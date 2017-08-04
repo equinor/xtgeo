@@ -1,0 +1,544 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xtgeo.surface package &mdash; XTGeo 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="XTGeo 0.1.1 documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XTGeo 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="xtgeo-surface-package">
+<h1>xtgeo.surface package<a class="headerlink" href="#xtgeo-surface-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-xtgeo.surface.regular_surface">
+<span id="xtgeo-surface-regular-surface-module"></span><h2>xtgeo.surface.regular_surface module<a class="headerlink" href="#module-xtgeo.surface.regular_surface" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="xtgeo.surface.regular_surface.RegularSurface">
+<em class="property">class </em><code class="descclassname">xtgeo.surface.regular_surface.</code><code class="descname">RegularSurface</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class for a regular surface in the xtgeo framework.</p>
+<p>The regular surface instance is usually initiated by
+import from file, but can also be made from scratch.
+The values can be accessed by the user as a 2D numpy float64 array
+(masked numpy).</p>
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.nx">
+<code class="descname">nx</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.nx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer for number of X direction columns</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.ny">
+<code class="descname">ny</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.ny" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer for number of Y direction rows</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.xori">
+<code class="descname">xori</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.xori" title="Permalink to this definition">¶</a></dt>
+<dd><p>X (East) origon coordinate</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.yori">
+<code class="descname">yori</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.yori" title="Permalink to this definition">¶</a></dt>
+<dd><p>Y (North) origin coordinate</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.xinc">
+<code class="descname">xinc</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.xinc" title="Permalink to this definition">¶</a></dt>
+<dd><p>X increment</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.yinc">
+<code class="descname">yinc</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.yinc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Y increment</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.rotation">
+<code class="descname">rotation</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>rotation in degrees, anticlock from X axis between 0, 360</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.values">
+<code class="descname">values</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>2D masked numpy array of shape (nx,ny), F order</p>
+</dd></dl>
+
+<p class="rubric">Example</p>
+<p>Initiate a class and import:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xtgeo.surface</span> <span class="kn">import</span> <span class="n">RegularSurface</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">RegularSurface</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s">&#39;some.irap&#39;</span><span class="p">,</span> <span class="n">fformat</span><span class="o">=</span><span class="s">&#39;irap_binary&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.avg_from_3dprop">
+<code class="descname">avg_from_3dprop</code><span class="sig-paren">(</span><em>xprop=None</em>, <em>yprop=None</em>, <em>mprop=None</em>, <em>dzprop=None</em>, <em>layer_minmax=None</em>, <em>truncate_le=None</em>, <em>zoneprop=None</em>, <em>zone_minmax=None</em>, <em>sampling=1</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.avg_from_3dprop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make an average map (DZ weighted) based on numpy arrays of
+properties from a 3D grid.</p>
+<p>The 3D arrays mush be undef numpies of size (nx,ny,nz). Undef
+entries must be given DZ=0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xprop</strong> &#8211; 3D numpy of all X coordinates (also inactive cells)</li>
+<li><strong>yprop</strong> &#8211; 3D numpy of all Y coordinates (also inactive cells)</li>
+<li><strong>mprop</strong> &#8211; 3D numpy of requested property (e.g. porosity) all</li>
+<li><strong>dzprop</strong> &#8211; 3D numpy of dz values (for weighting)
+NB zero for undef cells</li>
+<li><strong>layer_minmax</strong> &#8211; Optional. A list with start layer and end
+layer (1 counting)</li>
+<li><strong>truncate_le</strong> (<em>float</em>) &#8211; Optional. Truncate value (mask) if
+value is less</li>
+<li><strong>zoneprop</strong> &#8211; 3D numpy to a zone property</li>
+<li><strong>zone_minmax</strong> &#8211; a list with from-to zones to combine
+(e.g. [1,3])</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Nothing explicit, but updates the surface object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.copy">
+<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy a xtgeo.surface.RegularSurface object to another instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">mymapcopy</span> <span class="o">=</span> <span class="n">mymap</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.distance_from_point">
+<code class="descname">distance_from_point</code><span class="sig-paren">(</span><em>point=(0</em>, <em>0)</em>, <em>azimuth=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.distance_from_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make map values as horizontal distance from a point with azimuth
+direction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.from_file">
+<code class="descname">from_file</code><span class="sig-paren">(</span><em>mfile</em>, <em>fformat='irap_binary'</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import surface (regular map) from file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mfile</strong> (<em>str</em>) &#8211; Name of file</li>
+<li><strong>fformat</strong> (<em>str</em>) &#8211; File format, irap_binary is currently supported</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Object instance, optionally</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>Here the from_file method is used to initiate the object
+directly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">mymapobject</span> <span class="o">=</span> <span class="n">RegularSurface</span><span class="p">()</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s">&#39;myfile.x&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.from_roxar">
+<code class="descname">from_roxar</code><span class="sig-paren">(</span><em>project</em>, <em>type='horizon'</em>, <em>name=None</em>, <em>category=None</em>, <em>realisation=0</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.from_roxar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a surface from a Roxar RMS project.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>project</strong> (<em>str</em>) &#8211; Name of project (as folder) if outside RMS, og just
+use the magig &#8216;project&#8217; if within RMS.</li>
+<li><strong>type</strong> (<em>str</em>) &#8211; &#8216;horizon&#8217;, &#8216;clipboard&#8217;, etc</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; Name of surface/map</li>
+<li><strong>category</strong> (<em>str</em>) &#8211; For horizon only: for example &#8220;DS_extracted&#8221;</li>
+<li><strong>realiation</strong> (<em>int</em>) &#8211; Realisation number, default is 0</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Object instance updated</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>Here the from_roxar method is used to initiate the object
+directly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">mymap</span> <span class="o">=</span> <span class="n">RegularSurface</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mymap</span><span class="o">.</span><span class="n">from_roxar</span><span class="p">(</span><span class="n">etc</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_nx">
+<code class="descname">get_nx</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_nx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as nx (for backward compatibility)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_ny">
+<code class="descname">get_ny</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_ny" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as ny (for backward compatibility)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_rotation">
+<code class="descname">get_rotation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the surface roation, in degrees, from X, anti-clock.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_value_from_xy">
+<code class="descname">get_value_from_xy</code><span class="sig-paren">(</span><em>point=(0.0</em>, <em>0.0)</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_value_from_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the map value given a X Y point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>point</strong> (<em>float tuple</em>) &#8211; Position of X and Y coordinate</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The map value (interpolated). None if XY is outside defined map</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Example::</dt>
+<dd>mvalue = map.get_value_from_xy(point=(539291.12, 6788228.2))</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_xinc">
+<code class="descname">get_xinc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_xinc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as xinc (for backward compatibility)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_xori">
+<code class="descname">get_xori</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_xori" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as xori (for backward compatibility)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_yinc">
+<code class="descname">get_yinc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_yinc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as yinc (for backward compatibility)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_yori">
+<code class="descname">get_yori</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_yori" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as yori (for backward compatibility)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.get_zval">
+<code class="descname">get_zval</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.get_zval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an an 1D, numpy array of the map values (not masked).</p>
+<p>Note that undef values are very large numbers (see undef property).
+Also, this will reorder a 2D values array to column fastest, i.e.
+get stuff into Fortran order.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.hc_thickness_from_3dprops">
+<code class="descname">hc_thickness_from_3dprops</code><span class="sig-paren">(</span><em>xprop=None</em>, <em>yprop=None</em>, <em>hcpfzprop=None</em>, <em>zoneprop=None</em>, <em>zone_minmax=None</em>, <em>layer_minmax=None</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.hc_thickness_from_3dprops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a HC thickness map based on numpy arrays of properties
+from a 3D grid.</p>
+<p>Note that the input hcpfzprop is hydrocarbon fraction multiplied
+with thickness, which can be achieved by e.g.:
+cpfz = dz*poro*ntg*shc or by hcpfz = dz*hcpv/vbulk</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>xprop</strong> (<em>ndarray</em>) &#8211; 3D numpy array of X coordinates</li>
+<li><strong>yprop</strong> (<em>ndarray</em>) &#8211; 3D numpy array of Y coordinates</li>
+<li><strong>hcpfzprop</strong> (<em>ndarray</em>) &#8211; 3D numpy array of HC fraction multiplied
+with DZ per cell.</li>
+<li><strong>zoneprop</strong> (<em>ndarray</em>) &#8211; (optional) 3D numpy array indicating zonation
+property</li>
+<li><strong>zone_minmax</strong> (<em>array</em>) &#8211; (optional) 2 element list indicating start
+and stop zonation (both start and end spec are included)</li>
+<li><strong>layer_minmax</strong> (<em>array</em>) &#8211; (optional) 2 element list indicating start
+and stop grid layers (both start and end spec are included)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if operation went OK (but check result!), False if not</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.methods">
+<em class="property">classmethod </em><code class="descname">methods</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the methods in the class.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">nx</code></dt>
+<dd><p>The NX (or N-Idir) number, as property.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">ny</code></dt>
+<dd><p>The NY (or N-Jdir) number, as property.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.quickplot">
+<code class="descname">quickplot</code><span class="sig-paren">(</span><em>filename='default.map', title='QuickPlot', xvalues=None, yvalues=None, infotext=None, minmax=[-999.0, 999.0], levels=30</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.quickplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fast plot of maps using matplotlib.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">rotation</code></dt>
+<dd><p>The rotation, anticlock from X axis, in degrees [0..360].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.set_zval">
+<code class="descname">set_zval</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.set_zval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a 1D (unmasked) numpy array. The numpy array must be
+in Fortran order (i columns (nx) fastest).</p>
+<p>Will convert it to a 2D masked array internally.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.similarity_index">
+<code class="descname">similarity_index</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.similarity_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Report the degree of similarity between two maps, by comparing mean.</p>
+<p>The method computes the average per surface, and the similarity
+is difference in mean divided on mean of self. I.e. values close
+to 0.0 mean small difference.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<em>surface object</em>) &#8211; The other surface to compare with</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.to_file">
+<code class="descname">to_file</code><span class="sig-paren">(</span><em>mfile</em>, <em>fformat='irap_binary'</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export surface (regular map) to file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mfile</strong> (<em>str</em>) &#8211; Name of file</li>
+<li><strong>fformat</strong> (<em>str</em>) &#8211; File format, irap_binary/irap_classic</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">RegularSurface</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s">&#39;myfile.x&#39;</span><span class="p">,</span> <span class="n">fformat</span> <span class="o">=</span> <span class="s">&#39;irap_ascii&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="mi">300</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s">&#39;myfile2.x&#39;</span><span class="p">,</span> <span class="n">fformat</span> <span class="o">=</span> <span class="s">&#39;irap_ascii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.translate_coordinates">
+<code class="descname">translate_coordinates</code><span class="sig-paren">(</span><em>translate=(0</em>, <em>0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.translate_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Translate a map in X Y VALUE space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>translate</strong> (<em>tuple</em>) &#8211; Translate (shift) distance in X Y Z</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nb">map</span> <span class="o">=</span> <span class="n">RegularSurface</span><span class="p">()</span>
+<span class="nb">map</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s">&#39;some_file&#39;</span><span class="p">)</span>
+<span class="nb">map</span><span class="o">.</span><span class="n">translate</span><span class="p">((</span><span class="mi">300</span><span class="p">,</span><span class="mi">500</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+<span class="nb">map</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s">&#39;some_file&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.undef">
+<code class="descname">undef</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.undef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the undef value, to be used when in the get_zval method</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.surface.regular_surface.RegularSurface.undef_limit">
+<code class="descname">undef_limit</code><a class="headerlink" href="#xtgeo.surface.regular_surface.RegularSurface.undef_limit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the undef_limit value, to be used when in the get_zval method</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">values</code></dt>
+<dd><p>The map values, as 2D masked numpy (float64) of shape (nx, ny)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">xinc</code></dt>
+<dd><p>The X increment (or I dir increment)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">xori</code></dt>
+<dd><p>The X coordinate origin of the map (can be modified)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">yinc</code></dt>
+<dd><p>The Y increment (or I dir increment)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">yori</code></dt>
+<dd><p>The Y coordinate origin of the map (can be modified)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="xtgeo.surface.regular_surface.main">
+<code class="descclassname">xtgeo.surface.regular_surface.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.surface.regular_surface.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-xtgeo.surface">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-xtgeo.surface" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">xtgeo.surface package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-xtgeo.surface.regular_surface">xtgeo.surface.regular_surface module</a></li>
+<li><a class="reference internal" href="#module-xtgeo.surface">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/xtgeo.surface.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XTGeo 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2017, Jan C. Rivenaes.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.
+    </div>
+  </body>
+</html>

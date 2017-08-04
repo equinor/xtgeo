@@ -1,0 +1,257 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xtgeo.common package &mdash; XTGeo 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="XTGeo 0.1.1 documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XTGeo 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="xtgeo-common-package">
+<h1>xtgeo.common package<a class="headerlink" href="#xtgeo-common-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-xtgeo.common.ib_to_cell">
+<span id="xtgeo-common-ib-to-cell-module"></span><h2>xtgeo.common.ib_to_cell module<a class="headerlink" href="#module-xtgeo.common.ib_to_cell" title="Permalink to this headline">¶</a></h2>
+<p>Convert from cell number in Eclipse internal ordering to (ix,jy,kz)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">param ib - int - cell number in Eclipse ordering:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">param nx - int - grid dimension:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">param ny - int - grid dimension:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">param nz - int - grid dimension:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">returns:</th><td class="field-body">3D tuple Cell number (i,j,k) in user coordinates, starting with 1</td>
+</tr>
+</tbody>
+</table>
+<dl class="function">
+<dt id="xtgeo.common.ib_to_cell.ib_to_cell">
+<code class="descclassname">xtgeo.common.ib_to_cell.</code><code class="descname">ib_to_cell</code><span class="sig-paren">(</span><em>ib</em>, <em>nx</em>, <em>ny</em>, <em>nz</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.ib_to_cell.ib_to_cell" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-xtgeo.common.xtgeo_common">
+<span id="xtgeo-common-xtgeo-common-module"></span><h2>xtgeo.common.xtgeo_common module<a class="headerlink" href="#module-xtgeo.common.xtgeo_common" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="xtgeo.common.xtgeo_common.main">
+<code class="descclassname">xtgeo.common.xtgeo_common.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_common.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-xtgeo.common.xtgeo_dialog">
+<span id="xtgeo-common-xtgeo-dialog-module"></span><h2>xtgeo.common.xtgeo_dialog module<a class="headerlink" href="#module-xtgeo.common.xtgeo_dialog" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog">
+<em class="property">class </em><code class="descclassname">xtgeo.common.xtgeo_dialog.</code><code class="descname">XTGeoDialog</code><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>System for handling dialogs and messages in XTGeo, which cooperates
+with Python logging module.</p>
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.critical">
+<code class="descname">critical</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.critical" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.debug">
+<code class="descname">debug</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.debug" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.error">
+<code class="descname">error</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.get_callerinfo">
+<code class="descname">get_callerinfo</code><span class="sig-paren">(</span><em>caller</em>, <em>frame</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.get_callerinfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.get_syslevel">
+<code class="descname">get_syslevel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.get_syslevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.info">
+<code class="descname">info</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.insane">
+<code class="descname">insane</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.insane" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.loggingformat">
+<code class="descname">loggingformat</code><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.loggingformat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the format string to be used in logging</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.loggingformatlevel">
+<code class="descname">loggingformatlevel</code><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.loggingformatlevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.logginglevel">
+<code class="descname">logginglevel</code><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.logginglevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Will return a logging level property, e.g. logging.CRITICAL</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.print_xtgeo_header">
+<em class="property">static </em><code class="descname">print_xtgeo_header</code><span class="sig-paren">(</span><em>appname</em>, <em>appversion</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.print_xtgeo_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints a XTGeo banner for an app to STDOUT.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.say">
+<code class="descname">say</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.say" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.speak">
+<code class="descname">speak</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.speak" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.syslevel">
+<code class="descname">syslevel</code><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.syslevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.trace">
+<code class="descname">trace</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.warn">
+<code class="descname">warn</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.warn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="xtgeo.common.xtgeo_dialog.XTGeoDialog.warning">
+<code class="descname">warning</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.XTGeoDialog.warning" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="xtgeo.common.xtgeo_dialog.main">
+<code class="descclassname">xtgeo.common.xtgeo_dialog.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#xtgeo.common.xtgeo_dialog.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-xtgeo.common">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-xtgeo.common" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">xtgeo.common package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-xtgeo.common.ib_to_cell">xtgeo.common.ib_to_cell module</a></li>
+<li><a class="reference internal" href="#module-xtgeo.common.xtgeo_common">xtgeo.common.xtgeo_common module</a></li>
+<li><a class="reference internal" href="#module-xtgeo.common.xtgeo_dialog">xtgeo.common.xtgeo_dialog module</a></li>
+<li><a class="reference internal" href="#module-xtgeo.common">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/xtgeo.common.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XTGeo 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2017, Jan C. Rivenaes.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.
+    </div>
+  </body>
+</html>
