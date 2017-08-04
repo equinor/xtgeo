@@ -47,7 +47,7 @@ def update_version_py():
     ver = stdout.decode('UTF-8')
     ver = ver.replace("\n", "")
     # ensure a 3digit tag:
-    mver = ver[1:6]
+    mver = ver[:]
     f = open("xtgeo/_version.py", "w")
     f.write(VERSION_PY.format(mver, ver))
     f.close()
