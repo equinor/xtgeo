@@ -25,6 +25,9 @@ except Exception:
 # Do tests
 # =============================================================================
 
+sfile1 = '../xtgeo-testdata/cubes/gra/nh0304.segy'
+sfile2 = '../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy'
+
 
 class TestCube(unittest.TestCase):
     """Testing suite for cubes"""
@@ -55,8 +58,10 @@ class TestCube(unittest.TestCase):
         self.getlogger(sys._getframe(1).f_code.co_name)
         self.logger.info('Scan header...')
 
-        x = Cube().scan_segy_header('../../testdata/Cube/G/nh0304.segy',
-                                    outfile="TMP/cube_scanheader")
+        if not os.path.isfile(sfile1):
+            raise Exception("No such file")
+
+        x = Cube().scan_segy_header(sfile1, outfile="TMP/cube_scanheader")
 
         self.logger.info('Scan header for {} ...done'.format(x))
 
@@ -66,8 +71,7 @@ class TestCube(unittest.TestCase):
 
         self.logger.info('Scan traces...')
 
-        x = Cube().scan_segy_traces('../../testdata/Cube/G/nh0304.segy',
-                                    outfile="TMP/cube_scantraces")
+        x = Cube().scan_segy_traces(sfile1, outfile="TMP/cube_scantraces")
 
         self.logger.info(x)
 
@@ -78,8 +82,8 @@ class TestCube(unittest.TestCase):
         self.logger.info('Import SEGY format')
 
         x = Cube()
-        x.from_file('../../testdata/Cube/G/nh0304.segy',
-                    fformat='segy')
+
+        x.from_file(sfile1, fformat='segy')
 
         self.assertEqual(x.nx, 257, 'NX')
 
@@ -107,8 +111,7 @@ class TestCube(unittest.TestCase):
         self.logger.info('Import SEGY format via SEGYIO')
 
         x = Cube()
-        x.from_file('../../testdata/Cube/G/nh0304.segy',
-                    fformat='segy', engine=1)
+        x.from_file(sfile1, fformat='segy', engine=1)
 
         self.assertEqual(x.nx, 257, 'NX')
         dim = x.values.shape
@@ -135,27 +138,26 @@ class TestCube(unittest.TestCase):
 
         self.logger.info('Import Gullfaks SEGY format via SEGY and  SEGYIO')
 
-        sfile = '../../testdata/Cube/G/nh0304.segy'
 
         x1 = Cube()
-        x1.from_file(sfile, fformat='segy', engine=0)
+        x1.from_file(sfile1, fformat='segy', engine=0)
 
         x2 = Cube()
-        x2.from_file(sfile, fformat='segy', engine=1)
+        x2.from_file(sfile1, fformat='segy', engine=1)
 
         self.assertEqual(x1.nx, x2.nx, 'NX')
 
-    def test_cube_storm_import(self):
-        """Import SEGY (case 2 Gullfaks)."""
-        self.getlogger(sys._getframe(1).f_code.co_name)
+    # def test_cube_storm_import(self):
+    #     """Import SEGY (case 2 Gullfaks)."""
+    #     self.getlogger(sys._getframe(1).f_code.co_name)
 
-        self.logger.info('Import on STORM format...')
+    #     self.logger.info('Import on STORM format...')
 
-        x = Cube()
-        x.from_file('../../testdata/Cube/GF/gf_depth_1985_10_01.storm',
-                    fformat='storm')
+    #     x = Cube()
+    #     x.from_file('../../testdata/Cube/GF/gf_depth_1985_10_01.storm',
+    #                 fformat='storm')
 
-        self.assertEqual(x.nx, 501, 'NX')
+    #     self.assertEqual(x.nx, 501, 'NX')
 
     def test_swapaxes(self):
         """Import SEGY and swap axes."""
@@ -164,8 +166,7 @@ class TestCube(unittest.TestCase):
         self.logger.info('Import SEGY (test swapaxes)')
 
         x = Cube()
-        x.from_file('../../testdata/Cube/GF/gf_depth_1985_10_01.segy',
-                    fformat='segy')
+        x.from_file(sfile2, fformat='segy')
 
         orig_nx = x.nx
         orig_ny = x.ny

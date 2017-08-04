@@ -23,6 +23,12 @@ xtg = XTGeoDialog()
 # =============================================================================
 # This tests a combination of methods, in order to produce maps of HC thickness
 # =============================================================================
+gfile1 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
+ifile1 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
+
+gfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
+ifile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
+rfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.UNRST'
 
 
 class TestEtcMakeAvgMaps(unittest.TestCase):
@@ -47,13 +53,11 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
         self.getlogger('test_avg01')
 
         g = Grid()
-        g.from_file('../../testdata/Zone/B.GRID',
-                    fformat="grid")
+        g.from_file(gfile1, fformat="grid")
 
         # get the poro
         po = GridProperty()
-        po.from_file('../../testdata/Zone/B.INIT', fformat='init',
-                     name='PORO', grid=g)
+        po.from_file(ifile1, fformat='init', name='PORO', grid=g)
 
         # get the dz and the coordinates
         dz = g.get_dz(mask=False)
@@ -81,8 +85,10 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
                                mprop=pouse, dzprop=dzuse,
                                layer_minmax=(1, 9), truncate_le=0.001)
 
-        avgmap.quickplot(filename='/tmp/tmp_poro.png')
-        avgmap.to_file('/tmp/tmp.poro.gri')
+        avgmap.quickplot(filename='TMP/tmp_poro.png')
+        avgmap.to_file('TMP/tmp.poro.gri')
+
+        self.assertAlmostEqual(avgmap.values.mean(), 0.264, places=3)
 
     def test_avg02(self):
         """
@@ -91,13 +97,11 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
         self.getlogger('test_avg02')
 
         g = Grid()
-        g.from_file('../../testdata/Zone/GULLFAKS.EGRID',
-                    fformat="egrid")
+        g.from_file(gfile2, fformat="egrid")
 
         # get the poro
         po = GridProperty()
-        po.from_file('../../testdata/Zone/GULLFAKS.INIT', fformat='init',
-                     name='PORO', grid=g)
+        po.from_file(ifile2, fformat='init', name='PORO', grid=g)
 
         # get the dz and the coordinates
         dz = g.get_dz(mask=False)
@@ -127,8 +131,11 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
                                layer_minmax=(5, 6),
                                truncate_le=None)
 
-        avgmap.quickplot(filename='/tmp/tmp_poro2.png', xlabelrotation=30)
-        avgmap.to_file('/tmp/tmp.poro.gri', fformat='irap_ascii')
+        avgmap.quickplot(filename='TMP/tmp_poro2.png', xlabelrotation=30)
+        avgmap.to_file('TMP/tmp.poro.gri', fformat='irap_ascii')
+
+        print(avgmap.values.mean())
+        self.assertAlmostEqual(avgmap.values.mean(), 0.158, places=3)
 
     def test_avg03(self):
         """
@@ -139,14 +146,13 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
 
         self.logger.info("Reading Grid file")
         g = Grid()
-        g.from_file('../../testdata/Zone/GULLFAKS.EGRID',
-                    fformat="egrid")
+        g.from_file(gfile2, fformat="egrid")
 
         # get the sw
         self.logger.info("Reading GridProperty file")
         sw = GridProperty()
-        sw.from_file('../../testdata/Zone/GULLFAKS.UNRST', fformat='unrst',
-                     name='SWAT', date=19851001, grid=g)
+        sw.from_file(rfile2, fformat='unrst', name='SWAT', date=19851001,
+                     grid=g)
 
         # # # get the sw2
         # # sw2=GridProperty()
@@ -210,8 +216,8 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
         #                        layer_minmax=(1, 47),
         #                        truncate_le=10)
 
-        # avgmap.quickplot(filename='/tmp/tmp_depth.png')
-        # avgmap.to_file('/tmp/tmp_depth.gri', fformat='irap_binary')
+        # avgmap.quickplot(filename='TMP/tmp_depth.png')
+        # avgmap.to_file('TMP/tmp_depth.gri', fformat='irap_binary')
 
         # # avgmap2 = RegularSurface(nx=220, ny=260, xinc=50, yinc=50,
         # #                          xori=451100, yori=6779700,
@@ -222,10 +228,10 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
         # #                         lay_minmax=(1,47),
         # #                         truncate_le=10)
 
-        # # avgmap2.quickplot(filename='/tmp/tmp2_depth.png')
-        # # avgmap2.to_file('/tmp/tmp2_depth.gri', fformat='irap_binary')
+        # # avgmap2.quickplot(filename='TMP/tmp2_depth.png')
+        # # avgmap2.to_file('TMP/tmp2_depth.gri', fformat='irap_binary')
 
-        # self.logger.info("See output on /tmp ...")
+        # self.logger.info("See output on TMP ...")
 
 
 if __name__ == '__main__':

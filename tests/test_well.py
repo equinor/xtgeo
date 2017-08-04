@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
         """
         self.getlogger('test_import')
 
-        wfile = "../../testdata/Well/T/a/31_2-E-1_H.w"
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
 
         mywell = Well()
 
@@ -66,7 +66,7 @@ class Test(unittest.TestCase):
 
         self.getlogger('test_import_export_many')
 
-        wfiles = "../../testdata/Well/T/a/*"
+        wfiles = "../xtgeo-testdata/wells/tro/1/a/*"
 
         for filename in glob.glob(wfiles):
             self.logger.info("Importing " + filename)
@@ -132,7 +132,7 @@ class Test(unittest.TestCase):
     def test_get_carr(self):
         """Get a C array pointer"""
 
-        wfile = "../../testdata/Well/T/a/31_2-1.w"
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
         mywell = Well()
 
@@ -165,7 +165,7 @@ class Test(unittest.TestCase):
 
         self.getlogger('test_make_hlen')
 
-        wfile = "../../testdata/Well/T/a/31_2-1.w"
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
         mywell = Well()
         mywell.from_file(wfile)
@@ -178,7 +178,7 @@ class Test(unittest.TestCase):
 
         self.getlogger('test_fence')
 
-        wfile = "../../testdata/Well/G/w1/34_10-A-42.w"
+        wfile = "../xtgeo-testdata/wells/gfb/1/34_10-A-42.w"
 
         mywell = Well()
         mywell.from_file(wfile)
@@ -191,7 +191,7 @@ class Test(unittest.TestCase):
 
         self.getlogger('test_get_zonation_points')
 
-        wfile = "../../testdata/Well/T/a/31_2-1.w"
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
         mywell = Well().from_file(wfile)
         mywell.get_zonation_points(zonelogname='ZONELOG')
@@ -201,7 +201,7 @@ class Test(unittest.TestCase):
 
         self.getlogger('test_get_zonation_holes')
 
-        wfile = "../../testdata/Well/T/c/31_2-G-4_BY1H_holes.w"
+        wfile = "../xtgeo-testdata/wells/tro/3/31_2-G-4_BY1H_holes.w"
 
         mywell = Well().from_file(wfile)
         report = mywell.report_zonation_holes(zonelogname='ZONELOG')
@@ -213,7 +213,7 @@ class Test(unittest.TestCase):
 
         # ----------------------------------------------------------
 
-        wfile = "../../testdata/Well/O2/w1_holes.w"
+        wfile = "../xtgeo-testdata/wells/oea/1/w1_holes.w"
 
         mywell = Well().from_file(wfile)
         report = mywell.report_zonation_holes(zonelogname='Z2002A',
@@ -225,7 +225,7 @@ class Test(unittest.TestCase):
 
         # ----------------------------------------------------------
 
-        wfile = "../../testdata/Well/T/c/31_2-1.w"
+        wfile = "../xtgeo-testdata/wells/tro/3/31_2-1.w"
 
         mywell = Well().from_file(wfile)
         report = mywell.report_zonation_holes(zonelogname='ZONELOG',

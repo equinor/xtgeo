@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         """
         self.getlogger('test_import')
 
-        pfile = "../../testdata/Points/emerald_10_random.poi"
+        pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
 
         mypoints = Points()
 
@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
         """
         self.getlogger('test_import_polygons')
 
-        pfile = "../../testdata/Points/emerald_10_random.poi"
+        pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
 
         mypoly = Polygons()
 

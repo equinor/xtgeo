@@ -1,13 +1,13 @@
-xtgeo\.cube package
-===================
+xtgeo.well package
+==================
 
 Submodules
 ----------
 
-xtgeo\.cube\.cube module
-------------------------
+xtgeo.well.well module
+----------------------
 
-.. automodule:: xtgeo.cube.cube
+.. automodule:: xtgeo.well.well
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ xtgeo\.cube\.cube module
 Module contents
 ---------------
 
-.. automodule:: xtgeo.cube
+.. automodule:: xtgeo.well
     :members:
     :undoc-members:
     :show-inheritance:

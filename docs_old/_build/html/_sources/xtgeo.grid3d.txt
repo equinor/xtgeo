@@ -1,35 +1,35 @@
-xtgeo\.grid3d package
-=====================
+xtgeo.grid3d package
+====================
 
 Submodules
 ----------
 
-xtgeo\.grid3d\.grid module
---------------------------
+xtgeo.grid3d.grid module
+------------------------
 
 .. automodule:: xtgeo.grid3d.grid
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo\.grid3d\.grid3d module
-----------------------------
+xtgeo.grid3d.grid3d module
+--------------------------
 
 .. automodule:: xtgeo.grid3d.grid3d
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo\.grid3d\.grid\_properties module
---------------------------------------
+xtgeo.grid3d.grid_properties module
+-----------------------------------
 
 .. automodule:: xtgeo.grid3d.grid_properties
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo\.grid3d\.grid\_property module
-------------------------------------
+xtgeo.grid3d.grid_property module
+---------------------------------
 
 .. automodule:: xtgeo.grid3d.grid_property
     :members:

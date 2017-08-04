@@ -23,6 +23,7 @@ xtg = XTGeoDialog()
 # =============================================================================
 # Do tests
 # =============================================================================
+emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 
 
 class TestGrid(unittest.TestCase):
@@ -46,8 +47,7 @@ class TestGrid(unittest.TestCase):
         self.getlogger('test_import_wrong')
 
         with self.assertRaises(ValueError):
-            g = Grid().from_file('../../testdata/Zone/emerald_hetero'
-                                 'grid.roff', fformat='roffdum')
+            g = Grid().from_file(emegfile, fformat='roffdum')
             self.assertEqual(g.nx, 70)
 
     def test_import_guess(self):
@@ -55,7 +55,7 @@ class TestGrid(unittest.TestCase):
 
         self.getlogger('test_import_guess')
 
-        g = Grid().from_file('../../testdata/Zone/emerald_hetero_grid.roff')
+        g = Grid().from_file(emegfile)
 
         print(g.nx)
         self.assertEqual(g.nx, 70)
@@ -65,14 +65,12 @@ class TestGrid(unittest.TestCase):
 
         self.getlogger('test_roffbin_import0')
 
-        g = Grid().from_file('../../testdata/Zone/emerald_hetero_grid.roff',
-                             fformat="roff")
+        g = Grid().from_file(emegfile, fformat="roff")
 
         print(g)
         self.assertIsInstance(g, Grid)
 
-        g = Grid('../../testdata/Zone/emerald_hetero_grid.roff',
-                 fformat="roff")
+        g = Grid(emegfile, fformat="roff")
 
         print(g)
         self.assertIsInstance(g, Grid)
@@ -84,8 +82,7 @@ class TestGrid(unittest.TestCase):
         self.logger.info('Name is {}'.format(__name__))
         g = Grid()
         self.logger.info("Import roff...")
-        g.from_file('../../testdata/Zone/emerald_hetero_grid.roff',
-                    fformat="roff")
+        g.from_file(emegfile, fformat="roff")
 
         self.assertEqual(g.nx, 70, 'Grid NX Emerald')
         self.assertEqual(g.nz, 46, 'Grid NZ Emerald')
@@ -150,7 +147,7 @@ class TestGrid(unittest.TestCase):
         self.logger.info('Name is {}'.format(__name__))
         g = Grid()
         self.logger.info("Import Eclipse GRID...")
-        g.from_file('../../testdata/Zone/G1.GRID',
+        g.from_file('../xtgeo-testdata/3dgrids/gfb/G1.GRID',
                     fformat="grid")
 
         self.assertEqual(g.nx, 20, 'Grid NX from Eclipse')
@@ -165,7 +162,7 @@ class TestGrid(unittest.TestCase):
         self.logger.info('Name is {}'.format(__name__))
         g = Grid()
         self.logger.info("Import Eclipse GRID...")
-        g.from_file('../../testdata/Zone/GULLFAKS.EGRID',
+        g.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
                     fformat="egrid")
 
         self.assertEqual(g.nx, 99, 'EGrid NX from Eclipse')
@@ -184,7 +181,7 @@ class TestGrid(unittest.TestCase):
 
         g = Grid()
         self.logger.info("Import Eclipse GRDECL...")
-        g.from_file('../../testdata/Zone/g1_comments.grdecl',
+        g.from_file('../xtgeo-testdata/3dgrids/gfb/g1_comments.grdecl',
                     fformat="grdecl")
 
         mylist = g.get_geometrics()
@@ -207,7 +204,8 @@ class TestGrid(unittest.TestCase):
         """Test various import and export formats"""
         self.getlogger('test_simple_io')
 
-        gg = Grid('../../testdata/Zone/GULLFAKS.EGRID', fformat="egrid")
+        gg = Grid('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
+                  fformat="egrid")
 
         gg.to_file("TMP/gullfaks_test.roff")
 
@@ -215,7 +213,7 @@ class TestGrid(unittest.TestCase):
         """Test import an eclrun with dates and export to roff after a diff"""
         self.getlogger('test_ecl_run')
 
-        eclroot = '../../testdata/Zone/GULLFAKS'
+        eclroot = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS'
         dates = [19851001, 20150101]
         rprops = ['PRESSURE', 'SWAT']
 

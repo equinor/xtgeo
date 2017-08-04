@@ -1,27 +1,19 @@
-xtgeo.common package
-====================
+xtgeo\.common package
+=====================
 
 Submodules
 ----------
 
-xtgeo.common.ib_to_cell module
-------------------------------
+xtgeo\.common\.calc module
+--------------------------
 
-.. automodule:: xtgeo.common.ib_to_cell
+.. automodule:: xtgeo.common.calc
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo.common.xtgeo_common module
---------------------------------
-
-.. automodule:: xtgeo.common.xtgeo_common
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-xtgeo.common.xtgeo_dialog module
---------------------------------
+xtgeo\.common\.xtgeo\_dialog module
+-----------------------------------
 
 .. automodule:: xtgeo.common.xtgeo_dialog
     :members:

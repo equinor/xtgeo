@@ -50,11 +50,12 @@ class Test(unittest.TestCase):
         self.getlogger('test_simple_plot')
 
         mywell = Well()
-        mywell.from_file("../../testdata/Well/G/w1/34_10-A-42.w")
+        mywell.from_file("../xtgeo-testdata/wells/gfb/1/34_10-A-42.w")
 
         mysurfaces = []
         mysurf = RegularSurface()
-        mysurf.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
+        mysurf.from_file('../xtgeo-testdata/surfaces/gfb/1/'
+                         'gullfaks_top.irapbin')
         for i in range(10):
             xsurf = mysurf.copy()
             xsurf.values = xsurf.values + i * 20
@@ -66,7 +67,7 @@ class Test(unittest.TestCase):
         # set the color table, from file
         clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
         cfil1 = 'xtgeo'
-        cfil2 = '../../testdata/Various/colfacies.txt'
+        cfil2 = '../xtgeo-testdata/etc/colortables/colfacies.txt'
         myplot.set_colortable(cfil1, colorlist=None)
 
         myplot.canvas(title="Manamana", subtitle="My Dear Well")
@@ -86,10 +87,10 @@ class Test(unittest.TestCase):
         self.getlogger('test_troll1')
 
         myfield = Polygons()
-        myfield.from_file('../../testdata/Polygons/troll.xyz')
+        myfield.from_file('../xtgeo-testdata/polygons/tro/1/troll.xyz')
 
         mywells = []
-        wnames = glob.glob("../../testdata/Well/T/b/31_2-G-4_H.w")
+        wnames = glob.glob("../xtgeo-testdata/wells/tro/2/31_2-G-4_H.w")
         wnames.sort()
         for wname in wnames:
             mywell = Well()
@@ -99,7 +100,7 @@ class Test(unittest.TestCase):
         self.logger.info("Wells are read...")
 
         mysurfaces = []
-        surfnames = glob.glob("../../testdata/Horizons/T/b/*.gri")
+        surfnames = glob.glob("../xtgeo-testdata/surfaces/tro/2/*.gri")
         surfnames.sort()
         for fname in surfnames:
             self.logger.info("Read {}".format(fname))
@@ -109,7 +110,7 @@ class Test(unittest.TestCase):
 
         # Troll lobes
         mylobes = []
-        surfnames = glob.glob("../../testdata/Horizons/T/b2/*.gri")
+        surfnames = glob.glob("../xtgeo-testdata/surfaces/tro/3/*.gri")
         surfnames.sort()
         for fname in surfnames:
             self.logger.info("Read {}".format(fname))

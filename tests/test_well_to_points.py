@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         """
         self.getlogger('test_wellzone_to_points')
 
-        wfile = "../../testdata/Well/T/a/31_2-E-1_H.w"
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
 
         mywell = Well()
         mywell.from_file(wfile)
@@ -52,6 +52,7 @@ class Test(unittest.TestCase):
         # get the zpoints which is a Points object
         zpoints = mywell.get_zonation_points(zonelogname="ZONELOG")
 
+        print(zpoints)
 
 if __name__ == '__main__':
 

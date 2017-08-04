@@ -103,7 +103,7 @@ class TestSurface(unittest.TestCase):
         self.logger.info('Import and export...')
 
         x = RegularSurface()
-        x.from_file('../../testdata/Surface/Etc/fossekall1.irapbin',
+        x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
                     fformat='irap_binary')
 
         self.logger.debug("NX is {}".format(x.nx))
@@ -133,7 +133,7 @@ class TestSurface(unittest.TestCase):
         x.to_file('TMP/foss1_plus_300_a.fgr', fformat='irap_ascii')
         x.to_file('TMP/foss1_plus_300_b.gri', fformat='irap_binary')
 
-        mfile = '../../testdata/Surface/Etc/fossekall1.irapbin'
+        mfile = '../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin'
 
         # direct import
         y = RegularSurface(mfile)
@@ -152,7 +152,7 @@ class TestSurface(unittest.TestCase):
         self.getlogger('test_similarity')
         self.logger.info('Test if surfaces are similar...')
 
-        mfile = '../../testdata/Surface/Etc/fossekall1.irapbin'
+        mfile = '../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin'
 
         x = RegularSurface(mfile)
         y = RegularSurface(mfile)
@@ -177,7 +177,7 @@ class TestSurface(unittest.TestCase):
         for i in range(0, 10):
             # print(i)
             x = RegularSurface()
-            x.from_file('../../testdata/Surface/T/troll.irapbin',
+            x.from_file('../xtgeo-testdata/surfaces/tro/1/troll.irapbin',
                         fformat='irap_binary')
 
             self.logger.info('Map dimensions: {} {}'.format(x.nx, x.ny))
@@ -199,7 +199,7 @@ class TestSurface(unittest.TestCase):
         self.getlogger('test_distance_from_point')
 
         x = RegularSurface()
-        x.from_file('../../testdata/Surface/Etc/fossekall1.irapbin',
+        x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
                     fformat='irap_binary')
 
         x.distance_from_point(point=(464960, 7336900), azimuth=30)
@@ -213,7 +213,7 @@ class TestSurface(unittest.TestCase):
         self.getlogger('test_value_from_xy')
 
         x = RegularSurface()
-        x.from_file('../../testdata/Surface/Etc/fossekall1.irapbin',
+        x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
                     fformat='irap_binary')
 
         z = x.get_value_from_xy(point=(464375.992, 7337128.076))
@@ -247,7 +247,7 @@ class TestSurface(unittest.TestCase):
         print(myfence)
 
         x = RegularSurface()
-        x.from_file('../../testdata/Surface/Etc/fossekall1.irapbin',
+        x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
                     fformat='irap_binary')
 
         newfence = x.get_fence(myfence)

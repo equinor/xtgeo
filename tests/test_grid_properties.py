@@ -21,6 +21,13 @@ xtg = XTGeoDialog()
 # =============================================================================
 # Do tests
 # =============================================================================
+gfile1 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
+ifile1 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
+rfile1 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.UNRST'
+
+gfile2 = '../xtgeo-testdata/3dgrids/gfb/ECLIPSE.EGRID'
+ifile2 = '../xtgeo-testdata/3dgrids/gfb/ECLIPSE.INIT'
+rfile2 = '../xtgeo-testdata/3dgrids/gfb/ECLIPSE.UNRST'
 
 
 class TestGridProperties(unittest.TestCase):
@@ -39,12 +46,12 @@ class TestGridProperties(unittest.TestCase):
         self.getlogger(sys._getframe(1).f_code.co_name)
 
         g = Grid()
-        g.from_file('../../testdata/Zone/GULLFAKS.EGRID', fformat="egrid")
+        g.from_file(gfile1, fformat="egrid")
 
         x = GridProperties()
 
         names = ['PORO', 'PORV']
-        x.from_file('../../testdata/Zone/GULLFAKS.INIT', fformat="init",
+        x.from_file(ifile1, fformat="init",
                     names=names, grid=g)
 
         # get the object
@@ -62,13 +69,13 @@ class TestGridProperties(unittest.TestCase):
         self.getlogger(sys._getframe(1).f_code.co_name)
 
         g = Grid()
-        g.from_file('../../testdata/Zone/ECLIPSE.EGRID', fformat="egrid")
+        g.from_file(gfile2, fformat="egrid")
 
         x = GridProperties()
 
         names = ['PRESSURE', 'SWAT']
         dates = [19851001, 19870701]
-        x.from_file('../../testdata/Zone/ECLIPSE.UNRST',
+        x.from_file(rfile2,
                     fformat="unrst", names=names, dates=dates,
                     grid=g)
 
@@ -97,13 +104,13 @@ class TestGridProperties(unittest.TestCase):
         self.getlogger(sys._getframe(1).f_code.co_name)
 
         g = Grid()
-        g.from_file('../../testdata/Zone/GULLFAKS.EGRID', fformat="egrid")
+        g.from_file(gfile1, fformat="egrid")
 
         x = GridProperties()
 
         names = ['PRESSURE', 'SWAT']
         dates = [19851001]
-        x.from_file('../../testdata/Zone/GULLFAKS.UNRST',
+        x.from_file(rfile1,
                     fformat="unrst", names=names, dates=dates,
                     grid=g)
 
@@ -133,13 +140,13 @@ class TestGridProperties(unittest.TestCase):
         self.getlogger(sys._getframe(1).f_code.co_name)
 
         g = Grid()
-        g.from_file('../../testdata/Zone/ECLIPSE.EGRID', fformat="egrid")
+        g.from_file(gfile2, fformat="egrid")
 
         x = GridProperties()
 
         names = ['SOIL']
         dates = [19851001]
-        x.from_file('../../testdata/Zone/ECLIPSE.UNRST',
+        x.from_file(rfile2,
                     fformat="unrst", names=names, dates=dates,
                     grid=g)
 

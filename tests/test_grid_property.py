@@ -56,7 +56,7 @@ class TestGridProperty(unittest.TestCase):
         self.logger.info('Name is {}'.format(__name__))
         x = GridProperty()
         self.logger.info("Import roff...")
-        x.from_file('../../testdata/Zone/gullfaks2_poro.roffbin',
+        x.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_poro.roffbin',
                     fformat="roff", name='PORO')
 
         self.logger.info(repr(x.values))
@@ -74,7 +74,7 @@ class TestGridProperty(unittest.TestCase):
         self.logger.info('Name is {}'.format(__name__))
         dz = GridProperty()
         self.logger.info("Import roff...")
-        dz.from_file('../../testdata/props/em/em1/emerald_hetero.roff',
+        dz.from_file('../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff',
                      fformat="roff", name='Z_increment')
 
         self.logger.info(repr(dz.values))
@@ -83,7 +83,7 @@ class TestGridProperty(unittest.TestCase):
 
         hc = GridProperty()
         self.logger.info("Import roff...")
-        hc.from_file('../../testdata/props/em/em1/emerald_hetero.roff',
+        hc.from_file('../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff',
                      fformat="roff", name='Oil_HCPV')
 
         self.logger.info(repr(hc.values))
@@ -106,11 +106,11 @@ class TestGridProperty(unittest.TestCase):
             print(' ')
         self.logger.info('Name is {}'.format(__name__))
         gg = Grid()
-        gg.from_file('../../testdata/Zone/B.GRID',
+        gg.from_file('../xtgeo-testdata/3dgrids/bri/B.GRID',
                      fformat="grid")
         po = GridProperty()
         self.logger.info("Import INIT...")
-        po.from_file('../../testdata/Zone/B.INIT',
+        po.from_file('../xtgeo-testdata/3dgrids/bri/B.INIT',
                      fformat="init", name='PORO', grid=gg)
 
         self.assertEqual(po.nx, 20, 'NX from B.INIT')
@@ -121,7 +121,7 @@ class TestGridProperty(unittest.TestCase):
 
         # discrete prop
         eq = GridProperty()
-        eq.from_file('../../testdata/Zone/B.INIT',
+        eq.from_file('../xtgeo-testdata/3dgrids/bri/B.INIT',
                      fformat="init", name='EQLNUM', grid=gg)
         self.logger.info(eq.values[0:400])
         self.assertEqual(eq.values3d[12:13, 13:14, 0:1], 3,
@@ -138,14 +138,13 @@ class TestGridProperty(unittest.TestCase):
             print(' ')
         self.logger.info('Name is {}'.format(__name__))
         gg = Grid()
-        gg.from_file('../../testdata/Zone/GULLFAKS.EGRID',
+        gg.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
                      fformat="egrid")
         self.assertEqual(gg.nx, 99, "Gullfaks NX")
         po = GridProperty()
         self.logger.info("Import INIT...")
-        po.from_file('../../testdata/Zone/GULLFAKS.INIT',
+        po.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT',
                      fformat="init", name='PORO', grid=gg)
-
 
     def test_export_roff(self):
         """
@@ -158,11 +157,11 @@ class TestGridProperty(unittest.TestCase):
             print(' ')
         self.logger.info('Name is {}'.format(__name__))
         gg = Grid()
-        gg.from_file('../../testdata/Zone/B.GRID',
+        gg.from_file('../xtgeo-testdata/3dgrids/bri/B.GRID',
                      fformat="grid")
         po = GridProperty()
         self.logger.info("Import INIT...")
-        po.from_file('../../testdata/Zone/B.INIT',
+        po.from_file('../xtgeo-testdata/3dgrids/bri/B.INIT',
                      fformat="init", name='PORO', grid=gg)
 
         po.to_file('TMP/bdata.roff')
@@ -176,7 +175,7 @@ class TestGridProperty(unittest.TestCase):
 
         self.logger.info('Name is {}'.format(__name__))
         po = GridProperty()
-        po.from_file('../../testdata/Zone/gullfaks2_zone.roffbin',
+        po.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roffbin',
                      fformat="roff", name='Zone')
 
         self.logger.info("\nCodes ({})\n{}".format(po.ncodes, po.codes))

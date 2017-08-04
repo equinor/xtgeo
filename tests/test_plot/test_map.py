@@ -2,11 +2,6 @@ import unittest
 import os
 import sys
 import logging
-import matplotlib as mpl
-if os.environ.get('DISPLAY','') == '':
-    print('No display found. Using non-interactive Agg backend')
-    mpl.use('Agg')
-
 import matplotlib.pyplot as plt
 
 from xtgeo.plot import Map
@@ -55,7 +50,8 @@ class TestMap(unittest.TestCase):
         self.getlogger('test_simple_plot')
 
         mysurf = RegularSurface()
-        mysurf.from_file('../../testdata/Surface/G/gullfaks_top.irapbin')
+        mysurf.from_file('../xtgeo-testdata/surfaces/gfb/1/'
+                         'gullfaks_top.irapbin')
 
         # just make the instance, with a lot of defaults behind the scene
         myplot = Map()
@@ -70,7 +66,8 @@ class TestMap(unittest.TestCase):
         self.getlogger('test_more_features_plot')
 
         mysurf = RegularSurface()
-        mysurf.from_file('../../testdata/Surface/G/gullfaks_top.irapbin')
+        mysurf.from_file('../xtgeo-testdata/surfaces/gfb/1/'
+                         'gullfaks_top.irapbin')
 
         # just make the instance, with a lot of defaults behind the scene
         myplot = Map()

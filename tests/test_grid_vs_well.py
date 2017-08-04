@@ -48,24 +48,25 @@ class TestGridWellProperty(unittest.TestCase):
 
         self.logger.info('Name is {}'.format(__name__))
         g1 = Grid()
-        g1.from_file('../../testdata/Zone/gullfaks2.roff')
+        g1.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
 
         g2 = Grid()
-        g2.from_file('../../testdata/Zone/gullfaks2.roff')
+        g2.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
 
         g2.reduce_to_one_layer()
 
         z = GridProperty()
-        z.from_file('../../testdata/Zone/gullfaks2_zone.roff', name='Zone')
+        z.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff',
+                    name='Zone')
 
         # w1 = Well()
-        # w1.from_file('../../testdata/Well/G/w1/34_10-A-42.w')
+        # w1.from_file('../xtgeo-testdata/wells/gfb/1/34_10-A-42.w')
 
         w2 = Well()
-        w2.from_file('../../testdata/Well/G/w1/34_10-1.w')
+        w2.from_file('../xtgeo-testdata/wells/gfb/1/34_10-1.w')
 
         w3 = Well()
-        w3.from_file('../../testdata/Well/G/w1/34_10-B-21_B.w')
+        w3.from_file('../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w')
 
         wells = [w2, w3]
 

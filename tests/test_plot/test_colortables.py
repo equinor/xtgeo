@@ -26,7 +26,7 @@ class TestColors(unittest.TestCase):
     def test_readfromfile(self):
         """Read color table from RMS file."""
 
-        cfile = '../../testdata/Various/colfacies2.txt'
+        cfile = '../xtgeo-testdata/etc/colortables/colfacies.txt'
         self.getlogger('test_readfromfile')
 
         ctable = ct.colorsfromfile(cfile)
@@ -45,7 +45,6 @@ class TestColors(unittest.TestCase):
         self.assertEqual(ctable[5], (0.000, 1.000, 1.000))
 
         self.logger.info(ctable)
-
 
 
 if __name__ == '__main__':

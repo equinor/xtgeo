@@ -19,6 +19,9 @@ except OSError:
 # set default level
 xtg = XTGeoDialog()
 
+roff1_grid = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
+roff1_props = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff'
+
 
 class TestEtcMakeHcpvMaps(unittest.TestCase):
     """Testing suite making HC thickness maps"""
@@ -44,18 +47,15 @@ class TestEtcMakeHcpvMaps(unittest.TestCase):
         self.logger.info('Name is {}'.format(__name__))
         g = Grid()
         self.logger.info("Import roff...")
-        g.from_file('../../testdata/Zone/emerald_hetero_grid.roff',
-                    fformat="roff")
+        g.from_file(roff1_grid, fformat="roff")
 
         # get the hcpv
         st = GridProperty()
         to = GridProperty()
 
-        st.from_file('../../testdata/props/em/em1/emerald_hetero.roff',
-                     name='Oil_HCPV')
+        st.from_file(roff1_props, name='Oil_HCPV')
 
-        to.from_file('../../testdata/props/em/em1/emerald_hetero.roff',
-                     name='Oil_bulk')
+        to.from_file(roff1_props, name='Oil_bulk')
 
         # get the dz and the coordinates
         dz = g.get_dz()
@@ -86,8 +86,9 @@ class TestEtcMakeHcpvMaps(unittest.TestCase):
         hcmap.hc_thickness_from_3dprops(xprop=xc.values3d, yprop=yc.values3d,
                                         hcpfzprop=hcpfz, zoneprop=zp)
 
-        hcmap.quickplot(filename='TMP/tull.png')
-        #        os.system("eog /tmp/tull.png")
+        hcmap.quickplot(filename='TMP/quickplot_hcpv.png')
+        print(hcmap.values.mean())
+        self.assertAlmostEqual(hcmap.values.mean(), 2.9695, places=3)
 
 
 if __name__ == '__main__':
