@@ -4,11 +4,11 @@ import os.path
 import sys
 import logging
 import warnings
+import pytest
 
 from xtgeo.surface import RegularSurface
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
-
 
 path = 'TMP'
 try:
@@ -29,6 +29,7 @@ def custom_formatwarning(msg, *a):
     # ignore everything except the message
     return str(msg) + '\n'
 
+
 warnings.formatwarning = custom_formatwarning
 
 # =============================================================================
@@ -36,54 +37,50 @@ warnings.formatwarning = custom_formatwarning
 # =============================================================================
 
 
-class Test(unittest.TestCase):
-    """Testing suite for surfaces"""
+def getlogger(name):
 
-    def getlogger(self, name):
+    format = xtg.loggingformat
 
-        # if isinstance(self.logger):
-        #     return
+    logging.basicConfig(format=format, stream=sys.stdout)
+    logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
 
-        format = xtg.loggingformat
+    return logging.getLogger(name)
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
 
-        self.logger = logging.getLogger(name)
+def test_dummy():
 
-    def test_dummy(self):
+    dummy = 1
+    assert dummy == 1
 
-        dummy = 1
-        self.assertEqual(dummy, 1)
 
-    # def test_slice_nearest(self):
-    #     """
-    #     Slice a cube with a surface, nearest node
-    #     """
+def test_slice_nearest():
+    """Slice a cube with a surface, nearest node."""
 
-    #     self.getlogger('test_slice_nearest')
+    logger = getlogger('test_slice_nearest')
 
-    #     self.logger.info("Loading surface")
-    #     x = RegularSurface()
-    #     x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
+    logger.info("Loading surface")
+    x = RegularSurface()
+    x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
 
-    #     y = x.copy()
+    x.to_file("TMP/surf_slice_cube_initial.gri")
 
-    #     x.to_file("TMP/surf_slice_cube_initial.gri")
+    logger.info("Loading cube")
+    cc = Cube()
+    cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
+                 engine=1)
+    # Now slice
+    logger.info("Slicing...")
+    x.slice_cube(cc)
+    logger.info("Slicing...done")
 
-    #     self.logger.info("Loading cube")
-    #     cc = Cube()
-    #     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy")
-    #     self.logger.info("Loading cube, done")
+    x.to_file("TMP/surf_slice_cube.gri")
 
-    #     # Now slice
-    #     self.logger.info("Slicing...")
-    #     x.slice_cube(cc)
-    #     self.logger.info("Slicing...done")
+    x.quickplot(filename="TMP/surf_slice_cube.png", colortable='seismic',
+                minmax=(-1,1))
 
-    #     x.to_file("TMP/surf_slice_cube.gri")
-    #     self.assertAlmostEqual(x.values.mean(), -0.0755, places=2)
-    #     self.logger.info("Avg X is {}".format(x.values.mean()))
+    mean = x.values.mean()
+    assert mean == pytest.approx(-0.0755, abs=0.003)
+#    logger.info("Avg X is {}".format(x.values.mean()))
 
     #     # try same ting with swapaxes active ==================================
     #     y = RegularSurface()
@@ -91,48 +88,48 @@ class Test(unittest.TestCase):
 
     #     cc.swapaxes()
     #     # Now slice
-    #     self.logger.info("Slicing... (now with swapaxes)")
+    #     logger.info("Slicing... (now with swapaxes)")
     #     y.slice_cube(cc)
-    #     self.logger.info("Slicing...done")
+    #     logger.info("Slicing...done")
 
     #     y.to_file("TMP/surf_slice_cube_y.gri")
-    #     self.assertAlmostEqual(y.values.mean(), -0.0755, places=2)
-    #     self.logger.info("Avg Y is {}".format(y.values.mean()))
+    #     assertAlmostEqual(y.values.mean(), -0.0755, places=2)
+    #     logger.info("Avg Y is {}".format(y.values.mean()))
 
     # def test_slice_interpol(self):
     #     """
     #     Slice a cube with a surface, using trilinear interpol.
     #     """
 
-    #     self.getlogger('test_slice_interpol')
+    #     getlogger('test_slice_interpol')
 
-    #     self.logger.info("Loading surface")
+    #     logger.info("Loading surface")
     #     x = RegularSurface()
     #     x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
 
-    #     self.logger.info("Loading cube")
+    #     logger.info("Loading cube")
     #     cc = Cube()
     #     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy")
-    #     self.logger.info("Loading cube, done")
+    #     logger.info("Loading cube, done")
 
     #     if cc.yflip == -1:
-    #         self.logger.info("Swap axes...")
+    #         logger.info("Swap axes...")
     #         cc.swapaxes()
 
     #     # Now slice
-    #     self.logger.info("Slicing...")
+    #     logger.info("Slicing...")
     #     x.slice_cube(cc, sampling=1)
-    #     self.logger.info("Slicing...done")
+    #     logger.info("Slicing...done")
     #     x.to_file("TMP/surf_slice_cube_interpol.gri")
 
-    #     self.assertAlmostEqual(x.values.mean(), -0.07363, places=5)
+    #     assertAlmostEqual(x.values.mean(), -0.07363, places=5)
 
     # def test_slice2(self):
     #     """
     #     Slice a larger cube with a surface
     #     """
 
-    #     self.getlogger('test_slice2')
+    #     getlogger('test_slice2')
 
     #     if bigtest == 0:
     #         warnings.warn("TEST SKIPPED, enable with env BIGTEST = 1  .... ")
@@ -146,33 +143,22 @@ class Test(unittest.TestCase):
 
     #     if os.path.isfile(cfile):
 
-    #         self.logger.info("Loading surface")
+    #         logger.info("Loading surface")
     #         x = RegularSurface()
     #         x.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
 
     #         zd = RegularSurface()
     #         zd.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
 
-    #         self.logger.info("Loading cube")
+    #         logger.info("Loading cube")
     #         cc = Cube()
     #         cc.from_file(cfile)
-    #         self.logger.info("Loading cube, done")
+    #         logger.info("Loading cube, done")
 
     #         # Now slice
-    #         self.logger.info("Slicing a large cube...")
+    #         logger.info("Slicing a large cube...")
     #         x.slice_cube(cc, zsurf=zd)
-    #         self.logger.info("Slicing a large cube ... done")
+    #         logger.info("Slicing a large cube ... done")
     #         x.to_file("TMP/surf_slice2_cube.gri")
     #     else:
-    #         self.logger.warning("No big file; skip test")
-
-
-if __name__ == '__main__':
-
-    logging.basicConfig(stream=sys.stderr)
-    logging.getLogger('').setLevel(logging.DEBUG)
-
-    print()
-    unittest.main()
-
-    print("OK")
+    #         logger.warning("No big file; skip test")

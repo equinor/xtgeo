@@ -2,6 +2,7 @@ import unittest
 import os
 import logging
 import sys
+import numpy as np
 
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
@@ -74,6 +75,25 @@ class TestCube(unittest.TestCase):
         x = Cube().scan_segy_traces(sfile1, outfile="TMP/cube_scantraces")
 
         self.logger.info(x)
+
+    def test_segy_import_cvalues(self):
+        """Import SEGY using internal reader (case 1 Grane) and chk issues."""
+        self.getlogger(sys._getframe(1).f_code.co_name)
+
+        self.logger.info('Import SEGY format')
+
+        x = Cube()
+
+        x.from_file(sfile1, fformat='segy')
+
+        np1 = x.values.copy()
+        x1 = x.cvalues
+        np2 = x.values
+
+        print(np1)
+        print(np2)
+
+        print(np.array_equal(np1, np2))
 
     def test_segy_import(self):
         """Import SEGY using internal reader (case 1 Grane)."""

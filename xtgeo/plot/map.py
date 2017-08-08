@@ -10,6 +10,7 @@ if os.environ.get('DISPLAY', '') == '':
 import matplotlib.pyplot as plt
 import logging
 import numpy as np
+import numpy.ma as ma
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import _colortables as _ctable
@@ -82,7 +83,7 @@ class Map(BasePlot):
         xi = np.linspace(surf.xori, xmax, surf.nx)
         yi = np.linspace(surf.yori, ymax, surf.ny)
 
-        zi = np.transpose(surf.values)
+        zi = ma.transpose(surf.values.copy())
 
         if minvalue is None:
             minvalue = surf.values.min()
@@ -90,8 +91,8 @@ class Map(BasePlot):
         if maxvalue is None:
             maxvalue = surf.values.max()
 
-        zi[zi < minvalue] = minvalue
-        zi[zi > maxvalue] = maxvalue
+        # zi[zi < minvalue] = minvalue
+        # zi[zi > maxvalue] = maxvalue
 
         if colortable is not None:
             self.set_colortable(colortable)

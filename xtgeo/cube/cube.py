@@ -445,27 +445,30 @@ class Cube(object):
 
     # copy (update) values from numpy to SWIG, 1D array
     def _update_cvalues(self):
-
-        if self._cvalues is None and self._values is None:
-            self.logger.critical('Something is wrong. STOP!')
-            sys.exit(9)
-
-        elif self._values is None:
-            return self._cvalues
-
-        xtype = self._values.dtype
-        self.logger.info('VALUES of type {}'.format(xtype))
-
-        self.logger.debug('Updating cvalues...')
+        self.logger.debug("Enter update cvalues method...")
         n = self._nx * self._ny * self._nz
 
-        # make a 1D F order numpy array, and update C array
-        x = np.reshape(self._values, -1)
+        if self._values is None and self._cvalues is not None:
+            self.logger.debug("CVALUES unchanged")
+            return
 
-        if self._cvalues is None:
-            self._cvalues = _cxtgeo.new_floatarray(n)
+        elif self._cvalues is None and self._values is None:
+            self.logger.critical("_cvalues and _values is None in "
+                                 "_update_cvalues. STOP")
+            sys.exit(9)
+
+        elif self._cvalues is not None and self._values is None:
+            self.logger.critical("_cvalues and _values are both present in "
+                                 "_update_cvalues. STOP")
+            sys.exit(9)
+
+        # make a 1D F order numpy array, and update C array
+        x = self._values.copy()
+        x = np.reshape(x, -1, order='F')
+
+        self._cvalues = _cxtgeo.new_floatarray(n)
 
         _cxtgeo.swig_numpy_to_carr_f1d(x, self._cvalues)
-        self.logger.debug("Updating cvalues... done")
+        self.logger.debug("Enter method... DONE")
 
         self._values = None
