@@ -618,8 +618,6 @@ class RegularSurface(object):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        print("XTGVERBOSE = ", xtg_verbose_level)
-
         if zsurf is not None:
             other = zsurf
         else:
@@ -640,7 +638,7 @@ class RegularSurface(object):
         istat = _cxtgeo.surf_slice_cube(cube.nx, cube.ny, cube.nz, cube.xori,
                                         cube.xinc, cube.yori, cube.yinc,
                                         cube.zori, cube.zinc, cube.rotation,
-                                        cube.yflip, cube._cvalues,
+                                        cube.yflip, cube.cvalues,
                                         self.nx, self.ny, self.xori, self.xinc,
                                         self.yori, self.yinc,
                                         self.rotation, other.cvalues,
@@ -967,7 +965,7 @@ class RegularSurface(object):
 
     def quickplot(self, filename="default.png", title='QuickPlot',
                   infotext=None, xvalues=None, yvalues=None,
-                  minmax=[-999.0, 999.0], xlabelrotation=None,
+                  minmax=(None, None), xlabelrotation=None,
                   colortable='rainbow'):
         """Fast plot of maps using matplotlib.
 
@@ -975,8 +973,8 @@ class RegularSurface(object):
             filename (str): Name of plot file.
             title (str): Title of plot
             infotext (str): Additonal info on plot.
-            minmax (list): List of min and max values to be plotted. Note that
-                values outside range will be set equal to range limits
+            minmax (tuple): Tuple of min and max values to be plotted. Note
+                that values outside range will be set equal to range limits
             xlabelrotation (float): Rotation in degrees of X labels.
             colortable (str): Name of matplotlib or RMS file or XTGeo
                 colortable. Default is matplotlib's 'rainbow'
@@ -989,13 +987,8 @@ class RegularSurface(object):
 
         mymap.canvas(title=title, infotext=infotext)
 
-        minvalue = None
-        if minmax[0] != -999:
-            minvalue = minmax[0]
-
-        maxvalue = None
-        if minmax[1] != 999:
-            maxvalue = minmax[1]
+        minvalue = minmax[0]
+        maxvalue = minmax[1]
 
         mymap.set_colortable(colortable)
 

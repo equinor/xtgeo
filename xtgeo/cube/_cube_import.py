@@ -56,6 +56,7 @@ def import_segy_io(sfile):
         segyfile.mmap()
 
         values = segyio.tools.cube(segyfile)
+        values = np.asfortranarray(values)
 
         logger.debug(segyfile.fast)
         logger.debug(segyfile.ilines)
