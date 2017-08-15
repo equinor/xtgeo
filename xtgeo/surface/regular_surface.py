@@ -618,8 +618,6 @@ class RegularSurface(object):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        print("XTGVERBOSE = ", xtg_verbose_level)
-
         if zsurf is not None:
             other = zsurf
         else:

@@ -5,6 +5,7 @@ import sys
 import logging
 import warnings
 import pytest
+import numpy.ma as ma
 
 from xtgeo.surface import RegularSurface
 from xtgeo.cube import Cube
@@ -96,33 +97,34 @@ def test_slice_nearest():
     #     assertAlmostEqual(y.values.mean(), -0.0755, places=2)
     #     logger.info("Avg Y is {}".format(y.values.mean()))
 
-    # def test_slice_interpol(self):
-    #     """
-    #     Slice a cube with a surface, using trilinear interpol.
-    #     """
 
-    #     getlogger('test_slice_interpol')
+# def test_slice_interpol():
+#     """Slice a cube with a surface, using trilinear interpol."""
 
-    #     logger.info("Loading surface")
-    #     x = RegularSurface()
-    #     x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
+#     logger = getlogger('test_slice_interpol')
 
-    #     logger.info("Loading cube")
-    #     cc = Cube()
-    #     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy")
-    #     logger.info("Loading cube, done")
+#     logger.info("Loading surface")
+#     x = RegularSurface()
+#     x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
 
-    #     if cc.yflip == -1:
-    #         logger.info("Swap axes...")
-    #         cc.swapaxes()
+#     logger.info("Loading cube")
+#     cc = Cube()
+#     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
+#                  engine=1)
+#     logger.info("Loading cube, done")
 
-    #     # Now slice
-    #     logger.info("Slicing...")
-    #     x.slice_cube(cc, sampling=1)
-    #     logger.info("Slicing...done")
-    #     x.to_file("TMP/surf_slice_cube_interpol.gri")
+#     # if cc.yflip == -1:
+#     #     logger.info("Swap axes...")
+#     #     cc.swapaxes()
 
-    #     assertAlmostEqual(x.values.mean(), -0.07363, places=5)
+#     # Now slice
+#     logger.info("Slicing...")
+#     x.slice_cube(cc, sampling=1)
+#     logger.info("Slicing...done")
+#     x.to_file("TMP/surf_slice_cube_interpol.gri")
+
+#     logger.info('Avg value is {}'.format(x.values.mean))
+#     assert x.values.mean() == pytest.approx(-0.07363, abs=0.003)
 
     # def test_slice2(self):
     #     """
@@ -162,3 +164,55 @@ def test_slice_nearest():
     #         x.to_file("TMP/surf_slice2_cube.gri")
     #     else:
     #         logger.warning("No big file; skip test")
+
+
+def test_slice_nearest_manytimes():
+    """Slice a cube with a surface, nearest node many times for speed check."""
+
+    logger = getlogger('test_slice_nearest_manytimes')
+
+    ntimes = 10
+
+    logger.info("Loading surface")
+    x = RegularSurface()
+    x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
+
+    logger.info("Loading cube")
+    cc = Cube()
+    cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
+                 engine=1)
+    # Now slice
+    logger.info("Slicing...")
+    surf = []
+    npcollect = []
+
+    for i in range(ntimes):
+        surf.append(x.copy())
+        if i < 5:
+            surf[i].values -= i * 2
+        else:
+            surf[i].values += (i - 4) * 2
+
+        logger.info("Avg depth... {}".format(surf[i].values.mean()))
+        logger.info("Slicing... {}".format(i))
+        surf[i].slice_cube(cc)
+        logger.info("MEAN is {}".format(surf[i].values.mean()))
+        npcollect.append(surf[i].values)
+
+    logger.info("Slicing...done")
+
+    # now the numpies are stacked
+    stacked = ma.dstack(npcollect)
+
+    print(stacked.shape)
+
+    maxnp = ma.max(stacked, axis=2)
+
+    print(maxnp.shape)
+
+    x.values = maxnp
+    x.quickplot(filename="TMP/surf_slice_cube_max.png", colortable='seismic',
+                minmax=(-1,1))
+
+
+    # assert mean == pytest.approx(-0.0755, abs=0.003)
