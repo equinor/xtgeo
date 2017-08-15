@@ -4,9 +4,9 @@ from __future__ import print_function
 
 import os
 import matplotlib as mpl
-if os.environ.get('DISPLAY', '') == '':
-    print('No display found. Using non-interactive Agg backend')
-    mpl.use('Agg')
+# if os.environ.get('DISPLAY', '') == '':
+#     print('No display found. Using non-interactive Agg backend')
+#     mpl.use('Agg')
 import matplotlib.pyplot as plt
 import logging
 import numpy as np
