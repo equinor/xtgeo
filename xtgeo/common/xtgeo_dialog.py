@@ -26,8 +26,8 @@ import os
 import sys
 import inspect
 import logging
-import xtgeo._version as version
-
+import xtgeo
+import cxtgeo
 
 class XTGeoDialog(object):
     """
@@ -138,8 +138,8 @@ class XTGeoDialog(object):
         print('#' * 79)
         print('#{}#'.format(app.center(77)))
         print('#' * 79)
-        ver = "Using XTGeo4Python version " + version.__version__ + \
-            " (build: " + version._xtgeo_build + ")"
+        ver = 'XTGeo4Python version ' + xtgeo.__version__
+        ver = ver + '(CXTGeo v. ' + cxtgeo.__version__ + ')'
         print('#{}#'.format(ver.center(77)))
         print('#{}#'.format(cur_version.center(77)))
         print('#' * 79)
