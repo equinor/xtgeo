@@ -6,21 +6,20 @@ import matplotlib as mplib
 display = os.environ.get('DISPLAY', '')
 host1 = os.environ.get('HOSTNAME', '')
 host2 = os.environ.get('HOST', '')
-host = host1 + host2
+dhost = host1 + host2 + display
 
-print('')
-print('=' * 79)
-if display == '' or 'grid' in host1 or 'lgc' in host1 or\
-   'LSB_JOBID' in os.environ:
+ertbool = 'LSB_JOBID' in os.environ
+
+if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
+
+    print('')
+    print('=' * 79)
 
     print('XTGeo info: No display found or ERT server. Using non-interactive '
           'Agg backend for matplotlib')
     mplib.use('Agg')
-else:
-    print('XTGeo info: Matplotlib Agg backend is NOT active, '
-          'allow interactive plots')
+    print('=' * 79)
 
-print('=' * 79)
 
 from .surface import regular_surface
 from .grid3d import grid
