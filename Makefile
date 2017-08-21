@@ -18,7 +18,7 @@ BROWSER := firefox
 
 PYVER := $(shell python -c "import sys; print('{0[0]}.{0[1]}'.format(sys.version_info))")
 
-RESPYPATH := ${SDP_BINDIST}/xtgeo
+RESPYPATH := ${SDP_BINDIST_ROOT}
 RESPYPATHFULL := ${RESPYPATH}/lib/python${PYVER}/site-packages
 
 USRPYPATH := ${MY_BINDIST}/lib/python${PYVER}/site-packages
