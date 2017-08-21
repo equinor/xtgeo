@@ -49,8 +49,6 @@ class TestGridProperty(unittest.TestCase):
         # print(m.values.dtype)
 
     def test_roffbin_import1(self):
-        if xtg.get_syslevel():
-            print(' ')
         self.getlogger(sys._getframe(1).f_code.co_name)
 
         self.logger.info('Name is {}'.format(__name__))
@@ -69,8 +67,6 @@ class TestGridProperty(unittest.TestCase):
 
         self.getlogger(sys._getframe(1).f_code.co_name)
 
-        if xtg.get_syslevel():
-            print(' ')
         self.logger.info('Name is {}'.format(__name__))
         dz = GridProperty()
         self.logger.info("Import roff...")
@@ -102,8 +98,6 @@ class TestGridProperty(unittest.TestCase):
 
         self.getlogger(sys._getframe(1).f_code.co_name)
 
-        if xtg.get_syslevel():
-            print(' ')
         self.logger.info('Name is {}'.format(__name__))
         gg = Grid()
         gg.from_file('../xtgeo-testdata/3dgrids/bri/B.GRID',
@@ -134,8 +128,6 @@ class TestGridProperty(unittest.TestCase):
 
         self.getlogger(sys._getframe(1).f_code.co_name)
 
-        if xtg.get_syslevel():
-            print(' ')
         self.logger.info('Name is {}'.format(__name__))
         gg = Grid()
         gg.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
@@ -153,8 +145,6 @@ class TestGridProperty(unittest.TestCase):
 
         self.getlogger(sys._getframe(1).f_code.co_name)
 
-        if xtg.get_syslevel():
-            print(' ')
         self.logger.info('Name is {}'.format(__name__))
         gg = Grid()
         gg.from_file('../xtgeo-testdata/3dgrids/bri/B.GRID',
@@ -182,7 +172,7 @@ class TestGridProperty(unittest.TestCase):
 
         # tests:
         self.assertEqual(po.ncodes, 19)
-        print(po.codes[17])
+        self.logger.debug(po.codes[17])
         self.assertEqual(po.codes[17], "SEQ2")
 
         # export to ROFF

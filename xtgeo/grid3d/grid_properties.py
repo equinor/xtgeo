@@ -486,7 +486,7 @@ class GridProperties(Grid3D):
                     myswat = self.get_prop_by_name(swatname)
                     mysgas = self.get_prop_by_name(sgasname)
 
-                    print(mysgas.values)
+                    self.logger.debug(mysgas.values)
 
                     mysoil = myswat.copy(newname=soilname)
 

@@ -134,7 +134,7 @@ class TestEtcMakeAvgMaps(unittest.TestCase):
         avgmap.quickplot(filename='TMP/tmp_poro2.png', xlabelrotation=30)
         avgmap.to_file('TMP/tmp.poro.gri', fformat='irap_ascii')
 
-        print(avgmap.values.mean())
+        self.logger.info(avgmap.values.mean())
         self.assertAlmostEqual(avgmap.values.mean(), 0.158, places=3)
 
     def test_avg03(self):

@@ -136,8 +136,8 @@ def import_segy_io(sfile):
                 yflip *= -1
 
         rot2 = segyio.tools.rotation(segyfile)[0]
-        print('SEGYIO rotation is {}'.format(rot2 * 180 / 3.1415))
-        print('MY rotation is {}'.format(rotation))
+        logger.debug('SEGYIO rotation is {}'.format(rot2 * 180 / 3.1415))
+        logger.debug('MY rotation is {}'.format(rotation))
 
     # data to return
     sdata['values'] = values

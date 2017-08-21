@@ -36,7 +36,7 @@ class TestEtcMakeHcpvMaps(unittest.TestCase):
              + '\t%(message)s'
 
         logging.basicConfig(format=fm, stream=sys.stdout)
-        logging.getLogger().setLevel(logging.DEBUG)  # root logger!
+        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
 
         self.logger = logging.getLogger(name)
 
@@ -87,7 +87,7 @@ class TestEtcMakeHcpvMaps(unittest.TestCase):
                                         hcpfzprop=hcpfz, zoneprop=zp)
 
         hcmap.quickplot(filename='TMP/quickplot_hcpv.png')
-        print(hcmap.values.mean())
+        self.logger.debug(hcmap.values.mean())
         self.assertAlmostEqual(hcmap.values.mean(), 2.9695, places=3)
 
 

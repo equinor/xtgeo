@@ -52,7 +52,6 @@ class Test(unittest.TestCase):
         # get the zpoints which is a Points object
         zpoints = mywell.get_zonation_points(zonelogname="ZONELOG")
 
-        print(zpoints)
 
 if __name__ == '__main__':
 

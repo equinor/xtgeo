@@ -1,4 +1,3 @@
-import unittest
 import os
 import os.path
 import sys
@@ -70,100 +69,106 @@ def test_slice_nearest():
     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
                  engine=1)
     # Now slice
-    logger.info("Slicing...")
+    logger.info("Slicing cube which has YFLIP {}".format(cc.yflip))
     x.slice_cube(cc)
     logger.info("Slicing...done")
 
-    x.to_file("TMP/surf_slice_cube.gri")
+    x.to_file("TMP/surf_slice_cube.fgr", fformat='irap_ascii')
 
     x.quickplot(filename="TMP/surf_slice_cube.png", colortable='seismic',
-                minmax=(-1,1))
+                minmax=(-1, 1))
 
     mean = x.values.mean()
+    logger.info(x.values.min())
+    logger.info(x.values.max())
+    mean = x.values.mean()
     assert mean == pytest.approx(-0.0755, abs=0.003)
-#    logger.info("Avg X is {}".format(x.values.mean()))
+    logger.info("Avg X is {}".format(mean))
 
-    #     # try same ting with swapaxes active ==================================
-    #     y = RegularSurface()
-    #     y.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
+    # try same ting with swapaxes active ==================================
+    y = RegularSurface()
+    y.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
 
-    #     cc.swapaxes()
-    #     # Now slice
-    #     logger.info("Slicing... (now with swapaxes)")
-    #     y.slice_cube(cc)
-    #     logger.info("Slicing...done")
+    cc.swapaxes()
+    # Now slice
+    logger.info("Slicing... (now with swapaxes)")
+    y.slice_cube(cc)
+    logger.info("Slicing...done")
+    mean = y.values.mean()
+    logger.info("Avg Y is {}".format(mean))
 
-    #     y.to_file("TMP/surf_slice_cube_y.gri")
-    #     assertAlmostEqual(y.values.mean(), -0.0755, places=2)
-    #     logger.info("Avg Y is {}".format(y.values.mean()))
+    y.to_file("TMP/surf_slice_cube_swap.gri")
+    assert mean == pytest.approx(-0.0755, abs=0.003)
 
 
-# def test_slice_interpol():
-#     """Slice a cube with a surface, using trilinear interpol."""
+def test_slice_interpol():
+    """Slice a cube with a surface, using trilinear interpol."""
 
-#     logger = getlogger('test_slice_interpol')
+    logger = getlogger('test_slice_interpol')
 
-#     logger.info("Loading surface")
-#     x = RegularSurface()
-#     x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
+    logger.info("Loading surface")
+    x = RegularSurface()
+    x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
 
-#     logger.info("Loading cube")
-#     cc = Cube()
-#     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
-#                  engine=1)
-#     logger.info("Loading cube, done")
+    logger.info("Loading cube")
+    cc = Cube()
+    cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
+                 engine=1)
+    logger.info("Loading cube, done")
 
-#     # if cc.yflip == -1:
-#     #     logger.info("Swap axes...")
-#     #     cc.swapaxes()
+    # Now slice
+    logger.info("Slicing...")
+    x.slice_cube(cc, sampling=1)
+    logger.info("Slicing...done")
 
-#     # Now slice
-#     logger.info("Slicing...")
-#     x.slice_cube(cc, sampling=1)
-#     logger.info("Slicing...done")
-#     x.to_file("TMP/surf_slice_cube_interpol.gri")
+    logger.info(x.values.min())
+    logger.info(x.values.max())
 
-#     logger.info('Avg value is {}'.format(x.values.mean))
-#     assert x.values.mean() == pytest.approx(-0.07363, abs=0.003)
+    x.to_file("TMP/surf_slice_cube_interpol.fgr", fformat='irap_ascii')
 
-    # def test_slice2(self):
-    #     """
-    #     Slice a larger cube with a surface
-    #     """
+    x.quickplot(filename="TMP/surf_slice_cube_interpol.png",
+                colortable='seismic', minmax=(-1, 1))
 
-    #     getlogger('test_slice2')
+    logger.info('Avg value is {}'.format(x.values.mean()))
+    assert x.values.mean() == pytest.approx(-0.0755, abs=0.003)
 
-    #     if bigtest == 0:
-    #         warnings.warn("TEST SKIPPED, enable with env BIGTEST = 1  .... ")
-    #         return
+    def test_slice2(self):
+        """
+        Slice a larger cube with a surface
+        """
 
-    #     cfile = "/project/gullfaks/resmod/gfmain_brent/2015a/users/eza/"\
-    #             + "r004/r004_20170303/sim2seis/input/"\
-    #             + "4D_Res_PSTM_LM_ST8511D11_Full_rmsexport.segy"
+        getlogger('test_slice2')
 
-    #     print(cfile)
+        if bigtest == 0:
+            warnings.warn("TEST SKIPPED, enable with env BIGTEST = 1  .... ")
+            return
 
-    #     if os.path.isfile(cfile):
+        cfile = "/project/gullfaks/resmod/gfmain_brent/2015a/users/eza/"\
+                + "r004/r004_20170303/sim2seis/input/"\
+                + "4D_Res_PSTM_LM_ST8511D11_Full_rmsexport.segy"
 
-    #         logger.info("Loading surface")
-    #         x = RegularSurface()
-    #         x.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
 
-    #         zd = RegularSurface()
-    #         zd.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
+        if os.path.isfile(cfile):
 
-    #         logger.info("Loading cube")
-    #         cc = Cube()
-    #         cc.from_file(cfile)
-    #         logger.info("Loading cube, done")
+            logger.info("Loading surface")
+            x = RegularSurface()
+            x.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
 
-    #         # Now slice
-    #         logger.info("Slicing a large cube...")
-    #         x.slice_cube(cc, zsurf=zd)
-    #         logger.info("Slicing a large cube ... done")
-    #         x.to_file("TMP/surf_slice2_cube.gri")
-    #     else:
-    #         logger.warning("No big file; skip test")
+            zd = RegularSurface()
+            zd.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
+
+            logger.info("Loading cube")
+            cc = Cube()
+            cc.from_file(cfile)
+            logger.info("Loading cube, done")
+
+            # Now slice
+            logger.info("Slicing a large cube...")
+            x.slice_cube(cc, zsurf=zd)
+            logger.info("Slicing a large cube ... done")
+            x.to_file("TMP/surf_slice2_cube.gri")
+        else:
+            logger.warning("No big file; skip test")
 
 
 def test_slice_nearest_manytimes():
@@ -204,15 +209,11 @@ def test_slice_nearest_manytimes():
     # now the numpies are stacked
     stacked = ma.dstack(npcollect)
 
-    print(stacked.shape)
-
     maxnp = ma.max(stacked, axis=2)
-
-    print(maxnp.shape)
 
     x.values = maxnp
     x.quickplot(filename="TMP/surf_slice_cube_max.png", colortable='seismic',
-                minmax=(-1,1))
+                minmax=(-1, 1))
 
 
     # assert mean == pytest.approx(-0.0755, abs=0.003)

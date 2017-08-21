@@ -41,7 +41,7 @@ class Test(unittest.TestCase):
     def test_very_basic(self):
         """Just test that matplotlib works."""
         plt.title('Hello world')
-        plt.show()
+        plt.savefig('TMP/helloworld1')
 
     def test_simple_plot(self):
         """
@@ -78,7 +78,7 @@ class Test(unittest.TestCase):
 
         myplot.plot_map()
 
-        myplot.show()
+        myplot.savefig('TMP/xsect_gbf1.png')
 
     def test_troll1(self):
         """
@@ -140,10 +140,7 @@ class Test(unittest.TestCase):
 
             myplot.plot_map()
 
-            if not myplot.show():
-                print("Could not plot for some reason")
-
-            myplot.savefig('x.png')
+            myplot.savefig('TMP/xsect2.png')
 
 
 if __name__ == '__main__':

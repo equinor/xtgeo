@@ -49,7 +49,7 @@ class Test(unittest.TestCase):
 
         mypoints.from_file(pfile)
 
-        print(mypoints.dataframe)
+        self.logger.debug(mypoints.dataframe)
 
     def test_import_polygons(self):
         """
@@ -63,7 +63,7 @@ class Test(unittest.TestCase):
 
         mypoly.from_file(pfile)
 
-        print(mypoly.dataframe)
+        self.logger.debug(mypoly.dataframe)
 
 if __name__ == '__main__':
 

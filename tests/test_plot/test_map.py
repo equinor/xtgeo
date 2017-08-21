@@ -38,7 +38,7 @@ class TestMap(unittest.TestCase):
     def test_very_basic(self):
         """Just test that matplotlib works."""
         plt.title('Hello world')
-        plt.show()
+        plt.savefig('TMP/hello1.png')
 
     def test_very_basic_to_file(self):
         """Just test that matplotlib works, to a file."""
@@ -59,7 +59,7 @@ class TestMap(unittest.TestCase):
         myplot.set_colortable('gist_ncar')
         myplot.plot_surface(mysurf)
 
-        myplot.show()
+        myplot.savefig('TMP/map_simple.png')
 
     def test_more_features_plot(self):
         """Map with some more features added, such as label rotation."""
@@ -76,7 +76,7 @@ class TestMap(unittest.TestCase):
         myplot.plot_surface(mysurf, minvalue=1250, maxvalue=2200,
                             xlabelrotation=45)
 
-        myplot.show()
+        myplot.savefig('TMP/map_more1.png')
 
 
 if __name__ == '__main__':

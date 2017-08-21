@@ -90,10 +90,7 @@ class TestCube(unittest.TestCase):
         x1 = x.cvalues
         np2 = x.values
 
-        print(np1)
-        print(np2)
-
-        print(np.array_equal(np1, np2))
+        assert np.array_equal(np1, np2)
 
     def test_segy_import(self):
         """Import SEGY using internal reader (case 1 Grane)."""
@@ -158,7 +155,6 @@ class TestCube(unittest.TestCase):
 
         self.logger.info('Import Gullfaks SEGY format via SEGY and  SEGYIO')
 
-
         x1 = Cube()
         x1.from_file(sfile1, fformat='segy', engine=0)
 
@@ -199,7 +195,7 @@ class TestCube(unittest.TestCase):
         self.assertEqual(x.nx, orig_ny, 'NX swapaxes')
         self.assertEqual(x.ny, orig_nx, 'NY swapaxes')
         self.assertAlmostEqual(x.rotation, 359.1995, places=3)
-        print(x.rotation)
+        self.logger.info(x.rotation)
 
         x.to_file("TMP/cube_swapped.rmsreg", fformat="rms_regular")
 

@@ -113,8 +113,6 @@ class TestSurface(unittest.TestCase):
         # get the 1D numpy
         v1d = x.get_zval()
 
-        print(v1d)
-
         zval = x.values
 
         self.logger.info('VALUES are:\n{}'.format(zval))
@@ -243,8 +241,9 @@ class TestSurface(unittest.TestCase):
              [4.56194623e+05, 6.78299157e+06, 1.00279890e+03, 140.0],
              [4.56177213e+05, 6.78300142e+06, 1.00279890e+03, 160.0]])
 
-        print("NP:")
-        print(myfence)
+
+        self.logger.debug("NP:")
+        self.logger.debug(myfence)
 
         x = RegularSurface()
         x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
@@ -252,15 +251,12 @@ class TestSurface(unittest.TestCase):
 
         newfence = x.get_fence(myfence)
 
-        print("updated NP:")
-        print(newfence)
+        self.logger.debug("updated NP:")
+        self.logger.debug(newfence)
 
 if __name__ == '__main__':
 
     logging.basicConfig(stream=sys.stderr)
     logging.getLogger('').setLevel(logging.DEBUG)
 
-    print()
     unittest.main()
-
-    print("OK")

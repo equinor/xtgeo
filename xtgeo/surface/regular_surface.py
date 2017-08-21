@@ -112,6 +112,9 @@ class RegularSurface(object):
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
         self._cvalues = None     # carray swig C pointer of map values
 
+        # assume so far:
+        self._yflip = 1;
+
         if args:
             # make instance from file import
             mfile = args[0]
@@ -576,7 +579,7 @@ class RegularSurface(object):
         # call C routine
         z = _cxtgeo.surf_get_z_from_xy(float(x), float(y), self._nx, self._ny,
                                        self._xori, self._yori, self._xinc,
-                                       self._yinc, self._rotation,
+                                       self._yinc, self._yflip, self._rotation,
                                        self._cvalues, xtg_verbose_level)
 
         if z > self._undef_limit:
@@ -677,7 +680,8 @@ class RegularSurface(object):
         istat = _cxtgeo.surf_get_zv_from_xyv(nvec, cxarr, cyarr, czarr,
                                              self.nx, self.ny, self.xori,
                                              self.yori, self.xinc, self.yinc,
-                                             self.rotation, self.cvalues,
+                                             self._yflip, self.rotation,
+                                             self.cvalues,
                                              xtg_verbose_level)
 
         if istat != 0:

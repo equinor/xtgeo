@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
 
         mywell.from_file(wfile)
 
-        print("True well name:", mywell.truewellname)
+        self.logger.debug("True well name:", mywell.truewellname)
         self.assertEqual(mywell.xpos, 524139.420, 'XPOS')
         self.assertEqual(mywell.ypos, 6740790.41, 'YPOS')
         self.assertEqual(mywell.wellname, '31/2-E-1_H', 'YPOS')
@@ -171,7 +171,7 @@ class Test(unittest.TestCase):
         mywell.from_file(wfile)
         mywell.create_relative_hlen()
 
-        print(mywell.dataframe)
+        self.logger.debug(mywell.dataframe)
 
     def test_fence(self):
         """Return a resampled fence"""
@@ -184,7 +184,7 @@ class Test(unittest.TestCase):
         mywell.from_file(wfile)
         pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
 
-        print(pline)
+        self.logger.debug(pline)
 
     def test_get_zonation_points(self):
         """Get zonations points (zone tops)"""

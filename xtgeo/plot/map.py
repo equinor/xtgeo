@@ -2,23 +2,17 @@
 
 from __future__ import print_function
 
-import os
-import matplotlib as mpl
-# if os.environ.get('DISPLAY', '') == '':
-#     print('No display found. Using non-interactive Agg backend')
-#     mpl.use('Agg')
 import matplotlib.pyplot as plt
 import logging
 import numpy as np
 import numpy.ma as ma
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.plot import _colortables as _ctable
 from xtgeo.plot.baseplot import BasePlot
 
 
 class Map(BasePlot):
-    """Class for plotting a map."""
+    """Class for plotting a map, using matplotlib."""
 
     def __init__(self):
         """The __init__ (constructor) method for a Map object."""
@@ -85,14 +79,21 @@ class Map(BasePlot):
 
         zi = ma.transpose(surf.values.copy())
 
+        legendticks = None
+        if minvalue is not None and maxvalue is not None:
+            step = (maxvalue - minvalue) / 10.0
+            legendticks = []
+            for i in range(10 + 1):
+                llabel = float('{0:9.4f}'.format(minvalue + step * i))
+                legendticks.append(llabel)
+
+        self.logger.info('Legendticks: {}'.format(legendticks))
+
         if minvalue is None:
             minvalue = surf.values.min()
 
         if maxvalue is None:
             maxvalue = surf.values.max()
-
-        # zi[zi < minvalue] = minvalue
-        # zi[zi > maxvalue] = maxvalue
 
         if colortable is not None:
             self.set_colortable(colortable)
@@ -100,10 +101,12 @@ class Map(BasePlot):
             self.set_colortable('rainbow')
 
         levels = np.linspace(minvalue, maxvalue, self.contourlevels)
+        self.logger.debug('Number of contour levels: {}'.format(levels))
 
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
         im = self._ax.contourf(xi, yi, zi, levels, colors=self.colortable)
-        self._fig.colorbar(im)
+        self._fig.colorbar(im, ticks=legendticks)
+
         plt.gca().set_aspect('equal', adjustable='box')
 
     def show(self):

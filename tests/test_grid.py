@@ -57,7 +57,6 @@ class TestGrid(unittest.TestCase):
 
         g = Grid().from_file(emegfile)
 
-        print(g.nx)
         self.assertEqual(g.nx, 70)
 
     def test_roffbin_import0(self):
@@ -67,12 +66,10 @@ class TestGrid(unittest.TestCase):
 
         g = Grid().from_file(emegfile, fformat="roff")
 
-        print(g)
         self.assertIsInstance(g, Grid)
 
         g = Grid(emegfile, fformat="roff")
 
-        print(g)
         self.assertIsInstance(g, Grid)
 
     def test_roffbin_import1(self):
@@ -229,7 +226,7 @@ class TestGrid(unittest.TestCase):
         pres2 = gg.get_prop_by_name('PRESSURE_19851001')
 
         if isinstance(pres2, GridProperty):
-            print("OK==============================================")
+            pass
 
         self.logger.debug(pres1.values)
         self.logger.debug(pres2.values)
