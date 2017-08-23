@@ -989,6 +989,7 @@ class RegularSurface(object):
 
         mymap = Map()
 
+        self.logger.info('Infotext is <{}>'.format(infotext))
         mymap.canvas(title=title, infotext=infotext)
 
         minvalue = minmax[0]

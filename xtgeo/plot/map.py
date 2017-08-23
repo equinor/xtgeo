@@ -66,6 +66,9 @@ class Map(BasePlot):
             plt.title(title, fontsize=18)
         if subtitle is not None:
             self._ax.set_title(subtitle, size=14)
+        if infotext is not None:
+            self._fig.text(0.01, 0.02, infotext, ha='left', va='center',
+                           fontsize=8)
 
     def plot_surface(self, surf, minvalue=None, maxvalue=None,
                      contourlevels=None, xlabelrotation=None,
@@ -77,6 +80,7 @@ class Map(BasePlot):
         xi = np.linspace(surf.xori, xmax, surf.nx)
         yi = np.linspace(surf.yori, ymax, surf.ny)
 
+        # make a copy so original numpy is not altered!
         zi = ma.transpose(surf.values.copy())
 
         legendticks = None
@@ -86,6 +90,16 @@ class Map(BasePlot):
             for i in range(10 + 1):
                 llabel = float('{0:9.4f}'.format(minvalue + step * i))
                 legendticks.append(llabel)
+
+            zi[zi < minvalue] = minvalue
+            zi[zi > maxvalue] = maxvalue
+
+            notetxt = ('Note: map values are truncated '
+                       'to interval ['
+                       + str(minvalue) + ' - ' + str(maxvalue) + ']')
+
+            self._fig.text(0.99, 0.02, notetxt, ha='right', va='center',
+                           fontsize=8)
 
         self.logger.info('Legendticks: {}'.format(legendticks))
 
@@ -104,6 +118,7 @@ class Map(BasePlot):
         self.logger.debug('Number of contour levels: {}'.format(levels))
 
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
+
         im = self._ax.contourf(xi, yi, zi, levels, colors=self.colortable)
         self._fig.colorbar(im, ticks=legendticks)
 

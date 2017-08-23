@@ -48,8 +48,16 @@ class BasePlot(object):
         valid_maps = sorted(m for m in plt.cm.datad)
 
         colors = []
+
+        if cfile is None:
+            cfile = 'rainbow'
+
         if cfile == 'xtgeo':
             colors = _ctable.xtgeocolors()
+            self.contourlevels = len(colors)
+
+        elif 'rms' in cfile:
+            colors = _ctable.colorsfromfile(cfile)
             self.contourlevels = len(colors)
 
         elif cfile in valid_maps:
@@ -60,8 +68,11 @@ class BasePlot(object):
             self.contourlevels = cmap.N
 
         else:
-            colors = _ctable.colorsfromfile(cfile)
-            self.contourlevels = len(colors)
+            cmap = plt.get_cmap('rainbow')
+            self.logger.info(cmap.N)
+            for i in range(cmap.N):
+                colors.append(cmap(i))
+            self.contourlevels = cmap.N
 
         ctable = []
 
