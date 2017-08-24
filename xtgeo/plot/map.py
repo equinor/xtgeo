@@ -85,14 +85,17 @@ class Map(BasePlot):
 
         legendticks = None
         if minvalue is not None and maxvalue is not None:
-            step = (maxvalue - minvalue) / 10.0
+            minv = float(minvalue)
+            maxv = float(maxvalue)
+
+            step = (maxv - minv) / 10.0
             legendticks = []
             for i in range(10 + 1):
-                llabel = float('{0:9.4f}'.format(minvalue + step * i))
+                llabel = float('{0:9.4f}'.format(minv + step * i))
                 legendticks.append(llabel)
 
-            zi[zi < minvalue] = minvalue
-            zi[zi > maxvalue] = maxvalue
+            zi[zi < minv] = minv
+            zi[zi > maxv] = maxv
 
             notetxt = ('Note: map values are truncated '
                        'to interval ['
