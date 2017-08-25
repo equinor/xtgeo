@@ -97,9 +97,11 @@ class Map(BasePlot):
             zi[zi < minv] = minv
             zi[zi > maxv] = maxv
 
-            notetxt = ('Note: map values are truncated '
-                       'to interval ['
-                       + str(minvalue) + ' - ' + str(maxvalue) + ']')
+            notetxt = ('Note: map values are truncated from [' +
+                       str(surf.values.min()) + ', ' +
+                       str(surf.values.max()) + '] ' +
+                       'to interval [' +
+                       str(minvalue) + ', ' + str(maxvalue) + ']')
 
             self._fig.text(0.99, 0.02, notetxt, ha='right', va='center',
                            fontsize=8)

@@ -799,6 +799,8 @@ class RegularSurface(object):
             True if operation went OK (but check result!), False if not
 
         """
+        a = hcpfzprop
+        self.logger.debug('MIN MAX MEAN', a.min(), a.max(), a.mean())
 
         self.logger.debug('Enter hc_thickness_from_3dprops')
 
@@ -846,7 +848,8 @@ class RegularSurface(object):
                 zsum = np.zeros((self._nx, self._ny))
 
             propsum = zcopy.sum()
-            if (propsum < 1e-12):
+            if (abs(propsum) < 1e-12):
+                self.logger.debug("Z property sum is {}".format(propsum))
                 self.logger.debug("Skip layer K = {}".format(k))
                 continue
             else:
