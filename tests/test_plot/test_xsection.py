@@ -141,6 +141,7 @@ class Test(unittest.TestCase):
             myplot.plot_map()
 
             myplot.savefig('TMP/xsect2.png')
+            myplot.savefig('TMP/xsect2.svg')
 
 
 if __name__ == '__main__':

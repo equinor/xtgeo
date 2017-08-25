@@ -22,19 +22,19 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/jriv/pyxtgeo
+    $ git clone git://git.statil.no/jriv/pyxtgeo
 
 Also you will need test data:
 
 .. code-block:: console
 
-   $ git clone git://github.com/jriv/xtgeo-testdata
+   $ git clone git://git.statil.no/jriv/xtgeo-testdata
 
 And you may perhaps need:
 
 .. code-block:: console
 
-    $ git clone git://github.com/jriv/cxtgeo
+    $ git clone git://git.statil.no/jriv/cxtgeo
 
 Once you have a copy of the source, and you have a `virtual environment`_,
 you can install it with:
