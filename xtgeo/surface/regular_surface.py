@@ -236,6 +236,7 @@ class RegularSurface(object):
         else:
             self.logger.critical("Invalid file format")
 
+
     def from_roxar(self, project, type="horizon", name=None, category=None,
                    realisation=0):
         """
@@ -586,6 +587,82 @@ class RegularSurface(object):
             return None
 
         return z
+
+    def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
+                           valuefmt=None):
+        """Returns two lists for coordinates (x, y) and values.
+
+        For lformat = 'webportal' (default):
+
+        The lists are returned as xylist and valuelist, where xylist
+        is on the format:
+
+            [(x1, y1), (x2, y2) ...] (a list of x, y tuples)
+
+        and valuelist is one the format
+
+            [v1, v2, ...]
+
+        Inactive cells will be ignored.
+
+        Args:
+            lformat (string): List return format ('webportal' is default,
+                other options later)
+            xyfmt (string): The formatter for xy numbers, e.g. '12.2f'
+                (default None). Note no checks on valid input.
+            valuefmt (string): The formatter for values e.g. '8.4f'
+                (default None). Note no checks on valid input.
+
+        Returns:
+            xylist, valuelist
+
+        Example:
+
+            >>> mymap = RegularSurface('somefile.gri')
+            >>> xylist, valuelist = mymap.get_xy_value_lists(valuefmt='6.2f')
+        """
+
+        _cxtgeo.xtg_verbose_file("NONE")
+
+        xtg_verbose_level = self._xtg.get_syslevel()
+
+        if xtg_verbose_level < 0:
+            xtg_verbose_level = 0
+
+        px = _cxtgeo.new_doublepointer()
+        py = _cxtgeo.new_doublepointer()
+        pv = _cxtgeo.new_doublepointer()
+
+        xylist = []
+        valuelist = []
+
+        for j in range(self.ny):
+            for i in range(self.nx):
+                ier = _cxtgeo.surf_xyz_from_ij(i + 1, j + 1, px, py, pv,
+                                               self.xori, self.xinc,
+                                               self.yori, self.yinc,
+                                               self.nx, self.ny, self._yflip,
+                                               self.rotation, self.cvalues,
+                                               0, xtg_verbose_level)
+                if ier != 0:
+                    self.logger.critical('Error code {}, contact the author'.
+                                         format(ier))
+                    sys.exit(9)
+
+                x = _cxtgeo.doublepointer_value(px)
+                y = _cxtgeo.doublepointer_value(py)
+                v = _cxtgeo.doublepointer_value(pv)
+
+                if v < self.undef_limit:
+                    if xyfmt is not None:
+                        x = float('{:{width}}'.format(x, width=xyfmt))
+                        y = float('{:{width}}'.format(y, width=xyfmt))
+                    if valuefmt is not None:
+                        v = float('{:{width}}'.format(v, width=valuefmt))
+                    valuelist.append(v)
+                    xylist.append((x, y))
+
+        return xylist, valuelist
 
 # =============================================================================
 # Interacion with a cube

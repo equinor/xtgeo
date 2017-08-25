@@ -141,6 +141,22 @@ class TestSurface(unittest.TestCase):
         cc = RegularSurface().from_file(mfile)
         self.assertEqual(cc.nx, 58)
 
+    def test_get_xy_value_lists(self):
+        """Get the xy list and value list"""
+        self.getlogger('test_get_xy_value_lists')
+
+        x = RegularSurface()
+        x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
+                    fformat='irap_binary')
+
+        xylist, valuelist = x.get_xy_value_lists(valuefmt='8.3f',
+                                                 xyfmt='12.2f')
+
+        self.logger.info(xylist[2])
+        self.logger.info(valuelist[2])
+
+        self.assertEqual(valuelist[2], 2813.981)
+
     def test_similarity(self):
         """
         Testing similarity of two surfaces. 0.0 means identical in
