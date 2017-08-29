@@ -1,6 +1,6 @@
 """Module for map plots of surfaces, using matplotlib."""
 
-from __future__ import print_function
+from __future__ import print_function, division, absolute_import
 
 import matplotlib.pyplot as plt
 import logging
@@ -42,7 +42,6 @@ class Map(BasePlot):
         """ Returns page size."""
         return self._pagesize
 
-
     # =========================================================================
     # Functions methods (public)
     # =========================================================================
@@ -82,6 +81,9 @@ class Map(BasePlot):
 
         # make a copy so original numpy is not altered!
         zi = ma.transpose(surf.values.copy())
+
+        # store the current mask:
+        zimask = ma.getmask(zi).copy()
 
         legendticks = None
         if minvalue is not None and maxvalue is not None:
@@ -123,6 +125,8 @@ class Map(BasePlot):
         self.logger.debug('Number of contour levels: {}'.format(levels))
 
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
+
+        zi = ma.masked_where(zimask, zi)
 
         im = self._ax.contourf(xi, yi, zi, levels, colors=self.colortable)
         self._fig.colorbar(im, ticks=legendticks)

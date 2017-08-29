@@ -63,7 +63,7 @@ class RegularSurface(object):
         xinc: X increment
         yinc: Y increment
         rotation: rotation in degrees, anticlock from X axis between 0, 360
-        values: 2D masked numpy array of shape (nx,ny), F order
+        values: 2D (masked or not)  numpy array of shape (nx,ny), F order
 
     Example:
         Initiate a class and import::
@@ -98,11 +98,11 @@ class RegularSurface(object):
             nx (int): Number of columns, X
             ny (int): Number of rows, Y
             rotation (float): Rotation angle (deg.), from X axis, anti-clock
-            values (ndarray): 2D numpy of shape (nx,ny))
+            values (ndarray): 2D numpy (maked or not) of shape (nx,ny))
 
         """
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
+        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
         self.logger.addHandler(logging.NullHandler())
 
@@ -111,9 +111,10 @@ class RegularSurface(object):
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
         self._cvalues = None     # carray swig C pointer of map values
+        self._masked = False
 
         # assume so far:
-        self._yflip = 1;
+        self._yflip = 1
 
         if args:
             # make instance from file import
@@ -144,16 +145,17 @@ class RegularSurface(object):
                 self._values = values
 
                 if self._check_shape_ok(self._values) is False:
-                    self.logger.error("Wrong dimension of values")
+                    self.logger.error('Wrong dimension of values')
                     raise ValueError
 
             # make it masked
             self._values = ma.masked_greater(self._values, self._undef_limit)
+            self._masked = True
 
         # _nsurfaces += 1
 
         if self._values is not None:
-            self.logger.debug("Shape of value: and values")
+            self.logger.debug('Shape of value: and values')
             self.logger.debug('\n{}'.format(self._values.shape))
             self.logger.debug('\n{}'.format(repr(self._values)))
 
@@ -175,7 +177,7 @@ class RegularSurface(object):
 # Import and export
 # =============================================================================
 
-    def from_file(self, mfile, fformat="irap_binary"):
+    def from_file(self, mfile, fformat='irap_binary'):
         """
         Import surface (regular map) from file.
 
@@ -200,17 +202,17 @@ class RegularSurface(object):
         if (os.path.isfile(mfile)):
             pass
         else:
-            self.logger.critical("Not OK file")
+            self.logger.critical('Not OK file')
             raise os.error
 
-        if (fformat is None or fformat == "irap_binary"):
+        if (fformat is None or fformat == 'irap_binary'):
             self._import_irap_binary(mfile)
         else:
-            self.logger.error("Invalid file format")
+            self.logger.error('Invalid file format')
 
         return self
 
-    def to_file(self, mfile, fformat="irap_binary"):
+    def to_file(self, mfile, fformat='irap_binary'):
         """
         Export surface (regular map) to file
 
@@ -227,17 +229,16 @@ class RegularSurface(object):
 
         """
 
-        self.logger.debug("Enter method...")
-        self.logger.info("Export to file...")
-        if (fformat == "irap_ascii"):
+        self.logger.debug('Enter method...')
+        self.logger.info('Export to file...')
+        if (fformat == 'irap_ascii'):
             self._export_irap_ascii(mfile)
-        elif (fformat == "irap_binary"):
+        elif (fformat == 'irap_binary'):
             self._export_irap_binary(mfile)
         else:
-            self.logger.critical("Invalid file format")
+            self.logger.critical('Invalid file format')
 
-
-    def from_roxar(self, project, type="horizon", name=None, category=None,
+    def from_roxar(self, project, type='horizon', name=None, category=None,
                    realisation=0):
         """
         Load a surface from a Roxar RMS project.
@@ -247,7 +248,7 @@ class RegularSurface(object):
                 use the magig 'project' if within RMS.
             type (str): 'horizon', 'clipboard', etc
             name (str): Name of surface/map
-            category (str): For horizon only: for example "DS_extracted"
+            category (str): For horizon only: for example 'DS_extracted'
             realiation (int): Realisation number, default is 0
 
         Returns:
@@ -263,10 +264,10 @@ class RegularSurface(object):
         """
 
         if type == 'horizon' and name is None or category is None:
-            self.logger.error("Need to spesify name and categori for "
-                              "horizon")
+            self.logger.error('Need to spesify name and categori for '
+                              'horizon')
         elif type != 'horizon':
-            self.logger.error("Only horizon type is supported so far")
+            self.logger.error('Only horizon type is supported so far')
             raise Exception
 
         self._import_horizon_roxapi(project, name, category,
@@ -284,25 +285,25 @@ class RegularSurface(object):
         """
         The NX (or N-Idir) number, as property.
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         return self._nx
 
     @nx.setter
     def nx(self, n):
-        self.logger.debug("Enter method...")
-        self.logger.warning("Cannot change nx")
+        self.logger.debug('Enter method...')
+        self.logger.warning('Cannot change nx')
 
     @property
     def ny(self):
         """
         The NY (or N-Jdir) number, as property.
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         return self._ny
 
     @ny.setter
     def ny(self, n):
-        self.logger.warning("Cannot change ny")
+        self.logger.warning('Cannot change ny')
 
     @property
     def rotation(self):
@@ -323,7 +324,7 @@ class RegularSurface(object):
         """
         The X increment (or I dir increment)
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         return self._xinc
 
     @property
@@ -331,7 +332,7 @@ class RegularSurface(object):
         """
         The Y increment (or I dir increment)
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         return self._yinc
 
     @property
@@ -361,13 +362,13 @@ class RegularSurface(object):
         """
         The map values, as 2D masked numpy (float64) of shape (nx, ny)
         """
-        self.logger.debug("Enter method to get values...")
+        self.logger.debug('Enter method to get values...')
         self._update_values()
         return self._values
 
     @values.setter
     def values(self, values):
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
 
         if (isinstance(values, np.ndarray) and
                 not isinstance(values, ma.MaskedArray)):
@@ -380,28 +381,28 @@ class RegularSurface(object):
         self._values = values
         self._cvalues = None
 
-        self.logger.debug("Values shape: {}".format(self._values.shape))
-        self.logger.debug("Flags: {}".format(self._values.flags.c_contiguous))
+        self.logger.debug('Values shape: {}'.format(self._values.shape))
+        self.logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
 
     @property
     def cvalues(self):
         """
         The map values, as 1D C pointer i.e. a reference only (Fortran order).
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         self._update_cvalues()
         return self._cvalues
 
     @cvalues.setter
     def cvalues(self, cvalues):
-        self.logger.warn("Not possible!")
+        self.logger.warn('Not possible!')
 
     @property
     def undef(self):
         """
         Returns the undef value, to be used when in the get_zval method
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         return self._undef
 
     @property
@@ -409,7 +410,7 @@ class RegularSurface(object):
         """
         Returns the undef_limit value, to be used when in the get_zval method
         """
-        self.logger.debug("Enter method...")
+        self.logger.debug('Enter method...')
         return self._undef_limit
 
     def get_zval(self):
@@ -423,23 +424,23 @@ class RegularSurface(object):
 
         self._update_values()
 
-        self.logger.debug("Enter method...")
-        self.logger.debug("Shape: {}".format(self._values.shape))
+        self.logger.debug('Enter method...')
+        self.logger.debug('Shape: {}'.format(self._values.shape))
 
         if self._check_shape_ok(self._values) is False:
             raise ValueError
 
         # unmask the self._values numpy array, by filling the masked
         # values with undef value
-        self.logger.debug("Fill the masked...")
+        self.logger.debug('Fill the masked...')
         x = ma.filled(self._values, self._undef)
 
         # make it 1D (Fortran order)
-        self.logger.debug("1D")
+        self.logger.debug('1D')
 
         x = np.reshape(x, -1, order='F')
 
-        self.logger.debug("1D done {}".format(x.shape))
+        self.logger.debug('1D done {}'.format(x.shape))
 
         return x
 
@@ -502,6 +503,7 @@ class RegularSurface(object):
                            yinc=self.yinc, xori=self.xori, yori=self.yori,
                            rotation=self.rotation, values=self.values)
         return x
+
 
     def similarity_index(self, other):
         """
@@ -588,6 +590,41 @@ class RegularSurface(object):
 
         return z
 
+    def get_xy_value_from_ij(self, i, j):
+        """Returns x, y, z(value) from i j location.
+
+        If undefined cell, value is returned as None.
+        """
+
+        _cxtgeo.xtg_verbose_file('NONE')
+
+        xtg_verbose_level = self._xtg.get_syslevel()
+
+        if xtg_verbose_level < 0:
+            xtg_verbose_level = 0
+
+        if 1 <= i <= self.nx and 1 <= j <= self.ny:
+
+            ier, xval, yval, value = (
+                _cxtgeo.surf_xyz_from_ij(i, j,
+                                         self.xori, self.xinc,
+                                         self.yori, self.yinc,
+                                         self.nx, self.ny, self._yflip,
+                                         self.rotation, self.cvalues,
+                                         0, xtg_verbose_level))
+            if ier != 0:
+                self.logger.critical('Error code {}, contact the author'.
+                                     format(ier))
+                sys.exit(9)
+
+        else:
+            raise Exception
+
+        if value > self.undef_limit:
+            value = None
+
+        return xval, yval, value
+
     def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
                            valuefmt=None):
         """Returns two lists for coordinates (x, y) and values.
@@ -622,38 +659,21 @@ class RegularSurface(object):
             >>> xylist, valuelist = mymap.get_xy_value_lists(valuefmt='6.2f')
         """
 
-        _cxtgeo.xtg_verbose_file("NONE")
+        _cxtgeo.xtg_verbose_file('NONE')
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
         if xtg_verbose_level < 0:
             xtg_verbose_level = 0
 
-        px = _cxtgeo.new_doublepointer()
-        py = _cxtgeo.new_doublepointer()
-        pv = _cxtgeo.new_doublepointer()
-
         xylist = []
         valuelist = []
 
         for j in range(self.ny):
             for i in range(self.nx):
-                ier = _cxtgeo.surf_xyz_from_ij(i + 1, j + 1, px, py, pv,
-                                               self.xori, self.xinc,
-                                               self.yori, self.yinc,
-                                               self.nx, self.ny, self._yflip,
-                                               self.rotation, self.cvalues,
-                                               0, xtg_verbose_level)
-                if ier != 0:
-                    self.logger.critical('Error code {}, contact the author'.
-                                         format(ier))
-                    sys.exit(9)
+                x, y, v = self.get_xy_value_from_ij(i + 1, j + 1)
 
-                x = _cxtgeo.doublepointer_value(px)
-                y = _cxtgeo.doublepointer_value(py)
-                v = _cxtgeo.doublepointer_value(pv)
-
-                if v < self.undef_limit:
+                if v is not None:
                     if xyfmt is not None:
                         x = float('{:{width}}'.format(x, width=xyfmt))
                         y = float('{:{width}}'.format(y, width=xyfmt))
@@ -686,9 +706,9 @@ class RegularSurface(object):
 
         Example::
             cube = Cube()
-            cube.from_file("some.segy")
+            cube.from_file('some.segy')
             surf = RegularSurface()
-            surf.from_file("s.gri")
+            surf.from_file('s.gri')
             # update surf to sample cube values:
             surf.slice_cube(cube)
 
@@ -711,24 +731,42 @@ class RegularSurface(object):
         else:
             opt2 = 1
 
-        self._update_cvalues()
-        other._update_cvalues()
+        cubeval1d = np.ravel(cube.values, order='F')
 
-        self.logger.debug("Running method from C..:")
-        istat = _cxtgeo.surf_slice_cube(cube.nx, cube.ny, cube.nz, cube.xori,
-                                        cube.xinc, cube.yori, cube.yinc,
-                                        cube.zori, cube.zinc, cube.rotation,
-                                        cube.yflip, cube.cvalues,
-                                        self.nx, self.ny, self.xori, self.xinc,
-                                        self.yori, self.yinc,
-                                        self.rotation, other.cvalues,
-                                        self.cvalues, sampling, opt2,
-                                        xtg_verbose_level)
+        nsurf = self.nx * self.ny
 
-        self.logger.debug("Running method from C.. done")
+        self.logger.debug('Running method from C... '
+                          '(using typemaps for numpies!:')
+        istat, v1d = _cxtgeo.surf_slice_cube(cube.nx,
+                                             cube.ny,
+                                             cube.nz,
+                                             cube.xori,
+                                             cube.xinc,
+                                             cube.yori,
+                                             cube.yinc,
+                                             cube.zori,
+                                             cube.zinc,
+                                             cube.rotation,
+                                             cube.yflip,
+                                             cubeval1d,
+                                             self.nx,
+                                             self.ny,
+                                             self.xori,
+                                             self.xinc,
+                                             self.yori,
+                                             self.yinc,
+                                             self.rotation,
+                                             other.get_zval(),
+                                             nsurf,
+                                             sampling, opt2,
+                                             xtg_verbose_level)
 
         if istat != 0:
-            self.logger.warning("Seem to be rotten")
+            self.logger.warning('Seem to be rotten')
+
+        self.set_zval(v1d)
+
+        self.logger.debug('Running method from C.. done')
 
     # =========================================================================
     # Special methods
@@ -762,7 +800,7 @@ class RegularSurface(object):
                                              xtg_verbose_level)
 
         if istat != 0:
-            self.logger.warning("Seem to be rotten")
+            self.logger.warning('Seem to be rotten')
 
         zarr = self._convert_carr_double_np(czarr, nlen=nvec)
 
@@ -775,7 +813,8 @@ class RegularSurface(object):
     def hc_thickness_from_3dprops(self, xprop=None, yprop=None,
                                   hcpfzprop=None, zoneprop=None,
                                   zone_minmax=None, layer_minmax=None):
-        """
+        """Make a thickness weighted HC thickness map.
+
         Make a HC thickness map based on numpy arrays of properties
         from a 3D grid.
 
@@ -790,15 +829,15 @@ class RegularSurface(object):
                 with DZ per cell.
             zoneprop (ndarray): (optional) 3D numpy array indicating zonation
                 property
-            zone_minmax (array): (optional) 2 element list indicating start
+            zone_minmax (tuple): (optional) 2 element list indicating start
                 and stop zonation (both start and end spec are included)
-            layer_minmax (array): (optional) 2 element list indicating start
+            layer_minmax (tuple): (optional) 2 element list indicating start
                 and stop grid layers (both start and end spec are included)
 
         Returns:
             True if operation went OK (but check result!), False if not
-
         """
+
         a = hcpfzprop
         self.logger.debug('MIN MAX MEAN', a.min(), a.max(), a.mean())
 
@@ -816,7 +855,7 @@ class RegularSurface(object):
 
         # do not allow rotation...
         if self._rotation < -0.1 or self._rotation > 0.1:
-            self.logger.error("Cannut use rotated maps. Return")
+            self.logger.error('Cannut use rotated maps. Return')
             return False
 
         xmax = self._xori + self._xinc * self._nx
@@ -849,11 +888,11 @@ class RegularSurface(object):
 
             propsum = zcopy.sum()
             if (abs(propsum) < 1e-12):
-                self.logger.debug("Z property sum is {}".format(propsum))
-                self.logger.debug("Skip layer K = {}".format(k))
+                self.logger.debug('Z property sum is {}'.format(propsum))
+                self.logger.debug('Skip layer K = {}'.format(k))
                 continue
             else:
-                self.logger.debug("Z property sum is {}".format(propsum))
+                self.logger.debug('Z property sum is {}'.format(propsum))
 
             # debugging info...
             self.logger.debug(xi.shape)
@@ -873,7 +912,7 @@ class RegularSurface(object):
             self.logger.debug('Repr HC?: \n{}'.format(repr(hcpfzprop)))
 
             # need to make arrays 1D
-            self.logger.debug("Reshape and filter ...")
+            self.logger.debug('Reshape and filter ...')
             x = np.reshape(xcopy, -1, order='F')
             y = np.reshape(ycopy, -1, order='F')
             z = np.reshape(zcopy, -1, order='F')
@@ -884,9 +923,9 @@ class RegularSurface(object):
             y = y[xc < self._undef_limit]
             z = z[xc < self._undef_limit]
 
-            self.logger.debug("Reshape and filter ... done")
+            self.logger.debug('Reshape and filter ... done')
 
-            self.logger.debug("Map ...")
+            self.logger.debug('Map ...')
 
             try:
                 zi = scipy.interpolate.griddata((x, y), z, (xi, yi),
@@ -895,11 +934,11 @@ class RegularSurface(object):
             except ValueError:
                 continue
 
-            self.logger.info("ZI shape is {}".format(zi.shape))
-            self.logger.debug("Map ... done")
+            self.logger.info('ZI shape is {}'.format(zi.shape))
+            self.logger.debug('Map ... done')
 
             zsum = zsum + zi
-            self.logger.info("Sum of HCPB layer is {}".format(zsum.mean()))
+            self.logger.info('Sum of HCPB layer is {}'.format(zsum.mean()))
 
         self.values = zsum
         self.logger.debug(repr(self._values))
@@ -949,18 +988,18 @@ class RegularSurface(object):
         if zoneprop is None:
             usezoneprop = False
 
-        self.logger.info("Layer from: {}".format(layer_minmax[0]))
-        self.logger.info("Layer to: {}".format(layer_minmax[1]))
+        self.logger.info('Layer from: {}'.format(layer_minmax[0]))
+        self.logger.info('Layer to: {}'.format(layer_minmax[1]))
         self.logger.debug('Layout is {} {} {}'.format(ncol, nrow, nlay))
 
-        self.logger.info("Zone from: {}".format(zone_minmax[0]))
-        self.logger.info("Zone to: {}".format(zone_minmax[1]))
-        self.logger.info("Zone is :")
+        self.logger.info('Zone from: {}'.format(zone_minmax[0]))
+        self.logger.info('Zone to: {}'.format(zone_minmax[1]))
+        self.logger.info('Zone is :')
         self.logger.info(zoneprop)
 
         # do not allow rotation...
         if self._rotation < -0.1 or self._rotation > 0.1:
-            self.logger.error("Cannut use rotated maps. Return")
+            self.logger.error('Cannut use rotated maps. Return')
             return
 
         xmax = self._xori + self._xinc * self._nx
@@ -972,7 +1011,7 @@ class RegularSurface(object):
 
         sf = sampling
 
-        self.logger.debug("ZONEPROP:")
+        self.logger.debug('ZONEPROP:')
         self.logger.debug(zoneprop)
         # compute per K layer (start on count 1)
 
@@ -980,10 +1019,10 @@ class RegularSurface(object):
         for k in range(1, nlay + 1):
 
             if k < layer_minmax[0] or k > layer_minmax[1]:
-                self.logger.info("SKIP LAYER {}".format(k))
+                self.logger.info('SKIP LAYER {}'.format(k))
                 continue
             else:
-                self.logger.info("USE LAYER {}".format(k))
+                self.logger.info('USE LAYER {}'.format(k))
 
             if usezoneprop:
                 zonecopy = ma.copy(zoneprop[::sf, ::sf, k - 1:k])
@@ -1047,7 +1086,7 @@ class RegularSurface(object):
         self.values = vv
 #        self._values=dzsum
 
-    def quickplot(self, filename="default.png", title='QuickPlot',
+    def quickplot(self, filename='default.png', title='QuickPlot',
                   infotext=None, xvalues=None, yvalues=None,
                   minmax=(None, None), xlabelrotation=None,
                   colortable='rainbow'):
@@ -1103,7 +1142,7 @@ class RegularSurface(object):
             xtg_verbose_level)
 
         if ier != 0:
-            self.logger.error("Something went wrong...")
+            self.logger.error('Something went wrong...')
             raise ValueError
 
     def translate_coordinates(self, translate=(0, 0, 0)):
@@ -1142,9 +1181,9 @@ class RegularSurface(object):
 
     def _import_irap_binary(self, mfile):
 
-        self.logger.debug("Enter function...")
+        self.logger.debug('Enter function...')
         # need to call the C function...
-        _cxtgeo.xtg_verbose_file("NONE")
+        _cxtgeo.xtg_verbose_file('NONE')
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
@@ -1162,9 +1201,9 @@ class RegularSurface(object):
         ptr_ndef = _cxtgeo.new_intpointer()
 
         if (os.path.exists(mfile)):
-            self.logger.info("File is ok")
+            self.logger.info('File is ok')
         else:
-            self.logger.error("No such file!")
+            self.logger.error('No such file!')
 
         # read with mode 0, to get mx my
         _cxtgeo.surf_import_irap_bin(mfile, 0, ptr_mx, ptr_my, ptr_xori,
@@ -1237,7 +1276,7 @@ class RegularSurface(object):
 
         if (exportmethod == 1):
             # savetxt gives only one column, but perhaps faster
-            np.savetxt(f, a, fmt="%10.3f")
+            np.savetxt(f, a, fmt='%10.3f')
         else:
             i = 1
             for x in np.nditer(a):
@@ -1252,7 +1291,7 @@ class RegularSurface(object):
     def _export_irap_binary(self, mfile):
 
         # need to call the C function...
-        _cxtgeo.xtg_verbose_file("NONE")
+        _cxtgeo.xtg_verbose_file('NONE')
 
         # update numpy to c_array
         self._update_cvalues()
@@ -1294,7 +1333,7 @@ class RegularSurface(object):
         Local function for tranforming surfaces from ROXAPI to XTGeo
         object.
         """
-        self.logger.info("Surface from roxapi to xtgeo...")
+        self.logger.info('Surface from roxapi to xtgeo...')
         self._xori, self._yori = rox.origin
         self._nx, self._ny = rox.dimensions
         self._xinc, self._yinc = rox.increment
@@ -1313,8 +1352,8 @@ class RegularSurface(object):
             return
 
         elif self._cvalues is None and self._values is None:
-            self.logger.critical("_cvalues and _values is None in "
-                                 "_update_values. STOP")
+            self.logger.critical('_cvalues and _values is None in '
+                                 '_update_values. STOP')
             sys.exit(9)
 
         x = _cxtgeo.swig_carr_to_numpy_1d(n, self._cvalues)
@@ -1331,21 +1370,21 @@ class RegularSurface(object):
     # copy (update) values from numpy to SWIG, 1D array
 
     def _update_cvalues(self):
-        self.logger.debug("Enter update cvalues method...")
+        self.logger.debug('Enter update cvalues method...')
         n = self._nx * self._ny
 
         if self._values is None and self._cvalues is not None:
-            self.logger.debug("CVALUES unchanged")
+            self.logger.debug('CVALUES unchanged')
             return
 
         elif self._cvalues is None and self._values is None:
-            self.logger.critical("_cvalues and _values is None in "
-                                 "_update_cvalues. STOP")
+            self.logger.critical('_cvalues and _values is None in '
+                                 '_update_cvalues. STOP')
             sys.exit(9)
 
         elif self._cvalues is not None and self._values is None:
-            self.logger.critical("_cvalues and _values are both present in "
-                                 "_update_cvalues. STOP")
+            self.logger.critical('_cvalues and _values are both present in '
+                                 '_update_cvalues. STOP')
             sys.exit(9)
 
         # make a 1D F order numpy array, and update C array
@@ -1355,33 +1394,31 @@ class RegularSurface(object):
         self._cvalues = _cxtgeo.new_doublearray(n)
 
         _cxtgeo.swig_numpy_to_carr_1d(x, self._cvalues)
-        self.logger.debug("Enter method... DONE")
+        self.logger.debug('Enter method... DONE')
 
         self._values = None
 
     def _delete_cvalues(self):
-        self.logger.debug("Enter delete cvalues values method...")
+        self.logger.debug('Enter delete cvalues values method...')
 
         if self._cvalues is not None:
             _cxtgeo.delete_doublearray(self._cvalues)
 
         self._cvalues = None
-        self.logger.debug("Enter method... DONE")
+        self.logger.debug('Enter method... DONE')
 
     # check if values shape is OK (return True or False)
 
     def _check_shape_ok(self, values):
         (nx, ny) = values.shape
         if nx != self._nx or ny != self._ny:
-            self.logger.error("Wrong shape: Dimens of values {} {} vs {} {}"
+            self.logger.error('Wrong shape: Dimens of values {} {} vs {} {}'
                               .format(nx, ny, self._nx, self._ny))
             return False
         return True
 
     def _convert_np_carr_double(self, np_array, nlen):
-        """
-        Convert numpy 1D array to C array, assuming double type
-        """
+        """Convert numpy 1D array to C array, assuming double type"""
         carr = _cxtgeo.new_doublearray(nlen)
 
         _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
@@ -1389,9 +1426,7 @@ class RegularSurface(object):
         return carr
 
     def _convert_carr_double_np(self, carray, nlen=None):
-        """
-        Convert a C array to numpy, assuming double type.
-        """
+        """Convert a C array to numpy, assuming double type."""
         if nlen is None:
             nlen = len(self._df.index)
 
@@ -1408,7 +1443,7 @@ def main():
 
     logger = logging.getLogger(__name__)
 
-    logger.debug("Run")
+    logger.debug('Run')
 
     s = RegularSurface()
 
@@ -1417,7 +1452,7 @@ def main():
 
 if __name__ == '__main__':
     if __package__ is None:
-        print("NON PACKAGE MODE - TESTING ONLY")
+        print('NON PACKAGE MODE - TESTING ONLY')
         from os import path
         sys.path.append(path.dirname(path.dirname(path.abspath('.'))))
     else:

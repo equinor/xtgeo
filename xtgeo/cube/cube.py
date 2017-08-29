@@ -398,13 +398,13 @@ class Cube(object):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        self._update_cvalues()
+        self._update_values()
 
         _cube_export.export_rmsreg(self.nx, self.ny, self.nz,
                                    self.xori, self.yori, self.zori,
                                    self.xinc, self.yinc, self.zinc,
                                    self.rotation, self.yflip,
-                                   self.cvalues,
+                                   self.values,
                                    sfile, xtg_verbose_level)
 
     # =========================================================================
