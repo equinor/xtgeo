@@ -69,12 +69,14 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-docs: clean ## generate Sphinx HTML documentation, including API docs
+docsrun: clean ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/xtgeo.rst
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ xtgeo
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
+
+docs: docsrun ## generate and display Sphinx HTML documentation...
 	$(BROWSER) docs/_build/html/index.html
 
 servedocs: docs ## compile the docs watching for changes
@@ -106,6 +108,6 @@ userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	pip install --target ${USRPYPATH} --upgrade  ./dist/*.whl
 #	rsync -v -L --chmod=a+rx bin/* ${MY_BINDIST}/bin/.
 
-docinstall: docs
+docinstall: docsrun
 	rsync -av --delete --chmod=Dg+s,Do+rx,ug+rw,Fo-w,Fo+r docs/_build/html ${DOCINSTALL}/${APPLICATION}
 	chmod a+rwx ${DOCINSTALL}/${APPLICATION}
