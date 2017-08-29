@@ -108,6 +108,6 @@ userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	pip install --target ${USRPYPATH} --upgrade  ./dist/*.whl
 #	rsync -v -L --chmod=a+rx bin/* ${MY_BINDIST}/bin/.
 
-docinstall: docs
+docinstall: docsrun
 	rsync -av --delete docs/_build/html ${DOCINSTALL}/${APPLICATION}
 	/project/res/bin/res_perm ${DOCINSTALL}/${APPLICATION}
