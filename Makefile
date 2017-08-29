@@ -109,5 +109,5 @@ userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 #	rsync -v -L --chmod=a+rx bin/* ${MY_BINDIST}/bin/.
 
 docinstall: docsrun
-	rsync -av --delete --chmod=Dg+s,Do+rx,ug+rw,Fo-w,Fo+r docs/_build/html ${DOCINSTALL}/${APPLICATION}
-	chmod a+rwx ${DOCINSTALL}/${APPLICATION}
+	rsync -av --delete --chmod=Dg+s,Do+rx,ug+rw,Fo-w,Fo+r --chgrp "res" docs/_build/html ${DOCINSTALL}/${APPLICATION}
+#	chmod a+rwx ${DOCINSTALL}/${APPLICATION}
