@@ -21,6 +21,8 @@ PYVER := $(shell python -c "import sys; print('{0[0]}.{0[1]}'.format(sys.version
 RESPYPATH := ${SDP_BINDIST_ROOT}
 RESPYPATHFULL := ${RESPYPATH}/lib/python${PYVER}/site-packages
 
+TARGET := ${RESPYPATHFULL}
+
 USRPYPATH := ${MY_BINDIST}/lib/python${PYVER}/site-packages
 
 DOCINSTALL := /project/sdpdocs/Users/jriv/libs
@@ -84,24 +86,24 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
+	# python setup.py sdist
 	python setup.py bdist_wheel
-	ls -l dist
+
 
 oldinstall: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
-install: dist ## jriv version to VENV install place
+
+install: dist ## version to VENV install place
 #	pip uninstall --yes ${APPLICATION}
 	pip install --upgrade ./dist/*
 
-resinstall: dist ## Install in project/res (Trondheim)
+
+siteinstall: dist ## Install in project/res (Trondheim)
 	echo $(HOST)
-	\rm -fr  ${RESPYPATHFULL}/${APPLICATION}*
-	pip install --target ${RESPYPATHFULL} --upgrade  ./dist/*.whl
-	chmod 2775 `find ${RESPYPATHFULL}/${APPLICATION}* -type d`
-	chmod 0664 `find ${RESPYPATHFULL}/${APPLICATION}* -type f`
-#	chmod 0775 `find ${RESPYPATHFULL}/${APPLICATION}* -type f | grep '.so'`
+	\rm -fr  ${TARGET}/${APPLICATION}*
+	pip install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
+	/project/res/bin/res_perm ${TARGET}/${APPLICATION}*
 
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
