@@ -16,6 +16,9 @@ APPLICATION := xtgeo
 # JRIV override browser
 BROWSER := firefox
 
+PYTHON := python${PYTHON_SHORT}
+PIP := pip${PYTHON_SHORT}
+
 PYVER := $(shell python -c "import sys; print('{0[0]}.{0[1]}'.format(sys.version_info))")
 
 RESPYPATH := ${SDP_BINDIST_ROOT}
@@ -57,7 +60,7 @@ lint: ## check style with flake8
 	flake8 ${APPLICATION} tests
 
 test:  ## run tests quickly with the default Python
-	python setup.py test
+	${PYTHON} setup.py test
 
 test-all: ## run tests on every Python version with tox
 	tox
@@ -84,28 +87,28 @@ servedocs: docs ## compile the docs watching for changes
 
 dist: clean ## builds source and wheel package
 	# python setup.py sdist
-	python setup.py bdist_wheel
+	${PYTHON} setup.py bdist_wheel
 
 
 oldinstall: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	${PYTHON} setup.py install
 
 
 install: dist ## version to VENV install place
-#	pip uninstall --yes ${APPLICATION}
-	pip install --upgrade ./dist/*
+#	${PIP} uninstall --yes ${APPLICATION}
+	${PIP} install --upgrade ./dist/*
 
 
 siteinstall: dist ## Install in project/res (Trondheim)
 	echo $(HOST)
 	\rm -fr  ${TARGET}/${APPLICATION}*
-	pip install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
+	${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
 	/project/res/bin/res_perm ${TARGET}/${APPLICATION}*
 
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	\rm -fr  ${USRPYPATH}/${APPLICATION}*
-	pip install --target ${USRPYPATH} --upgrade  ./dist/*.whl
+	${PIP} install --target ${USRPYPATH} --upgrade  ./dist/*.whl
 #	rsync -v -L --chmod=a+rx bin/* ${MY_BINDIST}/bin/.
 
 docinstall: docsrun

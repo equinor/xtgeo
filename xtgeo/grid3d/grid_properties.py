@@ -54,6 +54,7 @@ class GridProperties(Grid3D):
 
         self._props = []            # list of GridProperty objects
         self._names = []            # list of GridProperty names
+        self._dates = []            # list of dates (_after_ import) YYYYDDMM
 
         self._xtg = XTGeoDialog()
 
@@ -142,13 +143,13 @@ class GridProperties(Grid3D):
     @property
     def names(self):
         """
-        Returns a list of property names
+        Returns a list of used property names
 
         Example::
 
-            proplist = props.names
-            for prop in proplist:
-                print ('Property is {}'.format(prop))
+            namelist = props.names
+            for prop in namelist:
+                print ('Property name is {}'.format(name))
 
         """
 
@@ -161,7 +162,7 @@ class GridProperties(Grid3D):
 
         Example::
 
-            proplist = props.properties
+            proplist = props.props
             for prop in proplist:
                 print ('Property object ID is {}'.format(prop))
 
@@ -169,13 +170,30 @@ class GridProperties(Grid3D):
 
         return self._props
 
+    @property
+    def dates(self):
+        """Returns a list of valid (found) dates after import.
+
+        Returns None if no dates present
+
+        Example::
+
+            datelist = props.dates
+            for date in datelist:
+                print ('Date applied is {}'.format(date))
+
+        """
+        if len(self._dates) == 0:
+            return None
+
+        return self._dates
+
     # =========================================================================
     # Other setters and getters
     # =========================================================================
 
     def get_prop_by_name(self, name):
-        """
-        Find and return a property object (GridProperty) by name
+        """Find and return a property object (GridProperty) by name.
 
         Example::
 
@@ -214,6 +232,11 @@ class GridProperties(Grid3D):
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def _import_ecl_output(self, pfile, etype=1, dates=[],
                            grid=None, names=[], namestyle=0):
+        """Imports the Eclipse INIT or UNRST data.
+
+        The actual successful properties are stored, and also
+        the valid dates (as self._dates)
+        """
 
         if not grid:
             raise Exception('Grid Geometry object is missing')
@@ -399,12 +422,10 @@ class GridProperties(Grid3D):
                 dcounter += 1
 
             elif ndates > 0 and dsuccess == 0:
-                self.logger.critical("Date <{}> not found in file <{}>!"
-                                     .format(dates[idate], pfile))
-                self.logger.critical("Date tag is <{}> and success was {}"
-                                     .format(usedatetag, dsuccess))
-                raise RuntimeError("Date {} not found in restart file".
-                                   format(dates[idate]))
+                self.logger.warning("Date <{}> not found in file <{}>!"
+                                    .format(dates[idate], pfile))
+                self.logger.debug("Date tag is <{}> and success was {}"
+                                  .format(usedatetag, dsuccess))
             else:
                 # INIT props:
                 dsuccess = 1
@@ -418,7 +439,11 @@ class GridProperties(Grid3D):
             # Actorder 1      0     2  |  4      3     5  |  7     6      8
             # which means ... actorder = order + (dcounter-1)*nkeysgot
 
-            if dsuccess:
+            if dsuccess > 0:
+
+                if ndates > 0:
+                    self._dates.append(dates[idate])
+
                 for kn in range(nklist):
                     nktype = _cxtgeo.intarray_getitem(ptr_nktype, kn)
                     norder = _cxtgeo.intarray_getitem(ptr_norder, kn)
