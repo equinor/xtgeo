@@ -988,6 +988,9 @@ class RegularSurface(object):
         if zoneprop is None:
             usezoneprop = False
 
+        # avoid artifacts from inactive cells that slips through somehow...
+        dzprop[mprop > _cxtgeo.UNDEF_LIMIT] = 0.0
+
         self.logger.info('Layer from: {}'.format(layer_minmax[0]))
         self.logger.info('Layer to: {}'.format(layer_minmax[1]))
         self.logger.debug('Layout is {} {} {}'.format(ncol, nrow, nlay))
