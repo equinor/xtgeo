@@ -9,6 +9,7 @@ import numpy.ma as ma
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
+import cxtgeo.cxtgeo as _cxtgeo
 
 
 class Map(BasePlot):
@@ -127,9 +128,19 @@ class Map(BasePlot):
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
 
         zi = ma.masked_where(zimask, zi)
+        zi = ma.masked_greater(zi, _cxtgeo.UNDEF_LIMIT)
 
-        im = self._ax.contourf(xi, yi, zi, levels, colors=self.colortable)
-        self._fig.colorbar(im, ticks=legendticks)
+        if ma.std(zi) > 1e-07:
+            uselevels = levels
+        else:
+            uselevels = 1
+
+        try:
+            im = self._ax.contourf(xi, yi, zi, uselevels,
+                                   colors=self.colortable)
+            self._fig.colorbar(im, ticks=legendticks)
+        except ValueError as err:
+            self.logger.warning('Could not make plot: {}'.format(err))
 
         plt.gca().set_aspect('equal', adjustable='box')
 
