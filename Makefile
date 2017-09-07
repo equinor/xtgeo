@@ -29,24 +29,16 @@ for line in sys.stdin:
 endef
 export PRINT_HELP_PYSCRIPT
 
+
 APPLICATION := xtgeo
+DOCSINSTALL := /project/sdpdocs/XTGeo/libs
+
 
 BROWSER := firefox
 
 PYTHON_VERSION ?= $(shell python -c "import sys; print('{0[0]}.{0[1]}.{0[2]}'.format(sys.version_info))")
 PYTHON_SHORT ?= `echo ${PYTHON_VERSION} | cut -d. -f1,2`
 PYTHON_VSHORT ?= `echo ${PYTHON_VERSION} | cut -d. -f1`
-
-TARGET := ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
-
-MY_BINDIST ?= $HOME
-
-USRPYPATH := ${MY_BINDIST}/lib/python${PYVER}/site-packages
-
-DOCINSTALL := /project/sdpdocs/Users/jriv/libs
-
-help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 # Active python my be e.g. 'python3.4' or 'python3' (depends...)
 ifeq (, python${PYTHON_SHORT})
@@ -56,6 +48,16 @@ PSHORT := ${PYTHON_VSHORT}
 endif
 PYTHON := python${PSHORT}
 PIP := pip${PSHORT}
+
+
+TARGET := ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
+
+MY_BINDIST ?= $HOME
+
+USRPYPATH := ${MY_BINDIST}/lib/python${PYVER}/site-packages
+
+help:
+	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage...
@@ -88,10 +90,10 @@ lint: ## check style with flake8
 
 
 test:  ## run tests quickly with the default Python
-	${PYTHON} setup.py test
+	@${PYTHON} setup.py test
 
 
-test-all: ## run tests on every Python version with tox
+test-all: ## run tests on every Python version with tox (not active)
 	tox
 
 
@@ -103,10 +105,10 @@ coverage: ## check code coverage quickly with the default Python
 
 
 docsrun: clean ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/xtgeo.rst
+	rm -f docs/${APPLICATION}.rst
 	rm -f docs/modules.rst
 	rm -fr docs/_build
-	sphinx-apidoc -o docs/ xtgeo
+	sphinx-apidoc -o docs/ ${APPLICATION}
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
@@ -142,5 +144,5 @@ userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 
 
 docsinstall: docsrun
-	rsync -av --delete docs/_build/html ${DOCINSTALL}/${APPLICATION}
-	/project/res/bin/res_perm ${DOCINSTALL}/${APPLICATION}
+	rsync -av --delete docs/_build/html ${DOCSINSTALL}/${APPLICATION}
+	/project/res/bin/res_perm ${DOCSINSTALL}/${APPLICATION}
