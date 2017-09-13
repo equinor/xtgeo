@@ -22,7 +22,7 @@ from .grid3d import Grid3D
 from .grid_property import GridProperty
 from .grid_properties import GridProperties
 
-from . import _hybridgrid
+from xtgeo.grid3d import _hybridgrid
 
 # =============================================================================
 # Class constructor
