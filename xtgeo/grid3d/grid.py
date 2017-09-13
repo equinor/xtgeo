@@ -1,29 +1,12 @@
-# #############################################################################
-# NAME:
-#    grid.py
-#
-# AUTHOR(S):
-#    Jan C. Rivenaes
-#
-# DESCRIPTION:
-#    XTGeo class for a corner point grid. It can have attached properties
-#    called "props" that will belong to the GridProperty class.
-#
-# TODO/ISSUES/BUGS:
-#
-# LICENCE:
-#    Statoil property
-#
-# CODING STANDARD:
-#    PEP8 / Googe style (http://google.github.io/styleguide/pyguide.html)
-#    (http://sphinxcontrib-napoleon.readthedocs.io/en/latest/index.html)
-#
-# #############################################################################
+# -*- coding: utf-8 -*-
+"""Module/class for 3D grids with XTGeo."""
+
 from __future__ import print_function
+
 import sys
 import inspect
 import numpy as np
-# import numpy.ma as ma
+
 import errno
 import os
 import os.path
@@ -34,11 +17,12 @@ import cxtgeo.cxtgeo as _cxtgeo
 import re
 from tempfile import mkstemp
 from xtgeo.common import XTGeoDialog
-# from xtgeo.well import Well
-# from .well import Well
+
 from .grid3d import Grid3D
 from .grid_property import GridProperty
 from .grid_properties import GridProperties
+
+from . import _hybridgrid
 
 # =============================================================================
 # Class constructor
@@ -574,6 +558,20 @@ class Grid(Grid3D):
 # =============================================================================
 # Various methods
 # =============================================================================
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Convert to hybrid
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    def convert_to_hybrid(self, nhdiv=10, toplevel=1000, bottomlevel=1100,
+                          region=None, region_number=None):
+
+        res = _hybridgrid.make_hybridgrid(self, nhdiv=nhdiv, toplevel=toplevel,
+                                          bottomlevel=bottomlevel,
+                                          region=region,
+                                          region_number=region_number)
+
+        self = res
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Report well to zone mismatch

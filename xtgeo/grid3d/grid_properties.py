@@ -26,15 +26,17 @@ import os.path
 import logging
 import cxtgeo.cxtgeo as _cxtgeo
 import sys
+import warnings
 from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
 
 from .grid_property import GridProperty
 
 
+
 class GridProperties(Grid3D):
     """
-    Class for a collection of 3D grid properties, belonging to the same grid.
+    Class for a collecemacs tulltion of 3D grid properties, belonging to the same grid.
     See also the GridProperty() class
     """
 
@@ -85,7 +87,9 @@ class GridProperties(Grid3D):
                 dates=[20110101, 20141212], names=['PORO', 'DZ']
 
         Raises:
-            FileNotFoundError: if file is not found
+            FileNotFoundError: if input file is not found
+            RuntimeError: if a property is not found
+            RuntimeWarning: if some dates are not found
 
         """
 
@@ -209,7 +213,7 @@ class GridProperties(Grid3D):
                 self.logger.debug(repr(p))
                 return p
 
-        raise Exception('Cannot find property with name <{}>'.format(name))
+        raise RuntimeError('Cannot find property with name <{}>'.format(name))
 
     # =========================================================================
     # PRIVATE METHODS
@@ -239,7 +243,7 @@ class GridProperties(Grid3D):
         """
 
         if not grid:
-            raise Exception('Grid Geometry object is missing')
+            raise RuntimeError('Grid Geometry object is missing')
 
         _cxtgeo.xtg_verbose_file("NONE")
 
@@ -254,7 +258,7 @@ class GridProperties(Grid3D):
                 dates.sort()
                 self.logger.debug(dates)
             else:
-                raise Exception('Oh... Restart file indicated, but no date(s)')
+                raise RuntimeError('Oh... Restart file indicated, but no date(s)')
 
             if 'SGAS' in names:
                 qsgas = True
@@ -377,6 +381,7 @@ class GridProperties(Grid3D):
         # the issue is now to convert to XTGeo storage
 
         # scan number of keywords that where got successfully
+        dateswarning = []
         nkeysgot = 0
         for kn in range(nklist):
             order = _cxtgeo.intarray_getitem(ptr_norder, kn)
@@ -384,13 +389,14 @@ class GridProperties(Grid3D):
             if order >= 0:
                 nkeysgot += 1
             else:
-                self.logger.warning(
-                    "Did not find property <{}>".format(
-                        names[kn]))
+                self.logger.error('Did not find property'
+                                  ' <{}>'.format(names[kn]))
+                raise RuntimeError('Property not found: {}'.
+                                            format(names[kn]))
 
         if nkeysgot == 0:
             self.logger.error("No keywords found. STOP!")
-            raise Exception("No keywords found")
+            raise RuntimeError('No property keywords found')
 
         self.logger.info(
             "Number of keys successfully read: {}".format(nkeysgot))
@@ -422,10 +428,8 @@ class GridProperties(Grid3D):
                 dcounter += 1
 
             elif ndates > 0 and dsuccess == 0:
-                self.logger.warning("Date <{}> not found in file <{}>!"
-                                    .format(dates[idate], pfile))
-                self.logger.debug("Date tag is <{}> and success was {}"
-                                  .format(usedatetag, dsuccess))
+                dateswarning.append(dates[idate])
+
             else:
                 # INIT props:
                 dsuccess = 1
@@ -531,3 +535,7 @@ class GridProperties(Grid3D):
                     if not qswat:
                         self._names.remove(swatname)
                         self._props.remove(myswat)
+
+        if len(dateswarning) > 0:
+            raise RuntimeWarning('Some dates not found: {}'.
+                                 format(dateswarning))

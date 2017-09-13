@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Class for a 3D grid property.
+"""Class for a 3D grid property.
 
 The grid property instances may or may not belong to a grid geometry
 object. Normally the instance is created when importing a grid
@@ -17,12 +16,6 @@ active cells).
 There will however be methods that can output the properties in RMS style,
 some sunny day.
 """
-__author__ = 'Jan C. Rivenaes'
-__copyright__ = 'Statoil property'
-__credits__ = 'FMU team'
-__licence__ = 'Propriatary'
-__status__ = 'Development'
-__version__ = 'see xtgeo/_version.py'
 
 import sys
 import numpy as np
@@ -49,9 +42,11 @@ from .grid3d import Grid3D
 
 
 class GridProperty(Grid3D):
-    """
-    Class for a single 3D grid property, which may or may not
-    belong to a grid (geometry) object.
+    """Class for a single 3D grid property.
+
+    An instance may or may not belong to a grid (geometry) object. E.g. for
+    for ROFF, nx, ny, nz are given in the file. Note that in such
+    cases the undef cells may (or may not) flagegs as a very high number.
     """
 
     def __init__(self, nx=5, ny=12, nz=2, values=None, name='Dummy',
@@ -113,6 +108,7 @@ class GridProperty(Grid3D):
 
         # make some undef cells (for test)
         self._values[0:4] = self._undef
+
         # make it masked
         self._values = ma.masked_greater(self._values, self._undef_limit)
 
@@ -201,6 +197,18 @@ class GridProperty(Grid3D):
         self.logger.debug('Values shape: {}'.format(self._values.shape))
         self.logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
 
+    # @property
+    # def npvalues(self):
+    #     """ Return an ordinary unmasked 1D numpy array"""
+    #     self._update_values()
+    #     vv = self._values.copy()
+    #     if self.isdiscrete:
+    #         vv = ma.filled(vv, self._undef_i)
+    #     else:
+    #         vv = ma.filled(vv, self._undef)
+
+    #     return vv
+
     @property
     def ntotal(self):
         """Returns total number of cells nx*ny*nz"""
@@ -213,10 +221,11 @@ class GridProperty(Grid3D):
         shape [nx][ny][nz].
         """
         self._update_values()
-        x = ma.copy(self._values)
-        x = ma.reshape(x, (self._nx, self._ny, self._nz), order='F')
+        values3d = ma.copy(self._values)
+        values3d = ma.reshape(values3d, (self._nx, self._ny, self._nz),
+                              order='F')
 
-        return x
+        return values3d
 
     @values3d.setter
     def values3d(self, values):
@@ -303,27 +312,49 @@ class GridProperty(Grid3D):
            x = GridProperty()
            x.from_file('somefile.roff', fformat='roff')
 
+        Returns:
+           True if success, otherwise False
         """
 
         if os.path.isfile(pfile):
-            self.logger.info('File {} exists OK'.format(pfile))
+            self.logger.debug('File {} exists OK'.format(pfile))
         else:
             print('No such file: {}'.format(pfile))
-            self.logger.warning('No such file: {}'.format(pfile))
+            self.logger.critical('No such file: {}'.format(pfile))
             sys.exit(1)
 
+        # work on file extension
+        froot, fext = os.path.splitext(pfile)
+        if fformat == 'guess':
+            if len(fext) == 0:
+                self.logger.critical('File extension missing. STOP')
+                sys.exit(9)
+            else:
+                fformat = fext.lower().replace('.', '')
+
+        self.logger.debug("File name to be used is {}".format(pfile))
+        self.logger.debug("File format is {}".format(fformat))
+
+        ier = 0
         if (fformat == 'roff'):
-            self._import_roff(pfile, name)
+            ier = self._import_roff(pfile, name)
         elif (fformat.lower() == 'init'):
-            self._import_ecl_output(pfile, name=name, etype=1,
-                                    grid=grid)
+            ier = self._import_ecl_output(pfile, name=name, etype=1,
+                                          grid=grid)
         elif (fformat.lower() == 'unrst'):
-            self._import_ecl_output(pfile, name=name, etype=5,
-                                    grid=grid,
-                                    date=date)
+            ier = self._import_ecl_output(pfile, name=name, etype=5,
+                                          grid=grid,
+                                          date=date)
         else:
             self.logger.warning('Invalid file format')
             sys.exit(1)
+
+        # would be better with excpetion handling?
+        print('IER IS', ier)
+        if ier == 0:
+            return True
+        else:
+            return False
 
     def to_file(self, pfile, fformat='roff', name=None):
         """
@@ -336,7 +367,7 @@ class GridProperty(Grid3D):
             name (str): If provided, will give property name; else the existing
                 name of the instance will used.
         """
-        self.logger.info('Export property to file...')
+        self.logger.debug('Export property to file...')
         if (fformat == 'roff'):
             if name is None:
                 name = self.name
@@ -359,7 +390,7 @@ class GridProperty(Grid3D):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        self.logger.info('Looking for {} in file {}'.format(name, pfile))
+        self.logger.debug('Looking for {} in file {}'.format(name, pfile))
 
         ptr_nx = _cxtgeo.new_intpointer()
         ptr_ny = _cxtgeo.new_intpointer()
@@ -376,21 +407,30 @@ class GridProperty(Grid3D):
                           format(xtg_verbose_level))
 
         # note that ...'
-        ier, codenames = _cxtgeo.grd3d_imp_prop_roffbin(
-            pfile, 0, ptr_type, ptr_nx,
-            ptr_ny, ptr_nz, ptr_ncodes, name,
-            ptr_idum, ptr_ddum,
-            ptr_idum, 0, xtg_verbose_level)
+        ier, codenames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
+                                                        0,
+                                                        ptr_type,
+                                                        ptr_nx,
+                                                        ptr_ny,
+                                                        ptr_nz,
+                                                        ptr_ncodes,
+                                                        name,
+                                                        ptr_idum,
+                                                        ptr_ddum,
+                                                        ptr_idum,
+                                                        0,
+                                                        xtg_verbose_level)
 
         if (ier == -1):
             msg = 'Cannot find property name {}'.format(name)
-            self.logger.warn(msg)
-            raise NameError(msg)
+            self.logger.critical(msg)
+            return ier
 
         self._nx = _cxtgeo.intpointer_value(ptr_nx)
         self._ny = _cxtgeo.intpointer_value(ptr_ny)
         self._nz = _cxtgeo.intpointer_value(ptr_nz)
         self._ncodes = _cxtgeo.intpointer_value(ptr_ncodes)
+
         ptype = _cxtgeo.intpointer_value(ptr_type)
 
         ntot = self._nx * self._ny * self._nz
@@ -399,12 +439,11 @@ class GridProperty(Grid3D):
             self._ncodes = 1
             self._codes = {0: 'undef'}
 
-        self.logger.info('NTOT is ' + str(ntot))
-        self.logger.info('Grid size is {} {} {}'.format(self._nx,
-                                                        self._ny,
-                                                        self._nz))
+        self.logger.debug('NTOT is ' + str(ntot))
+        self.logger.debug('Grid size is '
+                          '{} {} {}'.format(self._nx, self._ny, self._nz))
 
-        self.logger.info('Ncodes: {}'.format(self._ncodes))
+        self.logger.debug('Number of codes: {}'.format(self._ncodes))
 
         # allocate
 
@@ -412,10 +451,15 @@ class GridProperty(Grid3D):
             ptr_pval_v = _cxtgeo.new_doublearray(ntot)
             ptr_ival_v = _cxtgeo.new_intarray(1)
             self._isdiscrete = False
+            self._dtype = 'float64'
+
         elif ptype > 1:
             ptr_pval_v = _cxtgeo.new_doublearray(1)
             ptr_ival_v = _cxtgeo.new_intarray(ntot)
             self._isdiscrete = True
+            self._dtype = 'int32'
+
+        self.logger.debug('Is Property discrete? {}'.format(self._isdiscrete))
 
         # number of codes and names
         ptr_ccodes_v = _cxtgeo.new_intarray(self._ncodes)
@@ -424,12 +468,19 @@ class GridProperty(Grid3D):
         # inn the config and %cstring_bounded_output(char *p_codenames_v, NN);
         # Then the argument for *p_codevalues_v in C is OMITTED here!
 
-        ier, cnames = _cxtgeo.grd3d_imp_prop_roffbin(
-            pfile, 1, ptr_type, ptr_nx, ptr_ny, ptr_nz, ptr_ncodes,
-            name, ptr_ival_v, ptr_pval_v, ptr_ccodes_v, 0,
-            xtg_verbose_level)
-        myvalue = _cxtgeo.intarray_getitem(ptr_ival_v, 17)
-        # print(myvalue)
+        ier, cnames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
+                                                     1,
+                                                     ptr_type,
+                                                     ptr_nx,
+                                                     ptr_ny,
+                                                     ptr_nz,
+                                                     ptr_ncodes,
+                                                     name,
+                                                     ptr_ival_v,
+                                                     ptr_pval_v,
+                                                     ptr_ccodes_v,
+                                                     0,
+                                                     xtg_verbose_level)
 
         if self._isdiscrete:
             self._cvalues = ptr_ival_v
@@ -438,10 +489,10 @@ class GridProperty(Grid3D):
 
         self._values = None
 
-        self.logger.info(cnames)
+        self.logger.debug('CNAMES: {}'.format(cnames))
 
         # now make dictionary of codes
-        if self._ncodes > 1:
+        if self._isdiscrete:
             cnames = cnames.replace(';', '')
             cname_list = cnames.split('|')
             cname_list.pop()  # some rubbish as last entry
@@ -449,9 +500,11 @@ class GridProperty(Grid3D):
             for i in range(0, self._ncodes):
                 ccodes.append(_cxtgeo.intarray_getitem(ptr_ccodes_v, i))
 
-            self.logger.info(cname_list)
+            self.logger.debug(cname_list)
             self._codes = dict(zip(ccodes, cname_list))
+            self.logger.debug('CODES (value: name): {}'.format(self._codes))
 
+        return 0
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Import Eclipse's INIT and UNRST formats
     # type: 1 binary INIT
@@ -463,7 +516,12 @@ class GridProperty(Grid3D):
     # at the time. But the C function has the potential to take many props
     # in one go; perhaps need some kind of metaclass for this? (as this class
     # only takes one property at the time). See GridProperies class.
+    #
+    # Returns: 0: if OK
+    #          1: Parameter and or Date is missing
+    #         -9: Some serious error
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     def _import_ecl_output(self, pfile, name=None, etype=1, date=None,
                            grid=None):
 
@@ -471,7 +529,7 @@ class GridProperty(Grid3D):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        self.logger.info('Scanning NX NY NZ for checking...')
+        self.logger.debug('Scanning NX NY NZ for checking...')
         ptr_nx = _cxtgeo.new_intpointer()
         ptr_ny = _cxtgeo.new_intpointer()
         ptr_nz = _cxtgeo.new_intpointer()
@@ -479,7 +537,7 @@ class GridProperty(Grid3D):
         _cxtgeo.grd3d_scan_ecl_init_hd(1, ptr_nx, ptr_ny, ptr_nz,
                                        pfile, xtg_verbose_level)
 
-        self.logger.info('Scanning NX NY NZ for checking... DONE')
+        self.logger.debug('Scanning NX NY NZ for checking... DONE')
 
         nx0 = _cxtgeo.intpointer_value(ptr_nx)
         ny0 = _cxtgeo.intpointer_value(ptr_ny)
@@ -488,14 +546,14 @@ class GridProperty(Grid3D):
         if grid.nx != nx0 or grid.ny != ny0 or \
                 grid.nz != nz0:
             self.logger.error('Errors in dimensions property vs grid')
-            return
+            return -9
 
         self._nx = nx0
         self._ny = ny0
         self._nz = nz0
 
         # split date and populate array
-        self.logger.info('Date handling...')
+        self.logger.debug('Date handling...')
         if date is None:
             date = 99998877
         date = str(date)
@@ -531,8 +589,9 @@ class GridProperty(Grid3D):
             ndates = 0
         if etype == 5:
             ndates = 1
-        self.logger.info('Import via _cxtgeo... NX NY NX are {} {} {}'
-                         .format(nx0, ny0, nz0))
+        self.logger.debug('Import via _cxtgeo... NX NY NX are '
+                          '{} {} {}'.format(nx0, ny0, nz0))
+
         _cxtgeo.grd3d_import_ecl_prop(etype,
                                       nx0 * ny0 * nz0,
                                       grid._p_actnum_v,
@@ -548,14 +607,17 @@ class GridProperty(Grid3D):
                                       ptr_norder,
                                       ptr_dsuccess,
                                       xtg_verbose_level)
-        self.logger.info('Import via _cxtgeo... DONE')
+
+        self.logger.debug('Import via _cxtgeo... DONE')
         # process the result:
         norder = _cxtgeo.intarray_getitem(ptr_norder, 0)
         if norder == 0:
-            self.logger.info('Got 1 item OK')
+            self.logger.debug('Got 1 item OK')
         else:
-            self.logger.error('Did not get any property name: {}'.format(name))
-            self.logger.error('NORDER is {}'.format(norder))
+            self.logger.warning('Did not get any property name'
+                                ': {} Missing date?'.format(name))
+            self.logger.warning('NORDER is {}'.format(norder))
+            return 1
 
         nktype = _cxtgeo.intarray_getitem(ptr_nktype, 0)
 
@@ -577,13 +639,14 @@ class GridProperty(Grid3D):
                                         xtg_verbose_level)
 
         # self._update_values()
+        return 0
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export ROFF format
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def _export_roff(self, pfile, name):
 
-        self.logger.info('Exporting {} to file {}'.format(name, pfile))
+        self.logger.debug('Exporting {} to file {}'.format(name, pfile))
 
         self._update_cvalues()
         # need to call the C function...
@@ -622,7 +685,7 @@ class GridProperty(Grid3D):
 
     def _update_values(self):
         """copy (update) values from SWIG carray to numpy, 1D array"""
-        self.logger.info('Update numpy from C values')
+        self.logger.debug('Update numpy from C values')
 
         n = self.ntotal
         self.logger.debug('N is {}'.format(n))
@@ -635,14 +698,15 @@ class GridProperty(Grid3D):
             sys.exit(9)
 
         if not self._isdiscrete:
+            self.logger.debug('Entering conversion to numpy (float64) ...')
             x = _cxtgeo.swig_carr_to_numpy_1d(n, self._cvalues)
 
-            # make it float32 or whatever and mask it
+            # make it float64 or whatever(?) and mask it
             self._values = x.astype(self._dtype)
             self.mask_undef()
 
         else:
-            self.logger.info('Entering conversion to numpy (double) ...')
+            self.logger.debug('Entering conversion to numpy (int32) ...')
             self._values = _cxtgeo.swig_carr_to_numpy_i1d(n, self._cvalues)
 
             # make it int32 (not as RMS?) and mask it
@@ -654,7 +718,7 @@ class GridProperty(Grid3D):
     def _update_cvalues(self):
         """copy (update) values from numpy to SWIG, 1D array"""
 
-        self.logger.info('Entering conversion from numpy to C array ...')
+        self.logger.debug('Entering conversion from numpy to C array ...')
         if self._values is None and self._cvalues is not None:
             return
         elif self._cvalues is None and self._values is None:
@@ -670,7 +734,7 @@ class GridProperty(Grid3D):
 
         if x.dtype == 'float64' and self._isdiscrete:
             x = x.astype('int32')
-            self.logger.warning('Casting has been done')
+            self.logger.degug('Casting has been done')
 
         if self._isdiscrete is False:
             self._cvalues = _cxtgeo.new_doublearray(self.ntotal)
@@ -703,6 +767,20 @@ class GridProperty(Grid3D):
             return False
         return True
 
+    def discrete_to_continuous(self):
+        """Convert from discrete to continuous values"""
+
+        if self.isdiscrete:
+            val = self.values.copy()
+            val = val.astype('float64')
+            self.values = val
+            self._isdiscrete = False
+            self._dtype = val.dtype
+            self._codes = {}
+            self._ncodes = 1
+        else:
+            self.logger.debug('No need to convert, already continuous')
+
 
 def main():
     """Initial testing with main()"""
@@ -717,7 +795,7 @@ def main():
 
     xtg.info(poro.values)
 
-    logger.info('NX method is inherited from Grid class: {}'.format(poro.nx))
+    logger.debug('NX method is inherited from Grid class: {}'.format(poro.nx))
 
     poro.values = poro.values + 3
 
