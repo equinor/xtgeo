@@ -133,13 +133,15 @@ install: dist ## version to VENV install place
 
 siteinstall: dist ## Install in project/res (Trondheim) using $TARGET
 	@echo $(HOST)
-	\rm -fr  ${TARGET}/${APPLICATION}*
+	\rm -fr  ${TARGET}/${APPLICATION}
+	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
 	/project/res/bin/res_perm ${TARGET}/${APPLICATION}*
 
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
-	@\rm -fr  ${USRPYPATH}/${APPLICATION}*
+	@\rm -fr  ${USRPYPATH}/${APPLICATION}
+	@\rm -fr  ${USRPYPATH}/${APPLICATION}-*
 	@${PIP} install --target ${USRPYPATH} --upgrade  ./dist/*.whl
 
 

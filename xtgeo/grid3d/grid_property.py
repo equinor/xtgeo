@@ -26,6 +26,7 @@ import logging
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
+from . import _grid_property_op1
 
 # =============================================================================
 # Class constructor
@@ -356,6 +357,8 @@ class GridProperty(Grid3D):
         else:
             return False
 
+        return self
+
     def to_file(self, pfile, fformat='roff', name=None):
         """
         Export grid property to file.
@@ -373,6 +376,36 @@ class GridProperty(Grid3D):
                 name = self.name
             self._export_roff(pfile, name)
 
+    def get_xy_value_lists(self, grid=None, mask=True):
+        """Get lists of xy coords and values for Webportal format.
+
+        The coordinates are on the form (two cells)::
+
+            [[[(x1,y1), (x2,y2), (x3,y3), (x4,y4)],
+            [(x5,y5), (x6,y6), (x7,y7), (x8,y8)]]]
+
+        Args:
+            grid (object): The XTGeo Grid object for the property
+            mask (bool): If true (default), inactive cells will be omitted,
+                otherwise cell geometries will be listed and property will
+                have value -999 in undefined cells.
+
+        Example::
+
+            grid = Grid()
+            grid.from_file('../xtgeo-testdata/3dgrids/bri/b_grid.roff')
+            prop = GridProperty()
+            prop.from_file('../xtgeo-testdata/3dgrids/bri/b_poro.roff',
+                           grid=grid, name='PORO')
+
+            clist, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+
+
+        """
+
+        clist, vlist = _grid_property_op1.get_xy_value_lists(self, grid=grid,
+                                                             mask=mask)
+        return clist, vlist
 
     # =========================================================================
     # PRIVATE METHODS

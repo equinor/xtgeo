@@ -2,6 +2,7 @@ import unittest
 import os
 import sys
 import logging
+from timeit import default_timer as timer
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
@@ -177,6 +178,76 @@ class TestGridProperty(unittest.TestCase):
 
         # export to ROFF
         # po.to_file("TMP/zone.roff")
+
+    def test_get_all_corners(self):
+        """Get X Y Z for all corners as XTGeo GridProperty objects"""
+
+        self.getlogger(sys._getframe(1).f_code.co_name)
+
+        grid = Grid()
+        grid.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
+        allc = grid.get_xyz_corners()
+
+        x0 = allc[0]
+        y0 = allc[1]
+        z0 = allc[2]
+        x1 = allc[3]
+        y1 = allc[4]
+        z1 = allc[5]
+
+        # top of cell layer 2 in cell 41 41 (if 1 index start as RMS)
+        self.assertAlmostEqual(x0.values3d[40, 40, 1], 455116.76, places=2)
+        self.assertAlmostEqual(y0.values3d[40, 40, 1], 6787710.22, places=2)
+        self.assertAlmostEqual(z0.values3d[40, 40, 1], 1966.31, places=2)
+
+        self.assertAlmostEqual(x1.values3d[40, 40, 1], 455215.26, places=2)
+        self.assertAlmostEqual(y1.values3d[40, 40, 1], 6787710.60, places=2)
+        self.assertAlmostEqual(z1.values3d[40, 40, 1], 1959.87, places=2)
+
+
+    def test_get_cell_corners(self):
+        """Get X Y Z for one cell as tuple"""
+
+        self.getlogger(sys._getframe(1).f_code.co_name)
+
+        grid = Grid()
+        grid.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
+        clist = grid.get_xyz_cell_corners(ijk=(40, 40, 1))
+
+    def test_get_xy_values_for_webportal(self):
+        """Get lists on webportal format"""
+
+        self.getlogger(sys._getframe(1).f_code.co_name)
+
+        grid = Grid()
+        grid.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
+        prop = GridProperty()
+        prop.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_poro.roff',
+                       grid=grid, name='PORO')
+
+        start = timer()
+        self.logger.info('Start time: {}'.format(start))
+        coord, valuelist = prop.get_xy_value_lists(grid=grid)
+        end = timer()
+        self.logger.info('End time: {}. Elapsed {}'.format(end, end - start))
+
+        grid = Grid()
+        grid.from_file('../xtgeo-testdata/3dgrids/bri/b_grid.roff')
+        prop = GridProperty()
+        prop.from_file('../xtgeo-testdata/3dgrids/bri/b_poro.roff',
+                       grid=grid, name='PORO')
+
+        coord, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+
+        self.logger.info('\n{}'.format(coord))
+        self.logger.info('\n{}'.format(valuelist))
+
+        self.logger.info('Cell 1 1 1 coords\n{}.'.format(coord[0][0]))
+        self.assertEqual(coord[0][0][0], (454.875, 318.5))
+        self.assertEqual(valuelist[0][0], -999.0)
+
+
+
 
 if __name__ == '__main__':
 

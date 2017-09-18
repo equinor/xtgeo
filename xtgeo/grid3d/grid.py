@@ -443,6 +443,156 @@ class Grid(Grid3D):
         # return the objects
         return x, y, z
 
+    def get_xyz_cell_corners(self, ijk=(1, 1, 1), mask=True):
+        """Return 8*3 list x, y, z for each corner.
+
+        3       4
+        |-------|
+        |  top  |
+        |-------|
+        1       2
+
+        7       8
+        |-------|
+        |  base |
+        |-------|
+        5       6
+
+        Args:
+            ijk (tuple): A tuple of I J K (cell counting starts from 1)
+            mask (bool): Skip undef cells if set to True.
+
+        Returns:
+            A tuple with 24 elements (x1, y1, z1, ... x8, y8, z8)
+                for 8 corners. None if cell is inactive and mask=True.
+
+        Example::
+
+            >>> grid = Grid()
+            >>> grid.from_file('gullfaks2.roff')
+            >>> xyzlist = grid.get_xyz_corners_cell(ijk=(45,13,2))
+
+        Raises:
+            RuntimeWarning if spesification is invalid.
+        """
+
+        i, j, k = ijk
+
+        if mask is True:
+            actnum = self.get_actnum()
+            iact = actnum.values3d[i - 1, j - 1, k - 1]
+            if iact == 0:
+                return None
+
+        pcorners = _cxtgeo.new_doublearray(24)
+
+        # need to call the C function...
+        _cxtgeo.xtg_verbose_file('NONE')
+        xtg_verbose_level = self._xtg.syslevel
+
+        _cxtgeo.grd3d_corners(i, j, k,
+                              self.nx, self.ny, self.nz,
+                              self._p_coord_v, self._p_zcorn_v,
+                              pcorners, xtg_verbose_level)
+
+        cornerlist = []
+        for i in range(24):
+            cornerlist.append(_cxtgeo.doublearray_getitem(pcorners, i))
+
+        clist = tuple(cornerlist)
+        return clist
+
+    def get_xyz_corners(self, names=['X', 'Y', 'Z']):
+        """Return 8*3 GridProperty objects, x, y, z for each corner.
+
+        The values are cell corner values. Note that ACTNUM is
+        ignored, so these is also extracted for UNDEF cells (which may have
+        weird coordinates).
+
+        2       3
+        |-------|
+        |  top  |
+        |-------|
+        0       1
+
+        6       7
+        |-------|
+        |  base |
+        |-------|
+        4       5
+
+        Args:
+            names (list): Generic name of the properties, will have a
+                number added, e.g. X0, X1, etc.
+
+        Example::
+
+            >>> grid = Grid()
+            >>> grid.from_file('gullfaks2.roff')
+            >>> clist = grid.get_xyz_corners()
+
+
+        Raises:
+            RunetimeError if corners has wrong spesification
+        """
+
+        ntot = self.ntotal
+
+        grid_props = []
+
+        for i in range(0, 8):
+            xname = names[0] + str(i)
+            yname = names[1] + str(i)
+            zname = names[2] + str(i)
+            x = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+                             values=np.zeros(ntot, dtype=np.float64),
+                             name=xname, discrete=False)
+
+            y = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+                             values=np.zeros(ntot, dtype=np.float64),
+                             name=yname, discrete=False)
+
+            z = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+                             values=np.zeros(ntot, dtype=np.float64),
+                             name=zname, discrete=False)
+
+            grid_props.append(x)
+            grid_props.append(y)
+            grid_props.append(z)
+
+        ptr_coord = []
+        for i in range(24):
+            some = _cxtgeo.new_doublearray(self.ntotal)
+            ptr_coord.append(some)
+
+        for i, v in enumerate(ptr_coord):
+            self.logger.debug('SWIG object {}   {}'.format(i, v))
+
+        # need to call the C function...
+        _cxtgeo.xtg_verbose_file('NONE')
+        xtg_verbose_level = self._xtg.syslevel
+
+        option = 0
+
+        # note, fool the argument list to unpack ptr_coord with * ...
+        _cxtgeo.grd3d_get_all_corners(self._nx, self._ny, self._nz,
+                                      self._p_coord_v,
+                                      self._p_zcorn_v, self._p_actnum_v,
+                                      *(ptr_coord + [option] +
+                                        [xtg_verbose_level]))
+
+        for i in range(0, 24, 3):
+            grid_props[i]._cvalues = ptr_coord[i]
+            grid_props[i + 1]._cvalues = ptr_coord[i + 1]
+            grid_props[i + 2]._cvalues = ptr_coord[i + 2]
+
+            grid_props[i]._update_values()
+            grid_props[i + 1]._update_values()
+            grid_props[i + 2]._update_values()
+
+        # return the 24 objects (x1, y1, z1, ... x8, y8, z8)
+        return grid_props
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get grid geometrics
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -941,40 +1091,6 @@ class Grid(Grid3D):
 
         # end tag
         _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)
-
-
-# =============================================================================
-# Some private helper methods
-# =============================================================================
-
-    # copy (update) values from SWIG carray to numpy, 1D array
-    # CHECK THIS!
-    def _update_values(self):
-        n = self._nx * self._ny * self._nz
-        if not self._isdiscrete:
-            # x = _cxtgeo.swig_carr_to_numpy_1d(n, self._cvalues)
-
-            self._undef = _cxtgeo.UNDEF
-            self._undef_limit = _cxtgeo.UNDEF_INT_LIMIT
-
-            self.mask_undef()
-
-        else:
-            self._values = _cxtgeo.swig_carr_to_numpy_i1d(n, self._cvalues)
-
-            self._undef = _cxtgeo.UNDEF_INT
-            self._undef_limit = _cxtgeo.UNDEF_INT_LIMIT
-
-            # make it int32 (not as RMS?) and mask it
-            self._values = self._values.astype(np.int32)
-            self.mask_undef()
-
-    # copy (update) values from numpy to SWIG, 1D array
-    def _update_cvalues(self):
-        if self._ptype == 1:
-            _cxtgeo.swig_numpy_to_carr_1d(self._values, self._cvalues)
-        else:
-            _cxtgeo.swig_numpy_to_carr_i1d(self._values, self._cvalues)
 
 
 # =============================================================================
