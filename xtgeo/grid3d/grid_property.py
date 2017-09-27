@@ -47,13 +47,12 @@ class GridProperty(Grid3D):
 
     An instance may or may not belong to a grid (geometry) object. E.g. for
     for ROFF, nx, ny, nz are given in the file. Note that in such
-    cases the undef cells may (or may not) flagegs as a very high number.
+    cases the undef cells may (or may not) are flagged as a very high number.
     """
 
-    def __init__(self, nx=5, ny=12, nz=2, values=None, name='Dummy',
-                 discrete=False):
-        """
-        The __init__ (constructor) method, normally ran without args.
+    def __init__(self, *args, **kwargs):
+        """The __init__ (constructor) method, can be ran empty, or with two
+        variant of input arguments.
 
         Args:
             nx (int): Number of columns.
@@ -64,19 +63,44 @@ class GridProperty(Grid3D):
             discrete (bool): True if discrete property
                 (default is false).
 
-        Returns:
-            A GridProperty object.
+        Alternatively, the same arguments as the from_file() method
+        can be used.
 
-        Example::
+        Returns:
+            A GridProperty object instance.
+
+        Raises:
+            RuntimeError if something goes wrong (e.g. file not found)
+
+        Examples::
 
             myprop = GridProperty()
             myprop.from_file('emerald.roff', name='PORO')
+
+            # or
+
+            myprop = GridProperty(nx=12, ny=17, nz=10,
+                                  values=np.ones(12*17*10),
+                                  discrete=True, name='MyValue')
+
+            # or
+
+            myprop = GridProperty('emerald.roff', name='PORO')
 
         """
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
         self.logger.addHandler(logging.NullHandler())
+        self._xtg = XTGeoDialog()
+
+        nx = kwargs.get('nx', 5)
+        ny = kwargs.get('ny', 12)
+        nz = kwargs.get('nz', 2)
+        values = kwargs.get('values', None)
+        name = kwargs.get('name', 'unknown')
+        date = kwargs.get('date', None)
+        discrete = kwargs.get('discrete', False)
 
         self._nx = nx
         self._ny = ny
@@ -84,8 +108,10 @@ class GridProperty(Grid3D):
 
         self._isdiscrete = discrete
 
+        testmask = False
         if values is None:
-            values = np.zeros(5 * 12 * 2)
+            values = np.zeros(nx * ny * nz)
+            testmask = True
 
         self._values = values       # numpy version of properties (as 1D array)
         self._cvalues = None        # carray swig pointer version of map values
@@ -107,13 +133,22 @@ class GridProperty(Grid3D):
             self._values = self._values.astype(np.int32)
             self._dtype = self._values.dtype
 
-        # make some undef cells (for test)
-        self._values[0:4] = self._undef
+        if testmask:
+            # make some undef cells (for test)
+            self._values[0:4] = self._undef
+            # make it masked
+            self._values = ma.masked_greater(self._values, self._undef_limit)
 
-        # make it masked
-        self._values = ma.masked_greater(self._values, self._undef_limit)
+        if len(args) == 1:
+            # make instance through file import
 
-        self._xtg = XTGeoDialog()
+            self.logger.debug('Import from file...')
+            fformat = kwargs.get('fformat', 'guess')
+            name = kwargs.get('name', 'unknown')
+            date = kwargs.get('date', None)
+            grid = kwargs.get('grid', None)
+            self.from_file(args[0], fformat=fformat, name=name,
+                           grid=grid, date=date)
 
     def __del__(self):
         self._delete_cvalues()
@@ -295,7 +330,7 @@ class GridProperty(Grid3D):
     # Import and export
     # =========================================================================
 
-    def from_file(self, pfile, fformat='roff', name='unknown',
+    def from_file(self, pfile, fformat='guess', name='unknown',
                   grid=None, date=None):
         """
         Import grid property from file, and makes an instance of this class
@@ -303,7 +338,7 @@ class GridProperty(Grid3D):
         Args:
             file (str): name of file to be imported
             fformat (str): file format to be used roff/init/unrst
-                (roff is default).
+                (guess is default).
             name (str): name of property to import
             date (int): For restart files, date on YYYYMMDD format.
             grid (Grid object): Grid Object to link too (optional).
@@ -350,8 +385,10 @@ class GridProperty(Grid3D):
             self.logger.warning('Invalid file format')
             sys.exit(1)
 
-        # would be better with excpetion handling?
-        print('IER IS', ier)
+        if ier != 0:
+            raise RuntimeError('An error occured during import')
+
+        # would be better with exception handling?
         if ier == 0:
             return True
         else:

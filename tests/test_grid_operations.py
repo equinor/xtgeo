@@ -40,12 +40,12 @@ def getlogger(name):
 def test_hybridgrid1():
     """Making a hybridgrid for Emerald case (ROFF and GRDECL"""
 
-    logger = getlogger('test_hybridgrid1')
+    logger = getlogger(__name__)
 
     logger.info('Read grid...')
     grd = Grid(emegfile)
     logger.info('Read grid... done, NZ is {}'.format(grd.nz))
-    grd.to_file('TMP/test_hybridgrid1_asis.grdecl')
+    grd.to_file('TMP/test_hybridgrid1_asis.grdecl', fformat='grdecl')
 
     logger.info('Convert...')
     nhdiv = 40
@@ -66,7 +66,7 @@ def test_hybridgrid1():
 
     logger.info('Read grid 2...')
     grd2 = Grid('TMP/test_hybridgrid1_asis.grdecl')
-    logger.info('Read grid... done, NZ is {}'.format(grd.nz))
+    logger.info('Read grid... done, NZ is {}'.format(grd2.nz))
 
     logger.info('Convert...')
     nhdiv = 40

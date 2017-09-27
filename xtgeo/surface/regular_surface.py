@@ -838,24 +838,51 @@ class RegularSurface(object):
             True if operation went OK (but check result!), False if not
         """
 
-        a = hcpfzprop
-        self.logger.debug('MIN MAX MEAN', a.min(), a.max(), a.mean())
+        # logging of input:
 
-        self.logger.debug('Enter hc_thickness_from_3dprops')
+        a = hcpfzprop
+        self.logger.debug('HCPFZ MIN MAX MEAN {} {} {}'.
+                          format(a.min(), a.max(), a.mean()))
+        a = xprop
+        self.logger.debug('XCOORD MIN MAX MEAN {} {} {}'.
+                          format(a.min(), a.max(), a.mean()))
+        a = yprop
+        self.logger.debug('YCOORD MIN MAX MEAN {} {} {}'.
+                          format(a.min(), a.max(), a.mean()))
+
+        if zoneprop is not None:
+            a = zoneprop
+            self.logger.debug('HCPFZ MIN MAX MEAN {} {} {}'.
+                              format(a.min(), a.max(), a.mean()))
+
 
         ncol, nrow, nlay = xprop.shape
 
         if layer_minmax is None:
-            layer_minmax = (1, 99999)
+            layer_minmax = (1, nlay)
+        else:
+            minmax = list(layer_minmax)
+            if minmax[0] < 1:
+                minmax[0] = 1
+            if minmax[1] > nlay:
+                minmax[1] = nlay
+            layer_minmax = tuple(minmax)
 
         if zone_minmax is None:
             zone_minmax = (1, 99999)
 
-        self.logger.debug('Layout is {} {} {}'.format(ncol, nrow, nlay))
+        if zone_minmax is not None:
+            self.logger.info('ZONE_MINMAX {}'.format(zone_minmax))
+        else:
+            self.logger.debug('ZONE_MINMAX not given...')
+
+        self.logger.info('LAYER_MINMAX {}'.format(layer_minmax))
+
+        self.logger.debug('Grid layout is {} {} {}'.format(ncol, nrow, nlay))
 
         # do not allow rotation...
         if self._rotation < -0.1 or self._rotation > 0.1:
-            self.logger.error('Cannut use rotated maps. Return')
+            self.logger.error('Cannot use rotated maps. Return')
             return False
 
         xmax = self._xori + self._xinc * self._nx
@@ -865,31 +892,43 @@ class RegularSurface(object):
 
         xi, yi = np.meshgrid(xi, yi, indexing='ij')
 
-        # filter and compute per K layer (start count on 1)
-        for k in range(1, nlay + 1):
+        # filter and compute per K layer (start count on 0)
+        for k0 in range(layer_minmax[0] - 1, layer_minmax[1]):
 
-            if k < layer_minmax[0] or k > layer_minmax[1]:
+            k1 = k0 + 1   # layer counting base is 1 for k1
+
+            self.logger.info('Mapping for layer ' + str(k1) + '...')
+            self.logger.debug('K0 counter is {}'.format(k0))
+
+            if k1 == layer_minmax[0]:
+                self.logger.info('Initialize zsum ...')
+                zsum = np.zeros((self._nx, self._ny))
+
+            # this should actually never happen...
+            if k1 < layer_minmax[0] or k1 > layer_minmax[1]:
+                self.logger.info('SKIP (layer_minmax)')
                 continue
 
-            zonecopy = np.copy(zoneprop[:, :, k - 1:k])
+            zonecopy = np.copy(zoneprop[:, :, k0])
 
-            if zone_minmax[0] > zonecopy.mean() > zone_minmax[1]:
+            self.logger.debug('Zone MEAN is {}'.format(zonecopy.mean()))
+
+            actz = zonecopy.mean()
+            if actz < zone_minmax[0] or actz > zone_minmax[1]:
+                self.logger.info('SKIP (not active zone)')
                 continue
 
-            self.logger.info('Mapping for ' + str(k) + '...')
 
             # get slices per layer of relevant props
-            xcopy = np.copy(xprop[:, :, k - 1:k])
-            ycopy = np.copy(yprop[:, :, k - 1:k])
-            zcopy = np.copy(hcpfzprop[:, :, k - 1:k])
+            xcopy = np.copy(xprop[:, :, k0])
+            ycopy = np.copy(yprop[:, :, k0])
+            zcopy = np.copy(hcpfzprop[:, :, k0])
 
-            if k == layer_minmax[0]:
-                zsum = np.zeros((self._nx, self._ny))
 
             propsum = zcopy.sum()
             if (abs(propsum) < 1e-12):
                 self.logger.debug('Z property sum is {}'.format(propsum))
-                self.logger.debug('Skip layer K = {}'.format(k))
+                self.logger.info('Too little HC, skip layer K = {}'.format(k1))
                 continue
             else:
                 self.logger.debug('Z property sum is {}'.format(propsum))
@@ -907,9 +946,6 @@ class RegularSurface(object):
                                                                yprop.max()))
             self.logger.debug('HCPROP min and max {} {}'
                               .format(hcpfzprop.min(), hcpfzprop.max()))
-            self.logger.debug('Repr XI?: \n{}'.format(repr(xi)))
-            self.logger.debug('Repr XPROP?: \n{}'.format(repr(xprop)))
-            self.logger.debug('Repr HC?: \n{}'.format(repr(hcpfzprop)))
 
             # need to make arrays 1D
             self.logger.debug('Reshape and filter ...')
@@ -925,13 +961,14 @@ class RegularSurface(object):
 
             self.logger.debug('Reshape and filter ... done')
 
-            self.logger.debug('Map ...')
+            self.logger.debug('Map ... layer = {}'.format(k1))
 
             try:
                 zi = scipy.interpolate.griddata((x, y), z, (xi, yi),
                                                 method='linear',
                                                 fill_value=0.0)
             except ValueError:
+                self.logger.info('Not able to grid layer {}'.format(k1))
                 continue
 
             self.logger.info('ZI shape is {}'.format(zi.shape))

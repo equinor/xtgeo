@@ -23,6 +23,7 @@ from .grid_property import GridProperty
 from .grid_properties import GridProperties
 
 from xtgeo.grid3d import _hybridgrid
+from xtgeo.grid3d import _grid_export
 
 # =============================================================================
 # Class constructor
@@ -77,7 +78,7 @@ class Grid(Grid3D):
 
         if len(args) == 1:
             # make an instance directly through import of a file
-            fformat = kwargs.get('fformat', 'roff')
+            fformat = kwargs.get('fformat', 'guess')
             initprops = kwargs.get('initprops', None)
             restartprops = kwargs.get('restartprops', None)
             restartdates = kwargs.get('restartdates', None)
@@ -240,6 +241,7 @@ class Grid(Grid3D):
         fext = fext.replace('.', '')
         fext = fext.lower()
 
+        self.logger.info('Format is {}'.format(fformat))
         if fformat == 'guess':
             self.logger.info('Format is <guess>')
             fflist = ['egrid', 'grid', 'grdecl', 'roff', 'eclipserun']
@@ -303,9 +305,11 @@ class Grid(Grid3D):
         """
 
         if fformat == 'roff' or fformat == 'roff_binary':
-            self._export_roff(gfile, 0)
+            _grid_export.export_roff(self, gfile, 0)
         elif fformat == 'roff_ascii':
-            self._export_roff(gfile, 1)
+            _grid_export.export_roff(self, gfile, 1)
+        elif fformat == 'grdecl':
+            _grid_export.export_grdecl(self, gfile)
 
 # =========================================================================
 # Get some grid basics
@@ -716,12 +720,11 @@ class Grid(Grid3D):
     def convert_to_hybrid(self, nhdiv=10, toplevel=1000, bottomlevel=1100,
                           region=None, region_number=None):
 
-        res = _hybridgrid.make_hybridgrid(self, nhdiv=nhdiv, toplevel=toplevel,
-                                          bottomlevel=bottomlevel,
-                                          region=region,
-                                          region_number=region_number)
-
-        self = res
+        self = _hybridgrid.make_hybridgrid(self, nhdiv=nhdiv,
+                                           toplevel=toplevel,
+                                           bottomlevel=bottomlevel,
+                                           region=region,
+                                           region_number=region_number)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Report well to zone mismatch
@@ -1065,32 +1068,32 @@ class Grid(Grid3D):
         self.logger.info('Number of active cells: {}'.format(nact))
         self._nsubs = 0
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # export ROFF
-    # option = 0 binary; option = 1 ascii
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    def _export_roff(self, gfile, option):
+    # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # # export ROFF
+    # # option = 0 binary; option = 1 ascii
+    # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # def _export_roff(self, gfile, option):
 
-        _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = self._xtg.syslevel
+    #     _cxtgeo.xtg_verbose_file('NONE')
+    #     xtg_verbose_level = self._xtg.syslevel
 
-        if self._nsubs == 0 and not hasattr(self, '_p_subgrd_v'):
-            self.logger.debug('Create a pointer for _p_subgrd_v ...')
-            self._p_subgrd_v = _cxtgeo.new_intpointer()
+    #     if self._nsubs == 0 and not hasattr(self, '_p_subgrd_v'):
+    #         self.logger.debug('Create a pointer for _p_subgrd_v ...')
+    #         self._p_subgrd_v = _cxtgeo.new_intpointer()
 
-        # get the geometrics list to find the xshift, etc
-        gx = self.get_geometrics()
+    #     # get the geometrics list to find the xshift, etc
+    #     gx = self.get_geometrics()
 
-        _cxtgeo.grd3d_export_roff_grid(option, self._nx, self._ny, self._nz,
-                                       self._nsubs, 0, gx[3], gx[5], gx[7],
-                                       self._p_coord_v, self._p_zcorn_v,
-                                       self._p_actnum_v, self._p_subgrd_v,
-                                       gfile, xtg_verbose_level)
+    #     _cxtgeo.grd3d_export_roff_grid(option, self._nx, self._ny, self._nz,
+    #                                    self._nsubs, 0, gx[3], gx[5], gx[7],
+    #                                    self._p_coord_v, self._p_zcorn_v,
+    #                                    self._p_actnum_v, self._p_subgrd_v,
+    #                                    gfile, xtg_verbose_level)
 
-        # skip parameters for now (cf Perl code)
+    #     # skip parameters for now (cf Perl code)
 
-        # end tag
-        _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)
+    #     # end tag
+    #     _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)
 
 
 # =============================================================================

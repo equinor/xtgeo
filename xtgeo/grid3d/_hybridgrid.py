@@ -83,8 +83,6 @@ def make_hybridgrid(grid, **kwargs):
                                       region_number,
                                       xtg_verbose_level)
 
-
-
     grid._nz = newnz
     grid._nactive = _cxtgeo.intpointer_value(hyb_num_act)
     grid._p_zcorn_v = hyb_p_zcorn_v
