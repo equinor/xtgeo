@@ -62,17 +62,17 @@ def import_segy_io(sfile):
         logger.debug(segyfile.ilines)
         logger.debug(len(segyfile.ilines))
 
-        nx, ny, nz = values.shape
+        ncol, nrow, nlay = values.shape
 
-        logger.info('NXYZ  {} {} {}'.format(nx, ny, nz))
+        logger.info('NRCL  {} {} {}'.format(ncol, nrow, nlay))
         logger.info(len(segyfile.xlines))
         logger.info(len(segyfile.ilines))
 
         # need positions for all 4 corners
-        c1 = xcalc.ijk_to_ib(1, 1, 1, nx, ny, 1, forder=False)
-        c2 = xcalc.ijk_to_ib(nx, 1, 1, nx, ny, 1, forder=False)
-        c3 = xcalc.ijk_to_ib(1, ny, 1, nx, ny, 1, forder=False)
-        c4 = xcalc.ijk_to_ib(nx, ny, 1, nx, ny, 1, forder=False)
+        c1 = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
+        c2 = xcalc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
+        c3 = xcalc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
+        c4 = xcalc.ijk_to_ib(ncol, nrow, 1, ncol, nrow, 1, forder=False)
 
         clist = [c1, c2, c3, c4]
 
@@ -115,7 +115,7 @@ def import_segy_io(sfile):
             if i == 1:
                 slen, rotrad1, rot1 = xcalc.vectorinfo2(xori, cdpx,
                                                         yori, cdpy)
-                xinc = slen / (nx - 1)
+                xinc = slen / (ncol - 1)
                 logger.debug(slen)
 
                 rotation = rot1
@@ -124,7 +124,7 @@ def import_segy_io(sfile):
             if i == 2:
                 slen, rotrad2, rot2 = xcalc.vectorinfo2(xori, cdpx,
                                                         yori, cdpy)
-                yinc = slen / (ny - 1)
+                yinc = slen / (nrow - 1)
                 logger.debug(slen)
 
                 # find YFLIP by cross products
@@ -142,9 +142,9 @@ def import_segy_io(sfile):
     # data to return
     sdata['values'] = values
     sdata['cvalues'] = None
-    sdata['nx'] = nx
-    sdata['ny'] = ny
-    sdata['nz'] = nz
+    sdata['ncol'] = ncol
+    sdata['nrow'] = nrow
+    sdata['nlay'] = nlay
     sdata['xori'] = xori
     sdata['xinc'] = xinc
     sdata['yori'] = yori
@@ -220,9 +220,9 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
     # next is to scan first and last trace, in order to allocate
     # cube size
 
-    ptr_nx = _cxtgeo.new_intpointer()
-    ptr_ny = _cxtgeo.new_intpointer()
-    ptr_nz = _cxtgeo.new_intpointer()
+    ptr_ncol = _cxtgeo.new_intpointer()
+    ptr_nrow = _cxtgeo.new_intpointer()
+    ptr_nlay = _cxtgeo.new_intpointer()
     ptr_xori = _cxtgeo.new_doublepointer()
     ptr_yori = _cxtgeo.new_doublepointer()
     ptr_zori = _cxtgeo.new_doublepointer()
@@ -249,9 +249,9 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
                              gf_segyformat,
                              gn_samplespertrace,
                              # result (as pointers)
-                             ptr_nx,
-                             ptr_ny,
-                             ptr_nz,
+                             ptr_ncol,
+                             ptr_nrow,
+                             ptr_nlay,
                              ptr_dummy,
                              ptr_xori,
                              ptr_xinc,
@@ -272,18 +272,18 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
 
     logger.debug('Scan via C wrapper... done')
 
-    nx = _cxtgeo.intpointer_value(ptr_nx)
-    ny = _cxtgeo.intpointer_value(ptr_ny)
-    nz = _cxtgeo.intpointer_value(ptr_nz)
+    ncol = _cxtgeo.intpointer_value(ptr_ncol)
+    nrow = _cxtgeo.intpointer_value(ptr_nrow)
+    nlay = _cxtgeo.intpointer_value(ptr_nlay)
 
     if scantracemode:
         return
 
-    nxyz = nx * ny * nz
+    nrcl = ncol * nrow * nlay
 
-    logger.debug('Allocate number of cells: {}'.format(nxyz))
+    logger.debug('Allocate number of cells: {}'.format(nrcl))
 
-    ptr_cval_v = _cxtgeo.new_floatarray(nxyz)
+    ptr_cval_v = _cxtgeo.new_floatarray(nrcl)
 
     # next is to do the actual import of the cube
     optscan = 0
@@ -296,9 +296,9 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
                              gf_segyformat,
                              gn_samplespertrace,
                              # result (as pointers)
-                             ptr_nx,
-                             ptr_ny,
-                             ptr_nz,
+                             ptr_ncol,
+                             ptr_nrow,
+                             ptr_nlay,
                              ptr_cval_v,
                              ptr_xori,
                              ptr_xinc,
@@ -319,9 +319,9 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
 
     logger.debug('Import via C wrapper...')
 
-    sdata['nx'] = nx
-    sdata['ny'] = ny
-    sdata['nz'] = nz
+    sdata['ncol'] = ncol
+    sdata['nrow'] = nrow
+    sdata['nlay'] = nlay
 
     sdata['xori'] = _cxtgeo.doublepointer_value(ptr_xori)
     sdata['yori'] = _cxtgeo.doublepointer_value(ptr_yori)
@@ -340,7 +340,7 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
     sdata['maxval'] = _cxtgeo.doublepointer_value(ptr_maxval)
 
     sdata['zmin'] = sdata['zori']
-    sdata['zmax'] = sdata['zori'] + sdata['zflip'] * sdata['zinc'] * (nz - 1)
+    sdata['zmax'] = sdata['zori'] + sdata['zflip'] * sdata['zinc'] * (nlay - 1)
 
     # the pointer to 1D C array
     sdata['cvalues'] = ptr_cval_v
@@ -394,16 +394,16 @@ def import_stormcube(sfile):
             if iline == 5:
                 zlen, rot = xline.strip().split()
             if iline == 6:
-                nx, ny, nz = xline.strip().split()
+                ncol, nrow, nlay = xline.strip().split()
                 dataline = line + 2
     sf.close()
 
     logger.debug('BINARY data starts at line  {}'.format(dataline))
 
-    nx = int(nx)
-    ny = int(ny)
-    nz = int(nz)
-    nxyz = nx * ny * nz
+    ncol = int(ncol)
+    nrow = int(nrow)
+    nlay = int(nlay)
+    nrcl = ncol * nrow * nlay
 
     xori = float(xori)
     yori = float(yori)
@@ -413,14 +413,14 @@ def import_stormcube(sfile):
     if rotation < 0:
         rotation += 360
 
-    xinc = float(xlen) / (nx - 1 + 1)
-    yinc = float(ylen) / (ny - 1 + 1)
-    zinc = float(zlen) / (nz - 1 + 1)
+    xinc = float(xlen) / (ncol - 1 + 1)
+    yinc = float(ylen) / (nrow - 1 + 1)
+    zinc = float(zlen) / (nlay - 1 + 1)
 
     yflip = 1
 
-    logger.debug('NX NY NZ {} {} {}'.
-                 format(nx, ny, nz))
+    logger.debug('NCOL NROW NLAY {} {} {}'.
+                 format(ncol, nrow, nlay))
 
     logger.debug('XINC, YINC, ZINC {} {} {}'.
                  format(xinc, yinc, zinc))
@@ -429,14 +429,14 @@ def import_stormcube(sfile):
 
     xtg_verbose_level = xtg.get_syslevel()
 
-    cvalues = _cxtgeo.new_floatarray(nxyz)
+    cvalues = _cxtgeo.new_floatarray(nrcl)
 
-    _cxtgeo.cube_import_storm(sfile, dataline, int(undef_val), nxyz,
+    _cxtgeo.cube_import_storm(sfile, dataline, int(undef_val), nrcl,
                               cvalues, 0, xtg_verbose_level)
 
-    sdata['nx'] = nx
-    sdata['ny'] = ny
-    sdata['nz'] = nz
+    sdata['ncol'] = ncol
+    sdata['nrow'] = nrow
+    sdata['nlay'] = nlay
 
     sdata['xori'] = xori
     sdata['yori'] = yori

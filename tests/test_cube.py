@@ -141,7 +141,7 @@ def test_segyio_import():
     logger.info('Import SEGY format via SEGYIO')
 
     x = Cube()
-    x.from_file(sfile1, fformat='segy', engine=1)
+    x.from_file(sfile1, fformat='segy', engine='segyio')
 
     assert x.nx == 257, 'NX'
     dim = x.values.shape
@@ -169,10 +169,10 @@ def test_segyio_import():
 #         self.logger.info('Import Gullfaks SEGY format via SEGY and  SEGYIO')
 
 #         x1 = Cube()
-#         x1.from_file(sfile1, fformat='segy', engine=0)
+#         x1.from_file(sfile1, fformat='segy', engine='xtgeo')
 
 #         x2 = Cube()
-#         x2.from_file(sfile1, fformat='segy', engine=1)
+#         x2.from_file(sfile1, fformat='segy', engine='segyio')
 
 #         self.assertEqual(x1.nx, x2.nx, 'NX')
 

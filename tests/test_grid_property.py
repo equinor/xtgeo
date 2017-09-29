@@ -28,7 +28,7 @@ testfile3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
 testfile4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 testfile5 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
 testfile6 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
-testfile7 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roffbin'
+testfile7 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff'
 testfile8 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff'
 testfile9 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_poro.roff'
 testfile10 = '../xtgeo-testdata/3dgrids/bri/b_grid.roff'
@@ -167,12 +167,13 @@ def test_io_roff_discrete():
     logger.info("\nCodes ({})\n{}".format(po.ncodes, po.codes))
 
     # tests:
-    assert po.ncodes == 19
+    assert po.ncodes == 18
     logger.debug(po.codes[17])
     assert po.codes[17], "SEQ2"
 
     # export to ROFF ...TODO!
     # po.to_file("TMP/zone.roff")
+
 
 def test_get_all_corners():
     """Get X Y Z for all corners as XTGeo GridProperty objects"""

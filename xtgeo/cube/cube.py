@@ -8,12 +8,14 @@ import os.path
 import logging
 import tempfile
 import sys
+from warnings import warn
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export
+from xtgeo.cube import _cube_utils
 
 #
 # Note: The _values (3D array) may be C or F contiguous. As longs as it stays
@@ -28,45 +30,54 @@ from xtgeo.cube import _cube_export
 class Cube(object):
     """Class for a (seismic) cube in the XTGeo framework.
 
-    The values is a numpy, 3D Float 4 bytes.
+    The values is a numpy array, 3D Float 4 bytes. The
+    array is (ncol, nrow, nlay) expressed as (nx, ny, nlay)
+    and is a regular numpy, with Fortran ordering (ncol fastest).
+
+    The cube object intstance can be initialized by either a
+    spesification, or via a file import. The import is most
+    common, and usually SEGY, but also other formats are
+    available.
+
+    Examples::
+
+        from xtgeo.cube import Cube
+
+        vals = np.zeros((40, 30, 10), dtype=np.float32, order='F')
+
+        mycube = Cube(xori=100.0, yori=200.0, ncol=40, nrow=30,
+                      nlay=10, rotation=30, values=vals)
+
+        # or from file
+        mycube = Cube('somefile.segy')
+
     """
 
-    def __init__(self,
-                 xori=0.0,
-                 yori=0.0,
-                 zori=0.0,
-                 nx=5,
-                 ny=3,
-                 nz=2,
-                 xinc=25.0,
-                 yinc=25.0,
-                 zinc=4.0,
-                 rotation=0.0,
-                 yflip=1,
-                 # the numbers here will be incremental in F order;
-                 # hint turn head right and imagine the map...
-                 # e.g. lower right corner is value 5
-                 values=np.zeros((5, 3, 2), dtype=np.float32)
-                 ):
+    def __init__(self, *args, **kwargs):
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
         self.logger.addHandler(logging.NullHandler())
-
         self._xtg = XTGeoDialog()
 
-        self._xori = xori
-        self._yori = yori
-        self._nx = nx
-        self._ny = ny
-        self._nz = nz
-        self._xinc = xinc
-        self._yinc = yinc
-        self._zinc = zinc
-        self._rotation = rotation
-        self._yflip = yflip
-        self._values = values      # numpy of map values
-        self._cvalues = None       # carray swig C pointer of map values
+        if len(args) >= 1:
+            fformat = kwargs.get('fformat', 'guess')
+            self.from_file(args[0], fformat=fformat)
+        else:
+            self._xori = kwargs.get('xori', 0.0)
+            self._yori = kwargs.get('yori', 0.0)
+            self._zori = kwargs.get('zori', 0.0)
+            self._ncol = kwargs.get('nrow', 5)
+            self._nrow = kwargs.get('ncol', 3)
+            self._nlay = kwargs.get('nlay', 2)
+            self._xinc = kwargs.get('xinc', 25.0)
+            self._yinc = kwargs.get('yinc', 25.0)
+            self._zinc = kwargs.get('zinc', 2.0)
+            self._yflip = kwargs.get('yflip', 1)
+            self._rotation = kwargs.get('rotation', 0.0)
+            vals = np.zeros((5, 3, 2), dtype=np.float32, order='F')
+            self._values = vals
+            self._cvalues = None       # carray swig C pointer of map values
 
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
@@ -81,31 +92,43 @@ class Cube(object):
     # =========================================================================
 
     @property
-    def nx(self):
-        """The NX (or N-Idir or column) number, as property."""
-        return self._nx
+    def ncol(self):
+        """The NCOL (NX or I dir) number, as property."""
+        return self._ncol
 
-    @nx.setter
-    def nx(self, n):
-        self.logger.warning('Cannot change nx')
+    @property
+    def nx(self):
+        """The NCOL (NX or I dir) number, as property
+        (deprecated, use ncol instead)."""
+
+        warn('Use <ncol> instead of <nx>', DeprecationWarning)
+        return self._ncol
+
+    @property
+    def nrow(self):
+        """The NROW (NY or J dir) number, as property."""
+        return self._nrow
 
     @property
     def ny(self):
-        """The NY (or N-Jdir or row) number, as property."""
-        return self._ny
+        """The NROW (NY or J dir) number, as property
+        (deprecated, use nrow instead)."""
 
-    @ny.setter
-    def ny(self, n):
-        self.logger.warning('Cannot change ny')
+        warn('Use <nrow> instead of <ny>', DeprecationWarning)
+        return self._nrow
+
+    @property
+    def nlay(self):
+        """The NLAY (or NZ or K dir) number, as property."""
+        return self._nlay
 
     @property
     def nz(self):
-        """The NZ (or N-Kdir or layer) number, as property."""
-        return self._nz
+        """The NLAY (NZ or K dir) number, as property
+        (deprecated, use nlay instead)."""
 
-    @nz.setter
-    def nz(self, n):
-        self.logger.warning('Cannot change nz')
+        warn('Use <nlay> instead of <nz>', DeprecationWarning)
+        return self._nlay
 
     @property
     def xori(self):
@@ -190,8 +213,8 @@ class Cube(object):
 
     @property
     def values(self):
-        """The values, as a 3D numpy (nx, ny, nz), 4 byte float."""
-        self._update_values()
+        """The values, as a 3D numpy (ncol, nrow, nlay), 4 byte float."""
+        self._values, self._cvalues = _cube_utils.update_values(self)
         return self._values
 
     @values.setter
@@ -202,7 +225,7 @@ class Cube(object):
 
         vshape = values.shape
 
-        if vshape != (self._nx, self._ny, self._nz):
+        if vshape != (self._ncol, self._nrow, self._nlay):
             raise ValueError('Wrong dimensions of input numpy')
 
         self._values = values
@@ -211,41 +234,59 @@ class Cube(object):
     @property
     def cvalues(self):
         """The cvalues, as a SWIG pointer to C memory (float array)."""
-        self._update_cvalues()
+        self._values, self._cvalues = _cube_utils.update_cvalues(self)
         return self._cvalues
 
     # =========================================================================
     # Import and export
     # =========================================================================
 
-    def from_file(self, sfile, fformat='segy', engine=0):
+    def from_file(self, sfile, fformat='guess', engine='segyio'):
         """Import cube data from file.
+
+        If fformat is not provided, the file type will be guessed based
+        on file extension (e.g. segy og sgy for SEGY format)
 
         Args:
             sfile (str): Filename
-            fformat (str, optional): file format segy(default)/rms_regular
-            engine (int, optional): For SEGY reader, 0 is builtin (default),
-                1 is SEGYIO
+            fformat (str, optional): file format guess/segy/rms_regular
+                where 'guess' is default
+            engine (int, optional): For SEGY reader, 'xtgeo' is builtin
+                while 'segyio' uses SEGYIO (default)
+
+        Raises:
+            IOError if the file cannot be read (e.g. not found)
 
         Example::
             >>> zz = Cube()
             >>> zz.from_file('some.segy')
+
+
         """
         if (os.path.isfile(sfile)):
             pass
         else:
             self.logger.critical('Not OK file')
-            raise os.error
+            raise IOError('Input file for Cube cannot be read')
 
-        if (fformat == 'rms_regular'):
+        # work on file extension
+        froot, fext = os.path.splitext(sfile)
+        if fformat == 'guess':
+            if len(fext) == 0:
+                self.logger.critical('File extension missing. STOP')
+                sys.exit(9)
+            else:
+                fformat = fext.lower().replace('.', '')
+
+        if 'rms' in fformat:
             self._import_cube(sfile, sformat='rmsreg')
-        elif (fformat == 'segy'):
+        elif (fformat == 'segy' or fformat == 'sgy'):
             self._import_cube(sfile, sformat='segy', scanheadermode=False,
                               scantracemode=False, engine=engine)
         elif (fformat == 'storm'):
             self._import_cube(sfile, sformat='storm')
         else:
-            self.logger.error('Invalid file format')
+            self.logger.error('Invalid or unknown file format')
 
     def to_file(self, sfile, fformat='rms_regular'):
         """Export cube data to file.
@@ -270,7 +311,7 @@ class Cube(object):
         Args:
             sfile (str): Name of SEGY file
             outfile (str): File where store header info, if empty or None
-                output goes to STDOUT.
+                output goes to screen (STDOUT).
         """
 
         flag = False
@@ -329,31 +370,30 @@ class Cube(object):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        nx = _cxtgeo.new_intpointer()
-        ny = _cxtgeo.new_intpointer()
+        ncol = _cxtgeo.new_intpointer()
+        nrow = _cxtgeo.new_intpointer()
         yflip = _cxtgeo.new_intpointer()
         xinc = _cxtgeo.new_doublepointer()
         yinc = _cxtgeo.new_doublepointer()
         rota = _cxtgeo.new_doublepointer()
 
-        _cxtgeo.intpointer_assign(nx, self._nx)
-        _cxtgeo.intpointer_assign(ny, self._ny)
+        _cxtgeo.intpointer_assign(ncol, self._ncol)
+        _cxtgeo.intpointer_assign(nrow, self._nrow)
         _cxtgeo.intpointer_assign(yflip, self._yflip)
 
         _cxtgeo.doublepointer_assign(xinc, self._xinc)
         _cxtgeo.doublepointer_assign(yinc, self._yinc)
         _cxtgeo.doublepointer_assign(rota, self._rotation)
 
-        self._update_cvalues()
-
-        ier = _cxtgeo.cube_swapaxes(nx, ny, self.nz, yflip, self.xori, xinc,
-                                    self.yori, yinc, rota, self._cvalues,
+        ier = _cxtgeo.cube_swapaxes(ncol, nrow, self.nlay, yflip,
+                                    self.xori, xinc,
+                                    self.yori, yinc, rota, self.cvalues,
                                     0, xtg_verbose_level)
         if ier != 0:
             raise Exception
 
-        self._nx = _cxtgeo.intpointer_value(nx)
-        self._ny = _cxtgeo.intpointer_value(ny)
+        self._ncol = _cxtgeo.intpointer_value(ncol)
+        self._nrow = _cxtgeo.intpointer_value(nrow)
         self._yflip = _cxtgeo.intpointer_value(yflip)
 
         self._xinc = _cxtgeo.doublepointer_value(xinc)
@@ -366,11 +406,11 @@ class Cube(object):
     # =========================================================================
 
     def _import_cube(self, sfile, sformat='segy', scanheadermode=False,
-                     scantracemode=False, outfile=None, engine=0):
+                     scantracemode=False, outfile=None, engine='segyio'):
         """Import Cube data from file and make instance."""
 
         if sformat == 'segy':
-            if engine == 1:
+            if engine == 'segyio':
                 sdata = _cube_import.import_segy_io(sfile)
             else:
                 sdata = _cube_import.import_segy(sfile,
@@ -380,9 +420,9 @@ class Cube(object):
         elif sformat == 'storm':
             sdata = _cube_import.import_stormcube(sfile)
 
-        self._nx = sdata['nx']
-        self._ny = sdata['ny']
-        self._nz = sdata['nz']
+        self._ncol = sdata['ncol']
+        self._nrow = sdata['nrow']
+        self._nlay = sdata['nlay']
         self._xori = sdata['xori']
         self._xinc = sdata['xinc']
         self._yori = sdata['yori']
@@ -400,75 +440,9 @@ class Cube(object):
 
         self._update_values()
 
-        _cube_export.export_rmsreg(self.nx, self.ny, self.nz,
+        _cube_export.export_rmsreg(self.ncol, self.nrow, self.nlay,
                                    self.xori, self.yori, self.zori,
                                    self.xinc, self.yinc, self.zinc,
                                    self.rotation, self.yflip,
                                    self.values,
                                    sfile, xtg_verbose_level)
-
-    # =========================================================================
-    # Low Level methods
-    # should not be applied outside the class
-    # =========================================================================
-
-    # -------------------------------------------------------------------------
-    # Helper methods C <---> Numpy
-    # -------------------------------------------------------------------------
-
-    # copy (update) values from SWIG carray to numpy, 3D array, Fortran order
-    def _update_values(self):
-
-        if self._cvalues is None and self._values is None:
-            self.logger.critical('Something is wrong. STOP!')
-            sys.exit(9)
-
-        elif self._cvalues is None:
-            return self._values
-
-        self.logger.debug('Updating numpy values...')
-        n = self._nx * self._ny * self._nz
-        x = _cxtgeo.swig_carr_to_numpy_f1d(n, self._cvalues)
-
-        x = np.reshape(x, (self._nx, self._ny, self._nz), order='F')
-
-        self._values = x
-        self.logger.debug('Updating numpy values... done')
-
-        xtype = self._values.dtype
-        self.logger.info('VALUES of type {}'.format(xtype))
-
-        # free the C values (to save memory)
-        _cxtgeo.delete_floatarray(self._cvalues)
-
-        self._cvalues = None
-
-    # copy (update) values from numpy to SWIG, 1D array
-    def _update_cvalues(self):
-        self.logger.debug("Enter update cvalues method...")
-        n = self._nx * self._ny * self._nz
-
-        if self._values is None and self._cvalues is not None:
-            self.logger.debug("CVALUES unchanged")
-            return
-
-        elif self._cvalues is None and self._values is None:
-            self.logger.critical("_cvalues and _values is None in "
-                                 "_update_cvalues. STOP")
-            sys.exit(9)
-
-        elif self._cvalues is not None and self._values is None:
-            self.logger.critical("_cvalues and _values are both present in "
-                                 "_update_cvalues. STOP")
-            sys.exit(9)
-
-        # make a 1D F order numpy array, and update C array
-        x = self._values.copy()
-        x = np.reshape(x, -1, order='F')
-
-        self._cvalues = _cxtgeo.new_floatarray(n)
-
-        _cxtgeo.swig_numpy_to_carr_f1d(x, self._cvalues)
-        self.logger.debug("Enter method... DONE")
-
-        self._values = None

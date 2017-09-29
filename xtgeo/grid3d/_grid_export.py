@@ -11,7 +11,7 @@ logger.addHandler(logging.NullHandler())
 
 
 def export_roff(grid, gfile, option):
-    """Export grid to ROFF format (ascii and binary)"""
+    """Export grid to ROFF format (binary)"""
 
     logger.debug('Export to ROFF...')
     _cxtgeo.xtg_verbose_file('NONE')
@@ -37,7 +37,7 @@ def export_roff(grid, gfile, option):
 
 
 def export_grdecl(grid, gfile):
-    """Export grid to ROFF format (ascii and binary)"""
+    """Export grid to Eclipse GRDECL format (ascii)"""
 
     logger.debug('Export to GRDECL...')
     _cxtgeo.xtg_verbose_file('NONE')
@@ -45,4 +45,4 @@ def export_grdecl(grid, gfile):
 
     _cxtgeo.grd3d_export_grdecl(grid._nx, grid._ny, grid._nz,
                                 grid._p_coord_v, grid._p_zcorn_v,
-                                gfile, xtg_verbose_level)
+                                grid._p_actnum_v, gfile, xtg_verbose_level)
