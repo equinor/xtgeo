@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import _colortables as _ctable
-from xtgeo.plot.baseplot import BasePlot
+from xtgeo.plot import BasePlot
 
 
 class XSection(BasePlot):
@@ -365,18 +365,19 @@ class XSection(BasePlot):
             self.logger.warning("Nothing to plot (well outside Z range?)")
             return False
 
-    def savefig(self, filename):
-        """
-        Call to matplotlib.pyplot savefig().
+    def savefig(self, filename, fformat='png'):
+        """Call to matplotlib.pyplot savefig().
 
         Returns:
             True of plotting is done; otherwise False
         """
+        print('FORMAT is {}'.format(fformat))
+
         if self._tight:
             self._fig.tight_layout()
 
         if self._showok:
-            plt.savefig(filename)
+            plt.savefig(filename, format=fformat)
             plt.close(self._fig)
             return True
         else:

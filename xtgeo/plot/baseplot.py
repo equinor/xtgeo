@@ -1,5 +1,6 @@
 import logging
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 from xtgeo.plot import _colortables as _ctable
 
@@ -34,6 +35,18 @@ class BasePlot(object):
         # checking is missing...
         self._colortable = list
 
+    @property
+    def colormap(self):
+        """Get or set the color table as a matplot cmap object."""
+        return self._colormap
+
+    @colormap.setter
+    def colormap(self, cmap):
+        if isinstance(cmap, LinearSegmentedColormap):
+            self._colormap = cmap
+        else:
+            raise ValueError('Input not correct Matplotlib cmap instance')
+
     def set_colortable(self, cfile, colorlist=None):
         """Defines a color table from file or a predefined name.
 
@@ -49,16 +62,25 @@ class BasePlot(object):
 
         colors = []
 
+        cmap = plt.get_cmap('rainbow')
+
         if cfile is None:
             cfile = 'rainbow'
+            cmap = plt.get_cmap('rainbow')
 
         if cfile == 'xtgeo':
             colors = _ctable.xtgeocolors()
             self.contourlevels = len(colors)
 
+            cmap = LinearSegmentedColormap.from_list(cfile, colors,
+                                                     N=len(colors))
+
         elif 'rms' in cfile:
             colors = _ctable.colorsfromfile(cfile)
             self.contourlevels = len(colors)
+
+            cmap = LinearSegmentedColormap.from_list('rms', colors,
+                                                     N=len(colors))
 
         elif cfile in valid_maps:
             cmap = plt.get_cmap(cfile)
@@ -86,3 +108,52 @@ class BasePlot(object):
             self._colortable = ctable
         else:
             self._colortable = colors
+
+        self._colormap = cmap
+
+    def show(self):
+        """Call to matplotlib.pyplot show().
+
+        Returns:
+            True of plotting is done; otherwise False
+        """
+        if self._tight:
+            self._fig.tight_layout()
+
+        if self._showok:
+            self.logger.info('Calling plt show method...')
+            plt.show()
+            return True
+        else:
+            self.logger.warning("Nothing to plot (well outside Z range?)")
+            return False
+
+    def savefig(self, filename, fformat='png', last=True):
+        """Call to matplotlib.pyplot savefig().
+
+        Args:
+            filename (str): File to plot to
+            fformat (str): Plot format, e.g. png (default), jpg, svg
+            last (bool): Default is true, meaning that memory will be cleared;
+                however if several plot types for the same instance, let last
+                be False fora all except the last plots.
+
+        Returns:
+            True of plotting is done; otherwise False
+
+        Example::
+            myplot.savefig('TMP/layerslice.svg', fformat='svg', last=False)
+            myplot.savefig('TMP/layerslice.png')
+
+        """
+        if self._tight:
+            self._fig.tight_layout()
+
+        if self._showok:
+            plt.savefig(filename, format=fformat)
+            if last:
+                plt.close(self._fig)
+            return True
+        else:
+            self.logger.warning("Nothing to plot (well outside Z range?)")
+            return False

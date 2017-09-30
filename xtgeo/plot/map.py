@@ -161,7 +161,7 @@ class Map(BasePlot):
             self.logger.warning("Nothing to plot (well outside Z range?)")
             return False
 
-    def savefig(self, filename):
+    def savefig(self, filename, fformat='png'):
         """Call to matplotlib.pyplot savefig().
 
         Returns:
@@ -171,7 +171,7 @@ class Map(BasePlot):
             self._fig.tight_layout()
 
         if self._showok:
-            plt.savefig(filename)
+            plt.savefig(filename, format=fformat)
             plt.close(self._fig)
             return True
         else:

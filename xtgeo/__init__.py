@@ -26,6 +26,8 @@ from .grid3d import grid
 from .grid3d import grid_property
 from .grid3d import grid_properties
 from .well import well
+from .plot import baseplot
+from .plot import xsection
 
 from ._version import get_versions
 __version__ = get_versions()['version']

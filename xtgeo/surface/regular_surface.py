@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import sys
 import math
+import logging
 import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
@@ -16,11 +17,8 @@ from types import FunctionType
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
-# from xtgeo._version import __version__
-import logging
 
-
-__author__ = 'Jan C. Rivenaes'
+from xtgeo.surface import _regsurf_import
 
 # =============================================================================
 # Globals (always chack that these are same as in CLIB/CXTGEO)
@@ -29,14 +27,14 @@ __author__ = 'Jan C. Rivenaes'
 # =============================================================================
 # Class constructor
 # Properties:
-# _nx       =  number of rows (X, cycling fastest)
-# _ny       =  number of columns (Y)
+# _ncol     =  number of cols (X or I, cycling fastest)
+# _nrow     =  number of rows (Y or J)
 # _xori     =  X origin
 # _yori     =  Y origin
 # _xinc     =  X increment
 # _yinc     =  Y increment
 # _rotation =  Rotation in degrees, anti-clock relative to X axis (aka school)
-# _values   =  Numpy 2D array of doubles, of shape (nx,ny)
+# _values   =  Numpy 2D array of doubles, of shape (ncol,nrow)
 # _cvalues  =  Pointer to C array (SWIG).
 #
 # Note: The _values (2D array) may be C or F contiguous. As longs as it stays
@@ -47,23 +45,22 @@ __author__ = 'Jan C. Rivenaes'
 
 
 class RegularSurface(object):
-    """
-    Class for a regular surface in the xtgeo framework.
+    """Class for a regular surface in the xtgeo framework.
 
     The regular surface instance is usually initiated by
     import from file, but can also be made from scratch.
-    The values can be accessed by the user as a 2D numpy float64 array
-    (masked numpy).
+    The values can be accessed by the user as a 2D masked numpy float64 array,
+    but also other variants are possible (e.g. as 1D ordinary numpy).
 
     Attributes:
-        nx: Integer for number of X direction columns
-        ny: Integer for number of Y direction rows
+        ncol: Integer for number of X direction columns
+        nrow: Integer for number of Y direction rows
         xori: X (East) origon coordinate
         yori: Y (North) origin coordinate
         xinc: X increment
         yinc: Y increment
         rotation: rotation in degrees, anticlock from X axis between 0, 360
-        values: 2D (masked or not)  numpy array of shape (nx,ny), F order
+        values: 2D (masked or not)  numpy array of shape (ncol,nrow), F order
 
     Example:
         Initiate a class and import::
@@ -75,8 +72,7 @@ class RegularSurface(object):
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        The __init__ (constructor) method.
+        """The __init__ (constructor) method.
 
         The instance can be made either from file or by a spesification::
 
@@ -86,7 +82,7 @@ class RegularSurface(object):
                                             fformat='irap_binary')
         >>> x4 = RegularSurface()
         >>> x4.from_file('somefilename', fformat='irap_binary')
-        >>> x5 = RegularSurface(nx=20, ny=10, xori=2000.0, yori=2000.0,
+        >>> x5 = RegularSurface(ncol=20, nrow=10, xori=2000.0, yori=2000.0,
                                 rotation=0.0, xinc=25.0, yinc=25.0,
                                 values=np.zeros((20,10)))
 
@@ -95,10 +91,10 @@ class RegularSurface(object):
             yori (float): Origin of grid Y (North) coordinate
             xinc (float): Increment in X
             yinc (float): Increment in Y
-            nx (int): Number of columns, X
-            ny (int): Number of rows, Y
+            ncol (int): Number of columns, X
+            nrow (int): Number of rows, Y
             rotation (float): Rotation angle (deg.), from X axis, anti-clock
-            values (ndarray): 2D numpy (maked or not) of shape (nx,ny))
+            values (ndarray): 2D numpy (maked or not) of shape (ncol,nrow))
 
         """
 
@@ -126,8 +122,12 @@ class RegularSurface(object):
             # make instance by kw spesification
             self._xori = kwargs.get('xori', 0.0)
             self._yori = kwargs.get('yori', 0.0)
-            self._nx = kwargs.get('nx', 5)
-            self._ny = kwargs.get('ny', 3)
+            if 'nx' in kwargs:
+                self._ncol = kwargs.get('nx', 5)  # backward compatibility
+                self._nrow = kwargs.get('ny', 3)  # backward compatibility
+            else:
+                self._ncol = kwargs.get('ncol', 5)
+                self._nrow = kwargs.get('nrow', 3)
             self._xinc = kwargs.get('xinc', 25.0)
             self._yinc = kwargs.get('yinc', 25.0)
             self._rotation = kwargs.get('rotation', 0.0)
@@ -140,13 +140,15 @@ class RegularSurface(object):
                                          [3, 8, 1e33],
                                          [4, 9, 14],
                                          [5, 10, 15]],
-                                        dtype=np.double)
+                                        dtype=np.double, order='F')
             else:
+                if values.flags['F_CONTIGUOUS'] is False:
+                    values = np.asfortranarray(values)
+
                 self._values = values
 
                 if self._check_shape_ok(self._values) is False:
-                    self.logger.error('Wrong dimension of values')
-                    raise ValueError
+                    raise ValueError('Wrong dimension of values')
 
             # make it masked
             self._values = ma.masked_greater(self._values, self._undef_limit)
@@ -177,13 +179,13 @@ class RegularSurface(object):
 # Import and export
 # =============================================================================
 
-    def from_file(self, mfile, fformat='irap_binary'):
-        """
-        Import surface (regular map) from file.
+    def from_file(self, mfile, fformat='guess'):
+        """Import surface (regular map) from file.
 
         Args:
             mfile (str): Name of file
-            fformat (str): File format, irap_binary is currently supported
+            fformat (str): File format, guess/irap_binary is currently
+                supported
 
         Returns:
             Object instance, optionally
@@ -205,7 +207,7 @@ class RegularSurface(object):
             self.logger.critical('Not OK file')
             raise os.error
 
-        if (fformat is None or fformat == 'irap_binary'):
+        if (fformat is None or fformat == 'irap_binary' or fformat == 'guess'):
             self._import_irap_binary(mfile)
         else:
             self.logger.error('Invalid file format')
@@ -213,8 +215,7 @@ class RegularSurface(object):
         return self
 
     def to_file(self, mfile, fformat='irap_binary'):
-        """
-        Export surface (regular map) to file
+        """Export surface (regular map) to file
 
         Args:
             mfile (str): Name of file
@@ -281,35 +282,47 @@ class RegularSurface(object):
 # =============================================================================
 
     @property
+    def ncol(self):
+        """The NCOL (NX or N-Idir) number, as property."""
+        return self._ncol
+
+    @ncol.setter
+    def ncol(self, n):
+        raise ValueError('Cannot change ncol')
+
+    @property
+    def nrow(self):
+        """The NROW (NY or N-Jdir) number, as property."""
+        return self._nrow
+
+    @nrow.setter
+    def nrow(self, n):
+        raise ValueError('Cannot change nrow')
+
+    @property
     def nx(self):
-        """
-        The NX (or N-Idir) number, as property.
-        """
-        self.logger.debug('Enter method...')
-        return self._nx
+        """The NX (or N-Idir) number, as property (deprecated, use ncol)."""
+        self.logger.warning('Deprecated; use ncol instead')
+        return self._ncol
 
     @nx.setter
     def nx(self, n):
-        self.logger.debug('Enter method...')
         self.logger.warning('Cannot change nx')
+        raise ValueError('Cannot change nx')
 
     @property
     def ny(self):
-        """
-        The NY (or N-Jdir) number, as property.
-        """
-        self.logger.debug('Enter method...')
-        return self._ny
+        """The NY (or N-Jdir) number, as property (deprecated, use nrow)."""
+        self.logger.warning('Deprecated; use nrow instead')
+        return self._nrow
 
     @ny.setter
     def ny(self, n):
-        self.logger.warning('Cannot change ny')
+        raise ValueError('Cannot change ny')
 
     @property
     def rotation(self):
-        """
-        The rotation, anticlock from X axis, in degrees [0..360].
-        """
+        """The rotation, anticlock from X axis, in degrees [0..360]."""
         return self._rotation
 
     @rotation.setter
@@ -321,25 +334,18 @@ class RegularSurface(object):
 
     @property
     def xinc(self):
-        """
-        The X increment (or I dir increment)
-        """
+        """The X increment (or I dir increment)."""
         self.logger.debug('Enter method...')
         return self._xinc
 
     @property
     def yinc(self):
-        """
-        The Y increment (or I dir increment)
-        """
-        self.logger.debug('Enter method...')
+        """The Y increment (or I dir increment)."""
         return self._yinc
 
     @property
     def xori(self):
-        """
-        The X coordinate origin of the map (can be modified)
-        """
+        """The X coordinate origin of the map (can be modified)."""
         return self._xori
 
     @xori.setter
@@ -348,9 +354,7 @@ class RegularSurface(object):
 
     @property
     def yori(self):
-        """
-        The Y coordinate origin of the map (can be modified)
-        """
+        """The Y coordinate origin of the map (can be modified)."""
         return self._yori
 
     @yori.setter
@@ -359,10 +363,7 @@ class RegularSurface(object):
 
     @property
     def values(self):
-        """
-        The map values, as 2D masked numpy (float64) of shape (nx, ny)
-        """
-        self.logger.debug('Enter method to get values...')
+        """The map values, as 2D masked numpy (float64) of shape (ncol, nrow)."""
         self._update_values()
         return self._values
 
@@ -386,10 +387,7 @@ class RegularSurface(object):
 
     @property
     def cvalues(self):
-        """
-        The map values, as 1D C pointer i.e. a reference only (Fortran order).
-        """
-        self.logger.debug('Enter method...')
+        """The map values, as 1D C pointer i.e. a reference only (F-order)."""
         self._update_cvalues()
         return self._cvalues
 
@@ -399,23 +397,17 @@ class RegularSurface(object):
 
     @property
     def undef(self):
-        """
-        Returns the undef value, to be used when in the get_zval method
-        """
-        self.logger.debug('Enter method...')
+        """Returns the undef value, to be used when in the get_zval method."""
         return self._undef
 
     @property
     def undef_limit(self):
-        """
-        Returns the undef_limit value, to be used when in the get_zval method
-        """
-        self.logger.debug('Enter method...')
+        """Returns the undef_limit value, to be used when in the
+        get_zval method."""
         return self._undef_limit
 
     def get_zval(self):
-        """
-        Get an an 1D, numpy array of the map values (not masked).
+        """Get an an 1D, numpy array of the map values (not masked).
 
         Note that undef values are very large numbers (see undef property).
         Also, this will reorder a 2D values array to column fastest, i.e.
@@ -445,17 +437,17 @@ class RegularSurface(object):
         return x
 
     def set_zval(self, x):
-        """
-        Set a 1D (unmasked) numpy array. The numpy array must be
-        in Fortran order (i columns (nx) fastest).
+        """Set a 1D (unmasked) numpy array.
 
-        Will convert it to a 2D masked array internally.
+        The numpy array must be in Fortran order (i columns (ncol) fastest).
         """
+
+        # NOTE: Will convert it to a 2D masked array internally.
 
         self._update_values()
 
         # not sure if this is right always?...
-        x = np.reshape(x, (self._nx, self._ny), order='F')
+        x = np.reshape(x, (self._ncol, self._nrow), order='F')
 
         # make it masked
         x = ma.masked_greater(x, self._undef_limit)
@@ -463,18 +455,16 @@ class RegularSurface(object):
         self._values = x
 
     def get_rotation(self):
-        """
-        Returns the surface roation, in degrees, from X, anti-clock.
-        """
+        """Returns the surface roation, in degrees, from X, anti-clock."""
         return self._rotation
 
     def get_nx(self):
-        """ Same as nx (for backward compatibility) """
-        return self._nx
+        """ Same as ncol (nx) (for backward compatibility) """
+        return self._ncol
 
     def get_ny(self):
-        """ Same as ny (for backward compatibility) """
-        return self._ny
+        """ Same as nrow (ny) (for backward compatibility) """
+        return self._nrow
 
     def get_xori(self):
         """ Same as xori (for backward compatibility) """
@@ -493,21 +483,19 @@ class RegularSurface(object):
         return self._yinc
 
     def copy(self):
-        """
-        Copy a xtgeo.surface.RegularSurface object to another instance::
+        """Copy a xtgeo.surface.RegularSurface object to another instance::
 
             >>> mymapcopy = mymap.copy()
 
         """
-        x = RegularSurface(nx=self.nx, ny=self.ny, xinc=self.xinc,
-                           yinc=self.yinc, xori=self.xori, yori=self.yori,
-                           rotation=self.rotation, values=self.values)
-        return x
+        xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
+                               yinc=self.yinc, xori=self.xori, yori=self.yori,
+                               rotation=self.rotation, values=self.values)
+        return xsurf
 
 
     def similarity_index(self, other):
-        """
-        Report the degree of similarity between two maps, by comparing mean.
+        """Report the degree of similarity between two maps, by comparing mean.
 
         The method computes the average per surface, and the similarity
         is difference in mean divided on mean of self. I.e. values close
@@ -531,9 +519,9 @@ class RegularSurface(object):
         return diff
 
     def compare_topology(self, other):
-        """
-        Check that two object has the same topology, i.e. map defintions such
-        as origin, dimensions, number of defined cells...
+        """Check that two object has the same topology, i.e. map definitions.
+
+        Map definitions such as origin, dimensions, number of defined cells...
 
         Args:
             other (surface object): The other surface to compare with
@@ -541,7 +529,7 @@ class RegularSurface(object):
         Returns:
             True of same topology, False if not
         """
-        if (self.nx != other.nx or self.ny != other.ny or
+        if (self.ncol != other.ncol or self.nrow != other.nrow or
                 self.xori != other.xori or self.yori != other.yori or
                 self.xinc != other.xinc or self.yinc != other.yinc or
                 self.rotation != other.rotation):
@@ -558,8 +546,7 @@ class RegularSurface(object):
         return True
 
     def get_value_from_xy(self, point=(0.0, 0.0)):
-        """
-        Return the map value given a X Y point.
+        """Return the map value given a X Y point.
 
         Args:
             point (float tuple): Position of X and Y coordinate
@@ -570,7 +557,7 @@ class RegularSurface(object):
             mvalue = map.get_value_from_xy(point=(539291.12, 6788228.2))
 
         """
-        x, y = point
+        xc, yc = point
 
         self.logger.debug('Enter value_from_cy')
 
@@ -580,15 +567,16 @@ class RegularSurface(object):
         self._update_cvalues()
 
         # call C routine
-        z = _cxtgeo.surf_get_z_from_xy(float(x), float(y), self._nx, self._ny,
+        zc = _cxtgeo.surf_get_z_from_xy(float(xc), float(yc),
+                                       self._ncol, self._nrow,
                                        self._xori, self._yori, self._xinc,
                                        self._yinc, self._yflip, self._rotation,
                                        self._cvalues, xtg_verbose_level)
 
-        if z > self._undef_limit:
+        if zc > self._undef_limit:
             return None
 
-        return z
+        return zc
 
     def get_xy_value_from_ij(self, i, j):
         """Returns x, y, z(value) from i j location.
@@ -603,13 +591,13 @@ class RegularSurface(object):
         if xtg_verbose_level < 0:
             xtg_verbose_level = 0
 
-        if 1 <= i <= self.nx and 1 <= j <= self.ny:
+        if 1 <= i <= self.ncol and 1 <= j <= self.nrow:
 
             ier, xval, yval, value = (
                 _cxtgeo.surf_xyz_from_ij(i, j,
                                          self.xori, self.xinc,
                                          self.yori, self.yinc,
-                                         self.nx, self.ny, self._yflip,
+                                         self.ncol, self.nrow, self._yflip,
                                          self.rotation, self.cvalues,
                                          0, xtg_verbose_level))
             if ier != 0:
@@ -669,8 +657,8 @@ class RegularSurface(object):
         xylist = []
         valuelist = []
 
-        for j in range(self.ny):
-            for i in range(self.nx):
+        for j in range(self.nrow):
+            for i in range(self.ncol):
                 x, y, v = self.get_xy_value_from_ij(i + 1, j + 1)
 
                 if v is not None:
@@ -733,13 +721,13 @@ class RegularSurface(object):
 
         cubeval1d = np.ravel(cube.values, order='F')
 
-        nsurf = self.nx * self.ny
+        nsurf = self.ncol * self.nrow
 
         self.logger.debug('Running method from C... '
                           '(using typemaps for numpies!:')
-        istat, v1d = _cxtgeo.surf_slice_cube(cube.nx,
-                                             cube.ny,
-                                             cube.nz,
+        istat, v1d = _cxtgeo.surf_slice_cube(cube.ncol,
+                                             cube.nrow,
+                                             cube.nlay,
                                              cube.xori,
                                              cube.xinc,
                                              cube.yori,
@@ -749,8 +737,8 @@ class RegularSurface(object):
                                              cube.rotation,
                                              cube.yflip,
                                              cubeval1d,
-                                             self.nx,
-                                             self.ny,
+                                             self.ncol,
+                                             self.nrow,
                                              self.xori,
                                              self.xinc,
                                              self.yori,
@@ -793,7 +781,7 @@ class RegularSurface(object):
         czarr = self._convert_np_carr_double(xyfence[:, 2], nvec)
 
         istat = _cxtgeo.surf_get_zv_from_xyv(nvec, cxarr, cyarr, czarr,
-                                             self.nx, self.ny, self.xori,
+                                             self.ncol, self.nrow, self.xori,
                                              self.yori, self.xinc, self.yinc,
                                              self._yflip, self.rotation,
                                              self.cvalues,
@@ -885,10 +873,10 @@ class RegularSurface(object):
             self.logger.error('Cannot use rotated maps. Return')
             return False
 
-        xmax = self._xori + self._xinc * self._nx
-        ymax = self._yori + self._yinc * self._ny
-        xi = np.linspace(self._xori, xmax, self._nx)
-        yi = np.linspace(self._yori, ymax, self._ny)
+        xmax = self._xori + self._xinc * self._ncol
+        ymax = self._yori + self._yinc * self._nrow
+        xi = np.linspace(self._xori, xmax, self._ncol)
+        yi = np.linspace(self._yori, ymax, self._nrow)
 
         xi, yi = np.meshgrid(xi, yi, indexing='ij')
 
@@ -902,7 +890,7 @@ class RegularSurface(object):
 
             if k1 == layer_minmax[0]:
                 self.logger.info('Initialize zsum ...')
-                zsum = np.zeros((self._nx, self._ny))
+                zsum = np.zeros((self._ncol, self._nrow))
 
             # this should actually never happen...
             if k1 < layer_minmax[0] or k1 > layer_minmax[1]:
@@ -1042,10 +1030,10 @@ class RegularSurface(object):
             self.logger.error('Cannut use rotated maps. Return')
             return
 
-        xmax = self._xori + self._xinc * self._nx
-        ymax = self._yori + self._yinc * self._ny
-        xi = np.linspace(self._xori, xmax, self._nx)
-        yi = np.linspace(self._yori, ymax, self._ny)
+        xmax = self._xori + self._xinc * self._ncol
+        ymax = self._yori + self._yinc * self._nrow
+        xi = np.linspace(self._xori, xmax, self._ncol)
+        yi = np.linspace(self._yori, ymax, self._nrow)
 
         xi, yi = np.meshgrid(xi, yi, indexing='ij')
 
@@ -1079,8 +1067,8 @@ class RegularSurface(object):
             dzcopy = np.copy(dzprop[::, ::, k - 1:k])
 
             if first:
-                wsum = np.zeros((self._nx, self._ny))
-                dzsum = np.zeros((self._nx, self._ny))
+                wsum = np.zeros((self._ncol, self._nrow))
+                dzsum = np.zeros((self._ncol, self._nrow))
                 first = False
 
             self.logger.debug(zcopy)
@@ -1177,8 +1165,8 @@ class RegularSurface(object):
 
         # call C routine
         ier = _cxtgeo.surf_get_dist_values(
-            self._xori, self._xinc, self._yori, self._yinc, self._nx,
-            self._ny, self._rotation, x, y, azimuth, self._cvalues, 0,
+            self._xori, self._xinc, self._yori, self._yinc, self._ncol,
+            self._nrow, self._rotation, x, y, azimuth, self._cvalues, 0,
             xtg_verbose_level)
 
         if ier != 0:
@@ -1211,9 +1199,9 @@ class RegularSurface(object):
         # numpy operation:
         self.values = self.values + zshift
 
-# #############################################################################
-# PRIVATE STUFF
-# #############################################################################
+    # #########################################################################
+    # PRIVATE STUFF
+    # #########################################################################
 
     # =========================================================================
     # IMPORT routines
@@ -1221,55 +1209,17 @@ class RegularSurface(object):
 
     def _import_irap_binary(self, mfile):
 
-        self.logger.debug('Enter function...')
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
+        sdata = _regsurf_import.import_irap_binary(mfile)
 
-        xtg_verbose_level = self._xtg.get_syslevel()
+        self._ncol = sdata['ncol']
+        self._nrow = sdata['nrow']
+        self._xori = sdata['xori']
+        self._yori = sdata['yori']
+        self._xinc = sdata['xinc']
+        self._yinc = sdata['yinc']
+        self._rotation = sdata['rotation']
+        self._cvalues = sdata['cvalues']
 
-        if xtg_verbose_level < 0:
-            xtg_verbose_level = 0
-
-        ptr_mx = _cxtgeo.new_intpointer()
-        ptr_my = _cxtgeo.new_intpointer()
-        ptr_xori = _cxtgeo.new_doublepointer()
-        ptr_yori = _cxtgeo.new_doublepointer()
-        ptr_xinc = _cxtgeo.new_doublepointer()
-        ptr_yinc = _cxtgeo.new_doublepointer()
-        ptr_rot = _cxtgeo.new_doublepointer()
-        ptr_dum = _cxtgeo.new_doublepointer()
-        ptr_ndef = _cxtgeo.new_intpointer()
-
-        if (os.path.exists(mfile)):
-            self.logger.info('File is ok')
-        else:
-            self.logger.error('No such file!')
-
-        # read with mode 0, to get mx my
-        _cxtgeo.surf_import_irap_bin(mfile, 0, ptr_mx, ptr_my, ptr_xori,
-                                     ptr_yori, ptr_xinc, ptr_yinc, ptr_rot,
-                                     ptr_dum, ptr_ndef, 0, xtg_verbose_level)
-
-        mx = _cxtgeo.intpointer_value(ptr_mx)
-        my = _cxtgeo.intpointer_value(ptr_my)
-
-        self._cvalues = _cxtgeo.new_doublearray(mx * my)
-
-        # read with mode 1, to get the map
-        _cxtgeo.surf_import_irap_bin(mfile, 1, ptr_mx, ptr_my, ptr_xori,
-                                     ptr_yori, ptr_xinc, ptr_yinc, ptr_rot,
-                                     self._cvalues, ptr_ndef, 0,
-                                     xtg_verbose_level)
-
-        self._nx = _cxtgeo.intpointer_value(ptr_mx)
-        self._ny = _cxtgeo.intpointer_value(ptr_my)
-        self._xori = _cxtgeo.doublepointer_value(ptr_xori)
-        self._yori = _cxtgeo.doublepointer_value(ptr_yori)
-        self._xinc = _cxtgeo.doublepointer_value(ptr_xinc)
-        self._yinc = _cxtgeo.doublepointer_value(ptr_yinc)
-        self._rotation = _cxtgeo.doublepointer_value(ptr_rot)
-
-        # convert carray pointer to numpy
         self._values = None
 
     # =========================================================================
@@ -1285,14 +1235,14 @@ class RegularSurface(object):
 
         # this is only correct for nonrotated maps
         xmin = self.xori
-        xmax = self.xori + self.xinc * self.nx
+        xmax = self.xori + self.xinc * self.ncol
 
         ymin = self.yori
-        ymax = self.yori + self.yinc * self.ny
+        ymax = self.yori + self.yinc * self.nrow
 
         # print he IRAP ASCII header
         f.write('{0:10d}  {1:10d}  {2:10.2f} {3:10.2f}\n'.
-                format(-996, self.ny,
+                format(-996, self.nrow,
                        self.xinc,
                        self.yinc))
 
@@ -1300,7 +1250,7 @@ class RegularSurface(object):
                 format(xmin, xmax, ymin, ymax))
 
         f.write('{0:10d}  {1:10.2f}      {2:10.2f}      {3:10.2f}\n'.
-                format(self.nx,
+                format(self.ncol,
                        self.rotation,
                        self.xori,
                        self.yori))
@@ -1341,7 +1291,7 @@ class RegularSurface(object):
         if xtg_verbose_level < 0:
             xtg_verbose_level = 0
 
-        _cxtgeo.surf_export_irap_bin(mfile, self._nx, self._ny, self._xori,
+        _cxtgeo.surf_export_irap_bin(mfile, self._ncol, self._nrow, self._xori,
                                      self._yori, self._xinc, self._yinc,
                                      self._rotation, self._cvalues, 0,
                                      xtg_verbose_level)
@@ -1375,7 +1325,7 @@ class RegularSurface(object):
         """
         self.logger.info('Surface from roxapi to xtgeo...')
         self._xori, self._yori = rox.origin
-        self._nx, self._ny = rox.dimensions
+        self._ncol, self._nrow = rox.dimensions
         self._xinc, self._yinc = rox.increment
         self._rotation = rox.rotation
         self._values = rox.get_values()
@@ -1386,7 +1336,7 @@ class RegularSurface(object):
     # copy self (update) values from SWIG carray to numpy, 1D array
 
     def _update_values(self):
-        n = self._nx * self._ny
+        n = self._ncol * self._nrow
 
         if self._cvalues is None and self._values is not None:
             return
@@ -1398,7 +1348,7 @@ class RegularSurface(object):
 
         x = _cxtgeo.swig_carr_to_numpy_1d(n, self._cvalues)
 
-        x = np.reshape(x, (self._nx, self._ny), order='F')
+        x = np.reshape(x, (self._ncol, self._nrow), order='F')
 
         # make it masked
         x = ma.masked_greater(x, self._undef_limit)
@@ -1411,7 +1361,7 @@ class RegularSurface(object):
 
     def _update_cvalues(self):
         self.logger.debug('Enter update cvalues method...')
-        n = self._nx * self._ny
+        n = self._ncol * self._nrow
 
         if self._values is None and self._cvalues is not None:
             self.logger.debug('CVALUES unchanged')
@@ -1450,10 +1400,10 @@ class RegularSurface(object):
     # check if values shape is OK (return True or False)
 
     def _check_shape_ok(self, values):
-        (nx, ny) = values.shape
-        if nx != self._nx or ny != self._ny:
+        (ncol, nrow) = values.shape
+        if ncol != self._ncol or nrow != self._nrow:
             self.logger.error('Wrong shape: Dimens of values {} {} vs {} {}'
-                              .format(nx, ny, self._nx, self._ny))
+                              .format(ncol, nrow, self._ncol, self._nrow))
             return False
         return True
 
@@ -1487,7 +1437,7 @@ def main():
 
     s = RegularSurface()
 
-    print(s.nx)
+    print(s.ncol)
 
 
 if __name__ == '__main__':

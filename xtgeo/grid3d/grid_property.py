@@ -16,6 +16,7 @@ active cells).
 There will however be methods that can output the properties in RMS style,
 some sunny day.
 """
+from __future__ import print_function, absolute_import
 
 import sys
 import numpy as np
@@ -24,8 +25,9 @@ import os.path
 import logging
 
 import cxtgeo.cxtgeo as _cxtgeo
+# from xtgeo.grid3d  import Grid   # HÆÆÆ
 from xtgeo.common import XTGeoDialog
-from .grid3d import Grid3D
+from xtgeo.grid3d import Grid3D
 from . import _grid_property_op1
 
 # =============================================================================
@@ -101,10 +103,13 @@ class GridProperty(Grid3D):
         name = kwargs.get('name', 'unknown')
         date = kwargs.get('date', None)
         discrete = kwargs.get('discrete', False)
+        grid = kwargs.get('grid', None)
 
         self._nx = nx
         self._ny = ny
         self._nz = nz
+
+        self._grid = grid           # grid geometry object
 
         self._isdiscrete = discrete
 
@@ -166,6 +171,20 @@ class GridProperty(Grid3D):
     @name.setter
     def name(self, name):
         self._name = name
+
+    # -------------------------------------------------------------------------
+    @property
+    def grid(self):
+        """Return or set the grid geoemtry object"""
+        return self._grid
+
+    @grid.setter
+    def grid(self, thegrid):
+        pass
+        # if isinstance(thegrid, Grid):
+        #     self._grid = thegrid
+        # else:
+        #     raise RuntimeWarning('The given grid is not a Grid instance')
 
     # -------------------------------------------------------------------------
     @property
@@ -313,7 +332,7 @@ class GridProperty(Grid3D):
             newname = self.name + '_copy'
 
         x = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
-                         values=self._values, name=newname)
+                         values=self._values, name=newname, grid=self._grid)
 
         return x
 
@@ -334,6 +353,9 @@ class GridProperty(Grid3D):
                   grid=None, date=None):
         """
         Import grid property from file, and makes an instance of this class
+
+        Note that the the property may be linked to its geometrical grid,
+        through the grid= option. Sometimes this is required.
 
         Args:
             file (str): name of file to be imported
@@ -373,7 +395,7 @@ class GridProperty(Grid3D):
 
         ier = 0
         if (fformat == 'roff'):
-            ier = self._import_roff(pfile, name)
+            ier = self._import_roff(pfile, name, grid=grid)
         elif (fformat.lower() == 'init'):
             ier = self._import_ecl_output(pfile, name=name, etype=1,
                                           grid=grid)
@@ -453,7 +475,7 @@ class GridProperty(Grid3D):
     # Import methods for various formats
     # -------------------------------------------------------------------------
 
-    def _import_roff(self, pfile, name):
+    def _import_roff(self, pfile, name, grid=None):
 
         # need to call the C function...
         _cxtgeo.xtg_verbose_file('NONE')
@@ -573,6 +595,8 @@ class GridProperty(Grid3D):
             self.logger.debug(cname_list)
             self._codes = dict(zip(ccodes, cname_list))
             self.logger.debug('CODES (value: name): {}'.format(self._codes))
+
+        self._grid = grid
 
         return 0
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -708,6 +732,7 @@ class GridProperty(Grid3D):
                                         ptr_dvec_v, self._cvalues,
                                         xtg_verbose_level)
 
+        self._grid = grid
         # self._update_values()
         return 0
 
