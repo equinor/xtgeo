@@ -1,4 +1,3 @@
-import unittest
 import os
 import os.path
 import sys
@@ -16,49 +15,27 @@ except OSError:
         raise
 
 xtg = XTGeoDialog()
+logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
+logging.getLogger().setLevel(xtg.logginglevel)
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
 
-class TestCommon(unittest.TestCase):
-    """Testing suite for common routines"""
+def test_ijk_to_ib():
+    """Convert I J K to IB index."""
 
-    def getlogger(self, name):
-
-        # if isinstance(self.logger):
-        #     return
-
-        format = xtg.loggingformat
-
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
-
-        self.logger = logging.getLogger(name)
-
-    def test_ijk_to_ib(self):
-        """
-        Convert I J K to IB index
-        """
-
-        self.getlogger('test_ijk_to_ib')
-
-        ib = xcalc.ijk_to_ib(2, 2, 2, 3, 4, 5)
-        self.logger.info(ib)
-        self.assertEqual(ib, 16)
-
-    def test_ib_to_ijk(self):
-        """
-        Convert IB index to IJK tuple.
-        """
-
-        self.getlogger('test_ib_to_ijk')
-
-        ijk = xcalc.ib_to_ijk(16, 3, 4, 5)
-        self.logger.info(ijk)
-        self.assertEqual(ijk[0], 2)
+    ib = xcalc.ijk_to_ib(2, 2, 2, 3, 4, 5)
+    logger.info(ib)
+    assert ib == 16
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_ib_to_ijk():
+    """Convert IB index to IJK tuple."""
+
+    ijk = xcalc.ib_to_ijk(16, 3, 4, 5)
+    logger.info(ijk)
+    assert ijk[0] == 2

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module/class for 3D grids with XTGeo."""
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import sys
 import inspect
@@ -31,9 +31,9 @@ from xtgeo.grid3d import _grid_export
 
 
 class Grid(Grid3D):
-    """
-    Class for a 3D grid geometry (corner point) with optionally props,
-    i.e. the grid cells and active cell indicator.
+    """Class for a 3D grid geometry (corner point) with optionally props.
+
+    I.e. the gemetric grid cells and active cell indicator.
 
     The grid geometry class instances are normally created when
     importing a grid from file, as it is (currently) too complex to create from
@@ -50,9 +50,7 @@ class Grid(Grid3D):
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        The __init__ (constructor) method of the XTGeo Grid class.
-        """
+        """The __init__ (constructor) method of the XTGeo Grid class."""
 
         # logging settings
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
@@ -91,33 +89,6 @@ class Grid(Grid3D):
     # =========================================================================
 
     @property
-    def nx(self):
-        """Returns the NX (row) number of cells."""
-        return self._nx
-
-    @nx.setter
-    def nx(self, value):
-        self.logger.warning('Cannot change the nx property')
-
-    @property
-    def ny(self):
-        """Returns the NY (column) number of cells."""
-        return self._ny
-
-    @ny.setter
-    def ny(self, value):
-        self.logger.warning('Cannot change the ny property')
-
-    @property
-    def nz(self):
-        """Returns the NZ (layers) number of cells."""
-        return self._nz
-
-    @nz.setter
-    def nz(self, value):
-        self.logger.warning('Cannot change the nz property')
-
-    @property
     def nactive(self):
         """Returns the number of active cells."""
         return self._nactive
@@ -129,8 +100,7 @@ class Grid(Grid3D):
 
     @property
     def props(self):
-        """
-        Returns or sets a list of property objects.
+        """Returns or sets a list of property objects.
 
         When setting, the dimension of the property object is checked,
         and will raise an IndexError if it does not match the grid.
@@ -141,7 +111,7 @@ class Grid(Grid3D):
     @props.setter
     def props(self, list):
         for l in list:
-            if l.nx != self._nx or l.ny != self._ny or l.nz != self._nz:
+            if l.ncol != self._nx or l.nrow != self._ny or l.nlay != self._nz:
                 raise IndexError('Property NX NY NZ <{}> does not match grid!'
                                  .format(l.name))
 
@@ -149,9 +119,7 @@ class Grid(Grid3D):
 
     @property
     def propnames(self):
-        """
-        Returns a list of property names to are hooked to a grid object.
-        """
+        """Returns a list of property names that are hooked to a grid."""
 
         plist = []
         for obj in self._props:
@@ -161,16 +129,12 @@ class Grid(Grid3D):
 
     @property
     def undef(self):
-        """
-        Get the undef value for floats or ints numpy arrays.
-        """
+        """Get the undef value for floats or ints numpy arrays."""
         return self._undef
 
     @property
     def undef_limit(self):
-        """
-        Returns the undef limit number, which is slightly less than the
-        undef value.
+        """Returns the undef limit number - slightly less than the undef value.
 
         Hence for numerical precision, one can force undef values
         to a given number, e.g.::
@@ -178,8 +142,8 @@ class Grid(Grid3D):
            x[x<x.undef_limit]=999
 
         Undef limit values cannot be changed.
-
         """
+
         return self._undef_limit
 
     # =========================================================================
@@ -187,8 +151,7 @@ class Grid(Grid3D):
     # =========================================================================
 
     def get_prop_by_name(self, name):
-        """
-        Gets a propert object by looking for name, return None if not present.
+        """Gets a property object by name lookup, return None if not present.
         """
         for obj in self.props:
             if obj.name == name:
@@ -205,12 +168,11 @@ class Grid(Grid3D):
                   initprops=None,
                   restartprops=None,
                   restartdates=None):
-        """
-        Import grid geometry from file, and makes an instance of this class.
+        """Import grid geometry from file, and makes an instance of this class.
 
         If file extension is missing, then the extension is guessed by fformat
-        key, e.g. fformat egrid will guess to '.EGRID'. The 'eclipserun' will
-        try to input INIT and UNRST file in addition the grid in 'one go'.
+        key, e.g. fformat egrid will be guessed if '.EGRID'. The 'eclipserun'
+        will try to input INIT and UNRST file in addition the grid in 'one go'.
 
         Arguments:
             gfile (str): File name to be imported
@@ -226,7 +188,8 @@ class Grid(Grid3D):
             >>> myfile = ../../testdata/Zone/gullfaks.roff
             >>> xg = Grid()
             >>> xg.from_file(myfile, fformat='roff')
-
+            >>> # or shorter:
+            >>> xg = Grid(myfile)  # will guess the file format
         Raises:
             OSError: if file is not found etc
         """
@@ -495,7 +458,7 @@ class Grid(Grid3D):
         xtg_verbose_level = self._xtg.syslevel
 
         _cxtgeo.grd3d_corners(i, j, k,
-                              self.nx, self.ny, self.nz,
+                              self.ncol, self.nrow, self.nlay,
                               self._p_coord_v, self._p_zcorn_v,
                               pcorners, xtg_verbose_level)
 
@@ -1108,7 +1071,7 @@ def main():
 
     xtg = XTGeoDialog()
 
-    xtg.info('nx ny nz {} {} {}'.format(gg.nx, gg.ny, gg.nz))
+    xtg.info('nx ny nz {} {} {}'.format(gg.ncol, gg.nrow, gg.nlay))
 
 
 if __name__ == '__main__':

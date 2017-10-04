@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Metaclass for Grid and Properties.
-"""
-
-__author__ = 'Jan C. Rivenaes'
-__copyright__ = 'Statoil property'
-__credits__ = 'FMU team'
-__licence__ = 'Propriatary'
-__status__ = 'Development'
-__version__ = 'see xtgeo/_version.py'
+"""Metaclass for Grid and Properties, not to be used by itself"""
 
 import logging
 
@@ -16,10 +7,7 @@ import logging
 class Grid3D(object):
 
     def __init__(self):
-        """
-        The __init__ (constructor) method.
-
-        """
+        """The __init__ (constructor) method."""
         self._nx = 4
         self._ny = 3
         self._ny = 5
@@ -29,8 +17,36 @@ class Grid3D(object):
         self.logger.addHandler(logging.NullHandler())
 
     @property
+    def ncol(self):
+        """ Returns the NCOL (NX or Ncolumns) number of cells"""
+        return self._nx
+
+    @ncol.setter
+    def ncol(self, value):
+        self.logger.warning("Cannot change the ncol property")
+
+    @property
+    def nrow(self):
+        """ Returns the NROW (NY or Nrows) number of cells"""
+        return self._ny
+
+    @nrow.setter
+    def nrow(self, value):
+        self.logger.warning("Cannot change the nrow property")
+
+    @property
+    def nlay(self):
+        """ Returns the NLAY (NZ or Nlayers) number of cells"""
+        return self._nz
+
+    @nlay.setter
+    def nlay(self, value):
+        self.logger.warning("Cannot change the nlay property")
+
+    @property
     def nx(self):
-        """ Returns the NX (Ncolumns) number of cells"""
+        """ Returns the NX (Ncolumns) number of cells (deprecated; use ncol)"""
+        self.logger.warning("Deprecated; use ncol instead")
         return self._nx
 
     @nx.setter
@@ -39,7 +55,8 @@ class Grid3D(object):
 
     @property
     def ny(self):
-        """ Returns the NY (Nrows) number of cells"""
+        """ Returns the NY (Nrows) number of cells (deprecated; use nrow)"""
+        self.logger.warning("Deprecated; use nrow instead")
         return self._ny
 
     @ny.setter
@@ -48,7 +65,8 @@ class Grid3D(object):
 
     @property
     def nz(self):
-        """ Returns the NZ (Nlayers) number of cells"""
+        """ Returns the NZ (Nlayers) number of cells (deprecated; use nlay)"""
+        self.logger.warning("Deprecated; use nlay instead")
         return self._nz
 
     @nz.setter

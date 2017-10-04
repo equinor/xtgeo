@@ -1,9 +1,9 @@
 #!/usr/bin/env python -u
 
-import unittest
 import os
 import sys
 import logging
+import pytest
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
@@ -19,6 +19,10 @@ except OSError:
 # set default level
 xtg = XTGeoDialog()
 
+logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
+logging.getLogger().setLevel(xtg.logginglevel)
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Do tests
@@ -26,222 +30,193 @@ xtg = XTGeoDialog()
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 
 
-class TestGrid(unittest.TestCase):
-    """Testing suite for 3D grid geometry"""
+def assert_equal(this, that, txt=''):
+    assert this == that, txt
 
-    def getlogger(self, name):
 
-        # if isinstance(self.logger):
-        #     return
+def assert_almostequal(this, that, tol, txt=''):
+    assert this == pytest.approx(that, abs=tol), txt
 
-        format = xtg.loggingformat
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+def test_import_wrong():
+    """Importing wrong fformat, etc"""
 
-        self.logger = logging.getLogger(name)
+    with pytest.raises(ValueError) as e_info:
+        logger.warning(e_info)
+        g = Grid().from_file(emegfile, fformat='roffdum')
+        assert_equal(g.nx, 70)
 
-    def test_import_wrong(self):
-        """Importing wrong fformat, etc"""
 
-        self.getlogger('test_import_wrong')
+def test_import_guess():
+    """Import with guessing fformat"""
 
-        with self.assertRaises(ValueError):
-            g = Grid().from_file(emegfile, fformat='roffdum')
-            self.assertEqual(g.nx, 70)
+    g = Grid().from_file(emegfile)
 
-    def test_import_guess(self):
-        """Import with guessing fformat"""
+    assert_equal(g.nx, 70)
 
-        self.getlogger('test_import_guess')
 
-        g = Grid().from_file(emegfile)
+def test_roffbin_import0():
+    """Import ROFF on the form Grid().from_file and Grid(..)"""
 
-        self.assertEqual(g.nx, 70)
+    g = Grid().from_file(emegfile, fformat="roff")
 
-    def test_roffbin_import0(self):
-        """Import ROFF on the form Grid().from_file and Grid(..)"""
+    assert isinstance(g, Grid)
 
-        self.getlogger('test_roffbin_import0')
+    g = Grid(emegfile, fformat="roff")
 
-        g = Grid().from_file(emegfile, fformat="roff")
+    assert isinstance(g, Grid)
 
-        self.assertIsInstance(g, Grid)
 
-        g = Grid(emegfile, fformat="roff")
+def test_roffbin_import1():
+    """Test roff binary import case 1"""
 
-        self.assertIsInstance(g, Grid)
+    g = Grid()
+    logger.info("Import roff...")
+    g.from_file(emegfile, fformat="roff")
 
-    def test_roffbin_import1(self):
+    assert_equal(g.nx, 70, txt='Grid NX Emerald')
+    assert_equal(g.nz, 46, txt='Grid NZ Emerald')
 
-        self.getlogger('test_roffbin_import1')
+    # extract ACTNUM parameter as a property instance (a GridProperty)
+    act = g.get_actnum()
 
-        self.logger.info('Name is {}'.format(__name__))
-        g = Grid()
-        self.logger.info("Import roff...")
-        g.from_file(emegfile, fformat="roff")
+    logger.info('ACTNUM is {}'.format(act))
+    logger.debug('ACTNUM values are \n{}'.format(act.values[888:999]))
 
-        self.assertEqual(g.nx, 70, 'Grid NX Emerald')
-        self.assertEqual(g.nz, 46, 'Grid NZ Emerald')
+    # get dZ...
+    dz = g.get_dz()
 
-        # extract ACTNUM parameter as a property instance (a GridProperty)
-        act = g.get_actnum()
+    logger.info('DZ is {}'.format(act))
+    logger.info('DZ values are \n{}'.format(dz.values[888:999]))
 
-        self.logger.info('ACTNUM is {}'.format(act))
-        self.logger.debug('ACTNUM values are \n{}'.format(act.values[888:999]))
+    dzval = dz.values3d
+    # get the value is cell 32 73 1 shall be 2.761
+    mydz = float(dzval[31:32, 72:73, 0:1])
+    assert_almostequal(mydz, 2.761, 0.001, txt='Grid DZ Emerald')
 
-        # get dZ...
-        dz = g.get_dz()
+    # get X Y Z coordinates (as GridProperty objects) in one go
+    logger.info('Get X Y Z...')
+    x, y, z = g.get_xyz(names=['xxx', 'yyy', 'zzz'])
 
-        self.logger.info('DZ is {}'.format(act))
-        self.logger.info('DZ values are \n{}'.format(dz.values[888:999]))
+    logger.info('X is {}'.format(act))
+    logger.debug('X values are \n{}'.format(x.values[888:999]))
 
-        dzval = dz.values3d
-        # get the value is cell 32 73 1 shall be 2.761
-        mydz = float(dzval[31:32, 72:73, 0:1])
-        self.assertAlmostEqual(mydz, 2.761, places=3,
-                               msg='Grid DZ Emerald')
+    assert_equal(x.name, 'xxx', txt='Name of X coord')
+    x.name = 'Xerxes'
 
-        # get X Y Z coordinates (as GridProperty objects) in one go
-        self.logger.info('Get X Y Z...')
-        x, y, z = g.get_xyz(names=['xxx', 'yyy', 'zzz'])
+    logger.info('X name is now {}'.format(x.name))
 
-        self.logger.info('X is {}'.format(act))
-        self.logger.debug('X values are \n{}'.format(x.values[888:999]))
+    logger.info('Y is {}'.format(act))
+    logger.debug('Y values are \n{}'.format(y.values[888:999]))
 
-        self.assertEqual(x.name, 'xxx', 'Name of X coord')
-        x.name = 'Xerxes'
+    # attach some properties to grid
+    g.props = [x, y]
 
-        self.logger.info('X name is now {}'.format(x.name))
+    logger.info(g.props)
+    g.props = [z]
 
-        self.logger.info('Y is {}'.format(act))
-        self.logger.debug('Y values are \n{}'.format(y.values[888:999]))
+    logger.info(g.props)
 
-        # attach some properties to grid
-        g.props = [x, y]
+    g.props.append(x)
+    logger.info(g.propnames)
 
-        self.logger.info(g.props)
-        g.props = [z]
+    # get the property of name Xerxes
+    # myx = g.get_prop_by_name('Xerxes')
+    # if  myx != None:
+    #     logger.info(myx)
+    # else:
+    #     logger.info("Got nothing!")
 
-        self.logger.info(g.props)
 
-        g.props.append(x)
-        self.logger.info(g.propnames)
+def test_eclgrid_import1():
+    """Eclipse GRID import."""
 
-        # get the property of name Xerxes
-        # myx = g.get_prop_by_name('Xerxes')
-        # if  myx != None:
-        #     self.logger.info(myx)
-        # else:
-        #     self.logger.info("Got nothing!")
+    g = Grid()
+    logger.info("Import Eclipse GRID...")
+    g.from_file('../xtgeo-testdata/3dgrids/gfb/G1.GRID',
+                fformat="grid")
 
-    def test_eclgrid_import1(self):
-        """
-        Eclipse GRID import
-        """
-        self.getlogger('test_eclgrid_import1')
+    assert_equal(g.nx, 20, txt='Grid NX from Eclipse')
+    assert_equal(g.ny, 20, txt='Grid NY from Eclipse')
 
-        self.logger.info('Name is {}'.format(__name__))
-        g = Grid()
-        self.logger.info("Import Eclipse GRID...")
-        g.from_file('../xtgeo-testdata/3dgrids/gfb/G1.GRID',
-                    fformat="grid")
 
-        self.assertEqual(g.nx, 20, 'Grid NX from Eclipse')
-        self.assertEqual(g.ny, 20, 'Grid NY from Eclipse')
+def test_eclgrid_import2():
+    """Eclipse EGRID import."""
+    g = Grid()
+    logger.info("Import Eclipse GRID...")
+    g.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
+                fformat="egrid")
 
-    def test_eclgrid_import2(self):
-        """
-        Eclipse EGRID import
-        """
-        self.getlogger('test_eclgrid_import2')
+    assert_equal(g.nx, 99, txt='EGrid NX from Eclipse')
+    assert_equal(g.ny, 120, txt='EGrid NY from Eclipse')
+    assert_equal(g.nactive, 368004, txt='EGrid NTOTAL from Eclipse')
+    assert_equal(g.ntotal, 558360, txt='EGrid NACTIVE from Eclipse')
 
-        self.logger.info('Name is {}'.format(__name__))
-        g = Grid()
-        self.logger.info("Import Eclipse GRID...")
-        g.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
-                    fformat="egrid")
 
-        self.assertEqual(g.nx, 99, 'EGrid NX from Eclipse')
-        self.assertEqual(g.ny, 120, 'EGrid NY from Eclipse')
-        self.assertEqual(g.nactive, 368004, 'EGrid NTOTAL from Eclipse')
-        self.assertEqual(g.ntotal, 558360, 'EGrid NACTIVE from Eclipse')
+def test_eclgrid_import3():
+    """Eclipse GRDECL import and translate"""
 
-    def test_eclgrid_import3(self):
-        """
-        Eclipse GRDECL import and translate
-        """
+    g = Grid()
+    logger.info("Import Eclipse GRDECL...")
+    g.from_file('../xtgeo-testdata/3dgrids/gfb/g1_comments.grdecl',
+                fformat="grdecl")
 
-        self.getlogger('test_eclgrid_import3')
+    mylist = g.get_geometrics()
 
-        self.logger.info('Name is {}'.format(__name__))
+    xori1 = mylist[0]
 
-        g = Grid()
-        self.logger.info("Import Eclipse GRDECL...")
-        g.from_file('../xtgeo-testdata/3dgrids/gfb/g1_comments.grdecl',
-                    fformat="grdecl")
+    # translate the coordinates
+    g.translate_coordinates(translate=(100, 100, 10), flip=(1, 1, 1))
 
-        mylist = g.get_geometrics()
+    mylist = g.get_geometrics()
 
-        xori1 = mylist[0]
+    xori2 = mylist[0]
 
-        # translate the coordinates
-        g.translate_coordinates(translate=(100, 100, 10), flip=(1, 1, 1))
+    # check if origin is translated 100m in X
+    assert_equal(xori1 + 100, xori2, txt='Translate X distance')
 
-        mylist = g.get_geometrics()
+    g.to_file('TMP/g1_translate.roff', fformat="roff_binary")
 
-        xori2 = mylist[0]
 
-        # check if origin is translated 100m in X
-        self.assertEqual(xori1 + 100, xori2, 'Translate X distance')
+def test_simple_io():
+    """Test various import and export formats"""
 
-        g.to_file('TMP/g1_translate.roff', fformat="roff_binary")
+    gg = Grid('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
+              fformat="egrid")
 
-    def test_simple_io(self):
-        """Test various import and export formats"""
-        self.getlogger('test_simple_io')
+    gg.to_file("TMP/gullfaks_test.roff")
 
-        gg = Grid('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
-                  fformat="egrid")
 
-        gg.to_file("TMP/gullfaks_test.roff")
+def test_ecl_run():
+    """Test import an eclrun with dates and export to roff after a diff"""
 
-    def test_ecl_run(self):
-        """Test import an eclrun with dates and export to roff after a diff"""
-        self.getlogger('test_ecl_run')
+    eclroot = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS'
+    dates = [19851001, 20150101]
+    rprops = ['PRESSURE', 'SWAT']
 
-        eclroot = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS'
-        dates = [19851001, 20150101]
-        rprops = ['PRESSURE', 'SWAT']
+    gg = Grid(eclroot, fformat='eclipserun', restartdates=dates,
+              restartprops=rprops)
 
-        gg = Grid(eclroot, fformat='eclipserun', restartdates=dates,
-                  restartprops=rprops)
+    # get the property object:
+    pres1 = gg.get_prop_by_name('PRESSURE_20150101')
+    assert_almostequal(pres1.values.mean(), 239.505447, 0.001)
 
-        # get the property object:
-        pres1 = gg.get_prop_by_name('PRESSURE_20150101')
-        self.assertAlmostEqual(pres1.values.mean(), 239.505447, places=3)
+    pres1.to_file("TMP/pres1.roff")
 
-        pres1.to_file("TMP/pres1.roff")
+    pres2 = gg.get_prop_by_name('PRESSURE_19851001')
 
-        pres2 = gg.get_prop_by_name('PRESSURE_19851001')
+    if isinstance(pres2, GridProperty):
+        pass
 
-        if isinstance(pres2, GridProperty):
-            pass
+    logger.debug(pres1.values)
+    logger.debug(pres2.values)
+    logger.debug(pres1)
 
-        self.logger.debug(pres1.values)
-        self.logger.debug(pres2.values)
-        self.logger.debug(pres1)
+    pres1.values = pres1.values - pres2.values
+    logger.debug(pres1.values)
+    logger.debug(pres1)
+    avg = pres1.values.mean()
+    # ok checked in RMS:
+    assert_almostequal(avg, -93.046011, 0.001)
 
-        pres1.values = pres1.values - pres2.values
-        self.logger.debug(pres1.values)
-        self.logger.debug(pres1)
-        avg = pres1.values.mean()
-        # ok checked in RMS:
-        self.assertAlmostEqual(avg, -93.046011, places=3)
-
-        pres1.to_file("TMP/pressurediff.roff", name="PRESSUREDIFF")
-
-
-if __name__ == '__main__':
-
-    unittest.main()
+    pres1.to_file("TMP/pressurediff.roff", name="PRESSUREDIFF")
