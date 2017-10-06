@@ -168,6 +168,7 @@ class Grid(Grid3D):
                   initprops=None,
                   restartprops=None,
                   restartdates=None):
+
         """Import grid geometry from file, and makes an instance of this class.
 
         If file extension is missing, then the extension is guessed by fformat
@@ -190,6 +191,7 @@ class Grid(Grid3D):
             >>> xg.from_file(myfile, fformat='roff')
             >>> # or shorter:
             >>> xg = Grid(myfile)  # will guess the file format
+
         Raises:
             OSError: if file is not found etc
         """
@@ -355,8 +357,8 @@ class Grid(Grid3D):
     # Get X Y Z as properties
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def get_xyz(self, names=['X', 'Y', 'Z'], mask=True):
-        """
-        Return 3 GridProperty objects: x coordinate, ycoordinate, z coordinate.
+        """Return 3 GridProperty objects: x coordinate, ycoordinate,
+        zcoordinate.
 
         The values are mid cell values. Note that ACTNUM is
         ignored, so these is also extracted for UNDEF cells (which may have
@@ -365,7 +367,7 @@ class Grid(Grid3D):
 
         Arguments:
             names: a list of names per property
-            mask:
+            mask: If True, then only active cells
         """
 
         ntot = self.ntotal
@@ -414,15 +416,15 @@ class Grid(Grid3D):
         """Return 8*3 list x, y, z for each corner.
 
         3       4
-        |-------|
-        |  top  |
-        |-------|
-        1       2
+        !~~~~~~~!
+        !  top  !
+        !~~~~~~~!
+        !       2
 
         7       8
-        |-------|
-        |  base |
-        |-------|
+        !~~~~~~~!
+        !  base !
+        !~~~~~~~!
         5       6
 
         Args:
@@ -477,15 +479,15 @@ class Grid(Grid3D):
         weird coordinates).
 
         2       3
-        |-------|
-        |  top  |
-        |-------|
+        !~~~~~~~!
+        !  top  !
+        !~~~~~~~!
         0       1
 
         6       7
-        |-------|
-        |  base |
-        |-------|
+        !~~~~~~~!
+        !  base !
+        !~~~~~~~!
         4       5
 
         Args:

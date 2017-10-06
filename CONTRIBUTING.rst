@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://git.statoil.no/jriv/pyxtgeo/issues.
+Report bugs at https://git.statoil.no/xtgeo/pyxtgeo/issues.
 
 If you are reporting a bug, please include:
 
@@ -46,7 +46,7 @@ Submit Feedback
 ~~~~~~~~~~~~~~~
 
 The best way to send feedback is to file an issue
-at https://git.statoil.no/jriv/pyxtgeo/issues.
+at https://git.statoil.no/xtgeo/pyxtgeo/issues.
 
 If you are proposing a feature:
 
@@ -106,7 +106,7 @@ Before you submit a pull request, check that it meets these guidelines:
    feature to the list in README.rst.
 
 .. 3. The pull request should work for Python 2.7, 3.4, and for PyPy(?). Check
-..   https://travis-ci.org/jriv/pyxtgeo/pull_requests (INACTIVE)
+..   https://travis-ci.org/xtgeo/pyxtgeo/pull_requests (INACTIVE)
 ..   and make sure that the tests pass for all supported Python versions.
 
 Tips

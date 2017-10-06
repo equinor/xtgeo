@@ -233,6 +233,16 @@ class Well(object):
         else:
             return None
 
+    def get_logrecord_codename(self, lname, key):
+        """ Returns the name entry of a log record, for a given key"""
+        zlogdict = self.get_logrecord(lname)
+        try:
+            name = zlogdict[key]
+        except:
+            return None
+        else:
+            return name
+
     def get_carray(self, lname):
         """
         Returns the C array pointer (via SWIG) for a given log.
@@ -288,6 +298,49 @@ class Well(object):
         _cxtgeo.delete_doublearray(ptr_yv)
         _cxtgeo.delete_doublearray(ptr_zv)
         _cxtgeo.delete_doublearray(ptr_hlen)
+
+    def geometrics(self):
+        """Compute some well geometrical arrays MD and INCL, as logs.
+
+        These are kind of quasi measurements hence the logs will named
+        with a Q in front as Q_MDEPTH and Q_INCL.
+
+        These logs will be added to the dataframe
+        """
+
+        # need to call the C function...
+        _cxtgeo.xtg_verbose_file("NONE")
+        xtg_verbose_level = self._xtg.syslevel
+
+        # extract numpies from XYZ trajetory logs
+        ptr_xv = self.get_carray('X_UTME')
+        ptr_yv = self.get_carray('Y_UTMN')
+        ptr_zv = self.get_carray('Z_TVDSS')
+
+        # get number of rows in pandas
+        nlen = self.nrows
+
+        ptr_md = _cxtgeo.new_doublearray(nlen)
+        ptr_incl = _cxtgeo.new_doublearray(nlen)
+
+        ier = _cxtgeo.well_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md,
+                                      ptr_incl, 0, xtg_verbose_level)
+
+        if ier != 0:
+            sys.exit(-9)
+
+        dnumpy = self._convert_carr_double_np(ptr_md)
+        self._df['Q_MDEPTH'] = pd.Series(dnumpy, index=self._df.index)
+
+        dnumpy = self._convert_carr_double_np(ptr_incl)
+        self._df['Q_INCL'] = pd.Series(dnumpy, index=self._df.index)
+
+        # delete tmp pointers
+        _cxtgeo.delete_doublearray(ptr_xv)
+        _cxtgeo.delete_doublearray(ptr_yv)
+        _cxtgeo.delete_doublearray(ptr_zv)
+        _cxtgeo.delete_doublearray(ptr_md)
+        _cxtgeo.delete_doublearray(ptr_incl)
 
     def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None):
         """
@@ -431,55 +484,73 @@ class Well(object):
             df = pd.DataFrame(wellreport, columns=clm)
             return df
 
-    def get_zonation_points(self, zonelogname=None):
-        """
-        Extract zonation points and make a marker list
+    def get_zonation_points(self, zonelogname=None, tops=True,
+                            incl_limit=80, top_prefix='Top',
+                            zonelist=None):
+
+        """Extract zonation points from Zonelog and make a marker list.
+
+        Currently it is either 'Tops' or 'Zone' (thicknesses); default
+        is tops (i.e. tops=True).
 
         Args:
             zonelogname (str): name of Zonelog to be applied
+            tops (bool): If True then compute tops, else (thickness) points.
+            incl_limit (float): If given, and usezone is True, the max
+                angle of inclination to be  used as input to zonation points.
+            top_prefix (str): As well logs usually have isochore (zone) name,
+                this prefix could be Top, e.g. 'SO43' --> 'TopSO43'
 
         Returns:
-            A Points object... (in progress)
+            A pandas dataframe (ready for the xyz/Points class)
         """
-        wpoints = Points()
 
         zlist = []
         # get the relevant logs:
+
+        self.geometrics()
+
         zlog = self._df[zonelogname].values
-        x = self._df['X_UTME'].values
-        y = self._df['Y_UTMN'].values
-        z = self._df['Z_TVDSS'].values
+        xv = self._df['X_UTME'].values
+        yv = self._df['Y_UTMN'].values
+        zv = self._df['Z_TVDSS'].values
+        incl = self._df['Q_INCL'].values
+        md = self._df['Q_MDEPTH'].values
 
         zlog[np.isnan(zlog)] = -999
 
         self.logger.info("\n")
         self.logger.info(zlog)
-        self.logger.info(x)
-        self.logger.info(z)
+        self.logger.info(xv)
+        self.logger.info(zv)
 
         self.logger.info(self.get_logrecord(zonelogname))
-        zlogdict = self.get_logrecord(zonelogname)
+        if zonelist is None:
+            zonelist = self.get_logrecord(zonelogname).keys()
 
-        first = True
-        for key, values in zlogdict.items():
-            if first:
-                first = False
-                continue
+        self.logger.info("Find values for {}".format(zonelist))
 
-            self.logger.info("Find values for {} {}".format(key, values))
+        ztops, ztopnames, zisos, zisonames = (
+            self._extract_ztops(zonelist, xv, yv, zv, zlog, md, incl,
+                                zonelogname, tops=tops,
+                                incl_limit=incl_limit,
+                                prefix=top_prefix))
 
-            ztops = self._extract_ztops(key, x, y, z, zlog)
+        if tops:
+            zlist = ztops
+        else:
+            zlist = zisos
 
-            zlist = zlist + ztops
+        self.logger.debug(zlist)
 
-        self.logger.info(zlist)
-        df = pd.DataFrame(zlist, columns=['X', 'Y', 'Z', 'Zone', 'Well'])
+        if tops:
+            df = pd.DataFrame(zlist, columns=ztopnames)
+        else:
+            df = pd.DataFrame(zlist, columns=zisonames)
 
-        self.logger.info('\n')
         self.logger.info(df)
-        # TODO convert to Points object
 
-        return None
+        return df
 
     # =========================================================================
     # PRIVATE METHODS
@@ -546,9 +617,9 @@ class Well(object):
 
         # now import all logs as pandas framework
 
-        self._df = pd.read_csv(wfile, delim_whitespace = True, skiprows=lnum,
+        self._df = pd.read_csv(wfile, delim_whitespace=True, skiprows=lnum,
                                header=None, names=self._lognames_all,
-                               dtype = np.float64, na_values=-999)
+                               dtype=np.float64, na_values=-999)
 
         self.logger.debug(self._df.head())
 
@@ -595,48 +666,117 @@ class Well(object):
     # Various private methods
     # -------------------------------------------------------------------------
 
-    def _extract_ztops(self, key, x, y, z, zlog):
-        """
-        Extract a list of tops for a zone.
+    def _extract_ztops(self, keylist, x, y, z, zlog, md, incl, zlogname,
+                       tops=True, incl_limit=80, prefix='Top'):
+        """Extract a list of tops for a zone.
 
         Args:
-            key (int): The zonelog number to get top from.
+            keylist (list): The zonelog list number to apply
             x (np): X Position numpy array
             y (np): Y Position numpy array
             z (np): Z Position numpy array
             zlog (np): Zonelog array
+            md (np): MDepth log numpy array
+            incl (np): Inclination log numpy array
+            zlogname (str): Name of zonation log
+            tops (bool): Compute tops or thickness (zone) points (default True)
+            incl_limit (float): Limitation of zone computation (angle, degrees)
         """
 
-        # wellpoints will be a list of tuples (one tuple per hit)
-        wellpoints = []
+        # The wellpoints will be a list of tuples (one tuple per hit)
+        # Tuple: (X Y Z DZ ZONEKEY ZONENAME WELLNAME)
+        wpts = []
 
         self.logger.debug(zlog)
 
-        for ind, zone in np.ndenumerate(zlog):
-            i = ind[0]
-            if i == 0:
-                continue
+        if not tops and incl_limit is None:
+            incl_limit = 80
 
-            # look at the previous values
-            pzone = zlog[i - 1]
+        azi = -999.0  # tmp so far
 
-            self.logger.debug("PZONE is {} and zone is {}".format(pzone, zone))
+        for key in keylist:
+            for ind, zone in np.ndenumerate(zlog):
+                i = ind[0]
+                if i == 0:
+                    continue
 
-            if (pzone == -999 or zone == -999):
-                continue
+                # look at the previous values
+                pzone = zlog[i - 1]
 
-            if pzone != zone:
-                self.logger.info("FOUND")
-                if zone == key and pzone < zone:
-                    self.logger.info("FOUND MATCH")
-                    ztop = (x[i], y[i], z[i], key, self.xwellname)
-                    wellpoints.append(ztop)
-                if pzone == key and pzone > zone:
-                    self.logger.info("FOUND MATCH")
-                    ztop = (x[i - 1], y[i - 1], z[i - 1], pzone, self._wname)
-                    wellpoints.append(ztop)
+                self.logger.debug("PZONE is {} and zone is {}"
+                                  .format(pzone, zone))
 
-        return wellpoints
+                if (pzone == -999 or zone == -999):
+                    continue
+
+                if pzone != zone:
+                    self.logger.info("FOUND")
+                    if zone == key and pzone < zone:
+                        self.logger.info("FOUND MATCH")
+                        zname = self.get_logrecord_codename(zlogname, key)
+                        zname = prefix + zname
+                        ztop = (x[i], y[i], z[i], md[i], incl[i], azi,
+                                key, zname, self.xwellname)
+                        wpts.append(ztop)
+                        if pzone == key and pzone > zone:
+                            self.logger.info("FOUND MATCH")
+                            key2 = int(pzone)
+                            zname = self.get_logrecord_codename(zlogname, key2)
+                            zname = prefix + zname
+                            ztop = (x[i - 1], y[i - 1], z[i - 1], md[i - 1],
+                                    incl[i - 1], azi, key2, zname,
+                                    self.xwellname)
+                            wpts.append(ztop)
+
+        wpts_names = ['X', 'Y', 'Z', 'QMD', 'QINCL', 'QAZI', 'Zone', 'TopName',
+                      'WellName']
+
+        if tops:
+            return wpts, wpts_names, None, None
+
+        # next get a MIDPOINT zthickness (DZ)
+        llen = len(wpts) - 1
+
+        zwpts_names = ['X', 'Y', 'Z', 'QMD_AVG', 'QMD1', 'QMD2', 'QINCL',
+                       'QAZI', 'Zone', 'ZoneName', 'WellName']
+
+        zwpts = []
+        for i in range(llen):
+            i1 = i
+            i2 = i + 1
+            xx1, yy1, zz1, md1, incl1, azi1, zk1, zn1, wn1 = wpts[i1]
+            xx2, yy2, zz2, md2, incl2, azi2, zk2, zn2, wn2 = wpts[i2]
+
+            # mid point
+            xx_avg = (xx1 + xx2) / 2
+            yy_avg = (yy1 + yy2) / 2
+            md_avg = (md1 + md2) / 2
+            incl_avg = (incl1 + incl2) / 2
+
+            azi_avg = -999.0  # to be fixed later
+
+            zzp = round(abs(zz2 - zz1), 4)
+
+            useok = False
+
+            if incl_avg < incl_limit:
+                useok = True
+
+            if useok and zk2 != zk1:
+                self.logger.debug(" -- Zone {} {} ---> {}"
+                                  .format(zk1, zk2, zzp))
+                usezk = zk1
+                usezn = zn1
+                if zk1 > zk2:
+                    usezk = zk2
+                    usezn = zn2
+                usezn = usezn[len(prefix):]
+
+                zzone = (xx_avg, yy_avg, zzp, md_avg, md1, md2, incl_avg,
+                         azi_avg, usezk, usezn, wn1)
+                zwpts.append(zzone)
+
+        return wpts, wpts_names, zwpts, zwpts_names
 
     # -------------------------------------------------------------------------
     # Special methods for nerds

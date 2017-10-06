@@ -29,8 +29,9 @@ from xtgeo.common import XTGeoDialog
 
 
 class Points(object):
-    """
-    Class for a points set in the XTGeo framework.
+    """Class for a points set in the XTGeo framework.
+
+    The point set is a Pandas dataframe object.
     """
 
     def __init__(self, *args, **kwargs):
@@ -99,21 +100,25 @@ class Points(object):
 
         return self
 
-    def to_file(self, pfile, fformat="xyz"):
+    def to_file(self, pfile, fformat="xyz", attributes=None):
         """
         Export well to file
 
         Args:
             pfile (str): Name of file
-            fformat (str): File format
+            fformat (str): File format xyz / rms_attr
+            attributes (list): List of extra columns to export (some formats)
 
         Example::
 
             >>> x = Well()
 
         """
-        if (fformat is None or fformat == "xyz"):
+        if fformat is None or fformat == "xyz":
             self._export_xyz(pfile)
+
+        elif fformat == "rms_attr":
+            self._export_rms_attr(pfile, attributes=attributes)
 
     # =========================================================================
     # Get and Set properties
@@ -134,7 +139,7 @@ class Points(object):
         self._df = df.copy()
 
     def get_carray(self, lname):
-        """
+        """ WRONG PLACE?
         Returns the C array pointer (via SWIG) for a given log.
 
         Type conversion is double if float64, int32 if DISC log.
@@ -152,6 +157,45 @@ class Points(object):
 
         return carr
 
+    # =========================================================================
+    # Get tops and zones from well data
+    # =========================================================================
+
+    def from_wells(self, wells, zonelogname='ZONELOG', tops=True,
+                   incl_limit=None, top_prefix='Top', zonelist=None):
+        """Get tops or zone points data from a list of wells.
+
+        Args:
+            wells (list): List of XTGeo well objects
+            zonelogname (str): Name of zonelog, default is 'ZONELOG'
+            tops (bool): Get the tops if True (default), otherwise zone
+            incl_limit (float): Inclination limit for zones (thickness points)
+            top_prefix (str): Prefix used for Tops
+
+        Returns:
+            None if well list is empty; otherwise the number of wells
+
+        Raises:
+            Todo
+        """
+
+        if len(wells) == 0:
+            return None
+
+        dflist = []
+        for well in wells:
+            wp = well.get_zonation_points(zonelogname=zonelogname,
+                                          tops=tops, incl_limit=incl_limit,
+                                          top_prefix=top_prefix,
+                                          zonelist=zonelist)
+            dflist.append(wp)
+
+        if len(dflist) > 0:
+            self._df = pd.concat(dflist)
+        else:
+            return None
+
+        return len(dflist)
 
     # =========================================================================
     # PRIVATE METHODS
@@ -168,7 +212,7 @@ class Points(object):
 
         # now import all points as Pandas framework
 
-        self._df = pd.read_csv(pfile, delim_whitespace = True, skiprows=0,
+        self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
                                header=None, names=['X', 'Y', 'Z'],
                                dtype=np.float64, na_values=999.00)
 
@@ -176,8 +220,25 @@ class Points(object):
 
     # Export RMS ascii
     # -------------------------------------------------------------------------
-    def _export_rms_ascii(self, pfile):
-        pass
+    def _export_rms_attr(self, pfile, attributes=None):
+        """Export til RMS attribute, also called RMS extended set"""
+
+        df = self.dataframe
+        columns = ['X', 'Y', 'Z']
+        mode = 'r'
+        if attributes is not None:
+            mode = 'a'
+            columns += attributes
+            with open(pfile, 'w') as fout:
+                for col in attributes:
+                    if col in df.columns:
+                        fout.write('String ' + col + '\n')
+
+        with open(pfile, mode) as f:
+            df.to_csv(f, sep=' ', header=None,
+                      columns=columns, index=False)
+
+
 
     # -------------------------------------------------------------------------
     # Special methods for nerds
