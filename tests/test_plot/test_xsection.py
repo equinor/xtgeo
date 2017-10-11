@@ -71,8 +71,7 @@ def test_xsection_init():
 def test_simple_plot():
     """Test as simple XSECT plot."""
 
-    mywell = Well()
-    mywell.from_file(usefile1)
+    mywell = Well(usefile1)
 
     mysurfaces = []
     mysurf = RegularSurface()
@@ -121,8 +120,7 @@ def test_troll1():
     wnames = glob.glob(usefile4)
     wnames.sort()
     for wname in wnames:
-        mywell = Well()
-        mywell.from_file(wname)
+        mywell = Well(wname)
         mywells.append(mywell)
 
     logger.info("Wells are read...")

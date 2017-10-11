@@ -48,8 +48,8 @@ class TestSurface(unittest.TestCase):
         self.logger.info('Simple case...')
 
         x = RegularSurface()
-        self.assertEqual(x.nx, 5, 'NX')
-        self.assertEqual(x.ny, 3, 'NY')
+        self.assertEqual(x.ncol, 5, 'NX')
+        self.assertEqual(x.nrow, 3, 'NY')
         v = x.values
         xdim, ydim = v.shape
         self.assertEqual(xdim, 5, 'NX from DIM')
@@ -78,8 +78,8 @@ class TestSurface(unittest.TestCase):
         self.logger.info('Export to Irap Classic and Binary')
 
         x = RegularSurface(
-            nx=120,
-            ny=100,
+            ncol=120,
+            nrow=100,
             xori=1000,
             yori=5000,
             xinc=40,
@@ -87,7 +87,7 @@ class TestSurface(unittest.TestCase):
             values=np.random.rand(
                 120,
                 100))
-        self.assertEqual(x.nx, 120)
+        self.assertEqual(x.ncol, 120)
         x.to_file('TMP/irap2_a.fgr', fformat="irap_ascii")
         x.to_file('TMP/irap2_b.gri', fformat="irap_binary")
 
@@ -106,9 +106,9 @@ class TestSurface(unittest.TestCase):
         x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
                     fformat='irap_binary')
 
-        self.logger.debug("NX is {}".format(x.nx))
+        self.logger.debug("NX is {}".format(x.ncol))
 
-        self.assertEqual(x.nx, 58)
+        self.assertEqual(x.ncol, 58)
 
         # get the 1D numpy
         v1d = x.get_zval()
@@ -135,11 +135,11 @@ class TestSurface(unittest.TestCase):
 
         # direct import
         y = RegularSurface(mfile)
-        self.assertEqual(y.nx, 58)
+        self.assertEqual(y.ncol, 58)
 
         # semidirect import
         cc = RegularSurface().from_file(mfile)
-        self.assertEqual(cc.nx, 58)
+        self.assertEqual(cc.ncol, 58)
 
     def test_get_xy_value_lists(self):
         """Get the xy list and value list"""
@@ -194,7 +194,7 @@ class TestSurface(unittest.TestCase):
             x.from_file('../xtgeo-testdata/surfaces/tro/1/troll.irapbin',
                         fformat='irap_binary')
 
-            self.logger.info('Map dimensions: {} {}'.format(x.nx, x.ny))
+            self.logger.info('Map dimensions: {} {}'.format(x.ncol, x.nrow))
 
             m1 = x.values.mean()
             zval = x.values

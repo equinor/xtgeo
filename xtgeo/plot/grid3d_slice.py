@@ -3,18 +3,14 @@
 from __future__ import print_function, division, absolute_import
 
 import matplotlib.pyplot as plt
-import matplotlib
-import matplotlib.cm as cm
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
 import logging
 import numpy as np
-import numpy.ma as ma
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
-import cxtgeo.cxtgeo as _cxtgeo
 
 
 class Grid3DSlice(BasePlot):
@@ -116,7 +112,7 @@ class Grid3DSlice(BasePlot):
         pvalues = pvalues[~pvalues.mask]
 
         self.logger.debug(pvalues)
-        print(pvalues.shape, grid.nx * grid.ny)
+        print(pvalues.shape, grid.ncol * grid.nrow)
 
         geomlist = grid.get_geometrics(allcells=True, cellcenter=False)
 
@@ -135,11 +131,11 @@ class Grid3DSlice(BasePlot):
         xy3 = np.column_stack((clist[6].values, clist[7].values))
 
         xyc = np.column_stack((xy0, xy1, xy2, xy3))
-        xyc = xyc.reshape(grid.nz, grid.nx * grid.ny, 4, 2)
+        xyc = xyc.reshape(grid.nlay, grid.ncol * grid.nrow, 4, 2)
 
         patches = []
 
-        for pos in range(grid.nx * grid.ny):
+        for pos in range(grid.ncol * grid.nrow):
             nppol = xyc[index - 1, pos, :, :]
             if nppol.mean() > 0.0:
                 polygon = Polygon(nppol, True)

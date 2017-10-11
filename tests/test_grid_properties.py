@@ -61,7 +61,7 @@ def test_import_should_fail():
     x = GridProperties()
 
     names = ['PORO', 'NOSUCHNAME']
-    with pytest.raises(RuntimeError) as e_info:
+    with pytest.raises(ValueError) as e_info:
         logger.warning(e_info)
         x.from_file(ifile1, fformat="init", names=names, grid=g)
 

@@ -22,14 +22,15 @@ logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
 
 logger = logging.getLogger(__name__)
 
-wfiles = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+wfiles1 = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+wfiles2 = "../xtgeo-testdata/wells/tro/1/31*.w"
 
 
-def test_get_zone_tops_some_wells():
-    """Import somewells and get the zone tops"""
+def test_get_zone_tops_one_well():
+    """Import a well and get the zone tops"""
 
     wlist = []
-    for w in glob.glob(wfiles):
+    for w in glob.glob(wfiles1):
         wlist.append(Well(w))
         logger.info('Imported well {}'.format(w))
 
@@ -44,11 +45,30 @@ def test_get_zone_tops_some_wells():
                      attributes=['WellName', 'TopName'])
 
 
-def test_get_zone_thickness_some_wells():
-    """Import somewells and get the zone thicknesses"""
+def test_get_zone_tops_some_wells():
+    """Import some well and get the zone tops"""
 
     wlist = []
-    for w in glob.glob(wfiles):
+    for w in glob.glob(wfiles2):
+        wlist.append(Well(w))
+        logger.info('Imported well {}'.format(w))
+
+    mypoints = Points()
+    nwell = mypoints.from_wells(wlist)
+
+    print(mypoints.dataframe)
+
+    logger.info('Number of well made to tops: {}'.format(nwell))
+
+    mypoints.to_file('TMP/points_w1.rmsasc', fformat='rms_attr',
+                     attributes=['WellName', 'TopName'])
+
+
+def test_get_zone_thickness_one_well():
+    """Import a wells and get the zone thicknesses"""
+
+    wlist = []
+    for w in glob.glob(wfiles1):
         wlist.append(Well(w))
         logger.info('Imported well {}'.format(w))
 

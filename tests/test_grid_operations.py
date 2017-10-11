@@ -44,18 +44,18 @@ def test_hybridgrid1():
 
     logger.info('Read grid...')
     grd = Grid(emegfile)
-    logger.info('Read grid... done, NZ is {}'.format(grd.nz))
+    logger.info('Read grid... done, NZ is {}'.format(grd.nlay))
     grd.to_file('TMP/test_hybridgrid1_asis.grdecl', fformat='grdecl')
 
     logger.info('Convert...')
     nhdiv = 40
-    newnz = grd.nz * 2 + nhdiv
+    newnlay = grd.nlay * 2 + nhdiv
 
     grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
 
-    logger.info('Hybrid grid... done, NZ is now {}'.format(grd.nz))
+    logger.info('Hybrid grid... done, NLAY is now {}'.format(grd.nlay))
 
-    assert grd.nz == newnz, "New NZ number"
+    assert grd.nlay == newnlay, "New NLAY number"
 
     dz = grd.get_dz()
 
@@ -66,7 +66,7 @@ def test_hybridgrid1():
 
     logger.info('Read grid 2...')
     grd2 = Grid('TMP/test_hybridgrid1_asis.grdecl')
-    logger.info('Read grid... done, NZ is {}'.format(grd2.nz))
+    logger.info('Read grid... done, NLAY is {}'.format(grd2.nlay))
 
     logger.info('Convert...')
     nhdiv = 40
@@ -76,7 +76,7 @@ def test_hybridgrid1():
 
     logger.info('Hybrid grid... done, NZ is now {}'.format(grd2.nz))
 
-    assert grd2.nz == newnz, "New NZ number"
+    assert grd2.nlay == newnz, "New NLAY number"
 
     dz = grd2.get_dz()
 
@@ -90,7 +90,7 @@ def test_hybridgrid2():
 
     logger.info('Read grid...')
     grd = Grid(emegfile)
-    logger.info('Read grid... done, NZ is {}'.format(grd.nz))
+    logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
 
     reg = GridProperty()
     reg.from_file(emerfile, name='REGION')

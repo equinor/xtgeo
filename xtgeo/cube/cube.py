@@ -31,18 +31,21 @@ class Cube(object):
     """Class for a (seismic) cube in the XTGeo framework.
 
     The values is a numpy array, 3D Float 4 bytes. The
-    array is (ncol, nrow, nlay) expressed as (nx, ny, nlay)
-    and is a regular numpy, with Fortran ordering (ncol fastest).
+    array is (ncol, nrow, nlay) regular 3D numpy,
+    with Fortran ordering (ncol fastest).
 
-    The cube object intstance can be initialized by either a
+    Default format for cube values are float32.
+
+    The cube object instance can be initialized by either a
     spesification, or via a file import. The import is most
     common, and usually SEGY, but also other formats are
-    available.
+    available (or will be).
 
     Examples::
 
         from xtgeo.cube import Cube
 
+        # a user defined cube:
         vals = np.zeros((40, 30, 10), dtype=np.float32, order='F')
 
         mycube = Cube(xori=100.0, yori=200.0, ncol=40, nrow=30,
@@ -193,7 +196,7 @@ class Cube(object):
 
     @property
     def rotation(self):
-        """The rotation (inline, anticlock X axis in degrees)."""
+        """The rotation (inline, anticlock from X axis in degrees)."""
         return self._rotation
 
     @rotation.setter
@@ -249,10 +252,10 @@ class Cube(object):
 
         Args:
             sfile (str): Filename
-            fformat (str, optional): file format guess/segy/rms_regular
+            fformat (str): file format guess/segy/rms_regular
                 where 'guess' is default
-            engine (int, optional): For SEGY reader, 'xtgeo' is builtin
-                while 'segyio' uses SEGYIO (default)
+            engine (str): For the SEGY reader, 'xtgeo' is builtin
+                while 'segyio' uses the SEGYIO library (default)
 
         Raises:
             IOError if the file cannot be read (e.g. not found)
@@ -296,7 +299,7 @@ class Cube(object):
             fformat (str, optional): file format rms_regular (default)
 
         Example::
-            >>> zz = Cube()
+            >>> zz = Cube('some.segy')
             >>> zz.to_file('some.rmsreg')
         """
 

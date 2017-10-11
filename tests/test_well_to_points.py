@@ -38,15 +38,13 @@ class Test(unittest.TestCase):
         self.logger = logging.getLogger(name)
 
     def test_wellzone_to_points(self):
-        """
-        Import well from file and put zone boundaries to a Points object
-        """
+        """Import well from file and put zone boundaries to a Points object."""
+
         self.getlogger('test_wellzone_to_points')
 
         wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
 
-        mywell = Well()
-        mywell.from_file(wfile)
+        mywell = Well(wfile)
         self.logger.info("Imported {}".format(wfile))
 
         # get the zpoints which is a Points object

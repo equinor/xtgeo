@@ -62,11 +62,9 @@ class TestGridWellProperty(unittest.TestCase):
         # w1 = Well()
         # w1.from_file('../xtgeo-testdata/wells/gfb/1/34_10-A-42.w')
 
-        w2 = Well()
-        w2.from_file('../xtgeo-testdata/wells/gfb/1/34_10-1.w')
+        w2 = Well('../xtgeo-testdata/wells/gfb/1/34_10-1.w')
 
-        w3 = Well()
-        w3.from_file('../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w')
+        w3 = Well('../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w')
 
         wells = [w2, w3]
 

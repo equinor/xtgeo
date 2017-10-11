@@ -50,8 +50,8 @@ def getlogger(name):
 
 def test_create():
     x = GridProperty()
-    assert x.nx == 5, 'NX is OK'
-    assert x.ny == 12, 'NY'
+    assert x.ncol == 5, 'NCOL'
+    assert x.nrow == 12, 'NROW'
 
     m = GridProperty(discrete=True)
     (repr(m.values))
@@ -92,9 +92,9 @@ def test_roffbin_import2():
     logger.info(repr(hc.values))
     logger.info(hc.values.dtype)
     logger.info(hc.values3d.shape)
-    nx, ny, nz = hc.values3d.shape
+    ncol, nrow, nlay = hc.values3d.shape
 
-    assert ny == 100, 'NY from shape (Emerald)'
+    assert nrow == 100, 'NROW from shape (Emerald)'
 
     logger.info("Mean HCPV is {}".format(hc.values.mean()))
 
@@ -110,7 +110,7 @@ def test_eclinit_import():
     logger.info("Import INIT...")
     po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
 
-    assert po.nx == 20, 'NX from B.INIT'
+    assert po.ncol == 20, 'NX from B.INIT'
 
     logger.debug(po.values[0:400])
     assert float(po.values3d[1:2, 13:14, 0:1]) == \
@@ -129,7 +129,7 @@ def test_eclinit_import_gull():
 
     # let me guess the format (shall be egrid)
     gg = Grid(testfile5, fformat='egrid')
-    assert gg.nx == 99, "Gullfaks NX"
+    assert gg.ncol == 99, "Gullfaks NX"
 
     logger.info("Import INIT...")
     po = GridProperty(testfile6, name='PORO', grid=gg)

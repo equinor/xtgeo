@@ -44,9 +44,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
 
-        mywell = Well()
-
-        mywell.from_file(wfile)
+        mywell = Well(wfile)
 
         self.logger.debug("True well name:", mywell.truewellname)
         self.assertEqual(mywell.xpos, 524139.420, 'XPOS')
@@ -70,10 +68,9 @@ class Test(unittest.TestCase):
 
         for filename in glob.glob(wfiles):
             self.logger.info("Importing " + filename)
-            mywell = Well()
-            mywell.from_file(filename)
-            self.logger.info(mywell.nrows)
-            self.logger.info(mywell.ncolumns)
+            mywell = Well(filename)
+            self.logger.info(mywell.nrow)
+            self.logger.info(mywell.ncol)
             self.logger.info(mywell.lognames)
 
             wname = path + "/" + mywell.xwellname + ".w"
@@ -90,8 +87,8 @@ class Test(unittest.TestCase):
     #         self.logger.info("Importing "+filename)
     #         mywell = Well()
     #         mywell.from_file(filename)
-    #         # self.logger.info(mywell.nrows)
-    #         # self.logger.info(mywell.ncolumns)
+    #         # self.logger.info(mywell.nrow)
+    #         # self.logger.info(mywell.ncol)
     #         # self.logger.info(mywell.lognames)
 
     #         # wname = path + "/" + mywell.xwellname + ".w"
@@ -134,9 +131,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        mywell = Well()
-
-        mywell.from_file(wfile)
+        mywell = Well(wfile)
 
         dummy = mywell.get_carray("NOSUCH")
 
@@ -167,8 +162,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        mywell = Well()
-        mywell.from_file(wfile)
+        mywell = Well(wfile)
         mywell.create_relative_hlen()
 
         self.logger.debug(mywell.dataframe)
@@ -180,8 +174,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/gfb/1/34_10-A-42.w"
 
-        mywell = Well()
-        mywell.from_file(wfile)
+        mywell = Well(wfile)
         pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
 
         self.logger.debug(pline)
@@ -193,7 +186,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        mywell = Well().from_file(wfile)
+        mywell = Well(wfile)
         mywell.get_zonation_points(zonelogname='ZONELOG')
 
     def test_get_zonation_holes(self):
@@ -203,7 +196,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/3/31_2-G-4_BY1H_holes.w"
 
-        mywell = Well().from_file(wfile)
+        mywell = Well(wfile)
         report = mywell.report_zonation_holes(zonelogname='ZONELOG')
 
         self.logger.info("\n{}".format(report))
@@ -215,7 +208,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/oea/1/w1_holes.w"
 
-        mywell = Well().from_file(wfile)
+        mywell = Well(wfile)
         report = mywell.report_zonation_holes(zonelogname='Z2002A',
                                               mdlogname="MDEPTH")
 
@@ -227,7 +220,7 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/3/31_2-1.w"
 
-        mywell = Well().from_file(wfile)
+        mywell = Well(wfile)
         report = mywell.report_zonation_holes(zonelogname='ZONELOG',
                                               mdlogname="MD")
 
@@ -236,6 +229,22 @@ class Test(unittest.TestCase):
 
         self.assertEqual(len(report), 2)  # report length
         self.assertEqual(report.iat[1, 4], 28)  # zone no.
+
+    def test_get_filled_dataframe(self):
+        """Get a filled DataFrame"""
+
+        self.getlogger('test_filled_dataframe')
+
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+
+        mywell = Well(wfile)
+
+        df1 = mywell.dataframe
+
+        df2 = mywell.get_filled_dataframe()
+
+        print(df1)
+        print(df2)
 
 
 if __name__ == '__main__':

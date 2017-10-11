@@ -24,7 +24,7 @@ def export_roff(grid, gfile, option):
     # get the geometrics list to find the xshift, etc
     gx = grid.get_geometrics()
 
-    _cxtgeo.grd3d_export_roff_grid(option, grid._nx, grid._ny, grid._nz,
+    _cxtgeo.grd3d_export_roff_grid(option, grid._ncol, grid._nrow, grid._nlay,
                                    grid._nsubs, 0, gx[3], gx[5], gx[7],
                                    grid._p_coord_v, grid._p_zcorn_v,
                                    grid._p_actnum_v, grid._p_subgrd_v,
@@ -43,6 +43,6 @@ def export_grdecl(grid, gfile):
     _cxtgeo.xtg_verbose_file('NONE')
     xtg_verbose_level = grid._xtg.syslevel
 
-    _cxtgeo.grd3d_export_grdecl(grid._nx, grid._ny, grid._nz,
+    _cxtgeo.grd3d_export_grdecl(grid._ncol, grid._nrow, grid._nlay,
                                 grid._p_coord_v, grid._p_zcorn_v,
                                 grid._p_actnum_v, gfile, xtg_verbose_level)

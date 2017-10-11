@@ -44,7 +44,7 @@ def test_import_wrong():
     with pytest.raises(ValueError) as e_info:
         logger.warning(e_info)
         g = Grid().from_file(emegfile, fformat='roffdum')
-        assert_equal(g.nx, 70)
+        assert_equal(g.ncol, 70)
 
 
 def test_import_guess():
@@ -52,7 +52,7 @@ def test_import_guess():
 
     g = Grid().from_file(emegfile)
 
-    assert_equal(g.nx, 70)
+    assert_equal(g.ncol, 70)
 
 
 def test_roffbin_import0():
@@ -74,8 +74,8 @@ def test_roffbin_import1():
     logger.info("Import roff...")
     g.from_file(emegfile, fformat="roff")
 
-    assert_equal(g.nx, 70, txt='Grid NX Emerald')
-    assert_equal(g.nz, 46, txt='Grid NZ Emerald')
+    assert_equal(g.ncol, 70, txt='Grid NCOL Emerald')
+    assert_equal(g.nlay, 46, txt='Grid NLAY Emerald')
 
     # extract ACTNUM parameter as a property instance (a GridProperty)
     act = g.get_actnum()
@@ -121,11 +121,11 @@ def test_roffbin_import1():
     logger.info(g.propnames)
 
     # get the property of name Xerxes
-    # myx = g.get_prop_by_name('Xerxes')
-    # if  myx != None:
-    #     logger.info(myx)
-    # else:
-    #     logger.info("Got nothing!")
+    myx = g.get_prop_by_name('Xerxes')
+    if myx is None:
+        logger.info(myx)
+    else:
+        logger.info("Got nothing!")
 
 
 def test_eclgrid_import1():
@@ -136,8 +136,8 @@ def test_eclgrid_import1():
     g.from_file('../xtgeo-testdata/3dgrids/gfb/G1.GRID',
                 fformat="grid")
 
-    assert_equal(g.nx, 20, txt='Grid NX from Eclipse')
-    assert_equal(g.ny, 20, txt='Grid NY from Eclipse')
+    assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
+    assert_equal(g.nrow, 20, txt='Grid NROW from Eclipse')
 
 
 def test_eclgrid_import2():
@@ -147,8 +147,8 @@ def test_eclgrid_import2():
     g.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
                 fformat="egrid")
 
-    assert_equal(g.nx, 99, txt='EGrid NX from Eclipse')
-    assert_equal(g.ny, 120, txt='EGrid NY from Eclipse')
+    assert_equal(g.ncol, 99, txt='EGrid NX from Eclipse')
+    assert_equal(g.nrow, 120, txt='EGrid NY from Eclipse')
     assert_equal(g.nactive, 368004, txt='EGrid NTOTAL from Eclipse')
     assert_equal(g.ntotal, 558360, txt='EGrid NACTIVE from Eclipse')
 

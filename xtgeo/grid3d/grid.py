@@ -25,26 +25,25 @@ from .grid_properties import GridProperties
 from xtgeo.grid3d import _hybridgrid
 from xtgeo.grid3d import _grid_export
 
-# =============================================================================
-# Class constructor
-# =============================================================================
-
 
 class Grid(Grid3D):
     """Class for a 3D grid geometry (corner point) with optionally props.
 
-    I.e. the gemetric grid cells and active cell indicator.
+    I.e. the geometric grid cells and active cell indicator.
 
     The grid geometry class instances are normally created when
     importing a grid from file, as it is (currently) too complex to create from
     scratch.
 
-    See also the GridProperty() and the GridProperties() classes.
+    See also the :class:`.GridProperty` and the :class:`.GridProperties`
+    classes.
 
-    Example:
+    Example::
+
         geo = Grid()
         geo.from_file('myfile.roff')
-        # alternative:
+        #
+        # alternative (make instance directly from file):
         geo = Grid('myfile.roff')
 
     """
@@ -57,9 +56,9 @@ class Grid(Grid3D):
         self.logger = logging.getLogger(clsname)
         self.logger.addHandler(logging.NullHandler())
 
-        self._nx = 4
-        self._ny = 3
-        self._ny = 5
+        self._ncol = 4
+        self._nrow = 3
+        self._nlay = 5
         self._nsubs = 0
         self._p_coord_v = None  # carray swig pointer to coordinates vector
         self._p_zcorn_v = None  # carray swig pointer to zcorns vector
@@ -96,7 +95,7 @@ class Grid(Grid3D):
     @property
     def ntotal(self):
         """Returns the total number of cells."""
-        return self._nx * self._ny * self._nz
+        return self._ncol * self._nrow * self._nlay
 
     @property
     def props(self):
@@ -111,7 +110,8 @@ class Grid(Grid3D):
     @props.setter
     def props(self, list):
         for l in list:
-            if l.ncol != self._nx or l.nrow != self._ny or l.nlay != self._nz:
+            if l.ncol != self._ncol or l.nrow != self._nrow or\
+               l.nlay != self._nlay:
                 raise IndexError('Property NX NY NZ <{}> does not match grid!'
                                  .format(l.name))
 
@@ -263,9 +263,10 @@ class Grid(Grid3D):
 
     def to_file(self, gfile, fformat='roff'):
         """
-        Export grid geometry to file (roff supported).
+        Export grid geometry to file (roff binary supported).
 
-        Example:
+        Example::
+
             g.to_file('myfile.roff')
         """
 
@@ -291,11 +292,16 @@ class Grid(Grid3D):
         Return an ACTNUM GridProperty object
 
         Arguments:
-            name: name of property
+            name: name of property in the XTGeo GridProperty object
+
+        Example::
+
+            act = mygrid.get_actnum()
+            print('{}% cells are active'.format(act.values.mean() * 100))
         """
 
-        ntot = self._nx * self._ny * self._nz
-        act = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+        ntot = self._ncol * self._nrow * self._nlay
+        act = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                            values=np.zeros(ntot, dtype=np.int32),
                            name=name, discrete=True)
 
@@ -323,8 +329,8 @@ class Grid(Grid3D):
             A xtgeo GridProperty object
         """
 
-        ntot = self._nx * self._ny * self._nz
-        dz = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+        ntot = self._ncol * self._nrow * self._nlay
+        dz = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                           values=np.zeros(ntot, dtype=np.float64),
                           name=name, discrete=False)
 
@@ -343,7 +349,7 @@ class Grid(Grid3D):
             option = 1
 
         _cxtgeo.grd3d_calc_dz(
-            self._nx, self._ny, self._nz, self._p_zcorn_v,
+            self._ncol, self._nrow, self._nlay, self._p_zcorn_v,
             self._p_actnum_v, ptr_dz_v, nflip, option,
             xtg_verbose_level)
 
@@ -372,15 +378,15 @@ class Grid(Grid3D):
 
         ntot = self.ntotal
 
-        x = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+        x = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                          values=np.zeros(ntot, dtype=np.float64),
                          name=names[0], discrete=False)
 
-        y = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+        y = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                          values=np.zeros(ntot, dtype=np.float64),
                          name=names[1], discrete=False)
 
-        z = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+        z = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                          values=np.zeros(ntot, dtype=np.float64),
                          name=names[2], discrete=False)
 
@@ -396,9 +402,9 @@ class Grid(Grid3D):
         if mask:
             option = 1
 
-        _cxtgeo.grd3d_calc_xyz(self._nx, self._ny, self._nz, self._p_coord_v,
-                               self._p_zcorn_v, self._p_actnum_v,
-                               ptr_x_v, ptr_y_v, ptr_z_v,
+        _cxtgeo.grd3d_calc_xyz(self._ncol, self._nrow, self._nlay,
+                               self._p_coord_v, self._p_zcorn_v,
+                               self._p_actnum_v, ptr_x_v, ptr_y_v, ptr_z_v,
                                option, xtg_verbose_level)
 
         x._cvalues = ptr_x_v
@@ -413,19 +419,21 @@ class Grid(Grid3D):
         return x, y, z
 
     def get_xyz_cell_corners(self, ijk=(1, 1, 1), mask=True):
-        """Return 8*3 list x, y, z for each corner.
+        """Return a 8 * 3 list x, y, z for each corner.
 
-        3       4
-        !~~~~~~~!
-        !  top  !
-        !~~~~~~~!
-        !       2
+        .. code-block:: none
 
-        7       8
-        !~~~~~~~!
-        !  base !
-        !~~~~~~~!
-        5       6
+           3       4
+           !~~~~~~~!
+           !  top  !
+           !~~~~~~~!    Note that numbers starts from 1
+           1       2
+
+           7       8
+           !~~~~~~~!
+           !  base !
+           !~~~~~~~!
+           5       6
 
         Args:
             ijk (tuple): A tuple of I J K (cell counting starts from 1)
@@ -478,17 +486,19 @@ class Grid(Grid3D):
         ignored, so these is also extracted for UNDEF cells (which may have
         weird coordinates).
 
-        2       3
-        !~~~~~~~!
-        !  top  !
-        !~~~~~~~!
-        0       1
+        .. code-block:: none
 
-        6       7
-        !~~~~~~~!
-        !  base !
-        !~~~~~~~!
-        4       5
+           2       3
+           !~~~~~~~!
+           !  top  !
+           !~~~~~~~!    Listing corners with Python index (0 base)
+           0       1
+
+           6       7
+           !~~~~~~~!
+           !  base !
+           !~~~~~~~!
+           4       5
 
         Args:
             names (list): Generic name of the properties, will have a
@@ -513,15 +523,15 @@ class Grid(Grid3D):
             xname = names[0] + str(i)
             yname = names[1] + str(i)
             zname = names[2] + str(i)
-            x = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+            x = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                              values=np.zeros(ntot, dtype=np.float64),
                              name=xname, discrete=False)
 
-            y = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+            y = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                              values=np.zeros(ntot, dtype=np.float64),
                              name=yname, discrete=False)
 
-            z = GridProperty(nx=self._nx, ny=self._ny, nz=self._nz,
+            z = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                              values=np.zeros(ntot, dtype=np.float64),
                              name=zname, discrete=False)
 
@@ -544,7 +554,7 @@ class Grid(Grid3D):
         option = 0
 
         # note, fool the argument list to unpack ptr_coord with * ...
-        _cxtgeo.grd3d_get_all_corners(self._nx, self._ny, self._nz,
+        _cxtgeo.grd3d_get_all_corners(self._ncol, self._nrow, self._nlay,
                                       self._p_coord_v,
                                       self._p_zcorn_v, self._p_actnum_v,
                                       *(ptr_coord + [option] +
@@ -593,7 +603,7 @@ class Grid(Grid3D):
         if cellcenter:
             option2 = 0
 
-        quality = _cxtgeo.grd3d_geometrics(self._nx, self._ny, self._nz,
+        quality = _cxtgeo.grd3d_geometrics(self._ncol, self._nrow, self._nlay,
                                            self._p_coord_v, self._p_zcorn_v,
                                            self._p_actnum_v, ptr_x[0],
                                            ptr_x[1], ptr_x[2], ptr_x[3],
@@ -620,9 +630,20 @@ class Grid(Grid3D):
     # Reduce grid to one single layer (for special purpose)
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def reduce_to_one_layer(self):
+        """Reduce the grid to one single single layer.
+
+        Example::
+
+            >>> from xtgeo.grid3d import Grid
+            >>> gf = Grid('gullfaks2.roff')
+            >>> gf.nlay
+            47
+            >>> gf.reduce_to_one_layer()
+            >>> gf.nlay
+            1
+
         """
-        Reduce the grid to one single single layer.
-        """
+
         _cxtgeo.xtg_verbose_file('NONE')
         xtg_verbose_level = self._xtg.syslevel
 
@@ -630,10 +651,10 @@ class Grid(Grid3D):
 
         ptr_new_num_act = _cxtgeo.new_intpointer()
         ptr_new_zcorn_v = _cxtgeo.new_doublearray(
-            self._nx * self._ny * (1 + 1) * 4)
-        ptr_new_actnum_v = _cxtgeo.new_intarray(self._nx * self._ny * 1)
+            self._ncol * self._nrow * (1 + 1) * 4)
+        ptr_new_actnum_v = _cxtgeo.new_intarray(self._ncol * self._nrow * 1)
 
-        _cxtgeo.grd3d_reduce_onelayer(self._nx, self._ny, self._nz,
+        _cxtgeo.grd3d_reduce_onelayer(self._ncol, self._nrow, self._nlay,
                                       self._p_zcorn_v,
                                       ptr_new_zcorn_v,
                                       self._p_actnum_v,
@@ -642,7 +663,7 @@ class Grid(Grid3D):
                                       0,
                                       xtg_verbose_level)
 
-        self._nz = 1
+        self._nlay = 1
         self._p_zcorn_v = ptr_new_zcorn_v
         self._p_actnum_v = ptr_new_actnum_v
         self._nactive = _cxtgeo.intpointer_value(ptr_new_num_act)
@@ -665,7 +686,7 @@ class Grid(Grid3D):
         tx, ty, tz = translate
         fx, fy, fz = flip
 
-        ier = _cxtgeo.grd3d_translate(self._nx, self._ny, self._nz,
+        ier = _cxtgeo.grd3d_translate(self._ncol, self._nrow, self._nlay,
                                       fx, fy, fz, tx, ty, tz,
                                       self._p_coord_v, self._p_zcorn_v,
                                       xtg_verbose_level)
@@ -760,14 +781,14 @@ class Grid(Grid3D):
         ptr_zc = well.get_carray('Z_TVDSS')
         ptr_zo = well.get_carray(zonelogname)
 
-        nval = well.nrows
+        nval = well.nrow
 
         ptr_results = _cxtgeo.new_doublearray(10)
 
         ptr_zprop = zoneprop.cvalues
 
-        cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(self._nx, self._ny, self._nz,
-                                                self._p_coord_v,
+        cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(self._ncol, self._nrow,
+                                                self._nlay, self._p_coord_v,
                                                 self._p_zcorn_v,
                                                 self._p_actnum_v, ptr_zprop,
                                                 nval, ptr_xc, ptr_yc, ptr_zc,
@@ -815,22 +836,22 @@ class Grid(Grid3D):
         self.logger.info('Working with file {}'.format(gfile))
 
         self.logger.info('Scanning...')
-        ptr_nx = _cxtgeo.new_intpointer()
-        ptr_ny = _cxtgeo.new_intpointer()
-        ptr_nz = _cxtgeo.new_intpointer()
+        ptr_ncol = _cxtgeo.new_intpointer()
+        ptr_nrow = _cxtgeo.new_intpointer()
+        ptr_nlay = _cxtgeo.new_intpointer()
         ptr_nsubs = _cxtgeo.new_intpointer()
 
-        _cxtgeo.grd3d_scan_roff_bingrid(ptr_nx, ptr_ny, ptr_nz, ptr_nsubs,
-                                        gfile, xtg_verbose_level)
+        _cxtgeo.grd3d_scan_roff_bingrid(ptr_ncol, ptr_nrow, ptr_nlay,
+                                        ptr_nsubs, gfile, xtg_verbose_level)
 
-        self._nx = _cxtgeo.intpointer_value(ptr_nx)
-        self._ny = _cxtgeo.intpointer_value(ptr_ny)
-        self._nz = _cxtgeo.intpointer_value(ptr_nz)
+        self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
+        self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
+        self._nlay = _cxtgeo.intpointer_value(ptr_nlay)
         self._nsubs = _cxtgeo.intpointer_value(ptr_nsubs)
 
-        ntot = self._nx * self._ny * self._nz
-        ncoord = (self._nx + 1) * (self._ny + 1) * 2 * 3
-        nzcorn = self._nx * self._ny * (self._nz + 1) * 4
+        ntot = self._ncol * self._nrow * self._nlay
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
 
         self.logger.info('NCOORD {}'.format(ncoord))
         self.logger.info('NZCORN {}'.format(nzcorn))
@@ -872,27 +893,27 @@ class Grid(Grid3D):
         self.logger.info('Working with file {}'.format(gfile))
 
         self.logger.info('Scanning...')
-        ptr_nx = _cxtgeo.new_intpointer()
-        ptr_ny = _cxtgeo.new_intpointer()
-        ptr_nz = _cxtgeo.new_intpointer()
+        ptr_ncol = _cxtgeo.new_intpointer()
+        ptr_nrow = _cxtgeo.new_intpointer()
+        ptr_nlay = _cxtgeo.new_intpointer()
 
         if gtype == 0:
-            _cxtgeo.grd3d_scan_ecl_grid_hd(gtype, ptr_nx, ptr_ny, ptr_nz,
+            _cxtgeo.grd3d_scan_ecl_grid_hd(gtype, ptr_ncol, ptr_nrow, ptr_nlay,
                                            gfile, xtg_verbose_level)
         elif gtype == 2:
-            _cxtgeo.grd3d_scan_ecl_egrid_hd(gtype, ptr_nx, ptr_ny, ptr_nz,
-                                            gfile, xtg_verbose_level)
+            _cxtgeo.grd3d_scan_ecl_egrid_hd(gtype, ptr_ncol, ptr_nrow,
+                                            ptr_nlay, gfile, xtg_verbose_level)
 
-        self._nx = _cxtgeo.intpointer_value(ptr_nx)
-        self._ny = _cxtgeo.intpointer_value(ptr_ny)
-        self._nz = _cxtgeo.intpointer_value(ptr_nz)
+        self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
+        self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
+        self._nlay = _cxtgeo.intpointer_value(ptr_nlay)
 
-        self.logger.info('NX NY NZ {} {} {}'.format(self._nx, self._ny,
-                                                    self._nz))
+        self.logger.info('NX NY NZ {} {} {}'.format(self._ncol, self._nrow,
+                                                    self._nlay))
 
-        ntot = self._nx * self._ny * self._nz
-        ncoord = (self._nx + 1) * (self._ny + 1) * 2 * 3
-        nzcorn = self._nx * self._ny * (self._nz + 1) * 4
+        ntot = self._ncol * self._nrow * self._nlay
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
 
         self.logger.info('NTOT NCCORD NZCORN {} {} {}'.format(ntot, ncoord,
                                                               nzcorn))
@@ -912,8 +933,8 @@ class Grid(Grid3D):
                                           xtg_verbose_level)
         elif gtype == 2:
             # EGRID
-            _cxtgeo.grd3d_import_ecl_egrid(0, self._nx, self._ny, self._nz,
-                                           ptr_num_act,
+            _cxtgeo.grd3d_import_ecl_egrid(0, self._ncol, self._nrow,
+                                           self._nlay, ptr_num_act,
                                            self._p_coord_v, self._p_zcorn_v,
                                            self._p_actnum_v, gfile,
                                            xtg_verbose_level)
@@ -941,8 +962,8 @@ class Grid(Grid3D):
         # import the init properties unless list is empty
         if initprops:
             initprops = GridProperties()
-            initprops.from_file(ecl_init, name=name, fformat='init', date=None,
-                                grid=self)
+            initprops.from_file(ecl_init, names=initprops, fformat='init',
+                                date=None, grid=self)
             for p in initprops.props:
                 self._props.append(p)
 
@@ -977,7 +998,7 @@ class Grid(Grid3D):
         newfile.close()
         oldfile.close()
 
-        # find nx ny nz
+        # find ncol nrow nz
         mylist = []
         found = False
         with open(tmpfile) as xfile:
@@ -994,16 +1015,15 @@ class Grid(Grid3D):
             return
         xfile.close()
 
-        self._nx, self._ny, self._nz = \
+        self._ncol, self._nrow, self._nlay = \
             int(mylist[0]), int(mylist[1]), int(mylist[2])
 
-        self.logger.info('NX NY NZ in grdecl file: {} {} {}'.format(self._nx,
-                                                                    self._ny,
-                                                                    self._nz))
+        self.logger.info('NX NY NZ in grdecl file: {} {} {}'
+                         .format(self._ncol, self._nrow, self._nlay))
 
-        ntot = self._nx * self._ny * self._nz
-        ncoord = (self._nx + 1) * (self._ny + 1) * 2 * 3
-        nzcorn = self._nx * self._ny * (self._nz + 1) * 4
+        ntot = self._ncol * self._nrow * self._nlay
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
 
         self.logger.info('Reading...')
 
@@ -1012,9 +1032,9 @@ class Grid(Grid3D):
         self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
         self._p_actnum_v = _cxtgeo.new_intarray(ntot)
 
-        _cxtgeo.grd3d_import_grdecl(self._nx,
-                                    self._ny,
-                                    self._nz,
+        _cxtgeo.grd3d_import_grdecl(self._ncol,
+                                    self._nrow,
+                                    self._nlay,
                                     self._p_coord_v,
                                     self._p_zcorn_v,
                                     self._p_actnum_v,
@@ -1033,10 +1053,8 @@ class Grid(Grid3D):
         self.logger.info('Number of active cells: {}'.format(nact))
         self._nsubs = 0
 
-    # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # # export ROFF
     # # option = 0 binary; option = 1 ascii
-    # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # def _export_roff(self, gfile, option):
 
     #     _cxtgeo.xtg_verbose_file('NONE')
@@ -1049,7 +1067,8 @@ class Grid(Grid3D):
     #     # get the geometrics list to find the xshift, etc
     #     gx = self.get_geometrics()
 
-    #     _cxtgeo.grd3d_export_roff_grid(option, self._nx, self._ny, self._nz,
+    #     _cxtgeo.grd3d_export_roff_grid(option, self._ncol, self._nrow,
+    #                                    self._nlay,
     #                                    self._nsubs, 0, gx[3], gx[5], gx[7],
     #                                    self._p_coord_v, self._p_zcorn_v,
     #                                    self._p_actnum_v, self._p_subgrd_v,
@@ -1059,22 +1078,3 @@ class Grid(Grid3D):
 
     #     # end tag
     #     _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)
-
-
-# =============================================================================
-# MAIN, for initial testing. Run from current directory
-# =============================================================================
-def main():
-
-    gfile = '../../../../testdata/Zone/emerald_hetero_grid.roff'
-
-    gg = Grid()
-    gg.from_file(gfile, fformat='roff')
-
-    xtg = XTGeoDialog()
-
-    xtg.info('nx ny nz {} {} {}'.format(gg.ncol, gg.nrow, gg.nlay))
-
-
-if __name__ == '__main__':
-    main()

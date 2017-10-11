@@ -3,18 +3,28 @@ The *XTGeo* library
 =============================
 
 
-The solution of everything
+In-house Python class library for surfaces, wells, 3D grids, etc
+mostly in relation with RMS and geo work.
 
 
 Features
 --------
 
-To come...
+Easy access to basic data, with manipulation in numpy and/or pandas. E.g.
 
-Credits
--------
+::
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+   from xtgeo.surface import RegularSurface
 
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+   # create an instance of a surface, read from file
+   mysurf = RegularSurface('myfile.gri')  # Irap binary as default
+
+   print('Mean is {}'.format(mysurf.mean()))
+
+   # change date so all values less than 2000 becomes 2000
+   # The values attribute gives the Numpy array
+
+   mysurface.values[mysurface.values < 2000] = 2000
+
+   # export the modified surface:
+   mysurface.to_file('newfile.gri')

@@ -75,10 +75,10 @@ class Map(BasePlot):
                      colortable=None):
         """Input a surface and plot it."""
 
-        xmax = surf.xori + surf.xinc * surf.nx
-        ymax = surf.yori + surf.yinc * surf.ny
-        xi = np.linspace(surf.xori, xmax, surf.nx)
-        yi = np.linspace(surf.yori, ymax, surf.ny)
+        xmax = surf.xori + surf.xinc * surf.ncol
+        ymax = surf.yori + surf.yinc * surf.nrow
+        xi = np.linspace(surf.xori, xmax, surf.ncol)
+        yi = np.linspace(surf.yori, ymax, surf.nrow)
 
         # make a copy so original numpy is not altered!
         zi = ma.transpose(surf.values.copy())

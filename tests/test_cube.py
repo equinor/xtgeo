@@ -18,6 +18,12 @@ except OSError:
         raise
 
 xtg = XTGeoDialog()
+format = xtg.loggingformat
+
+logging.basicConfig(format=format, stream=sys.stdout)
+logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+
+logger = logging.getLogger(__name__)
 
 
 if 'XTGEO_NO_BIGTESTS' in os.environ:
@@ -35,22 +41,12 @@ sfile1 = testpath + '/cubes/gra/nh0304.segy'
 sfile2 = testpath + '/cubes/gfb/gf_depth_1985_10_01.segy'
 
 
-def getlogger(name):
-
-    format = xtg.loggingformat
-
-    logging.basicConfig(format=format, stream=sys.stdout)
-    logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
-
-    return logging.getLogger(name)
-
-
 @skiplargetest
 def test_create():
     """Create default cube instance."""
     x = Cube()
-    assert x.nx == 5, 'NX'
-    assert x.ny == 3, 'NY'
+    assert x.ncol == 5, 'NCOL'
+    assert x.nrow == 3, 'NROW'
     v = x.values
     xdim, ydim, zdim = v.shape
     assert xdim == 5, 'NX from numpy shape '
@@ -58,7 +54,6 @@ def test_create():
 
 def test_segy_scanheader():
     """Scan SEGY and report header, using XTGeo internal reader."""
-    logger = getlogger(sys._getframe(1).f_code.co_name)
     logger.info('Scan header...')
 
     if not os.path.isfile(sfile1):
@@ -71,7 +66,6 @@ def test_segy_scanheader():
 
 def test_segy_scantraces():
     """Scan and report SEGY first and last trace (internal reader)."""
-    logger = getlogger(sys._getframe(1).f_code.co_name)
 
     logger.info('Scan traces...')
 
@@ -88,7 +82,6 @@ def test_segy_scantraces():
 
 def test_segy_import_cvalues():
     """Import SEGY using internal reader (case 1 Grane) and chk issues."""
-    logger = getlogger(sys._getframe(1).f_code.co_name)
 
     logger.info('Import SEGY format')
 
@@ -106,7 +99,6 @@ def test_segy_import_cvalues():
 @skiplargetest
 def test_segy_import():
     """Import SEGY using internal reader (case 1 Grane)."""
-    logger = getlogger(sys._getframe(1).f_code.co_name)
 
     logger.info('Import SEGY format')
 
@@ -114,7 +106,7 @@ def test_segy_import():
 
     x.from_file(sfile1, fformat='segy')
 
-    assert x.nx == 257, 'NX'
+    assert x.ncol == 257, 'NCOL'
 
     logger.info('Import SEGY format done')
 
@@ -136,14 +128,13 @@ def test_segy_import():
 
 def test_segyio_import():
     """Import SEGY (case 1 Grane) via SegIO library."""
-    logger = getlogger(sys._getframe(1).f_code.co_name)
 
     logger.info('Import SEGY format via SEGYIO')
 
     x = Cube()
     x.from_file(sfile1, fformat='segy', engine='segyio')
 
-    assert x.nx == 257, 'NX'
+    assert x.ncol == 257, 'NCOL'
     dim = x.values.shape
 
     logger.info("Dimension is {}".format(dim))

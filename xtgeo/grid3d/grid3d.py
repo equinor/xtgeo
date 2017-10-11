@@ -8,9 +8,9 @@ class Grid3D(object):
 
     def __init__(self):
         """The __init__ (constructor) method."""
-        self._nx = 4
-        self._ny = 3
-        self._ny = 5
+        self._ncol = 4
+        self._nrow = 3
+        self._nlay = 5
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
@@ -19,7 +19,7 @@ class Grid3D(object):
     @property
     def ncol(self):
         """ Returns the NCOL (NX or Ncolumns) number of cells"""
-        return self._nx
+        return self._ncol
 
     @ncol.setter
     def ncol(self, value):
@@ -28,7 +28,7 @@ class Grid3D(object):
     @property
     def nrow(self):
         """ Returns the NROW (NY or Nrows) number of cells"""
-        return self._ny
+        return self._nrow
 
     @nrow.setter
     def nrow(self, value):
@@ -37,7 +37,7 @@ class Grid3D(object):
     @property
     def nlay(self):
         """ Returns the NLAY (NZ or Nlayers) number of cells"""
-        return self._nz
+        return self._nlay
 
     @nlay.setter
     def nlay(self, value):
@@ -47,7 +47,7 @@ class Grid3D(object):
     def nx(self):
         """ Returns the NX (Ncolumns) number of cells (deprecated; use ncol)"""
         self.logger.warning("Deprecated; use ncol instead")
-        return self._nx
+        return self._ncol
 
     @nx.setter
     def nx(self, value):
@@ -57,7 +57,7 @@ class Grid3D(object):
     def ny(self):
         """ Returns the NY (Nrows) number of cells (deprecated; use nrow)"""
         self.logger.warning("Deprecated; use nrow instead")
-        return self._ny
+        return self._nrow
 
     @ny.setter
     def ny(self, value):
@@ -67,7 +67,7 @@ class Grid3D(object):
     def nz(self):
         """ Returns the NZ (Nlayers) number of cells (deprecated; use nlay)"""
         self.logger.warning("Deprecated; use nlay instead")
-        return self._nz
+        return self._nlay
 
     @nz.setter
     def nz(self, value):

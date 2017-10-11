@@ -1,43 +1,19 @@
-# #############################################################################
-# NAME:
-#    grid_properties.py
-#
-# AUTHOR(S):
-#    Jan C. Rivenaes
-#
-# DESCRIPTION:
-#    XTGeo class for a group of grid properties. See GridProperty for
-#    individual properties.
-#
-#    In methods, "prop/props" is _the_ shorthand of property/properties!
-#
-# TODO/ISSUES/BUGS:
-#
-# LICENCE:
-#    Statoil property
-#
-# CODING STANDARD:
-#    PEP8 / Googe style (http://google.github.io/styleguide/pyguide.html)
-#    (http://sphinxcontrib-napoleon.readthedocs.io/en/latest/index.html)
-#
-# #############################################################################
+
 import numpy as np
 import os.path
 import logging
 import cxtgeo.cxtgeo as _cxtgeo
 import sys
-import warnings
 from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
 
 from .grid_property import GridProperty
 
 
-
 class GridProperties(Grid3D):
-    """
-    Class for a collecemacs tulltion of 3D grid properties, belonging to the same grid.
-    See also the GridProperty() class
+    """Class for a collection of 3D grid props, belonging to the same grid.
+
+    See also the ~xtgeo.grid3d.GridProperty class.
     """
 
     def __init__(self):
@@ -50,9 +26,9 @@ class GridProperties(Grid3D):
         self.logger = logging.getLogger(clsname)
         self.logger.addHandler(logging.NullHandler())
 
-        self._nx = 10
-        self._ny = 12
-        self._nz = 14
+        self._ncol = 10
+        self._nrow = 12
+        self._nlay = 14
 
         self._props = []            # list of GridProperty objects
         self._names = []            # list of GridProperty names
@@ -88,7 +64,7 @@ class GridProperties(Grid3D):
 
         Raises:
             FileNotFoundError: if input file is not found
-            RuntimeError: if a property is not found
+            ValueError: if a property is not found
             RuntimeWarning: if some dates are not found
 
         """
@@ -213,7 +189,7 @@ class GridProperties(Grid3D):
                 self.logger.debug(repr(p))
                 return p
 
-        raise RuntimeError('Cannot find property with name <{}>'.format(name))
+        raise ValueError('Cannot find property with name <{}>'.format(name))
 
     # =========================================================================
     # PRIVATE METHODS
@@ -243,7 +219,7 @@ class GridProperties(Grid3D):
         """
 
         if not grid:
-            raise RuntimeError('Grid Geometry object is missing')
+            raise ValueError('Grid Geometry object is missing')
 
         _cxtgeo.xtg_verbose_file("NONE")
 
@@ -258,7 +234,7 @@ class GridProperties(Grid3D):
                 dates.sort()
                 self.logger.debug(dates)
             else:
-                raise RuntimeError('Oh... Restart file indicated, but no date(s)')
+                raise ValueError('Restart file indicated, but no date(s)')
 
             if 'SGAS' in names:
                 qsgas = True
@@ -277,25 +253,25 @@ class GridProperties(Grid3D):
         xtg_verbose_level = self._xtg.get_syslevel()
 
         self.logger.info("Scanning NX NY NZ for checking...")
-        ptr_nx = _cxtgeo.new_intpointer()
-        ptr_ny = _cxtgeo.new_intpointer()
-        ptr_nz = _cxtgeo.new_intpointer()
+        ptr_ncol = _cxtgeo.new_intpointer()
+        ptr_nrow = _cxtgeo.new_intpointer()
+        ptr_nlay = _cxtgeo.new_intpointer()
 
-        _cxtgeo.grd3d_scan_ecl_init_hd(1, ptr_nx, ptr_ny, ptr_nz,
+        _cxtgeo.grd3d_scan_ecl_init_hd(1, ptr_ncol, ptr_nrow, ptr_nlay,
                                        pfile, xtg_verbose_level)
 
-        nx0 = _cxtgeo.intpointer_value(ptr_nx)
-        ny0 = _cxtgeo.intpointer_value(ptr_ny)
-        nz0 = _cxtgeo.intpointer_value(ptr_nz)
+        ncol0 = _cxtgeo.intpointer_value(ptr_ncol)
+        nrow0 = _cxtgeo.intpointer_value(ptr_nrow)
+        nlay0 = _cxtgeo.intpointer_value(ptr_nlay)
 
-        if grid.nx != nx0 or grid.ny != ny0 or \
-                grid.nz != nz0:
+        if grid.ncol != ncol0 or grid.nrow != nrow0 or \
+                grid.nlay != nlay0:
             self.logger.error("Errors in dimensions property vs grid")
             return
 
-        self._nx = nx0
-        self._ny = ny0
-        self._nz = nz0
+        self._ncol = ncol0
+        self._nrow = nrow0
+        self._nlay = nlay0
 
         # split date and populate array
         if not dates:
@@ -330,7 +306,8 @@ class GridProperties(Grid3D):
         else:
             nmult = 1
 
-        ptr_dvec_v = _cxtgeo.new_doublearray(nmult * nklist * nx0 * ny0 * nz0)
+        ptr_dvec_v = _cxtgeo.new_doublearray(nmult * nklist * ncol0 *
+                                             nrow0 * nlay0)
 
         ptr_nktype = _cxtgeo.new_intarray(nmult * nklist)
         ptr_norder = _cxtgeo.new_intarray(nmult * nklist)
@@ -348,7 +325,7 @@ class GridProperties(Grid3D):
                           format(nklist, ndates))
 
         _cxtgeo.grd3d_import_ecl_prop(etype,
-                                      nx0 * ny0 * nz0,
+                                      ncol0 * nrow0 * nlay0,
                                       grid._p_actnum_v,
                                       nklist,
                                       useprops,
@@ -391,12 +368,12 @@ class GridProperties(Grid3D):
             else:
                 self.logger.error('Did not find property'
                                   ' <{}>'.format(names[kn]))
-                raise RuntimeError('Property not found: {}'.
-                                            format(names[kn]))
+                raise ValueError('Property not found: {}'.
+                                 format(names[kn]))
 
         if nkeysgot == 0:
             self.logger.error("No keywords found. STOP!")
-            raise RuntimeError('No property keywords found')
+            raise ValueError('No property keywords found')
 
         self.logger.info(
             "Number of keys successfully read: {}".format(nkeysgot))
@@ -461,34 +438,38 @@ class GridProperties(Grid3D):
                     xelf = GridProperty()
 
                     if nktype == 1:
-                        xelf._cvalues = _cxtgeo.new_intarray(nx0 * ny0 * nz0)
+                        xelf._cvalues = _cxtgeo.new_intarray(ncol0 * nrow0 *
+                                                             nlay0)
+
                         xelf._isdiscrete = True
                         xelf._undef = _cxtgeo.UNDEF_INT
                         xelf._undef_limit = _cxtgeo.UNDEF_INT_LIMIT
                         xelf._ptype = 2
                         xelf._dtype = np.int32
                         xelf._name = ppname
-                        xelf._nx = nx0
-                        xelf._ny = ny0
-                        xelf._nz = nz0
+                        xelf._ncol = ncol0
+                        xelf._nrow = nrow0
+                        xelf._nlay = nlay0
 
-                        _cxtgeo.grd3d_strip_anint(nx0 * ny0 * nz0, aorder,
+                        _cxtgeo.grd3d_strip_anint(ncol0 * nrow0 * nlay0,
+                                                  aorder,
                                                   ptr_dvec_v, xelf._cvalues,
                                                   xtg_verbose_level)
 
                     else:
                         xelf._cvalues = _cxtgeo.new_doublearray(
-                            nx0 * ny0 * nz0)
+                            ncol0 * nrow0 * nlay0)
                         xelf._isdiscrete = False
                         xelf._undef = _cxtgeo.UNDEF
                         xelf._undef_limit = _cxtgeo.UNDEF_LIMIT
                         xelf._ptype = 1
                         xelf._name = ppname
-                        xelf._nx = nx0
-                        xelf._ny = ny0
-                        xelf._nz = nz0
+                        xelf._ncol = ncol0
+                        xelf._nrow = nrow0
+                        xelf._nlay = nlay0
 
-                        _cxtgeo.grd3d_strip_adouble(nx0 * ny0 * nz0, aorder,
+                        _cxtgeo.grd3d_strip_adouble(ncol0 * nrow0 * nlay0,
+                                                    aorder,
                                                     ptr_dvec_v, xelf._cvalues,
                                                     xtg_verbose_level)
 

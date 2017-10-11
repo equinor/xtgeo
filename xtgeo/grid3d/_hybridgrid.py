@@ -37,22 +37,22 @@ def make_hybridgrid(grid, **kwargs):
 
     xtg_verbose_level = xtg.syslevel
 
-    newnz = grid.nz * 2 + nhdiv
+    newnlay = grid.nlay * 2 + nhdiv
 
     hyb_num_act = _cxtgeo.new_intpointer()
-    hyb_p_zcorn_v = _cxtgeo.new_doublearray(grid.nx * grid.ny *
-                                            (newnz + 1) * 4)
-    hyb_p_actnum_v = _cxtgeo.new_intarray(grid.nx * grid.ny * newnz)
+    hyb_p_zcorn_v = _cxtgeo.new_doublearray(grid.ncol * grid.nrow *
+                                            (newnlay + 1) * 4)
+    hyb_p_actnum_v = _cxtgeo.new_intarray(grid.ncol * grid.nrow * newnlay)
 
     if region is None:
         print('No region...')
-        _cxtgeo.grd3d_convert_hybrid(grid.nx,
-                                     grid.ny,
-                                     grid.nz,
+        _cxtgeo.grd3d_convert_hybrid(grid.ncol,
+                                     grid.nrow,
+                                     grid.nlay,
                                      grid._p_coord_v,
                                      grid._p_zcorn_v,
                                      grid._p_actnum_v,
-                                     newnz,
+                                     newnlay,
                                      hyb_p_zcorn_v,
                                      hyb_p_actnum_v,
                                      hyb_num_act,
@@ -66,13 +66,13 @@ def make_hybridgrid(grid, **kwargs):
 
         print(region.values3d[40:50, 40:50, :])
 
-        _cxtgeo.grd3d_convert_hybrid2(grid.nx,
-                                      grid.ny,
-                                      grid.nz,
+        _cxtgeo.grd3d_convert_hybrid2(grid.ncol,
+                                      grid.nrow,
+                                      grid.nlay,
                                       grid._p_coord_v,
                                       grid._p_zcorn_v,
                                       grid._p_actnum_v,
-                                      newnz,
+                                      newnlay,
                                       hyb_p_zcorn_v,
                                       hyb_p_actnum_v,
                                       hyb_num_act,
@@ -83,7 +83,7 @@ def make_hybridgrid(grid, **kwargs):
                                       region_number,
                                       xtg_verbose_level)
 
-    grid._nz = newnz
+    grid._nlay = newnlay
     grid._nactive = _cxtgeo.intpointer_value(hyb_num_act)
     grid._p_zcorn_v = hyb_p_zcorn_v
     grid._p_actnum_v = hyb_p_actnum_v

@@ -54,7 +54,7 @@ def get_xy_value_lists(prop, **kwargs):
     xy3 = np.column_stack((clist[9].values, clist[10].values))
 
     xyc = np.column_stack((xy0, xy1, xy2, xy3))
-    xyc = xyc.reshape(grid.nz, grid.nx * grid.ny, 4, 2)
+    xyc = xyc.reshape(grid.nlay, grid.ncol * grid.nrow, 4, 2)
 
     coordlist = xyc.tolist()
 
@@ -64,7 +64,7 @@ def get_xy_value_lists(prop, **kwargs):
 
     coordlist = [[cell for cell in lay if len(cell) > 1] for lay in coordlist]
 
-    pval = prop.values.reshape((grid.nz, grid.nx * grid.ny))
+    pval = prop.values.reshape((grid.nlay, grid.ncol * grid.nrow))
     valuelist = pval.tolist(fill_value=-999.0)
     if mask:
         valuelist = [[val for val in lay if val != -999.0]

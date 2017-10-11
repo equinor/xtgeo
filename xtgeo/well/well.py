@@ -1,25 +1,7 @@
+# -*- coding: utf-8 -*-
 """XTGeo Well class"""
 
-# #############################################################################
-#
-# NAME:
-#    well.py
-#
-# AUTHOR(S):
-#    Jan C. Rivenaes
-#
-# DESCRIPTION:
-#    Class for a well. A well has some fixed metadata + a set of logs. The logs
-#    are stored her as Python PANDAS dataframe
-#    Note that trajecory is hardcoded to X_UTME, Y_UTMN, Z_TVDSS
-#
-# TODO/ISSUES/BUGS:
-#
-# LICENCE:
-#    Statoil property
-# #############################################################################
-
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import sys
 import numpy as np
@@ -30,7 +12,7 @@ import logging
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.xyz import Points
+from . import _wellmarkers
 
 
 class Well(object):
@@ -41,17 +23,19 @@ class Well(object):
     easy and fast.
     """
 
+    UNDEF = _cxtgeo.UNDEF
+    UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
+    UNDEF_INT = _cxtgeo.UNDEF_INT
+    UNDEF_INT_LIMIT = _cxtgeo.UNDEF_INT_LIMIT
+
     def __init__(self, *args, **kwargs):
 
         """The __init__ (constructor) method.
 
-        The instance can be made either from file or by a spesification::
+        The instance can be made either from file or (todo!) by spesification::
 
         >>> x1 = Well('somefilename')  # assume RMS ascii well
         >>> x2 = Well('somefilename', fformat='rms_ascii')
-        >>> x4 = Well()
-        >>> x4.from_file('somefilename', fformat='rms_ascii')
-        >>> x5 = Well(...)
 
         Args:
             xxx (nn): to come
@@ -59,13 +43,11 @@ class Well(object):
 
         """
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
+        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
         self.logger.addHandler(logging.NullHandler())
 
         self._xtg = XTGeoDialog()
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
 
         if args:
             # make instance from file import
@@ -74,10 +56,9 @@ class Well(object):
             self.from_file(wfile, fformat=fformat)
 
         else:
-            # make instance by kw spesification
-            self._xx = kwargs.get('xx', 0.0)
-
-            values = kwargs.get('values', None)
+            # make instance by kw spesification ... todo
+            raise RuntimeWarning('Cannot initialize a Well object without '
+                                 'import at the current stage.')
 
         self.logger.debug('Ran __init__ method for RegularSurface object')
 
@@ -85,40 +66,38 @@ class Well(object):
     # Import and export
     # =========================================================================
 
-    def from_file(self, wfile, fformat="rms_ascii"):
-        """
-        Import well from file.
+    def from_file(self, wfile, fformat='rms_ascii'):
+        """Import well from file.
 
         Args:
             wfile (str): Name of file
             fformat (str): File format, rms_ascii (rms well) is
-                currently supported and defualt format.
+                currently supported and default format.
 
         Returns:
-            Object instance, optionally
+            Object instance (optionally)
 
         Example:
             Here the from_file method is used to initiate the object
             directly::
 
-            >>> mymapobject = RegularSurface().from_file('myfile.x')
-
-
+            >>> mywell = Well('31_2-6.w')
         """
+
         if (os.path.isfile(wfile)):
             pass
         else:
-            self.logger.critical("Not OK file")
+            self.logger.critical('Not OK file')
             raise os.error
 
-        if (fformat is None or fformat == "rms_ascii"):
+        if (fformat is None or fformat == 'rms_ascii'):
             self._import_rms_ascii(wfile)
         else:
-            self.logger.error("Invalid file format")
+            self.logger.error('Invalid file format')
 
         return self
 
-    def to_file(self, wfile, fformat="rms_ascii"):
+    def to_file(self, wfile, fformat='rms_ascii'):
         """
         Export well to file
 
@@ -131,7 +110,7 @@ class Well(object):
             >>> x = Well()
 
         """
-        if (fformat is None or fformat == "rms_ascii"):
+        if (fformat is None or fformat == 'rms_ascii'):
             self._export_rms_ascii(wfile)
 
     # =========================================================================
@@ -166,8 +145,8 @@ class Well(object):
         with _).
         """
         x = self._wname
-        x = x.replace("/", "_")
-        x = x.replace(" ", "_")
+        x = x.replace('/', '_')
+        x = x.replace(' ', '_')
         return x
 
     @property
@@ -176,14 +155,9 @@ class Well(object):
         Returns well name on the assummed form aka '31/2-E-4 AH2'.
         """
         x = self.xwellname
-        x = x.replace("_", "/", 1)
-        x = x.replace("_", " ")
+        x = x.replace('_', '/', 1)
+        x = x.replace('_', ' ')
         return x
-
-    @property
-    def nlogs(self):
-        """ Returns number of well logs (not including X Y TVD)."""
-        return self._nlogs
 
     @property
     def dataframe(self):
@@ -195,12 +169,12 @@ class Well(object):
         self._df = df.copy()
 
     @property
-    def nrows(self):
+    def nrow(self):
         """ Returns the Pandas dataframe object number of rows"""
         return len(self._df.index)
 
     @property
-    def ncolumns(self):
+    def ncol(self):
         """ Returns the Pandas dataframe object number of columns"""
         return len(self._df.columns)
 
@@ -228,6 +202,7 @@ class Well(object):
 
     def get_logrecord(self, lname):
         """ Returns the record of a give log. None if not exists"""
+
         if lname in self._wlogtype:
             return self._wlogrecord[lname]
         else:
@@ -235,6 +210,7 @@ class Well(object):
 
     def get_logrecord_codename(self, lname, key):
         """ Returns the name entry of a log record, for a given key"""
+
         zlogdict = self.get_logrecord(lname)
         try:
             name = zlogdict[key]
@@ -244,8 +220,7 @@ class Well(object):
             return name
 
     def get_carray(self, lname):
-        """
-        Returns the C array pointer (via SWIG) for a given log.
+        """Returns the C array pointer (via SWIG) for a given log.
 
         Type conversion is double if float64, int32 if DISC log.
         Returns None of log does not exist.
@@ -255,23 +230,60 @@ class Well(object):
         except:
             return None
 
-        if self.get_logtype(lname) == "DISC":
+        if self.get_logtype(lname) == 'DISC':
             carr = self._convert_np_carr_int(np_array)
         else:
             carr = self._convert_np_carr_double(np_array)
 
         return carr
 
-    def create_relative_hlen(self):
-        """
-        Make a relative length of a well, as a log.
+    def get_filled_dataframe(self):
+        """Fill the Nan's in the dataframe with real UNDEF values.
 
-        The first well og entry defines zero, then the horisontal length
+        This module returns a copy of the dataframe in the object; it
+        does not change the instance.
+
+        Returns:
+            A pandas dataframe where Nan er replaces with high values.
+
+        """
+
+        lnames = self.lognames
+
+        newdf = self._df.copy()
+
+        # make a dictionary of datatypes
+        dtype = {'X_UTME': 'float64', 'Y_UTMN': 'float64',
+                 'Z_TVDSS': 'float64'}
+
+        dfill = {'X_UTME': Well.UNDEF, 'Y_UTMN': Well.UNDEF,
+                 'Z_TVDSS': Well.UNDEF}
+
+        for lname in lnames:
+            if self.get_logtype(lname) == 'DISC':
+                dtype[lname] = 'int32'
+                dfill[lname] = Well.UNDEF_INT
+            else:
+                dtype[lname] = 'float64'
+                dfill[lname] = Well.UNDEF
+
+        # now first fill Nan's (because int cannot be converted if Nan)
+        newdf.fillna(dfill, inplace=True)
+
+        # now cast to dtype
+        newdf.astype(dtype, inplace=True)
+
+        return newdf
+
+    def create_relative_hlen(self):
+        """Make a relative length of a well, as a log.
+
+        The first well og entry defines zero, then the horizontal length
         is computed relative to that by simple geometric methods.
         """
 
         # need to call the C function...
-        _cxtgeo.xtg_verbose_file("NONE")
+        _cxtgeo.xtg_verbose_file('NONE')
         xtg_verbose_level = self._xtg.syslevel
 
         # extract numpies from XYZ trajetory logs
@@ -280,7 +292,7 @@ class Well(object):
         ptr_zv = self.get_carray('Z_TVDSS')
 
         # get number of rows in pandas
-        nlen = self.nrows
+        nlen = self.nrow
 
         ptr_hlen = _cxtgeo.new_doublearray(nlen)
 
@@ -309,7 +321,7 @@ class Well(object):
         """
 
         # need to call the C function...
-        _cxtgeo.xtg_verbose_file("NONE")
+        _cxtgeo.xtg_verbose_file('NONE')
         xtg_verbose_level = self._xtg.syslevel
 
         # extract numpies from XYZ trajetory logs
@@ -318,7 +330,7 @@ class Well(object):
         ptr_zv = self.get_carray('Z_TVDSS')
 
         # get number of rows in pandas
-        nlen = self.nrows
+        nlen = self.nrow
 
         ptr_md = _cxtgeo.new_doublearray(nlen)
         ptr_incl = _cxtgeo.new_doublearray(nlen)
@@ -350,7 +362,7 @@ class Well(object):
         """
 
         # need to call the C function...
-        _cxtgeo.xtg_verbose_file("NONE")
+        _cxtgeo.xtg_verbose_file('NONE')
         xtg_verbose_level = self._xtg.syslevel
 
         df = self._df
@@ -370,7 +382,7 @@ class Well(object):
 
         ptr_nlen = _cxtgeo.new_intpointer()
 
-        ier = _cxtgeo.pol_resample(self.nrows, ptr_xv, ptr_yv, ptr_zv,
+        ier = _cxtgeo.pol_resample(self.nrow, ptr_xv, ptr_yv, ptr_zv,
                                    sampling, extend, nbuf, ptr_nlen,
                                    ptr_xov, ptr_yov, ptr_zov, ptr_hlv,
                                    0, xtg_verbose_level)
@@ -418,9 +430,9 @@ class Well(object):
         wellreport = []
 
         try:
-            zlog = self._df[zonelogname].values
+            zlog = self._df[zonelogname].values.copy()
         except Exception:
-            self.logger.warning("Cannot get zonelog")
+            self.logger.warning('Cannot get zonelog')
             return None
 
         mdlog = None
@@ -430,32 +442,32 @@ class Well(object):
         x = self._df['X_UTME'].values
         y = self._df['Y_UTMN'].values
         z = self._df['Z_TVDSS'].values
-        zlog[np.isnan(zlog)] = -999
+        zlog[np.isnan(zlog)] = Well.UNDEF_INT
 
         nc = 0
         first = True
         hole = False
         for ind, zone in np.ndenumerate(zlog):
             i = ind[0]
-            if zone == -999 and first:
+            if zone > Well.UNDEF_INT_LIMIT and first:
                 continue
 
-            if zone != -999 and first:
+            if zone < Well.UNDEF_INT_LIMIT and first:
                 first = False
                 continue
 
-            if zone == -999:
+            if zone > Well.UNDEF_INT_LIMIT:
                 nc += 1
                 hole = True
 
-            if zone == -999 and nc > threshold:
-                self.logger.info("Restart first (bigger hole)")
+            if zone > Well.UNDEF_INT_LIMIT and nc > threshold:
+                self.logger.info('Restart first (bigger hole)')
                 hole = False
                 first = True
                 nc = 0
                 continue
 
-            if hole and zone != -999 and nc <= threshold:
+            if hole and zone < Well.UNDEF_INT_LIMIT and nc <= threshold:
                 # here we have a hole that fits criteria
                 if mdlog is not None:
                     entry = (i, x[i], y[i], z[i], int(zone), self.xwellname,
@@ -469,7 +481,7 @@ class Well(object):
                 hole = False
                 nc = 0
 
-            if hole and zone != -999 and nc > threshold:
+            if hole and zone < Well.UNDEF_INT_LIMIT and nc > threshold:
                 hole = False
                 nc = 0
 
@@ -502,7 +514,8 @@ class Well(object):
                 this prefix could be Top, e.g. 'SO43' --> 'TopSO43'
 
         Returns:
-            A pandas dataframe (ready for the xyz/Points class)
+            A pandas dataframe (ready for the xyz/Points class), None
+            if a zonelog is missing
         """
 
         zlist = []
@@ -510,16 +523,22 @@ class Well(object):
 
         self.geometrics()
 
-        zlog = self._df[zonelogname].values
+        # as zlog is float64; need to convert to int array with high
+        # number as undef
+        if zonelogname in self._df.columns:
+            zlog = self._df[zonelogname].values
+            zlog[np.isnan(zlog)] = Well.UNDEF_INT
+            zlog = np.rint(zlog).astype(int)
+        else:
+            return None
+
         xv = self._df['X_UTME'].values
         yv = self._df['Y_UTMN'].values
         zv = self._df['Z_TVDSS'].values
         incl = self._df['Q_INCL'].values
         md = self._df['Q_MDEPTH'].values
 
-        zlog[np.isnan(zlog)] = -999
-
-        self.logger.info("\n")
+        self.logger.info('\n')
         self.logger.info(zlog)
         self.logger.info(xv)
         self.logger.info(zv)
@@ -528,13 +547,13 @@ class Well(object):
         if zonelist is None:
             zonelist = self.get_logrecord(zonelogname).keys()
 
-        self.logger.info("Find values for {}".format(zonelist))
+        self.logger.info('Find values for {}'.format(zonelist))
 
         ztops, ztopnames, zisos, zisonames = (
-            self._extract_ztops(zonelist, xv, yv, zv, zlog, md, incl,
-                                zonelogname, tops=tops,
-                                incl_limit=incl_limit,
-                                prefix=top_prefix))
+            _wellmarkers.extract_ztops(self, zonelist, xv, yv, zv, zlog, md,
+                                       incl, zonelogname, tops=tops,
+                                       incl_limit=incl_limit,
+                                       prefix=top_prefix))
 
         if tops:
             zlist = ztops
@@ -568,8 +587,8 @@ class Well(object):
         self._wlogtype = dict()
         self._wlogrecord = dict()
 
-        self._lognames_all = ['X_UTME', 'Y_UTMN', 'Z_TVDSS'];
-        self._lognames = [];
+        self._lognames_all = ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
+        self._lognames = []
 
         lnum = 1
         with open(wfile, 'r') as f:
@@ -621,17 +640,18 @@ class Well(object):
                                header=None, names=self._lognames_all,
                                dtype=np.float64, na_values=-999)
 
+        # undef values have a high float number? or keep Nan?
+        # self._df.fillna(Well.UNDEF, inplace=True)
+
         self.logger.debug(self._df.head())
 
-
     # Export RMS ascii
-    #---------------------------------------------------------------------------
     def _export_rms_ascii(self, wfile):
 
         with open(wfile, 'w') as f:
-            print("{}".format(self._ffver), file=f)
-            print("{}".format(self._wtype), file=f)
-            print("{} {} {} {}".format(self._wname, self._xpos, self._ypos,
+            print('{}'.format(self._ffver), file=f)
+            print('{}'.format(self._wtype), file=f)
+            print('{} {} {} {}'.format(self._wname, self._xpos, self._ypos,
                                        self._rkb), file=f)
             for lname in self.lognames:
                 wrec = []
@@ -646,7 +666,7 @@ class Well(object):
                 wrec = ' '.join(str(x) for x in wrec)
                 print(wrec)
 
-                print("{} {} {}".format(lname, self._wlogtype[lname],
+                print('{} {} {}'.format(lname, self._wlogtype[lname],
                                         wrec), file=f)
 
         # now export all logs as pandas framework
@@ -660,134 +680,20 @@ class Well(object):
 
         tmpdf.to_csv(wfile, sep=' ', header=False, index=False,
                      float_format='%-14.3f', quoting=csv.QUOTE_NONE,
-                     escapechar=" ", mode='a')
+                     escapechar=' ', mode='a')
 
-    # -------------------------------------------------------------------------
-    # Various private methods
-    # -------------------------------------------------------------------------
-
-    def _extract_ztops(self, keylist, x, y, z, zlog, md, incl, zlogname,
-                       tops=True, incl_limit=80, prefix='Top'):
-        """Extract a list of tops for a zone.
-
-        Args:
-            keylist (list): The zonelog list number to apply
-            x (np): X Position numpy array
-            y (np): Y Position numpy array
-            z (np): Z Position numpy array
-            zlog (np): Zonelog array
-            md (np): MDepth log numpy array
-            incl (np): Inclination log numpy array
-            zlogname (str): Name of zonation log
-            tops (bool): Compute tops or thickness (zone) points (default True)
-            incl_limit (float): Limitation of zone computation (angle, degrees)
-        """
-
-        # The wellpoints will be a list of tuples (one tuple per hit)
-        # Tuple: (X Y Z DZ ZONEKEY ZONENAME WELLNAME)
-        wpts = []
-
-        self.logger.debug(zlog)
-
-        if not tops and incl_limit is None:
-            incl_limit = 80
-
-        azi = -999.0  # tmp so far
-
-        for key in keylist:
-            for ind, zone in np.ndenumerate(zlog):
-                i = ind[0]
-                if i == 0:
-                    continue
-
-                # look at the previous values
-                pzone = zlog[i - 1]
-
-                self.logger.debug("PZONE is {} and zone is {}"
-                                  .format(pzone, zone))
-
-                if (pzone == -999 or zone == -999):
-                    continue
-
-                if pzone != zone:
-                    self.logger.info("FOUND")
-                    if zone == key and pzone < zone:
-                        self.logger.info("FOUND MATCH")
-                        zname = self.get_logrecord_codename(zlogname, key)
-                        zname = prefix + zname
-                        ztop = (x[i], y[i], z[i], md[i], incl[i], azi,
-                                key, zname, self.xwellname)
-                        wpts.append(ztop)
-                        if pzone == key and pzone > zone:
-                            self.logger.info("FOUND MATCH")
-                            key2 = int(pzone)
-                            zname = self.get_logrecord_codename(zlogname, key2)
-                            zname = prefix + zname
-                            ztop = (x[i - 1], y[i - 1], z[i - 1], md[i - 1],
-                                    incl[i - 1], azi, key2, zname,
-                                    self.xwellname)
-                            wpts.append(ztop)
-
-        wpts_names = ['X', 'Y', 'Z', 'QMD', 'QINCL', 'QAZI', 'Zone', 'TopName',
-                      'WellName']
-
-        if tops:
-            return wpts, wpts_names, None, None
-
-        # next get a MIDPOINT zthickness (DZ)
-        llen = len(wpts) - 1
-
-        zwpts_names = ['X', 'Y', 'Z', 'QMD_AVG', 'QMD1', 'QMD2', 'QINCL',
-                       'QAZI', 'Zone', 'ZoneName', 'WellName']
-
-        zwpts = []
-        for i in range(llen):
-            i1 = i
-            i2 = i + 1
-            xx1, yy1, zz1, md1, incl1, azi1, zk1, zn1, wn1 = wpts[i1]
-            xx2, yy2, zz2, md2, incl2, azi2, zk2, zn2, wn2 = wpts[i2]
-
-            # mid point
-            xx_avg = (xx1 + xx2) / 2
-            yy_avg = (yy1 + yy2) / 2
-            md_avg = (md1 + md2) / 2
-            incl_avg = (incl1 + incl2) / 2
-
-            azi_avg = -999.0  # to be fixed later
-
-            zzp = round(abs(zz2 - zz1), 4)
-
-            useok = False
-
-            if incl_avg < incl_limit:
-                useok = True
-
-            if useok and zk2 != zk1:
-                self.logger.debug(" -- Zone {} {} ---> {}"
-                                  .format(zk1, zk2, zzp))
-                usezk = zk1
-                usezn = zn1
-                if zk1 > zk2:
-                    usezk = zk2
-                    usezn = zn2
-                usezn = usezn[len(prefix):]
-
-                zzone = (xx_avg, yy_avg, zzp, md_avg, md1, md2, incl_avg,
-                         azi_avg, usezk, usezn, wn1)
-                zwpts.append(zzone)
-
-        return wpts, wpts_names, zwpts, zwpts_names
 
     # -------------------------------------------------------------------------
     # Special methods for nerds
     # -------------------------------------------------------------------------
 
     def _convert_np_carr_int(self, np_array):
+        """Convert numpy 1D array to C array, assuming int type.
+
+        The numpy is always a double (float64), so need to convert first
         """
-        Convert numpy 1D array to C array, assuming int type. The numpy
-        is always a double (float64), so need to convert first
-        """
-        carr = _cxtgeo.new_intarray(self.nrows)
+
+        carr = _cxtgeo.new_intarray(self.nrow)
 
         np_array = np_array.astype(np.int32)
 
@@ -796,19 +702,15 @@ class Well(object):
         return carr
 
     def _convert_np_carr_double(self, np_array):
-        """
-        Convert numpy 1D array to C array, assuming double type
-        """
-        carr = _cxtgeo.new_doublearray(self.nrows)
+        """Convert numpy 1D array to C array, assuming double type."""
+        carr = _cxtgeo.new_doublearray(self.nrow)
 
         _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
 
         return carr
 
     def _convert_carr_double_np(self, carray, nlen=None):
-        """
-        Convert a C array to numpy, assuming double type.
-        """
+        """Convert a C array to numpy, assuming double type."""
         if nlen is None:
             nlen = len(self._df.index)
 

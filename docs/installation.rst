@@ -22,19 +22,19 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://git.statil.no/xtgeo/pyxtgeo
+    $ git clone git://git.statoil.no/xtgeo/pyxtgeo
 
 Also you will need test data:
 
 .. code-block:: console
 
-   $ git clone git://git.statil.no/xtgeo/xtgeo-testdata
+   $ git clone git://git.statoil.no/xtgeo/xtgeo-testdata
 
-And you may perhaps need:
+And you may also need:
 
 .. code-block:: console
 
-    $ git clone git://git.statil.no/xtgeo/cxtgeo
+    $ git clone git://git.statoil.no/xtgeo/cxtgeo
 
 Once you have a copy of the source, and you have a `virtual environment`_,
 you can install it with:

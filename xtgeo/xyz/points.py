@@ -1,23 +1,7 @@
+# -*- coding: utf-8 -*-
 """XTGeo Points class"""
 
-# #############################################################################
-#
-# NAME:
-#    points.py
-#
-# AUTHOR(S):
-#    Jan C. Rivenaes
-#
-# DESCRIPTION:
-#    Class for XYZ points and also a base class for polygons (connected points)
-#    These points are stored as Pandas in Python.
-# TODO/ISSUES/BUGS:
-#
-# LICENCE:
-#    Statoil property
-# #############################################################################
-
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import numpy as np
 import pandas as pd
@@ -171,6 +155,7 @@ class Points(object):
             tops (bool): Get the tops if True (default), otherwise zone
             incl_limit (float): Inclination limit for zones (thickness points)
             top_prefix (str): Prefix used for Tops
+            zonelist (list-like): Which zone numbers to apply
 
         Returns:
             None if well list is empty; otherwise the number of wells
@@ -188,10 +173,11 @@ class Points(object):
                                           tops=tops, incl_limit=incl_limit,
                                           top_prefix=top_prefix,
                                           zonelist=zonelist)
-            dflist.append(wp)
+            if wp is not None:
+                dflist.append(wp)
 
         if len(dflist) > 0:
-            self._df = pd.concat(dflist)
+            self._df = pd.concat(dflist, ignore_index=True)
         else:
             return None
 
