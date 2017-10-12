@@ -84,7 +84,7 @@ class Points(object):
 
         return self
 
-    def to_file(self, pfile, fformat="xyz", attributes=None):
+    def to_file(self, pfile, fformat="xyz", attributes=None, filter=None):
         """
         Export well to file
 
@@ -92,6 +92,8 @@ class Points(object):
             pfile (str): Name of file
             fformat (str): File format xyz / rms_attr
             attributes (list): List of extra columns to export (some formats)
+            filter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}
 
         Example::
 
@@ -102,7 +104,7 @@ class Points(object):
             self._export_xyz(pfile)
 
         elif fformat == "rms_attr":
-            self._export_rms_attr(pfile, attributes=attributes)
+            self._export_rms_attr(pfile, attributes=attributes, filter=filter)
 
     # =========================================================================
     # Get and Set properties
@@ -206,12 +208,22 @@ class Points(object):
 
     # Export RMS ascii
     # -------------------------------------------------------------------------
-    def _export_rms_attr(self, pfile, attributes=None):
-        """Export til RMS attribute, also called RMS extended set"""
+    def _export_rms_attr(self, pfile, attributes=None, filter=None):
+        """Export til RMS attribute, also called RMS extended set
 
-        df = self.dataframe
+        Filter is on the form {TopName: ['Name1', 'Name2']}
+        """
+
+        df = self.dataframe.copy()
         columns = ['X', 'Y', 'Z']
         mode = 'r'
+
+        # apply filter if any
+        if filter:
+            for key, val in filter.items():
+                if key in df.columns:
+                    df = df.loc[df[key].isin(val)]
+
         if attributes is not None:
             mode = 'a'
             columns += attributes

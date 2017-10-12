@@ -56,9 +56,12 @@ class Well(object):
             self.from_file(wfile, fformat=fformat)
 
         else:
-            # make instance by kw spesification ... todo
-            raise RuntimeWarning('Cannot initialize a Well object without '
-                                 'import at the current stage.')
+            # dummy
+            self._xx = kwargs.get('xx', 0.0)
+
+            # # make instance by kw spesification ... todo
+            # raise RuntimeWarning('Cannot initialize a Well object without '
+            #                      'import at the current stage.')
 
         self.logger.debug('Ran __init__ method for RegularSurface object')
 
@@ -201,7 +204,7 @@ class Well(object):
             return None
 
     def get_logrecord(self, lname):
-        """ Returns the record of a give log. None if not exists"""
+        """ Returns the record (dict) of a give log. None if not exists"""
 
         if lname in self._wlogtype:
             return self._wlogrecord[lname]
@@ -209,7 +212,13 @@ class Well(object):
             return None
 
     def get_logrecord_codename(self, lname, key):
-        """ Returns the name entry of a log record, for a given key"""
+        """ Returns the name entry of a log record, for a given key
+
+        Example::
+
+            # get the name for zonelog entry no 4:
+            zname = well.get_logrecord_codename('ZONELOG', 4)
+        """
 
         zlogdict = self.get_logrecord(lname)
         try:
@@ -410,8 +419,7 @@ class Well(object):
 
     def report_zonation_holes(self, zonelogname=None, threshold=5,
                               mdlogname=None):
-        """
-        Reports if well has holes in the zonation, less or equal to N samples.
+        """Reports if well has holes in zonation, less or equal to N samples.
 
         Zonation may have holes due to various reasons, and
         usually a few undef samples indicates that something is wrong.
@@ -545,7 +553,8 @@ class Well(object):
 
         self.logger.info(self.get_logrecord(zonelogname))
         if zonelist is None:
-            zonelist = self.get_logrecord(zonelogname).keys()
+            # need to declare as list; otherwise Py3 will get dict.keys
+            zonelist = list(self.get_logrecord(zonelogname).keys())
 
         self.logger.info('Find values for {}'.format(zonelist))
 

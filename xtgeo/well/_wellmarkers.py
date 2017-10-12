@@ -49,7 +49,7 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
 
     usezonerange = range(0, 99999)
     if isinstance(zonelist, tuple) and len(zonelist) == 2:
-        usezonerange = range(zonelist)
+        usezonerange = range(zonelist[0], zonelist[1] + 1)
     elif isinstance(zonelist, list) and len(zonelist) > 1:
         usezonerange = zonelist
     else:
