@@ -186,8 +186,20 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        mywell = Well(wfile)
-        mywell.get_zonation_points(zonelogname='ZONELOG')
+        mywell = Well(wfile, zonelogname='ZONELOG')
+        mywell.get_zonation_points()
+
+    def test_get_zone_interval(self):
+        """Get zonations points (zone tops)"""
+
+        self.getlogger('test_get_zone_interval')
+
+        wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-3_Y1H.w"
+
+        mywell = Well(wfile, zonelogname='ZONELOG')
+        line = mywell.get_zone_interval(9)
+
+        print(line)
 
     def test_get_zonation_holes(self):
         """get a report of holes in the zonation, some samples with -999 """
@@ -196,8 +208,8 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/3/31_2-G-4_BY1H_holes.w"
 
-        mywell = Well(wfile)
-        report = mywell.report_zonation_holes(zonelogname='ZONELOG')
+        mywell = Well(wfile, zonelogname='ZONELOG')
+        report = mywell.report_zonation_holes()
 
         self.logger.info("\n{}".format(report))
 
@@ -208,9 +220,8 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/oea/1/w1_holes.w"
 
-        mywell = Well(wfile)
-        report = mywell.report_zonation_holes(zonelogname='Z2002A',
-                                              mdlogname="MDEPTH")
+        mywell = Well(wfile, zonelogname='Z2002A', mdlogname='MDEPTH')
+        report = mywell.report_zonation_holes()
 
         self.logger.info("\n{}".format(report))
 
@@ -220,9 +231,8 @@ class Test(unittest.TestCase):
 
         wfile = "../xtgeo-testdata/wells/tro/3/31_2-1.w"
 
-        mywell = Well(wfile)
-        report = mywell.report_zonation_holes(zonelogname='ZONELOG',
-                                              mdlogname="MD")
+        mywell = Well(wfile, zonelogname='ZONELOG', mdlogname='MD')
+        report = mywell.report_zonation_holes()
 
         self.logger.info("\n{}".format(report))
         self.logger.info("\n{}".format(len(report)))

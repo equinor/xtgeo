@@ -19,6 +19,7 @@
 
 from __future__ import print_function
 import logging
+import pandas as pd
 
 from .points import Points
 
@@ -51,28 +52,39 @@ class Polygons(Points):
 
         self.logger.debug('Ran __init__ method')
 
-    # =========================================================================
-    # Import and export
-    # =========================================================================
-    # =========================================================================
-    # Get and Set properties
-    # =========================================================================
+    def from_wells(self, wells, zone, resample=1):
+
+        """Get line segments from a list of wells and a zone number
+
+        Args:
+            wells (list): List of XTGeo well objects
+            zone (int): Which zone to apply
+            resample (int): If given, resample every N'th sample to make
+                polylines smaller in terms of bit and bytes.
+                1 = No resampling.
 
 
-    # =========================================================================
-    # PRIVATE METHODS
-    # should not be applied outside the class
-    # =========================================================================
+        Returns:
+            None if well list is empty; otherwise the number of wells that
+            have one or more line segments to return
 
-    # -------------------------------------------------------------------------
-    # Import/Export methods for various formats
-    # -------------------------------------------------------------------------
+        Raises:
+            Todo
+        """
 
-    # Import XYZ
-    # -------------------------------------------------------------------------
+        if len(wells) == 0:
+            return None
 
-    # Export RMS ascii
-    # -------------------------------------------------------------------------
-    # -------------------------------------------------------------------------
-    # Special methods for nerds
-    # -------------------------------------------------------------------------
+        dflist = []
+        for well in wells:
+            wp = well.get_zone_interval(zone, resample=resample)
+            if wp is not None:
+                dflist.append(wp)
+
+        if len(dflist) > 0:
+            self._df = pd.concat(dflist, ignore_index=True)
+            self._df.reset_index(inplace=True, drop=True)
+        else:
+            return None
+
+        return len(dflist)

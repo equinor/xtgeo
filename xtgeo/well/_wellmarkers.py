@@ -18,8 +18,9 @@ xtg = XTGeoDialog()
 xtg_verbose_level = xtg.get_syslevel()
 
 
-def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
-                  tops=True, incl_limit=80, prefix='Top'):
+def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl,
+                  tops=True, incl_limit=80, prefix='Top',
+                  use_undef=False):
     """Extract a list of tops for a zone.
 
     Args:
@@ -31,13 +32,15 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
         zlog (np): Zonelog array
         md (np): MDepth log numpy array
         incl (np): Inclination log numpy array
-        zlogname (str): Name of zonation log
         tops (bool): Compute tops or thickness (zone) points (default True)
         incl_limit (float): Limitation of zone computation (angle, degrees)
+        use_undef (bool): If True, then transition from UNDEF is also
+            used.
     """
 
     # The wellpoints will be a list of tuples (one tuple per hit)
     wpts = []
+    zlogname = well.zonelogname
 
     logger.debug(zlog)
     logger.info('Well name is {}'.format(well.wellname))
@@ -57,8 +60,10 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
 
     iundef = _cxtgeo.UNDEF_INT
     iundeflimit = _cxtgeo.UNDEF_INT_LIMIT
-
     pzone = iundef
+
+    if use_undef:
+        pzone = zlog.min() - 1
 
     for ind, zone in np.ndenumerate(zlog):
 
@@ -66,6 +71,9 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
 
         logger.debug('PZONE is {} and zone is {}'
                      .format(pzone, zone))
+
+        if use_undef and zone > iundeflimit:
+            zone = zlog.min() - 1
 
         if pzone != zone and pzone < iundeflimit and zone < iundeflimit:
             logger.debug('Found break in zonation')
@@ -90,7 +98,11 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
                         wpts.append(ztop)
         pzone = zone
 
-    wpts_names = ['X', 'Y', 'Z', 'QMD', 'QINCL', 'QAZI', 'Zone', 'TopName',
+    mdname = 'QMD'
+    if well.mdlogname is not None:
+        mdname = 'MD'
+
+    wpts_names = ['X', 'Y', 'Z', mdname, 'QINCL', 'QAZI', 'Zone', 'TopName',
                   'WellName']
 
     if tops:
@@ -99,7 +111,7 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl, zlogname,
     # next get a MIDPOINT zthickness (DZ)
     llen = len(wpts) - 1
 
-    zwpts_names = ['X', 'Y', 'Z', 'QMD_AVG', 'QMD1', 'QMD2', 'QINCL',
+    zwpts_names = ['X', 'Y', 'Z', mdname + '_AVG', 'QMD1', 'QMD2', 'QINCL',
                    'QAZI', 'Zone', 'ZoneName', 'WellName']
 
     zwpts = []

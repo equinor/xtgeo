@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""XTGeo Well class"""
+"""XTGeo well module"""
 
 from __future__ import print_function, absolute_import
 
@@ -49,11 +49,18 @@ class Well(object):
 
         self._xtg = XTGeoDialog()
 
+        # MD and ZONELOG are two essential logs; keep track of these names
+        self._mdlogname = None
+        self._zonelogname = None
+
         if args:
             # make instance from file import
             wfile = args[0]
             fformat = kwargs.get('fformat', 'rms_ascii')
-            self.from_file(wfile, fformat=fformat)
+            mdlogname = kwargs.get('mdlogname', None)
+            zonelogname = kwargs.get('zonelogname', None)
+            self.from_file(wfile, fformat=fformat, mdlogname=mdlogname,
+                           zonelogname=zonelogname)
 
         else:
             # dummy
@@ -69,13 +76,19 @@ class Well(object):
     # Import and export
     # =========================================================================
 
-    def from_file(self, wfile, fformat='rms_ascii'):
+    def from_file(self, wfile, fformat='rms_ascii',
+                  mdlogname=None, zonelogname=None, strict=True):
         """Import well from file.
 
         Args:
             wfile (str): Name of file
             fformat (str): File format, rms_ascii (rms well) is
                 currently supported and default format.
+            mdlogname (str): Name of measured depth log, if any
+            zonelogname (str): Name of zonation log, if any
+            strict (bool): If True, then import will fail if
+                zonelogname or mdlogname are asked for but not present
+                in wells.
 
         Returns:
             Object instance (optionally)
@@ -94,7 +107,9 @@ class Well(object):
             raise os.error
 
         if (fformat is None or fformat == 'rms_ascii'):
-            self._import_rms_ascii(wfile)
+            self._import_rms_ascii(wfile, mdlogname=mdlogname,
+                                   zonelogname=zonelogname,
+                                   strict=strict)
         else:
             self.logger.error('Invalid file format')
 
@@ -140,6 +155,16 @@ class Well(object):
     def wellname(self):
         """ Returns well name."""
         return self._wname
+
+    @property
+    def mdlogname(self):
+        """ Returns name of MD log, if any (Null if not)."""
+        return self._mdlogname
+
+    @property
+    def zonelogname(self):
+        """ Returns name of zone log, if any (Null if not)."""
+        return self._zonelogname
 
     @property
     def xwellname(self):
@@ -417,8 +442,7 @@ class Well(object):
 
         return x
 
-    def report_zonation_holes(self, zonelogname=None, threshold=5,
-                              mdlogname=None):
+    def report_zonation_holes(self, threshold=5):
         """Reports if well has holes in zonation, less or equal to N samples.
 
         Zonation may have holes due to various reasons, and
@@ -438,14 +462,14 @@ class Well(object):
         wellreport = []
 
         try:
-            zlog = self._df[zonelogname].values.copy()
+            zlog = self._df[self.zonelogname].values.copy()
         except Exception:
             self.logger.warning('Cannot get zonelog')
             return None
 
         mdlog = None
-        if mdlogname is not None:
-            mdlog = self._df[mdlogname].values
+        if self.mdlogname is not None:
+            mdlog = self._df[self.mdlogname].values
 
         x = self._df['X_UTME'].values
         y = self._df['Y_UTMN'].values
@@ -504,9 +528,8 @@ class Well(object):
             df = pd.DataFrame(wellreport, columns=clm)
             return df
 
-    def get_zonation_points(self, zonelogname=None, tops=True,
-                            incl_limit=80, top_prefix='Top',
-                            zonelist=None):
+    def get_zonation_points(self, tops=True, incl_limit=80, top_prefix='Top',
+                            zonelist=None, use_undef=False):
 
         """Extract zonation points from Zonelog and make a marker list.
 
@@ -514,12 +537,15 @@ class Well(object):
         is tops (i.e. tops=True).
 
         Args:
-            zonelogname (str): name of Zonelog to be applied
             tops (bool): If True then compute tops, else (thickness) points.
             incl_limit (float): If given, and usezone is True, the max
                 angle of inclination to be  used as input to zonation points.
             top_prefix (str): As well logs usually have isochore (zone) name,
                 this prefix could be Top, e.g. 'SO43' --> 'TopSO43'
+            zonelist (list of int): Zones to use
+            use_undef (bool): If True, then transition from UNDEF is also
+                used.
+
 
         Returns:
             A pandas dataframe (ready for the xyz/Points class), None
@@ -533,8 +559,8 @@ class Well(object):
 
         # as zlog is float64; need to convert to int array with high
         # number as undef
-        if zonelogname in self._df.columns:
-            zlog = self._df[zonelogname].values
+        if self.zonelogname is not None:
+            zlog = self._df[self.zonelogname].values
             zlog[np.isnan(zlog)] = Well.UNDEF_INT
             zlog = np.rint(zlog).astype(int)
         else:
@@ -546,23 +572,26 @@ class Well(object):
         incl = self._df['Q_INCL'].values
         md = self._df['Q_MDEPTH'].values
 
+        if self.mdlogname is not None:
+            md = self._df[self.mdlogname].values
+
         self.logger.info('\n')
         self.logger.info(zlog)
         self.logger.info(xv)
         self.logger.info(zv)
 
-        self.logger.info(self.get_logrecord(zonelogname))
+        self.logger.info(self.get_logrecord(self.zonelogname))
         if zonelist is None:
             # need to declare as list; otherwise Py3 will get dict.keys
-            zonelist = list(self.get_logrecord(zonelogname).keys())
+            zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
         self.logger.info('Find values for {}'.format(zonelist))
 
         ztops, ztopnames, zisos, zisonames = (
             _wellmarkers.extract_ztops(self, zonelist, xv, yv, zv, zlog, md,
-                                       incl, zonelogname, tops=tops,
+                                       incl, tops=tops,
                                        incl_limit=incl_limit,
-                                       prefix=top_prefix))
+                                       prefix=top_prefix, use_undef=use_undef))
 
         if tops:
             zlist = ztops
@@ -580,6 +609,84 @@ class Well(object):
 
         return df
 
+    def get_zone_interval(self, zonevalue, resample=1):
+
+        """Extract the X Y Z line (polyline) segment for a given zonevalue.
+
+        Args:
+            zonevalue (int): The zone value to extract
+            resample (int): If given, resample every N'th sample to make
+                polylines smaller in terms of bit and bytes.
+                1 = No resampling.
+
+
+        Returns:
+            A pandas dataframe X Y Z (ready for the xyz/Polygon class), None
+            if a zonelog is missing or actual zone does dot
+            exist in the well.
+        """
+
+        if resample < 1 or not isinstance(resample, int):
+            raise KeyError('Key resample of wrong type (must be int >= 1)')
+
+
+        df = self.get_filled_dataframe()
+
+        # the technical solution here is to make a tmp column which
+        # will add one number for each time the actual segment is repeated,
+        # not straightforward... (thanks to H. Berland for tip)
+
+        df['ztmp'] = df[self.zonelogname]
+        df['ztmp'] = (df[self.zonelogname] != zonevalue).astype(int)
+
+        df['ztmp'] = (df.ztmp != df.ztmp.shift()).cumsum()
+
+        df = df[df[self.zonelogname] == zonevalue]
+
+        m1 = df['ztmp'].min()
+        m2 = df['ztmp'].max()
+        if np.isnan(m1):
+            return None
+
+        df2 = df.copy()
+
+        dflist = []
+        for m in range(m1, m2 + 1):
+            df = df2.copy()
+            df = df2[df2['ztmp'] == m]
+            if len(df.index) > 0:
+                dflist.append(df)
+
+            # with pd.option_context('display.max_rows', None,
+            #                        'display.max_columns', None):
+            #     print(df)
+
+            # print(dflist)
+
+        undef_row = pd.DataFrame([[np.nan, np.nan, np.nan]],
+                                 columns=list('XYZ'))
+
+        dxlist = []
+        for i in range(len(dflist)):
+            dx = dflist[i]
+            cols = [x for x in dx.columns
+                    if x not in ['X_UTME', 'Y_UTMN', 'Z_TVDSS']]
+
+            dx = dx.drop(cols, axis=1)
+            # rename columns:
+            dx.columns = ['X', 'Y', 'Z']
+            # now resample every N'th
+            if resample > 1:
+                dx = pd.concat([dx.iloc[::resample, :], dx.tail(1)])
+
+            dx = pd.concat([dx, undef_row])
+            dxlist.append(dx)
+
+        df = pd.concat(dxlist)
+        df.reset_index(inplace=True, drop=True)
+
+        return df
+
     # =========================================================================
     # PRIVATE METHODS
     # should not be applied outside the class
@@ -591,7 +698,8 @@ class Well(object):
 
     # Import RMS ascii
     # -------------------------------------------------------------------------
-    def _import_rms_ascii(self, wfile):
+    def _import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None,
+                          strict=True):
 
         self._wlogtype = dict()
         self._wlogrecord = dict()
@@ -652,6 +760,32 @@ class Well(object):
         # undef values have a high float number? or keep Nan?
         # self._df.fillna(Well.UNDEF, inplace=True)
 
+        # check for MD log:
+        if mdlogname is not None:
+            if mdlogname in self._df.columns:
+                self._mdlogname = mdlogname
+            else:
+                msg = ('mdlogname={} was requested but no such log '
+                       'found for well {}'.format(mdlogname, self.wellname))
+
+                if strict:
+                    raise ValueError(msg)
+                else:
+                    self.logger.warning(msg)
+
+        # check for MD log:
+        if zonelogname is not None:
+            if zonelogname in self._df.columns:
+                self._zonelogname = zonelogname
+            else:
+                msg = ('zonelogname={} was requested but no such log '
+                       'found for well {}'.format(zonelogname, self.wellname))
+
+                if strict:
+                    raise ValueError(msg)
+                else:
+                    self.logger.warning(msg)
+
         self.logger.debug(self._df.head())
 
     # Export RMS ascii
@@ -690,7 +824,6 @@ class Well(object):
         tmpdf.to_csv(wfile, sep=' ', header=False, index=False,
                      float_format='%-14.3f', quoting=csv.QUOTE_NONE,
                      escapechar=' ', mode='a')
-
 
     # -------------------------------------------------------------------------
     # Special methods for nerds
