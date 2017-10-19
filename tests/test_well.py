@@ -64,7 +64,8 @@ class Test(unittest.TestCase):
 
         self.getlogger('test_import_export_many')
 
-        wfiles = "../xtgeo-testdata/wells/tro/1/a/*"
+        wfiles = "../xtgeo-testdata/wells/tro/1/*"
+        print(wfiles)
 
         for filename in glob.glob(wfiles):
             self.logger.info("Importing " + filename)

@@ -64,8 +64,6 @@ def make_hybridgrid(grid, **kwargs):
 
         region.discrete_to_continuous()
 
-        print(region.values3d[40:50, 40:50, :])
-
         _cxtgeo.grd3d_convert_hybrid2(grid.ncol,
                                       grid.nrow,
                                       grid.nlay,

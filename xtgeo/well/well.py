@@ -13,6 +13,7 @@ import logging
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from . import _wellmarkers
+from . import _well_io
 
 
 class Well(object):
@@ -107,11 +108,27 @@ class Well(object):
             raise os.error
 
         if (fformat is None or fformat == 'rms_ascii'):
-            self._import_rms_ascii(wfile, mdlogname=mdlogname,
-                                   zonelogname=zonelogname,
-                                   strict=strict)
+            attr = _well_io.import_rms_ascii(wfile, mdlogname=mdlogname,
+                                             zonelogname=zonelogname,
+                                             strict=strict)
         else:
             self.logger.error('Invalid file format')
+
+        # set the attributes
+        self._wlogtype = attr['wlogtype']
+        self._wlogrecord = attr['wlogrecord']
+        self._lognames_all = attr['lognames_all']
+        self._lognames = attr['lognames']
+        self._ffver = attr['ffver']
+        self._wtype = attr['wtype']
+        self._rkb = attr['rkb']
+        self._xpos = attr['xpos']
+        self._ypos = attr['ypos']
+        self._wname = attr['wname']
+        self._nlogs = attr['nlogs']
+        self._df = attr['df']
+        self._mdlogname = attr['mdlogname']
+        self._zonelogname = attr['zonelogname']
 
         return self
 
@@ -129,7 +146,7 @@ class Well(object):
 
         """
         if (fformat is None or fformat == 'rms_ascii'):
-            self._export_rms_ascii(wfile)
+            _well_io.export_rms_ascii(self, wfile)
 
     # =========================================================================
     # Get and Set properties (tend to pythonic properties; not javaic get
@@ -695,135 +712,6 @@ class Well(object):
     # -------------------------------------------------------------------------
     # Import/Export methods for various formats
     # -------------------------------------------------------------------------
-
-    # Import RMS ascii
-    # -------------------------------------------------------------------------
-    def _import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None,
-                          strict=True):
-
-        self._wlogtype = dict()
-        self._wlogrecord = dict()
-
-        self._lognames_all = ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
-        self._lognames = []
-
-        lnum = 1
-        with open(wfile, 'r') as f:
-            for line in f:
-                if lnum == 1:
-                    self._ffver = line.strip()
-                elif lnum == 2:
-                    self._wtype = line.strip()
-                elif lnum == 3:
-                    row = line.strip().split()
-                    self._rkb = float(row[-1])
-                    self._ypos = float(row[-2])
-                    self._xpos = float(row[-3])
-                    self._wname = row[-4]
-
-                elif lnum == 4:
-                    self._nlogs = int(line)
-                    nlogread = 1
-
-                else:
-                    row = line.strip().split()
-                    lname = row[0]
-                    ltype = row[1].upper()
-
-                    rx = row[2:]
-
-                    self._lognames_all.append(lname)
-                    self._lognames.append(lname)
-
-                    self._wlogtype[lname] = ltype
-
-                    if ltype == 'DISC':
-                        xdict = {int(rx[i]): rx[i + 1] for i in
-                                 range(0, len(rx), 2)}
-                        self._wlogrecord[lname] = xdict
-                    else:
-                        self._wlogrecord[lname] = rx
-
-                    nlogread += 1
-
-                    if nlogread > self._nlogs:
-                        break
-
-                lnum += 1
-
-        # now import all logs as pandas framework
-
-        self._df = pd.read_csv(wfile, delim_whitespace=True, skiprows=lnum,
-                               header=None, names=self._lognames_all,
-                               dtype=np.float64, na_values=-999)
-
-        # undef values have a high float number? or keep Nan?
-        # self._df.fillna(Well.UNDEF, inplace=True)
-
-        # check for MD log:
-        if mdlogname is not None:
-            if mdlogname in self._df.columns:
-                self._mdlogname = mdlogname
-            else:
-                msg = ('mdlogname={} was requested but no such log '
-                       'found for well {}'.format(mdlogname, self.wellname))
-
-                if strict:
-                    raise ValueError(msg)
-                else:
-                    self.logger.warning(msg)
-
-        # check for MD log:
-        if zonelogname is not None:
-            if zonelogname in self._df.columns:
-                self._zonelogname = zonelogname
-            else:
-                msg = ('zonelogname={} was requested but no such log '
-                       'found for well {}'.format(zonelogname, self.wellname))
-
-                if strict:
-                    raise ValueError(msg)
-                else:
-                    self.logger.warning(msg)
-
-        self.logger.debug(self._df.head())
-
-    # Export RMS ascii
-    def _export_rms_ascii(self, wfile):
-
-        with open(wfile, 'w') as f:
-            print('{}'.format(self._ffver), file=f)
-            print('{}'.format(self._wtype), file=f)
-            print('{} {} {} {}'.format(self._wname, self._xpos, self._ypos,
-                                       self._rkb), file=f)
-            for lname in self.lognames:
-                wrec = []
-                if type(self._wlogrecord[lname]) is dict:
-                    for key in self._wlogrecord[lname]:
-                        wrec.append(key)
-                        wrec.append(self._wlogrecord[lname][key])
-
-                else:
-                    wrec = self._wlogrecord[lname]
-
-                wrec = ' '.join(str(x) for x in wrec)
-                print(wrec)
-
-                print('{} {} {}'.format(lname, self._wlogtype[lname],
-                                        wrec), file=f)
-
-        # now export all logs as pandas framework
-        tmpdf = self._df.copy()
-        tmpdf.fillna(value=-999, inplace=True)
-
-        # make the disc as is np.int
-        for lname in self._wlogtype:
-            if self._wlogtype[lname] == 'DISC':
-                tmpdf[[lname]] = tmpdf[[lname]].astype(int)
-
-        tmpdf.to_csv(wfile, sep=' ', header=False, index=False,
-                     float_format='%-14.3f', quoting=csv.QUOTE_NONE,
-                     escapechar=' ', mode='a')
 
     # -------------------------------------------------------------------------
     # Special methods for nerds
