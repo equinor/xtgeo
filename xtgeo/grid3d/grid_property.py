@@ -830,9 +830,10 @@ class GridProperty(Grid3D):
 
         if x.dtype == 'float64' and self._isdiscrete:
             x = x.astype('int32')
-            self.logger.degug('Casting has been done')
+            self.logger.debug('Casting has been done')
 
         if self._isdiscrete is False:
+            self.logger.debug('Convert to cvalues (double)')
             self._cvalues = _cxtgeo.new_doublearray(self.ntotal)
             _cxtgeo.swig_numpy_to_carr_1d(x, self._cvalues)
         else:
@@ -869,6 +870,7 @@ class GridProperty(Grid3D):
         """Convert from discrete to continuous values"""
 
         if self.isdiscrete:
+            self.logger.info('Converting to continuous ...')
             val = self.values.copy()
             val = val.astype('float64')
             self.values = val
@@ -877,4 +879,4 @@ class GridProperty(Grid3D):
             self._codes = {}
             self._ncodes = 1
         else:
-            self.logger.debug('No need to convert, already continuous')
+            self.logger.info('No need to convert, already continuous')

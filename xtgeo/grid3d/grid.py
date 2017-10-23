@@ -622,13 +622,28 @@ class Grid(Grid3D):
         self.logger.info('Cell geometrics done')
         return list
 
-# =============================================================================
-# Some more special operations that changes the grid
-# =============================================================================
+    # =========================================================================
+    # Some more special operations that changes the grid or actnum
+    # =========================================================================
+    def inactivate_by_dz(self, threshold):
+        """Inactivate cells thinner than a given threshold."""
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Reduce grid to one single layer (for special purpose)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        _cxtgeo.xtg_verbose_file('NONE')
+        xtg_verbose_level = self._xtg.syslevel
+
+        if isinstance(threshold, int):
+            threshold = float(threshold)
+
+        if not isinstance(threshold, float):
+            raise ValueError('The threshold is not a float or int')
+
+        # assumption (unless somebody finds a Petrel made grid):
+        nflip = 1
+
+        _cxtgeo.grd3d_inact_by_dz(self.ncol, self.nrow, self.nlay,
+                                  self._p_zcorn_v, self._p_actnum_v,
+                                  threshold, nflip, xtg_verbose_level)
+
     def reduce_to_one_layer(self):
         """Reduce the grid to one single single layer.
 

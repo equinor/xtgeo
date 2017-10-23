@@ -101,3 +101,25 @@ def test_hybridgrid2():
                           region=reg, region_number=1)
 
     grd.to_file('TMP/test_hybridgrid2.roff')
+
+
+def test_inactivate_thin_cells():
+    """Make hybridgrid for Emerald case in region, and inactive thin cells"""
+
+    logger = getlogger('test_hybridgrid2')
+
+    logger.info('Read grid...')
+    grd = Grid(emegfile)
+    logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
+
+    reg = GridProperty()
+    reg.from_file(emerfile, name='REGION')
+
+    nhdiv = 40
+
+    grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=1650, bottomlevel=1690,
+                          region=reg, region_number=1)
+
+    grd.inactivate_by_dz(0.001)
+
+    grd.to_file('TMP/test_hybridgrid2_inact_thin.roff')
