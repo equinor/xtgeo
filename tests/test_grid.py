@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # Do tests
 # =============================================================================
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
+reekfile = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
 
 
 def assert_equal(this, that, txt=''):
@@ -176,6 +177,25 @@ def test_eclgrid_import3():
     assert_equal(xori1 + 100, xori2, txt='Translate X distance')
 
     g.to_file('TMP/g1_translate.roff', fformat="roff_binary")
+
+
+def test_geometrics_reek():
+    """Import Reek and test geometrics"""
+
+    g = Grid(reekfile, fformat='egrid')
+
+    geom = g.get_geometrics(return_dict=True, cellcenter=False)
+
+    for key, val in geom.items():
+        logger.info('{} is {}'.format(key, val))
+
+    # compared with RMS info:
+    assert_almostequal(geom['xmin'], 456510.6, 0.1, 'Xmin')
+    assert_almostequal(geom['ymax'], 5938935.5, 0.1, 'Ymax')
+
+    # cellcenter True:
+    geom = g.get_geometrics(return_dict=True, cellcenter=True)
+    assert_almostequal(geom['xmin'], 456620, 1, 'Xmin cell center')
 
 
 def test_simple_io():

@@ -575,17 +575,30 @@ class Grid(Grid3D):
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get grid geometrics
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    def get_geometrics(self, allcells=False, cellcenter=True):
-        """
-        Get a list of grid geometrics such as origin, minimum, maximum, average
-        rotation, etc.
+    def get_geometrics(self, allcells=False, cellcenter=True,
+                       return_dict=False):
+        """Get a list of grid geometrics such as origin, min, max, etc.
 
         This return list is (xori, yori, zori, xmin, xmax, ymin, ymax, zmin,
         zmax, avg_rotation, avg_dx, avg_dy, avg_dz, grid_regularity_flag)
 
-        Input:
-        allcells=True: Use all cells (also inactive)
-        cellcenter=True: Use cell center coordinates, not corners
+        If a dictionary is returned, the keys are as in the list above
+
+        Args:
+            allcells (bool): If True, return also for inactive cells
+            cellcenter (bool): If True, use cell center, otherwise corner
+                coords
+            return_dict (bool): If True, return a dictionary instead of a
+                list, which is usually more convinient.
+
+        Raises: Nothing
+
+        Example::
+
+            mygrid = Grid('gullfaks.roff')
+            gstuff = mygrid.get_geometrics(return_dict=True)
+            print('X min/max is {} {}'.format(gstuff['xmin', gstuff['xmax']))
+
         """
 
         _cxtgeo.xtg_verbose_file('NONE')
@@ -600,7 +613,7 @@ class Grid(Grid3D):
             option1 = 0
 
         option2 = 1
-        if cellcenter:
+        if not cellcenter:
             option2 = 0
 
         quality = _cxtgeo.grd3d_geometrics(self._ncol, self._nrow, self._nlay,
@@ -613,14 +626,25 @@ class Grid(Grid3D):
                                            option1, option2,
                                            xtg_verbose_level)
 
-        list = []
+        glist = []
         for i in range(13):
-            list.append(_cxtgeo.doublepointer_value(ptr_x[i]))
+            glist.append(_cxtgeo.doublepointer_value(ptr_x[i]))
 
-        list.append(quality)
+        glist.append(quality)
 
         self.logger.info('Cell geometrics done')
-        return list
+
+        if return_dict:
+            gdict = {}
+            gkeys = ['xori', 'yori', 'zori', 'xmin', 'xmax', 'ymin', 'ymax',
+                     'zmin', 'zmax', 'avg_rotation', 'avg_dx', 'avg_dy',
+                     'avg_dz', 'grid_regularity_flag']
+            for i, key in enumerate(gkeys):
+                gdict[key] = glist[i]
+
+            return gdict
+        else:
+            return glist
 
     # =========================================================================
     # Some more special operations that changes the grid or actnum
