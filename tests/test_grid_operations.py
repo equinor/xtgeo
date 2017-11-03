@@ -18,6 +18,12 @@ except OSError:
 # set default level
 xtg = XTGeoDialog()
 
+format = xtg.loggingformat
+
+logging.basicConfig(format=format, stream=sys.stdout)
+logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+
+logger = logging.getLogger(__name__)
 
 # =============================================================================
 # Do tests
@@ -26,21 +32,8 @@ emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 emerfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff'
 
 
-def getlogger(name):
-
-    format = xtg.loggingformat
-
-    logging.basicConfig(format=format, stream=sys.stdout)
-    logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
-
-    logger = logging.getLogger(name)
-    return logger
-
-
 def test_hybridgrid1():
     """Making a hybridgrid for Emerald case (ROFF and GRDECL"""
-
-    logger = getlogger(__name__)
 
     logger.info('Read grid...')
     grd = Grid(emegfile)
@@ -86,8 +79,6 @@ def test_hybridgrid1():
 def test_hybridgrid2():
     """Making a hybridgrid for Emerald case in region"""
 
-    logger = getlogger('test_hybridgrid2')
-
     logger.info('Read grid...')
     grd = Grid(emegfile)
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
@@ -106,8 +97,6 @@ def test_hybridgrid2():
 def test_inactivate_thin_cells():
     """Make hybridgrid for Emerald case in region, and inactive thin cells"""
 
-    logger = getlogger('test_hybridgrid2')
-
     logger.info('Read grid...')
     grd = Grid(emegfile)
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
@@ -123,3 +112,25 @@ def test_inactivate_thin_cells():
     grd.inactivate_by_dz(0.001)
 
     grd.to_file('TMP/test_hybridgrid2_inact_thin.roff')
+
+
+def test_refine_vertically():
+    """Do a grid refinement vertically."""
+
+    logger.info('Read grid...')
+
+    grd = Grid(emegfile)
+    logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
+
+    avg_dz1 = grd.get_dz().values3d.mean()
+
+    # idea; either a scalar (all cells), or a dictionary for zone wise
+    grd.refine_vertically(3)
+
+    avg_dz2 = grd.get_dz().values3d.mean()
+
+    assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
+
+    grd.inactivate_by_dz(0.001)
+
+    grd.to_file('TMP/test_refined_by_3.roff')

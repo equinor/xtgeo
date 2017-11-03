@@ -24,6 +24,7 @@ from .grid_properties import GridProperties
 
 from xtgeo.grid3d import _hybridgrid
 from xtgeo.grid3d import _grid_export
+from xtgeo.grid3d import _refinegrid
 
 
 class Grid(Grid3D):
@@ -750,6 +751,14 @@ class Grid(Grid3D):
                                            bottomlevel=bottomlevel,
                                            region=region,
                                            region_number=region_number)
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Refine vertically
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    def refine_vertically(self, rfactor):
+
+        self = _refinegrid.refine_vertically(self, rfactor)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Report well to zone mismatch
