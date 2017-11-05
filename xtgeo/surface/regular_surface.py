@@ -19,6 +19,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
 
 from xtgeo.surface import _regsurf_import
+from xtgeo.surface import _regsurf_cube
 
 # =============================================================================
 # Globals (always chack that these are same as in CLIB/CXTGEO)
@@ -676,19 +677,19 @@ class RegularSurface(object):
 # Interacion with a cube
 # =============================================================================
 
-    def slice_cube(self, cube, zsurf=None, sampling=0, mask=True):
-        """
-        Slice the cube and update the instance surface to it samples cube
+    def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
+        """Slice the cube and update the instance surface to sampled cube
         values.
 
         Args:
             cube (object): Instance of a Cube()
-            zsurf (surface object): Instance of a depth (or time) map.
+            zsurf (surface object): Instance of a depth (or time) map, which
+                is the depth or time map (or...) that is used a slicer.
                 If None, then the surface instance itself is used a slice
                 criteria. Note that zsurf must have same map defs as the
                 surface instance.
-            sampling (int): 0 for nearest node (default), 1 for trilinear
-                interpolation.
+            sampling (int): 'nearest' for nearest node (default), or
+                'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
                 the cube will be undef.
 
@@ -704,57 +705,56 @@ class RegularSurface(object):
             Exception if maps have different definitions (topology)
         """
 
-        xtg_verbose_level = self._xtg.get_syslevel()
+        _regsurf_cube.slice_cube(self, cube, zsurf=zsurf,
+                                 sampling=sampling, mask=mask)
 
-        if zsurf is not None:
-            other = zsurf
-        else:
-            other = self.copy()
+    def slice_cube_window(self, cube, zsurf=None, sampling='nearest',
+                          mask=True, zrange=10, ndiv=None, attribute='max'):
+        """Slice the cube within a vertical window and get the statistical
+        attrubute.
 
-        if not self.compare_topology(other):
-            raise Exception
+        The statistical attribute can be min, max etc. Attributes are:
 
-        if mask:
-            opt2 = 0
-        else:
-            opt2 = 1
+        * 'max' for maximum
 
-        cubeval1d = np.ravel(cube.values, order='F')
+        * 'min' for minimum
 
-        nsurf = self.ncol * self.nrow
+        * 'rms' for root mean square
 
-        self.logger.debug('Running method from C... '
-                          '(using typemaps for numpies!:')
-        istat, v1d = _cxtgeo.surf_slice_cube(cube.ncol,
-                                             cube.nrow,
-                                             cube.nlay,
-                                             cube.xori,
-                                             cube.xinc,
-                                             cube.yori,
-                                             cube.yinc,
-                                             cube.zori,
-                                             cube.zinc,
-                                             cube.rotation,
-                                             cube.yflip,
-                                             cubeval1d,
-                                             self.ncol,
-                                             self.nrow,
-                                             self.xori,
-                                             self.xinc,
-                                             self.yori,
-                                             self.yinc,
-                                             self.rotation,
-                                             other.get_zval(),
-                                             nsurf,
-                                             sampling, opt2,
-                                             xtg_verbose_level)
+        * 'var' for variance
 
-        if istat != 0:
-            self.logger.warning('Seem to be rotten')
+        Args:
+            cube (object): Instance of a Cube()
+            zsurf (surface object): Instance of a depth (or time) map, which
+                is the depth or time map (or...) that is used a slicer.
+                If None, then the surface instance itself is used a slice
+                criteria. Note that zsurf must have same map defs as the
+                surface instance.
+            sampling (int): 'nearest' for nearest node (default), or
+                'trilinear' for trilinear interpolation.
+            mask (bool): If True (default), then the map values outside
+                the cube will be undef.
+            zrange (float): The one-sided range of the window, e.g. 10 meter
+                (meter if in depth mode). The full window is +- zrange
+            ndiv (int): Number of intervals for sampling within zrange. None
+                means 'auto' sampling, using 0.5 of cube Z increment as basis.
+            attribute (str): The requested attribute, e.g. 'max' value
 
-        self.set_zval(v1d)
+        Example::
+            cube = Cube('some.segy')
+            surf = RegularSurface('s.gri')
+            # update surf to sample cube values:
+            surf.slice_cube_window(cube, attribute='min', zrange=15.0)
 
-        self.logger.debug('Running method from C.. done')
+        Raises:
+            Exception if maps have different definitions (topology)
+            ValueError if attribute is invalid.
+        """
+
+        _regsurf_cube.slice_cube_window(self, cube, zsurf=zsurf,
+                                        sampling=sampling, mask=mask,
+                                        zrange=zrange, ndiv=ndiv,
+                                        attribute=attribute)
 
     # =========================================================================
     # Special methods

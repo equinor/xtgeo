@@ -28,6 +28,7 @@ import inspect
 import logging
 import xtgeo
 import cxtgeo
+import timeit
 
 class XTGeoDialog(object):
     """
@@ -144,6 +145,60 @@ class XTGeoDialog(object):
         print('#{}#'.format(cur_version.center(77)))
         print('#' * 79)
         print('')
+
+    def basiclogger(self, name):
+        """Initiate the logger by some default settings"""
+
+        format = self.loggingformat
+        logging.basicConfig(format=format, stream=sys.stdout)
+        logging.getLogger().setLevel(self.logginglevel)  # root logger!
+
+        return logging.getLogger(name)
+
+    def _testsetup(self):
+        """Basic setup for XTGeo testing (private; only relevant for tests)"""
+
+        path = 'TMP'
+        try:
+            os.makedirs(path)
+        except OSError:
+            if not os.path.isdir(path):
+                raise
+
+        try:
+            bigtest = int(os.environ['XTG_BIGTEST'])
+            bigtest = True
+            print('<< Big tests enabled by XTG_BIGTEST env >>')
+        except Exception:
+            bigtest = False
+            print('<< Big tests disabled as XTG_BIGTEST not set >>')
+
+        testpath = '../xtgeo-testdata'
+        try:
+            testpath = str(os.environ['XTG_BIGTEST'])
+            print('<< Test data path by XTG_TESTDATA env: >>'.format(testpath))
+        except Exception:
+            print('<< No env XTG_TESTDATA - test data path default: {} >>'
+                  .format(testpath))
+
+        self.test_env = True
+        self.tmpdir = path
+        self.bigtest = bigtest
+        self.testpath = testpath
+
+        return True
+
+    @staticmethod
+    def timer(*args):
+        """Without args; return the time, with a time as arg return the
+        difference.
+        """
+        time1 = timeit.default_timer()
+
+        if len(args) > 0:
+            return time1 - args[0]
+        else:
+            return time1
 
     def insane(self, string):
         level = 4

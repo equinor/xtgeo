@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import logging
 import sys
@@ -7,31 +8,20 @@ import pytest
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
 
-
-testpath = os.getenv('XTGEO_TESTDATA', '../xtgeo-testdata')
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
 xtg = XTGeoDialog()
-format = xtg.loggingformat
+logger = xtg.basiclogger(__name__)
 
-logging.basicConfig(format=format, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+if not xtg._testsetup():
+    sys.exit(-9)
 
-logger = logging.getLogger(__name__)
+skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
+                                   reason="Big tests skip")
 
+td = xtg.tmpdir
+testpath = xtg.testpath
 
-if 'XTGEO_NO_BIGTESTS' in os.environ:
-    bigtest = False
-else:
-    bigtest = True
-
-skiplargetest = pytest.mark.skipif(bigtest is False, reason="Big tests skip")
+skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
+                                   reason="Big tests skip")
 
 # =============================================================================
 # Do tests
