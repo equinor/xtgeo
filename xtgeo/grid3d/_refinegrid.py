@@ -41,19 +41,23 @@ def refine_vertically(grid, rfactor):
                                             (newnlay + 1) * 4)
     ref_p_actnum_v = _cxtgeo.new_intarray(grid.ncol * grid.nrow * newnlay)
 
-    _cxtgeo.grd3d_refine_vert(grid.ncol,
-                              grid.nrow,
-                              grid.nlay,
-                              grid._p_coord_v,
-                              grid._p_zcorn_v,
-                              grid._p_actnum_v,
-                              newnlay,
-                              ref_p_zcorn_v,
-                              ref_p_actnum_v,
-                              ref_num_act,
-                              rfac,
-                              0,
-                              xtg_verbose_level)
+    ier = _cxtgeo.grd3d_refine_vert(grid.ncol,
+                                    grid.nrow,
+                                    grid.nlay,
+                                    grid._p_coord_v,
+                                    grid._p_zcorn_v,
+                                    grid._p_actnum_v,
+                                    newnlay,
+                                    ref_p_zcorn_v,
+                                    ref_p_actnum_v,
+                                    ref_num_act,
+                                    rfac,
+                                    0,
+                                    xtg_verbose_level)
+
+    if ier != 0:
+        raise RuntimeError('An error occured in the C routine '
+                           'grd3d_refine_vert, code {}'.format(ier))
 
     # update instance:
     grid._nlay = newnlay
