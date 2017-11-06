@@ -688,12 +688,13 @@ class RegularSurface(object):
                 If None, then the surface instance itself is used a slice
                 criteria. Note that zsurf must have same map defs as the
                 surface instance.
-            sampling (int): 'nearest' for nearest node (default), or
+            sampling (str): 'nearest' for nearest node (default), or
                 'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
                 the cube will be undef.
 
         Example::
+
             cube = Cube()
             cube.from_file('some.segy')
             surf = RegularSurface()
@@ -730,7 +731,7 @@ class RegularSurface(object):
                 If None, then the surface instance itself is used a slice
                 criteria. Note that zsurf must have same map defs as the
                 surface instance.
-            sampling (int): 'nearest' for nearest node (default), or
+            sampling (str): 'nearest' for nearest node (default), or
                 'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
                 the cube will be undef.
@@ -741,6 +742,7 @@ class RegularSurface(object):
             attribute (str): The requested attribute, e.g. 'max' value
 
         Example::
+
             cube = Cube('some.segy')
             surf = RegularSurface('s.gri')
             # update surf to sample cube values:
