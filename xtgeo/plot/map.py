@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import logging
 import numpy as np
 import numpy.ma as ma
+from scipy import ndimage
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
@@ -75,16 +76,20 @@ class Map(BasePlot):
                      colortable=None):
         """Input a surface and plot it."""
 
-        xmax = surf.xori + surf.xinc * surf.ncol
-        ymax = surf.yori + surf.yinc * surf.nrow
-        xi = np.linspace(surf.xori, xmax, surf.ncol)
-        yi = np.linspace(surf.yori, ymax, surf.nrow)
-
         # make a copy so original numpy is not altered!
         zi = ma.transpose(surf.values.copy())
 
+        if (abs(surf.rotation) > 0.001):
+            zimax = zi.max()
+            zi = zi.filled(3 * zimax)
+            zi = ndimage.rotate(zi, -1 * surf.rotation)
+            zi = ma.masked_greater(zi, zimax)
+
         # store the current mask:
         zimask = ma.getmask(zi).copy()
+
+        xi = np.linspace(surf.xmin, surf.xmax, zi.shape[1])
+        yi = np.linspace(surf.ymin, surf.ymax, zi.shape[0])
 
         legendticks = None
         if minvalue is not None and maxvalue is not None:
@@ -138,6 +143,8 @@ class Map(BasePlot):
         try:
             im = self._ax.contourf(xi, yi, zi, uselevels,
                                    colors=self.colortable)
+            # im = self._ax.contourf(zi, uselevels,
+            #                        colors=self.colortable)
             self._fig.colorbar(im, ticks=legendticks)
         except ValueError as err:
             self.logger.warning('Could not make plot: {}'.format(err))

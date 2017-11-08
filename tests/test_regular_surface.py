@@ -95,6 +95,21 @@ class TestSurface(unittest.TestCase):
         self.logger.info(fsize)
         self.assertEqual(fsize, 48900)
 
+    def test_minmax_rotated_map(self):
+        """Min and max of rotated map"""
+        self.getlogger('test_minmax_rotated_map')
+        self.logger.info('Import and export...')
+
+        x = RegularSurface()
+        x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
+                    fformat='irap_binary')
+
+        self.assertAlmostEqual(x.xmin, 464308.40625, places=2)
+        self.assertAlmostEqual(x.xmax, 466017.38536, places=2)
+        self.assertAlmostEqual(x.ymin, 7335894.4380, places=2)
+        self.assertAlmostEqual(x.ymax, 7337678.1262, places=2)
+
+
     def test_irapbin_io(self):
         """
         Import and export Irap binary

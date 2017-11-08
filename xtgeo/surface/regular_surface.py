@@ -363,6 +363,50 @@ class RegularSurface(object):
         self._yori = ynew
 
     @property
+    def xmin(self):
+        """The minimim X coordinate"""
+        corners = self.get_map_xycorners()
+
+        xmin = _cxtgeo.VERYLARGEPOSITIVE
+        for c in corners:
+            if c[0] < xmin:
+                xmin = c[0]
+        return xmin
+
+    @property
+    def xmax(self):
+        """The maximum X coordinate"""
+        corners = self.get_map_xycorners()
+
+        xmax = _cxtgeo.VERYLARGENEGATIVE
+        for c in corners:
+            if c[0] > xmax:
+                xmax = c[0]
+        return xmax
+
+    @property
+    def ymin(self):
+        """The minimim Y coordinate"""
+        corners = self.get_map_xycorners()
+
+        ymin = _cxtgeo.VERYLARGEPOSITIVE
+        for c in corners:
+            if c[1] < ymin:
+                ymin = c[1]
+        return ymin
+
+    @property
+    def ymax(self):
+        """The maximum Y xoordinate"""
+        corners = self.get_map_xycorners()
+
+        ymax = _cxtgeo.VERYLARGENEGATIVE
+        for c in corners:
+            if c[1] > ymax:
+                ymax = c[1]
+        return ymax
+
+    @property
     def values(self):
         """The map values, as 2D masked numpy (float64) of shape (ncol, nrow)."""
         self._update_values()
@@ -546,6 +590,33 @@ class RegularSurface(object):
         self.logger.debug('Surfaces have same topology')
         return True
 
+    def get_map_xycorners(self):
+        """Get the X and Y coordinates of the map corners.
+
+        Returns a tuple on the form
+        ((x0, y0), (x1, y1), (x2, y2), (x3, y3)) where
+        (if unrotated and normal flip) 0 is the lower left
+        corner, 1 is the right, 2 is the upper left, 3 is the upper right.
+        """
+
+        rot1 = self._rotation * math.pi / 180
+        rot2 = rot1 + (math.pi / 2.0)
+
+        x0 = self._xori
+        y0 = self._yori
+
+        x1 = self._xori + (self.ncol - 1) * math.cos(rot1) * self._xinc
+        y1 = self._yori + (self.ncol - 1) * math.sin(rot1) * self._xinc
+
+        x2 = self._xori + (self.nrow - 1) * math.cos(rot2) * self._yinc
+        y2 = self._yori + (self.nrow - 1) * math.sin(rot2) * self._yinc
+
+        x3 = x2 + (self.ncol - 1) * math.cos(rot1) * self._xinc
+        y3 = y2 + (self.ncol - 1) * math.sin(rot1) * self._xinc
+
+        return ((x0, y0), (x1, y1), (x2, y2), (x3, y3))
+
+
     def get_value_from_xy(self, point=(0.0, 0.0)):
         """Return the map value given a X Y point.
 
@@ -569,10 +640,10 @@ class RegularSurface(object):
 
         # call C routine
         zc = _cxtgeo.surf_get_z_from_xy(float(xc), float(yc),
-                                       self._ncol, self._nrow,
-                                       self._xori, self._yori, self._xinc,
-                                       self._yinc, self._yflip, self._rotation,
-                                       self._cvalues, xtg_verbose_level)
+                                        self._ncol, self._nrow,
+                                        self._xori, self._yori, self._xinc,
+                                        self._yinc, self._yflip, self._rotation,
+                                        self._cvalues, xtg_verbose_level)
 
         if zc > self._undef_limit:
             return None

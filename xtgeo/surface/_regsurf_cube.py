@@ -36,7 +36,7 @@ def slice_cube(rmap, cube, zsurf=None, sampling='nearest', mask=True):
     nsurf = rmap.ncol * rmap.nrow
 
     usesampling = 0
-    if sampling == 'nearest':
+    if sampling == 'trilinear':
         usesampling = 1
 
     logger.debug('Running method from C... (using typemaps for numpies!:')

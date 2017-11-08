@@ -22,6 +22,9 @@ td = xtg.tmpdir
 gtop1 = '../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin'
 gsgy1 = '../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy'
 
+ftop1 = '../xtgeo-testdata/surfaces/fos/2/topaare1.gri'
+fsgy1 = '../xtgeo-testdata/cubes/fos/4d_11.segy'
+
 
 def test_slice_nearest():
     """Slice a cube with a surface, nearest node."""
@@ -72,6 +75,47 @@ def test_slice_nearest():
 
     ys.to_file('TMP/surf_slice_cube_swap.gri')
     assert mean == pytest.approx(-0.0755, abs=0.003)
+
+
+def test_slice_various_fos():
+    """Slice a cube with a surface, both nearest node and interpol,
+    Fossekall
+    """
+
+    logger.info('Loading surface')
+    xs = RegularSurface(ftop1)
+
+    logger.info('Loading cube')
+    cc = Cube(fsgy1)
+
+    t1 = xtg.timer()
+    xs.slice_cube(cc)
+    t2 = xtg.timer(t1)
+    logger.info('Slicing... nearest, done in {} seconds'.format(t2))
+
+    xs.to_file('TMP/surf_slice_cube_fos_interp.gri')
+
+    xs.quickplot(filename=td + '/surf_slice_cube_fos_interp.png',
+                 colortable='seismic',
+                 minmax=(-1, 1), title='Fossekall', infotext='Method: nearest')
+
+    # trilinear interpolation:
+
+    logger.info('Loading surface')
+    xs = RegularSurface(ftop1)
+
+    t1 = xtg.timer()
+    xs.slice_cube(cc, sampling='trilinear')
+    t2 = xtg.timer(t1)
+    logger.info('Slicing... trilinear, done in {} seconds'.format(t2))
+
+    xs.to_file('TMP/surf_slice_cube_fos_trilinear.gri')
+
+    xs.quickplot(filename=td + '/surf_slice_cube_fos_trilinear.png',
+                 colortable='seismic',
+                 minmax=(-1, 1), title='Fossekall',
+                 infotext='Method: trilinear')
+
 
 
 def test_slice_interpol():
