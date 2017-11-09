@@ -796,6 +796,8 @@ class RegularSurface(object):
 
         * 'rms' for root mean square
 
+        * 'mean' for expected value
+
         * 'var' for variance
 
         Args:

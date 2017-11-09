@@ -70,8 +70,8 @@ class Cube(object):
             self._xori = kwargs.get('xori', 0.0)
             self._yori = kwargs.get('yori', 0.0)
             self._zori = kwargs.get('zori', 0.0)
-            self._ncol = kwargs.get('nrow', 5)
-            self._nrow = kwargs.get('ncol', 3)
+            self._ncol = kwargs.get('ncol', 5)
+            self._nrow = kwargs.get('nrow', 3)
             self._nlay = kwargs.get('nlay', 2)
             self._xinc = kwargs.get('xinc', 25.0)
             self._yinc = kwargs.get('yinc', 25.0)
@@ -173,7 +173,6 @@ class Cube(object):
         self.logger.warning('Changing xinc is risky')
         self._xinc = val
 
-
     @property
     def yinc(self):
         """The YINC (increment Y), as property."""
@@ -239,6 +238,19 @@ class Cube(object):
         """The cvalues, as a SWIG pointer to C memory (float array)."""
         self._values, self._cvalues = _cube_utils.update_cvalues(self)
         return self._cvalues
+
+    def copy(self):
+        """Copy a xtgeo.cube.Cube object to another instance::
+
+            >>> mycube2 = mycube.copy()
+
+        """
+        xcube = Cube(ncol=self.ncol, nrow=self.nrow, nlay=self.nlay,
+                     xinc=self.xinc, yinc=self.yinc, zinc=self.zinc,
+                     xori=self.xori, yori=self.yori, zori=self.zori,
+                     yflip=self.yflip,
+                     rotation=self.rotation, values=self.values)
+        return xcube
 
     # =========================================================================
     # Import and export

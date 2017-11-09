@@ -134,6 +134,8 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
         attvalues = np.sqrt(ma.mean(np.square(stacked), axis=2))
     elif attribute == 'var':
         attvalues = ma.var(stacked, axis=2)
+    elif attribute == 'mean':
+        attvalues = ma.mean(stacked, axis=2)
     else:
         etxt = 'Invalid attribute applied: {}'.format(attribute)
         raise ValueError(etxt)
