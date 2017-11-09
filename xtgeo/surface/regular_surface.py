@@ -235,6 +235,8 @@ class RegularSurface(object):
         self.logger.info('Export to file...')
         if (fformat == 'irap_ascii'):
             self._export_irap_ascii(mfile)
+        elif (fformat == 'irap_ascii_old'):
+            self._export_irap_ascii_old(mfile)
         elif (fformat == 'irap_binary'):
             self._export_irap_binary(mfile)
         else:
@@ -635,15 +637,12 @@ class RegularSurface(object):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
-        # secure that carray is updated before SWIG/C:
-        self._update_cvalues()
-
         # call C routine
         zc = _cxtgeo.surf_get_z_from_xy(float(xc), float(yc),
                                         self._ncol, self._nrow,
                                         self._xori, self._yori, self._xinc,
                                         self._yinc, self._yflip, self._rotation,
-                                        self._cvalues, xtg_verbose_level)
+                                        self.cvalues, xtg_verbose_level)
 
         if zc > self._undef_limit:
             return None
@@ -766,19 +765,23 @@ class RegularSurface(object):
 
         Example::
 
-            cube = Cube()
-            cube.from_file('some.segy')
-            surf = RegularSurface()
-            surf.from_file('s.gri')
+            cube = Cube('some.segy')
+            surf = RegularSurface('s.gri')
             # update surf to sample cube values:
             surf.slice_cube(cube)
 
         Raises:
             Exception if maps have different definitions (topology)
+            RuntimeWarning if number of sampled nodes is less than 10%
         """
 
-        _regsurf_cube.slice_cube(self, cube, zsurf=zsurf,
-                                 sampling=sampling, mask=mask)
+        ier = _regsurf_cube.slice_cube(self, cube, zsurf=zsurf,
+                                       sampling=sampling, mask=mask)
+
+        if ier == -4:
+            raise RuntimeWarning('Number of sampled nodes < 10\%')
+        elif ier == -5:
+            raise RuntimeWarning('No nodes sampled: map is outside cube?')
 
     def slice_cube_window(self, cube, zsurf=None, sampling='nearest',
                           mask=True, zrange=10, ndiv=None, attribute='max'):
@@ -916,7 +919,6 @@ class RegularSurface(object):
             self.logger.debug('HCPFZ MIN MAX MEAN {} {} {}'.
                               format(a.min(), a.max(), a.mean()))
 
-
         ncol, nrow, nlay = xprop.shape
 
         if layer_minmax is None:
@@ -979,12 +981,10 @@ class RegularSurface(object):
                 self.logger.info('SKIP (not active zone)')
                 continue
 
-
             # get slices per layer of relevant props
             xcopy = np.copy(xprop[:, :, k0])
             ycopy = np.copy(yprop[:, :, k0])
             zcopy = np.copy(hcpfzprop[:, :, k0])
-
 
             propsum = zcopy.sum()
             if (abs(propsum) < 1e-12):
@@ -1299,7 +1299,7 @@ class RegularSurface(object):
     # EXPORT routines
 
     # this is temporary; shall be replaces with a cxtgeo method
-    def _export_irap_ascii(self, mfile, exportmethod=2):
+    def _export_irap_ascii_old(self, mfile, exportmethod=2):
         """
         Private routine for export of surface to IRAP ASCII format
         """
@@ -1351,6 +1351,31 @@ class RegularSurface(object):
 
         f.close()
 
+    def _export_irap_ascii(self, mfile):
+
+        # need to call the C function...
+        _cxtgeo.xtg_verbose_file('NONE')
+
+        zmin = self.values.min()
+        zmax = self.values.max()
+
+        xtg_verbose_level = self._xtg.get_syslevel()
+
+        if xtg_verbose_level < 0:
+            xtg_verbose_level = 0
+
+        nxy = self._ncol * self._nrow
+
+        ier = _cxtgeo.surf_export_irap_ascii(mfile, self._ncol, self._nrow,
+                                             self._xori, self._yori,
+                                             self._xinc, self._yinc,
+                                             self._rotation, self.get_zval(),
+                                             zmin, zmax, 0,
+                                             xtg_verbose_level)
+        if ier != 0:
+            raise RuntimeError('Export to Irap Ascii went wrong, '
+                               'code is {}'.format(ier))
+
     def _export_irap_binary(self, mfile):
 
         # need to call the C function...
@@ -1364,10 +1389,15 @@ class RegularSurface(object):
         if xtg_verbose_level < 0:
             xtg_verbose_level = 0
 
-        _cxtgeo.surf_export_irap_bin(mfile, self._ncol, self._nrow, self._xori,
-                                     self._yori, self._xinc, self._yinc,
-                                     self._rotation, self._cvalues, 0,
-                                     xtg_verbose_level)
+        ier = _cxtgeo.surf_export_irap_bin(mfile, self._ncol, self._nrow,
+                                           self._xori,
+                                           self._yori, self._xinc, self._yinc,
+                                           self._rotation, self._cvalues, 0,
+                                           xtg_verbose_level)
+
+        if ier != 0:
+            raise RuntimeError('Export to Irap Ascii went wrong, '
+                               'code is {}'.format(ier))
 
     # =========================================================================
     # ROXAR API routines

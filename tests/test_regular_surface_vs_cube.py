@@ -25,6 +25,9 @@ gsgy1 = '../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy'
 ftop1 = '../xtgeo-testdata/surfaces/fos/2/topaare1.gri'
 fsgy1 = '../xtgeo-testdata/cubes/fos/4d_11.segy'
 
+ftop2 = '../xtgeo-testdata/surfaces/fos/2/top_ile_depth.irap'
+fsgy2 = '../xtgeo-testdata/cubes/fos/syntseis_2011_seismic_depth.segy'
+
 
 def test_slice_nearest():
     """Slice a cube with a surface, nearest node."""
@@ -47,7 +50,7 @@ def test_slice_nearest():
     t2 = xtg.timer(t1)
     logger.info('Slicing...done in {} seconds'.format(t2))
 
-    xs.to_file('TMP/surf_slice_cube.fgr', fformat='irap_ascii')
+    xs.to_file(td + '/surf_slice_cube.fgr', fformat='irap_ascii')
 
     xs.quickplot(filename=td + '/surf_slice_cube.png', colortable='seismic',
                  minmax=(-1, 1), title='Gullfaks', infotext='Method: nearest')
@@ -73,7 +76,7 @@ def test_slice_nearest():
     mean = ys.values.mean()
     logger.info('Avg for surface is now {}'.format(mean))
 
-    ys.to_file('TMP/surf_slice_cube_swap.gri')
+    ys.to_file(td + '/surf_slice_cube_swap.gri')
     assert mean == pytest.approx(-0.0755, abs=0.003)
 
 
@@ -93,7 +96,7 @@ def test_slice_various_fos():
     t2 = xtg.timer(t1)
     logger.info('Slicing... nearest, done in {} seconds'.format(t2))
 
-    xs.to_file('TMP/surf_slice_cube_fos_interp.gri')
+    xs.to_file(td + '/surf_slice_cube_fos_interp.gri')
 
     xs.quickplot(filename=td + '/surf_slice_cube_fos_interp.png',
                  colortable='seismic',
@@ -109,13 +112,35 @@ def test_slice_various_fos():
     t2 = xtg.timer(t1)
     logger.info('Slicing... trilinear, done in {} seconds'.format(t2))
 
-    xs.to_file('TMP/surf_slice_cube_fos_trilinear.gri')
+    xs.to_file(td + '/surf_slice_cube_fos_trilinear.gri')
 
     xs.quickplot(filename=td + '/surf_slice_cube_fos_trilinear.png',
                  colortable='seismic',
                  minmax=(-1, 1), title='Fossekall',
                  infotext='Method: trilinear')
 
+
+def test_slice_various_fos2():
+    """Slice another cube with a surface, nearest node,
+    Fossekall alt 2
+    """
+
+    logger.info('Loading surface')
+    xs = RegularSurface(ftop2)
+
+    logger.info('Loading cube')
+    cc = Cube(fsgy2)
+
+    t1 = xtg.timer()
+    xs.slice_cube(cc)
+    t2 = xtg.timer(t1)
+    logger.info('Slicing... nearest, done in {} seconds'.format(t2))
+
+    xs.to_file(td + '/surf_slice_cube_fos_interp_v2.gri')
+
+    xs.quickplot(filename=td + '/surf_slice_cube_fos_interp_v2.png',
+                 colortable='seismic',
+                 minmax=(-1, 1), title='Fossekall', infotext='Method: nearest')
 
 
 def test_slice_interpol():
@@ -138,9 +163,9 @@ def test_slice_interpol():
     logger.info(x.values.min())
     logger.info(x.values.max())
 
-    x.to_file('TMP/surf_slice_cube_interpol.fgr', fformat='irap_ascii')
+    x.to_file(td + '/surf_slice_cube_interpol.fgr', fformat='irap_ascii')
 
-    x.quickplot(filename='TMP/surf_slice_cube_interpol.png',
+    x.quickplot(filename=td + '/surf_slice_cube_interpol.png',
                 colortable='seismic', minmax=(-1, 1), title='Gullfaks',
                 infotext='Method: trilinear')
 
@@ -166,21 +191,21 @@ def test_slice_attr_window_max():
     t2 = xtg.timer(t1)
     logger.info('Window slicing... {} secs'. format(t2))
 
-    xs1.quickplot(filename='TMP/surf_slice_cube_window_min.png',
+    xs1.quickplot(filename=td + '/surf_slice_cube_window_min.png',
                   colortable='seismic', minmax=(-1, 1),
                   title='Gullfaks Minimum',
                   infotext='Method: trilinear, window')
 
     xs2.slice_cube_window(cc, attribute='max', sampling='trilinear')
 
-    xs2.quickplot(filename='TMP/surf_slice_cube_window_max.png',
+    xs2.quickplot(filename=td + '/surf_slice_cube_window_max.png',
                   colortable='seismic', minmax=(-1, 1),
                   title='Gullfaks Maximum',
                   infotext='Method: trilinear, window')
 
     xs3.slice_cube_window(cc, attribute='rms', sampling='trilinear')
 
-    xs3.quickplot(filename='TMP/surf_slice_cube_window_rms.png',
+    xs3.quickplot(filename=td + '/surf_slice_cube_window_rms.png',
                   colortable='jet', minmax=(0, 1),
                   title='Gullfaks rms',
                   infotext='Method: trilinear, window')

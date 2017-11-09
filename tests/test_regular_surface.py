@@ -121,6 +121,8 @@ class TestSurface(unittest.TestCase):
         x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
                     fformat='irap_binary')
 
+        x.to_file('TMP/foss1_test.fgr', fformat='irap_ascii')
+
         self.logger.debug("NX is {}".format(x.ncol))
 
         self.assertEqual(x.ncol, 58)
