@@ -1,56 +1,46 @@
-"""XTGeo Polygons class"""
+# -*- coding: utf-8 -*-
+"""XTGeo xyz.polygons module, which contains the Polygons class."""
 
-# #############################################################################
-#
-# NAME:
-#    polygons.py
-#
-# AUTHOR(S):
-#    Jan C. Rivenaes
-#
-# DESCRIPTION:
-#    Polygons (connected points), which is subset of Points
-#    Stored as Pandas in Python.
-# TODO/ISSUES/BUGS:
-#
-# LICENCE:
-#    Statoil property
-# #############################################################################
-
-from __future__ import print_function
-import logging
+from __future__ import print_function, absolute_import
 import pandas as pd
 
-from .points import Points
+from xtgeo.xyz import XYZ
 
 
-class Polygons(Points):
-    """
-    Class for a points set in the XTGeo framework.
-    """
+class Polygons(XYZ):
+    """Class for a polygons (connected points) in the XTGeo framework."""
 
     def __init__(self, *args, **kwargs):
 
-        """The __init__ (constructor) method.
+        super(Polygons, self).__init__(*args, **kwargs)
 
-        The instance can be made either from file or by a spesification::
+        self._ispolygons = True
 
-        >>> xp = Polygons()
-        >>> xp.from_file('somefilename', fformat='xyz')
+    @property
+    def nrows(self):
+        """Cf :py:attr:`.XYZ.nrows`"""
+        return super(Polygons, self).nrows
 
-        Args:
-            xxx (nn): to come
+    @property
+    def dataframe(self):
+        """Cf :py:attr:`.XYZ.dataframe`"""
+        return super(Polygons, self).dataframe
 
+    @dataframe.setter
+    def dataframe(self, df):
+        super(Polygons, self).dataframe = df
 
-        """
+    def from_file(self, pfile, fformat='xyz'):
+        """Cf :meth:`.XYZ.from_file`"""
+        super(Polygons, self).from_file(pfile, fformat=fformat)
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
-
-        Points.__init__(self)
-
-        self.logger.debug('Ran __init__ method')
+    def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
+                wcolumn=None, hcolumn=None, mdcolumn=None):
+        """Cf :meth:`.XYZ.to_file`"""
+        super(Polygons, self).to_file(pfile, fformat=fformat,
+                                      attributes=attributes, filter=filter,
+                                      wcolumn=wcolumn, hcolumn=hcolumn,
+                                      mdcolumn=mdcolumn)
 
     def from_wells(self, wells, zone, resample=1):
 
@@ -62,7 +52,6 @@ class Polygons(Points):
             resample (int): If given, resample every N'th sample to make
                 polylines smaller in terms of bit and bytes.
                 1 = No resampling.
-
 
         Returns:
             None if well list is empty; otherwise the number of wells that

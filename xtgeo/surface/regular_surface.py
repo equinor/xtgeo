@@ -1189,11 +1189,10 @@ class RegularSurface(object):
         self.values = vv
 #        self._values=dzsum
 
-    def quickplot(self, filename='default.png', title='QuickPlot',
-                  infotext=None, xvalues=None, yvalues=None,
-                  minmax=(None, None), xlabelrotation=None,
-                  colortable='rainbow'):
-        """Fast plot of maps using matplotlib.
+    def quickplot(self, filename='/tmp/default.png', title='QuickPlot',
+                  infotext=None, minmax=(None, None), xlabelrotation=None,
+                  colortable='rainbow', faults=None):
+        """Fast surface plot of maps using matplotlib.
 
         Args:
             filename (str): Name of plot file.
@@ -1204,6 +1203,9 @@ class RegularSurface(object):
             xlabelrotation (float): Rotation in degrees of X labels.
             colortable (str): Name of matplotlib or RMS file or XTGeo
                 colortable. Default is matplotlib's 'rainbow'
+            faults (dict): If fault plot is wanted, a dictionary on the
+                form => {'faults': XTGeo Polygons object, 'color': 'k'}
+
         """
 
         # This is using the more versatile Map class in XTGeo. Most kwargs
@@ -1222,8 +1224,13 @@ class RegularSurface(object):
         mymap.plot_surface(self, minvalue=minvalue,
                            maxvalue=maxvalue, xlabelrotation=xlabelrotation,
                            colortable=colortable)
+        if faults:
+            mymap.plot_faults(faults['faults'])
 
-        mymap.savefig(filename)
+        if filename is None:
+            mymap.show()
+        else:
+            mymap.savefig(filename)
 
     def distance_from_point(self, point=(0, 0), azimuth=0.0):
         """

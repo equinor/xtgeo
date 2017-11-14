@@ -1,27 +1,35 @@
-xtgeo\.plot package
-===================
+xtgeo.plot package
+==================
 
 Submodules
 ----------
 
-xtgeo\.plot\.baseplot module
-----------------------------
+xtgeo.plot.baseplot module
+--------------------------
 
 .. automodule:: xtgeo.plot.baseplot
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo\.plot\.map module
------------------------
+xtgeo.plot.grid3d_slice module
+------------------------------
+
+.. automodule:: xtgeo.plot.grid3d_slice
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+xtgeo.plot.map module
+---------------------
 
 .. automodule:: xtgeo.plot.map
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo\.plot\.xsection module
-----------------------------
+xtgeo.plot.xsection module
+--------------------------
 
 .. automodule:: xtgeo.plot.xsection
     :members:

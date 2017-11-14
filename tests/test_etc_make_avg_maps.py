@@ -7,6 +7,7 @@ import logging
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.surface import RegularSurface
+from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
 path = 'TMP'
@@ -34,6 +35,7 @@ gfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
 ifile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
 rfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.UNRST'
 
+ffile1 = '../xtgeo-testdata/polygons/gfb/faults_zone10.zmap'
 
 def test_avg01():
     """Make average map from very simple Eclipse."""
@@ -114,7 +116,12 @@ def test_avg02():
                            layer_minmax=(5, 6),
                            truncate_le=None)
 
-    avgmap.quickplot(filename='TMP/tmp_poro2.png', xlabelrotation=30)
+    # add the faults in plot
+    fau = Polygons(ffile1, fformat='zmap')
+    fspec = {'faults': fau}
+
+    avgmap.quickplot(filename='TMP/tmp_poro2.png', xlabelrotation=30,
+                     faults=fspec)
     avgmap.to_file('TMP/tmp.poro.gri', fformat='irap_ascii')
 
     logger.info(avgmap.values.mean())

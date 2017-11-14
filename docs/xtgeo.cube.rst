@@ -1,11 +1,11 @@
-xtgeo\.cube package
-===================
+xtgeo.cube package
+==================
 
 Submodules
 ----------
 
-xtgeo\.cube\.cube module
-------------------------
+xtgeo.cube.cube module
+----------------------
 
 .. automodule:: xtgeo.cube.cube
     :members:

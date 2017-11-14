@@ -30,6 +30,7 @@ import xtgeo
 import cxtgeo
 import timeit
 
+
 class XTGeoDialog(object):
     """
     System for handling dialogs and messages in XTGeo, which cooperates
@@ -154,6 +155,14 @@ class XTGeoDialog(object):
         logging.getLogger().setLevel(self.logginglevel)  # root logger!
 
         return logging.getLogger(name)
+
+    @staticmethod
+    def functionlogger(name):
+        """Get the logger for functions (not top level)"""
+
+        logger = logging.getLogger(name)
+        logger.addHandler(logging.NullHandler())
+        return logger
 
     def _testsetup(self):
         """Basic setup for XTGeo testing (private; only relevant for tests)"""

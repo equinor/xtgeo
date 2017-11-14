@@ -1,70 +1,98 @@
-import unittest
-import os
-import glob
+# -*- coding: utf-8 -*-
 import sys
-import logging
+import pytest
+from xtgeo.xyz import XYZ
 from xtgeo.xyz import Points
 from xtgeo.xyz import Polygons
+
 from xtgeo.common import XTGeoDialog
-
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
+from .test_grid import assert_almostequal
 
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
+if not xtg._testsetup():
+    sys.exit(-9)
+
+td = xtg.tmpdir
+testpath = xtg.testpath
+
+skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
+                                   reason="Big tests skip")
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
 
-class Test(unittest.TestCase):
-    """Testing suite for wells"""
+def test_xyz():
+    """Import XYZ module from file, should not be possible as it is abc."""
 
-    def getlogger(self, name):
+    ok = False
+    try:
+        myxyz = XYZ()
+    except TypeError as tt:
+        ok = True
+        logger.info(tt)
+        assert 'abstract' in str(tt)
+    else:
+        logger.info(myxyz)
 
-        # if isinstance(self.logger):
-        #     return
+    assert ok is True
 
-        format = xtg.loggingformat
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+def test_import():
+    """Import XYZ points from file."""
 
-        self.logger = logging.getLogger(name)
+    pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
 
-    def test_import(self):
-        """
-        Import XYZ points from file
-        """
-        self.getlogger('test_import')
+    mypoints = Points(pfile)
 
-        pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
+    logger.debug(mypoints.dataframe)
 
-        mypoints = Points()
+    x0 = mypoints.dataframe['X'].values[0]
+    logger.debug(x0)
+    assert_almostequal(x0, 460842.434326, 0.001)
 
-        mypoints.from_file(pfile)
 
-        self.logger.debug(mypoints.dataframe)
+def test_import_zmap():
+    """Import XYZ polygons on ZMAP format from file"""
 
-    def test_import_polygons(self):
-        """
-        Import XYZ polygons from file
-        """
-        self.getlogger('test_import_polygons')
+    pfile = "../xtgeo-testdata/polygons/gfb/faults_zone10.zmap"
 
-        pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
+    mypol = Polygons()
 
-        mypoly = Polygons()
+    mypol.from_file(pfile, fformat='zmap')
 
-        mypoly.from_file(pfile)
+    nn = mypol.nrows
+    assert nn == 16666
+    x0 = mypol.dataframe['X'].values[0]
+    y1 = mypol.dataframe['Y'].values[nn - 1]
 
-        self.logger.debug(mypoly.dataframe)
+    assert_almostequal(x0, 457357.78125, 0.001)
+    assert_almostequal(y1, 6790785.5, 0.01)
 
-if __name__ == '__main__':
 
-    unittest.main()
+def test_import_export_polygons():
+    """Import XYZ polygons from file. Modify, and export."""
+
+    pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
+
+    mypoly = Polygons()
+
+    mypoly.from_file(pfile)
+
+    z0 = mypoly.dataframe['Z'].values[0]
+
+    assert_almostequal(z0, 2266.996338, 0.001)
+
+    logger.debug(mypoly.dataframe)
+
+    mypoly.dataframe['Z'] += 100
+
+    mypoly.to_file(td + '/polygon_export.xyz', fformat='xyz')
+
+    # reimport and check
+    mypoly2 = Polygons(td + '/polygon_export.xyz')
+
+    assert_almostequal(z0 + 100, mypoly2.dataframe['Z'].values[0], 0.001)

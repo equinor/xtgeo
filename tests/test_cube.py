@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import logging
 import sys
 import numpy as np
 import pytest
@@ -13,9 +12,6 @@ logger = xtg.basiclogger(__name__)
 
 if not xtg._testsetup():
     sys.exit(-9)
-
-skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
-                                   reason="Big tests skip")
 
 td = xtg.tmpdir
 testpath = xtg.testpath

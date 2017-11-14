@@ -1,11 +1,11 @@
-xtgeo\.well package
-===================
+xtgeo.well package
+==================
 
 Submodules
 ----------
 
-xtgeo\.well\.well module
-------------------------
+xtgeo.well.well module
+----------------------
 
 .. automodule:: xtgeo.well.well
     :members:

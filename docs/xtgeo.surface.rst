@@ -1,11 +1,11 @@
-xtgeo\.surface package
-======================
+xtgeo.surface package
+=====================
 
 Submodules
 ----------
 
-xtgeo\.surface\.regular\_surface module
----------------------------------------
+xtgeo.surface.regular_surface module
+------------------------------------
 
 .. automodule:: xtgeo.surface.regular_surface
     :members:

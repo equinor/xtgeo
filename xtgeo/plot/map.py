@@ -3,9 +3,11 @@
 from __future__ import print_function, division, absolute_import
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mplp
 import logging
 import numpy as np
 import numpy.ma as ma
+import six
 from scipy import ndimage
 
 from xtgeo.common import XTGeoDialog
@@ -150,6 +152,45 @@ class Map(BasePlot):
             self.logger.warning('Could not make plot: {}'.format(err))
 
         plt.gca().set_aspect('equal', adjustable='box')
+
+    def plot_faults(self, fpoly, idname='ID', color='k', edgecolor='k',
+                    alpha=0.7, linewidth=0.8):
+        """Plot the faults
+
+        Args:
+            fpoly (object): A XTGeo Polygons object
+            idname (str): Name of column which has the faults ID
+            color (c): Fill color model c according to Matplotlib_
+            edgecolor (c): Edge color according to Matplotlib_
+            alpha (float): Degree of opacity
+            linewidth (float): Line width
+
+        .. _Matplotlib: http://matplotlib.org/api/colors_api.html
+        """
+
+        aff = fpoly.dataframe.groupby(idname)
+
+        for name, group in aff:
+
+            # make a dataframe sorted on faults (groupname)
+            myfault = aff.get_group(name)
+
+            # make a list [(X,Y) ...]; note PY3 need the
+            # list before the zip!
+            if six.PY3:
+                af = list(zip(myfault['X'].values,
+                              myfault['Y'].values))
+            else:
+                # make a numpy (X,Y) list from pandas series
+                af = myfault[['X', 'Y']].values
+
+            p = mplp.Polygon(af, alpha=0.7, color=color, ec=edgecolor,
+                             lw=linewidth)
+
+            if p.get_closed():
+                self._ax.add_artist(p)
+            else:
+                print("A polygon is not closed...")
 
     def show(self):
         """Call to matplotlib.pyplot show().

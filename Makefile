@@ -105,7 +105,7 @@ coverage: ## check code coverage quickly with the default Python
 
 
 docsrun: clean ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/${APPLICATION}.rst
+	rm -f docs/${APPLICATION}*.rst
 	rm -f docs/modules.rst
 	rm -fr docs/_build
 	sphinx-apidoc -o docs/ ${APPLICATION}

@@ -1,19 +1,19 @@
-xtgeo\.common package
-=====================
+xtgeo.common package
+====================
 
 Submodules
 ----------
 
-xtgeo\.common\.calc module
---------------------------
+xtgeo.common.calc module
+------------------------
 
 .. automodule:: xtgeo.common.calc
     :members:
     :undoc-members:
     :show-inheritance:
 
-xtgeo\.common\.xtgeo\_dialog module
------------------------------------
+xtgeo.common.xtgeo_dialog module
+--------------------------------
 
 .. automodule:: xtgeo.common.xtgeo_dialog
     :members:
