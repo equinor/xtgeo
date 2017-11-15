@@ -34,6 +34,14 @@ class Polygons(XYZ):
         """Cf :meth:`.XYZ.from_file`"""
         super(Polygons, self).from_file(pfile, fformat=fformat)
 
+        # for polygons, a seperate column with ID is required; however this may
+        # lack if the input is on XYZ format
+
+        if 'ID' not in self._df.columns:
+            self._df['ID'] = self._df.isnull().all(axis=1).cumsum().dropna()
+            self._df.dropna(axis=0, inplace=True)
+            self._df['ID'] += 1
+
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
         """Cf :meth:`.XYZ.to_file`"""
