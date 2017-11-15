@@ -21,7 +21,7 @@ setup_requirements = [
 
 test_requirements = [
     'pytest',
-    'segyio',
+    # 'segyio',
 ]
 
 setup(
