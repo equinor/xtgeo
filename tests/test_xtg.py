@@ -1,24 +1,31 @@
-import os
-import os.path
+# -*- coding: utf-8 -*-
 import sys
-import logging
+import pytest
 
 import xtgeo.common.calc as xcalc
 from xtgeo.common import XTGeoDialog
 
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
 xtg = XTGeoDialog()
-logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)
+logger = xtg.basiclogger(__name__)
 
-logger = logging.getLogger(__name__)
+if not xtg._testsetup():
+    sys.exit(-9)
+
+td = xtg.tmpdir
+testpath = xtg.testpath
+
+
+# =============================================================================
+# Some useful functions
+# =============================================================================
+
+def assert_equal(this, that, txt=''):
+    assert this == that, txt
+
+
+def assert_almostequal(this, that, tol, txt=''):
+    assert this == pytest.approx(that, abs=tol), txt
+
 
 # =============================================================================
 # Do tests

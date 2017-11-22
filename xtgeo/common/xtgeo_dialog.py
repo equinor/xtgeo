@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Module for basic XTGeo dialog"""
+
 # =============================================================================
 # Message and dialog handler in xtgeo. It works together the logging module,
 # But, also I need stuff to work together with existing
@@ -32,18 +35,13 @@ import timeit
 
 
 class XTGeoDialog(object):
-    """
-    System for handling dialogs and messages in XTGeo, which cooperates
-    with Python logging module.
+    """System for handling dialogs and messages in XTGeo.
+
+    This module cooperates with Python logging module.
 
     """
 
     def __init__(self):
-        """
-        The __init__ (constructor) method.
-
-        Args: none so far
-        """
 
         # a number, for C routines
         envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
@@ -114,22 +112,20 @@ class XTGeoDialog(object):
         if mylevel >= 0 and mylevel < 5:
             self._syslevel = mylevel
         else:
-            print("Invalid range for syslevel")
+            print('Invalid range for syslevel')
 
         envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
 
         if envsyslevel is None:
             pass
         else:
-            # print("Logging overridden by XTG_VERBOSE_LEVEL = {}"
+            # print('Logging overridden by XTG_VERBOSE_LEVEL = {}'
             #       .format(envsyslevel))
             self._syslevel = int(envsyslevel)
 
     @staticmethod
     def print_xtgeo_header(appname, appversion):
-        """
-        Prints a XTGeo banner for an app to STDOUT.
-        """
+        """Prints a XTGeo banner for an app to STDOUT."""
 
         cur_version = 'Python ' + str(sys.version_info[0]) + '.'
         cur_version += str(sys.version_info[1]) + '.' \
@@ -141,14 +137,14 @@ class XTGeoDialog(object):
         print('#{}#'.format(app.center(77)))
         print('#' * 79)
         ver = 'XTGeo4Python version ' + xtgeo.__version__
-        ver = ver + '(CXTGeo v. ' + cxtgeo.__version__ + ')'
+        ver = ver + ' (CXTGeo v. ' + cxtgeo.__version__ + ')'
         print('#{}#'.format(ver.center(77)))
         print('#{}#'.format(cur_version.center(77)))
         print('#' * 79)
         print('')
 
     def basiclogger(self, name):
-        """Initiate the logger by some default settings"""
+        """Initiate the logger by some default settings."""
 
         format = self.loggingformat
         logging.basicConfig(format=format, stream=sys.stdout)
@@ -158,7 +154,7 @@ class XTGeoDialog(object):
 
     @staticmethod
     def functionlogger(name):
-        """Get the logger for functions (not top level)"""
+        """Get the logger for functions (not top level)."""
 
         logger = logging.getLogger(name)
         logger.addHandler(logging.NullHandler())
@@ -365,28 +361,28 @@ def main():
 
     xtg = XTGeoDialog()
 
-    xtg.speak("Level 1 text")
-    xtg.debug("Level 2 text debug should not show")
+    xtg.speak('Level 1 text')
+    xtg.debug('Level 2 text debug should not show')
 
     xtx = XTGeoDialog()
 
     # can use both class and instacne her (since this is a classmethod)
-    print("Syslevel (instance) is {}".format(xtx.syslevel))
+    print('Syslevel (instance) is {}'.format(xtx.syslevel))
 
-    xtx.speak("Level 1 speak text")
-    xtx.info("Level 1 info text")
+    xtx.speak('Level 1 speak text')
+    xtx.info('Level 1 info text')
 
     mynumber = 2233.2293939
     xtx.say('My number is {0:6.2f}'.format(mynumber))
 
     xtg.syslevel(2)
 
-    print("Syslevel is " + str(xtg.syslevel))
+    print('Syslevel is ' + str(xtg.syslevel))
 
-    xtg.debug("Level 2 (debug) text should show now")
-    xtg.say("Say hello ...")
+    xtg.debug('Level 2 (debug) text should show now')
+    xtg.say('Say hello ...')
 
-    xtg.error("Errors are always shown as long as level > -9")
+    xtg.error('Errors are always shown as long as level > -9')
 
 
 if __name__ == '__main__':

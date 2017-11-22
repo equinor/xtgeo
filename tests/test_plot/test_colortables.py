@@ -1,52 +1,38 @@
-import unittest
+# -*- coding: utf-8 -*-
 import sys
-import logging
 import xtgeo.plot._colortables as ct
 from xtgeo.common import XTGeoDialog
-
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
+if not xtg._testsetup():
+    sys.exit(-9)
+
+td = xtg.tmpdir
+testpath = xtg.testpath
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
 
-class TestColors(unittest.TestCase):
-    """Testing suite for colo(u)rs"""
+def test_readfromfile():
+    """Read color table from RMS file."""
 
-    def getlogger(self, name):
+    cfile = '../xtgeo-testdata/etc/colortables/colfacies.txt'
 
-        format = xtg.loggingformat
+    ctable = ct.colorsfromfile(cfile)
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+    assert ctable[5] == (0.49019608, 0.38431373, 0.05882353)
 
-        self.logger = logging.getLogger(name)
-
-    def test_readfromfile(self):
-        """Read color table from RMS file."""
-
-        cfile = '../xtgeo-testdata/etc/colortables/colfacies.txt'
-        self.getlogger('test_readfromfile')
-
-        ctable = ct.colorsfromfile(cfile)
-
-        self.assertEqual(ctable[5], (0.49019608, 0.38431373, 0.05882353))
-
-        self.logger.info(ctable)
-
-    def test_xtgeo_colors(self):
-        """Read the XTGeo color table."""
-
-        self.getlogger('test_xtgeo_colors')
-
-        ctable = ct.xtgeocolors()
-
-        self.assertEqual(ctable[5], (0.000, 1.000, 1.000))
-
-        self.logger.info(ctable)
+    logger.info(ctable)
 
 
-if __name__ == '__main__':
+def test_xtgeo_colors():
+    """Read the XTGeo color table."""
 
-    unittest.main()
+    ctable = ct.xtgeocolors()
+
+    assert ctable[5] == (0.000, 1.000, 1.000)
+
+    logger.info(ctable)

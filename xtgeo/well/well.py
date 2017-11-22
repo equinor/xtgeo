@@ -628,7 +628,8 @@ class Well(object):
 
     def get_zone_interval(self, zonevalue, resample=1):
 
-        """Extract the X Y Z line (polyline) segment for a given zonevalue.
+        """Extract the X Y Z ID line (polyline) segment for a given
+        zonevalue.
 
         Args:
             zonevalue (int): The zone value to extract
@@ -638,14 +639,13 @@ class Well(object):
 
 
         Returns:
-            A pandas dataframe X Y Z (ready for the xyz/Polygon class), None
-            if a zonelog is missing or actual zone does dot
+            A pandas dataframe X Y Z ID (ready for the xyz/Polygon class),
+            None if a zonelog is missing or actual zone does dot
             exist in the well.
         """
 
         if resample < 1 or not isinstance(resample, int):
             raise KeyError('Key resample of wrong type (must be int >= 1)')
-
 
         df = self.get_filled_dataframe()
 
@@ -663,6 +663,7 @@ class Well(object):
         m1 = df['ztmp'].min()
         m2 = df['ztmp'].max()
         if np.isnan(m1):
+            self.logger.debug('Returns (no data)')
             return None
 
         df2 = df.copy()
@@ -674,34 +675,26 @@ class Well(object):
             if len(df.index) > 0:
                 dflist.append(df)
 
-            # with pd.option_context('display.max_rows', None,
-            #                        'display.max_columns', None):
-            #     print(df)
-
-            # print(dflist)
-
-        undef_row = pd.DataFrame([[np.nan, np.nan, np.nan]],
-                                 columns=list('XYZ'))
-
         dxlist = []
         for i in range(len(dflist)):
             dx = dflist[i]
+            dx = dx.rename(columns={'ztmp': 'ID'})
             cols = [x for x in dx.columns
-                    if x not in ['X_UTME', 'Y_UTMN', 'Z_TVDSS']]
+                    if x not in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID']]
 
             dx = dx.drop(cols, axis=1)
             # rename columns:
-            dx.columns = ['X', 'Y', 'Z']
+            dx.columns = ['X', 'Y', 'Z', 'ID']
             # now resample every N'th
             if resample > 1:
                 dx = pd.concat([dx.iloc[::resample, :], dx.tail(1)])
 
-            dx = pd.concat([dx, undef_row])
             dxlist.append(dx)
 
         df = pd.concat(dxlist)
         df.reset_index(inplace=True, drop=True)
 
+        self.logger.debug('DF from well:\n{}'.format(df))
         return df
 
     # =========================================================================

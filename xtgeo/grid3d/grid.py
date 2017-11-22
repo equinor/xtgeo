@@ -1100,29 +1100,3 @@ class Grid(Grid3D):
 
         self.logger.info('Number of active cells: {}'.format(nact))
         self._nsubs = 0
-
-    # # export ROFF
-    # # option = 0 binary; option = 1 ascii
-    # def _export_roff(self, gfile, option):
-
-    #     _cxtgeo.xtg_verbose_file('NONE')
-    #     xtg_verbose_level = self._xtg.syslevel
-
-    #     if self._nsubs == 0 and not hasattr(self, '_p_subgrd_v'):
-    #         self.logger.debug('Create a pointer for _p_subgrd_v ...')
-    #         self._p_subgrd_v = _cxtgeo.new_intpointer()
-
-    #     # get the geometrics list to find the xshift, etc
-    #     gx = self.get_geometrics()
-
-    #     _cxtgeo.grd3d_export_roff_grid(option, self._ncol, self._nrow,
-    #                                    self._nlay,
-    #                                    self._nsubs, 0, gx[3], gx[5], gx[7],
-    #                                    self._p_coord_v, self._p_zcorn_v,
-    #                                    self._p_actnum_v, self._p_subgrd_v,
-    #                                    gfile, xtg_verbose_level)
-
-    #     # skip parameters for now (cf Perl code)
-
-    #     # end tag
-    #     _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)

@@ -67,7 +67,9 @@ def import_zmap(xyz, pfile):
 
 
 def export_rms_attr(xyz, pfile, attributes=None, filter=None):
-    """Export til RMS attribute, also called RMS extended set
+    """Export til RMS attribute, also called RMS extended set.
+
+    If attributes is None, then it will be a simple XYZ file.
 
     Filter is on the form {TopName: ['Name1', 'Name2']}
 
@@ -89,12 +91,16 @@ def export_rms_attr(xyz, pfile, attributes=None, filter=None):
                 df = df.loc[df[key].isin(val)]
             else:
                 raise KeyError('The requested filter key {} was not '
-                               'found in dataframe. Valied keys are '
+                               'found in dataframe. Valid keys are '
                                '{}'.format(key, df.columns))
 
     if len(df.index) < 1:
         logger.warning('Nothing to export')
         return 0
+
+    if attributes is None and 'ID' in df.columns and xyz._ispolygons:
+        # need to convert the dataframe
+        df = _convert_idbased_xyz(df)
 
     if attributes is not None:
         mode = 'a'
@@ -109,6 +115,24 @@ def export_rms_attr(xyz, pfile, attributes=None, filter=None):
                   columns=columns, index=False, float_format='%.3f')
 
     return len(df.index)
+
+
+def _convert_idbased_xyz(df):
+
+    # If polygons, there is a 4th column with ID. This needs
+    # to replaced by adding 999 line instead (for polygons)
+    # prior to XYZ export
+
+    idgroups = df.groupby('ID')
+
+    newdf = pd.DataFrame(columns=['X', 'Y', 'Z'])
+    udef = pd.DataFrame([[999.0, 999.0, 999.0]], columns=['X', 'Y', 'Z'])
+
+    for id_, gr in idgroups:
+        dfx = gr.drop('ID', axis=1)
+        newdf = newdf.append([dfx, udef], ignore_index=True)
+
+    return newdf
 
 
 def export_rms_wpicks(xyz, pfile, hcolumn, wcolumn, mdcolumn=None):

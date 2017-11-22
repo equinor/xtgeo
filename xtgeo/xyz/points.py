@@ -28,9 +28,9 @@ class Points(XYZ):
         super(Points, self).__init__(*args, **kwargs)
 
     @property
-    def nrows(self):
-        """Cf :py:attr:`.XYZ.nrows`"""
-        return super(Points, self).nrows
+    def nrow(self):
+        """Cf :py:attr:`.XYZ.nrow`"""
+        return super(Points, self).nrow
 
     @property
     def dataframe(self):

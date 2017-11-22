@@ -20,6 +20,7 @@ from xtgeo.plot import Map
 
 from xtgeo.surface import _regsurf_import
 from xtgeo.surface import _regsurf_cube
+from xtgeo.surface import _regsurf_roxapi
 
 # =============================================================================
 # Globals (always chack that these are same as in CLIB/CXTGEO)
@@ -164,6 +165,9 @@ class RegularSurface(object):
 
         self.logger.debug('Ran __init__ method for RegularSurface object')
 
+    def __repr__(self):
+        return 'RegularSurface(ncol={0.ncol!r}, nrow={0.nrow!r} ...)'.format(self)
+
     def __del__(self):
         self._delete_cvalues()
 
@@ -274,10 +278,8 @@ class RegularSurface(object):
             self.logger.error('Only horizon type is supported so far')
             raise Exception
 
-        self._import_horizon_roxapi(project, name, category,
-                                    realisation)
-
-        return self
+        self = _regsurf_roxapi.import_horizon_roxapi(self, project, name,
+                                                     category,realisation)
 
 # =============================================================================
 # Get and Set properties (tend to pythonic properties rather than javaic get
@@ -1407,40 +1409,6 @@ class RegularSurface(object):
         if ier != 0:
             raise RuntimeError('Export to Irap Ascii went wrong, '
                                'code is {}'.format(ier))
-
-    # =========================================================================
-    # ROXAR API routines
-
-    def _import_horizon_roxapi(self, project, name, category,
-                               realisation):
-        """
-        Import a Horizon surface via ROXAR API spec
-        """
-        import roxar
-
-        if project is not None and isinstance(project, str):
-            projectname = project
-            with roxar.Project.open_import(projectname) as proj:
-                try:
-                    rox = proj.horizons[name][category].get_grid(realisation)
-                    self._roxapi_horizon_to_xtgeo(rox)
-                except KeyError as ke:
-                    self.logger.error(ke)
-        else:
-            rox = project.horizons[name][category].get_grid(realisation)
-            self._roxapi_horizon_to_xtgeo(rox)
-
-    def _roxapi_horizon_to_xtgeo(self, rox):
-        """
-        Local function for tranforming surfaces from ROXAPI to XTGeo
-        object.
-        """
-        self.logger.info('Surface from roxapi to xtgeo...')
-        self._xori, self._yori = rox.origin
-        self._ncol, self._nrow = rox.dimensions
-        self._xinc, self._yinc = rox.increment
-        self._rotation = rox.rotation
-        self._values = rox.get_values()
 
     # =========================================================================
     # Helper methods, for internal usage

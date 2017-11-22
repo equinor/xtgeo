@@ -1,22 +1,19 @@
-import unittest
-import numpy as np
 import os
 import os.path
 import sys
-import logging
 
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
-
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
+from .test_xtg import assert_equal, assert_almostequal
 
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
+if not xtg._testsetup():
+    sys.exit(-9)
+
+td = xtg.tmpdir
+testpath = xtg.testpath
 
 try:
     roxenv = int(os.environ['ROXENV'])
@@ -35,49 +32,22 @@ else:
 # =============================================================================
 
 
-class TestSurfaceRoxapi(unittest.TestCase):
-    """Testing suite for surfaces"""
+def test_getsurface():
+    """Get a surface from a RMS project."""
 
-    def getlogger(self, name):
+    if roxenv == 1:
 
-        # if isinstance(self.logger):
-        #     return
+        logger.info('Simple case...')
 
-        format = xtg.loggingformat
+        project = "/private/jriv/tmp/fossekall.rms10.0.0"
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+        x = RegularSurface()
+        x.from_roxar(project, name='TopIle', category="DepthSurface")
 
-        self.logger = logging.getLogger(name)
+        x.to_file("TMP/topile.gri")
 
-    def test_getsurface(self):
-        """
-        get a surface from a RMS project.
-        """
+        assert_equal(x.nx, 273, "NX of top Ile from RMS")
 
-        if roxenv == 1:
-            self.getlogger('test_getsurface')
-
-            self.logger.info('Simple case...')
-
-            project = "/private/jriv/tmp/fossekall.rms10.0.0"
-
-            x = RegularSurface()
-            x.from_roxar(project, name='TopIle', category="DepthSurface")
-
-            x.to_file("TMP/topile.gri")
-
-            self.assertEqual(x.nx, 273, "NX of top Ile from RMS")
-
-            self.assertAlmostEqual(x.values.mean(), 2771.82236, places=3)
-        else:
-            pass
-
-
-if __name__ == '__main__':
-
-    logging.basicConfig(stream=sys.stderr)
-    logging.getLogger('').setLevel(logging.DEBUG)
-
-    print()
-    unittest.main()
+        assert_almostequal(x.values.mean(), 2771.82236, 0.001)
+    else:
+        pass

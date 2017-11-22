@@ -50,13 +50,13 @@ def test_get_polygons_many_wells():
     wlist = []
     for w in glob.glob(wfiles2):
         wlist.append(Well(w, zonelogname='ZONELOG'))
-        logger.info('Imported well {}'.format(w))
+        print('Imported well {}'.format(w))
 
     mypoly = Polygons()
     nwell = mypoly.from_wells(wlist, 21, resample=10)
 
     print(mypoly.dataframe)
 
-    logger.info('Number of well made to tops: {}'.format(nwell))
+    print('Number of well made to tops: {}'.format(nwell))
 
     mypoly.to_file('TMP/poly_w1_many.irapasc')

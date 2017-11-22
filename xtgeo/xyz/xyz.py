@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""XTGeo xyz module"""
+"""XTGeo xyz module (abstract)"""
 
 from __future__ import print_function, absolute_import
 
@@ -11,7 +11,7 @@ import logging
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import _xyz_io
-from xtgeo.xyz import _xyz_lowlevel
+
 
 @six.add_metaclass(abc.ABCMeta)
 class XYZ(object):
@@ -22,10 +22,9 @@ class XYZ(object):
     def __init__(self, *args, **kwargs):
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
-
         self._xtg = XTGeoDialog()
+        self.logger = self._xtg.functionlogger(clsname)
+
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
         self._df = None
@@ -35,9 +34,8 @@ class XYZ(object):
             # make instance from file import
             self.logger.info('Instance from file')
             pfile = args[0]
-            fformat = kwargs.get('fformat', 'xyz')
+            fformat = kwargs.get('fformat', 'guess')
             self.from_file(pfile, fformat=fformat)
-
         else:
             self.logger.info('Instance initiated')
             # make instance by kw spesification
@@ -50,14 +48,16 @@ class XYZ(object):
     # =========================================================================
 
     @abc.abstractmethod
-    def from_file(self, pfile, fformat='xyz'):
-        """Import Points from a file.
+    def from_file(self, pfile, fformat='guess'):
+        """Import Points or Polygons from a file.
 
-        Supported import formats:
+        Supported import formats (fformat):
 
         * 'xyz': Simple XYZ format
 
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+
+        * 'guess': Try to choose file format based on extension
 
         Args:
             pfile (str): Name of file
@@ -67,28 +67,39 @@ class XYZ(object):
             Object instance (needed optionally)
 
         Raises:
-            OSError if file is not present or wrong permissions.
+            OSError: if file is not present or wrong permissions.
 
         """
+
         if (os.path.isfile(pfile)):
             pass
         else:
             self.logger.critical('Not OK file')
             raise os.error
 
-        if (fformat is None or fformat == 'xyz'):
+        froot, fext = os.path.splitext(pfile)
+        if fformat == 'guess':
+            if len(fext) == 0:
+                self.logger.critical('File extension missing. STOP')
+                raise SystemExit
+            else:
+                fformat = fext.lower().replace('.', '')
+
+        if fformat == 'xyz':
             _xyz_io.import_xyz(self, pfile)
         elif (fformat == 'zmap'):
             _xyz_io.import_zmap(self, pfile)
         else:
-            self.logger.error('Invalid file format')
+            self.logger.error('Invalid file format (not supported): {}'
+                              .format(fformat))
+            raise SystemExit
 
         return self
 
     @abc.abstractmethod
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
-        """Export well to file.
+        """Export XYZ (Points/Polygons) to file.
 
         Args:
             pfile (str): Name of file
@@ -141,7 +152,7 @@ class XYZ(object):
     # =========================================================================
 
     @abc.abstractproperty
-    def nrows(self):
+    def nrow(self):
         """ Returns the Pandas dataframe object number of rows"""
         if self._df is None:
             return 0

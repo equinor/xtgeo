@@ -1,42 +1,28 @@
 #!/usr/bin/env python -u
 
-import os
 import sys
-import logging
 import pytest
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
+from .test_xtg import assert_equal, assert_almostequal
 
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
-# set default level
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
 
-logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)
+if not xtg._testsetup():
+    sys.exit(-9)
 
-logger = logging.getLogger(__name__)
+td = xtg.tmpdir
+testpath = xtg.testpath
 
 # =============================================================================
 # Do tests
 # =============================================================================
+
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 reekfile = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
-
-
-def assert_equal(this, that, txt=''):
-    assert this == that, txt
-
-
-def assert_almostequal(this, that, tol, txt=''):
-    assert this == pytest.approx(that, abs=tol), txt
 
 
 def test_import_wrong():

@@ -18,7 +18,7 @@ def convert_np_carr_int(xyz, np_array):
     # The numpy is always a double (float64), so need to convert first
     # xyz is the general object
 
-    carr = _cxtgeo.new_intarray(xyz.nrows)
+    carr = _cxtgeo.new_intarray(xyz.nrow)
 
     np_array = np_array.astype(np.int32)
 
@@ -30,7 +30,7 @@ def convert_np_carr_int(xyz, np_array):
 def convert_np_carr_double(xyz, np_array):
     """Convert numpy 1D array to C array, assuming double type."""
 
-    carr = _cxtgeo.new_doublearray(xyz.nrows)
+    carr = _cxtgeo.new_doublearray(xyz.nrow)
 
     _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
 

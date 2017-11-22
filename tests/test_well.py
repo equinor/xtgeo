@@ -1,263 +1,234 @@
-import unittest
-import os
 import glob
 import sys
-import logging
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
-
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
+from .test_xtg import assert_equal
 
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
+if not xtg._testsetup():
+    sys.exit(-9)
+
+td = xtg.tmpdir
+testpath = xtg.testpath
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
 
-class Test(unittest.TestCase):
-    """Testing suite for wells"""
+def test_import():
+    """Import well from file."""
 
-    def getlogger(self, name):
+    wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
 
-        # if isinstance(self.logger):
-        #     return
+    mywell = Well(wfile)
 
-        format = xtg.loggingformat
+    logger.debug("True well name:", mywell.truewellname)
+    assert_equal(mywell.xpos, 524139.420, 'XPOS')
+    assert_equal(mywell.ypos, 6740790.41, 'YPOS')
+    assert_equal(mywell.wellname, '31/2-E-1_H', 'YPOS')
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+    logger.info(mywell.get_logtype('ZONELOG'))
+    logger.info(mywell.get_logrecord('ZONELOG'))
+    logger.info(mywell.lognames_all)
+    logger.info(mywell.dataframe)
 
-        self.logger = logging.getLogger(name)
+    # logger.info the numpy string of GR...
+    logger.info(type(mywell.dataframe['GR'].values))
 
-    def test_import(self):
-        """
-        Import well from file
-        """
-        self.getlogger('test_import')
 
-        wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
+def test_import_export_many():
+    """ Import many wells (test speed)"""
 
-        mywell = Well(wfile)
+    wfiles = "../xtgeo-testdata/wells/tro/1/*"
+    logger.debug(wfiles)
 
-        self.logger.debug("True well name:", mywell.truewellname)
-        self.assertEqual(mywell.xpos, 524139.420, 'XPOS')
-        self.assertEqual(mywell.ypos, 6740790.41, 'YPOS')
-        self.assertEqual(mywell.wellname, '31/2-E-1_H', 'YPOS')
+    for filename in glob.glob(wfiles):
+        logger.info("Importing " + filename)
+        mywell = Well(filename)
+        logger.info(mywell.nrow)
+        logger.info(mywell.ncol)
+        logger.info(mywell.lognames)
 
-        self.logger.info(mywell.get_logtype('ZONELOG'))
-        self.logger.info(mywell.get_logrecord('ZONELOG'))
-        self.logger.info(mywell.lognames_all)
-        self.logger.info(mywell.dataframe)
+        wname = td + "/" + mywell.xwellname + ".w"
+        logger.info("Exporting " + wname)
+        mywell.to_file(wname)
 
-        # self.logger.info the numpy string of GR...
-        self.logger.info(type(mywell.dataframe['GR'].values))
+# def test_import_export_many2():
+#     """ Import many wells (test speed) GULLFAKS"""
+#     wfiles = "/project/gullfaks/resmod/gfmain_brent/2015a/" +\
+#         "r003/rms/output/tmp/etc/data/wells/geomodel/*.w"
 
-    def test_import_export_many(self):
-        """ Import many wells (test speed)"""
+#     start = timer()
+#     for filename in glob.glob(wfiles):
+#         logger.info("Importing "+filename)
+#         mywell = Well()
+#         mywell.from_file(filename)
+#         # logger.info(mywell.nrow)
+#         # logger.info(mywell.ncol)
+#         # logger.info(mywell.lognames)
 
-        self.getlogger('test_import_export_many')
+#         # wname = path + "/" + mywell.xwellname + ".w"
+#         # logger.info("Exporting "+wname)
+#         # mywell.to_file(wname)
 
-        wfiles = "../xtgeo-testdata/wells/tro/1/*"
-        print(wfiles)
+#     end = timer()
+#     diff = end - start
+#     logger.info("\nImporten many gullfaks wells using {} seconds\n".format(diff))
 
-        for filename in glob.glob(wfiles):
-            self.logger.info("Importing " + filename)
-            mywell = Well(filename)
-            self.logger.info(mywell.nrow)
-            self.logger.info(mywell.ncol)
-            self.logger.info(mywell.lognames)
+# def test_operations1():
+#     """Operation on a log."""
 
-            wname = path + "/" + mywell.xwellname + ".w"
-            self.logger.info("Exporting " + wname)
-            mywell.to_file(wname)
+#     wfile = "../../testdata/Well/T/a/31_2-1.w"
 
-    # def test_import_export_many2(self):
-    #     """ Import many wells (test speed) GULLFAKS"""
-    #     wfiles = "/project/gullfaks/resmod/gfmain_brent/2015a/" +\
-    #         "r003/rms/output/tmp/etc/data/wells/geomodel/*.w"
+#     mywell = Well()
 
-    #     start = timer()
-    #     for filename in glob.glob(wfiles):
-    #         self.logger.info("Importing "+filename)
-    #         mywell = Well()
-    #         mywell.from_file(filename)
-    #         # self.logger.info(mywell.nrow)
-    #         # self.logger.info(mywell.ncol)
-    #         # self.logger.info(mywell.lognames)
+#     mywell.from_file(wfile)
 
-    #         # wname = path + "/" + mywell.xwellname + ".w"
-    #         # self.logger.info("Exporting "+wname)
-    #         # mywell.to_file(wname)
+#     df = mywell.dataframe
+#     logger.info(df.head())
 
-    #     end = timer()
-    #     diff = end - start
-    #     self.logger.info("\nImporten many gullfaks wells using {} seconds\n".format(diff))
+#     # make GR = GR+100 if not -999 ...
 
-    # def test_operations1(self):
-    #     """Operation on a log."""
+#     df['GR'].fillna(value=100, inplace=True)
 
-    #     wfile = "../../testdata/Well/T/a/31_2-1.w"
+#     logger.info(df.head())
 
-    #     mywell = Well()
+#     # set zone 21 to -999
 
-    #     mywell.from_file(wfile)
+#     df['ZONELOG'].loc[df['ZONELOG']==21] = np.nan
 
-    #     df = mywell.dataframe
-    #     self.logger.info(df.head())
+#     # set GR to undef if ZONELOG is undef
+#     df.GR = df.GR.where(df.ZONELOG, np.nan)
 
-    #     # make GR = GR+100 if not -999 ...
+# mywell.to_file("TMP/x.w")
 
-    #     df['GR'].fillna(value=100, inplace=True)
 
-    #     self.logger.info(df.head())
+def test_get_carr():
+    """Get a C array pointer"""
 
-    #     # set zone 21 to -999
+    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-    #     df['ZONELOG'].loc[df['ZONELOG']==21] = np.nan
+    mywell = Well(wfile)
 
-    #     # set GR to undef if ZONELOG is undef
-    #     df.GR = df.GR.where(df.ZONELOG, np.nan)
+    dummy = mywell.get_carray("NOSUCH")
 
-    # mywell.to_file("TMP/x.w")
+    assert_equal(dummy, None, 'Wrong log name')
 
-    def test_get_carr(self):
-        """Get a C array pointer"""
+    cref = mywell.get_carray("X_UTME")
 
-        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+    xref = str(cref)
+    swig = False
+    if "Swig" in xref and "double" in xref:
+        swig = True
 
-        mywell = Well(wfile)
+    assert_equal(swig, True, 'carray from log name, double')
 
-        dummy = mywell.get_carray("NOSUCH")
+    cref = mywell.get_carray("ZONELOG")
 
-        self.assertEqual(dummy, None, 'Wrong log name')
+    xref = str(cref)
+    swig = False
+    if "Swig" in xref and "int" in xref:
+        swig = True
 
-        cref = mywell.get_carray("X_UTME")
+    assert_equal(swig, True, 'carray from log name, int')
 
-        xref = str(cref)
-        swig = False
-        if "Swig" in xref and "double" in xref:
-            swig = True
 
-        self.assertEqual(swig, True, 'carray from log name, double')
+def test_make_hlen():
+    """Create a hlen log."""
 
-        cref = mywell.get_carray("ZONELOG")
+    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        xref = str(cref)
-        swig = False
-        if "Swig" in xref and "int" in xref:
-            swig = True
+    mywell = Well(wfile)
+    mywell.create_relative_hlen()
 
-        self.assertEqual(swig, True, 'carray from log name, int')
+    logger.debug(mywell.dataframe)
 
-    def test_make_hlen(self):
-        """Create a hlen log"""
 
-        self.getlogger('test_make_hlen')
+def test_fence():
+    """Return a resampled fence."""
 
-        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+    wfile = "../xtgeo-testdata/wells/gfb/1/34_10-A-42.w"
 
-        mywell = Well(wfile)
-        mywell.create_relative_hlen()
+    mywell = Well(wfile)
+    pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
 
-        self.logger.debug(mywell.dataframe)
+    logger.debug(pline)
 
-    def test_fence(self):
-        """Return a resampled fence"""
 
-        self.getlogger('test_fence')
+def test_get_zonation_points():
+    """Get zonations points (zone tops)"""
 
-        wfile = "../xtgeo-testdata/wells/gfb/1/34_10-A-42.w"
+    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        mywell = Well(wfile)
-        pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
+    mywell = Well(wfile, zonelogname='ZONELOG')
+    mywell.get_zonation_points()
 
-        self.logger.debug(pline)
 
-    def test_get_zonation_points(self):
-        """Get zonations points (zone tops)"""
+def test_get_zone_interval():
+    """Get zonations points (zone tops)"""
 
-        self.getlogger('test_get_zonation_points')
+    wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-3_Y1H.w"
 
-        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+    mywell = Well(wfile, zonelogname='ZONELOG')
+    line = mywell.get_zone_interval(10)
 
-        mywell = Well(wfile, zonelogname='ZONELOG')
-        mywell.get_zonation_points()
+    logger.info(type(line))
 
-    def test_get_zone_interval(self):
-        """Get zonations points (zone tops)"""
+    assert_equal(line.iat[0, 0], 524826.882)
+    assert_equal(line.iat[-1, 2], 1555.3452)
 
-        self.getlogger('test_get_zone_interval')
 
-        wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-3_Y1H.w"
+def test_get_zonation_holes():
+    """get a report of holes in the zonation, some samples with -999 """
 
-        mywell = Well(wfile, zonelogname='ZONELOG')
-        line = mywell.get_zone_interval(9)
+    wfile = "../xtgeo-testdata/wells/tro/3/31_2-G-4_BY1H_holes.w"
 
-        print(line)
+    mywell = Well(wfile, zonelogname='ZONELOG')
+    report = mywell.report_zonation_holes()
 
-    def test_get_zonation_holes(self):
-        """get a report of holes in the zonation, some samples with -999 """
+    logger.info("\n{}".format(report))
 
-        self.getlogger('test_get_zonation_holes')
+    assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
+    assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z
 
-        wfile = "../xtgeo-testdata/wells/tro/3/31_2-G-4_BY1H_holes.w"
+    # ----------------------------------------------------------
 
-        mywell = Well(wfile, zonelogname='ZONELOG')
-        report = mywell.report_zonation_holes()
+    wfile = "../xtgeo-testdata/wells/oea/1/w1_holes.w"
 
-        self.logger.info("\n{}".format(report))
+    mywell = Well(wfile, zonelogname='Z2002A', mdlogname='MDEPTH')
+    report = mywell.report_zonation_holes()
 
-        self.assertEqual(report.iat[0, 0], 4166)  # first value for INDEX
-        self.assertEqual(report.iat[1, 3], 1570.3855)  # second value for Z
+    logger.info("\n{}".format(report))
 
-        # ----------------------------------------------------------
+    assert_equal(report.iat[0, 6], 3823.4)  # value for MD
 
-        wfile = "../xtgeo-testdata/wells/oea/1/w1_holes.w"
+    # ----------------------------------------------------------
 
-        mywell = Well(wfile, zonelogname='Z2002A', mdlogname='MDEPTH')
-        report = mywell.report_zonation_holes()
+    wfile = "../xtgeo-testdata/wells/tro/3/31_2-1.w"
 
-        self.logger.info("\n{}".format(report))
+    mywell = Well(wfile, zonelogname='ZONELOG', mdlogname='MD')
+    report = mywell.report_zonation_holes()
 
-        self.assertEqual(report.iat[0, 6], 3823.4)  # value for MD
+    logger.info("\n{}".format(report))
+    logger.info("\n{}".format(len(report)))
 
-        # ----------------------------------------------------------
+    assert_equal(len(report), 2)  # report length
+    assert_equal(report.iat[1, 4], 28)  # zone no.
 
-        wfile = "../xtgeo-testdata/wells/tro/3/31_2-1.w"
 
-        mywell = Well(wfile, zonelogname='ZONELOG', mdlogname='MD')
-        report = mywell.report_zonation_holes()
+def test_get_filled_dataframe():
+    """Get a filled DataFrame"""
 
-        self.logger.info("\n{}".format(report))
-        self.logger.info("\n{}".format(len(report)))
+    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
 
-        self.assertEqual(len(report), 2)  # report length
-        self.assertEqual(report.iat[1, 4], 28)  # zone no.
+    mywell = Well(wfile)
 
-    def test_get_filled_dataframe(self):
-        """Get a filled DataFrame"""
+    df1 = mywell.dataframe
 
-        self.getlogger('test_filled_dataframe')
+    df2 = mywell.get_filled_dataframe()
 
-        wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
-
-        mywell = Well(wfile)
-
-        df1 = mywell.dataframe
-
-        df2 = mywell.get_filled_dataframe()
-
-        print(df1)
-        print(df2)
-
-
-if __name__ == '__main__':
-
-    unittest.main()
+    logger.debug(df1)
+    logger.debug(df2)

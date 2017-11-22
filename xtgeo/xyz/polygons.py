@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz.polygons module, which contains the Polygons class."""
 
+# For polygons, the order of the points sequence is important. In
+# addition, a Polygons dataframe _must_ have a columns called 'ID'
+# which identifies each polygon piece.
+
 from __future__ import print_function, absolute_import
 import pandas as pd
 
@@ -17,9 +21,9 @@ class Polygons(XYZ):
         self._ispolygons = True
 
     @property
-    def nrows(self):
-        """Cf :py:attr:`.XYZ.nrows`"""
-        return super(Polygons, self).nrows
+    def nrow(self):
+        """Cf :py:attr:`.XYZ.nrow`"""
+        return super(Polygons, self).nrow
 
     @property
     def dataframe(self):
@@ -40,7 +44,7 @@ class Polygons(XYZ):
         if 'ID' not in self._df.columns:
             self._df['ID'] = self._df.isnull().all(axis=1).cumsum().dropna()
             self._df.dropna(axis=0, inplace=True)
-            self._df['ID'] += 1
+            self._df.reset_index(inplace=True, drop=True)
 
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
@@ -73,9 +77,13 @@ class Polygons(XYZ):
             return None
 
         dflist = []
+        maxid = 0
         for well in wells:
             wp = well.get_zone_interval(zone, resample=resample)
             if wp is not None:
+                # as well segments may have overlapping ID:
+                wp['ID'] += maxid
+                maxid = wp['ID'].max() + 1
                 dflist.append(wp)
 
         if len(dflist) > 0:

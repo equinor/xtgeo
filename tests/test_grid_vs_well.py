@@ -1,113 +1,84 @@
-#!/usr/bin/env python -u
-
-import unittest
-import os
+# -*- coding: utf-8 -*-
 import sys
-import logging
 
 from xtgeo.grid3d import Grid
 from xtgeo.well import Well
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
-# set default level
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
+if not xtg._testsetup():
+    sys.exit(-9)
+
+td = xtg.tmpdir
+testpath = xtg.testpath
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
 
-class TestGridWellProperty(unittest.TestCase):
-    """Testing suite for 3D grid vs Well operations"""
+def test_report_zlog_mismatch():
+    """Report zone log mismatch grid and well."""
+    logger.info('Name is {}'.format(__name__))
+    g1 = Grid()
+    g1.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
 
-    def getlogger(self, name):
+    g2 = Grid()
+    g2.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
 
-        # if isinstance(self.logger):
-        #     return
+    g2.reduce_to_one_layer()
 
-        format = xtg.loggingformat
+    z = GridProperty()
+    z.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff',
+                name='Zone')
 
-        logging.basicConfig(format=format, stream=sys.stdout)
-        logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+    # w1 = Well()
+    # w1.from_file('../xtgeo-testdata/wells/gfb/1/34_10-A-42.w')
 
-        self.logger = logging.getLogger(name)
+    w2 = Well('../xtgeo-testdata/wells/gfb/1/34_10-1.w')
 
-    def test_report_zlog_mismatch(self):
-        """
-        Report zone log mismatch grid and well
-        """
-        self.getlogger(sys._getframe(1).f_code.co_name)
+    w3 = Well('../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w')
 
-        self.logger.info('Name is {}'.format(__name__))
-        g1 = Grid()
-        g1.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
+    wells = [w2, w3]
 
-        g2 = Grid()
-        g2.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
+    for w in wells:
+        response = g1.report_zone_mismatch(
+            well=w, zonelogname='ZONELOG', mode=0, zoneprop=z,
+            onelayergrid=g2, zonelogrange=[0, 19], option=0,
+            depthrange=[1700, 9999])
 
-        g2.reduce_to_one_layer()
+        if response is None:
+            continue
+        else:
+            logger.info(response)
+        # if w.wellname == w1.wellname:
+        #     match = float("{0:.2f}".format(response[0]))
+        #     .logger.info(match)
+        #     .assertEqual(match, 72.39, 'Match ration A42')
 
-        z = GridProperty()
-        z.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff',
-                    name='Zone')
+    # perforation log instead
 
-        # w1 = Well()
-        # w1.from_file('../xtgeo-testdata/wells/gfb/1/34_10-A-42.w')
+    for w in wells:
 
-        w2 = Well('../xtgeo-testdata/wells/gfb/1/34_10-1.w')
+        response = g1.report_zone_mismatch(
+            well=w, zonelogname='ZONELOG', mode=0, zoneprop=z,
+            onelayergrid=g2, zonelogrange=[0, 19], option=0,
+            perflogname='PERFLOG')
 
-        w3 = Well('../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w')
+        if response is None:
+            continue
+        else:
+            logger.info(response)
 
-        wells = [w2, w3]
+        # if w.wellname == w1.wellname:
+        #     match = float("{0:.1f}".format(response[0]))
+        #     logger.info(match)
+        #     assertEqual(match, 87.70, 'Match ratio A42')
 
-        for w in wells:
-            response = g1.report_zone_mismatch(
-                well=w, zonelogname='ZONELOG', mode=0, zoneprop=z,
-                onelayergrid=g2, zonelogrange=[0, 19], option=0,
-                depthrange=[1700, 9999])
-
-            if response is None:
-                continue
-            else:
-                self.logger.info(response)
-            # if w.wellname == w1.wellname:
-            #     match = float("{0:.2f}".format(response[0]))
-            #     self.logger.info(match)
-            #     self.assertEqual(match, 72.39, 'Match ration A42')
-
-        # perforation log instead
-
-        for w in wells:
-
-            response = g1.report_zone_mismatch(
-                well=w, zonelogname='ZONELOG', mode=0, zoneprop=z,
-                onelayergrid=g2, zonelogrange=[0, 19], option=0,
-                perflogname='PERFLOG')
-
-            if response is None:
-                continue
-            else:
-                self.logger.info(response)
-
-            # if w.wellname == w1.wellname:
-            #     match = float("{0:.1f}".format(response[0]))
-            #     self.logger.info(match)
-            #     self.assertEqual(match, 87.70, 'Match ratio A42')
-
-            if w.wellname == w3.wellname:
-                match = float("{0:.2f}".format(response[0]))
-                self.logger.info(match)
-                self.assertEqual(match, 0.0, 'Match ratio B21B')
-
-
-if __name__ == '__main__':
-
-    unittest.main()
+        if w.wellname == w3.wellname:
+            match = float("{0:.2f}".format(response[0]))
+            logger.info(match)
+            assert match == 0.0, 'Match ratio B21B'

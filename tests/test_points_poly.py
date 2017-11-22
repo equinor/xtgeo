@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import pytest
+import numpy as np
 from xtgeo.xyz import XYZ
 from xtgeo.xyz import Points
 from xtgeo.xyz import Polygons
@@ -18,7 +19,7 @@ td = xtg.tmpdir
 testpath = xtg.testpath
 
 skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
-                                   reason="Big tests skip")
+                                   reason='Big tests skip')
 
 # =========================================================================
 # Do tests
@@ -44,9 +45,9 @@ def test_xyz():
 def test_import():
     """Import XYZ points from file."""
 
-    pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
+    pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
 
-    mypoints = Points(pfile)
+    mypoints = Points(pfile, fformat='xyz')
 
     logger.debug(mypoints.dataframe)
 
@@ -55,32 +56,55 @@ def test_import():
     assert_almostequal(x0, 460842.434326, 0.001)
 
 
-def test_import_zmap():
-    """Import XYZ polygons on ZMAP format from file"""
+def test_import_zmap_and_xyz():
+    """Import XYZ polygons on ZMAP and XYZ format from file"""
 
-    pfile = "../xtgeo-testdata/polygons/gfb/faults_zone10.zmap"
+    pfile1 = '../xtgeo-testdata/polygons/gfb/faults_zone10.zmap'
 
-    mypol = Polygons()
+    pfile2a = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
+    pfile2b = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
 
-    mypol.from_file(pfile, fformat='zmap')
+    mypol1 = Polygons()
 
-    nn = mypol.nrows
+    mypol2a = Polygons()
+    mypol2b = Polygons()
+
+    mypol1.from_file(pfile1, fformat='zmap')
+
+    nn = mypol1.nrow
     assert nn == 16666
-    x0 = mypol.dataframe['X'].values[0]
-    y1 = mypol.dataframe['Y'].values[nn - 1]
+
+    x0 = mypol1.dataframe['X'].values[0]
+    y1 = mypol1.dataframe['Y'].values[nn - 1]
 
     assert_almostequal(x0, 457357.78125, 0.001)
     assert_almostequal(y1, 6790785.5, 0.01)
+
+    mypol2a.from_file(pfile2a, fformat='zmap')
+    mypol2b.from_file(pfile2b, fformat='xyz')
+
+    assert mypol2a.nrow == mypol2b.nrow
+
+    print(mypol2a.nrow, mypol2b.nrow)
+
+    print(mypol2a.dataframe)
+    print(mypol2b.dataframe)
+
+    for col in ['X', 'Y', 'Z', 'ID']:
+        status = np.allclose(mypol2a.dataframe[col].values,
+                             mypol2b.dataframe[col].values)
+
+        assert status is True
 
 
 def test_import_export_polygons():
     """Import XYZ polygons from file. Modify, and export."""
 
-    pfile = "../xtgeo-testdata/points/eme/1/emerald_10_random.poi"
+    pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
 
     mypoly = Polygons()
 
-    mypoly.from_file(pfile)
+    mypoly.from_file(pfile, fformat='xyz')
 
     z0 = mypoly.dataframe['Z'].values[0]
 
