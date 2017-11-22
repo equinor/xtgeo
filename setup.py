@@ -20,9 +20,8 @@ setup_requirements = [
 ]
 
 test_requirements = [
-    'pip>=9.0.0',
     'pytest',
-    'segyio',
+#    'segyio',
 ]
 
 setup(
