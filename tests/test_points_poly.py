@@ -47,7 +47,7 @@ def test_import():
 
     pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
 
-    mypoints = Points(pfile, fformat='xyz')
+    mypoints = Points(pfile)  # should guess based on extesion
 
     logger.debug(mypoints.dataframe)
 
@@ -63,11 +63,13 @@ def test_import_zmap_and_xyz():
 
     pfile2a = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
     pfile2b = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
+    pfile2c = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
 
     mypol1 = Polygons()
 
     mypol2a = Polygons()
     mypol2b = Polygons()
+    mypol2c = Polygons()
 
     mypol1.from_file(pfile1, fformat='zmap')
 
@@ -81,14 +83,16 @@ def test_import_zmap_and_xyz():
     assert_almostequal(y1, 6790785.5, 0.01)
 
     mypol2a.from_file(pfile2a, fformat='zmap')
-    mypol2b.from_file(pfile2b, fformat='xyz')
+    mypol2b.from_file(pfile2b)
+    mypol2c.from_file(pfile2c)
 
     assert mypol2a.nrow == mypol2b.nrow
+    assert mypol2b.nrow == mypol2c.nrow
 
-    print(mypol2a.nrow, mypol2b.nrow)
+    logger.info(mypol2a.nrow, mypol2b.nrow)
 
-    print(mypol2a.dataframe)
-    print(mypol2b.dataframe)
+    logger.info(mypol2a.dataframe)
+    logger.info(mypol2b.dataframe)
 
     for col in ['X', 'Y', 'Z', 'ID']:
         status = np.allclose(mypol2a.dataframe[col].values,

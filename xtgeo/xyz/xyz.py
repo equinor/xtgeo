@@ -6,7 +6,6 @@ from __future__ import print_function, absolute_import
 import abc
 import six
 import os.path
-import logging
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -53,7 +52,7 @@ class XYZ(object):
 
         Supported import formats (fformat):
 
-        * 'xyz': Simple XYZ format
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
 
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
 
@@ -85,7 +84,7 @@ class XYZ(object):
             else:
                 fformat = fext.lower().replace('.', '')
 
-        if fformat == 'xyz':
+        if fformat in ['xyz', 'poi', 'pol']:
             _xyz_io.import_xyz(self, pfile)
         elif (fformat == 'zmap'):
             _xyz_io.import_zmap(self, pfile)
@@ -103,7 +102,7 @@ class XYZ(object):
 
         Args:
             pfile (str): Name of file
-            fformat (str): File format xyz / rms_attr /rms_wellpicks
+            fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (list): List of extra columns to export (some formats)
             filter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
@@ -128,7 +127,7 @@ class XYZ(object):
             self.logger.warning('Nothing to export!')
             return ncount
 
-        if fformat is None or fformat == 'xyz':
+        if fformat is None or fformat in ['xyz', 'poi', 'pol']:
             # NB! reuse export_rms_attr function, but no attributes
             # are possible
             ncount = _xyz_io.export_rms_attr(self, pfile, attributes=None,
