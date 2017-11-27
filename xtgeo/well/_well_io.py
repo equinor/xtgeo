@@ -98,7 +98,7 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
             else:
                 logger.warning(msg)
 
-    # check for MD log:
+    # check for zone log:
     if zonelogname is not None:
         if zonelogname in df.columns:
             zonelogname = zonelogname

@@ -9,7 +9,7 @@ import math
 import logging
 import numpy as np
 import numpy.ma as ma
-import scipy.interpolate
+
 import os.path
 from types import FunctionType
 
@@ -499,6 +499,9 @@ class RegularSurface(object):
 
         # not sure if this is right always?...
         x = np.reshape(x, (self._ncol, self._nrow), order='F')
+
+        # replace Nans, if any
+        x = np.where(np.isnan(x), self.undef, x)
 
         # make it masked
         x = ma.masked_greater(x, self._undef_limit)
