@@ -1,19 +1,22 @@
 """Import RegularSurface data."""
 import logging
+import numpy as np
+import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+xtg = XTGeoDialog()
 
+logger = xtg.functionlogger(__name__)
+xtg_verbose_level = xtg.get_syslevel()
 _cxtgeo.xtg_verbose_file('NONE')
 
-xtg = XTGeoDialog()
-xtg_verbose_level = xtg.get_syslevel()
+
 
 
 def import_irap_binary(mfile):
+    # version using swig type mapping
 
     logger.debug('Enter function...')
     # need to call the C function...
@@ -24,41 +27,32 @@ def import_irap_binary(mfile):
     if xtg_verbose_level < 0:
         xtg_verbose_level = 0
 
-    ptr_mx = _cxtgeo.new_intpointer()
-    ptr_my = _cxtgeo.new_intpointer()
-    ptr_xori = _cxtgeo.new_doublepointer()
-    ptr_yori = _cxtgeo.new_doublepointer()
-    ptr_xinc = _cxtgeo.new_doublepointer()
-    ptr_yinc = _cxtgeo.new_doublepointer()
-    ptr_rot = _cxtgeo.new_doublepointer()
-    ptr_dum = _cxtgeo.new_doublepointer()
-    ptr_ndef = _cxtgeo.new_intpointer()
-
     # read with mode 0, to get mx my
-    _cxtgeo.surf_import_irap_bin(mfile, 0, ptr_mx, ptr_my, ptr_xori,
-                                 ptr_yori, ptr_xinc, ptr_yinc, ptr_rot,
-                                 ptr_dum, ptr_ndef, 0, xtg_verbose_level)
+    xlist = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, xtg_verbose_level)
 
-    mx = _cxtgeo.intpointer_value(ptr_mx)
-    my = _cxtgeo.intpointer_value(ptr_my)
+    nval = xlist[1] * xlist[2]  # mx * my
+    xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0, xtg_verbose_level)
 
-    cvalues = _cxtgeo.new_doublearray(mx * my)
+    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, val = xlist
 
-    # read with mode 1, to get the map
-    _cxtgeo.surf_import_irap_bin(mfile, 1, ptr_mx, ptr_my, ptr_xori,
-                                 ptr_yori, ptr_xinc, ptr_yinc, ptr_rot,
-                                 cvalues, ptr_ndef, 0,
-                                 xtg_verbose_level)
+    val = np.reshape(val, (ncol, nrow), order='F')
+
+    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+
+    if np.isnan(val).any():
+        logger.info('NaN values are found, will mask...')
+        val = ma.masked_invalid(val)
 
     sdata = dict()
 
-    sdata['ncol'] = _cxtgeo.intpointer_value(ptr_mx)
-    sdata['nrow'] = _cxtgeo.intpointer_value(ptr_my)
-    sdata['xori'] = _cxtgeo.doublepointer_value(ptr_xori)
-    sdata['yori'] = _cxtgeo.doublepointer_value(ptr_yori)
-    sdata['xinc'] = _cxtgeo.doublepointer_value(ptr_xinc)
-    sdata['yinc'] = _cxtgeo.doublepointer_value(ptr_yinc)
-    sdata['rotation'] = _cxtgeo.doublepointer_value(ptr_rot)
-    sdata['cvalues'] = cvalues
+    sdata['ncol'] = ncol
+    sdata['nrow'] = nrow
+    sdata['xori'] = xori
+    sdata['yori'] = yori
+    sdata['xinc'] = xinc
+    sdata['yinc'] = yinc
+    sdata['rotation'] = rot
+    sdata['values'] = val
+    sdata['cvalues'] = None
 
     return sdata

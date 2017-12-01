@@ -360,6 +360,51 @@ class Grid(Grid3D):
         # return the property object
         return dz
 
+    def get_dxdy(self, names=('dX', 'dY')):
+        """
+        Return the dX and dY as GridProperty object.
+
+        The values lengths are projected to a constant Z
+
+        Args:
+            name (tuple): names of properties
+
+        Returns:
+            Two XTGeo GridProperty objects
+        """
+
+        ntot = self._ncol * self._nrow * self._nlay
+        dx = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
+                          values=np.zeros(ntot, dtype=np.float64),
+                          name=names[0], discrete=False)
+        dy = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
+                          values=np.zeros(ntot, dtype=np.float64),
+                          name=names[1], discrete=False)
+
+        ptr_dx_v = _cxtgeo.new_doublearray(self.ntotal)
+        ptr_dy_v = _cxtgeo.new_doublearray(self.ntotal)
+
+        # need to call the C function...
+        _cxtgeo.xtg_verbose_file('NONE')
+        xtg_verbose_level = self._xtg.syslevel
+
+        option1 = 0
+        option2 = 0
+
+        _cxtgeo.grd3d_calc_dxdy(
+            self._ncol, self._nrow, self._nlay, self._p_coord_v,
+            self._p_zcorn_v, self._p_actnum_v, ptr_dx_v, ptr_dy_v,
+            option1, option2, xtg_verbose_level)
+
+        dx._cvalues = ptr_dx_v
+        dx._update_values()
+
+        dy._cvalues = ptr_dy_v
+        dy._update_values()
+
+        # return the property object
+        return dx, dy
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Get X Y Z as properties
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

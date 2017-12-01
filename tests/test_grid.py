@@ -81,6 +81,16 @@ def test_roffbin_import1():
     mydz = float(dzval[31:32, 72:73, 0:1])
     assert_almostequal(mydz, 2.761, 0.001, txt='Grid DZ Emerald')
 
+    # get dX dY
+    logger.info('Get dX dY')
+    dx, dy = g.get_dxdy()
+
+    mydx = float(dx.values3d[31:32, 72:73, 0:1])
+    mydy = float(dy.values3d[31:32, 72:73, 0:1])
+
+    assert_almostequal(mydx, 118.51, 0.01, txt='Grid DX Emerald')
+    assert_almostequal(mydy, 141.21, 0.01, txt='Grid DY Emerald')
+
     # get X Y Z coordinates (as GridProperty objects) in one go
     logger.info('Get X Y Z...')
     x, y, z = g.get_xyz(names=['xxx', 'yyy', 'zzz'])

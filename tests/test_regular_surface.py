@@ -178,7 +178,7 @@ def test_irapbin_io_loop():
     n = 10
     logger.info("Import and export map to numpy {} times".format(n))
 
-    for i in range(0, 10):
+    for i in range(0, n):
         # print(i)
         x = RegularSurface()
         x.from_file('../xtgeo-testdata/surfaces/tro/1/troll.irapbin',

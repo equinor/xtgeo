@@ -663,6 +663,8 @@ class GridProperty(Grid3D):
             self._name = name
         else:
             self._name = name + '_' + date
+            self.logger.info('Active date is {}'.format(date))
+            self._date = date
 
         ptr_day = _cxtgeo.new_intarray(1)
         ptr_month = _cxtgeo.new_intarray(1)

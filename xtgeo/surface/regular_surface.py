@@ -19,6 +19,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
 
 from xtgeo.surface import _regsurf_import
+from xtgeo.surface import _regsurf_export
 from xtgeo.surface import _regsurf_cube
 from xtgeo.surface import _regsurf_roxapi
 from xtgeo.surface import _regsurf_gridding
@@ -215,9 +216,20 @@ class RegularSurface(object):
             raise os.error
 
         if (fformat is None or fformat == 'irap_binary' or fformat == 'guess'):
-            self._import_irap_binary(mfile)
+            sdata = _regsurf_import.import_irap_binary(mfile)
         else:
             self.logger.error('Invalid file format')
+            raise ValueError('Invalid file format')
+
+        self._ncol = sdata['ncol']
+        self._nrow = sdata['nrow']
+        self._xori = sdata['xori']
+        self._yori = sdata['yori']
+        self._xinc = sdata['xinc']
+        self._yinc = sdata['yinc']
+        self._rotation = sdata['rotation']
+        self._cvalues = sdata['cvalues']
+        self._values = sdata['values']
 
         return self
 
@@ -240,11 +252,9 @@ class RegularSurface(object):
         self.logger.debug('Enter method...')
         self.logger.info('Export to file...')
         if (fformat == 'irap_ascii'):
-            self._export_irap_ascii(mfile)
-        elif (fformat == 'irap_ascii_old'):
-            self._export_irap_ascii_old(mfile)
+            _regsurf_export.export_irap_ascii(self, mfile)
         elif (fformat == 'irap_binary'):
-            self._export_irap_binary(mfile)
+            _regsurf_export.export_irap_binary(self, mfile)
         else:
             self.logger.critical('Invalid file format')
 
@@ -414,7 +424,7 @@ class RegularSurface(object):
 
     @property
     def values(self):
-        """The map values, as 2D masked numpy (float64) of shape (ncol, nrow)."""
+        """The map values, as 2D masked numpy (float64), shape (ncol, nrow)."""
         self._update_values()
         return self._values
 
@@ -435,6 +445,37 @@ class RegularSurface(object):
 
         self.logger.debug('Values shape: {}'.format(self._values.shape))
         self.logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
+
+    @property
+    def values1d(self):
+        """The map values, as 1D numpy, not masked, with undef as np.nan.
+
+        Example::
+
+            map = RegularSurface('myfile.gri')
+            values = map.values1d
+            mean = np.nanmean(values)
+            values[values <= 0] = np.nan
+            map.values1d = values  # update
+        """
+        self._update_values()
+        val = self._values.flatten(order='F')  # flatten will return a copy
+        val = ma.filled(val, self._undef)
+        val[val > self._undef_limit] = np.nan
+        return val
+
+    @values1d.setter
+    def values1d(self, ndarray):
+
+        if not isinstance(ndarray, np.ndarray):
+            raise ValueError('Provided array is not a Numpy ndarray')
+
+        if ndarray.shape[0] != self.ncol * self.nrow:
+            raise ValueError('Provided array has wrong shape')
+
+        val = np.reshape(ndarray, (self._ncol, self._nrow), order='F')
+
+        self._values = ma.masked_invalid(val)  # will return a copy
 
     @property
     def cvalues(self):
@@ -1055,133 +1096,6 @@ class RegularSurface(object):
         # note the Z coordinates are perhaps not depth
         # numpy operation:
         self.values = self.values + zshift
-
-    # #########################################################################
-    # PRIVATE STUFF
-    # #########################################################################
-
-    # =========================================================================
-    # IMPORT routines
-    # =========================================================================
-
-    def _import_irap_binary(self, mfile):
-
-        sdata = _regsurf_import.import_irap_binary(mfile)
-
-        self._ncol = sdata['ncol']
-        self._nrow = sdata['nrow']
-        self._xori = sdata['xori']
-        self._yori = sdata['yori']
-        self._xinc = sdata['xinc']
-        self._yinc = sdata['yinc']
-        self._rotation = sdata['rotation']
-        self._cvalues = sdata['cvalues']
-
-        self._values = None
-
-    # =========================================================================
-    # EXPORT routines
-
-    # this is temporary; shall be replaces with a cxtgeo method
-    def _export_irap_ascii_old(self, mfile, exportmethod=2):
-        """
-        Private routine for export of surface to IRAP ASCII format
-        """
-
-        f = open(mfile, 'w')
-
-        # this is only correct for nonrotated maps
-        xmin = self.xori
-        xmax = self.xori + self.xinc * self.ncol
-
-        ymin = self.yori
-        ymax = self.yori + self.yinc * self.nrow
-
-        # print he IRAP ASCII header
-        f.write('{0:10d}  {1:10d}  {2:10.2f} {3:10.2f}\n'.
-                format(-996, self.nrow,
-                       self.xinc,
-                       self.yinc))
-
-        f.write('{0:10.2f}      {1:10.2f}  {2:10.2f}  {3:10.2f}\n'.
-                format(xmin, xmax, ymin, ymax))
-
-        f.write('{0:10d}  {1:10.2f}      {2:10.2f}      {3:10.2f}\n'.
-                format(self.ncol,
-                       self.rotation,
-                       self.xori,
-                       self.yori))
-
-        f.write('     0   0   0    0     0     0        0\n')
-
-        # print the numpy part
-        a = self.get_zval()  # 1D numpy, F order
-
-        a[np.isnan(a)] = _cxtgeo.UNDEF_MAP_IRAP
-
-        a[a > self._undef_limit] = _cxtgeo.UNDEF_MAP_IRAP
-
-        if (exportmethod == 1):
-            # savetxt gives only one column, but perhaps faster
-            np.savetxt(f, a, fmt='%10.3f')
-        else:
-            i = 1
-            for x in np.nditer(a):
-                f.write('{0:14.4f}'.format(float(x)))
-                i += 1
-                if (i == 7):
-                    i = 1
-                    f.write('\n')
-
-        f.close()
-
-    def _export_irap_ascii(self, mfile):
-
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        zmin = self.values.min()
-        zmax = self.values.max()
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        if xtg_verbose_level < 0:
-            xtg_verbose_level = 0
-
-        nxy = self._ncol * self._nrow
-
-        ier = _cxtgeo.surf_export_irap_ascii(mfile, self._ncol, self._nrow,
-                                             self._xori, self._yori,
-                                             self._xinc, self._yinc,
-                                             self._rotation, self.get_zval(),
-                                             zmin, zmax, 0,
-                                             xtg_verbose_level)
-        if ier != 0:
-            raise RuntimeError('Export to Irap Ascii went wrong, '
-                               'code is {}'.format(ier))
-
-    def _export_irap_binary(self, mfile):
-
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        # update numpy to c_array
-        self._update_cvalues()
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        if xtg_verbose_level < 0:
-            xtg_verbose_level = 0
-
-        ier = _cxtgeo.surf_export_irap_bin(mfile, self._ncol, self._nrow,
-                                           self._xori,
-                                           self._yori, self._xinc, self._yinc,
-                                           self._rotation, self._cvalues, 0,
-                                           xtg_verbose_level)
-
-        if ier != 0:
-            raise RuntimeError('Export to Irap Ascii went wrong, '
-                               'code is {}'.format(ier))
 
     # =========================================================================
     # Helper methods, for internal usage

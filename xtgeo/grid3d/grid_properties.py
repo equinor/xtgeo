@@ -138,7 +138,7 @@ class GridProperties(Grid3D):
     @property
     def props(self):
         """
-        Returns a list of property objects
+        Returns a list of XTGeo GridProperty objects
 
         Example::
 
@@ -450,6 +450,8 @@ class GridProperties(Grid3D):
                         xelf._ncol = ncol0
                         xelf._nrow = nrow0
                         xelf._nlay = nlay0
+                        if ndates > 0:
+                            xelf._date = dates[idate]
 
                         _cxtgeo.grd3d_strip_anint(ncol0 * nrow0 * nlay0,
                                                   aorder,
@@ -467,6 +469,8 @@ class GridProperties(Grid3D):
                         xelf._ncol = ncol0
                         xelf._nrow = nrow0
                         xelf._nlay = nlay0
+                        if ndates > 0:
+                            xelf._date = dates[idate]
 
                         _cxtgeo.grd3d_strip_adouble(ncol0 * nrow0 * nlay0,
                                                     aorder,
