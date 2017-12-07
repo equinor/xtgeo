@@ -13,7 +13,6 @@ import numpy.ma as ma
 import os.path
 from types import FunctionType
 
-
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
@@ -47,6 +46,9 @@ from xtgeo.surface import _regsurf_gridding
 # other way, we need to know, as the file i/o (ie CXTGEO) is F contiguous!
 #
 # =============================================================================
+
+UNDEF = _cxtgeo.UNDEF
+UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
 
 
 class RegularSurface(object):
@@ -113,6 +115,7 @@ class RegularSurface(object):
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
         self._cvalues = None     # carray swig C pointer of map values
         self._masked = False
+        self._filesrc = None     # Name of original input file
 
         # assume so far:
         self._yflip = 1
@@ -140,24 +143,40 @@ class RegularSurface(object):
             values = kwargs.get('values', None)
 
             if values is None:
-                self._values = np.array([[1, 6, 11],
-                                         [2, 7, 12],
-                                         [3, 8, 1e33],
-                                         [4, 9, 14],
-                                         [5, 10, 15]],
-                                        dtype=np.double, order='F')
-            else:
-                if values.flags['F_CONTIGUOUS'] is False:
-                    values = np.asfortranarray(values)
-
+                values = np.array([[1, 6, 11],
+                                   [2, 7, 12],
+                                   [3, 8, 1e33],
+                                   [4, 9, 14],
+                                   [5, 10, 15]],
+                                  dtype=np.double, order='F')
+                # make it masked
+                values = ma.masked_greater(values, self._undef_limit)
+                self._masked = True
                 self._values = values
+            else:
+                self._values = self.ensure_correct_values(self.ncol,
+                                                          self.nrow, values)
+                # if values.flags['F_CONTIGUOUS'] is False:
+                #     self.logger.info('Convert to Fortran order')
+                #     if self._masked:
+                #         mask = ma.getmaskarray(values)
+                #         mask = np.asfortranarray(mask)
+                #         values = np.asfortranarray(values)
+                #         values = ma.array(values, mask=mask, order='F')
+                #         self._values = values
+                #     else:
+                #         values = np.asfortranarray(values)
+                #         # make it masked
+                #         values = ma.masked_greater(values, self._undef_limit)
+                #         self._masked = True
+                #         self._values = values
+                # else:
+                #     values = ma.masked_greater(values, self._undef_limit)
+                #     self._values = values
+                #     self._masked = True
 
                 if self._check_shape_ok(self._values) is False:
                     raise ValueError('Wrong dimension of values')
-
-            # make it masked
-            self._values = ma.masked_greater(self._values, self._undef_limit)
-            self._masked = True
 
         # _nsurfaces += 1
 
@@ -169,7 +188,18 @@ class RegularSurface(object):
         self.logger.debug('Ran __init__ method for RegularSurface object')
 
     def __repr__(self):
-        return 'RegularSurface(ncol={0.ncol!r}, nrow={0.nrow!r} ...)'.format(self)
+        avg = self.values.mean()
+        dsc = ('{0.__class__} (ncol={0.ncol!r}, '
+               'nrow={0.nrow!r}, original file: {0._filesrc}), '
+               'average {1:.4f} ID=<{2}>'.format(self, avg, id(self)))
+        return dsc
+
+    def __str__(self):
+        avg = self.values.mean()
+        dsc = ('{0.__class__.__name__} (ncol={0.ncol!r}, '
+               'nrow={0.nrow!r}, original file: {0._filesrc}), '
+               'average {1:.4f}'.format(self, avg))
+        return dsc
 
     def __del__(self):
         self._delete_cvalues()
@@ -231,6 +261,7 @@ class RegularSurface(object):
         self._cvalues = sdata['cvalues']
         self._values = sdata['values']
 
+        self._filesrc = mfile
         return self
 
     def to_file(self, mfile, fformat='irap_binary'):
@@ -426,6 +457,10 @@ class RegularSurface(object):
     def values(self):
         """The map values, as 2D masked numpy (float64), shape (ncol, nrow)."""
         self._update_values()
+
+        if not self._values.flags.f_contiguous:
+            self.logger.warning('Not Fortran order in numpy')
+
         return self._values
 
     @values.setter
@@ -435,7 +470,10 @@ class RegularSurface(object):
         if (isinstance(values, np.ndarray) and
                 not isinstance(values, ma.MaskedArray)):
 
-            values = ma.array(values)
+            values = ma.array(values, order='F')
+
+        if not values.flags['F_CONTIGUOUS']:
+            raise RuntimeError('Values are not Fortran order')
 
         if self._check_shape_ok(values) is False:
             raise ValueError
@@ -577,17 +615,47 @@ class RegularSurface(object):
         """ Same as yinc (for backward compatibility) """
         return self._yinc
 
+    @staticmethod
+    def ensure_correct_values(ncol, nrow, values):
+        """Ensures that values is a 2D masked numpy (ncol, nrol), F order"""
+
+        if not isinstance(values, ma.MaskedArray):
+            values = ma.array(values, order='F')
+        if not values.shape == (ncol, nrow):
+            values = ma.reshape(values, (ncol, nrow), order='F')
+        # replace any undef or nan with mask
+        values = ma.masked_greater(values, UNDEF_LIMIT)
+        values = ma.masked_invalid(values)
+
+        if not values.flags.f_contiguous:
+            mask = ma.getmaskarray(values)
+            mask = np.asfortranarray(mask)
+            values = np.asfortranarray(values)
+            values = ma.array(values, mask=mask, order='F')
+
+        return values
+
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
 
             >>> mymapcopy = mymap.copy()
 
         """
+        self.logger.debug('Copy object instance...')
+        self.logger.debug(self._values)
+        self.logger.debug(self._values.flags)
+        self.logger.debug(id(self._values))
+
         xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
                                yinc=self.yinc, xori=self.xori, yori=self.yori,
-                               rotation=self.rotation, values=self.values)
-        return xsurf
+                               rotation=self.rotation,
+                               values=self.values)
 
+        self.logger.debug('New array + flags + ID')
+        self.logger.debug(xsurf._values)
+        self.logger.debug(xsurf._values.flags)
+        self.logger.debug(id(xsurf._values))
+        return xsurf
 
     def similarity_index(self, other):
         """Report the degree of similarity between two maps, by comparing mean.
@@ -608,7 +676,7 @@ class RegularSurface(object):
 
         try:
             diff = diff / svalues.mean()
-        except:
+        except ZeroDivisionError:
             diff = -999
 
         return diff
@@ -632,8 +700,8 @@ class RegularSurface(object):
             return False
 
         # check that masks are equal
-        m1 = ma.getmask(self.values)
-        m2 = ma.getmask(other.values)
+        m1 = ma.getmaskarray(self.values)
+        m2 = ma.getmaskarray(other.values)
         if not np.array_equal(m1, m2):
             return False
 
@@ -666,7 +734,6 @@ class RegularSurface(object):
 
         return ((x0, y0), (x1, y1), (x2, y2), (x3, y3))
 
-
     def get_value_from_xy(self, point=(0.0, 0.0)):
         """Return the map value given a X Y point.
 
@@ -689,7 +756,8 @@ class RegularSurface(object):
         zc = _cxtgeo.surf_get_z_from_xy(float(xc), float(yc),
                                         self._ncol, self._nrow,
                                         self._xori, self._yori, self._xinc,
-                                        self._yinc, self._yflip, self._rotation,
+                                        self._yinc, self._yflip,
+                                        self._rotation,
                                         self.cvalues, xtg_verbose_level)
 
         if zc > self._undef_limit:
@@ -731,6 +799,38 @@ class RegularSurface(object):
             value = None
 
         return xval, yval, value
+
+    def get_xy_values(self):
+        """Return coordinates for X and Y as numpy 2D masked arrays."""
+
+        _cxtgeo.xtg_verbose_file('NONE')
+
+        xtg_verbose_level = self._xtg.get_syslevel()
+
+        if xtg_verbose_level < 0:
+            xtg_verbose_level = 0
+
+        ier, xvals, yvals = (
+            _cxtgeo.surf_xy_as_values(self.xori, self.xinc,
+                                      self.yori, self.yinc,
+                                      self.ncol, self.nrow,
+                                      self.rotation,
+                                      self._ncol * self._nrow,
+                                      self._ncol * self._nrow,
+                                      0, xtg_verbose_level))
+        if ier != 0:
+            self.logger.critical('Error code {}, contact the author'.
+                                 format(ier))
+
+        # reshape, then mask using the current Z values mask
+        xvals = xvals.reshape((self.ncol, self.nrow), order='F')
+        yvals = yvals.reshape((self.ncol, self.nrow), order='F')
+
+        mask = ma.getmaskarray(self.values)
+        xvals = ma.array(xvals, mask=mask)
+        yvals = ma.array(yvals, mask=mask)
+
+        return xvals, yvals
 
     def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
                            valuefmt=None):
@@ -1103,7 +1203,7 @@ class RegularSurface(object):
     # copy self (update) values from SWIG carray to numpy, 1D array
 
     def _update_values(self):
-        n = self._ncol * self._nrow
+        nnum = self._ncol * self._nrow
 
         if self._cvalues is None and self._values is not None:
             return
@@ -1113,14 +1213,14 @@ class RegularSurface(object):
                                  '_update_values. STOP')
             sys.exit(9)
 
-        x = _cxtgeo.swig_carr_to_numpy_1d(n, self._cvalues)
+        xvv = _cxtgeo.swig_carr_to_numpy_1d(nnum, self._cvalues)
 
-        x = np.reshape(x, (self._ncol, self._nrow), order='F')
+        xvv = np.reshape(xvv, (self._ncol, self._nrow), order='F')
 
         # make it masked
-        x = ma.masked_greater(x, self._undef_limit)
+        xvv = ma.masked_greater(xvv, self._undef_limit)
 
-        self._values = x
+        self._values = xvv
 
         self._delete_cvalues()
 
@@ -1128,7 +1228,7 @@ class RegularSurface(object):
 
     def _update_cvalues(self):
         self.logger.debug('Enter update cvalues method...')
-        n = self._ncol * self._nrow
+        nnum = self._ncol * self._nrow
 
         if self._values is None and self._cvalues is not None:
             self.logger.debug('CVALUES unchanged')
@@ -1145,12 +1245,12 @@ class RegularSurface(object):
             sys.exit(9)
 
         # make a 1D F order numpy array, and update C array
-        x = ma.filled(self._values, self._undef)
-        x = np.reshape(x, -1, order='F')
+        xvv = ma.filled(self._values, self._undef)
+        xvv = np.reshape(xvv, -1, order='F')
 
-        self._cvalues = _cxtgeo.new_doublearray(n)
+        self._cvalues = _cxtgeo.new_doublearray(nnum)
 
-        _cxtgeo.swig_numpy_to_carr_1d(x, self._cvalues)
+        _cxtgeo.swig_numpy_to_carr_1d(xvv, self._cvalues)
         self.logger.debug('Enter method... DONE')
 
         self._values = None
@@ -1167,6 +1267,12 @@ class RegularSurface(object):
     # check if values shape is OK (return True or False)
 
     def _check_shape_ok(self, values):
+
+        if not values.flags['F_CONTIGUOUS']:
+            self.logger.error('Wrong order; shall be Fortran (Flags: {}'
+                              .format(values.flags))
+            return False
+
         (ncol, nrow) = values.shape
         if ncol != self._ncol or nrow != self._nrow:
             self.logger.error('Wrong shape: Dimens of values {} {} vs {} {}'
@@ -1190,29 +1296,3 @@ class RegularSurface(object):
         nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
 
         return nparray
-
-
-def main():
-    import logging
-
-    FORMAT = '%(name)s %(asctime)-15s =>  %(message)s'
-    logging.basicConfig(format=FORMAT, level=logging.DEBUG)
-
-    logger = logging.getLogger(__name__)
-
-    logger.debug('Run')
-
-    s = RegularSurface()
-
-    print(s.ncol)
-
-
-if __name__ == '__main__':
-    if __package__ is None:
-        print('NON PACKAGE MODE - TESTING ONLY')
-        from os import path
-        sys.path.append(path.dirname(path.dirname(path.abspath('.'))))
-    else:
-        pass
-
-    main()

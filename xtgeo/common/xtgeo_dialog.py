@@ -34,6 +34,22 @@ import cxtgeo
 import timeit
 
 
+class _BColors:
+    # local class for ANSI term color commands
+    # bgcolors:
+    # 40=black, 41=red, 42=green, 43=yellow, 44=blue, 45=pink, 46 cyan
+
+    HEADER = '\033[1;96m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARN = '\033[93;43m'
+    ERROR = '\033[93;41m'
+    CRITICAL = '\033[1;91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class XTGeoDialog(object):
     """System for handling dialogs and messages in XTGeo.
 
@@ -133,6 +149,7 @@ class XTGeoDialog(object):
 
         app = appname + ' (version ' + str(appversion) + ')'
         print('')
+        print(_BColors.HEADER)
         print('#' * 79)
         print('#{}#'.format(app.center(77)))
         print('#' * 79)
@@ -141,6 +158,7 @@ class XTGeoDialog(object):
         print('#{}#'.format(ver.center(77)))
         print('#{}#'.format(cur_version.center(77)))
         print('#' * 79)
+        print(_BColors.ENDC)
         print('')
 
     def basiclogger(self, name):
@@ -288,7 +306,7 @@ class XTGeoDialog(object):
         self.get_callerinfo(caller, frame)
 
         self._output(idx, level, string)
-        sys.exit(1)
+        raise SystemExit('STOP!')
 
     def get_callerinfo(self, caller, frame):
         the_class = self._get_class_from_frame(frame)
@@ -321,6 +339,9 @@ class XTGeoDialog(object):
 
     def _output(self, idx, level, string):
 
+        prefix = ''
+        endfix = ''
+
         if idx == 0:
             prefix = '++'
         elif idx == 1:
@@ -328,11 +349,14 @@ class XTGeoDialog(object):
         elif idx == 3:
             prefix = '>>'
         elif idx == 6:
-            prefix = '##'
+            prefix = _BColors.WARN + '##'
+            endfix = _BColors.ENDC
         elif idx == 8:
-            prefix = '!#'
+            prefix = _BColors.ERROR + '!#'
+            endfix = _BColors.ENDC
         elif idx == 9:
-            prefix = '!!'
+            prefix = _BColors.CRITICAL + '!!'
+            endfix = _BColors.ENDC
 
         prompt = False
         if level <= self._syslevel:
@@ -340,7 +364,7 @@ class XTGeoDialog(object):
 
         if prompt:
             if self._syslevel <= 1:
-                print('{} {}'.format(prefix, string))
+                print('{} {}{}'.format(prefix, string, endfix))
             else:
                 ulevel = str(level)
                 if (level == -5):
@@ -349,9 +373,9 @@ class XTGeoDialog(object):
                     ulevel = 'E'
                 if (level == -9):
                     ulevel = 'W'
-                print('{0} <{1}> [{2:23s}->{3:>33s}] {4}'
+                print('{0} <{1}> [{2:23s}->{3:>33s}] {4}{5}'
                       .format(prefix, ulevel, self._callclass,
-                              self._caller, string))
+                              self._caller, string, endfix))
 
 
 # =============================================================================

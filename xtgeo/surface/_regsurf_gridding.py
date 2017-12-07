@@ -83,8 +83,8 @@ def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
         dzcopy = np.copy(dzprop[::, ::, k - 1:k])
 
         if first:
-            wsum = np.zeros((surf._ncol, surf._nrow))
-            dzsum = np.zeros((surf._ncol, surf._nrow))
+            wsum = np.zeros((surf._ncol, surf._nrow), order='F')
+            dzsum = np.zeros((surf._ncol, surf._nrow), order='F')
             first = False
 
         logger.debug(zcopy)
@@ -115,6 +115,10 @@ def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
             continue
 
         logger.debug(zvdzi.shape)
+        zvdzi = np.asfortranarray(zvdzi)
+        dzi = np.asfortranarray(dzi)
+        logger.debug('ZVDVI shape {}'.format(zvdzi.shape))
+        logger.debug('ZVDZI flags {}'.format(zvdzi.flags))
 
         wsum = wsum + zvdzi
         dzsum = dzsum + dzi
@@ -177,7 +181,7 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
 
         if k1 == layer_minmax[0]:
             logger.info('Initialize zsum ...')
-            zsum = np.zeros((surf._ncol, surf._nrow))
+            zsum = np.zeros((surf._ncol, surf._nrow), order='F')
 
         # this should actually never happen...
         if k1 < layer_minmax[0] or k1 > layer_minmax[1]:
@@ -244,12 +248,15 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
             logger.info('Not able to grid layer {} ({})'.format(k1, ve))
             continue
 
-        logger.info('ZI shape is {}'.format(zi.shape))
+        zi = np.asfortranarray(zi)
+        logger.info('ZI shape is {} and flags {}'.format(zi.shape, zi.flags))
         logger.debug('Map ... done')
 
         zsum = zsum + zi
         logger.info('Sum of HCPB layer is {}'.format(zsum.mean()))
 
+    logger.debug(repr(zsum))
+    logger.debug(repr(zsum.flags))
     surf.values = zsum
     logger.debug(repr(surf._values))
 

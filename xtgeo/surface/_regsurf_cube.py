@@ -140,5 +140,11 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
         etxt = 'Invalid attribute applied: {}'.format(attribute)
         raise ValueError(etxt)
 
+    if not attvalues.flags['F_CONTIGUOUS']:
+        mask = ma.getmaskarray(attvalues)
+        mask = np.asfortranarray(mask)
+        attvalues = np.asfortranarray(attvalues)
+        attvalues = ma.array(attvalues, mask=mask, order='F')
+
     rmap.values = attvalues
     logger.info('Mean of cube attribute is {}'.format(rmap.values.mean()))

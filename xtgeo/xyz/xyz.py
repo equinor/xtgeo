@@ -31,16 +31,14 @@ class XYZ(object):
 
         if len(args) >= 1:
             # make instance from file import
-            self.logger.info('Instance from file')
             pfile = args[0]
-            fformat = kwargs.get('fformat', 'guess')
-            self.from_file(pfile, fformat=fformat)
-        else:
-            self.logger.info('Instance initiated')
-            # make instance by kw spesification
-            self._xx = kwargs.get('xx', 0.0)
+            if isinstance(pfile, str):
+                self.logger.info('Instance from file')
+                fformat = kwargs.get('fformat', 'guess')
+                self.from_file(pfile, fformat=fformat)
 
-        self.logger.debug('Ran __init__ method for {} object'.format(clsname))
+        self.logger.info('Instance initiated')
+
 
     # =========================================================================
     # Import and export

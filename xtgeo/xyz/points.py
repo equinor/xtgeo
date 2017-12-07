@@ -3,8 +3,15 @@
 
 from __future__ import print_function, absolute_import
 
+import numpy as np
+import numpy.ma as ma
 import pandas as pd
 from xtgeo.xyz import XYZ
+from xtgeo.surface import RegularSurface
+import cxtgeo.cxtgeo as _cxtgeo
+
+UNDEF = _cxtgeo.UNDEF
+UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
 
 
 class Points(XYZ):
@@ -26,6 +33,10 @@ class Points(XYZ):
     def __init__(self, *args, **kwargs):
 
         super(Points, self).__init__(*args, **kwargs)
+
+        if len(args) == 1:
+            if isinstance(args[0], RegularSurface):
+                self.from_surface(args[0])
 
     @property
     def nrow(self):
@@ -92,3 +103,24 @@ class Points(XYZ):
             return None
 
         return len(dflist)
+
+    def from_surface(self, surf):
+        """Get points as X Y Value from a surface object nodes."""
+
+        # check if surf is instance from RegularSurface
+        if not isinstance(surf, RegularSurface):
+            raise ValueError('Given surf is not a RegularSurface object')
+
+        val = surf.values
+        xc, yc = surf.get_xy_values()
+
+        coor = []
+        for vv in [xc, yc, val]:
+            vv = ma.filled(vv.flatten(order='F'), fill_value=np.nan)
+            vv = vv[~np.isnan(vv)]
+            coor.append(vv)
+
+        # now populate the dataframe:
+        xc, yc, val = coor
+        ddatas = {'X': xc, 'Y': yc, 'Z': val}
+        self._df = pd.DataFrame(ddatas)
