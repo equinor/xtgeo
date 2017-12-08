@@ -28,6 +28,8 @@ class Points(XYZ):
         # show the Pandas dataframe
         print(xp.dataframe)
 
+    .. autoclass:: XYZ:: members:: inherited-members
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -105,7 +107,24 @@ class Points(XYZ):
         return len(dflist)
 
     def from_surface(self, surf):
-        """Get points as X Y Value from a surface object nodes."""
+        """Get points as X Y Value from a surface object nodes.
+
+        Note that undefined surface nodes will not be included.
+
+        Args:
+            surf (RegularSurface): A XTGeo RegularSurface object instance.
+
+        Example::
+
+            topx = RegularSurface('topx.gri')
+            topx_aspoints = Points()
+            topx_aspoints.from_surface(topx)
+
+            # alternative shortform:
+            topx_aspoints = Points(topx)  # get an instance directly
+
+            topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
+        """
 
         # check if surf is instance from RegularSurface
         if not isinstance(surf, RegularSurface):

@@ -59,7 +59,7 @@ class RegularSurface(object):
     The values can be accessed by the user as a 2D masked numpy float64 array,
     but also other variants are possible (e.g. as 1D ordinary numpy).
 
-    Attributes:
+    Args:
         ncol: Integer for number of X direction columns
         nrow: Integer for number of Y direction rows
         xori: X (East) origon coordinate
@@ -69,17 +69,7 @@ class RegularSurface(object):
         rotation: rotation in degrees, anticlock from X axis between 0, 360
         values: 2D (masked or not)  numpy array of shape (ncol,nrow), F order
 
-    Example:
-        Initiate a class and import::
-
-          from xtgeo.surface import RegularSurface
-          x = RegularSurface()
-          x.from_file('some.irap', fformat='irap_binary')
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        """The __init__ (constructor) method.
+    Examples:
 
         The instance can be made either from file or by a spesification::
 
@@ -93,17 +83,16 @@ class RegularSurface(object):
                                 rotation=0.0, xinc=25.0, yinc=25.0,
                                 values=np.zeros((20,10)))
 
-        Args:
-            xori (float): Origin of grid X (East) coordinate
-            yori (float): Origin of grid Y (North) coordinate
-            xinc (float): Increment in X
-            yinc (float): Increment in Y
-            ncol (int): Number of columns, X
-            nrow (int): Number of rows, Y
-            rotation (float): Rotation angle (deg.), from X axis, anti-clock
-            values (ndarray): 2D numpy (maked or not) of shape (ncol,nrow))
+        Initiate a class and import::
 
-        """
+          from xtgeo.surface import RegularSurface
+          x = RegularSurface()
+          x.from_file('some.irap', fformat='irap_binary')
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        """The __init__ (constructor) method."""
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
@@ -123,7 +112,7 @@ class RegularSurface(object):
         if args:
             # make instance from file import
             mfile = args[0]
-            fformat = kwargs.get('fformat', 'irap_binary')
+            fformat = kwargs.get('fformat', 'guess')
             self.from_file(mfile, fformat=fformat)
 
         else:
@@ -156,24 +145,6 @@ class RegularSurface(object):
             else:
                 self._values = self.ensure_correct_values(self.ncol,
                                                           self.nrow, values)
-                # if values.flags['F_CONTIGUOUS'] is False:
-                #     self.logger.info('Convert to Fortran order')
-                #     if self._masked:
-                #         mask = ma.getmaskarray(values)
-                #         mask = np.asfortranarray(mask)
-                #         values = np.asfortranarray(values)
-                #         values = ma.array(values, mask=mask, order='F')
-                #         self._values = values
-                #     else:
-                #         values = np.asfortranarray(values)
-                #         # make it masked
-                #         values = ma.masked_greater(values, self._undef_limit)
-                #         self._masked = True
-                #         self._values = values
-                # else:
-                #     values = ma.masked_greater(values, self._undef_limit)
-                #     self._values = values
-                #     self._masked = True
 
                 if self._check_shape_ok(self._values) is False:
                     raise ValueError('Wrong dimension of values')
@@ -204,6 +175,10 @@ class RegularSurface(object):
     def __del__(self):
         self._delete_cvalues()
 
+    # =========================================================================
+    # Class and static methods
+    # =========================================================================
+
     @classmethod
     def methods(cls):
         """
@@ -213,121 +188,39 @@ class RegularSurface(object):
         """
         return [x for x, y in cls.__dict__.items() if type(y) == FunctionType]
 
-# =============================================================================
-# Import and export
-# =============================================================================
-
-    def from_file(self, mfile, fformat='guess'):
-        """Import surface (regular map) from file.
-
-        Args:
-            mfile (str): Name of file
-            fformat (str): File format, guess/irap_binary is currently
-                supported
-
-        Returns:
-            Object instance, optionally
-
-        Example:
-            Here the from_file method is used to initiate the object
-            directly::
-
-            >>> mymapobject = RegularSurface().from_file('myfile.x')
-
-
-        """
-
-        self._values = None
-
-        if (os.path.isfile(mfile)):
-            pass
-        else:
-            self.logger.critical('Not OK file')
-            raise os.error
-
-        if (fformat is None or fformat == 'irap_binary' or fformat == 'guess'):
-            sdata = _regsurf_import.import_irap_binary(mfile)
-        else:
-            self.logger.error('Invalid file format')
-            raise ValueError('Invalid file format')
-
-        self._ncol = sdata['ncol']
-        self._nrow = sdata['nrow']
-        self._xori = sdata['xori']
-        self._yori = sdata['yori']
-        self._xinc = sdata['xinc']
-        self._yinc = sdata['yinc']
-        self._rotation = sdata['rotation']
-        self._cvalues = sdata['cvalues']
-        self._values = sdata['values']
-
-        self._filesrc = mfile
-        return self
-
-    def to_file(self, mfile, fformat='irap_binary'):
-        """Export surface (regular map) to file
-
-        Args:
-            mfile (str): Name of file
-            fformat (str): File format, irap_binary/irap_classic
+    @staticmethod
+    def ensure_correct_values(ncol, nrow, values):
+        """Ensures that values is a 2D masked numpy (ncol, nrol), F order.
 
         Example::
 
-            >>> x = RegularSurface()
-            >>> x.from_file('myfile.x', fformat = 'irap_ascii')
-            >>> x.values = x.values + 300
-            >>> x.to_file('myfile2.x', fformat = 'irap_ascii')
+            vals = np.ones((nx*ny))  # a 1D numpy array in C order by default
 
+            # secure that the values are masked, in correct format and shape:
+            mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
 
-        self.logger.debug('Enter method...')
-        self.logger.info('Export to file...')
-        if (fformat == 'irap_ascii'):
-            _regsurf_export.export_irap_ascii(self, mfile)
-        elif (fformat == 'irap_binary'):
-            _regsurf_export.export_irap_binary(self, mfile)
-        else:
-            self.logger.critical('Invalid file format')
+        if not isinstance(values, ma.MaskedArray):
+            values = ma.array(values, order='F')
 
-    def from_roxar(self, project, type='horizon', name=None, category=None,
-                   realisation=0):
-        """
-        Load a surface from a Roxar RMS project.
+        if not values.shape == (ncol, nrow):
+            values = ma.reshape(values, (ncol, nrow), order='F')
 
-        Args:
-            project (str): Name of project (as folder) if outside RMS, og just
-                use the magig 'project' if within RMS.
-            type (str): 'horizon', 'clipboard', etc
-            name (str): Name of surface/map
-            category (str): For horizon only: for example 'DS_extracted'
-            realiation (int): Realisation number, default is 0
+        # replace any undef or nan with mask
+        values = ma.masked_greater(values, UNDEF_LIMIT)
+        values = ma.masked_invalid(values)
 
-        Returns:
-            Object instance updated
+        if not values.flags.f_contiguous:
+            mask = ma.getmaskarray(values)
+            mask = np.asfortranarray(mask)
+            values = np.asfortranarray(values)
+            values = ma.array(values, mask=mask, order='F')
 
-        Example:
-            Here the from_roxar method is used to initiate the object
-            directly::
+        return values
 
-            >>> mymap = RegularSurface()
-            >>> mymap.from_roxar(etc)
-
-        """
-
-        if type == 'horizon' and name is None or category is None:
-            self.logger.error('Need to spesify name and categori for '
-                              'horizon')
-        elif type != 'horizon':
-            self.logger.error('Only horizon type is supported so far')
-            raise Exception
-
-        self = _regsurf_roxapi.import_horizon_roxapi(self, project, name,
-                                                     category,realisation)
-
-# =============================================================================
-# Get and Set properties (tend to pythonic properties rather than javaic get
-# & set syntax)
-# =============================================================================
+    # =========================================================================
+    # Properties
+    # =========================================================================
 
     @property
     def ncol(self):
@@ -536,6 +429,154 @@ class RegularSurface(object):
         get_zval method."""
         return self._undef_limit
 
+# =============================================================================
+# Import and export
+# =============================================================================
+
+    def from_file(self, mfile, fformat='guess'):
+        """Import surface (regular map) from file.
+
+        Note that the 'guess' option will look at the file extesions, where
+        "gri" will irap_binary and "fgr" assume Irap Ascii
+
+        Args:
+            mfile (str): Name of file
+            fformat (str): File format, guess/irap_binary/irap_ascii
+                is currently supported.
+
+        Returns:
+            Object instance, optionally.
+
+        Example:
+            Here the from_file method is used to initiate the object
+            directly::
+
+            >>> mymapobject = RegularSurface().from_file('myfile.x')
+
+
+        """
+
+        self._values = None
+
+        if (os.path.isfile(mfile)):
+            pass
+        else:
+            self.logger.critical('Not OK file')
+            raise os.error
+
+        froot, fext = os.path.splitext(mfile)
+        if fformat is None or fformat == 'guess':
+            if len(fext) == 0:
+                self.logger.critical('File extension missing. STOP')
+                raise SystemExit('Stop: fformat is "guess" but file '
+                                 'extension is missing')
+            else:
+                fformat = fext.lower().replace('.', '')
+
+        if fformat in ['irap_binary', 'gri', 'bin', 'irapbin']:
+            sdata = _regsurf_import.import_irap_binary(mfile)
+        elif fformat in ['irap_ascii', 'fgr', 'asc', 'irapasc']:
+            sdata = _regsurf_import.import_irap_ascii(mfile)
+        else:
+            raise ValueError('Invalid file format: {}'.format(fformat))
+
+        self._ncol = sdata['ncol']
+        self._nrow = sdata['nrow']
+        self._xori = sdata['xori']
+        self._yori = sdata['yori']
+        self._xinc = sdata['xinc']
+        self._yinc = sdata['yinc']
+        self._rotation = sdata['rotation']
+        self._cvalues = sdata['cvalues']
+        self._values = sdata['values']
+
+        self._filesrc = mfile
+
+        return self
+
+    def to_file(self, mfile, fformat='irap_binary'):
+        """Export surface (regular map) to file
+
+        Args:
+            mfile (str): Name of file
+            fformat (str): File format, irap_binary/irap_ascii
+
+        Example::
+
+            >>> x = RegularSurface()
+            >>> x.from_file('myfile.x', fformat = 'irap_ascii')
+            >>> x.values = x.values + 300
+            >>> x.to_file('myfile2.x', fformat = 'irap_ascii')
+
+        """
+
+        self.logger.debug('Enter method...')
+        self.logger.info('Export to file...')
+        if (fformat == 'irap_ascii'):
+            _regsurf_export.export_irap_ascii(self, mfile)
+        elif (fformat == 'irap_binary'):
+            _regsurf_export.export_irap_binary(self, mfile)
+        else:
+            self.logger.critical('Invalid file format')
+
+    def from_roxar(self, project, type='horizon', name=None, category=None,
+                   realisation=0):
+        """
+        Load a surface from a Roxar RMS project.
+
+        Args:
+            project (str): Name of project (as folder) if outside RMS, og just
+                use the magig 'project' if within RMS.
+            type (str): 'horizon', 'clipboard', etc
+            name (str): Name of surface/map
+            category (str): For horizon only: for example 'DS_extracted'
+            realiation (int): Realisation number, default is 0
+
+        Returns:
+            Object instance updated
+
+        Example:
+            Here the from_roxar method is used to initiate the object
+            directly::
+
+            >>> mymap = RegularSurface()
+            >>> mymap.from_roxar(etc)
+
+        """
+
+        if type == 'horizon' and name is None or category is None:
+            self.logger.error('Need to spesify name and categori for '
+                              'horizon')
+        elif type != 'horizon':
+            self.logger.error('Only horizon type is supported so far')
+            raise Exception
+
+        self = _regsurf_roxapi.import_horizon_roxapi(self, project, name,
+                                                     category, realisation)
+
+    def copy(self):
+        """Copy a xtgeo.surface.RegularSurface object to another instance::
+
+            >>> mymapcopy = mymap.copy()
+
+        """
+        self.logger.debug('Copy object instance...')
+        self.logger.debug(self._values)
+        self.logger.debug(self._values.flags)
+        self.logger.debug(id(self._values))
+
+        xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
+                               yinc=self.yinc, xori=self.xori, yori=self.yori,
+                               rotation=self.rotation,
+                               values=self.values)
+
+        self.logger.debug('New array + flags + ID')
+        self.logger.debug(xsurf._values)
+        self.logger.debug(xsurf._values.flags)
+        self.logger.debug(id(xsurf._values))
+        return xsurf
+
+
     def get_zval(self):
         """Get an an 1D, numpy array of the map values (not masked).
 
@@ -614,48 +655,6 @@ class RegularSurface(object):
     def get_yinc(self):
         """ Same as yinc (for backward compatibility) """
         return self._yinc
-
-    @staticmethod
-    def ensure_correct_values(ncol, nrow, values):
-        """Ensures that values is a 2D masked numpy (ncol, nrol), F order"""
-
-        if not isinstance(values, ma.MaskedArray):
-            values = ma.array(values, order='F')
-        if not values.shape == (ncol, nrow):
-            values = ma.reshape(values, (ncol, nrow), order='F')
-        # replace any undef or nan with mask
-        values = ma.masked_greater(values, UNDEF_LIMIT)
-        values = ma.masked_invalid(values)
-
-        if not values.flags.f_contiguous:
-            mask = ma.getmaskarray(values)
-            mask = np.asfortranarray(mask)
-            values = np.asfortranarray(values)
-            values = ma.array(values, mask=mask, order='F')
-
-        return values
-
-    def copy(self):
-        """Copy a xtgeo.surface.RegularSurface object to another instance::
-
-            >>> mymapcopy = mymap.copy()
-
-        """
-        self.logger.debug('Copy object instance...')
-        self.logger.debug(self._values)
-        self.logger.debug(self._values.flags)
-        self.logger.debug(id(self._values))
-
-        xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
-                               yinc=self.yinc, xori=self.xori, yori=self.yori,
-                               rotation=self.rotation,
-                               values=self.values)
-
-        self.logger.debug('New array + flags + ID')
-        self.logger.debug(xsurf._values)
-        self.logger.debug(xsurf._values.flags)
-        self.logger.debug(id(xsurf._values))
-        return xsurf
 
     def similarity_index(self, other):
         """Report the degree of similarity between two maps, by comparing mean.

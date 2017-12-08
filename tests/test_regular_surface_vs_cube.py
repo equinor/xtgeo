@@ -126,7 +126,7 @@ def test_slice_various_fos2():
     """
 
     logger.info('Loading surface')
-    xs = RegularSurface(ftop2)
+    xs = RegularSurface(ftop2, fformat='irap_binary')
 
     logger.info('Loading cube')
     cc = Cube(fsgy2)

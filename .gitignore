@@ -55,6 +55,8 @@ TMP/
 
 # Sphinx documentation
 docs/_build/
+docs/modules.rst
+docs/xtgeo*.rst
 
 # PyBuilder
 target/

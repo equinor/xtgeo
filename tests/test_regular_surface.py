@@ -49,8 +49,8 @@ def test_irapasc_export():
     assert fstatus is True
 
 
-def test_irapasc_exp2():
-    """Export Irap ASCII (2)."""
+def test_irapasc_export_and_import():
+    """Export Irap ASCII and import again."""
 
     logger.info('Export to Irap Classic and Binary')
 
@@ -65,12 +65,23 @@ def test_irapasc_exp2():
             120,
             100))
     assert_equal(x.ncol, 120)
+
+    mean1 = x.values.mean()
+
     x.to_file('TMP/irap2_a.fgr', fformat="irap_ascii")
     x.to_file('TMP/irap2_b.gri', fformat="irap_binary")
 
     fsize = os.path.getsize('TMP/irap2_b.gri')
     logger.info(fsize)
     assert_equal(fsize, 48900)
+
+    # import irap ascii
+    y = RegularSurface()
+    y.from_file('TMP/irap2_a.fgr', fformat="irap_ascii")
+
+    mean2 = y.values.mean()
+
+    assert_almostequal(mean1, mean2, 0.0001)
 
 
 def test_minmax_rotated_map():
