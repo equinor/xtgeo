@@ -9,7 +9,7 @@ from __future__ import print_function, absolute_import
 import pandas as pd
 
 from xtgeo.xyz import XYZ
-
+from xtgeo.xyz._xyz_io import _convert_idbased_xyz
 
 class Polygons(XYZ):
     """Class for a polygons (connected points) in the XTGeo framework."""
@@ -93,3 +93,11 @@ class Polygons(XYZ):
             return None
 
         return len(dflist)
+
+    def get_xyz_dataframe(self):
+        """Convert from ID based to XYZ, where a new polygon is marked
+        with a 999.0 value as flag"""
+
+        self.logger.info(self.dataframe)
+
+        return _convert_idbased_xyz(self.dataframe)

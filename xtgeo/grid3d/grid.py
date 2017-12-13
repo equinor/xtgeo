@@ -18,6 +18,7 @@ import re
 from tempfile import mkstemp
 from xtgeo.common import XTGeoDialog
 
+import xtgeo
 from .grid3d import Grid3D
 from .grid_property import GridProperty
 from .grid_properties import GridProperties
@@ -288,6 +289,47 @@ class Grid(Grid3D):
         """
         return self._p_actnum_v  # the SWIG pointer to the C structure
 
+    def get_indices(self, names=('I', 'J', 'K')):
+        """Return 3 GridProperty objects for column, row, and layer index,
+
+        Note that the indexes starts with 1, not zero (i.e. upper
+        cell layer is K=1)
+
+        Args:
+            names (tuple): Names of the columns (as property names)
+
+        Examples::
+
+            i_index, j_index, k_index = grd.get_indices()
+
+        """
+
+        grd = np.indices((self.ncol, self.nrow, self.nlay))
+
+        ilist = []
+        for axis in range(3):
+            index = grd[axis]
+            index = index.flatten(order='F')
+            index = index + 1
+            index.astype(np.int32)
+
+            idx = GridProperty(ncol=self._ncol, nrow=self._nrow,
+                               nlay=self._nlay,
+                               values=index,
+                               name=names[axis], discrete=True)
+            codes = {}
+            ncodes = 0
+            for i in range(index.min(), index.max() + 1):
+                codes[i] = str(i)
+                ncodes = ncodes + 1
+
+            idx._codes = codes
+            idx._ncodes = ncodes
+            idx._grid = self
+            ilist.append(idx)
+
+        return ilist
+
     def get_actnum(self, name='ACTNUM'):
         """
         Return an ACTNUM GridProperty object
@@ -310,6 +352,7 @@ class Grid(Grid3D):
         act._update_values()
         act._codes = {0: '0', 1: '1'}
         act._ncodes = 2
+        act._grid = self
 
         # return the object
         return act
@@ -713,6 +756,77 @@ class Grid(Grid3D):
         _cxtgeo.grd3d_inact_by_dz(self.ncol, self.nrow, self.nlay,
                                   self._p_zcorn_v, self._p_actnum_v,
                                   threshold, nflip, xtg_verbose_level)
+
+    def inactivate_inside(self, poly, layer_range=None, inside=True,
+                          force_close=False):
+        """Inacativate grid inside a polygon.
+
+        The Polygons instance may consist of several polygons. If a polygon
+        is open, then the flag force_close will close any that are not open
+        when doing the operations in the grid.
+
+        Args:
+            poly(Polygons): A polygons object
+            layer_range (tuple): A tuple of two ints, upper layer = 1, e.g.
+                (1, 14)
+            inside (bool): True if remove inside polygon
+
+        Raises:
+            RuntimeWarning: If a problems with one or more polygons.
+        """
+
+        if not isinstance(poly, xtgeo.xyz.Polygons):
+            raise ValueError('Input polygon not a XTGeo Polygons instance')
+
+        if layer_range is not None:
+            k1, k2 = layer_range
+        else:
+            k1 = 1
+            k2 = self.nlay
+
+        method = 0
+        if not inside:
+            method = 1
+
+        iforce = 0
+        if force_close:
+            iforce = 1
+
+        _cxtgeo.xtg_verbose_file('NONE')
+        xtg_verbose_level = self._xtg.syslevel
+
+        # get dataframe where each polygon is ended by a 999 value
+        dfxyz = poly.get_xyz_dataframe()
+
+        xc = dfxyz['X'].values
+        yc = dfxyz['Y'].values
+
+        ier = _cxtgeo.grd3d_inact_outside_pol(xc, yc, self.ncol,
+                                              self.nrow,
+                                              self.nlay, self._p_coord_v,
+                                              self._p_zcorn_v,
+                                              self._p_actnum_v, k1, k2,
+                                              iforce, method,
+                                              xtg_verbose_level)
+
+        if ier == 1:
+            raise RuntimeWarning('Problems with one or more polygons. '
+                                 'Not closed?')
+
+    def inactivate_outside(self, poly, layer_range=None):
+        """Inacativate grid outside a polygon. (cf inactivate_inside)"""
+
+        self.inactivate_inside(poly, layer_range=layer_range, inside=False)
+
+    def collapse_inactive_cells(self):
+        """ Collapse inactive layers where, for I J with other active cells."""
+
+        _cxtgeo.xtg_verbose_file('NONE')
+        xtg_verbose_level = self._xtg.syslevel
+
+        _cxtgeo.grd3d_collapse_inact(self.ncol, self.nrow, self.nlay,
+                                     self._p_zcorn_v, self._p_actnum_v,
+                                     xtg_verbose_level)
 
     def reduce_to_one_layer(self):
         """Reduce the grid to one single single layer.

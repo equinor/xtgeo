@@ -7,7 +7,7 @@ import numpy as np
 import numpy.ma as ma
 import pandas as pd
 from xtgeo.xyz import XYZ
-from xtgeo.surface import RegularSurface
+import xtgeo
 import cxtgeo.cxtgeo as _cxtgeo
 
 UNDEF = _cxtgeo.UNDEF
@@ -37,7 +37,7 @@ class Points(XYZ):
         super(Points, self).__init__(*args, **kwargs)
 
         if len(args) == 1:
-            if isinstance(args[0], RegularSurface):
+            if isinstance(args[0], xtgeo.surface.RegularSurface):
                 self.from_surface(args[0])
 
     @property
@@ -127,7 +127,7 @@ class Points(XYZ):
         """
 
         # check if surf is instance from RegularSurface
-        if not isinstance(surf, RegularSurface):
+        if not isinstance(surf, xtgeo.surface.RegularSurface):
             raise ValueError('Given surf is not a RegularSurface object')
 
         val = surf.values

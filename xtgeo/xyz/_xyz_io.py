@@ -121,7 +121,7 @@ def _convert_idbased_xyz(df):
 
     # If polygons, there is a 4th column with ID. This needs
     # to replaced by adding 999 line instead (for polygons)
-    # prior to XYZ export
+    # prior to XYZ export or when interactions in CXTGEO
 
     idgroups = df.groupby('ID')
 

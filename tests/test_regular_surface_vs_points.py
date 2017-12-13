@@ -42,6 +42,17 @@ def test_list_xy_points_as_numpies(reek_map):
 
 def test_map_to_points(reek_map):
     """Get the list of the coordinates"""
+
+    px = Points()
+
+    surf = RegularSurface(ftop1)
+
+    assert isinstance(surf, RegularSurface)
+
+    assert_almostequal(surf.values.mean(), 0.5755830099, 0.001)
+
+    px.from_surface(surf)
+
     # convert to a Points instance
     px = Points(reek_map)
     # or

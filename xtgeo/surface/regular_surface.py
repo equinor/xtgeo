@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module/class for regular surfaces with XTGeo."""
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import os
 import sys
@@ -16,12 +16,14 @@ from types import FunctionType
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
+from xtgeo.xyz import Points
 
 from xtgeo.surface import _regsurf_import
 from xtgeo.surface import _regsurf_export
 from xtgeo.surface import _regsurf_cube
 from xtgeo.surface import _regsurf_roxapi
 from xtgeo.surface import _regsurf_gridding
+from xtgeo.surface import _regsurf_oper
 
 
 # =============================================================================
@@ -199,6 +201,9 @@ class RegularSurface(object):
             # secure that the values are masked, in correct format and shape:
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
+        if np.isscalar(values):
+            vals = ma.zeros((ncol, nrow), order='F', dtype=np.double)
+            values = vals + float(values)
 
         if not isinstance(values, ma.MaskedArray):
             values = ma.array(values, order='F')
@@ -360,16 +365,7 @@ class RegularSurface(object):
     def values(self, values):
         self.logger.debug('Enter method...')
 
-        if (isinstance(values, np.ndarray) and
-                not isinstance(values, ma.MaskedArray)):
-
-            values = ma.array(values, order='F')
-
-        if not values.flags['F_CONTIGUOUS']:
-            raise RuntimeError('Values are not Fortran order')
-
-        if self._check_shape_ok(values) is False:
-            raise ValueError
+        values = self.ensure_correct_values(self.ncol, self.nrow, values)
 
         self._values = values
         self._cvalues = None
@@ -575,7 +571,6 @@ class RegularSurface(object):
         self.logger.debug(xsurf._values.flags)
         self.logger.debug(id(xsurf._values))
         return xsurf
-
 
     def get_zval(self):
         """Get an an 1D, numpy array of the map values (not masked).
@@ -890,9 +885,65 @@ class RegularSurface(object):
 
         return xylist, valuelist
 
-# =============================================================================
-# Interacion with a cube
-# =============================================================================
+    # =========================================================================
+    # Interacion with other surface
+    # =========================================================================
+
+    def gridding(self, points, method='linear'):
+        """Grid a surface from points
+
+        Args:
+            points(Points): XTGeo Points instance.
+            method (str): Gridding method option: linear / cubic / nearest
+
+        Example::
+
+            mypoints = Points('pfile.poi')
+            mysurf = RegularSurface('top.gri')
+
+            # update the surface by gridding the points
+            mysurf.gridding(mypoints)
+
+        Raises:
+            RuntimeError: If not possible to grid for some reason
+            ValueError: If invalid input
+
+        """
+
+        if not isinstance(points, Points):
+            raise ValueError('Argument not a Points '
+                             'instance')
+
+        self.logger.info('Do gridding...')
+
+        _regsurf_gridding.points_gridding(self, points)
+
+    # =========================================================================
+    # Interacion with other surface
+    # =========================================================================
+
+    def resample(self, other):
+        """Resample a surface from another surface instance.
+
+        Note that there may be some 'loss' of nodes at the edges of the
+        updated map, as only the 'inside' nodes in the updated map
+        versus the input map are applied.
+
+        Args:
+            other(RegularSurface): Surface to resample from
+        """
+
+        if not isinstance(other, RegularSurface):
+            raise ValueError('Argument not a RegularSurface '
+                             'instance')
+
+        self.logger.info('Do resampling...')
+
+        _regsurf_oper.resample(self, other)
+
+    # =========================================================================
+    # Interacion with a cube
+    # =========================================================================
 
     def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
         """Slice the cube and update the instance surface to sampled cube

@@ -5,10 +5,40 @@ import numpy.ma as ma
 import scipy.interpolate
 
 import cxtgeo.cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-xtg = XTGeoDialog()
+import xtgeo
+
+xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
+
+
+def points_gridding(surf, points, method='linear'):
+    """Do gridding from a points data set."""
+
+    xi, yi = surf.get_xy_values()
+
+    df = points.dataframe
+
+    xc = df['X'].values
+    yc = df['Y'].values
+    zc = df['Z'].values
+
+    validmethods = ['linear', 'nearest', 'cubic']
+    if method not in set(validmethods):
+        raise ValueError('Invalid method for gridding: {}, valid '
+                         'options are {}'. format(method, validmethods))
+
+    try:
+        znew = scipy.interpolate.griddata((xc, yc), zc, (xi, yi),
+                                          method=method, fill_value=np.nan)
+    except ValueError as verr:
+        raise RuntimeError('Could not do gridding: {}'.format(verr))
+
+    logger.info('Gridding point ... DONE')
+
+    znew = surf.ensure_correct_values(surf.ncol, surf.nrow, znew)
+
+    surf.values = znew
 
 
 def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
@@ -41,17 +71,7 @@ def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
     logger.info('Zone is :')
     logger.info(zoneprop)
 
-    # do not allow rotation...
-    if surf._rotation < -0.1 or surf._rotation > 0.1:
-        logger.error('Cannut use rotated maps. Return')
-        return
-
-    xmax = surf._xori + surf._xinc * surf._ncol
-    ymax = surf._yori + surf._yinc * surf._nrow
-    xi = np.linspace(surf._xori, xmax, surf._ncol)
-    yi = np.linspace(surf._yori, ymax, surf._nrow)
-
-    xi, yi = np.meshgrid(xi, yi, indexing='ij')
+    xi, yi = surf.get_xy_values()
 
     sf = sampling
 
@@ -159,17 +179,8 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
 
     logger.debug('Grid layout is {} {} {}'.format(ncol, nrow, nlay))
 
-    # do not allow rotation...
-    if surf._rotation < -0.1 or surf._rotation > 0.1:
-        logger.error('Cannot use rotated maps. Return')
-        return False
-
-    xmax = surf._xori + surf._xinc * surf._ncol
-    ymax = surf._yori + surf._yinc * surf._nrow
-    xi = np.linspace(surf._xori, xmax, surf._ncol)
-    yi = np.linspace(surf._yori, ymax, surf._nrow)
-
-    xi, yi = np.meshgrid(xi, yi, indexing='ij')
+    # rotation in mesh coords are OK!
+    xi, yi = surf.get_xy_values()
 
     # filter and compute per K layer (start count on 0)
     for k0 in range(layer_minmax[0] - 1, layer_minmax[1]):
@@ -177,7 +188,6 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
         k1 = k0 + 1   # layer counting base is 1 for k1
 
         logger.info('Mapping for layer ' + str(k1) + '...')
-        logger.debug('K0 counter is {}'.format(k0))
 
         if k1 == layer_minmax[0]:
             logger.info('Initialize zsum ...')
@@ -185,7 +195,7 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
 
         # this should actually never happen...
         if k1 < layer_minmax[0] or k1 > layer_minmax[1]:
-            logger.info('SKIP (layer_minmax)')
+            logger.warning('SKIP (layer_minmax)')
             continue
 
         zonecopy = np.copy(zoneprop[:, :, k0])
@@ -230,7 +240,7 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
         y = np.reshape(ycopy, -1, order='F')
         z = np.reshape(zcopy, -1, order='F')
 
-        xc = np.copy(x)
+        xc = xcopy.flatten(order='F')
 
         x = x[xc < surf._undef_limit]
         y = y[xc < surf._undef_limit]
