@@ -11,10 +11,10 @@ logger = xtg.basiclogger(__name__)
 if not xtg._testsetup():
     sys.exit(-9)
 
-skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
-                                   reason="Big tests skip")
-
 td = xtg.tmpdir
+
+skipsegyio = pytest.mark.skipif(sys.version_info > (2, 7),
+                                reason="Skip test with segyio for ver 3")
 
 # =============================================================================
 # Do tests
@@ -29,6 +29,7 @@ ftop2 = '../xtgeo-testdata/surfaces/fos/2/top_ile_depth.irap'
 fsgy2 = '../xtgeo-testdata/cubes/fos/syntseis_2011_seismic_depth.segy'
 
 
+@skipsegyio
 def test_slice_nearest():
     """Slice a cube with a surface, nearest node."""
 
@@ -80,6 +81,7 @@ def test_slice_nearest():
     assert mean == pytest.approx(-0.0755, abs=0.003)
 
 
+@skipsegyio
 def test_slice_various_fos():
     """Slice a cube with a surface, both nearest node and interpol,
     Fossekall
@@ -120,6 +122,7 @@ def test_slice_various_fos():
                  infotext='Method: trilinear')
 
 
+@skipsegyio
 def test_slice_various_fos2():
     """Slice another cube with a surface, nearest node,
     Fossekall alt 2
@@ -143,6 +146,7 @@ def test_slice_various_fos2():
                  minmax=(-1, 1), title='Fossekall', infotext='Method: nearest')
 
 
+@skipsegyio
 def test_slice_interpol():
     """Slice a cube with a surface, using trilinear interpol."""
 
@@ -173,6 +177,7 @@ def test_slice_interpol():
     assert x.values.mean() == pytest.approx(-0.0755, abs=0.003)
 
 
+@skipsegyio
 def test_slice_attr_window_max():
     """Slice a cube within a surface window, egt max, using trilinear
     interpol.

@@ -19,6 +19,9 @@ testpath = xtg.testpath
 skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
                                    reason="Big tests skip")
 
+skipsegyio = pytest.mark.skipif(sys.version_info > (2, 7),
+                                reason="Skip test with segyio for ver 3")
+
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -66,6 +69,7 @@ def test_segy_scantraces():
     # print line
 
 
+@skipsegyio
 def test_segy_import_cvalues():
     """Import SEGY using internal reader (case 1 Grane) and chk issues."""
 
@@ -81,7 +85,7 @@ def test_segy_import_cvalues():
 
     assert np.array_equal(np1, np2)
 
-
+@skipsegyio
 @skiplargetest
 def test_segy_import():
     """Import SEGY using internal reader (case 1 Grane)."""
@@ -112,6 +116,7 @@ def test_segy_import():
     logger.debug('YFLP: {}'.format(x.yflip))
 
 
+@skipsegyio
 def test_segyio_import():
     """Import SEGY (case 1 Grane) via SegIO library."""
 
