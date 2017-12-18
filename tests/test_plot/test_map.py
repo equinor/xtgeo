@@ -68,3 +68,18 @@ def test_more_features_plot():
     myplot.plot_faults(myfaults)
 
     myplot.savefig(td + '/map_more1.png')
+
+
+def test_perm_logarithmic_map():
+    """Map with PERM, log scale."""
+
+    mysurf = RegularSurface('../xtgeo-testdata/surfaces/reek/'
+                            '1/reek_perm_lay1.gri')
+
+    myplot = Map()
+    myplot.canvas(title='PERMX normal scale')
+    myplot.set_colortable('gist_rainbow_r')
+    myplot.plot_surface(mysurf, minvalue=0, maxvalue=6000,
+                        xlabelrotation=45, logarithmic=True)
+
+    myplot.savefig(td + '/permx_normal.png')

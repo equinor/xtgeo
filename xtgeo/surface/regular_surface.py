@@ -763,6 +763,8 @@ class RegularSurface(object):
         """Returns x, y, z(value) from i j location.
 
         If undefined cell, value is returned as None.
+
+        Note that the cell indices are 1 based (first cell is (1, 1))
         """
 
         _cxtgeo.xtg_verbose_file('NONE')
@@ -787,7 +789,7 @@ class RegularSurface(object):
                 sys.exit(9)
 
         else:
-            raise Exception
+            raise ValueError('Index i and/or j out of bounds')
 
         if value > self.undef_limit:
             value = None
@@ -826,6 +828,14 @@ class RegularSurface(object):
 
         return xvals, yvals
 
+    def get_xyz_values(self):
+        """Return coordinates for X Y and Z (values) as numpy 2D masked
+        arrays."""
+
+        xc, yc = self.get_xy_values()
+
+        return xc, yc, self.values
+
     def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
                            valuefmt=None):
         """Returns two lists for coordinates (x, y) and values.
@@ -860,37 +870,30 @@ class RegularSurface(object):
             >>> xylist, valuelist = mymap.get_xy_value_lists(valuefmt='6.2f')
         """
 
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        if xtg_verbose_level < 0:
-            xtg_verbose_level = 0
-
         xylist = []
         valuelist = []
 
         for j in range(self.nrow):
             for i in range(self.ncol):
-                x, y, v = self.get_xy_value_from_ij(i + 1, j + 1)
+                xc, yc, vc = self.get_xy_value_from_ij(i + 1, j + 1)
 
-                if v is not None:
+                if vc is not None:
                     if xyfmt is not None:
-                        x = float('{:{width}}'.format(x, width=xyfmt))
-                        y = float('{:{width}}'.format(y, width=xyfmt))
+                        xc = float('{:{width}}'.format(xc, width=xyfmt))
+                        yc = float('{:{width}}'.format(yc, width=xyfmt))
                     if valuefmt is not None:
-                        v = float('{:{width}}'.format(v, width=valuefmt))
-                    valuelist.append(v)
-                    xylist.append((x, y))
+                        vc = float('{:{width}}'.format(vc, width=valuefmt))
+                    valuelist.append(vc)
+                    xylist.append((xc, yc))
 
         return xylist, valuelist
 
     # =========================================================================
-    # Interacion with other surface
+    # Interacion with points
     # =========================================================================
 
     def gridding(self, points, method='linear'):
-        """Grid a surface from points
+        """Grid a surface from points.
 
         Args:
             points(Points): XTGeo Points instance.
@@ -1157,7 +1160,7 @@ class RegularSurface(object):
 
     def quickplot(self, filename='/tmp/default.png', title='QuickPlot',
                   infotext=None, minmax=(None, None), xlabelrotation=None,
-                  colortable='rainbow', faults=None):
+                  colortable='rainbow', faults=None, logarithmic=False):
         """Fast surface plot of maps using matplotlib.
 
         Args:
@@ -1171,6 +1174,8 @@ class RegularSurface(object):
                 colortable. Default is matplotlib's 'rainbow'
             faults (dict): If fault plot is wanted, a dictionary on the
                 form => {'faults': XTGeo Polygons object, 'color': 'k'}
+            logarithmic (bool): If True, a logarithmic contouring color scale
+                will be used.
 
         """
 
@@ -1189,7 +1194,7 @@ class RegularSurface(object):
 
         mymap.plot_surface(self, minvalue=minvalue,
                            maxvalue=maxvalue, xlabelrotation=xlabelrotation,
-                           colortable=colortable)
+                           colortable=colortable, logarithmic=logarithmic)
         if faults:
             mymap.plot_faults(faults['faults'])
 
@@ -1199,31 +1204,19 @@ class RegularSurface(object):
             mymap.savefig(filename)
 
     def distance_from_point(self, point=(0, 0), azimuth=0.0):
-        """
-        Make map values as horizontal distance from a point with azimuth
+        """Make map values as horizontal distance from a point with azimuth
         direction.
+
+        Args:
+            point (tuple): Point to measure from
+            azimuth (float): Angle from North (clockwise) in degrees
+
         """
 
-        x, y = point
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        # secure that carray is updated:
-        self._update_cvalues()
-
-        # call C routine
-        ier = _cxtgeo.surf_get_dist_values(
-            self._xori, self._xinc, self._yori, self._yinc, self._ncol,
-            self._nrow, self._rotation, x, y, azimuth, self._cvalues, 0,
-            xtg_verbose_level)
-
-        if ier != 0:
-            self.logger.error('Something went wrong...')
-            raise ValueError
+        _regsurf_oper.distance_from_point(self, point=point, azimuth=azimuth)
 
     def translate_coordinates(self, translate=(0, 0, 0)):
-        """
-        Translate a map in X Y VALUE space.
+        """Translate a map in X Y VALUE space.
 
         Args:
             translate (tuple): Translate (shift) distance in X Y Z

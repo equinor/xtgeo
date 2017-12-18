@@ -164,14 +164,19 @@ class Map(BasePlot):
         try:
             if logarithmic is False:
                 locator = None
-            else:
-                locator = ticker.LogLocator()
+                ticks=legendticks
+                im = self._ax.contourf(xi, yi, zi, uselevels, locator=locator,
+                                       cmap=self.colormap)
 
-            im = self._ax.contourf(xi, yi, zi, uselevels, locator=locator,
-                                   colors=self.colortable)
-            # im = self._ax.contourf(zi, uselevels,
-            #                        colors=self.colortable)
-            self._fig.colorbar(im, ticks=legendticks)
+            else:
+                self.logger.info('use LogLocator')
+                locator = ticker.LogLocator()
+                ticks = None
+                uselevels = None
+                im = self._ax.contourf(xi, yi, zi, locator=locator,
+                                       cmap=self.colormap)
+
+            self._fig.colorbar(im, ticks=ticks)
         except ValueError as err:
             self.logger.warning('Could not make plot: {}'.format(err))
 
