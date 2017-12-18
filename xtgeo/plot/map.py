@@ -4,12 +4,13 @@ from __future__ import print_function, division, absolute_import
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplp
+from matplotlib import ticker
 import logging
 import numpy as np
 import numpy.ma as ma
 import six
-from scipy import ndimage
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
 import cxtgeo.cxtgeo as _cxtgeo
@@ -75,23 +76,40 @@ class Map(BasePlot):
 
     def plot_surface(self, surf, minvalue=None, maxvalue=None,
                      contourlevels=None, xlabelrotation=None,
-                     colortable=None):
+                     colortable=None, logarithmic=False):
         """Input a surface and plot it."""
 
-        # make a copy so original numpy is not altered!
-        zi = ma.transpose(surf.values.copy())
+        # need a deep copy to avoid changes in the original surf
 
+        usesurf = surf.copy()
         if (abs(surf.rotation) > 0.001):
-            zimax = zi.max()
-            zi = zi.filled(3 * zimax)
-            zi = ndimage.rotate(zi, -1 * surf.rotation)
-            zi = ma.masked_greater(zi, zimax)
+            # resample the surface to something nonrotated
+            self.logger.info('Resampling to non-rotated surface...')
+            xlen = surf.xmax - surf.xmin
+            ylen = surf.ymax - surf.ymin
+            ncol = surf.ncol * 2
+            nrow = surf.nrow * 2
+            xinc = xlen / (ncol - 1)
+            yinc = ylen / (nrow - 1)
+            vals = ma.zeros((ncol, nrow), order='F')
+
+            nonrot = xtgeo.surface.RegularSurface(xori=surf.xmin,
+                                                  yori=surf.ymin,
+                                                  xinc=xinc, yinc=yinc,
+                                                  ncol=ncol, nrow=nrow,
+                                                  values=vals)
+            nonrot.resample(surf)
+            usesurf = nonrot
+
+        # make a copy so original numpy is not altered!
+        self.logger.info('Transpose values...')
+        zi = ma.transpose(usesurf.values)
 
         # store the current mask:
         zimask = ma.getmask(zi).copy()
 
-        xi = np.linspace(surf.xmin, surf.xmax, zi.shape[1])
-        yi = np.linspace(surf.ymin, surf.ymax, zi.shape[0])
+        xi = np.linspace(usesurf.xmin, usesurf.xmax, zi.shape[1])
+        yi = np.linspace(usesurf.ymin, usesurf.ymax, zi.shape[0])
 
         legendticks = None
         if minvalue is not None and maxvalue is not None:
@@ -107,6 +125,7 @@ class Map(BasePlot):
             zi[zi < minv] = minv
             zi[zi > maxv] = maxv
 
+            # note use surf.min, not usesurf.min here ...
             notetxt = ('Note: map values are truncated from [' +
                        str(surf.values.min()) + ', ' +
                        str(surf.values.max()) + '] ' +
@@ -119,10 +138,10 @@ class Map(BasePlot):
         self.logger.info('Legendticks: {}'.format(legendticks))
 
         if minvalue is None:
-            minvalue = surf.values.min()
+            minvalue = usesurf.values.min()
 
         if maxvalue is None:
-            maxvalue = surf.values.max()
+            maxvalue = usesurf.values.max()
 
         if colortable is not None:
             self.set_colortable(colortable)
@@ -143,7 +162,12 @@ class Map(BasePlot):
             uselevels = 1
 
         try:
-            im = self._ax.contourf(xi, yi, zi, uselevels,
+            if logarithmic is False:
+                locator = None
+            else:
+                locator = ticker.LogLocator()
+
+            im = self._ax.contourf(xi, yi, zi, uselevels, locator=locator,
                                    colors=self.colortable)
             # im = self._ax.contourf(zi, uselevels,
             #                        colors=self.colortable)
