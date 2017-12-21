@@ -164,3 +164,24 @@ def test_import_soil():
     logger.debug(x.names)
     txt = 'Average SOIL_19850101'
     assert soil.values.mean() == pytest.approx(0.1246, abs=0.001), txt
+
+
+def test_scan_dates():
+    """A static method to scan dates in a RESTART file"""
+    t1 = xtg.timer()
+    dl = GridProperties.scan_dates(rfile2)  # no need to make instance
+    t2 = xtg.timer(t1)
+    print('Dates scanned in {} seconds'.format(t2))
+
+    assert dl[2][1] == 19870101
+
+
+def test_scan_keywords():
+    """A static method to scan quickly keywords in a RESTART/INIT/*GRID file"""
+    t1 = xtg.timer()
+    df = GridProperties.scan_keywords(rfile2, dataframe=True)
+    t2 = xtg.timer(t1)
+    logger.info('Dates scanned in {} seconds'.format(t2))
+    logger.info(df)
+
+    assert df.loc[19, 'KEYWORD'] == 'ICON'

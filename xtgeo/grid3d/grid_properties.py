@@ -1,13 +1,16 @@
 
-import numpy as np
 import os.path
 import logging
 import cxtgeo.cxtgeo as _cxtgeo
 import sys
+
+import numpy as np
+
 from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
 
 from .grid_property import GridProperty
+from xtgeo.grid3d import _gridprops_io
 
 
 class GridProperties(Grid3D):
@@ -17,10 +20,6 @@ class GridProperties(Grid3D):
     """
 
     def __init__(self):
-        """
-        The __init__ (constructor) method.
-
-        """
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
         self.logger = logging.getLogger(clsname)
@@ -35,86 +34,6 @@ class GridProperties(Grid3D):
         self._dates = []            # list of dates (_after_ import) YYYYDDMM
 
         self._xtg = XTGeoDialog()
-
-# ==============================================================================
-# Import and export
-# This class can importies several properties in one go, which is efficient
-# for some file types such as Eclipse INIT and UNRST, and Roff
-# ==============================================================================
-
-    def from_file(self, pfile, fformat='roff', names=[],
-                  dates=[], grid=None, namestyle=0):
-        """
-        Import grid properties from file in one go. This class is particurlary
-        useful for Eclipse INIT and RESTART files
-
-        Args:
-            pfile (str): Name of file with properties
-            fformat (str): roff/init/unrst
-            names: list of property names, e.g. ['PORO', 'PERMX']
-            dates: list of dates on YYYYMMDD format, for restart files
-            grid (obj): The grid geometry object (optional?)
-            namestyle (int): 0 (default) for style SWAT_20110223,
-                1 for SWAT--2011_02_23 (applies to restart only)
-
-        Example::
-            >>> props = GridProperties()
-            >>> props.from_file('ECL.UNRST', fformat='unrst',
-                dates=[20110101, 20141212], names=['PORO', 'DZ']
-
-        Raises:
-            FileNotFoundError: if input file is not found
-            ValueError: if a property is not found
-            RuntimeWarning: if some dates are not found
-
-        """
-
-        # work on file extension
-        froot, fext = os.path.splitext(pfile)
-        if not fext:
-            # file extension is missing, guess from format
-            self.logger.info("File extension missing; guessing...")
-
-            useext = ''
-            if fformat == 'init':
-                useext = '.INIT'
-            elif fformat == 'unrst':
-                useext = '.UNRST'
-            elif fformat == 'roff':
-                useext = '.roff'
-
-            pfile = froot + useext
-
-        self.logger.info("File name to be used is {}".format(pfile))
-
-        if os.path.isfile(pfile):
-            self.logger.info('File {} exists OK'.format(pfile))
-        else:
-            self.logger.warning('No such file: {}'.format(pfile))
-            sys.exit(1)
-
-        if (fformat.lower() == "roff"):
-            self._import_roff(pfile, names)
-        elif (fformat.lower() == "init"):
-            self._import_ecl_output(pfile, names=names, etype=1,
-                                    grid=grid)
-        elif (fformat.lower() == "unrst"):
-            self._import_ecl_output(pfile, names=names, etype=5,
-                                    dates=dates, grid=grid,
-                                    namestyle=namestyle)
-        else:
-            self.logger.warning("Invalid file format")
-            sys.exit(1)
-
-    def to_file(self, pfile, fformat="roff"):
-        """Export grid property to file. NB not working!
-
-        Args:
-            pfile (str): file name
-            fformat (str): file format to be used (roff is the only supported)
-            mode (int): 0 for binary ROFF, 1 for ASCII
-        """
-        pass
 
     # =========================================================================
     # Properties, NB decorator only works when class is inherited from "object"
@@ -190,6 +109,143 @@ class GridProperties(Grid3D):
                 return p
 
         raise ValueError('Cannot find property with name <{}>'.format(name))
+
+    # ==========================================================================
+    # Import and export
+    # This class can importies several properties in one go, which is efficient
+    # for some file types such as Eclipse INIT and UNRST, and Roff
+    # ==========================================================================
+
+    def from_file(self, pfile, fformat='roff', names=[],
+                  dates=[], grid=None, namestyle=0):
+        """Import grid properties from file in one go.
+
+        This class is particurlary useful for Eclipse INIT and RESTART files.
+
+        Args:
+            pfile (str): Name of file with properties
+            fformat (str): roff/init/unrst
+            names: list of property names, e.g. ['PORO', 'PERMX']
+            dates: list of dates on YYYYMMDD format, for restart files
+            grid (obj): The grid geometry object (optional?)
+            namestyle (int): 0 (default) for style SWAT_20110223,
+                1 for SWAT--2011_02_23 (applies to restart only)
+
+        Example::
+            >>> props = GridProperties()
+            >>> props.from_file('ECL.UNRST', fformat='unrst',
+                dates=[20110101, 20141212], names=['PORO', 'DZ']
+
+        Raises:
+            FileNotFoundError: if input file is not found
+            ValueError: if a property is not found
+            RuntimeWarning: if some dates are not found
+
+        """
+
+        # work on file extension
+        froot, fext = os.path.splitext(pfile)
+        if not fext:
+            # file extension is missing, guess from format
+            self.logger.info("File extension missing; guessing...")
+
+            useext = ''
+            if fformat == 'init':
+                useext = '.INIT'
+            elif fformat == 'unrst':
+                useext = '.UNRST'
+            elif fformat == 'roff':
+                useext = '.roff'
+
+            pfile = froot + useext
+
+        self.logger.info("File name to be used is {}".format(pfile))
+
+        if os.path.isfile(pfile):
+            self.logger.info('File {} exists OK'.format(pfile))
+        else:
+            self.logger.warning('No such file: {}'.format(pfile))
+            sys.exit(1)
+
+        if (fformat.lower() == "roff"):
+            self._import_roff(pfile, names)
+        elif (fformat.lower() == "init"):
+            self._import_ecl_output(pfile, names=names, etype=1,
+                                    grid=grid)
+        elif (fformat.lower() == "unrst"):
+            self._import_ecl_output(pfile, names=names, etype=5,
+                                    dates=dates, grid=grid,
+                                    namestyle=namestyle)
+        else:
+            self.logger.warning("Invalid file format")
+            sys.exit(1)
+
+    def to_file(self, pfile, fformat="roff"):
+        """Export grid property to file. NB not working!
+
+        Args:
+            pfile (str): file name
+            fformat (str): file format to be used (roff is the only supported)
+            mode (int): 0 for binary ROFF, 1 for ASCII
+        """
+        pass
+
+    # =========================================================================
+    # Static methods (scans etc)
+    # =========================================================================
+
+    @staticmethod
+    def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
+        """Quick scan of keywords in Eclipse binary restart/init/... file.
+
+        Returns a lits of tuples, e.g. ('PRESSURE', 'REAL', 355299, 3582700),
+        where (keyword, type, no_of_values, byteposition_in_file)
+        Args:
+            pfile (str): Name of file with properties
+            fformat (str): unrst (so far)
+            maxkeys (int): Maximum number of keys
+            dataframe (bool): If True, return a Pandas dataframe instead
+
+        Return:
+            A list of tuples with ()..?
+
+        Example::
+            >>> props = GridProperties()
+            >>> dlist = props.scan_keywords('ECL.UNRST')
+
+        """
+
+        dlist = _gridprops_io.scan_keywords(pfile, fformat=fformat,
+                                            maxkeys=maxkeys,
+                                            dataframe=dataframe)
+
+        return dlist
+
+    @staticmethod
+    def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
+        """Quick scan dates in a simulation restart file.
+
+        Args:
+            pfile (str): Name of file with properties
+            fformat (str): unrst (so far)
+            maxdates (int): Maximum number of dates to collect
+            dataframe (bool): If True, return a Pandas dataframe instead
+
+        Return:
+            A list of tuples with (seqno, date), date on YYYYMMDD form.
+
+        Example::
+            >>> props = GridProperties()
+            >>> dlist = props.scan_dates('ECL.UNRST')
+
+        """
+
+        dlist = _gridprops_io.scan_dates(pfile, fformat=fformat,
+                                         maxdates=maxdates,
+                                         dataframe=dataframe)
+
+        return dlist
+
 
     # =========================================================================
     # PRIVATE METHODS
