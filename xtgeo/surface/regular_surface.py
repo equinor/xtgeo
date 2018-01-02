@@ -183,8 +183,7 @@ class RegularSurface(object):
 
     @classmethod
     def methods(cls):
-        """
-        Returns the names of the methods in the class.
+        """Returns the names of the methods in the class.
 
         >>> print(RegularSurface.methods())
         """
@@ -288,6 +287,11 @@ class RegularSurface(object):
     def yinc(self):
         """The Y increment (or I dir increment)."""
         return self._yinc
+
+    @property
+    def yflip(self):
+        """The Y flip indicator"""
+        return self._yflip
 
     @property
     def xori(self):
@@ -440,6 +444,7 @@ class RegularSurface(object):
             fformat (str): File format, guess/irap_binary/irap_ascii
                 is currently supported.
 
+
         Returns:
             Object instance, optionally.
 
@@ -454,7 +459,7 @@ class RegularSurface(object):
 
         self._values = None
 
-        if (os.path.isfile(mfile)):
+        if os.path.isfile(mfile):
             pass
         else:
             self.logger.critical('Not OK file')
@@ -740,24 +745,9 @@ class RegularSurface(object):
             mvalue = map.get_value_from_xy(point=(539291.12, 6788228.2))
 
         """
-        xc, yc = point
+        zcoord = _regsurf_oper.get_value_from_xy(self, point=point)
 
-        self.logger.debug('Enter value_from_cy')
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        # call C routine
-        zc = _cxtgeo.surf_get_z_from_xy(float(xc), float(yc),
-                                        self._ncol, self._nrow,
-                                        self._xori, self._yori, self._xinc,
-                                        self._yinc, self._yflip,
-                                        self._rotation,
-                                        self.cvalues, xtg_verbose_level)
-
-        if zc > self._undef_limit:
-            return None
-
-        return zc
+        return zcoord
 
     def get_xy_value_from_ij(self, i, j):
         """Returns x, y, z(value) from i j location.
@@ -767,32 +757,7 @@ class RegularSurface(object):
         Note that the cell indices are 1 based (first cell is (1, 1))
         """
 
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        if xtg_verbose_level < 0:
-            xtg_verbose_level = 0
-
-        if 1 <= i <= self.ncol and 1 <= j <= self.nrow:
-
-            ier, xval, yval, value = (
-                _cxtgeo.surf_xyz_from_ij(i, j,
-                                         self.xori, self.xinc,
-                                         self.yori, self.yinc,
-                                         self.ncol, self.nrow, self._yflip,
-                                         self.rotation, self.cvalues,
-                                         0, xtg_verbose_level))
-            if ier != 0:
-                self.logger.critical('Error code {}, contact the author'.
-                                     format(ier))
-                sys.exit(9)
-
-        else:
-            raise ValueError('Index i and/or j out of bounds')
-
-        if value > self.undef_limit:
-            value = None
+        xval, yval, value = _regsurf_oper.get_xy_value_from_ij(self, i, j)
 
         return xval, yval, value
 
@@ -943,6 +908,40 @@ class RegularSurface(object):
         self.logger.info('Do resampling...')
 
         _regsurf_oper.resample(self, other)
+
+    # =========================================================================
+    # Change a surface more fundamentally
+    # =========================================================================
+
+    def unrotate(self):
+        """Unrotete a map instance, and this will also change nrow, ncol,
+        xinc, etc.
+        """
+
+        xlen = self.xmax - self.xmin
+        ylen = self.ymax - self.ymin
+        ncol = self.ncol * 2
+        nrow = self.nrow * 2
+        xinc = xlen / (ncol - 1)
+        yinc = ylen / (nrow - 1)
+        vals = ma.zeros((ncol, nrow), order='F')
+
+        nonrot = RegularSurface(xori=self.xmin,
+                                yori=self.ymin,
+                                xinc=xinc, yinc=yinc,
+                                ncol=ncol, nrow=nrow,
+                                values=vals)
+        nonrot.resample(self)
+
+        self._values = nonrot.values
+        self._nrow = nonrot.nrow
+        self._ncol = nonrot.ncol
+        self._rotation = nonrot.rotation
+        self._xori = nonrot.nrow
+        self._yori = nonrot.yori
+        self._xinc = nonrot.xinc
+        self._yinc = nonrot.yinc
+        self._cvalues = None
 
     # =========================================================================
     # Interacion with a cube

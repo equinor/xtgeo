@@ -267,3 +267,15 @@ def test_fence():
 
     logger.debug("updated NP:")
     logger.debug(newfence)
+
+
+def test_unrotate():
+    """Chnage a rotated map to an unrotated instance"""
+
+    x = RegularSurface()
+    x.from_file('../xtgeo-testdata/surfaces/fos/1/fossekall1.irapbin',
+                fformat='irap_binary')
+
+    logger.info(x)
+    x.unrotate()
+    logger.info(x)

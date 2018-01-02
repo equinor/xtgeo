@@ -28,8 +28,8 @@ from .grid3d import grid_properties
 from .well import well
 from .plot import baseplot
 from .plot import xsection
-# from .xyz import points
-# from .xyz import polygons
+from .xyz import points
+from .xyz import polygons
 
 from ._version import get_versions
 __version__ = get_versions()['version']

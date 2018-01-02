@@ -60,6 +60,7 @@ def test_segy_scantraces():
 
     x = Cube().scan_segy_traces(sfile1, outfile="TMP/cube_scantraces")
 
+    logger.info('Object is {}'.format(x))
     with open("TMP/cube_scantraces") as lines:
         for line in lines:
             print(line)
@@ -84,6 +85,7 @@ def test_segy_import_cvalues():
     np2 = x.values
 
     assert np.array_equal(np1, np2)
+
 
 @skipsegyio
 @skiplargetest

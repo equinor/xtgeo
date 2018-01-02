@@ -46,15 +46,58 @@ def distance_from_point(surf, point=(0, 0), azimuth=0.0):
 
     x, y = point
 
-    # secure that carray is updated:
-    surf._update_cvalues()
+    svalues = surf.get_zval()
 
     # call C routine
     ier = _cxtgeo.surf_get_dist_values(
         surf._xori, surf._xinc, surf._yori, surf._yinc, surf._ncol,
-        surf._nrow, surf._rotation, x, y, azimuth, surf._cvalues, 0,
+        surf._nrow, surf._rotation, x, y, azimuth, svalues, 0,
         xtg_verbose_level)
 
     if ier != 0:
         surf.logger.error('Something went wrong...')
         raise RuntimeError('Something went wrong in {}'.format(__name__))
+
+    surf.set_zval(svalues)
+
+
+def get_value_from_xy(surf, point=(0.0, 0.0)):
+
+    xcoord, ycoord = point
+
+    zcoord = _cxtgeo.surf_get_z_from_xy(float(xcoord), float(ycoord),
+                                        surf.ncol, surf.nrow,
+                                        surf.xori, surf.yori, surf.xinc,
+                                        surf.yinc, surf.yflip,
+                                        surf.rotation,
+                                        surf.get_zval(), xtg_verbose_level)
+
+    if zcoord > surf._undef_limit:
+        return None
+
+    return zcoord
+
+
+def get_xy_value_from_ij(surf, i, j):
+
+    if 1 <= i <= surf.ncol and 1 <= j <= surf.nrow:
+
+        ier, xval, yval, value = (
+            _cxtgeo.surf_xyz_from_ij(i, j,
+                                     surf.xori, surf.xinc,
+                                     surf.yori, surf.yinc,
+                                     surf.ncol, surf.nrow, surf._yflip,
+                                     surf.rotation, surf.get_zval(),
+                                     0, xtg_verbose_level))
+        if ier != 0:
+            surf.logger.critical('Error code {}, contact the author'.
+                                 format(ier))
+            raise SystemExit('Error')
+
+    else:
+        raise ValueError('Index i and/or j out of bounds')
+
+    if value > surf.undef_limit:
+        value = None
+
+    return xval, yval, value

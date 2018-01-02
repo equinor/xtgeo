@@ -83,23 +83,7 @@ class Map(BasePlot):
 
         usesurf = surf.copy()
         if (abs(surf.rotation) > 0.001):
-            # resample the surface to something nonrotated
-            self.logger.info('Resampling to non-rotated surface...')
-            xlen = surf.xmax - surf.xmin
-            ylen = surf.ymax - surf.ymin
-            ncol = surf.ncol * 2
-            nrow = surf.nrow * 2
-            xinc = xlen / (ncol - 1)
-            yinc = ylen / (nrow - 1)
-            vals = ma.zeros((ncol, nrow), order='F')
-
-            nonrot = xtgeo.surface.RegularSurface(xori=surf.xmin,
-                                                  yori=surf.ymin,
-                                                  xinc=xinc, yinc=yinc,
-                                                  ncol=ncol, nrow=nrow,
-                                                  values=vals)
-            nonrot.resample(surf)
-            usesurf = nonrot
+            usesurf.unrotate()
 
         # make a copy so original numpy is not altered!
         self.logger.info('Transpose values...')
