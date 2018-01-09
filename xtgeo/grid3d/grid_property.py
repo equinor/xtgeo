@@ -7,14 +7,12 @@ property from file, but it can also be created directly, as e.g.:
 
 poro = GridProperty(ncol=233, nrow=122, nlay=32)
 
-The grid property values by themselves are 1D numpy as floatxx
-precision not as RMS do, (double will represent float32 from e.g.
-ROFF) or int (repr int, short, byte...). However, the order will be
-Fortran like in Eclipse manner, and masked (while RMS only list the
-active cells).
+The grid property values (instance.values) by themselves are 1D masked numpy
+as either float64 (double) or int32 (if discrete), and undefined cells are
+masked. The array order is F_CONTIGUOUS. (i.e. Eclipse manner). A 3D view
+is achieved by the values3d property, e.g.::
 
-There will however be methods that can output the properties in RMS style,
-some sunny day.
+  poronumpy = poro.values3d
 """
 from __future__ import print_function, absolute_import
 
@@ -22,13 +20,13 @@ import sys
 import numpy as np
 import numpy.ma as ma
 import os.path
-import logging
 
 import cxtgeo.cxtgeo as _cxtgeo
 # from xtgeo.grid3d  import Grid   # HÆÆÆ
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid3D
-from . import _grid_property_op1
+from xtgeo.grid3d import _grid_property_op1
+from xtgeo.grid3d import _gridprop_import
 
 # =============================================================================
 # Class constructor
@@ -37,8 +35,8 @@ from . import _grid_property_op1
 # _ncol        =  number of rows (X, cycling fastest)
 # _nrow        =  number of columns (Y)
 # _nlay        =  number of layers (Z)
-# _values    =  Numpy 1D array of doubles or int (masked)
-# _cvalues   =  SWIG pointer to C array
+# _values      =  Numpy 1D array of doubles or int (masked)
+# _cvalues     =  SWIG pointer to C array
 # NOTE: either _values OR _cvalues will exist; hence the other is "None"
 # etc
 # =============================================================================
@@ -92,9 +90,8 @@ class GridProperty(Grid3D):
         """
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
         self._xtg = XTGeoDialog()
+        self.logger = self._xtg.functionlogger(clsname)
 
         ncol = kwargs.get('ncol', 5)
         nrow = kwargs.get('nrow', 12)
@@ -152,8 +149,9 @@ class GridProperty(Grid3D):
             name = kwargs.get('name', 'unknown')
             date = kwargs.get('date', None)
             grid = kwargs.get('grid', None)
+            apiv = kwargs.get('apiversion', 2)
             self.from_file(args[0], fformat=fformat, name=name,
-                           grid=grid, date=date)
+                           grid=grid, date=date, apiversion=apiv)
 
     def __del__(self):
         self._delete_cvalues()
@@ -323,8 +321,9 @@ class GridProperty(Grid3D):
     # =========================================================================
 
     def copy(self, newname=None):
-        """
-        Copy a xtgeo.grid3d.GridProperty() object to another instance::
+        """Copy a xtgeo.grid3d.GridProperty() object to another instance.
+
+        ::
 
             >>> mycopy = xx.copy(newname='XPROP')
         """
@@ -332,15 +331,14 @@ class GridProperty(Grid3D):
         if newname is None:
             newname = self.name + '_copy'
 
-        x = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
-                         values=self._values, name=newname, grid=self._grid)
+        xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
+                             values=self._values, name=newname,
+                             grid=self._grid)
 
-        return x
+        return xprop
 
     def mask_undef(self):
-        """
-        Make UNDEF values masked
-        """
+        """Make UNDEF values masked."""
         if self._isdiscrete:
             self._values = ma.masked_greater(self._values, self._undef_ilimit)
         else:
@@ -351,7 +349,7 @@ class GridProperty(Grid3D):
     # =========================================================================
 
     def from_file(self, pfile, fformat='guess', name='unknown',
-                  grid=None, date=None):
+                  grid=None, date=None, apiversion=2):
         """
         Import grid property from file, and makes an instance of this class
 
@@ -365,6 +363,7 @@ class GridProperty(Grid3D):
             name (str): name of property to import
             date (int): For restart files, date on YYYYMMDD format.
             grid (Grid object): Grid Object to link too (optional).
+            apiversion (int): Internal XTGeo API setting for Ecl input (1 or 2)
 
         Example::
 
@@ -399,17 +398,17 @@ class GridProperty(Grid3D):
             ier = self._import_roff(pfile, name, grid=grid)
         elif (fformat.lower() == 'init'):
             ier = self._import_ecl_output(pfile, name=name, etype=1,
-                                          grid=grid)
+                                          grid=grid, apiversion=apiversion)
         elif (fformat.lower() == 'unrst'):
             ier = self._import_ecl_output(pfile, name=name, etype=5,
                                           grid=grid,
-                                          date=date)
+                                          date=date, apiversion=apiversion)
         else:
             self.logger.warning('Invalid file format')
             sys.exit(1)
 
         if ier != 0:
-            raise RuntimeError('An error occured during import')
+            raise RuntimeError('An error occured during import: {}'.format(ier))
 
         # would be better with exception handling?
         if ier == 0:
@@ -608,9 +607,7 @@ class GridProperty(Grid3D):
     # only store the active cells for most vectors. Hence, the grid sizes
     # and the actnum array shall be provided, and that is done via the grid
     # geometry object directly. Note that this import only takes ONE property
-    # at the time. But the C function has the potential to take many props
-    # in one go; perhaps need some kind of metaclass for this? (as this class
-    # only takes one property at the time). See GridProperies class.
+    # at the time... See GridProperies class.
     #
     # Returns: 0: if OK
     #          1: Parameter and or Date is missing
@@ -618,126 +615,23 @@ class GridProperty(Grid3D):
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def _import_ecl_output(self, pfile, name=None, etype=1, date=None,
-                           grid=None):
+                           grid=None, apiversion=2):
 
-        _cxtgeo.xtg_verbose_file('NONE')
+        if apiversion == 1:
+            # use the old version
+            self.logger.info('API version 1')
+            ier = _gridprop_import.import_eclbinary_v1(self, pfile, name=name,
+                                                       etype=etype, date=date,
+                                                       grid=grid)
 
-        xtg_verbose_level = self._xtg.get_syslevel()
+        elif apiversion == 2:
+            # use the new version
+            self.logger.info('API version 2')
+            ier = _gridprop_import.import_eclbinary_v2(self, pfile, name=name,
+                                                       etype=etype, date=date,
+                                                       grid=grid)
 
-        self.logger.debug('Scanning NX NY NZ for checking...')
-        ptr_ncol = _cxtgeo.new_intpointer()
-        ptr_nrow = _cxtgeo.new_intpointer()
-        ptr_nlay = _cxtgeo.new_intpointer()
-
-        _cxtgeo.grd3d_scan_ecl_init_hd(1, ptr_ncol, ptr_nrow, ptr_nlay,
-                                       pfile, xtg_verbose_level)
-
-        self.logger.debug('Scanning NX NY NZ for checking... DONE')
-
-        ncol0 = _cxtgeo.intpointer_value(ptr_ncol)
-        nrow0 = _cxtgeo.intpointer_value(ptr_nrow)
-        nlay0 = _cxtgeo.intpointer_value(ptr_nlay)
-
-        if grid.ncol != ncol0 or grid.nrow != nrow0 or \
-                grid.nlay != nlay0:
-            self.logger.error('Errors in dimensions property vs grid')
-            return -9
-
-        self._ncol = ncol0
-        self._nrow = nrow0
-        self._nlay = nlay0
-
-        # split date and populate array
-        self.logger.debug('Date handling...')
-        if date is None:
-            date = 99998877
-        date = str(date)
-        self.logger.debug('DATE is {}'.format(date))
-        day = int(date[6:8])
-        mon = int(date[4:6])
-        yer = int(date[0:4])
-
-        self.logger.debug('DD MM YYYY input is {} {} {}'.format(day, mon, yer))
-
-        if etype == 1:
-            self._name = name
-        else:
-            self._name = name + '_' + date
-            self.logger.info('Active date is {}'.format(date))
-            self._date = date
-
-        ptr_day = _cxtgeo.new_intarray(1)
-        ptr_month = _cxtgeo.new_intarray(1)
-        ptr_year = _cxtgeo.new_intarray(1)
-
-        _cxtgeo.intarray_setitem(ptr_day, 0, day)
-        _cxtgeo.intarray_setitem(ptr_month, 0, mon)
-        _cxtgeo.intarray_setitem(ptr_year, 0, yer)
-
-        ptr_dvec_v = _cxtgeo.new_doublearray(ncol0 * nrow0 * nlay0)
-        ptr_nktype = _cxtgeo.new_intarray(1)
-        ptr_norder = _cxtgeo.new_intarray(1)
-        ptr_dsuccess = _cxtgeo.new_intarray(1)
-
-        usename = '{0:8s}|'.format(name)
-        self.logger.debug('<{}>'.format(usename))
-
-        if etype == 1:
-            ndates = 0
-        if etype == 5:
-            ndates = 1
-        self.logger.debug('Import via _cxtgeo... NX NY NX are '
-                          '{} {} {}'.format(ncol0, nrow0, nlay0))
-
-        _cxtgeo.grd3d_import_ecl_prop(etype,
-                                      ncol0 * nrow0 * nlay0,
-                                      grid._p_actnum_v,
-                                      1,
-                                      usename,
-                                      ndates,
-                                      ptr_day,
-                                      ptr_month,
-                                      ptr_year,
-                                      pfile,
-                                      ptr_dvec_v,
-                                      ptr_nktype,
-                                      ptr_norder,
-                                      ptr_dsuccess,
-                                      xtg_verbose_level)
-
-        self.logger.debug('Import via _cxtgeo... DONE')
-        # process the result:
-        norder = _cxtgeo.intarray_getitem(ptr_norder, 0)
-        if norder == 0:
-            self.logger.debug('Got 1 item OK')
-        else:
-            self.logger.warning('Did not get any property name'
-                                ': {} Missing date?'.format(name))
-            self.logger.warning('NORDER is {}'.format(norder))
-            return 1
-
-        nktype = _cxtgeo.intarray_getitem(ptr_nktype, 0)
-
-        if nktype == 1:
-            self._cvalues = _cxtgeo.new_intarray(ncol0 * nrow0 * nlay0)
-            self._isdiscrete = True
-
-            self._dtype = np.int32
-
-            _cxtgeo.grd3d_strip_anint(ncol0 * nrow0 * nlay0, 0,
-                                      ptr_dvec_v, self._cvalues,
-                                      xtg_verbose_level)
-        else:
-            self._cvalues = _cxtgeo.new_doublearray(ncol0 * nrow0 * nlay0)
-            self._isdiscrete = False
-
-            _cxtgeo.grd3d_strip_adouble(ncol0 * nrow0 * nlay0, 0,
-                                        ptr_dvec_v, self._cvalues,
-                                        xtg_verbose_level)
-
-        self._grid = grid
-        # self._update_values()
-        return 0
+        return ier
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Export ROFF format

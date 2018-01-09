@@ -1,26 +1,23 @@
-import pytest
-import os
 import sys
-import logging
+import warnings
+
+import pytest
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperties
 from xtgeo.common import XTGeoDialog
 
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
+warnings.filterwarnings("ignore")
 
-# set default level
 xtg = XTGeoDialog()
 
-logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)
+if not xtg.testsetup():
+    sys.exit(-9)
 
-logger = logging.getLogger(__name__)
+td = xtg.tmpdir
+testpath = xtg.testpath
+
+logger = xtg.basiclogger(__name__)
 
 gfile1 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
 ifile1 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
@@ -29,6 +26,8 @@ rfile1 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.UNRST'
 gfile2 = '../xtgeo-testdata/3dgrids/gfb/ECLIPSE.EGRID'
 ifile2 = '../xtgeo-testdata/3dgrids/gfb/ECLIPSE.INIT'
 rfile2 = '../xtgeo-testdata/3dgrids/gfb/ECLIPSE.UNRST'
+
+apiver = 2
 
 
 def test_import_init():
@@ -41,7 +40,7 @@ def test_import_init():
 
     names = ['PORO', 'PORV']
     x.from_file(ifile1, fformat="init",
-                names=names, grid=g)
+                names=names, grid=g, apiversion=apiver)
 
     # get the object
     poro = x.get_prop_by_name('PORO')
@@ -63,15 +62,30 @@ def test_import_should_fail():
     names = ['PORO', 'NOSUCHNAME']
     with pytest.raises(ValueError) as e_info:
         logger.warning(e_info)
-        x.from_file(ifile1, fformat="init", names=names, grid=g)
+        x.from_file(ifile1, fformat="init", names=names, grid=g,
+                    apiversion=apiver)
 
     rx = GridProperties()
     names = ['PRESSURE']
     dates = [19851001, 19870799]  # last date does not exist
 
-    with pytest.raises(RuntimeWarning) as e_info:
+    with pytest.warns(RuntimeWarning) as e_info:
         logger.warning(e_info)
-        rx.from_file(rfile2, fformat='unrst', names=names, dates=dates, grid=g)
+        rx.from_file(rfile2, fformat='unrst', names=names, dates=dates, grid=g,
+                     apiversion=apiver)
+
+
+def test_import_should_warn():
+    """Import INIT and UNRST Gullfaks but ask for wrong name or date"""
+    g = Grid()
+    g.from_file(gfile1, fformat="egrid")
+
+    rx = GridProperties()
+    names = ['PRESSURE']
+    dates = [19851001, 19870799]  # last date does not exist
+
+    rx.from_file(rfile2, fformat='unrst', names=names, dates=dates, grid=g,
+                 apiversion=apiver)
 
 
 def test_import_restart():
@@ -86,7 +100,7 @@ def test_import_restart():
     dates = [19851001, 19870701]
     x.from_file(rfile2,
                 fformat="unrst", names=names, dates=dates,
-                grid=g)
+                grid=g, apiversion=apiver)
 
     # get the object
     pr = x.get_prop_by_name('PRESSURE_19851001')
@@ -122,7 +136,7 @@ def test_import_restart_gull():
     dates = [19851001]
     x.from_file(rfile1,
                 fformat="unrst", names=names, dates=dates,
-                grid=g)
+                grid=g, apiversion=apiver)
 
     # get the object
     pr = x.get_prop_by_name('PRESSURE_19851001')
@@ -153,9 +167,12 @@ def test_import_soil():
 
     x = GridProperties()
 
-    names = ['SOIL']
+    names = ['SOIL', 'SWAT', 'PRESSURE']
     dates = [19851001]
-    x.from_file(rfile2, fformat="unrst", names=names, dates=dates, grid=g)
+    x.from_file(rfile2, fformat="unrst", names=names, dates=dates, grid=g,
+                apiversion=apiver)
+
+    logger.info(x.names)
 
     # get the object instance
     soil = x.get_prop_by_name('SOIL_19851001')

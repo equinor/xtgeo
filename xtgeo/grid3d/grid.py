@@ -51,29 +51,27 @@ class Grid(Grid3D):
     """
 
     def __init__(self, *args, **kwargs):
-        """The __init__ (constructor) method of the XTGeo Grid class."""
 
-        # logging settings
+        self._xtg = XTGeoDialog()
+
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
+        self.logger = self._xtg.functionlogger(clsname)
 
         self._ncol = 4
         self._nrow = 3
         self._nlay = 5
         self._nsubs = 0
-        self._p_coord_v = None  # carray swig pointer to coordinates vector
-        self._p_zcorn_v = None  # carray swig pointer to zcorns vector
-        self._p_actnum_v = None  # carray swig pointer to actnum vector
-        self._nactive = -999  # Number of active cells
+        self._p_coord_v = None       # carray swig pointer to coords vector
+        self._p_zcorn_v = None       # carray swig pointer to zcorns vector
+        self._p_actnum_v = None      # carray swig pointer to actnum vector
+        self._nactive = -999         # Number of active cells
+        self._actnum_indices = None  # Index numpy array for active cells
 
         self._props = []  # List of 'attached' property objects
 
         # perhaps undef should be a class variable, not an instance variables?
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
-
-        self._xtg = XTGeoDialog()
 
         if len(args) == 1:
             # make an instance directly through import of a file
@@ -93,6 +91,15 @@ class Grid(Grid3D):
     def nactive(self):
         """Returns the number of active cells."""
         return self._nactive
+
+    @property
+    def actnum_indices(self):
+        """Returns the ndarray which holds the indices for active cells"""
+        if self._actnum_indices is None:
+            actnum = self.get_actnum()
+            self._actnum_indices = np.flatnonzero(actnum.values)
+
+        return self._actnum_indices
 
     @property
     def ntotal(self):

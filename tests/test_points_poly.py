@@ -12,7 +12,7 @@ from .test_grid import assert_almostequal
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-if not xtg._testsetup():
+if not xtg.testsetup():
     sys.exit(-9)
 
 td = xtg.tmpdir

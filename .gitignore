@@ -63,3 +63,7 @@ target/
 
 # pyenv python configuration file
 .python-version
+
+# other
+.idea/
+.projectile

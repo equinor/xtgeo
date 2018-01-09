@@ -1,12 +1,12 @@
 import pytest
 import os
-import sys
-import logging
 from timeit import default_timer as timer
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
+
+from .test_xtg import assert_equal, assert_almostequal
 
 path = 'TMP'
 try:
@@ -17,6 +17,8 @@ except OSError:
 
 # set default level
 xtg = XTGeoDialog()
+
+logger = xtg.basiclogger(__name__)
 
 # =============================================================================
 # Do tests
@@ -35,17 +37,7 @@ testfile10 = '../xtgeo-testdata/3dgrids/bri/b_grid.roff'
 testfile11 = '../xtgeo-testdata/3dgrids/bri/b_poro.roff'
 testfile12 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS_R003B-0.EGRID'
 testfile13 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS_R003B-0.INIT'
-
-
-def getlogger(name):
-
-    format = xtg.loggingformat
-
-    logging.basicConfig(format=format, stream=sys.stdout)
-    logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
-
-    logger = logging.getLogger(name)
-    return logger
+testfile14 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS_R003B-0.UNRST'
 
 
 def test_create():
@@ -58,7 +50,6 @@ def test_create():
 
 
 def test_roffbin_import1():
-    logger = getlogger(__name__)
 
     logger.info('Name is {}'.format(__name__))
 
@@ -74,7 +65,6 @@ def test_roffbin_import1():
 
 def test_roffbin_import2():
     """Import roffbin, with several props in one file."""
-    logger = getlogger(__name__)
 
     logger.info('Name is {}'.format(__name__))
     dz = GridProperty()
@@ -102,13 +92,12 @@ def test_roffbin_import2():
 def test_eclinit_import():
     """Property import from Eclipse. Needs a grid object first. Eclipse GRID"""
 
-    logger = getlogger(__name__)
-
     logger.info('Name is {}'.format(__name__))
     gg = Grid(testfile3, fformat="grid")
     po = GridProperty()
     logger.info("Import INIT...")
-    po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
+    po.from_file(testfile4, fformat="init", name='PORO', grid=gg,
+                 apiversion=2)
 
     assert po.ncol == 20, 'NX from B.INIT'
 
@@ -125,8 +114,6 @@ def test_eclinit_import():
 def test_eclinit_import_gull():
     """Property import from Eclipse. Gullfaks"""
 
-    logger = getlogger(__name__)
-
     # let me guess the format (shall be egrid)
     gg = Grid(testfile5, fformat='egrid')
     assert gg.ncol == 99, "Gullfaks NX"
@@ -138,27 +125,36 @@ def test_eclinit_import_gull():
     assert po.values.mean() == pytest.approx(0.261157181168, abs=0.0001)
 
 
+def test_eclunrst_import_gull():
+    """Property UNRST import from Eclipse. Gullfaks"""
+
+    gg = Grid(testfile12, fformat='egrid')
+
+    logger.info("Import RESTART (UNIFIED) ...")
+    press = GridProperty(testfile14, name='PRESSURE', fformat='unrst',
+                         date=19950101, grid=gg)
+
+    assert_almostequal(press.values.mean(), 279.8029, 0.0001)
+
 def test_export_roff():
     """Property import from Eclipse. Then export to roff."""
-
-    logger = getlogger(__name__)
 
     gg = Grid()
     gg.from_file(testfile3, fformat="grid")
     po = GridProperty()
     logger.info("Import INIT...")
-    po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
+    po.from_file(testfile4, fformat="init", name='PORO', grid=gg, apiversion=2)
 
     po.to_file('TMP/bdata.roff', name='PORO')
     pox = GridProperty('TMP/bdata.roff', name='PORO')
 
-    assert po.values.mean() == pytest.approx(pox.values.mean(), abs=0.00001)
+    print(po.values.mean())
+
+    assert po.values.mean() == pytest.approx(pox.values.mean(), abs=0.0001)
 
 
 def test_io_roff_discrete():
     """Import ROFF discrete property; then TODO! export to ROFF int."""
-
-    logger = getlogger(__name__)
 
     logger.info('Name is {}'.format(__name__))
     po = GridProperty()
@@ -177,8 +173,6 @@ def test_io_roff_discrete():
 
 def test_get_all_corners():
     """Get X Y Z for all corners as XTGeo GridProperty objects"""
-
-    logger = getlogger(__name__)
 
     grid = Grid(testfile8)
     allc = grid.get_xyz_corners()
@@ -210,8 +204,6 @@ def test_get_cell_corners():
 def test_get_xy_values_for_webportal():
     """Get lists on webportal format"""
 
-    logger = getlogger(__name__)
-
     grid = Grid(testfile8)
     prop = GridProperty(testfile9, grid=grid, name='PORO')
 
@@ -226,9 +218,6 @@ def test_get_xy_values_for_webportal():
 
     coord, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
 
-    #logger.info('\n{}'.format(coord))
-    #logger.info('\n{}'.format(valuelist))
-
     logger.info('Cell 1 1 1 coords\n{}.'.format(coord[0][0]))
     assert coord[0][0][0] == (454.875, 318.5)
     assert valuelist[0][0] == -999.0
@@ -236,8 +225,6 @@ def test_get_xy_values_for_webportal():
 
 def test_get_xy_values_for_webportal_ecl():
     """Get lists on webportal format (Eclipse input)"""
-
-    logger = getlogger(__name__)
 
     grid = Grid(testfile12)
     prop = GridProperty(testfile13, grid=grid, name='PORO')

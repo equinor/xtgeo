@@ -87,13 +87,16 @@ class Map(BasePlot):
 
         # make a copy so original numpy is not altered!
         self.logger.info('Transpose values...')
-        zi = ma.transpose(usesurf.values)
 
-        # store the current mask:
-        zimask = ma.getmask(zi).copy()
+        xi, yi, zi = usesurf.get_xyz_values()
 
-        xi = np.linspace(usesurf.xmin, usesurf.xmax, zi.shape[1])
-        yi = np.linspace(usesurf.ymin, usesurf.ymax, zi.shape[0])
+        # zi = ma.transpose(usesurf.values)
+
+        # # store the current mask:
+        # zimask = ma.getmask(zi).copy()
+
+        # xi = np.linspace(usesurf.xmin, usesurf.xmax, zi.shape[1])
+        # yi = np.linspace(usesurf.ymin, usesurf.ymax, zi.shape[0])
 
         legendticks = None
         if minvalue is not None and maxvalue is not None:
@@ -137,8 +140,8 @@ class Map(BasePlot):
 
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
 
-        zi = ma.masked_where(zimask, zi)
-        zi = ma.masked_greater(zi, _cxtgeo.UNDEF_LIMIT)
+        # zi = ma.masked_where(zimask, zi)
+        # zi = ma.masked_greater(zi, _cxtgeo.UNDEF_LIMIT)
 
         if ma.std(zi) > 1e-07:
             uselevels = levels

@@ -1,6 +1,8 @@
 """Various operations"""
 from __future__ import print_function, absolute_import
 
+import numpy.ma as ma
+
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -101,3 +103,52 @@ def get_xy_value_from_ij(surf, i, j):
         value = None
 
     return xval, yval, value
+
+
+def get_xy_values(surf):
+
+    nn = surf.ncol * surf.nrow
+
+    ier, xvals, yvals = (
+        _cxtgeo.surf_xy_as_values(surf.xori, surf.xinc,
+                                  surf.yori, surf.yinc,
+                                  surf.ncol, surf.nrow,
+                                  surf.rotation, nn, nn,
+                                  0, xtg_verbose_level))
+    if ier != 0:
+        surf.logger.critical('Error code {}, contact the author'.
+                             format(ier))
+
+    # reshape, then mask using the current Z values mask
+    xvals = xvals.reshape((surf.ncol, surf.nrow), order='F')
+    yvals = yvals.reshape((surf.ncol, surf.nrow), order='F')
+
+    mask = ma.getmaskarray(surf.values)
+    xvals = ma.array(xvals, mask=mask)
+    yvals = ma.array(yvals, mask=mask)
+
+    return xvals, yvals
+
+
+def get_fence(surf, xyfence):
+
+    cxarr = xyfence[:, 0]
+    cyarr = xyfence[:, 1]
+    czarr = xyfence[:, 2].copy()
+
+    # czarr will be updated "inplace":
+    istat = _cxtgeo.surf_get_zv_from_xyv(cxarr, cyarr, czarr,
+                                         surf.ncol, surf.nrow, surf.xori,
+                                         surf.yori, surf.xinc, surf.yinc,
+                                         surf.yflip, surf.rotation,
+                                         surf.get_zval(),
+                                         xtg_verbose_level)
+
+    if istat != 0:
+        surf.logger.warning('Seem to be rotten')
+
+    xyfence[:, 2] = czarr
+    xyfence = ma.masked_greater(xyfence, surf._undef_limit)
+    xyfence = ma.mask_rows(xyfence)
+
+    return xyfence

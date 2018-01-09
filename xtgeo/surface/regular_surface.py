@@ -17,6 +17,8 @@ import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
 from xtgeo.xyz import Points
+from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
+from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
 from xtgeo.surface import _regsurf_import
 from xtgeo.surface import _regsurf_export
@@ -48,9 +50,6 @@ from xtgeo.surface import _regsurf_oper
 # other way, we need to know, as the file i/o (ie CXTGEO) is F contiguous!
 #
 # =============================================================================
-
-UNDEF = _cxtgeo.UNDEF
-UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
 
 
 class RegularSurface(object):
@@ -102,8 +101,8 @@ class RegularSurface(object):
 
         self._xtg = XTGeoDialog()
 
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
+        self._undef = UNDEF
+        self._undef_limit = UNDEF_LIMIT
         self._cvalues = None     # carray swig C pointer of map values
         self._masked = False
         self._filesrc = None     # Name of original input file
@@ -141,7 +140,7 @@ class RegularSurface(object):
                                    [5, 10, 15]],
                                   dtype=np.double, order='F')
                 # make it masked
-                values = ma.masked_greater(values, self._undef_limit)
+                values = ma.masked_greater(values, UNDEF_LIMIT)
                 self._masked = True
                 self._values = values
             else:
@@ -316,7 +315,7 @@ class RegularSurface(object):
         """The minimim X coordinate"""
         corners = self.get_map_xycorners()
 
-        xmin = _cxtgeo.VERYLARGEPOSITIVE
+        xmin = VERYLARGEPOSITIVE
         for c in corners:
             if c[0] < xmin:
                 xmin = c[0]
@@ -327,7 +326,7 @@ class RegularSurface(object):
         """The maximum X coordinate"""
         corners = self.get_map_xycorners()
 
-        xmax = _cxtgeo.VERYLARGENEGATIVE
+        xmax = VERYLARGENEGATIVE
         for c in corners:
             if c[0] > xmax:
                 xmax = c[0]
@@ -338,7 +337,7 @@ class RegularSurface(object):
         """The minimim Y coordinate"""
         corners = self.get_map_xycorners()
 
-        ymin = _cxtgeo.VERYLARGEPOSITIVE
+        ymin = VERYLARGEPOSITIVE
         for c in corners:
             if c[1] < ymin:
                 ymin = c[1]
@@ -349,7 +348,7 @@ class RegularSurface(object):
         """The maximum Y xoordinate"""
         corners = self.get_map_xycorners()
 
-        ymax = _cxtgeo.VERYLARGENEGATIVE
+        ymax = VERYLARGENEGATIVE
         for c in corners:
             if c[1] > ymax:
                 ymax = c[1]
@@ -391,8 +390,8 @@ class RegularSurface(object):
         """
         self._update_values()
         val = self._values.flatten(order='F')  # flatten will return a copy
-        val = ma.filled(val, self._undef)
-        val[val > self._undef_limit] = np.nan
+        val = ma.filled(val, UNDEF)
+        val[val > UNDEF_LIMIT] = np.nan
         return val
 
     @values1d.setter
@@ -764,32 +763,7 @@ class RegularSurface(object):
     def get_xy_values(self):
         """Return coordinates for X and Y as numpy 2D masked arrays."""
 
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        if xtg_verbose_level < 0:
-            xtg_verbose_level = 0
-
-        ier, xvals, yvals = (
-            _cxtgeo.surf_xy_as_values(self.xori, self.xinc,
-                                      self.yori, self.yinc,
-                                      self.ncol, self.nrow,
-                                      self.rotation,
-                                      self._ncol * self._nrow,
-                                      self._ncol * self._nrow,
-                                      0, xtg_verbose_level))
-        if ier != 0:
-            self.logger.critical('Error code {}, contact the author'.
-                                 format(ier))
-
-        # reshape, then mask using the current Z values mask
-        xvals = xvals.reshape((self.ncol, self.nrow), order='F')
-        yvals = yvals.reshape((self.ncol, self.nrow), order='F')
-
-        mask = ma.getmaskarray(self.values)
-        xvals = ma.array(xvals, mask=mask)
-        yvals = ma.array(yvals, mask=mask)
+        xvals, yvals = _regsurf_oper.get_xy_values(self)
 
         return xvals, yvals
 
@@ -916,6 +890,10 @@ class RegularSurface(object):
     def unrotate(self):
         """Unrotete a map instance, and this will also change nrow, ncol,
         xinc, etc.
+
+        The default sampling makes a finer gridding in order to avoid
+        aliasing.
+
         """
 
         xlen = self.xmax - self.xmin
@@ -1049,30 +1027,7 @@ class RegularSurface(object):
             are (X, Y, Z). The Z will be updated to the map.
         """
 
-        xtg_verbose_level = self._xtg.get_syslevel()
-        self._update_cvalues()
-
-        nvec = xyfence.shape[0]
-
-        cxarr = self._convert_np_carr_double(xyfence[:, 0], nvec)
-        cyarr = self._convert_np_carr_double(xyfence[:, 1], nvec)
-        czarr = self._convert_np_carr_double(xyfence[:, 2], nvec)
-
-        istat = _cxtgeo.surf_get_zv_from_xyv(nvec, cxarr, cyarr, czarr,
-                                             self.ncol, self.nrow, self.xori,
-                                             self.yori, self.xinc, self.yinc,
-                                             self._yflip, self.rotation,
-                                             self.cvalues,
-                                             xtg_verbose_level)
-
-        if istat != 0:
-            self.logger.warning('Seem to be rotten')
-
-        zarr = self._convert_carr_double_np(czarr, nlen=nvec)
-
-        xyfence[:, 2] = zarr
-        xyfence = ma.masked_greater(xyfence, self._undef_limit)
-        xyfence = ma.mask_rows(xyfence)
+        xyfence = _regsurf_oper.get_fence(self, xyfence)
 
         return xyfence
 

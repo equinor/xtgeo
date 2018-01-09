@@ -33,6 +33,11 @@ import xtgeo
 import cxtgeo
 import timeit
 
+UNDEF = cxtgeo.cxtgeo.UNDEF
+UNDEF_LIMIT = cxtgeo.cxtgeo.UNDEF_LIMIT
+VERYLARGENEGATIVE = cxtgeo.cxtgeo.VERYLARGENEGATIVE
+VERYLARGEPOSITIVE = cxtgeo.cxtgeo.VERYLARGEPOSITIVE
+
 
 class _BColors:
     # local class for ANSI term color commands
@@ -82,6 +87,14 @@ class XTGeoDialog(object):
             self._lformatlevel = 1
         else:
             self._lformatlevel = int(loggingformat)
+
+    @staticmethod
+    def UNDEF():
+        return UNDEF
+
+    @staticmethod
+    def UNDEF_LIMIT():
+        return UNDEF_LIMIT
 
     @property
     def syslevel(self):
@@ -178,7 +191,7 @@ class XTGeoDialog(object):
         logger.addHandler(logging.NullHandler())
         return logger
 
-    def _testsetup(self):
+    def testsetup(self):
         """Basic setup for XTGeo testing (private; only relevant for tests)"""
 
         path = 'TMP'
