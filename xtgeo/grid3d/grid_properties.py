@@ -6,6 +6,7 @@ from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
 
 from xtgeo.grid3d import _gridprops_io
+from xtgeo.grid3d import _gridprops_io_obsolete
 
 
 class GridProperties(Grid3D):
@@ -264,15 +265,16 @@ class GridProperties(Grid3D):
         """Imports the Eclipse INIT or UNRST data.
 
         The actual successful properties are stored, and also
-        the valid dates (as self._dates)
+        the valid dates in case of restart files (as self._dates)
         """
 
         if apiversion == 1:
             self.logger.info('API version for GridProperies is 1')
-            _gridprops_io.import_ecl_output_v1(self, pfile, etype=etype,
-                                               dates=dates, grid=grid,
-                                               names=names,
-                                               namestyle=namestyle)
+            _gridprops_io_obsolete.import_ecl_output_v1(self, pfile,
+                                                        etype=etype,
+                                                        dates=dates, grid=grid,
+                                                        names=names,
+                                                        namestyle=namestyle)
 
         elif apiversion == 2:
             self.logger.info('API version for GridProperies is 2')

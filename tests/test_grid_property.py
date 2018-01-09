@@ -122,7 +122,12 @@ def test_eclinit_import_gull():
     po = GridProperty(testfile6, name='PORO', grid=gg)
 
     logger.info(po.values.mean())
+    logger.info(po.values[500:900])
     assert po.values.mean() == pytest.approx(0.261157181168, abs=0.0001)
+
+    pv = GridProperty(testfile6, name='PORV', grid=gg)
+    logger.info(pv.values.mean())
+    logger.info(pv.values[500:900])
 
 
 def test_eclunrst_import_gull():

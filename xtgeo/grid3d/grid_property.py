@@ -27,6 +27,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _grid_property_op1
 from xtgeo.grid3d import _gridprop_import
+from xtgeo.grid3d import _gridprop_import_obsolete
 
 # =============================================================================
 # Class constructor
@@ -618,11 +619,10 @@ class GridProperty(Grid3D):
                            grid=None, apiversion=2):
 
         if apiversion == 1:
-            # use the old version
+            # use the old obsolete version
             self.logger.info('API version 1')
-            ier = _gridprop_import.import_eclbinary_v1(self, pfile, name=name,
-                                                       etype=etype, date=date,
-                                                       grid=grid)
+            ier = _gridprop_import_obsolete.import_eclbinary_v1(
+                self, pfile, name=name, etype=etype, date=date, grid=grid)
 
         elif apiversion == 2:
             # use the new version
