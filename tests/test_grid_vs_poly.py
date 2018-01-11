@@ -37,7 +37,7 @@ def test_grid_inactivate_inside():
 
     try:
         g1.inactivate_inside(p1, layer_range=(1, 4))
-    except RuntimeWarning as rw:
+    except RuntimeError as rw:
         print(rw)
 
     g1.to_file(os.path.join(td, 'reek_inact_ins_pol.roff'))
@@ -78,7 +78,7 @@ def test_grid_inactivate_outside():
 
     try:
         g1.inactivate_outside(p1, layer_range=(1, 4))
-    except RuntimeWarning as rw:
+    except RuntimeError as rw:
         print(rw)
 
     g1.to_file(os.path.join(td, 'reek_inact_out_pol.roff'))

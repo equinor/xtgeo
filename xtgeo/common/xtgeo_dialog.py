@@ -180,6 +180,7 @@ class XTGeoDialog(object):
         format = self.loggingformat
         logging.basicConfig(format=format, stream=sys.stdout)
         logging.getLogger().setLevel(self.logginglevel)  # root logger!
+        logging.captureWarnings(True)
 
         return logging.getLogger(name)
 

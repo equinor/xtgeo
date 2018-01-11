@@ -25,7 +25,7 @@ import cxtgeo.cxtgeo as _cxtgeo
 # from xtgeo.grid3d  import Grid   # HÆÆÆ
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid3D
-from xtgeo.grid3d import _grid_property_op1
+from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
 from xtgeo.grid3d import _gridprop_import_obsolete
 
@@ -463,8 +463,8 @@ class GridProperty(Grid3D):
 
         """
 
-        clist, vlist = _grid_property_op1.get_xy_value_lists(self, grid=grid,
-                                                             mask=mask)
+        clist, vlist = _gridprop_op1.get_xy_value_lists(self, grid=grid,
+                                                        mask=mask)
         return clist, vlist
 
     # =========================================================================

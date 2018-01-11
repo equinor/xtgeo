@@ -1,20 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Metaclass for Grid and Properties, not to be used by itself"""
+"""Abstract baseclass for Grid and GridProperties, not to be used by itself"""
 
-import logging
+from __future__ import print_function, absolute_import
+
+import abc
+import warnings
+import six
+
+import xtgeo
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Grid3D(object):
+    """Abstract base class for Grid3D."""
 
-    def __init__(self):
-        """The __init__ (constructor) method."""
+    @abc.abstractmethod
+    def __init__(self, *args, **kwargs):
+
+        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
+        self._xtg = xtgeo.common.XTGeoDialog()
+        self.logger = self._xtg.functionlogger(clsname)
+
         self._ncol = 4
         self._nrow = 3
         self._nlay = 5
-
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
 
     @property
     def ncol(self):
@@ -23,7 +32,7 @@ class Grid3D(object):
 
     @ncol.setter
     def ncol(self, value):
-        self.logger.warning("Cannot change the ncol property")
+        warnings.warn(UserWarning("Cannot change the ncol property"))
 
     @property
     def nrow(self):
@@ -32,7 +41,7 @@ class Grid3D(object):
 
     @nrow.setter
     def nrow(self, value):
-        self.logger.warning("Cannot change the nrow property")
+        warnings.warn(UserWarning("Cannot change the nrow property"))
 
     @property
     def nlay(self):
@@ -41,34 +50,34 @@ class Grid3D(object):
 
     @nlay.setter
     def nlay(self, value):
-        self.logger.warning("Cannot change the nlay property")
+        warnings.warn(UserWarning("Cannot change the nlay property"))
 
     @property
     def nx(self):
         """ Returns the NX (Ncolumns) number of cells (deprecated; use ncol)"""
-        self.logger.warning("Deprecated; use ncol instead")
+        warnings.warn(DeprecationWarning("Deprecated; use ncol instead"))
         return self._ncol
 
     @nx.setter
     def nx(self, value):
-        self.logger.warning("Cannot change the nx property")
+        warnings.warn(UserWarning("Cannot change the nx property"))
 
     @property
     def ny(self):
         """ Returns the NY (Nrows) number of cells (deprecated; use nrow)"""
-        self.logger.warning("Deprecated; use nrow instead")
+        warnings.warn(DeprecationWarning("Deprecated; use nrow instead"))
         return self._nrow
 
     @ny.setter
     def ny(self, value):
-        self.logger.warning("Cannot change the ny property")
+        warnings.warn("Cannot change the ny property")
 
     @property
     def nz(self):
         """ Returns the NZ (Nlayers) number of cells (deprecated; use nlay)"""
-        self.logger.warning("Deprecated; use nlay instead")
+        warnings.warn(DeprecationWarning("Deprecated; use nlay instead"))
         return self._nlay
 
     @nz.setter
     def nz(self, value):
-        self.logger.warning("Cannot change the nz property")
+        warnings.warn(UserWarning("Cannot change the nz property"))
