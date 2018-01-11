@@ -748,15 +748,22 @@ class RegularSurface(object):
 
         return zcoord
 
-    def get_xy_value_from_ij(self, i, j):
+    def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
         """Returns x, y, z(value) from i j location.
 
-        If undefined cell, value is returned as None.
+        Args:
+            iloc (int): I (col) location (base is 1)
+            jloc (int): J (row) location (base is 1)
+            zvalues (ndarray). If this is used in a loop it is wise
+                to precompute the numpy surface once in the caller,
+                and submit the numpy array (use surf.get_zval()).
 
-        Note that the cell indices are 1 based (first cell is (1, 1))
+        Returns:
+            The z value at location iloc, jloc, None if undefined cell.
         """
 
-        xval, yval, value = _regsurf_oper.get_xy_value_from_ij(self, i, j)
+        xval, yval, value = _regsurf_oper.get_xy_value_from_ij(
+            self, iloc, jloc, zvalues=zvalues)
 
         return xval, yval, value
 
@@ -812,9 +819,12 @@ class RegularSurface(object):
         xylist = []
         valuelist = []
 
+        zvalues = self.get_zval()
+
         for j in range(self.nrow):
             for i in range(self.ncol):
-                xc, yc, vc = self.get_xy_value_from_ij(i + 1, j + 1)
+                xc, yc, vc = self.get_xy_value_from_ij(i + 1, j + 1,
+                                                       zvalues=zvalues)
 
                 if vc is not None:
                     if xyfmt is not None:

@@ -1,3 +1,4 @@
+# coding: utf-8
 """Various operations"""
 from __future__ import print_function, absolute_import
 
@@ -80,21 +81,24 @@ def get_value_from_xy(surf, point=(0.0, 0.0)):
     return zcoord
 
 
-def get_xy_value_from_ij(surf, i, j):
+def get_xy_value_from_ij(surf, iloc, jloc, zvalues=None):
 
-    if 1 <= i <= surf.ncol and 1 <= j <= surf.nrow:
+    if zvalues is None:
+        zvalues = surf.get_zval()
+
+    if 1 <= iloc <= surf.ncol and 1 <= jloc <= surf.nrow:
 
         ier, xval, yval, value = (
-            _cxtgeo.surf_xyz_from_ij(i, j,
+            _cxtgeo.surf_xyz_from_ij(iloc, jloc,
                                      surf.xori, surf.xinc,
                                      surf.yori, surf.yinc,
                                      surf.ncol, surf.nrow, surf._yflip,
-                                     surf.rotation, surf.get_zval(),
+                                     surf.rotation, zvalues,
                                      0, xtg_verbose_level))
         if ier != 0:
             surf.logger.critical('Error code {}, contact the author'.
                                  format(ier))
-            raise SystemExit('Error')
+            raise SystemExit('Error code {}'.format(ier))
 
     else:
         raise ValueError('Index i and/or j out of bounds')

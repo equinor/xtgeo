@@ -40,8 +40,8 @@ logger.info('Use env variable XTG_SHOW to show interactive plots to screen')
 # Do tests
 # =========================================================================
 
-usefile1 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff'
-usefile2 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_poro.roff'
+usefile1 = '../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff'
+usefile2 = '../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff'
 usefile3 = '../xtgeo-testdata/etc/colortables/rainbow_reverse.rmscolor'
 
 
@@ -65,7 +65,7 @@ def test_slice_simple():
     mygrid = Grid(usefile1)
     myprop = GridProperty(usefile2, grid=mygrid, name='PORO')
 
-    assert myprop.values.mean() == pytest.approx(0.2621, abs=0.001)
+    assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
     layslice.canvas(title='My Grid plot')
     layslice.plot_gridslice(myprop, window=(454000, 455000, 6782000, 6783000),
@@ -89,7 +89,7 @@ def test_slice_plot_many_grid_layers():
 
     layslice2 = Grid3DSlice()
 
-    for k in range(1, nlayers, 20):
+    for k in range(1, nlayers, 4):
         print('Layer {} ...'.format(k))
         layslice2.canvas(title='Porosity for layer ' + str(k))
         layslice2.plot_gridslice(myprop, colortable=usefile3, index=k,

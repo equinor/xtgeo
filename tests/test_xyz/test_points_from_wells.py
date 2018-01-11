@@ -1,29 +1,24 @@
-import os
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import sys
 import glob
-import logging
 from xtgeo.xyz import Points
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
 
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
 
-format = xtg.loggingformat
+if not xtg.testsetup():
+    sys.exit(-9)
 
-logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+td = xtg.tmpdir
+testpath = xtg.testpath
 
-logger = logging.getLogger(__name__)
-
-wfiles1 = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
-wfiles2 = "../xtgeo-testdata/wells/tro/1/31*.w"
+wfiles1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
+wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5]*"
 
 
 def test_get_zone_tops_one_well():
@@ -31,7 +26,7 @@ def test_get_zone_tops_one_well():
 
     wlist = []
     for w in glob.glob(wfiles1):
-        wlist.append(Well(w, zonelogname='ZONELOG'))
+        wlist.append(Well(w, zonelogname='Zonelog'))
         logger.info('Imported well {}'.format(w))
 
     mypoints = Points()
@@ -53,7 +48,7 @@ def test_get_zone_tops_one_well_w_undef():
 
     wlist = []
     for w in glob.glob(wfiles1):
-        wlist.append(Well(w, zonelogname='ZONELOG'))
+        wlist.append(Well(w, zonelogname='Zonelog'))
         logger.info('Imported well {}'.format(w))
 
     mypoints = Points()
@@ -76,7 +71,7 @@ def test_get_zone_tops_some_wells():
 
     wlist = []
     for w in glob.glob(wfiles2):
-        wlist.append(Well(w, zonelogname='ZONELOG'))
+        wlist.append(Well(w, zonelogname='Zonelog'))
         logger.info('Imported well {}'.format(w))
 
     mypoints = Points()
@@ -94,11 +89,11 @@ def test_get_zone_tops_some_wells():
 
 
 def test_get_zone_thickness_one_well():
-    """Import a wells and get the zone thicknesses"""
+    """Import a well and get the zone thicknesses"""
 
     wlist = []
     for w in glob.glob(wfiles1):
-        wlist.append(Well(w, zonelogname='ZONELOG'))
+        wlist.append(Well(w, zonelogname='Zonelog'))
         logger.info('Imported well {}'.format(w))
 
     mypoints = Points()
@@ -114,7 +109,7 @@ def test_get_zone_thickness_some_wells():
 
     wlist = []
     for w in glob.glob(wfiles2):
-        wlist.append(Well(w, zonelogname='ZONELOG'))
+        wlist.append(Well(w, zonelogname='Zonelog'))
         logger.info('Imported well {}'.format(w))
 
     mypoints = Points()

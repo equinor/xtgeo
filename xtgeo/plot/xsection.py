@@ -140,7 +140,7 @@ class XSection(BasePlot):
         __doc__ = BasePlot.set_colortable.__doc__
         super(XSection, self).set_colortable(cfile, colorlist)
 
-    def plot_well(self):
+    def plot_well(self, zonelogname='ZONELOG'):
         """Input an XTGeo Well object and plot it."""
         ax = self._ax1[self._surfaceplot_count - 1]
 
@@ -165,13 +165,13 @@ class XSection(BasePlot):
         # get the well trajectory (numpies)
         zv = df['Z_TVDSS'].values
         hv = df['R_HLEN'].values
-        zo = df['ZONELOG'].values
+        zo = df[zonelogname].values
 
         zomin = 0
         zomax = 0
         try:
-            zomin = int(df['ZONELOG'].min())
-            zomax = int(df['ZONELOG'].max())
+            zomin = int(df[zonelogname].min())
+            zomax = int(df[zonelogname].max())
         except ValueError:
             self._showok = False
             return

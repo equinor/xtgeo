@@ -1,18 +1,20 @@
-#!/usr/bin/env python -u
+# coding: utf-8
+from __future__ import division, absolute_import
+from __future__ import print_function
 
-import sys
+import os
 import pytest
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
-from .test_xtg import assert_equal, assert_almostequal
+from ..test_common.test_xtg import assert_equal, assert_almostequal
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
 td = xtg.tmpdir
 testpath = xtg.testpath
@@ -23,6 +25,9 @@ testpath = xtg.testpath
 
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 reekfile = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
+reekroot = '../xtgeo-testdata/3dgrids/reek/REEK'
+brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID'
+brilgrdecl = '../xtgeo-testdata/3dgrids/bri/b.grdecl'
 
 
 def test_import_wrong():
@@ -45,11 +50,11 @@ def test_import_guess():
 def test_roffbin_import0():
     """Import ROFF on the form Grid().from_file and Grid(..)"""
 
-    g = Grid().from_file(emegfile, fformat="roff")
+    g = Grid().from_file(emegfile, fformat='roff')
 
     assert isinstance(g, Grid)
 
-    g = Grid(emegfile, fformat="roff")
+    g = Grid(emegfile, fformat='roff')
 
     assert isinstance(g, Grid)
 
@@ -58,7 +63,6 @@ def test_roffbin_import1():
     """Test roff binary import case 1"""
 
     g = Grid()
-    logger.info("Import roff...")
     g.from_file(emegfile, fformat="roff")
 
     assert_equal(g.ncol, 70, txt='Grid NCOL Emerald')
@@ -67,14 +71,11 @@ def test_roffbin_import1():
     # extract ACTNUM parameter as a property instance (a GridProperty)
     act = g.get_actnum()
 
-    logger.info('ACTNUM is {}'.format(act))
-    logger.debug('ACTNUM values are \n{}'.format(act.values[888:999]))
-
     # get dZ...
     dz = g.get_dz()
 
-    logger.info('DZ is {}'.format(act))
-    logger.info('DZ values are \n{}'.format(dz.values[888:999]))
+    logger.info('ACTNUM is {}'.format(act))
+    logger.debug('DZ values are \n{}'.format(dz.values[888:999]))
 
     dzval = dz.values3d
     # get the value is cell 32 73 1 shall be 2.761
@@ -130,33 +131,28 @@ def test_eclgrid_import1():
 
     g = Grid()
     logger.info("Import Eclipse GRID...")
-    g.from_file('../xtgeo-testdata/3dgrids/gfb/G1.GRID',
-                fformat="grid")
+    g.from_file(brilfile, fformat="grid")
 
     assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
-    assert_equal(g.nrow, 20, txt='Grid NROW from Eclipse')
+    assert_equal(g.nrow, 15, txt='Grid NROW from Eclipse')
 
 
 def test_eclgrid_import2():
     """Eclipse EGRID import."""
     g = Grid()
     logger.info("Import Eclipse GRID...")
-    g.from_file('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
-                fformat="egrid")
+    g.from_file(reekfile, fformat="egrid")
 
-    assert_equal(g.ncol, 99, txt='EGrid NX from Eclipse')
-    assert_equal(g.nrow, 120, txt='EGrid NY from Eclipse')
-    assert_equal(g.nactive, 368004, txt='EGrid NTOTAL from Eclipse')
-    assert_equal(g.ntotal, 558360, txt='EGrid NACTIVE from Eclipse')
+    assert_equal(g.ncol, 40, txt='EGrid NX from Eclipse')
+    assert_equal(g.nrow, 64, txt='EGrid NY from Eclipse')
+    assert_equal(g.nactive, 35838, txt='EGrid NTOTAL from Eclipse')
+    assert_equal(g.ntotal, 35840, txt='EGrid NACTIVE from Eclipse')
 
 
 def test_eclgrid_import3():
     """Eclipse GRDECL import and translate"""
 
-    g = Grid()
-    logger.info("Import Eclipse GRDECL...")
-    g.from_file('../xtgeo-testdata/3dgrids/gfb/g1_comments.grdecl',
-                fformat="grdecl")
+    g = Grid(brilgrdecl, fformat="grdecl")
 
     mylist = g.get_geometrics()
 
@@ -172,7 +168,7 @@ def test_eclgrid_import3():
     # check if origin is translated 100m in X
     assert_equal(xori1 + 100, xori2, txt='Translate X distance')
 
-    g.to_file('TMP/g1_translate.roff', fformat="roff_binary")
+    g.to_file(os.path.join(td, 'g1_translate.roff'), fformat='roff_binary')
 
 
 def test_geometrics_reek():
@@ -197,29 +193,35 @@ def test_geometrics_reek():
 def test_simple_io():
     """Test various import and export formats"""
 
-    gg = Grid('../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID',
-              fformat="egrid")
+    gg = Grid(reekfile, fformat='egrid')
 
-    gg.to_file("TMP/gullfaks_test.roff")
+    assert gg.nx == 40
+
+    filex = os.path.join(td, 'grid_test_simple_io.roff')
+
+    gg.to_file(filex)
+
+    gg2 = Grid(filex, fformat='roff')
+
+    assert gg2.nx == 40
 
 
 def test_ecl_run():
     """Test import an eclrun with dates and export to roff after a diff"""
 
-    eclroot = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS'
-    dates = [19851001, 20150101]
+    dates = [19991201, 20030101]
     rprops = ['PRESSURE', 'SWAT']
 
-    gg = Grid(eclroot, fformat='eclipserun', restartdates=dates,
+    gg = Grid(reekroot, fformat='eclipserun', restartdates=dates,
               restartprops=rprops)
 
     # get the property object:
-    pres1 = gg.get_prop_by_name('PRESSURE_20150101')
-    assert_almostequal(pres1.values.mean(), 239.505447, 0.001)
+    pres1 = gg.get_prop_by_name('PRESSURE_20030101')
+    assert_almostequal(pres1.values.mean(), 308.45, 0.001)
 
-    pres1.to_file("TMP/pres1.roff")
+    pres1.to_file(os.path.join(td, 'pres1.roff'))
 
-    pres2 = gg.get_prop_by_name('PRESSURE_19851001')
+    pres2 = gg.get_prop_by_name('PRESSURE_19991201')
 
     if isinstance(pres2, GridProperty):
         pass
@@ -233,6 +235,6 @@ def test_ecl_run():
     logger.debug(pres1)
     avg = pres1.values.mean()
     # ok checked in RMS:
-    assert_almostequal(avg, -93.046011, 0.001)
+    assert_almostequal(avg, -26.073, 0.001)
 
-    pres1.to_file("TMP/pressurediff.roff", name="PRESSUREDIFF")
+    pres1.to_file(os.path.join(td, 'pressurediff.roff'), name='PRESSUREDIFF')

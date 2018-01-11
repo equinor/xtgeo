@@ -41,12 +41,11 @@ logger.info('Use env variable XTG_SHOW to show interactive plots to screen')
 # Do tests
 # =========================================================================
 
-usefile1 = '../xtgeo-testdata/wells/gfb/1/34_10-A-42.w'
-usefile2 = '../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin'
-usefile3 = '../xtgeo-testdata/polygons/tro/1/troll.xyz'
-usefile4 = '../xtgeo-testdata/wells/tro/2/31_2-G-4_H.w'
-usefile5 = "../xtgeo-testdata/surfaces/tro/2/*.gri"
-usefile6 = '../xtgeo-testdata/surfaces/tro/3/*.gri'
+usefile1 = '../xtgeo-testdata/wells/reek/1/OP_1.w'
+usefile2 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
+usefile3 = '../xtgeo-testdata/polygons/reek/1/mypoly.pol'
+usefile4 = '../xtgeo-testdata/wells/reek/1/OP_5.w'
+usefile5 = '../xtgeo-testdata/surfaces/reek/2/*.gri'
 
 
 def test_very_basic():
@@ -110,11 +109,11 @@ def test_simple_plot():
         myplot.show()
 
 
-def test_troll1():
-    """Test XSect for a Troll well."""
+def test_reek1():
+    """Test XSect for a Reek well."""
 
     myfield = Polygons()
-    myfield.from_file(usefile3)
+    myfield.from_file(usefile3, fformat='xyz')
 
     mywells = []
     wnames = glob.glob(usefile4)
@@ -136,7 +135,7 @@ def test_troll1():
 
     # Troll lobes
     mylobes = []
-    surfnames = glob.glob(usefile6)
+    surfnames = glob.glob(usefile5)
     surfnames.sort()
     for fname in surfnames:
         logger.info("Read {}".format(fname))
@@ -145,7 +144,7 @@ def test_troll1():
         mylobes.append(mysurf)
 
     for wo in mywells:
-        myplot = XSection(zmin=1300, zmax=2000, well=wo,
+        myplot = XSection(zmin=1500, zmax=1700, well=wo,
                           surfaces=mysurfaces, zonelogshift=-1,
                           outline=myfield)
 
@@ -160,7 +159,7 @@ def test_troll1():
         myplot.plot_surfaces(surfaces=mylobes, fill=False, linewidth=4,
                              legendtitle="Lobes", fancyline=True)
 
-        myplot.plot_well()
+        myplot.plot_well(zonelogname='Zonelog')
 
         myplot.plot_wellmap()
 

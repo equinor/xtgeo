@@ -24,12 +24,15 @@ else:
 # Do tests
 # =============================================================================
 
+reekgrid = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
+reekpoly = '../xtgeo-testdata/polygons/reek/1/mypoly.pol'
+
 
 def test_grid_inactivate_inside():
     """Inactivate a grid inside polygons"""
-    g1 = xtgeo.grid3d.Grid('../xtgeo-testdata/3dgrids/reek/REEK.EGRID')
+    g1 = xtgeo.grid3d.Grid(reekgrid)
 
-    p1 = xtgeo.xyz.Polygons('../xtgeo-testdata/polygons/reek/1/mypoly.pol')
+    p1 = xtgeo.xyz.Polygons(reekpoly)
 
     act1 = g1.get_actnum().values3d
     n1 = act1[7, 55, 1]
@@ -68,9 +71,9 @@ def test_grid_inactivate_inside():
 
 def test_grid_inactivate_outside():
     """Inactivate a grid outside polygons"""
-    g1 = xtgeo.grid3d.Grid('../xtgeo-testdata/3dgrids/reek/REEK.EGRID')
+    g1 = xtgeo.grid3d.Grid(reekgrid)
 
-    p1 = xtgeo.xyz.Polygons('../xtgeo-testdata/polygons/reek/1/mypoly.pol')
+    p1 = xtgeo.xyz.Polygons(reekpoly)
 
     act1 = g1.get_actnum().values3d
     n1 = act1[3, 56, 1]

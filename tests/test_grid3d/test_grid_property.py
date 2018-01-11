@@ -1,43 +1,43 @@
-import pytest
+# coding: utf-8
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import os
-from timeit import default_timer as timer
+import pytest
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 
-from .test_xtg import assert_equal, assert_almostequal
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
+from ..test_common.test_xtg import assert_almostequal
 
 # set default level
 xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
 
+if not xtg.testsetup():
+    raise SystemExit
+
+td = xtg.tmpdir
+testpath = xtg.testpath
+
 # =============================================================================
 # Do tests
 # =============================================================================
 
-testfile1 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_poro.roff'
+testfile1 = '../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff'
 testfile2 = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff'
 testfile3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
 testfile4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
-testfile5 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
-testfile6 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
-testfile7 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff'
-testfile8 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff'
-testfile9 = '../xtgeo-testdata/3dgrids/gfb/gullfaks2_poro.roff'
+testfile5 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
+testfile6 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
+testfile7 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
+testfile8 = '../xtgeo-testdata/3dgrids/reek/reek_sim_zone.roff'
+testfile8a = '../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff'
+testfile9 = testfile1
 testfile10 = '../xtgeo-testdata/3dgrids/bri/b_grid.roff'
 testfile11 = '../xtgeo-testdata/3dgrids/bri/b_poro.roff'
-testfile12 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS_R003B-0.EGRID'
-testfile13 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS_R003B-0.INIT'
-testfile14 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS_R003B-0.UNRST'
 
 
 def test_create():
@@ -60,7 +60,7 @@ def test_roffbin_import1():
     logger.info(repr(x.values))
     logger.info(x.values.dtype)
     logger.info("Mean porosity is {}".format(x.values.mean()))
-    assert x.values.mean() == pytest.approx(0.26256, abs=0.001)
+    assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
 def test_roffbin_import2():
@@ -111,35 +111,33 @@ def test_eclinit_import():
     assert eq.values3d[12:13, 13:14, 0:1] == 3, 'EQLNUM in cell 13 14 1'
 
 
-def test_eclinit_import_gull():
-    """Property import from Eclipse. Gullfaks"""
+def test_eclinit_import_reek():
+    """Property import from Eclipse. Reek"""
 
     # let me guess the format (shall be egrid)
     gg = Grid(testfile5, fformat='egrid')
-    assert gg.ncol == 99, "Gullfaks NX"
+    assert gg.ncol == 40, "Reek NX"
 
     logger.info("Import INIT...")
     po = GridProperty(testfile6, name='PORO', grid=gg)
 
     logger.info(po.values.mean())
-    logger.info(po.values[500:900])
-    assert po.values.mean() == pytest.approx(0.261157181168, abs=0.0001)
+    assert po.values.mean() == pytest.approx(0.1677, abs=0.0001)
 
     pv = GridProperty(testfile6, name='PORV', grid=gg)
     logger.info(pv.values.mean())
-    logger.info(pv.values[500:900])
 
 
-def test_eclunrst_import_gull():
-    """Property UNRST import from Eclipse. Gullfaks"""
+def test_eclunrst_import_reek():
+    """Property UNRST import from Eclipse. Reek"""
 
-    gg = Grid(testfile12, fformat='egrid')
+    gg = Grid(testfile5, fformat='egrid')
 
     logger.info("Import RESTART (UNIFIED) ...")
-    press = GridProperty(testfile14, name='PRESSURE', fformat='unrst',
-                         date=19950101, grid=gg)
+    press = GridProperty(testfile7, name='PRESSURE', fformat='unrst',
+                         date=19991201, grid=gg)
 
-    assert_almostequal(press.values.mean(), 279.8029, 0.0001)
+    assert_almostequal(press.values.mean(), 334.5232, 0.0001)
 
 def test_export_roff():
     """Property import from Eclipse. Then export to roff."""
@@ -150,8 +148,8 @@ def test_export_roff():
     logger.info("Import INIT...")
     po.from_file(testfile4, fformat="init", name='PORO', grid=gg, apiversion=2)
 
-    po.to_file('TMP/bdata.roff', name='PORO')
-    pox = GridProperty('TMP/bdata.roff', name='PORO')
+    po.to_file(os.path.join(td, 'bdata.roff'), name='PORO')
+    pox = GridProperty(os.path.join(td, 'bdata.roff'), name='PORO')
 
     print(po.values.mean())
 
@@ -163,23 +161,23 @@ def test_io_roff_discrete():
 
     logger.info('Name is {}'.format(__name__))
     po = GridProperty()
-    po.from_file(testfile7, fformat="roff", name='Zone')
+    po.from_file(testfile8, fformat="roff", name='Zone')
 
     logger.info("\nCodes ({})\n{}".format(po.ncodes, po.codes))
 
     # tests:
-    assert po.ncodes == 18
-    logger.debug(po.codes[17])
-    assert po.codes[17], "SEQ2"
+    assert po.ncodes == 3
+    logger.debug(po.codes[3])
+    assert po.codes[3] == 'Below_Low_reek'
 
-    # export to ROFF ...TODO!
-    # po.to_file("TMP/zone.roff")
+    # export discrete to ROFF ...TODO!
+    # po.to_file(os.join.path(td, zone_export.roff'))
 
 
 def test_get_all_corners():
     """Get X Y Z for all corners as XTGeo GridProperty objects"""
 
-    grid = Grid(testfile8)
+    grid = Grid(testfile8a)
     allc = grid.get_xyz_corners()
 
     x0 = allc[0]
@@ -189,34 +187,36 @@ def test_get_all_corners():
     y1 = allc[4]
     z1 = allc[5]
 
-    # top of cell layer 2 in cell 41 41 (if 1 index start as RMS)
-    assert x0.values3d[40, 40, 1] == pytest.approx(455116.76, abs=0.01)
-    assert y0.values3d[40, 40, 1] == pytest.approx(6787710.22, abs=0.01)
-    assert z0.values3d[40, 40, 1] == pytest.approx(1966.31, abs=0.01)
+    # top of cell layer 2 in cell 5 5 (if 1 index start as RMS)
+    assert x0.values3d[4, 4, 1] == pytest.approx(457387.718, abs=0.01)
+    assert y0.values3d[4, 4, 1] == pytest.approx(5935461.29790, abs=0.01)
+    assert z0.values3d[4, 4, 1] == pytest.approx(1728.9429, abs=0.01)
 
-    assert x1.values3d[40, 40, 1] == pytest.approx(455215.26, abs=0.01)
-    assert y1.values3d[40, 40, 1] == pytest.approx(6787710.60, abs=0.01)
-    assert z1.values3d[40, 40, 1] == pytest.approx(1959.87, abs=0.01)
+    assert x1.values3d[4, 4, 1] == pytest.approx(457526.55367, abs=0.01)
+    assert y1.values3d[4, 4, 1] == pytest.approx(5935542.02467, abs=0.01)
+    assert z1.values3d[4, 4, 1] == pytest.approx(1728.57898, abs=0.01)
 
 
 def test_get_cell_corners():
     """Get X Y Z for one cell as tuple"""
 
-    grid = Grid(testfile8)
-    clist = grid.get_xyz_cell_corners(ijk=(40, 40, 1))
+    grid = Grid(testfile8a)
+    clist = grid.get_xyz_cell_corners(ijk=(4, 4, 1))
+    logger.debug(clist)
+
+    assert_almostequal(clist[0], 457168.358886, 0.001)
 
 
 def test_get_xy_values_for_webportal():
     """Get lists on webportal format"""
 
-    grid = Grid(testfile8)
+    grid = Grid(testfile8a)
     prop = GridProperty(testfile9, grid=grid, name='PORO')
 
-    start = timer()
-    logger.info('Start time: {}'.format(start))
+    start = xtg.timer()
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
-    end = timer()
-    logger.info('End time: {}. Elapsed {}'.format(end, end - start))
+    elapsed = xtg.timer(start)
+    logger.info('Elapsed {}'.format(elapsed))
 
     grid = Grid(testfile10)
     prop = GridProperty(testfile11, grid=grid, name='PORO')
@@ -231,11 +231,8 @@ def test_get_xy_values_for_webportal():
 def test_get_xy_values_for_webportal_ecl():
     """Get lists on webportal format (Eclipse input)"""
 
-    grid = Grid(testfile12)
-    prop = GridProperty(testfile13, grid=grid, name='PORO')
+    grid = Grid(testfile5)
+    prop = GridProperty(testfile6, grid=grid, name='PORO')
 
-    start = timer()
-    logger.info('Start time: {}'.format(start))
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
-    end = timer()
-    logger.info('End time: {}. Elapsed {}'.format(end, end - start))
+    assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)

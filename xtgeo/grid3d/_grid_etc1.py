@@ -475,12 +475,14 @@ def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
 
     logger.info('Process well object for {}...'.format(well.wellname))
     df = well.dataframe.copy()
+    logger.debug(df)
 
     if depthrange:
         logger.info('Filter depth...')
         df = df[df.Z_TVDSS > depthrange[0]]
         df = df[df.Z_TVDSS < depthrange[1]]
         df = df.copy()
+        logger.debug('Well dataframe after depth range filter:')
         logger.debug(df)
 
     logger.info('Adding zoneshift {}'.format(zonelogshift))
@@ -541,4 +543,6 @@ def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
     tpoi = _cxtgeo.doublearray_getitem(ptr_results, 1)
     mpoi = _cxtgeo.doublearray_getitem(ptr_results, 2)
 
-    return (perc, tpoi, mpoi)
+    # returns percent match, then total numbers of well counts for zone,
+    # then match count. perc = mpoi/tpoi
+    return (perc, int(tpoi), int(mpoi))

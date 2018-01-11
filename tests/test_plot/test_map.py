@@ -1,6 +1,4 @@
-import os
 import sys
-import logging
 import pytest
 import matplotlib.pyplot as plt
 
@@ -26,6 +24,11 @@ skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
 # =========================================================================
 
 
+sfile1 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
+pfile1 = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
+sfile2 = '../xtgeo-testdata/surfaces/reek/1/reek_perm_lay1.gri'
+
+
 def test_very_basic_to_file():
     """Just test that matplotlib works, to a file."""
     plt.title('Hello world')
@@ -36,8 +39,7 @@ def test_simple_plot():
     """Test as simple map plot only making an instance++ and plot."""
 
     mysurf = RegularSurface()
-    mysurf.from_file('../xtgeo-testdata/surfaces/gfb/1/'
-                     'gullfaks_top.irapbin')
+    mysurf.from_file(sfile1)
 
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
@@ -52,11 +54,9 @@ def test_more_features_plot():
     """Map with some more features added, such as label rotation."""
 
     mysurf = RegularSurface()
-    mysurf.from_file('../xtgeo-testdata/surfaces/gfb/1/'
-                     'gullfaks_top.irapbin')
+    mysurf.from_file(sfile1)
 
-    myfaults = Polygons('../xtgeo-testdata/polygons/gfb/'
-                        'faults_zone10.zmap', fformat='zmap')
+    myfaults = Polygons(pfile1)
 
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
@@ -73,8 +73,7 @@ def test_more_features_plot():
 def test_perm_logarithmic_map():
     """Map with PERM, log scale."""
 
-    mysurf = RegularSurface('../xtgeo-testdata/surfaces/reek/'
-                            '1/reek_perm_lay1.gri')
+    mysurf = RegularSurface(sfile2)
 
     myplot = Map()
     myplot.canvas(title='PERMX normal scale')
