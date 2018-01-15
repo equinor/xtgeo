@@ -333,7 +333,7 @@ class Grid(Grid3D):
             index = grd[axis]
             index = index.flatten(order='F')
             index = index + 1
-            index.astype(np.int32)
+            index = index.astype(np.int32)
 
             idx = xtgeo.grid3d.GridProperty(ncol=self._ncol, nrow=self._nrow,
                                             nlay=self._nlay, values=index,

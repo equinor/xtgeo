@@ -91,7 +91,7 @@ def import_eclbinary_v2(prop, pfile, name=None, etype=1, date=None,
 
     else:
         prop._isdiscrete = False
-        values.astype(np.float64)  # cast REAL (float32) to float64
+        values = values.astype(np.float64)  # cast REAL (float32) to float64
         use_undef = prop._undef
         prop.codes = {}
 
