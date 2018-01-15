@@ -19,6 +19,7 @@ from xtgeo.grid3d import _grid_import
 from xtgeo.grid3d import _grid_export
 from xtgeo.grid3d import _grid_refine
 from xtgeo.grid3d import _grid_etc1
+from xtgeo.grid3d import _grid_roxapi
 
 
 class Grid(Grid3D):
@@ -59,6 +60,10 @@ class Grid(Grid3D):
         # perhaps undef should be a class variable, not an instance variables?
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
+
+        # Roxar api spesific:
+        self._roxgrid = None
+        self._roxindexer = None
 
         if len(args) == 1:
             # make an instance directly through import of a file
@@ -157,9 +162,17 @@ class Grid(Grid3D):
 
         return self._undef_limit
 
-    # =========================================================================
-    # Other setters and getters as _functions_
-    # =========================================================================
+    @property
+    def roxgrid(self):
+        """Get the Roxar native proj.grid_models[gname].get_grid() object"""
+        return self._roxgrid
+
+    @property
+    def roxindexer(self):
+        """Get the Roxar native proj.grid_models[gname].get_grid().grid_indexer
+        object"""
+
+        return self._roxindexer
 
     def get_prop_by_name(self, name):
         """Gets a property object by name lookup, return None if not present.
@@ -169,10 +182,6 @@ class Grid(Grid3D):
                 return obj
 
         return None
-
-# =========================================================================
-# Import and export
-# =========================================================================
 
     def from_file(self, gfile, fformat='guess', initprops=None,
                   restartprops=None, restartdates=None):
@@ -267,6 +276,18 @@ class Grid(Grid3D):
             raise SystemExit('Invalid file format')
 
         return self
+
+    def from_roxar(self, projectname, gname):
+
+        """Import grid model geometry from RMS project, and makes an instance.
+
+        Arguments:
+            projectname (str): Name of RMS project
+            gfile (str): Name of grid model
+
+        """
+
+        _grid_roxapi.import_grid_roxapi(self, projectname, gname)
 
     def to_file(self, gfile, fformat='roff'):
         """

@@ -8,6 +8,7 @@ from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
+import tests.test_setup as tsetup
 
 path = 'TMP'
 try:
@@ -28,6 +29,7 @@ roff1_grid = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 roff1_props = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff'
 
 
+@tsetup.skipifroxar
 def test_hcpvfz1():
 
     logger.info('Name is {}'.format(__name__))

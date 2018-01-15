@@ -10,6 +10,8 @@ from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
+import tests.test_setup as tsetup
+
 path = 'TMP'
 try:
     os.makedirs(path)
@@ -37,6 +39,8 @@ rfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.UNRST'
 
 ffile1 = '../xtgeo-testdata/polygons/gfb/faults_zone10.zmap'
 
+
+@tsetup.skipifroxar
 def test_avg01():
     """Make average map from very simple Eclipse."""
 
@@ -79,6 +83,7 @@ def test_avg01():
     assert avgmap.values.mean() == pytest.approx(0.264, abs=0.001)
 
 
+@tsetup.skipifroxar
 def test_avg02():
     """Make average map from Gullfaks Eclipse."""
     g = Grid()
@@ -128,6 +133,7 @@ def test_avg02():
     assert avgmap.values.mean() == pytest.approx(0.158, abs=0.001)
 
 
+@tsetup.skipifroxar
 def test_avg03():
     """Make average depth map where Sw is between 0.3 and 0.33"""
 

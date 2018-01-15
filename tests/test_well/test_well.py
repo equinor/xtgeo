@@ -2,7 +2,8 @@ import glob
 import sys
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
-from .test_xtg import assert_equal
+
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -26,9 +27,9 @@ def test_import():
     mywell = Well(wfile)
 
     logger.debug("True well name:", mywell.truewellname)
-    assert_equal(mywell.xpos, 524139.420, 'XPOS')
-    assert_equal(mywell.ypos, 6740790.41, 'YPOS')
-    assert_equal(mywell.wellname, '31/2-E-1_H', 'YPOS')
+    tsetup.assert_equal(mywell.xpos, 524139.420, 'XPOS')
+    tsetup.assert_equal(mywell.ypos, 6740790.41, 'YPOS')
+    tsetup.assert_equal(mywell.wellname, '31/2-E-1_H', 'YPOS')
 
     logger.info(mywell.get_logtype('ZONELOG'))
     logger.info(mywell.get_logrecord('ZONELOG'))
@@ -115,7 +116,7 @@ def test_get_carr():
 
     dummy = mywell.get_carray("NOSUCH")
 
-    assert_equal(dummy, None, 'Wrong log name')
+    tsetup.assert_equal(dummy, None, 'Wrong log name')
 
     cref = mywell.get_carray("X_UTME")
 
@@ -124,7 +125,7 @@ def test_get_carr():
     if "Swig" in xref and "double" in xref:
         swig = True
 
-    assert_equal(swig, True, 'carray from log name, double')
+    tsetup.assert_equal(swig, True, 'carray from log name, double')
 
     cref = mywell.get_carray("ZONELOG")
 
@@ -133,7 +134,7 @@ def test_get_carr():
     if "Swig" in xref and "int" in xref:
         swig = True
 
-    assert_equal(swig, True, 'carray from log name, int')
+    tsetup.assert_equal(swig, True, 'carray from log name, int')
 
 
 def test_make_hlen():
@@ -167,6 +168,7 @@ def test_get_zonation_points():
     mywell.get_zonation_points()
 
 
+@tsetup.skipifroxar  # fails if roxar version; wrong pandas?
 def test_get_zone_interval():
     """Get zonations points (zone tops)"""
 
@@ -177,8 +179,8 @@ def test_get_zone_interval():
 
     logger.info(type(line))
 
-    assert_equal(line.iat[0, 0], 524826.882)
-    assert_equal(line.iat[-1, 2], 1555.3452)
+    tsetup.assert_equal(line.iat[0, 0], 524826.882)
+    tsetup.assert_equal(line.iat[-1, 2], 1555.3452)
 
 
 def test_get_zonation_holes():
@@ -191,8 +193,8 @@ def test_get_zonation_holes():
 
     logger.info("\n{}".format(report))
 
-    assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
-    assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z
+    tsetup.assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
+    tsetup.assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z
 
     # ----------------------------------------------------------
 
@@ -203,7 +205,7 @@ def test_get_zonation_holes():
 
     logger.info("\n{}".format(report))
 
-    assert_equal(report.iat[0, 6], 3823.4)  # value for MD
+    tsetup.assert_equal(report.iat[0, 6], 3823.4)  # value for MD
 
     # ----------------------------------------------------------
 
@@ -215,10 +217,11 @@ def test_get_zonation_holes():
     logger.info("\n{}".format(report))
     logger.info("\n{}".format(len(report)))
 
-    assert_equal(len(report), 2)  # report length
-    assert_equal(report.iat[1, 4], 28)  # zone no.
+    tsetup.assert_equal(len(report), 2)  # report length
+    tsetup.assert_equal(report.iat[1, 4], 28)  # zone no.
 
 
+@tsetup.skipifroxar
 def test_get_filled_dataframe():
     """Get a filled DataFrame"""
 

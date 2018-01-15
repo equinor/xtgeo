@@ -4,6 +4,7 @@ import pytest
 from xtgeo.surface import RegularSurface
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -12,9 +13,6 @@ if not xtg.testsetup():
     sys.exit(-9)
 
 td = xtg.tmpdir
-
-skipsegyio = pytest.mark.skipif(sys.version_info > (2, 7),
-                                reason="Skip test with segyio for ver 3")
 
 # =============================================================================
 # Do tests
@@ -29,7 +27,8 @@ ftop2 = '../xtgeo-testdata/surfaces/fos/2/top_ile_depth.irap'
 fsgy2 = '../xtgeo-testdata/cubes/fos/syntseis_2011_seismic_depth.segy'
 
 
-@skipsegyio
+@tsetup.skipsegyio
+@tsetup.skipifroxar
 def test_slice_nearest():
     """Slice a cube with a surface, nearest node."""
 
@@ -81,7 +80,8 @@ def test_slice_nearest():
     assert mean == pytest.approx(-0.0755, abs=0.003)
 
 
-@skipsegyio
+@tsetup.skipsegyio
+@tsetup.skipifroxar
 def test_slice_various_fos():
     """Slice a cube with a surface, both nearest node and interpol,
     Fossekall
@@ -122,7 +122,8 @@ def test_slice_various_fos():
                  infotext='Method: trilinear')
 
 
-@skipsegyio
+@tsetup.skipsegyio
+@tsetup.skipifroxar
 def test_slice_various_fos2():
     """Slice another cube with a surface, nearest node,
     Fossekall alt 2
@@ -146,7 +147,8 @@ def test_slice_various_fos2():
                  minmax=(-1, 1), title='Fossekall', infotext='Method: nearest')
 
 
-@skipsegyio
+@tsetup.skipsegyio
+@tsetup.skipifroxar
 def test_slice_interpol():
     """Slice a cube with a surface, using trilinear interpol."""
 
@@ -177,7 +179,8 @@ def test_slice_interpol():
     assert x.values.mean() == pytest.approx(-0.0755, abs=0.003)
 
 
-@skipsegyio
+@tsetup.skipsegyio
+@tsetup.skipifroxar
 def test_slice_attr_window_max():
     """Slice a cube within a surface window, egt max, using trilinear
     interpol.
@@ -214,79 +217,3 @@ def test_slice_attr_window_max():
                   colortable='jet', minmax=(0, 1),
                   title='Gullfaks rms',
                   infotext='Method: trilinear, window')
-
-# @skiplargetest
-# def test_slice2(self):
-#     """Slice a larger cube with a surface"""
-
-#     cfile = "/project/gullfaks/resmod/gfmain_brent/2015a/users/eza/"\
-#             + "r004/r004_20170303/sim2seis/input/"\
-#             + "4D_Res_PSTM_LM_ST8511D11_Full_rmsexport.segy"
-
-#     if os.path.isfile(cfile):
-
-#         logger.info("Loading surface")
-#         x = RegularSurface()
-#         x.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
-
-#         zd = RegularSurface()
-#         zd.from_file("../../testdata/Surface/G/gullfaks_top.irapbin")
-
-#         logger.info("Loading cube")
-#         cc = Cube()
-#         cc.from_file(cfile)
-#         logger.info("Loading cube, done")
-
-#         # Now slice
-#         logger.info("Slicing a large cube...")
-#         x.slice_cube(cc, zsurf=zd)
-#         logger.info("Slicing a large cube ... done")
-#         x.to_file("TMP/surf_slice2_cube.gri")
-#     else:
-#         logger.warning("No big file; skip test")
-
-
-# def test_slice_nearest_manytimes():
-#     """Slice a cube with a surface, nearest node many times for speed check."""
-
-#     ntimes = 10
-
-#     logger.info("Loading surface")
-#     x = RegularSurface()
-#     x.from_file("../xtgeo-testdata/surfaces/gfb/1/gullfaks_top.irapbin")
-
-#     logger.info("Loading cube")
-#     cc = Cube()
-#     cc.from_file("../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy",
-#                  engine=1)
-#     # Now slice
-#     logger.info("Slicing...")
-#     surf = []
-#     npcollect = []
-
-#     for i in range(ntimes):
-#         surf.append(x.copy())
-#         if i < 5:
-#             surf[i].values -= i * 2
-#         else:
-#             surf[i].values += (i - 4) * 2
-
-#         logger.info("Avg depth... {}".format(surf[i].values.mean()))
-#         logger.info("Slicing... {}".format(i))
-#         surf[i].slice_cube(cc)
-#         logger.info("MEAN is {}".format(surf[i].values.mean()))
-#         npcollect.append(surf[i].values)
-
-#     logger.info("Slicing...done")
-
-#     # now the numpies are stacked
-#     stacked = ma.dstack(npcollect)
-
-#     maxnp = ma.max(stacked, axis=2)
-
-#     x.values = maxnp
-#     x.quickplot(filename="TMP/surf_slice_cube_max.png", colortable='seismic',
-#                 minmax=(-1, 1))
-
-
-    # assert mean == pytest.approx(-0.0755, abs=0.003)

@@ -28,6 +28,7 @@ from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
 from xtgeo.grid3d import _gridprop_import_obsolete
+from xtgeo.grid3d import _gridprop_roxapi
 
 # =============================================================================
 # Class constructor
@@ -131,6 +132,8 @@ class GridProperty(Grid3D):
 
         self._undef_i = _cxtgeo.UNDEF_INT
         self._undef_ilimit = _cxtgeo.UNDEF_INT_LIMIT
+
+        self._roxorigin = False  # true if the object comes from the ROXAPI
 
         if self._isdiscrete:
             self._values = self._values.astype(np.int32)
@@ -268,6 +271,11 @@ class GridProperty(Grid3D):
     def ntotal(self):
         """Returns total number of cells ncol*nrow*nlay"""
         return self._ncol * self._nrow * self._nlay
+
+    @property
+    def roxorigin(self):
+        """Returns True if the property comes from ROXAPI"""
+        return self._roxorigin
 
     @property
     def values3d(self):
@@ -418,6 +426,33 @@ class GridProperty(Grid3D):
             return False
 
         return self
+
+    def from_roxar(self, projectname, gname, pname):
+
+        """Import grid model property from RMS project, and makes an instance.
+
+        Arguments:
+            projectname (str): Name of RMS project
+            gfile (str): Name of grid model
+            pfile (str): Name of grid property
+
+        """
+        _gridprop_roxapi.import_prop_roxapi(
+            self, projectname, gname, pname)
+
+    def to_roxar(self, projectname, gname, pname, saveproject=False):
+
+        """Store a grid model property into a RMS project.
+
+        Arguments:
+            projectname (str): Name of RMS project
+            gfile (str): Name of grid model
+            pfile (str): Name of grid property
+            saveproject (bool): If True, a saveproject job will be ran.
+
+        """
+        _gridprop_roxapi.export_prop_roxapi(
+            self, projectname, gname, pname, saveproject=saveproject)
 
     def to_file(self, pfile, fformat='roff', name=None):
         """

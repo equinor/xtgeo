@@ -12,7 +12,7 @@ from xtgeo.well import Well
 from xtgeo.xyz import Polygons
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
-
+import tests.test_setup as tsetup
 
 path = 'TMP'
 try:
@@ -48,6 +48,7 @@ usefile4 = '../xtgeo-testdata/wells/reek/1/OP_5.w'
 usefile5 = '../xtgeo-testdata/surfaces/reek/2/*.gri'
 
 
+@tsetup.skipifroxar
 def test_very_basic():
     """Just test that matplotlib works."""
     assert 'matplotlib' in str(plt)
@@ -61,12 +62,14 @@ def test_very_basic():
     plt.close()
 
 
+@tsetup.skipifroxar
 def test_xsection_init():
     """Trigger XSection class, basically."""
     xsect = XSection()
     assert xsect.pagesize == 'A4'
 
 
+@tsetup.skipifroxar
 def test_simple_plot():
     """Test as simple XSECT plot."""
 
@@ -109,6 +112,7 @@ def test_simple_plot():
         myplot.show()
 
 
+@tsetup.skipifroxar
 def test_reek1():
     """Test XSect for a Reek well."""
 

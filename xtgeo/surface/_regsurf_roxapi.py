@@ -1,6 +1,5 @@
+# coding: utf-8
 """Roxar API functions for XTGeo RegularSurface"""
-
-import logging
 
 from xtgeo.common import XTGeoDialog
 
@@ -12,7 +11,7 @@ xtg_verbose_level = xtg.get_syslevel()
 
 
 def import_horizon_roxapi(surf, project, name, category,
-                           realisation):
+                          realisation):
     """Import a Horizon surface via ROXAR API spec."""
     import roxar
 

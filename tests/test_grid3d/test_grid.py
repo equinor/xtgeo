@@ -8,7 +8,7 @@ import pytest
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
-from ..test_common.test_xtg import assert_equal, assert_almostequal
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -36,7 +36,7 @@ def test_import_wrong():
     with pytest.raises(ValueError) as e_info:
         logger.warning(e_info)
         g = Grid().from_file(emegfile, fformat='roffdum')
-        assert_equal(g.ncol, 70)
+        tsetup.assert_equal(g.ncol, 70)
 
 
 def test_import_guess():
@@ -44,7 +44,7 @@ def test_import_guess():
 
     g = Grid().from_file(emegfile)
 
-    assert_equal(g.ncol, 70)
+    tsetup.assert_equal(g.ncol, 70)
 
 
 def test_roffbin_import0():
@@ -65,8 +65,8 @@ def test_roffbin_import1():
     g = Grid()
     g.from_file(emegfile, fformat="roff")
 
-    assert_equal(g.ncol, 70, txt='Grid NCOL Emerald')
-    assert_equal(g.nlay, 46, txt='Grid NLAY Emerald')
+    tsetup.assert_equal(g.ncol, 70, txt='Grid NCOL Emerald')
+    tsetup.assert_equal(g.nlay, 46, txt='Grid NLAY Emerald')
 
     # extract ACTNUM parameter as a property instance (a GridProperty)
     act = g.get_actnum()
@@ -80,7 +80,7 @@ def test_roffbin_import1():
     dzval = dz.values3d
     # get the value is cell 32 73 1 shall be 2.761
     mydz = float(dzval[31:32, 72:73, 0:1])
-    assert_almostequal(mydz, 2.761, 0.001, txt='Grid DZ Emerald')
+    tsetup.assert_almostequal(mydz, 2.761, 0.001, txt='Grid DZ Emerald')
 
     # get dX dY
     logger.info('Get dX dY')
@@ -89,8 +89,8 @@ def test_roffbin_import1():
     mydx = float(dx.values3d[31:32, 72:73, 0:1])
     mydy = float(dy.values3d[31:32, 72:73, 0:1])
 
-    assert_almostequal(mydx, 118.51, 0.01, txt='Grid DX Emerald')
-    assert_almostequal(mydy, 141.21, 0.01, txt='Grid DY Emerald')
+    tsetup.assert_almostequal(mydx, 118.51, 0.01, txt='Grid DX Emerald')
+    tsetup.assert_almostequal(mydy, 141.21, 0.01, txt='Grid DY Emerald')
 
     # get X Y Z coordinates (as GridProperty objects) in one go
     logger.info('Get X Y Z...')
@@ -99,7 +99,7 @@ def test_roffbin_import1():
     logger.info('X is {}'.format(act))
     logger.debug('X values are \n{}'.format(x.values[888:999]))
 
-    assert_equal(x.name, 'xxx', txt='Name of X coord')
+    tsetup.assert_equal(x.name, 'xxx', txt='Name of X coord')
     x.name = 'Xerxes'
 
     logger.info('X name is now {}'.format(x.name))
@@ -133,8 +133,8 @@ def test_eclgrid_import1():
     logger.info("Import Eclipse GRID...")
     g.from_file(brilfile, fformat="grid")
 
-    assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
-    assert_equal(g.nrow, 15, txt='Grid NROW from Eclipse')
+    tsetup.assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
+    tsetup.assert_equal(g.nrow, 15, txt='Grid NROW from Eclipse')
 
 
 def test_eclgrid_import2():
@@ -143,10 +143,10 @@ def test_eclgrid_import2():
     logger.info("Import Eclipse GRID...")
     g.from_file(reekfile, fformat="egrid")
 
-    assert_equal(g.ncol, 40, txt='EGrid NX from Eclipse')
-    assert_equal(g.nrow, 64, txt='EGrid NY from Eclipse')
-    assert_equal(g.nactive, 35838, txt='EGrid NTOTAL from Eclipse')
-    assert_equal(g.ntotal, 35840, txt='EGrid NACTIVE from Eclipse')
+    tsetup.assert_equal(g.ncol, 40, txt='EGrid NX from Eclipse')
+    tsetup.assert_equal(g.nrow, 64, txt='EGrid NY from Eclipse')
+    tsetup.assert_equal(g.nactive, 35838, txt='EGrid NTOTAL from Eclipse')
+    tsetup.assert_equal(g.ntotal, 35840, txt='EGrid NACTIVE from Eclipse')
 
 
 def test_eclgrid_import3():
@@ -166,7 +166,7 @@ def test_eclgrid_import3():
     xori2 = mylist[0]
 
     # check if origin is translated 100m in X
-    assert_equal(xori1 + 100, xori2, txt='Translate X distance')
+    tsetup.assert_equal(xori1 + 100, xori2, txt='Translate X distance')
 
     g.to_file(os.path.join(td, 'g1_translate.roff'), fformat='roff_binary')
 
@@ -182,12 +182,12 @@ def test_geometrics_reek():
         logger.info('{} is {}'.format(key, val))
 
     # compared with RMS info:
-    assert_almostequal(geom['xmin'], 456510.6, 0.1, 'Xmin')
-    assert_almostequal(geom['ymax'], 5938935.5, 0.1, 'Ymax')
+    tsetup.assert_almostequal(geom['xmin'], 456510.6, 0.1, 'Xmin')
+    tsetup.assert_almostequal(geom['ymax'], 5938935.5, 0.1, 'Ymax')
 
     # cellcenter True:
     geom = g.get_geometrics(return_dict=True, cellcenter=True)
-    assert_almostequal(geom['xmin'], 456620, 1, 'Xmin cell center')
+    tsetup.assert_almostequal(geom['xmin'], 456620, 1, 'Xmin cell center')
 
 
 def test_simple_io():
@@ -217,7 +217,7 @@ def test_ecl_run():
 
     # get the property object:
     pres1 = gg.get_prop_by_name('PRESSURE_20030101')
-    assert_almostequal(pres1.values.mean(), 308.45, 0.001)
+    tsetup.assert_almostequal(pres1.values.mean(), 308.45, 0.001)
 
     pres1.to_file(os.path.join(td, 'pres1.roff'))
 
@@ -235,6 +235,6 @@ def test_ecl_run():
     logger.debug(pres1)
     avg = pres1.values.mean()
     # ok checked in RMS:
-    assert_almostequal(avg, -26.073, 0.001)
+    tsetup.assert_almostequal(avg, -26.073, 0.001)
 
     pres1.to_file(os.path.join(td, 'pressurediff.roff'), name='PRESSUREDIFF')

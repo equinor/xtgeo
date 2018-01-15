@@ -5,7 +5,7 @@ import numpy as np
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Points
-from .test_xtg import assert_almostequal
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -48,8 +48,8 @@ def test_resample(fos_map):
     print('EXPORT', fout)
     snew.to_file(fout, fformat='irap_binary')
 
-    assert_almostequal(snew.values.mean(), 2791.21, 2)
-    assert_almostequal(snew.values.mean(), xs.values.mean(), 2)
+    tsetup.assert_almostequal(snew.values.mean(), 2791.21, 2)
+    tsetup.assert_almostequal(snew.values.mean(), xs.values.mean(), 2)
 
 
 def test_points_gridding(fos_map):
@@ -71,7 +71,7 @@ def test_points_gridding(fos_map):
     # now regrid
     xscopy.gridding(xyz)
 
-    assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
+    tsetup.assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
 
     xscopy.to_file(os.path.join(td, 'fos_points_to_map.gri'),
                    fformat='irap_binary')

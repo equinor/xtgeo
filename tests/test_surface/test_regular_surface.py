@@ -10,7 +10,7 @@ import numpy as np
 
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
-from ..test_common.test_xtg import assert_equal, assert_almostequal
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -36,11 +36,11 @@ def test_create():
     logger.info('Simple case...')
 
     x = RegularSurface()
-    assert_equal(x.ncol, 5, 'NX')
-    assert_equal(x.nrow, 3, 'NY')
+    tsetup.assert_equal(x.ncol, 5, 'NX')
+    tsetup.assert_equal(x.nrow, 3, 'NY')
     v = x.values
     xdim, ydim = v.shape
-    assert_equal(xdim, 5, 'NX from DIM')
+    tsetup.assert_equal(xdim, 5, 'NX from DIM')
 
 
 def test_irapasc_export():
@@ -72,7 +72,7 @@ def test_irapasc_export_and_import():
         values=np.random.rand(
             120,
             100))
-    assert_equal(x.ncol, 120)
+    tsetup.assert_equal(x.ncol, 120)
 
     mean1 = x.values.mean()
 
@@ -81,7 +81,7 @@ def test_irapasc_export_and_import():
 
     fsize = os.path.getsize('TMP/irap2_b.gri')
     logger.info(fsize)
-    assert_equal(fsize, 48900)
+    tsetup.assert_equal(fsize, 48900)
 
     # import irap ascii
     y = RegularSurface()
@@ -89,7 +89,7 @@ def test_irapasc_export_and_import():
 
     mean2 = y.values.mean()
 
-    assert_almostequal(mean1, mean2, 0.0001)
+    tsetup.assert_almostequal(mean1, mean2, 0.0001)
 
 
 def test_minmax_rotated_map():
@@ -100,10 +100,10 @@ def test_minmax_rotated_map():
     x.from_file(testset1,
                 fformat='irap_binary')
 
-    assert_almostequal(x.xmin, 454637.6, 0.1)
-    assert_almostequal(x.xmax, 468895.1, 0.1)
-    assert_almostequal(x.ymin, 5925995.0, 0.1)
-    assert_almostequal(x.ymax, 5939998.7, 0.1)
+    tsetup.assert_almostequal(x.xmin, 454637.6, 0.1)
+    tsetup.assert_almostequal(x.xmax, 468895.1, 0.1)
+    tsetup.assert_almostequal(x.ymin, 5925995.0, 0.1)
+    tsetup.assert_almostequal(x.ymax, 5939998.7, 0.1)
 
 
 def test_irapbin_io():
@@ -118,7 +118,7 @@ def test_irapbin_io():
 
     logger.debug("NX is {}".format(x.ncol))
 
-    assert_equal(x.ncol, 554)
+    tsetup.assert_equal(x.ncol, 554)
 
     # get the 1D numpy
     v1d = x.get_zval()
@@ -138,7 +138,7 @@ def test_irapbin_io():
 
     logger.info('MEAN value (update):\n{}'.format(x.values.mean()))
 
-    assert_almostequal(x.values.mean(), 1998.648, 0.01)
+    tsetup.assert_almostequal(x.values.mean(), 1998.648, 0.01)
 
     x.to_file('TMP/reek1_plus_300_a.fgr', fformat='irap_ascii')
     x.to_file('TMP/reek1_plus_300_b.gri', fformat='irap_binary')
@@ -147,11 +147,11 @@ def test_irapbin_io():
 
     # direct import
     y = RegularSurface(mfile)
-    assert_equal(y.ncol, 554)
+    tsetup.assert_equal(y.ncol, 554)
 
     # semidirect import
     cc = RegularSurface().from_file(mfile)
-    assert_equal(cc.ncol, 554)
+    tsetup.assert_equal(cc.ncol, 554)
 
 
 # @skipmytest
@@ -167,7 +167,7 @@ def test_get_xy_value_lists():
     logger.info(xylist[2])
     logger.info(valuelist[2])
 
-    assert_equal(valuelist[2], 1910.445)
+    tsetup.assert_equal(valuelist[2], 1910.445)
 
 
 def test_similarity():
@@ -183,12 +183,12 @@ def test_similarity():
     y = RegularSurface(mfile)
 
     si = x.similarity_index(y)
-    assert_equal(si, 0.0)
+    tsetup.assert_equal(si, 0.0)
 
     y.values = y.values * 2
 
     si = x.similarity_index(y)
-    assert_equal(si, 1.0)
+    tsetup.assert_equal(si, 1.0)
 
 
 def test_irapbin_io_loop():
@@ -237,7 +237,7 @@ def test_value_from_xy():
 
     z = x.get_value_from_xy(point=(460181.036, 5933948.386))
 
-    assert_almostequal(z, 1625.11, 0.01)
+    tsetup.assert_almostequal(z, 1625.11, 0.01)
 
     # outside value shall return None
     z = x.get_value_from_xy(point=(0.0, 7337128.076))
@@ -270,7 +270,7 @@ def test_fence():
     logger.debug("updated NP:")
     logger.debug(newfence)
 
-    assert_almostequal(newfence[1][2], 1720.9094, 0.01)
+    tsetup.assert_almostequal(newfence[1][2], 1720.9094, 0.01)
 
 
 def test_unrotate():

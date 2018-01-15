@@ -11,7 +11,7 @@ from xtgeo.plot import Grid3DSlice
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
-
+import tests.test_setup as tsetup
 
 path = 'TMP'
 try:
@@ -45,6 +45,7 @@ usefile2 = '../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff'
 usefile3 = '../xtgeo-testdata/etc/colortables/rainbow_reverse.rmscolor'
 
 
+@tsetup.skipifroxar
 def test_very_basic():
     """Just test that matplotlib works."""
     assert 'matplotlib' in str(plt)
@@ -58,6 +59,7 @@ def test_very_basic():
     plt.close()
 
 
+@tsetup.skipifroxar
 def test_slice_simple():
     """Trigger XSection class, and do some simple things basically."""
     layslice = Grid3DSlice()
@@ -79,6 +81,7 @@ def test_slice_simple():
         layslice.savefig('TMP/layerslice.png')
 
 
+@tsetup.skipifroxar
 def test_slice_plot_many_grid_layers():
     """Loop over layers and produce both SVG and PNG files to file"""
 

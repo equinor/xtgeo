@@ -4,7 +4,7 @@ import pytest
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Points
-from .test_xtg import assert_almostequal
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -49,7 +49,7 @@ def test_map_to_points(reek_map):
 
     assert isinstance(surf, RegularSurface)
 
-    assert_almostequal(surf.values.mean(), 0.5755830099, 0.001)
+    tsetup.assert_almostequal(surf.values.mean(), 0.5755830099, 0.001)
 
     px.from_surface(surf)
 
@@ -62,10 +62,10 @@ def test_map_to_points(reek_map):
     px.to_file(outf)
 
     assert px.dataframe['X'].min() == 456719.75
-    assert_almostequal(px.dataframe['Z'].mean(), 0.57558, 0.001)
+    tsetup.assert_almostequal(px.dataframe['Z'].mean(), 0.57558, 0.001)
 
     # read the output for comparison
     pxx = Points(outf)
 
-    assert_almostequal(px.dataframe['Z'].mean(), pxx.dataframe['Z'].mean(),
+    tsetup.assert_almostequal(px.dataframe['Z'].mean(), pxx.dataframe['Z'].mean(),
                        0.00001)

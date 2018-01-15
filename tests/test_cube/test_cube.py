@@ -2,11 +2,11 @@
 import os
 import sys
 import numpy as np
-import pytest
 
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
-from ..test_common.test_xtg import assert_almostequal
+
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -17,8 +17,8 @@ if not xtg.testsetup():
 td = xtg.tmpdir
 testpath = xtg.testpath
 
-skipsegyio = pytest.mark.skipif(sys.version_info > (2, 7),
-                                reason='Skip test with segyio for ver 3')
+# skipsegyio = pytest.mark.skipif(sys.version_info > (2, 7),
+#                                 reason='Skip test with segyio for ver 3')
 
 # =============================================================================
 # Do tests
@@ -28,6 +28,7 @@ sfile1 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.segy'
 sfile2 = testpath + '/cubes/reek/syntseis_20030101_seismic_depth_stack.segy'
 
 
+@tsetup.skipifroxar
 def test_create():
     """Create default cube instance."""
     x = Cube()
@@ -67,7 +68,6 @@ def test_segy_scantraces():
     # print line
 
 
-# @skipsegyio
 def test_segy_import_cvalues():
     """Import SEGY using internal reader (case 1 Reek) and chk issues."""
 
@@ -108,7 +108,7 @@ def test_segy_import():
     assert dim == (408, 280, 70), 'Dimensions 3D'
 
     print(x.values.max())
-    assert_almostequal(x.values.max(), 7.42017, 0.001)
+    tsetup.assert_almostequal(x.values.max(), 7.42017, 0.001)
 
     logger.debug('XORI: {}'.format(x.xori))
     logger.debug('XINC: {}'.format(x.xinc))
@@ -120,7 +120,7 @@ def test_segy_import():
     logger.debug('YFLP: {}'.format(x.yflip))
 
 
-# @skipsegyio
+@tsetup.skipsegyio
 def test_segyio_import():
     """Import SEGY (case 1 Reek) via SegIO library."""
 
@@ -137,7 +137,7 @@ def test_segyio_import():
 
     logger.info('Dimension is {}'.format(dim))
     assert dim == (408, 280, 70), 'Dimensions 3D'
-    assert_almostequal(x.values.max(), 7.42017, 0.001)
+    tsetup.assert_almostequal(x.values.max(), 7.42017, 0.001)
 
     logger.debug('XORI: {}'.format(x.xori))
     logger.debug('XINC: {}'.format(x.xinc))

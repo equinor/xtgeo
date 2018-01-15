@@ -9,7 +9,7 @@ from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 
-from ..test_common.test_xtg import assert_almostequal
+import tests.test_setup as tsetup
 
 # set default level
 xtg = XTGeoDialog()
@@ -137,7 +137,7 @@ def test_eclunrst_import_reek():
     press = GridProperty(testfile7, name='PRESSURE', fformat='unrst',
                          date=19991201, grid=gg)
 
-    assert_almostequal(press.values.mean(), 334.5232, 0.0001)
+    tsetup.assert_almostequal(press.values.mean(), 334.5232, 0.0001)
 
 def test_export_roff():
     """Property import from Eclipse. Then export to roff."""
@@ -204,7 +204,7 @@ def test_get_cell_corners():
     clist = grid.get_xyz_cell_corners(ijk=(4, 4, 1))
     logger.debug(clist)
 
-    assert_almostequal(clist[0], 457168.358886, 0.001)
+    tsetup.assert_almostequal(clist[0], 457168.358886, 0.001)
 
 
 def test_get_xy_values_for_webportal():
@@ -235,4 +235,4 @@ def test_get_xy_values_for_webportal_ecl():
     prop = GridProperty(testfile6, grid=grid, name='PORO')
 
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
-    assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)
+    tsetup.assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)

@@ -7,7 +7,7 @@ from xtgeo.xyz import Points
 from xtgeo.xyz import Polygons
 
 from xtgeo.common import XTGeoDialog
-from .test_grid import assert_almostequal
+import tests.test_setup as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -53,7 +53,7 @@ def test_import():
 
     x0 = mypoints.dataframe['X'].values[0]
     logger.debug(x0)
-    assert_almostequal(x0, 460842.434326, 0.001)
+    tsetup.assert_almostequal(x0, 460842.434326, 0.001)
 
 
 def test_import_zmap_and_xyz():
@@ -79,8 +79,8 @@ def test_import_zmap_and_xyz():
     x0 = mypol1.dataframe['X'].values[0]
     y1 = mypol1.dataframe['Y'].values[nn - 1]
 
-    assert_almostequal(x0, 457357.78125, 0.001)
-    assert_almostequal(y1, 6790785.5, 0.01)
+    tsetup.assert_almostequal(x0, 457357.78125, 0.001)
+    tsetup.assert_almostequal(y1, 6790785.5, 0.01)
 
     mypol2a.from_file(pfile2a, fformat='zmap')
     mypol2b.from_file(pfile2b)
@@ -112,7 +112,7 @@ def test_import_export_polygons():
 
     z0 = mypoly.dataframe['Z'].values[0]
 
-    assert_almostequal(z0, 2266.996338, 0.001)
+    tsetup.assert_almostequal(z0, 2266.996338, 0.001)
 
     logger.debug(mypoly.dataframe)
 
@@ -123,4 +123,4 @@ def test_import_export_polygons():
     # reimport and check
     mypoly2 = Polygons(td + '/polygon_export.xyz')
 
-    assert_almostequal(z0 + 100, mypoly2.dataframe['Z'].values[0], 0.001)
+    tsetup.assert_almostequal(z0 + 100, mypoly2.dataframe['Z'].values[0], 0.001)

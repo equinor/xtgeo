@@ -1,7 +1,5 @@
 #!/usr/bin/env python -u
-import os
 import sys
-import logging
 import pytest
 
 from xtgeo.grid3d import Grid
@@ -14,15 +12,8 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     sys.exit(-9)
 
-skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
-                                   reason="Big tests skip")
-
 td = xtg.tmpdir
 testpath = xtg.testpath
-
-skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
-                                   reason="Big tests skip")
-
 
 # =============================================================================
 # Do tests
@@ -30,7 +21,6 @@ skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 emerfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff'
 
-maugfile = '../xtgeo-testdata/3dgrids/mau/mau.roff'
 
 def test_hybridgrid1():
     """Making a hybridgrid for Emerald case (ROFF and GRDECL"""
@@ -134,31 +124,3 @@ def test_refine_vertically():
     grd.inactivate_by_dz(0.001)
 
     grd.to_file('TMP/test_refined_by_3.roff')
-
-
-@skiplargetest
-def test_refine_vertically_mau():
-    """Do a grid refinement vertically, Maureen case."""
-
-    logger.info('Read grid...')
-
-    grd = Grid(maugfile)
-    logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
-    logger.info('Read grid... done, NCOL is {}'.format(grd.ncol))
-    logger.info('Read grid... done, NROW is {}'.format(grd.nrow))
-
-    avg_dz1 = grd.get_dz().values3d.mean()
-
-    logger.info('AVG dZ prior is {}'.format(avg_dz1))
-
-    grd.refine_vertically(2)
-
-    avg_dz2 = grd.get_dz().values3d.mean()
-
-    logger.info('AVG dZ post refine is {}'.format(avg_dz2))
-
-    assert avg_dz1 == pytest.approx(2 * avg_dz2, abs=0.0001)
-
-    grd.inactivate_by_dz(0.00001)
-
-    grd.to_file('TMP/test_refined_by_2_mau.roff')
