@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """The setup script."""
 
+from glob import glob
+from os.path import basename
+from os.path import splitext
 from setuptools import setup, find_packages
 import versioneer
 
@@ -32,8 +34,10 @@ setup(
     long_description=readme + '\n\n' + history,
     author="Jan C. Rivenaes",
     author_email='jriv@statoil.com',
-    url='https://git.statoil.no/jriv/pyxtgeo',
-    packages=find_packages(exclude=['tests', 'tests.*']),
+    url='https://git.statoil.no/xtgeo/pyxtgeo',
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
+    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     # packages=find_packages('xtgeo'),
     include_package_data=True,
     install_requires=requirements,

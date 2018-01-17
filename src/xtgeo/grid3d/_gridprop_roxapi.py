@@ -14,11 +14,7 @@ logger = xtg.functionlogger(__name__)
 
 def import_prop_roxapi(prop, project, gname, pname):
     """Import a Property via ROXAR API spec."""
-    try:
-        import roxar
-    except ImportError:
-        warnings.warn('Cannot import roxar module!', RuntimeWarning)
-        raise
+    import roxar
 
     logger.info('SELF 2a is {}'.format(prop))
 
@@ -26,6 +22,7 @@ def import_prop_roxapi(prop, project, gname, pname):
 
     logger.info('Opening RMS project ...')
     if project is not None and isinstance(project, str):
+        # outside a RMS project
         projectname = project
         with roxar.Project.open(projectname, readonly=True) as proj:
 
@@ -43,24 +40,28 @@ def import_prop_roxapi(prop, project, gname, pname):
             except KeyError as keyerror:
                 raise RuntimeError(keyerror)
 
-    logger.info('SELF 2b is {}'.format(prop))
-    print(prop._roxprop)
+    else:
+        # inside a RMS project
+        try:
+            roxgrid = proj.grid_models[gname]
+            roxprop = roxgrid.properties[pname]
+            prop._roxorigin = True
+            _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop)
+
+        except KeyError as keyerror:
+            raise RuntimeError(keyerror)
 
     return prop
 
 
 def export_prop_roxapi(prop, project, gname, pname, saveproject=False):
     """Export to a Property in RMS via ROXAR API spec."""
-    try:
-        import roxar
-    except ImportError:
-        warnings.warn('Cannot import roxar module!', RuntimeWarning)
-        raise
+    import roxar
 
     logger.info('Opening RMS project ...')
     if project is not None and isinstance(project, str):
+        # outside RMS project
         projectname = project
-        roxar.Project.unlock(projectname)
         with roxar.Project.open(projectname) as proj:
 
             # Note that values must be extracted within the "with"
@@ -70,9 +71,6 @@ def export_prop_roxapi(prop, project, gname, pname, saveproject=False):
 
             try:
                 roxgrid = proj.grid_models[gname]
-
-                # tmp
-
                 _store_in_roxar(prop, pname, roxgrid)
 
                 if saveproject:
@@ -84,8 +82,18 @@ def export_prop_roxapi(prop, project, gname, pname, saveproject=False):
             except KeyError as keyerror:
                 raise RuntimeError(keyerror)
 
+    else:
+        # within RMS project
+        try:
+            roxgrid = project.grid_models[gname]
+            _store_in_roxar(prop, pname, roxgrid)
+        except KeyError as keyerror:
+            raise RuntimeError(keyerror)
+
 
 def _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop):
+
+    import roxar
 
     indexer = roxgrid.get_grid().grid_indexer
 
@@ -143,6 +151,8 @@ def _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop):
 
 
 def _store_in_roxar(prop, pname, roxgrid):
+
+    import roxar
 
     indexer = roxgrid.get_grid().grid_indexer
 

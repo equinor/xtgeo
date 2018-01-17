@@ -25,12 +25,9 @@ skipsegyio = pytest.mark.skipif(
 
 roxar = False
 if 'ROXENV' in os.environ:
-    roxenv = int(os.environ.get('ROXENV'))
-    print(roxenv)
-else:
-    roxenv = 0
-if roxenv == 1:
+    roxenv = str(os.environ.get('ROXENV'))
     roxar = True
+    print(roxenv)
     warnings.warn('Roxar is present')
 
 skipifroxar = pytest.mark.skipif(roxar,

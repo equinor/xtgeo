@@ -52,6 +52,8 @@ PIP := pip${PSHORT}
 
 TARGET := ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
 
+GID := res
+
 MY_BINDIST ?= $HOME
 
 USRPYPATH := ${MY_BINDIST}/lib/python${PYVER}/site-packages
@@ -136,8 +138,10 @@ siteinstall: dist ## Install in project/res (Trondheim) using $TARGET
 	\rm -fr  ${TARGET}/${APPLICATION}
 	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
-	/project/res/bin/res_perm ${TARGET}/${APPLICATION}*
-
+	chgrp ${GID} -R ${TARGET}/${APPLICATION}*
+	find ${TARGET}/${APPLICATION}* -type d -exec chmod 02775 {} \;
+	find ${TARGET}/${APPLICATION}* -type f -exec chmod 664 {} \;
+	find ${TARGET}/${APPLICATION}* -type f -name "*.so" -exec chmod 775 {} \;
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	@\rm -fr  ${USRPYPATH}/${APPLICATION}
