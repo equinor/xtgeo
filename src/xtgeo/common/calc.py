@@ -1,6 +1,4 @@
-"""
-Some common XTGEO calculation routines
-"""
+"""Some common XTGEO calculation routines."""
 
 import cxtgeo.cxtgeo as _cxtgeo
 
@@ -8,12 +6,17 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
+logger = xtg.functionlogger(__name__)
+
+
 def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
     """
     Convert a 1D index (starting from ibbase) to cell indices I J K.
 
     Returns I J K as a tuple.
     """
+
+    logger.info('IB to IJK')
 
     ip = _cxtgeo.new_intpointer()
     jp = _cxtgeo.new_intpointer()
@@ -42,7 +45,7 @@ def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
         # c order
         ib = _cxtgeo.x_ijk2ic(i, j, k, nx, ny, nz, ibbase)
 
-    if ibbase == 0 and ib > nx * ny* nz - 1:
+    if ibbase == 0 and ib > nx * ny * nz - 1:
         xtg.warn('Something is wrong with IJK conversion')
         xtg.warn('I J K, NX, NY, NZ IB: {} {} {} {} {} {} {}'
                  .format(i, j, k, nx, ny, nz, ib))

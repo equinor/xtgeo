@@ -3,7 +3,7 @@ import sys
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
 
-import tests.test_setup as tsetup
+import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)

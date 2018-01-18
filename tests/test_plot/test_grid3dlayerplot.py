@@ -11,7 +11,7 @@ from xtgeo.plot import Grid3DSlice
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
-import tests.test_setup as tsetup
+import test_common.test_xtg as tsetup
 
 path = 'TMP'
 try:

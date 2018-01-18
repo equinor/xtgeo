@@ -1,7 +1,8 @@
 # coding: utf-8
-
+import pytest
 import xtgeo
-import tests.test_setup as tsetup
+
+import test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -11,6 +12,7 @@ if not xtg.testsetup():
 
 td = xtg.tmpdir
 testpath = xtg.testpath
+
 
 # =============================================================================
 # Do tests
@@ -30,7 +32,7 @@ def test_rox_get_gridproperty():
     tsetup.assert_almostequal(poro.values.mean(), 0.1677, 0.001)
     tsetup.assert_almostequal(poro.values[1], 0.14942, 0.0001)
 
-    # logger.info('Roxar property id: {}'.format(poro._roxprop))
+    logger.info('Roxar property id: {}'.format(poro._roxprop))
 
 
 @tsetup.skipunlessroxar

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import sys
+import os
+import warnings
 import pytest
 
 import xtgeo.common.calc as xcalc
@@ -9,7 +10,7 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
 td = xtg.tmpdir
 testpath = xtg.testpath
@@ -26,6 +27,35 @@ def assert_equal(this, that, txt=''):
 def assert_almostequal(this, that, tol, txt=''):
     assert this == pytest.approx(that, abs=tol), txt
 
+
+# SEGYIO ----------------------------------------------------------------------
+no_segyio = False
+try:
+    import segyio  # pylint: disable=F401 # noqa:<Error No>
+except ImportError:
+    no_segyio = True
+
+if no_segyio:
+    warnings.warn('"segyio" library not found')
+
+skipsegyio = pytest.mark.skipif(no_segyio, reason='Skip test with segyio')
+
+# Roxar python-----------------------------------------------------------------
+# Routines using matplotlib shall not ran if ROXENV=1
+# use the @skipifroxar decorator
+
+roxar = False
+if 'ROXENV' in os.environ:
+    roxenv = str(os.environ.get('ROXENV'))
+    roxar = True
+    print(roxenv)
+    warnings.warn('Roxar is present')
+
+
+skipifroxar = pytest.mark.skipif(roxar, reason='Skip test in Roxar python')
+
+skipunlessroxar = pytest.mark.skipif(not roxar,
+                                     reason='Skip if NOT Roxar python')
 
 # =============================================================================
 # Do tests
