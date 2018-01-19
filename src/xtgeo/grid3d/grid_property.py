@@ -427,11 +427,12 @@ class GridProperty(Grid3D):
 
         return self
 
-    def from_roxar(self, gname, pname, projectname=None, realisation=0):
+    def from_roxar(self, projectname, gname, pname, realisation=0):
 
         """Import grid model property from RMS project, and makes an instance.
 
         Arguments:
+            projectname (str): Name of RMS project; use pure 'project' if inside RMS
             gfile (str): Name of grid model
             pfile (str): Name of grid property
             projectname (str): Name of RMS project; None if within a project
@@ -441,11 +442,12 @@ class GridProperty(Grid3D):
         _gridprop_roxapi.import_prop_roxapi(
             self, projectname, gname, pname, realisation)
 
-    def to_roxar(self, gname, pname, projectname=None, saveproject=False, realisation=0):
+    def to_roxar(self, projectname, gname, pname, saveproject=False, realisation=0):
 
         """Store a grid model property into a RMS project.
 
         Arguments:
+            projectname (str): Name of RMS project ('project' if inside a RMS project)
             gfile (str): Name of grid model
             pfile (str): Name of grid property
             projectname (str): Name of RMS project (None if inside a RMS project)
