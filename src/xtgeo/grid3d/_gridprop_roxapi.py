@@ -12,18 +12,15 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_prop_roxapi(prop, project, gname, pname):
+def import_prop_roxapi(prop, projectname, gname, pname, realisation):
     """Import a Property via ROXAR API spec."""
     import roxar
-
-    logger.info('SELF 2a is {}'.format(prop))
 
     prop._roxprop = None
 
     logger.info('Opening RMS project ...')
-    if project is not None and isinstance(project, str):
+    if projectname is not None and isinstance(projectname, str):
         # outside a RMS project
-        projectname = project
         with roxar.Project.open(projectname, readonly=True) as proj:
 
             # Note that values must be extracted within the "with"
@@ -43,7 +40,7 @@ def import_prop_roxapi(prop, project, gname, pname):
     else:
         # inside a RMS project
         try:
-            roxgrid = proj.grid_models[gname]
+            roxgrid = projectname.grid_models[gname]
             roxprop = roxgrid.properties[pname]
             prop._roxorigin = True
             _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop)
@@ -54,14 +51,13 @@ def import_prop_roxapi(prop, project, gname, pname):
     return prop
 
 
-def export_prop_roxapi(prop, project, gname, pname, saveproject=False):
+def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False, realisation=0):
     """Export to a Property in RMS via ROXAR API spec."""
     import roxar
 
     logger.info('Opening RMS project ...')
-    if project is not None and isinstance(project, str):
+    if projectname is not None and isinstance(projectname, str):
         # outside RMS project
-        projectname = project
         with roxar.Project.open(projectname) as proj:
 
             # Note that values must be extracted within the "with"
@@ -85,7 +81,7 @@ def export_prop_roxapi(prop, project, gname, pname, saveproject=False):
     else:
         # within RMS project
         try:
-            roxgrid = project.grid_models[gname]
+            roxgrid = projectname.grid_models[gname]
             _store_in_roxar(prop, pname, roxgrid)
         except KeyError as keyerror:
             raise RuntimeError(keyerror)
