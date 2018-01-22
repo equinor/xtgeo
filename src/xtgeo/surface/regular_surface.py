@@ -74,15 +74,15 @@ class RegularSurface(object):
 
         The instance can be made either from file or by a spesification::
 
-        >>> x1 = RegularSurface('somefilename')  # assume Irap binary
-        >>> x2 = RegularSurface('somefilename', fformat='irap_ascii')
-        >>> x3 = RegularSurface().from_file('somefilename',
-                                            fformat='irap_binary')
-        >>> x4 = RegularSurface()
-        >>> x4.from_file('somefilename', fformat='irap_binary')
-        >>> x5 = RegularSurface(ncol=20, nrow=10, xori=2000.0, yori=2000.0,
-                                rotation=0.0, xinc=25.0, yinc=25.0,
-                                values=np.zeros((20,10)))
+            >>> x1 = RegularSurface('somefilename')  # assume Irap binary
+            >>> x2 = RegularSurface('somefilename', fformat='irap_ascii')
+            >>> x3 = RegularSurface().from_file('somefilename',
+                                                 fformat='irap_binary')
+            >>> x4 = RegularSurface()
+            >>> x4.from_file('somefilename', fformat='irap_binary')
+            >>> x5 = RegularSurface(ncol=20, nrow=10, xori=2000.0, yori=2000.0,
+                                    rotation=0.0, xinc=25.0, yinc=25.0,
+                                    values=np.zeros((20,10)))
 
         Initiate a class and import::
 

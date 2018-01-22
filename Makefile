@@ -110,7 +110,7 @@ docsrun: clean ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/${APPLICATION}*.rst
 	rm -f docs/modules.rst
 	rm -fr docs/_build
-	sphinx-apidoc -o docs/ ${APPLICATION}
+	sphinx-apidoc -o docs/ src/${APPLICATION}
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 

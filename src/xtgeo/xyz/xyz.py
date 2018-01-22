@@ -39,7 +39,6 @@ class XYZ(object):
 
         self.logger.info('Instance initiated')
 
-
     # =========================================================================
     # Import and export
     # =========================================================================
@@ -111,10 +110,10 @@ class XYZ(object):
         Returns:
             Number of points exported
 
-        Note that the rms_wellpicks will try to output to::
+        Note that the rms_wellpicks will try to output to:
 
-            HorizonName, WellName, MD  if a MD (mdcolumn) is present,
-            HorizonName, WellName, X, Y, Z  otherwise
+        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
+        * HorizonName, WellName, X, Y, Z  otherwise
 
         Raises:
             KeyError if filter is set and key(s) are invalid
