@@ -138,10 +138,11 @@ siteinstall: dist ## Install in project/res (Trondheim) using $TARGET
 	\rm -fr  ${TARGET}/${APPLICATION}
 	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
-	chgrp ${GID} -R ${TARGET}/${APPLICATION}*
-	find ${TARGET}/${APPLICATION}* -type d -exec chmod 02775 {} \;
-	find ${TARGET}/${APPLICATION}* -type f -exec chmod 664 {} \;
-	find ${TARGET}/${APPLICATION}* -type f -name "*.so" -exec chmod 775 {} \;
+	# chgrp ${GID} -R ${TARGET}/${APPLICATION}*
+	# find ${TARGET}/${APPLICATION}* -type d -exec chmod 02775 {} \;
+	# find ${TARGET}/${APPLICATION}* -type f -exec chmod 664 {} \;
+	# find ${TARGET}/${APPLICATION}* -type f -name "*.so" -exec chmod 77
+5 {} \;
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	@\rm -fr  ${USRPYPATH}/${APPLICATION}
