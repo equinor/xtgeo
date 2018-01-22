@@ -170,6 +170,7 @@ class GridProperty(Grid3D):
         """Returns or rename the property name."""
         return self._name
 
+
     @name.setter
     def name(self, name):
         self._name = name
