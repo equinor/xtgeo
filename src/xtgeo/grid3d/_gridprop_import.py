@@ -98,7 +98,6 @@ def import_eclbinary_v2(prop, pfile, name=None, etype=1, date=None,
     # arrays from Eclipse INIT or UNRST are usually for inactive values only.
     # Use the ACTNUM index array for vectorized numpy remapping
     actnum = grid.get_actnum().values
-    print(actnum)
 
     allvalues = np.zeros((ncol * nrow * nlay), dtype=values.dtype) + use_undef
     logger.debug('Indices for actnum: {}'.format(grid.actnum_indices))
