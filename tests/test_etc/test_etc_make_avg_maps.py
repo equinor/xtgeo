@@ -33,11 +33,11 @@ logger = logging.getLogger(__name__)
 gfile1 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
 ifile1 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 
-gfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.EGRID'
-ifile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.INIT'
-rfile2 = '../xtgeo-testdata/3dgrids/gfb/GULLFAKS.UNRST'
+gfile2 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
+ifile2 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
+rfile2 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
 
-ffile1 = '../xtgeo-testdata/polygons/gfb/faults_zone10.zmap'
+ffile1 = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
 
 
 @tsetup.skipifroxar
@@ -112,9 +112,9 @@ def test_avg02():
 
     # make a map... estimate from xc and yc
 
-    avgmap = RegularSurface(nx=220, ny=260, xinc=50, yinc=50,
-                            xori=451100, yori=6779700,
-                            values=np.zeros((220, 260)))
+    avgmap = RegularSurface(nx=200, ny=250, xinc=50, yinc=50,
+                            xori=457000, yori=5927000,
+                            values=np.zeros((200, 250)))
 
     avgmap.avg_from_3dprop(xprop=xcuse, yprop=ycuse,
                            mprop=pouse, dzprop=dzuse,
@@ -130,7 +130,7 @@ def test_avg02():
     avgmap.to_file('TMP/tmp.poro.gri', fformat='irap_ascii')
 
     logger.info(avgmap.values.mean())
-    assert avgmap.values.mean() == pytest.approx(0.158, abs=0.001)
+    assert avgmap.values.mean() == pytest.approx(0.0828, abs=0.001)
 
 
 @tsetup.skipifroxar
@@ -144,7 +144,7 @@ def test_avg03():
     # get the sw
     logger.info("Reading GridProperty file")
     sw = GridProperty()
-    sw.from_file(rfile2, fformat='unrst', name='SWAT', date=19851001,
+    sw.from_file(rfile2, fformat='unrst', name='SWAT', date=19991201,
                  grid=g)
 
     # # # get the sw2

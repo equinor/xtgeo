@@ -11,11 +11,13 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
+# Note: 'self' is an instance of RegularSurface
 
-def points_gridding(surf, points, method='linear'):
+
+def points_gridding(self, points, method='linear'):
     """Do gridding from a points data set."""
 
-    xi, yi = surf.get_xy_values()
+    xi, yi = self.get_xy_values()
 
     df = points.dataframe
 
@@ -36,16 +38,21 @@ def points_gridding(surf, points, method='linear'):
 
     logger.info('Gridding point ... DONE')
 
-    znew = surf.ensure_correct_values(surf.ncol, surf.nrow, znew)
+    znew = self.ensure_correct_values(self.ncol, self.nrow, znew)
 
-    surf.values = znew
+    self.values = znew
 
 
-def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
+def avg_from_3d_prop_gridding(self, xprop=None, yprop=None,
                               mprop=None, dzprop=None, layer_minmax=None,
                               truncate_le=None, zoneprop=None,
                               zone_minmax=None,
                               sampling=1):
+
+    # TODO:
+    # - Refactoring, shorten routine
+    # - Clarify the use of ordinary numpies vs masked
+    # - speed up gridding if possible
 
     ncol, nrow, nlay = xprop.shape
 
@@ -71,7 +78,7 @@ def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
     logger.info('Zone is :')
     logger.info(zoneprop)
 
-    xi, yi = surf.get_xy_values()
+    xi, yi = self.get_xy_values()
 
     sf = sampling
 
@@ -103,8 +110,8 @@ def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
         dzcopy = np.copy(dzprop[::, ::, k - 1:k])
 
         if first:
-            wsum = np.zeros((surf._ncol, surf._nrow), order='F')
-            dzsum = np.zeros((surf._ncol, surf._nrow), order='F')
+            wsum = np.zeros((self._ncol, self._nrow), order='F')
+            dzsum = np.zeros((self._ncol, self._nrow), order='F')
             first = False
 
         logger.debug(zcopy)
@@ -151,12 +158,17 @@ def avg_from_3d_prop_gridding(surf, xprop=None, yprop=None,
     if truncate_le:
         vv = ma.masked_less(vv, truncate_le)
 
-    surf.values = vv
+    self.values = vv
 
 
-def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
+def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
                                   hcpfzprop=None, zoneprop=None,
                                   zone_minmax=None, layer_minmax=None):
+
+    # TODO:
+    # - Refactoring, shorten routine
+    # - Clarify the use of ordinary numpies vs masked
+    # - speed up gridding if possible
 
     for a in [hcpfzprop, xprop, yprop, zoneprop]:
         logger.debug('{} MIN MAX MEAN {} {} {}'.
@@ -180,7 +192,7 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
     logger.debug('Grid layout is {} {} {}'.format(ncol, nrow, nlay))
 
     # rotation in mesh coords are OK!
-    xi, yi = surf.get_xy_values()
+    xi, yi = self.get_xy_values()
 
     # filter and compute per K layer (start count on 0)
     for k0 in range(layer_minmax[0] - 1, layer_minmax[1]):
@@ -191,21 +203,20 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
 
         if k1 == layer_minmax[0]:
             logger.info('Initialize zsum ...')
-            zsum = np.zeros((surf._ncol, surf._nrow), order='F')
+            zsum = np.zeros((self._ncol, self._nrow), order='F')
 
         # this should actually never happen...
         if k1 < layer_minmax[0] or k1 > layer_minmax[1]:
             logger.warning('SKIP (layer_minmax)')
             continue
 
-        zonecopy = np.copy(zoneprop[:, :, k0])
+        if zoneprop is not None:
+            zoneslice = zoneprop[:, :, k0]
 
-        logger.debug('Zone MEAN is {}'.format(zonecopy.mean()))
-
-        actz = zonecopy.mean()
-        if actz < zone_minmax[0] or actz > zone_minmax[1]:
-            logger.info('SKIP (not active zone)')
-            continue
+            actz = int(round(zoneslice.mean()))
+            if actz < zone_minmax[0] or actz > zone_minmax[1]:
+                logger.info('SKIP (not active zone)')
+                continue
 
         # get slices per layer of relevant props
         xcopy = np.copy(xprop[:, :, k0])
@@ -242,9 +253,9 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
 
         xc = xcopy.flatten(order='F')
 
-        x = x[xc < surf._undef_limit]
-        y = y[xc < surf._undef_limit]
-        z = z[xc < surf._undef_limit]
+        x = x[xc < self._undef_limit]
+        y = y[xc < self._undef_limit]
+        z = z[xc < self._undef_limit]
 
         logger.debug('Reshape and filter ... done')
 
@@ -267,8 +278,8 @@ def hc_thickness_3dprops_gridding(surf, xprop=None, yprop=None,
 
     logger.debug(repr(zsum))
     logger.debug(repr(zsum.flags))
-    surf.values = zsum
-    logger.debug(repr(surf._values))
+    self.values = zsum
+    logger.debug(repr(self._values))
 
     logger.debug('Exit from hc_thickness_from_3dprops')
 

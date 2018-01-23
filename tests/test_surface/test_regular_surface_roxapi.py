@@ -20,7 +20,7 @@ testpath = xtg.testpath
 # =============================================================================
 
 
-@tsetup.skipunlessroxar  # disable=F405 # noqa:<Error No>
+@tsetup.skipunlessroxar
 def test_getsurface():
     """Get a surface from a RMS project."""
 

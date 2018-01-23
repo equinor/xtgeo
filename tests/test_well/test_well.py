@@ -57,55 +57,6 @@ def test_import_export_many():
         logger.info("Exporting " + wname)
         mywell.to_file(wname)
 
-# def test_import_export_many2():
-#     """ Import many wells (test speed) GULLFAKS"""
-#     wfiles = "/project/gullfaks/resmod/gfmain_brent/2015a/" +\
-#         "r003/rms/output/tmp/etc/data/wells/geomodel/*.w"
-
-#     start = timer()
-#     for filename in glob.glob(wfiles):
-#         logger.info("Importing "+filename)
-#         mywell = Well()
-#         mywell.from_file(filename)
-#         # logger.info(mywell.nrow)
-#         # logger.info(mywell.ncol)
-#         # logger.info(mywell.lognames)
-
-#         # wname = path + "/" + mywell.xwellname + ".w"
-#         # logger.info("Exporting "+wname)
-#         # mywell.to_file(wname)
-
-#     end = timer()
-#     diff = end - start
-#     logger.info("\nImporten many gullfaks wells using {} seconds\n".format(diff))
-
-# def test_operations1():
-#     """Operation on a log."""
-
-#     wfile = "../../testdata/Well/T/a/31_2-1.w"
-
-#     mywell = Well()
-
-#     mywell.from_file(wfile)
-
-#     df = mywell.dataframe
-#     logger.info(df.head())
-
-#     # make GR = GR+100 if not -999 ...
-
-#     df['GR'].fillna(value=100, inplace=True)
-
-#     logger.info(df.head())
-
-#     # set zone 21 to -999
-
-#     df['ZONELOG'].loc[df['ZONELOG']==21] = np.nan
-
-#     # set GR to undef if ZONELOG is undef
-#     df.GR = df.GR.where(df.ZONELOG, np.nan)
-
-# mywell.to_file("TMP/x.w")
-
 
 def test_get_carr():
     """Get a C array pointer"""
