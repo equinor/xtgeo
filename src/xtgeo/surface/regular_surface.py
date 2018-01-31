@@ -841,12 +841,14 @@ class RegularSurface(object):
     # Interacion with points
     # =========================================================================
 
-    def gridding(self, points, method='linear'):
+    def gridding(self, points, method='linear', coarsen=1):
         """Grid a surface from points.
 
         Args:
             points(Points): XTGeo Points instance.
             method (str): Gridding method option: linear / cubic / nearest
+            coarsen (int): Coarsen factor, to speed up gridding, but will
+                give poorer result.
 
         Example::
 
@@ -868,7 +870,8 @@ class RegularSurface(object):
 
         self.logger.info('Do gridding...')
 
-        _regsurf_gridding.points_gridding(self, points)
+        _regsurf_gridding.points_gridding(self, points, coarsen=coarsen,
+                                          method=method)
 
     # =========================================================================
     # Interacion with other surface

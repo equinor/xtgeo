@@ -59,32 +59,17 @@ def test_import():
 def test_import_zmap_and_xyz():
     """Import XYZ polygons on ZMAP and XYZ format from file"""
 
-    pfile1 = '../xtgeo-testdata/polygons/gfb/faults_zone10.zmap'
-
-    pfile2a = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
-    pfile2b = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
-    pfile2c = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
-
-    mypol1 = Polygons()
+    pfile1a = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
+    pfile1b = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
+    pfile1c = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
 
     mypol2a = Polygons()
     mypol2b = Polygons()
     mypol2c = Polygons()
 
-    mypol1.from_file(pfile1, fformat='zmap')
-
-    nn = mypol1.nrow
-    assert nn == 16666
-
-    x0 = mypol1.dataframe['X'].values[0]
-    y1 = mypol1.dataframe['Y'].values[nn - 1]
-
-    tsetup.assert_almostequal(x0, 457357.78125, 0.001)
-    tsetup.assert_almostequal(y1, 6790785.5, 0.01)
-
-    mypol2a.from_file(pfile2a, fformat='zmap')
-    mypol2b.from_file(pfile2b)
-    mypol2c.from_file(pfile2c)
+    mypol2a.from_file(pfile1a, fformat='zmap')
+    mypol2b.from_file(pfile1b)
+    mypol2c.from_file(pfile1c)
 
     assert mypol2a.nrow == mypol2b.nrow
     assert mypol2b.nrow == mypol2c.nrow

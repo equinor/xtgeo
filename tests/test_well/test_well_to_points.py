@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 def test_wellzone_to_points():
     """Import well from file and put zone boundaries to a Pandas object."""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
+    wfile = "../xtgeo-testdata/wells/reek/1/OP_1.w"
 
-    mywell = Well(wfile, zonelogname="ZONELOG")
+    mywell = Well(wfile, zonelogname="Zonelog")
     logger.info("Imported {}".format(wfile))
 
     # get the zpoints which is a Pandas

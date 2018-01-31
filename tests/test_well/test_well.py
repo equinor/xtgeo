@@ -1,5 +1,8 @@
 import glob
 import sys
+
+import pytest
+
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
 
@@ -18,32 +21,38 @@ testpath = xtg.testpath
 # Do tests
 # =========================================================================
 
+wfile = "../xtgeo-testdata/wells/reek/1/OP_1.w"
+wfiles = "../xtgeo-testdata/wells/reek/1/*"
 
-def test_import():
+
+@pytest.fixture()
+def loadwell1():
+    logger.info('Load well 1')
+    return Well(wfile)
+
+
+def test_import(loadwell1):
     """Import well from file."""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-1_H.w"
-
-    mywell = Well(wfile)
+    mywell = loadwell1
 
     logger.debug("True well name:", mywell.truewellname)
-    tsetup.assert_equal(mywell.xpos, 524139.420, 'XPOS')
-    tsetup.assert_equal(mywell.ypos, 6740790.41, 'YPOS')
-    tsetup.assert_equal(mywell.wellname, '31/2-E-1_H', 'YPOS')
+    tsetup.assert_equal(mywell.xpos, 461809.59, 'XPOS')
+    tsetup.assert_equal(mywell.ypos, 5932990.36, 'YPOS')
+    tsetup.assert_equal(mywell.wellname, 'OP_1', 'WNAME')
 
-    logger.info(mywell.get_logtype('ZONELOG'))
-    logger.info(mywell.get_logrecord('ZONELOG'))
+    logger.info(mywell.get_logtype('Zonelog'))
+    logger.info(mywell.get_logrecord('Zonelog'))
     logger.info(mywell.lognames_all)
     logger.info(mywell.dataframe)
 
-    # logger.info the numpy string of GR...
-    logger.info(type(mywell.dataframe['GR'].values))
+    # logger.info the numpy string of Poro...
+    logger.info(type(mywell.dataframe['Poro'].values))
 
 
 def test_import_export_many():
     """ Import many wells (test speed)"""
 
-    wfiles = "../xtgeo-testdata/wells/tro/1/*"
     logger.debug(wfiles)
 
     for filename in glob.glob(wfiles):
@@ -58,12 +67,10 @@ def test_import_export_many():
         mywell.to_file(wname)
 
 
-def test_get_carr():
+def test_get_carr(loadwell1):
     """Get a C array pointer"""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
-
-    mywell = Well(wfile)
+    mywell = loadwell1
 
     dummy = mywell.get_carray("NOSUCH")
 
@@ -78,7 +85,7 @@ def test_get_carr():
 
     tsetup.assert_equal(swig, True, 'carray from log name, double')
 
-    cref = mywell.get_carray("ZONELOG")
+    cref = mywell.get_carray("Zonelog")
 
     xref = str(cref)
     swig = False
@@ -88,21 +95,17 @@ def test_get_carr():
     tsetup.assert_equal(swig, True, 'carray from log name, int')
 
 
-def test_make_hlen():
+def test_make_hlen(loadwell1):
     """Create a hlen log."""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
-
-    mywell = Well(wfile)
+    mywell = loadwell1
     mywell.create_relative_hlen()
 
     logger.debug(mywell.dataframe)
 
 
-def test_fence():
+def test_fence(loadwell1):
     """Return a resampled fence."""
-
-    wfile = "../xtgeo-testdata/wells/gfb/1/34_10-A-42.w"
 
     mywell = Well(wfile)
     pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
@@ -113,76 +116,42 @@ def test_fence():
 def test_get_zonation_points():
     """Get zonations points (zone tops)"""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
-
-    mywell = Well(wfile, zonelogname='ZONELOG')
+    mywell = Well(wfile, zonelogname='Zonelog')
     mywell.get_zonation_points()
 
 
-@tsetup.skipifroxar  # fails if roxar version; wrong pandas?
 def test_get_zone_interval():
     """Get zonations points (zone tops)"""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-E-3_Y1H.w"
-
-    mywell = Well(wfile, zonelogname='ZONELOG')
-    line = mywell.get_zone_interval(10)
+    mywell = Well(wfile, zonelogname='Zonelog')
+    line = mywell.get_zone_interval(3)
 
     logger.info(type(line))
 
-    tsetup.assert_equal(line.iat[0, 0], 524826.882)
-    tsetup.assert_equal(line.iat[-1, 2], 1555.3452)
+    tsetup.assert_almostequal(line.iat[0, 0], 462698.33299, 0.001)
+    tsetup.assert_almostequal(line.iat[-1, 2], 1643.1618, 0.001)
 
 
-def test_get_zonation_holes():
-    """get a report of holes in the zonation, some samples with -999 """
+# def test_get_zonation_holes():
+#     """get a report of holes in the zonation, some samples with -999 """
 
-    wfile = "../xtgeo-testdata/wells/tro/3/31_2-G-4_BY1H_holes.w"
+#     mywell = Well(wfile, zonelogname='Zonelog')
+#     report = mywell.report_zonation_holes()
 
-    mywell = Well(wfile, zonelogname='ZONELOG')
-    report = mywell.report_zonation_holes()
+#     logger.info("\n{}".format(report))
 
-    logger.info("\n{}".format(report))
-
-    tsetup.assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
-    tsetup.assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z
-
-    # ----------------------------------------------------------
-
-    wfile = "../xtgeo-testdata/wells/oea/1/w1_holes.w"
-
-    mywell = Well(wfile, zonelogname='Z2002A', mdlogname='MDEPTH')
-    report = mywell.report_zonation_holes()
-
-    logger.info("\n{}".format(report))
-
-    tsetup.assert_equal(report.iat[0, 6], 3823.4)  # value for MD
-
-    # ----------------------------------------------------------
-
-    wfile = "../xtgeo-testdata/wells/tro/3/31_2-1.w"
-
-    mywell = Well(wfile, zonelogname='ZONELOG', mdlogname='MD')
-    report = mywell.report_zonation_holes()
-
-    logger.info("\n{}".format(report))
-    logger.info("\n{}".format(len(report)))
-
-    tsetup.assert_equal(len(report), 2)  # report length
-    tsetup.assert_equal(report.iat[1, 4], 28)  # zone no.
+#     tsetup.assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
+#     tsetup.assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z
 
 
-@tsetup.skipifroxar
-def test_get_filled_dataframe():
-    """Get a filled DataFrame"""
+# def test_get_filled_dataframe():
+#     """Get a filled DataFrame"""
 
-    wfile = "../xtgeo-testdata/wells/tro/1/31_2-1.w"
+#     mywell = Well(wfile)
 
-    mywell = Well(wfile)
+#     df1 = mywell.dataframe
 
-    df1 = mywell.dataframe
+#     df2 = mywell.get_filled_dataframe()
 
-    df2 = mywell.get_filled_dataframe()
-
-    logger.debug(df1)
-    logger.debug(df2)
+#     logger.debug(df1)
+#     logger.debug(df2)

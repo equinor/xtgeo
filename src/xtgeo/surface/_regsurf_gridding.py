@@ -14,7 +14,7 @@ logger = xtg.functionlogger(__name__)
 # Note: 'self' is an instance of RegularSurface
 
 
-def points_gridding(self, points, method='linear'):
+def points_gridding(self, points, method='linear', coarsen=1):
     """Do gridding from a points data set."""
 
     xi, yi = self.get_xy_values()
@@ -24,6 +24,13 @@ def points_gridding(self, points, method='linear'):
     xc = df['X'].values
     yc = df['Y'].values
     zc = df['Z'].values
+
+    if coarsen > 1:
+        xc = xc[::coarsen]
+        yc = yc[::coarsen]
+        zc = zc[::coarsen]
+
+    logger.info('Length of xc array: {}'.format(xc.size))
 
     validmethods = ['linear', 'nearest', 'cubic']
     if method not in set(validmethods):
