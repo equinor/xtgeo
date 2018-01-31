@@ -971,8 +971,9 @@ class RegularSurface(object):
         elif ier == -5:
             raise RuntimeWarning('No nodes sampled: map is outside cube?')
 
-    def slice_cube_window(self, cube, zsurf=None, sampling='nearest',
-                          mask=True, zrange=10, ndiv=None, attribute='max'):
+    def slice_cube_window(self, cube, zsurf=None, other=None,
+                          other_position='below', sampling='nearest',
+                          mask=True, zrange=None, ndiv=None, attribute='max'):
         """Slice the cube within a vertical window and get the statistical
         attrubute.
 
@@ -989,18 +990,23 @@ class RegularSurface(object):
         * 'var' for variance
 
         Args:
-            cube (object): Instance of a Cube()
-            zsurf (surface object): Instance of a depth (or time) map, which
+            cube (Cube): Instance of a Cube()
+            zsurf (RegularSurface): Instance of a depth (or time) map, which
                 is the depth or time map (or...) that is used a slicer.
                 If None, then the surface instance itself is used a slice
                 criteria. Note that zsurf must have same map defs as the
                 surface instance.
+            other (RegularSurface): Instance of other surface if window is
+                between surfaces instead of a static window. The zrange
+                input is then not applied.
             sampling (str): 'nearest' for nearest node (default), or
                 'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
                 the cube will be undef.
-            zrange (float): The one-sided range of the window, e.g. 10 meter
-                (meter if in depth mode). The full window is +- zrange
+            zrange (float): The one-sided range of the window, e.g. 10
+                (10 is default) units (e.g. meters if in depth mode).
+                The full window is +- zrange. If other surface is present,
+                zrange is computed based on that.
             ndiv (int): Number of intervals for sampling within zrange. None
                 means 'auto' sampling, using 0.5 of cube Z increment as basis.
             attribute (str): The requested attribute, e.g. 'max' value
@@ -1017,7 +1023,11 @@ class RegularSurface(object):
             ValueError if attribute is invalid.
         """
 
-        _regsurf_cube.slice_cube_window(self, cube, zsurf=zsurf,
+        if other is None and zrange is None:
+            zrange = 10
+
+        _regsurf_cube.slice_cube_window(self, cube, zsurf=zsurf, other=other,
+                                        other_position=other_position,
                                         sampling=sampling, mask=mask,
                                         zrange=zrange, ndiv=ndiv,
                                         attribute=attribute)

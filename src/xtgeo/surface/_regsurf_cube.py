@@ -14,16 +14,18 @@ _cxtgeo.xtg_verbose_file('NONE')
 
 xtg_verbose_level = xtg.get_syslevel()
 
+# self = RegularSurface instance!
 
-def slice_cube(rmap, cube, zsurf=None, sampling='nearest', mask=True):
+
+def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
     """Private funct ot do the Cube slicing."""
 
     if zsurf is not None:
         other = zsurf
     else:
-        other = rmap.copy()
+        other = self.copy()
 
-    if not rmap.compare_topology(other):
+    if not self.compare_topology(other):
         raise Exception
 
     if mask:
@@ -33,7 +35,7 @@ def slice_cube(rmap, cube, zsurf=None, sampling='nearest', mask=True):
 
     cubeval1d = np.ravel(cube.values, order='F')
 
-    nsurf = rmap.ncol * rmap.nrow
+    nsurf = self.ncol * self.nrow
 
     usesampling = 0
     if sampling == 'trilinear':
@@ -52,13 +54,13 @@ def slice_cube(rmap, cube, zsurf=None, sampling='nearest', mask=True):
                                          cube.rotation,
                                          cube.yflip,
                                          cubeval1d,
-                                         rmap.ncol,
-                                         rmap.nrow,
-                                         rmap.xori,
-                                         rmap.xinc,
-                                         rmap.yori,
-                                         rmap.yinc,
-                                         rmap.rotation,
+                                         self.ncol,
+                                         self.nrow,
+                                         self.xori,
+                                         self.xinc,
+                                         self.yori,
+                                         self.yinc,
+                                         self.rotation,
                                          other.get_zval(),
                                          nsurf,
                                          usesampling, opt2,
@@ -67,10 +69,12 @@ def slice_cube(rmap, cube, zsurf=None, sampling='nearest', mask=True):
     if istat != 0:
         logger.warning('Seem to be rotten')
 
-    rmap.set_zval(v1d)
+    self.set_zval(v1d)
 
 
-def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
+def slice_cube_window(self, cube, zsurf=None, other=None,
+                      other_position='below',
+                      sampling='nearest', mask=True,
                       zrange=10, ndiv=None, attribute='max'):
     """Slice Cube with a window and extract attribute(s)
 
@@ -80,9 +84,13 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
     logger.info('Slice cube window method')
 
     if zsurf is not None:
-        other = zsurf
+        this = zsurf
     else:
-        other = rmap.copy()
+        this = self.copy()
+
+    if other is not None:
+        zdelta = np.absolute(this.values - other.values)
+        zrange = zdelta.max()
 
     ndivmode = 'user setting'
     if ndiv is None:
@@ -92,13 +100,29 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
             ndiv = 1
             logger.warning('NDIV < 1; reset to 1')
 
+    logger.info('ZRANGE is {}'.format(zrange))
     logger.info('NDIV is set to {} ({})'.format(ndiv, ndivmode))
 
     # This will run slice in a loop within a window. Then, numpy methods
     # are applied to get the attributes
 
+    if other is None:
+        attvalues = _slice_contant_window(this, cube, sampling, zrange,
+                                          ndiv, mask, attribute)
+    else:
+        attvalues = _slice_between_surfaces(this, cube, sampling, other,
+                                            other_position, zrange,
+                                            ndiv, mask, attribute)
+
+    self.values = attvalues
+    logger.info('Mean of cube attribute is {}'.format(self.values.mean()))
+
+
+def _slice_contant_window(this, cube, sampling, zrange,
+                          ndiv, mask, attribute):
+    """Slice a window, (contant in vertical extent)."""
     npcollect = []
-    zcenter = other.copy()
+    zcenter = this.copy()
     zcenter.slice_cube(cube, sampling=sampling, mask=mask)
     npcollect.append(zcenter.values)
 
@@ -108,7 +132,7 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
 
     # collect above the original surface
     for i in range(ndiv):
-        ztmp = other.copy()
+        ztmp = this.copy()
         ztmp.values -= zincr * (i + 1)
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
         ztmp.slice_cube(cube, sampling=sampling, mask=mask)
@@ -117,7 +141,7 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
 
     # collect below the original surface
     for i in range(ndiv):
-        ztmp = other.copy()
+        ztmp = this.copy()
         ztmp.values += zincr * (i + 1)
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
         ztmp.slice_cube(cube, sampling=sampling, mask=mask)
@@ -126,6 +150,53 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
 
     stacked = ma.dstack(npcollect)
 
+    attvalues = _attvalues(attribute, stacked)
+    return attvalues
+
+
+def _slice_between_surfaces(this, cube, sampling, other, other_position,
+                            zrange, ndiv, mask, attribute):
+    """Slice and find values bewteen two surface"""
+
+    npcollect = []
+    zincr = zrange / float(ndiv)
+
+    zcenter = this.copy()
+    zcenter.slice_cube(cube, sampling=sampling, mask=mask)
+    npcollect.append(zcenter.values)
+
+    # collect below or above the original surface
+    if other_position == 'above':
+        mul = -1
+    else:
+        mul = 1
+
+    for i in range(ndiv):
+        ztmp = this.copy()
+        ztmp.values += zincr * (i + 1) * mul
+        zvalues = ztmp.values.copy()
+        logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
+        ztmp.slice_cube(cube, sampling=sampling, mask=mask)
+
+        diff = mul * (other.values - zvalues)
+
+        values = ztmp.values
+        values = ma.masked_where(diff < 0.0, values)
+
+        logger.info('Diff min and max {} {}'.format(diff.min(), diff.max()))
+        logger.info('Mean of cube slice is {}'.format(values.mean()))
+        logger.info('Number of nonmasked elements {}'.format(values.count()))
+
+        npcollect.append(values)
+
+    stacked = ma.dstack(npcollect)
+
+    attvalues = _attvalues(attribute, stacked)
+    return attvalues
+
+
+def _attvalues(attribute, stacked):
+    """Attibute values computed in numpy.ma stack."""
     if attribute == 'max':
         attvalues = ma.max(stacked, axis=2)
     elif attribute == 'min':
@@ -146,5 +217,4 @@ def slice_cube_window(rmap, cube, zsurf=None, sampling='nearest', mask=True,
         attvalues = np.asfortranarray(attvalues)
         attvalues = ma.array(attvalues, mask=mask, order='F')
 
-    rmap.values = attvalues
-    logger.info('Mean of cube attribute is {}'.format(rmap.values.mean()))
+    return attvalues
