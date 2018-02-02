@@ -10,7 +10,7 @@ logger = xtg.functionlogger(__name__)
 xtg_verbose_level = xtg.get_syslevel()
 
 
-def import_horizon_roxapi(surf, project, name, category,
+def import_horizon_roxapi(self, project, name, category,
                           realisation):
     """Import a Horizon surface via ROXAR API spec."""
     import roxar
@@ -20,44 +20,44 @@ def import_horizon_roxapi(surf, project, name, category,
         with roxar.Project.open_import(projectname) as proj:
             try:
                 rox = proj.horizons[name][category].get_grid(realisation)
-                _roxapi_horizon_to_xtgeo(surf, rox)
+                _roxapi_horizon_to_xtgeo(self, rox)
             except KeyError as ke:
                 logger.error(ke)
     else:
         rox = project.horizons[name][category].get_grid(realisation)
-        _roxapi_horizon_to_xtgeo(surf, rox)
+        _roxapi_horizon_to_xtgeo(self, rox)
 
-    return surf
+    return self
 
 
-def export_horizon_roxapi(surf, project, name, category,
+def export_horizon_roxapi(self, project, name, category,
                           realisation):
-    """Import a Horizon surface via ROXAR API spec."""
-    import roxar
+    """Export (store) a Horizon surface to RMS via ROXAR API spec."""
+    # import roxar
 
-    pass
+    raise NotImplementedError
 
     # if project is not None and isinstance(project, str):
     #     projectname = project
     #     with roxar.Project.open_import(projectname) as proj:
     #         try:
     #             rox = proj.horizons[name][category].get_grid(realisation)
-    #             surf._roxapi_horizon_to_xtgeo(rox)
+    #             self._roxapi_horizon_to_xtgeo(rox)
     #         except KeyError as ke:
     #             logger.error(ke)
     # else:
     #     rox = project.horizons[name][category].get_grid(realisation)
-    #     surf._roxapi_horizon_to_xtgeo(rox)
+    #     self._roxapi_horizon_to_xtgeo(rox)
 
-    # return surf
+    # return self
 
 
-def _roxapi_horizon_to_xtgeo(surf, rox):
+def _roxapi_horizon_to_xtgeo(self, rox):
     """Tranforming surfaces from ROXAPI to XTGeo object."""
     # local function
     logger.info('Surface from roxapi to xtgeo...')
-    surf._xori, surf._yori = rox.origin
-    surf._ncol, surf._nrow = rox.dimensions
-    surf._xinc, surf._yinc = rox.increment
-    surf._rotation = rox.rotation
-    surf._values = rox.get_values()
+    self._xori, self._yori = rox.origin
+    self._ncol, self._nrow = rox.dimensions
+    self._xinc, self._yinc = rox.increment
+    self._rotation = rox.rotation
+    self._values = rox.get_values()

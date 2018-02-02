@@ -11,6 +11,7 @@ import pandas as pd
 from xtgeo.xyz import XYZ
 from xtgeo.xyz._xyz_io import _convert_idbased_xyz
 
+
 class Polygons(XYZ):
     """Class for a polygons (connected points) in the XTGeo framework."""
 

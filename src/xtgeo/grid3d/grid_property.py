@@ -170,7 +170,6 @@ class GridProperty(Grid3D):
         """Returns or rename the property name."""
         return self._name
 
-
     @name.setter
     def name(self, name):
         self._name = name
@@ -418,7 +417,8 @@ class GridProperty(Grid3D):
             sys.exit(1)
 
         if ier != 0:
-            raise RuntimeError('An error occured during import: {}'.format(ier))
+            raise RuntimeError('An error occured during import: {}'
+                               .format(ier))
 
         # would be better with exception handling?
         if ier == 0:
@@ -433,7 +433,8 @@ class GridProperty(Grid3D):
         """Import grid model property from RMS project, and makes an instance.
 
         Arguments:
-            projectname (str): Name of RMS project; use pure 'project' if inside RMS
+            projectname (str): Name of RMS project; use pure 'project'
+                if inside RMS
             gfile (str): Name of grid model
             pfile (str): Name of grid property
             projectname (str): Name of RMS project; None if within a project
@@ -443,15 +444,17 @@ class GridProperty(Grid3D):
         _gridprop_roxapi.import_prop_roxapi(
             self, projectname, gname, pname, realisation)
 
-    def to_roxar(self, projectname, gname, pname, saveproject=False, realisation=0):
+    def to_roxar(self, projectname, gname, pname, saveproject=False,
+                 realisation=0):
 
         """Store a grid model property into a RMS project.
 
         Arguments:
-            projectname (str): Name of RMS project ('project' if inside a RMS project)
+            projectname (str): Name of RMS project ('project' if inside a
+                RMS project)
             gfile (str): Name of grid model
             pfile (str): Name of grid property
-            projectname (str): Name of RMS project (None if inside a RMS project)
+            projectname (str): Name of RMS project (None if inside a project)
             saveproject (bool): If True, a saveproject job will be ran.
             realisation (int): Realisation number (default 0 first)
 
@@ -574,8 +577,8 @@ class GridProperty(Grid3D):
             self._codes = {0: 'undef'}
 
         self.logger.debug('NTOT is ' + str(ntot))
-        self.logger.debug('Grid size is '
-                          '{} {} {}'.format(self._ncol, self._nrow, self._nlay))
+        self.logger.debug('Grid size is {} {} {}'
+                          .format(self._ncol, self._nrow, self._nlay))
 
         self.logger.debug('Number of codes: {}'.format(self._ncodes))
 

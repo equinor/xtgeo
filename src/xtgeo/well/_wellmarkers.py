@@ -102,8 +102,8 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl,
     if well.mdlogname is not None:
         mdname = 'MD'
 
-    wpts_names = ['X', 'Y', 'Z', mdname, 'QINCL', 'QAZI', 'Zone', 'TopName',
-                  'WellName']
+    wpts_names = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', mdname, 'QINCL', 'QAZI',
+                  'Zone', 'TopName', 'WellName']
 
     if tops:
         return wpts, wpts_names, None, None
@@ -111,7 +111,8 @@ def extract_ztops(well, zonelist, xc, yc, zc, zlog, md, incl,
     # next get a MIDPOINT zthickness (DZ)
     llen = len(wpts) - 1
 
-    zwpts_names = ['X', 'Y', 'Z', mdname + '_AVG', 'QMD1', 'QMD2', 'QINCL',
+    zwpts_names = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', mdname + '_AVG',
+                   'QMD1', 'QMD2', 'QINCL',
                    'QAZI', 'Zone', 'ZoneName', 'WellName']
 
     zwpts = []

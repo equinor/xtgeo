@@ -21,7 +21,7 @@ def import_xyz(xyz, pfile):
     # Simple X Y Z file. All points as Pandas framework
 
     xyz._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
-                          header=None, names=['X', 'Y', 'Z'],
+                          header=None, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'],
                           dtype=np.float64, na_values=999.00)
 
     xyz.logger.debug(xyz._df.head())
@@ -56,11 +56,12 @@ def import_zmap(xyz, pfile):
     #    457370.906250      6782606.000000      1744.619507         0
     #    457370.468750      6782568.500000      1745.868286         0
 
-    dtype = {'X': np.float64, 'Y': np.float64, 'Z': np.float64,
+    dtype = {'X_UTME': np.float64, 'Y_UTMN': np.float64, 'Z_TVDSS': np.float64,
              'ID': np.int32}
 
     xyz._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=16,
-                          header=None, names=['X', 'Y', 'Z', 'ID'],
+                          header=None,
+                          names=['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID'],
                           dtype=dtype, na_values=1.0E+30)
 
     logger.debug(xyz._df.head())
@@ -79,7 +80,7 @@ def export_rms_attr(xyz, pfile, attributes=None, filter=None):
     """
 
     df = xyz.dataframe.copy()
-    columns = ['X', 'Y', 'Z']
+    columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
     df.fillna(value=999.0, inplace=True)
 
     mode = 'w'
@@ -125,8 +126,10 @@ def _convert_idbased_xyz(df):
 
     idgroups = df.groupby('ID')
 
-    newdf = pd.DataFrame(columns=['X', 'Y', 'Z'])
-    udef = pd.DataFrame([[999.0, 999.0, 999.0]], columns=['X', 'Y', 'Z'])
+    newdf = pd.DataFrame(columns=['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
+    udef = pd.DataFrame([[999.0, 999.0, 999.0]], columns=['X_UTME',
+                                                          'Y_UTMN',
+                                                          'Z_TVDSS'])
 
     for id_, gr in idgroups:
         dfx = gr.drop('ID', axis=1)
@@ -172,7 +175,7 @@ def export_rms_wpicks(xyz, pfile, hcolumn, wcolumn, mdcolumn=None):
     if mdcolumn in df.columns:
         columns.append(mdcolumn)
     else:
-        columns += ['X', 'Y', 'Z']
+        columns += ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
 
     print(df)
     print(columns)

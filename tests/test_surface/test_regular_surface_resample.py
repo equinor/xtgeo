@@ -57,7 +57,7 @@ def test_points_gridding(reek_map):
 
     xyz = Points(xs)
 
-    xyz.dataframe['Z'] = xyz.dataframe['Z'] + 300
+    xyz.dataframe['Z_TVDSS'] = xyz.dataframe['Z_TVDSS'] + 300
 
     xscopy = xs.copy()
 

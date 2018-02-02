@@ -61,11 +61,11 @@ def test_map_to_points(reek_map):
     outf = os.path.join(td, 'points_from_surf_reek.poi')
     px.to_file(outf)
 
-    assert px.dataframe['X'].min() == 456719.75
-    tsetup.assert_almostequal(px.dataframe['Z'].mean(), 0.57558, 0.001)
+    assert px.dataframe['X_UTME'].min() == 456719.75
+    tsetup.assert_almostequal(px.dataframe['Z_TVDSS'].mean(), 0.57558, 0.001)
 
     # read the output for comparison
     pxx = Points(outf)
 
-    tsetup.assert_almostequal(px.dataframe['Z'].mean(), pxx.dataframe['Z'].mean(),
-                       0.00001)
+    tsetup.assert_almostequal(px.dataframe['Z_TVDSS'].mean(),
+                              pxx.dataframe['Z_TVDSS'].mean(), 0.00001)

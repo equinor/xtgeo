@@ -7,7 +7,6 @@ import sys
 import numpy as np
 import pandas as pd
 import os.path
-import csv
 import logging
 
 import cxtgeo.cxtgeo as _cxtgeo
@@ -17,11 +16,13 @@ from . import _well_io
 
 
 class Well(object):
-    """
-    Class for a well in the xtgeo framework.
+    """Class for a well in the xtgeo framework.
 
     The well logs are stored as Pandas dataframe, which make manipulation
     easy and fast.
+
+    The well trajectory are here represented as logs, and XYZ have magic names:
+    X_UTME, Y_UTMN, Z_TVDSS.
     """
 
     UNDEF = _cxtgeo.UNDEF
@@ -265,7 +266,7 @@ class Well(object):
         zlogdict = self.get_logrecord(lname)
         try:
             name = zlogdict[key]
-        except:
+        except Exception:
             return None
         else:
             return name
@@ -278,7 +279,7 @@ class Well(object):
         """
         try:
             np_array = self._df[lname].values
-        except:
+        except Exception:
             return None
 
         if self.get_logtype(lname) == 'DISC':
@@ -538,9 +539,10 @@ class Well(object):
             return None
         else:
             if mdlog is not None:
-                clm = ['INDEX', 'X', 'Y', 'Z', 'Zone', 'Well', 'MD']
+                clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS',
+                       'Zone', 'Well', 'MD']
             else:
-                clm = ['INDEX', 'X', 'Y', 'Z', 'Zone', 'Well']
+                clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS', 'Zone', 'Well']
 
             df = pd.DataFrame(wellreport, columns=clm)
             return df
@@ -684,7 +686,7 @@ class Well(object):
 
             dx = dx.drop(cols, axis=1)
             # rename columns:
-            dx.columns = ['X', 'Y', 'Z', 'ID']
+            dx.columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID']
             # now resample every N'th
             if resample > 1:
                 dx = pd.concat([dx.iloc[::resample, :], dx.tail(1)])

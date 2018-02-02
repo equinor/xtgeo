@@ -1,5 +1,4 @@
 """Import RegularSurface data."""
-import logging
 import numpy as np
 import numpy.ma as ma
 

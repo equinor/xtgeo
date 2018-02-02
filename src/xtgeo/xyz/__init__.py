@@ -1,4 +1,4 @@
-"""The XYZ module, which deals with Points and Polygons."""
+# flake8: noqa
 from .xyz import XYZ
 from .points import Points
 from .polygons import Polygons

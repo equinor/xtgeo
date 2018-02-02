@@ -51,7 +51,7 @@ def test_import():
 
     logger.debug(mypoints.dataframe)
 
-    x0 = mypoints.dataframe['X'].values[0]
+    x0 = mypoints.dataframe['X_UTME'].values[0]
     logger.debug(x0)
     tsetup.assert_almostequal(x0, 460842.434326, 0.001)
 
@@ -79,7 +79,7 @@ def test_import_zmap_and_xyz():
     logger.info(mypol2a.dataframe)
     logger.info(mypol2b.dataframe)
 
-    for col in ['X', 'Y', 'Z', 'ID']:
+    for col in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID']:
         status = np.allclose(mypol2a.dataframe[col].values,
                              mypol2b.dataframe[col].values)
 
@@ -95,17 +95,17 @@ def test_import_export_polygons():
 
     mypoly.from_file(pfile, fformat='xyz')
 
-    z0 = mypoly.dataframe['Z'].values[0]
+    z0 = mypoly.dataframe['Z_TVDSS'].values[0]
 
     tsetup.assert_almostequal(z0, 2266.996338, 0.001)
 
     logger.debug(mypoly.dataframe)
 
-    mypoly.dataframe['Z'] += 100
+    mypoly.dataframe['Z_TVDSS'] += 100
 
     mypoly.to_file(td + '/polygon_export.xyz', fformat='xyz')
 
     # reimport and check
     mypoly2 = Polygons(td + '/polygon_export.xyz')
 
-    tsetup.assert_almostequal(z0 + 100, mypoly2.dataframe['Z'].values[0], 0.001)
+    tsetup.assert_almostequal(z0 + 100, mypoly2.dataframe['Z_TVDSS'].values[0], 0.001)

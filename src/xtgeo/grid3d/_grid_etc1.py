@@ -99,7 +99,7 @@ def get_dxdy(grid, names=('dX', 'dY')):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get X Y Z as properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz(grid, names=['X', 'Y', 'Z'], mask=True):
+def get_xyz(grid, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'], mask=True):
 
     ntot = grid.ntotal
 
@@ -187,7 +187,7 @@ def get_xyz_cell_corners(grid, ijk=(1, 1, 1), mask=True, zerobased=False):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get X Y Z cell corners for all cells (as 24 GridProperty objects)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz_corners(grid, names=('X', 'Y', 'Z')):
+def get_xyz_corners(grid, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
 
     ntot = grid.ntotal
 
@@ -348,8 +348,10 @@ def inactivate_inside(grid, poly, layer_range=None, inside=True,
     # get dataframe where each polygon is ended by a 999 value
     dfxyz = poly.get_xyz_dataframe()
 
-    xc = dfxyz['X'].values
-    yc = dfxyz['Y'].values
+    xc = dfxyz['X_UTME'].values
+    yc = dfxyz['Y_UTMN'].values
+
+    print(xc)
 
     ier = _cxtgeo.grd3d_inact_outside_pol(xc, yc, grid.ncol,
                                           grid.nrow,

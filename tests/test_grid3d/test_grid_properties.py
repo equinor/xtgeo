@@ -198,3 +198,19 @@ def test_scan_keywords():
     logger.info(df)
 
     assert df.loc[12, 'KEYWORD'] == 'SWAT'
+
+
+def test_get_dataframe():
+    """Get a Pandas dataframe from the gridproperties"""
+
+    g = Grid(gfile1, fformat="egrid")
+
+    x = GridProperties()
+
+    names = ['SOIL', 'SWAT', 'PRESSURE']
+    dates = [19991201]
+    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g,
+                apiversion=apiver)
+    df = x.dataframe(activeonly=False, ijk=True, xyz=True)
+    print(repr(df))
+    print(df.dtypes)

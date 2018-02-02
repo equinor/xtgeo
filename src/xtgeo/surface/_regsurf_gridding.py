@@ -21,9 +21,9 @@ def points_gridding(self, points, method='linear', coarsen=1):
 
     df = points.dataframe
 
-    xc = df['X'].values
-    yc = df['Y'].values
-    zc = df['Z'].values
+    xc = df['X_UTME'].values
+    yc = df['Y_UTMN'].values
+    zc = df['Z_TVDSS'].values
 
     if coarsen > 1:
         xc = xc[::coarsen]

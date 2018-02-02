@@ -194,11 +194,11 @@ class Map(BasePlot):
             # make a list [(X,Y) ...]; note PY3 need the
             # list before the zip!
             if six.PY3:
-                af = list(zip(myfault['X'].values,
-                              myfault['Y'].values))
+                af = list(zip(myfault['X_UTME'].values,
+                              myfault['Y_UTMN'].values))
             else:
                 # make a numpy (X,Y) list from pandas series
-                af = myfault[['X', 'Y']].values
+                af = myfault[['X_UTME', 'Y_UTMN']].values
 
             p = mplp.Polygon(af, alpha=0.7, color=color, ec=edgecolor,
                              lw=linewidth)

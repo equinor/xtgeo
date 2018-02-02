@@ -131,6 +131,8 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
 
     if not grid:
         raise ValueError('Grid Geometry object is missing')
+    else:
+        props._grid = grid
 
     if not names:
         raise ValueError('Name list is missing')

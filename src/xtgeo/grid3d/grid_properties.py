@@ -1,6 +1,8 @@
 
 import os.path
 import sys
+import numpy as np
+import pandas as pd
 
 from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
@@ -26,10 +28,11 @@ class GridProperties(Grid3D):
         self._nrow = 12
         self._nlay = 14
 
+        self._grid = None           # The XTGeo Grid (geometry) object
+
         self._props = []            # list of GridProperty objects
         self._names = []            # list of GridProperty names
         self._dates = []            # list of dates (_after_ import) YYYYDDMM
-
 
     # =========================================================================
     # Properties, NB decorator only works when class is inherited from "object"
@@ -109,7 +112,7 @@ class GridProperties(Grid3D):
                   dates=None, grid=None, namestyle=0, apiversion=2):
         """Import grid properties from file in one go.
 
-        This class is particurlary useful for Eclipse INIT and RESTART files.
+        This class is particulary useful for Eclipse INIT and RESTART files.
 
         Args:
             pfile (str): Name of file with properties
@@ -179,7 +182,82 @@ class GridProperties(Grid3D):
             fformat (str): file format to be used (roff is the only supported)
             mode (int): 0 for binary ROFF, 1 for ASCII
         """
-        pass
+        raise NotImplementedError('Not implented yet!')
+
+    def dataframe(self, activeonly=True, ijk=False, xyz=False,
+                  doubleformat=False):
+        """Returns a Pandas dataframe table for the properties
+
+        Args:
+            activeonly (bool): If True, return only active cells
+            ijk (bool): If True, show cell indices, IX JY KZ columns.
+            xyz (bool): If True, show cell center coordinates.
+            doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
+                Note that coordinates (if xyz=True) is always 64 bit floats.
+
+        Returns:
+            Pandas dataframe object
+
+        Examples::
+
+            grd = Grid(gfile1, fformat="egrid")
+            xpr = GridProperties()
+
+            names = ['SOIL', 'SWAT', 'PRESSURE']
+            dates = [19991201]
+            xpr.from_file(rfile1, fformat='unrst', names=names, dates=dates,
+                        grid=grd)
+            df = x.dataframe(activeonly=False, ijk=True, xyz=True)
+
+        """
+        colnames = []
+        proplist = []
+
+        currentmask = self.props[0].values.mask
+
+        if ijk:
+            ix, jy, kz = np.indices(self.props[0].values3d.mask.shape,
+                                    dtype=np.uint16)
+            ix = ix.ravel(order='F')
+            jy = jy.ravel(order='F')
+            kz = kz.ravel(order='F')
+            colnames.extend(['IX', 'JY', 'KZ'])
+            if activeonly:
+                ix = ix[~currentmask]
+                jy = jy[~currentmask]
+                kz = kz[~currentmask]
+            proplist.extend([ix, jy, kz])
+
+        if xyz:
+            option = False
+            if activeonly:
+                option = True
+
+            xc, yc, zc = self._grid.get_xyz(mask=option)
+            colnames.extend(['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
+            proplist.extend([xc.values, yc.values, zc.values])
+
+        for prop in self.props:
+            self.logger.info('Getting property {}'.format(prop.name))
+            colnames.append(prop.name)
+            vector = prop.values.copy()
+            if activeonly:
+                vector = vector[~vector.mask]  # remove masked entries
+            else:
+                if prop.isdiscrete:
+                    vector = vector.filled(fill_value=0)
+                else:
+                    vector = vector.filled(fill_value=np.nan)
+                    if doubleformat:
+                        vector = vector.astype(np.float64)
+                    else:
+                        vector = vector.astype(np.float32)
+
+            proplist.append(vector)
+
+        dataframe = pd.DataFrame.from_items(zip(colnames, proplist))
+
+        return dataframe
 
     # =========================================================================
     # Static methods (scans etc)

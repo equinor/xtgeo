@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""XTGeo xyz module (abstract)"""
+"""XTGeo xyz module (abstract class)"""
 
 from __future__ import print_function, absolute_import
 

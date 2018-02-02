@@ -338,8 +338,8 @@ class XSection(BasePlot):
         ax = self._ax3
         if self._outline is not None and self._wfence is not None:
 
-            xp = self._outline.dataframe['X'].values
-            yp = self._outline.dataframe['Y'].values
+            xp = self._outline.dataframe['X_UTME'].values
+            yp = self._outline.dataframe['Y_UTMN'].values
 
             ax.plot(self._wfence[:, 0], self._wfence[:, 1],
                     linewidth=3, c='red')

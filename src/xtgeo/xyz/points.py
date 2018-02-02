@@ -141,5 +141,5 @@ class Points(XYZ):
 
         # now populate the dataframe:
         xc, yc, val = coor
-        ddatas = {'X': xc, 'Y': yc, 'Z': val}
+        ddatas = {'X_UTME': xc, 'Y_UTMN': yc, 'Z_TVDSS': val}
         self._df = pd.DataFrame(ddatas)

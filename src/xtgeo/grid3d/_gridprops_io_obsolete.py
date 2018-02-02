@@ -21,6 +21,8 @@ def import_ecl_output_v1(props, pfile, etype=1, dates=[],
 
     if not grid:
         raise ValueError('Grid Geometry object is missing')
+    else:
+        props._grid = grid
 
     # for handling of SOIL... (need SGAS and SWAT)
     qsoil = False

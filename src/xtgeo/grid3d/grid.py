@@ -416,7 +416,7 @@ class Grid(Grid3D):
         # return the property objects
         return deltax, deltay
 
-    def get_xyz(self, names=('X', 'Y', 'Z'), mask=True):
+    def get_xyz(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS'), mask=True):
         """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,
         ycoordinate, zcoordinate.
 
@@ -426,7 +426,8 @@ class Grid(Grid3D):
         for undef cells.
 
         Args:
-            names: a 3 x tuple of names per property (default is X, Y, Z).
+            names: a 3 x tuple of names per property (default is X_UTME,
+            Y_UTMN, Z_TVDSS).
             mask: If True, then only active cells.
         """
 
@@ -477,7 +478,7 @@ class Grid(Grid3D):
 
         return clist
 
-    def get_xyz_corners(self, names=('X', 'Y', 'Z')):
+    def get_xyz_corners(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
         """Returns 8*3 (24) xtgeo.grid3d.GridProperty objects, x, y, z for
         each corner.
 

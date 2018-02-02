@@ -51,7 +51,8 @@ def import_prop_roxapi(prop, projectname, gname, pname, realisation):
     return prop
 
 
-def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False, realisation=0):
+def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False,
+                       realisation=0):
     """Export to a Property in RMS via ROXAR API spec."""
     import roxar
 
@@ -72,8 +73,8 @@ def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False, reali
                 if saveproject:
                     try:
                         proj.save()
-                    except Exception as e:
-                        warnings.warn('Could not save')
+                    except Exception as myexception:
+                        warnings.warn('Could not save', myexception)
 
             except KeyError as keyerror:
                 raise RuntimeError(keyerror)

@@ -1,7 +1,4 @@
 """Export RegularSurface data."""
-import logging
-import numpy as np
-import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -11,20 +8,20 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def export_irap_ascii(surf, mfile):
+def export_irap_ascii(self, mfile):
 
-    zmin = surf.values.min()
-    zmax = surf.values.max()
+    zmin = self.values.min()
+    zmax = self.values.max()
 
     xtg_verbose_level = xtg.get_syslevel()
     _cxtgeo.xtg_verbose_file('NONE')
     if xtg_verbose_level < 0:
         xtg_verbose_level = 0
 
-    ier = _cxtgeo.surf_export_irap_ascii(mfile, surf._ncol, surf._nrow,
-                                         surf._xori, surf._yori,
-                                         surf._xinc, surf._yinc,
-                                         surf._rotation, surf.get_zval(),
+    ier = _cxtgeo.surf_export_irap_ascii(mfile, self._ncol, self._nrow,
+                                         self._xori, self._yori,
+                                         self._xinc, self._yinc,
+                                         self._rotation, self.get_zval(),
                                          zmin, zmax, 0,
                                          xtg_verbose_level)
     if ier != 0:
@@ -32,10 +29,10 @@ def export_irap_ascii(surf, mfile):
                            'code is {}'.format(ier))
 
 
-def export_irap_binary(surf, mfile):
+def export_irap_binary(self, mfile):
 
     # update numpy to c_array
-    surf._update_cvalues()
+    self._update_cvalues()
 
     xtg_verbose_level = xtg.get_syslevel()
     _cxtgeo.xtg_verbose_file('NONE')
@@ -43,10 +40,10 @@ def export_irap_binary(surf, mfile):
     if xtg_verbose_level < 0:
         xtg_verbose_level = 0
 
-    ier = _cxtgeo.surf_export_irap_bin(mfile, surf._ncol, surf._nrow,
-                                       surf._xori,
-                                       surf._yori, surf._xinc, surf._yinc,
-                                       surf._rotation, surf.get_zval(), 0,
+    ier = _cxtgeo.surf_export_irap_bin(mfile, self._ncol, self._nrow,
+                                       self._xori,
+                                       self._yori, self._xinc, self._yinc,
+                                       self._rotation, self.get_zval(), 0,
                                        xtg_verbose_level)
 
     if ier != 0:
