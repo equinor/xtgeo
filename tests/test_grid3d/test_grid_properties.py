@@ -2,6 +2,7 @@ import sys
 import warnings
 
 import pytest
+import pandas as pd
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperties
@@ -22,6 +23,8 @@ logger = xtg.basiclogger(__name__)
 gfile1 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
 ifile1 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
 rfile1 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
+
+xfile2 = '../xtgeo-testdata/3dgrids/reek/reek_grd_w_props.roff'
 
 apiver = 2
 
@@ -200,6 +203,17 @@ def test_scan_keywords():
     assert df.loc[12, 'KEYWORD'] == 'SWAT'
 
 
+def test_scan_keywords_roff():
+    """A static method to scan quickly keywords in a ROFF file"""
+    t1 = xtg.timer()
+    df = GridProperties.scan_keywords(xfile2, dataframe=True, fformat='roff')
+    t2 = xtg.timer(t1)
+    logger.info('Dates scanned in {} seconds'.format(t2))
+    logger.info(df)
+
+#    assert df.loc[12, 'KEYWORD'] == 'SWAT'
+
+
 def test_get_dataframe():
     """Get a Pandas dataframe from the gridproperties"""
 
@@ -211,6 +225,7 @@ def test_get_dataframe():
     dates = [19991201]
     x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g,
                 apiversion=apiver)
-    df = x.dataframe(activeonly=False, ijk=True, xyz=True)
-    print(repr(df))
-    print(df.dtypes)
+    df = x.dataframe(activeonly=True, ijk=True, xyz=True)
+
+    assert df['SWAT_19991201'].mean() == pytest.approx(0.87802, abs=0.001)
+    assert df['PRESSURE_19991201'].mean() == pytest.approx(334.523, abs=0.005)

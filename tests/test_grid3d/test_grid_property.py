@@ -139,6 +139,29 @@ def test_eclunrst_import_reek():
 
     tsetup.assert_almostequal(press.values.mean(), 334.5232, 0.0001)
 
+
+def test_eclunrst_import_soil_reek():
+    """Property UNRST import from Eclipse, computing SOIL. Reek"""
+
+    gg = Grid(testfile5, fformat='egrid')
+
+    logger.info("Import RESTART (UNIFIED) ...")
+    swat = GridProperty(testfile7, name='SWAT', fformat='unrst',
+                        date=19991201, grid=gg)
+
+    tsetup.assert_almostequal(swat.values.mean(), 0.8780, 0.001)
+
+    sgas = GridProperty(testfile7, name='SGAS', fformat='unrst',
+                        date=19991201, grid=gg)
+
+    tsetup.assert_almostequal(sgas.values.mean(), 0.000, 0.001)
+
+    soil = GridProperty(testfile7, name='SOIL', fformat='unrst',
+                        date=19991201, grid=gg)
+
+    tsetup.assert_almostequal(soil.values.mean(), 1.0 - 0.8780, 0.001)
+
+
 def test_export_roff():
     """Property import from Eclipse. Then export to roff."""
 

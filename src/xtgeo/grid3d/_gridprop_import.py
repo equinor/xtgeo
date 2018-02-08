@@ -18,8 +18,12 @@ _cxtgeo.xtg_verbose_file('NONE')
 xtg_verbose_level = xtg.get_syslevel()
 
 
-def import_eclbinary_v2(prop, pfile, name=None, etype=1, date=None,
-                        grid=None):
+def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
+                         grid=None):
+    """Import, private to this routine"""
+
+    logger.info('pfile is {}, name is {}, etype is {}, date is {}, '
+                'grid is {}'.format(pfile, name, etype, date, grid))
 
     fhandle, pclose = _get_fhandle(pfile)
 
@@ -52,9 +56,9 @@ def import_eclbinary_v2(prop, pfile, name=None, etype=1, date=None,
     intehead = eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
     ncol, nrow, nlay = intehead[8:11].tolist()
 
-    prop._ncol = ncol
-    prop._nrow = nrow
-    prop._nlay = nlay
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
 
     logger.info('Grid dimensions in INIT or RESTART file: {} {} {}'
                 .format(ncol, nrow, nlay))
@@ -81,19 +85,19 @@ def import_eclbinary_v2(prop, pfile, name=None, etype=1, date=None,
     values = eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
 
     if kwtype == 'INTE':
-        prop._isdiscrete = True
-        use_undef = prop._undef_i
+        self._isdiscrete = True
+        use_undef = self._undef_i
 
         # make the code list
         uniq = np.unique(values).tolist()
         codes = dict(zip(uniq, uniq))
-        prop.codes = codes
+        self.codes = codes
 
     else:
-        prop._isdiscrete = False
+        self._isdiscrete = False
         values = values.astype(np.float64)  # cast REAL (float32) to float64
-        use_undef = prop._undef
-        prop.codes = {}
+        use_undef = self._undef
+        self.codes = {}
 
     # arrays from Eclipse INIT or UNRST are usually for inactive values only.
     # Use the ACTNUM index array for vectorized numpy remapping
@@ -116,17 +120,52 @@ def import_eclbinary_v2(prop, pfile, name=None, etype=1, date=None,
 
     _close_fhandle(fhandle, pclose)
 
-    prop._grid = grid
-    prop._values = allvalues
-    prop._cvalues = None
+    self._grid = grid
+    self._values = allvalues
+    self._cvalues = None
 
     if etype == 1:
-        prop._name = name
+        self._name = name
     else:
-        prop._name = name + '_' + str(date)
-        prop._date = date
+        self._name = name + '_' + str(date)
+        self._date = date
 
     return 0
+
+
+def import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
+                        grid=None):
+    ios = 0
+    if name == 'SOIL':
+        # some recursive magic here
+        logger.info('Making SOIL from SWAT and SGAS ...')
+        logger.info('PFILE is {}'.format(pfile))
+
+        swat = xtgeo.grid3d.GridProperty()
+        swat.from_file(pfile, name='SWAT', grid=grid,
+                       date=date, fformat='unrst')
+
+        sgas = xtgeo.grid3d.GridProperty()
+        sgas.from_file(pfile, name='SGAS', grid=grid,
+                       date=date, fformat='unrst')
+
+        self.name = 'SOIL' + '_' + str(date)
+        self.values = swat.values * -1 - sgas.values + 1.0
+        self._nrow = swat.nrow
+        self._ncol = swat.ncol
+        self._nlay = swat.nlay
+        self._grid = grid
+        self._date = date
+
+        del swat
+        del sgas
+
+    else:
+        logger.info('Importing {}'.format(name))
+        ios = _import_eclbinary_v2(self, pfile, name=name, etype=etype,
+                                   date=date, grid=grid)
+
+    return ios
 
 
 def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):

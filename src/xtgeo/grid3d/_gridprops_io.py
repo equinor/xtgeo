@@ -40,6 +40,17 @@ def _close_fhandle(fh, flag):
 
 def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
 
+    if fformat == 'xecl':
+        data = _scan_ecl_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
+                                  dataframe=dataframe)
+    else:
+        data = _scan_roff_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
+                                   dataframe=dataframe)
+    return data
+
+
+def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
+
     # In case pfile is not a file name but a swig pointer to a file handle,
     # the file must not be closed
 
@@ -89,7 +100,59 @@ def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
         return result
 
 
+def _scan_roff_keywords(pfile, fformat='roff', maxkeys=10000, dataframe=False):
+
+    # In case pfile is not a file name but a swig pointer to a file handle,
+    # the file must not be closed
+
+    ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
+    if maxkeys > ultramax:
+        raise ValueError('maxkeys value is too large, must be < {}'
+                         .format(ultramax))
+
+    rectypes = _cxtgeo.new_intarray(maxkeys)
+    reclens = _cxtgeo.new_longarray(maxkeys)
+    recstarts = _cxtgeo.new_longarray(maxkeys)
+
+    fhandle, pclose = _get_fhandle(pfile)
+
+    nkeys, swapstatus, keywords = _cxtgeo.grd3d_scan_roffbinary(
+        fhandle, rectypes, reclens, recstarts, maxkeys,
+        xtg_verbose_level)
+
+    _close_fhandle(fhandle, pclose)
+
+    keywords = keywords.replace(' ', '')
+    keywords = keywords.split('|')
+
+    # record types translation (cf: grd3d_scan_eclbinary.c in cxtgeo)
+    rct = {'1': 'int', '2': 'float', '3': 'double', '4': 'char', '5': 'bool',
+           '6': 'byte'}
+
+    rc = []
+    rl = []
+    rs = []
+    for i in range(nkeys):
+        rc.append(rct[str(_cxtgeo.intarray_getitem(rectypes, i))])
+        rl.append(_cxtgeo.longarray_getitem(reclens, i))
+        rs.append(_cxtgeo.longarray_getitem(recstarts, i))
+
+    _cxtgeo.delete_intarray(rectypes)
+    _cxtgeo.delete_longarray(reclens)
+    _cxtgeo.delete_longarray(recstarts)
+
+    result = list(zip(keywords, rc, rl, rs))
+
+    if dataframe:
+        cols = ['KEYWORD', 'TYPE', 'NITEMS', 'BYTESTARTDATA']
+        df = pd.DataFrame.from_records(result, columns=cols)
+        return df
+    else:
+        return result
+
+
 def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
+    """Scan DATES in Eclipse OUTPUT files"""
 
     seq = _cxtgeo.new_intarray(maxdates)
     day = _cxtgeo.new_intarray(maxdates)
@@ -163,15 +226,15 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
 
     usenames = list(names)  # to make copy
 
-    # special treatement of SOIL since it is not present in restarts, but
-    # has to be computed from SWAT and SGAS as SOIL = 1 - SWAT - SGAS
+    # # special treatement of SOIL since it is not present in restarts, but
+    # # has to be computed from SWAT and SGAS as SOIL = 1 - SWAT - SGAS
 
-    qsoil = False
-    if 'SOIL' in set(names):
-        usenames.insert(0, 'SWAT')
-        usenames.insert(0, 'SGAS')
-        usenames.remove('SOIL')
-        qsoil = True
+    # qsoil = False
+    # if 'SOIL' in set(names):
+    #     usenames.insert(0, 'SWAT')
+    #     usenames.insert(0, 'SGAS')
+    #     usenames.remove('SOIL')
+    #     qsoil = True
 
     logger.info('Use names: {}'.format(usenames))
     logger.info('Valid dates: {}'.format(validdates))
@@ -180,8 +243,8 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
     firstproperty = True
 
     for date in validdates:
-        xprop = dict()
-        soil_ok = False
+        # xprop = dict()
+        # soil_ok = False
 
         for name in usenames:
 
@@ -210,24 +273,24 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
                 nlay = prop.nlay
                 firstproperty = False
 
-            if qsoil and not soil_ok:
-                if name in set(['SWAT', 'SGAS']):
-                    xprop[name] = prop.values
-                    logger.info('Made xprop for {}'.format(name))
+            # if qsoil and not soil_ok:
+            #     if name in set(['SWAT', 'SGAS']):
+            #         xprop[name] = prop.values
+            #         logger.info('Made xprop for {}'.format(name))
 
-                if len(xprop) == 2:
-                    soilv = xprop['SWAT'].copy() * 0 + 1
-                    soilv = soilv - xprop['SWAT'] - xprop['SGAS']
-                    soil_ok = True
-                    propname = 'SOIL' + '_' + str(date)
+            #     if len(xprop) == 2:
+            #         soilv = xprop['SWAT'].copy() * 0 + 1
+            #         soilv = soilv - xprop['SWAT'] - xprop['SGAS']
+            #         soil_ok = True
+            #         propname = 'SOIL' + '_' + str(date)
 
-                    prop = xtgeo.grid3d.GridProperty(ncol=ncol, nrow=nrow,
-                                                     nlay=nlay, name=propname,
-                                                     discrete=False,
-                                                     values=soilv)
-                else:
-                    logger.info('Length xprop is {}'.format(len(xprop)))
-                    continue
+            #         prop = xtgeo.grid3d.GridProperty(ncol=ncol, nrow=nrow,
+            #                                          nlay=nlay, name=propname,
+            #                                          discrete=False,
+            #                                          values=soilv)
+            #     else:
+            #         logger.info('Length xprop is {}'.format(len(xprop)))
+            #         continue
 
             logger.info('Appended property {}'.format(propname))
             props._names.append(propname)

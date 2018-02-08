@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 import inspect
 import warnings
 import numpy as np
+import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
@@ -94,6 +95,54 @@ def get_dxdy(grid, names=('dX', 'dY')):
 
     # return the property objects
     return dx, dy
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Get I J K as properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def get_ijk(self, names=['IX', 'JY', 'KZ'], mask=True, zero_base=False):
+
+    GrProp = xtgeo.grid3d.GridProperty
+
+    actnum = self.get_actnum()
+
+    ix, jy, kz = np.indices((self._ncol, self._nrow, self._nlay))
+
+    ix = ix.ravel(order='F')
+    jy = jy.ravel(order='F')
+    kz = kz.ravel(order='F')
+
+    if mask:
+        ix = ma.masked_where(actnum.values == 0, ix)
+        jy = ma.masked_where(actnum.values == 0, jy)
+        kz = ma.masked_where(actnum.values == 0, kz)
+
+    if not zero_base:
+        ix += 1
+        jy += 1
+        kz += 1
+
+    ix = GrProp(ncol=self._ncol,
+                nrow=self._nrow,
+                nlay=self._nlay,
+                values=ix,
+                name=names[0],
+                discrete=True)
+    jy = GrProp(ncol=self._ncol,
+                nrow=self._nrow,
+                nlay=self._nlay,
+                values=jy,
+                name=names[1],
+                discrete=True)
+    kz = GrProp(ncol=self._ncol,
+                nrow=self._nrow,
+                nlay=self._nlay,
+                values=kz,
+                name=names[2],
+                discrete=True)
+
+    # return the objects
+    return ix, jy, kz
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

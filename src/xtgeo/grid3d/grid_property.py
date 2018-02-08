@@ -29,6 +29,7 @@ from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
 from xtgeo.grid3d import _gridprop_import_obsolete
 from xtgeo.grid3d import _gridprop_roxapi
+from ._gridprops_io import _get_fhandle
 
 # =============================================================================
 # Class constructor
@@ -239,6 +240,7 @@ class GridProperty(Grid3D):
         self._update_values()
         return self._values
 
+
     @values.setter
     def values(self, values):
 
@@ -329,6 +331,14 @@ class GridProperty(Grid3D):
     # Various methods
     # =========================================================================
 
+    def get_active_values(self):
+        """ Return the grid property as a 1D numpy array (copy), active
+        cells only"""
+        self._update_values()
+        vact = self._values.copy()
+        vact = vact[~vact.mask]
+        return np.array(vact)
+
     def copy(self, newname=None):
         """Copy a xtgeo.grid3d.GridProperty() object to another instance.
 
@@ -383,24 +393,32 @@ class GridProperty(Grid3D):
            True if success, otherwise False
         """
 
-        if os.path.isfile(pfile):
-            self.logger.debug('File {} exists OK'.format(pfile))
-        else:
-            print('No such file: {}'.format(pfile))
-            self.logger.critical('No such file: {}'.format(pfile))
-            sys.exit(1)
+        # it may be that pfile already is an open file; hence a filehandle
+        # instead. Check for this, and skip tests of so
+        pfile_is_not_fhandle = True
+        fhandle, pclose = _get_fhandle(pfile)
+        if not pclose:
+            pfile_is_not_fhandle = False
 
-        # work on file extension
-        froot, fext = os.path.splitext(pfile)
-        if fformat == 'guess':
-            if len(fext) == 0:
-                self.logger.critical('File extension missing. STOP')
-                sys.exit(9)
+        if pfile_is_not_fhandle:
+            if os.path.isfile(pfile):
+                self.logger.debug('File {} exists OK'.format(pfile))
             else:
-                fformat = fext.lower().replace('.', '')
+                print('No such file: {}'.format(pfile))
+                self.logger.critical('No such file: {}'.format(pfile))
+                sys.exit(1)
 
-        self.logger.debug("File name to be used is {}".format(pfile))
-        self.logger.debug("File format is {}".format(fformat))
+            # work on file extension
+            froot, fext = os.path.splitext(pfile)
+            if fformat == 'guess':
+                if len(fext) == 0:
+                    self.logger.critical('File extension missing. STOP')
+                    sys.exit(9)
+                else:
+                    fformat = fext.lower().replace('.', '')
+
+            self.logger.debug("File name to be used is {}".format(pfile))
+            self.logger.debug("File format is {}".format(fformat))
 
         ier = 0
         if (fformat == 'roff'):

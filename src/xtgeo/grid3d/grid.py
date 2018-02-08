@@ -8,6 +8,7 @@ import os
 import os.path
 
 import numpy as np
+import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 
@@ -351,11 +352,13 @@ class Grid(Grid3D):
 
         return ilist
 
-    def get_actnum(self, name='ACTNUM'):
+    def get_actnum(self, name='ACTNUM', mask=False):
         """Return an ACTNUM GridProperty object.
 
-        Arguments:
+        Args:
             name (str): name of property in the XTGeo GridProperty object.
+            mask (bool): Opposite to most, actnum is returned will all cells
+                as default. Use mask=True to make 0 entries masked.
 
         Example::
 
@@ -371,6 +374,10 @@ class Grid(Grid3D):
 
         act._cvalues = self._p_actnum_v  # the SWIG pointer to the C structure
         act._update_values()
+
+        if mask:
+            act.values = ma.masked_equal(act.values, 0)
+
         act._codes = {0: '0', 1: '1'}
         act._ncodes = 2
         act._grid = self
@@ -415,6 +422,22 @@ class Grid(Grid3D):
 
         # return the property objects
         return deltax, deltay
+
+    def get_ijk(self, names=('IX', 'JY', 'KZ'), mask=True, zero_base=False):
+        """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
+        J counter, K counter.
+
+        Args:
+            names: a 3 x tuple of names per property (default IX, JY, KZ).
+            mask: If True, UNDEF cells are masked
+            zero_base: If True, counter start fro 0, otherwise 1 (default=1).
+        """
+
+        ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,
+                                           mask=mask, zero_base=zero_base)
+
+        # return the objects
+        return ixc, jyc, kzc
 
     def get_xyz(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS'), mask=True):
         """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,

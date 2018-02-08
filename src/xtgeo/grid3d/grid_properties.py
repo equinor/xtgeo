@@ -1,14 +1,14 @@
 
 import os.path
 import sys
-import numpy as np
-import pandas as pd
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from .grid3d import Grid3D
 
 from xtgeo.grid3d import _gridprops_io
 from xtgeo.grid3d import _gridprops_io_obsolete
+from xtgeo.grid3d import _gridprops_etc
 
 
 class GridProperties(Grid3D):
@@ -60,11 +60,24 @@ class GridProperties(Grid3D):
 
         Example::
 
-            proplist = props.props
+            gg = xtgeo.grid3d.Grid('TEST1.EGRID')
+            myprops = XTGeo.grid3d.GridProperties()
+            from_file('TEST1.INIT', fformat='init', names=['PORO'], grid=gg)
+            proplist = myprops.props
             for prop in proplist:
                 print ('Property object ID is {}'.format(prop))
 
+            # adding a property, e.g. get ACTNUM as a property from the grid
+            actn = gg.get_actnum()  # this will get actn as a GridProperty
+            myprops.add_props([actn])
+
+
         """
+
+        return self._props
+
+    @props.setter
+    def props(self, propslist):
 
         return self._props
 
@@ -101,6 +114,23 @@ class GridProperties(Grid3D):
                 return prop
 
         raise ValueError('Cannot find property with name <{}>'.format(name))
+
+    def append_props(self, proplist):
+        """Adds a list of GridProperty objects to the current
+        GridProperties instance."""
+
+        for prop in proplist:
+            if isinstance(prop, xtgeo.grid3d.GridProperty):
+
+                # need to check for grid instance?
+                if self.grid is prop.grid:
+
+                    self._props.append(prop)
+                    self._names.append(prop.name)
+                    self._dates.append(prop.date)
+            else:
+                raise ValueError('Input property is not a valid GridProperty '
+                                 'object')
 
     # =========================================================================
     # Import and export
@@ -210,54 +240,11 @@ class GridProperties(Grid3D):
             df = x.dataframe(activeonly=False, ijk=True, xyz=True)
 
         """
-        colnames = []
-        proplist = []
 
-        currentmask = self.props[0].values.mask
+        df = _gridprops_etc.dataframe(self, activeonly=activeonly, ijk=ijk,
+                                      xyz=xyz, doubleformat=doubleformat)
 
-        if ijk:
-            ix, jy, kz = np.indices(self.props[0].values3d.mask.shape,
-                                    dtype=np.uint16)
-            ix = ix.ravel(order='F')
-            jy = jy.ravel(order='F')
-            kz = kz.ravel(order='F')
-            colnames.extend(['IX', 'JY', 'KZ'])
-            if activeonly:
-                ix = ix[~currentmask]
-                jy = jy[~currentmask]
-                kz = kz[~currentmask]
-            proplist.extend([ix, jy, kz])
-
-        if xyz:
-            option = False
-            if activeonly:
-                option = True
-
-            xc, yc, zc = self._grid.get_xyz(mask=option)
-            colnames.extend(['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
-            proplist.extend([xc.values, yc.values, zc.values])
-
-        for prop in self.props:
-            self.logger.info('Getting property {}'.format(prop.name))
-            colnames.append(prop.name)
-            vector = prop.values.copy()
-            if activeonly:
-                vector = vector[~vector.mask]  # remove masked entries
-            else:
-                if prop.isdiscrete:
-                    vector = vector.filled(fill_value=0)
-                else:
-                    vector = vector.filled(fill_value=np.nan)
-                    if doubleformat:
-                        vector = vector.astype(np.float64)
-                    else:
-                        vector = vector.astype(np.float32)
-
-            proplist.append(vector)
-
-        dataframe = pd.DataFrame.from_items(zip(colnames, proplist))
-
-        return dataframe
+        return df
 
     # =========================================================================
     # Static methods (scans etc)
@@ -267,12 +254,22 @@ class GridProperties(Grid3D):
     def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
         """Quick scan of keywords in Eclipse binary restart/init/... file.
 
+        For Eclipse files:
         Returns a list of tuples, e.g. ('PRESSURE', 'REAL', 355299, 3582700),
         where (keyword, type, no_of_values, byteposition_in_file)
 
+        For ROFF files
+        Returns a list of tuples, e.g.
+        ('translate!xoffset', 'float', 1, 3582700),
+        where (keyword, type, no_of_values, byteposition_in_file).
+
+        For Eclipse, the byteposition is to the KEYWORD, while for ROFF
+        the byte position is to the beginning of the actual data.
+
         Args:
             pfile (str): Name or a filehandle to file with properties
-            fformat (str): unrst (so far)
+            fformat (str): xecl (Eclipse INIT, RESTART, ...) or roff for
+                ROFF binary,
             maxkeys (int): Maximum number of keys
             dataframe (bool): If True, return a Pandas dataframe instead
 
