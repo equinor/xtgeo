@@ -202,6 +202,21 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
 
     fhandle = _cxtgeo.xtg_fopen(pfile, 'rb')
 
+    # scan valid keywords
+    kwlist = props.scan_keywords(fhandle)
+
+    possiblekw = []
+    for name in names:
+        namefound = False
+        for kwitem in kwlist:
+            possiblekw.append(kwitem[0])
+            if name == kwitem[0]:
+                namefound = True
+        if not namefound:
+            possiblekw = list(set(possiblekw))
+            raise ValueError('Keyword name <{}> not found in {}'
+                             .format(name, possiblekw))
+
     # check valid dates, and remove invalid entries (allowing that user
     # can be a bit sloppy on DATES)
 
