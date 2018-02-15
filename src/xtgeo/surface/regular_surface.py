@@ -1056,11 +1056,13 @@ class RegularSurface(object):
 
     def hc_thickness_from_3dprops(self, xprop=None, yprop=None,
                                   hcpfzprop=None, zoneprop=None,
-                                  zone_minmax=None, layer_minmax=None):
+                                  zone_minmax=None, layer_minmax=None,
+                                  zone_avg=False, coarsen=1):
         """Make a thickness weighted HC thickness map.
 
         Make a HC thickness map based on numpy arrays of properties
-        from a 3D grid.
+        from a 3D grid. The numpy arrays here shall be ndarray,
+        not masked numpies (MaskedArray).
 
         Note that the input hcpfzprop is hydrocarbon fraction multiplied
         with thickness, which can be achieved by e.g.:
@@ -1077,10 +1079,21 @@ class RegularSurface(object):
                 and stop zonation (both start and end spec are included)
             layer_minmax (tuple): (optional) 2 element list indicating start
                 and stop grid layers (both start and end spec are included)
-
+            zone_avg (bool): A zone averaging is done prior to map gridding.
+                This may speed up the process a lot, but result will be less
+                precise. Default is False.
+            coarsen (int): Select every N'th X Y point in the gridding. Will
+                speed up process, but less precise result. Default=1
         Returns:
             True if operation went OK (but check result!), False if not
         """
+        subname = sys._getframe().f_code.co_name
+
+        for i, myprop in enumerate([xprop, yprop, hcpfzprop, zoneprop]):
+            if isinstance(myprop, ma.MaskedArray):
+                raise ValueError('Property input {} with avg {} to {} is a '
+                                 'masked array, not a plain numpy ndarray'
+                                 .format(i, myprop.mean(), subname))
 
         status = _regsurf_gridding.hc_thickness_3dprops_gridding(
             self,
@@ -1089,7 +1102,9 @@ class RegularSurface(object):
             hcpfzprop=hcpfzprop,
             zoneprop=zoneprop,
             zone_minmax=zone_minmax,
-            layer_minmax=layer_minmax)
+            layer_minmax=layer_minmax,
+            zone_avg=zone_avg,
+            coarsen=coarsen)
 
         if status is False:
             raise RuntimeError('Failure from hc thickness calculation')

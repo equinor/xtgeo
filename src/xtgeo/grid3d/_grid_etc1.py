@@ -400,8 +400,6 @@ def inactivate_inside(grid, poly, layer_range=None, inside=True,
     xc = dfxyz['X_UTME'].values
     yc = dfxyz['Y_UTMN'].values
 
-    print(xc)
-
     ier = _cxtgeo.grd3d_inact_outside_pol(xc, yc, grid.ncol,
                                           grid.nrow,
                                           grid.nlay, grid._p_coord_v,
@@ -526,15 +524,12 @@ def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
 
     logger.info('Process well object for {}...'.format(well.wellname))
     df = well.dataframe.copy()
-    logger.debug(df)
 
     if depthrange:
         logger.info('Filter depth...')
         df = df[df.Z_TVDSS > depthrange[0]]
         df = df[df.Z_TVDSS < depthrange[1]]
         df = df.copy()
-        logger.debug('Well dataframe after depth range filter:')
-        logger.debug(df)
 
     logger.info('Adding zoneshift {}'.format(zonelogshift))
     if zonelogshift != 0:
@@ -553,8 +548,6 @@ def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
 
     df.reset_index(drop=True, inplace=True)
     well.dataframe = df
-
-    logger.debug(df)
 
     # get the relevant well log C arrays...
     ptr_xc = well.get_carray('X_UTME')

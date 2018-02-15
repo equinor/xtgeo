@@ -205,8 +205,16 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
     # scan valid keywords
     kwlist = props.scan_keywords(fhandle)
 
+    lookfornames = list(set(names))
+
+    # Special treatment of "indirect" keyword SOIL, which is made
+    # from SWAT and SGAS
+    if 'SOIL' in set(names):
+        lookfornames.extend(['SWAT', 'SGAS'])
+        lookfornames.remove('SOIL')
+
     possiblekw = []
-    for name in names:
+    for name in lookfornames:
         namefound = False
         for kwitem in kwlist:
             possiblekw.append(kwitem[0])
@@ -214,8 +222,13 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
                 namefound = True
         if not namefound:
             possiblekw = list(set(possiblekw))
-            raise ValueError('Keyword name <{}> not found in {}'
-                             .format(name, possiblekw))
+            if 'SOIL' in set(names):
+                raise ValueError('Indirect keyword SOIL not found in via '
+                                 'SGAS and SWAT. Possible list: {}'
+                                 .format(possiblekw))
+            else:
+                raise ValueError('Keyword {} not found. Possible list: {}'
+                                 .format(name, possiblekw))
 
     # check valid dates, and remove invalid entries (allowing that user
     # can be a bit sloppy on DATES)
@@ -240,16 +253,6 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
             warnings.warn(RuntimeWarning(msg))
 
     usenames = list(names)  # to make copy
-
-    # # special treatement of SOIL since it is not present in restarts, but
-    # # has to be computed from SWAT and SGAS as SOIL = 1 - SWAT - SGAS
-
-    # qsoil = False
-    # if 'SOIL' in set(names):
-    #     usenames.insert(0, 'SWAT')
-    #     usenames.insert(0, 'SGAS')
-    #     usenames.remove('SOIL')
-    #     qsoil = True
 
     logger.info('Use names: {}'.format(usenames))
     logger.info('Valid dates: {}'.format(validdates))

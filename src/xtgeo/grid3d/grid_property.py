@@ -404,9 +404,8 @@ class GridProperty(Grid3D):
             if os.path.isfile(pfile):
                 self.logger.debug('File {} exists OK'.format(pfile))
             else:
-                print('No such file: {}'.format(pfile))
                 self.logger.critical('No such file: {}'.format(pfile))
-                sys.exit(1)
+                raise IOError
 
             # work on file extension
             froot, fext = os.path.splitext(pfile)

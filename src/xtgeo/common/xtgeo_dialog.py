@@ -129,7 +129,7 @@ class XTGeoDialog(object):
             self._lformat = '%(name)44s %(funcName)44s '\
                 + '%(levelname)8s: \t%(message)s'
         else:
-            self._lformat = '%(msecs)6.2f Line: %(lineno)4d %(name)44s '\
+            self._lformat = '%(asctime)s Line: %(lineno)4d %(name)44s '\
                 + '[%(funcName)40s()]'\
                 + '%(levelname)8s:'\
                 + '\t%(message)s'

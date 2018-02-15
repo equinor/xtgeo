@@ -170,37 +170,31 @@ def avg_from_3d_prop_gridding(self, xprop=None, yprop=None,
 
 def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
                                   hcpfzprop=None, zoneprop=None,
-                                  zone_minmax=None, layer_minmax=None,
-                                  zone_avg=False, coarsen=1):
+                                  zone_minmax=None, layer_minmax=None):
 
-    # NOTE:_
-    # - Inputs are pure 3D numpies, not masked!
-    # - Xprop and yprop must be made for all cells
+    # TODO:
+    # - Refactoring, shorten routine
+    # - Clarify the use of ordinary numpies vs masked
+    # - speed up gridding if possible
 
     for a in [hcpfzprop, xprop, yprop, zoneprop]:
-        logger.debug('xxx MIN MAX MEAN {} {} {}'.
-                     format(a.min(), a.max(), a.mean()))
-
-    if zone_minmax is None:
-        raise ValueError('zone_minmax is required')
-
-    xprop, yprop, hcpfzprop, zoneprop = _zone_hc_averaging(
-        xprop, yprop, hcpfzprop, zoneprop, zone_minmax, coarsen, zone_avg)
+        logger.debug('{} MIN MAX MEAN {} {} {}'.
+                     format(str(a), a.min(), a.max(), a.mean()))
 
     ncol, nrow, nlay = xprop.shape
 
     if layer_minmax is None:
         layer_minmax = (1, nlay)
     else:
-        if layer_minmax is not None and zone_avg:
-            raise RuntimeError('Cannot combine layer_minmax and zone_avg')
-
         minmax = list(layer_minmax)
         if minmax[0] < 1:
             minmax[0] = 1
         if minmax[1] > nlay:
             minmax[1] = nlay
         layer_minmax = tuple(minmax)
+
+    if zone_minmax is None:
+        zone_minmax = (1, 99999)
 
     logger.debug('Grid layout is {} {} {}'.format(ncol, nrow, nlay))
 
@@ -212,7 +206,7 @@ def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
 
         k1 = k0 + 1   # layer counting base is 1 for k1
 
-        logger.info('Mapping for (combined) layer no ' + str(k1) + '...')
+        logger.info('Mapping for layer ' + str(k1) + '...')
 
         if k1 == layer_minmax[0]:
             logger.info('Initialize zsum ...')
@@ -232,16 +226,31 @@ def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
                 continue
 
         # get slices per layer of relevant props
-        xcopy = np.copy(xprop[:, :, k0], order='F')
-        ycopy = np.copy(yprop[:, :, k0], order='F')
-        zcopy = np.copy(hcpfzprop[:, :, k0], order='F')
+        xcopy = np.copy(xprop[:, :, k0])
+        ycopy = np.copy(yprop[:, :, k0])
+        zcopy = np.copy(hcpfzprop[:, :, k0])
 
         propsum = zcopy.sum()
         if (abs(propsum) < 1e-12):
+            logger.debug('Z property sum is {}'.format(propsum))
             logger.info('Too little HC, skip layer K = {}'.format(k1))
             continue
         else:
             logger.debug('Z property sum is {}'.format(propsum))
+
+        # debugging info...
+        logger.debug(xi.shape)
+        logger.debug(yi.shape)
+        logger.debug('XI min and max {} {}'.format(xi.min(),
+                                                   xi.max()))
+        logger.debug('YI min and max {} {}'.format(yi.min(),
+                                                   yi.max()))
+        logger.debug('XPROP min and max {} {}'.format(xprop.min(),
+                                                      xprop.max()))
+        logger.debug('YPROP min and max {} {}'.format(yprop.min(),
+                                                      yprop.max()))
+        logger.debug('HCPROP min and max {} {}'
+                     .format(hcpfzprop.min(), hcpfzprop.max()))
 
         # need to make arrays 1D
         logger.debug('Reshape and filter ...')
@@ -269,87 +278,16 @@ def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
 
         zi = np.asfortranarray(zi)
         logger.info('ZI shape is {} and flags {}'.format(zi.shape, zi.flags))
+        logger.debug('Map ... done')
 
         zsum = zsum + zi
         logger.info('Sum of HCPB layer is {}'.format(zsum.mean()))
 
+    logger.debug(repr(zsum))
+    logger.debug(repr(zsum.flags))
     self.values = zsum
+    logger.debug(repr(self._values))
 
-    logger.info('Exit from hc_thickness_from_3dprops')
+    logger.debug('Exit from hc_thickness_from_3dprops')
 
     return True
-
-
-def _zone_hc_averaging(xprop, yprop, hcpfzprop, zoneprop, zone_minmax,
-                       coarsen, zone_avg):
-
-    # Change the 3D numpy array so they get layers by
-    # averaging across zones. This may speed up a lot,
-    # but will reduce the resolution.
-    # The x y coordinates shall be averaged (ideally
-    # with thickness weigting...) while hcpfzprop
-    # must be summed.
-
-    logger.info('HPR initial sum is {}'.format(hcpfzprop.sum()))
-
-    xpr = xprop
-    ypr = yprop
-    zpr = zoneprop
-    hpr = hcpfzprop
-
-    for a in [xpr, ypr, hpr, zpr]:
-        logger.info('Input shape of ... is {}'.format(a.shape))
-
-    if coarsen > 1:
-        xpr = xprop[::coarsen, ::coarsen, ::].copy(order='F')
-        ypr = yprop[::coarsen, ::coarsen, ::].copy(order='F')
-        hpr = hcpfzprop[::coarsen, ::coarsen, ::].copy(order='F')
-        zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='F')
-
-    if coarsen > 1:
-        logger.info('Coarsen is {}'.format(coarsen))
-
-    if zone_avg:
-        logger.info('Tuning zone_avg is {}'.format(zone_avg))
-        zmin = int(zone_minmax[0])
-        zmax = int(zone_minmax[1])
-        newx = []
-        newy = []
-        newz = []
-        newh = []
-
-        logger.info('HPR1: {}'.format(hpr.sum()))
-
-        for iz in range(zmin, zmax + 1):
-            xpr2 = ma.masked_where(zpr != iz, xpr)
-            ypr2 = ma.masked_where(zpr != iz, ypr)
-            hpr2 = ma.masked_where(zpr != iz, hpr)
-            logger.info('HPR2 IZ is = {} {}'.format(iz, hpr2.sum()))
-            zpr2 = ma.masked_where(zpr != iz, zpr)
-
-            xpr2 = ma.average(xpr2, axis=2)
-            ypr2 = ma.average(ypr2, axis=2)
-            hpr2 = ma.sum(hpr2, axis=2)
-            zpr2 = ma.average(zpr2, axis=2)
-
-            newx.append(xpr2)
-            newy.append(ypr2)
-            newh.append(hpr2)
-            newz.append(zpr2)
-
-        xpr = ma.dstack(newx)
-        ypr = ma.dstack(newy)
-        hpr = ma.dstack(newh)
-        zpr = ma.dstack(newz)
-
-    logger.info('HPR afterwards sum is {}'.format(hpr.sum()))
-
-    xpr = ma.filled(xpr, fill_value=np.nan)
-    ypr = ma.filled(ypr, fill_value=np.nan)
-    hpr = ma.filled(hpr, fill_value=0.0)
-    zpr = ma.filled(zpr, fill_value=0)
-
-    for a in [xpr, ypr, hpr, zpr]:
-        logger.info('Reduced shape of ... is {}'.format(a.shape))
-
-    return xpr, ypr, hpr, zpr
