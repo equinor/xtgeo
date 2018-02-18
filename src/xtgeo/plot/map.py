@@ -85,18 +85,9 @@ class Map(BasePlot):
         if (abs(surf.rotation) > 0.001):
             usesurf.unrotate()
 
-        # make a copy so original numpy is not altered!
-        self.logger.info('Transpose values...')
-
         xi, yi, zi = usesurf.get_xyz_values()
 
-        # zi = ma.transpose(usesurf.values)
-
-        # # store the current mask:
-        # zimask = ma.getmask(zi).copy()
-
-        # xi = np.linspace(usesurf.xmin, usesurf.xmax, zi.shape[1])
-        # yi = np.linspace(usesurf.ymin, usesurf.ymax, zi.shape[0])
+        zimask = ma.getmaskarray(zi).copy()  # yes need a copy!
 
         legendticks = None
         if minvalue is not None and maxvalue is not None:
@@ -111,6 +102,9 @@ class Map(BasePlot):
 
             zi[zi < minv] = minv
             zi[zi > maxv] = maxv
+
+            # need to restore the mask:
+            zi.mask = zimask
 
             # note use surf.min, not usesurf.min here ...
             notetxt = ('Note: map values are truncated from [' +

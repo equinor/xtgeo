@@ -240,7 +240,6 @@ class GridProperty(Grid3D):
         self._update_values()
         return self._values
 
-
     @values.setter
     def values(self, values):
 
@@ -330,6 +329,21 @@ class GridProperty(Grid3D):
     # =========================================================================
     # Various methods
     # =========================================================================
+
+    def get_npvalues3d(self, fill_value=None):
+        """Get a pure numpy copy (not masked) copy of the values, 3D shape
+
+        Args:
+            fill_value: Value of masked entries. Default is None which
+                means the XTGeo UNDEF value (a high number), different
+                for a continuous or discrete property"""
+        # this is a function, not a property by design
+        fvalue = _cxtgeo.UNDEF
+        if self._isdiscrete:
+            fvalue = _cxtgeo.UNDEF_INT
+
+        npv3d = ma.filled(self.values3d, fill_value=fvalue)
+        return npv3d
 
     def get_active_values(self):
         """ Return the grid property as a 1D numpy array (copy), active

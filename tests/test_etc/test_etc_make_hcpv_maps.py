@@ -84,7 +84,7 @@ def test_hcpvfz1():
     # now make hcpf map
 
     t1 = xtg.timer()
-    hcmap.hc_thickness_from_3dprops(xprop=xcv, yprop=ycv,
+    hcmap.hc_thickness_from_3dprops(xprop=xcv, yprop=ycv, dzprop=dzv,
                                     hcpfzprop=hcpfz, zoneprop=zp,
                                     zone_minmax=(1, 1))
     t2 = xtg.timer(t1)
@@ -92,7 +92,7 @@ def test_hcpvfz1():
     logger.info('Speed basic is {}'.format(t2))
 
     t1 = xtg.timer()
-    hcmap2.hc_thickness_from_3dprops(xprop=xcv, yprop=ycv,
+    hcmap2.hc_thickness_from_3dprops(xprop=xcv, yprop=ycv, dzprop=dzv,
                                      hcpfzprop=hcpfz, zoneprop=zp, coarsen=2,
                                      zone_avg=True, zone_minmax=(1, 1))
     t2 = xtg.timer(t1)

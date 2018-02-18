@@ -1056,8 +1056,9 @@ class RegularSurface(object):
 
     def hc_thickness_from_3dprops(self, xprop=None, yprop=None,
                                   hcpfzprop=None, zoneprop=None,
-                                  zone_minmax=None, layer_minmax=None,
-                                  zone_avg=False, coarsen=1):
+                                  zone_minmax=None, dzprop=None,
+                                  zone_avg=False, coarsen=1,
+                                  mask_outside=False):
         """Make a thickness weighted HC thickness map.
 
         Make a HC thickness map based on numpy arrays of properties
@@ -1073,17 +1074,20 @@ class RegularSurface(object):
             yprop (ndarray): 3D numpy array of Y coordinates
             hcpfzprop (ndarray): 3D numpy array of HC fraction multiplied
                 with DZ per cell.
-            zoneprop (ndarray): (optional) 3D numpy array indicating zonation
-                property
+            zoneprop (ndarray): 3D numpy array indicating zonation
+                property, where 1 is the lowest (0 values can be used to
+                exclude parts of the grid)
+            dzprop (ndarray): 3D numpy array holding DZ thickness. Will
+                be applied in weighting if zone_avg is active.
             zone_minmax (tuple): (optional) 2 element list indicating start
                 and stop zonation (both start and end spec are included)
-            layer_minmax (tuple): (optional) 2 element list indicating start
-                and stop grid layers (both start and end spec are included)
             zone_avg (bool): A zone averaging is done prior to map gridding.
                 This may speed up the process a lot, but result will be less
                 precise. Default is False.
             coarsen (int): Select every N'th X Y point in the gridding. Will
                 speed up process, but less precise result. Default=1
+            mask_outside (bool): Will mask the result map undef where sum of DZ
+                is zero. Default is False as it costs some extra CPU.
         Returns:
             True if operation went OK (but check result!), False if not
         """
@@ -1100,25 +1104,26 @@ class RegularSurface(object):
             xprop=xprop,
             yprop=yprop,
             hcpfzprop=hcpfzprop,
+            dzprop=dzprop,
             zoneprop=zoneprop,
             zone_minmax=zone_minmax,
-            layer_minmax=layer_minmax,
             zone_avg=zone_avg,
-            coarsen=coarsen)
+            coarsen=coarsen,
+            mask_outside=mask_outside)
 
         if status is False:
             raise RuntimeError('Failure from hc thickness calculation')
 
     def avg_from_3dprop(self, xprop=None, yprop=None,
-                        mprop=None, dzprop=None, layer_minmax=None,
+                        mprop=None, dzprop=None,
                         truncate_le=None, zoneprop=None, zone_minmax=None,
-                        sampling=1):
+                        coarsen=1, zone_avg=False):
         """
         Make an average map (DZ weighted) based on numpy arrays of
         properties from a 3D grid.
 
-        The 3D arrays mush be undef numpies of size (nx,ny,nz). Undef
-        entries must be given DZ=0
+        The 3D arrays mush be ordinary numpies of size (nx,ny,nz). Undef
+        entries must be given weights 0 by using DZ=0
 
         Args:
             xprop: 3D numpy of all X coordinates (also inactive cells)
@@ -1126,8 +1131,6 @@ class RegularSurface(object):
             mprop: 3D numpy of requested property (e.g. porosity) all
             dzprop: 3D numpy of dz values (for weighting)
                 NB zero for undef cells
-            layer_minmax: Optional. A tuple with start layer and end
-                layer (1 counting)
             truncate_le (float): Optional. Truncate value (mask) if
                 value is less
             zoneprop: 3D numpy to a zone property
@@ -1138,17 +1141,25 @@ class RegularSurface(object):
             Nothing explicit, but updates the surface object.
         """
 
+        subname = sys._getframe().f_code.co_name
+
+        for i, myprop in enumerate([xprop, yprop, mprop, dzprop, zoneprop]):
+            if isinstance(myprop, ma.MaskedArray):
+                raise ValueError('Property input {} with avg {} to {} is a '
+                                 'masked array, not a plain numpy ndarray'
+                                 .format(i, myprop.mean(), subname))
+
         _regsurf_gridding.avg_from_3d_prop_gridding(
             self,
             xprop=xprop,
             yprop=yprop,
             mprop=mprop,
             dzprop=dzprop,
-            layer_minmax=layer_minmax,
             truncate_le=truncate_le,
             zoneprop=zoneprop,
             zone_minmax=zone_minmax,
-            sampling=sampling)
+            coarsen=coarsen,
+            zone_avg=zone_avg)
 
     def quickplot(self, filename='/tmp/default.png', title='QuickPlot',
                   infotext=None, minmax=(None, None), xlabelrotation=None,

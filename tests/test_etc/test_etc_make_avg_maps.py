@@ -1,8 +1,10 @@
-import pytest
-import numpy as np
 import os
 import sys
 import logging
+
+import pytest
+import numpy as np
+import numpy.ma as ma
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
@@ -50,32 +52,31 @@ def test_avg01():
     # get the poro
     po = GridProperty()
     po.from_file(ifile1, fformat='init', name='PORO', grid=g)
+    po = ma.filled(po.values3d, fill_value=po.values.mean())
 
     # get the dz and the coordinates
     dz = g.get_dz(mask=False)
+    dz = ma.filled(dz.values3d)
     xc, yc, zc = g.get_xyz(mask=False)
+    xc = ma.filled(xc.values3d)
+    yc = ma.filled(yc.values3d)
+    zc = ma.filled(zc.values3d)
 
     # get actnum
     actnum = g.get_actnum()
-
-    # convert from masked numpy to ordinary
-    xcuse = np.copy(xc.values3d)
-    ycuse = np.copy(yc.values3d)
-    dzuse = np.copy(dz.values3d)
-    pouse = np.copy(po.values3d)
+    actnum = ma.filled(actnum.values3d)
 
     # dz must be zero for undef cells
-    dzuse[actnum.values3d < 0.5] = 0.0
-    pouse[actnum.values3d < 0.5] = 0.0
+    dz[actnum < 0.5] = 0.0
 
-    # make a map... estimate from xc and yc
+    zoneprop = np.ones((actnum.shape))
 
     avgmap = RegularSurface(nx=55, ny=50, xinc=400, yinc=375,
                             xori=-100, yori=0, values=np.zeros((55, 50)))
 
-    avgmap.avg_from_3dprop(xprop=xcuse, yprop=ycuse,
-                           mprop=pouse, dzprop=dzuse,
-                           layer_minmax=(1, 9), truncate_le=0.001)
+    avgmap.avg_from_3dprop(xprop=xc, yprop=yc, zoneprop=zoneprop,
+                           mprop=po, dzprop=dz, truncate_le=0.001,
+                           zone_minmax=(1, 1))
 
     avgmap.quickplot(filename='TMP/tmp_poro.png')
     avgmap.to_file('TMP/tmp.poro.gri')
@@ -85,7 +86,7 @@ def test_avg01():
 
 @tsetup.skipifroxar
 def test_avg02():
-    """Make average map from Gullfaks Eclipse."""
+    """Make average map from Reek Eclipse."""
     g = Grid()
     g.from_file(gfile2, fformat="egrid")
 
@@ -111,14 +112,15 @@ def test_avg02():
     pouse[actnum.values3d < 0.5] = 0.0
 
     # make a map... estimate from xc and yc
+    zuse = np.ones((xcuse.shape))
 
     avgmap = RegularSurface(nx=200, ny=250, xinc=50, yinc=50,
                             xori=457000, yori=5927000,
                             values=np.zeros((200, 250)))
 
-    avgmap.avg_from_3dprop(xprop=xcuse, yprop=ycuse,
+    avgmap.avg_from_3dprop(xprop=xcuse, yprop=ycuse, zoneprop=zuse,
+                           zone_minmax=(1, 1),
                            mprop=pouse, dzprop=dzuse,
-                           layer_minmax=(5, 6),
                            truncate_le=None)
 
     # add the faults in plot
@@ -130,98 +132,56 @@ def test_avg02():
     avgmap.to_file('TMP/tmp.poro.gri', fformat='irap_ascii')
 
     logger.info(avgmap.values.mean())
-    assert avgmap.values.mean() == pytest.approx(0.0828, abs=0.001)
+    assert avgmap.values.mean() == pytest.approx(0.0828, abs=0.01)
 
 
 @tsetup.skipifroxar
 def test_avg03():
-    """Make average depth map where Sw is between 0.3 and 0.33"""
-
-    logger.info("Reading Grid file")
+    """Make average map from Reek Eclipse, speed up by zone_avg."""
     g = Grid()
     g.from_file(gfile2, fformat="egrid")
 
-    # get the sw
-    logger.info("Reading GridProperty file")
-    sw = GridProperty()
-    sw.from_file(rfile2, fformat='unrst', name='SWAT', date=19991201,
-                 grid=g)
+    # get the poro
+    po = GridProperty()
+    po.from_file(ifile2, fformat='init', name='PORO', grid=g)
 
-    # # # get the sw2
-    # # sw2=GridProperty()
-    # # sw2.from_file('../../testdata/Zone/GULLFAKS.UNRST', fformat='unrst',
-    # #               name='SWAT', date=20150101, grid=g)
+    # get the dz and the coordinates
+    dz = g.get_dz(mask=False)
+    xc, yc, zc = g.get_xyz(mask=False)
 
-    # logger.info("Compute...")
-    # # get the dz and the coordinates
-    # dz = g.get_dz(mask=False)
-    # xc, yc, zc = g.get_xyz(mask=False)
+    # get actnum
+    actnum = g.get_actnum()
+    actnum = actnum.get_npvalues3d()
 
-    # # get actnum
-    # actnum = g.get_actnum()
+    # convert from masked numpy to ordinary
+    xcuse = xc.get_npvalues3d()
+    ycuse = yc.get_npvalues3d()
+    dzuse = dz.get_npvalues3d(fill_value=0.0)
+    pouse = po.get_npvalues3d(fill_value=0.0)
 
-    # # convert from masked numpy to ordinary
-    # xcuse = np.copy(xc.values3d)
-    # ycuse = np.copy(yc.values3d)
-    # zcuse = np.copy(zc.values3d)
-    # # zc2use = np.copy(zc.values3d) #
-    # dzuse = np.copy(dz.values3d)
+    # dz must be zero for undef cells
+    dzuse[actnum < 0.5] = 0.0
+    pouse[actnum < 0.5] = 0.0
 
-    # swuse = np.copy(sw.values3d)
-    # # sw2use = np.copy(sw2.values3d)
+    # make a map... estimate from xc and yc
+    zuse = np.ones((xcuse.shape))
 
-    # # dz must be zero for undef cells
-    # dzuse[actnum.values3d < 0.5] = 0.0
-    # swuse[actnum.values3d < 0.5] = 0.0
-    # # sw2use[actnum.values3d<0.5] = 0.0
+    avgmap = RegularSurface(nx=200, ny=250, xinc=50, yinc=50,
+                            xori=457000, yori=5927000,
+                            values=np.zeros((200, 250)))
 
-    # zcuse[swuse < 0.3] = 0.0
-    # zcuse[swuse > 0.33] = 0.0
+    avgmap.avg_from_3dprop(xprop=xcuse, yprop=ycuse, zoneprop=zuse,
+                           zone_minmax=(1, 1),
+                           mprop=pouse, dzprop=dzuse,
+                           truncate_le=None, zone_avg=True)
 
-    # # zc2use[sw2use<0.3]=0.0
-    # # zc2use[sw2use>0.33]=0.0
+    # add the faults in plot
+    fau = Polygons(ffile1, fformat='zmap')
+    fspec = {'faults': fau}
 
-    # zcuse = ma.array(zcuse)
-    # zcuse = ma.masked_less(zcuse, 999)  # e.g. depth 999
+    avgmap.quickplot(filename='TMP/tmp_poro3.png', xlabelrotation=30,
+                     faults=fspec)
+    avgmap.to_file('TMP/tmp.poro3.gri', fformat='irap_ascii')
 
-    # # zc2use = ma.array(zc2use)
-    # # zc2use = ma.masked_less(zc2use, 999) # e.g. depth 999
-
-    # logger.info(zcuse.min())
-    # logger.info(zcuse.max())
-
-    # dzuse[zcuse < zcuse.min()] = 0.0
-    # dzuse[zcuse > zcuse.max()] = 0.0
-
-    # # dz2use[zc2use<zc2use.min()] = 0.0
-    # # dz2use[zc2use>zc2use.max()] = 0.0
-
-    # zcuse = zcuse.filled(0.0)
-
-    # # make a map... estimate from xc and yc
-
-    # avgmap = RegularSurface(nx=220, ny=260, xinc=50, yinc=50,
-    #                         xori=451100, yori=6779700,
-    #                         values=np.zeros((220, 260)))
-
-    # avgmap.avg_from_3dprop(xprop=xcuse, yprop=ycuse,
-    #                        mprop=zcuse, dzprop=dzuse,
-    #                        layer_minmax=(1, 47),
-    #                        truncate_le=10)
-
-    # avgmap.quickplot(filename='TMP/tmp_depth.png')
-    # avgmap.to_file('TMP/tmp_depth.gri', fformat='irap_binary')
-
-    # # avgmap2 = RegularSurface(nx=220, ny=260, xinc=50, yinc=50,
-    # #                          xori=451100, yori=6779700,
-    # #                          values=np.zeros((220,260)))
-
-    # # avgmap2.avg_from_3dprop(xprop=xcuse, yprop=ycuse,
-    # #                         mprop=zc2use, dz2prop=dzuse,
-    # #                         lay_minmax=(1,47),
-    # #                         truncate_le=10)
-
-    # # avgmap2.quickplot(filename='TMP/tmp2_depth.png')
-    # # avgmap2.to_file('TMP/tmp2_depth.gri', fformat='irap_binary')
-
-    # logger.info("See output on TMP ...")
+    logger.info(avgmap.values.mean())
+    assert avgmap.values.mean() == pytest.approx(0.0828, abs=0.01)

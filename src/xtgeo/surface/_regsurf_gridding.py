@@ -50,89 +50,203 @@ def points_gridding(self, points, method='linear', coarsen=1):
     self.values = znew
 
 
-def avg_from_3d_prop_gridding(self, xprop=None, yprop=None,
-                              mprop=None, dzprop=None, layer_minmax=None,
-                              truncate_le=None, zoneprop=None,
-                              zone_minmax=None,
-                              sampling=1):
+def avgsum_from_3d_prop_gridding(self, summing=False, xprop=None,
+                                 yprop=None, mprop=None, dzprop=None,
+                                 truncate_le=None, zoneprop=None,
+                                 zone_minmax=None,
+                                 coarsen=1, zone_avg=False,
+                                 mask_outside=False):
 
-    # TODO:
-    # - Refactoring, shorten routine
-    # - Clarify the use of ordinary numpies vs masked
-    # - speed up gridding if possible
-
-    ncol, nrow, nlay = xprop.shape
-
-    if layer_minmax is None:
-        layer_minmax = (1, 99999)
+    # NOTE:
+    # This do _either_ averaging _or_ sum gridding (if summing is True)
+    # - Inputs shall be pure 3D numpies, not masked!
+    # - Xprop and yprop must be made for all cells
+    # - Also dzprop for all cells, and dzprop = 0 for inactive cells!
 
     if zone_minmax is None:
-        zone_minmax = (1, 99999)
+        raise ValueError('zone_minmax is required')
 
-    usezoneprop = True
-    if zoneprop is None:
-        usezoneprop = False
+    if dzprop is None:
+        raise ValueError('DZ property is required')
 
-    # avoid artifacts from inactive cells that slips through somehow...
-    dzprop[mprop > _cxtgeo.UNDEF_LIMIT] = 0.0
+    xprop, yprop, zoneprop, mprop, dzprop = _zone_averaging2(
+        xprop,
+        yprop,
+        zoneprop,
+        zone_minmax,
+        coarsen,
+        zone_avg,
+        dzprop,
+        mprop,
+        summing=summing)
 
-    logger.info('Layer from: {}'.format(layer_minmax[0]))
-    logger.info('Layer to: {}'.format(layer_minmax[1]))
-    logger.debug('Layout is {} {} {}'.format(ncol, nrow, nlay))
+    gnlay = xprop.nlay
 
-    logger.info('Zone from: {}'.format(zone_minmax[0]))
-    logger.info('Zone to: {}'.format(zone_minmax[1]))
-    logger.info('Zone is :')
-    logger.info(zoneprop)
+    # avoid artifacts from inactive cells that slips through somehow...(?)
+    if dzprop.max() > _cxtgeo.UNDEF_LIMIT:
+        raise RuntimeError('Bug: DZ with unphysical values present')
 
     xi, yi = self.get_xy_values()
 
-    sf = sampling
+    for k0 in range(gnlay):
 
-    logger.debug('ZONEPROP:')
-    logger.debug(zoneprop)
-    # compute per K layer (start on count 1)
+        k1 = k0 + 1
 
-    first = True
-    for k in range(1, nlay + 1):
+        if k1 == 1:
+            logger.info('Initialize zsum ...')
+            zsum = np.zeros((self._ncol, self._nrow), order='F')
+            dzsum = np.zeros((self._ncol, self._nrow), order='F')
 
-        if k < layer_minmax[0] or k > layer_minmax[1]:
-            logger.info('SKIP LAYER {}'.format(k))
+        numz = int(round(zoneprop[::, ::, k0].mean()))
+        if numz < zone_minmax[0] or numz > zone_minmax[1]:
             continue
+
+        if summing:
+            propsum = mprop[:, :, k0].sum()
+            if (abs(propsum) < 1e-12):
+                logger.info('Too little HC, skip layer K = {}'.format(k1))
+                continue
+            else:
+                logger.debug('Z property sum is {}'.format(propsum))
+
+        logger.info('Mapping for layer or zone ' + str(k1) + '...')
+
+        xc = xprop[::, ::, k0].ravel(order='F')
+        yc = yprop[::, ::, k0].ravel(order='F')
+        mv = mprop[::, ::, k0].ravel(order='F')
+        dz = dzprop[::, ::, k0].ravel(order='F')
+
+        # this is done to avoid problems if undef values still remains
+        # in the coordinates:
+        xcc = xc.copy()
+        xc = xc[xcc < _cxtgeo.UNDEF_LIMIT]
+        yc = yc[xcc < _cxtgeo.UNDEF_LIMIT]
+        mv = mv[xcc < _cxtgeo.UNDEF_LIMIT]
+        dz = dz[xcc < _cxtgeo.UNDEF_LIMIT]
+
+        if summing:
+            mvdz = mv
         else:
-            logger.info('USE LAYER {}'.format(k))
+            mvdz = mv * dz
 
-        if usezoneprop:
-            zonecopy = ma.copy(zoneprop[::sf, ::sf, k - 1:k])
+        try:
+            mvdzi = scipy.interpolate.griddata((xc, yc),
+                                               mvdz,
+                                               (xi, yi),
+                                               method='linear',
+                                               fill_value=0.0)
+        except ValueError:
+            continue
 
-            zzz = int(round(zonecopy.mean()))
-            if zzz < zone_minmax[0] or zzz > zone_minmax[1]:
+        if (not summing) or (summing and mask_outside):
+            try:
+                dzi = scipy.interpolate.griddata((xc, yc),
+                                                 dz,
+                                                 (xi, yi),
+                                                 method='linear',
+                                                 fill_value=0.0)
+            except ValueError:
                 continue
 
-        logger.info('Mapping for ' + str(k) + '...')
+            dzi = np.asfortranarray(dzi)
+            dzsum = dzsum + dzi
 
-        xcopy = np.copy(xprop[::, ::, k - 1:k])
-        ycopy = np.copy(yprop[::, ::, k - 1:k])
-        zcopy = np.copy(mprop[::, ::, k - 1:k])
-        dzcopy = np.copy(dzprop[::, ::, k - 1:k])
+        logger.debug(mvdzi.shape)
+        mvdzi = np.asfortranarray(mvdzi)
+
+        wsum = wsum + mvdzi
+
+    if summing and mask_outside:
+        zsum = ma.masked_where(dzsum < 1e-20, zsum)
+    elif summing:
+        zsum = ma.array(zsum)  # so the result becomes a ma array
+
+    dzmask = dzsum.copy()
+
+    dzsum[dzsum == 0.0] = 1e-20
+
+    if not summing:
+        vv = wsum / dzsum
+        vv = ma.masked_invalid(vv)
+    else:
+        vv = wsum
+
+    # apply the mask from the DZ map to mask the result
+    dzmask = ma.masked_less(dzmask, 1e-20)
+    dzmask = ma.getmaskarray(dzmask)
+
+    if truncate_le:
+        vv = ma.masked_less(vv, truncate_le)
+
+    vv.mask = dzmask
+    self.values = vv
+
+    return True
+
+
+def avg_from_3d_prop_gridding(self, xprop=None, yprop=None,
+                              mprop=None, dzprop=None,
+                              truncate_le=None, zoneprop=None,
+                              zone_minmax=None,
+                              coarsen=1, zone_avg=False):
+
+    # NOTE:
+    # - Inputs shall be pure 3D numpies, not masked!
+    # - Xprop and yprop must be made for all cells
+    # - Also dzprop for all cells, and dzprop = 0 for inactive cells!
+
+    if zone_minmax is None:
+        raise ValueError('zone_minmax is required')
+
+    if dzprop is None:
+        raise ValueError('DZ property is required')
+
+    # preprocessing
+    xprop, yprop, zoneprop, mprop, dzprop = _zone_averaging(
+        xprop,
+        yprop,
+        zoneprop,
+        zone_minmax,
+        coarsen,
+        zone_avg,
+        dzprop,
+        mprop=mprop,
+        hcprop=None)
+
+    ncol, nrow, nlay = xprop.shape
+
+    # avoid artifacts from inactive cells that slips through somehow...(?)
+    if dzprop.max() > _cxtgeo.UNDEF_LIMIT:
+        raise RuntimeError('Bug: DZ with unphysical values present')
+
+    xi, yi = self.get_xy_values()
+
+    first = True
+    for k0 in range(nlay):
+
+        k1 = k0 + 1
+
+        numz = int(round(zoneprop[::, ::, k0].mean()))
+        if numz < zone_minmax[0] or numz > zone_minmax[1]:
+            continue
+
+        logger.info('Mapping for ' + str(k1) + '...')
 
         if first:
             wsum = np.zeros((self._ncol, self._nrow), order='F')
             dzsum = np.zeros((self._ncol, self._nrow), order='F')
             first = False
 
-        logger.debug(zcopy)
+        xc = xprop[::, ::, k0].ravel(order='F')
+        yc = yprop[::, ::, k0].ravel(order='F')
+        mv = mprop[::, ::, k0].ravel(order='F')
+        dz = dzprop[::, ::, k0].ravel(order='F')
 
-        xc = np.reshape(xcopy, -1, order='F')
-        yc = np.reshape(ycopy, -1, order='F')
-        zv = np.reshape(zcopy, -1, order='F')
-        dz = np.reshape(dzcopy, -1, order='F')
-
-        zvdz = zv * dz
+        mvdz = mv * dz
 
         try:
-            zvdzi = scipy.interpolate.griddata((xc[::sf], yc[::sf]),
-                                               zvdz[::sf],
+            mvdzi = scipy.interpolate.griddata((xc, yc),
+                                               mvdz,
                                                (xi, yi),
                                                method='linear',
                                                fill_value=0.0)
@@ -140,127 +254,120 @@ def avg_from_3d_prop_gridding(self, xprop=None, yprop=None,
             continue
 
         try:
-            dzi = scipy.interpolate.griddata((xc[::sf], yc[::sf]),
-                                             dz[::sf],
+            dzi = scipy.interpolate.griddata((xc, yc),
+                                             dz,
                                              (xi, yi),
                                              method='linear',
                                              fill_value=0.0)
         except ValueError:
             continue
 
-        logger.debug(zvdzi.shape)
-        zvdzi = np.asfortranarray(zvdzi)
+        logger.debug(mvdzi.shape)
+        mvdzi = np.asfortranarray(mvdzi)
         dzi = np.asfortranarray(dzi)
-        logger.debug('ZVDVI shape {}'.format(zvdzi.shape))
-        logger.debug('ZVDZI flags {}'.format(zvdzi.flags))
 
-        wsum = wsum + zvdzi
+        wsum = wsum + mvdzi
         dzsum = dzsum + dzi
 
-        logger.debug(wsum[0:20, 0:20])
+    dzmask = dzsum.copy()
 
     dzsum[dzsum == 0.0] = 1e-20
     vv = wsum / dzsum
     vv = ma.masked_invalid(vv)
+
+    # apply the mask from the DZ map to mask the result
+    dzmask = ma.masked_less(dzmask, 1e-20)
+    dzmask = ma.getmaskarray(dzmask)
+
     if truncate_le:
         vv = ma.masked_less(vv, truncate_le)
 
+    vv.mask = dzmask
     self.values = vv
 
 
 def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
                                   hcpfzprop=None, zoneprop=None,
-                                  zone_minmax=None, layer_minmax=None,
-                                  zone_avg=False, coarsen=1):
+                                  zone_minmax=None, dzprop=None,
+                                  zone_avg=False, coarsen=1,
+                                  mask_outside=False):
 
     # NOTE:_
     # - Inputs are pure 3D numpies, not masked!
     # - Xprop and yprop must be made for all cells
 
-    for a in [hcpfzprop, xprop, yprop, zoneprop]:
-        logger.debug('xxx MIN MAX MEAN {} {} {}'.
-                     format(a.min(), a.max(), a.mean()))
-
     if zone_minmax is None:
         raise ValueError('zone_minmax is required')
 
-    xprop, yprop, hcpfzprop, zoneprop = _zone_hc_averaging(
-        xprop, yprop, hcpfzprop, zoneprop, zone_minmax, coarsen, zone_avg)
+    if dzprop is None:
+        raise ValueError('DZ property is required')
+
+    xprop, yprop, zoneprop, hcpfzprop, dzprop = _zone_averaging(
+        xprop,
+        yprop,
+        zoneprop,
+        zone_minmax,
+        coarsen,
+        zone_avg,
+        dzprop,
+        hcprop=hcpfzprop)
 
     ncol, nrow, nlay = xprop.shape
-
-    if layer_minmax is None:
-        layer_minmax = (1, nlay)
-    else:
-        if layer_minmax is not None and zone_avg:
-            raise RuntimeError('Cannot combine layer_minmax and zone_avg')
-
-        minmax = list(layer_minmax)
-        if minmax[0] < 1:
-            minmax[0] = 1
-        if minmax[1] > nlay:
-            minmax[1] = nlay
-        layer_minmax = tuple(minmax)
-
-    logger.debug('Grid layout is {} {} {}'.format(ncol, nrow, nlay))
 
     # rotation in mesh coords are OK!
     xi, yi = self.get_xy_values()
 
     # filter and compute per K layer (start count on 0)
-    for k0 in range(layer_minmax[0] - 1, layer_minmax[1]):
+    for k0 in range(nlay):
 
         k1 = k0 + 1   # layer counting base is 1 for k1
 
         logger.info('Mapping for (combined) layer no ' + str(k1) + '...')
 
-        if k1 == layer_minmax[0]:
+        if k1 == 1:
             logger.info('Initialize zsum ...')
             zsum = np.zeros((self._ncol, self._nrow), order='F')
+            dzsum = np.zeros((self._ncol, self._nrow), order='F')
 
-        # this should actually never happen...
-        if k1 < layer_minmax[0] or k1 > layer_minmax[1]:
-            logger.warning('SKIP (layer_minmax)')
+        # check if in zone
+        numz = int(round(zoneprop[:, :, k0].mean()))
+        if numz < zone_minmax[0] or numz > zone_minmax[1]:
+            logger.info('SKIP (not active zone) numz={}, zone_minmax is {}'
+                        .format(numz, zone_minmax))
             continue
 
-        if zoneprop is not None:
-            zoneslice = zoneprop[:, :, k0]
-
-            actz = int(round(zoneslice.mean()))
-            if actz < zone_minmax[0] or actz > zone_minmax[1]:
-                logger.info('SKIP (not active zone)')
-                continue
-
-        # get slices per layer of relevant props
-        xcopy = np.copy(xprop[:, :, k0], order='F')
-        ycopy = np.copy(yprop[:, :, k0], order='F')
-        zcopy = np.copy(hcpfzprop[:, :, k0], order='F')
-
-        propsum = zcopy.sum()
+        propsum = hcpfzprop[:, :, k0].sum()
         if (abs(propsum) < 1e-12):
             logger.info('Too little HC, skip layer K = {}'.format(k1))
             continue
         else:
             logger.debug('Z property sum is {}'.format(propsum))
 
-        # need to make arrays 1D
-        logger.debug('Reshape and filter ...')
-        x = np.reshape(xcopy, -1, order='F')
-        y = np.reshape(ycopy, -1, order='F')
-        z = np.reshape(zcopy, -1, order='F')
+        xc = xprop[:, :, k0].ravel(order='F')
+        yc = yprop[:, :, k0].ravel(order='F')
+        zc = hcpfzprop[:, :, k0].ravel(order='F')
 
-        xc = xcopy.flatten(order='F')
+        xcc = xc.copy()
+        xc = xc[xcc < _cxtgeo.UNDEF_LIMIT]
+        yc = yc[xcc < _cxtgeo.UNDEF_LIMIT]
+        zc = zc[xcc < _cxtgeo.UNDEF_LIMIT]
 
-        x = x[xc < self._undef_limit]
-        y = y[xc < self._undef_limit]
-        z = z[xc < self._undef_limit]
+        if mask_outside:
+            dzc = dzprop[:, :, k0].ravel(order='F')
+            dzc = dzc[xcc < _cxtgeo.UNDEF_LIMIT]
+            try:
+                dzi = scipy.interpolate.griddata((xc, yc), dzc, (xi, yi),
+                                                 method='linear',
+                                                 fill_value=0.0)
+            except ValueError as ve:
+                logger.info('Not able to grid layer {} ({})'.format(k1, ve))
+                continue
 
-        logger.debug('Reshape and filter ... done')
-
-        logger.debug('Map ... layer = {}'.format(k1))
+            dzi = np.asfortranarray(dzi)
+            dzsum = dzsum + dzi
 
         try:
-            zi = scipy.interpolate.griddata((x, y), z, (xi, yi),
+            zi = scipy.interpolate.griddata((xc, yc), zc, (xi, yi),
                                             method='linear',
                                             fill_value=0.0)
         except ValueError as ve:
@@ -273,6 +380,11 @@ def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
         zsum = zsum + zi
         logger.info('Sum of HCPB layer is {}'.format(zsum.mean()))
 
+    if mask_outside:
+        zsum = ma.masked_where(dzsum < 1e-20, zsum)
+    else:
+        zsum = ma.array(zsum)  # so the result becomes a ma array
+
     self.values = zsum
 
     logger.info('Exit from hc_thickness_from_3dprops')
@@ -280,33 +392,45 @@ def hc_thickness_3dprops_gridding(self, xprop=None, yprop=None,
     return True
 
 
-def _zone_hc_averaging(xprop, yprop, hcpfzprop, zoneprop, zone_minmax,
-                       coarsen, zone_avg):
+def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
+                    zone_avg, dzprop, mprop=None, hcprop=None):
 
     # Change the 3D numpy array so they get layers by
     # averaging across zones. This may speed up a lot,
     # but will reduce the resolution.
     # The x y coordinates shall be averaged (ideally
-    # with thickness weigting...) while hcpfzprop
+    # with thickness weighting...) while e.g. hcpfzprop
     # must be summed.
+    # Somewhat different processing whether this is a hc thickness
+    # or an average.
 
-    logger.info('HPR initial sum is {}'.format(hcpfzprop.sum()))
+    uprops = {'xprop': xprop, 'yprop': yprop, 'zoneprop': zoneprop,
+              'dzprop': dzprop}
 
-    xpr = xprop
-    ypr = yprop
-    zpr = zoneprop
-    hpr = hcpfzprop
+    # some sanity checks
+    for name, pp in uprops.items():
+        minpp = pp.min()
+        maxpp = pp.max()
+        logger.info('Min Max for {} is {} .. {}'.format(name, minpp, maxpp))
 
-    for a in [xpr, ypr, hpr, zpr]:
-        logger.info('Input shape of ... is {}'.format(a.shape))
+    qhc = False
+    if hcprop is not None:
+        qhc = True
+        hpr = hcprop
+
+    if mprop is not None:
+        mpr = mprop
 
     if coarsen > 1:
         xpr = xprop[::coarsen, ::coarsen, ::].copy(order='F')
         ypr = yprop[::coarsen, ::coarsen, ::].copy(order='F')
-        hpr = hcpfzprop[::coarsen, ::coarsen, ::].copy(order='F')
         zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='F')
+        dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='F')
+        if qhc:
+            hpr = hcprop[::coarsen, ::coarsen, ::].copy(order='F')
+        else:
+            mpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
 
-    if coarsen > 1:
         logger.info('Coarsen is {}'.format(coarsen))
 
     if zone_avg:
@@ -317,39 +441,170 @@ def _zone_hc_averaging(xprop, yprop, hcpfzprop, zoneprop, zone_minmax,
         newy = []
         newz = []
         newh = []
-
-        logger.info('HPR1: {}'.format(hpr.sum()))
+        newm = []
+        newd = []
 
         for iz in range(zmin, zmax + 1):
             xpr2 = ma.masked_where(zpr != iz, xpr)
             ypr2 = ma.masked_where(zpr != iz, ypr)
-            hpr2 = ma.masked_where(zpr != iz, hpr)
-            logger.info('HPR2 IZ is = {} {}'.format(iz, hpr2.sum()))
             zpr2 = ma.masked_where(zpr != iz, zpr)
+            dpr2 = ma.masked_where(zpr != iz, dpr)
+            if qhc:
+                hpr2 = ma.masked_where(zpr != iz, hpr)
+            else:
+                mpr2 = ma.masked_where(zpr != iz, mpr)
 
-            xpr2 = ma.average(xpr2, axis=2)
-            ypr2 = ma.average(ypr2, axis=2)
-            hpr2 = ma.sum(hpr2, axis=2)
-            zpr2 = ma.average(zpr2, axis=2)
+            # get the thickness and normalize along axis 2 (vertical)
+            # to get normalized thickness weights
+            lay_sums = dpr2.sum(axis=2)
+            normed_dz = dpr2 / lay_sums[:, :, np.newaxis]
 
+            xpr2 = ma.average(xpr2, weights=normed_dz, axis=2)
+            ypr2 = ma.average(ypr2, weights=normed_dz, axis=2)
+            zpr2 = ma.average(zpr2, axis=2)  # no need for weights
+            if qhc:
+                hpr2 = ma.sum(hpr2, axis=2)
+            else:
+                mpr2 = ma.average(mpr2, weights=normed_dz, axis=2)
+
+            dpr2 = ma.sum(dpr2, axis=2)
             newx.append(xpr2)
             newy.append(ypr2)
-            newh.append(hpr2)
             newz.append(zpr2)
+            newd.append(dpr2)
+            if qhc:
+                newh.append(hpr2)
+            else:
+                newm.append(mpr2)
 
         xpr = ma.dstack(newx)
         ypr = ma.dstack(newy)
-        hpr = ma.dstack(newh)
         zpr = ma.dstack(newz)
+        dpr = ma.dstack(newd)
+        if qhc:
+            hpr = ma.dstack(newh)
+        else:
+            mpr = ma.dstack(newm)
 
-    logger.info('HPR afterwards sum is {}'.format(hpr.sum()))
-
-    xpr = ma.filled(xpr, fill_value=np.nan)
-    ypr = ma.filled(ypr, fill_value=np.nan)
-    hpr = ma.filled(hpr, fill_value=0.0)
+    xpr = ma.filled(xpr, fill_value=_cxtgeo.UNDEF)
+    ypr = ma.filled(ypr, fill_value=_cxtgeo.UNDEF)
     zpr = ma.filled(zpr, fill_value=0)
+    dpr = ma.filled(dpr, fill_value=0.0)
 
-    for a in [xpr, ypr, hpr, zpr]:
+    for a in [xpr, ypr, zpr]:
         logger.info('Reduced shape of ... is {}'.format(a.shape))
 
-    return xpr, ypr, hpr, zpr
+    if qhc:
+        hpr = ma.filled(hpr, fill_value=0.0)
+        return xpr, ypr, zpr, hpr, dpr
+    else:
+        mpr = ma.filled(mpr, fill_value=0.0)
+        return xpr, ypr, zpr, mpr, dpr
+
+
+def _zone_averaging2(xprop, yprop, zoneprop, zone_minmax, coarsen,
+                     zone_avg, dzprop, mprop, summing=False):
+
+    # General preprocessing, and...
+    # Change the 3D numpy array so they get layers by
+    # averaging across zones. This may speed up a lot,
+    # but will reduce the resolution.
+    # The x y coordinates shall be averaged (ideally
+    # with thickness weighting...) while e.g. hcpfzprop
+    # must be summed.
+    # Somewhat different processing whether this is a hc thickness
+    # or an average.
+
+    uprops = {'xprop': xprop, 'yprop': yprop, 'zoneprop': zoneprop,
+              'dzprop': dzprop, 'mprop': mprop}
+
+    # some sanity checks
+    for name, pp in uprops.items():
+        minpp = pp.min()
+        maxpp = pp.max()
+        logger.info('Min Max for {} is {} .. {}'.format(name, minpp, maxpp))
+
+    if summing:
+        hpr = mprop
+    else:
+        mpr = mprop
+
+    if coarsen > 1:
+        xpr = xprop[::coarsen, ::coarsen, ::].copy(order='F')
+        ypr = yprop[::coarsen, ::coarsen, ::].copy(order='F')
+        zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='F')
+        dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='F')
+        if summing:
+            hpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
+        else:
+            mpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
+
+        logger.info('Coarsen is {}'.format(coarsen))
+
+    if zone_avg:
+        logger.info('Tuning zone_avg is {}'.format(zone_avg))
+        zmin = int(zone_minmax[0])
+        zmax = int(zone_minmax[1])
+        newx = []
+        newy = []
+        newz = []
+        newh = []
+        newm = []
+        newd = []
+
+        for iz in range(zmin, zmax + 1):
+            xpr2 = ma.masked_where(zpr != iz, xpr)
+            ypr2 = ma.masked_where(zpr != iz, ypr)
+            zpr2 = ma.masked_where(zpr != iz, zpr)
+            dpr2 = ma.masked_where(zpr != iz, dpr)
+            if summing:
+                hpr2 = ma.masked_where(zpr != iz, hpr)
+            else:
+                mpr2 = ma.masked_where(zpr != iz, mpr)
+
+            # get the thickness and normalize along axis 2 (vertical)
+            # to get normalized thickness weights
+            lay_sums = dpr2.sum(axis=2)
+            normed_dz = dpr2 / lay_sums[:, :, np.newaxis]
+
+            xpr2 = ma.average(xpr2, weights=normed_dz, axis=2)
+            ypr2 = ma.average(ypr2, weights=normed_dz, axis=2)
+            zpr2 = ma.average(zpr2, axis=2)  # no need for weights
+            if summing:
+                hpr2 = ma.sum(hpr2, axis=2)
+            else:
+                mpr2 = ma.average(mpr2, weights=normed_dz, axis=2)
+
+            dpr2 = ma.sum(dpr2, axis=2)
+            newx.append(xpr2)
+            newy.append(ypr2)
+            newz.append(zpr2)
+            newd.append(dpr2)
+            if summing:
+                newh.append(hpr2)
+            else:
+                newm.append(mpr2)
+
+        xpr = ma.dstack(newx)
+        ypr = ma.dstack(newy)
+        zpr = ma.dstack(newz)
+        dpr = ma.dstack(newd)
+        if summing:
+            hpr = ma.dstack(newh)
+        else:
+            mpr = ma.dstack(newm)
+
+    xpr = ma.filled(xpr, fill_value=_cxtgeo.UNDEF)
+    ypr = ma.filled(ypr, fill_value=_cxtgeo.UNDEF)
+    zpr = ma.filled(zpr, fill_value=0)
+    dpr = ma.filled(dpr, fill_value=0.0)
+
+    for a in [xpr, ypr, zpr]:
+        logger.info('Reduced shape of ... is {}'.format(a.shape))
+
+    if summing:
+        hpr = ma.filled(hpr, fill_value=0.0)
+        return xpr, ypr, zpr, hpr, dpr
+    else:
+        mpr = ma.filled(mpr, fill_value=0.0)
+        return xpr, ypr, zpr, mpr, dpr
