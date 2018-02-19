@@ -1099,11 +1099,12 @@ class RegularSurface(object):
                                  'masked array, not a plain numpy ndarray'
                                  .format(i, myprop.mean(), subname))
 
-        status = _regsurf_gridding.hc_thickness_3dprops_gridding(
+        status = _regsurf_gridding.avgsum_from_3dprops_gridding(
             self,
+            summing=True,
             xprop=xprop,
             yprop=yprop,
-            hcpfzprop=hcpfzprop,
+            mprop=hcpfzprop,
             dzprop=dzprop,
             zoneprop=zoneprop,
             zone_minmax=zone_minmax,
@@ -1149,8 +1150,9 @@ class RegularSurface(object):
                                  'masked array, not a plain numpy ndarray'
                                  .format(i, myprop.mean(), subname))
 
-        _regsurf_gridding.avg_from_3d_prop_gridding(
+        _regsurf_gridding.avgsum_from_3dprops_gridding(
             self,
+            summing=False,
             xprop=xprop,
             yprop=yprop,
             mprop=mprop,
