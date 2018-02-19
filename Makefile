@@ -146,5 +146,6 @@ userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 
 
 docsinstall: docsrun
+	mkdir -p ${DOCSINSTALL}/${APPLICATION}
 	rsync -av --delete docs/_build/html ${DOCSINSTALL}/${APPLICATION}
 	/project/res/bin/res_perm ${DOCSINSTALL}/${APPLICATION}
