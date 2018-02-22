@@ -42,7 +42,7 @@ def import_grid_roxapi(self, projectname, gname, realisation):
             roxgrid = projectname.grid_models[gname].get_grid()
             corners = roxgrid.get_cell_corners_by_index()
 
-            _convert_to_xtgeo_grid(self, corners)
+            _convert_to_xtgeo_grid(self, roxgrid, corners)
 
         except KeyError as keyerror:
             raise RuntimeError(keyerror)
