@@ -28,6 +28,9 @@ def import_grid_roxapi(self, projectname, gname, realisation):
             # the project
 
             try:
+                if gname not in proj.grid_models:
+                    raise KeyError('No such gridmodel: {}'.format(gname))
+
                 roxgrid = proj.grid_models[gname].get_grid()
                 corners = roxgrid.get_cell_corners_by_index()
 
@@ -97,10 +100,14 @@ def _convert_to_xtgeo_grid(self, roxgrid, corners):
     _cxtgeo.swig_numpy_to_carr_1d(corners, ccorners)
     _cxtgeo.swig_numpy_to_carr_i1d(actnum, cactnum)
 
+    logger.info('Calling C function...')
+
     # next task is to convert geometry to cxtgeo internal format
-    _cxtgeo.grd3d_conv_roxapi_grid(ncol, nrow, nlay, cactnum, ccorners,
+    _cxtgeo.grd3d_conv_roxapi_grid(ncol, nrow, nlay, ntot, cactnum, ccorners,
                                    self._p_coord_v, self._p_zcorn_v,
                                    self._p_actnum_v, xtg_verbose_level)
+
+    logger.info('Calling C function done...')
 
     _cxtgeo.delete_doublearray(ccorners)
     _cxtgeo.delete_intarray(cactnum)
