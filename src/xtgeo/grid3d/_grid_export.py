@@ -10,24 +10,24 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def export_roff(grid, gfile, option):
+def export_roff(self, gfile, option):
     """Export grid to ROFF format (binary)"""
 
     logger.debug('Export to ROFF...')
     _cxtgeo.xtg_verbose_file('NONE')
-    xtg_verbose_level = grid._xtg.syslevel
+    xtg_verbose_level = self._xtg.syslevel
 
-    if grid._nsubs == 0 and not hasattr(grid, '_p_subgrd_v'):
+    if self._nsubs == 0 and not hasattr(self, '_p_subgrd_v'):
         logger.debug('Create a pointer for _p_subgrd_v ...')
-        grid._p_subgrd_v = _cxtgeo.new_intpointer()
+        self._p_subgrd_v = _cxtgeo.new_intpointer()
 
     # get the geometrics list to find the xshift, etc
-    gx = grid.get_geometrics()
+    gx = self.get_geometrics()
 
-    _cxtgeo.grd3d_export_roff_grid(option, grid._ncol, grid._nrow, grid._nlay,
-                                   grid._nsubs, 0, gx[3], gx[5], gx[7],
-                                   grid._p_coord_v, grid._p_zcorn_v,
-                                   grid._p_actnum_v, grid._p_subgrd_v,
+    _cxtgeo.grd3d_export_roff_grid(option, self._ncol, self._nrow, self._nlay,
+                                   self._nsubs, 0, gx[3], gx[5], gx[7],
+                                   self._p_coord_v, self._p_zcorn_v,
+                                   self._p_actnum_v, self._p_subgrd_v,
                                    gfile, xtg_verbose_level)
 
     # skip parameters for now (cf Perl code)
@@ -36,13 +36,13 @@ def export_roff(grid, gfile, option):
     _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)
 
 
-def export_grdecl(grid, gfile):
+def export_grdecl(self, gfile):
     """Export grid to Eclipse GRDECL format (ascii)"""
 
     logger.debug('Export to GRDECL...')
     _cxtgeo.xtg_verbose_file('NONE')
-    xtg_verbose_level = grid._xtg.syslevel
+    xtg_verbose_level = self._xtg.syslevel
 
-    _cxtgeo.grd3d_export_grdecl(grid._ncol, grid._nrow, grid._nlay,
-                                grid._p_coord_v, grid._p_zcorn_v,
-                                grid._p_actnum_v, gfile, xtg_verbose_level)
+    _cxtgeo.grd3d_export_grdecl(self._ncol, self._nrow, self._nlay,
+                                self._p_coord_v, self._p_zcorn_v,
+                                self._p_actnum_v, gfile, xtg_verbose_level)

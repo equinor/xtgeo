@@ -278,7 +278,7 @@ class Grid(Grid3D):
 
         return self
 
-    def from_roxar(self, projectname, gname):
+    def from_roxar(self, projectname, gname, realisation=0):
 
         """Import grid model geometry from RMS project, and makes an instance.
 
@@ -288,7 +288,7 @@ class Grid(Grid3D):
 
         """
 
-        _grid_roxapi.import_grid_roxapi(self, projectname, gname)
+        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation)
 
     def to_file(self, gfile, fformat='roff'):
         """

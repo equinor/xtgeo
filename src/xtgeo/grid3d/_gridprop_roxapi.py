@@ -11,12 +11,14 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
+# self is the XTGeo GridProperty instance
 
-def import_prop_roxapi(prop, projectname, gname, pname, realisation):
+
+def import_prop_roxapi(self, projectname, gname, pname, realisation):
     """Import a Property via ROXAR API spec."""
     import roxar
 
-    prop._roxprop = None
+    self._roxprop = None
 
     logger.info('Opening RMS project ...')
     if projectname is not None and isinstance(projectname, str):
@@ -31,8 +33,8 @@ def import_prop_roxapi(prop, projectname, gname, pname, realisation):
             try:
                 roxgrid = proj.grid_models[gname]
                 roxprop = roxgrid.properties[pname]
-                prop._roxorigin = True
-                _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop)
+                self._roxorigin = True
+                _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop)
 
             except KeyError as keyerror:
                 raise RuntimeError(keyerror)
@@ -42,16 +44,16 @@ def import_prop_roxapi(prop, projectname, gname, pname, realisation):
         try:
             roxgrid = projectname.grid_models[gname]
             roxprop = roxgrid.properties[pname]
-            prop._roxorigin = True
-            _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop)
+            self._roxorigin = True
+            _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop)
 
         except KeyError as keyerror:
             raise RuntimeError(keyerror)
 
-    return prop
+    return self
 
 
-def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False,
+def export_prop_roxapi(self, projectname, gname, pname, saveproject=False,
                        realisation=0):
     """Export to a Property in RMS via ROXAR API spec."""
     import roxar
@@ -68,7 +70,7 @@ def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False,
 
             try:
                 roxgrid = proj.grid_models[gname]
-                _store_in_roxar(prop, pname, roxgrid)
+                _store_in_roxar(self, pname, roxgrid)
 
                 if saveproject:
                     try:
@@ -83,14 +85,14 @@ def export_prop_roxapi(prop, projectname, gname, pname, saveproject=False,
         # within RMS project
         try:
             roxgrid = projectname.grid_models[gname]
-            _store_in_roxar(prop, pname, roxgrid)
+            _store_in_roxar(self, pname, roxgrid)
         except KeyError as keyerror:
             raise RuntimeError(keyerror)
 
 
-def _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop):
+def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
 
-    import roxar
+    # import roxar
 
     indexer = roxgrid.get_grid().grid_indexer
 
@@ -99,19 +101,19 @@ def _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop):
     pvalues = roxprop.get_values()
     logger.info('PVALUES is {}'.format(pvalues))
 
-    # test
-    properties = roxgrid.properties
-    rprop = properties.create('TEST',
-                              property_type=roxar.GridPropertyType.continuous,
-                              data_type=np.float32)
+    # # test
+    # properties = roxgrid.properties
+    # rprop = properties.create('TEST',
+    #                           property_type=roxar.GridPropertyType.continuous,
+    #                           data_type=np.float32)
 
-    rprop.set_values(pvalues)
+    # rprop.set_values(pvalues)
 
     logger.info('PVALUES {} {}'.format(pvalues, pvalues.flags))
 
-    buffer = np.ndarray(indexer.dimensions, dtype=np.float64)
+    mybuffer = np.ndarray(indexer.dimensions, dtype=np.float64)
 
-    buffer.fill(prop.undef)
+    mybuffer.fill(self.undef)
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
@@ -121,33 +123,29 @@ def _convert_to_xtgeo_prop(prop, pname, roxgrid, roxprop):
     jind = ijk[:, 1]
     kind = ijk[:, 2]
 
-    print(iind[0:30])
-    print(jind)
-    print(kind)
+    mybuffer[iind, jind, kind] = pvalues[cellno]
+    logger.info('BUFFER 0 is {}'.format(mybuffer))
 
-    buffer[iind, jind, kind] = pvalues[cellno]
-    logger.info('BUFFER 0 is {}'.format(buffer))
+    mybuffer = mybuffer.copy(order='F')
+    mybuffer = mybuffer.ravel(order='K')
 
-    buffer = buffer.copy(order='F')
-    buffer = buffer.ravel(order='K')
+    mybuffer = ma.masked_greater(mybuffer, self.undef_limit)
 
-    buffer = ma.masked_greater(buffer, prop.undef_limit)
+    self._values = mybuffer
 
-    prop._values = buffer
+    self._cvalues = None
+    self._ncol = indexer.dimensions[0]
+    self._nrow = indexer.dimensions[1]
+    self._nlay = indexer.dimensions[2]
 
-    prop._cvalues = None
-    prop._ncol = indexer.dimensions[0]
-    prop._nrow = indexer.dimensions[1]
-    prop._nlay = indexer.dimensions[2]
+    self._name = pname
 
-    prop._name = pname
+    self._discrete = False
 
-    prop._discrete = False
-
-    logger.info('BUFFER 1 is {}'.format(buffer))
+    logger.info('BUFFER 1 is {}'.format(mybuffer))
 
 
-def _store_in_roxar(prop, pname, roxgrid):
+def _store_in_roxar(self, pname, roxgrid):
 
     import roxar
 
@@ -157,7 +155,7 @@ def _store_in_roxar(prop, pname, roxgrid):
 
     logger.info('Store in RMS...')
 
-    val3d = prop.values3d.copy(order='C')
+    val3d = self.values3d.copy(order='C')
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
@@ -175,8 +173,8 @@ def _store_in_roxar(prop, pname, roxgrid):
                               property_type=roxar.GridPropertyType.continuous,
                               data_type=np.float32)
 
-    # values = ma.filled(values, prop.undef)
-    # values = values[values < prop.undef_limit]
+    # values = ma.filled(values, self.undef)
+    # values = values[values < self.undef_limit]
     # values = values.astype(np.float32)
 
     # rprop.set_values(values)

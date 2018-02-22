@@ -1,6 +1,8 @@
 # coding: utf-8
-"""Roxar API functions for XTGeo Grid"""
-import warnings
+"""Roxar API functions for XTGeo Grid Geometry"""
+
+import cxtgeo.cxtgeo as _cxtgeo
+import numpy as np
 
 from xtgeo.common import XTGeoDialog
 
@@ -8,30 +10,102 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
-
-# ROXAPI, some important properties that are NATIVE roxar API props:
-#
-# self._roxgrid -> proj.grid_models[gname].get_grid()
-# self._roxindexer -> proj.grid_models[gname].get_grid().grid_indexer
+# self is Grid() instance
 
 
-def import_grid_roxapi(self, project, gname):
+def import_grid_roxapi(self, projectname, gname, realisation):
     """Import a Grid via ROXAR API spec."""
-    try:
-        import roxar
-    except ImportError:
-        warnings.warn('Cannot import roxar module!', RuntimeWarning)
-        raise
+    import roxar
 
     logger.info('Opening RMS project ...')
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
+    if projectname is not None and isinstance(projectname, str):
+        # outside a RMS project
+        with roxar.Project.open(projectname, readonly=True) as proj:
+
+            # Note that values must be extracted within the "with"
+            # scope here, as e.g. prop._roxgrid.properties[pname]
+            # will lose its reference as soon as we are outside
+            # the project
+
             try:
-                self._roxgrid = proj.grid_models[gname].get_grid()
-                self._roxindexer = self._roxgrid.grid_indexer
+                roxgrid = proj.grid_models[gname].get_grid()
+                corners = roxgrid.get_cell_corners_by_index()
+
+                _convert_to_xtgeo_grid(self, roxgrid, corners)
+
             except KeyError as keyerror:
                 raise RuntimeError(keyerror)
 
-    raise NotImplementedError('This task is not fully implemented')
+    else:
+        # inside a RMS project
+        try:
+            roxgrid = projectname.grid_models[gname].get_grid()
+            corners = roxgrid.get_cell_corners_by_index()
+
+            _convert_to_xtgeo_grid(self, corners)
+
+        except KeyError as keyerror:
+            raise RuntimeError(keyerror)
+
+
+def _convert_to_xtgeo_grid(self, roxgrid, corners):
+
+    _cxtgeo.xtg_verbose_file('NONE')
+    xtg_verbose_level = self._xtg.syslevel
+
+    indexer = roxgrid.grid_indexer
+
+    ncol, nrow, nlay = indexer.dimensions
+    ntot = ncol * nrow * nlay
+
+    # get the active cell numbers
+    mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
+
+    mybuffer.fill(0)
+
+    cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
+
+    ijk = indexer.get_indices(cellno)
+
+    iind = ijk[:, 0]
+    jind = ijk[:, 1]
+    kind = ijk[:, 2]
+
+    pvalues = np.ones(len(cellno))
+    pvalues[cellno] = 1
+    mybuffer[iind, jind, kind] = pvalues[cellno]
+
+    actnum = mybuffer
+
+    logger.info(indexer.handedness)
+
+    corners = corners.ravel(order='K')
+    actnum = actnum.ravel(order='K')
+
+    # convert to C pointer
+    nnum = ncol * nrow * nlay * 24
+    ccorners = _cxtgeo.new_doublearray(nnum)
+    ntot = ncol * nrow * nlay
+    cactnum = _cxtgeo.new_intarray(ntot)
+    ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
+    nzcorn = ncol * nrow * (nlay + 1) * 4
+
+    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    _cxtgeo.swig_numpy_to_carr_1d(corners, ccorners)
+    _cxtgeo.swig_numpy_to_carr_i1d(actnum, cactnum)
+
+    # next task is to convert geometry to cxtgeo internal format
+    _cxtgeo.grd3d_conv_roxapi_grid(ncol, nrow, nlay, cactnum, ccorners,
+                                   self._p_coord_v, self._p_zcorn_v,
+                                   self._p_actnum_v, xtg_verbose_level)
+
+    _cxtgeo.delete_doublearray(ccorners)
+    _cxtgeo.delete_intarray(cactnum)
+
+    # update other attributes
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
