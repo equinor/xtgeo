@@ -132,7 +132,7 @@ def test_avg02():
     avgmap.to_file('TMP/tmp.poro.gri', fformat='irap_ascii')
 
     logger.info(avgmap.values.mean())
-    assert avgmap.values.mean() == pytest.approx(0.0828, abs=0.01)
+    assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
 
 
 @tsetup.skipifroxar
@@ -184,4 +184,4 @@ def test_avg03():
     avgmap.to_file('TMP/tmp.poro3.gri', fformat='irap_ascii')
 
     logger.info(avgmap.values.mean())
-    assert avgmap.values.mean() == pytest.approx(0.0828, abs=0.01)
+    assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)

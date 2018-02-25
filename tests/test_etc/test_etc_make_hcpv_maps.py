@@ -87,6 +87,9 @@ def test_hcpvfz1():
     hcmap.hc_thickness_from_3dprops(xprop=xcv, yprop=ycv, dzprop=dzv,
                                     hcpfzprop=hcpfz, zoneprop=zp,
                                     zone_minmax=(1, 1))
+
+    assert hcmap.values.mean() == pytest.approx(1.447, abs=0.1)
+
     t2 = xtg.timer(t1)
 
     logger.info('Speed basic is {}'.format(t2))
@@ -94,7 +97,8 @@ def test_hcpvfz1():
     t1 = xtg.timer()
     hcmap2.hc_thickness_from_3dprops(xprop=xcv, yprop=ycv, dzprop=dzv,
                                      hcpfzprop=hcpfz, zoneprop=zp, coarsen=2,
-                                     zone_avg=True, zone_minmax=(1, 1))
+                                     zone_avg=True, zone_minmax=(1, 1),
+                                     mask_outside=True)
     t2 = xtg.timer(t1)
 
     logger.info('Speed zoneavg coarsen 2 is {}'.format(t2))
@@ -102,5 +106,3 @@ def test_hcpvfz1():
     hcmap.quickplot(filename='TMP/quickplot_hcpv.png')
     hcmap2.quickplot(filename='TMP/quickplot_hcpv_zavg_coarsen.png')
     logger.debug(hcmap.values.mean())
-
-    assert hcmap.values.mean() == pytest.approx(1.447, abs=0.1)

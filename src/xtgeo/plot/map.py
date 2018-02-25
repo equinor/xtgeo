@@ -10,10 +10,8 @@ import numpy as np
 import numpy.ma as ma
 import six
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
-import cxtgeo.cxtgeo as _cxtgeo
 
 
 class Map(BasePlot):
@@ -145,7 +143,7 @@ class Map(BasePlot):
         try:
             if logarithmic is False:
                 locator = None
-                ticks=legendticks
+                ticks = legendticks
                 im = self._ax.contourf(xi, yi, zi, uselevels, locator=locator,
                                        cmap=self.colormap)
 
@@ -201,6 +199,29 @@ class Map(BasePlot):
                 self._ax.add_artist(p)
             else:
                 print("A polygon is not closed...")
+
+    def plot_points(self, points):
+        """Plot a points set on the map.
+
+        This can be be useful e.g. for plotting the underlying point set
+        that makes a gridded map.
+
+        Args:
+            points (Points): A XTGeo Points object X Y VALUE
+
+        """
+
+        # This function is "in prep"
+
+        dataframe = points.dataframe
+
+        self._ax.scatter(dataframe['X_UTME'].values,
+                         dataframe['Y_UTMN'].values, marker='x')
+
+        #print(dataframe)
+
+
+
 
     def show(self):
         """Call to matplotlib.pyplot show().

@@ -42,17 +42,20 @@ class Points(XYZ):
 
     @property
     def nrow(self):
-        """Cf :py:attr:`.XYZ.nrow`"""
-        return super(Points, self).nrow
+        """ Returns the Pandas dataframe object number of rows"""
+        if self._df is None:
+            return 0
+        else:
+            return len(self._df.index)
 
     @property
     def dataframe(self):
-        """Cf :py:attr:`.XYZ.dataframe`"""
-        return super(Points, self).dataframe
+        """ Returns or set the Pandas dataframe object"""
+        return self._df
 
     @dataframe.setter
     def dataframe(self, df):
-        super(Points, self).dataframe = df
+        self._df = df.copy()
 
     def from_file(self, pfile, fformat='xyz'):
         """Cf :meth:`.XYZ.from_file`"""

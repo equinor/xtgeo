@@ -928,7 +928,7 @@ class RegularSurface(object):
         self._nrow = nonrot.nrow
         self._ncol = nonrot.ncol
         self._rotation = nonrot.rotation
-        self._xori = nonrot.nrow
+        self._xori = nonrot.xori
         self._yori = nonrot.yori
         self._xinc = nonrot.xinc
         self._yinc = nonrot.yinc

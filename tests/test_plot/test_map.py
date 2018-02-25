@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from xtgeo.plot import Map
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
+from xtgeo.xyz import Points
 from xtgeo.common import XTGeoDialog
 
 import test_common.test_xtg as tsetup
@@ -48,6 +49,30 @@ def test_simple_plot():
     myplot.plot_surface(mysurf)
 
     myplot.savefig('TMP/map_simple.png')
+
+
+@tsetup.skipifroxar
+def test_map_plot_with_points():
+    """Test as simple map plot with underlying points."""
+
+    mysurf = RegularSurface()
+    mysurf.from_file(sfile1)
+
+    mypoints = Points()
+    mypoints.from_surface(mysurf)
+
+    df = mypoints.dataframe.copy()
+    df = df[::20]
+    mypoints.dataframe = df
+
+    # just make the instance, with a lot of defaults behind the scene
+    myplot = Map()
+    myplot.canvas(title='My o my')
+    myplot.set_colortable('gist_ncar')
+    myplot.plot_surface(mysurf)
+    myplot.plot_points(mypoints)
+
+    myplot.savefig('TMP/map_with_points.png')
 
 
 @tsetup.skipifroxar

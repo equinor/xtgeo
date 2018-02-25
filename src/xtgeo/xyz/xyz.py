@@ -149,20 +149,15 @@ class XYZ(object):
 
     @abc.abstractproperty
     def nrow(self):
-        """ Returns the Pandas dataframe object number of rows"""
-        if self._df is None:
-            return 0
-        else:
-            return len(self._df.index)
+        pass
 
     @abc.abstractproperty
     def dataframe(self):
-        """ Returns or set the Pandas dataframe object"""
-        return self._df
+        pass
 
     @dataframe.setter
     def dataframe(self, df):
-        self._df = df.copy()
+        pass
 
     # @abc.abstractmethod
     # def get_carray(self, lname):

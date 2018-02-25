@@ -4,10 +4,12 @@ import warnings
 
 import numpy as np
 import numpy.ma as ma
+import pandas as pd
 import scipy.interpolate
 
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
+from xtgeo.xyz import Points
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -126,7 +128,7 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         dz = dzprop[::, ::, klay0].ravel(order='F')
 
         # this is done to avoid problems if undef values still remains
-        # in the coordinates:
+        # in the coordinates (assume Y undef where X undef):
         xcc = xcv.copy()
         xcv = xcv[xcc < _cxtgeo.UNDEF_LIMIT]
         ycv = ycv[xcc < _cxtgeo.UNDEF_LIMIT]
@@ -149,7 +151,7 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
                           UserWarning)
             continue
 
-        if not summing or trimbydz:
+        if trimbydz:
             try:
                 dzi = scipy.interpolate.griddata((xcv, ycv),
                                                  dz,
@@ -175,7 +177,7 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         vv = msum
 
     if trimbydz:
-        vv = ma.masked_where(dzsum < 1e-20, vv)
+        vv = ma.masked_where(dzsum < 1.1e-20, vv)
     else:
         vv = ma.array(vv)  # so the result becomes a ma array
 
@@ -214,20 +216,14 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
     zpr = zoneprop
     dpr = dzprop
 
-    if summing:
-        hpr = mprop
-    else:
-        mpr = mprop
+    mpr = mprop
 
     if coarsen > 1:
         xpr = xprop[::coarsen, ::coarsen, ::].copy(order='F')
         ypr = yprop[::coarsen, ::coarsen, ::].copy(order='F')
         zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='F')
         dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='F')
-        if summing:
-            hpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
-        else:
-            mpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
+        mpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
 
         logger.info('Coarsen is {}'.format(coarsen))
 
@@ -247,54 +243,42 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
             ypr2 = ma.masked_where(zpr != iz, ypr)
             zpr2 = ma.masked_where(zpr != iz, zpr)
             dpr2 = ma.masked_where(zpr != iz, dpr)
-            if summing:
-                hpr2 = ma.masked_where(zpr != iz, hpr)
-            else:
-                mpr2 = ma.masked_where(zpr != iz, mpr)
+            mpr2 = ma.masked_where(zpr != iz, mpr)
 
             # get the thickness and normalize along axis 2 (vertical)
             # to get normalized thickness weights
             lay_sums = dpr2.sum(axis=2)
             normed_dz = dpr2 / lay_sums[:, :, np.newaxis]
 
-            xpr2 = ma.average(xpr2, weights=normed_dz, axis=2)
-            ypr2 = ma.average(ypr2, weights=normed_dz, axis=2)
-            zpr2 = ma.average(zpr2, axis=2)  # no need for weights
-            if summing:
-                hpr2 = ma.sum(hpr2, axis=2)
-            else:
-                mpr2 = ma.average(mpr2, weights=normed_dz, axis=2)
+            # assume that coordinates have equal weights within a zone
+            xpr2 = ma.average(xpr2, axis=2)
+            ypr2 = ma.average(ypr2, axis=2)
+            zpr2 = ma.average(zpr2, axis=2)  # avg zone
 
             dpr2 = ma.sum(dpr2, axis=2)
+
+            if summing:
+                mpr2 = ma.sum(mpr2, axis=2)
+            else:
+                mpr2 = ma.average(mpr2, weights=normed_dz, axis=2)  # avg zone
+
             newx.append(xpr2)
             newy.append(ypr2)
             newz.append(zpr2)
             newd.append(dpr2)
-            if summing:
-                newh.append(hpr2)
-            else:
-                newm.append(mpr2)
+            newm.append(mpr2)
 
         xpr = ma.dstack(newx)
         ypr = ma.dstack(newy)
         zpr = ma.dstack(newz)
         dpr = ma.dstack(newd)
-        if summing:
-            hpr = ma.dstack(newh)
-        else:
-            mpr = ma.dstack(newm)
+        mpr = ma.dstack(newm)
 
     xpr = ma.filled(xpr, fill_value=_cxtgeo.UNDEF)
     ypr = ma.filled(ypr, fill_value=_cxtgeo.UNDEF)
     zpr = ma.filled(zpr, fill_value=0)
     dpr = ma.filled(dpr, fill_value=0.0)
 
-    for a in [xpr, ypr, zpr]:
-        logger.info('Reduced shape of ... is {}'.format(a.shape))
+    mpr = ma.filled(mpr, fill_value=0.0)
 
-    if summing:
-        hpr = ma.filled(hpr, fill_value=0.0)
-        return xpr, ypr, zpr, hpr, dpr
-    else:
-        mpr = ma.filled(mpr, fill_value=0.0)
-        return xpr, ypr, zpr, mpr, dpr
+    return xpr, ypr, zpr, mpr, dpr
