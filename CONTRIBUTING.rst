@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://git.statoil.no/xtgeo/pyxtgeo/issues.
+Report bugs at https://github.com/Statoil/xtgeo-python/issues.
 
 If you are reporting a bug, please include:
 
@@ -46,7 +46,7 @@ Submit Feedback
 ~~~~~~~~~~~~~~~
 
 The best way to send feedback is to file an issue
-at https://git.statoil.no/xtgeo/pyxtgeo/issues.
+at https://github.com/Statoil/xtgeo-python/issues.
 
 If you are proposing a feature:
 

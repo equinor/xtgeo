@@ -44,5 +44,5 @@ you can install it with:
     $ make install
 
 
-.. _Statoil Git repo: https://git.statoil.no/xtgeo/pyxtgeo
+.. _Statoil Git repo: https://github.com/Statoil/xtgeo-python
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
