@@ -163,7 +163,7 @@ class RegularSurface(object):
         avg = self.values.mean()
         dsc = ('{0.__class__} (ncol={0.ncol!r}, '
                'nrow={0.nrow!r}, original file: {0._filesrc}), '
-               'average {1:.4f} ID=<{2}>'.format(self, avg, id(self)))
+               'average {1} ID=<{2}>'.format(self, avg, id(self)))
         return dsc
 
     def __str__(self):

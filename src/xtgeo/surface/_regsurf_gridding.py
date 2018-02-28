@@ -4,12 +4,11 @@ import warnings
 
 import numpy as np
 import numpy.ma as ma
-import pandas as pd
+import logging
 import scipy.interpolate
 
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
-from xtgeo.xyz import Points
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -67,6 +66,8 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
     # - Xprop and yprop must be made for all cells
     # - Also dzprop for all cells, and dzprop = 0 for inactive cells!
 
+    qlog = logging.getLogger().isEnabledFor(logging.INFO)
+
     if zone_minmax is None:
         raise ValueError('zone_minmax is required')
 
@@ -85,6 +86,15 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         summing=summing)
 
     gnlay = xprop.shape[2]
+
+    uprops = {'xprop': xprop, 'yprop': yprop, 'zoneprop': zoneprop,
+              'dzprop': dzprop, 'mprop': mprop}
+
+    # some sanity checks
+    for name, ppx in uprops.items():
+        minpp = ppx.min()
+        maxpp = ppx.max()
+        logger.info('Min Max for {} is {} .. {}'.format(name, minpp, maxpp))
 
     # avoid artifacts from inactive cells that slips through somehow...(?)
     if dzprop.max() > _cxtgeo.UNDEF_LIMIT:
@@ -112,11 +122,12 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         if numz < zone_minmax[0] or numz > zone_minmax[1]:
             continue
 
+        qmcompute = True
         if summing:
             propsum = mprop[:, :, klay0].sum()
             if (abs(propsum) < 1e-12):
                 logger.info('Too little HC, skip layer K = {}'.format(k1lay))
-                continue
+                qmcompute = False
             else:
                 logger.debug('Z property sum is {}'.format(propsum))
 
@@ -130,26 +141,40 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         # this is done to avoid problems if undef values still remains
         # in the coordinates (assume Y undef where X undef):
         xcc = xcv.copy()
-        xcv = xcv[xcc < _cxtgeo.UNDEF_LIMIT]
-        ycv = ycv[xcc < _cxtgeo.UNDEF_LIMIT]
-        mv = mv[xcc < _cxtgeo.UNDEF_LIMIT]
-        dz = dz[xcc < _cxtgeo.UNDEF_LIMIT]
+        xcv = xcv[xcc < 1e20]
+        ycv = ycv[xcc < 1e20]
+        mv = mv[xcc < 1e20]
+        dz = dz[xcc < 1e20]
+
+        # some sanity checks
+        if qlog:
+            uprops = {'xcv': xcv, 'ycv': ycv, 'mv': mv, 'dz': dz}
+            for name, ppx in uprops.items():
+                minpp = ppx.min()
+                maxpp = ppx.max()
+                logger.info('Min Max {} is {} - {}'.format(name, minpp, maxpp))
 
         if summing:
             mvdz = mv
         else:
             mvdz = mv * dz
 
-        try:
-            mvdzi = scipy.interpolate.griddata((xcv, ycv),
-                                               mvdz,
-                                               (xiv, yiv),
-                                               method='linear',
-                                               fill_value=0.0)
-        except ValueError:
-            warnings.warn('Some problems in gridding ... will contue',
-                          UserWarning)
-            continue
+        if qmcompute:
+            try:
+                mvdzi = scipy.interpolate.griddata((xcv, ycv),
+                                                   mvdz,
+                                                   (xiv, yiv),
+                                                   method='linear',
+                                                   fill_value=0.0)
+            except ValueError:
+                warnings.warn('Some problems in gridding ... will contue',
+                              UserWarning)
+                continue
+
+            logger.debug(mvdzi.shape)
+            mvdzi = np.asfortranarray(mvdzi)
+
+            msum = msum + mvdzi
 
         if trimbydz:
             try:
@@ -163,11 +188,6 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
             dzi = np.asfortranarray(dzi)
             dzsum = dzsum + dzi
-
-        logger.debug(mvdzi.shape)
-        mvdzi = np.asfortranarray(mvdzi)
-
-        msum = msum + mvdzi
 
     if not summing:
         dzsum[dzsum == 0.0] = 1e-20
@@ -224,6 +244,7 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
         zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='F')
         dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='F')
         mpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
+        zpr.astype(np.int32)
 
         logger.info('Coarsen is {}'.format(coarsen))
 
@@ -231,14 +252,19 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
         logger.info('Tuning zone_avg is {}'.format(zone_avg))
         zmin = int(zone_minmax[0])
         zmax = int(zone_minmax[1])
+        if zpr.min() > zmin:
+            zmin = zpr.min()
+        if zpr.max() < zmax:
+            zmax = zpr.max()
+
         newx = []
         newy = []
         newz = []
-        newh = []
         newm = []
         newd = []
 
         for iz in range(zmin, zmax + 1):
+            logger.info('Averaging for zone {} ...'.format(iz))
             xpr2 = ma.masked_where(zpr != iz, xpr)
             ypr2 = ma.masked_where(zpr != iz, ypr)
             zpr2 = ma.masked_where(zpr != iz, zpr)
@@ -273,6 +299,7 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
         zpr = ma.dstack(newz)
         dpr = ma.dstack(newd)
         mpr = ma.dstack(newm)
+        zpr.astype(np.int32)
 
     xpr = ma.filled(xpr, fill_value=_cxtgeo.UNDEF)
     ypr = ma.filled(ypr, fill_value=_cxtgeo.UNDEF)
