@@ -56,7 +56,7 @@ GID := res
 
 MY_BINDIST ?= $HOME
 
-USRPYPATH := ${MY_BINDIST}/lib/python${PYVER}/site-packages
+USERTARGET := ${MY_BINDIST}/lib/python${PYTHON_SHORT}/site-packages
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -139,11 +139,13 @@ siteinstall: dist ## Install in project/res (Trondheim) using $TARGET
 	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
 
-userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
-	@\rm -fr  ${USRPYPATH}/${APPLICATION}
-	@\rm -fr  ${USRPYPATH}/${APPLICATION}-*
-	@${PIP} install --target ${USRPYPATH} --upgrade  ./dist/*.whl
 
+userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
+	@mkdir -p ${USERTARGET}
+	@\rm -fr  ${USERTARGET}/${APPLICATION}
+	@\rm -fr  ${USERTARGET}/${APPLICATION}-*
+	@${PIP} install --target ${USERTARGET} --upgrade  ./dist/${APPLICATION}*.whl
+	@echo "Install to  ${USERTARGET}"
 
 docsinstall: docsrun
 	mkdir -p ${DOCSINSTALL}/${APPLICATION}

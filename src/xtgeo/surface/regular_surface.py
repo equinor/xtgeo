@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Module/class for regular surfaces with XTGeo."""
+"""Module/class for regular surfaces with XTGeo.
+
+Note that an instance of a regular surface can be made directly with::
+
+ import xtgeo
+ mysurf = xtgeo.surface_from_file('some_name.gri')
+
+or::
+
+ mysurf = xtgeo.surface_from_roxar('some_rms_project', 'TopX', 'DepthSurface')
+
+"""
 
 from __future__ import print_function, absolute_import
 
@@ -519,40 +530,111 @@ class RegularSurface(object):
         else:
             self.logger.critical('Invalid file format')
 
-    def from_roxar(self, project, type='horizon', name=None, category=None,
+    def from_roxar(self, project, name, category, stype='horizons',
                    realisation=0):
-        """
-        Load a surface from a Roxar RMS project.
+        """Load a surface from a Roxar RMS project.
+
+        The import from the RMS project can be done either within the project
+        or outside the project.
+
+        Note that a shortform to::
+
+          import xtgeo
+          mysurf = xtgeo.surface.RegularSurface()
+          mysurf.from_roxar(project, 'TopAare', 'DepthSurface')
+
+        is::
+
+          import xtgeo
+          mysurf = xtgeo.surface_from_roxar(project, 'TopAare', 'DepthSurface')
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
 
         Args:
-            project (str): Name of project (as folder) if outside RMS, og just
-                use the magig 'project' if within RMS.
-            type (str): 'horizon', 'clipboard', etc
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
             name (str): Name of surface/map
-            category (str): For horizon only: for example 'DS_extracted'
-            realiation (int): Realisation number, default is 0
+            category (str): For horizons/zones only: for example 'DS_extracted'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            realisation (int): Realisation number, default is 0
 
         Returns:
             Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
 
         Example:
             Here the from_roxar method is used to initiate the object
             directly::
 
             >>> mymap = RegularSurface()
-            >>> mymap.from_roxar(etc)
+            >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
 
         """
 
-        if type == 'horizon' and name is None or category is None:
-            self.logger.error('Need to spesify name and categori for '
-                              'horizon')
-        elif type != 'horizon':
-            self.logger.error('Only horizon type is supported so far')
-            raise Exception
+        stype = stype.lower()
+        valid_stypes = ['horizons', 'zones']
 
-        self = _regsurf_roxapi.import_horizon_roxapi(self, project, name,
-                                                     category, realisation)
+        if stype not in valid_stypes:
+            raise ValueError('Invalid stype, only {} stypes is supported.'
+                             .format(valid_stypes))
+
+        self = _regsurf_roxapi.import_horizon_roxapi(
+            self, project, name, category, stype, realisation)
+
+    def to_roxar(self, project, name, category, stype='horizons',
+                 realisation=0):
+        """Store (export) a regular surface to a Roxar RMS project.
+
+        The export to the RMS project can be done either within the project
+        or outside the project. The storing is done to the Horizons or the
+        Zones folder in RMS.
+
+        Note that horizon or zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of surface/map
+            category (str): For horizons/zones only: e.g. 'DS_extracted'.
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            realisation (int): Realisation number, default is 0
+
+        Raises:
+            ValueError: If name or category does not exist in the project
+
+        Example:
+            Here the from_roxar method is used to initiate the object
+            directly::
+
+              import xtgeo
+              topupperreek = xtgeo.surface_from_roxar(project, 'TopUpperReek',
+                                                    'DS_extracted')
+              topupperreek.values += 200
+
+              # export to file:
+              topupperreek.to_file('topupperreek.gri')
+
+              # store in project
+              topupperreek.to_roxar(project, 'TopUpperReek', 'DS_something')
+
+        """
+
+        stype = stype.lower()
+        valid_stypes = ['horizons', 'zones']
+
+        if stype in valid_stypes and name is None or category is None:
+            self.logger.error('Need to spesify name and category for '
+                              'horizon')
+        elif stype not in valid_stypes:
+            raise ValueError('Only {} stype is supported per now'
+                             .format(valid_stypes))
+
+        self = _regsurf_roxapi.export_horizon_roxapi(
+            self, project, name, category, stype, realisation)
 
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
@@ -1344,3 +1426,28 @@ class RegularSurface(object):
         nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
 
         return nparray
+
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+
+def surface_from_file(mfile, fformat='guess'):
+    """This makes an instance of a RegularSurface directly from import."""
+
+    obj = RegularSurface()
+
+    obj.from_file(mfile, fformat=fformat)
+
+    return obj
+
+
+def surface_from_roxar(project, name, category, stype='horizons',
+                       realisation=0):
+    """This makes an instance of a RegularSurface directly from roxar input."""
+
+    obj = RegularSurface()
+
+    obj.from_roxar(project, name, category, stype=stype,
+                   realisation=realisation)
+
+    return obj

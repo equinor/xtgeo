@@ -1,3 +1,4 @@
+# flake8: noqa
 """The XTGeo Python module."""
 import os
 
@@ -34,3 +35,9 @@ from .xyz import polygons
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
+
+# some function wrappers to initiate objects from imports
+from .surface.regular_surface import surface_from_file
+from .surface.regular_surface import surface_from_roxar
+from .grid3d.grid_property import gridproperty_from_file
+from .grid3d.grid_property import gridproperty_from_roxar

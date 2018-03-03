@@ -1,5 +1,6 @@
 # coding: utf-8
 """Roxar API functions for XTGeo RegularSurface"""
+import numpy as np
 
 from xtgeo.common import XTGeoDialog
 
@@ -11,45 +12,45 @@ xtg_verbose_level = xtg.get_syslevel()
 
 
 def import_horizon_roxapi(self, project, name, category,
-                          realisation):
+                          stype, realisation):
     """Import a Horizon surface via ROXAR API spec."""
     import roxar
 
     if project is not None and isinstance(project, str):
         projectname = project
         with roxar.Project.open_import(projectname) as proj:
-            try:
-                rox = proj.horizons[name][category].get_grid(realisation)
-                _roxapi_horizon_to_xtgeo(self, rox)
-            except KeyError as ke:
-                logger.error(ke)
+            _roxapi_import_surface(self, proj, name, category, stype,
+                                   realisation)
     else:
-        rox = project.horizons[name][category].get_grid(realisation)
-        _roxapi_horizon_to_xtgeo(self, rox)
-
-    return self
+        _roxapi_import_surface(self, project, name, category, stype,
+                               realisation)
 
 
-def export_horizon_roxapi(self, project, name, category,
-                          realisation):
-    """Export (store) a Horizon surface to RMS via ROXAR API spec."""
-    # import roxar
-
-    raise NotImplementedError
-
-    # if project is not None and isinstance(project, str):
-    #     projectname = project
-    #     with roxar.Project.open_import(projectname) as proj:
-    #         try:
-    #             rox = proj.horizons[name][category].get_grid(realisation)
-    #             self._roxapi_horizon_to_xtgeo(rox)
-    #         except KeyError as ke:
-    #             logger.error(ke)
-    # else:
-    #     rox = project.horizons[name][category].get_grid(realisation)
-    #     self._roxapi_horizon_to_xtgeo(rox)
-
-    # return self
+def _roxapi_import_surface(self, proj, name, category, stype, realisation):
+    if stype == 'horizons':
+        if name not in proj.horizons:
+            raise ValueError('Name {} is not within Horizons'.format(name))
+        if category not in proj.horizons.representations:
+            raise ValueError('Category {} is not within Horizons categories'
+                             .format(category))
+        try:
+            rox = proj.horizons[name][category].get_grid(realisation)
+            _roxapi_horizon_to_xtgeo(self, rox)
+        except KeyError as ke:
+            logger.error(ke)
+    elif stype == 'zones':
+        if name not in proj.zones:
+            raise ValueError('Name {} is not within Zones'.format(name))
+        if category not in proj.zones.representations:
+            raise ValueError('Category {} is not within Zones categories'
+                             .format(category))
+        try:
+            rox = proj.zones[name][category].get_grid(realisation)
+            _roxapi_horizon_to_xtgeo(self, rox)
+        except KeyError as ke:
+            logger.error(ke)
+    else:
+        raise ValueError('Invalid stype')
 
 
 def _roxapi_horizon_to_xtgeo(self, rox):
@@ -60,4 +61,67 @@ def _roxapi_horizon_to_xtgeo(self, rox):
     self._ncol, self._nrow = rox.dimensions
     self._xinc, self._yinc = rox.increment
     self._rotation = rox.rotation
-    self._values = rox.get_values()
+
+    # since XTGeo is F order, while RMS is C order...
+    self._values = np.asanyarray(rox.get_values(), order='F')
+
+
+def export_horizon_roxapi(self, project, name, category, stype,
+                          realisation):
+    """Export (store) a Horizon surface to RMS via ROXAR API spec."""
+    import roxar
+
+    if project is not None and isinstance(project, str):
+        projectname = project
+        with roxar.Project.open_import(projectname) as proj:
+            _roxapi_export_surface(self, proj, name, category, stype,
+                                   realisation)
+    else:
+        _roxapi_export_surface(self, project, name, category, stype,
+                               realisation)
+
+
+def _roxapi_export_surface(self, proj, name, category, stype, realisation):
+    if stype == 'horizons':
+        if name not in proj.horizons:
+            raise ValueError('Name {} is not within Horizons'.format(name))
+        if category not in proj.horizons.representations:
+            raise ValueError('Category {} is not within Horizons categories'
+                             .format(category))
+        try:
+            roxroot = proj.horizons[name][category]
+            rox = _xtgeo_to_roxapi_grid(self)
+            rox.set_values(np.asanyarray(self.values, order='C'))
+            roxroot.set_grid(rox)
+        except KeyError as ke:
+            logger.error(ke)
+
+    elif stype == 'zones':
+        if name not in proj.zones:
+            raise ValueError('Name {} is not within Zones'.format(name))
+        if category not in proj.zones.representations:
+            raise ValueError('Category {} is not within Zones categories'
+                             .format(category))
+        try:
+            roxroot = proj.zones[name][category]
+            rox = _xtgeo_to_roxapi_grid(self)
+            rox.set_values(np.asanyarray(self.values, order='C'))
+            roxroot.set_grid(rox)
+        except KeyError as ke:
+            logger.error(ke)
+
+    else:
+        raise ValueError('Invalid stype')
+
+
+def _xtgeo_to_roxapi_grid(self):
+    # Create a 2D grid
+    import roxar
+    grid2d = roxar.RegularGrid2D.create(
+        x_origin=self.xori,
+        y_origin=self.yori,
+        i_inc=self.xinc, j_inc=self.yinc,
+        ni=self.ncol, nj=self.nrow,
+        rotation=self.rotation)
+
+    return grid2d

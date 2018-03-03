@@ -214,17 +214,17 @@ class GridProperty(Grid3D):
     # -------------------------------------------------------------------------
     @property
     def codes(self):
-        """The property codes as a dict"""
+        """The property codes as a dictionary."""
         return self._codes
 
     @codes.setter
     def codes(self, cdict):
-        self._codes = cdict
+        self._codes = cdict.copy()
 
     @property
     def ncodes(self):
         """Number of codes"""
-        return self._ncodes
+        return len(self._codes)
 
     # -------------------------------------------------------------------------
     @property
@@ -299,9 +299,7 @@ class GridProperty(Grid3D):
 
     @property
     def undef(self):
-        """
-        Get the undef value for floats or ints numpy arrays
-        """
+        """Get the undef value for floats or ints numpy arrays."""
         if self._isdiscrete:
             return self._undef_i
         else:
@@ -309,8 +307,7 @@ class GridProperty(Grid3D):
 
     @property
     def undef_limit(self):
-        """
-        Returns the undef limit number, which is slightly less than the
+        """Returns the undef limit number, which is slightly less than the
         undef value.
 
         Hence for numerical precision, one can force undef values
@@ -851,3 +848,25 @@ class GridProperty(Grid3D):
             self._ncodes = 1
         else:
             self.logger.info('No need to convert, already continuous')
+
+
+# =============================================================================
+# functions outside the class, for rapid access. Will be exposed as
+# xxx = xtgeo.gridproperty_from_file. Cf __init__ at top level
+
+
+def gridproperty_from_file(pfile, fformat='guess', name='unknown',
+                           grid=None, date=None, apiversion=2):
+
+    obj = GridProperty()
+    obj.from_file(pfile, fformat=fformat, name=name, grid=grid, date=date,
+                  apiversion=apiversion)
+
+    return obj
+
+
+def gridproperty_from_roxar(project, gname, pname, realisation=0):
+    obj = GridProperty()
+    obj.from_roxar(project, gname, pname, realisation=realisation)
+
+    return obj

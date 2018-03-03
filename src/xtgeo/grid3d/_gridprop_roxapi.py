@@ -14,80 +14,47 @@ logger = xtg.functionlogger(__name__)
 # self is the XTGeo GridProperty instance
 
 
-def import_prop_roxapi(self, projectname, gname, pname, realisation):
+def import_prop_roxapi(self, project, gname, pname, realisation):
     """Import a Property via ROXAR API spec."""
     import roxar
 
     self._roxprop = None
 
     logger.info('Opening RMS project ...')
-    if projectname is not None and isinstance(projectname, str):
+    if project is not None and isinstance(project, str):
         # outside a RMS project
-        with roxar.Project.open(projectname, readonly=True) as proj:
+        with roxar.Project.open(project, readonly=True) as proj:
 
             # Note that values must be extracted within the "with"
             # scope here, as e.g. prop._roxgrid.properties[pname]
             # will lose its reference as soon as we are outside
             # the project
-
-            try:
-                roxgrid = proj.grid_models[gname]
-                roxprop = roxgrid.properties[pname]
-                self._roxorigin = True
-                _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop)
-
-            except KeyError as keyerror:
-                raise RuntimeError(keyerror)
+            _get_gridprop_data(self, roxar, proj, gname, pname)
 
     else:
         # inside a RMS project
-        try:
-            roxgrid = projectname.grid_models[gname]
-            roxprop = roxgrid.properties[pname]
-            self._roxorigin = True
-            _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop)
-
-        except KeyError as keyerror:
-            raise RuntimeError(keyerror)
-
-    return self
+        _get_gridprop_data(self, roxar, project, gname, pname)
 
 
-def export_prop_roxapi(self, projectname, gname, pname, saveproject=False,
-                       realisation=0):
-    """Export to a Property in RMS via ROXAR API spec."""
-    import roxar
+def _get_gridprop_data(self, roxar, project, gname, pname):
+    # inside a RMS project
+    if gname not in project.grid_models:
+        raise ValueError('No gridmodel with name {}'.format(gname))
+    if pname not in project.grid_models[gname].properties:
+        raise ValueError('No property in {} with name {}'.format(gname, pname))
 
-    logger.info('Opening RMS project ...')
-    if projectname is not None and isinstance(projectname, str):
-        # outside RMS project
-        with roxar.Project.open(projectname) as proj:
+    try:
+        roxgrid = project.grid_models[gname]
+        roxprop = roxgrid.properties[pname]
 
-            # Note that values must be extracted within the "with"
-            # scope here, as e.g. prop._roxgrid.properties[pname]
-            # will lose its reference as soon as we are outside
-            # the project
+        if str(roxprop.type) == 'discrete':
+            self._isdiscrete = True
 
-            try:
-                roxgrid = proj.grid_models[gname]
-                _store_in_roxar(self, pname, roxgrid)
+        self._roxorigin = True
+        _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop)
 
-                if saveproject:
-                    try:
-                        proj.save()
-                    except Exception as myexception:
-                        warnings.warn('Could not save', myexception)
-
-            except KeyError as keyerror:
-                raise RuntimeError(keyerror)
-
-    else:
-        # within RMS project
-        try:
-            roxgrid = projectname.grid_models[gname]
-            _store_in_roxar(self, pname, roxgrid)
-        except KeyError as keyerror:
-            raise RuntimeError(keyerror)
+    except KeyError as keyerror:
+        raise RuntimeError(keyerror)
 
 
 def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
@@ -101,17 +68,12 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
     pvalues = roxprop.get_values()
     logger.info('PVALUES is {}'.format(pvalues))
 
-    # # test
-    # properties = roxgrid.properties
-    # rprop = properties.create('TEST',
-    #                           property_type=roxar.GridPropertyType.continuous,
-    #                           data_type=np.float32)
-
-    # rprop.set_values(pvalues)
-
     logger.info('PVALUES {} {}'.format(pvalues, pvalues.flags))
 
-    mybuffer = np.ndarray(indexer.dimensions, dtype=np.float64)
+    if self._isdiscrete:
+        mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
+    else:
+        mybuffer = np.ndarray(indexer.dimensions, dtype=np.float64)
 
     mybuffer.fill(self.undef)
 
@@ -140,9 +102,47 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
 
     self._name = pname
 
-    self._discrete = False
+    if self._isdiscrete:
+        self.codes = roxprop.code_names.copy()
 
     logger.info('BUFFER 1 is {}'.format(mybuffer))
+
+
+def export_prop_roxapi(self, project, gname, pname, saveproject=False,
+                       realisation=0):
+    """Export to a Property in RMS via ROXAR API spec."""
+    import roxar
+
+    logger.info('Opening RMS project ...')
+    if project is not None and isinstance(project, str):
+        # outside RMS project
+        with roxar.Project.open(project) as proj:
+
+            # Note that values must be extracted within the "with"
+            # scope here, as e.g. prop._roxgrid.properties[pname]
+            # will lose its reference as soon as we are outside
+            # the project
+
+            try:
+                roxgrid = proj.grid_models[gname]
+                _store_in_roxar(self, pname, roxgrid)
+
+                if saveproject:
+                    try:
+                        proj.save()
+                    except Exception as myexception:
+                        warnings.warn('Could not save', myexception)
+
+            except KeyError as keyerror:
+                raise RuntimeError(keyerror)
+
+    else:
+        # within RMS project
+        try:
+            roxgrid = project.grid_models[gname]
+            _store_in_roxar(self, pname, roxgrid)
+        except KeyError as keyerror:
+            raise RuntimeError(keyerror)
 
 
 def _store_in_roxar(self, pname, roxgrid):
@@ -165,13 +165,24 @@ def _store_in_roxar(self, pname, roxgrid):
     jind = ijk[:, 1]
     kind = ijk[:, 2]
 
-    pvalues = roxgrid.get_grid().generate_values(data_type=np.float32)
+    if self.isdiscrete:
+        pvalues = roxgrid.get_grid().generate_values(data_type=np.uint16)
+    else:
+        pvalues = roxgrid.get_grid().generate_values(data_type=np.float32)
+
     pvalues[cellno] = val3d[iind, jind, kind]
 
     properties = roxgrid.properties
-    rprop = properties.create(pname,
-                              property_type=roxar.GridPropertyType.continuous,
-                              data_type=np.float32)
+
+    if self.isdiscrete:
+        rprop = properties.create(
+            pname, property_type=roxar.GridPropertyType.discrete,
+            data_type=np.uint16)
+        rprop.code_names = self.codes.copy()
+    else:
+        rprop = properties.create(
+            pname, property_type=roxar.GridPropertyType.continuous,
+            data_type=np.float32)
 
     # values = ma.filled(values, self.undef)
     # values = values[values < self.undef_limit]
@@ -179,3 +190,6 @@ def _store_in_roxar(self, pname, roxgrid):
 
     # rprop.set_values(values)
     rprop.set_values(pvalues)
+
+    if self.isdiscrete:
+        rprop.code_names = self.codes.copy()
