@@ -31,18 +31,22 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     nentry = 0
     if etype == 5:
         datefound = False
+        logger.info('Look for date {}'.format(date))
         # scan for date and find SEQNUM entry number
         dtlist = gprops.scan_dates(fhandle)
         for ientry, dtentry in enumerate(dtlist):
+            logger.info('ientry {} dtentry {}'.format(ientry, dtentry))
             if str(dtentry[1]) == str(date):
                 datefound = True
                 nentry = ientry
                 break
 
         if not datefound:
+            logger.critical('Date not found')
             return 9
 
     # scan file for property
+    logger.info('Make kwlist')
     kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=10000,
                                   dataframe=False)
 
@@ -67,16 +71,30 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
         logger.error('Errors in dimensions property vs grid')
         return -9
 
+    # Restarts (etype == 5):
+    # there are cases where keywords do not exist for all dates, e.g .'RV'.
+    # The trick is to look first for correct SEQNUM, then for keyword which
+    # always comes after SEQNUM.
+
     kwfound = False
+    seqfound = False
+    if etype == 1:
+        seqfound = True
+
     ientry = 0
     for kwitem in kwlist:
-        if name == kwitem[0]:
-            kwname, kwtype, kwlen, kwbyte = kwitem
+        if etype == 5 and kwitem[0] == 'SEQNUM':
             if ientry == nentry:
-                kwfound = True
-                break
+                seqfound = True
+                logger.info('SEQNUM ok at no {}'.format(ientry))
             else:
                 ientry += 1
+
+        if seqfound and name == kwitem[0]:
+            logger.info('Keyword {} ok at step {}'.format(name, ientry))
+            kwname, kwtype, kwlen, kwbyte = kwitem
+            kwfound = True
+            break
 
     if not kwfound:
         return 9
