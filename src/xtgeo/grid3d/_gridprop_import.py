@@ -2,6 +2,8 @@
 
 from __future__ import print_function, absolute_import
 
+import warnings
+
 import numpy as np
 import numpy.ma as ma
 
@@ -43,17 +45,17 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
 
         if not datefound:
             logger.critical('Date not found')
-            return 9
+            return 22
 
     # scan file for property
     logger.info('Make kwlist')
     kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=10000,
-                                  dataframe=False)
+                                  dataframe=False, dates=True)
 
     # first INTEHEAD is needed to verify grid dimensions:
     for kwitem in kwlist:
         if kwitem[0] == 'INTEHEAD':
-            kwname, kwtype, kwlen, kwbyte = kwitem
+            kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
             break
 
     # read INTEHEAD record:
@@ -73,31 +75,45 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
 
     # Restarts (etype == 5):
     # there are cases where keywords do not exist for all dates, e.g .'RV'.
-    # The trick is to look first for correct SEQNUM, then for keyword which
-    # always comes after SEQNUM.
+    # The trick is to check for dates also...
 
     kwfound = False
-    seqfound = False
-    if etype == 1:
-        seqfound = True
+    datefound = False
+    usedate = '0'
+    restart = False
+    if etype == 5:
+        usedate = str(date)
+        restart = True
 
-    ientry = 0
     for kwitem in kwlist:
-        if etype == 5 and kwitem[0] == 'SEQNUM':
-            if ientry == nentry:
-                seqfound = True
-                logger.info('SEQNUM ok at no {}'.format(ientry))
-            else:
-                ientry += 1
-
-        if seqfound and name == kwitem[0]:
-            logger.info('Keyword {} ok at step {}'.format(name, ientry))
-            kwname, kwtype, kwlen, kwbyte = kwitem
+        kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
+        logger.debug('Keyword {} -  date: {} usedate: {}'
+                     .format(kwname, kwdate, usedate))
+        if name == kwname:
             kwfound = True
+
+        if name == kwname and usedate == str(kwdate):
+            logger.info('Keyword {} ok at date {}'.format(name, usedate))
+            kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
+            datefound = True
             break
 
-    if not kwfound:
-        return 9
+    if restart:
+        if datefound and not kwfound:
+            warnings.warn('For {}: Date <{}> is found, but not keyword <{}>'
+                          .format(pfile, date, name), RuntimeWarning)
+            return 23
+
+        if not datefound and kwfound:
+            warnings.warn('For {}: The keyword <{}> exists but not for '
+                          'date <{}>'.format(pfile, name, date),
+                          RuntimeWarning)
+            return 24
+    else:
+        if not kwfound:
+            warnings.warn('For {}: The keyword <{}> is not found'
+                          .format(pfile, name), RuntimeWarning)
+            return 25
 
     # read record:
     values = eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)

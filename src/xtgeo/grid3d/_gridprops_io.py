@@ -38,11 +38,18 @@ def _close_fhandle(fh, flag):
         logger.debug('File remains open')
 
 
-def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
+def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False,
+                  dates=False):
 
     if fformat == 'xecl':
-        data = _scan_ecl_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
-                                  dataframe=dataframe)
+        if dates:
+            data = _scan_ecl_keywords_w_dates(pfile, fformat=fformat,
+                                              maxkeys=maxkeys,
+                                              dataframe=dataframe)
+        else:
+            data = _scan_ecl_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
+                                      dataframe=dataframe)
+
     else:
         data = _scan_roff_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
                                    dataframe=dataframe)
@@ -94,6 +101,38 @@ def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
 
     if dataframe:
         cols = ['KEYWORD', 'TYPE', 'NITEMS', 'BYTESTART']
+        df = pd.DataFrame.from_records(result, columns=cols)
+        return df
+    else:
+        return result
+
+
+def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=10000,
+                               dataframe=False):
+
+    """Add a date column to the keyword"""
+
+    xkeys = _scan_ecl_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
+                               dataframe=False)
+
+    xdates = scan_dates(pfile, fformat=fformat, maxdates=maxkeys,
+                        dataframe=False)
+
+    result = []
+    # now merge thses two:
+    n = -1
+    date = 0
+    for item in xkeys:
+        name, dtype, reclen, bytepos = item
+        if name == 'SEQNUM':
+            n += 1
+            date = xdates[n][1]
+
+        entry = (name, dtype, reclen, bytepos, date)
+        result.append(entry)
+
+    if dataframe:
+        cols = ['KEYWORD', 'TYPE', 'NITEMS', 'BYTESTART', 'DATE']
         df = pd.DataFrame.from_records(result, columns=cols)
         return df
     else:
@@ -152,7 +191,7 @@ def _scan_roff_keywords(pfile, fformat='roff', maxkeys=10000, dataframe=False):
 
 
 def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
-    """Scan DATES in Eclipse OUTPUT files"""
+    """Scan DATES in Eclipse OUTPUT files (UNRST)"""
 
     seq = _cxtgeo.new_intarray(maxdates)
     day = _cxtgeo.new_intarray(maxdates)

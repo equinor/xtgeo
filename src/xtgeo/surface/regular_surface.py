@@ -18,6 +18,7 @@ import os
 import sys
 import math
 import logging
+import warnings
 import numpy as np
 import numpy.ma as ma
 
@@ -506,11 +507,16 @@ class RegularSurface(object):
         return self
 
     def to_file(self, mfile, fformat='irap_binary'):
-        """Export surface (regular map) to file
+        """Export a surface (map) to file.
+
+        Note, for zmap_ascii and storm_binary an unrotation will be done
+        automatically. The sampling will be somewhat finer than the
+        original map in order to prevent aliasing. See :func:`unrotate`.
 
         Args:
             mfile (str): Name of file
-            fformat (str): File format, irap_binary/irap_ascii
+            fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
+                storm_binary. Default is irap_binary.
 
         Example::
 
@@ -527,6 +533,10 @@ class RegularSurface(object):
             _regsurf_export.export_irap_ascii(self, mfile)
         elif (fformat == 'irap_binary'):
             _regsurf_export.export_irap_binary(self, mfile)
+        elif (fformat == 'zmap_ascii'):
+            _regsurf_export.export_zmap_ascii(self, mfile)
+        elif (fformat == 'storm_binary'):
+            _regsurf_export.export_storm_binary(self, mfile)
         else:
             self.logger.critical('Invalid file format')
 
@@ -982,20 +992,31 @@ class RegularSurface(object):
     # Change a surface more fundamentally
     # =========================================================================
 
-    def unrotate(self):
+    def unrotate(self, factor=2):
         """Unrotete a map instance, and this will also change nrow, ncol,
         xinc, etc.
 
-        The default sampling makes a finer gridding in order to avoid
-        aliasing.
+        The default sampling (factor=2) makes a finer gridding in order to
+        avoid artifacts, and this default can be used in most cases.
+
+        If a finer grid is wanted, increase the factor. Theoretically the
+        new increment for factor=N is between :math:`\\frac{1}{N}` and
+        :math:`\\frac{1}{N}\\sqrt{2}` of the original increment,
+        dependent on the rotation of the original surface.
+
+        A factor < 1 is not recommended, and a warning will be issued.
 
         """
 
+        if factor < 1:
+            warnings.warn('In unrotate(): A factor < 1 is not recommended!',
+                          UserWarning)
+
         xlen = self.xmax - self.xmin
         ylen = self.ymax - self.ymin
-        ncol = self.ncol * 2
-        nrow = self.nrow * 2
-        xinc = xlen / (ncol - 1)
+        ncol = self.ncol * factor
+        nrow = self.nrow * factor
+        xinc = xlen / (ncol - 1)  # node based, not cell center based
         yinc = ylen / (nrow - 1)
         vals = ma.zeros((ncol, nrow), order='F')
 

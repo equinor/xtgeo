@@ -251,7 +251,8 @@ class GridProperties(Grid3D):
     # =========================================================================
 
     @staticmethod
-    def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
+    def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False,
+                      dates=False):
         """Quick scan of keywords in Eclipse binary restart/init/... file.
 
         For Eclipse files:
@@ -272,6 +273,8 @@ class GridProperties(Grid3D):
                 ROFF binary,
             maxkeys (int): Maximum number of keys
             dataframe (bool): If True, return a Pandas dataframe instead
+            dates (bool): if True, the date is the last column (only
+                menaingful for restart files). Default is False.
 
         Return:
             A list of tuples or dataframe with keyword info
@@ -284,7 +287,8 @@ class GridProperties(Grid3D):
 
         dlist = _gridprops_io.scan_keywords(pfile, fformat=fformat,
                                             maxkeys=maxkeys,
-                                            dataframe=dataframe)
+                                            dataframe=dataframe,
+                                            dates=dates)
 
         return dlist
 

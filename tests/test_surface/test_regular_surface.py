@@ -57,6 +57,20 @@ def test_irapasc_export():
     assert fstatus is True
 
 
+def test_zmapasc_irapasc_export():
+    """Export Irap ASCII and then ZMAP ASCII format, last w auto derotation."""
+
+    x = RegularSurface(testset1)
+    x.to_file('TMP/reek.fgr', fformat="irap_ascii")
+    x.to_file('TMP/reek.zmap', fformat="zmap_ascii")
+
+    fstatus = False
+    if os.path.isfile('TMP/reek.zmap') is True:
+        fstatus = True
+
+    assert fstatus is True
+
+
 def test_irapasc_export_and_import():
     """Export Irap ASCII and import again."""
 

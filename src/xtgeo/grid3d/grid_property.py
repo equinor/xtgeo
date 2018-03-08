@@ -22,7 +22,10 @@ import numpy.ma as ma
 import os.path
 
 import cxtgeo.cxtgeo as _cxtgeo
-# from xtgeo.grid3d  import Grid   # HÆÆÆ
+
+from xtgeo.common.exceptions import DateNotFoundError, KeywordFoundNoDateError
+from xtgeo.common.exceptions import KeywordNotFoundError
+
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _gridprop_op1
@@ -444,9 +447,19 @@ class GridProperty(Grid3D):
             self.logger.warning('Invalid file format')
             sys.exit(1)
 
-        if ier != 0:
-            raise RuntimeError('An error occured during import: {}'
-                               .format(ier))
+        if ier == 22:
+            raise DateNotFoundError('Date {} not found when importing {}'
+                                    .format(date, name))
+        elif ier == 23:
+            raise KeywordNotFoundError('Keyword {} not found for date {} '
+                                       'when importing'.format(name, date))
+        elif ier == 24:
+            raise KeywordFoundNoDateError('Keyword {} found but not for date '
+                                          '{} when importing'
+                                          .format(name, date))
+        elif ier == 25:
+            raise KeywordNotFoundError('Keyword {} not found when importing'
+                                       .format(name))
 
         # would be better with exception handling?
         if ier == 0:
