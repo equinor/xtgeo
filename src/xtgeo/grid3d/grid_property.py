@@ -460,12 +460,8 @@ class GridProperty(Grid3D):
         elif ier == 25:
             raise KeywordNotFoundError('Keyword {} not found when importing'
                                        .format(name))
-
-        # would be better with exception handling?
-        if ier == 0:
-            return True
-        else:
-            return False
+        elif ier != 0:
+            raise RuntimeError('Somethin went wrong, code {}'.format(ier))
 
         return self
 

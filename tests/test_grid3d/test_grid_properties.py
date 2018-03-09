@@ -68,10 +68,13 @@ def test_import_should_fail():
     names = ['PRESSURE']
     dates = [19991201, 19991212]  # last date does not exist
 
-    with pytest.warns(RuntimeWarning) as e_info:
-        logger.warning(e_info)
-        rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g,
-                     apiversion=apiver)
+    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g,
+                 apiversion=apiver)
+
+    # with pytest.raises(ValueError) as e_info:
+    #     print(e_info)
+    #     rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g,
+    #                  apiversion=apiver)
 
 
 def test_import_should_warn():

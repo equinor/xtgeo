@@ -1,11 +1,11 @@
 """Import/export or scans of grid properties (cf GridProperties class"""
-import warnings
-
 import pandas as pd
 
 import xtgeo
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import DateNotFoundError
+
 
 xtg = XTGeoDialog()
 
@@ -277,19 +277,25 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
         dlist = props.scan_dates(fhandle)
 
         validdates = []
+        alldates = []
         for date in dates:
             for ditem in dlist:
+                alldates.append(str(ditem[1]))
                 if str(date) == str(ditem[1]):
                     validdates.append(date)
 
         if len(validdates) < 1:
-            raise ValueError('No valid dates given (dates: {} vs {})'
-                             .format(dates, dlist))
+            msg = ('No valid dates given (dates: {} vs {})'
+                   .format(dates, alldates))
+            xtg.error(msg)
+            raise ValueError(msg)
 
         if len(dates) > len(validdates):
             invalidddates = list(set(dates).difference(validdates))
-            msg = 'Some dates not found: {}'.format(invalidddates)
-            warnings.warn(RuntimeWarning(msg))
+            msg = ('In file {}: Some dates not found: {}, but will continue '
+                   'with dates: {}'.format(pfile, invalidddates, validdates))
+            xtg.warn(msg)
+            # raise DateNotFoundError(msg)
 
     usenames = list(names)  # to make copy
 
@@ -329,25 +335,6 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
                 nrow = prop.nrow
                 nlay = prop.nlay
                 firstproperty = False
-
-            # if qsoil and not soil_ok:
-            #     if name in set(['SWAT', 'SGAS']):
-            #         xprop[name] = prop.values
-            #         logger.info('Made xprop for {}'.format(name))
-
-            #     if len(xprop) == 2:
-            #         soilv = xprop['SWAT'].copy() * 0 + 1
-            #         soilv = soilv - xprop['SWAT'] - xprop['SGAS']
-            #         soil_ok = True
-            #         propname = 'SOIL' + '_' + str(date)
-
-            #         prop = xtgeo.grid3d.GridProperty(ncol=ncol, nrow=nrow,
-            #                                          nlay=nlay, name=propname,
-            #                                          discrete=False,
-            #                                          values=soilv)
-            #     else:
-            #         logger.info('Length xprop is {}'.format(len(xprop)))
-            #         continue
 
             logger.info('Appended property {}'.format(propname))
             props._names.append(propname)

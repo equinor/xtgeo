@@ -2,14 +2,16 @@
 
 from __future__ import print_function, absolute_import
 
-import warnings
-
 import numpy as np
 import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import DateNotFoundError
+from xtgeo.common.exceptions import KeywordFoundNoDateError
+from xtgeo.common.exceptions import KeywordNotFoundError
+
 from ._gridprops_io import _get_fhandle, _close_fhandle
 
 xtg = XTGeoDialog()
@@ -22,7 +24,15 @@ xtg_verbose_level = xtg.get_syslevel()
 
 def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
                          grid=None):
-    """Import, private to this routine"""
+    """Import, private to this routine.
+
+    Raises:
+        DateNotFoundError: If restart no neot contain requested date.
+        KeywordFoundNoDateError: If keyword is found but not at given date.
+        KeywordNotFoundError: If Keyword is not found.
+        RuntimeError: Mismatch in grid vs property, etc.
+
+    """
 
     logger.info('pfile is {}, name is {}, etype is {}, date is {}, '
                 'grid is {}'.format(pfile, name, etype, date, grid))
@@ -31,6 +41,8 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
 
     gprops = xtgeo.grid3d.GridProperties()
     nentry = 0
+
+    datefound = True
     if etype == 5:
         datefound = False
         logger.info('Look for date {}'.format(date))
@@ -44,8 +56,10 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
                 break
 
         if not datefound:
-            logger.critical('Date not found')
-            return 22
+            msg = ('In {}: Date {} not found, nentry={}'
+                   .format(pfile, date, nentry))
+            xtg.warn(msg)
+            raise DateNotFoundError(msg)
 
     # scan file for property
     logger.info('Make kwlist')
@@ -70,17 +84,20 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
                 .format(ncol, nrow, nlay))
 
     if grid.ncol != ncol or grid.nrow != nrow or grid.nlay != nlay:
-        logger.error('Errors in dimensions property vs grid')
-        return -9
+        msg = ('In {}: Errors in dimensions prop: {} {} {} vs grid: {} {} {} '
+               .format(pfile, ncol, nrow, nlay,
+                       grid.ncol, grid.ncol, grid.nlay))
+        raise RuntimeError(msg)
 
     # Restarts (etype == 5):
     # there are cases where keywords do not exist for all dates, e.g .'RV'.
     # The trick is to check for dates also...
 
     kwfound = False
-    datefound = False
+    datefoundhere = False
     usedate = '0'
     restart = False
+
     if etype == 5:
         usedate = str(date)
         restart = True
@@ -95,25 +112,26 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
         if name == kwname and usedate == str(kwdate):
             logger.info('Keyword {} ok at date {}'.format(name, usedate))
             kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
-            datefound = True
+            datefoundhere = True
             break
 
     if restart:
         if datefound and not kwfound:
-            warnings.warn('For {}: Date <{}> is found, but not keyword <{}>'
-                          .format(pfile, date, name), RuntimeWarning)
-            return 23
+            msg = ('For {}: Date <{}> is found, but not keyword <{}>'
+                   .format(pfile, date, name))
+            xtg.warn(msg)
+            raise KeywordNotFoundError(msg)
 
-        if not datefound and kwfound:
-            warnings.warn('For {}: The keyword <{}> exists but not for '
-                          'date <{}>'.format(pfile, name, date),
-                          RuntimeWarning)
-            return 24
+        if not datefoundhere and kwfound:
+            msg = ('For {}: The keyword <{}> exists but not for '
+                   'date <{}>'.format(pfile, name, date))
+            xtg.warn(msg)
+            raise KeywordFoundNoDateError(msg)
     else:
         if not kwfound:
-            warnings.warn('For {}: The keyword <{}> is not found'
-                          .format(pfile, name), RuntimeWarning)
-            return 25
+            msg = ('For {}: The keyword <{}> is not found'.format(pfile, name))
+            xtg.warn(msg)
+            raise KeywordNotFoundError(msg)
 
     # read record:
     values = eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
@@ -138,11 +156,6 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     actnum = grid.get_actnum().values
 
     allvalues = np.zeros((ncol * nrow * nlay), dtype=values.dtype) + use_undef
-    logger.debug('Indices for actnum: {}'.format(grid.actnum_indices))
-    logger.debug('Len for actnum indices: {}'
-                 .format(grid.actnum_indices.shape[0]))
-    logger.debug('Len for values: {}'
-                 .format(values.shape[0]))
 
     if grid.actnum_indices.shape[0] == values.shape[0]:
         allvalues[grid.actnum_indices] = values
