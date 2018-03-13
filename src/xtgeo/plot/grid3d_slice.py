@@ -73,7 +73,7 @@ class Grid3DSlice(BasePlot):
 
     def plot_gridslice(self, prop, mode='layer',
                        minvalue=None, maxvalue=None,
-                       colortable=None, index=1, window=None):
+                       colormap=None, index=1, window=None):
 
         """Input a a slice of a 3D grid and plot it.
 
@@ -85,17 +85,17 @@ class Grid3DSlice(BasePlot):
             minvalue (float): Minimum level color scale (default: from data)
             maxvalue (float): Maximum level color scale (default: from data)
             index: Index to plot e.g layer number if layer slice (first=1)
-            colortable: Color table to use, e.g. 'rainbow' or an rmscol file
+            colormap: Color map to use, e.g. 'rainbow' or an rmscol file
 
         """
 
         if prop.grid is None:
             raise RuntimeError('Need to connect property to a grid for plots')
 
-        if colortable is not None:
-            self.set_colortable(colortable)
+        if colormap is not None:
+            self.colormap = colormap
         else:
-            self.set_colortable('rainbow')
+            self.colormap = 'rainbow'
 
         grid = prop.grid
 

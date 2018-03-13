@@ -3,40 +3,37 @@
 from __future__ import print_function
 
 import sys
-import logging
+
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.plot import _colortables as _ctable
 from xtgeo.plot import BasePlot
+
+xtg = XTGeoDialog()
 
 
 class XSection(BasePlot):
-    """Class for plotting a cross-section of a well."""
+    """Class for plotting a cross-section of a well.
+
+    Args:
+        zmin (float): Upper level of the plot (top Y axis)
+        zmax (float): Lower level of the plot (bottom Y axis)
+        well (obj): XTgeo well object
+        surfaces (list of obj): List of XTGeo RegularSurface objects
+        surfacenames (list of str): List of surface names for legend
+        colormap (str): Name of colormap, e.g. 'Set1'. Default is 'xtgeo'
+        outline (obj): XTGeo Polygons object
+        tight (bool): True for tight_layout (False is default)
+
+    """
 
     def __init__(self, zmin=0, zmax=9999, well=None, surfaces=None,
-                 colortable=None, zonelogshift=0, surfacenames=None,
+                 colormap=None, zonelogshift=0, surfacenames=None,
                  outline=None, tight=False):
 
-        """
-        The __init__ (constructor) method.
-
-        Args:
-            zmin (float): Upper level of the plot (top Y axis)
-            zmax (float): Lower level of the plot (bottom Y axis)
-            well (obj): XTgeo well object
-            surfaces (list of obj): List of XTgeo surface objects
-            surfacenames (list of str): List of surface names for legend
-            colortable (list): List of RGB tuples
-            outline (obj): XTGeo Polygons object
-            tight (bool): True for tight_layout (False is default)
-        """
-
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
-
+        self.logger = xtg.functionlogger(clsname)
         self._xtg = XTGeoDialog()
 
         self._zmin = zmin
@@ -54,8 +51,13 @@ class XSection(BasePlot):
         self._surfaceplot_count = 0
         self._legendtitle = "Zones"
 
-        if colortable is None:
-            self._colortable = _ctable.random40()
+        if colormap is None:
+            self._colormap = plt.cm.viridis
+        else:
+            self.define_colormap(colormap)
+
+        self.logger.info('Ran __init__ ...')
+        self.logger.info('Colormap is {}'.format(self._colormap))
 
     # =========================================================================
     # Properties
@@ -64,11 +66,6 @@ class XSection(BasePlot):
     def pagesize(self):
         """ Returns page size."""
         return self._pagesize
-
-    @property
-    def colortable(self):
-        """ Returns actual color table, which is a list of RGB tuples."""
-        return self._colortable
 
     # =========================================================================
     # Functions methods (public)
@@ -136,10 +133,6 @@ class XSection(BasePlot):
         self._ax2 = ax2
         self._ax3 = ax3
 
-    def set_colortable(self, cfile, colorlist=None):
-        __doc__ = BasePlot.set_colortable.__doc__
-        super(XSection, self).set_colortable(cfile, colorlist)
-
     def plot_well(self, zonelogname='ZONELOG'):
         """Input an XTGeo Well object and plot it."""
         ax = self._ax1[self._surfaceplot_count - 1]
@@ -147,16 +140,15 @@ class XSection(BasePlot):
         wo = self._well
         # reduce the well data by Pandas operations
         df = wo.dataframe
-        self.logger.info(df)
 
         wo.dataframe = df[df['Z_TVDSS'] > self._zmin]
 
-        # Create a relative XYLINGTH vector (0.0 where well starts)
+        # Create a relative XYLENGTH vector (0.0 where well starts)
         wo.create_relative_hlen()
 
         df = wo.dataframe
 
-        self.logger.info(df)
+        self.logger.debug(df)
 
         if df.empty:
             self._showok = False
@@ -188,13 +180,14 @@ class XSection(BasePlot):
                 c='black')
 
         # let the part with ZONELOG have a colour
+        ctable = self.get_colormap_as_table()
         for zone in range(zomin, zomax + 1):
 
             # the minus one since zone no 1 use color entry no 0
             if (zone + zshift - 1) < 0:
                 color = (0.9, 0.9, 0.9)
             else:
-                color = self._colortable[zone + zshift - 1]
+                color = ctable[zone + zshift - 1]
 
             zv_copy = ma.masked_where(zo != zone, zv)
             hv_copy = ma.masked_where(zo != zone, hv)
@@ -204,7 +197,7 @@ class XSection(BasePlot):
             ax.plot(hv_copy, zv_copy, linewidth=4, c=color)
 
     def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
-                      colortable=None, linewidth=1.0, legendtitle=None,
+                      colormap=None, linewidth=1.0, legendtitle=None,
                       fancyline=False):
         """Input a surface list (ordered from top to base) , and plot them."""
 
@@ -229,8 +222,10 @@ class XSection(BasePlot):
         if legendtitle is None:
             legendtitle = self._legendtitle
 
-        if colortable is None:
-            colortable = self._colortable
+        if colormap is None:
+            colormap = self._colormap
+        else:
+            self.define_colormap(colormap)
 
         nlen = len(surfaces)
 
@@ -249,7 +244,7 @@ class XSection(BasePlot):
             else:
                 slegend = surfacenames
 
-        if len(self._colortable) < nlen:
+        if self._colormap.N < nlen:
             self.logger.critical("Too few colors in color table compared with "
                                  "number of surfaces")
             sys.exit(-22)
@@ -263,6 +258,7 @@ class XSection(BasePlot):
         self._wfence = wfence
 
         # sample the horizon to the fence:
+        colortable = self.get_colormap_as_table()
         for i in range(nlen):
             self.logger.info(i)
             if not fill:
@@ -273,13 +269,13 @@ class XSection(BasePlot):
                     if c[0] + c[1] + c[2] > 1.5:
                         xcol = 'black'
                     ax.plot(hfence[:, 3], hfence[:, 2],
-                            linewidth = 1.2 * linewidth,
+                            linewidth=1.2 * linewidth,
                             c=xcol)
                 ax.plot(hfence[:, 3], hfence[:, 2], linewidth=linewidth,
                         c=colortable[i], label=slegend[i])
                 if fancyline:
                     ax.plot(hfence[:, 3], hfence[:, 2],
-                            linewidth = 0.3 * linewidth,
+                            linewidth=0.3 * linewidth,
                             c=xcol)
             else:
                 # need copy() .. why?? found by debugging...

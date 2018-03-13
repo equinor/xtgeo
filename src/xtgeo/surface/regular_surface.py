@@ -1268,7 +1268,8 @@ class RegularSurface(object):
 
     def quickplot(self, filename='/tmp/default.png', title='QuickPlot',
                   infotext=None, minmax=(None, None), xlabelrotation=None,
-                  colortable='rainbow', faults=None, logarithmic=False):
+                  colormap='rainbow', colortable=None,
+                  faults=None, logarithmic=False):
         """Fast surface plot of maps using matplotlib.
 
         Args:
@@ -1278,8 +1279,10 @@ class RegularSurface(object):
             minmax (tuple): Tuple of min and max values to be plotted. Note
                 that values outside range will be set equal to range limits
             xlabelrotation (float): Rotation in degrees of X labels.
-            colortable (str): Name of matplotlib or RMS file or XTGeo
-                colortable. Default is matplotlib's 'rainbow'
+            colormap (str): Name of matplotlib or RMS file or XTGeo
+                colormap. Default is matplotlib's 'rainbow'
+            colortable (str): Deprecated, for backward compatibility! used
+                colormap instead.
             faults (dict): If fault plot is wanted, a dictionary on the
                 form => {'faults': XTGeo Polygons object, 'color': 'k'}
             logarithmic (bool): If True, a logarithmic contouring color scale
@@ -1298,11 +1301,14 @@ class RegularSurface(object):
         minvalue = minmax[0]
         maxvalue = minmax[1]
 
-        mymap.set_colortable(colortable)
+        if colortable is not None:
+            colormap = colortable
+
+        mymap.colormap = colormap
 
         mymap.plot_surface(self, minvalue=minvalue,
                            maxvalue=maxvalue, xlabelrotation=xlabelrotation,
-                           colortable=colortable, logarithmic=logarithmic)
+                           logarithmic=logarithmic)
         if faults:
             mymap.plot_faults(faults['faults'])
 

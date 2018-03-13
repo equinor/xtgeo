@@ -29,6 +29,8 @@ from .grid3d import grid_properties
 from .well import well
 from .plot import baseplot
 from .plot import xsection
+from .plot import xtmap
+from .plot import grid3d_slice
 from .xyz import points
 from .xyz import polygons
 

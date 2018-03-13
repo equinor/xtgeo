@@ -74,7 +74,7 @@ class Map(BasePlot):
 
     def plot_surface(self, surf, minvalue=None, maxvalue=None,
                      contourlevels=None, xlabelrotation=None,
-                     colortable=None, logarithmic=False):
+                     colormap=None, logarithmic=False):
         """Input a surface and plot it."""
 
         # need a deep copy to avoid changes in the original surf
@@ -122,10 +122,10 @@ class Map(BasePlot):
         if maxvalue is None:
             maxvalue = usesurf.values.max()
 
-        if colortable is not None:
-            self.set_colortable(colortable)
+        if colormap is not None:
+            self.colormap = colormap
         else:
-            self.set_colortable('rainbow')
+            self.colormap = 'rainbow'
 
         levels = np.linspace(minvalue, maxvalue, self.contourlevels)
         self.logger.debug('Number of contour levels: {}'.format(levels))

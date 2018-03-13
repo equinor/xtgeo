@@ -45,7 +45,7 @@ def test_simple_plot():
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
     myplot.canvas(title='My o my')
-    myplot.set_colortable('gist_ncar')
+    myplot.colormap = 'gist_ncar'
     myplot.plot_surface(mysurf)
 
     myplot.savefig('TMP/map_simple.png')
@@ -68,7 +68,7 @@ def test_map_plot_with_points():
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
     myplot.canvas(title='My o my')
-    myplot.set_colortable('gist_ncar')
+    myplot.colormap = 'gist_ncar'
     myplot.plot_surface(mysurf)
     myplot.plot_points(mypoints)
 
@@ -87,7 +87,7 @@ def test_more_features_plot():
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
     myplot.canvas(title='Label rotation')
-    myplot.set_colortable('gist_rainbow_r')
+    myplot.colormap = 'gist_rainbow_r'
     myplot.plot_surface(mysurf, minvalue=1250, maxvalue=2200,
                         xlabelrotation=45)
 
@@ -104,7 +104,7 @@ def test_perm_logarithmic_map():
 
     myplot = Map()
     myplot.canvas(title='PERMX normal scale')
-    myplot.set_colortable('gist_rainbow_r')
+    myplot.colormap = 'gist_rainbow_r'
     myplot.plot_surface(mysurf, minvalue=0, maxvalue=6000,
                         xlabelrotation=45, logarithmic=True)
 
