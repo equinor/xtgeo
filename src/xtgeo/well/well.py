@@ -14,6 +14,8 @@ from xtgeo.common import XTGeoDialog
 from . import _wellmarkers
 from . import _well_io
 
+xtg = XTGeoDialog()
+
 
 class Well(object):
     """Class for a well in the xtgeo framework.
@@ -460,7 +462,8 @@ class Well(object):
 
         return x
 
-    def report_zonation_holes(self, threshold=5):
+    def report_zonation_holes(self, zonelogname=None, mdlogname=None,
+                              threshold=5):
         """Reports if well has holes in zonation, less or equal to N samples.
 
         Zonation may have holes due to various reasons, and
@@ -477,17 +480,31 @@ class Well(object):
             A Pandas dataframe as report. None if no list is made.
         """
 
+        if zonelogname is None:
+            zonelogname = self._zonelogname
+
+        if mdlogname is None:
+            mdlogname = self._mdlogname
+
+        print('MDLOGNAME is {}'.format(mdlogname))
+
         wellreport = []
 
         try:
-            zlog = self._df[self.zonelogname].values.copy()
+            zlog = self._df[zonelogname].values.copy()
         except Exception:
             self.logger.warning('Cannot get zonelog')
+            xtg.warn('Cannot get zonelog {} for {}'
+                     .format(zonelogname, self.wellname))
             return None
 
-        mdlog = None
-        if self.mdlogname is not None:
-            mdlog = self._df[self.mdlogname].values
+        try:
+            mdlog = self._df[mdlogname].values
+        except Exception:
+            self.logger.warning('Cannot get mdlog')
+            xtg.warn('Cannot get mdlog {} for {}'
+                     .format(mdlogname, self.wellname))
+            return None
 
         x = self._df['X_UTME'].values
         y = self._df['Y_UTMN'].values
