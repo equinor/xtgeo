@@ -16,6 +16,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export
 from xtgeo.cube import _cube_utils
+from xtgeo.cube import _cube_roxapi
 
 #
 # Note: The _values (3D array) may be C or F contiguous. As longs as it stays
@@ -81,6 +82,7 @@ class Cube(object):
             vals = np.zeros((5, 3, 2), dtype=np.float32, order='F')
             self._values = vals
             self._cvalues = None       # carray swig C pointer of map values
+            self._segyfile = None
 
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
@@ -303,22 +305,71 @@ class Cube(object):
         else:
             self.logger.error('Invalid or unknown file format')
 
-    def to_file(self, sfile, fformat='rms_regular'):
+    def to_file(self, sfile, fformat='segy'):
         """Export cube data to file.
 
         Args:
             sfile (str): Filename
-            fformat (str, optional): file format rms_regular (default)
+            fformat (str, optional): file format 'segy' (default) or
+                'rms_regular'
 
         Example::
             >>> zz = Cube('some.segy')
             >>> zz.to_file('some.rmsreg')
         """
 
-        if (fformat == 'rms_regular'):
+        if (fformat == 'segy'):
+            _cube_export.export_segy(self, sfile)
+        elif (fformat == 'rms_regular'):
             self._export_cube(sfile)
         else:
             self.logger.error('Invalid file format')
+
+    def from_roxar(self, project, name):
+        """Import (transfer) a cube from a Roxar seismic object to XTGeo.
+
+        Args:
+            project (str): Inside RMS use the magic 'project', else use
+                path to RMS project
+            name (str): Name of cube within RMS project.
+
+        Raises:
+            To be described...
+
+        Example::
+
+            zz = Cube()
+            zz.from_roxar(project, 'truth_reek_seismic_depth_2000')
+
+        """
+        _cube_roxapi.import_cube_roxapi(self, project, name)
+
+    def to_roxar(self, project, name, folder=None, domain='time',
+                 compression=('wavelet', 5)):
+        """Export (transfer) a cube from a XTGeo cube object to Roxar data.
+
+        Args:
+            project (str): Inside RMS use the magic 'project', else use
+                path to RMS project
+            name (str): Name of cube (seismic data) within RMS project.
+            folder (str): Cubes may be stored under a folder in the tree.
+            domain (str): 'time' (default) or 'depth'
+            compression (tuple): description to come...
+
+        Raises:
+            To be described...
+
+        Example::
+
+            zz = xtgeo.cube.Cube('myfile.segy')
+            zz.to_roxar(project, 'reek_cube')
+
+            # alternative
+            zz = xtgeo.cube_from_file('myfile.segy')
+            zz.to_roxar(project, 'reek_cube')
+
+        """
+        _cube_roxapi.export_cube_roxapi(self, project, name)
 
     def scan_segy_header(self, sfile, outfile=None):
         """Scan a SEGY file header and print info to screen or file.
@@ -427,6 +478,7 @@ class Cube(object):
         if sformat == 'segy':
             if engine == 'segyio':
                 sdata = _cube_import.import_segy_io(sfile)
+                self._segyfile = sfile
             else:
                 sdata = _cube_import.import_segy(sfile,
                                                  scanheadermode=scanheadermode,
@@ -449,7 +501,7 @@ class Cube(object):
         self._values = sdata['values']
         self._yflip = sdata['yflip']
 
-    def _export_cube(self, sfile):
+    def _export_cube(self, sfile, fformat='segy'):
 
         xtg_verbose_level = self._xtg.get_syslevel()
 
@@ -461,3 +513,26 @@ class Cube(object):
                                    self.rotation, self.yflip,
                                    self.values,
                                    sfile, xtg_verbose_level)
+
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+
+def cube_from_file(mfile, fformat='guess'):
+    """This makes an instance of a Cube directly from file import."""
+
+    obj = Cube()
+
+    obj.from_file(mfile, fformat=fformat)
+
+    return obj
+
+
+def cube_from_roxar(project, name):
+    """This makes an instance of a Cube directly from roxar input."""
+
+    obj = Cube()
+
+    obj.from_roxar(project, name)
+
+    return obj

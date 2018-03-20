@@ -8,9 +8,9 @@ Contents:
 
    readme
    installation
+   modules
    usage
    usextgeoroxar
-   modules
    contributing
    authors
    history

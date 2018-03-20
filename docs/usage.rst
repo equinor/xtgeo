@@ -14,6 +14,9 @@ possibly in combinations.
 Surface operations
 ------------------
 
+See class :class:`RegularSurface` for details on available methods and
+attributes.
+
 Initialising a Surface object (instance)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -54,7 +57,7 @@ of these properties can be changed, which actually changes the map
 
    import xtgeo
 
-   surf3 =xtge.surface_from_file('reek.gri')
+   surf3 =xtgeo.surface_from_file('reek.gri')
 
    print(surf3.xinc, surf3.yinc)
 
@@ -70,3 +73,76 @@ of these properties can be changed, which actually changes the map
    surf3.to_file('changedsurface.gri')  # irap binary is default
 
    # Note that changing nrow and ncol is not possible to do directly.
+
+---------------
+Cube operations
+---------------
+
+Taking diff of two cubes and export, in SEGY
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is easy to take the difference bewteen two cubes and export to SEGY
+format. Here is an example:
+
+.. code-block:: python
+
+   import xtgeo
+
+   # make two cube objects from file import:
+   cube1 = xtgeo.cube_from_file('cube1.segy')
+   cube2 = xtgeo.cube_from_file('cube2.segy')
+
+   # subtract the two numpy arrays
+   cube1.values = cube1.values - cube2.values
+
+   # export the updated cube1 to SEGY
+   cube1.to_file('diff.segy')
+
+
+------------------------------------
+Combined Surface and Cube operations
+------------------------------------
+
+To sample cube values into a surface can be quite useful. Both direct
+sampling, and interval sampling (over a window, or between two surfaces)
+is supported. For the interval sampling, various attributes can be
+extracted.
+
+Sampling a surface from a cube
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is sampling a regular surface from a cube. The two objects can have
+different rotation. See :meth:`xtgeo.surface.RegularSurface.slice_cube` method
+
+.. code-block:: python
+
+   import xtgeo
+
+   # make two cube objects from file import:
+   surf = xtgeo.surface_from_file('top.gri')
+   cube = xtgeo.cube_from_file('cube2.segy')
+
+   surf.slice_cube(cube)
+
+   # export the updated to RMS binary map format
+   surf.to_file('myslice.gri')
+
+
+Sampling the root-mean-square surface over a window from a cube
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The root mean scquare (rms) value over a surface, +- 10 units
+(e.g. metres if depth), see `slice_cube_window` method.
+
+.. code-block:: python
+
+   import xtgeo
+
+   # slice within a window (vertically) around surface:
+   surf = xtgeo.surface_from_file('top.gri')
+   cube = xtgeo.cube_from_file('cube.segy')
+
+   surf.slice_cube_window(cube, zrange=10, attribute='rms')
+
+   # export the updated to Irap (RMS) ascii map format
+   surf.to_file('rmsaverage.fgr', fformat='irap_ascii')

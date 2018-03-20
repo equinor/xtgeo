@@ -8,7 +8,7 @@
 from __future__ import print_function, absolute_import
 import pandas as pd
 
-from xtgeo.xyz import XYZ
+from xtgeo.xyz._xyz import XYZ
 from xtgeo.xyz._xyz_io import _convert_idbased_xyz
 
 
@@ -39,7 +39,7 @@ class Polygons(XYZ):
         self._df = df.copy()
 
     def from_file(self, pfile, fformat='xyz'):
-        """Cf :meth:`.XYZ.from_file`"""
+        """Doc later"""
         super(Polygons, self).from_file(pfile, fformat=fformat)
 
         # for polygons, a seperate column with ID is required; however this may
@@ -52,7 +52,7 @@ class Polygons(XYZ):
 
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
-        """Cf :meth:`.XYZ.to_file`"""
+        """Doc later"""
         super(Polygons, self).to_file(pfile, fformat=fformat,
                                       attributes=attributes, filter=filter,
                                       wcolumn=wcolumn, hcolumn=hcolumn,

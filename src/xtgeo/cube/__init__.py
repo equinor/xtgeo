@@ -1,1 +1,1 @@
-from .cube import Cube
+from .cube import Cube  # noqa

@@ -95,30 +95,30 @@ class XYZ(object):
     @abc.abstractmethod
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
-        """Export XYZ (Points/Polygons) to file.
+        # """Export XYZ (Points/Polygons) to file.
 
-        Args:
-            pfile (str): Name of file
-            fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-            attributes (list): List of extra columns to export (some formats)
-            filter (dict): Filter on e.g. top name(s) with keys TopName
-                or ZoneName as {'TopName': ['Top1', 'Top2']}
-            wcolumn (str): Name of well column (rms_wellpicks format only)
-            hcolumn (str): Name of horizons column (rms_wellpicks format only)
-            mdcolumn (str): Name of MD column (rms_wellpicks format only)
+        # Args:
+        #     pfile (str): Name of file
+        #     fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
+        #     attributes (list): List of extra columns to export (some formats)
+        #     filter (dict): Filter on e.g. top name(s) with keys TopName
+        #         or ZoneName as {'TopName': ['Top1', 'Top2']}
+        #     wcolumn (str): Name of well column (rms_wellpicks format only)
+        #     hcolumn (str): Name of horizons column (rms_wellpicks format only)
+        #     mdcolumn (str): Name of MD column (rms_wellpicks format only)
 
-        Returns:
-            Number of points exported
+        # Returns:
+        #     Number of points exported
 
-        Note that the rms_wellpicks will try to output to:
+        # Note that the rms_wellpicks will try to output to:
 
-        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
-        * HorizonName, WellName, X, Y, Z  otherwise
+        # * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
+        # * HorizonName, WellName, X, Y, Z  otherwise
 
-        Raises:
-            KeyError if filter is set and key(s) are invalid
+        # Raises:
+        #     KeyError if filter is set and key(s) are invalid
 
-        """
+        # """
         if self.dataframe is None:
             ncount = 0
             self.logger.warning('Nothing to export!')
