@@ -21,6 +21,7 @@ from xtgeo.grid3d import _grid_export
 from xtgeo.grid3d import _grid_refine
 from xtgeo.grid3d import _grid_etc1
 from xtgeo.grid3d import _grid_roxapi
+from xtgeo.grid3d import _gridprop_lowlevel
 
 
 class Grid(Grid3D):
@@ -102,10 +103,14 @@ class Grid(Grid3D):
 
     @property
     def actnum_indices(self):
-        """Returns the ndarray which holds the indices for active cells"""
+        """Returns the 1D ndarray which holds the indices for active cells
+        given in 1D, F order.
+
+        """
         if self._actnum_indices is None:
-            actnum = self.get_actnum()
-            self._actnum_indices = np.flatnonzero(actnum.values)
+            actnumv = self.get_actnum().values.copy(order='F')
+            actnumv = np.ravel(actnumv, order='K')
+            self._actnum_indices = np.flatnonzero(actnumv)
 
         return self._actnum_indices
 
@@ -366,14 +371,16 @@ class Grid(Grid3D):
             print('{}% cells are active'.format(act.values.mean() * 100))
         """
 
-        ntot = self._ncol * self._nrow * self._nlay
         act = xtgeo.grid3d.GridProperty(ncol=self._ncol, nrow=self._nrow,
                                         nlay=self._nlay,
-                                        values=np.zeros(ntot, dtype=np.int32),
+                                        values=np.zeros((self._ncol,
+                                                         self._nrow,
+                                                         self._nlay),
+                                                        dtype=np.int32),
                                         name=name, discrete=True)
 
-        act._cvalues = self._p_actnum_v  # the SWIG pointer to the C structure
-        act._update_values()
+        carray = self._p_actnum_v  # the SWIG pointer to the C structure
+        _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
 
         if mask:
             act.values = ma.masked_equal(act.values, 0)
@@ -429,8 +436,8 @@ class Grid(Grid3D):
 
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
-            mask: If True, UNDEF cells are masked
-            zero_base: If True, counter start fro 0, otherwise 1 (default=1).
+            mask: If True, UNDEF cells are masked, default is True
+            zero_base: If True, counter start from 0, otherwise 1 (default=1).
         """
 
         ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,

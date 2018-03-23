@@ -94,11 +94,16 @@ def test_eclinit_import():
 
     logger.info('Name is {}'.format(__name__))
     gg = Grid(testfile3, fformat="grid")
+
+    actval = gg.get_actnum().values
+
+    print(actval[10, 0: 14, 3])
+
     po = GridProperty()
     logger.info("Import INIT...")
     po.from_file(testfile4, fformat="init", name='PORO', grid=gg,
                  apiversion=2)
-
+    logger.debug(po.values[10, 0: 14, 3])
     assert po.ncol == 20, 'NX from B.INIT'
 
     logger.debug(po.values[0:400])
@@ -240,6 +245,7 @@ def test_get_xy_values_for_webportal():
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
     elapsed = xtg.timer(start)
     logger.info('Elapsed {}'.format(elapsed))
+    logger.info('Coords {}'.format(coord))
 
     grid = Grid(testfile10)
     prop = GridProperty(testfile11, grid=grid, name='PORO')
@@ -258,4 +264,21 @@ def test_get_xy_values_for_webportal_ecl():
     prop = GridProperty(testfile6, grid=grid, name='PORO')
 
     coord, valuelist = prop.get_xy_value_lists(grid=grid)
+    logger.info('First active cell coords\n{}.'.format(coord[0][0]))
     tsetup.assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)
+
+
+def test_get_xy_values_for_webportal_bri():
+    """Get lists on webportal format, small BRILLIG case"""
+
+    # Todo, work with this case and UNDEf cells are non-existing
+    # in GRID input!
+
+    grid = Grid(testfile3)
+    prop = GridProperty(testfile4, grid=grid, name='PORO')
+
+    coord, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+
+    logger.info('First active cell coords\n{}.'.format(coord[0][0]))
+    # assert coord[0][0][0] == (454.875, 318.5)
+    # assert valuelist[0][0] == -999.0

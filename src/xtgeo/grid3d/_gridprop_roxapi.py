@@ -88,14 +88,12 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
     mybuffer[iind, jind, kind] = pvalues[cellno]
     logger.info('BUFFER 0 is {}'.format(mybuffer))
 
-    mybuffer = mybuffer.copy(order='F')
-    mybuffer = mybuffer.ravel(order='K')
+    mybuffer = mybuffer.copy(order='C')
 
     mybuffer = ma.masked_greater(mybuffer, self.undef_limit)
 
     self._values = mybuffer
 
-    self._cvalues = None
     self._ncol = indexer.dimensions[0]
     self._nrow = indexer.dimensions[1]
     self._nlay = indexer.dimensions[2]
@@ -153,9 +151,9 @@ def _store_in_roxar(self, pname, roxgrid):
 
     logger.info(indexer.handedness)
 
-    logger.info('Store in RMS...')
+    logger.info('Store in RMS... IS THAT SO!')
 
-    val3d = self.values3d.copy(order='C')
+    val3d = self.values.copy()
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 

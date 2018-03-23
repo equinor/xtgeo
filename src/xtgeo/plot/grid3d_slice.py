@@ -77,7 +77,7 @@ class Grid3DSlice(BasePlot):
 
         """Input a a slice of a 3D grid and plot it.
 
-        Under construction; only layer is supported now!
+        Under construction, has bugs; only layer is supported now!
 
         Args:
             prop: The XTGeo grid property object (needs link to the grid)
@@ -106,7 +106,7 @@ class Grid3DSlice(BasePlot):
             # mark the inactive cells
             clist[i].values[actnum.values == 0] = -999.0
 
-        pvalues = prop.values3d[:, :, index - 1].flatten(order='F')
+        pvalues = prop.values[:, :, index - 1].flatten(order='K')
 
         # how to remove the masked elements (lol):
         pvalues = pvalues[~pvalues.mask]
@@ -124,11 +124,11 @@ class Grid3DSlice(BasePlot):
         else:
             xmin, xmax, ymin, ymax = window
 
-        # now some numpy operations
-        xy0 = np.column_stack((clist[0].values, clist[1].values))
-        xy1 = np.column_stack((clist[3].values, clist[4].values))
-        xy2 = np.column_stack((clist[9].values, clist[10].values))  # intended!
-        xy3 = np.column_stack((clist[6].values, clist[7].values))
+        # now some numpy operations, numbering is intended
+        xy0 = np.column_stack((clist[0].values1d, clist[1].values1d))
+        xy1 = np.column_stack((clist[3].values1d, clist[4].values1d))
+        xy2 = np.column_stack((clist[9].values1d, clist[10].values1d))
+        xy3 = np.column_stack((clist[6].values1d, clist[7].values1d))
 
         xyc = np.column_stack((xy0, xy1, xy2, xy3))
         xyc = xyc.reshape(grid.nlay, grid.ncol * grid.nrow, 4, 2)

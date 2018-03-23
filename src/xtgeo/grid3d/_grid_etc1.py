@@ -10,6 +10,7 @@ import numpy.ma as ma
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = XTGeoDialog()
 
@@ -18,23 +19,25 @@ logger = xtg.functionlogger(__name__)
 _cxtgeo.xtg_verbose_file('NONE')
 xtg_verbose_level = xtg.get_syslevel()
 
+# Note that "self" is the grid instance
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get dZ as propertiy
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_dz(grid, name='dZ', flip=True, mask=True):
+def get_dz(self, name='dZ', flip=True, mask=True):
 
-    ntot = grid._ncol * grid._nrow * grid._nlay
+    ntot = (self._ncol, self._nrow, self._nlay)
 
     dz = xtgeo.grid3d.GridProperty(
-        ncol=grid._ncol,
-        nrow=grid._nrow,
-        nlay=grid._nlay,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
         values=np.zeros(ntot, dtype=np.float64),
         name=name,
         discrete=False)
 
-    ptr_dz_v = _cxtgeo.new_doublearray(grid.ntotal)
+    ptr_dz_v = _cxtgeo.new_doublearray(self.ntotal)
 
     nflip = 1
     if not flip:
@@ -44,54 +47,55 @@ def get_dz(grid, name='dZ', flip=True, mask=True):
     if mask:
         option = 1
 
-    _cxtgeo.grd3d_calc_dz(grid._ncol, grid._nrow, grid._nlay, grid._p_zcorn_v,
-                          grid._p_actnum_v, ptr_dz_v, nflip, option,
+    _cxtgeo.grd3d_calc_dz(self._ncol, self._nrow, self._nlay, self._p_zcorn_v,
+                          self._p_actnum_v, ptr_dz_v, nflip, option,
                           xtg_verbose_level)
 
-    dz._cvalues = ptr_dz_v
-    dz._update_values()
-
+    _gridprop_lowlevel.update_values_from_carray(dz, ptr_dz_v, np.float64,
+                                                 delete=True)
     # return the property object
+
+    logger.info('DZ mean value: {}'.format(dz.values.mean()))
+
     return dz
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get dX, dY as properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_dxdy(grid, names=('dX', 'dY')):
+def get_dxdy(self, names=('dX', 'dY')):
 
-    ntot = grid._ncol * grid._nrow * grid._nlay
+    ntot = self._ncol * self._nrow * self._nlay
     dx = xtgeo.grid3d.GridProperty(
-        ncol=grid._ncol,
-        nrow=grid._nrow,
-        nlay=grid._nlay,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
         values=np.zeros(ntot, dtype=np.float64),
         name=names[0],
         discrete=False)
     dy = xtgeo.grid3d.GridProperty(
-        ncol=grid._ncol,
-        nrow=grid._nrow,
-        nlay=grid._nlay,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
         values=np.zeros(ntot, dtype=np.float64),
         name=names[1],
         discrete=False)
 
-    ptr_dx_v = _cxtgeo.new_doublearray(grid.ntotal)
-    ptr_dy_v = _cxtgeo.new_doublearray(grid.ntotal)
+    ptr_dx_v = _cxtgeo.new_doublearray(self.ntotal)
+    ptr_dy_v = _cxtgeo.new_doublearray(self.ntotal)
 
     option1 = 0
     option2 = 0
 
-    _cxtgeo.grd3d_calc_dxdy(grid._ncol, grid._nrow, grid._nlay,
-                            grid._p_coord_v, grid._p_zcorn_v, grid._p_actnum_v,
+    _cxtgeo.grd3d_calc_dxdy(self._ncol, self._nrow, self._nlay,
+                            self._p_coord_v, self._p_zcorn_v, self._p_actnum_v,
                             ptr_dx_v, ptr_dy_v, option1, option2,
                             xtg_verbose_level)
 
-    dx._cvalues = ptr_dx_v
-    dx._update_values()
-
-    dy._cvalues = ptr_dy_v
-    dy._update_values()
+    _gridprop_lowlevel.update_values_from_carray(dx, ptr_dx_v, np.float64,
+                                                 delete=True)
+    _gridprop_lowlevel.update_values_from_carray(dy, ptr_dy_v, np.float64,
+                                                 delete=True)
 
     # return the property objects
     return dx, dy
@@ -106,16 +110,18 @@ def get_ijk(self, names=['IX', 'JY', 'KZ'], mask=True, zero_base=False):
 
     actnum = self.get_actnum()
 
-    ix, jy, kz = np.indices((self._ncol, self._nrow, self._nlay))
+    ashape = (self._ncol, self._nrow, self._nlay)
 
-    ix = ix.ravel(order='F')
-    jy = jy.ravel(order='F')
-    kz = kz.ravel(order='F')
+    ix, jy, kz = np.indices(ashape)
+
+    ix = ix.ravel()
+    jy = jy.ravel()
+    kz = kz.ravel()
 
     if mask:
-        ix = ma.masked_where(actnum.values == 0, ix)
-        jy = ma.masked_where(actnum.values == 0, jy)
-        kz = ma.masked_where(actnum.values == 0, kz)
+        ix = ma.masked_where(actnum.values1d == 0, ix)
+        jy = ma.masked_where(actnum.values1d == 0, jy)
+        kz = ma.masked_where(actnum.values1d == 0, kz)
 
     if not zero_base:
         ix += 1
@@ -125,19 +131,19 @@ def get_ijk(self, names=['IX', 'JY', 'KZ'], mask=True, zero_base=False):
     ix = GrProp(ncol=self._ncol,
                 nrow=self._nrow,
                 nlay=self._nlay,
-                values=ix,
+                values=ix.reshape(ashape),
                 name=names[0],
                 discrete=True)
     jy = GrProp(ncol=self._ncol,
                 nrow=self._nrow,
                 nlay=self._nlay,
-                values=jy,
+                values=jy.reshape(ashape),
                 name=names[1],
                 discrete=True)
     kz = GrProp(ncol=self._ncol,
                 nrow=self._nrow,
                 nlay=self._nlay,
-                values=kz,
+                values=kz.reshape(ashape),
                 name=names[2],
                 discrete=True)
 
@@ -148,64 +154,64 @@ def get_ijk(self, names=['IX', 'JY', 'KZ'], mask=True, zero_base=False):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get X Y Z as properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz(grid, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'], mask=True):
+def get_xyz(self, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'], mask=True):
 
-    ntot = grid.ntotal
+    ntot = self.ntotal
 
     GrProp = xtgeo.grid3d.GridProperty
 
     x = GrProp(
-        ncol=grid._ncol,
-        nrow=grid._nrow,
-        nlay=grid._nlay,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
         values=np.zeros(ntot, dtype=np.float64),
         name=names[0],
         discrete=False)
 
     y = GrProp(
-        ncol=grid._ncol,
-        nrow=grid._nrow,
-        nlay=grid._nlay,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
         values=np.zeros(ntot, dtype=np.float64),
         name=names[1],
         discrete=False)
 
     z = GrProp(
-        ncol=grid._ncol,
-        nrow=grid._nrow,
-        nlay=grid._nlay,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
         values=np.zeros(ntot, dtype=np.float64),
         name=names[2],
         discrete=False)
 
-    ptr_x_v = _cxtgeo.new_doublearray(grid.ntotal)
-    ptr_y_v = _cxtgeo.new_doublearray(grid.ntotal)
-    ptr_z_v = _cxtgeo.new_doublearray(grid.ntotal)
+    ptr_x_v = _cxtgeo.new_doublearray(self.ntotal)
+    ptr_y_v = _cxtgeo.new_doublearray(self.ntotal)
+    ptr_z_v = _cxtgeo.new_doublearray(self.ntotal)
 
     option = 0
     if mask:
         option = 1
 
-    _cxtgeo.grd3d_calc_xyz(grid._ncol, grid._nrow, grid._nlay, grid._p_coord_v,
-                           grid._p_zcorn_v, grid._p_actnum_v, ptr_x_v, ptr_y_v,
+    _cxtgeo.grd3d_calc_xyz(self._ncol, self._nrow, self._nlay, self._p_coord_v,
+                           self._p_zcorn_v, self._p_actnum_v, ptr_x_v, ptr_y_v,
                            ptr_z_v, option, xtg_verbose_level)
 
-    x._cvalues = ptr_x_v
-    y._cvalues = ptr_y_v
-    z._cvalues = ptr_z_v
+    _gridprop_lowlevel.update_values_from_carray(x, ptr_x_v, np.float64,
+                                                 delete=True)
+    _gridprop_lowlevel.update_values_from_carray(y, ptr_y_v, np.float64,
+                                                 delete=True)
+    _gridprop_lowlevel.update_values_from_carray(z, ptr_z_v, np.float64,
+                                                 delete=True)
 
-    x._update_values()
-    y._update_values()
-    z._update_values()
+    # Note: C arrays are deleted in the update_values_from_carray()
 
-    # return the objects
     return x, y, z
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get X Y Z cell corners for one cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz_cell_corners(grid, ijk=(1, 1, 1), mask=True, zerobased=False):
+def get_xyz_cell_corners(self, ijk=(1, 1, 1), mask=True, zerobased=False):
 
     i, j, k = ijk
 
@@ -214,16 +220,16 @@ def get_xyz_cell_corners(grid, ijk=(1, 1, 1), mask=True, zerobased=False):
         shift = 1
 
     if mask is True:
-        actnum = grid.get_actnum()
+        actnum = self.get_actnum()
         iact = actnum.values3d[i - 1 + shift, j - 1 + shift, k - 1 + shift]
         if iact == 0:
             return None
 
     pcorners = _cxtgeo.new_doublearray(24)
 
-    _cxtgeo.grd3d_corners(i + shift, j + shift, k + shift, grid.ncol,
-                          grid.nrow, grid.nlay, grid._p_coord_v,
-                          grid._p_zcorn_v, pcorners, xtg_verbose_level)
+    _cxtgeo.grd3d_corners(i + shift, j + shift, k + shift, self.ncol,
+                          self.nrow, self.nlay, self._p_coord_v,
+                          self._p_zcorn_v, pcorners, xtg_verbose_level)
 
     cornerlist = []
     for i in range(24):
@@ -236,9 +242,9 @@ def get_xyz_cell_corners(grid, ijk=(1, 1, 1), mask=True, zerobased=False):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get X Y Z cell corners for all cells (as 24 GridProperty objects)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz_corners(grid, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
+def get_xyz_corners(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
 
-    ntot = grid.ntotal
+    ntot = (self._ncol, self._nrow, self._nlay)
 
     grid_props = []
 
@@ -249,25 +255,25 @@ def get_xyz_corners(grid, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
         yname = names[1] + str(i)
         zname = names[2] + str(i)
         x = GrProp(
-            ncol=grid._ncol,
-            nrow=grid._nrow,
-            nlay=grid._nlay,
+            ncol=self._ncol,
+            nrow=self._nrow,
+            nlay=self._nlay,
             values=np.zeros(ntot, dtype=np.float64),
             name=xname,
             discrete=False)
 
         y = GrProp(
-            ncol=grid._ncol,
-            nrow=grid._nrow,
-            nlay=grid._nlay,
+            ncol=self._ncol,
+            nrow=self._nrow,
+            nlay=self._nlay,
             values=np.zeros(ntot, dtype=np.float64),
             name=yname,
             discrete=False)
 
         z = GrProp(
-            ncol=grid._ncol,
-            nrow=grid._nrow,
-            nlay=grid._nlay,
+            ncol=self._ncol,
+            nrow=self._nrow,
+            nlay=self._nlay,
             values=np.zeros(ntot, dtype=np.float64),
             name=zname,
             discrete=False)
@@ -278,27 +284,35 @@ def get_xyz_corners(grid, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
 
     ptr_coord = []
     for i in range(24):
-        some = _cxtgeo.new_doublearray(grid.ntotal)
+        some = _cxtgeo.new_doublearray(self.ntotal)
         ptr_coord.append(some)
 
     for i, v in enumerate(ptr_coord):
-        grid.logger.debug('SWIG object {}   {}'.format(i, v))
+        self.logger.debug('SWIG object {}   {}'.format(i, v))
 
     option = 0
 
     # note, fool the argument list to unpack ptr_coord with * ...
     _cxtgeo.grd3d_get_all_corners(
-        grid._ncol, grid._nrow, grid._nlay, grid._p_coord_v, grid._p_zcorn_v,
-        grid._p_actnum_v, *(ptr_coord + [option] + [xtg_verbose_level]))
+        self._ncol, self._nrow, self._nlay, self._p_coord_v, self._p_zcorn_v,
+        self._p_actnum_v, *(ptr_coord + [option] + [xtg_verbose_level]))
 
     for i in range(0, 24, 3):
-        grid_props[i]._cvalues = ptr_coord[i]
-        grid_props[i + 1]._cvalues = ptr_coord[i + 1]
-        grid_props[i + 2]._cvalues = ptr_coord[i + 2]
 
-        grid_props[i]._update_values()
-        grid_props[i + 1]._update_values()
-        grid_props[i + 2]._update_values()
+        _gridprop_lowlevel.update_values_from_carray(grid_props[i],
+                                                     ptr_coord[i],
+                                                     np.float64,
+                                                     delete=True)
+
+        _gridprop_lowlevel.update_values_from_carray(grid_props[i + 1],
+                                                     ptr_coord[i + 1],
+                                                     np.float64,
+                                                     delete=True)
+
+        _gridprop_lowlevel.update_values_from_carray(grid_props[i + 2],
+                                                     ptr_coord[i + 2],
+                                                     np.float64,
+                                                     delete=True)
 
     # return the 24 objects (x1, y1, z1, ... x8, y8, z8)
     return tuple(grid_props)
@@ -353,7 +367,7 @@ def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Inactivate by DZ
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def inactivate_by_dz(grid, threshold):
+def inactivate_by_dz(self, threshold):
 
     if isinstance(threshold, int):
         threshold = float(threshold)
@@ -364,17 +378,17 @@ def inactivate_by_dz(grid, threshold):
     # assumption (unless somebody finds a Petrel made grid):
     nflip = 1
 
-    _cxtgeo.grd3d_inact_by_dz(grid.ncol, grid.nrow, grid.nlay,
-                              grid._p_zcorn_v, grid._p_actnum_v,
+    _cxtgeo.grd3d_inact_by_dz(self.ncol, self.nrow, self.nlay,
+                              self._p_zcorn_v, self._p_actnum_v,
                               threshold, nflip, xtg_verbose_level)
 
-    return grid
+    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Inactivate inside a polygon (or outside)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def inactivate_inside(grid, poly, layer_range=None, inside=True,
+def inactivate_inside(self, poly, layer_range=None, inside=True,
                       force_close=False):
 
     if not isinstance(poly, xtgeo.xyz.Polygons):
@@ -384,7 +398,7 @@ def inactivate_inside(grid, poly, layer_range=None, inside=True,
         k1, k2 = layer_range
     else:
         k1 = 1
-        k2 = grid.nlay
+        k2 = self.nlay
 
     method = 0
     if not inside:
@@ -397,14 +411,14 @@ def inactivate_inside(grid, poly, layer_range=None, inside=True,
     # get dataframe where each polygon is ended by a 999 value
     dfxyz = poly.get_xyz_dataframe()
 
-    xc = dfxyz['X_UTME'].values
-    yc = dfxyz['Y_UTMN'].values
+    xc = dfxyz['X_UTME'].values.copy()
+    yc = dfxyz['Y_UTMN'].values.copy()
 
-    ier = _cxtgeo.grd3d_inact_outside_pol(xc, yc, grid.ncol,
-                                          grid.nrow,
-                                          grid.nlay, grid._p_coord_v,
-                                          grid._p_zcorn_v,
-                                          grid._p_actnum_v, k1, k2,
+    ier = _cxtgeo.grd3d_inact_outside_pol(xc, yc, self.ncol,
+                                          self.nrow,
+                                          self.nlay, self._p_coord_v,
+                                          self._p_zcorn_v,
+                                          self._p_actnum_v, k1, k2,
                                           iforce, method,
                                           xtg_verbose_level)
 
@@ -412,24 +426,24 @@ def inactivate_inside(grid, poly, layer_range=None, inside=True,
         raise RuntimeError('Problems with one or more polygons. '
                            'Not closed?')
 
-    return grid
+    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Collapse inactive cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def collapse_inactive_cells(grid):
+def collapse_inactive_cells(self):
 
-    _cxtgeo.grd3d_collapse_inact(grid.ncol, grid.nrow, grid.nlay,
-                                 grid._p_zcorn_v, grid._p_actnum_v,
+    _cxtgeo.grd3d_collapse_inact(self.ncol, self.nrow, self.nlay,
+                                 self._p_zcorn_v, self._p_actnum_v,
                                  xtg_verbose_level)
-    return grid
+    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Reduce grid to one layer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def reduce_to_one_layer(grid):
+def reduce_to_one_layer(self):
     """Reduce the grid to one single single layer.
 
     Example::
@@ -449,40 +463,40 @@ def reduce_to_one_layer(grid):
     ptr_new_num_act = _cxtgeo.new_intpointer()
 
     nnum = (1 + 1) * 4
-    ptr_new_zcorn_v = _cxtgeo.new_doublearray(grid.ncol * grid.nrow * nnum)
+    ptr_new_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow * nnum)
 
-    ptr_new_actnum_v = _cxtgeo.new_intarray(grid.ncol * grid.nrow * 1)
+    ptr_new_actnum_v = _cxtgeo.new_intarray(self.ncol * self.nrow * 1)
 
-    _cxtgeo.grd3d_reduce_onelayer(grid.ncol, grid.nrow, grid.nlay,
-                                  grid._p_zcorn_v,
+    _cxtgeo.grd3d_reduce_onelayer(self.ncol, self.nrow, self.nlay,
+                                  self._p_zcorn_v,
                                   ptr_new_zcorn_v,
-                                  grid._p_actnum_v,
+                                  self._p_actnum_v,
                                   ptr_new_actnum_v,
                                   ptr_new_num_act,
                                   0,
                                   xtg_verbose_level)
 
-    grid._nlay = 1
-    grid._p_zcorn_v = ptr_new_zcorn_v
-    grid._p_actnum_v = ptr_new_actnum_v
-    grid._nactive = _cxtgeo.intpointer_value(ptr_new_num_act)
-    grid._nsubs = 0
-    grid._props = []
+    self._nlay = 1
+    self._p_zcorn_v = ptr_new_zcorn_v
+    self._p_actnum_v = ptr_new_actnum_v
+    self._nactive = _cxtgeo.intpointer_value(ptr_new_num_act)
+    self._nsubs = 0
+    self._props = []
 
-    return grid
+    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Translate coordinates
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def translate_coordinates(grid, translate=(0, 0, 0), flip=(1, 1, 1)):
+def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
 
     tx, ty, tz = translate
     fx, fy, fz = flip
 
-    ier = _cxtgeo.grd3d_translate(grid._ncol, grid._nrow, grid._nlay,
+    ier = _cxtgeo.grd3d_translate(self._ncol, self._nrow, self._nlay,
                                   fx, fy, fz, tx, ty, tz,
-                                  grid._p_coord_v, grid._p_zcorn_v,
+                                  self._p_coord_v, self._p_zcorn_v,
                                   xtg_verbose_level)
     if ier != 0:
         raise RuntimeError('Something went wrong in translate, code: {}'
@@ -490,14 +504,14 @@ def translate_coordinates(grid, translate=(0, 0, 0), flip=(1, 1, 1)):
 
     logger.info('Translation of coords done')
 
-    return grid
+    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Reports well to zone mismatch
 # This works together with a Well object
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
+def report_zone_mismatch(self, well=None, zonelogname='ZONELOG',
                          mode=0, zoneprop=None, onelayergrid=None,
                          zonelogrange=(0, 9999), zonelogshift=0,
                          depthrange=None, option=0, perflogname=None):
@@ -559,12 +573,12 @@ def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
 
     ptr_results = _cxtgeo.new_doublearray(10)
 
-    ptr_zprop = zoneprop.cvalues
+    ptr_zprop = _gridprop_lowlevel.update_carray(zoneprop)
 
-    cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(grid._ncol, grid._nrow,
-                                            grid._nlay, grid._p_coord_v,
-                                            grid._p_zcorn_v,
-                                            grid._p_actnum_v, ptr_zprop,
+    cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(self._ncol, self._nrow,
+                                            self._nlay, self._p_coord_v,
+                                            self._p_zcorn_v,
+                                            self._p_actnum_v, ptr_zprop,
                                             nval, ptr_xc, ptr_yc, ptr_zc,
                                             ptr_zo, zonelogrange[0],
                                             zonelogrange[1],
@@ -572,6 +586,8 @@ def report_zone_mismatch(grid, well=None, zonelogname='ZONELOG',
                                             onelayergrid._p_actnum_v,
                                             ptr_results, option,
                                             xtg_verbose_level)
+
+    _gridprop_lowlevel.delete_carray(zoneprop, ptr_zprop)
 
     if cstatus == 0:
         logger.debug('OK well')

@@ -5,6 +5,7 @@ import logging
 from xtgeo.common import XTGeoDialog
 
 import cxtgeo.cxtgeo as _cxtgeo
+from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = XTGeoDialog()
 
@@ -64,6 +65,8 @@ def make_hybridgrid(grid, **kwargs):
 
         region.discrete_to_continuous()
 
+        carray_reg = _gridprop_lowlevel.update_carray(region)
+
         _cxtgeo.grd3d_convert_hybrid2(grid.ncol,
                                       grid.nrow,
                                       grid.nlay,
@@ -77,9 +80,11 @@ def make_hybridgrid(grid, **kwargs):
                                       toplevel,
                                       bottomlevel,
                                       nhdiv,
-                                      region.cvalues,
+                                      carray_reg,
                                       region_number,
                                       xtg_verbose_level)
+
+        _gridprop_lowlevel.delete_carray(region, carray_reg)
 
     grid._nlay = newnlay
     grid._nactive = _cxtgeo.intpointer_value(hyb_num_act)

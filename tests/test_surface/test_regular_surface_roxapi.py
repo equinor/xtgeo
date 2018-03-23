@@ -7,6 +7,7 @@ import test_common.test_xtg as tsetup
 try:
     import roxar
     roxver = roxar.__version__
+    roxver = roxver[0:3]
 except ImportError:
     pass
 
@@ -29,6 +30,8 @@ proj['1.1'] = '../xtgeo-testdata-statoil/data/rmsprojects/reek.rms10.1.1'
 @tsetup.skipunlessroxar
 def test_getsurface():
     """Get a surface from a RMS project."""
+
+    print(roxver)
 
     if not os.path.isdir(proj[roxver]):
         raise RuntimeError('RMS test project is missing for roxar version {}'

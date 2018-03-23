@@ -11,6 +11,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import DateNotFoundError
 from xtgeo.common.exceptions import KeywordFoundNoDateError
 from xtgeo.common.exceptions import KeywordNotFoundError
+from xtgeo.grid3d import _gridprop_lowlevel
 
 from ._gridprops_io import _get_fhandle, _close_fhandle
 
@@ -154,7 +155,6 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     # arrays from Eclipse INIT or UNRST are usually for inactive values only.
     # Use the ACTNUM index array for vectorized numpy remapping
     actnum = grid.get_actnum().values
-
     allvalues = np.zeros((ncol * nrow * nlay), dtype=values.dtype) + use_undef
 
     if grid.actnum_indices.shape[0] == values.shape[0]:
@@ -163,13 +163,14 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     if values.shape[0] == ncol * nrow * nlay:  # often the case for PORV array
         allvalues = values.copy()
 
+    allvalues = allvalues.reshape((ncol, nrow, nlay), order='F')
+    allvalues = np.asanyarray(allvalues, order='C')
     allvalues = ma.masked_where(actnum < 1, allvalues)
 
     _close_fhandle(fhandle, pclose)
 
     self._grid = grid
     self._values = allvalues
-    self._cvalues = None
 
     if etype == 1:
         self._name = name
@@ -243,3 +244,131 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
         return npflt
     elif kwtype == 'DOUB':
         return npdbl
+
+
+def import_roff(self, pfile, name, grid=None):
+    """Import ROFF format"""
+
+    # there is a todo here to get it more robust for various cases,
+    # e.g. that a ROFF file may contain both a grid an numerous
+    # props
+
+    logger.info('Looking for {} in file {}'.format(name, pfile))
+
+    ptr_ncol = _cxtgeo.new_intpointer()
+    ptr_nrow = _cxtgeo.new_intpointer()
+    ptr_nlay = _cxtgeo.new_intpointer()
+    ptr_ncodes = _cxtgeo.new_intpointer()
+    ptr_type = _cxtgeo.new_intpointer()
+
+    ptr_idum = _cxtgeo.new_intpointer()
+    ptr_ddum = _cxtgeo.new_doublepointer()
+
+    # read with mode 0, to scan for ncol, nrow, nlay and ndcodes, and if
+    # property is found
+    logger.debug('Entering C library... with level {}'.
+                 format(xtg_verbose_level))
+
+    # note that ...'
+    ier, codenames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
+                                                    0,
+                                                    ptr_type,
+                                                    ptr_ncol,
+                                                    ptr_nrow,
+                                                    ptr_nlay,
+                                                    ptr_ncodes,
+                                                    name,
+                                                    ptr_idum,
+                                                    ptr_ddum,
+                                                    ptr_idum,
+                                                    0,
+                                                    xtg_verbose_level)
+
+    if (ier == -1):
+        msg = 'Cannot find property name {}'.format(name)
+        logger.critical(msg)
+        return ier
+
+    self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
+    self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
+    self._nlay = _cxtgeo.intpointer_value(ptr_nlay)
+    self._ncodes = _cxtgeo.intpointer_value(ptr_ncodes)
+
+    ptype = _cxtgeo.intpointer_value(ptr_type)
+
+    ntot = self._ncol * self._nrow * self._nlay
+
+    if (self._ncodes <= 1):
+        self._ncodes = 1
+        self._codes = {0: 'undef'}
+
+    logger.debug('NTOT is ' + str(ntot))
+    logger.debug('Grid size is {} {} {}'
+                 .format(self._ncol, self._nrow, self._nlay))
+
+    logger.debug('Number of codes: {}'.format(self._ncodes))
+
+    # allocate
+
+    if ptype == 1:  # float, assign to double
+        ptr_pval_v = _cxtgeo.new_doublearray(ntot)
+        ptr_ival_v = _cxtgeo.new_intarray(1)
+        self._isdiscrete = False
+        self._dtype = 'float64'
+
+    elif ptype > 1:
+        ptr_pval_v = _cxtgeo.new_doublearray(1)
+        ptr_ival_v = _cxtgeo.new_intarray(ntot)
+        self._isdiscrete = True
+        self._dtype = 'int32'
+
+    logger.debug('Is Property discrete? {}'.format(self._isdiscrete))
+
+    # number of codes and names
+    ptr_ccodes_v = _cxtgeo.new_intarray(self._ncodes)
+
+    # NB! note the SWIG trick to return modified char values; use cstring.i
+    # inn the config and %cstring_bounded_output(char *p_codenames_v, NN);
+    # Then the argument for *p_codevalues_v in C is OMITTED here!
+
+    ier, cnames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
+                                                 1,
+                                                 ptr_type,
+                                                 ptr_ncol,
+                                                 ptr_nrow,
+                                                 ptr_nlay,
+                                                 ptr_ncodes,
+                                                 name,
+                                                 ptr_ival_v,
+                                                 ptr_pval_v,
+                                                 ptr_ccodes_v,
+                                                 0,
+                                                 xtg_verbose_level)
+
+    if self._isdiscrete:
+        _gridprop_lowlevel.update_values_from_carray(self, ptr_ival_v,
+                                                     np.int32,
+                                                     delete=True)
+    else:
+        _gridprop_lowlevel.update_values_from_carray(self, ptr_pval_v,
+                                                     np.float64,
+                                                     delete=True)
+
+    logger.debug('CNAMES: {}'.format(cnames))
+
+    # now make dictionary of codes
+    if self._isdiscrete:
+        cnames = cnames.replace(';', '')
+        cname_list = cnames.split('|')
+        cname_list.pop()  # some rubbish as last entry
+        ccodes = []
+        for i in range(0, self._ncodes):
+            ccodes.append(_cxtgeo.intarray_getitem(ptr_ccodes_v, i))
+
+        logger.debug(cname_list)
+        self._codes = dict(zip(ccodes, cname_list))
+        logger.debug('CODES (value: name): {}'.format(self._codes))
+
+    self._grid = grid
+
+    return 0

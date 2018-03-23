@@ -30,7 +30,7 @@ def test_rox_get_gridproperty():
     poro.from_roxar(project, 'REEK', 'PORO')
 
     tsetup.assert_almostequal(poro.values.mean(), 0.1677, 0.001)
-    tsetup.assert_almostequal(poro.values[1], 0.14942, 0.0001)
+    tsetup.assert_almostequal(poro.values[1, 0, 0], 0.14942, 0.0001)
 
     logger.info('Roxar property id: {}'.format(poro._roxprop))
 
@@ -50,4 +50,4 @@ def test_rox_get_modify_set_gridproperty():
     poro.to_roxar(project, 'REEK', 'PORO_NEW', saveproject=True)
 
     poro.from_roxar(project, 'REEK', 'PORO_NEW')
-    tsetup.assert_almostequal(poro.values[1], 0.14942 + adder, 0.0001)
+    tsetup.assert_almostequal(poro.values[1, 0, 0], 0.14942 + adder, 0.0001)

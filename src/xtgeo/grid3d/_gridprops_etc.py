@@ -26,12 +26,12 @@ def dataframe(self, activeonly=True, ijk=False, xyz=False,
     if ijk:
         if activeonly:
             ix, jy, kz = self._grid.get_ijk(mask=True)
-            proplist.extend([ix.get_active_values(),
-                             jy.get_active_values(),
-                             kz.get_active_values()])
+            proplist.extend([ix.get_active_npvalues1d(),
+                             jy.get_active_npvalues1d(),
+                             kz.get_active_npvalues1d()])
         else:
             ix, jy, kz = self._grid.get_ijk(mask=False)
-            proplist.extend([ix.values, jy.values, kz.values])
+            proplist.extend([ix.values1d, jy.values1d, kz.values1d])
 
         colnames.extend(['IX', 'JY', 'KZ'])
 
@@ -43,19 +43,19 @@ def dataframe(self, activeonly=True, ijk=False, xyz=False,
         xc, yc, zc = self._grid.get_xyz(mask=option)
         colnames.extend(['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
         if activeonly:
-            proplist.extend([xc.get_active_values(),
-                             yc.get_active_values(),
-                             zc.get_active_values()])
+            proplist.extend([xc.get_active_npvalues1d(),
+                             yc.get_active_npvalues1d(),
+                             zc.get_active_npvalues1d()])
         else:
-            proplist.extend([xc.values, yc.values, zc.values])
+            proplist.extend([xc.values1d, yc.values1d, zc.values1d])
 
     for prop in self.props:
         self.logger.info('Getting property {}'.format(prop.name))
         colnames.append(prop.name)
         if activeonly:
-            vector = prop.get_active_values()
+            vector = prop.get_active_npvalues1d()
         else:
-            vector = prop.values.copy()
+            vector = prop.values1d.copy()
             # mask values not supported in Pandas:
             if prop.isdiscrete:
                 vector = vector.filled(fill_value=0)

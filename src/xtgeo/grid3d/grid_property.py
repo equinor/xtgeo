@@ -7,12 +7,13 @@ property from file, but it can also be created directly, as e.g.:
 
 poro = GridProperty(ncol=233, nrow=122, nlay=32)
 
-The grid property values (instance.values) by themselves are 1D masked numpy
+The grid property values (instance.values) by themselves are 3D masked numpy
 as either float64 (double) or int32 (if discrete), and undefined cells are
-masked. The array order is F_CONTIGUOUS. (i.e. Eclipse manner). A 3D view
-is achieved by the values3d property, e.g.::
+masked. The array order is now C_CONTIGUOUS. (i.e. not in Eclipse manner).
+A 1D view (C order) is achieved by the values1d property, e.g.::
 
-  poronumpy = poro.values3d
+  poronumpy = poro.values1d
+
 """
 from __future__ import print_function, absolute_import
 
@@ -32,6 +33,7 @@ from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
 from xtgeo.grid3d import _gridprop_import_obsolete
 from xtgeo.grid3d import _gridprop_roxapi
+from xtgeo.grid3d import _gridprop_export
 from ._gridprops_io import _get_fhandle
 
 # =============================================================================
@@ -41,7 +43,7 @@ from ._gridprops_io import _get_fhandle
 # _ncol        =  number of rows (X, cycling fastest)
 # _nrow        =  number of columns (Y)
 # _nlay        =  number of layers (Z)
-# _values      =  Numpy 1D array of doubles or int (masked)
+# _values      =  Numpy 3D array of doubles or int (masked)
 # _cvalues     =  SWIG pointer to C array
 # NOTE: either _values OR _cvalues will exist; hence the other is "None"
 # etc
@@ -64,7 +66,7 @@ class GridProperty(Grid3D):
             ncol (int): Number of columns.
             nrow (int): Number of rows.
             nlay (int): Number of layers.
-            values (numpy): A 1D numpy of size ncol*nrow*nlay.
+            values (numpy): A 3D masked numpy of shape (ncol, nrow, nlay).
             name (str): Name of property.
             discrete (bool): True if discrete property
                 (default is false).
@@ -86,7 +88,8 @@ class GridProperty(Grid3D):
             # or
 
             myprop = GridProperty(ncol=12, nrow=17, nlay=10,
-                                  values=np.ones(12*17*10),
+                                  values=ma.ones((12, 17, 10),
+                                  dtype=np.float64),
                                   discrete=True, name='MyValue')
 
             # or
@@ -118,11 +121,10 @@ class GridProperty(Grid3D):
 
         testmask = False
         if values is None:
-            values = np.zeros(ncol * nrow * nlay)
+            values = ma.zeros((ncol, nrow, nlay))
             testmask = True
 
-        self._values = values       # numpy version of properties (as 1D array)
-        self._cvalues = None        # carray swig pointer version of map values
+        self._values = values       # numpy version of properties (as 3D array)
 
         self._dtype = values.dtype
 
@@ -161,8 +163,6 @@ class GridProperty(Grid3D):
             self.from_file(args[0], fformat=fformat, name=name,
                            grid=grid, date=date, apiversion=apiv)
 
-    def __del__(self):
-        self._delete_cvalues()
 
     # =========================================================================
     # Properties
@@ -231,30 +231,19 @@ class GridProperty(Grid3D):
 
     # -------------------------------------------------------------------------
     @property
-    def cvalues(self):
-        """Return the grid property C (SWIG) pointer."""
-        self._update_cvalues()
-        return self._cvalues
-
-    # -------------------------------------------------------------------------
-    @property
     def values(self):
         """ Return or set the grid property as a masked 1D numpy array"""
-        self._update_values()
         return self._values
 
     @values.setter
     def values(self, values):
-
-        self._update_values()
-
         if isinstance(values, np.ndarray) and\
            not isinstance(values, ma.MaskedArray):
 
             values = ma.array(values)
+            values = values.reshape((self._ncol, self._nrow, self._nlay))
 
         self._values = values
-        self._cvalues = None
 
         self.logger.debug('Values shape: {}'.format(self._values.shape))
         self.logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
@@ -283,22 +272,18 @@ class GridProperty(Grid3D):
 
     @property
     def values3d(self):
-        """Return or set the grid property as a masked 3D numpy array.
-
-        The 3D array has shape [ncol][nrow][nlay] and is Fortran ordered.
-        """
-        self._update_values()
-        values3d = ma.copy(self._values)
-        values3d = ma.reshape(values3d, (self._ncol, self._nrow, self._nlay),
-                              order='F')
-
-        return values3d
+        """For backward compatibility (use values instead)"""
+        return self._values
 
     @values3d.setter
     def values3d(self, values):
-        # flatten the input (a dimension check is needed...)
-        self._update_values()
-        self._values = ma.reshape(values, -1, order='F')
+        # kept for backwards compat
+        self.values = values
+
+    @property
+    def values1d(self):
+        """Returns a 1D view of values (masked numpy)"""
+        return (self._values.reshape(-1))
 
     @property
     def undef(self):
@@ -342,14 +327,13 @@ class GridProperty(Grid3D):
         if self._isdiscrete:
             fvalue = _cxtgeo.UNDEF_INT
 
-        npv3d = ma.filled(self.values3d, fill_value=fvalue)
+        npv3d = ma.filled(self.values, fill_value=fvalue)
         return npv3d
 
-    def get_active_values(self):
+    def get_active_npvalues1d(self):
         """ Return the grid property as a 1D numpy array (copy), active
         cells only"""
-        self._update_values()
-        vact = self._values.copy()
+        vact = self.values1d.copy()
         vact = vact[~vact.mask]
         return np.array(vact)
 
@@ -435,7 +419,9 @@ class GridProperty(Grid3D):
 
         ier = 0
         if (fformat == 'roff'):
-            ier = self._import_roff(pfile, name, grid=grid)
+            self.logger.info('Importing ROFF...')
+            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid)
+
         elif (fformat.lower() == 'init'):
             ier = self._import_ecl_output(pfile, name=name, etype=1,
                                           grid=grid, apiversion=apiversion)
@@ -512,10 +498,11 @@ class GridProperty(Grid3D):
                 name of the instance will used.
         """
         self.logger.debug('Export property to file...')
+
         if (fformat == 'roff'):
             if name is None:
                 name = self.name
-            self._export_roff(pfile, name)
+            _gridprop_export.export_roff(self, pfile, name)
 
     def get_xy_value_lists(self, grid=None, mask=True):
         """Get lists of xy coords and values for Webportal format.
@@ -557,130 +544,6 @@ class GridProperty(Grid3D):
     # Import methods for various formats
     # -------------------------------------------------------------------------
 
-    def _import_roff(self, pfile, name, grid=None):
-
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        self.logger.debug('Looking for {} in file {}'.format(name, pfile))
-
-        ptr_ncol = _cxtgeo.new_intpointer()
-        ptr_nrow = _cxtgeo.new_intpointer()
-        ptr_nlay = _cxtgeo.new_intpointer()
-        ptr_ncodes = _cxtgeo.new_intpointer()
-        ptr_type = _cxtgeo.new_intpointer()
-
-        ptr_idum = _cxtgeo.new_intpointer()
-        ptr_ddum = _cxtgeo.new_doublepointer()
-
-        # read with mode 0, to scan for ncol, nrow, nlay and ndcodes, and if
-        # property is found
-        self.logger.debug('Entering C library... with level {}'.
-                          format(xtg_verbose_level))
-
-        # note that ...'
-        ier, codenames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
-                                                        0,
-                                                        ptr_type,
-                                                        ptr_ncol,
-                                                        ptr_nrow,
-                                                        ptr_nlay,
-                                                        ptr_ncodes,
-                                                        name,
-                                                        ptr_idum,
-                                                        ptr_ddum,
-                                                        ptr_idum,
-                                                        0,
-                                                        xtg_verbose_level)
-
-        if (ier == -1):
-            msg = 'Cannot find property name {}'.format(name)
-            self.logger.critical(msg)
-            return ier
-
-        self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
-        self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
-        self._nlay = _cxtgeo.intpointer_value(ptr_nlay)
-        self._ncodes = _cxtgeo.intpointer_value(ptr_ncodes)
-
-        ptype = _cxtgeo.intpointer_value(ptr_type)
-
-        ntot = self._ncol * self._nrow * self._nlay
-
-        if (self._ncodes <= 1):
-            self._ncodes = 1
-            self._codes = {0: 'undef'}
-
-        self.logger.debug('NTOT is ' + str(ntot))
-        self.logger.debug('Grid size is {} {} {}'
-                          .format(self._ncol, self._nrow, self._nlay))
-
-        self.logger.debug('Number of codes: {}'.format(self._ncodes))
-
-        # allocate
-
-        if ptype == 1:  # float, assign to double
-            ptr_pval_v = _cxtgeo.new_doublearray(ntot)
-            ptr_ival_v = _cxtgeo.new_intarray(1)
-            self._isdiscrete = False
-            self._dtype = 'float64'
-
-        elif ptype > 1:
-            ptr_pval_v = _cxtgeo.new_doublearray(1)
-            ptr_ival_v = _cxtgeo.new_intarray(ntot)
-            self._isdiscrete = True
-            self._dtype = 'int32'
-
-        self.logger.debug('Is Property discrete? {}'.format(self._isdiscrete))
-
-        # number of codes and names
-        ptr_ccodes_v = _cxtgeo.new_intarray(self._ncodes)
-
-        # NB! note the SWIG trick to return modified char values; use cstring.i
-        # inn the config and %cstring_bounded_output(char *p_codenames_v, NN);
-        # Then the argument for *p_codevalues_v in C is OMITTED here!
-
-        ier, cnames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
-                                                     1,
-                                                     ptr_type,
-                                                     ptr_ncol,
-                                                     ptr_nrow,
-                                                     ptr_nlay,
-                                                     ptr_ncodes,
-                                                     name,
-                                                     ptr_ival_v,
-                                                     ptr_pval_v,
-                                                     ptr_ccodes_v,
-                                                     0,
-                                                     xtg_verbose_level)
-
-        if self._isdiscrete:
-            self._cvalues = ptr_ival_v
-        else:
-            self._cvalues = ptr_pval_v
-
-        self._values = None
-
-        self.logger.debug('CNAMES: {}'.format(cnames))
-
-        # now make dictionary of codes
-        if self._isdiscrete:
-            cnames = cnames.replace(';', '')
-            cname_list = cnames.split('|')
-            cname_list.pop()  # some rubbish as last entry
-            ccodes = []
-            for i in range(0, self._ncodes):
-                ccodes.append(_cxtgeo.intarray_getitem(ptr_ccodes_v, i))
-
-            self.logger.debug(cname_list)
-            self._codes = dict(zip(ccodes, cname_list))
-            self.logger.debug('CODES (value: name): {}'.format(self._codes))
-
-        self._grid = grid
-
-        return 0
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Import Eclipse's INIT and UNRST formats
     # type: 1 binary INIT
@@ -713,135 +576,6 @@ class GridProperty(Grid3D):
                                                        grid=grid)
 
         return ier
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Export ROFF format
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    def _export_roff(self, pfile, name):
-
-        self.logger.debug('Exporting {} to file {}'.format(name, pfile))
-
-        self._update_cvalues()
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-
-        xtg_verbose_level = self._xtg.get_syslevel()
-
-        ptr_idum = _cxtgeo.new_intpointer()
-
-        mode = 0  # binary
-        if not self._isdiscrete:
-            _cxtgeo.grd3d_export_roff_pstart(mode, self._ncol, self._nrow,
-                                             self._nlay, pfile,
-                                             xtg_verbose_level)
-
-        # now the actual data
-        # only float data are supported for now!
-        nsub = 0
-        isub_to_export = 0
-        if not self._isdiscrete:
-            _cxtgeo.grd3d_export_roff_prop(mode, self._ncol, self._nrow,
-                                           self._nlay, nsub, isub_to_export,
-                                           ptr_idum, name, 'double', ptr_idum,
-                                           self._cvalues, 0, '',
-                                           ptr_idum, pfile, xtg_verbose_level)
-        else:
-            self.logger.critical('INT export not supported yet')
-            sys.exit(1)
-
-        _cxtgeo.grd3d_export_roff_end(mode, pfile, xtg_verbose_level)
-
-    # =========================================================================
-    # PRIVATE HELPER (LOW LEVEL) METHODS
-    # should not be applied outside the class
-    # =========================================================================
-
-    def _update_values(self):
-        """copy (update) values from SWIG carray to numpy, 1D array"""
-        self.logger.debug('Update numpy from C values')
-
-        n = self.ntotal
-        self.logger.debug('N is {}'.format(n))
-
-        if self._cvalues is None and self._values is not None:
-            return
-        elif self._cvalues is None and self._values is None:
-            self.logger.critical('_cvalues and _values is None in '
-                                 '_update_values. STOP')
-            sys.exit(9)
-
-        if not self._isdiscrete:
-            self.logger.debug('Entering conversion to numpy (float64) ...')
-            x = _cxtgeo.swig_carr_to_numpy_1d(n, self._cvalues)
-
-            # make it float64 or whatever(?) and mask it
-            self._values = x.astype(self._dtype)
-            self.mask_undef()
-
-        else:
-            self.logger.debug('Entering conversion to numpy (int32) ...')
-            self._values = _cxtgeo.swig_carr_to_numpy_i1d(n, self._cvalues)
-
-            # make it int32 (not as RMS?) and mask it
-            self._values = self._values.astype(self._dtype)
-            self.mask_undef()
-
-        self._cvalues = None
-
-    def _update_cvalues(self):
-        """copy (update) values from numpy to SWIG, 1D array"""
-
-        self.logger.debug('Entering conversion from numpy to C array ...')
-        if self._values is None and self._cvalues is not None:
-            return
-        elif self._cvalues is None and self._values is None:
-            self.logger.critical('_cvalues and _values is None in '
-                                 '_update_values. STOP')
-            sys.exit(9)
-
-        x = self._values
-        x = ma.filled(x, self._undef)
-        self.logger.debug(x)
-        self.logger.debug(x.shape)
-        self.logger.debug(self.ntotal)
-
-        if x.dtype == 'float64' and self._isdiscrete:
-            x = x.astype('int32')
-            self.logger.debug('Casting has been done')
-
-        if self._isdiscrete is False:
-            self.logger.debug('Convert to cvalues (double)')
-            self._cvalues = _cxtgeo.new_doublearray(self.ntotal)
-            _cxtgeo.swig_numpy_to_carr_1d(x, self._cvalues)
-        else:
-            self._cvalues = _cxtgeo.new_intarray(self.ntotal)
-            _cxtgeo.swig_numpy_to_carr_i1d(x, self._cvalues)
-
-        self._values = None
-
-    def _delete_cvalues(self):
-        """Delete cpointer"""
-        self.logger.debug('Enter delete cvalues values method...')
-
-        if self._cvalues is not None:
-            if self._isdiscrete:
-                _cxtgeo.delete_intarray(self._cvalues)
-            else:
-                _cxtgeo.delete_doublearray(self._cvalues)
-
-        self._cvalues = None
-        self.logger.debug('Enter method... DONE')
-
-    def _check_shape_ok(self, values):
-        """Check if chape of values is OK"""
-        (ncol, nrow, nlay) = values.shape
-        if ncol != self._ncol or nrow != self._nrow or nlay != self._nlay:
-            self.logger.error('Wrong shape: Dimens of values {} {} {}'
-                              'vs {} {} {}'
-                              .format(ncol, nrow, nlay,
-                                      self._ncol, self._nrow, self._nlay))
-            return False
-        return True
 
     def discrete_to_continuous(self):
         """Convert from discrete to continuous values"""
