@@ -14,10 +14,45 @@ _cxtgeo.xtg_verbose_file('NONE')
 xtg = XTGeoDialog()
 xtg_verbose_level = xtg.get_syslevel()
 
-# Low Level methods
+
+def swapaxes(self):
+    """Swap the axes inline vs xline, keep origin."""
+
+    ncol = _cxtgeo.new_intpointer()
+    nrow = _cxtgeo.new_intpointer()
+    yflip = _cxtgeo.new_intpointer()
+    xinc = _cxtgeo.new_doublepointer()
+    yinc = _cxtgeo.new_doublepointer()
+    rota = _cxtgeo.new_doublepointer()
+
+    _cxtgeo.intpointer_assign(ncol, self._ncol)
+    _cxtgeo.intpointer_assign(nrow, self._nrow)
+    _cxtgeo.intpointer_assign(yflip, self._yflip)
+
+    _cxtgeo.doublepointer_assign(xinc, self._xinc)
+    _cxtgeo.doublepointer_assign(yinc, self._yinc)
+    _cxtgeo.doublepointer_assign(rota, self._rotation)
+
+    values1d = self.values.reshape(-1)
+
+    ier = _cxtgeo.cube_swapaxes(ncol, nrow, self.nlay, yflip,
+                                self.xori, xinc,
+                                self.yori, yinc, rota, values1d,
+                                0, xtg_verbose_level)
+    if ier != 0:
+        raise Exception
+
+    self._ncol = _cxtgeo.intpointer_value(ncol)
+    self._nrow = _cxtgeo.intpointer_value(nrow)
+    self._yflip = _cxtgeo.intpointer_value(yflip)
+
+    self._xinc = _cxtgeo.doublepointer_value(xinc)
+    self._yinc = _cxtgeo.doublepointer_value(yinc)
+    self._rotation = _cxtgeo.doublepointer_value(rota)
 
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order
+# to be DEPRECATED
 def update_values(cube):
 
     if cube._cvalues is None and cube._values is None:
@@ -45,6 +80,7 @@ def update_values(cube):
 
 
 # copy (update) values from numpy to SWIG, 1D array
+# TO BE DEPRECATED
 def update_cvalues(cube):
     logger.debug('Enter update cvalues method...')
     n = cube._ncol * cube._nrow * cube._nlay

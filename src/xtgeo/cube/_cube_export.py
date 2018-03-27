@@ -17,6 +17,8 @@ _cxtgeo.xtg_verbose_file('NONE')
 def export_segy(self, sfile, template=None):
     """Export on SEGY using segyio library"""
 
+    logger.debug('Export segy format using segyio...')
+
     if template is None and self._segyfile is None:
         raise NotImplementedError('Error, template=None is not yet made!')
 
@@ -24,7 +26,8 @@ def export_segy(self, sfile, template=None):
     # headers etc are applied for the new data. Requires that shapes etc are
     # equal.
     if self._segyfile is not None:
-        newvalues = np.asanyarray(self.values, order='C')
+        newvalues = self.values
+#        newvalues = np.asanyarray(self.values, order='C')
 
         try:
             shutil.copyfile(self._segyfile, sfile)
@@ -32,31 +35,43 @@ def export_segy(self, sfile, template=None):
             xtg.warn('Error message: '.format(errormsg))
             raise
 
-        with segyio.open(sfile, 'r+') as dst:
-            if dst.sorting == 1:
+        logger.debug('Input segy file copied...')
+        with segyio.open(sfile, 'r+') as segyfile:
+
+            logger.debug('Output segy file is now open...')
+            if segyfile.sorting == 1:
                 logger.info('xline sorting')
-                for xl, xline in enumerate(dst.xlines):
-                    dst.xline[xline] = newvalues[xl]   # broadcasting
+                for xl, xline in enumerate(segyfile.xlines):
+                    segyfile.xline[xline] = newvalues[xl]   # broadcasting
             else:
                 logger.info('iline sorting')
-                for il, iline in enumerate(dst.ilines):
-                    dst.iline[iline] = newvalues[il]  # broadcasting
+                logger.debug('ilines object: {}'.format(segyfile.ilines))
+                logger.debug('iline object: {}'.format(segyfile.iline))
+                logger.debug('newvalues shape {}'.format(newvalues.shape))
+                ix, jy, kz = newvalues.shape
+                for il, iline in enumerate(segyfile.ilines):
+                    logger.debug('il={}, iline={}'.format(il, iline))
+                    if ix != jy != kz or ix != kz != jy :
+                        segyfile.iline[iline] = newvalues[il]  # broadcasting
+                    else:
+                        # safer but a bit slower than broadcasting
+                        segyfile.iline[iline] = newvalues[il, :, :]
 
     else:
         raise NotImplementedError('Error, SEGY export is not properly made!')
 
 
-def export_rmsreg(nx, ny, nz, xori, yori, zori, xinc, yinc, zinc,
-                  rotation, yflip, values, sfile, xtg_verbose_level):
+def export_rmsreg(self, sfile):
     """Export on RMS regular format."""
 
-    values1d = np.ravel(values, order='F')
+    logger.debug('Export to RMS regular format...')
+    values1d = self.values.reshape(-1)
 
-    yinc = yinc * yflip
-    status = _cxtgeo.cube_export_rmsregular(nx, ny, nz,
-                                            xori, yori, zori,
-                                            xinc, yinc, zinc,
-                                            rotation, yflip,
+    yinc = self.yinc * self.yflip
+    status = _cxtgeo.cube_export_rmsregular(self.nx, self.ny, self.nz,
+                                            self.xori, self.yori, self.zori,
+                                            self.xinc, yinc, self.zinc,
+                                            self.rotation, self.yflip,
                                             values1d,
                                             sfile, xtg_verbose_level)
 

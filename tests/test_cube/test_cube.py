@@ -26,6 +26,7 @@ testpath = xtg.testpath
 
 sfile1 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.segy'
 sfile2 = testpath + '/cubes/reek/syntseis_20030101_seismic_depth_stack.segy'
+sfile3 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.storm'
 
 
 @tsetup.skipifroxar
@@ -68,20 +69,40 @@ def test_segy_scantraces():
     # print line
 
 
-def test_segy_import_cvalues():
-    """Import SEGY using internal reader (case 1 Reek) and chk issues."""
+# def test_segy_import_cvalues():
+#     """Import SEGY using internal reader (case 1 Reek) and chk issues."""
+
+#     logger.info('Import SEGY format')
+
+#     x = Cube()
+
+#     x.from_file(sfile1, fformat='segy')
+
+#     np1 = x.values.copy()
+
+#     np2 = x.values
+
+#     assert np.array_equal(np1, np2)
+
+def test_storm_import():
+    """Import Cube using Storm format (case Reek)."""
 
     logger.info('Import SEGY format')
 
-    x = Cube()
+    acube = Cube()
 
-    x.from_file(sfile1, fformat='segy')
+    st1 = xtg.timer()
+    acube.from_file(sfile3, fformat='storm')
+    elapsed = xtg.timer(st1)
+    logger.info('Reading Storm format took {}'.format(elapsed))
 
-    np1 = x.values.copy()
+    assert acube.ncol == 280, 'NCOL'
 
-    np2 = x.values
+    vals = acube.values
 
-    assert np.array_equal(np1, np2)
+    tsetup.assert_almostequal(vals[180, 185, 4], 0.117074, 0.0001)
+
+    acube.to_file('TMP/cube.rmsreg', fformat='rms_regular')
 
 
 # @skipsegyio

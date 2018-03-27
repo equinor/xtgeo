@@ -37,14 +37,13 @@ def find_flip(xv, yv, zv):
     return flip
 
 
-def import_segy_io(sfile):
+def import_segy_io(self, sfile):
     """Import SEGY via Statoils FOSS SegyIO library.
 
     Args:
+        self (Cube): Cube object
         sfile (str): File name of SEGY file
 
-    Returns:
-        A dictionary with relevant data.
     """
 
     sdata = dict()
@@ -56,7 +55,6 @@ def import_segy_io(sfile):
         segyfile.mmap()
 
         values = segyio.tools.cube(segyfile)
-        values = np.asfortranarray(values)
 
         logger.debug(segyfile.fast)
         logger.debug(segyfile.ilines)
@@ -137,29 +135,29 @@ def import_segy_io(sfile):
 
         rot2 = segyio.tools.rotation(segyfile)[0]
         logger.debug('SEGYIO rotation is {}'.format(rot2 * 180 / 3.1415))
+        testangle = _cxtgeo.x_rotation_conv(rot2, 3, 0, 0, xtg_verbose_level)
+        logger.debug('TEST rotation is {}'.format(testangle))
         logger.debug('MY rotation is {}'.format(rotation))
 
-    # data to return
-    sdata['values'] = values
-    sdata['cvalues'] = None
-    sdata['ncol'] = ncol
-    sdata['nrow'] = nrow
-    sdata['nlay'] = nlay
-    sdata['xori'] = xori
-    sdata['xinc'] = xinc
-    sdata['yori'] = yori
-    sdata['yinc'] = yinc
-    sdata['zori'] = zori
-    sdata['zinc'] = zinc
-    sdata['rotation'] = rotation
-    sdata['yflip'] = yflip
-
-    return sdata
+    # attributes to update
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
+    self._xori = xori
+    self._xinc = xinc
+    self._yori = yori
+    self._yinc = yinc
+    self._zori = zori
+    self._zinc = zinc
+    self._rotation = rotation
+    self._values = values
+    self._yflip = yflip
+    self._segyfile = sfile
 
 
 def import_segy(sfile, scanheadermode=False, scantracemode=False,
                 outfile=None):
-    """Import SEGY via XTGeo's C library.
+    """Import SEGY via XTGeo's C library. OLD NOT UPDATED!!
 
     Args:
         sfile (str): File name of SEGY file
@@ -349,10 +347,15 @@ def import_segy(sfile, scanheadermode=False, scantracemode=False,
     return sdata
 
 
-def import_stormcube(sfile):
+def import_rmsregular(self, sfile):
+    """Import on RMS regular format."""
+    raise NotImplementedError('Sorry, not implemented yet')
+
+
+def import_stormcube(self, sfile):
     """Import on StormCube format."""
 
-    # the ASCII header has all the metadata on the form:
+    # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------
     # storm_petro_binary       // always
     #
@@ -365,10 +368,9 @@ def import_stormcube(sfile):
     #
     # 501 861 140
     # ---------------------------------------------------------------------
-    # Description:
-    #
+    # The rest is float32 binary data, I (column fastest), then J, then K
+    # a total of ncol * nrow * nlay
 
-    sdata = dict()
     # Scan the header with Python; then use CLIB for the binary data
     try:
         sf = open(sfile, encoding='ISO-8859-1')  # python 3
@@ -383,22 +385,21 @@ def import_stormcube(sfile):
         else:
             iline += 1
             if iline == 1:
-                __ = xline
-            if iline == 2:
+                pass
+            elif iline == 2:
                 nn, modname, undef_val = xline.strip().split()
-            if iline == 3:
-                __ = xline.strip().split()
-            if iline == 4:
+            elif iline == 3:
+                pass
+            elif iline == 4:
                 (xori, xlen, yori, ylen,
                  zori, zmax, e1, e2) = xline.strip().split()
-            if iline == 5:
+            elif iline == 5:
                 zlen, rot = xline.strip().split()
-            if iline == 6:
+            elif iline == 6:
                 ncol, nrow, nlay = xline.strip().split()
-                dataline = line + 2
+                nlines = line + 2
+                break
     sf.close()
-
-    logger.debug('BINARY data starts at line  {}'.format(dataline))
 
     ncol = int(ncol)
     nrow = int(nrow)
@@ -413,11 +414,15 @@ def import_stormcube(sfile):
     if rotation < 0:
         rotation += 360
 
-    xinc = float(xlen) / (ncol - 1 + 1)
-    yinc = float(ylen) / (nrow - 1 + 1)
-    zinc = float(zlen) / (nlay - 1 + 1)
+    xinc = float(xlen) / ncol
+    yinc = float(ylen) / nrow
+    zinc = float(zlen) / nlay
 
     yflip = 1
+
+    if yinc < 0:
+        yflip = -1
+        yinc = yinc * yflip  # not sure if this will ever happen
 
     logger.debug('NCOL NROW NLAY {} {} {}'.
                  format(ncol, nrow, nlay))
@@ -429,28 +434,25 @@ def import_stormcube(sfile):
 
     xtg_verbose_level = xtg.get_syslevel()
 
-    cvalues = _cxtgeo.new_floatarray(nrcl)
+    logger.debug('BINARY data starts at line  {}'.format(nlines))
 
-    _cxtgeo.cube_import_storm(sfile, dataline, int(undef_val), nrcl,
-                              cvalues, 0, xtg_verbose_level)
+    ier, values = _cxtgeo.cube_import_storm(ncol, nrow, nlay,
+                                            sfile, nlines, nrcl,
+                                            0, xtg_verbose_level)
 
-    sdata['ncol'] = ncol
-    sdata['nrow'] = nrow
-    sdata['nlay'] = nlay
+    if ier != 0:
+        raise RuntimeError('Something when wrong in {}, code is {}'
+                           .format(__name__, ier))
 
-    sdata['xori'] = xori
-    sdata['yori'] = yori
-    sdata['zori'] = zori
-
-    sdata['xinc'] = xinc
-    sdata['yinc'] = yinc
-    sdata['zinc'] = zinc
-
-    sdata['yflip'] = yflip
-
-    sdata['rotation'] = rotation
-
-    sdata['cvalues'] = cvalues
-    sdata['values'] = None
-
-    return sdata
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
+    self._xori = xori
+    self._xinc = xinc
+    self._yori = yori
+    self._yinc = yinc
+    self._zori = zori
+    self._zinc = zinc
+    self._rotation = rotation
+    self._values = values.reshape((ncol, nrow, nlay))
+    self._yflip = yflip
