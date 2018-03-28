@@ -28,6 +28,8 @@ skipmytest = pytest.mark.skipif(True, reason='Skip test for some reasons...')
 # =============================================================================
 
 testset1 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
+testset2 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.gri'
+testset3 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr'
 
 
 def test_create():
@@ -41,6 +43,28 @@ def test_create():
     v = x.values
     xdim, ydim = v.shape
     tsetup.assert_equal(xdim, 5, 'NX from DIM')
+
+
+def test_irapbin_import1():
+    """Import Reek Irap binary."""
+    logger.info('Import and export...')
+
+    xsurf = RegularSurface(testset2)
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
+    tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+
+def test_irapasc_import1():
+    """Import Reek Irap ascii."""
+    logger.info('Import and export...')
+
+    xsurf = RegularSurface(testset3, fformat='irap_ascii')
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
+    tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
 
 
 def test_irapasc_export():

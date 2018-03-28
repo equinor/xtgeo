@@ -3,8 +3,6 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-import numpy as np
-
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -54,7 +52,7 @@ def _roxapi_cube_to_xtgeo(self, rcube):
     if rcube.is_empty:
         xtg.warn('Cube has no data; assume 0')
     else:
-        self._values = np.asanyarray(rcube.get_values(), order='F')
+        self._values = rcube.get_values()
 
 
 def export_cube_roxapi(self, project, name, folder=None, domain='time',
@@ -74,6 +72,9 @@ def export_cube_roxapi(self, project, name, folder=None, domain='time',
 
 def _roxapi_export_cube(self, roxar, proj, name, folder=None, domain='time',
                         compression=('wavelet', 5)):
+
+    # there are issues with compression; hence it is ignored
+
     if folder is None:
         rcube = proj.seismic.data.create_cube(name)
     else:
@@ -89,7 +90,7 @@ def _roxapi_export_cube(self, roxar, proj, name, folder=None, domain='time',
     if domain == 'depth':
         vertical_domain = roxar.VerticalDomain.depth
 
-    values = np.asanyarray(self.values, order='C')
+    values = self.values  # copy() needed?
 
     handedness = roxar.Direction.right
     if self.yflip == 1:

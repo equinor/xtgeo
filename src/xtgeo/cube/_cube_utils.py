@@ -1,18 +1,17 @@
 """Cube utilities (basic low level)"""
 import sys
-import logging
 import numpy as np
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+xtg = XTGeoDialog()
 
 _cxtgeo.xtg_verbose_file('NONE')
 
-xtg = XTGeoDialog()
 xtg_verbose_level = xtg.get_syslevel()
+
+logger = xtg.functionlogger(__name__)
 
 
 def swapaxes(self):

@@ -1,4 +1,5 @@
 """Export RegularSurface data."""
+import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -19,15 +20,21 @@ def export_irap_ascii(self, mfile):
     zmin = self.values.min()
     zmax = self.values.max()
 
+    vals = self.values.copy(order='F')
+    vals = vals.ravel(order='K')
+    vals = ma.filled(vals, fill_value=self.undef)
+
     ier = _cxtgeo.surf_export_irap_ascii(mfile, self._ncol, self._nrow,
                                          self._xori, self._yori,
                                          self._xinc, self._yinc,
-                                         self._rotation, self.get_zval(),
+                                         self._rotation, vals,
                                          zmin, zmax, 0,
                                          xtg_verbose_level)
     if ier != 0:
         raise RuntimeError('Export to Irap Ascii went wrong, '
                            'code is {}'.format(ier))
+
+    del vals
 
 
 def export_irap_binary(self, mfile):
