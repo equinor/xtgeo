@@ -30,13 +30,13 @@ import sys
 import inspect
 import logging
 import xtgeo
-import cxtgeo
+import cxtgeo.cxtgeo as _cxtgeo
 import timeit
 
-UNDEF = cxtgeo.cxtgeo.UNDEF
-UNDEF_LIMIT = cxtgeo.cxtgeo.UNDEF_LIMIT
-VERYLARGENEGATIVE = cxtgeo.cxtgeo.VERYLARGENEGATIVE
-VERYLARGEPOSITIVE = cxtgeo.cxtgeo.VERYLARGEPOSITIVE
+UNDEF = _cxtgeo.UNDEF
+UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
+VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
+VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
 
 
 class _BColors:

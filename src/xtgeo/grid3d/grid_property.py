@@ -36,6 +36,9 @@ from xtgeo.grid3d import _gridprop_roxapi
 from xtgeo.grid3d import _gridprop_export
 from ._gridprops_io import _get_fhandle
 
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
 # =============================================================================
 # Class constructor
 #
@@ -99,8 +102,7 @@ class GridProperty(Grid3D):
         """
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        self._xtg = XTGeoDialog()
-        self.logger = self._xtg.functionlogger(clsname)
+        logger.info(clsname)
 
         ncol = kwargs.get('ncol', 5)
         nrow = kwargs.get('nrow', 12)
@@ -123,6 +125,12 @@ class GridProperty(Grid3D):
         if values is None:
             values = ma.zeros((ncol, nrow, nlay))
             testmask = True
+
+        if values.shape != (ncol, nrow, nlay):
+            values = values.reshape((ncol, nrow, nlay), order='C')
+
+        if not isinstance(values, ma.MaskedArray):
+            values = ma.array(values)
 
         self._values = values       # numpy version of properties (as 3D array)
 
@@ -154,7 +162,7 @@ class GridProperty(Grid3D):
         if len(args) == 1:
             # make instance through file import
 
-            self.logger.debug('Import from file...')
+            logger.debug('Import from file...')
             fformat = kwargs.get('fformat', 'guess')
             name = kwargs.get('name', 'unknown')
             date = kwargs.get('date', None)
@@ -162,7 +170,6 @@ class GridProperty(Grid3D):
             apiv = kwargs.get('apiversion', 2)
             self.from_file(args[0], fformat=fformat, name=name,
                            grid=grid, date=date, apiversion=apiv)
-
 
     # =========================================================================
     # Properties
@@ -181,11 +188,12 @@ class GridProperty(Grid3D):
     # -------------------------------------------------------------------------
     @property
     def grid(self):
-        """Return or set the grid geoemtry object"""
+        """Return the XTGeo grid geometry object (read only)"""
         return self._grid
 
     @grid.setter
     def grid(self, thegrid):
+        # need many checks to get this to work
         pass
         # if isinstance(thegrid, Grid):
         #     self._grid = thegrid
@@ -201,8 +209,8 @@ class GridProperty(Grid3D):
     # -------------------------------------------------------------------------
     @property
     def dtype(self):
-        """Return the numpy dtype"""
-        return self._dtype
+        """Return the values numpy dtype"""
+        return str(self._values.dtype)
 
     # -------------------------------------------------------------------------
     @property
@@ -245,8 +253,8 @@ class GridProperty(Grid3D):
 
         self._values = values
 
-        self.logger.debug('Values shape: {}'.format(self._values.shape))
-        self.logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
+        logger.debug('Values shape: {}'.format(self._values.shape))
+        logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
 
     # @property
     # def npvalues(self):
@@ -400,26 +408,26 @@ class GridProperty(Grid3D):
 
         if pfile_is_not_fhandle:
             if os.path.isfile(pfile):
-                self.logger.debug('File {} exists OK'.format(pfile))
+                logger.debug('File {} exists OK'.format(pfile))
             else:
-                self.logger.critical('No such file: {}'.format(pfile))
+                logger.critical('No such file: {}'.format(pfile))
                 raise IOError
 
             # work on file extension
             froot, fext = os.path.splitext(pfile)
             if fformat == 'guess':
                 if len(fext) == 0:
-                    self.logger.critical('File extension missing. STOP')
+                    logger.critical('File extension missing. STOP')
                     sys.exit(9)
                 else:
                     fformat = fext.lower().replace('.', '')
 
-            self.logger.debug("File name to be used is {}".format(pfile))
-            self.logger.debug("File format is {}".format(fformat))
+            logger.debug("File name to be used is {}".format(pfile))
+            logger.debug("File format is {}".format(fformat))
 
         ier = 0
         if (fformat == 'roff'):
-            self.logger.info('Importing ROFF...')
+            logger.info('Importing ROFF...')
             ier = _gridprop_import.import_roff(self, pfile, name, grid=grid)
 
         elif (fformat.lower() == 'init'):
@@ -430,7 +438,7 @@ class GridProperty(Grid3D):
                                           grid=grid,
                                           date=date, apiversion=apiversion)
         else:
-            self.logger.warning('Invalid file format')
+            logger.warning('Invalid file format')
             sys.exit(1)
 
         if ier == 22:
@@ -497,7 +505,7 @@ class GridProperty(Grid3D):
             name (str): If provided, will give property name; else the existing
                 name of the instance will used.
         """
-        self.logger.debug('Export property to file...')
+        logger.debug('Export property to file...')
 
         if (fformat == 'roff'):
             if name is None:
@@ -564,13 +572,13 @@ class GridProperty(Grid3D):
 
         if apiversion == 1:
             # use the old obsolete version
-            self.logger.info('API version 1')
+            logger.info('API version 1')
             ier = _gridprop_import_obsolete.import_eclbinary_v1(
                 self, pfile, name=name, etype=etype, date=date, grid=grid)
 
         elif apiversion == 2:
             # use the new version
-            self.logger.info('API version 2')
+            logger.info('API version 2')
             ier = _gridprop_import.import_eclbinary_v2(self, pfile, name=name,
                                                        etype=etype, date=date,
                                                        grid=grid)
@@ -581,7 +589,7 @@ class GridProperty(Grid3D):
         """Convert from discrete to continuous values"""
 
         if self.isdiscrete:
-            self.logger.info('Converting to continuous ...')
+            logger.info('Converting to continuous ...')
             val = self.values.copy()
             val = val.astype('float64')
             self.values = val
@@ -590,7 +598,7 @@ class GridProperty(Grid3D):
             self._codes = {}
             self._ncodes = 1
         else:
-            self.logger.info('No need to convert, already continuous')
+            logger.info('No need to convert, already continuous')
 
 
 # =============================================================================

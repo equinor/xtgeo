@@ -15,17 +15,15 @@ or::
 from __future__ import print_function, absolute_import
 
 import os
+import os.path
 import sys
 import math
-import logging
+from types import FunctionType
 import warnings
+
 import numpy as np
 import numpy.ma as ma
 
-import os.path
-from types import FunctionType
-
-import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
 from xtgeo.xyz import Points
@@ -90,10 +88,7 @@ class RegularSurface(object):
         """The __init__ (constructor) method."""
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        logger = logging.getLogger(clsname)
-        logger.addHandler(logging.NullHandler())
-
-        self._xtg = XTGeoDialog()
+        logger.info(clsname)
 
         self._undef = UNDEF
         self._undef_limit = UNDEF_LIMIT
@@ -131,7 +126,7 @@ class RegularSurface(object):
                                    [3, 8, 1e33],
                                    [4, 9, 14],
                                    [5, 10, 15]],
-                                  dtype=np.double, order='C')
+                                  dtype=np.float64, order='C')
                 # make it masked
                 values = ma.masked_greater(values, UNDEF_LIMIT)
                 self._masked = True
@@ -139,9 +134,6 @@ class RegularSurface(object):
             else:
                 self._values = self.ensure_correct_values(self.ncol,
                                                           self.nrow, values)
-
-                if self._check_shape_ok(self._values) is False:
-                    raise ValueError('Wrong dimension of values')
 
         # _nsurfaces += 1
 
@@ -190,7 +182,7 @@ class RegularSurface(object):
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
         if np.isscalar(values):
-            vals = ma.zeros((ncol, nrow), order='C', dtype=np.double)
+            vals = ma.zeros((ncol, nrow), order='C', dtype=np.float64)
             values = vals + float(values)
 
         if not isinstance(values, ma.MaskedArray):
@@ -217,21 +209,13 @@ class RegularSurface(object):
 
     @property
     def ncol(self):
-        """The NCOL (NX or N-Idir) number, as property."""
+        """The NCOL (NX or N-Idir) number, as property (read only)."""
         return self._ncol
-
-    @ncol.setter
-    def ncol(self, n):
-        raise ValueError('Cannot change ncol')
 
     @property
     def nrow(self):
-        """The NROW (NY or N-Jdir) number, as property."""
+        """The NROW (NY or N-Jdir) number, as property (read only)."""
         return self._nrow
-
-    @nrow.setter
-    def nrow(self, n):
-        raise ValueError('Cannot change nrow')
 
     @property
     def nx(self):
@@ -239,20 +223,11 @@ class RegularSurface(object):
         logger.warning('Deprecated; use ncol instead')
         return self._ncol
 
-    @nx.setter
-    def nx(self, n):
-        logger.warning('Cannot change nx')
-        raise ValueError('Cannot change nx')
-
     @property
     def ny(self):
         """The NY (or N-Jdir) number, as property (deprecated, use nrow)."""
         logger.warning('Deprecated; use nrow instead')
         return self._nrow
-
-    @ny.setter
-    def ny(self, n):
-        raise ValueError('Cannot change ny')
 
     @property
     def rotation(self):
@@ -264,12 +239,11 @@ class RegularSurface(object):
         if rota >= 0 and rota < 360:
             self._rotation = rota
         else:
-            raise ValueError
+            raise ValueError('Rotation must be in interval [0, 360>')
 
     @property
     def xinc(self):
         """The X increment (or I dir increment)."""
-        logger.debug('Enter method...')
         return self._xinc
 
     @property
@@ -279,12 +253,12 @@ class RegularSurface(object):
 
     @property
     def yflip(self):
-        """The Y flip indicator"""
+        """The Y flip (handedness) indicator (read only)"""
         return self._yflip
 
     @property
     def xori(self):
-        """The X coordinate origin of the map (can be modified)."""
+        """The X coordinate origin of the map."""
         return self._xori
 
     @xori.setter
@@ -293,7 +267,7 @@ class RegularSurface(object):
 
     @property
     def yori(self):
-        """The Y coordinate origin of the map (can be modified)."""
+        """The Y coordinate origin of the map."""
         return self._yori
 
     @yori.setter
@@ -302,7 +276,7 @@ class RegularSurface(object):
 
     @property
     def xmin(self):
-        """The minimim X coordinate"""
+        """The minimim X coordinate (read only)."""
         corners = self.get_map_xycorners()
 
         xmin = VERYLARGEPOSITIVE
@@ -313,7 +287,7 @@ class RegularSurface(object):
 
     @property
     def xmax(self):
-        """The maximum X coordinate"""
+        """The maximum X coordinate (read only)."""
         corners = self.get_map_xycorners()
 
         xmax = VERYLARGENEGATIVE
@@ -324,7 +298,7 @@ class RegularSurface(object):
 
     @property
     def ymin(self):
-        """The minimim Y coordinate"""
+        """The minimim Y coordinate (read only)."""
         corners = self.get_map_xycorners()
 
         ymin = VERYLARGEPOSITIVE
@@ -335,7 +309,7 @@ class RegularSurface(object):
 
     @property
     def ymax(self):
-        """The maximum Y xoordinate"""
+        """The maximum Y xoordinate (read only)."""
         corners = self.get_map_xycorners()
 
         ymax = VERYLARGENEGATIVE
@@ -362,7 +336,7 @@ class RegularSurface(object):
         self._values = values
 
         logger.debug('Values shape: {}'.format(self._values.shape))
-        logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
+        logger.debug('Flags: {}'.format(self._values.flags))
 
     @property
     def values1d(self):
@@ -376,8 +350,7 @@ class RegularSurface(object):
             values[values <= 0] = np.nan
             map.values1d = values  # update
         """
-        self._update_values()
-        val = self._values.flatten(order=order)  # flatten will return a copy
+        val = self._values.flatten(order='K')  # flatten will return a copy
         val = ma.filled(val, UNDEF)
         val[val > UNDEF_LIMIT] = np.nan
         return val
@@ -445,9 +418,9 @@ class RegularSurface(object):
         froot, fext = os.path.splitext(mfile)
         if fformat is None or fformat == 'guess':
             if len(fext) == 0:
-                logger.critical('File extension missing. STOP')
-                raise SystemExit('Stop: fformat is "guess" but file '
-                                 'extension is missing')
+                msg = ('Stop: fformat is "guess" but file '
+                       'extension is missing for {}'.format(froot))
+                raise ValueError(msg)
             else:
                 fformat = fext.lower().replace('.', '')
 
@@ -483,13 +456,13 @@ class RegularSurface(object):
 
         logger.debug('Enter method...')
         logger.info('Export to file...')
-        if (fformat == 'irap_ascii'):
+        if fformat == 'irap_ascii':
             _regsurf_export.export_irap_ascii(self, mfile)
-        elif (fformat == 'irap_binary'):
+        elif fformat == 'irap_binary':
             _regsurf_export.export_irap_binary(self, mfile)
-        elif (fformat == 'zmap_ascii'):
+        elif fformat == 'zmap_ascii':
             _regsurf_export.export_zmap_ascii(self, mfile)
-        elif (fformat == 'storm_binary'):
+        elif fformat == 'storm_binary':
             _regsurf_export.export_storm_binary(self, mfile)
         else:
             logger.critical('Invalid file format')
@@ -545,7 +518,7 @@ class RegularSurface(object):
             raise ValueError('Invalid stype, only {} stypes is supported.'
                              .format(valid_stypes))
 
-        self = _regsurf_roxapi.import_horizon_roxapi(
+        _regsurf_roxapi.import_horizon_roxapi(
             self, project, name, category, stype, realisation)
 
     def to_roxar(self, project, name, category, stype='horizons',
@@ -597,7 +570,7 @@ class RegularSurface(object):
             raise ValueError('Only {} stype is supported per now'
                              .format(valid_stypes))
 
-        self = _regsurf_roxapi.export_horizon_roxapi(
+        _regsurf_roxapi.export_horizon_roxapi(
             self, project, name, category, stype, realisation)
 
     def copy(self):
@@ -614,64 +587,69 @@ class RegularSurface(object):
         xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
                                yinc=self.yinc, xori=self.xori, yori=self.yori,
                                rotation=self.rotation,
-                               values=self.values)
+                               values=self.values.copy())
 
         logger.debug('New array + flags + ID')
-        logger.debug(xsurf._values)
-        logger.debug(xsurf._values.flags)
-        logger.debug(id(xsurf._values))
         return xsurf
 
+    def get_values1d(self, order='C', asmasked=True, fill_value=np.nan):
+        """Get an an 1D, numpy or masked array of the map values.
+
+        Args:
+            order (str): Flatteting is in C (default) or F order
+            asmasked (bool): If true, as MaskedArray, other as standard
+                numpy ndarray with undef as np.nan or fill_value
+            fill_value (str): Relevent only if asmasked is False, this
+                will be the value of undef entries
+        """
+
+        val = self.values
+        # now reshape
+        if order != 'C':
+            val = np.asanyarray(val, order=order)  # ma subclass conserved
+
+        if not asmasked:
+            val = ma.filled(val, fill_value=fill_value)
+
+        return val.flatten(order='K')
+
+    def set_values1d(self, val, order='C', fill_value=np.nan):
+        """Update the values attribute based on a 1D input, multiple options.
+
+        Args:
+            order (str): Input is C (default) or F order
+            fill_value (str): Relevent only if input is not masked, this
+                will be the value of masked entries
+        """
+
+        val = val.reshape((self.ncol, self.nrow), order=order)
+
+        if not isinstance(val, ma.MaskedArray):
+            val = ma.masked_where(fill_value, val)
+
+        self.values = val
+
     def get_zval(self):
-        """Get an an 1D, numpy array of the map values (not masked).
+        """Get an an 1D, numpy array, F order of the map values (not masked).
 
         Note that undef values are very large numbers (see undef property).
         Also, this will reorder a 2D values array to column fastest, i.e.
         get stuff into Fortran order.
+
+        This routine exists for historical reasons and prefer get_values1d
+        instead.
         """
+        zval = self.get_values1d(order='F', asmasked=False,
+                                 fill_value=self.undef)
 
-        self._update_values()
+        return zval
 
-        logger.debug('Enter method...')
-        logger.debug('Shape: {}'.format(self._values.shape))
-
-        if self._check_shape_ok(self._values) is False:
-            raise ValueError
-
-        # unmask the self._values numpy array, by filling the masked
-        # values with undef value
-        logger.debug('Fill the masked...')
-        x = ma.filled(self._values, self._undef)
-
-        # make it 1D (Fortran order)
-        logger.debug('1D')
-
-        x = np.reshape(x, -1, order='F')
-
-        logger.debug('1D done {}'.format(x.shape))
-
-        return x
-
-    def set_zval(self, x):
-        """Set a 1D (unmasked) numpy array.
+    def set_zval(self, vals):
+        """Set a 1D (unmasked) numpy array (kept for historical reasons).
 
         The numpy array must be in Fortran order (i columns (ncol) fastest).
         """
-
-        # NOTE: Will convert it to a 2D masked array internally.
-
-        self._update_values()
-
-        # not sure if this is right always?...
-        x = np.reshape(x, (self._ncol, self._nrow), order='F')
-
-        # replace Nans, if any
-        x = np.where(np.isnan(x), self.undef, x)
-
-        # make it masked
-        x = ma.masked_greater(x, self._undef_limit)
-
-        self._values = x
+        self.set_values1d(vals, order='F')
 
     def get_rotation(self):
         """Returns the surface roation, in degrees, from X, anti-clock."""
@@ -744,9 +722,9 @@ class RegularSurface(object):
             return False
 
         # check that masks are equal
-        m1 = ma.getmaskarray(self.values)
-        m2 = ma.getmaskarray(other.values)
-        if not np.array_equal(m1, m2):
+        mas1 = ma.getmaskarray(self.values)
+        mas2 = ma.getmaskarray(other.values)
+        if not np.array_equal(mas1, mas2):
             return False
 
         logger.debug('Surfaces have same topology')
@@ -824,9 +802,9 @@ class RegularSurface(object):
         """Return coordinates for X Y and Z (values) as numpy 2D masked
         arrays."""
 
-        xc, yc = self.get_xy_values()
+        xcoord, ycoord = self.get_xy_values()
 
-        return xc, yc, self.values
+        return xcoord, ycoord, self.values
 
     def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
                            valuefmt=None):
