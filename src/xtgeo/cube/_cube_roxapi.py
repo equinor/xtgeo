@@ -32,8 +32,9 @@ def _roxapi_import_cube(self, proj, name):
     try:
         rcube = proj.seismic.data[[name]]
         _roxapi_cube_to_xtgeo(self, rcube)
-    except KeyError as ke:
-        logger.error(ke)
+    except KeyError as emsg:
+        logger.error(emsg)
+        raise
 
 
 def _roxapi_cube_to_xtgeo(self, rcube):

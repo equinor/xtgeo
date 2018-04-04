@@ -63,8 +63,8 @@ def import_segy_io(self, sfile):
         ncol, nrow, nlay = values.shape
 
         logger.info('NRCL  {} {} {}'.format(ncol, nrow, nlay))
-        logger.info(len(segyfile.xlines))
         logger.info(len(segyfile.ilines))
+        logger.info(len(segyfile.xlines))
 
         # need positions for all 4 corners
         c1 = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)

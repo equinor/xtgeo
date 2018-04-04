@@ -22,71 +22,72 @@ logger = xtg.functionlogger(__name__)
 # copy self (update) values from SWIG carray to numpy, 1D array
 
 
-def _update_values(self):
-    nnum = self._ncol * self._nrow
+# def _update_values(self):
+#     nnum = self._ncol * self._nrow
 
-    if self._cvalues is None and self._values is not None:
-        return
+#     if self._cvalues is None and self._values is not None:
+#         return
 
-    elif self._cvalues is None and self._values is None:
-        logger.critical('_cvalues and _values is None in '
-                        '_update_values. STOP')
-        sys.exit(9)
+#     elif self._cvalues is None and self._values is None:
+#         logger.critical('_cvalues and _values is None in '
+#                         '_update_values. STOP')
+#         sys.exit(9)
 
-    xvv = _cxtgeo.swig_carr_to_numpy_1d(nnum, self._cvalues)
+#     xvv = _cxtgeo.swig_carr_to_numpy_1d(nnum, self._cvalues)
 
-    xvv = np.reshape(xvv, (self._ncol, self._nrow), order='F')
+#     xvv = np.reshape(xvv, (self._ncol, self._nrow), order='F')
 
-    # make it masked
-    xvv = ma.masked_greater(xvv, self._undef_limit)
+#     # make it masked
+#     xvv = ma.masked_greater(xvv, self._undef_limit)
 
-    self._values = xvv
+#     self._values = xvv
 
-    self._delete_cvalues()
+#     self._delete_cvalues()
 
-# copy (update) values from numpy to SWIG, 1D array
-
-
-def _update_cvalues(self):
-    logger.debug('Enter update cvalues method...')
-    nnum = self._ncol * self._nrow
-
-    if self._values is None and self._cvalues is not None:
-        logger.debug('CVALUES unchanged')
-        return
-
-    elif self._cvalues is None and self._values is None:
-        logger.critical('_cvalues and _values is None in '
-                        '_update_cvalues. STOP')
-        sys.exit(9)
-
-    elif self._cvalues is not None and self._values is None:
-        logger.critical('_cvalues and _values are both present in '
-                        '_update_cvalues. STOP')
-        sys.exit(9)
-
-    # make a 1D F order numpy array, and update C array
-    xvv = ma.filled(self._values, self._undef)
-    xvv = np.reshape(xvv, -1, order='F')
-
-    self._cvalues = _cxtgeo.new_doublearray(nnum)
-
-    _cxtgeo.swig_numpy_to_carr_1d(xvv, self._cvalues)
-    logger.debug('Enter method... DONE')
-
-    self._values = None
+# # copy (update) values from numpy to SWIG, 1D array
 
 
-def _delete_cvalues(self):
-    logger.debug('Enter delete cvalues values method...')
+# def _update_cvalues(self):
+#     logger.debug('Enter update cvalues method...')
+#     nnum = self._ncol * self._nrow
 
-    if self._cvalues is not None:
-        _cxtgeo.delete_doublearray(self._cvalues)
+#     if self._values is None and self._cvalues is not None:
+#         logger.debug('CVALUES unchanged')
+#         return
 
-    self._cvalues = None
-    logger.debug('Enter method... DONE')
+#     elif self._cvalues is None and self._values is None:
+#         logger.critical('_cvalues and _values is None in '
+#                         '_update_cvalues. STOP')
+#         sys.exit(9)
 
-# check if values shape is OK (return True or False)
+#     elif self._cvalues is not None and self._values is None:
+#         logger.critical('_cvalues and _values are both present in '
+#                         '_update_cvalues. STOP')
+#         sys.exit(9)
+
+#     # make a 1D F order numpy array, and update C array
+#     xvv = ma.filled(self._values, self._undef)
+#     xvv = np.reshape(xvv, -1, order='F')
+
+#     self._cvalues = _cxtgeo.new_doublearray(nnum)
+
+#     _cxtgeo.swig_numpy_to_carr_1d(xvv, self._cvalues)
+#     logger.debug('Enter method... DONE')
+
+#     self._values = None
+
+
+# def _delete_cvalues(self):
+#     logger.debug('Enter delete cvalues values method...')
+
+#     if self._cvalues is not None:
+#         _cxtgeo.delete_doublearray(self._cvalues)
+
+#     self._cvalues = None
+#     logger.debug('Enter method... DONE')
+
+# # check i
+f values shape is OK (return True or False)
 
 
 def _check_shape_ok(self, values):

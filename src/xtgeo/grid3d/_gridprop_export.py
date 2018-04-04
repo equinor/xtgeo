@@ -15,36 +15,92 @@ xtg_verbose_level = xtg.get_syslevel()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Export binary ROFF format (NB Int NOT supported YET)!
+# Export ascii or binary ROFF format
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def export_roff(self, pfile, name):
+def export_roff(self, pfile, name, append=False, last=True, binary=True):
 
-    self.logger.debug('Exporting {} to file {}'.format(name, pfile))
+    logger.debug('Exporting {} to file {}'.format(name, pfile))
 
-    carray = _gridprop_lowlevel.update_carray(self)
+    if self._isdiscrete:
+        _export_roff_discrete(self, pfile, name, append=append, last=last,
+                              binary=binary)
+    else:
+        _export_roff_continuous(self, pfile, name, append=append, last=last,
+                                binary=binary)
+
+
+def _export_roff_discrete(self, pfile, name, append=False, last=True,
+                          binary=True):
+
+    logger.debug('Exporting {} to file {}'.format(name, pfile))
+
+    carray = _gridprop_lowlevel.update_carray(self, undef=-999)
+
+    ptr_idum = _cxtgeo.new_intpointer()
+    ptr_ddum = _cxtgeo.new_doublepointer()
+
+    # codes:
+    ptr_codes = _cxtgeo.new_intarray(256)
+    ncodes = self.ncodes
+    codenames = ""
+    print(self.codes.keys())
+    for inum, ckey in enumerate(sorted(self.codes.keys())):
+        codenames += self.codes[ckey]
+        codenames += '|'
+        _cxtgeo.intarray_setitem(ptr_codes, inum, ckey)
+
+    mode = 0
+    if not binary:
+        mode = 1
+
+    if not append:
+        _cxtgeo.grd3d_export_roff_pstart(mode, self._ncol, self._nrow,
+                                         self._nlay, pfile,
+                                         xtg_verbose_level)
+
+    nsub = 0
+    isub_to_export = 0
+    _cxtgeo.grd3d_export_roff_prop(mode, self._ncol, self._nrow,
+                                   self._nlay, nsub, isub_to_export,
+                                   ptr_idum, name, 'int', carray,
+                                   ptr_ddum, ncodes, codenames,
+                                   ptr_codes, pfile, xtg_verbose_level)
+
+    if last:
+        _cxtgeo.grd3d_export_roff_end(mode, pfile, xtg_verbose_level)
+
+    _gridprop_lowlevel.delete_carray(self, carray)
+
+
+def _export_roff_continuous(self, pfile, name, append=False, last=True,
+                            binary=True):
+
+    logger.debug('Exporting {} to file {}'.format(name, pfile))
+
+    carray = _gridprop_lowlevel.update_carray(self, undef=-999.0)
 
     ptr_idum = _cxtgeo.new_intpointer()
 
-    mode = 0  # binary
-    if not self._isdiscrete:
+    mode = 0
+    if not binary:
+        mode = 1
+
+    if not append:
         _cxtgeo.grd3d_export_roff_pstart(mode, self._ncol, self._nrow,
                                          self._nlay, pfile,
                                          xtg_verbose_level)
 
     # now the actual data
-    # only float data are supported for now!
     nsub = 0
     isub_to_export = 0
-    if not self._isdiscrete:
-        _cxtgeo.grd3d_export_roff_prop(mode, self._ncol, self._nrow,
-                                       self._nlay, nsub, isub_to_export,
-                                       ptr_idum, name, 'double', ptr_idum,
-                                       carray, 0, '',
-                                       ptr_idum, pfile, xtg_verbose_level)
-    else:
-        self.logger.critical('INT export not supported yet')
-        raise NotImplementedError('INT export not supported yet')
 
-    _cxtgeo.grd3d_export_roff_end(mode, pfile, xtg_verbose_level)
+    _cxtgeo.grd3d_export_roff_prop(mode, self._ncol, self._nrow,
+                                   self._nlay, nsub, isub_to_export,
+                                   ptr_idum, name, 'double', ptr_idum,
+                                   carray, 0, '',
+                                   ptr_idum, pfile, xtg_verbose_level)
+
+    if last:
+        _cxtgeo.grd3d_export_roff_end(mode, pfile, xtg_verbose_level)
 
     _gridprop_lowlevel.delete_carray(self, carray)

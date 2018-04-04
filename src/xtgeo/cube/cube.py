@@ -1,5 +1,5 @@
+# coding: utf-8
 """Module for a seismic (or whatever) cube."""
-
 from __future__ import print_function
 from __future__ import division
 
@@ -19,6 +19,46 @@ from xtgeo.cube import _cube_roxapi
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+def cube_from_file(mfile, fformat='guess'):
+    """This makes an instance of a Cube directly from file import.
+
+    Args:
+        mfile (str): Name of file
+        fformat (str): See :meth:`Cube.from_file`
+
+    Example::
+
+        import xtgeo
+        mycube = xtgeo.cube_from_file('some_cube.segy')
+    """
+
+    obj = Cube()
+
+    obj.from_file(mfile, fformat=fformat)
+
+    return obj
+
+
+def cube_from_roxar(project, name):
+    """This makes an instance of a Cube directly from roxar input.
+
+    Example::
+
+        import xtgeo
+        mycube = xtgeo.cube_from_roxar(project, 'DepthCube')
+
+    """
+
+    obj = Cube()
+
+    obj.from_roxar(project, name)
+
+    return obj
 
 
 class Cube(object):
@@ -51,6 +91,7 @@ class Cube(object):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initiate a Cube instance."""
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         logger.info(clsname)
@@ -79,6 +120,20 @@ class Cube(object):
 
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
+
+    def __repr__(self):
+        avg = self.values.mean()
+        dsc = ('{0.__class__} (ncol={0.ncol!r}, '
+               'nrow={0.nrow!r}, original file: {0._filesrc}), '
+               'average {1} ID=<{2}>'.format(self, avg, id(self)))
+        return dsc
+
+    def __str__(self):
+        avg = self.values.mean()
+        dsc = ('{0.__class__.__name__} (ncol={0.ncol!r}, '
+               'nrow={0.nrow!r}, original file: {0._filesrc}), '
+               'average {1:.4f}'.format(self, avg))
+        return dsc
 
     # =========================================================================
     # Get and Set properties (tend to pythonic properties rather than
@@ -272,6 +327,7 @@ class Cube(object):
             IOError if the file cannot be read (e.g. not found)
 
         Example::
+
             >>> zz = Cube()
             >>> zz.from_file('some.segy')
 
@@ -367,6 +423,35 @@ class Cube(object):
         """
         _cube_roxapi.export_cube_roxapi(self, project, name)
 
+    def scan_segy_traces(self, sfile, outfile=None):
+        """Scan a SEGY file traces and print limits info to STDOUT or file.
+
+        Args:
+            sfile (str): Name of SEGY file
+            outfile: File where store scanned trace info, if empty or None
+                output goes to STDOUT.
+        """
+
+        oflag = False
+        # if outfile is none, it means that you want to plot on STDOUT
+        if outfile is None:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            f.close()
+            outfile = f.name
+            logger.info('TMP file name is {}'.format(outfile))
+            oflag = True
+
+        _cube_import.import_segy(sfile, scanheadermode=False,
+                                 scantracemode=True, outfile=outfile)
+
+        if oflag:
+            pass
+            logger.info('OUTPUT to screen...')
+            with open(outfile, 'r') as out:
+                for line in out:
+                    print(line.rstrip('\r\n'))
+            os.remove(outfile)
+
     def scan_segy_header(self, sfile, outfile=None):
         """Scan a SEGY file header and print info to screen or file.
 
@@ -393,56 +478,5 @@ class Cube(object):
             logger.info('OUTPUT to screen...')
             with open(outfile, 'r') as out:
                 for line in out:
-                    print(line, end='')
+                    print(line.rstrip('\r\n'))
             os.remove(outfile)
-
-    def scan_segy_traces(self, sfile, outfile=None):
-        """Scan a SEGY file traces and print limits info to STDOUT or file.
-
-        Args:
-            sfile (str): Name of SEGY file
-            outfile: File where store scanned trace info, if empty or None
-                output goes to STDOUT.
-        """
-
-        flag = False
-        # if outfile is none, it means that you want tp plot on STDOUT
-        if outfile is None:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            f.close()
-            outfile = f.name
-            logger.info('TMP file name is {}'.format(outfile))
-            flag = True
-
-        _cube_import.import_segy(sfile, scanheadermode=False,
-                                 scantracemode=True, outfile=outfile)
-
-        if flag:
-            logger.info('OUTPUT to screen...')
-            with open(outfile, 'r') as out:
-                for line in out:
-                    print(line, end='')
-            os.remove(outfile)
-
-
-# =============================================================================
-# METHODS as wrappers to class init + import
-
-def cube_from_file(mfile, fformat='guess'):
-    """This makes an instance of a Cube directly from file import."""
-
-    obj = Cube()
-
-    obj.from_file(mfile, fformat=fformat)
-
-    return obj
-
-
-def cube_from_roxar(project, name):
-    """This makes an instance of a Cube directly from roxar input."""
-
-    obj = Cube()
-
-    obj.from_roxar(project, name)
-
-    return obj

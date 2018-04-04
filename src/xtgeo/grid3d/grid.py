@@ -23,6 +23,9 @@ from xtgeo.grid3d import _grid_etc1
 from xtgeo.grid3d import _grid_roxapi
 from xtgeo.grid3d import _gridprop_lowlevel
 
+xtg = xtgeo.common.XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
 
 class Grid(Grid3D):
     """Class for a 3D grid geometry (corner point) with optionally props.
@@ -230,16 +233,15 @@ class Grid(Grid3D):
         fext = fext.replace('.', '')
         fext = fext.lower()
 
-        self.logger.info('Format is {}'.format(fformat))
         if fformat == 'guess':
-            self.logger.info('Format is <guess>')
+            logger.info('Format is <guess>')
             fflist = ['egrid', 'grid', 'grdecl', 'roff', 'eclipserun']
             if fext and fext in fflist:
                 fformat = fext
 
         if not fext:
             # file extension is missing, guess from format
-            self.logger.info('File extension missing; guessing...')
+            logger.info('File extension missing; guessing...')
             useext = ''
             if fformat == 'egrid':
                 useext = '.EGRID'
@@ -254,16 +256,16 @@ class Grid(Grid3D):
 
             gfile = froot + useext
 
-        self.logger.info('File name to be used is {}'.format(gfile))
+        logger.info('File name to be used is {}'.format(gfile))
 
         test_gfile = gfile
         if fformat == 'eclipserun':
             test_gfile = gfile + '.EGRID'
 
         if os.path.isfile(test_gfile):
-            self.logger.info('File {} exists OK'.format(test_gfile))
+            logger.info('File {} exists OK'.format(test_gfile))
         else:
-            self.logger.critical('No such file: {}'.format(test_gfile))
+            logger.critical('No such file: {}'.format(test_gfile))
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), gfile)
 
         if (fformat == 'roff'):

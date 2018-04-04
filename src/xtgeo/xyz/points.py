@@ -138,7 +138,7 @@ class Points(XYZ):
 
         coor = []
         for vv in [xc, yc, val]:
-            vv = ma.filled(vv.flatten(order='F'), fill_value=np.nan)
+            vv = ma.filled(vv.flatten(order='C'), fill_value=np.nan)
             vv = vv[~np.isnan(vv)]
             coor.append(vv)
 

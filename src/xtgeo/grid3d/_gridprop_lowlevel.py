@@ -53,13 +53,14 @@ def update_values_from_carray(self, carray, dtype, delete=False):
         carray = delete_carray(self, carray)
 
 
-def update_carray(self):
+def update_carray(self, undef=None):
     """Copy (update) values from numpy to SWIG, 1D array, returns a pointer
     to SWIG C array"""
 
-    undef = self._undef
-    if self._isdiscrete:
-        undef = self._undef_i
+    if undef is None:
+        undef = self._undef
+        if self._isdiscrete:
+            undef = self._undef_i
 
     logger.debug('Entering conversion from numpy to C array ...')
 

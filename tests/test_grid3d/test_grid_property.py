@@ -5,6 +5,8 @@ from __future__ import print_function
 import os
 import pytest
 
+import numpy.ma as ma
+
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
@@ -177,7 +179,14 @@ def test_export_roff():
     po.from_file(testfile4, fformat="init", name='PORO', grid=gg, apiversion=2)
 
     po.to_file(os.path.join(td, 'bdata.roff'), name='PORO')
+
+    po.to_file(os.path.join(td, 'bdata.roffasc'), name='PORO',
+               fformat='roffasc')
+
     pox = GridProperty(os.path.join(td, 'bdata.roff'), name='PORO')
+
+    pox.to_file(os.path.join(td, 'bdata2.roffasc'), name='POROAGAIN',
+                fformat='roffasc')
 
     print(po.values.mean())
 
@@ -185,7 +194,7 @@ def test_export_roff():
 
 
 def test_io_roff_discrete():
-    """Import ROFF discrete property; then TODO! export to ROFF int."""
+    """Import ROFF discrete property; then export to ROFF int."""
 
     logger.info('Name is {}'.format(__name__))
     po = GridProperty()
@@ -198,8 +207,19 @@ def test_io_roff_discrete():
     logger.debug(po.codes[3])
     assert po.codes[3] == 'Below_Low_reek'
 
-    # export discrete to ROFF ...TODO!
-    # po.to_file(os.join.path(td, zone_export.roff'))
+    # export discrete to ROFF ...TODO
+    po.to_file(os.path.join(td, 'reek_zone_export.roff'), name='Zone',
+               fformat='roff')
+
+    # fix some zero values (will not be fixed properly as grid ACTNUM differs?)
+    val = po.values
+    val = ma.filled(val, fill_value=3)  # trick
+    print(val.min(), val.max())
+    po.values = val
+    print(po.values.min(), po.values.max())
+    po.values[:, :, 13] = 1  # just for fun test
+    po.to_file(os.path.join(td, 'reek_zonefix_export.roff'), name='ZoneFix',
+               fformat='roff')
 
 
 def test_get_all_corners():

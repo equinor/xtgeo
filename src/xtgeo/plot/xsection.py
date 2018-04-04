@@ -11,7 +11,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.plot import BasePlot
 
 xtg = XTGeoDialog()
-
+logger = xtg.functionlogger(__name__)
 
 class XSection(BasePlot):
     """Class for plotting a cross-section of a well.
@@ -33,7 +33,7 @@ class XSection(BasePlot):
                  outline=None, tight=False):
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = xtg.functionlogger(clsname)
+        logger = xtg.functionlogger(clsname)
         self._xtg = XTGeoDialog()
 
         self._zmin = zmin
@@ -56,8 +56,8 @@ class XSection(BasePlot):
         else:
             self.define_colormap(colormap)
 
-        self.logger.info('Ran __init__ ...')
-        self.logger.info('Colormap is {}'.format(self._colormap))
+        logger.info('Ran __init__ ...')
+        logger.info('Colormap is {}'.format(self._colormap))
 
     # =========================================================================
     # Properties
@@ -148,7 +148,7 @@ class XSection(BasePlot):
 
         df = wo.dataframe
 
-        self.logger.debug(df)
+        logger.debug(df)
 
         if df.empty:
             self._showok = False
@@ -168,7 +168,7 @@ class XSection(BasePlot):
             self._showok = False
             return
 
-        self.logger.info("ZONELOG min - max is {} - {}".format(zomin, zomax))
+        logger.info("ZONELOG min - max is {} - {}".format(zomin, zomax))
 
         zshift = 0
         if self._zonelogshift != 0:
@@ -192,7 +192,7 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(zo != zone, zv)
             hv_copy = ma.masked_where(zo != zone, hv)
 
-            self.logger.debug("Zone is {}, color no is {}".
+            logger.debug("Zone is {}, color no is {}".
                               format(zone, zone + zshift - 1))
             ax.plot(hv_copy, zv_copy, linewidth=4, c=color)
 
@@ -238,14 +238,14 @@ class XSection(BasePlot):
         else:
             # do a check
             if len(surfacenames) != nlen:
-                self.logger.critical("Wrong number of entries in "
+                logger.critical("Wrong number of entries in "
                                      "surfacenames!")
                 sys.exit(-13)
             else:
                 slegend = surfacenames
 
         if self._colormap.N < nlen:
-            self.logger.critical("Too few colors in color table compared with "
+            logger.critical("Too few colors in color table compared with "
                                  "number of surfaces")
             sys.exit(-22)
 
@@ -260,7 +260,7 @@ class XSection(BasePlot):
         # sample the horizon to the fence:
         colortable = self.get_colormap_as_table()
         for i in range(nlen):
-            self.logger.info(i)
+            logger.info(i)
             if not fill:
                 hfence = surfaces[i].get_fence(wfence)
                 if fancyline:
@@ -354,11 +354,11 @@ class XSection(BasePlot):
             self._fig.tight_layout()
 
         if self._showok:
-            self.logger.info('Calling plt show method...')
+            logger.info('Calling plt show method...')
             plt.show()
             return True
         else:
-            self.logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning("Nothing to plot (well outside Z range?)")
             return False
 
     def savefig(self, filename, fformat='png'):
@@ -377,5 +377,5 @@ class XSection(BasePlot):
             plt.close(self._fig)
             return True
         else:
-            self.logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning("Nothing to plot (well outside Z range?)")
             return False

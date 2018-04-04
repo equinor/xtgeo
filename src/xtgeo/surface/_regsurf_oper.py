@@ -23,13 +23,13 @@ def resample(surf, other):
 
     logger.info('Resampling...')
 
-    svalues = surf.get_zval()
+    svalues = surf.get_values1d()
 
     ier = _cxtgeo.surf_resample(other._ncol, other._nrow,
                                 other._xori, other._xinc,
                                 other._yori, other._yinc,
                                 other._yflip, other._rotation,
-                                other.get_zval(),
+                                other.get_values1d(),
                                 surf._ncol, surf._nrow,
                                 surf._xori, surf._xinc,
                                 surf._yori, surf._yinc,
@@ -42,14 +42,14 @@ def resample(surf, other):
         raise RuntimeError('Resampling went wrong, '
                            'code is {}'.format(ier))
 
-    surf.set_zval(svalues)
+    surf.set_values1d(svalues)
 
 
 def distance_from_point(surf, point=(0, 0), azimuth=0.0):
 
     x, y = point
 
-    svalues = surf.get_zval()
+    svalues = surf.get_values1d()
 
     # call C routine
     ier = _cxtgeo.surf_get_dist_values(
@@ -61,7 +61,7 @@ def distance_from_point(surf, point=(0, 0), azimuth=0.0):
         surf.logger.error('Something went wrong...')
         raise RuntimeError('Something went wrong in {}'.format(__name__))
 
-    surf.set_zval(svalues)
+    surf.set_values1d(svalues)
 
 
 def get_value_from_xy(surf, point=(0.0, 0.0)):
@@ -73,7 +73,7 @@ def get_value_from_xy(surf, point=(0.0, 0.0)):
                                         surf.xori, surf.yori, surf.xinc,
                                         surf.yinc, surf.yflip,
                                         surf.rotation,
-                                        surf.get_zval(), xtg_verbose_level)
+                                        surf.get_values1d(), xtg_verbose_level)
 
     if zcoord > surf._undef_limit:
         return None
@@ -84,7 +84,7 @@ def get_value_from_xy(surf, point=(0.0, 0.0)):
 def get_xy_value_from_ij(surf, iloc, jloc, zvalues=None):
 
     if zvalues is None:
-        zvalues = surf.get_zval()
+        zvalues = surf.get_values1d()
 
     if 1 <= iloc <= surf.ncol and 1 <= jloc <= surf.nrow:
 
@@ -124,8 +124,8 @@ def get_xy_values(surf):
                              format(ier))
 
     # reshape, then mask using the current Z values mask
-    xvals = xvals.reshape((surf.ncol, surf.nrow), order='F')
-    yvals = yvals.reshape((surf.ncol, surf.nrow), order='F')
+    xvals = xvals.reshape((surf.ncol, surf.nrow))
+    yvals = yvals.reshape((surf.ncol, surf.nrow))
 
     mask = ma.getmaskarray(surf.values)
     xvals = ma.array(xvals, mask=mask)
@@ -145,7 +145,7 @@ def get_fence(surf, xyfence):
                                          surf.ncol, surf.nrow, surf.xori,
                                          surf.yori, surf.xinc, surf.yinc,
                                          surf.yflip, surf.rotation,
-                                         surf.get_zval(),
+                                         surf.get_values1d(),
                                          xtg_verbose_level)
 
     if istat != 0:

@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import pytest
 
+import xtgeo
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
@@ -32,17 +33,17 @@ brilgrdecl = '../xtgeo-testdata/3dgrids/bri/b.grdecl'
 
 def test_import_wrong():
     """Importing wrong fformat, etc"""
-
-    with pytest.raises(ValueError) as e_info:
-        logger.warning(e_info)
-        g = Grid().from_file(emegfile, fformat='roffdum')
+    pass
+    with pytest.raises(ValueError):
+        g = Grid()
+        g.from_file(emegfile, fformat='ruffdum')
         tsetup.assert_equal(g.ncol, 70)
 
 
 def test_import_guess():
     """Import with guessing fformat"""
 
-    g = Grid().from_file(emegfile)
+    g = xtgeo.grid3d.Grid(emegfile)
 
     tsetup.assert_equal(g.ncol, 70)
 

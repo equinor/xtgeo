@@ -63,7 +63,7 @@ def _roxapi_horizon_to_xtgeo(self, rox):
     self._rotation = rox.rotation
 
     # since XTGeo is F order, while RMS is C order...
-    self._values = np.asanyarray(rox.get_values(), order='F')
+    self._values = np.asanyarray(rox.get_values(), order='C')
 
 
 def export_horizon_roxapi(self, project, name, category, stype,

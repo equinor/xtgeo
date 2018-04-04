@@ -61,7 +61,7 @@ def test_slice_nearest():
     logger.info(xs.values.max())
 
     mean = xs.values.mean()
-    assert mean == pytest.approx(0.0198142, abs=0.001)
+    assert mean == pytest.approx(0.0198142, abs=0.001)  # 0.019219 in RMS
     logger.info('Avg X is {}'.format(mean))
 
     # try same ting with swapaxes active ==================================

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Module/class for regular surfaces with XTGeo.
+"""
+Module/class for regular surfaces with XTGeo. Regular surfaces have a
+constant distance in between nodes (xinc, yinc), and this simplifies
+computations a lot. A regular surface is defined by an origin (xori, yori)
+in UTM, a number of columns (along X axis, if no rotation), a number of
+rows (along Y axis if no rotation), and increment (distance between nodes).
+The map itself is an array of values.
+Rotation is allowed and is measured in degrees, anticlock from X axis.
 
 Note that an instance of a regular surface can be made directly with::
 
@@ -41,6 +48,55 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+
+def surface_from_file(mfile, fformat='guess'):
+    """Make an instance of a RegularSurface directly from file import.
+
+    Args:
+        mfile (str): Name of file
+        fformat (str): See :meth:`RegularSurface.from_file`
+
+    Example::
+
+        import xtgeo
+        mysurf = xtgeo.surface_from_file('some_name.gri')
+    """
+
+    obj = RegularSurface()
+
+    obj.from_file(mfile, fformat=fformat)
+
+    return obj
+
+
+def surface_from_roxar(project, name, category, stype='horizons',
+                       realisation=0):
+    """This makes an instance of a RegularSurface directly from roxar input.
+
+    For arguments, see :meth:`RegularSurface.from_roxar`.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
+
+    """
+
+    obj = RegularSurface()
+
+    obj.from_roxar(project, name, category, stype=stype,
+                   realisation=realisation)
+
+    return obj
+
+
+# =============================================================================
+# RegularSurface class:
+
 class RegularSurface(object):
     """Class for a regular surface in the XTGeo framework.
 
@@ -60,7 +116,7 @@ class RegularSurface(object):
         xinc: X increment
         yinc: Y increment
         rotation: rotation in degrees, anticlock from X axis between 0, 360
-        values: 2D (masked or not) numpy array of shape (ncol,nrow), C order
+        values: 2D (masked) numpy array of shape (ncol, nrow), C order
 
     Examples:
 
@@ -85,7 +141,7 @@ class RegularSurface(object):
     """
 
     def __init__(self, *args, **kwargs):
-        """The __init__ (constructor) method."""
+        """Initiate a RegularSurface instance."""
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         logger.info(clsname)
@@ -174,6 +230,14 @@ class RegularSurface(object):
     def ensure_correct_values(ncol, nrow, values):
         """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
 
+        Args:
+            ncol (int): Number of columns.
+            nrow (int): Number of rows.
+            values (array or scalar): Values to process.
+
+        Return:
+            values (MaskedArray): Array on correct format.
+
         Example::
 
             vals = np.ones((nx*ny))  # a 1D numpy array in C order by default
@@ -189,7 +253,11 @@ class RegularSurface(object):
             values = ma.array(values, order='C')
 
         if not values.shape == (ncol, nrow):
-            values = ma.reshape(values, (ncol, nrow), order='C')
+            try:
+                values = ma.reshape(values, (ncol, nrow), order='C')
+            except ValueError as emsg:
+                xtg.error('Cannot reshape array: {}'.format(emsg))
+                raise
 
         # replace any undef or nan with mask
         values = ma.masked_greater(values, UNDEF_LIMIT)
@@ -197,8 +265,8 @@ class RegularSurface(object):
 
         if not values.flags.c_contiguous:
             mask = ma.getmaskarray(values)
-            mask = np.asfortranarray(mask)
-            values = np.asfortranarray(values)
+            mask = np.asanyarray(mask, order='C')
+            values = np.asanyarray(values, order='C')
             values = ma.array(values, mask=mask, order='C')
 
         return values
@@ -231,7 +299,7 @@ class RegularSurface(object):
 
     @property
     def rotation(self):
-        """The rotation, anticlock from X axis, in degrees [0..360]."""
+        """The rotation, anticlock from X axis, in degrees [0..360>."""
         return self._rotation
 
     @rotation.setter
@@ -253,7 +321,11 @@ class RegularSurface(object):
 
     @property
     def yflip(self):
-        """The Y flip (handedness) indicator (read only)"""
+        """The Y flip (handedness) indicator 1, or -1 (read only).
+
+        The value 1 (default) means a left-handed system if depth values are
+        positive downwards. Not sure if -1 ever happens.
+        """
         return self._yflip
 
     @property
@@ -340,44 +412,50 @@ class RegularSurface(object):
 
     @property
     def values1d(self):
-        """(Read only) Map values, as 1D numpy, not masked, undef as np.nan.
+        """(Read only) Map values, as 1D numpy masked, normally a numpy
+        view(?).
 
         Example::
 
             map = RegularSurface('myfile.gri')
             values = map.values1d
+        """
+        return self.get_values1d(asmasked=True)
+
+    @property
+    def npvalues1d(self):
+        """(Read only) Map values, as 1D numpy (not masked), undef as np.nan.
+
+        In most cases this will be a copy of the values.
+
+        Example::
+
+            map = RegularSurface('myfile.gri')
+            values = map.npvalues1d
             mean = np.nanmean(values)
             values[values <= 0] = np.nan
-            map.values1d = values  # update
         """
-        val = self._values.flatten(order='K')  # flatten will return a copy
-        val = ma.filled(val, UNDEF)
-        val[val > UNDEF_LIMIT] = np.nan
-        return val
-
-    # @values1d.setter
-    # def values1d(self, ndarray):
-
-    #     if not isinstance(ndarray, np.ndarray):
-    #         raise ValueError('Provided array is not a Numpy ndarray')
-
-    #     if ndarray.shape[0] != self.ncol * self.nrow:
-    #         raise ValueError('Provided array has wrong shape')
-
-    #     val = np.reshape(ndarray, (self._ncol, self._nrow), order='F')
-
-    #     self._values = ma.masked_invalid(val)  # will return a copy
+        return self.get_values1d(asmasked=False, fill_value=np.nan)
 
     @property
     def undef(self):
-        """Returns the undef value, to be used when in the get_zval method."""
+        """Returns or set the undef value, to be used e.g. when in the
+        get_zval method."""
         return self._undef
+
+    @undef.setter
+    def undef(self, undef):
+        self._undef = undef
 
     @property
     def undef_limit(self):
-        """Returns the undef_limit value, to be used when in the
+        """Returns or set the undef_limit value, to be used when in the
         get_zval method."""
         return self._undef_limit
+
+    @undef_limit.setter
+    def undef_limit(self, undef_limit):
+        self._undef_limit = undef_limit
 
 # =============================================================================
 # Import and export
@@ -592,7 +670,7 @@ class RegularSurface(object):
         logger.debug('New array + flags + ID')
         return xsurf
 
-    def get_values1d(self, order='C', asmasked=True, fill_value=np.nan):
+    def get_values1d(self, order='C', asmasked=False, fill_value=UNDEF):
         """Get an an 1D, numpy or masked array of the map values.
 
         Args:
@@ -611,21 +689,28 @@ class RegularSurface(object):
         if not asmasked:
             val = ma.filled(val, fill_value=fill_value)
 
-        return val.flatten(order='K')
+        return val.ravel(order='K')
 
-    def set_values1d(self, val, order='C', fill_value=np.nan):
+    def set_values1d(self, val, order='C'):
         """Update the values attribute based on a 1D input, multiple options.
+
+        If values are np.nan or values are > self.undef_limit, they will be
+        masked.
 
         Args:
             order (str): Input is C (default) or F order
-            fill_value (str): Relevent only if input is not masked, this
-                will be the value of masked entries
         """
 
-        val = val.reshape((self.ncol, self.nrow), order=order)
+        if order == 'F':
+            val = np.copy(val, order='C')
+
+        val = val.reshape((self.ncol, self.nrow))
 
         if not isinstance(val, ma.MaskedArray):
-            val = ma.masked_where(fill_value, val)
+            val = ma.array(val)
+
+        val = ma.masked_greater(val, self.undef_limit)
+        val = ma.masked_invalid(val)
 
         self.values = val
 
@@ -637,7 +722,7 @@ class RegularSurface(object):
         get stuff into Fortran order.
 
         This routine exists for historical reasons and prefer get_values1d
-        instead.
+        instead (C order).
         """
         zval = self.get_values1d(order='F', asmasked=False,
                                  fill_value=self.undef)
@@ -648,6 +733,9 @@ class RegularSurface(object):
         """Set a 1D (unmasked) numpy array (kept for historical reasons).
 
         The numpy array must be in Fortran order (i columns (ncol) fastest).
+
+        This routine exists for historical reasons and prefer set_values1d
+        instead (C order).
         """
         self.set_values1d(vals, order='F')
 
@@ -780,7 +868,7 @@ class RegularSurface(object):
             jloc (int): J (row) location (base is 1)
             zvalues (ndarray). If this is used in a loop it is wise
                 to precompute the numpy surface once in the caller,
-                and submit the numpy array (use surf.get_zval()).
+                and submit the numpy array (use surf.get_values1d()).
 
         Returns:
             The z value at location iloc, jloc, None if undefined cell.
@@ -843,7 +931,7 @@ class RegularSurface(object):
         xylist = []
         valuelist = []
 
-        zvalues = self.get_zval()
+        zvalues = self.get_values1d()
 
         for j in range(self.nrow):
             for i in range(self.ncol):
@@ -950,7 +1038,7 @@ class RegularSurface(object):
         nrow = self.nrow * factor
         xinc = xlen / (ncol - 1)  # node based, not cell center based
         yinc = ylen / (nrow - 1)
-        vals = ma.zeros((ncol, nrow), order='F')
+        vals = ma.zeros((ncol, nrow), order='C')
 
         nonrot = RegularSurface(xori=self.xmin,
                                 yori=self.ymin,
@@ -1285,43 +1373,3 @@ class RegularSurface(object):
         # note the Z coordinates are perhaps not depth
         # numpy operation:
         self.values = self.values + zshift
-
-
-# =============================================================================
-# METHODS as wrappers to class init + import
-
-
-def surface_from_file(mfile, fformat='guess'):
-    """This makes an instance of a RegularSurface directly from import.
-
-    Example::
-
-        import xtgeo
-        mysurf = xtgeo.surface_from_file('some_name.gri')
-    """
-
-    obj = RegularSurface()
-
-    obj.from_file(mfile, fformat=fformat)
-
-    return obj
-
-
-def surface_from_roxar(project, name, category, stype='horizons',
-                       realisation=0):
-    """This makes an instance of a RegularSurface directly from roxar input.
-
-    Example::
-
-        # inside RMS:
-        import xtgeo
-        mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
-
-    """
-
-    obj = RegularSurface()
-
-    obj.from_roxar(project, name, category, stype=stype,
-                   realisation=realisation)
-
-    return obj

@@ -115,8 +115,8 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
         if k1lay == 1:
             logger.info('Initialize zsum ...')
-            msum = np.zeros((self._ncol, self._nrow), order='F')
-            dzsum = np.zeros((self._ncol, self._nrow), order='F')
+            msum = np.zeros((self._ncol, self._nrow), order='C')
+            dzsum = np.zeros((self._ncol, self._nrow), order='C')
 
         numz = int(round(zoneprop[::, ::, klay0].mean()))
         if numz < zone_minmax[0] or numz > zone_minmax[1]:
@@ -133,10 +133,10 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
         logger.info('Mapping for layer or zone ' + str(k1lay) + '...')
 
-        xcv = xprop[::, ::, klay0].ravel(order='F')
-        ycv = yprop[::, ::, klay0].ravel(order='F')
-        mv = mprop[::, ::, klay0].ravel(order='F')
-        dz = dzprop[::, ::, klay0].ravel(order='F')
+        xcv = xprop[::, ::, klay0].ravel(order='C')
+        ycv = yprop[::, ::, klay0].ravel(order='C')
+        mv = mprop[::, ::, klay0].ravel(order='C')
+        dz = dzprop[::, ::, klay0].ravel(order='C')
 
         # this is done to avoid problems if undef values still remains
         # in the coordinates (assume Y undef where X undef):
@@ -172,7 +172,6 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
                 continue
 
             logger.debug(mvdzi.shape)
-            mvdzi = np.asfortranarray(mvdzi)
 
             msum = msum + mvdzi
 
@@ -186,7 +185,6 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
             except ValueError:
                 continue
 
-            dzi = np.asfortranarray(dzi)
             dzsum = dzsum + dzi
 
     if not summing:
@@ -239,11 +237,11 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
     mpr = mprop
 
     if coarsen > 1:
-        xpr = xprop[::coarsen, ::coarsen, ::].copy(order='F')
-        ypr = yprop[::coarsen, ::coarsen, ::].copy(order='F')
-        zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='F')
-        dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='F')
-        mpr = mprop[::coarsen, ::coarsen, ::].copy(order='F')
+        xpr = xprop[::coarsen, ::coarsen, ::].copy(order='C')
+        ypr = yprop[::coarsen, ::coarsen, ::].copy(order='C')
+        zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='C')
+        dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='C')
+        mpr = mprop[::coarsen, ::coarsen, ::].copy(order='C')
         zpr.astype(np.int32)
 
         logger.info('Coarsen is {}'.format(coarsen))

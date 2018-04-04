@@ -1,3 +1,4 @@
+# coding: utf-8
 """Import/export or scans of grid properties (cf GridProperties class"""
 import pandas as pd
 

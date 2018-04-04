@@ -5,6 +5,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.plot import _colortables as _ctable
 
 xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
 
 
 class BasePlot(object):
@@ -12,11 +13,11 @@ class BasePlot(object):
     def __init__(self):
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = xtg.functionlogger(clsname)
+        logger.info(clsname)
 
         self._contourlevels = 3
         self._colormap = plt.cm.viridis
-        self.logger.info('Ran __init__ ...')
+        logger.info('Ran __init__ ...')
 
     @property
     def contourlevels(self):
@@ -47,7 +48,7 @@ class BasePlot(object):
         if colorlist is None:
             self.colormap = cname
         else:
-            self.define_colormap(cfile, colorlist=colorlist)
+            self.define_colormap(cname, colorlist=colorlist)
 
     def get_colormap_as_table(self):
         """Get the current color map as a list of RGB tuples."""
@@ -105,14 +106,14 @@ class BasePlot(object):
 
         elif cfile in valid_maps:
             cmap = plt.get_cmap(cfile)
-            self.logger.info(cmap.N)
+            logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
             self.contourlevels = cmap.N
 
         else:
             cmap = plt.get_cmap('rainbow')
-            self.logger.info(cmap.N)
+            logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
             self.contourlevels = cmap.N
@@ -124,7 +125,7 @@ class BasePlot(object):
                 if entry < len(colors):
                     ctable.append(colors[entry])
                 else:
-                    self.logger.warn('Color list out of range')
+                    logger.warn('Color list out of range')
                     ctable.append(colors[0])
 
             cmap = LinearSegmentedColormap.from_list(ctable, colors,
@@ -142,11 +143,11 @@ class BasePlot(object):
             self._fig.tight_layout()
 
         if self._showok:
-            self.logger.info('Calling plt show method...')
+            logger.info('Calling plt show method...')
             plt.show()
             return True
         else:
-            self.logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning("Nothing to plot (well outside Z range?)")
             return False
 
     def savefig(self, filename, fformat='png', last=True):
@@ -176,5 +177,5 @@ class BasePlot(object):
                 plt.close(self._fig)
             return True
         else:
-            self.logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning("Nothing to plot (well outside Z range?)")
             return False

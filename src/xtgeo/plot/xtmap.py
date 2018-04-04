@@ -5,13 +5,15 @@ from __future__ import print_function, division, absolute_import
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplp
 from matplotlib import ticker
-import logging
 import numpy as np
 import numpy.ma as ma
 import six
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
+
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
 
 
 class Map(BasePlot):
@@ -23,10 +25,7 @@ class Map(BasePlot):
         super(Map, self).__init__()
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
-
-        self._xtg = XTGeoDialog()
+        logger.info(clsname)
 
         self._wells = None
         self._surface = None
@@ -98,6 +97,7 @@ class Map(BasePlot):
                 llabel = float('{0:9.4f}'.format(minv + step * i))
                 legendticks.append(llabel)
 
+            zi.unshare_mask()
             zi[zi < minv] = minv
             zi[zi > maxv] = maxv
 
@@ -114,7 +114,7 @@ class Map(BasePlot):
             self._fig.text(0.99, 0.02, notetxt, ha='right', va='center',
                            fontsize=8)
 
-        self.logger.info('Legendticks: {}'.format(legendticks))
+        logger.info('Legendticks: {}'.format(legendticks))
 
         if minvalue is None:
             minvalue = usesurf.values.min()
@@ -128,7 +128,7 @@ class Map(BasePlot):
             self.colormap = 'rainbow'
 
         levels = np.linspace(minvalue, maxvalue, self.contourlevels)
-        self.logger.debug('Number of contour levels: {}'.format(levels))
+        logger.debug('Number of contour levels: {}'.format(levels))
 
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
 
@@ -148,7 +148,7 @@ class Map(BasePlot):
                                        cmap=self.colormap)
 
             else:
-                self.logger.info('use LogLocator')
+                logger.info('use LogLocator')
                 locator = ticker.LogLocator()
                 ticks = None
                 uselevels = None
@@ -157,7 +157,7 @@ class Map(BasePlot):
 
             self._fig.colorbar(im, ticks=ticks)
         except ValueError as err:
-            self.logger.warning('Could not make plot: {}'.format(err))
+            logger.warning('Could not make plot: {}'.format(err))
 
         plt.gca().set_aspect('equal', adjustable='box')
 
@@ -221,8 +221,6 @@ class Map(BasePlot):
         #print(dataframe)
 
 
-
-
     def show(self):
         """Call to matplotlib.pyplot show().
 
@@ -233,11 +231,11 @@ class Map(BasePlot):
             self._fig.tight_layout()
 
         if self._showok:
-            self.logger.info('Calling plt show method...')
+            logger.info('Calling plt show method...')
             plt.show()
             return True
         else:
-            self.logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning("Nothing to plot (well outside Z range?)")
             return False
 
     def savefig(self, filename, fformat='png'):
@@ -254,5 +252,5 @@ class Map(BasePlot):
             plt.close(self._fig)
             return True
         else:
-            self.logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning("Nothing to plot (well outside Z range?)")
             return False

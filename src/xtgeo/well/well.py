@@ -4,10 +4,10 @@
 from __future__ import print_function, absolute_import
 
 import sys
+import os.path
+
 import numpy as np
 import pandas as pd
-import os.path
-import logging
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -15,6 +15,7 @@ from . import _wellmarkers
 from . import _well_io
 
 xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
 
 
 class Well(object):
@@ -48,8 +49,7 @@ class Well(object):
         """
 
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
+        logger.info(clsname)
 
         self._xtg = XTGeoDialog()
 
@@ -74,7 +74,7 @@ class Well(object):
             # raise RuntimeWarning('Cannot initialize a Well object without '
             #                      'import at the current stage.')
 
-        self.logger.debug('Ran __init__ method for RegularSurface object')
+        logger.debug('Ran __init__ method for RegularSurface object')
 
     # =========================================================================
     # Import and export
@@ -107,7 +107,7 @@ class Well(object):
         if (os.path.isfile(wfile)):
             pass
         else:
-            self.logger.critical('Not OK file')
+            logger.critical('Not OK file')
             raise os.error
 
         if (fformat is None or fformat == 'rms_ascii'):
@@ -115,7 +115,7 @@ class Well(object):
                                              zonelogname=zonelogname,
                                              strict=strict)
         else:
-            self.logger.error('Invalid file format')
+            logger.error('Invalid file format')
 
         # set the attributes
         self._wlogtype = attr['wlogtype']
@@ -493,7 +493,7 @@ class Well(object):
         try:
             zlog = self._df[zonelogname].values.copy()
         except Exception:
-            self.logger.warning('Cannot get zonelog')
+            logger.warning('Cannot get zonelog')
             xtg.warn('Cannot get zonelog {} for {}'
                      .format(zonelogname, self.wellname))
             return None
@@ -501,7 +501,7 @@ class Well(object):
         try:
             mdlog = self._df[mdlogname].values
         except Exception:
-            self.logger.warning('Cannot get mdlog')
+            logger.warning('Cannot get mdlog')
             xtg.warn('Cannot get mdlog {} for {}'
                      .format(mdlogname, self.wellname))
             return None
@@ -528,7 +528,7 @@ class Well(object):
                 hole = True
 
             if zone > Well.UNDEF_INT_LIMIT and nc > threshold:
-                self.logger.info('Restart first (bigger hole)')
+                logger.info('Restart first (bigger hole)')
                 hole = False
                 first = True
                 nc = 0
@@ -611,17 +611,17 @@ class Well(object):
         if self.mdlogname is not None:
             md = self._df[self.mdlogname].values
 
-        self.logger.info('\n')
-        self.logger.info(zlog)
-        self.logger.info(xv)
-        self.logger.info(zv)
+        logger.info('\n')
+        logger.info(zlog)
+        logger.info(xv)
+        logger.info(zv)
 
-        self.logger.info(self.get_logrecord(self.zonelogname))
+        logger.info(self.get_logrecord(self.zonelogname))
         if zonelist is None:
             # need to declare as list; otherwise Py3 will get dict.keys
             zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
-        self.logger.info('Find values for {}'.format(zonelist))
+        logger.info('Find values for {}'.format(zonelist))
 
         ztops, ztopnames, zisos, zisonames = (
             _wellmarkers.extract_ztops(self, zonelist, xv, yv, zv, zlog, md,
@@ -634,14 +634,14 @@ class Well(object):
         else:
             zlist = zisos
 
-        self.logger.debug(zlist)
+        logger.debug(zlist)
 
         if tops:
             df = pd.DataFrame(zlist, columns=ztopnames)
         else:
             df = pd.DataFrame(zlist, columns=zisonames)
 
-        self.logger.info(df)
+        logger.info(df)
 
         return df
 
@@ -682,7 +682,7 @@ class Well(object):
         m1 = df['ztmp'].min()
         m2 = df['ztmp'].max()
         if np.isnan(m1):
-            self.logger.debug('Returns (no data)')
+            logger.debug('Returns (no data)')
             return None
 
         df2 = df.copy()
@@ -713,7 +713,7 @@ class Well(object):
         df = pd.concat(dxlist)
         df.reset_index(inplace=True, drop=True)
 
-        self.logger.debug('DF from well:\n{}'.format(df))
+        logger.debug('DF from well:\n{}'.format(df))
         return df
 
     # =========================================================================

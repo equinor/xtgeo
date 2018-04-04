@@ -18,7 +18,7 @@ xtg_verbose_level = xtg.get_syslevel()
 
 
 def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
-    """Private funct ot do the Cube slicing."""
+    """Private function for the Cube slicing."""
 
     if zsurf is not None:
         other = zsurf
@@ -33,7 +33,7 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
     else:
         opt2 = 1
 
-    cubeval1d = np.ravel(cube.values, order='F')
+    cubeval1d = np.ravel(cube.values, order='C')
 
     nsurf = self.ncol * self.nrow
 
@@ -61,7 +61,7 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
                                          self.yori,
                                          self.yinc,
                                          self.rotation,
-                                         other.get_zval(),
+                                         other.get_values1d(),
                                          nsurf,
                                          usesampling, opt2,
                                          xtg_verbose_level)
@@ -69,7 +69,7 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
     if istat != 0:
         logger.warning('Seem to be rotten')
 
-    self.set_zval(v1d)
+    self.set_values1d(v1d)
 
 
 def slice_cube_window(self, cube, zsurf=None, other=None,
@@ -211,10 +211,10 @@ def _attvalues(attribute, stacked):
         etxt = 'Invalid attribute applied: {}'.format(attribute)
         raise ValueError(etxt)
 
-    if not attvalues.flags['F_CONTIGUOUS']:
+    if not attvalues.flags['C_CONTIGUOUS']:
         mask = ma.getmaskarray(attvalues)
-        mask = np.asfortranarray(mask)
-        attvalues = np.asfortranarray(attvalues)
-        attvalues = ma.array(attvalues, mask=mask, order='F')
+        mask = np.asanyarray(mask, order='C')
+        attvalues = np.asanyarray(attvalues, order='C')
+        attvalues = ma.array(attvalues, mask=mask, order='C')
 
     return attvalues

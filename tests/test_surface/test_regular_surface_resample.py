@@ -36,7 +36,7 @@ def test_resample(reek_map):
     # create a new map instance, unrotated, based on this map
     ncol = int((xs.xmax - xs.xmin) / 10)
     nrow = int((xs.ymax - xs.ymin) / 10)
-    values = np.zeros((nrow, ncol), order='F')
+    values = np.zeros((nrow, ncol))
     snew = RegularSurface(xori=xs.xmin, xinc=10, yori=xs.ymin, yinc=10,
                           nrow=nrow, ncol=ncol, values=values)
 
@@ -59,10 +59,18 @@ def test_points_gridding(reek_map):
 
     xyz.dataframe['Z_TVDSS'] = xyz.dataframe['Z_TVDSS'] + 300
 
+    logger.info('Avg of points: {}'.format(xyz.dataframe['Z_TVDSS'].mean()))
+
     xscopy = xs.copy()
 
+    print(xs.values.flags)
+    print(xscopy.values.flags)
+
     # now regrid
-    xscopy.gridding(xyz, coarsen=3)  # coarsen will speed up test a lot
+    xscopy.gridding(xyz, coarsen=1)  # coarsen will speed up test a lot
+
+    xs.quickplot(filename='/tmp/s1.png')
+    xscopy.quickplot(filename='/tmp/s2.png')
 
     tsetup.assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
 

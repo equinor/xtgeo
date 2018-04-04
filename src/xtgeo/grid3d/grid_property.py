@@ -39,19 +39,6 @@ from ._gridprops_io import _get_fhandle
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# =============================================================================
-# Class constructor
-#
-# Some key properties:
-# _ncol        =  number of rows (X, cycling fastest)
-# _nrow        =  number of columns (Y)
-# _nlay        =  number of layers (Z)
-# _values      =  Numpy 3D array of doubles or int (masked)
-# _cvalues     =  SWIG pointer to C array
-# NOTE: either _values OR _cvalues will exist; hence the other is "None"
-# etc
-# =============================================================================
-
 
 class GridProperty(Grid3D):
     """Class for a single 3D grid property.
@@ -285,7 +272,7 @@ class GridProperty(Grid3D):
 
     @values3d.setter
     def values3d(self, values):
-        # kept for backwards compat
+        # kept for backwards compatibility
         self.values = values
 
     @property
@@ -494,23 +481,39 @@ class GridProperty(Grid3D):
             self, projectname, gname, pname, saveproject=saveproject,
             realisation=0)
 
-    def to_file(self, pfile, fformat='roff', name=None):
+    def to_file(self, pfile, fformat='guess', name=None):
         """
         Export grid property to file.
 
         Args:
             pfile (str): file name
-            fformat (str): file format to be used (roff is the only
-                supported currently, which is roff binary)
+            fformat (str): file format to be used. The default 'guess' is
+                roff which is the only supported currently, which is either
+                'roff' or 'roff_binary' for binary, and 'roffasc'
+                or 'roff_ascii' for ASCII (text).
             name (str): If provided, will give property name; else the existing
                 name of the instance will used.
         """
         logger.debug('Export property to file...')
 
-        if (fformat == 'roff'):
+        # guess based on file extension (todo)
+        if fformat == 'guess':
+            fformat = 'roff'
+
+        if 'roff' in fformat:
             if name is None:
                 name = self.name
-            _gridprop_export.export_roff(self, pfile, name)
+
+            binary = True
+            if 'asc' in fformat:
+                binary = False
+
+            # for later usage
+            append = False
+            last = True
+
+            _gridprop_export.export_roff(self, pfile, name, append=append,
+                                         last=last, binary=binary)
 
     def get_xy_value_lists(self, grid=None, mask=True):
         """Get lists of xy coords and values for Webportal format.
