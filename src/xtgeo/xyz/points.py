@@ -6,8 +6,8 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
-from xtgeo.xyz import XYZ
 import xtgeo
+from xtgeo.xyz import XYZ
 import cxtgeo.cxtgeo as _cxtgeo
 
 UNDEF = _cxtgeo.UNDEF
@@ -58,12 +58,55 @@ class Points(XYZ):
         self._df = df.copy()
 
     def from_file(self, pfile, fformat='xyz'):
-        """Doc later"""
+        """Import points.
+
+        Supported import formats (fformat):
+
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+
+        * 'guess': Try to choose file format based on extension
+
+        Args:
+            pfile (str): Name of file
+            fformat (str): File format, see list above
+
+        Returns:
+            Object instance (needed optionally)
+
+        Raises:
+            OSError: if file is not present or wrong permissions.
+
+
+        """
         super(Points, self).from_file(pfile, fformat=fformat)
 
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
-        """Doc later"""
+        """Export XYZ (Points/Polygons) to file.
+
+        Args:
+            pfile (str): Name of file
+            fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
+            attributes (list): List of extra columns to export (some formats)
+            filter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}
+            wcolumn (str): Name of well column (rms_wellpicks format only)
+            hcolumn (str): Name of horizons column (rms_wellpicks format only)
+            mdcolumn (str): Name of MD column (rms_wellpicks format only)
+
+        Returns:
+            Number of points exported
+
+        Note that the rms_wellpicks will try to output to:
+
+        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
+        * HorizonName, WellName, X, Y, Z  otherwise
+
+        Raises:
+            KeyError if filter is set and key(s) are invalid
+
+        """
+
         super(Points, self).to_file(pfile, fformat=fformat,
                                     attributes=attributes, filter=filter,
                                     wcolumn=wcolumn, hcolumn=hcolumn,

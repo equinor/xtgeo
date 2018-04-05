@@ -11,6 +11,9 @@ import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import _xyz_io
 
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
 
 @six.add_metaclass(abc.ABCMeta)
 class XYZ(object):
@@ -19,10 +22,7 @@ class XYZ(object):
 
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
-
-        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        self._xtg = XTGeoDialog()
-        self.logger = self._xtg.functionlogger(clsname)
+        """Initiate instance"""
 
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
@@ -33,11 +33,11 @@ class XYZ(object):
             # make instance from file import
             pfile = args[0]
             if isinstance(pfile, str):
-                self.logger.info('Instance from file')
+                logger.info('Instance from file')
                 fformat = kwargs.get('fformat', 'guess')
                 self.from_file(pfile, fformat=fformat)
 
-        self.logger.info('Instance initiated')
+        logger.info('Instance initiated')
 
     # =========================================================================
     # Import and export
@@ -70,13 +70,13 @@ class XYZ(object):
         if (os.path.isfile(pfile)):
             pass
         else:
-            self.logger.critical('Not OK file')
+            logger.critical('Not OK file')
             raise os.error
 
         froot, fext = os.path.splitext(pfile)
         if fformat == 'guess':
             if len(fext) == 0:
-                self.logger.critical('File extension missing. STOP')
+                logger.critical('File extension missing. STOP')
                 raise SystemExit
             else:
                 fformat = fext.lower().replace('.', '')
@@ -86,7 +86,7 @@ class XYZ(object):
         elif (fformat == 'zmap'):
             _xyz_io.import_zmap(self, pfile)
         else:
-            self.logger.error('Invalid file format (not supported): {}'
+            logger.error('Invalid file format (not supported): {}'
                               .format(fformat))
             raise SystemExit
 
@@ -95,33 +95,33 @@ class XYZ(object):
     @abc.abstractmethod
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn=None):
-        # """Export XYZ (Points/Polygons) to file.
+        """Export XYZ (Points/Polygons) to file.
 
-        # Args:
-        #     pfile (str): Name of file
-        #     fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-        #     attributes (list): List of extra columns to export (some formats)
-        #     filter (dict): Filter on e.g. top name(s) with keys TopName
-        #         or ZoneName as {'TopName': ['Top1', 'Top2']}
-        #     wcolumn (str): Name of well column (rms_wellpicks format only)
-        #     hcolumn (str): Name of horizons column (rms_wellpicks format only)
-        #     mdcolumn (str): Name of MD column (rms_wellpicks format only)
+        Args:
+            pfile (str): Name of file
+            fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
+            attributes (list): List of extra columns to export (some formats)
+            filter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}
+            wcolumn (str): Name of well column (rms_wellpicks format only)
+            hcolumn (str): Name of horizons column (rms_wellpicks format only)
+            mdcolumn (str): Name of MD column (rms_wellpicks format only)
 
-        # Returns:
-        #     Number of points exported
+        Returns:
+            Number of points exported
 
-        # Note that the rms_wellpicks will try to output to:
+        Note that the rms_wellpicks will try to output to:
 
-        # * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
-        # * HorizonName, WellName, X, Y, Z  otherwise
+        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
+        * HorizonName, WellName, X, Y, Z  otherwise
 
-        # Raises:
-        #     KeyError if filter is set and key(s) are invalid
+        Raises:
+            KeyError if filter is set and key(s) are invalid
 
-        # """
+        """
         if self.dataframe is None:
             ncount = 0
-            self.logger.warning('Nothing to export!')
+            logger.warning('Nothing to export!')
             return ncount
 
         if fformat is None or fformat in ['xyz', 'poi', 'pol']:
@@ -139,7 +139,7 @@ class XYZ(object):
                                                mdcolumn=mdcolumn)
 
         if ncount == 0:
-            self.logger.warning('Nothing to export!')
+            logger.warning('Nothing to export!')
 
         return ncount
 
@@ -149,10 +149,12 @@ class XYZ(object):
 
     @abc.abstractproperty
     def nrow(self):
+        """NROW"""
         pass
 
     @abc.abstractproperty
     def dataframe(self):
+        """Dataframe"""
         pass
 
     @dataframe.setter

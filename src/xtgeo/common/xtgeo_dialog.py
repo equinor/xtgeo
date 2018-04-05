@@ -30,6 +30,7 @@ import sys
 import inspect
 import logging
 import xtgeo
+import cxtgeo
 import cxtgeo.cxtgeo as _cxtgeo
 import timeit
 

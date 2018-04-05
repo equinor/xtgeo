@@ -8,7 +8,7 @@
 from __future__ import print_function, absolute_import
 import pandas as pd
 
-from xtgeo.xyz._xyz import XYZ
+from xtgeo.xyz import XYZ
 from xtgeo.xyz._xyz_io import _convert_idbased_xyz
 
 

@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
-import logging
+
 from xtgeo.common import XTGeoDialog
 import cxtgeo.cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+_cxtgeo.xtg_verbose_file('NONE')
+xtg_verbose_level = xtg.get_syslevel()
+
+logger = xtg.functionlogger(__name__)
 
 
 def export_roff(self, gfile, option):
     """Export grid to ROFF format (binary)"""
 
     logger.debug('Export to ROFF...')
-    _cxtgeo.xtg_verbose_file('NONE')
-    xtg_verbose_level = self._xtg.syslevel
 
     if self._nsubs == 0 and not hasattr(self, '_p_subgrd_v'):
         logger.debug('Create a pointer for _p_subgrd_v ...')
@@ -40,8 +40,6 @@ def export_grdecl(self, gfile):
     """Export grid to Eclipse GRDECL format (ascii)"""
 
     logger.debug('Export to GRDECL...')
-    _cxtgeo.xtg_verbose_file('NONE')
-    xtg_verbose_level = self._xtg.syslevel
 
     _cxtgeo.grd3d_export_grdecl(self._ncol, self._nrow, self._nlay,
                                 self._p_coord_v, self._p_zcorn_v,

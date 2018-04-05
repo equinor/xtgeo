@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Class for a 3D grid property.
+"""Module for a 3D grid property.
 
 The grid property instances may or may not belong to a grid geometry
 object. Normally the instance is created when importing a grid

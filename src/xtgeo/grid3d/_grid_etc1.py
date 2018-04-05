@@ -288,7 +288,7 @@ def get_xyz_corners(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
         ptr_coord.append(some)
 
     for i, v in enumerate(ptr_coord):
-        self.logger.debug('SWIG object {}   {}'.format(i, v))
+        logger.debug('SWIG object {}   {}'.format(i, v))
 
     option = 0
 
@@ -348,7 +348,7 @@ def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
 
     glist.append(quality)
 
-    self.logger.info('Cell geometrics done')
+    logger.info('Cell geometrics done')
 
     if return_dict:
         gdict = {}

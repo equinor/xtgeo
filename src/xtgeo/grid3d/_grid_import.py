@@ -1,3 +1,4 @@
+# coding: utf-8
 """Private module, Grid Import private functions"""
 
 from __future__ import print_function, absolute_import
@@ -18,7 +19,7 @@ xtg_verbose_level = xtg.get_syslevel()
 
 #
 # NOTE:
-# self is the xtgeo.grid3d.grid instance
+# self is the xtgeo.grid3d.Grid instance
 #
 
 
@@ -72,11 +73,6 @@ def import_roff(self, gfile):
 # import eclipse output .GRID
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_output(self, gfile, gtype):
-
-    # need to call the C function...
-    _cxtgeo.xtg_verbose_file('NONE')
-
-    xtg_verbose_level = self._xtg.syslevel
 
     # gtype=0 GRID, gtype=1 FGRID, 2=EGRID, 3=FEGRID ...not all supported
     if gtype == 1 or gtype == 3:
@@ -178,11 +174,6 @@ def import_ecl_run(self, groot, initprops=None,
 # import eclipse input .GRDECL
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_grdecl(self, gfile):
-
-    # need to call the C function...
-    _cxtgeo.xtg_verbose_file('NONE')
-
-    xtg_verbose_level = self._xtg.syslevel
 
     # make a temporary file
     fds, tmpfile = mkstemp()

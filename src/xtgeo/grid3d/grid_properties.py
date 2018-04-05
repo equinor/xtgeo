@@ -4,7 +4,7 @@ import sys
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from .grid3d import Grid3D
+from xtgeo.grid3d import Grid3D
 
 from xtgeo.grid3d import _gridprops_io
 from xtgeo.grid3d import _gridprops_io_obsolete

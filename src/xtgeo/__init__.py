@@ -34,7 +34,7 @@ from .plot import xtmap
 from .plot import grid3d_slice
 from .xyz import points
 from .xyz import polygons
-# from .xyz import xyz
+# from .xyz import _xyz
 
 from ._version import get_versions
 __version__ = get_versions()['version']

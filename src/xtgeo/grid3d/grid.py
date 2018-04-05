@@ -86,17 +86,17 @@ class Grid(Grid3D):
 
     @property
     def ncol(self):
-        """Cf :py:attr:`.Grid3D.ncol`"""
+        """Number of columns (read only)"""
         return super(Grid, self).ncol
 
     @property
     def nrow(self):
-        """Cf :py:attr:`.Grid3D.nrow`"""
+        """Number of rows (read only)"""
         return super(Grid, self).nrow
 
     @property
     def nlay(self):
-        """Cf :py:attr:`.Grid3D.nlay`"""
+        """Number of layers (read only)"""
         return super(Grid, self).nlay
 
     @property
