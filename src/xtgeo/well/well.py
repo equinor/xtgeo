@@ -697,13 +697,13 @@ class Well(object):
         dxlist = []
         for i in range(len(dflist)):
             dx = dflist[i]
-            dx = dx.rename(columns={'ztmp': 'ID'})
+            dx = dx.rename(columns={'ztmp': 'POLY_ID'})
             cols = [x for x in dx.columns
-                    if x not in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID']]
+                    if x not in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']]
 
             dx = dx.drop(cols, axis=1)
             # rename columns:
-            dx.columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID']
+            dx.columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']
             # now resample every N'th
             if resample > 1:
                 dx = pd.concat([dx.iloc[::resample, :], dx.tail(1)])

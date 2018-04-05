@@ -161,7 +161,7 @@ class Map(BasePlot):
 
         plt.gca().set_aspect('equal', adjustable='box')
 
-    def plot_faults(self, fpoly, idname='ID', color='k', edgecolor='k',
+    def plot_faults(self, fpoly, idname='POLY_ID', color='k', edgecolor='k',
                     alpha=0.7, linewidth=0.8):
         """Plot the faults
 

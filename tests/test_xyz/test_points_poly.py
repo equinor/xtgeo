@@ -79,7 +79,7 @@ def test_import_zmap_and_xyz():
     logger.info(mypol2a.dataframe)
     logger.info(mypol2b.dataframe)
 
-    for col in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID']:
+    for col in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']:
         status = np.allclose(mypol2a.dataframe[col].values,
                              mypol2b.dataframe[col].values)
 

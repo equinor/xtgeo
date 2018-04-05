@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Private import and export routines"""
+"""Private import and export routines for XYZ stuff."""
 
 from __future__ import print_function, absolute_import
 
@@ -13,21 +13,22 @@ logger = xtg.basiclogger(__name__)
 
 # -------------------------------------------------------------------------
 # Import/Export methods for various formats
+# Note: 'self' is the XYZ instance which may be Points/Polygons
 # -------------------------------------------------------------------------
 
 
-def import_xyz(xyz, pfile):
+def import_xyz(self, pfile):
 
     # Simple X Y Z file. All points as Pandas framework
 
-    xyz._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
-                          header=None, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'],
-                          dtype=np.float64, na_values=999.00)
+    self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
+                           header=None, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'],
+                           dtype=np.float64, na_values=999.00)
 
-    xyz.logger.debug(xyz._df.head())
+    logger.debug(self._df.head())
 
 
-def import_zmap(xyz, pfile):
+def import_zmap(self, pfile):
 
     # the zmap ascii polygon format; not sure about all details;
     # seems that I just
@@ -57,17 +58,17 @@ def import_zmap(xyz, pfile):
     #    457370.468750      6782568.500000      1745.868286         0
 
     dtype = {'X_UTME': np.float64, 'Y_UTMN': np.float64, 'Z_TVDSS': np.float64,
-             'ID': np.int32}
+             'POLY_ID': np.int32}
 
-    xyz._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=16,
-                          header=None,
-                          names=['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'ID'],
-                          dtype=dtype, na_values=1.0E+30)
+    self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=16,
+                           header=None,
+                           names=['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID'],
+                           dtype=dtype, na_values=1.0E+30)
 
-    logger.debug(xyz._df.head())
+    logger.debug(self._df.head())
 
 
-def export_rms_attr(xyz, pfile, attributes=None, filter=None):
+def export_rms_attr(self, pfile, attributes=None, filter=None):
     """Export til RMS attribute, also called RMS extended set.
 
     If attributes is None, then it will be a simple XYZ file.
@@ -79,7 +80,7 @@ def export_rms_attr(xyz, pfile, attributes=None, filter=None):
         is made.
     """
 
-    df = xyz.dataframe.copy()
+    df = self.dataframe.copy()
     columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
     df.fillna(value=999.0, inplace=True)
 
@@ -99,7 +100,7 @@ def export_rms_attr(xyz, pfile, attributes=None, filter=None):
         logger.warning('Nothing to export')
         return 0
 
-    if attributes is None and 'ID' in df.columns and xyz._ispolygons:
+    if attributes is None and 'POLY_ID' in df.columns and self._ispolygons:
         # need to convert the dataframe
         df = _convert_idbased_xyz(df)
 
@@ -120,11 +121,11 @@ def export_rms_attr(xyz, pfile, attributes=None, filter=None):
 
 def _convert_idbased_xyz(df):
 
-    # If polygons, there is a 4th column with ID. This needs
+    # If polygons, there is a 4th column with POLY_ID. This needs
     # to replaced by adding 999 line instead (for polygons)
     # prior to XYZ export or when interactions in CXTGEO
 
-    idgroups = df.groupby('ID')
+    idgroups = df.groupby('POLY_ID')
 
     newdf = pd.DataFrame(columns=['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
     udef = pd.DataFrame([[999.0, 999.0, 999.0]], columns=['X_UTME',
@@ -132,13 +133,13 @@ def _convert_idbased_xyz(df):
                                                           'Z_TVDSS'])
 
     for id_, gr in idgroups:
-        dfx = gr.drop('ID', axis=1)
+        dfx = gr.drop('POLY_ID', axis=1)
         newdf = newdf.append([dfx, udef], ignore_index=True)
 
     return newdf
 
 
-def export_rms_wpicks(xyz, pfile, hcolumn, wcolumn, mdcolumn=None):
+def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn=None):
     """Export til RMS wellpicks
 
     If a MD column (mdcolumn) exists, it will use the MD
@@ -154,7 +155,7 @@ def export_rms_wpicks(xyz, pfile, hcolumn, wcolumn, mdcolumn=None):
 
     """
 
-    df = xyz.dataframe.copy()
+    df = self.dataframe.copy()
 
     print(df)
 

@@ -28,8 +28,6 @@ class Points(XYZ):
         # show the Pandas dataframe
         print(xp.dataframe)
 
-    .. autoclass:: XYZ:: members:: inherited-members
-
     """
 
     def __init__(self, *args, **kwargs):
