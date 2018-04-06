@@ -1,5 +1,4 @@
 """Export Cube data via SegyIO library or XTGeo CLIB."""
-import numpy as np
 import shutil
 import segyio
 
@@ -27,7 +26,6 @@ def export_segy(self, sfile, template=None):
     # equal.
     if self._segyfile is not None:
         newvalues = self.values
-#        newvalues = np.asanyarray(self.values, order='C')
 
         try:
             shutil.copyfile(self._segyfile, sfile)
@@ -36,9 +34,11 @@ def export_segy(self, sfile, template=None):
             raise
 
         logger.debug('Input segy file copied...')
+
         with segyio.open(sfile, 'r+') as segyfile:
 
             logger.debug('Output segy file is now open...')
+
             if segyfile.sorting == 1:
                 logger.info('xline sorting')
                 for xl, xline in enumerate(segyfile.xlines):
@@ -51,7 +51,7 @@ def export_segy(self, sfile, template=None):
                 ix, jy, kz = newvalues.shape
                 for il, iline in enumerate(segyfile.ilines):
                     logger.debug('il={}, iline={}'.format(il, iline))
-                    if ix != jy != kz or ix != kz != jy :
+                    if ix != jy != kz or ix != kz != jy:
                         segyfile.iline[iline] = newvalues[il]  # broadcasting
                     else:
                         # safer but a bit slower than broadcasting

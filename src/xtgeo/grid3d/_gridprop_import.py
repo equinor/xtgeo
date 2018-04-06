@@ -64,7 +64,7 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
 
     # scan file for property
     logger.info('Make kwlist')
-    kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=10000,
+    kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=100000,
                                   dataframe=False, dates=True)
 
     # first INTEHEAD is needed to verify grid dimensions:

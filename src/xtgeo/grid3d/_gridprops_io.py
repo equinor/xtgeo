@@ -39,7 +39,7 @@ def _close_fhandle(fh, flag):
         logger.debug('File remains open')
 
 
-def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False,
+def scan_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False,
                   dates=False):
 
     if fformat == 'xecl':
@@ -57,7 +57,7 @@ def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False,
     return data
 
 
-def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
+def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False):
 
     # In case pfile is not a file name but a swig pointer to a file handle,
     # the file must not be closed
@@ -108,7 +108,7 @@ def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False):
         return result
 
 
-def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=10000,
+def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=100000,
                                dataframe=False):
 
     """Add a date column to the keyword"""
@@ -140,7 +140,7 @@ def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=10000,
         return result
 
 
-def _scan_roff_keywords(pfile, fformat='roff', maxkeys=10000, dataframe=False):
+def _scan_roff_keywords(pfile, fformat='roff', maxkeys=100000, dataframe=False):
 
     # In case pfile is not a file name but a swig pointer to a file handle,
     # the file must not be closed

@@ -14,7 +14,7 @@ from xtgeo.grid3d import _gridprops_etc
 class GridProperties(Grid3D):
     """Class for a collection of 3D grid props, belonging to the same grid.
 
-    See also the ~xtgeo.grid3d.GridProperty class.
+    See also the :class:`xtgeo.grid3d.GridProperty` class.
     """
 
     def __init__(self):
@@ -251,7 +251,7 @@ class GridProperties(Grid3D):
     # =========================================================================
 
     @staticmethod
-    def scan_keywords(pfile, fformat='xecl', maxkeys=10000, dataframe=False,
+    def scan_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False,
                       dates=False):
         """Quick scan of keywords in Eclipse binary restart/init/... file.
 
