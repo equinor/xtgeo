@@ -200,3 +200,32 @@ def test_segyio_import_export():
     y = Cube('TMP/reek_cube.segy')
 
     logger.info(y.values.mean())
+
+
+def test_segyio_import_export_pristine():
+    """Import and export as pristine SEGY (case 1 Reek) via SegIO library."""
+
+    logger.info('Import SEGY format via SEGYIO')
+
+    x = Cube()
+    x.from_file(sfile1, fformat='segy', engine='segyio')
+
+    assert x.ncol == 408, 'NCOL'
+    dim = x.values.shape
+
+    logger.info('Dimension is {}'.format(dim))
+    assert dim == (408, 280, 70), 'Dimensions 3D'
+    tsetup.assert_almostequal(x.values.max(), 7.42017, 0.001)
+
+    input_mean = x.values.mean()
+
+    logger.info(input_mean)
+
+    x.values += 200
+
+    x.to_file('TMP/reek_cube_pristine.segy', pristine=True)
+
+    # # reread that file
+    # y = Cube('TMP/reek_cube_pristine.segy')
+
+    # logger.info(y.values.mean())

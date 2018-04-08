@@ -357,13 +357,14 @@ class Cube(object):
         else:
             logger.error('Invalid or unknown file format')
 
-    def to_file(self, sfile, fformat='segy'):
+    def to_file(self, sfile, fformat='segy', pristine=False):
         """Export cube data to file.
 
         Args:
             sfile (str): Filename
             fformat (str, optional): file format 'segy' (default) or
                 'rms_regular'
+            pristine (bool): If True, make SEGY from scratch.
 
         Example::
             >>> zz = Cube('some.segy')
@@ -371,7 +372,7 @@ class Cube(object):
         """
 
         if (fformat == 'segy'):
-            _cube_export.export_segy(self, sfile)
+            _cube_export.export_segy(self, sfile, pristine=pristine)
         elif (fformat == 'rms_regular'):
             _cube_export.export_rmsreg(self, sfile)
         else:
