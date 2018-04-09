@@ -11,6 +11,8 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # self is Grid() instance
+_cxtgeo.xtg_verbose_file('NONE')
+xtg_verbose_level = xtg.syslevel
 
 
 def import_grid_roxapi(self, projectname, gname, realisation):
@@ -52,9 +54,6 @@ def import_grid_roxapi(self, projectname, gname, realisation):
 
 
 def _convert_to_xtgeo_grid(self, roxgrid, corners):
-
-    _cxtgeo.xtg_verbose_file('NONE')
-    xtg_verbose_level = self._xtg.syslevel
 
     indexer = roxgrid.grid_indexer
 

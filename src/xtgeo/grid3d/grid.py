@@ -26,6 +26,28 @@ from xtgeo.grid3d import _gridprop_lowlevel
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
+# METHODS as wrappers to class init + import
+
+
+def grid_from_file(gfile, fformat='guess'):
+    """Text to come"""
+
+    obj = Grid()
+
+    obj.from_file(gfile, fformat=fformat)
+
+    return obj
+
+
+def grid_from_roxar(project, gname, realisation=0):
+    """text to come"""
+
+    obj = Grid()
+
+    obj.from_roxar(project, gname, realisation=realisation)
+
+    return obj
+
 
 class Grid(Grid3D):
     """Class for a 3D grid geometry (corner point) with optionally props.
