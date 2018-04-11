@@ -15,7 +15,7 @@ logger = xtg.functionlogger(__name__)
 _cxtgeo.xtg_verbose_file('NONE')
 
 
-def export_segy(self, sfile, template=None, pristine=False):
+def export_segy(self, sfile, template=None, pristine=False, engine='xtgeo'):
     """Export on SEGY using segyio library.
 
     Args:
@@ -24,6 +24,25 @@ def export_segy(self, sfile, template=None, pristine=False):
         template (str): Use an existing file a template.
         pristine (bool): Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
+        engine (str): Use 'xtgeo' or (later?) 'segyio'
+    """
+
+    if engine == 'segyio':
+        _export_segy_segyio(self, sfile, template=template, pristine=pristine)
+    else:
+        _export_segy_xtgeo(self, sfile)
+
+
+def _export_segy_segyio(self, sfile, template=None, pristine=False):
+    """Export on SEGY using segyio library.
+
+    Args:
+        self (Cube): The instance
+        sfile (str): File name to export to.
+        template (str): Use an existing file a template.
+        pristine (bool): Make SEGY from scrtach if True; otherwise use an
+            existing SEGY file.
+        engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
 
     logger.debug('Export segy format using segyio...')
@@ -72,11 +91,10 @@ def export_segy(self, sfile, template=None, pristine=False):
                         segyfile.iline[iline] = cvalues[il, :, :]
 
     else:
+        # NOT FINISHED!
         logger.debug('Input segy file from scratch ...')
 
         sintv = int(self.zinc * 1000)
-
-
         spec = segyio.spec()
 
         spec.sorting = 2
@@ -85,7 +103,6 @@ def export_segy(self, sfile, template=None, pristine=False):
         spec.samples = np.arange(self.nlay)
         spec.ilines = np.arange(self.ncol)
         spec.xlines = np.arange(self.nrow)
-
 
         with segyio.create(sfile, spec) as f:
 
@@ -106,6 +123,26 @@ def export_segy(self, sfile, template=None, pristine=False):
             #         segyio.TraceField.CROSSLINE_3D: xlno,
             #         segyio.TraceField.TRACE_SAMPLE_INTERVAL: sintv
             #     }
+
+
+def _export_segy_xtgeo(self, sfile):
+    """Export SEGY via XTGeo internal C routine."""
+
+    values1d = self.values.reshape(-1)
+
+    print(values1d.shape)
+
+    status = _cxtgeo.cube_export_segy(sfile, self.nx, self.ny, self.nz,
+                                      values1d,
+                                      self.xori, self.xinc,
+                                      self.yori, self.yinc,
+                                      self.zori, self.zinc,
+                                      self.rotation, self.yflip,
+                                      1, 0,
+                                      xtg_verbose_level)
+
+    if status != 0:
+        raise RuntimeError('Error when exporting to SEGY (xtgeo engine)')
 
 
 def export_rmsreg(self, sfile):

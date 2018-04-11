@@ -229,3 +229,26 @@ def test_segyio_import_export_pristine():
     # y = Cube('TMP/reek_cube_pristine.segy')
 
     # logger.info(y.values.mean())
+
+
+def test_segyio_export_xtgeo():
+    """Import via SEGYIO and and export SEGY (case 1 Reek) via XTGeo."""
+
+    logger.info('Import SEGY format via SEGYIO')
+
+    x = Cube(sfile1)
+
+    x.values += 200
+
+    x.to_file('TMP/reek_cube_xtgeo.segy', engine='xtgeo')
+
+    xx = Cube()
+    xx.scan_segy_header('TMP/reek_cube_xtgeo.segy',
+                        outfile='TMP/cube_scanheader2')
+    xx.scan_segy_traces('TMP/reek_cube_xtgeo.segy',
+                        outfile='TMP/cube_scantraces2')
+
+    # # reread that file, scan header
+    # y = Cube('TMP/reek_cube_pristine.segy')
+
+    # logger.info(y.values.mean())

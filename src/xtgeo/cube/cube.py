@@ -357,7 +357,7 @@ class Cube(object):
         else:
             logger.error('Invalid or unknown file format')
 
-    def to_file(self, sfile, fformat='segy', pristine=False):
+    def to_file(self, sfile, fformat='segy', pristine=False, engine='xtgeo'):
         """Export cube data to file.
 
         Args:
@@ -365,6 +365,7 @@ class Cube(object):
             fformat (str, optional): file format 'segy' (default) or
                 'rms_regular'
             pristine (bool): If True, make SEGY from scratch.
+            engine (str): Which "engine" to use.
 
         Example::
             >>> zz = Cube('some.segy')
@@ -372,7 +373,8 @@ class Cube(object):
         """
 
         if (fformat == 'segy'):
-            _cube_export.export_segy(self, sfile, pristine=pristine)
+            _cube_export.export_segy(self, sfile, pristine=pristine,
+                                     engine=engine)
         elif (fformat == 'rms_regular'):
             _cube_export.export_rmsreg(self, sfile)
         else:
