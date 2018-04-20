@@ -129,11 +129,11 @@ class Grid(Grid3D):
     @property
     def actnum_indices(self):
         """Returns the 1D ndarray which holds the indices for active cells
-        given in 1D, F order.
+        given in 1D, C order.
 
         """
         if self._actnum_indices is None:
-            actnumv = self.get_actnum().values.copy(order='F')
+            actnumv = self.get_actnum().values.copy(order='C')
             actnumv = np.ravel(actnumv, order='K')
             self._actnum_indices = np.flatnonzero(actnumv)
 
@@ -361,7 +361,7 @@ class Grid(Grid3D):
         ilist = []
         for axis in range(3):
             index = grd[axis]
-            index = index.flatten(order='F')
+            index = index.flatten(order='C')
             index = index + 1
             index = index.astype(np.int32)
 

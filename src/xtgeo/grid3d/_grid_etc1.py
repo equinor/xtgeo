@@ -411,6 +411,8 @@ def inactivate_inside(self, poly, layer_range=None, inside=True,
     # get dataframe where each polygon is ended by a 999 value
     dfxyz = poly.get_xyz_dataframe()
 
+    print(dfxyz)
+
     xc = dfxyz['X_UTME'].values.copy()
     yc = dfxyz['Y_UTMN'].values.copy()
 
