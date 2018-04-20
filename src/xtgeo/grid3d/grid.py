@@ -133,8 +133,8 @@ class Grid(Grid3D):
 
         """
         if self._actnum_indices is None:
-            actnumv = self.get_actnum().values.copy(order='C')
-            actnumv = np.ravel(actnumv, order='K')
+            actnumv = self.get_actnum()
+            actnumv = np.ravel(actnumv.values)
             self._actnum_indices = np.flatnonzero(actnumv)
 
         return self._actnum_indices
@@ -204,6 +204,17 @@ class Grid(Grid3D):
         object"""
 
         return self._roxindexer
+
+    def get_actnum_indices(self, order='C'):
+        """Returns the 1D ndarray which holds the indices for active cells
+        given in 1D, C or F order.
+
+        """
+        actnumv = self.get_actnum().values.copy(order=order)
+        actnumv = np.ravel(actnumv, order='K')
+        ind = np.flatnonzero(actnumv)
+
+        return ind
 
     def get_prop_by_name(self, name):
         """Gets a property object by name lookup, return None if not present.

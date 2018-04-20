@@ -43,7 +43,7 @@ def _export_roff_discrete(self, pfile, name, append=False, last=True,
     ptr_codes = _cxtgeo.new_intarray(256)
     ncodes = self.ncodes
     codenames = ""
-    print(self.codes.keys())
+    logger.info(self.codes.keys())
     for inum, ckey in enumerate(sorted(self.codes.keys())):
         codenames += self.codes[ckey]
         codenames += '|'

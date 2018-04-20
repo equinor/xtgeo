@@ -158,10 +158,12 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     allvalues = np.zeros((ncol * nrow * nlay), dtype=values.dtype) + use_undef
 
     if grid.actnum_indices.shape[0] == values.shape[0]:
-        allvalues[grid.actnum_indices] = values
 
-    if values.shape[0] == ncol * nrow * nlay:  # often the case for PORV array
+        allvalues[grid.get_actnum_indices(order='F')] = values
+    elif values.shape[0] == ncol * nrow * nlay:  # often the case for PORV array
         allvalues = values.copy()
+    else:
+        raise SystemExit('BUG')
 
     allvalues = allvalues.reshape((ncol, nrow, nlay), order='F')
     allvalues = np.asanyarray(allvalues, order='C')

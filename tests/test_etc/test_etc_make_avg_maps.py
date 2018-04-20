@@ -62,6 +62,7 @@ def test_avg01():
     yc = ma.filled(yc.values3d)
     zc = ma.filled(zc.values3d)
 
+
     # get actnum
     actnum = g.get_actnum()
     actnum = ma.filled(actnum.values3d)
@@ -73,6 +74,7 @@ def test_avg01():
 
     avgmap = RegularSurface(nx=55, ny=50, xinc=400, yinc=375,
                             xori=-100, yori=0, values=np.zeros((55, 50)))
+
 
     avgmap.avg_from_3dprop(xprop=xc, yprop=yc, zoneprop=zoneprop,
                            mprop=po, dzprop=dz, truncate_le=0.001,
