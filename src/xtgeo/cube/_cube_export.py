@@ -130,8 +130,6 @@ def _export_segy_xtgeo(self, sfile):
 
     values1d = self.values.reshape(-1)
 
-    print(values1d.shape)
-
     status = _cxtgeo.cube_export_segy(sfile, self.nx, self.ny, self.nz,
                                       values1d,
                                       self.xori, self.xinc,

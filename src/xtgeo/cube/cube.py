@@ -306,6 +306,76 @@ class Cube(object):
 
         _cube_utils.swapaxes(self)
 
+    def resample(self, incube, sampling='nearest', outside_value=None):
+        """Resample a Cube object into this instance.
+
+        Args:
+            incube (Cube): A XTGeo Cube instance
+            sampling (str): Sampling algorithm: 'nearest' for nearest node
+                of 'trilinear' for trilinear interpoltion (more correct but
+                slower)
+            outside_value (None or float). If None, keep original, otherwise
+                use this value
+
+        Raises:
+            ValueError: If cubes do not overlap
+
+        Example:
+
+            >>> mycube1 = Cube('mysegyfile.segy')
+            >>> mycube2 = Cube(xori=461500, yori=5926800, zori=1550,
+                   xinc=40, yinc=40, zinc=5, ncol=200, nrow=100,
+                   nlay=100, rotation=mycube1.rotation)
+            >>> mycube2.resample(mycube1)
+
+        """
+
+        _cube_utils.resample(self, incube, sampling=sampling,
+                             outside_value=outside_value)
+
+    def do_thinning(self, icol, jrow, klay):
+        """Thinning the cube by removing every N column, row and/or layer.
+
+        Args:
+            icol (int): Thinning factor for columns (usually inlines)
+            jrow (int): Thinning factor for rows (usually xlines)
+            klay (int): Thinning factor for layers
+
+        Raises:
+            ValueError: If icol, jrow or klay are out of reasonable range
+
+        Example:
+
+            >>> mycube1 = Cube('mysegyfile.segy')
+            >>> mycube1.do_thinning(2, 2, 1)  # keep every second column, row
+            >>> mycube1.to_file('mysegy_smaller.segy')
+
+        """
+        _cube_utils.thinning(self, icol, jrow, klay)
+
+    def do_cropping(self, icols, jrows, klays):
+        """Cropping the cube by removing rows, columns, layers.
+
+        Note that input boundary checking is currently lacking, and this
+        is a currently a user responsibility!
+
+        Args:
+            icols (int tuple): Cropping front, end of rows
+            jrows (int tuple): Cropping front, end of columns
+            klays (int tuple ): Cropping top, base layers
+
+        Example:
+            Crop 10 columns from front, 2 from back, then 20 columns in front,
+            40 in back, then no cropping of layers::
+
+            >>> mycube1 = Cube('mysegyfile.segy')
+            >>> mycube1.do_cropping((10, 2), (20, 40), (0, 0))
+            >>> mycube1.to_file('mysegy_smaller.segy')
+
+        """
+
+        _cube_utils.cropping(self, icols, jrows, klays)
+
     # =========================================================================
     # Import and export
     # =========================================================================

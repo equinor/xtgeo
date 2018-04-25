@@ -252,3 +252,48 @@ def test_segyio_export_xtgeo():
     # y = Cube('TMP/reek_cube_pristine.segy')
 
     # logger.info(y.values.mean())
+
+
+def test_cube_resampling():
+    """Import a cube, then make a smaller and resample, then export the new"""
+
+    logger.info('Import SEGY format via SEGYIO')
+
+    incube = Cube(sfile1)
+
+    newcube = Cube(xori=460500, yori=5926100, zori=1540,
+                   xinc=40, yinc=40, zinc=5, ncol=200, nrow=100,
+                   nlay=100, rotation=incube.rotation, yflip=incube.yflip)
+
+    newcube.resample(incube, sampling='trilinear', outside_value=10.0)
+
+    tsetup.assert_almostequal(newcube.values.mean(), 5.3107, 0.0001)
+    tsetup.assert_almostequal(newcube.values[20, 20, 20], 10.0, 0.0001)
+
+    newcube.to_file('TMP/cube_resmaple1.segy')
+
+
+def test_cube_thinning():
+    """Import a cube, then make a smaller by thinning every N line"""
+
+    logger.info('Import SEGY format via SEGYIO')
+
+    incube = Cube(sfile1)
+
+    # thinning to evey second column and row, but not vertically
+    incube.do_thinning(2, 2, 1)
+
+    incube.to_file('TMP/cube_thinned.segy')
+
+
+def test_cube_cropping():
+    """Import a cube, then make a smaller by cropping"""
+
+    logger.info('Import SEGY format via SEGYIO')
+
+    incube = Cube(sfile1)
+
+    # thinning to evey second column and row, but not vertically
+    incube.do_cropping((2, 13), (10, 22), (30, 0))
+
+    incube.to_file('TMP/cube_cropped.segy')

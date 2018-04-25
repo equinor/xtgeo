@@ -99,6 +99,74 @@ format. Here is an example:
    cube1.to_file('diff.segy')
 
 
+Reduce cube (e.g. SEGY) data by thinning and cropping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a big data set which gets heavily reduced by thinning and cropping.
+These are very quick operations! Note that cropping has two numbers (tuple) for each
+direction, e.g. (20, 30) means removal of 20 columns from front,
+and 30 from back. The applied order of these routines matters...
+
+.. code-block:: python
+
+   import xtgeo
+
+   big = xtgeo.cube_from_file('troll.segy')  # alt. for xtgeo.cube.Cube('troll.segy')
+   big.do_thinning(2, 2, 1)  # keep every second inline and xline
+   big.do_cropping((20, 30), (250, 20), (0, 0))  # crop ilines and xlines
+
+   # export a much smaller file to SEGY
+   big.to_file('much_smaller.segy')
+
+
+Reduce or change cube (e.g. SEGY) data by resampling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a big data set which gets heavily reduced by making a new cube
+with every second inline and xline, and then resample values prior to export.
+
+Also, another small cube with another rotation is made:
+
+.. code-block:: python
+
+   from __future__ import division, absolute_import
+   from __future__ import print_function
+
+   import xtgeo
+
+   big = xtgeo.cube.Cube('troll.segy')
+
+   # make a cube of every second iline and xline
+   newcube = xtgeo.cube.Cube(xori=big.xori, yori=big.yori, zori=big.zori,
+                             xinc=big.xinc * 2,
+                             yinc=big.yinc * 2,
+                             zinc=big.zinc,
+                             ncol=int(big.ncol / 2),
+                             nrow=int(big.nrow / 2),
+                             nlay=big.nlay,
+                             rotation=big.rotation,
+                             yflip=big.yflip)
+
+   newcube.resample(big)
+
+   newcube.to_file('newcube.segy')
+
+   # you can also make whatever cube you want with e.g. another rotation
+
+   smallcube = xtgeo.cube.Cube(xori=523380, yori=6735680, zori=big.zori,
+                               xinc=50,
+                               yinc=50,
+                               zinc=12,
+                               ncol=100,
+                               nrow=200,
+                               nlay=100,
+                               rotation=0.0,
+                               yflip=big.yflip)
+
+   smallcube.resample(big)
+
+   smallcube.to_file('smallcube.segy')
+
 ------------------------------------
 Combined Surface and Cube operations
 ------------------------------------

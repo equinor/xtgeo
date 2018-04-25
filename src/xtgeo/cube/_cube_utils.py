@@ -1,5 +1,7 @@
 """Cube utilities (basic low level)"""
 import sys
+import warnings
+
 import numpy as np
 
 import cxtgeo.cxtgeo as _cxtgeo
@@ -49,6 +51,114 @@ def swapaxes(self):
     self._yinc = _cxtgeo.doublepointer_value(yinc)
     self._rotation = _cxtgeo.doublepointer_value(rota)
 
+
+def thinning(self, icol, jrow, klay):
+
+    inputs = [icol, jrow, klay]
+    ranges = [self.nrow, self.ncol, self.nlay]
+
+    for inum, ix in enumerate(inputs):
+        if not isinstance(ix, int):
+            raise ValueError('Some input is not integer: {}'.format(inputs))
+        if ix > ranges[inum] / 2:
+            raise ValueError('Input numbers <{}> are too large compared to '
+                             'existing ranges <{}>'.format(inputs, ranges))
+
+    # just simple numpy operations, and changing some cube props
+
+    val = self.values.copy()
+
+    val = val[::icol, ::jrow, ::klay]
+    self._ncol = val.shape[0]
+    self._nrow = val.shape[1]
+    self._nlay = val.shape[2]
+    self._xinc *= icol
+    self._yinc *= jrow
+    self._zinc *= klay
+
+    self.values = val
+
+
+def cropping(self, icols, jrows, klays):
+    """Cropping, where inputs are tuples"""
+
+    icol1, icol2 = icols
+    jrow1, jrow2 = jrows
+    klay1, klay2 = klays
+
+    val = self.values.copy()
+    ncol = self.ncol
+    nrow = self.nrow
+    nlay = self.nlay
+
+    val = val[0 + icol1: ncol - icol2,
+              0 + jrow1: nrow - jrow2,
+              0 + klay1: nlay - klay2]
+
+    self._ncol = val.shape[0]
+    self._nrow = val.shape[1]
+    self._nlay = val.shape[2]
+
+    # need to recompute origins
+    xp = _cxtgeo.new_doublepointer()
+    yp = _cxtgeo.new_doublepointer()
+
+    ier = _cxtgeo.cube_xy_from_ij(0 + icol1, 0 + jrow1, xp, yp, self.xori,
+                                  self.xinc, self.yori, self.yinc, ncol,
+                                  nrow, self.yflip, self.rotation, 0,
+                                  xtg_verbose_level)
+
+    if ier != 0:
+        raise RuntimeError('Unexpected error, code is {}'.format(ier))
+
+    # get new X Y origins
+    self._xori = _cxtgeo.doublepointer_value(xp)
+    self._yori = _cxtgeo.doublepointer_value(yp)
+    self._zori = self.zori + klay1 * self.zinc
+
+    self.values = val
+
+
+def resample(self, other, sampling='nearest', outside_value=None):
+    """Resample another cube to the current self"""
+
+    values1a = self.values.reshape(-1)
+    values2a = other.values.reshape(-1)
+
+    opt1 = 0
+    if sampling == 'trilinear':
+        opt1 = 1
+
+    logger.info('Resampling...')
+
+    opt2 = 0
+    opt2value = 0
+    if outside_value is not None:
+        opt2 = 1
+        opt2value = outside_value
+
+    ier = _cxtgeo.cube_resample_cube(self.ncol, self.nrow, self.nlay,
+                                     self.xori, self.xinc,
+                                     self.yori, self.yinc,
+                                     self.zori, self.zinc, self.rotation,
+                                     self.yflip,
+                                     values1a,
+                                     other.ncol, other.nrow, other.nlay,
+                                     other.xori, other.xinc,
+                                     other.yori, other.yinc,
+                                     other.zori, other.zinc, other.rotation,
+                                     other.yflip,
+                                     values2a,
+                                     opt1, opt2, opt2value,
+                                     xtg_verbose_level)
+
+    if ier == -4:
+        warnings.warn('Less than 10% of origonal cube sampled', RuntimeWarning)
+
+    if ier == -5:
+        raise ValueError('No cube overlap in sampling')
+
+    logger.info('Resampling done!')
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order
 # to be DEPRECATED
