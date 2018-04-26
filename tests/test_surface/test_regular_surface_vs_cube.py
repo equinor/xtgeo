@@ -23,6 +23,7 @@ rpath1 = '../xtgeo-testdata/surfaces/reek'
 rpath2 = '../xtgeo-testdata/cubes/reek'
 rtop1 = os.path.join(rpath1, '1/topreek_rota.gri')
 rbas1 = os.path.join(rpath1, '1/basereek_rota.gri')
+rbas2 = os.path.join(rpath1, '1/basereek_rota_v2.gri')
 rsgy1 = os.path.join(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
 
 
@@ -177,6 +178,31 @@ def test_cube_attr_mean_two_surfaces():
     xss.to_file(td + '/surf_slice_cube_2surf_meantri.gri')
 
     xss.quickplot(filename=td + '/surf_slice_cube_2surf_mean.png',
+                  colortable='jet',
+                  title='Reek two surfs mean', minmax=(-0.1, 0.1),
+                  infotext='Method: trilinear, 2 surfs')
+
+    logger.info('Mean is {}'.format(xss.values.mean()))
+
+
+@tsetup.skipifroxar
+def test_cube_attr_mean_two_surfaces_with_zeroiso():
+    """Get cube attribute between two surfaces with partly zero isochore."""
+
+    logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
+    xs1 = RegularSurface(rtop1)
+    xs2 = RegularSurface(rbas2)
+
+    logger.info('Loading cube {}'.format(rsgy1))
+    cc = Cube(rsgy1)
+
+    xss = xs1.copy()
+    xss.slice_cube_window(cc, other=xs2, other_position='below',
+                          attribute='mean', sampling='trilinear')
+
+    xss.to_file(td + '/surf_slice_cube_2surf_meantri.gri')
+
+    xss.quickplot(filename=td + '/surf_slice_cube_2surf_mean_v2.png',
                   colortable='jet',
                   title='Reek two surfs mean', minmax=(-0.1, 0.1),
                   infotext='Method: trilinear, 2 surfs')

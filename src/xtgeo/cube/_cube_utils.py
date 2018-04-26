@@ -75,6 +75,8 @@ def thinning(self, icol, jrow, klay):
     self._xinc *= icol
     self._yinc *= jrow
     self._zinc *= klay
+    self._ilines = self._ilines[::icol]
+    self._xlines = self._xlines[::jrow]
 
     self.values = val
 
@@ -98,6 +100,8 @@ def cropping(self, icols, jrows, klays):
     self._ncol = val.shape[0]
     self._nrow = val.shape[1]
     self._nlay = val.shape[2]
+    self._ilines = self._ilines[0 + icol1: ncol - icol2]
+    self._xlines = self._xlines[0 + jrow1: nrow - jrow2]
 
     # need to recompute origins
     xp = _cxtgeo.new_doublepointer()

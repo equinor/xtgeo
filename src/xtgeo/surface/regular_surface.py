@@ -1099,7 +1099,8 @@ class RegularSurface(object):
 
     def slice_cube_window(self, cube, zsurf=None, other=None,
                           other_position='below', sampling='nearest',
-                          mask=True, zrange=None, ndiv=None, attribute='max'):
+                          mask=True, zrange=None, ndiv=None, attribute='max',
+                          maskthreshold=0.1):
         """Slice the cube within a vertical window and get the statistical
         attrubute.
 
@@ -1136,6 +1137,8 @@ class RegularSurface(object):
             ndiv (int): Number of intervals for sampling within zrange. None
                 means 'auto' sampling, using 0.5 of cube Z increment as basis.
             attribute (str): The requested attribute, e.g. 'max' value
+            maskthreshold (float): Only if two surfaces: if isochore is less
+                than given value, the result will be masked.
 
         Example::
 
@@ -1156,7 +1159,8 @@ class RegularSurface(object):
                                         other_position=other_position,
                                         sampling=sampling, mask=mask,
                                         zrange=zrange, ndiv=ndiv,
-                                        attribute=attribute)
+                                        attribute=attribute,
+                                        maskthreshold=maskthreshold)
 
     # =========================================================================
     # Special methods

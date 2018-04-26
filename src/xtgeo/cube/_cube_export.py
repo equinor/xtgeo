@@ -130,17 +130,30 @@ def _export_segy_xtgeo(self, sfile):
 
     values1d = self.values.reshape(-1)
 
+    ilinesp = _cxtgeo.new_intarray(len(self._ilines))
+    xlinesp = _cxtgeo.new_intarray(len(self._ilines))
+
+    for i, index in enumerate(self._ilines):
+        _cxtgeo.intarray_setitem(ilinesp, i, int(index))
+
+    for i, index in enumerate(self._xlines):
+        _cxtgeo.intarray_setitem(xlinesp, i, int(index))
+
     status = _cxtgeo.cube_export_segy(sfile, self.nx, self.ny, self.nz,
                                       values1d,
                                       self.xori, self.xinc,
                                       self.yori, self.yinc,
                                       self.zori, self.zinc,
-                                      self.rotation, self.yflip,
-                                      1, 0,
+                                      self.rotation, self.yflip, 1,
+                                      ilinesp, xlinesp,
+                                      0,
                                       xtg_verbose_level)
 
     if status != 0:
         raise RuntimeError('Error when exporting to SEGY (xtgeo engine)')
+
+    _cxtgeo.delete_intarray(ilinesp)
+    _cxtgeo.delete_intarray(xlinesp)
 
 
 def export_rmsreg(self, sfile):

@@ -279,11 +279,16 @@ def test_cube_thinning():
     logger.info('Import SEGY format via SEGYIO')
 
     incube = Cube(sfile1)
+    incube.describe()
 
     # thinning to evey second column and row, but not vertically
     incube.do_thinning(2, 2, 1)
+    incube.describe()
 
     incube.to_file('TMP/cube_thinned.segy')
+
+    incube2 = Cube('TMP/cube_thinned.segy')
+    incube2.describe()
 
 
 def test_cube_cropping():

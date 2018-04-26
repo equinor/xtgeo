@@ -46,8 +46,6 @@ def import_segy_io(self, sfile):
 
     """
 
-    sdata = dict()
-
     logger.debug('Inline sorting is {}'
                  .format(segyio.TraceSortingFormat.INLINE_SORTING))
 
@@ -59,6 +57,8 @@ def import_segy_io(self, sfile):
         logger.debug(segyfile.fast)
         logger.debug(segyfile.ilines)
         logger.debug(len(segyfile.ilines))
+        ilines = segyfile.ilines
+        xlines = segyfile.xlines
 
         ncol, nrow, nlay = values.shape
 
@@ -140,6 +140,8 @@ def import_segy_io(self, sfile):
         logger.debug('MY rotation is {}'.format(rotation))
 
     # attributes to update
+    self._ilines = ilines
+    self._xlines = xlines
     self._ncol = ncol
     self._nrow = nrow
     self._nlay = nlay
@@ -444,6 +446,8 @@ def import_stormcube(self, sfile):
         raise RuntimeError('Something when wrong in {}, code is {}'
                            .format(__name__, ier))
 
+    self._ilines = np.array(range(1, ncol + 1))
+    self._xlines = np.array(range(1, nrow + 1))
     self._ncol = ncol
     self._nrow = nrow
     self._nlay = nlay

@@ -11,6 +11,7 @@ from warnings import warn
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGDescription
 
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export
@@ -96,10 +97,15 @@ class Cube(object):
         clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         logger.info(clsname)
 
+        self._filesrc = None
+        self._ilines = None
+        self._xlines = None
+
         if len(args) >= 1:
             fformat = kwargs.get('fformat', 'guess')
             self.from_file(args[0], fformat=fformat)
         else:
+            self._filesrc = 'NONE'
             self._xori = kwargs.get('xori', 0.0)
             self._yori = kwargs.get('yori', 0.0)
             self._zori = kwargs.get('zori', 0.0)
@@ -116,6 +122,9 @@ class Cube(object):
                 vals = np.zeros((self._ncol, self._nrow, self._nlay),
                                 dtype=np.float32)
                 self._values = vals
+                self._ilines = np.array(range(1, self._ncol + 1))
+                self._xlines = np.array(range(1, self._nrow + 1))
+
             self._segyfile = kwargs.get('segyfile', None)
 
         self._undef = _cxtgeo.UNDEF
@@ -250,6 +259,16 @@ class Cube(object):
         self._rotation = val
 
     @property
+    def ilines(self):
+        """The inlines numbering vector."""
+        return self._ilines
+
+    @property
+    def xlines(self):
+        """The xlines numbering vector."""
+        return self._xlines
+
+    @property
     def yflip(self):
         """The YFLIP indicator, 1 is normal, -1 means Y flipped.
 
@@ -285,6 +304,33 @@ class Cube(object):
         self._values = values
 
     # =========================================================================
+    # Describe
+    # =========================================================================
+    def describe(self):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of Cube instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('File source', self._filesrc)
+        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
+        dsc.txt('Origins XORI, YORI, ZORI', self.xori, self.yori, self.zori)
+        dsc.txt('Increments XINC YINC ZINC', self.xinc, self.yinc, self.zinc)
+        dsc.txt('Rotation (anti-clock from X)', self.rotation)
+        dsc.txt('YFLIP flag', self.yflip)
+        np.set_printoptions(threshold=16)
+        dsc.txt('Inlines vector', self._ilines)
+        dsc.txt('Xlines vector', self._xlines)
+        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
+        np.set_printoptions(threshold=1000)
+        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
+                self.values.std(), self.values.min(), self.values.max())
+        msize = float(self.values.size * 4) / (1024 * 1024 * 1024)
+        dsc.txt('Minimum memory usage of array (GB)', msize)
+
+        dsc.flush()
+
+    # =========================================================================
     # Copy etc
     # =========================================================================
 
@@ -299,6 +345,7 @@ class Cube(object):
                      xori=self.xori, yori=self.yori, zori=self.zori,
                      yflip=self.yflip, segyfile=self.segyfile,
                      rotation=self.rotation, values=self.values.copy())
+        xcube._filesrc = self._filesrc + ' (copy)'
         return xcube
 
     def swapaxes(self):
@@ -426,6 +473,8 @@ class Cube(object):
             _cube_import.import_stormcube(self, sfile)
         else:
             logger.error('Invalid or unknown file format')
+
+        self._filesrc = sfile
 
     def to_file(self, sfile, fformat='segy', pristine=False, engine='xtgeo'):
         """Export cube data to file.

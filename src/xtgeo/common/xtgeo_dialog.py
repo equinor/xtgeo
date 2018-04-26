@@ -40,6 +40,49 @@ VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
 VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
 
 
+class XTGDescription(object):
+    """Internal Class for making desciptions of object instances"""
+    def __init__(self):
+        self._txt = []
+
+    def title(self, atitle):
+        fmt = '=' * 99
+        self._txt.append(fmt)
+        fmt = '{}'.format(atitle)
+        self._txt.append(fmt)
+        fmt = '=' * 99
+        self._txt.append(fmt)
+
+    def txt(self, *atxt):
+        atxt = list(atxt)
+        fmt = self._smartfmt(atxt)
+        self._txt.append(fmt)
+
+    def flush(self):
+        fmt = '=' * 99
+        self._txt.append(fmt)
+
+        for line in self._txt:
+            print(line)
+
+    def _smartfmt(self, atxt):
+        alen = len(atxt)
+        atxt.insert(1, '=>')
+        if alen == 1:
+            fmt = '{:40s}'.format(*atxt)
+        elif alen == 2:
+            fmt = '{:40s} {:>2s} {}'.format(*atxt)
+        elif alen == 3:
+            fmt = '{:40s} {:>2s} {}  {}'.format(*atxt)
+        elif alen == 4:
+            fmt = '{:40s} {:>2s} {}  {}  {}'.format(*atxt)
+        elif alen == 5:
+            fmt = '{:40s} {:>2s} {}  {}  {}  {}'.format(*atxt)
+        elif alen == 6:
+            fmt = '{:40s} {:>2s} {}  {}  {}  {}  {}'.format(*atxt)
+        return fmt
+
+
 class _BColors:
     # local class for ANSI term color commands
     # bgcolors:

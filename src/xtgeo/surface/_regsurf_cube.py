@@ -75,11 +75,15 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
 def slice_cube_window(self, cube, zsurf=None, other=None,
                       other_position='below',
                       sampling='nearest', mask=True,
-                      zrange=10, ndiv=None, attribute='max'):
+                      zrange=10, ndiv=None, attribute='max',
+                      maskthreshold=0.1):
     """Slice Cube with a window and extract attribute(s)
 
     The zrange is one-sided (on order to secure a centered input); hence
     of zrange is 5 than the fill window is 10.
+
+    The maskthreshold is only valid for surfaces; if isochore is less than
+    given value then the result will be masked.
     """
     logger.info('Slice cube window method')
 
@@ -107,19 +111,20 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
     # are applied to get the attributes
 
     if other is None:
-        attvalues = _slice_contant_window(this, cube, sampling, zrange,
-                                          ndiv, mask, attribute)
+        attvalues = _slice_constant_window(this, cube, sampling, zrange,
+                                           ndiv, mask, attribute)
     else:
         attvalues = _slice_between_surfaces(this, cube, sampling, other,
                                             other_position, zrange,
-                                            ndiv, mask, attribute)
+                                            ndiv, mask, attribute,
+                                            maskthreshold)
 
     self.values = attvalues
     logger.info('Mean of cube attribute is {}'.format(self.values.mean()))
 
 
-def _slice_contant_window(this, cube, sampling, zrange,
-                          ndiv, mask, attribute):
+def _slice_constant_window(this, cube, sampling, zrange,
+                           ndiv, mask, attribute):
     """Slice a window, (contant in vertical extent)."""
     npcollect = []
     zcenter = this.copy()
@@ -155,7 +160,7 @@ def _slice_contant_window(this, cube, sampling, zrange,
 
 
 def _slice_between_surfaces(this, cube, sampling, other, other_position,
-                            zrange, ndiv, mask, attribute):
+                            zrange, ndiv, mask, attribute, mthreshold):
     """Slice and find values bewteen two surface"""
 
     npcollect = []
@@ -192,6 +197,11 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     stacked = ma.dstack(npcollect)
 
     attvalues = _attvalues(attribute, stacked)
+
+    # for cases with erosion, the two surfaces are equal
+    isovalues = mul * (other.values - this.values)
+    attvalues = ma.masked_where(isovalues < mthreshold, attvalues)
+
     return attvalues
 
 
