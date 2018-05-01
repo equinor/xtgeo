@@ -131,13 +131,13 @@ def _export_segy_xtgeo(self, sfile):
     values1d = self.values.reshape(-1)
 
     ilinesp = _cxtgeo.new_intarray(len(self._ilines))
-    xlinesp = _cxtgeo.new_intarray(len(self._ilines))
+    xlinesp = _cxtgeo.new_intarray(len(self._xlines))
 
-    for i, index in enumerate(self._ilines):
-        _cxtgeo.intarray_setitem(ilinesp, i, int(index))
+    ilns = self._ilines.astype(np.int32)
+    xlns = self._xlines.astype(np.int32)
 
-    for i, index in enumerate(self._xlines):
-        _cxtgeo.intarray_setitem(xlinesp, i, int(index))
+    _cxtgeo.swig_numpy_to_carr_i1d(ilns, ilinesp)
+    _cxtgeo.swig_numpy_to_carr_i1d(xlns, xlinesp)
 
     status = _cxtgeo.cube_export_segy(sfile, self.nx, self.ny, self.nz,
                                       values1d,

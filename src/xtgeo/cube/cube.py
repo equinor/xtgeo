@@ -122,8 +122,10 @@ class Cube(object):
                 vals = np.zeros((self._ncol, self._nrow, self._nlay),
                                 dtype=np.float32)
                 self._values = vals
-                self._ilines = np.array(range(1, self._ncol + 1))
-                self._xlines = np.array(range(1, self._nrow + 1))
+                self._ilines = np.array(range(1, self._ncol + 1),
+                                        dtype=np.int32)
+                self._xlines = np.array(range(1, self._nrow + 1),
+                                        dtype=np.int32)
 
             self._segyfile = kwargs.get('segyfile', None)
 

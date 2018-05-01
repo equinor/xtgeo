@@ -446,8 +446,8 @@ def import_stormcube(self, sfile):
         raise RuntimeError('Something when wrong in {}, code is {}'
                            .format(__name__, ier))
 
-    self._ilines = np.array(range(1, ncol + 1))
-    self._xlines = np.array(range(1, nrow + 1))
+    self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
+    self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
     self._ncol = ncol
     self._nrow = nrow
     self._nlay = nlay
