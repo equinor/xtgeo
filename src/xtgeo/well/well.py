@@ -63,8 +63,9 @@ class Well(object):
             fformat = kwargs.get('fformat', 'rms_ascii')
             mdlogname = kwargs.get('mdlogname', None)
             zonelogname = kwargs.get('zonelogname', None)
+            strict = kwargs.get('strict', True)
             self.from_file(wfile, fformat=fformat, mdlogname=mdlogname,
-                           zonelogname=zonelogname)
+                           zonelogname=zonelogname, strict=strict)
 
         else:
             # dummy
@@ -178,12 +179,12 @@ class Well(object):
 
     @property
     def mdlogname(self):
-        """ Returns name of MD log, if any (Null if not)."""
+        """ Returns name of MD log, if any (None if not)."""
         return self._mdlogname
 
     @property
     def zonelogname(self):
-        """ Returns name of zone log, if any (Null if not)."""
+        """ Returns name of zone log, if any (None if not)."""
         return self._zonelogname
 
     @property

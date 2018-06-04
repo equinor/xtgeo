@@ -415,7 +415,8 @@ class GridProperty(Grid3D):
         ier = 0
         if (fformat == 'roff'):
             logger.info('Importing ROFF...')
-            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid)
+            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid,
+                                               apiversion=apiversion)
 
         elif (fformat.lower() == 'init'):
             ier = self._import_ecl_output(pfile, name=name, etype=1,

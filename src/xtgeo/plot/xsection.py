@@ -2,8 +2,6 @@
 
 from __future__ import print_function
 
-import sys
-
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
@@ -12,6 +10,7 @@ from xtgeo.plot import BasePlot
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
 
 class XSection(BasePlot):
     """Class for plotting a cross-section of a well.
@@ -32,7 +31,7 @@ class XSection(BasePlot):
                  colormap=None, zonelogshift=0, surfacenames=None,
                  outline=None, tight=False):
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
+        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
         logger = xtg.functionlogger(clsname)
         self._xtg = XTGeoDialog()
 
@@ -49,7 +48,7 @@ class XSection(BasePlot):
         self._wfence = None
         self._showok = True  # to indicate if plot is OK to show
         self._surfaceplot_count = 0
-        self._legendtitle = "Zones"
+        self._legendtitle = 'Zones'
 
         if colormap is None:
             self._colormap = plt.cm.viridis
@@ -136,29 +135,44 @@ class XSection(BasePlot):
     def plot_well(self, zonelogname='ZONELOG'):
         """Input an XTGeo Well object and plot it."""
         ax = self._ax1[self._surfaceplot_count - 1]
-
         wo = self._well
+
         # reduce the well data by Pandas operations
         df = wo.dataframe
-
         wo.dataframe = df[df['Z_TVDSS'] > self._zmin]
 
         # Create a relative XYLENGTH vector (0.0 where well starts)
         wo.create_relative_hlen()
 
         df = wo.dataframe
-
-        logger.debug(df)
-
         if df.empty:
             self._showok = False
             return
 
-        # get the well trajectory (numpies)
-        zv = df['Z_TVDSS'].values
-        hv = df['R_HLEN'].values
-        zo = df[zonelogname].values
+        # get the well trajectory (numpies) as copy
+        zv = df['Z_TVDSS'].values.copy()
+        hv = df['R_HLEN'].values.copy()
+        self._plot_well_traj(df, ax, zv, hv)
 
+        haszone = False
+        if zonelogname in df.columns:
+            haszone = True
+
+        if haszone:
+            self._plot_well_zlog(df, ax, zv, hv, zonelogname)
+
+    def _plot_well_traj(self, df, ax, zv, hv):
+        """Plot the trajectory as a black line"""
+
+        zv_copy = ma.masked_where(zv < self._zmin, zv)
+        hv_copy = ma.masked_where(zv < self._zmin, hv)
+
+        ax.plot(hv_copy, zv_copy, linewidth=6,
+                c='black')
+
+    def _plot_well_zlog(self, df, ax, zv, hv, zonelogname):
+        """Plot the zone log as colored segments."""
+        zo = df[zonelogname].values
         zomin = 0
         zomax = 0
         try:
@@ -168,16 +182,11 @@ class XSection(BasePlot):
             self._showok = False
             return
 
-        logger.info("ZONELOG min - max is {} - {}".format(zomin, zomax))
+        logger.info('ZONELOG min - max is {} - {}'.format(zomin, zomax))
 
         zshift = 0
         if self._zonelogshift != 0:
             zshift = self._zonelogshift
-
-        zv_copy = ma.masked_where(zv < self._zmin, zv)
-        hv_copy = ma.masked_where(zv < self._zmin, hv)
-        ax.plot(hv_copy, zv_copy, linewidth=6,
-                c='black')
 
         # let the part with ZONELOG have a colour
         ctable = self.get_colormap_as_table()
@@ -192,8 +201,8 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(zo != zone, zv)
             hv_copy = ma.masked_where(zo != zone, hv)
 
-            logger.debug("Zone is {}, color no is {}".
-                              format(zone, zone + zshift - 1))
+            logger.debug('Zone is {}, color no is {}'.
+                         format(zone, zone + zshift - 1))
             ax.plot(hv_copy, zv_copy, linewidth=4, c=color)
 
     def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
@@ -233,21 +242,22 @@ class XSection(BasePlot):
         slegend = []
         if surfacenames is None:
             for i in range(nlen):
-                slegend.append("Surf {}".format(i))
+                slegend.append('Surf {}'.format(i))
 
         else:
             # do a check
             if len(surfacenames) != nlen:
-                logger.critical("Wrong number of entries in "
-                                     "surfacenames!")
-                sys.exit(-13)
+                msg = ('Wrong number of entries in surfacenames! '
+                       'Number of names is {} while number of files '
+                       'is {}'.format(len(surfacenames), nlen))
+                logger.critical(msg)
+                raise SystemExit(msg)
             else:
                 slegend = surfacenames
 
         if self._colormap.N < nlen:
-            logger.critical("Too few colors in color table compared with "
-                                 "number of surfaces")
-            sys.exit(-22)
+            msg = 'Too few colors in color table vs number of surfaces'
+            raise SystemExit(msg)
 
         # need to resample the surface along the well trajectory
         # create a sampled fence from well path, and include extension
@@ -327,20 +337,24 @@ class XSection(BasePlot):
             ax.set_aspect('equal', 'datalim')
 
     def plot_map(self):
-        """
-        Plot well location map as an overall view (surrounded by a
-        field outline).
-        """
+        """Plot well location map as an overall view (with field outline)."""
+
         ax = self._ax3
         if self._outline is not None and self._wfence is not None:
 
             xp = self._outline.dataframe['X_UTME'].values
             yp = self._outline.dataframe['Y_UTMN'].values
+            ip = self._outline.dataframe['POLY_ID'].values
 
             ax.plot(self._wfence[:, 0], self._wfence[:, 1],
                     linewidth=3, c='red')
 
-            ax.plot(xp, yp, linewidth=0.3, c='black')
+            for i in range(int(ip.min()), int(ip.max()) + 1):
+                xpc = xp.copy()[ip == i]
+                ypc = yp.copy()[ip == i]
+                if len(xpc) > 1:
+                    ax.plot(xpc, ypc, linewidth=0.3, c='black')
+
             ax.set_aspect('equal', 'datalim')
 
     def show(self):
@@ -358,16 +372,20 @@ class XSection(BasePlot):
             plt.show()
             return True
         else:
-            logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning('Nothing to plot (well outside Z range?)')
             return False
 
     def savefig(self, filename, fformat='png'):
         """Call to matplotlib.pyplot savefig().
 
+        Args:
+            filename: Root name to export to
+            fformat: Either 'png' or 'svg'
+
         Returns:
             True of plotting is done; otherwise False
         """
-        print('FORMAT is {}'.format(fformat))
+        logger.info('FORMAT is {}'.format(fformat))
 
         if self._tight:
             self._fig.tight_layout()
@@ -377,5 +395,5 @@ class XSection(BasePlot):
             plt.close(self._fig)
             return True
         else:
-            logger.warning("Nothing to plot (well outside Z range?)")
+            logger.warning('Nothing to plot (well outside Z range?)')
             return False

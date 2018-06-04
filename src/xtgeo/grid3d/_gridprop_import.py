@@ -84,6 +84,9 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     logger.info('Grid dimensions in INIT or RESTART file: {} {} {}'
                 .format(ncol, nrow, nlay))
 
+    logger.info('Grid dimensions from GRID file: {} {} {}'
+                .format(grid.ncol, grid.nrow, grid.nlay))
+
     if grid.ncol != ncol or grid.nrow != nrow or grid.nlay != nlay:
         msg = ('In {}: Errors in dimensions prop: {} {} {} vs grid: {} {} {} '
                .format(pfile, ncol, nrow, nlay,
@@ -157,14 +160,23 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     actnum = grid.get_actnum().values
     allvalues = np.zeros((ncol * nrow * nlay), dtype=values.dtype) + use_undef
 
-    if grid.actnum_indices.shape[0] == values.shape[0]:
+    msg = '\n'
+    msg = (msg + 'grid.actnum_indices.shape[0] = {}\n'
+           .format(grid.actnum_indices.shape[0]))
+    msg = (msg + 'values.shape[0] = {}\n'.format(values.shape[0]))
+    msg = (msg + 'ncol nrow nlay {} {} {}, nrow*nrow*nlay = {}\n'
+           .format(ncol, nrow, nlay, ncol * nrow * nlay))
 
+    logger.info(msg)
+
+    if grid.actnum_indices.shape[0] == values.shape[0]:
         allvalues[grid.get_actnum_indices(order='F')] = values
     elif values.shape[0] == ncol * nrow * nlay:  # often case for PORV array
         allvalues = values.copy()
     else:
-        raise SystemExit('BUG somehow... Is the file corrupt? If not contact '
-                         'the library developer(s)!')
+        msg = ('BUG somehow... Is the file corrupt? If not contact '
+               'the library developer(s)!\n' + msg)
+        raise SystemExit(msg)
 
     allvalues = allvalues.reshape((ncol, nrow, nlay), order='F')
     allvalues = np.asanyarray(allvalues, order='C')
@@ -249,8 +261,21 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
         return npdbl
 
 
-def import_roff(self, pfile, name, grid=None):
+def import_roff(self, pfile, name, grid=None, apiversion=2):
     """Import ROFF format"""
+
+    if apiversion <= 2:
+        status = _import_roff_v1(self, pfile, name, grid=grid)
+        if status != 0:
+            raise SystemExit('Error from ROFF import')
+    elif apiversion == 3:
+        status = _import_roff_v2(self, pfile, name, grid=grid)
+
+    return status
+
+
+def _import_roff_v1(self, pfile, name, grid=None):
+    """Import ROFF format, version 1"""
 
     # there is a todo here to get it more robust for various cases,
     # e.g. that a ROFF file may contain both a grid an numerous
@@ -375,3 +400,146 @@ def import_roff(self, pfile, name, grid=None):
     self._grid = grid
 
     return 0
+
+
+def _import_roff_v2(self, pfile, name, grid=None):
+    """Import ROFF format, version 2 (improved version)"""
+
+    # This routine do first a scan for all keywords. Then it grabs
+    # the relevant data by only reading relevant portions of the input file
+
+    fhandle, pclose = _get_fhandle(pfile)
+
+    kwords = xtgeo.grid3d.GridProperties.scan_keywords(fhandle, fformat='roff')
+
+    for kw in kwords:
+        logger.info(kw)
+
+    # byteswap:
+    byteswap = _rkwquery(self, fhandle, kwords, 'filedata!byteswaptest', -1)
+
+    ncol = _rkwquery(self, fhandle, kwords, 'dimensions!nX', byteswap)
+    nrow = _rkwquery(self, fhandle, kwords, 'dimensions!nY', byteswap)
+    nlay = _rkwquery(self, fhandle, kwords, 'dimensions!nZ', byteswap)
+    logger.info('Dimensions in ROFF file {} {} {}'.format(ncol, nrow, nlay))
+
+    # get the actual parameter:
+    vals = _rarraykwquery(self, fhandle, kwords, 'parameter!name!' + name,
+                          byteswap, ncol, nrow, nlay)
+
+    self._values = vals
+
+    return 0
+
+
+def _rkwquery(self, fhandle, kws, name, swap):
+    """Local function for _import_roff_v2, single data"""
+
+    kwtypedict = {'int': 1, 'float': 2}
+    iresult = _cxtgeo.new_intpointer()
+    presult = _cxtgeo.new_floatpointer()
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    if dtype == 0:
+        raise ValueError('Cannot find property <{}> in file'.format(name))
+
+    logger.info('NAME: {} DTYPE, RECLEN, BYTEPOS: {} {} {}'.
+                format(name, dtype, reclen, bytepos))
+
+    if reclen != 1:
+        raise SystemError('Stuff is rotten here...')
+
+    _cxtgeo.grd3d_imp_roffbin_data(fhandle, swap, dtype, bytepos,
+                                   iresult, presult, xtg_verbose_level)
+
+    # -1 indicates that it is the swap flag which is looked for!
+    if dtype == 1:
+        xresult = _cxtgeo.intpointer_value(iresult)
+        print('xresult = {}'.format(xresult))
+        if swap == -1:
+            if xresult == 1:
+                return 0
+            else:
+                return 1
+        else:
+            return xresult
+
+
+def _rarraykwquery(self, fhandle, kws, name, swap, ncol, nrow, nlay):
+    """Local function for _import_roff_v2, 3D parameter arrays.
+
+    This parameters are translated to numpy data for the values
+    attribute usage.
+
+    Note from scan:
+    parameter!name!PORO   char        1            310
+    parameter!data        float   35840            336
+
+    Hence it is the parameter!data which comes after parameter!name!PORO which
+    is releveant here, given that name = PORO.
+
+    """
+
+    kwtypedict = {'int': 1, 'float': 2, 'double': 3, 'byte': 5}
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    namefound = False
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            namefound = True
+        if 'parameter!data' in items[0] and namefound:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    logger.info('NAME: {} DTYPE, RECLEN, BYTEPOS: {} {} {}'.
+                format(name, dtype, reclen, bytepos))
+
+    if dtype == 0:
+        raise ValueError('Cannot find property <{}> in file'.format(name))
+
+    if reclen <= 1:
+        raise SystemError('Stuff is rotten here...')
+
+    inumpy = np.zeros(ncol * nrow * nlay, dtype=np.int32)
+    fnumpy = np.zeros(ncol * nrow * nlay, dtype=np.float32)
+
+    _cxtgeo.grd3d_imp_roffbin_arr(fhandle, swap, ncol, nrow, nlay, bytepos,
+                                  dtype, fnumpy, inumpy, xtg_verbose_level)
+
+    # remember that for grid props, order=F in CXTGEO, while order=C
+    # in xtgeo-python!
+    if dtype == 1:
+        vals = inumpy
+        # vals = inumpy.reshape((ncol, nrow, nlay), order='F')
+        # vals = np.asanyarray(vals, order='C')
+        vals = ma.masked_greater(vals, self._undef_ilimit)
+        del fnumpy
+        del inumpy
+    elif dtype == 2:
+        vals = fnumpy
+        # vals = fnumpy.reshape((ncol, nrow, nlay), order='F')
+        # vals = np.asanyarray(vals, order='C')
+        vals = ma.masked_greater(vals, self._undef_limit)
+        vals = vals.astype(np.float64)
+        del fnumpy
+        del inumpy
+
+    vals = vals.reshape(ncol, nrow, nlay)
+    print(vals.min(), vals.max())
+    return vals

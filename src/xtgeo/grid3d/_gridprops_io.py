@@ -140,7 +140,8 @@ def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=100000,
         return result
 
 
-def _scan_roff_keywords(pfile, fformat='roff', maxkeys=100000, dataframe=False):
+def _scan_roff_keywords(pfile, fformat='roff', maxkeys=100000,
+                        dataframe=False):
 
     # In case pfile is not a file name but a swig pointer to a file handle,
     # the file must not be closed

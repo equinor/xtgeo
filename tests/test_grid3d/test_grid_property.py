@@ -61,8 +61,20 @@ def test_roffbin_import1():
 
     logger.info(repr(x.values))
     logger.info(x.values.dtype)
+    logger.info("Porosity is {}".format(x.values))
     logger.info("Mean porosity is {}".format(x.values.mean()))
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
+
+
+def test_roffbin_import1_new():
+    """Test ROFF import, new code May 2018"""
+    logger.info('Name is {}'.format(__name__))
+
+    x = GridProperty()
+    logger.info("Import roff...")
+    x.from_file(testfile1, fformat="roff", name='PORO', apiversion=3)
+    logger.info("Porosity is {}".format(x.values))
+    logger.info("Mean porosity is {}".format(x.values.mean()))
 
 
 def test_roffbin_import2():
