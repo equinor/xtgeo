@@ -159,16 +159,24 @@ def _export_segy_xtgeo(self, sfile):
 def export_rmsreg(self, sfile):
     """Export on RMS regular format."""
 
+    swapped = False
+    if self.yflip == -1:
+        self.swapaxes()
+        swapped = True
+
     logger.debug('Export to RMS regular format...')
     values1d = self.values.reshape(-1)
 
-    yinc = self.yinc * self.yflip
     status = _cxtgeo.cube_export_rmsregular(self.nx, self.ny, self.nz,
                                             self.xori, self.yori, self.zori,
-                                            self.xinc, yinc, self.zinc,
+                                            self.xinc, self.yinc, self.zinc,
                                             self.rotation, self.yflip,
                                             values1d,
                                             sfile, xtg_verbose_level)
 
     if status != 0:
         raise RuntimeError('Error when exporting to RMS regular')
+
+    # swap back if needed
+    if swapped:
+        self.swapaxes()

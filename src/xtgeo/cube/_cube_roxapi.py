@@ -48,12 +48,12 @@ def _roxapi_cube_to_xtgeo(self, rcube):
     self._xinc, self._yinc = rcube.increment
     self._zinc = rcube.sample_rate
     self._rotation = rcube.rotation
-    self._yflip = 0
+    self._yflip = -1
     if rcube.handedness == 'left':
         self._yflip = 1
 
-    ilstart = rcube.get_iline(0)
-    xlstart = rcube.get_xline(0)
+    ilstart = rcube.get_inline(0)
+    xlstart = rcube.get_crossline(0)
     ilincr, xlincr = rcube.inline_crossline_increment
 
     self._ilines = np.array(range(ilstart, self._ncol + ilstart, ilincr),
@@ -102,7 +102,7 @@ def _roxapi_export_cube(self, roxar, proj, name, folder=None, domain='time',
     if domain == 'depth':
         vertical_domain = roxar.VerticalDomain.depth
 
-    values = self.values  # copy() needed?
+    values = self.values.copy()  # copy() needed?
 
     handedness = roxar.Direction.right
     if self.yflip == 1:
