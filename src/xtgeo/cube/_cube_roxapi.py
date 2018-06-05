@@ -3,6 +3,8 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+import numpy as np
+
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -49,6 +51,15 @@ def _roxapi_cube_to_xtgeo(self, rcube):
     self._yflip = 0
     if rcube.handedness == 'left':
         self._yflip = 1
+
+    ilstart = rcube.get_iline(0)
+    xlstart = rcube.get_xline(0)
+    ilincr, xlincr = rcube.inline_crossline_increment
+
+    self._ilines = np.array(range(ilstart, self._ncol + ilstart, ilincr),
+                            dtype=np.int32)
+    self._xlines = np.array(range(xlstart, self._nrow + xlstart, xlincr),
+                            dtype=np.int32)
 
     if rcube.is_empty:
         xtg.warn('Cube has no data; assume 0')
@@ -97,6 +108,14 @@ def _roxapi_export_cube(self, roxar, proj, name, folder=None, domain='time',
     if self.yflip == 1:
         handedness = roxar.Direction.left
 
+    # inline xline vector
+    ilstart = self.ilines[0]
+    xlstart = self.xlines[0]
+    ilincr = self.ilines[1] - self.ilines[0]
+    xlincr = self.xlines[1] - self.xlines[0]
+
     rcube.set_cube(values, origin, increment, first_z, sample_rate, rotation,
                    vertical_domain=vertical_domain,
-                   handedness=handedness)
+                   handedness=handedness,
+                   inline_crossline_start=(ilstart, xlstart),
+                   inline_crossline_increment=(ilincr, xlincr))
