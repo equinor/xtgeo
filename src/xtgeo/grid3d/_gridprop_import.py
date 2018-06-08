@@ -47,8 +47,16 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     if etype == 5:
         datefound = False
         logger.info('Look for date {}'.format(date))
+
         # scan for date and find SEQNUM entry number
         dtlist = gprops.scan_dates(fhandle)
+        if date == 0:
+            date = dtlist[0][1]
+        elif date == 9:
+            date = dtlist[-1][1]
+
+        logger.info('Redefined date is {}'.format(date))
+
         for ientry, dtentry in enumerate(dtlist):
             logger.info('ientry {} dtentry {}'.format(ientry, dtentry))
             if str(dtentry[1]) == str(date):
@@ -147,6 +155,7 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
         # make the code list
         uniq = np.unique(values).tolist()
         codes = dict(zip(uniq, uniq))
+        codes = {key: str(val) for key, val in codes.items()}  # val: strings
         self.codes = codes
 
     else:

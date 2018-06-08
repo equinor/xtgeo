@@ -234,6 +234,37 @@ def test_io_roff_discrete():
                fformat='roff')
 
 
+def test_io_ecl2roff_discrete():
+    """Import Eclipse discrete property; then export to ROFF int."""
+
+    logger.info('Name is {}'.format(__name__))
+    po = GridProperty()
+    mygrid = Grid(testfile5)
+    po.from_file(testfile6, fformat="init", name='SATNUM', grid=mygrid)
+
+    print(po.codes)
+    assert po.ncodes == 1
+    assert isinstance(po.codes[1], str)
+
+    po.to_file(os.path.join(td, 'ecl2roff_disc.roff'), name='SATNUM',
+               fformat='roff')
+
+
+def test_io_ecl_dates():
+    """Import Eclipse with some more flexible dates settings"""
+
+    logger.info('Name is {}'.format(__name__))
+    po = GridProperty()
+    px = GridProperty()
+    mygrid = Grid(testfile5)
+    po.from_file(testfile7, fformat="unrst", name='PRESSURE', grid=mygrid,
+                 date='first')
+    assert po.date == 19991201
+    px.from_file(testfile7, fformat="unrst", name='PRESSURE', grid=mygrid,
+                 date='last')
+    assert px.date == 20030101
+
+
 def test_get_all_corners():
     """Get X Y Z for all corners as XTGeo GridProperty objects"""
 

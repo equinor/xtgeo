@@ -374,14 +374,21 @@ class GridProperty(Grid3D):
             fformat (str): file format to be used roff/init/unrst
                 (guess is default).
             name (str): name of property to import
-            date (int): For restart files, date on YYYYMMDD format.
+            date (int or str): For restart files, date on YYYYMMDD format. Also
+                the YYYY-MM-DD form is allowed (string), and for Eclipse,
+                mnemonics like 'first', 'last' is also allowed.
             grid (Grid object): Grid Object to link too (optional).
             apiversion (int): Internal XTGeo API setting for Ecl input (1 or 2)
 
-        Example::
+        Examples::
 
            x = GridProperty()
            x.from_file('somefile.roff', fformat='roff')
+           #
+           mygrid = Grid('ECL.EGRID')
+           pressure_1 = GridProperty()
+           pressure_1.from_file('ECL.UNRST', name='PRESSURE', date='first',
+                                grid=mygrid)
 
         Returns:
            True if success, otherwise False
@@ -423,6 +430,18 @@ class GridProperty(Grid3D):
             ier = self._import_ecl_output(pfile, name=name, etype=1,
                                           grid=grid, apiversion=apiversion)
         elif (fformat.lower() == 'unrst'):
+            if date is None:
+                raise ValueError('Restart file, but no date is given')
+            elif isinstance(date, str):
+                if '-' in date:
+                    date = int(date.replace('-', ''))
+                elif date == 'first':
+                    date = 0
+                elif date == 'last':
+                    date = 9
+                else:
+                    date = int(date)
+
             ier = self._import_ecl_output(pfile, name=name, etype=5,
                                           grid=grid,
                                           date=date, apiversion=apiversion)
@@ -622,6 +641,7 @@ def gridproperty_from_file(pfile, fformat='guess', name='unknown',
 
 
 def gridproperty_from_roxar(project, gname, pname, realisation=0):
+    print('FROM ROXAR!!')
     obj = GridProperty()
     obj.from_roxar(project, gname, pname, realisation=realisation)
 

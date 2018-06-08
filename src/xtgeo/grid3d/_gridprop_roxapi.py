@@ -104,20 +104,23 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
 
     if self._isdiscrete:
         self.codes = roxprop.code_names.copy()
+        print('CODES')
+        print(self.codes)
 
         tmpcode = self.codes.copy()
         for key, val in tmpcode.items():
             if val == '':
-                val = 'unknown'
+                val = 'unknown_' + str(key)
             tmpcode[key] = val
         self.codes = tmpcode
+        print(self.codes)
 
     logger.info('BUFFER 1 is {}'.format(mybuffer))
 
 
 def export_prop_roxapi(self, project, gname, pname, saveproject=False,
                        realisation=0):
-    """Export to a Property in RMS via ROXAR API spec."""
+    """Export (i.e. store) to a Property in RMS via ROXAR API spec."""
     import roxar
 
     logger.info('Opening RMS project ...')
@@ -160,7 +163,7 @@ def _store_in_roxar(self, pname, roxgrid):
 
     logger.info(indexer.handedness)
 
-    logger.info('Store in RMS... IS THAT SO!')
+    print('Store in RMS... IS THAT SO!')
 
     val3d = self.values.copy()
 
@@ -173,10 +176,11 @@ def _store_in_roxar(self, pname, roxgrid):
     kind = ijk[:, 2]
 
     dtype = self._roxar_dtype
+    print('DTYPE is ', dtype)
     if self.isdiscrete:
         pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
     else:
-        pvalues = roxgrid.get_grid().generate_values(data_type=np.float32)
+        pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
 
     pvalues[cellno] = val3d[iind, jind, kind]
 
@@ -190,14 +194,14 @@ def _store_in_roxar(self, pname, roxgrid):
     else:
         rprop = properties.create(
             pname, property_type=roxar.GridPropertyType.continuous,
-            data_type=np.float32)
+            data_type=dtype)
 
     # values = ma.filled(values, self.undef)
     # values = values[values < self.undef_limit]
     # values = values.astype(np.float32)
 
     # rprop.set_values(values)
-    rprop.set_values(pvalues)
+    rprop.set_values(pvalues.astype(dtype))
 
     if self.isdiscrete:
         rprop.code_names = self.codes.copy()
