@@ -257,6 +257,14 @@ class Well(object):
         else:
             return None
 
+    def set_logrecord(self, lname, newdict):
+        """ Sets the record (dict) of a given discrete log"""
+
+        if lname in self._dataframe.columns:
+            self._wlogrecord[lname] = newdict
+        else:
+            raise ValueError('Cannot set records ... (unknown log name)')
+
     def get_logrecord_codename(self, lname, key):
         """ Returns the name entry of a log record, for a given key
 

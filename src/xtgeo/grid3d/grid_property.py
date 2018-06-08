@@ -139,6 +139,7 @@ class GridProperty(Grid3D):
         if self._isdiscrete:
             self._values = self._values.astype(np.int32)
             self._dtype = self._values.dtype
+            self._roxar_dtype = np.int8
 
         if testmask:
             # make some undef cells (for test)

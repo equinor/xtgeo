@@ -43,21 +43,11 @@ class BasePlot(object):
         else:
             raise ValueError('Input incorrect')
 
-    def set_colortable(self, cname, colorlist=None):
-        """This is actually deprecated..."""
-        if colorlist is None:
-            self.colormap = cname
-        else:
-            self.define_colormap(cname, colorlist=colorlist)
+    @staticmethod
+    def define_any_colormap(cfile, colorlist=None):
+        """Defines any color map from file or a predefined name.
 
-    def get_colormap_as_table(self):
-        """Get the current color map as a list of RGB tuples."""
-        col = self._colormap
-        cmaplist = [col(i) for i in range(col.N)]
-        return cmaplist
-
-    def define_colormap(self, cfile, colorlist=None):
-        """Defines a color map from file or a predefined name.
+        This is a static method, which returns a matplotlib CM object.
 
         Args:
             cfile (str): File name (RMS format) or an alias for a predefined
@@ -79,28 +69,20 @@ class BasePlot(object):
 
         elif cfile == 'xtgeo':
             colors = _ctable.xtgeocolors()
-            self.contourlevels = len(colors)
-
             cmap = LinearSegmentedColormap.from_list(cfile, colors,
                                                      N=len(colors))
         elif cfile == 'random40':
             colors = _ctable.random40()
-            self.contourlevels = len(colors)
-
             cmap = LinearSegmentedColormap.from_list(cfile, colors,
                                                      N=len(colors))
 
         elif cfile == 'randomc':
             colors = _ctable.randomc(256)
-            self.contourlevels = len(colors)
-
             cmap = LinearSegmentedColormap.from_list(cfile, colors,
                                                      N=len(colors))
 
         elif isinstance(cfile, str) and 'rms' in cfile:
             colors = _ctable.colorsfromfile(cfile)
-            self.contourlevels = len(colors)
-
             cmap = LinearSegmentedColormap.from_list('rms', colors,
                                                      N=len(colors))
 
@@ -109,14 +91,11 @@ class BasePlot(object):
             logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
-            self.contourlevels = cmap.N
-
         else:
             cmap = plt.get_cmap('rainbow')
             logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
-            self.contourlevels = cmap.N
 
         ctable = []
 
@@ -131,6 +110,40 @@ class BasePlot(object):
             cmap = LinearSegmentedColormap.from_list(ctable, colors,
                                                      N=len(colors))
 
+        return cmap
+
+    @staticmethod
+    def get_any_colormap_as_table(cmap):
+        """Returns the given color map cmap as a list of RGB tuples."""
+        cmaplist = [cmap(i) for i in range(cmap.N)]
+        return cmaplist
+
+    def set_colortable(self, cname, colorlist=None):
+        """This is actually deprecated..."""
+        if colorlist is None:
+            self.colormap = cname
+        else:
+            self.define_colormap(cname, colorlist=colorlist)
+
+    def get_colormap_as_table(self):
+        """Get the current color map as a list of RGB tuples."""
+        return self.get_any_colormap_as_table(self._colormap)
+
+    def define_colormap(self, cfile, colorlist=None):
+        """Defines a color map from file or a predefined name.
+
+        Args:
+            cfile (str): File name (RMS format) or an alias for a predefined
+                map name, e.g. 'xtgeo', or one of matplotlibs numerous tables.
+            colorlist (list, int, optional): List of integers redefining
+                color entries per zone and/or well, which starts
+                from 0 index. Default is just keep the linear sequence as is.
+
+        """
+
+        cmap = self.define_any_colormap(cfile, colorlist=colorlist)
+
+        self.contourlevels = cmap.N
         self._colormap = cmap
 
     def show(self):

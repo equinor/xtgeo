@@ -16,11 +16,11 @@ class XSection(BasePlot):
     """Class for plotting a cross-section of a well.
 
     Args:
-        zmin (float): Upper level of the plot (top Y axis)
-        zmax (float): Lower level of the plot (bottom Y axis)
-        well (obj): XTgeo well object
-        surfaces (list of obj): List of XTGeo RegularSurface objects
-        surfacenames (list of str): List of surface names for legend
+        zmin (float): Upper level of the plot (top Y axis).
+        zmax (float): Lower level of the plot (bottom Y axis).
+        well (Well): XTGeo well object.
+        surfaces (list): List of XTGeo RegularSurface objects
+        surfacenames (list): List of surface names (str)for legend
         colormap (str): Name of colormap, e.g. 'Set1'. Default is 'xtgeo'
         outline (obj): XTGeo Polygons object
         tight (bool): True for tight_layout (False is default)
@@ -55,6 +55,12 @@ class XSection(BasePlot):
         else:
             self.define_colormap(colormap)
 
+        self._colormap_facies = self.define_any_colormap('xtgeo')
+        self._colormap_facies_dict = {idx: idx for idx in range(100)}
+
+        self._colormap_perf = self.define_any_colormap('xtgeo')
+        self._colormap_perf_dict = {idx: idx for idx in range(100)}
+
         logger.info('Ran __init__ ...')
         logger.info('Colormap is {}'.format(self._colormap))
 
@@ -63,8 +69,58 @@ class XSection(BasePlot):
     # =========================================================================
     @property
     def pagesize(self):
-        """ Returns page size."""
+        """Returns page size."""
         return self._pagesize
+
+    @property
+    def colormap_facies(self):
+        """Set or get the facies colormap"""
+        return self._colormap_facies
+
+    @colormap_facies.setter
+    def colormap_facies(self, cmap):
+        self._colormap_facies = self.define_any_colormap(cmap)
+
+    @property
+    def colormap_perf(self):
+        """Set or get the perforations colormap"""
+        return self._colormap_perf
+
+    @colormap_perf.setter
+    def colormap_perf(self, cmap):
+        self._colormap_perf = self.define_any_colormap(cmap)
+
+    @property
+    def colormap_facies_dict(self):
+        """Set or get the facies colormap actual dict table"""
+        return self._colormap_facies_dict
+
+    @colormap_facies_dict.setter
+    def colormap_facies_dict(self, xdict):
+        if not isinstance(xdict, dict):
+            raise ValueError('Input is not a dict')
+
+        # if not all(isinstance(item, int) for item in list(xdict.values)):
+        #     raise ValueError('Dict values is a list, but some elems are '
+        #                      'not ints!')
+
+        self._colormap_facies_dict = xdict
+
+    @property
+    def colormap_perf_dict(self):
+        """Set or get the perf colormap actual dict table"""
+        return self._colormap_perf_dict
+
+    @colormap_perf_dict.setter
+    def colormap_perf_dict(self, xdict):
+        if not isinstance(xdict, dict):
+            raise ValueError('Input is not a dict')
+
+        # if not all(isinstance(item, int) for item in list(xdict.values)):
+        #     raise ValueError('Dict values is a list, but some elems are '
+        #                      'not ints!')
+
+        self._colormap_perf_dict = xdict
 
     # =========================================================================
     # Functions methods (public)
@@ -87,12 +143,12 @@ class XSection(BasePlot):
                                               8.27 * figscaling))
         ax1 = []
 
-        ax1.append(plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=22))
+        ax1.append(plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23))
 
-        ax2 = plt.subplot2grid((20, 28), (17, 22), rowspan=3,
-                               colspan=3)
-        ax3 = plt.subplot2grid((20, 28), (17, 25), rowspan=3,
-                               colspan=3)
+        ax2 = plt.subplot2grid((20, 28), (10, 23), rowspan=5,
+                               colspan=5)
+        ax3 = plt.subplot2grid((20, 28), (15, 23), rowspan=5,
+                               colspan=5)
         # indicate A to B
         plt.text(0.02, 0.98, 'A', ha='left', va='top',
                  transform=ax1[0].transAxes, fontsize=8)
@@ -132,7 +188,8 @@ class XSection(BasePlot):
         self._ax2 = ax2
         self._ax3 = ax3
 
-    def plot_well(self, zonelogname='ZONELOG'):
+    def plot_well(self, zonelogname='ZONELOG', facieslogname=None,
+                  perflogname=None):
         """Input an XTGeo Well object and plot it."""
         ax = self._ax1[self._surfaceplot_count - 1]
         wo = self._well
@@ -152,13 +209,18 @@ class XSection(BasePlot):
         # get the well trajectory (numpies) as copy
         zv = df['Z_TVDSS'].values.copy()
         hv = df['R_HLEN'].values.copy()
+
+        # plot the perflog, if any, first
+        if perflogname:
+            self._plot_well_perflog(df, ax, zv, hv, perflogname)
+
+        # plot the facies, if any, behind the trajectory; ie. first or second
+        if facieslogname:
+            self._plot_well_faclog(df, ax, zv, hv, facieslogname)
+
         self._plot_well_traj(df, ax, zv, hv)
 
-        haszone = False
-        if zonelogname in df.columns:
-            haszone = True
-
-        if haszone:
+        if zonelogname:
             self._plot_well_zlog(df, ax, zv, hv, zonelogname)
 
     def _plot_well_traj(self, df, ax, zv, hv):
@@ -172,6 +234,10 @@ class XSection(BasePlot):
 
     def _plot_well_zlog(self, df, ax, zv, hv, zonelogname):
         """Plot the zone log as colored segments."""
+
+        if zonelogname not in df.columns:
+            return
+
         zo = df[zonelogname].values
         zomin = 0
         zomax = 0
@@ -204,6 +270,76 @@ class XSection(BasePlot):
             logger.debug('Zone is {}, color no is {}'.
                          format(zone, zone + zshift - 1))
             ax.plot(hv_copy, zv_copy, linewidth=4, c=color)
+
+    def _plot_well_faclog(self, df, ax, zv, hv, facieslogname,
+                          facieslist=None):
+        """Plot the facies log as colored segments.
+
+        Args:
+            df (dataframe): The Well dataframe.
+            ax (axes): The ax plot object.
+            zv (ndarray): The numpy Z TVD array.
+            hv (ndarray): The numpy Length  array.
+            facieslogname (str): name of the facies log.
+            facieslist (list): List of values to be plotted as facies
+        """
+
+        if facieslogname not in df.columns:
+            return
+
+        cmap = self.colormap_facies
+        ctable = self.get_any_colormap_as_table(cmap)
+        idx = self.colormap_facies_dict
+
+        if facieslist is None:
+            facieslist = list(idx.keys())
+
+        fa = df[facieslogname].values
+
+        # let the part with ZONELOG have a colour
+        for facies in facieslist:
+
+            color = ctable[idx[facies]]
+
+            zv_copy = ma.masked_where(fa != facies, zv)
+            hv_copy = ma.masked_where(fa != facies, hv)
+
+            ax.plot(hv_copy, zv_copy, linewidth=10, c=color)
+
+    def _plot_well_perflog(self, df, ax, zv, hv, perflogname,
+                           perflist=None):
+        """Plot the perforation log as colored segments.
+
+        Args:
+            df (dataframe): The Well dataframe.
+            ax (axes): The ax plot object.
+            zv (ndarray): The numpy Z TVD array.
+            hv (ndarray): The numpy Length  array.
+            perflogname (str): name of the perforation log.
+            perflist (list): List of values to be plotted as PERF
+        """
+
+        if perflogname not in df.columns:
+            return
+
+        cmap = self.colormap_perf
+        ctable = self.get_any_colormap_as_table(cmap)
+        idx = self.colormap_perf_dict
+
+        if perflist is None:
+            perflist = list(idx.keys())
+
+        prf = df[perflogname].values
+
+        # let the part with ZONELOG have a colour
+        for perf in perflist:
+
+            color = ctable[idx[perf]]
+
+            zv_copy = ma.masked_where(perf != prf, zv)
+            hv_copy = ma.masked_where(perf != prf, hv)
+
+            ax.plot(hv_copy, zv_copy, linewidth=15, c=color)
 
     def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
                       colormap=None, linewidth=1.0, legendtitle=None,

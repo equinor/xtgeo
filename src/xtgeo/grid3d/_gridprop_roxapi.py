@@ -66,6 +66,8 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
     logger.info(indexer.handedness)
 
     pvalues = roxprop.get_values()
+    self._roxar_dtype = pvalues.dtype
+
     logger.info('PVALUES is {}'.format(pvalues))
 
     logger.info('PVALUES {} {}'.format(pvalues, pvalues.flags))
@@ -102,6 +104,13 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
 
     if self._isdiscrete:
         self.codes = roxprop.code_names.copy()
+
+        tmpcode = self.codes.copy()
+        for key, val in tmpcode.items():
+            if val == '':
+                val = 'unknown'
+            tmpcode[key] = val
+        self.codes = tmpcode
 
     logger.info('BUFFER 1 is {}'.format(mybuffer))
 
@@ -163,8 +172,9 @@ def _store_in_roxar(self, pname, roxgrid):
     jind = ijk[:, 1]
     kind = ijk[:, 2]
 
+    dtype = self._roxar_dtype
     if self.isdiscrete:
-        pvalues = roxgrid.get_grid().generate_values(data_type=np.uint16)
+        pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
     else:
         pvalues = roxgrid.get_grid().generate_values(data_type=np.float32)
 
@@ -175,7 +185,7 @@ def _store_in_roxar(self, pname, roxgrid):
     if self.isdiscrete:
         rprop = properties.create(
             pname, property_type=roxar.GridPropertyType.discrete,
-            data_type=np.uint16)
+            data_type=dtype)
         rprop.code_names = self.codes.copy()
     else:
         rprop = properties.create(
