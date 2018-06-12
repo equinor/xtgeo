@@ -18,10 +18,10 @@ values1d property, e.g.::
 """
 from __future__ import print_function, absolute_import
 
-import sys
+import os.path
+
 import numpy as np
 import numpy.ma as ma
-import os.path
 
 import cxtgeo.cxtgeo as _cxtgeo
 
@@ -29,21 +29,22 @@ from xtgeo.common.exceptions import DateNotFoundError, KeywordFoundNoDateError
 from xtgeo.common.exceptions import KeywordNotFoundError
 
 from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGDescription
+from xtgeo.common import _get_fhandle
 from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
-from xtgeo.grid3d import _gridprop_import_obsolete
 from xtgeo.grid3d import _gridprop_roxapi
 from xtgeo.grid3d import _gridprop_export
-from ._gridprops_io import _get_fhandle
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
 # =============================================================================
-# functions outside the class, for rapid access. Will be exposed as
+# Functions outside the class, for rapid access. Will be exposed as
 # xxx = xtgeo.gridproperty_from_file. Cf __init__ at top level
+# =============================================================================
 
 def gridproperty_from_file(pfile, fformat='guess', name='unknown',
                            grid=None, date=None, apiversion=2):
@@ -85,6 +86,10 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):
 
     return obj
 
+
+# =============================================================================
+# GridProperty class
+# =============================================================================
 
 class GridProperty(Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
@@ -177,6 +182,7 @@ class GridProperty(Grid3D):
         self._undef_i = _cxtgeo.UNDEF_INT
         self._undef_ilimit = _cxtgeo.UNDEF_INT_LIMIT
 
+        self._filesrc = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
 
         self._roxar_dtype = np.float32
@@ -243,6 +249,10 @@ class GridProperty(Grid3D):
 
     @isdiscrete.setter
     def isdiscrete(self, flag):
+
+        if not isinstance(flag, bool):
+            raise ValueError('Input to {__name__} must be a bool')
+
         if flag is self._isdiscrete:
             pass
         else:
@@ -345,6 +355,13 @@ class GridProperty(Grid3D):
             values = ma.array(values)
             values = values.reshape((self._ncol, self._nrow, self._nlay))
 
+        elif isinstance(values, ma.MaskedArray):
+            values = values.reshape((self._ncol, self._nrow, self._nlay))
+        else:
+            raise ValueError('Problems with values in {}'.format(__name__))
+
+        self._values = values
+
         trydiscrete = False
         if 'int' in str(values.dtype):
             trydiscrete = True
@@ -358,21 +375,9 @@ class GridProperty(Grid3D):
         logger.debug('Values shape: {}'.format(self._values.shape))
         logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
 
-    # @property
-    # def npvalues(self):
-    #     """ Return an ordinary unmasked 1D numpy array"""
-    #     self._update_values()
-    #     vv = self._values.copy()
-    #     if self.isdiscrete:
-    #         vv = ma.filled(vv, self._undef_i)
-    #     else:
-    #         vv = ma.filled(vv, self._undef)
-
-    #     return vv
-
     @property
     def ntotal(self):
-        """Returns total number of cells ncol*nrow*nlay"""
+        """Returns total number of cells ncol*nrow*nlay (read only)"""
         return self._ncol * self._nrow * self._nlay
 
     @property
@@ -426,9 +431,37 @@ class GridProperty(Grid3D):
     # =========================================================================
     # Various public methods
     # =========================================================================
+    def describe(self):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of GridProperty instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('Name', self.name)
+        dsc.txt('Date', self.date)
+        dsc.txt('Belongs to grid', self.grid)
+        dsc.txt('File source', self._filesrc)
+        dsc.txt('Discrete status', self._isdiscrete)
+        dsc.txt('Codes', self._codes)
+        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
+        np.set_printoptions(threshold=16)
+        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
+        np.set_printoptions(threshold=1000)
+        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
+                self.values.std(), self.values.min(), self.values.max())
+        itemsize = self.values.itemsize
+        msize = float(self.values.size * itemsize) / (1024 * 1024 * 1024)
+        dsc.txt('Roxar datatype', self._roxar_dtype)
+        dsc.txt('Minimum memory usage of array (GB)', msize)
+
+        dsc.flush()
 
     def get_npvalues3d(self, fill_value=None):
-        """Get a pure numpy copy (not masked) copy of the values, 3D shape
+        """Get a pure numpy copy (not masked) copy of the values, 3D shape.
+
+        Note that Numpy dtype will be reset; int32 if discrete or float64 if
+        continuous. The reaoson for this is to avoid inconsistensies regarding
+        UNDEF values.
 
         Args:
             fill_value: Value of masked entries. Default is None which
@@ -437,11 +470,17 @@ class GridProperty(Grid3D):
         """
         # this is a function, not a property by design
 
-        fvalue = _cxtgeo.UNDEF
         if self._isdiscrete:
             fvalue = _cxtgeo.UNDEF_INT
+            dtype = np.int32
+        else:
+            fvalue = _cxtgeo.UNDEF
+            dtype = np.float64
 
-        npv3d = ma.filled(self.values, fill_value=fvalue)
+        val = self.values.copy().astype(dtype)
+        npv3d = ma.filled(val, fill_value=fvalue)
+        del val
+
         return npv3d
 
     def get_active_npvalues1d(self):
@@ -490,7 +529,7 @@ class GridProperty(Grid3D):
         for most Eclipse input.
 
         Args:
-            file (str): name of file to be imported
+            pfile (str): name of file to be imported
             fformat (str): file format to be used roff/init/unrst
                 (guess is default).
             name (str): name of property to import
@@ -514,6 +553,8 @@ class GridProperty(Grid3D):
            True if success, otherwise False
         """
 
+        self._filesrc = pfile
+
         # it may be that pfile already is an open file; hence a filehandle
         # instead. Check for this, and skip tests of so
         pfile_is_not_fhandle = True
@@ -533,7 +574,7 @@ class GridProperty(Grid3D):
             if fformat == 'guess':
                 if len(fext) == 0:
                     logger.critical('File extension missing. STOP')
-                    sys.exit(9)
+                    raise ValueError('File extension missing. STOP')
                 else:
                     fformat = fext.lower().replace('.', '')
 
@@ -547,8 +588,10 @@ class GridProperty(Grid3D):
                                                apiversion=apiversion)
 
         elif (fformat.lower() == 'init'):
-            ier = self._import_ecl_output(pfile, name=name, etype=1,
-                                          grid=grid, apiversion=apiversion)
+            ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
+                                                    etype=1, date=None,
+                                                    grid=grid)
+
         elif (fformat.lower() == 'unrst'):
             if date is None:
                 raise ValueError('Restart file, but no date is given')
@@ -562,12 +605,12 @@ class GridProperty(Grid3D):
                 else:
                     date = int(date)
 
-            ier = self._import_ecl_output(pfile, name=name, etype=5,
-                                          grid=grid,
-                                          date=date, apiversion=apiversion)
+            ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
+                                                    etype=5, date=date,
+                                                    grid=grid)
         else:
             logger.warning('Invalid file format')
-            sys.exit(1)
+            raise SystemExit('Invalid file format')
 
         if ier == 22:
             raise DateNotFoundError('Date {} not found when importing {}'
@@ -600,6 +643,10 @@ class GridProperty(Grid3D):
             realisation (int): Realisation number (default 0 first)
 
         """
+
+        self._filesrc = ('ROXAR API GridModel:{} Property: {}'
+                         .format(gname, pname))
+
         _gridprop_roxapi.import_prop_roxapi(
             self, projectname, gname, pname, realisation)
 
@@ -692,9 +739,9 @@ class GridProperty(Grid3D):
 
         if self.isdiscrete:
             logger.info('Converting to continuous ...')
-            val = self.values.copy()
+            val = self._values.copy()
             val = val.astype('float64')
-            self.values = val
+            self._values = val
             self._isdiscrete = False
             self._codes = {}
             self._roxar_dtype = np.float32
@@ -706,9 +753,9 @@ class GridProperty(Grid3D):
 
         if not self.isdiscrete:
             logger.info('Converting to discrete ...')
-            val = self.values.copy()
+            val = self._values.copy()
             val = val.astype(np.int32)
-            self.values = val
+            self._values = val
             self._isdiscrete = True
 
             # make the code list
@@ -719,45 +766,3 @@ class GridProperty(Grid3D):
             self._roxar_dtype = np.uint16
         else:
             logger.info('No need to convert, already discrete')
-
-    # =========================================================================
-    # PRIVATE METHODS
-    # should not be applied outside the class
-    # =========================================================================
-
-    # -------------------------------------------------------------------------
-    # Import methods for various formats
-    # -------------------------------------------------------------------------
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Import Eclipse's INIT and UNRST formats
-    # type: 1 binary INIT
-    #       5 binary unified restart
-    # These Eclipse files need the NX NY NZ and the ACTNUM array as they
-    # only store the active cells for most vectors. Hence, the grid sizes
-    # and the actnum array shall be provided, and that is done via the grid
-    # geometry object directly. Note that this import only takes ONE property
-    # at the time... See GridProperies class.
-    #
-    # Returns: 0: if OK
-    #          1: Parameter and or Date is missing
-    #         -9: Some serious error
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    def _import_ecl_output(self, pfile, name=None, etype=1, date=None,
-                           grid=None, apiversion=2):
-
-        if apiversion == 1:
-            # use the old obsolete version
-            logger.info('API version 1')
-            ier = _gridprop_import_obsolete.import_eclbinary_v1(
-                self, pfile, name=name, etype=etype, date=date, grid=grid)
-
-        elif apiversion == 2:
-            # use the new version
-            logger.info('API version 2')
-            ier = _gridprop_import.import_eclbinary_v2(self, pfile, name=name,
-                                                       etype=etype, date=date,
-                                                       grid=grid)
-
-        return ier

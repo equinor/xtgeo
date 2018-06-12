@@ -13,7 +13,7 @@ from xtgeo.common.exceptions import KeywordFoundNoDateError
 from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import _gridprop_lowlevel
 
-from ._gridprops_io import _get_fhandle, _close_fhandle
+from xtgeo.common import _get_fhandle, _close_fhandle
 
 xtg = XTGeoDialog()
 
@@ -23,8 +23,8 @@ _cxtgeo.xtg_verbose_file('NONE')
 xtg_verbose_level = xtg.get_syslevel()
 
 
-def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
-                         grid=None):
+def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
+                      grid=None):
     """Import, private to this routine.
 
     Raises:
@@ -205,8 +205,8 @@ def _import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
     return 0
 
 
-def import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
-                        grid=None):
+def import_eclbinary(self, pfile, name=None, etype=1, date=None,
+                     grid=None):
     ios = 0
     if name == 'SOIL':
         # some recursive magic here
@@ -222,19 +222,19 @@ def import_eclbinary_v2(self, pfile, name=None, etype=1, date=None,
                        date=date, fformat='unrst')
 
         self.name = 'SOIL' + '_' + str(date)
-        self.values = swat.values * -1 - sgas.values + 1.0
         self._nrow = swat.nrow
         self._ncol = swat.ncol
         self._nlay = swat.nlay
         self._grid = grid
         self._date = date
+        self._values = swat._values * -1 - sgas._values + 1.0
 
         del swat
         del sgas
 
     else:
         logger.info('Importing {}'.format(name))
-        ios = _import_eclbinary_v2(self, pfile, name=name, etype=etype,
+        ios = _import_eclbinary(self, pfile, name=name, etype=etype,
                                    date=date, grid=grid)
 
     return ios

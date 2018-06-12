@@ -62,7 +62,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'xtgeo'
-copyright = u"Statoil (contact person: Jan C. Rivenæs, JRIV@statoil.com)"
+copyright = u"Equinor (contact person: Jan C. Rivenæs, JRIV@equinor.com)"
 
 
 # Sort members by input order in classes
@@ -134,7 +134,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name of an image file (relative to this directory) to place at the
 # top of the sidebar.
-html_logo = '_static/statoil_logo.png'
+html_logo = '_static/equinor-logo2.jpg'
 
 # The name of an image file (within the static path) to use as favicon
 # of the docs.  This file should be a Windows icon file (.ico) being

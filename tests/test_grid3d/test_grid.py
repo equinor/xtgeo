@@ -33,7 +33,6 @@ brilgrdecl = '../xtgeo-testdata/3dgrids/bri/b.grdecl'
 
 def test_import_wrong():
     """Importing wrong fformat, etc"""
-    pass
     with pytest.raises(ValueError):
         g = Grid()
         g.from_file(emegfile, fformat='ruffdum')
@@ -263,11 +262,10 @@ def test_ecl_run():
 
     logger.debug(pres1.values)
     logger.debug(pres2.values)
-    logger.debug(pres1)
 
     pres1.values = pres1.values - pres2.values
-    logger.debug(pres1.values)
-    logger.debug(pres1)
+    # logger.debug(pres1.values)
+    # logger.debug(pres1)
     avg = pres1.values.mean()
     # ok checked in RMS:
     tsetup.assert_almostequal(avg, -26.073, 0.001)

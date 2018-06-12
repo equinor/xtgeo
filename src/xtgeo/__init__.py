@@ -22,33 +22,33 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
     print('=' * 79)
 
 
-from .surface import regular_surface
-from .cube import cube
-from .grid3d import grid
-from .grid3d import grid_property
-from .grid3d import grid_properties
-from .well import well
-from .plot import baseplot
-from .plot import xsection
-from .plot import xtmap
-from .plot import grid3d_slice
-from .xyz import points
-from .xyz import polygons
+from xtgeo.surface import regular_surface
+from xtgeo.cube import cube
+from xtgeo.grid3d import grid
+from xtgeo.grid3d import grid_property
+from xtgeo.grid3d import grid_properties
+from xtgeo.well import well
+from xtgeo.plot import baseplot
+from xtgeo.plot import xsection
+from xtgeo.plot import xtmap
+from xtgeo.plot import grid3d_slice
+from xtgeo.xyz import points
+from xtgeo.xyz import polygons
 # from .xyz import _xyz
 
-from ._version import get_versions
+from xtgeo._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
 # some function wrappers to initiate objects from imports
-from .surface.regular_surface import surface_from_file
-from .surface.regular_surface import surface_from_roxar
+from xtgeo.surface.regular_surface import surface_from_file
+from xtgeo.surface.regular_surface import surface_from_roxar
 
-from .grid3d.grid import grid_from_file
-from .grid3d.grid import grid_from_roxar
+from xtgeo.grid3d.grid import grid_from_file
+from xtgeo.grid3d.grid import grid_from_roxar
 
-from .grid3d.grid_property import gridproperty_from_file
-from .grid3d.grid_property import gridproperty_from_roxar
+from xtgeo.grid3d.grid_property import gridproperty_from_file
+from xtgeo.grid3d.grid_property import gridproperty_from_roxar
 
-from .cube.cube import cube_from_file
-from .cube.cube import cube_from_roxar
+from xtgeo.cube.cube import cube_from_file
+from xtgeo.cube.cube import cube_from_roxar

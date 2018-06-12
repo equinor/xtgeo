@@ -5,8 +5,10 @@ import pandas as pd
 import xtgeo
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import DateNotFoundError
+from xtgeo.common import _get_fhandle, _close_fhandle
 
+from xtgeo.grid3d import Grid3D
+from xtgeo.grid3d import _gridprop_import
 
 xtg = XTGeoDialog()
 
@@ -14,29 +16,6 @@ logger = xtg.functionlogger(__name__)
 
 xtg_verbose_level = xtg.get_syslevel()
 _cxtgeo.xtg_verbose_file('NONE')
-
-
-def _get_fhandle(pfile):
-    """Examine for file or filehandle and return filehandle + a bool"""
-
-    pclose = True
-    if "Swig Object of type 'FILE" in str(pfile):
-        fhandle = pfile
-        pclose = False
-    else:
-        fhandle = _cxtgeo.xtg_fopen(pfile, 'rb')
-
-    return fhandle, pclose
-
-
-def _close_fhandle(fh, flag):
-    """Close file if flag is True"""
-
-    if flag:
-        _cxtgeo.xtg_fclose(fh)
-        logger.debug('File is now closed')
-    else:
-        logger.debug('File remains open')
 
 
 def scan_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False,
@@ -120,7 +99,7 @@ def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=100000,
                         dataframe=False)
 
     result = []
-    # now merge thses two:
+    # now merge these two:
     n = -1
     date = 0
     for item in xkeys:
@@ -325,8 +304,9 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
 
             # use a private GridProperty function here, for convinience
             # (since filehandle)
-            ier = prop._import_ecl_output(fhandle, name=name, date=date,
-                                          grid=grid, apiversion=2, etype=etype)
+            ier = _gridprop_import.import_eclbinary(prop, fhandle, name=name,
+                                                    date=date, grid=grid,
+                                                    etype=etype)
             if ier != 0:
                 raise ValueError('Something went wrong, IER = {} while '
                                  'name={}, date={}, etype={}, propname={}'

@@ -14,6 +14,7 @@ import cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
 from xtgeo.grid3d import Grid3D
+from xtgeo.common import XTGDescription
 
 from xtgeo.grid3d import _grid_hybrid
 from xtgeo.grid3d import _grid_import
@@ -30,7 +31,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def grid_from_file(gfile, fformat='guess'):
-    """Text to come"""
+    """Read a grid (cornerpoint) from file and an returns a Grid() instance."""
 
     obj = Grid()
 
@@ -40,7 +41,7 @@ def grid_from_file(gfile, fformat='guess'):
 
 
 def grid_from_roxar(project, gname, realisation=0):
-    """text to come"""
+    """Read a grid inside a RMS project and return a Grid() instance."""
 
     obj = Grid()
 
@@ -81,6 +82,7 @@ class Grid(Grid3D):
         self._p_actnum_v = None      # carray swig pointer to actnum vector
         self._nactive = -999         # Number of active cells
         self._actnum_indices = None  # Index numpy array for active cells
+        self._filesrc = None
 
         self._props = []  # List of 'attached' property objects
 
@@ -205,6 +207,22 @@ class Grid(Grid3D):
 
         return self._roxindexer
 
+    # =========================================================================
+    # Various public methods
+    # =========================================================================
+    def describe(self):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of Grid instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('File source', self._filesrc)
+        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
+        dsc.txt('Number of active cells', self.nactive)
+        dsc.txt('Attached grid props (objects)', self.props)
+        # dsc.txt('Attached grid props (as names)', self.propnames)
+        dsc.flush()
+
     def get_actnum_indices(self, order='C'):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C or F order.
@@ -254,6 +272,8 @@ class Grid(Grid3D):
         Raises:
             OSError: if file is not found etc
         """
+
+        self._filesrc = gfile
 
         fflist = set(['egrid', 'grid', 'grdecl', 'roff', 'eclipserun',
                       'guess'])
