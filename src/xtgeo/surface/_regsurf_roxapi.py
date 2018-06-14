@@ -27,6 +27,9 @@ def import_horizon_roxapi(self, project, name, category,
 
 
 def _roxapi_import_surface(self, proj, name, category, stype, realisation):
+
+    self._name = name
+
     if stype == 'horizons':
         if name not in proj.horizons:
             raise ValueError('Name {} is not within Horizons'.format(name))
@@ -64,7 +67,6 @@ def _roxapi_horizon_to_xtgeo(self, rox):
 
     # since XTGeo is F order, while RMS is C order...
     self._values = np.asanyarray(rox.get_values(), order='C')
-
 
 def export_horizon_roxapi(self, project, name, category, stype,
                           realisation):

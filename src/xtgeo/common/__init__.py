@@ -1,4 +1,10 @@
-from .xtgeo_dialog import XTGeoDialog
-from .xtgeo_dialog import XTGDescription
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
 
-from ._fileutils import _get_fhandle, _close_fhandle
+# flake8: noqa
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.common.xtgeo_dialog import XTGDescription
+from xtgeo.common.xtgeo_dialog import XTGShowProgress
+
+from xtgeo.common._fileutils import _get_fhandle, _close_fhandle

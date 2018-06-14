@@ -32,6 +32,8 @@ import numpy as np
 import numpy.ma as ma
 
 from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGDescription
+
 from xtgeo.plot import Map
 from xtgeo.xyz import Points
 from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
@@ -117,6 +119,7 @@ class RegularSurface(object):
         yinc: Y increment
         rotation: rotation in degrees, anticlock from X axis between 0, 360
         values: 2D (masked) numpy array of shape (ncol, nrow), C order
+        name: A given name for the surface, default is file name root
 
     Examples:
 
@@ -150,6 +153,7 @@ class RegularSurface(object):
         self._undef_limit = UNDEF_LIMIT
         self._masked = False
         self._filesrc = None     # Name of original input file
+        self._name = 'unknown'
 
         # assume so far:
         self._yflip = 1
@@ -438,6 +442,16 @@ class RegularSurface(object):
         return self.get_values1d(asmasked=False, fill_value=np.nan)
 
     @property
+    def name(self):
+        """A free form name (str) e.g. for display, for the surface."""
+        return self._name
+
+    @name.setter
+    def name(self, newname):
+        if isinstance(newname, str):
+            self._name = newname
+
+    @property
     def undef(self):
         """Returns or set the undef value, to be used e.g. when in the
         get_zval method."""
@@ -458,8 +472,29 @@ class RegularSurface(object):
         self._undef_limit = undef_limit
 
 # =============================================================================
-# Import and export
+# Describe, import and export
 # =============================================================================
+    def describe(self):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of RegularSurface instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('File source', self._filesrc)
+        dsc.txt('Shape: NCOL, NROW', self.ncol, self.nrow)
+        dsc.txt('Origins XORI, YORI', self.xori, self.yori)
+        dsc.txt('Increments XINC YINC', self.xinc, self.yinc)
+        dsc.txt('Rotation (anti-clock from X)', self.rotation)
+        dsc.txt('YFLIP flag', self._yflip)
+        np.set_printoptions(threshold=16)
+        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
+        np.set_printoptions(threshold=1000)
+        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
+                self.values.std(), self.values.min(), self.values.max())
+        msize = float(self.values.size * 8) / (1024 * 1024 * 1024)
+        dsc.txt('Minimum memory usage of array (GB)', msize)
+
+        dsc.flush()
 
     def from_file(self, mfile, fformat='guess'):
         """Import surface (regular map) from file.
@@ -509,6 +544,7 @@ class RegularSurface(object):
         else:
             raise ValueError('Invalid file format: {}'.format(fformat))
 
+        self._name = os.path.basename(froot)
         return self
 
     def to_file(self, mfile, fformat='irap_binary'):
@@ -598,6 +634,7 @@ class RegularSurface(object):
 
         _regsurf_roxapi.import_horizon_roxapi(
             self, project, name, category, stype, realisation)
+
 
     def to_roxar(self, project, name, category, stype='horizons',
                  realisation=0):
@@ -1100,7 +1137,7 @@ class RegularSurface(object):
     def slice_cube_window(self, cube, zsurf=None, other=None,
                           other_position='below', sampling='nearest',
                           mask=True, zrange=None, ndiv=None, attribute='max',
-                          maskthreshold=0.1):
+                          maskthreshold=0.1, showprogress=False):
         """Slice the cube within a vertical window and get the statistical
         attrubute.
 
@@ -1130,21 +1167,22 @@ class RegularSurface(object):
                 'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
                 the cube will be undef.
-            zrange (float): The one-sided range of the window, e.g. 10
+            zrange (float): The one-sided "radius" range of the window, e.g. 10
                 (10 is default) units (e.g. meters if in depth mode).
-                The full window is +- zrange. If other surface is present,
-                zrange is computed based on that.
+                The full window is +- zrange (i.e. diameter).
+                If other surface is present, zrange is computed based on that.
             ndiv (int): Number of intervals for sampling within zrange. None
                 means 'auto' sampling, using 0.5 of cube Z increment as basis.
             attribute (str): The requested attribute, e.g. 'max' value
             maskthreshold (float): Only if two surfaces: if isochore is less
                 than given value, the result will be masked.
+            showprogress (bool): If True, then a progress is printed to stdout.
 
         Example::
 
             cube = Cube('some.segy')
             surf = RegularSurface('s.gri')
-            # update surf to sample cube values:
+            # update surf to sample cube values in a total range of 30 m:
             surf.slice_cube_window(cube, attribute='min', zrange=15.0)
 
         Raises:
@@ -1160,7 +1198,8 @@ class RegularSurface(object):
                                         sampling=sampling, mask=mask,
                                         zrange=zrange, ndiv=ndiv,
                                         attribute=attribute,
-                                        maskthreshold=maskthreshold)
+                                        maskthreshold=maskthreshold,
+                                        showprogress=showprogress)
 
     # =========================================================================
     # Special methods

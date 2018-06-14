@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 """Module for simplifying various operation in the Roxar python interface.
 
 E.g creating and deletion of Horizon folders, etc.

@@ -145,7 +145,8 @@ def test_slice_attr_window_max():
                   title='Reek Minimum',
                   infotext='Method: trilinear, window')
 
-    xs2.slice_cube_window(cc, attribute='max', sampling='trilinear')
+    xs2.slice_cube_window(cc, attribute='max', sampling='trilinear',
+                          showprogress=True)
 
     xs2.quickplot(filename=td + '/surf_slice_cube_window_max.png',
                   colortable='seismic', minmax=(-1, 1),

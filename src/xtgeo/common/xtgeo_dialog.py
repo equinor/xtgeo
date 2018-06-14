@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 """Module for basic XTGeo dialog"""
 
 # =============================================================================
@@ -38,6 +41,26 @@ UNDEF = _cxtgeo.UNDEF
 UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
 VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
 VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
+
+
+class XTGShowProgress(object):
+    """Internal Class for showing progress of a computation to the terminal"""
+    def __init__(self, mytxt, expander, show=True):
+        self._txt = mytxt
+        self._expander = expander  # typically a '.'
+        self._show = show
+        self._progress = expander
+
+    def flush(self):
+        if not self._show:
+            return
+        print('%% {} {}'.format(self._txt, self._progress), end='\r')
+        self._progress += self._expander
+
+    def finished(self):
+        if not self._show:
+            return
+        print('%% {} {} OK!'.format(self._txt, self._progress))
 
 
 class XTGDescription(object):

@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
 """Export RegularSurface data."""
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 

@@ -11,8 +11,8 @@ import pandas as pd
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from . import _wellmarkers
-from . import _well_io
+from xtgeo.well import _wellmarkers
+from xtgeo.well import _well_io
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)

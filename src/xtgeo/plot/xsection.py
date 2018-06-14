@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+from collections import OrderedDict
+
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
@@ -47,8 +49,8 @@ class XSection(BasePlot):
         self._pagesize = 'A4'
         self._wfence = None
         self._showok = True  # to indicate if plot is OK to show
-        self._surfaceplot_count = 0
         self._legendtitle = 'Zones'
+        self._legendsize = 7
 
         if colormap is None:
             self._colormap = plt.cm.viridis
@@ -141,9 +143,10 @@ class XSection(BasePlot):
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling,
                                               8.27 * figscaling))
-        ax1 = []
+        ax1 = OrderedDict()
 
-        ax1.append(plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23))
+        ax1['main'] = plt.subplot2grid((20, 28), (0, 0), rowspan=20,
+                                       colspan=23)
 
         ax2 = plt.subplot2grid((20, 28), (10, 23), rowspan=5,
                                colspan=5)
@@ -151,24 +154,24 @@ class XSection(BasePlot):
                                colspan=5)
         # indicate A to B
         plt.text(0.02, 0.98, 'A', ha='left', va='top',
-                 transform=ax1[0].transAxes, fontsize=8)
+                 transform=ax1['main'].transAxes, fontsize=8)
         plt.text(0.98, 0.98, 'B', ha='right', va='top',
-                 transform=ax1[0].transAxes, fontsize=8)
+                 transform=ax1['main'].transAxes, fontsize=8)
 
         # title her:
         if title is not None:
             plt.text(0.5, 1.09, title, ha='center', va='center',
-                     transform=ax1[0].transAxes, fontsize=18)
+                     transform=ax1['main'].transAxes, fontsize=18)
 
         if subtitle is not None:
-            ax1[0].set_title(subtitle, size=14)
+            ax1['main'].set_title(subtitle, size=14)
 
         if infotext is not None:
             plt.text(-0.11, -0.11, infotext, ha='left', va='center',
-                     transform=ax1[0].transAxes, fontsize=6)
+                     transform=ax1['main'].transAxes, fontsize=6)
 
-        ax1[0].set_ylabel('Depth', fontsize=12.0)
-        ax1[0].set_xlabel('Length along well', fontsize=12)
+        ax1['main'].set_ylabel('Depth', fontsize=12.0)
+        ax1['main'].set_xlabel('Length along well', fontsize=12)
 
         ax2.tick_params(axis='both', which='both', bottom=False, top=False,
                         right=False, left=False, labelbottom=False,
@@ -191,7 +194,6 @@ class XSection(BasePlot):
     def plot_well(self, zonelogname='ZONELOG', facieslogname=None,
                   perflogname=None):
         """Input an XTGeo Well object and plot it."""
-        ax = self._ax1[self._surfaceplot_count - 1]
         wo = self._well
 
         # reduce the well data by Pandas operations
@@ -212,16 +214,20 @@ class XSection(BasePlot):
 
         # plot the perflog, if any, first
         if perflogname:
-            self._plot_well_perflog(df, ax, zv, hv, perflogname)
+            ax, bba = self._currentax(axisname='perf')
+            self._plot_well_perflog(df, ax, bba, zv, hv, perflogname)
 
         # plot the facies, if any, behind the trajectory; ie. first or second
         if facieslogname:
-            self._plot_well_faclog(df, ax, zv, hv, facieslogname)
+            ax, bba = self._currentax(axisname='facies')
+            self._plot_well_faclog(df, ax, bba, zv, hv, facieslogname)
 
-        self._plot_well_traj(df, ax, zv, hv)
+        axx, bbxa = self._currentax(axisname='well')
+
+        self._plot_well_traj(df, axx, zv, hv)
 
         if zonelogname:
-            self._plot_well_zlog(df, ax, zv, hv, zonelogname)
+            self._plot_well_zlog(df, axx, zv, hv, zonelogname)
 
     def _plot_well_traj(self, df, ax, zv, hv):
         """Plot the trajectory as a black line"""
@@ -271,7 +277,7 @@ class XSection(BasePlot):
                          format(zone, zone + zshift - 1))
             ax.plot(hv_copy, zv_copy, linewidth=4, c=color)
 
-    def _plot_well_faclog(self, df, ax, zv, hv, facieslogname,
+    def _plot_well_faclog(self, df, ax, bba, zv, hv, facieslogname,
                           facieslist=None):
         """Plot the facies log as colored segments.
 
@@ -296,7 +302,7 @@ class XSection(BasePlot):
 
         fa = df[facieslogname].values
 
-        # let the part with ZONELOG have a colour
+        # let the part with FACIESLOG have a colour
         for facies in facieslist:
 
             color = ctable[idx[facies]]
@@ -304,9 +310,14 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(fa != facies, zv)
             hv_copy = ma.masked_where(fa != facies, hv)
 
-            ax.plot(hv_copy, zv_copy, linewidth=10, c=color)
+            fname = self._well.get_logrecord_codename(facieslogname, facies)
 
-    def _plot_well_perflog(self, df, ax, zv, hv, perflogname,
+            ax.plot(hv_copy, zv_copy, linewidth=10, c=color,
+                    label=str(fname))
+
+        self._drawlegend(ax, bba, title='Facies')
+
+    def _plot_well_perflog(self, df, ax, bba, zv, hv, perflogname,
                            perflist=None):
         """Plot the perforation log as colored segments.
 
@@ -339,30 +350,66 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(perf != prf, zv)
             hv_copy = ma.masked_where(perf != prf, hv)
 
-            ax.plot(hv_copy, zv_copy, linewidth=15, c=color)
+            ax.plot(hv_copy, zv_copy, linewidth=15, c=color, label='PERF')
 
-    def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
-                      colormap=None, linewidth=1.0, legendtitle=None,
-                      fancyline=False):
-        """Input a surface list (ordered from top to base) , and plot them."""
+        self._drawlegend(ax, bba, title='Perforations')
+
+    def _drawlegend(self, ax, bba, title=None):
+
+        leg = ax.legend(loc='upper left', bbox_to_anchor=bba,
+                        prop={'size': self._legendsize}, title=title,
+                        handlelength=2)
+
+        for myleg in leg.get_lines():
+            myleg.set_linewidth(5)
+
+
+    def _currentax(self, axisname='main'):
+        """Keep track of current axis; is needed as one new legend need one
+        new axis.
+        """
+        # for multiple legends, bba is dynamic
+        bbapos = {
+            'main': (1.22, 1.12, 1, 0),
+            'contacts': (1.01, 1.12),
+            'facies': (1.01, 1.00),
+            'perf': (1.01, 0.7)
+        }
 
         ax1 = self._ax1
-        self._surfaceplot_count += 1
 
-        bba = (1, 1.09)
-        nc = self._surfaceplot_count
-        if nc > 1:
-            ax1.append(ax1[0].twinx())
-            bba = (1 + (nc - 1) * 0.14, 1.09)
+        if axisname != 'main':
+            ax1[axisname] = self._ax1['main'].twinx()
 
-        ax = self._ax1[self._surfaceplot_count - 1]
+            # invert min,max to invert the Y axis
+            ax1[axisname].set_ylim([self._zmax, self._zmin])
 
+            ax1[axisname].set_yticklabels([])
+            ax1[axisname].tick_params(axis='y', direction='in')
+
+        ax = self._ax1[axisname]
+
+        if axisname in bbapos:
+            bba = bbapos[axisname]
+        else:
+            bba = (1.22, 0.5)
+
+        return ax, bba
+
+    def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
+                      colormap=None, onecolor=None, linewidth=1.0, legend=True,
+                      legendtitle=None, fancyline=False, axisname='main'):
+        """Input a surface list (ordered from top to base) , and plot them."""
+
+        ax, bba = self._currentax(axisname=axisname)
         # either use surfaces from __init__, or override with surfaces
         # speciefied here
 
         if surfaces is None:
             surfaces = self._surfaces
             surfacenames = self._surfacenames
+
+        surfacenames = [surf.name for surf in surfaces]
 
         if legendtitle is None:
             legendtitle = self._legendtitle
@@ -406,19 +453,21 @@ class XSection(BasePlot):
         # sample the horizon to the fence:
         colortable = self.get_colormap_as_table()
         for i in range(nlen):
-            logger.info(i)
+            usecolor = colortable[i]
+            if onecolor:
+                usecolor = onecolor
             if not fill:
                 hfence = surfaces[i].get_fence(wfence)
                 if fancyline:
                     xcol = 'white'
-                    c = colortable[i]
+                    c = usecolor
                     if c[0] + c[1] + c[2] > 1.5:
                         xcol = 'black'
                     ax.plot(hfence[:, 3], hfence[:, 2],
                             linewidth=1.2 * linewidth,
                             c=xcol)
                 ax.plot(hfence[:, 3], hfence[:, 2], linewidth=linewidth,
-                        c=colortable[i], label=slegend[i])
+                        c=usecolor, label=slegend[i])
                 if fancyline:
                     ax.plot(hfence[:, 3], hfence[:, 2],
                             linewidth=0.3 * linewidth,
@@ -442,14 +491,13 @@ class XSection(BasePlot):
         # invert min,max to invert the Y axis
         ax.set_ylim([self._zmax, self._zmin])
 
-        ax.legend(loc='upper left', bbox_to_anchor=bba,
-                  prop={'size': 7}, title=legendtitle)
+        if legend:
+            self._drawlegend(ax, bba, title=legendtitle)
 
-        if self._surfaceplot_count > 1:
+        if axisname != 'main':
             ax.set_yticklabels([])
 
         ax.tick_params(axis='y', direction='in')
-        self._ax1 = ax1
 
     def plot_wellmap(self):
         """

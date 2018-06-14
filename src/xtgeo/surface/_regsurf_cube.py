@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Regular surface vs Cube"""
+from __future__ import division, absolute_import
+from __future__ import print_function
 
 import numpy as np
 import numpy.ma as ma
 
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGShowProgress
 
 xtg = XTGeoDialog()
 
@@ -76,7 +79,8 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
                       other_position='below',
                       sampling='nearest', mask=True,
                       zrange=10, ndiv=None, attribute='max',
-                      maskthreshold=0.1):
+                      maskthreshold=0.1, showprogress=False):
+
     """Slice Cube with a window and extract attribute(s)
 
     The zrange is one-sided (on order to secure a centered input); hence
@@ -112,20 +116,22 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
     if other is None:
         attvalues = _slice_constant_window(this, cube, sampling, zrange,
-                                           ndiv, mask, attribute)
+                                           ndiv, mask, attribute,
+                                           showprogress=showprogress)
     else:
         attvalues = _slice_between_surfaces(this, cube, sampling, other,
                                             other_position, zrange,
                                             ndiv, mask, attribute,
-                                            maskthreshold)
+                                            maskthreshold,
+                                            showprogress=showprogress)
 
     self.values = attvalues
     logger.info('Mean of cube attribute is {}'.format(self.values.mean()))
 
 
 def _slice_constant_window(this, cube, sampling, zrange,
-                           ndiv, mask, attribute):
-    """Slice a window, (contant in vertical extent)."""
+                           ndiv, mask, attribute, showprogress=False):
+    """Slice a window, (constant in vertical extent)."""
     npcollect = []
     zcenter = this.copy()
     zcenter.slice_cube(cube, sampling=sampling, mask=mask)
@@ -136,16 +142,18 @@ def _slice_constant_window(this, cube, sampling, zrange,
     logger.info('ZINCR is {}'.format(zincr))
 
     # collect above the original surface
+    progress = XTGShowProgress('Working', '.', show=showprogress)
     for i in range(ndiv):
+        progress.flush()
         ztmp = this.copy()
         ztmp.values -= zincr * (i + 1)
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
         ztmp.slice_cube(cube, sampling=sampling, mask=mask)
         logger.info('Mean of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
-
     # collect below the original surface
     for i in range(ndiv):
+        progress.flush()
         ztmp = this.copy()
         ztmp.values += zincr * (i + 1)
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
@@ -156,12 +164,15 @@ def _slice_constant_window(this, cube, sampling, zrange,
     stacked = ma.dstack(npcollect)
 
     attvalues = _attvalues(attribute, stacked)
+    progress.finished()
     return attvalues
 
 
 def _slice_between_surfaces(this, cube, sampling, other, other_position,
-                            zrange, ndiv, mask, attribute, mthreshold):
-    """Slice and find values bewteen two surface"""
+                            zrange, ndiv, mask, attribute, mthreshold,
+                            showprogress=False):
+
+    """Slice and find values between two surfaces."""
 
     npcollect = []
     zincr = zrange / float(ndiv)
@@ -176,7 +187,10 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     else:
         mul = 1
 
+    # collect above the original surface
+    progress = XTGShowProgress('Working', '.', show=showprogress)
     for i in range(ndiv):
+        progress.flush()
         ztmp = this.copy()
         ztmp.values += zincr * (i + 1) * mul
         zvalues = ztmp.values.copy()
@@ -201,6 +215,7 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     # for cases with erosion, the two surfaces are equal
     isovalues = mul * (other.values - this.values)
     attvalues = ma.masked_where(isovalues < mthreshold, attvalues)
+    progress.finished()
 
     return attvalues
 

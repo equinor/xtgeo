@@ -1,5 +1,10 @@
+# -*- coding: utf-8 -*-
 # flake8: noqa
 """The XTGeo Python module."""
+
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import os
 
 # to avoid problems in batch runs when no DISPLAY is set:
@@ -34,7 +39,7 @@ from xtgeo.plot import xtmap
 from xtgeo.plot import grid3d_slice
 from xtgeo.xyz import points
 from xtgeo.xyz import polygons
-# from .xyz import _xyz
+# from xtgeo.xyz import _xyz
 
 from xtgeo._version import get_versions
 __version__ = get_versions()['version']

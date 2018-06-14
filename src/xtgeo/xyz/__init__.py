@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 # flake8: noqa
-from ._xyz import XYZ
-from .points import Points
-from .polygons import Polygons
+from xtgeo.xyz._xyz import XYZ
+from xtgeo.xyz.points import Points
+from xtgeo.xyz.polygons import Polygons
