@@ -522,11 +522,10 @@ class RegularSurface(object):
 
         self._values = None
 
-        if os.path.isfile(mfile):
-            pass
-        else:
-            logger.critical('Not OK file')
-            raise os.error
+        if not os.path.isfile(mfile):
+            msg = 'Does file exist? {}'.format(mfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
         froot, fext = os.path.splitext(mfile)
         if fformat is None or fformat == 'guess':

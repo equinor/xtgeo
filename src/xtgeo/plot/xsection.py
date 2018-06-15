@@ -140,6 +140,9 @@ class XSection(BasePlot):
 
 
         """
+
+        plt.rcParams['axes.xmargin'] = 0  # fill the plot margins
+
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling,
                                               8.27 * figscaling))
@@ -363,7 +366,6 @@ class XSection(BasePlot):
         for myleg in leg.get_lines():
             myleg.set_linewidth(5)
 
-
     def _currentax(self, axisname='main'):
         """Keep track of current axis; is needed as one new legend need one
         new axis.
@@ -398,7 +400,9 @@ class XSection(BasePlot):
 
     def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
                       colormap=None, onecolor=None, linewidth=1.0, legend=True,
-                      legendtitle=None, fancyline=False, axisname='main'):
+                      legendtitle=None, fancyline=False, axisname='main',
+                      gridlines=False):
+
         """Input a surface list (ordered from top to base) , and plot them."""
 
         ax, bba = self._currentax(axisname=axisname)
@@ -498,6 +502,9 @@ class XSection(BasePlot):
             ax.set_yticklabels([])
 
         ax.tick_params(axis='y', direction='in')
+
+        if axisname == 'main' and gridlines:
+            ax.grid(color='grey', linewidth=0.2)
 
     def plot_wellmap(self):
         """
