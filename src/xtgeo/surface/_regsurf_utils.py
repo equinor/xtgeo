@@ -15,6 +15,47 @@ xtg_verbose_level = xtg.get_syslevel()
 logger = xtg.functionlogger(__name__)
 
 
+def swapaxes(self):
+    """Swap the axes columns vs rows, keep origin. Will change yflip."""
+
+    ncol = _cxtgeo.new_intpointer()
+    nrow = _cxtgeo.new_intpointer()
+    yflip = _cxtgeo.new_intpointer()
+    xinc = _cxtgeo.new_doublepointer()
+    yinc = _cxtgeo.new_doublepointer()
+    rota = _cxtgeo.new_doublepointer()
+
+    _cxtgeo.intpointer_assign(ncol, self._ncol)
+    _cxtgeo.intpointer_assign(nrow, self._nrow)
+    _cxtgeo.intpointer_assign(yflip, self._yflip)
+
+    _cxtgeo.doublepointer_assign(xinc, self._xinc)
+    _cxtgeo.doublepointer_assign(yinc, self._yinc)
+    _cxtgeo.doublepointer_assign(rota, self._rotation)
+
+    values1d = self.values.reshape(-1)
+    val = values1d.copy().astype(np.float32)
+
+    # borrow the cube function here; regsurf is a cube with nlay=1
+    ier = _cxtgeo.cube_swapaxes(ncol, nrow, 1, yflip,
+                                self.xori, xinc,
+                                self.yori, yinc, rota, val,
+                                0, xtg_verbose_level)
+    if ier != 0:
+        raise RuntimeError('Unspecied run time error from {}: Code: {}'
+                           .format(__name__, ier))
+
+    self._ncol = _cxtgeo.intpointer_value(ncol)
+    self._nrow = _cxtgeo.intpointer_value(nrow)
+    self._yflip = _cxtgeo.intpointer_value(yflip)
+
+    self._xinc = _cxtgeo.doublepointer_value(xinc)
+    self._yinc = _cxtgeo.doublepointer_value(yinc)
+    self._rotation = _cxtgeo.doublepointer_value(rota)
+
+    self.values = val.astype(np.float64)
+
+
 # =========================================================================
 # METHODS BELOW SHALL BE DEPRECATED!!
 # Helper methods, for internal usage
@@ -87,38 +128,38 @@ logger = xtg.functionlogger(__name__)
 #     logger.debug('Enter method... DONE')
 
 # # check i
-f values shape is OK (return True or False)
+# f values shape is OK (return True or False)
 
 
-def _check_shape_ok(self, values):
+# def _check_shape_ok(self, values):
 
-    if not values.flags['F_CONTIGUOUS']:
-        logger.error('Wrong order; shall be Fortran (Flags: {}'
-                     .format(values.flags))
-        return False
+#     if not values.flags['F_CONTIGUOUS']:
+#         logger.error('Wrong order; shall be Fortran (Flags: {}'
+#                      .format(values.flags))
+#         return False
 
-    (ncol, nrow) = values.shape
-    if ncol != self._ncol or nrow != self._nrow:
-        logger.error('Wrong shape: Dimens of values {} {} vs {} {}'
-                     .format(ncol, nrow, self._ncol, self._nrow))
-        return False
-    return True
-
-
-def _convert_np_carr_double(self, np_array, nlen):
-    """Convert numpy 1D array to C array, assuming double type"""
-    carr = _cxtgeo.new_doublearray(nlen)
-
-    _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
-
-    return carr
+#     (ncol, nrow) = values.shape
+#     if ncol != self._ncol or nrow != self._nrow:
+#         logger.error('Wrong shape: Dimens of values {} {} vs {} {}'
+#                      .format(ncol, nrow, self._ncol, self._nrow))
+#         return False
+#     return True
 
 
-def _convert_carr_double_np(self, carray, nlen=None):
-    """Convert a C array to numpy, assuming double type."""
-    if nlen is None:
-        nlen = len(self._df.index)
+# def _convert_np_carr_double(self, np_array, nlen):
+#     """Convert numpy 1D array to C array, assuming double type"""
+#     carr = _cxtgeo.new_doublearray(nlen)
 
-    nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
+#     _cxtgeo.swig_numpy_to_carr_1d(np_array, carr)
 
-    return nparray
+#     return carr
+
+
+# def _convert_carr_double_np(self, carray, nlen=None):
+#     """Convert a C array to numpy, assuming double type."""
+#     if nlen is None:
+#         nlen = len(self._df.index)
+
+#     nparray = _cxtgeo.swig_carr_to_numpy_1d(nlen, carray)
+
+#     return nparray

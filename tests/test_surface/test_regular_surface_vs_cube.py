@@ -20,12 +20,15 @@ td = xtg.tmpdir
 # =============================================================================
 
 rpath1 = '../xtgeo-testdata/surfaces/reek'
+rpath3 = '../xtgeo-testdata/surfaces/etc'
 rpath2 = '../xtgeo-testdata/cubes/reek'
 rtop1 = os.path.join(rpath1, '1/topreek_rota.gri')
 rbas1 = os.path.join(rpath1, '1/basereek_rota.gri')
 rbas2 = os.path.join(rpath1, '1/basereek_rota_v2.gri')
 rsgy1 = os.path.join(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
 
+xtop1 = os.path.join(rpath3, 'ib_test-horizon.map')
+xsgy1 = '/scratch/auto4d/uservolumes/ib_test_volume.segy'
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
@@ -207,5 +210,28 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso():
                   colortable='jet',
                   title='Reek two surfs mean', minmax=(-0.1, 0.1),
                   infotext='Method: trilinear, 2 surfs')
+
+    logger.info('Mean is {}'.format(xss.values.mean()))
+
+
+@tsetup.skipifroxar
+def test_cube_slice_auto4d_data():
+    """Get cube slice from Auto4D input"""
+
+    logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
+    xs1 = RegularSurface(xtop1, fformat='ijxyz')
+
+    logger.info('Loading cube {}'.format(xsgy1))
+    cc = Cube(xsgy1)
+
+    xss = xs1.copy()
+    xss.slice_cube(cc)
+
+    xss.to_file(td + '/surf_slice_cube_1surf_auto4d.gri')
+
+    xss.quickplot(filename=td + '/surf_slice_cube_1surf_auto4d.png',
+                  colortable='seismic',
+                  title='Auto4D Test', minmax=(-13000, 13000),
+                  infotext='Method: simple')
 
     logger.info('Mean is {}'.format(xss.values.mean()))

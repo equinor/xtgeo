@@ -45,6 +45,7 @@ from xtgeo.surface import _regsurf_cube
 from xtgeo.surface import _regsurf_roxapi
 from xtgeo.surface import _regsurf_gridding
 from xtgeo.surface import _regsurf_oper
+from xtgeo.surface import _regsurf_utils
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -155,6 +156,10 @@ class RegularSurface(object):
         self._filesrc = None     # Name of original input file
         self._name = 'unknown'
 
+        # These are useful when import/export of surfaces with seismic origin
+        self._ilines = None
+        self._xlines = None
+
         # assume so far:
         self._yflip = 1
 
@@ -201,6 +206,11 @@ class RegularSurface(object):
             logger.debug('Shape of value: and values')
             logger.debug('\n{}'.format(self._values.shape))
             logger.debug('\n{}'.format(repr(self._values)))
+
+            self._ilines = np.array(range(1, self._ncol + 1),
+                                    dtype=np.int32)
+            self._xlines = np.array(range(1, self._nrow + 1),
+                                    dtype=np.int32)
 
         logger.debug('Ran __init__ method for RegularSurface object')
 
@@ -351,6 +361,16 @@ class RegularSurface(object):
         self._yori = ynew
 
     @property
+    def ilines(self):
+        """The inlines numbering vector (read only)."""
+        return self._ilines
+
+    @property
+    def xlines(self):
+        """The xlines numbering vector (read only)."""
+        return self._xlines
+
+    @property
     def xmin(self):
         """The minimim X coordinate (read only)."""
         corners = self.get_map_xycorners()
@@ -487,6 +507,8 @@ class RegularSurface(object):
         dsc.txt('Rotation (anti-clock from X)', self.rotation)
         dsc.txt('YFLIP flag', self._yflip)
         np.set_printoptions(threshold=16)
+        dsc.txt('Inlines vector', self._ilines)
+        dsc.txt('Xlines vector', self._xlines)
         dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
         np.set_printoptions(threshold=1000)
         dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
@@ -500,13 +522,16 @@ class RegularSurface(object):
         """Import surface (regular map) from file.
 
         Note that the 'guess' option will look at the file extesions, where
-        "gri" will irap_binary and "fgr" assume Irap Ascii
+        "gri" will irap_binary and "fgr" assume Irap Ascii.
+
+        The ijxyz format is the typical seismic format, on the form
+        (ILINE, XLINE, X, Y, VALUE) as a big point table. Map values are
+        estimated from the given values.
 
         Args:
             mfile (str): Name of file
-            fformat (str): File format, guess/irap_binary/irap_ascii
+            fformat (str): File format, guess/irap_binary/irap_ascii/ijxyz
                 is currently supported.
-
 
         Returns:
             Object instance, optionally.
@@ -540,6 +565,8 @@ class RegularSurface(object):
             _regsurf_import.import_irap_binary(self, mfile)
         elif fformat in ['irap_ascii', 'fgr', 'asc', 'irapasc']:
             _regsurf_import.import_irap_ascii(self, mfile)
+        elif fformat in ['ijxyz']:
+            _regsurf_import.import_ijxyz_ascii(self, mfile)
         else:
             raise ValueError('Invalid file format: {}'.format(fformat))
 
@@ -556,7 +583,7 @@ class RegularSurface(object):
         Args:
             mfile (str): Name of file
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
-                storm_binary. Default is irap_binary.
+                storm_binary/ijxyz. Default is irap_binary.
 
         Example::
 
@@ -577,6 +604,8 @@ class RegularSurface(object):
             _regsurf_export.export_zmap_ascii(self, mfile)
         elif fformat == 'storm_binary':
             _regsurf_export.export_storm_binary(self, mfile)
+        elif fformat == 'ijxyz':
+            _regsurf_export.export_ijxyz_ascii(self, mfile)
         else:
             logger.critical('Invalid file format')
 
@@ -827,13 +856,14 @@ class RegularSurface(object):
 
         return diff
 
-    def compare_topology(self, other):
+    def compare_topology(self, other, strict=True):
         """Check that two object has the same topology, i.e. map definitions.
 
         Map definitions such as origin, dimensions, number of defined cells...
 
         Args:
             other (surface object): The other surface to compare with
+            strict (bool): If false, the masks are not compared
 
         Returns:
             True of same topology, False if not
@@ -843,16 +873,36 @@ class RegularSurface(object):
                 self.xinc != other.xinc or self.yinc != other.yinc or
                 self.rotation != other.rotation):
 
+            logger.info('CMP ncol {} vs {}'.format(self.ncol, other.ncol))
+            logger.info('CMP nrow {} vs {}'.format(self.nrow, other.nrow))
+            logger.info('CMP xori {} vs {}'.format(self.xori, other.xori))
+            logger.info('CMP yori {} vs {}'.format(self.yori, other.yori))
+            logger.info('CMP xinc {} vs {}'.format(self.xinc, other.xinc))
+            logger.info('CMP yinc {} vs {}'.format(self.yinc, other.yinc))
+            logger.info('CMP rota {} vs {}'
+                        .format(self.rotation, other.rotation))
+
             return False
 
         # check that masks are equal
         mas1 = ma.getmaskarray(self.values)
         mas2 = ma.getmaskarray(other.values)
-        if not np.array_equal(mas1, mas2):
-            return False
+        if isinstance(mas1, np.ndarray) and isinstance(mas2, np.ndarray):
+            if np.array_equal(mas1, mas2):
+                pass
+            else:
+                logger.info('CMP mask {} {}'.format(mas1, mas2))
+                logger.warning('CMP mask {} {}'.format(mas1, mas2))
+                if strict:
+                    return False
 
         logger.debug('Surfaces have same topology')
         return True
+
+    def swapaxes(self):
+        """Swap the axes columns vs rows, keep origin byt reverse yflip."""
+
+        _regsurf_utils.swapaxes(self)
 
     def get_map_xycorners(self):
         """Get the X and Y coordinates of the map corners.

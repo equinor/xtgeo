@@ -16,27 +16,6 @@ xtg = XTGeoDialog()
 xtg_verbose_level = xtg.get_syslevel()
 
 
-def find_flip(xv, yv, zv):
-    """Find the flip status by computing the cross products."""
-
-    flip = 0
-
-    xv = np.array(xv)
-    yv = np.array(yv)
-    zv = np.array(zv)
-
-    xycross = np.cross(xv, yv)
-
-    logger.debug('Cross product XY is {}'.format(xycross))
-
-    if xycross[2] < 0:
-        flip = 1
-    else:
-        flip = -1
-
-    return flip
-
-
 def import_segy_io(self, sfile):
     """Import SEGY via Statoils FOSS SegyIO library.
 
@@ -76,8 +55,8 @@ def import_segy_io(self, sfile):
 
         logger.debug('IB to corners are {}'.format(clist))
 
-        for i, co in enumerate(clist):
-            logger.debug(i)
+        for inum, co in enumerate(clist):
+            logger.debug(inum)
             origin = segyfile.header[co][segyio.su.cdpx,
                                          segyio.su.cdpy,
                                          segyio.su.scalco,
@@ -91,7 +70,7 @@ def import_segy_io(self, sfile):
             scaler = origin[segyio.su.scalco]
             iline = origin[segyio.su.iline]
             xline = origin[segyio.su.xline]
-            logger.debug('{}: ILINE XLINE is {} {}'.format(i, iline, xline))
+            logger.debug('{}: ILINE XLINE is {} {}'.format(inum, iline, xline))
             logger.debug(cdpx)
             logger.debug(scaler)
             if (scaler < 0):
@@ -104,32 +83,32 @@ def import_segy_io(self, sfile):
             logger.debug(cdpx)
             logger.debug(cdpy)
 
-            if i == 0:
+            if inum == 0:
                 xori = cdpx
                 yori = cdpy
                 zori = origin[segyio.su.delrt]
                 zinc = origin[segyio.su.dt] / 1000.0
 
-            if i == 1:
+            if inum == 1:
                 slen, rotrad1, rot1 = xcalc.vectorinfo2(xori, cdpx,
                                                         yori, cdpy)
                 xinc = slen / (ncol - 1)
                 logger.debug(slen)
 
                 rotation = rot1
-                xv = [cdpx - xori, cdpy - yori, 0]
+                xv = (cdpx - xori, cdpy - yori, 0)
 
-            if i == 2:
+            if inum == 2:
                 slen, rotrad2, rot2 = xcalc.vectorinfo2(xori, cdpx,
                                                         yori, cdpy)
                 yinc = slen / (nrow - 1)
                 logger.debug(slen)
 
                 # find YFLIP by cross products
-                yv = [cdpx - xori, cdpy - yori, 0]
-                zv = [0, 0, -1]
+                yv = (cdpx - xori, cdpy - yori, 0)
+                zv = (0, 0, -1)
 
-                yflip = find_flip(xv, yv, zv)
+                yflip = xcalc.find_flip(xv, yv, zv)
                 # due to bug in segyio?
                 yflip *= -1
 

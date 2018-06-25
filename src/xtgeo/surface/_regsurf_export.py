@@ -3,6 +3,8 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+import numpy.ma as ma
+
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -88,3 +90,16 @@ def export_storm_binary(self, mfile):
     if ier != 0:
         raise RuntimeError('Export to Storm binary went wrong, '
                            'code is {}'.format(ier))
+
+
+def export_ijxyz_ascii(self, mfile):
+    """Export as INLINE XLINE X Y Z columns"""
+
+    # prototype...
+
+    xvals, yvals = self.get_xy_values()
+    xvals = ma.filled(xvals, fill_value=999.9)
+    yvals = ma.filled(yvals, fill_value=999.9)
+
+    raise NotImplementedError('Method {} is not ready...'.format(__name__))
+    pass

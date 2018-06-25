@@ -26,10 +26,11 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
     if zsurf is not None:
         other = zsurf
     else:
+        logger.info('The current surface is copied as "other"')
         other = self.copy()
 
-    if not self.compare_topology(other):
-        raise Exception
+    if not self.compare_topology(other, strict=False):
+        raise RuntimeError('Topology of maps differ. Stop!')
 
     if mask:
         opt2 = 0

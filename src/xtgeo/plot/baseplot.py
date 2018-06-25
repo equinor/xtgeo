@@ -39,9 +39,12 @@ class BasePlot(object):
         if isinstance(cmap, LinearSegmentedColormap):
             self._colormap = cmap
         elif isinstance(cmap, str):
+            logger.info('Definition of a colormap from string name...')
             self.define_colormap(cmap)
         else:
             raise ValueError('Input incorrect')
+
+        print(self._colormap)
 
     @staticmethod
     def define_any_colormap(cfile, colorlist=None):
@@ -58,6 +61,8 @@ class BasePlot(object):
 
         """
         valid_maps = sorted(m for m in plt.cm.datad)
+
+        logger.info(valid_maps)
 
         colors = []
 
@@ -140,6 +145,7 @@ class BasePlot(object):
                 from 0 index. Default is just keep the linear sequence as is.
 
         """
+        logger.info('Defining colormap')
 
         cmap = self.define_any_colormap(cfile, colorlist=colorlist)
 
