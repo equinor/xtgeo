@@ -79,6 +79,9 @@ class Map(BasePlot):
         # need a deep copy to avoid changes in the original surf
 
         usesurf = surf.copy()
+        if usesurf.yflip < 0:
+            usesurf.swapaxes()
+
         if (abs(surf.rotation) > 0.001):
             usesurf.unrotate()
 

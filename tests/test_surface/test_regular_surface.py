@@ -30,7 +30,10 @@ skipmytest = pytest.mark.skipif(True, reason='Skip test for some reasons...')
 testset1 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
 testset2 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.gri'
 testset3 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr'
-testset4 = '../xtgeo-testdata/surfaces/etc/ib_test-horizon.map'  # IJXYZ table
+testset4a = '../xtgeo-testdata/surfaces/etc/ib_test-horizon.map'  # IJXYZ table
+testset4b = '../xtgeo-testdata/surfaces/etc/ijxyz1.map'  # IJXYZ table
+testset4c = '../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map'  # IJXYZ table
+testset5 = '../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri'
 
 
 def test_create():
@@ -52,8 +55,37 @@ def test_ijxyz_import1():
     logger.info('Import and export...')
 
     xsurf = RegularSurface()
-    xsurf.from_file(testset4, fformat='ijxyz')
+    xsurf.from_file(testset4a, fformat='ijxyz')
     xsurf.describe()
+    tsetup.assert_almostequal(xsurf.xori, 600413.048444, 0.0001)
+    tsetup.assert_almostequal(xsurf.xinc, 25.0, 0.0001)
+    assert xsurf.ncol == 280
+    assert xsurf.nrow == 1341
+    xsurf.to_file(os.path.join(td, 'ijxyz_set4a.gri'))
+
+
+def test_ijxyz_import2():
+    """Import some IJ XYZ small set with YFLIP-1"""
+    logger.info('Import and export...')
+
+    xsurf = RegularSurface()
+    xsurf.from_file(testset4b, fformat='ijxyz')
+    xsurf.describe()
+    tsetup.assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
+    assert xsurf.ncol == 51
+    assert xsurf.yflip == -1
+    assert xsurf.nactive == 2578
+    xsurf.to_file(os.path.join(td, 'ijxyz_set4b.gri'))
+
+
+def test_ijxyz_import3():
+    """Import some IJ XYZ small set yet again"""
+    logger.info('Import and export...')
+
+    xsurf = RegularSurface()
+    xsurf.from_file(testset4c, fformat='ijxyz')
+    xsurf.describe()
+    xsurf.to_file(os.path.join(td, 'ijxyz_set4c.gri'))
 
 
 def test_irapbin_import1():
@@ -71,12 +103,21 @@ def test_irapbin_import1():
 def test_swapaxes():
     """Import Reek Irap binary and swap axes."""
 
-    xsurf = RegularSurface(testset2)
+    xsurf = RegularSurface(testset5)
+    xsurf.describe()
     logger.info(xsurf.yflip)
     xsurf.to_file('TMP/notswapped.gri')
+    val1 = xsurf.values.copy()
     xsurf.swapaxes()
+    xsurf.describe()
     logger.info(xsurf.yflip)
     xsurf.to_file('TMP/swapped.gri')
+    xsurf.swapaxes()
+    val2 = xsurf.values.copy()
+    xsurf.to_file('TMP/swapped_reswapped.gri')
+    valdiff = val2 - val1
+    tsetup.assert_almostequal(valdiff.mean(), 0.0, 0.00001)
+    tsetup.assert_almostequal(valdiff.std(), 0.0, 0.00001)
 
 
 def test_irapasc_import1():

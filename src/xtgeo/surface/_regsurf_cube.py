@@ -20,7 +20,8 @@ xtg_verbose_level = xtg.get_syslevel()
 # self = RegularSurface instance!
 
 
-def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
+def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
+               snapxy=False):
     """Private function for the Cube slicing."""
 
     if zsurf is not None:
@@ -44,6 +45,8 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
     usesampling = 0
     if sampling == 'trilinear':
         usesampling = 1
+        if snapxy:
+            usesampling = 2
 
     logger.debug('Running method from C... (using typemaps for numpies!:')
     istat, v1d = _cxtgeo.surf_slice_cube(cube.ncol,
@@ -64,6 +67,7 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
                                          self.xinc,
                                          self.yori,
                                          self.yinc,
+                                         self.yflip,
                                          self.rotation,
                                          other.get_values1d(),
                                          nsurf,
@@ -71,7 +75,7 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
                                          xtg_verbose_level)
 
     if istat != 0:
-        logger.warning('Seem to be rotten')
+        logger.warning('Problem, ISTAT = {}'.format(istat))
 
     self.set_values1d(v1d)
 
@@ -80,7 +84,8 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
                       other_position='below',
                       sampling='nearest', mask=True,
                       zrange=10, ndiv=None, attribute='max',
-                      maskthreshold=0.1, showprogress=False):
+                      maskthreshold=0.1, snapxy=False,
+                      showprogress=False):
 
     """Slice Cube with a window and extract attribute(s)
 
@@ -117,13 +122,13 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
     if other is None:
         attvalues = _slice_constant_window(this, cube, sampling, zrange,
-                                           ndiv, mask, attribute,
+                                           ndiv, mask, attribute, snapxy,
                                            showprogress=showprogress)
     else:
         attvalues = _slice_between_surfaces(this, cube, sampling, other,
                                             other_position, zrange,
                                             ndiv, mask, attribute,
-                                            maskthreshold,
+                                            maskthreshold, snapxy,
                                             showprogress=showprogress)
 
     self.values = attvalues
@@ -131,11 +136,11 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
 
 def _slice_constant_window(this, cube, sampling, zrange,
-                           ndiv, mask, attribute, showprogress=False):
+                           ndiv, mask, attribute, snapxy, showprogress=False):
     """Slice a window, (constant in vertical extent)."""
     npcollect = []
     zcenter = this.copy()
-    zcenter.slice_cube(cube, sampling=sampling, mask=mask)
+    zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy)
     npcollect.append(zcenter.values)
 
     zincr = zrange / float(ndiv)
@@ -149,7 +154,7 @@ def _slice_constant_window(this, cube, sampling, zrange,
         ztmp = this.copy()
         ztmp.values -= zincr * (i + 1)
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
-        ztmp.slice_cube(cube, sampling=sampling, mask=mask)
+        ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy)
         logger.info('Mean of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
     # collect below the original surface
@@ -158,7 +163,7 @@ def _slice_constant_window(this, cube, sampling, zrange,
         ztmp = this.copy()
         ztmp.values += zincr * (i + 1)
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
-        ztmp.slice_cube(cube, sampling=sampling, mask=mask)
+        ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy)
         logger.info('Mean of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
 
@@ -171,7 +176,7 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
 def _slice_between_surfaces(this, cube, sampling, other, other_position,
                             zrange, ndiv, mask, attribute, mthreshold,
-                            showprogress=False):
+                            snapxy, showprogress=False):
 
     """Slice and find values between two surfaces."""
 
@@ -179,7 +184,7 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     zincr = zrange / float(ndiv)
 
     zcenter = this.copy()
-    zcenter.slice_cube(cube, sampling=sampling, mask=mask)
+    zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy)
     npcollect.append(zcenter.values)
 
     # collect below or above the original surface
@@ -196,7 +201,7 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
         ztmp.values += zincr * (i + 1) * mul
         zvalues = ztmp.values.copy()
         logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
-        ztmp.slice_cube(cube, sampling=sampling, mask=mask)
+        ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy)
 
         diff = mul * (other.values - zvalues)
 

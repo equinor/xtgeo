@@ -27,6 +27,7 @@ testpath = xtg.testpath
 sfile1 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.segy'
 sfile2 = testpath + '/cubes/reek/syntseis_20030101_seismic_depth_stack.segy'
 sfile3 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.storm'
+sfile4 = testpath + '/cubes/etc/testx.segy'
 
 
 @tsetup.skipifroxar
@@ -302,3 +303,26 @@ def test_cube_cropping():
     incube.do_cropping((2, 13), (10, 22), (30, 0))
 
     incube.to_file('TMP/cube_cropped.segy')
+
+
+def test_cube_swapaxes():
+    """Import a cube, do axes swapping back and forth"""
+
+    logger.info('Import SEGY format via SEGYIO')
+
+    incube = Cube(sfile4)
+    incube.describe()
+    val1 = incube.values.copy()
+
+    incube.swapaxes()
+    incube.describe()
+
+    incube.swapaxes()
+    val2 = incube.values.copy()
+    incube.describe()
+
+    diff = val1 - val2
+
+    tsetup.assert_almostequal(diff.mean(), 0.0, 0.000001)
+    tsetup.assert_almostequal(diff.std(), 0.0, 0.000001)
+    assert incube.ilines.size == incube.ncol

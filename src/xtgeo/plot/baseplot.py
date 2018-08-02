@@ -1,3 +1,6 @@
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -17,6 +20,10 @@ class BasePlot(object):
 
         self._contourlevels = 3
         self._colormap = plt.cm.viridis
+        self._tight = False
+        self._showok = True
+        self._fig = None
+
         logger.info('Ran __init__ ...')
 
     @property
@@ -44,7 +51,7 @@ class BasePlot(object):
         else:
             raise ValueError('Input incorrect')
 
-        print(self._colormap)
+        logger.info('Colormap: {}'.format(self._colormap))
 
     @staticmethod
     def define_any_colormap(cfile, colorlist=None):

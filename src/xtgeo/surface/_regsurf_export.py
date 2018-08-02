@@ -30,7 +30,7 @@ def export_irap_ascii(self, mfile):
 
     ier = _cxtgeo.surf_export_irap_ascii(mfile, self._ncol, self._nrow,
                                          self._xori, self._yori,
-                                         self._xinc, self._yinc,
+                                         self._xinc, self._yflip * self._yinc,
                                          self._rotation, vals,
                                          zmin, zmax, 0,
                                          xtg_verbose_level)
@@ -43,14 +43,32 @@ def export_irap_ascii(self, mfile):
 
 def export_irap_binary(self, mfile):
 
+    vals = self.get_values1d(fill_value=self.undef)
     ier = _cxtgeo.surf_export_irap_bin(mfile, self._ncol, self._nrow,
                                        self._xori,
-                                       self._yori, self._xinc, self._yinc,
-                                       self._rotation, self.get_zval(), 0,
+                                       self._yori, self._xinc,
+                                       self._yflip * self._yinc,
+                                       self._rotation, vals, 0,
                                        xtg_verbose_level)
 
     if ier != 0:
         raise RuntimeError('Export to Irap Binary went wrong, '
+                           'code is {}'.format(ier))
+
+
+def export_ijxyz_ascii(self, mfile):
+
+    vals = self.get_values1d(fill_value=self.undef)
+    ier = _cxtgeo.surf_export_ijxyz(mfile, self._ncol, self._nrow,
+                                    self._xori,
+                                    self._yori, self._xinc,
+                                    self._yinc, self._rotation, self._yflip,
+                                    self._ilines, self._xlines,
+                                    vals, 0,
+                                    xtg_verbose_level)
+
+    if ier != 0:
+        raise RuntimeError('Export to IJXYZ format went wrong, '
                            'code is {}'.format(ier))
 
 
@@ -62,9 +80,11 @@ def export_zmap_ascii(self, mfile):
     zmin = self.values.min()
     zmax = self.values.max()
 
+    yinc = self._yinc * self._yflip
+
     ier = _cxtgeo.surf_export_zmap_ascii(mfile, self._ncol, self._nrow,
                                          self._xori, self._yori,
-                                         self._xinc, self._yinc,
+                                         self._xinc, yinc,
                                          self.get_zval(),
                                          zmin, zmax, 0,
                                          xtg_verbose_level)
@@ -81,25 +101,14 @@ def export_storm_binary(self, mfile):
     zmin = self.values.min()
     zmax = self.values.max()
 
+    yinc = self._yinc * self._yflip
+
     ier = _cxtgeo.surf_export_storm_bin(mfile, self._ncol, self._nrow,
                                         self._xori, self._yori,
-                                        self._xinc, self._yinc,
+                                        self._xinc, yinc,
                                         self.get_zval(),
                                         zmin, zmax, 0,
                                         xtg_verbose_level)
     if ier != 0:
         raise RuntimeError('Export to Storm binary went wrong, '
                            'code is {}'.format(ier))
-
-
-def export_ijxyz_ascii(self, mfile):
-    """Export as INLINE XLINE X Y Z columns"""
-
-    # prototype...
-
-    xvals, yvals = self.get_xy_values()
-    xvals = ma.filled(xvals, fill_value=999.9)
-    yvals = ma.filled(yvals, fill_value=999.9)
-
-    raise NotImplementedError('Method {} is not ready...'.format(__name__))
-    pass

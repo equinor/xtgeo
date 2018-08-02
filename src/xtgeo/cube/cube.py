@@ -1,7 +1,6 @@
 # coding: utf-8
 """Module for a seismic (or whatever) cube."""
-from __future__ import print_function
-from __future__ import division
+from __future__ import print_function, division
 
 import numpy as np
 import os.path
@@ -65,11 +64,9 @@ def cube_from_roxar(project, name):
 class Cube(object):
     """Class for a (seismic) cube in the XTGeo framework.
 
-    The values is a numpy array, 3D Float 4 bytes. The
+    The values are a numpy array, 3D Float (4 bytes; float32). The
     array is (ncol, nrow, nlay) regular 3D numpy,
     with internal C ordering (nlay fastest).
-
-    Default format for cube values are float32.
 
     The cube object instance can be initialized by either a
     spesification, or via a file import. The import is most
@@ -98,8 +95,25 @@ class Cube(object):
         logger.info(clsname)
 
         self._filesrc = None
+        self._segyfile = None
         self._ilines = None
         self._xlines = None
+        self._xori = 0.0
+        self._yori = 0.0
+        self._zori = 0.0
+        self._ncol = 5
+        self._nrow = 3
+        self._nlay = 4
+        self._xinc = 25.0
+        self._yinc = 25.0
+        self._zinc = 2.0
+        self._yflip = 1
+        self._values = np.zeros((5, 3, 4), dtype=np.float32)
+        self._ilines = np.array(range(1, 5 + 1), dtype=np.int32)
+        self._xlines = np.array(range(1, 3 + 1), dtype=np.int32)
+        self._rotation = 0.0
+        self._undef = _cxtgeo.UNDEF
+        self._undef_limit = _cxtgeo.UNDEF_LIMIT
 
         if len(args) >= 1:
             fformat = kwargs.get('fformat', 'guess')
@@ -128,9 +142,6 @@ class Cube(object):
                                         dtype=np.int32)
 
             self._segyfile = kwargs.get('segyfile', None)
-
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
 
     def __repr__(self):
         avg = self.values.mean()
@@ -333,7 +344,7 @@ class Cube(object):
         dsc.flush()
 
     # =========================================================================
-    # Copy etc
+    # Copy, swapping, cropping, thinning...
     # =========================================================================
 
     def copy(self):
@@ -347,7 +358,13 @@ class Cube(object):
                      xori=self.xori, yori=self.yori, zori=self.zori,
                      yflip=self.yflip, segyfile=self.segyfile,
                      rotation=self.rotation, values=self.values.copy())
-        xcube._filesrc = self._filesrc + ' (copy)'
+
+        if self._filesrc is not None and '(copy)' not in self._filesrc:
+            xcube._filesrc = self._filesrc + ' (copy)'
+
+        xcube._ilines = self._ilines.copy()
+        xcube._xlines = self._xlines.copy()
+
         return xcube
 
     def swapaxes(self):

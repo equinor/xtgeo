@@ -115,7 +115,7 @@ def get_xy_values(surf):
 
     ier, xvals, yvals = (
         _cxtgeo.surf_xy_as_values(surf.xori, surf.xinc,
-                                  surf.yori, surf.yinc,
+                                  surf.yori, surf.yinc * surf.yflip,
                                   surf.ncol, surf.nrow,
                                   surf.rotation, nn, nn,
                                   0, xtg_verbose_level))

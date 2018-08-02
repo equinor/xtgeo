@@ -51,6 +51,11 @@ def swapaxes(self):
     self._yinc = _cxtgeo.doublepointer_value(yinc)
     self._rotation = _cxtgeo.doublepointer_value(rota)
 
+    ilines = self._xlines.copy()
+    xlines = self._ilines.copy()
+    self._xlines = xlines
+    self._ilines = ilines
+
 
 def thinning(self, icol, jrow, klay):
 
@@ -93,6 +98,9 @@ def cropping(self, icols, jrows, klays):
     nrow = self.nrow
     nlay = self.nlay
 
+    print('NLAY: ', nlay)
+    print('VAL:SHAPE: ', val.shape)
+
     val = val[0 + icol1: ncol - icol2,
               0 + jrow1: nrow - jrow2,
               0 + klay1: nlay - klay2]
@@ -100,6 +108,10 @@ def cropping(self, icols, jrows, klays):
     self._ncol = val.shape[0]
     self._nrow = val.shape[1]
     self._nlay = val.shape[2]
+
+    print('NLAY: ', self._nlay)
+    print('VAL:SHAPE: ', val.shape)
+
     self._ilines = self._ilines[0 + icol1: ncol - icol2]
     self._xlines = self._xlines[0 + jrow1: nrow - jrow2]
 
@@ -107,7 +119,8 @@ def cropping(self, icols, jrows, klays):
     xp = _cxtgeo.new_doublepointer()
     yp = _cxtgeo.new_doublepointer()
 
-    ier = _cxtgeo.cube_xy_from_ij(0 + icol1, 0 + jrow1, xp, yp, self.xori,
+    # 1 + .., since the following routine as 1 as base for i j
+    ier = _cxtgeo.cube_xy_from_ij(1 + icol1, 1 + jrow1, xp, yp, self.xori,
                                   self.xinc, self.yori, self.yinc, ncol,
                                   nrow, self.yflip, self.rotation, 0,
                                   xtg_verbose_level)
@@ -163,6 +176,7 @@ def resample(self, other, sampling='nearest', outside_value=None):
         raise ValueError('No cube overlap in sampling')
 
     logger.info('Resampling done!')
+
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order
 # to be DEPRECATED

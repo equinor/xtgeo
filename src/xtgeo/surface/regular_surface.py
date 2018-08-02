@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Module/class for regular surfaces with XTGeo. Regular surfaces have a
-constant distance in between nodes (xinc, yinc), and this simplifies
+constant distance between nodes (xinc, yinc), and this simplifies
 computations a lot. A regular surface is defined by an origin (xori, yori)
 in UTM, a number of columns (along X axis, if no rotation), a number of
 rows (along Y axis if no rotation), and increment (distance between nodes).
@@ -120,7 +120,8 @@ class RegularSurface(object):
         yinc: Y increment
         rotation: rotation in degrees, anticlock from X axis between 0, 360
         values: 2D (masked) numpy array of shape (ncol, nrow), C order
-        name: A given name for the surface, default is file name root
+        name: A given name for the surface, default is file name root or
+            'unkown' if constructed from scratch.
 
     Examples:
 
@@ -153,14 +154,16 @@ class RegularSurface(object):
         self._undef = UNDEF
         self._undef_limit = UNDEF_LIMIT
         self._masked = False
-        self._filesrc = None     # Name of original input file
+        self._filesrc = None  # Name of original input file, if any
         self._name = 'unknown'
 
         # These are useful when import/export of surfaces with seismic origin
         self._ilines = None
         self._xlines = None
 
-        # assume so far:
+        # assume so far (1: meaning columns along X, to East, rows along Y,
+        # North. If -1: rows along negative Y
+
         self._yflip = 1
 
         if args:
@@ -199,8 +202,10 @@ class RegularSurface(object):
             else:
                 self._values = self.ensure_correct_values(self.ncol,
                                                           self.nrow, values)
-
-        # _nsurfaces += 1
+            self._yflip = kwargs.get('yflip', 1)
+            self._masked = kwargs.get('masked', True)
+            self._filesrc = kwargs.get('filesrc', None)
+            self._name = kwargs.get('name', 'unknown')
 
         if self._values is not None:
             logger.debug('Shape of value: and values')
@@ -214,19 +219,23 @@ class RegularSurface(object):
 
         logger.debug('Ran __init__ method for RegularSurface object')
 
+    # =========================================================================
+
     def __repr__(self):
-        avg = self.values.mean()
-        dsc = ('{0.__class__} (ncol={0.ncol!r}, '
-               'nrow={0.nrow!r}, original file: {0._filesrc}), '
-               'average {1} ID=<{2}>'.format(self, avg, id(self)))
-        return dsc
+        # should be able to newobject = eval(repr(thisobject))
+        myrp = ('{0.__class__.__name__} (xori={0._xori!r}, yori={0._yori!r}, '
+                'xinc={0._xinc!r}, yinc={0._yinc!r}, ncol={0._ncol!r}, '
+                'nrow={0._nrow!r}, rotation={0._rotation!r}, '
+                'yflip={0._yflip!r}, masked={0._masked!r}, '
+                'filesrc={0._filesrc!r}, name={0._name!r}, '
+                'ilines={0._ilines!r}, xlines={0._xlines!r}, '
+                'values={0._values!r})'
+                .format(self))
+        return myrp
 
     def __str__(self):
-        avg = self.values.mean()
-        dsc = ('{0.__class__.__name__} (ncol={0.ncol!r}, '
-               'nrow={0.nrow!r}, original file: {0._filesrc}), '
-               'average {1:.4f}'.format(self, avg))
-        return dsc
+        # user friendly print
+        return str(self.describe())
 
     # =========================================================================
     # Class and static methods
@@ -312,6 +321,11 @@ class RegularSurface(object):
         return self._nrow
 
     @property
+    def nactive(self):
+        """Number of active map nodes (read only)."""
+        return self._values.count()
+
+    @property
     def rotation(self):
         """The rotation, anticlock from X axis, in degrees [0..360>."""
         return self._rotation
@@ -338,7 +352,8 @@ class RegularSurface(object):
         """The Y flip (handedness) indicator 1, or -1 (read only).
 
         The value 1 (default) means a left-handed system if depth values are
-        positive downwards. Not sure if -1 ever happens.
+        positive downwards. Assume -1 is rare, but may happen when
+        surface is derived from seismic cube.
         """
         return self._yflip
 
@@ -502,6 +517,7 @@ class RegularSurface(object):
         dsc.txt('Object ID', id(self))
         dsc.txt('File source', self._filesrc)
         dsc.txt('Shape: NCOL, NROW', self.ncol, self.nrow)
+        dsc.txt('Active cells vs total', self.nactive, self.nrow * self.ncol)
         dsc.txt('Origins XORI, YORI', self.xori, self.yori)
         dsc.txt('Increments XINC YINC', self.xinc, self.yinc)
         dsc.txt('Rotation (anti-clock from X)', self.rotation)
@@ -521,11 +537,11 @@ class RegularSurface(object):
     def from_file(self, mfile, fformat='guess'):
         """Import surface (regular map) from file.
 
-        Note that the 'guess' option will look at the file extesions, where
-        "gri" will irap_binary and "fgr" assume Irap Ascii.
+        Note that the 'guess' option will look at the file extensions, where
+        e.g. "gri" will assume irap_binary and "fgr" assume Irap Ascii.
 
         The ijxyz format is the typical seismic format, on the form
-        (ILINE, XLINE, X, Y, VALUE) as a big point table. Map values are
+        (ILINE, XLINE, X, Y, VALUE) as a table of points. Map values are
         estimated from the given values.
 
         Args:
@@ -541,7 +557,6 @@ class RegularSurface(object):
             directly::
 
             >>> mymapobject = RegularSurface().from_file('myfile.x')
-
 
         """
 
@@ -561,11 +576,11 @@ class RegularSurface(object):
             else:
                 fformat = fext.lower().replace('.', '')
 
-        if fformat in ['irap_binary', 'gri', 'bin', 'irapbin']:
+        if fformat in ('irap_binary', 'gri', 'bin', 'irapbin'):
             _regsurf_import.import_irap_binary(self, mfile)
-        elif fformat in ['irap_ascii', 'fgr', 'asc', 'irapasc']:
+        elif fformat in ('irap_ascii', 'fgr', 'asc', 'irapasc'):
             _regsurf_import.import_irap_ascii(self, mfile)
-        elif fformat in ['ijxyz']:
+        elif fformat in ('ijxyz'):
             _regsurf_import.import_ijxyz_ascii(self, mfile)
         else:
             raise ValueError('Invalid file format: {}'.format(fformat))
@@ -729,8 +744,14 @@ class RegularSurface(object):
 
         xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
                                yinc=self.yinc, xori=self.xori, yori=self.yori,
-                               rotation=self.rotation,
+                               rotation=self.rotation, yflip=self.yflip,
                                values=self.values.copy())
+
+        xsurf._ilines = self._ilines.copy()
+        xsurf._xlines = self._xlines.copy()
+
+        if self._filesrc is not None and '(copy)' not in self._filesrc:
+            xsurf._filesrc = self._filesrc + ' (copy)'
 
         logger.debug('New array + flags + ID')
         return xsurf
@@ -947,7 +968,7 @@ class RegularSurface(object):
         return zcoord
 
     def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
-        """Returns x, y, z(value) from i j location.
+        """Returns x, y, z(value) from a single i j location.
 
         Args:
             iloc (int): I (col) location (base is 1)
@@ -1036,6 +1057,36 @@ class RegularSurface(object):
         return xylist, valuelist
 
     # =========================================================================
+    # Operation on map values (list to be extended)
+    # =========================================================================
+
+    def operation(self, opname, value):
+        """Do operation on map values.
+
+        Do operations on the current map values. Valid operations are:
+
+        * 'elilt' or 'eliminatelessthan': Eliminate less than <value>
+
+        * 'elile' or 'eliminatelessequal': Eliminate less or equal than <value>
+
+        Args:
+            opname (str): Name of operation. See list above.
+            values (*): A scalar number (float) or a tuple of two floats,
+                dependent on operation opname.
+
+        Examples::
+
+            surf.operation('elilt', 200)  # set all values < 200 as undef
+        """
+
+        if opname in ('elilt', 'eliminatelessthan'):
+            self._values = ma.masked_less(self._values, value)
+        elif opname in ('elile', 'eliminatelessequal'):
+            self._values = ma.masked_less_equal(self._values, value)
+        else:
+            raise ValueError('Invalid operation name')
+
+    # =========================================================================
     # Interacion with points
     # =========================================================================
 
@@ -1063,8 +1114,7 @@ class RegularSurface(object):
         """
 
         if not isinstance(points, Points):
-            raise ValueError('Argument not a Points '
-                             'instance')
+            raise ValueError('Argument not a Points instance')
 
         logger.info('Do gridding...')
 
@@ -1083,7 +1133,7 @@ class RegularSurface(object):
         versus the input map are applied.
 
         Args:
-            other(RegularSurface): Surface to resample from
+            other (RegularSurface): Surface to resample from.
         """
 
         if not isinstance(other, RegularSurface):
@@ -1147,7 +1197,8 @@ class RegularSurface(object):
     # Interacion with a cube
     # =========================================================================
 
-    def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True):
+    def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
+                   snapxy=False):
         """Slice the cube and update the instance surface to sampled cube
         values.
 
@@ -1162,6 +1213,9 @@ class RegularSurface(object):
                 'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
                 the cube will be undef.
+            snapxy (bool): If True (optional), then the map values will get
+                values at nearest Cube XY location. Only relevant to use if
+                surface is derived from seismic coordinates (e.g. Auto4D).
 
         Example::
 
@@ -1176,7 +1230,8 @@ class RegularSurface(object):
         """
 
         ier = _regsurf_cube.slice_cube(self, cube, zsurf=zsurf,
-                                       sampling=sampling, mask=mask)
+                                       sampling=sampling, mask=mask,
+                                       snapxy=snapxy)
 
         if ier == -4:
             raise RuntimeWarning('Number of sampled nodes < 10\%')
@@ -1186,7 +1241,7 @@ class RegularSurface(object):
     def slice_cube_window(self, cube, zsurf=None, other=None,
                           other_position='below', sampling='nearest',
                           mask=True, zrange=None, ndiv=None, attribute='max',
-                          maskthreshold=0.1, showprogress=False):
+                          maskthreshold=0.1, snapxy=False, showprogress=False):
         """Slice the cube within a vertical window and get the statistical
         attrubute.
 
@@ -1223,8 +1278,11 @@ class RegularSurface(object):
             ndiv (int): Number of intervals for sampling within zrange. None
                 means 'auto' sampling, using 0.5 of cube Z increment as basis.
             attribute (str): The requested attribute, e.g. 'max' value
-            maskthreshold (float): Only if two surfaces: if isochore is less
+            maskthreshold (float): Only if two surface; if isochore is less
                 than given value, the result will be masked.
+            snapxy (bool): If True (optional), then the map values will get
+                values at nearest Cube XY location. Only relevant to use if
+                surface is derived from seismic coordinates (e.g. Auto4D).
             showprogress (bool): If True, then a progress is printed to stdout.
 
         Example::
@@ -1248,6 +1306,7 @@ class RegularSurface(object):
                                         zrange=zrange, ndiv=ndiv,
                                         attribute=attribute,
                                         maskthreshold=maskthreshold,
+                                        snapxy=snapxy,
                                         showprogress=showprogress)
 
     # =========================================================================

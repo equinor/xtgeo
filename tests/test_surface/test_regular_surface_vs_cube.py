@@ -22,13 +22,14 @@ td = xtg.tmpdir
 rpath1 = '../xtgeo-testdata/surfaces/reek'
 rpath3 = '../xtgeo-testdata/surfaces/etc'
 rpath2 = '../xtgeo-testdata/cubes/reek'
+rpath4 = '../xtgeo-testdata/cubes/etc'
 rtop1 = os.path.join(rpath1, '1/topreek_rota.gri')
 rbas1 = os.path.join(rpath1, '1/basereek_rota.gri')
 rbas2 = os.path.join(rpath1, '1/basereek_rota_v2.gri')
 rsgy1 = os.path.join(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
 
 xtop1 = os.path.join(rpath3, 'ib_test-horizon.map')
-xsgy1 = '/scratch/auto4d/uservolumes/ib_test_volume.segy'
+xsgy1 = os.path.join(rpath4, 'testx.segy')
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
@@ -220,9 +221,11 @@ def test_cube_slice_auto4d_data():
 
     logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
     xs1 = RegularSurface(xtop1, fformat='ijxyz')
+    xs1.describe()
 
     logger.info('Loading cube {}'.format(xsgy1))
     cc = Cube(xsgy1)
+    cc.describe()
 
     xss = xs1.copy()
     xss.slice_cube(cc)

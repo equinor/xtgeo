@@ -1,9 +1,7 @@
 """Import RegularSurface data."""
 import numpy as np
 import numpy.ma as ma
-import pandas as pd
 
-import xtgeo.common.calc as xcalc
 import cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -46,15 +44,24 @@ def import_irap_binary(self, mfile):
         logger.info('NaN values are found, will mask...')
         val = ma.masked_invalid(val)
 
+    yflip = 1
+    if yinc < 0.0:
+        yinc = yinc * -1
+        yflip = -1
+
     self._ncol = ncol
     self._nrow = nrow
     self._xori = xori
     self._yori = yori
     self._xinc = xinc
     self._yinc = yinc
+    self._yflip = yflip
     self._rotation = rot
     self._values = val
     self._filesrc = mfile
+
+    self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
+    self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
 
 
 def import_irap_ascii(self, mfile):
@@ -88,15 +95,24 @@ def import_irap_ascii(self, mfile):
         logger.info('NaN values are found, will mask...')
         val = ma.masked_invalid(val)
 
+    yflip = 1
+    if yinc < 0.0:
+        yinc = yinc * -1
+        yflip = -1
+
     self._ncol = ncol
     self._nrow = nrow
     self._xori = xori
     self._yori = yori
     self._xinc = xinc
     self._yinc = yinc
+    self._yflip = yflip
     self._rotation = rot
     self._values = val
     self._filesrc = mfile
+
+    self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
+    self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
 
 
 def import_ijxyz_ascii(self, mfile):
@@ -104,53 +120,42 @@ def import_ijxyz_ascii(self, mfile):
     # 2588	1179	476782.2897888889	6564025.6954	1000.0
     # 2588	1180	476776.7181777778	6564014.5058	1000.0
 
-    # read in as pandas dataframe, and extract info
-    heading = ['ILINE', 'XLINE', 'X_UTME', 'Y_UTMN', 'MAPVALUES']
+    logger.debug('Read data from file... (scan for dimensions)')
 
-    df = pd.read_csv(mfile, delim_whitespace=True,
-                     header=None, names=heading)
+    xlist = _cxtgeo.surf_import_ijxyz(mfile, 0, 1, 1, 1,
+                                      0, xtg_verbose_level)
 
-    # compute geometrics
-    xori = df.X_UTME.iloc[0]
-    yori = df.Y_UTMN.iloc[0]
+    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, il, xl,\
+        val, yflip = xlist
 
-    dfifilter = df[df.ILINE == df.ILINE[0]]
-    xtmp1 = dfifilter.X_UTME.iloc[1]
-    ytmp1 = dfifilter.Y_UTMN.iloc[1]
+    logger.debug('Dimensions are {} {}'. format(ncol, nrow))
 
-    dfxfilter = df[df.XLINE == df.XLINE[0]]
-    xtmp2 = dfxfilter.X_UTME.iloc[1]
-    ytmp2 = dfxfilter.Y_UTMN.iloc[1]
+    # now real read mode
+    xlist = _cxtgeo.surf_import_ijxyz(mfile, 1, ncol, nrow,
+                                      ncol * nrow, 0, xtg_verbose_level)
 
-    yinc, xa_radian, xa_degrees = xcalc.vectorinfo2(xori, xtmp1, yori, ytmp1)
+    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, il, xl,\
+        val, yflip = xlist
 
-    xinc, xa_radian, rot = xcalc.vectorinfo2(xori, xtmp2, yori, ytmp2)
+    logger.info(xlist)
 
-    flip = xcalc.find_flip((xtmp2 - xori, ytmp2 - yori, 0),
-                           (xtmp1 - xori, ytmp1 - xori, 0),
-                           (0, 0, -1))
-    logger.info('Flip is {}'.format(flip))
+    logger.info('ncol={}, nrow={}, xori={}, yori={}, xinc={}, yinc={} '
+                'rot={}'.format(ncol, nrow, xori, yori, xinc, yinc, rot))
+
+    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
 
     self._xori = xori
     self._xinc = xinc
     self._yori = yori
     self._yinc = yinc
-    self._nrow = len(dfifilter)
-    self._ncol = len(dfxfilter)
+    self._ncol = ncol
+    self._nrow = nrow
     self._rotation = rot
-    self._yflip = flip
-
-    self._ilines = dfxfilter.ILINE.values.astype(np.int32)
-    self._xlines = dfifilter.XLINE.values.astype(np.int32)
-
-    val = df.MAPVALUES.values.copy()
-
-    self._values = val.reshape((self.nrow, self.ncol))
+    self._yflip = yflip
+    self._values = val.reshape((self._nrow, self._ncol))
     self._filesrc = mfile
 
-    if self._yflip == -1:
-        self.swapaxes()
+    self._ilines = il
+    self._xlines = xl
 
-    del df
-    del dfifilter
-    del dfxfilter
+    logger.debug('ILINES and XLINES: {} {}'.format(self._ilines, self._xlines))

@@ -33,16 +33,14 @@ def swapaxes(self):
     _cxtgeo.doublepointer_assign(yinc, self._yinc)
     _cxtgeo.doublepointer_assign(rota, self._rotation)
 
-    values1d = self.values.reshape(-1)
-    val = values1d.copy().astype(np.float32)
+    val = self.get_values1d(fill_value=self.undef)
 
-    # borrow the cube function here; regsurf is a cube with nlay=1
-    ier = _cxtgeo.cube_swapaxes(ncol, nrow, 1, yflip,
+    ier = _cxtgeo.surf_swapaxes(ncol, nrow, yflip,
                                 self.xori, xinc,
                                 self.yori, yinc, rota, val,
                                 0, xtg_verbose_level)
     if ier != 0:
-        raise RuntimeError('Unspecied run time error from {}: Code: {}'
+        raise RuntimeError('Unspecied runtime error from {}: Code: {}'
                            .format(__name__, ier))
 
     self._ncol = _cxtgeo.intpointer_value(ncol)
@@ -53,7 +51,13 @@ def swapaxes(self):
     self._yinc = _cxtgeo.doublepointer_value(yinc)
     self._rotation = _cxtgeo.doublepointer_value(rota)
 
-    self.values = val.astype(np.float64)
+    ilines = self._xlines.copy()
+    xlines = self._ilines.copy()
+
+    self._ilines = ilines
+    self._xlines = xlines
+
+    self.values = val  # reshaping and masking is done in in self.values
 
 
 # =========================================================================
