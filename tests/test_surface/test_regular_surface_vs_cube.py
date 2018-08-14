@@ -28,8 +28,26 @@ rbas1 = os.path.join(rpath1, '1/basereek_rota.gri')
 rbas2 = os.path.join(rpath1, '1/basereek_rota_v2.gri')
 rsgy1 = os.path.join(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
 
-xtop1 = os.path.join(rpath3, 'ib_test-horizon.map')
-xsgy1 = os.path.join(rpath4, 'testx.segy')
+xtop1 = os.path.join(rpath3, 'ib_test_horizon2.gri')
+xcub1 = os.path.join(rpath4, 'ib_test_cube2.segy')
+
+
+@tsetup.skipsegyio
+@tsetup.skipifroxar
+def test_get_surface_from_cube():
+    """Construct a constant surface from cube."""
+
+    surf = RegularSurface()
+    cube = Cube(rsgy1)
+
+    surf.from_cube(cube, 1999.0)
+
+    assert surf.xinc == cube.xinc
+    assert surf.nrow == cube.nrow
+
+    surf.describe()
+    cube.describe()
+
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
@@ -125,7 +143,6 @@ def test_slice_various_reek():
                  infotext='Method: trilinear')
 
 
-
 @tsetup.skipsegyio
 @tsetup.skipifroxar
 def test_slice_attr_window_max():
@@ -217,24 +234,36 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso():
 
 @tsetup.skipifroxar
 def test_cube_slice_auto4d_data():
-    """Get cube slice from Auto4D input"""
+    """Get cube slice aka Auto4D input, with synthetic/scrambled data"""
 
-    logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
-    xs1 = RegularSurface(xtop1, fformat='ijxyz')
+    xs1 = RegularSurface(xtop1, fformat='gri')
     xs1.describe()
 
-    logger.info('Loading cube {}'.format(xsgy1))
-    cc = Cube(xsgy1)
-    cc.describe()
+    xs1out = os.path.join(td, 'xtop1.ijxyz')
+    xs1.to_file(xs1out, fformat='ijxyz')
 
-    xss = xs1.copy()
-    xss.slice_cube(cc)
+    xs2 = RegularSurface(xs1out, fformat='ijxyz')
 
-    xss.to_file(td + '/surf_slice_cube_1surf_auto4d.gri')
+    assert xs1.values.mean() == pytest.approx(xs2.values.mean(), abs=0.0001)
 
-    xss.quickplot(filename=td + '/surf_slice_cube_1surf_auto4d.png',
+    cc1 = Cube(xcub1)
+    cc1.describe()
+
+    assert xs2.nactive == 10830
+
+    xs2.slice_cube_window(cc1, sampling='trilinear', mask=True,
+                          attribute='max')
+
+    xs2out1 = os.path.join(td, 'xtop2_sampled_from_cube.ijxyz')
+    xs2out2 = os.path.join(td, 'xtop2_sampled_from_cube.gri')
+    xs2out3 = os.path.join(td, 'xtop2_sampled_from_cube.png')
+
+    xs2.to_file(xs2out1, fformat='ijxyz')
+    xs2.to_file(xs2out2)
+
+    assert xs2.nactive == 3320  # shall be fewer cells
+
+    xs2.quickplot(filename=xs2out3,
                   colortable='seismic',
-                  title='Auto4D Test', minmax=(-13000, 13000),
-                  infotext='Method: simple')
-
-    logger.info('Mean is {}'.format(xss.values.mean()))
+                  title='Auto4D Test', minmax=(0, 12000),
+                  infotext='Method: max')

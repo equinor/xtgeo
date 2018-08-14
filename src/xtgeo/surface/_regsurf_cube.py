@@ -79,6 +79,8 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
 
     self.set_values1d(v1d)
 
+    return istat
+
 
 def slice_cube_window(self, cube, zsurf=None, other=None,
                       other_position='below',

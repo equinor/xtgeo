@@ -18,12 +18,14 @@ or::
  mysurf = xtgeo.surface_from_roxar('some_rms_project', 'TopX', 'DepthSurface')
 
 """
+# pylint: disable=too-many-public-methods
 
 from __future__ import print_function, absolute_import
 
 import os
 import os.path
-import sys
+
+from copy import deepcopy
 import math
 from types import FunctionType
 import warnings
@@ -49,7 +51,6 @@ from xtgeo.surface import _regsurf_utils
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
-
 
 # =============================================================================
 # METHODS as wrappers to class init + import
@@ -209,8 +210,8 @@ class RegularSurface(object):
 
         if self._values is not None:
             logger.debug('Shape of value: and values')
-            logger.debug('\n{}'.format(self._values.shape))
-            logger.debug('\n{}'.format(repr(self._values)))
+            logger.debug('\n%s', self._values.shape)
+            logger.debug('\n%s', self._values)
 
             self._ilines = np.array(range(1, self._ncol + 1),
                                     dtype=np.int32)
@@ -247,7 +248,8 @@ class RegularSurface(object):
 
         >>> print(RegularSurface.methods())
         """
-        return [x for x, y in cls.__dict__.items() if type(y) == FunctionType]
+        return [x for x, y in cls.__dict__.items() if
+                isinstance(y, FunctionType)]
 
     @staticmethod
     def ensure_correct_values(ncol, nrow, values):
@@ -309,15 +311,15 @@ class RegularSurface(object):
         return self._nrow
 
     @property
-    def nx(self):
+    def nx(self):  # pylint: disable=C0103
         """The NX (or N-Idir) number, as property (deprecated, use ncol)."""
-        logger.warning('Deprecated; use ncol instead')
+        warnings.warn('Deprecated; use ncol instead', DeprecationWarning)
         return self._ncol
 
     @property
-    def ny(self):
+    def ny(self):  # pylint: disable=C0103
         """The NY (or N-Jdir) number, as property (deprecated, use nrow)."""
-        logger.warning('Deprecated; use nrow instead')
+        warnings.warn('Deprecated; use nrow instead', DeprecationWarning)
         return self._nrow
 
     @property
@@ -380,10 +382,20 @@ class RegularSurface(object):
         """The inlines numbering vector (read only)."""
         return self._ilines
 
+    @ilines.setter
+    def ilines(self, values):
+        if isinstance(values, np.ndarray) and values.shape[0] == self._ncol:
+            self._ilines = values
+
     @property
     def xlines(self):
         """The xlines numbering vector (read only)."""
         return self._xlines
+
+    @xlines.setter
+    def xlines(self, values):
+        if isinstance(values, np.ndarray) and values.shape[0] == self._nrow:
+            self._xlines = values
 
     @property
     def xmin(self):
@@ -391,9 +403,9 @@ class RegularSurface(object):
         corners = self.get_map_xycorners()
 
         xmin = VERYLARGEPOSITIVE
-        for c in corners:
-            if c[0] < xmin:
-                xmin = c[0]
+        for corner in corners:
+            if corner[0] < xmin:
+                xmin = corner[0]
         return xmin
 
     @property
@@ -402,9 +414,9 @@ class RegularSurface(object):
         corners = self.get_map_xycorners()
 
         xmax = VERYLARGENEGATIVE
-        for c in corners:
-            if c[0] > xmax:
-                xmax = c[0]
+        for corner in corners:
+            if corner[0] > xmax:
+                xmax = corner[0]
         return xmax
 
     @property
@@ -413,9 +425,9 @@ class RegularSurface(object):
         corners = self.get_map_xycorners()
 
         ymin = VERYLARGEPOSITIVE
-        for c in corners:
-            if c[1] < ymin:
-                ymin = c[1]
+        for corner in corners:
+            if corner[1] < ymin:
+                ymin = corner[1]
         return ymin
 
     @property
@@ -424,9 +436,9 @@ class RegularSurface(object):
         corners = self.get_map_xycorners()
 
         ymax = VERYLARGENEGATIVE
-        for c in corners:
-            if c[1] > ymax:
-                ymax = c[1]
+        for corner in corners:
+            if corner[1] > ymax:
+                ymax = corner[1]
         return ymax
 
     @property
@@ -446,8 +458,8 @@ class RegularSurface(object):
 
         self._values = values
 
-        logger.debug('Values shape: {}'.format(self._values.shape))
-        logger.debug('Flags: {}'.format(self._values.flags))
+        logger.debug('Values shape: %s', self._values.shape)
+        logger.debug('Flags: %s', self._values.flags)
 
     @property
     def values1d(self):
@@ -495,6 +507,15 @@ class RegularSurface(object):
     @undef.setter
     def undef(self, undef):
         self._undef = undef
+
+    @property
+    def filesrc(self):
+        """Gives the name of the file source (if any)"""
+        return self._filesrc
+
+    @filesrc.setter
+    def filesrc(self, name):
+        self._filesrc = name   # checking is currently missing
 
     @property
     def undef_limit(self):
@@ -569,7 +590,7 @@ class RegularSurface(object):
 
         froot, fext = os.path.splitext(mfile)
         if fformat is None or fformat == 'guess':
-            if len(fext) == 0:
+            if not fext:
                 msg = ('Stop: fformat is "guess" but file '
                        'extension is missing for {}'.format(froot))
                 raise ValueError(msg)
@@ -580,7 +601,7 @@ class RegularSurface(object):
             _regsurf_import.import_irap_binary(self, mfile)
         elif fformat in ('irap_ascii', 'fgr', 'asc', 'irapasc'):
             _regsurf_import.import_irap_ascii(self, mfile)
-        elif fformat in ('ijxyz'):
+        elif fformat == 'ijxyz':
             _regsurf_import.import_ijxyz_ascii(self, mfile)
         else:
             raise ValueError('Invalid file format: {}'.format(fformat))
@@ -678,7 +699,6 @@ class RegularSurface(object):
         _regsurf_roxapi.import_horizon_roxapi(
             self, project, name, category, stype, realisation)
 
-
     def to_roxar(self, project, name, category, stype='horizons',
                  realisation=0):
         """Store (export) a regular surface to a Roxar RMS project.
@@ -731,6 +751,39 @@ class RegularSurface(object):
         _regsurf_roxapi.export_horizon_roxapi(
             self, project, name, category, stype, realisation)
 
+    def from_cube(self, cube, zlevel):
+        """Make a constant surface from a Cube, at a given time/depth level.
+
+        The surface instance will have exactly the same origins and increments
+        as the cube.
+
+        Args:
+            cube (Cube): XTGeo Cube instance
+            zlevel (float): Depth or Time (or whatever) value of the surface
+
+        Returns:
+            Object instance updated
+
+        Example:
+            Here the from_roxar method is used to initiate the object
+            directly::
+
+            >>> mymap = RegularSurface()
+            >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
+
+        """
+
+        props = ['_ncol', '_nrow', '_xori', '_yori', '_xinc', '_yinc',
+                 '_rotation', '_ilines', '_xlines']
+
+        for prop in props:
+            setattr(self, prop, deepcopy(getattr(cube, prop)))
+
+        self.values = ma.array(np.full((self._ncol, self._nrow), zlevel,
+                                       dtype=np.float64))
+
+        self._filesrc = cube._filesrc + ' (derived surface)'
+
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
 
@@ -747,11 +800,11 @@ class RegularSurface(object):
                                rotation=self.rotation, yflip=self.yflip,
                                values=self.values.copy())
 
-        xsurf._ilines = self._ilines.copy()
-        xsurf._xlines = self._xlines.copy()
+        xsurf.ilines = self._ilines.copy()
+        xsurf.xlines = self._xlines.copy()
 
         if self._filesrc is not None and '(copy)' not in self._filesrc:
-            xsurf._filesrc = self._filesrc + ' (copy)'
+            xsurf.filesrc = self._filesrc + ' (copy)'
 
         logger.debug('New array + flags + ID')
         return xsurf
@@ -889,20 +942,20 @@ class RegularSurface(object):
         Returns:
             True of same topology, False if not
         """
-        if (self.ncol != other.ncol or self.nrow != other.nrow or
-                self.xori != other.xori or self.yori != other.yori or
-                self.xinc != other.xinc or self.yinc != other.yinc or
-                self.rotation != other.rotation):
 
-            logger.info('CMP ncol {} vs {}'.format(self.ncol, other.ncol))
-            logger.info('CMP nrow {} vs {}'.format(self.nrow, other.nrow))
-            logger.info('CMP xori {} vs {}'.format(self.xori, other.xori))
-            logger.info('CMP yori {} vs {}'.format(self.yori, other.yori))
-            logger.info('CMP xinc {} vs {}'.format(self.xinc, other.xinc))
-            logger.info('CMP yinc {} vs {}'.format(self.yinc, other.yinc))
-            logger.info('CMP rota {} vs {}'
-                        .format(self.rotation, other.rotation))
+        tstatus = True
 
+        # TODO: refactor to getattr() instead!
+        chklist = set(['_ncol', '_nrow', '_xori', '_yori', '_xinc', '_yinc',
+                       '_rotation'])
+        for skey, sval in self.__dict__.items():
+            if skey in chklist:
+                for okey, oval in other.__dict__.items():
+                    if skey == okey and sval != oval:
+                        logger.info('CMP %s: %s vs %s', skey, sval, oval)
+                        tstatus = False
+
+        if not tstatus:
             return False
 
         # check that masks are equal
@@ -912,8 +965,8 @@ class RegularSurface(object):
             if np.array_equal(mas1, mas2):
                 pass
             else:
-                logger.info('CMP mask {} {}'.format(mas1, mas2))
-                logger.warning('CMP mask {} {}'.format(mas1, mas2))
+                logger.info('CMP mask %s %s', mas1, mas2)
+                logger.warning('CMP mask %s %s', mas1, mas2)
                 if strict:
                     return False
 
@@ -937,19 +990,19 @@ class RegularSurface(object):
         rot1 = self._rotation * math.pi / 180
         rot2 = rot1 + (math.pi / 2.0)
 
-        x0 = self._xori
-        y0 = self._yori
+        xc0 = self._xori
+        yc0 = self._yori
 
-        x1 = self._xori + (self.ncol - 1) * math.cos(rot1) * self._xinc
-        y1 = self._yori + (self.ncol - 1) * math.sin(rot1) * self._xinc
+        xc1 = self._xori + (self.ncol - 1) * math.cos(rot1) * self._xinc
+        yc1 = self._yori + (self.ncol - 1) * math.sin(rot1) * self._xinc
 
-        x2 = self._xori + (self.nrow - 1) * math.cos(rot2) * self._yinc
-        y2 = self._yori + (self.nrow - 1) * math.sin(rot2) * self._yinc
+        xc2 = self._xori + (self.nrow - 1) * math.cos(rot2) * self._yinc
+        yc2 = self._yori + (self.nrow - 1) * math.sin(rot2) * self._yinc
 
-        x3 = x2 + (self.ncol - 1) * math.cos(rot1) * self._xinc
-        y3 = y2 + (self.ncol - 1) * math.sin(rot1) * self._xinc
+        xc3 = xc2 + (self.ncol - 1) * math.cos(rot1) * self._xinc
+        yc3 = yc2 + (self.ncol - 1) * math.sin(rot1) * self._xinc
 
-        return ((x0, y0), (x1, y1), (x2, y2), (x3, y3))
+        return ((xc0, yc0), (xc1, yc1), (xc2, yc2), (xc3, yc3))
 
     def get_value_from_xy(self, point=(0.0, 0.0)):
         """Return the map value given a X Y point.
@@ -1040,19 +1093,22 @@ class RegularSurface(object):
 
         zvalues = self.get_values1d()
 
-        for j in range(self.nrow):
-            for i in range(self.ncol):
-                xc, yc, vc = self.get_xy_value_from_ij(i + 1, j + 1,
-                                                       zvalues=zvalues)
+        if lformat != 'webportal':
+            raise ValueError('Unsupported lformat')
 
-                if vc is not None:
+        for jnum in range(self.nrow):
+            for inum in range(self.ncol):
+                xcv, ycv, vcv = self.get_xy_value_from_ij(inum + 1, jnum + 1,
+                                                          zvalues=zvalues)
+
+                if vcv is not None:
                     if xyfmt is not None:
-                        xc = float('{:{width}}'.format(xc, width=xyfmt))
-                        yc = float('{:{width}}'.format(yc, width=xyfmt))
+                        xcv = float('{:{width}}'.format(xcv, width=xyfmt))
+                        ycv = float('{:{width}}'.format(ycv, width=xyfmt))
                     if valuefmt is not None:
-                        vc = float('{:{width}}'.format(vc, width=valuefmt))
-                    valuelist.append(vc)
-                    xylist.append((xc, yc))
+                        vcv = float('{:{width}}'.format(vcv, width=valuefmt))
+                    valuelist.append(vcv)
+                    xylist.append((xcv, ycv))
 
         return xylist, valuelist
 
@@ -1191,7 +1247,6 @@ class RegularSurface(object):
         self._yori = nonrot.yori
         self._xinc = nonrot.xinc
         self._yinc = nonrot.yinc
-        self._cvalues = None
 
     # =========================================================================
     # Interacion with a cube
@@ -1234,9 +1289,9 @@ class RegularSurface(object):
                                        snapxy=snapxy)
 
         if ier == -4:
-            raise RuntimeWarning('Number of sampled nodes < 10\%')
+            xtg.warn('Number of sampled nodes < 10 percent')
         elif ier == -5:
-            raise RuntimeWarning('No nodes sampled: map is outside cube?')
+            xtg.warn('No nodes sampled: map is 100 percent outside of cube?')
 
     def slice_cube_window(self, cube, zsurf=None, other=None,
                           other_position='below', sampling='nearest',
@@ -1365,13 +1420,12 @@ class RegularSurface(object):
         Returns:
             True if operation went OK (but check result!), False if not
         """
-        subname = sys._getframe().f_code.co_name
 
-        for i, myprop in enumerate([xprop, yprop, hcpfzprop, zoneprop]):
+        for inum, myprop in enumerate([xprop, yprop, hcpfzprop, zoneprop]):
             if isinstance(myprop, ma.MaskedArray):
                 raise ValueError('Property input {} with avg {} to {} is a '
                                  'masked array, not a plain numpy ndarray'
-                                 .format(i, myprop.mean(), subname))
+                                 .format(inum, myprop.mean(), __name__))
 
         status = _regsurf_gridding.avgsum_from_3dprops_gridding(
             self,
@@ -1416,13 +1470,11 @@ class RegularSurface(object):
             Nothing explicit, but updates the surface object.
         """
 
-        subname = sys._getframe().f_code.co_name
-
-        for i, myprop in enumerate([xprop, yprop, mprop, dzprop, zoneprop]):
+        for inum, myprop in enumerate([xprop, yprop, mprop, dzprop, zoneprop]):
             if isinstance(myprop, ma.MaskedArray):
                 raise ValueError('Property input {} with avg {} to {} is a '
                                  'masked array, not a plain numpy ndarray'
-                                 .format(i, myprop.mean(), subname))
+                                 .format(inum, myprop.mean(), __name__))
 
         _regsurf_gridding.avgsum_from_3dprops_gridding(
             self,
@@ -1466,7 +1518,7 @@ class RegularSurface(object):
 
         mymap = Map()
 
-        logger.info('Infotext is <{}>'.format(infotext))
+        logger.info('Infotext is <%s>', infotext)
         mymap.canvas(title=title, infotext=infotext)
 
         minvalue = minmax[0]

@@ -1,0 +1,11 @@
+# PYLINT: General settings for XTGeo
+[BASIC]
+good-names=logger, xtg
+
+[FORMAT]
+max-line-length=79
+max-module-lines=3000
+
+[DESIGN]
+max-attributes=25
+max-args=20

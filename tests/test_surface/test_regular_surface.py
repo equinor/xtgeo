@@ -272,6 +272,26 @@ def test_get_xy_value_lists():
     tsetup.assert_equal(valuelist[2], 1910.445)
 
 
+def test_topology():
+    """Testing topology between two surfaces."""
+
+    logger.info('Test if surfaces are similar...')
+
+    mfile = testset1
+
+    x = RegularSurface(mfile)
+    y = RegularSurface(mfile)
+
+    status = x.compare_topology(y)
+    assert status is True
+
+    y.xori = y.xori - 100.0
+    status = x.compare_topology(y)
+    assert status is False
+
+
+
+
 def test_similarity():
     """Testing similarity of two surfaces. 0.0 means identical in
     terms of mean value.

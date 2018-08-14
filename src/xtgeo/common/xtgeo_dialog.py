@@ -131,6 +131,8 @@ class XTGeoDialog(object):
 
     def __init__(self):
 
+        self._showrtwarnings = True
+
         # a number, for C routines
         envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
 
@@ -304,6 +306,10 @@ class XTGeoDialog(object):
         else:
             return time1
 
+    def show_runtimewarnings(self, flag=True):
+        """Show warnings issued by xtg.warn, if flag is True."""
+        self._showrtwarnings = flag
+
     def insane(self, string):
         level = 4
         idx = 0
@@ -357,14 +363,16 @@ class XTGeoDialog(object):
         self._output(idx, level, string)
 
     def warn(self, string):
+        """Show warnings at Runtime (pure user info/warns)."""
         level = 0
         idx = 6
 
-        caller = sys._getframe(1).f_code.co_name
-        frame = inspect.stack()[1][0]
-        self.get_callerinfo(caller, frame)
+        if self._showrtwarnings:
+            caller = sys._getframe(1).f_code.co_name
+            frame = inspect.stack()[1][0]
+            self.get_callerinfo(caller, frame)
 
-        self._output(idx, level, string)
+            self._output(idx, level, string)
 
     warning = warn
 

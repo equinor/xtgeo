@@ -1,37 +1,38 @@
 """Import RegularSurface data."""
+# pylint: disable=protected-access
+
 import numpy as np
 import numpy.ma as ma
 
-import cxtgeo.cxtgeo as _cxtgeo
+import cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
+DEBUG = xtg.get_syslevel()
+if DEBUG < 0:
+    DEBUG = 0
+
 _cxtgeo.xtg_verbose_file('NONE')
 
 
 def import_irap_binary(self, mfile):
+    """Import Irap binary format."""
     # using swig type mapping
 
     logger.debug('Enter function...')
     # need to call the C function...
     _cxtgeo.xtg_verbose_file('NONE')
 
-    xtg_verbose_level = xtg.get_syslevel()
-
-    if xtg_verbose_level < 0:
-        xtg_verbose_level = 0
-
     # read with mode 0, to get mx my
-    xlist = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, xtg_verbose_level)
+    xlist = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, DEBUG)
 
     nval = xlist[1] * xlist[2]  # mx * my
-    xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0, xtg_verbose_level)
+    xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0, DEBUG)
 
-    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, val = xlist
+    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
         raise RuntimeError('Problem in {}, code {}'.format(__name__, ier))
@@ -65,24 +66,20 @@ def import_irap_binary(self, mfile):
 
 
 def import_irap_ascii(self, mfile):
+    """Import Irap ascii format."""
     # version using swig type mapping
 
     logger.debug('Enter function...')
     # need to call the C function...
     _cxtgeo.xtg_verbose_file('NONE')
 
-    xtg_verbose_level = xtg.get_syslevel()
-
-    if xtg_verbose_level < 0:
-        xtg_verbose_level = 0
-
     # read with mode 0, scan to get mx my
-    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 0, 1, 0, xtg_verbose_level)
+    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 0, 1, 0, DEBUG)
 
-    nv = xlist[1] * xlist[2]  # mx * my
-    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 1, nv, 0, xtg_verbose_level)
+    nvn = xlist[1] * xlist[2]  # mx * my
+    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 1, nvn, 0, DEBUG)
 
-    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, val = xlist
+    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
         raise RuntimeError('Problem in {}, code {}'.format(__name__, ier))
@@ -115,7 +112,9 @@ def import_irap_ascii(self, mfile):
     self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
 
 
-def import_ijxyz_ascii(self, mfile):
+def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
+    """Import OW/DSG IJXYZ ascii format."""
+
     # import of seismic column system on the form:
     # 2588	1179	476782.2897888889	6564025.6954	1000.0
     # 2588	1180	476776.7181777778	6564014.5058	1000.0
@@ -123,24 +122,25 @@ def import_ijxyz_ascii(self, mfile):
     logger.debug('Read data from file... (scan for dimensions)')
 
     xlist = _cxtgeo.surf_import_ijxyz(mfile, 0, 1, 1, 1,
-                                      0, xtg_verbose_level)
+                                      0, DEBUG)
 
-    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, il, xl,\
+    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln,\
         val, yflip = xlist
 
-    logger.debug('Dimensions are {} {}'. format(ncol, nrow))
+    if ier != 0:
+        raise RuntimeError('Import from C is wrong...')
 
     # now real read mode
     xlist = _cxtgeo.surf_import_ijxyz(mfile, 1, ncol, nrow,
-                                      ncol * nrow, 0, xtg_verbose_level)
+                                      ncol * nrow, 0, DEBUG)
 
-    ier, ncol, nrow, ndef, xori, yori, xinc, yinc, rot, il, xl,\
+    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln,\
         val, yflip = xlist
 
-    logger.info(xlist)
+    if ier != 0:
+        raise RuntimeError('Import from C is wrong...')
 
-    logger.info('ncol={}, nrow={}, xori={}, yori={}, xinc={}, yinc={} '
-                'rot={}'.format(ncol, nrow, xori, yori, xinc, yinc, rot))
+    logger.info(xlist)
 
     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
 
@@ -155,7 +155,5 @@ def import_ijxyz_ascii(self, mfile):
     self._values = val.reshape((self._nrow, self._ncol))
     self._filesrc = mfile
 
-    self._ilines = il
-    self._xlines = xl
-
-    logger.debug('ILINES and XLINES: {} {}'.format(self._ilines, self._xlines))
+    self._ilines = iln
+    self._xlines = xln
