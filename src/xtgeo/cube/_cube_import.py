@@ -16,13 +16,22 @@ xtg = XTGeoDialog()
 xtg_verbose_level = xtg.get_syslevel()
 
 
-def import_segy_io(self, sfile):
+def import_segy(self, sfile, engine='segyio'):
+    if engine == 'segyio':
+        _import_segy_io(self, sfile)
+    else:
+        pass
+        # _import_segy_xtgeo()
+
+
+def _import_segy_io(self, sfile):
     """Import SEGY via Statoils FOSS SegyIO library.
 
     Args:
         self (Cube): Cube object
         sfile (str): File name of SEGY file
-
+        undef (float): If None, dead traces (undef) are read as is, but
+            if a a value, than dead traces get this value.
     """
 
     logger.debug('Inline sorting is {}'
@@ -40,6 +49,9 @@ def import_segy_io(self, sfile):
         xlines = segyfile.xlines
 
         ncol, nrow, nlay = values.shape
+
+        trcode = segyio.TraceField.TraceIdentificationCode
+        traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
 
         logger.info('NRCL  {} {} {}'.format(ncol, nrow, nlay))
         logger.info(len(segyfile.ilines))
@@ -134,10 +146,11 @@ def import_segy_io(self, sfile):
     self._values = values
     self._yflip = yflip
     self._segyfile = sfile
+    self._traceidcodes = traceidcodes
 
 
-def import_segy(sfile, scanheadermode=False, scantracemode=False,
-                outfile=None):
+def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
+                       outfile=None):
     """Import SEGY via XTGeo's C library. OLD NOT UPDATED!!
 
     Args:
@@ -439,3 +452,4 @@ def import_stormcube(self, sfile):
     self._rotation = rotation
     self._values = values.reshape((ncol, nrow, nlay))
     self._yflip = yflip
+    self._traceidcodes = np.ones((ncol, nrow), dtype=np.int32)

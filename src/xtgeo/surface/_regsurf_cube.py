@@ -21,7 +21,7 @@ xtg_verbose_level = xtg.get_syslevel()
 
 
 def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
-               snapxy=False):
+               snapxy=False, ignore_dead_traces=True):
     """Private function for the Cube slicing."""
 
     if zsurf is not None:
@@ -37,6 +37,10 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
         opt2 = 0
     else:
         opt2 = 1
+
+    # if ignore_dead_traces:
+    #     # set dead traces to cxtgeo UNDEF -> special treatment in the C code
+    #     olddead = cube.values_dead_traces(_cxtgeo.UNDEF)
 
     cubeval1d = np.ravel(cube.values, order='C')
 
@@ -78,6 +82,9 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
         logger.warning('Problem, ISTAT = {}'.format(istat))
 
     self.set_values1d(v1d)
+
+    # if ignore_dead_traces:
+    #     cube.values_dead_traces(olddead)  # reset value for dead traces
 
     return istat
 

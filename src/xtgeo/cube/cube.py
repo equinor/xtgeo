@@ -2,20 +2,24 @@
 """Module for a seismic (or whatever) cube."""
 from __future__ import print_function, division
 
-import numpy as np
 import os.path
 import tempfile
 import sys
 from warnings import warn
 
-import cxtgeo.cxtgeo as _cxtgeo
+import numpy as np
+
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
+from xtgeo.common import constants
 
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export
 from xtgeo.cube import _cube_utils
 from xtgeo.cube import _cube_roxapi
+
+UNDEF = constants.UNDEF
+UNDEF_LIMIT = constants.UNDEF_LIMIT
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -112,8 +116,9 @@ class Cube(object):
         self._ilines = np.array(range(1, 5 + 1), dtype=np.int32)
         self._xlines = np.array(range(1, 3 + 1), dtype=np.int32)
         self._rotation = 0.0
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
+        self._traceidcodes = np.ones((5, 3), dtype=np.int32)
+        self._undef = UNDEF
+        self._undef_limit = UNDEF_LIMIT
 
         if len(args) >= 1:
             fformat = kwargs.get('fformat', 'guess')
@@ -140,6 +145,8 @@ class Cube(object):
                                         dtype=np.int32)
                 self._xlines = np.array(range(1, self._nrow + 1),
                                         dtype=np.int32)
+                self._traceidcodes = np.ones((self._nrow, self._nrow),
+                                            dtype=np.int32)
 
             self._segyfile = kwargs.get('segyfile', None)
 
@@ -168,7 +175,7 @@ class Cube(object):
         return self._ncol
 
     @property
-    def nx(self):
+    def nx(self):  # pylint: disable=invalid-name
         """The NCOL (NX or I dir) number
         (deprecated, use ncol instead)."""
 
@@ -181,7 +188,7 @@ class Cube(object):
         return self._nrow
 
     @property
-    def ny(self):
+    def ny(self):  # pylint: disable=invalid-name
         """The NROW (NY or J dir) number.
         (deprecated, use nrow instead)."""
 
@@ -194,7 +201,7 @@ class Cube(object):
         return self._nlay
 
     @property
-    def nz(self):
+    def nz(self):  # pylint: disable=invalid-name
         """The NLAY (NZ or K dir) number.
         (deprecated, use nlay instead)."""
 
@@ -276,10 +283,37 @@ class Cube(object):
         """The inlines numbering vector."""
         return self._ilines
 
+    @ilines.setter
+    def ilines(self, values):
+        self._ilines = values
+
     @property
     def xlines(self):
         """The xlines numbering vector."""
         return self._xlines
+
+    @xlines.setter
+    def xlines(self, values):
+        self._xlines = values
+
+    @property
+    def zslices(self):
+        """Return the time/depth slices as an int array (read only)."""
+        # This is a derived property
+        zslices = range(int(self.zori),
+                        int(self.zori + self.nlay * self.zinc),
+                        int(self.zinc))
+        zslices = np.array(zslices)
+        return zslices
+
+    @property
+    def traceidcodes(self):
+        """The trace identifaction codes array (ncol, nrow)."""
+        return self._traceidcodes
+
+    @traceidcodes.setter
+    def traceidcodes(self, values):
+        self._traceidcodes = values.reshape(self.ncol, self.nrow)
 
     @property
     def yflip(self):
@@ -294,7 +328,16 @@ class Cube(object):
     @property
     def segyfile(self):
         """The input segy file name (str), if any (or None) (read-only)."""
-        return self._values
+        return self._segyfile
+
+    @property
+    def filesrc(self):
+        """The input file name (str), if any (or None) (read-only)."""
+        return self._filesrc
+
+    @filesrc.setter
+    def filesrc(self, name):
+        self._filesrc = name
 
     @property
     def values(self):
@@ -334,10 +377,12 @@ class Cube(object):
         np.set_printoptions(threshold=16)
         dsc.txt('Inlines vector', self._ilines)
         dsc.txt('Xlines vector', self._xlines)
+        dsc.txt('Time or depth slices vector', self.zslices)
         dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
         np.set_printoptions(threshold=1000)
         dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
                 self.values.std(), self.values.min(), self.values.max())
+        dsc.txt('Trace ID codes', self._traceidcodes.reshape(-1))
         msize = float(self.values.size * 4) / (1024 * 1024 * 1024)
         dsc.txt('Minimum memory usage of array (GB)', msize)
 
@@ -360,10 +405,11 @@ class Cube(object):
                      rotation=self.rotation, values=self.values.copy())
 
         if self._filesrc is not None and '(copy)' not in self._filesrc:
-            xcube._filesrc = self._filesrc + ' (copy)'
+            xcube.filesrc = self._filesrc + ' (copy)'
 
-        xcube._ilines = self._ilines.copy()
-        xcube._xlines = self._xlines.copy()
+        xcube.ilines = self._ilines.copy()
+        xcube.xlines = self._xlines.copy()
+        xcube.traceidcodes = self._traceidcodes.copy()
 
         return xcube
 
@@ -419,28 +465,84 @@ class Cube(object):
         """
         _cube_utils.thinning(self, icol, jrow, klay)
 
-    def do_cropping(self, icols, jrows, klays):
+    def do_cropping(self, icols, jrows, klays, mode='edges'):
         """Cropping the cube by removing rows, columns, layers.
 
         Note that input boundary checking is currently lacking, and this
         is a currently a user responsibility!
 
+        The 'mode' is used to determine to different 'approaches' on
+        cropping. Examples for icols and mode 'edges':
+        Here the tuple (N, M) will cut N first rows and M last rows.
+
+        However, if mode is 'inclusive' then, it defines the range
+        of rows to be included, and the numbering now shall be the
+        INLINE, XLINE and DEPTH/TIME mode.
+
         Args:
-            icols (int tuple): Cropping front, end of rows
-            jrows (int tuple): Cropping front, end of columns
-            klays (int tuple ): Cropping top, base layers
+            icols (int tuple): Cropping front, end of rows, or inclusive range
+            jrows (int tuple): Cropping front, end of columns, or
+                inclusive range
+            klays (int tuple ): Cropping top, base layers, or inclusive range.
+            model (str): 'Default i 'edges'; alternative is 'inclusive'
 
         Example:
-            Crop 10 columns from front, 2 from back, then 20 columns in front,
+            Crop 10 columns from front, 2 from back, then 20 rows in front,
             40 in back, then no cropping of layers::
 
             >>> mycube1 = Cube('mysegyfile.segy')
+            >>> mycube2 = mycube1.copy()
             >>> mycube1.do_cropping((10, 2), (20, 40), (0, 0))
             >>> mycube1.to_file('mysegy_smaller.segy')
 
+            In stead, do cropping as 'inclusive' where inlines, xlines, slices
+            arrays are known::
+
+            >>> mycube2.do_cropping((112, 327), (1120, 1140), (1500, 2000))
+
         """
 
-        _cube_utils.cropping(self, icols, jrows, klays)
+        useicols = icols
+        usejrows = jrows
+        useklays = klays
+
+        if mode == 'inclusive':
+            # transfer to 'numbers to row/col/lay to remove' in front end ...
+            useicols = (icols[0] - self._ilines[0],
+                        self._ilines[self._ncol - 1] - icols[1])
+            usejrows = (jrows[0] - self._xlines[0],
+                        self._xlines[self._nrow - 1] - jrows[1])
+            ntop = int((klays[0] - self.zori) / self.zinc)
+            nbot = int((self.zori + self.nlay * self.zinc - klays[1] - 1) /
+                       (self.zinc))
+            useklays = (ntop, nbot)
+
+        logger.info('Cropping at all cube sides: %s %s %s', useicols, usejrows,
+                    useklays)
+        _cube_utils.cropping(self, useicols, usejrows, useklays)
+
+    def values_dead_traces(self, newvalue):
+        """Set values for traces flagged as dead, i.e. have traceidcodes 2,
+        and return the (average of) old values.
+
+        Args:
+            newvalue (float):
+        Return:
+            oldvalue (float): The estimated simple average of old value will
+                be returned. If no dead traces, then None will be returned.
+        """
+
+        try:
+            logger.info(self._values.shape)
+            logger.info(self._traceidcodes.shape)
+            minval = self._values[self._traceidcodes == 2].min()
+            maxval = self._values[self._traceidcodes == 2].max()
+            avgold = 0.5 * (minval + maxval)
+            self._values[self._traceidcodes == 2] = newvalue
+        except ValueError:
+            avgold = None
+
+        return avgold
 
     # =========================================================================
     # Import and export
@@ -458,6 +560,8 @@ class Cube(object):
                 where 'guess' is default
             engine (str): For the SEGY reader, 'xtgeo' is builtin
                 while 'segyio' uses the SEGYIO library (default)
+            deadtraces (float): Set 'dead' trace values to this value (SEGY
+                only). Default is UNDEF value (a very large number)
 
         Raises:
             IOError if the file cannot be read (e.g. not found)
@@ -469,16 +573,16 @@ class Cube(object):
 
 
         """
-        if (os.path.isfile(sfile)):
+        if os.path.isfile(sfile):
             pass
         else:
             logger.critical('Not OK file')
             raise IOError('Input file for Cube cannot be read')
 
         # work on file extension
-        froot, fext = os.path.splitext(sfile)
+        _froot, fext = os.path.splitext(sfile)
         if fformat == 'guess':
-            if len(fext) == 0:
+            if not fext:
                 logger.critical('File extension missing. STOP')
                 sys.exit(9)
             else:
@@ -486,9 +590,9 @@ class Cube(object):
 
         if 'rms' in fformat.lower():
             _cube_import.import_rmsregular(self, sfile)
-        elif (fformat.lower() == 'segy' or fformat.lower() == 'sgy'):
-            _cube_import.import_segy_io(self, sfile)
-        elif (fformat == 'storm'):
+        elif fformat.lower() == 'segy' or fformat.lower() == 'sgy':
+            _cube_import.import_segy(self, sfile, engine=engine)
+        elif fformat == 'storm':
             _cube_import.import_stormcube(self, sfile)
         else:
             logger.error('Invalid or unknown file format')
@@ -510,10 +614,10 @@ class Cube(object):
             >>> zz.to_file('some.rmsreg')
         """
 
-        if (fformat == 'segy'):
+        if fformat == 'segy':
             _cube_export.export_segy(self, sfile, pristine=pristine,
                                      engine=engine)
-        elif (fformat == 'rms_regular'):
+        elif fformat == 'rms_regular':
             _cube_export.export_rmsreg(self, sfile)
         else:
             logger.error('Invalid file format')
@@ -582,8 +686,8 @@ class Cube(object):
             logger.info('TMP file name is {}'.format(outfile))
             oflag = True
 
-        _cube_import.import_segy(sfile, scanheadermode=False,
-                                 scantracemode=True, outfile=outfile)
+        _cube_import._import_segy_xtgeo(sfile, scanheadermode=False,
+                                        scantracemode=True, outfile=outfile)
 
         if oflag:
             pass
@@ -611,9 +715,9 @@ class Cube(object):
             logger.info('TMP file name is {}'.format(outfile))
             flag = True
 
-        _cube_import.import_segy(sfile, scanheadermode=True,
-                                 scantracemode=False,
-                                 outfile=outfile)
+        _cube_import._import_segy_xtgeo(sfile, scanheadermode=True,
+                                        scantracemode=False,
+                                        outfile=outfile)
 
         if flag:
             logger.info('OUTPUT to screen...')

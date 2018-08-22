@@ -27,7 +27,7 @@ testpath = xtg.testpath
 sfile1 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.segy'
 sfile2 = testpath + '/cubes/reek/syntseis_20030101_seismic_depth_stack.segy'
 sfile3 = testpath + '/cubes/reek/syntseis_20000101_seismic_depth_stack.storm'
-sfile4 = testpath + '/cubes/etc/testx.segy'
+sfile4 = testpath + '/cubes/etc/ib_test_cube2.segy'
 
 
 @tsetup.skipifroxar

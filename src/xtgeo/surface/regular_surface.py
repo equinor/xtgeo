@@ -774,7 +774,7 @@ class RegularSurface(object):
         """
 
         props = ['_ncol', '_nrow', '_xori', '_yori', '_xinc', '_yinc',
-                 '_rotation', '_ilines', '_xlines']
+                 '_rotation', '_ilines', '_xlines', '_yflip']
 
         for prop in props:
             setattr(self, prop, deepcopy(getattr(cube, prop)))

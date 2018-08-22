@@ -2,6 +2,8 @@ import sys
 import pytest
 import os.path
 
+import numpy.ma as ma
+
 from xtgeo.surface import RegularSurface
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
@@ -30,6 +32,7 @@ rsgy1 = os.path.join(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
 
 xtop1 = os.path.join(rpath3, 'ib_test_horizon2.gri')
 xcub1 = os.path.join(rpath4, 'ib_test_cube2.segy')
+xcub2 = os.path.join(rpath4, 'cube_w_deadtraces.segy')
 
 
 @tsetup.skipsegyio
@@ -267,3 +270,74 @@ def test_cube_slice_auto4d_data():
                   colortable='seismic',
                   title='Auto4D Test', minmax=(0, 12000),
                   infotext='Method: max')
+
+
+@tsetup.skipifroxar
+def test_cube_slice_w_dead_traces_nearest():
+    """Get cube slice nearest aka Auto4D input, with scrambled data with
+    dead traces, various YFLIP cases."""
+
+    cube1 = Cube(xcub2)
+
+    surf1 = RegularSurface()
+    surf1.from_cube(cube1, 1000.1)
+
+    cells = ((18, 12), (20, 2), (0, 4))
+
+    surf1.slice_cube(cube1)
+    plotfile = os.path.join(td, 'slice_nea1.png')
+    surf1.quickplot(filename=plotfile)
+
+    for cell in cells:
+        icell, jcell = cell
+        assert surf1.values[icell, jcell] == cube1.values[icell, jcell, 0]
+    assert ma.count_masked(surf1.values) == 0  # shall be no masked cells
+
+    # swap surface
+    surf2 = surf1.copy()
+    surf2.values = 1000.1
+    surf2.swapaxes()
+
+    surf2.slice_cube(cube1)
+    assert surf2.values.mean() == surf1.values.mean()
+
+    # swap surface and cube
+    surf2 = surf1.copy()
+    surf2.values = 1000.1
+    surf2.swapaxes()
+
+    cube2 = cube1.copy()
+    cube2.swapaxes()
+    surf2.slice_cube(cube2)
+    assert surf2.values.mean() == surf1.values.mean()
+
+    # swap cube only
+    surf2 = surf1.copy()
+    surf2.values = 1000.1
+
+    cube2 = cube1.copy()
+    cube2.swapaxes()
+    surf2.slice_cube(cube2)
+    assert surf2.values.mean() == surf1.values.mean()
+
+
+@tsetup.skipifroxar
+def test_cube_slice_w_dead_traces_trilinear():
+    """Get cube slice trilinear aka Auto4D input, with scrambled data with
+    dead traces, various YFLIP cases."""
+
+    cube1 = Cube(xcub2)
+
+    surf1 = RegularSurface()
+    surf1.from_cube(cube1, 1000.1)
+
+    cells = [(18, 12)]  # , (20, 2), (0, 4))
+
+    surf1.slice_cube(cube1, sampling='trilinear')
+    plotfile = os.path.join(td, 'slice_tri1.png')
+    surf1.quickplot(filename=plotfile)
+
+    # for cell in cells:
+    #     icell, jcell = cell
+    #     assert surf1.values[icell, jcell] == cube1.values[icell, jcell, 0]
+    # assert ma.count_masked(surf1.values) == 0  # shall be no masked cells

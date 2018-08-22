@@ -132,12 +132,15 @@ def _export_segy_xtgeo(self, sfile):
 
     ilinesp = _cxtgeo.new_intarray(len(self._ilines))
     xlinesp = _cxtgeo.new_intarray(len(self._xlines))
+    tracidp = _cxtgeo.new_intarray(self.ncol * self.nrow)
 
     ilns = self._ilines.astype(np.int32)
     xlns = self._xlines.astype(np.int32)
+    trid = self._traceidcodes.flatten().astype(np.int32)
 
     _cxtgeo.swig_numpy_to_carr_i1d(ilns, ilinesp)
     _cxtgeo.swig_numpy_to_carr_i1d(xlns, xlinesp)
+    _cxtgeo.swig_numpy_to_carr_i1d(trid, tracidp)
 
     status = _cxtgeo.cube_export_segy(sfile, self.nx, self.ny, self.nz,
                                       values1d,
@@ -145,7 +148,7 @@ def _export_segy_xtgeo(self, sfile):
                                       self.yori, self.yinc,
                                       self.zori, self.zinc,
                                       self.rotation, self.yflip, 1,
-                                      ilinesp, xlinesp,
+                                      ilinesp, xlinesp, tracidp,
                                       0,
                                       xtg_verbose_level)
 

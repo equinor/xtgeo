@@ -56,16 +56,19 @@ def swapaxes(self):
     self._xlines = xlines
     self._ilines = ilines
 
+    self._traceidcodes = self._traceidcodes.reshape((self._ncol, self._nrow))
+    self._values = values1d.reshape((self._ncol, self._nrow, self.nlay))
+
 
 def thinning(self, icol, jrow, klay):
 
     inputs = [icol, jrow, klay]
     ranges = [self.nrow, self.ncol, self.nlay]
 
-    for inum, ix in enumerate(inputs):
-        if not isinstance(ix, int):
+    for inum, ixc in enumerate(inputs):
+        if not isinstance(ixc, int):
             raise ValueError('Some input is not integer: {}'.format(inputs))
-        if ix > ranges[inum] / 2:
+        if ixc > ranges[inum] / 2:
             raise ValueError('Input numbers <{}> are too large compared to '
                              'existing ranges <{}>'.format(inputs, ranges))
 
@@ -82,6 +85,7 @@ def thinning(self, icol, jrow, klay):
     self._zinc *= klay
     self._ilines = self._ilines[::icol]
     self._xlines = self._xlines[::jrow]
+    self._traceidcodes = self._traceidcodes[::icol, ::jrow]
 
     self.values = val
 
@@ -98,9 +102,6 @@ def cropping(self, icols, jrows, klays):
     nrow = self.nrow
     nlay = self.nlay
 
-    print('NLAY: ', nlay)
-    print('VAL:SHAPE: ', val.shape)
-
     val = val[0 + icol1: ncol - icol2,
               0 + jrow1: nrow - jrow2,
               0 + klay1: nlay - klay2]
@@ -109,11 +110,10 @@ def cropping(self, icols, jrows, klays):
     self._nrow = val.shape[1]
     self._nlay = val.shape[2]
 
-    print('NLAY: ', self._nlay)
-    print('VAL:SHAPE: ', val.shape)
-
     self._ilines = self._ilines[0 + icol1: ncol - icol2]
     self._xlines = self._xlines[0 + jrow1: nrow - jrow2]
+    self.traceidcodes = (self.traceidcodes[0 + icol1: ncol - icol2,
+                                           0 + jrow1: nrow - jrow2])
 
     # need to recompute origins
     xp = _cxtgeo.new_doublepointer()
@@ -138,6 +138,7 @@ def cropping(self, icols, jrows, klays):
 
 def resample(self, other, sampling='nearest', outside_value=None):
     """Resample another cube to the current self"""
+    # TODO: traceidcodes
 
     values1a = self.values.reshape(-1)
     values2a = other.values.reshape(-1)
