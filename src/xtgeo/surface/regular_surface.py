@@ -98,6 +98,30 @@ def surface_from_roxar(project, name, category, stype='horizons',
     return obj
 
 
+def surface_from_cube(cube, value):
+    """This makes an instance of a RegularSurface directly from a cube instance
+    with a constant value.
+
+    The surface geometry will be exactly the same as for the Cube.
+
+    Args:
+        cube(xtgeo.cube.Cube): A Cube instance
+        value (float): A constant value for the surface
+
+    Example::
+
+        mycube = xtgeo.cube_from_file('somefile.segy')
+        mysurf = xtgeo.surface_from_cube(mycube, 1200)
+
+    """
+
+    obj = RegularSurface()
+
+    obj.from_cube(cube, value)
+
+    return obj
+
+
 # =============================================================================
 # RegularSurface class:
 
@@ -1253,7 +1277,7 @@ class RegularSurface(object):
     # =========================================================================
 
     def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
-                   snapxy=False):
+                   snapxy=False, deadtraces=True):
         """Slice the cube and update the instance surface to sampled cube
         values.
 
@@ -1271,6 +1295,9 @@ class RegularSurface(object):
             snapxy (bool): If True (optional), then the map values will get
                 values at nearest Cube XY location. Only relevant to use if
                 surface is derived from seismic coordinates (e.g. Auto4D).
+            deadtraces (bool): If True (default) then dead cube traces
+                (given as value 2 in SEGY trace headers), are treated as
+                undefined, nad map will be undefined at dead trace location.
 
         Example::
 
@@ -1286,7 +1313,8 @@ class RegularSurface(object):
 
         ier = _regsurf_cube.slice_cube(self, cube, zsurf=zsurf,
                                        sampling=sampling, mask=mask,
-                                       snapxy=snapxy)
+                                       snapxy=snapxy,
+                                       deadtraces=deadtraces)
 
         if ier == -4:
             xtg.warn('Number of sampled nodes < 10 percent')
@@ -1296,7 +1324,8 @@ class RegularSurface(object):
     def slice_cube_window(self, cube, zsurf=None, other=None,
                           other_position='below', sampling='nearest',
                           mask=True, zrange=None, ndiv=None, attribute='max',
-                          maskthreshold=0.1, snapxy=False, showprogress=False):
+                          maskthreshold=0.1, snapxy=False, showprogress=False,
+                          deadtraces=True):
         """Slice the cube within a vertical window and get the statistical
         attrubute.
 
@@ -1339,6 +1368,9 @@ class RegularSurface(object):
                 values at nearest Cube XY location. Only relevant to use if
                 surface is derived from seismic coordinates (e.g. Auto4D).
             showprogress (bool): If True, then a progress is printed to stdout.
+            deadtraces (bool): If True (default) then dead cube traces
+                (given as value 2 in SEGY trace headers), are treated as
+                undefined, nad map will be undefined at dead trace location.
 
         Example::
 
@@ -1362,7 +1394,8 @@ class RegularSurface(object):
                                         attribute=attribute,
                                         maskthreshold=maskthreshold,
                                         snapxy=snapxy,
-                                        showprogress=showprogress)
+                                        showprogress=showprogress,
+                                        deadtraces=deadtraces)
 
     # =========================================================================
     # Special methods

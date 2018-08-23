@@ -48,6 +48,7 @@ del get_versions
 # some function wrappers to initiate objects from imports
 from xtgeo.surface.regular_surface import surface_from_file
 from xtgeo.surface.regular_surface import surface_from_roxar
+from xtgeo.surface.regular_surface import surface_from_cube
 
 from xtgeo.grid3d.grid import grid_from_file
 from xtgeo.grid3d.grid import grid_from_roxar

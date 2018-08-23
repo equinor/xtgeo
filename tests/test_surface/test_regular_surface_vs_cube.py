@@ -4,6 +4,7 @@ import os.path
 
 import numpy.ma as ma
 
+import xtgeo
 from xtgeo.surface import RegularSurface
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
@@ -273,9 +274,9 @@ def test_cube_slice_auto4d_data():
 
 
 @tsetup.skipifroxar
-def test_cube_slice_w_dead_traces_nearest():
+def test_cube_slice_w_ignore_dead_traces_nearest():
     """Get cube slice nearest aka Auto4D input, with scrambled data with
-    dead traces, various YFLIP cases."""
+    dead traces, various YFLIP cases, ignore dead traces."""
 
     cube1 = Cube(xcub2)
 
@@ -284,13 +285,15 @@ def test_cube_slice_w_dead_traces_nearest():
 
     cells = ((18, 12), (20, 2), (0, 4))
 
-    surf1.slice_cube(cube1)
+    surf1.slice_cube(cube1, deadtraces=False)
     plotfile = os.path.join(td, 'slice_nea1.png')
-    surf1.quickplot(filename=plotfile)
+    title = 'Cube with dead traces; nearest; use just values as is'
+    surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
     for cell in cells:
         icell, jcell = cell
-        assert surf1.values[icell, jcell] == cube1.values[icell, jcell, 0]
+        assert surf1.values[icell, jcell] == \
+            pytest.approx(cube1.values[icell, jcell, 0], abs=0.01)
     assert ma.count_masked(surf1.values) == 0  # shall be no masked cells
 
     # swap surface
@@ -298,7 +301,7 @@ def test_cube_slice_w_dead_traces_nearest():
     surf2.values = 1000.1
     surf2.swapaxes()
 
-    surf2.slice_cube(cube1)
+    surf2.slice_cube(cube1, deadtraces=False)
     assert surf2.values.mean() == surf1.values.mean()
 
     # swap surface and cube
@@ -308,7 +311,7 @@ def test_cube_slice_w_dead_traces_nearest():
 
     cube2 = cube1.copy()
     cube2.swapaxes()
-    surf2.slice_cube(cube2)
+    surf2.slice_cube(cube2, deadtraces=False)
     assert surf2.values.mean() == surf1.values.mean()
 
     # swap cube only
@@ -317,27 +320,106 @@ def test_cube_slice_w_dead_traces_nearest():
 
     cube2 = cube1.copy()
     cube2.swapaxes()
-    surf2.slice_cube(cube2)
+    surf2.slice_cube(cube2, deadtraces=False)
     assert surf2.values.mean() == surf1.values.mean()
 
 
 @tsetup.skipifroxar
-def test_cube_slice_w_dead_traces_trilinear():
-    """Get cube slice trilinear aka Auto4D input, with scrambled data with
-    dead traces, various YFLIP cases."""
+def test_cube_slice_w_dead_traces_nearest():
+    """Get cube slice nearest aka Auto4D input, with scrambled data with
+    dead traces, various YFLIP cases, undef at dead traces."""
 
     cube1 = Cube(xcub2)
 
     surf1 = RegularSurface()
     surf1.from_cube(cube1, 1000.1)
 
-    cells = [(18, 12)]  # , (20, 2), (0, 4))
+    cells = ((18, 12),)
 
-    surf1.slice_cube(cube1, sampling='trilinear')
+    surf1.slice_cube(cube1, deadtraces=True)
+    plotfile = os.path.join(td, 'slice_nea1_dead.png')
+    title = 'Cube with dead traces; nearest; UNDEF at dead traces'
+    surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
+
+    for cell in cells:
+        icell, jcell = cell
+        assert surf1.values[icell, jcell] == cube1.values[icell, jcell, 0]
+
+    ndead = (cube1.traceidcodes == 2).sum()
+    print(ndead)
+
+    assert ma.count_masked(surf1.values) == ndead
+
+    # swap cube only
+    surf2 = surf1.copy()
+    surf2.values = 1000.1
+
+    cube2 = cube1.copy()
+    cube2.swapaxes()
+    surf2.slice_cube(cube2, deadtraces=True)
+    plotfile = os.path.join(td, 'slice_nea1_dead_cubeswap.png')
+    surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
+    assert ma.count_masked(surf2.values) == ndead
+    assert surf2.values.mean() == surf1.values.mean()
+
+
+@tsetup.skipifroxar
+def test_cube_slice_w_ignore_dead_traces_trilinear():
+    """Get cube slice trilinear aka Auto4D input, with scrambled data with
+    dead traces to be ignored, various YFLIP cases."""
+
+    cube1 = Cube(xcub2)
+
+    surf1 = RegularSurface()
+    surf1.from_cube(cube1, 1000.0)
+
+    cells = [(18, 12), (20, 2), (0, 4)]
+
+    surf1.slice_cube(cube1, sampling='trilinear', snapxy=True,
+                     deadtraces=False)
     plotfile = os.path.join(td, 'slice_tri1.png')
-    surf1.quickplot(filename=plotfile)
+    title = 'Cube with dead traces; trilinear; keep as is at dead traces'
+    surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
-    # for cell in cells:
-    #     icell, jcell = cell
-    #     assert surf1.values[icell, jcell] == cube1.values[icell, jcell, 0]
-    # assert ma.count_masked(surf1.values) == 0  # shall be no masked cells
+    for cell in cells:
+        icell, jcell = cell
+        assert surf1.values[icell, jcell] == \
+            pytest.approx(cube1.values[icell, jcell, 0], abs=0.1)
+    assert ma.count_masked(surf1.values) == 0  # shall be no masked cells
+
+
+@tsetup.skipifroxar
+def test_cube_slice_w_dead_traces_trilinear():
+    """Get cube slice trilinear aka Auto4D input, with scrambled data with
+    dead traces to be ignored, various YFLIP cases."""
+
+    cube1 = Cube(xcub2)
+
+    surf1 = xtgeo.surface_from_cube(cube1, 1000.0)
+
+    cells = [(18, 12)]
+
+    surf1.slice_cube(cube1, sampling='trilinear', snapxy=True,
+                     deadtraces=True)
+    plotfile = os.path.join(td, 'slice_tri1_dead.png')
+    title = 'Cube with dead traces; trilinear; UNDEF at dead traces'
+    surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
+
+    ndead = (cube1.traceidcodes == 2).sum()
+
+    for cell in cells:
+        icell, jcell = cell
+        assert surf1.values[icell, jcell] == \
+            pytest.approx(cube1.values[icell, jcell, 0], 0.1)
+    assert ma.count_masked(surf1.values) == ndead
+
+    # swap cube only
+    surf2 = surf1.copy()
+    surf2.values = 1000.0
+    cube2 = cube1.copy()
+    cube2.swapaxes()
+    surf2.slice_cube(cube2, sampling='trilinear', deadtraces=True)
+    plotfile = os.path.join(td, 'slice_tri1__dead_cubeswap.png')
+    surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
+    assert ma.count_masked(surf2.values) == ndead
+    assert surf2.values.mean() == surf1.values.mean()

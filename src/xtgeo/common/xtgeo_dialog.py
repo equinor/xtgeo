@@ -44,27 +44,36 @@ VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
 
 
 class XTGShowProgress(object):
-    """Internal Class for showing progress of a computation to the terminal"""
-    def __init__(self, mytxt, expander, show=True):
-        self._txt = mytxt
-        self._expander = expander  # typically a '.'
-        self._show = show
-        self._progress = expander
+    """Class for showing progress of a computation to the terminal.
 
-    def flush(self):
+    Example::
+
+        # assuming 30 steps in calculation
+        theprogress = XTGShowProgress(30, info='Compute stuff')
+        for i in range(30):
+            do_slow_computation()
+            theprogress.flush(i)
+        theprogress.finished()
+"""
+    def __init__(self, maxiter, info='', show=True):
+        self._max = maxiter
+        self._info = info
+        self._show = show
+
+    def flush(self, step):
         if not self._show:
             return
-        print('%% {} {}'.format(self._txt, self._progress), end='\r')
-        self._progress += self._expander
+        progress = int(float(step) / float(self._max) * 100.0)
+        print('{0}% {1}'.format(progress, self._info))
 
     def finished(self):
         if not self._show:
             return
-        print('%% {} {} OK!'.format(self._txt, self._progress))
+        print('100%!')
 
 
 class XTGDescription(object):
-    """Internal Class for making desciptions of object instances"""
+    """Class for making desciptions of object instances"""
     def __init__(self):
         self._txt = []
 

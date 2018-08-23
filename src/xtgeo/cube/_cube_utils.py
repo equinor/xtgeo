@@ -35,11 +35,12 @@ def swapaxes(self):
     _cxtgeo.doublepointer_assign(rota, self._rotation)
 
     values1d = self.values.reshape(-1)
+    traceid1d = self._traceidcodes.reshape(-1)
 
     ier = _cxtgeo.cube_swapaxes(ncol, nrow, self.nlay, yflip,
                                 self.xori, xinc,
                                 self.yori, yinc, rota, values1d,
-                                0, xtg_verbose_level)
+                                traceid1d, 0, xtg_verbose_level)
     if ier != 0:
         raise Exception
 
@@ -56,7 +57,7 @@ def swapaxes(self):
     self._xlines = xlines
     self._ilines = ilines
 
-    self._traceidcodes = self._traceidcodes.reshape((self._ncol, self._nrow))
+    self._traceidcodes = traceid1d.reshape((self._ncol, self._nrow))
     self._values = values1d.reshape((self._ncol, self._nrow, self.nlay))
 
 
