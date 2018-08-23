@@ -161,7 +161,8 @@ def _slice_constant_window(this, cube, sampling, zrange,
     logger.info('ZINCR is {}'.format(zincr))
 
     # collect above the original surface
-    progress = XTGShowProgress(ndiv * 2, show=showprogress)
+    progress = XTGShowProgress(ndiv * 2, show=showprogress,
+                               leadtext='progress: ')
     for i in range(ndiv):
         progress.flush(i)
         ztmp = this.copy()
@@ -210,7 +211,8 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
         mul = 1
 
     # collect above the original surface
-    progress = XTGShowProgress(ndiv, show=showprogress)
+    progress = XTGShowProgress(ndiv, show=showprogress,
+                               leadtext='progress: ')
     for i in range(ndiv):
         progress.flush(i)
         ztmp = this.copy()

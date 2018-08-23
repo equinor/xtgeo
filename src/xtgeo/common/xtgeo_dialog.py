@@ -54,22 +54,23 @@ class XTGShowProgress(object):
             do_slow_computation()
             theprogress.flush(i)
         theprogress.finished()
-"""
-    def __init__(self, maxiter, info='', show=True):
+    """
+    def __init__(self, maxiter, info='', leadtext='', show=True):
         self._max = maxiter
         self._info = info
         self._show = show
+        self._leadtext = leadtext
 
     def flush(self, step):
         if not self._show:
             return
         progress = int(float(step) / float(self._max) * 100.0)
-        print('{0}% {1}'.format(progress, self._info))
+        print('{0}{1}% {2}'.format(self._leadtext, progress, self._info))
 
     def finished(self):
         if not self._show:
             return
-        print('100%!')
+        print('{0}{1}% {2}'.format(self._leadtext, 100, self._info))
 
 
 class XTGDescription(object):
