@@ -480,8 +480,8 @@ def reduce_to_one_layer(self):
     self._p_zcorn_v = ptr_new_zcorn_v
     self._p_actnum_v = ptr_new_actnum_v
     self._nactive = _cxtgeo.intpointer_value(ptr_new_num_act)
-    self._nsubs = 0
     self._props = []
+    self._subgrids = None
 
     return self
 

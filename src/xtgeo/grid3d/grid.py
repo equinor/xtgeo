@@ -59,7 +59,7 @@ class Grid(Grid3D):
     importing a grid from file, as it is (currently) too complex to create from
     scratch.
 
-    See also the :class:`xtgeo.grid3d.GridProperty` and the
+    See also the :class:`.GridProperty` and the
     :class:`.GridProperties` classes.
 
     Example::
@@ -76,15 +76,16 @@ class Grid(Grid3D):
 
         super(Grid, self).__init__(*args, **kwargs)
 
-        self._nsubs = 0
         self._p_coord_v = None       # carray swig pointer to coords vector
         self._p_zcorn_v = None       # carray swig pointer to zcorns vector
         self._p_actnum_v = None      # carray swig pointer to actnum vector
+        self._p_subgrd_v = None      # carray swig pointer to subgrid vector
         self._nactive = -999         # Number of active cells
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
         self._props = []  # List of 'attached' property objects
+        self._subgrids = None        # A python list if subgrids are given
 
         # perhaps undef should be a class variable, not an instance variables?
         self._undef = _cxtgeo.UNDEF
@@ -110,28 +111,57 @@ class Grid(Grid3D):
 
     @property
     def ncol(self):
-        """Number of columns (read only)"""
+        """int: Number of columns (read only)"""
         return super(Grid, self).ncol
 
     @property
     def nrow(self):
-        """Number of rows (read only)"""
+        """int: Number of rows (read only)"""
         return super(Grid, self).nrow
 
     @property
     def nlay(self):
-        """Number of layers (read only)"""
+        """int: Number of layers (read only)"""
         return super(Grid, self).nlay
 
     @property
+    def subgrids(self):
+        """:obj:`list` of :obj:`int`: A list array with subgrid numbering,
+        or None of not present.
+
+        This will an list on the form [10, 12, 16], here meaning
+        3 subgrids where upper is 10 cells vertically, then 12, then 16.
+        The numbers must sum to NLAY.
+
+        None will be returned if no subgrid indexing is present.
+
+        """
+        if self._subgrids is None:
+            return None
+
+        # note that subgrids corresponds with self._p_subgrd_v
+
+        self._subgrids = [int(elem) for elem in self._subgrids]
+        return self._subgrids
+
+    @subgrids.setter
+    def subgrids(self, array):
+        if isinstance(array, list) and sum(array) == self._nlay:
+            self._subgrids = [int(elem) for elem in array]
+        else:
+            xtg.warn('Input array {}, sums to {}, when NLAY is {}'
+                     .format(array, sum(array), self._nlay))
+            raise ValueError('Array input is wrong somehow')
+
+    @property
     def nactive(self):
-        """Returns the number of active cells."""
+        """int: Returns the number of active cells (read only)."""
         return self._nactive
 
     @property
     def actnum_indices(self):
         """Returns the 1D ndarray which holds the indices for active cells
-        given in 1D, C order.
+        given in 1D, C order (read only).
 
         """
         if self._actnum_indices is None:
@@ -143,12 +173,13 @@ class Grid(Grid3D):
 
     @property
     def ntotal(self):
-        """Returns the total number of cells."""
+        """Returns the total number of cells (read only)."""
         return self._ncol * self._nrow * self._nlay
 
     @property
     def props(self):
-        """Returns or sets a list of property objects.
+        """:obj:`list` of :obj:`.GridProperty`: Return or set a
+        list of property objects.
 
         When setting, the dimension of the property object is checked,
         and will raise an IndexError if it does not match the grid.
@@ -733,12 +764,11 @@ class Grid(Grid3D):
                                             region=region,
                                             region_number=region_number)
 
-    def refine_vertically(self, rfactor):
-        """Refine the grid vertically by rfactor (limited to constant for
-        all layers)
+    def refine_vertically(self, rfactor, zoneprop=None):
+        """Refine the grid vertically by rfactor...)
         """
 
-        self = _grid_refine.refine_vertically(self, rfactor)
+        self = _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
 
     def report_zone_mismatch(self, well=None, zonelogname='ZONELOG',
                              mode=0, zoneprop=None, onelayergrid=None,

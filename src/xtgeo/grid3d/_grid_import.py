@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import
 import re
 import os
 from tempfile import mkstemp
+import numpy as np
 
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
@@ -42,7 +43,7 @@ def import_roff(self, gfile):
     self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
     self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
     self._nlay = _cxtgeo.intpointer_value(ptr_nlay)
-    self._nsubs = _cxtgeo.intpointer_value(ptr_nsubs)
+    nsubs = _cxtgeo.intpointer_value(ptr_nsubs)
 
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
@@ -56,17 +57,27 @@ def import_roff(self, gfile):
     self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
-    self._p_subgrd_v = _cxtgeo.new_intarray(self._nsubs)
+    self._p_subgrd_v = _cxtgeo.new_intarray(nsubs)
 
     _cxtgeo.grd3d_import_roff_grid(ptr_num_act, ptr_nsubs, self._p_coord_v,
                                    self._p_zcorn_v, self._p_actnum_v,
-                                   self._p_subgrd_v, self._nsubs, gfile,
+                                   self._p_subgrd_v, nsubs, gfile,
                                    xtg_verbose_level)
 
     self._nactive = _cxtgeo.intpointer_value(ptr_num_act)
 
     logger.info('Number of active cells: {}'.format(self.nactive))
-    logger.info('Number of subselfs: {}'.format(self._nsubs))
+    logger.info('Number of subgrids: {}'.format(nsubs))
+
+    if nsubs > 1:
+        self._subgrids = []
+        for i in range(nsubs):
+            val = _cxtgeo.intarray_getitem(self._p_subgrd_v, i)
+            self._subgrids.append(val)
+    else:
+        self._subgrids = None
+
+    logger.info('Subgrids array %s', self._subgrids)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,7 +145,7 @@ def import_ecl_output(self, gfile, gtype):
     self._nactive = nact
 
     logger.info('Number of active cells: {}'.format(nact))
-    self._nsubs = 0
+    self._subgrids = None
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,4 +250,4 @@ def import_ecl_grdecl(self, gfile):
     self._nactive = nact
 
     logger.info('Number of active cells: {}'.format(nact))
-    self._nsubs = 0
+    self._subgrids = None

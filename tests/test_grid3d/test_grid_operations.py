@@ -1,6 +1,8 @@
 #!/usr/bin/env python -u
 import sys
+
 import pytest
+import numpy as np
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
@@ -20,6 +22,9 @@ testpath = xtg.testpath
 # =============================================================================
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 emerfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff'
+
+emegfile2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero_grid.roff'
+emezfile2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero.roff'
 
 
 def test_hybridgrid1():
@@ -124,3 +129,25 @@ def test_refine_vertically():
     grd.inactivate_by_dz(0.001)
 
     grd.to_file('TMP/test_refined_by_3.roff')
+
+
+def test_refine_vertically_per_zone():
+    """Do a grid refinement vertically, via a dict per zone."""
+
+    logger.info('Read grid...')
+
+    grd = Grid(emegfile2)
+    logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
+    grd.to_file('TMP/test_refined_by_dict_initial.roff')
+    dz1 = grd.get_dz().values
+
+    zone = GridProperty(emezfile2, grid=grd, name='Zone')
+    logger.info('Zone values min max: %s %s', zone.values.min(),
+                zone.values.max())
+
+    logger.info('Subgrids list: %s', grd.subgrids)
+
+    refinement = {1: 4, 2: 2}
+    grd.refine_vertically(refinement, zoneprop=zone)
+
+    grd.to_file('TMP/test_refined_by_dict.roff')

@@ -17,15 +17,22 @@ def export_roff(self, gfile, option):
 
     logger.debug('Export to ROFF...')
 
-    if self._nsubs == 0 and not hasattr(self, '_p_subgrd_v'):
+    nsubs = 0
+    if self.subgrids is None:
         logger.debug('Create a pointer for _p_subgrd_v ...')
         self._p_subgrd_v = _cxtgeo.new_intpointer()
+    else:
+        nsubs = len(self.subgrids)
+        self._p_subgrd_v = _cxtgeo.new_intarray(nsubs)
+        for inum, subgrid in enumerate(self.subgrids):
+            logger.info('INUM SUBGRID: %s %s', inum, subgrid)
+            _cxtgeo.intarray_setitem(self._p_subgrd_v, inum, subgrid)
 
     # get the geometrics list to find the xshift, etc
     gx = self.get_geometrics()
 
     _cxtgeo.grd3d_export_roff_grid(option, self._ncol, self._nrow, self._nlay,
-                                   self._nsubs, 0, gx[3], gx[5], gx[7],
+                                   nsubs, 0, gx[3], gx[5], gx[7],
                                    self._p_coord_v, self._p_zcorn_v,
                                    self._p_actnum_v, self._p_subgrd_v,
                                    gfile, xtg_verbose_level)
