@@ -35,7 +35,6 @@ def refine_vertically(self, rfactor, zoneprop=None):
     if isinstance(rfactor, dict):
         newnlay = 0
         zprval = zoneprop.values
-        print(zprval)
         for izone, rnfactor in rfactor.items():
             mininzn = int(kval[zprval == izone].min() - 1)  # 0 base
             maxinzn = int(kval[zprval == izone].max() - 1)  # 0 base

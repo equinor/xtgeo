@@ -46,7 +46,6 @@ def make_hybridgrid(grid, **kwargs):
     hyb_p_actnum_v = _cxtgeo.new_intarray(grid.ncol * grid.nrow * newnlay)
 
     if region is None:
-        print('No region...')
         _cxtgeo.grd3d_convert_hybrid(grid.ncol,
                                      grid.nrow,
                                      grid.nlay,
