@@ -1361,7 +1361,10 @@ class RegularSurface(object):
                 If other surface is present, zrange is computed based on that.
             ndiv (int): Number of intervals for sampling within zrange. None
                 means 'auto' sampling, using 0.5 of cube Z increment as basis.
-            attribute (str): The requested attribute, e.g. 'max' value
+            attribute (str or list): The requested attribute(s), e.g.
+                'max' value. May also be a list of attributes, e.g.
+                ['min', 'rms', 'max']. By such, a dict of surface objects is
+                returned.
             maskthreshold (float): Only if two surface; if isochore is less
                 than given value, the result will be masked.
             snapxy (bool): If True (optional), then the map values will get
@@ -1379,23 +1382,37 @@ class RegularSurface(object):
             # update surf to sample cube values in a total range of 30 m:
             surf.slice_cube_window(cube, attribute='min', zrange=15.0)
 
+            # Here a list is given instead:
+            alst = ['min', 'max', 'rms']
+
+            myattrs = surf.slice_cube_window(cube, attribute=alst, zrange=15.0)
+            for attr in myattrs.keys():
+                myattrs[attr].to_file('myfile_' + attr + '.gri')
+
         Raises:
             Exception if maps have different definitions (topology)
             ValueError if attribute is invalid.
+
+        Returns:
+            If attribute is a string, then the instance is updated and
+            None is returned. If attribute is a list, then a dictionary
+            of surface objects is returned.
         """
 
         if other is None and zrange is None:
             zrange = 10
 
-        _regsurf_cube.slice_cube_window(self, cube, zsurf=zsurf, other=other,
-                                        other_position=other_position,
-                                        sampling=sampling, mask=mask,
-                                        zrange=zrange, ndiv=ndiv,
-                                        attribute=attribute,
-                                        maskthreshold=maskthreshold,
-                                        snapxy=snapxy,
-                                        showprogress=showprogress,
-                                        deadtraces=deadtraces)
+        asurfs = _regsurf_cube.slice_cube_window(self, cube, zsurf=zsurf,
+                                                 other=other,
+                                                 other_position=other_position,
+                                                 sampling=sampling, mask=mask,
+                                                 zrange=zrange, ndiv=ndiv,
+                                                 attribute=attribute,
+                                                 maskthreshold=maskthreshold,
+                                                 snapxy=snapxy,
+                                                 showprogress=showprogress,
+                                                 deadtraces=deadtraces)
+        return asurfs
 
     # =========================================================================
     # Special methods

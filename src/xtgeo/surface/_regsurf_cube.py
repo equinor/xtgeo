@@ -103,8 +103,18 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
     The maskthreshold is only valid for surfaces; if isochore is less than
     given value then the result will be masked.
+
+    Note: attribute may be a scalar or a list. If a list, then a dict of
+    surfaces are returned.
     """
     logger.info('Slice cube window method')
+
+    qattr_is_string = True
+    if not isinstance(attribute, list):
+        attrlist = [attribute]
+    else:
+        attrlist = attribute
+        qattr_is_string = False
 
     if zsurf is not None:
         this = zsurf
@@ -131,23 +141,36 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
     if other is None:
         attvalues = _slice_constant_window(this, cube, sampling, zrange,
-                                           ndiv, mask, attribute, snapxy,
+                                           ndiv, mask, attrlist, snapxy,
                                            showprogress=showprogress,
                                            deadtraces=deadtraces)
     else:
         attvalues = _slice_between_surfaces(this, cube, sampling, other,
                                             other_position, zrange,
-                                            ndiv, mask, attribute,
+                                            ndiv, mask, attrlist,
                                             maskthreshold, snapxy,
                                             showprogress=showprogress,
                                             deadtraces=deadtraces)
 
-    self.values = attvalues
+    results = dict()
+
+    for attr in attrlist:
+        scopy = self.copy()
+        scopy.values = attvalues[attr]
+        results[attr] = scopy
+
+    # for backward compatibility
+    if qattr_is_string:
+        self.values = attvalues[attrlist[0]]
+        return None
+
+    return results
+
     logger.info('Mean of cube attribute is {}'.format(self.values.mean()))
 
 
 def _slice_constant_window(this, cube, sampling, zrange,
-                           ndiv, mask, attribute, snapxy, showprogress=False,
+                           ndiv, mask, attrlist, snapxy, showprogress=False,
                            deadtraces=True):
     """Slice a window, (constant in vertical extent)."""
     npcollect = []
@@ -185,13 +208,16 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
     stacked = ma.dstack(npcollect)
 
-    attvalues = _attvalues(attribute, stacked)
+    attvalues = dict()
+    for attr in attrlist:
+        attvalues[attr] = _attvalues(attr, stacked)
+
     progress.finished()
-    return attvalues
+    return attvalues  # this is dict with numpies, one per attribute
 
 
 def _slice_between_surfaces(this, cube, sampling, other, other_position,
-                            zrange, ndiv, mask, attribute, mthreshold,
+                            zrange, ndiv, mask, attrlist, mthreshold,
                             snapxy, showprogress=False, deadtraces=True):
 
     """Slice and find values between two surfaces."""
@@ -235,14 +261,17 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
 
     stacked = ma.dstack(npcollect)
 
-    attvalues = _attvalues(attribute, stacked)
-
     # for cases with erosion, the two surfaces are equal
     isovalues = mul * (other.values - this.values)
-    attvalues = ma.masked_where(isovalues < mthreshold, attvalues)
+
+    attvalues = dict()
+    for attr in attrlist:
+        attvaluestmp = _attvalues(attr, stacked)
+        attvalues[attr] = ma.masked_where(isovalues < mthreshold, attvaluestmp)
+
     progress.finished()
 
-    return attvalues
+    return attvalues  # this is dict with numpies, one per attribute
 
 
 def _attvalues(attribute, stacked):

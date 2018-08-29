@@ -423,3 +423,43 @@ def test_cube_slice_w_dead_traces_trilinear():
     surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
     assert ma.count_masked(surf2.values) == ndead
     assert surf2.values.mean() == surf1.values.mean()
+
+
+@tsetup.skipifroxar
+def test_cube_attr_mean_two_surfaces_multiattr():
+    """Get cube attribute (mean) between two surfaces, many attr at the same
+    time.
+    """
+
+    logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
+    xs1 = RegularSurface(rtop1)
+    xs2 = RegularSurface(rbas1)
+
+    logger.info('Loading cube {}'.format(rsgy1))
+    cc = Cube(rsgy1)
+
+    xss = xs1.copy()
+    attrs = xss.slice_cube_window(cc, other=xs2, other_position='below',
+                                  attribute=['max', 'mean', 'min', 'rms'],
+                                  sampling='trilinear', showprogress=True)
+
+    xsss = xs1.copy()
+    attrs = xsss.slice_cube_window(cc, other=xs2, other_position='below',
+                                  attribute=['max', 'mean', 'min', 'rms'],
+                                  sampling='trilinear', showprogress=True)
+
+    logger.info(attrs)
+
+    for attr in attrs.keys():
+        logger.info('Working with %s', attr)
+
+        attrs[attr].to_file(td + '/surf_slice_cube_2surf_' + attr +
+                            'multi.gri')
+
+        xss.quickplot(filename=td + '/surf_slice_cube_2surf_' + attr +
+                      'multi.png',
+                      colortable='jet',
+                      title='Reek two surfs mean', minmax=(-0.1, 0.1),
+                      infotext='Method: trilinear, 2 surfs ' + attr)
+
+    logger.info('Mean is {}'.format(xss.values.mean()))
