@@ -23,7 +23,7 @@ def import_prop_roxapi(self, project, gname, pname, realisation):
     logger.info('Opening RMS project ...')
     if project is not None and isinstance(project, str):
         # outside a RMS project
-        with roxar.Project.open(project, readonly=True) as proj:
+        with roxar.Project.open(project) as proj:
 
             # Note that values must be extracted within the "with"
             # scope here, as e.g. prop._roxgrid.properties[pname]

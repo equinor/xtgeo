@@ -9,6 +9,7 @@ import pandas as pd
 import xtgeo
 from xtgeo.xyz import XYZ
 import cxtgeo.cxtgeo as _cxtgeo
+# import xtgeo.xyz._xyz_roxapi as _xyz_roxapi
 
 UNDEF = _cxtgeo.UNDEF
 UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
@@ -187,3 +188,51 @@ class Points(XYZ):
         xc, yc, val = coor
         ddatas = {'X_UTME': xc, 'Y_UTMN': yc, 'Z_TVDSS': val}
         self._df = pd.DataFrame(ddatas)
+
+
+    def from_roxar(self, project, name, category, stype='horizons',
+                   realisation=0):
+        """Load a points set from a Roxar RMS project.
+
+        Syntax is::
+
+          import xtgeo
+          mysurf = xtgeo.surface_from_roxar(project, 'TopAare', 'DepthSurface')
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic `project` word if
+                within RMS.
+            name (str): Name of surface/map
+            category (str): For horizons/zones only: for example 'DP_extracted'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            realisation (int): Realisation number, default is 0
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        Example:
+            Here the from_roxar method is used to initiate the object
+            directly::
+
+            >>> mypoints = Points()
+            >>> mypoints.from_roxar(project, 'TopAare', 'DepthPoints')
+
+        """
+        pass
+
+        # stype = stype.lower()
+        # valid_stypes = ['horizons', 'zones']
+
+        # if stype not in valid_stypes:
+        #     raise ValueError('Invalid stype, only {} stypes is supported.'
+        #                      .format(valid_stypes))
+
+        # _xyz_roxapi.import_points_roxapi(
+        #     self, project, name, category, stype, realisation)

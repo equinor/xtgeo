@@ -484,7 +484,7 @@ class Cube(object):
             jrows (int tuple): Cropping front, end of columns, or
                 inclusive range
             klays (int tuple ): Cropping top, base layers, or inclusive range.
-            model (str): 'Default i 'edges'; alternative is 'inclusive'
+            mode (str): 'Default is 'edges'; alternative is 'inclusive'
 
         Example:
             Crop 10 columns from front, 2 from back, then 20 rows in front,

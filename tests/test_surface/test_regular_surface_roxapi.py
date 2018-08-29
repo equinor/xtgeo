@@ -4,6 +4,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
+roxver = None
 try:
     import roxar
     roxver = roxar.__version__
@@ -25,6 +26,7 @@ testpath = xtg.testpath
 # =============================================================================
 proj = {}
 proj['1.1'] = '../xtgeo-testdata-statoil/data/rmsprojects/reek.rms10.1.1'
+proj['1.2'] = '../xtgeo-testdata-statoil/data/rmsprojects/reek.rms11.0.0'
 
 
 @tsetup.skipunlessroxar
