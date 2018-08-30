@@ -94,7 +94,8 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
                       sampling='nearest', mask=True,
                       zrange=10, ndiv=None, attribute='max',
                       maskthreshold=0.1, snapxy=False,
-                      showprogress=False, deadtraces=True):
+                      showprogress=False, deadtraces=True,
+                      deletecube=False):
 
     """Slice Cube with a window and extract attribute(s)
 
@@ -143,14 +144,16 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
         attvalues = _slice_constant_window(this, cube, sampling, zrange,
                                            ndiv, mask, attrlist, snapxy,
                                            showprogress=showprogress,
-                                           deadtraces=deadtraces)
+                                           deadtraces=deadtraces,
+                                           deletecube=deletecube)
     else:
         attvalues = _slice_between_surfaces(this, cube, sampling, other,
                                             other_position, zrange,
                                             ndiv, mask, attrlist,
                                             maskthreshold, snapxy,
                                             showprogress=showprogress,
-                                            deadtraces=deadtraces)
+                                            deadtraces=deadtraces,
+                                            deletecube=deletecube)
 
     results = dict()
 
@@ -171,7 +174,7 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
 def _slice_constant_window(this, cube, sampling, zrange,
                            ndiv, mask, attrlist, snapxy, showprogress=False,
-                           deadtraces=True):
+                           deadtraces=True, deletecube=False):
     """Slice a window, (constant in vertical extent)."""
     npcollect = []
     zcenter = this.copy()
@@ -206,10 +209,15 @@ def _slice_constant_window(this, cube, sampling, zrange,
         logger.info('Mean of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
 
+    logger.info('Make a stack of the maps...')
     stacked = ma.dstack(npcollect)
+    del(npcollect)
+    if deletecube:
+        del(cube)
 
     attvalues = dict()
     for attr in attrlist:
+        logger.info('Running attribute %s', attr)
         attvalues[attr] = _attvalues(attr, stacked)
 
     progress.finished()
@@ -218,7 +226,8 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
 def _slice_between_surfaces(this, cube, sampling, other, other_position,
                             zrange, ndiv, mask, attrlist, mthreshold,
-                            snapxy, showprogress=False, deadtraces=True):
+                            snapxy, showprogress=False, deadtraces=True,
+                            deletecube=False):
 
     """Slice and find values between two surfaces."""
 
@@ -260,6 +269,11 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
         npcollect.append(values)
 
     stacked = ma.dstack(npcollect)
+
+    del(npcollect)
+
+    if deletecube:
+        del(cube)
 
     # for cases with erosion, the two surfaces are equal
     isovalues = mul * (other.values - this.values)
