@@ -1,6 +1,6 @@
 import sys
 import pytest
-import os.path
+from os.path import join as ojn
 
 import numpy.ma as ma
 
@@ -26,14 +26,14 @@ rpath1 = '../xtgeo-testdata/surfaces/reek'
 rpath3 = '../xtgeo-testdata/surfaces/etc'
 rpath2 = '../xtgeo-testdata/cubes/reek'
 rpath4 = '../xtgeo-testdata/cubes/etc'
-rtop1 = os.path.join(rpath1, '1/topreek_rota.gri')
-rbas1 = os.path.join(rpath1, '1/basereek_rota.gri')
-rbas2 = os.path.join(rpath1, '1/basereek_rota_v2.gri')
-rsgy1 = os.path.join(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
+rtop1 = ojn(rpath1, '1/topreek_rota.gri')
+rbas1 = ojn(rpath1, '1/basereek_rota.gri')
+rbas2 = ojn(rpath1, '1/basereek_rota_v2.gri')
+rsgy1 = ojn(rpath2, 'syntseis_20000101_seismic_depth_stack.segy')
 
-xtop1 = os.path.join(rpath3, 'ib_test_horizon2.gri')
-xcub1 = os.path.join(rpath4, 'ib_test_cube2.segy')
-xcub2 = os.path.join(rpath4, 'cube_w_deadtraces.segy')
+xtop1 = ojn(rpath3, 'ib_test_horizon2.gri')
+xcub1 = ojn(rpath4, 'ib_test_cube2.segy')
+xcub2 = ojn(rpath4, 'cube_w_deadtraces.segy')
 
 
 @tsetup.skipsegyio
@@ -231,7 +231,7 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso():
     xss.quickplot(filename=td + '/surf_slice_cube_2surf_mean_v2.png',
                   colortable='jet',
                   title='Reek two surfs mean', minmax=(-0.1, 0.1),
-                  infotext='Method: trilinear, 2 surfs')
+                  infotext='Method: trilinear, 2 surfs, partly zero isochore')
 
     logger.info('Mean is {}'.format(xss.values.mean()))
 
@@ -243,7 +243,7 @@ def test_cube_slice_auto4d_data():
     xs1 = RegularSurface(xtop1, fformat='gri')
     xs1.describe()
 
-    xs1out = os.path.join(td, 'xtop1.ijxyz')
+    xs1out = ojn(td, 'xtop1.ijxyz')
     xs1.to_file(xs1out, fformat='ijxyz')
 
     xs2 = RegularSurface(xs1out, fformat='ijxyz')
@@ -258,9 +258,9 @@ def test_cube_slice_auto4d_data():
     xs2.slice_cube_window(cc1, sampling='trilinear', mask=True,
                           attribute='max')
 
-    xs2out1 = os.path.join(td, 'xtop2_sampled_from_cube.ijxyz')
-    xs2out2 = os.path.join(td, 'xtop2_sampled_from_cube.gri')
-    xs2out3 = os.path.join(td, 'xtop2_sampled_from_cube.png')
+    xs2out1 = ojn(td, 'xtop2_sampled_from_cube.ijxyz')
+    xs2out2 = ojn(td, 'xtop2_sampled_from_cube.gri')
+    xs2out3 = ojn(td, 'xtop2_sampled_from_cube.png')
 
     xs2.to_file(xs2out1, fformat='ijxyz')
     xs2.to_file(xs2out2)
@@ -286,7 +286,7 @@ def test_cube_slice_w_ignore_dead_traces_nearest():
     cells = ((18, 12), (20, 2), (0, 4))
 
     surf1.slice_cube(cube1, deadtraces=False)
-    plotfile = os.path.join(td, 'slice_nea1.png')
+    plotfile = ojn(td, 'slice_nea1.png')
     title = 'Cube with dead traces; nearest; use just values as is'
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -337,7 +337,7 @@ def test_cube_slice_w_dead_traces_nearest():
     cells = ((18, 12),)
 
     surf1.slice_cube(cube1, deadtraces=True)
-    plotfile = os.path.join(td, 'slice_nea1_dead.png')
+    plotfile = ojn(td, 'slice_nea1_dead.png')
     title = 'Cube with dead traces; nearest; UNDEF at dead traces'
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -357,7 +357,7 @@ def test_cube_slice_w_dead_traces_nearest():
     cube2 = cube1.copy()
     cube2.swapaxes()
     surf2.slice_cube(cube2, deadtraces=True)
-    plotfile = os.path.join(td, 'slice_nea1_dead_cubeswap.png')
+    plotfile = ojn(td, 'slice_nea1_dead_cubeswap.png')
     surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
     assert ma.count_masked(surf2.values) == ndead
     assert surf2.values.mean() == surf1.values.mean()
@@ -377,7 +377,7 @@ def test_cube_slice_w_ignore_dead_traces_trilinear():
 
     surf1.slice_cube(cube1, sampling='trilinear', snapxy=True,
                      deadtraces=False)
-    plotfile = os.path.join(td, 'slice_tri1.png')
+    plotfile = ojn(td, 'slice_tri1.png')
     title = 'Cube with dead traces; trilinear; keep as is at dead traces'
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -401,7 +401,7 @@ def test_cube_slice_w_dead_traces_trilinear():
 
     surf1.slice_cube(cube1, sampling='trilinear', snapxy=True,
                      deadtraces=True)
-    plotfile = os.path.join(td, 'slice_tri1_dead.png')
+    plotfile = ojn(td, 'slice_tri1_dead.png')
     title = 'Cube with dead traces; trilinear; UNDEF at dead traces'
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -419,7 +419,7 @@ def test_cube_slice_w_dead_traces_trilinear():
     cube2 = cube1.copy()
     cube2.swapaxes()
     surf2.slice_cube(cube2, sampling='trilinear', deadtraces=True)
-    plotfile = os.path.join(td, 'slice_tri1__dead_cubeswap.png')
+    plotfile = ojn(td, 'slice_tri1__dead_cubeswap.png')
     surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
     assert ma.count_masked(surf2.values) == ndead
     assert surf2.values.mean() == surf1.values.mean()
@@ -439,27 +439,34 @@ def test_cube_attr_mean_two_surfaces_multiattr():
     cc = Cube(rsgy1)
 
     xss = xs1.copy()
-    attrs = xss.slice_cube_window(cc, other=xs2, other_position='below',
+    xss.slice_cube_window(cc, other=xs2, other_position='below',
+                          attribute='rms',
+                          sampling='trilinear', showprogress=True)
+
+    logger.debug(xss.values.mean())
+
+    xsx = xs1.copy()
+    attrs = xsx.slice_cube_window(cc, other=xs2, other_position='below',
                                   attribute=['max', 'mean', 'min', 'rms'],
                                   sampling='trilinear', showprogress=True)
+    logger.debug(attrs['rms'].values.mean())
 
-    xsss = xs1.copy()
-    attrs = xsss.slice_cube_window(cc, other=xs2, other_position='below',
-                                  attribute=['max', 'mean', 'min', 'rms'],
-                                  sampling='trilinear', showprogress=True)
-
-    logger.info(attrs)
+    assert xss.values.mean() == attrs['rms'].values.mean()
+    assert xss.values.std() == attrs['rms'].values.std()
 
     for attr in attrs.keys():
         logger.info('Working with %s', attr)
 
-        attrs[attr].to_file(td + '/surf_slice_cube_2surf_' + attr +
-                            'multi.gri')
+        xxx = attrs[attr]
+        xxx.to_file(ojn(td, 'surf_slice_cube_2surf_' + attr +
+                            'multi.gri'))
 
-        xss.quickplot(filename=td + '/surf_slice_cube_2surf_' + attr +
-                      'multi.png',
-                      colortable='jet',
-                      title='Reek two surfs mean', minmax=(-0.1, 0.1),
-                      infotext='Method: trilinear, 2 surfs ' + attr)
+        minmax = (None, None)
+        if attr == 'mean':
+            minmax = (-0.1, 0.1)
 
-    logger.info('Mean is {}'.format(xss.values.mean()))
+        xxx.quickplot(filename=ojn(td, 'surf_slice_cube_2surf_' +
+                                   attr + 'multi.png'),
+                      colortable='jet', minmax=minmax,
+                      title='Reek two surfs mean multiattr: ' + attr,
+                      infotext='Method: trilinear, 2 surfs multiattr ' + attr)
