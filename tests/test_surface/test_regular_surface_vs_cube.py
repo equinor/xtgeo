@@ -186,6 +186,48 @@ def test_slice_attr_window_max():
                   infotext='Method: trilinear, window')
 
 
+@tsetup.skipsegyio
+@tsetup.skipifroxar
+def test_slice_attr_window_max_algorithm2():
+    """Slice a cube within a window, get max, using trilinear interpol,
+    alg 2.
+    """
+
+    logger.info('Loading surface')
+    xs1 = RegularSurface(rtop1)
+    xs2 = xs1.copy()
+    xs3 = xs1.copy()
+
+    logger.info('Loading cube')
+    cc = Cube(rsgy1)
+
+    t1 = xtg.timer()
+    xs1.slice_cube_window(cc, attribute='min', sampling='trilinear',
+                          algorithm=2)
+    t2 = xtg.timer(t1)
+    # logger.info('Window slicing... {} secs'. format(t2))
+
+    # xs1.quickplot(filename=td + '/surf_slice_cube_window_min.png',
+    #               colortable='seismic', minmax=(-1, 1),
+    #               title='Reek Minimum',
+    #               infotext='Method: trilinear, window')
+
+    # xs2.slice_cube_window(cc, attribute='max', sampling='trilinear',
+    #                       showprogress=True)
+
+    # xs2.quickplot(filename=td + '/surf_slice_cube_window_max.png',
+    #               colortable='seismic', minmax=(-1, 1),
+    #               title='Reek Maximum',
+    #               infotext='Method: trilinear, window')
+
+    # xs3.slice_cube_window(cc, attribute='rms', sampling='trilinear')
+
+    # xs3.quickplot(filename=td + '/surf_slice_cube_window_rms.png',
+    #               colortable='jet', minmax=(0, 1),
+    #               title='Reek rms (root mean square)',
+    #               infotext='Method: trilinear, window')
+
+
 @tsetup.skipifroxar
 def test_cube_attr_mean_two_surfaces():
     """Get cube attribute (mean) between two surfaces."""
