@@ -732,7 +732,7 @@ class Grid(Grid3D):
 
         """
 
-        self = _grid_etc1.do_cropping(self)
+        _grid_etc1.do_cropping(self, croprange)
 
     def reduce_to_one_layer(self):
         """Reduce the grid to one single single layer.
