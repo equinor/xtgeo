@@ -715,6 +715,25 @@ class Grid(Grid3D):
 
         self = _grid_etc1.collapse_inactive_cells(self)
 
+    def do_cropping(self, croprange):
+        """Reduce the grid size by cropping, the grid will have new dimensions.
+
+        Args:
+            croprange (tuple): Crop range on the form
+                ((i1, i2), (j1, j2), (k1, k2)), from i1, i2 means from i1 to
+                i2, etc (inclusive).
+
+        Example::
+
+            >>> from xtgeo.grid3d import Grid
+            >>> gf = Grid('gullfaks2.roff')
+            >>> gf.do_cropping((3, 6), (4, 20), (1, 10))
+            >>> gf.to_file('gf_reduced.roff')
+
+        """
+
+        _grid_etc1.do_cropping(self, croprange)
+
     def reduce_to_one_layer(self):
         """Reduce the grid to one single single layer.
 

@@ -131,6 +131,7 @@ def test_refine_vertically():
     grd.to_file('TMP/test_refined_by_3.roff')
 
 
+
 def test_refine_vertically_per_zone():
     """Do a grid refinement vertically, via a dict per zone."""
 
@@ -151,3 +152,18 @@ def test_refine_vertically_per_zone():
     grd.refine_vertically(refinement, zoneprop=zone)
 
     grd.to_file('TMP/test_refined_by_dict.roff')
+
+
+def test_crop_grid():
+    """Crop a grid."""
+
+    logger.info('Read grid...')
+
+    grd = Grid(emegfile)
+    logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
+    logger.info('Read grid...NCOL, NROW, NLAY is {} {} {}'
+                .format(grd.ncol, grd.nrow, grd.nlay))
+
+    grd.do_cropping(((30, 60), (20, 40), (1, 46)))
+
+    grd.to_file('TMP/grid_cropped.roff')

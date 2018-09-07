@@ -61,6 +61,9 @@ def _roxapi_cube_to_xtgeo(self, rcube):
     self._xlines = np.array(range(xlstart, self._nrow + xlstart, xlincr),
                             dtype=np.int32)
 
+    # roxar API does not store traceid codes, assume 1
+    self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
+
     if rcube.is_empty:
         xtg.warn('Cube has no data; assume 0')
     else:

@@ -441,6 +441,58 @@ def collapse_inactive_cells(self):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Do cropping
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def do_cropping(self, spec):
+    """Do cropping of geometry (and params)."""
+
+    (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
+
+    if ic1 < 1 or ic2 > self.ncol or jc1 < 1 or jc2 > self.nrow or \
+       kc1 < 1 or kc2 > self.nlay:
+
+        raise ValueError('Boundary for tuples not matching grid'
+                         'NCOL, NROW, NLAY')
+
+    # compute size of new cropped grid
+    nncol = ic2 - ic1 + 1
+    nnrow = jc2 - jc1 + 1
+    nnlay = kc2 - kc1 + 1
+
+    ntot = nncol * nnrow * nnlay
+    ncoord = (nncol + 1) * (nnrow + 1) * 2 * 3
+    nzcorn = nncol * nnrow * (nnlay + 1) * 4
+
+    new_num_act = _cxtgeo.new_intpointer()
+    new_p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    new_p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    new_p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    _cxtgeo.grd3d_crop_geometry(self.ncol, self.nrow, self.nlay,
+                                self._p_coord_v,
+                                self._p_zcorn_v,
+                                self._p_actnum_v,
+                                new_p_coord_v,
+                                new_p_zcorn_v,
+                                new_p_actnum_v,
+                                ic1, ic2, jc1, jc2, kc1, kc2,
+                                new_num_act,
+                                0,
+                                xtg_verbose_level)
+
+    self._p_coord_v = new_p_coord_v
+    self._p_zcorn_v = new_p_zcorn_v
+    self._p_actnum_v = new_p_actnum_v
+
+    self._nactive = _cxtgeo.intpointer_value(new_num_act)
+    self._ncol = nncol
+    self._nrow = nnrow
+    self._nlay = nnlay
+
+    # TODO: subgrid
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Reduce grid to one layer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def reduce_to_one_layer(self):

@@ -1325,7 +1325,7 @@ class RegularSurface(object):
                           other_position='below', sampling='nearest',
                           mask=True, zrange=None, ndiv=None, attribute='max',
                           maskthreshold=0.1, snapxy=False, showprogress=False,
-                          deadtraces=True):
+                          deadtraces=True, algorithm=1):
         """Slice the cube within a vertical window and get the statistical
         attrubute.
 
@@ -1374,6 +1374,7 @@ class RegularSurface(object):
             deadtraces (bool): If True (default) then dead cube traces
                 (given as value 2 in SEGY trace headers), are treated as
                 undefined, nad map will be undefined at dead trace location.
+            algorithm (int): 1 for old method, 2 for new alternative.
 
         Example::
 
@@ -1411,7 +1412,8 @@ class RegularSurface(object):
                                                  maskthreshold=maskthreshold,
                                                  snapxy=snapxy,
                                                  showprogress=showprogress,
-                                                 deadtraces=deadtraces)
+                                                 deadtraces=deadtraces,
+                                                 algorithm=algorithm)
         return asurfs
 
     # =========================================================================

@@ -95,7 +95,7 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
                       zrange=10, ndiv=None, attribute='max',
                       maskthreshold=0.1, snapxy=False,
                       showprogress=False, deadtraces=True,
-                      deletecube=False):
+                      deletecube=False, algorithm=1):
 
     """Slice Cube with a window and extract attribute(s)
 
@@ -140,12 +140,18 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
     # This will run slice in a loop within a window. Then, numpy methods
     # are applied to get the attributes
 
-    if other is None:
+    if other is None and algorithm == 1:
         attvalues = _slice_constant_window(this, cube, sampling, zrange,
                                            ndiv, mask, attrlist, snapxy,
                                            showprogress=showprogress,
                                            deadtraces=deadtraces,
                                            deletecube=deletecube)
+    elif other is None and algorithm == 2:
+        attvalues = _slice_constant_window2(this, cube, sampling, zrange,
+                                            ndiv, mask, attrlist, snapxy,
+                                            showprogress=showprogress,
+                                            deadtraces=deadtraces,
+                                            deletecube=deletecube)
     else:
         attvalues = _slice_between_surfaces(this, cube, sampling, other,
                                             other_position, zrange,
@@ -157,19 +163,20 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
     results = dict()
 
-    for attr in attrlist:
-        scopy = self.copy()
-        scopy.values = attvalues[attr]
-        results[attr] = scopy
+    if algorithm != 2:
+        for attr in attrlist:
+            scopy = self.copy()
+            scopy.values = attvalues[attr]
+            results[attr] = scopy
 
-    # for backward compatibility
-    if qattr_is_string:
-        self.values = attvalues[attrlist[0]]
+        # for backward compatibility
+        if qattr_is_string:
+            self.values = attvalues[attrlist[0]]
+            return None
+
+        return results
+    else:
         return None
-
-    return results
-
-    logger.info('Mean of cube attribute is {}'.format(self.values.mean()))
 
 
 def _slice_constant_window(this, cube, sampling, zrange,
@@ -222,6 +229,77 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
     progress.finished()
     return attvalues  # this is dict with numpies, one per attribute
+
+
+def _slice_constant_window2(this, cube, sampling, zrange,
+                            ndiv, mask, attrlist, snapxy, showprogress=False,
+                            deadtraces=True, deletecube=False):
+    """Slice a window, (constant in vertical extent); faster and better
+    algorithm (algorithm2).
+    """
+
+    zincr = zrange / float(ndiv)
+    ztmp = this.copy()
+    ztmp.values = ztmp.values - zincr * (ndiv + 1)
+
+    if mask:
+        opt2 = 0
+    else:
+        opt2 = 1
+
+    if deadtraces:
+        # set dead traces to cxtgeo UNDEF -> special treatment in the C code
+        olddead = cube.values_dead_traces(_cxtgeo.UNDEF)
+
+    cubeval1d = np.ravel(cube.values, order='C')
+
+    usesampling = 0
+    if sampling == 'trilinear':
+        usesampling = 1
+        if snapxy:
+            usesampling = 2
+
+    # allocate the attribute maps
+    nattr = 5  # predefined attributes
+    nsurf = ztmp.ncol * ztmp.nrow * nattr
+
+    istat, attrmaps = _cxtgeo.surf_slice_cube_window(
+        cube.ncol,
+        cube.nrow,
+        cube.nlay,
+        cube.xori,
+        cube.xinc,
+        cube.yori,
+        cube.yinc,
+        cube.zori,
+        cube.zinc,
+        cube.rotation,
+        cube.yflip,
+        cubeval1d,
+        ztmp.ncol,
+        ztmp.nrow,
+        ztmp.xori,
+        ztmp.xinc,
+        ztmp.yori,
+        ztmp.yinc,
+        ztmp.yflip,
+        ztmp.rotation,
+        ztmp.get_values1d(),
+        zincr,
+        ndiv * 2,
+        nsurf,
+        nattr,
+        usesampling,
+        opt2,
+        xtg_verbose_level)
+
+    if istat != 0:
+        logger.warning('Problem, ISTAT = {}'.format(istat))
+
+    if deadtraces:
+        cube.values_dead_traces(olddead)  # reset value for dead traces
+
+    return istat
 
 
 def _slice_between_surfaces(this, cube, sampling, other, other_position,
