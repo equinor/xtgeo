@@ -225,6 +225,8 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
     # scan valid keywords
     kwlist = props.scan_keywords(fhandle)
 
+    logger.info('NAMES are %s', names)
+
     lookfornames = list(set(names))
 
     # Special treatment of "indirect" keyword SOIL, which is made

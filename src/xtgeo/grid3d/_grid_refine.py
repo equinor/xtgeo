@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 
 import logging
+from collections import OrderedDict
 
 from xtgeo.common import XTGeoDialog
 
@@ -29,12 +30,22 @@ def refine_vertically(self, rfactor, zoneprop=None):
     i_index, j_index, k_index = self.get_indices()
     kval = k_index.values
 
-    old_subgrids = self.subgrids
-    new_subgrids = []
+    if (zoneprop is None):
+        zprval = kval.copy() * 0 + 1
+        print(zprval)
+    else:
+        zprval = zoneprop.values
+
+    if isinstance(rfactor, int):
+        newrfactor = {}
+        for izone in range(zprval.min(), zprval.max() + 1):
+            newrfactor[izone] = rfactor
+
+        rfactor = newrfactor
+        print(rfactor)
 
     if isinstance(rfactor, dict):
         newnlay = 0
-        zprval = zoneprop.values
         for izone, rnfactor in rfactor.items():
             mininzn = int(kval[zprval == izone].min() - 1)  # 0 base
             maxinzn = int(kval[zprval == izone].max() - 1)  # 0 base
@@ -42,17 +53,6 @@ def refine_vertically(self, rfactor, zoneprop=None):
             for ira in range(mininzn, maxinzn + 1):
                 _cxtgeo.intarray_setitem(rfac, ira, rnfactor)
                 newnlay = newnlay + rnfactor
-
-            if old_subgrids is not None:
-                new_subgrids.append(rnfactor * old_subgrids[izone - 1])
-    else:
-        newnlay = self.nlay * rfactor  # scalar case
-        for i in range(self.nlay):
-            _cxtgeo.intarray_setitem(rfac, i, rfactor)
-
-        if old_subgrids is not None:
-            for izone in range(len(old_subgrids)):
-                new_subgrids.append(rfactor * old_subgrids[izone])
 
     logger.info('Old NLAY: %s, new NLAY: %s', self.nlay, newnlay)
 
@@ -83,10 +83,14 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     # update instance:
     self._nlay = newnlay
-    self._nactive = _cxtgeo.intpointer_value(ref_num_act)
     self._p_zcorn_v = ref_p_zcorn_v
     self._p_actnum_v = ref_p_actnum_v
-    if old_subgrids is not None:
-        self.subgrids = new_subgrids
+    if self.subgrids is not None:
+        newsub = OrderedDict()
+        # for inum, (subname, sublist) in enumerate(self.subgrids.items()):
+        #     znum = inum + 1
+        #     ref =
+
+        self.subgrids = None
 
     return self

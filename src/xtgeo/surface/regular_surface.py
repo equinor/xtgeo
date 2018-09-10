@@ -829,6 +829,8 @@ class RegularSurface(object):
 
         if self._filesrc is not None and '(copy)' not in self._filesrc:
             xsurf.filesrc = self._filesrc + ' (copy)'
+        elif self._filesrc is not None:
+            xsurf.filesrc = self._filesrc
 
         logger.debug('New array + flags + ID')
         return xsurf

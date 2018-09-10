@@ -222,6 +222,11 @@ class GridProperty(Grid3D):
         self._name = name
 
     @property
+    def dimensions(self):
+        """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
+        return (self._ncol, self._nrow, self._nlay)
+
+    @property
     def grid(self):
         """Return the XTGeo grid geometry object (read only)"""
         return self._grid
@@ -503,7 +508,7 @@ class GridProperty(Grid3D):
             newname = self.name + '_copy'
 
         xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
-                             values=self._values, name=newname,
+                             values=self._values.copy(), name=newname,
                              grid=self._grid)
 
         return xprop
@@ -514,6 +519,23 @@ class GridProperty(Grid3D):
             self._values = ma.masked_greater(self._values, self._undef_ilimit)
         else:
             self._values = ma.masked_greater(self._values, self._undef_limit)
+
+    def crop(self, spec):
+        """Crop a property, see method under grid"""
+
+        (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
+
+        # compute size of new cropped grid
+        self._ncol = ic2 - ic1 + 1
+        self._nrow = jc2 - jc1 + 1
+        self._nlay = kc2 - kc1 + 1
+
+        newvalues = self.values.copy()
+
+        self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
+
+
+
 
     # =========================================================================
     # Import and export
@@ -627,6 +649,10 @@ class GridProperty(Grid3D):
                                        .format(name))
         elif ier != 0:
             raise RuntimeError('Somethin went wrong, code {}'.format(ier))
+
+        # if grid, then append this grid to the current grid object
+        if grid:
+            grid.append_prop(self)
 
         return self
 
