@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import
 
 import inspect
 import warnings
+from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 from copy import deepcopy
@@ -565,7 +566,7 @@ def crop(self, spec, props=None):
     self._nlay = nnlay
 
     if isinstance(self.subgrids, dict):
-        newsub = {}
+        newsub = OrderedDict()
         # easier to work with numpies than lists
         newarr = np.array(range(1, oldnlay + 1))
         newarr[newarr < kc1] = 0
@@ -587,6 +588,7 @@ def crop(self, spec, props=None):
             props = self.props
 
         for prop in props:
+            logger.info('Crop %s', prop.name)
             prop.crop(spec)
 
 

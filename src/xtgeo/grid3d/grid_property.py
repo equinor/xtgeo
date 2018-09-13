@@ -19,6 +19,7 @@ values1d property, e.g.::
 from __future__ import print_function, absolute_import
 
 import os.path
+import copy
 
 import numpy as np
 import numpy.ma as ma
@@ -511,6 +512,17 @@ class GridProperty(Grid3D):
                              values=self._values.copy(), name=newname,
                              grid=self._grid)
 
+        xprop._codes = copy.deepcopy(self._codes)
+        xprop._isdiscrete = self._isdiscrete
+        xprop._date = self._date
+        xprop._roxorigin = self._roxorigin
+        xprop._roxar_dtype = self._roxar_dtype
+
+        if self._filesrc is not None and '(copy)' not in self._filesrc:
+            xprop.filesrc = self._filesrc + ' (copy)'
+        elif self._filesrc is not None:
+            xprop.filesrc = self._filesrc
+
         return xprop
 
     def mask_undef(self):
@@ -533,9 +545,6 @@ class GridProperty(Grid3D):
         newvalues = self.values.copy()
 
         self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
-
-
-
 
     # =========================================================================
     # Import and export

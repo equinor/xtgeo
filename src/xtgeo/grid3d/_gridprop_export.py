@@ -47,7 +47,7 @@ def _export_roff_discrete(self, pfile, name, append=False, last=True,
     for inum, ckey in enumerate(sorted(self.codes.keys())):
         codenames += str(self.codes[ckey])
         codenames += '|'
-        _cxtgeo.intarray_setitem(ptr_codes, inum, ckey)
+        _cxtgeo.intarray_setitem(ptr_codes, inum, int(ckey))
 
     mode = 0
     if not binary:

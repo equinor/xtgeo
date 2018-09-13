@@ -119,6 +119,7 @@ def test_refine_vertically():
 
     grd = Grid(EMEGFILE)
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
+    logger.info('Subgrids before: %s', grd.get_subgrids())
 
     avg_dz1 = grd.get_dz().values3d.mean()
 
@@ -129,10 +130,10 @@ def test_refine_vertically():
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 
+    logger.info('Subgrids after: %s', grd.get_subgrids())
     grd.inactivate_by_dz(0.001)
 
     grd.to_file('TMP/test_refined_by_3.roff')
-
 
 
 def test_refine_vertically_per_zone():
@@ -140,10 +141,13 @@ def test_refine_vertically_per_zone():
 
     logger.info('Read grid...')
 
-    grd = Grid(EMEGFILE2)
+    grd_orig = Grid(EMEGFILE2)
+    grd = grd_orig.copy()
+
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
     grd.to_file('TMP/test_refined_by_dict_initial.roff')
-    dz1 = grd.get_dz().values
+
+    logger.info('Subgrids before: %s', grd.get_subgrids())
 
     zone = GridProperty(EMEZFILE2, grid=grd, name='Zone')
     logger.info('Zone values min max: %s %s', zone.values.min(),
@@ -154,7 +158,20 @@ def test_refine_vertically_per_zone():
     refinement = {1: 4, 2: 2}
     grd.refine_vertically(refinement, zoneprop=zone)
 
+    grd1s = grd.get_subgrids()
+    logger.info('Subgrids after: %s', grd1s)
+
     grd.to_file('TMP/test_refined_by_dict.roff')
+
+    grd = grd_orig.copy()
+    grd.refine_vertically(refinement)  # no zoneprop
+    grd2s = grd.get_subgrids()
+    logger.info('Subgrids after: %s', grd2s)
+    assert list(grd1s.values()) == list(grd2s.values())
+
+    grd = grd_orig.copy()
+    with pytest.raises(RuntimeError):
+        grd.refine_vertically({1: 200}, zoneprop=zone)
 
 
 def test_copy_grid():
@@ -176,8 +193,6 @@ def test_crop_grid():
     grd = Grid(EMEGFILE2)
     zprop = GridProperty(EMEZFILE2, name='Zone', grid=grd)
 
-    print(zprop.ncol)
-
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
     logger.info('Read grid...NCOL, NROW, NLAY is {} {} {}'
                 .format(grd.ncol, grd.nrow, grd.nlay))
@@ -189,8 +204,6 @@ def test_crop_grid():
     grd2 = Grid(join('TMP', 'grid_cropped.roff'))
 
     assert grd2.ncol == 31
-
-    print(zprop.ncol)
 
 
 def test_crop_grid_after_copy():

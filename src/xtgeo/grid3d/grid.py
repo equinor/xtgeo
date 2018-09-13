@@ -6,6 +6,8 @@ from __future__ import print_function, absolute_import
 import errno
 import os
 import os.path
+import json
+from collections import OrderedDict
 
 import numpy as np
 import numpy.ma as ma
@@ -141,6 +143,8 @@ class Grid(Grid3D):
 
         None will be returned if no subgrid indexing is present.
 
+        See also :meth:`set_subgrids()` and :meth:`get_subgrids()`
+
         """
         if self._subgrids is None:
             return None
@@ -154,8 +158,8 @@ class Grid(Grid3D):
             self._subgrids = None
             return None
 
-        if not isinstance(sgrids, dict):
-            raise ValueError('Input to subgrids must be a dictionary')
+        if not isinstance(sgrids, OrderedDict):
+            raise ValueError('Input to subgrids must be an ordered dictionary')
 
         lengths = 0
         zarr = []
@@ -168,7 +172,7 @@ class Grid(Grid3D):
         if lengths != self._nlay:
             raise ValueError('Subgrids lengths not equal NLAY')
 
-        if zarr != range(1, self._nlay + 1):
+        if zarr != list(range(1, self._nlay + 1)):
             raise ValueError('Arrays are not valid as the do not sum to '
                              'vertical range, {}'.format(zarr))
 
@@ -190,7 +194,6 @@ class Grid(Grid3D):
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
-        print(actnumv.shape)
         self._actnum_indices = np.flatnonzero(actnumv)
 
         return self._actnum_indices
@@ -293,17 +296,17 @@ class Grid(Grid3D):
     def describe(self, details=False):
         """Describe an instance by printing to stdout"""
 
-        geom = self.get_geometrics(cellcenter=True, return_dict=True)
+        if details:
+            geom = self.get_geometrics(cellcenter=True, return_dict=True)
 
-        prp1 = []
-        for prp in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
-            prp1.append('{:10.3f}'.format(geom[prp]))
+            prp1 = []
+            for prp in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
+                prp1.append('{:10.3f}'.format(geom[prp]))
 
             prp2 = []
-        for prp in ('avg_dx', 'avg_dy', 'avg_dz', 'avg_rotation'):
-            prp2.append('{:7.4f}'.format(geom[prp]))
+            for prp in ('avg_dx', 'avg_dy', 'avg_dz', 'avg_rotation'):
+                prp2.append('{:7.4f}'.format(geom[prp]))
 
-        if details:
             geox = self.get_geometrics(cellcenter=False, allcells=True,
                                        return_dict=True)
             prp3 = []
@@ -324,19 +327,23 @@ class Grid(Grid3D):
         dsc.txt('File source', self._filesrc)
         dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
         dsc.txt('Number of active cells', self.nactive)
-        dsc.txt('For active cells, using cell centers:')
-        dsc.txt('Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:', *prp1)
-        dsc.txt('Avg DX, Avg DY, Avg DZ, Avg rotation:', *prp2)
         if details:
+            dsc.txt('For active cells, using cell centers:')
+            dsc.txt('Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:', *prp1)
+            dsc.txt('Avg DX, Avg DY, Avg DZ, Avg rotation:', *prp2)
             dsc.txt('For all cells, using cell corners:')
             dsc.txt('Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:', *prp3)
             dsc.txt('Avg DX, Avg DY, Avg DZ, Avg rotation:', *prp4)
         dsc.txt('Attached grid props objects (names)', self.propnames)
         if details:
             dsc.txt('Attached grid props objects (id)', self.props)
-        dsc.txt('Subgrids: ', self.subgrids.keys())
+        if self.subgrids:
+            dsc.txt('Number of subgrids', len(list(self.subgrids.keys())))
+        else:
+            dsc.txt('Number of subgrids', 'No subgrids')
         if details:
-            dsc.txt('Subgrids with values array: ', self.subgrids)
+            dsc.txt('Subgrids details', json.dumps(self.get_subgrids()))
+            dsc.txt('Subgrids with values array', self.subgrids)
 
         dsc.flush()
 
@@ -348,6 +355,77 @@ class Grid(Grid3D):
         else:
             raise ValueError('Dimensions does not match')
 
+    def set_subgrids(self, sdict):
+        """Set the subgrid from a simplified ordered dictionary.
+
+        The simplified dictionary is on the form
+        {'name1': 3, 'name2': 5}
+
+        Note that the input must be an OrderedDict!
+
+        """
+
+        if not isinstance(sdict, OrderedDict):
+            raise ValueError('Input sdict is not an OrderedDict')
+
+        newsub = OrderedDict()
+
+        inn1 = 1
+        for name, nsub in sdict.items():
+            inn2 = inn1 + nsub
+            newsub[name] = range(inn1, inn2)
+            inn1 = inn2
+
+        self.subgrids = newsub
+
+    def get_subgrids(self):
+        """Get the subgrids on a simplified ordered dictionary.
+
+        The simplified dictionary is on the form {'name1': 3, 'name2': 5}
+        """
+
+        if not self.subgrids:
+            return None
+
+        newd = OrderedDict()
+        for name, subarr in self.subgrids.items():
+            newd[name] = len(subarr)
+
+        return newd
+
+    def subgrids_from_zoneprop(self, zoneprop):
+        """Make subgrids from a zone property, which will replace the
+        current if any.
+
+        Args:
+            zoneprop(GridProperty): a XTGeo GridProperty instance.
+
+        Returns:
+            Will also return simplified dictionary is on the form
+                {'name1': 3, 'name2': 5}
+        """
+
+        newd = OrderedDict()
+        i_index, j_index, k_index = self.get_indices()
+        kval = k_index.values
+        zprval = zoneprop.values
+        minzone = int(zprval.min())
+        maxzone = int(zprval.max())
+
+        for izone in range(minzone, maxzone + 1):
+            mininzn = int(kval[zprval == izone].min())  # 1 base
+            maxinzn = int(kval[zprval == izone].max())  # 1 base
+            newd['zone' + str(izone)] = range(mininzn, maxinzn + 1)
+
+        self.subgrids = newd
+
+        return self.get_subgrids()
+
+    def get_zoneprop_from_subgrids(self):
+        """Make a XTGeo GridProperty instance for a Zone property from
+        the Grid subgrids information"""
+
+        raise NotImplementedError('Not yet; todo')
 
     def get_actnum_indices(self, order='C'):
         """Returns the 1D ndarray which holds the indices for active cells
@@ -888,7 +966,51 @@ class Grid(Grid3D):
                                             region_number=region_number)
 
     def refine_vertically(self, rfactor, zoneprop=None):
-        """Refine the grid vertically by rfactor...)
+        """Refine vertically, proportionally
+
+        The rfactor can be a scalar or a dictionary.
+
+        If rfactor is a dict and zoneprop is None, then the current
+        subgrids array is used. If zoneprop is defined, the
+        current subgrid index will be redefined for the case. A warning will
+        be issued if subgrids are defined, but the give zone
+        property is inconsistent with this.
+
+        Also, if a zoneprop is defined but no current subgrids in the grid,
+        then subgrids will be added to the grid, if more than 1 subgrid.
+
+        Args:
+            self (object): A grid XTGeo object
+            rfactor (scalar or dict): Refinement factor, if dict, then the
+                dictionary must be consistent with self.subgrids if this is
+                present.
+            zoneprop (GridProperty): Zone property; must be defined if rfactor
+                is a dict
+
+        Returns:
+            ValueError: if..
+            RuntimeError: if mimatch in dimensions for rfactor and zoneprop
+
+
+        Examples::
+
+            # refine vertically all by factor 3
+
+            grd.refine_vertically(3)
+
+            # refine by using a dictionary; note that subgrids must exist!
+            # and that subgrids that are not mentioned will have value 1
+            # in refinement (1 is meaning no refinement)
+
+            grd.refine_vertically({1: 3, 2: 4, 4: 1})
+
+            # refine by using a a dictionary and a zonelog. If subgrids exists
+            # but are inconsistent with the zonelog; the current subgrids will
+            # be redefined, and a warning will be issued! Note also that ranges
+            # in the dictionary rfactor and the zone property must be aligned.
+
+            grd.refine_vertically({1: 3, 2: 4, 4: 0}, zoneprop=myzone)
+
         """
 
         self = _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
