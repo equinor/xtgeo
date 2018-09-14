@@ -191,6 +191,8 @@ class RegularSurface(object):
 
         self._yflip = 1
 
+        self._values = None
+
         if args:
             # make instance from file import
             mfile = args[0]
@@ -262,6 +264,27 @@ class RegularSurface(object):
         # user friendly print
         return str(self.describe())
 
+    def __add__(self, other):
+
+        news = self.copy()
+        news.add(other)
+
+        return news
+
+    def __sub__(self, other):
+
+        news = self.copy()
+        news.subtract(other)
+
+        return news
+
+    def __mul__(self, other):
+
+        news = self.copy()
+        news.multiply(other)
+
+        return news
+
     # =========================================================================
     # Class and static methods
     # =========================================================================
@@ -275,8 +298,7 @@ class RegularSurface(object):
         return [x for x, y in cls.__dict__.items() if
                 isinstance(y, FunctionType)]
 
-    @staticmethod
-    def ensure_correct_values(ncol, nrow, values):
+    def ensure_correct_values(self, ncol, nrow, values):
         """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
 
         Args:
@@ -294,8 +316,15 @@ class RegularSurface(object):
             # secure that the values are masked, in correct format and shape:
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
+
+        currentmask = None
+        if self._values is not None:
+            if isinstance(self._values, ma.MaskedArray):
+                currentmask = ma.getmaskarray(self._values)
+
         if np.isscalar(values):
             vals = ma.zeros((ncol, nrow), order='C', dtype=np.float64)
+            vals = ma.array(vals, mask=currentmask)
             values = vals + float(values)
 
         if not isinstance(values, ma.MaskedArray):
@@ -467,7 +496,10 @@ class RegularSurface(object):
 
     @property
     def values(self):
-        """The map values, as 2D masked numpy (float64), shape (ncol, nrow)."""
+        """The map values, as 2D masked numpy (float64), shape (ncol, nrow).
+
+        When setting values as a scalar, the current mask will be preserved.
+        """
 
         if not self._values.flags.c_contiguous:
             logger.warning('Not C order in numpy')
@@ -821,8 +853,9 @@ class RegularSurface(object):
 
         xsurf = RegularSurface(ncol=self.ncol, nrow=self.nrow, xinc=self.xinc,
                                yinc=self.yinc, xori=self.xori, yori=self.yori,
-                               rotation=self.rotation, yflip=self.yflip,
-                               values=self.values.copy())
+                               rotation=self.rotation, yflip=self.yflip)
+
+        xsurf._values = self._values.copy()
 
         xsurf.ilines = self._ilines.copy()
         xsurf.xlines = self._xlines.copy()
@@ -1167,6 +1200,25 @@ class RegularSurface(object):
             self._values = ma.masked_less_equal(self._values, value)
         else:
             raise ValueError('Invalid operation name')
+
+    # =========================================================================
+    # Operation with secondary map
+    # =========================================================================
+
+    def add(self, other):
+        """Add another map to current map"""
+
+        _regsurf_oper.operations_two(self, other, oper='add')
+
+    def subtract(self, other):
+        """Subtract another map from current map"""
+
+        _regsurf_oper.operations_two(self, other, oper='sub')
+
+    def multiply(self, other):
+        """Multiply another map and current map"""
+
+        _regsurf_oper.operations_two(self, other, oper='mul')
 
     # =========================================================================
     # Interacion with points
