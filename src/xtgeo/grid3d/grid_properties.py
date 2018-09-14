@@ -10,6 +10,9 @@ from xtgeo.grid3d import _gridprops_io
 from xtgeo.grid3d import _gridprops_io_obsolete
 from xtgeo.grid3d import _gridprops_etc
 
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
 
 class GridProperties(Grid3D):
     """Class for a collection of 3D grid props, belonging to the same grid.
@@ -194,6 +197,7 @@ class GridProperties(Grid3D):
         if (fformat.lower() == "roff"):
             self._import_roff(pfile, names)
         elif (fformat.lower() == "init"):
+            logger.info('NAMES 3 are %s', names)
             self._import_ecl_output(pfile, names=names, etype=1,
                                     grid=grid, apiversion=apiversion)
         elif (fformat.lower() == "unrst"):
@@ -356,6 +360,8 @@ class GridProperties(Grid3D):
                                                         namestyle=namestyle)
 
         elif apiversion == 2:
+            logger.info('NAMES 2 are %s', names)
+
             self.logger.info('API version for GridProperies is 2')
             _gridprops_io.import_ecl_output_v2(self, pfile,
                                                dates=dates, grid=grid,

@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import
 import re
 import os
 from tempfile import mkstemp
+from collections import OrderedDict
 import numpy as np
 
 import cxtgeo.cxtgeo as _cxtgeo
@@ -57,23 +58,26 @@ def import_roff(self, gfile):
     self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
-    self._p_subgrd_v = _cxtgeo.new_intarray(nsubs)
+    subgrd_v = _cxtgeo.new_intarray(nsubs)
 
     _cxtgeo.grd3d_import_roff_grid(ptr_num_act, ptr_nsubs, self._p_coord_v,
                                    self._p_zcorn_v, self._p_actnum_v,
-                                   self._p_subgrd_v, nsubs, gfile,
+                                   subgrd_v, nsubs, gfile,
                                    xtg_verbose_level)
-
-    self._nactive = _cxtgeo.intpointer_value(ptr_num_act)
 
     logger.info('Number of active cells: {}'.format(self.nactive))
     logger.info('Number of subgrids: {}'.format(nsubs))
 
     if nsubs > 1:
-        self._subgrids = []
-        for i in range(nsubs):
-            val = _cxtgeo.intarray_getitem(self._p_subgrd_v, i)
-            self._subgrids.append(val)
+        self._subgrids = OrderedDict()
+        prev = 1
+        for irange in range(nsubs):
+            val = _cxtgeo.intarray_getitem(subgrd_v, irange)
+
+            logger.info('VAL is %s', val)
+            logger.info('RANGE is %s', range(prev, val + prev))
+            self._subgrids['subgrid_' + str(irange)] = range(prev, val + prev)
+            prev = val + prev
     else:
         self._subgrids = None
 
@@ -142,7 +146,6 @@ def import_ecl_output(self, gfile, gtype):
                                        xtg_verbose_level)
 
     nact = _cxtgeo.intpointer_value(ptr_num_act)
-    self._nactive = nact
 
     logger.info('Number of active cells: {}'.format(nact))
     self._subgrids = None
@@ -164,11 +167,11 @@ def import_ecl_run(self, groot, initprops=None,
 
     # import the init properties unless list is empty
     if initprops:
-        initprops = xtgeo.grid3d.GridProperties()
-        initprops.from_file(ecl_init, names=initprops, fformat='init',
-                            dates=None, grid=self)
+        iprops = xtgeo.grid3d.GridProperties()
+        iprops.from_file(ecl_init, names=initprops, fformat='init',
+                         dates=None, grid=self)
 
-        for prop in initprops.props:
+        for prop in iprops.props:
             self._props.append(prop)
 
     # import the restart properties for dates unless lists are empty
@@ -247,7 +250,6 @@ def import_ecl_grdecl(self, gfile):
     os.remove(tmpfile)
 
     nact = _cxtgeo.intpointer_value(ptr_num_act)
-    self._nactive = nact
 
     logger.info('Number of active cells: {}'.format(nact))
     self._subgrids = None

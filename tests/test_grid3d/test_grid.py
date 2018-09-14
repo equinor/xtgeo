@@ -3,6 +3,8 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os
+from collections import OrderedDict
+
 import pytest
 
 import xtgeo
@@ -57,6 +59,40 @@ def test_roffbin_import0():
     g = Grid(emegfile, fformat='roff')
 
     assert isinstance(g, Grid)
+
+
+def test_subgrids():
+    """Import ROFF and test different subgrid functions."""
+
+    grd = Grid().from_file(emegfile, fformat='roff')
+
+    assert isinstance(grd, Grid)
+
+    logger.info(grd.subgrids)
+
+    newsub = OrderedDict()
+    newsub['XX1'] = 20
+    newsub['XX2'] = 2
+    newsub['XX3'] = 24
+
+    grd.set_subgrids(newsub)
+    logger.info(grd.subgrids)
+
+    subs = grd.get_subgrids()
+    logger.info(subs)
+
+    assert subs == newsub
+
+    i_index, j_index, k_index = grd.get_indices()
+
+    zprop = k_index.copy()
+    zprop.values[k_index.values > 4] = 2
+    zprop.values[k_index.values <= 4] = 1
+    print(zprop.values)
+    grd.describe()
+    grd.subgrids_from_zoneprop(zprop)
+
+    grd.describe()
 
 
 def test_roffbin_import1():

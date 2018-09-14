@@ -4,8 +4,10 @@ from __future__ import print_function, absolute_import
 
 import inspect
 import warnings
+from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
+from copy import deepcopy
 
 import cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
@@ -441,10 +443,83 @@ def collapse_inactive_cells(self):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Copy a grid instance.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def copy(self):
+    """Copy a grid instance (C pointers) and other props.
+
+    Returns:
+        A new instance
+    """
+
+    other = xtgeo.grid3d.Grid()
+
+    ntot = self.ncol * self.nrow * self.nlay
+    ncoord = (self.ncol + 1) * (self.nrow + 1) * 2 * 3
+    nzcorn = self.ncol * self.nrow * (self.nlay + 1) * 4
+
+    new_p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    new_p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    new_p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    _cxtgeo.grd3d_copy(self.ncol, self.nrow, self.nlay,
+                       self._p_coord_v,
+                       self._p_zcorn_v,
+                       self._p_actnum_v,
+                       new_p_coord_v,
+                       new_p_zcorn_v,
+                       new_p_actnum_v,
+                       0,
+                       xtg_verbose_level)
+
+    other._p_coord_v = new_p_coord_v
+    other._p_zcorn_v = new_p_zcorn_v
+    other._p_actnum_v = new_p_actnum_v
+
+    other._ncol = self.ncol
+    other._nrow = self.nrow
+    other._nlay = self.nlay
+
+    if isinstance(self.subgrids, dict):
+        other.subgrids = deepcopy(self.subgrids)
+
+    # copy attached properties
+    if self.props:
+        newprops = []
+        for prop in self.props:
+            newprop = prop.copy(newname=prop.name)
+            newprop._grid = other
+            newprops.append(newprop)
+        other.props = newprops
+
+    if self._filesrc is not None and '(copy)' not in self._filesrc:
+        other._filesrc = self._filesrc + ' (copy)'
+    elif self._filesrc is not None:
+        other._filesrc = self._filesrc
+
+    return other
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Do cropping
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def do_cropping(self, spec):
-    """Do cropping of geometry (and params)."""
+def crop(self, spec, props=None):
+    """Do cropping of geometry (and properties).
+
+    If props is 'all' then all properties assosiated (linked) to then
+    grid are also cropped, and the instances are updated.
+
+    Args:
+        spec (tuple): A nested tuple on the form ((i1, i2), (j1, j2), (k1, k2))
+            where 1 represents start number, and 2 reperesent end. The range
+            is inclusive for both ends, and the number start index is 1 based.
+        props (list or str): None is default, while properties can be listed.
+            If 'all', then all GridProperty objects which are linked to the
+            Grid instance are updated.
+
+    Returns:
+        The instance is updated (cropped)
+    """
 
     (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
 
@@ -453,6 +528,8 @@ def do_cropping(self, spec):
 
         raise ValueError('Boundary for tuples not matching grid'
                          'NCOL, NROW, NLAY')
+
+    oldnlay = self._nlay
 
     # compute size of new cropped grid
     nncol = ic2 - ic1 + 1
@@ -484,12 +561,35 @@ def do_cropping(self, spec):
     self._p_zcorn_v = new_p_zcorn_v
     self._p_actnum_v = new_p_actnum_v
 
-    self._nactive = _cxtgeo.intpointer_value(new_num_act)
     self._ncol = nncol
     self._nrow = nnrow
     self._nlay = nnlay
 
-    # TODO: subgrid
+    if isinstance(self.subgrids, dict):
+        newsub = OrderedDict()
+        # easier to work with numpies than lists
+        newarr = np.array(range(1, oldnlay + 1))
+        newarr[newarr < kc1] = 0
+        newarr[newarr > kc2] = 0
+        newaxx = newarr.copy() - kc1 + 1
+        for sub, arr in self.subgrids.items():
+            arrx = np.array(arr)
+            arrxmap = newaxx[arrx[0] - 1: arrx[-1]]
+            arrxmap = arrxmap[arrxmap > 0]
+            if arrxmap.size > 0:
+                newsub[sub] = arrxmap.astype(np.int32).tolist()
+
+        print(newsub)
+        self.subgrids = newsub
+
+    # crop properties
+    if props is not None:
+        if props == 'all':
+            props = self.props
+
+        for prop in props:
+            logger.info('Crop %s', prop.name)
+            prop.crop(spec)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -531,7 +631,6 @@ def reduce_to_one_layer(self):
     self._nlay = 1
     self._p_zcorn_v = ptr_new_zcorn_v
     self._p_actnum_v = ptr_new_actnum_v
-    self._nactive = _cxtgeo.intpointer_value(ptr_new_num_act)
     self._props = []
     self._subgrids = None
 

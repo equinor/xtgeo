@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
+"""Private module for refinement of a grid"""
 from __future__ import print_function, absolute_import
 
-import logging
-
+from collections import OrderedDict
 from xtgeo.common import XTGeoDialog
-
 import cxtgeo.cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
+XTGDEBUG = xtg.syslevel
 
 logger = xtg.functionlogger(__name__)
 
@@ -14,49 +15,69 @@ logger = xtg.functionlogger(__name__)
 def refine_vertically(self, rfactor, zoneprop=None):
     """Refine vertically, proportionally
 
-    The rfactor can be a scalar or (todo:) a dictionary
-
-    Input:
-        self (object): A grid XTGeo object
-        rfactor (scalar or dict): Refinement factor
-        zoneprop (GridProperty): Zone property; must be defined if rfactor
-            is a dict
+    See details in caller.
     """
+    rfactord = OrderedDict()
 
-    # rfac is an array with length nlay, and has refinement per
-    # layer
-    rfac = _cxtgeo.new_intarray(self.nlay)
-    i_index, j_index, k_index = self.get_indices()
-    kval = k_index.values
+    # case 1 rfactor as scalar value.
+    if isinstance(rfactor, int):
+        if self.subgrids:
+            subgrids = self.get_subgrids()
+            for i, _ in enumerate(self.subgrids.keys()):
+                rfactord[i + 1] = rfactor
+        else:
+            rfactord[0] = rfactor
+            subgrids = OrderedDict()
+            subgrids[1] = self.nlay
 
-    old_subgrids = self.subgrids
-    new_subgrids = []
-
-    if isinstance(rfactor, dict):
-        newnlay = 0
-        zprval = zoneprop.values
-        for izone, rnfactor in rfactor.items():
-            mininzn = int(kval[zprval == izone].min() - 1)  # 0 base
-            maxinzn = int(kval[zprval == izone].max() - 1)  # 0 base
-            logger.info('Zone %s: lay range %s %s', izone, mininzn, maxinzn)
-            for ira in range(mininzn, maxinzn + 1):
-                _cxtgeo.intarray_setitem(rfac, ira, rnfactor)
-                newnlay = newnlay + rnfactor
-
-            if old_subgrids is not None:
-                new_subgrids.append(rnfactor * old_subgrids[izone - 1])
+    # case 2 rfactor is a dict
     else:
-        newnlay = self.nlay * rfactor  # scalar case
-        for i in range(self.nlay):
-            _cxtgeo.intarray_setitem(rfac, i, rfactor)
+        rfactord = OrderedDict(sorted(rfactor.items()))  # redefined to ordered
+        # 2a: zoneprop is present
+        if zoneprop is not None:
+            oldsubgrids = None
+            if self.subgrids:
+                oldsubgrids = self.get_subgrids()
 
-        if old_subgrids is not None:
-            for izone in range(len(old_subgrids)):
-                new_subgrids.append(rfactor * old_subgrids[izone])
+            subgrids = self.subgrids_from_zoneprop(zoneprop)
 
-    logger.info('Old NLAY: %s, new NLAY: %s', self.nlay, newnlay)
+            if oldsubgrids:
+                if subgrids.values() != oldsubgrids.values():
+                    xtg.warn('ISSUES!!!')
 
-    xtg_verbose_level = xtg.syslevel
+        # 2b: zoneprop is not present
+        elif zoneprop is None and self.subgrids:
+            subgrids = self.get_subgrids()
+
+        elif zoneprop is None and not self.subgrids:
+            raise ValueError('You gave in a dict, but no zoneprops and '
+                             'subgrids are not preesent in the grid')
+        else:
+            raise ValueError('Some major unexpected issue in routine...')
+
+    if len(subgrids) != len(rfactord):
+        raise RuntimeError('Subgrids and refinements: different definition!')
+
+    self.set_subgrids(subgrids)
+
+    # Now, based on dict, give a value per subgrid for key, val in rfactor
+    newsubgrids = OrderedDict()
+    newnlay = 0
+    for (nnn, rfi), (snam, sran) in zip(rfactord.items(), subgrids.items()):
+        newsubgrids[snam] = sran * rfi
+        newnlay += newsubgrids[snam]
+
+    logger.debug('New layers: %s', newnlay)
+
+    # rfac is an array with length nlay; has N refinements per single K layer
+    rfac = _cxtgeo.new_intarray(self.nlay)
+
+    totvector = []
+    for (nnn, rfi), (nam, arr) in zip(rfactord.items(), self.subgrids.items()):
+        for elem in range(len(arr)):
+            totvector.append(rfi)
+    for inn, rfi in enumerate(totvector):
+        _cxtgeo.intarray_setitem(rfac, inn, rfi)
 
     ref_num_act = _cxtgeo.new_intpointer()
     ref_p_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow *
@@ -75,7 +96,7 @@ def refine_vertically(self, rfactor, zoneprop=None):
                                     ref_num_act,
                                     rfac,
                                     0,
-                                    xtg_verbose_level)
+                                    XTGDEBUG)
 
     if ier != 0:
         raise RuntimeError('An error occured in the C routine '
@@ -83,10 +104,11 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     # update instance:
     self._nlay = newnlay
-    self._nactive = _cxtgeo.intpointer_value(ref_num_act)
     self._p_zcorn_v = ref_p_zcorn_v
     self._p_actnum_v = ref_p_actnum_v
-    if old_subgrids is not None:
-        self.subgrids = new_subgrids
+    if self.subgrids is None or len(self.subgrids) <= 1:
+        self.subgrids = None
+    else:
+        self.set_subgrids(newsubgrids)
 
     return self

@@ -1,8 +1,11 @@
-#!/usr/bin/env python -u
-import sys
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
+from os.path import join
+from filecmp import cmp
 
 import pytest
-import numpy as np
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
@@ -12,28 +15,28 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
-td = xtg.tmpdir
-testpath = xtg.testpath
+TDP = xtg.tmpdir
+TESTPATH = xtg.testpath
 
 # =============================================================================
 # Do tests
 # =============================================================================
-emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
-emerfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff'
+EMEGFILE = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
+EMERFILE = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff'
 
-emegfile2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero_grid.roff'
-emezfile2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero.roff'
+EMEGFILE2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero_grid.roff'
+EMEZFILE2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero.roff'
 
 
 def test_hybridgrid1():
     """Making a hybridgrid for Emerald case (ROFF and GRDECL"""
 
     logger.info('Read grid...')
-    grd = Grid(emegfile)
+    grd = Grid(EMEGFILE)
     logger.info('Read grid... done, NZ is {}'.format(grd.nlay))
-    grd.to_file('TMP/test_hybridgrid1_asis.grdecl', fformat='grdecl')
+    grd.to_file(join(TDP, 'test_hybridgrid1_asis.grdecl'), fformat='grdecl')
 
     logger.info('Convert...')
     nhdiv = 40
@@ -75,11 +78,11 @@ def test_hybridgrid2():
     """Making a hybridgrid for Emerald case in region"""
 
     logger.info('Read grid...')
-    grd = Grid(emegfile)
+    grd = Grid(EMEGFILE)
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
 
     reg = GridProperty()
-    reg.from_file(emerfile, name='REGION')
+    reg.from_file(EMERFILE, name='REGION')
 
     nhdiv = 40
 
@@ -93,11 +96,11 @@ def test_inactivate_thin_cells():
     """Make hybridgrid for Emerald case in region, and inactive thin cells"""
 
     logger.info('Read grid...')
-    grd = Grid(emegfile)
+    grd = Grid(EMEGFILE)
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
 
     reg = GridProperty()
-    reg.from_file(emerfile, name='REGION')
+    reg.from_file(EMERFILE, name='REGION')
 
     nhdiv = 40
 
@@ -114,8 +117,9 @@ def test_refine_vertically():
 
     logger.info('Read grid...')
 
-    grd = Grid(emegfile)
+    grd = Grid(EMEGFILE)
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
+    logger.info('Subgrids before: %s', grd.get_subgrids())
 
     avg_dz1 = grd.get_dz().values3d.mean()
 
@@ -126,10 +130,10 @@ def test_refine_vertically():
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 
+    logger.info('Subgrids after: %s', grd.get_subgrids())
     grd.inactivate_by_dz(0.001)
 
     grd.to_file('TMP/test_refined_by_3.roff')
-
 
 
 def test_refine_vertically_per_zone():
@@ -137,12 +141,15 @@ def test_refine_vertically_per_zone():
 
     logger.info('Read grid...')
 
-    grd = Grid(emegfile2)
+    grd_orig = Grid(EMEGFILE2)
+    grd = grd_orig.copy()
+
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
     grd.to_file('TMP/test_refined_by_dict_initial.roff')
-    dz1 = grd.get_dz().values
 
-    zone = GridProperty(emezfile2, grid=grd, name='Zone')
+    logger.info('Subgrids before: %s', grd.get_subgrids())
+
+    zone = GridProperty(EMEZFILE2, grid=grd, name='Zone')
     logger.info('Zone values min max: %s %s', zone.values.min(),
                 zone.values.max())
 
@@ -151,7 +158,31 @@ def test_refine_vertically_per_zone():
     refinement = {1: 4, 2: 2}
     grd.refine_vertically(refinement, zoneprop=zone)
 
+    grd1s = grd.get_subgrids()
+    logger.info('Subgrids after: %s', grd1s)
+
     grd.to_file('TMP/test_refined_by_dict.roff')
+
+    grd = grd_orig.copy()
+    grd.refine_vertically(refinement)  # no zoneprop
+    grd2s = grd.get_subgrids()
+    logger.info('Subgrids after: %s', grd2s)
+    assert list(grd1s.values()) == list(grd2s.values())
+
+    grd = grd_orig.copy()
+    with pytest.raises(RuntimeError):
+        grd.refine_vertically({1: 200}, zoneprop=zone)
+
+
+def test_copy_grid():
+    """Crop a grid."""
+
+    grd = Grid(EMEGFILE2)
+    grd2 = grd.copy()
+
+    grd.to_file(join('TMP', 'gcp1.roff'))
+    grd2.to_file(join('TMP', 'gcp2.roff'))
+    assert cmp(join('TMP', 'gcp1.roff'), join('TMP', 'gcp2.roff')) is True
 
 
 def test_crop_grid():
@@ -159,11 +190,45 @@ def test_crop_grid():
 
     logger.info('Read grid...')
 
-    grd = Grid(emegfile)
+    grd = Grid(EMEGFILE2)
+    zprop = GridProperty(EMEZFILE2, name='Zone', grid=grd)
+
     logger.info('Read grid... done, NLAY is {}'.format(grd.nlay))
     logger.info('Read grid...NCOL, NROW, NLAY is {} {} {}'
                 .format(grd.ncol, grd.nrow, grd.nlay))
 
-    grd.do_cropping(((30, 60), (20, 40), (1, 46)))
+    grd.crop(((30, 60), (20, 40), (1, 46)), props=[zprop])
 
-    grd.to_file('TMP/grid_cropped.roff')
+    grd.to_file(join('TMP', 'grid_cropped.roff'))
+
+    grd2 = Grid(join('TMP', 'grid_cropped.roff'))
+
+    assert grd2.ncol == 31
+
+
+def test_crop_grid_after_copy():
+    """Copy a grid, then crop and check number of active cells."""
+
+    logger.info('Read grid...')
+
+    grd = Grid(EMEGFILE2)
+    grd.describe()
+    zprop = GridProperty(EMEZFILE2, name='Zone', grid=grd)
+    grd.describe(details=True)
+
+    logger.info(grd.dimensions)
+
+    grd2 = grd.copy()
+    grd2.describe(details=True)
+
+    logger.info('GRD2 props: %s', grd2.props)
+    assert grd.propnames == grd2.propnames
+
+    logger.info('GRD2 number of active cells: %s', grd2.nactive)
+    act = grd.get_actnum()
+    logger.info(act.values.shape)
+    logger.info('ZPROP: %s', zprop._values.shape)
+
+    grd2.crop(((1, 30), (40, 80), (23, 46)))
+
+    grd2.describe(details=True)

@@ -18,6 +18,27 @@ if xtg_verbose_level < 0:
 _cxtgeo.xtg_verbose_file('NONE')
 
 
+def operations_two(self, other, oper='add'):
+    """General operations between two maps"""
+
+    okstatus = self.compare_topology(other)
+
+    if not okstatus:
+        other.resample(self)
+
+    if oper == 'add':
+        self.values = self.values + other.values
+
+    if oper == 'sub':
+        self.values = self.values - other.values
+
+    if oper == 'mul':
+        self.values = self.values * other.values
+
+    if oper == 'div':
+        self.values = self.values * other.values
+
+
 def resample(surf, other):
     """Resample from other surface object to this surf"""
 

@@ -113,6 +113,8 @@ class XTGDescription(object):
             fmt = '{:40s} {:>2s} {}  {}  {}  {}'.format(*atxt)
         elif alen == 6:
             fmt = '{:40s} {:>2s} {}  {}  {}  {}  {}'.format(*atxt)
+        elif alen == 7:
+            fmt = '{:40s} {:>2s} {}  {}  {}  {}  {}  {}'.format(*atxt)
         return fmt
 
 

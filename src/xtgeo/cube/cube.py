@@ -406,6 +406,8 @@ class Cube(object):
 
         if self._filesrc is not None and '(copy)' not in self._filesrc:
             xcube.filesrc = self._filesrc + ' (copy)'
+        elif self._filesrc is not None:
+            xcube.filesrc = self._filesrc
 
         xcube.ilines = self._ilines.copy()
         xcube.xlines = self._xlines.copy()

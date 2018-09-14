@@ -19,6 +19,7 @@ values1d property, e.g.::
 from __future__ import print_function, absolute_import
 
 import os.path
+import copy
 
 import numpy as np
 import numpy.ma as ma
@@ -220,6 +221,11 @@ class GridProperty(Grid3D):
     @name.setter
     def name(self, name):
         self._name = name
+
+    @property
+    def dimensions(self):
+        """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
+        return (self._ncol, self._nrow, self._nlay)
 
     @property
     def grid(self):
@@ -503,8 +509,19 @@ class GridProperty(Grid3D):
             newname = self.name + '_copy'
 
         xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
-                             values=self._values, name=newname,
+                             values=self._values.copy(), name=newname,
                              grid=self._grid)
+
+        xprop._codes = copy.deepcopy(self._codes)
+        xprop._isdiscrete = self._isdiscrete
+        xprop._date = self._date
+        xprop._roxorigin = self._roxorigin
+        xprop._roxar_dtype = self._roxar_dtype
+
+        if self._filesrc is not None and '(copy)' not in self._filesrc:
+            xprop.filesrc = self._filesrc + ' (copy)'
+        elif self._filesrc is not None:
+            xprop.filesrc = self._filesrc
 
         return xprop
 
@@ -514,6 +531,20 @@ class GridProperty(Grid3D):
             self._values = ma.masked_greater(self._values, self._undef_ilimit)
         else:
             self._values = ma.masked_greater(self._values, self._undef_limit)
+
+    def crop(self, spec):
+        """Crop a property, see method under grid"""
+
+        (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
+
+        # compute size of new cropped grid
+        self._ncol = ic2 - ic1 + 1
+        self._nrow = jc2 - jc1 + 1
+        self._nlay = kc2 - kc1 + 1
+
+        newvalues = self.values.copy()
+
+        self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
 
     # =========================================================================
     # Import and export
@@ -627,6 +658,10 @@ class GridProperty(Grid3D):
                                        .format(name))
         elif ier != 0:
             raise RuntimeError('Somethin went wrong, code {}'.format(ier))
+
+        # if grid, then append this grid to the current grid object
+        if grid:
+            grid.append_prop(self)
 
         return self
 

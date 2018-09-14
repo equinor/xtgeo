@@ -407,6 +407,7 @@ def _import_roff_v1(self, pfile, name, grid=None):
         logger.debug('CODES (value: name): {}'.format(self._codes))
 
     self._grid = grid
+    self._name = name
 
     return 0
 
@@ -437,6 +438,8 @@ def _import_roff_v2(self, pfile, name, grid=None):
                           byteswap, ncol, nrow, nlay)
 
     self._values = vals
+    self._name = name
+    self._grid = grid
 
     return 0
 
