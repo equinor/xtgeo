@@ -185,8 +185,13 @@ def _slice_constant_window(this, cube, sampling, zrange,
     """Slice a window, (constant in vertical extent)."""
     npcollect = []
     zcenter = this.copy()
+
+    logger.info('Mean W of depth no MIDDLE slice is {}'
+                .format(zcenter.values.mean()))
     zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                        deadtraces=deadtraces)
+    logger.info('Mean of cube slice is {}'.format(zcenter.values.mean()))
+
     npcollect.append(zcenter.values)
 
     zincr = zrange / float(ndiv)
@@ -200,20 +205,22 @@ def _slice_constant_window(this, cube, sampling, zrange,
         progress.flush(i)
         ztmp = this.copy()
         ztmp.values -= zincr * (i + 1)
-        logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
+        logger.info('Mean W of depth no {} slice is {}'
+                    .format(i, ztmp.values.mean()))
         ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                         deadtraces=deadtraces)
-        logger.info('Mean of cube slice is {}'.format(ztmp.values.mean()))
+        logger.info('Mean W of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
     # collect below the original surface
     for i in range(ndiv):
         progress.flush(ndiv + i)
         ztmp = this.copy()
         ztmp.values += zincr * (i + 1)
-        logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
+        logger.info('Mean W of depth no {} slice is {}'
+                    .format(i, ztmp.values.mean()))
         ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                         deadtraces=deadtraces)
-        logger.info('Mean of cube slice is {}'.format(ztmp.values.mean()))
+        logger.info('Mean W of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
 
     logger.info('Make a stack of the maps...')
@@ -313,6 +320,8 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     zincr = zrange / float(ndiv)
 
     zcenter = this.copy()
+    logger.info('Mean S of depth no START slice is {}'
+                .format(zcenter.values.mean()))
     zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                        deadtraces=deadtraces)
     npcollect.append(zcenter.values)
@@ -331,7 +340,10 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
         ztmp = this.copy()
         ztmp.values += zincr * (i + 1) * mul
         zvalues = ztmp.values.copy()
-        logger.info('Mean of depth slice is {}'.format(ztmp.values.mean()))
+
+        logger.info('Mean S of depth no {} slice is {}'
+                    .format(i, ztmp.values.mean()))
+
         ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                         deadtraces=deadtraces)
 

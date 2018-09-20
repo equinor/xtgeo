@@ -44,6 +44,7 @@ from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 from xtgeo.surface import _regsurf_import
 from xtgeo.surface import _regsurf_export
 from xtgeo.surface import _regsurf_cube
+from xtgeo.surface import _regsurf_grid3d
 from xtgeo.surface import _regsurf_roxapi
 from xtgeo.surface import _regsurf_gridding
 from xtgeo.surface import _regsurf_oper
@@ -1325,6 +1326,31 @@ class RegularSurface(object):
         self._yori = nonrot.yori
         self._xinc = nonrot.xinc
         self._yinc = nonrot.yinc
+
+    # =========================================================================
+    # Interacion with a grid3d
+    # =========================================================================
+
+    def slice_grid3d(self, prop):
+        """Slice the grid property and update the instance surface to sampled
+        values.
+
+        Args:
+            prop (GridProperty): Instance of a GridProperty, with attached grid
+
+        Example::
+
+            cube = Cube('some.segy')
+            surf = RegularSurface('s.gri')
+            # update surf to sample cube values:
+            surf.slice_cube(cube)
+
+        Raises:
+            Exception if maps have different definitions (topology)
+            RuntimeWarning if number of sampled nodes is less than 10%
+        """
+
+        ier = _regsurf_grid3d.slice_grid3d(self, prop)
 
     # =========================================================================
     # Interacion with a cube
