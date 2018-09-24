@@ -197,7 +197,7 @@ def test_crop_grid():
     logger.info('Read grid...NCOL, NROW, NLAY is {} {} {}'
                 .format(grd.ncol, grd.nrow, grd.nlay))
 
-    grd.crop(((30, 60), (20, 40), (1, 46)), props=[zprop])
+    grd.crop((30, 60), (20, 40), (1, 46), props=[zprop])
 
     grd.to_file(join('TMP', 'grid_cropped.roff'))
 
@@ -229,6 +229,6 @@ def test_crop_grid_after_copy():
     logger.info(act.values.shape)
     logger.info('ZPROP: %s', zprop._values.shape)
 
-    grd2.crop(((1, 30), (40, 80), (23, 46)))
+    grd2.crop((1, 30), (40, 80), (23, 46))
 
     grd2.describe(details=True)

@@ -74,6 +74,13 @@ of these properties can be changed, which actually changes the map
 
    # Note that changing nrow and ncol is not possible to do directly.
 
+
+Sample a surface fro 3D grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../examples/surface_slice_grid3d.py
+   :language: python
+
 ---------------
 Cube operations
 ---------------
@@ -214,3 +221,14 @@ The root mean scquare (rms) value over a surface, +- 10 units
 
    # export the updated to Irap (RMS) ascii map format
    surf.to_file('rmsaverage.fgr', fformat='irap_ascii')
+
+----------------
+3D grid examples
+----------------
+
+
+Crop a 3D grid with properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../examples/grid3d_crop.py
+   :language: python

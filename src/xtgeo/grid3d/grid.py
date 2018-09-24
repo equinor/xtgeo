@@ -888,16 +888,18 @@ class Grid(Grid3D):
 
         self = _grid_etc1.collapse_inactive_cells(self)
 
-    def crop(self, croprange, props=None):
+    def crop(self, colcrop, rowcrop, laycrop, props=None):
         """Reduce the grid size by cropping, the grid will have new dimensions.
 
         If props is 'all' then all properties assosiated (linked) to then
         grid are also cropped, and the instances are updated.
 
     Args:
-        spec (tuple): A nested tuple on the form ((i1, i2), (j1, j2), (k1, k2))
-            where 1 represents start number, and 2 reperesent end. The range
+        colcrop (tuple): A tuple on the form (i1, i2)
+            where 1 represents start number, and 2 represent end. The range
             is inclusive for both ends, and the number start index is 1 based.
+        rowcrop (tuple): A tuple on the form (j1, j2)
+        laycrop (tuple): A tuple on the form (k1, k2)
         props (list or str): None is default, while properties can be listed.
             If 'all', then all GridProperty objects which are linked to the
             Grid instance are updated.
@@ -914,7 +916,7 @@ class Grid(Grid3D):
 
         """
 
-        _grid_etc1.crop(self, croprange, props=props)
+        _grid_etc1.crop(self, (colcrop, rowcrop, laycrop), props=props)
 
     def reduce_to_one_layer(self):
         """Reduce the grid to one single single layer.
