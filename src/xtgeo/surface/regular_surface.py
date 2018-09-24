@@ -1327,30 +1327,79 @@ class RegularSurface(object):
         self._xinc = nonrot.xinc
         self._yinc = nonrot.yinc
 
+    def refine(self, factor):
+        """Refine a surface with a factor, e.g. 2 for double.
+
+        Range for factor is 2 to 10.
+
+        Note that there may be some 'loss' of nodes at the edges of the
+        updated map, as only the 'inside' nodes in the updated map
+        versus the input map are applied.
+
+        Args:
+            factor (int): Refinement factor
+        """
+
+        if not isinstance(factor, int):
+            raise ValueError('Argument not a, Integer')
+
+        if factor < 2 or factor >= 10:
+            raise ValueError('Argument exceeds range 2 .. 10')
+
+        proxy = self.copy()
+        self._ncol = proxy._ncol * factor
+        self._nrow = proxy._nrow * factor
+        self._xinc = proxy._xinc / factor
+        self._yinc = proxy._yinc / factor
+
+        self._values = ma.zeros((self._ncol, self._nrow))
+
+        self._ilines = np.array(range(1, self._ncol + 1),
+                                dtype=np.int32)
+        self._xlines = np.array(range(1, self._nrow + 1),
+                                dtype=np.int32)
+
+        if self._filesrc and '(refined)' not in self._filesrc:
+            self._filesrc = self._filesrc + ' (refined)'
+
+        self.resample(proxy)
+
+        del proxy
+
     # =========================================================================
     # Interacion with a grid3d
     # =========================================================================
 
-    def slice_grid3d(self, prop):
+    def slice_grid3d(self, prop, zsurf=None, sbuffer=1):
         """Slice the grid property and update the instance surface to sampled
         values.
 
         Args:
             prop (GridProperty): Instance of a GridProperty, with attached grid
-
+            zsurf (surface object): Instance of map, which is used a slicer.
+                If None, then the surface instance itself is used a slice
+                criteria. Note that zsurf must have same map defs as the
+                surface instance.
+            sbuffer (int): Default is 1; if "holes" after sampling
+                extend this to e.g. 3
         Example::
 
-            cube = Cube('some.segy')
+            grd = Grid('some.roff')
+            prop = GridProperty('someprop.roff', name='PHIT', grid=grd)
             surf = RegularSurface('s.gri')
-            # update surf to sample cube values:
-            surf.slice_cube(cube)
+            # update surf to sample the 3D grid property:
+            surf.slice_grid3d(prop)
 
         Raises:
             Exception if maps have different definitions (topology)
-            RuntimeWarning if number of sampled nodes is less than 10%
         """
 
-        ier = _regsurf_grid3d.slice_grid3d(self, prop)
+        ier = _regsurf_grid3d.slice_grid3d(self, prop, zsurf=zsurf,
+                                           sbuffer=sbuffer)
+
+        if ier != 0:
+            raise RuntimeError('Wrong status from routine; something went '
+                               'wrong. Contact the author')
 
     # =========================================================================
     # Interacion with a cube

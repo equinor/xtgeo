@@ -17,18 +17,24 @@ xtg_verbose_level = xtg.get_syslevel()
 # self = RegularSurface instance!
 
 
-def slice_grid3d(self, prop):
+def slice_grid3d(self, prop, zsurf=None, sbuffer=1):
     """Private function for the Grid3D slicing."""
+
+    if zsurf is not None:
+        other = zsurf
+    else:
+        logger.info('The current surface is copied as "other"')
+        other = self.copy()
+    if not self.compare_topology(other, strict=False):
+        raise RuntimeError('Topology of maps differ. Stop!')
 
     grid = prop.grid
 
-    zslice = self.copy()
+    zslice = other.copy()
 
     nsurf = self.ncol * self.nrow
 
-    p_prop = _gridprop_lowlevel.update_carray(prop)
-
-    print('XXXX', p_prop, grid._p_actnum_v)
+    p_prop = _gridprop_lowlevel.update_carray(prop, discrete=False)
 
     istat, updatedval = _cxtgeo.surf_slice_grd3d(
         self.ncol,
@@ -48,8 +54,9 @@ def slice_grid3d(self, prop):
         grid._p_zcorn_v,
         grid._p_actnum_v,
         p_prop,
+        sbuffer,
         0,
-        1)
+        xtg_verbose_level)
 
     if istat != 0:
         logger.warning('Problem, ISTAT = {}'.format(istat))

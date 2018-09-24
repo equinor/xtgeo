@@ -53,28 +53,41 @@ def update_values_from_carray(self, carray, dtype, delete=False):
         carray = delete_carray(self, carray)
 
 
-def update_carray(self, undef=None):
+def update_carray(self, undef=None, discrete=None):
     """Copy (update) values from numpy to SWIG, 1D array, returns a pointer
-    to SWIG C array"""
+    to SWIG C array. If discrete is defined as True or False, force
+    the SWIG array to be of that kind."""
+
+    dstatus = self._isdiscrete
+    if discrete is not None:
+        if discrete:
+            dstatus = True
+        else:
+            dstatus = False
 
     if undef is None:
         undef = self._undef
-        if self._isdiscrete:
+        if dstatus:
             undef = self._undef_i
 
     logger.debug('Entering conversion from numpy to C array ...')
 
     values = self._values.copy()
+    if dstatus:
+        values = values.astype(np.int32)
+    else:
+        values = values.astype(np.float64)
+
     values = ma.filled(values, undef)
 
     values = np.asfortranarray(values)
     values1d = np.ravel(values, order='K')
 
-    if values1d.dtype == 'float64' and self._isdiscrete:
+    if values1d.dtype == 'float64' and dstatus:
         values1d = values1d.astype('int32')
         logger.debug('Casting has been done')
 
-    if self._isdiscrete is False:
+    if dstatus is False:
         logger.debug('Convert to carray (double)')
         carray = _cxtgeo.new_doublearray(self.ntotal)
         _cxtgeo.swig_numpy_to_carr_1d(values1d, carray)
