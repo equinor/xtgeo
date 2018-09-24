@@ -152,7 +152,7 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     self._nrow = nrow
     self._rotation = rot
     self._yflip = yflip
-    self._values = val.reshape((self._nrow, self._ncol))
+    self._values = val.reshape((self._ncol, self._nrow))
     self._filesrc = mfile
 
     self._ilines = iln
