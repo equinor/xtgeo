@@ -49,6 +49,21 @@ def test_resample(reek_map):
     tsetup.assert_almostequal(snew.values.mean(), xs.values.mean(), 2)
 
 
+def test_refine(reek_map):
+    """Do refining of a surface"""
+
+    xs = reek_map
+    assert xs.ncol == 554
+
+    xs_orig = xs.copy()
+    xs.refine(4)
+
+    fout = os.path.join(td, 'reek_refined.gri')
+    xs.to_file(fout, fformat='irap_binary')
+
+    tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
+
+
 def test_points_gridding(reek_map):
     """Make points of surface; then grid back to surface."""
 

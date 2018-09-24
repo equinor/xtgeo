@@ -254,6 +254,43 @@ def test_cube_attr_mean_two_surfaces():
 
 
 @tsetup.skipifroxar
+def test_cube_attr_rms_two_surfaces_compare_window():
+    """Get cube attribute (rms) between two surfaces, and compare with
+    window."""
+
+    logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
+    xs1 = RegularSurface(rtop1)
+    xs2 = xs1.copy()
+    xs2.values += 30
+
+    logger.info('Loading cube {}'.format(rsgy1))
+    cc = Cube(rsgy1)
+
+    xss1 = xs1.copy()
+    xss1.slice_cube_window(cc, other=xs2, other_position='below',
+                           attribute='rms', sampling='trilinear')
+
+    xss1.quickplot(filename=td + '/surf_slice_cube_2surf_rms1.png',
+                   colortable='jet', minmax=[0, 0.5],
+                   # TODO: itle='Reek two surfs mean', minmax=(-0.1, 0.1),
+                   infotext='Method: trilinear, 2 surfs, 30ms apart')
+
+    print('\n\n{}\n'.format('=' * 100))
+
+    xss2 = xs1.copy()
+    xss2.values += 15
+    xss2.slice_cube_window(cc, zrange=15,
+                           attribute='rms', sampling='trilinear')
+
+    xss2.quickplot(filename=td + '/surf_slice_cube_2surf_rms2.png',
+                   colortable='jet', minmax=[0, 0.5],
+                   # TODO: itle='Reek two surfs mean', minmax=(-0.1, 0.1),
+                   infotext='Method: trilinear, 2 surfs, +- 15ms window')
+
+    assert xss1.values.mean() == xss2.values.mean()
+
+
+@tsetup.skipifroxar
 def test_cube_attr_mean_two_surfaces_with_zeroiso():
     """Get cube attribute between two surfaces with partly zero isochore."""
 
