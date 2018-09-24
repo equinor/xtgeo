@@ -16,7 +16,7 @@
 # > make siteinstall TARGET=$RESTARGET
 # =============================================================================
 
-xt.PHONY: clean clean-test clean-pyc clean-build docs help pyver
+xt.PHONY: clean clean-test clean-pyc clean-build docs help pyver examples
 .DEFAULT_GOAL := help
 
 define PRINT_HELP_PYSCRIPT
@@ -62,7 +62,7 @@ help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage...
+clean: clean-build clean-pyc clean-test clean-examples  ## remove all build, test, coverage...
 
 
 clean-build: ## remove build artifacts
@@ -85,6 +85,9 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr TMP/
+
+clean-examples:
+	find examples ! -name "*.py" -type f -exec rm -f {} +
 
 
 lint: ## check style with flake8
@@ -118,6 +121,8 @@ docsrun: clean ## generate Sphinx HTML documentation, including API docs
 docs: docsrun ## generate and display Sphinx HTML documentation...
 	$(BROWSER) docs/_build/html/index.html
 
+examples: clean
+	cd examples; python *.py
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
