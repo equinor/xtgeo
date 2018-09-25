@@ -232,3 +232,10 @@ Crop a 3D grid with properties
 
 .. literalinclude:: ../examples/grid3d_crop.py
    :language: python
+
+
+Extract Pandas dataframe from 3D grid and props
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../examples/grid3d_get_df.py
+   :language: python
