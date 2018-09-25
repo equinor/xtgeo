@@ -37,9 +37,15 @@ class GridProperties(Grid3D):
         self._names = []            # list of GridProperty names
         self._dates = []            # list of dates (_after_ import) YYYYDDMM
 
-    # =========================================================================
-    # Properties, NB decorator only works when class is inherited from "object"
-    # =========================================================================
+    @property
+    def grid(self):
+        """Return or set the Grid instance."""
+
+        return self._grid
+
+    @grid.setter
+    def grid(self, grid):
+        self._grid = grid
 
     @property
     def names(self):
@@ -73,16 +79,15 @@ class GridProperties(Grid3D):
             # adding a property, e.g. get ACTNUM as a property from the grid
             actn = gg.get_actnum()  # this will get actn as a GridProperty
             myprops.add_props([actn])
-
-
         """
+        if len(self._props) == 0:
+            return None
 
         return self._props
 
     @props.setter
     def props(self, propslist):
-
-        return self._props
+        self._props = propslist
 
     @property
     def dates(self):

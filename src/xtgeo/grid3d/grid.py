@@ -438,6 +438,15 @@ class Grid(Grid3D):
 
         return ind
 
+    def get_gridproperties(self):
+        """Return a :obj:`GridProperties` instance."""
+
+        grdprops = xtgeo.grid3d.GridProperties()
+        grdprops.grid = self
+        grdprops.append_props(self.props)
+
+        return grdprops
+
     def get_prop_by_name(self, name):
         """Gets a property object by name lookup, return None if not present.
         """

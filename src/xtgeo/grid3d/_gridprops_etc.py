@@ -29,11 +29,13 @@ def dataframe(self, activeonly=True, ijk=False, xyz=False,
             proplist.extend([ix.get_active_npvalues1d(),
                              jy.get_active_npvalues1d(),
                              kz.get_active_npvalues1d()])
+            colnames.extend(['IX', 'JY', 'KZ'])
         else:
+            act = self._grid.get_actnum()
             ix, jy, kz = self._grid.get_ijk(mask=False)
-            proplist.extend([ix.values1d, jy.values1d, kz.values1d])
-
-        colnames.extend(['IX', 'JY', 'KZ'])
+            proplist.extend([act.values1d, ix.values1d, jy.values1d,
+                             kz.values1d])
+            colnames.extend(['ACTNUM', 'IX', 'JY', 'KZ'])
 
     if xyz:
         option = False
