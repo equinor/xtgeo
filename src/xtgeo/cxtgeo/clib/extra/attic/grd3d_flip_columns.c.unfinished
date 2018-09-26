@@ -1,0 +1,72 @@
+/*
+ * ############################################################################
+ * grd3d_flip_columns.c
+ * ############################################################################
+ */
+
+#include "libxtg.h"
+#include "libxtg_.h"
+
+/*
+ * ############################################################################
+ * Flipping (negate) the I counting values of a grid. The parameters will also
+ * need a flipping (another routine)
+ * ############################################################################
+ */
+
+// UNFINISHED!!
+
+void grd3d_flip_columns (
+			 int   nx,
+			 int   ny,
+			 int   nz,
+			 double *p_coord_v,
+			 double *p_zcorn_v,
+			 int   debug
+			 )
+
+{
+    /* locals */
+    int    i, j, ic, ib, nzcorn;
+    char sub[24]="grd3d_flip_columns";
+    double *tmpcoord;
+
+    xtgverbose(debug);
+
+    xtg_speak(sub,2,"Entering routine ...");
+
+    // need some tmp variables
+    tmpcoord=calloc((nx+1)*(ny+1)*2*3, sizeof(double));
+
+    // coord section
+
+    iq=0;
+    // the first ib corner
+    ib=x_ijk2ib(nx+1,ny+1,1,nx+1,1,1,0);
+
+    for (j=0;j<=ny; j++) {
+	for (i=0;i<=nx; i++) {
+	    tmpcoord=[iq+0] = p_coord_v[ib+0];
+	    tmpcoord=[iq+1] = p_coord_v[ib+1];
+	    tmpcoord=[iq+2] = p_coord_v[ib+2];
+	    tmpcoord=[iq+3] = p_coord_v[ib+3];
+	    tmpcoord=[iq+4] = p_coord_v[ib+4];
+	    tmpcoord=[iq+5] = p_coord_v[ib+5];
+	    iq=iq+6;
+	    ib=ib-6-i*(nx+1);
+	}
+    }
+
+    // zcorn section
+    
+    nzcorn=4*nx*ny*(nz+1);
+    for (ic=0; ic<=nzcorn; ic++) {
+	p_zcorn_v[ic]=-1*p_zcorn_v[ic];
+    }
+	
+    
+    xtg_speak(sub,2,"Exit from flipping routine");
+}
+
+
+

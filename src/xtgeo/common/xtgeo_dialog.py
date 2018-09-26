@@ -33,8 +33,7 @@ import sys
 import inspect
 import logging
 import xtgeo
-import cxtgeo
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import timeit
 
 UNDEF = _cxtgeo.UNDEF
@@ -248,7 +247,7 @@ class XTGeoDialog(object):
         print('#{}#'.format(app.center(77)))
         print('#' * 79)
         ver = 'XTGeo4Python version ' + xtgeo.__version__
-        ver = ver + ' (CXTGeo v. ' + cxtgeo.__version__ + ')'
+        ver = ver + ' (CXTGeo v. ' + xtgeo.__version__ + ')'
         print('#{}#'.format(ver.center(77)))
         print('#{}#'.format(cur_version.center(77)))
         print('#' * 79)

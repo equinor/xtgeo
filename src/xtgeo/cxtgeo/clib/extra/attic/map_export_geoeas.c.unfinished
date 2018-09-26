@@ -1,0 +1,66 @@
+/*
+ * ############################################################################
+ * map_export_geoeas.c
+ * Export to GEOEAS format
+ * This format is ASCII, with a simple header and then column of each
+ * data type:
+ *
+ *
+ *
+ *
+ *
+ *
+ * Author: J.C. Rivenaes
+ * ############################################################################
+ */
+
+#include "libxtg.h"
+#include "libxtg_.h"
+
+void map_export_geoeas (
+			int nx, 
+			int ny, 
+			double xstep, 
+			double ystep,
+			double xmin, 
+			double xmax, 
+			double ymin, 
+			double ymax, 
+			double *p_map_v,
+			char  *file, 
+			int   debug
+			) 
+{
+    
+    FILE *fc;
+    int i;
+    int swap;
+    char s[24]="map_export_geoeas";
+
+    xtgverbose(debug);
+    swap=x_swap_check();
+
+    fc=fopen(file,"wb");
+       
+    xtg_speak(s,2,"Exporting to GEOEAS format");
+    
+    fprintf(fc,"GEOEAS format output from XTGeo\n");
+    fprintf(fc,"3\nEAST\nNORTH\n\TVDSS\n");
+    nxy = nx * ny;
+    
+    for (j=1;j<=ny;j++) {
+	for (i=1;i<=nx;i++) {
+	    ib=x_ijk2ib(i,j,1,nx,ny,1,0);
+	    x=xmin + (i-1)*xstep;
+	    y=ymin + (j-1)*ystep;
+	    z=p_map_v[ib];
+
+	    if (z > UNDEF_MAP_LIMIT) {
+		z=UNDEF_MAP_STORM;
+	    }
+	    fprintf(fc,"%13.2f  %13.2f  %13.2f\n",x,y,z);
+	}
+    }
+    fclose(fc);
+
+}

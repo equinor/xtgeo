@@ -1,0 +1,13 @@
+
+#include "libxtg.h"
+#include "libxtg_.h"
+
+/* cf https://mit-crpg.github.io/OpenMOC/devguide/swig.html */
+
+void x_get_1d_double_array(double* a, double* x, int len) {
+    int i;
+    for (i=0;i<len;i++) {
+	a[i]=x[i];
+    }
+    return;
+}

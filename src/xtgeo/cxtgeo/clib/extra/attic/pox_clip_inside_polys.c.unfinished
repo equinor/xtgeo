@@ -1,0 +1,58 @@
+#include "libxtg.h"
+#include "libxtg_.h"
+
+/* UNFINISHED, NOT NEEDED?? */
+
+/*
+ *=============================================================================
+ * Inactive whether a point is inside (flag=0) or outside (flag=1) a set of
+ * closed polygons
+ *=============================================================================
+ * Notice:
+ * p_xp_v and p_yp_v may contain several polygons. It is important that this
+ * routine uses a single polygon within the set. This is noted by using
+ * np1 (start) and np2 (stop). Example:
+ * 534107.203857 6739110.818115   0 
+ * 533039.560425 6739059.977051   1
+ * 531971.916992 6738907.457275   2 
+ * 531674.519531 6739027.486572   3 
+ * 531356.117920 6739693.593750   4 
+ * -999.000000 -999.000000        5      
+ * 523865.425781 6751717.128906   6    NP1
+ * 524242.802734 6752008.737305   7    
+ * 524932.494141 6752279.557617   8
+ * 524143.175781 6750989.322266   9
+ * 523992.173828 6751308.480469   10
+ * 523865.425781 6751717.128906   11   NP2
+ * -999.000000 -999.000000        12
+ *=============================================================================
+ */
+
+void pox_clip_with_polys(
+			double *p_xpoi_v,
+			double *p_ypoi_v,
+			int    npoi,
+			double *p_xpol_v,
+			double *p_ypol_v,
+			int    npol,
+			int    flag
+			int    debug
+			)
+    
+{
+    int    i, j;
+    double *px, *py;
+    char  s[24]="pox_clip_with_polys";
+
+
+
+    /* loop over all points */
+    for (i=0;i<=npoi;i++) {
+	if (p_xpoi_v[i]!=UNDEF) {
+	    /* check if inside polygonset */
+	    for (j=0;j<=npol;j++) {
+		if (p_xpol[j]==UNDEF) {
+		    np
+
+    }
+}

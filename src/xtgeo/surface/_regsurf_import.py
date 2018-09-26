@@ -4,7 +4,7 @@
 import numpy as np
 import numpy.ma as ma
 
-import cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()

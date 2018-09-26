@@ -9,7 +9,7 @@ from tempfile import mkstemp
 from collections import OrderedDict
 import numpy as np
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

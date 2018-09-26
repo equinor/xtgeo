@@ -24,7 +24,7 @@ import copy
 import numpy as np
 import numpy.ma as ma
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 from xtgeo.common.exceptions import DateNotFoundError, KeywordFoundNoDateError
 from xtgeo.common.exceptions import KeywordNotFoundError

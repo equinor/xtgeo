@@ -16,7 +16,7 @@
 # > make siteinstall TARGET=$RESTARGET
 # =============================================================================
 
-xt.PHONY: clean clean-test clean-pyc clean-build docs help pyver examples
+xt.PHONY: clean clean-test clean-pyc clean-build clean-cc docs help pyver examples
 .DEFAULT_GOAL := help
 
 define PRINT_HELP_PYSCRIPT
@@ -62,7 +62,7 @@ help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
-clean: clean-build clean-pyc clean-test clean-examples  ## remove all build, test, coverage...
+clean: clean-build clean-pyc clean-test clean-examples clean-cc ## remove all build, test, coverage...
 
 
 clean-build: ## remove build artifacts
@@ -88,6 +88,13 @@ clean-test: ## remove test and coverage artifacts
 
 clean-examples:
 	find examples ! -name "*.py" -type f -exec rm -f {} +
+
+clean-cc:
+	rm -fr src/xtgeo/cxtgeo/clib/build
+
+cc:
+	mkdir -p src/xtgeo/cxtgeo/clib/build
+	cd src/xtgeo/cxtgeo/clib/build; cmake ..; make; make install
 
 
 lint: ## check style with flake8

@@ -1,0 +1,14 @@
+*.o
+*.a
+*~
+*#
+*.bak
+/TMP
+/build/
+/bak/
+.exists
+cxtgeo.py
+_cxtgeo.so
+cxtgeo_wrap.c
+Makefile.old
+Makefile

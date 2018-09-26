@@ -3,7 +3,7 @@
 import pandas as pd
 
 import xtgeo
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import _get_fhandle, _close_fhandle
 

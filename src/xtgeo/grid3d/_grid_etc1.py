@@ -9,7 +9,7 @@ import numpy as np
 import numpy.ma as ma
 from copy import deepcopy
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel

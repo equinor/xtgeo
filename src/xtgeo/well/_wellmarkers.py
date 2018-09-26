@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 from xtgeo.common import XTGeoDialog
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

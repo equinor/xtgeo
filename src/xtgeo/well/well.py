@@ -9,7 +9,7 @@ import os.path
 import numpy as np
 import pandas as pd
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import _wellmarkers
 from xtgeo.well import _well_io

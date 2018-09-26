@@ -1,0 +1,3 @@
+To determine what your machine is, you can do (in the C programming language):
+long L=1; void *Ptr=&L; char B=*(char*)Ptr;
+If you get 1 as a result in B, your machine is little endian, if you get 0 it's big endian. The PC is little endian, the SGI machines and Macs are big endian. 

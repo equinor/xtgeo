@@ -1,0 +1,102 @@
+/*
+ * ############################################################################
+ * grd3d_adj_z_local.c
+ * ############################################################################
+ * Based on grd3d_adj_z_from_mapv2.c
+ * Instead of using a map, a point is used, for a known grid cell index
+ * ############################################################################
+ */
+
+
+#include "libxtg.h"
+#include "libxtg_.h"
+
+/*
+ * ############################################################################
+ * Use a map (correction map) to adjust zvalues in grid.
+ * ############################################################################
+ */
+
+void grd3d_adj_z_local (
+			     int nx,
+			     int ny,
+			     int nz,
+			     double *p_coord_v,
+			     double *p_zcorn_v,
+			     int *p_actnum_v,
+			     int iuse,
+			     int juse,
+			     int kuse,
+			     double zadj,
+			     int   iflag,
+			     int   flip,
+			     int   debug
+			     )
+
+{
+    /* locals */
+    int i, j, k, ib, ic;
+    double  corner_v[24];
+    char   s[24]="grd3d_adj_z_local";
+
+    xtgverbose(debug);
+
+    xtg_speak(s,2,"Entering <grd3d_adj_z_local>");
+    xtg_speak(s,3,"Using IFLAG: %d", iflag);
+    
+    xtg_speak(s,3,"NX NY NZ: %d %d %d", nx, ny, nz);
+
+
+    /*
+     * Must be sure that grid is consistent in z, and also has
+     * a small separation for each cell-layer
+     */
+
+    grd3d_make_z_consistent(
+			    nx,
+			    ny,
+			    nz,
+			    p_zcorn_v,
+			    p_actnum_v,
+			    0.001,
+			    debug
+			    );
+
+    kstart=1;
+    kstop=nz;
+   
+    /* Adjust all values along pillar: */	
+    if (iflag==0) {			
+	for (k = 1; k <= nz+1; k+=1) {
+	    ib=x_ijk2ib(i,j,k,nx,ny,nz+1,0);
+	    p_zcorn_v[4*ib + 1*ic - 1] = 
+		p_zcorn_v[4*ib + 1*ic - 1] + zadj;		    
+	}
+    }
+    
+
+
+
+
+
+    /*
+     * After: Must be sure that grid is consistent in z, and also has
+     * a small separation for each cell-layer
+     */
+
+    grd3d_make_z_consistent(
+			    nx,
+			    ny,
+			    nz,
+			    p_zcorn_v,
+			    p_actnum_v,
+			    0.001,
+			    debug
+			    );
+
+    xtg_speak(s,1,"Adjusting grid to map ... DONE!");
+    xtg_speak(s,2,"Exiting <grd3d_adj_z_from_map>");
+}
+
+
+
