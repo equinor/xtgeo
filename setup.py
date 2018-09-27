@@ -42,18 +42,15 @@ def the_version():
 
     useversion = 'UNSET'
     if len(sver) == 3:
-        print('DING')
         useversion = version
     else:
-        print('DoNG')
         bugv = sver[2].replace('+', '.')
 
         if 'dirty' in version:
-            ext = 'dev0'
+            ext = '.dev0'
         else:
             ext = ''
-        useversion = '{}.{}.{}.{}'.format(sver[0], sver[1], bugv, ext)
-        print('\nCCUSING VERSION {}\n\n'.format(useversion))
+        useversion = '{}.{}.{}{}'.format(sver[0], sver[1], bugv, ext)
 
     print('\n\n\nUSING VERSION {}\n\n'.format(useversion))
     return useversion
