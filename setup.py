@@ -30,6 +30,35 @@ test_requirements = [
 ]
 
 
+def the_version():
+    """Process the version, to avoid non-pythonic version schemes.
+
+    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.2.dev0
+    """
+
+    version = versioneer.get_version()
+    sver = version.split('.')
+    print('\n\n\nUSING VERSION {}\n\n'.format(sver))
+
+    useversion = 'UNSET'
+    if len(sver) == 3:
+        print('DING')
+        useversion = version
+    else:
+        print('DoNG')
+        bugv = sver[2].replace('+', '.')
+
+        if 'dirty' in version:
+            ext = 'dev0'
+        else:
+            ext = ''
+        useversion = '{}.{}.{}.{}'.format(sver[0], sver[1], bugv, ext)
+        print('\nCCUSING VERSION {}\n\n'.format(useversion))
+
+    print('\n\n\nUSING VERSION {}\n\n'.format(useversion))
+    return useversion
+
+
 class build(_build):
     # different order: build_ext *before* build_py
     sub_commands = [('build_ext', _build.has_ext_modules),
@@ -50,17 +79,15 @@ except AttributeError:
 # cxtgeo extension module
 _cxtgeo = Extension('xtgeo.cxtgeo._cxtgeo',
                     sources=sources,
+                    extra_compile_args=['-Wno-uninitialized'],
                     include_dirs=['src/xtgeo/cxtgeo/clib/src', numpy_include],
                     library_dirs=['src/xtgeo/cxtgeo/clib/lib'],
                     libraries=['cxtgeo'],
-                    swig_opts=['-modern'],
-)
-
-
+                    swig_opts=['-modern'])
 
 setup(
     name='xtgeo',
-    version=versioneer.get_version(),
+    version=the_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="XTGeo Python library for grids, surfaces, wells, etc",
     long_description=readme + '\n\n' + history,
