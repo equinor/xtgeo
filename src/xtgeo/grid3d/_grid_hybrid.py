@@ -4,7 +4,7 @@ import logging
 
 from xtgeo.common import XTGeoDialog
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = XTGeoDialog()

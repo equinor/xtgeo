@@ -11,7 +11,7 @@ import numpy.ma as ma
 import logging
 import scipy.interpolate
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()

@@ -8,7 +8,7 @@ import numpy.ma as ma
 import pandas as pd
 import xtgeo
 from xtgeo.xyz import XYZ
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 # import xtgeo.xyz._xyz_roxapi as _xyz_roxapi
 
 UNDEF = _cxtgeo.UNDEF

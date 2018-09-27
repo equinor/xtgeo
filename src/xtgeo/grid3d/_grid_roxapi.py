@@ -1,7 +1,7 @@
 # coding: utf-8
 """Roxar API functions for XTGeo Grid Geometry"""
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import numpy as np
 
 from xtgeo.common import XTGeoDialog

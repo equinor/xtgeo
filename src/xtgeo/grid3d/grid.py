@@ -12,7 +12,7 @@ from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
 from xtgeo.grid3d import Grid3D

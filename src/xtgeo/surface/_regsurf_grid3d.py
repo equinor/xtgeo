@@ -3,7 +3,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel
 

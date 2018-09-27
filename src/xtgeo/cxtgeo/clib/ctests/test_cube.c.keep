@@ -1,0 +1,221 @@
+/* test the cube routines */
+
+#include "../tap/tap.h"
+#include "../src/libxtg.h"
+#include "../src/libxtg_.h"
+#include <math.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+int main () {
+    int nx, ny, nz;
+    int gn_bitsheader, gn_formatcode, gn_samplespertrace, gn_measuresystem;
+    float gf_segyformat, pdummy;
+    int option, debug, status;
+    char file[132];
+    double xori, xinc, yori, yinc, zori, zinc, minval, maxval, rotation;
+    int yflip, zflip, optscan, ier;
+    float dummy, *p_val_v, val;
+    long nn;
+    char fout[132];
+
+    option = 1; // 1 for print to screen
+    debug = 2;
+
+    xtgverbose(debug);
+    xtg_verbose_file("NONE");
+
+    status = mkdir("./TMP", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    strcpy(fout, "/tmp/jriv_test_cube.txt");
+
+    plan(NO_PLAN);
+
+    /*
+     * ------------------------------------------------------------------------
+     * Import a cube from SEGY; this is not flipped
+     * ------------------------------------------------------------------------
+     */
+
+    strcpy(file,"../../../xtgeo-testdata/cubes/gra/nh0304.segy");
+
+    /* first scan header...*/
+    cube_scan_segy_hdr(file, &gn_bitsheader, &gn_formatcode, &gf_segyformat,
+                       &gn_samplespertrace, &gn_measuresystem, option,
+                       fout, debug);
+
+    /* now scan full file */
+    optscan = 1;
+    option = 1;
+    cube_import_segy(file, gn_bitsheader, gn_formatcode, gf_segyformat,
+                     gn_samplespertrace,
+                     &nx, &ny, &nz,
+                     &dummy,
+                     &xori, &xinc, &yori, &yinc, &zori, &zinc, &rotation,
+                     &yflip, &zflip, &minval, &maxval, optscan, option,
+                     fout, debug);
+
+    /* now import... */
+    debug = 1;
+
+    optscan = 0;
+    option = 0;
+    nn = (long)nx * (long)ny * (long)nz;
+    p_val_v = calloc(nn, sizeof(float));
+
+    printf("Import SEGY...\n");
+
+    cube_import_segy(file, gn_bitsheader, gn_formatcode, gf_segyformat,
+                     gn_samplespertrace,
+                     &nx, &ny, &nz,
+                     p_val_v,
+                     &xori, &xinc, &yori, &yinc, &zori, &zinc, &rotation,
+                     &yflip, &zflip, &minval, &maxval, optscan, option,
+                     fout, debug);
+    printf("Import SEGY done\n");
+
+    printf("Rotation and XORI YORI (YFLIP), %lf %lf %lf (%d)\n", rotation ,
+           xori, yori, yflip);
+
+    /* Value in cell 147,308,1 shall be 47.752 */
+
+    cube_value_ijk(147, 308, 1, nx, ny, nz, p_val_v, &val, debug);
+    ok(fabs(val-47.752)<0.001, "Value in cell 1");
+
+    debug = 3;
+    /* value at location 467967.1 655814.95 1200 shall be 73.849 (110 291 1) */
+    ier = cube_value_xyz_cell(467967.1, 6554814.95, 1200, xori, xinc,
+                              yori, yinc,
+                              zori, zinc, rotation, yflip, nx, ny, nz, p_val_v,
+                              &val, 0, debug);
+
+    printf("IER is %d and VAL is %f\n", ier, val);
+    ok(fabs(val-73.849)<0.001, "Value in cell 2");
+
+    /*
+     * ------------------------------------------------------------------------
+     * Export to RMS regular
+     * ------------------------------------------------------------------------
+     */
+    /* export to RMS regular  */
+    printf("Export to RMS reg ...\n");
+    strcpy(file,"TMP/cube1.rmsreg");
+
+    nn = (long)nx * (long)ny * (long)nz;
+
+    cube_export_rmsregular(nx, ny, nz, xori, yori, zori, xinc, yinc, zinc,
+                           rotation, yflip, p_val_v, nn, file, debug);
+
+    printf("Export to RMS reg ... DONE");
+
+    free(p_val_v);
+
+    /*
+     * ========================================================================
+     * Import a cube from SEGY; this is flipped
+     * ========================================================================
+     */
+
+    strcpy(file,"../../../xtgeo-testdata/cubes/gfb/gf_depth_1985_10_01.segy");
+
+    /* first scan header...*/
+    cube_scan_segy_hdr(file, &gn_bitsheader, &gn_formatcode, &gf_segyformat,
+                       &gn_samplespertrace, &gn_measuresystem, option,
+                       fout, debug);
+
+    /* now scan full file */
+    optscan = 1;
+    option = 1;
+    cube_import_segy(file, gn_bitsheader, gn_formatcode, gf_segyformat,
+                     gn_samplespertrace,
+                     &nx, &ny, &nz,
+                     &dummy,
+                     &xori, &xinc, &yori, &yinc, &zori, &zinc, &rotation,
+                     &yflip, &zflip, &minval, &maxval, optscan, option,
+                     fout, debug);
+
+    /* now import... */
+    debug = 1;
+
+    optscan = 0;
+    option = 0;
+    nn = (long)nx * (long)ny * (long)nz;
+    p_val_v = calloc(nn, sizeof(float));
+
+    printf("Import SEGY Gullfaks...\n");
+
+    cube_import_segy(file, gn_bitsheader, gn_formatcode, gf_segyformat,
+                     gn_samplespertrace,
+                     &nx, &ny, &nz,
+                     p_val_v,
+                     &xori, &xinc, &yori, &yinc, &zori, &zinc, &rotation,
+                     &yflip, &zflip, &minval, &maxval, optscan, option,
+                     fout, debug);
+    printf("Import SEGY done\n");
+
+    printf("Rotation and XORI YORI (YFLIP), %lf %lf %lf (%d)\n", rotation ,
+           xori, yori, yflip);
+
+    /* Value in cell 162, 247, 1 shall be 0.063849 */
+
+    cube_value_ijk(162, 247, 1, nx, ny, nz, p_val_v, &val, debug);
+    ok(fabs(val-0.063849)<0.00001, "Value in cell 1 GF");
+
+    debug = 3;
+
+    ier = cube_value_xyz_cell(456986.39, 6782765.08, 1800, xori, xinc,
+                              yori, yinc,
+                              zori, zinc, rotation, yflip, nx, ny, nz, p_val_v,
+                              &val, 0, debug);
+
+    printf("IER is %d and VAL is %f\n", ier, val);
+    ok(fabs(val+0.069409)<0.00001, "Value in cell 2 GF");
+
+    /* printf("Swap...\n"); */
+    /* ier = cube_swapaxes(&nx, &ny, nz, &yflip, xori, &xinc, yori, &yinc, */
+    /*                     &rotation, p_val_v, 0, debug); */
+
+    /* printf("Swap... done\n"); */
+
+    /* in a cell node */
+    ier = cube_value_xyz_interp(456986.386059, 6782765.011273, 1800.00,
+                                xori, xinc, yori, yinc,
+                                zori, zinc, rotation, yflip, nx, ny, nz,
+                                p_val_v, &val, 0, debug);
+
+    ok(fabs(val+0.069409)<0.00001, "Value in cell 2 GF a");
+
+    /* between cell nodes ~ 394 292 1 approx answer shall be .0582512 */
+    ier = cube_value_xyz_interp(457614.0, 6784288.0, 1800.00,
+                                xori, xinc, yori, yinc,
+                                zori, zinc, rotation, yflip, nx, ny, nz,
+                                p_val_v, &val, 0, debug);
+
+    printf("IER is %d and VAL is %f\n", ier, val);
+
+    ok(fabs(val+0.0582512)<0.001, "Value in cell 2 GF b");
+
+
+    /*
+     * ------------------------------------------------------------------------
+     * Export to RMS regular
+     * ------------------------------------------------------------------------
+     */
+    /* export to RMS regular  */
+    printf("Export to RMS reg ...\n");
+    strcpy(file,"TMP/cube2.rmsreg");
+    debug = 2;
+
+    nn = (long)nx * (long)ny * (long)nz;
+
+    cube_export_rmsregular(nx, ny, nz, xori, yori, zori, xinc, yinc, zinc,
+                           rotation, yflip, p_val_v, nn, file, debug);
+
+    printf("Export to RMS reg ... DONE");
+
+    free(p_val_v);
+
+    done_testing();
+
+}

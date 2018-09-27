@@ -7,7 +7,7 @@ import abc
 import six
 import os.path
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import _xyz_io
 

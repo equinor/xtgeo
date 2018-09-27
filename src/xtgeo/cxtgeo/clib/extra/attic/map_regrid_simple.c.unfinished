@@ -1,0 +1,103 @@
+UFERDIG. ER IKKE TRIVIELT DERSOM ODDE ELLER PARTALL INODER...
+
+/*
+ * ############################################################################
+ * map_regrid_simple.c
+ * Simple regridding to half or double size, by linear interpolation. This
+ * may be useful when applying Horizon for isochore gridding, and the speed
+ * is too slow... Note, for reducing to half, it is required that NX and NY
+ * are "odde" numbers
+ *
+ * Author: J.C. Rivenaes
+ * ############################################################################
+ * $Id: map_export_storm_binary.c,v 1.1 2001/03/14 08:02:29 bg54276 Exp $ 
+ * $Source: /d/proj/bg/avresmod/src/gplib/GPLExt/RCS/map_export_storm_binary.c,v $ 
+ *
+ * $Log: $
+ *
+ * ############################################################################
+ */
+
+#include "libxtg.h"
+#include "libxtg_.h"
+
+void map_regrid_simple (
+			  int   nx1, 
+			  int   ny1, 
+			  int   nx2, 
+			  int   ny2, 
+			  double *p_map1_v,
+			  double *p_map2_v,
+			  int   iop,
+			  int   debug
+			  ) 
+{
+    
+    int i, j, ion, jon;
+    char s[24]; 
+  
+    strcpy(s,"map_regrid_simple");
+    
+    xtgverbose(debug);
+    xtg_speak(s,2,"Entering <map_regrid_simple>...");
+	
+    /* general check */
+    if (iop==1) {
+	if (nx2 == (2*nx1+1) && ny2 == (2*ny1+1) ) {
+	    xtg_speak(s,2,"OK: NX1 NX2 NY1 NY2...");
+	}
+	else{
+	    xtg_warn(s,1,"NX1 and NY1 invalid ved NX2 and NY2");
+	}
+    }
+
+    if (iop==1) {
+	xtg_speak(s,2,"Reducing map row/cols to half the number...");
+	if (nx1 % 2 != 1 || ny1 % 2 !=1) {
+	    xtg_warn(s,1,"Cannot use NX and NY input that are not odde");
+	}
+
+
+	jon=1;
+	ion=1;
+	im=0;
+	jm=0;
+	for (j=1;j<=ny1;j++) {
+	    if (jon==1) {
+		jm+=1;
+		xtg_speak(s,3,"Using input col: %d",j);
+		for (i=1;i<=nx1;i++) {
+		    xtg_speak(s,3,"Using input row: %d",i);
+		    if (ion==1) {
+			im+=1;
+			ib1=x_ijk2ib(nx1,ny1,1,i,j,1,0);
+			ib2=x_ijk2ib(nx2,ny2,1,im,jm,1,0);
+			p_map2_v[ib2]=p_map1_v[ib1];
+			ion=0;
+		    }
+		    else{
+			ion=1;
+		    }
+		}
+		jon=0;
+	    }
+	    else{
+		jon=1;
+	    }	    
+	}
+    }
+    else{
+	xtg_speak(s,2,"Doubling the number of row and cols points...");
+	/* first double the I-nodes */
+	for (j=1;j<=ny;j++) {
+	    im=0;
+	    for (i=1;i<=(nx1-1);i++) {
+		im+=1;
+		ib1=x_ijk2ib(nx1,ny1,1,i,j,1,0);
+		ib2=x_ijk2ib(nx2,ny2,1,im,j,1,0);
+		
+
+    
+    xtg_speak(s,2,"Exiting <map_regrid_simple>...");
+}
+

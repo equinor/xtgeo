@@ -1,0 +1,65 @@
+/*
+ * ############################################################################
+ * map_polygon_mask.c
+ * Makes nodes outside speciefied polygons undefined.
+ * Author: J.C. Rivenaes
+ * ############################################################################
+ * $Id: $ 
+ * $Source: $ 
+ *
+ * $Log: $
+ *
+ * ############################################################################
+ * General description:
+ * ############################################################################
+ */
+
+#include "libxtg.h"
+#include "libxtg_.h"
+
+/*
+ * ****************************************************************************
+ *                          GRD2D_POLYGON_MASK
+ * ****************************************************************************
+ * The algorithm is to see if the map nodes lies inside some of the polygins.
+ * If not, an undef value is given. If already undef, then value is kept.
+ * Todo: The algorithm is straightforward and hence a bit slow...
+ * ----------------------------------------------------------------------------
+ *
+ */   
+void map_getcontour(
+		      float z0,
+		      int nx,
+		      int ny,
+		      float xstep, 
+		      float ystep,
+		      float xmin, 
+		      float ymin, 
+		      float *p_map_v,
+		      int debug
+		      )
+{
+    int i, j, istat, ib;
+    double x, y, z;
+
+    xtg_speak("map_getcontour",1,"Entering...");
+    for (j=1;j<=ny;j++) {
+	for (i=1;i<=nx;i++) {
+	    x=xmin + (i-1)*xstep;
+	    y=ymin + (j-1)*ystep;
+	    
+	    ib=ijk2ib(i,j,1,nx,ny,1,0);
+
+	    z=p_map_v[ib];
+
+	    if (z<z0) {
+		istat=0;
+	    }
+	}
+    }
+    xtg_speak("map_getcontour",1,"Quiting routine...");
+}
+
+
+
+

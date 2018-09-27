@@ -2,7 +2,7 @@
 import os.path
 import logging
 
-import cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
