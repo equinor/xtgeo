@@ -38,7 +38,7 @@ def the_version():
 
     version = versioneer.get_version()
     sver = version.split('.')
-    print('\n\n\nUSING VERSION {}\n\n'.format(sver))
+    print('\nFrom TAG descitption: {}'.format(sver))
 
     useversion = 'UNSET'
     if len(sver) == 3:
@@ -52,7 +52,7 @@ def the_version():
             ext = ''
         useversion = '{}.{}.{}{}'.format(sver[0], sver[1], bugv, ext)
 
-    print('\n\n\nUSING VERSION {}\n\n'.format(useversion))
+    print('Using version {}\n'.format(useversion))
     return useversion
 
 
@@ -76,38 +76,48 @@ except AttributeError:
 # cxtgeo extension module
 _cxtgeo = Extension('xtgeo.cxtgeo._cxtgeo',
                     sources=sources,
-                    extra_compile_args=['-Wno-uninitialized'],
+                    extra_compile_args=['-Wno-uninitialized',
+                                        '-Wno-strict-prototypes'],
                     include_dirs=['src/xtgeo/cxtgeo/clib/src', numpy_include],
                     library_dirs=['src/xtgeo/cxtgeo/clib/lib'],
                     libraries=['cxtgeo'],
                     swig_opts=['-modern'])
 
+_cmdclass = {'build': build}
+_cmdclass.update(versioneer.get_cmdclass())
+
 setup(
     name='xtgeo',
     version=the_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=_cmdclass,
     description="XTGeo Python library for grids, surfaces, wells, etc",
     long_description=readme + '\n\n' + history,
     author="Jan C. Rivenaes",
-    author_email='jriv@statoil.com',
+    author_email='jriv@equinor.com',
     url='https://github.com/Statoil/xtgeo-python',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     ext_modules=[_cxtgeo],
-    # packages=find_packages('xtgeo'),
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
     keywords='xtgeo',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: Developers :: Science/Research',
+        'License :: OSI Approved',
+        'License :: GNU Library or Lesser General Public License (LGPL)',
+        'Operating System :: POSIX :: Linux',
+        'Topic :: Scientific/Engineering',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
+        'Programming Language :: C',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
     tests_require=test_requirements,
