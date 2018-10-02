@@ -13,12 +13,12 @@
 #include <stdlib.h>
 #include "libxtg.h"
 #include "libxtg_.h"
-    
+
 /*
  * ****************************************************************************
  *                     READ_ECLIPSE_BINARY_RECORD
  * ****************************************************************************
- * The format is the Eclipse binary/ascii output; the GRID/INIT etc file, 
+ * The format is the Eclipse binary/ascii output; the GRID/INIT etc file,
  * Records may look like:
  *
  * 'COORDS  '           7 'INTE'
@@ -38,7 +38,7 @@
  *
  * ----------------------------------------------------------------------------
  *
- */   
+ */
 
 
 int u_read_ecl_bin_record (
@@ -58,7 +58,7 @@ int u_read_ecl_bin_record (
 			   FILE    *fc,
 			   int     debug
 			   )
-     
+
 /*
  * This routine reads the Eclipse standard binary format
  */
@@ -68,6 +68,7 @@ int u_read_ecl_bin_record (
     int    i, ic, istat=1, reclenx;
     float  myfloat;
     double mydouble;
+    char mystring[9];
     char   s[24]="u_read_ecl_bin_record";
 
     swap=0;
@@ -80,7 +81,7 @@ int u_read_ecl_bin_record (
        where the <16> are 4 byte int determining record
        length (8+4+4 = 16 bytes)
     */
-    
+
     istat=fread(&myint,4,1,fc);
     if (swap) SWAP_INT(myint); ftn_1=myint;
     if (istat != 1) {
@@ -91,11 +92,11 @@ int u_read_ecl_bin_record (
 	    return -233222;
 	}
     }
-	
-    xtg_speak(s,4,"ftn_1 is %d",ftn_1);	
+
+    xtg_speak(s,4,"ftn_1 is %d",ftn_1);
     if ((istat=fread(cname,8,1,fc)) != 1) return -233222;
     cname[8]='\0';
-    xtg_speak(s,3,"cname is <%s>",cname);	
+    xtg_speak(s,3,"cname is <%s>",cname);
     istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); *reclen=myint;
     if (istat != 1) return -233222;
     xtg_speak(s,4,"reclen is %d",*reclen);
@@ -105,14 +106,14 @@ int u_read_ecl_bin_record (
 
     if ((istat=fread(ctype,4,1,fc)) != 1) return -233222;;
     ctype[4]='\0';
-    xtg_speak(s,3,"ctype is <%s>",ctype);	
+    xtg_speak(s,3,"ctype is <%s>",ctype);
 
     istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); ftn_2=myint;
 
 
     if (istat != 1) return -233222;
-    xtg_speak(s,4,"ftn_2 is %d",ftn_2);	
-    
+    xtg_speak(s,4,"ftn_2 is %d",ftn_2);
+
 
     /* check allocation */
     if (strcmp(ctype, "INTE") == 0 && reclenx > max_alloc_int) {
@@ -126,7 +127,7 @@ int u_read_ecl_bin_record (
     if (strcmp(ctype, "DOUB") == 0 && reclenx > max_alloc_double) {
 
 	xtg_error(s,"Allocation error (DOUBLE) !. reclenx = %d vs max_alloc = %d  STOP!",reclenx,max_alloc_double);
- 
+
 	/* /\* in this, max_alloc_double must be updtaed to the caller *\/ */
 
 	/* xtg_speak(s,2,"Need to realloc memory ... reclenx=%d vs max_alloc=%d  STOP!",reclenx,max_alloc_double); */
@@ -137,13 +138,13 @@ int u_read_ecl_bin_record (
 	/* else{ */
 	/*     xtg_error(s,"Reallocation error (DOUBLE)! STOP!"); */
 	/* } */
-	    
+
     }
 
     if (strcmp(ctype, "LOGI") == 0 && reclenx > max_alloc_logi) {
 	xtg_error(s,"Allocation error (LOGI) !. reclenx = %d vs max_alloc = %d  STOP!",reclenx,max_alloc_logi);
     }
-	    
+
 
     if (strcmp(ctype, "CHAR") == 0 && reclenx > max_alloc_char) {
 	xtg_error(s,"Allocation error (CHAR) !. reclenx = %d vs max_alloc = %d  STOP!",reclenx,max_alloc_char);;
@@ -153,9 +154,9 @@ int u_read_ecl_bin_record (
 
 
     /* Now read the record itself */
-    
+
     ic=0;
-    if (strcmp(ctype, "REAL") == 0) { 
+    if (strcmp(ctype, "REAL") == 0) {
 	xtg_speak(s,3,"ctype is REAL");
 	while (*reclen > 0) {
 	    /* ftn_1 will tell us how long the record is (in bytes) */
@@ -164,11 +165,11 @@ int u_read_ecl_bin_record (
 	    ftn_reclen=(ftn_1/sizeof(float));
 	    if (ftn_reclen < *reclen) { nrecord=ftn_reclen; } else {nrecord=*reclen;}
 
-	    
+
 
 	    /* read the float array */
 	    for (i=0;i<nrecord;i++) {
-		istat=fread(&myfloat,4,1,fc); if (swap) SWAP_FLOAT(myfloat); 
+		istat=fread(&myfloat,4,1,fc); if (swap) SWAP_FLOAT(myfloat);
 		tmp_float_v[ic++]=myfloat;
 	    }
 	    /* end of record integer: */
@@ -178,7 +179,7 @@ int u_read_ecl_bin_record (
 	    xtg_speak(s,4,"Remaining reclen is %d",*reclen);
 	}
     }
-    else if (strcmp(ctype, "DOUB") == 0) { 
+    else if (strcmp(ctype, "DOUB") == 0) {
 	xtg_speak(s,3,"ctype is DOUB");
 	while (*reclen > 0) {
 	    /* ftn_1 will tell us how long the record is (in bytes) */
@@ -186,11 +187,11 @@ int u_read_ecl_bin_record (
 	    if (istat != 1) return -233222;
 	    ftn_reclen=(ftn_1/sizeof(double));
 	    if (ftn_reclen < *reclen) { nrecord=ftn_reclen; } else {nrecord=*reclen;}
-	    
+
 
 	    /* read the double array */
 	    for (i=0;i<nrecord;i++) {
-		istat=fread(&mydouble,8,1,fc); if (swap) SWAP_DOUBLE(mydouble); 
+		istat=fread(&mydouble,8,1,fc); if (swap) SWAP_DOUBLE(mydouble);
 		tmp_double_v[ic++]=mydouble;
 	    }
 	    /* end of record integer: */
@@ -200,8 +201,8 @@ int u_read_ecl_bin_record (
 	    xtg_speak(s,4,"Remaining reclen is %d",*reclen);
 	}
     }
-    
-    else if (strcmp(ctype, "INTE") == 0) { 
+
+    else if (strcmp(ctype, "INTE") == 0) {
 	xtg_speak(s,3,"ctype is INTE");
 	while (*reclen > 0) {
 	    /* ftn_1 will tell us how long the record is (in bytes) */
@@ -209,13 +210,13 @@ int u_read_ecl_bin_record (
 	    if (istat != 1) return -233222;
 	    ftn_reclen=(ftn_1/sizeof(int));
 	    if (ftn_reclen < *reclen) { nrecord=ftn_reclen; } else {nrecord=*reclen;}
-	    
+
 	    /* read the int array */
 	    xtg_speak(s,3,"nrecord is %d",nrecord);
 
 
 	    for (i=0;i<nrecord;i++) {
-		istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); 
+		istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint);
 		tmp_int_v[ic++]=myint;
 	    }
 	    /* end of record integer: */
@@ -225,27 +226,27 @@ int u_read_ecl_bin_record (
 	    xtg_speak(s,4,"Remaining reclen is %d",*reclen);
 	}
     }
-    
+
     /* no Byte swap needed for char */
-    else if (strcmp(ctype, "CHAR") == 0) { 
+    else if (strcmp(ctype, "CHAR") == 0) {
 	xtg_speak(s,3,"ctype is CHAR");
 	while (*reclen > 0) {
 	    /* ftn_1 will tell us how long the record is (in bytes) */
 	    istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); ftn_1=myint;
 	    ftn_reclen=(ftn_1/(8*sizeof(char)));
 	    if (ftn_reclen < *reclen) {nrecord=ftn_reclen;}else{nrecord=*reclen;}
-	    if ((istat=fread(tmp_string_v,8,nrecord,fc)) 
+	    if ((istat=fread(mystring,8,nrecord,fc))
 		!= nrecord) return -233222;
 	    /* end of record integer: */
 	    istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); ftn_2=myint;
-	    
+
 	    /* remaining record length */
 	    *reclen = *reclen-nrecord;
 	    xtg_speak(s,4,"Remaining reclen is %d",*reclen);
 	}
     }
-    
-    else if (strcmp(ctype, "LOGI") == 0) { 
+
+    else if (strcmp(ctype, "LOGI") == 0) {
 	xtg_speak(s,3,"ctype is LOGI");
 	while (*reclen > 0) {
 	    /* ftn_1 will tell us how long the record is (in bytes) */
@@ -254,10 +255,10 @@ int u_read_ecl_bin_record (
 	    ftn_reclen=(ftn_1/sizeof(int));
 	    if (ftn_reclen < *reclen) { nrecord=ftn_reclen; } else {nrecord=*reclen;}
 
-	    
+
 	    /* read the array */
 	    for (i=0;i<nrecord;i++) {
-		istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); 
+		istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint);
 		tmp_logi_v[ic++]=myint;
 	    }
 	    /* end of record integer: */
@@ -267,9 +268,9 @@ int u_read_ecl_bin_record (
 	    xtg_speak(s,4,"Remaining reclen is %d",*reclen);
 	}
     }
-    
+
     /* not sure what this is...*/
-    else if (strcmp(ctype, "MESS") == 0) { 
+    else if (strcmp(ctype, "MESS") == 0) {
 	xtg_speak(s,3,"ctype is MESS");
 	while (*reclen > 0) {
 	    /* ftn_1 will tell us how long the record is (in bytes) */
@@ -277,10 +278,10 @@ int u_read_ecl_bin_record (
 	    if (istat != 1) return -233222;
 	    ftn_reclen=(ftn_1/sizeof(int));
 	    if (ftn_reclen < *reclen) { nrecord=ftn_reclen; } else {nrecord=*reclen;}
-	    
+
 	    /* read the array */
 	    for (i=0;i<nrecord;i++) {
-		istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint); 
+		istat=fread(&myint,4,1,fc); if (swap) SWAP_INT(myint);
 		tmp_logi_v[ic++]=myint;
 	    }
 	    /* end of record integer: */
@@ -290,11 +291,11 @@ int u_read_ecl_bin_record (
 	    xtg_speak(s,4,"Remaining reclen is %d",*reclen);
 	}
     }
-    
+
     else {
 	exit(23);
     }
-    
+
     if (ic>0 && (ic != reclenx)) {
 	xtg_error(s,"Something is rotten: IC is %d, RECLENX is %d",ic,reclenx);
     }

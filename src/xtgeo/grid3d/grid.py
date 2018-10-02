@@ -20,6 +20,7 @@ from xtgeo.common import XTGDescription
 
 from xtgeo.grid3d import _grid_hybrid
 from xtgeo.grid3d import _grid_import
+from xtgeo.grid3d import _grid_import_ecl
 from xtgeo.grid3d import _grid_export
 from xtgeo.grid3d import _grid_refine
 from xtgeo.grid3d import _grid_etc1
@@ -104,6 +105,23 @@ class Grid(Grid3D):
             self.from_file(args[0], fformat=fformat, initprops=initprops,
                            restartprops=restartprops,
                            restartdates=restartdates)
+
+    def __del__(self):
+        print('DELETING grid instance')
+
+        if self._p_coord_v is not None:
+            logger.info('Deleting instance {}'.format(self))
+            _cxtgeo.delete_doublearray(self._p_coord_v)
+            _cxtgeo.delete_doublearray(self._p_zcorn_v)
+            _cxtgeo.delete_intarray(self._p_actnum_v)
+            self._p_coord_v = None
+            for myvar in vars(self).keys():
+                print('Deleting {}'.format(myvar))
+                del myvar
+
+            for prop in self.props:
+                logger.info('Deleting property instance {}'.format(prop))
+                prop.__del__()
 
     # =========================================================================
     # Properties:
@@ -538,12 +556,14 @@ class Grid(Grid3D):
             _grid_import.import_roff(self, gfile)
         elif (fformat == 'grid'):
             _grid_import.import_ecl_output(self, gfile, 0)
+        # elif (fformat == 'egrid'):
+        #     _grid_import.import_ecl_output(self, gfile, 2)
         elif (fformat == 'egrid'):
-            _grid_import.import_ecl_output(self, gfile, 2)
+            _grid_import_ecl.import_ecl_egrid(self, gfile)
         elif (fformat == 'eclipserun'):
-            _grid_import.import_ecl_run(self, gfile, initprops=initprops,
-                                        restartprops=restartprops,
-                                        restartdates=restartdates)
+            _grid_import_ecl.import_ecl_run(self, gfile, initprops=initprops,
+                                            restartprops=restartprops,
+                                            restartdates=restartdates)
         elif (fformat == 'grdecl'):
             _grid_import.import_ecl_grdecl(self, gfile)
         else:

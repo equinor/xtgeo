@@ -209,6 +209,14 @@ class GridProperty(Grid3D):
             self.from_file(args[0], fformat=fformat, name=name,
                            grid=grid, date=date, apiversion=apiv)
 
+    def __del__(self):
+        print('DELETING property instance')
+        self._values = None
+        for myvar in vars(self).keys():
+            #print('Deleting {}'.format(myvar))
+            del myvar
+
+
     # =========================================================================
     # Properties
     # =========================================================================

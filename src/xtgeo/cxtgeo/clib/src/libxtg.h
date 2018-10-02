@@ -1840,6 +1840,15 @@ int grd3d_read_eclrecord (
                           int    debug
                           );
 
+void grd3d_zcorn_convert (
+                          int nx,
+                          int ny,
+                          int nz,
+                          float *zcorn,
+                          double *p_zcorn_v,
+                          int option,
+                          int debug
+                          );
 
 int grd3d_ecl_tsteps (
                       FILE *fc,
@@ -1863,6 +1872,22 @@ void grd3d_import_ecl_egrid (
 			     char   *filename,
 			     int    debug
 			     );
+/* new version */
+int grd3d_imp_ecl_egrid (
+                         FILE *fc,
+                         int nx,
+                         int ny,
+                         int nz,
+                         long bpos_mapaxes,
+                         long bpos_coord,
+                         long bpos_zcorn,
+                         long bpos_actnum,
+                         double *p_coord_v,
+                         double *p_zcorn_v,
+                         int *actnum_v,
+                         int debug
+                         );
+
 
 void grd3d_scan_ecl_grid_hd (
 			     int   ftype,

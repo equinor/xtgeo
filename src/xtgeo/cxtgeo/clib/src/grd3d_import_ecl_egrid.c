@@ -116,10 +116,12 @@ void grd3d_import_ecl_egrid (
     tmp_double_v=calloc(max_alloc_double, sizeof(double));
     xtg_speak(s,3,"Allocated tmp_double_v ... OK");
     /* the string vector is 2D */
-    tmp_string_v=calloc(max_alloc_char, sizeof(char *));
-    for (i=0; i<nxyz; i++) tmp_string_v[i]=calloc(9, sizeof(char));
-    tmp_logi_v=calloc(max_alloc_logi, sizeof(int));
+    tmp_string_v = malloc(max_alloc_char * sizeof(char *));
+    if (tmp_string_v)
+        for (i=0; i<nxyz; i++)
+            tmp_string_v[i] =  malloc(9 * sizeof *tmp_string_v[i]) ;
 
+    tmp_logi_v=calloc(max_alloc_logi, sizeof(int));
 
     xtg_speak(s,2,"Opening %s",filename);
 
@@ -359,10 +361,14 @@ void grd3d_import_ecl_egrid (
     xtg_speak(s,3,"Freeing tmp_double_v ...");
     free(tmp_double_v);
 
-    /*
-      xtg_speak(s,3,"Freeing tmp_int_v ...");
-      for (i=0; i<nxyz; i++) free(tmp_string_v[i]);
-      free(tmp_string_v); */
+
+    xtg_speak(s,3,"Freeing tmp_string_v ...");
+    for (i=0; i<nxyz; i++) {
+        xtg_speak(s,3,"Freeing tmp_string_v elem...");
+        if (tmp_string_v[i]) free(tmp_string_v[i]);
+    }
+    if (tmp_string_v) free(tmp_string_v);
+
     xtg_speak(s,3,"Freeing tmp_logi_v ...");
     free(tmp_logi_v);
     xtg_speak(s,2,"Leaving routine ...");

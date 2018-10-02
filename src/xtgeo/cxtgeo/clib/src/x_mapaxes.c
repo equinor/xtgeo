@@ -19,7 +19,7 @@
  * ****************************************************************************
  * X = a*X' + b*Y' + c
  * Y = d*X' + e*Y' + f
- * Based on a formula from T. Barkve, Roxar
+ * Based on a formula from T. Barkve, Roxar + ERT
  * MAPAXES has 6 elements:
  * x1 y1 x2 y2 x3 y3 (1 is a point on the Y axis, 2 is origo, 3 a point on X)
  * xmin, ymin, xmax, ymax in local coords must be computed from the full grid
