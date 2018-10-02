@@ -38,7 +38,7 @@ def the_version():
 
     version = versioneer.get_version()
     sver = version.split('.')
-    print('\nFrom TAG descitption: {}'.format(sver))
+    print('\nFrom TAG description: {}'.format(sver))
 
     useversion = 'UNSET'
     if len(sver) == 3:

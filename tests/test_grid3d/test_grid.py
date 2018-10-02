@@ -23,8 +23,6 @@ if not xtg.testsetup():
 td = xtg.tmpdir
 testpath = xtg.testpath
 
-print(UNDEF)
-
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -220,26 +218,6 @@ def test_eclgrid_import2():
     actnum = g.get_actnum()
     print(actnum.values[12:13, 22:24, 5:6])
     tsetup.assert_equal(actnum.values[12, 22, 5], 0, txt='ACTNUM 0')
-
-
-
-# def test_eclgrid_import_egrid_apiversion2():
-#     """Eclipse EGRID import, apiversion2."""
-#     grd = Grid()
-#     logger.info("Import Eclipse GRID...")
-#     grd.from_file(reekfile, fformat='egrid', apiversion=2)
-
-#     grd.to_file(join(td, 'ecl2.roff'))
-#     grd.to_file(join(td, 'ecl2.grdecl'), fformat='grdecl')
-
-    # tsetup.assert_equal(g.ncol, 40, txt='EGrid NX from Eclipse')
-    # tsetup.assert_equal(g.nrow, 64, txt='EGrid NY from Eclipse')
-    # tsetup.assert_equal(g.nactive, 35838, txt='EGrid NTOTAL from Eclipse')
-    # tsetup.assert_equal(g.ntotal, 35840, txt='EGrid NACTIVE from Eclipse')
-
-    # actnum = g.get_actnum()
-    # print(actnum.values[12:13, 22:24, 5:6])
-    # tsetup.assert_equal(actnum.values[12, 22, 5], 0, txt='ACTNUM 0')
 
 
 def test_eclgrid_import3():

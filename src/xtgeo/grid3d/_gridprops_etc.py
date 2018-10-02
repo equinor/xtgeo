@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+from xtgeo.grid3d import Grid
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -17,42 +18,43 @@ _cxtgeo.xtg_verbose_file('NONE')
 
 
 def dataframe(self, activeonly=True, ijk=False, xyz=False,
-              doubleformat=False):
+              doubleformat=False, grid=None):
     """Returns a Pandas dataframe table for the properties."""
 
     colnames = []
     proplist = []
 
-    if ijk:
-        if activeonly:
-            ix, jy, kz = self._grid.get_ijk(mask=True)
-            proplist.extend([ix.get_active_npvalues1d(),
-                             jy.get_active_npvalues1d(),
-                             kz.get_active_npvalues1d()])
-            colnames.extend(['IX', 'JY', 'KZ'])
-        else:
-            act = self._grid.get_actnum()
-            ix, jy, kz = self._grid.get_ijk(mask=False)
-            proplist.extend([act.values1d, ix.values1d, jy.values1d,
-                             kz.values1d])
-            colnames.extend(['ACTNUM', 'IX', 'JY', 'KZ'])
+    if grid is not None and isinstance(grid, Grid):
+        if ijk:
+            if activeonly:
+                ix, jy, kz = grid.get_ijk(mask=True)
+                proplist.extend([ix.get_active_npvalues1d(),
+                                 jy.get_active_npvalues1d(),
+                                 kz.get_active_npvalues1d()])
+                colnames.extend(['IX', 'JY', 'KZ'])
+            else:
+                act = grid.get_actnum()
+                ix, jy, kz = grid.get_ijk(mask=False)
+                proplist.extend([act.values1d, ix.values1d, jy.values1d,
+                                 kz.values1d])
+                colnames.extend(['ACTNUM', 'IX', 'JY', 'KZ'])
 
-    if xyz:
-        option = False
-        if activeonly:
-            option = True
+        if xyz:
+            option = False
+            if activeonly:
+                option = True
 
-        xc, yc, zc = self._grid.get_xyz(mask=option)
-        colnames.extend(['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
-        if activeonly:
-            proplist.extend([xc.get_active_npvalues1d(),
-                             yc.get_active_npvalues1d(),
-                             zc.get_active_npvalues1d()])
-        else:
-            proplist.extend([xc.values1d, yc.values1d, zc.values1d])
+            xc, yc, zc = grid.get_xyz(mask=option)
+            colnames.extend(['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
+            if activeonly:
+                proplist.extend([xc.get_active_npvalues1d(),
+                                 yc.get_active_npvalues1d(),
+                                 zc.get_active_npvalues1d()])
+            else:
+                proplist.extend([xc.values1d, yc.values1d, zc.values1d])
 
     for prop in self.props:
-        self.logger.info('Getting property {}'.format(prop.name))
+        logger.info('Getting property {}'.format(prop.name))
         colnames.append(prop.name)
         if activeonly:
             vector = prop.get_active_npvalues1d()

@@ -71,7 +71,7 @@ class Grid3DSlice(BasePlot):
             self._fig.text(0.01, 0.02, infotext, ha='left', va='center',
                            fontsize=8)
 
-    def plot_gridslice(self, prop, mode='layer',
+    def plot_gridslice(self, grid, prop, mode='layer',
                        minvalue=None, maxvalue=None,
                        colormap=None, index=1, window=None):
 
@@ -80,7 +80,8 @@ class Grid3DSlice(BasePlot):
         Under construction, has bugs; only layer is supported now!
 
         Args:
-            prop: The XTGeo grid property object (needs link to the grid)
+            grid: The XTGeo grid object
+            prop: The XTGeo grid property object (must belong to grid).
             mode (str): Choose between 'column', 'row', 'layer' (default)
             minvalue (float): Minimum level color scale (default: from data)
             maxvalue (float): Maximum level color scale (default: from data)
@@ -89,15 +90,10 @@ class Grid3DSlice(BasePlot):
 
         """
 
-        if prop.grid is None:
-            raise RuntimeError('Need to connect property to a grid for plots')
-
         if colormap is not None:
             self.colormap = colormap
         else:
             self.colormap = 'rainbow'
-
-        grid = prop.grid
 
         clist = grid.get_xyz_corners()
         actnum = grid.get_actnum()

@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 """Import/export or scans of grid properties (cf GridProperties class"""
 import pandas as pd
 
@@ -7,7 +7,6 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import _get_fhandle, _close_fhandle
 
-from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _gridprop_import
 
 xtg = XTGeoDialog()
@@ -209,18 +208,16 @@ def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
         return zdates
 
 
-def import_ecl_output_v2(props, pfile, names=None, dates=None,
-                         grid=None, namestyle=0):
+def import_ecl_output(props, pfile, names=None, dates=None,
+                      grid=None, namestyle=0):
 
     if not grid:
         raise ValueError('Grid Geometry object is missing')
-    else:
-        props._grid = grid
 
     if not names:
         raise ValueError('Name list is missing')
 
-    fhandle = _cxtgeo.xtg_fopen(pfile, 'rb')
+    fhandle, pclose = _get_fhandle(pfile)
 
     # scan valid keywords
     kwlist = props.scan_keywords(fhandle)
@@ -228,12 +225,6 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
     logger.info('NAMES are %s', names)
 
     lookfornames = list(set(names))
-
-    # Special treatment of "indirect" keyword SOIL, which is made
-    # from SWAT and SGAS
-    if 'SOIL' in set(names):
-        lookfornames.extend(['SWAT', 'SGAS'])
-        lookfornames.remove('SOIL')
 
     possiblekw = []
     for name in lookfornames:
@@ -243,11 +234,8 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
             if name == kwitem[0]:
                 namefound = True
         if not namefound:
-            possiblekw = list(set(possiblekw))
-            if 'SOIL' in set(names):
-                raise ValueError('Indirect keyword SOIL not found in via '
-                                 'SGAS and SWAT. Possible list: {}'
-                                 .format(possiblekw))
+            if name == 'SOIL':
+                pass  # will check for SWAT and SGAS later
             else:
                 raise ValueError('Keyword {} not found. Possible list: {}'
                                  .format(name, possiblekw))
@@ -327,5 +315,8 @@ def import_ecl_output_v2(props, pfile, names=None, dates=None,
     props._ncol = ncol
     props._nrow = nrow
     props._nlay = nlay
+
     if validdates[0] != 0:
         props._dates = validdates
+
+    _close_fhandle(fhandle, pclose)

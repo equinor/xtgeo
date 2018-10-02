@@ -85,7 +85,7 @@ class Grid(Grid3D):
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
-        self._props = []  # List of 'attached' property objects
+        self._props = None           # None or a GridProperties instance
         self._subgrids = None        # A python dict if subgrids are given
 
         # perhaps undef should be a class variable, not an instance variables?
@@ -107,7 +107,7 @@ class Grid(Grid3D):
                            restartdates=restartdates)
 
     def __del__(self):
-        print('DELETING grid instance')
+        logger.info('DELETING grid instance')
 
         if self._p_coord_v is not None:
             logger.info('Deleting instance {}'.format(self))
@@ -115,13 +115,14 @@ class Grid(Grid3D):
             _cxtgeo.delete_doublearray(self._p_zcorn_v)
             _cxtgeo.delete_intarray(self._p_actnum_v)
             self._p_coord_v = None
-            for myvar in vars(self).keys():
-                print('Deleting {}'.format(myvar))
-                del myvar
 
-            for prop in self.props:
-                logger.info('Deleting property instance {}'.format(prop))
-                prop.__del__()
+            if self.props is not None:
+                for prop in self.props:
+                    logger.info('Deleting property instance {}'.format(prop))
+                    prop.__del__()
+
+            # for myvar in vars(self).keys():
+            #     del myvar
 
     # =========================================================================
     # Properties:
@@ -222,6 +223,23 @@ class Grid(Grid3D):
         return self._ncol * self._nrow * self._nlay
 
     @property
+    def gridprops(self):
+        """Return or set a XTGeo GridProperties objects attached to the Grid.
+        """
+        # Note, internally, the _props is a GridProperties instance, which is
+        # a class that holds a list of properties.
+
+        return self._props
+
+    @gridprops.setter
+    def gridprops(self, gprops):
+
+        if not isinstance(gprops, xtgeo.grid3d.GridProperties):
+            raise ValueError('Input must be a GridProperties instance')
+
+        self._props = gprops  # self._props is a GridProperties instance
+
+    @property
     def props(self):
         """:obj:`list` of :obj:`.GridProperty`: Return or set a
         list of XTGeo GridProperty objects.
@@ -234,31 +252,38 @@ class Grid(Grid3D):
         See also props_append() method to add a property to the current list.
 
         """
-        return self._props
+        # Note, internally, the _props is a GridProperties instance, which is
+        # a class that holds a list of properties.
+
+        prplist = None
+        if self._props is not None:
+            prplist = self._props.props
+
+        return prplist
 
     @props.setter
     def props(self, plist):
 
         if not isinstance(plist, list):
-            raise ValueError('Input to props muts be a list')
+            raise ValueError('Input to props must be a list')
 
         if self._props is None:
-            self._props = []
+            self._props = xtgeo.grid3d.GridProperties()
 
         for litem in plist:
             if litem.dimensions != self.dimensions:
                 raise IndexError('Property NX NY NZ <{}> does not match grid!'
                                  .format(litem.name))
 
-        self._props = plist
+        self._props.props = plist  # self._props is a GridProperties instance
 
     @property
     def propnames(self):
         """Returns a list of property names that are hooked to a grid."""
 
-        plist = []
-        for obj in self._props:
-            plist.append(obj.name)
+        plist = None
+        if self._props is not None:
+            plist = self._props.names
 
         return plist
 
@@ -369,7 +394,10 @@ class Grid(Grid3D):
         """Append a single property to the grid"""
 
         if prop.dimensions == self.dimensions:
-            self._props.append(prop)
+            if self._props is None:
+                self._props = xtgeo.grid3d.GridProperties()
+
+            self._props.append_props([prop])
         else:
             raise ValueError('Dimensions does not match')
 
@@ -457,13 +485,12 @@ class Grid(Grid3D):
         return ind
 
     def get_gridproperties(self):
-        """Return a :obj:`GridProperties` instance."""
+        """Return the :obj:`GridProperties` instance attached to the grid.
 
-        grdprops = xtgeo.grid3d.GridProperties()
-        grdprops.grid = self
-        grdprops.append_props(self.props)
+        See also the :meth:`gridprops` property
+        """
 
-        return grdprops
+        return self._props
 
     def get_prop_by_name(self, name):
         """Gets a property object by name lookup, return None if not present.
@@ -640,7 +667,6 @@ class Grid(Grid3D):
 
             idx._codes = codes
             idx._ncodes = ncodes
-            idx._grid = self
             ilist.append(idx)
 
         return ilist
@@ -675,7 +701,6 @@ class Grid(Grid3D):
 
         act._codes = {0: '0', 1: '1'}
         act._ncodes = 2
-        act._grid = self
 
         # return the object
         return act

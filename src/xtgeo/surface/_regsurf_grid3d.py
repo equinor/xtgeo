@@ -17,7 +17,7 @@ xtg_verbose_level = xtg.get_syslevel()
 # self = RegularSurface instance!
 
 
-def slice_grid3d(self, prop, zsurf=None, sbuffer=1):
+def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
     """Private function for the Grid3D slicing."""
 
     if zsurf is not None:
@@ -27,8 +27,6 @@ def slice_grid3d(self, prop, zsurf=None, sbuffer=1):
         other = self.copy()
     if not self.compare_topology(other, strict=False):
         raise RuntimeError('Topology of maps differ. Stop!')
-
-    grid = prop.grid
 
     zslice = other.copy()
 

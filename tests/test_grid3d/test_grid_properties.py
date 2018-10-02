@@ -26,8 +26,6 @@ rfile1 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
 
 xfile2 = '../xtgeo-testdata/3dgrids/reek/reek_grd_w_props.roff'
 
-apiver = 2
-
 
 def test_import_init():
     """Import INIT Reek"""
@@ -39,7 +37,7 @@ def test_import_init():
 
     names = ['PORO', 'PORV']
     x.from_file(ifile1, fformat="init",
-                names=names, grid=g, apiversion=apiver)
+                names=names, grid=g)
 
     # get the object
     poro = x.get_prop_by_name('PORO')
@@ -61,20 +59,13 @@ def test_import_should_fail():
     names = ['PORO', 'NOSUCHNAME']
     with pytest.raises(ValueError) as e_info:
         logger.warning(e_info)
-        x.from_file(ifile1, fformat="init", names=names, grid=g,
-                    apiversion=apiver)
+        x.from_file(ifile1, fformat="init", names=names, grid=g)
 
     rx = GridProperties()
     names = ['PRESSURE']
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g,
-                 apiversion=apiver)
-
-    # with pytest.raises(ValueError) as e_info:
-    #     print(e_info)
-    #     rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g,
-    #                  apiversion=apiver)
+    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g)
 
 
 def test_import_should_warn():
@@ -86,8 +77,7 @@ def test_import_should_warn():
     names = ['PRESSURE']
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g,
-                 apiversion=apiver)
+    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g)
 
 
 def test_import_restart():
@@ -102,7 +92,7 @@ def test_import_restart():
     dates = [19991201, 20010101]
     x.from_file(rfile1,
                 fformat="unrst", names=names, dates=dates,
-                grid=g, apiversion=apiver)
+                grid=g)
 
     # get the object
     pr = x.get_prop_by_name('PRESSURE_19991201')
@@ -138,7 +128,7 @@ def test_import_restart_gull():
     dates = [19991201]
     x.from_file(rfile1,
                 fformat="unrst", names=names, dates=dates,
-                grid=g, apiversion=apiver)
+                grid=g)
 
     # get the object
     pr = x.get_prop_by_name('PRESSURE_19991201')
@@ -171,8 +161,7 @@ def test_import_soil():
 
     names = ['SOIL', 'SWAT', 'PRESSURE']
     dates = [19991201]
-    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g,
-                apiversion=apiver)
+    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g)
 
     logger.info(x.names)
 
@@ -226,8 +215,7 @@ def test_get_dataframe():
 
     names = ['SOIL', 'SWAT', 'PRESSURE']
     dates = [19991201]
-    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g,
-                apiversion=apiver)
+    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g)
     df = x.dataframe(activeonly=True, ijk=True, xyz=True)
 
     assert df['SWAT_19991201'].mean() == pytest.approx(0.87802, abs=0.001)

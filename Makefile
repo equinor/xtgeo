@@ -117,6 +117,9 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 
+develop:  ## make develop mode (for pure python only)
+	${PIP} install -e .
+
 docsrun: clean ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/${APPLICATION}*.rst
 	rm -f docs/modules.rst

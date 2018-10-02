@@ -72,7 +72,7 @@ def test_roffbin_import1_new():
 
     x = GridProperty()
     logger.info("Import roff...")
-    x.from_file(testfile1, fformat="roff", name='PORO', apiversion=3)
+    x.from_file(testfile1, fformat="roff", name='PORO')
     logger.info("Porosity is {}".format(x.values))
     logger.info("Mean porosity is {}".format(x.values.mean()))
 
@@ -115,8 +115,7 @@ def test_eclinit_import():
 
     po = GridProperty()
     logger.info("Import INIT...")
-    po.from_file(testfile4, fformat="init", name='PORO', grid=gg,
-                 apiversion=2)
+    po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
     logger.debug(po.values[10, 0: 14, 3])
     assert po.ncol == 20, 'NX from B.INIT'
 
@@ -188,7 +187,7 @@ def test_export_roff():
     gg.from_file(testfile3, fformat="grid")
     po = GridProperty()
     logger.info("Import INIT...")
-    po.from_file(testfile4, fformat="init", name='PORO', grid=gg, apiversion=2)
+    po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
 
     po.to_file(os.path.join(td, 'bdata.roff'), name='PORO')
 

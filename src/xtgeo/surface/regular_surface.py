@@ -33,6 +33,7 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
 
@@ -1370,12 +1371,13 @@ class RegularSurface(object):
     # Interacion with a grid3d
     # =========================================================================
 
-    def slice_grid3d(self, prop, zsurf=None, sbuffer=1):
+    def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
         """Slice the grid property and update the instance surface to sampled
         values.
 
         Args:
-            prop (GridProperty): Instance of a GridProperty, with attached grid
+            grid (Grid): Instance of a Grid.
+            prop (GridProperty): Instance of a GridProperty, belongs to grid
             zsurf (surface object): Instance of map, which is used a slicer.
                 If None, then the surface instance itself is used a slice
                 criteria. Note that zsurf must have same map defs as the
@@ -1385,16 +1387,18 @@ class RegularSurface(object):
         Example::
 
             grd = Grid('some.roff')
-            prop = GridProperty('someprop.roff', name='PHIT', grid=grd)
+            prop = GridProperty('someprop.roff', name='PHIT')
             surf = RegularSurface('s.gri')
             # update surf to sample the 3D grid property:
-            surf.slice_grid3d(prop)
+            surf.slice_grid3d(grd, prop)
 
         Raises:
             Exception if maps have different definitions (topology)
         """
+        if not isinstance(grid, xtgeo.grid3d.Grid):
+            raise ValueError('First argument must be a grid instance')
 
-        ier = _regsurf_grid3d.slice_grid3d(self, prop, zsurf=zsurf,
+        ier = _regsurf_grid3d.slice_grid3d(self, grid, prop, zsurf=zsurf,
                                            sbuffer=sbuffer)
 
         if ier != 0:
