@@ -62,14 +62,13 @@ help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
-clean: clean-build clean-pyc clean-test clean-examples clean-cc ## remove all build, test, coverage...
+clean: clean-build clean-pyc clean-test clean-examples ## remove all build, test, coverage...
 
 
 clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
 	rm -fr .eggs/
-	rm -fr \'.\'/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -fr {} +
 
@@ -90,12 +89,13 @@ clean-test: ## remove test and coverage artifacts
 clean-examples:
 	find examples ! -name "*.py" -type f -exec rm -f {} +
 
-clean-cc:
-	rm -fr src/xtgeo/cxtgeo/clib/build
-
 cc:
+	rm -fr src/xtgeo/cxtgeo/clib/build
 	mkdir -p src/xtgeo/cxtgeo/clib/build
 	cd src/xtgeo/cxtgeo/clib/build; cmake ..; make; make install
+
+ccu:
+	cd src/xtgeo/cxtgeo/clib/build; make; make install
 
 
 lint: ## check style with flake8
@@ -116,6 +116,9 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
+
+develop:  ## make develop mode (for pure python only)
+	${PIP} install -e .
 
 docsrun: clean ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/${APPLICATION}*.rst

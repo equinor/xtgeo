@@ -23,6 +23,70 @@ _cxtgeo.xtg_verbose_file('NONE')
 xtg_verbose_level = xtg.get_syslevel()
 
 
+def import_eclbinary(self, pfile, name=None, etype=1, date=None,
+                     grid=None):
+    ios = 0
+    if name == 'SOIL':
+        # some recursive magic here
+        logger.info('Making SOIL from SWAT and SGAS ...')
+        logger.info('PFILE is {}'.format(pfile))
+
+        swat = xtgeo.grid3d.GridProperty()
+        swat.from_file(pfile, name='SWAT', grid=grid,
+                       date=date, fformat='unrst')
+
+        sgas = xtgeo.grid3d.GridProperty()
+        sgas.from_file(pfile, name='SGAS', grid=grid,
+                       date=date, fformat='unrst')
+
+        self.name = 'SOIL' + '_' + str(date)
+        self._nrow = swat.nrow
+        self._ncol = swat.ncol
+        self._nlay = swat.nlay
+        self._date = date
+        self._values = swat._values * -1 - sgas._values + 1.0
+
+        del swat
+        del sgas
+
+    else:
+        logger.info('Importing {}'.format(name))
+        ios = _import_eclbinary(self, pfile, name=name, etype=etype,
+                                date=date, grid=grid)
+
+    return ios
+
+
+def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
+    # read a binary Eclipse record via cxtgeo
+
+    ilen = flen = dlen = 1
+
+    if kwtype == 'INTE':
+        ilen = kwlen
+        kwntype = 1
+    elif kwtype == 'REAL':
+        flen = kwlen
+        kwntype = 2
+    elif kwtype == 'DOUB':
+        dlen = kwlen
+        kwntype = 3
+
+    npint = np.zeros((ilen), dtype=np.int32)
+    npflt = np.zeros((flen), dtype=np.float32)
+    npdbl = np.zeros((dlen), dtype=np.float64)
+
+    _cxtgeo.grd3d_read_eclrecord(fhandle, kwbyte, kwntype,
+                                 npint, npflt, npdbl, xtg_verbose_level)
+
+    if kwtype == 'INTE':
+        return npint
+    elif kwtype == 'REAL':
+        return npflt
+    elif kwtype == 'DOUB':
+        return npdbl
+
+
 def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
                       grid=None):
     """Import, private to this routine.
@@ -193,7 +257,6 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
 
     _close_fhandle(fhandle, pclose)
 
-    self._grid = grid
     self._values = allvalues
 
     if etype == 1:
@@ -203,71 +266,6 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
         self._date = date
 
     return 0
-
-
-def import_eclbinary(self, pfile, name=None, etype=1, date=None,
-                     grid=None):
-    ios = 0
-    if name == 'SOIL':
-        # some recursive magic here
-        logger.info('Making SOIL from SWAT and SGAS ...')
-        logger.info('PFILE is {}'.format(pfile))
-
-        swat = xtgeo.grid3d.GridProperty()
-        swat.from_file(pfile, name='SWAT', grid=grid,
-                       date=date, fformat='unrst')
-
-        sgas = xtgeo.grid3d.GridProperty()
-        sgas.from_file(pfile, name='SGAS', grid=grid,
-                       date=date, fformat='unrst')
-
-        self.name = 'SOIL' + '_' + str(date)
-        self._nrow = swat.nrow
-        self._ncol = swat.ncol
-        self._nlay = swat.nlay
-        self._grid = grid
-        self._date = date
-        self._values = swat._values * -1 - sgas._values + 1.0
-
-        del swat
-        del sgas
-
-    else:
-        logger.info('Importing {}'.format(name))
-        ios = _import_eclbinary(self, pfile, name=name, etype=etype,
-                                   date=date, grid=grid)
-
-    return ios
-
-
-def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
-    # read a binary Eclipse record via cxtgeo
-
-    ilen = flen = dlen = 1
-
-    if kwtype == 'INTE':
-        ilen = kwlen
-        kwntype = 1
-    elif kwtype == 'REAL':
-        flen = kwlen
-        kwntype = 2
-    elif kwtype == 'DOUB':
-        dlen = kwlen
-        kwntype = 3
-
-    npint = np.zeros((ilen), dtype=np.int32)
-    npflt = np.zeros((flen), dtype=np.float32)
-    npdbl = np.zeros((dlen), dtype=np.float64)
-
-    _cxtgeo.grd3d_read_eclrecord(fhandle, kwbyte, kwntype,
-                                 npint, npflt, npdbl, xtg_verbose_level)
-
-    if kwtype == 'INTE':
-        return npint
-    elif kwtype == 'REAL':
-        return npflt
-    elif kwtype == 'DOUB':
-        return npdbl
 
 
 def import_roff(self, pfile, name, grid=None, apiversion=2):
@@ -406,7 +404,6 @@ def _import_roff_v1(self, pfile, name, grid=None):
         self._codes = dict(zip(ccodes, cname_list))
         logger.debug('CODES (value: name): {}'.format(self._codes))
 
-    self._grid = grid
     self._name = name
 
     return 0
@@ -439,7 +436,6 @@ def _import_roff_v2(self, pfile, name, grid=None):
 
     self._values = vals
     self._name = name
-    self._grid = grid
 
     return 0
 

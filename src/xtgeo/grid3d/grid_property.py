@@ -48,7 +48,7 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 
 def gridproperty_from_file(pfile, fformat='guess', name='unknown',
-                           grid=None, date=None, apiversion=2):
+                           grid=None, date=None):
     """Make a GridProperty instance directly from file import.
 
     For arguments, see :func:`GridProperty.from_file()`
@@ -64,8 +64,7 @@ def gridproperty_from_file(pfile, fformat='guess', name='unknown',
     """
 
     obj = GridProperty()
-    obj.from_file(pfile, fformat=fformat, name=name, grid=grid, date=date,
-                  apiversion=apiversion)
+    obj.from_file(pfile, fformat=fformat, name=name, grid=grid, date=date)
 
     return obj
 
@@ -156,8 +155,6 @@ class GridProperty(Grid3D):
         self._nrow = nrow
         self._nlay = nlay
 
-        self._grid = grid           # grid geometry object
-
         self._isdiscrete = discrete
 
         testmask = False
@@ -205,9 +202,14 @@ class GridProperty(Grid3D):
             name = kwargs.get('name', 'unknown')
             date = kwargs.get('date', None)
             grid = kwargs.get('grid', None)
-            apiv = kwargs.get('apiversion', 2)
             self.from_file(args[0], fformat=fformat, name=name,
-                           grid=grid, date=date, apiversion=apiv)
+                           grid=grid, date=date)
+
+    def __del__(self):
+        logger.info('DELETING property instance')
+        self._values = None
+        for myvar in vars(self).keys():
+            del myvar
 
     # =========================================================================
     # Properties
@@ -226,20 +228,6 @@ class GridProperty(Grid3D):
     def dimensions(self):
         """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
         return (self._ncol, self._nrow, self._nlay)
-
-    @property
-    def grid(self):
-        """Return the XTGeo grid geometry object (read only)"""
-        return self._grid
-
-    @grid.setter
-    def grid(self, thegrid):
-        # need many checks to get this to work
-        pass
-        # if isinstance(thegrid, Grid):
-        #     self._grid = thegrid
-        # else:
-        #     raise RuntimeWarning('The given grid is not a Grid instance')
 
     @property
     def isdiscrete(self):
@@ -445,7 +433,6 @@ class GridProperty(Grid3D):
         dsc.txt('Object ID', id(self))
         dsc.txt('Name', self.name)
         dsc.txt('Date', self.date)
-        dsc.txt('Belongs to grid', self.grid)
         dsc.txt('File source', self._filesrc)
         dsc.txt('Discrete status', self._isdiscrete)
         dsc.txt('Codes', self._codes)
@@ -509,8 +496,7 @@ class GridProperty(Grid3D):
             newname = self.name + '_copy'
 
         xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
-                             values=self._values.copy(), name=newname,
-                             grid=self._grid)
+                             values=self._values.copy(), name=newname)
 
         xprop._codes = copy.deepcopy(self._codes)
         xprop._isdiscrete = self._isdiscrete
@@ -551,7 +537,7 @@ class GridProperty(Grid3D):
     # =========================================================================
 
     def from_file(self, pfile, fformat='guess', name='unknown',
-                  grid=None, date=None, apiversion=2):
+                  grid=None, date=None):
         """
         Import grid property from file, and makes an instance of this class.
 
@@ -567,8 +553,8 @@ class GridProperty(Grid3D):
             date (int or str): For restart files, date on YYYYMMDD format. Also
                 the YYYY-MM-DD form is allowed (string), and for Eclipse,
                 mnemonics like 'first', 'last' is also allowed.
-            grid (Grid object): Grid Object to link too (optional).
-            apiversion (int): Internal XTGeo API setting for Ecl input (1 or 2)
+            grid (Grid object): Grid Object for checks (optional for ROFF,
+                required for Eclipse).
 
         Examples::
 
@@ -615,8 +601,7 @@ class GridProperty(Grid3D):
         ier = 0
         if (fformat == 'roff'):
             logger.info('Importing ROFF...')
-            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid,
-                                               apiversion=apiversion)
+            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid)
 
         elif (fformat.lower() == 'init'):
             ier = _gridprop_import.import_eclbinary(self, pfile, name=name,

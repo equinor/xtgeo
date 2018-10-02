@@ -70,8 +70,8 @@ def test_slice_simple():
     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
     layslice.canvas(title='My Grid plot')
-    layslice.plot_gridslice(myprop, window=(454000, 455000, 6782000, 6783000),
-                            colormap=usefile3)
+    wnd = (454000, 455000, 6782000, 6783000)
+    layslice.plot_gridslice(mygrid, myprop, window=wnd, colormap=usefile3)
 
     if xtgshow:
         layslice.show()
@@ -95,7 +95,7 @@ def test_slice_plot_many_grid_layers():
     for k in range(1, nlayers, 4):
         print('Layer {} ...'.format(k))
         layslice2.canvas(title='Porosity for layer ' + str(k))
-        layslice2.plot_gridslice(myprop, colormap=usefile3, index=k,
+        layslice2.plot_gridslice(mygrid, myprop, colormap=usefile3, index=k,
                                  minvalue=0.18, maxvalue=0.36)
         layslice2.savefig('TMP/layerslice2_' + str(k) + '.svg', fformat='svg',
                           last=False)

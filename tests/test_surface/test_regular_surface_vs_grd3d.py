@@ -43,20 +43,20 @@ def test_get_surface_from_grd3d_porosity():
                                     grid=grd)
 
     # slice grd3d
-    surf.slice_grid3d(phi)
+    surf.slice_grid3d(grd, phi)
 
     surf.to_file(ojn(td, 'surf_slice_grd3d_reek.gri'))
     surf.quickplot(filename=ojn(td, 'surf_slice_grd3d_reek.png'))
 
     # refined version:
     surfr.refine(2)
-    surfr.slice_grid3d(phi)
+    surfr.slice_grid3d(grd, phi)
 
     surfr.to_file(ojn(td, 'surf_slice_grd3d_reek_refined.gri'))
     surfr.quickplot(filename=ojn(td, 'surf_slice_grd3d_reek_refined.png'))
 
     # use zsurf:
-    surf2.slice_grid3d(phi, zsurf=zsurf)
+    surf2.slice_grid3d(grd, phi, zsurf=zsurf)
 
     surf2.to_file(ojn(td, 'surf_slice_grd3d_reek_zslice.gri'))
     surf2.quickplot(filename=ojn(td, 'surf_slice_grd3d_reek_zslice.png'))
@@ -77,7 +77,7 @@ def test_get_surface_from_grd3d_zones():
                                      grid=grd)
 
     # slice grd3d
-    surf.slice_grid3d(zone, sbuffer=1)
+    surf.slice_grid3d(grd, zone, sbuffer=1)
 
     surf.to_file(ojn(td, 'surf_slice_grd3d_reek_zone.gri'))
     surf.quickplot(filename=ojn(td, 'surf_slice_grd3d_reek_zone.png'))

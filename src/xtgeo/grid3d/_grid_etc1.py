@@ -449,7 +449,7 @@ def copy(self):
     """Copy a grid instance (C pointers) and other props.
 
     Returns:
-        A new instance
+        A new instance (attached grid properties will also be unique)
     """
 
     other = xtgeo.grid3d.Grid()
@@ -484,13 +484,9 @@ def copy(self):
         other.subgrids = deepcopy(self.subgrids)
 
     # copy attached properties
-    if self.props:
-        newprops = []
-        for prop in self.props:
-            newprop = prop.copy(newname=prop.name)
-            newprop._grid = other
-            newprops.append(newprop)
-        other.props = newprops
+    if self._props:
+        other._props = self._props.copy()
+        logger.info('Other vs self props %s vs %s', other._props, self._props)
 
     if self._filesrc is not None and '(copy)' not in self._filesrc:
         other._filesrc = self._filesrc + ' (copy)'
