@@ -13,6 +13,7 @@ from xtgeo.grid3d import Grid3D
 
 from xtgeo.grid3d import _gridprops_io
 from xtgeo.grid3d import _gridprops_etc
+from xtgeo.grid3d import _grid_etc1
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -145,6 +146,41 @@ class GridProperties(Grid3D):
                 raise ValueError('Input property is not a valid GridProperty '
                                  'object')
 
+    def get_ijk(self, names=['IX', 'JY', 'KZ'], zero_base=False, mask=False):
+
+        """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
+        J counter, K counter.
+
+        Args:
+            names: a 3 x tuple of names per property (default IX, JY, KZ).
+            mask: If True, then active cells only.
+            zero_base: If True, counter start from 0, otherwise 1 (default=1).
+        """
+
+        # resuse method from grid, but no mask
+        ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,
+                                           zero_base=zero_base, mask=mask)
+
+        # return the objects
+        return ixc, jyc, kzc
+
+    def get_actnum(self, name='ACTNUM', mask=False):
+        """Return an ACTNUM GridProperty object.
+
+        Args:
+            name (str): name of property in the XTGeo GridProperty object.
+            mask (bool): Opposite to most, actnum is returned will all cells
+                as default. Use mask=True to make 0 entries masked.
+
+        Example::
+
+            act = myprops.get_actnum()
+            print('{}% cells are active'.format(act.values.mean() * 100))
+        """
+
+        # borrow function from GridProperty class:
+        return self._props[0].get_actnum(name=name, mask=mask)
+
     # =========================================================================
     # Import and export
     # This class can importies several properties in one go, which is efficient
@@ -157,10 +193,13 @@ class GridProperties(Grid3D):
 
         This class is particulary useful for Eclipse INIT and RESTART files.
 
+        In case of names='all' then all vectors which have a valid length
+        (number of total or active cells in the grid) will be read
+
         Args:
             pfile (str): Name of file with properties
             fformat (str): roff/init/unrst
-            names: list of property names, e.g. ['PORO', 'PERMX']
+            names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
             dates: list of dates on YYYYMMDD format, for restart files
             grid (obj): The grid geometry object (optional if ROFF)
             namestyle (int): 0 (default) for style SWAT_20110223,
@@ -223,12 +262,13 @@ class GridProperties(Grid3D):
         """
         raise NotImplementedError('Not implented yet!')
 
-    def dataframe(self, activeonly=True, ijk=False, xyz=False,
+    def dataframe(self, activeonly=False, ijk=False, xyz=False,
                   doubleformat=False, grid=None):
         """Returns a Pandas dataframe table for the properties
 
         Args:
-            activeonly (bool): If True, return only active cells
+            activeonly (bool): If True, return only active cells, NB!
+                If True, will require a grid instance (see grid key)
             ijk (bool): If True, show cell indices, IX JY KZ columns
             xyz (bool): If True, show cell center coordinates (needs grid).
             doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
@@ -248,15 +288,15 @@ class GridProperties(Grid3D):
             dates = [19991201]
             xpr.from_file(rfile1, fformat='unrst', names=names, dates=dates,
                         grid=grd)
-            df = x.dataframe(activeonly=False, ijk=True, xyz=True)
+            df = x.dataframe(activeonly=False, ijk=True, xyz=True, grid=grd)
 
         """
 
-        df = _gridprops_etc.dataframe(self, activeonly=activeonly, ijk=ijk,
-                                      xyz=xyz, doubleformat=doubleformat,
-                                      grid=grid)
+        dfr = _gridprops_etc.dataframe(self, activeonly=activeonly, ijk=ijk,
+                                       xyz=xyz, doubleformat=doubleformat,
+                                       grid=grid)
 
-        return df
+        return dfr
 
     # =========================================================================
     # Static methods (scans etc)

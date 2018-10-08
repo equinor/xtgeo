@@ -110,8 +110,6 @@ def get_ijk(self, names=['IX', 'JY', 'KZ'], mask=True, zero_base=False):
 
     GrProp = xtgeo.grid3d.GridProperty
 
-    actnum = self.get_actnum()
-
     ashape = (self._ncol, self._nrow, self._nlay)
 
     ix, jy, kz = np.indices(ashape)
@@ -121,6 +119,8 @@ def get_ijk(self, names=['IX', 'JY', 'KZ'], mask=True, zero_base=False):
     kz = kz.ravel()
 
     if mask:
+        actnum = self.get_actnum()
+
         ix = ma.masked_where(actnum.values1d == 0, ix)
         jy = ma.masked_where(actnum.values1d == 0, jy)
         kz = ma.masked_where(actnum.values1d == 0, kz)

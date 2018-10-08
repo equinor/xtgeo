@@ -239,3 +239,13 @@ Extract Pandas dataframe from 3D grid and props
 
 .. literalinclude:: ../examples/grid3d_get_df.py
    :language: python
+
+
+Compute a grid property average across realisations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this example, a technique that keeps memory usage
+under control when computing averages is also presented.
+
+.. literalinclude:: ../examples/grid3d_compute_stats.py
+   :language: python

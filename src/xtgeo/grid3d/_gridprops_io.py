@@ -215,16 +215,29 @@ def import_ecl_output(props, pfile, names=None, dates=None,
         raise ValueError('Grid Geometry object is missing')
 
     if not names:
-        raise ValueError('Name list is missing')
+        raise ValueError('Name list is empty (None)')
 
     fhandle, pclose = _get_fhandle(pfile)
 
     # scan valid keywords
     kwlist = props.scan_keywords(fhandle)
 
-    logger.info('NAMES are %s', names)
+    usenames = list()
 
-    lookfornames = list(set(names))
+    if names == 'all':
+        nact = grid.nactive
+        ntot = grid.ntotal
+
+        for kw in kwlist:
+            kwname, kwtype, nlen, _bs1 = kw
+            if nlen == nact or nlen == ntot:
+                usenames.append(kwname)
+    else:
+        usenames = list(names)
+
+    logger.info('NAMES are %s', usenames)
+
+    lookfornames = list(set(usenames))
 
     possiblekw = []
     for name in lookfornames:
@@ -268,9 +281,9 @@ def import_ecl_output(props, pfile, names=None, dates=None,
             xtg.warn(msg)
             # raise DateNotFoundError(msg)
 
-    usenames = list(names)  # to make copy
+    use2names = list(usenames)  # to make copy
 
-    logger.info('Use names: {}'.format(usenames))
+    logger.info('Use names: {}'.format(use2names))
     logger.info('Valid dates: {}'.format(validdates))
 
     # now import each property
@@ -280,7 +293,7 @@ def import_ecl_output(props, pfile, names=None, dates=None,
         # xprop = dict()
         # soil_ok = False
 
-        for name in usenames:
+        for name in use2names:
 
             if date is None:
                 date = None

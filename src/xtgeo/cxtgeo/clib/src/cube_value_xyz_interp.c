@@ -65,7 +65,7 @@ int cube_value_xyz_interp(
     char s[24] = "cube_value_xyz_interp";
     long ib, useib, ibmax;
     int  ic, jc, kc, i, j, k, ier, ier1, flag;
-    double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz, upx, upy;
+    double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz;
     double usex, usey, dist, previousdist, avginc;
     float p_v[8], val;
 

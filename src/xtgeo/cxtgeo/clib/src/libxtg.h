@@ -1840,6 +1840,17 @@ int grd3d_read_eclrecord (
                           int    debug
                           );
 
+int grd3d_write_eclrecord (FILE *fc,
+                           char *recname,
+                           int rectype,
+                           int *intv,
+                           long nint,
+                           float *floatv,
+                           long nflt,
+                           double *doublev,
+                           long ndbl,
+                           int debug);
+
 void grd3d_zcorn_convert (
                           int nx,
                           int ny,

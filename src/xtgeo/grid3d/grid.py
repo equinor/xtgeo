@@ -390,6 +390,46 @@ class Grid(Grid3D):
 
         dsc.flush()
 
+    def dataframe(self, activeonly=True, ijk=True, xyz=True,
+                  doubleformat=False):
+        """Returns a Pandas dataframe table for the grid and
+        any attached grid properties.
+
+        Note that this dataframe method is rather similar to GridProperties
+        dataframe function, but have other defaults.
+
+        Args:
+            activeonly (bool): If True (default), return only active cells.
+            ijk (bool): If True (default), show cell indices, IX JY KZ columns
+            xyz (bool): If True (default), show cell center coordinates.
+            doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
+                Note that coordinates (if xyz=True) is always 64 bit floats.
+
+        Returns:
+            Pandas dataframe object
+
+        Examples::
+
+            grd = Grid(gfile1, fformat='egrid')
+            xpr = GridProperties()
+
+            names = ['SOIL', 'SWAT', 'PRESSURE']
+            dates = [19991201]
+            xpr.from_file(rfile1, fformat='unrst', names=names, dates=dates,
+                        grid=grd)
+            grd.gridprops = xpr  # attach properties to grid
+
+            df = grd.dataframe()
+
+        """
+
+        if self.gridprops is None:
+            self.gridprops = xtgeo.grid3d.GridProperties()
+
+        return self.gridprops.dataframe(activeonly=activeonly, ijk=ijk,
+                                        xyz=xyz,
+                                        doubleformat=doubleformat, grid=self)
+
     def append_prop(self, prop):
         """Append a single property to the grid"""
 

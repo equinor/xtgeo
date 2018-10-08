@@ -1,6 +1,6 @@
 """
 Compute statistics of N realisations. In this the realisations are "faked" by
-just adding a constant to each loop. It provides and insight on memomery
+just adding a constant to each loop. It provides and insight on memory
 handling and speed.
 """
 
@@ -18,7 +18,7 @@ INITPROPS = ['PORO', 'PERMX']
 RESTARTPROPS = ['PRESSURE', 'SWAT', 'SOIL']
 RDATES = [20001101, 20030101]
 
-NRUN = 60
+NRUN = 10
 
 
 def sum_stats():

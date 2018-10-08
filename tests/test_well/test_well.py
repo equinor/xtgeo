@@ -67,6 +67,24 @@ def test_import_export_many():
         mywell.to_file(wname)
 
 
+# def test_import_as_rms_export_as_hdf5_many():
+#     """ Import RMS and export as HDF5, many"""
+
+#     logger.debug(wfiles)
+
+#     wfile = td + "/mytest.h5"
+#     for filename in glob.glob(wfiles):
+#         logger.info("Importing " + filename)
+#         mywell = Well(filename)
+#         logger.info(mywell.nrow)
+#         logger.info(mywell.ncol)
+#         logger.info(mywell.lognames)
+
+#         wname = td + "/" + mywell.xwellname + ".h5"
+#         logger.info("Exporting " + wname)
+#         mywell.to_file(wfile, fformat='hdf5')
+
+
 def test_get_carr(loadwell1):
     """Get a C array pointer"""
 

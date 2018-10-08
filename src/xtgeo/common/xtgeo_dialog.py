@@ -30,6 +30,9 @@ from __future__ import print_function
 
 import os
 import sys
+from datetime import datetime as dtime
+import getpass
+import platform
 import inspect
 import logging
 import xtgeo
@@ -240,14 +243,16 @@ class XTGeoDialog(object):
         cur_version += str(sys.version_info[1]) + '.' \
             + str(sys.version_info[2])
 
-        app = appname + ' (version ' + str(appversion) + ')'
+        app = appname + ', version ' + str(appversion)
         print('')
         print(_BColors.HEADER)
         print('#' * 79)
         print('#{}#'.format(app.center(77)))
         print('#' * 79)
-        ver = 'XTGeo4Python version ' + xtgeo.__version__
-        ver = ver + ' (CXTGeo v. ' + xtgeo.__version__ + ')'
+        nowtime = dtime.now().strftime('%Y-%m-%d %H:%M:%S')
+        ver = 'Using XTGeo version ' + xtgeo.__version__
+        cur_version += ' @ {} on {} by {}'.format(nowtime, platform.node(),
+                                                  getpass.getuser())
         print('#{}#'.format(ver.center(77)))
         print('#{}#'.format(cur_version.center(77)))
         print('#' * 79)
