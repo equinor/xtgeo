@@ -54,20 +54,19 @@
  */
 
 
-int grd3d_read_eclrecord (FILE *fc,
-                          char *recname,
-                          int rectype, int *intv, long nint, float *floatv,
-                          long nflt, double *doublev, long ndbl,
-                          int debug)
+int grd3d_write_eclrecord (FILE *fc,
+                           char *recname,
+                           int rectype, int *intv, long nint, float *floatv,
+                           long nflt, double *doublev, long ndbl,
+                           int debug)
 {
 
     char s[24] = "grd3d_write_eclrecord";
     int ib, swap = 0;
     int myint, mylen;
     float myfloat;
-    double mydouble;
-    char mychar[9]="", mytype[5]=""
-    long reclength = 0, nrecs, icc;
+    char mychar[9]="", mytype[5]="";
+    long reclength = 0, nrecs;
 
     xtgverbose(debug);
 
@@ -113,4 +112,5 @@ int grd3d_read_eclrecord (FILE *fc,
     }
     fwrite(&myint, 1, 4, fc);
 
+    return EXIT_SUCCESS;
 }
