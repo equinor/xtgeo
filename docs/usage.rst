@@ -75,8 +75,8 @@ of these properties can be changed, which actually changes the map
    # Note that changing nrow and ncol is not possible to do directly.
 
 
-Sample a surface fro 3D grid
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Sample a surface from a 3D grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../examples/surface_slice_grid3d.py
    :language: python
@@ -248,4 +248,14 @@ In this example, a technique that keeps memory usage
 under control when computing averages is also presented.
 
 .. literalinclude:: ../examples/grid3d_compute_stats.py
+   :language: python
+
+Make a CSV file from Eclipse INIT data (aka ERT ECL)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example on how to create a CSV file from all INIT
+properties. Example is for Eclipse format, but shall
+work also with ROFF input.
+
+.. literalinclude:: ../examples/grid3d_print_init_csv.py
    :language: python
