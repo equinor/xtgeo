@@ -62,6 +62,32 @@ def test_roffbin_import0():
     assert isinstance(g, Grid)
 
 
+def test_roffbin_get_dataframe_for_grid():
+    """Import ROFF grid and return a grid dataframe (no props)"""
+
+    grd = Grid(emegfile, fformat='roff')
+
+    assert isinstance(grd, Grid)
+
+    df = grd.dataframe()
+    print(df.head())
+
+    assert len(df) == grd.nactive
+
+    assert df['X_UTME'][0] == 459176.7937727844
+
+    assert len(df.columns) == 6
+
+    df = grd.dataframe(activeonly=False)
+    print(df.head())
+
+    assert len(df.columns) == 7
+    assert len(df) != grd.nactive
+
+    assert len(df) == grd.ncol * grd.nrow * grd.nlay
+
+
+
 def test_subgrids():
     """Import ROFF and test different subgrid functions."""
 

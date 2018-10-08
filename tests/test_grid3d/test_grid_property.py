@@ -51,6 +51,18 @@ def test_create():
     (repr(m.values))
 
 
+def test_create_actnum():
+    x = GridProperty()
+    act = x.get_actnum()
+
+    print(x.values)
+    print(act.values)
+    print(x.nactive)
+    print(x.ntotal)
+
+    assert x.nactive < x.ntotal
+
+
 def test_roffbin_import1():
 
     logger.info('Name is {}'.format(__name__))

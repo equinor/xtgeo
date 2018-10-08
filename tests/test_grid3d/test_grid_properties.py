@@ -216,7 +216,11 @@ def test_get_dataframe():
     names = ['SOIL', 'SWAT', 'PRESSURE']
     dates = [19991201]
     x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g)
-    df = x.dataframe(activeonly=True, ijk=True, xyz=True)
+    df = x.dataframe(activeonly=True, ijk=True, xyz=False)
+
+    print(df.head())
 
     assert df['SWAT_19991201'].mean() == pytest.approx(0.87802, abs=0.001)
     assert df['PRESSURE_19991201'].mean() == pytest.approx(334.523, abs=0.005)
+
+#    df = x.dataframe(activeonly=True, ijk=True, xyz=True)

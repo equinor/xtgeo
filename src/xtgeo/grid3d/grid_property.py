@@ -160,6 +160,7 @@ class GridProperty(Grid3D):
         testmask = False
         if values is None:
             values = ma.zeros((ncol, nrow, nlay))
+            values += 99
             testmask = True
 
         if values.shape != (ncol, nrow, nlay):
@@ -190,7 +191,7 @@ class GridProperty(Grid3D):
 
         if testmask:
             # make some undef cells (for test)
-            self._values[0:4] = self._undef
+            self._values[0:4, 0, 0:2] = self._undef
             # make it masked
             self._values = ma.masked_greater(self._values, self._undef_limit)
 
@@ -206,7 +207,7 @@ class GridProperty(Grid3D):
                            grid=grid, date=date)
 
     def __del__(self):
-        logger.info('DELETING property instance')
+        logger.info('DELETING property instance %s', self.name)
         self._values = None
         for myvar in vars(self).keys():
             del myvar
@@ -228,6 +229,23 @@ class GridProperty(Grid3D):
     def dimensions(self):
         """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
         return (self._ncol, self._nrow, self._nlay)
+
+    @property
+    def nactive(self):
+        """int: Returns the number of active cells (read only)."""
+        return len(self.actnum_indices)
+
+    @property
+    def actnum_indices(self):
+        """Returns the 1D ndarray which holds the indices for active cells
+        given in 1D, C order (read only).
+
+        """
+        actnumv = self.get_actnum()
+        actnumv = np.ravel(actnumv.values)
+        self._actnum_indices = np.flatnonzero(actnumv)
+
+        return self._actnum_indices
 
     @property
     def isdiscrete(self):
@@ -475,6 +493,40 @@ class GridProperty(Grid3D):
         del val
 
         return npv3d
+
+    def get_actnum(self, name='ACTNUM', mask=False):
+        """Return an ACTNUM GridProperty object.
+
+        Args:
+            name (str): name of property in the XTGeo GridProperty object.
+            mask (bool): Opposite to most, actnum is returned will all cells
+                as default. Use mask=True to make 0 entries masked.
+
+        Example::
+
+            act = myprop.get_actnum()
+            print('{}% cells are active'.format(act.values.mean() * 100))
+        """
+
+        act = GridProperty(ncol=self._ncol, nrow=self._nrow,
+                           nlay=self._nlay,
+                           name=name, discrete=True)
+
+        orig = self.values
+        vact = np.ones(self.values.shape)
+        print(vact)
+        vact[orig.mask] = 0
+        print(vact)
+
+        if mask:
+            vact = ma.masked_equal(vact, 0)
+
+        act.values = vact.astype(np.int32)
+        act._codes = {0: '0', 1: '1'}
+        act._ncodes = 2
+
+        # return the object
+        return act
 
     def get_active_npvalues1d(self):
         """Return the grid property as a 1D numpy array (copy), active

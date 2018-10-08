@@ -151,6 +151,15 @@ class Well(object):
         """
         if (fformat is None or fformat == 'rms_ascii'):
             _well_io.export_rms_ascii(self, wfile)
+        elif (fformat == 'hdf5'):
+            print('DINGDONG')
+
+            with pd.HDFStore(wfile, 'a', complevel=9, complib='zlib') as store:
+                logger.info('export to HDF5 %s', wfile)
+                store[self._wname] = self._df
+                meta = dict()
+                meta['name'] = self._wname
+                store.get_storer(self._wname).attrs['metadata'] = meta
 
     # =========================================================================
     # Get and Set properties (tend to pythonic properties; not javaic get
