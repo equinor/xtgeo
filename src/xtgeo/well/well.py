@@ -428,7 +428,8 @@ class Well(object):
 
     def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None):
         """
-        Return a fence polyline as a numpy array.
+        Return a fence polyline as a numpy array. If not possible, return
+        False
 
         (Perhaps this should belong to a polygon class?)
         """
@@ -442,6 +443,10 @@ class Well(object):
         if tvdmin is not None:
             self._df = df[df['Z_TVDSS'] > tvdmin]
 
+        if len(self._df) < 2:
+            xtg.warn('Well does not enough points in interval, outside range?')
+            return False
+
         ptr_xv = self.get_carray('X_UTME')
         ptr_yv = self.get_carray('Y_UTMN')
         ptr_zv = self.get_carray('Z_TVDSS')
@@ -454,10 +459,10 @@ class Well(object):
 
         ptr_nlen = _cxtgeo.new_intpointer()
 
-        ier = _cxtgeo.pol_resample(self.nrow, ptr_xv, ptr_yv, ptr_zv,
-                                   sampling, extend, nbuf, ptr_nlen,
-                                   ptr_xov, ptr_yov, ptr_zov, ptr_hlv,
-                                   0, xtg_verbose_level)
+        ier = _cxtgeo.pol_resampling(
+            self.nrow, ptr_xv, ptr_yv, ptr_zv, sampling, sampling * extend,
+            nbuf, ptr_nlen, ptr_xov, ptr_yov, ptr_zov, ptr_hlv,
+            0, xtg_verbose_level)
 
         if ier != 0:
             sys.exit(-2)
@@ -468,7 +473,7 @@ class Well(object):
         npyarr = self._convert_carr_double_np(ptr_yov, nlen=nlen)
         npzarr = self._convert_carr_double_np(ptr_zov, nlen=nlen)
         npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
-        npharr = npharr - sampling * extend
+        # npharr = npharr - sampling * extend ???
 
         x = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
         x = np.reshape(x, (nlen, 4), order='F')

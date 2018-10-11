@@ -80,6 +80,11 @@ int cube_value_xyz_cell(
         ier = cube_value_ijk(i, j, k, nx, ny, nz,
                              p_val_v, &val, debug);
         *value = val;
+
+        if (debug > 2) {
+            xtg_speak(s,3,"Cube I J K and value is %d %d %d ==> %f",
+                      i, j, k, val);
+        }
     }
     else{
         *value = UNDEF;

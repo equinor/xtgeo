@@ -1294,6 +1294,12 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
                  double *xov, double *yov, double *zov, double *hlen,
                  int option, int debug);
 
+/* better version than pol_resample: */
+int pol_resampling(int nlen, double *xv, double *yv, double *zv,
+                   double smpl, double hext, int nbuf, int *nolen,
+                   double *xov, double *yov, double *zov, double *hlen,
+                   int option, int debug);
+
 /*
  *=============================================================================
  * CUBE (REGULAR 3D)
@@ -1631,7 +1637,32 @@ int cube_resample_cube(
                        int debug
                        );
 
-
+int cube_get_randomline(
+                        double *swig_np_dbl_in_v1,  // *xvec,
+                        long n_swig_np_dbl_in_v1,   // nxvec,
+                        double *swig_np_dbl_in_v2,  // *yvec,
+                        long n_swig_np_dbl_in_v2,   // nyvec,
+                        double zmin,
+                        double zmax,
+                        int nzsam,
+                        double xori,
+                        double xinc,
+                        double yori,
+                        double yinc,
+                        double zori,
+                        double zinc,
+                        double rot_deg,
+                        int yflip,
+                        int nx,
+                        int ny,
+                        int nz,
+                        float *swig_np_flt_in_v1,   // *p_val_v
+                        long n_swig_np_flt_in_v1,    // ncube
+                        double *swig_np_dbl_aout_v1,  // *values
+                        long n_swig_np_dbl_aout_v1,  // nvalues
+                        int option,
+                        int debug
+                        );
 /*
  *=============================================================================
  * GRID (3D) CORNERPOINTS

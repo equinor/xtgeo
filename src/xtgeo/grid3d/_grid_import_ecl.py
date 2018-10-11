@@ -31,6 +31,9 @@ def import_ecl_egrid(self, gfile):
     kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=1000,
                                   dataframe=False, dates=False)
     bpos = {}
+    for name in ('COORD', 'ZCORN', 'ACTNUM', 'MAPAXES'):
+        bpos[name] = -1  # initially
+
     for kwitem in kwlist:
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == 'GRIDHEAD':
@@ -39,7 +42,9 @@ def import_ecl_egrid(self, gfile):
                                      kwbyte)
             ncol, nrow, nlay = gridhead[1:4].tolist()
             logger.info('%s %s %s', ncol, nrow, nlay)
-        elif kwname in ('COORD', 'ZCORN', 'ACTNUM', 'MAPAXES'):
+        elif kwname in ('COORD', 'ZCORN', 'ACTNUM'):
+            bpos[kwname] = kwbyte
+        elif kwname == 'MAPAXES':  # not always present
             bpos[kwname] = kwbyte
 
     self._ncol = ncol
