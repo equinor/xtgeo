@@ -62,7 +62,7 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
-#define MBUFFER = 10000
+#define MBUFFER 10000
 
 int pol_resampling(int nlen, double *xv, double *yv, double *zv,
                    double smpl, double hext, int nbuf, int *nolen,
@@ -72,7 +72,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
     double *txv, *tyv, *tzv, *thlen, *thlenx;
     double tchlen, usmpl, angr_start, angr_end, angd, vlen, uhext;
     double length1, length2, dscaler, x1, x2, y1, y2, z1, z2, xr, yr, zr;
-    double delta, x0, y0, z0, x3, y3, z3, xs, ys, zs, xe, ye, ze, hxxd, dist;
+    double delta, x0, y0, z0, x3, y3, xs, ys, zs, xe, ye, ze, hxxd, dist;
     int ier, nsam, ic, nct = 0, i, naddr;
 
     char  sbn[24] = "pol_resampling";
@@ -83,7 +83,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
     thlen = calloc(nlen, sizeof(double));
 
     /* estimate additonal alloc for refinement, plus a large buffer */
-    naddr = nlen + 2 + 2* (x_mint(hext / smpl) + 1) + MBUFFER;
+    naddr = nlen + MBUFFER; //nlen + 2 + 2* (x_nint(hext / smpl) + 1) + MBUFFER;
 
     txv = calloc(naddr, sizeof(double));
     tyv = calloc(naddr, sizeof(double));
