@@ -22,15 +22,19 @@
  * DESCRIPTION:
  *    Take in an existing polyline, and return a resampled polyline. Probably
  *    best to avoid closed polygons?
- *    This can also be used for makeing fance from well paths!
+ *    This can also be used for making fence from well paths!
+ *
+ *    From oct 10, 2018: It is important that sampling is horizontally uniform,
+ *    hence smpl is recalculated as well as the extensions. Hence input will be
+ *    estimates only.
  *
  * ARGUMENTS:
  *    nlen           i     lenght of input vector
  *    xv             i     X array
  *    yv             i     Y array
  *    zv             i     Z array
- *    smpl           i     Sample distance
- *    next           i     Extension in both ends distance (as next*smpl)
+ *    smpl           i     Sample distance input
+ *    next           i     Extension in both ends distance (as next*smpl) input
  *    nbuf           i     Allocated length of output vectors
  *    nolen          o     Actual length of output vectors
  *    xov            o     X array output
@@ -62,10 +66,10 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
                  double *xov, double *yov, double *zov, double *hlen,
                  int option, int debug)
 {
-    int i, n, ier;
+    int i, n, ier, nsam, nnext;
     double x0, y0, z0, x1=0.0, y1=0.0, z1, x2, y2, z2, xr, yr, zr;
     double length1, length2, delta, dscaler;
-    double tmp_hlen[nlen], xsmpl, xhlen;
+    double tmp_hlen[nlen], xsmpl, xhlen, xect;
     double x00, x01, x10, x11, y00, y01, y10, y11;
 
     char  s[24]="pol_resample";
@@ -74,10 +78,10 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     xtg_speak(s, 2, "Running with sampling %f, first entry is %f %f %f",
               smpl, xv[0], yv[0], zv[0]);
 
-    /* find the tmp_hlen vector */
+    /* find the tmp_hlen vector, which is the horizontal cumulative length */
     ier = pol_geometrics(nlen, xv, yv, zv, tmp_hlen, debug);
 
-    xhlen = tmp_hlen[nlen - 1];
+    xhlen = tmp_hlen[nlen - 1];  /* total horizontal length */
     if (xhlen < 1.0) xhlen = 1.0;
 
     /* the extension vector input is based on the the first points within a
@@ -86,7 +90,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
      * i.e. x00 is first point and x01 are second X points for START extension
      */
 
-    x01 = xv[0];   /* second point on START extension */
+    x01 = xv[0];        /* second point on START extension */
     y01 = yv[0];
 
     x11 = xv[nlen-1];   /* second point on END extension */
@@ -97,9 +101,17 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     x10 = -999;
     y10 = -999;
 
-    xsmpl = smpl;
 
-    if (xhlen < smpl) {
+    /* recompute sampling and extension so it becomes uniform */
+    nsam = 1 + (int)(xhlen / smpl);
+    if (nsam < 4) nsam = 4;
+    xsmpl = xhlen/nsam;
+
+    xect = next * smpl;
+    nnext = xect / xsmpl;
+
+
+    if (xhlen < xsmpl) {  /* never occur? */
         x00 = xv[nlen-1];
         y00 = yv[nlen-1];
         x10 = xv[0];
@@ -107,7 +119,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     }
     else{
         for (i=0; i<nlen; i++) {
-            if (tmp_hlen[i] > smpl) {
+            if (tmp_hlen[i] > xsmpl) {
                 x00 = xv[i];
                 y00 = yv[i];
                 break;
@@ -115,7 +127,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
         }
 
         for (i=nlen-1; i>=0; i--) {
-            if ((xhlen - tmp_hlen[i]) > smpl) {
+            if ((xhlen - tmp_hlen[i]) > xsmpl) {
                 x10 = xv[i];
                 y10 = yv[i];
                 break;
@@ -127,9 +139,9 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     z1 = z0;
 
     n = 0;
-    if (next > 0) {
-        for (i=next; i>0; i--) {
-            ier = x_vector_linint2(x00, y00, z0, x01, y01, z1, smpl*i,
+    if (nnext > 0) {
+        for (i=nnext; i>0; i--) {
+            ier = x_vector_linint2(x00, y00, z0, x01, y01, z1, xsmpl*i,
                                    &xr, &yr, &zr, 1, debug);
 
             if (ier != 0) {
@@ -160,7 +172,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     /* now resample along the given input polyline, but beware if the total
      * length is less than sample distance*/
 
-    if (xhlen < smpl) {
+    if (xhlen < xsmpl) {
         xsmpl = xhlen/4;
     }
 
@@ -228,13 +240,18 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
      * but now x0 is the last sampled point
      */
 
-    if (next > 0) {
+    if (nnext > 0) {
         if (debug>1) xtg_speak(s,2, "Last point on well is %f %f %f: ",
                                x1, y1, z1);
         z0 = z1;
 
-        for (i=1; i<=next; i++) {
-            ier = x_vector_linint2(x10, y10, z0, x11, y11, z1, smpl*i,
+        /* xov[n] = x1; */
+        /* yov[n] = y1; */
+        /* zov[n] = z1; */
+        /* n++; */
+
+        for (i=0; i<=nnext; i++) {
+            ier = x_vector_linint2(x10, y10, z0, x11, y11, z1, xsmpl*i,  // xsmpl not smpl?
                                    &xr, &yr, &zr, 2, debug);
 
             if (ier != 0) {
@@ -278,7 +295,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
             if (i>0) {
                 delta = hlen[i]-hlen[i-1];
             }
-            xtg_speak(s,2, "ALL incl EXT coords: "
+            xtg_speak(s,0, "ALL incl EXT coords: "
                       "I= %d .. %f  %f  %f   %f  (%f)",
                       i, xov[i], yov[i], zov[i], hlen[i], delta);
         }

@@ -7,6 +7,7 @@ from collections import OrderedDict
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import BasePlot
 
@@ -23,6 +24,7 @@ class XSection(BasePlot):
         well (Well): XTGeo well object.
         surfaces (list): List of XTGeo RegularSurface objects
         surfacenames (list): List of surface names (str)for legend
+        cube (Cube): A XTGeo Cube instance
         colormap (str): Name of colormap, e.g. 'Set1'. Default is 'xtgeo'
         outline (obj): XTGeo Polygons object
         tight (bool): True for tight_layout (False is default)
@@ -31,17 +33,14 @@ class XSection(BasePlot):
 
     def __init__(self, zmin=0, zmax=9999, well=None, surfaces=None,
                  colormap=None, zonelogshift=0, surfacenames=None,
-                 outline=None, tight=False):
-
-        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        logger = xtg.functionlogger(clsname)
-        self._xtg = XTGeoDialog()
+                 cube=None, outline=None, tight=False):
 
         self._zmin = zmin
         self._zmax = zmax
         self._well = well
         self._surfaces = surfaces
         self._surfacenames = surfacenames
+        self._cube = cube
         self._zonelogshift = zonelogshift
         self._tight = tight
         self._outline = outline
@@ -398,6 +397,46 @@ class XSection(BasePlot):
 
         return ax, bba
 
+    def plot_cube(self, colormap='seismic',
+                  vmin=None, vmax=None, alpha=0.7):
+        """Plot a cube backdrop.
+
+        Args:
+            colormap (ColorMap): Name of color map (default 'seismic')
+            vmin (float): Minimum value in plot.
+            vmax (float); Maximum value in plot
+            alpha (float): Alpah blending number beween 0 and 1.
+
+        Raises:
+            ValueError: No cube is loaded
+
+        """
+        if self._cube is None:
+            raise ValueError('Ask for plot cube, but noe cube is loaded')
+
+        ax, bba = self._currentax(axisname='main')
+
+        if self._wfence is None:
+            wfence = self._well.get_fence_polyline(sampling=20, extend=5,
+                                                   tvdmin=self._zmin)
+            self._wfence = wfence
+
+        zvv = self._cube.get_randomline(self._wfence, zmin=self._zmin,
+                                        zmax=self._zmax, zincrement=2.0)
+
+        h1, h2, v1, v2, arr = zvv
+
+        arr = ma.masked_greater(arr, xtgeo.UNDEF_LIMIT)
+
+        print(ma.count_masked(arr))
+
+        if colormap is None:
+            colormap = 'seismic'
+
+        ax.imshow(arr, cmap=colormap, interpolation='sinc',
+                  vmin=vmin, vmax=vmax,
+                  extent=(h1, h2, v2, v1), aspect='auto', alpha=alpha)
+
     def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
                       colormap=None, onecolor=None, linewidth=1.0, legend=True,
                       legendtitle=None, fancyline=False, axisname='main',
@@ -449,10 +488,14 @@ class XSection(BasePlot):
         # need to resample the surface along the well trajectory
         # create a sampled fence from well path, and include extension
         # This fence is numpy vector [[XYZ ...]]
-        wfence = self._well.get_fence_polyline(sampling=20, extend=5,
-                                               tvdmin=self._zmin)
+        if self._wfence is None:
+            wfence = self._well.get_fence_polyline(sampling=20, extend=5,
+                                                   tvdmin=self._zmin)
 
-        self._wfence = wfence
+            self._wfence = wfence
+
+        if self._wfence is False:
+            return
 
         # sample the horizon to the fence:
         colortable = self.get_colormap_as_table()
@@ -461,7 +504,7 @@ class XSection(BasePlot):
             if onecolor:
                 usecolor = onecolor
             if not fill:
-                hfence = surfaces[i].get_fence(wfence)
+                hfence = surfaces[i].get_fence(self._wfence)
                 if fancyline:
                     xcol = 'white'
                     c = usecolor
@@ -478,11 +521,11 @@ class XSection(BasePlot):
                             c=xcol)
             else:
                 # need copy() .. why?? found by debugging...
-                hfence1 = surfaces[i].get_fence(wfence).copy()
+                hfence1 = surfaces[i].get_fence(self._wfence).copy()
                 x1 = hfence1[:, 3]
                 y1 = hfence1[:, 2]
                 if i < (nlen - 1):
-                    hfence2 = surfaces[i + 1].get_fence(wfence).copy()
+                    hfence2 = surfaces[i + 1].get_fence(self._wfence).copy()
                     y2 = hfence2[:, 2]
                 else:
                     y2 = y1.copy()
@@ -566,7 +609,7 @@ class XSection(BasePlot):
             logger.warning('Nothing to plot (well outside Z range?)')
             return False
 
-    def savefig(self, filename, fformat='png'):
+    def savefig(self, filename, fformat='png', closeplot=True):
         """Call to matplotlib.pyplot savefig().
 
         Args:
@@ -583,8 +626,9 @@ class XSection(BasePlot):
 
         if self._showok:
             plt.savefig(filename, format=fformat)
-            plt.close(self._fig)
+            if closeplot:
+                plt.close(self._fig)
             return True
         else:
-            logger.warning('Nothing to plot (well outside Z range?)')
+            xtg.warn('Nothing to plot (well outside Z range?)')
             return False

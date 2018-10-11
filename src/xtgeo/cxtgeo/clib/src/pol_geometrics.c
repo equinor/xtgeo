@@ -27,7 +27,7 @@
  *    nlen           i     lenght of vector
  *    xv             i     X array
  *    yv             i     Y array
- *    zv             i     Z array
+ *    zv             i     Z array (not used)
  *    hlenv          o     Array describing horizontal cumulative length,
  *                         starting as 0.0 in first point
  *
@@ -49,8 +49,7 @@
 #include "libxtg_.h"
 
 int pol_geometrics(int nlen, double *xv, double *yv, double *zv,
-                   double *hlenv,
-                   int debug)
+                   double *hlenv, int debug)
 {
     int i;
     double hincr;

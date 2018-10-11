@@ -11,7 +11,7 @@ xtg = XTGeoDialog()
 
 _cxtgeo.xtg_verbose_file('NONE')
 
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 logger = xtg.functionlogger(__name__)
 
@@ -40,7 +40,7 @@ def swapaxes(self):
     ier = _cxtgeo.cube_swapaxes(ncol, nrow, self.nlay, yflip,
                                 self.xori, xinc,
                                 self.yori, yinc, rota, values1d,
-                                traceid1d, 0, xtg_verbose_level)
+                                traceid1d, 0, XTGDEBUG)
     if ier != 0:
         raise Exception
 
@@ -124,7 +124,7 @@ def cropping(self, icols, jrows, klays):
     ier = _cxtgeo.cube_xy_from_ij(1 + icol1, 1 + jrow1, xp, yp, self.xori,
                                   self.xinc, self.yori, self.yinc, ncol,
                                   nrow, self.yflip, self.rotation, 0,
-                                  xtg_verbose_level)
+                                  XTGDEBUG)
 
     if ier != 0:
         raise RuntimeError('Unexpected error, code is {}'.format(ier))
@@ -169,7 +169,7 @@ def resample(self, other, sampling='nearest', outside_value=None):
                                      other.yflip,
                                      values2a,
                                      opt1, opt2, opt2value,
-                                     xtg_verbose_level)
+                                     XTGDEBUG)
 
     if ier == -4:
         warnings.warn('Less than 10% of origonal cube sampled', RuntimeWarning)
@@ -178,6 +178,49 @@ def resample(self, other, sampling='nearest', outside_value=None):
         raise ValueError('No cube overlap in sampling')
 
     logger.info('Resampling done!')
+
+
+def get_randomline(self, fencespec, zmin=None, zmax=None,
+                   zincrement=None):
+    """Get a random line from a fence spesification"""
+
+    if not isinstance(fencespec, np.ndarray):
+        raise ValueError('Fence is not a numpy array')
+
+    if not len(fencespec.shape) == 2:
+        raise ValueError('Fence is not a 2D numpy')
+
+    xcoords = fencespec[:, 0]
+    ycoords = fencespec[:, 1]
+    hcoords = fencespec[:, 3]
+
+    for i in range(hcoords.shape[0] - 1):
+        dh = hcoords[i + 1] - hcoords[i]
+        logger.info('Delta H along well path: %s', dh)
+
+    zcubemax = self._zori + (self._nlay - 1) * self._zinc
+    if zmin is None or zmin < self._zori:
+        zmin = self._zori
+
+    if zmax is None or zmax > zcubemax:
+        zmax = zcubemax
+
+    if zincrement is None:
+        zincrement = self._zinc / 2.0
+
+    nzsam = int(zmax - zmin / zincrement)
+
+    nsamples = xcoords.shape[0] * nzsam
+
+    ier, values = _cxtgeo.cube_get_randomline(
+        xcoords, ycoords, zmin, zmax, nzsam, self._xori, self._xinc,
+        self._yori, self._yinc, self._zori, self._zinc, self._rotation,
+        self._yflip, self._ncol, self._nrow, self._nlay,
+        self._values.reshape(-1), nsamples, 0, XTGDEBUG)
+
+    arr = values.reshape((xcoords.shape[0], nzsam)).T
+
+    return (hcoords[0], hcoords[-1], zmin, zmax, arr)
 
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order
