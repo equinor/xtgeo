@@ -126,8 +126,10 @@ int grd3d_imp_ecl_egrid (
         cx = tmp_coord[ib];
         cy = tmp_coord[ib+1];
         cz = tmp_coord[ib+2];
-        x_mapaxes(bpos_mapaxes, &cx, &cy, xma1, yma1, xma2, yma2,
-                  xma3, yma3, 0.0, 0.0, 0.0, 0.0, 2, debug);
+        if (bpos_mapaxes > 0) {
+            x_mapaxes(bpos_mapaxes, &cx, &cy, xma1, yma1, xma2, yma2,
+                      xma3, yma3, 0.0, 0.0, 0.0, 0.0, 2, debug);
+        }
         p_coord_v[ib] = cx;
         p_coord_v[ib+1] = cy;
         p_coord_v[ib+2] = cz;
