@@ -1701,6 +1701,12 @@ class RegularSurface(object):
         # This is using the more versatile Map class in XTGeo. Most kwargs
         # is just passed as is. Prefer using Map() directly in apps?
 
+        ncount = self.values.count()
+        if ncount < 5:
+            xtg.warn('None or too few map nodes for plotting. Skip '
+                     'output {}!'.format(filename))
+            return
+
         mymap = Map()
 
         logger.info('Infotext is <%s>', infotext)

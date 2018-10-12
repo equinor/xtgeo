@@ -231,7 +231,7 @@ def test_eclgrid_import1_cells():
 
 
 def test_eclgrid_import2():
-    """Eclipse EGRID import."""
+    """Eclipse EGRID import, also change ACTNUM."""
     g = Grid()
     logger.info("Import Eclipse GRID...")
     g.from_file(reekfile, fformat="egrid")
@@ -244,6 +244,13 @@ def test_eclgrid_import2():
     actnum = g.get_actnum()
     print(actnum.values[12:13, 22:24, 5:6])
     tsetup.assert_equal(actnum.values[12, 22, 5], 0, txt='ACTNUM 0')
+
+    actnum.values[:, :, :] = 1
+    actnum.values[:, :, 4:6] = 0
+    g.set_actnum(actnum)
+    newactive = g.ncol * g.nrow * g.nlay - 2 * (g.ncol * g.nrow)
+    tsetup.assert_equal(g.nactive, newactive, txt='Changed ACTNUM')
+    g.to_file(join(td, 'reek_new_actnum.roff'))
 
 
 def test_eclgrid_import3():

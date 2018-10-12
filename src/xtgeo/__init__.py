@@ -47,9 +47,13 @@ from xtgeo.common.constants import UNDEF_INT_LIMIT
 
 # from xtgeo.xyz import _xyz
 
-from xtgeo._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+# from xtgeo._version import get_versions
+# __version__ = get_versions()['version']
+# del get_versions
+
+from xtgeo._theversion import theversion
+__version__ = theversion()
+# del get_versions
 
 # some function wrappers to initiate objects from imports
 from xtgeo.surface.regular_surface import surface_from_file
