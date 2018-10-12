@@ -32,9 +32,10 @@ test_requirements = [
 # -----------------------------------------------------------------------------
 # Explaining versions:
 # As system the PEP 440 major.minor.micro is used:
-# - major: API or any larger changes
-# - minor: Functionality added, shall have backward compatibiility
-# - micro: Bug fix with no expected side effects
+# - major: API or any very larger changes
+# - minor: Functionality added, mostly backward compatibility but some
+#          functions may change. Also includes larger refactoring of code.
+# - micro: Added functionality and bug fixes with no expected side effects
 # - Provide a tag on the form 3.4.0 for each release!
 #
 # Also, a verymicro may _sometimes_ exist (allowed in PEP440); which can be:
@@ -45,10 +46,13 @@ test_requirements = [
 # Hence, use major.minor.micro or major.minor.micro.verymicro scheme.
 # -----------------------------------------------------------------------------
 
+
 def the_version():
     """Process the version, to avoid non-pythonic version schemes.
 
     Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.2.dev0
+
+    This function must be ~identical to xtgeo._theversion.py
     """
 
     version = versioneer.get_version()

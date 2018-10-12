@@ -745,6 +745,24 @@ class Grid(Grid3D):
         # return the object
         return act
 
+    def set_actnum(self, actnum):
+        """Modify the existing active cell index, ACTNUM.
+
+        Args:
+            actnum (GridProperty): a gridproperty instance with 1 for active
+                cells, 0 for inactive cells
+
+        Example::
+
+            act = mygrid.get_actnum()
+            act.values[:, :, :] = 1
+            act.values[:, :, 4] = 0
+            grid.set_actnum(act)
+        """
+
+        self._p_actnum_v = _gridprop_lowlevel.update_carray(
+            actnum, discrete=True)
+
     def get_dz(self, name='dZ', flip=True, mask=True):
         """
         Return the dZ as GridProperty object.
