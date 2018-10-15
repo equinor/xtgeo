@@ -22,7 +22,7 @@ import os.path
 import copy
 
 import numpy as np
-import numpy.ma as ma
+import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
@@ -41,11 +41,13 @@ from xtgeo.grid3d import _gridprop_export
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
+# pylint: disable=logging-format-interpolation, too-many-public-methods
 
 # =============================================================================
 # Functions outside the class, for rapid access. Will be exposed as
-# xxx = xtgeo.gridproperty_from_file. Cf __init__ at top level
+# xxx = xtgeo.gridproperty_from_file. pylint: disable=fixme
 # =============================================================================
+
 
 def gridproperty_from_file(pfile, fformat='guess', name='unknown',
                            grid=None, date=None):
@@ -139,8 +141,7 @@ class GridProperty(Grid3D):
 
     def __init__(self, *args, **kwargs):
 
-        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        logger.info(clsname)
+        super(GridProperty, self).__init__(*args, **kwargs)
 
         ncol = kwargs.get('ncol', 5)
         nrow = kwargs.get('nrow', 12)
@@ -174,14 +175,15 @@ class GridProperty(Grid3D):
         self._name = name           # property name
         self._date = None           # property may have an assosiated date
         self._codes = {}            # code dictionary (for discrete)
+        self._filesrc = None
 
         self._undef = _cxtgeo.UNDEF
         self._undef_limit = _cxtgeo.UNDEF_LIMIT
 
         self._undef_i = _cxtgeo.UNDEF_INT
         self._undef_ilimit = _cxtgeo.UNDEF_INT_LIMIT
+        self._actnum_indices = None
 
-        self._filesrc = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
 
         self._roxar_dtype = np.float32
@@ -287,39 +289,37 @@ class GridProperty(Grid3D):
         allowedfloat = [np.float16, np.float32, np.float64]
         allowedint = [np.uint8, np.uint16, np.int16, np.int32, np.int64]
 
-        ok = True
+        okv = True
         if self.isdiscrete:
             if dtype in allowedint:
                 self.values = self.values.astype(dtype)
             else:
-                ok = False
+                okv = False
                 msg = ('{}: Wrong input for dtype. Use one of {}!'
                        .format(__name__, allowedint))
         else:
             if dtype in allowedfloat:
                 self.values = self.values.astype(dtype)
             else:
-                ok = False
+                okv = False
                 msg = ('{}: Wrong input for dtype. Use one of {}!'
                        .format(__name__, allowedfloat))
 
-        if not ok:
+        if not okv:
             raise ValueError(msg)
 
     @property
+    def filesrc(self):
+        """Return or set file src (if any)"""
+        return self._filesrc
+
+    @filesrc.setter
+    def filesrc(self, src):
+        self._filesrc = src
+
+    @property
     def roxar_dtype(self):
-        """Return or set the values for numpy datatype when using ROXAPI.
-
-        This dtype is either np.float32 (continuous) or np.uint8 or
-        np.uint16 for discrete. Note that this means that a roxar discrete
-        cannot be negative!
-
-        Remember that XTGeo internal uses np.float64 for continous or
-        np.int32 for discrete grid properties.
-        """
-        if not self._roxar_dtype:
-            self._roxar_dtype = np.float32
-
+        """Return or set the roxar dtype (if any)"""
         return self._roxar_dtype
 
     @roxar_dtype.setter
@@ -362,7 +362,7 @@ class GridProperty(Grid3D):
     @values.setter
     def values(self, values):
         if (isinstance(values, np.ndarray) and
-           not isinstance(values, ma.MaskedArray)):
+                not isinstance(values, ma.MaskedArray)):
 
             values = ma.array(values)
             values = values.reshape((self._ncol, self._nrow, self._nlay))
@@ -384,8 +384,8 @@ class GridProperty(Grid3D):
             else:
                 self.discrete_to_continuous()
 
-        logger.debug('Values shape: {}'.format(self._values.shape))
-        logger.debug('Flags: {}'.format(self._values.flags.c_contiguous))
+        logger.debug('Values shape: %s', self._values.shape)
+        logger.debug('Flags: %s', self._values.flags.c_contiguous)
 
     @property
     def ntotal(self):
@@ -396,6 +396,13 @@ class GridProperty(Grid3D):
     def roxorigin(self):
         """Returns True if the property comes from ROXAPI"""
         return self._roxorigin
+
+    @roxorigin.setter
+    def roxorigin(self, val):
+        if isinstance(val, bool):
+            self._roxorigin = val
+        else:
+            raise ValueError('Input to roxorigin must be True or False')
 
     @property
     def values3d(self):
@@ -410,7 +417,7 @@ class GridProperty(Grid3D):
     @property
     def values1d(self):
         """Returns a 1D view of values (masked numpy) (read only)."""
-        return (self._values.reshape(-1))
+        return self._values.reshape(-1)
 
     @property
     def undef(self):
@@ -419,8 +426,8 @@ class GridProperty(Grid3D):
         """
         if self._isdiscrete:
             return self._undef_i
-        else:
-            return self._undef
+
+        return self._undef
 
     @property
     def undef_limit(self):
@@ -437,8 +444,8 @@ class GridProperty(Grid3D):
         """
         if self._isdiscrete:
             return self._undef_ilimit
-        else:
-            return self._undef_limit
+
+        return self._undef_limit
 
     # =========================================================================
     # Various public methods
@@ -462,7 +469,7 @@ class GridProperty(Grid3D):
                 self.values.std(), self.values.min(), self.values.max())
         itemsize = self.values.itemsize
         msize = float(self.values.size * itemsize) / (1024 * 1024 * 1024)
-        dsc.txt('Roxar datatype', self._roxar_dtype)
+        dsc.txt('Roxar datatype', self.roxar_dtype)
         dsc.txt('Minimum memory usage of array (GB)', msize)
 
         dsc.flush()
@@ -481,12 +488,15 @@ class GridProperty(Grid3D):
         """
         # this is a function, not a property by design
 
-        if self._isdiscrete:
-            fvalue = _cxtgeo.UNDEF_INT
-            dtype = np.int32
+        if fill_value is None:
+            if self._isdiscrete:
+                fvalue = _cxtgeo.UNDEF_INT
+                dtype = np.int32
+            else:
+                fvalue = _cxtgeo.UNDEF
+                dtype = np.float64
         else:
-            fvalue = _cxtgeo.UNDEF
-            dtype = np.float64
+            fvalue = fill_value
 
         val = self.values.copy().astype(dtype)
         npv3d = ma.filled(val, fill_value=fvalue)
@@ -522,8 +532,7 @@ class GridProperty(Grid3D):
             vact = ma.masked_equal(vact, 0)
 
         act.values = vact.astype(np.int32)
-        act._codes = {0: '0', 1: '1'}
-        act._ncodes = 2
+        act.codes = {0: '0', 1: '1'}
 
         # return the object
         return act
@@ -550,11 +559,11 @@ class GridProperty(Grid3D):
         xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                              values=self._values.copy(), name=newname)
 
-        xprop._codes = copy.deepcopy(self._codes)
-        xprop._isdiscrete = self._isdiscrete
-        xprop._date = self._date
-        xprop._roxorigin = self._roxorigin
-        xprop._roxar_dtype = self._roxar_dtype
+        xprop.codes = copy.deepcopy(self._codes)
+        xprop.isdiscrete = self._isdiscrete
+        xprop.date = self._date
+        xprop.roxorigin = self._roxorigin
+        xprop.roxar_dtype = self._roxar_dtype
 
         if self._filesrc is not None and '(copy)' not in self._filesrc:
             xprop.filesrc = self._filesrc + ' (copy)'
@@ -622,12 +631,14 @@ class GridProperty(Grid3D):
            True if success, otherwise False
         """
 
+        # pylint: disable=too-many-branches, too-many-statements
+
         self._filesrc = pfile
 
         # it may be that pfile already is an open file; hence a filehandle
         # instead. Check for this, and skip tests of so
         pfile_is_not_fhandle = True
-        fhandle, pclose = _get_fhandle(pfile)
+        _fhandle, pclose = _get_fhandle(pfile)
         if not pclose:
             pfile_is_not_fhandle = False
 
@@ -639,9 +650,9 @@ class GridProperty(Grid3D):
                 raise IOError
 
             # work on file extension
-            froot, fext = os.path.splitext(pfile)
+            _froot, fext = os.path.splitext(pfile)
             if fformat == 'guess':
-                if len(fext) == 0:
+                if not fext:
                     logger.critical('File extension missing. STOP')
                     raise ValueError('File extension missing. STOP')
                 else:
@@ -651,16 +662,16 @@ class GridProperty(Grid3D):
             logger.debug("File format is {}".format(fformat))
 
         ier = 0
-        if (fformat == 'roff'):
+        if fformat == 'roff':
             logger.info('Importing ROFF...')
             ier = _gridprop_import.import_roff(self, pfile, name, grid=grid)
 
-        elif (fformat.lower() == 'init'):
+        elif fformat.lower() == 'init':
             ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
                                                     etype=1, date=None,
                                                     grid=grid)
 
-        elif (fformat.lower() == 'unrst'):
+        elif fformat.lower() == 'unrst':
             if date is None:
                 raise ValueError('Restart file, but no date is given')
             elif isinstance(date, str):
@@ -739,7 +750,7 @@ class GridProperty(Grid3D):
         """
         _gridprop_roxapi.export_prop_roxapi(
             self, projectname, gname, pname, saveproject=saveproject,
-            realisation=0)
+            realisation=realisation)
 
     def to_file(self, pfile, fformat='guess', name=None):
         """

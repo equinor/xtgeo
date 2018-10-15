@@ -18,7 +18,7 @@ def import_prop_roxapi(self, project, gname, pname, realisation):
     """Import a Property via ROXAR API spec."""
     import roxar
 
-    self._roxprop = None
+    # self._roxprop = None
 
     logger.info('Opening RMS project ...')
     if project is not None and isinstance(project, str):

@@ -10,7 +10,7 @@ import json
 from collections import OrderedDict
 
 import numpy as np
-import numpy.ma as ma
+import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
@@ -75,6 +75,8 @@ class Grid(Grid3D):
 
     """
 
+    # pylint: disable=too-many-public-methods
+
     def __init__(self, *args, **kwargs):
 
         super(Grid, self).__init__(*args, **kwargs)
@@ -110,7 +112,7 @@ class Grid(Grid3D):
         logger.info('DELETING grid instance')
 
         if self._p_coord_v is not None:
-            logger.info('Deleting instance {}'.format(self))
+            logger.info('Deleting instance %s', self)
             _cxtgeo.delete_doublearray(self._p_coord_v)
             _cxtgeo.delete_doublearray(self._p_zcorn_v)
             _cxtgeo.delete_intarray(self._p_actnum_v)
@@ -118,7 +120,7 @@ class Grid(Grid3D):
 
             if self.props is not None:
                 for prop in self.props:
-                    logger.info('Deleting property instance {}'.format(prop))
+                    logger.info('Deleting property instance %s', prop)
                     prop.__del__()
 
             # for myvar in vars(self).keys():
@@ -175,7 +177,6 @@ class Grid(Grid3D):
 
         if sgrids is None:
             self._subgrids = None
-            return None
 
         if not isinstance(sgrids, OrderedDict):
             raise ValueError('Input to subgrids must be an ordered dictionary')
@@ -492,7 +493,7 @@ class Grid(Grid3D):
         """
 
         newd = OrderedDict()
-        i_index, j_index, k_index = self.get_indices()
+        _i_index, _j_index, k_index = self.get_indices()
         kval = k_index.values
         zprval = zoneprop.values
         minzone = int(zprval.min())
@@ -571,6 +572,8 @@ class Grid(Grid3D):
             OSError: if file is not found etc
         """
 
+        # pylint: disable=too-many-branches
+
         self._filesrc = gfile
 
         fflist = set(['egrid', 'grid', 'grdecl', 'roff', 'eclipserun',
@@ -607,31 +610,31 @@ class Grid(Grid3D):
 
             gfile = froot + useext
 
-        logger.info('File name to be used is {}'.format(gfile))
+        logger.info('File name to be used is %s', gfile)
 
         test_gfile = gfile
         if fformat == 'eclipserun':
             test_gfile = gfile + '.EGRID'
 
         if os.path.isfile(test_gfile):
-            logger.info('File {} exists OK'.format(test_gfile))
+            logger.info('File %s exists OK', test_gfile)
         else:
-            logger.critical('No such file: {}'.format(test_gfile))
+            logger.critical('No such file: %s', test_gfile)
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), gfile)
 
-        if (fformat == 'roff'):
+        if  fformat == 'roff':
             _grid_import.import_roff(self, gfile)
-        elif (fformat == 'grid'):
+        elif fformat == 'grid':
             _grid_import.import_ecl_output(self, gfile, 0)
         # elif (fformat == 'egrid'):
         #     _grid_import.import_ecl_output(self, gfile, 2)
-        elif (fformat == 'egrid'):
+        elif fformat == 'egrid':
             _grid_import_ecl.import_ecl_egrid(self, gfile)
-        elif (fformat == 'eclipserun'):
+        elif fformat == 'eclipserun':
             _grid_import_ecl.import_ecl_run(self, gfile, initprops=initprops,
                                             restartprops=restartprops,
                                             restartdates=restartdates)
-        elif (fformat == 'grdecl'):
+        elif fformat == 'grdecl':
             _grid_import.import_ecl_grdecl(self, gfile)
         else:
             raise SystemExit('Invalid file format')
@@ -659,7 +662,7 @@ class Grid(Grid3D):
             g.to_file('myfile.roff')
         """
 
-        if fformat == 'roff' or fformat == 'roff_binary':
+        if fformat in ('roff', 'roff_binary'):
             _grid_export.export_roff(self, gfile, 0)
         elif fformat == 'roff_ascii':
             _grid_export.export_roff(self, gfile, 1)
@@ -699,14 +702,11 @@ class Grid(Grid3D):
             idx = xtgeo.grid3d.GridProperty(ncol=self._ncol, nrow=self._nrow,
                                             nlay=self._nlay, values=index,
                                             name=names[axis], discrete=True)
-            codes = {}
-            ncodes = 0
-            for i in range(index.min(), index.max() + 1):
-                codes[i] = str(i)
-                ncodes = ncodes + 1
+            codes = dict()
+            for icn in range(index.min(), index.max() + 1):
+                codes[icn] = str(icn)
 
-            idx._codes = codes
-            idx._ncodes = ncodes
+            idx.codes = codes
             ilist.append(idx)
 
         return ilist
@@ -739,8 +739,7 @@ class Grid(Grid3D):
         if mask:
             act.values = ma.masked_equal(act.values, 0)
 
-        act._codes = {0: '0', 1: '1'}
-        act._ncodes = 2
+        act.codes = {0: '0', 1: '1'}
 
         # return the object
         return act
@@ -962,7 +961,7 @@ class Grid(Grid3D):
     def inactivate_by_dz(self, threshold):
         """Inactivate cells thinner than a given threshold."""
 
-        self = _grid_etc1.inactivate_by_dz(self, threshold)
+        _grid_etc1.inactivate_by_dz(self, threshold)
 
     def inactivate_inside(self, poly, layer_range=None, inside=True,
                           force_close=False):
@@ -984,10 +983,10 @@ class Grid(Grid3D):
             ValueError: If Polygon is not a XTGeo object
         """
 
-        self = _grid_etc1.inactivate_inside(self, poly,
-                                            layer_range=layer_range,
-                                            inside=inside,
-                                            force_close=force_close)
+        _grid_etc1.inactivate_inside(self, poly,
+                                     layer_range=layer_range,
+                                     inside=inside,
+                                     force_close=force_close)
 
     def inactivate_outside(self, poly, layer_range=None, force_close=False):
         """Inacativate grid outside a polygon. (cf inactivate_inside)"""
@@ -998,7 +997,7 @@ class Grid(Grid3D):
     def collapse_inactive_cells(self):
         """ Collapse inactive layers where, for I J with other active cells."""
 
-        self = _grid_etc1.collapse_inactive_cells(self)
+        _grid_etc1.collapse_inactive_cells(self)
 
     def crop(self, colcrop, rowcrop, laycrop, props=None):
         """Reduce the grid size by cropping, the grid will have new dimensions.
@@ -1045,7 +1044,7 @@ class Grid(Grid3D):
 
         """
 
-        self = _grid_etc1.reduce_to_one_layer(self)
+        _grid_etc1.reduce_to_one_layer(self)
 
     def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         """Translate (move) and/or flip grid coordinates in 3D.
@@ -1058,8 +1057,8 @@ class Grid(Grid3D):
             RuntimeError: If translation goes wrong for unknown reasons
         """
 
-        self = _grid_etc1.translate_coordinates(self, translate=translate,
-                                                flip=flip)
+        _grid_etc1.translate_coordinates(self, translate=translate,
+                                         flip=flip)
 
     def convert_to_hybrid(self, nhdiv=10, toplevel=1000.0, bottomlevel=1100.0,
                           region=None, region_number=None):
@@ -1073,11 +1072,11 @@ class Grid(Grid3D):
             region_number (int): Which region to apply hybrid grid in.
         """
 
-        self = _grid_hybrid.make_hybridgrid(self, nhdiv=nhdiv,
-                                            toplevel=toplevel,
-                                            bottomlevel=bottomlevel,
-                                            region=region,
-                                            region_number=region_number)
+        _grid_hybrid.make_hybridgrid(self, nhdiv=nhdiv,
+                                     toplevel=toplevel,
+                                     bottomlevel=bottomlevel,
+                                     region=region,
+                                     region_number=region_number)
 
     def refine_vertically(self, rfactor, zoneprop=None):
         """Refine vertically, proportionally
@@ -1127,7 +1126,7 @@ class Grid(Grid3D):
 
         """
 
-        self = _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
+        _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
 
     def report_zone_mismatch(self, well=None, zonelogname='ZONELOG',
                              mode=0, zoneprop=None, onelayergrid=None,

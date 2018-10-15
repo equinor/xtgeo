@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Testing: test_grid_operations"""
 from __future__ import division, absolute_import
 from __future__ import print_function
 
@@ -20,6 +21,8 @@ if not xtg.testsetup():
 TDP = xtg.tmpdir
 TESTPATH = xtg.testpath
 
+# pylint: disable=logging-format-interpolation
+
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -35,7 +38,7 @@ def test_hybridgrid1():
 
     logger.info('Read grid...')
     grd = Grid(EMEGFILE)
-    logger.info('Read grid... done, NZ is {}'.format(grd.nlay))
+    logger.info('Read grid... done, NZ is %s', grd.nlay)
     grd.to_file(join(TDP, 'test_hybridgrid1_asis.grdecl'), fformat='grdecl')
 
     logger.info('Convert...')
@@ -44,20 +47,20 @@ def test_hybridgrid1():
 
     grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
 
-    logger.info('Hybrid grid... done, NLAY is now {}'.format(grd.nlay))
+    logger.info('Hybrid grid... done, NLAY is now %s', grd.nlay)
 
     assert grd.nlay == newnlay, "New NLAY number"
 
-    dz = grd.get_dz()
+    dzv = grd.get_dz()
 
-    assert dz.values3d.mean() == pytest.approx(1.395, abs=0.01)
+    assert dzv.values3d.mean() == pytest.approx(1.395, abs=0.01)
 
     logger.info('Export...')
     grd.to_file('TMP/test_hybridgrid1.roff')
 
     logger.info('Read grid 2...')
     grd2 = Grid('TMP/test_hybridgrid1_asis.grdecl')
-    logger.info('Read grid... done, NLAY is {}'.format(grd2.nlay))
+    logger.info('Read grid... done, NLAY is %s', grd2.nlay)
 
     logger.info('Convert...')
     nhdiv = 40
@@ -65,13 +68,13 @@ def test_hybridgrid1():
 
     grd2.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
 
-    logger.info('Hybrid grid... done, NZ is now {}'.format(grd2.nz))
+    logger.info('Hybrid grid... done, NZ is now %s', grd2.nz)
 
-    assert grd2.nlay == newnz, "New NLAY number"
+    assert grd2.nlay == newnz, 'New NLAY number'
 
-    dz = grd2.get_dz()
+    dzv = grd2.get_dz()
 
-    assert dz.values3d.mean() == pytest.approx(1.395, abs=0.01)
+    assert dzv.values3d.mean() == pytest.approx(1.395, abs=0.01)
 
 
 def test_hybridgrid2():
@@ -227,7 +230,7 @@ def test_crop_grid_after_copy():
     logger.info('GRD2 number of active cells: %s', grd2.nactive)
     act = grd.get_actnum()
     logger.info(act.values.shape)
-    logger.info('ZPROP: %s', zprop._values.shape)
+    logger.info('ZPROP: %s', zprop.values.shape)
 
     grd2.crop((1, 30), (40, 80), (23, 46))
 

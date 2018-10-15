@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
+"""Testing: test_grid_operations"""
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import sys
 import warnings
 
 import pytest
-import pandas as pd
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperties
@@ -15,28 +19,31 @@ xtg = XTGeoDialog()
 if not xtg.testsetup():
     sys.exit(-9)
 
-td = xtg.tmpdir
-testpath = xtg.testpath
+TDIR = xtg.tmpdir
+TESTPATH = xtg.testpath
 
 logger = xtg.basiclogger(__name__)
 
-gfile1 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
-ifile1 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
-rfile1 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
+GFILE1 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
+IFILE1 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
+RFILE1 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
 
-xfile2 = '../xtgeo-testdata/3dgrids/reek/reek_grd_w_props.roff'
+XFILE2 = '../xtgeo-testdata/3dgrids/reek/reek_grd_w_props.roff'
+
+# pylint: disable=logging-format-interpolation
+# pylint: disable=invalid-name
 
 
 def test_import_init():
     """Import INIT Reek"""
 
     g = Grid()
-    g.from_file(gfile1, fformat="egrid")
+    g.from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
     names = ['PORO', 'PORV']
-    x.from_file(ifile1, fformat="init",
+    x.from_file(IFILE1, fformat="init",
                 names=names, grid=g)
 
     # get the object
@@ -52,45 +59,45 @@ def test_import_should_fail():
     """Import INIT and UNRST Reek but ask for wrong name or date"""
 
     g = Grid()
-    g.from_file(gfile1, fformat="egrid")
+    g.from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
     names = ['PORO', 'NOSUCHNAME']
     with pytest.raises(ValueError) as e_info:
         logger.warning(e_info)
-        x.from_file(ifile1, fformat="init", names=names, grid=g)
+        x.from_file(IFILE1, fformat="init", names=names, grid=g)
 
     rx = GridProperties()
     names = ['PRESSURE']
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g)
+    rx.from_file(RFILE1, fformat='unrst', names=names, dates=dates, grid=g)
 
 
 def test_import_should_warn():
     """Import INIT and UNRST Reek but ask for wrong name or date"""
     g = Grid()
-    g.from_file(gfile1, fformat="egrid")
+    g.from_file(GFILE1, fformat="egrid")
 
     rx = GridProperties()
     names = ['PRESSURE']
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(rfile1, fformat='unrst', names=names, dates=dates, grid=g)
+    rx.from_file(RFILE1, fformat='unrst', names=names, dates=dates, grid=g)
 
 
 def test_import_restart():
     """Import Restart"""
 
     g = Grid()
-    g.from_file(gfile1, fformat="egrid")
+    g.from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
     names = ['PRESSURE', 'SWAT']
     dates = [19991201, 20010101]
-    x.from_file(rfile1,
+    x.from_file(RFILE1,
                 fformat="unrst", names=names, dates=dates,
                 grid=g)
 
@@ -120,13 +127,13 @@ def test_import_restart_gull():
     """Import Restart Reek"""
 
     g = Grid()
-    g.from_file(gfile1, fformat="egrid")
+    g.from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
     names = ['PRESSURE', 'SWAT']
     dates = [19991201]
-    x.from_file(rfile1,
+    x.from_file(RFILE1,
                 fformat="unrst", names=names, dates=dates,
                 grid=g)
 
@@ -155,13 +162,13 @@ def test_import_soil():
     """SOIL need to be computed in code from SWAT and SGAS"""
 
     g = Grid()
-    g.from_file(gfile1, fformat="egrid")
+    g.from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
     names = ['SOIL', 'SWAT', 'PRESSURE']
     dates = [19991201]
-    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g)
+    x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
 
     logger.info(x.names)
 
@@ -177,7 +184,7 @@ def test_import_soil():
 def test_scan_dates():
     """A static method to scan dates in a RESTART file"""
     t1 = xtg.timer()
-    dl = GridProperties.scan_dates(rfile1)  # no need to make instance
+    dl = GridProperties.scan_dates(RFILE1)  # no need to make instance
     t2 = xtg.timer(t1)
     print('Dates scanned in {} seconds'.format(t2))
 
@@ -187,18 +194,18 @@ def test_scan_dates():
 def test_scan_keywords():
     """A static method to scan quickly keywords in a RESTART/INIT/*GRID file"""
     t1 = xtg.timer()
-    df = GridProperties.scan_keywords(rfile1, dataframe=True)
+    df = GridProperties.scan_keywords(RFILE1, dataframe=True)
     t2 = xtg.timer(t1)
     logger.info('Dates scanned in {} seconds'.format(t2))
     logger.info(df)
 
-    assert df.loc[12, 'KEYWORD'] == 'SWAT'
+    assert df.loc[12, 'KEYWORD'] == 'SWAT'  # pylint: disable=no-member
 
 
 def test_scan_keywords_roff():
     """A static method to scan quickly keywords in a ROFF file"""
     t1 = xtg.timer()
-    df = GridProperties.scan_keywords(xfile2, dataframe=True, fformat='roff')
+    df = GridProperties.scan_keywords(XFILE2, dataframe=True, fformat='roff')
     t2 = xtg.timer(t1)
     logger.info('Dates scanned in {} seconds'.format(t2))
     logger.info(df)
@@ -209,13 +216,13 @@ def test_scan_keywords_roff():
 def test_get_dataframe():
     """Get a Pandas dataframe from the gridproperties"""
 
-    g = Grid(gfile1, fformat="egrid")
+    g = Grid(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
     names = ['SOIL', 'SWAT', 'PRESSURE']
     dates = [19991201]
-    x.from_file(rfile1, fformat="unrst", names=names, dates=dates, grid=g)
+    x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
     df = x.dataframe(activeonly=True, ijk=True, xyz=False)
 
     print(df.head())
