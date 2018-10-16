@@ -171,19 +171,19 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
 
     /* now make a new points at start and end; extrapolate using angles */
 
-    x_vector_extrapol(xv[0], yv[0], zv[0], &xs, &ys, &zs, uhext,
-                      angr_start, debug);
-    x_vector_extrapol(xv[nlen - 1], yv[nlen - 1], zv[nlen - 1], &xe, &ye,
-                      &ze, uhext, angr_end, debug);
+    x_vector_extrapol2(xv[0], yv[0], zv[0], &xs, &ys, &zs, uhext,
+                       angr_start, debug);
+    x_vector_extrapol2(xv[nlen - 1], yv[nlen - 1], zv[nlen - 1], &xe, &ye,
+                       &ze, uhext, angr_end, debug);
 
     /* and finally make a merged trajectory */
     for (ic = 0; ic < nlen; ic++) {
         if (ic == 0) {
-            txv[0] = xv[ic] + xs; tyv[0] = yv[ic] + ys; tzv[0] = zv[ic];
+            txv[0] = xs; tyv[0] = ys; tzv[0] = zv[ic];
         }
         txv[ic + 1] = xv[ic]; tyv[ic + 1] = yv[ic]; tzv[ic + 1] = zv[ic];
         if (ic == (nlen - 1)) {
-            txv[nlen + 1] = xv[ic] + xe; tyv[nlen + 1] = yv[ic] + ye;
+            txv[nlen + 1] = xe; tyv[nlen + 1] = ye;
             tzv[nlen + 1] = zv[ic];
         }
     }
@@ -267,6 +267,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
 
     /* find the new hlen vector */
     ier = pol_geometrics(*nolen, xov, yov, zov, hlen, debug);
+    for (i = 0;  i < nct; i++) hlen[i] -= uhext;
 
     if (debug > 2) {
         /* debugging only work */
