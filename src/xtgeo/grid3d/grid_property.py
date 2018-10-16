@@ -478,7 +478,7 @@ class GridProperty(Grid3D):
         """Get a pure numpy copy (not masked) copy of the values, 3D shape.
 
         Note that Numpy dtype will be reset; int32 if discrete or float64 if
-        continuous. The reaoson for this is to avoid inconsistensies regarding
+        continuous. The reason for this is to avoid inconsistensies regarding
         UNDEF values.
 
         Args:
@@ -497,6 +497,7 @@ class GridProperty(Grid3D):
                 dtype = np.float64
         else:
             fvalue = fill_value
+            dtype = np.float64
 
         val = self.values.copy().astype(dtype)
         npv3d = ma.filled(val, fill_value=fvalue)
