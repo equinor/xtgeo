@@ -5,7 +5,7 @@ handling and speed.
 """
 
 from os.path import join as ojn
-import numpy.ma as ma
+import numpy.ma as npma
 import xtgeo
 
 # from memory_profiler import profile
@@ -49,7 +49,7 @@ def sum_stats():
             propsd[prop.name].append(prop.values1d)
 
     # find the averages:
-    porovalues = ma.vstack(propsd['PORO'])
+    porovalues = npma.vstack(propsd['PORO'])
     poromeanarray = porovalues.mean(axis=0)
     porostdarray = porovalues.std(axis=0)
     print(poromeanarray)
@@ -75,7 +75,7 @@ def sum_running_stats():
                       restartprops=RESTARTPROPS, restartdates=RDATES,
                       initprops=INITPROPS)
 
-        NN = float(irel + 1)
+        nnum = float(irel + 1)
         for prop in grd.props:
             if prop.name == 'PORO':
                 prop.values += irel * 0.001  # mimic variability aka ensembles
@@ -86,9 +86,9 @@ def sum_running_stats():
                 if irel == 0:
                     pcum = prop.values1d
                 else:
-                    pavg = prop.values1d / NN
-                    pcum = pcum * (NN - 1) / NN
-                    pcum = ma.vstack([pcum, pavg])
+                    pavg = prop.values1d / nnum
+                    pcum = pcum * (nnum - 1) / nnum
+                    pcum = npma.vstack([pcum, pavg])
                     pcum = pcum.sum(axis=0)
 
     # find the averages:
@@ -99,8 +99,8 @@ def sum_running_stats():
 
 if __name__ == '__main__':
 
-    avg1 = sum_stats()
-    avg2 = sum_running_stats()
+    AVG1 = sum_stats()
+    AVG2 = sum_running_stats()
 
-    if avg1 == avg2:
+    if AVG1 == AVG2:
         print('Same result, OK!')

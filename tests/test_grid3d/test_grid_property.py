@@ -1,17 +1,21 @@
 # coding: utf-8
+"""Testing: test_grid_property"""
 from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os
 import pytest
 
-import numpy.ma as ma
+import numpy.ma as npma
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 
 import test_common.test_xtg as tsetup
+
+# pylint: disable=logging-format-interpolation
+# pylint: disable=invalid-name
 
 # set default level
 xtg = XTGeoDialog()
@@ -23,6 +27,8 @@ if not xtg.testsetup():
 
 td = xtg.tmpdir
 testpath = xtg.testpath
+
+
 
 # =============================================================================
 # Do tests
@@ -43,6 +49,8 @@ testfile11 = '../xtgeo-testdata/3dgrids/bri/b_poro.roff'
 
 
 def test_create():
+    """Create a simple property"""
+
     x = GridProperty()
     assert x.ncol == 5, 'NCOL'
     assert x.nrow == 12, 'NROW'
@@ -52,6 +60,7 @@ def test_create():
 
 
 def test_create_actnum():
+    """Test creating ACTNUM"""
     x = GridProperty()
     act = x.get_actnum()
 
@@ -64,6 +73,7 @@ def test_create_actnum():
 
 
 def test_roffbin_import1():
+    """Test of import of ROFF binary"""
 
     logger.info('Name is {}'.format(__name__))
 
@@ -108,7 +118,7 @@ def test_roffbin_import2():
     logger.info(repr(hc.values))
     logger.info(hc.values.dtype)
     logger.info(hc.values3d.shape)
-    ncol, nrow, nlay = hc.values3d.shape
+    _ncol, nrow, _nlay = hc.values3d.shape
 
     assert nrow == 100, 'NROW from shape (Emerald)'
 
@@ -236,7 +246,7 @@ def test_io_roff_discrete():
 
     # fix some zero values (will not be fixed properly as grid ACTNUM differs?)
     val = po.values
-    val = ma.filled(val, fill_value=3)  # trick
+    val = npma.filled(val, fill_value=3)  # trick
     print(val.min(), val.max())
     po.values = val
     print(po.values.min(), po.values.max())
@@ -337,7 +347,7 @@ def test_get_xy_values_for_webportal_ecl():
     grid = Grid(testfile5)
     prop = GridProperty(testfile6, grid=grid, name='PORO')
 
-    coord, valuelist = prop.get_xy_value_lists(grid=grid)
+    coord, _valuelist = prop.get_xy_value_lists(grid=grid)
     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
     tsetup.assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)
 
@@ -345,13 +355,13 @@ def test_get_xy_values_for_webportal_ecl():
 def test_get_xy_values_for_webportal_bri():
     """Get lists on webportal format, small BRILLIG case"""
 
-    # Todo, work with this case and UNDEf cells are non-existing
+    # Upps, work with this case and UNDEf cells are non-existing
     # in GRID input!
 
     grid = Grid(testfile3)
     prop = GridProperty(testfile4, grid=grid, name='PORO')
 
-    coord, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+    coord, _valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
 
     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
     # assert coord[0][0][0] == (454.875, 318.5)

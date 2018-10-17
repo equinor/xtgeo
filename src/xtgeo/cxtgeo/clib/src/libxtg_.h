@@ -86,6 +86,18 @@ int x_vector_extrapol (
 		       int   debug
 		       );
 
+int x_vector_extrapol2 (
+                        double x1,
+                        double y1,
+                        double z1,
+                        double *x2,
+                        double *y2,
+                        double *z2,
+                        double dlen,
+                        double xang,
+                        int   debug
+                        );
+
 int x_chk_point_in_cell (
 			 double x,
 			 double y,

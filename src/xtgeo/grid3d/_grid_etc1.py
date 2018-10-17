@@ -384,8 +384,6 @@ def inactivate_by_dz(self, threshold):
                               self._p_zcorn_v, self._p_actnum_v,
                               threshold, nflip, xtg_verbose_level)
 
-    return self
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Inactivate inside a polygon (or outside)
@@ -428,18 +426,16 @@ def inactivate_inside(self, poly, layer_range=None, inside=True,
         raise RuntimeError('Problems with one or more polygons. '
                            'Not closed?')
 
-    return self
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Collapse inactive cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def collapse_inactive_cells(self):
 
     _cxtgeo.grd3d_collapse_inact(self.ncol, self.nrow, self.nlay,
                                  self._p_zcorn_v, self._p_actnum_v,
                                  xtg_verbose_level)
-    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -630,8 +626,6 @@ def reduce_to_one_layer(self):
     self._props = []
     self._subgrids = None
 
-    return self
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Translate coordinates
@@ -650,8 +644,6 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
                            .format(ier))
 
     logger.info('Translation of coords done')
-
-    return self
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

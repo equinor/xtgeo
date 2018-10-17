@@ -241,6 +241,17 @@ Extract Pandas dataframe from 3D grid and props
    :language: python
 
 
+Compute a grid property average and stdev
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this example, hwo to extract Mean ans Stddev from
+some geo properties, filtered on facies. An RMS inside
+version is also shown.
+
+.. literalinclude:: ../examples/grid3d_properties_qc.py
+   :language: python
+
+
 Compute a grid property average across realisations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

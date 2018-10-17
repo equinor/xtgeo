@@ -6,47 +6,56 @@ from os.path import join as ojn
 
 import xtgeo
 
-expath1 = '../../xtgeo-testdata/3dgrids/reek'
+EXPATH1 = '../../xtgeo-testdata/3dgrids/reek'
 
-gridfileroot = ojn(expath1, 'REEK')
+GRIDFILEROOT = ojn(EXPATH1, 'REEK')
 
-initprops = ['PORO', 'PERMX']
+INITPROPS = ['PORO', 'PERMX']
 
-grd = xtgeo.grid.Grid()
-grd.from_file(gridfileroot, fformat='eclipserun', initprops=initprops)
 
-print(grd.props)
+def cropper():
+    """Do a cropping of a 3D grid"""
 
-# find current NCOL, NROW and divide into 4 pieces
+    # pylint: disable=too-many-locals
+    grd = xtgeo.grid.Grid()
+    grd.from_file(GRIDFILEROOT, fformat='eclipserun', initprops=INITPROPS)
 
-ncol = grd.ncol
-nrow = grd.nrow
-nlay = grd.nlay
+    print(grd.props)
 
-ncol1 = ncol / 2
+    # find current NCOL, NROW and divide into 4 pieces
 
-nrow1 = nrow / 2
+    ncol = grd.ncol
+    nrow = grd.nrow
+    nlay = grd.nlay
 
-print('Original grid dimensions are {} {}'.format(ncol, nrow, nlay))
-print('Crop ranges are {} {}'.format(ncol1, nrow1, nlay))
+    ncol1 = ncol / 2
 
-ncolranges = [(1, ncol1), (ncol1 + 1, ncol)]
-nrowranges = [(1, nrow1), (nrow1 + 1, nrow)]
+    nrow1 = nrow / 2
 
-for ncr in ncolranges:
-    nc1, nc2 = ncr
-    for nrr in nrowranges:
+    print('Original grid dimensions are {} {} {}'.format(ncol, nrow, nlay))
+    print('Crop ranges are {} {} {}'.format(ncol1, nrow1, nlay))
 
-        nr1, nr2 = nrr
+    ncolranges = [(1, ncol1), (ncol1 + 1, ncol)]
+    nrowranges = [(1, nrow1), (nrow1 + 1, nrow)]
 
-        fname = '_{}-{}_{}-{}'.format(nc1, nc2, nr1, nr2)
+    for ncr in ncolranges:
+        nc1, nc2 = ncr
+        for nrr in nrowranges:
 
-        tmpgrd = grd.copy()
-        tmpgrd.crop(ncr, nrr, (1, nlay), props='all')
-        # save to disk as ROFF files
-        tmpgrd.to_file('grid' + fname + '.roff')
-        for prop in tmpgrd.props:
-            print('{} for {} .. {}'.format(prop.name, ncr, nrr))
-            fname2 = prop.name + fname + '.roff'
-            fname2 = fname2.lower()
-            prop.to_file(fname2)
+            nr1, nr2 = nrr
+
+            fname = '_{}-{}_{}-{}'.format(nc1, nc2, nr1, nr2)
+
+            tmpgrd = grd.copy()
+            tmpgrd.crop(ncr, nrr, (1, nlay), props='all')
+            # save to disk as ROFF files
+            tmpgrd.to_file('grid' + fname + '.roff')
+            for prop in tmpgrd.props:
+                print('{} for {} .. {}'.format(prop.name, ncr, nrr))
+                fname2 = prop.name + fname + '.roff'
+                fname2 = fname2.lower()
+                prop.to_file(fname2)
+
+
+if __name__ == '__main__':
+    cropper()

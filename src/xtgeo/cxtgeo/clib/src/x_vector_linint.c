@@ -34,7 +34,7 @@ int x_vector_linint (
     char     sub[24]="x_vector_linint";
 
     xtgverbose(debug);
-    xtg_speak(sub,2,"Entering routine");
+    if (debug > 2) xtg_speak(sub, 3, "Entering routine");
 
     /*
      * ------------------------------------------------------------------------
@@ -43,7 +43,7 @@ int x_vector_linint (
      */
 
     if ( x1 == x2 && y1 == y2 && z1 == z2) {
-	xtg_speak(sub,2,"Hmmm null length vector");
+	xtg_speak(sub, 2, "Hmmm null length vector");
 	return -9;
     }
 
@@ -55,14 +55,16 @@ int x_vector_linint (
      */
 
 
-    xtg_speak(sub,3,"DLEN is %3.2f, x1 is %9.2f   x2 is %9.2f", dlen, x1, x2);
+    if (debug > 2) xtg_speak(sub, 3, "DLEN is %3.2f, x1 is %9.2f   x2 "
+                             "is %9.2f", dlen, x1, x2);
 
 
-    *xn=x1*(1-dlen)+x2*dlen;
-    *yn=y1*(1-dlen)+y2*dlen;
-    *zn=z1*(1-dlen)+z2*dlen;
+    *xn = x1 * (1 - dlen) + x2 * dlen;
+    *yn = y1 * (1 - dlen) + y2 * dlen;
+    *zn = z1 * (1 - dlen) + z2 * dlen;
 
-    xtg_speak(sub,3,"DLEN is %3.2f, x1 is %9.2f   x2 is %9.2f result: is %9.2f", dlen, x1, x2, *xn);
+    if (debug > 2) xtg_speak(sub, 3, "DLEN is %3.2f, x1 is %9.2f   x2 "
+                             "is %9.2f result: is %9.2f", dlen, x1, x2, *xn);
 
 
     return 0;
