@@ -189,7 +189,7 @@ class GridProperty(Grid3D):
         self._roxar_dtype = np.float32
         if self._isdiscrete:
             self._values = self._values.astype(np.int32)
-            self._roxar_dtype = np.int8
+            self._roxar_dtype = np.uint8
 
         if testmask:
             # make some undef cells (for test)
