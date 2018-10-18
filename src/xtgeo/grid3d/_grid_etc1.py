@@ -571,7 +571,6 @@ def crop(self, spec, props=None):
             if arrxmap.size > 0:
                 newsub[sub] = arrxmap.astype(np.int32).tolist()
 
-        print(newsub)
         self.subgrids = newsub
 
     # crop properties
