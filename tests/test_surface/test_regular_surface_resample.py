@@ -10,10 +10,14 @@ import test_common.test_xtg as tsetup
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
+XTGSHOW = False
+if 'XTG_SHOW' in os.environ:
+    XTGSHOW = True
+
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
+TMPD = xtg.tmpdir
 
 # =============================================================================
 # Do tests
@@ -42,7 +46,7 @@ def test_resample(reek_map):
 
     snew.resample(xs)
 
-    fout = os.path.join(td, 'reek_resampled.gri')
+    fout = os.path.join(TMPD, 'reek_resampled.gri')
     snew.to_file(fout, fformat='irap_binary')
 
     tsetup.assert_almostequal(snew.values.mean(), 1698.458, 2)
@@ -58,10 +62,35 @@ def test_refine(reek_map):
     xs_orig = xs.copy()
     xs.refine(4)
 
-    fout = os.path.join(td, 'reek_refined.gri')
+    fout = os.path.join(TMPD, 'reek_refined.gri')
     xs.to_file(fout, fformat='irap_binary')
 
     tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
+
+    if XTGSHOW:
+        logger.info('Output plots to file (may be time consuming)')
+        xs_orig.quickplot(filename=os.path.join(TMPD, 'reek_orig.png'))
+        xs.quickplot(filename=os.path.join(TMPD, 'reek_refined4.png'))
+
+
+def test_coarsen(reek_map):
+    """Do a coarsening of a surface"""
+
+    xs = reek_map
+    assert xs.ncol == 554
+
+    xs_orig = xs.copy()
+    xs.coarsen(3)
+
+    fout = os.path.join(TMPD, 'reek_coarsened.gri')
+    xs.to_file(fout, fformat='irap_binary')
+
+    tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
+
+    if XTGSHOW:
+        logger.info('Output plots to file (may be time consuming)')
+        xs_orig.quickplot(filename=os.path.join(TMPD, 'reek_orig.png'))
+        xs.quickplot(filename=os.path.join(TMPD, 'reek_coarsen3.png'))
 
 
 def test_points_gridding(reek_map):
@@ -78,16 +107,18 @@ def test_points_gridding(reek_map):
 
     xscopy = xs.copy()
 
-    print(xs.values.flags)
-    print(xscopy.values.flags)
+    logger.info(xs.values.flags)
+    logger.info(xscopy.values.flags)
 
     # now regrid
     xscopy.gridding(xyz, coarsen=1)  # coarsen will speed up test a lot
 
-    xs.quickplot(filename='/tmp/s1.png')
-    xscopy.quickplot(filename='/tmp/s2.png')
+    if XTGSHOW:
+        logger.info('Output plots to file (may be time consuming)')
+        xs.quickplot(filename=os.path.join(TMPD, 's1.png'))
+        xscopy.quickplot(filename=os.path.join(TMPD, '/tmp/s2.png'))
 
     tsetup.assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
 
-    xscopy.to_file(os.path.join(td, 'reek_points_to_map.gri'),
+    xscopy.to_file(os.path.join(TMPD, 'reek_points_to_map.gri'),
                    fformat='irap_binary')

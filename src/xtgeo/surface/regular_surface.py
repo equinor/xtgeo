@@ -21,6 +21,7 @@ or::
 # pylint: disable=too-many-public-methods
 
 from __future__ import print_function, absolute_import
+from __future__ import division
 
 import os
 import os.path
@@ -1341,17 +1342,22 @@ class RegularSurface(object):
             factor (int): Refinement factor
         """
 
+        logger.info('Do refining...')
+
         if not isinstance(factor, int):
             raise ValueError('Argument not a, Integer')
 
         if factor < 2 or factor >= 10:
             raise ValueError('Argument exceeds range 2 .. 10')
 
+        xlen = self._xinc * (self._ncol - 1)
+        ylen = self._yinc * (self._nrow - 1)
+
         proxy = self.copy()
         self._ncol = proxy._ncol * factor
         self._nrow = proxy._nrow * factor
-        self._xinc = proxy._xinc / factor
-        self._yinc = proxy._yinc / factor
+        self._xinc = xlen / (self._ncol - 1)
+        self._yinc = ylen / (self._nrow - 1)
 
         self._values = ma.zeros((self._ncol, self._nrow))
 
@@ -1366,6 +1372,63 @@ class RegularSurface(object):
         self.resample(proxy)
 
         del proxy
+        logger.info('Do refining... DONE')
+
+    def coarsen(self, factor):
+        """Coarsen a surface with a factor, e.g. 2 meaning half the number of
+        columns and rows.
+
+        Range for coarsening is 2 to 10.
+
+        Note that there may be some 'loss' of nodes at the edges of the
+        updated map, as only the 'inside' nodes in the updated map
+        versus the input map are applied.
+
+        Args:
+            factor (int): Coarsen factor (2 .. 10)
+
+        Raises:
+            ValueError: Coarsen is too large, giving too few nodes in result
+        """
+
+        logger.info('Do coarsening...')
+        if not isinstance(factor, int):
+            raise ValueError('Argument not a, Integer')
+
+        if factor < 2 or factor >= 10:
+            raise ValueError('Argument exceeds range 2 .. 10')
+
+        proxy = self.copy()
+        xlen = self._xinc * (self._ncol - 1)
+        ylen = self._yinc * (self._nrow - 1)
+
+        ncol = int(round(proxy._ncol / factor))
+        nrow = int(round(proxy._nrow / factor))
+
+        if ncol < 4 or nrow < 4:
+            raise ValueError('Coarsen is too large, giving ncol or nrow less '
+                             'than 4 nodes')
+
+        self._ncol = ncol
+        self._nrow = nrow
+
+        self._xinc = xlen / (self._ncol - 1)
+        self._yinc = ylen / (self._nrow - 1)
+
+        self._values = ma.zeros((self._ncol, self._nrow))
+
+        self._ilines = np.array(range(1, self._ncol + 1),
+                                dtype=np.int32)
+        self._xlines = np.array(range(1, self._nrow + 1),
+                                dtype=np.int32)
+
+        if self._filesrc and '(coarsened)' not in self._filesrc:
+            self._filesrc = self._filesrc + ' (coarsened)'
+
+        self.resample(proxy)
+
+        del proxy
+        logger.info('Do coarsening... DONE')
 
     # =========================================================================
     # Interacion with a grid3d

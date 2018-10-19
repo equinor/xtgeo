@@ -26,7 +26,7 @@ def export_irap_ascii(self, mfile):
     zmax = self.values.max()
 
     vals = self.get_values1d(fill_value=self.undef)
-    print('SHAPE', vals.shape, vals.dtype)
+    logger.debug('SHAPE %s %s', vals.shape, vals.dtype)
 
     ier = _cxtgeo.surf_export_irap_ascii(mfile, self._ncol, self._nrow,
                                          self._xori, self._yori,
