@@ -91,8 +91,8 @@ void cube_import_rmsregular (
 
     /* header is ASCII. NB remember the \n !... */
     xtg_speak(sub,2,"Scanning header...");
-    for (i=1;i<=iline;i++) {
-       fgets(string,132,fc);
+    for (i = 1; i <= iline; i++) {
+        if (fgets(string, 132, fc) != NULL) xtg_speak(sub, 2, "Scanning...");
    }
    xtg_speak(sub,2,"Scanning header...OK");
 

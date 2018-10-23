@@ -30,7 +30,7 @@ testpath = xtg.testpath
 emegfile = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff'
 reekfile = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
 reekroot = '../xtgeo-testdata/3dgrids/reek/REEK'
-brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID'
+# brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 brilgrdecl = '../xtgeo-testdata/3dgrids/bri/b.grdecl'
 
 
@@ -190,44 +190,44 @@ def test_roffbin_import1():
     #     logger.info("Got nothing!")
 
 
-def test_eclgrid_import1():
-    """Eclipse GRID import."""
+# def test_eclgrid_import1():
+#     """Eclipse GRID import."""
 
-    g = Grid()
-    logger.info("Import Eclipse GRID...")
-    g.from_file(brilfile, fformat="grid")
+#     g = Grid()
+#     logger.info("Import Eclipse GRID...")
+#     g.from_file(brilfile, fformat="grid")
 
-    tsetup.assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
-    tsetup.assert_equal(g.nrow, 15, txt='Grid NROW from Eclipse')
+#     tsetup.assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
+#     tsetup.assert_equal(g.nrow, 15, txt='Grid NROW from Eclipse')
 
 
-def test_eclgrid_import1_cells():
-    """Eclipse GRID import, test for cell corners."""
+# def test_eclgrid_import1_cells():
+#     """Eclipse GRID import, test for cell corners."""
 
-    g = Grid()
-    logger.info("Import Eclipse GRID...")
-    g.from_file(brilfile, fformat="grid")
+#     g = Grid()
+#     logger.info("Import Eclipse GRID...")
+#     g.from_file(brilfile, fformat="grid")
 
-    corners = g.get_xyz_cell_corners(ijk=(6, 8, 1))
+#     corners = g.get_xyz_cell_corners(ijk=(6, 8, 1))
 
-    tsetup.assert_almostequal(corners[0], 5071.91, 0.1)
-    tsetup.assert_almostequal(corners[1], 7184.34, 0.1)
-    tsetup.assert_almostequal(corners[2], 7274.81, 0.1)
+#     tsetup.assert_almostequal(corners[0], 5071.91, 0.1)
+#     tsetup.assert_almostequal(corners[1], 7184.34, 0.1)
+#     tsetup.assert_almostequal(corners[2], 7274.81, 0.1)
 
-    tsetup.assert_almostequal(corners[21], 5995.31, 0.1)
-    tsetup.assert_almostequal(corners[22], 7893.03, 0.1)
-    tsetup.assert_almostequal(corners[23], 7228.98, 0.1)
+#     tsetup.assert_almostequal(corners[21], 5995.31, 0.1)
+#     tsetup.assert_almostequal(corners[22], 7893.03, 0.1)
+#     tsetup.assert_almostequal(corners[23], 7228.98, 0.1)
 
-    allcorners = g.get_xyz_corners()
-    for corn in allcorners:
-        logger.info(corn.name)
+#     allcorners = g.get_xyz_corners()
+#     for corn in allcorners:
+#         logger.info(corn.name)
 
-    logger.info(allcorners[0].values[5, 7, 0])  # x for corn0 at 6, 8, 1
-    logger.info(allcorners[1].values[5, 7, 0])  # y for corn0 at 6, 8, 1
-    logger.info(allcorners[2].values[5, 7, 0])  # z for corn0 at 6, 8, 1
+#     logger.info(allcorners[0].values[5, 7, 0])  # x for corn0 at 6, 8, 1
+#     logger.info(allcorners[1].values[5, 7, 0])  # y for corn0 at 6, 8, 1
+#     logger.info(allcorners[2].values[5, 7, 0])  # z for corn0 at 6, 8, 1
 
-    tsetup.assert_equal(corners[1], allcorners[1].values[5, 7, 0])
-    tsetup.assert_equal(corners[22], allcorners[22].values[5, 7, 0])
+#     tsetup.assert_equal(corners[1], allcorners[1].values[5, 7, 0])
+#     tsetup.assert_equal(corners[22], allcorners[22].values[5, 7, 0])
 
 
 def test_eclgrid_import2():

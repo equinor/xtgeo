@@ -1,11 +1,11 @@
 /*
  * ############################################################################
  * grd3d_import_eclipse_grdecl
- * Reading a Eclipse ASCII input grid 
+ * Reading a Eclipse ASCII input grid
  * Author: JCR
  * ############################################################################
- * $Id: $ 
- * $Source: $ 
+ * $Id: $
+ * $Source: $
  *
  * $Log: $
  *
@@ -25,7 +25,7 @@
  ******************************************************************************
  * ----------------------------------------------------------------------------
  *
- */   
+ */
 
 
 void grd3d_import_grdecl (
@@ -64,24 +64,24 @@ void grd3d_import_grdecl (
 
     /* this is just a COORD sort of counter, to track if X, Y, Z is read (for xmin etc)*/
     ix=1; jy=0; kz=0;
-    
+
     mamode=0;
 
-    /* 
+    /*
      *-------------------------------------------------------------------------
      * Open file
      *-------------------------------------------------------------------------
      */
-  
+
     xtg_speak(s,2,"Opening GRDECL file...");
     fc=fopen(filename,"r");
     if (fc == NULL) {
 	xtg_error(s,"Cannot open file!");
     }
     xtg_speak(s,2,"Opening file...OK!");
-    
-    
-    /* 
+
+
+    /*
      *=========================================================================
      * Loop file... It is NOT necessary to do many tests; that should be done
      * by the calling PERL script?
@@ -92,11 +92,10 @@ void grd3d_import_grdecl (
 	    nx,ny,nz,num_cornerlines);
 
     for (line=1;line<9999999;line++) {
-	
+
 	/* Get offsets */
-	fgets(cname,9,fc);
-	xtg_speak(s,4,"CNAME is:\n%s",cname);
-      
+	if (fgets(cname,9,fc) != NULL) xtg_speak(s, 4, "CNAME is:\n%s", cname);
+
 	if (strncmp(cname,"SPECGRID",8)==0) {
 	    xtg_speak(s,2,"SPECGRID found");
 	    ier=fscanf(fc,"%d %d %d", &nnx, &nny, &nnz);
@@ -125,8 +124,8 @@ void grd3d_import_grdecl (
 		}
 		p_coord_v[i]=fvalue;
 		if (debug >= 4) xtg_speak(s,4,"CornerLine [%d] %lf",i,fvalue);
-		
-	    
+
+
 		if (ix==1) {
 		    if (p_coord_v[i]<xmin) xmin = p_coord_v[i];
 		    if (p_coord_v[i]>xmax) xmax = p_coord_v[i];
@@ -156,13 +155,13 @@ void grd3d_import_grdecl (
 	 * problems if GAPS in GRDECL format (like BRILLD test case)
 	 *
 	 */
-	
+
 
 
 	if (strncmp(cname,"ZCORN",5)==0) {
 	    xtg_speak(s,2,"ZCORN found");
 	    nfzcorn=1;
-	    
+
 	    ib=0;
 	    kzread=0;
 	    kk=0;
@@ -177,13 +176,13 @@ void grd3d_import_grdecl (
 		if (kzread==1) {
 		    kk+=1;
 		    xtg_speak(s,2,"Reading layer: %d", kk);
-		}		    
+		}
 		for (j=1; j<=ny; j++) {
 		    /* "left" cell margin */
 		    for (i=1; i<=nx; i++) {
 			if (fscanf(fc,"%lf",&fvalue1) != 1) xtg_error(s,"Error in reading ZCORN");
-			if (fscanf(fc,"%lf",&fvalue2) != 1) xtg_error(s,"Error in reading ZCORN");	  
-			
+			if (fscanf(fc,"%lf",&fvalue2) != 1) xtg_error(s,"Error in reading ZCORN");
+
 			ib=x_ijk2ib(i,j,kk,nx,ny,nz+1,0);
 			if (kzread==1) {
 			    p_zcorn_v[4*ib+1*1-1]=fvalue1;
@@ -199,12 +198,12 @@ void grd3d_import_grdecl (
 			    p_zcorn_v[4*ib+1*3-1]=fvalue1;
 			    p_zcorn_v[4*ib+1*4-1]=fvalue2;
 			}
-		    }		    
+		    }
 		}
 	    }
-	    xtg_speak(s,3,"Last value read: %lf\n",fvalue2);	    
+	    xtg_speak(s,3,"Last value read: %lf\n",fvalue2);
 	}
-	
+
 	nn=0;
 	if (strncmp(cname,"ACTNUM",6)==0) {
 	    xtg_speak(s,2,"ACTNUM found");
@@ -221,12 +220,12 @@ void grd3d_import_grdecl (
 			    xtg_error(s,"Error in reading...");
 			}
 		    }
-		    
+
 		}
 	    }
-	    xtg_speak(s,3,"Last value read: %d\n",dvalue);	    
+	    xtg_speak(s,3,"Last value read: %d\n",dvalue);
 	}
-	
+
 	if (nfact==1 && nfzcorn==1 && nfcoord==1) {
 	  break;
 	  /* fclose(fc); */
@@ -249,8 +248,7 @@ void grd3d_import_grdecl (
 	    p_coord_v[ib]   = cx;
 	    p_coord_v[ib+1] = cy;
 	}
-	xtg_speak(s,2,"Conversion via MAPAXES... DONE");		
-    }	      
+	xtg_speak(s,2,"Conversion via MAPAXES... DONE");
+    }
 
 }
-
