@@ -21,7 +21,6 @@ install(FILES
 
 add_test(NAME test_x COMMAND test_x)
 add_test(NAME test_messages COMMAND test_messages)
-add_test(NAME test_map_grd3d COMMAND test_map_grd3d)
 add_test(NAME test_point_in_cell_profiling COMMAND test_point_in_cell_profiling)
 add_test(NAME test_grd3d_onelayer COMMAND test_grd3d_onelayer)
 add_test(NAME test_surf COMMAND test_surf)

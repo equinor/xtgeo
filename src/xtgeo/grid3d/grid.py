@@ -553,7 +553,7 @@ class Grid(Grid3D):
 
         Arguments:
             gfile (str): File name to be imported
-            fformat (str): File format egrid/grid/roff/grdecl/eclipserun
+            fformat (str): File format egrid/roff/grdecl/eclipserun
                 (roff is default)
             initprops (str list): Optional, if given, and file format
                 is 'eclipserun', then list the names of the properties here.
@@ -576,7 +576,8 @@ class Grid(Grid3D):
 
         self._filesrc = gfile
 
-        fflist = set(['egrid', 'grid', 'grdecl', 'roff', 'eclipserun',
+        # note .grid is currently disabled; need to work at C backend
+        fflist = set(['egrid', 'grdecl', 'roff', 'eclipserun',
                       'guess'])
         if fformat not in fflist:
             raise ValueError('Invalid fformat: <{}>, options are {}'.
@@ -589,7 +590,7 @@ class Grid(Grid3D):
 
         if fformat == 'guess':
             logger.info('Format is <guess>')
-            fflist = ['egrid', 'grid', 'grdecl', 'roff', 'eclipserun']
+            fflist = ['egrid', 'grdecl', 'roff', 'eclipserun']
             if fext and fext in fflist:
                 fformat = fext
 
@@ -599,8 +600,6 @@ class Grid(Grid3D):
             useext = ''
             if fformat == 'egrid':
                 useext = '.EGRID'
-            elif fformat == 'grid':
-                useext = '.GRID'
             elif fformat == 'grdecl':
                 useext = '.grdecl'
             elif fformat == 'roff':
@@ -624,10 +623,6 @@ class Grid(Grid3D):
 
         if  fformat == 'roff':
             _grid_import.import_roff(self, gfile)
-        elif fformat == 'grid':
-            _grid_import.import_ecl_output(self, gfile, 0)
-        # elif (fformat == 'egrid'):
-        #     _grid_import.import_ecl_output(self, gfile, 2)
         elif fformat == 'egrid':
             _grid_import_ecl.import_ecl_egrid(self, gfile)
         elif fformat == 'eclipserun':

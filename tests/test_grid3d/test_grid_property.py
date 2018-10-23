@@ -36,8 +36,8 @@ testpath = xtg.testpath
 
 testfile1 = '../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff'
 testfile2 = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff'
-testfile3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
-testfile4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
+# testfile3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
+# testfile4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 testfile5 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
 testfile6 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
 testfile7 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
@@ -125,30 +125,30 @@ def test_roffbin_import2():
     logger.info("Mean HCPV is {}".format(hc.values.mean()))
 
 
-def test_eclinit_import():
-    """Property import from Eclipse. Needs a grid object first. Eclipse GRID"""
+# def test_eclinit_import():
+#     """Property import from Eclipse. Needs a grid object first. Eclipse GRID"""
 
-    logger.info('Name is {}'.format(__name__))
-    gg = Grid(testfile3, fformat="grid")
+#     logger.info('Name is {}'.format(__name__))
+#     gg = Grid(testfile3, fformat="grid")
 
-    actval = gg.get_actnum().values
+#     actval = gg.get_actnum().values
 
-    print(actval[10, 0: 14, 3])
+#     print(actval[10, 0: 14, 3])
 
-    po = GridProperty()
-    logger.info("Import INIT...")
-    po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
-    logger.debug(po.values[10, 0: 14, 3])
-    assert po.ncol == 20, 'NX from B.INIT'
+#     po = GridProperty()
+#     logger.info("Import INIT...")
+#     po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
+#     logger.debug(po.values[10, 0: 14, 3])
+#     assert po.ncol == 20, 'NX from B.INIT'
 
-    logger.debug(po.values[0:400])
-    assert float(po.values3d[1:2, 13:14, 0:1]) == \
-        pytest.approx(0.17146, abs=0.001), 'PORO in cell 2 14 1'
+#     logger.debug(po.values[0:400])
+#     assert float(po.values3d[1:2, 13:14, 0:1]) == \
+#         pytest.approx(0.17146, abs=0.001), 'PORO in cell 2 14 1'
 
-    # discrete prop
-    eq = GridProperty(testfile4, fformat="init", name='EQLNUM', grid=gg)
-    logger.info(eq.values[0:400])
-    assert eq.values3d[12:13, 13:14, 0:1] == 3, 'EQLNUM in cell 13 14 1'
+#     # discrete prop
+#     eq = GridProperty(testfile4, fformat="init", name='EQLNUM', grid=gg)
+#     logger.info(eq.values[0:400])
+#     assert eq.values3d[12:13, 13:14, 0:1] == 3, 'EQLNUM in cell 13 14 1'
 
 
 def test_eclinit_import_reek():
@@ -202,28 +202,28 @@ def test_eclunrst_import_soil_reek():
     tsetup.assert_almostequal(soil.values.mean(), 1.0 - 0.8780, 0.001)
 
 
-def test_export_roff():
-    """Property import from Eclipse. Then export to roff."""
+# def test_export_roff():
+#     """Property import from Eclipse. Then export to roff."""
 
-    gg = Grid()
-    gg.from_file(testfile3, fformat="grid")
-    po = GridProperty()
-    logger.info("Import INIT...")
-    po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
+#     gg = Grid()
+#     gg.from_file(testfile3, fformat="grid")
+#     po = GridProperty()
+#     logger.info("Import INIT...")
+#     po.from_file(testfile4, fformat="init", name='PORO', grid=gg)
 
-    po.to_file(os.path.join(td, 'bdata.roff'), name='PORO')
+#     po.to_file(os.path.join(td, 'bdata.roff'), name='PORO')
 
-    po.to_file(os.path.join(td, 'bdata.roffasc'), name='PORO',
-               fformat='roffasc')
+#     po.to_file(os.path.join(td, 'bdata.roffasc'), name='PORO',
+#                fformat='roffasc')
 
-    pox = GridProperty(os.path.join(td, 'bdata.roff'), name='PORO')
+#     pox = GridProperty(os.path.join(td, 'bdata.roff'), name='PORO')
 
-    pox.to_file(os.path.join(td, 'bdata2.roffasc'), name='POROAGAIN',
-                fformat='roffasc')
+#     pox.to_file(os.path.join(td, 'bdata2.roffasc'), name='POROAGAIN',
+#                 fformat='roffasc')
 
-    print(po.values.mean())
+#     print(po.values.mean())
 
-    assert po.values.mean() == pytest.approx(pox.values.mean(), abs=0.0001)
+#     assert po.values.mean() == pytest.approx(pox.values.mean(), abs=0.0001)
 
 
 def test_io_roff_discrete():
@@ -352,17 +352,17 @@ def test_get_xy_values_for_webportal_ecl():
     tsetup.assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)
 
 
-def test_get_xy_values_for_webportal_bri():
-    """Get lists on webportal format, small BRILLIG case"""
+# def test_get_xy_values_for_webportal_bri():
+#     """Get lists on webportal format, small BRILLIG case"""
 
-    # Upps, work with this case and UNDEf cells are non-existing
-    # in GRID input!
+#     # Upps, work with this case and UNDEf cells are non-existing
+#     # in GRID input!
 
-    grid = Grid(testfile3)
-    prop = GridProperty(testfile4, grid=grid, name='PORO')
+#     grid = Grid(testfile3)
+#     prop = GridProperty(testfile4, grid=grid, name='PORO')
 
-    coord, _valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
 
-    logger.info('First active cell coords\n{}.'.format(coord[0][0]))
-    # assert coord[0][0][0] == (454.875, 318.5)
-    # assert valuelist[0][0] == -999.0
+#     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
+#     # assert coord[0][0][0] == (454.875, 318.5)
+#     # assert valuelist[0][0] == -999.0

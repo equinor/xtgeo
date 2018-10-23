@@ -7,7 +7,6 @@ import re
 import os
 from tempfile import mkstemp
 from collections import OrderedDict
-import numpy as np
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
@@ -85,7 +84,7 @@ def import_roff(self, gfile):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# import eclipse output .GRID
+# import eclipse output .GRID. CURRENTLY DISABLED!
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_output(self, gfile, gtype):
 

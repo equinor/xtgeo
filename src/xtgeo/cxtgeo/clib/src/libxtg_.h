@@ -451,39 +451,6 @@ int u_wri_ecl_bin_record (
 			  );
 
 
-/* int _scan_ecl_bin_record(FILE *fc, char *cname, int *cntype, long *rnlen, */
-/*                          long npos1, long *npos2, int debug); */
-
-int u_read_ecl_bin_record (
-			   char    *cname,
-			   char    *ctype,
-			   int     *reclen,
-			   int max_alloc_int,
-			   int max_alloc_float,
-			   int max_alloc_double,
-			   int max_alloc_char,
-			   int max_alloc_logi,
-			   int     *tmp_int_v,
-			   float   *tmp_float_v,
-			   double  *tmp_double_v,
-			   char    **tmp_string_v,
-			   int     *tmp_logi_v,
-			   FILE    *fc,
-			   int     debug
-			   );
-
-int u_read_ecl_asc_record (
-			   char    *cname,
-			   char    *ctype,
-			   int     *reclen,
-			   int     *tmp_int_v,
-			   float   *tmp_float_v,
-			   double  *tmp_double_v,
-			   char    **tmp_string_v,
-			   int     *tmp_logi_v,
-			   FILE    *fc,
-			   int     debug
-			   );
 
 int u_eightletter (
 		   char *cs

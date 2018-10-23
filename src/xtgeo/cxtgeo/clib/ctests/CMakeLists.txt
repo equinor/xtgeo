@@ -4,9 +4,6 @@ target_link_libraries (test_x cxtgeo tap m)
 add_executable (test_messages test_messages.c)
 target_link_libraries (test_messages cxtgeo tap m)
 
-add_executable (test_map_grd3d test_map_grd3d.c)
-target_link_libraries (test_map_grd3d cxtgeo tap m)
-
 add_executable (test_point_in_cell_profiling test_point_in_cell_profiling.c )
 target_link_libraries (test_point_in_cell_profiling cxtgeo tap m)
 

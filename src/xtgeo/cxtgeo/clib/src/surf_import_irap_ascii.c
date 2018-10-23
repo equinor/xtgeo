@@ -93,11 +93,14 @@ int surf_import_irap_ascii (
     /* read header */
     xtg_speak(s,2,"Reading header!");
 
-    fscanf(fd, "%d %d %lf %lf %lf %f %lf %f %d %lf %f %f %d %d %d %d %d %d %d",
-	   &idum, ny, xinc, yinc,
-	   xori, &rdum, yori, &rdum,
-	   nx, rot, &rdum, &rdum,
-	   &idum, &idum, &idum, &idum, &idum, &idum, &idum);
+    iok = fscanf(fd, "%d %d %lf %lf %lf %f %lf %f %d %lf %f %f %d %d %d %d %d "
+                 "%d %d", &idum, ny, xinc, yinc,
+                 xori, &rdum, yori, &rdum,
+                 nx, rot, &rdum, &rdum,
+                 &idum, &idum, &idum, &idum, &idum, &idum, &idum);
+
+    if (iok < 19) xtg_error(s, "Something went wrong with Irap ASCII import. "
+                            "Report as BUG");
 
     if (*rot < 0.0) *rot = *rot + 360.0;
 

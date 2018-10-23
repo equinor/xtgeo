@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # This tests a combination of methods, in order to produce maps of HC thickness
 # =============================================================================
-gfile1 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
-ifile1 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
+# gfile1 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
+# ifile1 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 
 gfile2 = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
 ifile2 = '../xtgeo-testdata/3dgrids/reek/REEK.INIT'
@@ -42,48 +42,48 @@ rfile2 = '../xtgeo-testdata/3dgrids/reek/REEK.UNRST'
 ffile1 = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
 
 
-@tsetup.skipifroxar
-def test_avg01():
-    """Make average map from very simple Eclipse."""
+# @tsetup.skipifroxar
+# def test_avg01():
+#     """Make average map from very simple Eclipse."""
 
-    g = Grid()
-    g.from_file(gfile1, fformat="grid")
+#     g = Grid()
+#     g.from_file(gfile1, fformat="grid")
 
-    # get the poro
-    po = GridProperty()
-    po.from_file(ifile1, fformat='init', name='PORO', grid=g)
-    po = ma.filled(po.values3d, fill_value=po.values.mean())
+#     # get the poro
+#     po = GridProperty()
+#     po.from_file(ifile1, fformat='init', name='PORO', grid=g)
+#     po = ma.filled(po.values3d, fill_value=po.values.mean())
 
-    # get the dz and the coordinates
-    dz = g.get_dz(mask=False)
-    dz = ma.filled(dz.values3d)
-    xc, yc, zc = g.get_xyz(mask=False)
-    xc = ma.filled(xc.values3d)
-    yc = ma.filled(yc.values3d)
-    zc = ma.filled(zc.values3d)
-
-
-    # get actnum
-    actnum = g.get_actnum()
-    actnum = ma.filled(actnum.values3d)
-
-    # dz must be zero for undef cells
-    dz[actnum < 0.5] = 0.0
-
-    zoneprop = np.ones((actnum.shape))
-
-    avgmap = RegularSurface(nx=55, ny=50, xinc=400, yinc=375,
-                            xori=-100, yori=0, values=np.zeros((55, 50)))
+#     # get the dz and the coordinates
+#     dz = g.get_dz(mask=False)
+#     dz = ma.filled(dz.values3d)
+#     xc, yc, zc = g.get_xyz(mask=False)
+#     xc = ma.filled(xc.values3d)
+#     yc = ma.filled(yc.values3d)
+#     zc = ma.filled(zc.values3d)
 
 
-    avgmap.avg_from_3dprop(xprop=xc, yprop=yc, zoneprop=zoneprop,
-                           mprop=po, dzprop=dz, truncate_le=0.001,
-                           zone_minmax=(1, 1))
+#     # get actnum
+#     actnum = g.get_actnum()
+#     actnum = ma.filled(actnum.values3d)
 
-    avgmap.quickplot(filename='TMP/tmp_poro.png')
-    avgmap.to_file('TMP/tmp.poro.gri')
+#     # dz must be zero for undef cells
+#     dz[actnum < 0.5] = 0.0
 
-    assert avgmap.values.mean() == pytest.approx(0.264, abs=0.001)
+#     zoneprop = np.ones((actnum.shape))
+
+#     avgmap = RegularSurface(nx=55, ny=50, xinc=400, yinc=375,
+#                             xori=-100, yori=0, values=np.zeros((55, 50)))
+
+
+#     avgmap.avg_from_3dprop(xprop=xc, yprop=yc, zoneprop=zoneprop,
+#                            mprop=po, dzprop=dz, truncate_le=0.001,
+#                            zone_minmax=(1, 1))
+
+#     avgmap.quickplot(filename='TMP/tmp_poro.png')
+#     avgmap.to_file('TMP/tmp.poro.gri')
+
+#     assert avgmap.values.mean() == pytest.approx(0.264, abs=0.001)
 
 
 @tsetup.skipifroxar
