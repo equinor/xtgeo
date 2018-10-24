@@ -9,6 +9,7 @@ import os.path
 import numpy as np
 import pandas as pd
 
+import xtgeo.common.constants as const
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import _wellmarkers
@@ -26,34 +27,24 @@ class Well(object):
 
     The well trajectory are here represented as logs, and XYZ have magic names:
     X_UTME, Y_UTMN, Z_TVDSS.
-    """
 
-    UNDEF = _cxtgeo.UNDEF
-    UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
-    UNDEF_INT = _cxtgeo.UNDEF_INT
-    UNDEF_INT_LIMIT = _cxtgeo.UNDEF_INT_LIMIT
-
-    def __init__(self, *args, **kwargs):
-
-        """The __init__ (constructor) method.
-
-        The instance can be made either from file or (todo!) by spesification::
+    The instance can be made either from file or (todo!) by spesification::
 
         >>> x1 = Well('somefilename')  # assume RMS ascii well
         >>> x2 = Well('somefilename', fformat='rms_ascii')
 
-        Args:
-            xxx (nn): to come
+    Args:
+        xxx (nn): to come
+    """
 
+    UNDEF = const.UNDEF
+    UNDEF_LIMIT = const.UNDEF_LIMIT
+    UNDEF_INT = const.UNDEF_INT
+    UNDEF_INT_LIMIT = const.UNDEF_INT_LIMIT
 
-        """
+    def __init__(self, *args, **kwargs):
 
-        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
-        logger.info(clsname)
-
-        self._xtg = XTGeoDialog()
-
-        # MD and ZONELOG are two essential logs; keep track of these names
+        # MD (MDEPTH) and ZONELOG are two essential logs; keep track of names!
         self._mdlogname = None
         self._zonelogname = None
 
@@ -152,7 +143,6 @@ class Well(object):
         if (fformat is None or fformat == 'rms_ascii'):
             _well_io.export_rms_ascii(self, wfile)
         elif (fformat == 'hdf5'):
-            print('DINGDONG')
 
             with pd.HDFStore(wfile, 'a', complevel=9, complib='zlib') as store:
                 logger.info('export to HDF5 %s', wfile)
@@ -356,7 +346,7 @@ class Well(object):
 
         # need to call the C function...
         _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = self._xtg.syslevel
+        xtg_verbose_level = xtg.syslevel
 
         # extract numpies from XYZ trajetory logs
         ptr_xv = self.get_carray('X_UTME')
@@ -394,7 +384,7 @@ class Well(object):
 
         # need to call the C function...
         _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = self._xtg.syslevel
+        xtg_verbose_level = xtg.syslevel
 
         # extract numpies from XYZ trajetory logs
         ptr_xv = self.get_carray('X_UTME')
@@ -436,7 +426,7 @@ class Well(object):
 
         # need to call the C function...
         _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = self._xtg.syslevel
+        xtg_verbose_level = xtg.syslevel
 
         df = self._df
 
@@ -509,7 +499,7 @@ class Well(object):
         if mdlogname is None:
             mdlogname = self._mdlogname
 
-        print('MDLOGNAME is {}'.format(mdlogname))
+        logger.info('MDLOGNAME is %s', mdlogname)
 
         wellreport = []
 
