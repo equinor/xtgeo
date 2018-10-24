@@ -914,27 +914,6 @@ int cube_swapaxes (
                    int debug
                    );
 
-int cube_conv_from_grd3d(
-			 int nx,
-			 int ny,
-			 int nz,
-			 double *p_coord_v,
-			 double *p_zcorn_v,
-			 int   *p_actnum_v,
-			 double *p_prop_v,
-			 double *xori,
-			 double *xinc,
-			 double *yori,
-			 double *yinc,
-			 double *zori,
-			 double *zinc,
-			 double *rotation,
-			 float  *p_cube_val,
-			 double *cube_val_min,
-			 double *cube_val_max,
-			 int   option,
-			 int   debug
-			 );
 
 int cube_coord_val_ijk(
                        int   i,
@@ -1130,8 +1109,50 @@ int cube_get_randomline(
 /*
  *=============================================================================
  * GRID (3D) CORNERPOINTS
+ * FIXHD: codefix needed
  *=============================================================================
  */
+
+int grd3d_calc_dxdy(
+                    int nx,
+                    int ny,
+                    int nz,
+                    double *p_coord_v,
+                    double *p_zcorn_v,
+                    int *p_actnum_v,
+                    double *dx,
+                    double *dy,
+                    int option1,
+                    int option2,
+                    int debug
+                    ); //FIXHD
+
+void grd3d_calc_dz(
+		   int nx,
+		   int ny,
+		   int nz,
+		   double *p_zcorn_v,
+		   int *p_actnum_v,
+		   double *p_dz_v,
+		   int flip,
+		   int option,
+		   int debug
+		   ); //FIXHD
+
+void grd3d_calc_xyz(
+		    int nx,
+		    int ny,
+		    int nz,
+		    double *p_coord_v,
+		    double *p_zcorn_v,
+		    int *p_actnum_v,
+		    double *p_x_v,
+		    double *p_y_v,
+		    double *p_z_v,
+		    int option,
+		    int debug
+		    ); //FIXHD
+
 
 /* last generation import roff binary from here --> */
 long grd3d_scan_roffbinary (FILE *fc,
@@ -1208,19 +1229,6 @@ int grd3d_imp_prop_roffbin (
 			    int     debug
 			    );
 
-/* old version */
-void grd3d_import_roff_prop (
-			      int     nx,
-			      int     ny,
-			      int     nz,
-			      char    *prop_name,
-			      int     *p_int_v,
-			      double  *p_dfloat_v,
-			      char    **codenames,
-			      int     *codevalues,
-			      char    *filename,
-			      int     debug
-			     );
 
 void grd3d_export_roff_grid (
 			    int     mode,
@@ -1293,24 +1301,6 @@ void grd3d_export_roff_prop (
 			      int     debug
 			      );
 
-/* use in Perl version (codenames as double pointer) */
-void grd3d_export_roff_prop_old (int mode,
-                                 int     nx,
-                                 int     ny,
-                                 int     nz,
-                                 int     num_subgrds,
-                                 int     isubgrd_to_export,
-                                 int     *p_subgrd_v,
-                                 char    *pname,
-                                 char    *ptype,
-                                 int     *p_int_v,
-                                 double  *p_double_v,
-                                 int     ncodes,
-                                 char    **codenames,
-                                 int     *codevalues,
-                                 char    *filename,
-                                 int     debug
-                                 );
 
 long grd3d_scan_eclbinary (
                            FILE *fc,
@@ -1383,47 +1373,6 @@ int grd3d_imp_ecl_egrid (
                          );
 
 
-
-void grd3d_export_ecl_grid (
-			    int     nx,
-			    int     ny,
-			    int     nz,
-			    double   *p_coord_v,
-			    double   *p_zcorn_v,
-			    int     *p_actnum_v,
-			    char    *filename,
-			    int     mode,
-			    int     debug
-			    );
-
-
-void grd3d_export_ecl_pstart (
-			      int     mode,
-			      int     nx,
-			      int     ny,
-			      int     nz,
-			      int     *p_actnum_v,
-			      char    *filename,
-			      int     debug
-			      );
-
-void grd3d_export_ecl_prop (
-			     int     mode,
-			     int     nx,
-			     int     ny,
-			     int     nz,
-			     char    *cname,
-			     char    *ctype,
-			     int     *int_v,
-			     double   *float_v,
-			     double  *double_v,
-			     char    **string_v,
-			     int     *logi_v,
-			     int     *p_actnum_v,
-			     char    *filename,
-			     int     debug
-			     );
-
 void grd3d_import_grdecl (
 			  int     nx,
 			  int     ny,
@@ -1458,30 +1407,6 @@ void grd3d_export_grdeclprop (
 			      int     filemode,
 			      int     debug
 			      );
-void grd3d_import_grdeclpar (
-                             int     nx,
-			     int     ny,
-			     int     nz,
-			     char    *prop_name,
-			     double   *p_float_v,
-			     char    *filename,
-			     int     debug
-			     );
-void grd3d_export_flgrs(
-                        int nx,
-			int ny,
-			int nz,
-			double *p_coord_v,
-			double *p_zcorn_v,
-			int   *p_actnum_v,
-			double flimit,
-			char  *file,
-			int   mdiv,
-			int   kthrough,
-			int   append,
-			int   additonal,
-			int   debug
-                        );
 
 int grd3d_copy(
                int ncol,
@@ -1495,43 +1420,6 @@ int grd3d_copy(
                int *p_actnum2_v,
                int iflag,
                int debug);
-
-
-int grd3d_ijwindow_from_poly(
-                             int np,
-                             double *p_xp_v,
-                             double *p_yp_v,
-                             int nx,
-                             int ny,
-                             int nz,
-                             int klayer,
-                             double *p_coord_v,
-                             double *p_zcorn_v,
-                             int *p_actnum_v,
-                             int *i1,
-                             int *i2,
-                             int *j1,
-                             int *j2,
-                             double extra,
-                             int option,
-                             int debug
-                             );
-
-
-void grd3d_add_zcells (
-		       int    nx,
-		       int    ny,
-		       int    nz,
-		       int    nadd,
-		       double thickness,
-		       double *p_zcorn1_v,
-		       int    *p_actnum1_v,
-		       double *p_zcornnew_v,
-		       int    *p_actnumnew_v,
-		       int    *p_numnew_act,
-		       int    option,
-		       int    debug
-		       );
 
 
 
@@ -1551,25 +1439,6 @@ int grd3d_crop_geometry (
                          int debug
                          );
 
-int grd3d_reduce_by_zon (
-			 int    zmin,
-			 int    zmax,
-			 int    nx,
-			 int    ny,
-			 int    nz1,
-			 int    *nz2,
-			 double *p_zcorn1_v,
-			 double *p_zcorn2_v,
-			 int    *p_actnum1_v,
-			 int    *p_actnum2_v,
-			 int    *p_zon1_v,
-			 int    *p_zon2_v,
-			 int    *nactive,
-			 int    *ibmappermin,
-			 int    *ibmappermax,
-			 int    iflag,
-			 int    debug
-			 );
 
 int grd3d_reduce_onelayer (
 			   int    nx,
@@ -1584,72 +1453,6 @@ int grd3d_reduce_onelayer (
 			   int    debug
 			   );
 
-
-void grd3d_fault_marks(
-		       int nx,
-		       int ny,
-		       int nz,
-		       double *p_coord_v,
-		       double *p_zcorn_v,
-		       int   *p_actnum_v,
-		       int   *p_fmark_v,
-		       double flimit,
-		       int   debug
-		       );
-
-
-int grd3d_pol_ftrace(
-		     int    nx,
-		     int    ny,
-		     int    nz,
-		     double  *p_coord_v,
-		     double  *p_zcorn_v,
-		     int    *p_actnum_v,
-		     double  *p_fprop_v,
-		     double  *p_fprop2_v,
-		     int    klayer,
-		     int    nelem,
-		     int    *fid,
-		     double  *sfr,
-		     double  *dir,
-		     int    *ext,
-		     int    *pri,
-		     double  *xw1,
-		     double  *xw2,
-		     double  *yw1,
-		     double  *yw2,
-		     int    *np,
-		     double  *p_xp_v,
-		     double  *p_yp_v,
-		     int    maxradius,
-		     int    ntracemax,
-		     int    option,
-		     int    debug
-		     );
-
-
-int grd3d_cell_faultthrows(
-			   int   i,
-			   int   j,
-			   int   z,
-			   int   nx,
-			   int   ny,
-			   int   nz,
-			   double *p_coord_v,
-			   double *p_zcorn_v,
-			   int   *p_actnum_v,
-			   double throw[],
-			   int   option,
-			   int   debug
-			   );
-
-int grd3d_count_prop_int(
-			 int   nxyz,
-			 int   *p_nprop_v,
-			 int   *p_actnum_v,
-			 int   nval,
-			 int   debug
-			 );
 
 int grd3d_refine_vert(
                       int nx,
@@ -1704,43 +1507,6 @@ void grd3d_convert_hybrid2(
 			   );
 
 
-int grd3d_ijk_range_by_prop (
-                             int    nx,
-                             int    ny,
-                             int    nz,
-                             int    p1,
-                             int    p2,
-                             int    *p_iprop_v,
-                             int    *p_actnum_v,
-                             int    *imin,
-                             int    *imax,
-                             int    *jmin,
-                             int    *jmax,
-                             int    *kmin,
-                             int    *kmax,
-                             int    iflag,
-                             int    debug
-                             );
-
-void grd3d_merge_grids (
-			int   nx,
-			int   ny,
-			int   nz1,
-			double *p_coord1_v,
-			double *p_zcorn1_v,
-			int   *p_actnum1_v,
-			int   nz2,
-			double *p_zcorn2_v,
-			int   *p_actnum2_v,
-			int   nznew,
-			double *p_zcornnew_v,
-			int   *p_actnumnew_v,
-			int   *p_numnew_act,
-			int   option,
-			int   debug
-			);
-
-
 void grd3d_make_z_consistent (
 			      int    nx,
 			      int    ny,
@@ -1751,14 +1517,6 @@ void grd3d_make_z_consistent (
 			      int    debug
 			      );
 
-void grd3d_flip_depth (
-		       int   nx,
-		       int   ny,
-		       int   nz,
-		       double *p_coord_v,
-		       double *p_zcorn_v,
-		       int   debug
-		       );
 
 int grd3d_translate (
 		     int   nx,
@@ -1774,19 +1532,6 @@ int grd3d_translate (
 		     double *p_zcorn_v,
 		     int   debug
 		     );
-
-void grd3d_set_dz_cell (
-			int   i,
-			int   j,
-			int   k,
-			int   nx,
-			int   ny,
-			int   nz,
-			double *p_zcorn_v,
-			int   *p_actnum_v,
-			double zsep,
-			int   debug
-			);
 
 
 int grd3d_point_in_cell(
@@ -1834,39 +1579,9 @@ void grd3d_midpoint (
 		     int     debug
 		     );
 
-void grd3d_cellpoint (
-		      int     i,
-		      int     j,
-		      int     k,
-		      int     nx,
-		      int     ny,
-		      int     nz,
-		      int     ftype,
-		      double   *p_coord_v,
-		      double   *p_zcorn_v,
-		      double   *x,
-		      double   *y,
-		      double   *z,
-		      int     debug
-		      );
 
 
 
-void grd3d_make_active(
-		       int     i1,
-		       int     i2,
-		       int     j1,
-		       int     j2,
-		       int     k1,
-		       int     k2,
-		       int     nx,
-		       int     ny,
-		       int     nz,
-		       int     *p_actnum_v,
-		       int     debug
-		       );
-
-// python version:
 int grd3d_inact_outside_pol(
                             double *swig_np_dbl_in_v1,    // polygons X
                             long   n_swig_np_dbl_in_v1,   // N
@@ -1885,23 +1600,6 @@ int grd3d_inact_outside_pol(
                             int    debug
                             );
 
-// perl version:
-void grd3d_inact_outs_pol(
-			  int     np,
-			  double   *p_xp_v,
-			  double   *p_yp_v,
-			  int     nx,
-			  int     ny,
-			  int     nz,
-			  double   *p_coord_v,
-			  double   *p_zcorn_v,
-			  int     *p_actnum_v,
-			  int     *p_subgrd_v,
-			  int     isub,
-			  int     nsub,
-			  int     option,
-			  int     debug
-			  );
 
 int grd3d_geometrics(
 		     int     nx,
@@ -1928,73 +1626,6 @@ int grd3d_geometrics(
 		     int     debug
 		     );
 
-void grd3d_set_prop_by_pol(
-			   int    np,
-			   double  *p_xp_v,
-			   double  *p_yp_v,
-			   int    nx,
-			   int    ny,
-			   int    nz,
-			   double  *p_coord_v,
-			   double  *p_zcorn_v,
-			   int    *p_actnum_v,
-			   double  *p_prop_v,
-			   double  value,
-			   double  ronly,
-			   int    i1,
-			   int    i2,
-			   int    j1,
-			   int    j2,
-			   int    k1,
-			   int    k2,
-			   int    option,
-			   int    debug
-			   );
-
-void grd3d_set_prop_in_pol(
-			   int    np,
-			   double  *p_xp_v,
-			   double  *p_yp_v,
-			   int    nx,
-			   int    ny,
-			   int    nz,
-			   double  *p_coord_v,
-			   double  *p_zcorn_v,
-			   int    *p_actnum_v,
-			   int    *p_prop_v,
-			   double  value,
-			   int    i1,
-			   int    i2,
-			   int    j1,
-			   int    j2,
-			   int    k1,
-			   int    k2,
-			   int    option,
-			   int    debug
-			   );
-
-void grd3d_split_prop_by_pol(
-			     int    np,
-			     double  *p_xp_v,
-			     double  *p_yp_v,
-			     int    nx,
-			     int    ny,
-			     int    nz,
-			     double  *p_coord_v,
-			     double  *p_zcorn_v,
-			     int    *p_actnum_v,
-			     int    *p_prop_v,
-			     double  *p_propfilter_v,
-			     double  filterval,
-			     int    i1,
-			     int    i2,
-			     int    j1,
-			     int    j2,
-			     int    k1,
-			     int    k2,
-			     int    option,
-			     int    debug
-			     );
 
 void grd3d_inact_by_dz(
 		       int nx,
@@ -2007,293 +1638,11 @@ void grd3d_inact_by_dz(
 		       int   debug
 		       );
 
-void grd3d_copy_prop_int(
-			 long   nxyz,
-			 int   *p_input_v,
-			 int   *p_output_v,
-			 int   debug
-			 );
-
-void grd3d_copy_prop_float(
-			   long   nxyz,
-			   float *p_input_v,
-			   float *p_output_v,
-			   int   debug
-			   );
-
-void grd3d_copy_prop_doflo(
-			   long   nxyz,
-			   double *p_input_v,
-			   float *p_output_v,
-			   int   debug
-			   );
-
-void grd3d_copy_prop_double(
-			   long   nxyz,
-			   double *p_input_v,
-			   double *p_output_v,
-			   int   debug
-			   );
-
-void grd3d_transfer_prop_int(
-			     int   nx,
-			     int   ny,
-			     int   nz1,
-			     int   nz2,
-			     int   k1min,
-			     int   k1max,
-			     int   k2min,
-			     int   k2max,
-			     int   *p_input_v,
-			     int   *p_output_v,
-			     int   option,
-			     int   debug
-			     );
-
-void grd3d_transfer_prop_dbl(
-			     int    nx,
-			     int    ny,
-			     int    nz1,
-			     int    nz2,
-			     int    k1min,
-			     int    k1max,
-			     int    k2min,
-			     int    k2max,
-			     double *p_input_v,
-			     double *p_output_v,
-			     int    option,
-			     int    debug
-			     );
 
 
-void grd3d_ifthen_prop_intint(
-			      int   nx,
-			      int   ny,
-			      int   nz,
-			      int   i1,
-			      int   i2,
-			      int   j1,
-			      int   j2,
-			      int   k1,
-			      int   k2,
-			      int   *p_other_v,
-			      int   *p_this_v,
-			      int   *p_array,
-			      int   alen,
-			      int   newvalue,
-			      int   elsevalue,
-			      int   rmin,
-			      int   rmax,
-			      int   debug
-			      );
-
-double grd3d_frac_prop_within_ii(
-			       int   nxyz,
-			       int   *p_other_v,
-			       int   *p_this_v,
-			       int   *p_oarray,
-			       int   oalen,
-			       int   *p_tarray,
-			       int   talen,
-			       int   debug
-				);
-
-void grd3d_remap_prop_g2g(
-			   int   nx1,
-			   int   ny1,
-			   int   nz1,
-			   int   nx2,
-			   int   ny2,
-			   int   nz2,
-			   int   isub,
-			   int   num_subgrds,
-			   int   *p_subgrd_v,
-			   char  *ptype,
-			   int   *p_int1_v,
-			   double *p_double1_v,
-			   int   *p_int2_v,
-			   double *p_double2_v,
-			   int   debug
-			   );
-
-int grd3d_count_active(
-		       int     nx,
-		       int     ny,
-		       int     nz,
-		       int    *p_actnum_v,
-		       int debug
-		       );
 
 
-void grd3d_calc_dz(
-		   int     nx,
-		   int     ny,
-		   int     nz,
-		   double  *p_zcorn_v,
-		   int     *p_actnum_v,
-		   double   *p_dz_v,
-		   int     flip,
-		   int     option,
-		   int     debug
-		   );
 
-int grd3d_calc_dxdy(
-                    int      nx,
-                    int      ny,
-                    int      nz,
-                    double   *p_coord_v,
-                    double   *p_zcorn_v,
-                    int      *p_actnum_v,
-                    double   *dx,
-                    double   *dy,
-                    int      option1,
-                    int      option2,
-                    int      debug
-                    );
-
-void grd3d_calc_xyz(
-		    int      nx,
-		    int      ny,
-		    int      nz,
-		    double   *p_coord_v,
-		    double   *p_zcorn_v,
-		    int      *p_actnum_v,
-		    double   *p_x_v,
-		    double   *p_y_v,
-		    double   *p_z_v,
-		    int      option,
-		    int      debug
-		    );
-
-
-void grd3d_calc_z(
-		  int nx,
-		  int ny,
-		  int nz,
-		  double *p_zcorn_v,
-		  double *p_z_v,
-		  int debug
-		  );
-
-int grd3d_prop_infill1_int(
-			   int nx,
-			   int ny,
-			   int nz,
-			   int i1,
-			   int i2,
-			   int j1,
-			   int j2,
-			   int k1,
-			   int k2,
-			   double *p_coord_v,
-			   double *p_zcorn_v,
-			   int   *p_actnum_v,
-			   int   *p_xxx_v,
-			   int   value,
-			   int   debug
-			   );
-
-void grd3d_calc_cell_dip(
-			 int nx,
-			 int ny,
-			 int nz,
-			 double *p_coord_v,
-			 double *p_zcorn_v,
-			 double *p_dip_v,
-			 int   debug
-			 );
-
-void grd3d_interp_prop_verti(
-			     int    nx,
-			     int    ny,
-			     int    nz,
-			     double *p_zcorn_v,
-			     int    *p_actnum_v,
-			     double  *p_xxx_v,
-			     double  bgval,
-			     double  dzmax,
-			     int    option,
-			     int    debug
-			     );
-
-void grd3d_interp_prop_vertii(
-			      int    nx,
-			      int    ny,
-			      int    nz,
-			      int    i1,
-			      int    i2,
-			      int    j1,
-			      int    j2,
-			      double *p_zcorn_v,
-			      int    *p_actnum_v,
-			      int    *p_xxx_v,
-			      int    bgval,
-			      double  dzmax,
-			      int    option,
-			      int    debug
-			      );
-
-int grd3d_getcell_by_prop(
-			  int      nx,
-			  int      ny,
-			  int      nz,
-			  int      i1,
-			  int      i2,
-			  int      j1,
-			  int      j2,
-			  int      k1,
-			  int      k2,
-			  double   *p_coord_v,
-			  double   *p_zcorn_v,
-			  int      *p_actnum_v,
-			  double    *p_xxx_v,
-			  double    pmin,
-			  double    pmax,
-			  int      criteria,
-			  int      option,
-			  int      debug
-			  );
-
-
-void grd3d_calc_sum_dz(
-		       int    nx,
-		       int    ny,
-		       int    nz,
-		       double *p_zcorn_v,
-		       int    *p_actnum_v,
-		       double  *p_sumdz_v,
-		       int    flip,
-		       int    debug
-		       );
-
-
-void grd3d_calc_abase(
-		      int option,
-		      int nx,
-		      int ny,
-		      int nz,
-		      double *p_dz_v,
-		      double *p_abase_v,
-		      int   flip,
-		      int   debug
-		      );
-
-
-void grd3d_print_cellinfo (
-			   int   i1,
-			   int   i2,
-			   int   j1,
-			   int   j2,
-			   int   k1,
-			   int   k2,
-			   int   nx,
-			   int   ny,
-			   int   nz,
-			   double *p_coord_v,
-			   double *p_zcorn_v,
-			   int   *actnum_v,
-			   int   debug
-			   );
 
 void grd3d_corners (
 		    int     i,
@@ -2355,42 +1704,6 @@ void grd3d_get_all_corners(
                            int debug
                            );
 
-void grd3d_set_propval_int(
-			   int     nxyz,
-			   int     *p_prop_v,
-			   int     value,
-			   int     debug
-			   );
-
-void grd3d_set_propval_float(
-			     int     nxyz,
-			     float   *p_prop_v,
-			     float   value,
-			     int     debug
-			     );
-
-void grd3d_set_propval_double(
-			     int     nxyz,
-			     double   *p_prop_v,
-			     double   value,
-			     int     debug
-			     );
-
-
-void grd3d_pzcorns (
-		    int     i,
-		    int     j,
-		    int     k,
-		    int     nx,
-		    int     ny,
-		    int     nz,
-		    double   *p_coord_v,
-		    double   *p_zcorn_v,
-		    double   *p,
-		    int     *flag,
-		    int     debug
-		    );
-
 
 int grd3d_rpt_zlog_vs_zon (
 			   int   nx,
@@ -2413,73 +1726,6 @@ int grd3d_rpt_zlog_vs_zon (
 			   int   iflag,
 			   int   debug
 			   );
-
-
-
-void grd3d_diff_zcorn (
-		       int nx,
-		       int ny,
-		       int nz,
-		       double *p_coord1_v,
-		       double *p_zcorn1_v,
-		       int   *p_actnum1_v,
-		       double *p_dz1_v,
-		       double *p_dz2_v,
-		       double *p_dz3_v,
-		       double *p_dz4_v,
-		       double *p_dz5_v,
-		       double *p_dz6_v,
-		       double *p_dz7_v,
-		       double *p_dz8_v,
-		       double *p_dzavg_v,
-		       double *p_coord2_v,
-		       double *p_zcorn2_v,
-		       int   *p_actnum2_v,
-		       int   debug
-		       );
-
-
-void grd3d_adj_dzcorn (
-		       int nx,
-		       int ny,
-		       int nz,
-		       double *p_zcorn_v,
-		       double *p_dz1_v,
-		       double *p_dz2_v,
-		       double *p_dz3_v,
-		       double *p_dz4_v,
-		       double *p_dz5_v,
-		       double *p_dz6_v,
-		       double *p_dz7_v,
-		       double *p_dz8_v,
-		       int   debug
-		       );
-
-
-int grd3d_set_active(
-		     int   nx,
-		     int   ny,
-		     int   nz,
-		     int   i1,
-		     int   i2,
-		     int   j1,
-		     int   j2,
-		     int   k1,
-		     int   k2,
-		     int   *p_actnum_v,
-		     int   debug
-		     );
-
-void grd3d_zdominance_int(
-			  int   nx,
-			  int   ny,
-			  int   nz,
-			  double *p_zcorn_v,
-			  int   *p_actnum_v,
-			  int   *p_xxx_v,
-			  int   option,
-			  int   debug
-			  );
 
 
 int well_geometrics (
