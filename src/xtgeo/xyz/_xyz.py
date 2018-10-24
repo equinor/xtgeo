@@ -7,7 +7,6 @@ import abc
 import six
 import os.path
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import _xyz_io
 
@@ -24,8 +23,6 @@ class XYZ(object):
     def __init__(self, *args, **kwargs):
         """Initiate instance"""
 
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
         self._df = None
         self._ispolygons = False
 
@@ -87,14 +84,14 @@ class XYZ(object):
             _xyz_io.import_zmap(self, pfile)
         else:
             logger.error('Invalid file format (not supported): {}'
-                              .format(fformat))
+                         .format(fformat))
             raise SystemExit
 
         return self
 
     @abc.abstractmethod
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
-                wcolumn=None, hcolumn=None, mdcolumn=None):
+                wcolumn=None, hcolumn=None, mdcolumn='M_MDEPTH'):
         """Export XYZ (Points/Polygons) to file.
 
         Args:

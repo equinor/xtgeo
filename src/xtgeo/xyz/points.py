@@ -8,11 +8,7 @@ import numpy.ma as ma
 import pandas as pd
 import xtgeo
 from xtgeo.xyz import XYZ
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 # import xtgeo.xyz._xyz_roxapi as _xyz_roxapi
-
-UNDEF = _cxtgeo.UNDEF
-UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
 
 
 class Points(XYZ):
@@ -29,9 +25,22 @@ class Points(XYZ):
         # show the Pandas dataframe
         print(xp.dataframe)
 
+    Magic column names in the dataframe:
+
+    * X_UTME: UTM X coordinate
+    * Y_UTMN: UTM Y coordinate
+    * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
+      something else!
+    * M_MDEPTH: measured depth, (if present)
+    * Q_*: Quasi geometrical measures, such as MD, AZIMUTH, INCL
+
     """
 
     def __init__(self, *args, **kwargs):
+
+        # instance variables listed
+        self._df = None
+        self._ispolygons = False
 
         super(Points, self).__init__(*args, **kwargs)
 
@@ -80,7 +89,7 @@ class Points(XYZ):
         super(Points, self).from_file(pfile, fformat=fformat)
 
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
-                wcolumn=None, hcolumn=None, mdcolumn=None):
+                wcolumn=None, hcolumn=None, mdcolumn='M_MDEPTH'):
         """Export XYZ (Points/Polygons) to file.
 
         Args:
@@ -141,6 +150,7 @@ class Points(XYZ):
                                           top_prefix=top_prefix,
                                           zonelist=zonelist,
                                           use_undef=use_undef)
+
             if wp is not None:
                 dflist.append(wp)
 
@@ -188,7 +198,6 @@ class Points(XYZ):
         xc, yc, val = coor
         ddatas = {'X_UTME': xc, 'Y_UTMN': yc, 'Z_TVDSS': val}
         self._df = pd.DataFrame(ddatas)
-
 
     def from_roxar(self, project, name, category, stype='horizons',
                    realisation=0):

@@ -18,8 +18,7 @@ logger = xtg.basiclogger(__name__)
 
 
 def import_xyz(self, pfile):
-
-    # Simple X Y Z file. All points as Pandas framework
+    """Simple X Y Z file. All points as Pandas framework."""
 
     self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
                            header=None, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'],
@@ -29,9 +28,8 @@ def import_xyz(self, pfile):
 
 
 def import_zmap(self, pfile):
-
-    # the zmap ascii polygon format; not sure about all details;
-    # seems that I just
+    """The zmap ascii polygon format; not sure about all details."""
+    # ...seems that I just
     # take in the columns starting from @<blank> line as is.
     # Potential here to improve...
 
@@ -120,6 +118,7 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
 
 
 def _convert_idbased_xyz(df):
+    """Conversion of format from ID column to 999 flag."""
 
     # If polygons, there is a 4th column with POLY_ID. This needs
     # to replaced by adding 999 line instead (for polygons)
@@ -139,7 +138,7 @@ def _convert_idbased_xyz(df):
     return newdf
 
 
-def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn=None):
+def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn='M_MDEPTH'):
     """Export til RMS wellpicks
 
     If a MD column (mdcolumn) exists, it will use the MD
@@ -156,8 +155,6 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn=None):
     """
 
     df = self.dataframe.copy()
-
-    print(df)
 
     columns = []
 
@@ -177,9 +174,6 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn=None):
         columns.append(mdcolumn)
     else:
         columns += ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
-
-    print(df)
-    print(columns)
 
     if len(df.index) < 1:
         logger.warning('Nothing to export')
