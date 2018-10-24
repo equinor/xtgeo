@@ -2,8 +2,12 @@
 
 from __future__ import print_function, absolute_import
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import re
+import os
+from tempfile import mkstemp
+
 import xtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d._gridprop_import import eclbin_record
@@ -18,6 +22,9 @@ _cxtgeo.xtg_verbose_file('NONE')
 XTGDEBUG = xtg.get_syslevel()
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import Eclipse result .EGRID
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_egrid(self, gfile):
     """Import, private to this routine.
 
@@ -101,3 +108,74 @@ def import_ecl_run(self, groot, initprops=None,
                            grid=self)
 
     self.gridprops = grdprops
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import eclipse input .GRDECL
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def import_ecl_grdecl(self, gfile):
+
+    # make a temporary file
+    fds, tmpfile = mkstemp()
+    # make a temporary
+
+    with open(gfile) as oldfile, open(tmpfile, 'w') as newfile:
+        for line in oldfile:
+            if not (re.search(r'^--', line) or re.search(r'^\s+$', line)):
+                newfile.write(line)
+
+    newfile.close()
+    oldfile.close()
+
+    # find ncol nrow nz
+    mylist = []
+    found = False
+    with open(tmpfile) as xfile:
+        for line in xfile:
+            if found:
+                logger.info(line)
+                mylist = line.split()
+                break
+            if re.search(r'^SPECGRID', line):
+                found = True
+
+    if not found:
+        logger.error('SPECGRID not found. Nothing imported!')
+        return
+    xfile.close()
+
+    self._ncol, self._nrow, self._nlay = \
+        int(mylist[0]), int(mylist[1]), int(mylist[2])
+
+    logger.info('NX NY NZ in grdecl file: {} {} {}'
+                .format(self._ncol, self._nrow, self._nlay))
+
+    ntot = self._ncol * self._nrow * self._nlay
+    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+
+    logger.info('Reading...')
+
+    ptr_num_act = _cxtgeo.new_intpointer()
+    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    _cxtgeo.grd3d_import_grdecl(self._ncol,
+                                self._nrow,
+                                self._nlay,
+                                self._p_coord_v,
+                                self._p_zcorn_v,
+                                self._p_actnum_v,
+                                ptr_num_act,
+                                tmpfile,
+                                XTGDEBUG)
+
+    # remove tmpfile
+    os.close(fds)
+    os.remove(tmpfile)
+
+    nact = _cxtgeo.intpointer_value(ptr_num_act)
+
+    logger.info('Number of active cells: {}'.format(nact))
+    self._subgrids = None

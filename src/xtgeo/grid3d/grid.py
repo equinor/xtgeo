@@ -19,7 +19,7 @@ from xtgeo.grid3d import Grid3D
 from xtgeo.common import XTGDescription
 
 from xtgeo.grid3d import _grid_hybrid
-from xtgeo.grid3d import _grid_import
+from xtgeo.grid3d import _grid_import_roff
 from xtgeo.grid3d import _grid_import_ecl
 from xtgeo.grid3d import _grid_export
 from xtgeo.grid3d import _grid_refine
@@ -621,8 +621,8 @@ class Grid(Grid3D):
             logger.critical('No such file: %s', test_gfile)
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), gfile)
 
-        if  fformat == 'roff':
-            _grid_import.import_roff(self, gfile)
+        if fformat == 'roff':
+            _grid_import_roff.import_roff(self, gfile)
         elif fformat == 'egrid':
             _grid_import_ecl.import_ecl_egrid(self, gfile)
         elif fformat == 'eclipserun':
@@ -630,7 +630,7 @@ class Grid(Grid3D):
                                             restartprops=restartprops,
                                             restartdates=restartdates)
         elif fformat == 'grdecl':
-            _grid_import.import_ecl_grdecl(self, gfile)
+            _grid_import_ecl.import_ecl_grdecl(self, gfile)
         else:
             raise SystemExit('Invalid file format')
 
