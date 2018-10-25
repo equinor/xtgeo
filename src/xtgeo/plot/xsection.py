@@ -403,7 +403,8 @@ class XSection(BasePlot):
 
     def plot_cube(self, colormap='seismic',
                   vmin=None, vmax=None, alpha=0.7,
-                  interpolation='gaussian'):
+                  interpolation='gaussian',
+                  sampling='nearest'):
         """Plot a cube backdrop.
 
         Args:
@@ -411,6 +412,10 @@ class XSection(BasePlot):
             vmin (float): Minimum value in plot.
             vmax (float); Maximum value in plot
             alpha (float): Alpah blending number beween 0 and 1.
+            interpolation (str): Interpolation for plotting, cf. matplotlib
+                documentation on this. Also gaussianN is allowed, where
+                N = 1..9.
+            sampling (str): 'nearest' (default) or 'trilinear'
 
         Raises:
             ValueError: No cube is loaded
@@ -426,8 +431,11 @@ class XSection(BasePlot):
                                                    tvdmin=self._zmin)
             self._wfence = wfence
 
+        zinc = self._cube.zinc / 2.0
+
         zvv = self._cube.get_randomline(self._wfence, zmin=self._zmin,
-                                        zmax=self._zmax, zincrement=2.0)
+                                        zmax=self._zmax, zincrement=zinc,
+                                        sampling=sampling)
 
         h1, h2, v1, v2, arr = zvv
 
