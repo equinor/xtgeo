@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import numpy.ma as ma
 import matplotlib.pyplot as plt
+from scipy.ndimage.filters import gaussian_filter
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -50,6 +51,9 @@ class XSection(BasePlot):
         self._showok = True  # to indicate if plot is OK to show
         self._legendtitle = 'Zones'
         self._legendsize = 7
+
+        self._colormap_cube = None
+        self._colorlegend_cube = False
 
         if colormap is None:
             self._colormap = plt.cm.viridis
@@ -398,7 +402,8 @@ class XSection(BasePlot):
         return ax, bba
 
     def plot_cube(self, colormap='seismic',
-                  vmin=None, vmax=None, alpha=0.7):
+                  vmin=None, vmax=None, alpha=0.7,
+                  interpolation='gaussian'):
         """Plot a cube backdrop.
 
         Args:
@@ -428,14 +433,31 @@ class XSection(BasePlot):
 
         arr = ma.masked_greater(arr, xtgeo.UNDEF_LIMIT)
 
-        print(ma.count_masked(arr))
+        logger.info('Number of masked elems: %s', ma.count_masked(arr))
 
-        if colormap is None:
-            colormap = 'seismic'
+        if self._colormap_cube is None:
+            if colormap is None:
+                colormap = 'seismic'
+            self._colormap_cube = self.define_any_colormap(colormap)
 
-        ax.imshow(arr, cmap=colormap, interpolation='sinc',
-                  vmin=vmin, vmax=vmax,
-                  extent=(h1, h2, v2, v1), aspect='auto', alpha=alpha)
+        if 'gaussian' in interpolation:  # allow gaussian3 etc
+            nnv = interpolation[-1]
+            try:
+                nnv = int(nnv)
+                arr = gaussian_filter(arr, nnv)
+                print('INTERPOLATION is ', nnv)
+                interpolation = 'none'
+            except ValueError:
+                interpolation = 'gaussian'
+
+        img = ax.imshow(arr, cmap=self._colormap_cube,
+                        interpolation=interpolation,
+                        vmin=vmin, vmax=vmax,
+                        extent=(h1, h2, v2, v1), aspect='auto', alpha=alpha)
+
+        # steer this?
+        if self._colorlegend_cube:
+            self._fig.colorbar(img, ax=ax)
 
     def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
                       colormap=None, onecolor=None, linewidth=1.0, legend=True,
@@ -573,8 +595,11 @@ class XSection(BasePlot):
     def plot_map(self):
         """Plot well location map as an overall view (with field outline)."""
 
+        if not self._outline:
+            return
+
         ax = self._ax3
-        if self._outline is not None and self._wfence is not None:
+        if self._wfence is not None:
 
             xp = self._outline.dataframe['X_UTME'].values
             yp = self._outline.dataframe['Y_UTMN'].values

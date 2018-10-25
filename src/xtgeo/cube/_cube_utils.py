@@ -181,7 +181,7 @@ def resample(self, other, sampling='nearest', outside_value=None):
 
 
 def get_randomline(self, fencespec, zmin=None, zmax=None,
-                   zincrement=None):
+                   zincrement=None, sampling='nearest'):
     """Get a random line from a fence spesification"""
 
     if not isinstance(fencespec, np.ndarray):
@@ -212,11 +212,15 @@ def get_randomline(self, fencespec, zmin=None, zmax=None,
 
     nsamples = xcoords.shape[0] * nzsam
 
+    option = 0
+    if sampling == 'trilinear':
+        option = 1
+
     ier, values = _cxtgeo.cube_get_randomline(
         xcoords, ycoords, zmin, zmax, nzsam, self._xori, self._xinc,
         self._yori, self._yinc, self._zori, self._zinc, self._rotation,
         self._yflip, self._ncol, self._nrow, self._nlay,
-        self._values.reshape(-1), nsamples, 0, XTGDEBUG)
+        self._values.reshape(-1), nsamples, option, XTGDEBUG)
 
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 

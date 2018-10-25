@@ -19,7 +19,7 @@
  *    nx ny nz       i     Cube dimensions
  *    p_val_v        i     3D cube values
  *    value          o     Randomline array
- *    option         i     0: nearest value, 1: interpolate
+ *    option         i     0: nearest value, 1: interpolate tri
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -83,10 +83,18 @@ int cube_get_randomline(
 
             zc = zmin + izc * zsam;
 
-            ier = cube_value_xyz_cell(xc, yc, zc, xori, xinc, yori, yinc,
-                                      zori, zinc, rot_deg, yflip,
-                                      nx, ny, nz, p_val_v, &val, 0,
-                                      debug);
+            if (option == 0) {
+                ier = cube_value_xyz_cell(xc, yc, zc, xori, xinc, yori, yinc,
+                                          zori, zinc, rot_deg, yflip,
+                                          nx, ny, nz, p_val_v, &val, 0,
+                                          debug);
+            }
+            else{
+                ier = cube_value_xyz_interp(xc, yc, zc, xori, xinc, yori, yinc,
+                                            zori, zinc, rot_deg, yflip,
+                                            nx, ny, nz, p_val_v, &val, 0,
+                                            debug);
+            }
 
             if (ier == 0) values[ib] = val;
             if (ier != 0) values[ib] = UNDEF;
