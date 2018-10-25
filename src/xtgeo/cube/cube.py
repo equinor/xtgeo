@@ -550,7 +550,8 @@ class Cube(object):
     # Cube extractions, e.g. XSection
     # =========================================================================
 
-    def get_randomline(self, fencespec, zmin=None, zmax=None, zincrement=None):
+    def get_randomline(self, fencespec, zmin=None, zmax=None, zincrement=None,
+                       sampling='nearest'):
         """Get a randomline from a fence spesification.
 
         In prep.
@@ -562,13 +563,13 @@ class Cube(object):
         where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
         length along the fence.
 
-        TODO: Should it be required that HLEN is evenly spaced?
-
         Args:
             fencespec (np): 2D numpy with X, Y, Z, HLEN as rows.
             zmin (float): Minimum Z (default is Cube Z minima/origin)
             zmax (float): Maximum Z (default is Cube Z maximum)
             zincrement (float): Sampling, default is Cube ZINC/2
+            sampling (str): Algorithm, 'nearest' or 'trilinear' (first is
+                faster, second is more precise for continuous fields)
 
         Returns:
             A tuple: (hmin, hmax, vmin, vmax, ndarray2d)
@@ -579,7 +580,8 @@ class Cube(object):
         """
 
         res = _cube_utils.get_randomline(self, fencespec, zmin=zmin, zmax=zmax,
-                                         zincrement=zincrement)
+                                         zincrement=zincrement,
+                                         sampling=sampling)
         return res
 
     # =========================================================================
