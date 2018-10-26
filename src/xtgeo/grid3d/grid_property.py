@@ -555,7 +555,7 @@ class GridProperty(Grid3D):
         """
 
         if newname is None:
-            newname = self.name + '_copy'
+            newname = self.name
 
         xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                              values=self._values.copy(), name=newname)
