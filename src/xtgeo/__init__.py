@@ -52,7 +52,6 @@ from xtgeo.common.constants import UNDEF_INT_LIMIT
 # del get_versions
 
 from xtgeo._theversion import theversion
-__version__ = theversion()
 # del get_versions
 
 # some function wrappers to initiate objects from imports

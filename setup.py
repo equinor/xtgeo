@@ -47,34 +47,6 @@ test_requirements = [
 # -----------------------------------------------------------------------------
 
 
-def the_version():
-    """Process the version, to avoid non-pythonic version schemes.
-
-    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.2.dev0
-
-    This function must be ~identical to xtgeo._theversion.py
-    """
-
-    version = versioneer.get_version()
-    sver = version.split('.')
-    print('\nFrom TAG description: {}'.format(sver))
-
-    useversion = 'UNSET'
-    if len(sver) == 3:
-        useversion = version
-    else:
-        bugv = sver[2].replace('+', '.')
-
-        if 'dirty' in version:
-            ext = '.dev0'
-        else:
-            ext = ''
-        useversion = '{}.{}.{}{}'.format(sver[0], sver[1], bugv, ext)
-
-    print('Using version {}\n'.format(useversion))
-    return useversion
-
-
 class build(_build):
     # different order: build_ext *before* build_py
     sub_commands = [('build_ext', _build.has_ext_modules),
@@ -107,7 +79,6 @@ _cmdclass.update(versioneer.get_cmdclass())
 
 setup(
     name='xtgeo',
-    version=the_version(),
     cmdclass=_cmdclass,
     description="XTGeo Python library for grids, surfaces, wells, etc",
     long_description=readme + '\n\n' + history,
