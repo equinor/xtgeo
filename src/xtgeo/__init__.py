@@ -68,3 +68,6 @@ from xtgeo.grid3d.grid_property import gridproperty_from_roxar
 
 from xtgeo.cube.cube import cube_from_file
 from xtgeo.cube.cube import cube_from_roxar
+
+from xtgeo.well.well import well_from_file
+from xtgeo.well.well import well_from_roxar

@@ -8,7 +8,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 logger = xtg.functionlogger(__name__)
 
@@ -63,7 +63,7 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         try:
             shutil.copyfile(self._segyfile, sfile)
         except Exception as errormsg:
-            xtg.warn('Error message: '.format(errormsg))
+            xtg.warn('Error message: {}'.format(errormsg))
             raise
 
         logger.debug('Input segy file copied ...')
@@ -74,27 +74,23 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
 
             if segyfile.sorting == 1:
                 logger.info('xline sorting')
-                for xl, xline in enumerate(segyfile.xlines):
-                    segyfile.xline[xline] = cvalues[xl]   # broadcasting
+                for xll, xline in enumerate(segyfile.xlines):
+                    segyfile.xline[xline] = cvalues[xll]   # broadcasting
             else:
                 logger.info('iline sorting')
-                logger.debug('ilines object: {}'.format(segyfile.ilines))
-                logger.debug('iline object: {}'.format(segyfile.iline))
-                logger.debug('cvalues shape {}'.format(cvalues.shape))
-                ix, jy, kz = cvalues.shape
-                for il, iline in enumerate(segyfile.ilines):
-                    logger.debug('il={}, iline={}'.format(il, iline))
-                    if ix != jy != kz or ix != kz != jy:
-                        segyfile.iline[iline] = cvalues[il]  # broadcasting
+                ixv, jyv, kzv = cvalues.shape
+                for ill, iline in enumerate(segyfile.ilines):
+                    if ixv != jyv != kzv or ixv != kzv != jyv:
+                        segyfile.iline[iline] = cvalues[ill]  # broadcasting
                     else:
                         # safer but a bit slower than broadcasting
-                        segyfile.iline[iline] = cvalues[il, :, :]
+                        segyfile.iline[iline] = cvalues[ill, :, :]
 
     else:
         # NOT FINISHED!
         logger.debug('Input segy file from scratch ...')
 
-        sintv = int(self.zinc * 1000)
+        # sintv = int(self.zinc * 1000)
         spec = segyio.spec()
 
         spec.sorting = 2
@@ -104,13 +100,12 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         spec.ilines = np.arange(self.ncol)
         spec.xlines = np.arange(self.nrow)
 
-        with segyio.create(sfile, spec) as f:
+        with segyio.create(sfile, spec) as fseg:
 
             # write the line itself to the file and the inline number
             # in all this line's headers
-            for il, ilno in enumerate(spec.ilines):
-                logger.debug('il={}, iline={}'.format(il, ilno))
-                f.iline[ilno] = cvalues[il]
+            for ill, ilno in enumerate(spec.ilines):
+                fseg.iline[ilno] = cvalues[ill]
                 # f.header.iline[ilno] = {
                 #     segyio.TraceField.INLINE_3D: ilno,
                 #     segyio.TraceField.offset: 0,
@@ -150,7 +145,7 @@ def _export_segy_xtgeo(self, sfile):
                                       self.rotation, self.yflip, 1,
                                       ilinesp, xlinesp, tracidp,
                                       0,
-                                      xtg_verbose_level)
+                                      XTGDEBUG)
 
     if status != 0:
         raise RuntimeError('Error when exporting to SEGY (xtgeo engine)')
@@ -171,7 +166,7 @@ def export_rmsreg(self, sfile):
                                             self.zinc,
                                             self.rotation, self.yflip,
                                             values1d,
-                                            sfile, xtg_verbose_level)
+                                            sfile, XTGDEBUG)
 
     if status != 0:
         raise RuntimeError('Error when exporting to RMS regular')

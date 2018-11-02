@@ -140,8 +140,8 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False,
                 if saveproject:
                     try:
                         proj.save()
-                    except Exception as myexception:
-                        warnings.warn('Could not save', myexception)
+                    except RuntimeError:
+                        xtg.warn('Could not save project!')
 
             except KeyError as keyerror:
                 raise RuntimeError(keyerror)

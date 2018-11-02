@@ -15,9 +15,10 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 _cxtgeo.xtg_verbose_file('NONE')
 
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 # self = RegularSurface instance!
+# pylint: disable=too-many-locals, too-many-branches
 
 
 def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
@@ -76,10 +77,10 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
                                          other.get_values1d(),
                                          nsurf,
                                          usesampling, opt2,
-                                         xtg_verbose_level)
+                                         XTGDEBUG)
 
     if istat != 0:
-        logger.warning('Problem, ISTAT = {}'.format(istat))
+        logger.warning('Problem, ISTAT = %s', istat)
 
     self.set_values1d(v1d)
 
@@ -134,8 +135,8 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
             ndiv = 1
             logger.warning('NDIV < 1; reset to 1')
 
-    logger.info('ZRANGE is {}'.format(zrange))
-    logger.info('NDIV is set to {} ({})'.format(ndiv, ndivmode))
+    logger.info('ZRANGE is %s', zrange)
+    logger.info('NDIV is set to %s (%s)', ndiv, ndivmode)
 
     # This will run slice in a loop within a window. Then, numpy methods
     # are applied to get the attributes
@@ -186,48 +187,42 @@ def _slice_constant_window(this, cube, sampling, zrange,
     npcollect = []
     zcenter = this.copy()
 
-    logger.info('Mean W of depth no MIDDLE slice is {}'
-                .format(zcenter.values.mean()))
+    logger.info('Mean W of depth no MIDDLE slice is %s',
+                zcenter.values.mean())
     zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                        deadtraces=deadtraces)
-    logger.info('Mean of cube slice is {}'.format(zcenter.values.mean()))
+    logger.info('Mean of cube slice is %s', zcenter.values.mean())
 
     npcollect.append(zcenter.values)
 
     zincr = zrange / float(ndiv)
 
-    logger.info('ZINCR is {}'.format(zincr))
+    logger.info('ZINCR is %s', zincr)
 
     # collect above the original surface
     progress = XTGShowProgress(ndiv * 2, show=showprogress,
                                leadtext='progress: ')
-    for i in range(ndiv):
-        progress.flush(i)
+    for idv in range(ndiv):
+        progress.flush(idv)
         ztmp = this.copy()
-        ztmp.values -= zincr * (i + 1)
-        logger.info('Mean W of depth no {} slice is {}'
-                    .format(i, ztmp.values.mean()))
+        ztmp.values -= zincr * (idv + 1)
         ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                         deadtraces=deadtraces)
-        logger.info('Mean W of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
     # collect below the original surface
-    for i in range(ndiv):
-        progress.flush(ndiv + i)
+    for idv in range(ndiv):
+        progress.flush(ndiv + idv)
         ztmp = this.copy()
-        ztmp.values += zincr * (i + 1)
-        logger.info('Mean W of depth no {} slice is {}'
-                    .format(i, ztmp.values.mean()))
+        ztmp.values += zincr * (idv + 1)
         ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                         deadtraces=deadtraces)
-        logger.info('Mean W of cube slice is {}'.format(ztmp.values.mean()))
         npcollect.append(ztmp.values)
 
     logger.info('Make a stack of the maps...')
     stacked = ma.dstack(npcollect)
-    del(npcollect)
+    del npcollect
     if deletecube:
-        del(cube)
+        del cube
 
     attvalues = dict()
     for attr in attrlist:
@@ -238,9 +233,11 @@ def _slice_constant_window(this, cube, sampling, zrange,
     return attvalues  # this is dict with numpies, one per attribute
 
 
-def _slice_constant_window2(this, cube, sampling, zrange,
-                            ndiv, mask, attrlist, snapxy, showprogress=False,
-                            deadtraces=True, deletecube=False):
+# NOT FINISHED:
+def _slice_constant_window2(  # pylint: disable=unused-argument
+        this, cube, sampling, zrange, ndiv, mask, attrlist,
+        snapxy, showprogress=False, deadtraces=True,
+        deletecube=False):
     """Slice a window, (constant in vertical extent); faster and better
     algorithm (algorithm2).
     """
@@ -270,7 +267,7 @@ def _slice_constant_window2(this, cube, sampling, zrange,
     nattr = 5  # predefined attributes
     nsurf = ztmp.ncol * ztmp.nrow * nattr
 
-    istat, attrmaps = _cxtgeo.surf_slice_cube_window(
+    istat, _attrmaps = _cxtgeo.surf_slice_cube_window(
         cube.ncol,
         cube.nrow,
         cube.nlay,
@@ -298,13 +295,16 @@ def _slice_constant_window2(this, cube, sampling, zrange,
         nattr,
         usesampling,
         opt2,
-        xtg_verbose_level)
+        XTGDEBUG)
 
     if istat != 0:
-        logger.warning('Problem, ISTAT = {}'.format(istat))
+        logger.warning('Problem, ISTAT = %s', istat)
 
     if deadtraces:
         cube.values_dead_traces(olddead)  # reset value for dead traces
+
+    if deletecube:
+        del cube
 
     return istat
 
@@ -320,8 +320,6 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     zincr = zrange / float(ndiv)
 
     zcenter = this.copy()
-    logger.info('Mean S of depth no START slice is {}'
-                .format(zcenter.values.mean()))
     zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                        deadtraces=deadtraces)
     npcollect.append(zcenter.values)
@@ -335,14 +333,11 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     # collect above the original surface
     progress = XTGShowProgress(ndiv, show=showprogress,
                                leadtext='progress: ')
-    for i in range(ndiv):
-        progress.flush(i)
+    for idv in range(ndiv):
+        progress.flush(idv)
         ztmp = this.copy()
-        ztmp.values += zincr * (i + 1) * mul
+        ztmp.values += zincr * (idv + 1) * mul
         zvalues = ztmp.values.copy()
-
-        logger.info('Mean S of depth no {} slice is {}'
-                    .format(i, ztmp.values.mean()))
 
         ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
                         deadtraces=deadtraces)
@@ -352,18 +347,14 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
         values = ztmp.values
         values = ma.masked_where(diff < 0.0, values)
 
-        logger.info('Diff min and max {} {}'.format(diff.min(), diff.max()))
-        logger.info('Mean of cube slice is {}'.format(values.mean()))
-        logger.info('Number of nonmasked elements {}'.format(values.count()))
-
         npcollect.append(values)
 
     stacked = ma.dstack(npcollect)
 
-    del(npcollect)
+    del npcollect
 
     if deletecube:
-        del(cube)
+        del cube
 
     # for cases with erosion, the two surfaces are equal
     isovalues = mul * (other.values - this.values)

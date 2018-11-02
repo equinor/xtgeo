@@ -37,6 +37,8 @@ def test_resample(reek_map):
     xs = reek_map
     assert xs.ncol == 554
 
+    xs_copy = xs.copy()
+
     # create a new map instance, unrotated, based on this map
     ncol = int((xs.xmax - xs.xmin) / 10)
     nrow = int((xs.ymax - xs.ymin) / 10)
@@ -51,6 +53,11 @@ def test_resample(reek_map):
 
     tsetup.assert_almostequal(snew.values.mean(), 1698.458, 2)
     tsetup.assert_almostequal(snew.values.mean(), xs.values.mean(), 2)
+
+    # check that the "other" in snew.resample(other) is unchanged:
+    assert xs.xinc == xs_copy.xinc
+    tsetup.assert_almostequal(xs.values.mean(), xs_copy.values.mean(), 1e-4)
+    tsetup.assert_almostequal(xs.values.std(), xs_copy.values.std(), 1e-4)
 
 
 def test_refine(reek_map):

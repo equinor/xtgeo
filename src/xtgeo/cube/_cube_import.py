@@ -13,7 +13,7 @@ logger.addHandler(logging.NullHandler())
 _cxtgeo.xtg_verbose_file('NONE')
 
 xtg = XTGeoDialog()
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 
 def import_segy(self, sfile, engine='segyio'):
@@ -34,8 +34,10 @@ def _import_segy_io(self, sfile):
             if a a value, than dead traces get this value.
     """
 
-    logger.debug('Inline sorting is {}'
-                 .format(segyio.TraceSortingFormat.INLINE_SORTING))
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-locals
+
+    logger.debug('Inline sorting %s', segyio.TraceSortingFormat.INLINE_SORTING)
 
     with segyio.open(sfile, 'r') as segyfile:
         segyfile.mmap()
@@ -53,47 +55,35 @@ def _import_segy_io(self, sfile):
         trcode = segyio.TraceField.TraceIdentificationCode
         traceidcodes = segyfile.attributes(trcode)[:].reshape(ncol, nrow)
 
-        logger.info('NRCL  {} {} {}'.format(ncol, nrow, nlay))
-        logger.info(len(segyfile.ilines))
-        logger.info(len(segyfile.xlines))
+        logger.info('NRCL  %s %s %s', ncol, nrow, nlay)
 
         # need positions for all 4 corners
-        c1 = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
-        c2 = xcalc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
-        c3 = xcalc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
-        c4 = xcalc.ijk_to_ib(ncol, nrow, 1, ncol, nrow, 1, forder=False)
+        c1v = xcalc.ijk_to_ib(1, 1, 1, ncol, nrow, 1, forder=False)
+        c2v = xcalc.ijk_to_ib(ncol, 1, 1, ncol, nrow, 1, forder=False)
+        c3v = xcalc.ijk_to_ib(1, nrow, 1, ncol, nrow, 1, forder=False)
+        c4v = xcalc.ijk_to_ib(ncol, nrow, 1, ncol, nrow, 1, forder=False)
 
-        clist = [c1, c2, c3, c4]
+        clist = [c1v, c2v, c3v, c4v]
 
-        logger.debug('IB to corners are {}'.format(clist))
-
-        for inum, co in enumerate(clist):
+        for inum, cox in enumerate(clist):
             logger.debug(inum)
-            origin = segyfile.header[co][segyio.su.cdpx,
-                                         segyio.su.cdpy,
-                                         segyio.su.scalco,
-                                         segyio.su.delrt,
-                                         segyio.su.dt,
-                                         segyio.su.iline,
-                                         segyio.su.xline]
+            origin = segyfile.header[cox][segyio.su.cdpx,
+                                          segyio.su.cdpy,
+                                          segyio.su.scalco,
+                                          segyio.su.delrt,
+                                          segyio.su.dt,
+                                          segyio.su.iline,
+                                          segyio.su.xline]
             # get the data on SU (seismic unix) format
             cdpx = origin[segyio.su.cdpx]
             cdpy = origin[segyio.su.cdpy]
             scaler = origin[segyio.su.scalco]
-            iline = origin[segyio.su.iline]
-            xline = origin[segyio.su.xline]
-            logger.debug('{}: ILINE XLINE is {} {}'.format(inum, iline, xline))
-            logger.debug(cdpx)
-            logger.debug(scaler)
-            if (scaler < 0):
+            if scaler < 0:
                 cdpx = -1 * float(cdpx) / scaler
                 cdpy = -1 * float(cdpy) / scaler
             else:
                 cdpx = cdpx * scaler
                 cdpy = cdpy * scaler
-
-            logger.debug(cdpx)
-            logger.debug(cdpy)
 
             if inum == 0:
                 xori = cdpx
@@ -102,33 +92,29 @@ def _import_segy_io(self, sfile):
                 zinc = origin[segyio.su.dt] / 1000.0
 
             if inum == 1:
-                slen, rotrad1, rot1 = xcalc.vectorinfo2(xori, cdpx,
-                                                        yori, cdpy)
+                slen, _rotrad1, rot1 = xcalc.vectorinfo2(xori, cdpx,
+                                                         yori, cdpy)
                 xinc = slen / (ncol - 1)
-                logger.debug(slen)
 
                 rotation = rot1
-                xv = (cdpx - xori, cdpy - yori, 0)
+                xvv = (cdpx - xori, cdpy - yori, 0)
 
             if inum == 2:
-                slen, rotrad2, rot2 = xcalc.vectorinfo2(xori, cdpx,
-                                                        yori, cdpy)
+                slen, _rotrad2, rot2 = xcalc.vectorinfo2(xori, cdpx,
+                                                         yori, cdpy)
                 yinc = slen / (nrow - 1)
-                logger.debug(slen)
 
                 # find YFLIP by cross products
-                yv = (cdpx - xori, cdpy - yori, 0)
-                zv = (0, 0, -1)
+                yvv = (cdpx - xori, cdpy - yori, 0)
+                zvv = (0, 0, -1)
 
-                yflip = xcalc.find_flip(xv, yv, zv)
+                yflip = xcalc.find_flip(xvv, yvv, zvv)
                 # due to bug in segyio?
                 yflip *= -1
 
         rot2 = segyio.tools.rotation(segyfile)[0]
-        logger.debug('SEGYIO rotation is {}'.format(rot2 * 180 / 3.1415))
-        testangle = _cxtgeo.x_rotation_conv(rot2, 3, 0, 0, xtg_verbose_level)
-        logger.debug('TEST rotation is {}'.format(testangle))
-        logger.debug('MY rotation is {}'.format(rotation))
+        logger.debug('SEGYIO rotation is %s', rot2 * 180 / 3.1415)
+        logger.debug('XTGeo rotation is %s', rotation)
 
     # attributes to update
     self._ilines = ilines
@@ -162,6 +148,7 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
     Returns:
         A dictionary with relevant data.
     """
+    # pylint: disable=too-many-statements, too-many-locals
 
     sdata = dict()
 
@@ -182,32 +169,20 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
     if scanheadermode:
         option = 1
 
-    logger.info('OPTION = {}'.format(option))
-
     _cxtgeo.cube_scan_segy_hdr(sfile, ptr_gn_bitsheader, ptr_gn_formatcode,
                                ptr_gf_segyformat, ptr_gn_samplespertrace,
                                ptr_gn_measuresystem, option, outfile,
-                               xtg_verbose_level)
+                               XTGDEBUG)
 
     # get values
     gn_bitsheader = _cxtgeo.intpointer_value(ptr_gn_bitsheader)
     gn_formatcode = _cxtgeo.intpointer_value(ptr_gn_formatcode)
     gf_segyformat = _cxtgeo.floatpointer_value(ptr_gf_segyformat)
     gn_samplespertrace = _cxtgeo.intpointer_value(ptr_gn_samplespertrace)
-    gn_measuresystem = _cxtgeo.intpointer_value(ptr_gn_measuresystem)
-
-    logger.info('GN_BITSHEADER      = {}'.format(gn_bitsheader))
-    logger.info('GN_FORMATCODE      = {}'.format(gn_formatcode))
-    logger.info('GN_SEGYFORMAT      = {}'.format(gf_segyformat))
-    logger.info('GN_SAMPLESPERTRACE = {} (global value)'.
-                format(gn_samplespertrace))
-    logger.info('GN_MEASURESYSTEM   = {} (code)'.
-                format(gn_measuresystem))
 
     if scanheadermode:
-        logger.info('Scan SEGY header ... {} bytes ... DONE'.
-                    format(gn_bitsheader))
-        return
+        logger.info('Scan SEGY header ... %s bytes ... DONE', gn_bitsheader)
+        return None
 
     # next is to scan first and last trace, in order to allocate
     # cube size
@@ -260,7 +235,7 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
                              optscan,
                              option,
                              outfile,
-                             xtg_verbose_level)
+                             XTGDEBUG)
 
     logger.debug('Scan via C wrapper... done')
 
@@ -269,11 +244,9 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
     nlay = _cxtgeo.intpointer_value(ptr_nlay)
 
     if scantracemode:
-        return
+        return None
 
     nrcl = ncol * nrow * nlay
-
-    logger.debug('Allocate number of cells: {}'.format(nrcl))
 
     ptr_cval_v = _cxtgeo.new_floatarray(nrcl)
 
@@ -307,7 +280,7 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
                              optscan,
                              option,
                              outfile,
-                             xtg_verbose_level)
+                             XTGDEBUG)
 
     logger.debug('Import via C wrapper...')
 
@@ -343,11 +316,14 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False,
 
 def import_rmsregular(self, sfile):
     """Import on RMS regular format."""
+    logger.debug(self, sfile)
     raise NotImplementedError('Sorry, not implemented yet')
 
 
 def import_stormcube(self, sfile):
     """Import on StormCube format."""
+
+    # pylint: disable=too-many-statements, too-many-locals, too-many-branches
 
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------
@@ -367,33 +343,33 @@ def import_stormcube(self, sfile):
 
     # Scan the header with Python; then use CLIB for the binary data
     try:
-        sf = open(sfile, encoding='ISO-8859-1')  # python 3
+        stf = open(sfile, encoding='ISO-8859-1')  # python 3
     except TypeError:
-        sf = open(sfile)
+        stf = open(sfile)
 
     iline = 0
     for line in range(10):
-        xline = sf.readline()
-        if len(xline.strip()) == 0:
+        xline = stf.readline()
+        if not xline.strip():
             continue
         else:
             iline += 1
             if iline == 1:
                 pass
             elif iline == 2:
-                nn, modname, undef_val = xline.strip().split()
+                _nn, _modname, _undef_val = xline.strip().split()
             elif iline == 3:
                 pass
             elif iline == 4:
                 (xori, xlen, yori, ylen,
-                 zori, zmax, e1, e2) = xline.strip().split()
+                 zori, _zmax, _e1, _e2) = xline.strip().split()
             elif iline == 5:
                 zlen, rot = xline.strip().split()
             elif iline == 6:
                 ncol, nrow, nlay = xline.strip().split()
                 nlines = line + 2
                 break
-    sf.close()
+    stf.close()
 
     ncol = int(ncol)
     nrow = int(nrow)
@@ -418,21 +394,10 @@ def import_stormcube(self, sfile):
         yflip = -1
         yinc = yinc * yflip  # not sure if this will ever happen
 
-    logger.debug('NCOL NROW NLAY {} {} {}'.
-                 format(ncol, nrow, nlay))
-
-    logger.debug('XINC, YINC, ZINC {} {} {}'.
-                 format(xinc, yinc, zinc))
-
-    logger.debug('ROT  {}'.format(rotation))
-
-    xtg_verbose_level = xtg.get_syslevel()
-
-    logger.debug('BINARY data starts at line  {}'.format(nlines))
 
     ier, values = _cxtgeo.cube_import_storm(ncol, nrow, nlay,
                                             sfile, nlines, nrcl,
-                                            0, xtg_verbose_level)
+                                            0, XTGDEBUG)
 
     if ier != 0:
         raise RuntimeError('Something when wrong in {}, code is {}'

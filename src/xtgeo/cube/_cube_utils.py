@@ -14,6 +14,7 @@ _cxtgeo.xtg_verbose_file('NONE')
 XTGDEBUG = xtg.get_syslevel()
 
 logger = xtg.functionlogger(__name__)
+# pylint: disable=protected-access
 
 
 def swapaxes(self):
@@ -117,11 +118,11 @@ def cropping(self, icols, jrows, klays):
                                            0 + jrow1: nrow - jrow2])
 
     # need to recompute origins
-    xp = _cxtgeo.new_doublepointer()
-    yp = _cxtgeo.new_doublepointer()
+    xpp = _cxtgeo.new_doublepointer()
+    ypp = _cxtgeo.new_doublepointer()
 
     # 1 + .., since the following routine as 1 as base for i j
-    ier = _cxtgeo.cube_xy_from_ij(1 + icol1, 1 + jrow1, xp, yp, self.xori,
+    ier = _cxtgeo.cube_xy_from_ij(1 + icol1, 1 + jrow1, xpp, ypp, self.xori,
                                   self.xinc, self.yori, self.yinc, ncol,
                                   nrow, self.yflip, self.rotation, 0,
                                   XTGDEBUG)
@@ -130,8 +131,8 @@ def cropping(self, icols, jrows, klays):
         raise RuntimeError('Unexpected error, code is {}'.format(ier))
 
     # get new X Y origins
-    self._xori = _cxtgeo.doublepointer_value(xp)
-    self._yori = _cxtgeo.doublepointer_value(yp)
+    self._xori = _cxtgeo.doublepointer_value(xpp)
+    self._yori = _cxtgeo.doublepointer_value(ypp)
     self._zori = self.zori + klay1 * self.zinc
 
     self.values = val
@@ -194,9 +195,9 @@ def get_randomline(self, fencespec, zmin=None, zmax=None,
     ycoords = fencespec[:, 1]
     hcoords = fencespec[:, 3]
 
-    for i in range(hcoords.shape[0] - 1):
-        dh = hcoords[i + 1] - hcoords[i]
-        logger.info('Delta H along well path: %s', dh)
+    for ino in range(hcoords.shape[0] - 1):
+        dhv = hcoords[ino + 1] - hcoords[ino]
+        logger.info('Delta H along well path: %s', dhv)
 
     zcubemax = self._zori + (self._nlay - 1) * self._zinc
     if zmin is None or zmin < self._zori:
@@ -216,7 +217,7 @@ def get_randomline(self, fencespec, zmin=None, zmax=None,
     if sampling == 'trilinear':
         option = 1
 
-    ier, values = _cxtgeo.cube_get_randomline(
+    _ier, values = _cxtgeo.cube_get_randomline(
         xcoords, ycoords, zmin, zmax, nzsam, self._xori, self._xinc,
         self._yori, self._yinc, self._zori, self._zinc, self._rotation,
         self._yflip, self._ncol, self._nrow, self._nlay,
@@ -240,26 +241,26 @@ def update_values(cube):
 
     logger.debug('Updating numpy values...')
     ncrl = cube._ncol * cube._nrow * cube._nlay
-    xv = _cxtgeo.swig_carr_to_numpy_f1d(ncrl, cube._cvalues)
+    xvv = _cxtgeo.swig_carr_to_numpy_f1d(ncrl, cube._cvalues)
 
-    xv = np.reshape(xv, (cube._ncol, cube._nrow, cube._nlay), order='F')
+    xvv = np.reshape(xvv, (cube._ncol, cube._nrow, cube._nlay), order='F')
 
     logger.debug('Updating numpy values... done')
 
-    xtype = xv.dtype
-    logger.info('VALUES of type {}'.format(xtype))
+    xtype = xvv.dtype
+    logger.info('VALUES of type %s', xtype)
 
     # free the C values (to save memory)
     _cxtgeo.delete_floatarray(cube._cvalues)
 
-    return xv, None
+    return xvv, None
 
 
 # copy (update) values from numpy to SWIG, 1D array
 # TO BE DEPRECATED
 def update_cvalues(cube):
     logger.debug('Enter update cvalues method...')
-    n = cube._ncol * cube._nrow * cube._nlay
+    nval = cube._ncol * cube._nrow * cube._nlay
 
     if cube._values is None and cube._cvalues is not None:
         logger.debug('CVALUES unchanged')
@@ -276,13 +277,13 @@ def update_cvalues(cube):
         sys.exit(9)
 
     # make a 1D F order numpy array, and update C array
-    xv = cube._values.copy()
-    xv = np.reshape(xv, -1, order='F')
+    xvv = cube._values.copy()
+    xvv = np.reshape(xvv, -1, order='F')
 
-    xcv = _cxtgeo.new_floatarray(n)
+    xcv = _cxtgeo.new_floatarray(nval)
 
     # convert...
-    _cxtgeo.swig_numpy_to_carr_f1d(xv, xcv)
+    _cxtgeo.swig_numpy_to_carr_f1d(xvv, xcv)
     logger.debug('Enter method... DONE')
 
     return None, xcv

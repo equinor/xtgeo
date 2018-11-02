@@ -1,7 +1,4 @@
 """RegularSurface utilities (basic low level)"""
-import sys
-
-import numpy as np
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -10,9 +7,10 @@ xtg = XTGeoDialog()
 
 _cxtgeo.xtg_verbose_file('NONE')
 
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 logger = xtg.functionlogger(__name__)
+# pylint: disable=protected-access
 
 
 def swapaxes(self):
@@ -38,7 +36,7 @@ def swapaxes(self):
     ier = _cxtgeo.surf_swapaxes(ncol, nrow, yflip,
                                 self.xori, xinc,
                                 self.yori, yinc, rota, val,
-                                0, xtg_verbose_level)
+                                0, XTGDEBUG)
     if ier != 0:
         raise RuntimeError('Unspecied runtime error from {}: Code: {}'
                            .format(__name__, ier))

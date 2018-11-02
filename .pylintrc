@@ -9,3 +9,16 @@ max-module-lines=3000
 [DESIGN]
 max-attributes=25
 max-args=20
+max-locals=20
+
+[SIMILARITIES]
+min-similarity-lines=10
+ignore-comments=yes
+ignore-docstrings=no
+ignore-imports=yes
+
+[MESSAGES CONTROL]
+disable=
+    fixme,
+    missing-docstring,
+    protected-access,
