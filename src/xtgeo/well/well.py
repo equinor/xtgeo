@@ -14,19 +14,94 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import _wellmarkers
 from xtgeo.well import _well_io
+from xtgeo.well import _well_roxapi
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+# pylint: disable=too-many-public-methods
 
 
-class Well(object):
-    """Class for a well in the xtgeo framework.
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+
+def well_from_file(wfile, fformat='rms_ascii', mdlogname=None,
+                   zonelogname=None, strict=True):
+    """Make an instance of a Well directly from file import.
+
+    Args:
+        mfile (str): Name of file
+        fformat (str): See :meth:`Well.from_file`
+        mdlogname (str): See :meth:`Well.from_file`
+        zonelogname (str): See :meth:`Well.from_file`
+        strict (bool): See :meth:`Well.from_file`
+
+    Example::
+
+        import xtgeo
+        mywell = xtgeo.well_from_file('somewell.xxx')
+    """
+
+    obj = Well()
+
+    obj.from_file(wfile, fformat=fformat, mdlogname=mdlogname,
+                  zonelogname=zonelogname, strict=strict)
+
+    return obj
+
+
+def well_from_roxar(project, name, trajectory='Drilled trajectory',
+                    logrun='log', lognames=None, inclmd=False,
+                    inclsurvey=False):
+
+    """This makes an instance of a RegularSurface directly from roxar input.
+
+    For arguments, see :meth:`Well.from_roxar`.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
+
+    """
+
+    obj = Well()
+
+    obj.from_roxar(project, name, trajectory=trajectory, logrun=logrun,
+                   lognames=lognames, inclmd=inclmd, inclsurvey=inclsurvey)
+
+    return obj
+
+
+# =============================================================================
+# CLASS
+
+class Well(object):  # pylint: disable=useless-object-inheritance
+    """Class for a well in the XTGeo framework.
 
     The well logs are stored as Pandas dataframe, which make manipulation
     easy and fast.
 
     The well trajectory are here represented as logs, and XYZ have magic names:
     X_UTME, Y_UTMN, Z_TVDSS.
+
+    Other geometry logs has also 'semi-magic' names:
+
+    M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M_) or
+    quasi computed/estimated (Q_). The Quasi may be incorrect for
+    all uses, but sufficient for some computations.
+
+    Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
+
+    The dataframe itself is a Pandas dataframe, and all values (yes,
+    discrete also!) are stored as float64
+    format, and undefined values are Nan. Integers are stored as Float due
+    to the lacking support for 'Intger Nan' (currently lacking in Pandas,
+    but may come in later Pandas versions).
+
+    Note there is a method that can return a dataframe (copy) with Integer
+    and Float columns, see :meth:`get_filled_dataframe`.
 
     The instance can be made either from file or (todo!) by spesification::
 
@@ -44,6 +119,14 @@ class Well(object):
 
     def __init__(self, *args, **kwargs):
 
+        # instance attributes
+        self._wlogtype = dict()  # dictionary of log types, 'DISC' or 'CONT'
+        self._wlogrecord = dict()  # code record for 'DISC' logs
+        self._rkb = None  # well RKB height
+        self._xpos = None  # well head X pos
+        self._ypos = None  # well head Y pos
+        self._wname = None  # well name
+        self._df = None  # pandas dataframe with all log values
         # MD (MDEPTH) and ZONELOG are two essential logs; keep track of names!
         self._mdlogname = None
         self._zonelogname = None
@@ -96,36 +179,18 @@ class Well(object):
             >>> mywell = Well('31_2-6.w')
         """
 
-        if (os.path.isfile(wfile)):
+        if os.path.isfile(wfile):
             pass
         else:
             logger.critical('Not OK file')
             raise os.error
 
         if (fformat is None or fformat == 'rms_ascii'):
-            attr = _well_io.import_rms_ascii(wfile, mdlogname=mdlogname,
-                                             zonelogname=zonelogname,
-                                             strict=strict)
+            _well_io.import_rms_ascii(self, wfile, mdlogname=mdlogname,
+                                      zonelogname=zonelogname,
+                                      strict=strict)
         else:
             logger.error('Invalid file format')
-
-        # set the attributes
-        self._wlogtype = attr['wlogtype']
-        self._wlogrecord = attr['wlogrecord']
-        self._lognames_all = attr['lognames_all']
-        self._lognames = attr['lognames']
-        self._ffver = attr['ffver']
-        self._wtype = attr['wtype']
-        self._rkb = attr['rkb']
-        self._xpos = attr['xpos']
-        self._ypos = attr['ypos']
-        self._wname = attr['wname']
-        self._nlogs = attr['nlogs']
-        self._df = attr['df']
-        self._mdlogname = attr['mdlogname']
-        self._zonelogname = attr['zonelogname']
-
-        return self
 
     def to_file(self, wfile, fformat='rms_ascii'):
         """
@@ -140,9 +205,9 @@ class Well(object):
             >>> x = Well()
 
         """
-        if (fformat is None or fformat == 'rms_ascii'):
+        if fformat is None or fformat == 'rms_ascii':
             _well_io.export_rms_ascii(self, wfile)
-        elif (fformat == 'hdf5'):
+        elif fformat == 'hdf5':
 
             with pd.HDFStore(wfile, 'a', complevel=9, complib='zlib') as store:
                 logger.info('export to HDF5 %s', wfile)
@@ -151,6 +216,29 @@ class Well(object):
                 meta['name'] = self._wname
                 store.get_storer(self._wname).attrs['metadata'] = meta
 
+    def from_roxar(self, project, wname, trajectory='Drilled trajectory',
+                   logrun='log', lognames=None, inclmd=False,
+                   inclsurvey=False):
+        """Import (retrieve) well from roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            wname (str): Name of well, as shown in RMS.
+            trajectory (str): Name of trajectory in RMS
+            logrun (str): Name of logrun in RMS
+            lognames (list): List of lognames to import
+            inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
+            inclsurvey (bool): Include M_AZI and M_INCL from RMS
+        """
+
+        _well_roxapi.import_well_roxapi(self, project, wname,
+                                        trajectory=trajectory,
+                                        logrun=logrun, lognames=lognames,
+                                        inclmd=inclmd, inclsurvey=inclsurvey)
+
     # =========================================================================
     # Get and Set properties (tend to pythonic properties; not javaic get
     # & set syntax, if possible)
@@ -158,27 +246,27 @@ class Well(object):
 
     @property
     def rkb(self):
-        """ Returns RKB height for the well."""
+        """ Returns RKB height for the well (read only)."""
         return self._rkb
 
     @property
     def xpos(self):
-        """ Returns well header X position."""
+        """ Returns well header X position (read only)."""
         return self._xpos
 
     @property
     def ypos(self):
-        """ Returns well header Y position."""
+        """ Returns well header Y position (read only)."""
         return self._ypos
 
     @property
     def wellname(self):
-        """ Returns well name."""
+        """ Returns well name (read only)."""
         return self._wname
 
     @property
     def mdlogname(self):
-        """ Returns name of MD log, if any (None if not)."""
+        """ Returns name of MD log, if any (None if not) (read only)."""
         return self._mdlogname
 
     @property
@@ -188,84 +276,83 @@ class Well(object):
 
     @property
     def xwellname(self):
-        """
-        Returns well name on a file syntax safe form (/ and space replaced
+        """Returns well name on a file syntax safe form (/ and space replaced
         with _).
         """
-        x = self._wname
-        x = x.replace('/', '_')
-        x = x.replace(' ', '_')
-        return x
+        xname = self._wname
+        xname = xname.replace('/', '_')
+        xname = xname.replace(' ', '_')
+        return xname
 
     @property
     def truewellname(self):
-        """
-        Returns well name on the assummed form aka '31/2-E-4 AH2'.
-        """
-        x = self.xwellname
-        x = x.replace('_', '/', 1)
-        x = x.replace('_', ' ')
-        return x
+        """Returns well name on the assummed form aka '31/2-E-4 AH2'."""
+        xname = self.xwellname
+        xname = xname.replace('_', '/', 1)
+        xname = xname.replace('_', ' ')
+        return xname
 
     @property
     def dataframe(self):
-        """ Returns or set the Pandas dataframe object for all logs."""
+        """Returns or set the Pandas dataframe object for all logs."""
         return self._df
 
     @dataframe.setter
-    def dataframe(self, df):
-        self._df = df.copy()
+    def dataframe(self, dfr):
+        self._df = dfr.copy()
 
     @property
     def nrow(self):
-        """ Returns the Pandas dataframe object number of rows"""
+        """Returns the Pandas dataframe object number of rows"""
         return len(self._df.index)
 
     @property
     def ncol(self):
-        """ Returns the Pandas dataframe object number of columns"""
+        """Returns the Pandas dataframe object number of columns"""
         return len(self._df.columns)
 
     @property
     def nlogs(self):
-        """ Returns the Pandas dataframe object number of columns"""
+        """Returns the Pandas dataframe object number of columns"""
         return len(self._df.columns) - 3
 
     @property
     def lognames_all(self):
-        """ Returns the Pandas dataframe column names as list (incl X Y TVD)"""
+        """Returns the Pandas dataframe column names as list (including
+        mandatory X_UTME Y_UTMN Z_TVDSS)."""
         return list(self._df)
 
     @property
     def lognames(self):
-        """ Returns the Pandas dataframe column as list (excl X Y TVD)"""
+        """Returns the Pandas dataframe column as list (excluding
+        mandatory X_UTME Y_UTMN Z_TVDSS)"""
         return list(self._df)[3:]
 
     def get_logtype(self, lname):
-        """ Returns the type of a give log (e.g. DISC). None if not exists."""
+        """Returns the type of a give log (e.g. DISC). None if not exists."""
         if lname in self._wlogtype:
             return self._wlogtype[lname]
-        else:
-            return None
+
+        return None
 
     def get_logrecord(self, lname):
-        """ Returns the record (dict) of a give log. None if not exists"""
+        """Returns the record (dict) of a give log. None if not exists"""
 
         if lname in self._wlogtype:
             return self._wlogrecord[lname]
-        else:
-            return None
+
+        return None
 
     def set_logrecord(self, lname, newdict):
-        """ Sets the record (dict) of a given discrete log"""
+        """Sets the record (dict) of a given discrete log"""
 
-        if lname in self._dataframe.columns:
+        if lname in self._df.columns:
             self._wlogrecord[lname] = newdict
         else:
             raise ValueError('Cannot set records ... (unknown log name)')
 
     def get_logrecord_codename(self, lname, key):
-        """ Returns the name entry of a log record, for a given key
+        """Returns the name entry of a log record, for a given key
 
         Example::
 
@@ -274,12 +361,10 @@ class Well(object):
         """
 
         zlogdict = self.get_logrecord(lname)
-        try:
-            name = zlogdict[key]
-        except Exception:
-            return None
-        else:
-            return name
+        if key in zlogdict:
+            return zlogdict[key]
+
+        return None
 
     def get_carray(self, lname):
         """Returns the C array pointer (via SWIG) for a given log.
@@ -287,9 +372,9 @@ class Well(object):
         Type conversion is double if float64, int32 if DISC log.
         Returns None of log does not exist.
         """
-        try:
+        if lname in self._df:
             np_array = self._df[lname].values
-        except Exception:
+        else:
             return None
 
         if self.get_logtype(lname) == 'DISC':
@@ -424,14 +509,16 @@ class Well(object):
         (Perhaps this should belong to a polygon class?)
         """
 
+        # pylint: disable=too-many-locals
+
         # need to call the C function...
         _cxtgeo.xtg_verbose_file('NONE')
         xtg_verbose_level = xtg.syslevel
 
-        df = self._df
+        dfr = self._df
 
         if tvdmin is not None:
-            self._df = df[df['Z_TVDSS'] > tvdmin]
+            self._df = dfr[dfr['Z_TVDSS'] > tvdmin]
 
         if len(self._df) < 2:
             xtg.warn('Well does not enough points in interval, outside range?')
@@ -465,15 +552,15 @@ class Well(object):
         npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
         # npharr = npharr - sampling * extend ???
 
-        x = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
-        x = np.reshape(x, (nlen, 4), order='F')
+        rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
+        rval = np.reshape(rval, (nlen, 4), order='F')
 
         _cxtgeo.delete_doublearray(ptr_xov)
         _cxtgeo.delete_doublearray(ptr_yov)
         _cxtgeo.delete_doublearray(ptr_zov)
         _cxtgeo.delete_doublearray(ptr_hlv)
 
-        return x
+        return rval
 
     def report_zonation_holes(self, zonelogname=None, mdlogname=None,
                               threshold=5):
@@ -492,6 +579,7 @@ class Well(object):
         Returns:
             A Pandas dataframe as report. None if no list is made.
         """
+        # pylint: disable=too-many-branches, too-many-statements
 
         if zonelogname is None:
             zonelogname = self._zonelogname
@@ -503,32 +591,32 @@ class Well(object):
 
         wellreport = []
 
-        try:
+        if zonelogname in self._df:
             zlog = self._df[zonelogname].values.copy()
-        except Exception:
+        else:
             logger.warning('Cannot get zonelog')
             xtg.warn('Cannot get zonelog {} for {}'
                      .format(zonelogname, self.wellname))
             return None
 
-        try:
+        if mdlogname in self._df:
             mdlog = self._df[mdlogname].values
-        except Exception:
+        else:
             logger.warning('Cannot get mdlog')
             xtg.warn('Cannot get mdlog {} for {}'
                      .format(mdlogname, self.wellname))
             return None
 
-        x = self._df['X_UTME'].values
-        y = self._df['Y_UTMN'].values
-        z = self._df['Z_TVDSS'].values
+        xvv = self._df['X_UTME'].values
+        yvv = self._df['Y_UTMN'].values
+        zvv = self._df['Z_TVDSS'].values
         zlog[np.isnan(zlog)] = Well.UNDEF_INT
 
-        nc = 0
+        ncv = 0
         first = True
         hole = False
         for ind, zone in np.ndenumerate(zlog):
-            i = ind[0]
+            ino = ind[0]
             if zone > Well.UNDEF_INT_LIMIT and first:
                 continue
 
@@ -537,45 +625,45 @@ class Well(object):
                 continue
 
             if zone > Well.UNDEF_INT_LIMIT:
-                nc += 1
+                ncv += 1
                 hole = True
 
-            if zone > Well.UNDEF_INT_LIMIT and nc > threshold:
+            if zone > Well.UNDEF_INT_LIMIT and ncv > threshold:
                 logger.info('Restart first (bigger hole)')
                 hole = False
                 first = True
-                nc = 0
+                ncv = 0
                 continue
 
-            if hole and zone < Well.UNDEF_INT_LIMIT and nc <= threshold:
+            if hole and zone < Well.UNDEF_INT_LIMIT and ncv <= threshold:
                 # here we have a hole that fits criteria
                 if mdlog is not None:
-                    entry = (i, x[i], y[i], z[i], int(zone), self.xwellname,
-                             mdlog[i])
+                    entry = (ino, xvv[ino], yvv[ino], zvv[ino],
+                             int(zone), self.xwellname, mdlog[ino])
                 else:
-                    entry = (i, x[i], y[i], z[i], int(zone), self.xwellname)
+                    entry = (ino, xvv[ino], yvv[ino], zvv[ino], int(zone),
+                             self.xwellname)
 
                 wellreport.append(entry)
 
-                # retstart count
+                # restart count
                 hole = False
-                nc = 0
+                ncv = 0
 
-            if hole and zone < Well.UNDEF_INT_LIMIT and nc > threshold:
+            if hole and zone < Well.UNDEF_INT_LIMIT and ncv > threshold:
                 hole = False
-                nc = 0
+                ncv = 0
 
-        if len(wellreport) == 0:
+        if not wellreport:  # ie length is 0
             return None
-        else:
-            if mdlog is not None:
-                clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS',
-                       'Zone', 'Well', 'MD']
-            else:
-                clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS', 'Zone', 'Well']
 
-            df = pd.DataFrame(wellreport, columns=clm)
-            return df
+        if mdlog is not None:
+            clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS',
+                   'Zone', 'Well', 'MD']
+        else:
+            clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS', 'Zone', 'Well']
+
+        return pd.DataFrame(wellreport, columns=clm)
 
     def get_zonation_points(self, tops=True, incl_limit=80, top_prefix='Top',
                             zonelist=None, use_undef=False):
@@ -615,30 +703,24 @@ class Well(object):
         else:
             return None
 
-        xv = self._df['X_UTME'].values
-        yv = self._df['Y_UTMN'].values
-        zv = self._df['Z_TVDSS'].values
+        xvv = self._df['X_UTME'].values
+        yvv = self._df['Y_UTMN'].values
+        zvv = self._df['Z_TVDSS'].values
         incl = self._df['Q_INCL'].values
-        md = self._df['Q_MDEPTH'].values
+        mdv = self._df['Q_MDEPTH'].values
 
         if self.mdlogname is not None:
-            md = self._df[self.mdlogname].values
+            mdv = self._df[self.mdlogname].values
 
-        logger.info('\n')
-        logger.info(zlog)
-        logger.info(xv)
-        logger.info(zv)
-
-        logger.info(self.get_logrecord(self.zonelogname))
         if zonelist is None:
             # need to declare as list; otherwise Py3 will get dict.keys
             zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
-        logger.info('Find values for {}'.format(zonelist))
+        logger.info('Find values for %s', zonelist)
 
         ztops, ztopnames, zisos, zisonames = (
-            _wellmarkers.extract_ztops(self, zonelist, xv, yv, zv, zlog, md,
-                                       incl, tops=tops,
+            _wellmarkers.extract_ztops(self, zonelist, xvv, yvv, zvv, zlog,
+                                       mdv, incl, tops=tops,
                                        incl_limit=incl_limit,
                                        prefix=top_prefix, use_undef=use_undef))
 
@@ -650,15 +732,15 @@ class Well(object):
         logger.debug(zlist)
 
         if tops:
-            df = pd.DataFrame(zlist, columns=ztopnames)
+            dfr = pd.DataFrame(zlist, columns=ztopnames)
         else:
-            df = pd.DataFrame(zlist, columns=zisonames)
+            dfr = pd.DataFrame(zlist, columns=zisonames)
 
-        logger.info(df)
+        logger.debug(dfr)
 
-        return df
+        return dfr
 
-    def get_zone_interval(self, zonevalue, resample=1):
+    def get_zone_interval(self, zonevalue, resample=1, extralogs=None):
 
         """Extract the X Y Z ID line (polyline) segment for a given
         zonevalue.
@@ -668,6 +750,7 @@ class Well(object):
             resample (int): If given, resample every N'th sample to make
                 polylines smaller in terms of bit and bytes.
                 1 = No resampling.
+            extralogs (list of str): List of extra log names to include
 
 
         Returns:
@@ -679,55 +762,85 @@ class Well(object):
         if resample < 1 or not isinstance(resample, int):
             raise KeyError('Key resample of wrong type (must be int >= 1)')
 
-        df = self.get_filled_dataframe()
+        dff = self.get_filled_dataframe()
 
         # the technical solution here is to make a tmp column which
         # will add one number for each time the actual segment is repeated,
         # not straightforward... (thanks to H. Berland for tip)
 
-        df['ztmp'] = df[self.zonelogname]
-        df['ztmp'] = (df[self.zonelogname] != zonevalue).astype(int)
+        dff['ztmp'] = dff[self.zonelogname]
+        dff['ztmp'] = (dff[self.zonelogname] != zonevalue).astype(int)
 
-        df['ztmp'] = (df.ztmp != df.ztmp.shift()).cumsum()
+        dff['ztmp'] = (dff.ztmp != dff.ztmp.shift()).cumsum()
 
-        df = df[df[self.zonelogname] == zonevalue]
+        dff = dff[dff[self.zonelogname] == zonevalue]
 
-        m1 = df['ztmp'].min()
-        m2 = df['ztmp'].max()
-        if np.isnan(m1):
+        m1v = dff['ztmp'].min()
+        m2v = dff['ztmp'].max()
+        if np.isnan(m1v):
             logger.debug('Returns (no data)')
             return None
 
-        df2 = df.copy()
+        df2 = dff.copy()
 
         dflist = []
-        for m in range(m1, m2 + 1):
-            df = df2.copy()
-            df = df2[df2['ztmp'] == m]
-            if len(df.index) > 0:
-                dflist.append(df)
+        for mvv in range(m1v, m2v + 1):
+            dff9 = df2.copy()
+            dff9 = df2[df2['ztmp'] == mvv]
+            if dff9.index.shape[0] > 0:
+                dflist.append(dff9)
 
         dxlist = []
-        for i in range(len(dflist)):
-            dx = dflist[i]
-            dx = dx.rename(columns={'ztmp': 'POLY_ID'})
-            cols = [x for x in dx.columns
-                    if x not in ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']]
 
-            dx = dx.drop(cols, axis=1)
-            # rename columns:
-            dx.columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']
+        useloglist = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']
+        if extralogs is not None:
+            useloglist.extend(extralogs)
+
+        # pylint: disable=consider-using-enumerate
+        for ivv in range(len(dflist)):
+            dxf = dflist[ivv]
+            dxf = dxf.rename(columns={'ztmp': 'POLY_ID'})
+            cols = [xxx for xxx in dxf.columns
+                    if xxx not in useloglist]
+
+            dxf = dxf.drop(cols, axis=1)
+
             # now resample every N'th
             if resample > 1:
-                dx = pd.concat([dx.iloc[::resample, :], dx.tail(1)])
+                dxf = pd.concat([dxf.iloc[::resample, :], dxf.tail(1)])
 
-            dxlist.append(dx)
+            dxlist.append(dxf)
 
-        df = pd.concat(dxlist)
-        df.reset_index(inplace=True, drop=True)
+        dff = pd.concat(dxlist)
+        dff.reset_index(inplace=True, drop=True)
 
-        logger.debug('DF from well:\n{}'.format(df))
-        return df
+        logger.debug('Dataframe from well:\n%s', dff)
+        return dff
+
+    def get_fraction_per_zone(self, dlogname, dnames, zonelist=None,
+                              incl_limit=80):
+
+        """Get fraction of a discrete parameter, e.g. a facies, per zone.
+
+        It can be constrained on an inclination.
+
+        Args:
+            dlogname (str): Name of discrete log, e.g. 'FACIES'
+            dnames (list of str): Names of facies to report for
+            zonelist (list of int): Zones to use
+            incl_limit (float): Inclination limit for well path.
+
+        Returns:
+            A pandas dataframe (ready for the xyz/Points class), None
+            if a zonelog is missing
+        """
+
+        dfr = _wellmarkers.get_fraction_per_zone(
+            self, dlogname, dnames, zonelist=zonelist, incl_limit=incl_limit)
+
+        # logger.debug(dfr)
+
+        # return dfr
 
     # =========================================================================
     # PRIVATE METHODS

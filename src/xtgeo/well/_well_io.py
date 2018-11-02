@@ -8,24 +8,18 @@ import numpy as np
 import pandas as pd
 
 from xtgeo.common import XTGeoDialog
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-_cxtgeo.xtg_verbose_file('NONE')
-
 xtg = XTGeoDialog()
-xtg_verbose_level = xtg.get_syslevel()
 
 
 # Import RMS ascii
 # -------------------------------------------------------------------------
-def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
+def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None,
                      strict=True):
-
-    attr = dict()
-
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     wlogtype = dict()
     wlogrecord = dict()
 
@@ -33,12 +27,12 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
     lognames = []
 
     lnum = 1
-    with open(wfile, 'r') as f:
-        for line in f:
+    with open(wfile, 'r') as fwell:
+        for line in fwell:
             if lnum == 1:
-                ffver = line.strip()
+                _ffver = line.strip()  # noqa, file version
             elif lnum == 2:
-                wtype = line.strip()
+                _wtype = line.strip()  # noqa, well type
             elif lnum == 3:
                 row = line.strip().split()
                 rkb = float(row[-1])
@@ -55,7 +49,7 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
                 lname = row[0]
                 ltype = row[1].upper()
 
-                rx = row[2:]
+                rxv = row[2:]
 
                 lognames_all.append(lname)
                 lognames.append(lname)
@@ -63,11 +57,11 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
                 wlogtype[lname] = ltype
 
                 if ltype == 'DISC':
-                    xdict = {int(rx[i]): rx[i + 1] for i in
-                             range(0, len(rx), 2)}
+                    xdict = {int(rxv[i]): rxv[i + 1] for i in
+                             range(0, len(rxv), 2)}
                     wlogrecord[lname] = xdict
                 else:
-                    wlogrecord[lname] = rx
+                    wlogrecord[lname] = rxv
 
                 nlogread += 1
 
@@ -78,16 +72,16 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
 
     # now import all logs as pandas framework
 
-    df = pd.read_csv(wfile, delim_whitespace=True, skiprows=lnum,
-                     header=None, names=lognames_all,
-                     dtype=np.float64, na_values=-999)
+    dfr = pd.read_csv(wfile, delim_whitespace=True, skiprows=lnum,
+                      header=None, names=lognames_all,
+                      dtype=np.float64, na_values=-999)
 
     # undef values have a high float number? or keep Nan?
     # df.fillna(Well.UNDEF, inplace=True)
 
     # check for MD log:
     if mdlogname is not None:
-        if mdlogname in df.columns:
+        if mdlogname in dfr.columns:
             mdlogname = mdlogname
         else:
             msg = ('mdlogname={} was requested but no such log '
@@ -100,7 +94,7 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
 
     # check for zone log:
     if zonelogname is not None:
-        if zonelogname in df.columns:
+        if zonelogname in dfr.columns:
             zonelogname = zonelogname
         else:
             msg = ('zonelogname={} was requested but no such log '
@@ -111,57 +105,46 @@ def import_rms_ascii(wfile, mdlogname=None, zonelogname=None,
             else:
                 logger.warning(msg)
 
-    logger.debug(df.head())
+    logger.debug(dfr.head())
 
-    attr['wlogtype'] = wlogtype
-    attr['wlogrecord'] = wlogrecord
-    attr['lognames_all'] = lognames_all
-    attr['lognames'] = lognames
-    attr['ffver'] = ffver
-    attr['wtype'] = wtype
-    attr['rkb'] = rkb
-    attr['xpos'] = xpos
-    attr['ypos'] = ypos
-    attr['wname'] = wname
-    attr['nlogs'] = nlogs
-    attr['df'] = df
-    attr['mdlogname'] = mdlogname
-    attr['zonelogname'] = zonelogname
-
-    return attr
+    self._wlogtype = wlogtype
+    self._wlogrecord = wlogrecord
+    self._rkb = rkb
+    self._xpos = xpos
+    self._ypos = ypos
+    self._wname = wname
+    self._df = dfr
+    self._mdlogname = mdlogname
+    self._zonelogname = zonelogname
 
 
-def export_rms_ascii(well, wfile, precision=4):
+def export_rms_ascii(self, wfile, precision=4):
     """Export to RMS well format."""
 
-    with open(wfile, 'w') as f:
-        print('{}'.format(well._ffver), file=f)
-        print('{}'.format(well._wtype), file=f)
-        print('{} {} {} {}'.format(well._wname, well._xpos, well._ypos,
-                                   well._rkb), file=f)
-        for lname in well.lognames:
+    with open(wfile, 'w') as fwell:
+        print('{}'.format('1.0'), file=fwell)
+        print('{}'.format('Unknown'), file=fwell)
+        print('{} {} {} {}'.format(self._wname, self._xpos, self._ypos,
+                                   self._rkb), file=fwell)
+        for lname in self.lognames:
+            usewrec = 'linear'
             wrec = []
-            if type(well._wlogrecord[lname]) is dict:
-                for key in well._wlogrecord[lname]:
+            if isinstance(self._wlogrecord[lname], dict):
+                for key in self._wlogrecord[lname]:
                     wrec.append(key)
-                    wrec.append(well._wlogrecord[lname][key])
+                    wrec.append(self._wlogrecord[lname][key])
+                usewrec = ' '.join(str(x) for x in wrec)
 
-            else:
-                wrec = well._wlogrecord[lname]
-
-            wrec = ' '.join(str(x) for x in wrec)
-            print(wrec)
-
-            print('{} {} {}'.format(lname, well._wlogtype[lname],
-                                    wrec), file=f)
+            print('{} {} {}'.format(lname, self._wlogtype[lname],
+                                    usewrec), file=fwell)
 
     # now export all logs as pandas framework
-    tmpdf = well._df.copy()
+    tmpdf = self._df.copy()
     tmpdf.fillna(value=-999, inplace=True)
 
     # make the disc as is np.int
-    for lname in well._wlogtype:
-        if well._wlogtype[lname] == 'DISC':
+    for lname in self._wlogtype:
+        if self._wlogtype[lname] == 'DISC':
             tmpdf[[lname]] = tmpdf[[lname]].astype(int)
 
     cformat = '%-.' + str(precision) + 'f'

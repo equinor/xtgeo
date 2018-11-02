@@ -11,11 +11,13 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
-if xtg_verbose_level < 0:
-    xtg_verbose_level = 0
+
+XTGDEBUG = xtg.get_syslevel()
+if XTGDEBUG < 0:
+    XTGDEBUG = 0
 
 _cxtgeo.xtg_verbose_file('NONE')
+# pylint: disable=protected-access
 
 
 def operations_two(self, other, oper='add'):
@@ -57,7 +59,7 @@ def resample(surf, other):
                                 surf._yflip, surf._rotation,
                                 svalues,
                                 0,
-                                xtg_verbose_level)
+                                XTGDEBUG)
 
     if ier != 0:
         raise RuntimeError('Resampling went wrong, '
@@ -67,16 +69,16 @@ def resample(surf, other):
 
 
 def distance_from_point(surf, point=(0, 0), azimuth=0.0):
-
-    x, y = point
+    """Find distance bwteen point and surface."""
+    xpv, ypv = point
 
     svalues = surf.get_values1d()
 
     # call C routine
     ier = _cxtgeo.surf_get_dist_values(
         surf._xori, surf._xinc, surf._yori, surf._yinc, surf._ncol,
-        surf._nrow, surf._rotation, x, y, azimuth, svalues, 0,
-        xtg_verbose_level)
+        surf._nrow, surf._rotation, xpv, ypv, azimuth, svalues, 0,
+        XTGDEBUG)
 
     if ier != 0:
         surf.logger.error('Something went wrong...')
@@ -86,6 +88,7 @@ def distance_from_point(surf, point=(0, 0), azimuth=0.0):
 
 
 def get_value_from_xy(surf, point=(0.0, 0.0)):
+    """Find surface value for point X Y."""
 
     xcoord, ycoord = point
 
@@ -94,7 +97,7 @@ def get_value_from_xy(surf, point=(0.0, 0.0)):
                                         surf.xori, surf.yori, surf.xinc,
                                         surf.yinc, surf.yflip,
                                         surf.rotation,
-                                        surf.get_values1d(), xtg_verbose_level)
+                                        surf.get_values1d(), XTGDEBUG)
 
     if zcoord > surf._undef_limit:
         return None
@@ -103,6 +106,7 @@ def get_value_from_xy(surf, point=(0.0, 0.0)):
 
 
 def get_xy_value_from_ij(surf, iloc, jloc, zvalues=None):
+    """Find X Y value from I J index"""
 
     if zvalues is None:
         zvalues = surf.get_values1d()
@@ -115,7 +119,7 @@ def get_xy_value_from_ij(surf, iloc, jloc, zvalues=None):
                                      surf.yori, surf.yinc,
                                      surf.ncol, surf.nrow, surf._yflip,
                                      surf.rotation, zvalues,
-                                     0, xtg_verbose_level))
+                                     0, XTGDEBUG))
         if ier != 0:
             surf.logger.critical('Error code {}, contact the author'.
                                  format(ier))
@@ -131,15 +135,15 @@ def get_xy_value_from_ij(surf, iloc, jloc, zvalues=None):
 
 
 def get_xy_values(surf):
-
-    nn = surf.ncol * surf.nrow
+    """Get X Y values as numpy arrays."""
+    nno = surf.ncol * surf.nrow
 
     ier, xvals, yvals = (
         _cxtgeo.surf_xy_as_values(surf.xori, surf.xinc,
                                   surf.yori, surf.yinc * surf.yflip,
                                   surf.ncol, surf.nrow,
-                                  surf.rotation, nn, nn,
-                                  0, xtg_verbose_level))
+                                  surf.rotation, nno, nno,
+                                  0, XTGDEBUG))
     if ier != 0:
         surf.logger.critical('Error code {}, contact the author'.
                              format(ier))
@@ -156,6 +160,7 @@ def get_xy_values(surf):
 
 
 def get_fence(surf, xyfence):
+    """Get surface values along fence."""
 
     cxarr = xyfence[:, 0]
     cyarr = xyfence[:, 1]
@@ -167,7 +172,7 @@ def get_fence(surf, xyfence):
                                          surf.yori, surf.xinc, surf.yinc,
                                          surf.yflip, surf.rotation,
                                          surf.get_values1d(),
-                                         xtg_verbose_level)
+                                         XTGDEBUG)
 
     if istat != 0:
         surf.logger.warning('Seem to be rotten')

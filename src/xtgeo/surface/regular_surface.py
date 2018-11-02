@@ -333,7 +333,7 @@ class RegularSurface(object):
         if not isinstance(values, ma.MaskedArray):
             values = ma.array(values, order='C')
 
-        if not values.shape == (ncol, nrow):
+        if values.shape != (ncol, nrow):
             try:
                 values = ma.reshape(values, (ncol, nrow), order='C')
             except ValueError as emsg:
@@ -841,7 +841,7 @@ class RegularSurface(object):
         self.values = ma.array(np.full((self._ncol, self._nrow), zlevel,
                                        dtype=np.float64))
 
-        self._filesrc = cube._filesrc + ' (derived surface)'
+        self._filesrc = cube.filesrc + ' (derived surface)'
 
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
@@ -849,6 +849,7 @@ class RegularSurface(object):
             >>> mymapcopy = mymap.copy()
 
         """
+        # pylint: disable=protected-access
         logger.debug('Copy object instance...')
         logger.debug(self._values)
         logger.debug(self._values.flags)
@@ -1007,7 +1008,7 @@ class RegularSurface(object):
 
         tstatus = True
 
-        # TODO: refactor to getattr() instead!
+        # consider refactor to getattr() instead!
         chklist = set(['_ncol', '_nrow', '_xori', '_yori', '_xinc', '_yinc',
                        '_rotation'])
         for skey, sval in self.__dict__.items():
@@ -1354,8 +1355,8 @@ class RegularSurface(object):
         ylen = self._yinc * (self._nrow - 1)
 
         proxy = self.copy()
-        self._ncol = proxy._ncol * factor
-        self._nrow = proxy._nrow * factor
+        self._ncol = proxy.ncol * factor
+        self._nrow = proxy.nrow * factor
         self._xinc = xlen / (self._ncol - 1)
         self._yinc = ylen / (self._nrow - 1)
 

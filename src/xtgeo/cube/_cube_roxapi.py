@@ -11,12 +11,12 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 
 def import_cube_roxapi(self, project, name):
     """Import (transfer) a Cube via ROXAR API container to XTGeo."""
-    import roxar
+    import roxar  # pylint: disable=import-error
 
     if project is not None and isinstance(project, str):
         projectname = project
@@ -73,7 +73,10 @@ def _roxapi_cube_to_xtgeo(self, rcube):
 def export_cube_roxapi(self, project, name, folder=None, domain='time',
                        compression=('wavelet', 5)):
     """Export (store) a Seismic cube to RMS via ROXAR API spec."""
-    import roxar
+    import roxar  # pylint: disable=import-error
+
+    logger.debug('TODO: folder %s', folder)
+    logger.debug('TODO: compression %s', compression)
 
     if project is not None and isinstance(project, str):
         projectname = project
@@ -88,7 +91,9 @@ def export_cube_roxapi(self, project, name, folder=None, domain='time',
 def _roxapi_export_cube(self, roxar, proj, name, folder=None, domain='time',
                         compression=('wavelet', 5)):
 
-    # there are issues with compression; hence it is ignored
+
+    logger.info('There are issues with compression%s, hence it {} is ignored',
+                compression)
 
     if folder is None:
         rcube = proj.seismic.data.create_cube(name)

@@ -8,13 +8,13 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
+# pylint: disable=protected-access
 
 
 def import_horizon_roxapi(self, project, name, category,
                           stype, realisation):
     """Import a Horizon surface via ROXAR API spec."""
-    import roxar
+    import roxar  # pylint: disable=import-error
 
     if project is not None and isinstance(project, str):
         projectname = project
@@ -39,8 +39,8 @@ def _roxapi_import_surface(self, proj, name, category, stype, realisation):
         try:
             rox = proj.horizons[name][category].get_grid(realisation)
             _roxapi_horizon_to_xtgeo(self, rox)
-        except KeyError as ke:
-            logger.error(ke)
+        except KeyError as kwe:
+            logger.error(kwe)
     elif stype == 'zones':
         if name not in proj.zones:
             raise ValueError('Name {} is not within Zones'.format(name))
@@ -50,8 +50,8 @@ def _roxapi_import_surface(self, proj, name, category, stype, realisation):
         try:
             rox = proj.zones[name][category].get_grid(realisation)
             _roxapi_horizon_to_xtgeo(self, rox)
-        except KeyError as ke:
-            logger.error(ke)
+        except KeyError as kwe:
+            logger.error(kwe)
     else:
         raise ValueError('Invalid stype')
 
@@ -68,10 +68,11 @@ def _roxapi_horizon_to_xtgeo(self, rox):
     # since XTGeo is F order, while RMS is C order...
     self._values = np.asanyarray(rox.get_values(), order='C')
 
+
 def export_horizon_roxapi(self, project, name, category, stype,
                           realisation):
     """Export (store) a Horizon surface to RMS via ROXAR API spec."""
-    import roxar
+    import roxar  # pylint: disable=import-error
 
     if project is not None and isinstance(project, str):
         projectname = project
@@ -94,9 +95,9 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
             roxroot = proj.horizons[name][category]
             rox = _xtgeo_to_roxapi_grid(self)
             rox.set_values(np.asanyarray(self.values, order='C'))
-            roxroot.set_grid(rox)
-        except KeyError as ke:
-            logger.error(ke)
+            roxroot.set_grid(rox, realisation=realisation)
+        except KeyError as kwe:
+            logger.error(kwe)
 
     elif stype == 'zones':
         if name not in proj.zones:
@@ -109,8 +110,8 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
             rox = _xtgeo_to_roxapi_grid(self)
             rox.set_values(np.asanyarray(self.values, order='C'))
             roxroot.set_grid(rox)
-        except KeyError as ke:
-            logger.error(ke)
+        except KeyError as kwe:
+            logger.error(kwe)
 
     else:
         raise ValueError('Invalid stype')
@@ -118,7 +119,7 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
 
 def _xtgeo_to_roxapi_grid(self):
     # Create a 2D grid
-    import roxar
+    import roxar  # pylint: disable=import-error
     grid2d = roxar.RegularGrid2D.create(
         x_origin=self.xori,
         y_origin=self.yori,

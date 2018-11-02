@@ -144,6 +144,8 @@ def test_get_zone_interval():
     mywell = Well(wfile, zonelogname='Zonelog')
     line = mywell.get_zone_interval(3)
 
+    print(line)
+
     logger.info(type(line))
 
     tsetup.assert_almostequal(line.iat[0, 0], 462698.33299, 0.001)

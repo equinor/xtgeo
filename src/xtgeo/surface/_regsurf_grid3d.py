@@ -10,11 +10,12 @@ from xtgeo.grid3d import _gridprop_lowlevel
 xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
-_cxtgeo.xtg_verbose_file('NONE')
 
-xtg_verbose_level = xtg.get_syslevel()
+_cxtgeo.xtg_verbose_file('NONE')
+XTGDEBUG = xtg.get_syslevel()
 
 # self = RegularSurface instance!
+# pylint: disable=protected-access
 
 
 def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
@@ -54,10 +55,10 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
         p_prop,
         sbuffer,
         0,
-        xtg_verbose_level)
+        XTGDEBUG)
 
     if istat != 0:
-        logger.warning('Problem, ISTAT = {}'.format(istat))
+        logger.warning('Problem, ISTAT = %s', istat)
 
     self.set_values1d(updatedval)
 
