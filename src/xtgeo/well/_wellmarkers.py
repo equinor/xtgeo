@@ -144,7 +144,7 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
     return wpts, wpts_names, zwpts, zwpts_names
 
 
-def get_fraction_per_zone(self, dlogname, dvalue, zonelist=None,
+def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
                           incl_limit=80):
 
     #     X_UTME       Y_UTMN    Z_TVDSS  Zonelog  Facies  M_INCL
@@ -157,11 +157,12 @@ def get_fraction_per_zone(self, dlogname, dvalue, zonelist=None,
     # 464011.911  5931757.340  1666.1123      3.0     1.0    12.2
     # 464011.943  5931757.354  1666.6134      3.0     1.0    13.4
     #
-    # Count number of one facies filtered on a zone, given that
+    # Count fraction of one or more facies filtered on a zone, given that
     # Inclination is below limit all over. Since a zone can be
     # repeated, it is important to split into segments. When
     # fraction is determined, the AVG X Y coord is applied.
 
+    print ('XXXXX', dvalues)
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
         zonelist = list(self.get_logrecord(self.zonelogname).keys())
@@ -172,11 +173,17 @@ def get_fraction_per_zone(self, dlogname, dvalue, zonelist=None,
     else:
         self.geometrics()
 
+    zonelist=[1, 2, 3]
+
+    print ('XXXXX', dvalues, "for well ", self.wellname)
     xtralogs = [dlogname, useinclname]
     for izon in zonelist:
         print(izon)
         dfr = self.get_zone_interval(izon, extralogs=xtralogs)
-        vvv = dfr[dlogname].value_counts(normalize=True)[dvalue]
-        xxx = dfr['X_UTME'].mean()
-        yyy = dfr['Y_UTMN'].mean()
-        print(xxx, yyy, vvv)
+        print(dfr)
+        # vvv = 0.0
+        # # for dval in dvalues:
+        # #     dfr[dlogname].value_counts(normalize=True)[dval]
+        # xxx = dfr['X_UTME'].mean()
+        # yyy = dfr['Y_UTMN'].mean()
+        # print(xxx, yyy, vvv)

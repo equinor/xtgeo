@@ -33,6 +33,7 @@ export PRINT_HELP_PYSCRIPT
 APPLICATION := xtgeo
 DOCSINSTALL := /project/sdpdocs/XTGeo/libs
 
+CXTGEOBUILD := src/xtgeo/cxtgeo/clib/build
 
 BROWSER := firefox
 
@@ -62,7 +63,11 @@ help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
-clean: clean-build clean-pyc clean-test clean-examples ## remove all build, test, coverage...
+allclean: clean cclean  ## Cleanup all, both C compile stuff and Python
+
+clean: clean-build clean-pyc clean-test clean-examples ## remove all Python build, test, coverage...
+
+cclean: clean-cc ## remove all C compiling (CXTGeo) build
 
 
 clean-build: ## remove build artifacts
@@ -86,20 +91,25 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr TMP/
 
+clean-cc: ## remove C files
+	rm -fr ${CXTGEOBUILD}
+
 clean-examples:
 	find examples ! -name "*.py" -type f -exec rm -f {} +
 
 cc:
-	rm -fr src/xtgeo/cxtgeo/clib/build
-	mkdir -p src/xtgeo/cxtgeo/clib/build
-	cd src/xtgeo/cxtgeo/clib/build; cmake ..; make; make install
+	@if -d "${CXTGEOBUILD}"]; then \
+	    cd ${CXTGEOBUILD}; make; make install; \
+	else \
+	    mkdir -p ${CXTGEOBUILD}; \
+	    cd ${CXTGEOBUILD}; cmake ..; make; make install; \
+	fi
 
-ccu:
-	cd src/xtgeo/cxtgeo/clib/build; make; make install
+lint: ## check style with pylint
+	@${PYTHON} -m pylint ${APPLICATION} tests
 
-
-lint: ## check style with flake8
-	flake8 ${APPLICATION} tests
+flake: ## check style with flake8
+	@${PYTHON} -m flake8 ${APPLICATION} tests
 
 
 test:  ## run tests quickly with the default Python
@@ -139,7 +149,7 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 
-dist: clean  ## builds wheel package
+dist: clean cc  ## builds wheel package
 	@echo "Running ${PYTHON} (${PYTHON_VERSION}) bdist_wheel..."
 	@${PYTHON} setup.py bdist_wheel
 
@@ -149,7 +159,7 @@ install: dist ## version to VENV install place
 	@${PIP} install --upgrade ./dist/*
 
 
-siteinstall: dist ## Install in project/res (Trondheim) using $TARGET
+siteinstall: allclean dist ## Install in Equinor using $TARGET
 	@echo $(HOST)
 	\rm -fr  ${TARGET}/${APPLICATION}
 	\rm -fr  ${TARGET}/${APPLICATION}-*

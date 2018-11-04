@@ -2,7 +2,6 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-import sys
 import glob
 from xtgeo.xyz import Points
 from xtgeo.well import Well
@@ -12,7 +11,7 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
 td = xtg.tmpdir
 testpath = xtg.testpath
@@ -121,5 +120,27 @@ def test_get_zone_thickness_some_wells():
                      attributes=['WellName', 'ZoneName'],
                      filter={'ZoneName': ['SO622']})
 
-
     logger.info('Number of well made to tops: {}'.format(nwell))
+
+
+def test_get_faciesfraction_some_wells():
+    """Import some wells and get the facies fractions per zone, for
+    wells < 70 degrees inclination.
+    """
+
+    wlist = []
+    for w in glob.glob(wfiles2):
+        wlist.append(Well(w, zonelogname='Zonelog'))
+        logger.info('Imported well {}'.format(w))
+
+    mypoints = Points()
+    facname = 'Facies'
+    fcode = [3]
+
+    nwell = mypoints.dfrac_from_wells(wlist, facname, fcode, zonelist=(1, 22))
+
+    print(nwell, '\n', mypoints.dataframe)
+
+    mypoints.to_file('TMP/ffrac_per_zone.rmsasc', fformat='rms_attr')
+
+    logger.info('Number of well for facies fraction: {}'.format(nwell))

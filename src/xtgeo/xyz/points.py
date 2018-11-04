@@ -161,6 +161,46 @@ class Points(XYZ):
 
         return len(dflist)
 
+    def dfrac_from_wells(self, wells, dlogname, dcodes, incl_limit=90,
+                         zonelist=None):
+
+        """Get fraction of discrete code(s) (e.g. facies) per zone.
+
+        Args:
+            wells (list): List of XTGeo well objects
+            dlogname (str): Name of discrete log (e.g. Facies)
+            dcodes (list of int): Code(s) to get fraction for, e.g. [3]
+            incl_limit (float): Inclination limit for zones (thickness points)
+
+        Returns:
+            None if well list is empty; otherwise the number of wells.
+
+        Raises:
+            Todo
+        """
+
+        if len(wells) == 0:
+            return None
+
+        if zonelist is None:
+            zonelist = [1]
+
+        dflist = []
+        for well in wells:
+            wpf = well.get_fraction_per_zone(
+                dlogname, dcodes, zonelist=zonelist,
+                incl_limit=incl_limit)
+
+            if wpf is not None:
+                dflist.append(wpf)
+
+        if len(dflist) > 0:
+            self._df = pd.concat(dflist, ignore_index=True)
+        else:
+            return None
+
+        return len(dflist)
+
     def from_surface(self, surf):
         """Get points as X Y Value from a surface object nodes.
 
