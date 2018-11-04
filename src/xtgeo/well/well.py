@@ -817,12 +817,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         logger.debug('Dataframe from well:\n%s', dff)
         return dff
 
-    def get_fraction_per_zone(self, dlogname, dnames, zonelist=None,
+    def get_fraction_per_zone(self, dlogname, dcodes, zonelist=None,
                               incl_limit=80):
 
         """Get fraction of a discrete parameter, e.g. a facies, per zone.
 
-        It can be constrained on an inclination.
+        It can be constrained by an inclination.
 
         Args:
             dlogname (str): Name of discrete log, e.g. 'FACIES'
@@ -836,11 +836,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         dfr = _wellmarkers.get_fraction_per_zone(
-            self, dlogname, dnames, zonelist=zonelist, incl_limit=incl_limit)
+            self, dlogname, dcodes, zonelist=zonelist, incl_limit=incl_limit)
 
-        # logger.debug(dfr)
-
-        # return dfr
+        return dfr
 
     # =========================================================================
     # PRIVATE METHODS
