@@ -256,6 +256,127 @@ def test_irapbin_io():
     tsetup.assert_equal(cc.ncol, 554)
 
 
+def test_get_values1d():
+    """Get the 1D array, different variants as masked, notmasked, order, etc"""
+
+    xmap = RegularSurface()
+    print(xmap.values)
+
+    v1d = xmap.get_values1d(order='C', asmasked=False, fill_value=-999)
+
+    assert v1d.tolist() == [1., 6., 11., 2., 7., 12., 3., 8., -999., 4.,
+                            9., 14., 5., 10., 15.]
+
+    v1d = xmap.get_values1d(order='C', asmasked=True, fill_value=-999)
+    print(v1d)
+
+    assert v1d.tolist() == [1., 6., 11., 2., 7., 12., 3., 8., None, 4.,
+                            9., 14., 5., 10., 15.]
+
+    v1d = xmap.get_values1d(order='F', asmasked=False, fill_value=-999)
+
+    assert v1d.tolist() == [1., 2., 3., 4., 5., 6., 7., 8., 9., 10.,
+                            11., 12., -999., 14., 15.]
+
+    v1d = xmap.get_values1d(order='F', asmasked=True)
+
+    assert v1d.tolist() == [1., 2., 3., 4., 5., 6., 7., 8., 9., 10.,
+                            11., 12., None, 14., 15.]
+
+
+def test_ij_map_indices():
+    """Get the IJ MAP indices"""
+
+    xmap = RegularSurface()
+    print(xmap.values)
+
+    ixc, jyc = xmap.get_ij_values1d(activeonly=True, order='C')
+
+    assert ixc.tolist() == [1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5]
+    assert jyc.tolist() == [1, 2, 3, 1, 2, 3, 1, 2, 1, 2, 3, 1, 2, 3]
+
+    ixc, jyc = xmap.get_ij_values1d(activeonly=False, order='C')
+
+    assert ixc.tolist() == [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5]
+    assert jyc.tolist() == [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]
+
+    ixc, jyc = xmap.get_ij_values1d(activeonly=False, order='F')
+
+    assert ixc.tolist() == [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
+    assert jyc.tolist() == [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
+
+
+def test_get_xy_values():
+    """Get the XY coordinate values as 2D arrays"""
+
+    xmap = RegularSurface()
+
+    xcv, ycv = xmap.get_xy_values(order='C')
+
+    xxv = xcv.ravel(order='K')
+    tsetup.assert_almostequal(xxv[1], 0.0, 0.001)
+
+    xcv, ycv = xmap.get_xy_values(order='F')
+    xxv = xcv.ravel(order='K')
+    tsetup.assert_almostequal(xxv[1], 25.0, 0.001)
+
+    xcv, ycv = xmap.get_xy_values(order='C', asmasked=True)
+
+    xxv = xcv.ravel(order='K')
+    tsetup.assert_almostequal(xxv[1], 0.0, 0.001)
+
+    xcv, ycv = xmap.get_xy_values(order='F', asmasked=True)
+
+    xxv = xcv.ravel(order='K')
+    tsetup.assert_almostequal(xxv[1], 25.0, 0.001)
+
+
+def test_get_xy_values1d():
+    """Get the XY coordinate values"""
+
+    xmap = RegularSurface()
+
+    xcv, ycv = xmap.get_xy_values1d(activeonly=False, order='C')
+
+    tsetup.assert_almostequal(xcv[1], 0.0, 0.001)
+
+    xcv, ycv = xmap.get_xy_values1d(activeonly=False, order='F')
+
+    tsetup.assert_almostequal(xcv[1], 25.0, 0.001)
+
+    xcv, ycv = xmap.get_xy_values1d(activeonly=True, order='C')
+
+    tsetup.assert_almostequal(xcv[1], 0.0, 0.001)
+
+    xcv, ycv = xmap.get_xy_values1d(activeonly=True, order='F')
+
+    tsetup.assert_almostequal(xcv[1], 25.0, 0.001)
+
+
+def test_dataframe():
+    """Get a pandas Dataframe object"""
+
+    xmap = RegularSurface(testset1)
+
+    xmap.describe()
+
+    dfrc = xmap.dataframe(ijcolumns=True, order='C', activeonly=True)
+    dfrf = xmap.dataframe(ijcolumns=True, order='F', activeonly=True)
+
+    dfrc.to_csv(os.path.join(td, 'regsurf_df_c.csv'))
+    dfrf.to_csv(os.path.join(td, 'regsurf_df_f.csv'))
+    xmap.to_file(os.path.join(td, 'regsurf_df.ijxyz'), fformat='ijxyz')
+
+    tsetup.assert_almostequal(dfrc['X_UTME'][2], 465956.274, 0.01)
+    tsetup.assert_almostequal(dfrf['X_UTME'][2], 462679.773, 0.01)
+
+    dfrcx = xmap.dataframe(ijcolumns=False, order='C', activeonly=True)
+    dfrcx.to_csv(os.path.join(td, 'regsurf_df_noij_c.csv'))
+    dfrcy = xmap.dataframe(ijcolumns=False, order='C', activeonly=False,
+                           fill_value=None)
+    dfrcy.to_csv(os.path.join(td, 'regsurf_df_noij_c_all.csv'))
+
+
 # @skipmytest
 def test_get_xy_value_lists():
     """Get the xy list and value list"""
