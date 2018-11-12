@@ -2,6 +2,7 @@
 """Various operations"""
 from __future__ import print_function, absolute_import
 
+import numpy as np
 import numpy.ma as ma
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
@@ -41,22 +42,22 @@ def operations_two(self, other, oper='add'):
         self.values = self.values * other.values
 
 
-def resample(surf, other):
+def resample(self, other):
     """Resample from other surface object to this surf"""
 
     logger.info('Resampling...')
 
-    svalues = surf.get_values1d()
+    svalues = self.get_values1d()
 
     ier = _cxtgeo.surf_resample(other._ncol, other._nrow,
                                 other._xori, other._xinc,
                                 other._yori, other._yinc,
                                 other._yflip, other._rotation,
                                 other.get_values1d(),
-                                surf._ncol, surf._nrow,
-                                surf._xori, surf._xinc,
-                                surf._yori, surf._yinc,
-                                surf._yflip, surf._rotation,
+                                self._ncol, self._nrow,
+                                self._xori, self._xinc,
+                                self._yori, self._yinc,
+                                self._yflip, self._rotation,
                                 svalues,
                                 0,
                                 XTGDEBUG)
@@ -65,101 +66,179 @@ def resample(surf, other):
         raise RuntimeError('Resampling went wrong, '
                            'code is {}'.format(ier))
 
-    surf.set_values1d(svalues)
+    self.set_values1d(svalues)
 
 
-def distance_from_point(surf, point=(0, 0), azimuth=0.0):
+def distance_from_point(self, point=(0, 0), azimuth=0.0):
     """Find distance bwteen point and surface."""
     xpv, ypv = point
 
-    svalues = surf.get_values1d()
+    svalues = self.get_values1d()
 
     # call C routine
     ier = _cxtgeo.surf_get_dist_values(
-        surf._xori, surf._xinc, surf._yori, surf._yinc, surf._ncol,
-        surf._nrow, surf._rotation, xpv, ypv, azimuth, svalues, 0,
+        self._xori, self._xinc, self._yori, self._yinc, self._ncol,
+        self._nrow, self._rotation, xpv, ypv, azimuth, svalues, 0,
         XTGDEBUG)
 
     if ier != 0:
-        surf.logger.error('Something went wrong...')
+        logger.error('Something went wrong...')
         raise RuntimeError('Something went wrong in {}'.format(__name__))
 
-    surf.set_values1d(svalues)
+    self.set_values1d(svalues)
 
 
-def get_value_from_xy(surf, point=(0.0, 0.0)):
+def get_value_from_xy(self, point=(0.0, 0.0)):
     """Find surface value for point X Y."""
 
     xcoord, ycoord = point
 
     zcoord = _cxtgeo.surf_get_z_from_xy(float(xcoord), float(ycoord),
-                                        surf.ncol, surf.nrow,
-                                        surf.xori, surf.yori, surf.xinc,
-                                        surf.yinc, surf.yflip,
-                                        surf.rotation,
-                                        surf.get_values1d(), XTGDEBUG)
+                                        self.ncol, self.nrow,
+                                        self.xori, self.yori, self.xinc,
+                                        self.yinc, self.yflip,
+                                        self.rotation,
+                                        self.get_values1d(), XTGDEBUG)
 
-    if zcoord > surf._undef_limit:
+    if zcoord > self._undef_limit:
         return None
 
     return zcoord
 
 
-def get_xy_value_from_ij(surf, iloc, jloc, zvalues=None):
+def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
     """Find X Y value from I J index"""
 
     if zvalues is None:
-        zvalues = surf.get_values1d()
+        zvalues = self.get_values1d()
 
-    if 1 <= iloc <= surf.ncol and 1 <= jloc <= surf.nrow:
+    if 1 <= iloc <= self.ncol and 1 <= jloc <= self.nrow:
 
         ier, xval, yval, value = (
             _cxtgeo.surf_xyz_from_ij(iloc, jloc,
-                                     surf.xori, surf.xinc,
-                                     surf.yori, surf.yinc,
-                                     surf.ncol, surf.nrow, surf._yflip,
-                                     surf.rotation, zvalues,
+                                     self.xori, self.xinc,
+                                     self.yori, self.yinc,
+                                     self.ncol, self.nrow, self._yflip,
+                                     self.rotation, zvalues,
                                      0, XTGDEBUG))
         if ier != 0:
-            surf.logger.critical('Error code {}, contact the author'.
-                                 format(ier))
+            logger.critical('Error code {}, contact the author'.
+                            format(ier))
             raise SystemExit('Error code {}'.format(ier))
 
     else:
         raise ValueError('Index i and/or j out of bounds')
 
-    if value > surf.undef_limit:
+    if value > self.undef_limit:
         value = None
 
     return xval, yval, value
 
 
-def get_xy_values(surf):
-    """Get X Y values as numpy arrays."""
-    nno = surf.ncol * surf.nrow
+def get_ij_values(self, zero_based=False, order='C', asmasked=False):
+    """Get I J values as numpy 2D arrays.
+
+    Args:
+        zero_based (bool): If True, first index is 0. False (1) is default.
+        order (str): 'C' or 'F' order (row vs column major)
+
+    """
+
+    ixn, jyn = np.indices((self._ncol, self._nrow))
+
+    if order == 'F':
+        ixn = np.asfortranarray(ixn)
+        jyn = np.asfortranarray(jyn)
+
+    if not zero_based:
+        ixn += 1
+        jyn += 1
+
+    if asmasked:
+        ixn = ixn[~self.values.mask]
+        jyn = ixn[~self.values.mask]
+
+    return ixn, jyn
+
+
+def get_ij_values1d(self, zero_based=False, activeonly=True, order='C'):
+    """Get I J values as numpy 1D arrays.
+
+    Args:
+        zero_based (bool): If True, first index is 0. False (1) is default.
+        activeonly (bool): If True, only for active nodes
+        order (str): 'C' or 'F' order (row vs column major)
+
+    """
+
+    ixn, jyn = self.get_ij_values(zero_based=zero_based, order=order)
+
+    ixn = ixn.ravel(order='K')
+    jyn = jyn.ravel(order='K')
+
+    if activeonly:
+        tmask = ma.getmaskarray(self.get_values1d(order=order, asmasked=True))
+        ixn = ma.array(ixn, mask=tmask)
+        ixn = ixn[~ixn.mask]
+        jyn = ma.array(jyn, mask=tmask)
+        jyn = jyn[~jyn.mask]
+
+    return ixn, jyn
+
+
+def get_xy_values(self, order='C', asmasked=False):
+    """Get X Y coordinate values as numpy 2D arrays."""
+    nno = self.ncol * self.nrow
 
     ier, xvals, yvals = (
-        _cxtgeo.surf_xy_as_values(surf.xori, surf.xinc,
-                                  surf.yori, surf.yinc * surf.yflip,
-                                  surf.ncol, surf.nrow,
-                                  surf.rotation, nno, nno,
+        _cxtgeo.surf_xy_as_values(self.xori, self.xinc,
+                                  self.yori, self.yinc * self.yflip,
+                                  self.ncol, self.nrow,
+                                  self.rotation, nno, nno,
                                   0, XTGDEBUG))
     if ier != 0:
-        surf.logger.critical('Error code {}, contact the author'.
-                             format(ier))
+        logger.critical('Error code {}, contact the author'.
+                        format(ier))
 
-    # reshape, then mask using the current Z values mask
-    xvals = xvals.reshape((surf.ncol, surf.nrow))
-    yvals = yvals.reshape((surf.ncol, surf.nrow))
+    # reshape
+    xvals = xvals.reshape((self.ncol, self.nrow))
+    yvals = yvals.reshape((self.ncol, self.nrow))
 
-    mask = ma.getmaskarray(surf.values)
-    xvals = ma.array(xvals, mask=mask)
-    yvals = ma.array(yvals, mask=mask)
+    if order == 'F':
+        xvals = np.array(xvals, order='F')
+        yvals = np.array(yvals, order='F')
+
+    if asmasked:
+        tmpv = ma.filled(self.values, fill_value=np.nan)
+        tmpv = np.array(tmpv, order=order)
+        tmpv = ma.masked_invalid(tmpv)
+        mymask = ma.getmaskarray(tmpv)
+        xvals = ma.array(xvals, mask=mymask, order=order)
+        yvals = ma.array(yvals, mask=mymask, order=order)
 
     return xvals, yvals
 
 
-def get_fence(surf, xyfence):
+def get_xy_values1d(self, order='C', activeonly=True):
+    """Get X Y coordinate values as numpy 1D arrays."""
+
+    asmasked = False
+    if activeonly:
+        asmasked = True
+
+    xvals, yvals = self.get_xy_values(order=order, asmasked=asmasked)
+
+    xvals = xvals.ravel(order='K')
+    yvals = yvals.ravel(order='K')
+
+    if activeonly:
+        xvals = xvals[~xvals.mask]
+        yvals = yvals[~yvals.mask]
+
+    return xvals, yvals
+
+
+def get_fence(self, xyfence):
     """Get surface values along fence."""
 
     cxarr = xyfence[:, 0]
@@ -168,17 +247,17 @@ def get_fence(surf, xyfence):
 
     # czarr will be updated "inplace":
     istat = _cxtgeo.surf_get_zv_from_xyv(cxarr, cyarr, czarr,
-                                         surf.ncol, surf.nrow, surf.xori,
-                                         surf.yori, surf.xinc, surf.yinc,
-                                         surf.yflip, surf.rotation,
-                                         surf.get_values1d(),
+                                         self.ncol, self.nrow, self.xori,
+                                         self.yori, self.xinc, self.yinc,
+                                         self.yflip, self.rotation,
+                                         self.get_values1d(),
                                          XTGDEBUG)
 
     if istat != 0:
-        surf.logger.warning('Seem to be rotten')
+        logger.warning('Seem to be rotten')
 
     xyfence[:, 2] = czarr
-    xyfence = ma.masked_greater(xyfence, surf._undef_limit)
+    xyfence = ma.masked_greater(xyfence, self._undef_limit)
     xyfence = ma.mask_rows(xyfence)
 
     return xyfence

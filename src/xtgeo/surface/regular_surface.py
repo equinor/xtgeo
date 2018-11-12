@@ -31,8 +31,12 @@ import math
 from types import FunctionType
 import warnings
 
+from collections import OrderedDict
+
 import numpy as np
 import numpy.ma as ma
+
+import pandas as pd
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -872,26 +876,40 @@ class RegularSurface(object):
         logger.debug('New array + flags + ID')
         return xsurf
 
-    def get_values1d(self, order='C', asmasked=False, fill_value=UNDEF):
+    def get_values1d(self, order='C', asmasked=False, fill_value=UNDEF,
+                     activeonly=False):
         """Get an an 1D, numpy or masked array of the map values.
 
         Args:
             order (str): Flatteting is in C (default) or F order
-            asmasked (bool): If true, as MaskedArray, other as standard
+            asmasked (bool): If true, return as MaskedArray, other as standard
                 numpy ndarray with undef as np.nan or fill_value
             fill_value (str): Relevent only if asmasked is False, this
                 will be the value of undef entries
+            activeonly (bool): If True, only active cells. Keys 'asmasked' and
+                'fill_value' are not revelant.
+
+        Returns:
+            A numpy 1D array or MaskedArray
+
         """
 
-        val = self.values
-        # now reshape
-        if order != 'C':
-            val = np.asanyarray(val, order=order)  # ma subclass conserved
+        val = self.values.copy()
 
-        if not asmasked:
+        if order == 'F':
+            val = ma.filled(val, fill_value=np.nan)
+            val = ma.array(val, order='F')
+            val = ma.masked_invalid(val)
+
+        val = val.ravel(order='K')
+
+        if activeonly:
+            val = val[~val.mask]
+
+        if not asmasked and not activeonly:
             val = ma.filled(val, fill_value=fill_value)
 
-        return val.ravel(order='K')
+        return val
 
     def set_values1d(self, val, order='C'):
         """Update the values attribute based on a 1D input, multiple options.
@@ -1102,20 +1120,128 @@ class RegularSurface(object):
 
         return xval, yval, value
 
-    def get_xy_values(self):
-        """Return coordinates for X and Y as numpy 2D masked arrays."""
+    def get_ij_values(self, zero_based=False, asmasked=False, order='C'):
+        """Return I J numpy 2D arrays, optionally as masked arrays.
 
-        xvals, yvals = _regsurf_oper.get_xy_values(self)
+        Args:
+            zero_base (bool): If False, first number is 1, not 0
+            asmasked (bool): If True, UNDEF map nodes are skipped
+            order (str): 'C' (default) or 'F' order (row vs column major)
+        """
+
+        return _regsurf_oper.get_ij_values(self, zero_based=zero_based,
+                                           asmasked=asmasked, order=order)
+
+    def get_ij_values1d(self, zero_based=False, activeonly=True, order='C'):
+        """Return I J numpy as 1D arrays
+
+        Args:
+            zero_base (bool): If False, first number is 1, not 0
+            activeonly (bool): If True, UNDEF map nodes are skipped
+            order (str): 'C' (default) or 'F' order (row vs column major)
+        """
+
+        return _regsurf_oper.get_ij_values1d(self, zero_based=zero_based,
+                                             activeonly=activeonly,
+                                             order=order)
+
+    def get_xy_values(self, order='C', asmasked=True):
+        """Return coordinates for X and Y as numpy (masked) 2D arrays.
+
+        Args:
+            order (str): 'C' (default) or 'F' order (row major vs column major)
+            asmasked (bool): If True , inactive nodes are masked.
+        """
+
+        xvals, yvals = _regsurf_oper.get_xy_values(self, order=order,
+                                                   asmasked=asmasked)
+
+        return xvals, yvals
+
+    def get_xy_values1d(self, order='C', activeonly=True):
+        """Return coordinates for X and Y as numpy 2D arrays.
+
+        Args:
+            order (str): 'C' (default) or 'F' order (row major vs column major)
+            activeonly (bool): Only active cells are returned.
+        """
+
+        xvals, yvals = _regsurf_oper.get_xy_values1d(self, order=order,
+                                                     activeonly=activeonly)
 
         return xvals, yvals
 
     def get_xyz_values(self):
-        """Return coordinates for X Y and Z (values) as numpy 2D masked
-        arrays."""
+        """Return coordinates for X Y and Z (values) as numpy (masked)
+        2D arrays.
 
-        xcoord, ycoord = self.get_xy_values()
+        """
 
-        return xcoord, ycoord, self.values
+        xcoord, ycoord = self.get_xy_values(asmasked=True)
+
+        values = self.values.copy()
+
+        return xcoord, ycoord, values
+
+    def get_xyz_values1d(self, order='C', activeonly=True, fill_value=np.nan):
+        """Return coordinates for X Y and Z (values) as numpy 1D arrays.
+
+        Args:
+            order (str): 'C' (default) or 'F' order (row major vs column major)
+            activeonly (bool): Only active cells are returned.
+            fill_value (float): If activeonly is False, value of inactive nodes
+        """
+
+        xcoord, ycoord = self.get_xy_values1d(
+            order=order, activeonly=activeonly)
+
+        values = self.get_values1d(
+            order=order, asmasked=False, fill_value=fill_value,
+            activeonly=activeonly)
+
+        return xcoord, ycoord, values
+
+    def dataframe(self, ijcolumns=False, order='C', activeonly=True,
+                  fill_value=np.nan):
+        """Return a Pandas dataframe object, with columns X_UTME,
+        Y_UTMN, VALUES.
+
+        Args:
+            ijcolumns (bool): If True, and IX and JY indices will be
+               added as dataframe columns.
+            order (str): 'C' (default) for C order (row fastest), or 'F'
+               for Fortran order (column fastest)
+            activeonly (bool): If True, only active nodes are listed. If
+                False, the values will have fill_value default None = NaN
+                as values
+            fill_value (float): Value of inactive nodes if activeonly is False
+
+        Example::
+
+            surf = RegularSurface('myfile.gri')
+            dfr = surf.dataframe()
+            dfr.to_csv('somecsv.csv')
+
+        Returns:
+            A Pandas dataframe object.
+        """
+
+        xcoord, ycoord, values = self.get_xyz_values1d(
+            order=order, activeonly=activeonly, fill_value=fill_value)
+
+        entry = OrderedDict()
+
+        if ijcolumns:
+            ixn, jyn = self.get_ij_values1d(order=order, activeonly=activeonly)
+            entry['IX'] = ixn
+            entry['JY'] = jyn
+
+        entry.update([('X_UTME', xcoord), ('Y_UTMN', ycoord),
+                      ('VALUES', values)])
+
+        dataframe = pd.DataFrame(entry)
+        logger.debug(dataframe)
+        return dataframe
 
     def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
                            valuefmt=None):

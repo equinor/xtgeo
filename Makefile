@@ -98,7 +98,7 @@ clean-examples:
 	find examples ! -name "*.py" -type f -exec rm -f {} +
 
 cc:
-	@if -d "${CXTGEOBUILD}"]; then \
+	@if [ -d "${CXTGEOBUILD}" ]; then \
 	    cd ${CXTGEOBUILD}; make; make install; \
 	else \
 	    mkdir -p ${CXTGEOBUILD}; \
