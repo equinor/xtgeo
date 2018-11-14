@@ -251,6 +251,11 @@ class RegularSurface(object):
             self._xlines = np.array(range(1, self._nrow + 1),
                                     dtype=np.int32)
 
+            if self._values.mask is ma.nomask:
+                logger.info('Ensure that mask is a full array')
+                self._values = ma.array(self._values,
+                                        mask=ma.getmaskarray(self._values))
+
         logger.debug('Ran __init__ method for RegularSurface object')
 
     # =========================================================================
@@ -670,6 +675,7 @@ class RegularSurface(object):
             raise ValueError('Invalid file format: {}'.format(fformat))
 
         self._name = os.path.basename(froot)
+        self.ensure_correct_values(self.ncol, self.nrow, self._values)
         return self
 
     def to_file(self, mfile, fformat='irap_binary'):

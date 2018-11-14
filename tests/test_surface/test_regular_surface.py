@@ -7,6 +7,7 @@ import os.path
 
 import pytest
 import numpy as np
+import numpy.ma as npma
 
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
