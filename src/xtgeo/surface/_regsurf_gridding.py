@@ -29,9 +29,9 @@ def points_gridding(self, points, method='linear', coarsen=1):
 
     dfra = points.dataframe
 
-    xcv = dfra['X_UTME'].values
-    ycv = dfra['Y_UTMN'].values
-    zcv = dfra['Z_TVDSS'].values
+    xcv = dfra[points.xname].values
+    ycv = dfra[points.yname].values
+    zcv = dfra[points.zname].values
 
     if coarsen > 1:
         xcv = xcv[::coarsen]

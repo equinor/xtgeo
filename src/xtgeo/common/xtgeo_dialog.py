@@ -183,6 +183,22 @@ class XTGeoDialog(object):
     def syslevel(self):
         return self._syslevel
 
+    @syslevel.setter
+    def syslevel(self, mylevel):
+        if mylevel >= 0 and mylevel < 5:
+            self._syslevel = mylevel
+        else:
+            print('Invalid range for syslevel')
+
+        envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
+
+        if envsyslevel is None:
+            pass
+        else:
+            # print('Logging overridden by XTG_VERBOSE_LEVEL = {}'
+            #       .format(envsyslevel))
+            self._syslevel = int(envsyslevel)
+
     # for backward compatibility (to be phased out)
     def get_syslevel(self):
         return self._syslevel
@@ -219,21 +235,6 @@ class XTGeoDialog(object):
 
         return self._lformat
 
-    @syslevel.setter
-    def syslevel(self, mylevel):
-        if mylevel >= 0 and mylevel < 5:
-            self._syslevel = mylevel
-        else:
-            print('Invalid range for syslevel')
-
-        envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
-
-        if envsyslevel is None:
-            pass
-        else:
-            # print('Logging overridden by XTG_VERBOSE_LEVEL = {}'
-            #       .format(envsyslevel))
-            self._syslevel = int(envsyslevel)
 
     @staticmethod
     def print_xtgeo_header(appname, appversion):
@@ -259,11 +260,13 @@ class XTGeoDialog(object):
         print(_BColors.ENDC)
         print('')
 
-    def basiclogger(self, name):
+    def basiclogger(self, name, logginglevel=None):
         """Initiate the logger by some default settings."""
 
         format = self.loggingformat
         logging.basicConfig(format=format, stream=sys.stdout)
+        if logginglevel:
+            self._logginglevel = logginglevel
         logging.getLogger().setLevel(self.logginglevel)  # root logger!
         logging.captureWarnings(True)
 

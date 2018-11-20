@@ -84,7 +84,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     easy and fast.
 
     The well trajectory are here represented as logs, and XYZ have magic names:
-    X_UTME, Y_UTMN, Z_TVDSS.
+    X_UTME, Y_UTMN, Z_TVDSS, which are the three first Pandas columns.
 
     Other geometry logs has also 'semi-magic' names:
 
@@ -97,7 +97,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     The dataframe itself is a Pandas dataframe, and all values (yes,
     discrete also!) are stored as float64
     format, and undefined values are Nan. Integers are stored as Float due
-    to the lacking support for 'Intger Nan' (currently lacking in Pandas,
+    to the lacking support for 'Integer Nan' (currently lacking in Pandas,
     but may come in later Pandas versions).
 
     Note there is a method that can return a dataframe (copy) with Integer
@@ -105,11 +105,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     The instance can be made either from file or (todo!) by spesification::
 
-        >>> x1 = Well('somefilename')  # assume RMS ascii well
-        >>> x2 = Well('somefilename', fformat='rms_ascii')
+        >>> well1 = Well('somefilename')  # assume RMS ascii well
+        >>> well2 = Well('somefilename', fformat='rms_ascii')
+        >>> well3 = xtgeo.wells_from_file('somefilename')
 
-    Args:
-        xxx (nn): to come
+    For arguments, see method under :meth:`from_file`.
+
     """
 
     UNDEF = const.UNDEF
@@ -192,6 +193,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         else:
             logger.error('Invalid file format')
 
+        return self
+
     def to_file(self, wfile, fformat='rms_ascii'):
         """
         Export well to file
@@ -271,8 +274,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def zonelogname(self):
-        """ Returns name of zone log, if any (None if not)."""
+        """ Returns or sets name of zone log, return None if missing."""
         return self._zonelogname
+
+    @zonelogname.setter
+    def zonelogname(self, zname):
+        self._zonelogname = zname
 
     @property
     def xwellname(self):
@@ -818,7 +825,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return dff
 
     def get_fraction_per_zone(self, dlogname, dcodes, zonelist=None,
-                              incl_limit=80):
+                              incl_limit=80, count_limit=3, zonelogname=None):
 
         """Get fraction of a discrete parameter, e.g. a facies, per zone.
 
@@ -826,17 +833,23 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         Args:
             dlogname (str): Name of discrete log, e.g. 'FACIES'
-            dnames (list of str): Names of facies to report for
+            dnames (list of int): Codes of facies to report for
             zonelist (list of int): Zones to use
             incl_limit (float): Inclination limit for well path.
+            count_limit (int): Minimum number of counts required per segment
+                for valid calculations
+            zonelogname (str). If None, the Well().zonelogname attribute is
+                applied
 
         Returns:
             A pandas dataframe (ready for the xyz/Points class), None
-            if a zonelog is missing
+            if a zonelog is missing or list is zero length for any reason
+
         """
 
         dfr = _wellmarkers.get_fraction_per_zone(
-            self, dlogname, dcodes, zonelist=zonelist, incl_limit=incl_limit)
+            self, dlogname, dcodes, zonelist=zonelist, incl_limit=incl_limit,
+            count_limit=count_limit, zonelogname=zonelogname)
 
         return dfr
 

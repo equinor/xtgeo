@@ -27,7 +27,7 @@ class Polygons(XYZ):
     The polygons are stored in Python as a Pandas dataframe, which
     allow for flexible manipulation and fast execution.
 
-    A Polygons instance will have 4 mandatory columns:
+    A Polygons instance will have 4 mandatory columns; here by default names:
 
     * X_UTME - for X UTM coordinate (Easting)
     * Y_UTMN - For Y UTM coordinate (Northing)
@@ -38,7 +38,12 @@ class Polygons(XYZ):
     """
 
     def __init__(self, *args, **kwargs):
-
+        self._df = None
+        self._xname = 'X_UTME'
+        self._yname = 'Y_UTMN'
+        self._zname = 'Z_TVDSS'
+        self._pname = 'POLY_ID'
+        self._mname = 'M_MDEPTH'
         super(Polygons, self).__init__(*args, **kwargs)
 
         self._ispolygons = True
@@ -50,6 +55,33 @@ class Polygons(XYZ):
             return 0
         else:
             return len(self._df.index)
+
+    @property
+    def xname(self):
+        """ Returns the name of the X column"""
+        return self._xname
+
+    @property
+    def yname(self):
+        """ Returns the name of the Y column"""
+        return self._yname
+
+    @property
+    def zname(self):
+        """ Returns or set the name of the Z/VALUE column"""
+        return self._zname
+
+    @zname.setter
+    def zname(self, zname):
+        if isinstance(zname, str):
+            self._zname = zname
+        else:
+            raise ValueError('Wrong type of input to zname; must be string')
+
+    @property
+    def pname(self):
+        """ Returns the name of the POLY_ID column"""
+        return self._pname
 
     @property
     def dataframe(self):
@@ -88,8 +120,8 @@ class Polygons(XYZ):
         # for polygons, a seperate column with POLY_ID is required; however this may
         # lack if the input is on XYZ format
 
-        if 'POLY_ID' not in self._df.columns:
-            self._df['POLY_ID'] = self._df.isnull().all(axis=1).cumsum().dropna()
+        if self._pname not in self._df.columns:
+            self._df[self._pname] = self._df.isnull().all(axis=1).cumsum().dropna()
             self._df.dropna(axis=0, inplace=True)
             self._df.reset_index(inplace=True, drop=True)
 
@@ -155,8 +187,8 @@ class Polygons(XYZ):
             wp = well.get_zone_interval(zone, resample=resample)
             if wp is not None:
                 # as well segments may have overlapping POLY_ID:
-                wp['POLY_ID'] += maxid
-                maxid = wp['POLY_ID'].max() + 1
+                wp[self._pname] += maxid
+                maxid = wp[self._pname].max() + 1
                 dflist.append(wp)
 
         if len(dflist) > 0:
@@ -173,4 +205,4 @@ class Polygons(XYZ):
 
         logger.info(self.dataframe)
 
-        return _convert_idbased_xyz(self.dataframe)
+        return _convert_idbased_xyz(self, self.dataframe)

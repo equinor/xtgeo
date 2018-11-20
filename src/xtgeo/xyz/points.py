@@ -3,6 +3,8 @@
 
 from __future__ import print_function, absolute_import
 
+from collections import OrderedDict
+
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
@@ -25,12 +27,12 @@ class Points(XYZ):
         # show the Pandas dataframe
         print(xp.dataframe)
 
-    Magic column names in the dataframe:
+    Default column names in the dataframe:
 
-    * X_UTME: UTM X coordinate
-    * Y_UTMN: UTM Y coordinate
+    * X_UTME: UTM X coordinate  as self._xname
+    * Y_UTMN: UTM Y coordinate  as self_yname
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
-      something else!
+      something else! Use zname attribute
     * M_MDEPTH: measured depth, (if present)
     * Q_*: Quasi geometrical measures, such as MD, AZIMUTH, INCL
 
@@ -41,6 +43,11 @@ class Points(XYZ):
         # instance variables listed
         self._df = None
         self._ispolygons = False
+        self._xname = 'X_UTME'
+        self._yname = 'Y_UTMN'
+        self._zname = 'Z_TVDSS'
+        self._pname = 'POLY_ID'
+        self._mname = 'M_MDEPTH'
 
         super(Points, self).__init__(*args, **kwargs)
 
@@ -64,6 +71,39 @@ class Points(XYZ):
     @dataframe.setter
     def dataframe(self, df):
         self._df = df.copy()
+
+    @property
+    def xname(self):
+        """ Returns the name of the X column"""
+        return self._xname
+
+    @property
+    def yname(self):
+        """ Returns the name of the Y column"""
+        return self._yname
+
+    @property
+    def zname(self):
+        """ Returns or set the name of the Z/VALUE column"""
+        return self._zname
+
+    @zname.setter
+    def zname(self, zname):
+        if zname == self._zname:
+            return
+
+        if isinstance(zname, str):
+            self._df.rename(index=str, columns={self._zname: zname},
+                            inplace=True)
+            self._zname = zname
+        else:
+            raise ValueError('Wrong type of input to zname; must be string, '
+                             'input is {}'.format(type(zname)))
+
+    @property
+    def pname(self):
+        """ Returns the name of the POLY_ID column"""
+        return self._pname
 
     def from_file(self, pfile, fformat='xyz'):
         """Import points.
@@ -162,7 +202,7 @@ class Points(XYZ):
         return len(dflist)
 
     def dfrac_from_wells(self, wells, dlogname, dcodes, incl_limit=90,
-                         zonelist=None):
+                         count_limit=3, zonelist=None, zonelogname=None):
 
         """Get fraction of discrete code(s) (e.g. facies) per zone.
 
@@ -171,6 +211,11 @@ class Points(XYZ):
             dlogname (str): Name of discrete log (e.g. Facies)
             dcodes (list of int): Code(s) to get fraction for, e.g. [3]
             incl_limit (float): Inclination limit for zones (thickness points)
+            count_limit (int): Min. no of counts per segment for valid result
+            zonelist (list of int): Whihc zones to compute for (default None
+                means that all zones will be evaluated)
+            zonelogname (str): Name of zonelog; if None than the
+                well.zonelogname property will be applied.
 
         Returns:
             None if well list is empty; otherwise the number of wells.
@@ -182,32 +227,32 @@ class Points(XYZ):
         if len(wells) == 0:
             return None
 
-        if zonelist is None:
-            zonelist = [1]
-
-        dflist = []
+        dflist = []  # will be a list of pandas dataframes
         for well in wells:
             wpf = well.get_fraction_per_zone(
                 dlogname, dcodes, zonelist=zonelist,
-                incl_limit=incl_limit)
+                incl_limit=incl_limit, count_limit=count_limit,
+                zonelogname=zonelogname)
 
             if wpf is not None:
                 dflist.append(wpf)
 
         if len(dflist) > 0:
             self._df = pd.concat(dflist, ignore_index=True)
+            self.zname = 'DFRAC'  # name of third column
         else:
             return None
 
         return len(dflist)
 
-    def from_surface(self, surf):
+    def from_surface(self, surf, zname='Z_TVDSS'):
         """Get points as X Y Value from a surface object nodes.
 
         Note that undefined surface nodes will not be included.
 
         Args:
             surf (RegularSurface): A XTGeo RegularSurface object instance.
+            zname (str): Name of value column (3'rd column)
 
         Example::
 
@@ -236,8 +281,12 @@ class Points(XYZ):
 
         # now populate the dataframe:
         xc, yc, val = coor
-        ddatas = {'X_UTME': xc, 'Y_UTMN': yc, 'Z_TVDSS': val}
+        ddatas = OrderedDict()
+        ddatas[self._xname] = xc
+        ddatas[self._yname] = yc
+        ddatas[self._zname] = val
         self._df = pd.DataFrame(ddatas)
+        self.zname = zname
 
     def from_roxar(self, project, name, category, stype='horizons',
                    realisation=0):
