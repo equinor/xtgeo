@@ -17,17 +17,19 @@ logger = xtg.basiclogger(__name__)
 # -------------------------------------------------------------------------
 
 
-def import_xyz(self, pfile):
+def import_xyz(self, pfile, zname='Z_TVDSS'):
     """Simple X Y Z file. All points as Pandas framework."""
 
+    self.zname = zname
+
     self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
-                           header=None, names=['X_UTME', 'Y_UTMN', 'Z_TVDSS'],
+                           header=None, names=[self._xname, self._yname, zname],
                            dtype=np.float64, na_values=999.00)
 
     logger.debug(self._df.head())
 
 
-def import_zmap(self, pfile):
+def import_zmap(self, pfile, zname='Z_TVDSS'):
     """The zmap ascii polygon format; not sure about all details."""
     # ...seems that I just
     # take in the columns starting from @<blank> line as is.
@@ -55,12 +57,13 @@ def import_zmap(self, pfile):
     #    457370.906250      6782606.000000      1744.619507         0
     #    457370.468750      6782568.500000      1745.868286         0
 
-    dtype = {'X_UTME': np.float64, 'Y_UTMN': np.float64, 'Z_TVDSS': np.float64,
-             'POLY_ID': np.int32}
+    dtype = {self._xname: np.float64, self._yname: np.float64, zname:
+             np.float64, self._pname: np.int32}
 
     self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=16,
                            header=None,
-                           names=['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID'],
+                           names=[self._xname, self._yname, zname,
+                                  self._pname],
                            dtype=dtype, na_values=1.0E+30)
 
     logger.debug(self._df.head())
@@ -79,7 +82,7 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
     """
 
     df = self.dataframe.copy()
-    columns = ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
+    columns = [self._xname, self._yname, self.zname]
     df.fillna(value=999.0, inplace=True)
 
     mode = 'w'
@@ -98,9 +101,11 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
         logger.warning('Nothing to export')
         return 0
 
-    if attributes is None and 'POLY_ID' in df.columns and self._ispolygons:
+    if attributes is None and self._pname in df.columns and \
+       self._ispolygons:
+
         # need to convert the dataframe
-        df = _convert_idbased_xyz(df)
+        df = _convert_idbased_xyz(self, df)
 
     if attributes is not None:
         mode = 'a'
@@ -117,22 +122,22 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
     return len(df.index)
 
 
-def _convert_idbased_xyz(df):
+def _convert_idbased_xyz(self, df):
     """Conversion of format from ID column to 999 flag."""
 
     # If polygons, there is a 4th column with POLY_ID. This needs
     # to replaced by adding 999 line instead (for polygons)
     # prior to XYZ export or when interactions in CXTGEO
 
-    idgroups = df.groupby('POLY_ID')
+    idgroups = df.groupby(self._pname)
 
-    newdf = pd.DataFrame(columns=['X_UTME', 'Y_UTMN', 'Z_TVDSS'])
-    udef = pd.DataFrame([[999.0, 999.0, 999.0]], columns=['X_UTME',
-                                                          'Y_UTMN',
-                                                          'Z_TVDSS'])
+    newdf = pd.DataFrame(columns=[self._xname, self._yname, self._zname])
+    udef = pd.DataFrame([[999.0, 999.0, 999.0]], columns=[self._xname,
+                                                          self._yname,
+                                                          self._zname])
 
     for id_, gr in idgroups:
-        dfx = gr.drop('POLY_ID', axis=1)
+        dfx = gr.drop(self._pname, axis=1)
         newdf = newdf.append([dfx, udef], ignore_index=True)
 
     return newdf
@@ -173,7 +178,7 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn='M_MDEPTH'):
     if mdcolumn in df.columns:
         columns.append(mdcolumn)
     else:
-        columns += ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
+        columns += [self._xname, self._yname, self._zname]
 
     if len(df.index) < 1:
         logger.warning('Nothing to export')

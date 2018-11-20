@@ -90,21 +90,14 @@ def _roxapi_import_well(self, proj, wname, traj, lrun, lognames,
         logs['M_INCL'] = geo_array[:, 1]
         logs['M_AZI'] = geo_array[:, 2]
 
-    if lognames:
+    if lognames and lognames == 'all':
+        for logcurv in roxlrun.log_curves:
+            lname = logcurv.name
+            logs[lname] = _get_roxlog(self, roxlrun, lname)
+    elif lognames:
         for lname in lognames:
             if lname in roxlrun.log_curves:
-                roxcurve = roxlrun.log_curves[lname]
-                tmplog = roxcurve.get_values().astype(np.float64)
-                tmplog = npma.filled(tmplog, fill_value=np.nan)
-                tmplog[tmplog == -999] = np.nan
-                if roxcurve.is_discrete:
-                    self._wlogtype[lname] = 'DISC'
-                    self._wlogrecord[lname] = roxcurve.get_code_names()
-                else:
-                    self._wlogtype[lname] = 'CONT'
-                    self._wlogrecord[lname] = None
-
-                logs[lname] = tmplog
+                logs[lname] = _get_roxlog(self, roxlrun, lname)
             else:
                 validlogs = [logname.name for logname in roxlrun.log_curves]
                 raise ValueError('Could not get log name {}, validlogs are {}'
@@ -114,3 +107,18 @@ def _roxapi_import_well(self, proj, wname, traj, lrun, lognames,
     self._xpos, self._ypos = roxwell.wellhead
     self._wname = wname
     self._df = pd.DataFrame.from_dict(logs)
+
+
+def _get_roxlog(self, roxlrun, lname):
+    roxcurve = roxlrun.log_curves[lname]
+    tmplog = roxcurve.get_values().astype(np.float64)
+    tmplog = npma.filled(tmplog, fill_value=np.nan)
+    tmplog[tmplog == -999] = np.nan
+    if roxcurve.is_discrete:
+        self._wlogtype[lname] = 'DISC'
+        self._wlogrecord[lname] = roxcurve.get_code_names()
+    else:
+        self._wlogtype[lname] = 'CONT'
+        self._wlogrecord[lname] = None
+
+    return tmplog

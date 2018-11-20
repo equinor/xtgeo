@@ -1,6 +1,5 @@
 # coding: utf-8
 """Roxar API functions for XTGeo Grid Property"""
-import warnings
 
 import numpy as np
 import numpy.ma as ma
@@ -104,8 +103,6 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
 
     if self._isdiscrete:
         self.codes = roxprop.code_names.copy()
-        print('CODES')
-        print(self.codes)
 
         tmpcode = self.codes.copy()
         for key, val in tmpcode.items():
@@ -113,7 +110,6 @@ def _convert_to_xtgeo_prop(self, pname, roxgrid, roxprop):
                 val = 'unknown_' + str(key)
             tmpcode[key] = val
         self.codes = tmpcode
-        print(self.codes)
 
     logger.info('BUFFER 1 is {}'.format(mybuffer))
 
@@ -163,7 +159,7 @@ def _store_in_roxar(self, pname, roxgrid):
 
     logger.info(indexer.handedness)
 
-    print('Store in RMS... IS THAT SO!')
+    logger.info('Store in RMS...')
 
     val3d = self.values.copy()
 
@@ -176,7 +172,7 @@ def _store_in_roxar(self, pname, roxgrid):
     kind = ijk[:, 2]
 
     dtype = self._roxar_dtype
-    print('DTYPE is ', dtype)
+    logger.info('DTYPE is ', dtype)
     if self.isdiscrete:
         pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
     else:

@@ -18,6 +18,7 @@ testpath = xtg.testpath
 
 wfiles1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
 wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5]*"
+wfiles3 = "../xtgeo-testdata/wells/reek/1/XP_*"
 
 
 def test_get_zone_tops_one_well():
@@ -135,12 +136,20 @@ def test_get_faciesfraction_some_wells():
 
     mypoints = Points()
     facname = 'Facies'
-    fcode = [3]
+    fcode = [1]
 
-    nwell = mypoints.dfrac_from_wells(wlist, facname, fcode, zonelist=(1, 22))
+    nwell = mypoints.dfrac_from_wells(wlist, facname, fcode,
+                                      zonelist=None, incl_limit=70)
 
-    print(nwell, '\n', mypoints.dataframe)
+    # rename column
+    # mypoints.zname = 'FACFRAC'
 
-    mypoints.to_file('TMP/ffrac_per_zone.rmsasc', fformat='rms_attr')
+    logger.info('Number of wells is %s, DATAFRAME:\n, %s', nwell,
+                mypoints.dataframe)
 
-    logger.info('Number of well for facies fraction: {}'.format(nwell))
+    print(mypoints.dataframe)
+
+    assert mypoints.dataframe[mypoints.zname][8] - 0.086957 < 0.001
+
+    mypoints.to_file('TMP/ffrac_per_zone.rmsasc', fformat='rms_attr',
+                     attributes=['WELLNAME', 'ZONE'], filter={'ZONE': [1]})

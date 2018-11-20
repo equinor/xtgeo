@@ -25,6 +25,11 @@ class XYZ(object):
 
         self._df = None
         self._ispolygons = False
+        self._xname = 'X_UTME'
+        self._yname = 'Y_UTMN'
+        self._zname = 'Z_TVDSS'
+        self._pname = 'POLY_ID'
+        self._mname = 'M_MDEPTH'
 
         if len(args) >= 1:
             # make instance from file import

@@ -3,7 +3,9 @@
 
 from __future__ import print_function, absolute_import
 
+from collections import OrderedDict
 import numpy as np
+import pandas as pd
 
 from xtgeo.common import XTGeoDialog
 import xtgeo.common.constants as const
@@ -145,24 +147,50 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
 
 
 def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
-                          incl_limit=80):
+                          incl_limit=80, count_limit=3, zonelogname=None):
 
-    #     X_UTME       Y_UTMN    Z_TVDSS  Zonelog  Facies  M_INCL
-    # 464011.719  5931757.257  1663.1079      3.0     1.0    10.2
-    # 464011.751  5931757.271  1663.6084      3.0     1.0    10.3
-    # 464011.783  5931757.285  1664.1090      3.0     2.0    11.2
-    # 464011.815  5931757.299  1664.6097      3.0     2.0    11.4
-    # 464011.847  5931757.313  1665.1105      3.0     2.0    11.5
-    # 464011.879  5931757.326  1665.6114      3.0     2.0    12.0
-    # 464011.911  5931757.340  1666.1123      3.0     1.0    12.2
-    # 464011.943  5931757.354  1666.6134      3.0     1.0    13.4
-    #
-    # Count fraction of one or more facies filtered on a zone, given that
-    # Inclination is below limit all over. Since a zone can be
-    # repeated, it is important to split into segments. When
-    # fraction is determined, the AVG X Y coord is applied.
+    """Fraction of e.g. a facies in a zone segment.
 
-    print ('XXXXX', dvalues)
+        X_UTME       Y_UTMN    Z_TVDSS  Zonelog  Facies  M_INCL
+    464011.719  5931757.257  1663.1079      3.0     1.0    10.2
+    464011.751  5931757.271  1663.6084      3.0     1.0    10.3
+    464011.783  5931757.285  1664.1090      3.0     2.0    11.2
+    464011.815  5931757.299  1664.6097      3.0     2.0    11.4
+    464011.847  5931757.313  1665.1105      3.0     2.0    11.5
+    464011.879  5931757.326  1665.6114      3.0     2.0    12.0
+    464011.911  5931757.340  1666.1123      3.0     1.0    12.2
+    464011.943  5931757.354  1666.6134      3.0     1.0    13.4
+
+    Count fraction of one or more facies (dvalues list)
+    filtered on a zone, given that Inclination is below limit all over.
+    Since a zone can be repeated, it is important to split
+    into segments by POLY_ID. When fraction is determined, the
+    AVG X Y coord is applied.
+
+    Args:
+        dlogname (str): Name of discrete log e.g. Facies
+        dvalues (list): List of codes to sum fraction upon
+        zonelist (list): List of zones to compute over
+        incl_limit (float): Skip if max inclination found > incl_limit
+        count_limit (int): Minimum number of samples required per segment
+
+    Returns:
+        A dataframe with relevant data...
+
+    """
+
+    logger.info('The zonelist is %s', zonelist)
+    logger.info('The dlogname is %s', dlogname)
+    logger.info('The dvalues are %s', dvalues)
+
+    if zonelogname is not None:
+        usezonelogname = zonelogname
+    else:
+        usezonelogname = self.zonelogname
+
+    if usezonelogname is None:
+        raise RuntimeError('Stop, zonelogname is None')
+
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
         zonelist = list(self.get_logrecord(self.zonelogname).keys())
@@ -173,17 +201,58 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
     else:
         self.geometrics()
 
-    zonelist=[1, 2, 3]
+    result = OrderedDict()
+    result['X_UTME'] = []
+    result['Y_UTMN'] = []
+    result['DFRAC'] = []
+    result['Q_INCL'] = []
+    result['ZONE'] = []
+    result['WELLNAME'] = []
+    result[dlogname] = []
 
-    print ('XXXXX', dvalues, "for well ", self.wellname)
+    svalues = str(dvalues).rstrip(']').lstrip('[').replace(', ', '+')
+
     xtralogs = [dlogname, useinclname]
     for izon in zonelist:
-        print(izon)
+        logger.info('The zone number is %s', izon)
+        logger.info('The extralogs are %s', xtralogs)
+
         dfr = self.get_zone_interval(izon, extralogs=xtralogs)
-        print(dfr)
-        # vvv = 0.0
-        # # for dval in dvalues:
-        # #     dfr[dlogname].value_counts(normalize=True)[dval]
-        # xxx = dfr['X_UTME'].mean()
-        # yyy = dfr['Y_UTMN'].mean()
-        # print(xxx, yyy, vvv)
+
+        if dfr is None:
+            continue
+
+        dfrx = dfr.groupby('POLY_ID')
+
+        for polyid, dframe in dfrx:
+            qinclmax = dframe['Q_INCL'].max()
+            qinclavg = dframe['Q_INCL'].mean()
+            dseries = dframe[dlogname]
+            if qinclmax > incl_limit:
+                logger.debug('Skipped due to max inclination %s', qinclmax)
+                continue
+            if dseries.size < count_limit:  # interval too short for fraction
+                logger.debug('Skipped due to too few samples %s', dseries.size)
+                continue
+
+            xavg = dframe['X_UTME'].mean()
+            yavg = dframe['Y_UTMN'].mean()
+
+            dfrac = 0.0
+            for dval in dvalues:
+                if any(dseries.isin([dval])):
+                    dfrac += dseries.value_counts(normalize=True)[dval]
+
+            result['X_UTME'].append(xavg)
+            result['Y_UTMN'].append(yavg)
+            result['DFRAC'].append(dfrac)
+            result['Q_INCL'].append(qinclavg)
+            result['ZONE'].append(izon)
+            result['WELLNAME'].append(self.xwellname)
+            result[dlogname].append(svalues)
+
+    # make the dataframe and return it
+    if result['X_UTME']:
+        return pd.DataFrame.from_dict(result)
+
+    return None
