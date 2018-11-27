@@ -21,6 +21,18 @@ project = '/private/jriv/work/testing/reek/reek_grid.rms10.1.1'
 
 
 @tsetup.skipunlessroxar
+def test_rox_get_grid_dimensions_only():
+    """Get a grid dimens only from a RMS project."""
+
+    logger.info('Project is {}'.format(project))
+
+    grd = xtgeo.grid3d.Grid()
+    grd.from_roxar(project, 'REEK', dimensions_only=True)
+
+    assert grd.dimensions == (40, 64, 14)
+
+
+@tsetup.skipunlessroxar
 def test_rox_get_gridproperty():
     """Get a grid property from a RMS project."""
 

@@ -44,6 +44,9 @@ def _import_segy_io(self, sfile):
 
         values = segyio.tools.cube(segyfile)
 
+        if (np.isnan(np.sum(values))):
+            raise ValueError('The input contains NaN values which is trouble!')
+
         logger.debug(segyfile.fast)
         logger.debug(segyfile.ilines)
         logger.debug(len(segyfile.ilines))
