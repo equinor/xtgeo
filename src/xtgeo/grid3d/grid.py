@@ -43,12 +43,25 @@ def grid_from_file(gfile, fformat='guess'):
     return obj
 
 
-def grid_from_roxar(project, gname, realisation=0):
-    """Read a grid inside a RMS project and return a Grid() instance."""
+def grid_from_roxar(project, gname, realisation=0, dimensions_only=False):
+    """Read a grid inside a RMS project and return a Grid() instance.
+
+    Args:
+        project (str or special): The RMS project og the project variable
+            from inside RMS.
+        gname (str): Name of Grid Model in RMS.
+        realisation (int): Realisation number.
+        dimensions_only (bool): If True, only the ncol, nrow, nlay will
+            read. The actual grid geometry will remain empty (None). This will
+            be much faster of only grid size info is needed, e.g.
+            for initalising a grid property.
+
+"""
 
     obj = Grid()
 
-    obj.from_roxar(project, gname, realisation=realisation)
+    obj.from_roxar(project, gname, realisation=realisation,
+                   dimensions_only=dimensions_only)
 
     return obj
 
@@ -636,17 +649,24 @@ class Grid(Grid3D):
 
         return self
 
-    def from_roxar(self, projectname, gname, realisation=0):
+    def from_roxar(self, projectname, gname, realisation=0,
+                   dimensions_only=False):
 
         """Import grid model geometry from RMS project, and makes an instance.
 
-        Arguments:
+        Args:
             projectname (str): Name of RMS project
-            gfile (str): Name of grid model
+            gname (str): Name of grid model
+            realisation (int): Realisation number.
+            dimensions_only (bool): If True, only the ncol, nrow, nlay will
+                read. The actual grid geometry will remain empty (None). This
+                will be much faster of only grid size info is needed, e.g.
+                for initalising a grid property.
 
         """
 
-        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation)
+        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
+                                        dimensions_only)
 
     def to_file(self, gfile, fformat='roff'):
         """

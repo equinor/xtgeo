@@ -117,11 +117,12 @@ class Polygons(XYZ):
 
         super(Polygons, self).from_file(pfile, fformat=fformat)
 
-        # for polygons, a seperate column with POLY_ID is required; however this may
-        # lack if the input is on XYZ format
+        # for polygons, a seperate column with POLY_ID is required;
+        # however this may lack if the input is on XYZ format
 
         if self._pname not in self._df.columns:
-            self._df[self._pname] = self._df.isnull().all(axis=1).cumsum().dropna()
+            pxn = self._pname
+            self._df[pxn] = self._df.isnull().all(axis=1).cumsum().dropna()
             self._df.dropna(axis=0, inplace=True)
             self._df.reset_index(inplace=True, drop=True)
 

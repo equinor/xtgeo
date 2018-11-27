@@ -172,7 +172,7 @@ def _store_in_roxar(self, pname, roxgrid):
     kind = ijk[:, 2]
 
     dtype = self._roxar_dtype
-    logger.info('DTYPE is ', dtype)
+    logger.info('DTYPE is %s for %s', dtype, pname)
     if self.isdiscrete:
         pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
     else:

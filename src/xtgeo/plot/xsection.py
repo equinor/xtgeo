@@ -1,4 +1,4 @@
-"""Module for fast XSection plots of wells/surfaces, using matplotlib."""
+"""Module for fast XSection plots of wells/surfaces etc, using matplotlib."""
 
 from __future__ import print_function
 
@@ -8,7 +8,6 @@ import numpy.ma as ma
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import BasePlot
 
@@ -50,7 +49,7 @@ class XSection(BasePlot):
         self._wfence = None
         self._showok = True  # to indicate if plot is OK to show
         self._legendtitle = 'Zones'
-        self._legendsize = 7
+        self._legendsize = 5
 
         self._colormap_cube = None
         self._colorlegend_cube = False
@@ -76,6 +75,16 @@ class XSection(BasePlot):
     def pagesize(self):
         """Returns page size."""
         return self._pagesize
+
+    @property
+    def legendsize(self):
+        """Returns or set the legend size"""
+        return self._legendsize
+
+    @legendsize.setter
+    def legendsize(self, lsize):
+        """Returns or set the legend size"""
+        self._legendsize = lsize
 
     @property
     def colormap_facies(self):
@@ -229,7 +238,6 @@ class XSection(BasePlot):
             self._plot_well_faclog(df, ax, bba, zv, hv, facieslogname)
 
         axx, bbxa = self._currentax(axisname='well')
-
         self._plot_well_traj(df, axx, zv, hv)
 
         if zonelogname:
@@ -253,6 +261,7 @@ class XSection(BasePlot):
         zo = df[zonelogname].values
         zomin = 0
         zomax = 0
+
         try:
             zomin = int(df[zonelogname].min())
             zomax = int(df[zonelogname].max())
@@ -268,6 +277,7 @@ class XSection(BasePlot):
 
         # let the part with ZONELOG have a colour
         ctable = self.get_colormap_as_table()
+
         for zone in range(zomin, zomax + 1):
 
             # the minus one since zone no 1 use color entry no 0
@@ -281,7 +291,9 @@ class XSection(BasePlot):
 
             logger.debug('Zone is {}, color no is {}'.
                          format(zone, zone + zshift - 1))
-            ax.plot(hv_copy, zv_copy, linewidth=4, c=color)
+
+            ax.plot(hv_copy, zv_copy, linewidth=4, c=color,
+                    solid_capstyle='butt')
 
     def _plot_well_faclog(self, df, ax, bba, zv, hv, facieslogname,
                           facieslist=None):
@@ -303,23 +315,26 @@ class XSection(BasePlot):
         ctable = self.get_any_colormap_as_table(cmap)
         idx = self.colormap_facies_dict
 
+        frecord = self._well.get_logrecord(facieslogname)
+        frecord = {val: fname for val, fname in frecord.items() if val >= 0}
+
         if facieslist is None:
-            facieslist = list(idx.keys())
+            facieslist = list(frecord.keys())
 
         fa = df[facieslogname].values
 
-        # let the part with FACIESLOG have a colour
-        for facies in facieslist:
+        for fcc in frecord:
 
-            color = ctable[idx[facies]]
+            if isinstance(idx[fcc], str):
+                color = idx[fcc]
+            else:
+                color = ctable[idx[fcc]]
 
-            zv_copy = ma.masked_where(fa != facies, zv)
-            hv_copy = ma.masked_where(fa != facies, hv)
+            zv_copy = ma.masked_where(fa != fcc, zv)
+            hv_copy = ma.masked_where(fa != fcc, hv)
 
-            fname = self._well.get_logrecord_codename(facieslogname, facies)
-
-            ax.plot(hv_copy, zv_copy, linewidth=10, c=color,
-                    label=str(fname))
+            myline, = ax.plot(hv_copy, zv_copy, linewidth=9, c=color,
+                              label=frecord[fcc], solid_capstyle='butt')
 
         self._drawlegend(ax, bba, title='Facies')
 
@@ -341,22 +356,30 @@ class XSection(BasePlot):
 
         cmap = self.colormap_perf
         ctable = self.get_any_colormap_as_table(cmap)
+
+        precord = self._well.get_logrecord(perflogname)
+        precord = {val: pname for val, pname in precord.items() if val >= 0}
+
         idx = self.colormap_perf_dict
 
         if perflist is None:
-            perflist = list(idx.keys())
+            perflist = list(precord.keys())
 
         prf = df[perflogname].values
 
         # let the part with ZONELOG have a colour
         for perf in perflist:
 
-            color = ctable[idx[perf]]
+            if isinstance(idx[perf], str):
+                color = idx[perf]
+            else:
+                color = ctable[idx[perf]]
 
             zv_copy = ma.masked_where(perf != prf, zv)
             hv_copy = ma.masked_where(perf != prf, hv)
 
-            ax.plot(hv_copy, zv_copy, linewidth=15, c=color, label='PERF')
+            ax.plot(hv_copy, zv_copy, linewidth=15, c=color,
+                    label=precord[perf], solid_capstyle='butt')
 
         self._drawlegend(ax, bba, title='Perforations')
 
@@ -377,8 +400,9 @@ class XSection(BasePlot):
         bbapos = {
             'main': (1.22, 1.12, 1, 0),
             'contacts': (1.01, 1.12),
+            'second': (1.22, 0.50),
             'facies': (1.01, 1.00),
-            'perf': (1.01, 0.7)
+            'perf': (1.22, 0.45)
         }
 
         ax1 = self._ax1
@@ -429,6 +453,8 @@ class XSection(BasePlot):
         if self._wfence is None:
             wfence = self._well.get_fence_polyline(sampling=20, extend=5,
                                                    tvdmin=self._zmin)
+            if wfence is False:
+                return
             self._wfence = wfence
 
         zinc = self._cube.zinc / 2.0
@@ -439,7 +465,8 @@ class XSection(BasePlot):
 
         h1, h2, v1, v2, arr = zvv
 
-        arr = ma.masked_greater(arr, xtgeo.UNDEF_LIMIT)
+        # if vmin is not None or vmax is not None:
+        #     arr = np.clip(arr, vmin, vmax)
 
         logger.info('Number of masked elems: %s', ma.count_masked(arr))
 
@@ -453,7 +480,6 @@ class XSection(BasePlot):
             try:
                 nnv = int(nnv)
                 arr = gaussian_filter(arr, nnv)
-                print('INTERPOLATION is ', nnv)
                 interpolation = 'none'
             except ValueError:
                 interpolation = 'gaussian'
@@ -463,6 +489,7 @@ class XSection(BasePlot):
                         vmin=vmin, vmax=vmax,
                         extent=(h1, h2, v2, v1), aspect='auto', alpha=alpha)
 
+        logger.info('Actual VMIN and VMAX: %s', img.get_clim())
         # steer this?
         if self._colorlegend_cube:
             self._fig.colorbar(img, ax=ax)
@@ -521,6 +548,8 @@ class XSection(BasePlot):
         if self._wfence is None:
             wfence = self._well.get_fence_polyline(sampling=20, extend=5,
                                                    tvdmin=self._zmin)
+            if wfence is False:
+                return
 
             self._wfence = wfence
 

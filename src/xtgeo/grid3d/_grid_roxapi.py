@@ -15,7 +15,7 @@ _cxtgeo.xtg_verbose_file('NONE')
 xtg_verbose_level = xtg.syslevel
 
 
-def import_grid_roxapi(self, projectname, gname, realisation):
+def import_grid_roxapi(self, projectname, gname, realisation, dimonly):
     """Import a Grid via ROXAR API spec."""
     import roxar
 
@@ -34,7 +34,11 @@ def import_grid_roxapi(self, projectname, gname, realisation):
                     raise KeyError('No such gridmodel: {}'.format(gname))
 
                 roxgrid = proj.grid_models[gname].get_grid()
-                corners = roxgrid.get_cell_corners_by_index()
+
+                if dimonly:
+                    corners = None
+                else:
+                    corners = roxgrid.get_cell_corners_by_index()
 
                 _convert_to_xtgeo_grid(self, roxgrid, corners)
 
@@ -45,7 +49,10 @@ def import_grid_roxapi(self, projectname, gname, realisation):
         # inside a RMS project
         try:
             roxgrid = projectname.grid_models[gname].get_grid()
-            corners = roxgrid.get_cell_corners_by_index()
+            if dimonly:
+                corners = None
+            else:
+                corners = roxgrid.get_cell_corners_by_index()
 
             _convert_to_xtgeo_grid(self, roxgrid, corners)
 
@@ -60,13 +67,24 @@ def _convert_to_xtgeo_grid(self, roxgrid, corners):
     ncol, nrow, nlay = indexer.dimensions
     ntot = ncol * nrow * nlay
 
-    # get the active cell numbers
+    # update other attributes
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
+
+    if corners is None:
+        logger.info('Asked for dimensions_only: No geometry read!')
+        return
+
+    logger.info('Get active cells')
     mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
 
     mybuffer.fill(0)
 
+    logger.info('Get cell numbers')
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
+    logger.info('Reorder...')
     ijk = indexer.get_indices(cellno)
 
     iind = ijk[:, 0]
@@ -84,7 +102,8 @@ def _convert_to_xtgeo_grid(self, roxgrid, corners):
     corners = corners.ravel(order='K')
     actnum = actnum.ravel(order='K')
 
-    # convert to C pointer
+    logger.info('Convert to C pointers...')
+
     nnum = ncol * nrow * nlay * 24
     ccorners = _cxtgeo.new_doublearray(nnum)
     ntot = ncol * nrow * nlay
@@ -110,8 +129,3 @@ def _convert_to_xtgeo_grid(self, roxgrid, corners):
 
     _cxtgeo.delete_doublearray(ccorners)
     _cxtgeo.delete_intarray(cactnum)
-
-    # update other attributes
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
