@@ -55,6 +55,22 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
  *      1347   2026    532455.1750556396     6750752.272758402     7700.624
  *      1347   2025    532445.7551645326     6750744.055988892     8482.951
  *
+ *    In some cases headersand footers are present. Assume footer when
+ *    line is like this, and I J may be float, not INT
+ *     @File_Version: 4
+       @Coordinate_Type_is: 3
+       @Export_Type_is: 1
+       @Number_of_Projects 1
+       @Project_Type_Name: , 3,TROLL_WEST,
+       @Project_Unit_is: meters , ST_ED50_UTM31N_P23031_T1133 , PROJECTED_COORDINATE_SYSTEM
+       #File_Version____________-> 4
+       #Project_Name____________-> TROLL_WEST
+       #Horizon_remark_size_____-> 0
+
+       #End_of_Horizon_ASCII_Header_
+
+
+ *
  *    See there is no system in fastest vs slowest ILINE vs XLINE!
  *
  * ARGUMENTS:
@@ -204,8 +220,9 @@ void _scan_dimensions(FILE *fd, int *nx, int *ny, int debug)
     int ilinemin, ilinemax, xlinemin, xlinemax;
     int ispacing, xspacing, ispace, mispace, mxspace;
     int itmp[MAXIX], xtmp[MAXIX];
-    float rdum;
+    float rdum, filine, fxline;
     char sbn[24] = "_scan_dimensions";
+    char lbuffer[132];
 
     xtgverbose(debug);
 
@@ -223,9 +240,19 @@ void _scan_dimensions(FILE *fd, int *nx, int *ny, int debug)
     xlinemin = 999999999;
     xlinemax = -99999999;
     iok = 1;
-    while (iok >= 1) {
-        iok = fscanf(fd, "%d %d %f %f %f", &iline, &xline,
+    while(fgets(lbuffer, 132, (FILE*) fd)) {
+        if (strncmp(lbuffer, "\n", 1) == 0) continue;
+        lbuffer[strcspn(lbuffer, "\n")] = 0;
+        if (debug > 2) xtg_speak(sbn, 3, "LBUFFER <%s>", lbuffer);
+        if (strncmp(lbuffer, "#", 1) == 0) continue;
+        if (strncmp(lbuffer, "@", 1) == 0) continue;
+        if (strncmp(lbuffer, "E", 1) == 0) continue;
+
+        iok = sscanf(lbuffer, "%f %f %f %f %f", &filine, &fxline,
                      &rdum, &rdum, &rdum);
+
+        iline = (int)(filine + 0.01);
+        xline = (int)(fxline + 0.01);
 
         if (iok > 5) xtg_error(sbn, "Wrong file format for map file?");
 
@@ -289,8 +316,10 @@ long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
 {
     int ilinemin, ilinemax, xlinemin, xlinemax, iok;
     int iline, xline;
+    float filine, fxline;
     long ixnum;
     double xval, yval, zval;
+    char lbuffer[132];
 
 
     char sbn[24] = "_collect_values";
@@ -305,9 +334,19 @@ long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
 
     ixnum = 0;
     iok = 1;
-    while (iok >= 1) {
-        iok = fscanf(fd, "%d %d %lf %lf %lf", &iline, &xline,
+    while(fgets(lbuffer, 132, (FILE*) fd)) {
+        if (strncmp(lbuffer, "\n", 1) == 0) continue;
+        lbuffer[strcspn(lbuffer, "\n")] = 0;
+        if (strncmp(lbuffer, "#", 1) == 0) continue;
+        if (strncmp(lbuffer, "@", 1) == 0) continue;
+        if (strncmp(lbuffer, "E", 1) == 0) continue;
+
+        iok = sscanf(lbuffer, "%f %f %lf %lf %lf", &filine, &fxline,
                      &xval, &yval, &zval);
+
+        iline = (int)(filine + 0.01);
+        xline = (int)(fxline + 0.01);
+
         ilinesb[ixnum] = iline;
         xlinesb[ixnum] = xline;
         xbuffer[ixnum] = xval;

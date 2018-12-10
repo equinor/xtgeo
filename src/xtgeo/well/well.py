@@ -15,9 +15,14 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.well import _wellmarkers
 from xtgeo.well import _well_io
 from xtgeo.well import _well_roxapi
+from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+# need to call the C function...
+_cxtgeo.xtg_verbose_file('NONE')
+XTGDEBUG = xtg.syslevel
 # pylint: disable=too-many-public-methods
 
 
@@ -295,8 +300,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     def truewellname(self):
         """Returns well name on the assummed form aka '31/2-E-4 AH2'."""
         xname = self.xwellname
-        xname = xname.replace('_', '/', 1)
-        xname = xname.replace('_', ' ')
+        if '/' not in xname:
+            xname = xname.replace('_', '/', 1)
+            xname = xname.replace('_', ' ')
         return xname
 
     @property
@@ -436,10 +442,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         is computed relative to that by simple geometric methods.
         """
 
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = xtg.syslevel
-
         # extract numpies from XYZ trajetory logs
         ptr_xv = self.get_carray('X_UTME')
         ptr_yv = self.get_carray('Y_UTMN')
@@ -451,7 +453,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_hlen = _cxtgeo.new_doublearray(nlen)
 
         ier = _cxtgeo.pol_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_hlen,
-                                     xtg_verbose_level)
+                                     XTGDEBUG)
 
         if ier != 0:
             sys.exit(-9)
@@ -474,10 +476,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         These logs will be added to the dataframe
         """
 
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = xtg.syslevel
-
         # extract numpies from XYZ trajetory logs
         ptr_xv = self.get_carray('X_UTME')
         ptr_yv = self.get_carray('Y_UTMN')
@@ -490,7 +488,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_incl = _cxtgeo.new_doublearray(nlen)
 
         ier = _cxtgeo.well_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md,
-                                      ptr_incl, 0, xtg_verbose_level)
+                                      ptr_incl, 0, XTGDEBUG)
 
         if ier != 0:
             sys.exit(-9)
@@ -508,19 +506,26 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         _cxtgeo.delete_doublearray(ptr_md)
         _cxtgeo.delete_doublearray(ptr_incl)
 
-    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None):
+    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None,
+                           asnumpy=True):
         """
-        Return a fence polyline as a numpy array. If not possible, return
-        False
+        Return a fence polyline as a numpy array or a Polygons object.
 
-        (Perhaps this should belong to a polygon class?)
+        Args:
+            sampling (float): Sampling interval (input)
+            extend (int): Number if sampling to extend; e.g. 2 * 20
+            tvdmin (float): Minimum TVD starting point.
+            as_numpy (bool): If True, a numpy array, otherwise a Polygons
+                object with 5 columns where the 2 last are HLEN and POLY_ID
+                and the POLY_ID will be set to 0.
+
+        Returns:
+            A numpy array of shape (NLEN, 4) in F order,
+            Or a Polygons object with 5 columns
+            If not possible return False
         """
 
         # pylint: disable=too-many-locals
-
-        # need to call the C function...
-        _cxtgeo.xtg_verbose_file('NONE')
-        xtg_verbose_level = xtg.syslevel
 
         dfr = self._df
 
@@ -546,7 +551,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ier = _cxtgeo.pol_resampling(
             self.nrow, ptr_xv, ptr_yv, ptr_zv, sampling, sampling * extend,
             nbuf, ptr_nlen, ptr_xov, ptr_yov, ptr_zov, ptr_hlv,
-            0, xtg_verbose_level)
+            0, XTGDEBUG)
 
         if ier != 0:
             sys.exit(-2)
@@ -559,8 +564,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
         # npharr = npharr - sampling * extend ???
 
-        rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
-        rval = np.reshape(rval, (nlen, 4), order='F')
+        if asnumpy is True:
+            rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
+            rval = np.reshape(rval, (nlen, 4), order='F')
+        else:
+            rval = Polygons()
+            wna = self.xwellname
+            idwell = [None] * extend + [wna] * (nlen - 2 * extend) + \
+                     [None] * extend
+            arr = np.vstack([npxarr, npyarr, npzarr, npharr,
+                             np.zeros(nlen, dtype=np.int32)])
+            col = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'HLEN', 'ID']
+            dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
+            dfr = dfr.astype({'ID': int})
+            dfr = dfr.assign(WELL=idwell)
+            rval.dataframe = dfr
+            rval.name = self.xwellname
 
         _cxtgeo.delete_doublearray(ptr_xov)
         _cxtgeo.delete_doublearray(ptr_yov)

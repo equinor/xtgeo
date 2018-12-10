@@ -267,9 +267,9 @@ class RegularSurface(object):
                 'nrow={0._nrow!r}, rotation={0._rotation!r}, '
                 'yflip={0._yflip!r}, masked={0._masked!r}, '
                 'filesrc={0._filesrc!r}, name={0._name!r}, '
-                'ilines={0._ilines!r}, xlines={0._xlines!r}, '
-                'values={0._values!r})'
-                .format(self))
+                'ilines={0._ilines.shape!r}, xlines={0._xlines.shape!r}, '
+                'values={0._values.shape!r}) ID={1}.'
+                .format(self, id(self)))
         return myrp
 
     def __str__(self):
@@ -616,7 +616,7 @@ class RegularSurface(object):
         dsc.txt('Xlines vector', self._xlines)
         dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
         np.set_printoptions(threshold=1000)
-        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
+        dsc.txt('Values: mean, stdev, minimum, maximum', self.values.mean(),
                 self.values.std(), self.values.min(), self.values.max())
         msize = float(self.values.size * 8) / (1024 * 1024 * 1024)
         dsc.txt('Minimum memory usage of array (GB)', msize)
@@ -1422,36 +1422,51 @@ class RegularSurface(object):
         """Unrotete a map instance, and this will also change nrow, ncol,
         xinc, etc.
 
-        The default sampling (factor=2) makes a finer gridding in order to
+        The default sampling (factor=2) makes a finer grid in order to
         avoid artifacts, and this default can be used in most cases.
 
-        If a finer grid is wanted, increase the factor. Theoretically the
+        If an even finer grid is wanted, increase the factor. Theoretically the
         new increment for factor=N is between :math:`\\frac{1}{N}` and
         :math:`\\frac{1}{N}\\sqrt{2}` of the original increment,
         dependent on the rotation of the original surface.
 
-        A factor < 1 is not recommended, and a warning will be issued.
+        If the current instance already is unrotated, nothing is done.
+
+        Args:
+            factor (int): Refinement factor (>= 1)
 
         """
+        if abs(self.rotation) < 0.00001:
+            logger.info('Surface has no rotation, nothing is done')
+            return
 
         if factor < 1:
-            warnings.warn('In unrotate(): A factor < 1 is not recommended!',
-                          UserWarning)
+            raise ValueError('Unrotate refinement factor cannot be be '
+                             'less than 1')
 
-        xlen = self.xmax - self.xmin
-        ylen = self.ymax - self.ymin
-        ncol = self.ncol * factor
-        nrow = self.nrow * factor
+        if not isinstance(factor, int):
+            raise ValueError('Refinementfactor must an integer')
+
+        scopy = self
+        if scopy._yflip < 0:
+            scopy = self.copy()
+            scopy.swapaxes()
+
+        xlen = scopy.xmax - scopy.xmin
+        ylen = scopy.ymax - scopy.ymin
+        ncol = scopy.ncol * factor
+        nrow = scopy.nrow * factor
         xinc = xlen / (ncol - 1)  # node based, not cell center based
         yinc = ylen / (nrow - 1)
         vals = ma.zeros((ncol, nrow), order='C')
 
-        nonrot = RegularSurface(xori=self.xmin,
-                                yori=self.ymin,
+        nonrot = RegularSurface(xori=scopy.xmin,
+                                yori=scopy.ymin,
                                 xinc=xinc, yinc=yinc,
                                 ncol=ncol, nrow=nrow,
-                                values=vals)
-        nonrot.resample(self)
+                                values=vals,
+                                yflip=1)
+        nonrot.resample(scopy)
 
         self._values = nonrot.values
         self._nrow = nonrot.nrow
@@ -1461,6 +1476,12 @@ class RegularSurface(object):
         self._yori = nonrot.yori
         self._xinc = nonrot.xinc
         self._yinc = nonrot.yinc
+        self._yflip = nonrot.yflip
+        self._ilines = nonrot.ilines
+        self._xlines = nonrot.xlines
+
+        if self._filesrc and '(resampled)' not in self._filesrc:
+            self._filesrc = self._filesrc + ' (resampled)'
 
     def refine(self, factor):
         """Refine a surface with a factor, e.g. 2 for double.
@@ -1870,14 +1891,14 @@ class RegularSurface(object):
             coarsen=coarsen,
             zone_avg=zone_avg)
 
-    def quickplot(self, filename='/tmp/default.png', title='QuickPlot',
+    def quickplot(self, filename=None, title='QuickPlot',
                   infotext=None, minmax=(None, None), xlabelrotation=None,
                   colormap='rainbow', colortable=None,
                   faults=None, logarithmic=False):
         """Fast surface plot of maps using matplotlib.
 
         Args:
-            filename (str): Name of plot file.
+            filename (str): Name of plot file; None will plot to screen.
             title (str): Title of plot
             infotext (str): Additonal info on plot.
             minmax (tuple): Tuple of min and max values to be plotted. Note

@@ -43,7 +43,7 @@
  *    zov            o     Z array output
  *    hlen           o     Horizontal length vector, relative to FIRST input
  *                   o     point.
- *    option         i     Options...
+ *    option         i     if option 1, then Z output will be contant 0
  *    debug          i     Debug flag
  *
  * RETURNS:
@@ -212,17 +212,20 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
      * ========================================================================
      */
     nct = 0;
-    x0 = txv[0]; y0 = tyv[0]; z0 = 0.0;
+    x0 = txv[0]; y0 = tyv[0]; z0 = tzv[0];
+    if (option == 1) z0 = 0.0;
     xov[nct] = x0; yov[nct] = y0; zov[nct] = z0;
     nct++;
     for (i = 1; i < nnnf; i++) {
         x1 = txv[i-1];
         y1 = tyv[i-1];
-        z1 = 0.0;
+        z1 = tzv[i-1];
+        if (option == 1) z1 = 0.0;
 
         x2 = txv[i];
         y2 = tyv[i];
-        z2 = 0.0;
+        z2 = tzv[i];
+        if (option == 1) z2 = 0.0;
 
         xtg_speak(sbn, 3, "XX x0 x1 x2 y0 y1 y2 %f %f %f   %f %f %f",
                   x0, x1, x2, y0, y1, y2);
@@ -249,14 +252,15 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
 
             xov[nct] = xr;
             yov[nct] = yr;
-            zov[nct] = 0.0;
+            if (option == 1) zr = 0.0;
+            zov[nct] = zr;
 
             nct++;
 
             if (nct >= nbuf) return -8;
 
             /* redefine start point */
-            x0 = xr; y0 = yr; z0 = 0.0;
+            x0 = xr; y0 = yr; z0 = zr;
 
         }
     }
