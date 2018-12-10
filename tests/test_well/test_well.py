@@ -4,6 +4,7 @@ import sys
 import pytest
 
 from xtgeo.well import Well
+from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
 import test_common.test_xtg as tsetup
@@ -129,6 +130,19 @@ def test_fence(loadwell1):
     pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
 
     logger.debug(pline)
+
+
+def test_fence_as_polygons(loadwell1):
+    """Return a resampled fence as Polygons."""
+
+    mywell = Well(wfile)
+    pline = mywell.get_fence_polyline(extend=3, tvdmin=1000,
+                                      asnumpy=False)
+
+    assert isinstance(pline, Polygons)
+    dfr = pline.dataframe
+    print(dfr)
+    tsetup.assert_almostequal(dfr['X_UTME'][5], 462567.741277, 0.0001)
 
 
 def test_get_zonation_points():

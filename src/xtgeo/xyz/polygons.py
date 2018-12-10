@@ -34,7 +34,10 @@ class Polygons(XYZ):
     * Z_TVDSS - For depth or property from mean SeaLevel; Depth positive down
     * POLY_ID - for polygon ID as there may be several polylines segments
 
-    It is important that these column names are unique and protected.
+    Each Polygons instance can also a name (through the name attribute).
+    Default is 'poly'. E.g. if a well fence, it is logical to name the
+    instance to be the same as the well name.
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -44,6 +47,7 @@ class Polygons(XYZ):
         self._zname = 'Z_TVDSS'
         self._pname = 'POLY_ID'
         self._mname = 'M_MDEPTH'
+        self._name = 'poly'  # the name of the polygons instance
         super(Polygons, self).__init__(*args, **kwargs)
 
         self._ispolygons = True
@@ -55,6 +59,15 @@ class Polygons(XYZ):
             return 0
         else:
             return len(self._df.index)
+
+    @property
+    def name(self):
+        """ Returns or sets the name of the instance."""
+        return self._name
+
+    @name.setter
+    def name(self, newname):
+        self._name = newname
 
     @property
     def xname(self):

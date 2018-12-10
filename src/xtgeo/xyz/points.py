@@ -30,7 +30,7 @@ class Points(XYZ):
     Default column names in the dataframe:
 
     * X_UTME: UTM X coordinate  as self._xname
-    * Y_UTMN: UTM Y coordinate  as self_yname
+    * Y_UTMN: UTM Y coordinate  as self._yname
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
       something else! Use zname attribute
     * M_MDEPTH: measured depth, (if present)

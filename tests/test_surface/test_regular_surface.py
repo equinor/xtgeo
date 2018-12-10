@@ -33,6 +33,7 @@ testset2 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.gri'
 testset3 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr'
 testset4a = '../xtgeo-testdata/surfaces/etc/ib_test-horizon.map'  # IJXYZ table
 testset4b = '../xtgeo-testdata/surfaces/etc/ijxyz1.map'  # IJXYZ table
+testset4d = '../xtgeo-testdata/surfaces/etc/ijxyz1.dat'  # IJXYZ table OW
 testset4c = '../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map'  # IJXYZ table
 testset5 = '../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri'
 
@@ -77,6 +78,20 @@ def test_ijxyz_import2():
     assert xsurf.yflip == -1
     assert xsurf.nactive == 2578
     xsurf.to_file(os.path.join(td, 'ijxyz_set4b.gri'))
+
+
+def test_ijxyz_import4_ow_messy_dat():
+    """Import some IJ XYZ small set with YFLIP -1 from OW messy dat format."""
+    logger.info('Import and export...')
+
+    xsurf = RegularSurface()
+    xsurf.from_file(testset4d, fformat='ijxyz')
+    xsurf.describe()
+    tsetup.assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
+    assert xsurf.ncol == 51
+    assert xsurf.yflip == -1
+    assert xsurf.nactive == 2578
+    xsurf.to_file(os.path.join(td, 'ijxyz_set4d.gri'))
 
 
 def test_ijxyz_import3():
