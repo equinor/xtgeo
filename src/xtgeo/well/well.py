@@ -297,6 +297,35 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return xname
 
     @property
+    def shortwellname(self):
+        """Returns well name on a short name form where blockname and spaces
+        are removed (read only).
+
+        This should cope with both North Sea style and Haltenbanken style.
+
+        E.g.: '31/2-G-5 AH' -> 'G-5AH', '6472_11-F-23_AH_T2' -> 'F-23AHT2'
+
+        """
+        newname = []
+        first1 = False
+        first2 = False
+        for letter in self.wellname:
+            if first1 and first2:
+                newname.append(letter)
+                continue
+            if letter == '_' or letter == '/':
+                first1 = True
+                continue
+            if first1 and letter == '-':
+                first2 = True
+                continue
+
+        xname = ''.join(newname)
+        xname = xname.replace('_', '')
+        xname = xname.replace(' ', '')
+        return xname
+
+    @property
     def truewellname(self):
         """Returns well name on the assummed form aka '31/2-E-4 AH2'."""
         xname = self.xwellname
@@ -442,7 +471,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         is computed relative to that by simple geometric methods.
         """
 
-        # extract numpies from XYZ trajetory logs
+        # extract numpies from XYZ trajectory logs
         ptr_xv = self.get_carray('X_UTME')
         ptr_yv = self.get_carray('Y_UTMN')
         ptr_zv = self.get_carray('Z_TVDSS')

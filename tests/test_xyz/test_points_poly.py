@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import pytest
 import numpy as np
 from xtgeo.xyz import XYZ
@@ -13,7 +12,7 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
 td = xtg.tmpdir
 testpath = xtg.testpath
@@ -108,4 +107,21 @@ def test_import_export_polygons():
     # reimport and check
     mypoly2 = Polygons(td + '/polygon_export.xyz')
 
-    tsetup.assert_almostequal(z0 + 100, mypoly2.dataframe['Z_TVDSS'].values[0], 0.001)
+    tsetup.assert_almostequal(z0 + 100,
+                              mypoly2.dataframe['Z_TVDSS'].values[0], 0.001)
+
+
+def test_polygon_boundary():
+    """Import XYZ polygons from fileadn test boundary function."""
+
+    pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
+
+    mypoly = Polygons()
+
+    mypoly.from_file(pfile, fformat='xyz')
+
+    boundary = mypoly.get_boundary()
+
+    tsetup.assert_almostequal(boundary[0], 460595.6036, 0.0001)
+    tsetup.assert_almostequal(boundary[4], 2025.952637, 0.0001)
+    tsetup.assert_almostequal(boundary[5], 2266.996338, 0.0001)

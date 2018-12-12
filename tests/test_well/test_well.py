@@ -68,6 +68,22 @@ def test_import_export_many():
         mywell.to_file(wname)
 
 
+def test_shortwellname():
+    """Test that shortwellname gives wanted result"""
+
+    mywell = Well()
+
+    mywell._wname = '31/2-A-14 2H'
+    short = mywell.shortwellname
+
+    assert short == 'A-142H'
+
+    mywell._wname = '6412_2-A-14_2H'
+    short = mywell.shortwellname
+
+    assert short == 'A-142H'
+
+
 # def test_import_as_rms_export_as_hdf5_many():
 #     """ Import RMS and export as HDF5, many"""
 

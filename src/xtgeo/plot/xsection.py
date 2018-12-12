@@ -10,6 +10,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import BasePlot
+from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -207,43 +208,49 @@ class XSection(BasePlot):
         self._ax3 = ax3
 
     def plot_well(self, zonelogname='ZONELOG', facieslogname=None,
-                  perflogname=None):
+                  perflogname=None, wellcrossings=None):
         """Input an XTGeo Well object and plot it."""
         wo = self._well
 
         # reduce the well data by Pandas operations
-        df = wo.dataframe
-        wo.dataframe = df[df['Z_TVDSS'] > self._zmin]
+        dfr = wo.dataframe
+        wo.dataframe = dfr[dfr['Z_TVDSS'] > self._zmin]
 
         # Create a relative XYLENGTH vector (0.0 where well starts)
         wo.create_relative_hlen()
 
-        df = wo.dataframe
-        if df.empty:
+        dfr = wo.dataframe
+        if dfr.empty:
             self._showok = False
             return
 
         # get the well trajectory (numpies) as copy
-        zv = df['Z_TVDSS'].values.copy()
-        hv = df['R_HLEN'].values.copy()
+        zv = dfr['Z_TVDSS'].values.copy()
+        hv = dfr['R_HLEN'].values.copy()
 
         # plot the perflog, if any, first
         if perflogname:
             ax, bba = self._currentax(axisname='perf')
-            self._plot_well_perflog(df, ax, bba, zv, hv, perflogname)
+            self._plot_well_perflog(dfr, ax, bba, zv, hv, perflogname)
 
         # plot the facies, if any, behind the trajectory; ie. first or second
         if facieslogname:
             ax, bba = self._currentax(axisname='facies')
-            self._plot_well_faclog(df, ax, bba, zv, hv, facieslogname)
+            self._plot_well_faclog(dfr, ax, bba, zv, hv, facieslogname)
 
         axx, bbxa = self._currentax(axisname='well')
-        self._plot_well_traj(df, axx, zv, hv)
+        self._plot_well_traj(axx, zv, hv)
 
         if zonelogname:
-            self._plot_well_zlog(df, axx, zv, hv, zonelogname)
+            self._plot_well_zlog(dfr, axx, zv, hv, zonelogname)
 
-    def _plot_well_traj(self, df, ax, zv, hv):
+        if wellcrossings is not None and wellcrossings.empty:
+            wellcrossings = None
+
+        if wellcrossings is not None:
+            self._plot_well_crossings(dfr, axx, wellcrossings)
+
+    def _plot_well_traj(self, ax, zv, hv):
         """Plot the trajectory as a black line"""
 
         zv_copy = ma.masked_where(zv < self._zmin, zv)
@@ -382,6 +389,49 @@ class XSection(BasePlot):
                     label=precord[perf], solid_capstyle='butt')
 
         self._drawlegend(ax, bba, title='Perforations')
+
+    def _plot_well_crossings(self, dfr, ax, wcross):
+        """Plot well crossing based on dataframe (wcrossings)
+
+        The well crossing coordinates are identified for this well,
+        and then it is looking for the closest coordinate. Given this
+        coordinate, a position is chosen.
+
+        The pandas dataframe wcross shall have havbe the following columns:
+
+        * Name of crossing wells named CWELL
+        * Coordinate X named XUTM
+        * Coordinate Y named YUTM
+
+        Args:
+            dfr: Well dataframe
+            ax: current axis
+            wcross: A pandas dataframe with precomputed well crossings
+        """
+
+        for index, row in wcross.iterrows():
+            xcoord = row.XUTM
+            ycoord = row.YUTM
+
+            dfrc = dfr.copy()
+
+            dfrc['DLEN'] = pow(pow(dfrc.X_UTME - xcoord, 2) +
+                               pow(dfrc.Y_UTMN - ycoord, 2), 0.5)
+
+            minindx = dfrc.DLEN.idxmin()
+
+            ax.scatter(dfrc.R_HLEN[minindx], row.TVDMSL_C,
+                       marker='o', color='black', s=70)
+            ax.scatter(dfrc.R_HLEN[minindx], row.TVDMSL_C,
+                       marker='o', color='orange', s=38)
+            ax.annotate(row.CWELL, size=6,
+                        xy=(dfrc.R_HLEN[minindx], row.TVDMSL_C),
+                        xytext=(40, 40),
+                        textcoords='offset points',
+                        arrowprops=dict(
+                            arrowstyle='->',
+                            connectionstyle='angle3,angleA=0,angleB=90'),
+                        color='black', )
 
     def _drawlegend(self, ax, bba, title=None):
 
@@ -608,11 +658,19 @@ class XSection(BasePlot):
         if axisname == 'main' and gridlines:
             ax.grid(color='grey', linewidth=0.2)
 
-    def plot_wellmap(self):
-        """
-        Plot well location map as local view
+    def plot_wellmap(self, otherwells=None, expand=1):
+        """Plot well map as local view, optionally with nearby wells.
+
+        Args:
+            otherwells (list of Polygons): List of surrounding wells to plot,
+                these wells are repr as Polygons instances, one per well.
+            expand (float): Plot axis expand factor (default is 1); larger
+                values may be used if other wells are plotted.
+
+
         """
         ax = self._ax2
+
         if self._wfence is not None:
 
             xwellarray = self._well.dataframe['X_UTME'].values
@@ -628,6 +686,29 @@ class XSection(BasePlot):
             ax.annotate('B', xy=(self._wfence[-1, 0], self._wfence[-1, 1]),
                         fontsize=8)
             ax.set_aspect('equal', 'datalim')
+
+            left, right = ax.get_xlim()
+            xdiff = right - left
+            bottom, top = ax.get_ylim()
+            ydiff = top - bottom
+
+            ax.set_xlim(left - (expand - 1.0) * xdiff,
+                        right + (expand - 1.0) * xdiff)
+            ax.set_ylim(bottom - (expand - 1.0) * ydiff,
+                        top + (expand - 1.0) * ydiff)
+        if otherwells:
+            for poly in otherwells:
+                if not isinstance(poly, Polygons):
+                    xtg.warn('<otherw> not a Polygons instance, but '
+                             'a {}'.format(type(poly)))
+                    continue
+                if poly.name == self._well.xwellname:
+                    continue
+                xwp = poly.dataframe[poly.xname].values
+                ywp = poly.dataframe[poly.yname].values
+                ax.plot(xwp, ywp, linewidth=1, c='grey')
+                ax.annotate(poly.name, xy=(xwp[-1], ywp[-1]), color='grey',
+                            size=5)
 
     def plot_map(self):
         """Plot well location map as an overall view (with field outline)."""
