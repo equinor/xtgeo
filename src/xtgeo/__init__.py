@@ -71,3 +71,5 @@ from xtgeo.cube.cube import cube_from_roxar
 
 from xtgeo.well.well import well_from_file
 from xtgeo.well.well import well_from_roxar
+
+from xtgeo.xyz.polygons import polygons_from_file

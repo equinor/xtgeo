@@ -6,6 +6,7 @@
 # which identifies each polygon piece.
 
 from __future__ import print_function, absolute_import
+import numpy as np
 import pandas as pd
 
 import xtgeo
@@ -16,6 +17,31 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+def polygons_from_file(wfile, fformat='xyz'):
+    """Make an instance of a Polygons object directly from file import.
+
+    Args:
+        mfile (str): Name of file
+        fformat (str): See :meth:`Polygons.from_file`
+
+    Example::
+
+        import xtgeo
+        mypoly = xtgeo.polygons_from_file('somefile.xyz')
+    """
+
+    obj = Polygons()
+
+    obj.from_file(wfile, fformat=fformat)
+
+    return obj
+
+
+# =============================================================================
+# CLASS
 class Polygons(XYZ):
     """Class for a polygons (connected points) in the XTGeo framework.
 
@@ -166,8 +192,6 @@ class Polygons(XYZ):
 
         """
 
-
-
         super(Polygons, self).to_file(pfile, fformat=fformat,
                                       attributes=attributes, filter=filter,
                                       wcolumn=wcolumn, hcolumn=hcolumn,
@@ -220,3 +244,19 @@ class Polygons(XYZ):
         logger.info(self.dataframe)
 
         return _convert_idbased_xyz(self, self.dataframe)
+
+    def get_boundary(self):
+        """Get the XYZ window (boundaries) of the instance.
+
+        Returns:
+            (xmin, xmax, ymin, ymax, zmin, zmax)
+        """
+
+        xmin = np.nanmin(self.dataframe[self.xname].values)
+        xmax = np.nanmax(self.dataframe[self.xname].values)
+        ymin = np.nanmin(self.dataframe[self.yname].values)
+        ymax = np.nanmax(self.dataframe[self.yname].values)
+        zmin = np.nanmin(self.dataframe[self.zname].values)
+        zmax = np.nanmax(self.dataframe[self.zname].values)
+
+        return (xmin, xmax, ymin, ymax, zmin, zmax)
