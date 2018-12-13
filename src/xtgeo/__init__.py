@@ -33,6 +33,7 @@ from xtgeo.grid3d import grid
 from xtgeo.grid3d import grid_property
 from xtgeo.grid3d import grid_properties
 from xtgeo.well import well
+from xtgeo.well import wells
 from xtgeo.plot import baseplot
 from xtgeo.plot import xsection
 from xtgeo.plot import xtmap

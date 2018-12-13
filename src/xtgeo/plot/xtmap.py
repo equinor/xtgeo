@@ -221,8 +221,22 @@ class Map(BasePlot):
         self._ax.scatter(dataframe['X_UTME'].values,
                          dataframe['Y_UTMN'].values, marker='x')
 
-        #print(dataframe)
+    def plot_wells(self, wells):
+        """Plot wells on the map.
 
+        Args:
+            wells (Wells): A XTGeo Wells object (contains a number of Well
+                instances.
+
+        """
+
+        for well in wells.wells:
+            dataframe = well.dataframe
+
+            xval = dataframe['X_UTME'].values
+            yval = dataframe['Y_UTMN'].values
+            self._ax.plot(xval, yval)
+            self._ax.annotate(well.name, xy=(xval[-1], yval[-1]))
 
     def show(self):
         """Call to matplotlib.pyplot show().

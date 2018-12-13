@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 
 import sys
 import os.path
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -158,98 +159,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         logger.debug('Ran __init__ method for RegularSurface object')
 
     # =========================================================================
-    # Import and export
-    # =========================================================================
-
-    def from_file(self, wfile, fformat='rms_ascii',
-                  mdlogname=None, zonelogname=None, strict=True):
-        """Import well from file.
-
-        Args:
-            wfile (str): Name of file
-            fformat (str): File format, rms_ascii (rms well) is
-                currently supported and default format.
-            mdlogname (str): Name of measured depth log, if any
-            zonelogname (str): Name of zonation log, if any
-            strict (bool): If True, then import will fail if
-                zonelogname or mdlogname are asked for but not present
-                in wells.
-
-        Returns:
-            Object instance (optionally)
-
-        Example:
-            Here the from_file method is used to initiate the object
-            directly::
-
-            >>> mywell = Well('31_2-6.w')
-        """
-
-        if os.path.isfile(wfile):
-            pass
-        else:
-            logger.critical('Not OK file')
-            raise os.error
-
-        if (fformat is None or fformat == 'rms_ascii'):
-            _well_io.import_rms_ascii(self, wfile, mdlogname=mdlogname,
-                                      zonelogname=zonelogname,
-                                      strict=strict)
-        else:
-            logger.error('Invalid file format')
-
-        return self
-
-    def to_file(self, wfile, fformat='rms_ascii'):
-        """
-        Export well to file
-
-        Args:
-            wfile (str): Name of file
-            fformat (str): File format
-
-        Example::
-
-            >>> x = Well()
-
-        """
-        if fformat is None or fformat == 'rms_ascii':
-            _well_io.export_rms_ascii(self, wfile)
-        elif fformat == 'hdf5':
-
-            with pd.HDFStore(wfile, 'a', complevel=9, complib='zlib') as store:
-                logger.info('export to HDF5 %s', wfile)
-                store[self._wname] = self._df
-                meta = dict()
-                meta['name'] = self._wname
-                store.get_storer(self._wname).attrs['metadata'] = meta
-
-    def from_roxar(self, project, wname, trajectory='Drilled trajectory',
-                   logrun='log', lognames=None, inclmd=False,
-                   inclsurvey=False):
-        """Import (retrieve) well from roxar project.
-
-        Note this method works only when inside RMS, or when RMS license is
-        activated.
-
-        Args:
-            project (str): Magic string 'project' or file path to project
-            wname (str): Name of well, as shown in RMS.
-            trajectory (str): Name of trajectory in RMS
-            logrun (str): Name of logrun in RMS
-            lognames (list): List of lognames to import
-            inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
-            inclsurvey (bool): Include M_AZI and M_INCL from RMS
-        """
-
-        _well_roxapi.import_well_roxapi(self, project, wname,
-                                        trajectory=trajectory,
-                                        logrun=logrun, lognames=lognames,
-                                        inclmd=inclmd, inclsurvey=inclsurvey)
-
-    # =========================================================================
-    # Get and Set properties (tend to pythonic properties; not javaic get
-    # & set syntax, if possible)
+    # Properties
     # =========================================================================
 
     @property
@@ -271,6 +181,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     def wellname(self):
         """ Returns well name (read only)."""
         return self._wname
+
+    name = wellname
 
     @property
     def mdlogname(self):
@@ -369,6 +281,115 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """Returns the Pandas dataframe column as list (excluding
         mandatory X_UTME Y_UTMN Z_TVDSS)"""
         return list(self._df)[3:]
+
+    # =========================================================================
+    # Methods
+    # =========================================================================
+
+    def from_file(self, wfile, fformat='rms_ascii',
+                  mdlogname=None, zonelogname=None, strict=True):
+        """Import well from file.
+
+        Args:
+            wfile (str): Name of file
+            fformat (str): File format, rms_ascii (rms well) is
+                currently supported and default format.
+            mdlogname (str): Name of measured depth log, if any
+            zonelogname (str): Name of zonation log, if any
+            strict (bool): If True, then import will fail if
+                zonelogname or mdlogname are asked for but not present
+                in wells.
+
+        Returns:
+            Object instance (optionally)
+
+        Example:
+            Here the from_file method is used to initiate the object
+            directly::
+
+            >>> mywell = Well('31_2-6.w')
+        """
+
+        if os.path.isfile(wfile):
+            pass
+        else:
+            logger.critical('Not OK file')
+            raise os.error
+
+        if (fformat is None or fformat == 'rms_ascii'):
+            _well_io.import_rms_ascii(self, wfile, mdlogname=mdlogname,
+                                      zonelogname=zonelogname,
+                                      strict=strict)
+        else:
+            logger.error('Invalid file format')
+
+        return self
+
+    def to_file(self, wfile, fformat='rms_ascii'):
+        """
+        Export well to file
+
+        Args:
+            wfile (str): Name of file
+            fformat (str): File format
+
+        Example::
+
+            >>> x = Well()
+
+        """
+        if fformat is None or fformat == 'rms_ascii':
+            _well_io.export_rms_ascii(self, wfile)
+
+        elif fformat == 'hdf5':
+            with pd.HDFStore(wfile, 'a', complevel=9, complib='zlib') as store:
+                logger.info('export to HDF5 %s', wfile)
+                store[self._wname] = self._df
+                meta = dict()
+                meta['name'] = self._wname
+                store.get_storer(self._wname).attrs['metadata'] = meta
+
+    def from_roxar(self, project, wname, trajectory='Drilled trajectory',
+                   logrun='log', lognames=None, inclmd=False,
+                   inclsurvey=False):
+        """Import (retrieve) well from roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            wname (str): Name of well, as shown in RMS.
+            trajectory (str): Name of trajectory in RMS
+            logrun (str): Name of logrun in RMS
+            lognames (list): List of lognames to import
+            inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
+            inclsurvey (bool): Include M_AZI and M_INCL from RMS
+        """
+
+        _well_roxapi.import_well_roxapi(self, project, wname,
+                                        trajectory=trajectory,
+                                        logrun=logrun, lognames=lognames,
+                                        inclmd=inclmd, inclsurvey=inclsurvey)
+
+    def copy(self):
+        """Copy a Well to a new unique instance"""
+
+        new = Well()
+        new._wlogtype = deepcopy(self._wlogtype)
+        new._wlogrecord = deepcopy(self._wlogrecord)
+        new._rkb = self._rkb
+        new._xpos = self._xpos = None
+        new._ypos = self._ypos
+        new._wname = self._wname
+        if self._def is None:
+            new._df = None
+        else:
+            new._df = self._df.copy()
+        new._mdlogname = self._mdlogname
+        new._zonelogname = self._zonelogname
+
+        return new
 
     def get_logtype(self, lname):
         """Returns the type of a give log (e.g. DISC). None if not exists."""
