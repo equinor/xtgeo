@@ -126,6 +126,7 @@ def export_rms_ascii(self, wfile, precision=4):
         print('{}'.format('Unknown'), file=fwell)
         print('{} {} {} {}'.format(self._wname, self._xpos, self._ypos,
                                    self._rkb), file=fwell)
+        print('{}'.format(len(self.lognames)), file=fwell)
         for lname in self.lognames:
             usewrec = 'linear'
             wrec = []
