@@ -121,22 +121,33 @@ class Wells(object):
         else:
             mymap.savefig(filename)
 
-    def wellintersections(self, sampling=None, tvdrange=(None, None)):
+    def wellintersections(self, fencesampling=None, tvdrange=(None, None),
+                          wfilter=None, mdepth=False):
         """Get intersections between wells, return as dataframe table.
 
         Args:
-            sampling (float): Sampling interval. Default is well log sampling,
-                but a sparser sampling may speed up a lot.
+            fencesampling (float): Sampling interval if fence. Default is
+                well log sampling (which can be coarser by
+                well.resampling(...), but a sparser fencesampling my
+                speed up. Incompatible with 'mdepth' True
 
             tvdrange (tuple of floats): Search interval. One is often just
                 interested in the reservoir section.
 
+            wfilter (float): In order to filter away points that are close
+                (meaning they are probably paralell with current trajecory)
+            mdepth (bool): If mdepth is True, the current 'mdlogname' log
+                is used to add values; hence returning dataframe will have
+                one extra column.
+
         Returns:
             A Pandas dataframe object, with columns WELL, CWELL and UTMX UTMY
-                TVD coordinates where CWELL crosses WELL.
+                TVD coordinates for CWELL where CWELL crosses WELL,
+                and optionally MDEPTH for the WELL.
         """
 
-        dfr = _wells_utils.wellintersections(self, sampling=sampling,
-                                             tvdrange=tvdrange)
+        dfr = _wells_utils.wellintersections(self, fencesampling=fencesampling,
+                                             tvdrange=tvdrange,
+                                             wfilter=wfilter, mdepth=mdepth)
 
         return dfr

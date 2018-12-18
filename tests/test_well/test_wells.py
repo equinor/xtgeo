@@ -73,6 +73,6 @@ def test_wellintersections_sampling(loadwells1):
 
     mywells = Wells()
     mywells.wells = mywell_list
-    mywells.wellintersections(sampling=10.0, tvdrange=(1300, 9999))
+    mywells.wellintersections(fencesampling=10.0, tvdrange=(1300, 9999))
     dfr = mywells.wellintersections()
     logger.info(dfr)

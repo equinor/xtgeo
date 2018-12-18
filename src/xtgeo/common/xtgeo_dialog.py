@@ -227,6 +227,9 @@ class XTGeoDialog(object):
         if self._lformatlevel <= 1:
             self._lformat = '%(name)44s %(funcName)44s '\
                 + '%(levelname)8s: \t%(message)s'
+        elif self._lformatlevel == 20:
+            # mimic xtg.say look
+            self._lformat = '>> %(message)s'
         else:
             self._lformat = '%(asctime)s Line: %(lineno)4d %(name)44s '\
                 + '[%(funcName)40s()]'\
@@ -234,7 +237,6 @@ class XTGeoDialog(object):
                 + '\t%(message)s'
 
         return self._lformat
-
 
     @staticmethod
     def print_xtgeo_header(appname, appversion):
@@ -260,8 +262,11 @@ class XTGeoDialog(object):
         print(_BColors.ENDC)
         print('')
 
-    def basiclogger(self, name, logginglevel=None):
+    def basiclogger(self, name, logginglevel=None, loggingformat=None):
         """Initiate the logger by some default settings."""
+
+        if loggingformat is not None:
+            self._lformat = loggingformat
 
         format = self.loggingformat
         logging.basicConfig(format=format, stream=sys.stdout)

@@ -3,22 +3,19 @@
 
 from __future__ import print_function, absolute_import
 
-import logging
 import numpy as np
 import pandas as pd
 
 from xtgeo.common import XTGeoDialog
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
 xtg = XTGeoDialog()
 
+logger = xtg.functionlogger(__name__)
 
-# Import RMS ascii
-# -------------------------------------------------------------------------
+
 def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None,
                      strict=True):
+    """Import RMS ascii table well"""
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     wlogtype = dict()
     wlogrecord = dict()
