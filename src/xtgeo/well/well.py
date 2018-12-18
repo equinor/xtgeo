@@ -373,7 +373,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                                         inclmd=inclmd, inclsurvey=inclsurvey)
 
     def copy(self):
-        """Copy a Well to a new unique instance"""
+        """Copy a Well instance to a new unique Well instance."""
 
         new = Well()
         new._wlogtype = deepcopy(self._wlogtype)
@@ -382,7 +382,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         new._xpos = self._xpos = None
         new._ypos = self._ypos
         new._wname = self._wname
-        if self._def is None:
+        if self._df is None:
             new._df = None
         else:
             new._df = self._df.copy()
@@ -523,7 +523,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         These are kind of quasi measurements hence the logs will named
         with a Q in front as Q_MDEPTH and Q_INCL.
 
-        These logs will be added to the dataframe
+        These logs will be added to the dataframe. If the mdlogname
+        attribute does not exist in advance, it will be set to 'Q_MDEPTH'.
         """
 
         # extract numpies from XYZ trajetory logs
@@ -549,12 +550,31 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         dnumpy = self._convert_carr_double_np(ptr_incl)
         self._df['Q_INCL'] = pd.Series(dnumpy, index=self._df.index)
 
+        if not self._mdlogname:
+            self._mdlogname = 'Q_MDEPTH'
+
         # delete tmp pointers
         _cxtgeo.delete_doublearray(ptr_xv)
         _cxtgeo.delete_doublearray(ptr_yv)
         _cxtgeo.delete_doublearray(ptr_zv)
         _cxtgeo.delete_doublearray(ptr_md)
         _cxtgeo.delete_doublearray(ptr_incl)
+
+    def resample(self, interval=4, keeplast=True):
+        """Resample by sampling every N'th element (coarsen only).
+
+        Args:
+            interval (int): Sampling interval.
+            keeplast (bool): If True, the last element from the original
+                dataframe is kept, to avoid that the well is shortened.
+        """
+
+        dfr = self._df[::interval]
+
+        if keeplast:
+            dfr.append(self._df.iloc[-1])
+
+        self._df = dfr.reset_index(drop=True)
 
     def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None,
                            asnumpy=True):

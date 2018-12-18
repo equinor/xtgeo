@@ -410,8 +410,8 @@ class XSection(BasePlot):
         """
 
         for index, row in wcross.iterrows():
-            xcoord = row.XUTM
-            ycoord = row.YUTM
+            xcoord = row.UTMX
+            ycoord = row.UTMY
 
             dfrc = dfr.copy()
 
@@ -420,12 +420,12 @@ class XSection(BasePlot):
 
             minindx = dfrc.DLEN.idxmin()
 
-            ax.scatter(dfrc.R_HLEN[minindx], row.TVDMSL_C,
-                       marker='o', color='black', s=70)
-            ax.scatter(dfrc.R_HLEN[minindx], row.TVDMSL_C,
-                       marker='o', color='orange', s=38)
+            ax.scatter(dfrc.R_HLEN[minindx], row.TVD,
+                       marker='o', color='black', s=70, zorder=100)
+            ax.scatter(dfrc.R_HLEN[minindx], row.TVD,
+                       marker='o', color='orange', s=38, zorder=102)
             ax.annotate(row.CWELL, size=6,
-                        xy=(dfrc.R_HLEN[minindx], row.TVDMSL_C),
+                        xy=(dfrc.R_HLEN[minindx], row.TVD),
                         xytext=(40, 40),
                         textcoords='offset points',
                         arrowprops=dict(
