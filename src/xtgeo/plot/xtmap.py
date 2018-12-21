@@ -64,7 +64,10 @@ class Map(BasePlot):
         self._fig, self._ax = plt.subplots(figsize=(11.69 * figscaling,
                                                     8.27 * figscaling))
         if title is not None:
-            plt.title(title, fontsize=18)
+            if subtitle:
+                self._fig.suptitle(title, fontsize=18)
+            else:
+                plt.title(title, fontsize=18)
         if subtitle is not None:
             self._ax.set_title(subtitle, size=14)
         if infotext is not None:
