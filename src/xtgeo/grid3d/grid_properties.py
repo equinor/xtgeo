@@ -305,7 +305,8 @@ class GridProperties(Grid3D):
     @staticmethod
     def scan_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False,
                       dates=False):
-        """Quick scan of keywords in Eclipse binary restart/init/... file.
+        """Quick scan of keywords in Eclipse binary restart/init/... file,
+        or ROFF binary files.
 
         For Eclipse files:
         Returns a list of tuples (or dataframe), e.g. ('PRESSURE',

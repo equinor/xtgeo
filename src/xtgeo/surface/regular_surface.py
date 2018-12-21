@@ -1891,7 +1891,7 @@ class RegularSurface(object):
             coarsen=coarsen,
             zone_avg=zone_avg)
 
-    def quickplot(self, filename=None, title='QuickPlot',
+    def quickplot(self, filename=None, title='QuickPlot', subtitle=None,
                   infotext=None, minmax=(None, None), xlabelrotation=None,
                   colormap='rainbow', colortable=None,
                   faults=None, logarithmic=False):
@@ -1900,6 +1900,7 @@ class RegularSurface(object):
         Args:
             filename (str): Name of plot file; None will plot to screen.
             title (str): Title of plot
+            subtitle (str): Subtitle of plot
             infotext (str): Additonal info on plot.
             minmax (tuple): Tuple of min and max values to be plotted. Note
                 that values outside range will be set equal to range limits
@@ -1927,7 +1928,7 @@ class RegularSurface(object):
         mymap = Map()
 
         logger.info('Infotext is <%s>', infotext)
-        mymap.canvas(title=title, infotext=infotext)
+        mymap.canvas(title=title, subtitle=subtitle, infotext=infotext)
 
         minvalue = minmax[0]
         maxvalue = minmax[1]
