@@ -224,6 +224,7 @@ def test_minmax_rotated_map():
     tsetup.assert_almostequal(x.ymax, 5939998.7, 0.1)
 
 
+@tsetup.bigtest
 def test_irapbin_io():
     """Import and export Irap binary."""
     logger.info('Import and export...')
@@ -369,8 +370,19 @@ def test_get_xy_values1d():
     tsetup.assert_almostequal(xcv[1], 25.0, 0.001)
 
 
-def test_dataframe():
+def test_dataframe_simple():
     """Get a pandas Dataframe object"""
+
+    xmap = RegularSurface(testset1)
+
+    dfrc = xmap.dataframe(ijcolumns=True, order='C', activeonly=True)
+
+    tsetup.assert_almostequal(dfrc['X_UTME'][2], 465956.274, 0.01)
+
+
+@tsetup.bigtest
+def test_dataframe_more():
+    """Get a pandas Dataframe object, more detailed testing"""
 
     xmap = RegularSurface(testset1)
 

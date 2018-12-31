@@ -6,6 +6,8 @@ import pytest
 import xtgeo.common.calc as xcalc
 from xtgeo.common import XTGeoDialog
 
+# pylint: disable=invalid-name
+
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
@@ -21,12 +23,21 @@ testpath = xtg.testpath
 # =============================================================================
 
 def assert_equal(this, that, txt=''):
+    """Assert equal wrapper function."""
     assert this == that, txt
 
 
 def assert_almostequal(this, that, tol, txt=''):
+    """Assert almost equal wrapper function."""
     assert this == pytest.approx(that, abs=tol), txt
 
+
+# BIG TESTS -------------------------------------------------------------------
+qbigtest = False
+if 'XTG_BIGTEST' in os.environ:
+    qbigtest = True
+
+bigtest = pytest.mark.skipif(qbigtest, reason='Run time demanding test')
 
 # SEGYIO ----------------------------------------------------------------------
 no_segyio = False

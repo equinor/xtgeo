@@ -100,6 +100,7 @@ def test_coarsen(reek_map):
         xs.quickplot(filename=os.path.join(TMPD, 'reek_coarsen3.png'))
 
 
+@tsetup.bigtest
 def test_points_gridding(reek_map):
     """Make points of surface; then grid back to surface."""
 
