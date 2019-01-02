@@ -405,8 +405,22 @@ def test_dataframe_more():
     dfrcy.to_csv(os.path.join(td, 'regsurf_df_noij_c_all.csv'))
 
 
-# @skipmytest
-def test_get_xy_value_lists():
+def test_get_xy_value_lists_small():
+    """Get the xy list and value list from small test case"""
+
+    x = RegularSurface()  # default instance
+
+    xylist, valuelist = x.get_xy_value_lists(valuefmt='8.3f',
+                                             xyfmt='12.2f')
+
+    logger.info(xylist[2])
+    logger.info(valuelist[2])
+
+    tsetup.assert_equal(valuelist[2], 3.0)
+
+
+@tsetup.bigtest
+def test_get_xy_value_lists_reek():
     """Get the xy list and value list"""
 
     x = RegularSurface()
@@ -437,8 +451,6 @@ def test_topology():
     y.xori = y.xori - 100.0
     status = x.compare_topology(y)
     assert status is False
-
-
 
 
 def test_similarity():

@@ -130,7 +130,7 @@ def test_get_faciesfraction_some_wells():
     """
 
     wlist = []
-    for w in glob.glob(wfiles2):
+    for w in sorted(glob.glob(wfiles2)):
         wlist.append(Well(w, zonelogname='Zonelog'))
         logger.info('Imported well {}'.format(w))
 

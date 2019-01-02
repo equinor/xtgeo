@@ -33,11 +33,11 @@ def assert_almostequal(this, that, tol, txt=''):
 
 
 # BIG TESTS -------------------------------------------------------------------
-qbigtest = False
+nobigtests = True
 if 'XTG_BIGTEST' in os.environ:
-    qbigtest = True
+    nobigtests = False
 
-bigtest = pytest.mark.skipif(qbigtest, reason='Run time demanding test')
+bigtest = pytest.mark.skipif(nobigtests, reason='Run time demanding test')
 
 # SEGYIO ----------------------------------------------------------------------
 no_segyio = False
