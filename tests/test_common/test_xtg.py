@@ -32,6 +32,13 @@ def assert_almostequal(this, that, tol, txt=''):
     assert this == pytest.approx(that, abs=tol), txt
 
 
+# EQUINOR ONLY ----------------------------------------------------------------
+qequinor = False
+if 'KOMODO_RELEASE' in os.environ:
+    qequinor = True
+
+equinor = pytest.mark.skipif(not qequinor, reason='Equinor internal test set')
+
 # BIG TESTS -------------------------------------------------------------------
 nobigtests = True
 if 'XTG_BIGTEST' in os.environ:

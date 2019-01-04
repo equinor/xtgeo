@@ -48,8 +48,8 @@ else
 PSHORT := ${PYTHON_VSHORT}
 endif
 PYTHON := python${PSHORT}
-PIP := pip${PSHORT}
-
+#PIP := pip${PSHORT}
+PIP := ${PYTHON} -m pip
 
 TARGET := ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
 

@@ -650,7 +650,7 @@ class Grid(Grid3D):
         return self
 
     def from_roxar(self, projectname, gname, realisation=0,
-                   dimensions_only=False):
+                   dimensions_only=False, info=False):
 
         """Import grid model geometry from RMS project, and makes an instance.
 
@@ -662,11 +662,15 @@ class Grid(Grid3D):
                 read. The actual grid geometry will remain empty (None). This
                 will be much faster of only grid size info is needed, e.g.
                 for initalising a grid property.
+            info (bool): If True, various info will printed to screen. This
+                info will depend on version of ROXAPI, and is mainly a
+                developer/debugger feature. Default is False.
+
 
         """
 
         _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
-                                        dimensions_only)
+                                        dimensions_only, info)
 
     def to_file(self, gfile, fformat='roff'):
         """
