@@ -112,6 +112,15 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
     xiv, yiv = self.get_xy_values()
 
+    # weight are needed if zoneprop is not follow layers, but rather regions
+    weights = dzprop.copy() * 0.0 + 1.0
+    weights[zoneprop < zone_minmax[0]] = 0.0
+    weights[zoneprop > zone_minmax[1]] = 0.0
+
+    # this operation is needed if zoneprop is aka a region ("irregular zone")
+    zoneprop = ma.masked_less(zoneprop, zone_minmax[0])
+    zoneprop = ma.masked_greater(zoneprop, zone_minmax[1])
+
     for klay0 in range(gnlay):
 
         k1lay = klay0 + 1
@@ -120,8 +129,12 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
             msum = np.zeros((self.ncol, self.nrow), order='C')
             dzsum = np.zeros((self.ncol, self.nrow), order='C')
 
-        numz = int(round(zoneprop[::, ::, klay0].mean()))
-        if numz < zone_minmax[0] or numz > zone_minmax[1]:
+        numz = zoneprop[::, ::, klay0].mean()
+        if isinstance(numz, float):
+            numz = int(round(zoneprop[::, ::, klay0].mean()))
+            if numz < zone_minmax[0] or numz > zone_minmax[1]:
+                continue
+        else:
             continue
 
         qmcompute = True
@@ -139,6 +152,7 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         ycv = yprop[::, ::, klay0].ravel(order='C')
         mvv = mprop[::, ::, klay0].ravel(order='C')
         dzv = dzprop[::, ::, klay0].ravel(order='C')
+        wei = weights[::, ::, klay0].ravel(order='C')
 
         # this is done to avoid problems if undef values still remains
         # in the coordinates (assume Y undef where X undef):
@@ -147,6 +161,7 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         ycv = ycv[xcc < 1e20]
         mvv = mvv[xcc < 1e20]
         dzv = dzv[xcc < 1e20]
+        wei = wei[xcc < 1e20]
 
         # some sanity checks
         if qlog:
@@ -157,9 +172,9 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
                 logger.info('Min max is %s %s ...', minpp, maxpp)
 
         if summing:
-            mvdz = mvv
+            mvdz = mvv * wei
         else:
-            mvdz = mvv * dzv
+            mvdz = mvv * dzv * wei
 
         if qmcompute:
             try:
