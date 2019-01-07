@@ -7,7 +7,7 @@ try:
     import roxar
     from roxar import __version__ as ROXVER
     print('ROXVER', ROXVER)
-except ModuleNotFoundError as msg:
+except ImportError as msg:
     print(msg)
     pass
 
