@@ -6,9 +6,8 @@ from pkg_resources import parse_version as pver
 try:
     import roxar
     from roxar import __version__ as ROXVER
-    print('ROXVER', ROXVER)
-except ImportError as msg:
-    print(msg)
+    roxmsg = 'ROXVER: {}'.format(ROXVER)
+except ImportError as roxmsg:
     pass
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
@@ -18,6 +17,8 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
+
+logger.info(roxmsg)
 
 # self is Grid() instance
 _cxtgeo.xtg_verbose_file('NONE')
