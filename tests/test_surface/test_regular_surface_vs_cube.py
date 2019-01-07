@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import sys
 import pytest
 from os.path import join as ojn
@@ -36,26 +40,31 @@ xcub1 = ojn(rpath4, 'ib_test_cube2.segy')
 xcub2 = ojn(rpath4, 'cube_w_deadtraces.segy')
 
 
+@pytest.fixture()
+def load_cube_rsgy1():
+    """Loading test cube (pytest setup fixture)"""
+    logger.info('Load cube rsgy1')
+    return Cube(rsgy1)
+
+
 @tsetup.skipsegyio
 @tsetup.skipifroxar
-def test_get_surface_from_cube():
+def test_get_surface_from_cube(load_cube_rsgy1):
     """Construct a constant surface from cube."""
 
     surf = RegularSurface()
-    cube = Cube(rsgy1)
+    cube = load_cube_rsgy1
 
     surf.from_cube(cube, 1999.0)
 
     assert surf.xinc == cube.xinc
     assert surf.nrow == cube.nrow
-
-    surf.describe()
-    cube.describe()
+    tsetup.assert_almostequal(surf.values.mean(), 1999.0, 0.00001)
 
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
-def test_slice_nearest():
+def test_slice_nearest(load_cube_rsgy1):
     """Slice a cube with a surface, nearest node."""
 
     t1 = xtg.timer()
@@ -65,14 +74,14 @@ def test_slice_nearest():
     xs.to_file(td + '/surf_slice_cube_initial.gri')
 
     logger.info('Loading cube')
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     # now slice
-    logger.info('Slicing cube which has YFLIP status {}'.format(cc.yflip))
+    logger.info('Slicing cube which has YFLIP status {}'.format(kube.yflip))
 
     t1 = xtg.timer()
     print(t1)
-    xs.slice_cube(cc)
+    xs.slice_cube(kube)
     t2 = xtg.timer(t1)
     logger.info('Slicing...done in {} seconds'.format(t2))
 
@@ -95,10 +104,10 @@ def test_slice_nearest():
     ys = RegularSurface()
     ys.from_file(rtop1)
 
-    cc.swapaxes()
+    kube.swapaxes()
     # Now slice
     logger.info('Slicing... (now with swapaxes)')
-    ys.slice_cube(cc)
+    ys.slice_cube(kube)
     logger.info('Slicing...done')
     mean = ys.values.mean()
     logger.info('Avg for surface is now {}'.format(mean))
@@ -109,17 +118,17 @@ def test_slice_nearest():
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
-def test_slice_various_reek():
+def test_slice_various_reek(load_cube_rsgy1):
     """Slice a cube with a surface, both nearest node and interpol, Reek."""
 
     logger.info('Loading surface')
     xs = RegularSurface(rtop1)
 
     logger.info('Loading cube')
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     t1 = xtg.timer()
-    xs.slice_cube(cc)
+    xs.slice_cube(kube)
     t2 = xtg.timer(t1)
     logger.info('Slicing... nearest, done in {} seconds'.format(t2))
 
@@ -135,7 +144,7 @@ def test_slice_various_reek():
     xs = RegularSurface(rtop1)
 
     t1 = xtg.timer()
-    xs.slice_cube(cc, sampling='trilinear')
+    xs.slice_cube(kube, sampling='trilinear')
     t2 = xtg.timer(t1)
     logger.info('Slicing... trilinear, done in {} seconds'.format(t2))
 
@@ -149,8 +158,26 @@ def test_slice_various_reek():
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
-def test_slice_attr_window_max():
+def test_slice_attr_window_max(load_cube_rsgy1):
     """Slice a cube within a window, get max, using trilinear interpol."""
+
+    logger.info('Loading surface')
+    xs1 = RegularSurface(rtop1)
+
+    logger.info('Loading cube')
+    kube = load_cube_rsgy1
+
+    xs1.slice_cube_window(kube, attribute='max', sampling='trilinear')
+    logger.info(xs1.values.mean())
+    tsetup.assert_almostequal(xs1.values.mean(), 0.08494559, 0.0001)
+
+
+@tsetup.bigtest
+@tsetup.skipsegyio
+@tsetup.skipifroxar
+def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
+    """Slice a cube within a window, get max/min etc, using trilinear
+    interpol and plotting."""
 
     logger.info('Loading surface')
     xs1 = RegularSurface(rtop1)
@@ -158,10 +185,10 @@ def test_slice_attr_window_max():
     xs3 = xs1.copy()
 
     logger.info('Loading cube')
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     t1 = xtg.timer()
-    xs1.slice_cube_window(cc, attribute='min', sampling='trilinear')
+    xs1.slice_cube_window(kube, attribute='min', sampling='trilinear')
     t2 = xtg.timer(t1)
     logger.info('Window slicing... {} secs'. format(t2))
 
@@ -170,7 +197,7 @@ def test_slice_attr_window_max():
                   title='Reek Minimum',
                   infotext='Method: trilinear, window')
 
-    xs2.slice_cube_window(cc, attribute='max', sampling='trilinear',
+    xs2.slice_cube_window(kube, attribute='max', sampling='trilinear',
                           showprogress=True)
 
     xs2.quickplot(filename=td + '/surf_slice_cube_window_max.png',
@@ -178,7 +205,7 @@ def test_slice_attr_window_max():
                   title='Reek Maximum',
                   infotext='Method: trilinear, window')
 
-    xs3.slice_cube_window(cc, attribute='rms', sampling='trilinear')
+    xs3.slice_cube_window(kube, attribute='rms', sampling='trilinear')
 
     xs3.quickplot(filename=td + '/surf_slice_cube_window_rms.png',
                   colortable='jet', minmax=(0, 1),
@@ -188,7 +215,7 @@ def test_slice_attr_window_max():
 
 @tsetup.skipsegyio
 @tsetup.skipifroxar
-def test_slice_attr_window_max_algorithm2():
+def test_slice_attr_window_max_algorithm2(load_cube_rsgy1):
     """Slice a cube within a window, get max, using trilinear interpol,
     alg 2.
     """
@@ -199,10 +226,10 @@ def test_slice_attr_window_max_algorithm2():
     xs3 = xs1.copy()
 
     logger.info('Loading cube')
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     t1 = xtg.timer()
-    xs1.slice_cube_window(cc, attribute='min', sampling='trilinear',
+    xs1.slice_cube_window(kube, attribute='min', sampling='trilinear',
                           algorithm=2)
     t2 = xtg.timer(t1)
     # logger.info('Window slicing... {} secs'. format(t2))
@@ -212,7 +239,7 @@ def test_slice_attr_window_max_algorithm2():
     #               title='Reek Minimum',
     #               infotext='Method: trilinear, window')
 
-    # xs2.slice_cube_window(cc, attribute='max', sampling='trilinear',
+    # xs2.slice_cube_window(kube, attribute='max', sampling='trilinear',
     #                       showprogress=True)
 
     # xs2.quickplot(filename=td + '/surf_slice_cube_window_max.png',
@@ -220,7 +247,7 @@ def test_slice_attr_window_max_algorithm2():
     #               title='Reek Maximum',
     #               infotext='Method: trilinear, window')
 
-    # xs3.slice_cube_window(cc, attribute='rms', sampling='trilinear')
+    # xs3.slice_cube_window(kube, attribute='rms', sampling='trilinear')
 
     # xs3.quickplot(filename=td + '/surf_slice_cube_window_rms.png',
     #               colortable='jet', minmax=(0, 1),
@@ -229,7 +256,7 @@ def test_slice_attr_window_max_algorithm2():
 
 
 @tsetup.skipifroxar
-def test_cube_attr_mean_two_surfaces():
+def test_cube_attr_mean_two_surfaces(load_cube_rsgy1):
     """Get cube attribute (mean) between two surfaces."""
 
     logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
@@ -237,10 +264,10 @@ def test_cube_attr_mean_two_surfaces():
     xs2 = RegularSurface(rbas1)
 
     logger.info('Loading cube {}'.format(rsgy1))
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     xss = xs1.copy()
-    xss.slice_cube_window(cc, other=xs2, other_position='below',
+    xss.slice_cube_window(kube, other=xs2, other_position='below',
                           attribute='mean', sampling='trilinear')
 
     xss.to_file(td + '/surf_slice_cube_2surf_meantri.gri')
@@ -254,9 +281,33 @@ def test_cube_attr_mean_two_surfaces():
 
 
 @tsetup.skipifroxar
-def test_cube_attr_rms_two_surfaces_compare_window():
+def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1):
     """Get cube attribute (rms) between two surfaces, and compare with
     window."""
+
+    xs1 = RegularSurface(rtop1)
+    xs2 = xs1.copy()
+    xs2.values += 30
+
+    kube = load_cube_rsgy1
+
+    xss1 = xs1.copy()
+    xss1.slice_cube_window(kube, other=xs2, other_position='below',
+                           attribute='rms', sampling='trilinear')
+
+    xss2 = xs1.copy()
+    xss2.values += 15
+    xss2.slice_cube_window(kube, zrange=15,
+                           attribute='rms', sampling='trilinear')
+
+    assert xss1.values.mean() == xss2.values.mean()
+
+
+@tsetup.bigtest
+@tsetup.skipifroxar
+def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
+    """Get cube attribute (rms) between two surfaces, and compare with
+    window, and show plots."""
 
     logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
     xs1 = RegularSurface(rtop1)
@@ -264,10 +315,10 @@ def test_cube_attr_rms_two_surfaces_compare_window():
     xs2.values += 30
 
     logger.info('Loading cube {}'.format(rsgy1))
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     xss1 = xs1.copy()
-    xss1.slice_cube_window(cc, other=xs2, other_position='below',
+    xss1.slice_cube_window(kube, other=xs2, other_position='below',
                            attribute='rms', sampling='trilinear')
 
     xss1.quickplot(filename=td + '/surf_slice_cube_2surf_rms1.png',
@@ -279,7 +330,7 @@ def test_cube_attr_rms_two_surfaces_compare_window():
 
     xss2 = xs1.copy()
     xss2.values += 15
-    xss2.slice_cube_window(cc, zrange=15,
+    xss2.slice_cube_window(kube, zrange=15,
                            attribute='rms', sampling='trilinear')
 
     xss2.quickplot(filename=td + '/surf_slice_cube_2surf_rms2.png',
@@ -291,7 +342,7 @@ def test_cube_attr_rms_two_surfaces_compare_window():
 
 
 @tsetup.skipifroxar
-def test_cube_attr_mean_two_surfaces_with_zeroiso():
+def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
     """Get cube attribute between two surfaces with partly zero isochore."""
 
     logger.info('Loading surfaces {} {}'.format(rtop1, rbas1))
@@ -299,10 +350,10 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso():
     xs2 = RegularSurface(rbas2)
 
     logger.info('Loading cube {}'.format(rsgy1))
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     xss = xs1.copy()
-    xss.slice_cube_window(cc, other=xs2, other_position='below',
+    xss.slice_cube_window(kube, other=xs2, other_position='below',
                           attribute='mean', sampling='trilinear')
 
     xss.to_file(td + '/surf_slice_cube_2surf_meantri.gri')
@@ -329,12 +380,12 @@ def test_cube_slice_auto4d_data():
 
     assert xs1.values.mean() == pytest.approx(xs2.values.mean(), abs=0.0001)
 
-    cc1 = Cube(xcub1)
-    cc1.describe()
+    kube1 = Cube(xcub1)
+    kube1.describe()
 
     assert xs2.nactive == 10830
 
-    xs2.slice_cube_window(cc1, sampling='trilinear', mask=True,
+    xs2.slice_cube_window(kube1, sampling='trilinear', mask=True,
                           attribute='max')
 
     xs2out1 = ojn(td, 'xtop2_sampled_from_cube.ijxyz')
@@ -504,8 +555,9 @@ def test_cube_slice_w_dead_traces_trilinear():
     assert surf2.values.mean() == surf1.values.mean()
 
 
+@tsetup.bigtest
 @tsetup.skipifroxar
-def test_cube_attr_mean_two_surfaces_multiattr():
+def test_cube_attr_mean_two_surfaces_multiattr(load_cube_rsgy1):
     """Get cube attribute (mean) between two surfaces, many attr at the same
     time.
     """
@@ -515,17 +567,17 @@ def test_cube_attr_mean_two_surfaces_multiattr():
     xs2 = RegularSurface(rbas1)
 
     logger.info('Loading cube {}'.format(rsgy1))
-    cc = Cube(rsgy1)
+    kube = load_cube_rsgy1
 
     xss = xs1.copy()
-    xss.slice_cube_window(cc, other=xs2, other_position='below',
+    xss.slice_cube_window(kube, other=xs2, other_position='below',
                           attribute='rms',
                           sampling='trilinear', showprogress=True)
 
     logger.debug(xss.values.mean())
 
     xsx = xs1.copy()
-    attrs = xsx.slice_cube_window(cc, other=xs2, other_position='below',
+    attrs = xsx.slice_cube_window(kube, other=xs2, other_position='below',
                                   attribute=['max', 'mean', 'min', 'rms'],
                                   sampling='trilinear', showprogress=True)
     logger.debug(attrs['rms'].values.mean())

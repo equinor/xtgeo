@@ -1,8 +1,17 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 """Roxar API functions for XTGeo Grid Geometry"""
+import numpy as np
+from pkg_resources import parse_version as pver
+
+try:
+    import roxar
+    from roxar import __version__ as ROXVER
+    print('ROXVER', ROXVER)
+except ModuleNotFoundError as msg:
+    print(msg)
+    pass
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-import numpy as np
 
 from xtgeo.common import XTGeoDialog
 
@@ -15,53 +24,73 @@ _cxtgeo.xtg_verbose_file('NONE')
 xtg_verbose_level = xtg.syslevel
 
 
-def import_grid_roxapi(self, projectname, gname, realisation, dimonly):
+def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
     """Import a Grid via ROXAR API spec."""
-    import roxar
 
-    logger.info('Opening RMS project ...')
-    if projectname is not None and isinstance(projectname, str):
-        # outside a RMS project
-        with roxar.Project.open(projectname, readonly=True) as proj:
+    def _load_grid(proj):
+        """Inner function to load a grid"""
 
-            # Note that values must be extracted within the "with"
-            # scope here, as e.g. prop._roxgrid.properties[pname]
-            # will lose its reference as soon as we are outside
-            # the project
-
-            try:
-                if gname not in proj.grid_models:
-                    raise KeyError('No such gridmodel: {}'.format(gname))
-
-                roxgrid = proj.grid_models[gname].get_grid()
-
-                if dimonly:
-                    corners = None
-                else:
-                    corners = roxgrid.get_cell_corners_by_index()
-
-                _convert_to_xtgeo_grid(self, roxgrid, corners)
-
-            except KeyError as keyerror:
-                raise RuntimeError(keyerror)
-
-    else:
-        # inside a RMS project
+        logger.info('Loading grid ...')
         try:
-            roxgrid = projectname.grid_models[gname].get_grid()
+            if gname not in proj.grid_models:
+                raise KeyError('No such gridmodel: {}'.format(gname))
+
+            logger.info('Get roxgrid...')
+            roxgrid = proj.grid_models[gname].get_grid()
+
             if dimonly:
                 corners = None
             else:
+                logger.info('Get corners...')
                 corners = roxgrid.get_cell_corners_by_index()
 
+            if info:
+                _display_roxapi_grid_info(self, proj, roxgrid, corners)
+
+            logger.info('Convert to XTGeo internals...')
             _convert_to_xtgeo_grid(self, roxgrid, corners)
 
         except KeyError as keyerror:
             raise RuntimeError(keyerror)
 
+    logger.info('Opening a RMS project ...')
+    if projectname is not None and isinstance(projectname, str):
+        # outside a RMS project
+        with roxar.Project.open(projectname, readonly=True) as proj:
+            _load_grid(proj)
+
+    else:
+        # inside a RMS project
+        _load_grid(projectname)
+
+
+def _display_roxapi_grid_info(self, proj, roxgrid, corners):
+    # in prep!
+    """Push info to screen (mostly for debugging)"""
+    cpgeom = False
+    if pver(ROXVER) >= pver('1.3'):
+        cpgeom = True
+
+    indexer = roxgrid.grid_indexer
+    ncol, nrow, nlay = indexer.dimensions
+
+    if cpgeom:
+        xtg.say('ROXAPI with support for CornerPointGeometry')
+        geom = roxgrid.get_geometry()
+        defined_cells = geom.get_defined_cells()
+        xtg.say('Defined cells \n{}'.format(defined_cells))
+
+        tops, bottoms, depth = geom.get_pillar_data(0, 0)
+        xtg.say('For pillar 0, 0\n')
+        xtg.say('Tops\n{}'.format(tops))
+        xtg.say('Bots\n{}'.format(bottoms))
+        xtg.say('Depths\n{}'.format(depth))
+
 
 def _convert_to_xtgeo_grid(self, roxgrid, corners):
+    """Convert from RMS API to XTGeo API"""
 
+    logger.info('Call the ROXAPI grid indexer')
     indexer = roxgrid.grid_indexer
 
     ncol, nrow, nlay = indexer.dimensions
@@ -97,7 +126,10 @@ def _convert_to_xtgeo_grid(self, roxgrid, corners):
 
     actnum = mybuffer
 
-    logger.info(indexer.handedness)
+    if pver(ROXVER) < pver('1.3'):
+        logger.info('Handedness %s', indexer.handedness)
+    else:
+        logger.info('Handedness %s', indexer.ijk_handedness)
 
     corners = corners.ravel(order='K')
     actnum = actnum.ravel(order='K')
@@ -129,3 +161,15 @@ def _convert_to_xtgeo_grid(self, roxgrid, corners):
 
     _cxtgeo.delete_doublearray(ccorners)
     _cxtgeo.delete_intarray(cactnum)
+
+
+def export_grid_roxapi(self, projectname, gname, realisation):
+    """Export (i.e. store in RMS) via ROXAR API spec.
+
+    This is possible from version ROXAPI ver 1.3, where the CornerPointGeometry
+    class is defined.
+    """
+
+    if pver(ROXVER) < pver('1.3'):
+        raise NotImplementedError('Export is not implemented for ROXAPI '
+                                  'version {}. SKIP!'.format(ROXVER))

@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import glob
-import sys
+from os.path import join
 
 import pytest
 
@@ -13,7 +17,7 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
 td = xtg.tmpdir
 testpath = xtg.testpath
@@ -22,12 +26,13 @@ testpath = xtg.testpath
 # Do tests
 # =========================================================================
 
-wfile = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-wfiles = "../xtgeo-testdata/wells/reek/1/*"
+wfile = join(testpath, 'wells/reek/1/OP_1.w')
+wfiles = join(testpath, 'wells/reek/1/*')
 
 
 @pytest.fixture()
 def loadwell1():
+    """Fixture for loading a well (pytest setup)"""
     logger.info('Load well 1')
     return Well(wfile)
 
@@ -37,7 +42,7 @@ def test_import(loadwell1):
 
     mywell = loadwell1
 
-    logger.debug("True well name:", mywell.truewellname)
+    logger.debug('True well name:', mywell.truewellname)
     tsetup.assert_equal(mywell.xpos, 461809.59, 'XPOS')
     tsetup.assert_equal(mywell.ypos, 5932990.36, 'YPOS')
     tsetup.assert_equal(mywell.wellname, 'OP_1', 'WNAME')
@@ -52,19 +57,19 @@ def test_import(loadwell1):
 
 
 def test_import_export_many():
-    """ Import many wells (test speed)"""
+    """ Import and export many wells (test speed)"""
 
     logger.debug(wfiles)
 
-    for filename in glob.glob(wfiles):
-        logger.info("Importing " + filename)
+    for filename in sorted(glob.glob(wfiles)):
+        logger.info('Importing ' + filename)
         mywell = Well(filename)
         logger.info(mywell.nrow)
         logger.info(mywell.ncol)
         logger.info(mywell.lognames)
 
-        wname = td + "/" + mywell.xwellname + ".w"
-        logger.info("Exporting " + wname)
+        wname = join(td, mywell.xwellname + '.w')
+        logger.info('Exporting ' + wname)
         mywell.to_file(wname)
 
 
@@ -107,24 +112,24 @@ def test_get_carr(loadwell1):
 
     mywell = loadwell1
 
-    dummy = mywell.get_carray("NOSUCH")
+    dummy = mywell.get_carray('NOSUCH')
 
     tsetup.assert_equal(dummy, None, 'Wrong log name')
 
-    cref = mywell.get_carray("X_UTME")
+    cref = mywell.get_carray('X_UTME')
 
     xref = str(cref)
     swig = False
-    if "Swig" in xref and "double" in xref:
+    if 'Swig' in xref and 'double' in xref:
         swig = True
 
     tsetup.assert_equal(swig, True, 'carray from log name, double')
 
-    cref = mywell.get_carray("Zonelog")
+    cref = mywell.get_carray('Zonelog')
 
     xref = str(cref)
     swig = False
-    if "Swig" in xref and "int" in xref:
+    if 'Swig' in xref and 'int' in xref:
         swig = True
 
     tsetup.assert_equal(swig, True, 'carray from log name, int')
@@ -188,7 +193,7 @@ def test_get_zone_interval():
 #     mywell = Well(wfile, zonelogname='Zonelog')
 #     report = mywell.report_zonation_holes()
 
-#     logger.info("\n{}".format(report))
+#     logger.info('\n{}'.format(report))
 
 #     tsetup.assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
 #     tsetup.assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z

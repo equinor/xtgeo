@@ -224,6 +224,7 @@ def test_minmax_rotated_map():
     tsetup.assert_almostequal(x.ymax, 5939998.7, 0.1)
 
 
+@tsetup.bigtest
 def test_irapbin_io():
     """Import and export Irap binary."""
     logger.info('Import and export...')
@@ -369,8 +370,19 @@ def test_get_xy_values1d():
     tsetup.assert_almostequal(xcv[1], 25.0, 0.001)
 
 
-def test_dataframe():
+def test_dataframe_simple():
     """Get a pandas Dataframe object"""
+
+    xmap = RegularSurface(testset1)
+
+    dfrc = xmap.dataframe(ijcolumns=True, order='C', activeonly=True)
+
+    tsetup.assert_almostequal(dfrc['X_UTME'][2], 465956.274, 0.01)
+
+
+@tsetup.bigtest
+def test_dataframe_more():
+    """Get a pandas Dataframe object, more detailed testing"""
 
     xmap = RegularSurface(testset1)
 
@@ -393,8 +405,22 @@ def test_dataframe():
     dfrcy.to_csv(os.path.join(td, 'regsurf_df_noij_c_all.csv'))
 
 
-# @skipmytest
-def test_get_xy_value_lists():
+def test_get_xy_value_lists_small():
+    """Get the xy list and value list from small test case"""
+
+    x = RegularSurface()  # default instance
+
+    xylist, valuelist = x.get_xy_value_lists(valuefmt='8.3f',
+                                             xyfmt='12.2f')
+
+    logger.info(xylist[2])
+    logger.info(valuelist[2])
+
+    tsetup.assert_equal(valuelist[2], 3.0)
+
+
+@tsetup.bigtest
+def test_get_xy_value_lists_reek():
     """Get the xy list and value list"""
 
     x = RegularSurface()
@@ -425,8 +451,6 @@ def test_topology():
     y.xori = y.xori - 100.0
     status = x.compare_topology(y)
     assert status is False
-
-
 
 
 def test_similarity():
