@@ -144,6 +144,25 @@ def test_make_hlen(loadwell1):
     logger.debug(mywell.dataframe)
 
 
+def test_rescale_well(loadwell1):
+    """Rescale (resample) a well to a finer increment"""
+
+    mywell = loadwell1
+
+    df1 = mywell.dataframe.copy()
+    df1 = df1[(df1['Z_TVDSS'] > 1587) & (df1['Z_TVDSS'] < 1610)]
+
+    mywell.to_file('test1.w')
+
+    mywell.rescale(delta=0.2)
+
+    df2 = mywell.dataframe.copy()
+    df2 = df2[(df2['Z_TVDSS'] > 1587) & (df2['Z_TVDSS'] < 1610)]
+    print('XXXXXXXXXXXXXXXXXXX', df1['Perm'].mean())
+    print('XXXXXXXXXXXXXXXXXXX', df2['Perm'].mean())
+    mywell.to_file('test2.w')
+
+
 def test_fence(loadwell1):
     """Return a resampled fence."""
 

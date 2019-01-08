@@ -18,7 +18,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-logger.info(roxmsg)
+# logger.info(roxmsg)
 
 # self is Grid() instance
 _cxtgeo.xtg_verbose_file('NONE')

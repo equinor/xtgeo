@@ -16,6 +16,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.well import _wellmarkers
 from xtgeo.well import _well_io
 from xtgeo.well import _well_roxapi
+from xtgeo.well import _well_oper
 from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
@@ -575,6 +576,15 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             dfr.append(self._df.iloc[-1])
 
         self._df = dfr.reset_index(drop=True)
+
+    def rescale(self, delta=0.15):
+        """Rescale (refine or coarse) a well by sampling a delta along the
+        trajectory, in MD.
+
+        Args:
+            delta (float): Step length
+        """
+        _well_oper.rescale(self, delta=delta)
 
     def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None,
                            asnumpy=True):
