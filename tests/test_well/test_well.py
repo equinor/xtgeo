@@ -56,6 +56,40 @@ def test_import(loadwell1):
     logger.info(type(mywell.dataframe['Poro'].values))
 
 
+def test_change_a_lot_of_stuff(loadwell1):
+    """Import well from file and try to change lognames etc."""
+
+    mywell = loadwell1
+
+    assert mywell.get_logtype('Poro') == 'CONT'
+    assert mywell.get_logrecord('Poro') is None
+
+    with pytest.raises(ValueError) as vinfo:
+        mywell.set_logrecord('Poro', {0: 'null'})
+    assert 'Cannot set a log record for a continuous log' in str(vinfo.value)
+
+    assert mywell.name == 'OP_1'
+    mywell.name = 'OP_1_EDITED'
+    assert mywell.name == 'OP_1_EDITED'
+
+    mywell.rename_log('Poro', 'PORO')
+    assert 'PORO' in mywell.lognames
+
+    with pytest.raises(ValueError) as vinfo:
+        mywell.rename_log('PoroXX', 'Perm')
+    assert 'Input log does not exist' in str(vinfo.value)
+
+    with pytest.raises(ValueError) as vinfo:
+        mywell.rename_log('PORO', 'Perm')
+    assert 'New log name exists already' in str(vinfo.value)
+
+    frec1 = mywell.get_logrecord('Facies')
+    mywell.rename_log('Facies', 'FACIES')
+    frec2 = mywell.get_logrecord('FACIES')
+
+    assert sorted(frec1) == sorted(frec2)
+
+
 def test_import_export_many():
     """ Import and export many wells (test speed)"""
 
@@ -150,17 +184,15 @@ def test_rescale_well(loadwell1):
     mywell = loadwell1
 
     df1 = mywell.dataframe.copy()
-    df1 = df1[(df1['Z_TVDSS'] > 1587) & (df1['Z_TVDSS'] < 1610)]
-
-    mywell.to_file('test1.w')
+    df1 = df1[(df1['Zonelog'] == 1)]
 
     mywell.rescale(delta=0.2)
 
     df2 = mywell.dataframe.copy()
-    df2 = df2[(df2['Z_TVDSS'] > 1587) & (df2['Z_TVDSS'] < 1610)]
-    print('XXXXXXXXXXXXXXXXXXX', df1['Perm'].mean())
-    print('XXXXXXXXXXXXXXXXXXX', df2['Perm'].mean())
-    mywell.to_file('test2.w')
+    df2 = df2[(df2['Zonelog'] == 1)]
+
+    tsetup.assert_almostequal(df1['Perm'].mean(), df2['Perm'].mean(), 20.0)
+    tsetup.assert_almostequal(df1['Poro'].mean(), df2['Poro'].mean(), 0.001)
 
 
 def test_fence(loadwell1):
