@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import pytest
 
+import numpy as np
 import numpy.ma as npma
 
 from xtgeo.grid3d import Grid
@@ -351,6 +352,23 @@ def test_get_xy_values_for_webportal_ecl():
     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
     tsetup.assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)
 
+
+def test_get_values_by_ijk():
+    """Test getting values for given input arrays for I J K"""
+    logger.info('Name is {}'.format(__name__))
+
+    x = GridProperty()
+    logger.info("Import roff...")
+    x.from_file(testfile1, fformat="roff", name='PORO')
+
+    iset1 = np.array([np.nan, 23, 22])
+    jset1 = np.array([np.nan, 23, 19])
+    kset1 = np.array([np.nan, 13, 2])
+
+    res1 = x.get_values_by_ijk(iset1, jset1, kset1)
+
+    tsetup.assert_almostequal(res1[1], 0.08403542, 0.0001)
+    assert np.isnan(res1[0])
 
 # def test_get_xy_values_for_webportal_bri():
 #     """Get lists on webportal format, small BRILLIG case"""

@@ -1058,6 +1058,46 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return dfr
 
+    def get_ijk_from_grid(self, grid, grid_id=''):
+        """Look through a Grid and add grid I J K as discrete logs.
+
+        Note that the the grid counting has base 1 (first row is 1 etc).
+
+        By default, log (i.e. column names in the dataframe) will be
+        ICELL, JCELL, KCELL, but you can add a tag (ID) to that name.
+
+        Args:
+            grid (Grid): A XTGeo Grid instance
+            grid_id (str): Add a tag (optional) to the current log name
+
+        Raises:
+            RuntimeError: 'Error from C routine, code is ...'
+        """
+
+        _well_oper.get_ijk_from_grid(self, grid, grid_id=grid_id)
+
+    def get_gridproperties(self, gridprops, grid=('ICELL', 'JCELL', 'KCELL'),
+                           gridcells=None, prop_id='_model'):
+        """Look through a Grid and add a set of grid properties as logs.
+
+        This can be done to sample model properties along a well.
+
+        Args:
+            gridprops (Grid): A XTGeo GridProperties instance (a collection
+                of properties)
+            grid (Grid or tuple): A XTGeo Grid instance. If this is tuple,
+                it states the names of the logs that contains the IJK numbering
+                or it should be a Grid instance.
+            grid_id (str): Add a tag (optional) to the current log name, e.g
+                as PORO_model, where _model is the tag.
+
+        Raises:
+            RuntimeError: 'Error from C routine, code is ...'
+        """
+
+        _well_oper.get_gridproperties(self, gridprops, grid=grid,
+                                      prop_id=prop_id)
+
     # =========================================================================
     # PRIVATE METHODS
     # should not be applied outside the class

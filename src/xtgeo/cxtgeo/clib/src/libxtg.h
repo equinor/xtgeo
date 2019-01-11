@@ -1727,6 +1727,25 @@ int grd3d_rpt_zlog_vs_zon (
 			   int   debug
 			   );
 
+int grd3d_well_ijk(
+                   int nx,
+                   int ny,
+                   int nz,
+                   double *p_coord_v,
+                   double *p_zcorn_v,
+                   int *p_actnum_v,
+                   double *p_zcorn_onelay_v,
+                   int *p_actnum_onelay_v,
+                   int nval,
+                   double *p_utme_v,
+                   double *p_utmn_v,
+                   double *p_tvds_v,
+                   int *ivector,
+                   int *jvector,
+                   int *kvector,
+                   int iflag,
+                   int debug
+                   );
 
 int well_geometrics (
                      int np,

@@ -270,9 +270,11 @@ class Grid(Grid3D):
         # a class that holds a list of properties.
 
         prplist = None
-        if self._props is not None:
+        if isinstance(self._props, xtgeo.grid3d.GridProperties):
             prplist = self._props.props
-
+        elif isinstance(self._props, list):
+            raise RuntimeError('self._props is a list, not a GridProperties '
+                               'instance')
         return prplist
 
     @props.setter
