@@ -587,7 +587,10 @@ def crop(self, spec, props=None):
 # Reduce grid to one layer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def reduce_to_one_layer(self):
-    """Reduce the grid to one single single layer.
+    """Reduce the grid to one single layer.
+
+    This can be useful for algorithms that need to test if a point is within
+    the full grid.
 
     Example::
 
@@ -622,7 +625,7 @@ def reduce_to_one_layer(self):
     self._nlay = 1
     self._p_zcorn_v = ptr_new_zcorn_v
     self._p_actnum_v = ptr_new_actnum_v
-    self._props = []
+    self._props = None
     self._subgrids = None
 
 

@@ -818,6 +818,49 @@ class GridProperty(Grid3D):
                                                         mask=mask)
         return clist, vlist
 
+    def get_values_by_ijk(self, iarr, jarr, karr, base=1):
+        """Get a 1D ndarray of values by I J K arrays.
+
+        This could for instance be a well path where I J K
+        exists as well logs.
+
+        Note that the input arrays have 1 as base as default
+
+        Args:
+            iarr (ndarray): Numpy array of I
+            jarr (ndarray): Numpy array of J
+            karr (ndarray): Numpy array of K
+            base (int): Should be 1 or 0, dependent on what
+                number base the input arrays has.
+
+        Returns:
+            pvalues (ndarray): A 1D numpy array of property values,
+                with NaN if undefined
+
+        """
+        res = np.zeros(iarr.shape, dtype='float64')
+        res = ma.masked_equal(res, 0)  # mask all
+
+        # get indices where defined (note the , after valids)
+        valids, = np.where(~np.isnan(iarr))
+
+        iarr = iarr[~np.isnan(iarr)]
+        jarr = jarr[~np.isnan(jarr)]
+        karr = karr[~np.isnan(karr)]
+
+        try:
+            res[valids] = self.values[iarr.astype('int') - base,
+                                      jarr.astype('int') - base,
+                                      karr.astype('int') - base]
+
+            return np.ma.filled(res, fill_value=np.nan)
+
+        except IndexError as ier:
+            xtg.warn('Error {}, return None'.format(ier))
+            return None
+        else:
+            raise
+
     def discrete_to_continuous(self):
         """Convert from discrete to continuous values"""
 

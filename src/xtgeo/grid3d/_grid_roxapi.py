@@ -18,7 +18,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-logger.info(roxmsg)
+# logger.info(roxmsg)
 
 # self is Grid() instance
 _cxtgeo.xtg_verbose_file('NONE')
@@ -81,6 +81,7 @@ def _display_roxapi_grid_info(self, proj, roxgrid, corners):
         defined_cells = geom.get_defined_cells()
         xtg.say('Defined cells \n{}'.format(defined_cells))
 
+        xtg.say('IJK handedness: {}'.format(geom.ijk_handedness))
         tops, bottoms, depth = geom.get_pillar_data(0, 0)
         xtg.say('For pillar 0, 0\n')
         xtg.say('Tops\n{}'.format(tops))

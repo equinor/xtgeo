@@ -1,0 +1,87 @@
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
+from os.path import join
+
+import pytest
+
+
+from xtgeo.well import Well
+from xtgeo.grid3d import Grid
+from xtgeo.common import XTGeoDialog
+
+import test_common.test_xtg as tsetup
+
+xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
+if not xtg.testsetup():
+    raise SystemExit
+
+TMPDIR = xtg.tmpdir
+TESTPATH = xtg.testpath
+EQGULLTESTPATH = '../xtgeo-testdata-equinor/data'
+
+# =========================================================================
+# Do tests
+# =========================================================================
+
+WFILE = join(TESTPATH, 'wells/reek/1/OP_1.w')
+GFILE = join(TESTPATH, '3dgrids/reek/REEK.EGRID')
+
+GGULLFILE = join(EQGULLTESTPATH, '3dgrids/gfb/gullfaks_gg.roff')
+WGULLFILE = join(EQGULLTESTPATH, 'wells/gfb/1/34_10-A-42.w')
+
+
+@pytest.fixture()
+def loadwell1():
+    """Fixture for loading a well (pytest setup)"""
+    logger.info('Load well 1')
+    return Well(WFILE)
+
+
+@pytest.fixture()
+def loadgrid1():
+    """Fixture for loading a grid (pytest setup)"""
+    logger.info('Load grid 1')
+    return Grid(GFILE)
+
+
+def test_get_ijk_grid(loadwell1, loadgrid1):
+    """Import well from and grid and make I J K logs"""
+
+    mywell = loadwell1
+    mygrid = loadgrid1
+
+    mywell.get_ijk_from_grid(mygrid)
+
+    df = mywell.dataframe
+
+    assert int(df.iloc[4850]['ICELL']) == 29
+    assert int(df.iloc[4850]['JCELL']) == 28
+    assert int(df.iloc[4850]['KCELL']) == 13
+    assert int(df.iloc[4847]['KCELL']) == 12
+
+    assert int(df.iloc[4775]['ICELL']) == 29
+    assert int(df.iloc[4775]['JCELL']) == 28
+    assert int(df.iloc[4775]['KCELL']) == 1
+
+
+@tsetup.equinor
+@tsetup.bigtest
+def test_get_ijk_gf_geogrid():
+    """Import well from and a large geogrid and make I J K logs"""
+
+    mywell = Well(WGULLFILE)
+    mygrid = Grid(GGULLFILE)
+
+    logger.info('Number of cells in grid is %s', mygrid.ntotal)
+
+    mywell.get_ijk_from_grid(mygrid)
+
+    df = mywell.dataframe
+
+    assert int(df.iloc[16120]['ICELL']) == 68
+    assert int(df.iloc[16120]['JCELL']) == 204
+    assert int(df.iloc[16120]['KCELL']) == 15
