@@ -88,7 +88,7 @@ def test_slice_plot_many_grid_layers():
     mygrid = Grid(usefile1)
     myprop = GridProperty(usefile2, grid=mygrid, name='PORO')
 
-    nlayers = mygrid.nz + 1
+    nlayers = mygrid.nlay + 1
 
     layslice2 = Grid3DSlice()
 

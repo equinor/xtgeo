@@ -80,7 +80,7 @@ def test_hcpvfz1():
     hcmap2 = RegularSurface(nx=50, ny=50, xinc=xinc, yinc=yinc,
                             xori=xmin, yori=ymin, values=np.zeros((50, 50)))
 
-    zp = np.ones((g.nx, g.ny, g.nz))
+    zp = np.ones((g.ncol, g.nrow, g.nlay))
     # now make hcpf map
 
     t1 = xtg.timer()

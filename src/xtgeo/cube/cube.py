@@ -175,37 +175,13 @@ class Cube(object):
         return self._ncol
 
     @property
-    def nx(self):  # pylint: disable=invalid-name
-        """The NCOL (NX or I dir) number
-        (deprecated, use ncol instead)."""
-
-        warn('Use <ncol> instead of <nx>', DeprecationWarning)
-        return self._ncol
-
-    @property
     def nrow(self):
         """The NROW (NY or J dir) number (read-only)."""
         return self._nrow
 
     @property
-    def ny(self):  # pylint: disable=invalid-name
-        """The NROW (NY or J dir) number.
-        (deprecated, use nrow instead)."""
-
-        warn('Use <nrow> instead of <ny>', DeprecationWarning)
-        return self._nrow
-
-    @property
     def nlay(self):
         """The NLAY (or NZ or K dir) number (read-only)."""
-        return self._nlay
-
-    @property
-    def nz(self):  # pylint: disable=invalid-name
-        """The NLAY (NZ or K dir) number.
-        (deprecated, use nlay instead)."""
-
-        warn('Use <nlay> instead of <nz>', DeprecationWarning)
         return self._nlay
 
     @property

@@ -64,11 +64,11 @@ def test_hybridgrid1():
 
     logger.info('Convert...')
     nhdiv = 40
-    newnz = grd2.nz * 2 + nhdiv
+    newnz = grd2.nlay * 2 + nhdiv
 
     grd2.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
 
-    logger.info('Hybrid grid... done, NZ is now %s', grd2.nz)
+    logger.info('Hybrid grid... done, NZ is now %s', grd2.nlay)
 
     assert grd2.nlay == newnz, 'New NLAY number'
 
