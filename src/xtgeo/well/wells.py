@@ -20,9 +20,20 @@ class Wells(object):
     See also the :class:`xtgeo.well.Well` class.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
         self._wells = []            # list of Well objects
+
+        if args:
+            # make instance from file import
+            wfiles = args[0]
+            fformat = kwargs.get('fformat', 'rms_ascii')
+            mdlogname = kwargs.get('mdlogname', None)
+            zonelogname = kwargs.get('zonelogname', None)
+            strict = kwargs.get('strict', True)
+            self.from_files(wfiles, fformat=fformat, mdlogname=mdlogname,
+                            zonelogname=zonelogname, strict=strict,
+                            append=False)
 
     @property
     def names(self):
@@ -99,7 +110,17 @@ class Wells(object):
 
         # file checks are done within the Well() class
         for wfile in filelist:
-            self._wells.append(xtgeo.well.Well(wfile))
+            try:
+                wll = xtgeo.well.Well(wfile, fformat=fformat,
+                                      mdlogname=mdlogname,
+                                      zonelogname=zonelogname,
+                                      strict=strict)
+                self._wells.append(wll)
+            except ValueError as err:
+                xtg.warn('SKIP this well: {}'.format(err))
+                continue
+        if not self._wells:
+            xtg.warn('No wells imported!')
 
     def quickplot(self, filename=None, title='QuickPlot'):
         """Fast plot of wells using matplotlib.
@@ -121,33 +142,45 @@ class Wells(object):
         else:
             mymap.savefig(filename)
 
-    def wellintersections(self, fencesampling=None, tvdrange=(None, None),
-                          wfilter=None, mdepth=False):
+    def limit_tvd(self, tvdmin, tvdmax):
+        """Limit TVD to be in range tvdmin, tvdmax for all wells"""
+        for well in self.wells:
+            well.limit_tvd(tvdmin, tvdmax)
+
+    def downsample(self, interval=4, keeplast=True):
+        """Downsample by sampling every N'th element (coarsen only), all
+        wells.
+        """
+
+        for well in self.wells:
+            well.downsample(interval=interval, keeplast=keeplast)
+
+    def wellintersections(self, wfilter=None, showprogress=False):
         """Get intersections between wells, return as dataframe table.
 
-        Args:
-            fencesampling (float): Sampling interval if fence. Default is
-                well log sampling (which can be coarser by
-                well.resampling(...), but a sparser fencesampling my
-                speed up. Incompatible with 'mdepth' True
+        Notes on wfilter: A wfilter is settings to improve result. In
+        particular to remove parts of trajectories that are parallel.
 
+        wfilter = {'parallel': {'xtol': 4.0, 'ytol': 4.0, 'ztol':2.0,
+                                'itol':10, 'atol':2}}
+
+        Here xtol is tolerance in X coordinate; further Y tolerance,
+        Z tolerance, (I)nclination tolerance, and (A)zimuth tolerance.
+
+        Args:
             tvdrange (tuple of floats): Search interval. One is often just
                 interested in the reservoir section.
-
-            wfilter (float): In order to filter away points that are close
-                (meaning they are probably paralell with current trajecory)
-            mdepth (bool): If mdepth is True, the current 'mdlogname' log
-                is used to add values; hence returning dataframe will have
-                one extra column.
+            wfilter (dict): A dictionrary for filter options, in order to
+                improve result. See example above.
+            showprogress (bool): Will show progress to screen if enabled.
 
         Returns:
             A Pandas dataframe object, with columns WELL, CWELL and UTMX UTMY
                 TVD coordinates for CWELL where CWELL crosses WELL,
-                and optionally MDEPTH for the WELL.
+                and also MDEPTH for the WELL.
         """
 
-        dfr = _wells_utils.wellintersections(self, fencesampling=fencesampling,
-                                             tvdrange=tvdrange,
-                                             wfilter=wfilter, mdepth=mdepth)
+        dfr = _wells_utils.wellintersections(self, wfilter=wfilter,
+                                             showprogress=showprogress)
 
         return dfr

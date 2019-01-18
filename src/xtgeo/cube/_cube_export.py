@@ -137,7 +137,7 @@ def _export_segy_xtgeo(self, sfile):
     _cxtgeo.swig_numpy_to_carr_i1d(xlns, xlinesp)
     _cxtgeo.swig_numpy_to_carr_i1d(trid, tracidp)
 
-    status = _cxtgeo.cube_export_segy(sfile, self.nx, self.ny, self.nz,
+    status = _cxtgeo.cube_export_segy(sfile, self.ncol, self.nrow, self.nlay,
                                       values1d,
                                       self.xori, self.xinc,
                                       self.yori, self.yinc,
@@ -160,7 +160,7 @@ def export_rmsreg(self, sfile):
     logger.debug('Export to RMS regular format...')
     values1d = self.values.reshape(-1)
 
-    status = _cxtgeo.cube_export_rmsregular(self.nx, self.ny, self.nz,
+    status = _cxtgeo.cube_export_rmsregular(self.ncol, self.nrow, self.nlay,
                                             self.xori, self.yori, self.zori,
                                             self.xinc, self.yinc * self.yflip,
                                             self.zinc,

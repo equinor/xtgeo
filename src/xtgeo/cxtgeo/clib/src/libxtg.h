@@ -188,6 +188,18 @@ int x_vector_info2 (
 		    int     debug
 		    );
 
+double x_diff_angle (
+		     double ang1,
+		     double ang2,
+		     int    option,
+		     int    debug
+		     );
+
+double x_avg_angles(
+                    double *angles,
+                    int nsize
+                    );
+
 
 int x_conv_int2float (
 		      int n,
@@ -1754,6 +1766,29 @@ int well_geometrics (
                      double *zv,
                      double *md,
                      double *incl,
+                     double *az,
                      int option,
                      int debug
                      );
+
+int well_trunc_parallel(
+                        double *swig_np_dbl_inplace_v1,   // *xv1,
+                        long n_swig_np_dbl_inplace_v1,     // nx1
+                        double *swig_np_dbl_inplace_v2,   // *yv1,
+                        long n_swig_np_dbl_inplace_v2,     // ny1
+                        double *swig_np_dbl_inplace_v3,   // *zv1,
+                        long n_swig_np_dbl_inplace_v3,     // nz1
+                        double *swig_np_dbl_in_v1,        // *xv2,
+                        long n_swig_np_dbl_in_v1,          // nx2
+                        double *swig_np_dbl_in_v2,        // *yv2,
+                        long n_swig_np_dbl_in_v2,          // ny2
+                        double *swig_np_dbl_in_v3,        // *yv2,
+                        long n_swig_np_dbl_in_v3,          // ny2
+                        double xtol,
+                        double ytol,
+                        double ztol,
+                        double itol,
+                        double atol,
+                        int option,
+                        int debug
+                        );

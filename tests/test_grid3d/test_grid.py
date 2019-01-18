@@ -299,7 +299,7 @@ def test_simple_io():
 
     gg = Grid(reekfile, fformat='egrid')
 
-    assert gg.nx == 40
+    assert gg.ncol == 40
 
     filex = os.path.join(td, 'grid_test_simple_io.roff')
 
@@ -307,7 +307,7 @@ def test_simple_io():
 
     gg2 = Grid(filex, fformat='roff')
 
-    assert gg2.nx == 40
+    assert gg2.ncol == 40
 
 
 def test_ecl_run():

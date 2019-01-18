@@ -64,15 +64,60 @@ def test_wellintersections(loadwells1):
     mywells.wells = mywell_list
     dfr = mywells.wellintersections()
     logger.info(dfr)
+    dfr.to_csv('TMP/wells_crossins.csv')
 
 
-def test_wellintersections_sampling(loadwells1):
+def test_wellintersections_tvdrange_nowfilter(loadwells1):
     """Find well crossing using coarser sampling to Fence"""
 
     mywell_list = loadwells1
 
     mywells = Wells()
     mywells.wells = mywell_list
-    mywells.wellintersections(fencesampling=10.0, tvdrange=(1300, 9999))
+    print('Limit TVD and downsample...')
+    mywells.limit_tvd(1300, 1400)
+    mywells.downsample(interval=6)
+    print('Limit TVD and downsample...DONE')
+
     dfr = mywells.wellintersections()
-    logger.info(dfr)
+    print(dfr)
+
+
+def test_wellintersections_tvdrange_no_wfilter(loadwells1):
+    """Find well crossing using coarser sampling to Fence, no
+    wfilter settings.
+    """
+
+    mywell_list = loadwells1
+
+    mywells = Wells()
+    mywells.wells = mywell_list
+    print('Limit TVD and downsample...')
+    mywells.limit_tvd(1300, 1400)
+    mywells.downsample(interval=6)
+    print('Limit TVD and downsample...DONE')
+
+    dfr = mywells.wellintersections()
+    print(dfr)
+
+
+def test_wellintersections_tvdrange_wfilter(loadwells1):
+    """Find well crossing using coarser sampling to Fence, with
+    wfilter settings.
+    """
+
+    wfilter = {'parallel': {'xtol': 4.0, 'ytol': 4.0, 'ztol': 2.0, 'itol': 10,
+                            'atol': 5.0}}
+
+    mywell_list = loadwells1
+
+    mywells = Wells()
+    mywells.wells = mywell_list
+    print('Limit TVD and downsample...')
+    mywells.limit_tvd(1300, 1400)
+    mywells.downsample(interval=6)
+    print('Limit TVD and downsample...DONE')
+
+    dfr = mywells.wellintersections(wfilter=wfilter)
+    dfr.to_csv('TMP/wells_crossings_filter.csv')
+    print(dfr)

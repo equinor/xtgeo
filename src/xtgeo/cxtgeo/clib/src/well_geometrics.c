@@ -29,6 +29,7 @@
  *    zv             i     z vector np points
  *    np             i     Number of points
  *    md             o     md vector
+ *    incl           o     inclination vector in degrees, horizontal is 90 deg
  *    az             o     Azimuth; azimith is in degrees, with hor.
  *                         path as 90 degrees
  *    option         i     Options: for future usage
@@ -56,6 +57,7 @@ int well_geometrics (
                      double *zv,
                      double *md,
                      double *incl,
+                     double *az,
                      int option,
                      int debug
                      )
@@ -64,6 +66,8 @@ int well_geometrics (
     char s[24] = "well_geometrics";
     int i;
     double incl1, incl2, zdiff;
+    double vlen, arad, adeg1, adeg2;
+    double tmp[2];
 
     xtgverbose(debug);
     xtg_speak(s,3,"Entering routine %s", s);
@@ -73,6 +77,7 @@ int well_geometrics (
             md[i] = md[i - 1] + sqrt(pow((xv[i] - xv[i - 1]), 2.0) +
                                      pow((yv[i] - yv[i - 1]), 2.0) +
                                      pow((zv[i] - zv[i - 1]), 2.0));
+
         }
         else{
             md[i] = 0.0;
@@ -90,6 +95,9 @@ int well_geometrics (
                 incl1 = 90.0;
             }
 
+            x_vector_info2(xv[i-1], xv[i], yv[i-1], yv[i], &vlen, &arad,
+                           &adeg1, 0, debug);
+
             zdiff = fabs(zv[i] - zv[i + 1]);
             if (zdiff > FLOATEPS) {
                 incl2 = atan2(sqrt(pow(xv[i + 1] - xv[i], 2.0) +
@@ -101,18 +109,27 @@ int well_geometrics (
                 incl2 = 90.0;
             }
 
-            incl[i] = 0.5 * (incl1 + incl2);
+            x_vector_info2(xv[i], xv[i+1], yv[i], yv[i+1], &vlen, &arad,
+                           &adeg2, 0, debug);
 
+            tmp[0] = incl1; tmp[1] = incl2;
+            incl[i] = x_avg_angles(tmp, 2);
+
+            tmp[0] = adeg1; tmp[1] = adeg2;
+            az[i] = x_avg_angles(tmp, 2);
         }
     }
 
     incl[0] = incl[1];
     incl[np - 1] = incl[np - 2];
 
+    az[0] = az[1];
+    az[np - 1] = az[np - 2];
+
     if (debug > 2) {
         for (i = 0; i < np; i ++) {
-            xtg_speak(s, 3, "Inclination and MD for pos %d: %f   %f",
-                      i, incl[i], md[i]);
+            xtg_speak(s, 3, "Inclination, azi and MD for pos %d: %f  %f  %f",
+                      i, incl[i], az[i], md[i]);
         }
     }
 

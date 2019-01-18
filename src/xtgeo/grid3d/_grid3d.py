@@ -38,21 +38,3 @@ class Grid3D(object):
     def nlay(self):
         """ Returns the NLAY (NZ or Nlayers) number of cells"""
         return self._nlay
-
-    @property
-    def nx(self):
-        """ Returns the NX (Ncolumns) number of cells (deprecated; use ncol)"""
-        warnings.warn(DeprecationWarning("Deprecated; use ncol instead"))
-        return self._ncol
-
-    @property
-    def ny(self):
-        """ Returns the NY (Nrows) number of cells (deprecated; use nrow)"""
-        warnings.warn(DeprecationWarning("Deprecated; use nrow instead"))
-        return self._nrow
-
-    @property
-    def nz(self):
-        """ Returns the NZ (Nlayers) number of cells (deprecated; use nlay)"""
-        warnings.warn(DeprecationWarning("Deprecated; use nlay instead"))
-        return self._nlay

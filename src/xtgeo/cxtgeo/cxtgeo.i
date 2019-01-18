@@ -105,6 +105,13 @@ import_array();
 // INPLACE float64 / double no 1
 %apply (double* INPLACE_ARRAY1, long DIM1) {(double *swig_np_dbl_inplace_v1,
                                              long n_swig_np_dbl_inplace_v1)};
+// INPLACE float64 / double no 2
+%apply (double* INPLACE_ARRAY1, long DIM1) {(double *swig_np_dbl_inplace_v2,
+                                             long n_swig_np_dbl_inplace_v2)};
+// INPLACE float64 / double no 3
+%apply (double* INPLACE_ARRAY1, long DIM1) {(double *swig_np_dbl_inplace_v3,
+                                             long n_swig_np_dbl_inplace_v3)};
+
 // ARGOUT float64 / double no 1
 %apply (double* ARGOUT_ARRAY1, long DIM1) {(double *swig_np_dbl_aout_v1,
                                             long n_swig_np_dbl_aout_v1)};

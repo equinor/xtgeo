@@ -201,7 +201,7 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
     # collect above the original surface
     progress = XTGShowProgress(ndiv * 2, show=showprogress,
-                               leadtext='progress: ')
+                               leadtext='progress: ', skip=1)
     for idv in range(ndiv):
         progress.flush(idv)
         ztmp = this.copy()

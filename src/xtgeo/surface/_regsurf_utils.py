@@ -55,7 +55,7 @@ def swapaxes(self):
     self._ilines = ilines
     self._xlines = xlines
 
-    self.values = val  # reshaping and masking is done in in self.values
+    self.values = val  # reshaping and masking is done in self.values
 
 
 # =========================================================================

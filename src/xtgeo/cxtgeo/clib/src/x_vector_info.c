@@ -1,6 +1,6 @@
 /*
  * ############################################################################
- * Take 2 points in XY space and compute length and azimuth or normal amgle
+ * Take 2 points in XY space and compute length and azimuth or normal angle
  * Option 0, AZIMUTH is returned (clockwise, releative to North)
  * Option 1, ANGLE is returned (counter clockwise, relative to East)
  * JRIV

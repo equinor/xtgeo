@@ -57,17 +57,21 @@ class XTGShowProgress(object):
             theprogress.flush(i)
         theprogress.finished()
     """
-    def __init__(self, maxiter, info='', leadtext='', show=True):
+    def __init__(self, maxiter, info='', leadtext='', skip=1, show=True):
         self._max = maxiter
         self._info = info
         self._show = show
         self._leadtext = leadtext
+        self._skip = skip
+        self._next = 0
 
     def flush(self, step):
         if not self._show:
             return
         progress = int(float(step) / float(self._max) * 100.0)
-        print('{0}{1}% {2}'.format(self._leadtext, progress, self._info))
+        if progress >= self._next:
+            print('{0}{1}% {2}'.format(self._leadtext, progress, self._info))
+            self._next += self._skip
 
     def finished(self):
         if not self._show:

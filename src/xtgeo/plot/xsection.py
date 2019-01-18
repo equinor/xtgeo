@@ -391,17 +391,18 @@ class XSection(BasePlot):
         self._drawlegend(ax, bba, title='Perforations')
 
     def _plot_well_crossings(self, dfr, ax, wcross):
-        """Plot well crossing based on dataframe (wcrossings)
+        """Plot well crossing based on dataframe (wcross)
 
         The well crossing coordinates are identified for this well,
         and then it is looking for the closest coordinate. Given this
         coordinate, a position is chosen.
 
-        The pandas dataframe wcross shall have havbe the following columns:
+        The pandas dataframe wcross shall have the following columns:
 
         * Name of crossing wells named CWELL
-        * Coordinate X named XUTM
-        * Coordinate Y named YUTM
+        * Coordinate X named X_UTME
+        * Coordinate Y named Y_UTMN
+        * Coordinate Z named Z_TVDSS
 
         Args:
             dfr: Well dataframe
@@ -420,12 +421,12 @@ class XSection(BasePlot):
 
             minindx = dfrc.DLEN.idxmin()
 
-            ax.scatter(dfrc.R_HLEN[minindx], row.TVD,
+            ax.scatter(dfrc.R_HLEN[minindx], row.Z_TVDSS,
                        marker='o', color='black', s=70, zorder=100)
-            ax.scatter(dfrc.R_HLEN[minindx], row.TVD,
+            ax.scatter(dfrc.R_HLEN[minindx], row.Z_TVDSS,
                        marker='o', color='orange', s=38, zorder=102)
             ax.annotate(row.CWELL, size=6,
-                        xy=(dfrc.R_HLEN[minindx], row.TVD),
+                        xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
                         xytext=(40, 40),
                         textcoords='offset points',
                         arrowprops=dict(
