@@ -478,7 +478,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # rename in dataframe
         self._df.rename(index=str, columns={lname: newname}, inplace=True)
 
-
     def get_logtype(self, lname):
         """Returns the type of a give log (e.g. DISC or CONT)"""
         self._ensure_consistency()
@@ -625,14 +624,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         _cxtgeo.delete_doublearray(ptr_hlen)
 
     def geometrics(self):
-        """Compute some well geometrical arrays MD and INCL, as logs.
+        """Compute some well geometrical arrays MD, INCL, AZI, as logs.
 
         These are kind of quasi measurements hence the logs will named
-        with a Q in front as Q_MDEPTH and Q_INCL.
+        with a Q in front as Q_MDEPTH, Q_INCL, and Q_AZI.
 
         These logs will be added to the dataframe. If the mdlogname
         attribute does not exist in advance, it will be set to 'Q_MDEPTH'.
+
+        Returns:
+            False if geometrics cannot be computed
+
         """
+        if self._df.size < 3:
+            logger.warning('Cannot compute geometrics for %s. Too few  '
+                           'trajectory points', self.name)
+            return False
 
         # extract numpies from XYZ trajetory logs
         ptr_xv = self.get_carray('X_UTME')
@@ -644,9 +651,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         ptr_md = _cxtgeo.new_doublearray(nlen)
         ptr_incl = _cxtgeo.new_doublearray(nlen)
+        ptr_az = _cxtgeo.new_doublearray(nlen)
 
         ier = _cxtgeo.well_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md,
-                                      ptr_incl, 0, XTGDEBUG)
+                                      ptr_incl, ptr_az, 0, XTGDEBUG)
 
         if ier != 0:
             sys.exit(-9)
@@ -657,6 +665,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         dnumpy = self._convert_carr_double_np(ptr_incl)
         self._df['Q_INCL'] = pd.Series(dnumpy, index=self._df.index)
 
+        dnumpy = self._convert_carr_double_np(ptr_az)
+        self._df['Q_AZI'] = pd.Series(dnumpy, index=self._df.index)
+
         if not self._mdlogname:
             self._mdlogname = 'Q_MDEPTH'
 
@@ -666,15 +677,109 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         _cxtgeo.delete_doublearray(ptr_zv)
         _cxtgeo.delete_doublearray(ptr_md)
         _cxtgeo.delete_doublearray(ptr_incl)
+        _cxtgeo.delete_doublearray(ptr_az)
 
-    def resample(self, interval=4, keeplast=True):
-        """Resample by sampling every N'th element (coarsen only).
+        return True
+
+    def truncate_parallel_path(self, other, xtol=None, ytol=None,
+                               ztol=None, itol=None, atol=None):
+        """Truncate (remove) the part of the well trajectory that is
+        ~parallel with other.
+
+        Args:
+            other (Well): Other well to compare with
+            xtol (float): Tolerance in X (East) coord for measuring unit
+            ytol (float): Tolerance in Y (North) coord for measuring unit
+            ztol (float): Tolerance in Z (TVD) coord for measuring unit
+            itol (float): Tolerance in inclination (degrees)
+            atol (float): Tolerance in azimuth (degrees)
+        """
+
+        if xtol is None:
+            xtol = 0.0
+        if ytol is None:
+            ytol = 0.0
+        if ztol is None:
+            ztol = 0.0
+        if itol is None:
+            itol = 0.0
+        if atol is None:
+            atol = 0.0
+
+        if self._df.size < 3 or other._df.size < 3:
+            # xtg.warn('Too few points to truncate parallel path')
+            return
+
+        # extract numpies from XYZ trajectory logs
+        xv1 = self._df['X_UTME'].values
+        yv1 = self._df['Y_UTMN'].values
+        zv1 = self._df['Z_TVDSS'].values
+
+        xv2 = other._df['X_UTME'].values
+        yv2 = other._df['Y_UTMN'].values
+        zv2 = other._df['Z_TVDSS'].values
+
+        ier = _cxtgeo.well_trunc_parallel(xv1, yv1, zv1, xv2, yv2, zv2,
+                                          xtol, ytol, ztol, itol, atol, 0,
+                                          XTGDEBUG)
+
+        if ier != 0:
+            raise RuntimeError('Unexpected error')
+
+        self._df = self._df[self._df['X_UTME'] < Well.UNDEF_LIMIT]
+        self._df.reset_index(drop=True, inplace=True)
+
+    def may_overlap(self, other):
+        """Consider if well may overlap in X Y coordinates with other well,
+        True/False
+        """
+
+        if self._df.size < 2 or other._df.size < 2:
+            return False
+
+        # extract numpies from XYZ trajectory logs
+        xmin1 = np.nanmin(self.dataframe['X_UTME'].values)
+        xmax1 = np.nanmax(self.dataframe['X_UTME'].values)
+        ymin1 = np.nanmin(self.dataframe['Y_UTMN'].values)
+        ymax1 = np.nanmax(self.dataframe['Y_UTMN'].values)
+
+        xmin2 = np.nanmin(other.dataframe['X_UTME'].values)
+        xmax2 = np.nanmax(other.dataframe['X_UTME'].values)
+        ymin2 = np.nanmin(other.dataframe['Y_UTMN'].values)
+        ymax2 = np.nanmax(other.dataframe['Y_UTMN'].values)
+
+        if xmin1 > xmax2 or ymin1 > ymax2:
+            return False
+        if xmin2 > xmax1 or ymin2 > ymax1:
+            return False
+
+        return True
+
+    def limit_tvd(self, tvdmin, tvdmax):
+        """Truncate the part of the well that is outside tvdmin, tvdmax.
+
+        Range will be in tvdmin <= tvd <= tvdmax.
+
+        Args:
+            tvdmin (float): Minimum TVD
+            tvdmax (float): Maximum TVD
+        """
+        self._df = self._df[self._df['Z_TVDSS'] >= tvdmin]
+        self._df = self._df[self._df['Z_TVDSS'] <= tvdmax]
+
+        self._df.reset_index(drop=True, inplace=True)
+
+    def downsample(self, interval=4, keeplast=True):
+        """Downsample by sampling every N'th element (coarsen only).
 
         Args:
             interval (int): Sampling interval.
             keeplast (bool): If True, the last element from the original
                 dataframe is kept, to avoid that the well is shortened.
         """
+
+        if self._df.size < 2 * interval:
+            return
 
         dfr = self._df[::interval]
 
@@ -959,9 +1064,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         Args:
             zonevalue (int): The zone value to extract
-            resample (int): If given, resample every N'th sample to make
+            resample (int): If given, downsample every N'th sample to make
                 polylines smaller in terms of bit and bytes.
-                1 = No resampling.
+                1 = No downsampling.
             extralogs (list of str): List of extra log names to include
 
 
@@ -1017,7 +1122,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
             dxf = dxf.drop(cols, axis=1)
 
-            # now resample every N'th
+            # now (down) resample every N'th
             if resample > 1:
                 dxf = pd.concat([dxf.iloc[::resample, :], dxf.tail(1)])
 

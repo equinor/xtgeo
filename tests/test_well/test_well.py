@@ -29,12 +29,23 @@ testpath = xtg.testpath
 wfile = join(testpath, 'wells/reek/1/OP_1.w')
 wfiles = join(testpath, 'wells/reek/1/*')
 
+WELL1 = join(testpath, 'wells/battle/1/WELL09.rmswell')
+WELL2 = join(testpath, 'wells/battle/1/WELL36.rmswell')
+WELL3 = join(testpath, 'wells/battle/1/WELL10.rmswell')
+
 
 @pytest.fixture()
 def loadwell1():
     """Fixture for loading a well (pytest setup)"""
     logger.info('Load well 1')
     return Well(wfile)
+
+
+@pytest.fixture()
+def loadwell3():
+    """Fixture for loading a well (pytest setup)"""
+    logger.info('Load well 3')
+    return Well(WELL3)
 
 
 def test_import(loadwell1):
@@ -54,6 +65,19 @@ def test_import(loadwell1):
 
     # logger.info the numpy string of Poro...
     logger.info(type(mywell.dataframe['Poro'].values))
+
+
+def test_import_long_well(loadwell3):
+    """Import a longer well from file."""
+
+    mywell = loadwell3
+
+    logger.debug('True well name:', mywell.truewellname)
+
+    mywell.geometrics()
+    dfr = mywell.dataframe
+
+    tsetup.assert_almostequal(dfr['Q_AZI'][27], 91.856158, 0.0001)
 
 
 def test_change_a_lot_of_stuff(loadwell1):
@@ -236,6 +260,18 @@ def test_get_zone_interval():
 
     tsetup.assert_almostequal(line.iat[0, 0], 462698.33299, 0.001)
     tsetup.assert_almostequal(line.iat[-1, 2], 1643.1618, 0.001)
+
+
+def test_remove_parallel_parts():
+    """Remove the part of the well thst is parallel with some other"""
+
+    well1 = Well(WELL1)
+    well2 = Well(WELL2)
+
+
+    well1.truncate_parallel_path(well2)
+
+    print(well1.dataframe)
 
 
 # def test_get_zonation_holes():

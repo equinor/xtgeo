@@ -29,58 +29,81 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
+// OLD:
+/* double x_diff_angle ( */
+/* 		     double ang1, */
+/* 		     double ang2, */
+/* 		     int    option, */
+/* 		     int    debug */
+/* 		    ) */
+/* { */
+/*     /\* locals *\/ */
+/*     char     s[24]="x_diff_angle"; */
+/*     double   a1, a2, result; */
+
+/*     xtgverbose(debug); */
+/*     xtg_speak(s,3,"Entering routine %s",s); */
+
+/*     if (option==1) { */
+/* 	/\* angles and result shall be in degrees, not radians; convert *\/ */
+/* 	a1=ang1*PI/180; */
+/* 	a2=ang2*PI/180; */
+/*     } */
+/*     else{ */
+/* 	a1=ang1; */
+/* 	a2=ang2; */
+/*     } */
+
+/*     /\* */
+/*      * ------------------------------------------------------------------------ */
+/*      * Compute the result; case 1 angles are identical */
+/*      * ------------------------------------------------------------------------ */
+/*      *\/ */
+
+/*     result=a1-a2; */
+
+/*     if (result>PI) result=result-2*PI; */
+/*     if (result<PI*-1) result=result+2*PI; */
+
+
+/*     if (option==1){ */
+/* 	result=result*180/PI; */
+/* 	if (fabs(result)>180) { */
+/* 	    xtg_error(s,"Something went wrong in %s, contact JRIV",s); */
+/* 	} */
+/*     } */
+/*     else{ */
+/* 	if (fabs(result)>PI) { */
+/* 	    xtg_error(s,"Something went wrong in %s, contact JRIV",s); */
+/* 	} */
+/*     } */
+
+/*     xtg_speak(s,3,"Difference between A1= %7.3f and A2= %7.3f is: %7.3f", */
+/* 	      a1,a2,result); */
+
+
+/*     return(result); */
+/* } */
+
 
 double x_diff_angle (
-		     double ang1,
-		     double ang2,
-		     int    option,
-		     int    debug
-		    )
+                     double ang1,
+                     double ang2,
+                     int option,
+                     int debug
+                     )
+/* https://rosettacode.org/wiki/Angle_difference_between_two_bearings#C++ */
 {
-    /* locals */
-    char     s[24]="x_diff_angle";
-    double   a1, a2, result;
+    double full=2*M_PI, half=M_PI;
+    double diff;
 
-    xtgverbose(debug);
-    xtg_speak(s,3,"Entering routine %s",s);
+    if (option == 1)
+        full = 360.0;
+        half = 180.0;
 
-    if (option==1) {
-	/* angles and result shall be in degrees, not radians; convert */
-	a1=ang1*PI/180;
-	a2=ang2*PI/180;
-    }
-    else{
-	a1=ang1;
-	a2=ang2;
-    }
+    diff = fmod(ang2 - ang1, full);
+    if (diff < -half) diff += full;
+    if (diff > half) diff -= full;
 
-    /*
-     * ------------------------------------------------------------------------
-     * Compute the result; case 1 angles are identical
-     * ------------------------------------------------------------------------
-     */
-
-    result=a1-a2;
-
-    if (result>PI) result=result-2*PI;
-    if (result<PI*-1) result=result+2*PI;
-
-
-    if (option==1){
-	result=result*180/PI;
-	if (fabs(result)>180) {
-	    xtg_error(s,"Something went wrong in %s, contact JRIV",s);
-	}
-    }
-    else{
-	if (fabs(result)>PI) {
-	    xtg_error(s,"Something went wrong in %s, contact JRIV",s);
-	}
-    }
-
-    xtg_speak(s,3,"Difference between A1= %7.3f and A2= %7.3f is: %7.3f",
-	      a1,a2,result);
-
-
-    return(result);
+    return diff;
 }

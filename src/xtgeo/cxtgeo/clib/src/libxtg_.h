@@ -156,13 +156,6 @@ void x_regular_geom (
                      );
 
 
-double x_diff_angle (
-		     double ang1,
-		     double ang2,
-		     int    option,
-		     int    debug
-		     );
-
 
 int x_vector_linint (
                      double x1,
