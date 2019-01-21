@@ -29,8 +29,6 @@ if not xtg.testsetup():
 td = xtg.tmpdir
 testpath = xtg.testpath
 
-
-
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -89,6 +87,22 @@ def test_roffbin_import1():
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
+def test_roffbin_import1_roffapiv2():
+    """Test of import of ROFF binary using new API"""
+
+    logger.info('Name is {}'.format(__name__))
+
+    x = GridProperty()
+    logger.info("Import roff...")
+    x.from_file(testfile1, fformat="roff", name='PORO', _roffapiv=2)
+
+    logger.info(repr(x.values))
+    logger.info(x.values.dtype)
+    logger.info("Porosity is {}".format(x.values))
+    logger.info("Mean porosity is {}".format(x.values.mean()))
+    assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
+
+
 def test_roffbin_import1_new():
     """Test ROFF import, new code May 2018"""
     logger.info('Name is {}'.format(__name__))
@@ -124,7 +138,34 @@ def test_roffbin_import2():
     assert nrow == 100, 'NROW from shape (Emerald)'
 
     logger.info("Mean HCPV is {}".format(hc.values.mean()))
+    tsetup.assert_almostequal(hc.values.mean(), 1446.4611912446985, 0.0001)
 
+
+def test_roffbin_import2_roffapiv2():
+    """Import roffbin, with several props in one file. API version 2"""
+
+    logger.info('Name is {}'.format(__name__))
+    dz = GridProperty()
+    logger.info("Import roff...")
+    dz.from_file(testfile2, fformat="roff", name='Z_increment', _roffapiv=2)
+
+    logger.info(repr(dz.values))
+    logger.info(dz.values.dtype)
+    logger.info("Mean DZ is {}".format(dz.values.mean()))
+
+    hc = GridProperty()
+    logger.info("Import roff...")
+    hc.from_file(testfile2, fformat="roff", name='Oil_HCPV', _roffapiv=2)
+
+    logger.info(repr(hc.values))
+    logger.info(hc.values.dtype)
+    logger.info(hc.values3d.shape)
+    _ncol, nrow, _nlay = hc.values3d.shape
+
+    assert nrow == 100, 'NROW from shape (Emerald)'
+
+    logger.info("Mean HCPV is {}".format(hc.values.mean()))
+    tsetup.assert_almostequal(hc.values.mean(), 1446.4611912446985, 0.0001)
 
 # def test_eclinit_import():
 #     """Property import from Eclipse. Needs a grid object first. Eclipse GRID"""

@@ -599,7 +599,7 @@ class GridProperty(Grid3D):
     # =========================================================================
 
     def from_file(self, pfile, fformat='guess', name='unknown',
-                  grid=None, date=None):
+                  grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
 
@@ -665,7 +665,8 @@ class GridProperty(Grid3D):
         ier = 0
         if fformat == 'roff':
             logger.info('Importing ROFF...')
-            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid)
+            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid,
+                                               _roffapiv=_roffapiv)
 
         elif fformat.lower() == 'init':
             ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
@@ -706,7 +707,7 @@ class GridProperty(Grid3D):
             raise KeywordNotFoundError('Keyword {} not found when importing'
                                        .format(name))
         elif ier != 0:
-            raise RuntimeError('Somethin went wrong, code {}'.format(ier))
+            raise RuntimeError('Something went wrong, code {}'.format(ier))
 
         # if grid, then append this grid to the current grid object
         if grid:
@@ -858,7 +859,8 @@ class GridProperty(Grid3D):
         except IndexError as ier:
             xtg.warn('Error {}, return None'.format(ier))
             return None
-        else:
+        except:
+            xtg.warn('Unexpected error')
             raise
 
     def discrete_to_continuous(self):
