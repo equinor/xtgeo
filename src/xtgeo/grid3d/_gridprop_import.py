@@ -20,7 +20,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 _cxtgeo.xtg_verbose_file('NONE')
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 
 def import_eclbinary(self, pfile, name=None, etype=1, date=None,
@@ -29,7 +29,7 @@ def import_eclbinary(self, pfile, name=None, etype=1, date=None,
     if name == 'SOIL':
         # some recursive magic here
         logger.info('Making SOIL from SWAT and SGAS ...')
-        logger.info('PFILE is {}'.format(pfile))
+        logger.info('PFILE is %s', pfile)
 
         swat = xtgeo.grid3d.GridProperty()
         swat.from_file(pfile, name='SWAT', grid=grid,
@@ -50,7 +50,7 @@ def import_eclbinary(self, pfile, name=None, etype=1, date=None,
         del sgas
 
     else:
-        logger.info('Importing {}'.format(name))
+        logger.info('Importing %s', name)
         ios = _import_eclbinary(self, pfile, name=name, etype=etype,
                                 date=date, grid=grid)
 
@@ -71,20 +71,32 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
     elif kwtype == 'DOUB':
         dlen = kwlen
         kwntype = 3
+    else:
+        raise ValueError('Wrong type of kwtype {} for {}, must be INTE, REAL '
+                         'or DOUB'.format(kwtype, kwname))
 
     npint = np.zeros((ilen), dtype=np.int32)
     npflt = np.zeros((flen), dtype=np.float32)
     npdbl = np.zeros((dlen), dtype=np.float64)
 
     _cxtgeo.grd3d_read_eclrecord(fhandle, kwbyte, kwntype,
-                                 npint, npflt, npdbl, xtg_verbose_level)
+                                 npint, npflt, npdbl, XTGDEBUG)
 
+    npuse = None
     if kwtype == 'INTE':
-        return npint
-    elif kwtype == 'REAL':
-        return npflt
-    elif kwtype == 'DOUB':
-        return npdbl
+        npuse = npint
+        del npflt
+        del npdbl
+    if kwtype == 'REAL':
+        npuse = npflt
+        del npint
+        del npdbl
+    if kwtype == 'DOUB':
+        npuse = npdbl
+        del npint
+        del npflt
+
+    return npuse
 
 
 def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
@@ -92,15 +104,16 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
     """Import, private to this routine.
 
     Raises:
-        DateNotFoundError: If restart no neot contain requested date.
+        DateNotFoundError: If restart do not contain requested date.
         KeywordFoundNoDateError: If keyword is found but not at given date.
         KeywordNotFoundError: If Keyword is not found.
         RuntimeError: Mismatch in grid vs property, etc.
 
     """
-
-    logger.info('pfile is {}, name is {}, etype is {}, date is {}, '
-                'grid is {}'.format(pfile, name, etype, date, grid))
+    # This function requires simplification!
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
 
     fhandle, pclose = _get_fhandle(pfile)
 
@@ -110,7 +123,7 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
     datefound = True
     if etype == 5:
         datefound = False
-        logger.info('Look for date {}'.format(date))
+        logger.info('Look for date %s', date)
 
         # scan for date and find SEQNUM entry number
         dtlist = gprops.scan_dates(fhandle)
@@ -119,10 +132,9 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
         elif date == 9:
             date = dtlist[-1][1]
 
-        logger.info('Redefined date is {}'.format(date))
+        logger.info('Redefined date is %s', date)
 
         for ientry, dtentry in enumerate(dtlist):
-            logger.info('ientry {} dtentry {}'.format(ientry, dtentry))
             if str(dtentry[1]) == str(date):
                 datefound = True
                 nentry = ientry
@@ -153,11 +165,11 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
     self._nrow = nrow
     self._nlay = nlay
 
-    logger.info('Grid dimensions in INIT or RESTART file: {} {} {}'
-                .format(ncol, nrow, nlay))
+    logger.info('Grid dimensions in INIT or RESTART file: %s %s %s', ncol,
+                nrow, nlay)
 
-    logger.info('Grid dimensions from GRID file: {} {} {}'
-                .format(grid.ncol, grid.nrow, grid.nlay))
+    logger.info('Grid dimensions from GRID file: %s %s %s',
+                grid.ncol, grid.nrow, grid.nlay)
 
     if grid.ncol != ncol or grid.nrow != nrow or grid.nlay != nlay:
         msg = ('In {}: Errors in dimensions prop: {} {} {} vs grid: {} {} {} '
@@ -180,13 +192,13 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
 
     for kwitem in kwlist:
         kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
-        logger.debug('Keyword {} -  date: {} usedate: {}'
-                     .format(kwname, kwdate, usedate))
+        logger.debug('Keyword %s -  date: %s usedate: %s', kwname, kwdate,
+                     usedate)
         if name == kwname:
             kwfound = True
 
         if name == kwname and usedate == str(kwdate):
-            logger.info('Keyword {} ok at date {}'.format(name, usedate))
+            logger.info('Keyword %s ok at date %s', name, usedate)
             kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
             datefoundhere = True
             break
@@ -268,27 +280,28 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
     return 0
 
 
-def import_roff(self, pfile, name, grid=None, apiversion=2):
+def import_roff(self, pfile, name, grid=None, _roffapiv=1):
     """Import ROFF format"""
 
-    if apiversion <= 2:
-        status = _import_roff_v1(self, pfile, name, grid=grid)
+    if _roffapiv <= 1:
+        status = _import_roff_v1(self, pfile, name)
         if status != 0:
             raise SystemExit('Error from ROFF import')
-    elif apiversion == 3:
-        status = _import_roff_v2(self, pfile, name, grid=grid)
+    elif _roffapiv == 2:
+        status = _import_roff_v2(self, pfile, name)
 
     return status
 
 
-def _import_roff_v1(self, pfile, name, grid=None):
+def _import_roff_v1(self, pfile, name):
     """Import ROFF format, version 1"""
+    # pylint: disable=too-many-locals
 
     # there is a todo here to get it more robust for various cases,
     # e.g. that a ROFF file may contain both a grid an numerous
     # props
 
-    logger.info('Looking for {} in file {}'.format(name, pfile))
+    logger.info('Looking for %s in file %s', name, pfile)
 
     ptr_ncol = _cxtgeo.new_intpointer()
     ptr_nrow = _cxtgeo.new_intpointer()
@@ -300,26 +313,22 @@ def _import_roff_v1(self, pfile, name, grid=None):
     ptr_ddum = _cxtgeo.new_doublepointer()
 
     # read with mode 0, to scan for ncol, nrow, nlay and ndcodes, and if
-    # property is found
-    logger.debug('Entering C library... with level {}'.
-                 format(xtg_verbose_level))
+    # property is found...
+    ier, _codenames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
+                                                     0,
+                                                     ptr_type,
+                                                     ptr_ncol,
+                                                     ptr_nrow,
+                                                     ptr_nlay,
+                                                     ptr_ncodes,
+                                                     name,
+                                                     ptr_idum,
+                                                     ptr_ddum,
+                                                     ptr_idum,
+                                                     0,
+                                                     XTGDEBUG)
 
-    # note that ...'
-    ier, codenames = _cxtgeo.grd3d_imp_prop_roffbin(pfile,
-                                                    0,
-                                                    ptr_type,
-                                                    ptr_ncol,
-                                                    ptr_nrow,
-                                                    ptr_nlay,
-                                                    ptr_ncodes,
-                                                    name,
-                                                    ptr_idum,
-                                                    ptr_ddum,
-                                                    ptr_idum,
-                                                    0,
-                                                    xtg_verbose_level)
-
-    if (ier == -1):
+    if ier == -1:
         msg = 'Cannot find property name {}'.format(name)
         logger.critical(msg)
         return ier
@@ -333,15 +342,11 @@ def _import_roff_v1(self, pfile, name, grid=None):
 
     ntot = self._ncol * self._nrow * self._nlay
 
-    if (self._ncodes <= 1):
+    if self._ncodes <= 1:
         self._ncodes = 1
         self._codes = {0: 'undef'}
 
-    logger.debug('NTOT is ' + str(ntot))
-    logger.debug('Grid size is {} {} {}'
-                 .format(self._ncol, self._nrow, self._nlay))
-
-    logger.debug('Number of codes: {}'.format(self._ncodes))
+    logger.debug('Number of codes: %s', self._ncodes)
 
     # allocate
 
@@ -356,8 +361,6 @@ def _import_roff_v1(self, pfile, name, grid=None):
         ptr_ival_v = _cxtgeo.new_intarray(ntot)
         self._isdiscrete = True
         self._dtype = 'int32'
-
-    logger.debug('Is Property discrete? {}'.format(self._isdiscrete))
 
     # number of codes and names
     ptr_ccodes_v = _cxtgeo.new_intarray(self._ncodes)
@@ -378,7 +381,7 @@ def _import_roff_v1(self, pfile, name, grid=None):
                                                  ptr_pval_v,
                                                  ptr_ccodes_v,
                                                  0,
-                                                 xtg_verbose_level)
+                                                 XTGDEBUG)
 
     if self._isdiscrete:
         _gridprop_lowlevel.update_values_from_carray(self, ptr_ival_v,
@@ -389,38 +392,34 @@ def _import_roff_v1(self, pfile, name, grid=None):
                                                      np.float64,
                                                      delete=True)
 
-    logger.debug('CNAMES: {}'.format(cnames))
-
     # now make dictionary of codes
     if self._isdiscrete:
         cnames = cnames.replace(';', '')
         cname_list = cnames.split('|')
         cname_list.pop()  # some rubbish as last entry
         ccodes = []
-        for i in range(0, self._ncodes):
-            ccodes.append(_cxtgeo.intarray_getitem(ptr_ccodes_v, i))
+        for ino in range(0, self._ncodes):
+            ccodes.append(_cxtgeo.intarray_getitem(ptr_ccodes_v, ino))
 
-        logger.debug(cname_list)
         self._codes = dict(zip(ccodes, cname_list))
-        logger.debug('CODES (value: name): {}'.format(self._codes))
 
     self._name = name
 
     return 0
 
 
-def _import_roff_v2(self, pfile, name, grid=None):
+def _import_roff_v2(self, pfile, name):
     """Import ROFF format, version 2 (improved version)"""
 
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 
-    fhandle, pclose = _get_fhandle(pfile)
+    fhandle, _pclose = _get_fhandle(pfile)
 
     kwords = xtgeo.grid3d.GridProperties.scan_keywords(fhandle, fformat='roff')
 
-    for kw in kwords:
-        logger.info(kw)
+    for kwd in kwords:
+        logger.info(kwd)
 
     # byteswap:
     byteswap = _rkwquery(self, fhandle, kwords, 'filedata!byteswaptest', -1)
@@ -428,7 +427,7 @@ def _import_roff_v2(self, pfile, name, grid=None):
     ncol = _rkwquery(self, fhandle, kwords, 'dimensions!nX', byteswap)
     nrow = _rkwquery(self, fhandle, kwords, 'dimensions!nY', byteswap)
     nlay = _rkwquery(self, fhandle, kwords, 'dimensions!nZ', byteswap)
-    logger.info('Dimensions in ROFF file {} {} {}'.format(ncol, nrow, nlay))
+    logger.info('Dimensions in ROFF file %s %s %s', ncol, nrow, nlay)
 
     # get the actual parameter:
     vals = _rarraykwquery(self, fhandle, kwords, 'parameter!name!' + name,
@@ -460,14 +459,11 @@ def _rkwquery(self, fhandle, kws, name, swap):
     if dtype == 0:
         raise ValueError('Cannot find property <{}> in file'.format(name))
 
-    logger.info('NAME: {} DTYPE, RECLEN, BYTEPOS: {} {} {}'.
-                format(name, dtype, reclen, bytepos))
-
     if reclen != 1:
         raise SystemError('Stuff is rotten here...')
 
     _cxtgeo.grd3d_imp_roffbin_data(fhandle, swap, dtype, bytepos,
-                                   iresult, presult, xtg_verbose_level)
+                                   iresult, presult, XTGDEBUG)
 
     # -1 indicates that it is the swap flag which is looked for!
     if dtype == 1:
@@ -515,9 +511,6 @@ def _rarraykwquery(self, fhandle, kws, name, swap, ncol, nrow, nlay):
             bytepos = items[3]
             break
 
-    logger.info('NAME: {} DTYPE, RECLEN, BYTEPOS: {} {} {}'.
-                format(name, dtype, reclen, bytepos))
-
     if dtype == 0:
         raise ValueError('Cannot find property <{}> in file'.format(name))
 
@@ -528,7 +521,7 @@ def _rarraykwquery(self, fhandle, kws, name, swap, ncol, nrow, nlay):
     fnumpy = np.zeros(ncol * nrow * nlay, dtype=np.float32)
 
     _cxtgeo.grd3d_imp_roffbin_arr(fhandle, swap, ncol, nrow, nlay, bytepos,
-                                  dtype, fnumpy, inumpy, xtg_verbose_level)
+                                  dtype, fnumpy, inumpy, XTGDEBUG)
 
     # remember that for grid props, order=F in CXTGEO, while order=C
     # in xtgeo-python!
