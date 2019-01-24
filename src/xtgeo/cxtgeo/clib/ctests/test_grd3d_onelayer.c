@@ -106,6 +106,7 @@ int main () {
 			 p_zcorn2_v,
 			 p_actnum2_v,
 			 file,
+                         1,
 			 debug
 			 );
 

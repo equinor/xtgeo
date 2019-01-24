@@ -1337,16 +1337,29 @@ int grd3d_read_eclrecord (
                           int    debug
                           );
 
-int grd3d_write_eclrecord (FILE *fc,
-                           char *recname,
-                           int rectype,
-                           int *intv,
-                           long nint,
-                           float *floatv,
-                           long nflt,
-                           double *doublev,
-                           long ndbl,
-                           int debug);
+int grd3d_write_eclrecord(FILE *fc,
+                          char *recname,
+                          int rectype,
+                          int *intv,
+                          long nint,
+                          float *floatv,
+                          long nflt,
+                          double *doublev,
+                          long ndbl,
+                          int debug);
+
+int grd3d_write_eclinput(FILE *fc,
+                         char *recname,
+                         int rectype,
+                         int *intv,
+                         long nint,
+                         float *floatv,
+                         long nflt,
+                         double *doublev,
+                         long ndbl,
+                         char *fmt,
+                         int ncolumns,
+                         int debug);
 
 void grd3d_zcorn_convert (
                           int nx,
@@ -1397,28 +1410,29 @@ void grd3d_import_grdecl (
 			  int     debug
 			  );
 
-void grd3d_export_grdecl (
-			  int     nx,
-			  int     ny,
-			  int     nz,
-			  double  *p_coord_v,
-			  double  *p_zcorn_v,
-			  int     *p_actnum_v,
-			  char    *filename,
-			  int     debug
-			  );
+void grd3d_export_grdecl(
+                         int nx,
+                         int ny,
+                         int nz,
+                         double *p_coord_v,
+                         double *p_zcorn_v,
+                         int *p_actnum_v,
+                         char *filename,
+                         int mode,
+                         int debug
+                         );
 
-void grd3d_export_grdeclprop (
-			      int     nx,
-			      int     ny,
-			      int     nz,
-			      int     formatspec,
-			      char    *propname,
-			      double   *p_fprop_v,
-			      char    *filename,
-			      int     filemode,
-			      int     debug
-			      );
+void grd3d_export_grdeclprop(
+                             int nx,
+                             int ny,
+                             int nz,
+                             int formatspec,
+                             char *propname,
+                             double *p_fprop_v,
+                             char *filename,
+                             int filemode,
+                             int debug
+                             );
 
 int grd3d_copy(
                int ncol,

@@ -592,7 +592,7 @@ class Grid(Grid3D):
         self._filesrc = gfile
 
         # note .grid is currently disabled; need to work at C backend
-        fflist = set(['egrid', 'grdecl', 'roff', 'eclipserun',
+        fflist = set(['egrid', 'grdecl', 'bgrdecl', 'roff', 'eclipserun',
                       'guess'])
         if fformat not in fflist:
             raise ValueError('Invalid fformat: <{}>, options are {}'.
@@ -605,7 +605,7 @@ class Grid(Grid3D):
 
         if fformat == 'guess':
             logger.info('Format is <guess>')
-            fflist = ['egrid', 'grdecl', 'roff', 'eclipserun']
+            fflist = ['egrid', 'grdecl', 'bgrdecl', 'roff', 'eclipserun']
             if fext and fext in fflist:
                 fformat = fext
 
@@ -617,6 +617,8 @@ class Grid(Grid3D):
                 useext = '.EGRID'
             elif fformat == 'grdecl':
                 useext = '.grdecl'
+            elif fformat == 'bgrdecl':
+                useext = '.bgrdecl'
             elif fformat == 'roff':
                 useext = '.roff'
             elif fformat == 'guess':
@@ -646,6 +648,8 @@ class Grid(Grid3D):
                                             restartdates=restartdates)
         elif fformat == 'grdecl':
             _grid_import_ecl.import_ecl_grdecl(self, gfile)
+        elif fformat == 'bgrdecl':
+            _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
         else:
             raise SystemExit('Invalid file format')
 
@@ -675,8 +679,12 @@ class Grid(Grid3D):
                                         dimensions_only, info)
 
     def to_file(self, gfile, fformat='roff'):
-        """
-        Export grid geometry to file (roff binary supported).
+        """Export grid geometry to file.
+
+        Args:
+            gfile (str): Name of output file
+            fformat (str): File format; roff/roff_binary/roff_ascii/
+                grdecl/bgrdecl.
 
         Example::
 
@@ -688,7 +696,9 @@ class Grid(Grid3D):
         elif fformat == 'roff_ascii':
             _grid_export.export_roff(self, gfile, 1)
         elif fformat == 'grdecl':
-            _grid_export.export_grdecl(self, gfile)
+            _grid_export.export_grdecl(self, gfile, 1)
+        elif fformat == 'bgrdecl':
+            _grid_export.export_grdecl(self, gfile, 0)
         else:
             raise SystemExit('Invalid file format')
 

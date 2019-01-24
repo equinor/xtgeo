@@ -179,3 +179,62 @@ def import_ecl_grdecl(self, gfile):
 
     logger.info('Number of active cells: {}'.format(nact))
     self._subgrids = None
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import Eclipse binary GRDECL format
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def import_ecl_bgrdecl(self, gfile):
+    """Import binary files with GRDECL layout"""
+
+    fhandle, pclose = _get_fhandle(gfile)
+
+    gprops = xtgeo.grid3d.GridProperties()
+
+    # scan file for properties; these have similar binary format as e.g. EGRID
+    logger.info('Make kwlist by scanning')
+    kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=1000,
+                                  dataframe=False, dates=False)
+    bpos = {}
+    needkwlist = ['SPECGRID', 'COORD', 'ZCORN', 'ACTNUM']
+    optkwlist = ['MAPAXES']
+    for name in needkwlist + optkwlist:
+        bpos[name] = -1  # initially
+
+    for kwitem in kwlist:
+        kwname, kwtype, kwlen, kwbyte = kwitem
+        if kwname == 'SPECGRID':
+            # read grid geometry record:
+            specgrid = eclbin_record(fhandle, 'SPECGRID', kwlen, kwtype,
+                                     kwbyte)
+            ncol, nrow, nlay = specgrid[0:3].tolist()
+            logger.info('%s %s %s', ncol, nrow, nlay)
+        elif kwname in needkwlist:
+            bpos[kwname] = kwbyte
+        elif kwname == 'MAPAXES':  # not always present
+            bpos[kwname] = kwbyte
+
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
+
+    logger.info('Grid dimensions in binary GRDECL file: {} {} {}'
+                .format(ncol, nrow, nlay))
+
+    # allocate dimensions:
+    ntot = self._ncol * self._nrow * self._nlay
+    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+
+    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    nact = _cxtgeo.grd3d_imp_ecl_egrid(
+        fhandle, self._ncol, self._nrow, self._nlay, bpos['MAPAXES'],
+        bpos['COORD'], bpos['ZCORN'], bpos['ACTNUM'], self._p_coord_v,
+        self._p_zcorn_v, self._p_actnum_v, XTGDEBUG)
+
+    self._nactive = nact
+
+    _close_fhandle(fhandle, pclose)
