@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  *
- * Export to GRDECL foramt for grid geometry
+ * Export to GRDECL format for grid geometry
  *
  ******************************************************************************
  */
@@ -15,11 +15,8 @@
  * NAME:
  *    grd3d_export_grdecl.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
- *
  * DESCRIPTION:
- *    Export to Eclipse GRDECL format
+ *    Export to Eclipse GRDECL format, either ASCII text or Ecl binary style
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     NCOL, NROW, NLAY
@@ -55,12 +52,12 @@ void grd3d_export_grdecl (
     int i, j, k, jj;
     long ic = 0, ib = 0;
     FILE *fc;
-    char sbn[24] = "grd3d_export_grdecl";
     int idum;
     long ncc, ncoord, nzcorn, nact;
     float *farr, fdum;
     double ddum;
 
+    char sbn[24] = "grd3d_export_grdecl";
     xtgverbose(debug);
 
     xtg_speak(sbn, 2,"==== Entering grd3d_export_grdecl ====");
@@ -140,7 +137,7 @@ void grd3d_export_grdecl (
 
     xtg_speak(sbn, 2, "Exporting ZCORN...");
 
-    nzcorn = nx * ny * nz * 8;
+    nzcorn = nx * ny * nz * 8;  /* 8 Z values per cell for ZCORN */
     farr = calloc(nzcorn, sizeof(float));
     for (k = 1; k <= nz; k++) {
 	/* top */
@@ -204,6 +201,12 @@ void grd3d_export_grdecl (
         grd3d_write_eclinput(fc, "ACTNUM", 1, p_actnum_v, nact, &fdum, 0,
                              &ddum, 0, "  %1d", 12, debug);
     }
+
+    /*
+     *-------------------------------------------------------------------------
+     * Close file
+     *-------------------------------------------------------------------------
+     */
 
     fclose(fc);
 }
