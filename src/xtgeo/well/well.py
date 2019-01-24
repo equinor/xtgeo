@@ -61,7 +61,7 @@ def well_from_roxar(project, name, trajectory='Drilled trajectory',
                     logrun='log', lognames=None, inclmd=False,
                     inclsurvey=False):
 
-    """This makes an instance of a RegularSurface directly from roxar input.
+    """This makes an instance of a Well directly from Roxar RMS.
 
     For arguments, see :meth:`Well.from_roxar`.
 
@@ -69,7 +69,9 @@ def well_from_roxar(project, name, trajectory='Drilled trajectory',
 
         # inside RMS:
         import xtgeo
-        mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
+        mylogs = ['ZONELOG', 'GR', 'Facies']
+        mysurf = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
+                                       logrun='log', lognames=mylogs)
 
     """
 
@@ -429,7 +431,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             wname (str): Name of well, as shown in RMS.
             trajectory (str): Name of trajectory in RMS
             logrun (str): Name of logrun in RMS
-            lognames (list): List of lognames to import
+            lognames (list): List of lognames to import, or use 'all' for
+                all current logs for this well.
             inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
             inclsurvey (bool): Include M_AZI and M_INCL from RMS
         """

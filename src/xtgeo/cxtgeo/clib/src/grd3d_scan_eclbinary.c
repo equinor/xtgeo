@@ -1,19 +1,16 @@
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  * Scan Eclipse binary files for data
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int _scan_ecl_bin_record(FILE *fc, char *cname, int *cntype, long *rnlen,
-                         long npos1, long *npos2, int debug);
-
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  * NAME:
  *    grd3d_scan_eclbinary.c
@@ -53,7 +50,7 @@ int _scan_ecl_bin_record(FILE *fc, char *cname, int *cntype, long *rnlen,
  *                          3 = DOUBLE, 4 = CHAR (8), ...
  *    reclengths      o     An array with record lengths (no of elements)
  *    recstarts       o     An array with record starts (in bytes)
- *    maxkw           i     Max number of kwords (ie allocated length of arrays)
+ *    maxkw           i     Max number of kwords (allocated length of arrays)
  *    debug           i     Debug level
  *
  * RETURNS:
@@ -64,8 +61,118 @@ int _scan_ecl_bin_record(FILE *fc, char *cname, int *cntype, long *rnlen,
  *
  * LICENCE:
  *    Statoil property
- *******************************************************************************
+ ******************************************************************************
  */
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * local function(s)
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+int _scan_ecl_bin_record(FILE *fc, char *cname, int *cntype, long *rnlen,
+                         long npos1, long *npos2, int debug)
+{
+    char s[24] = "_scan_ecl_bin_record";
+    int swap = 0;
+    int ftn, ier, doread, rlen, nbyte, nval;
+    const int FAIL = -88;
+    char ctype[5] = "NNNN";
+    long ncum = 0;
+
+    xtgverbose(debug);
+
+    if (x_swap_check() == 1) swap = 1;
+
+    /* read the description line, as e.g.:
+       [<16>'CORNERS '          24 'REAL'<16>] where <16> are 4 byte int
+       determining record length, here (8+4+4 = 16 bytes)
+    */
+
+    ier = fread(&ftn, 4, 1, fc);
+
+    if (ier != 1) {
+        xtg_speak(s, 2, "IER != 1, unswapped FTN and IER is %d %d EOF=%d",
+                  ftn, ier, EOF);
+        if (ier == 0) return EOF;
+        if (ier == EOF) return EOF;
+        if (ier != EOF) return FAIL;
+    }
+
+    if (swap) SWAP_INT(ftn);
+    xtg_speak(s, 2, "Read FTN <%d>", ftn);
+
+
+    /* read keyword, arraylength and type */
+    if ((ier = fread(cname, 8, 1, fc)) != 1) return FAIL;
+    cname[8]='\0';
+    xtg_speak(s, 2, "Read <%s>", cname);
+
+    if ((ier = fread(&rlen, 4, 1, fc)) != 1) return FAIL;
+    if (swap) SWAP_INT(rlen);
+    xtg_speak(s, 2, "Read RLEN <%d>", rlen);
+
+    if ((ier = fread(ctype, 4, 1, fc)) != 1) return FAIL;
+    ctype[4]='\0';
+    xtg_speak(s, 2, "Read CTYPE <%s>", ctype);
+
+    *cntype = -1;
+    if (strcmp(ctype, "INTE") == 0) *cntype = 1;
+    if (strcmp(ctype, "REAL") == 0) *cntype = 2;
+    if (strcmp(ctype, "DOUB") == 0) *cntype = 3;
+    if (strcmp(ctype, "CHAR") == 0) *cntype = 4;
+    if (strcmp(ctype, "LOGI") == 0) *cntype = 5;
+    if (strcmp(ctype, "MESS") == 0) *cntype = 6;
+
+    if (*cntype == -1) return FAIL;
+
+    ier = fread(&ftn, 4, 1, fc);
+    if (swap) SWAP_INT(ftn);
+    xtg_speak(s, 2, "<%s>: Last FTN and IER is %d %d", cname, ftn, ier);
+
+    if (ier != 1) return FAIL;
+
+    /*
+     * Report the end byte position of this record. The challenge is that
+     * there is a unknown number of Fortran records to loop,
+     * as the need to be counted. So far:
+     */
+    ncum = npos1 + 4 + 8 + 4 + 4 + 4;  /* [ftn KEYWORD nlen TYPE ftn] */
+    xtg_speak(s, 2, "NCUM is %d", ncum);
+    xtg_speak(s, 2, "RLEN is %d", rlen);
+
+    doread = rlen;
+    nval = 0;
+    while(doread) {
+        if (fread(&ftn, 4, 1, fc) != 1) return FAIL;
+        if (swap) SWAP_INT(ftn);
+
+        if (debug>2) xtg_speak(s, 3, "Data block ftn is %d", ftn);
+        nbyte = 4;
+        if (*cntype > 2) nbyte = 8;
+        if (*cntype == 5) nbyte = 1;
+        if (*cntype == 6) nbyte = 4;  /* MESS, correct?? */
+
+        ncum = ncum + ftn + 4 + 4;
+
+        if (debug>2) xtg_speak(s, 3, "ncum is %d", ncum);
+
+        if (fseek(fc, ncum, SEEK_SET) != 0) return FAIL;
+
+        /* count used amount of the array length */
+        nval += ftn/nbyte ;
+
+        if (debug>2) xtg_speak(s, 3, "Data block nval is %d", nval);
+
+        if (nval >= rlen) doread = 0;
+    }
+
+    *npos2 = ncum;
+    *rnlen = rlen;
+
+    xtg_speak(s, 2, "NCUM and NPOS2 is %d, %d", ncum, *npos2);
+
+    return EXIT_SUCCESS;
+}
 
 
 long grd3d_scan_eclbinary (FILE *fc, char *keywords, int *rectypes,
@@ -126,110 +233,3 @@ long grd3d_scan_eclbinary (FILE *fc, char *keywords, int *rectypes,
 
     return (i);  /* return number of actual keywords */
 }
-
-/* ######################################################################### */
-/* LOCAL FUNCTIONS                                                           */
-/* ######################################################################### */
-/*
- * Scan each binary records. Read the header information, and skip the
- * remaining data arrays by using fseek.
- *
- */
-
- int _scan_ecl_bin_record(FILE *fc, char *cname, int *cntype, long *rnlen,
-                          long npos1, long *npos2, int debug)
- {
-     char s[24] = "_scan_ecl_bin_record";
-     int swap = 0;
-     int ftn, ier, doread, rlen, nbyte, nval;
-     const int FAIL = -88;
-     char ctype[5] = "NNNN";
-     long ncum = 0;
-
-     xtgverbose(debug);
-
-     if (x_swap_check() == 1) swap = 1;
-
-     /* read the description line, as e.g.:
-        [<16>'CORNERS '          24 'REAL'<16>] where <16> are 4 byte int
-        determining record length, here (8+4+4 = 16 bytes)
-     */
-
-     ier = fread(&ftn, 4, 1, fc);
-
-     if (ier != 1) {
-         xtg_speak(s, 2, "IER != 1, unswapped FTN and IER is %d %d EOF=%d",
-                   ftn, ier, EOF);
-         if (ier == 0) return EOF;
-         if (ier == EOF) return EOF;
-         if (ier != EOF) return FAIL;
-     }
-
-     if (swap) SWAP_INT(ftn);
-
-
-     /* read keyword, arraylength and type */
-     if ((ier = fread(cname, 8, 1, fc)) != 1) return FAIL;
-     cname[8]='\0';
-     xtg_speak(s, 2, "Read %s", cname);
-
-     if ((ier = fread(&rlen, 4, 1, fc)) != 1) return FAIL;
-     if (swap) SWAP_INT(rlen);
-
-     if ((ier = fread(ctype, 4, 1, fc)) != 1) return FAIL;
-     ctype[4]='\0';
-
-     *cntype = -1;
-     if (strcmp(ctype, "INTE") == 0) *cntype = 1;
-     if (strcmp(ctype, "REAL") == 0) *cntype = 2;
-     if (strcmp(ctype, "DOUB") == 0) *cntype = 3;
-     if (strcmp(ctype, "CHAR") == 0) *cntype = 4;
-     if (strcmp(ctype, "LOGI") == 0) *cntype = 5;
-     if (strcmp(ctype, "MESS") == 0) *cntype = 6;
-
-     if (*cntype == -1) return FAIL;
-
-     ier = fread(&ftn, 4, 1, fc);
-     if (swap) SWAP_INT(ftn);
-     xtg_speak(s, 2, "<%s>: Last FTN and IER is %d %d", cname, ftn, ier);
-
-     if (ier != 1) return FAIL;
-
-     /*
-      * Report the end byte position of this record. The challenge is that
-      * there is a unknown number of Fortran records to loop,
-      * as the need to be counted. So far:
-      */
-     ncum = npos1 + 4 + 8 + 4 + 4 + 4;  /* [ftn KEYWORD nlen TYPE ftn] */
-
-     doread = rlen;
-     nval = 0;
-     while(doread) {
-         if (fread(&ftn, 4, 1, fc) != 1) return FAIL;
-         if (swap) SWAP_INT(ftn);
-
-         if (debug>2) xtg_speak(s, 3, "Data block ftn is %d", ftn);
-         nbyte = 4;
-         if (*cntype > 2) nbyte = 8;
-         if (*cntype == 5) nbyte = 1;
-         if (*cntype == 6) nbyte = 4;  /* MESS, correct?? */
-
-         ncum = ncum + ftn + 4 + 4;
-
-         if (debug>2) xtg_speak(s, 3, "ncum is %d", ncum);
-
-         if (fseek(fc, ncum, SEEK_SET) != 0) return FAIL;
-
-         /* count used amount of the array length */
-         nval += ftn/nbyte ;
-
-         if (debug>2) xtg_speak(s, 3, "Data block nval is %d", nval);
-
-         if (nval >= rlen) doread = 0;
-     }
-
-     *npos2 = ncum;
-     *rnlen = rlen;
-
-     return EXIT_SUCCESS;
- }

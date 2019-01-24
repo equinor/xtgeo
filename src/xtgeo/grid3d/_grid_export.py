@@ -7,7 +7,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 xtg = XTGeoDialog()
 
 _cxtgeo.xtg_verbose_file('NONE')
-xtg_verbose_level = xtg.get_syslevel()
+XTGDEBUG = xtg.get_syslevel()
 
 logger = xtg.functionlogger(__name__)
 
@@ -35,19 +35,21 @@ def export_roff(self, gfile, option):
                                    nsubs, 0, gx[3], gx[5], gx[7],
                                    self._p_coord_v, self._p_zcorn_v,
                                    self._p_actnum_v, subgrd_v,
-                                   gfile, xtg_verbose_level)
+                                   gfile, XTGDEBUG)
 
     # skip parameters for now (cf Perl code)
 
     # end tag
-    _cxtgeo.grd3d_export_roff_end(option, gfile, xtg_verbose_level)
+    _cxtgeo.grd3d_export_roff_end(option, gfile, XTGDEBUG)
 
 
-def export_grdecl(self, gfile):
-    """Export grid to Eclipse GRDECL format (ascii)"""
+def export_grdecl(self, gfile, mode):
+    """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary
+    (mode=0).
+    """
 
-    logger.debug('Export to GRDECL...')
+    logger.debug('Export to ascii or binary GRDECL...')
 
     _cxtgeo.grd3d_export_grdecl(self._ncol, self._nrow, self._nlay,
                                 self._p_coord_v, self._p_zcorn_v,
-                                self._p_actnum_v, gfile, xtg_verbose_level)
+                                self._p_actnum_v, gfile, mode, XTGDEBUG)

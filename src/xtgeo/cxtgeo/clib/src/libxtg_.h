@@ -25,10 +25,6 @@ void x_mapaxes (
 		const double y2,
 		const double x3,
 		const double y3,
-		double xmin,
-		double xmax,
-		double ymin,
-		double ymax,
 		int   option,
 		int   debug
 		);

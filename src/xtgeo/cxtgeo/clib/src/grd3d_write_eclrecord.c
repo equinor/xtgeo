@@ -6,6 +6,7 @@
  ******************************************************************************
  */
 
+#include <limits.h>
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -15,14 +16,12 @@
  * NAME:
  *    grd3d_write_eclrecord.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
- *
  * DESCRIPTION:
  *    Feed data from XTGeo to the Eclipse binary Fortran format (big endian).
- *    The XTGeo DATA stream must be in FORTRAN order.
+ *    The XTGeo data arrays must be in FORTRAN order.
  *
- *    This is the format for GRID, EGRID, INIT and restart files.
+ *    This is the format for binary GRDECL, GRID, EGRID, INIT and restart
+ *    files (and also summary files). The layout is:
  *
  *    'INTEHEAD'         200 'INTE'
  *    -1617152669        9701           2       -2345       -2345       -2345
@@ -49,68 +48,89 @@
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    Cf. XTGeo license
  ******************************************************************************
  */
 
 
-int grd3d_write_eclrecord (FILE *fc,
-                           char *recname,
+int grd3d_write_eclrecord (FILE *fc, char *recname,
                            int rectype, int *intv, long nint, float *floatv,
                            long nflt, double *doublev, long ndbl,
                            int debug)
 {
 
-    char s[24] = "grd3d_write_eclrecord";
     int ib, swap = 0;
-    int myint, mylen;
+    int myint, myint2, mylen, nbyte;
     float myfloat;
-    char mychar[9]="", mytype[5]="";
-    long reclength = 0, nrecs;
+    double mydouble;
+    char mychar[8]="", mytype[4]="";
+    long nrecs = 0;
 
+    char sbn[24] = "grd3d_write_eclrecord";
     xtgverbose(debug);
 
-    strncpy(mychar, recname, 8);
+    sprintf(mychar, "%-8s", recname);
+    // u_eightletter(mychar);
 
     if (x_swap_check() == 1) swap = 1;
 
-    if (fc == NULL) xtg_error(s, "Cannot use file");
+    if (fc == NULL) xtg_error(sbn, "Cannot use file, file descriptor is NULL");
 
     if (rectype == 1) {
-        reclength = nint;
+        nrecs = nint;
+        nbyte = 4;
         strncpy(mytype, "INTE", 4);
     }
     if (rectype == 2) {
-        reclength = nflt;
+        nrecs = nflt;
+        nbyte = 4;
         strncpy(mytype, "REAL", 4);
     }
     if (rectype == 3) {
-        reclength = ndbl;
+        nrecs = ndbl;
+        nbyte = 8;
         strncpy(mytype, "DBLE", 4);
     }
-
-    nrecs = reclength;
 
  /* header: */
     myint = 16;
     if (swap) SWAP_INT(myint);
     fwrite(&myint, 4, 1, fc);
-    fwrite(mychar, 8, 1, fc);
-    mylen = reclength; if (swap) SWAP_INT(mylen);
-    fwrite(&mylen, 1, 4, fc);
+    fwrite(mychar, 1, 8, fc);
+    mylen = nrecs;
+    if (swap) SWAP_INT(mylen);
+    fwrite(&mylen, 4, 1, fc);
     fwrite(mytype, 1, 4, fc);
-    fwrite(&myint, 1, 4, fc);
+    fwrite(&myint, 4, 1, fc);
 
-    myint = nrecs;
-    if (swap) SWAP_INT(myint);
-
-    fwrite(&myint, 1, 4, fc);
-    for (ib = 0; ib < nrecs; ib++) {
-        myfloat = floatv[ib];
-        if (swap) SWAP_INT(myfloat);
-        fwrite(&myfloat, 1, 4, fc);
+    if (nrecs * nbyte > INT_MAX) {
+        xtg_error(sbn, "Record size > %d; not supported (yet)", INT_MAX);
     }
-    fwrite(&myint, 1, 4, fc);
+
+    myint2 = nrecs * nbyte;
+    xtg_speak(sbn, 2, "NRECS %d (total bytes %d) for <%s> of type <%s>",
+              nrecs, myint2, mychar, mytype);
+    if (swap) SWAP_INT(myint2);
+
+    fwrite(&myint2, 4, 1, fc);
+    for (ib = 0; ib < nrecs; ib++) {
+        if (rectype == 1) {
+            myint = intv[ib];
+            if (swap) SWAP_INT(myint);
+            fwrite(&myint, 4, 1, fc);
+        }
+        else if (rectype == 2) {
+            myfloat = floatv[ib];
+            if (swap) SWAP_FLOAT(myfloat);
+            fwrite(&myfloat, 4, 1, fc);
+        }
+        else if (rectype == 3) {
+            mydouble = doublev[ib];
+            if (swap) SWAP_DOUBLE(mydouble);
+            fwrite(&mydouble, 8, 1, fc);
+        }
+    }
+    fwrite(&myint2, 4, 1, fc);
 
     return EXIT_SUCCESS;
 }

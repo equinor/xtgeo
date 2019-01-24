@@ -106,7 +106,8 @@ void grd3d_import_grdecl (
 
 	if (strncmp(cname,"MAPAXES",7)==0) {
 	    xtg_speak(s,2,"MAPAXES found");
-	    ier = fscanf(fc,"%lf %lf %lf %lf %lf %lf", &x1, &y1, &x2, &y2, &x3, &y3);
+	    ier = fscanf(fc,"%lf %lf %lf %lf %lf %lf", &x1, &y1, &x2, &y2,
+                         &x3, &y3);
 	    if (ier != 6) {
 		xtg_error(s,"Error in reading MAPAXES");
 	    }
@@ -118,7 +119,8 @@ void grd3d_import_grdecl (
 	    nfcoord=1;
 
 	    for (i=0; i<num_cornerlines; i++) {
-		if (fscanf(fc,"%lf",&fvalue) != 1) xtg_error(s,"Error in reading COORD");
+		if (fscanf(fc,"%lf",&fvalue) != 1)
+                    xtg_error(s,"Error in reading COORD");
 		if (fvalue == 9999900.0000) {
 		    fvalue=-9999.99;
 		}
@@ -155,8 +157,6 @@ void grd3d_import_grdecl (
 	 * problems if GAPS in GRDECL format (like BRILLD test case)
 	 *
 	 */
-
-
 
 	if (strncmp(cname,"ZCORN",5)==0) {
 	    xtg_speak(s,2,"ZCORN found");
@@ -238,13 +238,10 @@ void grd3d_import_grdecl (
    /* convert from MAPAXES, if present */
     if (mamode==1) {
 	xtg_speak(s,2,"Conversion via MAPAXES...");
-	xtg_speak(s,3,"Using xmin xmax, ymin, ymax... %lf  %lf    %lf  %lf",
-		  xmin,xmax,ymin,ymax);
 	for (ib=0; ib<(nx+1)*(ny+1)*6; ib=ib+3) {
 	    cx = p_coord_v[ib];
 	    cy = p_coord_v[ib+1];
-	    x_mapaxes(mamode,&cx,&cy,x1,y1,x2,y2,x3,y3,xmin,xmax,
-		      ymin,ymax,0,debug);
+	    x_mapaxes(mamode, &cx, &cy, x1, y1, x2, y2, x3, y3, 0, debug);
 	    p_coord_v[ib]   = cx;
 	    p_coord_v[ib+1] = cy;
 	}
