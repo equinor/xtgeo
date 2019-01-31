@@ -665,6 +665,25 @@ void surf_sample_grd3d_lay (
 			   int    debug
 			   );
 
+int surf_setval_poly(
+                     double xori,
+                     double xinc,
+                     double yori,
+                     double yinc,
+                     int ncol,
+                     int nrow,
+                     int yflip,
+                     double rot_deg,
+                     double *swig_np_dbl_inplace_v1,   // *p_map_v
+                     long   n_swig_np_dbl_inplace_v1,  // nmap
+                     double *swig_np_dbl_in_v1,        // *p_xp_v,
+                     long   n_swig_np_dbl_in_v1,       // npolx
+                     double *swig_np_dbl_in_v2,        // *p_yp_v,
+                     long   n_swig_np_dbl_in_v2,       // npoly
+                     double value,
+                     int flag,
+                     int debug
+                     );
 /*
  *=============================================================================
  * POLYGON/POINTS

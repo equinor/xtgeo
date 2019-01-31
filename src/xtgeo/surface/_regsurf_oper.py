@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import numpy.ma as ma
 
+from xtgeo.xyz import Polygons
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -39,7 +40,7 @@ def operations_two(self, other, oper='add'):
         self.values = self.values * other.values
 
     if oper == 'div':
-        self.values = self.values * other.values
+        self.values = self.values / other.values
 
 
 def resample(self, other):
@@ -261,3 +262,81 @@ def get_fence(self, xyfence):
     xyfence = ma.mask_rows(xyfence)
 
     return xyfence
+
+
+def operation_polygons(self, poly, value, opname='add', inside=True):
+    """Operations restricted to polygons"""
+
+    if not isinstance(poly, Polygons):
+        raise ValueError('The poly input is not a Polygons instance')
+
+    # make a copy of the RegularSurface which is used a "filter" or "proxy"
+    # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
+
+    proxy = self.copy()
+    proxy.values *= 0.0
+    vals = proxy.get_values1d(fill_value=self.undef)
+
+    # value could be a scalar or another surface; if another surface,
+    # must ensure same topology
+
+    if isinstance(value, type(self)):
+        if not self.compare_topology(value):
+            raise ValueError('Input is RegularSurface, but not same map '
+                             'topology')
+        else:
+            value = value.values.copy()
+    else:
+        # turn scalar value into numpy array
+        value = self.values.copy() * 0 + value
+
+    idgroups = poly.dataframe.groupby(poly.pname)
+
+    for id_, grp in idgroups:
+        xcor = grp[poly.xname].values
+        ycor = grp[poly.yname].values
+
+        ier = _cxtgeo.surf_setval_poly(proxy.xori, proxy.xinc, proxy.yori,
+                                       proxy.yinc, proxy.ncol, proxy.nrow,
+                                       proxy.yflip, proxy.rotation, vals,
+                                       xcor, ycor, 1.0, 0, XTGDEBUG)
+        if ier == -9:
+            xtg.warn('Polygon is not closed')
+
+    proxy.set_values1d(vals)
+    proxyv = proxy.values.astype(np.int8)
+
+    proxytarget = 1
+    if not inside:
+        proxytarget = 0
+
+    if opname == 'add':
+        tmp = self.values.copy() + value
+    elif opname == 'sub':
+        tmp = self.values.copy() - value
+    elif opname == 'mul':
+        tmp = self.values.copy() * value
+    elif opname == 'div':
+        # Dividing a map of zero is always a hazzle; try to obtain 0.0
+        # as result in these cases
+        if 0.0 in value:
+            xtg.warn('Dividing a surface with value or surface with zero '
+                     'elements; may get unexpected results, try to '
+                     'achieve zero values as result!')
+        with np.errstate(divide='ignore', invalid='ignore'):
+            this = ma.filled(self.values, fill_value=1.0)
+            that = ma.filled(value, fill_value=1.0)
+            mask = ma.getmaskarray(self.values)
+            tmp = np.true_divide(this, that)
+            tmp[tmp == np.inf] = 0
+            tmp = np.nan_to_num(tmp)
+            tmp = ma.array(tmp, mask=mask)
+
+    elif opname == 'set':
+        tmp = value
+    elif opname == 'eli':
+        tmp = value * 0 + self.undef
+        tmp = ma.masked_greater(tmp, self.undef_limit)
+
+    self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
+    del tmp

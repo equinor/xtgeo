@@ -73,7 +73,7 @@ class Polygons(XYZ):
         self._zname = 'Z_TVDSS'
         self._pname = 'POLY_ID'
         self._mname = 'M_MDEPTH'
-        self._name = 'poly'  # the name of the polygons instance
+        self._name = 'poly'  # the name of the Polygons() instance
         super(Polygons, self).__init__(*args, **kwargs)
 
         self._ispolygons = True
