@@ -77,42 +77,56 @@ def export_ijxyz_ascii(self, mfile):
 def export_zmap_ascii(self, mfile):
     """Export to ZMAP ascii format (non-rotated)."""
 
-    if abs(self.rotation) > 1.0e-20:
-        self.unrotate()
+    # zmap can only deal with non-rotated formats; hence make a copy
+    # of the instance and derotate that prior to export, so that the
+    # original instance is unchanged
 
-    zmin = self.values.min()
-    zmax = self.values.max()
+    scopy = self.copy()
 
-    yinc = self._yinc * self._yflip
+    if abs(scopy.rotation) > 1.0e-20:
+        scopy.unrotate()
 
-    ier = _cxtgeo.surf_export_zmap_ascii(mfile, self._ncol, self._nrow,
-                                         self._xori, self._yori,
-                                         self._xinc, yinc,
-                                         self.get_zval(),
+    zmin = scopy.values.min()
+    zmax = scopy.values.max()
+
+    yinc = scopy._yinc * scopy._yflip
+
+    ier = _cxtgeo.surf_export_zmap_ascii(mfile, scopy._ncol, scopy._nrow,
+                                         scopy._xori, scopy._yori,
+                                         scopy._xinc, yinc,
+                                         scopy.get_zval(),
                                          zmin, zmax, 0,
                                          DEBUG)
     if ier != 0:
         raise RuntimeError('Export to ZMAP Ascii went wrong, '
                            'code is {}'.format(ier))
+    del scopy
 
 
 def export_storm_binary(self, mfile):
     """Export to Storm binary format (non-rotated)."""
 
-    if abs(self.rotation) > 1.0e-20:
-        self.unrotate()
+    # storm can only deal with non-rotated formats; hence make a copy
+    # of the instance and derotate that prior to export, so that the
+    # original instance is unchanged
 
-    zmin = self.values.min()
-    zmax = self.values.max()
+    scopy = self.copy()
 
-    yinc = self._yinc * self._yflip
+    if abs(scopy.rotation) > 1.0e-20:
+        scopy.unrotate()
 
-    ier = _cxtgeo.surf_export_storm_bin(mfile, self._ncol, self._nrow,
-                                        self._xori, self._yori,
-                                        self._xinc, yinc,
-                                        self.get_zval(),
+    zmin = scopy.values.min()
+    zmax = scopy.values.max()
+
+    yinc = scopy._yinc * scopy._yflip
+
+    ier = _cxtgeo.surf_export_storm_bin(mfile, scopy._ncol, scopy._nrow,
+                                        scopy._xori, scopy._yori,
+                                        scopy._xinc, yinc,
+                                        scopy.get_zval(),
                                         zmin, zmax, 0,
                                         DEBUG)
     if ier != 0:
         raise RuntimeError('Export to Storm binary went wrong, '
                            'code is {}'.format(ier))
+    del scopy

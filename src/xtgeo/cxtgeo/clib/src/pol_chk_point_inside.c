@@ -13,7 +13,7 @@
  * 1 if on edge
  * 0 outside
  * -1 undetermined
- * JCR 17-FEB-2002
+ * -9 Polygon is not closed
  *=============================================================================
  * Notice:
  * Based on polys_chk_point_inside, but limited to one polygon. This shall
@@ -35,11 +35,9 @@ int pol_chk_point_inside(
 {
     double cnull, cen, pih, topi, eps;
     double x1 ,x2, y1, y2, vin, vinsum, an, an1, an2, xp, pp;
-    double cosv, dtmp;
-    int    i;
-    char  s[24]="pol_chk_point_inside";
-
-
+    double cosv, dtmp, xdiff, ydiff;
+    int i;
+    char s[24] = "pol_chk_point_inside";
 
     xtgverbose(debug);
     /*
@@ -60,11 +58,18 @@ int pol_chk_point_inside(
      * Check
      *-------------------------------------------------------------------------
      */
-    if ((p_xp_v[0] != p_xp_v[np-1]) || (p_yp_v[0] != p_yp_v[np-1])) {
-	xtg_speak(s,1,"Point p_xp_v[0] vs p_xp_v[np-1]   p_yp_v[0] "
-		  "vs p_yp_v[np-1] %9.2f  %9.2f    %9.2f  %9.2f",
-		  p_xp_v[0],p_xp_v[np-1],p_yp_v[0],p_yp_v[np-1]);
-	xtg_error(s,"Not a closed polygon. Stop!");
+
+    /* check first vs last point, and force close if small */
+    xdiff = fabs(p_xp_v[0] - p_xp_v[np - 1]);
+    ydiff = fabs(p_yp_v[0] - p_yp_v[np - 1]);
+
+    if (xdiff < FLOATEPS && ydiff < FLOATEPS) {
+        p_xp_v[np - 1] = p_xp_v[0];
+        p_yp_v[np - 1] = p_yp_v[0];
+    }
+    else{
+	xtg_warn(s, 2, "Not a closed polygon, return -9");
+        return -9;
     }
 
     /*

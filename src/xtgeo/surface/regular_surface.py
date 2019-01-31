@@ -1338,6 +1338,73 @@ class RegularSurface(object):
             raise ValueError('Invalid operation name')
 
     # =========================================================================
+    # Operations restricted to inside/outside polygons
+    # =========================================================================
+
+    def operation_polygons(self, poly, value, opname='add', inside=True):
+        """A generic function for doing map operations restricted to inside
+        or outside polygon(s).
+
+        Args:
+            poly (Polygons): A XTGeo Polygons instance
+            value(float or RegularSurface): Value to add, subtract etc
+            opname (str): Name of operation... 'add', 'sub', etc
+            inside (bool): If True do operation inside polygons; else outside.
+        """
+
+        _regsurf_oper.operation_polygons(self, poly, value, opname=opname,
+                                         inside=inside)
+
+    # shortforms
+    def add_inside(self, poly, value):
+        """Add a value (scalar or other map) inside polygons"""
+        self.operation_polygons(poly, value, opname='add', inside=True)
+
+    def add_outside(self, poly, value):
+        """Add a value (scalar or other map) outside polygons"""
+        self.operation_polygons(poly, value, opname='add', inside=False)
+
+    def sub_inside(self, poly, value):
+        """Subtract a value (scalar or other map) inside polygons"""
+        self.operation_polygons(poly, value, opname='sub', inside=True)
+
+    def sub_outside(self, poly, value):
+        """Subtract a value (scalar or other map) outside polygons"""
+        self.operation_polygons(poly, value, opname='sub', inside=False)
+
+    def mul_inside(self, poly, value):
+        """Multiply a value (scalar or other map) inside polygons"""
+        self.operation_polygons(poly, value, opname='mul', inside=True)
+
+    def mul_outside(self, poly, value):
+        """Multiply a value (scalar or other map) outside polygons"""
+        self.operation_polygons(poly, value, opname='mul', inside=False)
+
+    def div_inside(self, poly, value):
+        """Divide a value (scalar or other map) inside polygons"""
+        self.operation_polygons(poly, value, opname='div', inside=True)
+
+    def div_outside(self, poly, value):
+        """Divide a value (scalar or other map) outside polygons"""
+        self.operation_polygons(poly, value, opname='div', inside=False)
+
+    def set_inside(self, poly, value):
+        """Set a value (scalar or other map) inside polygons"""
+        self.operation_polygons(poly, value, opname='set', inside=True)
+
+    def set_outside(self, poly, value):
+        """Set a value (scalar or other map) outside polygons"""
+        self.operation_polygons(poly, value, opname='set', inside=False)
+
+    def eli_inside(self, poly):
+        """Eliminate current map values inside polygons"""
+        self.operation_polygons(poly, 0, opname='eli', inside=True)
+
+    def eli_outside(self, poly):
+        """Eliminate current map values outside polygons"""
+        self.operation_polygons(poly, 0, opname='eli', inside=True)
+
+    # =========================================================================
     # Operation with secondary map
     # =========================================================================
 
@@ -1355,6 +1422,11 @@ class RegularSurface(object):
         """Multiply another map and current map"""
 
         _regsurf_oper.operations_two(self, other, oper='mul')
+
+    def divide(self, other):
+        """Multiply another map and current map"""
+
+        _regsurf_oper.operations_two(self, other, oper='div')
 
     # =========================================================================
     # Interacion with points
