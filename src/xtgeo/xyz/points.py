@@ -8,9 +8,58 @@ from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
+
 import xtgeo
 from xtgeo.xyz import XYZ
-# import xtgeo.xyz._xyz_roxapi as _xyz_roxapi
+from xtgeo.xyz import _xyz_oper
+
+xtg = xtgeo.common.XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
+
+# =============================================================================
+# METHODS as wrappers to class init + import
+
+def points_from_file(wfile, fformat='xyz'):
+    """Make an instance of a Points object directly from file import.
+
+    Args:
+        mfile (str): Name of file
+        fformat (str): See :meth:`Points.from_file`
+
+    Example::
+
+        import xtgeo
+        mypoints = xtgeo.points_from_file('somefile.xyz')
+    """
+
+    obj = Points()
+
+    obj.from_file(wfile, fformat=fformat)
+
+    return obj
+
+
+def points_from_roxar(project, name, category, stype='horizons',
+                      realisation=0):
+    """This makes an instance of a Points directly from roxar input.
+
+    For arguments, see :meth:`Points.from_roxar`.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mypoints = xtgeo.points_from_roxar(project, 'TopEtive', 'DP_seismic')
+
+    """
+
+    obj = Points()
+
+    obj.from_roxar(project, name, category, stype=stype,
+                   realisation=realisation)
+
+    return obj
 
 
 class Points(XYZ):
@@ -34,7 +83,7 @@ class Points(XYZ):
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
       something else! Use zname attribute
     * M_MDEPTH: measured depth, (if present)
-    * Q_*: Quasi geometrical measures, such as MD, AZIMUTH, INCL
+    * Q_*: Quasi geometrical measures, such as Q_MDEPTH, Q_AZI, Q_INCL
 
     """
 
@@ -54,6 +103,21 @@ class Points(XYZ):
         if len(args) == 1:
             if isinstance(args[0], xtgeo.surface.RegularSurface):
                 self.from_surface(args[0])
+
+    def __eq__(self, value):
+        return self.dataframe[self.zname] == value
+
+    def __gt__(self, value):
+        return self.dataframe[self.zname] > value
+
+    def __ge__(self, value):
+        return self.dataframe[self.zname] >= value
+
+    def __lt__(self, value):
+        return self.dataframe[self.zname] < value
+
+    def __le__(self, value):
+        return self.dataframe[self.zname] <= value
 
     @property
     def nrow(self):
@@ -128,6 +192,8 @@ class Points(XYZ):
         """
         super(Points, self).from_file(pfile, fformat=fformat)
 
+        self._df.dropna(inplace=True)
+
     def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn='M_MDEPTH'):
         """Export XYZ (Points/Polygons) to file.
@@ -159,6 +225,68 @@ class Points(XYZ):
                                     attributes=attributes, filter=filter,
                                     wcolumn=wcolumn, hcolumn=hcolumn,
                                     mdcolumn=mdcolumn)
+
+    def from_roxar(self, project, name, category, stype='horizons',
+                   realisation=0):
+        """Load a points item from a Roxar RMS project.
+
+        The import from the RMS project can be done either within the project
+        or outside the project.
+
+        Note that a shortform to::
+
+          import xtgeo
+          mypoly = xtgeo.xyz.Points()
+          mypoints.from_roxar(project, 'TopAare', 'DepthPoints')
+
+        is::
+
+          import xtgeo
+          mypoints = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPoints')
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones only: for example 'DL_depth'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            realisation (int): Realisation number, default is 0
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        """
+        super(Points, self).from_roxar(project, name, category, stype=stype,
+                                       realisation=realisation)
+
+    def to_roxar(self, project, name, category, stype='horizons',
+                 realisation=0):
+        """Export/save/store a points item to a Roxar RMS project.
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones only: for example 'DL_depth'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            realisation (int): Realisation number, default is 0
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        """
+
+        super(Points, self).to_roxar(project, name, category, stype=stype,
+                                     realisation=realisation)
 
     def from_wells(self, wells, tops=True, incl_limit=None, top_prefix='Top',
                    zonelist=None, use_undef=False):
@@ -288,49 +416,98 @@ class Points(XYZ):
         self._df = pd.DataFrame(ddatas)
         self.zname = zname
 
-    def from_roxar(self, project, name, category, stype='horizons',
-                   realisation=0):
-        """Load a points set from a Roxar RMS project.
+    # =========================================================================
+    # Operations restricted to inside/outside polygons
+    # =========================================================================
 
-        Syntax is::
-
-          import xtgeo
-          mysurf = xtgeo.surface_from_roxar(project, 'TopAare', 'DepthSurface')
-
-        Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
+    def operation_polygons(self, poly, value, opname='add', inside=True,
+                           where=True):
+        """A generic function for doing points operations restricted to inside
+        or outside polygon(s).
 
         Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic `project` word if
-                within RMS.
-            name (str): Name of surface/map
-            category (str): For horizons/zones only: for example 'DP_extracted'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
-            realisation (int): Realisation number, default is 0
+            poly (Polygons): A XTGeo Polygons instance
+            value(float): Value to add, subtract etc
+            opname (str): Name of operation... 'add', 'sub', etc
+            inside (bool): If True do operation inside polygons; else outside.
+            where (bool): A scalar or array to set an additonal condition
 
-        Returns:
-            Object instance updated
+        Examples::
 
-        Raises:
-            ValueError: Various types of invalid inputs.
+            # assume a point set where you want eliminate number inside
+            # polygons, given that the points Z value inside this polygon is
+            # larger than 1700:
+            poi = Points(POINTSET2)
+            pol = Polygons(POLSET2)
 
-        Example:
-            Here the from_roxar method is used to initiate the object
-            directly::
+            poi.operation_polygons(pol, 0, opname='eli', where=poi > 1700,
+                                   inside=True)
 
-            >>> mypoints = Points()
-            >>> mypoints.from_roxar(project, 'TopAare', 'DepthPoints')
+
 
         """
-        pass
 
-        # stype = stype.lower()
-        # valid_stypes = ['horizons', 'zones']
+        _xyz_oper.operation_polygons(self, poly, value, opname=opname,
+                                     inside=inside, where=where)
 
-        # if stype not in valid_stypes:
-        #     raise ValueError('Invalid stype, only {} stypes is supported.'
-        #                      .format(valid_stypes))
+    # shortforms
+    def add_inside(self, poly, value, where=True):
+        """Add a value (scalar) inside polygons (see `operation_polygons`)"""
+        self.operation_polygons(poly, value, opname='add', inside=True,
+                                where=where)
 
-        # _xyz_roxapi.import_points_roxapi(
-        #     self, project, name, category, stype, realisation)
+    def add_outside(self, poly, value, where=True):
+        """Add a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='add', inside=False,
+                                where=where)
+
+    def sub_inside(self, poly, value, where=True):
+        """Subtract a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='sub', inside=True,
+                                where=where)
+
+    def sub_outside(self, poly, value, where=True):
+        """Subtract a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='sub', inside=False,
+                                where=where)
+
+    def mul_inside(self, poly, value, where=True):
+        """Multiply a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='mul', inside=True,
+                                where=where)
+
+    def mul_outside(self, poly, value, where=True):
+        """Multiply a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='mul', inside=False,
+                                where=where)
+
+    def div_inside(self, poly, value, where=True):
+        """Divide a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='div', inside=True,
+                                where=where)
+
+    def div_outside(self, poly, value, where=True):
+        """Divide a value (scalar) outside polygons (value 0.0 will give
+        result 0)"""
+        self.operation_polygons(poly, value, opname='div', inside=False,
+                                where=where)
+
+    def set_inside(self, poly, value, where=True):
+        """Set a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='set', inside=True,
+                                where=where)
+
+    def set_outside(self, poly, value, where=True):
+        """Set a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='set', inside=False,
+                                where=where)
+
+    def eli_inside(self, poly, where=True):
+        """Eliminate current map values inside polygons"""
+        self.operation_polygons(poly, 0, opname='eli', inside=True,
+                                where=where)
+
+    def eli_outside(self, poly, where=True):
+        """Eliminate current map values outside polygons"""
+        self.operation_polygons(poly, 0, opname='eli', inside=False,
+                                where=where)

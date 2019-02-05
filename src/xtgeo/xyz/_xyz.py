@@ -9,6 +9,7 @@ import os.path
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import _xyz_io
+from xtgeo.xyz import _xyz_roxapi
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -144,6 +145,91 @@ class XYZ(object):
             logger.warning('Nothing to export!')
 
         return ncount
+
+    @abc.abstractmethod
+    def from_roxar(self, project, name, category, stype='horizons',
+                   realisation=0):
+        """Load a points/polygons item from a Roxar RMS project.
+
+        The import from the RMS project can be done either within the project
+        or outside the project.
+
+        Note that a shortform (for polygons) to::
+
+          import xtgeo
+          mypoly = xtgeo.xyz.Polygons()
+          mypoly.from_roxar(project, 'TopAare', 'DepthPolys')
+
+        is::
+
+          import xtgeo
+          mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+
+        Note also that horizon/zone/faults name and category must exists
+        in advance, otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones only: for example 'DL_depth'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            realisation (int): Realisation number, default is 0
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        """
+        stype = stype.lower()
+        valid_stypes = ['horizons', 'zones', 'faults']
+
+        if stype not in valid_stypes:
+            raise ValueError('Invalid stype, only {} stypes is supported.'
+                             .format(valid_stypes))
+
+        _xyz_roxapi.import_xyz_roxapi(
+            self, project, name, category, stype, realisation)
+
+    @abc.abstractmethod
+    def to_roxar(self, project, name, category, stype='horizons',
+                 realisation=0):
+        """Export (store) a points/polygons item to a Roxar RMS project.
+
+        The export to the RMS project can be done either within the project
+        or outside the project.
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones/faults: for example 'DL_depth'
+            stype (str): RMS folder type, 'horizons' (default), 'zones'
+                or 'faults'
+            realisation (int): Realisation number, default is 0
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        """
+
+        stype = stype.lower()
+        valid_stypes = ['horizons', 'zones', 'faults']
+
+        if stype not in valid_stypes:
+            raise ValueError('Invalid stype, only {} stypes is supported.'
+                             .format(valid_stypes))
+
+        _xyz_roxapi.export_xyz_roxapi(
+            self, project, name, category, stype, realisation)
 
     # =========================================================================
     # Get and Set properties

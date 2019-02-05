@@ -1402,7 +1402,7 @@ class RegularSurface(object):
 
     def eli_outside(self, poly):
         """Eliminate current map values outside polygons"""
-        self.operation_polygons(poly, 0, opname='eli', inside=True)
+        self.operation_polygons(poly, 0, opname='eli', inside=False)
 
     # =========================================================================
     # Operation with secondary map

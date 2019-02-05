@@ -23,7 +23,8 @@ def import_xyz(self, pfile, zname='Z_TVDSS'):
     self.zname = zname
 
     self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=0,
-                           header=None, names=[self._xname, self._yname, zname],
+                           header=None, names=[self._xname, self._yname,
+                                               zname],
                            dtype=np.float64, na_values=999.00)
 
     logger.debug(self._df.head())

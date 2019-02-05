@@ -22,6 +22,7 @@ TESTPATH = '../xtgeo-testdata-equinor/data/rmsprojects'
 
 PROJ = dict()
 PROJ['1.1'] = os.path.join(TESTPATH, 'reek.rms10.1.1')
+PROJ['1.3'] = os.path.join(TESTPATH, 'reek.rms11.1.0')
 
 
 @tsetup.equinor

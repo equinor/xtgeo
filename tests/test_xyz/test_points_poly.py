@@ -24,6 +24,13 @@ skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
 # Do tests
 # =========================================================================
 
+PFILE1A = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
+PFILE1B = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
+PFILE1C = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
+PFILE = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
+POLSET2 = '../xtgeo-testdata/polygons/reek/1/polset2.pol'
+POINTSET2 = '../xtgeo-testdata/points/reek/1/pointset2.poi'
+
 
 def test_xyz():
     """Import XYZ module from file, should not be possible as it is abc."""
@@ -44,9 +51,7 @@ def test_xyz():
 def test_import():
     """Import XYZ points from file."""
 
-    pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
-
-    mypoints = Points(pfile)  # should guess based on extesion
+    mypoints = Points(PFILE)  # should guess based on extesion
 
     logger.debug(mypoints.dataframe)
 
@@ -58,17 +63,13 @@ def test_import():
 def test_import_zmap_and_xyz():
     """Import XYZ polygons on ZMAP and XYZ format from file"""
 
-    pfile1a = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
-    pfile1b = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
-    pfile1c = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
-
     mypol2a = Polygons()
     mypol2b = Polygons()
     mypol2c = Polygons()
 
-    mypol2a.from_file(pfile1a, fformat='zmap')
-    mypol2b.from_file(pfile1b)
-    mypol2c.from_file(pfile1c)
+    mypol2a.from_file(PFILE1A, fformat='zmap')
+    mypol2b.from_file(PFILE1B)
+    mypol2c.from_file(PFILE1C)
 
     assert mypol2a.nrow == mypol2b.nrow
     assert mypol2b.nrow == mypol2c.nrow
@@ -88,11 +89,9 @@ def test_import_zmap_and_xyz():
 def test_import_export_polygons():
     """Import XYZ polygons from file. Modify, and export."""
 
-    pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
-
     mypoly = Polygons()
 
-    mypoly.from_file(pfile, fformat='xyz')
+    mypoly.from_file(PFILE, fformat='xyz')
 
     z0 = mypoly.dataframe['Z_TVDSS'].values[0]
 
@@ -112,16 +111,28 @@ def test_import_export_polygons():
 
 
 def test_polygon_boundary():
-    """Import XYZ polygons from fileadn test boundary function."""
-
-    pfile = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
+    """Import XYZ polygons from file and test boundary function."""
 
     mypoly = Polygons()
 
-    mypoly.from_file(pfile, fformat='xyz')
+    mypoly.from_file(PFILE, fformat='xyz')
 
     boundary = mypoly.get_boundary()
 
     tsetup.assert_almostequal(boundary[0], 460595.6036, 0.0001)
     tsetup.assert_almostequal(boundary[4], 2025.952637, 0.0001)
     tsetup.assert_almostequal(boundary[5], 2266.996338, 0.0001)
+
+
+def test_points_in_polygon():
+    """Import XYZ points and do operations if inside or outside"""
+
+    poi = Points(POINTSET2)
+    pol = Polygons(POLSET2)
+    print(poi.dataframe)
+
+    poi.operation_polygons(pol, 0, opname='eli',
+                           where=True)
+
+    print(poi.dataframe)
+    poi.to_file('TMP/poi_test.poi')
