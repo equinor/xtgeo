@@ -424,8 +424,9 @@ def test_values_in_polygon():
     grid = Grid(testfile5)
     xprop.from_file(testfile1, fformat="roff", name='PORO', grid=grid)
     poly = Polygons(polyfile)
+    xprop.geometry = grid
 
-    xprop.operation_polygons(grid, poly, 99, inside=True)
+    xprop.operation_polygons(poly, 99, inside=True)
     tsetup.assert_almostequal(xprop.values.mean(), 25.1788, 0.01)
 
     # geom = grid.get_geometrics(return_dict=True)

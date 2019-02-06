@@ -172,8 +172,10 @@ class XYZ(object):
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
-            category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            category (str): For horizons/zones/faults: for example 'DL_depth'
+                or use a folder notation on clipboard.
+
+            stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
             realisation (int): Realisation number, default is 0
 
         Returns:
@@ -184,7 +186,7 @@ class XYZ(object):
 
         """
         stype = stype.lower()
-        valid_stypes = ['horizons', 'zones', 'faults']
+        valid_stypes = ['horizons', 'zones', 'faults', 'clipboard']
 
         if stype not in valid_stypes:
             raise ValueError('Invalid stype, only {} stypes is supported.'
@@ -210,7 +212,7 @@ class XYZ(object):
             name (str): Name of polygons item
             category (str): For horizons/zones/faults: for example 'DL_depth'
             stype (str): RMS folder type, 'horizons' (default), 'zones'
-                or 'faults'
+                or 'faults' or 'clipboard'
             realisation (int): Realisation number, default is 0
 
         Returns:
@@ -222,7 +224,7 @@ class XYZ(object):
         """
 
         stype = stype.lower()
-        valid_stypes = ['horizons', 'zones', 'faults']
+        valid_stypes = ['horizons', 'zones', 'faults', 'clipboard']
 
         if stype not in valid_stypes:
             raise ValueError('Invalid stype, only {} stypes is supported.'

@@ -213,8 +213,12 @@ class Polygons(XYZ):
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
-            category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            category (str): For horizons/zones/faults: for example 'DL_depth',
+                for clipboard use folders such as 'somefolder/somesubfolder' or
+                just empty '' if no folder. Alternatively, use '|' instead
+                of '/'.
+            stype (str): RMS folder type, 'horizons' (default) or 'zones',
+                'faults', 'clipboard'.
             realisation (int): Realisation number, default is 0
 
         Returns:

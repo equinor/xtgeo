@@ -26,6 +26,7 @@ import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
+import xtgeo
 from xtgeo.common.exceptions import DateNotFoundError, KeywordFoundNoDateError
 from xtgeo.common.exceptions import KeywordNotFoundError
 
@@ -158,6 +159,10 @@ class GridProperty(Grid3D):
 
         self._isdiscrete = discrete
 
+        # this is a link to the Grid instance, _only if needed_. It may
+        # potentially make trouble for garbage collection
+        self._geometry = None
+
         testmask = False
         if values is None:
             values = ma.zeros((ncol, nrow, nlay))
@@ -236,6 +241,23 @@ class GridProperty(Grid3D):
     def nactive(self):
         """int: Returns the number of active cells (read only)."""
         return len(self.actnum_indices)
+
+    @property
+    def geometry(self):
+        """Returns or set the linked geometry, i.e. the Grid instance)
+        """
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geom):
+
+        if geom is None:
+            self._geometry = None
+        elif (isinstance(geom, xtgeo.grid3d.Grid) and
+              geom.dimensions == self.dimensions):
+            self._geometry = geom
+        else:
+            raise ValueError('Could not set geometry; wrong type or size')
 
     @property
     def actnum_indices(self):
@@ -560,6 +582,7 @@ class GridProperty(Grid3D):
         xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
                              values=self._values.copy(), name=newname)
 
+        xprop.geometry = self._geometry
         xprop.codes = copy.deepcopy(self._codes)
         xprop.isdiscrete = self._isdiscrete
         xprop.date = self._date
@@ -900,9 +923,12 @@ class GridProperty(Grid3D):
     # Operations restricted to inside/outside polygons
     # =========================================================================
 
-    def operation_polygons(self, grid, poly, value, opname='add', inside=True):
+    def operation_polygons(self, poly, value, opname='add', inside=True):
         """A generic function for doing 3D grid property operations
         restricted to inside or outside polygon(s).
+
+        This method requires that the property geometry is known
+        (prop.geometry is set to a grid instance)
 
         Args:
             grid (Grid): The grid geometry instance
@@ -912,5 +938,49 @@ class GridProperty(Grid3D):
             inside (bool): If True do operation inside polygons; else outside.
         """
 
-        _gridprop_op1.operation_polygons(self, grid, poly, value,
+        if self.geometry is None:
+            raise ValueError('The geometry attribute is not set')
+
+        _gridprop_op1.operation_polygons(self, poly, value,
                                          opname=opname, inside=inside)
+
+    # shortforms
+    def add_inside(self, poly, value):
+        """Add a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='add', inside=True)
+
+    def add_outside(self, poly, value):
+        """Add a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='add', inside=False)
+
+    def sub_inside(self, poly, value):
+        """Subtract a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='sub', inside=True)
+
+    def sub_outside(self, poly, value):
+        """Subtract a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='sub', inside=False)
+
+    def mul_inside(self, poly, value):
+        """Multiply a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='mul', inside=True)
+
+    def mul_outside(self, poly, value):
+        """Multiply a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='mul', inside=False)
+
+    def div_inside(self, poly, value):
+        """Divide a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='div', inside=True)
+
+    def div_outside(self, poly, value):
+        """Divide a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='div', inside=False)
+
+    def set_inside(self, poly, value):
+        """Set a value (scalar) inside polygons"""
+        self.operation_polygons(poly, value, opname='set', inside=True)
+
+    def set_outside(self, poly, value):
+        """Set a value (scalar) outside polygons"""
+        self.operation_polygons(poly, value, opname='set', inside=False)
