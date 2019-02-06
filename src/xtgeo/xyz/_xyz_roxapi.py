@@ -1,6 +1,7 @@
 # coding: utf-8
-"""Roxar API functions for XTGeo XYZ"""
+"""Roxar API functions for XTGeo Points/Polygons"""
 import numpy as np
+import pandas as pd
 
 from xtgeo.common import XTGeoDialog
 
@@ -8,122 +9,149 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
+# pylint: disable=protected-access
 
 
-def import_points_roxapi(self, project, name, category,
-                         stype, realisation):
-    """Import a Horizon surface via ROXAR API spec."""
-    import roxar
+def import_xyz_roxapi(self, project, name, category,
+                      stype, realisation):
+    """Import a Points or Polygons item via ROXAR API spec."""
+    import roxar  # pylint: disable=import-error
 
     if project is not None and isinstance(project, str):
         projectname = project
         with roxar.Project.open_import(projectname) as proj:
-            _roxapi_import_points(self, proj, name, category, stype,
-                                  realisation)
+            _roxapi_import_xyz(self, proj, name, category, stype,
+                               realisation)
     else:
-        _roxapi_import_points(self, project, name, category, stype,
-                              realisation)
+        _roxapi_import_xyz(self, project, name, category, stype,
+                           realisation)
 
 
-def _roxapi_import_points(self, proj, name, category, stype, realisation):
+def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
 
     self._name = name
 
+    if not _check_category_etc(self, proj, name, category, stype, realisation):
+        raise RuntimeError('Something is very wrong...')
+
+    try:
+        if stype == 'horizons':
+            roxxyz = proj.horizons[name][category].get_values(realisation)
+        elif stype == 'zones':
+            roxxyz = proj.zones[name][category].get_values(realisation)
+        elif stype == 'faults':
+            roxxyz = proj.faults[name][category].get_values(realisation)
+        else:
+            roxxyz = None
+            raise ValueError('Unsupported stype: {}'.format(stype))
+
+        _roxapi_xyz_to_xtgeo(self, roxxyz)
+    except KeyError as kwe:
+        logger.error(kwe)
+
+
+def _roxapi_xyz_to_xtgeo(self, roxxyz):
+    """Tranforming some XYZ from ROXAPI to XTGeo object."""
+
+    # In ROXAPI, polygons is a list of numpies, while
+    # points is just a numpy array. Hence a polyg* may be identified
+    # by being a list after import
+
+    logger.info('Points/polygons/polylines from roxapi to xtgeo...')
+    cnames = ['X_UTME', 'Y_UTMN', 'Z_TVDSS']
+
+    if isinstance(roxxyz, list):
+        # polylines/-gons
+        dfs = []
+        for id, poly in enumerate(roxxyz):
+            dataset = pd.DataFrame.from_records(poly, columns=cnames)
+            dataset['POLY_ID'] = id
+            dfs.append(dataset)
+
+        dfr = pd.concat(dfs)
+        self._ispolygons = True
+
+    elif isinstance(roxxyz, np.ndarray):
+        # points
+        dfr = pd.DataFrame.from_records(roxxyz, columns=cnames)
+        self._ispolygons = False
+
+    else:
+        raise RuntimeError('Unknown error in getting data from Roxar')
+
+    print('XXXX', 'ding10')
+
+    self._df = dfr
+
+
+def export_xyz_roxapi(self, project, name, category, stype,
+                      realisation):
+    """Export (store) a XYZ item to RMS via ROXAR API spec."""
+    import roxar  # pylint: disable=import-error
+
+    if project is not None and isinstance(project, str):
+        projectname = project
+        with roxar.Project.open_import(projectname) as proj:
+            _roxapi_export_xyz(self, proj, name, category, stype,
+                               realisation)
+    else:
+        _roxapi_export_xyz(self, project, name, category, stype,
+                           realisation)
+
+
+def _roxapi_export_xyz(self, proj, name, category, stype, realisation):
+
+    if not _check_category_etc:
+        raise RuntimeError('Cannot access correct category or name in RMS')
+
+    if stype == 'horizons':
+        roxxyz = proj.horizons[name][category]
+    elif stype == 'zones':
+        roxxyz = proj.zones[name][category]
+    elif stype == 'faults':
+        roxxyz = proj.faults[name][category]
+    else:
+        roxxyz = None
+        raise ValueError('Unsupported stype: {}'.format(stype))
+
+    if self._ispolygons:
+        arrxyz = []
+        polys = self.dataframe.groupby(self.pname)
+        for id_, grp in polys:
+            arr = np.stack([grp[self.xname], grp[self.yname],
+                            grp[self.zname]], axis=1)
+            arrxyz.append(arr)
+    else:
+        xyz = self.dataframe
+        arrxyz = np.stack([xyz[self.xname], xyz[self.yname],
+                           xyz[self.zname]], axis=1)
+    try:
+        roxxyz.set_values(arrxyz)
+    except KeyError as kwe:
+        logger.error(kwe)
+
+
+def _check_category_etc(self, proj, name, category, stype, realisation):
+    """Helper to check if valid placeholder' whithin RMS."""
     if stype == 'horizons':
         if name not in proj.horizons:
             raise ValueError('Name {} is not within Horizons'.format(name))
         if category not in proj.horizons.representations:
             raise ValueError('Category {} is not within Horizons categories'
                              .format(category))
-        try:
-            rox = proj.horizons[name][category].get_grid(realisation)
-            _roxapi_points_to_xtgeo(self, rox)
-        except KeyError as ke:
-            logger.error(ke)
     elif stype == 'zones':
         if name not in proj.zones:
             raise ValueError('Name {} is not within Zones'.format(name))
         if category not in proj.zones.representations:
             raise ValueError('Category {} is not within Zones categories'
                              .format(category))
-        try:
-            rox = proj.zones[name][category].get_grid(realisation)
-            _roxapi_horizon_to_xtgeo(self, rox)
-        except KeyError as ke:
-            logger.error(ke)
+    elif stype == 'faults':
+        if name not in proj.zones:
+            raise ValueError('Name {} is not within Faults'.format(name))
+        if category not in proj.zones.representations:
+            raise ValueError('Category {} is not within Faults categories'
+                             .format(category))
     else:
         raise ValueError('Invalid stype')
 
-
-def _roxapi_points_to_xtgeo(self, rox):
-    """Tranforming points from ROXAPI to XTGeo object."""
-    # local function
-    logger.info('Surface from roxapi to xtgeo...')
-    self._xori, self._yori = rox.origin
-    self._ncol, self._nrow = rox.dimensions
-    self._xinc, self._yinc = rox.increment
-    self._rotation = rox.rotation
-
-    # since XTGeo is F order, while RMS is C order...
-    self._values = np.asanyarray(rox.get_values(), order='C')
-
-# def export_horizon_roxapi(self, project, name, category, stype,
-#                           realisation):
-#     """Export (store) a Horizon surface to RMS via ROXAR API spec."""
-#     import roxar
-
-#     if project is not None and isinstance(project, str):
-#         projectname = project
-#         with roxar.Project.open_import(projectname) as proj:
-#             _roxapi_export_surface(self, proj, name, category, stype,
-#                                    realisation)
-#     else:
-#         _roxapi_export_surface(self, project, name, category, stype,
-#                                realisation)
-
-
-# def _roxapi_export_surface(self, proj, name, category, stype, realisation):
-#     if stype == 'horizons':
-#         if name not in proj.horizons:
-#             raise ValueError('Name {} is not within Horizons'.format(name))
-#         if category not in proj.horizons.representations:
-#             raise ValueError('Category {} is not within Horizons categories'
-#                              .format(category))
-#         try:
-#             roxroot = proj.horizons[name][category]
-#             rox = _xtgeo_to_roxapi_grid(self)
-#             rox.set_values(np.asanyarray(self.values, order='C'))
-#             roxroot.set_grid(rox)
-#         except KeyError as ke:
-#             logger.error(ke)
-
-#     elif stype == 'zones':
-#         if name not in proj.zones:
-#             raise ValueError('Name {} is not within Zones'.format(name))
-#         if category not in proj.zones.representations:
-#             raise ValueError('Category {} is not within Zones categories'
-#                              .format(category))
-#         try:
-#             roxroot = proj.zones[name][category]
-#             rox = _xtgeo_to_roxapi_grid(self)
-#             rox.set_values(np.asanyarray(self.values, order='C'))
-#             roxroot.set_grid(rox)
-#         except KeyError as ke:
-#             logger.error(ke)
-
-#     else:
-#         raise ValueError('Invalid stype')
-
-
-# def _xtgeo_to_roxapi_grid(self):
-#     # Create a 2D grid
-#     import roxar
-#     grid2d = roxar.RegularGrid2D.create(
-#         x_origin=self.xori,
-#         y_origin=self.yori,
-#         i_inc=self.xinc, j_inc=self.yinc,
-#         ni=self.ncol, nj=self.nrow,
-#         rotation=self.rotation)
-
-#     return grid2d
+    return True

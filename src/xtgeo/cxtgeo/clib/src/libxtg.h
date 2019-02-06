@@ -1645,6 +1645,23 @@ int grd3d_inact_outside_pol(
                             int    debug
                             );
 
+int grd3d_setval_poly(
+                      double *swig_np_dbl_in_v1,    // polygons X
+                      long   n_swig_np_dbl_in_v1,   // N
+                      double *swig_np_dbl_in_v2,    // polygons Y
+                      long   n_swig_np_dbl_in_v2,   // N
+                      int nx,
+                      int ny,
+                      int nz,
+                      double *p_coord_v,
+                      double *p_zcorn_v,
+                      int *p_actnum_v,
+                      double *p_val_v,
+                      double value,
+                      int option,
+                      int debug
+                      );
+
 
 int grd3d_geometrics(
 		     int     nx,

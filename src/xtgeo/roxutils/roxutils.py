@@ -36,10 +36,13 @@ def create_horizon_category(project, category, stype='horizons',
         htype (str): Horizon type: surface/lines/points
     """
 
+    categories = []
     if isinstance(category, str):
-        category = list(category)
+        categories.append(category)
+    else:
+        categories.extend(category)
 
-    for cat in category:
+    for category in categories:
         geom = roxar.GeometryType.surface
         if htype.lower() == 'lines':
             geom = roxar.GeometryType.lines
@@ -90,21 +93,30 @@ def delete_horizon_category(project, category, stype='horizons'):
             Default is horizons
     """
 
+    categories = []
     if isinstance(category, str):
-        category = list(category)
+        categories.append(category)
+    else:
+        categories.extend(category)
 
-    for cat in category:
+    for category in categories:
         if stype.lower() == 'horizons':
             try:
-                del project.horizons.representations[cat]
+                del project.horizons.representations[category]
             except KeyError as kerr:
-                if kerr == cat:
+                if kerr == category:
                     print('Cannot delete {}, does not exist'. format(kerr))
         elif stype.lower() == 'zones':
             try:
-                del project.horizons.representations[cat]
+                del project.horizons.representations[category]
             except KeyError as kerr:
-                if kerr == cat:
+                if kerr == category:
                     print('Cannot delete {}, does not exist'. format(kerr))
         else:
             raise ValueError('Wrong stype applied')
+
+
+def delete_zones_category(project, category):
+    """Delete on or more horizons or zones categories. See previous"""
+
+    delete_horizon_category(project, category, stype='zones')

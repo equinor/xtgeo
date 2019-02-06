@@ -40,6 +40,7 @@ from xtgeo.plot import xtmap
 from xtgeo.plot import grid3d_slice
 from xtgeo.xyz import points
 from xtgeo.xyz import polygons
+from xtgeo.roxutils import roxutils
 
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.constants import UNDEF_LIMIT
@@ -74,3 +75,7 @@ from xtgeo.well.well import well_from_file
 from xtgeo.well.well import well_from_roxar
 
 from xtgeo.xyz.polygons import polygons_from_file
+from xtgeo.xyz.polygons import polygons_from_roxar
+
+from xtgeo.xyz.points import points_from_file
+from xtgeo.xyz.points import points_from_roxar
