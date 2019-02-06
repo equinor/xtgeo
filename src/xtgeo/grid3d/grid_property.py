@@ -895,3 +895,22 @@ class GridProperty(Grid3D):
             self._roxar_dtype = np.uint16
         else:
             logger.info('No need to convert, already discrete')
+
+    # =========================================================================
+    # Operations restricted to inside/outside polygons
+    # =========================================================================
+
+    def operation_polygons(self, grid, poly, value, opname='add', inside=True):
+        """A generic function for doing 3D grid property operations
+        restricted to inside or outside polygon(s).
+
+        Args:
+            grid (Grid): The grid geometry instance
+            poly (Polygons): A XTGeo Polygons instance
+            value (float): Value to add, subtract etc
+            opname (str): Name of operation... 'add', 'sub', etc
+            inside (bool): If True do operation inside polygons; else outside.
+        """
+
+        _gridprop_op1.operation_polygons(self, grid, poly, value,
+                                         opname=opname, inside=inside)

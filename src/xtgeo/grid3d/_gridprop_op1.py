@@ -2,16 +2,23 @@
 
 from __future__ import print_function, absolute_import
 
-import logging
 import numpy as np
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import _gridprop_lowlevel as gl
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = xtg.functionlogger(__name__)
+
+XTGDEBUG = xtg.get_syslevel()
+if XTGDEBUG < 0:
+    XTGDEBUG = 0
+
+_cxtgeo.xtg_verbose_file('NONE')
+# pylint: disable=protected-access
 
 
 def get_xy_value_lists(self, **kwargs):
@@ -72,3 +79,71 @@ def get_xy_value_lists(self, **kwargs):
                      for lay in valuelist]
 
     return coordlist, valuelist
+
+
+def operation_polygons(self, grid, poly, value, opname='add', inside=True):
+    """A generic function for doing operations restricted to inside
+    or outside polygon(s).
+    """
+
+    if not isinstance(poly, xtgeo.xyz.Polygons):
+        raise ValueError('The poly input is not a Polygons instance')
+
+    # make a copy of the RegularSurface which is used a "filter" or "proxy"
+    # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
+
+    proxy = self.copy()
+    proxy.values *= 0.0
+    cvals = gl.update_carray(proxy)
+
+    print(proxy.values.mean())
+
+    idgroups = poly.dataframe.groupby(poly.pname)
+
+    for id_, grp in idgroups:
+        xcor = grp[poly.xname].values
+        ycor = grp[poly.yname].values
+
+        ier = _cxtgeo.grd3d_setval_poly(xcor, ycor, self.ncol, self.nrow,
+                                        self.nlay, grid._p_coord_v,
+                                        grid._p_zcorn_v, grid._p_actnum_v,
+                                        cvals, 1, 0, XTGDEBUG)
+        if ier == -9:
+            xtg.warn('Polygon is not closed')
+
+    gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
+
+    print(proxy.values.mean())
+    proxyv = proxy.values.astype(np.int8)
+
+    proxytarget = 1
+    if not inside:
+        proxytarget = 0
+
+    if opname == 'add':
+        tmp = self.values.copy() + value
+    elif opname == 'sub':
+        tmp = self.values.copy() - value
+    elif opname == 'mul':
+        tmp = self.values.copy() * value
+    elif opname == 'div':
+        # Dividing a map of zero is always a hazzle; try to obtain 0.0
+        # as result in these cases
+        if 0.0 in value:
+            xtg.warn('Dividing a surface with value or surface with zero '
+                     'elements; may get unexpected results, try to '
+                     'achieve zero values as result!')
+        with np.errstate(divide='ignore', invalid='ignore'):
+            this = np.ma.filled(self.values, fill_value=1.0)
+            that = np.ma.filled(value, fill_value=1.0)
+            mask = np.ma.getmaskarray(self.values)
+            tmp = np.true_divide(this, that)
+            tmp[tmp == np.inf] = 0
+            tmp = np.nan_to_num(tmp)
+            tmp = np.ma.array(tmp, mask=mask)
+
+    elif opname == 'set':
+        tmp = value
+
+    self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
+    del tmp

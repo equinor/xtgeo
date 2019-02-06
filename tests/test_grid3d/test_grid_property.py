@@ -9,6 +9,8 @@ import pytest
 import numpy as np
 import numpy.ma as npma
 
+import xtgeo
+from xtgeo.xyz import Polygons
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
@@ -45,6 +47,7 @@ testfile8a = '../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff'
 testfile9 = testfile1
 testfile10 = '../xtgeo-testdata/3dgrids/bri/b_grid.roff'
 testfile11 = '../xtgeo-testdata/3dgrids/bri/b_poro.roff'
+polyfile = '../xtgeo-testdata/polygons/reek/1/polset2.pol'
 
 
 def test_create():
@@ -410,6 +413,29 @@ def test_get_values_by_ijk():
 
     tsetup.assert_almostequal(res1[1], 0.08403542, 0.0001)
     assert np.isnan(res1[0])
+
+
+def test_values_in_polygon():
+    """Test replace values in polygons"""
+    logger.info('Name is {}'.format(__name__))
+
+    xprop = GridProperty()
+    logger.info("Import roff...")
+    grid = Grid(testfile5)
+    xprop.from_file(testfile1, fformat="roff", name='PORO', grid=grid)
+    poly = Polygons(polyfile)
+
+    xprop.operation_polygons(grid, poly, 99, inside=True)
+    tsetup.assert_almostequal(xprop.values.mean(), 25.1788, 0.01)
+
+    # geom = grid.get_geometrics(return_dict=True)
+
+    # layslice = xtgeo.plot.Grid3DSlice()
+    # layslice.canvas(title="Layer 1")
+    # layslice.plot_gridslice(grid, xprop, window=(geom['xmin'], geom['xmax'],
+    #                                              geom['ymin'], geom['ymax']))
+    # layslice.show()
+
 
 # def test_get_xy_values_for_webportal_bri():
 #     """Get lists on webportal format, small BRILLIG case"""
