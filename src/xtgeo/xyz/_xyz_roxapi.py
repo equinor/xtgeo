@@ -37,10 +37,24 @@ def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
     try:
         if stype == 'horizons':
             roxxyz = proj.horizons[name][category].get_values(realisation)
+
         elif stype == 'zones':
             roxxyz = proj.zones[name][category].get_values(realisation)
+
         elif stype == 'faults':
             roxxyz = proj.faults[name][category].get_values(realisation)
+
+        elif stype == 'clipboard':
+            if category:
+                if '|' in category:
+                    folders = category.split('|')
+                else:
+                    folders = category.split('/')
+                roxxyz = proj.clipboard.folders[folders]
+            else:
+                roxxyz = proj.clipboard
+            roxxyz = roxxyz[name].get_values(realisation)
+
         else:
             roxxyz = None
             raise ValueError('Unsupported stype: {}'.format(stype))
@@ -79,8 +93,6 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
     else:
         raise RuntimeError('Unknown error in getting data from Roxar')
 
-    print('XXXX', 'ding10')
-
     self._df = dfr
 
 
@@ -110,6 +122,15 @@ def _roxapi_export_xyz(self, proj, name, category, stype, realisation):
         roxxyz = proj.zones[name][category]
     elif stype == 'faults':
         roxxyz = proj.faults[name][category]
+    elif stype == 'clipboard':
+        if category:
+            if '|' in category:
+                folders = category.split('|')
+            else:
+                folders = category.split('/')
+            roxxyz = proj.clipboard.folders[folders]
+        else:
+            roxxyz = proj.clipboard
     else:
         roxxyz = None
         raise ValueError('Unsupported stype: {}'.format(stype))
@@ -146,11 +167,22 @@ def _check_category_etc(self, proj, name, category, stype, realisation):
             raise ValueError('Category {} is not within Zones categories'
                              .format(category))
     elif stype == 'faults':
-        if name not in proj.zones:
+        if name not in proj.faults:
             raise ValueError('Name {} is not within Faults'.format(name))
         if category not in proj.zones.representations:
             raise ValueError('Category {} is not within Faults categories'
                              .format(category))
+    elif stype == 'clipboard':
+        if category:
+            if '|' in category:
+                folders = category.split('|')
+            else:
+                folders = category.split('/')
+            roxxyz = proj.clipboard.folders[folders]
+        else:
+            roxxyz = proj.clipboard
+        if name not in roxxyz:
+            raise ValueError('Name {} is not within Clipboard...'.format(name))
     else:
         raise ValueError('Invalid stype')
 

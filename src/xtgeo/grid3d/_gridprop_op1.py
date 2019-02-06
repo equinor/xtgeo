@@ -81,10 +81,12 @@ def get_xy_value_lists(self, **kwargs):
     return coordlist, valuelist
 
 
-def operation_polygons(self, grid, poly, value, opname='add', inside=True):
+def operation_polygons(self, poly, value, opname='add', inside=True):
     """A generic function for doing operations restricted to inside
     or outside polygon(s).
     """
+
+    grid = self.geometry
 
     if not isinstance(poly, xtgeo.xyz.Polygons):
         raise ValueError('The poly input is not a Polygons instance')
@@ -109,11 +111,10 @@ def operation_polygons(self, grid, poly, value, opname='add', inside=True):
                                         grid._p_zcorn_v, grid._p_actnum_v,
                                         cvals, 1, 0, XTGDEBUG)
         if ier == -9:
-            xtg.warn('Polygon is not closed')
+            print('## Polygon no {} is not closed'.format(id_ + 1))
 
     gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
 
-    print(proxy.values.mean())
     proxyv = proxy.values.astype(np.int8)
 
     proxytarget = 1
@@ -143,7 +144,7 @@ def operation_polygons(self, grid, poly, value, opname='add', inside=True):
             tmp = np.ma.array(tmp, mask=mask)
 
     elif opname == 'set':
-        tmp = value
+        tmp = self.values.copy() * 0 + value
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
     del tmp
