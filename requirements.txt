@@ -2,3 +2,5 @@ numpy
 segyio
 shapely
 pandas
+matplotlib
+scipy
