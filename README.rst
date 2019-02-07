@@ -1,6 +1,8 @@
 =============================
 The *XTGeo* library
 =============================
+.. image:: https://travis-ci.com/equinor/xtgeo.svg?token=c9LYyqv6MtDXz4Cxbq9H&branch=master
+    :target: https://travis-ci.com/equinor/xtgeo
 
 
 In-house Python class library for surfaces, wells, 3D grids, etc
