@@ -56,6 +56,7 @@ void grd3d_export_grdecl (
     long ncc, ncoord, nzcorn, nact;
     float *farr, fdum;
     double ddum;
+    int itmp[4];
 
     char sbn[24] = "grd3d_export_grdecl";
     xtgverbose(debug);
@@ -80,10 +81,12 @@ void grd3d_export_grdecl (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(sbn, 2, "Exporting SPECGRID...");
-    int itmp[4]; itmp[0] = nx; itmp[1] = ny; itmp[2] = nz; itmp[3] = 1;
+    xtg_speak(sbn, 2, "Exporting SPECGRID... ... .. ");
+    itmp[0] = nx; itmp[1] = ny; itmp[2] = nz; itmp[3] = 1;
 
+    xtg_speak(sbn, 2, "Exporting SPECGRID......");
     if (mode == 0) {
+        xtg_speak(sbn, 2, "Exporting binary SPECGRID...");
         grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, 4, &fdum, 0,
                               &ddum, 0, debug);
     }

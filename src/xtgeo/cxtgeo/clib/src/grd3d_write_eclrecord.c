@@ -63,7 +63,7 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
     int myint, myint2, mylen, nbyte;
     float myfloat;
     double mydouble;
-    char mychar[8]="", mytype[4]="";
+    char mychar[9]="", mytype[5]="";
     long nrecs = 0;
 
     char sbn[24] = "grd3d_write_eclrecord";

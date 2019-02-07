@@ -1165,7 +1165,7 @@ class RegularSurface(object):
         return xvals, yvals
 
     def get_xy_values1d(self, order='C', activeonly=True):
-        """Return coordinates for X and Y as numpy 2D arrays.
+        """Return coordinates for X and Y as numpy 1D arrays.
 
         Args:
             order (str): 'C' (default) or 'F' order (row major vs column major)
