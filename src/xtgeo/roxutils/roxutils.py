@@ -7,6 +7,7 @@ from __future__ import print_function
 
 try:
     import roxar
+    import _roxar
 except ImportError:
     pass
 
@@ -19,11 +20,13 @@ class RoxUtils(object):
     import xtgeo
 
     xr = xtgeo.RoxUtils()
-    xr.create_horizon_category(project, 'DS_extracted_run3')
-    xr.delete_horizon_category(project, 'DS_extracted_run2')
+    xr.create_horizon_category('DS_extracted_run3')
+    xr.delete_horizon_category('DS_extracted_run2')
     """
 
-    def __init__(self):
+    def __init__(self, project):
+        self._project = None
+
         self._version = roxar.__version__
 
         self._versions = {'1.0': ['10.0.x'],
@@ -33,26 +36,40 @@ class RoxUtils(object):
                           '1.2.1': ['11.0.1'],
                           '1.3': ['11.1.0']}
 
+        if project is not None and isinstance(project, str):
+            projectname = project
+            self._project = roxar.Project.open_import(projectname)
+        elif isinstance(project, _roxar.Project):
+            self._project = project
+        else:
+            raise RuntimeError('Project is not valid')
+
     @property
     def roxversion(self):
         """Roxar API version (read only)"""
         return self._version
 
-    def create_horizon_category(self, project, category, stype='horizons',
+    @property
+    def project(self):
+        """The Roxar project instance (read only)"""
+        return self._project
+
+    def create_horizon_category(self, category, stype='horizons',
                                 domain='depth', htype='surface'):
         """Create one or more a Horizons category entries.
 
         Args:
-            project (str or special): Use project if within RMS project
             category (str or list): Name(s) of category to make, either as
                  a simple string or a list of strings.
-            stype (str): Main folder in RMS (horizons or zones).
+            stype (str): 'Super type' in RMS (horizons or zones).
                 Default is horizons
             domain (str): 'depth' (default) or 'time'
             htype (str): Horizon type: surface/lines/points
         """
 
+        project = self.project
         categories = []
+
         if isinstance(category, str):
             categories.append(category)
         else:
@@ -89,25 +106,26 @@ class RoxUtils(object):
                 else:
                     print('Category <{}> already exists'.format(category))
 
-    def create_zones_category(self, project, category, domain='thickness',
+    def create_zones_category(self, category, domain='thickness',
                               htype='surface'):
         """Same as create_horizon_category, but with stype='zones'."""
 
-        self.create_horizon_category(project, category, stype='zones',
+        self.create_horizon_category(category, stype='zones',
                                      domain=domain, htype=htype)
 
-    def delete_horizon_category(self, project, category, stype='horizons'):
+    def delete_horizon_category(self, category, stype='horizons'):
         """Delete on or more horizons or zones categories.
 
         Args:
-            project (str or special): Use project if within RMS project
             category (str or list): Name(s) of category to make, either
                 as a simple string or a list of strings.
-            stype (str): Main folder in RMS (horizons or zones).
+            stype (str): 'Super type', in RMS (horizons or zones).
                 Default is horizons
         """
 
+        project = self.project
         categories = []
+
         if isinstance(category, str):
             categories.append(category)
         else:
@@ -129,7 +147,7 @@ class RoxUtils(object):
             else:
                 raise ValueError('Wrong stype applied')
 
-    def delete_zones_category(self, project, category):
+    def delete_zones_category(self, category):
         """Delete on or more horizons or zones categories. See previous"""
 
-        self.delete_horizon_category(project, category, stype='zones')
+        self.delete_horizon_category(category, stype='zones')

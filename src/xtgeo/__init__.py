@@ -42,6 +42,17 @@ from xtgeo.xyz import points
 from xtgeo.xyz import polygons
 from xtgeo.roxutils import roxutils
 
+from xtgeo.surface.regular_surface import RegularSurface
+from xtgeo.cube.cube import Cube
+from xtgeo.grid3d.grid import Grid
+from xtgeo.grid3d.grid_property import GridProperty
+from xtgeo.grid3d.grid_properties import GridProperties
+from xtgeo.well.well import Well
+from xtgeo.well.wells import Wells
+from xtgeo.xyz.points import Points
+from xtgeo.xyz.polygons import Polygons
+from xtgeo.roxutils.roxutils import RoxUtils
+
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.constants import UNDEF_INT

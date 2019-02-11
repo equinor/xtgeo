@@ -1146,7 +1146,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         Args:
             dlogname (str): Name of discrete log, e.g. 'FACIES'
-            dnames (list of int): Codes of facies to report for
+            dnames (list of int): Codes of facies (or similar) to report for
             zonelist (list of int): Zones to use
             incl_limit (float): Inclination limit for well path.
             count_limit (int): Minimum number of counts required per segment
@@ -1156,8 +1156,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         Returns:
             A pandas dataframe (ready for the xyz/Points class), None
-            if a zonelog is missing or list is zero length for any reason
-
+            if a zonelog is missing or or dlogname is missing,
+            list is zero length for any reason.
         """
 
         dfr = _wellmarkers.get_fraction_per_zone(
