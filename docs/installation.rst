@@ -8,33 +8,28 @@ Installation
 Stable release
 --------------
 
-The stable release is on /project/res, so it can be run as e.g.:
+The stable release is on /project/res or Komodo, so it can be run as e.g.:
 
- from xtgeo.surface import RegularSurface
+ import xtgeo
 
 
 From sources
 ------------
 
-The sources for XTGeo can be downloaded from the `Statoil Git repo`_.
+The sources for XTGeo can be downloaded from the `Equinor Github repo`_.
+Send a message to JRIV@equinor.com if your don't have access.
 
 You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git@git.statoil.no:xtgeo/pyxtgeo
+    $ git clone git@github.com:equinor/xtgeo
 
 Also you will need test data:
 
 .. code-block:: console
 
-   $ git clone git@git.statoil.no:xtgeo/xtgeo-testdata
-
-And you may also need:
-
-.. code-block:: console
-
-    $ git clone git@git.statoil.no:xtgeo/cxtgeo
+   $ git clone git@github.com:equinor/xtgeo-testdata
 
 Once you have a copy of the source, and you have a `virtual environment`_,
 you can install it with:
@@ -44,5 +39,5 @@ you can install it with:
     $ make install
 
 
-.. _Statoil Git repo: https://github.com/Statoil/xtgeo-python
+.. _Equinor Github repo: https://github.com/equinor/xtgeo
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
