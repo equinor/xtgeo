@@ -4,10 +4,10 @@
 Use of XTGeo in RMS
 ===================
 
-XTGeo can be incorporated within the  RMS user interface and share
-some data with RMS. The integration will be continuosly improved.
+XTGeo can be incorporated within the RMS user interface and share
+data with RMS. The integration will be continuosly improved.
 Note that all these script examples are assumed to be ran inside
-a python job in RMS.
+a python job within RMS.
 
 Surface data
 ------------
@@ -25,6 +25,13 @@ Export a surface in RMS to irap binary format
     surf = xtgeo.surface_from_roxar(project, 'TopReek', 'DS_extracted')
 
     surf.to_file('topreek.gri')
+
+    # modify surface, add 1000 to all map nodes
+    surf.values += 1000
+
+    # store in RMS (category must exist)
+    surf.to_roxar(project, 'TopReek', 'DS_whatever')
+
 
 Export a surface in RMS to zmap ascii format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -75,7 +82,49 @@ Exporting geometry to ROFF file
     # import (transfer) data from RMS to XTGeo and export
     mygrid = xtgeo.grid_from_roxar(project, 'Geomodel')
 
-    mygrid.to_file('topreek.gri')
+    mygrid.to_file('topreek.roff')  # roff binary is default format
+
+
+Edit a porosity in a 3D grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    import xtgeo
+
+    # import (transfer) data from RMS to XTGeo
+    myporo = xtgeo.gridproperty_from_roxar(project, 'Geomodel', 'Por')
+
+    # now I want to limit porosity to 0.35 for values above 0.35:
+
+    poro.values[poro_values > 0.35] = 0.35
+
+    # store to another icon
+    poro.to_roxar(project, 'Geomodel', 'PorNew')
+
+Edit a 3D grid porosity inside polygons
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   # Example where I want to read a 3D grid porosity, and set value
+   # to 99 inside polygons
+
+   import xtgeo
+
+   mygrid = xtgeo.grid_from_roxar(project, 'Reek_sim')
+   myprop = xtgeo.gridproperty_from_roxar(project, 'Reek_sim', 'PORO')
+
+   # read polygon(s), from Horizons, Faults, Zones or Clipboard
+   mypoly = xtgeo.polygons_from_roxar(project, 'TopUpperReek', 'DL_test')
+
+   # need to connect property to grid geometry when using polygons
+   myprop.geometry = mygrid
+
+   myprop.set_inside(mypoly, 99)
+
+   # Save in RMS as a new icon
+   myprop.to_roxar(project, 'Reek_sim', 'NEWPORO_setinside')
 
 
 Cube data

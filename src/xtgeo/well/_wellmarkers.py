@@ -7,6 +7,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 import xtgeo.common.constants as const
 
@@ -167,6 +168,9 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
     into segments by POLY_ID. When fraction is determined, the
     AVG X Y coord is applied.
 
+    If there are one or more occurences of undef for the dlogname
+    in that interval, no value shall be computed.
+
     Args:
         dlogname (str): Name of discrete log e.g. Facies
         dvalues (list): List of codes to sum fraction upon
@@ -232,7 +236,10 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
                 logger.debug('Skipped due to max inclination %s', qinclmax)
                 continue
             if dseries.size < count_limit:  # interval too short for fraction
-                logger.debug('Skipped due to too few samples %s', dseries.size)
+                logger.debug('Skipped due to too few values %s', dseries.size)
+                continue
+            if dseries.max() > xtgeo.UNDEF_INT_LIMIT:
+                logger.debug('Skipped due to too missing/undef value(s)')
                 continue
 
             xavg = dframe['X_UTME'].mean()
