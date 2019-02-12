@@ -4,6 +4,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+from distutils.version import StrictVersion
 
 try:
     import roxar
@@ -53,6 +54,43 @@ class RoxUtils(object):
     def project(self):
         """The Roxar project instance (read only)"""
         return self._project
+
+    def version_required(self, targetversion):
+        """Defines a minimum ROXAPI version for some feature (True or False).
+
+        Args:
+            targetversion (str): Minimum version to compare with.
+
+        Example::
+
+            rox = RoxUtils(project)
+            if rox.version_required('1.2'):
+                somefunction()
+            else:
+                print('Not supported in this version')
+
+        """
+        return StrictVersion(self._version) >= StrictVersion(targetversion)
+
+    def rmsversion(self, apiversion):
+        """Get the actual RMS version(s) given an API version.
+
+        Args:
+            apiversion (str): ROXAPI version to ask for
+
+        Returns:
+            A list of RMS version(s) for the given API version, None if
+                not any match.
+
+        Example::
+
+            rox = RoxUtils(project)
+            rmsver = rox.rmsversion('1.2')
+            print('The supported RMS version are {}'.format(rmsver))
+
+        """
+
+        return self._versions.get(apiversion, None)
 
     def create_horizon_category(self, category, stype='horizons',
                                 domain='depth', htype='surface'):
