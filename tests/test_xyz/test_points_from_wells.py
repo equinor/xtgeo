@@ -142,14 +142,18 @@ def test_get_faciesfraction_some_wells():
                                       zonelist=None, incl_limit=70)
 
     # rename column
-    # mypoints.zname = 'FACFRAC'
+    mypoints.zname = 'FACFRAC'
 
     logger.info('Number of wells is %s, DATAFRAME:\n, %s', nwell,
                 mypoints.dataframe)
 
     print(mypoints.dataframe)
+    mypoints.dataframe.to_csv('xx.csv')
 
-    assert mypoints.dataframe[mypoints.zname][8] - 0.086957 < 0.001
+    myquery = 'WELLNAME == "OP_1" and ZONE == 1'
+    usedf = mypoints.dataframe.query(myquery)
+
+    assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001
 
     mypoints.to_file('TMP/ffrac_per_zone.rmsasc', fformat='rms_attr',
                      attributes=['WELLNAME', 'ZONE'], filter={'ZONE': [1]})
