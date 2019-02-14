@@ -1429,6 +1429,19 @@ void grd3d_import_grdecl (
 			  int     debug
 			  );
 
+int grd3d_import_grdecl_prop(
+                             char *filename,
+                             int nx,
+                             int ny,
+                             int nz,
+                             char *pname,
+                             double *swig_np_dbl_aout_v1, // p_prop_v
+                             long n_swig_np_dbl_aout_v1,  // nlen
+                             int option,
+                             int debug
+                             );
+
+
 void grd3d_export_grdecl(
                          int nx,
                          int ny,
