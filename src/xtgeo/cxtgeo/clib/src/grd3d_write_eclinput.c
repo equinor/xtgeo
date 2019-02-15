@@ -30,11 +30,9 @@
  *    recname          i     Name of record to write
  *    rectype          i     Type of record to write (1=INT, 2=FLT, 3=DBL)
  *    intv             i     Input int array (if rectype is 1)
- *    nint             i     The int record total length
  *    floatv           i     Input Float array (if rectype is 2)
- *    nflt             i     The float record total length
  *    doublev          i     Input double array (if rectype is 3)
- *    ndbl             i     The record total length if double
+ *    nrecs            i     The record total length
  *    fmt              i     Format specifier e.g. "  %8.2f", NB with col space
  *    ncolumns         i     Number of columns
  *    debug            i     Debug level
@@ -51,11 +49,10 @@
  ******************************************************************************
  */
 
-
 int grd3d_write_eclinput (FILE *fc,
                           char *recname,
-                          int rectype, int *intv, long nint, float *floatv,
-                          long nflt, double *doublev, long ndbl,
+                          int rectype, int *intv, float *floatv,
+                          double *doublev, long nrecs,
                           char *fmt, int ncolumns, int debug)
 {
 
@@ -69,7 +66,7 @@ int grd3d_write_eclinput (FILE *fc,
 
     if (rectype == 1) {
         icwrap = 0;
-        for (icc = 0; icc < nint; icc++) {
+        for (icc = 0; icc < nrecs; icc++) {
             fprintf(fc, fmt, intv[icc]);
             icwrap++;
             if (icwrap >= ncolumns) {
@@ -81,7 +78,7 @@ int grd3d_write_eclinput (FILE *fc,
 
     if (rectype == 2) {
         icwrap = 0;
-        for (icc = 0; icc < nflt; icc++) {
+        for (icc = 0; icc < nrecs; icc++) {
             fprintf(fc, fmt, floatv[icc]);
             icwrap++;
             if (icwrap >= ncolumns) {
@@ -93,7 +90,7 @@ int grd3d_write_eclinput (FILE *fc,
 
     if (rectype == 3) {
         icwrap = 0;
-        for (icc = 0; icc < ndbl; icc++) {
+        for (icc = 0; icc < nrecs; icc++) {
             fprintf(fc, fmt, doublev[icc]);
             icwrap++;
             if (icwrap >= ncolumns) {

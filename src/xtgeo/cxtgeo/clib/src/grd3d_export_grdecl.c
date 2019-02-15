@@ -87,12 +87,12 @@ void grd3d_export_grdecl (
     xtg_speak(sbn, 2, "Exporting SPECGRID......");
     if (mode == 0) {
         xtg_speak(sbn, 2, "Exporting binary SPECGRID...");
-        grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, 4, &fdum, 0,
-                              &ddum, 0, debug);
+        grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, &fdum,
+                              &ddum, 4, debug);
     }
     else{
-        grd3d_write_eclinput(fc, "SPECGRID", 1, itmp, 4, &fdum, 0,
-                             &ddum, 0, "  %5d", 10, debug);
+        grd3d_write_eclinput(fc, "SPECGRID", 1, itmp, &fdum,
+                             &ddum, 4, "  %5d", 10, debug);
     }
 
     /*
@@ -116,11 +116,11 @@ void grd3d_export_grdecl (
     }
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "COORD", 2, &idum, 0, farr, ncoord, &ddum, 0,
+        grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
                               debug);
     }
     else{
-        grd3d_write_eclinput(fc, "COORD", 2, &idum, 0, farr, ncoord, &ddum, 0,
+        grd3d_write_eclinput(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
                              "  %15.3f", 6, debug);
     }
     free(farr);
@@ -178,11 +178,11 @@ void grd3d_export_grdecl (
     }
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, 0, farr, nzcorn, &ddum, 0,
+        grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
                               debug);
     }
     else {
-        grd3d_write_eclinput(fc, "ZCORN", 2, &idum, 0, farr, nzcorn, &ddum, 0,
+        grd3d_write_eclinput(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
                               "  %11.3f", 6, debug);
     }
     free(farr);
@@ -197,12 +197,12 @@ void grd3d_export_grdecl (
     nact = nx * ny * nz;
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, nact, &fdum, 0,
-                              &ddum, 0, debug);
+        grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
+                              &ddum, nact, debug);
     }
     else{
-        grd3d_write_eclinput(fc, "ACTNUM", 1, p_actnum_v, nact, &fdum, 0,
-                             &ddum, 0, "  %1d", 12, debug);
+        grd3d_write_eclinput(fc, "ACTNUM", 1, p_actnum_v, &fdum,
+                             &ddum, nact, "  %1d", 12, debug);
     }
 
     /*

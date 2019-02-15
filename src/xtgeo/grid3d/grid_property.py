@@ -632,7 +632,7 @@ class GridProperty(Grid3D):
 
         Args:
             pfile (str): name of file to be imported
-            fformat (str): file format to be used roff/init/unrst
+            fformat (str): file format to be used roff/init/unrst/grdecl
                 (guess is default).
             name (str): name of property to import
             date (int or str): For restart files, date on YYYYMMDD format. Also
@@ -655,88 +655,44 @@ class GridProperty(Grid3D):
            True if success, otherwise False
         """
 
-        # pylint: disable=too-many-branches, too-many-statements
+        obj = _gridprop_import.from_file(self, pfile, fformat=fformat,
+                                         name=name, grid=grid,
+                                         date=date, _roffapiv=_roffapiv)
+        return obj
 
-        self._filesrc = pfile
+    def to_file(self, pfile, fformat='roff', name=None, append=False):
+        """
+        Export grid property to file.
 
-        # it may be that pfile already is an open file; hence a filehandle
-        # instead. Check for this, and skip tests of so
-        pfile_is_not_fhandle = True
-        _fhandle, pclose = _get_fhandle(pfile)
-        if not pclose:
-            pfile_is_not_fhandle = False
+        Args:
+            pfile (str): file name
+            fformat (str): file format to be used. The default is
+                roff binary , else roff_ascii/grdecl/bgrdecl
+            name (str): If provided, will give property name; else the existing
+                name of the instance will used.
+        """
+        logger.debug('Export property to file...')
 
-        if pfile_is_not_fhandle:
-            if os.path.isfile(pfile):
-                logger.debug('File {} exists OK'.format(pfile))
-            else:
-                logger.critical('No such file: {}'.format(pfile))
-                raise IOError
+        if 'roff' in fformat:
+            if name is None:
+                name = self.name
 
-            # work on file extension
-            _froot, fext = os.path.splitext(pfile)
-            if fformat == 'guess':
-                if not fext:
-                    logger.critical('File extension missing. STOP')
-                    raise ValueError('File extension missing. STOP')
-                else:
-                    fformat = fext.lower().replace('.', '')
+            binary = True
+            if 'asc' in fformat:
+                binary = False
 
-            logger.debug("File name to be used is {}".format(pfile))
-            logger.debug("File format is {}".format(fformat))
+            # for later usage
+            append = False
+            last = True
 
-        ier = 0
-        if fformat == 'roff':
-            logger.info('Importing ROFF...')
-            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid,
-                                               _roffapiv=_roffapiv)
+            _gridprop_export.export_roff(self, pfile, name, append=append,
+                                         last=last, binary=binary)
 
-        elif fformat.lower() == 'init':
-            ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
-                                                    etype=1, date=None,
-                                                    grid=grid)
+        elif fformat == 'grdecl':
+            _gridprop_export.export_grdecl(self, pfile, name, append=append)
 
-        elif fformat.lower() == 'unrst':
-            if date is None:
-                raise ValueError('Restart file, but no date is given')
-            elif isinstance(date, str):
-                if '-' in date:
-                    date = int(date.replace('-', ''))
-                elif date == 'first':
-                    date = 0
-                elif date == 'last':
-                    date = 9
-                else:
-                    date = int(date)
-
-            ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
-                                                    etype=5, date=date,
-                                                    grid=grid)
-        else:
-            logger.warning('Invalid file format')
-            raise SystemExit('Invalid file format')
-
-        if ier == 22:
-            raise DateNotFoundError('Date {} not found when importing {}'
-                                    .format(date, name))
-        elif ier == 23:
-            raise KeywordNotFoundError('Keyword {} not found for date {} '
-                                       'when importing'.format(name, date))
-        elif ier == 24:
-            raise KeywordFoundNoDateError('Keyword {} found but not for date '
-                                          '{} when importing'
-                                          .format(name, date))
-        elif ier == 25:
-            raise KeywordNotFoundError('Keyword {} not found when importing'
-                                       .format(name))
-        elif ier != 0:
-            raise RuntimeError('Something went wrong, code {}'.format(ier))
-
-        # if grid, then append this grid to the current grid object
-        if grid:
-            grid.append_prop(self)
-
-        return self
+        elif fformat == 'bgrdecl':
+            _gridprop_export.export_bgrdecl(self, pfile, name, append=append)
 
     def from_roxar(self, projectname, gname, pname, realisation=0):
 
@@ -777,39 +733,6 @@ class GridProperty(Grid3D):
             self, projectname, gname, pname, saveproject=saveproject,
             realisation=realisation)
 
-    def to_file(self, pfile, fformat='guess', name=None):
-        """
-        Export grid property to file.
-
-        Args:
-            pfile (str): file name
-            fformat (str): file format to be used. The default 'guess' is
-                roff which is the only supported currently, which is either
-                'roff' or 'roff_binary' for binary, and 'roffasc'
-                or 'roff_ascii' for ASCII (text).
-            name (str): If provided, will give property name; else the existing
-                name of the instance will used.
-        """
-        logger.debug('Export property to file...')
-
-        # guess based on file extension (todo)
-        if fformat == 'guess':
-            fformat = 'roff'
-
-        if 'roff' in fformat:
-            if name is None:
-                name = self.name
-
-            binary = True
-            if 'asc' in fformat:
-                binary = False
-
-            # for later usage
-            append = False
-            last = True
-
-            _gridprop_export.export_roff(self, pfile, name, append=append,
-                                         last=last, binary=binary)
 
     def get_xy_value_lists(self, grid=None, mask=True):
         """Get lists of xy coords and values for Webportal format.

@@ -3,9 +3,6 @@
 
 from __future__ import print_function, absolute_import
 
-import errno
-import os
-import os.path
 import json
 from collections import OrderedDict
 
@@ -19,8 +16,7 @@ from xtgeo.grid3d import Grid3D
 from xtgeo.common import XTGDescription
 
 from xtgeo.grid3d import _grid_hybrid
-from xtgeo.grid3d import _grid_import_roff
-from xtgeo.grid3d import _grid_import_ecl
+from xtgeo.grid3d import _grid_import
 from xtgeo.grid3d import _grid_export
 from xtgeo.grid3d import _grid_refine
 from xtgeo.grid3d import _grid_etc1
@@ -562,14 +558,14 @@ class Grid(Grid3D):
 
         """Import grid geometry from file, and makes an instance of this class.
 
-        If file extension is missing, then the extension is guessed by fformat
+        If file extension is missing, then the extension will guess the fformat
         key, e.g. fformat egrid will be guessed if '.EGRID'. The 'eclipserun'
         will try to input INIT and UNRST file in addition the grid in 'one go'.
 
         Arguments:
             gfile (str): File name to be imported
-            fformat (str): File format egrid/roff/grdecl/eclipserun
-                (roff is default)
+            fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
+                ('guess' is default, and 'roff' is the assumption)
             initprops (str list): Optional, if given, and file format
                 is 'eclipserun', then list the names of the properties here.
             restartprops (str list): Optional, see initprops
@@ -586,97 +582,12 @@ class Grid(Grid3D):
         Raises:
             OSError: if file is not found etc
         """
+        obj = _grid_import.from_file(self, gfile, fformat=fformat,
+                                     initprops=initprops,
+                                     restartprops=restartprops,
+                                     restartdates=restartdates)
 
-        # pylint: disable=too-many-branches
-
-        self._filesrc = gfile
-
-        # note .grid is currently disabled; need to work at C backend
-        fflist = set(['egrid', 'grdecl', 'bgrdecl', 'roff', 'eclipserun',
-                      'guess'])
-        if fformat not in fflist:
-            raise ValueError('Invalid fformat: <{}>, options are {}'.
-                             format(fformat, fflist))
-
-        # work on file extension
-        froot, fext = os.path.splitext(gfile)
-        fext = fext.replace('.', '')
-        fext = fext.lower()
-
-        if fformat == 'guess':
-            logger.info('Format is <guess>')
-            fflist = ['egrid', 'grdecl', 'bgrdecl', 'roff', 'eclipserun']
-            if fext and fext in fflist:
-                fformat = fext
-
-        if not fext:
-            # file extension is missing, guess from format
-            logger.info('File extension missing; guessing...')
-            useext = ''
-            if fformat == 'egrid':
-                useext = '.EGRID'
-            elif fformat == 'grdecl':
-                useext = '.grdecl'
-            elif fformat == 'bgrdecl':
-                useext = '.bgrdecl'
-            elif fformat == 'roff':
-                useext = '.roff'
-            elif fformat == 'guess':
-                raise ValueError('Cannot guess format without file extension')
-
-            gfile = froot + useext
-
-        logger.info('File name to be used is %s', gfile)
-
-        test_gfile = gfile
-        if fformat == 'eclipserun':
-            test_gfile = gfile + '.EGRID'
-
-        if os.path.isfile(test_gfile):
-            logger.info('File %s exists OK', test_gfile)
-        else:
-            logger.critical('No such file: %s', test_gfile)
-            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), gfile)
-
-        if fformat == 'roff':
-            _grid_import_roff.import_roff(self, gfile)
-        elif fformat == 'egrid':
-            _grid_import_ecl.import_ecl_egrid(self, gfile)
-        elif fformat == 'eclipserun':
-            _grid_import_ecl.import_ecl_run(self, gfile, initprops=initprops,
-                                            restartprops=restartprops,
-                                            restartdates=restartdates)
-        elif fformat == 'grdecl':
-            _grid_import_ecl.import_ecl_grdecl(self, gfile)
-        elif fformat == 'bgrdecl':
-            _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
-        else:
-            raise SystemExit('Invalid file format')
-
-        return self
-
-    def from_roxar(self, projectname, gname, realisation=0,
-                   dimensions_only=False, info=False):
-
-        """Import grid model geometry from RMS project, and makes an instance.
-
-        Args:
-            projectname (str): Name of RMS project
-            gname (str): Name of grid model
-            realisation (int): Realisation number.
-            dimensions_only (bool): If True, only the ncol, nrow, nlay will
-                read. The actual grid geometry will remain empty (None). This
-                will be much faster of only grid size info is needed, e.g.
-                for initalising a grid property.
-            info (bool): If True, various info will printed to screen. This
-                info will depend on version of ROXAPI, and is mainly a
-                developer/debugger feature. Default is False.
-
-
-        """
-
-        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
-                                        dimensions_only, info)
+        return obj
 
     def to_file(self, gfile, fformat='roff'):
         """Export grid geometry to file.
@@ -701,6 +612,34 @@ class Grid(Grid3D):
             _grid_export.export_grdecl(self, gfile, 0)
         else:
             raise SystemExit('Invalid file format')
+
+    def from_roxar(self, projectname, gname, realisation=0,
+                   dimensions_only=False, info=False):
+
+        """Import grid model geometry from RMS project, and makes an instance.
+
+        Args:
+            projectname (str): Name of RMS project
+            gname (str): Name of grid model
+            realisation (int): Realisation number.
+            dimensions_only (bool): If True, only the ncol, nrow, nlay will
+                read. The actual grid geometry will remain empty (None). This
+                will be much faster of only grid size info is needed, e.g.
+                for initalising a grid property.
+            info (bool): If True, various info will printed to screen. This
+                info will depend on version of ROXAPI, and is mainly a
+                developer/debugger feature. Default is False.
+
+
+        """
+
+        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
+                                        dimensions_only, info)
+
+    def to_roxar(self, projectname, gname, realisation=0):
+        """Export a grid to RMS via Roxar API (in prep.)"""
+
+        raise NotImplementedError('Coming soon')
 
     def get_cactnum(self):
         """Returns the C pointer object reference to the ACTNUM array."""

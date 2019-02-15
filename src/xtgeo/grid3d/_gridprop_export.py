@@ -107,3 +107,13 @@ def _export_roff_continuous(self, pfile, name, append=False, last=True,
         _cxtgeo.grd3d_export_roff_end(mode, pfile, xtg_verbose_level)
 
     _gridprop_lowlevel.delete_carray(self, carray)
+
+
+def _export_grdecl(self, pfile, name, append=False):
+
+    raise NotImplementedError('In prep')
+
+
+def _export_bgrdecl(self, pfile, name, append=False):
+
+    raise NotImplementedError('In prep')

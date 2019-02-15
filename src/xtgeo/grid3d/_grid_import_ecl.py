@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Grid import functions for Eclipse, new approach (i.e. version 2)"""
 
 from __future__ import print_function, absolute_import

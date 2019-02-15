@@ -77,9 +77,8 @@ int grd3d_import_grdecl_prop(
 
     for (line = 1; line < 99999999; line++) {
 
-	/* Get offsets */
-	if (fgets(cname, 33, fc) != NULL)
-            xtg_speak(sbn, 4, "CNAME: %s", cname);
+	/* Get word */
+	if (fgets(cname, 33, fc) == NULL) return -1;
 
 	if (strncmp(cname, pname, nchar) == 0) {
 	    xtg_speak(sbn, 2, "Keyword found");
