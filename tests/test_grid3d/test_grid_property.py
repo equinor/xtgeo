@@ -272,12 +272,19 @@ def test_grdecl_import_reek():
                              grid=rgrid)
         logger.debug('Keyword failed as expected for instance %s', poro3)
 
+    # Export to ascii grdecl and import that again...
+    exportfile = os.path.join(td, 'reekporo.grdecl')
+    poro.to_file(exportfile, fformat='grdecl')
+    porox = GridProperty(exportfile, name='PORO', fformat='grdecl',
+                         grid=rgrid)
+    tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
+
     # Export to binary grdecl and import that again...
     exportfile = os.path.join(td, 'reekporo.bgrdecl')
-#    poro.to_file(exportfile, fformat='bgrdecl')
-#    porox = GridProperty(exportfile, name='PORO', fformat='bgrdecl',
- #                        grid=rgrid)
-    # tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
+    poro.to_file(exportfile, fformat='bgrdecl')
+    porox = GridProperty(exportfile, name='PORO', fformat='bgrdecl',
+                         grid=rgrid)
+    tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
 
 
 # def test_export_roff():

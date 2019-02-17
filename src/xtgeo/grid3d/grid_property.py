@@ -621,19 +621,19 @@ class GridProperty(Grid3D):
     # Import and export
     # =========================================================================
 
-    def from_file(self, pfile, fformat='guess', name='unknown',
+    def from_file(self, pfile, fformat=None, name='unknown',
                   grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
 
         Note that the the property may be linked to its geometrical grid,
-        through the grid= option. Sometimes this is required, for instance
+        through the ``grid=`` option. Sometimes this is required, for instance
         for most Eclipse input.
 
         Args:
             pfile (str): name of file to be imported
             fformat (str): file format to be used roff/init/unrst/grdecl
-                (guess is default).
+                (None is default, which means "guess" from file extension).
             name (str): name of property to import
             date (int or str): For restart files, date on YYYYMMDD format. Also
                 the YYYY-MM-DD form is allowed (string), and for Eclipse,
@@ -660,39 +660,37 @@ class GridProperty(Grid3D):
                                          date=date, _roffapiv=_roffapiv)
         return obj
 
-    def to_file(self, pfile, fformat='roff', name=None, append=False):
-        """
-        Export grid property to file.
+    def to_file(self, pfile, fformat='roff', name=None, append=False,
+                dtype=None):
+        """Export the grid property to file.
 
         Args:
-            pfile (str): file name
-            fformat (str): file format to be used. The default is
+            pfile (str): File name to export to
+            fformat (str): The file format to be used. Default is
                 roff binary , else roff_ascii/grdecl/bgrdecl
-            name (str): If provided, will give property name; else the existing
-                name of the instance will used.
+            name (str): If provided, will explicitly give property name;
+                else the existing name of the instance will used.
+            append (bool): Append to existing file, only for (b)grdecl formats.
+            dtype (str): Data type; this is valid only for grdecl or bgrdecl
+                formats, where default is None which means 'float32' for
+                floating point number and 'int32' for discrete properties.
+                Other choices are 'float64' which are 'DOUB' entries in
+                Eclipse formats.
+
+        Example::
+
+            # This example demonstrates that file formats can be mixed
+            rgrid = Grid('reek.roff')
+            poro = GridProperty('reek_poro.grdecl', grid=rgrid, name='PORO')
+
+            poro.values += 0.05
+
+            poro.to_file('reek_export_poro.bgrdecl', format='bgrdecl')
+
         """
-        logger.debug('Export property to file...')
 
-        if 'roff' in fformat:
-            if name is None:
-                name = self.name
-
-            binary = True
-            if 'asc' in fformat:
-                binary = False
-
-            # for later usage
-            append = False
-            last = True
-
-            _gridprop_export.export_roff(self, pfile, name, append=append,
-                                         last=last, binary=binary)
-
-        elif fformat == 'grdecl':
-            _gridprop_export.export_grdecl(self, pfile, name, append=append)
-
-        elif fformat == 'bgrdecl':
-            _gridprop_export.export_bgrdecl(self, pfile, name, append=append)
+        _gridprop_export.to_file(self, pfile, fformat=fformat, name=name,
+                                 append=append, dtype=dtype)
 
     def from_roxar(self, projectname, gname, pname, realisation=0):
 
@@ -703,8 +701,7 @@ class GridProperty(Grid3D):
                 if inside RMS
             gfile (str): Name of grid model
             pfile (str): Name of grid property
-            projectname (str): Name of RMS project; None if within a project
-            realisation (int): Realisation number (default 0 first)
+            realisation (int): Realisation number (default 0; first)
 
         """
 
@@ -732,7 +729,6 @@ class GridProperty(Grid3D):
         _gridprop_roxapi.export_prop_roxapi(
             self, projectname, gname, pname, saveproject=saveproject,
             realisation=realisation)
-
 
     def get_xy_value_lists(self, grid=None, mask=True):
         """Get lists of xy coords and values for Webportal format.

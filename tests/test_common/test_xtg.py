@@ -24,11 +24,13 @@ testpath = xtg.testpath
 
 def assert_equal(this, that, txt=''):
     """Assert equal wrapper function."""
+    logger.debug('Test if values are equal...')
     assert this == that, txt
 
 
 def assert_almostequal(this, that, tol, txt=''):
     """Assert almost equal wrapper function."""
+    logger.debug('Test if values are almost equal...')
     assert this == pytest.approx(that, abs=tol), txt
 
 

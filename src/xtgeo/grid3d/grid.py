@@ -29,8 +29,19 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def grid_from_file(gfile, fformat='guess'):
-    """Read a grid (cornerpoint) from file and an returns a Grid() instance."""
+def grid_from_file(gfile, fformat=None):
+    """Read a grid (cornerpoint) from file and an returns a Grid() instance.
+
+    Args:
+        gfile(str): Name of file to read grid from
+        fformat (str): File format, default is None which means "guess"
+
+    Example::
+
+        import xtgeo
+        mygrid = xtgeo.grid_from_file('reek.roff')
+
+    """
 
     obj = Grid()
 
@@ -52,7 +63,13 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False):
             be much faster of only grid size info is needed, e.g.
             for initalising a grid property.
 
-"""
+    Example::
+
+        # inside RMS
+        import xtgeo
+        mygrid = xtgeo.grid_from_roxar(project, 'REEK_SIM')
+
+    """
 
     obj = Grid()
 
@@ -132,8 +149,17 @@ class Grid(Grid3D):
                     logger.info('Deleting property instance %s', prop)
                     prop.__del__()
 
-            # for myvar in vars(self).keys():
-            #     del myvar
+    def __repr__(self):
+        # should be able to newobject = eval(repr(thisobject))
+        myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
+                'nrow={0._nrow!r}, nlay={0._nlay!r}, '
+                'filesrc={0._filesrc!r}'
+                .format(self, id(self)))
+        return myrp
+
+    def __str__(self):
+        # user friendly print
+        return str(self.describe())
 
     # =========================================================================
     # Properties:
@@ -553,7 +579,7 @@ class Grid(Grid3D):
 
         return None
 
-    def from_file(self, gfile, fformat='guess', initprops=None,
+    def from_file(self, gfile, fformat=None, initprops=None,
                   restartprops=None, restartdates=None):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -565,7 +591,7 @@ class Grid(Grid3D):
         Arguments:
             gfile (str): File name to be imported
             fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
-                ('guess' is default, and 'roff' is the assumption)
+                (None is default and means 'guess')
             initprops (str list): Optional, if given, and file format
                 is 'eclipserun', then list the names of the properties here.
             restartprops (str list): Optional, see initprops
@@ -599,7 +625,7 @@ class Grid(Grid3D):
 
         Example::
 
-            g.to_file('myfile.roff')
+            xg.to_file('myfile.roff')
         """
 
         if fformat in ('roff', 'roff_binary'):

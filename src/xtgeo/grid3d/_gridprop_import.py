@@ -27,7 +27,7 @@ _cxtgeo.xtg_verbose_file('NONE')
 XTGDEBUG = xtg.get_syslevel()
 
 
-def from_file(self, pfile, fformat='guess', name='unknown',
+def from_file(self, pfile, fformat=None, name='unknown',
               grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
     """Import grid property from file, and makes an instance of this."""
 
@@ -51,7 +51,7 @@ def from_file(self, pfile, fformat='guess', name='unknown',
 
         # work on file extension
         _froot, fext = os.path.splitext(pfile)
-        if fformat == 'guess':
+        if fformat is None or fformat == 'guess':
             if not fext:
                 logger.critical('File extension missing. STOP')
                 raise ValueError('File extension missing. STOP')

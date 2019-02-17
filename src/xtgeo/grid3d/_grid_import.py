@@ -16,7 +16,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def from_file(self, gfile, fformat='guess', initprops=None,
+def from_file(self, gfile, fformat=None, initprops=None,
               restartprops=None, restartdates=None):
 
     """Import grid geometry from file, and makes an instance of this class."""
@@ -24,6 +24,9 @@ def from_file(self, gfile, fformat='guess', initprops=None,
     # pylint: disable=too-many-branches
 
     self._filesrc = gfile
+
+    if fformat is None:
+        fformat = 'guess'
 
     # note .grid is currently disabled; need to work at C backend
     fflist = set(['egrid', 'grdecl', 'bgrdecl', 'roff', 'eclipserun',

@@ -53,10 +53,14 @@ def update_values_from_carray(self, carray, dtype, delete=False):
         carray = delete_carray(self, carray)
 
 
-def update_carray(self, undef=None, discrete=None):
+def update_carray(self, undef=None, discrete=None, dtype=None, order='F'):
     """Copy (update) values from numpy to SWIG, 1D array, returns a pointer
     to SWIG C array. If discrete is defined as True or False, force
-    the SWIG array to be of that kind."""
+    the SWIG array to be of that kind.
+
+    Note that dtype will "override" current datatype if set. The resulting
+    carray will be in Fortran order, unless order is specified as 'C'
+    """
 
     dstatus = self._isdiscrete
     if discrete is not None:
@@ -73,46 +77,63 @@ def update_carray(self, undef=None, discrete=None):
     logger.debug('Entering conversion from numpy to C array ...')
 
     values = self._values.copy()
-    if dstatus:
-        values = values.astype(np.int32)
+
+    if not dtype:
+        if dstatus:
+            values = values.astype(np.int32)
+        else:
+            values = values.astype(np.float64)
     else:
-        values = values.astype(np.float64)
+        values = values.astype(dtype)
 
     values = ma.filled(values, undef)
 
-    values = np.asfortranarray(values)
-    values1d = np.ravel(values, order='K')
+    if order == 'F':
+        values = np.asfortranarray(values)
+        values1d = np.ravel(values, order='K')
 
     if values1d.dtype == 'float64' and dstatus:
         values1d = values1d.astype('int32')
         logger.debug('Casting has been done')
 
-    if dstatus is False:
+    if values1d.dtype == 'float64':
         logger.debug('Convert to carray (double)')
         carray = _cxtgeo.new_doublearray(self.ntotal)
         _cxtgeo.swig_numpy_to_carr_1d(values1d, carray)
-    else:
+    elif values1d.dtype == 'float32':
+        logger.debug('Convert to carray (float)')
+        carray = _cxtgeo.new_floatarray(self.ntotal)
+        _cxtgeo.swig_numpy_to_carr_f1d(values1d, carray)
+    elif values1d.dtype == 'int32':
+        logger.debug('Convert to carray (int32)')
         carray = _cxtgeo.new_intarray(self.ntotal)
         _cxtgeo.swig_numpy_to_carr_i1d(values1d, carray)
-
+    else:
+        raise RuntimeError('Unsupported dtype, probable bug in {}'
+                           .format(__name__))
     return carray
 
 
 def delete_carray(self, carray):
     """Delete carray SWIG C pointer, return carray as None"""
+
     logger.debug('Enter delete carray values method...')
     if carray is None:
         return None
 
-    if self._isdiscrete:
+    if 'int' in str(carray):
         _cxtgeo.delete_intarray(carray)
         carray = None
-        return carray
-
-    else:
+    elif 'float' in str(carray):
+        _cxtgeo.delete_floatarray(carray)
+        carray = None
+    elif 'double' in str(carray):
         _cxtgeo.delete_doublearray(carray)
         carray = None
-        return carray
+    else:
+        raise RuntimeError('BUG?')
+
+    return carray
 
 
 def check_shape_ok(self, values):

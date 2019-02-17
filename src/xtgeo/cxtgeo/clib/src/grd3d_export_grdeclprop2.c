@@ -52,14 +52,9 @@ void grd3d_export_grdeclprop2 (
                                )
 
 {
-    int i, j, k, jj;
-    long ic = 0, ib = 0;
+    long nlen;
     FILE *fc;
-    int idum;
-    long ncc, ncoord, nzcorn, nact;
-    float *farr, fdum;
-    double ddum;
-    int itmp[4];
+
 
     char sbn[24] = "grd3d_exp..grdeclprop2";
     xtgverbose(debug);

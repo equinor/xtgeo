@@ -1462,6 +1462,20 @@ void grd3d_export_grdeclprop(
                              int debug
                              );
 
+void grd3d_export_grdeclprop2(
+                              int nx,
+                              int ny,
+                              int nz,
+                              int ptype,
+                              int *p_iprop_v,
+                              float *p_fprop_v,
+                              double *p_dprop_v,
+                              char *pname,
+                              char *filename,
+                              int mode,
+                              int debug
+                              );
+
 int grd3d_copy(
                int ncol,
                int nrow,
