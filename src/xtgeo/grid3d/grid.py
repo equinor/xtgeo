@@ -4,6 +4,7 @@
 from __future__ import print_function, absolute_import
 
 import json
+import warnings
 from collections import OrderedDict
 
 import numpy as np
@@ -25,6 +26,19 @@ from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Comment on 'asmasked' vs 'activeonly:
+# 'asmasked'=True will return a np.ma array, with some fill_value if
+# if asmasked = False
+#
+# while 'activeonly' will filter
+# out masked entries, or use None or np.nan if 'activeonly' is False
+#
+# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
+#
+# For functions with mask=... ,the should be replaced with asmasked=...
+# -----------------------------------------------------------------------------
 
 # METHODS as wrappers to class init + import
 
@@ -80,9 +94,9 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False):
 
 
 class Grid(Grid3D):
-    """Class for a 3D grid geometry (corner point) with optionally props.
+    """Class for a 3D grid geometry (corner point geometry).
 
-    I.e. the geometric grid cells and active cell indicator.
+    I.e. the geometric grid cells and the active cell indicator.
 
     The grid geometry class instances are normally created when
     importing a grid from file, as it is (currently) too complex to create from
@@ -93,11 +107,17 @@ class Grid(Grid3D):
 
     Example::
 
+        import xtgeo
+        from xtgeo import Grid
+
         geo = Grid()
         geo.from_file('myfile.roff')
-        #
+
         # alternative (make instance directly from file):
         geo = Grid('myfile.roff')
+
+        # or use
+        geo = xtgeo.grid_from_file('myfile.roff')
 
     """
 
@@ -150,7 +170,6 @@ class Grid(Grid3D):
                     prop.__del__()
 
     def __repr__(self):
-        # should be able to newobject = eval(repr(thisobject))
         myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
                 'nrow={0._nrow!r}, nlay={0._nlay!r}, '
                 'filesrc={0._filesrc!r}'
@@ -190,8 +209,8 @@ class Grid(Grid3D):
         """:obj:`list` of :obj:`int`: A dictionary with subgrid name and
         an array as value, or None of not present.
 
-        I.e. a dict on the form {'name1': [1, 2, 3, 4], 'name2:' [5, 6, 7],
-        'name3': [8, 9, 10]}, here meaning 3 subgrids where upper is 4
+        I.e. a dict on the form ``{'name1': [1, 2, 3, 4], 'name2:' [5, 6, 7],
+        'name3': [8, 9, 10]}``, here meaning 3 subgrids where upper is 4
         cells vertically, then 3, then 3. The numbers must sum to NLAY.
 
         The numbering in the arrays are 1 based; meaning uppermost layer is 1
@@ -240,6 +259,17 @@ class Grid(Grid3D):
     def nactive(self):
         """int: Returns the number of active cells (read only)."""
         return len(self.actnum_indices)
+
+    @property
+    def actnum_array(self):
+        """Returns the 3D ndarray which for active cells, 1 for active, 0
+        for inactive, in C order (read only).
+
+        """
+        actnumv = self.get_actnum().values
+        actnumv = ma.filled(actnumv, fill_value=0)
+
+        return actnumv
 
     @property
     def actnum_indices(self):
@@ -357,13 +387,105 @@ class Grid(Grid3D):
         return self._roxindexer
 
     # =========================================================================
+    # Import/export
+    # =========================================================================
+
+    def from_file(self, gfile, fformat=None, initprops=None,
+                  restartprops=None, restartdates=None):
+
+        """Import grid geometry from file, and makes an instance of this class.
+
+        If file extension is missing, then the extension will guess the fformat
+        key, e.g. fformat egrid will be guessed if '.EGRID'. The 'eclipserun'
+        will try to input INIT and UNRST file in addition the grid in 'one go'.
+
+        Arguments:
+            gfile (str): File name to be imported
+            fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
+                (None is default and means 'guess')
+            initprops (str list): Optional, if given, and file format
+                is 'eclipserun', then list the names of the properties here.
+            restartprops (str list): Optional, see initprops
+            restartdates (int list): Optional, required if restartprops
+
+        Example::
+
+            >>> myfile = ../../testdata/Zone/gullfaks.roff
+            >>> xg = Grid()
+            >>> xg.from_file(myfile, fformat='roff')
+            >>> # or shorter:
+            >>> xg = Grid(myfile)  # will guess the file format
+
+        Raises:
+            OSError: if file is not found etc
+        """
+        obj = _grid_import.from_file(self, gfile, fformat=fformat,
+                                     initprops=initprops,
+                                     restartprops=restartprops,
+                                     restartdates=restartdates)
+
+        return obj
+
+    def to_file(self, gfile, fformat='roff'):
+        """Export grid geometry to file.
+
+        Args:
+            gfile (str): Name of output file
+            fformat (str): File format; roff/roff_binary/roff_ascii/
+                grdecl/bgrdecl.
+
+        Example::
+
+            xg.to_file('myfile.roff')
+        """
+
+        if fformat in ('roff', 'roff_binary'):
+            _grid_export.export_roff(self, gfile, 0)
+        elif fformat == 'roff_ascii':
+            _grid_export.export_roff(self, gfile, 1)
+        elif fformat == 'grdecl':
+            _grid_export.export_grdecl(self, gfile, 1)
+        elif fformat == 'bgrdecl':
+            _grid_export.export_grdecl(self, gfile, 0)
+        else:
+            raise SystemExit('Invalid file format')
+
+    def from_roxar(self, projectname, gname, realisation=0,
+                   dimensions_only=False, info=False):
+
+        """Import grid model geometry from RMS project, and makes an instance.
+
+        Args:
+            projectname (str): Name of RMS project
+            gname (str): Name of grid model
+            realisation (int): Realisation number.
+            dimensions_only (bool): If True, only the ncol, nrow, nlay will
+                read. The actual grid geometry will remain empty (None). This
+                will be much faster of only grid size info is needed, e.g.
+                for initalising a grid property.
+            info (bool): If True, various info will printed to screen. This
+                info will depend on version of ROXAPI, and is mainly a
+                developer/debugger feature. Default is False.
+
+
+        """
+
+        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
+                                        dimensions_only, info)
+
+    def to_roxar(self, projectname, gname, realisation=0):
+        """Export a grid to RMS via Roxar API (in prep.)"""
+
+        raise NotImplementedError('Coming soon')
+
+    # =========================================================================
     # Various public methods
     # =========================================================================
 
     def copy(self):
-        """Copy from one existing Grid instance to a new.
+        """Copy from one existing Grid instance to a new unique instance.
 
-        Note that assosisated properties will also be copied.
+        Note that associated properties will also be copied.
 
         Example::
 
@@ -444,9 +566,9 @@ class Grid(Grid3D):
                 Note that coordinates (if xyz=True) is always 64 bit floats.
 
         Returns:
-            Pandas dataframe object
+            A Pandas dataframe object
 
-        Examples::
+        Example::
 
             grd = Grid(gfile1, fformat='egrid')
             xpr = GridProperties()
@@ -459,6 +581,8 @@ class Grid(Grid3D):
 
             df = grd.dataframe()
 
+            # save as CSV file
+            df.to_csv('mygrid.csv')
         """
 
         if self.gridprops is None:
@@ -579,147 +703,27 @@ class Grid(Grid3D):
 
         return None
 
-    def from_file(self, gfile, fformat=None, initprops=None,
-                  restartprops=None, restartdates=None):
-
-        """Import grid geometry from file, and makes an instance of this class.
-
-        If file extension is missing, then the extension will guess the fformat
-        key, e.g. fformat egrid will be guessed if '.EGRID'. The 'eclipserun'
-        will try to input INIT and UNRST file in addition the grid in 'one go'.
-
-        Arguments:
-            gfile (str): File name to be imported
-            fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
-                (None is default and means 'guess')
-            initprops (str list): Optional, if given, and file format
-                is 'eclipserun', then list the names of the properties here.
-            restartprops (str list): Optional, see initprops
-            restartdates (int list): Optional, required if restartprops
-
-        Example::
-
-            >>> myfile = ../../testdata/Zone/gullfaks.roff
-            >>> xg = Grid()
-            >>> xg.from_file(myfile, fformat='roff')
-            >>> # or shorter:
-            >>> xg = Grid(myfile)  # will guess the file format
-
-        Raises:
-            OSError: if file is not found etc
-        """
-        obj = _grid_import.from_file(self, gfile, fformat=fformat,
-                                     initprops=initprops,
-                                     restartprops=restartprops,
-                                     restartdates=restartdates)
-
-        return obj
-
-    def to_file(self, gfile, fformat='roff'):
-        """Export grid geometry to file.
-
-        Args:
-            gfile (str): Name of output file
-            fformat (str): File format; roff/roff_binary/roff_ascii/
-                grdecl/bgrdecl.
-
-        Example::
-
-            xg.to_file('myfile.roff')
-        """
-
-        if fformat in ('roff', 'roff_binary'):
-            _grid_export.export_roff(self, gfile, 0)
-        elif fformat == 'roff_ascii':
-            _grid_export.export_roff(self, gfile, 1)
-        elif fformat == 'grdecl':
-            _grid_export.export_grdecl(self, gfile, 1)
-        elif fformat == 'bgrdecl':
-            _grid_export.export_grdecl(self, gfile, 0)
-        else:
-            raise SystemExit('Invalid file format')
-
-    def from_roxar(self, projectname, gname, realisation=0,
-                   dimensions_only=False, info=False):
-
-        """Import grid model geometry from RMS project, and makes an instance.
-
-        Args:
-            projectname (str): Name of RMS project
-            gname (str): Name of grid model
-            realisation (int): Realisation number.
-            dimensions_only (bool): If True, only the ncol, nrow, nlay will
-                read. The actual grid geometry will remain empty (None). This
-                will be much faster of only grid size info is needed, e.g.
-                for initalising a grid property.
-            info (bool): If True, various info will printed to screen. This
-                info will depend on version of ROXAPI, and is mainly a
-                developer/debugger feature. Default is False.
-
-
-        """
-
-        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
-                                        dimensions_only, info)
-
-    def to_roxar(self, projectname, gname, realisation=0):
-        """Export a grid to RMS via Roxar API (in prep.)"""
-
-        raise NotImplementedError('Coming soon')
-
     def get_cactnum(self):
         """Returns the C pointer object reference to the ACTNUM array."""
         return self._p_actnum_v  # the SWIG pointer to the C structure
 
-    def get_indices(self, names=('I', 'J', 'K')):
-        """Return 3 GridProperty objects for column, row, and layer index,
-
-        Note that the indexes starts with 1, not zero (i.e. upper
-        cell layer is K=1)
-
-        Args:
-            names (tuple): Names of the columns (as property names)
-
-        Examples::
-
-            i_index, j_index, k_index = grd.get_indices()
-
-        """
-
-        grd = np.indices((self.ncol, self.nrow, self.nlay))
-
-        ilist = []
-        for axis in range(3):
-            index = grd[axis]
-            index = index.flatten(order='C')
-            index = index + 1
-            index = index.astype(np.int32)
-
-            idx = xtgeo.grid3d.GridProperty(ncol=self._ncol, nrow=self._nrow,
-                                            nlay=self._nlay, values=index,
-                                            name=names[axis], discrete=True)
-            codes = dict()
-            for icn in range(index.min(), index.max() + 1):
-                codes[icn] = str(icn)
-
-            idx.codes = codes
-            ilist.append(idx)
-
-        return ilist
-
-    def get_actnum(self, name='ACTNUM', mask=False):
+    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
 
         Args:
             name (str): name of property in the XTGeo GridProperty object.
-            mask (bool): Opposite to most, actnum is returned will all cells
-                as default. Use mask=True to make 0 entries masked.
+            asmasked (bool): Actnum is returned with all cells shown
+                as default. Use asmasked=True to make 0 entries masked.
+            mask (bool): Deprecated, use asmasked instead!
 
         Example::
 
             act = mygrid.get_actnum()
             print('{}% cells are active'.format(act.values.mean() * 100))
         """
+
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
 
         act = xtgeo.grid3d.GridProperty(ncol=self._ncol, nrow=self._nrow,
                                         nlay=self._nlay,
@@ -732,7 +736,7 @@ class Grid(Grid3D):
         carray = self._p_actnum_v  # the SWIG pointer to the C structure
         _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
 
-        if mask:
+        if asmasked:
             act.values = ma.masked_equal(act.values, 0)
 
         act.codes = {0: '0', 1: '1'}
@@ -758,7 +762,7 @@ class Grid(Grid3D):
         self._p_actnum_v = _gridprop_lowlevel.update_carray(
             actnum, discrete=True)
 
-    def get_dz(self, name='dZ', flip=True, mask=True):
+    def get_dz(self, name='dZ', flip=True, asmasked=True, mask=None):
         """
         Return the dZ as GridProperty object.
 
@@ -768,13 +772,16 @@ class Grid(Grid3D):
         Args:
             name (str): name of property
             flip (bool): Use False for Petrel grids (experimental)
-            mask (bool): True if only for active cells, False for all cells
+            asmasked (bool): True if only for active cells, False for all cells
+            mask (bool): Deprecated, use asmasked instead!
 
         Returns:
             A XTGeo GridProperty object
         """
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
 
-        deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, mask=mask)
+        deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, mask=asmasked)
 
         return deltaz
 
@@ -796,44 +803,73 @@ class Grid(Grid3D):
         # return the property objects
         return deltax, deltay
 
-    def get_ijk(self, names=('IX', 'JY', 'KZ'), mask=True, zero_base=False):
+    def get_indices(self, names=('I', 'J', 'K')):
+        """Return 3 GridProperty objects for column, row, and layer index,
+
+        Note that the indexes starts with 1, not zero (i.e. upper
+        cell layer is K=1)
+
+        Args:
+            names (tuple): Names of the columns (as property names)
+
+        Examples::
+
+            i_index, j_index, k_index = grd.get_indices()
+
+        """
+
+        warnings.warn('Use method get_ijk() instead', DeprecationWarning)
+        return self.get_ijk(names=names, asmasked=False)
+
+    def get_ijk(self, names=('IX', 'JY', 'KZ'), asmasked=True, mask=None,
+                zerobased=False):
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
         J counter, K counter.
 
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
-            mask: If True, UNDEF cells are masked, default is True
-            zero_base: If True, counter start from 0, otherwise 1 (default=1).
+            asmasked: If True, UNDEF cells are masked, default is True
+            mask (bool): Deprecated, use asmasked instead!
+            zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
 
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
+
         ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,
-                                           mask=mask, zero_base=zero_base)
+                                           mask=asmasked, zero_base=zerobased)
 
         # return the objects
         return ixc, jyc, kzc
 
-    def get_xyz(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS'), mask=True):
+    def get_xyz(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS'), asmasked=True,
+                mask=None):
         """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,
         ycoordinate, zcoordinate.
 
         The values are mid cell values. Note that ACTNUM is
         ignored, so these is also extracted for UNDEF cells (which may have
-        weird coordinates). However, the option mask=True will mask the numpies
-        for undef cells.
+        weird coordinates). However, the option asmasked=True will mask
+        the numpies for undef cells.
 
         Args:
             names: a 3 x tuple of names per property (default is X_UTME,
             Y_UTMN, Z_TVDSS).
-            mask: If True, then only active cells.
+            asmasked: If True, then only active cells.
+            mask (bool): Deprecated, use asmasked instead!
         """
 
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
+
         xcoord, ycoord, zcoord = _grid_etc1.get_xyz(self, names=names,
-                                                    mask=mask)
+                                                    mask=asmasked)
 
         # return the objects
         return xcoord, ycoord, zcoord
 
-    def get_xyz_cell_corners(self, ijk=(1, 1, 1), mask=True, zerobased=False):
+    def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, mask=None,
+                             zerobased=False):
         """Return a 8 * 3 tuple x, y, z for each corner.
 
         .. code-block:: none
@@ -853,11 +889,12 @@ class Grid(Grid3D):
         Args:
             ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
                 unless zerobased is True)
-            mask (bool): Skip undef cells if set to True.
+            activeonly (bool): Skip undef cells if set to True.
+            mask (bool): Deprecated, use activeonly instead!
 
         Returns:
             A tuple with 24 elements (x1, y1, z1, ... x8, y8, z8)
-                for 8 corners. None if cell is inactive and mask=True.
+                for 8 corners. None if cell is inactive and activeonly=True.
 
         Example::
 
@@ -869,7 +906,10 @@ class Grid(Grid3D):
             RuntimeWarning if spesification is invalid.
         """
 
-        clist = _grid_etc1.get_xyz_cell_corners(self, ijk=ijk, mask=mask,
+        if mask is not None:
+            activeonly = self._evaluate_mask(mask)
+
+        clist = _grid_etc1.get_xyz_cell_corners(self, ijk=ijk, mask=activeonly,
                                                 zerobased=zerobased)
 
         return clist
@@ -1179,3 +1219,17 @@ class Grid(Grid3D):
                                                   perflogname=perflogname)
 
         return reports
+
+    # -------------------------------------------------------------------------
+    # Private function
+    # -------------------------------------------------------------------------
+
+    def _evaluate_mask(self, mask):
+        xtg.warn('Use of keyword "mask" in argument list is deprecated, '
+                 'use "asmasked" instead!')
+        if mask is False:
+            return False
+        elif mask is True:
+            return True
+        else:
+            raise ValueError('Wrong value of keyword "mask"')
