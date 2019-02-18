@@ -29,15 +29,16 @@ logger = xtg.functionlogger(__name__)
 
 # -----------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
-# 'asmasked'=True will return a np.ma array, with some fill_value if
-# if asmasked = False
 #
-# while 'activeonly' will filter
-# out masked entries, or use None or np.nan if 'activeonly' is False
+# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
+# return a np.ndarray
+#
+# The 'activeonly' will filter out masked entries, or use None or np.nan
+# if 'activeonly' is False.
 #
 # Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
 #
-# For functions with mask=... ,the should be replaced with asmasked=...
+# For functions with mask=... ,they should be replaced with asmasked=...
 # -----------------------------------------------------------------------------
 
 # METHODS as wrappers to class init + import
@@ -1224,7 +1225,8 @@ class Grid(Grid3D):
     # Private function
     # -------------------------------------------------------------------------
 
-    def _evaluate_mask(self, mask):
+    @staticmethod
+    def _evaluate_mask(mask):
         xtg.warn('Use of keyword "mask" in argument list is deprecated, '
                  'use "asmasked" instead!')
         if mask is False:

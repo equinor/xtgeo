@@ -57,7 +57,7 @@ def from_file(self, gfile, fformat=None, initprops=None,
     if os.path.isfile(test_gfile):
         logger.info('File %s exists OK', test_gfile)
     else:
-        logger.critical('No such file: %s', test_gfile)
+        raise IOError('No such file: {}'.format(test_gfile))
 
     if fformat == 'roff':
         _grid_import_roff.import_roff(self, gfile)

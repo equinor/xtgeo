@@ -18,7 +18,6 @@ values1d property, e.g.::
 """
 from __future__ import print_function, absolute_import
 
-import os.path
 import copy
 
 import numpy as np
@@ -27,12 +26,9 @@ import numpy.ma as ma  # pylint: disable=useless-import-alias
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
-from xtgeo.common.exceptions import DateNotFoundError, KeywordFoundNoDateError
-from xtgeo.common.exceptions import KeywordNotFoundError
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
-from xtgeo.common import _get_fhandle
 from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
@@ -41,6 +37,20 @@ from xtgeo.grid3d import _gridprop_export
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Comment on 'asmasked' vs 'activeonly:
+#
+# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
+# return a np.ndarray
+#
+# The 'activeonly' will filter out masked entries, or use None or np.nan
+# if 'activeonly' is False.
+#
+# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
+#
+# For functions with mask=... ,they should be replaced with asmasked=...
+# -----------------------------------------------------------------------------
 
 # pylint: disable=logging-format-interpolation, too-many-public-methods
 
@@ -470,154 +480,6 @@ class GridProperty(Grid3D):
         return self._undef_limit
 
     # =========================================================================
-    # Various public methods
-    # =========================================================================
-    def describe(self):
-        """Describe an instance by printing to stdout"""
-
-        dsc = XTGDescription()
-        dsc.title('Description of GridProperty instance')
-        dsc.txt('Object ID', id(self))
-        dsc.txt('Name', self.name)
-        dsc.txt('Date', self.date)
-        dsc.txt('File source', self._filesrc)
-        dsc.txt('Discrete status', self._isdiscrete)
-        dsc.txt('Codes', self._codes)
-        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
-        np.set_printoptions(threshold=16)
-        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
-        np.set_printoptions(threshold=1000)
-        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
-                self.values.std(), self.values.min(), self.values.max())
-        itemsize = self.values.itemsize
-        msize = float(self.values.size * itemsize) / (1024 * 1024 * 1024)
-        dsc.txt('Roxar datatype', self.roxar_dtype)
-        dsc.txt('Minimum memory usage of array (GB)', msize)
-
-        dsc.flush()
-
-    def get_npvalues3d(self, fill_value=None):
-        """Get a pure numpy copy (not masked) copy of the values, 3D shape.
-
-        Note that Numpy dtype will be reset; int32 if discrete or float64 if
-        continuous. The reason for this is to avoid inconsistensies regarding
-        UNDEF values.
-
-        Args:
-            fill_value: Value of masked entries. Default is None which
-                means the XTGeo UNDEF value (a high number), different
-                for a continuous or discrete property
-        """
-        # this is a function, not a property by design
-
-        if fill_value is None:
-            if self._isdiscrete:
-                fvalue = _cxtgeo.UNDEF_INT
-                dtype = np.int32
-            else:
-                fvalue = _cxtgeo.UNDEF
-                dtype = np.float64
-        else:
-            fvalue = fill_value
-            dtype = np.float64
-
-        val = self.values.copy().astype(dtype)
-        npv3d = ma.filled(val, fill_value=fvalue)
-        del val
-
-        return npv3d
-
-    def get_actnum(self, name='ACTNUM', mask=False):
-        """Return an ACTNUM GridProperty object.
-
-        Args:
-            name (str): name of property in the XTGeo GridProperty object.
-            mask (bool): Opposite to most, actnum is returned will all cells
-                as default. Use mask=True to make 0 entries masked.
-
-        Example::
-
-            act = myprop.get_actnum()
-            print('{}% cells are active'.format(act.values.mean() * 100))
-        """
-
-        act = GridProperty(ncol=self._ncol, nrow=self._nrow,
-                           nlay=self._nlay,
-                           name=name, discrete=True)
-
-        orig = self.values
-        vact = np.ones(self.values.shape)
-        print(vact)
-        vact[orig.mask] = 0
-        print(vact)
-
-        if mask:
-            vact = ma.masked_equal(vact, 0)
-
-        act.values = vact.astype(np.int32)
-        act.codes = {0: '0', 1: '1'}
-
-        # return the object
-        return act
-
-    def get_active_npvalues1d(self):
-        """Return the grid property as a 1D numpy array (copy), active
-        cells only.
-        """
-        vact = self.values1d.copy()
-        vact = vact[~vact.mask]
-        return np.array(vact)
-
-    def copy(self, newname=None):
-        """Copy a xtgeo.grid3d.GridProperty() object to another instance.
-
-        ::
-
-            >>> mycopy = xx.copy(newname='XPROP')
-        """
-
-        if newname is None:
-            newname = self.name
-
-        xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
-                             values=self._values.copy(), name=newname)
-
-        xprop.geometry = self._geometry
-        xprop.codes = copy.deepcopy(self._codes)
-        xprop.isdiscrete = self._isdiscrete
-        xprop.date = self._date
-        xprop.roxorigin = self._roxorigin
-        xprop.roxar_dtype = self._roxar_dtype
-
-        if self._filesrc is not None and '(copy)' not in self._filesrc:
-            xprop.filesrc = self._filesrc + ' (copy)'
-        elif self._filesrc is not None:
-            xprop.filesrc = self._filesrc
-
-        return xprop
-
-    def mask_undef(self):
-        """Make UNDEF values masked."""
-        if self._isdiscrete:
-            self._values = ma.masked_greater(self._values, self._undef_ilimit)
-        else:
-            self._values = ma.masked_greater(self._values, self._undef_limit)
-
-    def crop(self, spec):
-        """Crop a property, see method under grid"""
-
-        (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
-
-        # compute size of new cropped grid
-        self._ncol = ic2 - ic1 + 1
-        self._nrow = jc2 - jc1 + 1
-        self._nlay = kc2 - kc1 + 1
-
-        newvalues = self.values.copy()
-
-        self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
-
-    # =========================================================================
     # Import and export
     # =========================================================================
 
@@ -730,7 +592,164 @@ class GridProperty(Grid3D):
             self, projectname, gname, pname, saveproject=saveproject,
             realisation=realisation)
 
-    def get_xy_value_lists(self, grid=None, mask=True):
+    # =========================================================================
+    # Various public methods
+    # =========================================================================
+
+    def describe(self):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of GridProperty instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('Name', self.name)
+        dsc.txt('Date', self.date)
+        dsc.txt('File source', self._filesrc)
+        dsc.txt('Discrete status', self._isdiscrete)
+        dsc.txt('Codes', self._codes)
+        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
+        np.set_printoptions(threshold=16)
+        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
+        np.set_printoptions(threshold=1000)
+        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
+                self.values.std(), self.values.min(), self.values.max())
+        itemsize = self.values.itemsize
+        msize = float(self.values.size * itemsize) / (1024 * 1024 * 1024)
+        dsc.txt('Roxar datatype', self.roxar_dtype)
+        dsc.txt('Minimum memory usage of array (GB)', msize)
+
+        dsc.flush()
+
+    def get_npvalues3d(self, fill_value=None):
+        """Get a pure numpy copy (not masked) copy of the values, 3D shape.
+
+        Note that Numpy dtype will be reset; int32 if discrete or float64 if
+        continuous. The reason for this is to avoid inconsistensies regarding
+        UNDEF values.
+
+        Args:
+            fill_value: Value of masked entries. Default is None which
+                means the XTGeo UNDEF value (a high number), different
+                for a continuous or discrete property
+        """
+        # this is a function, not a property by design
+
+        if fill_value is None:
+            if self._isdiscrete:
+                fvalue = _cxtgeo.UNDEF_INT
+                dtype = np.int32
+            else:
+                fvalue = _cxtgeo.UNDEF
+                dtype = np.float64
+        else:
+            fvalue = fill_value
+            dtype = np.float64
+
+        val = self.values.copy().astype(dtype)
+        npv3d = ma.filled(val, fill_value=fvalue)
+        del val
+
+        return npv3d
+
+    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
+        """Return an ACTNUM GridProperty object.
+
+        Note that this method is similar to, but not identical to,
+        the job with sam name in Grid(). Here, the maskedarray of the values
+        is applied to deduce the ACTNUM array.
+
+        Args:
+            name (str): name of property in the XTGeo GridProperty object.
+            asmasked (bool): Actnum is returned with all cells shown
+                as default. Use asmasked=True to make 0 entries masked.
+            mask (bool): Deprecated, use asmasked instead!
+
+        Example::
+
+            act = mygrid.get_actnum()
+            print('{}% cells are active'.format(act.values.mean() * 100))
+        """
+
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
+
+        act = GridProperty(ncol=self._ncol, nrow=self._nrow,
+                           nlay=self._nlay,
+                           name=name, discrete=True)
+
+        orig = self.values
+        vact = np.ones(self.values.shape)
+        print(vact)
+        vact[orig.mask] = 0
+        print(vact)
+
+        if asmasked:
+            vact = ma.masked_equal(vact, 0)
+
+        act.values = vact.astype(np.int32)
+        act.codes = {0: '0', 1: '1'}
+
+        # return the object
+        return act
+
+    def get_active_npvalues1d(self):
+        """Return the grid property as a 1D numpy array (copy), active
+        cells only.
+        """
+        vact = self.values1d.copy()
+        vact = vact[~vact.mask]
+        return np.array(vact)
+
+    def copy(self, newname=None):
+        """Copy a xtgeo.grid3d.GridProperty() object to another instance.
+
+        ::
+
+            >>> mycopy = xx.copy(newname='XPROP')
+        """
+
+        if newname is None:
+            newname = self.name
+
+        xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
+                             values=self._values.copy(), name=newname)
+
+        xprop.geometry = self._geometry
+        xprop.codes = copy.deepcopy(self._codes)
+        xprop.isdiscrete = self._isdiscrete
+        xprop.date = self._date
+        xprop.roxorigin = self._roxorigin
+        xprop.roxar_dtype = self._roxar_dtype
+
+        if self._filesrc is not None and '(copy)' not in self._filesrc:
+            xprop.filesrc = self._filesrc + ' (copy)'
+        elif self._filesrc is not None:
+            xprop.filesrc = self._filesrc
+
+        return xprop
+
+    def mask_undef(self):
+        """Make UNDEF values masked."""
+        if self._isdiscrete:
+            self._values = ma.masked_greater(self._values, self._undef_ilimit)
+        else:
+            self._values = ma.masked_greater(self._values, self._undef_limit)
+
+    def crop(self, spec):
+        """Crop a property, see method under grid"""
+
+        (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
+
+        # compute size of new cropped grid
+        self._ncol = ic2 - ic1 + 1
+        self._nrow = jc2 - jc1 + 1
+        self._nlay = kc2 - kc1 + 1
+
+        newvalues = self.values.copy()
+
+        self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
+
+    def get_xy_value_lists(self, grid=None, activeonly=True):
         """Get lists of xy coords and values for Webportal format.
 
         The coordinates are on the form (two cells)::
@@ -740,7 +759,7 @@ class GridProperty(Grid3D):
 
         Args:
             grid (object): The XTGeo Grid object for the property
-            mask (bool): If true (default), inactive cells will be omitted,
+            activeonly (bool): If true (default), active cells only,
                 otherwise cell geometries will be listed and property will
                 have value -999 in undefined cells.
 
@@ -752,13 +771,14 @@ class GridProperty(Grid3D):
             prop.from_file('../xtgeo-testdata/3dgrids/bri/b_poro.roff',
                            grid=grid, name='PORO')
 
-            clist, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+            clist, valuelist = prop.get_xy_value_lists(grid=grid,
+                                                       activeonly=False)
 
 
         """
 
         clist, vlist = _gridprop_op1.get_xy_value_lists(self, grid=grid,
-                                                        mask=mask)
+                                                        mask=activeonly)
         return clist, vlist
 
     def get_values_by_ijk(self, iarr, jarr, karr, base=1):
@@ -903,3 +923,18 @@ class GridProperty(Grid3D):
     def set_outside(self, poly, value):
         """Set a value (scalar) outside polygons"""
         self.operation_polygons(poly, value, opname='set', inside=False)
+
+    # -------------------------------------------------------------------------
+    # Private function
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def _evaluate_mask(mask):
+        xtg.warn('Use of keyword "mask" in argument list is deprecated, '
+                 'use "asmasked" instead!')
+        if mask is False:
+            return False
+        elif mask is True:
+            return True
+        else:
+            raise ValueError('Wrong value of keyword "mask"')

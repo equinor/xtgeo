@@ -419,7 +419,7 @@ def test_get_xy_values_for_webportal():
     grid = Grid(testfile10)
     prop = GridProperty(testfile11, grid=grid, name='PORO')
 
-    coord, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+    coord, valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
 
     logger.info('Cell 1 1 1 coords\n{}.'.format(coord[0][0]))
     assert coord[0][0][0] == (454.875, 318.5)
@@ -487,7 +487,7 @@ def test_values_in_polygon():
 #     grid = Grid(testfile3)
 #     prop = GridProperty(testfile4, grid=grid, name='PORO')
 
-#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
 
 #     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
 #     # assert coord[0][0][0] == (454.875, 318.5)
