@@ -7,7 +7,7 @@ Usage
 .. comments
    These examples are ran in Jupyter notebook...
 
-XTGeo is python libraray to work with surfaces, grids, cubes, wells, etc,
+XTGeo is Python library to work with surfaces, grids, cubes, wells, etc,
 possibly in combinations.
 
 ------------------
