@@ -4,12 +4,11 @@
 from __future__ import print_function, absolute_import
 
 import abc
-import warnings
 import six
 
-import xtgeo
+from xtgeo.common import XTGeoDialog
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
@@ -38,3 +37,15 @@ class Grid3D(object):
     def nlay(self):
         """ Returns the NLAY (NZ or Nlayers) number of cells"""
         return self._nlay
+
+    @abc.abstractmethod
+    def _evaluate_mask(self, mask):
+        xtg.warn('Use of keyword "mask" in argument list is deprecated, '
+                 'use alternative specified in API instead! In: {}'
+                 .format(self))
+        if mask is False:
+            return False
+        elif mask is True:
+            return True
+        else:
+            raise ValueError('Wrong value or use of keyword "mask"')

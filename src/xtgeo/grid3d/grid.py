@@ -418,7 +418,7 @@ class Grid(Grid3D):
             >>> xg = Grid(myfile)  # will guess the file format
 
         Raises:
-            OSError: if file is not found etc
+            IOError: if file is not found etc
         """
         obj = _grid_import.from_file(self, gfile, fformat=fformat,
                                      initprops=initprops,
@@ -1223,15 +1223,7 @@ class Grid(Grid3D):
 
     # -------------------------------------------------------------------------
     # Private function
-    # -------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    @staticmethod
-    def _evaluate_mask(mask):
-        xtg.warn('Use of keyword "mask" in argument list is deprecated, '
-                 'use "asmasked" instead!')
-        if mask is False:
-            return False
-        elif mask is True:
-            return True
-        else:
-            raise ValueError('Wrong value of keyword "mask"')
+    def _evaluate_mask(self, mask):
+        return super(Grid, self)._evaluate_mask(mask)

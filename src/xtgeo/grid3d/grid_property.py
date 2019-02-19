@@ -928,13 +928,5 @@ class GridProperty(Grid3D):
     # Private function
     # -------------------------------------------------------------------------
 
-    @staticmethod
-    def _evaluate_mask(mask):
-        xtg.warn('Use of keyword "mask" in argument list is deprecated, '
-                 'use "asmasked" instead!')
-        if mask is False:
-            return False
-        elif mask is True:
-            return True
-        else:
-            raise ValueError('Wrong value of keyword "mask"')
+    def _evaluate_mask(self, mask):
+        return super(GridProperty, self)._evaluate_mask(mask)

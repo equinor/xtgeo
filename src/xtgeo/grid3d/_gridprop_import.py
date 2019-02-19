@@ -46,14 +46,12 @@ def from_file(self, pfile, fformat=None, name='unknown',
         if os.path.isfile(pfile):
             logger.debug('File {} exists OK'.format(pfile))
         else:
-            logger.critical('No such file: {}'.format(pfile))
-            raise IOError
+            raise IOError('No such file: {}'.format(pfile))
 
         # work on file extension
         _froot, fext = os.path.splitext(pfile)
         if fformat is None or fformat == 'guess':
             if not fext:
-                logger.critical('File extension missing. STOP')
                 raise ValueError('File extension missing. STOP')
             else:
                 fformat = fext.lower().replace('.', '')
@@ -539,7 +537,7 @@ def _import_roff_v1(self, pfile, name):
 
     if ier == -1:
         msg = 'Cannot find property name {}'.format(name)
-        logger.critical(msg)
+        logger.warning(msg)
         return ier
 
     self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
