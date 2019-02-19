@@ -433,7 +433,7 @@ class Grid(Grid3D):
         Args:
             gfile (str): Name of output file
             fformat (str): File format; roff/roff_binary/roff_ascii/
-                grdecl/bgrdecl.
+                grdecl/bgrdecl/egrid.
 
         Example::
 
@@ -448,6 +448,8 @@ class Grid(Grid3D):
             _grid_export.export_grdecl(self, gfile, 1)
         elif fformat == 'bgrdecl':
             _grid_export.export_grdecl(self, gfile, 0)
+        elif fformat == 'egrid':
+            _grid_export.export_egrid(self, gfile)
         else:
             raise SystemExit('Invalid file format')
 

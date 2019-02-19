@@ -1450,6 +1450,18 @@ void grd3d_export_grdecl(
                          int debug
                          );
 
+void grd3d_export_egrid(
+                        int nx,
+                        int ny,
+                        int nz,
+                        double *p_coord_v,
+                        double *p_zcorn_v,
+                        int *p_actnum_v,
+                        char *filename,
+                        int mode,
+                        int debug
+                        );
+
 void grd3d_export_grdeclprop(
                              int nx,
                              int ny,

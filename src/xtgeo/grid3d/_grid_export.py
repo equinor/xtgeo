@@ -53,3 +53,13 @@ def export_grdecl(self, gfile, mode):
     _cxtgeo.grd3d_export_grdecl(self._ncol, self._nrow, self._nlay,
                                 self._p_coord_v, self._p_zcorn_v,
                                 self._p_actnum_v, gfile, mode, XTGDEBUG)
+
+
+def export_egrid(self, gfile):
+    """Export grid to Eclipse EGRID format, binary."""
+
+    logger.debug('Export to binary EGRID...')
+
+    _cxtgeo.grd3d_export_egrid(self._ncol, self._nrow, self._nlay,
+                               self._p_coord_v, self._p_zcorn_v,
+                               self._p_actnum_v, gfile, 0, XTGDEBUG)
