@@ -1774,6 +1774,22 @@ class RegularSurface(object):
 
         * 'var' for variance
 
+        * 'maxpos' for maximum of positive values
+
+        * 'maxneg' for maximum of negative values ??
+
+        * 'maxabs' for maximum of absolute values
+
+        * 'sumpos' for sum of positive values
+
+        * 'sumneg' for sum of negative values
+
+        * 'meanabs' for mean of absolute values
+
+        * 'meanpos' for mean of positive values
+
+        * 'meanneg' for mean of negative values
+
         Args:
             cube (Cube): Instance of a Cube()
             zsurf (RegularSurface): Instance of a depth (or time) map, which

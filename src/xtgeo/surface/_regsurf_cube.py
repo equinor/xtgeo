@@ -370,7 +370,7 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
 
 
 def _attvalues(attribute, stacked):
-    """Attibute values computed in numpy.ma stack."""
+    """Attribute values computed in numpy.ma stack."""
     if attribute == 'max':
         attvalues = ma.max(stacked, axis=2)
     elif attribute == 'min':
@@ -381,6 +381,24 @@ def _attvalues(attribute, stacked):
         attvalues = ma.var(stacked, axis=2)
     elif attribute == 'mean':
         attvalues = ma.mean(stacked, axis=2)
+    elif attribute == 'maxpos':
+        attvalues = ma.max(stacked[stacked >= 0.0], axis=2)
+    elif attribute == 'maxneg':  # ~ minimum of negative values?
+        attvalues = ma.min(stacked[stacked < 0.0], axis=2)
+    elif attribute == 'maxabs':
+        attvalues = ma.max(abs(stacked), axis=2)
+    elif attribute == 'sumpos':
+        attvalues = ma.sum(stacked[stacked >= 0.0], axis=2)
+    elif attribute == 'sumneg':
+        attvalues = ma.sum(stacked[stacked < 0.0], axis=2)
+    elif attribute == 'sumabs':
+        attvalues = ma.sum(abs(stacked), axis=2)
+    elif attribute == 'meanabs':
+        attvalues = ma.mean(abs(stacked), axis=2)
+    elif attribute == 'meanpos':
+        attvalues = ma.mean(stacked[stacked >= 0.0], axis=2)
+    elif attribute == 'meanneg':
+        attvalues = ma.mean(stacked[stacked < 0.0], axis=2)
     else:
         etxt = 'Invalid attribute applied: {}'.format(attribute)
         raise ValueError(etxt)
