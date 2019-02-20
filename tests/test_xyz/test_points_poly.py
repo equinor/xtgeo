@@ -136,3 +136,36 @@ def test_points_in_polygon():
 
     print(poi.dataframe)
     poi.to_file('TMP/poi_test.poi')
+
+
+def test_rescale_polygon():
+    """Take a plygons set and rescale/resample"""
+
+    pol = Polygons(POLSET2)
+
+    df = pol.dataframe[0:3]
+
+    df.at[0, 'X_UTME'] = 0.0
+    df.at[1, 'X_UTME'] = 100.0
+    df.at[2, 'X_UTME'] = 100.0
+
+    df.at[0, 'Y_UTMN'] = 20.0
+    df.at[1, 'Y_UTMN'] = 20.0
+    df.at[2, 'Y_UTMN'] = 100.0
+
+    df.at[0, 'Z_TVDSS'] = 0.0
+    df.at[1, 'Z_TVDSS'] = 1000.0
+    df.at[2, 'Z_TVDSS'] = 2000.0
+
+    pol.dataframe = df
+
+    pol.rescale(20)
+    logger.info(pol.dataframe)
+
+    assert pol.dataframe.at[1, 'X_UTME'] == 20.0
+
+    pol = Polygons(POLSET2)
+    pol.rescale(100)
+
+    logger.info(pol.dataframe)
+    assert abs(pol.dataframe.at[369, 'X_UTME'] - 462708.614654) < 0.0001

@@ -351,6 +351,21 @@ class Polygons(XYZ):
 
         return (xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def rescale(self, distance):
+        """Rescale (resample) by using a new horizontal increment.
+
+        As usual, the instance is updated in-place.
+
+        If the distance is larger than the total input poly-line length,
+        nothing is done. Note that the result distance may differ from then
+        requested distance to rounding to fit original length.
+
+        Args:
+             distance (float): New distance between points
+        """
+
+        _xyz_oper.rescale_polygons(self, distance=distance)
+
     # =========================================================================
     # Operations restricted to inside/outside polygons
     # =========================================================================
