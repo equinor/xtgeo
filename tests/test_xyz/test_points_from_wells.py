@@ -147,9 +147,6 @@ def test_get_faciesfraction_some_wells():
     logger.info('Number of wells is %s, DATAFRAME:\n, %s', nwell,
                 mypoints.dataframe)
 
-    print(mypoints.dataframe)
-    mypoints.dataframe.to_csv('xx.csv')
-
     myquery = 'WELLNAME == "OP_1" and ZONE == 1'
     usedf = mypoints.dataframe.query(myquery)
 

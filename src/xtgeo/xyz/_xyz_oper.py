@@ -90,3 +90,46 @@ def operation_polygons(self, poly, value, opname='add', inside=True,
     dfwork.drop(['_PROXY'], inplace=True, axis=1)
 
     self._df = dfwork.reset_index(drop=True)
+
+
+def rescale_polygons(self, distance=10):
+    """Rescale (resample) a polygons segment"""
+
+    if not self._ispolygons:
+        raise ValueError('Not a Polygons object')
+
+    idgroups = self.dataframe.groupby(self.pname)
+
+    dfrlist = []
+    for idx, grp in idgroups:
+        pxcor = grp[self.xname].values
+        pycor = grp[self.yname].values
+        pzcor = grp[self.zname].values
+        spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
+
+        new_spoly = _redistribute_vertices(spoly, distance)
+
+        dfr = pd.DataFrame(np.array(new_spoly),
+                           columns=[self.xname, self.yname, self.zname])
+        dfr[self.pname] = idx
+        dfrlist.append(dfr)
+
+    dfr = pd.concat(dfrlist)
+    self.dataframe = dfr.reset_index(drop=True)
+
+
+def _redistribute_vertices(geom, distance):
+    """Local function to interpolate in a polyline"""
+    if geom.geom_type == 'LineString':
+        num_vert = int(round(geom.length / distance))
+        if num_vert == 0:
+            num_vert = 1
+        return sg.LineString(
+            [geom.interpolate(float(n) / num_vert, normalized=True)
+             for n in range(num_vert + 1)])
+    elif geom.geom_type == 'MultiLineString':
+        parts = [_redistribute_vertices(part, distance)
+                 for part in geom]
+        return type(geom)([p for p in parts if not p.is_empty])
+    else:
+        raise ValueError('Unhandled geometry %s', (geom.geom_type,))

@@ -6,10 +6,12 @@ from __future__ import print_function
 
 import os.path
 import sys
+import warnings
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid3D
+from xtgeo.common import XTGDescription
 
 from xtgeo.grid3d import _gridprops_io
 from xtgeo.grid3d import _gridprops_etc
@@ -17,6 +19,20 @@ from xtgeo.grid3d import _grid_etc1
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Comment on 'asmasked' vs 'activeonly:
+#
+# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
+# return a np.ndarray
+#
+# The 'activeonly' will filter out masked entries, or use None or np.nan
+# if 'activeonly' is False.
+#
+# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
+#
+# For functions with mask=... ,they should be replaced with asmasked=...
+# -----------------------------------------------------------------------------
 
 
 class GridProperties(Grid3D):
@@ -34,6 +50,24 @@ class GridProperties(Grid3D):
         self._props = []            # list of GridProperty objects
         self._names = []            # list of GridProperty names
         self._dates = []            # list of dates (_after_ import) YYYYDDMM
+
+    def __del__(self):
+        logger.info('DELETING GridProperties instance')
+
+    def __repr__(self):
+        myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
+                'nrow={0._nrow!r}, nlay={0._nlay!r}, '
+                'filesrc={0._names!r}'
+                .format(self, id(self)))
+        return myrp
+
+    def __str__(self):
+        # user friendly print
+        return str(self.describe())
+
+    # =========================================================================
+    # Properties:
+    # =========================================================================
 
     @property
     def names(self):
@@ -120,6 +154,17 @@ class GridProperties(Grid3D):
 
         return new
 
+    def describe(self):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of GridProperties instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
+        dsc.txt('Attached grid props objects (names)', self._names)
+
+        dsc.flush()
+
     def get_prop_by_name(self, name):
         """Find and return a property object (GridProperty) by name."""
 
@@ -146,7 +191,8 @@ class GridProperties(Grid3D):
                 raise ValueError('Input property is not a valid GridProperty '
                                  'object')
 
-    def get_ijk(self, names=['IX', 'JY', 'KZ'], zero_base=False, mask=False):
+    def get_ijk(self, names=['IX', 'JY', 'KZ'], zero_base=False,
+                asmasked=False, mask=None):
 
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
         J counter, K counter.
@@ -157,29 +203,44 @@ class GridProperties(Grid3D):
             zero_base: If True, counter start from 0, otherwise 1 (default=1).
         """
 
-        # resuse method from grid, but no mask
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
+
+        # resuse method from grid
         ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,
-                                           zero_base=zero_base, mask=mask)
+                                           zero_base=zero_base,
+                                           mask=asmasked)
 
         # return the objects
         return ixc, jyc, kzc
 
-    def get_actnum(self, name='ACTNUM', mask=False):
+    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
 
         Args:
             name (str): name of property in the XTGeo GridProperty object.
-            mask (bool): Opposite to most, actnum is returned will all cells
-                as default. Use mask=True to make 0 entries masked.
+            asmasked (bool): ACTNUM is returned with all cells
+                as default. Use asmasked=True to make 0 entries masked.
+            mask (bool): Deprecated, use asmasked instead.
 
         Example::
 
             act = myprops.get_actnum()
             print('{}% cells are active'.format(act.values.mean() * 100))
+
+        Returns:
+            A GridProperty instance of ACTNUM, or None if no props present.
         """
 
+        if mask is not None:
+            asmasked = super(GridProperties, self)._evaluate_mask(mask)
+
         # borrow function from GridProperty class:
-        return self._props[0].get_actnum(name=name, mask=mask)
+        if self._props:
+            return self._props[0].get_actnum(name=name, mask=asmasked)
+        else:
+            warnings.warn('No gridproperty in list', UserWarning)
+            return None
 
     # =========================================================================
     # Import and export
@@ -242,15 +303,19 @@ class GridProperties(Grid3D):
             sys.exit(1)
 
         if fformat.lower() == 'roff':
-            self._import_roff(pfile, names)
+            lst = list()
+            for name in names:
+                lst.append(xtgeo.GridProperty(pfile, fformat='roff',
+                                              name=name))
+            self.append_props(lst)
+
         elif fformat.lower() in ('init', 'unrst'):
             _gridprops_io.import_ecl_output(self, pfile,
                                             dates=dates, grid=grid,
                                             names=names,
                                             namestyle=namestyle)
         else:
-            logger.warning('Invalid file format')
-            sys.exit(1)
+            raise IOError('Invalid file format')
 
     def to_file(self, pfile, fformat='roff'):
         """Export grid property to file. NB not working!
@@ -371,3 +436,10 @@ class GridProperties(Grid3D):
                                          dataframe=dataframe)
 
         return dlist
+
+    # -------------------------------------------------------------------------
+    # Private function
+    # ------------------------------------------------------------------------
+
+    def _evaluate_mask(self, mask):
+        return super(GridProperties, self)._evaluate_mask(mask)

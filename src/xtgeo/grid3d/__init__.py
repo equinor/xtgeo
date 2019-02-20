@@ -8,5 +8,5 @@ from xtgeo.grid3d.grid import Grid
 from xtgeo.grid3d.grid_property import GridProperty
 from xtgeo.grid3d.grid_properties import GridProperties
 
-from xtgeo.grid3d.grid_property import DateNotFoundError, \
+from xtgeo.common.exceptions import DateNotFoundError, \
     KeywordFoundNoDateError, KeywordNotFoundError

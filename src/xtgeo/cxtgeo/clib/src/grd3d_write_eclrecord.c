@@ -35,11 +35,9 @@
  *    recname          i     Name of record to write
  *    rectype          i     Type of record to write (1=INT, 2=FLT, 3=DBL)
  *    intv             i     Input int array (if rectype is 1)
- *    nint             i     The int record total length
  *    floatv           i     Input Float array (if rectype is 2)
- *    nflt             i     The float record total length
  *    doublev          i     Input double array (if rectype is 3)
- *    ndbl             i     The record total length if double
+ *    nrecs            i     The record total length
  *    debug            i     Debug level
  *
  * RETURNS:
@@ -54,8 +52,8 @@
 
 
 int grd3d_write_eclrecord (FILE *fc, char *recname,
-                           int rectype, int *intv, long nint, float *floatv,
-                           long nflt, double *doublev, long ndbl,
+                           int rectype, int *intv, float *floatv,
+                           double *doublev, long nrecs,
                            int debug)
 {
 
@@ -64,7 +62,6 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
     float myfloat;
     double mydouble;
     char mychar[9]="", mytype[5]="";
-    long nrecs = 0;
 
     char sbn[24] = "grd3d_write_eclrecord";
     xtgverbose(debug);
@@ -77,17 +74,14 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
     if (fc == NULL) xtg_error(sbn, "Cannot use file, file descriptor is NULL");
 
     if (rectype == 1) {
-        nrecs = nint;
         nbyte = 4;
         strncpy(mytype, "INTE", 4);
     }
     if (rectype == 2) {
-        nrecs = nflt;
         nbyte = 4;
         strncpy(mytype, "REAL", 4);
     }
     if (rectype == 3) {
-        nrecs = ndbl;
         nbyte = 8;
         strncpy(mytype, "DBLE", 4);
     }

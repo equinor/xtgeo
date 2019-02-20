@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  *
- * Export to GRDECL format for grid geometry
+ * Export to binary EGRID format for grid geometry
  *
  ******************************************************************************
  */
@@ -13,10 +13,10 @@
  ******************************************************************************
  *
  * NAME:
- *    grd3d_export_grdecl.c
+ *    grd3d_export_egrid.c
  *
  * DESCRIPTION:
- *    Export to Eclipse GRDECL format, either ASCII text or Ecl binary style
+ *    Export to Eclipse EGRID format, rather similar to binary GRDECL
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     NCOL, NROW, NLAY
@@ -36,17 +36,17 @@
  */
 
 
-void grd3d_export_grdecl (
-			  int nx,
-			  int ny,
-			  int nz,
-			  double *p_coord_v,
-			  double *p_zcorn_v,
-			  int *p_actnum_v,
-			  char *filename,
-                          int mode,
-			  int debug
-			  )
+void grd3d_export_egrid (
+                         int nx,
+                         int ny,
+                         int nz,
+                         double *p_coord_v,
+                         double *p_zcorn_v,
+                         int *p_actnum_v,
+                         char *filename,
+                         int mode,
+                         int debug
+                         )
 
 {
     int i, j, k, jj;
@@ -56,12 +56,10 @@ void grd3d_export_grdecl (
     long ncc, ncoord, nzcorn, nact;
     float *farr, fdum;
     double ddum;
-    int itmp[4];
+    int itmp[100];
 
-    char sbn[24] = "grd3d_export_grdecl";
+    char sbn[24] = "grd3d_export_egrid";
     xtgverbose(debug);
-
-    xtg_speak(sbn, 2,"==== Entering grd3d_export_grdecl ====");
 
     /*
      *-------------------------------------------------------------------------
@@ -69,31 +67,40 @@ void grd3d_export_grdecl (
      *-------------------------------------------------------------------------
      */
 
-    if (mode == 0) xtg_speak(sbn, 2,"Opening binary GRDECL file...");
-    if (mode == 1) xtg_speak(sbn, 2,"Opening text GRDECL file...");
+    if (mode == 0) xtg_speak(sbn, 2,"Opening binary EGRID file...");
+    if (mode == 1) xtg_speak(sbn, 2,"Opening text EGRID file...");
 
     fc = fopen(filename, "wb"); /* The b will ensure Unix style ASCII on win */
     if (fc == NULL) xtg_error(sbn, "Cannot open file!");
 
     /*
      *-------------------------------------------------------------------------
-     * SPECGRID
+     * FILEHEAD
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(sbn, 2, "Exporting SPECGRID... ... .. ");
-    itmp[0] = nx; itmp[1] = ny; itmp[2] = nz; itmp[3] = 1;
+    for (i = 0; i < 100; i++) itmp[i] = 0;
 
-    xtg_speak(sbn, 2, "Exporting SPECGRID......");
-    if (mode == 0) {
-        xtg_speak(sbn, 2, "Exporting binary SPECGRID...");
-        grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, &fdum,
-                              &ddum, 4, debug);
-    }
-    else{
-        grd3d_write_eclinput(fc, "SPECGRID", 1, itmp, &fdum,
-                             &ddum, 4, "  %5d", 10, debug);
-    }
+    itmp[0] = 3; itmp[1] = 2017;
+
+    xtg_speak(sbn, 2, "Exporting FILEHEAD...");
+    grd3d_write_eclrecord(fc, "FILEHEAD", 1, itmp, &fdum,
+                          &ddum, 100, debug);
+
+    /*
+     *-------------------------------------------------------------------------
+     * GRIDHEAD
+     *-------------------------------------------------------------------------
+     */
+
+    for (i = 0; i < 100; i++) itmp[i] = 0;
+
+    itmp[0] = 1; itmp[1] = nx; itmp[2] = ny; itmp[3] = nz;
+    // itmp[24] = 1; itmp[25] = 1;
+
+    xtg_speak(sbn, 2, "Exporting GRIDHEAD...");
+    grd3d_write_eclrecord(fc, "GRIDHEAD", 1, itmp, &fdum,
+                          &ddum, 100, debug);
 
     /*
      *-------------------------------------------------------------------------
@@ -110,19 +117,14 @@ void grd3d_export_grdecl (
 	for (i = 0;i <= nx; i++) {
 
             for (jj = 0; jj < 6; jj++) farr[ncc++] = p_coord_v[ib + jj];
-
             ib = ib + 6;
+
         }
     }
 
-    if (mode == 0) {
-        grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
-                              debug);
-    }
-    else{
-        grd3d_write_eclinput(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
-                             "  %15.3f", 6, debug);
-    }
+    grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
+                          debug);
+
     free(farr);
 
     /*
@@ -177,14 +179,8 @@ void grd3d_export_grdecl (
 	}
     }
 
-    if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
-                              debug);
-    }
-    else {
-        grd3d_write_eclinput(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
-                              "  %11.3f", 6, debug);
-    }
+    grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
+                          debug);
     free(farr);
 
     /*
@@ -196,14 +192,20 @@ void grd3d_export_grdecl (
 
     nact = nx * ny * nz;
 
-    if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
-                              &ddum, nact, debug);
-    }
-    else{
-        grd3d_write_eclinput(fc, "ACTNUM", 1, p_actnum_v, &fdum,
-                             &ddum, nact, "  %1d", 12, debug);
-    }
+    grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
+                          &ddum, nact, debug);
+
+    /*
+     *-------------------------------------------------------------------------
+     * ENDGRID
+     *-------------------------------------------------------------------------
+     */
+
+    itmp[0] = 0;
+
+    xtg_speak(sbn, 2, "Exporting ENDGRID...");
+    grd3d_write_eclrecord(fc, "ENDGRID", 1, itmp, &fdum,
+                          &ddum, 1, debug);
 
     /*
      *-------------------------------------------------------------------------

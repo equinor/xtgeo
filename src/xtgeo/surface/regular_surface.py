@@ -18,6 +18,17 @@ or::
  mysurf = xtgeo.surface_from_roxar('some_rms_project', 'TopX', 'DepthSurface')
 
 """
+# -----------------------------------------------------------------------------
+# Comment on 'asmasked' vs 'activeonly:
+# 'asmasked'=True will return a np.ma array, with some fill_value if
+# if asmasked = False
+#
+# while 'activeonly' will filter
+# out maked entries, or use np.nan if 'activeonly' is False
+#
+# For functions with mask=... ,the should be replaced with asmasked=...
+# -----------------------------------------------------------------------------
+
 # pylint: disable=too-many-public-methods
 
 from __future__ import print_function, absolute_import
@@ -1762,6 +1773,22 @@ class RegularSurface(object):
         * 'mean' for expected value
 
         * 'var' for variance
+
+        * 'maxpos' for maximum of positive values
+
+        * 'maxneg' for maximum of negative values ??
+
+        * 'maxabs' for maximum of absolute values
+
+        * 'sumpos' for sum of positive values
+
+        * 'sumneg' for sum of negative values
+
+        * 'meanabs' for mean of absolute values
+
+        * 'meanpos' for mean of positive values
+
+        * 'meanneg' for mean of negative values
 
         Args:
             cube (Cube): Instance of a Cube()

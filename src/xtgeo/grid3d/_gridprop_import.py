@@ -2,6 +2,10 @@
 
 from __future__ import print_function, absolute_import
 
+import re
+import os
+from tempfile import mkstemp
+
 import numpy as np
 import numpy.ma as ma
 
@@ -21,6 +25,100 @@ logger = xtg.functionlogger(__name__)
 
 _cxtgeo.xtg_verbose_file('NONE')
 XTGDEBUG = xtg.get_syslevel()
+
+
+def from_file(self, pfile, fformat=None, name='unknown',
+              grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
+    """Import grid property from file, and makes an instance of this."""
+
+    # pylint: disable=too-many-branches, too-many-statements
+
+    self._filesrc = pfile
+
+    # it may be that pfile already is an open file; hence a filehandle
+    # instead. Check for this, and skip tests if so
+    pfile_is_not_fhandle = True
+    _fhandle, pclose = _get_fhandle(pfile)
+    if not pclose:
+        pfile_is_not_fhandle = False
+
+    if pfile_is_not_fhandle:
+        if os.path.isfile(pfile):
+            logger.debug('File {} exists OK'.format(pfile))
+        else:
+            raise IOError('No such file: {}'.format(pfile))
+
+        # work on file extension
+        _froot, fext = os.path.splitext(pfile)
+        if fformat is None or fformat == 'guess':
+            if not fext:
+                raise ValueError('File extension missing. STOP')
+            else:
+                fformat = fext.lower().replace('.', '')
+
+        logger.debug("File name to be used is {}".format(pfile))
+        logger.debug("File format is {}".format(fformat))
+
+    ier = 0
+    if fformat == 'roff':
+        logger.info('Importing ROFF...')
+        ier = import_roff(self, pfile, name, grid=grid,
+                          _roffapiv=_roffapiv)
+
+    elif fformat.lower() == 'init':
+        ier = import_eclbinary(self, pfile, name=name,
+                               etype=1, date=None,
+                               grid=grid)
+
+    elif fformat.lower() == 'unrst':
+        if date is None:
+            raise ValueError('Restart file, but no date is given')
+        elif isinstance(date, str):
+            if '-' in date:
+                date = int(date.replace('-', ''))
+            elif date == 'first':
+                date = 0
+            elif date == 'last':
+                date = 9
+            else:
+                date = int(date)
+
+        ier = import_eclbinary(self, pfile, name=name,
+                               etype=5, date=date,
+                               grid=grid)
+
+    elif fformat.lower() == 'grdecl':
+        ier = import_grdecl_prop(self, pfile, name=name,
+                                 grid=grid)
+
+    elif fformat.lower() == 'bgrdecl':
+        ier = import_bgrdecl_prop(self, pfile, name=name,
+                                  grid=grid)
+    else:
+        logger.warning('Invalid file format')
+        raise SystemExit('Invalid file format')
+
+    if ier == 22:
+        raise DateNotFoundError('Date {} not found when importing {}'
+                                .format(date, name))
+    elif ier == 23:
+        raise KeywordNotFoundError('Keyword {} not found for date {} '
+                                   'when importing'.format(name, date))
+    elif ier == 24:
+        raise KeywordFoundNoDateError('Keyword {} found but not for date '
+                                      '{} when importing'
+                                      .format(name, date))
+    elif ier == 25:
+        raise KeywordNotFoundError('Keyword {} not found when importing'
+                                   .format(name))
+    elif ier != 0:
+        raise RuntimeError('Something went wrong, code {}'.format(ier))
+
+    # if grid, then append this grid to the current grid object
+    if grid:
+        grid.append_prop(self)
+
+    return self
 
 
 def import_eclbinary(self, pfile, name=None, etype=1, date=None,
@@ -280,6 +378,115 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None,
     return 0
 
 
+def import_bgrdecl_prop(self, pfile, name='unknown', grid=None):
+    """Import property from binary files with GRDECL layout"""
+
+    fhandle, pclose = _get_fhandle(pfile)
+
+    gprops = xtgeo.grid3d.GridProperties()
+
+    # scan file for properties; these have similar binary format as e.g. EGRID
+    logger.info('Make kwlist by scanning')
+    kwlist = gprops.scan_keywords(fhandle, fformat='xecl', maxkeys=1000,
+                                  dataframe=False, dates=False)
+    bpos = {}
+    bpos[name] = -1
+
+    for kwitem in kwlist:
+        kwname, kwtype, kwlen, kwbyte = kwitem
+        logger.info('KWITEM: %s', kwitem)
+        if name == kwname:
+            bpos[name] = kwbyte
+            break
+
+    if bpos[name] == -1:
+        raise KeywordNotFoundError('Cannot find property name {} in file'
+                                   .format(name, pfile))
+    self._ncol = grid.ncol
+    self._nrow = grid.nrow
+    self._nlay = grid.nlay
+
+    values = eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
+    if kwtype == 'INTE':
+        self._isdiscrete = True
+        # make the code list
+        uniq = np.unique(values).tolist()
+        codes = dict(zip(uniq, uniq))
+        codes = {key: str(val) for key, val in codes.items()}  # val: strings
+        self.codes = codes
+
+    else:
+        self._isdiscrete = False
+        values = values.astype(np.float64)  # cast REAL (float32) to float64
+        self.codes = {}
+
+    # property arrays from binary GRDECL will be for all cells, but they
+    # are in Fortran order, so need to convert...
+
+    actnum = grid.get_actnum().values
+    allvalues = values.reshape(self.dimensions, order='F')
+    allvalues = np.asanyarray(allvalues, order='C')
+    allvalues = ma.masked_where(actnum < 1, allvalues)
+    self.values = allvalues
+    self._name = name
+
+    _close_fhandle(fhandle, pclose)
+    return 0
+
+
+def import_grdecl_prop(self, pfile, name='unknown', grid=None):
+    """Read a GRDECL ASCII property record"""
+
+    if grid is None:
+        raise ValueError('A grid instance is required as argument')
+
+    self._ncol = grid.ncol
+    self._nrow = grid.nrow
+    self._nlay = grid.nlay
+    self._name = name
+    self._filesrc = pfile
+    actnumv = grid.get_actnum().values
+
+    # This requires that the Python part clean up comments
+    # etc, and make a tmp file.
+
+    # make a temporary file
+    fds, tmpfile = mkstemp()
+    # make a temporary
+
+    with open(pfile) as oldfile, open(tmpfile, 'w') as newfile:
+        for line in oldfile:
+            if not (re.search(r'^--', line) or re.search(r'^\s+$', line)):
+                newfile.write(line)
+
+    newfile.close()
+    oldfile.close()
+
+    # now read the property
+    nlen = self._ncol * self._nrow * self._nlay
+    ier, values = _cxtgeo.grd3d_import_grdecl_prop(tmpfile,
+                                                   self._ncol,
+                                                   self._nrow,
+                                                   self._nlay,
+                                                   name,
+                                                   nlen,
+                                                   0,
+                                                   XTGDEBUG)
+    # remove tmpfile
+    os.close(fds)
+    os.remove(tmpfile)
+
+    if ier != 0:
+        raise KeywordNotFoundError('Cannot import {}, not present in file {}?'
+                                   .format(name, pfile))
+
+    self.values = values.reshape(self.dimensions)
+
+    self.values = ma.masked_equal(self.values, actnumv == 0)
+
+    return 0
+
+
 def import_roff(self, pfile, name, grid=None, _roffapiv=1):
     """Import ROFF format"""
 
@@ -330,7 +537,7 @@ def _import_roff_v1(self, pfile, name):
 
     if ier == -1:
         msg = 'Cannot find property name {}'.format(name)
-        logger.critical(msg)
+        logger.warning(msg)
         return ier
 
     self._ncol = _cxtgeo.intpointer_value(ptr_ncol)

@@ -14,6 +14,7 @@ from xtgeo.xyz import Polygons
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import KeywordNotFoundError
 
 import test_common.test_xtg as tsetup
 
@@ -48,6 +49,9 @@ testfile9 = testfile1
 testfile10 = '../xtgeo-testdata/3dgrids/bri/b_grid.roff'
 testfile11 = '../xtgeo-testdata/3dgrids/bri/b_poro.roff'
 polyfile = '../xtgeo-testdata/polygons/reek/1/polset2.pol'
+
+testfile12a = '../xtgeo-testdata/3dgrids/reek/reek_sim_grid.grdecl'
+testfile12b = '../xtgeo-testdata/3dgrids/reek/reek_sim_poro.grdecl'
 
 
 def test_create():
@@ -247,6 +251,42 @@ def test_eclunrst_import_soil_reek():
     tsetup.assert_almostequal(soil.values.mean(), 1.0 - 0.8780, 0.001)
 
 
+def test_grdecl_import_reek():
+    """Property GRDECL import from Eclipse. Reek"""
+
+    rgrid = Grid(testfile12a, fformat='grdecl')
+
+    assert rgrid.dimensions == (40, 64, 14)
+
+    poro = GridProperty(testfile12b, name='PORO', fformat='grdecl',
+                        grid=rgrid)
+
+    poro2 = GridProperty(testfile1, name='PORO', fformat='roff',
+                         grid=rgrid)
+
+    tsetup.assert_almostequal(poro.values.mean(), poro2.values.mean(), 0.001)
+    tsetup.assert_almostequal(poro.values.std(), poro2.values.std(), 0.001)
+
+    with pytest.raises(KeywordNotFoundError):
+        poro3 = GridProperty(testfile12b, name='XPORO', fformat='grdecl',
+                             grid=rgrid)
+        logger.debug('Keyword failed as expected for instance %s', poro3)
+
+    # Export to ascii grdecl and import that again...
+    exportfile = os.path.join(td, 'reekporo.grdecl')
+    poro.to_file(exportfile, fformat='grdecl')
+    porox = GridProperty(exportfile, name='PORO', fformat='grdecl',
+                         grid=rgrid)
+    tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
+
+    # Export to binary grdecl and import that again...
+    exportfile = os.path.join(td, 'reekporo.bgrdecl')
+    poro.to_file(exportfile, fformat='bgrdecl')
+    porox = GridProperty(exportfile, name='PORO', fformat='bgrdecl',
+                         grid=rgrid)
+    tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
+
+
 # def test_export_roff():
 #     """Property import from Eclipse. Then export to roff."""
 
@@ -379,7 +419,7 @@ def test_get_xy_values_for_webportal():
     grid = Grid(testfile10)
     prop = GridProperty(testfile11, grid=grid, name='PORO')
 
-    coord, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+    coord, valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
 
     logger.info('Cell 1 1 1 coords\n{}.'.format(coord[0][0]))
     assert coord[0][0][0] == (454.875, 318.5)
@@ -447,7 +487,7 @@ def test_values_in_polygon():
 #     grid = Grid(testfile3)
 #     prop = GridProperty(testfile4, grid=grid, name='PORO')
 
-#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
 
 #     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
 #     # assert coord[0][0][0] == (454.875, 318.5)

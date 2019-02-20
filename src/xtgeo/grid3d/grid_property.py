@@ -18,7 +18,6 @@ values1d property, e.g.::
 """
 from __future__ import print_function, absolute_import
 
-import os.path
 import copy
 
 import numpy as np
@@ -27,12 +26,9 @@ import numpy.ma as ma  # pylint: disable=useless-import-alias
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
-from xtgeo.common.exceptions import DateNotFoundError, KeywordFoundNoDateError
-from xtgeo.common.exceptions import KeywordNotFoundError
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
-from xtgeo.common import _get_fhandle
 from xtgeo.grid3d import Grid3D
 from xtgeo.grid3d import _gridprop_op1
 from xtgeo.grid3d import _gridprop_import
@@ -41,6 +37,20 @@ from xtgeo.grid3d import _gridprop_export
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+# -----------------------------------------------------------------------------
+# Comment on 'asmasked' vs 'activeonly:
+#
+# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
+# return a np.ndarray
+#
+# The 'activeonly' will filter out masked entries, or use None or np.nan
+# if 'activeonly' is False.
+#
+# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
+#
+# For functions with mask=... ,they should be replaced with asmasked=...
+# -----------------------------------------------------------------------------
 
 # pylint: disable=logging-format-interpolation, too-many-public-methods
 
@@ -470,8 +480,122 @@ class GridProperty(Grid3D):
         return self._undef_limit
 
     # =========================================================================
+    # Import and export
+    # =========================================================================
+
+    def from_file(self, pfile, fformat=None, name='unknown',
+                  grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
+        """
+        Import grid property from file, and makes an instance of this class.
+
+        Note that the the property may be linked to its geometrical grid,
+        through the ``grid=`` option. Sometimes this is required, for instance
+        for most Eclipse input.
+
+        Args:
+            pfile (str): name of file to be imported
+            fformat (str): file format to be used roff/init/unrst/grdecl
+                (None is default, which means "guess" from file extension).
+            name (str): name of property to import
+            date (int or str): For restart files, date on YYYYMMDD format. Also
+                the YYYY-MM-DD form is allowed (string), and for Eclipse,
+                mnemonics like 'first', 'last' is also allowed.
+            grid (Grid object): Grid Object for checks (optional for ROFF,
+                required for Eclipse).
+
+        Examples::
+
+           x = GridProperty()
+           x.from_file('somefile.roff', fformat='roff')
+           #
+           mygrid = Grid('ECL.EGRID')
+           pressure_1 = GridProperty()
+           pressure_1.from_file('ECL.UNRST', name='PRESSURE', date='first',
+                                grid=mygrid)
+
+        Returns:
+           True if success, otherwise False
+        """
+
+        obj = _gridprop_import.from_file(self, pfile, fformat=fformat,
+                                         name=name, grid=grid,
+                                         date=date, _roffapiv=_roffapiv)
+        return obj
+
+    def to_file(self, pfile, fformat='roff', name=None, append=False,
+                dtype=None):
+        """Export the grid property to file.
+
+        Args:
+            pfile (str): File name to export to
+            fformat (str): The file format to be used. Default is
+                roff binary , else roff_ascii/grdecl/bgrdecl
+            name (str): If provided, will explicitly give property name;
+                else the existing name of the instance will used.
+            append (bool): Append to existing file, only for (b)grdecl formats.
+            dtype (str): Data type; this is valid only for grdecl or bgrdecl
+                formats, where default is None which means 'float32' for
+                floating point number and 'int32' for discrete properties.
+                Other choices are 'float64' which are 'DOUB' entries in
+                Eclipse formats.
+
+        Example::
+
+            # This example demonstrates that file formats can be mixed
+            rgrid = Grid('reek.roff')
+            poro = GridProperty('reek_poro.grdecl', grid=rgrid, name='PORO')
+
+            poro.values += 0.05
+
+            poro.to_file('reek_export_poro.bgrdecl', format='bgrdecl')
+
+        """
+
+        _gridprop_export.to_file(self, pfile, fformat=fformat, name=name,
+                                 append=append, dtype=dtype)
+
+    def from_roxar(self, projectname, gname, pname, realisation=0):
+
+        """Import grid model property from RMS project, and makes an instance.
+
+        Arguments:
+            projectname (str): Name of RMS project; use pure 'project'
+                if inside RMS
+            gfile (str): Name of grid model
+            pfile (str): Name of grid property
+            realisation (int): Realisation number (default 0; first)
+
+        """
+
+        self._filesrc = ('ROXAR API GridModel:{} Property: {}'
+                         .format(gname, pname))
+
+        _gridprop_roxapi.import_prop_roxapi(
+            self, projectname, gname, pname, realisation)
+
+    def to_roxar(self, projectname, gname, pname, saveproject=False,
+                 realisation=0):
+
+        """Store a grid model property into a RMS project.
+
+        Arguments:
+            projectname (str): Name of RMS project ('project' if inside a
+                RMS project)
+            gfile (str): Name of grid model
+            pfile (str): Name of grid property
+            projectname (str): Name of RMS project (None if inside a project)
+            saveproject (bool): If True, a saveproject job will be ran.
+            realisation (int): Realisation number (default 0 first)
+
+        """
+        _gridprop_roxapi.export_prop_roxapi(
+            self, projectname, gname, pname, saveproject=saveproject,
+            realisation=realisation)
+
+    # =========================================================================
     # Various public methods
     # =========================================================================
+
     def describe(self):
         """Describe an instance by printing to stdout"""
 
@@ -527,19 +651,27 @@ class GridProperty(Grid3D):
 
         return npv3d
 
-    def get_actnum(self, name='ACTNUM', mask=False):
+    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
+
+        Note that this method is similar to, but not identical to,
+        the job with sam name in Grid(). Here, the maskedarray of the values
+        is applied to deduce the ACTNUM array.
 
         Args:
             name (str): name of property in the XTGeo GridProperty object.
-            mask (bool): Opposite to most, actnum is returned will all cells
-                as default. Use mask=True to make 0 entries masked.
+            asmasked (bool): Actnum is returned with all cells shown
+                as default. Use asmasked=True to make 0 entries masked.
+            mask (bool): Deprecated, use asmasked instead!
 
         Example::
 
-            act = myprop.get_actnum()
+            act = mygrid.get_actnum()
             print('{}% cells are active'.format(act.values.mean() * 100))
         """
+
+        if mask is not None:
+            asmasked = self._evaluate_mask(mask)
 
         act = GridProperty(ncol=self._ncol, nrow=self._nrow,
                            nlay=self._nlay,
@@ -551,7 +683,7 @@ class GridProperty(Grid3D):
         vact[orig.mask] = 0
         print(vact)
 
-        if mask:
+        if asmasked:
             vact = ma.masked_equal(vact, 0)
 
         act.values = vact.astype(np.int32)
@@ -617,201 +749,7 @@ class GridProperty(Grid3D):
 
         self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
 
-    # =========================================================================
-    # Import and export
-    # =========================================================================
-
-    def from_file(self, pfile, fformat='guess', name='unknown',
-                  grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
-        """
-        Import grid property from file, and makes an instance of this class.
-
-        Note that the the property may be linked to its geometrical grid,
-        through the grid= option. Sometimes this is required, for instance
-        for most Eclipse input.
-
-        Args:
-            pfile (str): name of file to be imported
-            fformat (str): file format to be used roff/init/unrst
-                (guess is default).
-            name (str): name of property to import
-            date (int or str): For restart files, date on YYYYMMDD format. Also
-                the YYYY-MM-DD form is allowed (string), and for Eclipse,
-                mnemonics like 'first', 'last' is also allowed.
-            grid (Grid object): Grid Object for checks (optional for ROFF,
-                required for Eclipse).
-
-        Examples::
-
-           x = GridProperty()
-           x.from_file('somefile.roff', fformat='roff')
-           #
-           mygrid = Grid('ECL.EGRID')
-           pressure_1 = GridProperty()
-           pressure_1.from_file('ECL.UNRST', name='PRESSURE', date='first',
-                                grid=mygrid)
-
-        Returns:
-           True if success, otherwise False
-        """
-
-        # pylint: disable=too-many-branches, too-many-statements
-
-        self._filesrc = pfile
-
-        # it may be that pfile already is an open file; hence a filehandle
-        # instead. Check for this, and skip tests of so
-        pfile_is_not_fhandle = True
-        _fhandle, pclose = _get_fhandle(pfile)
-        if not pclose:
-            pfile_is_not_fhandle = False
-
-        if pfile_is_not_fhandle:
-            if os.path.isfile(pfile):
-                logger.debug('File {} exists OK'.format(pfile))
-            else:
-                logger.critical('No such file: {}'.format(pfile))
-                raise IOError
-
-            # work on file extension
-            _froot, fext = os.path.splitext(pfile)
-            if fformat == 'guess':
-                if not fext:
-                    logger.critical('File extension missing. STOP')
-                    raise ValueError('File extension missing. STOP')
-                else:
-                    fformat = fext.lower().replace('.', '')
-
-            logger.debug("File name to be used is {}".format(pfile))
-            logger.debug("File format is {}".format(fformat))
-
-        ier = 0
-        if fformat == 'roff':
-            logger.info('Importing ROFF...')
-            ier = _gridprop_import.import_roff(self, pfile, name, grid=grid,
-                                               _roffapiv=_roffapiv)
-
-        elif fformat.lower() == 'init':
-            ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
-                                                    etype=1, date=None,
-                                                    grid=grid)
-
-        elif fformat.lower() == 'unrst':
-            if date is None:
-                raise ValueError('Restart file, but no date is given')
-            elif isinstance(date, str):
-                if '-' in date:
-                    date = int(date.replace('-', ''))
-                elif date == 'first':
-                    date = 0
-                elif date == 'last':
-                    date = 9
-                else:
-                    date = int(date)
-
-            ier = _gridprop_import.import_eclbinary(self, pfile, name=name,
-                                                    etype=5, date=date,
-                                                    grid=grid)
-        else:
-            logger.warning('Invalid file format')
-            raise SystemExit('Invalid file format')
-
-        if ier == 22:
-            raise DateNotFoundError('Date {} not found when importing {}'
-                                    .format(date, name))
-        elif ier == 23:
-            raise KeywordNotFoundError('Keyword {} not found for date {} '
-                                       'when importing'.format(name, date))
-        elif ier == 24:
-            raise KeywordFoundNoDateError('Keyword {} found but not for date '
-                                          '{} when importing'
-                                          .format(name, date))
-        elif ier == 25:
-            raise KeywordNotFoundError('Keyword {} not found when importing'
-                                       .format(name))
-        elif ier != 0:
-            raise RuntimeError('Something went wrong, code {}'.format(ier))
-
-        # if grid, then append this grid to the current grid object
-        if grid:
-            grid.append_prop(self)
-
-        return self
-
-    def from_roxar(self, projectname, gname, pname, realisation=0):
-
-        """Import grid model property from RMS project, and makes an instance.
-
-        Arguments:
-            projectname (str): Name of RMS project; use pure 'project'
-                if inside RMS
-            gfile (str): Name of grid model
-            pfile (str): Name of grid property
-            projectname (str): Name of RMS project; None if within a project
-            realisation (int): Realisation number (default 0 first)
-
-        """
-
-        self._filesrc = ('ROXAR API GridModel:{} Property: {}'
-                         .format(gname, pname))
-
-        _gridprop_roxapi.import_prop_roxapi(
-            self, projectname, gname, pname, realisation)
-
-    def to_roxar(self, projectname, gname, pname, saveproject=False,
-                 realisation=0):
-
-        """Store a grid model property into a RMS project.
-
-        Arguments:
-            projectname (str): Name of RMS project ('project' if inside a
-                RMS project)
-            gfile (str): Name of grid model
-            pfile (str): Name of grid property
-            projectname (str): Name of RMS project (None if inside a project)
-            saveproject (bool): If True, a saveproject job will be ran.
-            realisation (int): Realisation number (default 0 first)
-
-        """
-        _gridprop_roxapi.export_prop_roxapi(
-            self, projectname, gname, pname, saveproject=saveproject,
-            realisation=realisation)
-
-    def to_file(self, pfile, fformat='guess', name=None):
-        """
-        Export grid property to file.
-
-        Args:
-            pfile (str): file name
-            fformat (str): file format to be used. The default 'guess' is
-                roff which is the only supported currently, which is either
-                'roff' or 'roff_binary' for binary, and 'roffasc'
-                or 'roff_ascii' for ASCII (text).
-            name (str): If provided, will give property name; else the existing
-                name of the instance will used.
-        """
-        logger.debug('Export property to file...')
-
-        # guess based on file extension (todo)
-        if fformat == 'guess':
-            fformat = 'roff'
-
-        if 'roff' in fformat:
-            if name is None:
-                name = self.name
-
-            binary = True
-            if 'asc' in fformat:
-                binary = False
-
-            # for later usage
-            append = False
-            last = True
-
-            _gridprop_export.export_roff(self, pfile, name, append=append,
-                                         last=last, binary=binary)
-
-    def get_xy_value_lists(self, grid=None, mask=True):
+    def get_xy_value_lists(self, grid=None, activeonly=True):
         """Get lists of xy coords and values for Webportal format.
 
         The coordinates are on the form (two cells)::
@@ -821,7 +759,7 @@ class GridProperty(Grid3D):
 
         Args:
             grid (object): The XTGeo Grid object for the property
-            mask (bool): If true (default), inactive cells will be omitted,
+            activeonly (bool): If true (default), active cells only,
                 otherwise cell geometries will be listed and property will
                 have value -999 in undefined cells.
 
@@ -833,13 +771,14 @@ class GridProperty(Grid3D):
             prop.from_file('../xtgeo-testdata/3dgrids/bri/b_poro.roff',
                            grid=grid, name='PORO')
 
-            clist, valuelist = prop.get_xy_value_lists(grid=grid, mask=False)
+            clist, valuelist = prop.get_xy_value_lists(grid=grid,
+                                                       activeonly=False)
 
 
         """
 
         clist, vlist = _gridprop_op1.get_xy_value_lists(self, grid=grid,
-                                                        mask=mask)
+                                                        mask=activeonly)
         return clist, vlist
 
     def get_values_by_ijk(self, iarr, jarr, karr, base=1):
@@ -984,3 +923,10 @@ class GridProperty(Grid3D):
     def set_outside(self, poly, value):
         """Set a value (scalar) outside polygons"""
         self.operation_polygons(poly, value, opname='set', inside=False)
+
+    # -------------------------------------------------------------------------
+    # Private function
+    # -------------------------------------------------------------------------
+
+    def _evaluate_mask(self, mask):
+        return super(GridProperty, self)._evaluate_mask(mask)
