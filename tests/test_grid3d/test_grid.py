@@ -316,7 +316,7 @@ def test_geometrics_reek():
 
 
 def test_simple_io():
-    """Test various import and export formats"""
+    """Test various import and export formats, incl egrid and bgrdecl"""
 
     gg = Grid(REEKFILE, fformat='egrid')
 
@@ -329,6 +329,26 @@ def test_simple_io():
     gg2 = Grid(filex, fformat='roff')
 
     assert gg2.ncol == 40
+
+    filex = os.path.join(TMPDIR, 'grid_test_simple_io.EGRID')
+    filey = os.path.join(TMPDIR, 'grid_test_simple_io.bgrdecl')
+
+    gg.to_file(filex, fformat='egrid')
+    gg.to_file(filey, fformat='bgrdecl')
+
+    gg2 = Grid(filex, fformat='egrid')
+    gg3 = Grid(filey, fformat='bgrdecl')
+
+    assert gg2.ncol == 40
+
+    dz1 = gg.get_dz()
+    dz2 = gg2.get_dz()
+    dz3 = gg3.get_dz()
+
+    tsetup.assert_almostequal(dz1.values.mean(), dz2.values.mean(), 0.001)
+    tsetup.assert_almostequal(dz1.values.std(), dz2.values.std(), 0.001)
+    tsetup.assert_almostequal(dz1.values.mean(), dz3.values.mean(), 0.001)
+    tsetup.assert_almostequal(dz1.values.std(), dz3.values.std(), 0.001)
 
 
 def test_ecl_run():
