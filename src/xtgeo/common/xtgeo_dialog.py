@@ -35,6 +35,7 @@ import getpass
 import platform
 import inspect
 import logging
+import warnings
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import timeit
@@ -403,6 +404,18 @@ class XTGeoDialog(object):
             self._output(idx, level, string)
 
     warning = warn
+
+    def warndeprecated(self, string):
+        """Show Deprecation warnings"""
+
+        def warnoneliner(msg, cat, fname, lino, file=None, line=None):
+            return '%s:%s: %s:%s\n' % (fname, lino, cat.__name__, msg)
+
+        defaultformat = warnings.formatwarning
+        warnings.formatwarning = warnoneliner
+        warnings.simplefilter('default', DeprecationWarning)
+        warnings.warn(string, DeprecationWarning, stacklevel=2)
+        warnings.formatwarning = defaultformat  # reset
 
     def error(self, string):
         level = -8

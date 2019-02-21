@@ -961,6 +961,9 @@ class RegularSurface(object):
         This routine exists for historical reasons and prefer get_values1d
         instead (C order).
         """
+
+        xtg.warndeprecated('Deprecated method')
+
         zval = self.get_values1d(order='F', asmasked=False,
                                  fill_value=self.undef)
 
