@@ -285,7 +285,7 @@ class RegularSurface(object):
 
     def __str__(self):
         # user friendly print
-        return str(self.describe())
+        return self.describe(flush=False)
 
     def __add__(self, other):
 
@@ -609,7 +609,7 @@ class RegularSurface(object):
 # =============================================================================
 # Describe, import and export
 # =============================================================================
-    def describe(self):
+    def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
@@ -632,7 +632,10 @@ class RegularSurface(object):
         msize = float(self.values.size * 8) / (1024 * 1024 * 1024)
         dsc.txt('Minimum memory usage of array (GB)', msize)
 
-        dsc.flush()
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
 
     def from_file(self, mfile, fformat='guess'):
         """Import surface (regular map) from file.
@@ -958,9 +961,13 @@ class RegularSurface(object):
         Also, this will reorder a 2D values array to column fastest, i.e.
         get stuff into Fortran order.
 
-        This routine exists for historical reasons and prefer get_values1d
-        instead (C order).
+        This routine exists for historical reasons and prefer using
+        property 'values', or alternatively get_values1d()
+        instead (with order='F').
         """
+
+        xtg.warndeprecated('Deprecated method (get_zval())')
+
         zval = self.get_values1d(order='F', asmasked=False,
                                  fill_value=self.undef)
 
@@ -971,8 +978,8 @@ class RegularSurface(object):
 
         The numpy array must be in Fortran order (i columns (ncol) fastest).
 
-        This routine exists for historical reasons and prefer set_values1d
-        instead (C order).
+        This routine exists for historical reasons and prefer 'values or
+        set_values1d instead (with option order='F').
         """
         self.set_values1d(vals, order='F')
 

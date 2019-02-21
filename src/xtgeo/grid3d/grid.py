@@ -179,7 +179,7 @@ class Grid(Grid3D):
 
     def __str__(self):
         # user friendly print
-        return str(self.describe())
+        return self.describe(flush=False)
 
     # =========================================================================
     # Properties:
@@ -219,7 +219,8 @@ class Grid(Grid3D):
 
         None will be returned if no subgrid indexing is present.
 
-        See also :meth:`set_subgrids()` and :meth:`get_subgrids()`
+        See also :meth:`set_subgrids()` and :meth:`get_subgrids()` which
+        have a similar function, but differs a bit.
 
         """
         if self._subgrids is None:
@@ -499,7 +500,7 @@ class Grid(Grid3D):
 
         return other
 
-    def describe(self, details=False):
+    def describe(self, details=False, flush=True):
         """Describe an instance by printing to stdout"""
 
         if details:
@@ -551,7 +552,10 @@ class Grid(Grid3D):
             dsc.txt('Subgrids details', json.dumps(self.get_subgrids()))
             dsc.txt('Subgrids with values array', self.subgrids)
 
-        dsc.flush()
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
 
     def dataframe(self, activeonly=True, ijk=True, xyz=True,
                   doubleformat=False):

@@ -82,6 +82,73 @@ skipunlessroxar = pytest.mark.skipif(not roxar,
 # =============================================================================
 
 
+@pytest.fixture()
+def mylogger():
+    # need to do it like this...
+    mlogger = xtg.basiclogger(__name__, logginglevel='DEBUG')
+    return mlogger
+
+
+def test_info_logger(mylogger, caplog):
+    """Test basic logger behaviour, will capture output to stdin"""
+
+    mylogger.info('This is a test')
+    assert 'This is a test' in caplog.text
+
+    logger.warn('This is a warning')
+    assert 'This is a warning' in caplog.text
+
+
+def test_more_logging_tests(caplog):
+    """Testing on the logging levels, see that ENV variable will override
+    the basiclogger setting.
+    """
+
+    os.environ['XTG_LOGGING_LEVEL'] = 'INFO'
+
+    xtgmore = XTGeoDialog()  # another instance
+    locallogger = xtgmore.basiclogger(__name__, logginglevel='WARNING')
+    locallogger.debug('Display debug')
+    assert caplog.text == ''  # shall be empty
+    locallogger.info('Display info')
+    assert 'info' in caplog.text  # INFO shall be shown, overrided by ENV!
+    locallogger.warning('Display warning')
+    assert 'warning' in caplog.text
+    locallogger.critical('Display critical')
+    assert 'critical' in caplog.text
+
+
+def test_timer(capsys):
+    """Test the timer function"""
+
+    time1 = xtg.timer()
+    for inum in range(100000):
+        inum += 1
+
+    xtg.say('Used time was {}'.format(xtg.timer(time1)))
+    captured = capsys.readouterr()
+    assert 'Used time was' in captured[0]
+    # repeat to see on screen
+    xtg.say('')
+    xtg.warn('Used time was {}'.format(xtg.timer(time1)))
+
+
+def test_print_xtgeo_header():
+    """Test writing an app header."""
+    xtg.print_xtgeo_header('MYAPP', '0.99', info='Beta release (be careful)')
+
+
+def test_user_msg():
+    """Testing user messages"""
+
+    xtg.say('')
+    xtg.say('This is a message')
+    xtg.warn('This is a warning')
+    xtg.warning('This is also a warning')
+    xtg.error('This is an error')
+    xtg.critical('This is a critical error', sysexit=False)
+
+
 def test_ijk_to_ib():
     """Convert I J K to IB index."""
 
@@ -96,3 +163,11 @@ def test_ib_to_ijk():
     ijk = xcalc.ib_to_ijk(16, 3, 4, 5)
     logger.info(ijk)
     assert ijk[0] == 2
+
+
+def test_dialog_warndeprecated():
+
+    with pytest.warns(DeprecationWarning) as rwarn:
+        xtg.warndeprecated('Show a deprecated message')
+    logger.info(rwarn[0].message)
+    assert 'Show' in str(rwarn[0].message)

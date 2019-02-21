@@ -58,6 +58,8 @@ from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.constants import UNDEF_INT
 from xtgeo.common.constants import UNDEF_INT_LIMIT
 
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+
 # from xtgeo.xyz import _xyz
 
 # from xtgeo._version import get_versions

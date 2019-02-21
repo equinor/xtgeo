@@ -229,6 +229,17 @@ class GridProperty(Grid3D):
         for myvar in vars(self).keys():
             del myvar
 
+    def __repr__(self):
+        myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
+                'nrow={0._nrow!r}, nlay={0._nlay!r}, '
+                'filesrc={0._filesrc!r}'
+                .format(self, id(self)))
+        return myrp
+
+    def __str__(self):
+        # user friendly print
+        return self.describe(flush=False)
+
     # =========================================================================
     # Properties
     # =========================================================================
@@ -596,7 +607,7 @@ class GridProperty(Grid3D):
     # Various public methods
     # =========================================================================
 
-    def describe(self):
+    def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
@@ -618,7 +629,10 @@ class GridProperty(Grid3D):
         dsc.txt('Roxar datatype', self.roxar_dtype)
         dsc.txt('Minimum memory usage of array (GB)', msize)
 
-        dsc.flush()
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
 
     def get_npvalues3d(self, fill_value=None):
         """Get a pure numpy copy (not masked) copy of the values, 3D shape.
