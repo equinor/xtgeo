@@ -91,11 +91,12 @@ def export_zmap_ascii(self, mfile):
 
     yinc = scopy._yinc * scopy._yflip
 
+    vals = scopy.get_values1d(order='F', asmasked=False, fill_value=self.undef)
+
     ier = _cxtgeo.surf_export_zmap_ascii(mfile, scopy._ncol, scopy._nrow,
                                          scopy._xori, scopy._yori,
                                          scopy._xinc, yinc,
-                                         scopy.get_zval(),
-                                         zmin, zmax, 0,
+                                         vals, zmin, zmax, 0,
                                          DEBUG)
     if ier != 0:
         raise RuntimeError('Export to ZMAP Ascii went wrong, '

@@ -2,31 +2,61 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-"""Module for basic XTGeo dialog"""
+"""
+Module for basic XTGeo dialog, basic interaction with user,
+including logging for debugging.
 
-# =============================================================================
-# Message and dialog handler in xtgeo. It works together the logging module,
-# But, also I need stuff to work together with existing
-# Perl and C libraries...
-#
-# How it should works:
-# Enviroment variable XTG_VERBOSE_LEVEL will steer the output from lowelevel
-# C routines; normally they are quiet
-# XTG_VERBOSE_LEVEL is undefined: xtg.say works to screen
-# XTG_VERBOSE_LEVEL > 1 starts to print C messages
-# XTG_VERBOSE_LEVEL < 0 skip also xtg.say
-#
-# XTG_LOGGING_LEVEL is for Python logging (string, as INFO)
-# XTG_LOGGING_FORMAT is for Python logging (number, 0 ,1, 2, ...)
-#
-# The system here is:
-# syslevel is the actual level when code is executed:
-#
-# -1: quiet dialog, no warnings only errors and critical
-# 0 : quiet dialog, only warnings and errors will be displayed
-# JRIV
-# =============================================================================
+Logging is enabled by setting a environment variable::
 
+  export XTG_LOGGING_LEVEL=INFO   # if bash; will set logging to INFO level
+  setenv XTG_LOGGING_LEVEL INFO   # if tcsh; will set logging to INFO level
+
+Other levels are DEBUG and CRITICAL. CRITICAL is default (cf. Pythons logging)
+
+Usage of logging in scripts::
+
+  import xtgeo
+  xtg = xtgeo.common.XTGeoDialog()
+  logger = xtg.basiclogger(__name__)
+  logger.info('This is logging of %s', something)
+
+Other than logging, there is also a template for user interaction, which shall
+be used in client scripts::
+
+  xtg.echo('This is a message')
+  xtg.warn('This is a warning')
+  xtg.error('This is an error, will continue')
+  xtg.critical('This is a big error, will exit')
+
+How it should works:
+
+Enviroment variable XTG_VERBOSE_LEVEL will steer the output from lowelevel
+C routines; normally they are quiet
+
+XTG_VERBOSE_LEVEL is undefined: xtg.say works to screen
+
+XTG_VERBOSE_LEVEL > 1 starts to print C messages
+
+XTG_VERBOSE_LEVEL < 0 skip also xtg.say
+
+XTG_LOGGING_LEVEL is for Python logging (string, as INFO)
+
+XTG_LOGGING_FORMAT is for Python logging (number, 0 ,1, 2, ...)
+
+The system here is:
+syslevel is the actual level when code is executed:
+
+-1: quiet dialog, no warnings only errors and critical
+
+0 : quiet dialog, only warnings and errors will be displayed
+
+In addition there are other classes:
+
+* XTGShowProgress()
+
+* XTGDescription()
+
+"""
 
 import os
 import sys
@@ -105,6 +135,16 @@ class XTGDescription(object):
         for line in self._txt:
             print(line)
 
+    def astext(self):
+        thetext = ''
+        fmt = '=' * 99
+        self._txt.append(fmt)
+
+        for line in self._txt:
+            thetext += line + '\n'
+
+        return thetext[: -1]
+
     def _smartfmt(self, atxt):
         alen = len(atxt)
         atxt.insert(1, '=>')
@@ -150,42 +190,70 @@ class XTGeoDialog(object):
 
     def __init__(self):
 
+        self._callclass = None
+        self._caller = None
+        self._lformat = None
+        self._lformatlevel = 1
+        self._logginglevel = 'CRITICAL'
+        self._logginglevel_fromenv = None
+        self._loggingname = ''
+        self._syslevel = 1
+        self._test_env = True
+        self._tmpdir = 'TMP'
+        self._testpath = None
         self._showrtwarnings = True
 
-        # a number, for C routines
-        envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
-
         # a string, for Python logging:
-        logginglevel = os.environ.get('XTG_LOGGING_LEVEL')
+        self._logginglevel_fromenv = os.environ.get('XTG_LOGGING_LEVEL', None)
 
         # a number, for format, 1 is simple, 2 is more info etc
         loggingformat = os.environ.get('XTG_LOGGING_FORMAT')
 
+        if self._logginglevel_fromenv:
+            self.logginglevel = self._logginglevel_fromenv
+
+        if loggingformat is not None:
+            self._lformatlevel = int(loggingformat)
+
+        # a number, for C routines
+        envsyslevel = os.environ.get('XTG_VERBOSE_LEVEL')
         if envsyslevel is None:
             self._syslevel = 0
         else:
             self._syslevel = int(envsyslevel)
 
-        if logginglevel is None:
-            self._logginglevel = 'CRITICAL'
-        else:
-            self._logginglevel = str(logginglevel)
 
-        if loggingformat is None:
-            self._lformatlevel = 1
-        else:
-            self._lformatlevel = int(loggingformat)
 
-    @staticmethod
-    def UNDEF():
-        return UNDEF
 
-    @staticmethod
-    def UNDEF_LIMIT():
-        return UNDEF_LIMIT
+
+        # # a string, for Python logging:
+        # logginglevel = os.environ.get('XTG_LOGGING_LEVEL')
+
+        # # a number, for format, 1 is simple, 2 is more info etc
+        # loggingformat = os.environ.get('XTG_LOGGING_FORMAT')
+
+
+        # if logginglevel is None:
+        #     self._logginglevel = 'CRITICAL'
+        # else:
+        #     self._logginglevel = str(logginglevel)
+
+        # if loggingformat is None:
+        #     self._lformatlevel = 1
+        # else:
+        #     self._lformatlevel = int(loggingformat)
+
+    # @staticmethod
+    # def UNDEF():
+    #     return UNDEF
+
+    # @staticmethod
+    # def UNDEF_LIMIT():
+    #     return UNDEF_LIMIT
 
     @property
     def syslevel(self):
+        """This is about logging from the C compiled parts"""
         return self._syslevel
 
     @syslevel.setter
@@ -200,26 +268,54 @@ class XTGeoDialog(object):
         if envsyslevel is None:
             pass
         else:
-            # print('Logging overridden by XTG_VERBOSE_LEVEL = {}'
-            #       .format(envsyslevel))
             self._syslevel = int(envsyslevel)
 
     # for backward compatibility (to be phased out)
     def get_syslevel(self):
         return self._syslevel
 
+    # @property
+    # def logginglevel(self):
+    #     """Will return a logging level property, e.g. logging.CRITICAL"""
+    #     ll = logging.CRITICAL
+    #     if self._logginglevel == 'INFO':
+    #         ll = logging.INFO
+    #     elif self._logginglevel == 'WARNING':
+    #         ll = logging.WARNING
+    #     elif self._logginglevel == 'DEBUG':
+    #         ll = logging.DEBUG
+
+    #     return ll
+
     @property
     def logginglevel(self):
-        """Will return a logging level property, e.g. logging.CRITICAL"""
-        ll = logging.CRITICAL
-        if self._logginglevel == 'INFO':
-            ll = logging.INFO
-        elif self._logginglevel == 'WARNING':
-            ll = logging.WARNING
-        elif self._logginglevel == 'DEBUG':
-            ll = logging.DEBUG
+        """Set or return a logging level property, e.g. logging.CRITICAL"""
 
-        return ll
+        return self._logginglevel
+
+    @logginglevel.setter
+    def logginglevel(self, level):
+        # pylint: disable=pointless-statement
+
+        validlevels = ('INFO', 'WARNING', 'DEBUG', 'CRITICAL')
+        if level in validlevels:
+            self._logginglevel = level
+        else:
+            raise ValueError('Invalid level given, must be '
+                             'in {}'.format(validlevels))
+
+    @property
+    def numericallogginglevel(self):
+        """Return a numerical logging level (read only)"""
+        llo = logging.CRITICAL
+        if self._logginglevel == 'INFO':
+            llo = logging.INFO
+        elif self._logginglevel == 'WARNING':
+            llo = logging.WARNING
+        elif self._logginglevel == 'DEBUG':
+            llo = logging.DEBUG
+
+        return llo
 
     @property
     def loggingformatlevel(self):
@@ -230,8 +326,10 @@ class XTGeoDialog(object):
         """Returns the format string to be used in logging"""
 
         if self._lformatlevel <= 1:
-            self._lformat = '%(name)44s %(funcName)44s '\
-                + '%(levelname)8s: \t%(message)s'
+            self._lformat = '%(levelname)8s: \t%(message)s'
+
+            # self._lformat = '%(name)44s %(funcName)44s '\
+            #     + '%(levelname)8s: \t%(message)s'
         elif self._lformatlevel == 20:
             # mimic xtg.say look
             self._lformat = '>> %(message)s'
@@ -244,14 +342,26 @@ class XTGeoDialog(object):
         return self._lformat
 
     @staticmethod
-    def print_xtgeo_header(appname, appversion):
-        """Prints a XTGeo banner for an app to STDOUT."""
+    def print_xtgeo_header(appname, appversion, info=None):
+        """Prints a banner for a XTGeo app to STDOUT.
+
+        Args:
+            appname (str): Name of application.
+            appversion (str): Version of application on form '3.2.1'
+            info (str, optional): More info, e.g. if beta release
+
+        Example::
+
+            xtg.print_xtgeo_header('myapp', '0.2.1', info='Beta release!')
+        """
 
         cur_version = 'Python ' + str(sys.version_info[0]) + '.'
         cur_version += str(sys.version_info[1]) + '.' \
             + str(sys.version_info[2])
 
         app = appname + ', version ' + str(appversion)
+        if info:
+            app = app + ' (' + info + ')'
         print('')
         print(_BColors.HEADER)
         print('#' * 79)
@@ -270,14 +380,16 @@ class XTGeoDialog(object):
     def basiclogger(self, name, logginglevel=None, loggingformat=None):
         """Initiate the logger by some default settings."""
 
+        if logginglevel is not None and self._logginglevel_fromenv is None:
+            self.logginglevel = logginglevel
+
         if loggingformat is not None:
             self._lformat = loggingformat
 
-        format = self.loggingformat
-        logging.basicConfig(format=format, stream=sys.stdout)
-        if logginglevel:
-            self._logginglevel = logginglevel
-        logging.getLogger().setLevel(self.logginglevel)  # root logger!
+        fmt = self.loggingformat
+        self._loggingname = name
+        logging.basicConfig(format=fmt, stream=sys.stdout)
+        logging.getLogger().setLevel(self.numericallogginglevel)  # root logger
         logging.captureWarnings(True)
 
         return logging.getLogger(name)
@@ -408,14 +520,14 @@ class XTGeoDialog(object):
     def warndeprecated(self, string):
         """Show Deprecation warnings"""
 
-        def warnoneliner(msg, cat, fname, lino, file=None, line=None):
-            return '%s:%s: %s:%s\n' % (fname, lino, cat.__name__, msg)
+        def warnoneliner(message, category, filename, lineno, file=None,
+                         line=None):
+            return '%s: %s: (%s:%s)\n' % (category.__name__, message,
+                                          filename, lineno)
 
-        defaultformat = warnings.formatwarning
         warnings.formatwarning = warnoneliner
         warnings.simplefilter('default', DeprecationWarning)
         warnings.warn(string, DeprecationWarning, stacklevel=2)
-        warnings.formatwarning = defaultformat  # reset
 
     def error(self, string):
         level = -8
@@ -427,7 +539,7 @@ class XTGeoDialog(object):
 
         self._output(idx, level, string)
 
-    def critical(self, string):
+    def critical(self, string, sysexit=True):
         level = -9
         idx = 9
 
@@ -436,7 +548,8 @@ class XTGeoDialog(object):
         self.get_callerinfo(caller, frame)
 
         self._output(idx, level, string)
-        raise SystemExit('STOP!')
+        if sysexit:
+            raise SystemExit('STOP!')
 
     def get_callerinfo(self, caller, frame):
         the_class = self._get_class_from_frame(frame)

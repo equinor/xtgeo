@@ -63,7 +63,7 @@ class GridProperties(Grid3D):
 
     def __str__(self):
         # user friendly print
-        return str(self.describe())
+        return self.describe(flush=False)
 
     # =========================================================================
     # Properties:
@@ -154,7 +154,7 @@ class GridProperties(Grid3D):
 
         return new
 
-    def describe(self):
+    def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
@@ -163,7 +163,10 @@ class GridProperties(Grid3D):
         dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
         dsc.txt('Attached grid props objects (names)', self._names)
 
-        dsc.flush()
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
 
     def get_prop_by_name(self, name):
         """Find and return a property object (GridProperty) by name."""

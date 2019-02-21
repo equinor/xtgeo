@@ -146,23 +146,20 @@ class Cube(object):
                 self._xlines = np.array(range(1, self._nrow + 1),
                                         dtype=np.int32)
                 self._traceidcodes = np.ones((self._nrow, self._nrow),
-                                            dtype=np.int32)
+                                             dtype=np.int32)
 
             self._segyfile = kwargs.get('segyfile', None)
 
     def __repr__(self):
         avg = self.values.mean()
         dsc = ('{0.__class__} (ncol={0.ncol!r}, '
-               'nrow={0.nrow!r}, original file: {0._filesrc}), '
-               'average {1} ID=<{2}>'.format(self, avg, id(self)))
+               'nrow={0.nrow!r}, nlay={0.nlay!r}, '
+               'original file: {0._filesrc}), '
+               'average {1}, ID=<{2}>'.format(self, avg, id(self)))
         return dsc
 
     def __str__(self):
-        avg = self.values.mean()
-        dsc = ('{0.__class__.__name__} (ncol={0.ncol!r}, '
-               'nrow={0.nrow!r}, original file: {0._filesrc}), '
-               'average {1:.4f}'.format(self, avg))
-        return dsc
+        return self.describe(flush=False)
 
     # =========================================================================
     # Get and Set properties (tend to pythonic properties rather than
@@ -338,8 +335,8 @@ class Cube(object):
     # =========================================================================
     # Describe
     # =========================================================================
-    def describe(self):
-        """Describe an instance by printing to stdout"""
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout or return"""
 
         dsc = XTGDescription()
         dsc.title('Description of Cube instance')
@@ -362,7 +359,10 @@ class Cube(object):
         msize = float(self.values.size * 4) / (1024 * 1024 * 1024)
         dsc.txt('Minimum memory usage of array (GB)', msize)
 
-        dsc.flush()
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
 
     # =========================================================================
     # Copy, swapping, cropping, thinning...
