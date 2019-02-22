@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import pandas as pd
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperties
@@ -58,6 +59,64 @@ def rescale(self, delta=0.15):
     pd.options.display.max_rows = pdrows  # reset
 
     self._df = dfr
+
+
+def make_zone_qual_log(self, zqname):
+    """Make a flag log based on stratigraphic relations"""
+
+    if zqname in self.dataframe:
+        logger.warning('Quality log exists, will be overwritten')
+
+    if not self.zonelogname or self.zonelogname not in self.dataframe:
+        raise ValueError('Cannot find a zonelog')
+
+    dff = self.get_filled_dataframe()
+    dff['ztmp'] = dff[self.zonelogname]
+    dff['ztmp'] = (dff.ztmp != dff.ztmp.shift()).cumsum()
+
+    sgrp = dff.groupby('ztmp')
+
+    dff[zqname] = dff[self.zonelogname] * 0
+
+    idlist = list()
+    seq = list()
+    for idx, grp in sgrp:
+        izns = int(grp[self.zonelogname].mean())
+        seq.append(izns)
+        idlist.append(idx)
+
+    codes = {0: 'UNDETERMINED', 1: 'INCREASE', 2: 'DECREASE', 3: 'U_TURN',
+             4: 'INV_U_TURN', 9: 'INCOMPLETE'}
+
+    code = list()
+    for ind, iseq in enumerate(seq):
+        if ind == 0 or ind == len(seq) - 1:
+            code.append(0)
+        else:
+            prev_ = seq[ind - 1]
+            next_ = seq[ind + 1]
+            if prev_ > xtgeo.UNDEF_INT_LIMIT or next_ > xtgeo.UNDEF_INT_LIMIT:
+                code.append(9)
+            elif iseq > prev_ and iseq < next_:
+                code.append(1)
+            elif iseq < prev_ and iseq > next_:
+                code.append(2)
+            elif iseq > prev_ and iseq > next_:
+                code.append(3)
+            elif iseq < prev_ and iseq < next_:
+                code.append(4)
+    dcode = dict(zip(idlist, code))
+
+    # now run
+    self.create_log(zqname, logtype='DISC', logrecord=codes)
+    for key, val in dcode.items():
+        self._df[zqname][dff['ztmp'] == key] = val
+
+    # set the metadata
+    self.set_logtype(zqname, 'DISC')
+    self.set_logrecord(zqname, codes)
+
+    del dff
 
 
 def get_ijk_from_grid(self, grid, grid_id=''):

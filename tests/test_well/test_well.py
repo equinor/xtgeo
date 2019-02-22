@@ -6,6 +6,7 @@ import glob
 from os.path import join
 
 import pytest
+import pandas as pd
 
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
@@ -201,6 +202,19 @@ def test_make_hlen(loadwell1):
 
     logger.debug(mywell.dataframe)
 
+
+def test_make_zqual_log(loadwell3):
+    """Make a zonelog FLAG quality log"""
+
+    mywell = loadwell3
+    mywell.zonelogname = 'ZONELOG'
+
+    logger.debug('True well name:', mywell.truewellname)
+
+    mywell.make_zone_qual_log('manamana')
+
+    with pd.option_context("display.max_rows", 1000):
+        print(mywell.dataframe)
 
 def test_rescale_well(loadwell1):
     """Rescale (resample) a well to a finer increment"""
