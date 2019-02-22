@@ -167,7 +167,7 @@ class Grid(Grid3D):
 
             if self.props is not None:
                 for prop in self.props:
-                    logger.info('Deleting property instance %s', prop)
+                    logger.info('Deleting property instance %s', prop.name)
                     prop.__del__()
 
     def __repr__(self):

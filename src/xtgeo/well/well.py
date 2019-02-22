@@ -13,6 +13,8 @@ import pandas as pd
 import xtgeo.common.constants as const
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGDescription
+
 from xtgeo.well import _wellmarkers
 from xtgeo.well import _well_io
 from xtgeo.well import _well_roxapi
@@ -135,6 +137,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._xpos = None  # well head X pos
         self._ypos = None  # well head Y pos
         self._wname = None  # well name
+        self._filesrc = None  # source file if any
 
         # instance attributes well log names
         self._wlognames = list()  # A list of log names
@@ -165,6 +168,17 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         self._ensure_consistency()
         logger.debug('Ran __init__ method for RegularSurface object')
+
+    def __repr__(self):
+        # should be able to newobject = eval(repr(thisobject))
+        myrp = ('{0.__class__.__name__} (filesrc={0._filesrc!r}, '
+                'name={0._wname!r},  ID={1})'
+                .format(self, id(self)))
+        return myrp
+
+    def __str__(self):
+        # user friendly print
+        return self.describe(flush=False)
 
     # =========================================================================
     # Consistency checking. As well log names are columns in the Pandas DF,
@@ -390,6 +404,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             logger.error('Invalid file format')
 
         self._ensure_consistency()
+        self._filesrc = wfile
         return self
 
     def to_file(self, wfile, fformat='rms_ascii'):
@@ -443,6 +458,37 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                                         inclmd=inclmd, inclsurvey=inclsurvey)
         self._ensure_consistency()
 
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of Well instance')
+        dsc.txt('Object ID', id(self))
+        dsc.txt('File source', self._filesrc)
+        dsc.txt('Well name', self._wname)
+        dsc.txt('RKB', self._rkb)
+        dsc.txt('Well head', self._xpos, self._ypos)
+        dsc.txt('Name of all columns', self.lognames_all)
+        dsc.txt('Name of log columns', self.lognames)
+        for wlog in self.lognames:
+            rec = self.get_logrecord(wlog)
+            if rec is not None and len(rec) > 3:
+                string = '('
+                nlen = len(rec)
+                for idx, (code, val) in enumerate(rec.items()):
+                    if idx < 2:
+                        string += '{}: {} '.format(code, val)
+                    elif idx == nlen - 1:
+                        string += '...  {}: {})'.format(code, val)
+            else:
+                string = '{}'.format(rec)
+            dsc.txt('Logname', wlog, self.get_logtype(wlog), string)
+
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
+
     def copy(self):
         """Copy a Well instance to a new unique Well instance."""
 
@@ -480,6 +526,42 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         # rename in dataframe
         self._df.rename(index=str, columns={lname: newname}, inplace=True)
+
+        if self._mdlogname == lname:
+            self._mdlogname = newname
+
+        if self._zonelogname == lname:
+            self._zonelogname = newname
+
+    def create_log(self, lname, logtype='CONT', logrecord=None, value=0.0):
+        """Create a new log, """
+
+        if lname in self._wlognames:
+            raise ValueError('Input log does already exist')
+
+        self._wlogtype[lname] = logtype
+        self._wlogrecord[lname] = logrecord
+
+        # make a new column
+        self._df[lname] = value
+        self._ensure_consistency()
+
+    def delete_log(self, lname):
+        """Remove an existing log """
+
+        if lname not in self._wlognames:
+            raise ValueError('Input log to delete does not exist')
+
+        del self._wlogtype[lname]
+        del self._wlogrecord[lname]
+
+        self._df.drop(lname, axis=1, inplace=True)
+        self._ensure_consistency()
+
+        if self._mdlogname == lname:
+            self._mdlogname = None
+        if self._zonelogname == lname:
+            self._zonelogname = None
 
     def get_logtype(self, lname):
         """Returns the type of a give log (e.g. DISC or CONT)"""
@@ -1144,6 +1226,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         It can be constrained by an inclination.
 
+        Also, it needs to be evaluated only of ZONE is complete; either
+        INCREASE or DECREASE ; hence a quality flag is made and applied.
+
         Args:
             dlogname (str): Name of discrete log, e.g. 'FACIES'
             dnames (list of int): Codes of facies (or similar) to report for
@@ -1183,6 +1268,33 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         _well_oper.get_ijk_from_grid(self, grid, grid_id=grid_id)
+
+    def make_zone_qual_log(self, zqname):
+        """Create a zone quality (flag) log.
+
+        This routine looks through to zone log and flag intervals according
+        to neighbouring zones:
+
+        * 0: Undetermined flag
+
+        * 1: Zonelog interval numbering increases,
+             e.g. for zone 2: 1 1 1 1 2 2 2 2 2 5 5 5 5 5
+
+        * 2: Zonelog interval numbering decreases,
+             e.g. for zone 2: 6 6 6 2 2 2 2 1 1 1
+
+        * 3: Interval numbering is a U turning point, e.g. 0 0 0 2 2 2 1 1 1
+
+        * 4: Interval numbering is a inverse U turning point, 3 3 3 2 2 2 5 5
+
+        * 9: Interval is bounded by one or more missing sections,
+             e.g. 1 1 1 2 2 2 -999 -999
+
+        Args:
+            zqname (str): Name of quality log
+        """
+
+        _well_oper.make_zone_qual_log(self, zqname)
 
     def get_gridproperties(self, gridprops, grid=('ICELL', 'JCELL', 'KCELL'),
                            gridcells=None, prop_id='_model'):

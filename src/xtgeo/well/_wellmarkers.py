@@ -182,18 +182,21 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
         A dataframe with relevant data...
 
     """
-
     logger.info('The zonelist is %s', zonelist)
     logger.info('The dlogname is %s', dlogname)
     logger.info('The dvalues are %s', dvalues)
 
     if zonelogname is not None:
         usezonelogname = zonelogname
+        self.zonelogname = zonelogname
     else:
         usezonelogname = self.zonelogname
 
     if usezonelogname is None:
         raise RuntimeError('Stop, zonelogname is None')
+
+    self.make_zone_qual_log('_QFLAG')
+    print(self._df)
 
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
@@ -216,7 +219,7 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
 
     svalues = str(dvalues).rstrip(']').lstrip('[').replace(', ', '+')
 
-    xtralogs = [dlogname, useinclname]
+    xtralogs = [dlogname, useinclname, '_QFLAG']
     for izon in zonelist:
         logger.info('The zone number is %s', izon)
         logger.info('The extralogs are %s', xtralogs)
@@ -231,7 +234,11 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
         for polyid, dframe in dfrx:
             qinclmax = dframe['Q_INCL'].max()
             qinclavg = dframe['Q_INCL'].mean()
+            qflag = dframe['_QFLAG'].mean()
             dseries = dframe[dlogname]
+            if qflag < 0.5 or qflag > 2.5:  # 1 or 2 is OK
+                logger.debug('Skipped due to zone %s', qflag)
+                continue
             if qinclmax > incl_limit:
                 logger.debug('Skipped due to max inclination %s', qinclmax)
                 continue
@@ -261,5 +268,7 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
     # make the dataframe and return it
     if result['X_UTME']:
         return pd.DataFrame.from_dict(result)
+
+    self.delete_log('_QFLAG')
 
     return None
