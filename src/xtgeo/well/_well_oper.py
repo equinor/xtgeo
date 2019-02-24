@@ -65,7 +65,7 @@ def make_zone_qual_log(self, zqname):
     """Make a flag log based on stratigraphic relations"""
 
     if zqname in self.dataframe:
-        logger.warning('Quality log exists, will be overwritten')
+        logger.warning('Quality log %s exists, will be overwritten', zqname)
 
     if not self.zonelogname or self.zonelogname not in self.dataframe:
         raise ValueError('Cannot find a zonelog')
@@ -107,7 +107,7 @@ def make_zone_qual_log(self, zqname):
                 code.append(4)
     dcode = dict(zip(idlist, code))
 
-    # now run
+    # now create the new log
     self.create_log(zqname, logtype='DISC', logrecord=codes)
     for key, val in dcode.items():
         self._df[zqname][dff['ztmp'] == key] = val

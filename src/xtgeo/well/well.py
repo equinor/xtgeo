@@ -515,10 +515,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """Rename a log, e.g. Poro to PORO"""
         self._ensure_consistency()
 
-        if lname not in self._wlognames:
+        if lname not in self.lognames:
             raise ValueError('Input log does not exist')
 
-        if newname in self._wlognames:
+        if newname in self.lognames:
             raise ValueError('New log name exists already')
 
         self._wlogtype[newname] = self._wlogtype.pop(lname)
@@ -533,35 +533,75 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if self._zonelogname == lname:
             self._zonelogname = newname
 
-    def create_log(self, lname, logtype='CONT', logrecord=None, value=0.0):
-        """Create a new log, """
+    def create_log(self, lname, logtype='CONT', logrecord=None, value=0.0,
+                   force=True):
+        """Create a new log with initial values.
 
-        if lname in self._wlognames:
-            raise ValueError('Input log does already exist')
+        If the logname already exists, it will be silently overwritten, unless
+        the option force=False.
+
+        Args:
+            lname (str): name of new log
+            logtype (str): Must be 'CONT' (default) or 'DISC' (discrete)
+            logrecord (dict): A dictionary of key: values for 'DISC' logs
+            value (float): initia value to set_index
+            force (bool): If True, and lname exists, it will be overwritten, if
+               False, no new log will be made. Will return False.
+
+        Returns:
+            True: If a new log is made (either new or force overwrite an
+                existing)
+            False: The new log already exists, and ``force=False``.
+        """
+
+        if lname in self.lognames and force is False:
+            return False
 
         self._wlogtype[lname] = logtype
         self._wlogrecord[lname] = logrecord
 
         # make a new column
-        self._df[lname] = value
+        self._df[lname] = float(value)
         self._ensure_consistency()
+        return True
 
     def delete_log(self, lname):
-        """Remove an existing log """
+        """Delete/remove an existing log, or list of logs.
 
-        if lname not in self._wlognames:
-            raise ValueError('Input log to delete does not exist')
+        Will continue silently if a log does not exist.
 
-        del self._wlogtype[lname]
-        del self._wlogrecord[lname]
+        Args:
+            lname(str or list): A logname or a list of lognames
 
-        self._df.drop(lname, axis=1, inplace=True)
+        Returns:
+            Number of logs deleted
+        """
+
         self._ensure_consistency()
+        if not isinstance(lname, list):
+            lname = [lname]
 
-        if self._mdlogname == lname:
-            self._mdlogname = None
-        if self._zonelogname == lname:
-            self._zonelogname = None
+        lcount = 0
+        for logn in lname:
+            if logn not in self._wlognames:
+                logger.info('Log does no exist: %s', logn)
+                continue
+            else:
+                logger.info('Log exist and will be deleted: %s', logn)
+                lcount += 1
+                del self._wlogtype[logn]
+                del self._wlogrecord[logn]
+
+                self._df.drop(logn, axis=1, inplace=True)
+                self._ensure_consistency()
+
+                if self._mdlogname == logn:
+                    self._mdlogname = None
+                if self._zonelogname == logn:
+                    self._zonelogname = None
+
+        self._ensure_consistency()
+        return lcount
 
     def get_logtype(self, lname):
         """Returns the type of a give log (e.g. DISC or CONT)"""
@@ -594,7 +634,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """Sets the record (dict) of a given discrete log"""
 
         self._ensure_consistency()
-        if lname not in self._wlognames:
+        if lname not in self.lognames:
             raise ValueError('No such logname: {}'.format(lname))
 
         if self._wlogtype[lname] == 'CONT':
@@ -1270,7 +1310,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         _well_oper.get_ijk_from_grid(self, grid, grid_id=grid_id)
 
     def make_zone_qual_log(self, zqname):
-        """Create a zone quality (flag) log.
+        """Create a zone quality/indicator (flag) log.
 
         This routine looks through to zone log and flag intervals according
         to neighbouring zones:
@@ -1283,12 +1323,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         * 2: Zonelog interval numbering decreases,
              e.g. for zone 2: 6 6 6 2 2 2 2 1 1 1
 
-        * 3: Interval numbering is a U turning point, e.g. 0 0 0 2 2 2 1 1 1
+        * 3: Interval is a U turning point, e.g. 0 0 0 2 2 2 1 1 1
 
-        * 4: Interval numbering is a inverse U turning point, 3 3 3 2 2 2 5 5
+        * 4: Interval is a inverse U turning point, 3 3 3 2 2 2 5 5
 
         * 9: Interval is bounded by one or more missing sections,
              e.g. 1 1 1 2 2 2 -999 -999
+
+        If a log with the name exists, it will be silently replaced
 
         Args:
             zqname (str): Name of quality log

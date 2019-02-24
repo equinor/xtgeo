@@ -194,6 +194,29 @@ def test_get_carr(loadwell1):
     tsetup.assert_equal(swig, True, 'carray from log name, int')
 
 
+def test_create_and_delete_logs(loadwell3):
+
+    mywell = loadwell3
+
+    status = mywell.create_log('NEWLOG')
+    assert status is True
+
+    status = mywell.create_log('NEWLOG', force=False)
+    assert status is False
+
+    status = mywell.create_log('NEWLOG', force=True, value=200)
+    assert status is True
+    assert mywell.dataframe.NEWLOG.mean() == 200.0
+
+    ndeleted = mywell.delete_log('NEWLOG')
+
+    assert ndeleted == 1
+    status = mywell.create_log('NEWLOG', force=True, value=200)
+
+    ndeleted = mywell.delete_log(['NEWLOG', 'GR'])
+    assert ndeleted == 2
+
+
 def test_make_hlen(loadwell1):
     """Create a hlen log."""
 
@@ -215,6 +238,7 @@ def test_make_zqual_log(loadwell3):
 
     with pd.option_context("display.max_rows", 1000):
         print(mywell.dataframe)
+
 
 def test_rescale_well(loadwell1):
     """Rescale (resample) a well to a finer increment"""
@@ -281,7 +305,6 @@ def test_remove_parallel_parts():
 
     well1 = Well(WELL1)
     well2 = Well(WELL2)
-
 
     well1.truncate_parallel_path(well2)
 
