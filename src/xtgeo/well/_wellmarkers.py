@@ -196,7 +196,6 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
         raise RuntimeError('Stop, zonelogname is None')
 
     self.make_zone_qual_log('_QFLAG')
-    print(self._df)
 
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
