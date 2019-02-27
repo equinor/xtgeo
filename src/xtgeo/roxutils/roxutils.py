@@ -49,7 +49,7 @@ class RoxUtils(object):
 
     """
 
-    def __init__(self, *args, readonly=False):
+    def __init__(self, project, readonly=False):
         self._project = None
 
         self._version = roxar.__version__
@@ -61,9 +61,6 @@ class RoxUtils(object):
                           '1.2': ['11.0.0'],
                           '1.2.1': ['11.0.1'],
                           '1.3': ['11.1.0']}
-
-        if args:
-            project = args[0]
 
         if project is not None and isinstance(project, str):
             projectname = project
