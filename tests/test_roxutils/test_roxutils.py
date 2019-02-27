@@ -13,6 +13,7 @@ roxver = None
 try:
     import roxar
     roxver = roxar.__version__
+    import _roxar
 except ImportError:
     pass
 xtg = XTGeoDialog()
@@ -53,4 +54,5 @@ def test_basic_api(load_reek):
 
     rox = load_reek
 
-    print(rox)
+    assert isinstance(rox, RoxUtils)
+    assert isinstance(rox._project, _roxar.Project)

@@ -5,7 +5,9 @@ constant distance between nodes (xinc, yinc), and this simplifies
 computations a lot. A regular surface is defined by an origin (xori, yori)
 in UTM, a number of columns (along X axis, if no rotation), a number of
 rows (along Y axis if no rotation), and increment (distance between nodes).
+
 The map itself is an array of values.
+
 Rotation is allowed and is measured in degrees, anticlock from X axis.
 
 Note that an instance of a regular surface can be made directly with::

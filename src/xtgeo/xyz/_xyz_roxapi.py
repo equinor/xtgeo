@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from xtgeo.common import XTGeoDialog
+from xtgeo.roxutils import RoxUtils
 
 xtg = XTGeoDialog()
 
@@ -15,16 +16,11 @@ logger = xtg.functionlogger(__name__)
 def import_xyz_roxapi(self, project, name, category,
                       stype, realisation):
     """Import a Points or Polygons item via ROXAR API spec."""
-    import roxar  # pylint: disable=import-error
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_import_xyz(self, proj, name, category, stype,
-                               realisation)
-    else:
-        _roxapi_import_xyz(self, project, name, category, stype,
-                           realisation)
+    rox = RoxUtils(project)
+
+    _roxapi_import_xyz(self, rox.project, name, category, stype,
+                       realisation)
 
 
 def _roxapi_import_xyz(self, proj, name, category, stype, realisation):

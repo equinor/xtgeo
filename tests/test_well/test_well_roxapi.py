@@ -5,11 +5,10 @@ import xtgeo
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
-roxver = None
+roxv = None
 try:
     import roxar
-    roxver = roxar.__version__
-    roxver = roxver[0:3]
+    roxv = roxar.__version__
 except ImportError:
     pass
 
@@ -27,23 +26,24 @@ testpath = xtg.testpath
 # =============================================================================
 proj = {}
 proj['1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.1'
-proj['1.2'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.0'
+proj['1.2.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.1'
+proj['1.3'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.1.0'
 
 
 @tsetup.skipunlessroxar
 def test_getwell():
     """Get a well from a RMS project."""
 
-    print(roxver)
+    print(roxv)
 
-    if not os.path.isdir(proj[roxver]):
+    if not os.path.isdir(proj[roxv]):
         raise RuntimeError('RMS test project is missing for roxar version {}'
-                           .format(roxver))
+                           .format(roxv))
 
     logger.info('Simple case, reading a well from RMS well folder')
 
     xwell = xtgeo.well.Well()
-    xwell.from_roxar(proj[roxver], 'WI_3_RKB2', trajectory='Drilled trajectory',
+    xwell.from_roxar(proj[roxv], 'WI_3_RKB2', trajectory='Drilled trajectory',
                      logrun='LOG', lognames=['Zonelog', 'Poro', 'Facies'])
 
     logger.info('Dataframe\n %s ', xwell.dataframe)
@@ -60,16 +60,16 @@ def test_getwell():
 def test_getwell_all_logs():
     """Get a well from a RMS project, reading all logs present."""
 
-    print(roxver)
+    print(roxv)
 
-    if not os.path.isdir(proj[roxver]):
+    if not os.path.isdir(proj[roxv]):
         raise RuntimeError('RMS test project is missing for roxar version {}'
-                           .format(roxver))
+                           .format(roxv))
 
     logger.info('Simple case, reading a well from RMS well folder')
 
     xwell = xtgeo.well.Well()
-    xwell.from_roxar(proj[roxver], 'WI_3_RKB2',
+    xwell.from_roxar(proj[roxv], 'WI_3_RKB2',
                      trajectory='Drilled trajectory',
                      logrun='LOG', lognames='all')
 
