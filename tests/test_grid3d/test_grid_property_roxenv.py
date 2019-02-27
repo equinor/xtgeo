@@ -22,6 +22,7 @@ TESTPATH = '../xtgeo-testdata-equinor/data/rmsprojects'
 
 PROJ = dict()
 PROJ['1.1'] = os.path.join(TESTPATH, 'reek.rms10.1.1')
+PROJ['1.2.1'] = os.path.join(TESTPATH, 'reek.rms11.0.1')
 PROJ['1.3'] = os.path.join(TESTPATH, 'reek.rms11.1.0')
 
 
@@ -37,7 +38,9 @@ def test_rox_get_gridproperty():
     poro.from_roxar(PROJ[ver], 'Reek_sim', 'PORO')
 
     tsetup.assert_almostequal(poro.values.mean(), 0.1588, 0.001)
+    assert poro.dimensions == (40, 64, 14)
     tsetup.assert_almostequal(poro.values[1, 0, 0], 0.113876, 0.0001)
+    print(poro.values[1, 0, 0])
 
 
 @tsetup.equinor

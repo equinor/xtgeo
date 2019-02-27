@@ -12,23 +12,48 @@ try:
 except ImportError:
     pass
 
+from xtgeo.common import XTGeoDialog
+
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
 
 class RoxUtils(object):
 
-    """ Class RoxUtils
-    E.g creating and deletion of Horizon folders, etc.
+    """Class RoxUtils, for accessing project level methods::
 
-    import xtgeo
+     import xtgeo
 
-    xr = xtgeo.RoxUtils()
-    xr.create_horizon_category('DS_extracted_run3')
-    xr.delete_horizon_category('DS_extracted_run2')
+     xr = xtgeo.RoxUtils(project)
+     xr.create_horizon_category('DS_extracted_run3')
+     xr.delete_horizon_category('DS_extracted_run2')
+
+    The project itself can be a reference to an existing project, typically
+    the magic ``project`` wording inside RMS python,
+    or a file path to a RMS project (for external access).
+
+    Args:
+        project (_roxar.Project or str): Reference to a RMS project
+            either a instance or a RMS project folder path.
+        readonly (bool). Default is False. If readonly, then it cannot be
+            saved to this project (which is the case for "secondary" projects).
+
+    Examples::
+
+        import xgeo
+        path = '/some/path/to/rmsprject.rmsx'
+
+        ext = xtgeo.RoxUtils(path, readonly=True)
+        # ...do somthing
+        ext.safe_close()
+
     """
 
-    def __init__(self, project):
+    def __init__(self, *args, readonly=False):
         self._project = None
 
         self._version = roxar.__version__
+        self._roxarapps = True
 
         self._versions = {'1.0': ['10.0.x'],
                           '1.1': ['10.1.0', '10.1.1', '10.1.2'],
@@ -37,10 +62,19 @@ class RoxUtils(object):
                           '1.2.1': ['11.0.1'],
                           '1.3': ['11.1.0']}
 
+        if args:
+            project = args[0]
+
         if project is not None and isinstance(project, str):
             projectname = project
-            self._project = roxar.Project.open_import(projectname)
+            if readonly:
+                self._project = roxar.Project.open_import(projectname)
+            else:
+                self._project = roxar.Project.open(projectname)
+
         elif isinstance(project, _roxar.Project):
+            # this will only happen for _current_ project inside RMS
+            self.roxarapps = False
             self._project = project
         else:
             raise RuntimeError('Project is not valid')
@@ -54,6 +88,17 @@ class RoxUtils(object):
     def project(self):
         """The Roxar project instance (read only)"""
         return self._project
+
+    def safe_close(self):
+        """Close the project but only if roxarapps (external) mode, i.e.
+        not current RMS project.
+        """
+        print('Status of _roxarapps: {}'.format(self._roxarapps))
+        if self._roxarapps:
+            try:
+                self._project.close()
+            except TypeError as msg:
+                xtg.warn(msg)
 
     def version_required(self, targetversion):
         """Defines a minimum ROXAPI version for some feature (True or False).
@@ -152,13 +197,13 @@ class RoxUtils(object):
                                      domain=domain, htype=htype)
 
     def delete_horizon_category(self, category, stype='horizons'):
-        """Delete on or more horizons or zones categories.
+        """Delete onelayergrid or more horizons or zones categories.
 
         Args:
             category (str or list): Name(s) of category to make, either
                 as a simple string or a list of strings.
-            stype (str): 'Super type', in RMS (horizons or zones).
-                Default is horizons
+            stype (str): 'Super type', in RMS ('horizons' or 'zones').
+                Default is 'horizons'
         """
 
         project = self.project

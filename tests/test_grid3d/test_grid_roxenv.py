@@ -63,6 +63,9 @@ def test_rox_get_grid_import_bri():
     """Get a simple grid from a RMS project and convert to XTGeo."""
     from roxar import __version__ as ver
 
+    if ver not in bproject.keys():
+        return
+
     logger.info('Project is {}'.format(bproject[ver]))
 
     grd = xtgeo.grid3d.Grid()

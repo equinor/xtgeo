@@ -209,9 +209,27 @@ class Polygons(XYZ):
         Note also that horizon/zone name and category must exists in advance,
         otherwise an Exception will be raised.
 
+        If the project is a folder, then the project will be closed
+        automatically after each job. For big projects (long load time),
+        this is inconvinient, and instead, one  can preload the project as
+        this::
+
+            import xtgeo
+            projpath = '/some/path/to/rms_project'
+            myp = xtgeo.RoxUtils(projpath)
+            poly1 = xtgeo.polygons_from_roxar(myp.project, 'Top1', 'DepthPoly')
+            poly2 = xtgeo.polygons_from_roxar(myp.project, 'Top2', 'DepthPoly')
+            poly3 = xtgeo.polygons_from_roxar(myp.project, 'Top3', 'DepthPoly')
+            poly4 = xtgeo.polygons_from_roxar(myp.project, 'Top4', 'DepthPoly')
+            # ...
+            myp.safe_close()
+
         Args:
             project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
+                outside RMS, or use a special RoxApi(path).project variable
+               (see example above). If the current project inside RMS,
+               just use the magic ``project`` word if within RMS.
+
             name (str): Name of polygons item
             category (str): For horizons/zones/faults: for example 'DL_depth',
                 for clipboard use folders such as 'somefolder/somesubfolder' or
@@ -220,6 +238,7 @@ class Polygons(XYZ):
             stype (str): RMS folder type, 'horizons' (default) or 'zones',
                 'faults', 'clipboard'.
             realisation (int): Realisation number, default is 0
+
 
         Returns:
             Object instance updated

@@ -8,7 +8,6 @@ roxver = None
 try:
     import roxar
     roxver = roxar.__version__
-    roxver = roxver[0:3]
 except ImportError:
     pass
 
@@ -26,7 +25,7 @@ testpath = xtg.testpath
 # =============================================================================
 proj = {}
 proj['1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.1'
-proj['1.2'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.0'
+proj['1.2.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.1'
 proj['1.3'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.1.0'
 
 

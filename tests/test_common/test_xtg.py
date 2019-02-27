@@ -95,7 +95,7 @@ def test_info_logger(mylogger, caplog):
     mylogger.info('This is a test')
     assert 'This is a test' in caplog.text
 
-    logger.warn('This is a warning')
+    logger.warning('This is a warning')
     assert 'This is a warning' in caplog.text
 
 
