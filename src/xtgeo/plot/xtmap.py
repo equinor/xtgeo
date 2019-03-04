@@ -125,10 +125,11 @@ class Map(BasePlot):
         if maxvalue is None:
             maxvalue = usesurf.values.max()
 
+        # this will override current instance colormap locally, and is
+        # therefore reset afterwards
+        keepcolor = self.colormap
         if colormap is not None:
             self.colormap = colormap
-        else:
-            self.colormap = 'rainbow'
 
         levels = np.linspace(minvalue, maxvalue, self.contourlevels)
         logger.debug('Number of contour levels: {}'.format(levels))
@@ -163,6 +164,7 @@ class Map(BasePlot):
             logger.warning('Could not make plot: {}'.format(err))
 
         plt.gca().set_aspect('equal', adjustable='box')
+        self.colormap = keepcolor
 
     def plot_faults(self, fpoly, idname='POLY_ID', color='k', edgecolor='k',
                     alpha=0.7, linewidth=0.8):

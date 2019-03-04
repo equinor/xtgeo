@@ -51,7 +51,7 @@ class BasePlot(object):
         else:
             raise ValueError('Input incorrect')
 
-        logger.info('Colormap: {}'.format(self._colormap))
+        logger.info('Colormap: %s', self._colormap)
 
     @staticmethod
     def define_any_colormap(cfile, colorlist=None):
@@ -83,21 +83,24 @@ class BasePlot(object):
             colors = _ctable.xtgeocolors()
             cmap = LinearSegmentedColormap.from_list(cfile, colors,
                                                      N=len(colors))
+            cmap.name = 'xtgeo'
         elif cfile == 'random40':
             colors = _ctable.random40()
             cmap = LinearSegmentedColormap.from_list(cfile, colors,
                                                      N=len(colors))
+            cmap.name = 'random40'
 
         elif cfile == 'randomc':
             colors = _ctable.randomc(256)
             cmap = LinearSegmentedColormap.from_list(cfile, colors,
                                                      N=len(colors))
+            cmap.name = 'randomc'
 
         elif isinstance(cfile, str) and 'rms' in cfile:
             colors = _ctable.colorsfromfile(cfile)
             cmap = LinearSegmentedColormap.from_list('rms', colors,
                                                      N=len(colors))
-
+            cmap.name = cfile
         elif cfile in valid_maps:
             cmap = plt.get_cmap(cfile)
             logger.info(cmap.N)
@@ -121,6 +124,7 @@ class BasePlot(object):
 
             cmap = LinearSegmentedColormap.from_list(ctable, colors,
                                                      N=len(colors))
+            cmap.name = 'user'
 
         return cmap
 
