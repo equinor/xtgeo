@@ -81,6 +81,12 @@ Sample a surface from a 3D grid
 .. literalinclude:: ../examples/surface_slice_grid3d.py
    :language: python
 
+Sample a surface or a window attribute from a cube
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../examples/surface_slice_cube.py
+   :language: python
+
 ---------------
 Cube operations
 ---------------

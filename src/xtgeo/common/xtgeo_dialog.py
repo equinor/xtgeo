@@ -529,6 +529,17 @@ class XTGeoDialog(object):
         warnings.simplefilter('default', DeprecationWarning)
         warnings.warn(string, DeprecationWarning, stacklevel=2)
 
+    def warnuser(self, string):
+        """Show User warnings, using Python warnings"""
+
+        def warnoneliner(message, category, filename, lineno, file=None,
+                         line=None):
+            return '%s: %s\n' % (category.__name__, message)
+
+        warnings.formatwarning = warnoneliner
+        warnings.simplefilter('default', UserWarning)
+        warnings.warn(string, UserWarning, stacklevel=2)
+
     def error(self, string):
         level = -8
         idx = 8
