@@ -72,7 +72,7 @@ def well_from_roxar(project, name, trajectory='Drilled trajectory',
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mysurf = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
+        mywell = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
                                        logrun='log', lognames=mylogs)
 
     """
@@ -549,9 +549,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                False, no new log will be made. Will return False.
 
         Returns:
-            True: If a new log is made (either new or force overwrite an
-                existing)
-            False: The new log already exists, and ``force=False``.
+            True ff a new log is made (either new or force overwrite an
+            existing) or False if the new log already exists,
+            and ``force=False``.
+
         """
 
         if lname in self.lognames and force is False:

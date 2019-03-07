@@ -4,6 +4,7 @@
 import numpy as np
 import numpy.ma as ma
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
@@ -157,3 +158,34 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
 
     self._ilines = iln
     self._xlines = xln
+
+
+def import_ijxyz_ascii_tmpl(self, mfile, template):
+    """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface
+    instance as template."""
+
+    if isinstance(template, (xtgeo.Cube, xtgeo.RegularSurface)):
+        logger.info('OK template')
+    else:
+        raise ValueError('Template is of wrong type: %s', type(template))
+
+    nxy = template.ncol * template.nrow
+    iok, val = _cxtgeo.surf_import_ijxyz_tmpl(mfile, template.ilines,
+                                              template.xlines, nxy,
+                                              0, DEBUG)
+
+    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+
+    self._xori = template.xori
+    self._xinc = template.xinc
+    self._yori = template.yori
+    self._yinc = template.yinc
+    self._ncol = template.ncol
+    self._nrow = template.nrow
+    self._rotation = template.rotation
+    self._yflip = template.yflip
+    self._values = val.reshape((self._ncol, self._nrow))
+    self._filesrc = mfile
+
+    self._ilines = template._ilines.copy()
+    self._xlines = template._xlines.copy()

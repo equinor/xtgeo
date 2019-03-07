@@ -76,12 +76,13 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def surface_from_file(mfile, fformat='guess'):
+def surface_from_file(mfile, fformat=None, template=None):
     """Make an instance of a RegularSurface directly from file import.
 
     Args:
         mfile (str): Name of file
         fformat (str): See :meth:`RegularSurface.from_file`
+        template (Cube or RegularSurface): See :meth:`RegularSurface.from_file`
 
     Example::
 
@@ -91,7 +92,7 @@ def surface_from_file(mfile, fformat='guess'):
 
     obj = RegularSurface()
 
-    obj.from_file(mfile, fformat=fformat)
+    obj.from_file(mfile, fformat=fformat, template=template)
 
     return obj
 
@@ -216,8 +217,9 @@ class RegularSurface(object):
         if args:
             # make instance from file import
             mfile = args[0]
-            fformat = kwargs.get('fformat', 'guess')
-            self.from_file(mfile, fformat=fformat)
+            fformat = kwargs.get('fformat', None)
+            template = kwargs.get('template', None)
+            self.from_file(mfile, fformat=fformat, template=template)
 
         else:
             # make instance by kw spesification
@@ -639,23 +641,28 @@ class RegularSurface(object):
         else:
             return dsc.astext()
 
-    def from_file(self, mfile, fformat='guess'):
+    def from_file(self, mfile, fformat=None, template=None):
         """Import surface (regular map) from file.
 
-        Note that the 'guess' option will look at the file extensions, where
-        e.g. "gri" will assume irap_binary and "fgr" assume Irap Ascii.
+        Note that the fformat=None option will guess bye looking at the file
+        extension, where e.g. "gri" will assume irap_binary and "fgr"
+        assume Irap Ascii.
 
         The ijxyz format is the typical seismic format, on the form
         (ILINE, XLINE, X, Y, VALUE) as a table of points. Map values are
-        estimated from the given values.
+        estimated from the given values, or by using an existing map or
+        cube as template, and match by ILINE/XLINE numbering.
 
         Args:
             mfile (str): Name of file
-            fformat (str): File format, guess/irap_binary/irap_ascii/ijxyz
+            fformat (str): File format, None/guess/irap_binary/irap_ascii/ijxyz
                 is currently supported.
+            template (object): Only valid if ``ijxyz`` format, where an
+                existing Cube or RegularSurface instance is applied to
+                get correct topology.
 
         Returns:
-            Object instance, optionally.
+            Object instance.
 
         Example:
             Here the from_file method is used to initiate the object
@@ -686,7 +693,11 @@ class RegularSurface(object):
         elif fformat in ('irap_ascii', 'fgr', 'asc', 'irapasc'):
             _regsurf_import.import_irap_ascii(self, mfile)
         elif fformat == 'ijxyz':
-            _regsurf_import.import_ijxyz_ascii(self, mfile)
+            if template:
+                _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
+            else:
+                _regsurf_import.import_ijxyz_ascii(self, mfile)
+
         else:
             raise ValueError('Invalid file format: {}'.format(fformat))
 
@@ -1757,9 +1768,9 @@ class RegularSurface(object):
                                        sampling=sampling, mask=mask,
                                        snapxy=snapxy,
                                        deadtraces=deadtraces)
-
         if ier == -4:
-            xtg.warn('Number of sampled nodes < 10 percent')
+            xtg.warnuser('Number of sampled surface nodes < 10 percent of '
+                         'Cube nodes')
         elif ier == -5:
             xtg.warn('No nodes sampled: map is 100 percent outside of cube?')
 
@@ -1799,6 +1810,9 @@ class RegularSurface(object):
 
         * 'meanneg' for mean of negative values
 
+        Note that 'all' can be used to select all attributes that are currently
+        available.
+
         Args:
             cube (Cube): Instance of a Cube()
             zsurf (RegularSurface): Instance of a depth (or time) map, which
@@ -1822,7 +1836,7 @@ class RegularSurface(object):
             attribute (str or list): The requested attribute(s), e.g.
                 'max' value. May also be a list of attributes, e.g.
                 ['min', 'rms', 'max']. By such, a dict of surface objects is
-                returned.
+                returned. Note 'all' will make a list of possible attributes
             maskthreshold (float): Only if two surface; if isochore is less
                 than given value, the result will be masked.
             snapxy (bool): If True (optional), then the map values will get

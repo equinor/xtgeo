@@ -296,6 +296,18 @@ int surf_import_ijxyz(
                       int debug
                       );
 
+int surf_import_ijxyz_tmpl(
+                           char *file,
+                           int *swig_np_int_in_v1,       // *ilines,
+                           long n_swig_np_int_in_v1,     // nilines or ncol,
+                           int *swig_np_int_in_v2,       // *xlines,
+                           long n_swig_np_int_in_v2,     // nxlines or nrow,
+                           double *swig_np_dbl_aout_v1,  // *p_map_v
+                           long n_swig_np_dbl_aout_v1,   // nmap = nrow*ncol
+                           int option,
+                           int debug
+                           );
+
 
 int surf_export_irap_bin(
 			 char   *filename,

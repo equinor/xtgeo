@@ -17,6 +17,10 @@ _cxtgeo.xtg_verbose_file('NONE')
 
 XTGDEBUG = xtg.get_syslevel()
 
+ALLATTRS = ['max', 'min', 'rms', 'var', 'mean', 'maxpos', 'maxneg',
+            'maxabs', 'sumpos', 'sumneg', 'sumabs', 'meanabs', 'meanpos',
+            'meanneg']
+
 # self = RegularSurface instance!
 # pylint: disable=too-many-locals, too-many-branches
 
@@ -113,7 +117,11 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
 
     qattr_is_string = True
     if not isinstance(attribute, list):
-        attrlist = [attribute]
+        if attribute == 'all':
+            attrlist = ALLATTRS
+            qattr_is_string = False
+        else:
+            attrlist = [attribute]
     else:
         attrlist = attribute
         qattr_is_string = False
@@ -382,23 +390,29 @@ def _attvalues(attribute, stacked):
     elif attribute == 'mean':
         attvalues = ma.mean(stacked, axis=2)
     elif attribute == 'maxpos':
-        attvalues = ma.max(stacked[stacked >= 0.0], axis=2)
+        stacked = ma.masked_less(stacked, 0.0, copy=True)
+        attvalues = ma.max(stacked, axis=2)
     elif attribute == 'maxneg':  # ~ minimum of negative values?
-        attvalues = ma.min(stacked[stacked < 0.0], axis=2)
+        stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
+        attvalues = ma.min(stacked, axis=2)
     elif attribute == 'maxabs':
         attvalues = ma.max(abs(stacked), axis=2)
     elif attribute == 'sumpos':
-        attvalues = ma.sum(stacked[stacked >= 0.0], axis=2)
+        stacked = ma.masked_less(stacked, 0.0, copy=True)
+        attvalues = ma.sum(stacked, axis=2)
     elif attribute == 'sumneg':
-        attvalues = ma.sum(stacked[stacked < 0.0], axis=2)
+        stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
+        attvalues = ma.sum(stacked, axis=2)
     elif attribute == 'sumabs':
         attvalues = ma.sum(abs(stacked), axis=2)
     elif attribute == 'meanabs':
         attvalues = ma.mean(abs(stacked), axis=2)
     elif attribute == 'meanpos':
-        attvalues = ma.mean(stacked[stacked >= 0.0], axis=2)
+        stacked = ma.masked_less(stacked, 0.0, copy=True)
+        attvalues = ma.mean(stacked, axis=2)
     elif attribute == 'meanneg':
-        attvalues = ma.mean(stacked[stacked < 0.0], axis=2)
+        stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
+        attvalues = ma.mean(stacked, axis=2)
     else:
         etxt = 'Invalid attribute applied: {}'.format(attribute)
         raise ValueError(etxt)
