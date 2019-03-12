@@ -45,6 +45,19 @@ def test_import_wells(loadwells1):
     assert 'WELL33' in mywells.names
 
 
+def test_get_dataframe_allwells(loadwells1):
+    """Get a single dataframe for all wells"""
+
+    mywell_list = loadwells1
+
+    mywells = Wells()
+    mywells.wells = mywell_list
+
+    df = mywells.get_dataframe()
+
+    print(df)
+
+
 def test_quickplot_wells(loadwells1):
     """Import wells from file to Wells and quick plot."""
 

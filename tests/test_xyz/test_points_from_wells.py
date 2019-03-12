@@ -17,8 +17,8 @@ td = xtg.tmpdir
 testpath = xtg.testpath
 
 wfiles1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5]*"
-wfiles3 = "../xtgeo-testdata/wells/reek/1/XP_*"
+wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5]*.w"
+wfiles3 = "../xtgeo-testdata/wells/reek/1/XP_*.w"
 
 
 def test_get_zone_tops_one_well():

@@ -49,6 +49,7 @@ from xtgeo.grid3d.grid_property import GridProperty
 from xtgeo.grid3d.grid_properties import GridProperties
 from xtgeo.well.well import Well
 from xtgeo.well.wells import Wells
+from xtgeo.well.blocked_well import BlockedWell
 from xtgeo.xyz.points import Points
 from xtgeo.xyz.polygons import Polygons
 from xtgeo.roxutils.roxutils import RoxUtils

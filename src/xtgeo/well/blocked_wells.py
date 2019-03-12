@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Wells module, which has the Wells class (collection of Well objects)"""
+"""BlockedWells module, (collection of BlockedWell objects)"""
 from __future__ import division, absolute_import
 from __future__ import print_function
 
@@ -14,31 +14,20 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-class Wells(object):
-    """Class for a collection of Well objects, for operations that involves
-    a number of wells.
+class BlockedWells(object):
+    """Class for a collection of BlockedWell objects, for operations that
+    involves a number of wells.
 
-    See also the :class:`xtgeo.well.Well` class.
+    See also the :class:`xtgeo.well.BlockedWell` class.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
 
-        self._wells = []            # list of Well objects
-
-        if args:
-            # make instance from file import
-            wfiles = args[0]
-            fformat = kwargs.get('fformat', 'rms_ascii')
-            mdlogname = kwargs.get('mdlogname', None)
-            zonelogname = kwargs.get('zonelogname', None)
-            strict = kwargs.get('strict', True)
-            self.from_files(wfiles, fformat=fformat, mdlogname=mdlogname,
-                            zonelogname=zonelogname, strict=strict,
-                            append=False)
+        self._bwells = []            # list of Well objects
 
     @property
     def names(self):
-        """Returns a list of well names (read only).
+        """Returns a list of blocked well names (read only).
 
         Example::
 
@@ -49,34 +38,36 @@ class Wells(object):
         """
 
         wlist = []
-        for wel in self._wells:
+        for wel in self._bwells:
             wlist.append(wel.name)
 
         return wlist
 
     @property
     def wells(self):
-        """Returns or sets a list of XTGeo Well objects, None if empty."""
-        if len(self._wells) == 0:
+        """Returns or sets a list of XTGeo BlockedWell objects, None if
+        empty.
+        """
+        if len(self._bwells) == 0:
             return None
 
-        return self._wells
+        return self._bwells
 
     @wells.setter
-    def wells(self, well_list):
+    def wells(self, bwell_list):
 
-        for well in well_list:
-            if not isinstance(well, xtgeo.well.Well):
-                raise ValueError('Well in list not valid Well object')
+        for well in bwell_list:
+            if not isinstance(well, xtgeo.well.BlockedWell):
+                raise ValueError('Well in list not valid BlockedWell object')
 
-        self._wells = well_list
+        self._wells = bwell_list
 
     def copy(self):
-        """Copy a Wells instance to a new unique instance (a deep copy)."""
+        """Copy a BlockedWells instance to a new unique instance."""
 
-        new = Wells()
+        new = BlockedWells()
 
-        for well in self._wells:
+        for well in self._bwells:
             newwell = well.copy()
             new._props.append(newwell)
 
