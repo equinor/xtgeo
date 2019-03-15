@@ -39,30 +39,29 @@ def blockedwell_from_file(bwfile, fformat='rms_ascii', mdlogname=None,
     return obj
 
 
-# def blockedwell_from_roxar(project, name, trajectory='Drilled trajectory',
-#                            logrun='log', lognames=None, inclmd=False,
-#                            inclsurvey=False):
+def blockedwell_from_roxar(project, gname, bwname, wname,
+                           lognames=None, ijk=True):
 
-#     """This makes an instance of a Well directly from Roxar RMS.
+    """This makes an instance of a BlockedWell directly from Roxar RMS.
 
-#     For arguments, see :meth:`Well.from_roxar`.
+    For arguments, see :meth:`BlockedWell.from_roxar`.
 
-#     Example::
+    Example::
 
-#         # inside RMS:
-#         import xtgeo
-#         mylogs = ['ZONELOG', 'GR', 'Facies']
-#         mywell = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
-#                                        logrun='log', lognames=mylogs)
+        # inside RMS:
+        import xtgeo
+        mylogs = ['ZONELOG', 'GR', 'Facies']
+        mybw = xtgeo.blockedwell_from_roxar(project, 'Simgrid', 'BW', '31_3-1',
+                                            lognames=mylogs)
 
-#     """
+    """
 
-#     obj = Well()
+    obj = BlockedWell()
 
-#     obj.from_roxar(project, name, trajectory=trajectory, logrun=logrun,
-#                    lognames=lognames, inclmd=inclmd, inclsurvey=inclsurvey)
+    obj.from_roxar(project, gname, bwname, wname, ijk=ijk,
+                   lognames=lognames)
 
-#     return obj
+    return obj
 
 
 # =============================================================================
@@ -134,7 +133,7 @@ class BlockedWell(Well):
 
     def from_roxar(self, project, gname, bwname, wname, lognames=None,
                    ijk=True, realisation=0):
-        """Import (retrieve) a blocked well from roxar project.
+        """Import (retrieve) a single blocked well from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
         activated.

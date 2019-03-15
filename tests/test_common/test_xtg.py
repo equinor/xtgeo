@@ -77,6 +77,14 @@ skipifroxar = pytest.mark.skipif(roxar, reason='Skip test in Roxar python')
 skipunlessroxar = pytest.mark.skipif(not roxar,
                                      reason='Skip if NOT Roxar python')
 
+skipplot = False
+if 'ROXAR_RMS_ROOT' in os.environ:
+    skipplot = True
+
+plotskipifroxar = pytest.mark.skipif(skipplot, reason='Skip test in as '
+                                     'Roxar has matplotlib issues')
+
+
 # =============================================================================
 # Do tests
 # =============================================================================

@@ -10,6 +10,8 @@ import pandas as pd
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
+from xtgeo.common.exceptions import WellNotFoundError
+
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -47,9 +49,10 @@ def _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
         raise ValueError('No such blocked well set: {}'.format(bwname))
 
     if wname in bwset.get_well_names():
-        self.wname = wname
+        self._wname = wname
     else:
-        raise ValueError('No such well in blocked well set: {}'.format(wname))
+        raise WellNotFoundError('No such well in blocked well set: {}'
+                                .format(wname))
 
     bwprops = [item for item in bwset.properties]
     bwnames = [item.name for item in bwset.properties]
@@ -95,6 +98,7 @@ def _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
 
     self._df = pd.DataFrame.from_dict(logs)
     self._gname = gname
+    self._filesrc = 'RMS'
 
     # finally get some other metadata like RKB and topside X Y; as they
     # seem to miss for the BW in RMS, try and get them from the

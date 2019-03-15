@@ -123,20 +123,65 @@ class Wells(object):
         if not self._wells:
             xtg.warn('No wells imported!')
 
+    def from_roxar(self, project, lognames=None, filter='*',
+                   ijk=True, realisation=0):
+        """Import (retrieve) all wells (or based on a filter) from
+        roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        All the wells present in the bwname icon will be imported.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            lognames (list): List of lognames to include, or use 'all' for
+                all current blocked logs for this well.
+            filter (str): This is a regular expression to tell which wells
+                that shall be included.
+            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
+            realisation (int): Realisation index (0 is default)
+
+        Example::
+
+            import xtgeo
+            mywells = xtgeo.Wells()
+            mywells.from_roxar(project, lognames='all', filter='31.*')
+
+        """
+        raise NotImplementedError('In prep...')
+
     # not having this as property but a get_ .. is intended, for flexibility
-    def get_dataframe(self):
+    def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
         """Get a big dataframe for all wells in instance, with well name
-        as first column"""
+        as first column
+
+        Args:
+            filled (bool): If True, then NaN's are replaces with values
+            fill_value1 (int): Only applied if filled=True, for logs that
+                have missing values
+            fill_value2 (int): Only applied if filled=True, when logs
+                are missing completely for that well.
+        """
 
         bigdf = []
         for well in self._wells:
             dfr = well.dataframe.copy()
-            # dfr = dfr.insert(0, 'WELL_NAME', well.name)
             dfr['WELLNAME'] = well.name
-            dfr = dfr[['WELLNAME'] + [col for col in dfr if col != 'WELLNAME']]
+            if filled:
+                dfr = dfr.fillna(fill_value1)
             bigdf.append(dfr)
 
-        return pd.concat(bigdf, ignore_index=True)
+        dfr = pd.concat(bigdf, ignore_index=True)
+
+        # the concat itself may lead to NaN's:
+        if filled:
+            dfr = dfr.fillna(fill_value2)
+
+        spec_order = ['WELLNAME', 'X_UTME', 'Y_UTMN', 'Z_TVDSS']
+        dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
+
+        return dfr
 
     def quickplot(self, filename=None, title='QuickPlot'):
         """Fast plot of wells using matplotlib.

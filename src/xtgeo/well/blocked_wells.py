@@ -7,11 +7,36 @@ from __future__ import print_function
 import pandas as pd
 
 import xtgeo
-
-from xtgeo.well import _wells_utils
+from . import _blockedwells_roxapi
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
+
+    """This makes an instance of a BlockedWells directly from Roxar RMS.
+
+    For arguments, see :meth:`BlockedWells.from_roxar`.
+
+    Note the difference between classes BlockedWell and BlockedWells.
+
+    Example::
+
+        # inside RMS:
+        import xtgeo
+        mylogs = ['ZONELOG', 'GR', 'Facies']
+        mybws = xtgeo.blockedwells_from_roxar(project, 'Simgrid', 'BW',
+                                            lognames=mylogs)
+
+    """
+
+    obj = BlockedWells()
+
+    obj.from_roxar(project, gname, bwname, ijk=ijk,
+                   lognames=lognames)
+
+    return obj
 
 
 class BlockedWells(object):
@@ -76,7 +101,7 @@ class BlockedWells(object):
     def from_files(self, filelist, fformat='rms_ascii', mdlogname=None,
                    zonelogname=None, strict=True, append=True):
 
-        """Import wells from a list of files (filelist).
+        """Import blocked wells from a list of files (filelist).
 
         Args:
             filelist (list of str): List with file names
@@ -98,39 +123,78 @@ class BlockedWells(object):
         """
 
         if not append:
-            self._wells = []
+            self._bwells = []
 
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = xtgeo.well.Well(wfile, fformat=fformat,
-                                      mdlogname=mdlogname,
-                                      zonelogname=zonelogname,
-                                      strict=strict)
-                self._wells.append(wll)
+                wll = xtgeo.well.BlockedWell(wfile, fformat=fformat,
+                                             mdlogname=mdlogname,
+                                             zonelogname=zonelogname,
+                                             strict=strict)
+                self._bwells.append(wll)
             except ValueError as err:
                 xtg.warn('SKIP this well: {}'.format(err))
                 continue
-        if not self._wells:
+        if not self._bwells:
             xtg.warn('No wells imported!')
 
-    # not having this as property but a get_ .. is intended, for flexibility
-    def get_dataframe(self):
+    def from_roxar(self, project, gname, bwname, lognames=None,
+                   ijk=True, realisation=0):
+        """Import (retrieve) blocked wells from roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        All the wells present in the bwname icon will be imported.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            gname (str): Name of GridModel icon in RMS
+            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
+            lognames (list): List of lognames to include, or use 'all' for
+                all current blocked logs for this well.
+            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
+            realisation (int): Realisation index (0 is default)
+        """
+
+        _blockedwells_roxapi.import_bwells_roxapi(self, project, gname, bwname,
+                                                  lognames=lognames,
+                                                  ijk=ijk)
+
+    def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
         """Get a big dataframe for all wells in instance, with well name
-        as first column"""
+        as first column
+
+        Args:
+            filled (bool): If True, then NaN's are replaces with values
+            fill_value1 (int): Only applied if filled=True, for logs that
+                have missing values
+            fill_value2 (int): Only applied if filled=True, when logs
+                are missing completely for that well.
+        """
 
         bigdf = []
-        for well in self._wells:
+        for well in self._bwells:
             dfr = well.dataframe.copy()
-            # dfr = dfr.insert(0, 'WELL_NAME', well.name)
             dfr['WELLNAME'] = well.name
-            dfr = dfr[['WELLNAME'] + [col for col in dfr if col != 'WELLNAME']]
+            if filled:
+                dfr.fillna(fill_value1)
             bigdf.append(dfr)
 
-        return pd.concat(bigdf, ignore_index=True)
+        dfr = pd.concat(bigdf, ignore_index=True, axis=1)
+
+        # the concat itself may lead to NaN's:
+        if filled:
+            dfr = dfr.fillna(fill_value2)
+
+        spec_order = ['WELLNAME', 'X_UTME', 'Y_UTMN', 'Z_TVDSS']
+        dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
+
+        return dfr
 
     def quickplot(self, filename=None, title='QuickPlot'):
-        """Fast plot of wells using matplotlib.
+        """Fast plot of blocked wells using matplotlib.
 
         Args:
             filename (str): Name of plot file; None will plot to screen.
@@ -148,46 +212,3 @@ class BlockedWells(object):
             mymap.show()
         else:
             mymap.savefig(filename)
-
-    def limit_tvd(self, tvdmin, tvdmax):
-        """Limit TVD to be in range tvdmin, tvdmax for all wells"""
-        for well in self.wells:
-            well.limit_tvd(tvdmin, tvdmax)
-
-    def downsample(self, interval=4, keeplast=True):
-        """Downsample by sampling every N'th element (coarsen only), all
-        wells.
-        """
-
-        for well in self.wells:
-            well.downsample(interval=interval, keeplast=keeplast)
-
-    def wellintersections(self, wfilter=None, showprogress=False):
-        """Get intersections between wells, return as dataframe table.
-
-        Notes on wfilter: A wfilter is settings to improve result. In
-        particular to remove parts of trajectories that are parallel.
-
-        wfilter = {'parallel': {'xtol': 4.0, 'ytol': 4.0, 'ztol':2.0,
-                                'itol':10, 'atol':2}}
-
-        Here xtol is tolerance in X coordinate; further Y tolerance,
-        Z tolerance, (I)nclination tolerance, and (A)zimuth tolerance.
-
-        Args:
-            tvdrange (tuple of floats): Search interval. One is often just
-                interested in the reservoir section.
-            wfilter (dict): A dictionrary for filter options, in order to
-                improve result. See example above.
-            showprogress (bool): Will show progress to screen if enabled.
-
-        Returns:
-            A Pandas dataframe object, with columns WELL, CWELL and UTMX UTMY
-                TVD coordinates for CWELL where CWELL crosses WELL,
-                and also MDEPTH for the WELL.
-        """
-
-        dfr = _wells_utils.wellintersections(self, wfilter=wfilter,
-                                             showprogress=showprogress)
-
-        return dfr

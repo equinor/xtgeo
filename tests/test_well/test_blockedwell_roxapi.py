@@ -29,7 +29,7 @@ PROJ['1.3'] = os.path.join(TESTPATH, 'reek.rms11.1.0')
 
 @tsetup.equinor
 @tsetup.skipunlessroxar
-def test_rox_get_gridproperty():
+def test_rox_get_blockedwell():
     """Get a blocked well from a RMS project."""
     from roxar import __version__ as ver
 
@@ -37,5 +37,18 @@ def test_rox_get_gridproperty():
 
     bwell = xtgeo.BlockedWell()
     bwell.from_roxar(PROJ[ver], 'Reek_geo', 'BW', 'OP_1', ijk=False,
-                     lognames=['Porox'])
-    print(bwell.dataframe.head())
+                     lognames=['Poro'])
+    logger.info(bwell.dataframe.head())
+
+
+@tsetup.equinor
+@tsetup.skipunlessroxar
+def test_rox_get_blockedwell_oneliner():
+    """Get a blocked well from a RMS project using a oneliner."""
+    from roxar import __version__ as ver
+
+    logger.info('Project is {}'.format(PROJ[ver]))
+
+    bwell = xtgeo.blockedwell_from_roxar(PROJ[ver], 'Reek_geo', 'BW', 'OP_1',
+                                         ijk=False, lognames=['Poro'])
+    logger.info(bwell.dataframe.head())

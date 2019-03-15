@@ -7,3 +7,4 @@ from xtgeo.well.well import Well
 from xtgeo.well.wells import Wells
 
 from xtgeo.well.blocked_well import BlockedWell
+from xtgeo.well.blocked_wells import BlockedWells
