@@ -9,7 +9,6 @@ import pytest
 import numpy as np
 import numpy.ma as npma
 
-import xtgeo
 from xtgeo.xyz import Polygons
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty

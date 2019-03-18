@@ -1748,9 +1748,33 @@ void grd3d_inact_by_dz(
 		       );
 
 
-
-
-
+int grd3d_check_cell_splits (
+                             int ncol,
+                             int nrow,
+                             int nlay,
+                             double *p_coord_v,
+                             double *p_zcorn_v,
+                             long ib1,
+                             long ib2,
+                             int debug
+                             );
+int grd3d_adj_cells (
+                     int ncol,
+                     int nrow,
+                     int nlay,
+                     double *p_coord_v,
+                     double *p_zcorn_v,
+                     int *p_actnum_v,
+                     int *p_prop1,
+                     long nprop1,
+                     int val1,
+                     int val2,
+                     int *p_prop2,
+                     long nprop2,
+                     int iflag1,
+                     int iflag2,
+                     int debug
+                     );
 
 
 void grd3d_corners (
