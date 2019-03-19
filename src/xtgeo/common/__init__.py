@@ -7,4 +7,6 @@ from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.common.xtgeo_dialog import XTGShowProgress
 
+from xtgeo.common.exceptions import WellNotFoundError
+
 from xtgeo.common._fileutils import _get_fhandle, _close_fhandle

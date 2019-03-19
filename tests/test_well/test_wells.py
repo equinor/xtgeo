@@ -1,13 +1,17 @@
-import glob
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
 
+import glob
 from os.path import join as ojoin
+
 import pytest
 
 from xtgeo.well import Well
 from xtgeo.well import Wells
 from xtgeo.common import XTGeoDialog
 
-# import test_common.test_xtg as tsetup
+import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -22,14 +26,14 @@ testpath = xtg.testpath
 # Do tests
 # =========================================================================
 
-wfiles = "../xtgeo-testdata/wells/battle/1/*.rmswell"
+WFILES = "../xtgeo-testdata/wells/battle/1/*.rmswell"
 
 
 @pytest.fixture()
 def loadwells1():
     logger.info('Load well 1')
     wlist = []
-    for wfile in glob.glob(wfiles):
+    for wfile in glob.glob(WFILES):
         wlist.append(Well(wfile))
     return wlist
 
@@ -45,6 +49,22 @@ def test_import_wells(loadwells1):
     assert 'WELL33' in mywells.names
 
 
+def test_get_dataframe_allwells(loadwells1):
+    """Get a single dataframe for all wells"""
+
+    mywell_list = loadwells1
+
+    mywells = Wells()
+    mywells.wells = mywell_list
+
+    df = mywells.get_dataframe(filled=True)
+
+    #    assert df.iat[95610, 4] == 345.4128
+
+    logger.debug(df)
+
+
+@tsetup.plotskipifroxar
 def test_quickplot_wells(loadwells1):
     """Import wells from file to Wells and quick plot."""
 
@@ -64,7 +84,7 @@ def test_wellintersections(loadwells1):
     mywells.wells = mywell_list
     dfr = mywells.wellintersections()
     logger.info(dfr)
-    dfr.to_csv('TMP/wells_crossins.csv')
+    dfr.to_csv(ojoin(td, 'wells_crossings.csv'))
 
 
 def test_wellintersections_tvdrange_nowfilter(loadwells1):
@@ -119,5 +139,5 @@ def test_wellintersections_tvdrange_wfilter(loadwells1):
     print('Limit TVD and downsample...DONE')
 
     dfr = mywells.wellintersections(wfilter=wfilter)
-    dfr.to_csv('TMP/wells_crossings_filter.csv')
+    dfr.to_csv(ojoin(td, 'wells_crossings_filter.csv'))
     print(dfr)

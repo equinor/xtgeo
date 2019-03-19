@@ -963,9 +963,6 @@ class Grid(Grid3D):
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Get grid geometrics
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     def get_geometrics(self, allcells=False, cellcenter=True,
                        return_dict=False):
         """Get a list of grid geometrics such as origin, min, max, etc.
@@ -998,9 +995,40 @@ class Grid(Grid3D):
 
         return gresult
 
+    def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
+
+        """Go through the grid for a discrete property and reports val1
+        properties that are neighbouring val2.
+
+        The result will be a new gridproperty, which in general has value 0
+        but 1 if criteria is met, and 2 if criteria is met but cells are
+        faulted.
+
+        Args:
+            prop (xtgeo.GridProperty): A discrete grid property, e.g region
+            val1 (int): Primary value to evaluate
+            val2 (int): Neighbourung value
+            activeonly (bool): If True, do not look at inactive cells
+
+        Raises: Nothing
+
+        """
+
+        presult = _grid_etc1.get_adjacent_cells(self, prop, val1, val2,
+                                                activeonly=activeonly)
+
+        return presult
+
     # =========================================================================
     # Some more special operations that changes the grid or actnum
     # =========================================================================
+    def activate_all(self):
+        """Activate all cells in the grid, by manipulating ACTNUM"""
+
+        actnum = self.get_actnum()
+        actnum.values = np.ones(self.dimensions, dtype=np.int32)
+        self.set_actnum(actnum)
+
     def inactivate_by_dz(self, threshold):
         """Inactivate cells thinner than a given threshold."""
 

@@ -68,11 +68,13 @@ class RoxUtils(object):
                 self._project = roxar.Project.open_import(projectname)
             else:
                 self._project = roxar.Project.open(projectname)
+            logger.info('Open RMS project from %s', projectname)
 
         elif isinstance(project, _roxar.Project):
             # this will only happen for _current_ project inside RMS
-            self.roxarapps = False
+            self._roxarapps = False
             self._project = project
+            logger.info('RMS project instance is already open %s', project)
         else:
             raise RuntimeError('Project is not valid')
 
@@ -90,10 +92,10 @@ class RoxUtils(object):
         """Close the project but only if roxarapps (external) mode, i.e.
         not current RMS project.
         """
-        print('Status of _roxarapps: {}'.format(self._roxarapps))
         if self._roxarapps:
             try:
                 self._project.close()
+                logger.info('RMS project instance is closed')
             except TypeError as msg:
                 xtg.warn(msg)
 

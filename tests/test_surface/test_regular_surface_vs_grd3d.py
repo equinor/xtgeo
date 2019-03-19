@@ -29,6 +29,7 @@ rgrd2 = ojn(rpath2, 'reek_sim_grid.roff')
 rprop2 = ojn(rpath2, 'reek_sim_zone.roff')
 
 
+@tsetup.plotskipifroxar
 def test_get_surface_from_grd3d_porosity():
     """Sample a surface from a 3D grid"""
 
@@ -67,6 +68,7 @@ def test_get_surface_from_grd3d_porosity():
     tsetup.assert_almostequal(surfr.values.mean(), 0.1667, 0.01)
 
 
+@tsetup.plotskipifroxar
 def test_get_surface_from_grd3d_zones():
     """Sample a surface from a 3D grid, using zones"""
 

@@ -315,6 +315,28 @@ def test_geometrics_reek():
     tsetup.assert_almostequal(geom['xmin'], 456620, 1, 'Xmin cell center')
 
 
+def test_activate_all_cells():
+    """Make the grid active for all cells"""
+
+    grid = Grid(EMEGFILE)
+    logger.info('Number of active cells %s before', grid.nactive)
+    grid.activate_all()
+    logger.info('Number of active cells %s after', grid.nactive)
+
+    assert grid.nactive == grid.ntotal
+    grid.to_file(join(TMPDIR, 'emerald_all_active.roff'))
+
+
+def test_get_adjacent_cells():
+    """Get the cell indices for discrete value X vs Y, if connected"""
+
+    grid = Grid(EMEGFILE)
+    actnum = grid.get_actnum()
+    actnum.to_file(join(TMPDIR, 'emerald_actnum.roff'))
+    result = grid.get_adjacent_cells(actnum, 0, 1, activeonly=False)
+    result.to_file(join(TMPDIR, 'emerald_adj_cells.roff'))
+
+
 def test_simple_io():
     """Test various import and export formats, incl egrid and bgrdecl"""
 

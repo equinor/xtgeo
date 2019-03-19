@@ -6,6 +6,7 @@ import glob
 from os.path import join
 
 import pytest
+import numpy as np
 import pandas as pd
 
 from xtgeo.well import Well
@@ -27,8 +28,9 @@ testpath = xtg.testpath
 # Do tests
 # =========================================================================
 
-wfile = join(testpath, 'wells/reek/1/OP_1.w')
-wfiles = join(testpath, 'wells/reek/1/*')
+WFILE = join(testpath, 'wells/reek/1/OP_1.w')
+WFILE_HOLES = join(testpath, 'wells/reek/1/OP_1_zholes.w')
+WFILES = join(testpath, 'wells/reek/1/*')
 
 WELL1 = join(testpath, 'wells/battle/1/WELL09.rmswell')
 WELL2 = join(testpath, 'wells/battle/1/WELL36.rmswell')
@@ -39,7 +41,7 @@ WELL3 = join(testpath, 'wells/battle/1/WELL10.rmswell')
 def loadwell1():
     """Fixture for loading a well (pytest setup)"""
     logger.info('Load well 1')
-    return Well(wfile)
+    return Well(WFILE)
 
 
 @pytest.fixture()
@@ -118,9 +120,9 @@ def test_change_a_lot_of_stuff(loadwell1):
 def test_import_export_many():
     """ Import and export many wells (test speed)"""
 
-    logger.debug(wfiles)
+    logger.debug(WFILES)
 
-    for filename in sorted(glob.glob(wfiles)):
+    for filename in sorted(glob.glob(WFILES)):
         logger.info('Importing ' + filename)
         mywell = Well(filename)
         logger.info(mywell.nrow)
@@ -151,10 +153,10 @@ def test_shortwellname():
 # def test_import_as_rms_export_as_hdf5_many():
 #     """ Import RMS and export as HDF5, many"""
 
-#     logger.debug(wfiles)
+#     logger.debug(WFILES)
 
 #     wfile = td + "/mytest.h5"
-#     for filename in glob.glob(wfiles):
+#     for filename in glob.glob(WFILES):
 #         logger.info("Importing " + filename)
 #         mywell = Well(filename)
 #         logger.info(mywell.nrow)
@@ -260,7 +262,7 @@ def test_rescale_well(loadwell1):
 def test_fence(loadwell1):
     """Return a resampled fence."""
 
-    mywell = Well(wfile)
+    mywell = Well(WFILE)
     pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
 
     logger.debug(pline)
@@ -269,7 +271,7 @@ def test_fence(loadwell1):
 def test_fence_as_polygons(loadwell1):
     """Return a resampled fence as Polygons."""
 
-    mywell = Well(wfile)
+    mywell = Well(WFILE)
     pline = mywell.get_fence_polyline(extend=3, tvdmin=1000,
                                       asnumpy=False)
 
@@ -282,14 +284,14 @@ def test_fence_as_polygons(loadwell1):
 def test_get_zonation_points():
     """Get zonations points (zone tops)"""
 
-    mywell = Well(wfile, zonelogname='Zonelog')
+    mywell = Well(WFILE, zonelogname='Zonelog')
     mywell.get_zonation_points()
 
 
 def test_get_zone_interval():
     """Get zonations points (zone tops)"""
 
-    mywell = Well(wfile, zonelogname='Zonelog')
+    mywell = Well(WFILE, zonelogname='Zonelog')
     line = mywell.get_zone_interval(3)
 
     print(line)
@@ -311,26 +313,29 @@ def test_remove_parallel_parts():
     print(well1.dataframe)
 
 
-# def test_get_zonation_holes():
-#     """get a report of holes in the zonation, some samples with -999 """
+def test_get_zonation_holes():
+    """get a report of holes in the zonation, some samples with -999 """
 
-#     mywell = Well(wfile, zonelogname='Zonelog')
-#     report = mywell.report_zonation_holes()
+    mywell = Well(WFILE_HOLES, zonelogname='Zonelog')
+    report = mywell.report_zonation_holes()
 
-#     logger.info('\n{}'.format(report))
+    logger.info('\n{}'.format(report))
 
-#     tsetup.assert_equal(report.iat[0, 0], 4166)  # first value for INDEX
-#     tsetup.assert_equal(report.iat[1, 3], 1570.3855)  # second value for Z
+    tsetup.assert_equal(report.iat[0, 0], 4193)  # first value for INDEX
+    tsetup.assert_equal(report.iat[1, 3], 1609.5800)  # second value for Z
 
 
-# def test_get_filled_dataframe():
-#     """Get a filled DataFrame"""
+def test_get_filled_dataframe():
+    """Get a filled DataFrame"""
 
-#     mywell = Well(wfile)
+    mywell = Well(WFILE)
 
-#     df1 = mywell.dataframe
+    df1 = mywell.dataframe
 
-#     df2 = mywell.get_filled_dataframe()
+    df2 = mywell.get_filled_dataframe(fill_value=-999, fill_value_int=-888)
 
-#     logger.debug(df1)
-#     logger.debug(df2)
+    logger.info(df1)
+    logger.info(df2)
+
+    assert np.isnan(df1.iat[4860, 6])
+    assert df2.iat[4860, 6] == -888

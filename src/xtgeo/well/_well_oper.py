@@ -196,3 +196,77 @@ def get_gridproperties(self, gridprops, grid=('ICELL', 'JCELL', 'KCELL'),
     else:
         raise ValueError('The "grid" is of wrong type, must be a tuple or '
                          'a Grid')
+
+
+def report_zonation_holes(self, threshold=5):
+    """Reports if well has holes in zonation, less or equal to N samples."""
+    # pylint: disable=too-many-branches, too-many-statements
+
+    if self.zonelogname is None:
+        raise RuntimeError('No zonelog present for well')
+
+    wellreport = []
+
+    zlog = self._df[self.zonelogname].values.copy()
+
+    mdlog = None
+    if self.mdlogname:
+        mdlog = self._df[self.mdlogname].values
+
+    xvv = self._df['X_UTME'].values
+    yvv = self._df['Y_UTMN'].values
+    zvv = self._df['Z_TVDSS'].values
+    zlog[np.isnan(zlog)] = xtgeo.UNDEF_INT
+
+    ncv = 0
+    first = True
+    hole = False
+    for ind, zone in np.ndenumerate(zlog):
+        ino = ind[0]
+        if zone > xtgeo.UNDEF_INT_LIMIT and first:
+            continue
+
+        if zone < xtgeo.UNDEF_INT_LIMIT and first:
+            first = False
+            continue
+
+        if zone > xtgeo.UNDEF_INT_LIMIT:
+            ncv += 1
+            hole = True
+
+        if zone > xtgeo.UNDEF_INT_LIMIT and ncv > threshold:
+            logger.info('Restart first (bigger hole)')
+            hole = False
+            first = True
+            ncv = 0
+            continue
+
+        if hole and zone < xtgeo.UNDEF_INT_LIMIT and ncv <= threshold:
+            # here we have a hole that fits criteria
+            if mdlog is not None:
+                entry = (ino, xvv[ino], yvv[ino], zvv[ino],
+                         int(zone), self.xwellname, mdlog[ino])
+            else:
+                entry = (ino, xvv[ino], yvv[ino], zvv[ino], int(zone),
+                         self.xwellname)
+
+            wellreport.append(entry)
+
+            # restart count
+            hole = False
+            ncv = 0
+
+        if hole and zone < xtgeo.UNDEF_INT_LIMIT and ncv > threshold:
+            hole = False
+            ncv = 0
+
+    if not wellreport:  # ie length is 0
+        return None
+
+    if mdlog is not None:
+        clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS',
+               'Zone', 'Well', 'MD']
+    else:
+        clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS', 'Zone', 'Well']
+
+    return pd.DataFrame(wellreport, columns=clm)

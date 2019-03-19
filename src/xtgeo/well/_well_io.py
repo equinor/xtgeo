@@ -31,19 +31,47 @@ def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None,
             elif lnum == 2:
                 _wtype = line.strip()  # noqa, well type
             elif lnum == 3:
+                # usually 4 fields, but last (rkb) can be missing. A
+                # complication is that first field (well name) may have spaces,
+                # hence some clever guessing is needed. However, this cannot be
+                # 100% foolproof... if Ycoord < 1000 and last item of a well
+                # name with spaces is a number, then this may fail.
+                assume_rkb = False
                 row = line.strip().split()
-                rkb = float(row[-1])
-                ypos = float(row[-2])
-                xpos = float(row[-3])
-                wname = row[-4]
+                newrow = []
+                if len(row) > 3:
+                    for item in row:
+                        try:
+                            item = float(item)
+                        except ValueError:
+                            item = item
+                        newrow.append(item)
+                    if all(isinstance(var, float) for var in newrow[-3:]):
+                        if abs(newrow[-1] < 1000.0):
+                            assume_rkb = True
+
+                if assume_rkb:
+                    rkb = float(row.pop())
+                else:
+                    rkb = None
+                ypos = float(row.pop())
+                xpos = float(row.pop())
+                wname = ' '.join(map(str, row))
 
             elif lnum == 4:
                 nlogs = int(line)
                 nlogread = 1
+                logger.debug('Number of logs: %s', nlogs)
 
             else:
                 row = line.strip().split()
                 lname = row[0]
+
+                # if i_index etc, make uppercase to I_INDEX
+                # however it is most practical to treat indexes as CONT logs
+                if '_index' in lname:
+                    lname = lname.upper()
+
                 ltype = row[1].upper()
 
                 rxv = row[2:]
@@ -52,6 +80,8 @@ def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None,
                 lognames.append(lname)
 
                 wlogtype[lname] = ltype
+
+                logger.debug('Reading log name %s of type %s', lname, ltype)
 
                 if ltype == 'DISC':
                     xdict = {int(rxv[i]): rxv[i + 1] for i in
@@ -121,8 +151,12 @@ def export_rms_ascii(self, wfile, precision=4):
     with open(wfile, 'w') as fwell:
         print('{}'.format('1.0'), file=fwell)
         print('{}'.format('Unknown'), file=fwell)
-        print('{} {} {} {}'.format(self._wname, self._xpos, self._ypos,
-                                   self._rkb), file=fwell)
+        if self._rkb is None:
+            print('{} {} {}'.format(self._wname, self._xpos, self._ypos),
+                  file=fwell)
+        else:
+            print('{} {} {} {}'.format(self._wname, self._xpos, self._ypos,
+                                       self._rkb), file=fwell)
         print('{}'.format(len(self.lognames)), file=fwell)
         for lname in self.lognames:
             usewrec = 'linear'

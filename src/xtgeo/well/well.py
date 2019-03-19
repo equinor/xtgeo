@@ -123,11 +123,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     """
 
-    UNDEF = const.UNDEF
-    UNDEF_LIMIT = const.UNDEF_LIMIT
-    UNDEF_INT = const.UNDEF_INT
-    UNDEF_INT_LIMIT = const.UNDEF_INT_LIMIT
-
     VALID_LOGTYPES = {'DISC', 'CONT'}
 
     def __init__(self, *args, **kwargs):
@@ -679,14 +674,19 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return carr
 
-    def get_filled_dataframe(self):
+    def get_filled_dataframe(self, fill_value=const.UNDEF,
+                             fill_value_int=const.UNDEF_INT):
         """Fill the Nan's in the dataframe with real UNDEF values.
 
         This module returns a copy of the dataframe in the object; it
         does not change the instance.
 
+        Note that DISC logs will be casted to columns with integer
+        as datatype.
+
         Returns:
-            A pandas dataframe where Nan er replaces with high values.
+            A pandas dataframe where Nan er replaces with preset
+                high XTGeo UNDEF values, or user defined values.
 
         """
 
@@ -698,22 +698,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         dtype = {'X_UTME': 'float64', 'Y_UTMN': 'float64',
                  'Z_TVDSS': 'float64'}
 
-        dfill = {'X_UTME': Well.UNDEF, 'Y_UTMN': Well.UNDEF,
-                 'Z_TVDSS': Well.UNDEF}
+        dfill = {'X_UTME': const.UNDEF, 'Y_UTMN': const.UNDEF,
+                 'Z_TVDSS': const.UNDEF}
 
         for lname in lnames:
             if self.get_logtype(lname) == 'DISC':
-                dtype[lname] = 'int32'
-                dfill[lname] = Well.UNDEF_INT
+                dtype[lname] = np.int32
+                dfill[lname] = fill_value_int
             else:
-                dtype[lname] = 'float64'
-                dfill[lname] = Well.UNDEF
+                dtype[lname] = np.float64
+                dfill[lname] = fill_value
 
         # now first fill Nan's (because int cannot be converted if Nan)
-        newdf.fillna(dfill, inplace=True)
+        newdf = newdf.fillna(dfill)
 
         # now cast to dtype
-        newdf.astype(dtype, inplace=True)
+        newdf = newdf.astype(dtype)
 
         return newdf
 
@@ -852,7 +852,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if ier != 0:
             raise RuntimeError('Unexpected error')
 
-        self._df = self._df[self._df['X_UTME'] < Well.UNDEF_LIMIT]
+        self._df = self._df[self._df['X_UTME'] < const.UNDEF_LIMIT]
         self._df.reset_index(drop=True, inplace=True)
 
     def may_overlap(self, other):
@@ -1005,108 +1005,32 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return rval
 
-    def report_zonation_holes(self, zonelogname=None, mdlogname=None,
-                              threshold=5):
+    def report_zonation_holes(self, threshold=5):
         """Reports if well has holes in zonation, less or equal to N samples.
 
         Zonation may have holes due to various reasons, and
         usually a few undef samples indicates that something is wrong.
         This method reports well and start interval of the "holes"
 
+        The well shall have zonelog from import (via zonelogname attribute) and
+        preferly a MD log (via mdlogname attribute); however if the
+        latter is not present, a report withou MD values will be present.
+
         Args:
-            zonelogname (str): name of Zonelog to be applied
             threshold (int): Number of samples (max.) that defines a hole, e.g.
                 5 means that undef samples in the range [1, 5] (including 5) is
                 applied
 
         Returns:
-            A Pandas dataframe as report. None if no list is made.
+            A Pandas dataframe as a report. None if no list is made.
+
+        Raises:
+            RuntimeError if zonelog is not present
         """
-        # pylint: disable=too-many-branches, too-many-statements
 
-        if zonelogname is None:
-            zonelogname = self._zonelogname
+        dfr = _well_oper.report_zonation_holes(self, threshold=threshold)
 
-        if mdlogname is None:
-            mdlogname = self._mdlogname
-
-        logger.info('MDLOGNAME is %s', mdlogname)
-
-        wellreport = []
-
-        if zonelogname in self._df:
-            zlog = self._df[zonelogname].values.copy()
-        else:
-            logger.warning('Cannot get zonelog')
-            xtg.warn('Cannot get zonelog {} for {}'
-                     .format(zonelogname, self.wellname))
-            return None
-
-        if mdlogname in self._df:
-            mdlog = self._df[mdlogname].values
-        else:
-            logger.warning('Cannot get mdlog')
-            xtg.warn('Cannot get mdlog {} for {}'
-                     .format(mdlogname, self.wellname))
-            return None
-
-        xvv = self._df['X_UTME'].values
-        yvv = self._df['Y_UTMN'].values
-        zvv = self._df['Z_TVDSS'].values
-        zlog[np.isnan(zlog)] = Well.UNDEF_INT
-
-        ncv = 0
-        first = True
-        hole = False
-        for ind, zone in np.ndenumerate(zlog):
-            ino = ind[0]
-            if zone > Well.UNDEF_INT_LIMIT and first:
-                continue
-
-            if zone < Well.UNDEF_INT_LIMIT and first:
-                first = False
-                continue
-
-            if zone > Well.UNDEF_INT_LIMIT:
-                ncv += 1
-                hole = True
-
-            if zone > Well.UNDEF_INT_LIMIT and ncv > threshold:
-                logger.info('Restart first (bigger hole)')
-                hole = False
-                first = True
-                ncv = 0
-                continue
-
-            if hole and zone < Well.UNDEF_INT_LIMIT and ncv <= threshold:
-                # here we have a hole that fits criteria
-                if mdlog is not None:
-                    entry = (ino, xvv[ino], yvv[ino], zvv[ino],
-                             int(zone), self.xwellname, mdlog[ino])
-                else:
-                    entry = (ino, xvv[ino], yvv[ino], zvv[ino], int(zone),
-                             self.xwellname)
-
-                wellreport.append(entry)
-
-                # restart count
-                hole = False
-                ncv = 0
-
-            if hole and zone < Well.UNDEF_INT_LIMIT and ncv > threshold:
-                hole = False
-                ncv = 0
-
-        if not wellreport:  # ie length is 0
-            return None
-
-        if mdlog is not None:
-            clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS',
-                   'Zone', 'Well', 'MD']
-        else:
-            clm = ['INDEX', 'X_UTME', 'Y_UTMN', 'Z_TVDSS', 'Zone', 'Well']
-
-        return pd.DataFrame(wellreport, columns=clm)
+        return dfr
 
     def get_zonation_points(self, tops=True, incl_limit=80, top_prefix='Top',
                             zonelist=None, use_undef=False):
@@ -1141,7 +1065,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # number as undef
         if self.zonelogname is not None:
             zlog = self._df[self.zonelogname].values
-            zlog[np.isnan(zlog)] = Well.UNDEF_INT
+            zlog[np.isnan(zlog)] = const.UNDEF_INT
             zlog = np.rint(zlog).astype(int)
         else:
             return None

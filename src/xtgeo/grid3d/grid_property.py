@@ -884,7 +884,6 @@ class GridProperty(Grid3D):
         (prop.geometry is set to a grid instance)
 
         Args:
-            grid (Grid): The grid geometry instance
             poly (Polygons): A XTGeo Polygons instance
             value (float): Value to add, subtract etc
             opname (str): Name of operation... 'add', 'sub', etc

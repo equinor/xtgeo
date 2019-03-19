@@ -26,49 +26,61 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
     mplib.use('Agg')
     print('=' * 79)
 
+#
+# Order matters!
+#
 
-from xtgeo.surface import regular_surface
-from xtgeo.cube import cube
-from xtgeo.grid3d import grid
-from xtgeo.grid3d import grid_property
-from xtgeo.grid3d import grid_properties
-from xtgeo.well import well
-from xtgeo.well import wells
-from xtgeo.plot import baseplot
-from xtgeo.plot import xsection
-from xtgeo.plot import xtmap
-from xtgeo.plot import grid3d_slice
-from xtgeo.xyz import points
-from xtgeo.xyz import polygons
-from xtgeo.roxutils import roxutils
+from xtgeo._theversion import theversion
+__version__ = theversion()
 
-from xtgeo.surface.regular_surface import RegularSurface
-from xtgeo.cube.cube import Cube
-from xtgeo.grid3d.grid import Grid
-from xtgeo.grid3d.grid_property import GridProperty
-from xtgeo.grid3d.grid_properties import GridProperties
-from xtgeo.well.well import Well
-from xtgeo.well.wells import Wells
-from xtgeo.xyz.points import Points
-from xtgeo.xyz.polygons import Polygons
-from xtgeo.roxutils.roxutils import RoxUtils
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
 
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.constants import UNDEF_LIMIT
 from xtgeo.common.constants import UNDEF_INT
 from xtgeo.common.constants import UNDEF_INT_LIMIT
 
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.common.exceptions import DateNotFoundError
+from xtgeo.common.exceptions import KeywordNotFoundError
+from xtgeo.common.exceptions import KeywordFoundNoDateError
+from xtgeo.common.exceptions import WellNotFoundError
+from xtgeo.common.exceptions import GridNotFoundError
+from xtgeo.common.exceptions import BlockedWellsNotFoundError
 
-# from xtgeo.xyz import _xyz
+from xtgeo.roxutils import roxutils
+from xtgeo.roxutils.roxutils import RoxUtils
 
-# from xtgeo._version import get_versions
-# __version__ = get_versions()['version']
-# del get_versions
+from xtgeo.surface import regular_surface
+from xtgeo.surface.regular_surface import RegularSurface
 
-from xtgeo._theversion import theversion
-__version__ = theversion()
-# del get_versions
+from xtgeo.cube import cube
+from xtgeo.cube.cube import Cube
+
+from xtgeo.grid3d import grid
+from xtgeo.grid3d import grid_property
+from xtgeo.grid3d import grid_properties
+from xtgeo.grid3d.grid import Grid
+from xtgeo.grid3d.grid_property import GridProperty
+from xtgeo.grid3d.grid_properties import GridProperties
+
+from xtgeo.well import well
+from xtgeo.well import wells
+from xtgeo.well.well import Well
+from xtgeo.well.wells import Wells
+from xtgeo.well.blocked_well import BlockedWell
+from xtgeo.well.blocked_wells import BlockedWells
+
+from xtgeo.xyz import points
+from xtgeo.xyz import polygons
+
+from xtgeo.xyz.points import Points
+from xtgeo.xyz.polygons import Polygons
+
+from xtgeo.plot import baseplot
+from xtgeo.plot import xsection
+from xtgeo.plot import xtmap
+from xtgeo.plot import grid3d_slice
+
 
 # some function wrappers to initiate objects from imports
 from xtgeo.surface.regular_surface import surface_from_file
@@ -86,6 +98,11 @@ from xtgeo.cube.cube import cube_from_roxar
 
 from xtgeo.well.well import well_from_file
 from xtgeo.well.well import well_from_roxar
+
+from xtgeo.well.blocked_well import blockedwell_from_file
+from xtgeo.well.blocked_well import blockedwell_from_roxar
+
+from xtgeo.well.blocked_wells import blockedwells_from_roxar
 
 from xtgeo.xyz.polygons import polygons_from_file
 from xtgeo.xyz.polygons import polygons_from_roxar
