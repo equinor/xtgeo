@@ -201,6 +201,7 @@ class XTGeoDialog(object):
         self._test_env = True
         self._tmpdir = 'TMP'
         self._testpath = None
+        self._bigtests = None
         self._showrtwarnings = True
 
         # a string, for Python logging:
@@ -250,6 +251,35 @@ class XTGeoDialog(object):
     # @staticmethod
     # def UNDEF_LIMIT():
     #     return UNDEF_LIMIT
+
+    @property
+    def bigtests(self):
+        """Return bigtests status"""
+        return self._bigtests
+
+    @property
+    def bigtest(self):
+        """Return bigtest(s) status (alt)"""
+        return self._bigtests
+
+    @property
+    def tmpdir(self):
+        """Return tmpdir value"""
+        return self._tmpdir
+
+    @property
+    def testpath(self):
+        """Return or setting up testpath"""
+        return self._testpath
+
+    @testpath.setter
+    def testpath(self, newtestpath):
+
+        if not os.path.isdir(newtestpath):
+            raise RuntimeError('Proposed test path is not valid: {}'
+                               .format(newtestpath))
+
+        self._testpath = newtestpath
 
     @property
     def syslevel(self):
@@ -405,33 +435,26 @@ class XTGeoDialog(object):
     def testsetup(self):
         """Basic setup for XTGeo testing (private; only relevant for tests)"""
 
-        path = 'TMP'
+        tmppath = 'TMP'
         try:
-            os.makedirs(path)
+            os.makedirs(tmppath)
         except OSError:
-            if not os.path.isdir(path):
+            if not os.path.isdir(tmppath):
                 raise
 
-        try:
-            bigtest = int(os.environ['XTG_BIGTEST'])
-            bigtest = True
-            print('<< Big tests enabled by XTG_BIGTEST env >>')
-        except Exception:
-            bigtest = False
-            print('<< Big tests disabled as XTG_BIGTEST not set >>')
+        tstpath = os.environ.get('XTG_TESTPATH', '../xtgeo-testdata')
+        if not os.path.isdir(tstpath):
+            raise RuntimeError('Test path is not valid: {}'.format(tstpath))
 
-        testpath = '../xtgeo-testdata'
-        try:
-            testpath = str(os.environ['XTG_BIGTEST'])
-            print('<< Test data path by XTG_TESTDATA env: >>'.format(testpath))
-        except Exception:
-            print('<< No env XTG_TESTDATA - test data path default: {} >>'
-                  .format(testpath))
+        bigtst1 = os.environ.get('XTG_BIGTESTS', None)
+        bigtst2 = os.environ.get('XTG_BIGTEST', None)
 
-        self.test_env = True
-        self.tmpdir = path
-        self.bigtest = bigtest
-        self.testpath = testpath
+        if bigtst1 is not None or bigtst2 is not None:
+            self._bigtests = True
+
+        self._test_env = True
+        self._tmpdir = tmppath
+        self._testpath = tstpath
 
         return True
 

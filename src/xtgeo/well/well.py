@@ -1216,7 +1216,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return dfr
 
-    def get_ijk_from_grid(self, grid, grid_id=''):
+    def make_ijk_from_grid(self, grid, grid_id=''):
         """Look through a Grid and add grid I J K as discrete logs.
 
         Note that the the grid counting has base 1 (first row is 1 etc).
@@ -1231,6 +1231,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Raises:
             RuntimeError: 'Error from C routine, code is ...'
         """
+        # renamed from get_ijk_from_grid
 
         _well_oper.get_ijk_from_grid(self, grid, grid_id=grid_id)
 

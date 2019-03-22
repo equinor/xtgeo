@@ -48,13 +48,13 @@ def loadgrid1():
     return Grid(GFILE)
 
 
-def test_get_ijk_grid(loadwell1, loadgrid1):
+def test_make_ijk_grid(loadwell1, loadgrid1):
     """Import well from and grid and make I J K logs"""
 
     mywell = loadwell1
     mygrid = loadgrid1
 
-    mywell.get_ijk_from_grid(mygrid)
+    mywell.make_ijk_from_grid(mygrid)
 
     df = mywell.dataframe
 

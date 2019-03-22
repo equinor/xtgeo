@@ -98,6 +98,9 @@ class RoxUtils(object):
                 logger.info('RMS project instance is closed')
             except TypeError as msg:
                 xtg.warn(msg)
+        else:
+            logger.info('Close request, but RMS project cannot close '
+                        '(reason: probably within RMS GUI)')
 
     def version_required(self, targetversion):
         """Defines a minimum ROXAPI version for some feature (True or False).

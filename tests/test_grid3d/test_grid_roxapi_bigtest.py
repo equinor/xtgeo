@@ -15,7 +15,7 @@ testpath = xtg.testpath
 
 BPROJECT = dict()
 BPROJECT['1.1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/gfb.rms10.1.3'
-BPROJECT['1.2.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/gfb.rms11.0.1'
+BPROJECT['1.3'] = '../xtgeo-testdata-equinor/data/rmsprojects/gfb.rms11.1.0'
 
 
 @tsetup.equinor

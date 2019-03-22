@@ -21,26 +21,26 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
-testpath = xtg.testpath
+TMPD = xtg.tmpdir
+TESTPATH = xtg.testpath
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-WFILE = join(testpath, 'wells/reek/1/OP_1.w')
-WFILE_HOLES = join(testpath, 'wells/reek/1/OP_1_zholes.w')
-WFILES = join(testpath, 'wells/reek/1/*')
+WFILE = join(TESTPATH, 'wells/reek/1/OP_1.w')
+WFILE_HOLES = join(TESTPATH, 'wells/reek/1/OP_1_zholes.w')
+WFILES = join(TESTPATH, 'wells/reek/1/*')
 
-WELL1 = join(testpath, 'wells/battle/1/WELL09.rmswell')
-WELL2 = join(testpath, 'wells/battle/1/WELL36.rmswell')
-WELL3 = join(testpath, 'wells/battle/1/WELL10.rmswell')
+WELL1 = join(TESTPATH, 'wells/battle/1/WELL09.rmswell')
+WELL2 = join(TESTPATH, 'wells/battle/1/WELL36.rmswell')
+WELL3 = join(TESTPATH, 'wells/battle/1/WELL10.rmswell')
 
 
 @pytest.fixture()
 def loadwell1():
     """Fixture for loading a well (pytest setup)"""
-    logger.info('Load well 1')
+    logger.info('Load well 1: {}'.format(WFILE))
     return Well(WFILE)
 
 
@@ -129,7 +129,7 @@ def test_import_export_many():
         logger.info(mywell.ncol)
         logger.info(mywell.lognames)
 
-        wname = join(td, mywell.xwellname + '.w')
+        wname = join(TMPD, mywell.xwellname + '.w')
         logger.info('Exporting ' + wname)
         mywell.to_file(wname)
 
@@ -155,7 +155,7 @@ def test_shortwellname():
 
 #     logger.debug(WFILES)
 
-#     wfile = td + "/mytest.h5"
+#     wfile = TMPD + "/mytest.h5"
 #     for filename in glob.glob(WFILES):
 #         logger.info("Importing " + filename)
 #         mywell = Well(filename)
@@ -163,7 +163,7 @@ def test_shortwellname():
 #         logger.info(mywell.ncol)
 #         logger.info(mywell.lognames)
 
-#         wname = td + "/" + mywell.xwellname + ".h5"
+#         wname = TMPD + "/" + mywell.xwellname + ".h5"
 #         logger.info("Exporting " + wname)
 #         mywell.to_file(wfile, fformat='hdf5')
 
