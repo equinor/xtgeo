@@ -5,6 +5,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 from distutils.version import StrictVersion
+# from pkg_resources import parse_version as pver (ALT)
 
 try:
     import roxar
@@ -74,7 +75,8 @@ class RoxUtils(object):
             # this will only happen for _current_ project inside RMS
             self._roxarapps = False
             self._project = project
-            logger.info('RMS project instance is already open %s', project)
+            logger.info('RMS project instance is already open as <%s>',
+                        project)
         else:
             raise RuntimeError('Project is not valid')
 

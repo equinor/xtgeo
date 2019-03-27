@@ -71,3 +71,21 @@ def test_rox_get_grid_import_bri():
     grd = xtgeo.grid3d.Grid()
     grd.from_roxar(BPROJECT[ver], 'b_noactnum', dimensions_only=False,
                    info=True)
+
+
+@tsetup.equinor
+@tsetup.skipunlessroxar
+def test_rox_get_grid_bri_and_store():
+    """Get a simple grid from a RMS project and store again"""
+    from roxar import __version__ as ver
+
+    if ver not in BPROJECT.keys():
+        return
+
+    logger.info('Project is {}'.format(BPROJECT[ver]))
+
+    grd = xtgeo.grid3d.Grid()
+    grd.from_roxar(BPROJECT[ver], 'b_noactnum', dimensions_only=False,
+                   info=False)
+
+    grd.to_roxar(BPROJECT[ver], 'b_noactnum', info=True)

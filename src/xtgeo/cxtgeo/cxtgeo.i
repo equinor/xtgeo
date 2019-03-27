@@ -118,6 +118,12 @@ import_array();
 // ARGOUT float64 / double no 2
 %apply (double* ARGOUT_ARRAY1, long DIM1) {(double *swig_np_dbl_aout_v2,
                                             long n_swig_np_dbl_aout_v2)};
+// ARGOUT float64 / double no 3
+%apply (double* ARGOUT_ARRAY1, long DIM1) {(double *swig_np_dbl_aout_v3,
+                                            long n_swig_np_dbl_aout_v3)};
+// ARGOUT float64 / double no 4
+%apply (double* ARGOUT_ARRAY1, long DIM1) {(double *swig_np_dbl_aout_v4,
+                                            long n_swig_np_dbl_aout_v4)};
 
 // ARGOUT float32 / no 1
 %apply (float* ARGOUT_ARRAY1, long DIM1) {(float *swig_np_flt_aout_v1,

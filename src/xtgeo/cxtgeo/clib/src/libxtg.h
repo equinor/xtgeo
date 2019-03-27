@@ -1500,6 +1500,22 @@ void grd3d_export_grdeclprop2(
                               int debug
                               );
 
+int grd3d_conv_grid_roxapi (
+                            int ncol,
+                            int nrow,
+                            int nlay,
+                            double *p_coord_v,
+                            double *p_zcorn_v,
+                            int *p_actnum_v,
+                            double *swig_np_dbl_aout_v1,   // *tpillars
+                            long n_swig_np_dbl_aout_v1,    // ntpillars
+                            double *swig_np_dbl_aout_v2,   // *bpillars
+                            long n_swig_np_dbl_aout_v2,    // nbpillars
+                            double *swig_np_dbl_aout_v3,   // *zcorners
+                            long n_swig_np_dbl_aout_v3,    // nzcorners
+                            int debug
+                            );
+
 int grd3d_copy(
                int ncol,
                int nrow,

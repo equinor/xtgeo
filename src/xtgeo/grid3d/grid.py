@@ -3,6 +3,7 @@
 
 from __future__ import print_function, absolute_import
 
+import sys
 import json
 import warnings
 from collections import OrderedDict
@@ -65,7 +66,8 @@ def grid_from_file(gfile, fformat=None):
     return obj
 
 
-def grid_from_roxar(project, gname, realisation=0, dimensions_only=False):
+def grid_from_roxar(project, gname, realisation=0, dimensions_only=False,
+                    info=False):
     """Read a grid inside a RMS project and return a Grid() instance.
 
     Args:
@@ -89,7 +91,7 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False):
     obj = Grid()
 
     obj.from_roxar(project, gname, realisation=realisation,
-                   dimensions_only=dimensions_only)
+                   dimensions_only=dimensions_only, info=info)
 
     return obj
 
@@ -154,12 +156,12 @@ class Grid(Grid3D):
             self.from_file(args[0], fformat=fformat, initprops=initprops,
                            restartprops=restartprops,
                            restartdates=restartdates)
+        logger.info('Ran __init__ for %s', repr(self))
 
     def __del__(self):
-        logger.info('DELETING grid instance')
 
         if self._p_coord_v is not None:
-            logger.info('Deleting instance %s', self)
+            logger.info('Deleting Grid instance %s', id(self))
             _cxtgeo.delete_doublearray(self._p_coord_v)
             _cxtgeo.delete_doublearray(self._p_zcorn_v)
             _cxtgeo.delete_intarray(self._p_actnum_v)
@@ -171,6 +173,7 @@ class Grid(Grid3D):
                     prop.__del__()
 
     def __repr__(self):
+        logger.info('Invoke __repr__ for grid')
         myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
                 'nrow={0._nrow!r}, nlay={0._nlay!r}, '
                 'filesrc={0._filesrc!r}'
@@ -179,6 +182,11 @@ class Grid(Grid3D):
 
     def __str__(self):
         # user friendly print
+        if sys.version_info[0] < 3:
+            logger.debug('Invoke __str__ for grid')
+        else:
+            logger.debug('Invoke __str__ for grid', stack_info=True)
+
         return self.describe(flush=False)
 
     # =========================================================================
@@ -477,10 +485,12 @@ class Grid(Grid3D):
         _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
                                         dimensions_only, info)
 
-    def to_roxar(self, projectname, gname, realisation=0):
+    def to_roxar(self, projectname, gname, realisation=0, info=False,
+                 method='cpg'):
         """Export a grid to RMS via Roxar API (in prep.)"""
 
-        raise NotImplementedError('Coming soon')
+        _grid_roxapi.export_grid_roxapi(self, projectname, gname, realisation,
+                                        info=info, method=method)
 
     # =========================================================================
     # Various public methods
@@ -496,12 +506,15 @@ class Grid(Grid3D):
             newgrd = grd.copy()
         """
 
+        logger.info('Copy a Grid instance')
         other = _grid_etc1.copy(self)
 
         return other
 
     def describe(self, details=False, flush=True):
         """Describe an instance by printing to stdout"""
+
+        logger.info('Print a description...')
 
         if details:
             geom = self.get_geometrics(cellcenter=True, return_dict=True)
@@ -1130,6 +1143,15 @@ class Grid(Grid3D):
 
         _grid_etc1.translate_coordinates(self, translate=translate,
                                          flip=flip)
+
+    def make_zconsistent(self, zsep=1e-5):
+        """Make the 3D grid consistent in Z, by a minimal gap (zsep).
+
+        Args:
+            zsep (float): Minimum gap
+        """
+
+        _grid_etc1.make_zconsistent(self, zsep)
 
     def convert_to_hybrid(self, nhdiv=10, toplevel=1000.0, bottomlevel=1100.0,
                           region=None, region_number=None):

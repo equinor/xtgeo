@@ -181,6 +181,29 @@ class _BColors:
     UNDERLINE = '\033[4m'
 
 
+class _TimeFilter(logging.Filter):
+    """handling difftimes in logging..."""
+    # cf https://stackoverflow.com/questions/31521859/
+    # python-logging-module-time-since-last-log
+
+    def filter(self, record):
+        ML = 10000000.0
+
+        try:
+            last = self.last
+        except AttributeError:
+            last = record.relativeCreated
+
+        dlt = dtime.fromtimestamp(record.relativeCreated / 1000.0) \
+            - dtime.fromtimestamp(last / 1000.0)
+
+        record.relative = (
+            '{0:.2f}'.format(dlt.seconds + dlt.microseconds / ML))
+
+        self.last = record.relativeCreated
+        return True
+
+
 class XTGeoDialog(object):
     """System for handling dialogs and messages in XTGeo.
 
@@ -192,6 +215,7 @@ class XTGeoDialog(object):
 
         self._callclass = None
         self._caller = None
+        self._rootlogger = logging.getLogger()
         self._lformat = None
         self._lformatlevel = 1
         self._logginglevel = 'CRITICAL'
@@ -356,19 +380,27 @@ class XTGeoDialog(object):
         """Returns the format string to be used in logging"""
 
         if self._lformatlevel <= 1:
-            self._lformat = '%(levelname)8s: \t%(message)s'
+            fmt = logging.Formatter(
+                fmt='%(levelname)8s: (%(relative)ss) \t%(message)s')
 
-            # self._lformat = '%(name)44s %(funcName)44s '\
-            #     + '%(levelname)8s: \t%(message)s'
-        elif self._lformatlevel == 20:
-            # mimic xtg.say look
-            self._lformat = '>> %(message)s'
+        elif self._lformatlevel == 2:
+            fmt = logging.Formatter(
+                fmt='%(levelname)8s (%(relative)ss) %(name)44s '
+                '[%(funcName)40s()] %(lineno)4d >> \t%(message)s')
+
         else:
-            self._lformat = '%(asctime)s Line: %(lineno)4d %(name)44s '\
-                + '[%(funcName)40s()]'\
-                + '%(levelname)8s:'\
-                + '\t%(message)s'
+            fmt = logging.Formatter(
+                fmt='%(asctime)s Line: %(lineno)4d %(name)44s '
+                '(Delta=%(relative)ss) '
+                '[%(funcName)40s()]'
+                '%(levelname)8s:'
+                '\t%(message)s')
 
+        log = self._rootlogger
+        [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
+        [hndl.setFormatter(fmt) for hndl in log.handlers]
+
+        self._lformat = fmt._fmt  # private attribute in Formatter()
         return self._lformat
 
     @staticmethod
@@ -407,22 +439,27 @@ class XTGeoDialog(object):
         print(_BColors.ENDC)
         print('')
 
-    def basiclogger(self, name, logginglevel=None, loggingformat=None):
+    def basiclogger(self, name, logginglevel=None, loggingformat=None,
+                    info=False):
         """Initiate the logger by some default settings."""
 
         if logginglevel is not None and self._logginglevel_fromenv is None:
             self.logginglevel = logginglevel
 
-        if loggingformat is not None:
-            self._lformat = loggingformat
+        if loggingformat is not None and isinstance(loggingformat, int):
+            self._lformatlevel = loggingformat
 
+        logging.basicConfig(stream=sys.stdout)
         fmt = self.loggingformat
         self._loggingname = name
-        logging.basicConfig(format=fmt, stream=sys.stdout)
-        logging.getLogger().setLevel(self.numericallogginglevel)  # root logger
+        if info:
+            print('Logginglevel is {}, formatlevel is {}, and format is {}'
+                  .format(self.logginglevel, self._lformatlevel, fmt))
+        self._rootlogger.setLevel(self.numericallogginglevel)
+
         logging.captureWarnings(True)
 
-        return logging.getLogger(name)
+        return logging.getLogger(self._loggingname)
 
     @staticmethod
     def functionlogger(name):

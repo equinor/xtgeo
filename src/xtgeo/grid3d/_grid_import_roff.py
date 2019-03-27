@@ -26,6 +26,7 @@ xtg_verbose_level = xtg.get_syslevel()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_roff(self, gfile):
 
+    tstart = xtg.timer()
     logger.info('Working with file {}'.format(gfile))
 
     logger.info('Scanning...')
@@ -46,9 +47,8 @@ def import_roff(self, gfile):
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
     nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
 
-    logger.info('NCOORD {}'.format(ncoord))
-    logger.info('NZCORN {}'.format(nzcorn))
-    logger.info('Reading...')
+    logger.debug('NCOORD {}'.format(ncoord))
+    logger.debug('NZCORN {}'.format(nzcorn))
 
     ptr_num_act = _cxtgeo.new_intpointer()
     self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
@@ -56,13 +56,14 @@ def import_roff(self, gfile):
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
     subgrd_v = _cxtgeo.new_intarray(nsubs)
 
+    logger.info('Reading..., total number of cells is %s', ntot)
     _cxtgeo.grd3d_import_roff_grid(ptr_num_act, ptr_nsubs, self._p_coord_v,
                                    self._p_zcorn_v, self._p_actnum_v,
                                    subgrd_v, nsubs, gfile,
                                    xtg_verbose_level)
 
-    logger.info('Number of active cells: {}'.format(self.nactive))
-    logger.info('Number of subgrids: {}'.format(nsubs))
+    logger.info('Reading done. Active cells: %s', self.nactive)
+    logger.info('Number of subgrids: %s', nsubs)
 
     if nsubs > 1:
         self._subgrids = OrderedDict()
@@ -70,11 +71,12 @@ def import_roff(self, gfile):
         for irange in range(nsubs):
             val = _cxtgeo.intarray_getitem(subgrd_v, irange)
 
-            logger.info('VAL is %s', val)
-            logger.info('RANGE is %s', range(prev, val + prev))
+            logger.debug('VAL is %s', val)
+            logger.debug('RANGE is %s', range(prev, val + prev))
             self._subgrids['subgrid_' + str(irange)] = range(prev, val + prev)
             prev = val + prev
     else:
         self._subgrids = None
 
-    logger.info('Subgrids array %s', self._subgrids)
+    logger.debug('Subgrids array %s', self._subgrids)
+    logger.info('Total time for ROFF import was %6.2fs', xtg.timer(tstart))

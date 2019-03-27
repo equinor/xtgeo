@@ -9,7 +9,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
-logger = xtg.basiclogger(__name__)
+logger = xtg.functionlogger(__name__)
 
 
 def convert_np_carr_int(xyz, np_array):

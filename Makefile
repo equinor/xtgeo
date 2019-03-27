@@ -168,10 +168,12 @@ siteinstall: allclean dist ## Install in Equinor using $TARGET
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	@mkdir -p ${USERTARGET}
+	@chmod -R 700 ${USERTARGET}
 	@\rm -fr  ${USERTARGET}/${APPLICATION}
 	@\rm -fr  ${USERTARGET}/${APPLICATION}-*
 	@${PIP} install --target ${USERTARGET} --upgrade  ./dist/${APPLICATION}*.whl
 	@echo "Install to  ${USERTARGET}"
+	@chmod -R 500 ${USERTARGET}
 
 docsinstall: docsrun
 	mkdir -p ${DOCSINSTALL}/${APPLICATION}

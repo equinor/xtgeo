@@ -9,7 +9,7 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-logger = xtg.basiclogger(__name__)
+logger = xtg.functionlogger(__name__)
 
 # -------------------------------------------------------------------------
 # Import/Export methods for various formats

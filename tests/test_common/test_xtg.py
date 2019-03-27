@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import warnings
+import time
+
 import pytest
 
 import xtgeo.common.calc as xcalc
@@ -107,6 +109,18 @@ def test_info_logger(mylogger, caplog):
 #    assert 'This is a warning' in caplog.text[0]
 
 
+def test_difftimelogger():
+    # need to do it like this...
+
+    for level in (0, 1, 2, 20, 1):
+        mlogger = xtg.basiclogger(__name__, logginglevel='INFO',
+                                  loggingformat=level)
+        mlogger.info('String 1')
+        time.sleep(0.3)
+        mlogger.info('String 2')
+        del mlogger
+
+
 def test_more_logging_tests(caplog):
     """Testing on the logging levels, see that ENV variable will override
     the basiclogger setting.
@@ -117,13 +131,9 @@ def test_more_logging_tests(caplog):
     xtgmore = XTGeoDialog()  # another instance
     locallogger = xtgmore.basiclogger(__name__, logginglevel='WARNING')
     locallogger.debug('Display debug')
- #   assert caplog.text == ''  # shall be empty
     locallogger.info('Display info')
- #   assert 'info' in caplog.text  # INFO shall be shown, overrided by ENV!
     locallogger.warning('Display warning')
- #   assert 'warning' in caplog.text
     locallogger.critical('Display critical')
- #   assert 'critical' in caplog.text
 
 
 def test_timer(capsys):

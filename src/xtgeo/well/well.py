@@ -99,8 +99,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     Other geometry logs has also 'semi-magic' names:
 
-    M\_MDEPTH or Q\_MDEPTH: Measured depth, either real/true (M\_) or
-    quasi computed/estimated (Q\_). The Quasi may be incorrect for
+    M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M_xx) or
+    quasi computed/estimated (Q_xx). The Quasi may be incorrect for
     all uses, but sufficient for some computations.
 
     Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
@@ -162,7 +162,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             #                      'import at the current stage.')
 
         self._ensure_consistency()
-        logger.debug('Ran __init__ method for RegularSurface object')
+        logger.info('Ran __init__for Well() %s', id(self))
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
@@ -174,6 +174,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     def __str__(self):
         # user friendly print
         return self.describe(flush=False)
+
+    def __del__(self):
+        logger.info('Deleting Well instance %s', id(self))
 
     # =========================================================================
     # Consistency checking. As well log names are columns in the Pandas DF,

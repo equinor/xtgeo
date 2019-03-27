@@ -70,15 +70,16 @@ def test_make_ijk_grid(loadwell1, loadgrid1):
 
 @tsetup.equinor
 @tsetup.bigtest
-def test_get_ijk_gf_geogrid():
+def test_make_ijk_gf_geogrid():
     """Import well from and a large geogrid and make I J K logs"""
 
+    logger.info('Running test... %s', __name__)
     mywell = Well(WGULLFILE)
     mygrid = Grid(GGULLFILE)
 
     logger.info('Number of cells in grid is %s', mygrid.ntotal)
 
-    mywell.get_ijk_from_grid(mygrid)
+    mywell.make_ijk_from_grid(mygrid)
 
     df = mywell.dataframe
 
