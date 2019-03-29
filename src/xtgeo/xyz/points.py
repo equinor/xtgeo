@@ -41,7 +41,7 @@ def points_from_file(wfile, fformat='xyz'):
 
 
 def points_from_roxar(project, name, category, stype='horizons',
-                      realisation=0):
+                      realisation=0, attributes=False):
     """This makes an instance of a Points directly from roxar input.
 
     For arguments, see :meth:`Points.from_roxar`.
@@ -57,7 +57,7 @@ def points_from_roxar(project, name, category, stype='horizons',
     obj = Points()
 
     obj.from_roxar(project, name, category, stype=stype,
-                   realisation=realisation)
+                   realisation=realisation, attributes=attributes)
 
     return obj
 
@@ -103,6 +103,10 @@ class Points(XYZ):
         if len(args) == 1:
             if isinstance(args[0], xtgeo.surface.RegularSurface):
                 self.from_surface(args[0])
+        logger.info('Initiated Points')
+
+    def __del__(self):
+        logger.info('Points object %s deleted', id(self))
 
     def __eq__(self, value):
         return self.dataframe[self.zname] == value
@@ -194,7 +198,7 @@ class Points(XYZ):
 
         self._df.dropna(inplace=True)
 
-    def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
+    def to_file(self, pfile, fformat='xyz', attributes='all', filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn='M_MDEPTH'):
         """Export XYZ (Points/Polygons) to file.
 
@@ -227,7 +231,7 @@ class Points(XYZ):
                                     mdcolumn=mdcolumn)
 
     def from_roxar(self, project, name, category, stype='horizons',
-                   realisation=0):
+                   realisation=0, attributes=False):
         """Load a points item from a Roxar RMS project.
 
         The import from the RMS project can be done either within the project
@@ -254,6 +258,8 @@ class Points(XYZ):
             category (str): For horizons/zones only: for example 'DL_depth'
             stype (str): RMS folder type, 'horizons' (default) or 'zones'
             realisation (int): Realisation number, default is 0
+            attributes (bool): If attributes should be included (requires
+                a workaround in the library code)
 
         Returns:
             Object instance updated
@@ -262,11 +268,12 @@ class Points(XYZ):
             ValueError: Various types of invalid inputs.
 
         """
-        super(Points, self).from_roxar(project, name, category, stype=stype,
-                                       realisation=realisation)
+        super(Points, self).from_roxar(
+            project, name, category, stype=stype, realisation=realisation,
+            attributes=attributes)
 
     def to_roxar(self, project, name, category, stype='horizons',
-                 realisation=0):
+                 realisation=0, attributes=False):
         """Export/save/store a points item to a Roxar RMS project.
 
         Note also that horizon/zone name and category must exists in advance,
@@ -279,14 +286,17 @@ class Points(XYZ):
             category (str): For horizons/zones only: for example 'DL_depth'
             stype (str): RMS folder type, 'horizons' (default) or 'zones'
             realisation (int): Realisation number, default is 0
+            attributes (bool): If attributes should be included (requires
+                a workaround in the library code)
 
         Raises:
             ValueError: Various types of invalid inputs.
 
         """
 
-        super(Points, self).to_roxar(project, name, category, stype=stype,
-                                     realisation=realisation)
+        super(Points, self).to_roxar(
+            project, name, category, stype=stype, realisation=realisation,
+            attributes=attributes)
 
     def from_wells(self, wells, tops=True, incl_limit=None, top_prefix='Top',
                    zonelist=None, use_undef=False):
@@ -326,6 +336,9 @@ class Points(XYZ):
             self._df = pd.concat(dflist, ignore_index=True)
         else:
             return None
+
+        for col in self._df.columns:
+            self._attrs[col] = 'float'
 
         return len(dflist)
 
@@ -370,6 +383,9 @@ class Points(XYZ):
             self.zname = 'DFRAC'  # name of third column
         else:
             return None
+
+        for col in self._df.columns[3:]:
+            self._attrs[col] = 'float'
 
         return len(dflist)
 
@@ -427,10 +443,11 @@ class Points(XYZ):
 
         Args:
             poly (Polygons): A XTGeo Polygons instance
-            value(float): Value to add, subtract etc
+            value(float or str): Value to add, subtract etc. If 'poly'
+                then use the avg Z value from each polygon.
             opname (str): Name of operation... 'add', 'sub', etc
             inside (bool): If True do operation inside polygons; else outside.
-            where (bool): A scalar or array to set an additonal condition
+            where (bool): A logical filter (current not implemented)
 
         Examples::
 
@@ -440,8 +457,7 @@ class Points(XYZ):
             poi = Points(POINTSET2)
             pol = Polygons(POLSET2)
 
-            poi.operation_polygons(pol, 0, opname='eli', where=poi > 1700,
-                                   inside=True)
+            poi.operation_polygons(pol, 0, opname='eli', inside=True)
 
 
 

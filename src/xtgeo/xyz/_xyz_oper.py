@@ -9,10 +9,14 @@ import shapely.geometry as sg
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
+
+_cxtgeo.xtg_verbose_file('NONE')
+XTGDEBUG = xtg.get_syslevel()
 
 # pylint: disable=protected-access
 
@@ -21,75 +25,62 @@ def operation_polygons(self, poly, value, opname='add', inside=True,
                        where=True):
     """
     Operations restricted to closed polygons, for points or polyline points.
+
+    If value is not float but 'poly', then the avg of each polygon Z value will
+    be used instead.
+
+    'Inside' several polygons will become a union, while 'outside' polygons
+    will be the intersection.
+
+    The "where" filter is remaining...
     """
 
+    oper = {'set': 1, 'add': 2, 'sub': 3, 'mul': 4, 'div': 5, 'eli': 11}
+
+    insidevalue = 0
+    if inside:
+        insidevalue = 1
+
+    logger.info('Operations of points inside polygon(s)...')
     if not isinstance(poly, xtgeo.xyz.Polygons):
         raise ValueError('The poly input is not a Polygons instance')
-
-    # make a temporary column in the input dataframe as "filter" or "proxy"
-    # value will be 1 inside polygons, 0 outside. If where is applied and is
-    # False, the -1 is used as flag
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
     xcor = self._df[self.xname].values
     ycor = self._df[self.yname].values
-    proxy = np.zeros(xcor.shape, dtype='int')
+    zcor = self._df[self.zname].values
 
-    points = sg.MultiPoint(np.stack([xcor, ycor], axis=1))
-    for inum, point in enumerate(points):
+    usepoly = False
+    if isinstance(value, str) and value == 'poly':
+        usepoly = True
 
-        for id_, grp in idgroups:
-            pxcor = grp[poly.xname].values
-            pycor = grp[poly.yname].values
-            spoly = sg.Polygon(np.stack([pxcor, pycor], axis=1))
-
-            if point.within(spoly):
-                proxy[inum] = 1
-
-    if not isinstance(where, pd.Series):
-        if where:
-            where_array = np.ones(proxy.shape, dtype=bool)
+    for id_, grp in idgroups:
+        pxcor = grp[poly.xname].values
+        pycor = grp[poly.yname].values
+        pvalue = value
+        if usepoly:
+            pvalue = grp[poly.zname].values.mean()
         else:
-            where_array = np.zeros(proxy.shape, dtype=bool)
-    else:
-        where_array = where.values
+            pvalue = value
 
-    proxy[~where_array] = -1
+        logger.info('C function for polygon %s...', id_)
 
-    dfwork = self._df.copy()
-    dfwork['_PROXY'] = proxy
+        ies = _cxtgeo.pol_do_points_inside(
+            xcor, ycor, zcor, pxcor, pycor, pvalue, oper[opname],
+            insidevalue, XTGDEBUG)
+        logger.info('C function for polygon %s... done', id_)
 
-    proxytarget = 1
-    if not inside:
-        proxytarget = 0
+        if ies != 0:
+            raise RuntimeError('Something went wrong, code {}'.format(ies))
 
-    cond = dfwork['_PROXY'] == proxytarget
-
-    if opname == 'add':
-        dfwork.loc[cond, self.zname] += value
-
-    elif opname == 'sub':
-        dfwork.loc[cond, self.zname] -= value
-
-    elif opname == 'mul':
-        dfwork.loc[cond, self.zname] *= value
-
-    elif opname == 'div':
-        if value != 0.0:
-            dfwork.loc[cond, self.zname] /= value
-        else:
-            dfwork.loc[cond, self.zname] *= 0.0
-
-    elif opname == 'set':
-        dfwork.loc[cond, self.zname] = value
-
-    elif opname == 'eli':
-        dfwork = dfwork[~cond]
-
-    dfwork.drop(['_PROXY'], inplace=True, axis=1)
-
-    self._df = dfwork.reset_index(drop=True)
+    zcor[zcor > xtgeo.UNDEF_LIMIT] = np.nan
+    self._df[self.zname] = zcor
+    print('XX', self._df)
+    # removing rows where Z column is undefined
+    self._df.dropna(how='any', subset=[self.zname], inplace=True)
+    self._df.reset_index(inplace=True, drop=True)
+    logger.info('Operations of points inside polygon(s)... done')
 
 
 def rescale_polygons(self, distance=10):
@@ -119,7 +110,7 @@ def rescale_polygons(self, distance=10):
 
 
 def _redistribute_vertices(geom, distance):
-    """Local function to interpolate in a polyline"""
+    """Local function to interpolate in a polyline using Shapely"""
     if geom.geom_type == 'LineString':
         num_vert = int(round(geom.length / distance))
         if num_vert == 0:

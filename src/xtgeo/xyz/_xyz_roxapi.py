@@ -1,5 +1,7 @@
 # coding: utf-8
 """Roxar API functions for XTGeo Points/Polygons"""
+import os
+import tempfile
 import numpy as np
 import pandas as pd
 
@@ -14,13 +16,64 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_xyz_roxapi(self, project, name, category,
-                      stype, realisation):
+                      stype, realisation, attributes):
     """Import a Points or Polygons item via ROXAR API spec."""
 
     rox = RoxUtils(project)
 
-    _roxapi_import_xyz(self, rox.project, name, category, stype,
-                       realisation)
+    if attributes:
+        _roxapi_import_xyz_viafile(self, rox, name, category, stype,
+                                   realisation)
+    else:
+        _roxapi_import_xyz(self, rox.project, name, category, stype,
+                           realisation)
+
+
+def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
+
+    import roxar
+
+    self._name = name
+    proj = rox.project
+
+    if not _check_category_etc(self, proj, name, category, stype, realisation):
+        raise RuntimeError('Something is very wrong...')
+
+    try:
+        if stype == 'horizons':
+            roxxyz = proj.horizons[name][category]
+
+        elif stype == 'zones':
+            roxxyz = proj.zones[name][category]
+
+        elif stype == 'faults':
+            roxxyz = proj.faults[name][category]
+
+        elif stype == 'clipboard':
+            if category:
+                if '|' in category:
+                    folders = category.split('|')
+                else:
+                    folders = category.split('/')
+                roxxyz = proj.clipboard.folders[folders]
+            else:
+                roxxyz = proj.clipboard
+            roxxyz = roxxyz[name]
+
+        else:
+            roxxyz = None
+            raise ValueError('Unsupported stype: {}'.format(stype))
+
+        # make a temporary folder and work within the with.. block
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger.info('Made a tmp folder: %s', tmpdir)
+            roxxyz.save(os.path.join(tmpdir, 'generic.rmsattr'),
+                        roxar.FileFormat.RMS_POINTS)
+            self.from_file(os.path.join(tmpdir, 'generic.rmsattr'),
+                           fformat='rms_attr')
+
+    except KeyError as kwe:
+        logger.error(kwe)
 
 
 def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
@@ -93,22 +146,59 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
 
 
 def export_xyz_roxapi(self, project, name, category, stype,
-                      realisation):
+                      realisation, attributes):
     """Export (store) a XYZ item to RMS via ROXAR API spec."""
-    import roxar  # pylint: disable=import-error
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_export_xyz(self, proj, name, category, stype,
-                               realisation)
+    rox = RoxUtils(project)
+
+    if attributes:
+        _roxapi_export_xyz_viafile(self, rox, name, category, stype,
+                                   realisation)
     else:
-        _roxapi_export_xyz(self, project, name, category, stype,
+        _roxapi_export_xyz(self, rox, name, category, stype,
                            realisation)
 
 
-def _roxapi_export_xyz(self, proj, name, category, stype, realisation):
+def _roxapi_export_xyz_viafile(self, rox, name, category, stype, realisation):
 
+    import roxar
+
+    proj = rox.project
+
+    if not _check_category_etc:
+        raise RuntimeError('Cannot access correct category or name in RMS')
+
+    if stype == 'horizons':
+        roxxyz = proj.horizons[name][category]
+    elif stype == 'zones':
+        roxxyz = proj.zones[name][category]
+    elif stype == 'faults':
+        roxxyz = proj.faults[name][category]
+    elif stype == 'clipboard':
+        if category:
+            if '|' in category:
+                folders = category.split('|')
+            else:
+                folders = category.split('/')
+            roxxyz = proj.clipboard.folders[folders]
+        else:
+            roxxyz = proj.clipboard
+    else:
+        roxxyz = None
+        raise ValueError('Unsupported stype: {}'.format(stype))
+
+    # make a temporary folder and work within the with.. block
+    with tempfile.TemporaryDirectory() as tmpdir:
+        logger.info('Made a tmp folder: %s', tmpdir)
+        self.to_file(os.path.join(tmpdir, 'generic.rmsattr'),
+                     fformat='rms_attr')
+        roxxyz.load(os.path.join(tmpdir, 'generic.rmsattr'),
+                    roxar.FileFormat.RMS_POINTS)
+
+
+def _roxapi_export_xyz(self, rox, name, category, stype, realisation):
+
+    proj = rox.project
     if not _check_category_etc:
         raise RuntimeError('Cannot access correct category or name in RMS')
 

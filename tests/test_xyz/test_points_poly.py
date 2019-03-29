@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import pytest
+from os.path import join
 import numpy as np
 from xtgeo.xyz import XYZ
 from xtgeo.xyz import Points
@@ -14,22 +14,20 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
-testpath = xtg.testpath
-
-skiplargetest = pytest.mark.skipif(xtg.bigtest is False,
-                                   reason='Big tests skip')
+TMPD = xtg.tmpdir
+TSTPATH = xtg.testpath
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-PFILE1A = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap'
-PFILE1B = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.xyz'
-PFILE1C = '../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol'
-PFILE = '../xtgeo-testdata/points/eme/1/emerald_10_random.poi'
-POLSET2 = '../xtgeo-testdata/polygons/reek/1/polset2.pol'
-POINTSET2 = '../xtgeo-testdata/points/reek/1/pointset2.poi'
+PFILE1A = join(TSTPATH, 'polygons/reek/1/top_upper_reek_faultpoly.zmap')
+PFILE1B = join(TSTPATH, 'polygons/reek/1/top_upper_reek_faultpoly.xyz')
+PFILE1C = join(TSTPATH, 'polygons/reek/1/top_upper_reek_faultpoly.pol')
+PFILE = join(TSTPATH, 'points/eme/1/emerald_10_random.poi')
+POLSET2 = join(TSTPATH, 'polygons/reek/1/polset2.pol')
+POINTSET2 = join(TSTPATH, 'points/reek/1/pointset2.poi')
+POINTSET3 = join(TSTPATH, 'points/battle/1/many.rmsattr')
 
 
 def test_xyz():
@@ -86,6 +84,20 @@ def test_import_zmap_and_xyz():
         assert status is True
 
 
+def test_import_rmsattr_format():
+    """Import points with attributes from RMS attr format"""
+
+    mypoi = Points()
+
+    mypoi.from_file(POINTSET3, fformat='rms_attr')
+
+    logger.info(id(mypoi))
+    logger.info(mypoi._df.head())
+    # print(mypoi.dataframe.columns[3:])
+    print(mypoi.dataframe['VerticalSep'].dtype)
+    mypoi.to_file('TMP/attrs.rmsattr', fformat='rms_attr')
+
+
 def test_import_export_polygons():
     """Import XYZ polygons from file. Modify, and export."""
 
@@ -101,10 +113,10 @@ def test_import_export_polygons():
 
     mypoly.dataframe['Z_TVDSS'] += 100
 
-    mypoly.to_file(td + '/polygon_export.xyz', fformat='xyz')
+    mypoly.to_file(TMPD + '/polygon_export.xyz', fformat='xyz')
 
     # reimport and check
-    mypoly2 = Polygons(td + '/polygon_export.xyz')
+    mypoly2 = Polygons(TMPD + '/polygon_export.xyz')
 
     tsetup.assert_almostequal(z0 + 100,
                               mypoly2.dataframe['Z_TVDSS'].values[0], 0.001)
@@ -129,13 +141,23 @@ def test_points_in_polygon():
 
     poi = Points(POINTSET2)
     pol = Polygons(POLSET2)
-    print(poi.dataframe)
+    assert poi.nrow == 30
+    logger.info(poi.dataframe)
 
+    # remove points in polygon
     poi.operation_polygons(pol, 0, opname='eli',
                            where=True)
 
-    print(poi.dataframe)
-    poi.to_file('TMP/poi_test.poi')
+    logger.info(poi.dataframe)
+    assert poi.nrow == 19
+    poi.to_file(join(TMPD, 'poi_test.poi'))
+
+    poi = Points(POINTSET2)
+    # remove points outside polygon
+    poi.operation_polygons(pol, 0, opname='eli', inside=False,
+                           where=True)
+    logger.info(poi.dataframe)
+    assert poi.nrow == 1
 
 
 def test_rescale_polygon():

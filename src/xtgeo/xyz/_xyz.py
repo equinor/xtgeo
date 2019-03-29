@@ -7,6 +7,8 @@ import abc
 import six
 import os.path
 
+from collections import OrderedDict
+
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
@@ -32,6 +34,10 @@ class XYZ(object):
         self._pname = 'POLY_ID'
         self._mname = 'M_MDEPTH'
 
+        # other attributes name: type, where type is
+        # ~ ('str', 'int', 'float', 'bool')
+        self._attrs = OrderedDict()
+
         if len(args) >= 1:
             # make instance from file import
             pfile = args[0]
@@ -40,7 +46,7 @@ class XYZ(object):
                 fformat = kwargs.get('fformat', 'guess')
                 self.from_file(pfile, fformat=fformat)
 
-        logger.info('Instance initiated')
+        logger.info('XYZ Instance initiated (base class) ID %s', id(self))
 
     # =========================================================================
     # Import and export
@@ -56,6 +62,8 @@ class XYZ(object):
 
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
 
+        * 'rms_attr': RMS points formats with attributes (extra columns)
+
         * 'guess': Try to choose file format based on extension
 
         Args:
@@ -69,6 +77,8 @@ class XYZ(object):
             OSError: if file is not present or wrong permissions.
 
         """
+
+        logger.info('Reading from file %s...', pfile)
 
         if (os.path.isfile(pfile)):
             pass
@@ -88,15 +98,20 @@ class XYZ(object):
             _xyz_io.import_xyz(self, pfile)
         elif (fformat == 'zmap'):
             _xyz_io.import_zmap(self, pfile)
+        elif (fformat in ('rms_attr', 'rmsattr')):
+            _xyz_io.import_rms_attr(self, pfile)
         else:
             logger.error('Invalid file format (not supported): {}'
                          .format(fformat))
             raise SystemExit
 
+        logger.info('Reading from file %s... done', pfile)
+        logger.info('\n%s', self._df.head())
+
         return self
 
     @abc.abstractmethod
-    def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
+    def to_file(self, pfile, fformat='xyz', attributes='all', filter=None,
                 wcolumn=None, hcolumn=None, mdcolumn='M_MDEPTH'):
         """Export XYZ (Points/Polygons) to file.
 
@@ -104,6 +119,7 @@ class XYZ(object):
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (list): List of extra columns to export (some formats)
+                or 'all' for all attributes present
             filter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
@@ -148,7 +164,7 @@ class XYZ(object):
 
     @abc.abstractmethod
     def from_roxar(self, project, name, category, stype='horizons',
-                   realisation=0):
+                   realisation=0, attributes=False):
         """Load a points/polygons item from a Roxar RMS project.
 
         The import from the RMS project can be done either within the project
@@ -193,11 +209,11 @@ class XYZ(object):
                              .format(valid_stypes))
 
         _xyz_roxapi.import_xyz_roxapi(
-            self, project, name, category, stype, realisation)
+            self, project, name, category, stype, realisation, attributes)
 
     @abc.abstractmethod
     def to_roxar(self, project, name, category, stype='horizons',
-                 realisation=0):
+                 realisation=0, attributes=False):
         """Export (store) a points/polygons item to a Roxar RMS project.
 
         The export to the RMS project can be done either within the project
@@ -231,7 +247,7 @@ class XYZ(object):
                              .format(valid_stypes))
 
         _xyz_roxapi.export_xyz_roxapi(
-            self, project, name, category, stype, realisation)
+            self, project, name, category, stype, realisation, attributes)
 
     # =========================================================================
     # Get and Set properties

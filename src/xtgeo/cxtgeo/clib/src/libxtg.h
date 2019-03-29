@@ -702,8 +702,6 @@ int surf_setval_poly(
  *=============================================================================
  */
 
-
-
 void pol_import_irap (
 		      int    i1,
 		      int    i2,
@@ -722,6 +720,23 @@ int pol_chk_point_inside(
 			 double *p_yp_v,
 			 int    np,
 			 int    debug
+			 );
+
+int pol_do_points_inside(
+                         double *swig_np_dbl_in_v1,  // xpoi
+                         long n_swig_np_dbl_in_v1,
+                         double *swig_np_dbl_in_v2,  // ypoi
+                         long n_swig_np_dbl_in_v2,
+                         double *swig_np_dbl_inplace_v1,  // zpoi
+                         long n_swig_np_dbl_inplace_v1,
+                         double *swig_np_dbl_in_v3,  // xpol
+                         long n_swig_np_dbl_in_v3,
+                         double *swig_np_dbl_in_v4,  // ypol
+                         long n_swig_np_dbl_in_v4,
+                         double new_value,
+                         int option,
+                         int inside,
+                         int debug
 			 );
 
 int polys_chk_point_inside(
