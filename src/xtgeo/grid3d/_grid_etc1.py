@@ -386,6 +386,21 @@ def inactivate_by_dz(self, threshold):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Make consistent in z
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def make_zconsistent(self, zsep):
+
+    if isinstance(zsep, int):
+        zsep = float(zsep)
+
+    if not isinstance(zsep, float):
+        raise ValueError('The "zsep" is not a float or int')
+
+    _cxtgeo.grd3d_make_z_consistent(self.ncol, self.nrow, self.nlay,
+                                    self._p_zcorn_v, self._p_actnum_v,
+                                    zsep, XTGDEBUG)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Inactivate inside a polygon (or outside)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def inactivate_inside(self, poly, layer_range=None, inside=True,

@@ -12,7 +12,7 @@ from xtgeo.common import XTGShowProgress
 
 xtg = XTGeoDialog()
 
-logger = xtg.basiclogger(__name__)
+logger = xtg.functionlogger(__name__)
 _cxtgeo.xtg_verbose_file('NONE')
 
 XTGDEBUG = xtg.get_syslevel()

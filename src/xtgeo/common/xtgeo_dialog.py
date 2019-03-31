@@ -181,6 +181,29 @@ class _BColors:
     UNDERLINE = '\033[4m'
 
 
+class _TimeFilter(logging.Filter):
+    """handling difftimes in logging..."""
+    # cf https://stackoverflow.com/questions/31521859/
+    # python-logging-module-time-since-last-log
+
+    def filter(self, record):
+        ML = 10000000.0
+
+        try:
+            last = self.last
+        except AttributeError:
+            last = record.relativeCreated
+
+        dlt = dtime.fromtimestamp(record.relativeCreated / 1000.0) \
+            - dtime.fromtimestamp(last / 1000.0)
+
+        record.relative = (
+            '{0:.2f}'.format(dlt.seconds + dlt.microseconds / ML))
+
+        self.last = record.relativeCreated
+        return True
+
+
 class XTGeoDialog(object):
     """System for handling dialogs and messages in XTGeo.
 
@@ -192,6 +215,7 @@ class XTGeoDialog(object):
 
         self._callclass = None
         self._caller = None
+        self._rootlogger = logging.getLogger()
         self._lformat = None
         self._lformatlevel = 1
         self._logginglevel = 'CRITICAL'
@@ -201,6 +225,7 @@ class XTGeoDialog(object):
         self._test_env = True
         self._tmpdir = 'TMP'
         self._testpath = None
+        self._bigtests = None
         self._showrtwarnings = True
 
         # a string, for Python logging:
@@ -250,6 +275,35 @@ class XTGeoDialog(object):
     # @staticmethod
     # def UNDEF_LIMIT():
     #     return UNDEF_LIMIT
+
+    @property
+    def bigtests(self):
+        """Return bigtests status"""
+        return self._bigtests
+
+    @property
+    def bigtest(self):
+        """Return bigtest(s) status (alt)"""
+        return self._bigtests
+
+    @property
+    def tmpdir(self):
+        """Return tmpdir value"""
+        return self._tmpdir
+
+    @property
+    def testpath(self):
+        """Return or setting up testpath"""
+        return self._testpath
+
+    @testpath.setter
+    def testpath(self, newtestpath):
+
+        if not os.path.isdir(newtestpath):
+            raise RuntimeError('Proposed test path is not valid: {}'
+                               .format(newtestpath))
+
+        self._testpath = newtestpath
 
     @property
     def syslevel(self):
@@ -326,19 +380,27 @@ class XTGeoDialog(object):
         """Returns the format string to be used in logging"""
 
         if self._lformatlevel <= 1:
-            self._lformat = '%(levelname)8s: \t%(message)s'
+            fmt = logging.Formatter(
+                fmt='%(levelname)8s: (%(relative)ss) \t%(message)s')
 
-            # self._lformat = '%(name)44s %(funcName)44s '\
-            #     + '%(levelname)8s: \t%(message)s'
-        elif self._lformatlevel == 20:
-            # mimic xtg.say look
-            self._lformat = '>> %(message)s'
+        elif self._lformatlevel == 2:
+            fmt = logging.Formatter(
+                fmt='%(levelname)8s (%(relative)ss) %(name)44s '
+                '[%(funcName)40s()] %(lineno)4d >> \t%(message)s')
+
         else:
-            self._lformat = '%(asctime)s Line: %(lineno)4d %(name)44s '\
-                + '[%(funcName)40s()]'\
-                + '%(levelname)8s:'\
-                + '\t%(message)s'
+            fmt = logging.Formatter(
+                fmt='%(asctime)s Line: %(lineno)4d %(name)44s '
+                '(Delta=%(relative)ss) '
+                '[%(funcName)40s()]'
+                '%(levelname)8s:'
+                '\t%(message)s')
 
+        log = self._rootlogger
+        [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
+        [hndl.setFormatter(fmt) for hndl in log.handlers]
+
+        self._lformat = fmt._fmt  # private attribute in Formatter()
         return self._lformat
 
     @staticmethod
@@ -377,22 +439,27 @@ class XTGeoDialog(object):
         print(_BColors.ENDC)
         print('')
 
-    def basiclogger(self, name, logginglevel=None, loggingformat=None):
+    def basiclogger(self, name, logginglevel=None, loggingformat=None,
+                    info=False):
         """Initiate the logger by some default settings."""
 
         if logginglevel is not None and self._logginglevel_fromenv is None:
             self.logginglevel = logginglevel
 
-        if loggingformat is not None:
-            self._lformat = loggingformat
+        if loggingformat is not None and isinstance(loggingformat, int):
+            self._lformatlevel = loggingformat
 
+        logging.basicConfig(stream=sys.stdout)
         fmt = self.loggingformat
         self._loggingname = name
-        logging.basicConfig(format=fmt, stream=sys.stdout)
-        logging.getLogger().setLevel(self.numericallogginglevel)  # root logger
+        if info:
+            print('Logginglevel is {}, formatlevel is {}, and format is {}'
+                  .format(self.logginglevel, self._lformatlevel, fmt))
+        self._rootlogger.setLevel(self.numericallogginglevel)
+
         logging.captureWarnings(True)
 
-        return logging.getLogger(name)
+        return logging.getLogger(self._loggingname)
 
     @staticmethod
     def functionlogger(name):
@@ -405,33 +472,26 @@ class XTGeoDialog(object):
     def testsetup(self):
         """Basic setup for XTGeo testing (private; only relevant for tests)"""
 
-        path = 'TMP'
+        tmppath = 'TMP'
         try:
-            os.makedirs(path)
+            os.makedirs(tmppath)
         except OSError:
-            if not os.path.isdir(path):
+            if not os.path.isdir(tmppath):
                 raise
 
-        try:
-            bigtest = int(os.environ['XTG_BIGTEST'])
-            bigtest = True
-            print('<< Big tests enabled by XTG_BIGTEST env >>')
-        except Exception:
-            bigtest = False
-            print('<< Big tests disabled as XTG_BIGTEST not set >>')
+        tstpath = os.environ.get('XTG_TESTPATH', '../xtgeo-testdata')
+        if not os.path.isdir(tstpath):
+            raise RuntimeError('Test path is not valid: {}'.format(tstpath))
 
-        testpath = '../xtgeo-testdata'
-        try:
-            testpath = str(os.environ['XTG_BIGTEST'])
-            print('<< Test data path by XTG_TESTDATA env: >>'.format(testpath))
-        except Exception:
-            print('<< No env XTG_TESTDATA - test data path default: {} >>'
-                  .format(testpath))
+        bigtst1 = os.environ.get('XTG_BIGTESTS', None)
+        bigtst2 = os.environ.get('XTG_BIGTEST', None)
 
-        self.test_env = True
-        self.tmpdir = path
-        self.bigtest = bigtest
-        self.testpath = testpath
+        if bigtst1 is not None or bigtst2 is not None:
+            self._bigtests = True
+
+        self._test_env = True
+        self._tmpdir = tmppath
+        self._testpath = tstpath
 
         return True
 

@@ -5,11 +5,12 @@ from __future__ import print_function, absolute_import
 
 import numpy as np
 import pandas as pd
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-logger = xtg.basiclogger(__name__)
+logger = xtg.functionlogger(__name__)
 
 # -------------------------------------------------------------------------
 # Import/Export methods for various formats
@@ -70,7 +71,60 @@ def import_zmap(self, pfile, zname='Z_TVDSS'):
     logger.debug(self._df.head())
 
 
-def export_rms_attr(self, pfile, attributes=None, filter=None):
+def import_rms_attr(self, pfile, zname='Z_TVDSS'):
+    """The RMS ascii file with atttributes"""
+
+    # Discrete  FaultBlock
+    # String    FaultTag
+    # Float     VerticalSep
+    # 519427.941  6733887.914  1968.988    6  UNDEF  UNDEF
+    # 519446.363  6732037.910  1806.782    19  UNDEF  UNDEF
+    # 519446.379  6732137.910  1795.707    19  UNDEF  UNDEF
+
+    self._zname = zname
+    dtype = {self._xname: np.float64, self._yname: np.float64, self._zname:
+             np.float64}
+
+    names = [self._xname, self._yname, self._zname]
+
+    # parse header
+    skiprows = 0
+    with open(pfile, 'r') as rmsfile:
+        for iline in range(20):
+            fields = rmsfile.readline().split()
+            if len(fields) != 2:
+                skiprows = iline
+                break
+            else:
+                dty, cname = fields
+                dtyx = None
+                if dty == 'Discrete':
+                    dtyx = 'int'
+                elif dty == 'String':
+                    dtyx = 'str'
+                elif dty == 'Float':
+                    dtyx = 'float'
+                elif dty == 'Int':
+                    dtyx = 'int'
+                else:
+                    dtyx = 'str'
+                names.append(cname)
+                self._attrs[cname] = dtyx
+
+    self._df = pd.read_csv(pfile, delim_whitespace=True, skiprows=skiprows,
+                           header=None,
+                           names=names,
+                           dtype=dtype)
+
+    for col in self._df.columns[3:]:
+        if col in self._attrs:
+            if self._attrs[col] == 'float':
+                self._df[col].replace('UNDEF', xtgeo.UNDEF, inplace=True)
+            elif self._attrs[col] == 'int':
+                self._df[col].replace('UNDEF', xtgeo.UNDEF_INT, inplace=True)
+
+
+def export_rms_attr(self, pfile, attributes='all', filter=None):
     """Export til RMS attribute, also called RMS extended set.
 
     If attributes is None, then it will be a simple XYZ file.
@@ -87,6 +141,10 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
     df.fillna(value=999.0, inplace=True)
 
     mode = 'w'
+
+    transl = {'int': 'Discrete', 'float': 'Float', 'str': 'String'}
+
+    logger.info('Attributes is %s', attributes)
 
     # apply filter if any
     if filter:
@@ -107,6 +165,9 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
 
         # need to convert the dataframe
         df = _convert_idbased_xyz(self, df)
+    elif attributes == 'all':
+        attributes = self._attrs.keys()
+        logger.info('Attributes is all: %s', attributes)
 
     if attributes is not None:
         mode = 'a'
@@ -114,8 +175,15 @@ def export_rms_attr(self, pfile, attributes=None, filter=None):
         with open(pfile, 'w') as fout:
             for col in attributes:
                 if col in df.columns:
-                    fout.write('String ' + col + '\n')
-
+                    fout.write(transl[self._attrs[col]] + ' ' + col + '\n')
+                    if self._attrs[col] == 'int':
+                        df[col].replace(xtgeo.UNDEF_INT, 'UNDEF', inplace=True)
+                    elif self._attrs[col] == 'float':
+                        try:
+                            df[col].where(df[col] < xtgeo.UNDEF_LIMIT,
+                                          other='UNDEF', inplace=True)
+                        except TypeError:
+                            logger.warning('Type error...')
     with open(pfile, mode) as f:
         df.to_csv(f, sep=' ', header=None,
                   columns=columns, index=False, float_format='%.3f')

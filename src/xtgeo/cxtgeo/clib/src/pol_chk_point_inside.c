@@ -59,6 +59,7 @@ int pol_chk_point_inside(
      *-------------------------------------------------------------------------
      */
 
+
     /* check first vs last point, and force close if small */
     xdiff = fabs(p_xp_v[0] - p_xp_v[np - 1]);
     ydiff = fabs(p_yp_v[0] - p_yp_v[np - 1]);
@@ -82,7 +83,8 @@ int pol_chk_point_inside(
     y2=p_yp_v[np-1]-y;
 
     for (i=0;i<np;i++) {
-	xtg_speak(s,4,"Polygon corners is %f %f", p_xp_v[i], p_yp_v[i]);
+	if (debug > 3) xtg_speak(s, 4, "Polygon corners is %f %f",
+                                 p_xp_v[i], p_yp_v[i]);
 	/* differences and norms */
 	x1=x2;
 	y1=y2;

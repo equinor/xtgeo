@@ -702,8 +702,6 @@ int surf_setval_poly(
  *=============================================================================
  */
 
-
-
 void pol_import_irap (
 		      int    i1,
 		      int    i2,
@@ -722,6 +720,23 @@ int pol_chk_point_inside(
 			 double *p_yp_v,
 			 int    np,
 			 int    debug
+			 );
+
+int pol_do_points_inside(
+                         double *swig_np_dbl_in_v1,  // xpoi
+                         long n_swig_np_dbl_in_v1,
+                         double *swig_np_dbl_in_v2,  // ypoi
+                         long n_swig_np_dbl_in_v2,
+                         double *swig_np_dbl_inplace_v1,  // zpoi
+                         long n_swig_np_dbl_inplace_v1,
+                         double *swig_np_dbl_in_v3,  // xpol
+                         long n_swig_np_dbl_in_v3,
+                         double *swig_np_dbl_in_v4,  // ypol
+                         long n_swig_np_dbl_in_v4,
+                         double new_value,
+                         int option,
+                         int inside,
+                         int debug
 			 );
 
 int polys_chk_point_inside(
@@ -1499,6 +1514,22 @@ void grd3d_export_grdeclprop2(
                               int mode,
                               int debug
                               );
+
+int grd3d_conv_grid_roxapi (
+                            int ncol,
+                            int nrow,
+                            int nlay,
+                            double *p_coord_v,
+                            double *p_zcorn_v,
+                            int *p_actnum_v,
+                            double *swig_np_dbl_aout_v1,   // *tpillars
+                            long n_swig_np_dbl_aout_v1,    // ntpillars
+                            double *swig_np_dbl_aout_v2,   // *bpillars
+                            long n_swig_np_dbl_aout_v2,    // nbpillars
+                            double *swig_np_dbl_aout_v3,   // *zcorners
+                            long n_swig_np_dbl_aout_v3,    // nzcorners
+                            int debug
+                            );
 
 int grd3d_copy(
                int ncol,

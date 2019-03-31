@@ -8,6 +8,7 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -21,26 +22,22 @@ def import_well_roxapi(self, project, wname, trajectory='Drilled trajectory',
                        inclsurvey=False):
     """Private function for loading project and ROXAPI well import"""
 
-    import roxar  # pylint: disable=import-error
+    rox = xtgeo.RoxUtils(project, readonly=True)
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_import_well(self, proj, wname, trajectory, logrun,
-                                lognames, inclmd, inclsurvey)
-    else:
-        _roxapi_import_well(self, project, wname, trajectory, logrun,
-                            lognames, inclmd, inclsurvey)
+    _roxapi_import_well(self, rox, wname, trajectory, logrun,
+                        lognames, inclmd, inclsurvey)
+
+    rox.safe_close()
 
 
-def _roxapi_import_well(self, proj, wname, traj, lrun, lognames,
+def _roxapi_import_well(self, rox, wname, traj, lrun, lognames,
                         inclmd, inclsurvey):
     """Private function for ROXAPI well import"""
 
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
 
-    if wname in proj.wells:
-        roxwell = proj.wells[wname]
+    if wname in rox.project.wells:
+        roxwell = rox.project.wells[wname]
     else:
         raise ValueError('No such well name present: {}'.format(wname))
 

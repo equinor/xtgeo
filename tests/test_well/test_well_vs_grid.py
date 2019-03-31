@@ -48,13 +48,13 @@ def loadgrid1():
     return Grid(GFILE)
 
 
-def test_get_ijk_grid(loadwell1, loadgrid1):
+def test_make_ijk_grid(loadwell1, loadgrid1):
     """Import well from and grid and make I J K logs"""
 
     mywell = loadwell1
     mygrid = loadgrid1
 
-    mywell.get_ijk_from_grid(mygrid)
+    mywell.make_ijk_from_grid(mygrid)
 
     df = mywell.dataframe
 
@@ -70,15 +70,16 @@ def test_get_ijk_grid(loadwell1, loadgrid1):
 
 @tsetup.equinor
 @tsetup.bigtest
-def test_get_ijk_gf_geogrid():
+def test_make_ijk_gf_geogrid():
     """Import well from and a large geogrid and make I J K logs"""
 
+    logger.info('Running test... %s', __name__)
     mywell = Well(WGULLFILE)
     mygrid = Grid(GGULLFILE)
 
     logger.info('Number of cells in grid is %s', mygrid.ntotal)
 
-    mywell.get_ijk_from_grid(mygrid)
+    mywell.make_ijk_from_grid(mygrid)
 
     df = mywell.dataframe
 

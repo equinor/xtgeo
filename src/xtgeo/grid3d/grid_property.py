@@ -693,9 +693,7 @@ class GridProperty(Grid3D):
 
         orig = self.values
         vact = np.ones(self.values.shape)
-        print(vact)
         vact[orig.mask] = 0
-        print(vact)
 
         if asmasked:
             vact = ma.masked_equal(vact, 0)
