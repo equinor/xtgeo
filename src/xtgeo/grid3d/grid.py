@@ -28,7 +28,7 @@ from xtgeo.grid3d import _gridprop_lowlevel
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 #
 # 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
@@ -40,7 +40,7 @@ logger = xtg.functionlogger(__name__)
 # Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 # METHODS as wrappers to class init + import
 
@@ -66,8 +66,7 @@ def grid_from_file(gfile, fformat=None):
     return obj
 
 
-def grid_from_roxar(project, gname, realisation=0, dimensions_only=False,
-                    info=False):
+def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=False):
     """Read a grid inside a RMS project and return a Grid() instance.
 
     Args:
@@ -90,8 +89,13 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False,
 
     obj = Grid()
 
-    obj.from_roxar(project, gname, realisation=realisation,
-                   dimensions_only=dimensions_only, info=info)
+    obj.from_roxar(
+        project,
+        gname,
+        realisation=realisation,
+        dimensions_only=dimensions_only,
+        info=info,
+    )
 
     return obj
 
@@ -130,14 +134,14 @@ class Grid(Grid3D):
 
         super(Grid, self).__init__(*args, **kwargs)
 
-        self._p_coord_v = None       # carray swig pointer to coords vector
-        self._p_zcorn_v = None       # carray swig pointer to zcorns vector
-        self._p_actnum_v = None      # carray swig pointer to actnum vector
+        self._p_coord_v = None  # carray swig pointer to coords vector
+        self._p_zcorn_v = None  # carray swig pointer to zcorns vector
+        self._p_actnum_v = None  # carray swig pointer to actnum vector
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
-        self._props = None           # None or a GridProperties instance
-        self._subgrids = None        # A python dict if subgrids are given
+        self._props = None  # None or a GridProperties instance
+        self._subgrids = None  # A python dict if subgrids are given
 
         # perhaps undef should be a class variable, not an instance variables?
         self._undef = _cxtgeo.UNDEF
@@ -149,19 +153,23 @@ class Grid(Grid3D):
 
         if len(args) == 1:
             # make an instance directly through import of a file
-            fformat = kwargs.get('fformat', 'guess')
-            initprops = kwargs.get('initprops', None)
-            restartprops = kwargs.get('restartprops', None)
-            restartdates = kwargs.get('restartdates', None)
-            self.from_file(args[0], fformat=fformat, initprops=initprops,
-                           restartprops=restartprops,
-                           restartdates=restartdates)
-        logger.info('Ran __init__ for %s', repr(self))
+            fformat = kwargs.get("fformat", "guess")
+            initprops = kwargs.get("initprops", None)
+            restartprops = kwargs.get("restartprops", None)
+            restartdates = kwargs.get("restartdates", None)
+            self.from_file(
+                args[0],
+                fformat=fformat,
+                initprops=initprops,
+                restartprops=restartprops,
+                restartdates=restartdates,
+            )
+        logger.info("Ran __init__ for %s", repr(self))
 
     def __del__(self):
 
         if self._p_coord_v is not None:
-            logger.info('Deleting Grid instance %s', id(self))
+            logger.info("Deleting Grid instance %s", id(self))
             _cxtgeo.delete_doublearray(self._p_coord_v)
             _cxtgeo.delete_doublearray(self._p_zcorn_v)
             _cxtgeo.delete_intarray(self._p_actnum_v)
@@ -169,23 +177,24 @@ class Grid(Grid3D):
 
             if self.props is not None:
                 for prop in self.props:
-                    logger.info('Deleting property instance %s', prop.name)
+                    logger.info("Deleting property instance %s", prop.name)
                     prop.__del__()
 
     def __repr__(self):
-        logger.info('Invoke __repr__ for grid')
-        myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
-                'nrow={0._nrow!r}, nlay={0._nlay!r}, '
-                'filesrc={0._filesrc!r}'
-                .format(self, id(self)))
+        logger.info("Invoke __repr__ for grid")
+        myrp = (
+            "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
+            "nrow={0._nrow!r}, nlay={0._nlay!r}, "
+            "filesrc={0._filesrc!r}".format(self, id(self))
+        )
         return myrp
 
     def __str__(self):
         # user friendly print
         if sys.version_info[0] < 3:
-            logger.debug('Invoke __str__ for grid')
+            logger.debug("Invoke __str__ for grid")
         else:
-            logger.debug('Invoke __str__ for grid', stack_info=True)
+            logger.debug("Invoke __str__ for grid", stack_info=True)
 
         return self.describe(flush=False)
 
@@ -243,7 +252,7 @@ class Grid(Grid3D):
             self._subgrids = None
 
         if not isinstance(sgrids, OrderedDict):
-            raise ValueError('Input to subgrids must be an ordered dictionary')
+            raise ValueError("Input to subgrids must be an ordered dictionary")
 
         lengths = 0
         zarr = []
@@ -254,14 +263,16 @@ class Grid(Grid3D):
             zarr.extend(val)
 
         if lengths != self._nlay:
-            raise ValueError('Subgrids lengths not equal NLAY')
+            raise ValueError("Subgrids lengths not equal NLAY")
 
         if zarr != list(range(1, self._nlay + 1)):
-            raise ValueError('Arrays are not valid as the do not sum to '
-                             'vertical range, {}'.format(zarr))
+            raise ValueError(
+                "Arrays are not valid as the do not sum to "
+                "vertical range, {}".format(zarr)
+            )
 
         if len(keys) != len(set(keys)):
-            raise ValueError('Subgrid keys are not unique: {}'.format(keys))
+            raise ValueError("Subgrid keys are not unique: {}".format(keys))
 
         self._subgrids = sgrids
 
@@ -311,7 +322,7 @@ class Grid(Grid3D):
     def gridprops(self, gprops):
 
         if not isinstance(gprops, xtgeo.grid3d.GridProperties):
-            raise ValueError('Input must be a GridProperties instance')
+            raise ValueError("Input must be a GridProperties instance")
 
         self._props = gprops  # self._props is a GridProperties instance
 
@@ -335,23 +346,25 @@ class Grid(Grid3D):
         if isinstance(self._props, xtgeo.grid3d.GridProperties):
             prplist = self._props.props
         elif isinstance(self._props, list):
-            raise RuntimeError('self._props is a list, not a GridProperties '
-                               'instance')
+            raise RuntimeError(
+                "self._props is a list, not a GridProperties " "instance"
+            )
         return prplist
 
     @props.setter
     def props(self, plist):
 
         if not isinstance(plist, list):
-            raise ValueError('Input to props must be a list')
+            raise ValueError("Input to props must be a list")
 
         if self._props is None:
             self._props = xtgeo.grid3d.GridProperties()
 
         for litem in plist:
             if litem.dimensions != self.dimensions:
-                raise IndexError('Property NX NY NZ <{}> does not match grid!'
-                                 .format(litem.name))
+                raise IndexError(
+                    "Property NX NY NZ <{}> does not match grid!".format(litem.name)
+                )
 
         self._props.props = plist  # self._props is a GridProperties instance
 
@@ -396,12 +409,13 @@ class Grid(Grid3D):
 
         return self._roxindexer
 
-    # =========================================================================
+    # ==================================================================================
     # Import/export
-    # =========================================================================
+    # ==================================================================================
 
-    def from_file(self, gfile, fformat=None, initprops=None,
-                  restartprops=None, restartdates=None):
+    def from_file(
+        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+    ):
 
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -429,14 +443,18 @@ class Grid(Grid3D):
         Raises:
             IOError: if file is not found etc
         """
-        obj = _grid_import.from_file(self, gfile, fformat=fformat,
-                                     initprops=initprops,
-                                     restartprops=restartprops,
-                                     restartdates=restartdates)
+        obj = _grid_import.from_file(
+            self,
+            gfile,
+            fformat=fformat,
+            initprops=initprops,
+            restartprops=restartprops,
+            restartdates=restartdates,
+        )
 
         return obj
 
-    def to_file(self, gfile, fformat='roff'):
+    def to_file(self, gfile, fformat="roff"):
         """Export grid geometry to file.
 
         Args:
@@ -449,21 +467,22 @@ class Grid(Grid3D):
             xg.to_file('myfile.roff')
         """
 
-        if fformat in ('roff', 'roff_binary'):
+        if fformat in ("roff", "roff_binary"):
             _grid_export.export_roff(self, gfile, 0)
-        elif fformat == 'roff_ascii':
+        elif fformat == "roff_ascii":
             _grid_export.export_roff(self, gfile, 1)
-        elif fformat == 'grdecl':
+        elif fformat == "grdecl":
             _grid_export.export_grdecl(self, gfile, 1)
-        elif fformat == 'bgrdecl':
+        elif fformat == "bgrdecl":
             _grid_export.export_grdecl(self, gfile, 0)
-        elif fformat == 'egrid':
+        elif fformat == "egrid":
             _grid_export.export_egrid(self, gfile)
         else:
-            raise SystemExit('Invalid file format')
+            raise SystemExit("Invalid file format")
 
-    def from_roxar(self, projectname, gname, realisation=0,
-                   dimensions_only=False, info=False):
+    def from_roxar(
+        self, projectname, gname, realisation=0, dimensions_only=False, info=False
+    ):
 
         """Import grid model geometry from RMS project, and makes an instance.
 
@@ -482,15 +501,16 @@ class Grid(Grid3D):
 
         """
 
-        _grid_roxapi.import_grid_roxapi(self, projectname, gname, realisation,
-                                        dimensions_only, info)
+        _grid_roxapi.import_grid_roxapi(
+            self, projectname, gname, realisation, dimensions_only, info
+        )
 
-    def to_roxar(self, projectname, gname, realisation=0, info=False,
-                 method='cpg'):
+    def to_roxar(self, projectname, gname, realisation=0, info=False, method="cpg"):
         """Export a grid to RMS via Roxar API (in prep.)"""
 
-        _grid_roxapi.export_grid_roxapi(self, projectname, gname, realisation,
-                                        info=info, method=method)
+        _grid_roxapi.export_grid_roxapi(
+            self, projectname, gname, realisation, info=info, method=method
+        )
 
     # =========================================================================
     # Various public methods
@@ -506,7 +526,7 @@ class Grid(Grid3D):
             newgrd = grd.copy()
         """
 
-        logger.info('Copy a Grid instance')
+        logger.info("Copy a Grid instance")
         other = _grid_etc1.copy(self)
 
         return other
@@ -514,64 +534,65 @@ class Grid(Grid3D):
     def describe(self, details=False, flush=True):
         """Describe an instance by printing to stdout"""
 
-        logger.info('Print a description...')
+        logger.info("Print a description...")
 
         if details:
             geom = self.get_geometrics(cellcenter=True, return_dict=True)
 
             prp1 = []
-            for prp in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
-                prp1.append('{:10.3f}'.format(geom[prp]))
+            for prp in ("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"):
+                prp1.append("{:10.3f}".format(geom[prp]))
 
             prp2 = []
-            for prp in ('avg_dx', 'avg_dy', 'avg_dz', 'avg_rotation'):
-                prp2.append('{:7.4f}'.format(geom[prp]))
+            for prp in ("avg_dx", "avg_dy", "avg_dz", "avg_rotation"):
+                prp2.append("{:7.4f}".format(geom[prp]))
 
-            geox = self.get_geometrics(cellcenter=False, allcells=True,
-                                       return_dict=True)
+            geox = self.get_geometrics(
+                cellcenter=False, allcells=True, return_dict=True
+            )
             prp3 = []
-            for prp in ('xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'):
-                prp3.append('{:10.3f}'.format(geox[prp]))
+            for prp in ("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"):
+                prp3.append("{:10.3f}".format(geox[prp]))
 
             prp4 = []
-            for prp in ('avg_dx', 'avg_dy', 'avg_dz', 'avg_rotation'):
-                prp4.append('{:7.4f}'.format(geox[prp]))
+            for prp in ("avg_dx", "avg_dy", "avg_dz", "avg_rotation"):
+                prp4.append("{:7.4f}".format(geox[prp]))
 
         dsc = XTGDescription()
-        dsc.title('Description of Grid instance')
-        dsc.txt('Object ID', id(self))
+        dsc.title("Description of Grid instance")
+        dsc.txt("Object ID", id(self))
         if details:
-            dsc.txt('SWIG ID to coordinates pointer', self._p_coord_v)
-            dsc.txt('SWIG ID to zcorn pointer', self._p_zcorn_v)
-            dsc.txt('SWIG ID to actnum pointer', self._p_actnum_v)
-        dsc.txt('File source', self._filesrc)
-        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
-        dsc.txt('Number of active cells', self.nactive)
+            dsc.txt("SWIG ID to coordinates pointer", self._p_coord_v)
+            dsc.txt("SWIG ID to zcorn pointer", self._p_zcorn_v)
+            dsc.txt("SWIG ID to actnum pointer", self._p_actnum_v)
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
+        dsc.txt("Number of active cells", self.nactive)
         if details:
-            dsc.txt('For active cells, using cell centers:')
-            dsc.txt('Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:', *prp1)
-            dsc.txt('Avg DX, Avg DY, Avg DZ, Avg rotation:', *prp2)
-            dsc.txt('For all cells, using cell corners:')
-            dsc.txt('Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:', *prp3)
-            dsc.txt('Avg DX, Avg DY, Avg DZ, Avg rotation:', *prp4)
-        dsc.txt('Attached grid props objects (names)', self.propnames)
+            dsc.txt("For active cells, using cell centers:")
+            dsc.txt("Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:", *prp1)
+            dsc.txt("Avg DX, Avg DY, Avg DZ, Avg rotation:", *prp2)
+            dsc.txt("For all cells, using cell corners:")
+            dsc.txt("Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:", *prp3)
+            dsc.txt("Avg DX, Avg DY, Avg DZ, Avg rotation:", *prp4)
+        dsc.txt("Attached grid props objects (names)", self.propnames)
         if details:
-            dsc.txt('Attached grid props objects (id)', self.props)
+            dsc.txt("Attached grid props objects (id)", self.props)
         if self.subgrids:
-            dsc.txt('Number of subgrids', len(list(self.subgrids.keys())))
+            dsc.txt("Number of subgrids", len(list(self.subgrids.keys())))
         else:
-            dsc.txt('Number of subgrids', 'No subgrids')
+            dsc.txt("Number of subgrids", "No subgrids")
         if details:
-            dsc.txt('Subgrids details', json.dumps(self.get_subgrids()))
-            dsc.txt('Subgrids with values array', self.subgrids)
+            dsc.txt("Subgrids details", json.dumps(self.get_subgrids()))
+            dsc.txt("Subgrids with values array", self.subgrids)
 
         if flush:
             dsc.flush()
-        else:
-            return dsc.astext()
+            return None
 
-    def dataframe(self, activeonly=True, ijk=True, xyz=True,
-                  doubleformat=False):
+        return dsc.astext()
+
+    def dataframe(self, activeonly=True, ijk=True, xyz=True, doubleformat=False):
         """Returns a Pandas dataframe table for the grid and
         any attached grid properties.
 
@@ -608,9 +629,13 @@ class Grid(Grid3D):
         if self.gridprops is None:
             self.gridprops = xtgeo.grid3d.GridProperties()
 
-        return self.gridprops.dataframe(activeonly=activeonly, ijk=ijk,
-                                        xyz=xyz,
-                                        doubleformat=doubleformat, grid=self)
+        return self.gridprops.dataframe(
+            activeonly=activeonly,
+            ijk=ijk,
+            xyz=xyz,
+            doubleformat=doubleformat,
+            grid=self,
+        )
 
     def append_prop(self, prop):
         """Append a single property to the grid"""
@@ -621,7 +646,7 @@ class Grid(Grid3D):
 
             self._props.append_props([prop])
         else:
-            raise ValueError('Dimensions does not match')
+            raise ValueError("Dimensions does not match")
 
     def set_subgrids(self, sdict):
         """Set the subgrid from a simplified ordered dictionary.
@@ -634,7 +659,7 @@ class Grid(Grid3D):
         """
 
         if not isinstance(sdict, OrderedDict):
-            raise ValueError('Input sdict is not an OrderedDict')
+            raise ValueError("Input sdict is not an OrderedDict")
 
         newsub = OrderedDict()
 
@@ -683,7 +708,7 @@ class Grid(Grid3D):
         for izone in range(minzone, maxzone + 1):
             mininzn = int(kval[zprval == izone].min())  # 1 base
             maxinzn = int(kval[zprval == izone].max())  # 1 base
-            newd['zone' + str(izone)] = range(mininzn, maxinzn + 1)
+            newd["zone" + str(izone)] = range(mininzn, maxinzn + 1)
 
         self.subgrids = newd
 
@@ -693,15 +718,15 @@ class Grid(Grid3D):
         """Make a XTGeo GridProperty instance for a Zone property from
         the Grid subgrids information"""
 
-        raise NotImplementedError('Not yet; todo')
+        raise NotImplementedError("Not yet; todo")
 
-    def get_actnum_indices(self, order='C'):
+    def get_actnum_indices(self, order="C"):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C or F order.
 
         """
         actnumv = self.get_actnum().values.copy(order=order)
-        actnumv = np.ravel(actnumv, order='K')
+        actnumv = np.ravel(actnumv, order="K")
         ind = np.flatnonzero(actnumv)
 
         return ind
@@ -727,7 +752,7 @@ class Grid(Grid3D):
         """Returns the C pointer object reference to the ACTNUM array."""
         return self._p_actnum_v  # the SWIG pointer to the C structure
 
-    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
+    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
 
         Args:
@@ -745,13 +770,14 @@ class Grid(Grid3D):
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        act = xtgeo.grid3d.GridProperty(ncol=self._ncol, nrow=self._nrow,
-                                        nlay=self._nlay,
-                                        values=np.zeros((self._ncol,
-                                                         self._nrow,
-                                                         self._nlay),
-                                                        dtype=np.int32),
-                                        name=name, discrete=True)
+        act = xtgeo.grid3d.GridProperty(
+            ncol=self._ncol,
+            nrow=self._nrow,
+            nlay=self._nlay,
+            values=np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32),
+            name=name,
+            discrete=True,
+        )
 
         carray = self._p_actnum_v  # the SWIG pointer to the C structure
         _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
@@ -759,7 +785,7 @@ class Grid(Grid3D):
         if asmasked:
             act.values = ma.masked_equal(act.values, 0)
 
-        act.codes = {0: '0', 1: '1'}
+        act.codes = {0: "0", 1: "1"}
 
         # return the object
         return act
@@ -779,10 +805,9 @@ class Grid(Grid3D):
             grid.set_actnum(act)
         """
 
-        self._p_actnum_v = _gridprop_lowlevel.update_carray(
-            actnum, discrete=True)
+        self._p_actnum_v = _gridprop_lowlevel.update_carray(actnum, discrete=True)
 
-    def get_dz(self, name='dZ', flip=True, asmasked=True, mask=None):
+    def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
         """
         Return the dZ as GridProperty object.
 
@@ -805,7 +830,7 @@ class Grid(Grid3D):
 
         return deltaz
 
-    def get_dxdy(self, names=('dX', 'dY')):
+    def get_dxdy(self, names=("dX", "dY")):
         """
         Return the dX and dY as GridProperty object.
 
@@ -823,7 +848,7 @@ class Grid(Grid3D):
         # return the property objects
         return deltax, deltay
 
-    def get_indices(self, names=('I', 'J', 'K')):
+    def get_indices(self, names=("I", "J", "K")):
         """Return 3 GridProperty objects for column, row, and layer index,
 
         Note that the indexes starts with 1, not zero (i.e. upper
@@ -838,11 +863,12 @@ class Grid(Grid3D):
 
         """
 
-        warnings.warn('Use method get_ijk() instead', DeprecationWarning)
+        warnings.warn("Use method get_ijk() instead", DeprecationWarning)
         return self.get_ijk(names=names, asmasked=False)
 
-    def get_ijk(self, names=('IX', 'JY', 'KZ'), asmasked=True, mask=None,
-                zerobased=False):
+    def get_ijk(
+        self, names=("IX", "JY", "KZ"), asmasked=True, mask=None, zerobased=False
+    ):
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
         J counter, K counter.
 
@@ -856,14 +882,14 @@ class Grid(Grid3D):
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,
-                                           mask=asmasked, zero_base=zerobased)
+        ixc, jyc, kzc = _grid_etc1.get_ijk(
+            self, names=names, mask=asmasked, zero_base=zerobased
+        )
 
         # return the objects
         return ixc, jyc, kzc
 
-    def get_xyz(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS'), asmasked=True,
-                mask=None):
+    def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True, mask=None):
         """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,
         ycoordinate, zcoordinate.
 
@@ -882,14 +908,14 @@ class Grid(Grid3D):
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        xcoord, ycoord, zcoord = _grid_etc1.get_xyz(self, names=names,
-                                                    mask=asmasked)
+        xcoord, ycoord, zcoord = _grid_etc1.get_xyz(self, names=names, mask=asmasked)
 
         # return the objects
         return xcoord, ycoord, zcoord
 
-    def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, mask=None,
-                             zerobased=False):
+    def get_xyz_cell_corners(
+        self, ijk=(1, 1, 1), activeonly=True, mask=None, zerobased=False
+    ):
         """Return a 8 * 3 tuple x, y, z for each corner.
 
         .. code-block:: none
@@ -929,12 +955,13 @@ class Grid(Grid3D):
         if mask is not None:
             activeonly = self._evaluate_mask(mask)
 
-        clist = _grid_etc1.get_xyz_cell_corners(self, ijk=ijk, mask=activeonly,
-                                                zerobased=zerobased)
+        clist = _grid_etc1.get_xyz_cell_corners(
+            self, ijk=ijk, mask=activeonly, zerobased=zerobased
+        )
 
         return clist
 
-    def get_xyz_corners(self, names=('X_UTME', 'Y_UTMN', 'Z_TVDSS')):
+    def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
         """Returns 8*3 (24) xtgeo.grid3d.GridProperty objects, x, y, z for
         each corner.
 
@@ -976,8 +1003,7 @@ class Grid(Grid3D):
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
 
-    def get_geometrics(self, allcells=False, cellcenter=True,
-                       return_dict=False):
+    def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
         """Get a list of grid geometrics such as origin, min, max, etc.
 
         This returns a tuple: (xori, yori, zori, xmin, xmax, ymin, ymax, zmin,
@@ -1002,9 +1028,9 @@ class Grid(Grid3D):
 
         """
 
-        gresult = _grid_etc1.get_geometrics(self, allcells=allcells,
-                                            cellcenter=cellcenter,
-                                            return_dict=return_dict)
+        gresult = _grid_etc1.get_geometrics(
+            self, allcells=allcells, cellcenter=cellcenter, return_dict=return_dict
+        )
 
         return gresult
 
@@ -1027,8 +1053,9 @@ class Grid(Grid3D):
 
         """
 
-        presult = _grid_etc1.get_adjacent_cells(self, prop, val1, val2,
-                                                activeonly=activeonly)
+        presult = _grid_etc1.get_adjacent_cells(
+            self, prop, val1, val2, activeonly=activeonly
+        )
 
         return presult
 
@@ -1047,8 +1074,7 @@ class Grid(Grid3D):
 
         _grid_etc1.inactivate_by_dz(self, threshold)
 
-    def inactivate_inside(self, poly, layer_range=None, inside=True,
-                          force_close=False):
+    def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
         """Inacativate grid inside a polygon.
 
         The Polygons instance may consist of several polygons. If a polygon
@@ -1067,16 +1093,16 @@ class Grid(Grid3D):
             ValueError: If Polygon is not a XTGeo object
         """
 
-        _grid_etc1.inactivate_inside(self, poly,
-                                     layer_range=layer_range,
-                                     inside=inside,
-                                     force_close=force_close)
+        _grid_etc1.inactivate_inside(
+            self, poly, layer_range=layer_range, inside=inside, force_close=force_close
+        )
 
     def inactivate_outside(self, poly, layer_range=None, force_close=False):
         """Inacativate grid outside a polygon. (cf inactivate_inside)"""
 
-        self.inactivate_inside(poly, layer_range=layer_range, inside=False,
-                               force_close=force_close)
+        self.inactivate_inside(
+            poly, layer_range=layer_range, inside=False, force_close=force_close
+        )
 
     def collapse_inactive_cells(self):
         """ Collapse inactive layers where, for I J with other active cells."""
@@ -1141,8 +1167,7 @@ class Grid(Grid3D):
             RuntimeError: If translation goes wrong for unknown reasons
         """
 
-        _grid_etc1.translate_coordinates(self, translate=translate,
-                                         flip=flip)
+        _grid_etc1.translate_coordinates(self, translate=translate, flip=flip)
 
     def make_zconsistent(self, zsep=1e-5):
         """Make the 3D grid consistent in Z, by a minimal gap (zsep).
@@ -1153,8 +1178,14 @@ class Grid(Grid3D):
 
         _grid_etc1.make_zconsistent(self, zsep)
 
-    def convert_to_hybrid(self, nhdiv=10, toplevel=1000.0, bottomlevel=1100.0,
-                          region=None, region_number=None):
+    def convert_to_hybrid(
+        self,
+        nhdiv=10,
+        toplevel=1000.0,
+        bottomlevel=1100.0,
+        region=None,
+        region_number=None,
+    ):
         """Convert to hybrid grid, either globally or in a selected region..
 
         Args:
@@ -1165,11 +1196,14 @@ class Grid(Grid3D):
             region_number (int): Which region to apply hybrid grid in.
         """
 
-        _grid_hybrid.make_hybridgrid(self, nhdiv=nhdiv,
-                                     toplevel=toplevel,
-                                     bottomlevel=bottomlevel,
-                                     region=region,
-                                     region_number=region_number)
+        _grid_hybrid.make_hybridgrid(
+            self,
+            nhdiv=nhdiv,
+            toplevel=toplevel,
+            bottomlevel=bottomlevel,
+            region=region,
+            region_number=region_number,
+        )
 
     def refine_vertically(self, rfactor, zoneprop=None):
         """Refine vertically, proportionally
@@ -1221,10 +1255,19 @@ class Grid(Grid3D):
 
         _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
 
-    def report_zone_mismatch(self, well=None, zonelogname='ZONELOG',
-                             mode=0, zoneprop=None, onelayergrid=None,
-                             zonelogrange=(0, 9999), zonelogshift=0,
-                             depthrange=None, option=0, perflogname=None):
+    def report_zone_mismatch(
+        self,
+        well=None,
+        zonelogname="ZONELOG",
+        mode=0,
+        zoneprop=None,
+        onelayergrid=None,
+        zonelogrange=(0, 9999),
+        zonelogshift=0,
+        depthrange=None,
+        option=0,
+        perflogname=None,
+    ):
         """Reports mismatch between wells and a zone.
 
         Args:
@@ -1263,23 +1306,25 @@ class Grid(Grid3D):
                 depthrange=[1700, 9999])
         """
 
-        reports = _grid_etc1.report_zone_mismatch(self,
-                                                  well=well,
-                                                  zonelogname=zonelogname,
-                                                  mode=mode,
-                                                  zoneprop=zoneprop,
-                                                  onelayergrid=onelayergrid,
-                                                  zonelogrange=zonelogrange,
-                                                  zonelogshift=zonelogshift,
-                                                  depthrange=depthrange,
-                                                  option=option,
-                                                  perflogname=perflogname)
+        reports = _grid_etc1.report_zone_mismatch(
+            self,
+            well=well,
+            zonelogname=zonelogname,
+            mode=mode,
+            zoneprop=zoneprop,
+            onelayergrid=onelayergrid,
+            zonelogrange=zonelogrange,
+            zonelogshift=zonelogshift,
+            depthrange=depthrange,
+            option=option,
+            perflogname=perflogname,
+        )
 
         return reports
 
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
     # Private function
-    # ------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
 
     def _evaluate_mask(self, mask):
-        return super(Grid, self)._evaluate_mask(mask)
+        return self._evaluate_mask(mask)  # in super class

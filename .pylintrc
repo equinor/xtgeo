@@ -3,13 +3,14 @@
 good-names=logger, xtg
 
 [FORMAT]
-max-line-length=79
+max-line-length=88
 max-module-lines=3000
 
 [DESIGN]
 max-attributes=25
 max-args=20
 max-locals=20
+max-branches=15
 
 [SIMILARITIES]
 min-similarity-lines=10
@@ -22,3 +23,4 @@ disable=
     fixme,
     missing-docstring,
     protected-access,
+    C0330,
