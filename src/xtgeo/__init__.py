@@ -9,6 +9,7 @@ import os
 
 # to avoid problems in batch runs when no DISPLAY is set:
 import matplotlib as mplib
+
 display = os.environ.get('DISPLAY', '')
 host1 = os.environ.get('HOSTNAME', '')
 host2 = os.environ.get('HOST', '')
@@ -21,8 +22,10 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
     print('')
     print('=' * 79)
 
-    print('XTGeo info: No display found or ERT server. Using non-interactive '
-          'Agg backend for matplotlib')
+    print(
+        'XTGeo info: No display found or ERT server. Using non-interactive '
+        'Agg backend for matplotlib'
+    )
     mplib.use('Agg')
     print('=' * 79)
 
@@ -31,6 +34,7 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
 #
 
 from xtgeo._theversion import theversion
+
 __version__ = theversion()
 
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
