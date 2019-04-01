@@ -397,7 +397,6 @@ def import_stormcube(self, sfile):
         yflip = -1
         yinc = yinc * yflip  # not sure if this will ever happen
 
-
     ier, values = _cxtgeo.cube_import_storm(ncol, nrow, nlay,
                                             sfile, nlines, nrcl,
                                             0, XTGDEBUG)

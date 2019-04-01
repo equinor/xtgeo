@@ -400,6 +400,7 @@ def make_zconsistent(self, zsep):
                                     self._p_zcorn_v, self._p_actnum_v,
                                     zsep, XTGDEBUG)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Inactivate inside a polygon (or outside)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

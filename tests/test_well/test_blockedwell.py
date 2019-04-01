@@ -2,14 +2,11 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-import glob
 from os.path import join
 
 import pytest
-import pandas as pd
 
 from xtgeo.well import BlockedWell
-from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
 import test_common.test_xtg as tsetup

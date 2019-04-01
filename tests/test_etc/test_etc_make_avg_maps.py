@@ -4,7 +4,6 @@ import logging
 
 import pytest
 import numpy as np
-import numpy.ma as ma
 
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty

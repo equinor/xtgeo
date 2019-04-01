@@ -1,7 +1,6 @@
 from os.path import join as ojn
 
 import numpy as np
-import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog

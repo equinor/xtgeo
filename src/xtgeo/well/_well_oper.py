@@ -183,7 +183,9 @@ def get_ijk_from_grid(self, grid, grid_id=''):
 
 def get_gridproperties(self, gridprops, grid=('ICELL', 'JCELL', 'KCELL'),
                        prop_id=''):
-    """Getting gridprops as logs"""
+    """In prep! Getting gridprops as logs"""
+
+    raise NotImplementedError
 
     if not isinstance(gridprops, GridProperties):
         raise ValueError('"gridprops" are not a GridProperties instance')
@@ -192,7 +194,7 @@ def get_gridproperties(self, gridprops, grid=('ICELL', 'JCELL', 'KCELL'),
         icl, jcl, kcl = grid
     elif isinstance(grid, Grid):
         self.get_ijk_from_grid(grid, grid_id='_tmp')
-        icl, jcl, kcl = ('ICELL_tmp', 'JCELL_tmp', 'KCELL_tmp')
+        # icl, jcl, kcl = ('ICELL_tmp', 'JCELL_tmp', 'KCELL_tmp')
     else:
         raise ValueError('The "grid" is of wrong type, must be a tuple or '
                          'a Grid')

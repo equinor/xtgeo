@@ -64,8 +64,8 @@ def test_report_zlog_mismatch():
     wells = [w1, w2, w3, w4, w5, w6, w7]
 
     resultd = {}
-    matchd = {'WI_1': 69, 'WI_3': 70, 'OP_4': 74, 'OP_5': 75, 'OP_1': 75,
-              'OP_2': 74, 'OP_3': 70}
+    # matchd = {'WI_1': 69, 'WI_3': 70, 'OP_4': 74, 'OP_5': 75, 'OP_1': 75,
+    #           'OP_2': 74, 'OP_3': 70}
 
     for w in wells:
         response = g1.report_zone_mismatch(

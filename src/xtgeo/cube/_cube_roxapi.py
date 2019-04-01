@@ -91,7 +91,6 @@ def export_cube_roxapi(self, project, name, folder=None, domain='time',
 def _roxapi_export_cube(self, roxar, proj, name, folder=None, domain='time',
                         compression=('wavelet', 5)):
 
-
     logger.info('There are issues with compression%s, hence it {} is ignored',
                 compression)
 

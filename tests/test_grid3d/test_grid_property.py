@@ -174,7 +174,7 @@ def test_roffbin_import2_roffapiv2():
     tsetup.assert_almostequal(hc.values.mean(), 1446.4611912446985, 0.0001)
 
 # def test_eclinit_import():
-#     """Property import from Eclipse. Needs a grid object first. Eclipse GRID"""
+#     """Property import from Eclipse, a grid object first. Eclipse GRID"""
 
 #     logger.info('Name is {}'.format(__name__))
 #     gg = Grid(testfile3, fformat="grid")
