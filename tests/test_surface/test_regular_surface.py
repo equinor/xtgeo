@@ -7,7 +7,6 @@ import os.path
 
 import pytest
 import numpy as np
-import numpy.ma as npma
 
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
@@ -34,7 +33,7 @@ testset3 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr'
 testset4a = '../xtgeo-testdata/surfaces/etc/ib_test-horizon.map'  # IJXYZ table
 testset4b = '../xtgeo-testdata/surfaces/etc/ijxyz1.map'  # IJXYZ table
 testset4d = '../xtgeo-testdata/surfaces/etc/ijxyz1.dat'  # IJXYZ table OW
-testset4c = '../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map'  # IJXYZ table
+testset4c = '../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map'
 testset5 = '../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri'
 
 

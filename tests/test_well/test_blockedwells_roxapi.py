@@ -43,7 +43,7 @@ def test_rox_get_blockedwells():
 
     for wll in bwells.wells:
         print(wll.name)
-        #logger.info(bwells.dataframe.head())
+        # logger.info(bwells.dataframe.head())
 
 
 # @tsetup.equinor

@@ -222,16 +222,16 @@ def test_slice_attr_window_max_algorithm2(load_cube_rsgy1):
 
     logger.info('Loading surface')
     xs1 = RegularSurface(rtop1)
-    xs2 = xs1.copy()
-    xs3 = xs1.copy()
+    # xs2 = xs1.copy()
+    # xs3 = xs1.copy()
 
     logger.info('Loading cube')
     kube = load_cube_rsgy1
 
-    t1 = xtg.timer()
+    # t1 = xtg.timer()
     xs1.slice_cube_window(kube, attribute='min', sampling='trilinear',
                           algorithm=2)
-    t2 = xtg.timer(t1)
+    # t2 = xtg.timer(t1)
     # logger.info('Window slicing... {} secs'. format(t2))
 
     # xs1.quickplot(filename=td + '/surf_slice_cube_window_min.png',

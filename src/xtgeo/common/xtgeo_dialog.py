@@ -247,16 +247,11 @@ class XTGeoDialog(object):
         else:
             self._syslevel = int(envsyslevel)
 
-
-
-
-
         # # a string, for Python logging:
         # logginglevel = os.environ.get('XTG_LOGGING_LEVEL')
 
         # # a number, for format, 1 is simple, 2 is more info etc
         # loggingformat = os.environ.get('XTG_LOGGING_FORMAT')
-
 
         # if logginglevel is None:
         #     self._logginglevel = 'CRITICAL'

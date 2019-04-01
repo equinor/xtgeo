@@ -1271,15 +1271,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                            gridcells=None, prop_id='_model'):
         """Look through a Grid and add a set of grid properties as logs.
 
+        In prep!
+
         This can be done to sample model properties along a well.
 
         Args:
             gridprops (Grid): A XTGeo GridProperties instance (a collection
                 of properties)
-            grid (Grid or tuple): A XTGeo Grid instance. If this is tuple,
-                it states the names of the logs that contains the IJK numbering
-                or it should be a Grid instance.
-            grid_id (str): Add a tag (optional) to the current log name, e.g
+            grid (Grid or tuple): A XTGeo Grid instance or a reference
+                via tuple. If this is tuple,
+                it states the names of the logs that contains
+                the IJK numbering.
+            prop_id (str): Add a tag (optional) to the current log name, e.g
                 as PORO_model, where _model is the tag.
 
         Raises:

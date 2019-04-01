@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/Statoil/xtgeo-python/issues.
+Report bugs at https://github.com/equinor/xtgeo/issues.
 
 If you are reporting a bug, please include:
 
@@ -38,7 +38,7 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-pyxtgeo could always use more documentation, whether as part of the
+xtgeo could always use more documentation, whether as part of the
 official xtgeo docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
@@ -46,7 +46,7 @@ Submit Feedback
 ~~~~~~~~~~~~~~~
 
 The best way to send feedback is to file an issue
-at https://github.com/Statoil/xtgeo-python/issues.
+at https://github.com/equinor/xtgeo/issues.
 
 If you are proposing a feature:
 
@@ -58,18 +58,18 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `pyxtgeo` for local development.
+Ready to contribute? Here's how to set up `xtgeo` for local development.
 
-1. Fork the `pyxtgeo` repo on Git Statoil
+1. Fork the `xtgeo` repo on Git equinor
 2. Clone your fork locally::
 
-    $ git clone git@git.statoil.no:your_name_here/pyxtgeo.git
+    $ git clone git@git.equinor.no:your_name_here/xtgeo.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed,
    this is how you set up your fork for local development::
 
     $ mkvirtualenv xtgeo
-    $ cd pyxtgeo/
+    $ cd xtgeo/
     $ python setup.py develop
 
 4. Create a branch for local development::
@@ -78,12 +78,10 @@ Ready to contribute? Here's how to set up `pyxtgeo` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests,
-   including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass flake8 and the tests::
 
-    $ flake8 xtgeo tests
-    $ python setup.py test or py.test
-    $ tox ...?
+    $ flake8 <your edited code>
+    $ Use make test, python setup.py test or pytest
 
    To get flake8 and tox, just pip install them into your virtualenv.
 
@@ -106,15 +104,15 @@ Before you submit a pull request, check that it meets these guidelines:
    feature to the list in README.rst.
 
 .. 3. The pull request should work for Python 2.7, 3.4, and for PyPy(?). Check
-..   https://travis-ci.org/xtgeo/pyxtgeo/pull_requests (INACTIVE)
+..   https://travis-ci.org/xtgeo/xtgeo/pull_requests (INACTIVE)
 ..   and make sure that the tests pass for all supported Python versions.
 
 Tips
 ----
 
-To run a subset of tests::
+To run a subset of tests, e.g. only surface tests::
 
-    $ python -m unittest tests.test_hc
+    $ pytest test/test_surfaces
 
 Or use the Makefile to speed up things::
 

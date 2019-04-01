@@ -5,14 +5,30 @@ The *XTGeo* library
     :target: https://travis-ci.com/equinor/xtgeo
 
 
-In-house Python class library for surfaces, wells, 3D grids, etc
-mostly in relation with RMS and geo work.
+XTGeo is Python class library with a C backend for subsurface work. It handles
+many data types, such as surfaces, well data, 3D grids, etc. The usage is primarely
+targeted to geoscientist and reservoir engineers working with reservoir modelling,
+in relation with RMS.
+
+
+Building XTGeo
+--------------
+
+XTGeo is developed on Linux. To build XTGeo you need:
+
+* A C99 compatible C compiler (gcc is recommended)
+* The SWIG library (http://www.swig.org/) version 2 or higher.
+* Python 2.7, 3.4 or higher. Furter Python requirements
+  are listed in requirements.txt, requirements_dev.txt and setup.py
+* Detailed instructions are provided in installation.rst
+
 
 
 Features
 --------
 
-Easy access to basic data, with manipulation in numpy and/or pandas. E.g.
+To goal of XTGeo is to provide easy access to basic data, with manipulation in
+numpy and/or pandas. For example:
 
 ::
 

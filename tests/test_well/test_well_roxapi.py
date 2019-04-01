@@ -112,5 +112,4 @@ def test_getwell_and_find_ijk_gfb2():
     print(xwell.dataframe.head())
     xwell.to_file(join(TMPD, 'gfb2_well_ijk.rmswell'))
 
-
     # tsetup.assert_almostequal(x.values.mean(), 1696.255599, 0.001)

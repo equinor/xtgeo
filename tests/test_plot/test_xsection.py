@@ -5,7 +5,6 @@ import os
 from os.path import join
 import glob
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 from xtgeo.plot import XSection
@@ -44,6 +43,7 @@ usefile6 = '../xtgeo-testdata/cubes/reek/' +\
            'syntseis_20000101_seismic_depth_stack.segy'
 
 usefile7 = '../xtgeo-testdata/wells/reek/1/OP_2.w'
+
 
 @tsetup.skipifroxar
 def test_very_basic():

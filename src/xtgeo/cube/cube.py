@@ -5,7 +5,6 @@ from __future__ import print_function, division
 import os.path
 import tempfile
 import sys
-from warnings import warn
 
 import numpy as np
 

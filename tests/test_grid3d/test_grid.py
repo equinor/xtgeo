@@ -403,4 +403,5 @@ def test_ecl_run():
     # ok checked in RMS:
     tsetup.assert_almostequal(avg, -26.073, 0.001)
 
-    pres1.to_file(os.path.join(TMPDIR, 'pressurediff.roff'), name='PRESSUREDIFF')
+    pres1.to_file(os.path.join(TMPDIR, 'pressurediff.roff'),
+                  name='PRESSUREDIFF')
