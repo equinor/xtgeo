@@ -69,7 +69,7 @@ def test_report_zlog_mismatch():
 
     for w in wells:
         response = g1.report_zone_mismatch(
-            well=w, zonelogname='Zonelog', mode=0, zoneprop=z,
+            well=w, zonelogname='Zonelog', zoneprop=z,
             onelayergrid=g2, zonelogrange=(1, 3), option=0,
             depthrange=[1300, 9999])
 

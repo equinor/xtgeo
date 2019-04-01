@@ -1,6 +1,7 @@
 # PYLINT: General settings for XTGeo
 [BASIC]
-good-names=logger, xtg
+good-names=logger, xtg, i, j, k, x, y, z
+variable-rgx=^[a-z][_a-z0-9]+((_[a-z0-9]+)*)?$
 
 [FORMAT]
 max-line-length=88
@@ -9,8 +10,9 @@ max-module-lines=3000
 [DESIGN]
 max-attributes=25
 max-args=20
-max-locals=20
+max-locals=30
 max-branches=15
+max-bool-expr=8
 
 [SIMILARITIES]
 min-similarity-lines=10

@@ -29,15 +29,15 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # --------------------------------------------------------------------------------------
-# Comment on 'asmasked' vs 'activeonly:
+# Comment on "asmasked" vs "activeonly:
 #
-# 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
+# "asmasked"=True will return a np.ma array, while "asmasked" = False will
 # return a np.ndarray
 #
-# The 'activeonly' will filter out masked entries, or use None or np.nan
-# if 'activeonly' is False.
+# The "activeonly" will filter out masked entries, or use None or np.nan
+# if "activeonly" is False.
 #
-# Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
+# Use word "zerobased" for a bool regrading startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def grid_from_file(gfile, fformat=None):
     Example::
 
         import xtgeo
-        mygrid = xtgeo.grid_from_file('reek.roff')
+        mygrid = xtgeo.grid_from_file("reek.roff")
 
     """
 
@@ -83,7 +83,7 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=F
 
         # inside RMS
         import xtgeo
-        mygrid = xtgeo.grid_from_roxar(project, 'REEK_SIM')
+        mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
 
     """
 
@@ -118,13 +118,13 @@ class Grid(Grid3D):
         from xtgeo import Grid
 
         geo = Grid()
-        geo.from_file('myfile.roff')
+        geo.from_file("myfile.roff")
 
         # alternative (make instance directly from file):
-        geo = Grid('myfile.roff')
+        geo = Grid("myfile.roff")
 
         # or use
-        geo = xtgeo.grid_from_file('myfile.roff')
+        geo = xtgeo.grid_from_file("myfile.roff")
 
     """
 
@@ -227,8 +227,8 @@ class Grid(Grid3D):
         """:obj:`list` of :obj:`int`: A dictionary with subgrid name and
         an array as value, or None of not present.
 
-        I.e. a dict on the form ``{'name1': [1, 2, 3, 4], 'name2:' [5, 6, 7],
-        'name3': [8, 9, 10]}``, here meaning 3 subgrids where upper is 4
+        I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2:" [5, 6, 7],
+        "name3": [8, 9, 10]}``, here meaning 3 subgrids where upper is 4
         cells vertically, then 3, then 3. The numbers must sum to NLAY.
 
         The numbering in the arrays are 1 based; meaning uppermost layer is 1
@@ -420,15 +420,15 @@ class Grid(Grid3D):
         """Import grid geometry from file, and makes an instance of this class.
 
         If file extension is missing, then the extension will guess the fformat
-        key, e.g. fformat egrid will be guessed if '.EGRID'. The 'eclipserun'
-        will try to input INIT and UNRST file in addition the grid in 'one go'.
+        key, e.g. fformat egrid will be guessed if ".EGRID". The "eclipserun"
+        will try to input INIT and UNRST file in addition the grid in "one go".
 
         Arguments:
             gfile (str): File name to be imported
             fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
-                (None is default and means 'guess')
+                (None is default and means "guess")
             initprops (str list): Optional, if given, and file format
-                is 'eclipserun', then list the names of the properties here.
+                is "eclipserun", then list the names of the properties here.
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
 
@@ -436,7 +436,7 @@ class Grid(Grid3D):
 
             >>> myfile = ../../testdata/Zone/gullfaks.roff
             >>> xg = Grid()
-            >>> xg.from_file(myfile, fformat='roff')
+            >>> xg.from_file(myfile, fformat="roff")
             >>> # or shorter:
             >>> xg = Grid(myfile)  # will guess the file format
 
@@ -464,7 +464,7 @@ class Grid(Grid3D):
 
         Example::
 
-            xg.to_file('myfile.roff')
+            xg.to_file("myfile.roff")
         """
 
         if fformat in ("roff", "roff_binary"):
@@ -611,19 +611,19 @@ class Grid(Grid3D):
 
         Example::
 
-            grd = Grid(gfile1, fformat='egrid')
+            grd = Grid(gfile1, fformat="egrid")
             xpr = GridProperties()
 
-            names = ['SOIL', 'SWAT', 'PRESSURE']
+            names = ["SOIL", "SWAT", "PRESSURE"]
             dates = [19991201]
-            xpr.from_file(rfile1, fformat='unrst', names=names, dates=dates,
+            xpr.from_file(rfile1, fformat="unrst", names=names, dates=dates,
                         grid=grd)
             grd.gridprops = xpr  # attach properties to grid
 
             df = grd.dataframe()
 
             # save as CSV file
-            df.to_csv('mygrid.csv')
+            df.to_csv("mygrid.csv")
         """
 
         if self.gridprops is None:
@@ -652,7 +652,7 @@ class Grid(Grid3D):
         """Set the subgrid from a simplified ordered dictionary.
 
         The simplified dictionary is on the form
-        {'name1': 3, 'name2': 5}
+        {"name1": 3, "name2": 5}
 
         Note that the input must be an OrderedDict!
 
@@ -674,7 +674,7 @@ class Grid(Grid3D):
     def get_subgrids(self):
         """Get the subgrids on a simplified ordered dictionary.
 
-        The simplified dictionary is on the form {'name1': 3, 'name2': 5}
+        The simplified dictionary is on the form {"name1": 3, "name2": 5}
         """
 
         if not self.subgrids:
@@ -695,7 +695,7 @@ class Grid(Grid3D):
 
         Returns:
             Will also return simplified dictionary is on the form
-                {'name1': 3, 'name2': 5}
+                {"name1": 3, "name2": 5}
         """
 
         newd = OrderedDict()
@@ -764,7 +764,7 @@ class Grid(Grid3D):
         Example::
 
             act = mygrid.get_actnum()
-            print('{}% cells are active'.format(act.values.mean() * 100))
+            print("{}% cells are active".format(act.values.mean() * 100))
         """
 
         if mask is not None:
@@ -945,7 +945,7 @@ class Grid(Grid3D):
         Example::
 
             >>> grid = Grid()
-            >>> grid.from_file('gullfaks2.roff')
+            >>> grid.from_file("gullfaks2.roff")
             >>> xyzlist = grid.get_xyz_corners_cell(ijk=(45,13,2))
 
         Raises:
@@ -990,7 +990,7 @@ class Grid(Grid3D):
         Example::
 
             >>> grid = Grid()
-            >>> grid.from_file('gullfaks2.roff')
+            >>> grid.from_file("gullfaks2.roff")
             >>> clist = grid.get_xyz_corners()
 
 
@@ -1022,9 +1022,9 @@ class Grid(Grid3D):
 
         Example::
 
-            mygrid = Grid('gullfaks.roff')
+            mygrid = Grid("gullfaks.roff")
             gstuff = mygrid.get_geometrics(return_dict=True)
-            print('X min/max is {} {}'.format(gstuff['xmin', gstuff['xmax']))
+            print("X min/max is {} {}".format(gstuff["xmin", gstuff["xmax"]))
 
         """
 
@@ -1112,7 +1112,7 @@ class Grid(Grid3D):
     def crop(self, colcrop, rowcrop, laycrop, props=None):
         """Reduce the grid size by cropping, the grid will have new dimensions.
 
-        If props is 'all' then all properties assosiated (linked) to then
+        If props is "all" then all properties assosiated (linked) to then
         grid are also cropped, and the instances are updated.
 
     Args:
@@ -1122,7 +1122,7 @@ class Grid(Grid3D):
         rowcrop (tuple): A tuple on the form (j1, j2)
         laycrop (tuple): A tuple on the form (k1, k2)
         props (list or str): None is default, while properties can be listed.
-            If 'all', then all GridProperty objects which are linked to the
+            If "all", then all GridProperty objects which are linked to the
             Grid instance are updated.
 
     Returns:
@@ -1131,9 +1131,9 @@ class Grid(Grid3D):
     Example::
 
             >>> from xtgeo.grid3d import Grid
-            >>> gf = Grid('gullfaks2.roff')
+            >>> gf = Grid("gullfaks2.roff")
             >>> gf.do_cropping((3, 6), (4, 20), (1, 10))
-            >>> gf.to_file('gf_reduced.roff')
+            >>> gf.to_file("gf_reduced.roff")
 
         """
 
@@ -1145,7 +1145,7 @@ class Grid(Grid3D):
         Example::
 
             >>> from xtgeo.grid3d import Grid
-            >>> gf = Grid('gullfaks2.roff')
+            >>> gf = Grid("gullfaks2.roff")
             >>> gf.nlay
             47
             >>> gf.reduce_to_one_layer()
@@ -1259,7 +1259,6 @@ class Grid(Grid3D):
         self,
         well=None,
         zonelogname="ZONELOG",
-        mode=0,
         zoneprop=None,
         onelayergrid=None,
         zonelogrange=(0, 9999),
@@ -1273,7 +1272,6 @@ class Grid(Grid3D):
         Args:
             well (xtgeo.well.Well): a XTGeo well object
             zonelogname (str): Name of the zone logger
-            mode (int): Means...
             zoneprop (xtgeo.grid3d.GridProperty): Grid property to use for
                 zonation
             zonelogrange (tuple): zone log range, from - to (inclusive)
@@ -1285,32 +1283,31 @@ class Grid(Grid3D):
 
         Example::
 
-            g1 = Grid('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
-            g2 = Grid('../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff')
+            g1 = Grid("../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff")
+            g2 = Grid("../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff")
             g2.reduce_to_one_layer()
 
             z = GridProperty()
-            z.from_file('../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff',
-                        name='Zone')
+            z.from_file("../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff",
+                        name="Zone")
 
-            w2 = Well('../xtgeo-testdata/wells/gfb/1/34_10-1.w')
+            w2 = Well("../xtgeo-testdata/wells/gfb/1/34_10-1.w")
 
-            w3 = Well('../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w')
+            w3 = Well("../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w")
 
             wells = [w2, w3]
 
             for w in wells:
                 response = g1.report_zone_mismatch(
-                well=w, zonelogname='ZONELOG', mode=0, zoneprop=z,
-                onelayergrid=g2, zonelogrange=[0, 19], option=0,
-                depthrange=[1700, 9999])
+                well=w, zonelogname="ZONELOG", mode=0, zoneprop=z,
+                onelayergrid=g2, zonelogrange=(0, 19), option=0,
+                depthrange=(1700, 9999))
         """
 
         reports = _grid_etc1.report_zone_mismatch(
             self,
             well=well,
             zonelogname=zonelogname,
-            mode=mode,
             zoneprop=zoneprop,
             onelayergrid=onelayergrid,
             zonelogrange=zonelogrange,
@@ -1327,4 +1324,4 @@ class Grid(Grid3D):
     # ----------------------------------------------------------------------------------
 
     def _evaluate_mask(self, mask):
-        return self._evaluate_mask(mask)  # in super class
+        return super(Grid, self)._evaluate_mask(mask)  # in super class
