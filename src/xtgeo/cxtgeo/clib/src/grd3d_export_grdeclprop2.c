@@ -26,6 +26,7 @@
  *    pname          i     Name of property
  *    pfile          i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
+ *    flag           i     0: new file, 1 append
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -48,6 +49,7 @@ void grd3d_export_grdeclprop2 (
                                char *pname,
                                char *filename,
                                int mode,
+                               int flag,
                                int debug
                                )
 
@@ -55,11 +57,10 @@ void grd3d_export_grdeclprop2 (
     long nlen;
     FILE *fc;
 
-
     char sbn[24] = "grd3d_exp..grdeclprop2";
     xtgverbose(debug);
 
-    xtg_speak(sbn, 2,"==== Entering grd3d_export_grdecl ====");
+    xtg_speak(sbn, 2,"Enter %s", sbn);
 
     /*
      *-------------------------------------------------------------------------
@@ -70,7 +71,9 @@ void grd3d_export_grdeclprop2 (
     if (mode == 0) xtg_speak(sbn, 2,"Opening binary GRDECL file...");
     if (mode == 1) xtg_speak(sbn, 2,"Opening text GRDECL file...");
 
-    fc = fopen(filename, "wb"); /* The b will ensure Unix style ASCII on win */
+    if (flag == 0) fc = fopen(filename, "wb");
+    if (flag == 1) fc = fopen(filename, "ab");
+
     if (fc == NULL) xtg_error(sbn, "Cannot open file!");
 
 

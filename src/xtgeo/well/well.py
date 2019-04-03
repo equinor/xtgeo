@@ -176,12 +176,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return self.describe(flush=False)
 
     def __del__(self):
-        logger.info('Deleting Well instance %s', id(self))
+        logger.info('Deleting %s instance %s', self.__class__.__name__, id(self))
 
-    # =========================================================================
     # Consistency checking. As well log names are columns in the Pandas DF,
     # there are additional attributes per log that have to be "in sync"
-    # =========================================================================
     def _ensure_consistency(self):
         """Ensure consistency within an object (private function)"""
 

@@ -22,26 +22,29 @@ logger = xtg.functionlogger(__name__)
 def import_prop_roxapi(self, project, gname, pname, realisation):
     """Import a Property via ROXAR API spec."""
 
-    logger.info('Opening RMS project ...')
+    logger.info("Opening RMS project ...")
     rox = xtgeo.RoxUtils(project, readonly=True)
 
-    _get_gridprop_data(self, rox, gname, pname)
+    _get_gridprop_data(self, rox, gname, pname, realisation)
 
     rox.safe_close()
 
 
-def _get_gridprop_data(self, rox, gname, pname):
+def _get_gridprop_data(self, rox, gname, pname, realisation):
     # inside a RMS project
+
+    logger.info("Realisation key not applied yet: %s", realisation)
+
     if gname not in rox.project.grid_models:
-        raise ValueError('No gridmodel with name {}'.format(gname))
+        raise ValueError("No gridmodel with name {}".format(gname))
     if pname not in rox.project.grid_models[gname].properties:
-        raise ValueError('No property in {} with name {}'.format(gname, pname))
+        raise ValueError("No property in {} with name {}".format(gname, pname))
 
     try:
         roxgrid = rox.project.grid_models[gname]
         roxprop = roxgrid.properties[pname]
 
-        if str(roxprop.type) == 'discrete':
+        if str(roxprop.type) == "discrete":
             self._isdiscrete = True
 
         self._roxorigin = True
@@ -56,17 +59,13 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
     indexer = roxgrid.get_grid().grid_indexer
     self._ncol, self._nrow, self._nlay = indexer.dimensions
 
-    if rox.version_required('1.3'):
+    if rox.version_required("1.3"):
         logger.info(indexer.ijk_handedness)
     else:
         logger.info(indexer.handedness)
 
     pvalues = roxprop.get_values()
     self._roxar_dtype = pvalues.dtype
-
-    logger.info('PVALUES is {}'.format(pvalues))
-
-    logger.info('PVALUES {} {}'.format(pvalues, pvalues.flags))
 
     if self._isdiscrete:
         mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
@@ -88,13 +87,15 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
     mybuffer = ma.masked_greater(mybuffer, self.undef_limit)
 
     self._values = mybuffer
+    self._name = pname
 
 
-def export_prop_roxapi(self, project, gname, pname, saveproject=False,
-                       realisation=0):
+def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisation=0):
     """Export (i.e. store) to a Property in RMS via ROXAR API spec."""
 
     rox = xtgeo.RoxUtils(project, readonly=False)
+
+    logger.info("Realisation key not applied yet: %s", realisation)
 
     try:
         roxgrid = rox.project.grid_models[gname]
@@ -104,7 +105,7 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False,
             try:
                 rox.project.save()
             except RuntimeError:
-                xtg.warn('Could not save project!')
+                xtg.warn("Could not save project!")
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
@@ -116,7 +117,7 @@ def _store_in_roxar(self, pname, roxgrid):
 
     indexer = roxgrid.get_grid().grid_indexer
 
-    logger.info('Store in RMS...')
+    logger.info("Store in RMS...")
 
     val3d = self.values.copy()
 
@@ -129,7 +130,7 @@ def _store_in_roxar(self, pname, roxgrid):
     kind = ijk[:, 2]
 
     dtype = self._roxar_dtype
-    logger.info('DTYPE is %s for %s', dtype, pname)
+    logger.info("DTYPE is %s for %s", dtype, pname)
     if self.isdiscrete:
         pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
     else:
@@ -141,12 +142,12 @@ def _store_in_roxar(self, pname, roxgrid):
 
     if self.isdiscrete:
         rprop = properties.create(
-            pname, property_type=roxar.GridPropertyType.discrete,
-            data_type=dtype)
+            pname, property_type=roxar.GridPropertyType.discrete, data_type=dtype
+        )
     else:
         rprop = properties.create(
-            pname, property_type=roxar.GridPropertyType.continuous,
-            data_type=dtype)
+            pname, property_type=roxar.GridPropertyType.continuous, data_type=dtype
+        )
 
     rprop.set_values(pvalues.astype(dtype))
 

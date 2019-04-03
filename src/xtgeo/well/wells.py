@@ -7,8 +7,8 @@ from __future__ import print_function
 import pandas as pd
 
 import xtgeo
-
 from xtgeo.well import _wells_utils
+from xtgeo.common import XTGDescription
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -24,6 +24,7 @@ class Wells(object):
     def __init__(self, *args, **kwargs):
 
         self._wells = []            # list of Well objects
+        self._bw = False
 
         if args:
             # make instance from file import
@@ -71,6 +72,20 @@ class Wells(object):
 
         self._wells = well_list
 
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of {} instance'.format(self.__class__.__name__))
+        dsc.txt('Object ID', id(self))
+
+        dsc.txt('Wells', self.names)
+
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
+
     def copy(self):
         """Copy a Wells instance to a new unique instance (a deep copy)."""
 
@@ -81,6 +96,15 @@ class Wells(object):
             new._props.append(newwell)
 
         return new
+
+    def get_well(self, name):
+        """Get a Well() instance by name, or None"""
+
+        logger.info("Asking for a well with name %s", name)
+        for well in self._wells:
+            if well.name == name:
+                return well
+        return None
 
     def from_files(self, filelist, fformat='rms_ascii', mdlogname=None,
                    zonelogname=None, strict=True, append=True):
@@ -153,8 +177,8 @@ class Wells(object):
 
     # not having this as property but a get_ .. is intended, for flexibility
     def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
-        """Get a big dataframe for all wells in instance, with well name
-        as first column
+        """Get a big dataframe for all wells or blocked wells in instance,
+        with well name as first column
 
         Args:
             filled (bool): If True, then NaN's are replaces with values
@@ -163,11 +187,13 @@ class Wells(object):
             fill_value2 (int): Only applied if filled=True, when logs
                 are missing completely for that well.
         """
+        logger.info("Ask for big dataframe for all wells")
 
         bigdf = []
         for well in self._wells:
             dfr = well.dataframe.copy()
             dfr['WELLNAME'] = well.name
+            logger.info(well.name)
             if filled:
                 dfr = dfr.fillna(fill_value1)
             bigdf.append(dfr)

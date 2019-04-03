@@ -592,7 +592,7 @@ class Grid(Grid3D):
 
         return dsc.astext()
 
-    def dataframe(self, activeonly=True, ijk=True, xyz=True, doubleformat=False):
+    def get_dataframe(self, activeonly=True, ijk=True, xyz=True, doubleformat=False):
         """Returns a Pandas dataframe table for the grid and
         any attached grid properties.
 
@@ -636,6 +636,8 @@ class Grid(Grid3D):
             doubleformat=doubleformat,
             grid=self,
         )
+
+    dataframe = get_dataframe  # backward compatibility...
 
     def append_prop(self, prop):
         """Append a single property to the grid"""
@@ -699,7 +701,7 @@ class Grid(Grid3D):
         """
 
         newd = OrderedDict()
-        _i_index, _j_index, k_index = self.get_indices()
+        _i_index, _j_index, k_index = self.get_ijk()
         kval = k_index.values
         zprval = zoneprop.values
         minzone = int(zprval.min())
@@ -826,11 +828,11 @@ class Grid(Grid3D):
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, mask=asmasked)
+        deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, asmasked=asmasked)
 
         return deltaz
 
-    def get_dxdy(self, names=("dX", "dY")):
+    def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         """
         Return the dX and dY as GridProperty object.
 
@@ -838,12 +840,14 @@ class Grid(Grid3D):
 
         Args:
             name (tuple): names of properties
+            asmasked (bool). If True, make a np.ma array where inactive cells
+                are masked.
 
         Returns:
             Two XTGeo GridProperty objects (dx, dy)
         """
 
-        deltax, deltay = _grid_etc1.get_dxdy(self, names=names)
+        deltax, deltay = _grid_etc1.get_dxdy(self, names=names, asmasked=asmasked)
 
         # return the property objects
         return deltax, deltay
@@ -854,6 +858,8 @@ class Grid(Grid3D):
         Note that the indexes starts with 1, not zero (i.e. upper
         cell layer is K=1)
 
+        This method is deprecated, use :meth:`get_ijk()` instead.
+
         Args:
             names (tuple): Names of the columns (as property names)
 
@@ -863,7 +869,7 @@ class Grid(Grid3D):
 
         """
 
-        warnings.warn("Use method get_ijk() instead", DeprecationWarning)
+        warnings.warn("Use method get_ijk() instead", DeprecationWarning, stacklevel=2)
         return self.get_ijk(names=names, asmasked=False)
 
     def get_ijk(
@@ -883,7 +889,7 @@ class Grid(Grid3D):
             asmasked = self._evaluate_mask(mask)
 
         ixc, jyc, kzc = _grid_etc1.get_ijk(
-            self, names=names, mask=asmasked, zero_base=zerobased
+            self, names=names, asmasked=asmasked, zero_base=zerobased
         )
 
         # return the objects
@@ -901,21 +907,21 @@ class Grid(Grid3D):
         Args:
             names: a 3 x tuple of names per property (default is X_UTME,
             Y_UTMN, Z_TVDSS).
-            asmasked: If True, then only active cells.
+            asmasked: If True, then inactive cells is masked (numpy.ma).
             mask (bool): Deprecated, use asmasked instead!
         """
 
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        xcoord, ycoord, zcoord = _grid_etc1.get_xyz(self, names=names, mask=asmasked)
+        xcoord, ycoord, zcoord = _grid_etc1.get_xyz(
+            self, names=names, asmasked=asmasked
+        )
 
         # return the objects
         return xcoord, ycoord, zcoord
 
-    def get_xyz_cell_corners(
-        self, ijk=(1, 1, 1), activeonly=True, mask=None, zerobased=False
-    ):
+    def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
         """Return a 8 * 3 tuple x, y, z for each corner.
 
         .. code-block:: none
@@ -936,7 +942,6 @@ class Grid(Grid3D):
             ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
                 unless zerobased is True)
             activeonly (bool): Skip undef cells if set to True.
-            mask (bool): Deprecated, use activeonly instead!
 
         Returns:
             A tuple with 24 elements (x1, y1, z1, ... x8, y8, z8)
@@ -952,11 +957,8 @@ class Grid(Grid3D):
             RuntimeWarning if spesification is invalid.
         """
 
-        if mask is not None:
-            activeonly = self._evaluate_mask(mask)
-
         clist = _grid_etc1.get_xyz_cell_corners(
-            self, ijk=ijk, mask=activeonly, zerobased=zerobased
+            self, ijk=ijk, activeonly=activeonly, zerobased=zerobased
         )
 
         return clist

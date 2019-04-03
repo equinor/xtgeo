@@ -11,6 +11,9 @@ XTGDEBUG = xtg.syslevel
 
 logger = xtg.functionlogger(__name__)
 
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
+
 
 def refine_vertically(self, rfactor, zoneprop=None):
     """Refine vertically, proportionally
@@ -43,64 +46,69 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
             if oldsubgrids:
                 if subgrids.values() != oldsubgrids.values():
-                    xtg.warn('ISSUES!!!')
+                    xtg.warn("ISSUES!!!")
 
         # 2b: zoneprop is not present
         elif zoneprop is None and self.subgrids:
             subgrids = self.get_subgrids()
 
         elif zoneprop is None and not self.subgrids:
-            raise ValueError('You gave in a dict, but no zoneprops and '
-                             'subgrids are not preesent in the grid')
+            raise ValueError(
+                "You gave in a dict, but no zoneprops and "
+                "subgrids are not preesent in the grid"
+            )
         else:
-            raise ValueError('Some major unexpected issue in routine...')
+            raise ValueError("Some major unexpected issue in routine...")
 
     if len(subgrids) != len(rfactord):
-        raise RuntimeError('Subgrids and refinements: different definition!')
+        raise RuntimeError("Subgrids and refinements: different definition!")
 
     self.set_subgrids(subgrids)
 
     # Now, based on dict, give a value per subgrid for key, val in rfactor
     newsubgrids = OrderedDict()
     newnlay = 0
-    for (nnn, rfi), (snam, sran) in zip(rfactord.items(), subgrids.items()):
+    for (_x, rfi), (snam, sran) in zip(rfactord.items(), subgrids.items()):
         newsubgrids[snam] = sran * rfi
         newnlay += newsubgrids[snam]
 
-    logger.debug('New layers: %s', newnlay)
+    logger.debug("New layers: %s", newnlay)
 
     # rfac is an array with length nlay; has N refinements per single K layer
     rfac = _cxtgeo.new_intarray(self.nlay)
 
     totvector = []
-    for (nnn, rfi), (nam, arr) in zip(rfactord.items(), self.subgrids.items()):
-        for elem in range(len(arr)):
+    for (_tmp1, rfi), (_tmp2, arr) in zip(rfactord.items(), self.subgrids.items()):
+        for _elem in range(len(arr)):
             totvector.append(rfi)
     for inn, rfi in enumerate(totvector):
         _cxtgeo.intarray_setitem(rfac, inn, rfi)
 
     ref_num_act = _cxtgeo.new_intpointer()
-    ref_p_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow *
-                                            (newnlay + 1) * 4)
+    ref_p_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow * (newnlay + 1) * 4)
     ref_p_actnum_v = _cxtgeo.new_intarray(self.ncol * self.nrow * newnlay)
 
-    ier = _cxtgeo.grd3d_refine_vert(self.ncol,
-                                    self.nrow,
-                                    self.nlay,
-                                    self._p_coord_v,
-                                    self._p_zcorn_v,
-                                    self._p_actnum_v,
-                                    newnlay,
-                                    ref_p_zcorn_v,
-                                    ref_p_actnum_v,
-                                    ref_num_act,
-                                    rfac,
-                                    0,
-                                    XTGDEBUG)
+    ier = _cxtgeo.grd3d_refine_vert(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        newnlay,
+        ref_p_zcorn_v,
+        ref_p_actnum_v,
+        ref_num_act,
+        rfac,
+        0,
+        XTGDEBUG,
+    )
 
     if ier != 0:
-        raise RuntimeError('An error occured in the C routine '
-                           'grd3d_refine_vert, code {}'.format(ier))
+        raise RuntimeError(
+            "An error occured in the C routine "
+            "grd3d_refine_vert, code {}".format(ier)
+        )
 
     # update instance:
     self._nlay = newnlay

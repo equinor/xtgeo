@@ -21,7 +21,8 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 # METHODS as wrappers to class init + import
 
-def polygons_from_file(wfile, fformat='xyz'):
+
+def polygons_from_file(wfile, fformat="xyz"):
     """Make an instance of a Polygons object directly from file import.
 
     Args:
@@ -41,8 +42,7 @@ def polygons_from_file(wfile, fformat='xyz'):
     return obj
 
 
-def polygons_from_roxar(project, name, category, stype='horizons',
-                        realisation=0):
+def polygons_from_roxar(project, name, category, stype="horizons", realisation=0):
     """This makes an instance of a Polygons directly from roxar input.
 
     For arguments, see :meth:`Polygons.from_roxar`.
@@ -57,8 +57,7 @@ def polygons_from_roxar(project, name, category, stype='horizons',
 
     obj = Polygons()
 
-    obj.from_roxar(project, name, category, stype=stype,
-                   realisation=realisation)
+    obj.from_roxar(project, name, category, stype=stype, realisation=realisation)
 
     return obj
 
@@ -91,15 +90,26 @@ class Polygons(XYZ):
 
     def __init__(self, *args, **kwargs):
         self._df = None
-        self._xname = 'X_UTME'
-        self._yname = 'Y_UTMN'
-        self._zname = 'Z_TVDSS'
-        self._pname = 'POLY_ID'
-        self._mname = 'M_MDEPTH'
-        self._name = 'poly'  # the name of the Polygons() instance
+        self._xname = "X_UTME"
+        self._yname = "Y_UTMN"
+        self._zname = "Z_TVDSS"
+        self._pname = "POLY_ID"
+        self._mname = "M_MDEPTH"
+        self._name = "poly"  # the name of the Polygons() instance
         super(Polygons, self).__init__(*args, **kwargs)
 
         self._ispolygons = True
+
+    def __str__(self):
+        # user friendly print
+        return self.describe(flush=False)
+
+    def __del__(self):
+        logger.info("Polygons object %s deleted", id(self))
+
+    # ----------------------------------------------------------------------------------
+    # Properties
+    # ----------------------------------------------------------------------------------
 
     @property
     def nrow(self):
@@ -138,7 +148,7 @@ class Polygons(XYZ):
         if isinstance(zname, str):
             self._zname = zname
         else:
-            raise ValueError('Wrong type of input to zname; must be string')
+            raise ValueError("Wrong type of input to zname; must be string")
 
     @property
     def pname(self):
@@ -154,7 +164,14 @@ class Polygons(XYZ):
     def dataframe(self, df):
         self._df = df.copy()
 
-    def from_file(self, pfile, fformat='xyz'):
+    # ----------------------------------------------------------------------------------
+    # Methods
+    # ----------------------------------------------------------------------------------
+
+    def describe(self, flush=True):
+        super(Polygons, self).describe(flush=flush)
+
+    def from_file(self, pfile, fformat="xyz"):
         """Import Polygons from a file.
 
         Supported import formats (fformat):
@@ -188,8 +205,7 @@ class Polygons(XYZ):
             self._df.dropna(axis=0, inplace=True)
             self._df.reset_index(inplace=True, drop=True)
 
-    def from_roxar(self, project, name, category, stype='horizons',
-                   realisation=0):
+    def from_roxar(self, project, name, category, stype="horizons", realisation=0):
         """Load a polygons item from a Roxar RMS project.
 
         The import from the RMS project can be done either within the project
@@ -246,11 +262,11 @@ class Polygons(XYZ):
 
         """
 
-        super(Polygons, self).from_roxar(project, name, category, stype=stype,
-                                         realisation=realisation)
+        super(Polygons, self).from_roxar(
+            project, name, category, stype=stype, realisation=realisation
+        )
 
-    def to_roxar(self, project, name, category, stype='horizons',
-                 realisation=0):
+    def to_roxar(self, project, name, category, stype="horizons", realisation=0):
         """Export/save/store a polygons item to a Roxar RMS project.
 
         Note also that horizon/zone name and category must exists in advance,
@@ -269,11 +285,20 @@ class Polygons(XYZ):
 
         """
 
-        super(Polygons, self).to_roxar(project, name, category, stype=stype,
-                                       realisation=realisation)
+        super(Polygons, self).to_roxar(
+            project, name, category, stype=stype, realisation=realisation
+        )
 
-    def to_file(self, pfile, fformat='xyz', attributes=None, filter=None,
-                wcolumn=None, hcolumn=None, mdcolumn=None):
+    def to_file(
+        self,
+        pfile,
+        fformat="xyz",
+        attributes=None,
+        filter=None,
+        wcolumn=None,
+        hcolumn=None,
+        mdcolumn=None,
+    ):
         """Export Polygons to file.
 
         Args:
@@ -299,10 +324,15 @@ class Polygons(XYZ):
 
         """
 
-        super(Polygons, self).to_file(pfile, fformat=fformat,
-                                      attributes=attributes, filter=filter,
-                                      wcolumn=wcolumn, hcolumn=hcolumn,
-                                      mdcolumn=mdcolumn)
+        super(Polygons, self).to_file(
+            pfile,
+            fformat=fformat,
+            attributes=attributes,
+            filter=filter,
+            wcolumn=wcolumn,
+            hcolumn=hcolumn,
+            mdcolumn=mdcolumn,
+        )
 
     def from_wells(self, wells, zone, resample=1):
 
@@ -387,7 +417,7 @@ class Polygons(XYZ):
     # Operations restricted to inside/outside polygons
     # =========================================================================
 
-    def operation_polygons(self, poly, value, opname='add', inside=True):
+    def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for doing points operations restricted to inside
         or outside polygon(s).
 
@@ -400,55 +430,54 @@ class Polygons(XYZ):
             inside (bool): If True do operation inside polygons; else outside.
         """
 
-        _xyz_oper.operation_polygons(self, poly, value, opname=opname,
-                                     inside=inside)
+        _xyz_oper.operation_polygons(self, poly, value, opname=opname, inside=inside)
 
     # shortforms
     def add_inside(self, poly, value):
         """Add a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='add', inside=True)
+        self.operation_polygons(poly, value, opname="add", inside=True)
 
     def add_outside(self, poly, value):
         """Add a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='add', inside=False)
+        self.operation_polygons(poly, value, opname="add", inside=False)
 
     def sub_inside(self, poly, value):
         """Subtract a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='sub', inside=True)
+        self.operation_polygons(poly, value, opname="sub", inside=True)
 
     def sub_outside(self, poly, value):
         """Subtract a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='sub', inside=False)
+        self.operation_polygons(poly, value, opname="sub", inside=False)
 
     def mul_inside(self, poly, value):
         """Multiply a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='mul', inside=True)
+        self.operation_polygons(poly, value, opname="mul", inside=True)
 
     def mul_outside(self, poly, value):
         """Multiply a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='mul', inside=False)
+        self.operation_polygons(poly, value, opname="mul", inside=False)
 
     def div_inside(self, poly, value):
         """Divide a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='div', inside=True)
+        self.operation_polygons(poly, value, opname="div", inside=True)
 
     def div_outside(self, poly, value):
         """Divide a value (scalar) outside polygons (value 0.0 will give
         result 0)"""
-        self.operation_polygons(poly, value, opname='div', inside=False)
+        self.operation_polygons(poly, value, opname="div", inside=False)
 
     def set_inside(self, poly, value):
         """Set a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='set', inside=True)
+        self.operation_polygons(poly, value, opname="set", inside=True)
 
     def set_outside(self, poly, value):
         """Set a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='set', inside=False)
+        self.operation_polygons(poly, value, opname="set", inside=False)
 
     def eli_inside(self, poly):
         """Eliminate current map values inside polygons"""
-        self.operation_polygons(poly, 0, opname='eli', inside=True)
+        self.operation_polygons(poly, 0, opname="eli", inside=True)
 
     def eli_outside(self, poly):
         """Eliminate current map values outside polygons"""
-        self.operation_polygons(poly, 0, opname='eli', inside=False)
+        self.operation_polygons(poly, 0, opname="eli", inside=False)

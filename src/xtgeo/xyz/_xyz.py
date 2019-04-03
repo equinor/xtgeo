@@ -9,7 +9,7 @@ import os.path
 
 from collections import OrderedDict
 
-from xtgeo.common import XTGeoDialog
+from xtgeo.common import XTGeoDialog, XTGDescription
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
 
@@ -33,7 +33,7 @@ class XYZ(object):
         self._zname = 'Z_TVDSS'
         self._pname = 'POLY_ID'
         self._mname = 'M_MDEPTH'
-
+        self._filesrc = None
         # other attributes name: type, where type is
         # ~ ('str', 'int', 'float', 'bool')
         self._attrs = OrderedDict()
@@ -48,9 +48,24 @@ class XYZ(object):
 
         logger.info('XYZ Instance initiated (base class) ID %s', id(self))
 
-    # =========================================================================
+    @abc.abstractmethod
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title('Description of {} instance'.format(self.__class__.__name__))
+        dsc.txt('Object ID', id(self))
+        dsc.txt('xname, yname, zname', self._xname, self._yname, self._zname)
+
+        dsc.txt
+        if flush:
+            dsc.flush()
+        else:
+            return dsc.astext()
+
+    # ==================================================================================
     # Import and export
-    # =========================================================================
+    # ==================================================================================
 
     @abc.abstractmethod
     def from_file(self, pfile, fformat='guess'):
@@ -107,6 +122,7 @@ class XYZ(object):
 
         logger.info('Reading from file %s... done', pfile)
         logger.info('\n%s', self._df.head())
+        self._filesrc = pfile
 
         return self
 
@@ -211,6 +227,8 @@ class XYZ(object):
         _xyz_roxapi.import_xyz_roxapi(
             self, project, name, category, stype, realisation, attributes)
 
+        self._filesrc = "RMS: {} ({})".format(name, category)
+
     @abc.abstractmethod
     def to_roxar(self, project, name, category, stype='horizons',
                  realisation=0, attributes=False):
@@ -249,9 +267,9 @@ class XYZ(object):
         _xyz_roxapi.export_xyz_roxapi(
             self, project, name, category, stype, realisation, attributes)
 
-    # =========================================================================
+    # ==================================================================================
     # Get and Set properties
-    # =========================================================================
+    # ==================================================================================
 
     @abc.abstractproperty
     def nrow(self):

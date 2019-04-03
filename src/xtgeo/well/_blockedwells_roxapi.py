@@ -56,8 +56,8 @@ def _roxapi_import_bwells(self, rox, gname, bwname, lnames,
                          realisation=realisation)
         bwlist.append(bwtmp)
 
-    self._bwells = bwlist
+    self._wells = bwlist
 
-    if not len(self._bwells):
+    if not len(self._wells):
         xtg.warn('No wells imported to BlockedWells')
-        self._bwells = None
+        self._wells = None

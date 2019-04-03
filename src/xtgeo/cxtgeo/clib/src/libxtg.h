@@ -1512,6 +1512,7 @@ void grd3d_export_grdeclprop2(
                               char *pname,
                               char *filename,
                               int mode,
+                              int flag,
                               int debug
                               );
 

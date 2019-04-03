@@ -12,8 +12,8 @@
  *     p_actnum_v       ZCORN array (pointer) of input
  *     dx               DX per cell (output)
  *     dy               DY per cell (output)
- *     option1          0: use projected to Z = constant deltas
- *     option2          0: compute using cell corners, 1: use cell centers
+ *     option1          0: all cells; 1 set UNDEF if ACTNUM=0
+ *     option2          0: not in use
  *     debug            debug/verbose flag
  *
  * Return:
@@ -57,6 +57,12 @@ int grd3d_calc_dxdy(
 	    for (i = 1; i <= nx; i++) {
 
 		ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
+
+                if (option1 == 1 && p_actnum_v[ib] == 0) {
+                    dx[ib] = UNDEF;
+                    dx[ib] = UNDEF;
+                    continue;
+                }
 
                 grd3d_corners(i, j, k, nx, ny, nz,
                               p_coord_v, p_zcorn_v, c, debug);

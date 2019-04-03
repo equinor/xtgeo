@@ -1,6 +1,8 @@
 # coding: utf-8
 """Testing block wells sets from and to ROXAPI"""
 
+# ======================================================================================
+
 from __future__ import division, absolute_import
 from __future__ import print_function
 import os
@@ -39,12 +41,13 @@ def test_rox_get_blockedwells():
     bwells.from_roxar(PROJ[ver], 'Reek_geo', 'BW', ijk=False,
                       lognames=['Poro'])
 
-    print(bwells.wells)
+    bwells.describe()
 
-    for wll in bwells.wells:
-        print(wll.name)
-        # logger.info(bwells.dataframe.head())
+    wll = bwells.get_blocked_well("OP_1")
+    print('WELL:\n', wll.dataframe)
 
+    df = bwells.get_dataframe()
+    print('WELLS:\n', df)
 
 # @tsetup.equinor
 # @tsetup.skipunlessroxar
