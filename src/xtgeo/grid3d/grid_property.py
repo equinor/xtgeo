@@ -60,8 +60,9 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 
 
-def gridproperty_from_file(pfile, fformat='guess', name='unknown',
-                           grid=None, date=None):
+def gridproperty_from_file(
+    pfile, fformat="guess", name="unknown", grid=None, date=None
+):
     """Make a GridProperty instance directly from file import.
 
     For arguments, see :func:`GridProperty.from_file()`
@@ -103,6 +104,7 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):
 # =============================================================================
 # GridProperty class
 # =============================================================================
+
 
 class GridProperty(Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
@@ -154,14 +156,14 @@ class GridProperty(Grid3D):
 
         super(GridProperty, self).__init__(*args, **kwargs)
 
-        ncol = kwargs.get('ncol', 5)
-        nrow = kwargs.get('nrow', 12)
-        nlay = kwargs.get('nlay', 2)
-        values = kwargs.get('values', None)
-        name = kwargs.get('name', 'unknown')
-        date = kwargs.get('date', None)
-        discrete = kwargs.get('discrete', False)
-        grid = kwargs.get('grid', None)
+        ncol = kwargs.get("ncol", 5)
+        nrow = kwargs.get("nrow", 12)
+        nlay = kwargs.get("nlay", 2)
+        values = kwargs.get("values", None)
+        name = kwargs.get("name", "unknown")
+        date = kwargs.get("date", None)
+        discrete = kwargs.get("discrete", False)
+        grid = kwargs.get("grid", None)
 
         self._ncol = ncol
         self._nrow = nrow
@@ -180,16 +182,16 @@ class GridProperty(Grid3D):
             testmask = True
 
         if values.shape != (ncol, nrow, nlay):
-            values = values.reshape((ncol, nrow, nlay), order='C')
+            values = values.reshape((ncol, nrow, nlay), order="C")
 
         if not isinstance(values, ma.MaskedArray):
             values = ma.array(values)
 
-        self._values = values       # numpy version of properties (as 3D array)
+        self._values = values  # numpy version of properties (as 3D array)
 
-        self._name = name           # property name
-        self._date = None           # property may have an assosiated date
-        self._codes = {}            # code dictionary (for discrete)
+        self._name = name  # property name
+        self._date = None  # property may have an assosiated date
+        self._codes = {}  # code dictionary (for discrete)
         self._filesrc = None
 
         self._undef = _cxtgeo.UNDEF
@@ -215,25 +217,25 @@ class GridProperty(Grid3D):
         if len(args) == 1:
             # make instance through file import
 
-            logger.debug('Import from file...')
-            fformat = kwargs.get('fformat', 'guess')
-            name = kwargs.get('name', 'unknown')
-            date = kwargs.get('date', None)
-            grid = kwargs.get('grid', None)
-            self.from_file(args[0], fformat=fformat, name=name,
-                           grid=grid, date=date)
+            logger.debug("Import from file...")
+            fformat = kwargs.get("fformat", "guess")
+            name = kwargs.get("name", "unknown")
+            date = kwargs.get("date", None)
+            grid = kwargs.get("grid", None)
+            self.from_file(args[0], fformat=fformat, name=name, grid=grid, date=date)
 
     def __del__(self):
-        logger.info('DELETING property instance %s', self.name)
+        logger.info("DELETING property instance %s", self.name)
         self._values = None
         for myvar in vars(self).keys():
             del myvar
 
     def __repr__(self):
-        myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
-                'nrow={0._nrow!r}, nlay={0._nlay!r}, '
-                'filesrc={0._filesrc!r}'
-                .format(self, id(self)))
+        myrp = (
+            "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
+            "nrow={0._nrow!r}, nlay={0._nlay!r}, "
+            "filesrc={0._filesrc!r}".format(self, id(self))
+        )
         return myrp
 
     def __str__(self):
@@ -274,11 +276,10 @@ class GridProperty(Grid3D):
 
         if geom is None:
             self._geometry = None
-        elif (isinstance(geom, xtgeo.grid3d.Grid) and
-              geom.dimensions == self.dimensions):
+        elif isinstance(geom, xtgeo.grid3d.Grid) and geom.dimensions == self.dimensions:
             self._geometry = geom
         else:
-            raise ValueError('Could not set geometry; wrong type or size')
+            raise ValueError("Could not set geometry; wrong type or size")
 
     @property
     def actnum_indices(self):
@@ -308,7 +309,7 @@ class GridProperty(Grid3D):
     def isdiscrete(self, flag):
 
         if not isinstance(flag, bool):
-            raise ValueError('Input to {__name__} must be a bool')
+            raise ValueError("Input to {__name__} must be a bool")
 
         if flag is self._isdiscrete:
             pass
@@ -338,15 +339,17 @@ class GridProperty(Grid3D):
                 self.values = self.values.astype(dtype)
             else:
                 okv = False
-                msg = ('{}: Wrong input for dtype. Use one of {}!'
-                       .format(__name__, allowedint))
+                msg = "{}: Wrong input for dtype. Use one of {}!".format(
+                    __name__, allowedint
+                )
         else:
             if dtype in allowedfloat:
                 self.values = self.values.astype(dtype)
             else:
                 okv = False
-                msg = ('{}: Wrong input for dtype. Use one of {}!'
-                       .format(__name__, allowedfloat))
+                msg = "{}: Wrong input for dtype. Use one of {}!".format(
+                    __name__, allowedfloat
+                )
 
         if not okv:
             raise ValueError(msg)
@@ -371,8 +374,11 @@ class GridProperty(Grid3D):
         if dtype in allowed:
             self._roxar_dtype = dtype
         else:
-            raise ValueError('{}: Wrong input for roxar_dtype. Use one of {}!'
-                             .format(__name__, allowed))
+            raise ValueError(
+                "{}: Wrong input for roxar_dtype. Use one of {}!".format(
+                    __name__, allowed
+                )
+            )
 
     @property
     def date(self):
@@ -404,8 +410,7 @@ class GridProperty(Grid3D):
 
     @values.setter
     def values(self, values):
-        if (isinstance(values, np.ndarray) and
-                not isinstance(values, ma.MaskedArray)):
+        if isinstance(values, np.ndarray) and not isinstance(values, ma.MaskedArray):
 
             values = ma.array(values)
             values = values.reshape((self._ncol, self._nrow, self._nlay))
@@ -413,12 +418,12 @@ class GridProperty(Grid3D):
         elif isinstance(values, ma.MaskedArray):
             values = values.reshape((self._ncol, self._nrow, self._nlay))
         else:
-            raise ValueError('Problems with values in {}'.format(__name__))
+            raise ValueError("Problems with values in {}".format(__name__))
 
         self._values = values
 
         trydiscrete = False
-        if 'int' in str(values.dtype):
+        if "int" in str(values.dtype):
             trydiscrete = True
 
         if trydiscrete is not self._isdiscrete:
@@ -427,8 +432,8 @@ class GridProperty(Grid3D):
             else:
                 self.discrete_to_continuous()
 
-        logger.debug('Values shape: %s', self._values.shape)
-        logger.debug('Flags: %s', self._values.flags.c_contiguous)
+        logger.debug("Values shape: %s", self._values.shape)
+        logger.debug("Flags: %s", self._values.flags.c_contiguous)
 
     @property
     def ntotal(self):
@@ -445,7 +450,7 @@ class GridProperty(Grid3D):
         if isinstance(val, bool):
             self._roxorigin = val
         else:
-            raise ValueError('Input to roxorigin must be True or False')
+            raise ValueError("Input to roxorigin must be True or False")
 
     @property
     def values3d(self):
@@ -494,8 +499,9 @@ class GridProperty(Grid3D):
     # Import and export
     # =========================================================================
 
-    def from_file(self, pfile, fformat=None, name='unknown',
-                  grid=None, date=None, _roffapiv=1):  # _roffapiv for devel.
+    def from_file(
+        self, pfile, fformat=None, name="unknown", grid=None, date=None, _roffapiv=1
+    ):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
 
@@ -528,13 +534,18 @@ class GridProperty(Grid3D):
            True if success, otherwise False
         """
 
-        obj = _gridprop_import.from_file(self, pfile, fformat=fformat,
-                                         name=name, grid=grid,
-                                         date=date, _roffapiv=_roffapiv)
+        obj = _gridprop_import.from_file(
+            self,
+            pfile,
+            fformat=fformat,
+            name=name,
+            grid=grid,
+            date=date,
+            _roffapiv=_roffapiv,
+        )
         return obj
 
-    def to_file(self, pfile, fformat='roff', name=None, append=False,
-                dtype=None):
+    def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
         """Export the grid property to file.
 
         Args:
@@ -562,8 +573,9 @@ class GridProperty(Grid3D):
 
         """
 
-        _gridprop_export.to_file(self, pfile, fformat=fformat, name=name,
-                                 append=append, dtype=dtype)
+        _gridprop_export.to_file(
+            self, pfile, fformat=fformat, name=name, append=append, dtype=dtype
+        )
 
     def from_roxar(self, projectname, gname, pname, realisation=0):
 
@@ -578,14 +590,13 @@ class GridProperty(Grid3D):
 
         """
 
-        self._filesrc = ('ROXAR API GridModel:{} Property: {}'
-                         .format(gname, pname))
+        self._filesrc = "ROXAR API GridModel:{} Property: {}".format(gname, pname)
 
         _gridprop_roxapi.import_prop_roxapi(
-            self, projectname, gname, pname, realisation)
+            self, projectname, gname, pname, realisation
+        )
 
-    def to_roxar(self, projectname, gname, pname, saveproject=False,
-                 realisation=0):
+    def to_roxar(self, projectname, gname, pname, saveproject=False, realisation=0):
 
         """Store a grid model property into a RMS project.
 
@@ -600,8 +611,13 @@ class GridProperty(Grid3D):
 
         """
         _gridprop_roxapi.export_prop_roxapi(
-            self, projectname, gname, pname, saveproject=saveproject,
-            realisation=realisation)
+            self,
+            projectname,
+            gname,
+            pname,
+            saveproject=saveproject,
+            realisation=realisation,
+        )
 
     # =========================================================================
     # Various public methods
@@ -611,28 +627,34 @@ class GridProperty(Grid3D):
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
-        dsc.title('Description of GridProperty instance')
-        dsc.txt('Object ID', id(self))
-        dsc.txt('Name', self.name)
-        dsc.txt('Date', self.date)
-        dsc.txt('File source', self._filesrc)
-        dsc.txt('Discrete status', self._isdiscrete)
-        dsc.txt('Codes', self._codes)
-        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
+        dsc.title("Description of GridProperty instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("Name", self.name)
+        dsc.txt("Date", self.date)
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Discrete status", self._isdiscrete)
+        dsc.txt("Codes", self._codes)
+        dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
         np.set_printoptions(threshold=16)
-        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
+        dsc.txt("Values", self._values.reshape(-1), self._values.dtype)
         np.set_printoptions(threshold=1000)
-        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
-                self.values.std(), self.values.min(), self.values.max())
+        dsc.txt(
+            "Values, mean, stdev, minimum, maximum",
+            self.values.mean(),
+            self.values.std(),
+            self.values.min(),
+            self.values.max(),
+        )
         itemsize = self.values.itemsize
         msize = float(self.values.size * itemsize) / (1024 * 1024 * 1024)
-        dsc.txt('Roxar datatype', self.roxar_dtype)
-        dsc.txt('Minimum memory usage of array (GB)', msize)
+        dsc.txt("Roxar datatype", self.roxar_dtype)
+        dsc.txt("Minimum memory usage of array (GB)", msize)
 
         if flush:
             dsc.flush()
-        else:
-            return dsc.astext()
+            return None
+
+        return dsc.astext()
 
     def get_npvalues3d(self, fill_value=None):
         """Get a pure numpy copy (not masked) copy of the values, 3D shape.
@@ -665,7 +687,7 @@ class GridProperty(Grid3D):
 
         return npv3d
 
-    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
+    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
 
         Note that this method is similar to, but not identical to,
@@ -687,9 +709,9 @@ class GridProperty(Grid3D):
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        act = GridProperty(ncol=self._ncol, nrow=self._nrow,
-                           nlay=self._nlay,
-                           name=name, discrete=True)
+        act = GridProperty(
+            ncol=self._ncol, nrow=self._nrow, nlay=self._nlay, name=name, discrete=True
+        )
 
         orig = self.values
         vact = np.ones(self.values.shape)
@@ -699,7 +721,7 @@ class GridProperty(Grid3D):
             vact = ma.masked_equal(vact, 0)
 
         act.values = vact.astype(np.int32)
-        act.codes = {0: '0', 1: '1'}
+        act.codes = {0: "0", 1: "1"}
 
         # return the object
         return act
@@ -723,8 +745,13 @@ class GridProperty(Grid3D):
         if newname is None:
             newname = self.name
 
-        xprop = GridProperty(ncol=self._ncol, nrow=self._nrow, nlay=self._nlay,
-                             values=self._values.copy(), name=newname)
+        xprop = GridProperty(
+            ncol=self._ncol,
+            nrow=self._nrow,
+            nlay=self._nlay,
+            values=self._values.copy(),
+            name=newname,
+        )
 
         xprop.geometry = self._geometry
         xprop.codes = copy.deepcopy(self._codes)
@@ -733,8 +760,8 @@ class GridProperty(Grid3D):
         xprop.roxorigin = self._roxorigin
         xprop.roxar_dtype = self._roxar_dtype
 
-        if self._filesrc is not None and '(copy)' not in self._filesrc:
-            xprop.filesrc = self._filesrc + ' (copy)'
+        if self._filesrc is not None and "(copy)" not in self._filesrc:
+            xprop.filesrc = self._filesrc + " (copy)"
         elif self._filesrc is not None:
             xprop.filesrc = self._filesrc
 
@@ -759,7 +786,7 @@ class GridProperty(Grid3D):
 
         newvalues = self.values.copy()
 
-        self.values = newvalues[ic1 - 1: ic2, jc1 - 1: jc2, kc1 - 1: kc2]
+        self.values = newvalues[ic1 - 1 : ic2, jc1 - 1 : jc2, kc1 - 1 : kc2]
 
     def get_xy_value_lists(self, grid=None, activeonly=True):
         """Get lists of xy coords and values for Webportal format.
@@ -789,8 +816,9 @@ class GridProperty(Grid3D):
 
         """
 
-        clist, vlist = _gridprop_op1.get_xy_value_lists(self, grid=grid,
-                                                        mask=activeonly)
+        clist, vlist = _gridprop_op1.get_xy_value_lists(
+            self, grid=grid, mask=activeonly
+        )
         return clist, vlist
 
     def get_values_by_ijk(self, iarr, jarr, karr, base=1):
@@ -813,7 +841,7 @@ class GridProperty(Grid3D):
                 with NaN if undefined
 
         """
-        res = np.zeros(iarr.shape, dtype='float64')
+        res = np.zeros(iarr.shape, dtype="float64")
         res = ma.masked_equal(res, 0)  # mask all
 
         # get indices where defined (note the , after valids)
@@ -824,38 +852,40 @@ class GridProperty(Grid3D):
         karr = karr[~np.isnan(karr)]
 
         try:
-            res[valids] = self.values[iarr.astype('int') - base,
-                                      jarr.astype('int') - base,
-                                      karr.astype('int') - base]
+            res[valids] = self.values[
+                iarr.astype("int") - base,
+                jarr.astype("int") - base,
+                karr.astype("int") - base,
+            ]
 
             return np.ma.filled(res, fill_value=np.nan)
 
         except IndexError as ier:
-            xtg.warn('Error {}, return None'.format(ier))
+            xtg.warn("Error {}, return None".format(ier))
             return None
         except:
-            xtg.warn('Unexpected error')
+            xtg.warn("Unexpected error")
             raise
 
     def discrete_to_continuous(self):
         """Convert from discrete to continuous values"""
 
         if self.isdiscrete:
-            logger.info('Converting to continuous ...')
+            logger.info("Converting to continuous ...")
             val = self._values.copy()
-            val = val.astype('float64')
+            val = val.astype("float64")
             self._values = val
             self._isdiscrete = False
             self._codes = {}
             self._roxar_dtype = np.float32
         else:
-            logger.info('No need to convert, already continuous')
+            logger.info("No need to convert, already continuous")
 
     def continuous_to_discrete(self):
         """Convert from continuous to discrete values"""
 
         if not self.isdiscrete:
-            logger.info('Converting to discrete ...')
+            logger.info("Converting to discrete ...")
             val = self._values.copy()
             val = val.astype(np.int32)
             self._values = val
@@ -868,13 +898,13 @@ class GridProperty(Grid3D):
             self.codes = codes
             self._roxar_dtype = np.uint16
         else:
-            logger.info('No need to convert, already discrete')
+            logger.info("No need to convert, already discrete")
 
     # =========================================================================
     # Operations restricted to inside/outside polygons
     # =========================================================================
 
-    def operation_polygons(self, poly, value, opname='add', inside=True):
+    def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for doing 3D grid property operations
         restricted to inside or outside polygon(s).
 
@@ -889,51 +919,52 @@ class GridProperty(Grid3D):
         """
 
         if self.geometry is None:
-            raise ValueError('The geometry attribute is not set')
+            raise ValueError("The geometry attribute is not set")
 
-        _gridprop_op1.operation_polygons(self, poly, value,
-                                         opname=opname, inside=inside)
+        _gridprop_op1.operation_polygons(
+            self, poly, value, opname=opname, inside=inside
+        )
 
     # shortforms
     def add_inside(self, poly, value):
         """Add a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='add', inside=True)
+        self.operation_polygons(poly, value, opname="add", inside=True)
 
     def add_outside(self, poly, value):
         """Add a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='add', inside=False)
+        self.operation_polygons(poly, value, opname="add", inside=False)
 
     def sub_inside(self, poly, value):
         """Subtract a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='sub', inside=True)
+        self.operation_polygons(poly, value, opname="sub", inside=True)
 
     def sub_outside(self, poly, value):
         """Subtract a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='sub', inside=False)
+        self.operation_polygons(poly, value, opname="sub", inside=False)
 
     def mul_inside(self, poly, value):
         """Multiply a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='mul', inside=True)
+        self.operation_polygons(poly, value, opname="mul", inside=True)
 
     def mul_outside(self, poly, value):
         """Multiply a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='mul', inside=False)
+        self.operation_polygons(poly, value, opname="mul", inside=False)
 
     def div_inside(self, poly, value):
         """Divide a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='div', inside=True)
+        self.operation_polygons(poly, value, opname="div", inside=True)
 
     def div_outside(self, poly, value):
         """Divide a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='div', inside=False)
+        self.operation_polygons(poly, value, opname="div", inside=False)
 
     def set_inside(self, poly, value):
         """Set a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='set', inside=True)
+        self.operation_polygons(poly, value, opname="set", inside=True)
 
     def set_outside(self, poly, value):
         """Set a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='set', inside=False)
+        self.operation_polygons(poly, value, opname="set", inside=False)
 
     # -------------------------------------------------------------------------
     # Private function

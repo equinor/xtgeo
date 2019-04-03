@@ -24,64 +24,67 @@ def make_hybridgrid(grid, **kwargs):
         etc...
     """
 
-    nhdiv = kwargs.get('nhdiv')
-    toplevel = kwargs.get('toplevel')
-    bottomlevel = kwargs.get('bottomlevel')
-    region = kwargs.get('region', None)
-    region_number = kwargs.get('region_number', None)
+    nhdiv = kwargs.get("nhdiv")
+    toplevel = kwargs.get("toplevel")
+    bottomlevel = kwargs.get("bottomlevel")
+    region = kwargs.get("region", None)
+    region_number = kwargs.get("region_number", None)
 
-    logger.debug('nhdiv: {}'.format(nhdiv))
-    logger.debug('toplevel: {}'.format(toplevel))
-    logger.debug('bottomlevel: {}'.format(bottomlevel))
-    logger.debug('region: {}'.format(region))
-    logger.debug('region_number: {}'.format(region_number))
+    logger.debug("nhdiv: %s", nhdiv)
+    logger.debug("toplevel: %s", toplevel)
+    logger.debug("bottomlevel: %s", bottomlevel)
+    logger.debug("region: %s", region)
+    logger.debug("region_number: %s", region_number)
 
     xtg_verbose_level = xtg.syslevel
 
     newnlay = grid.nlay * 2 + nhdiv
 
     hyb_num_act = _cxtgeo.new_intpointer()
-    hyb_p_zcorn_v = _cxtgeo.new_doublearray(grid.ncol * grid.nrow *
-                                            (newnlay + 1) * 4)
+    hyb_p_zcorn_v = _cxtgeo.new_doublearray(grid.ncol * grid.nrow * (newnlay + 1) * 4)
     hyb_p_actnum_v = _cxtgeo.new_intarray(grid.ncol * grid.nrow * newnlay)
 
     if region is None:
-        _cxtgeo.grd3d_convert_hybrid(grid.ncol,
-                                     grid.nrow,
-                                     grid.nlay,
-                                     grid._p_coord_v,
-                                     grid._p_zcorn_v,
-                                     grid._p_actnum_v,
-                                     newnlay,
-                                     hyb_p_zcorn_v,
-                                     hyb_p_actnum_v,
-                                     hyb_num_act,
-                                     toplevel,
-                                     bottomlevel,
-                                     nhdiv,
-                                     xtg_verbose_level)
+        _cxtgeo.grd3d_convert_hybrid(
+            grid.ncol,
+            grid.nrow,
+            grid.nlay,
+            grid._p_coord_v,
+            grid._p_zcorn_v,
+            grid._p_actnum_v,
+            newnlay,
+            hyb_p_zcorn_v,
+            hyb_p_actnum_v,
+            hyb_num_act,
+            toplevel,
+            bottomlevel,
+            nhdiv,
+            xtg_verbose_level,
+        )
     else:
 
         region.discrete_to_continuous()
 
         carray_reg = _gridprop_lowlevel.update_carray(region)
 
-        _cxtgeo.grd3d_convert_hybrid2(grid.ncol,
-                                      grid.nrow,
-                                      grid.nlay,
-                                      grid._p_coord_v,
-                                      grid._p_zcorn_v,
-                                      grid._p_actnum_v,
-                                      newnlay,
-                                      hyb_p_zcorn_v,
-                                      hyb_p_actnum_v,
-                                      hyb_num_act,
-                                      toplevel,
-                                      bottomlevel,
-                                      nhdiv,
-                                      carray_reg,
-                                      region_number,
-                                      xtg_verbose_level)
+        _cxtgeo.grd3d_convert_hybrid2(
+            grid.ncol,
+            grid.nrow,
+            grid.nlay,
+            grid._p_coord_v,
+            grid._p_zcorn_v,
+            grid._p_actnum_v,
+            newnlay,
+            hyb_p_zcorn_v,
+            hyb_p_actnum_v,
+            hyb_num_act,
+            toplevel,
+            bottomlevel,
+            nhdiv,
+            carray_reg,
+            region_number,
+            xtg_verbose_level,
+        )
 
         _gridprop_lowlevel.delete_carray(region, carray_reg)
 

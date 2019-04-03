@@ -25,11 +25,8 @@ XTGDEBUG = xtg.get_syslevel()
 # Note that "self" is the grid instance
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get dZ as property
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_dz(self, name="dZ", flip=True, mask=True):
-
+def get_dz(self, name="dZ", flip=True, asmasked=True):
+    """Get dZ as property"""
     ntot = (self._ncol, self._nrow, self._nlay)
 
     dzv = xtgeo.grid3d.GridProperty(
@@ -48,7 +45,7 @@ def get_dz(self, name="dZ", flip=True, mask=True):
         nflip = -1
 
     option = 0
-    if mask:
+    if asmasked:
         option = 1
 
     _cxtgeo.grd3d_calc_dz(
@@ -71,11 +68,8 @@ def get_dz(self, name="dZ", flip=True, mask=True):
     return dzv
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get dX, dY as properties
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_dxdy(self, names=("dX", "dY")):
-
+def get_dxdy(self, names=("dX", "dY"), asmasked=False):
+    """Get dX, dY as properties"""
     ntot = self._ncol * self._nrow * self._nlay
     dx = xtgeo.grid3d.GridProperty(
         ncol=self._ncol,
@@ -100,6 +94,9 @@ def get_dxdy(self, names=("dX", "dY")):
     option1 = 0
     option2 = 0
 
+    if asmasked:
+        option1 = 1
+
     _cxtgeo.grd3d_calc_dxdy(
         self._ncol,
         self._nrow,
@@ -121,10 +118,8 @@ def get_dxdy(self, names=("dX", "dY")):
     return dx, dy
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get I J K as properties
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_ijk(self, names=("IX", "JY", "KZ"), mask=True, zero_base=False):
+def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zero_base=False):
+    """Get I J K as properties"""
 
     GrProp = xtgeo.grid3d.GridProperty
 
@@ -136,7 +131,7 @@ def get_ijk(self, names=("IX", "JY", "KZ"), mask=True, zero_base=False):
     jy = jy.ravel()
     kz = kz.ravel()
 
-    if mask:
+    if asmasked:
         actnum = self.get_actnum()
 
         ix = ma.masked_where(actnum.values1d == 0, ix)
@@ -177,10 +172,8 @@ def get_ijk(self, names=("IX", "JY", "KZ"), mask=True, zero_base=False):
     return ix, jy, kz
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get X Y Z as properties
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), mask=True):
+def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
+    """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
 
     ntot = self.ntotal
 
@@ -218,7 +211,7 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), mask=True):
     ptr_z_v = _cxtgeo.new_doublearray(self.ntotal)
 
     option = 0
-    if mask:
+    if asmasked:
         option = 1
 
     _cxtgeo.grd3d_calc_xyz(
@@ -244,18 +237,15 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), mask=True):
     return x, y, z
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get X Y Z cell corners for one cell
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_xyz_cell_corners(self, ijk=(1, 1, 1), mask=True, zerobased=False):
-
+def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
+    """Get X Y Z cell corners for one cell."""
     i, j, k = ijk
 
     shift = 0
     if zerobased:
         shift = 1
 
-    if mask is True:
+    if activeonly:
         actnum = self.get_actnum()
         iact = actnum.values3d[i - 1 + shift, j - 1 + shift, k - 1 + shift]
         if iact == 0:
@@ -284,11 +274,8 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), mask=True, zerobased=False):
     return clist
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get X Y Z cell corners for all cells (as 24 GridProperty objects)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
-
+    """Get X Y Z cell corners for all cells (as 24 GridProperty objects)"""
     ntot = (self._ncol, self._nrow, self._nlay)
 
     grid_props = []
@@ -369,9 +356,6 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     return tuple(grid_props)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get grid geometrics
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
 
     ptr_x = []
@@ -446,11 +430,8 @@ def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
     return tuple(glist)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Inactivate by DZ
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def inactivate_by_dz(self, threshold):
-
+    """Inactivate by DZ"""
     if isinstance(threshold, int):
         threshold = float(threshold)
 
@@ -472,11 +453,8 @@ def inactivate_by_dz(self, threshold):
     )
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Make consistent in z
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def make_zconsistent(self, zsep):
-
+    """Make consistent in z"""
     if isinstance(zsep, int):
         zsep = float(zsep)
 
@@ -494,11 +472,8 @@ def make_zconsistent(self, zsep):
     )
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Inactivate inside a polygon (or outside)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
-
+    """Inactivate inside a polygon (or outside)"""
     if not isinstance(poly, xtgeo.xyz.Polygons):
         raise ValueError("Input polygon not a XTGeo Polygons instance")
 
@@ -542,21 +517,13 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
         raise RuntimeError("Problems with one or more polygons. " "Not closed?")
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Collapse inactive cells
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 def collapse_inactive_cells(self):
-
+    """Collapse inactive cells"""
     _cxtgeo.grd3d_collapse_inact(
         self.ncol, self.nrow, self.nlay, self._p_zcorn_v, self._p_actnum_v, XTGDEBUG
     )
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Copy a grid instance.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def copy(self):
     """Copy a grid instance (C pointers) and other props.
 
@@ -612,9 +579,6 @@ def copy(self):
     return other
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Do cropping
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     """Do cropping of geometry (and properties).
 
@@ -717,9 +681,6 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
             prop.crop(spec)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Reduce grid to one layer
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def reduce_to_one_layer(self):
     """Reduce the grid to one single layer.
 
@@ -767,11 +728,8 @@ def reduce_to_one_layer(self):
     self._subgrids = None
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Translate coordinates
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
-
+    """Translate grid coordinates"""
     tx, ty, tz = translate
     fx, fy, fz = flip
 
@@ -795,10 +753,6 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
     logger.info("Translation of coords done")
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Reports well to zone mismatch
-# This works together with a Well object
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def report_zone_mismatch(  # pylint: disable=too-many-statements
     self,
     well=None,
@@ -811,6 +765,7 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
     option=0,
     perflogname=None,
 ):
+    """Reports well to zone mismatch; this works together with a Well object."""
 
     this = inspect.currentframe().f_code.co_name
 
@@ -917,11 +872,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
     return (perc, int(tpoi), int(mpoi))
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get adjacents cells
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
-
+    """Get adjacents cells"""
     if not isinstance(prop, xtgeo.GridProperty):
         raise ValueError("The argument prop is not a xtgeo.GridPropery")
 

@@ -13,37 +13,33 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-xtg_verbose_level = xtg.get_syslevel()
-_cxtgeo.xtg_verbose_file('NONE')
+XTGDEBUG = xtg.get_syslevel()
+_cxtgeo.xtg_verbose_file("NONE")
 
 
-def scan_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False,
-                  dates=False):
+def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False):
 
-    if fformat == 'xecl':
+    if fformat == "xecl":
         if dates:
-            data = _scan_ecl_keywords_w_dates(pfile, fformat=fformat,
-                                              maxkeys=maxkeys,
-                                              dataframe=dataframe)
+            data = _scan_ecl_keywords_w_dates(
+                pfile, maxkeys=maxkeys, dataframe=dataframe
+            )
         else:
-            data = _scan_ecl_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
-                                      dataframe=dataframe)
+            data = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
 
     else:
-        data = _scan_roff_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
-                                   dataframe=dataframe)
+        data = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
     return data
 
 
-def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False):
+def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
 
     # In case pfile is not a file name but a swig pointer to a file handle,
     # the file must not be closed
 
     ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
     if maxkeys > ultramax:
-        raise ValueError('maxkeys value is too large, must be < {}'
-                         .format(ultramax))
+        raise ValueError("maxkeys value is too large, must be < {}".format(ultramax))
 
     rectypes = _cxtgeo.new_intarray(maxkeys)
     reclens = _cxtgeo.new_longarray(maxkeys)
@@ -51,18 +47,25 @@ def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False):
 
     fhandle, pclose = _get_fhandle(pfile)
 
-    nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(fhandle, rectypes, reclens,
-                                                   recstarts, maxkeys,
-                                                   xtg_verbose_level)
+    nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
+        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+    )
 
     _close_fhandle(fhandle, pclose)
 
-    keywords = keywords.replace(' ', '')
-    keywords = keywords.split('|')
+    keywords = keywords.replace(" ", "")
+    keywords = keywords.split("|")
 
     # record types translation (cf: grd3d_scan_eclbinary.c in cxtgeo)
-    rct = {'1': 'INTE', '2': 'REAL', '3': 'DOUB', '4': 'CHAR', '5': 'LOGI',
-           '6': 'MESS', '-1': '????'}
+    rct = {
+        "1": "INTE",
+        "2": "REAL",
+        "3": "DOUB",
+        "4": "CHAR",
+        "5": "LOGI",
+        "6": "MESS",
+        "-1": "????",
+    }
 
     rc = []
     rl = []
@@ -79,55 +82,50 @@ def _scan_ecl_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False):
     result = list(zip(keywords, rc, rl, rs))
 
     if dataframe:
-        cols = ['KEYWORD', 'TYPE', 'NITEMS', 'BYTESTART']
+        cols = ["KEYWORD", "TYPE", "NITEMS", "BYTESTART"]
         df = pd.DataFrame.from_records(result, columns=cols)
         return df
-    else:
-        return result
+
+    return result
 
 
-def _scan_ecl_keywords_w_dates(pfile, fformat='unrst', maxkeys=100000,
-                               dataframe=False):
+def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
 
     """Add a date column to the keyword"""
 
-    xkeys = _scan_ecl_keywords(pfile, fformat=fformat, maxkeys=maxkeys,
-                               dataframe=False)
+    xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
 
-    xdates = scan_dates(pfile, fformat=fformat, maxdates=maxkeys,
-                        dataframe=False)
+    xdates = scan_dates(pfile, maxdates=maxkeys, dataframe=False)
 
     result = []
     # now merge these two:
-    n = -1
+    nv = -1
     date = 0
     for item in xkeys:
         name, dtype, reclen, bytepos = item
-        if name == 'SEQNUM':
-            n += 1
-            date = xdates[n][1]
+        if name == "SEQNUM":
+            nv += 1
+            date = xdates[nv][1]
 
         entry = (name, dtype, reclen, bytepos, date)
         result.append(entry)
 
     if dataframe:
-        cols = ['KEYWORD', 'TYPE', 'NITEMS', 'BYTESTART', 'DATE']
+        cols = ["KEYWORD", "TYPE", "NITEMS", "BYTESTART", "DATE"]
         df = pd.DataFrame.from_records(result, columns=cols)
         return df
-    else:
-        return result
+
+    return result
 
 
-def _scan_roff_keywords(pfile, fformat='roff', maxkeys=100000,
-                        dataframe=False):
+def _scan_roff_keywords(pfile, maxkeys=100000, dataframe=False):
 
     # In case pfile is not a file name but a swig pointer to a file handle,
     # the file must not be closed
 
     ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
     if maxkeys > ultramax:
-        raise ValueError('maxkeys value is too large, must be < {}'
-                         .format(ultramax))
+        raise ValueError("maxkeys value is too large, must be < {}".format(ultramax))
 
     rectypes = _cxtgeo.new_intarray(maxkeys)
     reclens = _cxtgeo.new_longarray(maxkeys)
@@ -135,18 +133,24 @@ def _scan_roff_keywords(pfile, fformat='roff', maxkeys=100000,
 
     fhandle, pclose = _get_fhandle(pfile)
 
-    nkeys, swapstatus, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys,
-        xtg_verbose_level)
+    nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
+        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+    )
 
     _close_fhandle(fhandle, pclose)
 
-    keywords = keywords.replace(' ', '')
-    keywords = keywords.split('|')
+    keywords = keywords.replace(" ", "")
+    keywords = keywords.split("|")
 
     # record types translation (cf: grd3d_scan_eclbinary.c in cxtgeo)
-    rct = {'1': 'int', '2': 'float', '3': 'double', '4': 'char', '5': 'bool',
-           '6': 'byte'}
+    rct = {
+        "1": "int",
+        "2": "float",
+        "3": "double",
+        "4": "char",
+        "5": "bool",
+        "6": "byte",
+    }
 
     rc = []
     rl = []
@@ -163,14 +167,14 @@ def _scan_roff_keywords(pfile, fformat='roff', maxkeys=100000,
     result = list(zip(keywords, rc, rl, rs))
 
     if dataframe:
-        cols = ['KEYWORD', 'TYPE', 'NITEMS', 'BYTESTARTDATA']
+        cols = ["KEYWORD", "TYPE", "NITEMS", "BYTESTARTDATA"]
         df = pd.DataFrame.from_records(result, columns=cols)
         return df
-    else:
-        return result
+
+    return result
 
 
-def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
+def scan_dates(pfile, maxdates=1000, dataframe=False):
     """Scan DATES in Eclipse OUTPUT files (UNRST)"""
 
     seq = _cxtgeo.new_intarray(maxdates)
@@ -180,8 +184,7 @@ def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
 
     fhandle, pclose = _get_fhandle(pfile)
 
-    nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates,
-                                     xtg_verbose_level)
+    nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates, XTGDEBUG)
 
     _close_fhandle(fhandle, pclose)
 
@@ -192,7 +195,7 @@ def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
         dday = _cxtgeo.intarray_getitem(day, i)
         dmon = _cxtgeo.intarray_getitem(mon, i)
         dyer = _cxtgeo.intarray_getitem(yer, i)
-        date = '{0:4}{1:02}{2:02}'.format(dyer, dmon, dday)
+        date = "{0:4}{1:02}{2:02}".format(dyer, dmon, dday)
         da.append(int(date))
 
     for item in [seq, day, mon, yer]:
@@ -201,21 +204,24 @@ def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
     zdates = list(zip(sq, da))  # list for PY3
 
     if dataframe:
-        cols = ['SEQNUM', 'DATE']
+        cols = ["SEQNUM", "DATE"]
         df = pd.DataFrame.from_records(zdates, columns=cols)
         return df
-    else:
-        return zdates
+
+    return zdates
 
 
-def import_ecl_output(props, pfile, names=None, dates=None,
-                      grid=None, namestyle=0):
+def import_ecl_output(
+    props, pfile, names=None, dates=None, grid=None, namestyle=0
+):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+
+    logger.debug("'namestyle' is %s (not in use)", namestyle)
 
     if not grid:
-        raise ValueError('Grid Geometry object is missing')
+        raise ValueError("Grid Geometry object is missing")
 
     if not names:
-        raise ValueError('Name list is empty (None)')
+        raise ValueError("Name list is empty (None)")
 
     fhandle, pclose = _get_fhandle(pfile)
 
@@ -224,18 +230,18 @@ def import_ecl_output(props, pfile, names=None, dates=None,
 
     usenames = list()
 
-    if names == 'all':
+    if names == "all":
         nact = grid.nactive
         ntot = grid.ntotal
 
         for kw in kwlist:
-            kwname, kwtype, nlen, _bs1 = kw
-            if nlen == nact or nlen == ntot:
+            kwname, _tmp1, nlen, _bs1 = kw
+            if nlen in (nact, ntot):
                 usenames.append(kwname)
     else:
         usenames = list(names)
 
-    logger.info('NAMES are %s', usenames)
+    logger.info("NAMES are %s", usenames)
 
     lookfornames = list(set(usenames))
 
@@ -247,11 +253,12 @@ def import_ecl_output(props, pfile, names=None, dates=None,
             if name == kwitem[0]:
                 namefound = True
         if not namefound:
-            if name == 'SOIL':
+            if name == "SOIL":
                 pass  # will check for SWAT and SGAS later
             else:
-                raise ValueError('Keyword {} not found. Possible list: {}'
-                                 .format(name, possiblekw))
+                raise ValueError(
+                    "Keyword {} not found. Possible list: {}".format(name, possiblekw)
+                )
 
     # check valid dates, and remove invalid entries (allowing that user
     # can be a bit sloppy on DATES)
@@ -268,23 +275,24 @@ def import_ecl_output(props, pfile, names=None, dates=None,
                 if str(date) == str(ditem[1]):
                     validdates.append(date)
 
-        if len(validdates) < 1:
-            msg = ('No valid dates given (dates: {} vs {})'
-                   .format(dates, alldates))
+        if not validdates:
+            msg = "No valid dates given (dates: {} vs {})".format(dates, alldates)
             xtg.error(msg)
             raise ValueError(msg)
 
         if len(dates) > len(validdates):
             invalidddates = list(set(dates).difference(validdates))
-            msg = ('In file {}: Some dates not found: {}, but will continue '
-                   'with dates: {}'.format(pfile, invalidddates, validdates))
+            msg = (
+                "In file {}: Some dates not found: {}, but will continue "
+                "with dates: {}".format(pfile, invalidddates, validdates)
+            )
             xtg.warn(msg)
             # raise DateNotFoundError(msg)
 
     use2names = list(usenames)  # to make copy
 
-    logger.info('Use names: {}'.format(use2names))
-    logger.info('Valid dates: {}'.format(validdates))
+    logger.info("Use names: %s", use2names)
+    logger.info("Valid dates: %s", validdates)
 
     # now import each property
     firstproperty = True
@@ -300,20 +308,23 @@ def import_ecl_output(props, pfile, names=None, dates=None,
                 propname = name
                 etype = 1
             else:
-                propname = name + '_' + str(date)
+                propname = name + "_" + str(date)
                 etype = 5
 
             prop = xtgeo.grid3d.GridProperty()
 
             # use a private GridProperty function here, for convinience
             # (since filehandle)
-            ier = _gridprop_import.import_eclbinary(prop, fhandle, name=name,
-                                                    date=date, grid=grid,
-                                                    etype=etype)
+            ier = _gridprop_import.import_eclbinary(
+                prop, fhandle, name=name, date=date, grid=grid, etype=etype
+            )
             if ier != 0:
-                raise ValueError('Something went wrong, IER = {} while '
-                                 'name={}, date={}, etype={}, propname={}'
-                                 .format(ier, name, date, etype, propname))
+                raise ValueError(
+                    "Something went wrong, IER = {} while "
+                    "name={}, date={}, etype={}, propname={}".format(
+                        ier, name, date, etype, propname
+                    )
+                )
 
             if firstproperty:
                 ncol = prop.ncol
@@ -321,7 +332,7 @@ def import_ecl_output(props, pfile, names=None, dates=None,
                 nlay = prop.nlay
                 firstproperty = False
 
-            logger.info('Appended property {}'.format(propname))
+            logger.info("Appended property %s", propname)
             props._names.append(propname)
             props._props.append(prop)
 

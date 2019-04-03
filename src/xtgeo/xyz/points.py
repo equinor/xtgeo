@@ -20,7 +20,8 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 # METHODS as wrappers to class init + import
 
-def points_from_file(wfile, fformat='xyz'):
+
+def points_from_file(wfile, fformat="xyz"):
     """Make an instance of a Points object directly from file import.
 
     Args:
@@ -40,8 +41,9 @@ def points_from_file(wfile, fformat='xyz'):
     return obj
 
 
-def points_from_roxar(project, name, category, stype='horizons',
-                      realisation=0, attributes=False):
+def points_from_roxar(
+    project, name, category, stype="horizons", realisation=0, attributes=False
+):
     """This makes an instance of a Points directly from roxar input.
 
     For arguments, see :meth:`Points.from_roxar`.
@@ -56,8 +58,14 @@ def points_from_roxar(project, name, category, stype='horizons',
 
     obj = Points()
 
-    obj.from_roxar(project, name, category, stype=stype,
-                   realisation=realisation, attributes=attributes)
+    obj.from_roxar(
+        project,
+        name,
+        category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
+    )
 
     return obj
 
@@ -92,21 +100,32 @@ class Points(XYZ):
         # instance variables listed
         self._df = None
         self._ispolygons = False
-        self._xname = 'X_UTME'
-        self._yname = 'Y_UTMN'
-        self._zname = 'Z_TVDSS'
-        self._pname = 'POLY_ID'
-        self._mname = 'M_MDEPTH'
+        self._xname = "X_UTME"
+        self._yname = "Y_UTMN"
+        self._zname = "Z_TVDSS"
+        self._pname = "POLY_ID"
+        self._mname = "M_MDEPTH"
 
         super(Points, self).__init__(*args, **kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], xtgeo.surface.RegularSurface):
                 self.from_surface(args[0])
-        logger.info('Initiated Points')
+        logger.info("Initiated Points")
+
+    def __repr__(self):
+        # should be able to newobject = eval(repr(thisobject))
+        myrp = "{0.__class__.__name__} (filesrc={0._filesrc!r}, " "ID={1})".format(
+            self, id(self)
+        )
+        return myrp
+
+    def __str__(self):
+        # user friendly print
+        return self.describe(flush=False)
 
     def __del__(self):
-        logger.info('Points object %s deleted', id(self))
+        logger.info("Points object %s deleted", id(self))
 
     def __eq__(self, value):
         return self.dataframe[self.zname] == value
@@ -122,6 +141,10 @@ class Points(XYZ):
 
     def __le__(self, value):
         return self.dataframe[self.zname] <= value
+
+    # ----------------------------------------------------------------------------------
+    # Properties
+    # ----------------------------------------------------------------------------------
 
     @property
     def nrow(self):
@@ -161,19 +184,27 @@ class Points(XYZ):
             return
 
         if isinstance(zname, str):
-            self._df.rename(index=str, columns={self._zname: zname},
-                            inplace=True)
+            self._df.rename(index=str, columns={self._zname: zname}, inplace=True)
             self._zname = zname
         else:
-            raise ValueError('Wrong type of input to zname; must be string, '
-                             'input is {}'.format(type(zname)))
+            raise ValueError(
+                "Wrong type of input to zname; must be string, "
+                "input is {}".format(type(zname))
+            )
 
     @property
     def pname(self):
         """ Returns the name of the POLY_ID column"""
         return self._pname
 
-    def from_file(self, pfile, fformat='xyz'):
+    # ----------------------------------------------------------------------------------
+    # Methods
+    # ----------------------------------------------------------------------------------
+
+    def describe(self, flush=True):
+        super(Points, self).describe(flush=flush)
+
+    def from_file(self, pfile, fformat="xyz"):
         """Import points.
 
         Supported import formats (fformat):
@@ -198,8 +229,16 @@ class Points(XYZ):
 
         self._df.dropna(inplace=True)
 
-    def to_file(self, pfile, fformat='xyz', attributes='all', filter=None,
-                wcolumn=None, hcolumn=None, mdcolumn='M_MDEPTH'):
+    def to_file(
+        self,
+        pfile,
+        fformat="xyz",
+        attributes="all",
+        filter=None,
+        wcolumn=None,
+        hcolumn=None,
+        mdcolumn="M_MDEPTH",
+    ):
         """Export XYZ (Points/Polygons) to file.
 
         Args:
@@ -225,13 +264,19 @@ class Points(XYZ):
 
         """
 
-        super(Points, self).to_file(pfile, fformat=fformat,
-                                    attributes=attributes, filter=filter,
-                                    wcolumn=wcolumn, hcolumn=hcolumn,
-                                    mdcolumn=mdcolumn)
+        super(Points, self).to_file(
+            pfile,
+            fformat=fformat,
+            attributes=attributes,
+            filter=filter,
+            wcolumn=wcolumn,
+            hcolumn=hcolumn,
+            mdcolumn=mdcolumn,
+        )
 
-    def from_roxar(self, project, name, category, stype='horizons',
-                   realisation=0, attributes=False):
+    def from_roxar(
+        self, project, name, category, stype="horizons", realisation=0, attributes=False
+    ):
         """Load a points item from a Roxar RMS project.
 
         The import from the RMS project can be done either within the project
@@ -269,11 +314,17 @@ class Points(XYZ):
 
         """
         super(Points, self).from_roxar(
-            project, name, category, stype=stype, realisation=realisation,
-            attributes=attributes)
+            project,
+            name,
+            category,
+            stype=stype,
+            realisation=realisation,
+            attributes=attributes,
+        )
 
-    def to_roxar(self, project, name, category, stype='horizons',
-                 realisation=0, attributes=False):
+    def to_roxar(
+        self, project, name, category, stype="horizons", realisation=0, attributes=False
+    ):
         """Export/save/store a points item to a Roxar RMS project.
 
         Note also that horizon/zone name and category must exists in advance,
@@ -295,11 +346,23 @@ class Points(XYZ):
         """
 
         super(Points, self).to_roxar(
-            project, name, category, stype=stype, realisation=realisation,
-            attributes=attributes)
+            project,
+            name,
+            category,
+            stype=stype,
+            realisation=realisation,
+            attributes=attributes,
+        )
 
-    def from_wells(self, wells, tops=True, incl_limit=None, top_prefix='Top',
-                   zonelist=None, use_undef=False):
+    def from_wells(
+        self,
+        wells,
+        tops=True,
+        incl_limit=None,
+        top_prefix="Top",
+        zonelist=None,
+        use_undef=False,
+    ):
 
         """Get tops or zone points data from a list of wells.
 
@@ -324,10 +387,13 @@ class Points(XYZ):
 
         dflist = []
         for well in wells:
-            wp = well.get_zonation_points(tops=tops, incl_limit=incl_limit,
-                                          top_prefix=top_prefix,
-                                          zonelist=zonelist,
-                                          use_undef=use_undef)
+            wp = well.get_zonation_points(
+                tops=tops,
+                incl_limit=incl_limit,
+                top_prefix=top_prefix,
+                zonelist=zonelist,
+                use_undef=use_undef,
+            )
 
             if wp is not None:
                 dflist.append(wp)
@@ -338,12 +404,20 @@ class Points(XYZ):
             return None
 
         for col in self._df.columns:
-            self._attrs[col] = 'float'
+            self._attrs[col] = "float"
 
         return len(dflist)
 
-    def dfrac_from_wells(self, wells, dlogname, dcodes, incl_limit=90,
-                         count_limit=3, zonelist=None, zonelogname=None):
+    def dfrac_from_wells(
+        self,
+        wells,
+        dlogname,
+        dcodes,
+        incl_limit=90,
+        count_limit=3,
+        zonelist=None,
+        zonelogname=None,
+    ):
 
         """Get fraction of discrete code(s) (e.g. facies) per zone.
 
@@ -371,25 +445,29 @@ class Points(XYZ):
         dflist = []  # will be a list of pandas dataframes
         for well in wells:
             wpf = well.get_fraction_per_zone(
-                dlogname, dcodes, zonelist=zonelist,
-                incl_limit=incl_limit, count_limit=count_limit,
-                zonelogname=zonelogname)
+                dlogname,
+                dcodes,
+                zonelist=zonelist,
+                incl_limit=incl_limit,
+                count_limit=count_limit,
+                zonelogname=zonelogname,
+            )
 
             if wpf is not None:
                 dflist.append(wpf)
 
         if len(dflist) > 0:
             self._df = pd.concat(dflist, ignore_index=True)
-            self.zname = 'DFRAC'  # name of third column
+            self.zname = "DFRAC"  # name of third column
         else:
             return None
 
         for col in self._df.columns[3:]:
-            self._attrs[col] = 'float'
+            self._attrs[col] = "float"
 
         return len(dflist)
 
-    def from_surface(self, surf, zname='Z_TVDSS'):
+    def from_surface(self, surf, zname="Z_TVDSS"):
         """Get points as X Y Value from a surface object nodes.
 
         Note that undefined surface nodes will not be included.
@@ -412,14 +490,14 @@ class Points(XYZ):
 
         # check if surf is instance from RegularSurface
         if not isinstance(surf, xtgeo.surface.RegularSurface):
-            raise ValueError('Given surf is not a RegularSurface object')
+            raise ValueError("Given surf is not a RegularSurface object")
 
         val = surf.values
         xc, yc = surf.get_xy_values()
 
         coor = []
         for vv in [xc, yc, val]:
-            vv = ma.filled(vv.flatten(order='C'), fill_value=np.nan)
+            vv = ma.filled(vv.flatten(order="C"), fill_value=np.nan)
             vv = vv[~np.isnan(vv)]
             coor.append(vv)
 
@@ -436,8 +514,7 @@ class Points(XYZ):
     # Operations restricted to inside/outside polygons
     # =========================================================================
 
-    def operation_polygons(self, poly, value, opname='add', inside=True,
-                           where=True):
+    def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
         """A generic function for doing points operations restricted to inside
         or outside polygon(s).
 
@@ -463,67 +540,56 @@ class Points(XYZ):
 
         """
 
-        _xyz_oper.operation_polygons(self, poly, value, opname=opname,
-                                     inside=inside, where=where)
+        _xyz_oper.operation_polygons(
+            self, poly, value, opname=opname, inside=inside, where=where
+        )
 
     # shortforms
     def add_inside(self, poly, value, where=True):
         """Add a value (scalar) inside polygons (see `operation_polygons`)"""
-        self.operation_polygons(poly, value, opname='add', inside=True,
-                                where=where)
+        self.operation_polygons(poly, value, opname="add", inside=True, where=where)
 
     def add_outside(self, poly, value, where=True):
         """Add a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='add', inside=False,
-                                where=where)
+        self.operation_polygons(poly, value, opname="add", inside=False, where=where)
 
     def sub_inside(self, poly, value, where=True):
         """Subtract a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='sub', inside=True,
-                                where=where)
+        self.operation_polygons(poly, value, opname="sub", inside=True, where=where)
 
     def sub_outside(self, poly, value, where=True):
         """Subtract a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='sub', inside=False,
-                                where=where)
+        self.operation_polygons(poly, value, opname="sub", inside=False, where=where)
 
     def mul_inside(self, poly, value, where=True):
         """Multiply a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='mul', inside=True,
-                                where=where)
+        self.operation_polygons(poly, value, opname="mul", inside=True, where=where)
 
     def mul_outside(self, poly, value, where=True):
         """Multiply a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='mul', inside=False,
-                                where=where)
+        self.operation_polygons(poly, value, opname="mul", inside=False, where=where)
 
     def div_inside(self, poly, value, where=True):
         """Divide a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='div', inside=True,
-                                where=where)
+        self.operation_polygons(poly, value, opname="div", inside=True, where=where)
 
     def div_outside(self, poly, value, where=True):
         """Divide a value (scalar) outside polygons (value 0.0 will give
         result 0)"""
-        self.operation_polygons(poly, value, opname='div', inside=False,
-                                where=where)
+        self.operation_polygons(poly, value, opname="div", inside=False, where=where)
 
     def set_inside(self, poly, value, where=True):
         """Set a value (scalar) inside polygons"""
-        self.operation_polygons(poly, value, opname='set', inside=True,
-                                where=where)
+        self.operation_polygons(poly, value, opname="set", inside=True, where=where)
 
     def set_outside(self, poly, value, where=True):
         """Set a value (scalar) outside polygons"""
-        self.operation_polygons(poly, value, opname='set', inside=False,
-                                where=where)
+        self.operation_polygons(poly, value, opname="set", inside=False, where=where)
 
     def eli_inside(self, poly, where=True):
         """Eliminate current map values inside polygons"""
-        self.operation_polygons(poly, 0, opname='eli', inside=True,
-                                where=where)
+        self.operation_polygons(poly, 0, opname="eli", inside=True, where=where)
 
     def eli_outside(self, poly, where=True):
         """Eliminate current map values outside polygons"""
-        self.operation_polygons(poly, 0, opname='eli', inside=False,
-                                where=where)
+        self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)

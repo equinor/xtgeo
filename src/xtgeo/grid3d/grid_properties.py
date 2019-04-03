@@ -20,7 +20,7 @@ from xtgeo.grid3d import _grid_etc1
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 #
 # 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
@@ -32,7 +32,7 @@ logger = xtg.functionlogger(__name__)
 # Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 
 class GridProperties(Grid3D):
@@ -47,27 +47,26 @@ class GridProperties(Grid3D):
         self._nrow = 12
         self._nlay = 14
 
-        self._props = []            # list of GridProperty objects
-        self._names = []            # list of GridProperty names
-        self._dates = []            # list of dates (_after_ import) YYYYDDMM
+        self._props = []  # list of GridProperty objects
+        self._names = []  # list of GridProperty names
+        self._dates = []  # list of dates (_after_ import) YYYYDDMM
 
     def __del__(self):
-        logger.info('DELETING GridProperties instance')
+        logger.info("DELETING GridProperties instance")
 
     def __repr__(self):
-        myrp = ('{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, '
-                'nrow={0._nrow!r}, nlay={0._nlay!r}, '
-                'filesrc={0._names!r}'
-                .format(self, id(self)))
+        myrp = (
+            "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
+            "nrow={0._nrow!r}, nlay={0._nlay!r}, "
+            "filesrc={0._names!r}".format(self, id(self))
+        )
         return myrp
 
     def __str__(self):
         # user friendly print
         return self.describe(flush=False)
 
-    # =========================================================================
     # Properties:
-    # =========================================================================
 
     @property
     def names(self):
@@ -127,9 +126,7 @@ class GridProperties(Grid3D):
 
         return self._dates
 
-    # =========================================================================
     # Copy, and etc aka setters and getters
-    # =========================================================================
 
     def copy(self):
         """Copy a GridProperties instance to a new unique instance.
@@ -158,10 +155,10 @@ class GridProperties(Grid3D):
         """Describe an instance by printing to stdout"""
 
         dsc = XTGDescription()
-        dsc.title('Description of GridProperties instance')
-        dsc.txt('Object ID', id(self))
-        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
-        dsc.txt('Attached grid props objects (names)', self._names)
+        dsc.title("Description of GridProperties instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
+        dsc.txt("Attached grid props objects (names)", self._names)
 
         if flush:
             dsc.flush()
@@ -172,13 +169,12 @@ class GridProperties(Grid3D):
         """Find and return a property object (GridProperty) by name."""
 
         for prop in self._props:
-            logger.debug("Look for {}, actual is {}"
-                         .format(name, prop.name))
+            logger.debug("Look for {}, actual is {}".format(name, prop.name))
             if prop.name == name:
                 logger.debug(repr(prop))
                 return prop
 
-        raise ValueError('Cannot find property with name <{}>'.format(name))
+        raise ValueError("Cannot find property with name <{}>".format(name))
 
     def append_props(self, proplist):
         """Adds a list of GridProperty objects to the current
@@ -191,11 +187,11 @@ class GridProperties(Grid3D):
                 self._names.append(prop.name)
                 self._dates.append(prop.date)
             else:
-                raise ValueError('Input property is not a valid GridProperty '
-                                 'object')
+                raise ValueError("Input property is not a valid GridProperty " "object")
 
-    def get_ijk(self, names=['IX', 'JY', 'KZ'], zero_base=False,
-                asmasked=False, mask=None):
+    def get_ijk(
+        self, names=["IX", "JY", "KZ"], zero_base=False, asmasked=False, mask=None
+    ):
 
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
         J counter, K counter.
@@ -210,14 +206,14 @@ class GridProperties(Grid3D):
             asmasked = self._evaluate_mask(mask)
 
         # resuse method from grid
-        ixc, jyc, kzc = _grid_etc1.get_ijk(self, names=names,
-                                           zero_base=zero_base,
-                                           mask=asmasked)
+        ixc, jyc, kzc = _grid_etc1.get_ijk(
+            self, names=names, zero_base=zero_base, asmasked=asmasked
+        )
 
         # return the objects
         return ixc, jyc, kzc
 
-    def get_actnum(self, name='ACTNUM', asmasked=False, mask=None):
+    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
 
         Args:
@@ -242,17 +238,16 @@ class GridProperties(Grid3D):
         if self._props:
             return self._props[0].get_actnum(name=name, mask=asmasked)
         else:
-            warnings.warn('No gridproperty in list', UserWarning)
+            warnings.warn("No gridproperty in list", UserWarning)
             return None
 
-    # =========================================================================
     # Import and export
     # This class can importies several properties in one go, which is efficient
     # for some file types such as Eclipse INIT and UNRST, and Roff
-    # =========================================================================
 
-    def from_file(self, pfile, fformat='roff', names=None,
-                  dates=None, grid=None, namestyle=0):
+    def from_file(
+        self, pfile, fformat="roff", names=None, dates=None, grid=None, namestyle=0
+    ):
         """Import grid properties from file in one go.
 
         This class is particulary useful for Eclipse INIT and RESTART files.
@@ -285,42 +280,40 @@ class GridProperties(Grid3D):
         froot, fext = os.path.splitext(pfile)
         if not fext:
             # file extension is missing, guess from format
-            logger.info('File extension missing; guessing...')
+            logger.info("File extension missing; guessing...")
 
-            useext = ''
-            if fformat == 'init':
-                useext = '.INIT'
-            elif fformat == 'unrst':
-                useext = '.UNRST'
-            elif fformat == 'roff':
-                useext = '.roff'
+            useext = ""
+            if fformat == "init":
+                useext = ".INIT"
+            elif fformat == "unrst":
+                useext = ".UNRST"
+            elif fformat == "roff":
+                useext = ".roff"
 
             pfile = froot + useext
 
-        logger.info('File name to be used is {}'.format(pfile))
+        logger.info("File name to be used is {}".format(pfile))
 
         if os.path.isfile(pfile):
-            logger.info('File {} exists OK'.format(pfile))
+            logger.info("File {} exists OK".format(pfile))
         else:
-            logger.warning('No such file: {}'.format(pfile))
+            logger.warning("No such file: {}".format(pfile))
             sys.exit(1)
 
-        if fformat.lower() == 'roff':
+        if fformat.lower() == "roff":
             lst = list()
             for name in names:
-                lst.append(xtgeo.GridProperty(pfile, fformat='roff',
-                                              name=name))
+                lst.append(xtgeo.GridProperty(pfile, fformat="roff", name=name))
             self.append_props(lst)
 
-        elif fformat.lower() in ('init', 'unrst'):
-            _gridprops_io.import_ecl_output(self, pfile,
-                                            dates=dates, grid=grid,
-                                            names=names,
-                                            namestyle=namestyle)
+        elif fformat.lower() in ("init", "unrst"):
+            _gridprops_io.import_ecl_output(
+                self, pfile, dates=dates, grid=grid, names=names, namestyle=namestyle
+            )
         else:
-            raise IOError('Invalid file format')
+            raise IOError("Invalid file format")
 
-    def to_file(self, pfile, fformat='roff'):
+    def to_file(self, pfile, fformat="roff"):
         """Export grid property to file. NB not working!
 
         Args:
@@ -328,10 +321,11 @@ class GridProperties(Grid3D):
             fformat (str): file format to be used (roff is the only supported)
             mode (int): 0 for binary ROFF, 1 for ASCII
         """
-        raise NotImplementedError('Not implented yet!')
+        raise NotImplementedError("Not implented yet!")
 
-    def dataframe(self, activeonly=False, ijk=False, xyz=False,
-                  doubleformat=False, grid=None):
+    def get_dataframe(
+        self, activeonly=False, ijk=False, xyz=False, doubleformat=False, grid=None
+    ):
         """Returns a Pandas dataframe table for the properties
 
         Args:
@@ -360,19 +354,25 @@ class GridProperties(Grid3D):
 
         """
 
-        dfr = _gridprops_etc.dataframe(self, activeonly=activeonly, ijk=ijk,
-                                       xyz=xyz, doubleformat=doubleformat,
-                                       grid=grid)
+        dfr = _gridprops_etc.dataframe(
+            self,
+            activeonly=activeonly,
+            ijk=ijk,
+            xyz=xyz,
+            doubleformat=doubleformat,
+            grid=grid,
+        )
 
         return dfr
 
-    # =========================================================================
+    dataframe = get_dataframe  # for compatibility, but deprecated
+
     # Static methods (scans etc)
-    # =========================================================================
 
     @staticmethod
-    def scan_keywords(pfile, fformat='xecl', maxkeys=100000, dataframe=False,
-                      dates=False):
+    def scan_keywords(
+        pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False
+    ):
         """Quick scan of keywords in Eclipse binary restart/init/... file,
         or ROFF binary files.
 
@@ -407,15 +407,14 @@ class GridProperties(Grid3D):
 
         """
 
-        dlist = _gridprops_io.scan_keywords(pfile, fformat=fformat,
-                                            maxkeys=maxkeys,
-                                            dataframe=dataframe,
-                                            dates=dates)
+        dlist = _gridprops_io.scan_keywords(
+            pfile, fformat=fformat, maxkeys=maxkeys, dataframe=dataframe, dates=dates
+        )
 
         return dlist
 
     @staticmethod
-    def scan_dates(pfile, fformat='unrst', maxdates=1000, dataframe=False):
+    def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
         """Quick scan dates in a simulation restart file.
 
         Args:
@@ -433,16 +432,13 @@ class GridProperties(Grid3D):
             >>> dlist = props.scan_dates('ECL.UNRST')
 
         """
+        logger.info("Format supported as default is %s", fformat)
 
-        dlist = _gridprops_io.scan_dates(pfile, fformat=fformat,
-                                         maxdates=maxdates,
-                                         dataframe=dataframe)
+        dlist = _gridprops_io.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
 
         return dlist
 
-    # -------------------------------------------------------------------------
     # Private function
-    # ------------------------------------------------------------------------
 
     def _evaluate_mask(self, mask):
         return super(GridProperties, self)._evaluate_mask(mask)

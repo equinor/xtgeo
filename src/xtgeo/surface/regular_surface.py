@@ -1238,14 +1238,16 @@ class RegularSurface(object):
 
         return xcoord, ycoord, values
 
-    def dataframe(self, ijcolumns=False, order='C', activeonly=True,
-                  fill_value=np.nan):
+    def get_dataframe(self, ijcolumns=False, ij=False, order='C', activeonly=True,
+                      fill_value=np.nan):
         """Return a Pandas dataframe object, with columns X_UTME,
         Y_UTMN, VALUES.
 
         Args:
             ijcolumns (bool): If True, and IX and JY indices will be
-               added as dataframe columns.
+               added as dataframe columns. Redundant, use "ij" instead.
+            ij (bool): Same as ijcolumns. If True, and IX and JY indices will be
+               added as dataframe columns. Preferred syntax
             order (str): 'C' (default) for C order (row fastest), or 'F'
                for Fortran order (column fastest)
             activeonly (bool): If True, only active nodes are listed. If
@@ -1268,7 +1270,7 @@ class RegularSurface(object):
 
         entry = OrderedDict()
 
-        if ijcolumns:
+        if ijcolumns or ij:
             ixn, jyn = self.get_ij_values1d(order=order, activeonly=activeonly)
             entry['IX'] = ixn
             entry['JY'] = jyn
@@ -1279,6 +1281,8 @@ class RegularSurface(object):
         dataframe = pd.DataFrame(entry)
         logger.debug(dataframe)
         return dataframe
+
+    dataframe = get_dataframe  # for compatibility backwards
 
     def get_xy_value_lists(self, lformat='webportal', xyfmt=None,
                            valuefmt=None):

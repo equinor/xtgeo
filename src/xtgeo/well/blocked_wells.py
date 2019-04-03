@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-
 """BlockedWells module, (collection of BlockedWell objects)"""
+
+# ======================================================================================
+
 from __future__ import division, absolute_import
 from __future__ import print_function
 
 import pandas as pd
 
 import xtgeo
+from xtgeo.well import Wells
 from . import _blockedwells_roxapi
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -39,7 +42,7 @@ def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
     return obj
 
 
-class BlockedWells(object):
+class BlockedWells(Wells):
     """Class for a collection of BlockedWell objects, for operations that
     involves a number of wells.
 
@@ -48,55 +51,23 @@ class BlockedWells(object):
 
     def __init__(self):
 
-        self._bwells = []            # list of Well objects
-
-    @property
-    def names(self):
-        """Returns a list of blocked well names (read only).
-
-        Example::
-
-            namelist = wells.names
-            for prop in namelist:
-                print ('Well name is {}'.format(name))
-
-        """
-
-        wlist = []
-        for wel in self._bwells:
-            wlist.append(wel.name)
-
-        return wlist
-
-    @property
-    def wells(self):
-        """Returns or sets a list of XTGeo BlockedWell objects, None if
-        empty.
-        """
-        if len(self._bwells) == 0:
-            return None
-
-        return self._bwells
-
-    @wells.setter
-    def wells(self, bwell_list):
-
-        for well in bwell_list:
-            if not isinstance(well, xtgeo.well.BlockedWell):
-                raise ValueError('Well in list not valid BlockedWell object')
-
-        self._wells = bwell_list
+        self._wells = []            # list of Well objects
 
     def copy(self):
         """Copy a BlockedWells instance to a new unique instance."""
 
         new = BlockedWells()
 
-        for well in self._bwells:
+        for well in self._wells:
             newwell = well.copy()
             new._props.append(newwell)
 
         return new
+
+    def get_blocked_well(self, name):
+        """Get a BlockedWell() instance by name, or None"""
+        logger.info("Calling super...")
+        return super(BlockedWells, self).get_well(name)
 
     def from_files(self, filelist, fformat='rms_ascii', mdlogname=None,
                    zonelogname=None, strict=True, append=True):
@@ -123,7 +94,7 @@ class BlockedWells(object):
         """
 
         if not append:
-            self._bwells = []
+            self._wells = []
 
         # file checks are done within the Well() class
         for wfile in filelist:
@@ -132,11 +103,11 @@ class BlockedWells(object):
                                              mdlogname=mdlogname,
                                              zonelogname=zonelogname,
                                              strict=strict)
-                self._bwells.append(wll)
+                self._wells.append(wll)
             except ValueError as err:
                 xtg.warn('SKIP this well: {}'.format(err))
                 continue
-        if not self._bwells:
+        if not self._wells:
             xtg.warn('No wells imported!')
 
     def from_roxar(self, project, gname, bwname, lognames=None,
@@ -161,54 +132,3 @@ class BlockedWells(object):
         _blockedwells_roxapi.import_bwells_roxapi(self, project, gname, bwname,
                                                   lognames=lognames,
                                                   ijk=ijk)
-
-    def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
-        """Get a big dataframe for all wells in instance, with well name
-        as first column
-
-        Args:
-            filled (bool): If True, then NaN's are replaces with values
-            fill_value1 (int): Only applied if filled=True, for logs that
-                have missing values
-            fill_value2 (int): Only applied if filled=True, when logs
-                are missing completely for that well.
-        """
-
-        bigdf = []
-        for well in self._bwells:
-            dfr = well.dataframe.copy()
-            dfr['WELLNAME'] = well.name
-            if filled:
-                dfr.fillna(fill_value1)
-            bigdf.append(dfr)
-
-        dfr = pd.concat(bigdf, ignore_index=True, axis=1)
-
-        # the concat itself may lead to NaN's:
-        if filled:
-            dfr = dfr.fillna(fill_value2)
-
-        spec_order = ['WELLNAME', 'X_UTME', 'Y_UTMN', 'Z_TVDSS']
-        dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
-
-        return dfr
-
-    def quickplot(self, filename=None, title='QuickPlot'):
-        """Fast plot of blocked wells using matplotlib.
-
-        Args:
-            filename (str): Name of plot file; None will plot to screen.
-            title (str): Title of plot
-
-        """
-
-        mymap = xtgeo.plot.Map()
-
-        mymap.canvas(title=title)
-
-        mymap.plot_wells(self)
-
-        if filename is None:
-            mymap.show()
-        else:
-            mymap.savefig(filename)

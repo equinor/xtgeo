@@ -5,6 +5,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 from distutils.version import StrictVersion
+
 # from pkg_resources import parse_version as pver (ALT)
 
 try:
@@ -56,12 +57,14 @@ class RoxUtils(object):
         self._version = roxar.__version__
         self._roxarapps = True
 
-        self._versions = {'1.0': ['10.0.x'],
-                          '1.1': ['10.1.0', '10.1.1', '10.1.2'],
-                          '1.1.1': ['10.1.3'],
-                          '1.2': ['11.0.0'],
-                          '1.2.1': ['11.0.1'],
-                          '1.3': ['11.1.0']}
+        self._versions = {
+            "1.0": ["10.0.x"],
+            "1.1": ["10.1.0", "10.1.1", "10.1.2"],
+            "1.1.1": ["10.1.3"],
+            "1.2": ["11.0.0"],
+            "1.2.1": ["11.0.1"],
+            "1.3": ["11.1.0"],
+        }
 
         if project is not None and isinstance(project, str):
             projectname = project
@@ -69,16 +72,15 @@ class RoxUtils(object):
                 self._project = roxar.Project.open_import(projectname)
             else:
                 self._project = roxar.Project.open(projectname)
-            logger.info('Open RMS project from %s', projectname)
+            logger.info("Open RMS project from %s", projectname)
 
         elif isinstance(project, _roxar.Project):
             # this will only happen for _current_ project inside RMS
             self._roxarapps = False
             self._project = project
-            logger.info('RMS project instance is already open as <%s>',
-                        project)
+            logger.info("RMS project instance is already open as <%s>", project)
         else:
-            raise RuntimeError('Project is not valid')
+            raise RuntimeError("Project is not valid")
 
     @property
     def roxversion(self):
@@ -97,12 +99,12 @@ class RoxUtils(object):
         if self._roxarapps:
             try:
                 self._project.close()
-                logger.info('RMS project instance is closed')
+                logger.info("RMS project instance is closed")
             except TypeError as msg:
                 xtg.warn(msg)
         else:
-            logger.info('Close request, but RMS project cannot close '
-                        '(reason: probably within RMS GUI)')
+            logger.info("Close request, but skip for good reasons...")
+            logger.debug("... either in RMS GUI or in a sequence of running roxarapps")
 
     def version_required(self, targetversion):
         """Defines a minimum ROXAPI version for some feature (True or False).
@@ -141,8 +143,9 @@ class RoxUtils(object):
 
         return self._versions.get(apiversion, None)
 
-    def create_horizon_category(self, category, stype='horizons',
-                                domain='depth', htype='surface'):
+    def create_horizon_category(
+        self, category, stype="horizons", domain="depth", htype="surface"
+    ):
         """Create one or more a Horizons category entries.
 
         Args:
@@ -164,43 +167,41 @@ class RoxUtils(object):
 
         for category in categories:
             geom = roxar.GeometryType.surface
-            if htype.lower() == 'lines':
+            if htype.lower() == "lines":
                 geom = roxar.GeometryType.lines
-            elif htype.lower() == 'points':
+            elif htype.lower() == "points":
                 geom = roxar.GeometryType.points
 
             dom = roxar.VerticalDomain.depth
-            if domain.lower() == 'time':
+            if domain.lower() == "time":
                 dom = roxar.GeometryType.lines
 
-            if stype.lower() == 'horizons':
+            if stype.lower() == "horizons":
                 if category not in project.horizons.representations:
                     try:
-                        project.horizons.representations.create(category, geom,
-                                                                dom)
+                        project.horizons.representations.create(category, geom, dom)
                     except Exception as exmsg:
-                        print('Error: {}'.format(exmsg))
+                        print("Error: {}".format(exmsg))
                 else:
-                    print('Category <{}> already exists'.format(category))
+                    print("Category <{}> already exists".format(category))
 
-            elif stype.lower() == 'zones':
+            elif stype.lower() == "zones":
                 if category not in project.zones.representations:
                     try:
-                        project.zones.representations.create(category, geom,
-                                                             dom)
+                        project.zones.representations.create(category, geom, dom)
                     except Exception as exmsg:
-                        print('Error: {}'.format(exmsg))
+                        print("Error: {}".format(exmsg))
                 else:
-                    print('Category <{}> already exists'.format(category))
+                    print("Category <{}> already exists".format(category))
 
-    def create_zones_category(self, category, domain='thickness',
-                              htype='surface'):
+    def create_zones_category(self, category, domain="thickness", htype="surface"):
         """Same as create_horizon_category, but with stype='zones'."""
 
-        self.create_horizon_category(category, stype='zones',
-                                     domain=domain, htype=htype)
+        self.create_horizon_category(
+            category, stype="zones", domain=domain, htype=htype
+        )
 
-    def delete_horizon_category(self, category, stype='horizons'):
+    def delete_horizon_category(self, category, stype="horizons"):
         """Delete onelayergrid or more horizons or zones categories.
 
         Args:
@@ -219,22 +220,22 @@ class RoxUtils(object):
             categories.extend(category)
 
         for category in categories:
-            if stype.lower() == 'horizons':
+            if stype.lower() == "horizons":
                 try:
                     del project.horizons.representations[category]
                 except KeyError as kerr:
                     if kerr == category:
-                        print('Cannot delete {}, does not exist'. format(kerr))
-            elif stype.lower() == 'zones':
+                        print("Cannot delete {}, does not exist".format(kerr))
+            elif stype.lower() == "zones":
                 try:
                     del project.horizons.representations[category]
                 except KeyError as kerr:
                     if kerr == category:
-                        print('Cannot delete {}, does not exist'. format(kerr))
+                        print("Cannot delete {}, does not exist".format(kerr))
             else:
-                raise ValueError('Wrong stype applied')
+                raise ValueError("Wrong stype applied")
 
     def delete_zones_category(self, category):
         """Delete on or more horizons or zones categories. See previous"""
 
-        self.delete_horizon_category(category, stype='zones')
+        self.delete_horizon_category(category, stype="zones")
