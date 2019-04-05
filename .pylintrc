@@ -27,3 +27,4 @@ disable=
     missing-docstring,
     protected-access,
     C0330,
+    useless-object-inheritance,

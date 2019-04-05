@@ -18,13 +18,14 @@ logger = xtg.functionlogger(__name__)
 # logger.info(roxmsg)
 
 # self is Grid() instance
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.syslevel
 
 
 # =============================================================================
 # Load/import
 # =============================================================================
+
 
 def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
     """Import a Grid via ROXAR API spec."""
@@ -33,23 +34,23 @@ def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
 
     proj = rox.project
 
-    logger.info('Loading grid ...')
+    logger.info("Loading grid with realisation %s...", realisation)
     try:
         if gname not in proj.grid_models:
-            raise KeyError('No such gridmodel: {}'.format(gname))
+            raise KeyError("No such gridmodel: {}".format(gname))
 
-        logger.info('Get roxgrid...')
+        logger.info("Get roxgrid...")
         roxgrid = proj.grid_models[gname].get_grid()
 
         if dimonly:
             corners = None
         else:
-            logger.info('Get corners...')
+            logger.info("Get corners...")
             corners = roxgrid.get_cell_corners_by_index()
-            logger.info('Get corners... done')
+            logger.info("Get corners... done")
 
         if info:
-            _display_roxapi_grid_info(self, rox, roxgrid, corners)
+            _display_roxapi_grid_info(rox, roxgrid)
 
         _convert_to_xtgeo_grid(self, rox, roxgrid, corners)
 
@@ -59,37 +60,37 @@ def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
     rox.safe_close()
 
 
-def _display_roxapi_grid_info(self, rox, roxgrid, corners):
+def _display_roxapi_grid_info(rox, roxgrid):
     # in prep!
     """Push info to screen (mostly for debugging)"""
     cpgeom = False
-    if rox.version_required('1.3'):
+    if rox.version_required("1.3"):
         cpgeom = True
 
     indexer = roxgrid.grid_indexer
-    ncol, nrow, nlay = indexer.dimensions
+    ncol, nrow, _nlay = indexer.dimensions
 
     if cpgeom:
-        xtg.say('ROXAPI with support for CornerPointGeometry')
+        xtg.say("ROXAPI with support for CornerPointGeometry")
         geom = roxgrid.get_geometry()
         defined_cells = geom.get_defined_cells()
-        xtg.say('Defined cells \n{}'.format(defined_cells))
+        xtg.say("Defined cells \n{}".format(defined_cells))
 
-        xtg.say('IJK handedness: {}'.format(geom.ijk_handedness))
+        xtg.say("IJK handedness: {}".format(geom.ijk_handedness))
         for ipi in range(ncol + 1):
             for jpi in range(nrow + 1):
                 tpi, bpi, zco = geom.get_pillar_data(ipi, jpi)
-                xtg.say('For pillar {}, {}\n'.format(ipi, jpi))
-                xtg.say('Tops\n{}'.format(tpi))
-                xtg.say('Bots\n{}'.format(bpi))
-                xtg.say('Depths\n{}'.format(zco))
+                xtg.say("For pillar {}, {}\n".format(ipi, jpi))
+                xtg.say("Tops\n{}".format(tpi))
+                xtg.say("Bots\n{}".format(bpi))
+                xtg.say("Depths\n{}".format(zco))
 
 
 def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     """Convert from RMS API to XTGeo API"""
 
-    logger.info('Converting to XTGeo internals...')
-    logger.info('Call the ROXAPI grid indexer')
+    logger.info("Converting to XTGeo internals...")
+    logger.info("Call the ROXAPI grid indexer")
     indexer = roxgrid.grid_indexer
 
     ncol, nrow, nlay = indexer.dimensions
@@ -101,18 +102,18 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     self._nlay = nlay
 
     if corners is None:
-        logger.info('Asked for dimensions_only: No geometry read!')
+        logger.info("Asked for dimensions_only: No geometry read!")
         return
 
-    logger.info('Get active cells')
+    logger.info("Get active cells")
     mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
 
     mybuffer.fill(0)
 
-    logger.info('Get cell numbers')
+    logger.info("Get cell numbers")
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
-    logger.info('Reorder...')
+    logger.info("Reorder...")
     ijk = indexer.get_indices(cellno)
 
     iind = ijk[:, 0]
@@ -125,15 +126,15 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
 
     actnum = mybuffer
 
-    if rox.version_required('1.3'):
-        logger.info('Handedness (new) %s', indexer.ijk_handedness)
+    if rox.version_required("1.3"):
+        logger.info("Handedness (new) %s", indexer.ijk_handedness)
     else:
-        logger.info('Handedness (old) %s', indexer.handedness)
+        logger.info("Handedness (old) %s", indexer.handedness)
 
-    corners = corners.ravel(order='K')
-    actnum = actnum.ravel(order='K')
+    corners = corners.ravel(order="K")
+    actnum = actnum.ravel(order="K")
 
-    logger.info('Convert to C pointers...')
+    logger.info("Convert to C pointers...")
 
     nnum = ncol * nrow * nlay * 24
     ccorners = _cxtgeo.new_doublearray(nnum)
@@ -150,23 +151,32 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     _cxtgeo.swig_numpy_to_carr_i1d(actnum, cactnum)
 
     # next task is to convert geometry to cxtgeo internal format
-    logger.info('Run XTGeo C code...')
-    _cxtgeo.grd3d_conv_roxapi_grid(ncol, nrow, nlay, ntot, cactnum, ccorners,
-                                   self._p_coord_v, self._p_zcorn_v,
-                                   self._p_actnum_v, XTGDEBUG)
-    logger.info('Run XTGeo C code... done')
+    logger.info("Run XTGeo C code...")
+    _cxtgeo.grd3d_conv_roxapi_grid(
+        ncol,
+        nrow,
+        nlay,
+        ntot,
+        cactnum,
+        ccorners,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        XTGDEBUG,
+    )
+    logger.info("Run XTGeo C code... done")
 
     _cxtgeo.delete_doublearray(ccorners)
     _cxtgeo.delete_intarray(cactnum)
-    logger.info('Converting to XTGeo internals... done')
+    logger.info("Converting to XTGeo internals... done")
 
 
 # =============================================================================
 # Save/export
 # =============================================================================
 
-def export_grid_roxapi(self, projectname, gname, realisation, info=False,
-                       method='cpg'):
+
+def export_grid_roxapi(self, projectname, gname, realisation, info=False, method="cpg"):
     """Export (i.e. store in RMS) via ROXAR API spec.
 
     Using method 'cpg' means that the CPG method is applied (from ROXAPI 1.3).
@@ -179,17 +189,20 @@ def export_grid_roxapi(self, projectname, gname, realisation, info=False,
     """
     rox = RoxUtils(projectname, readonly=False)
 
-    if method != 'cpg' and not rox.version_required('1.2'):
-        raise NotImplementedError('Grid load/import not possible in this API '
-                                  'version: {}. Version 1.2 is required'
-                                  .format(rox.version))
+    if method != "cpg" and not rox.version_required("1.2"):
+        raise NotImplementedError(
+            "Grid load/import not possible in this API "
+            "version: {}. Version 1.2 is required".format(rox.roxversion)
+        )
 
-    if method == 'cpg' and not rox.version_required('1.3'):
-        xtg.warn('Export method=cpg is not implemented for ROXAPI '
-                 'version {}. Change to workaround...'.format(rox.roxversion))
-        method = 'other'
+    if method == "cpg" and not rox.version_required("1.3"):
+        xtg.warn(
+            "Export method=cpg is not implemented for ROXAPI "
+            "version {}. Change to workaround...".format(rox.roxversion)
+        )
+        method = "other"
 
-    if method == 'cpg':
+    if method == "cpg":
         _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info)
     else:
         _export_grid_viaroff_roxapi(self, rox, gname, realisation)
@@ -202,7 +215,7 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
 
     from roxar.grids import CornerPointGridGeometry as CPG
 
-    logger.info('Load grid via CornerPointGridGeometry...')
+    logger.info("Load grid via CornerPointGridGeometry...")
 
     grid_model = rox.project.grid_models.create(gname)
     grid_model.set_empty(realisation)
@@ -215,9 +228,18 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * 4 * (self.nlay + 1)
 
-    ier, tpi, bpi, zco = _cxtgeo.grd3d_conv_grid_roxapi(
-        self.ncol, self.nrow, self.nlay, self._p_coord_v, self._p_zcorn_v,
-        self._p_actnum_v, npill, npill, nzcrn, XTGDEBUG)
+    _ier, tpi, bpi, zco = _cxtgeo.grd3d_conv_grid_roxapi(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        npill,
+        npill,
+        nzcrn,
+        XTGDEBUG,
+    )
 
     tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)
     bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
@@ -228,17 +250,20 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     for ipi in range(self.ncol + 1):
         for jpi in range(self.nrow + 1):
             zzco = zco[ipi, jpi].reshape((self.nlay + 1), 4).T
-            geom.set_pillar_data(ipi, jpi,
-                                 top_point=tpi[ipi, jpi],
-                                 bottom_point=bpi[ipi, jpi],
-                                 depth_values=zzco)
+            geom.set_pillar_data(
+                ipi,
+                jpi,
+                top_point=tpi[ipi, jpi],
+                bottom_point=bpi[ipi, jpi],
+                depth_values=zzco,
+            )
             if info and ipi < 5 and jpi < 5:
                 if ipi == 0 and jpi == 0:
-                    xtg.say('Showing info for i<5 and j<5 only!')
-                xtg.say('XTGeo pillar {}, {}\n'.format(ipi, jpi))
-                xtg.say('XTGeo Tops\n{}'.format(tpi[ipi, jpi]))
-                xtg.say('XTGeo Bots\n{}'.format(bpi[ipi, jpi]))
-                xtg.say('XTGeo Depths\n{}'.format(zzco))
+                    xtg.say("Showing info for i<5 and j<5 only!")
+                xtg.say("XTGeo pillar {}, {}\n".format(ipi, jpi))
+                xtg.say("XTGeo Tops\n{}".format(tpi[ipi, jpi]))
+                xtg.say("XTGeo Bots\n{}".format(bpi[ipi, jpi]))
+                xtg.say("XTGeo Depths\n{}".format(zzco))
 
     geom.set_defined_cells(self.get_actnum().values.astype(np.bool))
     grid.set_geometry(geom)
@@ -247,11 +272,11 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
 def _export_grid_viaroff_roxapi(self, rox, gname, realisation):
     """Convert xtgeo geometry to internal RMS via i/o ROFF tricks"""
 
-    # realisation?
+    logger.info("Realisation is %s", realisation)
 
     # make a temporary folder and work within the with.. block
     with tempfile.TemporaryDirectory() as tmpdir:
-        logger.info('Made a tmp folder: %s', tmpdir)
+        logger.info("Made a tmp folder: %s", tmpdir)
 
         fname = os.path.join(tmpdir, gname)
         self.to_file(fname)
@@ -260,8 +285,8 @@ def _export_grid_viaroff_roxapi(self, rox, gname, realisation):
 
         try:
             del grd[gname]
-            logger.info('Overwriting existing grid in RMS')
+            logger.info("Overwriting existing grid in RMS")
         except KeyError:
-            logger.info('Grid in RMS is new')
+            logger.info("Grid in RMS is new")
 
         grd.load(fname)
