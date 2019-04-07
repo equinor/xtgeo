@@ -13,6 +13,7 @@ logger = xtg.functionlogger(__name__)
 
 class BasePlot(object):
     """Base class for plots, providing some functions to share"""
+
     def __init__(self):
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
@@ -24,7 +25,7 @@ class BasePlot(object):
         self._showok = True
         self._fig = None
 
-        logger.info('Ran __init__ ...')
+        logger.info("Ran __init__ ...")
 
     @property
     def contourlevels(self):
@@ -32,8 +33,8 @@ class BasePlot(object):
         return self._contourlevels
 
     @contourlevels.setter
-    def contourlevels(self, n):
-        self._contourlevels = n
+    def contourlevels(self, num):
+        self._contourlevels = num
 
     @property
     def colormap(self):
@@ -46,12 +47,12 @@ class BasePlot(object):
         if isinstance(cmap, LinearSegmentedColormap):
             self._colormap = cmap
         elif isinstance(cmap, str):
-            logger.info('Definition of a colormap from string name...')
+            logger.info("Definition of a colormap from string name...")
             self.define_colormap(cmap)
         else:
-            raise ValueError('Input incorrect')
+            raise ValueError("Input incorrect")
 
-        logger.info('Colormap: %s', self._colormap)
+        logger.info("Colormap: %s", self._colormap)
 
     @staticmethod
     def define_any_colormap(cfile, colorlist=None):
@@ -73,33 +74,29 @@ class BasePlot(object):
 
         colors = []
 
-        cmap = plt.get_cmap('rainbow')
+        cmap = plt.get_cmap("rainbow")
 
         if cfile is None:
-            cfile = 'rainbow'
-            cmap = plt.get_cmap('rainbow')
+            cfile = "rainbow"
+            cmap = plt.get_cmap("rainbow")
 
-        elif cfile == 'xtgeo':
+        elif cfile == "xtgeo":
             colors = _ctable.xtgeocolors()
-            cmap = LinearSegmentedColormap.from_list(cfile, colors,
-                                                     N=len(colors))
-            cmap.name = 'xtgeo'
-        elif cfile == 'random40':
+            cmap = LinearSegmentedColormap.from_list(cfile, colors, N=len(colors))
+            cmap.name = "xtgeo"
+        elif cfile == "random40":
             colors = _ctable.random40()
-            cmap = LinearSegmentedColormap.from_list(cfile, colors,
-                                                     N=len(colors))
-            cmap.name = 'random40'
+            cmap = LinearSegmentedColormap.from_list(cfile, colors, N=len(colors))
+            cmap.name = "random40"
 
-        elif cfile == 'randomc':
+        elif cfile == "randomc":
             colors = _ctable.randomc(256)
-            cmap = LinearSegmentedColormap.from_list(cfile, colors,
-                                                     N=len(colors))
-            cmap.name = 'randomc'
+            cmap = LinearSegmentedColormap.from_list(cfile, colors, N=len(colors))
+            cmap.name = "randomc"
 
-        elif isinstance(cfile, str) and 'rms' in cfile:
+        elif isinstance(cfile, str) and "rms" in cfile:
             colors = _ctable.colorsfromfile(cfile)
-            cmap = LinearSegmentedColormap.from_list('rms', colors,
-                                                     N=len(colors))
+            cmap = LinearSegmentedColormap.from_list("rms", colors, N=len(colors))
             cmap.name = cfile
         elif cfile in valid_maps:
             cmap = plt.get_cmap(cfile)
@@ -107,7 +104,7 @@ class BasePlot(object):
             for i in range(cmap.N):
                 colors.append(cmap(i))
         else:
-            cmap = plt.get_cmap('rainbow')
+            cmap = plt.get_cmap("rainbow")
             logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
@@ -119,12 +116,11 @@ class BasePlot(object):
                 if entry < len(colors):
                     ctable.append(colors[entry])
                 else:
-                    logger.warn('Color list out of range')
+                    logger.warn("Color list out of range")
                     ctable.append(colors[0])
 
-            cmap = LinearSegmentedColormap.from_list(ctable, colors,
-                                                     N=len(colors))
-            cmap.name = 'user'
+            cmap = LinearSegmentedColormap.from_list(ctable, colors, N=len(colors))
+            cmap.name = "user"
 
         return cmap
 
@@ -156,7 +152,7 @@ class BasePlot(object):
                 from 0 index. Default is just keep the linear sequence as is.
 
         """
-        logger.info('Defining colormap')
+        logger.info("Defining colormap")
 
         cmap = self.define_any_colormap(cfile, colorlist=colorlist)
 
@@ -173,14 +169,14 @@ class BasePlot(object):
             self._fig.tight_layout()
 
         if self._showok:
-            logger.info('Calling plt show method...')
+            logger.info("Calling plt show method...")
             plt.show()
             return True
-        else:
-            logger.warning("Nothing to plot (well outside Z range?)")
-            return False
 
-    def savefig(self, filename, fformat='png', last=True):
+        logger.warning("Nothing to plot (well outside Z range?)")
+        return False
+
+    def savefig(self, filename, fformat="png", last=True):
         """Call to matplotlib.pyplot savefig().
 
         Args:
@@ -206,6 +202,6 @@ class BasePlot(object):
             if last:
                 plt.close(self._fig)
             return True
-        else:
-            logger.warning("Nothing to plot (well outside Z range?)")
-            return False
+
+        logger.warning("Nothing to plot (well outside Z range?)")
+        return False

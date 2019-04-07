@@ -31,6 +31,7 @@ class Map(BasePlot):
         self._surface = None
         self._tight = False
 
+        self._ax = None
         self._pagesize = "A4"
         self._wfence = None
         self._showok = True  # to indicate if plot is OK to show
@@ -79,7 +80,8 @@ class Map(BasePlot):
         xlabelrotation=None,
         colormap=None,
         logarithmic=False,
-    ):
+    ):  # pylint: disable=too-many-statements
+
         """Input a surface and plot it."""
 
         # need a deep copy to avoid changes in the original surf
@@ -204,7 +206,7 @@ class Map(BasePlot):
 
         aff = fpoly.dataframe.groupby(idname)
 
-        for name, group in aff:
+        for name, _group in aff:
 
             # make a dataframe sorted on faults (groupname)
             myfault = aff.get_group(name)
@@ -217,10 +219,10 @@ class Map(BasePlot):
                 # make a numpy (X,Y) list from pandas series
                 af = myfault[["X_UTME", "Y_UTMN"]].values
 
-            p = mplp.Polygon(af, alpha=0.7, color=color, ec=edgecolor, lw=linewidth)
+            px = mplp.Polygon(af, alpha=alpha, color=color, ec=edgecolor, lw=linewidth)
 
-            if p.get_closed():
-                self._ax.add_artist(p)
+            if px.get_closed():
+                self._ax.add_artist(px)
             else:
                 print("A polygon is not closed...")
 
@@ -259,37 +261,3 @@ class Map(BasePlot):
             yval = dataframe["Y_UTMN"].values
             self._ax.plot(xval, yval)
             self._ax.annotate(well.name, xy=(xval[-1], yval[-1]))
-
-    def show(self):
-        """Call to matplotlib.pyplot show().
-
-        Returns:
-            True of plotting is done; otherwise False
-        """
-        if self._tight:
-            self._fig.tight_layout()
-
-        if self._showok:
-            logger.info("Calling plt show method...")
-            plt.show()
-            return True
-        else:
-            logger.warning("Nothing to plot (well outside Z range?)")
-            return False
-
-    def savefig(self, filename, fformat="png"):
-        """Call to matplotlib.pyplot savefig().
-
-        Returns:
-            True of plotting is done; otherwise False
-        """
-        if self._tight:
-            self._fig.tight_layout()
-
-        if self._showok:
-            plt.savefig(filename, format=fformat)
-            plt.close(self._fig)
-            return True
-        else:
-            logger.warning("Nothing to plot (well outside Z range?)")
-            return False

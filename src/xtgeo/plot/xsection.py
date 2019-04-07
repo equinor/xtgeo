@@ -32,9 +32,20 @@ class XSection(BasePlot):
 
     """
 
-    def __init__(self, zmin=0, zmax=9999, well=None, surfaces=None,
-                 colormap=None, zonelogshift=0, surfacenames=None,
-                 cube=None, outline=None, tight=False):
+    def __init__(
+        self,
+        zmin=0,
+        zmax=9999,
+        well=None,
+        surfaces=None,
+        colormap=None,
+        zonelogshift=0,
+        surfacenames=None,
+        cube=None,
+        outline=None,
+    ):
+
+        super(XSection, self).__init__()
 
         self._zmin = zmin
         self._zmax = zmax
@@ -43,31 +54,33 @@ class XSection(BasePlot):
         self._surfacenames = surfacenames
         self._cube = cube
         self._zonelogshift = zonelogshift
-        self._tight = tight
         self._outline = outline
 
-        self._pagesize = 'A4'
+        self._pagesize = "A4"
         self._wfence = None
-        self._showok = True  # to indicate if plot is OK to show
-        self._legendtitle = 'Zones'
+        self._legendtitle = "Zones"
         self._legendsize = 5
+
+        self._ax1 = None
+        self._ax2 = None
+        self._ax3 = None
 
         self._colormap_cube = None
         self._colorlegend_cube = False
 
         if colormap is None:
-            self._colormap = plt.cm.viridis
+            self._colormap = plt.cm.get_cmap("viridis")
         else:
             self.define_colormap(colormap)
 
-        self._colormap_facies = self.define_any_colormap('xtgeo')
+        self._colormap_facies = self.define_any_colormap("xtgeo")
         self._colormap_facies_dict = {idx: idx for idx in range(100)}
 
-        self._colormap_perf = self.define_any_colormap('xtgeo')
+        self._colormap_perf = self.define_any_colormap("xtgeo")
         self._colormap_perf_dict = {idx: idx for idx in range(100)}
 
-        logger.info('Ran __init__ ...')
-        logger.info('Colormap is {}'.format(self._colormap))
+        logger.info("Ran __init__ ...")
+        logger.info("Colormap is %s", self._colormap)
 
     # =========================================================================
     # Properties
@@ -113,7 +126,7 @@ class XSection(BasePlot):
     @colormap_facies_dict.setter
     def colormap_facies_dict(self, xdict):
         if not isinstance(xdict, dict):
-            raise ValueError('Input is not a dict')
+            raise ValueError("Input is not a dict")
 
         # if not all(isinstance(item, int) for item in list(xdict.values)):
         #     raise ValueError('Dict values is a list, but some elems are '
@@ -129,7 +142,7 @@ class XSection(BasePlot):
     @colormap_perf_dict.setter
     def colormap_perf_dict(self, xdict):
         if not isinstance(xdict, dict):
-            raise ValueError('Input is not a dict')
+            raise ValueError("Input is not a dict")
 
         # if not all(isinstance(item, int) for item in list(xdict.values)):
         #     raise ValueError('Dict values is a list, but some elems are '
@@ -141,8 +154,7 @@ class XSection(BasePlot):
     # Functions methods (public)
     # =========================================================================
 
-    def canvas(self, title=None, subtitle=None, infotext=None,
-               figscaling=1.0):
+    def canvas(self, title=None, subtitle=None, infotext=None, figscaling=1.0):
         """Prepare the canvas to plot on, with title and subtitle.
 
         Args:
@@ -154,48 +166,90 @@ class XSection(BasePlot):
 
         """
 
-        plt.rcParams['axes.xmargin'] = 0  # fill the plot margins
+        plt.rcParams["axes.xmargin"] = 0  # fill the plot margins
 
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
-        self._fig, __ = plt.subplots(figsize=(11.69 * figscaling,
-                                              8.27 * figscaling))
+        self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1['main'] = plt.subplot2grid((20, 28), (0, 0), rowspan=20,
-                                       colspan=23)
+        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
-        ax2 = plt.subplot2grid((20, 28), (10, 23), rowspan=5,
-                               colspan=5)
-        ax3 = plt.subplot2grid((20, 28), (15, 23), rowspan=5,
-                               colspan=5)
+        ax2 = plt.subplot2grid((20, 28), (10, 23), rowspan=5, colspan=5)
+        ax3 = plt.subplot2grid((20, 28), (15, 23), rowspan=5, colspan=5)
         # indicate A to B
-        plt.text(0.02, 0.98, 'A', ha='left', va='top',
-                 transform=ax1['main'].transAxes, fontsize=8)
-        plt.text(0.98, 0.98, 'B', ha='right', va='top',
-                 transform=ax1['main'].transAxes, fontsize=8)
+        plt.text(
+            0.02,
+            0.98,
+            "A",
+            ha="left",
+            va="top",
+            transform=ax1["main"].transAxes,
+            fontsize=8,
+        )
+        plt.text(
+            0.98,
+            0.98,
+            "B",
+            ha="right",
+            va="top",
+            transform=ax1["main"].transAxes,
+            fontsize=8,
+        )
 
         # title her:
         if title is not None:
-            plt.text(0.5, 1.09, title, ha='center', va='center',
-                     transform=ax1['main'].transAxes, fontsize=18)
+            plt.text(
+                0.5,
+                1.09,
+                title,
+                ha="center",
+                va="center",
+                transform=ax1["main"].transAxes,
+                fontsize=18,
+            )
 
         if subtitle is not None:
-            ax1['main'].set_title(subtitle, size=14)
+            ax1["main"].set_title(subtitle, size=14)
 
         if infotext is not None:
-            plt.text(-0.11, -0.11, infotext, ha='left', va='center',
-                     transform=ax1['main'].transAxes, fontsize=6)
+            plt.text(
+                -0.11,
+                -0.11,
+                infotext,
+                ha="left",
+                va="center",
+                transform=ax1["main"].transAxes,
+                fontsize=6,
+            )
 
-        ax1['main'].set_ylabel('Depth', fontsize=12.0)
-        ax1['main'].set_xlabel('Length along well', fontsize=12)
+        ax1["main"].set_ylabel("Depth", fontsize=12.0)
+        ax1["main"].set_xlabel("Length along well", fontsize=12)
 
-        ax2.tick_params(axis='both', which='both', bottom=False, top=False,
-                        right=False, left=False, labelbottom=False,
-                        labeltop=False, labelright=False, labelleft=False)
+        ax2.tick_params(
+            axis="both",
+            which="both",
+            bottom=False,
+            top=False,
+            right=False,
+            left=False,
+            labelbottom=False,
+            labeltop=False,
+            labelright=False,
+            labelleft=False,
+        )
 
-        ax3.tick_params(axis='both', which='both', bottom=False, top=False,
-                        right=False, left=False, labelbottom=False,
-                        labeltop=False, labelright=False, labelleft=False)
+        ax3.tick_params(
+            axis="both",
+            which="both",
+            bottom=False,
+            top=False,
+            right=False,
+            left=False,
+            labelbottom=False,
+            labeltop=False,
+            labelright=False,
+            labelleft=False,
+        )
 
         # need these also, a bug in functions above?
         ax2.xaxis.set_major_formatter(plt.NullFormatter())
@@ -207,14 +261,19 @@ class XSection(BasePlot):
         self._ax2 = ax2
         self._ax3 = ax3
 
-    def plot_well(self, zonelogname='ZONELOG', facieslogname=None,
-                  perflogname=None, wellcrossings=None):
+    def plot_well(
+        self,
+        zonelogname="ZONELOG",
+        facieslogname=None,
+        perflogname=None,
+        wellcrossings=None,
+    ):
         """Input an XTGeo Well object and plot it."""
         wo = self._well
 
         # reduce the well data by Pandas operations
         dfr = wo.dataframe
-        wo.dataframe = dfr[dfr['Z_TVDSS'] > self._zmin]
+        wo.dataframe = dfr[dfr["Z_TVDSS"] > self._zmin]
 
         # Create a relative XYLENGTH vector (0.0 where well starts)
         wo.create_relative_hlen()
@@ -225,20 +284,20 @@ class XSection(BasePlot):
             return
 
         # get the well trajectory (numpies) as copy
-        zv = dfr['Z_TVDSS'].values.copy()
-        hv = dfr['R_HLEN'].values.copy()
+        zv = dfr["Z_TVDSS"].values.copy()
+        hv = dfr["R_HLEN"].values.copy()
 
         # plot the perflog, if any, first
         if perflogname:
-            ax, bba = self._currentax(axisname='perf')
+            ax, bba = self._currentax(axisname="perf")
             self._plot_well_perflog(dfr, ax, bba, zv, hv, perflogname)
 
         # plot the facies, if any, behind the trajectory; ie. first or second
         if facieslogname:
-            ax, bba = self._currentax(axisname='facies')
+            ax, bba = self._currentax(axisname="facies")
             self._plot_well_faclog(dfr, ax, bba, zv, hv, facieslogname)
 
-        axx, bbxa = self._currentax(axisname='well')
+        axx, _bbxa = self._currentax(axisname="well")
         self._plot_well_traj(axx, zv, hv)
 
         if zonelogname:
@@ -256,8 +315,7 @@ class XSection(BasePlot):
         zv_copy = ma.masked_where(zv < self._zmin, zv)
         hv_copy = ma.masked_where(zv < self._zmin, hv)
 
-        ax.plot(hv_copy, zv_copy, linewidth=6,
-                c='black')
+        ax.plot(hv_copy, zv_copy, linewidth=6, c="black")
 
     def _plot_well_zlog(self, df, ax, zv, hv, zonelogname):
         """Plot the zone log as colored segments."""
@@ -276,7 +334,7 @@ class XSection(BasePlot):
             self._showok = False
             return
 
-        logger.info('ZONELOG min - max is {} - {}'.format(zomin, zomax))
+        logger.info("ZONELOG min - max is %s - %s", zomin, zomax)
 
         zshift = 0
         if self._zonelogshift != 0:
@@ -296,14 +354,11 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(zo != zone, zv)
             hv_copy = ma.masked_where(zo != zone, hv)
 
-            logger.debug('Zone is {}, color no is {}'.
-                         format(zone, zone + zshift - 1))
+            logger.debug("Zone is %s, color no is %s", zone, zone + zshift - 1)
 
-            ax.plot(hv_copy, zv_copy, linewidth=4, c=color,
-                    solid_capstyle='butt')
+            ax.plot(hv_copy, zv_copy, linewidth=4, c=color, solid_capstyle="butt")
 
-    def _plot_well_faclog(self, df, ax, bba, zv, hv, facieslogname,
-                          facieslist=None):
+    def _plot_well_faclog(self, df, ax, bba, zv, hv, facieslogname, facieslist=None):
         """Plot the facies log as colored segments.
 
         Args:
@@ -340,13 +395,18 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(fa != fcc, zv)
             hv_copy = ma.masked_where(fa != fcc, hv)
 
-            myline, = ax.plot(hv_copy, zv_copy, linewidth=9, c=color,
-                              label=frecord[fcc], solid_capstyle='butt')
+            _myline, = ax.plot(
+                hv_copy,
+                zv_copy,
+                linewidth=9,
+                c=color,
+                label=frecord[fcc],
+                solid_capstyle="butt",
+            )
 
-        self._drawlegend(ax, bba, title='Facies')
+        self._drawlegend(ax, bba, title="Facies")
 
-    def _plot_well_perflog(self, df, ax, bba, zv, hv, perflogname,
-                           perflist=None):
+    def _plot_well_perflog(self, df, ax, bba, zv, hv, perflogname, perflist=None):
         """Plot the perforation log as colored segments.
 
         Args:
@@ -385,12 +445,19 @@ class XSection(BasePlot):
             zv_copy = ma.masked_where(perf != prf, zv)
             hv_copy = ma.masked_where(perf != prf, hv)
 
-            ax.plot(hv_copy, zv_copy, linewidth=15, c=color,
-                    label=precord[perf], solid_capstyle='butt')
+            ax.plot(
+                hv_copy,
+                zv_copy,
+                linewidth=15,
+                c=color,
+                label=precord[perf],
+                solid_capstyle="butt",
+            )
 
-        self._drawlegend(ax, bba, title='Perforations')
+        self._drawlegend(ax, bba, title="Perforations")
 
-    def _plot_well_crossings(self, dfr, ax, wcross):
+    @staticmethod
+    def _plot_well_crossings(dfr, ax, wcross):
         """Plot well crossing based on dataframe (wcross)
 
         The well crossing coordinates are identified for this well,
@@ -410,76 +477,98 @@ class XSection(BasePlot):
             wcross: A pandas dataframe with precomputed well crossings
         """
 
-        for index, row in wcross.iterrows():
+        for _index, row in wcross.iterrows():
             xcoord = row.UTMX
             ycoord = row.UTMY
 
             dfrc = dfr.copy()
 
-            dfrc['DLEN'] = pow(pow(dfrc.X_UTME - xcoord, 2) +
-                               pow(dfrc.Y_UTMN - ycoord, 2), 0.5)
+            dfrc["DLEN"] = pow(
+                pow(dfrc.X_UTME - xcoord, 2) + pow(dfrc.Y_UTMN - ycoord, 2), 0.5
+            )
 
             minindx = dfrc.DLEN.idxmin()
 
-            ax.scatter(dfrc.R_HLEN[minindx], row.Z_TVDSS,
-                       marker='o', color='black', s=70, zorder=100)
-            ax.scatter(dfrc.R_HLEN[minindx], row.Z_TVDSS,
-                       marker='o', color='orange', s=38, zorder=102)
-            ax.annotate(row.CWELL, size=6,
-                        xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
-                        xytext=(40, 40),
-                        textcoords='offset points',
-                        arrowprops=dict(
-                            arrowstyle='->',
-                            connectionstyle='angle3,angleA=0,angleB=90'),
-                        color='black', )
+            ax.scatter(
+                dfrc.R_HLEN[minindx],
+                row.Z_TVDSS,
+                marker="o",
+                color="black",
+                s=70,
+                zorder=100,
+            )
+            ax.scatter(
+                dfrc.R_HLEN[minindx],
+                row.Z_TVDSS,
+                marker="o",
+                color="orange",
+                s=38,
+                zorder=102,
+            )
+            ax.annotate(
+                row.CWELL,
+                size=6,
+                xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
+                xytext=(40, 40),
+                textcoords="offset points",
+                arrowprops=dict(
+                    arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
+                ),
+                color="black",
+            )
 
     def _drawlegend(self, ax, bba, title=None):
 
-        leg = ax.legend(loc='upper left', bbox_to_anchor=bba,
-                        prop={'size': self._legendsize}, title=title,
-                        handlelength=2)
+        leg = ax.legend(
+            loc="upper left",
+            bbox_to_anchor=bba,
+            prop={"size": self._legendsize},
+            title=title,
+            handlelength=2,
+        )
 
         for myleg in leg.get_lines():
             myleg.set_linewidth(5)
 
-    def _currentax(self, axisname='main'):
+    def _currentax(self, axisname="main"):
         """Keep track of current axis; is needed as one new legend need one
         new axis.
         """
         # for multiple legends, bba is dynamic
         bbapos = {
-            'main': (1.22, 1.12, 1, 0),
-            'contacts': (1.01, 1.12),
-            'second': (1.22, 0.50),
-            'facies': (1.01, 1.00),
-            'perf': (1.22, 0.45)
+            "main": (1.22, 1.12, 1, 0),
+            "contacts": (1.01, 1.12),
+            "second": (1.22, 0.50),
+            "facies": (1.01, 1.00),
+            "perf": (1.22, 0.45),
         }
 
         ax1 = self._ax1
 
-        if axisname != 'main':
-            ax1[axisname] = self._ax1['main'].twinx()
+        if axisname != "main":
+            ax1[axisname] = self._ax1["main"].twinx()
 
             # invert min,max to invert the Y axis
             ax1[axisname].set_ylim([self._zmax, self._zmin])
 
             ax1[axisname].set_yticklabels([])
-            ax1[axisname].tick_params(axis='y', direction='in')
+            ax1[axisname].tick_params(axis="y", direction="in")
 
         ax = self._ax1[axisname]
 
-        if axisname in bbapos:
-            bba = bbapos[axisname]
-        else:
-            bba = (1.22, 0.5)
+        bba = bbapos.get(axisname, (1.22, 0.5))
 
         return ax, bba
 
-    def plot_cube(self, colormap='seismic',
-                  vmin=None, vmax=None, alpha=0.7,
-                  interpolation='gaussian',
-                  sampling='nearest'):
+    def plot_cube(
+        self,
+        colormap="seismic",
+        vmin=None,
+        vmax=None,
+        alpha=0.7,
+        interpolation="gaussian",
+        sampling="nearest",
+    ):
         """Plot a cube backdrop.
 
         Args:
@@ -497,58 +586,79 @@ class XSection(BasePlot):
 
         """
         if self._cube is None:
-            raise ValueError('Ask for plot cube, but noe cube is loaded')
+            raise ValueError("Ask for plot cube, but noe cube is loaded")
 
-        ax, bba = self._currentax(axisname='main')
+        ax, _bba = self._currentax(axisname="main")
 
         if self._wfence is None:
-            wfence = self._well.get_fence_polyline(sampling=20, extend=5,
-                                                   tvdmin=self._zmin)
+            wfence = self._well.get_fence_polyline(
+                sampling=20, extend=5, tvdmin=self._zmin
+            )
             if wfence is False:
                 return
             self._wfence = wfence
 
         zinc = self._cube.zinc / 2.0
 
-        zvv = self._cube.get_randomline(self._wfence, zmin=self._zmin,
-                                        zmax=self._zmax, zincrement=zinc,
-                                        sampling=sampling)
+        zvv = self._cube.get_randomline(
+            self._wfence,
+            zmin=self._zmin,
+            zmax=self._zmax,
+            zincrement=zinc,
+            sampling=sampling,
+        )
 
         h1, h2, v1, v2, arr = zvv
 
         # if vmin is not None or vmax is not None:
         #     arr = np.clip(arr, vmin, vmax)
 
-        logger.info('Number of masked elems: %s', ma.count_masked(arr))
+        logger.info("Number of masked elems: %s", ma.count_masked(arr))
 
         if self._colormap_cube is None:
             if colormap is None:
-                colormap = 'seismic'
+                colormap = "seismic"
             self._colormap_cube = self.define_any_colormap(colormap)
 
-        if 'gaussian' in interpolation:  # allow gaussian3 etc
+        if "gaussian" in interpolation:  # allow gaussian3 etc
             nnv = interpolation[-1]
             try:
                 nnv = int(nnv)
                 arr = gaussian_filter(arr, nnv)
-                interpolation = 'none'
+                interpolation = "none"
             except ValueError:
-                interpolation = 'gaussian'
+                interpolation = "gaussian"
 
-        img = ax.imshow(arr, cmap=self._colormap_cube,
-                        interpolation=interpolation,
-                        vmin=vmin, vmax=vmax,
-                        extent=(h1, h2, v2, v1), aspect='auto', alpha=alpha)
+        img = ax.imshow(
+            arr,
+            cmap=self._colormap_cube,
+            interpolation=interpolation,
+            vmin=vmin,
+            vmax=vmax,
+            extent=(h1, h2, v2, v1),
+            aspect="auto",
+            alpha=alpha,
+        )
 
-        logger.info('Actual VMIN and VMAX: %s', img.get_clim())
+        logger.info("Actual VMIN and VMAX: %s", img.get_clim())
         # steer this?
         if self._colorlegend_cube:
             self._fig.colorbar(img, ax=ax)
 
-    def plot_surfaces(self, fill=False, surfaces=None, surfacenames=None,
-                      colormap=None, onecolor=None, linewidth=1.0, legend=True,
-                      legendtitle=None, fancyline=False, axisname='main',
-                      gridlines=False):
+    def plot_surfaces(
+        self,
+        fill=False,
+        surfaces=None,
+        surfacenames=None,
+        colormap=None,
+        onecolor=None,
+        linewidth=1.0,
+        legend=True,
+        legendtitle=None,
+        fancyline=False,
+        axisname="main",
+        gridlines=False,
+    ):  # pylint: disable=too-many-branches, too-many-statements
 
         """Input a surface list (ordered from top to base) , and plot them."""
 
@@ -576,29 +686,32 @@ class XSection(BasePlot):
         slegend = []
         if surfacenames is None:
             for i in range(nlen):
-                slegend.append('Surf {}'.format(i))
+                slegend.append("Surf {}".format(i))
 
         else:
             # do a check
             if len(surfacenames) != nlen:
-                msg = ('Wrong number of entries in surfacenames! '
-                       'Number of names is {} while number of files '
-                       'is {}'.format(len(surfacenames), nlen))
+                msg = (
+                    "Wrong number of entries in surfacenames! "
+                    "Number of names is {} while number of files "
+                    "is {}".format(len(surfacenames), nlen)
+                )
                 logger.critical(msg)
                 raise SystemExit(msg)
-            else:
-                slegend = surfacenames
+
+            slegend = surfacenames
 
         if self._colormap.N < nlen:
-            msg = 'Too few colors in color table vs number of surfaces'
+            msg = "Too few colors in color table vs number of surfaces"
             raise SystemExit(msg)
 
         # need to resample the surface along the well trajectory
         # create a sampled fence from well path, and include extension
         # This fence is numpy vector [[XYZ ...]]
         if self._wfence is None:
-            wfence = self._well.get_fence_polyline(sampling=20, extend=5,
-                                                   tvdmin=self._zmin)
+            wfence = self._well.get_fence_polyline(
+                sampling=20, extend=5, tvdmin=self._zmin
+            )
             if wfence is False:
                 return
 
@@ -616,19 +729,24 @@ class XSection(BasePlot):
             if not fill:
                 hfence = surfaces[i].get_fence(self._wfence)
                 if fancyline:
-                    xcol = 'white'
-                    c = usecolor
-                    if c[0] + c[1] + c[2] > 1.5:
-                        xcol = 'black'
-                    ax.plot(hfence[:, 3], hfence[:, 2],
-                            linewidth=1.2 * linewidth,
-                            c=xcol)
-                ax.plot(hfence[:, 3], hfence[:, 2], linewidth=linewidth,
-                        c=usecolor, label=slegend[i])
+                    xcol = "white"
+                    cxx = usecolor
+                    if cxx[0] + cxx[1] + cxx[2] > 1.5:
+                        xcol = "black"
+                    ax.plot(
+                        hfence[:, 3], hfence[:, 2], linewidth=1.2 * linewidth, c=xcol
+                    )
+                ax.plot(
+                    hfence[:, 3],
+                    hfence[:, 2],
+                    linewidth=linewidth,
+                    c=usecolor,
+                    label=slegend[i],
+                )
                 if fancyline:
-                    ax.plot(hfence[:, 3], hfence[:, 2],
-                            linewidth=0.3 * linewidth,
-                            c=xcol)
+                    ax.plot(
+                        hfence[:, 3], hfence[:, 2], linewidth=0.3 * linewidth, c=xcol
+                    )
             else:
                 # need copy() .. why?? found by debugging...
                 hfence1 = surfaces[i].get_fence(self._wfence).copy()
@@ -640,10 +758,8 @@ class XSection(BasePlot):
                 else:
                     y2 = y1.copy()
 
-                ax.plot(x1, y1, linewidth=0.1 * linewidth, c='black')
-                ax.fill_between(x1, y1, y2,
-                                facecolor=colortable[i],
-                                label=slegend[i])
+                ax.plot(x1, y1, linewidth=0.1 * linewidth, c="black")
+                ax.fill_between(x1, y1, y2, facecolor=colortable[i], label=slegend[i])
 
         # invert min,max to invert the Y axis
         ax.set_ylim([self._zmax, self._zmin])
@@ -651,13 +767,13 @@ class XSection(BasePlot):
         if legend:
             self._drawlegend(ax, bba, title=legendtitle)
 
-        if axisname != 'main':
+        if axisname != "main":
             ax.set_yticklabels([])
 
-        ax.tick_params(axis='y', direction='in')
+        ax.tick_params(axis="y", direction="in")
 
-        if axisname == 'main' and gridlines:
-            ax.grid(color='grey', linewidth=0.2)
+        if axisname == "main" and gridlines:
+            ax.grid(color="grey", linewidth=0.2)
 
     def plot_wellmap(self, otherwells=None, expand=1):
         """Plot well map as local view, optionally with nearby wells.
@@ -674,42 +790,37 @@ class XSection(BasePlot):
 
         if self._wfence is not None:
 
-            xwellarray = self._well.dataframe['X_UTME'].values
-            ywellarray = self._well.dataframe['Y_UTMN'].values
+            xwellarray = self._well.dataframe["X_UTME"].values
+            ywellarray = self._well.dataframe["Y_UTMN"].values
 
-            ax.plot(xwellarray, ywellarray,
-                    linewidth=4, c='cyan')
+            ax.plot(xwellarray, ywellarray, linewidth=4, c="cyan")
 
-            ax.plot(self._wfence[:, 0], self._wfence[:, 1],
-                    linewidth=1, c='black')
-            ax.annotate('A', xy=(self._wfence[0, 0], self._wfence[0, 1]),
-                        fontsize=8)
-            ax.annotate('B', xy=(self._wfence[-1, 0], self._wfence[-1, 1]),
-                        fontsize=8)
-            ax.set_aspect('equal', 'datalim')
+            ax.plot(self._wfence[:, 0], self._wfence[:, 1], linewidth=1, c="black")
+            ax.annotate("A", xy=(self._wfence[0, 0], self._wfence[0, 1]), fontsize=8)
+            ax.annotate("B", xy=(self._wfence[-1, 0], self._wfence[-1, 1]), fontsize=8)
+            ax.set_aspect("equal", "datalim")
 
             left, right = ax.get_xlim()
             xdiff = right - left
             bottom, top = ax.get_ylim()
             ydiff = top - bottom
 
-            ax.set_xlim(left - (expand - 1.0) * xdiff,
-                        right + (expand - 1.0) * xdiff)
-            ax.set_ylim(bottom - (expand - 1.0) * ydiff,
-                        top + (expand - 1.0) * ydiff)
+            ax.set_xlim(left - (expand - 1.0) * xdiff, right + (expand - 1.0) * xdiff)
+            ax.set_ylim(bottom - (expand - 1.0) * ydiff, top + (expand - 1.0) * ydiff)
         if otherwells:
             for poly in otherwells:
                 if not isinstance(poly, Polygons):
-                    xtg.warn('<otherw> not a Polygons instance, but '
-                             'a {}'.format(type(poly)))
+                    xtg.warn(
+                        "<otherw> not a Polygons instance, but "
+                        "a {}".format(type(poly))
+                    )
                     continue
                 if poly.name == self._well.xwellname:
                     continue
                 xwp = poly.dataframe[poly.xname].values
                 ywp = poly.dataframe[poly.yname].values
-                ax.plot(xwp, ywp, linewidth=1, c='grey')
-                ax.annotate(poly.name, xy=(xwp[-1], ywp[-1]), color='grey',
-                            size=5)
+                ax.plot(xwp, ywp, linewidth=1, c="grey")
+                ax.annotate(poly.name, xy=(xwp[-1], ywp[-1]), color="grey", size=5)
 
     def plot_map(self):
         """Plot well location map as an overall view (with field outline)."""
@@ -720,59 +831,16 @@ class XSection(BasePlot):
         ax = self._ax3
         if self._wfence is not None:
 
-            xp = self._outline.dataframe['X_UTME'].values
-            yp = self._outline.dataframe['Y_UTMN'].values
-            ip = self._outline.dataframe['POLY_ID'].values
+            xp = self._outline.dataframe["X_UTME"].values
+            yp = self._outline.dataframe["Y_UTMN"].values
+            ip = self._outline.dataframe["POLY_ID"].values
 
-            ax.plot(self._wfence[:, 0], self._wfence[:, 1],
-                    linewidth=3, c='red')
+            ax.plot(self._wfence[:, 0], self._wfence[:, 1], linewidth=3, c="red")
 
             for i in range(int(ip.min()), int(ip.max()) + 1):
                 xpc = xp.copy()[ip == i]
                 ypc = yp.copy()[ip == i]
                 if len(xpc) > 1:
-                    ax.plot(xpc, ypc, linewidth=0.3, c='black')
+                    ax.plot(xpc, ypc, linewidth=0.3, c="black")
 
-            ax.set_aspect('equal', 'datalim')
-
-    def show(self):
-        """
-        Call to matplotlib.pyplot show().
-
-        Returns:
-            True of plotting is done; otherwise False
-        """
-        if self._tight:
-            self._fig.tight_layout()
-
-        if self._showok:
-            logger.info('Calling plt show method...')
-            plt.show()
-            return True
-        else:
-            logger.warning('Nothing to plot (well outside Z range?)')
-            return False
-
-    def savefig(self, filename, fformat='png', closeplot=True):
-        """Call to matplotlib.pyplot savefig().
-
-        Args:
-            filename: Root name to export to
-            fformat: Either 'png' or 'svg'
-
-        Returns:
-            True of plotting is done; otherwise False
-        """
-        logger.info('FORMAT is {}'.format(fformat))
-
-        if self._tight:
-            self._fig.tight_layout()
-
-        if self._showok:
-            plt.savefig(filename, format=fformat)
-            if closeplot:
-                plt.close(self._fig)
-            return True
-        else:
-            xtg.warn('Nothing to plot (well outside Z range?)')
-            return False
+            ax.set_aspect("equal", "datalim")
