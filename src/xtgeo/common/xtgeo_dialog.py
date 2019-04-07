@@ -678,7 +678,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             endfix = ENDC
 
         prompt = False
-        if level <= self._syslevel():
+        if level <= self._syslevel:
             prompt = True
 
         if prompt:

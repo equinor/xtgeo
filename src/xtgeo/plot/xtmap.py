@@ -31,7 +31,7 @@ class Map(BasePlot):
         self._surface = None
         self._tight = False
 
-        self._pagesize = 'A4'
+        self._pagesize = "A4"
         self._wfence = None
         self._showok = True  # to indicate if plot is OK to show
         self._legendtitle = "Map"
@@ -48,8 +48,7 @@ class Map(BasePlot):
     # Functions methods (public)
     # =========================================================================
 
-    def canvas(self, title=None, subtitle=None, infotext=None,
-               figscaling=1.0):
+    def canvas(self, title=None, subtitle=None, infotext=None, figscaling=1.0):
         """Prepare the canvas to plot on, with title and subtitle.
 
         Args:
@@ -61,28 +60,37 @@ class Map(BasePlot):
 
         """
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
-        self._fig, self._ax = plt.subplots(figsize=(11.69 * figscaling,
-                                                    8.27 * figscaling))
+        self._fig, self._ax = plt.subplots(
+            figsize=(11.69 * figscaling, 8.27 * figscaling)
+        )
         if title is not None:
             self._fig.suptitle(title, fontsize=18)
         if subtitle is not None:
             self._ax.set_title(subtitle, size=14)
         if infotext is not None:
-            self._fig.text(0.01, 0.02, infotext, ha='left', va='center',
-                           fontsize=8)
+            self._fig.text(0.01, 0.02, infotext, ha="left", va="center", fontsize=8)
 
-    def plot_surface(self, surf, minvalue=None, maxvalue=None,
-                     contourlevels=None, xlabelrotation=None,
-                     colormap=None, logarithmic=False):
+    def plot_surface(
+        self,
+        surf,
+        minvalue=None,
+        maxvalue=None,
+        contourlevels=None,
+        xlabelrotation=None,
+        colormap=None,
+        logarithmic=False,
+    ):
         """Input a surface and plot it."""
 
         # need a deep copy to avoid changes in the original surf
+
+        logger.info("The key contourlevels %s is not in use", contourlevels)
 
         usesurf = surf.copy()
         if usesurf.yflip < 0:
             usesurf.swapaxes()
 
-        if (abs(surf.rotation) > 0.001):
+        if abs(surf.rotation) > 0.001:
             usesurf.unrotate()
 
         xi, yi, zi = usesurf.get_xyz_values()
@@ -97,7 +105,7 @@ class Map(BasePlot):
             step = (maxv - minv) / 10.0
             legendticks = []
             for i in range(10 + 1):
-                llabel = float('{0:9.4f}'.format(minv + step * i))
+                llabel = float("{0:9.4f}".format(minv + step * i))
                 legendticks.append(llabel)
 
             zi.unshare_mask()
@@ -108,16 +116,22 @@ class Map(BasePlot):
             zi.mask = zimask
 
             # note use surf.min, not usesurf.min here ...
-            notetxt = ('Note: map values are truncated from [' +
-                       str(surf.values.min()) + ', ' +
-                       str(surf.values.max()) + '] ' +
-                       'to interval [' +
-                       str(minvalue) + ', ' + str(maxvalue) + ']')
+            notetxt = (
+                "Note: map values are truncated from ["
+                + str(surf.values.min())
+                + ", "
+                + str(surf.values.max())
+                + "] "
+                + "to interval ["
+                + str(minvalue)
+                + ", "
+                + str(maxvalue)
+                + "]"
+            )
 
-            self._fig.text(0.99, 0.02, notetxt, ha='right', va='center',
-                           fontsize=8)
+            self._fig.text(0.99, 0.02, notetxt, ha="right", va="center", fontsize=8)
 
-        logger.info('Legendticks: {}'.format(legendticks))
+        logger.info("Legendticks: %s", legendticks)
 
         if minvalue is None:
             minvalue = usesurf.values.min()
@@ -132,7 +146,7 @@ class Map(BasePlot):
             self.colormap = colormap
 
         levels = np.linspace(minvalue, maxvalue, self.contourlevels)
-        logger.debug('Number of contour levels: {}'.format(levels))
+        logger.debug("Number of contour levels: %s", levels)
 
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
 
@@ -148,26 +162,33 @@ class Map(BasePlot):
             if logarithmic is False:
                 locator = None
                 ticks = legendticks
-                im = self._ax.contourf(xi, yi, zi, uselevels, locator=locator,
-                                       cmap=self.colormap)
+                im = self._ax.contourf(
+                    xi, yi, zi, uselevels, locator=locator, cmap=self.colormap
+                )
 
             else:
-                logger.info('use LogLocator')
+                logger.info("use LogLocator")
                 locator = ticker.LogLocator()
                 ticks = None
                 uselevels = None
-                im = self._ax.contourf(xi, yi, zi, locator=locator,
-                                       cmap=self.colormap)
+                im = self._ax.contourf(xi, yi, zi, locator=locator, cmap=self.colormap)
 
             self._fig.colorbar(im, ticks=ticks)
         except ValueError as err:
-            logger.warning('Could not make plot: {}'.format(err))
+            logger.warning("Could not make plot: %s", err)
 
-        plt.gca().set_aspect('equal', adjustable='box')
+        plt.gca().set_aspect("equal", adjustable="box")
         self.colormap = keepcolor
 
-    def plot_faults(self, fpoly, idname='POLY_ID', color='k', edgecolor='k',
-                    alpha=0.7, linewidth=0.8):
+    def plot_faults(
+        self,
+        fpoly,
+        idname="POLY_ID",
+        color="k",
+        edgecolor="k",
+        alpha=0.7,
+        linewidth=0.8,
+    ):
         """Plot the faults
 
         Args:
@@ -191,14 +212,12 @@ class Map(BasePlot):
             # make a list [(X,Y) ...]; note PY3 need the
             # list before the zip!
             if six.PY3:
-                af = list(zip(myfault['X_UTME'].values,
-                              myfault['Y_UTMN'].values))
+                af = list(zip(myfault["X_UTME"].values, myfault["Y_UTMN"].values))
             else:
                 # make a numpy (X,Y) list from pandas series
-                af = myfault[['X_UTME', 'Y_UTMN']].values
+                af = myfault[["X_UTME", "Y_UTMN"]].values
 
-            p = mplp.Polygon(af, alpha=0.7, color=color, ec=edgecolor,
-                             lw=linewidth)
+            p = mplp.Polygon(af, alpha=0.7, color=color, ec=edgecolor, lw=linewidth)
 
             if p.get_closed():
                 self._ax.add_artist(p)
@@ -220,8 +239,9 @@ class Map(BasePlot):
 
         dataframe = points.dataframe
 
-        self._ax.scatter(dataframe['X_UTME'].values,
-                         dataframe['Y_UTMN'].values, marker='x')
+        self._ax.scatter(
+            dataframe["X_UTME"].values, dataframe["Y_UTMN"].values, marker="x"
+        )
 
     def plot_wells(self, wells):
         """Plot wells on the map.
@@ -235,8 +255,8 @@ class Map(BasePlot):
         for well in wells.wells:
             dataframe = well.dataframe
 
-            xval = dataframe['X_UTME'].values
-            yval = dataframe['Y_UTMN'].values
+            xval = dataframe["X_UTME"].values
+            yval = dataframe["Y_UTMN"].values
             self._ax.plot(xval, yval)
             self._ax.annotate(well.name, xy=(xval[-1], yval[-1]))
 
@@ -250,14 +270,14 @@ class Map(BasePlot):
             self._fig.tight_layout()
 
         if self._showok:
-            logger.info('Calling plt show method...')
+            logger.info("Calling plt show method...")
             plt.show()
             return True
         else:
             logger.warning("Nothing to plot (well outside Z range?)")
             return False
 
-    def savefig(self, filename, fformat='png'):
+    def savefig(self, filename, fformat="png"):
         """Call to matplotlib.pyplot savefig().
 
         Returns:

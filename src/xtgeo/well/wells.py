@@ -4,6 +4,8 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+from distutils.version import StrictVersion
+
 import pandas as pd
 
 import xtgeo
@@ -198,7 +200,10 @@ class Wells(object):
                 dfr = dfr.fillna(fill_value1)
             bigdf.append(dfr)
 
-        dfr = pd.concat(bigdf, ignore_index=True)
+        if StrictVersion(pd.__version__) > StrictVersion('0.23.0'):
+            dfr = pd.concat(bigdf, ignore_index=True, sort=True)
+        else:
+            dfr = pd.concat(bigdf, ignore_index=True)
 
         # the concat itself may lead to NaN's:
         if filled:
