@@ -70,6 +70,8 @@ def randomc(nlen):
         blue = random.uniform(0, 1)
         ctable.append((red, green, blue))
 
+    return ctable
+
 
 def xtgeocolors():
     """Get the XTGeo color table which is basic inherited from old IRAP."""

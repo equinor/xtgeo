@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.plot import _colortables as _ctable
+from . import _colortables as _ctable
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -20,10 +20,13 @@ class BasePlot(object):
         logger.info(clsname)
 
         self._contourlevels = 3
-        self._colormap = plt.cm.viridis
+        self._colormap = plt.cm.get_cmap("viridis")
+
+        self._ax = None
         self._tight = False
         self._showok = True
         self._fig = None
+        self._pagesize = "A4"
 
         logger.info("Ran __init__ ...")
 
@@ -53,6 +56,11 @@ class BasePlot(object):
             raise ValueError("Input incorrect")
 
         logger.info("Colormap: %s", self._colormap)
+
+    @property
+    def pagesize(self):
+        """ Returns page size."""
+        return self._pagesize
 
     @staticmethod
     def define_any_colormap(cfile, colorlist=None):
@@ -116,7 +124,7 @@ class BasePlot(object):
                 if entry < len(colors):
                     ctable.append(colors[entry])
                 else:
-                    logger.warn("Color list out of range")
+                    logger.warning("Color list out of range")
                     ctable.append(colors[0])
 
             cmap = LinearSegmentedColormap.from_list(ctable, colors, N=len(colors))
@@ -158,6 +166,28 @@ class BasePlot(object):
 
         self.contourlevels = cmap.N
         self._colormap = cmap
+
+    def canvas(self, title=None, subtitle=None, infotext=None, figscaling=1.0):
+        """Prepare the canvas to plot on, with title and subtitle.
+
+        Args:
+            title (str, optional): Title of plot.
+            subtitle (str, optional): Sub title of plot.
+            infotext (str, optional): Text to be written as info string.
+            figscaling (str, optional): Figure scaling, default is 1.0
+
+
+        """
+        # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
+        self._fig, self._ax = plt.subplots(
+            figsize=(11.69 * figscaling, 8.27 * figscaling)
+        )
+        if title is not None:
+            self._fig.suptitle(title, fontsize=18)
+        if subtitle is not None:
+            self._ax.set_title(subtitle, size=14)
+        if infotext is not None:
+            self._fig.text(0.01, 0.02, infotext, ha="left", va="center", fontsize=8)
 
     def show(self):
         """Call to matplotlib.pyplot show().

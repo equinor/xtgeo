@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.plot import BasePlot
 from xtgeo.xyz import Polygons
+
+from .baseplot import BasePlot
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -24,11 +25,10 @@ class XSection(BasePlot):
         zmax (float): Lower level of the plot (bottom Y axis).
         well (Well): XTGeo well object.
         surfaces (list): List of XTGeo RegularSurface objects
-        surfacenames (list): List of surface names (str)for legend
+        surfacenames (list): List of surface names (str) for legend
         cube (Cube): A XTGeo Cube instance
         colormap (str): Name of colormap, e.g. 'Set1'. Default is 'xtgeo'
         outline (obj): XTGeo Polygons object
-        tight (bool): True for tight_layout (False is default)
 
     """
 
@@ -82,9 +82,10 @@ class XSection(BasePlot):
         logger.info("Ran __init__ ...")
         logger.info("Colormap is %s", self._colormap)
 
-    # =========================================================================
+    # ==================================================================================
     # Properties
-    # =========================================================================
+    # Notice additonal props in base class
+    # ==================================================================================
     @property
     def pagesize(self):
         """Returns page size."""
@@ -150,9 +151,9 @@ class XSection(BasePlot):
 
         self._colormap_perf_dict = xdict
 
-    # =========================================================================
+    # ==================================================================================
     # Functions methods (public)
-    # =========================================================================
+    # ==================================================================================
 
     def canvas(self, title=None, subtitle=None, infotext=None, figscaling=1.0):
         """Prepare the canvas to plot on, with title and subtitle.
@@ -165,6 +166,8 @@ class XSection(BasePlot):
 
 
         """
+
+        # overriding the base class canvas
 
         plt.rcParams["axes.xmargin"] = 0  # fill the plot margins
 

@@ -10,7 +10,7 @@ import numpy.ma as ma
 import six
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.plot.baseplot import BasePlot
+from .baseplot import BasePlot
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -31,8 +31,6 @@ class Map(BasePlot):
         self._surface = None
         self._tight = False
 
-        self._ax = None
-        self._pagesize = "A4"
         self._wfence = None
         self._showok = True  # to indicate if plot is OK to show
         self._legendtitle = "Map"
@@ -48,28 +46,6 @@ class Map(BasePlot):
     # =========================================================================
     # Functions methods (public)
     # =========================================================================
-
-    def canvas(self, title=None, subtitle=None, infotext=None, figscaling=1.0):
-        """Prepare the canvas to plot on, with title and subtitle.
-
-        Args:
-            title (str, optional): Title of plot.
-            subtitle (str, optional): Sub title of plot.
-            infotext (str, optional): Text to be written as info string.
-            figscaling (str, optional): Figure scaling, default is 1.0
-
-
-        """
-        # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
-        self._fig, self._ax = plt.subplots(
-            figsize=(11.69 * figscaling, 8.27 * figscaling)
-        )
-        if title is not None:
-            self._fig.suptitle(title, fontsize=18)
-        if subtitle is not None:
-            self._ax.set_title(subtitle, size=14)
-        if infotext is not None:
-            self._fig.text(0.01, 0.02, infotext, ha="left", va="center", fontsize=8)
 
     def plot_surface(
         self,

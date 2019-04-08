@@ -3,7 +3,6 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 # flake8: noqa
-from xtgeo.plot.baseplot import BasePlot
 from xtgeo.plot.xsection import XSection
 from xtgeo.plot.xtmap import Map
 from xtgeo.plot.grid3d_slice import Grid3DSlice
