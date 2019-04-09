@@ -252,7 +252,7 @@ def get_randomline(
     if zincrement is None:
         zincrement = self._zinc / 2.0
 
-    nzsam = int(zmax - zmin / zincrement)
+    nzsam = int((zmax - zmin) / zincrement)
 
     nsamples = xcoords.shape[0] * nzsam
 
