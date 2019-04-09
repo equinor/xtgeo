@@ -118,7 +118,7 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     return dx, dy
 
 
-def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zero_base=False):
+def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     """Get I J K as properties"""
 
     GrProp = xtgeo.grid3d.GridProperty
@@ -138,7 +138,7 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zero_base=False):
         jy = ma.masked_where(actnum.values1d == 0, jy)
         kz = ma.masked_where(actnum.values1d == 0, kz)
 
-    if not zero_base:
+    if not zerobased:
         ix += 1
         jy += 1
         kz += 1
