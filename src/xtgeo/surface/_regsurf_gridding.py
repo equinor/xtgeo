@@ -22,7 +22,7 @@ logger = xtg.functionlogger(__name__)
 # pylint: disable=too-many-branches, too-many-statements, too-many-locals
 
 
-def points_gridding(self, points, method='linear', coarsen=1):
+def points_gridding(self, points, method="linear", coarsen=1):
     """Do gridding from a points data set."""
 
     xiv, yiv = self.get_xy_values()
@@ -38,30 +38,41 @@ def points_gridding(self, points, method='linear', coarsen=1):
         ycv = ycv[::coarsen]
         zcv = zcv[::coarsen]
 
-    validmethods = ['linear', 'nearest', 'cubic']
+    validmethods = ["linear", "nearest", "cubic"]
     if method not in set(validmethods):
-        raise ValueError('Invalid method for gridding: {}, valid '
-                         'options are {}'. format(method, validmethods))
+        raise ValueError(
+            "Invalid method for gridding: {}, valid "
+            "options are {}".format(method, validmethods)
+        )
 
     try:
-        znew = scipy.interpolate.griddata((xcv, ycv), zcv, (xiv, yiv),
-                                          method=method, fill_value=np.nan)
+        znew = scipy.interpolate.griddata(
+            (xcv, ycv), zcv, (xiv, yiv), method=method, fill_value=np.nan
+        )
     except ValueError as verr:
-        raise RuntimeError('Could not do gridding: {}'.format(verr))
+        raise RuntimeError("Could not do gridding: {}".format(verr))
 
-    logger.info('Gridding point ... DONE')
+    logger.info("Gridding point ... DONE")
 
     znew = self.ensure_correct_values(self.ncol, self.nrow, znew)
 
     self.values = znew
 
 
-def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
-                                 yprop=None, mprop=None, dzprop=None,
-                                 truncate_le=None, zoneprop=None,
-                                 zone_minmax=None,
-                                 coarsen=1, zone_avg=False,
-                                 mask_outside=False):
+def avgsum_from_3dprops_gridding(
+    self,
+    summing=False,
+    xprop=None,
+    yprop=None,
+    mprop=None,
+    dzprop=None,
+    truncate_le=None,
+    zoneprop=None,
+    zone_minmax=None,
+    coarsen=1,
+    zone_avg=False,
+    mask_outside=False,
+):
 
     """Get surface average from a 3D grid prop."""
     # NOTE:
@@ -73,10 +84,10 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
     qlog = logging.getLogger().isEnabledFor(logging.INFO)
 
     if zone_minmax is None:
-        raise ValueError('zone_minmax is required')
+        raise ValueError("zone_minmax is required")
 
     if dzprop is None:
-        raise ValueError('DZ property is required')
+        raise ValueError("DZ property is required")
 
     xprop, yprop, zoneprop, mprop, dzprop = _zone_averaging(
         xprop,
@@ -87,12 +98,18 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         zone_avg,
         dzprop,
         mprop,
-        summing=summing)
+        summing=summing,
+    )
 
     gnlay = xprop.shape[2]
 
-    uprops = {'xprop': xprop, 'yprop': yprop, 'zoneprop': zoneprop,
-              'dzprop': dzprop, 'mprop': mprop}
+    uprops = {
+        "xprop": xprop,
+        "yprop": yprop,
+        "zoneprop": zoneprop,
+        "dzprop": dzprop,
+        "mprop": mprop,
+    }
 
     # some sanity checks
     for _name, ppx in uprops.items():
@@ -101,7 +118,7 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
     # avoid artifacts from inactive cells that slips through somehow...(?)
     if dzprop.max() > _cxtgeo.UNDEF_LIMIT:
-        raise RuntimeError('Bug: DZ with unphysical values present')
+        raise RuntimeError("Bug: DZ with unphysical values present")
 
     trimbydz = False
     if not summing:
@@ -126,8 +143,8 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         k1lay = klay0 + 1
 
         if k1lay == 1:
-            msum = np.zeros((self.ncol, self.nrow), order='C')
-            dzsum = np.zeros((self.ncol, self.nrow), order='C')
+            msum = np.zeros((self.ncol, self.nrow), order="C")
+            dzsum = np.zeros((self.ncol, self.nrow), order="C")
 
         numz = zoneprop[::, ::, klay0].mean()
         if isinstance(numz, float):
@@ -141,18 +158,18 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
         if summing:
             propsum = mprop[:, :, klay0].sum()
             if abs(propsum) < 1e-12:
-                logger.info('Too little HC, skip layer K = %s', k1lay)
+                logger.info("Too little HC, skip layer K = %s", k1lay)
                 qmcompute = False
             else:
-                logger.debug('Z property sum is %s', propsum)
+                logger.debug("Z property sum is %s", propsum)
 
-        logger.info('Mapping for layer or zone %s ....', k1lay)
+        logger.info("Mapping for layer or zone %s ....", k1lay)
 
-        xcv = xprop[::, ::, klay0].ravel(order='C')
-        ycv = yprop[::, ::, klay0].ravel(order='C')
-        mvv = mprop[::, ::, klay0].ravel(order='C')
-        dzv = dzprop[::, ::, klay0].ravel(order='C')
-        wei = weights[::, ::, klay0].ravel(order='C')
+        xcv = xprop[::, ::, klay0].ravel(order="C")
+        ycv = yprop[::, ::, klay0].ravel(order="C")
+        mvv = mprop[::, ::, klay0].ravel(order="C")
+        dzv = dzprop[::, ::, klay0].ravel(order="C")
+        wei = weights[::, ::, klay0].ravel(order="C")
 
         # this is done to avoid problems if undef values still remains
         # in the coordinates (assume Y undef where X undef):
@@ -165,11 +182,11 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
         # some sanity checks
         if qlog:
-            uprops = {'xcv': xcv, 'ycv': ycv, 'mvv': mvv, 'dzv': dzv}
+            uprops = {"xcv": xcv, "ycv": ycv, "mvv": mvv, "dzv": dzv}
             for _name, ppx in uprops.items():
                 minpp = ppx.min()
                 maxpp = ppx.max()
-                logger.info('Min max is %s %s ...', minpp, maxpp)
+                logger.info("Min max is %s %s ...", minpp, maxpp)
 
         if summing:
             mvdz = mvv * wei
@@ -178,25 +195,20 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
 
         if qmcompute:
             try:
-                mvdzi = scipy.interpolate.griddata((xcv, ycv),
-                                                   mvdz,
-                                                   (xiv, yiv),
-                                                   method='linear',
-                                                   fill_value=0.0)
+                mvdzi = scipy.interpolate.griddata(
+                    (xcv, ycv), mvdz, (xiv, yiv), method="linear", fill_value=0.0
+                )
             except ValueError:
-                warnings.warn('Some problems in gridding ... will contue',
-                              UserWarning)
+                warnings.warn("Some problems in gridding ... will contue", UserWarning)
                 continue
 
             msum = msum + mvdzi
 
         if trimbydz:
             try:
-                dzi = scipy.interpolate.griddata((xcv, ycv),
-                                                 dzv,
-                                                 (xiv, yiv),
-                                                 method='linear',
-                                                 fill_value=0.0)
+                dzi = scipy.interpolate.griddata(
+                    (xcv, ycv), dzv, (xiv, yiv), method="linear", fill_value=0.0
+                )
             except ValueError:
                 continue
 
@@ -222,8 +234,9 @@ def avgsum_from_3dprops_gridding(self, summing=False, xprop=None,
     return True
 
 
-def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
-                    zone_avg, dzprop, mprop, summing=False):
+def _zone_averaging(
+    xprop, yprop, zoneprop, zone_minmax, coarsen, zone_avg, dzprop, mprop, summing=False
+):
 
     # General preprocessing, and...
     # Change the 3D numpy array so they get layers by
@@ -243,11 +256,11 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
     mpr = mprop
 
     if coarsen > 1:
-        xpr = xprop[::coarsen, ::coarsen, ::].copy(order='C')
-        ypr = yprop[::coarsen, ::coarsen, ::].copy(order='C')
-        zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order='C')
-        dpr = dzprop[::coarsen, ::coarsen, ::].copy(order='C')
-        mpr = mprop[::coarsen, ::coarsen, ::].copy(order='C')
+        xpr = xprop[::coarsen, ::coarsen, ::].copy(order="C")
+        ypr = yprop[::coarsen, ::coarsen, ::].copy(order="C")
+        zpr = zoneprop[::coarsen, ::coarsen, ::].copy(order="C")
+        dpr = dzprop[::coarsen, ::coarsen, ::].copy(order="C")
+        mpr = mprop[::coarsen, ::coarsen, ::].copy(order="C")
         zpr.astype(np.int32)
 
     if zone_avg:
@@ -265,7 +278,7 @@ def _zone_averaging(xprop, yprop, zoneprop, zone_minmax, coarsen,
         newd = []
 
         for izv in range(zmin, zmax + 1):
-            logger.info('Averaging for zone %s ...', izv)
+            logger.info("Averaging for zone %s ...", izv)
             xpr2 = ma.masked_where(zpr != izv, xpr)
             ypr2 = ma.masked_where(zpr != izv, ypr)
             zpr2 = ma.masked_where(zpr != izv, zpr)

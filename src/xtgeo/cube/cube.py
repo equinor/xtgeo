@@ -27,7 +27,8 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 # METHODS as wrappers to class init + import
 
-def cube_from_file(mfile, fformat='guess'):
+
+def cube_from_file(mfile, fformat="guess"):
     """This makes an instance of a Cube directly from file import.
 
     Args:
@@ -64,7 +65,7 @@ def cube_from_roxar(project, name):
     return obj
 
 
-class Cube(object):
+class Cube(object):  # pylint: disable=too-many-public-methods
     """Class for a (seismic) cube in the XTGeo framework.
 
     The values are a numpy array, 3D Float (4 bytes; float32). The
@@ -94,7 +95,7 @@ class Cube(object):
     def __init__(self, *args, **kwargs):
         """Initiate a Cube instance."""
 
-        clsname = '{}.{}'.format(type(self).__module__, type(self).__name__)
+        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
         logger.info(clsname)
 
         self._filesrc = None
@@ -120,41 +121,39 @@ class Cube(object):
         self._undef_limit = UNDEF_LIMIT
 
         if len(args) >= 1:
-            fformat = kwargs.get('fformat', 'guess')
+            fformat = kwargs.get("fformat", "guess")
             self.from_file(args[0], fformat=fformat)
         else:
-            self._filesrc = 'NONE'
-            self._xori = kwargs.get('xori', 0.0)
-            self._yori = kwargs.get('yori', 0.0)
-            self._zori = kwargs.get('zori', 0.0)
-            self._ncol = kwargs.get('ncol', 5)
-            self._nrow = kwargs.get('nrow', 3)
-            self._nlay = kwargs.get('nlay', 2)
-            self._xinc = kwargs.get('xinc', 25.0)
-            self._yinc = kwargs.get('yinc', 25.0)
-            self._zinc = kwargs.get('zinc', 2.0)
-            self._yflip = kwargs.get('yflip', 1)
-            self._values = kwargs.get('values', None)
-            self._rotation = kwargs.get('rotation', 0.0)
+            self._filesrc = "NONE"
+            self._xori = kwargs.get("xori", 0.0)
+            self._yori = kwargs.get("yori", 0.0)
+            self._zori = kwargs.get("zori", 0.0)
+            self._ncol = kwargs.get("ncol", 5)
+            self._nrow = kwargs.get("nrow", 3)
+            self._nlay = kwargs.get("nlay", 2)
+            self._xinc = kwargs.get("xinc", 25.0)
+            self._yinc = kwargs.get("yinc", 25.0)
+            self._zinc = kwargs.get("zinc", 2.0)
+            self._yflip = kwargs.get("yflip", 1)
+            self._values = kwargs.get("values", None)
+            self._rotation = kwargs.get("rotation", 0.0)
             if self._values is None:
-                vals = np.zeros((self._ncol, self._nrow, self._nlay),
-                                dtype=np.float32)
+                vals = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.float32)
                 self._values = vals
-                self._ilines = np.array(range(1, self._ncol + 1),
-                                        dtype=np.int32)
-                self._xlines = np.array(range(1, self._nrow + 1),
-                                        dtype=np.int32)
-                self._traceidcodes = np.ones((self._nrow, self._nrow),
-                                             dtype=np.int32)
+                self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+                self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+                self._traceidcodes = np.ones((self._nrow, self._nrow), dtype=np.int32)
 
-            self._segyfile = kwargs.get('segyfile', None)
+            self._segyfile = kwargs.get("segyfile", None)
 
     def __repr__(self):
         avg = self.values.mean()
-        dsc = ('{0.__class__} (ncol={0.ncol!r}, '
-               'nrow={0.nrow!r}, nlay={0.nlay!r}, '
-               'original file: {0._filesrc}), '
-               'average {1}, ID=<{2}>'.format(self, avg, id(self)))
+        dsc = (
+            "{0.__class__} (ncol={0.ncol!r}, "
+            "nrow={0.nrow!r}, nlay={0.nlay!r}, "
+            "original file: {0._filesrc}), "
+            "average {1}, ID=<{2}>".format(self, avg, id(self))
+        )
         return dsc
 
     def __str__(self):
@@ -187,7 +186,7 @@ class Cube(object):
 
     @xori.setter
     def xori(self, val):
-        logger.warning('Changing xori is risky')
+        logger.warning("Changing xori is risky")
         self._xori = val
 
     @property
@@ -197,7 +196,7 @@ class Cube(object):
 
     @yori.setter
     def yori(self, val):
-        logger.warning('Changing yori is risky')
+        logger.warning("Changing yori is risky")
         self._yori = val
 
     @property
@@ -207,7 +206,7 @@ class Cube(object):
 
     @zori.setter
     def zori(self, val):
-        logger.warning('Changing zori is risky')
+        logger.warning("Changing zori is risky")
         self._zori = val
 
     @property
@@ -217,7 +216,7 @@ class Cube(object):
 
     @xinc.setter
     def xinc(self, val):
-        logger.warning('Changing xinc is risky')
+        logger.warning("Changing xinc is risky")
         self._xinc = val
 
     @property
@@ -227,7 +226,7 @@ class Cube(object):
 
     @yinc.setter
     def yinc(self, val):
-        logger.warning('Changing yinc is risky')
+        logger.warning("Changing yinc is risky")
         self._yinc = val
 
     @property
@@ -237,7 +236,7 @@ class Cube(object):
 
     @zinc.setter
     def zinc(self, val):
-        logger.warning('Changing zinc is risky')
+        logger.warning("Changing zinc is risky")
         self._zinc = val
 
     @property
@@ -247,7 +246,7 @@ class Cube(object):
 
     @rotation.setter
     def rotation(self, val):
-        logger.warning('Changing rotation is risky')
+        logger.warning("Changing rotation is risky")
         self._rotation = val
 
     @property
@@ -272,9 +271,9 @@ class Cube(object):
     def zslices(self):
         """Return the time/depth slices as an int array (read only)."""
         # This is a derived property
-        zslices = range(int(self.zori),
-                        int(self.zori + self.nlay * self.zinc),
-                        int(self.zinc))
+        zslices = range(
+            int(self.zori), int(self.zori + self.nlay * self.zinc), int(self.zinc)
+        )
         zslices = np.array(zslices)
         return zslices
 
@@ -320,12 +319,12 @@ class Cube(object):
     def values(self, values):
 
         if not isinstance(values, np.ndarray):
-            raise ValueError('Input is not a numpy array')
+            raise ValueError("Input is not a numpy array")
 
         vshape = values.shape
 
         if vshape != (self._ncol, self._nrow, self._nlay):
-            raise ValueError('Wrong dimensions of input numpy')
+            raise ValueError("Wrong dimensions of input numpy")
 
         values = np.ascontiguousarray(values, dtype=np.float32)
 
@@ -338,30 +337,36 @@ class Cube(object):
         """Describe an instance by printing to stdout or return"""
 
         dsc = XTGDescription()
-        dsc.title('Description of Cube instance')
-        dsc.txt('Object ID', id(self))
-        dsc.txt('File source', self._filesrc)
-        dsc.txt('Shape: NCOL, NROW, NLAY', self.ncol, self.nrow, self.nlay)
-        dsc.txt('Origins XORI, YORI, ZORI', self.xori, self.yori, self.zori)
-        dsc.txt('Increments XINC YINC ZINC', self.xinc, self.yinc, self.zinc)
-        dsc.txt('Rotation (anti-clock from X)', self.rotation)
-        dsc.txt('YFLIP flag', self.yflip)
+        dsc.title("Description of Cube instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
+        dsc.txt("Origins XORI, YORI, ZORI", self.xori, self.yori, self.zori)
+        dsc.txt("Increments XINC YINC ZINC", self.xinc, self.yinc, self.zinc)
+        dsc.txt("Rotation (anti-clock from X)", self.rotation)
+        dsc.txt("YFLIP flag", self.yflip)
         np.set_printoptions(threshold=16)
-        dsc.txt('Inlines vector', self._ilines)
-        dsc.txt('Xlines vector', self._xlines)
-        dsc.txt('Time or depth slices vector', self.zslices)
-        dsc.txt('Values', self._values.reshape(-1), self._values.dtype)
+        dsc.txt("Inlines vector", self._ilines)
+        dsc.txt("Xlines vector", self._xlines)
+        dsc.txt("Time or depth slices vector", self.zslices)
+        dsc.txt("Values", self._values.reshape(-1), self._values.dtype)
         np.set_printoptions(threshold=1000)
-        dsc.txt('Values, mean, stdev, minimum, maximum', self.values.mean(),
-                self.values.std(), self.values.min(), self.values.max())
-        dsc.txt('Trace ID codes', self._traceidcodes.reshape(-1))
+        dsc.txt(
+            "Values, mean, stdev, minimum, maximum",
+            self.values.mean(),
+            self.values.std(),
+            self.values.min(),
+            self.values.max(),
+        )
+        dsc.txt("Trace ID codes", self._traceidcodes.reshape(-1))
         msize = float(self.values.size * 4) / (1024 * 1024 * 1024)
-        dsc.txt('Minimum memory usage of array (GB)', msize)
+        dsc.txt("Minimum memory usage of array (GB)", msize)
 
         if flush:
             dsc.flush()
-        else:
-            return dsc.astext()
+            return None
+
+        return dsc.astext()
 
     # =========================================================================
     # Copy, swapping, cropping, thinning...
@@ -373,14 +378,24 @@ class Cube(object):
             >>> mycube2 = mycube.copy()
 
         """
-        xcube = Cube(ncol=self.ncol, nrow=self.nrow, nlay=self.nlay,
-                     xinc=self.xinc, yinc=self.yinc, zinc=self.zinc,
-                     xori=self.xori, yori=self.yori, zori=self.zori,
-                     yflip=self.yflip, segyfile=self.segyfile,
-                     rotation=self.rotation, values=self.values.copy())
+        xcube = Cube(
+            ncol=self.ncol,
+            nrow=self.nrow,
+            nlay=self.nlay,
+            xinc=self.xinc,
+            yinc=self.yinc,
+            zinc=self.zinc,
+            xori=self.xori,
+            yori=self.yori,
+            zori=self.zori,
+            yflip=self.yflip,
+            segyfile=self.segyfile,
+            rotation=self.rotation,
+            values=self.values.copy(),
+        )
 
-        if self._filesrc is not None and '(copy)' not in self._filesrc:
-            xcube.filesrc = self._filesrc + ' (copy)'
+        if self._filesrc is not None and "(copy)" not in self._filesrc:
+            xcube.filesrc = self._filesrc + " (copy)"
         elif self._filesrc is not None:
             xcube.filesrc = self._filesrc
 
@@ -395,7 +410,7 @@ class Cube(object):
 
         _cube_utils.swapaxes(self)
 
-    def resample(self, incube, sampling='nearest', outside_value=None):
+    def resample(self, incube, sampling="nearest", outside_value=None):
         """Resample a Cube object into this instance.
 
         Args:
@@ -419,8 +434,9 @@ class Cube(object):
 
         """
 
-        _cube_utils.resample(self, incube, sampling=sampling,
-                             outside_value=outside_value)
+        _cube_utils.resample(
+            self, incube, sampling=sampling, outside_value=outside_value
+        )
 
     def do_thinning(self, icol, jrow, klay):
         """Thinning the cube by removing every N column, row and/or layer.
@@ -442,7 +458,7 @@ class Cube(object):
         """
         _cube_utils.thinning(self, icol, jrow, klay)
 
-    def do_cropping(self, icols, jrows, klays, mode='edges'):
+    def do_cropping(self, icols, jrows, klays, mode="edges"):
         """Cropping the cube by removing rows, columns, layers.
 
         Note that input boundary checking is currently lacking, and this
@@ -483,19 +499,23 @@ class Cube(object):
         usejrows = jrows
         useklays = klays
 
-        if mode == 'inclusive':
+        if mode == "inclusive":
             # transfer to 'numbers to row/col/lay to remove' in front end ...
-            useicols = (icols[0] - self._ilines[0],
-                        self._ilines[self._ncol - 1] - icols[1])
-            usejrows = (jrows[0] - self._xlines[0],
-                        self._xlines[self._nrow - 1] - jrows[1])
+            useicols = (
+                icols[0] - self._ilines[0],
+                self._ilines[self._ncol - 1] - icols[1],
+            )
+            usejrows = (
+                jrows[0] - self._xlines[0],
+                self._xlines[self._nrow - 1] - jrows[1],
+            )
             ntop = int((klays[0] - self.zori) / self.zinc)
-            nbot = int((self.zori + self.nlay * self.zinc - klays[1] - 1) /
-                       (self.zinc))
+            nbot = int((self.zori + self.nlay * self.zinc - klays[1] - 1) / (self.zinc))
             useklays = (ntop, nbot)
 
-        logger.info('Cropping at all cube sides: %s %s %s', useicols, usejrows,
-                    useklays)
+        logger.info(
+            "Cropping at all cube sides: %s %s %s", useicols, usejrows, useklays
+        )
         _cube_utils.cropping(self, useicols, usejrows, useklays)
 
     def values_dead_traces(self, newvalue):
@@ -521,12 +541,32 @@ class Cube(object):
 
         return avgold
 
+    def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
+        """Returns x, y from a single i j location.
+
+        Args:
+            iloc (int): I (col) location (base is 1)
+            jloc (int): J (row) location (base is 1)
+            ixline (bool): If True, then input locations are inline and xline position
+            zerobased (bool): If True, first index is 0, else it is 1. This does not
+                apply when ixline is set to True.
+        Returns:
+            The z value at location iloc, jloc, None if undefined cell.
+        """
+
+        xval, yval = _cube_utils.get_xy_value_from_ij(
+            self, iloc, jloc, ixline=ixline, zerobased=zerobased
+        )
+
+        return xval, yval
+
     # =========================================================================
     # Cube extractions, e.g. XSection
     # =========================================================================
 
-    def get_randomline(self, fencespec, zmin=None, zmax=None, zincrement=None,
-                       sampling='nearest'):
+    def get_randomline(
+        self, fencespec, zmin=None, zmax=None, zincrement=None, sampling="nearest"
+    ):
         """Get a randomline from a fence spesification.
 
         In prep.
@@ -554,16 +594,21 @@ class Cube(object):
 
         """
 
-        res = _cube_utils.get_randomline(self, fencespec, zmin=zmin, zmax=zmax,
-                                         zincrement=zincrement,
-                                         sampling=sampling)
+        res = _cube_utils.get_randomline(
+            self,
+            fencespec,
+            zmin=zmin,
+            zmax=zmax,
+            zincrement=zincrement,
+            sampling=sampling,
+        )
         return res
 
     # =========================================================================
     # Import and export
     # =========================================================================
 
-    def from_file(self, sfile, fformat='guess', engine='segyio'):
+    def from_file(self, sfile, fformat="guess", engine="segyio"):
         """Import cube data from file.
 
         If fformat is not provided, the file type will be guessed based
@@ -591,30 +636,30 @@ class Cube(object):
         if os.path.isfile(sfile):
             pass
         else:
-            logger.critical('Not OK file')
-            raise IOError('Input file for Cube cannot be read')
+            logger.critical("Not OK file")
+            raise IOError("Input file for Cube cannot be read")
 
         # work on file extension
         _froot, fext = os.path.splitext(sfile)
-        if fformat == 'guess':
+        if fformat == "guess":
             if not fext:
-                logger.critical('File extension missing. STOP')
+                logger.critical("File extension missing. STOP")
                 sys.exit(9)
             else:
-                fformat = fext.lower().replace('.', '')
+                fformat = fext.lower().replace(".", "")
 
-        if 'rms' in fformat.lower():
+        if "rms" in fformat.lower():
             _cube_import.import_rmsregular(self, sfile)
-        elif fformat.lower() == 'segy' or fformat.lower() == 'sgy':
+        elif fformat.lower() == "segy" or fformat.lower() == "sgy":
             _cube_import.import_segy(self, sfile, engine=engine)
-        elif fformat == 'storm':
+        elif fformat == "storm":
             _cube_import.import_stormcube(self, sfile)
         else:
-            logger.error('Invalid or unknown file format')
+            logger.error("Invalid or unknown file format")
 
         self._filesrc = sfile
 
-    def to_file(self, sfile, fformat='segy', pristine=False, engine='xtgeo'):
+    def to_file(self, sfile, fformat="segy", pristine=False, engine="xtgeo"):
         """Export cube data to file.
 
         Args:
@@ -629,13 +674,12 @@ class Cube(object):
             >>> zz.to_file('some.rmsreg')
         """
 
-        if fformat == 'segy':
-            _cube_export.export_segy(self, sfile, pristine=pristine,
-                                     engine=engine)
-        elif fformat == 'rms_regular':
+        if fformat == "segy":
+            _cube_export.export_segy(self, sfile, pristine=pristine, engine=engine)
+        elif fformat == "rms_regular":
             _cube_export.export_rmsreg(self, sfile)
         else:
-            logger.error('Invalid file format')
+            logger.error("Invalid file format")
 
     def from_roxar(self, project, name):
         """Import (transfer) a cube from a Roxar seismic object to XTGeo.
@@ -656,8 +700,9 @@ class Cube(object):
         """
         _cube_roxapi.import_cube_roxapi(self, project, name)
 
-    def to_roxar(self, project, name, folder=None, domain='time',
-                 compression=('wavelet', 5)):
+    def to_roxar(
+        self, project, name, folder=None, domain="time", compression=("wavelet", 5)
+    ):
         """Export (transfer) a cube from a XTGeo cube object to Roxar data.
 
         Args:
@@ -681,9 +726,12 @@ class Cube(object):
             zz.to_roxar(project, 'reek_cube')
 
         """
-        _cube_roxapi.export_cube_roxapi(self, project, name)
+        _cube_roxapi.export_cube_roxapi(
+            self, project, name, folder=folder, domain=domain, compression=compression
+        )
 
-    def scan_segy_traces(self, sfile, outfile=None):
+    @staticmethod
+    def scan_segy_traces(sfile, outfile=None):
         """Scan a SEGY file traces and print limits info to STDOUT or file.
 
         Args:
@@ -695,24 +743,26 @@ class Cube(object):
         oflag = False
         # if outfile is none, it means that you want to plot on STDOUT
         if outfile is None:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            f.close()
-            outfile = f.name
-            logger.info('TMP file name is {}'.format(outfile))
+            fx = tempfile.NamedTemporaryFile(delete=False)
+            fx.close()
+            outfile = fx.name
+            logger.info("TMP file name is %s", outfile)
             oflag = True
 
-        _cube_import._import_segy_xtgeo(sfile, scanheadermode=False,
-                                        scantracemode=True, outfile=outfile)
+        _cube_import._import_segy_xtgeo(
+            sfile, scanheadermode=False, scantracemode=True, outfile=outfile
+        )
 
         if oflag:
-            pass
-            logger.info('OUTPUT to screen...')
-            with open(outfile, 'r') as out:
+            # pass
+            logger.info("OUTPUT to screen...")
+            with open(outfile, "r") as out:
                 for line in out:
-                    print(line.rstrip('\r\n'))
+                    print(line.rstrip("\r\n"))
             os.remove(outfile)
 
-    def scan_segy_header(self, sfile, outfile=None):
+    @staticmethod
+    def scan_segy_header(sfile, outfile=None):
         """Scan a SEGY file header and print info to screen or file.
 
         Args:
@@ -724,19 +774,19 @@ class Cube(object):
         flag = False
         # if outfile is none, it means that you want to print on STDOUT
         if outfile is None:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            f.close()
-            outfile = f.name
-            logger.info('TMP file name is {}'.format(outfile))
+            fc = tempfile.NamedTemporaryFile(delete=False)
+            fc.close()
+            outfile = fc.name
+            logger.info("TMP file name is %s", outfile)
             flag = True
 
-        _cube_import._import_segy_xtgeo(sfile, scanheadermode=True,
-                                        scantracemode=False,
-                                        outfile=outfile)
+        _cube_import._import_segy_xtgeo(
+            sfile, scanheadermode=True, scantracemode=False, outfile=outfile
+        )
 
         if flag:
-            logger.info('OUTPUT to screen...')
-            with open(outfile, 'r') as out:
+            logger.info("OUTPUT to screen...")
+            with open(outfile, "r") as out:
                 for line in out:
-                    print(line.rstrip('\r\n'))
+                    print(line.rstrip("\r\n"))
             os.remove(outfile)

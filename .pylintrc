@@ -3,6 +3,7 @@
 good-names=logger, xtg, i, j, k, x, y, z, _
 additional-builtins=_x, _y, _z, _tmp1, _tmp2
 variable-rgx=^[a-z_][_a-z0-9]+((_[a-z0-9]+)*)?$
+argument-rgx=^[a-z_][_a-z0-9]+((_[a-z0-9]+)*)?$
 
 [FORMAT]
 max-line-length=88
@@ -27,3 +28,4 @@ disable=
     missing-docstring,
     protected-access,
     C0330,
+    useless-object-inheritance,

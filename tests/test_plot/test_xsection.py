@@ -21,41 +21,42 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
-testpath = xtg.testpath
+TMPD = xtg.tmpdir
+TESTPATH = xtg.testpath
 
-xtgshow = False
-if 'XTG_SHOW' in os.environ:
-    xtgshow = True
+XTGSHOW = False
+if "XTG_SHOW" in os.environ:
+    XTGSHOW = True
 
-logger.info('Use env variable XTG_SHOW to show interactive plots to screen')
+logger.info("Use env variable XTG_SHOW to show interactive plots to screen")
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-usefile1 = '../xtgeo-testdata/wells/reek/1/OP_1.w'
-usefile2 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
-usefile3 = '../xtgeo-testdata/polygons/reek/1/mypoly.pol'
-usefile4 = '../xtgeo-testdata/wells/reek/1/OP_5.w'
-usefile5 = '../xtgeo-testdata/surfaces/reek/2/*.gri'
-usefile6 = '../xtgeo-testdata/cubes/reek/' +\
-           'syntseis_20000101_seismic_depth_stack.segy'
+USEFILE1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
+USEFILE2 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
+USEFILE3 = "../xtgeo-testdata/polygons/reek/1/mypoly.pol"
+USEFILE4 = "../xtgeo-testdata/wells/reek/1/OP_5.w"
+USEFILE5 = "../xtgeo-testdata/surfaces/reek/2/*.gri"
+USEFILE6 = (
+    "../xtgeo-testdata/cubes/reek/" + "syntseis_20000101_seismic_depth_stack.segy"
+)
 
-usefile7 = '../xtgeo-testdata/wells/reek/1/OP_2.w'
+USEFILE7 = "../xtgeo-testdata/wells/reek/1/OP_2.w"
 
 
 @tsetup.skipifroxar
 def test_very_basic():
     """Just test that matplotlib works."""
-    assert 'matplotlib' in str(plt)
+    assert "matplotlib" in str(plt)
 
-    plt.title('Hello world')
-    plt.savefig(join(td, 'helloworld1.png'))
-    plt.savefig(join(td, 'helloworld1.svg'))
-    if xtgshow:
+    plt.title("Hello world")
+    plt.savefig(join(TMPD, "helloworld1.png"))
+    plt.savefig(join(TMPD, "helloworld1.svg"))
+    if XTGSHOW:
         plt.show()
-    logger.info('Very basic plotting')
+    logger.info("Very basic plotting")
     plt.close()
 
 
@@ -63,36 +64,35 @@ def test_very_basic():
 def test_xsection_init():
     """Trigger XSection class, basically."""
     xsect = XSection()
-    assert xsect.pagesize == 'A4'
+    assert xsect.pagesize == "A4"
 
 
 @tsetup.skipifroxar
 def test_simple_plot():
     """Test as simple XSECT plot."""
 
-    mywell = Well(usefile4)
+    mywell = Well(USEFILE4)
 
     mysurfaces = []
     mysurf = RegularSurface()
-    mysurf.from_file(usefile2)
+    mysurf.from_file(USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
         xsurf.values = xsurf.values + i * 20
-        xsurf.name = 'Surface_{}'.format(i)
+        xsurf.name = "Surface_{}".format(i)
         mysurfaces.append(xsurf)
 
-    myplot = XSection(zmin=1500, zmax=1800, well=mywell,
-                      surfaces=mysurfaces)
+    myplot = XSection(zmin=1500, zmax=1800, well=mywell, surfaces=mysurfaces)
 
     # set the color table, from file
     clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
-    cfil1 = 'xtgeo'
-    cfil2 = '../xtgeo-testdata/etc/colortables/colfacies.txt'
+    cfil1 = "xtgeo"
+    cfil2 = "../xtgeo-testdata/etc/colortables/colfacies.txt"
 
     assert 222 in clist
-    assert 'xtgeo' in cfil1
-    assert 'colfacies' in cfil2
+    assert "xtgeo" in cfil1
+    assert "colfacies" in cfil2
 
     myplot.set_colortable(cfil1, colorlist=None)
 
@@ -100,15 +100,15 @@ def test_simple_plot():
 
     myplot.plot_surfaces(fill=False)
 
-    myplot.plot_well(zonelogname='Zonelog')
+    myplot.plot_well(zonelogname="Zonelog")
 
     # myplot.plot_map()
 
-    myplot.savefig(join(td, 'xsect_gbf1.png'))
+    myplot.savefig(join(TMPD, "xsect_gbf1.png"))
 
-    print('XTGSHOW', xtgshow)
-    if xtgshow:
-        print('Show plot')
+    print("XTGSHOW", XTGSHOW)
+    if XTGSHOW:
+        print("Show plot")
         myplot.show()
 
 
@@ -116,8 +116,8 @@ def test_simple_plot():
 def test_simple_plot_with_seismics():
     """Test as simple XSECT plot with seismic backdrop."""
 
-    mywell = Well(usefile7)
-    mycube = Cube(usefile6)
+    mywell = Well(USEFILE7)
+    mycube = Cube(USEFILE6)
 
     # mycube.values += 10
     # mycube.values *= 100
@@ -126,25 +126,26 @@ def test_simple_plot_with_seismics():
 
     mysurfaces = []
     mysurf = RegularSurface()
-    mysurf.from_file(usefile2)
+    mysurf.from_file(USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
         xsurf.values = xsurf.values + i * 20
-        xsurf.name = 'Surface_{}'.format(i)
+        xsurf.name = "Surface_{}".format(i)
         mysurfaces.append(xsurf)
 
-    myplot = XSection(zmin=1000, zmax=1900, well=mywell,
-                      surfaces=mysurfaces, cube=mycube)
+    myplot = XSection(
+        zmin=1000, zmax=1900, well=mywell, surfaces=mysurfaces, cube=mycube
+    )
 
     # set the color table, from file
     clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
-    cfil1 = 'xtgeo'
-    cfil2 = '../xtgeo-testdata/etc/colortables/colfacies.txt'
+    cfil1 = "xtgeo"
+    cfil2 = "../xtgeo-testdata/etc/colortables/colfacies.txt"
 
     assert 222 in clist
-    assert 'xtgeo' in cfil1
-    assert 'colfacies' in cfil2
+    assert "xtgeo" in cfil1
+    assert "colfacies" in cfil2
 
     myplot.set_colortable(cfil1, colorlist=None)
 
@@ -157,9 +158,9 @@ def test_simple_plot_with_seismics():
 
     myplot.plot_map()
 
-    myplot.savefig(join(td, 'xsect_wcube.png'), closeplot=False)
+    myplot.savefig(join(TMPD, "xsect_wcube.png"), last=False)
 
-    if xtgshow:
+    if XTGSHOW:
         myplot.show()
 
 
@@ -168,10 +169,10 @@ def test_reek1():
     """Test XSect for a Reek well."""
 
     myfield = Polygons()
-    myfield.from_file(usefile3, fformat='xyz')
+    myfield.from_file(USEFILE3, fformat="xyz")
 
     mywells = []
-    wnames = glob.glob(usefile4)
+    wnames = glob.glob(USEFILE4)
     wnames.sort()
     for wname in wnames:
         mywell = Well(wname)
@@ -180,45 +181,56 @@ def test_reek1():
     logger.info("Wells are read...")
 
     mysurfaces = []
-    surfnames = glob.glob(usefile5)
+    surfnames = glob.glob(USEFILE5)
     surfnames.sort()
     for fname in surfnames:
-        logger.info("Read {}".format(fname))
         mysurf = RegularSurface()
         mysurf.from_file(fname)
         mysurfaces.append(mysurf)
 
     # Troll lobes
     mylobes = []
-    surfnames = glob.glob(usefile5)
+    surfnames = glob.glob(USEFILE5)
     surfnames.sort()
     for fname in surfnames:
-        logger.info("Read {}".format(fname))
         mysurf = RegularSurface()
         mysurf.from_file(fname)
         mylobes.append(mysurf)
 
     for wo in mywells:
-        myplot = XSection(zmin=1500, zmax=1700, well=wo,
-                          surfaces=mysurfaces, zonelogshift=-1,
-                          outline=myfield)
+        myplot = XSection(
+            zmin=1500,
+            zmax=1700,
+            well=wo,
+            surfaces=mysurfaces,
+            zonelogshift=-1,
+            outline=myfield,
+        )
 
-        myplot.canvas(title=wo.truewellname,
-                      subtitle="Before my corrections",
-                      infotext="Heisan sveisan", figscaling=1.2)
+        myplot.canvas(
+            title=wo.truewellname,
+            subtitle="Before my corrections",
+            infotext="Heisan sveisan",
+            figscaling=1.2,
+        )
 
         # myplot.colortable('xtgeo')
 
         myplot.plot_surfaces(fill=True)
 
-        myplot.plot_surfaces(surfaces=mylobes, fill=False, linewidth=4,
-                             legendtitle="Lobes", fancyline=True)
+        myplot.plot_surfaces(
+            surfaces=mylobes,
+            fill=False,
+            linewidth=4,
+            legendtitle="Lobes",
+            fancyline=True,
+        )
 
-        myplot.plot_well(zonelogname='Zonelog')
+        myplot.plot_well(zonelogname="Zonelog")
 
         myplot.plot_wellmap()
 
         myplot.plot_map()
 
-        myplot.savefig(join(td, 'xsect2a.svg'), fformat='svg', closeplot=False)
-        myplot.savefig(join(td, 'xsect2a.png'), fformat='png')
+        myplot.savefig(join(TMPD, "xsect2a.svg"), fformat="svg", last=False)
+        myplot.savefig(join(TMPD, "xsect2a.png"), fformat="png")

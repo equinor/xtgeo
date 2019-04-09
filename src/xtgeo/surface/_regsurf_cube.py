@@ -13,20 +13,34 @@ from xtgeo.common import XTGShowProgress
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 
 XTGDEBUG = xtg.get_syslevel()
 
-ALLATTRS = ['max', 'min', 'rms', 'var', 'mean', 'maxpos', 'maxneg',
-            'maxabs', 'sumpos', 'sumneg', 'sumabs', 'meanabs', 'meanpos',
-            'meanneg']
+ALLATTRS = [
+    "max",
+    "min",
+    "rms",
+    "var",
+    "mean",
+    "maxpos",
+    "maxneg",
+    "maxabs",
+    "sumpos",
+    "sumneg",
+    "sumabs",
+    "meanabs",
+    "meanpos",
+    "meanneg",
+]
 
 # self = RegularSurface instance!
 # pylint: disable=too-many-locals, too-many-branches
 
 
-def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
-               snapxy=False, deadtraces=True):
+def slice_cube(
+    self, cube, zsurf=None, sampling="nearest", mask=True, snapxy=False, deadtraces=True
+):
     """Private function for the Cube slicing."""
 
     if zsurf is not None:
@@ -36,7 +50,7 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
         other = self.copy()
 
     if not self.compare_topology(other, strict=False):
-        raise RuntimeError('Topology of maps differ. Stop!')
+        raise RuntimeError("Topology of maps differ. Stop!")
 
     if mask:
         opt2 = 0
@@ -47,44 +61,47 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
         olddead = cube.values_dead_traces(_cxtgeo.UNDEF)
 
-    cubeval1d = np.ravel(cube.values, order='C')
+    cubeval1d = np.ravel(cube.values, order="C")
 
     nsurf = self.ncol * self.nrow
 
     usesampling = 0
-    if sampling == 'trilinear':
+    if sampling == "trilinear":
         usesampling = 1
         if snapxy:
             usesampling = 2
 
-    logger.debug('Running method from C... (using typemaps for numpies!:')
-    istat, v1d = _cxtgeo.surf_slice_cube(cube.ncol,
-                                         cube.nrow,
-                                         cube.nlay,
-                                         cube.xori,
-                                         cube.xinc,
-                                         cube.yori,
-                                         cube.yinc,
-                                         cube.zori,
-                                         cube.zinc,
-                                         cube.rotation,
-                                         cube.yflip,
-                                         cubeval1d,
-                                         self.ncol,
-                                         self.nrow,
-                                         self.xori,
-                                         self.xinc,
-                                         self.yori,
-                                         self.yinc,
-                                         self.yflip,
-                                         self.rotation,
-                                         other.get_values1d(),
-                                         nsurf,
-                                         usesampling, opt2,
-                                         XTGDEBUG)
+    logger.debug("Running method from C... (using typemaps for numpies!:")
+    istat, v1d = _cxtgeo.surf_slice_cube(
+        cube.ncol,
+        cube.nrow,
+        cube.nlay,
+        cube.xori,
+        cube.xinc,
+        cube.yori,
+        cube.yinc,
+        cube.zori,
+        cube.zinc,
+        cube.rotation,
+        cube.yflip,
+        cubeval1d,
+        self.ncol,
+        self.nrow,
+        self.xori,
+        self.xinc,
+        self.yori,
+        self.yinc,
+        self.yflip,
+        self.rotation,
+        other.get_values1d(),
+        nsurf,
+        usesampling,
+        opt2,
+        XTGDEBUG,
+    )
 
     if istat != 0:
-        logger.warning('Problem, ISTAT = %s', istat)
+        logger.warning("Problem, ISTAT = %s", istat)
 
     self.set_values1d(v1d)
 
@@ -94,13 +111,24 @@ def slice_cube(self, cube, zsurf=None, sampling='nearest', mask=True,
     return istat
 
 
-def slice_cube_window(self, cube, zsurf=None, other=None,
-                      other_position='below',
-                      sampling='nearest', mask=True,
-                      zrange=10, ndiv=None, attribute='max',
-                      maskthreshold=0.1, snapxy=False,
-                      showprogress=False, deadtraces=True,
-                      deletecube=False, algorithm=1):
+def slice_cube_window(
+    self,
+    cube,
+    zsurf=None,
+    other=None,
+    other_position="below",
+    sampling="nearest",
+    mask=True,
+    zrange=10,
+    ndiv=None,
+    attribute="max",
+    maskthreshold=0.1,
+    snapxy=False,
+    showprogress=False,
+    deadtraces=True,
+    deletecube=False,
+    algorithm=1,
+):
 
     """Slice Cube with a window and extract attribute(s)
 
@@ -113,11 +141,11 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
     Note: attribute may be a scalar or a list. If a list, then a dict of
     surfaces are returned.
     """
-    logger.info('Slice cube window method')
+    logger.info("Slice cube window method")
 
     qattr_is_string = True
     if not isinstance(attribute, list):
-        if attribute == 'all':
+        if attribute == "all":
             attrlist = ALLATTRS
             qattr_is_string = False
         else:
@@ -135,40 +163,65 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
         zdelta = np.absolute(this.values - other.values)
         zrange = zdelta.max()
 
-    ndivmode = 'user setting'
+    ndivmode = "user setting"
     if ndiv is None:
-        ndivmode = 'auto'
+        ndivmode = "auto"
         ndiv = int(2 * zrange / cube.zinc)
         if ndiv < 1:
             ndiv = 1
-            logger.warning('NDIV < 1; reset to 1')
+            logger.warning("NDIV < 1; reset to 1")
 
-    logger.info('ZRANGE is %s', zrange)
-    logger.info('NDIV is set to %s (%s)', ndiv, ndivmode)
+    logger.info("ZRANGE is %s", zrange)
+    logger.info("NDIV is set to %s (%s)", ndiv, ndivmode)
 
     # This will run slice in a loop within a window. Then, numpy methods
     # are applied to get the attributes
 
     if other is None and algorithm == 1:
-        attvalues = _slice_constant_window(this, cube, sampling, zrange,
-                                           ndiv, mask, attrlist, snapxy,
-                                           showprogress=showprogress,
-                                           deadtraces=deadtraces,
-                                           deletecube=deletecube)
+        attvalues = _slice_constant_window(
+            this,
+            cube,
+            sampling,
+            zrange,
+            ndiv,
+            mask,
+            attrlist,
+            snapxy,
+            showprogress=showprogress,
+            deadtraces=deadtraces,
+            deletecube=deletecube,
+        )
     elif other is None and algorithm == 2:
-        attvalues = _slice_constant_window2(this, cube, sampling, zrange,
-                                            ndiv, mask, attrlist, snapxy,
-                                            showprogress=showprogress,
-                                            deadtraces=deadtraces,
-                                            deletecube=deletecube)
+        attvalues = _slice_constant_window2(
+            this,
+            cube,
+            sampling,
+            zrange,
+            ndiv,
+            mask,
+            attrlist,
+            snapxy,
+            showprogress=showprogress,
+            deadtraces=deadtraces,
+            deletecube=deletecube,
+        )
     else:
-        attvalues = _slice_between_surfaces(this, cube, sampling, other,
-                                            other_position, zrange,
-                                            ndiv, mask, attrlist,
-                                            maskthreshold, snapxy,
-                                            showprogress=showprogress,
-                                            deadtraces=deadtraces,
-                                            deletecube=deletecube)
+        attvalues = _slice_between_surfaces(
+            this,
+            cube,
+            sampling,
+            other,
+            other_position,
+            zrange,
+            ndiv,
+            mask,
+            attrlist,
+            maskthreshold,
+            snapxy,
+            showprogress=showprogress,
+            deadtraces=deadtraces,
+            deletecube=deletecube,
+        )
 
     results = dict()
 
@@ -184,49 +237,62 @@ def slice_cube_window(self, cube, zsurf=None, other=None,
             return None
 
         return results
-    else:
-        return None
+
+    return None
 
 
-def _slice_constant_window(this, cube, sampling, zrange,
-                           ndiv, mask, attrlist, snapxy, showprogress=False,
-                           deadtraces=True, deletecube=False):
+def _slice_constant_window(
+    this,
+    cube,
+    sampling,
+    zrange,
+    ndiv,
+    mask,
+    attrlist,
+    snapxy,
+    showprogress=False,
+    deadtraces=True,
+    deletecube=False,
+):
     """Slice a window, (constant in vertical extent)."""
     npcollect = []
     zcenter = this.copy()
 
-    logger.info('Mean W of depth no MIDDLE slice is %s',
-                zcenter.values.mean())
-    zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
-                       deadtraces=deadtraces)
-    logger.info('Mean of cube slice is %s', zcenter.values.mean())
+    logger.info("Mean W of depth no MIDDLE slice is %s", zcenter.values.mean())
+    zcenter.slice_cube(
+        cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+    )
+    logger.info("Mean of cube slice is %s", zcenter.values.mean())
 
     npcollect.append(zcenter.values)
 
     zincr = zrange / float(ndiv)
 
-    logger.info('ZINCR is %s', zincr)
+    logger.info("ZINCR is %s", zincr)
 
     # collect above the original surface
-    progress = XTGShowProgress(ndiv * 2, show=showprogress,
-                               leadtext='progress: ', skip=1)
+    progress = XTGShowProgress(
+        ndiv * 2, show=showprogress, leadtext="progress: ", skip=1
+    )
     for idv in range(ndiv):
         progress.flush(idv)
         ztmp = this.copy()
         ztmp.values -= zincr * (idv + 1)
-        ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
-                        deadtraces=deadtraces)
+        ztmp.slice_cube(
+            cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+        )
         npcollect.append(ztmp.values)
     # collect below the original surface
     for idv in range(ndiv):
         progress.flush(ndiv + idv)
         ztmp = this.copy()
         ztmp.values += zincr * (idv + 1)
-        ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
-                        deadtraces=deadtraces)
+        ztmp.slice_cube(
+            cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+        )
         npcollect.append(ztmp.values)
 
-    logger.info('Make a stack of the maps...')
+    logger.info("Make a stack of the maps...")
     stacked = ma.dstack(npcollect)
     del npcollect
     if deletecube:
@@ -234,7 +300,7 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
     attvalues = dict()
     for attr in attrlist:
-        logger.info('Running attribute %s', attr)
+        logger.info("Running attribute %s", attr)
         attvalues[attr] = _attvalues(attr, stacked)
 
     progress.finished()
@@ -243,9 +309,18 @@ def _slice_constant_window(this, cube, sampling, zrange,
 
 # NOT FINISHED:
 def _slice_constant_window2(  # pylint: disable=unused-argument
-        this, cube, sampling, zrange, ndiv, mask, attrlist,
-        snapxy, showprogress=False, deadtraces=True,
-        deletecube=False):
+    this,
+    cube,
+    sampling,
+    zrange,
+    ndiv,
+    mask,
+    attrlist,
+    snapxy,
+    showprogress=False,
+    deadtraces=True,
+    deletecube=False,
+):
     """Slice a window, (constant in vertical extent); faster and better
     algorithm (algorithm2).
     """
@@ -263,10 +338,10 @@ def _slice_constant_window2(  # pylint: disable=unused-argument
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
         olddead = cube.values_dead_traces(_cxtgeo.UNDEF)
 
-    cubeval1d = np.ravel(cube.values, order='C')
+    cubeval1d = np.ravel(cube.values, order="C")
 
     usesampling = 0
-    if sampling == 'trilinear':
+    if sampling == "trilinear":
         usesampling = 1
         if snapxy:
             usesampling = 2
@@ -303,10 +378,11 @@ def _slice_constant_window2(  # pylint: disable=unused-argument
         nattr,
         usesampling,
         opt2,
-        XTGDEBUG)
+        XTGDEBUG,
+    )
 
     if istat != 0:
-        logger.warning('Problem, ISTAT = %s', istat)
+        logger.warning("Problem, ISTAT = %s", istat)
 
     if deadtraces:
         cube.values_dead_traces(olddead)  # reset value for dead traces
@@ -317,10 +393,22 @@ def _slice_constant_window2(  # pylint: disable=unused-argument
     return istat
 
 
-def _slice_between_surfaces(this, cube, sampling, other, other_position,
-                            zrange, ndiv, mask, attrlist, mthreshold,
-                            snapxy, showprogress=False, deadtraces=True,
-                            deletecube=False):
+def _slice_between_surfaces(
+    this,
+    cube,
+    sampling,
+    other,
+    other_position,
+    zrange,
+    ndiv,
+    mask,
+    attrlist,
+    mthreshold,
+    snapxy,
+    showprogress=False,
+    deadtraces=True,
+    deletecube=False,
+):
 
     """Slice and find values between two surfaces."""
 
@@ -328,27 +416,28 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
     zincr = zrange / float(ndiv)
 
     zcenter = this.copy()
-    zcenter.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
-                       deadtraces=deadtraces)
+    zcenter.slice_cube(
+        cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+    )
     npcollect.append(zcenter.values)
 
     # collect below or above the original surface
-    if other_position == 'above':
+    if other_position == "above":
         mul = -1
     else:
         mul = 1
 
     # collect above the original surface
-    progress = XTGShowProgress(ndiv, show=showprogress,
-                               leadtext='progress: ')
+    progress = XTGShowProgress(ndiv, show=showprogress, leadtext="progress: ")
     for idv in range(ndiv):
         progress.flush(idv)
         ztmp = this.copy()
         ztmp.values += zincr * (idv + 1) * mul
         zvalues = ztmp.values.copy()
 
-        ztmp.slice_cube(cube, sampling=sampling, mask=mask, snapxy=snapxy,
-                        deadtraces=deadtraces)
+        ztmp.slice_cube(
+            cube, sampling=sampling, mask=mask, snapxy=snapxy, deadtraces=deadtraces
+        )
 
         diff = mul * (other.values - zvalues)
 
@@ -379,48 +468,48 @@ def _slice_between_surfaces(this, cube, sampling, other, other_position,
 
 def _attvalues(attribute, stacked):
     """Attribute values computed in numpy.ma stack."""
-    if attribute == 'max':
+    if attribute == "max":
         attvalues = ma.max(stacked, axis=2)
-    elif attribute == 'min':
+    elif attribute == "min":
         attvalues = ma.min(stacked, axis=2)
-    elif attribute == 'rms':
+    elif attribute == "rms":
         attvalues = np.sqrt(ma.mean(np.square(stacked), axis=2))
-    elif attribute == 'var':
+    elif attribute == "var":
         attvalues = ma.var(stacked, axis=2)
-    elif attribute == 'mean':
+    elif attribute == "mean":
         attvalues = ma.mean(stacked, axis=2)
-    elif attribute == 'maxpos':
+    elif attribute == "maxpos":
         stacked = ma.masked_less(stacked, 0.0, copy=True)
         attvalues = ma.max(stacked, axis=2)
-    elif attribute == 'maxneg':  # ~ minimum of negative values?
+    elif attribute == "maxneg":  # ~ minimum of negative values?
         stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
         attvalues = ma.min(stacked, axis=2)
-    elif attribute == 'maxabs':
+    elif attribute == "maxabs":
         attvalues = ma.max(abs(stacked), axis=2)
-    elif attribute == 'sumpos':
+    elif attribute == "sumpos":
         stacked = ma.masked_less(stacked, 0.0, copy=True)
         attvalues = ma.sum(stacked, axis=2)
-    elif attribute == 'sumneg':
+    elif attribute == "sumneg":
         stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
         attvalues = ma.sum(stacked, axis=2)
-    elif attribute == 'sumabs':
+    elif attribute == "sumabs":
         attvalues = ma.sum(abs(stacked), axis=2)
-    elif attribute == 'meanabs':
+    elif attribute == "meanabs":
         attvalues = ma.mean(abs(stacked), axis=2)
-    elif attribute == 'meanpos':
+    elif attribute == "meanpos":
         stacked = ma.masked_less(stacked, 0.0, copy=True)
         attvalues = ma.mean(stacked, axis=2)
-    elif attribute == 'meanneg':
+    elif attribute == "meanneg":
         stacked = ma.masked_greater_equal(stacked, 0.0, copy=True)
         attvalues = ma.mean(stacked, axis=2)
     else:
-        etxt = 'Invalid attribute applied: {}'.format(attribute)
+        etxt = "Invalid attribute applied: {}".format(attribute)
         raise ValueError(etxt)
 
-    if not attvalues.flags['C_CONTIGUOUS']:
+    if not attvalues.flags["C_CONTIGUOUS"]:
         mask = ma.getmaskarray(attvalues)
-        mask = np.asanyarray(mask, order='C')
-        attvalues = np.asanyarray(attvalues, order='C')
-        attvalues = ma.array(attvalues, mask=mask, order='C')
+        mask = np.asanyarray(mask, order="C")
+        attvalues = np.asanyarray(attvalues, order="C")
+        attvalues = ma.array(attvalues, mask=mask, order="C")
 
     return attvalues

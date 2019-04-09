@@ -6,74 +6,46 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
-import logging
 import numpy as np
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot.baseplot import BasePlot
 
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
 
 class Grid3DSlice(BasePlot):
-    """Class for plotting a row, acolumn, or a layer, using matplotlib."""
+    """Class for plotting a row, a column, or a layer, using matplotlib."""
 
     def __init__(self):
         """The __init__ (constructor) method for a Grid3DSlice object."""
 
         super(Grid3DSlice, self).__init__()
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        self.logger = logging.getLogger(clsname)
-        self.logger.addHandler(logging.NullHandler())
-
-        self._xtg = XTGeoDialog()
-
         self._wells = None
         self._surface = None
         self._tight = False
 
-        self._pagesize = 'A4'
         self._wfence = None
-        self._showok = True  # to indicate if plot is OK to show
         self._legendtitle = "Map"
 
-    # =========================================================================
-    # Properties
-    # =========================================================================
-    @property
-    def pagesize(self):
-        """ Returns page size."""
-        return self._pagesize
-
-    # =========================================================================
+    # ==================================================================================
     # Functions methods (public)
-    # =========================================================================
+    # Beware general methods in base class also!
+    # ==================================================================================
 
-    def canvas(self, title=None, subtitle=None, infotext=None,
-               figscaling=1.0):
-        """Prepare the canvas to plot on, with title and subtitle.
-
-        Args:
-            title (str, optional): Title of plot.
-            subtitle (str, optional): Sub title of plot.
-            infotext (str, optional): Text to be written as info string.
-            figscaling (str, optional): Figure scaling, default is 1.0
-
-
-        """
-        # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
-        self._fig, self._ax = plt.subplots(figsize=(11.69 * figscaling,
-                                                    8.27 * figscaling))
-        if title is not None:
-            plt.title(title, fontsize=18)
-        if subtitle is not None:
-            self._ax.set_title(subtitle, size=14)
-        if infotext is not None:
-            self._fig.text(0.01, 0.02, infotext, ha='left', va='center',
-                           fontsize=8)
-
-    def plot_gridslice(self, grid, prop, mode='layer',
-                       minvalue=None, maxvalue=None,
-                       colormap=None, index=1, window=None):
+    def plot_gridslice(
+        self,
+        grid,
+        prop,
+        mode="layer",
+        minvalue=None,
+        maxvalue=None,
+        colormap=None,
+        index=1,
+        window=None,
+    ):  # pylint: disable=too-many-locals
 
         """Input a a slice of a 3D grid and plot it.
 
@@ -89,25 +61,25 @@ class Grid3DSlice(BasePlot):
             colormap: Color map to use, e.g. 'rainbow' or an rmscol file
 
         """
-
+        logger.info("Mode %s is not active", mode)
         if colormap is not None:
             self.colormap = colormap
         else:
-            self.colormap = 'rainbow'
+            self.colormap = "rainbow"
 
         clist = grid.get_xyz_corners()
         actnum = grid.get_actnum()
 
-        for i in range(len(clist)):
+        for cli in clist:
             # mark the inactive cells
-            clist[i].values[actnum.values == 0] = -999.0
+            cli.values[actnum.values == 0] = -999.0
 
-        pvalues = prop.values[:, :, index - 1].flatten(order='K')
+        pvalues = prop.values[:, :, index - 1].flatten(order="K")
 
         # how to remove the masked elements (lol):
         pvalues = pvalues[~pvalues.mask]
 
-        self.logger.debug(pvalues)
+        logger.debug(pvalues)
         print(pvalues.shape, grid.ncol * grid.nrow)
 
         geomlist = grid.get_geometrics(allcells=True, cellcenter=False)
@@ -140,8 +112,7 @@ class Grid3DSlice(BasePlot):
         print(pvalues.shape, len(patches))
 
         black = (0, 0, 0, 1)
-        patchcoll = PatchCollection(patches, edgecolors=(black,),
-                                    cmap=self.colormap)
+        patchcoll = PatchCollection(patches, edgecolors=(black,), cmap=self.colormap)
 
         patchcoll.set_array(np.array(pvalues))
 
@@ -152,4 +123,4 @@ class Grid3DSlice(BasePlot):
         self._ax.set_ylim((ymin, ymax))
         self._fig.colorbar(im)
 
-        plt.gca().set_aspect('equal', adjustable='box')
+        plt.gca().set_aspect("equal", adjustable="box")

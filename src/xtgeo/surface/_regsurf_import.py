@@ -16,16 +16,16 @@ DEBUG = xtg.get_syslevel()
 if DEBUG < 0:
     DEBUG = 0
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 
 
 def import_irap_binary(self, mfile):
     """Import Irap binary format."""
     # using swig type mapping
 
-    logger.debug('Enter function...')
+    logger.debug("Enter function...")
     # need to call the C function...
-    _cxtgeo.xtg_verbose_file('NONE')
+    _cxtgeo.xtg_verbose_file("NONE")
 
     # read with mode 0, to get mx my
     xlist = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, DEBUG)
@@ -36,14 +36,14 @@ def import_irap_binary(self, mfile):
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
-        raise RuntimeError('Problem in {}, code {}'.format(__name__, ier))
+        raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
-    val = np.reshape(val, (ncol, nrow), order='C')
+    val = np.reshape(val, (ncol, nrow), order="C")
 
     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
 
     if np.isnan(val).any():
-        logger.info('NaN values are found, will mask...')
+        logger.info("NaN values are found, will mask...")
         val = ma.masked_invalid(val)
 
     yflip = 1
@@ -70,9 +70,9 @@ def import_irap_ascii(self, mfile):
     """Import Irap ascii format."""
     # version using swig type mapping
 
-    logger.debug('Enter function...')
+    logger.debug("Enter function...")
     # need to call the C function...
-    _cxtgeo.xtg_verbose_file('NONE')
+    _cxtgeo.xtg_verbose_file("NONE")
 
     # read with mode 0, scan to get mx my
     xlist = _cxtgeo.surf_import_irap_ascii(mfile, 0, 1, 0, DEBUG)
@@ -83,14 +83,14 @@ def import_irap_ascii(self, mfile):
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
-        raise RuntimeError('Problem in {}, code {}'.format(__name__, ier))
+        raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
-    val = np.reshape(val, (ncol, nrow), order='C')
+    val = np.reshape(val, (ncol, nrow), order="C")
 
     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
 
     if np.isnan(val).any():
-        logger.info('NaN values are found, will mask...')
+        logger.info("NaN values are found, will mask...")
         val = ma.masked_invalid(val)
 
     yflip = 1
@@ -120,26 +120,22 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     # 2588	1179	476782.2897888889	6564025.6954	1000.0
     # 2588	1180	476776.7181777778	6564014.5058	1000.0
 
-    logger.debug('Read data from file... (scan for dimensions)')
+    logger.debug("Read data from file... (scan for dimensions)")
 
-    xlist = _cxtgeo.surf_import_ijxyz(mfile, 0, 1, 1, 1,
-                                      0, DEBUG)
+    xlist = _cxtgeo.surf_import_ijxyz(mfile, 0, 1, 1, 1, 0, DEBUG)
 
-    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln,\
-        val, yflip = xlist
+    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
 
     if ier != 0:
-        raise RuntimeError('Import from C is wrong...')
+        raise RuntimeError("Import from C is wrong...")
 
     # now real read mode
-    xlist = _cxtgeo.surf_import_ijxyz(mfile, 1, ncol, nrow,
-                                      ncol * nrow, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_ijxyz(mfile, 1, ncol, nrow, ncol * nrow, 0, DEBUG)
 
-    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln,\
-        val, yflip = xlist
+    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
 
     if ier != 0:
-        raise RuntimeError('Import from C is wrong...')
+        raise RuntimeError("Import from C is wrong...")
 
     logger.info(xlist)
 
@@ -165,14 +161,14 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     instance as template."""
 
     if isinstance(template, (xtgeo.Cube, xtgeo.RegularSurface)):
-        logger.info('OK template')
+        logger.info("OK template")
     else:
-        raise ValueError('Template is of wrong type: %s', type(template))
+        raise ValueError("Template is of wrong type: {}".format(type(template)))
 
     nxy = template.ncol * template.nrow
-    iok, val = _cxtgeo.surf_import_ijxyz_tmpl(mfile, template.ilines,
-                                              template.xlines, nxy,
-                                              0, DEBUG)
+    _iok, val = _cxtgeo.surf_import_ijxyz_tmpl(
+        mfile, template.ilines, template.xlines, nxy, 0, DEBUG
+    )
 
     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
 

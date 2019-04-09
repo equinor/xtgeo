@@ -5,7 +5,7 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 
 XTGDEBUG = xtg.get_syslevel()
 
@@ -33,13 +33,13 @@ def swapaxes(self):
 
     val = self.get_values1d(fill_value=self.undef)
 
-    ier = _cxtgeo.surf_swapaxes(ncol, nrow, yflip,
-                                self.xori, xinc,
-                                self.yori, yinc, rota, val,
-                                0, XTGDEBUG)
+    ier = _cxtgeo.surf_swapaxes(
+        ncol, nrow, yflip, self.xori, xinc, self.yori, yinc, rota, val, 0, XTGDEBUG
+    )
     if ier != 0:
-        raise RuntimeError('Unspecied runtime error from {}: Code: {}'
-                           .format(__name__, ier))
+        raise RuntimeError(
+            "Unspecied runtime error from {}: Code: {}".format(__name__, ier)
+        )
 
     self._ncol = _cxtgeo.intpointer_value(ncol)
     self._nrow = _cxtgeo.intpointer_value(nrow)

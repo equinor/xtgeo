@@ -9,7 +9,7 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 
 XTGDEBUG = xtg.get_syslevel()
 
@@ -38,10 +38,21 @@ def swapaxes(self):
     values1d = self.values.reshape(-1)
     traceid1d = self._traceidcodes.reshape(-1)
 
-    ier = _cxtgeo.cube_swapaxes(ncol, nrow, self.nlay, yflip,
-                                self.xori, xinc,
-                                self.yori, yinc, rota, values1d,
-                                traceid1d, 0, XTGDEBUG)
+    ier = _cxtgeo.cube_swapaxes(
+        ncol,
+        nrow,
+        self.nlay,
+        yflip,
+        self.xori,
+        xinc,
+        self.yori,
+        yinc,
+        rota,
+        values1d,
+        traceid1d,
+        0,
+        XTGDEBUG,
+    )
     if ier != 0:
         raise Exception
 
@@ -69,10 +80,12 @@ def thinning(self, icol, jrow, klay):
 
     for inum, ixc in enumerate(inputs):
         if not isinstance(ixc, int):
-            raise ValueError('Some input is not integer: {}'.format(inputs))
+            raise ValueError("Some input is not integer: {}".format(inputs))
         if ixc > ranges[inum] / 2:
-            raise ValueError('Input numbers <{}> are too large compared to '
-                             'existing ranges <{}>'.format(inputs, ranges))
+            raise ValueError(
+                "Input numbers <{}> are too large compared to "
+                "existing ranges <{}>".format(inputs, ranges)
+            )
 
     # just simple numpy operations, and changing some cube props
 
@@ -104,41 +117,48 @@ def cropping(self, icols, jrows, klays):
     nrow = self.nrow
     nlay = self.nlay
 
-    val = val[0 + icol1: ncol - icol2,
-              0 + jrow1: nrow - jrow2,
-              0 + klay1: nlay - klay2]
+    val = val[
+        0 + icol1 : ncol - icol2, 0 + jrow1 : nrow - jrow2, 0 + klay1 : nlay - klay2
+    ]
 
     self._ncol = val.shape[0]
     self._nrow = val.shape[1]
     self._nlay = val.shape[2]
 
-    self._ilines = self._ilines[0 + icol1: ncol - icol2]
-    self._xlines = self._xlines[0 + jrow1: nrow - jrow2]
-    self.traceidcodes = (self.traceidcodes[0 + icol1: ncol - icol2,
-                                           0 + jrow1: nrow - jrow2])
-
-    # need to recompute origins
-    xpp = _cxtgeo.new_doublepointer()
-    ypp = _cxtgeo.new_doublepointer()
+    self._ilines = self._ilines[0 + icol1 : ncol - icol2]
+    self._xlines = self._xlines[0 + jrow1 : nrow - jrow2]
+    self.traceidcodes = self.traceidcodes[
+        0 + icol1 : ncol - icol2, 0 + jrow1 : nrow - jrow2
+    ]
 
     # 1 + .., since the following routine as 1 as base for i j
-    ier = _cxtgeo.cube_xy_from_ij(1 + icol1, 1 + jrow1, xpp, ypp, self.xori,
-                                  self.xinc, self.yori, self.yinc, ncol,
-                                  nrow, self.yflip, self.rotation, 0,
-                                  XTGDEBUG)
+    ier, xpp, ypp = _cxtgeo.cube_xy_from_ij(
+        1 + icol1,
+        1 + jrow1,
+        self.xori,
+        self.xinc,
+        self.yori,
+        self.yinc,
+        ncol,
+        nrow,
+        self.yflip,
+        self.rotation,
+        0,
+        XTGDEBUG,
+    )
 
     if ier != 0:
-        raise RuntimeError('Unexpected error, code is {}'.format(ier))
+        raise RuntimeError("Unexpected error, code is {}".format(ier))
 
     # get new X Y origins
-    self._xori = _cxtgeo.doublepointer_value(xpp)
-    self._yori = _cxtgeo.doublepointer_value(ypp)
+    self._xori = xpp
+    self._yori = ypp
     self._zori = self.zori + klay1 * self.zinc
 
     self.values = val
 
 
-def resample(self, other, sampling='nearest', outside_value=None):
+def resample(self, other, sampling="nearest", outside_value=None):
     """Resample another cube to the current self"""
     # TODO: traceidcodes
 
@@ -146,10 +166,10 @@ def resample(self, other, sampling='nearest', outside_value=None):
     values2a = other.values.reshape(-1)
 
     opt1 = 0
-    if sampling == 'trilinear':
+    if sampling == "trilinear":
         opt1 = 1
 
-    logger.info('Resampling...')
+    logger.info("Resampling...")
 
     opt2 = 0
     opt2value = 0
@@ -157,39 +177,99 @@ def resample(self, other, sampling='nearest', outside_value=None):
         opt2 = 1
         opt2value = outside_value
 
-    ier = _cxtgeo.cube_resample_cube(self.ncol, self.nrow, self.nlay,
-                                     self.xori, self.xinc,
-                                     self.yori, self.yinc,
-                                     self.zori, self.zinc, self.rotation,
-                                     self.yflip,
-                                     values1a,
-                                     other.ncol, other.nrow, other.nlay,
-                                     other.xori, other.xinc,
-                                     other.yori, other.yinc,
-                                     other.zori, other.zinc, other.rotation,
-                                     other.yflip,
-                                     values2a,
-                                     opt1, opt2, opt2value,
-                                     XTGDEBUG)
+    ier = _cxtgeo.cube_resample_cube(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self.xori,
+        self.xinc,
+        self.yori,
+        self.yinc,
+        self.zori,
+        self.zinc,
+        self.rotation,
+        self.yflip,
+        values1a,
+        other.ncol,
+        other.nrow,
+        other.nlay,
+        other.xori,
+        other.xinc,
+        other.yori,
+        other.yinc,
+        other.zori,
+        other.zinc,
+        other.rotation,
+        other.yflip,
+        values2a,
+        opt1,
+        opt2,
+        opt2value,
+        XTGDEBUG,
+    )
 
     if ier == -4:
-        warnings.warn('Less than 10% of origonal cube sampled', RuntimeWarning)
+        warnings.warn("Less than 10% of origonal cube sampled", RuntimeWarning)
 
     if ier == -5:
-        raise ValueError('No cube overlap in sampling')
+        raise ValueError("No cube overlap in sampling")
 
-    logger.info('Resampling done!')
+    logger.info("Resampling done!")
 
 
-def get_randomline(self, fencespec, zmin=None, zmax=None,
-                   zincrement=None, sampling='nearest'):
+def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
+    """Find X Y value from I J index, or corresponding inline/xline"""
+    # assumes that inline follows I and xlines follows J
+
+    iuse = iloc
+    juse = jloc
+
+    if zerobased:
+        iuse = iuse + 1
+        juse = juse + 1
+
+    if ixline:
+        ilst = self.ilines.tolist()
+        jlst = self.xlines.tolist()
+        iuse = ilst.index(iloc) + 1
+        juse = jlst.index(jloc) + 1
+
+    if 1 <= iuse <= self.ncol and 1 <= juse <= self.nrow:
+
+        ier, xval, yval = _cxtgeo.cube_xy_from_ij(
+            iuse,
+            juse,
+            self.xori,
+            self.xinc,
+            self.yori,
+            self.yinc,
+            self.ncol,
+            self.nrow,
+            self._yflip,
+            self.rotation,
+            0,
+            XTGDEBUG,
+        )
+        if ier != 0:
+            logger.critical("Error code %s, contact the author", ier)
+            raise SystemExit("Error code {}".format(ier))
+
+    else:
+        raise ValueError("Index i and/or j out of bounds")
+
+    return xval, yval
+
+
+def get_randomline(
+    self, fencespec, zmin=None, zmax=None, zincrement=None, sampling="nearest"
+):
     """Get a random line from a fence spesification"""
 
     if not isinstance(fencespec, np.ndarray):
-        raise ValueError('Fence is not a numpy array')
+        raise ValueError("Fence is not a numpy array")
 
     if not len(fencespec.shape) == 2:
-        raise ValueError('Fence is not a 2D numpy')
+        raise ValueError("Fence is not a 2D numpy")
 
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]
@@ -197,7 +277,7 @@ def get_randomline(self, fencespec, zmin=None, zmax=None,
 
     for ino in range(hcoords.shape[0] - 1):
         dhv = hcoords[ino + 1] - hcoords[ino]
-        logger.info('Delta H along well path: %s', dhv)
+        logger.info("Delta H along well path: %s", dhv)
 
     zcubemax = self._zori + (self._nlay - 1) * self._zinc
     if zmin is None or zmin < self._zori:
@@ -209,19 +289,36 @@ def get_randomline(self, fencespec, zmin=None, zmax=None,
     if zincrement is None:
         zincrement = self._zinc / 2.0
 
-    nzsam = int(zmax - zmin / zincrement)
+    nzsam = int((zmax - zmin) / zincrement)
 
     nsamples = xcoords.shape[0] * nzsam
 
     option = 0
-    if sampling == 'trilinear':
+    if sampling == "trilinear":
         option = 1
 
     _ier, values = _cxtgeo.cube_get_randomline(
-        xcoords, ycoords, zmin, zmax, nzsam, self._xori, self._xinc,
-        self._yori, self._yinc, self._zori, self._zinc, self._rotation,
-        self._yflip, self._ncol, self._nrow, self._nlay,
-        self._values.reshape(-1), nsamples, option, XTGDEBUG)
+        xcoords,
+        ycoords,
+        zmin,
+        zmax,
+        nzsam,
+        self._xori,
+        self._xinc,
+        self._yori,
+        self._yinc,
+        self._zori,
+        self._zinc,
+        self._rotation,
+        self._yflip,
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._values.reshape(-1),
+        nsamples,
+        option,
+        XTGDEBUG,
+    )
 
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
@@ -233,22 +330,22 @@ def get_randomline(self, fencespec, zmin=None, zmax=None,
 def update_values(cube):
 
     if cube._cvalues is None and cube._values is None:
-        logger.critical('Something is wrong. STOP!')
+        logger.critical("Something is wrong. STOP!")
         sys.exit(9)
 
     elif cube._cvalues is None:
         return cube._values, None
 
-    logger.debug('Updating numpy values...')
+    logger.debug("Updating numpy values...")
     ncrl = cube._ncol * cube._nrow * cube._nlay
     xvv = _cxtgeo.swig_carr_to_numpy_f1d(ncrl, cube._cvalues)
 
-    xvv = np.reshape(xvv, (cube._ncol, cube._nrow, cube._nlay), order='F')
+    xvv = np.reshape(xvv, (cube._ncol, cube._nrow, cube._nlay), order="F")
 
-    logger.debug('Updating numpy values... done')
+    logger.debug("Updating numpy values... done")
 
     xtype = xvv.dtype
-    logger.info('VALUES of type %s', xtype)
+    logger.info("VALUES of type %s", xtype)
 
     # free the C values (to save memory)
     _cxtgeo.delete_floatarray(cube._cvalues)
@@ -256,34 +353,34 @@ def update_values(cube):
     return xvv, None
 
 
-# copy (update) values from numpy to SWIG, 1D array
-# TO BE DEPRECATED
-def update_cvalues(cube):
-    logger.debug('Enter update cvalues method...')
-    nval = cube._ncol * cube._nrow * cube._nlay
+# # copy (update) values from numpy to SWIG, 1D array
+# # TO BE DEPRECATED
+# def update_cvalues(cube):
+#     logger.debug('Enter update cvalues method...')
+#     nval = cube._ncol * cube._nrow * cube._nlay
 
-    if cube._values is None and cube._cvalues is not None:
-        logger.debug('CVALUES unchanged')
-        return None, cube._cvalues
+#     if cube._values is None and cube._cvalues is not None:
+#         logger.debug('CVALUES unchanged')
+#         return None, cube._cvalues
 
-    elif cube._cvalues is None and cube._values is None:
-        logger.critical('_cvalues and _values is None in '
-                        '_update_cvalues. STOP')
-        sys.exit(9)
+#     elif cube._cvalues is None and cube._values is None:
+#         logger.critical('_cvalues and _values is None in '
+#                         '_update_cvalues. STOP')
+#         sys.exit(9)
 
-    elif cube._cvalues is not None and cube._values is None:
-        logger.critical('_cvalues and _values are both present in '
-                        '_update_cvalues. STOP')
-        sys.exit(9)
+#     elif cube._cvalues is not None and cube._values is None:
+#         logger.critical('_cvalues and _values are both present in '
+#                         '_update_cvalues. STOP')
+#         sys.exit(9)
 
-    # make a 1D F order numpy array, and update C array
-    xvv = cube._values.copy()
-    xvv = np.reshape(xvv, -1, order='F')
+#     # make a 1D F order numpy array, and update C array
+#     xvv = cube._values.copy()
+#     xvv = np.reshape(xvv, -1, order='F')
 
-    xcv = _cxtgeo.new_floatarray(nval)
+#     xcv = _cxtgeo.new_floatarray(nval)
 
-    # convert...
-    _cxtgeo.swig_numpy_to_carr_f1d(xvv, xcv)
-    logger.debug('Enter method... DONE')
+#     # convert...
+#     _cxtgeo.swig_numpy_to_carr_f1d(xvv, xcv)
+#     logger.debug('Enter method... DONE')
 
-    return None, xcv
+#     return None, xcv

@@ -12,10 +12,10 @@ XTGDEBUG = xtg.get_syslevel()
 
 logger = xtg.functionlogger(__name__)
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 
 
-def export_segy(self, sfile, template=None, pristine=False, engine='xtgeo'):
+def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):
     """Export on SEGY using segyio library.
 
     Args:
@@ -27,7 +27,7 @@ def export_segy(self, sfile, template=None, pristine=False, engine='xtgeo'):
         engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
 
-    if engine == 'segyio':
+    if engine == "segyio":
         _export_segy_segyio(self, sfile, template=template, pristine=pristine)
     else:
         _export_segy_xtgeo(self, sfile)
@@ -45,10 +45,10 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
 
-    logger.debug('Export segy format using segyio...')
+    logger.debug("Export segy format using segyio...")
 
     if template is None and self._segyfile is None:
-        raise NotImplementedError('Error, template=None is not yet made!')
+        raise NotImplementedError("Error, template=None is not yet made!")
 
     # There is an existing _segyfile attribute, in this case the current SEGY
     # headers etc are applied for the new data. Requires that shapes etc are
@@ -63,21 +63,21 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         try:
             shutil.copyfile(self._segyfile, sfile)
         except Exception as errormsg:
-            xtg.warn('Error message: {}'.format(errormsg))
+            xtg.warn("Error message: {}".format(errormsg))
             raise
 
-        logger.debug('Input segy file copied ...')
+        logger.debug("Input segy file copied ...")
 
-        with segyio.open(sfile, 'r+') as segyfile:
+        with segyio.open(sfile, "r+") as segyfile:
 
-            logger.debug('Output segy file is now open...')
+            logger.debug("Output segy file is now open...")
 
             if segyfile.sorting == 1:
-                logger.info('xline sorting')
+                logger.info("xline sorting")
                 for xll, xline in enumerate(segyfile.xlines):
-                    segyfile.xline[xline] = cvalues[xll]   # broadcasting
+                    segyfile.xline[xline] = cvalues[xll]  # broadcasting
             else:
-                logger.info('iline sorting')
+                logger.info("iline sorting")
                 ixv, jyv, kzv = cvalues.shape
                 for ill, iline in enumerate(segyfile.ilines):
                     if ixv != jyv != kzv or ixv != kzv != jyv:
@@ -88,7 +88,7 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
 
     else:
         # NOT FINISHED!
-        logger.debug('Input segy file from scratch ...')
+        logger.debug("Input segy file from scratch ...")
 
         # sintv = int(self.zinc * 1000)
         spec = segyio.spec()
@@ -137,18 +137,30 @@ def _export_segy_xtgeo(self, sfile):
     _cxtgeo.swig_numpy_to_carr_i1d(xlns, xlinesp)
     _cxtgeo.swig_numpy_to_carr_i1d(trid, tracidp)
 
-    status = _cxtgeo.cube_export_segy(sfile, self.ncol, self.nrow, self.nlay,
-                                      values1d,
-                                      self.xori, self.xinc,
-                                      self.yori, self.yinc,
-                                      self.zori, self.zinc,
-                                      self.rotation, self.yflip, 1,
-                                      ilinesp, xlinesp, tracidp,
-                                      0,
-                                      XTGDEBUG)
+    status = _cxtgeo.cube_export_segy(
+        sfile,
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        values1d,
+        self.xori,
+        self.xinc,
+        self.yori,
+        self.yinc,
+        self.zori,
+        self.zinc,
+        self.rotation,
+        self.yflip,
+        1,
+        ilinesp,
+        xlinesp,
+        tracidp,
+        0,
+        XTGDEBUG,
+    )
 
     if status != 0:
-        raise RuntimeError('Error when exporting to SEGY (xtgeo engine)')
+        raise RuntimeError("Error when exporting to SEGY (xtgeo engine)")
 
     _cxtgeo.delete_intarray(ilinesp)
     _cxtgeo.delete_intarray(xlinesp)
@@ -157,16 +169,25 @@ def _export_segy_xtgeo(self, sfile):
 def export_rmsreg(self, sfile):
     """Export on RMS regular format."""
 
-    logger.debug('Export to RMS regular format...')
+    logger.debug("Export to RMS regular format...")
     values1d = self.values.reshape(-1)
 
-    status = _cxtgeo.cube_export_rmsregular(self.ncol, self.nrow, self.nlay,
-                                            self.xori, self.yori, self.zori,
-                                            self.xinc, self.yinc * self.yflip,
-                                            self.zinc,
-                                            self.rotation, self.yflip,
-                                            values1d,
-                                            sfile, XTGDEBUG)
+    status = _cxtgeo.cube_export_rmsregular(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self.xori,
+        self.yori,
+        self.zori,
+        self.xinc,
+        self.yinc * self.yflip,
+        self.zinc,
+        self.rotation,
+        self.yflip,
+        values1d,
+        sfile,
+        XTGDEBUG,
+    )
 
     if status != 0:
-        raise RuntimeError('Error when exporting to RMS regular')
+        raise RuntimeError("Error when exporting to RMS regular")

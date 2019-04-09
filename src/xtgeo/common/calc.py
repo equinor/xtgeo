@@ -9,6 +9,8 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
+DBG = xtg.get_syslevel()
+
 
 def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
     """
@@ -17,7 +19,7 @@ def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
     Returns I J K as a tuple.
     """
 
-    logger.info('IB to IJK')
+    logger.info("IB to IJK")
 
     ip = _cxtgeo.new_intpointer()
     jp = _cxtgeo.new_intpointer()
@@ -47,9 +49,10 @@ def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
         ib = _cxtgeo.x_ijk2ic(i, j, k, nx, ny, nz, ibbase)
 
     if ibbase == 0 and ib > nx * ny * nz - 1:
-        xtg.warn('Something is wrong with IJK conversion')
-        xtg.warn('I J K, NX, NY, NZ IB: {} {} {} {} {} {} {}'
-                 .format(i, j, k, nx, ny, nz, ib))
+        xtg.warn("Something is wrong with IJK conversion")
+        xtg.warn(
+            "I J K, NX, NY, NZ IB: {} {} {} {} {} {} {}".format(i, j, k, nx, ny, nz, ib)
+        )
 
     return ib
 
@@ -63,13 +66,11 @@ def vectorinfo2(x1, x2, y1, y2, option=1):
 
     _cxtgeo.xtg_verbose_file("NONE")
 
-    dbg = xtg.get_syslevel()
-
     lenp = _cxtgeo.new_doublepointer()
     radp = _cxtgeo.new_doublepointer()
     degp = _cxtgeo.new_doublepointer()
 
-    _cxtgeo.x_vector_info2(x1, x2, y1, y2, lenp, radp, degp, option, dbg)
+    _cxtgeo.x_vector_info2(x1, x2, y1, y2, lenp, radp, degp, option, DBG)
 
     llen = _cxtgeo.doublepointer_value(lenp)
     rad = _cxtgeo.doublepointer_value(radp)
@@ -101,7 +102,7 @@ def find_flip(xv, yv, zv):
 
     xycross = np.cross(xv, yv)
 
-    logger.debug('Cross product XY is {}'.format(xycross))
+    logger.debug("Cross product XY is %s", xycross)
 
     if xycross[2] < 0:
         flip = 1

@@ -17,7 +17,7 @@ XTGDEBUG = xtg.get_syslevel()
 if XTGDEBUG < 0:
     XTGDEBUG = 0
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 # pylint: disable=protected-access
 
 
@@ -34,26 +34,26 @@ def get_xy_value_lists(self, **kwargs):
 
     """
 
-    grid = kwargs.get('grid', None)
+    grid = kwargs.get("grid", None)
 
-    mask = kwargs.get('mask', True)
+    mask = kwargs.get("mask", True)
 
     if grid is None:
-        raise RuntimeError('Missing grid object')
+        raise RuntimeError("Missing grid object")
 
     if not isinstance(grid, xtgeo.grid3d.Grid):
-        raise RuntimeError('The input grid is not a XTGeo Grid instance')
+        raise RuntimeError("The input grid is not a XTGeo Grid instance")
 
     if not isinstance(self, xtgeo.grid3d.GridProperty):
-        raise RuntimeError('The property is not a XTGeo GridProperty instance')
+        raise RuntimeError("The property is not a XTGeo GridProperty instance")
 
     clist = grid.get_xyz_corners()
     actnum = grid.get_actnum()
 
     # set value 0 if actnum is 0 to facilitate later operations
     if mask:
-        for i in range(len(clist)):
-            clist[i].values[actnum.values == 0] = 0
+        for cli in clist:
+            cli.values[actnum.values == 0] = 0
 
     # now some numpy operations (coffee?, any?)
     xy0 = np.column_stack((clist[0].values1d, clist[1].values1d))
@@ -67,21 +67,21 @@ def get_xy_value_lists(self, **kwargs):
     coordlist = xyc.tolist()
 
     # remove cells that are undefined ("marked" as coordinate [0, 0] if mask)
-    coordlist = [[[tuple(xy) for xy in cell if xy[0] > 0]
-                  for cell in lay] for lay in coordlist]
+    coordlist = [
+        [[tuple(xy) for xy in cell if xy[0] > 0] for cell in lay] for lay in coordlist
+    ]
 
     coordlist = [[cell for cell in lay if len(cell) > 1] for lay in coordlist]
 
     pval = self.values1d.reshape((grid.nlay, grid.ncol * grid.nrow))
     valuelist = pval.tolist(fill_value=-999.0)
     if mask:
-        valuelist = [[val for val in lay if val != -999.0]
-                     for lay in valuelist]
+        valuelist = [[val for val in lay if val != -999.0] for lay in valuelist]
 
     return coordlist, valuelist
 
 
-def operation_polygons(self, poly, value, opname='add', inside=True):
+def operation_polygons(self, poly, value, opname="add", inside=True):
     """A generic function for doing operations restricted to inside
     or outside polygon(s).
     """
@@ -89,7 +89,7 @@ def operation_polygons(self, poly, value, opname='add', inside=True):
     grid = self.geometry
 
     if not isinstance(poly, xtgeo.xyz.Polygons):
-        raise ValueError('The poly input is not a Polygons instance')
+        raise ValueError("The poly input is not a Polygons instance")
 
     # make a copy of the RegularSurface which is used a "filter" or "proxy"
     # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
@@ -106,12 +106,22 @@ def operation_polygons(self, poly, value, opname='add', inside=True):
         xcor = grp[poly.xname].values
         ycor = grp[poly.yname].values
 
-        ier = _cxtgeo.grd3d_setval_poly(xcor, ycor, self.ncol, self.nrow,
-                                        self.nlay, grid._p_coord_v,
-                                        grid._p_zcorn_v, grid._p_actnum_v,
-                                        cvals, 1, 0, XTGDEBUG)
+        ier = _cxtgeo.grd3d_setval_poly(
+            xcor,
+            ycor,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            grid._p_coord_v,
+            grid._p_zcorn_v,
+            grid._p_actnum_v,
+            cvals,
+            1,
+            0,
+            XTGDEBUG,
+        )
         if ier == -9:
-            print('## Polygon no {} is not closed'.format(id_ + 1))
+            print("## Polygon no {} is not closed".format(id_ + 1))
 
     gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
 
@@ -121,20 +131,22 @@ def operation_polygons(self, poly, value, opname='add', inside=True):
     if not inside:
         proxytarget = 0
 
-    if opname == 'add':
+    if opname == "add":
         tmp = self.values.copy() + value
-    elif opname == 'sub':
+    elif opname == "sub":
         tmp = self.values.copy() - value
-    elif opname == 'mul':
+    elif opname == "mul":
         tmp = self.values.copy() * value
-    elif opname == 'div':
+    elif opname == "div":
         # Dividing a map of zero is always a hazzle; try to obtain 0.0
         # as result in these cases
         if 0.0 in value:
-            xtg.warn('Dividing a surface with value or surface with zero '
-                     'elements; may get unexpected results, try to '
-                     'achieve zero values as result!')
-        with np.errstate(divide='ignore', invalid='ignore'):
+            xtg.warn(
+                "Dividing a surface with value or surface with zero "
+                "elements; may get unexpected results, try to "
+                "achieve zero values as result!"
+            )
+        with np.errstate(divide="ignore", invalid="ignore"):
             this = np.ma.filled(self.values, fill_value=1.0)
             that = np.ma.filled(value, fill_value=1.0)
             mask = np.ma.getmaskarray(self.values)
@@ -143,7 +155,7 @@ def operation_polygons(self, poly, value, opname='add', inside=True):
             tmp = np.nan_to_num(tmp)
             tmp = np.ma.array(tmp, mask=mask)
 
-    elif opname == 'set':
+    elif opname == "set":
         tmp = self.values.copy() * 0 + value
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]

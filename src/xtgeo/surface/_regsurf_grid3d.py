@@ -11,7 +11,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.get_syslevel()
 
 # self = RegularSurface instance!
@@ -27,7 +27,7 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
         logger.info('The current surface is copied as "other"')
         other = self.copy()
     if not self.compare_topology(other, strict=False):
-        raise RuntimeError('Topology of maps differ. Stop!')
+        raise RuntimeError("Topology of maps differ. Stop!")
 
     zslice = other.copy()
 
@@ -55,10 +55,11 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
         p_prop,
         sbuffer,
         0,
-        XTGDEBUG)
+        XTGDEBUG,
+    )
 
     if istat != 0:
-        logger.warning('Problem, ISTAT = %s', istat)
+        logger.warning("Problem, ISTAT = %s", istat)
 
     self.set_values1d(updatedval)
 
