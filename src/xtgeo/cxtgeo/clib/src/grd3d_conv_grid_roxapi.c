@@ -55,7 +55,7 @@ int grd3d_conv_grid_roxapi (
 
 {
     long ic, ib, ib0, ib1, ib2, ib3;
-    int icn, jcn, kcn, nn, i, j, k;
+    int icn, jcn, nn, i = 0, j = 0, k = 0;
     double z0, z1, z2, z3;
 
     char sbn[24] = "grd3d_conv_grid_roxapi";

@@ -55,7 +55,7 @@ void grd3d_export_grdeclprop2 (
 
 {
     long nlen;
-    FILE *fc;
+    FILE *fc = NULL;
 
     char sbn[24] = "grd3d_exp..grdeclprop2";
     xtgverbose(debug);
