@@ -18,8 +18,6 @@ if not xtg.testsetup():
 TMD = xtg.tmpdir
 TPATH = xtg.testpath
 
-# skipsegyio = pytest.mark.skipif(sys.version_info > (2, 7),
-#                                 reason='Skip test with segyio for ver 3')
 
 # =============================================================================
 # Do tests
@@ -66,13 +64,6 @@ def test_segy_scantraces():
     logger.info("Scan traces...")
 
     Cube().scan_segy_traces(SFILE1, outfile="TMP/cube_scantraces")
-
-    # with open(join(TMD, 'cube_scantraces')) as lines:
-    #     print('HELLO2', lines)
-    #     for iln, line in enumerate(lines):
-    #         print('HELLO3')
-    #         if iln == 32:
-    #             assert 'xxx' in line
 
 
 def test_storm_import():

@@ -190,7 +190,7 @@ class GridProperties(Grid3D):
                 raise ValueError("Input property is not a valid GridProperty " "object")
 
     def get_ijk(
-        self, names=("IX", "JY", "KZ"), zero_base=False, asmasked=False, mask=None
+        self, names=("IX", "JY", "KZ"), zerobased=False, asmasked=False, mask=None
     ):
 
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
@@ -199,7 +199,7 @@ class GridProperties(Grid3D):
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
             mask: If True, then active cells only.
-            zero_base: If True, counter start from 0, otherwise 1 (default=1).
+            zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
 
         if mask is not None:
@@ -207,7 +207,7 @@ class GridProperties(Grid3D):
 
         # resuse method from grid
         ixc, jyc, kzc = _grid_etc1.get_ijk(
-            self, names=names, zero_base=zero_base, asmasked=asmasked
+            self, names=names, zerobased=zerobased, asmasked=asmasked
         )
 
         # return the objects

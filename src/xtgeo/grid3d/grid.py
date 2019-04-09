@@ -889,7 +889,7 @@ class Grid(Grid3D):
             asmasked = self._evaluate_mask(mask)
 
         ixc, jyc, kzc = _grid_etc1.get_ijk(
-            self, names=names, asmasked=asmasked, zero_base=zerobased
+            self, names=names, asmasked=asmasked, zerobased=zerobased
         )
 
         # return the objects
