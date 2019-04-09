@@ -1000,8 +1000,8 @@ int cube_coord_val_ijk(
 int cube_xy_from_ij(
 		    int    i,
 		    int    j,
-		    double *x,
-		    double *y,
+                    double *swig_dbl_out_p1,  //  *x
+                    double *swig_dbl_out_p2,  //  *y
 		    double xori,
 		    double xinc,
 		    double yori,

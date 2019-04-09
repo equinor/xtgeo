@@ -541,6 +541,25 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         return avgold
 
+    def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
+        """Returns x, y from a single i j location.
+
+        Args:
+            iloc (int): I (col) location (base is 1)
+            jloc (int): J (row) location (base is 1)
+            ixline (bool): If True, then input locations are inline and xline position
+            zerobased (bool): If True, first index is 0, else it is 1. This does not
+                apply when ixline is set to True.
+        Returns:
+            The z value at location iloc, jloc, None if undefined cell.
+        """
+
+        xval, yval = _cube_utils.get_xy_value_from_ij(
+            self, iloc, jloc, ixline=ixline, zerobased=zerobased
+        )
+
+        return xval, yval
+
     # =========================================================================
     # Cube extractions, e.g. XSection
     # =========================================================================

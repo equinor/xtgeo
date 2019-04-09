@@ -131,16 +131,10 @@ def cropping(self, icols, jrows, klays):
         0 + icol1 : ncol - icol2, 0 + jrow1 : nrow - jrow2
     ]
 
-    # need to recompute origins
-    xpp = _cxtgeo.new_doublepointer()
-    ypp = _cxtgeo.new_doublepointer()
-
     # 1 + .., since the following routine as 1 as base for i j
-    ier = _cxtgeo.cube_xy_from_ij(
+    ier, xpp, ypp = _cxtgeo.cube_xy_from_ij(
         1 + icol1,
         1 + jrow1,
-        xpp,
-        ypp,
         self.xori,
         self.xinc,
         self.yori,
@@ -157,8 +151,8 @@ def cropping(self, icols, jrows, klays):
         raise RuntimeError("Unexpected error, code is {}".format(ier))
 
     # get new X Y origins
-    self._xori = _cxtgeo.doublepointer_value(xpp)
-    self._yori = _cxtgeo.doublepointer_value(ypp)
+    self._xori = xpp
+    self._yori = ypp
     self._zori = self.zori + klay1 * self.zinc
 
     self.values = val
@@ -221,6 +215,49 @@ def resample(self, other, sampling="nearest", outside_value=None):
         raise ValueError("No cube overlap in sampling")
 
     logger.info("Resampling done!")
+
+
+def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
+    """Find X Y value from I J index, or corresponding inline/xline"""
+    # assumes that inline follows I and xlines follows J
+
+    iuse = iloc
+    juse = jloc
+
+    if zerobased:
+        iuse = iuse + 1
+        juse = juse + 1
+
+    if ixline:
+        ilst = self.ilines.tolist()
+        jlst = self.xlines.tolist()
+        iuse = ilst.index(iloc) + 1
+        juse = jlst.index(jloc) + 1
+
+    if 1 <= iuse <= self.ncol and 1 <= juse <= self.nrow:
+
+        ier, xval, yval = _cxtgeo.cube_xy_from_ij(
+            iuse,
+            juse,
+            self.xori,
+            self.xinc,
+            self.yori,
+            self.yinc,
+            self.ncol,
+            self.nrow,
+            self._yflip,
+            self.rotation,
+            0,
+            XTGDEBUG,
+        )
+        if ier != 0:
+            logger.critical("Error code %s, contact the author", ier)
+            raise SystemExit("Error code {}".format(ier))
+
+    else:
+        raise ValueError("Index i and/or j out of bounds")
+
+    return xval, yval
 
 
 def get_randomline(
