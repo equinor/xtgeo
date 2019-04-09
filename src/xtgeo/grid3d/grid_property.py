@@ -707,7 +707,7 @@ class GridProperty(Grid3D):
         """
 
         if mask is not None:
-            asmasked = self._evaluate_mask(mask)
+            asmasked = super(GridProperty, self)._evaluate_mask(mask)
 
         act = GridProperty(
             ncol=self._ncol, nrow=self._nrow, nlay=self._nlay, name=name, discrete=True
@@ -966,9 +966,10 @@ class GridProperty(Grid3D):
         """Set a value (scalar) outside polygons"""
         self.operation_polygons(poly, value, opname="set", inside=False)
 
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
     # Private function
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
 
-    def _evaluate_mask(self, mask):
-        return super(GridProperty, self)._evaluate_mask(mask)
+    # def _evaluate_mask(self, mask):
+    #     # the super version is used instead; need this to override abstract method
+    #     pass

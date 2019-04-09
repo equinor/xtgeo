@@ -1325,5 +1325,6 @@ class Grid(Grid3D):
     # Private function
     # ----------------------------------------------------------------------------------
 
-    def _evaluate_mask(self, mask):
-        return super(Grid, self)._evaluate_mask(mask)  # in super class
+    # def _evaluate_mask(self, mask):  # pylint: disable=useless-super-delegation
+    #     # need to delegate since the base class is abstract
+    #     return super(Grid, self)._evaluate_mask(mask)  # in super class

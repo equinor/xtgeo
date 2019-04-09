@@ -199,7 +199,7 @@ class XSection(BasePlot):
             fontsize=8,
         )
 
-        # title her:
+        # title here:
         if title is not None:
             plt.text(
                 0.5,

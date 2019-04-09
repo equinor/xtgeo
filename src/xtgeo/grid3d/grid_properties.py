@@ -5,17 +5,16 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os.path
-import sys
 import warnings
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid3D
 from xtgeo.common import XTGDescription
 
-from xtgeo.grid3d import _gridprops_io
-from xtgeo.grid3d import _gridprops_etc
-from xtgeo.grid3d import _grid_etc1
+from . import Grid3D
+from . import _gridprops_io
+from . import _gridprops_etc
+from . import _grid_etc1
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -42,6 +41,7 @@ class GridProperties(Grid3D):
     """
 
     def __init__(self):
+        super(GridProperties, self).__init__()
 
         self._ncol = 10
         self._nrow = 12
@@ -99,7 +99,7 @@ class GridProperties(Grid3D):
             actn = gg.get_actnum()  # this will get actn as a GridProperty
             myprops.add_props([actn])
         """
-        if len(self._props) == 0:
+        if not self._props:
             return None
 
         return self._props
@@ -121,7 +121,7 @@ class GridProperties(Grid3D):
                 print ('Date applied is {}'.format(date))
 
         """
-        if len(self._dates) == 0:
+        if not self._dates:
             return None
 
         return self._dates
@@ -162,14 +162,14 @@ class GridProperties(Grid3D):
 
         if flush:
             dsc.flush()
-        else:
-            return dsc.astext()
+            return None
+        return dsc.astext()
 
     def get_prop_by_name(self, name):
         """Find and return a property object (GridProperty) by name."""
 
         for prop in self._props:
-            logger.debug("Look for {}, actual is {}".format(name, prop.name))
+            logger.debug("Look for %s, actual is %s", name, prop.name)
             if prop.name == name:
                 logger.debug(repr(prop))
                 return prop
@@ -190,7 +190,7 @@ class GridProperties(Grid3D):
                 raise ValueError("Input property is not a valid GridProperty " "object")
 
     def get_ijk(
-        self, names=["IX", "JY", "KZ"], zero_base=False, asmasked=False, mask=None
+        self, names=("IX", "JY", "KZ"), zero_base=False, asmasked=False, mask=None
     ):
 
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
@@ -203,7 +203,7 @@ class GridProperties(Grid3D):
         """
 
         if mask is not None:
-            asmasked = self._evaluate_mask(mask)
+            asmasked = super(GridProperties, self)._evaluate_mask(mask)
 
         # resuse method from grid
         ixc, jyc, kzc = _grid_etc1.get_ijk(
@@ -237,9 +237,9 @@ class GridProperties(Grid3D):
         # borrow function from GridProperty class:
         if self._props:
             return self._props[0].get_actnum(name=name, mask=asmasked)
-        else:
-            warnings.warn("No gridproperty in list", UserWarning)
-            return None
+
+        warnings.warn("No gridproperty in list", UserWarning)
+        return None
 
     # Import and export
     # This class can importies several properties in one go, which is efficient
@@ -292,13 +292,13 @@ class GridProperties(Grid3D):
 
             pfile = froot + useext
 
-        logger.info("File name to be used is {}".format(pfile))
+        logger.info("File name to be used is %s", pfile)
 
         if os.path.isfile(pfile):
-            logger.info("File {} exists OK".format(pfile))
+            logger.info("File %s exists OK", pfile)
         else:
-            logger.warning("No such file: {}".format(pfile))
-            sys.exit(1)
+            logger.warning("No such file: %s", pfile)
+            raise IOError("No such file: {}".format(pfile))
 
         if fformat.lower() == "roff":
             lst = list()
@@ -437,8 +437,3 @@ class GridProperties(Grid3D):
         dlist = _gridprops_io.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
 
         return dlist
-
-    # Private function
-
-    def _evaluate_mask(self, mask):
-        return super(GridProperties, self)._evaluate_mask(mask)

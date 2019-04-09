@@ -226,7 +226,7 @@ class Map(BasePlot):
 
         Args:
             wells (Wells): A XTGeo Wells object (contains a number of Well
-                instances.
+                instances).
 
         """
 

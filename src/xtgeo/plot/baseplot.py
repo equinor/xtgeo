@@ -32,7 +32,7 @@ class BasePlot(object):
 
     @property
     def contourlevels(self):
-        """Get the number of contour levels"""
+        """Get or set the number of contour levels"""
         return self._contourlevels
 
     @contourlevels.setter
