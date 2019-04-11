@@ -63,9 +63,9 @@ from xtgeo.cube.cube import Cube
 from xtgeo.grid3d import grid
 from xtgeo.grid3d import grid_property
 from xtgeo.grid3d import grid_properties
-from xtgeo.grid3d.grid import Grid
-from xtgeo.grid3d.grid_property import GridProperty
-from xtgeo.grid3d.grid_properties import GridProperties
+# from xtgeo.grid3d.grid import Grid
+# from xtgeo.grid3d.grid_property import GridProperty
+# from xtgeo.grid3d.grid_properties import GridProperties
 
 from xtgeo.well import well
 from xtgeo.well import wells

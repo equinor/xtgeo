@@ -11,9 +11,11 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import _gridprop_lowlevel
+from xtgeo.xyz.polygons import Polygons
+from xtgeo.well.well import Well
+from . import _gridprop_lowlevel
+from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 
@@ -29,7 +31,7 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
     """Get dZ as property"""
     ntot = (self._ncol, self._nrow, self._nlay)
 
-    dzv = xtgeo.grid3d.GridProperty(
+    dzv = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -71,7 +73,7 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     """Get dX, dY as properties"""
     ntot = self._ncol * self._nrow * self._nlay
-    dx = xtgeo.grid3d.GridProperty(
+    dx = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -79,7 +81,7 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         name=names[0],
         discrete=False,
     )
-    dy = xtgeo.grid3d.GridProperty(
+    dy = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -121,8 +123,6 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
 def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     """Get I J K as properties"""
 
-    GrProp = xtgeo.grid3d.GridProperty
-
     ashape = (self._ncol, self._nrow, self._nlay)
 
     ix, jy, kz = np.indices(ashape)
@@ -143,7 +143,7 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
         jy += 1
         kz += 1
 
-    ix = GrProp(
+    ix = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -151,7 +151,7 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
         name=names[0],
         discrete=True,
     )
-    jy = GrProp(
+    jy = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -159,7 +159,7 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
         name=names[1],
         discrete=True,
     )
-    kz = GrProp(
+    kz = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -177,9 +177,7 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
 
     ntot = self.ntotal
 
-    GrProp = xtgeo.grid3d.GridProperty
-
-    x = GrProp(
+    x = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -188,7 +186,7 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
         discrete=False,
     )
 
-    y = GrProp(
+    y = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -197,7 +195,7 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
         discrete=False,
     )
 
-    z = GrProp(
+    z = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
@@ -280,13 +278,11 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
     grid_props = []
 
-    GrProp = xtgeo.grid3d.GridProperty
-
     for i in range(0, 8):
         xname = names[0] + str(i)
         yname = names[1] + str(i)
         zname = names[2] + str(i)
-        x = GrProp(
+        x = GridProperty(
             ncol=self._ncol,
             nrow=self._nrow,
             nlay=self._nlay,
@@ -295,7 +291,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
             discrete=False,
         )
 
-        y = GrProp(
+        y = GridProperty(
             ncol=self._ncol,
             nrow=self._nrow,
             nlay=self._nlay,
@@ -304,7 +300,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
             discrete=False,
         )
 
-        z = GrProp(
+        z = GridProperty(
             ncol=self._ncol,
             nrow=self._nrow,
             nlay=self._nlay,
@@ -474,7 +470,7 @@ def make_zconsistent(self, zsep):
 
 def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
     """Inactivate inside a polygon (or outside)"""
-    if not isinstance(poly, xtgeo.xyz.Polygons):
+    if not isinstance(poly, Polygons):
         raise ValueError("Input polygon not a XTGeo Polygons instance")
 
     if layer_range is not None:
@@ -531,7 +527,7 @@ def copy(self):
         A new instance (attached grid properties will also be unique)
     """
 
-    other = xtgeo.grid3d.Grid()
+    other = self.__class__()
 
     ntot = self.ncol * self.nrow * self.nlay
     ncoord = (self.ncol + 1) * (self.nrow + 1) * 2 * 3
@@ -770,7 +766,7 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
     this = inspect.currentframe().f_code.co_name
 
     # first do some trimming of the well dataframe
-    if not well or not isinstance(well, xtgeo.well.Well):
+    if not well or not isinstance(well, Well):
         msg = "No well object in <{}> or invalid object; " "returns no result".format(
             this
         )
@@ -874,13 +870,13 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
 
 def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
     """Get adjacents cells"""
-    if not isinstance(prop, xtgeo.GridProperty):
+    if not isinstance(prop, GridProperty):
         raise ValueError("The argument prop is not a xtgeo.GridPropery")
 
     if prop.isdiscrete is False:
         raise ValueError("The argument prop is not a discrete property")
 
-    result = xtgeo.GridProperty(
+    result = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,

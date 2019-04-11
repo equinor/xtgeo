@@ -14,16 +14,17 @@ import numpy.ma as ma  # pylint: disable=useless-import-alias
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
-from xtgeo.grid3d import Grid3D
 from xtgeo.common import XTGDescription
 
-from xtgeo.grid3d import _grid_hybrid
-from xtgeo.grid3d import _grid_import
-from xtgeo.grid3d import _grid_export
-from xtgeo.grid3d import _grid_refine
-from xtgeo.grid3d import _grid_etc1
-from xtgeo.grid3d import _grid_roxapi
-from xtgeo.grid3d import _gridprop_lowlevel
+from ._grid3d import Grid3D
+
+from . import _grid_hybrid
+from . import _grid_import
+from . import _grid_export
+from . import _grid_refine
+from . import _grid_etc1
+from . import _grid_roxapi
+from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)

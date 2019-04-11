@@ -17,7 +17,9 @@ logger.addHandler(logging.NullHandler())
 xtg = XTGeoDialog()
 
 
-def wellintersections(self, wfilter=None, showprogress=False):
+def wellintersections(
+    self, wfilter=None, showprogress=False
+):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Get intersections between wells, return as dataframe table.
 
     This routine is using "shapely" functions!
@@ -34,8 +36,7 @@ def wellintersections(self, wfilter=None, showprogress=False):
 
     wlen = len(self.wells)
 
-    progress = XTGShowProgress(wlen, show=showprogress, leadtext='progress: ',
-                               skip=5)
+    progress = XTGShowProgress(wlen, show=showprogress, leadtext="progress: ", skip=5)
 
     for iwell, well in enumerate(self.wells):
 
@@ -43,18 +44,18 @@ def wellintersections(self, wfilter=None, showprogress=False):
 
         gstatus = well.geometrics()
 
-        logger.info('Work with %s', well.name)
+        logger.info("Work with %s", well.name)
         if not gstatus:
-            logger.info('Skip %s (cannot compute geometrics)', well.name)
+            logger.info("Skip %s (cannot compute geometrics)", well.name)
             continue
 
         welldfr = well.dataframe.copy()
 
-        xcor = welldfr['X_UTME'].values
-        ycor = welldfr['Y_UTMN'].values
-        zcor = welldfr['Z_TVDSS'].values
+        xcor = welldfr["X_UTME"].values
+        ycor = welldfr["Y_UTMN"].values
+        zcor = welldfr["Z_TVDSS"].values
         mcor = welldfr[well.mdlogname].values
-        logger.info('The mdlogname property is: {}'.format(well.mdlogname))
+        logger.info("The mdlogname property is: %s", well.mdlogname)
 
         if xcor.size < 2:
             continue
@@ -73,7 +74,7 @@ def wellintersections(self, wfilter=None, showprogress=False):
                 nox[well.name].append(other.name)
                 continue  # a quick check; no chance for overlap
 
-            logger.info('Consider crossing with %s ...', other.name)
+            logger.info("Consider crossing with %s ...", other.name)
 
             # try to be smart to skip entries that earlier have beenn tested
             # for crossing. If other does not cross well, then well does not
@@ -85,19 +86,19 @@ def wellintersections(self, wfilter=None, showprogress=False):
             owell = other.copy()
 
             # wfilter = None
-            if wfilter is not None and 'parallel' in wfilter:
-                    xtol = wfilter['parallel'].get('xtol')
-                    ytol = wfilter['parallel'].get('ytol')
-                    ztol = wfilter['parallel'].get('ztol')
-                    itol = wfilter['parallel'].get('itol')
-                    atol = wfilter['parallel'].get('atol')
-                    owell.truncate_parallel_path(well, xtol=xtol, ytol=ytol,
-                                                 ztol=ztol, itol=itol,
-                                                 atol=atol)
+            if wfilter is not None and "parallel" in wfilter:
+                xtol = wfilter["parallel"].get("xtol")
+                ytol = wfilter["parallel"].get("ytol")
+                ztol = wfilter["parallel"].get("ztol")
+                itol = wfilter["parallel"].get("itol")
+                atol = wfilter["parallel"].get("atol")
+                owell.truncate_parallel_path(
+                    well, xtol=xtol, ytol=ytol, ztol=ztol, itol=itol, atol=atol
+                )
 
-            xcorc = owell.dataframe['X_UTME'].values
-            ycorc = owell.dataframe['Y_UTMN'].values
-            zcorc = owell.dataframe['Z_TVDSS'].values
+            xcorc = owell.dataframe["X_UTME"].values
+            ycorc = owell.dataframe["Y_UTMN"].values
+            zcorc = owell.dataframe["Z_TVDSS"].values
 
             if xcorc.size < 2:
                 continue
@@ -118,7 +119,7 @@ def wellintersections(self, wfilter=None, showprogress=False):
             other2 = sg.LineString(np.stack([xcorc, ycorc], axis=1))
             ixx2 = thisline2.intersection(other2)
 
-            logger.debug('==> Intersects with %s', other.name)
+            logger.debug("==> Intersects with %s", other.name)
 
             if isinstance(ixx, sg.Point):
                 xcor, ycor, zcor = ixx.coords[0]
@@ -130,8 +131,7 @@ def wellintersections(self, wfilter=None, showprogress=False):
                 for ino, pxx in enumerate(list(ixx)):
                     xcor, ycor, zcor = pxx.coords[0]
                     _x, _y, mcor = pxx2[ino].coords[0]
-                    xpoints.append([well.name, mcor, other.name, xcor,
-                                    ycor, zcor])
+                    xpoints.append([well.name, mcor, other.name, xcor, ycor, zcor])
 
             elif isinstance(ixx, sg.GeometryCollection):
                 gxx2 = list(ixx2)
@@ -139,13 +139,13 @@ def wellintersections(self, wfilter=None, showprogress=False):
                     if isinstance(gxx, sg.Point):
                         xcor, ycor, zcor = gxx.coords[0]
                         _x, _y, mcor = gxx2[ino].coords[0]
-                        xpoints.append([well.name, mcor, other.name, xcor,
-                                        ycor, zcor])
+                        xpoints.append([well.name, mcor, other.name, xcor, ycor, zcor])
 
-    dfr = pd.DataFrame(xpoints, columns=['WELL', 'MDEPTH', 'CWELL', 'X_UTME',
-                                         'Y_UTMN', 'Z_TVDSS'])
+    dfr = pd.DataFrame(
+        xpoints, columns=["WELL", "MDEPTH", "CWELL", "X_UTME", "Y_UTMN", "Z_TVDSS"]
+    )
 
     progress.finished()
 
-    logger.info('All intersections found!')
+    logger.info("All intersections found!")
     return dfr

@@ -213,7 +213,10 @@ def export_grid_roxapi(self, projectname, gname, realisation, info=False, method
 def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     """Convert xtgeo geometry to pillar spec in ROXAPI and store"""
 
-    from roxar.grids import CornerPointGridGeometry as CPG
+    try:
+        from roxar.grids import CornerPointGridGeometry as CPG
+    except ImportError:
+        raise RuntimeError("Cannot load Roxar module")
 
     logger.info("Load grid via CornerPointGridGeometry...")
 

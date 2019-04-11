@@ -18,41 +18,42 @@ logger = xtg.functionlogger(__name__)
 
 
 # Import from ROX api
-# -------------------------------------------------------------------------
-def import_bwell_roxapi(self, project, gname, bwname, wname,
-                        lognames=None, ijk=True, realisation=0):
+
+
+def import_bwell_roxapi(
+    self, project, gname, bwname, wname, lognames=None, ijk=True, realisation=0
+):
     """Private function for loading project and ROXAPI blockwell import"""
 
-    logger.info('Opening RMS project ...')
+    logger.info("Opening RMS project ...")
     rox = RoxUtils(project, readonly=True)
 
-    _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
-                         ijk, realisation)
+    _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
 
     rox.safe_close()
 
 
-def _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
-                         ijk, realisation):
+def _roxapi_import_bwell(
+    self, rox, gname, bwname, wname, lognames, ijk, realisation
+):  # pylint: disable=too-many-statements
     """Private function for ROXAPI well import"""
 
     if gname in rox.project.grid_models:
         gmodel = rox.project.grid_models[gname]
-        logger.info('RMS grid model <%s> OK', gname)
+        logger.info("RMS grid model <%s> OK", gname)
     else:
-        raise ValueError('No such grid name present: {}'.format(gname))
+        raise ValueError("No such grid name present: {}".format(gname))
 
     if bwname in gmodel.blocked_wells_set:
         bwset = gmodel.blocked_wells_set[bwname]
-        logger.info('Blocked well set <%s> OK', bwname)
+        logger.info("Blocked well set <%s> OK", bwname)
     else:
-        raise ValueError('No such blocked well set: {}'.format(bwname))
+        raise ValueError("No such blocked well set: {}".format(bwname))
 
     if wname in bwset.get_well_names():
         self._wname = wname
     else:
-        raise WellNotFoundError('No such well in blocked well set: {}'
-                                .format(wname))
+        raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
 
     bwprops = [item for item in bwset.properties]
     bwnames = [item.name for item in bwset.properties]
@@ -64,17 +65,17 @@ def _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
     xyz = np.transpose(gmodel.get_grid().get_cell_centers(cind))
 
     logs = OrderedDict()
-    logs['X_UTME'] = xyz[0].astype(np.float64)
-    logs['Y_UTMN'] = xyz[1].astype(np.float64)
-    logs['Z_TVDSS'] = xyz[2].astype(np.float64)
+    logs["X_UTME"] = xyz[0].astype(np.float64)
+    logs["Y_UTMN"] = xyz[1].astype(np.float64)
+    logs["Z_TVDSS"] = xyz[2].astype(np.float64)
     if ijk:
         ijk = np.transpose(gmodel.get_grid().grid_indexer.get_indices(cind))
-        logs['I_INDEX'] = ijk[0].astype(np.float64)
-        logs['J_INDEX'] = ijk[1].astype(np.float64)
-        logs['K_INDEX'] = ijk[2].astype(np.float64)
+        logs["I_INDEX"] = ijk[0].astype(np.float64)
+        logs["J_INDEX"] = ijk[1].astype(np.float64)
+        logs["K_INDEX"] = ijk[2].astype(np.float64)
 
     usenames = []
-    if lognames and lognames == 'all':
+    if lognames and lognames == "all":
         usenames = bwnames
     elif lognames:
         usenames = lognames
@@ -87,18 +88,18 @@ def _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
         tmplog = propvalues[dind].astype(np.float64)
         tmplog = npma.filled(tmplog, fill_value=np.nan)
         tmplog[tmplog == -999] = np.nan
-        if 'discrete' in str(bwprop.type):
-            self._wlogtype[lname] = 'DISC'
+        if "discrete" in str(bwprop.type):
+            self._wlogtype[lname] = "DISC"
             self._wlogrecord[lname] = bwprop.code_names
         else:
-            self._wlogtype[lname] = 'CONT'
+            self._wlogtype[lname] = "CONT"
             self._wlogrecord[lname] = None
 
         logs[lname] = tmplog
 
     self._df = pd.DataFrame.from_dict(logs)
     self._gname = gname
-    self._filesrc = 'RMS'
+    self._filesrc = "RMS"
 
     # finally get some other metadata like RKB and topside X Y; as they
     # seem to miss for the BW in RMS, try and get them from the
@@ -108,4 +109,4 @@ def _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames,
         self._xpos, self._ypos = rox.project.wells[wname].wellhead
     else:
         self._rkb = None
-        self._xpos, self._ypos = self._df['X_UTME'][0], self._df['Y_UTMN'][0]
+        self._xpos, self._ypos = self._df["X_UTME"][0], self._df["Y_UTMN"][0]

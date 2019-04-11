@@ -29,11 +29,11 @@ import xtgeo
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
-from xtgeo.grid3d import Grid3D
-from xtgeo.grid3d import _gridprop_op1
-from xtgeo.grid3d import _gridprop_import
-from xtgeo.grid3d import _gridprop_roxapi
-from xtgeo.grid3d import _gridprop_export
+from ._grid3d import Grid3D
+from . import _gridprop_op1
+from . import _gridprop_import
+from . import _gridprop_roxapi
+from . import _gridprop_export
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)

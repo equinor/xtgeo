@@ -14,8 +14,10 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 # METHODS as wrappers to class init + import
 
-def blockedwell_from_file(bwfile, fformat='rms_ascii', mdlogname=None,
-                          zonelogname=None, strict=True):
+
+def blockedwell_from_file(
+    bwfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
+):
     """Make an instance of a BlockedWell directly from file import.
 
     Args:
@@ -33,14 +35,18 @@ def blockedwell_from_file(bwfile, fformat='rms_ascii', mdlogname=None,
 
     obj = BlockedWell()
 
-    obj.from_file(bwfile, fformat=fformat, mdlogname=mdlogname,
-                  zonelogname=zonelogname, strict=strict)
+    obj.from_file(
+        bwfile,
+        fformat=fformat,
+        mdlogname=mdlogname,
+        zonelogname=zonelogname,
+        strict=strict,
+    )
 
     return obj
 
 
-def blockedwell_from_roxar(project, gname, bwname, wname,
-                           lognames=None, ijk=True):
+def blockedwell_from_roxar(project, gname, bwname, wname, lognames=None, ijk=True):
 
     """This makes an instance of a BlockedWell directly from Roxar RMS.
 
@@ -58,14 +64,14 @@ def blockedwell_from_roxar(project, gname, bwname, wname,
 
     obj = BlockedWell()
 
-    obj.from_roxar(project, gname, bwname, wname, ijk=ijk,
-                   lognames=lognames)
+    obj.from_roxar(project, gname, bwname, wname, ijk=ijk, lognames=lognames)
 
     return obj
 
 
 # =============================================================================
 # CLASS
+
 
 class BlockedWell(Well):
     """Class for a blocked well in the XTGeo framework, subclassed from the
@@ -79,13 +85,13 @@ class BlockedWell(Well):
 
     Other geometry logs has also 'semi-magic' names:
 
-    M\_MDEPTH or Q\_MDEPTH: Measured depth, either real/true (M\_) or
-    quasi computed/estimated (Q\_). The Quasi may be incorrect for
+    M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M_) or
+    quasi computed/estimated (Q_). The Quasi may be incorrect for
     all uses, but sufficient for some computations.
 
     Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
 
-    I\_INDEX, J\_INDEX, K\_INDEX: They are grid indices. For practical reasons
+    I_INDEX, J_INDEX, K_INDEX: They are grid indices. For practical reasons
     they are treated as a CONT logs, since the min/max grid indices usually are
     unknown, and hence making a code index is not trivial.
 
@@ -107,7 +113,7 @@ class BlockedWell(Well):
 
     """
 
-    VALID_LOGTYPES = {'DISC', 'CONT'}
+    VALID_LOGTYPES = {"DISC", "CONT"}
 
     def __init__(self, *args, **kwargs):
 
@@ -131,8 +137,7 @@ class BlockedWell(Well):
 
         newbw._gridname = self._gridname
 
-    def from_roxar(self, project, gname, bwname, wname, lognames=None,
-                   ijk=True, realisation=0):
+    def from_roxar(self, *args, **kwargs):
         """Import (retrieve) a single blocked well from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
@@ -145,13 +150,26 @@ class BlockedWell(Well):
             wname (str): Name of well, as shown in RMS.
             lognames (list): List of lognames to include, or use 'all' for
                 all current blocked logs for this well.
-            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
             realisation (int): Realisation index (0 is default)
+            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
         """
+        project = args[0]
+        gname = args[1]
+        bwname = args[2]
+        wname = args[3]
+        lognames = kwargs.get("lognames", None)
+        ijk = kwargs.get("ijk", False)
+        realisation = kwargs.get("realisation", 0)
 
-        _blockedwell_roxapi.import_bwell_roxapi(self, project, gname, bwname,
-                                                wname, lognames=lognames,
-                                                ijk=ijk,
-                                                realisation=realisation)
+        _blockedwell_roxapi.import_bwell_roxapi(
+            self,
+            project,
+            gname,
+            bwname,
+            wname,
+            lognames=lognames,
+            ijk=ijk,
+            realisation=realisation,
+        )
 
         self._ensure_consistency()

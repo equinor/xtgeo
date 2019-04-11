@@ -17,7 +17,7 @@ max-branches=15
 max-bool-expr=8
 
 [SIMILARITIES]
-min-similarity-lines=10
+min-similarity-lines=20
 ignore-comments=yes
 ignore-docstrings=no
 ignore-imports=yes

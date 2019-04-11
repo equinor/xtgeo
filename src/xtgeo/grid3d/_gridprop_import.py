@@ -10,14 +10,15 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import DateNotFoundError
 from xtgeo.common.exceptions import KeywordFoundNoDateError
 from xtgeo.common.exceptions import KeywordNotFoundError
-from xtgeo.grid3d import _gridprop_lowlevel
 
 from xtgeo.common import _get_fhandle, _close_fhandle
+
+from . import _gridprop_lowlevel
+from . import _grid3d_utils as utils
 
 xtg = XTGeoDialog()
 
@@ -127,10 +128,10 @@ def import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
         logger.info("Making SOIL from SWAT and SGAS ...")
         logger.info("PFILE is %s", pfile)
 
-        swat = xtgeo.grid3d.GridProperty()
+        swat = self.__class__()
         swat.from_file(pfile, name="SWAT", grid=grid, date=date, fformat="unrst")
 
-        sgas = xtgeo.grid3d.GridProperty()
+        sgas = self.__class__()
         sgas.from_file(pfile, name="SGAS", grid=grid, date=date, fformat="unrst")
 
         self.name = "SOIL" + "_" + str(date)
@@ -214,7 +215,6 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
 
     fhandle, pclose = _get_fhandle(pfile)
 
-    gprops = xtgeo.grid3d.GridProperties()
     nentry = 0
 
     datefound = True
@@ -223,7 +223,7 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
         logger.info("Look for date %s", date)
 
         # scan for date and find SEQNUM entry number
-        dtlist = gprops.scan_dates(fhandle)
+        dtlist = utils.scan_dates(fhandle)
         if date == 0:
             date = dtlist[0][1]
         elif date == 9:
@@ -244,7 +244,7 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
 
     # scan file for property
     logger.info("Make kwlist")
-    kwlist = gprops.scan_keywords(
+    kwlist = utils.scan_keywords(
         fhandle, fformat="xecl", maxkeys=100000, dataframe=False, dates=True
     )
 
@@ -387,11 +387,9 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
 
     fhandle, pclose = _get_fhandle(pfile)
 
-    gprops = xtgeo.grid3d.GridProperties()
-
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
-    kwlist = gprops.scan_keywords(
+    kwlist = utils.scan_keywords(
         fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
@@ -631,7 +629,7 @@ def _import_roff_v2(self, pfile, name):
 
     fhandle, _pclose = _get_fhandle(pfile)
 
-    kwords = xtgeo.grid3d.GridProperties.scan_keywords(fhandle, fformat="roff")
+    kwords = utils.scan_keywords(fhandle, fformat="roff")
 
     for kwd in kwords:
         logger.info(kwd)

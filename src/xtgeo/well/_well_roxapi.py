@@ -8,7 +8,7 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
-import xtgeo
+from xtgeo.roxutils import RoxUtils
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -22,7 +22,7 @@ def import_well_roxapi(self, project, wname, trajectory='Drilled trajectory',
                        inclsurvey=False):
     """Private function for loading project and ROXAPI well import"""
 
-    rox = xtgeo.RoxUtils(project, readonly=True)
+    rox = RoxUtils(project, readonly=True)
 
     _roxapi_import_well(self, rox, wname, trajectory, logrun,
                         lognames, inclmd, inclsurvey)

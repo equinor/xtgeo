@@ -58,6 +58,6 @@ def _roxapi_import_bwells(self, rox, gname, bwname, lnames,
 
     self._wells = bwlist
 
-    if not len(self._wells):
+    if not self._wells:
         xtg.warn('No wells imported to BlockedWells')
         self._wells = None
