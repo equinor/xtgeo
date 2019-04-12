@@ -52,24 +52,19 @@ import numpy.ma as ma
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGDescription
-
-from xtgeo.plot import Map
-from xtgeo.xyz import Points
 from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
-from xtgeo.surface import _regsurf_import
-from xtgeo.surface import _regsurf_export
-from xtgeo.surface import _regsurf_cube
-from xtgeo.surface import _regsurf_grid3d
-from xtgeo.surface import _regsurf_roxapi
-from xtgeo.surface import _regsurf_gridding
-from xtgeo.surface import _regsurf_oper
-from xtgeo.surface import _regsurf_utils
+from . import _regsurf_import
+from . import _regsurf_export
+from . import _regsurf_cube
+from . import _regsurf_grid3d
+from . import _regsurf_roxapi
+from . import _regsurf_gridding
+from . import _regsurf_oper
+from . import _regsurf_utils
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # =============================================================================
@@ -612,7 +607,7 @@ class RegularSurface(object):
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = XTGDescription()
+        dsc = xtgeo.common.XTGDescription()
         dsc.title("Description of RegularSurface instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("File source", self._filesrc)
@@ -1515,7 +1510,7 @@ class RegularSurface(object):
 
         """
 
-        if not isinstance(points, Points):
+        if not isinstance(points, xtgeo.xyz.Points):
             raise ValueError("Argument not a Points instance")
 
         logger.info("Do gridding...")
@@ -2141,7 +2136,7 @@ class RegularSurface(object):
             )
             return
 
-        mymap = Map()
+        mymap = xtgeo.plot.Map()
 
         logger.info("Infotext is <%s>", infotext)
         mymap.canvas(title=title, subtitle=subtitle, infotext=infotext)

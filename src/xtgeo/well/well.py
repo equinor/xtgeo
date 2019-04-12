@@ -10,18 +10,16 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from xtgeo.common import constants as const
-from xtgeo.cxtgeo import cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGDescription
-from xtgeo.xyz import Polygons
+import xtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.common.constants as const
 
 from . import _wellmarkers
 from . import _well_io
 from . import _well_roxapi
 from . import _well_oper
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # need to call the C function...
@@ -501,7 +499,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = XTGDescription()
+        dsc = xtgeo.common.XTGDescription()
         dsc.title("Description of Well instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("File source", self._filesrc)
@@ -1044,7 +1042,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
             rval = np.reshape(rval, (nlen, 4), order="F")
         else:
-            rval = Polygons()
+            rval = xtgeo.xyz.Polygons()
             wna = self.xwellname
             idwell = [None] * extend + [wna] * (nlen - 2 * extend) + [None] * extend
             arr = np.vstack(

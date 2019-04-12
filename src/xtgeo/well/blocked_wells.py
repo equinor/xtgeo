@@ -6,12 +6,12 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-from xtgeo.common import XTGeoDialog
-from . import Wells
-from . import _blockedwells_roxapi
-from .blocked_well import BlockedWell
+import xtgeo
+from .wells import Wells
 
-xtg = XTGeoDialog()
+from . import _blockedwells_roxapi
+
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
@@ -33,7 +33,7 @@ def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
 
     """
 
-    obj = BlockedWells()
+    obj = xtgeo.well.BlockedWells()
 
     obj.from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
 
@@ -105,7 +105,7 @@ class BlockedWells(Wells):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = BlockedWell(
+                wll = xtgeo.well.BlockedWell(
                     wfile,
                     fformat=fformat,
                     mdlogname=mdlogname,

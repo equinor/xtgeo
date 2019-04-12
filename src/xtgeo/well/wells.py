@@ -8,13 +8,11 @@ from distutils.version import StrictVersion
 
 import pandas as pd
 
-from xtgeo.common import XTGDescription, XTGeoDialog
-from xtgeo.plot import Map
+import xtgeo
 
 from . import _wells_utils
-from .well import Well
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
@@ -77,7 +75,7 @@ class Wells(object):
     def wells(self, well_list):
 
         for well in well_list:
-            if not isinstance(well, Well):
+            if not isinstance(well, xtgeo.well.Well):
                 raise ValueError("Well in list not valid Well object")
 
         self._wells = well_list
@@ -85,7 +83,7 @@ class Wells(object):
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = XTGDescription()
+        dsc = xtgeo.common.XTGDescription()
         dsc.title("Description of {} instance".format(self.__class__.__name__))
         dsc.txt("Object ID", id(self))
 
@@ -154,7 +152,7 @@ class Wells(object):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = Well(
+                wll = xtgeo.well.Well(
                     wfile,
                     fformat=fformat,
                     mdlogname=mdlogname,
@@ -242,7 +240,7 @@ class Wells(object):
 
         """
 
-        mymap = Map()
+        mymap = xtgeo.plot.Map()
 
         mymap.canvas(title=title)
 

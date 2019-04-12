@@ -9,12 +9,12 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import pandas as pd
 
-import xtgeo
-from xtgeo.xyz import XYZ
-from xtgeo.xyz._xyz_io import _convert_idbased_xyz
-from xtgeo.xyz import _xyz_oper
+from xtgeo.common import XTGeoDialog
+from ._xyz import XYZ
+from ._xyz_io import _convert_idbased_xyz
+from . import _xyz_oper
 
-xtg = xtgeo.common.XTGeoDialog()
+xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
@@ -64,7 +64,7 @@ def polygons_from_roxar(project, name, category, stype="horizons", realisation=0
 
 # =============================================================================
 # CLASS
-class Polygons(XYZ):
+class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     """Class for a polygons (connected points) in the XTGeo framework.
 
     The term Polygons is hereused in a wider context, as it includes
@@ -116,8 +116,8 @@ class Polygons(XYZ):
         """ Returns the Pandas dataframe object number of rows"""
         if self._df is None:
             return 0
-        else:
-            return len(self._df.index)
+
+        return len(self._df.index)
 
     @property
     def name(self):
@@ -205,7 +205,9 @@ class Polygons(XYZ):
             self._df.dropna(axis=0, inplace=True)
             self._df.reset_index(inplace=True, drop=True)
 
-    def from_roxar(self, project, name, category, stype="horizons", realisation=0):
+    def from_roxar(
+        self, project, name, category, stype="horizons", realisation=0, attributes=False
+    ):
         """Load a polygons item from a Roxar RMS project.
 
         The import from the RMS project can be done either within the project
@@ -253,6 +255,7 @@ class Polygons(XYZ):
             stype (str): RMS folder type, 'horizons' (default) or 'zones',
                 'faults', 'clipboard'.
             realisation (int): Realisation number, default is 0
+            attributes (bool): Not in use
 
         Returns:
             Object instance updated
@@ -261,12 +264,15 @@ class Polygons(XYZ):
             ValueError: Various types of invalid inputs.
 
         """
+        logger.info("Skip attributes: %s", attributes)
 
         super(Polygons, self).from_roxar(
             project, name, category, stype=stype, realisation=realisation
         )
 
-    def to_roxar(self, project, name, category, stype="horizons", realisation=0):
+    def to_roxar(
+        self, project, name, category, stype="horizons", realisation=0, attributes=False
+    ):
         """Export/save/store a polygons item to a Roxar RMS project.
 
         Note also that horizon/zone name and category must exists in advance,
@@ -294,7 +300,7 @@ class Polygons(XYZ):
         pfile,
         fformat="xyz",
         attributes=None,
-        filter=None,
+        pfilter=None,
         wcolumn=None,
         hcolumn=None,
         mdcolumn=None,
@@ -305,7 +311,7 @@ class Polygons(XYZ):
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (list): List of extra columns to export (some formats)
-            filter (dict): Filter on e.g. top name(s) with keys TopName
+            pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
             hcolumn (str): Name of horizons column (rms_wellpicks format only)
@@ -320,7 +326,7 @@ class Polygons(XYZ):
         * HorizonName, WellName, X, Y, Z  otherwise
 
         Raises:
-            KeyError if filter is set and key(s) are invalid
+            KeyError if pfilter is set and key(s) are invalid
 
         """
 
@@ -328,7 +334,7 @@ class Polygons(XYZ):
             pfile,
             fformat=fformat,
             attributes=attributes,
-            filter=filter,
+            pfilter=pfilter,
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
@@ -353,7 +359,7 @@ class Polygons(XYZ):
             Todo
         """
 
-        if len(wells) == 0:
+        if not wells:
             return None
 
         dflist = []
@@ -366,7 +372,7 @@ class Polygons(XYZ):
                 maxid = wp[self._pname].max() + 1
                 dflist.append(wp)
 
-        if len(dflist) > 0:
+        if dflist:
             self._df = pd.concat(dflist, ignore_index=True)
             self._df.reset_index(inplace=True, drop=True)
         else:
