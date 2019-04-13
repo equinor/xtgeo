@@ -5,7 +5,7 @@ from __future__ import print_function, absolute_import
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
-from . import BlockedWell
+from .blocked_well import BlockedWell
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)

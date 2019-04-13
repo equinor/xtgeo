@@ -3,11 +3,11 @@
 
 from __future__ import print_function, absolute_import
 
-from xtgeo.common import XTGeoDialog
+import xtgeo
 from .well import Well
 from . import _blockedwell_roxapi
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 

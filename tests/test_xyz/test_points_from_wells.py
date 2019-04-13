@@ -119,7 +119,7 @@ def test_get_zone_thickness_some_wells():
 
     mypoints.to_file('TMP/zpoints_w_so622.rmsasc', fformat='rms_attr',
                      attributes=['WellName', 'ZoneName'],
-                     filter={'ZoneName': ['SO622']})
+                     pfilter={'ZoneName': ['SO622']})
 
     logger.info('Number of well made to tops: {}'.format(nwell))
 
@@ -153,4 +153,4 @@ def test_get_faciesfraction_some_wells():
     assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001
 
     mypoints.to_file('TMP/ffrac_per_zone.rmsasc', fformat='rms_attr',
-                     attributes=['WELLNAME', 'ZONE'], filter={'ZONE': [1]})
+                     attributes=['WELLNAME', 'ZONE'], pfilter={'ZONE': [1]})

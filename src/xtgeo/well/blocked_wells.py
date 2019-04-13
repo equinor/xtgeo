@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import xtgeo
 from .wells import Wells
+from .blocked_well import BlockedWell
 
 from . import _blockedwells_roxapi
 
@@ -33,7 +34,7 @@ def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
 
     """
 
-    obj = xtgeo.well.BlockedWells()
+    obj = BlockedWells()
 
     obj.from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
 
@@ -105,7 +106,7 @@ class BlockedWells(Wells):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = xtgeo.well.BlockedWell(
+                wll = BlockedWell(
                     wfile,
                     fformat=fformat,
                     mdlogname=mdlogname,

@@ -90,6 +90,8 @@ from xtgeo.roxutils.roxutils import RoxUtils
 
 from xtgeo.well import well
 from xtgeo.well import wells
+from xtgeo.well import blocked_well
+from xtgeo.well import blocked_wells
 
 from xtgeo.surface import regular_surface
 
