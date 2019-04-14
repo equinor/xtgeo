@@ -1002,7 +1002,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_yv = self.get_carray("Y_UTMN")
         ptr_zv = self.get_carray("Z_TVDSS")
 
-        nbuf = 1_000_000
+        nbuf = 1000000
         ptr_xov = _cxtgeo.new_doublearray(nbuf)
         ptr_yov = _cxtgeo.new_doublearray(nbuf)
         ptr_zov = _cxtgeo.new_doublearray(nbuf)
