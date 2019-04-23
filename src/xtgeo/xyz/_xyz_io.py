@@ -124,7 +124,7 @@ def import_rms_attr(self, pfile, zname='Z_TVDSS'):
                 self._df[col].replace('UNDEF', xtgeo.UNDEF_INT, inplace=True)
 
 
-def export_rms_attr(self, pfile, attributes='all', filter=None):
+def export_rms_attr(self, pfile, attributes='all', pfilter=None):
     """Export til RMS attribute, also called RMS extended set.
 
     If attributes is None, then it will be a simple XYZ file.
@@ -146,17 +146,17 @@ def export_rms_attr(self, pfile, attributes='all', filter=None):
 
     logger.info('Attributes is %s', attributes)
 
-    # apply filter if any
-    if filter:
-        for key, val in filter.items():
+    # apply pfilter if any
+    if pfilter:
+        for key, val in pfilter.items():
             if key in df.columns:
                 df = df.loc[df[key].isin(val)]
             else:
-                raise KeyError('The requested filter key {} was not '
+                raise KeyError('The requested pfilter key {} was not '
                                'found in dataframe. Valid keys are '
                                '{}'.format(key, df.columns))
 
-    if len(df.index) < 1:
+    if not df.index.any():
         logger.warning('Nothing to export')
         return 0
 
@@ -184,8 +184,8 @@ def export_rms_attr(self, pfile, attributes='all', filter=None):
                                           other='UNDEF', inplace=True)
                         except TypeError:
                             logger.warning('Type error...')
-    with open(pfile, mode) as f:
-        df.to_csv(f, sep=' ', header=None,
+    with open(pfile, mode) as fc:
+        df.to_csv(fc, sep=' ', header=None,
                   columns=columns, index=False, float_format='%.3f')
 
     return len(df.index)
@@ -205,7 +205,7 @@ def _convert_idbased_xyz(self, df):
                                                           self._yname,
                                                           self._zname])
 
-    for id_, gr in idgroups:
+    for _id, gr in idgroups:
         dfx = gr.drop(self._pname, axis=1)
         newdf = newdf.append([dfx, udef], ignore_index=True)
 
@@ -249,12 +249,12 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn='M_MDEPTH'):
     else:
         columns += [self._xname, self._yname, self._zname]
 
-    if len(df.index) < 1:
+    if not df.index.any():
         logger.warning('Nothing to export')
         return 0
 
-    with open(pfile, 'w') as f:
-        df.to_csv(f, sep=' ', header=None,
+    with open(pfile, 'w') as fc:
+        df.to_csv(fc, sep=' ', header=None,
                   columns=columns, index=False)
 
     return len(df.index)

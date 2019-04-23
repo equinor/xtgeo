@@ -10,22 +10,20 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-import xtgeo.common.constants as const
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGDescription
+import xtgeo.common.constants as const
 
-from xtgeo.well import _wellmarkers
-from xtgeo.well import _well_io
-from xtgeo.well import _well_roxapi
-from xtgeo.well import _well_oper
-from xtgeo.xyz import Polygons
+from . import _wellmarkers
+from . import _well_io
+from . import _well_roxapi
+from . import _well_oper
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # need to call the C function...
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.syslevel
 # pylint: disable=too-many-public-methods
 
@@ -34,8 +32,9 @@ XTGDEBUG = xtg.syslevel
 # METHODS as wrappers to class init + import
 
 
-def well_from_file(wfile, fformat='rms_ascii', mdlogname=None,
-                   zonelogname=None, strict=True):
+def well_from_file(
+    wfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
+):
     """Make an instance of a Well directly from file import.
 
     Args:
@@ -53,15 +52,26 @@ def well_from_file(wfile, fformat='rms_ascii', mdlogname=None,
 
     obj = Well()
 
-    obj.from_file(wfile, fformat=fformat, mdlogname=mdlogname,
-                  zonelogname=zonelogname, strict=strict)
+    obj.from_file(
+        wfile,
+        fformat=fformat,
+        mdlogname=mdlogname,
+        zonelogname=zonelogname,
+        strict=strict,
+    )
 
     return obj
 
 
-def well_from_roxar(project, name, trajectory='Drilled trajectory',
-                    logrun='log', lognames=None, inclmd=False,
-                    inclsurvey=False):
+def well_from_roxar(
+    project,
+    name,
+    trajectory="Drilled trajectory",
+    logrun="log",
+    lognames=None,
+    inclmd=False,
+    inclsurvey=False,
+):
 
     """This makes an instance of a Well directly from Roxar RMS.
 
@@ -79,14 +89,22 @@ def well_from_roxar(project, name, trajectory='Drilled trajectory',
 
     obj = Well()
 
-    obj.from_roxar(project, name, trajectory=trajectory, logrun=logrun,
-                   lognames=lognames, inclmd=inclmd, inclsurvey=inclsurvey)
+    obj.from_roxar(
+        project,
+        name,
+        trajectory=trajectory,
+        logrun=logrun,
+        lognames=lognames,
+        inclmd=inclmd,
+        inclsurvey=inclsurvey,
+    )
 
     return obj
 
 
 # =============================================================================
 # CLASS
+
 
 class Well(object):  # pylint: disable=useless-object-inheritance
     """Class for a well in the XTGeo framework.
@@ -123,7 +141,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     """
 
-    VALID_LOGTYPES = {'DISC', 'CONT'}
+    VALID_LOGTYPES = {"DISC", "CONT"}
 
     def __init__(self, *args, **kwargs):
 
@@ -146,29 +164,35 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if args:
             # make instance from file import
             wfile = args[0]
-            fformat = kwargs.get('fformat', 'rms_ascii')
-            mdlogname = kwargs.get('mdlogname', None)
-            zonelogname = kwargs.get('zonelogname', None)
-            strict = kwargs.get('strict', True)
-            self.from_file(wfile, fformat=fformat, mdlogname=mdlogname,
-                           zonelogname=zonelogname, strict=strict)
+            fformat = kwargs.get("fformat", "rms_ascii")
+            mdlogname = kwargs.get("mdlogname", None)
+            zonelogname = kwargs.get("zonelogname", None)
+            strict = kwargs.get("strict", True)
+            self.from_file(
+                wfile,
+                fformat=fformat,
+                mdlogname=mdlogname,
+                zonelogname=zonelogname,
+                strict=strict,
+            )
 
         else:
             # dummy
-            self._xx = kwargs.get('xx', 0.0)
+            self._xx = kwargs.get("xx", 0.0)
 
             # # make instance by kw spesification ... todo
             # raise RuntimeWarning('Cannot initialize a Well object without '
             #                      'import at the current stage.')
 
         self._ensure_consistency()
-        logger.info('Ran __init__for Well() %s', id(self))
+        logger.info("Ran __init__for Well() %s", id(self))
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
-        myrp = ('{0.__class__.__name__} (filesrc={0._filesrc!r}, '
-                'name={0._wname!r},  ID={1})'
-                .format(self, id(self)))
+        myrp = (
+            "{0.__class__.__name__} (filesrc={0._filesrc!r}, "
+            "name={0._wname!r},  ID={1})".format(self, id(self))
+        )
         return myrp
 
     def __str__(self):
@@ -176,7 +200,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return self.describe(flush=False)
 
     def __del__(self):
-        logger.info('Deleting %s instance %s', self.__class__.__name__, id(self))
+        logger.info("Deleting %s instance %s", self.__class__.__name__, id(self))
 
     # Consistency checking. As well log names are columns in the Pandas DF,
     # there are additional attributes per log that have to be "in sync"
@@ -190,22 +214,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         for logname in self._wlognames:
             if logname not in self._wlogtype:
-                self._wlogtype[logname] = 'CONT'  # continuous as default
+                self._wlogtype[logname] = "CONT"  # continuous as default
                 self._wlogrecord[logname] = None  # None as default
             else:
                 if self._wlogtype[logname] not in self.VALID_LOGTYPES:
-                    self._wlogtype[logname] = 'CONT'
+                    self._wlogtype[logname] = "CONT"
                     self._wlogrecord[logname] = None  # None as default
 
             if logname not in self._wlogrecord:
-                if self._wlogtype[logname] == 'DISC':
+                if self._wlogtype[logname] == "DISC":
                     # it is a discrete log with missing record; try to find
                     # a default one based on current values...
                     lvalues = self._df[logname].values.round(decimals=0)
                     lmin = int(lvalues.min())
                     lmax = int(lvalues.max())
 
-                    lvalues = lvalues.astype('int')
+                    lvalues = lvalues.astype("int")
                     codes = {}
                     for lval in range(lmin, lmax + 1):
                         if lval in lvalues:
@@ -252,8 +276,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         with _).
         """
         xname = self._wname
-        xname = xname.replace('/', '_')
-        xname = xname.replace(' ', '_')
+        xname = xname.replace("/", "_")
+        xname = xname.replace(" ", "_")
         return xname
 
     @property
@@ -273,25 +297,25 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             if first1 and first2:
                 newname.append(letter)
                 continue
-            if letter == '_' or letter == '/':
+            if letter in ("_", "/"):
                 first1 = True
                 continue
-            if first1 and letter == '-':
+            if first1 and letter == "-":
                 first2 = True
                 continue
 
-        xname = ''.join(newname)
-        xname = xname.replace('_', '')
-        xname = xname.replace(' ', '')
+        xname = "".join(newname)
+        xname = xname.replace("_", "")
+        xname = xname.replace(" ", "")
         return xname
 
     @property
     def truewellname(self):
         """Returns well name on the assummed form aka '31/2-E-4 AH2'."""
         xname = self.xwellname
-        if '/' not in xname:
-            xname = xname.replace('_', '/', 1)
-            xname = xname.replace('_', ' ')
+        if "/" not in xname:
+            xname = xname.replace("_", "/", 1)
+            xname = xname.replace("_", " ")
         return xname
 
     @property
@@ -304,8 +328,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if mname in self._wlognames:
             self._mdlogname = mname
         else:
-            raise ValueError('Cannot set mdlogname; {} not present'
-                             .format(mname))
+            raise ValueError("Cannot set mdlogname; {} not present".format(mname))
 
     @property
     def zonelogname(self):
@@ -317,8 +340,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if zname in self._wlognames:
             self._zonelogname = zname
         else:
-            raise ValueError('Cannot set zonelogname; {} not present'
-                             .format(zname))
+            raise ValueError("Cannot set zonelogname; {} not present".format(zname))
 
     @property
     def dataframe(self):
@@ -362,8 +384,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     # Methods
     # =========================================================================
 
-    def from_file(self, wfile, fformat='rms_ascii',
-                  mdlogname=None, zonelogname=None, strict=True):
+    def from_file(
+        self, wfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
+    ):
         """Import well from file.
 
         Args:
@@ -389,21 +412,21 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if os.path.isfile(wfile):
             pass
         else:
-            logger.critical('Not OK file')
+            logger.critical("Not OK file")
             raise os.error
 
-        if (fformat is None or fformat == 'rms_ascii'):
-            _well_io.import_rms_ascii(self, wfile, mdlogname=mdlogname,
-                                      zonelogname=zonelogname,
-                                      strict=strict)
+        if fformat is None or fformat == "rms_ascii":
+            _well_io.import_rms_ascii(
+                self, wfile, mdlogname=mdlogname, zonelogname=zonelogname, strict=strict
+            )
         else:
-            logger.error('Invalid file format')
+            logger.error("Invalid file format")
 
         self._ensure_consistency()
         self._filesrc = wfile
         return self
 
-    def to_file(self, wfile, fformat='rms_ascii'):
+    def to_file(self, wfile, fformat="rms_ascii"):
         """
         Export well to file
 
@@ -418,20 +441,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
         self._ensure_consistency()
 
-        if fformat is None or fformat == 'rms_ascii':
+        if fformat is None or fformat == "rms_ascii":
             _well_io.export_rms_ascii(self, wfile)
 
-        elif fformat == 'hdf5':
-            with pd.HDFStore(wfile, 'a', complevel=9, complib='zlib') as store:
-                logger.info('export to HDF5 %s', wfile)
+        elif fformat == "hdf5":
+            with pd.HDFStore(wfile, "a", complevel=9, complib="zlib") as store:
+                logger.info("export to HDF5 %s", wfile)
                 store[self._wname] = self._df
                 meta = dict()
-                meta['name'] = self._wname
-                store.get_storer(self._wname).attrs['metadata'] = meta
+                meta["name"] = self._wname
+                store.get_storer(self._wname).attrs["metadata"] = meta
 
-    def from_roxar(self, project, wname, trajectory='Drilled trajectory',
-                   logrun='log', lognames=None, inclmd=False,
-                   inclsurvey=False):
+    def from_roxar(self, *args, **kwargs):
         """Import (retrieve) well from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
@@ -440,50 +461,72 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             project (str): Magic string 'project' or file path to project
             wname (str): Name of well, as shown in RMS.
-            trajectory (str): Name of trajectory in RMS
-            logrun (str): Name of logrun in RMS
             lognames (list): List of lognames to import, or use 'all' for
                 all current logs for this well.
+            realisation (int): Currently inactive
+            trajectory (str): Name of trajectory in RMS
+            logrun (str): Name of logrun in RMS
             inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
             inclsurvey (bool): Include M_AZI and M_INCL from RMS
         """
 
-        _well_roxapi.import_well_roxapi(self, project, wname,
-                                        trajectory=trajectory,
-                                        logrun=logrun, lognames=lognames,
-                                        inclmd=inclmd, inclsurvey=inclsurvey)
+        # use *args, **kwargs since this method is overrided in blocked_well, and
+        # signature should be the same
+
+        project = args[0]
+        wname = args[1]
+        lognames = kwargs.get("lognames", None)
+        trajectory = kwargs.get("trajectory", "Drilled trajecetry")
+        logrun = kwargs.get("logrun", "log")
+        inclmd = kwargs.get("inclmd", False)
+        inclsurvey = kwargs.get("inclsurvey", False)
+        realisation = kwargs.get("realisation", 0)
+
+        logger.debug("Not in use: realisation %s", realisation)
+
+        _well_roxapi.import_well_roxapi(
+            self,
+            project,
+            wname,
+            trajectory=trajectory,
+            logrun=logrun,
+            lognames=lognames,
+            inclmd=inclmd,
+            inclsurvey=inclsurvey,
+        )
         self._ensure_consistency()
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = XTGDescription()
-        dsc.title('Description of Well instance')
-        dsc.txt('Object ID', id(self))
-        dsc.txt('File source', self._filesrc)
-        dsc.txt('Well name', self._wname)
-        dsc.txt('RKB', self._rkb)
-        dsc.txt('Well head', self._xpos, self._ypos)
-        dsc.txt('Name of all columns', self.lognames_all)
-        dsc.txt('Name of log columns', self.lognames)
+        dsc = xtgeo.common.XTGDescription()
+        dsc.title("Description of Well instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Well name", self._wname)
+        dsc.txt("RKB", self._rkb)
+        dsc.txt("Well head", self._xpos, self._ypos)
+        dsc.txt("Name of all columns", self.lognames_all)
+        dsc.txt("Name of log columns", self.lognames)
         for wlog in self.lognames:
             rec = self.get_logrecord(wlog)
             if rec is not None and len(rec) > 3:
-                string = '('
+                string = "("
                 nlen = len(rec)
                 for idx, (code, val) in enumerate(rec.items()):
                     if idx < 2:
-                        string += '{}: {} '.format(code, val)
+                        string += "{}: {} ".format(code, val)
                     elif idx == nlen - 1:
-                        string += '...  {}: {})'.format(code, val)
+                        string += "...  {}: {})".format(code, val)
             else:
-                string = '{}'.format(rec)
-            dsc.txt('Logname', wlog, self.get_logtype(wlog), string)
+                string = "{}".format(rec)
+            dsc.txt("Logname", wlog, self.get_logtype(wlog), string)
 
         if flush:
             dsc.flush()
-        else:
-            return dsc.astext()
+            return None
+
+        return dsc.astext()
 
     def copy(self):
         """Copy a Well instance to a new unique Well instance."""
@@ -512,10 +555,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._ensure_consistency()
 
         if lname not in self.lognames:
-            raise ValueError('Input log does not exist')
+            raise ValueError("Input log does not exist")
 
         if newname in self.lognames:
-            raise ValueError('New log name exists already')
+            raise ValueError("New log name exists already")
 
         self._wlogtype[newname] = self._wlogtype.pop(lname)
         self._wlogrecord[newname] = self._wlogrecord.pop(lname)
@@ -529,8 +572,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if self._zonelogname == lname:
             self._zonelogname = newname
 
-    def create_log(self, lname, logtype='CONT', logrecord=None, value=0.0,
-                   force=True):
+    def create_log(self, lname, logtype="CONT", logrecord=None, value=0.0, force=True):
         """Create a new log with initial values.
 
         If the logname already exists, it will be silently overwritten, unless
@@ -581,10 +623,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         lcount = 0
         for logn in lname:
             if logn not in self._wlognames:
-                logger.info('Log does no exist: %s', logn)
+                logger.info("Log does no exist: %s", logn)
                 continue
             else:
-                logger.info('Log exist and will be deleted: %s', logn)
+                logger.info("Log exist and will be deleted: %s", logn)
                 lcount += 1
                 del self._wlogtype[logn]
                 del self._wlogrecord[logn]
@@ -606,18 +648,19 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         if lname in self._wlogtype:
             return self._wlogtype[lname]
+        return None
 
     def set_logtype(self, lname, ltype):
         """Sets the type of a give log (e.g. DISC or CONT)"""
 
         self._ensure_consistency()
 
-        valid = {'DISC', 'CONT'}
+        valid = {"DISC", "CONT"}
 
         if ltype in valid:
             self._wlogtype[lname] = ltype
         else:
-            raise ValueError('Try to set invalid log type: {}'.format(ltype))
+            raise ValueError("Try to set invalid log type: {}".format(ltype))
 
     def get_logrecord(self, lname):
         """Returns the record (dict) of a give log. None if not exists"""
@@ -632,13 +675,13 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         self._ensure_consistency()
         if lname not in self.lognames:
-            raise ValueError('No such logname: {}'.format(lname))
+            raise ValueError("No such logname: {}".format(lname))
 
-        if self._wlogtype[lname] == 'CONT':
-            raise ValueError('Cannot set a log record for a continuous log')
+        if self._wlogtype[lname] == "CONT":
+            raise ValueError("Cannot set a log record for a continuous log")
 
         if not isinstance(newdict, dict):
-            raise ValueError('Input is not a dictionary')
+            raise ValueError("Input is not a dictionary")
 
         self._wlogrecord[lname] = newdict
 
@@ -668,15 +711,16 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         else:
             return None
 
-        if self.get_logtype(lname) == 'DISC':
+        if self.get_logtype(lname) == "DISC":
             carr = self._convert_np_carr_int(np_array)
         else:
             carr = self._convert_np_carr_double(np_array)
 
         return carr
 
-    def get_filled_dataframe(self, fill_value=const.UNDEF,
-                             fill_value_int=const.UNDEF_INT):
+    def get_filled_dataframe(
+        self, fill_value=const.UNDEF, fill_value_int=const.UNDEF_INT
+    ):
         """Fill the Nan's in the dataframe with real UNDEF values.
 
         This module returns a copy of the dataframe in the object; it
@@ -696,14 +740,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         newdf = self._df.copy()
 
         # make a dictionary of datatypes
-        dtype = {'X_UTME': 'float64', 'Y_UTMN': 'float64',
-                 'Z_TVDSS': 'float64'}
+        dtype = {"X_UTME": "float64", "Y_UTMN": "float64", "Z_TVDSS": "float64"}
 
-        dfill = {'X_UTME': const.UNDEF, 'Y_UTMN': const.UNDEF,
-                 'Z_TVDSS': const.UNDEF}
+        dfill = {"X_UTME": const.UNDEF, "Y_UTMN": const.UNDEF, "Z_TVDSS": const.UNDEF}
 
         for lname in lnames:
-            if self.get_logtype(lname) == 'DISC':
+            if self.get_logtype(lname) == "DISC":
                 dtype[lname] = np.int32
                 dfill[lname] = fill_value_int
             else:
@@ -726,23 +768,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         # extract numpies from XYZ trajectory logs
-        ptr_xv = self.get_carray('X_UTME')
-        ptr_yv = self.get_carray('Y_UTMN')
-        ptr_zv = self.get_carray('Z_TVDSS')
+        ptr_xv = self.get_carray("X_UTME")
+        ptr_yv = self.get_carray("Y_UTMN")
+        ptr_zv = self.get_carray("Z_TVDSS")
 
         # get number of rows in pandas
         nlen = self.nrow
 
         ptr_hlen = _cxtgeo.new_doublearray(nlen)
 
-        ier = _cxtgeo.pol_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_hlen,
-                                     XTGDEBUG)
+        ier = _cxtgeo.pol_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_hlen, XTGDEBUG)
 
         if ier != 0:
             sys.exit(-9)
 
         dnumpy = self._convert_carr_double_np(ptr_hlen)
-        self._df['R_HLEN'] = pd.Series(dnumpy, index=self._df.index)
+        self._df["R_HLEN"] = pd.Series(dnumpy, index=self._df.index)
 
         # delete tmp pointers
         _cxtgeo.delete_doublearray(ptr_xv)
@@ -764,14 +805,16 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         """
         if self._df.size < 3:
-            logger.warning('Cannot compute geometrics for %s. Too few  '
-                           'trajectory points', self.name)
+            logger.warning(
+                "Cannot compute geometrics for %s. Too few  " "trajectory points",
+                self.name,
+            )
             return False
 
         # extract numpies from XYZ trajetory logs
-        ptr_xv = self.get_carray('X_UTME')
-        ptr_yv = self.get_carray('Y_UTMN')
-        ptr_zv = self.get_carray('Z_TVDSS')
+        ptr_xv = self.get_carray("X_UTME")
+        ptr_yv = self.get_carray("Y_UTMN")
+        ptr_zv = self.get_carray("Z_TVDSS")
 
         # get number of rows in pandas
         nlen = self.nrow
@@ -780,23 +823,24 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_incl = _cxtgeo.new_doublearray(nlen)
         ptr_az = _cxtgeo.new_doublearray(nlen)
 
-        ier = _cxtgeo.well_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md,
-                                      ptr_incl, ptr_az, 0, XTGDEBUG)
+        ier = _cxtgeo.well_geometrics(
+            nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md, ptr_incl, ptr_az, 0, XTGDEBUG
+        )
 
         if ier != 0:
             sys.exit(-9)
 
         dnumpy = self._convert_carr_double_np(ptr_md)
-        self._df['Q_MDEPTH'] = pd.Series(dnumpy, index=self._df.index)
+        self._df["Q_MDEPTH"] = pd.Series(dnumpy, index=self._df.index)
 
         dnumpy = self._convert_carr_double_np(ptr_incl)
-        self._df['Q_INCL'] = pd.Series(dnumpy, index=self._df.index)
+        self._df["Q_INCL"] = pd.Series(dnumpy, index=self._df.index)
 
         dnumpy = self._convert_carr_double_np(ptr_az)
-        self._df['Q_AZI'] = pd.Series(dnumpy, index=self._df.index)
+        self._df["Q_AZI"] = pd.Series(dnumpy, index=self._df.index)
 
         if not self._mdlogname:
-            self._mdlogname = 'Q_MDEPTH'
+            self._mdlogname = "Q_MDEPTH"
 
         # delete tmp pointers
         _cxtgeo.delete_doublearray(ptr_xv)
@@ -808,8 +852,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return True
 
-    def truncate_parallel_path(self, other, xtol=None, ytol=None,
-                               ztol=None, itol=None, atol=None):
+    def truncate_parallel_path(
+        self, other, xtol=None, ytol=None, ztol=None, itol=None, atol=None
+    ):
         """Truncate (remove) the part of the well trajectory that is
         ~parallel with other.
 
@@ -838,22 +883,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             return
 
         # extract numpies from XYZ trajectory logs
-        xv1 = self._df['X_UTME'].values
-        yv1 = self._df['Y_UTMN'].values
-        zv1 = self._df['Z_TVDSS'].values
+        xv1 = self._df["X_UTME"].values
+        yv1 = self._df["Y_UTMN"].values
+        zv1 = self._df["Z_TVDSS"].values
 
-        xv2 = other._df['X_UTME'].values
-        yv2 = other._df['Y_UTMN'].values
-        zv2 = other._df['Z_TVDSS'].values
+        xv2 = other._df["X_UTME"].values
+        yv2 = other._df["Y_UTMN"].values
+        zv2 = other._df["Z_TVDSS"].values
 
-        ier = _cxtgeo.well_trunc_parallel(xv1, yv1, zv1, xv2, yv2, zv2,
-                                          xtol, ytol, ztol, itol, atol, 0,
-                                          XTGDEBUG)
+        ier = _cxtgeo.well_trunc_parallel(
+            xv1, yv1, zv1, xv2, yv2, zv2, xtol, ytol, ztol, itol, atol, 0, XTGDEBUG
+        )
 
         if ier != 0:
-            raise RuntimeError('Unexpected error')
+            raise RuntimeError("Unexpected error")
 
-        self._df = self._df[self._df['X_UTME'] < const.UNDEF_LIMIT]
+        self._df = self._df[self._df["X_UTME"] < const.UNDEF_LIMIT]
         self._df.reset_index(drop=True, inplace=True)
 
     def may_overlap(self, other):
@@ -865,15 +910,15 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             return False
 
         # extract numpies from XYZ trajectory logs
-        xmin1 = np.nanmin(self.dataframe['X_UTME'].values)
-        xmax1 = np.nanmax(self.dataframe['X_UTME'].values)
-        ymin1 = np.nanmin(self.dataframe['Y_UTMN'].values)
-        ymax1 = np.nanmax(self.dataframe['Y_UTMN'].values)
+        xmin1 = np.nanmin(self.dataframe["X_UTME"].values)
+        xmax1 = np.nanmax(self.dataframe["X_UTME"].values)
+        ymin1 = np.nanmin(self.dataframe["Y_UTMN"].values)
+        ymax1 = np.nanmax(self.dataframe["Y_UTMN"].values)
 
-        xmin2 = np.nanmin(other.dataframe['X_UTME'].values)
-        xmax2 = np.nanmax(other.dataframe['X_UTME'].values)
-        ymin2 = np.nanmin(other.dataframe['Y_UTMN'].values)
-        ymax2 = np.nanmax(other.dataframe['Y_UTMN'].values)
+        xmin2 = np.nanmin(other.dataframe["X_UTME"].values)
+        xmax2 = np.nanmax(other.dataframe["X_UTME"].values)
+        ymin2 = np.nanmin(other.dataframe["Y_UTMN"].values)
+        ymax2 = np.nanmax(other.dataframe["Y_UTMN"].values)
 
         if xmin1 > xmax2 or ymin1 > ymax2:
             return False
@@ -891,8 +936,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             tvdmin (float): Minimum TVD
             tvdmax (float): Maximum TVD
         """
-        self._df = self._df[self._df['Z_TVDSS'] >= tvdmin]
-        self._df = self._df[self._df['Z_TVDSS'] <= tvdmax]
+        self._df = self._df[self._df["Z_TVDSS"] >= tvdmin]
+        self._df = self._df[self._df["Z_TVDSS"] <= tvdmax]
 
         self._df.reset_index(drop=True, inplace=True)
 
@@ -924,8 +969,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
         _well_oper.rescale(self, delta=delta)
 
-    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None,
-                           asnumpy=True):
+    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None, asnumpy=True):
         """
         Return a fence polyline as a numpy array or a Polygons object.
 
@@ -948,15 +992,15 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         dfr = self._df
 
         if tvdmin is not None:
-            self._df = dfr[dfr['Z_TVDSS'] > tvdmin]
+            self._df = dfr[dfr["Z_TVDSS"] > tvdmin]
 
         if len(self._df) < 2:
-            xtg.warn('Well does not enough points in interval, outside range?')
+            xtg.warn("Well does not enough points in interval, outside range?")
             return False
 
-        ptr_xv = self.get_carray('X_UTME')
-        ptr_yv = self.get_carray('Y_UTMN')
-        ptr_zv = self.get_carray('Z_TVDSS')
+        ptr_xv = self.get_carray("X_UTME")
+        ptr_yv = self.get_carray("Y_UTMN")
+        ptr_zv = self.get_carray("Z_TVDSS")
 
         nbuf = 1000000
         ptr_xov = _cxtgeo.new_doublearray(nbuf)
@@ -967,9 +1011,21 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_nlen = _cxtgeo.new_intpointer()
 
         ier = _cxtgeo.pol_resampling(
-            self.nrow, ptr_xv, ptr_yv, ptr_zv, sampling, sampling * extend,
-            nbuf, ptr_nlen, ptr_xov, ptr_yov, ptr_zov, ptr_hlv,
-            0, XTGDEBUG)
+            self.nrow,
+            ptr_xv,
+            ptr_yv,
+            ptr_zv,
+            sampling,
+            sampling * extend,
+            nbuf,
+            ptr_nlen,
+            ptr_xov,
+            ptr_yov,
+            ptr_zov,
+            ptr_hlv,
+            0,
+            XTGDEBUG,
+        )
 
         if ier != 0:
             sys.exit(-2)
@@ -984,17 +1040,17 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         if asnumpy is True:
             rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
-            rval = np.reshape(rval, (nlen, 4), order='F')
+            rval = np.reshape(rval, (nlen, 4), order="F")
         else:
-            rval = Polygons()
+            rval = xtgeo.xyz.Polygons()
             wna = self.xwellname
-            idwell = [None] * extend + [wna] * (nlen - 2 * extend) + \
-                     [None] * extend
-            arr = np.vstack([npxarr, npyarr, npzarr, npharr,
-                             np.zeros(nlen, dtype=np.int32)])
-            col = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'HLEN', 'ID']
+            idwell = [None] * extend + [wna] * (nlen - 2 * extend) + [None] * extend
+            arr = np.vstack(
+                [npxarr, npyarr, npzarr, npharr, np.zeros(nlen, dtype=np.int32)]
+            )
+            col = ["X_UTME", "Y_UTMN", "Z_TVDSS", "HLEN", "ID"]
             dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
-            dfr = dfr.astype({'ID': int})
+            dfr = dfr.astype({"ID": int})
             dfr = dfr.assign(WELL=idwell)
             rval.dataframe = dfr
             rval.name = self.xwellname
@@ -1033,8 +1089,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return dfr
 
-    def get_zonation_points(self, tops=True, incl_limit=80, top_prefix='Top',
-                            zonelist=None, use_undef=False):
+    def get_zonation_points(
+        self, tops=True, incl_limit=80, top_prefix="Top", zonelist=None, use_undef=False
+    ):
 
         """Extract zonation points from Zonelog and make a marker list.
 
@@ -1071,11 +1128,11 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         else:
             return None
 
-        xvv = self._df['X_UTME'].values
-        yvv = self._df['Y_UTMN'].values
-        zvv = self._df['Z_TVDSS'].values
-        incl = self._df['Q_INCL'].values
-        mdv = self._df['Q_MDEPTH'].values
+        xvv = self._df["X_UTME"].values
+        yvv = self._df["Y_UTMN"].values
+        zvv = self._df["Z_TVDSS"].values
+        incl = self._df["Q_INCL"].values
+        mdv = self._df["Q_MDEPTH"].values
 
         if self.mdlogname is not None:
             mdv = self._df[self.mdlogname].values
@@ -1084,13 +1141,22 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             # need to declare as list; otherwise Py3 will get dict.keys
             zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
-        logger.info('Find values for %s', zonelist)
+        logger.info("Find values for %s", zonelist)
 
-        ztops, ztopnames, zisos, zisonames = (
-            _wellmarkers.extract_ztops(self, zonelist, xvv, yvv, zvv, zlog,
-                                       mdv, incl, tops=tops,
-                                       incl_limit=incl_limit,
-                                       prefix=top_prefix, use_undef=use_undef))
+        ztops, ztopnames, zisos, zisonames = _wellmarkers.extract_ztops(
+            self,
+            zonelist,
+            xvv,
+            yvv,
+            zvv,
+            zlog,
+            mdv,
+            incl,
+            tops=tops,
+            incl_limit=incl_limit,
+            prefix=top_prefix,
+            use_undef=use_undef,
+        )
 
         if tops:
             zlist = ztops
@@ -1128,7 +1194,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         if resample < 1 or not isinstance(resample, int):
-            raise KeyError('Key resample of wrong type (must be int >= 1)')
+            raise KeyError("Key resample of wrong type (must be int >= 1)")
 
         dff = self.get_filled_dataframe()
 
@@ -1136,17 +1202,17 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # will add one number for each time the actual segment is repeated,
         # not straightforward... (thanks to H. Berland for tip)
 
-        dff['ztmp'] = dff[self.zonelogname]
-        dff['ztmp'] = (dff[self.zonelogname] != zonevalue).astype(int)
+        dff["ztmp"] = dff[self.zonelogname]
+        dff["ztmp"] = (dff[self.zonelogname] != zonevalue).astype(int)
 
-        dff['ztmp'] = (dff.ztmp != dff.ztmp.shift()).cumsum()
+        dff["ztmp"] = (dff.ztmp != dff.ztmp.shift()).cumsum()
 
         dff = dff[dff[self.zonelogname] == zonevalue]
 
-        m1v = dff['ztmp'].min()
-        m2v = dff['ztmp'].max()
+        m1v = dff["ztmp"].min()
+        m2v = dff["ztmp"].max()
         if np.isnan(m1v):
-            logger.debug('Returns (no data)')
+            logger.debug("Returns (no data)")
             return None
 
         df2 = dff.copy()
@@ -1154,22 +1220,21 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         dflist = []
         for mvv in range(m1v, m2v + 1):
             dff9 = df2.copy()
-            dff9 = df2[df2['ztmp'] == mvv]
+            dff9 = df2[df2["ztmp"] == mvv]
             if dff9.index.shape[0] > 0:
                 dflist.append(dff9)
 
         dxlist = []
 
-        useloglist = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID']
+        useloglist = ["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]
         if extralogs is not None:
             useloglist.extend(extralogs)
 
         # pylint: disable=consider-using-enumerate
         for ivv in range(len(dflist)):
             dxf = dflist[ivv]
-            dxf = dxf.rename(columns={'ztmp': 'POLY_ID'})
-            cols = [xxx for xxx in dxf.columns
-                    if xxx not in useloglist]
+            dxf = dxf.rename(columns={"ztmp": "POLY_ID"})
+            cols = [xxx for xxx in dxf.columns if xxx not in useloglist]
 
             dxf = dxf.drop(cols, axis=1)
 
@@ -1182,11 +1247,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         dff = pd.concat(dxlist)
         dff.reset_index(inplace=True, drop=True)
 
-        logger.debug('Dataframe from well:\n%s', dff)
+        logger.debug("Dataframe from well:\n%s", dff)
         return dff
 
-    def get_fraction_per_zone(self, dlogname, dcodes, zonelist=None,
-                              incl_limit=80, count_limit=3, zonelogname=None):
+    def get_fraction_per_zone(
+        self,
+        dlogname,
+        dcodes,
+        zonelist=None,
+        incl_limit=80,
+        count_limit=3,
+        zonelogname=None,
+    ):
 
         """Get fraction of a discrete parameter, e.g. a facies, per zone.
 
@@ -1212,12 +1284,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         dfr = _wellmarkers.get_fraction_per_zone(
-            self, dlogname, dcodes, zonelist=zonelist, incl_limit=incl_limit,
-            count_limit=count_limit, zonelogname=zonelogname)
+            self,
+            dlogname,
+            dcodes,
+            zonelist=zonelist,
+            incl_limit=incl_limit,
+            count_limit=count_limit,
+            zonelogname=zonelogname,
+        )
 
         return dfr
 
-    def make_ijk_from_grid(self, grid, grid_id=''):
+    def make_ijk_from_grid(self, grid, grid_id=""):
         """Look through a Grid and add grid I J K as discrete logs.
 
         Note that the the grid counting has base 1 (first row is 1 etc).
@@ -1265,8 +1343,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         _well_oper.make_zone_qual_log(self, zqname)
 
-    def get_gridproperties(self, gridprops, grid=('ICELL', 'JCELL', 'KCELL'),
-                           gridcells=None, prop_id='_model'):
+    def get_gridproperties(
+        self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id="_model"
+    ):
         """Look through a Grid and add a set of grid properties as logs.
 
         In prep!
@@ -1287,8 +1366,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             RuntimeError: 'Error from C routine, code is ...'
         """
 
-        _well_oper.get_gridproperties(self, gridprops, grid=grid,
-                                      prop_id=prop_id)
+        _well_oper.get_gridproperties(self, gridprops, grid=grid, prop_id=prop_id)
 
     # =========================================================================
     # PRIVATE METHODS

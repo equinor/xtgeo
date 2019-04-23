@@ -5,7 +5,7 @@ from __future__ import print_function, absolute_import
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
-from . import BlockedWell
+from .blocked_well import BlockedWell
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -58,6 +58,6 @@ def _roxapi_import_bwells(self, rox, gname, bwname, lnames,
 
     self._wells = bwlist
 
-    if not len(self._wells):
+    if not self._wells:
         xtg.warn('No wells imported to BlockedWells')
         self._wells = None

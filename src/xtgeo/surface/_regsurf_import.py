@@ -160,7 +160,7 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface
     instance as template."""
 
-    if isinstance(template, (xtgeo.Cube, xtgeo.RegularSurface)):
+    if isinstance(template, (xtgeo.cube.Cube, xtgeo.surface.RegularSurface)):
         logger.info("OK template")
     else:
         raise ValueError("Template is of wrong type: {}".format(type(template)))

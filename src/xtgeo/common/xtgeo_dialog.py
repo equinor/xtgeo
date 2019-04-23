@@ -1,20 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
-
-import os
-import sys
-from datetime import datetime as dtime
-import getpass
-import platform
-import inspect
-import logging
-import warnings
-import timeit
-
-import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-
 """
 Module for basic XTGeo dialog, basic interaction with user,
 including logging for debugging.
@@ -70,6 +54,23 @@ In addition there are other classes:
 * XTGDescription()
 
 """
+
+from __future__ import division, absolute_import
+from __future__ import print_function
+
+import os
+import sys
+from datetime import datetime as dtime
+import getpass
+import platform
+import inspect
+import logging
+import warnings
+import timeit
+
+import xtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+
 
 
 UNDEF = _cxtgeo.UNDEF
@@ -397,8 +398,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             )
 
         log = self._rootlogger
-        [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
-        [hndl.setFormatter(fmt) for hndl in log.handlers]
+        _tmp1 = [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
+        _tmp2 = [hndl.setFormatter(fmt) for hndl in log.handlers]
 
         self._lformat = fmt._fmt  # private attribute in Formatter()
         return self._lformat

@@ -7,7 +7,6 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 import xtgeo.common.constants as const
 
@@ -15,9 +14,20 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
-                  tops=True, incl_limit=80, prefix='Top',
-                  use_undef=False):
+def extract_ztops(
+    self,
+    zonelist,
+    xcv,
+    ycv,
+    zcv,
+    zlog,
+    mdv,
+    incl,
+    tops=True,
+    incl_limit=80,
+    prefix="Top",
+    use_undef=False,
+):
     """Extract a list of tops for a zone.
 
     Args:
@@ -41,7 +51,7 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
     zlogname = self.zonelogname
 
     logger.debug(zlog)
-    logger.info('Well name is %s', self.wellname)
+    logger.info("Well name is %s", self.wellname)
 
     if not tops and incl_limit is None:
         incl_limit = 80
@@ -54,7 +64,7 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
     elif isinstance(zonelist, list) and len(zonelist) > 1:
         usezonerange = zonelist
     else:
-        raise ValueError('Something is wrong with zonelist input')
+        raise ValueError("Something is wrong with zonelist input")
 
     iundef = const.UNDEF_INT
     iundeflimit = const.UNDEF_INT_LIMIT
@@ -71,34 +81,60 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
             zone = zlog.min() - 1
 
         if pzone != zone and pzone < iundeflimit and zone < iundeflimit:
-            logger.debug('Found break in zonation')
+            logger.debug("Found break in zonation")
             if pzone < zone:
-                logger.debug('Found match with zonation increasing')
+                logger.debug("Found match with zonation increasing")
                 for kzv in range(pzone + 1, zone + 1):
                     if kzv in usezonerange:
                         zname = self.get_logrecord_codename(zlogname, kzv)
                         zname = prefix + zname
-                        ztop = (xcv[ino], ycv[ino], zcv[ino], mdv[ino],
-                                incl[ino], azi, kzv, zname, self.xwellname)
+                        ztop = (
+                            xcv[ino],
+                            ycv[ino],
+                            zcv[ino],
+                            mdv[ino],
+                            incl[ino],
+                            azi,
+                            kzv,
+                            zname,
+                            self.xwellname,
+                        )
                         wpts.append(ztop)
             if pzone > zone and ino > 0:
-                logger.info('Found match, decreasing zonation')
+                logger.info("Found match, decreasing zonation")
                 for kzv in range(pzone, zone, -1):
                     if kzv in usezonerange:
                         zname = self.get_logrecord_codename(zlogname, kzv)
                         zname = prefix + zname
-                        ztop = (xcv[ino - 1], ycv[ino - 1], zcv[ino - 1],
-                                mdv[ino - 1], incl[ino - 1], azi, kzv, zname,
-                                self.xwellname)
+                        ztop = (
+                            xcv[ino - 1],
+                            ycv[ino - 1],
+                            zcv[ino - 1],
+                            mdv[ino - 1],
+                            incl[ino - 1],
+                            azi,
+                            kzv,
+                            zname,
+                            self.xwellname,
+                        )
                         wpts.append(ztop)
         pzone = zone
 
-    mdname = 'Q_MDEPTH'
+    mdname = "Q_MDEPTH"
     if self.mdlogname is not None:
-        mdname = 'M_MDEPTH'
+        mdname = "M_MDEPTH"
 
-    wpts_names = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', mdname, 'Q_INCL', 'Q_AZI',
-                  'Zone', 'TopName', 'WellName']
+    wpts_names = [
+        "X_UTME",
+        "Y_UTMN",
+        "Z_TVDSS",
+        mdname,
+        "Q_INCL",
+        "Q_AZI",
+        "Zone",
+        "TopName",
+        "WellName",
+    ]
 
     if tops:
         return wpts, wpts_names, None, None
@@ -106,9 +142,19 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
     # next get a MIDPOINT zthickness (DZ)
     llen = len(wpts) - 1
 
-    zwpts_names = ['X_UTME', 'Y_UTMN', 'Z_TVDSS', mdname + '_AVG',
-                   'Q_MD1', 'Q_MD2', 'Q_INCL',
-                   'Q_AZI', 'Zone', 'ZoneName', 'WellName']
+    zwpts_names = [
+        "X_UTME",
+        "Y_UTMN",
+        "Z_TVDSS",
+        mdname + "_AVG",
+        "Q_MD1",
+        "Q_MD2",
+        "Q_INCL",
+        "Q_AZI",
+        "Zone",
+        "ZoneName",
+        "WellName",
+    ]
 
     zwpts = []
     for ino in range(llen):
@@ -138,17 +184,35 @@ def extract_ztops(self, zonelist, xcv, ycv, zcv, zlog, mdv, incl,
             if zk1 > zk2:
                 usezk = zk2
                 usezn = zn2
-            usezn = usezn[len(prefix):]
+            usezn = usezn[len(prefix) :]
 
-            zzone = (xx_avg, yy_avg, zzp, md_avg, md1, md2, incl_avg,
-                     azi_avg, usezk, usezn, wn1)
+            zzone = (
+                xx_avg,
+                yy_avg,
+                zzp,
+                md_avg,
+                md1,
+                md2,
+                incl_avg,
+                azi_avg,
+                usezk,
+                usezn,
+                wn1,
+            )
             zwpts.append(zzone)
 
     return wpts, wpts_names, zwpts, zwpts_names
 
 
-def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
-                          incl_limit=80, count_limit=3, zonelogname=None):
+def get_fraction_per_zone(
+    self,
+    dlogname,
+    dvalues,
+    zonelist=None,
+    incl_limit=80,
+    count_limit=3,
+    zonelogname=None,
+):  # pylint: disable=too-many-branches, too-many-statements
 
     """Fraction of e.g. a facies in a zone segment.
 
@@ -182,9 +246,9 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
         A dataframe with relevant data...
 
     """
-    logger.info('The zonelist is %s', zonelist)
-    logger.info('The dlogname is %s', dlogname)
-    logger.info('The dvalues are %s', dvalues)
+    logger.info("The zonelist is %s", zonelist)
+    logger.info("The dlogname is %s", dlogname)
+    logger.info("The dvalues are %s", dvalues)
 
     if zonelogname is not None:
         usezonelogname = zonelogname
@@ -193,81 +257,81 @@ def get_fraction_per_zone(self, dlogname, dvalues, zonelist=None,
         usezonelogname = self.zonelogname
 
     if usezonelogname is None:
-        raise RuntimeError('Stop, zonelogname is None')
+        raise RuntimeError("Stop, zonelogname is None")
 
-    self.make_zone_qual_log('_QFLAG')
+    self.make_zone_qual_log("_QFLAG")
 
     if zonelist is None:
         # need to declare as list; otherwise Py3 will get dict.keys
         zonelist = list(self.get_logrecord(self.zonelogname).keys())
 
-    useinclname = 'Q_INCL'
-    if 'M_INCL' in self._df:
-        useinclname = 'M_INCL'
+    useinclname = "Q_INCL"
+    if "M_INCL" in self._df:
+        useinclname = "M_INCL"
     else:
         self.geometrics()
 
     result = OrderedDict()
-    result['X_UTME'] = []
-    result['Y_UTMN'] = []
-    result['DFRAC'] = []
-    result['Q_INCL'] = []
-    result['ZONE'] = []
-    result['WELLNAME'] = []
+    result["X_UTME"] = []
+    result["Y_UTMN"] = []
+    result["DFRAC"] = []
+    result["Q_INCL"] = []
+    result["ZONE"] = []
+    result["WELLNAME"] = []
     result[dlogname] = []
 
-    svalues = str(dvalues).rstrip(']').lstrip('[').replace(', ', '+')
+    svalues = str(dvalues).rstrip("]").lstrip("[").replace(", ", "+")
 
-    xtralogs = [dlogname, useinclname, '_QFLAG']
+    xtralogs = [dlogname, useinclname, "_QFLAG"]
     for izon in zonelist:
-        logger.info('The zone number is %s', izon)
-        logger.info('The extralogs are %s', xtralogs)
+        logger.info("The zone number is %s", izon)
+        logger.info("The extralogs are %s", xtralogs)
 
         dfr = self.get_zone_interval(izon, extralogs=xtralogs)
 
         if dfr is None:
             continue
 
-        dfrx = dfr.groupby('POLY_ID')
+        dfrx = dfr.groupby("POLY_ID")
 
-        for polyid, dframe in dfrx:
-            qinclmax = dframe['Q_INCL'].max()
-            qinclavg = dframe['Q_INCL'].mean()
-            qflag = dframe['_QFLAG'].mean()
+        for _polyid, dframe in dfrx:
+            qinclmax = dframe["Q_INCL"].max()
+            qinclavg = dframe["Q_INCL"].mean()
+            qflag = dframe["_QFLAG"].mean()
             dseries = dframe[dlogname]
             if qflag < 0.5 or qflag > 2.5:  # 1 or 2 is OK
-                logger.debug('Skipped due to zone %s', qflag)
+                logger.debug("Skipped due to zone %s", qflag)
                 continue
             if qinclmax > incl_limit:
-                logger.debug('Skipped due to max inclination %s', qinclmax)
+                logger.debug("Skipped due to max inclination %s", qinclmax)
                 continue
             if dseries.size < count_limit:  # interval too short for fraction
-                logger.debug('Skipped due to too few values %s', dseries.size)
+                logger.debug("Skipped due to too few values %s", dseries.size)
                 continue
-            if dseries.max() > xtgeo.UNDEF_INT_LIMIT:
-                logger.debug('Skipped due to too missing/undef value(s)')
+            if dseries.max() > const.UNDEF_INT_LIMIT:
+                logger.debug("Skipped due to too missing/undef value(s)")
                 continue
 
-            xavg = dframe['X_UTME'].mean()
-            yavg = dframe['Y_UTMN'].mean()
+            xavg = dframe["X_UTME"].mean()
+            yavg = dframe["Y_UTMN"].mean()
 
             dfrac = 0.0
             for dval in dvalues:
                 if any(dseries.isin([dval])):
                     dfrac += dseries.value_counts(normalize=True)[dval]
 
-            result['X_UTME'].append(xavg)
-            result['Y_UTMN'].append(yavg)
-            result['DFRAC'].append(dfrac)
-            result['Q_INCL'].append(qinclavg)
-            result['ZONE'].append(izon)
-            result['WELLNAME'].append(self.xwellname)
+            result["X_UTME"].append(xavg)
+            result["Y_UTMN"].append(yavg)
+            result["DFRAC"].append(dfrac)
+            result["Q_INCL"].append(qinclavg)
+            result["ZONE"].append(izon)
+            result["WELLNAME"].append(self.xwellname)
             result[dlogname].append(svalues)
 
     # make the dataframe and return it
-    if result['X_UTME']:
+    if result["X_UTME"]:
         return pd.DataFrame.from_dict(result)
 
-    self.delete_log('_QFLAG')
+    self.delete_log("_QFLAG")
 
     return None

@@ -165,7 +165,7 @@ class RoxUtils(object):
         else:
             categories.extend(category)
 
-        for category in categories:
+        for catg in categories:
             geom = roxar.GeometryType.surface
             if htype.lower() == "lines":
                 geom = roxar.GeometryType.lines
@@ -177,22 +177,22 @@ class RoxUtils(object):
                 dom = roxar.GeometryType.lines
 
             if stype.lower() == "horizons":
-                if category not in project.horizons.representations:
+                if catg not in project.horizons.representations:
                     try:
-                        project.horizons.representations.create(category, geom, dom)
-                    except Exception as exmsg:
+                        project.horizons.representations.create(catg, geom, dom)
+                    except Exception as exmsg:  # pylint: disable=broad-except
                         print("Error: {}".format(exmsg))
                 else:
-                    print("Category <{}> already exists".format(category))
+                    print("Category <{}> already exists".format(catg))
 
             elif stype.lower() == "zones":
-                if category not in project.zones.representations:
+                if catg not in project.zones.representations:
                     try:
-                        project.zones.representations.create(category, geom, dom)
-                    except Exception as exmsg:
+                        project.zones.representations.create(catg, geom, dom)
+                    except Exception as exmsg:  # pylint: disable=broad-except
                         print("Error: {}".format(exmsg))
                 else:
-                    print("Category <{}> already exists".format(category))
+                    print("Category <{}> already exists".format(catg))
 
     def create_zones_category(self, category, domain="thickness", htype="surface"):
         """Same as create_horizon_category, but with stype='zones'."""
@@ -219,18 +219,18 @@ class RoxUtils(object):
         else:
             categories.extend(category)
 
-        for category in categories:
+        for catg in categories:
             if stype.lower() == "horizons":
                 try:
-                    del project.horizons.representations[category]
+                    del project.horizons.representations[catg]
                 except KeyError as kerr:
-                    if kerr == category:
+                    if kerr == catg:
                         print("Cannot delete {}, does not exist".format(kerr))
             elif stype.lower() == "zones":
                 try:
-                    del project.horizons.representations[category]
+                    del project.horizons.representations[catg]
                 except KeyError as kerr:
-                    if kerr == category:
+                    if kerr == catg:
                         print("Cannot delete {}, does not exist".format(kerr))
             else:
                 raise ValueError("Wrong stype applied")

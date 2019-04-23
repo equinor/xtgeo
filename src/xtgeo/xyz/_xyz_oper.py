@@ -15,14 +15,13 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-_cxtgeo.xtg_verbose_file('NONE')
+_cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.get_syslevel()
 
 # pylint: disable=protected-access
 
 
-def operation_polygons(self, poly, value, opname='add', inside=True,
-                       where=True):
+def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
     """
     Operations restricted to closed polygons, for points or polyline points.
 
@@ -35,15 +34,16 @@ def operation_polygons(self, poly, value, opname='add', inside=True,
     The "where" filter is remaining...
     """
 
-    oper = {'set': 1, 'add': 2, 'sub': 3, 'mul': 4, 'div': 5, 'eli': 11}
+    logger.warning("Where is not imeplented: %s", where)
+    oper = {"set": 1, "add": 2, "sub": 3, "mul": 4, "div": 5, "eli": 11}
 
     insidevalue = 0
     if inside:
         insidevalue = 1
 
-    logger.info('Operations of points inside polygon(s)...')
+    logger.info("Operations of points inside polygon(s)...")
     if not isinstance(poly, xtgeo.xyz.Polygons):
-        raise ValueError('The poly input is not a Polygons instance')
+        raise ValueError("The poly input is not a Polygons instance")
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
@@ -52,7 +52,7 @@ def operation_polygons(self, poly, value, opname='add', inside=True,
     zcor = self._df[self.zname].values
 
     usepoly = False
-    if isinstance(value, str) and value == 'poly':
+    if isinstance(value, str) and value == "poly":
         usepoly = True
 
     for id_, grp in idgroups:
@@ -64,30 +64,30 @@ def operation_polygons(self, poly, value, opname='add', inside=True,
         else:
             pvalue = value
 
-        logger.info('C function for polygon %s...', id_)
+        logger.info("C function for polygon %s...", id_)
 
         ies = _cxtgeo.pol_do_points_inside(
-            xcor, ycor, zcor, pxcor, pycor, pvalue, oper[opname],
-            insidevalue, XTGDEBUG)
-        logger.info('C function for polygon %s... done', id_)
+            xcor, ycor, zcor, pxcor, pycor, pvalue, oper[opname], insidevalue, XTGDEBUG
+        )
+        logger.info("C function for polygon %s... done", id_)
 
         if ies != 0:
-            raise RuntimeError('Something went wrong, code {}'.format(ies))
+            raise RuntimeError("Something went wrong, code {}".format(ies))
 
     zcor[zcor > xtgeo.UNDEF_LIMIT] = np.nan
     self._df[self.zname] = zcor
-    print('XX', self._df)
+    print("XX", self._df)
     # removing rows where Z column is undefined
-    self._df.dropna(how='any', subset=[self.zname], inplace=True)
+    self._df.dropna(how="any", subset=[self.zname], inplace=True)
     self._df.reset_index(inplace=True, drop=True)
-    logger.info('Operations of points inside polygon(s)... done')
+    logger.info("Operations of points inside polygon(s)... done")
 
 
 def rescale_polygons(self, distance=10):
     """Rescale (resample) a polygons segment"""
 
     if not self._ispolygons:
-        raise ValueError('Not a Polygons object')
+        raise ValueError("Not a Polygons object")
 
     idgroups = self.dataframe.groupby(self.pname)
 
@@ -100,8 +100,9 @@ def rescale_polygons(self, distance=10):
 
         new_spoly = _redistribute_vertices(spoly, distance)
 
-        dfr = pd.DataFrame(np.array(new_spoly),
-                           columns=[self.xname, self.yname, self.zname])
+        dfr = pd.DataFrame(
+            np.array(new_spoly), columns=[self.xname, self.yname, self.zname]
+        )
         dfr[self.pname] = idx
         dfrlist.append(dfr)
 
@@ -111,16 +112,19 @@ def rescale_polygons(self, distance=10):
 
 def _redistribute_vertices(geom, distance):
     """Local function to interpolate in a polyline using Shapely"""
-    if geom.geom_type == 'LineString':
+    if geom.geom_type == "LineString":
         num_vert = int(round(geom.length / distance))
         if num_vert == 0:
             num_vert = 1
         return sg.LineString(
-            [geom.interpolate(float(n) / num_vert, normalized=True)
-             for n in range(num_vert + 1)])
-    elif geom.geom_type == 'MultiLineString':
-        parts = [_redistribute_vertices(part, distance)
-                 for part in geom]
+            [
+                geom.interpolate(float(n) / num_vert, normalized=True)
+                for n in range(num_vert + 1)
+            ]
+        )
+
+    if geom.geom_type == "MultiLineString":
+        parts = [_redistribute_vertices(part, distance) for part in geom]
         return type(geom)([p for p in parts if not p.is_empty])
-    else:
-        raise ValueError('Unhandled geometry %s', (geom.geom_type,))
+
+    raise ValueError("Unhandled geometry {}".format(geom.geom_type))

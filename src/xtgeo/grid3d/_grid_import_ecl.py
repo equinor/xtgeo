@@ -16,6 +16,8 @@ from xtgeo.grid3d._gridprop_import import eclbin_record
 
 from xtgeo.common import _get_fhandle, _close_fhandle
 
+from . import _grid3d_utils as utils
+
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
@@ -33,11 +35,9 @@ def import_ecl_egrid(self, gfile):
     """
     fhandle, pclose = _get_fhandle(gfile)
 
-    gprops = xtgeo.grid3d.GridProperties()
-
     # scan file for property
     logger.info("Make kwlist by scanning")
-    kwlist = gprops.scan_keywords(
+    kwlist = utils.scan_keywords(
         fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
@@ -200,11 +200,9 @@ def import_ecl_bgrdecl(self, gfile):
 
     fhandle, pclose = _get_fhandle(gfile)
 
-    gprops = xtgeo.grid3d.GridProperties()
-
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
-    kwlist = gprops.scan_keywords(
+    kwlist = utils.scan_keywords(
         fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}

@@ -10,8 +10,10 @@ import numpy.ma as ma
 import pandas as pd
 
 import xtgeo
-from xtgeo.xyz import XYZ
-from xtgeo.xyz import _xyz_oper
+# from xtgeo.common import XTGeoDialog
+# from xtgeo.surface import RegularSurface
+from ._xyz import XYZ
+from . import _xyz_oper
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -70,7 +72,7 @@ def points_from_roxar(
     return obj
 
 
-class Points(XYZ):
+class Points(XYZ):  # pylint: disable=too-many-public-methods
     """Points: Class for a points set in the XTGeo framework.
 
     The Points class is a subclass of the :class:`.XYZ` class,
@@ -151,8 +153,8 @@ class Points(XYZ):
         """ Returns the Pandas dataframe object number of rows"""
         if self._df is None:
             return 0
-        else:
-            return len(self._df.index)
+
+        return len(self._df.index)
 
     @property
     def dataframe(self):
@@ -234,7 +236,7 @@ class Points(XYZ):
         pfile,
         fformat="xyz",
         attributes="all",
-        filter=None,
+        pfilter=None,
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",
@@ -245,7 +247,7 @@ class Points(XYZ):
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (list): List of extra columns to export (some formats)
-            filter (dict): Filter on e.g. top name(s) with keys TopName
+            pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
             hcolumn (str): Name of horizons column (rms_wellpicks format only)
@@ -260,7 +262,7 @@ class Points(XYZ):
         * HorizonName, WellName, X, Y, Z  otherwise
 
         Raises:
-            KeyError if filter is set and key(s) are invalid
+            KeyError if pfilter is set and key(s) are invalid
 
         """
 
@@ -268,7 +270,7 @@ class Points(XYZ):
             pfile,
             fformat=fformat,
             attributes=attributes,
-            filter=filter,
+            pfilter=pfilter,
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
@@ -382,7 +384,7 @@ class Points(XYZ):
             Todo
         """
 
-        if len(wells) == 0:
+        if not wells:
             return None
 
         dflist = []
@@ -398,7 +400,7 @@ class Points(XYZ):
             if wp is not None:
                 dflist.append(wp)
 
-        if len(dflist) > 0:
+        if dflist:
             self._df = pd.concat(dflist, ignore_index=True)
         else:
             return None
@@ -439,7 +441,7 @@ class Points(XYZ):
             Todo
         """
 
-        if len(wells) == 0:
+        if not wells:
             return None
 
         dflist = []  # will be a list of pandas dataframes
@@ -456,7 +458,7 @@ class Points(XYZ):
             if wpf is not None:
                 dflist.append(wpf)
 
-        if len(dflist) > 0:
+        if dflist:
             self._df = pd.concat(dflist, ignore_index=True)
             self.zname = "DFRAC"  # name of third column
         else:
@@ -502,7 +504,7 @@ class Points(XYZ):
             coor.append(vv)
 
         # now populate the dataframe:
-        xc, yc, val = coor
+        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
         ddatas = OrderedDict()
         ddatas[self._xname] = xc
         ddatas[self._yname] = yc

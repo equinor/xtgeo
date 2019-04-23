@@ -9,8 +9,8 @@ from distutils.version import StrictVersion
 import pandas as pd
 
 import xtgeo
-from xtgeo.well import _wells_utils
-from xtgeo.common import XTGDescription
+
+from . import _wells_utils
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -25,19 +25,25 @@ class Wells(object):
 
     def __init__(self, *args, **kwargs):
 
-        self._wells = []            # list of Well objects
+        self._wells = []  # list of Well objects
         self._bw = False
+        self._props = None
 
         if args:
             # make instance from file import
             wfiles = args[0]
-            fformat = kwargs.get('fformat', 'rms_ascii')
-            mdlogname = kwargs.get('mdlogname', None)
-            zonelogname = kwargs.get('zonelogname', None)
-            strict = kwargs.get('strict', True)
-            self.from_files(wfiles, fformat=fformat, mdlogname=mdlogname,
-                            zonelogname=zonelogname, strict=strict,
-                            append=False)
+            fformat = kwargs.get("fformat", "rms_ascii")
+            mdlogname = kwargs.get("mdlogname", None)
+            zonelogname = kwargs.get("zonelogname", None)
+            strict = kwargs.get("strict", True)
+            self.from_files(
+                wfiles,
+                fformat=fformat,
+                mdlogname=mdlogname,
+                zonelogname=zonelogname,
+                strict=strict,
+                append=False,
+            )
 
     @property
     def names(self):
@@ -60,7 +66,7 @@ class Wells(object):
     @property
     def wells(self):
         """Returns or sets a list of XTGeo Well objects, None if empty."""
-        if len(self._wells) == 0:
+        if not self._wells:
             return None
 
         return self._wells
@@ -70,23 +76,24 @@ class Wells(object):
 
         for well in well_list:
             if not isinstance(well, xtgeo.well.Well):
-                raise ValueError('Well in list not valid Well object')
+                raise ValueError("Well in list not valid Well object")
 
         self._wells = well_list
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = XTGDescription()
-        dsc.title('Description of {} instance'.format(self.__class__.__name__))
-        dsc.txt('Object ID', id(self))
+        dsc = xtgeo.common.XTGDescription()
+        dsc.title("Description of {} instance".format(self.__class__.__name__))
+        dsc.txt("Object ID", id(self))
 
-        dsc.txt('Wells', self.names)
+        dsc.txt("Wells", self.names)
 
         if flush:
             dsc.flush()
-        else:
-            return dsc.astext()
+            return None
+
+        return dsc.astext()
 
     def copy(self):
         """Copy a Wells instance to a new unique instance (a deep copy)."""
@@ -108,8 +115,15 @@ class Wells(object):
                 return well
         return None
 
-    def from_files(self, filelist, fformat='rms_ascii', mdlogname=None,
-                   zonelogname=None, strict=True, append=True):
+    def from_files(
+        self,
+        filelist,
+        fformat="rms_ascii",
+        mdlogname=None,
+        zonelogname=None,
+        strict=True,
+        append=True,
+    ):
 
         """Import wells from a list of files (filelist).
 
@@ -138,19 +152,21 @@ class Wells(object):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = xtgeo.well.Well(wfile, fformat=fformat,
-                                      mdlogname=mdlogname,
-                                      zonelogname=zonelogname,
-                                      strict=strict)
+                wll = xtgeo.well.Well(
+                    wfile,
+                    fformat=fformat,
+                    mdlogname=mdlogname,
+                    zonelogname=zonelogname,
+                    strict=strict,
+                )
                 self._wells.append(wll)
             except ValueError as err:
-                xtg.warn('SKIP this well: {}'.format(err))
+                xtg.warn("SKIP this well: {}".format(err))
                 continue
         if not self._wells:
-            xtg.warn('No wells imported!')
+            xtg.warn("No wells imported!")
 
-    def from_roxar(self, project, lognames=None, filter='*',
-                   ijk=True, realisation=0):
+    def from_roxar(self, *args, **kwargs):
         """Import (retrieve) all wells (or based on a filter) from
         roxar project.
 
@@ -163,7 +179,7 @@ class Wells(object):
             project (str): Magic string 'project' or file path to project
             lognames (list): List of lognames to include, or use 'all' for
                 all current blocked logs for this well.
-            filter (str): This is a regular expression to tell which wells
+            wfilter (str): This is a regular expression to tell which wells
                 that shall be included.
             ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
             realisation (int): Realisation index (0 is default)
@@ -172,10 +188,10 @@ class Wells(object):
 
             import xtgeo
             mywells = xtgeo.Wells()
-            mywells.from_roxar(project, lognames='all', filter='31.*')
+            mywells.from_roxar(project, lognames='all', wfilter='31.*')
 
         """
-        raise NotImplementedError('In prep...')
+        raise NotImplementedError("In prep...")
 
     # not having this as property but a get_ .. is intended, for flexibility
     def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
@@ -194,13 +210,14 @@ class Wells(object):
         bigdf = []
         for well in self._wells:
             dfr = well.dataframe.copy()
-            dfr['WELLNAME'] = well.name
+            dfr["WELLNAME"] = well.name
             logger.info(well.name)
             if filled:
                 dfr = dfr.fillna(fill_value1)
             bigdf.append(dfr)
 
-        if StrictVersion(pd.__version__) > StrictVersion('0.23.0'):
+        if StrictVersion(pd.__version__) > StrictVersion("0.23.0"):
+            # pylint: disable=unexpected-keyword-arg
             dfr = pd.concat(bigdf, ignore_index=True, sort=True)
         else:
             dfr = pd.concat(bigdf, ignore_index=True)
@@ -209,12 +226,12 @@ class Wells(object):
         if filled:
             dfr = dfr.fillna(fill_value2)
 
-        spec_order = ['WELLNAME', 'X_UTME', 'Y_UTMN', 'Z_TVDSS']
+        spec_order = ["WELLNAME", "X_UTME", "Y_UTMN", "Z_TVDSS"]
         dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
 
         return dfr
 
-    def quickplot(self, filename=None, title='QuickPlot'):
+    def quickplot(self, filename=None, title="QuickPlot"):
         """Fast plot of wells using matplotlib.
 
         Args:
@@ -272,7 +289,8 @@ class Wells(object):
                 and also MDEPTH for the WELL.
         """
 
-        dfr = _wells_utils.wellintersections(self, wfilter=wfilter,
-                                             showprogress=showprogress)
+        dfr = _wells_utils.wellintersections(
+            self, wfilter=wfilter, showprogress=showprogress
+        )
 
         return dfr

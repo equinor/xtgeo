@@ -7,12 +7,14 @@ from __future__ import print_function
 import os.path
 import warnings
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
 
-from . import Grid3D
+from ._grid3d import Grid3D
+from .grid_property import GridProperty
+
 from . import _gridprops_io
+from . import _grid3d_utils as utils
 from . import _gridprops_etc
 from . import _grid_etc1
 
@@ -37,7 +39,7 @@ logger = xtg.functionlogger(__name__)
 class GridProperties(Grid3D):
     """Class for a collection of 3D grid props, belonging to the same grid.
 
-    See also the :class:`xtgeo.grid3d.GridProperty` class.
+    See also the :class:`GridProperty` class.
     """
 
     def __init__(self):
@@ -181,7 +183,7 @@ class GridProperties(Grid3D):
         GridProperties instance."""
 
         for prop in proplist:
-            if isinstance(prop, xtgeo.grid3d.GridProperty):
+            if isinstance(prop, GridProperty):
 
                 self._props.append(prop)
                 self._names.append(prop.name)
@@ -303,7 +305,7 @@ class GridProperties(Grid3D):
         if fformat.lower() == "roff":
             lst = list()
             for name in names:
-                lst.append(xtgeo.GridProperty(pfile, fformat="roff", name=name))
+                lst.append(GridProperty(pfile, fformat="roff", name=name))
             self.append_props(lst)
 
         elif fformat.lower() in ("init", "unrst"):
@@ -368,6 +370,9 @@ class GridProperties(Grid3D):
     dataframe = get_dataframe  # for compatibility, but deprecated
 
     # Static methods (scans etc)
+    # Don't make a GridProperties instance inside other XTGeo classes
+    # as it make cyclic imports. I.e. use only these functions in clients
+    # if needed...
 
     @staticmethod
     def scan_keywords(
@@ -407,7 +412,7 @@ class GridProperties(Grid3D):
 
         """
 
-        dlist = _gridprops_io.scan_keywords(
+        dlist = utils.scan_keywords(
             pfile, fformat=fformat, maxkeys=maxkeys, dataframe=dataframe, dates=dates
         )
 
@@ -434,6 +439,6 @@ class GridProperties(Grid3D):
         """
         logger.info("Format supported as default is %s", fformat)
 
-        dlist = _gridprops_io.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
+        dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
 
         return dlist

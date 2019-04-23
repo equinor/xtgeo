@@ -6,10 +6,10 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-import pandas as pd
-
 import xtgeo
-from xtgeo.well import Wells
+from .wells import Wells
+from .blocked_well import BlockedWell
+
 from . import _blockedwells_roxapi
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -36,8 +36,7 @@ def blockedwells_from_roxar(project, gname, bwname, lognames=None, ijk=True):
 
     obj = BlockedWells()
 
-    obj.from_roxar(project, gname, bwname, ijk=ijk,
-                   lognames=lognames)
+    obj.from_roxar(project, gname, bwname, ijk=ijk, lognames=lognames)
 
     return obj
 
@@ -51,7 +50,8 @@ class BlockedWells(Wells):
 
     def __init__(self):
 
-        self._wells = []            # list of Well objects
+        super(BlockedWells, self).__init__()
+        self._wells = []  # list of Well objects
 
     def copy(self):
         """Copy a BlockedWells instance to a new unique instance."""
@@ -69,8 +69,15 @@ class BlockedWells(Wells):
         logger.info("Calling super...")
         return super(BlockedWells, self).get_well(name)
 
-    def from_files(self, filelist, fformat='rms_ascii', mdlogname=None,
-                   zonelogname=None, strict=True, append=True):
+    def from_files(
+        self,
+        filelist,
+        fformat="rms_ascii",
+        mdlogname=None,
+        zonelogname=None,
+        strict=True,
+        append=True,
+    ):
 
         """Import blocked wells from a list of files (filelist).
 
@@ -90,7 +97,7 @@ class BlockedWells(Wells):
             Here the from_file method is used to initiate the object
             directly::
 
-            >>> mywells = Wells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
+            >>> mywells = BlockedWells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
         """
 
         if not append:
@@ -99,19 +106,21 @@ class BlockedWells(Wells):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = xtgeo.well.BlockedWell(wfile, fformat=fformat,
-                                             mdlogname=mdlogname,
-                                             zonelogname=zonelogname,
-                                             strict=strict)
+                wll = BlockedWell(
+                    wfile,
+                    fformat=fformat,
+                    mdlogname=mdlogname,
+                    zonelogname=zonelogname,
+                    strict=strict,
+                )
                 self._wells.append(wll)
             except ValueError as err:
-                xtg.warn('SKIP this well: {}'.format(err))
+                xtg.warn("SKIP this well: {}".format(err))
                 continue
         if not self._wells:
-            xtg.warn('No wells imported!')
+            xtg.warn("No wells imported!")
 
-    def from_roxar(self, project, gname, bwname, lognames=None,
-                   ijk=True, realisation=0):
+    def from_roxar(self, *args, **kwargs):
         """Import (retrieve) blocked wells from roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
@@ -128,7 +137,12 @@ class BlockedWells(Wells):
             ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
             realisation (int): Realisation index (0 is default)
         """
+        project = args[0]
+        gname = args[1]
+        bwname = args[2]
+        lognames = kwargs.get("lognames", None)
+        ijk = kwargs.get("ijk", True)
 
-        _blockedwells_roxapi.import_bwells_roxapi(self, project, gname, bwname,
-                                                  lognames=lognames,
-                                                  ijk=ijk)
+        _blockedwells_roxapi.import_bwells_roxapi(
+            self, project, gname, bwname, lognames=lognames, ijk=ijk
+        )

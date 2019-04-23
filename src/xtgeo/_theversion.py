@@ -4,12 +4,12 @@ Process the version, to avoid non-pythonic version schemes.
 Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.2.dev0
 """
 
-import xtgeo._version as versioneer
+import xtgeo._version
 
 
 def theversion():
 
-    versions = versioneer.get_versions()
+    versions = xtgeo._version.get_versions()
     version = versions['version']
     sver = version.split('.')
 

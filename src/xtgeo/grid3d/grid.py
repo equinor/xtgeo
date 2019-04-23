@@ -14,16 +14,17 @@ import numpy.ma as ma  # pylint: disable=useless-import-alias
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
-from xtgeo.grid3d import Grid3D
 from xtgeo.common import XTGDescription
 
-from xtgeo.grid3d import _grid_hybrid
-from xtgeo.grid3d import _grid_import
-from xtgeo.grid3d import _grid_export
-from xtgeo.grid3d import _grid_refine
-from xtgeo.grid3d import _grid_etc1
-from xtgeo.grid3d import _grid_roxapi
-from xtgeo.grid3d import _gridprop_lowlevel
+from ._grid3d import Grid3D
+
+from . import _grid_hybrid
+from . import _grid_import
+from . import _grid_export
+from . import _grid_refine
+from . import _grid_etc1
+from . import _grid_roxapi
+from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -115,7 +116,7 @@ class Grid(Grid3D):
     Example::
 
         import xtgeo
-        from xtgeo import Grid
+        from xtgeo.grid3d import Grid
 
         geo = Grid()
         geo.from_file("myfile.roff")
@@ -1134,7 +1135,7 @@ class Grid(Grid3D):
 
             >>> from xtgeo.grid3d import Grid
             >>> gf = Grid("gullfaks2.roff")
-            >>> gf.do_cropping((3, 6), (4, 20), (1, 10))
+            >>> gf.crop((3, 6), (4, 20), (1, 10))
             >>> gf.to_file("gf_reduced.roff")
 
         """
@@ -1142,7 +1143,7 @@ class Grid(Grid3D):
         _grid_etc1.crop(self, (colcrop, rowcrop, laycrop), props=props)
 
     def reduce_to_one_layer(self):
-        """Reduce the grid to one single single layer.
+        """Reduce the grid to one single layer.
 
         Example::
 
