@@ -21,21 +21,16 @@ from __future__ import print_function, absolute_import
 import copy
 
 import numpy as np
-import numpy.ma as ma  # pylint: disable=useless-import-alias
-
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
 
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGDescription
 from ._grid3d import Grid3D
 from . import _gridprop_op1
 from . import _gridprop_import
 from . import _gridprop_roxapi
 from . import _gridprop_export
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # -----------------------------------------------------------------------------
@@ -140,7 +135,7 @@ class GridProperty(Grid3D):
 
         # or
 
-        values = ma.ones((12, 17, 10), dtype=np.float64),
+        values = np.ma.ones((12, 17, 10), dtype=np.float64),
         myprop = GridProperty(ncol=12, nrow=17, nlay=10,
                               values=values, discrete=False,
                               name='MyValue')
@@ -177,15 +172,15 @@ class GridProperty(Grid3D):
 
         testmask = False
         if values is None:
-            values = ma.zeros((ncol, nrow, nlay))
+            values = np.ma.zeros((ncol, nrow, nlay))
             values += 99
             testmask = True
 
         if values.shape != (ncol, nrow, nlay):
             values = values.reshape((ncol, nrow, nlay), order="C")
 
-        if not isinstance(values, ma.MaskedArray):
-            values = ma.array(values)
+        if not isinstance(values, np.ma.MaskedArray):
+            values = np.ma.array(values)
 
         self._values = values  # numpy version of properties (as 3D array)
 
@@ -194,11 +189,11 @@ class GridProperty(Grid3D):
         self._codes = {}  # code dictionary (for discrete)
         self._filesrc = None
 
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
+        self._undef = xtgeo.UNDEF
+        self._undef_limit = xtgeo.UNDEF_LIMIT
 
-        self._undef_i = _cxtgeo.UNDEF_INT
-        self._undef_ilimit = _cxtgeo.UNDEF_INT_LIMIT
+        self._undef_i = xtgeo.UNDEF_INT
+        self._undef_ilimit = xtgeo.UNDEF_INT_LIMIT
         self._actnum_indices = None
 
         self._roxorigin = False  # true if the object comes from the ROXAPI
@@ -212,7 +207,7 @@ class GridProperty(Grid3D):
             # make some undef cells (for test)
             self._values[0:4, 0, 0:2] = self._undef
             # make it masked
-            self._values = ma.masked_greater(self._values, self._undef_limit)
+            self._values = np.ma.masked_greater(self._values, self._undef_limit)
 
         if len(args) == 1:
             # make instance through file import
@@ -410,12 +405,12 @@ class GridProperty(Grid3D):
 
     @values.setter
     def values(self, values):
-        if isinstance(values, np.ndarray) and not isinstance(values, ma.MaskedArray):
+        if isinstance(values, np.ndarray) and not isinstance(values, np.ma.MaskedArray):
 
-            values = ma.array(values)
+            values = np.ma.array(values)
             values = values.reshape((self._ncol, self._nrow, self._nlay))
 
-        elif isinstance(values, ma.MaskedArray):
+        elif isinstance(values, np.ma.MaskedArray):
             values = values.reshape((self._ncol, self._nrow, self._nlay))
         else:
             raise ValueError("Problems with values in {}".format(__name__))
@@ -626,7 +621,7 @@ class GridProperty(Grid3D):
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
-        dsc = XTGDescription()
+        dsc = xtgeo.common.XTGDescription()
         dsc.title("Description of GridProperty instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("Name", self.name)
@@ -672,17 +667,17 @@ class GridProperty(Grid3D):
 
         if fill_value is None:
             if self._isdiscrete:
-                fvalue = _cxtgeo.UNDEF_INT
+                fvalue = xtgeo.UNDEF_INT
                 dtype = np.int32
             else:
-                fvalue = _cxtgeo.UNDEF
+                fvalue = xtgeo.UNDEF
                 dtype = np.float64
         else:
             fvalue = fill_value
             dtype = np.float64
 
         val = self.values.copy().astype(dtype)
-        npv3d = ma.filled(val, fill_value=fvalue)
+        npv3d = np.ma.filled(val, fill_value=fvalue)
         del val
 
         return npv3d
@@ -718,7 +713,7 @@ class GridProperty(Grid3D):
         vact[orig.mask] = 0
 
         if asmasked:
-            vact = ma.masked_equal(vact, 0)
+            vact = np.ma.masked_equal(vact, 0)
 
         act.values = vact.astype(np.int32)
         act.codes = {0: "0", 1: "1"}
@@ -770,9 +765,9 @@ class GridProperty(Grid3D):
     def mask_undef(self):
         """Make UNDEF values masked."""
         if self._isdiscrete:
-            self._values = ma.masked_greater(self._values, self._undef_ilimit)
+            self._values = np.ma.masked_greater(self._values, self._undef_ilimit)
         else:
-            self._values = ma.masked_greater(self._values, self._undef_limit)
+            self._values = np.ma.masked_greater(self._values, self._undef_limit)
 
     def crop(self, spec):
         """Crop a property, see method under grid"""
@@ -842,7 +837,7 @@ class GridProperty(Grid3D):
 
         """
         res = np.zeros(iarr.shape, dtype="float64")
-        res = ma.masked_equal(res, 0)  # mask all
+        res = np.ma.masked_equal(res, 0)  # mask all
 
         # get indices where defined (note the , after valids)
         valids, = np.where(~np.isnan(iarr))
@@ -863,7 +858,7 @@ class GridProperty(Grid3D):
         except IndexError as ier:
             xtg.warn("Error {}, return None".format(ier))
             return None
-        except:
+        except:  # noqa
             xtg.warn("Unexpected error")
             raise
 

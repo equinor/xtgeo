@@ -116,7 +116,7 @@ class Grid(Grid3D):
     Example::
 
         import xtgeo
-        from xtgeo import Grid
+        from xtgeo.grid3d import Grid
 
         geo = Grid()
         geo.from_file("myfile.roff")
@@ -1135,7 +1135,7 @@ class Grid(Grid3D):
 
             >>> from xtgeo.grid3d import Grid
             >>> gf = Grid("gullfaks2.roff")
-            >>> gf.do_cropping((3, 6), (4, 20), (1, 10))
+            >>> gf.crop((3, 6), (4, 20), (1, 10))
             >>> gf.to_file("gf_reduced.roff")
 
         """
@@ -1143,7 +1143,7 @@ class Grid(Grid3D):
         _grid_etc1.crop(self, (colcrop, rowcrop, laycrop), props=props)
 
     def reduce_to_one_layer(self):
-        """Reduce the grid to one single single layer.
+        """Reduce the grid to one single layer.
 
         Example::
 

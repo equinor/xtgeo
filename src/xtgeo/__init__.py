@@ -5,6 +5,7 @@
 
 from __future__ import division, absolute_import
 from __future__ import print_function
+import os
 import timeit
 
 
@@ -20,7 +21,10 @@ def timer(*args):
     return time1
 
 TIME0 = timer()
+
 DEBUG = 1
+if os.environ.get("XTG_VERBOSE_LEVEL") is None:
+    DEBUG = 0
 
 def xprint(msg):
 
