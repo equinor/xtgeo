@@ -9,10 +9,7 @@ import os
 import timeit
 
 
-def timer(*args):
-    """Without args; return the time, with a time as arg return the
-    difference.
-    """
+def _timer(*args):
     time1 = timeit.default_timer()
 
     if args:
@@ -20,24 +17,25 @@ def timer(*args):
 
     return time1
 
-TIME0 = timer()
+TIME0 = _timer()
 
 DEBUG = 1
+
 if os.environ.get("XTG_VERBOSE_LEVEL") is None:
     DEBUG = 0
 
-def xprint(msg):
+def _xprint(msg):
 
-    difftime = timer(TIME0)
+    difftime = _timer(TIME0)
 
     if DEBUG:
-        print('>>>>>>>>>>>>> ({0:4.3f})  {1}'.format(difftime, msg))
+        print('({0:4.3f})  {1}'.format(difftime, msg))
 
-xprint('XTGEO __init__ ...')
+_xprint('XTGEO __init__ ...')
 
 import os
 # to avoid problems in batch runs when no DISPLAY is set:
-xprint('Import matplotlib etc...')
+_xprint('Import matplotlib etc...')
 import matplotlib as mplib
 
 display = os.environ.get('DISPLAY', '')
@@ -62,16 +60,16 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
 #
 # Order matters!
 #
-xprint('Import matplotlib etc...DONE')
+_xprint('Import matplotlib etc...DONE')
 
-xprint('Import xtgeo version...')
+_xprint('Import xtgeo version...')
 from xtgeo._theversion import theversion
 
 __version__ = theversion()
 
-xprint('Import xtgeo version...DONE')
+_xprint('Import xtgeo version...DONE')
 
-xprint('Import common...')
+_xprint('Import common...')
 
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.constants import UNDEF_LIMIT
@@ -85,9 +83,9 @@ from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.common.exceptions import GridNotFoundError
 from xtgeo.common.exceptions import BlockedWellsNotFoundError
 
-xprint('Import common... done')
+_xprint('Import common... done')
 
-xprint('Import various XTGeo modules...')
+_xprint('Import various XTGeo modules...')
 
 from xtgeo.roxutils import roxutils
 from xtgeo.roxutils.roxutils import RoxUtils
@@ -96,28 +94,36 @@ from xtgeo.well import well
 from xtgeo.well import wells
 from xtgeo.well import blocked_well
 from xtgeo.well import blocked_wells
+_xprint('Import various XTGeo modules... wells...')
 
 from xtgeo.surface import regular_surface
+_xprint('Import various XTGeo modules... surface...')
 
 from xtgeo.cube import cube
+_xprint('Import various XTGeo modules... cube...')
 
 from xtgeo.grid3d import grid
 from xtgeo.grid3d import grid_property
 from xtgeo.grid3d import grid_properties
+_xprint('Import various XTGeo modules... 3D grids...')
 
 from xtgeo.xyz import points
 from xtgeo.xyz import polygons
+_xprint('Import various XTGeo modules... xyz...')
+
 
 from xtgeo.plot import baseplot
 from xtgeo.plot import xsection
 from xtgeo.plot import xtmap
 from xtgeo.plot import grid3d_slice
+_xprint('Import various XTGeo modules... plots...')
 
-xprint('Import various XTGeo modules...DONE')
+
+_xprint('Import various XTGeo modules...DONE')
 
 
 # some function wrappers to initiate objects from imports
-xprint('Import various XTGeo wrappers...')
+_xprint('Import various XTGeo wrappers...')
 from xtgeo.surface.regular_surface import surface_from_file
 from xtgeo.surface.regular_surface import surface_from_roxar
 from xtgeo.surface.regular_surface import surface_from_cube
@@ -145,4 +151,4 @@ from xtgeo.xyz.polygons import polygons_from_roxar
 from xtgeo.xyz.points import points_from_file
 from xtgeo.xyz.points import points_from_roxar
 
-xprint('XTGEO __init__ done')
+_xprint('XTGEO __init__ done')
