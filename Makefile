@@ -59,8 +59,8 @@ PYTHON := python${PSHORT}
 #PIP := pip${PSHORT}
 PIP := ${PYTHON} -m pip
 
-TARGET := ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
 PREFIX := ${SDP_BINDIST_ROOT}
+TARGET := ${PREFIX}/lib/python${PYTHON_SHORT}/site-packages
 
 GID := res
 
@@ -174,8 +174,8 @@ oldsiteinstall: allclean dist ## Install in Equinor using $TARGET
 	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
 
-siteinstall: allclean dist ## Install in Equinor using $TARGET
-	PYTHONUSERBASE=${PREFIX} ${PIP} install --upgrade --user .
+siteinstall: dist ## Install in Equinor using $PREFIX
+	PYTHONUSERBASE=${PREFIX} ${PIP} install . --upgrade --user --no-deps
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	@mkdir -p ${USERTARGET}

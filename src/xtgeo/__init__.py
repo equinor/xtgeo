@@ -19,7 +19,7 @@ def _timer(*args):
 
 TIME0 = _timer()
 
-DEBUG = 1
+DEBUG = 19
 
 if os.environ.get("XTG_VERBOSE_LEVEL") is None:
     DEBUG = 0
