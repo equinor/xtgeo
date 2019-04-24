@@ -11,7 +11,15 @@
 # > setenv PYTHON_SHORT 2.7; setenv PYTHON_SHORT 2.7;
 # > make install
 #
+# OLD:
 # $TARGET may also be applied explicitly for e.g. install at /project/res
+# > setenv RESTARGET ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
+# > make oldsiteinstall TARGET=$RESTARGET
+#
+# NEW:
+# Instead of TARGET, the preferred method is now setting PREFIX instead:
+# make siteinstall PREFIX=${SDP_BINDIST_ROOT}
+#
 # > setenv RESTARGET ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
 # > make siteinstall TARGET=$RESTARGET
 # =============================================================================
@@ -52,6 +60,7 @@ PYTHON := python${PSHORT}
 PIP := ${PYTHON} -m pip
 
 TARGET := ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
+PREFIX := ${SDP_BINDIST_ROOT}
 
 GID := res
 
@@ -159,12 +168,14 @@ install: dist ## version to VENV install place
 	@${PIP} install --upgrade ./dist/*
 
 
-siteinstall: allclean dist ## Install in Equinor using $TARGET
+oldsiteinstall: allclean dist ## Install in Equinor using $TARGET
 	@echo $(HOST)
 	\rm -fr  ${TARGET}/${APPLICATION}
 	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
 
+siteinstall: allclean dist ## Install in Equinor using $TARGET
+	PYTHONUSERBASE=${PREFIX} ${PIP} install --upgrade --user .
 
 userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
 	@mkdir -p ${USERTARGET}
