@@ -20,8 +20,6 @@
 # Instead of TARGET, the preferred method is now setting PREFIX instead:
 # make siteinstall PREFIX=${SDP_BINDIST_ROOT}
 #
-# > setenv RESTARGET ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
-# > make siteinstall TARGET=$RESTARGET
 # =============================================================================
 
 xt.PHONY: clean clean-test clean-pyc clean-build clean-cc docs help pyver examples
@@ -64,17 +62,15 @@ TARGET := ${PREFIX}/lib/python${PYTHON_SHORT}/site-packages
 
 GID := res
 
-MY_BINDIST ?= $HOME
-
-USERTARGET := ${MY_BINDIST}/lib/python${PYTHON_SHORT}/site-packages
-
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
 allclean: clean cclean  ## Cleanup all, both C compile stuff and Python
 
+
 clean: clean-build clean-pyc clean-test clean-examples ## remove all Python build, test, coverage...
+
 
 cclean: clean-cc ## remove all C compiling (CXTGeo) build
 
@@ -100,11 +96,17 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr TMP/
 
-clean-cc: ## remove C files
+
+clean-cc: ## remove C files and compiled files
 	rm -fr ${CXTGEOBUILD}
+	find . -name '*.so' -exec rm -f {} +
+	find . -name '*.a' -exec rm -f {} +
+	find . -name '*.dll' -exec rm -f {} +
+
 
 clean-examples:
 	find examples ! -name "*.py" -type f -exec rm -f {} +
+
 
 cc:
 	@if [ -d "${CXTGEOBUILD}" ]; then \
@@ -114,8 +116,10 @@ cc:
 	    cd ${CXTGEOBUILD}; cmake ..; make; make install; \
 	fi
 
+
 lint: ## check style with pylint
 	@${PYTHON} -m pylint ${APPLICATION} tests
+
 
 flake: ## check style with flake8
 	@${PYTHON} -m flake8 ${APPLICATION} tests
@@ -139,6 +143,7 @@ coverage: ## check code coverage quickly with the default Python
 develop:  ## make develop mode (for pure python only)
 	${PIP} install -e .
 
+
 docsrun: clean ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/${APPLICATION}*.rst
 	rm -f docs/modules.rst
@@ -151,8 +156,10 @@ docsrun: clean ## generate Sphinx HTML documentation, including API docs
 docs: docsrun ## generate and display Sphinx HTML documentation...
 	$(BROWSER) docs/_build/html/index.html
 
+
 examples: clean
 	cd examples; python *.py
+
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
@@ -165,28 +172,24 @@ dist: clean cc  ## builds wheel package
 
 install: dist ## version to VENV install place
 	@echo "Running ${PIP} (${PYTHON_VERSION}) ..."
-	@${PIP} install --upgrade ./dist/*
+	@${PIP} install --upgrade .
 
 
-oldsiteinstall: allclean dist ## Install in Equinor using $TARGET
+oldsiteinstall: allclean dist ## Install in Equinor using $TARGET (old)
 	@echo $(HOST)
 	\rm -fr  ${TARGET}/${APPLICATION}
 	\rm -fr  ${TARGET}/${APPLICATION}-*
 	@${PIP} install --target ${TARGET} --upgrade  ./dist/${APPLICATION}*.whl
 
-siteinstall: dist ## Install in Equinor using $PREFIX
-	PYTHONUSERBASE=${PREFIX} ${PIP} install . --upgrade --user --no-deps
 
-userinstall: dist ## Install on user directory (need a MY_BINDIST env variable)
-	@mkdir -p ${USERTARGET}
-	@chmod -R 700 ${USERTARGET}
-	@\rm -fr  ${USERTARGET}/${APPLICATION}
-	@\rm -fr  ${USERTARGET}/${APPLICATION}-*
-	@${PIP} install --target ${USERTARGET} --upgrade  ./dist/${APPLICATION}*.whl
-	@echo "Install to  ${USERTARGET}"
-	@chmod -R 500 ${USERTARGET}
+siteinstall: allclean dist ## Install to custom place using $PREFIX aka make siteinstall PREFIX=/local/usr
+	@echo $(HOST)
+	\rm -fr  ${TARGET}/${APPLICATION}
+	\rm -fr  ${TARGET}/${APPLICATION}-*
+	pip install --prefix=${PREFIX} .
 
-docsinstall: docsrun
+
+docsinstall: docsrun  ## install docs in Equinor
 	mkdir -p ${DOCSINSTALL}/${APPLICATION}
 	rsync -av --delete docs/_build/html ${DOCSINSTALL}/${APPLICATION}
 	/project/res/bin/res_perm ${DOCSINSTALL}/${APPLICATION}
