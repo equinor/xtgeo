@@ -64,6 +64,8 @@ double surf_get_z_from_ij(
 			int debug
 			)
 {
+
+
     int  ibc=-9;
     char s[24]="map_get_z_from_ij";
     double x_v[4], y_v[4], z_v[4];

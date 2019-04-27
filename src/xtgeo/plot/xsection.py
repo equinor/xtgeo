@@ -480,9 +480,18 @@ class XSection(BasePlot):
             wcross: A pandas dataframe with precomputed well crossings
         """
 
-        for _index, row in wcross.iterrows():
-            xcoord = row.UTMX
-            ycoord = row.UTMY
+        placings = {
+            0: (40, 40),
+            1: (40, -20),
+            2: (-30, 30),
+            3: (30, 20),
+            4: (-40, 30),
+            5: (-20, 40),
+        }
+
+        for index, row in wcross.iterrows():
+            xcoord = row.X_UTME
+            ycoord = row.Y_UTMN
 
             dfrc = dfr.copy()
 
@@ -508,11 +517,14 @@ class XSection(BasePlot):
                 s=38,
                 zorder=102,
             )
+
+            modulo = index % 5
+
             ax.annotate(
                 row.CWELL,
                 size=6,
                 xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
-                xytext=(40, 40),
+                xytext=placings[modulo],
                 textcoords="offset points",
                 arrowprops=dict(
                     arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
