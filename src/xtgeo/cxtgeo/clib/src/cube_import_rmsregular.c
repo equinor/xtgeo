@@ -43,7 +43,7 @@
  *    Not sure what XMAX/YMAX is .. (actually not needed!)
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 #include "libxtg.h"

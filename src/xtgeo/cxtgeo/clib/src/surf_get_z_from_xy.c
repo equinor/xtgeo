@@ -40,7 +40,7 @@
  *    - checking the handling of undef nodes; shall return UNDEF
  *    - Propert handling of YFLIP = -1!
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

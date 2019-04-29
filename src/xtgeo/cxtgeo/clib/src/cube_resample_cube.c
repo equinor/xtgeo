@@ -40,7 +40,7 @@
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

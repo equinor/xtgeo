@@ -39,7 +39,7 @@
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 int x_plane_normalvector(double *points_v, double *nvector, int option,
@@ -124,7 +124,7 @@ int x_plane_normalvector(double *points_v, double *nvector, int option,
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
@@ -219,7 +219,7 @@ int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 double x_sample_z_from_xy_cell(double *cell_v, double x, double y,

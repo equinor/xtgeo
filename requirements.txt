@@ -1,6 +1,2 @@
-numpy
-segyio
-shapely
-pandas
-matplotlib
-scipy
+# Requirement in setup.py
+-e .

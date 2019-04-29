@@ -28,7 +28,7 @@
  *    - yflip handling correctly dealt with?
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

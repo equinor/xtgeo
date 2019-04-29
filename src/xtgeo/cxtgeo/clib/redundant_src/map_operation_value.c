@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    map_operation value.c
  *
  * AUTHOR(S):
@@ -16,7 +16,7 @@
  *     3    Multiply <value> to all exisitng defined nodes
  *     4    Divide <value> to all existing defined nodes (value must not be 0)
  *     5    Set all UNDEF to value
- * 
+ *
  *     7    if (z<value) then z=value2 else z=value3 (if value3 is not UNDEF)
  *     8    if (z<=value) then z=value2 else z=value3 (if value3 is not UNDEF)
  *     9    if (z>value) then z=value2 else z=value3 (if value3 is not UNDEF)
@@ -25,10 +25,10 @@
  *
  *
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    mode           i     Kind of operation (see DESCRIPTION)
  *    nx, ny         i     Map dimension
- *    p_zval_v      i/o    Maps depth/whatever values vector (pointer) 
+ *    p_zval_v      i/o    Maps depth/whatever values vector (pointer)
  *    value          i     Value1
  *    value2         i     Value2
  *    value3         i     Value3
@@ -36,19 +36,19 @@
  *
  * RETURNS:
  *    Void + Changed pointer to map property (z values)
- * 
+ *
  * TODO/ISSUES/BUGS:
- *    
+ *
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
-   
+
 void map_operation_value (
 			  int mode,
 			  int nx,
@@ -69,7 +69,7 @@ void map_operation_value (
 
     for (j=1;j<=ny;j++) {
 	for (i=1;i<=nx;i++) {
-	
+
 	    ib=x_ijk2ib(i,j,1,nx,ny,1,0);
 
 
@@ -77,7 +77,7 @@ void map_operation_value (
 		p_zval_v[ib]=value;
 	    }
 	    else if (p_zval_v[ib]<UNDEF_MAP_LIMIT) {
-		
+
 		if (mode==-1) {                         /* all UNDEF  */
 		    p_zval_v[ib]=UNDEF;
 		}
@@ -106,7 +106,7 @@ void map_operation_value (
 			p_zval_v[ib]=value2;
 		    }
 		    else {
-			/* "else" will be activated if value3 is not 
+			/* "else" will be activated if value3 is not
 			   set to UNDEF */
 
 			if (value3 < UNDEF_LIMIT) {
@@ -166,4 +166,3 @@ void map_operation_value (
 	}
     }
 }
-

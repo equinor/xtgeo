@@ -46,7 +46,7 @@
  *    Todo: The algorithm is straightforward and hence a bit slow...
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

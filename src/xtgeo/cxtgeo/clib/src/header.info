@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- * A collection of 3D geomtrical vectors, planes, etc         
+ * A collection of 3D geomtrical vectors, planes, etc
  *
  *******************************************************************************
  */
@@ -12,7 +12,7 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    x_plane_normalvector.c
  *
  * AUTHOR(S):
@@ -24,7 +24,7 @@
  *    The standard equation is Ax + By +Cz + D = 0 where (A,B,C)
  *    is the N vector
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    points_v       i     a [9] matrix with X Y Z of 3 points
  *    nvector        o     a [4] vector with A B C D
  *    option         i     Options flag for later usage
@@ -35,11 +35,11 @@
  *              1: some input points are overlapping
  *              2: the input points forms a line
  *    Result nvector is updated
- * 
+ *
  * TODO/ISSUES/BUGS:
- *    
+ *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 int x_plane_normalvector(double *points_v, double *nvector, int option,

@@ -10,7 +10,7 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    grd3d_transfer_prop_dbl.c
  *
  * AUTHOR(S):
@@ -19,9 +19,9 @@
  * DESCRIPTION:
  *    Transfer an DOUBLE property from one layer range to another layer range.
  *    It can be layer ranges in two diffeent grid instances. Note that the
- *    range interval must be identical! 
+ *    range interval must be identical!
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    nx,ny          i     Grid dimensions I J
  *    nz1            i     NZ input
  *    nz2            i     NZ output
@@ -34,12 +34,12 @@
  *
  * RETURNS:
  *    Void + Changed pointer to grid property
- * 
+ *
  * TODO/ISSUES/BUGS:
- *    
+ *
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 
@@ -92,7 +92,7 @@ void grd3d_transfer_prop_dbl(
 	    }
 	}
     }
-			    
-	   
+
+
     xtg_speak(s,2,"Exit transfer double xx array");
 }

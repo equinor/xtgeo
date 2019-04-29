@@ -41,7 +41,7 @@
  *    UNFINISHED! All combinations of conversion are not finished yet
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 #include "libxtg.h"

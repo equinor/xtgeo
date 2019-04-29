@@ -26,7 +26,7 @@
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *
  * CODING STANDARD:
  *    Pure C, 79 columns, Stroustrup do/if braces

@@ -36,7 +36,7 @@
  *    Make proper return codes
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 #include <string.h>

@@ -30,7 +30,7 @@
  * TODO/ISSUES/BUGS:
  *    - checking the handling of undef nodes; shall return UNDEF
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

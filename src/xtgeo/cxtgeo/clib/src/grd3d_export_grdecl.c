@@ -61,7 +61,7 @@ void grd3d_export_grdecl (
     char sbn[24] = "grd3d_export_grdecl";
     xtgverbose(debug);
 
-    xtg_speak(sbn, 2,"==== Entering grd3d_export_grdecl ====");
+    xtg_speak(sbn, 1,"Entering %s", sbn);
 
     /*
      *-------------------------------------------------------------------------

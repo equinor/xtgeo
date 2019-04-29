@@ -39,7 +39,7 @@
  *    More metrics will be added upon need
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

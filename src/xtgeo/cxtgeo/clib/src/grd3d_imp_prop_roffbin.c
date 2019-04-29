@@ -93,7 +93,7 @@
  *           IJK order flipping
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 
