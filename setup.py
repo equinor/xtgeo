@@ -28,7 +28,7 @@ requirements = [
     "segyio >= 1.4",
 ]
 
-setup_requirements = ["pytest-runner", "cmake"]
+setup_requirements = ["pytest-runner", "cmake", "wheel"]
 
 test_requirements = ["pytest"]
 
