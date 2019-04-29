@@ -12,7 +12,7 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    map_interp_holes.c
  *
  * AUTHOR(S):
@@ -22,20 +22,20 @@
  *    Tries to make undefined map values defined by interpolation in both
  *    direction, and use inverse distance weighting
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    mx, my         i     map dimensions
  *    p_zval_v      i/o    map values
  *    option         i     Options flag for later usage
  *    debug          i     Debug level
  *
  * RETURNS:
- *    Function: 0: upon success. 
+ *    Function: 0: upon success.
  *    p_zval_v is updated
- * 
+ *
  * TODO/ISSUES/BUGS:
- *    
+ *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 int map_interp_holes(int mx, int my, double *p_zval_v, int option,
@@ -47,14 +47,14 @@ int map_interp_holes(int mx, int my, double *p_zval_v, int option,
     char s[24]="map_interp_holes";
 
     xtgverbose(debug);
-    
+
     /* test every point */
 
     for (j=1;j<=my;j++) {
 	for (i=1;i<=mx;i++) {
-	
+
 	    ib=x_ijk2ib(i,j,1,mx,my,1,0);
-	    
+
 	    /* find UNDEF values*/
 	    if (p_zval_v[ib] > UNDEF_MAP_LIMIT) {
 		xtg_speak(s,3,"Hole for node %d %d found ...",i,j);
@@ -105,17 +105,17 @@ int map_interp_holes(int mx, int my, double *p_zval_v, int option,
 
 
 		/* now I have potentially 4 values, with 4 weights
-		   indicating distance in each direction 
+		   indicating distance in each direction
 		   e.g.
 		   px1 = 2400 px1w=3 weight=(1/3)
 		   px2 = 3000 px2w=8 --> 1/8
 		   py1 = 2600 py1w=1 --> 1/1
 		   py2 = 2800 py2w=5 --> 1/5
-		   
+
 		   px1 shall have 1/3 influence, px2 1/8, py1 1/1 py2 1/5
 
 		   sum of scales are 1/3+1/8+1/1+1/5 = X = 1.65833
-		   
+
 		   hence p1xw_actual = 0.333/1.65833=0.20098
 		   hence p2xw_actual = 0.125/1.65833=0.07538
 		   hence p1xw_actual = 1/1.65833=0.6030
@@ -137,8 +137,7 @@ int map_interp_holes(int mx, int my, double *p_zval_v, int option,
 		p_zval_v[ib]=px1*px1w+px2*px2w+py1*py1w+py2*py2w;
 	    }
 	}
-    }	   
+    }
 
     return 0;
 }
-

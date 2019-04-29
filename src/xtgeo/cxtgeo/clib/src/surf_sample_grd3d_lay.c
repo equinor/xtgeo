@@ -31,7 +31,7 @@
  *    Map rotation is currently NOT supported!
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 #include <math.h>

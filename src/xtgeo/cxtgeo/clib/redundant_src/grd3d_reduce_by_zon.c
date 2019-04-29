@@ -1,16 +1,16 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    grd3d_reduce_by_zon.c
  *
  * AUTHOR(S):
  *    Jan C. Rivenaes
  *
  * DESCRIPTION:
- *    Reduce the grid by using a zonation interval 
+ *    Reduce the grid by using a zonation interval
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    nx,ny          i     Grid dimensions I J
  *    nz1            i     NZ as input
  *    nz2            o     NZ for output
@@ -25,12 +25,12 @@
  *
  * RETURNS:
  *    The C macro EXIT_SUCCESS unless problems + changed pointers
- * 
+ *
  * TODO/ISSUES/BUGS:
  *    Code is not finished
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 
@@ -61,7 +61,7 @@ int grd3d_reduce_by_zon (
 {
     /* locals */
     char s[24]="grd3d_reduce_by_zon";
-    int  ib, ib1, ib2, ic, i, j, k, ibt, ibb, ibp;    
+    int  ib, ib1, ib2, ic, i, j, k, ibt, ibb, ibp;
     int  kmin, kmax, knew, ncc, nnz2;
 
     xtgverbose(debug);
@@ -83,12 +83,12 @@ int grd3d_reduce_by_zon (
 	    for (i = 1; i <= nx; i++) {
 		ibp=x_ijk2ib(i,j,k,nx,ny,nz1,0);
 
-		if (p_actnum1_v[ibp] == 1 && p_zon1_v[ibp] >= zmin && 
+		if (p_actnum1_v[ibp] == 1 && p_zon1_v[ibp] >= zmin &&
 		    p_zon1_v[ibp] <= zmax) {
 
 		    if (kmin > k) kmin = k;
 		    if (kmax < k) kmax = k;
-		    
+
 		}
 	    }
 	}
@@ -130,13 +130,13 @@ int grd3d_reduce_by_zon (
     nnz2 = *nz2;
 
     /* transfer actnum */
-    grd3d_transfer_prop_int(nx, ny, nz1, nnz2, kmin, kmax, 1, nnz2, 
+    grd3d_transfer_prop_int(nx, ny, nz1, nnz2, kmin, kmax, 1, nnz2,
 			    p_actnum1_v, p_actnum2_v, 0, debug);
 
     ncc=0;
     for (ib=0; ib<nx*ny*nnz2; ib++) {
 	if (p_actnum2_v[ib]==1) ncc++;
-    } 
+    }
 
     *nactive=ncc;
 
@@ -146,4 +146,3 @@ int grd3d_reduce_by_zon (
     return EXIT_SUCCESS;
 
 }
-

@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    grd3d_reduce_onelayer.c
  *
  * AUTHOR(S):
@@ -10,7 +10,7 @@
  * DESCRIPTION:
  *    Reduce the grid to one single big layer
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions I J K in input
  *    p_zcorn1_v     i     Grid Z corners for input
  *    p_zcorn2_v     o     Grid Z corners for output
@@ -22,12 +22,12 @@
  *
  * RETURNS:
  *    The C macro EXIT_SUCCESS unless problems + changed pointers
- * 
+ *
  * TODO/ISSUES/BUGS:
  *    ACTNUM is set to 1 for all cells (iflag=0), only.
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 
@@ -51,7 +51,7 @@ int grd3d_reduce_onelayer (
 {
     /* locals */
     char s[24]="grd3d_reduce_onelayer";
-    int  i, j, ic, ib, ibt, ibb, ncc;    
+    int  i, j, ic, ib, ibt, ibb, ncc;
 
     xtgverbose(debug);
 
@@ -88,7 +88,7 @@ int grd3d_reduce_onelayer (
 	for (ib=0; ib<nx*ny*1; ib++) {
 	    p_actnum2_v[ib]=1;
 	    ncc++;
-	} 
+	}
     }
     else{
 	xtg_error(s,"IFLAG other than 0 not implemented yet for <%s>",s);
@@ -102,4 +102,3 @@ int grd3d_reduce_onelayer (
     return EXIT_SUCCESS;
 
 }
-

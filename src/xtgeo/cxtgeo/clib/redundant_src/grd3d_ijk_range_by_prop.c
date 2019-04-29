@@ -24,7 +24,7 @@
  *    The C macro EXIT_SUCCESS unless problems + changed pointers
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

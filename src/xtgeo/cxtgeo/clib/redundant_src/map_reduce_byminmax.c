@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- * NAME:         
+ * NAME:
  *    map_reduce_byminmax.c
  *
  * AUTHOR(S):
@@ -10,11 +10,11 @@
  * DESCRIPTION:
  *    Reduce map by min/max window. There is a scan mode and an a execute mode
  *
- * ARGUMENTS:         
+ * ARGUMENTS:
  *    mode                 i     0 = scan mode; 1 = execute
  *    nx, ny               i     Map dimension
  *    xori ... yinc        i     Map geometry
- *    p_zval_v             i     Input map (pointer) 
+ *    p_zval_v             i     Input map (pointer)
  *    newxmin...newxmax    i     New x and y window
  *    nnx, nny            i/o    New map dimensions
  *    nnxsh, nnysh        i/o    Shift in start nodes (to be used in mode=1)
@@ -23,20 +23,20 @@
  *    debug                i     Debug level
  *
  * RETURNS:
- *    Void + new dimensions, geometry and pointer to new map 
- * 
+ *    Void + new dimensions, geometry and pointer to new map
+ *
  * TODO/ISSUES/BUGS:
- *    
+ *
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
-   
+
 void map_reduce_byminmax (
 			  int mode,
 			  int nx,
@@ -82,13 +82,13 @@ void map_reduce_byminmax (
 
 	nxmax = 1;
 	nymax = 1;
-	
+
 	newxori = VERYLARGEFLOAT;
 	newyori = VERYLARGEFLOAT;
-		
+
 	for (j=1;j<=ny;j++) {
 	    for (i=1;i<=nx;i++) {
-		
+
 		xpos=xori+xinc*(i-1);
 		ypos=yori+yinc*(j-1);
 
@@ -106,7 +106,7 @@ void map_reduce_byminmax (
 		}
 
 	    }
-	}	    
+	}
 
 	if (nxmax<nxshift || nymax<nyshift) {
 	    xtg_error(s,"Error 3421. Contact JRIV");
@@ -119,7 +119,7 @@ void map_reduce_byminmax (
 	*nnxsh = nxshift;
 	*nnysh = nyshift;
 
-	*nxori = newxori;	
+	*nxori = newxori;
 	*nyori = newyori;
     }
 
@@ -129,9 +129,9 @@ void map_reduce_byminmax (
 
     else{
 	mx  = *nnx;     /* dimen of new maps */
-	my  = *nny; 
+	my  = *nny;
 	mxs = *nnxsh;   /* shift relative to oold map */
-	mys = *nnysh; 
+	mys = *nnysh;
 
 	xtg_speak(s,2,"New map dimens are %d %d", mx, my);
 	xtg_speak(s,2,"Shifts are %d %d", mxs, mys);
@@ -142,8 +142,8 @@ void map_reduce_byminmax (
 
 		ib  = x_ijk2ib(i,j,1,nx,ny,1,0);
 
-		if (i >= mxs && i < (mxs+mx) && 
-		    j >= mys && j < (mys+my)) { 
+		if (i >= mxs && i < (mxs+mx) &&
+		    j >= mys && j < (mys+my)) {
 
 		    ii=i-mxs+1;
 		    jj=j-mys+1;
@@ -156,6 +156,6 @@ void map_reduce_byminmax (
 		}
 
 	    }
-	}	    
+	}
     }
 }

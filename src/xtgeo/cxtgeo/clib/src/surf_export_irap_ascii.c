@@ -42,7 +42,7 @@
  *           (not xmin etc ) and steps are used to define the map extent.
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  *******************************************************************************
  */
 int surf_export_irap_ascii(

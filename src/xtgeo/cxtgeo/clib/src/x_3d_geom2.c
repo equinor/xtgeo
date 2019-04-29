@@ -48,7 +48,7 @@
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 int x_point_line_dist(double x1, double y1, double z1,
@@ -164,7 +164,7 @@ int x_point_line_dist(double x1, double y1, double z1,
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 int x_point_line_pos(double x1, double y1, double z1,

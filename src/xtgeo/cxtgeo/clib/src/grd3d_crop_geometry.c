@@ -30,7 +30,7 @@
  *    None known
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

@@ -31,7 +31,7 @@
  *    Code is not finished
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 

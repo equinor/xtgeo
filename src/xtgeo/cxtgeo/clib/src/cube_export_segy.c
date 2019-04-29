@@ -32,7 +32,7 @@
  *    - update ARGUMENT list above
  *
  * LICENCE:
- *    Statoil property
+ *    cf. XTGeo LICENSE
  ******************************************************************************
  */
 
