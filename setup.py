@@ -26,6 +26,7 @@ requirements = [
     "matplotlib >= 1.5",
     "scipy >= 0.17",
     "segyio >= 1.4",
+    "pandas >= 0.17",
 ]
 
 setup_requirements = ["pytest-runner", "cmake", "wheel"]
