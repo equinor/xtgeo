@@ -18,7 +18,7 @@ XTGeo is developed on Linux. To build XTGeo you need:
 
 * A C99 compatible C compiler (gcc is recommended)
 * The SWIG library (http://www.swig.org/) version 2 or higher.
-* Python 2.7, 3.4 or higher. Furter Python requirements
+* Python 2.7, 3.4 or higher. Further Python requirements
   are listed in requirements.txt, requirements_dev.txt and setup.py
 * Detailed instructions are provided in installation.rst
 
@@ -37,7 +37,7 @@ numpy and/or pandas. For example:
    # create an instance of a surface, read from file
    mysurf = RegularSurface('myfile.gri')  # Irap binary as default
 
-   print('Mean is {}'.format(mysurf.mean()))
+   print('Mean is {}'.format(mysurf.values.mean()))
 
    # change date so all values less than 2000 becomes 2000
    # The values attribute gives the Numpy array
