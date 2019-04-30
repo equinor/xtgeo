@@ -1,0 +1,36 @@
+<HTML><HEAD>
+<TITLE>Network Error</TITLE>
+</HEAD>
+<BODY>
+<FONT face="Helvetica">
+<big><strong></strong></big><BR>
+</FONT>
+<blockquote>
+<TABLE border=0 cellPadding=1 width="80%">
+<TR><TD>
+<FONT face="Helvetica">
+<big>Network Error (tcp_error)</big>
+<BR>
+<BR>
+</FONT>
+</TD></TR>
+<TR><TD>
+<FONT face="Helvetica">
+A communication error occurred: ""
+</FONT>
+</TD></TR>
+<TR><TD>
+<FONT face="Helvetica">
+The Web Server may be down, too busy, or experiencing other problems preventing it from responding to requests. You may wish to try again at a later time.
+</FONT>
+</TD></TR>
+<TR><TD>
+<FONT face="Helvetica" SIZE=2>
+<BR>
+For assistance, contact your network support team.
+</FONT>
+</TD></TR>
+</TABLE>
+</blockquote>
+</FONT>
+</BODY></HTML>
