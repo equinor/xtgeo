@@ -1,19 +1,24 @@
 #!/bin/bash
 set -e -x
 
-# Install a system package required by our library
-yum install -y pcre-devel
-cd tmp
-curl -O https://ftp.osuosl.org/pub/blfs/conglomeration/swig/swig-3.0.12.tar.gz
-tar xzvf swig-3.0.12.tar.gz
-cd swig-3.0.12
-sh ./configure; make; make install
+# # Install a system package required by our library
+# yum install -y pcre-devel
+# cd tmp
+# curl -O https://ftp.osuosl.org/pub/blfs/conglomeration/swig/swig-3.0.12.tar.gz
+# tar xzf swig-3.0.12.tar.gz
+# cd swig-3.0.12
+# sh ./configure > /dev/null
+# make > /dev/null
+# make install
+curl -O ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/Openwsman/CentOS_CentOS-6/x86_64/swig-3.0.2-5.1.x86_64.rpm
+rpm -i swig-3.0.2-5.1.x86_64.rpm
 
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
-    "${PYBIN}/pip" install -r /io/requirements.txt
-    "${PYBIN}/pip" install -r /io/requirements_dev.txt
-    "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+    echo $PYBIN
+    # "${PYBIN}/pip" install -r /io/requirements.txt
+    # "${PYBIN}/pip" install -r /io/requirements_dev.txt
+    # "${PYBIN}/pip" wheel /io/ -w wheelhouse/
 done
 
 # # Bundle external shared libraries into the wheels
