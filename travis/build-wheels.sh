@@ -10,7 +10,7 @@ set -e -x
 # sh ./configure > /dev/null
 # make > /dev/null
 # make install
-curl -O ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/Openwsman/CentOS_CentOS-6/x86_64/swig-3.0.2-5.1.x86_64.rpm
+curl -O https://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/Openwsman/CentOS_CentOS-6/x86_64/swig-3.0.2-5.1.x86_64.rpm
 rpm -i swig-3.0.2-5.1.x86_64.rpm
 
 # Compile wheels
