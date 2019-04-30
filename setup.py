@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 """The setup script."""
 
-import numpy
-
 import subprocess
 from glob import glob
 import os
@@ -12,7 +10,15 @@ from os.path import splitext
 from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
 
+import numpy
 import versioneer
+
+
+def parse_requirements(filename):
+    """Load requirements from a pip requirements file"""
+    lineiter = (line.strip() for line in open(filename))
+    return [line for line in lineiter if line and not line.startswith("#")]
+
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -20,14 +26,7 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = [
-    "numpy >= 1.10",
-    "shapely >= 1.6.4",
-    "matplotlib >= 1.5",
-    "scipy >= 0.17",
-    "segyio >= 1.4",
-    "pandas >= 0.17",
-]
+requirements = parse_requirements("requirements.txt")
 
 setup_requirements = ["numpy", "pytest-runner", "cmake", "wheel"]
 

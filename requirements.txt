@@ -1,2 +1,6 @@
-# Requirement in setup.py
--e .
+numpy>=1.10
+shapely>=1.6.4
+matplotlib>=1.5
+scipy>=0.17
+segyio>=1.4
+pandas>=0.17
