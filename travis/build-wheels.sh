@@ -1,16 +1,15 @@
 #!/bin/bash
 set -e -x
 
-# # Install a system package required by our library
-# yum install -y pcre-devel
-# cd tmp
-# curl -O https://ftp.osuosl.org/pub/blfs/conglomeration/swig/swig-3.0.12.tar.gz
-# tar xzf swig-3.0.12.tar.gz
-# cd swig-3.0.12
-# sh ./configure > /dev/null
-# make > /dev/null
-# make install
-rpm -i /io/travis/swig-3.0.2-5.1.x86_64.rpm
+# Install a system package required by our library
+yum install -y pcre-devel
+cd tmp
+curl -O https://ftp.osuosl.org/pub/blfs/conglomeration/swig/swig-3.0.12.tar.gz
+tar xzf swig-3.0.12.tar.gz
+cd swig-3.0.12
+sh ./configure > /dev/null
+make > /dev/null
+make install
 
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
