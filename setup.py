@@ -29,7 +29,7 @@ requirements = [
     "pandas >= 0.17",
 ]
 
-setup_requirements = ["pytest-runner", "cmake", "wheel"]
+setup_requirements = ["numpy", "pytest-runner", "cmake", "wheel"]
 
 test_requirements = ["pytest"]
 
