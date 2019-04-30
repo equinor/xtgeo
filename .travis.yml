@@ -18,8 +18,10 @@
 #     - make test
 
 
-matrix:
+jobs:
   include:
+    if: tag IS present
+
     - sudo: required
       services:
         - docker

@@ -25,7 +25,7 @@ for PYBIN in /opt/python/*/bin; do
         "${PYBIN}/pip" install numpy
         # "${PYBIN}/pip" install -r /io/requirements_dev.txt
         "${PYBIN}/pip" wheel /io/ -w wheelhouse/
-        "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
+        # "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
     fi
 done
 
