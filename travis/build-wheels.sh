@@ -9,14 +9,17 @@ tar xzf swig-3.0.12.tar.gz
 cd swig-3.0.12
 sh ./configure > /dev/null
 make > /dev/null
-make install
+make install > /dev/null
 
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     echo $PYBIN
-    # "${PYBIN}/pip" install -r /io/requirements.txt
-    # "${PYBIN}/pip" install -r /io/requirements_dev.txt
-    # "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+    if [[ $PYBIN == *"36"* ]]; then
+        echo "Install for $PYBIN"
+        "${PYBIN}/pip" install -r /io/requirements.txt
+        "${PYBIN}/pip" install -r /io/requirements_dev.txt
+        "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+    fi
 done
 
 # # Bundle external shared libraries into the wheels
