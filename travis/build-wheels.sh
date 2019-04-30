@@ -20,7 +20,7 @@ ln -s /opt/python/cp36-cp36m/bin/cmake /usr/bin/cmake
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     echo $PYBIN
-    if [[ $PYBIN == *"cp36"* ]]; then
+    if [[ $PYBIN == *"cp3"* ]]; then
         echo "Install for $PYBIN"
         "${PYBIN}/pip" install numpy
         # "${PYBIN}/pip" install -r /io/requirements_dev.txt
