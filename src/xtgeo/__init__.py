@@ -3,11 +3,18 @@
 # pylint: skip-file
 """The XTGeo Python module."""
 
+
+
 from __future__ import division, absolute_import
 from __future__ import print_function
 import os
 import timeit
 
+try:
+    from ._theversion import version
+    __version__ = version
+except ImportError:
+    __version__ = '0.0.0'
 
 def _timer(*args):
     time1 = timeit.default_timer()
@@ -61,15 +68,6 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
 # Order matters!
 #
 _xprint('Import matplotlib etc...DONE')
-
-_xprint('Import xtgeo version...')
-from xtgeo._theversion import theversion
-
-__version__ = theversion()
-
-_xprint('Import xtgeo version...DONE')
-
-_xprint('Import common...')
 
 from xtgeo.common.constants import UNDEF
 from xtgeo.common.constants import UNDEF_LIMIT

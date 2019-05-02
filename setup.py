@@ -11,8 +11,10 @@ from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
 
 import numpy
+
 # import versioneer
 from setuptools_scm import get_version
+
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
@@ -79,6 +81,11 @@ test_requirements = ["pytest"]
 #     return useversion
 
 
+def src(x):
+    root = os.path.dirname(__file__)
+    return os.path.abspath(os.path.join(root, x))
+
+
 class build(_build):
     # different order: build_ext *before* build_py
     sub_commands = [
@@ -132,7 +139,7 @@ _cmdclass = {"build": build}
 
 setup(
     name="xtgeo",
-    version=get_version(root='.', relative_to=__file__),
+    # version=get_version(root='.', relative_to=__file__),
     cmdclass=_cmdclass,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
@@ -144,7 +151,7 @@ setup(
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[_cxtgeo],
     include_package_data=True,
-    use_scm_version=True,
+    use_scm_version={"root": src(""), "write_to": src("src/xtgeo/_theversion.py")},
     zip_safe=False,
     keywords="xtgeo",
     classifiers=[
