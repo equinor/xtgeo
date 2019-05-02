@@ -30,7 +30,7 @@ for PYBIN in /opt/python/*/bin; do
         fi
         "${PYBIN}/pip" install numpy
         "${PYBIN}/pip" wheel /io/ -w wheelhouse/
-        "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
+        # "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
     fi
 done
 
