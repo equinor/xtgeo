@@ -28,7 +28,13 @@ with open("HISTORY.rst") as history_file:
 
 requirements = parse_requirements("requirements.txt")
 
-setup_requirements = ["numpy", "pytest-runner", "cmake", "wheel"]
+setup_requirements = [
+    "numpy",
+    "pytest-runner",
+    "cmake",
+    "wheel",
+    "setuptools_scm>=3.2.0",
+]
 
 test_requirements = ["pytest"]
 
@@ -41,19 +47,13 @@ test_requirements = ["pytest"]
 # - micro: Added functionality and bug fixes with no expected side effects
 # - Provide a tag on the form 3.4.0 for each release!
 #
-# Also, a verymicro may _sometimes_ exist (allowed in PEP440); which can be:
-# - One single, very easy to understand, bugfixes
-# - Additions in documentations (not affecting code)
-# - These may not be tagged explicity!
-#
-# Hence, use major.minor.micro or major.minor.micro.verymicro scheme.
 # -----------------------------------------------------------------------------
 
 
 def the_version():
     """Process the version, to avoid non-pythonic version schemes.
 
-    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.2.dev0
+    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.dev2.precommit
 
     This function must be ~identical to xtgeo._theversion.py
     """
@@ -66,10 +66,10 @@ def the_version():
     if len(sver) == 3:
         useversion = version
     else:
-        bugv = sver[2].replace("+", ".")
+        bugv = sver[2].replace("+", ".dev")
 
         if "dirty" in version:
-            ext = ".dev0"
+            ext = ".precommit"
         else:
             ext = ""
         useversion = "{}.{}.{}{}".format(sver[0], sver[1], bugv, ext)
@@ -135,9 +135,9 @@ setup(
     cmdclass=_cmdclass,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
-    author="Jan C. Rivenaes",
-    author_email="jriv@equinor.com",
+    author="R&T Equinor",
     url="https://github.com/equinor/xtgeo",
+    license="LGPL-3.0",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
