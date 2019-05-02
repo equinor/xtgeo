@@ -11,8 +11,8 @@ from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
 
 import numpy
-import versioneer
-
+# import versioneer
+from setuptools_scm import get_version
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
@@ -50,32 +50,33 @@ test_requirements = ["pytest"]
 # -----------------------------------------------------------------------------
 
 
-def the_version():
-    """Process the version, to avoid non-pythonic version schemes.
+# def the_version():
+#     """Process the version, to avoid non-pythonic version schemes.
 
-    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.dev2.precommit
+#     Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.dev2.precommit
 
-    This function must be ~identical to xtgeo._theversion.py
-    """
+#     This function must be ~identical to xtgeo._theversion.py
+#     """
 
-    version = versioneer.get_version()
-    sver = version.split(".")
-    print("\nFrom TAG description: {}".format(sver))
+#     version = versioneer.get_version()
+#     sver = version.split(".")
+#     print("\nFrom TAG description: {}".format(sver))
 
-    useversion = "UNSET"
-    if len(sver) == 3:
-        useversion = version
-    else:
-        bugv = sver[2].replace("+", ".dev")
+#     useversion = "UNSET"
+#     if len(sver) == 3:
+#         useversion = version
+#     else:
+#         print("SVER", sver)
+#         bugv = sver[2].replace("+", ".dev")
 
-        if "dirty" in version:
-            ext = ".precommit"
-        else:
-            ext = ""
-        useversion = "{}.{}.{}{}".format(sver[0], sver[1], bugv, ext)
+#         if "dirty" in version:
+#             ext = ".precommit"
+#         else:
+#             ext = ""
+#         useversion = "{}.{}.{}{}".format(sver[0], sver[1], bugv, ext)
 
-    print("Using version {}\n".format(useversion))
-    return useversion
+#     print("Using version {}\n".format(useversion))
+#     return useversion
 
 
 class build(_build):
@@ -127,11 +128,11 @@ _cxtgeo = CMakeExtension(
 )
 
 _cmdclass = {"build": build}
-_cmdclass.update(versioneer.get_cmdclass())
+# _cmdclass.update(versioneer.get_cmdclass())
 
 setup(
     name="xtgeo",
-    version=the_version(),
+    version=get_version(root='.', relative_to=__file__),
     cmdclass=_cmdclass,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
@@ -143,6 +144,7 @@ setup(
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     ext_modules=[_cxtgeo],
     include_package_data=True,
+    use_scm_version=True,
     zip_safe=False,
     keywords="xtgeo",
     classifiers=[
