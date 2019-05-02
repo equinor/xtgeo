@@ -53,7 +53,7 @@ test_requirements = ["pytest"]
 def the_version():
     """Process the version, to avoid non-pythonic version schemes.
 
-    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.2.dev0
+    Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.dev2.precommit
 
     This function must be ~identical to xtgeo._theversion.py
     """
@@ -66,10 +66,10 @@ def the_version():
     if len(sver) == 3:
         useversion = version
     else:
-        bugv = sver[2].replace("+", ".")
+        bugv = sver[2].replace("+", ".dev")
 
         if "dirty" in version:
-            ext = ".dev0"
+            ext = ".precommit"
         else:
             ext = ""
         useversion = "{}.{}.{}{}".format(sver[0], sver[1], bugv, ext)
