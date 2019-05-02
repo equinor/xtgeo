@@ -28,7 +28,13 @@ with open("HISTORY.rst") as history_file:
 
 requirements = parse_requirements("requirements.txt")
 
-setup_requirements = ["numpy", "pytest-runner", "cmake", "wheel"]
+setup_requirements = [
+    "numpy",
+    "pytest-runner",
+    "cmake",
+    "wheel",
+    "setuptools_scm>=3.2.0",
+]
 
 test_requirements = ["pytest"]
 
@@ -129,9 +135,9 @@ setup(
     cmdclass=_cmdclass,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
-    author="Jan C. Rivenaes",
-    author_email="jriv@equinor.com",
+    author="R&T Equinor",
     url="https://github.com/equinor/xtgeo",
+    license="LGPL-3.0",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],

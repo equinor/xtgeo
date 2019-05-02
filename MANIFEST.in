@@ -6,15 +6,5 @@ include README.rst
 
 include Makefile
 
-recursive-include tests *
-recursive-include examples *
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
-
-recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
-include versioneer.py
-include src/xtgeo/_version.py
-include src/xtgeo/_theversion.py
-recursive-include src/xtgeo/cxtgeo *.c *.h *.i CMakeLists.txt
-recursive-exclude src/xtgeo/cxtgeo/clib/redundant_src *
-recursive-exclude src/xtgeo/cxtgeo/clib/build *
+graft src docs examples
+global-exclude *.py[cod] __pycache__ *.so
