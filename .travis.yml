@@ -10,7 +10,8 @@ python:
     - '3.6'
 
 before_script:
-    - git clone https://c625a677ff258e52690537553ba18a1b845070be@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+    # - git clone https://c625a677ff258e52690537553ba18a1b845070be@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+    - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
 
 script:
     - make cc
