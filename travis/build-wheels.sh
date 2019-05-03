@@ -1,18 +1,25 @@
 #!/bin/bash
 set -e -x
 
-# Install a system package required by our library
+ROOT="/"
+TMP="/tmp"
+IO="/io"
+
+SWIGURL="https://ftp.osuosl.org/pub/blfs/conglomeration/swig"
+SWIG="swig-3.0.12"
+
+# Install the SWIG package required by our library for install
+cd $TMP
+
 yum install -y pcre-devel
-cd tmp
-curl -O https://ftp.osuosl.org/pub/blfs/conglomeration/swig/swig-3.0.12.tar.gz
-tar xzf swig-3.0.12.tar.gz
-cd swig-3.0.12
+curl -O $SWIGURL/${SWIG}.tar.gz
+tar xzf tar.gz
+cd $SWIG
 sh ./configure > /dev/null
 make > /dev/null
 make install > /dev/null
 
-export PYHOME=/home
-cd ${PYHOME}
+cd $ROOT
 
 /opt/python/cp36-cp36m/bin/pip install twine cmake
 ln -s /opt/python/cp36-cp36m/bin/cmake /usr/bin/cmake
@@ -20,7 +27,7 @@ ln -s /opt/python/cp36-cp36m/bin/cmake /usr/bin/cmake
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     echo $PYBIN
-    if [[ $PYBIN == *"cp"* ]]; then
+    if [[ $PYBIN == *"cp36"* ]]; then
         echo "======================================="
         echo "Install for $PYBIN"
         echo "======================================="
@@ -29,12 +36,14 @@ for PYBIN in /opt/python/*/bin; do
             continue
         fi
         "${PYBIN}/pip" install numpy
-        "${PYBIN}/pip" wheel /io/ -w wheelhouse/
-        # "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
+        "${PYBIN}/pip" wheel /io/ -w /io/wheelhouse/
+        cd $IO
+        "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
     fi
 done
 
 # Bundle external shared libraries into the wheels
+cd $IO
 for whl in wheelhouse/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/wheelhouse/
 done
