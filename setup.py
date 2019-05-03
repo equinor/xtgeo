@@ -12,21 +12,28 @@ from distutils.command.build import build as _build
 
 import numpy
 
-# import versioneer
-from setuptools_scm import get_version
-
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
-    lineiter = (line.strip() for line in open(filename))
-    return [line for line in lineiter if line and not line.startswith("#")]
+    try:
+        lineiter = (line.strip() for line in open(filename))
+        return [line for line in lineiter if line and not line.startswith("#")]
+    except FileNotFoundError:
+        return []
 
 
-with open("README.rst") as readme_file:
-    readme = readme_file.read()
+try:
+    with open("README.rst") as readme_file:
+        readme = readme_file.read()
+except FileNotFoundError:
+    readme = "See README.rst"
 
-with open("HISTORY.rst") as history_file:
-    history = history_file.read()
+
+try:
+    with open("HISTORY.rst") as history_file:
+        history = history_file.read()
+except FileNotFoundError:
+    history = "See HISTORY.rst"
 
 requirements = parse_requirements("requirements.txt")
 
