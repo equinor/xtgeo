@@ -18,8 +18,11 @@ script:
   - pytest tests/test_simple
 
 
-after_script:
-  - travis/hello.sh
+jobs:
+  include:
+    - stage: deployx
+      install: skip
+      script: travis/hello.sh
 
 #       stage: build manylinux1
 #       sudo: required
