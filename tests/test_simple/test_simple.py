@@ -8,11 +8,6 @@ import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 
-if not xtg.testsetup():
-    raise SystemExit
-
-td = xtg.tmpdir
-
 
 def test_regular_surface():
     """Do tests on default surface"""

@@ -1,11 +1,6 @@
 language: python
 
 
-stages:
-  - test
-  - hello
-
-
 addons:
   apt:
     packages:
@@ -23,11 +18,8 @@ script:
   - pytest tests/test_simple
 
 
-jobs:
-  include:
-    - stage: hello
-      script:
-        - travis/hello.sh
+after_script:
+  - travis/hello.sh
 
 #       stage: build manylinux1
 #       sudo: required
