@@ -8,6 +8,7 @@ addons:
 python:
     - '2.7'
     - '3.6'
+    - '3.7'
 
 before_script:
     - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
