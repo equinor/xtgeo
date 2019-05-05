@@ -1,41 +1,59 @@
 language: python
+cache: pip
 
-
-addons:
-  apt:
-    packages:
-    - swig
+env:
+  CIBW_BEFORE_BUILD: travis/build-wheels.sh
+  CIBW_PLATFORM: linux
 
 python:
-  - '2.7'
-  - '3.6'
+- '3.6'
 
-# before_script:
-#   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+install:
+- pip install -r requirements.txt -q
+
 
 script:
-  - pip install -e .
-  - pytest tests/test_simple
+- if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then export CIBW_BUILD='cp36*'; fi
+- pip install cibuildwheel
+- cibuildwheel --output-dir wheelhouse
 
 
-jobs:
-  include:
-    - stage: build manylinux1
-      # if: branch = master
-      langauge: minimal
-      on:
-        tags: true
-      sudo: required
-      services:
-        - docker
-      env:
-        DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
-        PLAT=manylinux1_x86_64
-      install:
-        - docker pull $DOCKER_IMAGE
-      script:
-        - docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh
-        - ls wheelhouse/
 
-deploy:
-  provider: pypi
+# addons:
+#   apt:
+#     packages:
+#     - swig
+
+# python:
+#   - '2.7'
+#   - '3.6'
+
+# # before_script:
+# #   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+
+# script:
+#   - pip install -e .
+#   - pytest tests/test_simple
+
+
+# jobs:
+#   include:
+#     - stage: build manylinux1
+#       # if: branch = master
+#       langauge: minimal
+#       on:
+#         tags: true
+#       sudo: required
+#       services:
+#         - docker
+#       env:
+#         DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+#         PLAT=manylinux1_x86_64
+#       install:
+#         - docker pull $DOCKER_IMAGE
+#       script:
+#         - docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh
+#         - ls wheelhouse/
+
+# deploy:
+#   provider: pypi
