@@ -6,15 +6,15 @@ addons:
     - swig
 
 python:
-    - '2.7'
-    - '3.6'
-    - '3.7'
+  - '2.7'
+  - '3.6'
 
 before_script:
-    - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
 
 script:
-    - python setup.py test
+  - pip install -e .
+  - pytest tests/test_simple
 
 # jobs:
 #   include:
