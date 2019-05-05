@@ -13,8 +13,17 @@ before_script:
   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
 
 script:
-  - python setup.py dist
+  - pip install -e .
   - pytest tests/test_simple
+
+stages:
+  - deploy
+
+jobs:
+  include:
+    - stage: deploy
+      script: travis/hello.sh
+
 
 # jobs:
 #   include:
