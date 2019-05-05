@@ -1,5 +1,6 @@
 language: python
 cache: pip
+dist: xenial
 
 env:
   CIBW_BEFORE_BUILD: travis/build-wheels.sh
