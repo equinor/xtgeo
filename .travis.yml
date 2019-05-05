@@ -16,13 +16,9 @@ script:
   - pip install -e .
   - pytest tests/test_simple
 
-stages:
-  - deploy
 
-jobs:
-  include:
-    - stage: deploy
-      script: travis/hello.sh
+deploy:
+  script: travis/hello.sh
 
 
 # jobs:
