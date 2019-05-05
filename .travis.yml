@@ -14,7 +14,7 @@ install:
 
 script:
 - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then export CIBW_BUILD='cp36*'; fi
-- pip install cibuildwheel
+- pip install cibuildwheel==0.10.1
 - cibuildwheel --output-dir wheelhouse
 
 
