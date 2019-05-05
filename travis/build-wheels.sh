@@ -12,8 +12,8 @@ SWIG="swig-3.0.12"
 cd $TMP
 
 yum install -y pcre-devel
-curl -O $SWIGURL/${SWIG}.tar.gz
-tar xzf tar.gz
+curl -O ${SWIGURL}/${SWIG}.tar.gz
+tar xzf ${SWIG}.tar.gz
 cd $SWIG
 sh ./configure > /dev/null
 make > /dev/null

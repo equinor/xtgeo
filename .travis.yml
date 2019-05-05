@@ -21,7 +21,7 @@ script:
 jobs:
   include:
     - stage: build manylinux1
-      langauge: generic
+      langauge: minimal
       sudo: required
       services:
         - docker
