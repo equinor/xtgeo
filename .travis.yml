@@ -17,15 +17,14 @@ script:
   - pip install -e .
   - pytest tests/test_simple
 
-stages:
-  - name: build manylinux1
-    # if: branch = master
 
 jobs:
   include:
     - stage: build manylinux1
       # if: branch = master
       langauge: minimal
+      on:
+        tags: true
       sudo: required
       services:
         - docker
