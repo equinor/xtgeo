@@ -17,11 +17,14 @@ script:
   - pip install -e .
   - pytest tests/test_simple
 
+stages:
+  - name: build manylinux1
+    # if: branch = master
 
 jobs:
   include:
     - stage: build manylinux1
-      if: branch = master
+      # if: branch = master
       langauge: minimal
       sudo: required
       services:
