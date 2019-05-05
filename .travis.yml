@@ -21,7 +21,7 @@ script:
 - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then export CIBW_BUILD='cp35*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then export CIBW_BUILD='cp36*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then export CIBW_BUILD='cp37*'; fi
-- pip install cibuildwheel==0.10.1
+- pip install cibuildwheel
 - cibuildwheel --output-dir wheelhouse
 
 
