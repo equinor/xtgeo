@@ -21,12 +21,15 @@ script:
 jobs:
   include:
     - stage: build manylinux1
+      langauge: generic
       sudo: required
       services:
         - docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+      env:
+        DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+        PLAT=manylinux1_x86_64
       install:
         - docker pull $DOCKER_IMAGE
-#       script:
-#         - docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh
-#         - ls wheelhouse/
+      script:
+        - docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh
+        - ls wheelhouse/
