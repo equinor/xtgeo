@@ -19,6 +19,10 @@ sh ./configure > /dev/null
 make > /dev/null
 make install > /dev/null
 
+pip install numpy cmake
+
+# ===========================
+
 # cd $ROOT
 
 # /opt/python/cp36-cp36m/bin/pip install twine cmake
