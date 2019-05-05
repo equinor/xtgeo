@@ -7,14 +7,18 @@ env:
   CIBW_SKIP: '*-manylinux1_i686'
 
 python:
+- '3.5'
 - '3.6'
+- '3.7'
 
 install:
 - pip install -r requirements.txt -q
 
 
 script:
+- if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then export CIBW_BUILD='cp35*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then export CIBW_BUILD='cp36*'; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then export CIBW_BUILD='cp37*'; fi
 - pip install cibuildwheel==0.10.1
 - cibuildwheel --output-dir wheelhouse
 
