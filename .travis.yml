@@ -1,5 +1,10 @@
 language: python
 
+
+stages:
+  - hello
+
+
 addons:
   apt:
     packages:
@@ -9,21 +14,20 @@ python:
   - '2.7'
   - '3.6'
 
-before_script:
-  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+# before_script:
+#   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
 
 script:
   - pip install -e .
   - pytest tests/test_simple
 
 
-deploy:
-  script: travis/hello.sh
+jobs:
+  include:
+    - stage: hello
+      script:
+        - travis/hello.sh
 
-
-# jobs:
-#   include:
-#     -
 #       stage: build manylinux1
 #       sudo: required
 #       services:
