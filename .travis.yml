@@ -13,7 +13,7 @@ before_script:
   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
 
 script:
-  - pip install -e .
+  # - pip install -e .
   - pytest tests/test_simple
 
 # jobs:
