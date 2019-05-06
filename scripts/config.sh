@@ -14,5 +14,6 @@ function pre_build {
 }
 
 function run_tests {
-    pytest
+    ls -l .
+    python setup.py test
 }
