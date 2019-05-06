@@ -26,9 +26,11 @@ matrix:
           - MB_PYTHON_VERSION=3.6
 
 before_install:
-    - source multibuild/common_utils.sh
-    - source multibuild/travis_steps.sh
-    - before_install
+  - unset -f pushd
+  - unset -f popd
+  - source multibuild/common_utils.sh
+  - source multibuild/travis_steps.sh
+  - before_install
 
 install:
   - build_wheel . $PLAT
