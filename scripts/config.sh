@@ -1,5 +1,6 @@
 
 function pre_build {
+    $CPWD=$PWD
     ROOT="/"
     TMP="/tmp"
     IO="/io"
@@ -17,5 +18,6 @@ function pre_build {
     sh ./configure > /dev/null
     make > /dev/null
     make install > /dev/null
-    cd $ROOT
+    cd $CPDW
+    echo "PWD is $PWD"
 }
