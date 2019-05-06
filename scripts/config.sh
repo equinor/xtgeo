@@ -1,6 +1,6 @@
 
 function pre_build {
-    $CPWD=$PWD
+    CPWD=$PWD
     ROOT="/"
     TMP="/tmp"
     IO="/io"

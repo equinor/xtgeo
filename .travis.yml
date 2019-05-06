@@ -11,7 +11,7 @@ env:
         - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
         - BUILD_DEPENDS="cmake numpy"
         - CONFIG_PATH=scripts/config.sh
-        - REPO_DIR=xtgeo
+        - REPO_DIR=.
 os:
   - linux
 
