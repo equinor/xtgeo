@@ -17,4 +17,5 @@ function run_tests {
     uname -a
     python --version
     echo $PWD
+    ls -la ..
 }
