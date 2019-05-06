@@ -11,7 +11,6 @@ function pre_build {
     make > /dev/null
     make install > /dev/null
     popd
-    uname -a
 }
 
 function run_tests {
