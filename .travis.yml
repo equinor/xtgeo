@@ -1,16 +1,14 @@
 language: python
-cache: pip
-dist: xenial
 
 env:
   CIBW_BEFORE_BUILD: travis/build-wheels.sh
   CIBW_PLATFORM: linux
   CIBW_SKIP: '*-manylinux1_i686'
-  CIBW_BUILD_VERBOSITY: 2
+  CIBW_BUILD_VERBOSITY: 0
 
 
 python:
-- '2.7'
+# - '2.7'
 - '3.5'
 - '3.6'
 
@@ -19,7 +17,7 @@ install:
 
 
 script:
-- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export CIBW_BUILD='cp27mu*'; fi
+# - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export CIBW_BUILD='cp27mu*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then export CIBW_BUILD='cp35*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then export CIBW_BUILD='cp36*'; fi
 - pip install cibuildwheel
