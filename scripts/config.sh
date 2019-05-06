@@ -14,7 +14,7 @@ function pre_build {
 }
 
 function run_tests {
-    ls -l
-    pip install -e .
-    pytest tests/test_simple
+    git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+    python --version
+    echo $PWD
 }
