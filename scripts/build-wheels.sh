@@ -5,6 +5,8 @@ ROOT="/"
 TMP="/tmp"
 IO="/io"
 
+declare -a PYDIST=("cp27-cp27mu" "cp36-cp36m")
+
 SWIGURL="https://ftp.osuosl.org/pub/blfs/conglomeration/swig"
 SWIG="swig-3.0.12"
 
@@ -27,18 +29,12 @@ cd $ROOT
 ln -s /opt/python/cp36-cp36m/bin/cmake /usr/bin/cmake
 
 # Compile wheels
-for PYBIN in /opt/python/*/bin; do
+for dst in ${PYDIST[@]}; do
+    PYBIN=/opt/python/$dst/bin
     echo $PYBIN
-    if [[ $PYBIN == *"cp"* ]]; then
-        echo "======================================="
-        echo "Install for $PYBIN"
-        echo "======================================="
-        if [[ $PYBIN == "/opt/python/cp27-cp27m/bin" ]]; then
-            echo "****************  Skip $PYBIN"
-            continue
-        fi
-        "${PYBIN}/pip" install numpy
-        "${PYBIN}/pip" wheel /io/ -w /io/wheelhouse/
+    "${PYBIN}/pip" install numpy
+    "${PYBIN}/pip" wheel /io/ -w /io/wheelhouse/
+    if [[ $PYBIN == "/opt/python/cp36-cp36m/bin" ]]; then
         cd $IO
         "${PYBIN}/python" /io/setup.py sdist -d /io/wheelhouse/
     fi
@@ -50,11 +46,11 @@ for whl in wheelhouse/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/wheelhouse/
 done
 
-# # # Install packages and test
-# # for PYBIN in /opt/python/*/bin/; do
-# #     "${PYBIN}/pip" install python-manylinux-demo --no-index -f /io/wheelhouse
-# #     (cd "$HOME"; "${PYBIN}/nosetests" pymanylinuxdemo)
-# # done
+# # Install packages and test
+# for PYBIN in /opt/python/*/bin/; do
+#     "${PYBIN}/pip" install xtgeo --no-index -f /io/wheelhouse
+#     (cd "$HOME"; "${PYBIN}/nosetests" pymanylinuxdemo)
+# done
 
 
 # # Test

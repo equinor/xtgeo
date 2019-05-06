@@ -15,7 +15,9 @@ function pre_build {
 
 function run_tests {
     set -x
+    apt-get install git
     pip install pytest
     python -c "import xtgeo; print(xtgeo.__version__)"
-    pytest ../tests/test_simple/test_simple.py
+    ln -s ../tests tests
+    pytest tests/test_simple/test_simple.py
 }
