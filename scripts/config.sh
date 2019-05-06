@@ -14,7 +14,7 @@ function pre_build {
 }
 
 function run_tests {
-    git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+    uname -a
     python --version
     echo $PWD
 }
