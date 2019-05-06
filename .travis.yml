@@ -1,6 +1,6 @@
 language: python
 
-python: 3.5
+python: 3.6
 dist: xenial
 
 env:
@@ -11,7 +11,7 @@ env:
         - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
         - BUILD_DEPENDS="cmake numpy"
         - CONFIG_PATH=scripts/config.sh
-        - REPO_DIR=jcrivenaes/xtgeo
+        - REPO_DIR=xtgeo
 os:
   - linux
 
@@ -21,7 +21,7 @@ sudo: required
 
 matrix:
     exclude:
-      - python: 3.5
+      - python: 3.6
 
     include:
       - os: linux
@@ -31,9 +31,12 @@ matrix:
 before_install:
   - unset -f pushd
   - unset -f popd
+  - echo $REPO_DIR
+  - echo $PWD
   - source multibuild/common_utils.sh
   - source multibuild/travis_steps.sh
   - before_install
+  - echo $PWD
 
 install:
   - build_wheel $REPO_DIR $PLAT
