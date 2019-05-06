@@ -1,34 +1,37 @@
 language: python
 
-addons:
-  apt:
-    packages:
-    - swig
+python: 3.5
 
-python:
-  - '2.7'
-  - '3.6'
+env:
+    global:
+        - UNICODE_WIDTH=32
+        - PLAT=x86_64
+        - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+        - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
+        - BUILD_DEPENDS="cmake numpy"
+os:
+  - linux
 
-before_script:
-  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+services: docker
+
+sudo: required
+
+matrix:
+    exclude:
+      - python: 3.5
+
+    include:
+      - os: linux
+        env:
+          - MB_PYTHON_VERSION=3.6
+
+before_install:
+    - source multibuild/common_utils.sh
+    - source multibuild/travis_steps.sh
+    - before_install
+
+install:
+  - build_wheel . $PLAT
 
 script:
-  - pip install -e .
-  - pytest tests
-
-# jobs:
-#   include:
-#     - stage: build manylinux1
-#       # if: branch = master
-#       langauge: minimal
-#       sudo: required
-#       services:
-#         - docker
-#       env:
-#         DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
-#         PLAT=manylinux1_x86_64
-#       install:
-#         - docker pull $DOCKER_IMAGE
-#       script:
-#         - docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh
-#         - ls wheelhouse/
+  - install_run $PLAT
