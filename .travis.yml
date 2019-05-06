@@ -21,6 +21,9 @@ services: docker
 
 sudo: required
 
+before_script:
+  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+
 matrix:
   exclude:
     - python: 3.6

@@ -15,10 +15,10 @@ function pre_build {
 
 function run_tests {
     set -x
-    apt-get -y install git
-    git clone --depth 1 https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+    ls -l ..
+    ls -l ../..
     pip install pytest
     python -c "import xtgeo; print(xtgeo.__version__)"
     ln -s ../tests tests
-    pytest tests
+    pytest tests/test_simple
 }
