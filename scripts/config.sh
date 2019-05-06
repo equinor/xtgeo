@@ -15,9 +15,8 @@ function pre_build {
 }
 
 function run_tests {
-    uname -a
-    apt-get install git
-    python --version
-    echo $PWD
-    ls -la ..
+    set -x
+    pip install pytest
+    python -c "import xtgeo; print(xtgeo.__version__)"
+    pytest ../tests/test_simple/test_simple.py
 }
