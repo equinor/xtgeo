@@ -18,3 +18,4 @@ cd $SWIG
 sh ./configure > /dev/null
 make > /dev/null
 make install > /dev/null
+cd $ROOT
