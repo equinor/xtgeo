@@ -12,3 +12,7 @@ function pre_build {
     make install > /dev/null
     popd
 }
+
+function run_tests {
+    echo "Running tests"
+}
