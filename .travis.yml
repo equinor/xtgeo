@@ -11,7 +11,6 @@ env:
 
 python:
 - '2.7'
-- '3.4'
 - '3.5'
 - '3.6'
 
@@ -20,8 +19,7 @@ install:
 
 
 script:
-- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export CIBW_BUILD='cp27*'; fi
-- if [[ $TRAVIS_PYTHON_VERSION == 3.4 ]]; then export CIBW_BUILD='cp34*'; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export CIBW_BUILD='cp27-cp27mu*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.5 ]]; then export CIBW_BUILD='cp35*'; fi
 - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then export CIBW_BUILD='cp36*'; fi
 - pip install cibuildwheel
