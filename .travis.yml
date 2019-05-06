@@ -12,6 +12,7 @@ env:
         - BUILD_DEPENDS="cmake numpy"
         - CONFIG_PATH=scripts/config.sh
         - REPO_DIR=.
+        - TEST_DEPENDS="pytest"
 os:
   - linux
 

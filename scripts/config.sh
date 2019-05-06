@@ -14,5 +14,5 @@ function pre_build {
 }
 
 function run_tests {
-    echo "Running tests"
+    pytest
 }
