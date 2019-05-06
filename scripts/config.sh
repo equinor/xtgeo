@@ -16,6 +16,7 @@ function pre_build {
 
 function run_tests {
     uname -a
+    apt-get install git
     python --version
     echo $PWD
     ls -la ..
