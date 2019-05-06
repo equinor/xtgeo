@@ -31,7 +31,7 @@ matrix:
         - MB_PYTHON_VERSION=3.6
 
 before_install:
-  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+  - git clone https://git@github.com/equinor/xtgeo-testdata.git jcrivenaes/xtgeo-testdata
   - unset -f pushd
   - unset -f popd
   - echo $REPO_DIR
