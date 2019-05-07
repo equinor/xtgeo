@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""The setup script."""
+"""XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
 
 import subprocess
 from glob import glob
@@ -150,6 +150,7 @@ setup(
     cmdclass=_cmdclass,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
+    long_description_content_type="text/markdown",
     author="R&T Equinor",
     url="https://github.com/equinor/xtgeo",
     license="LGPL-3.0",
@@ -163,7 +164,8 @@ setup(
     keywords="xtgeo",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers :: Science/Research",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
         "License :: OSI Approved",
         "License :: GNU Lesser General Public License v3 or later (LGPLv3+)",
         "Operating System :: POSIX :: Linux",
@@ -171,8 +173,6 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
