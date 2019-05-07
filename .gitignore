@@ -10,6 +10,7 @@ __pycache__/
 .Python
 env/
 build/
+wheelhouse/
 develop-eggs/
 dist/
 downloads/

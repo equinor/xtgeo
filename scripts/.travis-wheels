@@ -1,0 +1,50 @@
+language: python
+
+python: 3.6
+dist: xenial
+
+env:
+  global:
+    - UNICODE_WIDTH=32
+    - PLAT=x86_64
+    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+    - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
+    - BUILD_DEPENDS="cmake numpy"
+    - CONFIG_PATH=scripts/config.sh
+    - REPO_DIR=.
+    - TEST_DEPENDS="pytest"
+
+os:
+  - linux
+
+services: docker
+
+sudo: required
+
+matrix:
+  exclude:
+    - python: 3.6
+
+  include:
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+
+before_install:
+  - git clone https://git@github.com/equinor/xtgeo-testdata.git jcrivenaes/xtgeo-testdata
+  - unset -f pushd
+  - unset -f popd
+  - echo $REPO_DIR
+  - echo $PWD
+  - source multibuild/common_utils.sh
+  - source multibuild/travis_steps.sh
+  - before_install
+
+install:
+  - build_wheel $REPO_DIR $PLAT
+
+script:
+  - install_run $PLAT
+
+after_success:
+  - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
