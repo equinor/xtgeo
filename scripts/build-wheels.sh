@@ -42,7 +42,8 @@ done
 
 # Bundle external shared libraries into the wheels
 cd $IO
-mkdir wheels
+rm -fr wheels
+mkdir -p wheels
 for whl in wheelhouse/xt*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/wheels/
 done
