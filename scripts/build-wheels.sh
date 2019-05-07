@@ -42,8 +42,9 @@ done
 
 # Bundle external shared libraries into the wheels
 cd $IO
-for whl in wheelhouse/*.whl; do
-    auditwheel repair "$whl" --plat $PLAT -w /io/wheelhouse/
+mkdir wheels
+for whl in wheelhouse/xt*.whl; do
+    auditwheel repair "$whl" --plat $PLAT -w /io/wheels/
 done
 
 # # Install packages and test
