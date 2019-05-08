@@ -4,12 +4,19 @@
 Installation
 ============
 
+From pip
+--------
 
-Stable release
---------------
+For a limited selection of platforms and Python versions:
 
-Within Equinor, the stable release is on /project/res or Komodo, so it can
-be run as e.g.:
+ pip install xtgeo
+
+
+Stable release in Equinor
+-------------------------
+
+Within Equinor, the stable release is pre-installed, so all you have
+to do is:
 
  import xtgeo
 
@@ -17,8 +24,10 @@ be run as e.g.:
 From sources
 ------------
 
+This is only verified on Linux. You will need `swig` (version 2 or later)
+installed, in addition to a C compiler (gcc)
+
 The sources for XTGeo can be downloaded from the `Equinor Github repo`_.
-Send a message to JRIV@equinor.com if your don't have access.
 
 You can either clone the public repository:
 
@@ -37,7 +46,6 @@ then always run tests (run first compile with make cc):
 
 .. code-block:: console
 
-   $ make cc
    $ make test
 
 Next you can install it with:
