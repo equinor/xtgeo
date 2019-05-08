@@ -1,8 +1,5 @@
 # XTGeo #
-
-[![Travis](https://img.shields.io/travis/equinor/xtgeo/master.svg?label=travis)](https://travis-ci.org/equinor/xtgeo)
-[![PyPI Updates](https://pyup.io/repos/github/equinor/xtgeo/shield.svg)](https://pyup.io/repos/github/equinor/xtgeo/)
-[![Python 3](https://pyup.io/repos/github/equinor/xtgeo/python-3-shield.svg)](https://pyup.io/repos/github/equinor/xtgeo/)
+[![Build Status](https://travis-ci.com/equinor/xtgeo.svg?branch=master)](https://travis-ci.com/equinor/xtgeo)
 
 ## Introduction ##
 
