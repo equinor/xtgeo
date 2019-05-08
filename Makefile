@@ -144,7 +144,7 @@ develop:  ## make develop mode (for pure python only)
 	${PIP} install -e .
 
 
-docsrun: clean ## generate Sphinx HTML documentation, including API docs
+docsrun: develop ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/${APPLICATION}*.rst
 	rm -f docs/modules.rst
 	rm -fr docs/_build
