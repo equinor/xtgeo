@@ -8,7 +8,7 @@ env:
     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
     - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
     - BUILD_DEPENDS="cmake numpy"
-    - CONFIG_PATH=config.sh
+    - CONFIG_PATH=scripts/config.sh
     - TEST_DEPENDS="pytest"
 
 addons:
@@ -17,18 +17,20 @@ addons:
     - swig
 
 python:
-    - '2.7'
-    - '3.6'
+  - '2.7'
+  - '3.6'
 
 before_script:
-    - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
 
 script:
-    - python setup.py test
+  - make develop
+  - pytest tests/test_simple
 
 jobs:
   include:
-    - stage: wheels
+    - &xtgeo-wheels
+      stage: wheels
       os:
         - linux
       env:
@@ -48,3 +50,6 @@ jobs:
         - install_run $PLAT
       after_success:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
+    - <<: *xtgeo-wheels
+      env:
+        - MB_PYTHON_VERSION=3.5
