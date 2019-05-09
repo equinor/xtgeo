@@ -49,9 +49,9 @@ jobs:
         - install_run $PLAT
       after_success:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
-    # - <<: *xtgeo-wheels
-    #   env:
-    #     - MB_PYTHON_VERSION=3.5
+    - <<: *xtgeo-wheels
+      env:
+        - MB_PYTHON_VERSION=3.5
 
 
 # deploy:
