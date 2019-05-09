@@ -1,5 +1,16 @@
 language: python
 
+env:
+  global:
+    - REPO_DIR=xtgeo
+    - UNICODE_WIDTH=32
+    - PLAT=x86_64
+    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+    - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
+    - BUILD_DEPENDS="cmake numpy"
+    - CONFIG_PATH=config.sh
+    - TEST_DEPENDS="pytest"
+
 addons:
   apt:
     packages:
@@ -14,3 +25,26 @@ before_script:
 
 script:
     - python setup.py test
+
+jobs:
+  include:
+    - stage: wheels
+      os:
+        - linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+
+      services: docker
+      sudo: required
+      before_install:
+        - echo "Repo is $REPO_DIR"
+        - echo "PWD is $PWD"
+        - source multibuild/common_utils.sh
+        - source multibuild/travis_steps.sh
+        - before_install
+      install:
+        - build_wheel $REPO_DIR $PLAT
+      script:
+        - install_run $PLAT
+      after_success:
+        - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
