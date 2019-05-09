@@ -25,7 +25,6 @@ before_script:
 
 script:
   - make develop
-  - pytest tests/test_simple
 
 jobs:
   include:
@@ -50,6 +49,17 @@ jobs:
         - install_run $PLAT
       after_success:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
-    - <<: *xtgeo-wheels
-      env:
-        - MB_PYTHON_VERSION=3.5
+    # - <<: *xtgeo-wheels
+    #   env:
+    #     - MB_PYTHON_VERSION=3.5
+
+
+# deploy:
+#   provider: pypi
+#   user: 2m
+#   server: https://testpypi.python.org/pypi # Remove for deployment to official PyPi repo
+#   password:
+#     secure: ...
+#   on:
+#     tags: true
+#     repo: 2m/test-pypi-deploy
