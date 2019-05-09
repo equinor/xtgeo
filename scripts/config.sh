@@ -19,6 +19,6 @@ function run_tests {
     ls -l ../..
     pip install pytest
     python -c "import xtgeo; print(xtgeo.__version__)"
-    ln -s ../tests tests
-    pytest tests/test_simple
+    #ln -s ../tests tests
+    #pytest tests/test_simple
 }
