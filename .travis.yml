@@ -2,7 +2,7 @@ language: python
 
 env:
   global:
-    - REPO_DIR=xtgeo
+    - REPO_DIR=.
     - UNICODE_WIDTH=32
     - PLAT=x86_64
     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
