@@ -19,7 +19,7 @@ addons:
     - swig
 
 python:
-  - '2.7'
+#  - '2.7'
   - '3.6'
 
 before_script:
@@ -52,25 +52,30 @@ jobs:
         - install_run $PLAT
       after_success:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
-      deploy:
-        provider: script
-        script:
-          - ls -latr
-          - echo "DEPLOY"
+      # deploy:
+      #   provider: script
+      #   script:
+      #     - ls -latr
+      #     - echo "DEPLOY"
 
 
-    - <<: *xtgeo-wheels
-      env:
-        - MB_PYTHON_VERSION=3.5
-    - <<: *xtgeo-wheels
-      env:
-        - MB_PYTHON_VERSION=3.7
-    - <<: *xtgeo-wheels
-      env:
-        - MB_PYTHON_VERSION=2.7
+    # - <<: *xtgeo-wheels
+    #   env:
+    #     - MB_PYTHON_VERSION=3.5
+    # - <<: *xtgeo-wheels
+    #   env:
+    #     - MB_PYTHON_VERSION=3.7
+    # - <<: *xtgeo-wheels
+    #   env:
+    #     - MB_PYTHON_VERSION=2.7
 
 
-# deploy:
+deploy:
+  provider: script
+  script:
+    - ls -latr
+    - echo "DEPLOY"
+
 #   provider: pypi
 #   user: 2m
 #   server: https://testpypi.python.org/pypi # Remove for deployment to official PyPi repo
