@@ -72,9 +72,7 @@ jobs:
 
 deploy:
   provider: script
-  script:
-    - ls -latr
-    - echo "DEPLOY"
+  script: bash scripts/deploy.sh
 
 #   provider: pypi
 #   user: 2m
