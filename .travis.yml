@@ -1,5 +1,7 @@
 language: python
 
+if: branch=master
+
 env:
   global:
     - REPO_DIR=.
@@ -52,7 +54,10 @@ jobs:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
       deploy:
         provider: script
-        script: bash scripts/deploy.sh
+        script:
+          - ls -latr
+          - echo "DEPLOY"
+
 
     - <<: *xtgeo-wheels
       env:
