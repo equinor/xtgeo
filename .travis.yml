@@ -30,6 +30,7 @@ jobs:
   include:
     - &xtgeo-wheels
       stage: wheels
+      if: branch=master
       os:
         - linux
       env:
