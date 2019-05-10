@@ -52,11 +52,12 @@ jobs:
         - install_run $PLAT
       after_success:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
-      # deploy:
-      #   provider: script
-      #   script:
-      #     - ls -latr
-      #     - echo "DEPLOY"
+      deploy:
+        provider: script
+        script: bash scripts/deploy.sh
+        on:
+          tags: False
+          all_branches: True
 
 
     # - <<: *xtgeo-wheels
@@ -70,9 +71,12 @@ jobs:
     #     - MB_PYTHON_VERSION=2.7
 
 
-deploy:
-  provider: script
-  script: bash scripts/deploy.sh
+# deploy:
+#   provider: script
+#   script: bash scripts/deploy.sh
+#   on:
+#     tags: False
+#     all_branches: True
 
 #   provider: pypi
 #   user: 2m
