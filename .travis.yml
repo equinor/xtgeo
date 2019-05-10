@@ -52,6 +52,9 @@ jobs:
         - install_run $PLAT
       after_success:
         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
+      before_deploy:
+        - ls -l
+   
       deploy:
         provider: script
         script: bash scripts/deploy.sh
