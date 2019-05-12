@@ -1,96 +1,178 @@
 language: python
-
-if: branch=master
-
-env:
-  global:
-    - REPO_DIR=.
-    - UNICODE_WIDTH=32
-    - PLAT=x86_64
-    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
-    - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
-    - BUILD_DEPENDS="cmake numpy"
-    - CONFIG_PATH=scripts/config.sh
-    - TEST_DEPENDS="pytest"
-
-addons:
-  apt:
-    packages:
-    - swig
-
 python:
-#  - '2.7'
-  - '3.6'
+  - 3.5
 
-before_script:
-  - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+# os:
+#   - linux
 
-script:
-  - make develop
+# services: docker
+# sudo: required
 
-jobs:
-  include:
-    - &xtgeo-wheels
-      stage: wheels
-      if: branch=master
-      os:
-        - linux
-      env:
-        - MB_PYTHON_VERSION=3.6
-
-      services: docker
-      sudo: required
-      before_install:
-        - echo "Repo is $REPO_DIR"
-        - echo "PWD is $PWD"
-        - source multibuild/common_utils.sh
-        - source multibuild/travis_steps.sh
-        - before_install
-      install:
-        - build_wheel $REPO_DIR $PLAT
-      script:
-        - install_run $PLAT
-      after_success:
-        - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
- 
-    - stage: dodeploy
-    
-      before_deploy:
-        - ls -l
-      deploy:
-        provider: script
-        script: bash scripts/deploy.sh
-        on:
-          tags: False
-          all_branches: True
+# env:
+#   global:
+#     - UNICODE_WIDTH=32
+#     - PLAT=x86_64
+#     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+#     - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
 
 
-    # - <<: *xtgeo-wheels
-    #   env:
-    #     - MB_PYTHON_VERSION=3.5
-    # - <<: *xtgeo-wheels
-    #   env:
-    #     - MB_PYTHON_VERSION=3.7
-    # - <<: *xtgeo-wheels
-    #   env:
-    #     - MB_PYTHON_VERSION=2.7
+# matrix:
+#   fast_finish: true
+#   include:
+#     - python: 3.7
+#       dist: xenial
+#       sudo: true
 
-before_deploy:
-  - ls -l
-  - ls -l ..
-  
-deploy:
-  provider: script
-  script: bash scripts/deploy.sh
-#  on:
-#     tags: False
-#     all_branches: True
+# before_install:
+#   - eval "${MATRIX_EVAL}"
+#   - unset -f pushd
+#   - unset -f popd
+#   - git clone https://github.com/matthew-brett/multibuild
+#   - source multibuild/common_utils.sh
+#   - source multibuild/travis_steps.sh
+#   - before_install
 
-#   provider: pypi
-#   user: 2m
-#   server: https://testpypi.python.org/pypi # Remove for deployment to official PyPi repo
-#   password:
-#     secure: ...
-#   on:
-#     tags: true
-#     repo: 2m/test-pypi-deploy
+# install:
+#   - pip install --upgrade
+#   bandit
+#   numpy
+#   setuptools
+#   setuptools_scm
+#   pytest
+#   pytest-runner
+#   pybind11
+#   hypothesis
+#   sphinx
+#   scikit-build
+#   - bandit -c bandit.yml -r python/
+
+# before_script:
+
+# script:
+#     - pushd build
+#     - make
+#     - ctest --output-on-failure
+#     - sudo make install
+#     - popd
+#     # install works, so remove the _skbuild because it having root permissions
+#     # from make install breaks build_wheel
+#     - sudo rm -rf python/_skbuild
+#     - build_wheel python $PLAT
+#     - install_run $PLAT
+#     - mv wheelhouse python/dist
+
+# before_deploy:
+#     - pushd python
+
+# after_deploy:
+#     - popd
+
+# deploy:
+#     - provider: pypi
+#       skip_cleanup: true
+#       skip_upload_docs: true
+#       user: statoil-travis
+#       distributions: --skip-cmake build
+#       password:
+#         secure: NKjQaDPPCDE8C7f1c3rNdVInJUBkp1DegubXyzbNwLz0k/JiQv5IoTKh7ehJnZoOaHaFa8zTMSZYT9VypgvRp2sziCdI/piEASCTbv5lJAZ1ELE2aSiVeSCuBbq/3BFp5YqfuqPjrIy32xvlbCU2rwhRNo4eVrfop8pYdMZeWSAvn+FDSNaVPhUs0E4HKI57ROkjDJvnMmRQpcOYQslxUgGth7F7F2kGxP0Z+L0DmsAnxPYjLzjNe3DzD9EMfegPG5il+J7GmKJrLNNhGyIET+cxKKaODgjVSqaiZ5tgiNjAALxZMiZz0KyYclo/TOiKvuimWjSruDAiSY2NsacF6SW83qkfGZHCURL/nrHnyTEhzY3/qRN2HuSeE51BTFTrw306HzdCHDp8E7nlLz44/F3X+UaL8OinuZvj5IaaJSX9Q0eU10dxvH5ezgZa0CgAIK3N/bvjSMEFJhkG5/MlRk4pmo4HsjX8EduskJQMV+qc0pE4JHMZkRqlFY+LjkyEgw73iIqrpXBkSnkSM8Q4t7sECyTup7nhMbbkl1MehT+uKC+9dy1cZw2AMsRcs+WLzSOV8jU6IY1Iwh/q+N8q6Y08ek6lmGXGMKPzPQCsNQ6B2NpJ0zb6PRqMa4d5HS+b+ar/B4nMrltzRzP8bRJYrmx1cQXnJ1gLwgpsBhfEnf0=
+#       on:
+#         tags: true
+#         condition: -z $SOURCEDEPLOY
+
+
+# # language: python
+
+# # if: branch=master
+
+# env:
+#   global:
+#     - REPO_DIR=.
+#     - UNICODE_WIDTH=32
+#     - PLAT=x86_64
+#     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+#     - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
+#     - BUILD_DEPENDS="cmake numpy"
+#     - CONFIG_PATH=scripts/config.sh
+#     - TEST_DEPENDS="pytest"
+
+# addons:
+#   apt:
+#     packages:
+#     - swig
+
+# python:
+# #  - '2.7'
+#   - '3.6'
+
+# before_script:
+#   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
+
+# script:
+#   - make develop
+
+# jobs:
+#   include:
+#     - &xtgeo-wheels
+#       stage: wheels
+#       if: branch=master
+#       os:
+#         - linux
+#       env:
+#         - MB_PYTHON_VERSION=3.6
+
+#       services: docker
+#       sudo: required
+#       before_install:
+#         - echo "Repo is $REPO_DIR"
+#         - echo "PWD is $PWD"
+#         - source multibuild/common_utils.sh
+#         - source multibuild/travis_steps.sh
+#         - before_install
+#       install:
+#         - build_wheel $REPO_DIR $PLAT
+#       script:
+#         - install_run $PLAT
+#       after_success:
+#         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
+
+#     - stage: dodeploy
+
+#       before_deploy:
+#         - ls -l
+#       deploy:
+#         provider: script
+#         script: bash scripts/deploy.sh
+#         on:
+#           tags: False
+#           all_branches: True
+
+
+#     # - <<: *xtgeo-wheels
+#     #   env:
+#     #     - MB_PYTHON_VERSION=3.5
+#     # - <<: *xtgeo-wheels
+#     #   env:
+#     #     - MB_PYTHON_VERSION=3.7
+#     # - <<: *xtgeo-wheels
+#     #   env:
+#     #     - MB_PYTHON_VERSION=2.7
+
+# before_deploy:
+#   - ls -l
+#   - ls -l ..
+
+# deploy:
+#   provider: script
+#   script: bash scripts/deploy.sh
+# #  on:
+# #     tags: False
+# #     all_branches: True
+
+# #   provider: pypi
+# #   user: 2m
+# #   server: https://testpypi.python.org/pypi # Remove for deployment to official PyPi repo
+# #   password:
+# #     secure: ...
+# #   on:
+# #     tags: true
+# #     repo: 2m/test-pypi-deploy
