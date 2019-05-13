@@ -33,7 +33,9 @@ matrix:
   - os: linux
     env: MB_PYTHON_VERSION=3.6
   - os: linux
-    env: MB_PYTHON_VERSION=3.7
+    env:
+      - MB_PYTHON_VERSION=3.7
+      - SOURCEDEPLOY=1
 
 before_install:
 - echo "PWD is $PWD"
@@ -61,9 +63,13 @@ before_deploy:
 deploy:
   provider: pypi
   server: https://test.pypi.org/legacy/
+  skip_cleanup: true
+  skip_upload_docs: true
+  distributions: sbuild
   user: jcrivenaes
   password:
     secure: E2pm0/4ROnEJLcSTCd3YcLpswf5nqCJxfZGbIAjPe2/ZCrMcTqRapSgn3YePewqZYumi/WHIUPfBxGv/hNP9czKW9LUByNBFm2XNxc+OafL/h4XVDd92UzH4tfWwIl5+0JnSuToWLBU2r267+ALVz0FVnrYd/itLMrbqAh8HaSkX6/kAt0sPxEjx7O50KPg4NOomHcAWDaTk7UWqnmtYUXlZf1NhdTD/XQh09JCB+7dM6EzyEIU7HjdNF5xyHVoNNuBhc7IvyqLCjMFCHsyG4WMavvP8MXgQgdPWGokRWUc79T6GfiOkUjjnxsidhFpVAtr0uB0sKnEciwdvlPsbNsRPiC4i7128GyqAC2+CjhZXhoxY+UogjI9Rg6Cu7FuQYGXDv0UBTdpVhV9+7CgM4DZOkOU1IgdQzgnHD9HNPPTsXPNFwML5USO2M8Gs+vNM0wEcbdJuWZAWVvQRTaL/Au+9YnyzIgYOngSYmfQrs96T1aYY4FdJaxHxg8fEOD3SyNkohZiMc4zmWo4Sb+rE8A3DqCpuvNe4yIPQzBAZljfhpbsC3vJciPimYroKXXOP9STp4NB2MRQpvIb7e2txR0N2NkipDz8o8Oi2pqKxQRnkmK1+3H6OZEITojQGMdgJ1CNFVZReokOZHnWxsnDoG2mn63PShDguLQD5X1m2Ewg=
   on:
     branch: master
     tags: True
+    condition: -z $SOURCEDEPLOY
