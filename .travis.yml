@@ -1,185 +1,55 @@
 language: python
 python:
-  - 3.6
-
+- 3.6
 os:
-  - linux
-
+- linux
 services: docker
 sudo: required
-
 env:
   global:
-    - REPO_DIR=.
-    - UNICODE_WIDTH=32
-    - PLAT=x86_64
-    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
-    - VERSION=$(echo $TRAVIS_TAG)
-    - BUILD_DEPENDS="cmake numpy"
-    - CONFIG_PATH=scripts/config.sh
-    - TEST_DEPENDS="pytest"
-
-
+  - REPO_DIR=.
+  - UNICODE_WIDTH=32
+  - PLAT=x86_64
+  - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+  - VERSION=$(echo $TRAVIS_TAG)
+  - BUILD_DEPENDS="cmake numpy"
+  - CONFIG_PATH=scripts/config.sh
+  - TEST_DEPENDS="pytest"
 matrix:
   fast_finish: true
   exclude:
-    # Exclude the default Python build
-    - python: 3.6
+  - python: 3.6
   include:
-    - os: linux
-      env: MB_PYTHON_VERSION=2.7
-    - os: linux
-      env: MB_PYTHON_VERSION=3.6
-    - os: linux
-      env: MB_PYTHON_VERSION=3.7
-    # - python: 3.7
-    #   dist: xenial
-    #   sudo: true
-
+  - os: linux
+    env: MB_PYTHON_VERSION=2.7
+  - os: linux
+    env: MB_PYTHON_VERSION=3.6
+  - os: linux
+    env: MB_PYTHON_VERSION=3.7
 before_install:
-  - echo "PWD is $PWD"
-  - unset -f pushd
-  - unset -f popd
-  - git clone https://github.com/matthew-brett/multibuild
-  - ls -l
-  - source multibuild/common_utils.sh
-  - source multibuild/travis_steps.sh
-  - before_install
+- echo "PWD is $PWD"
+- unset -f pushd
+- unset -f popd
+- git clone https://github.com/matthew-brett/multibuild
+- ls -l
+- source multibuild/common_utils.sh
+- source multibuild/travis_steps.sh
+- before_install
 install:
-  - build_wheel $REPO_DIR $PLAT
+- build_wheel $REPO_DIR $PLAT
 script:
-  - install_run $PLAT
-  - mv wheelhouse dist
-
+- install_run $PLAT
+- mv wheelhouse dist
 after_success:
-  - ls -l ${TRAVIS_BUILD_DIR}/dist
-
+- ls -l ${TRAVIS_BUILD_DIR}/dist
 before_deploy:
-  - ls -l dist
-
-# script:
-#     - pushd build
-#     - make
-#     - ctest --output-on-failure
-#     - sudo make install
-#     - popd
-#     # install works, so remove the _skbuild because it having root permissions
-#     # from make install breaks build_wheel
-#     - sudo rm -rf python/_skbuild
-#     - build_wheel python $PLAT
-#     - install_run $PLAT
-#     - mv wheelhouse python/dist
-
-
-# after_deploy:
-#     - popd
-
-# deploy:
-#     - provider: pypi
-#       skip_cleanup: true
-#       skip_upload_docs: true
-#       user: statoil-travis
-#       distributions: --skip-cmake build
-#       password:
-#         secure: ...
-#       on:
-#         tags: true
-#         condition: -z $SOURCEDEPLOY
-
-# =========================================================
-# # language: python
-
-# # if: branch=master
-
-# env:
-#   global:
-#     - REPO_DIR=.
-#     - UNICODE_WIDTH=32
-#     - PLAT=x86_64
-#     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
-#     - VERSION=$(echo $TRAVIS_TAG | sed s/v//)
-#     - BUILD_DEPENDS="cmake numpy"
-#     - CONFIG_PATH=scripts/config.sh
-#     - TEST_DEPENDS="pytest"
-
-# addons:
-#   apt:
-#     packages:
-#     - swig
-
-# python:
-# #  - '2.7'
-#   - '3.6'
-
-# before_script:
-#   - git clone https://git@github.com/equinor/xtgeo-testdata.git ../xtgeo-testdata
-
-# script:
-#   - make develop
-
-# jobs:
-#   include:
-#     - &xtgeo-wheels
-#       stage: wheels
-#       if: branch=master
-#       os:
-#         - linux
-#       env:
-#         - MB_PYTHON_VERSION=3.6
-
-#       services: docker
-#       sudo: required
-#       before_install:
-#         - echo "Repo is $REPO_DIR"
-#         - echo "PWD is $PWD"
-#         - source multibuild/common_utils.sh
-#         - source multibuild/travis_steps.sh
-#         - before_install
-#       install:
-#         - build_wheel $REPO_DIR $PLAT
-#       script:
-#         - install_run $PLAT
-#       after_success:
-#         - ls -l ${TRAVIS_BUILD_DIR}/wheelhouse
-
-#     - stage: dodeploy
-
-#       before_deploy:
-#         - ls -l
-#       deploy:
-#         provider: script
-#         script: bash scripts/deploy.sh
-#         on:
-#           tags: False
-#           all_branches: True
-
-
-#     # - <<: *xtgeo-wheels
-#     #   env:
-#     #     - MB_PYTHON_VERSION=3.5
-#     # - <<: *xtgeo-wheels
-#     #   env:
-#     #     - MB_PYTHON_VERSION=3.7
-#     # - <<: *xtgeo-wheels
-#     #   env:
-#     #     - MB_PYTHON_VERSION=2.7
-
-# before_deploy:
-#   - ls -l
-#   - ls -l ..
-
-# deploy:
-#   provider: script
-#   script: bash scripts/deploy.sh
-# #  on:
-# #     tags: False
-# #     all_branches: True
-
-# #   provider: pypi
-# #   user: 2m
-# #   server: https://testpypi.python.org/pypi # Remove for deployment to official PyPi repo
-# #   password:
-# #     secure: ...
-# #   on:
-# #     tags: true
-# #     repo: 2m/test-pypi-deploy
+- ls -l dist
+deploy:
+  provider: pypi
+  server: https://test.pypi.org/legacy/
+  user: jcrivenaes
+  password:
+    secure: E2pm0/4ROnEJLcSTCd3YcLpswf5nqCJxfZGbIAjPe2/ZCrMcTqRapSgn3YePewqZYumi/WHIUPfBxGv/hNP9czKW9LUByNBFm2XNxc+OafL/h4XVDd92UzH4tfWwIl5+0JnSuToWLBU2r267+ALVz0FVnrYd/itLMrbqAh8HaSkX6/kAt0sPxEjx7O50KPg4NOomHcAWDaTk7UWqnmtYUXlZf1NhdTD/XQh09JCB+7dM6EzyEIU7HjdNF5xyHVoNNuBhc7IvyqLCjMFCHsyG4WMavvP8MXgQgdPWGokRWUc79T6GfiOkUjjnxsidhFpVAtr0uB0sKnEciwdvlPsbNsRPiC4i7128GyqAC2+CjhZXhoxY+UogjI9Rg6Cu7FuQYGXDv0UBTdpVhV9+7CgM4DZOkOU1IgdQzgnHD9HNPPTsXPNFwML5USO2M8Gs+vNM0wEcbdJuWZAWVvQRTaL/Au+9YnyzIgYOngSYmfQrs96T1aYY4FdJaxHxg8fEOD3SyNkohZiMc4zmWo4Sb+rE8A3DqCpuvNe4yIPQzBAZljfhpbsC3vJciPimYroKXXOP9STp4NB2MRQpvIb7e2txR0N2NkipDz8o8Oi2pqKxQRnkmK1+3H6OZEITojQGMdgJ1CNFVZReokOZHnWxsnDoG2mn63PShDguLQD5X1m2Ewg=
+  on:
+    branch: master
+    tags: True
