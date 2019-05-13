@@ -60,10 +60,10 @@ after_success:
 before_deploy:
 - ls -l dist
 - pip install numpy
+- apt-get -y install swig
 
 deploy:
   provider: pypi
-  server: https://test.pypi.org/legacy/
   skip_cleanup: true
   skip_upload_docs: true
   distributions: build
@@ -74,6 +74,6 @@ deploy:
 pCuxWCG9TaO/Q5U59LNCczEYMD2Q2nmJly8JDa89K2vNiwE2FeYd7zpmy0iItqY6yZuWd+MKaYa+53WdfK5Tn02XycWHBN80FurcK1dzncrYuBf8K6R5pDj25y1hd5RwvA2Tk2ANpW9Wvl
 vU2dgb5wRl4cl5YqhchcqaeQcnfex9l2/W3P6WarMKHhBhc1jwZaVp3UmRuUJqwb/UOxh1HotcKJ0JqXCYF0LgqqgeOql6V4xUjCKPxjHRaBVM9E9D3FB06DrDLphGxgoKMZHO3qGH8LMN
 nfzZcbTrTqi+RkwAWYbjxyi3GaYWA46zgOKdEhe4tY7y7C7aevWZEHdpkrYMmpsMnMnDoK655/UT65juTtlX8X9Q3ktkcan34yM5EmxWz0w2roTYrW48g2zCbSEOAys=
-  # on:
-  #   tags: False
+  on:
+    tags: True
     # condition: -z $SOURCEDEPLOY
