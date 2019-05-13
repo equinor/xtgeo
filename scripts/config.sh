@@ -17,5 +17,5 @@ function run_tests {
     pip install pytest
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
-    pytest tests/test_surface
+    pytest tests/test_well
 }
