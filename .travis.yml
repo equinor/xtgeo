@@ -59,6 +59,7 @@ after_success:
 
 before_deploy:
 - ls -l dist
+- pip install numpy
 
 deploy:
   provider: pypi
