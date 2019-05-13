@@ -1,10 +1,17 @@
 language: python
+
 python:
 - 3.6
+
 os:
 - linux
+
+if: branch=master
+
 services: docker
+
 sudo: required
+
 env:
   global:
   - REPO_DIR=.
@@ -15,6 +22,7 @@ env:
   - BUILD_DEPENDS="cmake numpy"
   - CONFIG_PATH=scripts/config.sh
   - TEST_DEPENDS="pytest"
+
 matrix:
   fast_finish: true
   exclude:
@@ -26,6 +34,7 @@ matrix:
     env: MB_PYTHON_VERSION=3.6
   - os: linux
     env: MB_PYTHON_VERSION=3.7
+
 before_install:
 - echo "PWD is $PWD"
 - unset -f pushd
@@ -35,15 +44,20 @@ before_install:
 - source multibuild/common_utils.sh
 - source multibuild/travis_steps.sh
 - before_install
+
 install:
 - build_wheel $REPO_DIR $PLAT
+
 script:
 - install_run $PLAT
 - mv wheelhouse dist
+
 after_success:
 - ls -l ${TRAVIS_BUILD_DIR}/dist
+
 before_deploy:
 - ls -l dist
+
 deploy:
   provider: pypi
   server: https://test.pypi.org/legacy/
