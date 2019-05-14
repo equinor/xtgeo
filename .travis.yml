@@ -58,7 +58,7 @@ after_success:
 before_deploy:
 - ls -la dist
 - pip install numpy
-- apt-get -y install swig
+- uname -a
 
 deploy:
   provider: pypi
