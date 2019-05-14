@@ -7,7 +7,7 @@ from glob import glob
 import os
 from os.path import basename
 from os.path import splitext
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages, Extension, Command
 from distutils.command.build import build as _build
 
 import numpy
@@ -103,6 +103,19 @@ class build(_build):
     ]
 
 
+class DummyCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        """Abstract method that is required to be overwritten"""
+
+    def finalize_options(self):
+        """Abstract method that is required to be overwritten"""
+
+    def run(self):
+        print(" => Dummy trigger")
+
+
 class CMakeExtension(Extension):
     def __init__(self, name, cmake_lists_dir=".", sources=[], **kwa):
         Extension.__init__(self, name, sources=sources, **kwa)
@@ -141,7 +154,7 @@ _cxtgeo = CMakeExtension(
     swig_opts=["-modern"],
 )
 
-_cmdclass = {"build": build}
+_cmdclass = {"build": build, "dummy": DummyCommand}
 # _cmdclass.update(versioneer.get_cmdclass())
 
 setup(
