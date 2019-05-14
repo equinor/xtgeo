@@ -58,7 +58,7 @@ after_success:
 - ls -l ${TRAVIS_BUILD_DIR}/dist
 
 before_deploy:
-- ls -l dist
+- ls -la dist
 - pip install numpy
 - apt-get -y install swig
 
