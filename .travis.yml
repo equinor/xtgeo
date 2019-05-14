@@ -66,6 +66,7 @@ deploy:
   provider: pypi
   skip_cleanup: true
   skip_upload_docs: true
+  server: https://testpypi.python.org/legacy/
   distributions: build
   user: jcrivenaes
   password:
