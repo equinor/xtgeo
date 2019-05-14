@@ -6,6 +6,11 @@ python:
 os:
 - linux
 
+addons:
+  apt:
+    packages:
+    - swig
+
 services: docker
 
 sudo: required
