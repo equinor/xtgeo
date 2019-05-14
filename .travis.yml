@@ -6,8 +6,6 @@ python:
 os:
 - linux
 
-if: branch=master
-
 services: docker
 
 sudo: required
