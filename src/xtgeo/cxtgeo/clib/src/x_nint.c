@@ -7,6 +7,7 @@
  *
  */
 
+#define _ISOC99_SOURCE
 #include "libxtg_.h"
 #include <math.h>
 
