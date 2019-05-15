@@ -79,7 +79,7 @@ class CMakeExtension(Extension):
         )
 
         subprocess.check_call(
-            ["apt-get", "install", "-y", "swig"], cwd=self.build_temp
+            ["sudo", "apt-get", "install", "-y", "swig"], cwd=self.build_temp
         )
 
 
