@@ -5,7 +5,7 @@ python:
   version: 3.6
   install:
     - method: setuptools
-      requirements: requirements.txt
+      path: .
 
 sphinx:
   configuration: docs/conf.py
