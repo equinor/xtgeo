@@ -1,7 +1,7 @@
 version: 2
 
 build:
-  image: latest  # waiting for 5.0
+  image: 5.0.0rc2
 
 python:
   version: 3.6
