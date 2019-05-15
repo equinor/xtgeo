@@ -1,9 +1,11 @@
-requirements_file: requirements.txt
+version: 2
+
+
 python:
   version: 3.6
   install:
-    - method: pip
-      path: .
+    - method: setuptools
+      requirements: requirements.txt
 
 sphinx:
   configuration: docs/conf.py
