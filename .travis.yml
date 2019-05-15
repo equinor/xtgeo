@@ -73,9 +73,8 @@ deploy:
   skip_cleanup: true
   skip_upload_docs: true
   distributions: build
-  user: statoil-travis
-  password:
-    secure: "EkMH2g7JKUsA93v/tbswZIQSJjGneYAkl3usThWd90NxUYTtZk7WmLLm8Go4hTElo/A3K3++2Gazh9Y9BTjFnDDh55gpNGyc4GD7JiTc1RHsZeNa9ZW/ZxA3Osk9f5KWiC4uuuDGt+H4iZXrfYNeZXTFi4yF50ZHWFp3U0B6UlDSA0eY+JvIlpYKdWMLEi1jPHZKrqWBZDXvhb0ve7vhk1FauN1DdKgQQLEAgoOfuo+ctVdXtxOvb4aXp8QQwEBKwjuct77l4kJuBM7928QcLiOUjt59H7lLHJQKGm1+o8TlMqHFZw26Z1QOErNK2pevu0yKNt/6XBsp6TPhHqcmtrBM5Aw2SZFDJrA95z3Rs45SfJdcxdO+rRykGfepWBcsiYJmd+/V9FKhpVijw8Y2fC1ib/Gg3spwJKnrU2//v7r+cKM4L6ZOL7c6j9i/NY8wAiuPnxIjYAzoFdYt1mZRqNrElXVBbAzenO+FHhYBn6uhiS2SLZAmQLt9l0ToedqHh4lGxQ+26M8/RSpewu9OIGlonX06P9RSXVX2dVrXAdWtifxsTmVKVGfC7tBgfHdBramXX0YWBT6BD9FhhcGnUXkrQP9e/xeBzJdGmpUWzqV0Zr3v1rE6Lo5nttUbgwU4vvUed3Zdpo2L/1DnofqS+sduh8XOILkXpg/MPNpDN7M="
+  user: $PYPI_USER
+  password: $PYPI_PASSWORD
   on:
     tags: True
     # condition: -z $SOURCEDEPLOY
