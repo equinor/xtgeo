@@ -7,7 +7,7 @@ from glob import glob
 import os
 from os.path import basename
 from os.path import splitext
-from setuptools import setup, find_packages, Extension, Command
+from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
 
 import numpy
@@ -47,46 +47,6 @@ setup_requirements = [
 
 test_requirements = ["pytest"]
 
-# -----------------------------------------------------------------------------
-# Explaining versions:
-# As system the PEP 440 major.minor.micro is used:
-# - major: API or any very larger changes
-# - minor: Functionality added, mostly backward compatibility but some
-#          functions may change. Also includes larger refactoring of code.
-# - micro: Added functionality and bug fixes with no expected side effects
-# - Provide a tag on the form 3.4.0 for each release!
-#
-# -----------------------------------------------------------------------------
-
-
-# def the_version():
-#     """Process the version, to avoid non-pythonic version schemes.
-
-#     Means that e.g. 1.5.12+2.g191571d.dirty is turned to 1.5.12.dev2.precommit
-
-#     This function must be ~identical to xtgeo._theversion.py
-#     """
-
-#     version = versioneer.get_version()
-#     sver = version.split(".")
-#     print("\nFrom TAG description: {}".format(sver))
-
-#     useversion = "UNSET"
-#     if len(sver) == 3:
-#         useversion = version
-#     else:
-#         print("SVER", sver)
-#         bugv = sver[2].replace("+", ".dev")
-
-#         if "dirty" in version:
-#             ext = ".precommit"
-#         else:
-#             ext = ""
-#         useversion = "{}.{}.{}{}".format(sver[0], sver[1], bugv, ext)
-
-#     print("Using version {}\n".format(useversion))
-#     return useversion
-
 
 def src(x):
     root = os.path.dirname(__file__)
@@ -103,19 +63,6 @@ class build(_build):
     ]
 
 
-class DummyCommand(Command):
-    user_options = []
-
-    def initialize_options(self):
-        """Abstract method that is required to be overwritten"""
-
-    def finalize_options(self):
-        """Abstract method that is required to be overwritten"""
-
-    def run(self):
-        print(" => Dummy trigger")
-
-
 class CMakeExtension(Extension):
     def __init__(self, name, cmake_lists_dir=".", sources=[], **kwa):
         Extension.__init__(self, name, sources=sources, **kwa)
@@ -129,6 +76,10 @@ class CMakeExtension(Extension):
 
         subprocess.check_call(
             ["cmake", "--build", ".", "--target", "install"], cwd=self.build_temp
+        )
+
+        subprocess.check_call(
+            ["apt-get", "install", "-y", "swig"], cwd=self.build_temp
         )
 
 
@@ -154,12 +105,10 @@ _cxtgeo = CMakeExtension(
     swig_opts=["-modern"],
 )
 
-_cmdclass = {"build": build, "dummy": DummyCommand}
-# _cmdclass.update(versioneer.get_cmdclass())
+_cmdclass = {"build": build}
 
 setup(
     name="xtgeo",
-    # version=get_version(root='.', relative_to=__file__),
     cmdclass=_cmdclass,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
