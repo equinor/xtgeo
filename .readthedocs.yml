@@ -4,9 +4,10 @@ version: 2
 python:
   version: 3.6
   install:
+    - requirements: requirements.txt
+    - requirements: docs/requirements.txt
     - method: pip
       path: .
-      requirements: docs/requirements.txt
   system_packages: true
 
 sphinx:
