@@ -6,8 +6,8 @@ python:
   install:
     - requirements: requirements.txt
     - requirements: docs/requirements.txt
-    - method: setuptools
-      path: .
+    - method: pip
+      path: xtgeo
   system_packages: true
 
 sphinx:

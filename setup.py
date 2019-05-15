@@ -78,10 +78,6 @@ class CMakeExtension(Extension):
             ["cmake", "--build", ".", "--target", "install"], cwd=self.build_temp
         )
 
-        subprocess.check_call(
-            ["sudo", "apt-get", "install", "-y", "swig"], cwd=self.build_temp
-        )
-
 
 # get all C swig sources
 
