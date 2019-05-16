@@ -1,5 +1,7 @@
 language: python
 
+if: fork = true AND branch ! master OR fork = false
+
 python:
 - 3.6
 
@@ -25,7 +27,7 @@ env:
   - PLAT=x86_64
   - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
   - VERSION=$(echo $TRAVIS_TAG)
-  - BUILD_DEPENDS="cmake numpy"
+  - BUILD_DEPENDS="cmake numpy==1.10.4"
   - CONFIG_PATH=scripts/config.sh
   - TEST_DEPENDS="pytest"
 
@@ -69,7 +71,7 @@ after_success:
 
 before_deploy:
 - ls -la dist
-- pip install numpy
+- pip install numpy==1.10.4
 - uname -a
 
 deploy:
