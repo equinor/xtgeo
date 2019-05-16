@@ -3,8 +3,6 @@
 # pylint: skip-file
 """The XTGeo Python module."""
 
-
-
 from __future__ import division, absolute_import
 from __future__ import print_function
 import os
@@ -40,7 +38,6 @@ def _xprint(msg):
 
 _xprint('XTGEO __init__ ...')
 
-import os
 # to avoid problems in batch runs when no DISPLAY is set:
 _xprint('Import matplotlib etc...')
 import matplotlib as mplib
@@ -54,15 +51,15 @@ ertbool = 'LSB_JOBID' in os.environ
 
 if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
 
-    print('')
-    print('=' * 79)
+    _xprint('')
+    _xprint('=' * 79)
 
-    print(
-        'XTGeo info: No display found or ERT server. Using non-interactive '
-        'Agg backend for matplotlib'
+    x_print(
+        'XTGeo info: No display found or a batch (e.g. ERT) server. '
+        'Using non-interactive Agg backend for matplotlib'
     )
     mplib.use('Agg')
-    print('=' * 79)
+    _xprint('=' * 79)
 
 #
 # Order matters!
