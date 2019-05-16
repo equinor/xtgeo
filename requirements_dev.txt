@@ -11,3 +11,4 @@ tox==2.3.1
 coverage==4.1
 Sphinx
 sphinx-rtd-theme
+bandit

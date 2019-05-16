@@ -10,10 +10,12 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 
 
 #define PI  3.14159265358979323846
+#define M_PI  3.14159265358979323846
 #define PIHALF  1.57079632679489661923
 
 #define FLOATEPS 1.0E-05
