@@ -36,7 +36,6 @@ pip install xtgeo
 For detailed installation instructions (implies C compiling), see
 the documentation.
 
-
 ## Documentation ##
 
 XTGeo will be present at readthedocs soon. In the mean time, clone the project

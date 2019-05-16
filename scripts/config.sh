@@ -1,3 +1,4 @@
+#!/bin/bash
 
 function pre_build {
     echo "Prebuild stage, install swig..."
