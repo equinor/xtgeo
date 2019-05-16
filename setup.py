@@ -38,7 +38,8 @@ except FileNotFoundError:
 requirements = parse_requirements("requirements.txt")
 
 setup_requirements = [
-    "numpy",
+    "numpy == 1.10.4; python_version < 3.7",
+    "numpy; python_version >= 3.7",
     "pytest-runner",
     "cmake",
     "wheel",
