@@ -37,6 +37,10 @@ matrix:
   - os: linux
     env: MB_PYTHON_VERSION=2.7
   - os: linux
+    env: MB_PYTHON_VERSION=3.4
+  - os: linux
+    env: MB_PYTHON_VERSION=3.5
+  - os: linux
     env: MB_PYTHON_VERSION=3.6
   - os: linux
     env:
@@ -81,5 +85,5 @@ deploy:
   password: $PYPI_PASSWORD
   on:
     tags: True
-    repo: equinor
+    repo: equinor/xtgeo
     # condition: -z $SOURCEDEPLOY
