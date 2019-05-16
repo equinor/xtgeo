@@ -46,6 +46,7 @@ matrix:
     env:
       - MB_PYTHON_VERSION=3.7
       - SOURCEDEPLOY=1
+      - BUILD_DEPENDS="cmake numpy>=1.14"
 
 before_install:
   - echo "PWD is $PWD"
@@ -72,9 +73,7 @@ after_success:
 - ls -l ${TRAVIS_BUILD_DIR}/dist
 
 before_deploy:
-- ls -la dist
-- pip install numpy==1.10.4
-- uname -a
+- pip install numpy
 
 deploy:
   provider: pypi
