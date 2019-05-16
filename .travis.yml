@@ -25,7 +25,7 @@ env:
   - PLAT=x86_64
   - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
   - VERSION=$(echo $TRAVIS_TAG)
-  - BUILD_DEPENDS="cmake numpy==1.10.4 pandas==0.19"
+  - BUILD_DEPENDS="cmake numpy==1.13.3"
   - CONFIG_PATH=scripts/config.sh
   - TEST_DEPENDS="pytest"
 
@@ -43,12 +43,11 @@ matrix:
   - os: linux
     env:
       - MB_PYTHON_VERSION=3.6
-      - BUILD_DEPENDS="cmake numpy>=1.14 pandas"
   - os: linux
     env:
       - MB_PYTHON_VERSION=3.7
       - SOURCEDEPLOY=1
-      - BUILD_DEPENDS="cmake numpy>=1.14 pandas"
+      - BUILD_DEPENDS="cmake numpy>=1.13"
 
 before_install:
   - echo "PWD is $PWD"
