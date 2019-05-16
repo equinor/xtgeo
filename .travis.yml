@@ -1,6 +1,6 @@
 language: python
 
-if: fork = true AND branch ! master OR fork = false
+if: (fork = true AND branch ! master) OR (fork = false)
 
 python:
 - 3.6
