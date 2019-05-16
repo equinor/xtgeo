@@ -25,7 +25,7 @@ env:
   - PLAT=x86_64
   - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
   - VERSION=$(echo $TRAVIS_TAG)
-  - BUILD_DEPENDS="cmake numpy"
+  - BUILD_DEPENDS="cmake numpy==1.10.4 pandas==0.19"
   - CONFIG_PATH=scripts/config.sh
   - TEST_DEPENDS="pytest"
 
@@ -37,11 +37,18 @@ matrix:
   - os: linux
     env: MB_PYTHON_VERSION=2.7
   - os: linux
-    env: MB_PYTHON_VERSION=3.6
+    env: MB_PYTHON_VERSION=3.4
+  - os: linux
+    env: MB_PYTHON_VERSION=3.5
+  - os: linux
+    env:
+      - MB_PYTHON_VERSION=3.6
+      - BUILD_DEPENDS="cmake numpy>=1.14 pandas"
   - os: linux
     env:
       - MB_PYTHON_VERSION=3.7
       - SOURCEDEPLOY=1
+      - BUILD_DEPENDS="cmake numpy>=1.14 pandas"
 
 before_install:
   - echo "PWD is $PWD"
@@ -68,9 +75,7 @@ after_success:
 - ls -l ${TRAVIS_BUILD_DIR}/dist
 
 before_deploy:
-- ls -la dist
 - pip install numpy
-- uname -a
 
 deploy:
   provider: pypi
@@ -81,4 +86,5 @@ deploy:
   password: $PYPI_PASSWORD
   on:
     tags: True
+    repo: equinor/xtgeo
     # condition: -z $SOURCEDEPLOY
