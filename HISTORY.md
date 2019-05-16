@@ -1,6 +1,10 @@
 # History (changelog) #
 
-## dev ##
+## 2.0.3 ##
+
+  * Deploy to python 3.4 and 3.5 also. Numpy versions tuned to match roxar library.
+
+## 2.0.2 ##
 
   * Adding services for code improvements (codacy, bandit)
 
