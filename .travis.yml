@@ -41,7 +41,9 @@ matrix:
   - os: linux
     env: MB_PYTHON_VERSION=3.5
   - os: linux
-    env: MB_PYTHON_VERSION=3.6
+    env:
+      - MB_PYTHON_VERSION=3.6
+      - BUILD_DEPENDS="cmake numpy>=1.14 pandas"
   - os: linux
     env:
       - MB_PYTHON_VERSION=3.7
