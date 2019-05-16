@@ -11,10 +11,10 @@
 # > setenv PYTHON_SHORT 2.7; setenv PYTHON_SHORT 2.7;
 # > make install
 #
-# OLD:
+# SDP special:
 # $TARGET may also be applied explicitly for e.g. install at /project/res
 # > setenv RESTARGET ${SDP_BINDIST_ROOT}/lib/python${PYTHON_SHORT}/site-packages
-# > make oldsiteinstall TARGET=$RESTARGET
+# > make sdpsiteinstall TARGET=$RESTARGET
 #
 # NEW:
 # Instead of TARGET, the preferred method is now setting PREFIX instead:
@@ -176,7 +176,7 @@ install: dist ## version to VENV install place
 	@${PIP} install --upgrade .
 
 
-oldsiteinstall: allclean dist ## Install in Equinor using $TARGET (old)
+sdpsiteinstall: allclean dist ## Install in Equinor using $TARGET (old)
 	@echo $(HOST)
 	\rm -fr  ${TARGET}/${APPLICATION}
 	\rm -fr  ${TARGET}/${APPLICATION}-*
@@ -185,8 +185,8 @@ oldsiteinstall: allclean dist ## Install in Equinor using $TARGET (old)
 
 siteinstall: allclean dist ## Install to custom place using $PREFIX aka make siteinstall PREFIX=/local/usr
 	@echo $(HOST)
-	\rm -fr  ${TARGET}/${APPLICATION}
-	\rm -fr  ${TARGET}/${APPLICATION}-*
+	\rm -fr  ${PREFIX}/${APPLICATION}
+	\rm -fr  ${PREFIX}/${APPLICATION}-*
 	pip install --prefix=${PREFIX} .
 
 
