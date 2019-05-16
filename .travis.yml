@@ -1,7 +1,5 @@
 language: python
 
-if: (fork = true AND branch ! master) OR (fork = false)
-
 python:
 - 3.6
 
@@ -83,4 +81,5 @@ deploy:
   password: $PYPI_PASSWORD
   on:
     tags: True
+    repo: equinor
     # condition: -z $SOURCEDEPLOY
