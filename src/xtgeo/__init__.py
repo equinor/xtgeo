@@ -54,7 +54,7 @@ if display == '' or 'grid' in dhost or 'lgc' in dhost or ertbool:
     _xprint('')
     _xprint('=' * 79)
 
-    x_print(
+    _xprint(
         'XTGeo info: No display found or a batch (e.g. ERT) server. '
         'Using non-interactive Agg backend for matplotlib'
     )
