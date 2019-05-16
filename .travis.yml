@@ -44,17 +44,21 @@ matrix:
       - SOURCEDEPLOY=1
 
 before_install:
-- echo "PWD is $PWD"
-- unset -f pushd
-- unset -f popd
-- git clone https://github.com/matthew-brett/multibuild
-- ls -l
-- source multibuild/common_utils.sh
-- source multibuild/travis_steps.sh
-- before_install
+  - echo "PWD is $PWD"
+  - unset -f pushd
+  - unset -f popd
+  - git clone https://github.com/matthew-brett/multibuild
+  - ls -l
+  - source multibuild/common_utils.sh
+  - source multibuild/travis_steps.sh
+  - before_install
 
 install:
-- build_wheel $REPO_DIR $PLAT
+  - pip install bandit
+  - build_wheel $REPO_DIR $PLAT
+
+before_script:
+  - bandit -c bandit.yml -r src/xtgeo
 
 script:
 - install_run $PLAT
