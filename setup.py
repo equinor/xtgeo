@@ -44,7 +44,7 @@ setup_requirements = [
     "wheel",
     "setuptools_scm>=3.2.0",
 ]
-if platform.python_version_tuple() > (3, 6, 2):
+if platform.python_version_tuple() > ("3", "6", "2"):
     setup_requirements = [
         "numpy==1.16.3",
         "pytest-runner",
