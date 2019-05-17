@@ -46,7 +46,7 @@ setup_requirements = [
 ]
 if platform.python_version_tuple() > ("3", "6", "2"):
     setup_requirements = [
-        "numpy==1.16.3",
+        "numpy",
         "pytest-runner",
         "cmake",
         "wheel",
