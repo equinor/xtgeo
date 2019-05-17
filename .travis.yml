@@ -47,6 +47,7 @@ matrix:
     env:
       - MB_PYTHON_VERSION=3.7
       - SOURCEDEPLOY=1
+      - BUILD_DEPENDS="cmake numpy"
 
 before_install:
   - echo "PWD is $PWD"
