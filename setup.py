@@ -4,14 +4,13 @@
 import platform
 import subprocess
 from glob import glob
+import shutil
 import os
 from os.path import basename
 from os.path import splitext
 from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
 from setuptools.command.build_ext import build_ext as _build_ext
-
-# import numpy
 
 
 def parse_requirements(filename):
@@ -99,11 +98,6 @@ class CMakeExtension(Extension):
 
 sources = ["src/xtgeo/cxtgeo/cxtgeo.i"]
 
-# # Obtain the numpy include directory. This logic works across numpy versions.
-# try:
-#     numpy_include = numpy.get_include()
-# except AttributeError:
-#     numpy_include = numpy.get_numpy_include()
 
 # cxtgeo extension module
 _cxtgeo = CMakeExtension(
@@ -119,6 +113,14 @@ _cxtgeo = CMakeExtension(
 
 _CMDCLASS = {"build": build, "build_ext": build_ext}
 
+_EXT_MODULES = [_cxtgeo]
+
+# This is done for readthedocs purposes, which cannot deal with SWIG:
+if "SWIG_FAKE" in os.environ:
+    print("=================== FAKE SWIG SETUP ====================")
+    shutil.copyfile("src/xtgeo/cxtgeo/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
+    _EXT_MODULES = []
+
 setup(
     name="xtgeo",
     cmdclass=_CMDCLASS,
@@ -131,7 +133,7 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
-    ext_modules=[_cxtgeo],
+    ext_modules=_EXT_MODULES,
     include_package_data=True,
     use_scm_version={"root": src(""), "write_to": src("src/xtgeo/_theversion.py")},
     zip_safe=False,

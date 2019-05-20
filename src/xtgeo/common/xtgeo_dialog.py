@@ -69,14 +69,7 @@ import warnings
 import timeit
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
-
-
-UNDEF = _cxtgeo.UNDEF
-UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
-VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
-VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
 MLS = 10000000.0
 
 
