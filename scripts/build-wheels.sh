@@ -5,9 +5,10 @@ ROOT="/"
 TMP="/tmp"
 IO="/io"
 
-declare -a PYDIST=("cp27-cp27mu" "cp36-cp36m")
+declare -a PYDIST=("cp27-cp27mu" "cp34-cp34m" "cp36-cp36m")
 
 SWIGURL="https://ftp.osuosl.org/pub/blfs/conglomeration/swig"
+
 SWIG="swig-3.0.12"
 
 # Install the SWIG package required by our library for install
@@ -17,7 +18,14 @@ yum install -y pcre-devel
 curl -O ${SWIGURL}/${SWIG}.tar.gz
 tar xzf ${SWIG}.tar.gz
 cd $SWIG
-sh ./configure > /dev/null
+sh ./configure \
+   --with-python \
+   --with-python3 \
+   --without-perl5 \
+   --without-ruby \
+   --without-tcl \
+   --without-maximum-compile-warnings \
+   > /dev/null
 make > /dev/null
 make install > /dev/null
 

@@ -9,8 +9,9 @@ from os.path import basename
 from os.path import splitext
 from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
+from setuptools.command.build_ext import build_ext as _build_ext
 
-import numpy
+# import numpy
 
 
 def parse_requirements(filename):
@@ -18,42 +19,49 @@ def parse_requirements(filename):
     try:
         lineiter = (line.strip() for line in open(filename))
         return [line for line in lineiter if line and not line.startswith("#")]
-    except FileNotFoundError:
+    except IOError:
         return []
 
 
 try:
     with open("README.md") as readme_file:
         readme = readme_file.read()
-except FileNotFoundError:
+except IOError:
     readme = "See README.md"
 
 
 try:
     with open("HISTORY.md") as history_file:
         history = history_file.read()
-except FileNotFoundError:
+except IOError:
     history = "See HISTORY.md"
 
 requirements = parse_requirements("requirements.txt")
 
+NUMPYVER = "numpy==1.13.3"
+if platform.python_version_tuple() < ("3", "4", "99"):
+    NUMPYVER = "numpy==1.10.4"
+if platform.python_version_tuple() > ("3", "7", "0"):
+    NUMPYVER = "numpy==1.16.3"
+
 setup_requirements = [
-    "numpy==1.13.3",
+    NUMPYVER,
     "pytest-runner",
     "cmake",
     "wheel",
     "setuptools_scm>=3.2.0",
 ]
-if platform.python_version_tuple() > ("3", "6", "2"):
-    setup_requirements = [
-        "numpy",
-        "pytest-runner",
-        "cmake",
-        "wheel",
-        "setuptools_scm>=3.2.0",
-        ]
-    
+
 test_requirements = ["pytest"]
+
+
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 def src(x):
@@ -91,11 +99,11 @@ class CMakeExtension(Extension):
 
 sources = ["src/xtgeo/cxtgeo/cxtgeo.i"]
 
-# Obtain the numpy include directory. This logic works across numpy versions.
-try:
-    numpy_include = numpy.get_include()
-except AttributeError:
-    numpy_include = numpy.get_numpy_include()
+# # Obtain the numpy include directory. This logic works across numpy versions.
+# try:
+#     numpy_include = numpy.get_include()
+# except AttributeError:
+#     numpy_include = numpy.get_numpy_include()
 
 # cxtgeo extension module
 _cxtgeo = CMakeExtension(
@@ -103,17 +111,17 @@ _cxtgeo = CMakeExtension(
     cmake_lists_dir="src/xtgeo/cxtgeo/clib",
     sources=sources,
     extra_compile_args=["-Wno-uninitialized", "-Wno-strict-prototypes"],
-    include_dirs=["src/xtgeo/cxtgeo/clib/src", numpy_include],
+    include_dirs=["src/xtgeo/cxtgeo/clib/src"],
     library_dirs=["src/xtgeo/cxtgeo/clib/lib"],
     libraries=["cxtgeo"],
     swig_opts=["-modern"],
 )
 
-_cmdclass = {"build": build}
+_CMDCLASS = {"build": build, "build_ext": build_ext}
 
 setup(
     name="xtgeo",
-    cmdclass=_cmdclass,
+    cmdclass=_CMDCLASS,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
