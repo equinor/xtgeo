@@ -103,6 +103,8 @@ clean-cc: ## remove C files and compiled files
 	find . -name '*.so' -exec rm -f {} +
 	find . -name '*.a' -exec rm -f {} +
 	find . -name '*.dll' -exec rm -f {} +
+	find . -name 'cxtgeo.py' -exec rm -fr {} +
+	find . -name 'cxtgeo_wrap.c' -exec rm -fr {} +
 
 
 clean-examples:
