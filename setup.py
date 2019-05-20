@@ -19,33 +19,33 @@ def parse_requirements(filename):
     try:
         lineiter = (line.strip() for line in open(filename))
         return [line for line in lineiter if line and not line.startswith("#")]
-    except FileNotFoundError:
+    except IOError:
         return []
 
 
 try:
     with open("README.md") as readme_file:
         readme = readme_file.read()
-except FileNotFoundError:
+except IOError:
     readme = "See README.md"
 
 
 try:
     with open("HISTORY.md") as history_file:
         history = history_file.read()
-except FileNotFoundError:
+except IOError:
     history = "See HISTORY.md"
 
 requirements = parse_requirements("requirements.txt")
 
-numpyver = "numpy==1.13.3"
+NUMPYVER = "numpy==1.13.3"
 if platform.python_version_tuple() < ("3", "4", "99"):
-    numpyver = "numpy==1.10.4"
+    NUMPYVER = "numpy==1.10.4"
 if platform.python_version_tuple() > ("3", "7", "0"):
-    numpyver = "numpy==1.16.3"
+    NUMPYVER = "numpy==1.16.3"
 
 setup_requirements = [
-    numpyver,
+    NUMPYVER,
     "pytest-runner",
     "cmake",
     "wheel",
@@ -117,11 +117,11 @@ _cxtgeo = CMakeExtension(
     swig_opts=["-modern"],
 )
 
-_cmdclass = {"build": build, "build_ext": build_ext}
+_CMDCLASS = {"build": build, "build_ext": build_ext}
 
 setup(
     name="xtgeo",
-    cmdclass=_cmdclass,
+    cmdclass=_CMDCLASS,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
