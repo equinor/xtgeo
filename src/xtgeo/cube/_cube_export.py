@@ -4,6 +4,7 @@ import numpy as np
 
 import segyio
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -19,13 +20,15 @@ def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):
     """Export on SEGY using segyio library.
 
     Args:
-        self (Cube): The instance
+        self (:class:`xtgeo.cube.Cube`): The instance
         sfile (str): File name to export to.
         template (str): Use an existing file a template.
         pristine (bool): Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
         engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
+    if not isinstance(self, xtgeo.cube.Cube):
+        raise ValueError("first argument is not a Cube instance")
 
     if engine == "segyio":
         _export_segy_segyio(self, sfile, template=template, pristine=pristine)
@@ -37,7 +40,7 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
     """Export on SEGY using segyio library.
 
     Args:
-        self (Cube): The instance
+        self (:class:`xtgeo.cube.Cube`): The instance
         sfile (str): File name to export to.
         template (str): Use an existing file a template.
         pristine (bool): Make SEGY from scrtach if True; otherwise use an
