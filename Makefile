@@ -150,8 +150,11 @@ develop:  ## make develop mode (for pure python only)
 docsrun: develop ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/${APPLICATION}*.rst
 	rm -f docs/modules.rst
+	rm -f docs/autoapi
 	rm -fr docs/_build
-	sphinx-apidoc -H "XTGeo API description" -o docs/ src/${APPLICATION}
+	rm -fr docs/_static
+	rm -fr docs/_templates
+	# sphinx-apidoc -H "XTGeo API description" -o docs/ src/${APPLICATION}
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 

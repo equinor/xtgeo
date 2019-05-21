@@ -9,7 +9,6 @@ Contents:
    readme
    installation
    datamodels
-   modules
    usage
    usextgeoroxar
    contributing
