@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
 # pylint: skip-file
-"""The XTGeo Python module."""
+"""The XTGeo Python library."""
 
 from __future__ import division, absolute_import
 from __future__ import print_function
@@ -145,5 +145,7 @@ from xtgeo.xyz.polygons import polygons_from_roxar
 
 from xtgeo.xyz.points import points_from_file
 from xtgeo.xyz.points import points_from_roxar
+
+
 
 _xprint('XTGEO __init__ done')

@@ -30,17 +30,17 @@ extensions = [
 ]
 
 autoapi_type = 'python'
-autoapi_dirs = ['../src/xtgeo']
-# autoapi_dirs = ['../src/xtgeo/common',
-#                 '../src/xtgeo/cube',
-#                 '../src/xtgeo/surface',
-#                 '../src/xtgeo/grid3d',
-#                 '../src/xtgeo/well',
-#                 '../src/xtgeo/xyz',
-#                 '../src/xtgeo/plot',
-#                 '../src/xtgeo/roxutils',
-#                 '../src/xtgeo']
-autoapi_options = ['members', 'undoc-members']
+autoapi_dirs = ['../src/xtgeo/common',
+                '../src/xtgeo/cube',
+                '../src/xtgeo/surface',
+                '../src/xtgeo/grid3d',
+                '../src/xtgeo/well',
+                '../src/xtgeo/xyz',
+                '../src/xtgeo/plot',
+                '../src/xtgeo/roxutils',
+                '../src/xtgeo']
+
+autoapi_options = ['members']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

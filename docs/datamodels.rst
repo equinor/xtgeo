@@ -1,7 +1,3 @@
-.. highlight:: python
-.. automodule:: xtgeo
-   :members:
-
 =================================
 XTGeo data models and i/o formats
 =================================

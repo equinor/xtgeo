@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* Jan C. Rivenaes <jriv@statoil.com>
+* Jan C. Rivenaes, Equinor R&T
 
 Contributors
 ------------

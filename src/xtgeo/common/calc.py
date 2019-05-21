@@ -13,8 +13,7 @@ DBG = xtg.get_syslevel()
 
 
 def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
-    """
-    Convert a 1D index (starting from ibbase) to cell indices I J K.
+    """Convert a 1D index (starting from ibbase) to cell indices I J K.
 
     Returns I J K as a tuple.
     """
