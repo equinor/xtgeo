@@ -1,2 +1,3 @@
 cmake
 setuptools_scm
+sphinx-autoapi
