@@ -63,7 +63,7 @@ html_theme_options = {
 }
 
 
-html_logo = "images/xtgeo-logo.svg"
+html_logo = "images/xtgeo-logo.png"
 
 # The name of an image file (within the static path) to use as favicon
 # of the docs.  This file should be a Windows icon file (.ico) being
