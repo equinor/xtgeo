@@ -2,6 +2,11 @@
 
 ## Version 2
 
+### 2.0.5 (in prep)
+
+* Fixed a bug when reading grids in ROXAR API, the subgrids were missing
+* Improved logo and documentation runs
+
 ### 2.0.4
 
 * Technical fixes regarding numpy versions vs py version, swig setup and setup.py
@@ -27,4 +32,4 @@
 
 See github for commit and tag history:
 
-https://github.com/equinor/xt
+https://github.com/equinor/xtgeo
