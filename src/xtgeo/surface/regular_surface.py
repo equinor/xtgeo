@@ -996,7 +996,7 @@ class RegularSurface(object):
         instead (with order='F').
         """
 
-        xtg.warndeprecated("Deprecated method (get_zval())")
+        # xtg.warndeprecated("Deprecated method (get_zval())")
 
         zval = self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
 
@@ -1805,9 +1805,10 @@ class RegularSurface(object):
             deadtraces=deadtraces,
         )
         if ier == -4:
-            xtg.warnuser(
-                "Number of sampled surface nodes < 10 percent of " "Cube nodes"
-            )
+            # xtg.warnuser(
+            #     "Number of sampled surface nodes < 10 percent of " "Cube nodes"
+            # )
+            print("Number of sampled surface nodes < 10 percent of Cube nodes")
         elif ier == -5:
             xtg.warn("No nodes sampled: map is 100 percent outside of cube?")
 

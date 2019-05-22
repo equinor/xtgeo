@@ -56,6 +56,9 @@ def test_rox_get_grid_import_reek():
     dzprop = grd.get_dz()
     tsetup.assert_almostequal(dzprop.values.mean(), 3.2951, 0.0001)
 
+    # subgrids
+    assert grd.subgrids['Below_Mid_reek'] == [6, 7, 8, 9, 10]
+
 
 @tsetup.equinor
 @tsetup.skipunlessroxar

@@ -37,7 +37,7 @@ def test_rox_get_blockedwells():
 
     logger.info('Project is {}'.format(PROJ[ver]))
 
-    bwells = xtgeo.BlockedWells()
+    bwells = xtgeo.blockedwells.BlockedWells()
     bwells.from_roxar(PROJ[ver], 'Reek_geo', 'BW', ijk=False,
                       lognames=['Poro'])
 
