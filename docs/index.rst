@@ -14,6 +14,7 @@ Contents:
    contributing
    authors
    history
+   apiref/modules
 
 Indices and tables
 ==================

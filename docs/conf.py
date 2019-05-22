@@ -22,34 +22,23 @@ version = xtgeo.__version__
 release = xtgeo.__version__
 
 extensions = [
+    "sphinxcontrib.apidoc",
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
-    "autoapi.extension",
+    "m2r",
 ]
 
-autoapi_type = 'python'
-autoapi_dirs = ['../src/xtgeo/common',
-                '../src/xtgeo/cube',
-                '../src/xtgeo/surface',
-                '../src/xtgeo/grid3d',
-                '../src/xtgeo/well',
-                '../src/xtgeo/xyz',
-                '../src/xtgeo/plot',
-                '../src/xtgeo/roxutils',
-                '../src/xtgeo']
-
-autoapi_options = ['members']
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+apidoc_module_dir = '../src/xtgeo'
+apidoc_output_dir = 'apiref'
+apidoc_excluded_paths = ['tests']
+apidoc_separate_modules = True
+apidoc_module_first = True
+apidoc_extra_args = ["-H", "XTGeo API description"]
 
 # The suffix of source filenames.
-source_suffix = ".rst"
-
-# The encoding of source files.
-# source_encoding = 'utf-8-sig'
+source_suffix = [".rst", ".md"]
 
 # The master toctree document.
 master_doc = "index"
@@ -69,18 +58,18 @@ pygments_style = "sphinx"
 
 html_theme = "sphinx_rtd_theme"
 
-# html_logo = "_static/equinor-logo2.jpg"
+html_theme_options = {
+    'style_nav_header_background': '#C0C0C0',
+}
+
+
+html_logo = "images/xtgeo-logo.svg"
 
 # The name of an image file (within the static path) to use as favicon
 # of the docs.  This file should be a Windows icon file (.ico) being
 # 16x16 or 32x32 pixels large.
 # html_favicon = None
 
-# Add any paths that contain custom static files (such as style sheets)
-# here, relative to this directory. They are copied after the builtin
-# static files, so a file named "default.css" will overwrite the builtin
-# "default.css".
-html_static_path = ["_static"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page
 # bottom, using the given strftime format.

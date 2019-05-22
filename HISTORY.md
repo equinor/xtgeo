@@ -1,28 +1,30 @@
-# History (changelog) #
+# History
 
-  ## 2.0.4 ##
+## Version 2
 
-  * Technical fixes regarding numpy versions vs py version, swig setup and setup.py
-  
-  ## 2.0.3 ##
+### 2.0.4
 
-  * Deploy to python 3.4 and 3.5 also. Numpy versions tuned to match roxar library.
+* Technical fixes regarding numpy versions vs py version, swig setup and setup.py
 
-  ## 2.0.2 ##
+### 2.0.3
 
-  * Adding services for code improvements (codacy, bandit)
+* Deploy to python 3.4 and 3.5 also. Numpy versions tuned to match roxar library.
 
-  ## 2.0.1 ##
+### 2.0.2
 
-  * Minor improvements in setup and documentation
-  * Travis automatic deploy works now
+* Adding services for code improvements (codacy, bandit)
 
-  ## 2.0.0 ##
+### 2.0.1
 
-  * First version after Open Sourcing to LGPL v3+
+* Minor improvements in setup and documentation
+* Travis automatic deploy works now
 
-  ## Version 0 and 1 ##
+### 2.0.0
+
+* First version after Open Sourcing to LGPL v3+
+
+## Version 0 and 1
 
 See github for commit and tag history:
 
-https://github.com/equinor/xtgeo
+https://github.com/equinor/xt
