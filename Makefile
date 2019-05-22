@@ -148,9 +148,7 @@ develop:  ## make develop mode (for pure python only)
 
 
 docsrun: develop ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/${APPLICATION}*.rst
-	rm -f docs/modules.rst
-	rm -f docs/autoapi
+	rm -fr docs/apiref
 	rm -fr docs/_build
 	rm -fr docs/_static
 	rm -fr docs/_templates

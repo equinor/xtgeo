@@ -58,9 +58,8 @@ examples/*
 *.log
 
 # Sphinx documentation
-docs/_build/
-docs/modules.rst
-docs/xtgeo*.rst
+docs/_build
+docs/apiref
 
 # PyBuilder
 target/
