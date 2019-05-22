@@ -10,13 +10,13 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="361.24445mm"
-   height="180.62222mm"
-   viewBox="0 0 1280 640"
+   width="705.46313mm"
+   height="137.68413mm"
+   viewBox="0 0 2499.6725 487.85714"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="xtgeo-logo.svg"
+   sodipodi:docname="xtgeo-logo-wide.svg"
    inkscape:export-filename="/home/jan/work/git/xtgeo/docs/images/xtgeo-logo.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
@@ -29,9 +29,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35355339"
-     inkscape:cx="317.94172"
-     inkscape:cy="461.94615"
+     inkscape:zoom="0.25"
+     inkscape:cx="720.26836"
+     inkscape:cy="480.76667"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="false"
@@ -47,19 +47,19 @@
      inkscape:window-y="0"
      inkscape:window-maximized="1">
     <sodipodi:guide
-       position="74.285714,237.14286"
+       position="679.24064,162.5"
        orientation="1,0"
        id="guide3348" />
     <sodipodi:guide
-       position="1200,634.28571"
+       position="1804.9549,559.64285"
        orientation="1,0"
        id="guide3350" />
     <sodipodi:guide
-       position="854.28571,560"
+       position="1459.2406,485.35714"
        orientation="0,1"
        id="guide3352" />
     <sodipodi:guide
-       position="794.28571,77.142857"
+       position="1399.2406,2.5000018"
        orientation="0,1"
        id="guide3354" />
   </sodipodi:namedview>
@@ -71,7 +71,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -79,7 +79,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(60,-146.64792)"
+     transform="translate(664.95496,-224.14792)"
      style="display:none">
     <image
        y="146.64792"
@@ -95,7 +95,8 @@
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Layer 2"
-     style="display:inline">
+     style="display:inline"
+     transform="translate(604.95496,-77.5)">
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:406.47744751px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
