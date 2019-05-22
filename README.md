@@ -10,6 +10,8 @@ manipulation of (oil industry) subsurface reservoir modelling. Typical
 users are geoscientist and reservoir engineers working with
 reservoir modelling, in relation with RMS. XTGeo is developed in Equinor.
 
+Detailed documentation for [XTGeo at Read *the* Docs](https://xtgeo.readthedocs.io)
+
 ## Feature summary ##
 
    * Python 2.7+ and 3.4+ is supported
@@ -35,10 +37,6 @@ pip install xtgeo
 ```
 For detailed installation instructions (implies C compiling), see
 the documentation.
-
-## Detailed documentation ##
-
-[XTGeo at Read *the* Docs](https://xtgeo.readthedocs.io)
 
 ## Getting started ##
 
