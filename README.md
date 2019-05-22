@@ -1,4 +1,4 @@
-![XTGeo](https://github.com/equinor/xtgeo/blob/master/docs/images/xtgeo-logo.svg)
+![XTGeo](https://github.com/equinor/xtgeo/blob/master/docs/images/xtgeo-logo-wide.png)
 
 [![Build Status](https://travis-ci.com/equinor/xtgeo.svg?branch=master)](https://travis-ci.com/equinor/xtgeo)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
