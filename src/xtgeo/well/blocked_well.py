@@ -4,7 +4,7 @@
 from __future__ import print_function, absolute_import
 
 import xtgeo
-from .well import Well
+from .well1 import Well
 from . import _blockedwell_roxapi
 
 xtg = xtgeo.common.XTGeoDialog()

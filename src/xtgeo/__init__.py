@@ -85,7 +85,7 @@ _xprint('Import various XTGeo modules...')
 from xtgeo.roxutils import roxutils
 from xtgeo.roxutils.roxutils import RoxUtils
 
-from xtgeo.well import well
+from xtgeo.well import well1
 from xtgeo.well import wells
 from xtgeo.well import blocked_well
 from xtgeo.well import blocked_wells
@@ -94,7 +94,7 @@ _xprint('Import various XTGeo modules... wells...')
 from xtgeo.surface import regular_surface
 _xprint('Import various XTGeo modules... surface...')
 
-from xtgeo.cube import cube
+from xtgeo.cube import cube1
 _xprint('Import various XTGeo modules... cube...')
 
 from xtgeo.grid3d import grid
@@ -129,11 +129,11 @@ from xtgeo.grid3d.grid import grid_from_roxar
 from xtgeo.grid3d.grid_property import gridproperty_from_file
 from xtgeo.grid3d.grid_property import gridproperty_from_roxar
 
-from xtgeo.cube.cube import cube_from_file
-from xtgeo.cube.cube import cube_from_roxar
+from xtgeo.cube.cube1 import cube_from_file
+from xtgeo.cube.cube1 import cube_from_roxar
 
-from xtgeo.well.well import well_from_file
-from xtgeo.well.well import well_from_roxar
+from xtgeo.well.well1 import well_from_file
+from xtgeo.well.well1 import well_from_roxar
 
 from xtgeo.well.blocked_well import blockedwell_from_file
 from xtgeo.well.blocked_well import blockedwell_from_roxar

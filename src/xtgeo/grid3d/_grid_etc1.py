@@ -13,7 +13,7 @@ import numpy.ma as ma
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz.polygons import Polygons
-from xtgeo.well.well import Well
+from xtgeo.well import Well
 from . import _gridprop_lowlevel
 from .grid_property import GridProperty
 
