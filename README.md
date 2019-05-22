@@ -1,8 +1,13 @@
-# XTGeo #
+![PyLops](https://github.com/equinor/xtgeo/blob/master/docs/images/xtgeo_logo.svg)
+
 [![Build Status](https://travis-ci.com/equinor/xtgeo.svg?branch=master)](https://travis-ci.com/equinor/xtgeo)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![PyPI version](https://badge.fury.io/py/xtgeo.svg)](https://badge.fury.io/py/xtgeo)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c209aeed6a2a40b08ea859aeadf31cb0)](https://www.codacy.com/app/jcrivenaes/xtgeo?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=equinor/xtgeo&amp;utm_campaign=Badge_Grade)
 [![Documentation Status](https://readthedocs.org/projects/xtgeo/badge/?version=latest)](https://xtgeo.readthedocs.io/en/latest/?badge=latest)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/xtgeo.svg)
+![PyPI - License](https://img.shields.io/pypi/l/xtgeo.svg)
+
 ## Introduction ##
 
 XTGeo is a LGPL licensed Python library with C backend to support
