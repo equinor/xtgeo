@@ -996,7 +996,10 @@ class RegularSurface(object):
         instead (with order='F').
         """
 
-        xtg.warndeprecated("Deprecated method (get_zval())")
+        xtg.warndeprecated(
+            "The get_zval() method is deprecated, use values.ravel() "
+            "or get_values1d() instead"
+        )
 
         zval = self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
 
@@ -1010,6 +1013,11 @@ class RegularSurface(object):
         This routine exists for historical reasons and prefer 'values or
         set_values1d instead (with option order='F').
         """
+        xtg.warndeprecated(
+            "The set_zval() method is deprecated, use values "
+            "or set_values1d() instead"
+        )
+
         self.set_values1d(vals, order="F")
 
     def get_rotation(self):
@@ -1808,6 +1816,7 @@ class RegularSurface(object):
             xtg.warnuser(
                 "Number of sampled surface nodes < 10 percent of " "Cube nodes"
             )
+            print("Number of sampled surface nodes < 10 percent of Cube nodes")
         elif ier == -5:
             xtg.warn("No nodes sampled: map is 100 percent outside of cube?")
 

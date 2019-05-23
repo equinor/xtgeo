@@ -4,7 +4,7 @@
 from __future__ import print_function, absolute_import
 
 import xtgeo
-from .well import Well
+from .well1 import Well
 from . import _blockedwell_roxapi
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -85,8 +85,8 @@ class BlockedWell(Well):
 
     Other geometry logs has also 'semi-magic' names:
 
-    M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M\_) or
-    quasi computed/estimated (Q\_). The Quasi may be incorrect for
+    M_MDEPTH or Q_MDEPTH: Measured depth, either real/true (M...) or
+    quasi computed/estimated (Q...). The Quasi may be incorrect for
     all uses, but sufficient for some computations.
 
     Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.

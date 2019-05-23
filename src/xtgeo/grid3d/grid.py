@@ -240,6 +240,9 @@ class Grid(Grid3D):
         See also :meth:`set_subgrids()` and :meth:`get_subgrids()` which
         have a similar function, but differs a bit.
 
+        Note that this design is a bit different from the Roxar API, where
+        repeated sections are allowed, and where indices start from 0,
+        not one.
         """
         if self._subgrids is None:
             return None

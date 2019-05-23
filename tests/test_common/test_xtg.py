@@ -183,9 +183,9 @@ def test_ib_to_ijk():
     assert ijk[0] == 2
 
 
-def test_dialog_warndeprecated():
+# def test_dialog_warndeprecated():
 
-    with pytest.warns(DeprecationWarning) as rwarn:
-        xtg.warndeprecated('Show a deprecated message')
-    logger.info(rwarn[0].message)
-    assert 'Show' in str(rwarn[0].message)
+#     with pytest.warns(DeprecationWarning) as rwarn:
+#         xtg.warndeprecated('Show a deprecated message')
+#     logger.info(rwarn[0].message)
+#     assert 'Show' in str(rwarn[0].message)

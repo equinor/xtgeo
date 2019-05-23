@@ -575,13 +575,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def warndeprecated(string):
-        """Show Deprecation warnings"""
+        """Show Deprecation warnings using Python warnings"""
 
-        def warnoneliner(message, category, filename, lineno):
-
-            return "%s: %s: (%s:%s)\n" % (category.__name__, message, filename, lineno)
-
-        warnings.formatwarning = warnoneliner
         warnings.simplefilter("default", DeprecationWarning)
         warnings.warn(string, DeprecationWarning, stacklevel=2)
 
@@ -589,10 +584,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     def warnuser(string):
         """Show User warnings, using Python warnings"""
 
-        def warnoneliner(message, category):
-            return "%s: %s\n" % (category.__name__, message)
-
-        warnings.formatwarning = warnoneliner
         warnings.simplefilter("default", UserWarning)
         warnings.warn(string, UserWarning, stacklevel=2)
 

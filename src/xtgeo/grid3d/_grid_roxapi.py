@@ -2,6 +2,7 @@
 """Roxar API functions for XTGeo Grid Geometry"""
 import os
 import tempfile
+from collections import OrderedDict
 
 import numpy as np
 
@@ -89,6 +90,8 @@ def _display_roxapi_grid_info(rox, roxgrid):
 def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     """Convert from RMS API to XTGeo API"""
 
+    # pylint: disable=too-many-statements
+
     logger.info("Converting to XTGeo internals...")
     logger.info("Call the ROXAPI grid indexer")
     indexer = roxgrid.grid_indexer
@@ -169,6 +172,19 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     _cxtgeo.delete_doublearray(ccorners)
     _cxtgeo.delete_intarray(cactnum)
     logger.info("Converting to XTGeo internals... done")
+
+    # subgrids
+    if len(indexer.zonation) > 1:
+        logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
+        subz = OrderedDict()
+        for inum, zrange in indexer.zonation.items():
+            logger.debug("inum: %s, zrange: %s", inum, zrange)
+            zname = roxgrid.zone_names[inum]
+            logger.debug("zname is: %s", zname)
+            zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
+            subz[zname] = zra
+
+        self.subgrids = subz
 
 
 # =============================================================================
