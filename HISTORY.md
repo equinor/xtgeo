@@ -2,10 +2,13 @@
 
 ## Version 2
 
-### 2.0.5 (in prep)
+### 2.0.5
 
 * Fixed a bug when reading grids in ROXAR API, the subgrids were missing
 * Improved logo and documentation runs
+* Allow for xtgeo.ClassName() as well as xtgeo.submodule.ClassName()
+* A number of smaller Fixes
+* More badges
 
 ### 2.0.4
 
