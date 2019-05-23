@@ -90,6 +90,8 @@ def _display_roxapi_grid_info(rox, roxgrid):
 def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     """Convert from RMS API to XTGeo API"""
 
+    # pylint: disable=too-many-statements
+
     logger.info("Converting to XTGeo internals...")
     logger.info("Call the ROXAPI grid indexer")
     indexer = roxgrid.grid_indexer
