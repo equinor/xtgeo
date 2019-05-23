@@ -81,7 +81,8 @@ deploy:
   skip_upload_docs: true
   distributions: build
   user: $PYPI_USER
-  password: $PYPI_PASSWORD
+  password:
+    secure: "wSNkuWv2kz9911FYhrYuIDMJKSvBCmNwI1cgEVBnmX5mIr3s19/1C8BNqV1v3GvVKbvAA6zkV+lHbwvNbL0GmPsi3e43pi2zajGTenhLXmstMmwqT9Aw8y8tUzQJSv+rY7FgvFWDrFvybqf2BjCUJGXYt8XqUveBYwnwgWG5Hb+FYeNRClxRQwD7gR+G22pOD4FjXLU+9L34J/eet99lGBcPlapg+RC79OQxz000ejUVhZQmVpmCeQywWu5NIugYm/MLFcAJahPnDko78uuRoW7btVgDjUrHBSOwOtNdIBOYHZovSH9n21OoeG8gB7eXuVXADFAn6sAxdJ6Y8ssOVeKETLZ7y6sQX+MG/oTMb2yJd//o30NIILh1TBx6dCwzeNc4PM1dHwD++I7duv6W9N/fvC36mjj7WMNDLJbD37ljjshQ+6XTGhmJR4+RPtF81NkVl8FBLqAsp/FLTTK+bGF9S1Vx+okKFVT7e/gx9aSmBfcEvrtbtQIW1gHUV5kXGqmyKcANiV5qs7eNB6zWuMKYDohcjUfBCVc9UM4pZrWd9I2IUivAkWIKvtf/u1HAXJ/MDPj+adQSHT0F9SKEU1aTIPjoHiXZ+t9wURFpVhkT/c50of7HJTaEu0PpAeFrzQfVucPl35PZ3OQQ/3MskrCxEvOuFv+RpGlxlVr04TA="
   on:
     tags: True
     repo: equinor/xtgeo
