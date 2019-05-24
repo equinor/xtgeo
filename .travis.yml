@@ -1,10 +1,10 @@
 language: python
 
 python:
-- 3.6
+  - 3.6
 
 os:
-- linux
+  - linux
 
 git:
   depth: false
@@ -12,7 +12,7 @@ git:
 addons:
   apt:
     packages:
-    - swig
+      - swig
 
 services: docker
 
@@ -20,22 +20,19 @@ sudo: required
 
 env:
   global:
-    secure: "O+xi089N9YfUAYxfspFHOI4jmJzy4JHJb/8HVPqcAilbRMG805OqlE7GeuHPQacJGNnRJJIGr9lnSeYzMcXgwV8mmt9l/TcBrh978sJS9zI0ya3AWt/MUKYfLWM3noTNCKI8sZbTyXNipB+u5DEI3v7I4yt+J0vFr9KjxsHJj/vqgeNtU+22MyL3VYHLC9LF4iHgOmMA/RZjWEk9xyYYIDadoJTFx0ISPC/CENqJ7vlpAd01mEXqLi14Pm1ULE1TeZRdw1PjOLJpHN2I/b1fNWtxn07bqjbO3LMENbLnnwi42PG3ediZl7wrHbR0aqSxOn9tAzrkjCABX7lTIbNKXD9XhzbFiiyae4oJsHWKWvP1Y6um6DbnVj4bPNyKeDMPl/QqrEmhRVswq1C/seRsmlEXkVCHJ5iTGdepPtApvrM8pf9ZFISZz/mUWtaqfctoWZDNrtsjzRrM18kraYQAJ+VqQbaHzdmtCWDV/LGuElre6CadV2tKSCCqRSTqmE1G/vz4vd82dKPmkjdWzeiw0c32z/eje1jG4LOvFYK3qDYP0Si7g256VyO8T2MGMmHx04FOJ4fQlNTXdMKVlc/COuVOe2rPBSmWVRhVz1bgHEY3Q3T5FliZAnDjqDalemAABOMgurdPm39fonCTQTwOAzpQwIW/UIssc4dQdkTSIjM="
-
-#
-# - REPO_DIR=.
-#  - UNICODE_WIDTH=32
-#  - PLAT=x86_64
-#  - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
-#  - VERSION=$(echo $TRAVIS_TAG)
-#  - BUILD_DEPENDS="cmake"
-#  - CONFIG_PATH=scripts/config.sh
-#  - TEST_DEPENDS="pytest"
+    - REPO_DIR=.
+    - UNICODE_WIDTH=32
+    - PLAT=x86_64
+    - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
+    - VERSION=$(echo $TRAVIS_TAG)
+    - BUILD_DEPENDS="cmake"
+    - CONFIG_PATH=scripts/config.sh
+    - TEST_DEPENDS="pytest"
 
 matrix:
   fast_finish: true
   exclude:
-  - python: 3.6
+    - python: 3.6
   include:
   #- os: linux
   #  env: MB_PYTHON_VERSION=2.7
@@ -69,24 +66,23 @@ before_script:
   - bandit -c bandit.yml -r src/xtgeo
 
 script:
-- install_run $PLAT
-- mv wheelhouse dist
-- echo $msg
+  - install_run $PLAT
+  - mv wheelhouse dist
 
 after_success:
-- ls -l ${TRAVIS_BUILD_DIR}/dist
+  - ls -l ${TRAVIS_BUILD_DIR}/dist
 
 before_deploy:
-- pip install numpy
+  - pip install numpy
 
 deploy:
   - provider: pypi
     skip_cleanup: true
     skip_upload_docs: true
     distributions: build
-    user: statoil-travis
-    password:
-      secure: "YZTt5dTbdsiCcpNBRpcNZBfmxVsq6b3PPy7leyIw3MfPWLXJvvI+vkAYxF8HZD8N8dBQER6gG0PvG6IlUHzbqNvNjOLrBlm92xpLGZf+C6Q5bon1Z5jKk25oN7h+YM2n0z7DZ6XKjmRaGx7iA0thoU/io4VYEXAURSZ1vivRbgkMhgYKwc9YmYtyA/2n03nJ3wORyir559GMB4UzKDIMNNNJu5SgcqUvFSx68jjjXloPmG1fDZeSpVwXNKkoDJC1yAxGmSCfJknLWKXSa3Lg0JFq6qg4o8UEfF49W8jGKIr/V37ihhSnMn79fxv6JCahic/Pd/5BzssYWaC4Nzvi1A99KBo2iCO9lcXzcnmGS92KHyd6sl6aeoAcehZ5V45jJ4gxt7VpnjCwHV2znMrEbcQm9ZqJcjfV9wumMaP2/8G5MJkFE5MTNz9jBWDoREyLloSzBp1davUgPubQu2IZEeHoDtHXfgyzBA7txsAhMFt1KuTrsWgmMKnpfJxR3rRMkBY7y7cGYVCeg+J8+TpYyIlMJ3ep+gG/ig57uyedYjAofPysMW3ZVFbmqJL2burRcrLgJQuwdihDUzEXftT49Gusd6OWz5y/RBR5x0fKZzpAep/Yt4F4SS7yiVZ9ATHiXZS1Ad6mtsvcAslRmncFnHhZgDnBztaCDNMVKnBI7zY="
+    user: $PYPI_USER
+    password: $PYPI_PASSWORD
+      # secure: "YZTt5dTbdsiCcpNBRpcNZBfmxVsq6b3PPy7leyIw3MfPWLXJvvI+vkAYxF8HZD8N8dBQER6gG0PvG6IlUHzbqNvNjOLrBlm92xpLGZf+C6Q5bon1Z5jKk25oN7h+YM2n0z7DZ6XKjmRaGx7iA0thoU/io4VYEXAURSZ1vivRbgkMhgYKwc9YmYtyA/2n03nJ3wORyir559GMB4UzKDIMNNNJu5SgcqUvFSx68jjjXloPmG1fDZeSpVwXNKkoDJC1yAxGmSCfJknLWKXSa3Lg0JFq6qg4o8UEfF49W8jGKIr/V37ihhSnMn79fxv6JCahic/Pd/5BzssYWaC4Nzvi1A99KBo2iCO9lcXzcnmGS92KHyd6sl6aeoAcehZ5V45jJ4gxt7VpnjCwHV2znMrEbcQm9ZqJcjfV9wumMaP2/8G5MJkFE5MTNz9jBWDoREyLloSzBp1davUgPubQu2IZEeHoDtHXfgyzBA7txsAhMFt1KuTrsWgmMKnpfJxR3rRMkBY7y7cGYVCeg+J8+TpYyIlMJ3ep+gG/ig57uyedYjAofPysMW3ZVFbmqJL2burRcrLgJQuwdihDUzEXftT49Gusd6OWz5y/RBR5x0fKZzpAep/Yt4F4SS7yiVZ9ATHiXZS1Ad6mtsvcAslRmncFnHhZgDnBztaCDNMVKnBI7zY="
     on:
       tags: True
       repo: equinor/xtgeo
