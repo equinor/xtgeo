@@ -76,14 +76,14 @@ before_deploy:
 - pip install numpy
 
 deploy:
-  provider: pypi
-  skip_cleanup: true
-  skip_upload_docs: true
-  distributions: build
-  user: statoil-travis
-  password:
-    secure: "gXxUX6LW9TnFDPYJdFzv2uZMpdOvJggc6xy2j0nUeuIB6K02qeQNXFs1FEZbVvJxvQ4e2rTFlQg2V7DjeMpjlWZDNBlNgE8AFczoKRpeh+NH/qcoEtdX5nfhKJ45RWdz+lg9DLGqGVPU8bFw/my1HPnZqeNIWCtMcp2iwvty0dzOMPivKbSJkrEh1yo7bDzTOmDrcHqKDQavizqzgbrizYpDRcMflbuucl8tA8EQp8L0Kz8RKfROAnq7JorU2XAS27lc7lir7QMfQQ7birnKIfA44byRqKhEi6Ih3PQc21gFVA5maIjVAW8+coAK1F30GYB6NSjMxfV0ZMet6Z4HnXSkwE0j+MZDXM7AtPdVmTMPPbBdkWBBHwJuxIKku1IhfeAsmDA5WecC3OoJXOm8YF0iCvdIrfg83Kx5OgafMb//QTprmap0daMI6rGZEUUFyaGYEPzD9RIOO/Hhu1SZ+5TQWVIWdE0Um2njF3jc9JteRwOESgEMrT60BLQ6jiABxnxppnc2EUBoNyzurNNpvY1VZSL/mQ3lToZJbw8mg9sSmtbq7BJQpGlN4+c21xe2UD2f9QijufFfmxQMVfiUNdsx8fW1dgrfwf4uIYn8Lv012YqynCVTQ5UORGrCkKV3xELu8oQgIJvpc3vKI77fLNtfnjQF5HX5HjxmY4y3DIU="
-  on:
-    tags: True
-    repo: equinor/xtgeo
-    # condition: -z $SOURCEDEPLOY
+  - provider: pypi
+    skip_cleanup: true
+    skip_upload_docs: true
+    distributions: build
+    user: statoil-travis
+    password:
+      secure: "gXxUX6LW9TnFDPYJdFzv2uZMpdOvJggc6xy2j0nUeuIB6K02qeQNXFs1FEZbVvJxvQ4e2rTFlQg2V7DjeMpjlWZDNBlNgE8AFczoKRpeh+NH/qcoEtdX5nfhKJ45RWdz+lg9DLGqGVPU8bFw/my1HPnZqeNIWCtMcp2iwvty0dzOMPivKbSJkrEh1yo7bDzTOmDrcHqKDQavizqzgbrizYpDRcMflbuucl8tA8EQp8L0Kz8RKfROAnq7JorU2XAS27lc7lir7QMfQQ7birnKIfA44byRqKhEi6Ih3PQc21gFVA5maIjVAW8+coAK1F30GYB6NSjMxfV0ZMet6Z4HnXSkwE0j+MZDXM7AtPdVmTMPPbBdkWBBHwJuxIKku1IhfeAsmDA5WecC3OoJXOm8YF0iCvdIrfg83Kx5OgafMb//QTprmap0daMI6rGZEUUFyaGYEPzD9RIOO/Hhu1SZ+5TQWVIWdE0Um2njF3jc9JteRwOESgEMrT60BLQ6jiABxnxppnc2EUBoNyzurNNpvY1VZSL/mQ3lToZJbw8mg9sSmtbq7BJQpGlN4+c21xe2UD2f9QijufFfmxQMVfiUNdsx8fW1dgrfwf4uIYn8Lv012YqynCVTQ5UORGrCkKV3xELu8oQgIJvpc3vKI77fLNtfnjQF5HX5HjxmY4y3DIU="
+    on:
+      tags: True
+      repo: equinor/xtgeo
+      # condition: -z $SOURCEDEPLOY
