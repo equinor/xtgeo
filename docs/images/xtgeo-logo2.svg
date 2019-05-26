@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="108.75094mm"
+   height="19.969999mm"
+   viewBox="0 0 108.75094 19.97"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.0 r15299"
+   sodipodi:docname="xtgeo-logo2.svg"
+   inkscape:export-filename="C:\Users\Jan\xtgeo-logo2.png"
+   inkscape:export-xdpi="300"
+   inkscape:export-ydpi="300">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="23.188026"
+     inkscape:cy="-73.088256"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="3"
+     fit-margin-left="3"
+     fit-margin-bottom="3"
+     fit-margin-right="3"
+     inkscape:window-width="1920"
+     inkscape:window-height="1177"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-25.496983,-87.138163)">
+    <g
+       aria-label="XTGeo"
+       transform="matrix(0.26458333,0,0,0.26458333,-4.0090429,0.80180858)"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;line-height:25px;font-family:moonhouse;-inkscape-font-specification:'moonhouse, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ff1243;fill-opacity:1;stroke:none"
+       id="flowRoot4485">
+      <path
+         d="m 195.14542,390.44922 -20.544,-20.544 h -14.784 l -20.544,20.544 h -16.128 l 26.304,-26.304 -26.592,-26.496 h 16.128 l 20.832,20.832 h 14.784 l 20.832,-20.832 h 16.128 l -26.592,26.496 26.304,26.304 z"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:moonhouse;-inkscape-font-specification:'moonhouse, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1"
+         id="path4488" />
+      <path
+         d="m 215.29492,337.84122 h 68.16 v 11.52 h -27.744 v 41.088 h -12.672 v -41.088 h -27.744 z"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:moonhouse;-inkscape-font-specification:'moonhouse, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1"
+         id="path4490" />
+      <path
+         d="m 348.52492,378.92922 6.72,-8.928 q -12.288,0 -24.384,0 -12,-0.096 -24.288,-0.096 v -11.616 q 14.016,0 27.936,0.096 14.016,0 28.032,0 2.496,0 4.224,1.344 1.824,1.344 2.688,3.36 0.864,1.92 0.672,4.224 -0.192,2.304 -1.632,4.224 l -14.304,18.912 h -47.232 q -3.936,0 -7.392,-1.44 -3.456,-1.536 -6.048,-4.032 -2.496,-2.592 -4.032,-6.048 -1.44,-3.456 -1.44,-7.392 v -14.784 q 0,-3.936 1.44,-7.392 1.536,-3.456 4.032,-6.048 2.592,-2.592 6.048,-4.032 3.456,-1.536 7.392,-1.536 h 59.136 v 11.616 h -59.136 q -3.072,0 -5.28,2.208 -2.112,2.112 -2.112,5.184 v 14.784 q 0,3.072 2.112,5.28 2.208,2.112 5.28,2.112 z"
+         style=""
+         id="path4492" />
+      <path
+         d="m 437.00092,378.92922 v 11.52 h -44.544 q -3.936,0 -7.392,-1.44 -3.456,-1.536 -6.048,-4.032 -2.496,-2.592 -4.032,-6.048 -1.44,-3.456 -1.44,-7.392 0,-3.936 1.44,-7.392 1.536,-3.456 4.032,-5.952 2.592,-2.592 6.048,-4.032 3.456,-1.536 7.392,-1.536 h 37.536 q 2.4,0 4.224,1.248 1.824,1.248 2.688,3.168 0.864,1.824 0.672,4.032 -0.096,2.208 -1.632,4.032 l -11.04,13.824 z m -44.544,-15.072 q -1.536,0 -2.88,0.672 -1.344,0.576 -2.4,1.632 -0.96,1.056 -1.536,2.496 -0.576,1.344 -0.576,2.88 0,3.072 2.112,5.28 2.208,2.112 5.28,2.112 h 18.24 l 12,-15.072 z"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:moonhouse;-inkscape-font-specification:'moonhouse, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1"
+         id="path4494" />
+      <path
+         d="m 460.51942,390.44922 q -3.936,0 -7.392,-1.44 -3.456,-1.536 -6.048,-4.032 -2.496,-2.592 -4.032,-6.048 -1.44,-3.456 -1.44,-7.392 0,-3.936 1.44,-7.392 1.536,-3.456 4.032,-5.952 2.592,-2.592 6.048,-4.032 3.456,-1.536 7.392,-1.536 h 31.776 q 3.936,0 7.392,1.536 3.456,1.44 5.952,4.032 2.592,2.496 4.032,5.952 1.536,3.456 1.536,7.392 0,3.936 -1.536,7.392 -1.44,3.456 -4.032,6.048 -2.496,2.496 -5.952,4.032 -3.456,1.44 -7.392,1.44 z m 0,-26.304 q -3.072,0 -5.28,2.208 -2.112,2.112 -2.112,5.184 0,3.072 2.112,5.28 2.208,2.112 5.28,2.112 h 31.776 q 3.072,0 5.184,-2.112 2.208,-2.208 2.208,-5.28 0,-3.072 -2.208,-5.184 -2.112,-2.208 -5.184,-2.208 z"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:moonhouse;-inkscape-font-specification:'moonhouse, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1"
+         id="path4496" />
+    </g>
+  </g>
+</svg>
