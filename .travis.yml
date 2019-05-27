@@ -25,7 +25,7 @@ env:
     - PLAT=x86_64
     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
     - VERSION=$(echo $TRAVIS_TAG)
-    - BUILD_DEPENDS="cmake"
+    - BUILD_DEPENDS="cmake=3.13.3"
     - CONFIG_PATH=scripts/config.sh
     - TEST_DEPENDS="pytest"
 

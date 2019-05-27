@@ -1,4 +1,4 @@
-cmake
+cmake=3.13.3
 setuptools_scm
 sphinxcontrib-apidoc
 m2r

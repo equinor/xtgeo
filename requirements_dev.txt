@@ -1,4 +1,4 @@
-cmake
+cmake==3.13.3
 pip>=8.1.2
 wheel>=0.29.0
 flake8==2.6.0
