@@ -132,6 +132,7 @@ class XYZ(object):
         fformat="xyz",
         attributes="all",
         pfilter=None,
+        filter=None,  # deprecated, not in use (only signature)
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",

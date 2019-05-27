@@ -271,6 +271,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
                      "(will continue)")
             pfilter = filter
+            filter = None
+        elif filter is not None and pfilter is not None:
+            xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
+                     "(will continue)")
+            filter = None
 
         super(Points, self).to_file(
             pfile,
@@ -280,7 +285,8 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
-        )
+            filter=None,
+       )
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False

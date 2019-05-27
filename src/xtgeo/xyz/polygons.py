@@ -335,12 +335,17 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
                      "(will continue)")
             pfilter = filter
+        else filter is not None and pfilter is not None:
+            xtg.warn("Keyword 'filter' is deprecated, using 'pfilter' instead "
+                     "(will continue)")
+
 
         super(Polygons, self).to_file(
             pfile,
             fformat=fformat,
             attributes=attributes,
             pfilter=pfilter,
+            filter=None,
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
