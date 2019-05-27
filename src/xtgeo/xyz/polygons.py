@@ -332,13 +332,16 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
 
         if filter is not None and pfilter is None:
-            xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
-                     "(will continue)")
+            xtg.warn(
+                "Keyword 'filter' is deprecated, use 'pfilter' instead "
+                "(will continue)"
+            )
             pfilter = filter
-        else filter is not None and pfilter is not None:
-            xtg.warn("Keyword 'filter' is deprecated, using 'pfilter' instead "
-                     "(will continue)")
-
+        elif filter is not None and pfilter is not None:
+            xtg.warn(
+                "Keyword 'filter' is deprecated, using 'pfilter' instead "
+                "(will continue)"
+            )
 
         super(Polygons, self).to_file(
             pfile,
