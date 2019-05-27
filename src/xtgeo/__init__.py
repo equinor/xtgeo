@@ -43,28 +43,36 @@ def _xprint(msg):
 
 _xprint("XTGEO __init__ ...")
 
+ROXAR = True
+try:
+    import roxar
+except Exception:
+    ROXAR = False
+
+
 # to avoid problems in batch runs when no DISPLAY is set:
 _xprint("Import matplotlib etc...")
-import matplotlib as mplib
+if not ROXAR:
+    import matplotlib as mplib
 
-display = os.environ.get("DISPLAY", "")
-host1 = os.environ.get("HOSTNAME", "")
-host2 = os.environ.get("HOST", "")
-dhost = host1 + host2 + display
+    display = os.environ.get("DISPLAY", "")
+    host1 = os.environ.get("HOSTNAME", "")
+    host2 = os.environ.get("HOST", "")
+    dhost = host1 + host2 + display
 
-ertbool = "LSB_JOBID" in os.environ
+    ertbool = "LSB_JOBID" in os.environ
 
-if display == "" or "grid" in dhost or "lgc" in dhost or ertbool:
+    if display == "" or "grid" in dhost or "lgc" in dhost or ertbool:
 
-    _xprint("")
-    _xprint("=" * 79)
+        _xprint("")
+        _xprint("=" * 79)
 
-    _xprint(
-        "XTGeo info: No display found or a batch (e.g. ERT) server. "
-        "Using non-interactive Agg backend for matplotlib"
-    )
-    mplib.use("Agg")
-    _xprint("=" * 79)
+        _xprint(
+            "XTGeo info: No display found or a batch (e.g. ERT) server. "
+            "Using non-interactive Agg backend for matplotlib"
+        )
+        mplib.use("Agg")
+        _xprint("=" * 79)
 
 #
 # Order matters!
@@ -103,11 +111,11 @@ from xtgeo.well.blocked_wells import BlockedWells
 _xprint("Import various XTGeo modules... wells...")
 
 from xtgeo.surface import regular_surface
+from xtgeo.surface.regular_surface import RegularSurface
 
 _xprint("Import various XTGeo modules... surface...")
 
 from xtgeo.cube import cube1
-
 from xtgeo.cube.cube1 import Cube
 
 _xprint("Import various XTGeo modules... cube...")
@@ -130,11 +138,11 @@ from xtgeo.xyz.polygons import Polygons
 
 _xprint("Import various XTGeo modules... xyz...")
 
-
-from xtgeo.plot import baseplot
-from xtgeo.plot import xsection
-from xtgeo.plot import xtmap
-from xtgeo.plot import grid3d_slice
+if not ROXAR:
+    from xtgeo.plot import baseplot
+    from xtgeo.plot import xsection
+    from xtgeo.plot import xtmap
+    from xtgeo.plot import grid3d_slice
 
 _xprint("Import various XTGeo modules... plots...")
 

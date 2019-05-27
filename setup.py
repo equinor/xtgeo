@@ -46,7 +46,7 @@ if platform.python_version_tuple() > ("3", "7", "0"):
 setup_requirements = [
     NUMPYVER,
     "pytest-runner",
-    "cmake",
+    "cmake==3.13.3",
     "wheel",
     "setuptools_scm>=3.2.0",
 ]

@@ -18,5 +18,5 @@ try:
     UNDEF_INT_LIMIT = xtgeo.cxtgeo.cxtgeo.UNDEF_INT_LIMIT
     VERYLARGENEGATIVE = xtgeo.cxtgeo.cxtgeo.VERYLARGENEGATIVE
     VERYLARGEPOSITIVE = xtgeo.cxtgeo.cxtgeo.VERYLARGEPOSITIVE
-except NameError:
+except AttributeError:
     print("Dummy settings")
