@@ -301,6 +301,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         fformat="xyz",
         attributes=None,
         pfilter=None,
+        filter=None,  # deprecated
         wcolumn=None,
         hcolumn=None,
         mdcolumn=None,
@@ -311,8 +312,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (list): List of extra columns to export (some formats)
-            pfilter (dict): Filter on e.g. top name(s) with keys TopName
-                or ZoneName as {'TopName': ['Top1', 'Top2']}
+            pfilter (dict): Filter on e.g. top name(s) with keys
+                 TopName or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
             hcolumn (str): Name of horizons column (rms_wellpicks format only)
             mdcolumn (str): Name of MD column (rms_wellpicks format only)
@@ -330,11 +331,24 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         """
 
+        if filter is not None and pfilter is None:
+            xtg.warn(
+                "Keyword 'filter' is deprecated, use 'pfilter' instead "
+                "(will continue)"
+            )
+            pfilter = filter
+        elif filter is not None and pfilter is not None:
+            xtg.warn(
+                "Keyword 'filter' is deprecated, using 'pfilter' instead "
+                "(will continue)"
+            )
+
         super(Polygons, self).to_file(
             pfile,
             fformat=fformat,
             attributes=attributes,
             pfilter=pfilter,
+            filter=None,
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,

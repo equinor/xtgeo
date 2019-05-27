@@ -240,6 +240,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",
+        filter=None,
     ):
         """Export XYZ (Points/Polygons) to file.
 
@@ -247,7 +248,8 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (list): List of extra columns to export (some formats)
-            pfilter (dict): Filter on e.g. top name(s) with keys TopName
+            pfilter (dict): (or filter) Filter on e.g. top name(s) with
+                keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
             hcolumn (str): Name of horizons column (rms_wellpicks format only)
@@ -265,6 +267,15 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             KeyError if pfilter is set and key(s) are invalid
 
         """
+        if filter is not None and pfilter is None:
+            xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
+                     "(will continue)")
+            pfilter = filter
+            filter = None
+        elif filter is not None and pfilter is not None:
+            xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
+                     "(will continue)")
+            filter = None
 
         super(Points, self).to_file(
             pfile,
@@ -274,7 +285,8 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
-        )
+            filter=None,
+       )
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False

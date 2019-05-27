@@ -121,6 +121,11 @@ def test_get_zone_thickness_some_wells():
                      attributes=['WellName', 'ZoneName'],
                      pfilter={'ZoneName': ['SO622']})
 
+    # filter, for backwards compatibility
+    mypoints.to_file('TMP/zpoints_w_so622_again.rmsasc', fformat='rms_attr',
+                     attributes=['WellName', 'ZoneName'],
+                     filter={'ZoneName': ['SO622']})
+
     logger.info('Number of well made to tops: {}'.format(nwell))
 
 

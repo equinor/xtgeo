@@ -18,6 +18,8 @@ services: docker
 
 sudo: required
 
+if: (branch =~ /^dev/) OR (repo == equinor/xtgeo)
+
 env:
   global:
     - REPO_DIR=.
