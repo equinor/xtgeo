@@ -2,6 +2,10 @@
 
 ## Version 2
 
+### 2.0.6
+
+* Corrected issues with matplotlib when loading xtgeo in RMS
+
 ### 2.0.5
 
 * Fixed a bug when reading grids in ROXAR API, the subgrids were missing
