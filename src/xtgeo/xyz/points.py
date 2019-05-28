@@ -10,6 +10,7 @@ import numpy.ma as ma
 import pandas as pd
 
 import xtgeo
+
 # from xtgeo.common import XTGeoDialog
 # from xtgeo.surface import RegularSurface
 from ._xyz import XYZ
@@ -268,13 +269,16 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         """
         if filter is not None and pfilter is None:
-            xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
-                     "(will continue)")
+            xtg.warndeprecated(
+                "Keyword 'filter' is deprecated, use 'pfilter' instead (will continue)"
+            )
             pfilter = filter
             filter = None
+
         elif filter is not None and pfilter is not None:
-            xtg.warn("Keyword 'filter' is deprecated, use 'pfilter' instead "
-                     "(will continue)")
+            xtg.warndeprecated(
+                "Keyword 'filter' is deprecated, using 'pfilter' instead"
+            )
             filter = None
 
         super(Points, self).to_file(
@@ -286,7 +290,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
             filter=None,
-       )
+        )
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False
