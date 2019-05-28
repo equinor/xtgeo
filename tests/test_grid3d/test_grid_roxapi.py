@@ -19,6 +19,7 @@ TESTPATH = xtg.testpath
 # =============================================================================
 RPROJECT = dict()
 RPROJECT['1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.1'
+RPROJECT['1.1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.3'
 RPROJECT['1.2.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.1'
 RPROJECT['1.3'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.1.0'
 

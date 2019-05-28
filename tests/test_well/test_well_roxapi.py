@@ -1,6 +1,8 @@
 import os
 from os.path import join
 
+import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
@@ -26,6 +28,7 @@ testpath = xtg.testpath
 # =============================================================================
 PROJ = {}
 PROJ['1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.1'
+PROJ['1.1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.3'
 PROJ['1.2.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.1'
 PROJ['1.3'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.1.0'
 
@@ -54,9 +57,34 @@ def test_getwell():
     tsetup.assert_equal(xwell.nrow, 10081, 'NROW of well')
     tsetup.assert_equal(xwell.rkb, -10, 'RKB of well')
 
+    df = xwell.dataframe
+
+    tsetup.assert_almostequal(df.Poro.mean(), 0.191911, 0.001)
+
     xwell.to_file(join(TMPD, 'roxwell_export.rmswell'))
 
-    # tsetup.assert_almostequal(x.values.mean(), 1696.255599, 0.001)
+
+@tsetup.skipunlessroxar
+def test_getwell_strict_logs_raise_error():
+    """Get a well from a RMS project, with strict lognames, and this should fail"""
+
+    if not os.path.isdir(PROJ[roxv]):
+        raise RuntimeError('RMS test project is missing for roxar version {}'
+                           .format(roxv))
+
+    logger.info('Simple case, reading a well from RMS well folder')
+
+    xwell = xtgeo.well.Well()
+
+    rox = xtgeo.RoxUtils(PROJ[roxv])
+
+    with pytest.raises(ValueError) as msg:
+        logger.warning(msg)
+        xwell.from_roxar(rox.project, 'WI_3_RKB2',
+                         trajectory='Drilled trajectory',
+                         logrun='LOG', lognames=['Zonelog', 'Poro', 'Facies', 'Dummy'],
+                         lognames_strict=True)
+    rox.safe_close()
 
 
 @tsetup.skipunlessroxar
@@ -78,12 +106,12 @@ def test_getwell_all_logs():
 
     logger.info('Dataframe\n %s ', xwell.dataframe)
 
+    df = xwell.dataframe
+    tsetup.assert_almostequal(df.Poro.mean(), 0.191911, 0.001)
     tsetup.assert_equal(xwell.nrow, 10081, 'NROW of well')
     tsetup.assert_equal(xwell.rkb, -10, 'RKB of well')
 
     xwell.to_file(join(TMPD, 'roxwell_export.rmswell'))
-
-    # tsetup.assert_almostequal(x.values.mean(), 1696.255599, 0.001)
 
 
 @tsetup.bigtest
