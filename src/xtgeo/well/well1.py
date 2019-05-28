@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-"""XTGeo well module"""
+"""XTGeo well module, working with one single well"""
 
 from __future__ import print_function, absolute_import
 
 import sys
 import os.path
 from copy import deepcopy
+from distutils.version import StrictVersion
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ XTGDEBUG = xtg.syslevel
 # pylint: disable=too-many-public-methods
 
 
-# =============================================================================
+# ======================================================================================
 # METHODS as wrappers to class init + import
 
 
@@ -102,7 +103,7 @@ def well_from_roxar(
     return obj
 
 
-# =============================================================================
+# ======================================================================================
 # CLASS
 
 
@@ -461,8 +462,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             project (str): Magic string 'project' or file path to project
             wname (str): Name of well, as shown in RMS.
-            lognames (list): List of lognames to import, or use 'all' for
-                all current logs for this well.
+            lognames (:obj:list or :obj:str): List of lognames to import, or
+                use simply 'all' for current logs for this well.
+            lognames_strict (bool); Flag to require all logs or to just provide
+                a subset that is present. Default is `False`.
             realisation (int): Currently inactive
             trajectory (str): Name of trajectory in RMS
             logrun (str): Name of logrun in RMS
@@ -476,6 +479,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         project = args[0]
         wname = args[1]
         lognames = kwargs.get("lognames", None)
+        lognames_strict = kwargs.get("lognames_strict", False)
         trajectory = kwargs.get("trajectory", "Drilled trajecetry")
         logrun = kwargs.get("logrun", "log")
         inclmd = kwargs.get("inclmd", False)
@@ -491,6 +495,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             trajectory=trajectory,
             logrun=logrun,
             lognames=lognames,
+            lognames_strict=lognames_strict,
             inclmd=inclmd,
             inclsurvey=inclsurvey,
         )
@@ -755,8 +760,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # now first fill Nan's (because int cannot be converted if Nan)
         newdf = newdf.fillna(dfill)
 
-        # now cast to dtype
-        newdf = newdf.astype(dtype)
+        # now cast to dtype (dep on Pandas version)
+        if StrictVersion(pd.__version__) >= StrictVersion("0.19.0"):
+            newdf = newdf.astype(dtype)
+        else:
+            for k, var in dtype.items():
+                newdf[k] = newdf[k].astype(var)
 
         return newdf
 
