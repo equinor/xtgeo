@@ -948,7 +948,7 @@ class RegularSurface(object):
 
         if order == "F":
             val = ma.filled(val, fill_value=np.nan)
-            val = ma.array(val, order="F")
+            val = np.array(val, order="F")
             val = ma.masked_invalid(val)
 
         val = val.ravel(order="K")
