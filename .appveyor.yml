@@ -11,10 +11,10 @@ platform:
 
 environment:
   matrix:
-    - PYTHON: C:\Python35
-      PYTHON_VERSION: 35
-    - PYTHON: C:\Python36
-      PYTHON_VERSION: 36
+    # - PYTHON: C:\Python35
+    #   PYTHON_VERSION: 35
+    # - PYTHON: C:\Python36
+    #   PYTHON_VERSION: 36
     - PYTHON: C:\Python37
       PYTHON_VERSION: 37
 
@@ -43,8 +43,8 @@ before_build:
 
 build_script:
   - git describe
-  - IF DEFINED PYTHON python setup.py bdist_wheel -G %generator%
-  - ps: popd
+  # - IF DEFINED PYTHON python setup.py bdist_wheel -G %generator%
+  # - ps: popd
 
 # before_deploy:
 #     - ps: pushd python
