@@ -2,6 +2,14 @@
 
 ## Version 2
 
+### 2.0.8
+
+* Fixed a backward compatibility issue with `filter` vs `pfilter` for points/polygons `to_file`
+
+### 2.0.7
+
+* (merged into 2.0.8)
+
 ### 2.0.6
 
 * Corrected issues with matplotlib when loading xtgeo in RMS
