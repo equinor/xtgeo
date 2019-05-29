@@ -232,3 +232,16 @@ Supported import/export formats
      - Yes
      -
      -
+
+---------
+Well data
+---------
+
+Description to come...
+
+
+-----------------------------
+XYZ data, Points and Polygons
+-----------------------------
+
+Description to come...

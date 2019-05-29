@@ -7,7 +7,7 @@ Installation
 From pip
 --------
 
-For a limited selection of platforms and Python versions:
+For a selection of platforms (currently Linux only) and Python versions:
 
  pip install xtgeo
 

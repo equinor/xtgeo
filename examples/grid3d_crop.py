@@ -28,9 +28,9 @@ def cropper():
     nrow = grd.nrow
     nlay = grd.nlay
 
-    ncol1 = ncol / 2
+    ncol1 = int(ncol / 2)
 
-    nrow1 = nrow / 2
+    nrow1 = int(nrow / 2)
 
     print('Original grid dimensions are {} {} {}'.format(ncol, nrow, nlay))
     print('Crop ranges are {} {} {}'.format(ncol1, nrow1, nlay))
