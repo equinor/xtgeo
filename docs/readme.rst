@@ -10,7 +10,7 @@ modelling, in relation with RMS. XTGeo is developed in Equinor.
 Feature summary
 ---------------
 
--  Python 2.7+ and 3.4+ is supported
+-  Python 2.7+ and 3.4+ is supported (Linux)
 -  Focus on high speed, using numpy and pandas with C backend
 -  Regular surfaces, i.e. 2D maps with regular sampling and rotation
 -  3D grids (corner-point), supporting several formats such as RMS and
@@ -21,19 +21,18 @@ Feature summary
    with a seismic cube
 -  Integration to ROXAR API python for several data types is supported
    (see note later)
--  Currently, Linux only is supported
 
 Quick Installation
 ------------------
 
-For some versions, PYPI installation is possible:
+For Linux PYPI installation is enabled:
 
 ::
 
    pip install xtgeo
 
-For detailed installation instructions (implies C compiling), see the
-documentation.
+For detailed installation instructions (implies C compiling), see
+:doc:`installation`.
 
 Getting started
 ---------------

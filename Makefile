@@ -108,7 +108,7 @@ clean-cc: ## remove C files and compiled files
 
 
 clean-examples:
-	find examples ! -name "*.py" -type f -exec rm -f {} +
+	find examples ! -name "*.py" ! -name "*.sh" -type f -exec rm -f {} +
 
 
 cc:
@@ -162,7 +162,7 @@ docs: docsrun ## generate and display Sphinx HTML documentation...
 
 
 examples: clean
-	cd examples; python *.py
+	cd examples; ./runexamples.sh
 
 
 servedocs: docs ## compile the docs watching for changes
