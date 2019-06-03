@@ -660,24 +660,29 @@ int surf_slice_cube_window(
 
 
 void surf_sample_grd3d_lay (
-			   int    nx,
-			   int    ny,
-			   int    nz,
-			   double *p_coord_v,
-			   double *p_zcorn_v,
-			   int    *p_actnum_v,
-			   int    klayer,
-			   int    mx,
-			   int    my,
-			   double xori,
-			   double xstep,
-			   double yori,
-			   double ystep,
-			   double rotation,
-			   double *p_zval_v,
-			   int    option,
-			   int    debug
-			   );
+                            int nx,
+                            int ny,
+                            int nz,
+                            double *p_coord_v,
+                            double *p_zcorn_v,
+                            int *p_actnum_v,
+                            int klayer,
+                            int mx,
+                            int my,
+                            double xori,
+                            double xstep,
+                            double yori,
+                            double ystep,
+                            double rotation,
+                            double *swig_np_dbl_inplace_v1,
+                            long n_swig_np_dbl_inplace_v1,
+                            double *swig_np_dbl_inplace_v2,
+                            long n_swig_np_dbl_inplace_v2,
+                            double *swig_np_dbl_inplace_v3,
+                            long n_swig_np_dbl_inplace_v3,
+                            int option,
+                            int debug
+                            );
 
 int surf_setval_poly(
                      double xori,
