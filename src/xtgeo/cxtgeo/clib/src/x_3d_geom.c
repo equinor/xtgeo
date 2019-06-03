@@ -217,7 +217,7 @@ double x_angle_vectors(double *avec, double *bvec, int debug)
     maga = sqrt(avec[0] * avec[0] + avec[1] * avec[1] + avec[2] * avec[2]);
     magb = sqrt(bvec[0] * bvec[0] + bvec[1] * bvec[1] + bvec[2] * bvec[2]);
 
-    if (maga * magb < FLOAT_EPS) return 0.0;
+    if (maga * magb < FLOATEPS) return 0.0;
 
     angle = acos(dotproduct / (maga * magb));
 
