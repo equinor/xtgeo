@@ -8,8 +8,9 @@ int main () {
     int ib, ier, inside, i;
     double points_v[9]={0,1,-7, 3,1,-9, 0,-5,-8}; /* assign at compile time */
     double nvector[4], line_v[6], point_v[3], c[24], myz, res;
+    double angle, nvec1[4], nvec2[4], diff;
     int    debug=1;
-    
+
     xtgverbose(debug);
     xtg_verbose_file("NONE");
 
