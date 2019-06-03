@@ -82,3 +82,32 @@ def test_get_surface_from_grd3d_zones():
 
     surf.to_file(ojn(td, 'surf_slice_grd3d_reek_zone.gri'))
     surf.quickplot(filename=ojn(td, 'surf_slice_grd3d_reek_zone.png'))
+
+
+@tsetup.plotskipifroxar
+def test_surface_from_grd3d_layer():
+    """Create a surface from a 3D grid layer"""
+
+    surf = xtgeo.surface.RegularSurface()
+    grd = xtgeo.grid3d.Grid(rgrd2, fformat='roff')
+    # grd = xtgeo.Grid("../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg.roff")
+    surf.from_grid3d(grd)
+
+    surf.fill()
+    surf.to_file(ojn(td, 'surf_from_grid3d_top.gri'))
+    tmp = surf.copy()
+    surf.quickplot(filename=ojn(td, 'surf_from_grid3d_top.png'))
+
+    surf.from_grid3d(grd, template=tmp, mode="i")
+
+    surf.to_file(ojn(td, 'surf_from_grid3d_top_icell.gri'))
+    surf.quickplot(filename=ojn(td, 'surf_from_grid3d_top_icell.png'))
+
+    surf.from_grid3d(grd, template=tmp, mode="j")
+    surf.fill()
+    surf.to_file(ojn(td, 'surf_from_grid3d_top_jcell.gri'))
+    surf.quickplot(filename=ojn(td, 'surf_from_grid3d_top_jcell.png'))
+
+    surf.from_grid3d(grd, template=tmp, mode="depth", where="3_base")
+    surf.to_file(ojn(td, 'surf_from_grid3d_3base.gri'))
+    surf.quickplot(filename=ojn(td, 'surf_from_grid3d_3base.png'))

@@ -1,16 +1,16 @@
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * A collection of 3D geomtrical vectors, planes, etc
  *
- ******************************************************************************
+ ***************************************************************************************
  */
 #include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    x_plane_normalvector.c
@@ -40,7 +40,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 int x_plane_normalvector(double *points_v, double *nvector, int option,
 			 int debug)
@@ -96,7 +96,7 @@ int x_plane_normalvector(double *points_v, double *nvector, int option,
 
 
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    x_isect_line_plane
@@ -125,7 +125,7 @@ int x_plane_normalvector(double *points_v, double *nvector, int option,
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
 		       int option, int debug)
@@ -177,9 +177,55 @@ int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
 }
 
 
+/*
+ ***************************************************************************************
+ *
+ * NAME:
+ *    x_angle_vectors
+ *
+ * AUTHOR(S):
+ *    Jan C. Rivenaes
+ *
+ * DESCRIPTION:
+ *    Find the angle in radians between two 3D vectors in space.
+ *
+ * ARGUMENTS:
+ *    avec           i     The coeffs in A: ax + by + cz + d = 0
+ *    bvec           i     The coeffs in B: ax + by + cz + d = 0
+ *    debug          i     Debug level
+ *
+ * RETURNS:
+ *    Angle in radians
+ *
+ * TODO/ISSUES/BUGS:
+ *
+ * LICENCE:
+ *    cf. XTGeo LICENSE
+ ***************************************************************************************
+ */
+double x_angle_vectors(double *avec, double *bvec, int debug)
+{
+    char  s[24]="x_angle_vector";
+    double dotproduct, maga, magb, angle;
+
+    xtgverbose(debug);
+
+    if (debug > 2) xtg_speak(s,3,"Enter %s",s);
+
+    dotproduct = avec[0] * bvec[0] + avec[1] * bvec[1] + avec[2] * bvec[2];
+
+    maga = sqrt(avec[0] * avec[0] + avec[1] * avec[1] + avec[2] * avec[2]);
+    magb = sqrt(bvec[0] * bvec[0] + bvec[1] * bvec[1] + bvec[2] * bvec[2]);
+
+    if (maga * magb < FLOAT_EPS) return 0.0;
+
+    angle = acos(dotproduct / (maga * magb));
+
+    return angle;
+}
 
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    x_sample_z_from_xy_cell
@@ -210,6 +256,7 @@ int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
  *    x              i     X coordinate
  *    y              i     Y coordinate
  *    option         i     0 for cell top, 1 for cell base
+ *    option2        i     0 for avg in one trianglem 1 fro triangle1, 2 for triangle 2
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -220,19 +267,17 @@ int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
-			     int option, int debug)
+                               int option, int option2, int debug)
 {
     double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
     char   s[24]="x_sample_z_from_xy_cell";
-    int    add, inside, nfound, ier;
-    double px[5], py[5], points[9], nvector[4], point_v[3];
+    int    add, insidecell, inside, nfound, ier;
+    double px[5], py[5], points[9], nvector1[4], nvector2[4], point_v[3];
     double line_v[6];
-    double zloc1, zloc2, myzloc;
-
-
+    double angle12, angle34, zloc1, zloc2, myzloc;
 
     xtgverbose(debug);
 
@@ -279,16 +324,16 @@ double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
 
 
 
-    inside = pol_chk_point_inside(x,y,px,py,5,debug);
+    insidecell = pol_chk_point_inside(x,y,px,py,5,debug);
 
     /* accept both inside (2) or edge (1): */
-    if (inside<1) {
+    if (insidecell < 1) {
 	return(UNDEF);
     }
 
     /* OK, points is inside plane, now evaluate all triangles */
 
-    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     /* (1) triangle 1 --> 4 --> 3  */
     /* (2) triangle 1 --> 2 --> 4  */
 
@@ -296,21 +341,21 @@ double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
 
     px[0]=x1; px[1]=x4; px[2]=x3; px[3]=x1;
     py[0]=y1; py[1]=y4; py[2]=y3; py[3]=y1;
-    inside = pol_chk_point_inside(x,y,px,py,4,debug); /* check for triangle */
 
+    inside = pol_chk_point_inside(x, y, px, py, 4, debug); /* check for triangle */
+
+    points[0]=x1; points[1]=y1; points[2]=z1;
+    points[3]=x4; points[4]=y4; points[5]=z4;
+    points[6]=x3; points[7]=y3; points[8]=z3;
+
+    ier = x_plane_normalvector(points, nvector1, 0, debug);
+    if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 
     if (inside > 0) {
 	nfound=1;
-	points[0]=x1; points[1]=y1; points[2]=z1;
-	points[3]=x4; points[4]=y4; points[5]=z4;
-	points[6]=x3; points[7]=y3; points[8]=z3;
-
-	/* find normal vector */
-	ier = x_plane_normalvector(points, nvector, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
 	/* find the intersection */
-	ier = x_isect_line_plane(nvector, line_v, point_v, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
+	ier = x_isect_line_plane(nvector1, line_v, point_v, 0, debug);
+	if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 	zloc1 = point_v[2];
     }
     else{
@@ -320,27 +365,25 @@ double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
     /* check the other triangle */
     px[0]=x1; px[1]=x2; px[2]=x4; px[3]=x1;
     py[0]=y1; py[1]=y2; py[2]=y4; py[3]=y1;
-    inside = pol_chk_point_inside(x,y,px,py,4,debug); /* check for triangle */
 
+    inside = pol_chk_point_inside(x,y,px,py,4,debug); /* check for triangle */
+    points[0]=x1; points[1]=y1; points[2]=z1;
+    points[3]=x2; points[4]=y2; points[5]=z2;
+    points[6]=x4; points[7]=y4; points[8]=z4;
+
+    ier = x_plane_normalvector(points, nvector2, 0, debug);
 
     if (nfound==0 && inside > 0) {
 	nfound=1;
-	points[0]=x1; points[1]=y1; points[2]=z1;
-	points[3]=x2; points[4]=y2; points[5]=z2;
-	points[6]=x4; points[7]=y4; points[8]=z4;
-
-	/* find normal vector */
-	ier = x_plane_normalvector(points, nvector, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
 	/* find the intersection */
-	ier = x_isect_line_plane(nvector, line_v, point_v, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
+	ier = x_isect_line_plane(nvector2, line_v, point_v, 0, debug);
+	if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 	zloc1 = point_v[2];
     }
 
+    angle12 = x_angle_vectors(nvector1, nvector2, debug);
 
-
-    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     /* (1) triangle 1 --> 2 --> 3  */
     /* (2) triangle 2 --> 3 --> 4  */
 
@@ -348,21 +391,22 @@ double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
 
     px[0]=x1; px[1]=x2; px[2]=x3; px[3]=x1;
     py[0]=y1; py[1]=y2; py[2]=y3; py[3]=y1;
+
     inside = pol_chk_point_inside(x,y,px,py,4,debug); /* check for triangle */
 
+    points[0]=x1; points[1]=y1; points[2]=z1;
+    points[3]=x2; points[4]=y2; points[5]=z2;
+    points[6]=x3; points[7]=y3; points[8]=z3;
+
+    /* find normal vector */
+    ier = x_plane_normalvector(points, nvector1, 0, debug);
+    if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 
     if (inside > 0) {
 	nfound=1;
-	points[0]=x1; points[1]=y1; points[2]=z1;
-	points[3]=x2; points[4]=y2; points[5]=z2;
-	points[6]=x3; points[7]=y3; points[8]=z3;
-
-	/* find normal vector */
-	ier = x_plane_normalvector(points, nvector, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
 	/* find the intersection */
-	ier = x_isect_line_plane(nvector, line_v, point_v, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
+	ier = x_isect_line_plane(nvector1, line_v, point_v, 0, debug);
+	if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 	zloc2 = point_v[2];
     }
     else{
@@ -372,23 +416,26 @@ double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
     /* check the other triangle */
     px[0]=x2; px[1]=x3; px[2]=x4; px[3]=x2;
     py[0]=y2; py[1]=y3; py[2]=y4; py[3]=y2;
+
     inside = pol_chk_point_inside(x,y,px,py,4,debug); /* check for triangle */
 
+    points[0]=x2; points[1]=y2; points[2]=z2;
+    points[3]=x3; points[4]=y3; points[5]=z3;
+    points[6]=x4; points[7]=y4; points[8]=z4;
+
+    /* find normal vector */
+    ier = x_plane_normalvector(points, nvector2, 0, debug);
+    if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 
     if (nfound==0 && inside > 0) {
 	nfound=1;
-	points[0]=x2; points[1]=y2; points[2]=z2;
-	points[3]=x3; points[4]=y3; points[5]=z3;
-	points[6]=x4; points[7]=y4; points[8]=z4;
-
-	/* find normal vector */
-	ier = x_plane_normalvector(points, nvector, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
 	/* find the intersection */
-	ier = x_isect_line_plane(nvector, line_v, point_v, 0, debug);
-	if (ier != 0) xtg_error(s,"Unforseen problems; contact JRIV");
+	ier = x_isect_line_plane(nvector2, line_v, point_v, 0, debug);
+	if (ier != 0) xtg_error(s,"Unforseen problems; report bug");
 	zloc2 = point_v[2];
     }
+
+    angle34 = x_angle_vectors(nvector1, nvector2, debug);
 
 
     if (zloc1 > UNDEF_LIMIT && zloc2 < UNDEF_LIMIT ) {
@@ -400,10 +447,28 @@ double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
 		  zloc2, zloc1);
     }
 
+    /* the final Z coordinate is as default the average of zloc1 and zloc2
+     * this is really tricky and compared with RMS. It is NONTRIVIAL and grid tops
+     * are not planes but curves, but all in all it seems that option2 = 0
+     * (avg) is the best choice.
+     */
 
-    /* the final Z coordinate is the average of zloc1 and zloc2 */
+    myzloc = 0.5 * (zloc1 + zloc2);
 
-    myzloc = 0.5*(zloc1 + zloc2);
+    if (option2 == 1) {
+        myzloc = zloc1;
+    }
+    else if (option2 == 2) {
+        myzloc = zloc2;
+    }
+    else if (option2 == 3) {
+        if (angle12 < angle34) myzloc = zloc1;
+        if (angle12 >= angle34) myzloc = zloc2;
+    }
+    else if (option2 == 4) {
+        if (angle12 >= angle34) myzloc = zloc1;
+        if (angle12 < angle34) myzloc = zloc2;
+    }
 
     return(myzloc);
 }
