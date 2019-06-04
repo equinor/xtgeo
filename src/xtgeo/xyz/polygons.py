@@ -8,6 +8,7 @@
 from __future__ import print_function, absolute_import
 import numpy as np
 import pandas as pd
+import shapely.geometry as sg
 
 from xtgeo.common import XTGeoDialog
 from ._xyz import XYZ
@@ -401,6 +402,24 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         return _convert_idbased_xyz(self, self.dataframe)
 
+    def get_shapely_objects(self):
+        """Returns a list of Shapely LineString objects, one per POLY_ID.
+
+        .. versionadded:: 2.1.0
+
+        """
+        spolys = []
+        idgroups = self.dataframe.groupby(self.pname)
+
+        for idx, grp in idgroups:
+            pxcor = grp[self.xname].values
+            pycor = grp[self.yname].values
+            pzcor = grp[self.zname].values
+            spoly = sg.LineString(np.stack([pxcor, pycor, pzcor], axis=1))
+            spolys.append(spoly)
+
+        return spolys
+
     def get_boundary(self):
         """Get the XYZ window (boundaries) of the instance.
 
@@ -431,6 +450,31 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
 
         _xyz_oper.rescale_polygons(self, distance=distance)
+
+    def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
+        """Extracts a fence with constant horizontal sampling and
+        an additonal HLEN vector, suitable for X sections.
+
+        Args:
+            distance (float): New distance between points
+            atleast (int): Minimum number of point. If the true length/atleast is
+                less than distance, than distance will be be reset to
+                length/atleast.
+            extend (int): Number of samples to extend at each end
+            name (str): Name of polygon (if asnumpy=False)
+            asnumpy (bool): Return a [:, 5] numpy array with
+                columns X, Y, Z, H, dH
+
+        Returns:
+            A numpy array (if asnumpy=True) or a new Polygons() object
+
+        .. versionadded:: 2.1.0
+        """
+
+        return _xyz_oper.get_fence(
+            self, distance=distance, atleast=atleast, extend=extend,
+            name=name, asnumpy=asnumpy
+        )
 
     # =========================================================================
     # Operations restricted to inside/outside polygons

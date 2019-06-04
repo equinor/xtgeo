@@ -128,3 +128,75 @@ def _redistribute_vertices(geom, distance):
         return type(geom)([p for p in parts if not p.is_empty])
 
     raise ValueError("Unhandled geometry {}".format(geom.geom_type))
+
+
+def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
+    """Get a fence suitable for plotting xsections, either as a numpy or as a
+    new Polygons instance.
+
+    The atleast parameter will win over the distance, meaning that if total length
+    horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
+
+"""
+
+    if len(self._df) < 2:
+        xtg.warn("Well does not enough points in interval, outside range?")
+        return False
+
+    hlen = self.get_shapely_objects()[0].length
+
+    if hlen / float(atleast) < distance:
+        distance = hlen / float(atleast)
+
+    nbuf = 1000000
+
+    npxarr = np.zeros(nbuf, dtype=np.float64)
+    npyarr = np.zeros(nbuf, dtype=np.float64)
+    npzarr = np.zeros(nbuf, dtype=np.float64)
+    npharr = np.zeros(nbuf, dtype=np.float64)
+
+    # C function:
+    ier, npxarr, npyarr, npzarr, npharr, nlen = _cxtgeo.pol_resampling(
+        self._df[self.xname].values,
+        self._df[self.yname].values,
+        self._df[self.zname].values,
+        distance,
+        distance * extend,
+        nbuf,
+        nbuf,
+        nbuf,
+        nbuf,
+        0,
+        XTGDEBUG
+    )
+
+    if ier != 0:
+        raise RuntimeError("Nonzero code from_cxtgeo.pol_resampling")
+
+    npxarr = npxarr[:nlen]
+    npyarr = npyarr[:nlen]
+    npzarr = npzarr[:nlen]
+    npharr = npharr[:nlen]
+
+    npdharr = np.subtract(npharr[1:], npharr[0: nlen - 1])
+    npdharr = np.insert(npdharr, 0, [0.0])
+
+    if asnumpy is True:
+        rval = np.concatenate((npxarr, npyarr, npzarr, npharr, npdharr), axis=0)
+        rval = np.reshape(rval, (nlen, 5), order="F")
+    else:
+        rval = xtgeo.xyz.Polygons()
+        arr = np.vstack(
+            [npxarr, npyarr, npzarr, npharr, npdharr, np.zeros(nlen, dtype=np.int32)]
+        )
+        col = ["X_UTME", "Y_UTMN", "Z_TVDSS", "HLEN", "DHLEN", "ID"]
+        dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
+        dfr = dfr.astype({"ID": int})
+        if name:
+            dfr = dfr.assign(NAME=name)
+
+        rval.dataframe = dfr
+        if name:
+            rval.name = name
+
+    return rval
