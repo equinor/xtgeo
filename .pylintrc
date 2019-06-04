@@ -8,6 +8,9 @@ additional-builtins=_x, _y, _z, _tmp1, _tmp2
 variable-rgx=^[a-z_][_a-z0-9]+((_[a-z0-9]+)*)?$
 argument-rgx=^[a-z_][_a-z0-9]+((_[a-z0-9]+)*)?$
 
+[TYPECHECK]
+generated-members=np.*, numpy.*, pd.*, pandas.*
+
 [FORMAT]
 max-line-length=88
 max-module-lines=3000
