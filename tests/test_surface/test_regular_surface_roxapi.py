@@ -2,6 +2,7 @@ import os
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.roxutils import RoxUtils
 import test_common.test_xtg as tsetup
 
 roxver = None
@@ -77,3 +78,39 @@ def test_getsurface_from_zones():
 
     # write to folder
     x.to_roxar(proj[roxver], 'UpperReek', 'IS_jriv', stype='zones')
+
+
+@tsetup.skipunlessroxar
+def test_getsetsurface_from_clipboard():
+    """Get and set a surface from a RMS project, from the clipboard container."""
+
+    if not os.path.isdir(proj[roxver]):
+        raise RuntimeError('RMS test project is missing for roxar version {}'
+                           .format(roxver))
+
+    rox = RoxUtils(proj[roxver], readonly=False)
+    roxproj = rox.project
+
+    # direct initiate an instance from Roxar import
+    x = xtgeo.surface_from_roxar(roxproj, 'basereek_rota', 'maps',
+                                 stype='clipboard')
+
+    x.to_file(os.path.join(td, 'upperreek_from_rms.gri'))
+
+    tsetup.assert_equal(x.ncol, 554, 'NCOL of from RMS')
+
+    # values from mean are read from statistics in RMS
+    tsetup.assert_almostequal(x.values.mean(), 1742.3574, 0.001)
+
+    # add and write to folder
+    x.values += 100
+    x.to_roxar(roxproj, 'somenew', 'maps', stype='clipboard')
+
+    rox.project.save()
+    # read again
+    y = xtgeo.surface_from_roxar(roxproj, 'somenew', 'maps',
+                                 stype='clipboard')
+
+    tsetup.assert_almostequal(y.values.mean(), 1842.3574, 0.001)
+
+    rox.safe_close()

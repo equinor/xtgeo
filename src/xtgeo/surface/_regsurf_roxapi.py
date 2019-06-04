@@ -3,6 +3,7 @@
 import numpy as np
 
 from xtgeo.common import XTGeoDialog
+from xtgeo import RoxUtils
 
 xtg = XTGeoDialog()
 
@@ -13,14 +14,14 @@ logger = xtg.functionlogger(__name__)
 
 def import_horizon_roxapi(self, project, name, category, stype, realisation):
     """Import a Horizon surface via ROXAR API spec."""
-    import roxar  # pylint: disable=import-error
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_import_surface(self, proj, name, category, stype, realisation)
-    else:
-        _roxapi_import_surface(self, project, name, category, stype, realisation)
+    rox = RoxUtils(project, readonly=True)
+
+    proj = rox.project
+
+    _roxapi_import_surface(self, proj, name, category, stype, realisation)
+
+    rox.safe_close()
 
 
 def _roxapi_import_surface(self, proj, name, category, stype, realisation):
@@ -39,6 +40,7 @@ def _roxapi_import_surface(self, proj, name, category, stype, realisation):
             _roxapi_horizon_to_xtgeo(self, rox)
         except KeyError as kwe:
             logger.error(kwe)
+
     elif stype == "zones":
         if name not in proj.zones:
             raise ValueError("Name {} is not within Zones".format(name))
@@ -51,6 +53,19 @@ def _roxapi_import_surface(self, proj, name, category, stype, realisation):
             _roxapi_horizon_to_xtgeo(self, rox)
         except KeyError as kwe:
             logger.error(kwe)
+
+    elif stype == "clipboard":
+        if category:
+            if "|" in category:
+                folders = category.split("|")
+            else:
+                folders = category.split("/")
+            rox = proj.clipboard.folders[folders]
+        else:
+            rox = proj.clipboard
+        roxsurf = rox[name].get_grid(realisation)
+        _roxapi_horizon_to_xtgeo(self, roxsurf)
+
     else:
         raise ValueError("Invalid stype")
 
@@ -64,20 +79,19 @@ def _roxapi_horizon_to_xtgeo(self, rox):
     self._xinc, self._yinc = rox.increment
     self._rotation = rox.rotation
 
-    # since XTGeo is F order, while RMS is C order...
-    self._values = np.asanyarray(rox.get_values(), order="C")
+    self._values = rox.get_values()
+    logger.info("Surface from roxapi to xtgeo... DONE")
 
 
 def export_horizon_roxapi(self, project, name, category, stype, realisation):
     """Export (store) a Horizon surface to RMS via ROXAR API spec."""
-    import roxar  # pylint: disable=import-error
+    rox = RoxUtils(project, readonly=False)
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_export_surface(self, proj, name, category, stype, realisation)
-    else:
-        _roxapi_export_surface(self, project, name, category, stype, realisation)
+    logger.info("Surface from xtgeo to roxapi...")
+    _roxapi_export_surface(self, rox.project, name, category, stype, realisation)
+
+    logger.info("Surface from xtgeo to roxapi... DONE")
+    rox.safe_close()
 
 
 def _roxapi_export_surface(self, proj, name, category, stype, realisation):
@@ -90,9 +104,9 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
             )
         try:
             roxroot = proj.horizons[name][category]
-            rox = _xtgeo_to_roxapi_grid(self)
-            rox.set_values(np.asanyarray(self.values, order="C"))
-            roxroot.set_grid(rox, realisation=realisation)
+            roxg = _xtgeo_to_roxapi_grid(self)
+            roxg.set_values(self.values)
+            roxroot.set_grid(roxg, realisation=realisation)
         except KeyError as kwe:
             logger.error(kwe)
 
@@ -105,12 +119,26 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
             )
         try:
             roxroot = proj.zones[name][category]
-            rox = _xtgeo_to_roxapi_grid(self)
-            rox.set_values(np.asanyarray(self.values, order="C"))
-            roxroot.set_grid(rox)
+            roxg = _xtgeo_to_roxapi_grid(self)
+            roxg.set_values(self.values)
+            roxroot.set_grid(roxg)
         except KeyError as kwe:
             logger.error(kwe)
 
+    elif stype == "clipboard":
+        folders = []
+        if category:
+            if "|" in category:
+                folders = category.split("|")
+            else:
+                folders = category.split("/")
+        if folders:
+            proj.clipboard.folders.create(folders)
+
+        roxroot = proj.clipboard.create_surface(name, folders)
+        roxg = _xtgeo_to_roxapi_grid(self)
+        roxg.set_values(self.values)
+        roxroot.set_grid(roxg)
     else:
         raise ValueError("Invalid stype")
 

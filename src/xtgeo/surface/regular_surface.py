@@ -784,8 +784,8 @@ class RegularSurface(object):
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of surface/map
-            category (str): For horizons/zones only: for example 'DS_extracted'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            category (str): For horizons/zones or clipboard: for example 'DS_extracted'
+            stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
             realisation (int): Realisation number, default is 0
 
         Returns:
@@ -801,10 +801,12 @@ class RegularSurface(object):
             >>> mymap = RegularSurface()
             >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
 
+        .. versionadded:: 2.1.0 clipboard support
+
         """
 
         stype = stype.lower()
-        valid_stypes = ["horizons", "zones"]
+        valid_stypes = ["horizons", "zones", "clipboard"]
 
         if stype not in valid_stypes:
             raise ValueError(
@@ -830,7 +832,7 @@ class RegularSurface(object):
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of surface/map
             category (str): For horizons/zones only: e.g. 'DS_extracted'.
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
             realisation (int): Realisation number, default is 0
 
         Raises:
@@ -851,10 +853,12 @@ class RegularSurface(object):
               # store in project
               topupperreek.to_roxar(project, 'TopUpperReek', 'DS_something')
 
+        .. versionadded:: 2.1.0 clipboard support
+
         """
 
         stype = stype.lower()
-        valid_stypes = ["horizons", "zones"]
+        valid_stypes = ["horizons", "zones", "clipboard"]
 
         if stype in valid_stypes and name is None or category is None:
             logger.error("Need to spesify name and category for " "horizon")
