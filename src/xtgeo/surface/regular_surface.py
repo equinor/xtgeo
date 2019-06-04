@@ -136,6 +136,26 @@ def surface_from_cube(cube, value):
     return obj
 
 
+# def surface_from_grid3d(grid):
+#     """This makes 3 instances of a RegularSurface directly from a Grid() instance.
+
+#     Args:
+#         grid (~xtgeo.grid3d.grid.Grid): 3D grid geometry
+
+#     Example::
+
+#         mycube = xtgeo.cube_from_file('somefile.segy')
+#         mysurf = xtgeo.surface_from_cube(mycube, 1200)
+
+#     """
+
+#     obj = RegularSurface()
+
+#     obj.from_cube(cube, value)
+
+#     return obj
+
+
 # =============================================================================
 # RegularSurface class:
 
@@ -863,7 +883,8 @@ class RegularSurface(object):
             directly::
 
             >>> mymap = RegularSurface()
-            >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
+            >>> mycube = Cube("reek.segy")
+            >>> mymap.from_cube(mycube, 2700)
 
         """
 
@@ -888,6 +909,37 @@ class RegularSurface(object):
         )
 
         self._filesrc = cube.filesrc + " (derived surface)"
+
+    def from_grid3d(self, grid, template=None, where="top", mode="depth"):
+        # It would perhaps to be natural to have this as a Grid() method also?
+
+        """Extract a surface from a 3D grid.
+
+        Args:
+            grid (Grid): XTGeo Grid instance
+            template(RegularSurface): Optional to use an existing surface as
+                template for geometry
+            where (str): "top", "base" or use the syntax "2_top" where 2
+                is layer no. 2 and _top indicates top of cell, while "_base"
+                indicates base of cell
+            mode (str): "depth", "i" or "j"
+
+        Returns:
+            Object instance is updated in-place
+
+        Example:
+
+            >>> mymap = RegularSurface()
+            >>> mygrid = Grid("REEK.EGRID")
+            >>> imap, jmap = mymap.from_grid3d(mygrid)
+
+        .. versionadded:: 2.1.0
+
+        """
+
+        _regsurf_grid3d.from_grid3d(
+            self, grid, template=template, where=where, mode=mode
+        )
 
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
@@ -1368,6 +1420,23 @@ class RegularSurface(object):
                     xylist.append((xcv, ycv))
 
         return xylist, valuelist
+
+    # =========================================================================
+    # Interpolation or fill of values (possibly many methods here)
+    # =========================================================================
+
+    def fill(self):
+        """Fast infilling of undefined values.
+
+        Note that minimum and maximum values will not change.
+
+        Returns:
+            RegularSurface instance is updated in-place
+
+        .. versionadded:: 2.1.0
+        """
+
+        _regsurf_gridding.surf_fill(self)
 
     # =========================================================================
     # Operation on map values (list to be extended)

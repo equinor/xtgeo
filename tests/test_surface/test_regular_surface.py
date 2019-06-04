@@ -564,3 +564,18 @@ def test_unrotate():
     logger.info(x)
     x.unrotate()
     logger.info(x)
+
+
+def test_fill():
+    """Fill the undefined values for the surface"""
+
+    srf = RegularSurface()
+    srf.from_file(testset1, fformat='irap_binary')
+
+    minv1 = srf.values.min()
+    tsetup.assert_almostequal(srf.values.mean(), 1698.648, 0.001)
+
+    srf.fill()
+    minv2 = srf.values.min()
+    tsetup.assert_almostequal(srf.values.mean(), 1705.201, 0.001)
+    tsetup.assert_almostequal(minv1, minv2, 0.000001)

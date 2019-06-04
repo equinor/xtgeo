@@ -209,8 +209,10 @@ int x_plane_normalvector(double *points_v, double *nvector, int option,
 int x_isect_line_plane(double *nvector, double *line_v, double *point_v,
 		       int option, int debug);
 
+double x_angle_vectors(double *avec, double *bvec, int debug);
+
 double x_sample_z_from_xy_cell(double *cell_v, double x, double y,
-			       int option, int debug);
+			       int option, int option2, int debug);
 
 int x_point_line_dist(double x1, double y1, double z1,
 		      double x2, double y2, double z2,

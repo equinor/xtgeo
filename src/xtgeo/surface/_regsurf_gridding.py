@@ -323,3 +323,22 @@ def _zone_averaging(
     mpr = ma.filled(mpr, fill_value=0.0)
 
     return xpr, ypr, zpr, mpr, dpr
+
+
+def surf_fill(self):
+    """Replace the value of invalid 'data' cells (indicated by 'invalid')
+    by the value of the nearest valid data cell.
+
+    This is a quite fast method to fill undefined areas of the map.
+    The surface values are updated 'in-place'
+
+    .. versionadded:: 2.1.0
+    """
+    logger.info("Do fill...")
+    invalid = ma.getmaskarray(self.values)
+
+    ind = scipy.ndimage.distance_transform_edt(invalid,
+                                               return_distances=False,
+                                               return_indices=True)
+    self._values = self._values[tuple(ind)]
+    logger.info("Do fill... DONE")

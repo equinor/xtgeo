@@ -30,19 +30,24 @@
  *    last fraction of the sampling distance.
  *
  * ARGUMENTS:
- *    nlen           i     lenght of input vector
  *    xv             i     X array
+ *    nlenx          i     lenght of input vector...
  *    yv             i     Y array
+ *    nleny          i     lenght of input vector...
  *    zv             i     Z array
+ *    nlenz          i     lenght of input vector...
  *    smpl           i     Sample distance input as proposal (to be modified!)
  *    hext           i     Extension in both ends distance as length!
- *    nbuf           i     Allocated length of output vectors
- *    nolen          o     Actual length of output vectors
  *    xov            o     X array output
+ *    nbufx          i     Allocated length of output vector...
  *    yov            o     Y array output
+ *    nbufy          i     Allocated length of output vector...
  *    zov            o     Z array output
+ *    nbufz          i     Allocated length of output vector...
  *    hlen           o     Horizontal length vector, relative to FIRST input
  *                   o     point.
+ *    nbufh          i     Allocated length of output vector hlen...
+ *    nolen          o     Actual! length of output vectors
  *    option         i     if option 1, then Z output will be contant 0
  *    debug          i     Debug flag
  *
@@ -64,10 +69,26 @@
 
 #define MBUFFER 10000
 
-int pol_resampling(int nlen, double *xv, double *yv, double *zv,
-                   double smpl, double hext, int nbuf, int *nolen,
-                   double *xov, double *yov, double *zov, double *hlen,
-                   int option, int debug)
+int pol_resampling(
+                   double *xv,
+                   long nlenx,
+                   double *yv,
+                   long nleny,
+                   double *zv,
+                   long nlenz,
+                   double smpl,
+                   double hext,
+                   double *xov,
+                   long nbufx,
+                   double *yov,
+                   long nbufy,
+                   double *zov,
+                   long nbufz,
+                   double *hlen,
+                   long nbufh,
+                   int *nolen,
+                   int option,
+                   int debug)
 {
     double *txv, *tyv, *tzv, *thlen, *thlenx;
     double tchlen, usmpl, angr_start, angr_end, angd, vlen, uhext;
@@ -80,10 +101,10 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
     xtgverbose(debug);
     xtg_speak(sbn, 2, "Running %s", sbn);
 
-    thlen = calloc(nlen, sizeof(double));
+    thlen = calloc(nlenx, sizeof(double));
 
     /* estimate additonal alloc for refinement, plus a large buffer */
-    naddr = nlen + MBUFFER; //nlen + 2 + 2* (x_nint(hext / smpl) + 1) + MBUFFER;
+    naddr = nlenx + MBUFFER; //nlenx + 2 + 2* (x_nint(hext / smpl) + 1) + MBUFFER;
 
     txv = calloc(naddr, sizeof(double));
     tyv = calloc(naddr, sizeof(double));
@@ -97,10 +118,10 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
      */
 
     /* find the hlen vector, which is the horizontal cumulative length */
-    ier = pol_geometrics(nlen, xv, yv, zv, thlen, debug);
+    ier = pol_geometrics(nlenx, xv, yv, zv, thlen, debug);
 
     if (debug > 2) {
-        for (i = 0;  i < nlen; i++) {
+        for (i = 0;  i < nlenx; i++) {
             delta = 0.0;
             if (i>0) delta = thlen[i] - thlen[i - 1];
             xtg_speak(sbn, 3, "Input I X Y Z H - DH: %d %f %f %f %f - %f",
@@ -108,7 +129,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
         }
     }
 
-    tchlen = thlen[nlen - 1];  /* total cumulative horizontal length */
+    tchlen = thlen[nlenx - 1];  /* total cumulative horizontal length */
     if (tchlen < 1.0) tchlen = 1.0;
 
     /* recompute sampling and extension so it becomes uniform */
@@ -128,7 +149,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
         x0 = 0; x1 = 0; x2 = 0; x3 = 0;
         y0 = 0; y1 = 0; y2 = 0; y3 = 0;
         x0 = xv[0]; y0 = yv[0];
-        for (i = 0;  i < nlen; i++) {
+        for (i = 0;  i < nlenx; i++) {
             if (thlen[i] > hxxd) {
                 x1 = xv[i]; y1 = yv[i];
                 break;
@@ -136,9 +157,9 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
         }
 
         /* the other end */
-        x2 = xv[nlen - 1]; y2 = yv[nlen -1];
-        for (i = (nlen - 1);  i >= 0; i--) {
-            dist = thlen[nlen - 1] - thlen[i];
+        x2 = xv[nlenx - 1]; y2 = yv[nlenx -1];
+        for (i = (nlenx - 1);  i >= 0; i--) {
+            dist = thlen[nlenx - 1] - thlen[i];
             if (dist > hxxd) {
                 x3 = xv[i]; y3 = yv[i];
                 break;
@@ -173,25 +194,25 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
 
     x_vector_extrapol2(xv[0], yv[0], zv[0], &xs, &ys, &zs, uhext,
                        angr_start, debug);
-    x_vector_extrapol2(xv[nlen - 1], yv[nlen - 1], zv[nlen - 1], &xe, &ye,
+    x_vector_extrapol2(xv[nlenx - 1], yv[nlenx - 1], zv[nlenx - 1], &xe, &ye,
                        &ze, uhext, angr_end, debug);
 
     /* and finally make a merged trajectory */
-    for (ic = 0; ic < nlen; ic++) {
+    for (ic = 0; ic < nlenx; ic++) {
         if (ic == 0) {
             txv[0] = xs; tyv[0] = ys; tzv[0] = zv[ic];
         }
         txv[ic + 1] = xv[ic]; tyv[ic + 1] = yv[ic]; tzv[ic + 1] = zv[ic];
-        if (ic == (nlen - 1)) {
-            txv[nlen + 1] = xe; tyv[nlen + 1] = ye;
-            tzv[nlen + 1] = zv[ic];
+        if (ic == (nlenx - 1)) {
+            txv[nlenx + 1] = xe; tyv[nlenx + 1] = ye;
+            tzv[nlenx + 1] = zv[ic];
         }
     }
 
     if (debug > 2) {
         /* debugging only work */
-        ier = pol_geometrics(nlen + 2, txv, tyv, tzv, thlenx, debug);
-        for (i = 0;  i < (nlen + 2); i++) {
+        ier = pol_geometrics(nlenx + 2, txv, tyv, tzv, thlenx, debug);
+        for (i = 0;  i < (nlenx + 2); i++) {
             delta = 0.0;
             if (i>0) delta = thlenx[i] - thlenx[i - 1];
             xtg_speak(sbn, 3, "Extended I X Y Z H - DH: %d %f %f %f %f - %f",
@@ -204,7 +225,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
      * ========================================================================
      */
     int nnnf = 0;
-    nnnf = pol_refine(nlen + 2, naddr, txv, tyv, tzv, usmpl/2.0,
+    nnnf = pol_refine(nlenx + 2, naddr, txv, tyv, tzv, usmpl/2.0,
                       1, debug);
 
     /* ========================================================================
@@ -257,7 +278,7 @@ int pol_resampling(int nlen, double *xv, double *yv, double *zv,
 
             nct++;
 
-            if (nct >= nbuf) return -8;
+            if (nct >= nbufx) return -8;
 
             /* redefine start point */
             x0 = xr; y0 = yr; z0 = zr;

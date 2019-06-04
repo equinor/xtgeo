@@ -26,6 +26,7 @@ logger = xtg.functionlogger(__name__)
 # need to call the C function...
 _cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.syslevel
+
 # pylint: disable=too-many-public-methods
 
 
@@ -978,12 +979,31 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
         _well_oper.rescale(self, delta=delta)
 
-    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None, asnumpy=True):
+    def get_polygon(self):
+        """Return a Polygons object from the well trajectory.
+
+        .. versionadded:: 2.1.0
         """
-        Return a fence polyline as a numpy array or a Polygons object.
+
+        dfr = self._df.copy()
+
+        keep = ("X_UTME", "Y_UTMN", "Z_TVDSS")
+        for col in dfr.columns:
+            if col not in keep:
+                dfr.drop(labels=col, axis=1, inplace=True)
+        dfr["POLY_ID"] = 1
+        dfr["NAME"] = self.xwellname
+        poly = xtgeo.Polygons()
+        poly.dataframe = dfr
+        poly.name = self.xwellname
+
+        return poly
+
+    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None, asnumpy=True):
+        """Return a fence polyline as a numpy array or a Polygons object.
 
         Args:
-            sampling (float): Sampling interval (input)
+            sampling (float): Sampling interval i.e. distance (input)
             extend (int): Number if sampling to extend; e.g. 2 * 20
             tvdmin (float): Minimum TVD starting point.
             as_numpy (bool): If True, a numpy array, otherwise a Polygons
@@ -996,80 +1016,87 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             If not possible return False
         """
 
-        # pylint: disable=too-many-locals
-
-        dfr = self._df
+        poly = self.get_polygon()
 
         if tvdmin is not None:
-            self._df = dfr[dfr["Z_TVDSS"] > tvdmin]
+            poly.dataframe = poly.dataframe[poly.dataframe[poly.zname] >= tvdmin]
 
-        if len(self._df) < 2:
-            xtg.warn("Well does not enough points in interval, outside range?")
-            return False
+        return poly.get_fence(distance=sampling, extend=extend, asnumpy=asnumpy)
 
-        ptr_xv = self.get_carray("X_UTME")
-        ptr_yv = self.get_carray("Y_UTMN")
-        ptr_zv = self.get_carray("Z_TVDSS")
+        # # pylint: disable=too-many-locals
 
-        nbuf = 1000000
-        ptr_xov = _cxtgeo.new_doublearray(nbuf)
-        ptr_yov = _cxtgeo.new_doublearray(nbuf)
-        ptr_zov = _cxtgeo.new_doublearray(nbuf)
-        ptr_hlv = _cxtgeo.new_doublearray(nbuf)
+        # dfr = self._df
 
-        ptr_nlen = _cxtgeo.new_intpointer()
+        # if tvdmin is not None:
+        #     self._df = dfr[dfr["Z_TVDSS"] > tvdmin]
 
-        ier = _cxtgeo.pol_resampling(
-            self.nrow,
-            ptr_xv,
-            ptr_yv,
-            ptr_zv,
-            sampling,
-            sampling * extend,
-            nbuf,
-            ptr_nlen,
-            ptr_xov,
-            ptr_yov,
-            ptr_zov,
-            ptr_hlv,
-            0,
-            XTGDEBUG,
-        )
+        # if len(self._df) < 2:
+        #     xtg.warn("Well does not enough points in interval, outside range?")
+        #     return False
 
-        if ier != 0:
-            sys.exit(-2)
+        # ptr_xv = self.get_carray("X_UTME")
+        # ptr_yv = self.get_carray("Y_UTMN")
+        # ptr_zv = self.get_carray("Z_TVDSS")
 
-        nlen = _cxtgeo.intpointer_value(ptr_nlen)
+        # nbuf = 1000000
+        # ptr_xov = _cxtgeo.new_doublearray(nbuf)
+        # ptr_yov = _cxtgeo.new_doublearray(nbuf)
+        # ptr_zov = _cxtgeo.new_doublearray(nbuf)
+        # ptr_hlv = _cxtgeo.new_doublearray(nbuf)
 
-        npxarr = self._convert_carr_double_np(ptr_xov, nlen=nlen)
-        npyarr = self._convert_carr_double_np(ptr_yov, nlen=nlen)
-        npzarr = self._convert_carr_double_np(ptr_zov, nlen=nlen)
-        npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
-        # npharr = npharr - sampling * extend ???
+        # ptr_nlen = _cxtgeo.new_intpointer()
 
-        if asnumpy is True:
-            rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
-            rval = np.reshape(rval, (nlen, 4), order="F")
-        else:
-            rval = xtgeo.xyz.Polygons()
-            wna = self.xwellname
-            idwell = [None] * extend + [wna] * (nlen - 2 * extend) + [None] * extend
-            arr = np.vstack(
-                [npxarr, npyarr, npzarr, npharr, np.zeros(nlen, dtype=np.int32)]
-            )
-            col = ["X_UTME", "Y_UTMN", "Z_TVDSS", "HLEN", "ID"]
-            dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
-            dfr = dfr.astype({"ID": int})
-            dfr = dfr.assign(WELL=idwell)
-            rval.dataframe = dfr
-            rval.name = self.xwellname
+        # ier = _cxtgeo.pol_resampling(
+        #     self.nrow,
+        #     ptr_xv,
+        #     ptr_yv,
+        #     ptr_zv,
+        #     sampling,
+        #     sampling * extend,
+        #     nbuf,
+        #     ptr_nlen,
+        #     ptr_xov,
+        #     ptr_yov,
+        #     ptr_zov,
+        #     ptr_hlv,
+        #     0,
+        #     XTGDEBUG,
+        # )
 
-        _cxtgeo.delete_doublearray(ptr_xov)
-        _cxtgeo.delete_doublearray(ptr_yov)
-        _cxtgeo.delete_doublearray(ptr_zov)
-        _cxtgeo.delete_doublearray(ptr_hlv)
+        # if ier != 0:
+        #     sys.exit(-2)
 
-        return rval
+        # nlen = _cxtgeo.intpointer_value(ptr_nlen)
+
+        # npxarr = self._convert_carr_double_np(ptr_xov, nlen=nlen)
+        # npyarr = self._convert_carr_double_np(ptr_yov, nlen=nlen)
+        # npzarr = self._convert_carr_double_np(ptr_zov, nlen=nlen)
+        # npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
+        # # npharr = npharr - sampling * extend ???
+
+        # if asnumpy is True:
+        #     rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
+        #     rval = np.reshape(rval, (nlen, 4), order="F")
+        # else:
+        #     rval = xtgeo.xyz.Polygons()
+        #     wna = self.xwellname
+        #     idwell = [None] * extend + [wna] * (nlen - 2 * extend) + [None] * extend
+        #     arr = np.vstack(
+        #         [npxarr, npyarr, npzarr, npharr, np.zeros(nlen, dtype=np.int32)]
+        #     )
+        #     col = ["X_UTME", "Y_UTMN", "Z_TVDSS", "HLEN", "ID"]
+        #     dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
+        #     dfr = dfr.astype({"ID": int})
+        #     dfr = dfr.assign(WELL=idwell)
+        #     rval.dataframe = dfr
+        #     rval.name = self.xwellname
+
+        # _cxtgeo.delete_doublearray(ptr_xov)
+        # _cxtgeo.delete_doublearray(ptr_yov)
+        # _cxtgeo.delete_doublearray(ptr_zov)
+        # _cxtgeo.delete_doublearray(ptr_hlv)
+
+        # return rval
 
     def report_zonation_holes(self, threshold=5):
         """Reports if well has holes in zonation, less or equal to N samples.

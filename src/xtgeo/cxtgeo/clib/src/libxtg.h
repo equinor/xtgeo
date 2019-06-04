@@ -660,24 +660,29 @@ int surf_slice_cube_window(
 
 
 void surf_sample_grd3d_lay (
-			   int    nx,
-			   int    ny,
-			   int    nz,
-			   double *p_coord_v,
-			   double *p_zcorn_v,
-			   int    *p_actnum_v,
-			   int    klayer,
-			   int    mx,
-			   int    my,
-			   double xori,
-			   double xstep,
-			   double yori,
-			   double ystep,
-			   double rotation,
-			   double *p_zval_v,
-			   int    option,
-			   int    debug
-			   );
+                            int nx,
+                            int ny,
+                            int nz,
+                            double *p_coord_v,
+                            double *p_zcorn_v,
+                            int *p_actnum_v,
+                            int klayer,
+                            int mx,
+                            int my,
+                            double xori,
+                            double xstep,
+                            double yori,
+                            double ystep,
+                            double rotation,
+                            double *swig_np_dbl_inplace_v1,
+                            long n_swig_np_dbl_inplace_v1,
+                            double *swig_np_dbl_inplace_v2,
+                            long n_swig_np_dbl_inplace_v2,
+                            double *swig_np_dbl_inplace_v3,
+                            long n_swig_np_dbl_inplace_v3,
+                            int option,
+                            int debug
+                            );
 
 int surf_setval_poly(
                      double xori,
@@ -819,10 +824,27 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
                  int option, int debug);
 
 /* better version than pol_resample: */
-int pol_resampling(int nlen, double *xv, double *yv, double *zv,
-                   double smpl, double hext, int nbuf, int *nolen,
-                   double *xov, double *yov, double *zov, double *hlen,
-                   int option, int debug);
+int pol_resampling(
+                   double *swig_np_dbl_in_v1,   // *xv,
+                   long n_swig_np_dbl_in_v1,
+                   double *swig_np_dbl_in_v2,   // *yv,
+                   long n_swig_np_dbl_in_v2,
+                   double *swig_np_dbl_in_v3,   // *zv,
+                   long n_swig_np_dbl_in_v3,
+                   double smpl,
+                   double hext,
+                   double *swig_np_dbl_aout_v1,  // *xov
+                   long n_swig_np_dbl_aout_v1,
+                   double *swig_np_dbl_aout_v2,  // *yov
+                   long n_swig_np_dbl_aout_v2,
+                   double *swig_np_dbl_aout_v3,  // *zov
+                   long n_swig_np_dbl_aout_v3,
+                   double *swig_np_dbl_aout_v4,  // *hlen
+                   long n_swig_np_dbl_aout_v4,
+                   int *swig_int_out_p1,         // *nolen
+                   int option,
+                   int debug);
+
 
 /*
  *=============================================================================

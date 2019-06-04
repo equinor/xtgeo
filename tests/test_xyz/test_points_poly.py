@@ -161,7 +161,7 @@ def test_points_in_polygon():
 
 
 def test_rescale_polygon():
-    """Take a plygons set and rescale/resample"""
+    """Take a polygons set and rescale/resample"""
 
     pol = Polygons(POLSET2)
 
@@ -191,3 +191,31 @@ def test_rescale_polygon():
 
     logger.info(pol.dataframe)
     assert abs(pol.dataframe.at[369, 'X_UTME'] - 462708.614654) < 0.0001
+
+
+def test_fence_from_polygon():
+    """Test polygons get_fence method"""
+
+    pol = Polygons(POLSET2)
+
+    df = pol.dataframe[0:3]
+
+    df.at[0, 'X_UTME'] = 0.0
+    df.at[1, 'X_UTME'] = 100.0
+    df.at[2, 'X_UTME'] = 100.0
+
+    df.at[0, 'Y_UTMN'] = 20.0
+    df.at[1, 'Y_UTMN'] = 20.0
+    df.at[2, 'Y_UTMN'] = 100.0
+
+    df.at[0, 'Z_TVDSS'] = 0.0
+    df.at[1, 'Z_TVDSS'] = 1000.0
+    df.at[2, 'Z_TVDSS'] = 2000.0
+
+    pol.dataframe = df
+
+    fence = pol.get_fence(distance=100, extend=4, name="SOMENAME", asnumpy=False,
+                          atleast=10)
+    logger.info(fence.dataframe)
+
+    assert fence.dataframe.at[13, 'X_UTME'] == 100.0
