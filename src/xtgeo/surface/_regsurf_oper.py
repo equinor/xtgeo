@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import numpy.ma as ma
 
+import xtgeo
 from xtgeo.xyz import Polygons
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -129,7 +130,7 @@ def get_value_from_xy(self, point=(0.0, 0.0)):
         XTGDEBUG,
     )
 
-    if zcoord > self._undef_limit:
+    if zcoord > xtgeo.UNDEF_LIMIT:
         return None
 
     return zcoord
@@ -165,7 +166,7 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
     else:
         raise ValueError("Index i and/or j out of bounds")
 
-    if value > self.undef_limit:
+    if value > xtgeo.UNDEF_LIMIT:
         value = None
 
     return xval, yval, value
@@ -308,7 +309,7 @@ def get_fence(self, xyfence):
         logger.warning("Seem to be rotten")
 
     xyfence[:, 2] = czarr
-    xyfence = ma.masked_greater(xyfence, self._undef_limit)
+    xyfence = ma.masked_greater(xyfence, xtgeo.UNDEF_LIMIT)
     xyfence = ma.mask_rows(xyfence)
 
     return xyfence
@@ -325,7 +326,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     proxy = self.copy()
     proxy.values *= 0.0
-    vals = proxy.get_values1d(fill_value=self.undef)
+    vals = proxy.get_values1d(fill_value=xtgeo.UNDEF)
 
     # value could be a scalar or another surface; if another surface,
     # must ensure same topology
@@ -397,8 +398,8 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     elif opname == "set":
         tmp = value
     elif opname == "eli":
-        tmp = value * 0 + self.undef
-        tmp = ma.masked_greater(tmp, self.undef_limit)
+        tmp = value * 0 + xtgeo.UNDEF
+        tmp = ma.masked_greater(tmp, xtgeo.UNDEF_LIMIT)
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
     del tmp

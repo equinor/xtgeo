@@ -52,7 +52,6 @@ import numpy.ma as ma
 import pandas as pd
 
 import xtgeo
-from xtgeo.common.constants import UNDEF, UNDEF_LIMIT
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
 
 from . import _regsurf_import
@@ -208,11 +207,6 @@ class RegularSurface(object):
     def __init__(self, *args, **kwargs):  # pylint: disable=too-many-statements
         """Initiate a RegularSurface instance."""
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        logger.info(clsname)
-
-        self._undef = UNDEF
-        self._undef_limit = UNDEF_LIMIT
         self._masked = False
         self._filesrc = None  # Name of original input file, if any
         self._name = "unknown"
@@ -258,7 +252,7 @@ class RegularSurface(object):
                     order="C",
                 )
                 # make it masked
-                values = ma.masked_greater(values, UNDEF_LIMIT)
+                values = ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
                 self._masked = True
                 self._values = values
             else:
@@ -376,7 +370,7 @@ class RegularSurface(object):
                 raise
 
         # replace any undef or nan with mask
-        values = ma.masked_greater(values, UNDEF_LIMIT)
+        values = ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
         values = ma.masked_invalid(values)
 
         if not values.flags.c_contiguous:
@@ -593,16 +587,6 @@ class RegularSurface(object):
             self._name = newname
 
     @property
-    def undef(self):
-        """Returns or set the undef value, to be used e.g. when in the
-        get_zval method."""
-        return self._undef
-
-    @undef.setter
-    def undef(self, undef):
-        self._undef = undef
-
-    @property
     def filesrc(self):
         """Gives the name of the file source (if any)"""
         return self._filesrc
@@ -611,15 +595,6 @@ class RegularSurface(object):
     def filesrc(self, name):
         self._filesrc = name  # checking is currently missing
 
-    @property
-    def undef_limit(self):
-        """Returns or set the undef_limit value, to be used when in the
-        get_zval method."""
-        return self._undef_limit
-
-    @undef_limit.setter
-    def undef_limit(self, undef_limit):
-        self._undef_limit = undef_limit
 
     # =============================================================================
     # Describe, import and export
@@ -982,7 +957,7 @@ class RegularSurface(object):
         return xsurf
 
     def get_values1d(
-        self, order="C", asmasked=False, fill_value=UNDEF, activeonly=False
+        self, order="C", asmasked=False, fill_value=xtgeo.UNDEF, activeonly=False
     ):
         """Get an an 1D, numpy or masked array of the map values.
 
@@ -1020,7 +995,7 @@ class RegularSurface(object):
     def set_values1d(self, val, order="C"):
         """Update the values attribute based on a 1D input, multiple options.
 
-        If values are np.nan or values are > self.undef_limit, they will be
+        If values are np.nan or values are > UNDEF_LIMIT, they will be
         masked.
 
         Args:
@@ -1035,7 +1010,7 @@ class RegularSurface(object):
         if not isinstance(val, ma.MaskedArray):
             val = ma.array(val)
 
-        val = ma.masked_greater(val, self.undef_limit)
+        val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
         val = ma.masked_invalid(val)
 
         self.values = val
@@ -1057,7 +1032,7 @@ class RegularSurface(object):
             "or get_values1d() instead"
         )
 
-        zval = self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
+        zval = self.get_values1d(order="F", asmasked=False, fill_value=xtgeo.UNDEF)
 
         return zval
 

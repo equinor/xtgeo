@@ -1,5 +1,6 @@
 """RegularSurface utilities (basic low level)"""
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -31,7 +32,7 @@ def swapaxes(self):
     _cxtgeo.doublepointer_assign(yinc, self._yinc)
     _cxtgeo.doublepointer_assign(rota, self._rotation)
 
-    val = self.get_values1d(fill_value=self.undef)
+    val = self.get_values1d(fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_swapaxes(
         ncol, nrow, yflip, self.xori, xinc, self.yori, yinc, rota, val, 0, XTGDEBUG
@@ -81,7 +82,7 @@ def swapaxes(self):
 #     xvv = np.reshape(xvv, (self._ncol, self._nrow), order='F')
 
 #     # make it masked
-#     xvv = ma.masked_greater(xvv, self._undef_limit)
+#     xvv = ma.masked_greater(xvv, xtgeo.UNDEF_LIMIT)
 
 #     self._values = xvv
 
@@ -109,7 +110,7 @@ def swapaxes(self):
 #         sys.exit(9)
 
 #     # make a 1D F order numpy array, and update C array
-#     xvv = ma.filled(self._values, self._undef)
+#     xvv = ma.filled(self._values, xtgeo.UNDEF)
 #     xvv = np.reshape(xvv, -1, order='F')
 
 #     self._cvalues = _cxtgeo.new_doublearray(nnum)

@@ -5,6 +5,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
@@ -25,7 +26,7 @@ def export_irap_ascii(self, mfile):
     zmin = self.values.min()
     zmax = self.values.max()
 
-    vals = self.get_values1d(fill_value=self.undef)
+    vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     logger.debug("SHAPE %s %s", vals.shape, vals.dtype)
 
     ier = _cxtgeo.surf_export_irap_ascii(
@@ -52,7 +53,7 @@ def export_irap_ascii(self, mfile):
 def export_irap_binary(self, mfile):
     """Export to Irap RMS binary format."""
 
-    vals = self.get_values1d(fill_value=self.undef)
+    vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     ier = _cxtgeo.surf_export_irap_bin(
         mfile,
         self._ncol,
@@ -76,7 +77,7 @@ def export_irap_binary(self, mfile):
 def export_ijxyz_ascii(self, mfile):
     """Export to DSG IJXYZ ascii format."""
 
-    vals = self.get_values1d(fill_value=self.undef)
+    vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     ier = _cxtgeo.surf_export_ijxyz(
         mfile,
         self._ncol,
@@ -117,7 +118,7 @@ def export_zmap_ascii(self, mfile):
 
     yinc = scopy._yinc * scopy._yflip
 
-    vals = scopy.get_values1d(order="F", asmasked=False, fill_value=self.undef)
+    vals = scopy.get_values1d(order="F", asmasked=False, fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_export_zmap_ascii(
         mfile,

@@ -1,15 +1,11 @@
 # coding: utf-8
 """Roxar API functions for XTGeo RegularSurface"""
-import numpy as np
-
 from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
-
-# pylint: disable=protected-access
 
 
 def import_horizon_roxapi(self, project, name, category, stype, realisation):
