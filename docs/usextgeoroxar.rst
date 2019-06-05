@@ -69,6 +69,72 @@ Take a surface in RMS and multiply values with 2:
     surf.to_roxar(project, 'TopReek', 'DS_tmp')
 
 
+Do operations on surfaces, also inside polygons:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Find the diff maps in time domain, of the main surfaces. Also make a
+a version where cut by polygons where surfaces has interp (minimum
+common multiplum)
+
+.. code-block:: python
+
+   import xtgeo
+   from fmu.config import utilities as ut
+
+   CFG = ut.yaml_load("../../fmuconfig/output/global_variables.yml")["rms"]
+
+   # ========= SETTINGS ===================================================================
+
+   PRJ = project  # noqa
+
+   # input
+   TSCAT1 = "TS_interp_raw_ow"
+   PCAT = "TL_interp_raw_approx_outline"
+
+
+   # output
+   ISCAT1 = "IS_twt_main_interp_raw_ow"
+   ISCAT2 = "IS_twt_main_interp_raw_ow_cut"
+
+   # ========= END SETTINGS ===============================================================
+
+
+   def main():
+
+       topmainzones = CFG["horizons"]["TOP_MAINRES"]
+       mainzones = CFG["zones"]["MAIN_ZONES"]
+       for znum, mzone in enumerate(mainzones):
+
+           surf1 = xtgeo.surface_from_roxar(PRJ, topmainzones[znum], TSCAT1)
+           surf2 = xtgeo.surface_from_roxar(PRJ, topmainzones[znum + 1], TSCAT1)
+
+           diff = surf2.copy()
+           diff.values -= surf1.values
+           diff.to_roxar(PRJ, mzone, ISCAT1, stype="zones")
+           print("Store {} at {}".format(mzone, ISCAT1))
+
+           # extract differences inside a polygon and compute min/max values:
+
+           poly = xtgeo.polygons_from_roxar(PRJ, topmainzones[znum], PCAT)
+           surf1.eli_outside(poly)
+           surf2.eli_outside(poly)
+           diff2 = surf2.copy()
+           diff2.values -= surf1.values
+           print(
+              "Min and max values inside polygons {} : {} (negative OK) for {}".format(
+                    diff2.values.min(), diff2.values.max(), mzone
+                    )
+                )
+           diff2.to_roxar(PRJ, mzone, ISCAT2, stype="zones")
+           print("Store cut surface {} at {}".format(mzone, ISCAT2))
+
+
+    if __name__ == "__main__":
+        main()
+        print("Done, see <{}> and <{}>".format(ISCAT1, ISCAT2))
+
+
+
 3D grid data
 ------------
 
