@@ -463,18 +463,19 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             extend (int): Number of samples to extend at each end
             name (str): Name of polygon (if asnumpy=False)
             asnumpy (bool): Return a [:, 5] numpy array with
-                columns X, Y, Z, H, dH
+                columns X.., Y.., Z.., HLEN, dH
 
         Returns:
             A numpy array (if asnumpy=True) or a new Polygons() object
 
         .. versionadded:: 2.1.0
         """
-
+        logger.info("Getting fence within a Polygons instance...")
         return _xyz_oper.get_fence(
             self, distance=distance, atleast=atleast, extend=extend,
             name=name, asnumpy=asnumpy
         )
+        logger.info("Getting fence within a Polygons instance... DONE")
 
     # =========================================================================
     # Operations restricted to inside/outside polygons

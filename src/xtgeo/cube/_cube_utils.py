@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -261,12 +262,22 @@ def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
 
 
 def get_randomline(
-    self, fencespec, zmin=None, zmax=None, zincrement=None, sampling="nearest"
+    self,
+    fencespec,
+    zmin=None,
+    zmax=None,
+    zincrement=None,
+    hincrement=None,
+    atleast=5,
+    extend=2,
+    sampling="nearest",
 ):
     """Get a random line from a fence spesification"""
 
-    if not isinstance(fencespec, np.ndarray):
-        raise ValueError("Fence is not a numpy array")
+    if isinstance(fencespec, xtgeo.Polygons):
+        logger.info("Estimate hincrement from Polygons instance...")
+        fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, extend)
+        logger.info("Estimate hincrement from Polygons instance... DONE")
 
     if not len(fencespec.shape) == 2:
         raise ValueError("Fence is not a 2D numpy")
@@ -323,6 +334,20 @@ def get_randomline(
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)
+
+
+def _get_randomline_fence(self, fencespec, hincrement, atleast, extend):
+    """Compute a resampled fence from a Polygons instance"""
+
+    if hincrement is None:
+        avgdxdy = 0.5 * (self.xinc + self.yinc)
+        distance = 0.5 * avgdxdy
+
+    logger.info("Getting fence from a Polygons instance...")
+    return fencespec.get_fence(
+        distance=distance, atleast=atleast, extend=extend, asnumpy=True
+    )
+    logger.info("Getting fence from a Polygons instance... DONE")
 
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order

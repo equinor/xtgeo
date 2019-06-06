@@ -112,7 +112,7 @@ int pol_resampling(
     thlenx = calloc(naddr, sizeof(double));
 
     /* ========================================================================
-     * Part one, look at current input, re-estimate smapling distance, and
+     * Part one, look at current input, re-estimate sampling distance, and
      * find extend angles using certain criteria
      * ========================================================================
      */

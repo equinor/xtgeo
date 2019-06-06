@@ -8,17 +8,15 @@ import sys
 
 import numpy as np
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
-from xtgeo.common import constants
 
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export
 from xtgeo.cube import _cube_utils
 from xtgeo.cube import _cube_roxapi
 
-UNDEF = constants.UNDEF
-UNDEF_LIMIT = constants.UNDEF_LIMIT
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -95,9 +93,6 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     def __init__(self, *args, **kwargs):
         """Initiate a Cube instance."""
 
-        clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
-        logger.info(clsname)
-
         self._filesrc = None
         self._segyfile = None
         self._ilines = None
@@ -117,8 +112,6 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         self._xlines = np.array(range(1, 3 + 1), dtype=np.int32)
         self._rotation = 0.0
         self._traceidcodes = np.ones((5, 3), dtype=np.int32)
-        self._undef = UNDEF
-        self._undef_limit = UNDEF_LIMIT
 
         if len(args) >= 1:
             fformat = kwargs.get("fformat", "guess")
@@ -565,7 +558,15 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     # =========================================================================
 
     def get_randomline(
-        self, fencespec, zmin=None, zmax=None, zincrement=None, sampling="nearest"
+        self,
+        fencespec,
+        zmin=None,
+        zmax=None,
+        zincrement=None,
+        hincrement=None,
+        atleast=5,
+        extend=2,
+        sampling="nearest",
     ):
         """Get a randomline from a fence spesification.
 
@@ -576,13 +577,24 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         The input fencespec is a 2D numpy where each row is X, Y, Z, HLEN,
         where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
-        length along the fence.
+        length along the fence, or a Polygons instance with HLEN present.
+
+        It is important that the HLEN array has a constant increment and ideally
+        a sampling that is less than the Cube resolution.
 
         Args:
-            fencespec (np): 2D numpy with X, Y, Z, HLEN as rows.
+            fencespec (~np.ndarray or :class:`~xtgeo.xyz.polygons.Polygons`):
+                2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
             zmin (float): Minimum Z (default is Cube Z minima/origin)
             zmax (float): Maximum Z (default is Cube Z maximum)
-            zincrement (float): Sampling, default is Cube ZINC/2
+            zincrement (float): Sampling vertically, default is Cube ZINC/2
+            hincrement (float or bool): Resampling horizontally. This applies only
+                if the fencespec is a Polygons() instance. If None (default),
+                the distance will be deduced automatically.
+            atleast (int): Minimum number of horizontal samples (only if
+                fencespec is a Polygons instance)
+            extend (int): Extend with extend*hincrement in both ends (only if
+                fencespec is a Polygons instance)
             sampling (str): Algorithm, 'nearest' or 'trilinear' (first is
                 faster, second is more precise for continuous fields)
 
@@ -592,16 +604,25 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         Raises:
             ValueError: Input fence is not according to spec.
 
-        """
+        .. versionadded:: 2.1.0 support for Polygons() as fencespec, and keywords
+           hincrement, atleast and sampling
 
+        """
+        if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
+            raise ValueError("fencespec must be a numpy or a Polygons() object")
+        logger.info("Getting randomline...")
         res = _cube_utils.get_randomline(
             self,
             fencespec,
             zmin=zmin,
             zmax=zmax,
             zincrement=zincrement,
+            hincrement=hincrement,
+            atleast=atleast,
+            extend=extend,
             sampling=sampling,
         )
+        logger.info("Getting randomline... DONE")
         return res
 
     # =========================================================================
