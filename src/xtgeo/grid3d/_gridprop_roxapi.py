@@ -69,10 +69,10 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
 
     if self._isdiscrete:
         mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
+        mybuffer.fill(xtgeo.UNDEF_INT)
     else:
         mybuffer = np.ndarray(indexer.dimensions, dtype=np.float64)
-
-    mybuffer.fill(self.undef)  # self.undef dynamic based on self._isdiscrete
+        mybuffer.fill(xtgeo.UNDEF)
 
     cellno = indexer.get_cell_numbers_in_range((0, 0, 0), indexer.dimensions)
 
@@ -84,7 +84,10 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
 
     mybuffer[iind, jind, kind] = pvalues[cellno]
 
-    mybuffer = ma.masked_greater(mybuffer, self.undef_limit)
+    if self._isdiscrete:
+        mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_INT_LIMIT)
+    else:
+        mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_LIMIT)
 
     self._values = mybuffer
     self._name = pname

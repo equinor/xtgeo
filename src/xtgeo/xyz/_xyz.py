@@ -136,7 +136,7 @@ class XYZ(object):
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",
-    ):
+    ):  # pylint: disable=redefined-builtin
         """Export XYZ (Points/Polygons) to file.
 
         Args:

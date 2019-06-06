@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import numpy.ma as ma
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -61,9 +62,9 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
         dstatus = bool(discrete)
 
     if undef is None:
-        undef = self._undef
+        undef = xtgeo.UNDEF
         if dstatus:
-            undef = self._undef_i
+            undef = xtgeo.UNDEF_INT
 
     logger.debug("Entering conversion from numpy to C array ...")
 

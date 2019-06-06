@@ -9,18 +9,14 @@ from tempfile import mkstemp
 import numpy as np
 import numpy.ma as ma
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import DateNotFoundError
-from xtgeo.common.exceptions import KeywordFoundNoDateError
-from xtgeo.common.exceptions import KeywordNotFoundError
-
 from xtgeo.common import _get_fhandle, _close_fhandle
 
 from . import _gridprop_lowlevel
 from . import _grid3d_utils as utils
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
@@ -102,19 +98,21 @@ def from_file(
         if grid:
             grid.append_prop(self)
     elif ier == 22:
-        raise DateNotFoundError(
+        raise xtgeo.DateNotFoundError(
             "Date {} not found when importing {}".format(date, name)
         )
     elif ier == 23:
-        raise KeywordNotFoundError(
+        raise xtgeo.KeywordNotFoundError(
             "Keyword {} not found for date {} when importing".format(name, date)
         )
     elif ier == 24:
-        raise KeywordFoundNoDateError(
+        raise xtgeo.KeywordFoundNoDateError(
             "Keyword {} found but not for date " "{} when importing".format(name, date)
         )
     elif ier == 25:
-        raise KeywordNotFoundError("Keyword {} not found when importing".format(name))
+        raise xtgeo.KeywordNotFoundError(
+            "Keyword {} not found when importing".format(name)
+        )
     else:
         raise RuntimeError("Something went wrong, code {}".format(ier))
 
@@ -240,7 +238,7 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
         if not datefound:
             msg = "In {}: Date {} not found, nentry={}".format(pfile, date, nentry)
             xtg.warn(msg)
-            raise DateNotFoundError(msg)
+            raise xtgeo.DateNotFoundError(msg)
 
     # scan file for property
     logger.info("Make kwlist")
@@ -305,26 +303,26 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
                 pfile, date, name
             )
             xtg.warn(msg)
-            raise KeywordNotFoundError(msg)
+            raise xtgeo.KeywordNotFoundError(msg)
 
         if not datefoundhere and kwfound:
             msg = "For {}: The keyword <{}> exists but not for " "date <{}>".format(
                 pfile, name, date
             )
             xtg.warn(msg)
-            raise KeywordFoundNoDateError(msg)
+            raise xtgeo.KeywordFoundNoDateError(msg)
     else:
         if not kwfound:
             msg = "For {}: The keyword <{}> is not found".format(pfile, name)
             xtg.warn(msg)
-            raise KeywordNotFoundError(msg)
+            raise xtgeo.KeywordNotFoundError(msg)
 
     # read record:
     values = eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
 
     if kwtype == "INTE":
         self._isdiscrete = True
-        use_undef = self._undef_i
+        use_undef = xtgeo.UNDEF_INT
 
         # make the code list
         uniq = np.unique(values).tolist()
@@ -335,7 +333,7 @@ def _import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
     else:
         self._isdiscrete = False
         values = values.astype(np.float64)  # cast REAL (float32) to float64
-        use_undef = self._undef
+        use_undef = xtgeo.UNDEF
         self.codes = {}
 
     # arrays from Eclipse INIT or UNRST are usually for inactive values only.
@@ -403,7 +401,7 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
             break
 
     if bpos[name] == -1:
-        raise KeywordNotFoundError(
+        raise xtgeo.KeywordNotFoundError(
             "Cannot find property name {} in file {}".format(name, pfile)
         )
     self._ncol = grid.ncol
@@ -476,7 +474,7 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     os.remove(tmpfile)
 
     if ier != 0:
-        raise KeywordNotFoundError(
+        raise xtgeo.KeywordNotFoundError(
             "Cannot import {}, not present in file {}?".format(name, pfile)
         )
 
@@ -644,7 +642,7 @@ def _import_roff_v2(self, pfile, name):
 
     # get the actual parameter:
     vals = _rarraykwquery(
-        self, fhandle, kwords, "parameter!name!" + name, byteswap, ncol, nrow, nlay
+        fhandle, kwords, "parameter!name!" + name, byteswap, ncol, nrow, nlay
     )
 
     self._values = vals
@@ -692,7 +690,7 @@ def _rkwquery(fhandle, kws, name, swap):
     return xresult
 
 
-def _rarraykwquery(self, fhandle, kws, name, swap, ncol, nrow, nlay):
+def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     """Local function for _import_roff_v2, 3D parameter arrays.
 
     This parameters are translated to numpy data for the values
@@ -744,14 +742,14 @@ def _rarraykwquery(self, fhandle, kws, name, swap, ncol, nrow, nlay):
         vals = inumpy
         # vals = inumpy.reshape((ncol, nrow, nlay), order='F')
         # vals = np.asanyarray(vals, order='C')
-        vals = ma.masked_greater(vals, self._undef_ilimit)
+        vals = ma.masked_greater(vals, xtgeo.UNDEF_INT_LIMIT)
         del fnumpy
         del inumpy
     elif dtype == 2:
         vals = fnumpy
         # vals = fnumpy.reshape((ncol, nrow, nlay), order='F')
         # vals = np.asanyarray(vals, order='C')
-        vals = ma.masked_greater(vals, self._undef_limit)
+        vals = ma.masked_greater(vals, xtgeo.UNDEF_LIMIT)
         vals = vals.astype(np.float64)
         del fnumpy
         del inumpy

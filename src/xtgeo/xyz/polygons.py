@@ -306,7 +306,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         wcolumn=None,
         hcolumn=None,
         mdcolumn=None,
-    ):
+    ):  # pylint: disable=redefined-builtin
         """Export Polygons to file.
 
         Args:
@@ -411,7 +411,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         spolys = []
         idgroups = self.dataframe.groupby(self.pname)
 
-        for idx, grp in idgroups:
+        for _idx, grp in idgroups:
             pxcor = grp[self.xname].values
             pycor = grp[self.yname].values
             pzcor = grp[self.zname].values
