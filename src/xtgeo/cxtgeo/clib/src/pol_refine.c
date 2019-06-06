@@ -69,7 +69,7 @@ int pol_refine (
 
 	if (n>1) {
 	    len=usedist/n;
-
+            xtg_speak(s, 2, "LEN is %d", len);
 	    for (ii=1;ii<n; ii++) {
 
 		frac = (len/usedist)*ii;

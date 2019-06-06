@@ -137,7 +137,7 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
     The atleast parameter will win over the distance, meaning that if total length
     horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
 
-"""
+    """
 
     if len(self._df) < 2:
         xtg.warn("Well does not enough points in interval, outside range?")
@@ -150,11 +150,13 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
 
     nbuf = 1000000
 
+    logger.info("%s %s %s %s %s ", distance, atleast, extend, name, asnumpy)
     npxarr = np.zeros(nbuf, dtype=np.float64)
     npyarr = np.zeros(nbuf, dtype=np.float64)
     npzarr = np.zeros(nbuf, dtype=np.float64)
     npharr = np.zeros(nbuf, dtype=np.float64)
 
+    logger.info("Calling C routine...")
     # C function:
     ier, npxarr, npyarr, npzarr, npharr, nlen = _cxtgeo.pol_resampling(
         self._df[self.xname].values,
@@ -169,6 +171,7 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
         0,
         XTGDEBUG
     )
+    logger.info("Calling C routine... DONE")
 
     if ier != 0:
         raise RuntimeError("Nonzero code from_cxtgeo.pol_resampling")

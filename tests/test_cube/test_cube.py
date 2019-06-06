@@ -2,8 +2,11 @@
 import os
 from os.path import join
 
+import numpy as np
+import pandas as pd
 import pytest
 
+import xtgeo
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
 
@@ -311,3 +314,32 @@ def test_cube_swapaxes():
     tsetup.assert_almostequal(diff.mean(), 0.0, 0.000001)
     tsetup.assert_almostequal(diff.std(), 0.0, 0.000001)
     assert incube.ilines.size == incube.ncol
+
+
+def test_cube_randomline():
+    """Import a cube, and compute a randomline given a simple Polygon"""
+
+    # import matplotlib.pyplot as plt
+
+    incube = Cube(SFILE4)
+
+    # make a polyline with two points
+    dfr = pd.DataFrame(
+        np.array([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]]),
+        columns=["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"],
+    )
+    poly = xtgeo.Polygons()
+    poly.dataframe = dfr
+
+    logger.info("Generate random line...")
+    hmin, hmax, vmin, vmax, random = incube.get_randomline(poly)
+
+    tsetup.assert_almostequal(hmin, -15.655932861802714, 0.001)
+    tsetup.assert_almostequal(random.mean(), -11.8755, 0.001)
+
+    # plt.figure()
+    # plt.imshow(random, cmap='seismic', interpolation='sinc',
+    #            extent=(hmin, hmax, vmax, vmin))
+    # plt.axis('tight')
+    # plt.colorbar()
+    # plt.show()
