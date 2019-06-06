@@ -144,10 +144,6 @@ class Grid(Grid3D):
         self._props = None  # None or a GridProperties instance
         self._subgrids = None  # A python dict if subgrids are given
 
-        # perhaps undef should be a class variable, not an instance variables?
-        self._undef = _cxtgeo.UNDEF
-        self._undef_limit = _cxtgeo.UNDEF_LIMIT
-
         # Roxar api spesific:
         self._roxgrid = None
         self._roxindexer = None
@@ -381,25 +377,6 @@ class Grid(Grid3D):
             plist = self._props.names
 
         return plist
-
-    @property
-    def undef(self):
-        """Get the undef value for floats or ints numpy arrays."""
-        return self._undef
-
-    @property
-    def undef_limit(self):
-        """Returns the undef limit number - slightly less than the undef value.
-
-        Hence for numerical precision, one can force undef values
-        to a given number, e.g.::
-
-           x[x<x.undef_limit]=999
-
-        Undef limit values cannot be changed.
-        """
-
-        return self._undef_limit
 
     @property
     def roxgrid(self):

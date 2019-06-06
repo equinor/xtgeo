@@ -189,11 +189,6 @@ class GridProperty(Grid3D):
         self._codes = {}  # code dictionary (for discrete)
         self._filesrc = None
 
-        self._undef = xtgeo.UNDEF
-        self._undef_limit = xtgeo.UNDEF_LIMIT
-
-        self._undef_i = xtgeo.UNDEF_INT
-        self._undef_ilimit = xtgeo.UNDEF_INT_LIMIT
         self._actnum_indices = None
 
         self._roxorigin = False  # true if the object comes from the ROXAPI
@@ -205,9 +200,9 @@ class GridProperty(Grid3D):
 
         if testmask:
             # make some undef cells (for test)
-            self._values[0:4, 0, 0:2] = self._undef
+            self._values[0:4, 0, 0:2] = xtgeo.UNDEF
             # make it masked
-            self._values = np.ma.masked_greater(self._values, self._undef_limit)
+            self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
 
         if len(args) == 1:
             # make instance through file import
@@ -468,9 +463,9 @@ class GridProperty(Grid3D):
         numpy arrays (read only).
         """
         if self._isdiscrete:
-            return self._undef_i
+            return xtgeo.UNDEF_INT
 
-        return self._undef
+        return xtgeo.UNDEF
 
     @property
     def undef_limit(self):
@@ -486,9 +481,9 @@ class GridProperty(Grid3D):
 
         """
         if self._isdiscrete:
-            return self._undef_ilimit
+            return xtgeo.UNDEF_INT_LIMIT
 
-        return self._undef_limit
+        return xtgeo.UNDEF_LIMIT
 
     # =========================================================================
     # Import and export
@@ -765,9 +760,9 @@ class GridProperty(Grid3D):
     def mask_undef(self):
         """Make UNDEF values masked."""
         if self._isdiscrete:
-            self._values = np.ma.masked_greater(self._values, self._undef_ilimit)
+            self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_INT_LIMIT)
         else:
-            self._values = np.ma.masked_greater(self._values, self._undef_limit)
+            self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
 
     def crop(self, spec):
         """Crop a property, see method under grid"""

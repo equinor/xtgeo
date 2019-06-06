@@ -238,11 +238,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         fformat="xyz",
         attributes="all",
         pfilter=None,
+        filter=None,  # deprecated use (for backwards compatibility)
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",
-        filter=None,
-    ):
+    ):  # pylint: disable=redefined-builtin
         """Export XYZ (Points/Polygons) to file.
 
         Args:
