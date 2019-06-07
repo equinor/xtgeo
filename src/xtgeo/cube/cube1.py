@@ -570,20 +570,20 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     ):
         """Get a randomline from a fence spesification.
 
-        In prep.
-
         This randomline will be a 2D numpy with depth/time on the vertical
-        axis, and length along as horizontal axis.
+        axis, and length along as horizontal axis. Undefined values will have
+        the np.nan value.
 
         The input fencespec is a 2D numpy where each row is X, Y, Z, HLEN,
         where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
         length along the fence, or a Polygons instance with HLEN present.
 
-        It is important that the HLEN array has a constant increment and ideally
-        a sampling that is less than the Cube resolution.
+        If input fencspec is a numpy 2D, it is important that the HLEN array
+        has a constant increment and ideally a sampling that is less than the
+        Cube resolution. If a Polygons() instance, this is automated!
 
         Args:
-            fencespec (~np.ndarray or :class:`~xtgeo.xyz.polygons.Polygons`):
+            fencespec (:obj:`~numpy.ndarray` or :class:`~xtgeo.xyz.polygons.Polygons`):
                 2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
             zmin (float): Minimum Z (default is Cube Z minima/origin)
             zmax (float): Maximum Z (default is Cube Z maximum)
@@ -593,7 +593,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
                 the distance will be deduced automatically.
             atleast (int): Minimum number of horizontal samples (only if
                 fencespec is a Polygons instance)
-            extend (int): Extend with extend*hincrement in both ends (only if
+            extend (int): Extend with extend * hincrement in both ends (only if
                 fencespec is a Polygons instance)
             sampling (str): Algorithm, 'nearest' or 'trilinear' (first is
                 faster, second is more precise for continuous fields)
@@ -604,8 +604,13 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         Raises:
             ValueError: Input fence is not according to spec.
 
-        .. versionadded:: 2.1.0 support for Polygons() as fencespec, and keywords
+        .. versionchanged:: 2.1.0 support for Polygons() as fencespec, and keywords
            hincrement, atleast and sampling
+
+        .. seealso::
+           Class :class:`~xtgeo.xyz.polygons.Polygons`
+              The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
+              used to pregenerate `fencespec`
 
         """
         if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
