@@ -242,6 +242,7 @@ class XYZ(object):
 
             stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
             realisation (int): Realisation number, default is 0
+            attributes (bool): If True, attributes will be preserved (from RMS 11)
 
         Returns:
             Object instance updated
@@ -284,6 +285,8 @@ class XYZ(object):
             stype (str): RMS folder type, 'horizons' (default), 'zones'
                 or 'faults' or 'clipboard'
             realisation (int): Realisation number, default is 0
+            attributes (bool): If True, attributes will be preserved (from RMS 11)
+
 
         Returns:
             Object instance updated
