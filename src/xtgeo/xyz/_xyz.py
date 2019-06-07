@@ -6,9 +6,11 @@ from __future__ import print_function, absolute_import
 import abc
 import os.path
 from collections import OrderedDict
+from copy import deepcopy
 
 import six
 
+import xtgeo
 from xtgeo.common import XTGeoDialog, XTGDescription
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
@@ -47,6 +49,26 @@ class XYZ(object):
                 self.from_file(pfile, fformat=fformat)
 
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
+
+    @abc.abstractmethod
+    def copy(self, stype):
+        """Returns a a deep copy of an instance"""
+
+        if stype == "polygons":
+            mycopy = xtgeo.Polygons()
+        else:
+            mycopy = xtgeo.Points()
+        mycopy._df = self._df.copy()
+        mycopy._ispolygons = self._ispolygons
+        mycopy._xname = self._xname
+        mycopy._yname = self._yname
+        mycopy._zname = self._zname
+        mycopy._pname = self._pname
+        mycopy._mname = self._mname
+        mycopy._filescr = self._filesrc = None
+        mycopy._attrs = deepcopy(self._attrs)
+
+        return mycopy
 
     @abc.abstractmethod
     def describe(self, flush=True):

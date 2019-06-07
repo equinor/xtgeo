@@ -169,7 +169,7 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
         nbuf,
         nbuf,
         0,
-        XTGDEBUG
+        XTGDEBUG,
     )
     logger.info("Calling C routine... DONE")
 
@@ -181,7 +181,7 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
     npzarr = npzarr[:nlen]
     npharr = npharr[:nlen]
 
-    npdharr = np.subtract(npharr[1:], npharr[0: nlen - 1])
+    npdharr = np.subtract(npharr[1:], npharr[0 : nlen - 1])
     npdharr = np.insert(npdharr, 0, [0.0])
 
     if asnumpy is True:
@@ -203,3 +203,44 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
             rval.name = name
 
     return rval
+
+
+def snap_surface(self, surf, activeonly=True):
+    """Snap (or transfer) operation.
+
+    Points that falls outside the surface will be UNDEF, and they will be removed
+    if activeonly. Otherwise, the old values will be kept.
+    """
+
+    if not isinstance(surf, xtgeo.RegularSurface):
+        raise ValueError("Input object of wrong data type, must be RegularSurface")
+
+    zval = self._df[self.zname].values.copy()
+
+    ier = _cxtgeo.surf_get_zv_from_xyv(
+        self._df[self.xname].values,
+        self._df[self.yname].values,
+        zval,
+        surf.ncol,
+        surf.nrow,
+        surf.xori,
+        surf.yori,
+        surf.xinc,
+        surf.yinc,
+        surf.yflip,
+        surf.rotation,
+        surf.get_values1d(),
+        XTGDEBUG,
+    )
+
+    if ier != 0:
+        raise RuntimeError(
+            "Error code from C routine surf_get_zv_from_xyv is {}".format(ier)
+        )
+    if activeonly:
+        self._df[self.zname] = zval
+        self._df = self._df[self._df[self.zname] < xtgeo.UNDEF_LIMIT]
+        self._df.reset_index(inplace=True, drop=True)
+    else:
+        out = np.where(zval < xtgeo.UNDEF_LIMIT, zval, self._df[self.zname].values)
+        self._df[self.zname] = out

@@ -204,7 +204,16 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
+    def copy(self, stype="points"):
+        """Deep copy of a Points instance
+
+        .. versionadded: 2.1.0
+        """
+        stype = "points"
+        return super(Points, self).copy(stype)
+
     def describe(self, flush=True):
+        """Describe a Points instance"""
         super(Points, self).describe(flush=flush)
 
     def from_file(self, pfile, fformat="xyz"):
@@ -528,9 +537,33 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         self._df = pd.DataFrame(ddatas)
         self.zname = zname
 
-    # =========================================================================
+    # ==================================================================================
+    # Operations vs surfaces and possibly other
+    # ==================================================================================
+
+    def snap_surface(self, surf, activeonly=True):
+        """Snap (transfer) the points Z values to a RegularSurface
+
+        Args:
+            surf (~xtgeo.surface.regular_surface.RegularSurface): Surface to snap to.
+            activeonly (bool): If True (default), the points outside the defined surface
+                will be removed. If False, these points will keep the original values.
+
+        Returns:
+            None (instance is updated inplace)
+
+        Raises:
+            ValueError: Input object of wrong data type, must be RegularSurface
+            RuntimeError: Error code from C routine surf_get_zv_from_xyv is ...
+
+        .. versionadded:: 2.1.0
+
+        """
+        _xyz_oper.snap_surface(self, surf, activeonly=activeonly)
+
+    # ==================================================================================
     # Operations restricted to inside/outside polygons
-    # =========================================================================
+    # ==================================================================================
 
     def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
         """A generic function for doing points operations restricted to inside
