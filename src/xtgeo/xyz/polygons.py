@@ -169,12 +169,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
-    def copy(self):
+    def copy(self, stype="polygons"):
         """Deep copy of a Polygons instance.
 
         .. versionadded: 2.1.0
         """
-        return super(Polygons, self).copy()
+        return super(Polygons, self).copy(stype)
 
     def describe(self, flush=True):
         """Describe a Polygons instance"""
@@ -483,7 +483,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self, distance=distance, atleast=atleast, extend=extend,
             name=name, asnumpy=asnumpy
         )
-        logger.info("Getting fence within a Polygons instance... DONE")
 
     # =========================================================================
     # Operations restricted to inside/outside polygons

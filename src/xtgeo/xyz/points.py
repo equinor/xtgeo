@@ -204,12 +204,13 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
-    def copy(self):
+    def copy(self, stype="points"):
         """Deep copy of a Points instance
 
         .. versionadded: 2.1.0
         """
-        return super(Points, self).copy()
+        stype = "points"
+        return super(Points, self).copy(stype)
 
     def describe(self, flush=True):
         """Describe a Points instance"""

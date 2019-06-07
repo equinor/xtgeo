@@ -51,10 +51,10 @@ class XYZ(object):
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
 
     @abc.abstractmethod
-    def copy(self):
+    def copy(self, stype):
         """Returns a a deep copy of an instance"""
 
-        if self._ispolygons:
+        if stype == "polygons":
             mycopy = xtgeo.Polygons()
         else:
             mycopy = xtgeo.Points()
