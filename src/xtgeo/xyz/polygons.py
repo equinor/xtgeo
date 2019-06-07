@@ -169,7 +169,15 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
+    def copy(self):
+        """Deep copy of a Polygons instance.
+
+        .. versionadded: 2.1.0
+        """
+        return super(Polygons, self).copy()
+
     def describe(self, flush=True):
+        """Describe a Polygons instance"""
         super(Polygons, self).describe(flush=flush)
 
     def from_file(self, pfile, fformat="xyz"):

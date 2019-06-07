@@ -204,7 +204,15 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
+    def copy(self):
+        """Deep copy of a Points instance
+
+        .. versionadded: 2.1.0
+        """
+        return super(Points, self).copy()
+
     def describe(self, flush=True):
+        """Describe a Points instance"""
         super(Points, self).describe(flush=flush)
 
     def from_file(self, pfile, fformat="xyz"):
