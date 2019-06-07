@@ -331,6 +331,7 @@ def get_randomline(
         XTGDEBUG,
     )
 
+    values[values > xtgeo.UNDEF_LIMIT] = np.nan
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)
