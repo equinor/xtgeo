@@ -90,7 +90,7 @@ int pol_resampling(
                    int option,
                    int debug)
 {
-    double *txv, *tyv, *tzv, *thlen, *thlenx;
+    double *txv, *tyv, *tzv, *thlen, *tdhlenx, *thlenx, *tmpdh;
     double tchlen, usmpl, angr_start, angr_end, angd, vlen, uhext;
     double length1, length2, dscaler, x1, x2, y1, y2, z1, z2, xr, yr, zr;
     double delta, x0, y0, z0, x3, y3, xs, ys, zs, xe, ye, ze, hxxd, dist;
@@ -110,6 +110,8 @@ int pol_resampling(
     tyv = calloc(naddr, sizeof(double));
     tzv = calloc(naddr, sizeof(double));
     thlenx = calloc(naddr, sizeof(double));
+    tdhlenx = calloc(naddr, sizeof(double));
+
 
     /* ========================================================================
      * Part one, look at current input, re-estimate sampling distance, and
@@ -118,7 +120,8 @@ int pol_resampling(
      */
 
     /* find the hlen vector, which is the horizontal cumulative length */
-    ier = pol_geometrics(nlenx, xv, yv, zv, thlen, debug);
+    ier = pol_geometrics(xv, nlenx, yv, nlenx, zv, nlenx, thlen, nlenx,
+                         thlen, nlenx, debug);
 
     if (debug > 2) {
         for (i = 0;  i < nlenx; i++) {
@@ -211,7 +214,12 @@ int pol_resampling(
 
     if (debug > 2) {
         /* debugging only work */
-        ier = pol_geometrics(nlenx + 2, txv, tyv, tzv, thlenx, debug);
+        ier = pol_geometrics(txv, nlenx + 2,
+                             tyv, nlenx + 2,
+                             tzv, nlenx + 2,
+                             thlenx, nlenx + 2,
+                             tdhlenx, nlenx + 2,
+                             debug);
         for (i = 0;  i < (nlenx + 2); i++) {
             delta = 0.0;
             if (i>0) delta = thlenx[i] - thlenx[i - 1];
@@ -290,8 +298,16 @@ int pol_resampling(
 
     xtg_speak(sbn, 2, "Updated NOLEN is %d", *nolen);
 
+    tmpdh = calloc(nbufh, sizeof(double));
+
     /* find the new hlen vector */
-    ier = pol_geometrics(*nolen, xov, yov, zov, hlen, debug);
+    ier = pol_geometrics(xov, *nolen,
+                         yov, *nolen,
+                         zov, *nolen,
+                         hlen, *nolen,
+                         tmpdh, *nolen,
+                         debug);
+
     for (i = 0;  i < nct; i++) hlen[i] -= uhext;
 
     if (debug > 2) {
@@ -310,6 +326,7 @@ int pol_resampling(
     }
 
     free(thlen);
+    free(tmpdh);
     free(thlenx);
     free(txv);
     free(tyv);

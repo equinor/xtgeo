@@ -96,6 +96,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._zname = "Z_TVDSS"
         self._pname = "POLY_ID"
         self._mname = "M_MDEPTH"
+        self._hname = "H_CUMLEN"
+        self._dhname = "H_DELTALEN"
         self._name = "poly"  # the name of the Polygons() instance
         super(Polygons, self).__init__(*args, **kwargs)
 
@@ -145,11 +147,41 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return self._zname
 
     @zname.setter
-    def zname(self, zname):
-        if isinstance(zname, str):
-            self._zname = zname
+    def zname(self, newname):
+        if isinstance(newname, str):
+            self._zname = newname
         else:
             raise ValueError("Wrong type of input to zname; must be string")
+
+    @property
+    def hname(self):
+        """ Returns or set the name of the cumulative horizontal length column.
+
+        .. versionadded: 2.1.0
+        """
+        return self._hname
+
+    @hname.setter
+    def hname(self, myhname):
+        if isinstance(myhname, str):
+            self._hname = myhname
+        else:
+            raise ValueError("Wrong type of input to hname; must be string")
+
+    @property
+    def dhname(self):
+        """ Returns or set the name of the delta horizontal length column.
+
+        .. versionadded: 2.1.0
+        """
+        return self._dhname
+
+    @dhname.setter
+    def dhname(self, mydhname):
+        if isinstance(mydhname, str):
+            self._dhname = mydhname
+        else:
+            raise ValueError("Wrong type of input to dhname; must be string")
 
     @property
     def pname(self):
@@ -444,22 +476,57 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         return (xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def rescale(self, distance):
+    def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
+        """Compute and add or replace columns for cum. lenghth and delta length.
+
+        The instance is updated in-place.
+
+        Args:
+            hname (str): Name of cumulative horizontal length. Default is H_CUMLEN.
+            dhname (str): Name of delta length column. Default is H_DELTALEN.
+            atindex (int): Which index which shall be 0.0 for cumulative length.
+
+        .. versionadded: 2.1.0
+        """
+
+        _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
+
+    def extend(self, distance, nsamples=1):
+        """Extend polyline by `distance` at both ends.
+
+        Args:
+            distance (float): The horizontal distance to extend
+            nsamples (int): Number of samples to extend.
+
+        .. versionadded: 2.1.0
+        """
+
+        _xyz_oper.extend(self, distance, nsamples)
+
+    def rescale(self, distance, hlen=True, constant=False):
         """Rescale (resample) by using a new horizontal increment.
 
-        As usual, the instance is updated in-place.
+        The instance is updated in-place.
 
         If the distance is larger than the total input poly-line length,
         nothing is done. Note that the result distance may differ from then
         requested distance to rounding to fit original length.
 
         Args:
-             distance (float): New distance between points
+            distance (float): New distance between points
+            hlen (str): If True, a horizontal cum. and delta length columns will
+                will be added.
+            constant (bool): If True, internal vertices are not preserved
+
         """
 
-        _xyz_oper.rescale_polygons(self, distance=distance)
+        _xyz_oper.rescale_polygons(
+            self, distance=distance, hlen=hlen, constant=constant
+        )
 
-    def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
+    def get_fence(
+        self, distance=20, atleast=5, extend=2, name=None, asnumpy=True, version=2
+    ):
         """Extracts a fence with constant horizontal sampling and
         an additonal HLEN vector, suitable for X sections.
 
@@ -472,6 +539,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             name (str): Name of polygon (if asnumpy=False)
             asnumpy (bool): Return a [:, 5] numpy array with
                 columns X.., Y.., Z.., HLEN, dH
+            version (int): Two versions in internal algorithm, 1 or 2 (default).
 
         Returns:
             A numpy array (if asnumpy=True) or a new Polygons() object
@@ -480,8 +548,13 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
         logger.info("Getting fence within a Polygons instance...")
         return _xyz_oper.get_fence(
-            self, distance=distance, atleast=atleast, extend=extend,
-            name=name, asnumpy=asnumpy
+            self,
+            distance=distance,
+            atleast=atleast,
+            extend=extend,
+            name=name,
+            asnumpy=asnumpy,
+            version=version,
         )
 
     # =========================================================================

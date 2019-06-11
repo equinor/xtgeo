@@ -190,6 +190,23 @@ int x_vector_info2 (
 		    int     debug
 		    );
 
+
+int x_vector_linint2 (
+                      double x0,
+                      double y0,
+                      double z0,
+                      double x1,
+                      double y1,
+                      double z1,
+                      double dist,
+                      double *swig_dbl_out_p1,
+                      double *swig_dbl_out_p2,
+                      double *swig_dbl_out_p3,
+                      int option,
+                      int debug
+                      );
+
+
 double x_diff_angle (
 		     double ang1,
 		     double ang2,
@@ -779,9 +796,19 @@ int pol_set_entry (
 		   int    debug
 		   );
 
-int pol_geometrics(int nlen, double *xv, double *yv, double *zv,
-                   double *hlenv,
-                   int debug);
+int pol_geometrics(
+                   double *swig_np_dbl_in_v1,     // *xv
+                   long   n_swig_np_dbl_in_v1,    // nxv
+                   double *swig_np_dbl_in_v2,     // *yv
+                   long   n_swig_np_dbl_in_v2,    // nyv
+                   double *swig_np_dbl_in_v3,     // *zv
+                   long   n_swig_np_dbl_in_v3,    // nzv
+                   double *swig_np_dbl_aout_v1,     // *hv
+                   long   n_swig_np_dbl_aout_v1,    // nhv
+                   double *swig_np_dbl_aout_v2,     // *dhv
+                   long   n_swig_np_dbl_aout_v2,    // ndhv
+                   int debug
+                   );
 
 int pol_info(int nlen,
              double *xv,

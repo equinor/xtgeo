@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 import shapely.geometry as sg
 
@@ -23,7 +24,7 @@ XTGDEBUG = xtg.get_syslevel()
 
 def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
     """
-    Operations restricted to closed polygons, for points or polyline points.
+    Operations re restricted to closed polygons, for points or polyline points.
 
     If value is not float but 'poly', then the avg of each polygon Z value will
     be used instead.
@@ -31,10 +32,11 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     'Inside' several polygons will become a union, while 'outside' polygons
     will be the intersection.
 
-    The "where" filter is remaining...
+    The "where" filter is reserved for future use.
     """
 
     logger.warning("Where is not imeplented: %s", where)
+
     oper = {"set": 1, "add": 2, "sub": 3, "mul": 4, "div": 5, "eli": 11}
 
     insidevalue = 0
@@ -76,15 +78,18 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
 
     zcor[zcor > xtgeo.UNDEF_LIMIT] = np.nan
     self._df[self.zname] = zcor
-    print("XX", self._df)
     # removing rows where Z column is undefined
     self._df.dropna(how="any", subset=[self.zname], inplace=True)
     self._df.reset_index(inplace=True, drop=True)
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def rescale_polygons(self, distance=10):
+def rescale_polygons(self, distance=10, hlen=True, constant=False):
     """Rescale (resample) a polygons segment"""
+
+    if constant:
+        _rescale_constant(self, distance, hlen)
+        return None
 
     if not self._ispolygons:
         raise ValueError("Not a Polygons object")
@@ -103,11 +108,15 @@ def rescale_polygons(self, distance=10):
         dfr = pd.DataFrame(
             np.array(new_spoly), columns=[self.xname, self.yname, self.zname]
         )
+
         dfr[self.pname] = idx
         dfrlist.append(dfr)
 
     dfr = pd.concat(dfrlist)
     self.dataframe = dfr.reset_index(drop=True)
+
+    if hlen:
+        self.hlen()
 
 
 def _redistribute_vertices(geom, distance):
@@ -130,7 +139,42 @@ def _redistribute_vertices(geom, distance):
     raise ValueError("Unhandled geometry {}".format(geom.geom_type))
 
 
-def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
+def _rescale_constant(self, distance, hlen):
+
+    # Rescaling to constant increment is perhaps impossible, but this is
+    # is quite close
+
+    self.hlen()
+
+    idgroups = self.dataframe.groupby(self.pname)
+
+    dfrlist = []
+    for idx, grp in idgroups:
+
+        points = np.array([grp[self.xname], grp[self.yname], grp[self.zname]]).T
+        lenh = grp[self.hname].iloc[-1]
+        nstep = int(lenh / distance)
+
+        interpolator = interp1d(grp[self.hname], points, kind="slinear", axis=0)
+        ip = interpolator(np.linspace(0, lenh, num=nstep, endpoint=True))
+
+        dfr = pd.DataFrame(
+            np.array(ip), columns=[self.xname, self.yname, self.zname]
+        )
+
+        dfr[self.pname] = idx
+        dfrlist.append(dfr)
+
+    dfr = pd.concat(dfrlist)
+    self.dataframe = dfr.reset_index(drop=True)
+
+    if hlen:
+        self.hlen()
+
+
+def get_fence(
+    self, distance=20, atleast=5, extend=2, name=None, asnumpy=True, version=2
+):
     """Get a fence suitable for plotting xsections, either as a numpy or as a
     new Polygons instance.
 
@@ -138,6 +182,13 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
     horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
 
     """
+    if version == 1:
+        return _fence_v1(self, distance, atleast, extend, name, asnumpy)
+    else:
+        return _fence_v2(self, distance, atleast, extend, name, asnumpy)
+
+
+def _fence_v1(self, distance, atleast, extend, name, asnumpy):
 
     if len(self._df) < 2:
         xtg.warn("Well does not enough points in interval, outside range?")
@@ -205,6 +256,41 @@ def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
     return rval
 
 
+def _fence_v2(self, distance, atleast, extend, name, asnumpy):
+
+    new = self.copy()
+
+    if len(new.dataframe) < 2:
+        xtg.warn("Well does not enough points in interval, outside range?")
+        return False
+
+    hlen = new.get_shapely_objects()[0].length
+
+    if hlen / float(atleast) < distance:
+        distance = hlen / float(atleast)
+
+    new.rescale(distance, constant=True)
+    new.extend(distance, nsamples=extend)
+
+    if name:
+        new.name = name
+
+    if asnumpy is True:
+        rval = np.concatenate(
+            (
+                new.dataframe[new.xname].values,
+                new.dataframe[new.yname].values,
+                new.dataframe[new.zname].values,
+                new.dataframe[new.hname].values,
+                new.dataframe[new.dhname].values,
+            ),
+            axis=0,
+        )
+        return np.reshape(rval, (new.nrow, 5), order="F")
+
+    return new
+
+
 def snap_surface(self, surf, activeonly=True):
     """Snap (or transfer) operation.
 
@@ -244,3 +330,99 @@ def snap_surface(self, surf, activeonly=True):
     else:
         out = np.where(zval < xtgeo.UNDEF_LIMIT, zval, self._df[self.zname].values)
         self._df[self.zname] = out
+
+
+def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
+    """Get the distance (cumulative and delta) between points in polygons.
+
+    The properties hname and dhname will be updated.
+
+    Note that DH at first location will be set equal to dHat location 1
+    """
+
+    if not isinstance(self, xtgeo.Polygons):
+        raise ValueError("Input object of wrong data type, must be Polygons")
+
+    # delete existing self.hname and self.dhname columns
+    if self.hname in self._df:
+        self._df.drop(self.hname, axis=1, inplace=True)
+
+    if self.dhname in self._df:
+        self._df.drop(self.dhname, axis=1, inplace=True)
+
+    idgroups = self._df.groupby(self.pname)
+
+    hdist = np.array([])
+    dhdist = np.array([])
+    for _id, grp in idgroups:
+        print(grp)
+        ier, hlen, dhlen = _cxtgeo.pol_geometrics(
+            grp[self.xname].values,
+            grp[self.yname].values,
+            grp[self.zname].values,
+            len(grp),
+            len(grp),
+            XTGDEBUG,
+        )
+        dhlen[0] = dhlen[1]
+        if atindex > 0:
+            cumval = hlen[atindex]
+            hlen -= cumval
+
+        hdist = np.append(hdist, hlen)
+        dhdist = np.append(dhdist, dhlen)
+
+    self._df[hname] = hdist
+    self._df[dhname] = dhdist
+
+    self.hname = hname
+    self.dhname = dhname
+
+
+def extend(self, distance, nsamples, hlen=True):
+    """Extend polygon by distance, nsamples times.
+
+    It is default to recompute HLEN from nsmaples
+    """
+
+    if not isinstance(self, xtgeo.Polygons):
+        raise ValueError("Input object of wrong data type, must be Polygons")
+
+    for nsam in range(nsamples):
+
+        # beginning of poly
+        row0 = self._df.iloc[0]
+        row1 = self._df.iloc[1]
+
+        rown = row0.copy()
+
+        ier, newx, newy, newz = _cxtgeo.x_vector_linint2(
+            row1[0], row1[1], row1[2], row0[0], row0[1], row0[2], distance, 2, XTGDEBUG
+        )
+
+        rown[self.xname] = newx
+        rown[self.yname] = newy
+
+        df_to_add = rown.to_frame().T
+
+        self._df = pd.concat([df_to_add, self._df]).reset_index(drop=True)
+
+        # end of poly
+        row0 = self._df.iloc[-2]
+        row1 = self._df.iloc[-1]
+
+        rown = row1.copy()
+
+        ier, newx, newy, newz = _cxtgeo.x_vector_linint2(
+            row0[0], row0[1], row0[2], row1[0], row1[1], row1[2], distance, 1, XTGDEBUG
+        )
+
+        rown[self.xname] = newx
+        rown[self.yname] = newy
+
+        df_to_add = rown.to_frame().T
+
+        self._df = pd.concat([self._df, df_to_add]).reset_index(drop=True)
+
+    if hlen:
+        self.hlen(atindex=nsamples)
