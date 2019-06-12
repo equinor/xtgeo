@@ -565,7 +565,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         zincrement=None,
         hincrement=None,
         atleast=5,
-        extend=2,
+        nextend=2,
         sampling="nearest",
     ):
         """Get a randomline from a fence spesification.
@@ -593,7 +593,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
                 the distance will be deduced automatically.
             atleast (int): Minimum number of horizontal samples (only if
                 fencespec is a Polygons instance)
-            extend (int): Extend with extend * hincrement in both ends (only if
+            nextend (int): Extend with extend * hincrement in both ends (only if
                 fencespec is a Polygons instance)
             sampling (str): Algorithm, 'nearest' or 'trilinear' (first is
                 faster, second is more precise for continuous fields)
@@ -624,7 +624,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             zincrement=zincrement,
             hincrement=hincrement,
             atleast=atleast,
-            extend=extend,
+            nextend=nextend,
             sampling=sampling,
         )
         logger.info("Getting randomline... DONE")

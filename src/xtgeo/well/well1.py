@@ -778,28 +778,21 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         # extract numpies from XYZ trajectory logs
-        ptr_xv = self.get_carray("X_UTME")
-        ptr_yv = self.get_carray("Y_UTMN")
-        ptr_zv = self.get_carray("Z_TVDSS")
+        xv = self._df["X_UTME"].values
+        yv = self._df["Y_UTMN"].values
+        zv = self._df["Z_TVDSS"].values
 
         # get number of rows in pandas
         nlen = self.nrow
 
-        ptr_hlen = _cxtgeo.new_doublearray(nlen)
-
-        ier = _cxtgeo.pol_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_hlen, XTGDEBUG)
+        ier, hlenv, dhlenv = _cxtgeo.pol_geometrics(
+            xv, yv, zv, nlen, nlen, XTGDEBUG
+        )
 
         if ier != 0:
             sys.exit(-9)
 
-        dnumpy = self._convert_carr_double_np(ptr_hlen)
-        self._df["R_HLEN"] = pd.Series(dnumpy, index=self._df.index)
-
-        # delete tmp pointers
-        _cxtgeo.delete_doublearray(ptr_xv)
-        _cxtgeo.delete_doublearray(ptr_yv)
-        _cxtgeo.delete_doublearray(ptr_zv)
-        _cxtgeo.delete_doublearray(ptr_hlen)
+        self._df["R_HLEN"] = pd.Series(hlenv, index=self._df.index)
 
     def geometrics(self):
         """Compute some well geometrical arrays MD, INCL, AZI, as logs.
@@ -999,12 +992,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return poly
 
-    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None, asnumpy=True):
+    def get_fence_polyline(self, sampling=20, nextend=2, tvdmin=None, asnumpy=True):
         """Return a fence polyline as a numpy array or a Polygons object.
 
         Args:
             sampling (float): Sampling interval i.e. distance (input)
-            extend (int): Number if sampling to extend; e.g. 2 * 20
+            nextend (int): Number if sampling to extend; e.g. 2 * 20
             tvdmin (float): Minimum TVD starting point.
             as_numpy (bool): If True, a numpy array, otherwise a Polygons
                 object with 5 columns where the 2 last are HLEN and POLY_ID
@@ -1021,7 +1014,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if tvdmin is not None:
             poly.dataframe = poly.dataframe[poly.dataframe[poly.zname] >= tvdmin]
 
-        return poly.get_fence(distance=sampling, extend=extend, asnumpy=asnumpy)
+        return poly.get_fence(distance=sampling, nextend=nextend, asnumpy=asnumpy)
 
         # # pylint: disable=too-many-locals
 
@@ -1052,7 +1045,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         #     ptr_yv,
         #     ptr_zv,
         #     sampling,
-        #     sampling * extend,
+        #     sampling * nextend,
         #     nbuf,
         #     ptr_nlen,
         #     ptr_xov,
@@ -1072,7 +1065,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # npyarr = self._convert_carr_double_np(ptr_yov, nlen=nlen)
         # npzarr = self._convert_carr_double_np(ptr_zov, nlen=nlen)
         # npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
-        # # npharr = npharr - sampling * extend ???
+        # # npharr = npharr - sampling * nextend ???
 
         # if asnumpy is True:
         #     rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
@@ -1080,7 +1073,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # else:
         #     rval = xtgeo.xyz.Polygons()
         #     wna = self.xwellname
-        #     idwell = [None] * extend + [wna] * (nlen - 2 * extend) + [None] * extend
+        #     idwell = [None] * nextend + [wna] * (nlen - 2 * extend) + [None] * extend
         #     arr = np.vstack(
         #         [npxarr, npyarr, npzarr, npharr, np.zeros(nlen, dtype=np.int32)]
         #     )

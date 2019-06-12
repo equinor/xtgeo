@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, UnivariateSpline
 
 import shapely.geometry as sg
 
@@ -84,11 +84,11 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def rescale_polygons(self, distance=10, hlen=True, _version=2):
+def rescale_polygons(self, distance=10, addhlen=True, _version=2):
     """Rescale (resample) a polygons segment"""
 
     if _version == 2:
-        _rescale_v2(self, distance, hlen)
+        _rescale_v2(self, distance, addhlen)
         return None
 
     # version 1:
@@ -117,10 +117,12 @@ def rescale_polygons(self, distance=10, hlen=True, _version=2):
     dfr = pd.concat(dfrlist)
     self.dataframe = dfr.reset_index(drop=True)
 
-    if hlen:
+    if addhlen:
         self.hlen()
     else:
         self.delete_columns([self.hname, self.dhname])
+
+    return None
 
 
 def _redistribute_vertices(geom, distance):
@@ -143,7 +145,7 @@ def _redistribute_vertices(geom, distance):
     raise ValueError("Unhandled geometry {}".format(geom.geom_type))
 
 
-def _rescale_v2(self, distance, hlen):
+def _rescale_v2(self, distance, addhlen, kind="slinear"):
 
     # Rescaling to constant increment is perhaps impossible, but this is
     # is quite close
@@ -155,12 +157,29 @@ def _rescale_v2(self, distance, hlen):
     dfrlist = []
     for idx, grp in idgroups:
 
-        points = np.array([grp[self.xname], grp[self.yname], grp[self.zname]]).T
+        points = [grp[self.xname], grp[self.yname], grp[self.zname]]
+        print(points)
         lenh = grp[self.hname].iloc[-1]
         nstep = int(lenh / distance)
+        alpha = np.linspace(0, lenh, num=nstep, endpoint=True)
 
-        interpolator = interp1d(grp[self.hname], points, kind="slinear", axis=0)
-        ip = interpolator(np.linspace(0, lenh, num=nstep, endpoint=True))
+        if kind == "slinear":
+            points = np.array(points).T
+            interpolator = interp1d(
+                grp[self.hname], points, kind="slinear", axis=0, assume_sorted=True
+            )
+            ip = interpolator(alpha)
+        elif kind == "cubic":
+            splines = [
+                UnivariateSpline(grp[self.hname], crd) for crd in points
+            ]
+            for spl in splines:
+                print(spl(alpha))
+
+            ip = np.vstack(spl(alpha) for spl in splines).T
+            print(ip)
+        else:
+            raise ValueError("Invalid kind chosen: {}".format(kind))
 
         dfr = pd.DataFrame(np.array(ip), columns=[self.xname, self.yname, self.zname])
 
@@ -170,7 +189,7 @@ def _rescale_v2(self, distance, hlen):
     dfr = pd.concat(dfrlist)
     self.dataframe = dfr.reset_index(drop=True)
 
-    if hlen:
+    if addhlen:
         self.hlen()
     else:
         self.delete_columns([self.hname, self.dhname])
@@ -180,7 +199,7 @@ def get_fence(
     self,
     distance=20,
     atleast=5,
-    extend=2,
+    nextend=2,
     name=None,
     asnumpy=True,
     polyid=None,
@@ -194,12 +213,12 @@ def get_fence(
 
     """
     if _version == 1:
-        return _fence_v1(self, distance, atleast, extend, name, asnumpy)
-    else:
-        return _fence_v2(self, distance, atleast, extend, name, asnumpy, polyid)
+        return _fence_v1(self, distance, atleast, nextend, name, asnumpy)
+
+    return _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid)
 
 
-def _fence_v1(self, distance, atleast, extend, name, asnumpy):
+def _fence_v1(self, distance, atleast, nextend, name, asnumpy):
 
     # POLYID NOT IMPLEMENTED!
 
@@ -207,14 +226,14 @@ def _fence_v1(self, distance, atleast, extend, name, asnumpy):
         xtg.warn("Well does not enough points in interval, outside range?")
         return False
 
-    hlen = self.get_shapely_objects()[0].length
+    hxlen = self.get_shapely_objects()[0].length
 
-    if hlen / float(atleast) < distance:
-        distance = hlen / float(atleast)
+    if hxlen / float(atleast) < distance:
+        distance = hxlen / float(atleast)
 
     nbuf = 1000000
 
-    logger.info("%s %s %s %s %s ", distance, atleast, extend, name, asnumpy)
+    logger.info("%s %s %s %s %s ", distance, atleast, nextend, name, asnumpy)
     npxarr = np.zeros(nbuf, dtype=np.float64)
     npyarr = np.zeros(nbuf, dtype=np.float64)
     npzarr = np.zeros(nbuf, dtype=np.float64)
@@ -227,7 +246,7 @@ def _fence_v1(self, distance, atleast, extend, name, asnumpy):
         self._df[self.yname].values,
         self._df[self.zname].values,
         distance,
-        distance * extend,
+        distance * nextend,
         nbuf,
         nbuf,
         nbuf,
@@ -269,7 +288,7 @@ def _fence_v1(self, distance, atleast, extend, name, asnumpy):
     return rval
 
 
-def _fence_v2(self, distance, atleast, extend, name, asnumpy, polyid):
+def _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid):
 
     new = self.copy()
 
@@ -277,18 +296,15 @@ def _fence_v2(self, distance, atleast, extend, name, asnumpy, polyid):
         xtg.warn("Well does not enough points in interval, outside range?")
         return False
 
-    if polyid is None:
-        polyid = new.dataframe[new.pname].iloc[0]
+    new.filter_byid(polyid)
 
-    new.dataframe = new.dataframe[new.dataframe[new.pname == polyid]]
+    hxlen = new.get_shapely_objects()[0].length
 
-    hlen = new.get_shapely_objects()[0].length
+    if hxlen / float(atleast) < distance:
+        distance = hxlen / float(atleast)
 
-    if hlen / float(atleast) < distance:
-        distance = hlen / float(atleast)
-
-    new.rescale(distance, constant=True)
-    new.extend(distance, nsamples=extend)
+    new.rescale(distance)
+    new.extend(distance, nsamples=nextend)
 
     if name:
         new.name = name
@@ -370,7 +386,7 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
     dhdist = np.array([])
     for _id, grp in idgroups:
         print(grp)
-        ier, hlen, dhlen = _cxtgeo.pol_geometrics(
+        ier, hlenv, dhlenv = _cxtgeo.pol_geometrics(
             grp[self.xname].values,
             grp[self.yname].values,
             grp[self.zname].values,
@@ -378,13 +394,18 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
             len(grp),
             XTGDEBUG,
         )
-        dhlen[0] = dhlen[1]
-        if atindex > 0:
-            cumval = hlen[atindex]
-            hlen -= cumval
+        if ier != 0:
+            raise RuntimeError(
+                "Error code from _cxtgeo.pol_geometrics is {}".format(ier)
+            )
 
-        hdist = np.append(hdist, hlen)
-        dhdist = np.append(dhdist, dhlen)
+        dhlenv[0] = dhlenv[1]
+        if atindex > 0:
+            cumval = hlenv[atindex]
+            hlenv -= cumval
+
+        hdist = np.append(hdist, hlenv)
+        dhdist = np.append(dhdist, dhlenv)
 
     self._df[hname] = hdist
     self._df[dhname] = dhdist
@@ -393,16 +414,16 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
     self.dhname = dhname
 
 
-def extend(self, distance, nsamples, hlen=True):
+def extend(self, distance, nsamples, addhlen=True):
     """Extend polygon by distance, nsamples times.
 
-    It is default to recompute HLEN from nsmaples
+    It is default to recompute HLEN from nsamples
     """
 
     if not isinstance(self, xtgeo.Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
-    for nsam in range(nsamples):
+    for _nsam in range(nsamples):
 
         # beginning of poly
         row0 = self._df.iloc[0]
@@ -410,9 +431,14 @@ def extend(self, distance, nsamples, hlen=True):
 
         rown = row0.copy()
 
-        ier, newx, newy, newz = _cxtgeo.x_vector_linint2(
+        ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
             row1[0], row1[1], row1[2], row0[0], row0[1], row0[2], distance, 2, XTGDEBUG
         )
+
+        if ier != 0:
+            raise RuntimeError(
+                "Error code from _cxtgeo.x_vector_linint2 is {}".format(ier)
+            )
 
         rown[self.xname] = newx
         rown[self.yname] = newy
@@ -427,7 +453,7 @@ def extend(self, distance, nsamples, hlen=True):
 
         rown = row1.copy()
 
-        ier, newx, newy, newz = _cxtgeo.x_vector_linint2(
+        ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
             row0[0], row0[1], row0[2], row1[0], row1[1], row1[2], distance, 1, XTGDEBUG
         )
 
@@ -438,5 +464,5 @@ def extend(self, distance, nsamples, hlen=True):
 
         self._df = pd.concat([self._df, df_to_add]).reset_index(drop=True)
 
-    if hlen:
+    if addhlen:
         self.hlen(atindex=nsamples)

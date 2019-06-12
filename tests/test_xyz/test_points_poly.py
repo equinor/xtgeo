@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from os.path import join
 import numpy as np
 from xtgeo.xyz import XYZ
@@ -17,6 +18,10 @@ if not xtg.testsetup():
 TMPD = xtg.tmpdir
 TSTPATH = xtg.testpath
 
+XTGSHOW = False
+if "XTG_SHOW" in os.environ:
+    XTGSHOW = True
+
 # =========================================================================
 # Do tests
 # =========================================================================
@@ -27,6 +32,7 @@ PFILE1C = join(TSTPATH, 'polygons/reek/1/top_upper_reek_faultpoly.pol')
 PFILE = join(TSTPATH, 'points/eme/1/emerald_10_random.poi')
 POLSET2 = join(TSTPATH, 'polygons/reek/1/polset2.pol')
 POLSET3 = join(TSTPATH, 'polygons/etc/outline.pol')
+POLSET4 = join(TSTPATH, 'polygons/etc/well16.pol')
 POINTSET2 = join(TSTPATH, 'points/reek/1/pointset2.poi')
 POINTSET3 = join(TSTPATH, 'points/battle/1/many.rmsattr')
 
@@ -205,34 +211,18 @@ def test_points_in_polygon():
 def test_rescale_polygon():
     """Take a polygons set and rescale/resample"""
 
-    pol = Polygons(POLSET2)
+    pol = Polygons(POLSET4)
 
-    df = pol.dataframe[0:3]
-
-    df.at[0, 'X_UTME'] = 0.0
-    df.at[1, 'X_UTME'] = 100.0
-    df.at[2, 'X_UTME'] = 100.0
-
-    df.at[0, 'Y_UTMN'] = 20.0
-    df.at[1, 'Y_UTMN'] = 20.0
-    df.at[2, 'Y_UTMN'] = 100.0
-
-    df.at[0, 'Z_TVDSS'] = 0.0
-    df.at[1, 'Z_TVDSS'] = 1000.0
-    df.at[2, 'Z_TVDSS'] = 2000.0
-
-    pol.dataframe = df
-
-    pol.rescale(20)
-    logger.info(pol.dataframe)
-
-    assert pol.dataframe.at[1, 'X_UTME'] == 20.0
-
-    pol = Polygons(POLSET2)
+    oldpol = pol.copy()
+    oldpol.name = "ORIG"
     pol.rescale(100)
+    logger.info("\n%s", pol.dataframe)
 
-    logger.info(pol.dataframe)
-    assert abs(pol.dataframe.at[369, 'X_UTME'] - 462708.614654) < 0.0001
+    XTGSHOW = 1
+    if XTGSHOW:
+        pol.quickplot(others=[oldpol])
+
+    # assert abs(pol.dataframe.at[1, 'X_UTME'] - 22.5) < 0.1
 
 
 def test_fence_from_polygon():
@@ -256,7 +246,7 @@ def test_fence_from_polygon():
 
     pol.dataframe = df
 
-    fence = pol.get_fence(distance=100, extend=4, name="SOMENAME", asnumpy=False,
+    fence = pol.get_fence(distance=100, nextend=4, name="SOMENAME", asnumpy=False,
                           atleast=10)
     logger.info(fence.dataframe)
 

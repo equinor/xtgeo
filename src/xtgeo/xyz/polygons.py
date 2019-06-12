@@ -272,9 +272,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
                 )
                 continue
 
-            if cname not in self._df and strict is True:
-                raise ValueError("The column {} is not present".format(cname))
-                continue
+            if cname not in self._df:
+                if strict is True:
+                    raise ValueError("The column {} is not present".format(cname))
 
             if cname in self._df:
                 self._df.drop(cname, axis=1, inplace=True)
@@ -600,7 +600,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         _xyz_oper.extend(self, distance, nsamples)
 
-    def rescale(self, distance, hlen=True):
+    def rescale(self, distance, addhlen=True):
         """Rescale (resample) by using a new horizontal increment.
 
         The instance is updated in-place.
@@ -611,7 +611,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Args:
             distance (float): New distance between points
-            hlen (str): If True, a horizontal cum. and delta length columns will
+            addhlen (str): If True, a horizontal cum. and delta length columns will
                 will be added.
             constant (bool): If True, internal vertices are not preserved
 
@@ -619,10 +619,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         """
 
-        _xyz_oper.rescale_polygons(self, distance=distance, hlen=hlen, _version=2)
+        _xyz_oper.rescale_polygons(self, distance=distance, addhlen=addhlen, _version=2)
 
     def get_fence(
-        self, distance=20, atleast=5, extend=2, name=None, asnumpy=True, polyid=None
+        self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None
     ):
         """Extracts a fence with constant horizontal sampling and
         additonal H_CUMLEN and H_DELTALEN vectors, suitable for X sections.
@@ -632,7 +632,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             atleast (int): Minimum number of point. If the true length/atleast is
                 less than distance, than distance will be be reset to
                 length/atleast.
-            extend (int): Number of samples to extend at each end
+            nextend (int): Number of samples to extend at each end
             name (str): Name of polygon (if asnumpy=False)
             asnumpy (bool): Return a [:, 5] numpy array with
                 columns X.., Y.., Z.., HLEN, dH
@@ -649,7 +649,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self,
             distance=distance,
             atleast=atleast,
-            extend=extend,
+            nextend=nextend,
             name=name,
             asnumpy=asnumpy,
             polyid=polyid,
@@ -667,8 +667,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         title="QuickPlot for Polygons",
         subtitle=None,
         infotext=None,
-        xlabelrotation=None,
-        colormap="rainbow",
+        linewidth=1.0,
+        color="r"
+        # xlabelrotation=None,
+        # colormap="rainbow",
     ):
         """Fast plotting of polygons using matplotlib.
 
@@ -684,14 +686,20 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
         mymap = xtgeo.plot.Map()
         mymap.canvas(title=title, subtitle=subtitle, infotext=infotext)
-        mymap.plot_polygons(self, idname=self.pname)
+
+        if others:
+            for other in others:
+                lwid = linewidth / 2.0
+                mymap.plot_polygons(
+                    other, idname=other.pname, linewidth=lwid, color="black"
+                )
+
+        mymap.plot_polygons(self, idname=self.pname, linewidth=linewidth, color=color)
 
         if filename is None:
             mymap.show()
         else:
             mymap.savefig(filename)
-
-        pass
 
     # ==================================================================================
     # Operations restricted to inside/outside polygons

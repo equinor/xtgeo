@@ -263,7 +263,7 @@ def test_fence(loadwell1):
     """Return a resampled fence."""
 
     mywell = Well(WFILE)
-    pline = mywell.get_fence_polyline(extend=10, tvdmin=1000)
+    pline = mywell.get_fence_polyline(nextend=10, tvdmin=1000)
 
     logger.debug(pline)
 
@@ -272,13 +272,13 @@ def test_fence_as_polygons(loadwell1):
     """Return a resampled fence as Polygons."""
 
     mywell = Well(WFILE)
-    pline = mywell.get_fence_polyline(extend=3, tvdmin=1000,
+    pline = mywell.get_fence_polyline(nextend=3, tvdmin=1000,
                                       asnumpy=False)
 
     assert isinstance(pline, Polygons)
     dfr = pline.dataframe
     print(dfr)
-    tsetup.assert_almostequal(dfr['X_UTME'][5], 462567.741277, 0.0001)
+    tsetup.assert_almostequal(dfr['X_UTME'][5], 462569.00, 2.0)
 
 
 def test_get_zonation_points():

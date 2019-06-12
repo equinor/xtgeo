@@ -232,7 +232,8 @@ class Map(BasePlot):
             xarr = group[fpoly.xname].values
             yarr = group[fpoly.yname].values
 
-            self._ax.plot(xarr, yarr, label=pname)
+            self._ax.plot(xarr, yarr, label=pname, lw=linewidth, color=color)
+            self._ax.legend()
 
     def plot_points(self, points):
         """Plot a points set on the map.
