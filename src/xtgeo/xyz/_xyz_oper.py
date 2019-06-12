@@ -84,12 +84,14 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def rescale_polygons(self, distance=10, hlen=True, constant=False):
+def rescale_polygons(self, distance=10, hlen=True, _version=2):
     """Rescale (resample) a polygons segment"""
 
-    if constant:
-        _rescale_constant(self, distance, hlen)
+    if _version == 2:
+        _rescale_v2(self, distance, hlen)
         return None
+
+    # version 1:
 
     if not self._ispolygons:
         raise ValueError("Not a Polygons object")
@@ -117,6 +119,8 @@ def rescale_polygons(self, distance=10, hlen=True, constant=False):
 
     if hlen:
         self.hlen()
+    else:
+        self.delete_columns([self.hname, self.dhname])
 
 
 def _redistribute_vertices(geom, distance):
@@ -139,7 +143,7 @@ def _redistribute_vertices(geom, distance):
     raise ValueError("Unhandled geometry {}".format(geom.geom_type))
 
 
-def _rescale_constant(self, distance, hlen):
+def _rescale_v2(self, distance, hlen):
 
     # Rescaling to constant increment is perhaps impossible, but this is
     # is quite close
@@ -158,9 +162,7 @@ def _rescale_constant(self, distance, hlen):
         interpolator = interp1d(grp[self.hname], points, kind="slinear", axis=0)
         ip = interpolator(np.linspace(0, lenh, num=nstep, endpoint=True))
 
-        dfr = pd.DataFrame(
-            np.array(ip), columns=[self.xname, self.yname, self.zname]
-        )
+        dfr = pd.DataFrame(np.array(ip), columns=[self.xname, self.yname, self.zname])
 
         dfr[self.pname] = idx
         dfrlist.append(dfr)
@@ -170,10 +172,19 @@ def _rescale_constant(self, distance, hlen):
 
     if hlen:
         self.hlen()
+    else:
+        self.delete_columns([self.hname, self.dhname])
 
 
 def get_fence(
-    self, distance=20, atleast=5, extend=2, name=None, asnumpy=True, version=2
+    self,
+    distance=20,
+    atleast=5,
+    extend=2,
+    name=None,
+    asnumpy=True,
+    polyid=None,
+    _version=2,
 ):
     """Get a fence suitable for plotting xsections, either as a numpy or as a
     new Polygons instance.
@@ -182,13 +193,15 @@ def get_fence(
     horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
 
     """
-    if version == 1:
+    if _version == 1:
         return _fence_v1(self, distance, atleast, extend, name, asnumpy)
     else:
-        return _fence_v2(self, distance, atleast, extend, name, asnumpy)
+        return _fence_v2(self, distance, atleast, extend, name, asnumpy, polyid)
 
 
 def _fence_v1(self, distance, atleast, extend, name, asnumpy):
+
+    # POLYID NOT IMPLEMENTED!
 
     if len(self._df) < 2:
         xtg.warn("Well does not enough points in interval, outside range?")
@@ -256,13 +269,18 @@ def _fence_v1(self, distance, atleast, extend, name, asnumpy):
     return rval
 
 
-def _fence_v2(self, distance, atleast, extend, name, asnumpy):
+def _fence_v2(self, distance, atleast, extend, name, asnumpy, polyid):
 
     new = self.copy()
 
     if len(new.dataframe) < 2:
         xtg.warn("Well does not enough points in interval, outside range?")
         return False
+
+    if polyid is None:
+        polyid = new.dataframe[new.pname].iloc[0]
+
+    new.dataframe = new.dataframe[new.dataframe[new.pname == polyid]]
 
     hlen = new.get_shapely_objects()[0].length
 
@@ -344,11 +362,7 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     # delete existing self.hname and self.dhname columns
-    if self.hname in self._df:
-        self._df.drop(self.hname, axis=1, inplace=True)
-
-    if self.dhname in self._df:
-        self._df.drop(self.dhname, axis=1, inplace=True)
+    self.delete_columns([self.hname, self.dhname])
 
     idgroups = self._df.groupby(self.pname)
 

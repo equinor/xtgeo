@@ -26,6 +26,7 @@ PFILE1B = join(TSTPATH, 'polygons/reek/1/top_upper_reek_faultpoly.xyz')
 PFILE1C = join(TSTPATH, 'polygons/reek/1/top_upper_reek_faultpoly.pol')
 PFILE = join(TSTPATH, 'points/eme/1/emerald_10_random.poi')
 POLSET2 = join(TSTPATH, 'polygons/reek/1/polset2.pol')
+POLSET3 = join(TSTPATH, 'polygons/etc/outline.pol')
 POINTSET2 = join(TSTPATH, 'points/reek/1/pointset2.poi')
 POINTSET3 = join(TSTPATH, 'points/battle/1/many.rmsattr')
 
@@ -136,6 +137,47 @@ def test_polygon_boundary():
     tsetup.assert_almostequal(boundary[5], 2266.996338, 0.0001)
 
 
+def test_polygon_filter_byid():
+    """Filter a Polygon by a list of ID's"""
+
+    pol = Polygons(POLSET3)
+
+    assert pol.dataframe["POLY_ID"].iloc[0] == 0
+    assert pol.dataframe["POLY_ID"].iloc[-1] == 3
+
+    pol.filter_byid()
+    assert pol.dataframe["POLY_ID"].iloc[-1] == 0
+
+    pol = Polygons(POLSET3)
+    pol.filter_byid([1, 3])
+
+    assert pol.dataframe["POLY_ID"].iloc[0] == 1
+    assert pol.dataframe["POLY_ID"].iloc[-1] == 3
+
+    pol = Polygons(POLSET3)
+    pol.filter_byid(2)
+
+    assert pol.dataframe["POLY_ID"].iloc[0] == 2
+    assert pol.dataframe["POLY_ID"].iloc[-1] == 2
+
+    pol = Polygons(POLSET3)
+    pol.filter_byid(99)  # not present; should remove all rows
+    assert pol.nrow == 0
+
+
+def test_polygon_hlen():
+    """Test the hlen operation"""
+
+    pol = Polygons(POLSET3)
+    pol.hlen()
+    print(pol.dataframe)
+
+    pol.filter_byid()
+    hlen = pol.get_shapely_objects()[0].length
+    assert (abs(pol.dataframe[pol.hname].iloc[-1] - hlen)) < 0.001
+    assert (abs(pol.dataframe[pol.dhname].iloc[0] - 1761.148)) < 0.01
+
+
 def test_points_in_polygon():
     """Import XYZ points and do operations if inside or outside"""
 
@@ -219,3 +261,9 @@ def test_fence_from_polygon():
     logger.info(fence.dataframe)
 
     assert fence.dataframe.at[13, 'X_UTME'] == 100.0
+
+
+def test_polygons_quickplot():
+
+    pol = Polygons(POLSET2)
+    pol.quickplot()

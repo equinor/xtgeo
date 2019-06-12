@@ -202,6 +202,38 @@ class Map(BasePlot):
             else:
                 print("A polygon is not closed...")
 
+    def plot_polygons(
+        self,
+        fpoly,
+        idname="POLY_ID",
+        color="k",
+        linewidth=0.8,
+    ):
+        """Plot a polygons instance
+
+        Args:
+            fpoly (object): A XTGeo Polygons object
+            idname (str): Name of column which has the faults ID
+            color (c): Line color model c according to Matplotlib_
+            linewidth (float): Line width
+
+        .. _Matplotlib: http://matplotlib.org/api/colors_api.html
+        """
+
+        aff = fpoly.dataframe.groupby(idname)
+
+        print("XX", self._ax)
+
+        for name, group in aff:
+
+            # make a dataframe sorted on groupname
+            pname = fpoly.name
+
+            xarr = group[fpoly.xname].values
+            yarr = group[fpoly.yname].values
+
+            self._ax.plot(xarr, yarr, label=pname)
+
     def plot_points(self, points):
         """Plot a points set on the map.
 

@@ -2151,7 +2151,7 @@ class RegularSurface(object):
     def quickplot(
         self,
         filename=None,
-        title="QuickPlot",
+        title="QuickPlot for Surfaces",
         subtitle=None,
         infotext=None,
         minmax=(None, None),
