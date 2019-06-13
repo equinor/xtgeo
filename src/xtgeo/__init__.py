@@ -112,6 +112,7 @@ _xprint("Import various XTGeo modules... wells...")
 
 from xtgeo.surface import regular_surface
 from xtgeo.surface.regular_surface import RegularSurface
+from xtgeo.surface.surfaces import Surfaces
 
 _xprint("Import various XTGeo modules... surface...")
 

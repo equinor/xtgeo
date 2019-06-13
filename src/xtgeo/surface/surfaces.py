@@ -5,6 +5,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import xtgeo
+from . import _surfs_import
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -48,40 +49,21 @@ class Surfaces(object):
         #         append=False,
         #     )
 
-    # @property
-    # def names(self):
-    #     """Returns a list of well names (read only).
+    @property
+    def surfaces(self):
+        """Get or set a list of individual surfaces"""
+        return self._surfaces
 
-    #     Example::
+    @surfaces.setter
+    def surfaces(self, slist):
+        if not isinstance(slist, list):
+            raise ValueError("Input not a list")
 
-    #         namelist = wells.names
-    #         for prop in namelist:
-    #             print ('Well name is {}'.format(name))
+        for elem in slist:
+            if not isinstance(elem, xtgeo.RegularSurface):
+                raise ValueError("Element in list not a valid type of Surface")
 
-    #     """
-
-    #     wlist = []
-    #     for wel in self._wells:
-    #         wlist.append(wel.name)
-
-    #     return wlist
-
-    # @property
-    # def wells(self):
-    #     """Returns or sets a list of XTGeo Well objects, None if empty."""
-    #     if not self._wells:
-    #         return None
-
-    #     return self._wells
-
-    # @wells.setter
-    # def wells(self, well_list):
-
-    #     for well in well_list:
-    #         if not isinstance(well, xtgeo.well.Well):
-    #             raise ValueError("Well in list not valid Well object")
-
-    #     self._wells = well_list
+        self._surfaces = slist
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -90,7 +72,8 @@ class Surfaces(object):
         dsc.title("Description of {} instance".format(self.__class__.__name__))
         dsc.txt("Object ID", id(self))
 
-        dsc.txt("Surfaces", self.names)
+        for inum, surf in enumerate(self.surfaces):
+            dsc.txt("Surface:", inum, surf.name)
 
         if flush:
             dsc.flush()
@@ -125,6 +108,6 @@ class Surfaces(object):
                 return surf
         return None
 
-    def from_grid3d(self, subgrids=True):
+    def from_grid3d(self, grid, subgrids=True, rfactor=1):
         """Derive surfaces from a 3D grid"""
-        pass
+        _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
