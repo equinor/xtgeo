@@ -69,7 +69,7 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
     return istat
 
 
-def from_grid3d(self, grid, template=None, where="top", mode="depth"):
+def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
     """Private function for deriving a surface from a 3D grid.
 
     .. versionadded:: 2.1.0
@@ -92,7 +92,10 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth"):
         if what == "base":
             option = 1
 
-    _update_regsurf(self, template, grid)
+    if rfactor < 0.5:
+        raise KeyError("Refinefactor rfactor is too small, should be >= 0.5")
+
+    _update_regsurf(self, template, grid, rfactor=float(rfactor))
 
     # call C function to make a map
     svalues = self.get_values1d() * 0.0 + xtgeo.UNDEF
@@ -134,7 +137,7 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth"):
         self.set_values1d(svalues)
 
 
-def _update_regsurf(self, template, grid):
+def _update_regsurf(self, template, grid, rfactor=1.0):
 
     if template is None:
         # need to estimate map settings from the existing grid. this
@@ -146,7 +149,7 @@ def _update_regsurf(self, template, grid):
         xori = geom["xmin"] - 0.05 * xlen
         yori = geom["ymin"] - 0.05 * ylen
         # take same xinc and yinc
-        xinc = yinc = 0.1 * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
+        xinc = yinc = (1.0 / rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)
 

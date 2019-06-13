@@ -889,7 +889,7 @@ class RegularSurface(object):
 
         self._filesrc = cube.filesrc + " (derived surface)"
 
-    def from_grid3d(self, grid, template=None, where="top", mode="depth"):
+    def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
 
         """Extract a surface from a 3D grid.
@@ -902,6 +902,9 @@ class RegularSurface(object):
                 is layer no. 2 and _top indicates top of cell, while "_base"
                 indicates base of cell
             mode (str): "depth", "i" or "j"
+            rfactor (float): Determines how fine the extracted map is; higher values
+                for finer map (but computing time will increase). Will only apply if
+                template is None.
 
         Returns:
             Object instance is updated in-place
@@ -917,7 +920,7 @@ class RegularSurface(object):
         """
 
         _regsurf_grid3d.from_grid3d(
-            self, grid, template=template, where=where, mode=mode
+            self, grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
 
     def copy(self):
