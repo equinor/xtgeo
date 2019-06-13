@@ -574,9 +574,9 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         axis, and length along as horizontal axis. Undefined values will have
         the np.nan value.
 
-        The input fencespec is a 2D numpy where each row is X, Y, Z, HLEN,
+        The input fencespec is either a 2D numpy where each row is X, Y, Z, HLEN,
         where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
-        length along the fence, or a Polygons instance with HLEN present.
+        length along the fence, or a Polygons instance.
 
         If input fencspec is a numpy 2D, it is important that the HLEN array
         has a constant increment and ideally a sampling that is less than the
@@ -593,7 +593,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
                 the distance will be deduced automatically.
             atleast (int): Minimum number of horizontal samples (only if
                 fencespec is a Polygons instance)
-            nextend (int): Extend with extend * hincrement in both ends (only if
+            nextend (int): Extend with nextend * hincrement in both ends (only if
                 fencespec is a Polygons instance)
             sampling (str): Algorithm, 'nearest' or 'trilinear' (first is
                 faster, second is more precise for continuous fields)
