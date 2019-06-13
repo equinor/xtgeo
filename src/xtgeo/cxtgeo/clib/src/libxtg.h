@@ -1709,6 +1709,29 @@ int grd3d_translate (
 		     );
 
 
+int grd3d_point_val_crange(
+                           double x,
+                           double y,
+                           double z,
+                           int nx,
+                           int ny,
+                           int nz,
+                           double *p_coor_v,
+                           double *p_zcorn_v,
+                           int *p_actnum_v,
+                           double *p_val_v,
+                           double *value,
+                           int imin,
+                           int imax,
+                           int jmin,
+                           int jmax,
+                           int kmin,
+                           int kmax,
+                           long *ibs,
+                           int option,
+                           int debug
+                           );
+
 int grd3d_point_in_cell(
 			int ibstart,
 			int  kzonly,
