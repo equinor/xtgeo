@@ -600,7 +600,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         _xyz_oper.extend(self, distance, nsamples)
 
-    def rescale(self, distance, addhlen=True):
+    def rescale(self, distance, addhlen=True, kind="slinear"):
         """Rescale (resample) by using a new horizontal increment.
 
         The instance is updated in-place.
@@ -613,13 +613,13 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             distance (float): New distance between points
             addhlen (str): If True, a horizontal cum. and delta length columns will
                 will be added.
-            constant (bool): If True, internal vertices are not preserved
+            kind (str): What kind of rescaling: slinear/cubic/simple
 
         .. versionchanged:: 2.1.0 a new algorithm
 
         """
 
-        _xyz_oper.rescale_polygons(self, distance=distance, addhlen=addhlen, _version=2)
+        _xyz_oper.rescale_polygons(self, distance=distance, addhlen=addhlen, kind=kind)
 
     def get_fence(
         self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None

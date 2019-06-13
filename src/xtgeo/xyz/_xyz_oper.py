@@ -84,14 +84,18 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def rescale_polygons(self, distance=10, addhlen=True, _version=2):
+def rescale_polygons(self, distance=10, addhlen=True, kind="slinear"):
     """Rescale (resample) a polygons segment"""
 
-    if _version == 2:
-        _rescale_v2(self, distance, addhlen)
-        return None
+    if kind in ("slinear", "cubic"):
+        _rescale_v2(self, distance, addhlen, kind=kind)
 
-    # version 1:
+    else:
+        _rescale_v1(self, distance, addhlen)
+
+
+def _rescale_v1(self, distance, addhlen):
+    # version 1, simple approach
 
     if not self._ispolygons:
         raise ValueError("Not a Polygons object")
@@ -291,6 +295,7 @@ def _fence_v1(self, distance, atleast, nextend, name, asnumpy):
 def _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid):
 
     new = self.copy()
+    new.hlen()
 
     if len(new.dataframe) < 2:
         xtg.warn("Well does not enough points in interval, outside range?")
