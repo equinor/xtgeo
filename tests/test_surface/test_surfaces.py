@@ -2,8 +2,10 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+from os.path import join
+
 import xtgeo
-# import test_common.test_xtg as tsetup
+import test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -44,5 +46,13 @@ def test_get_surfaces_from_3dgrid():
 
     mygrid = xtgeo.Grid(TESTSETG1)
     surfs = xtgeo.Surfaces()
-    surfs.from_grid3d(mygrid, rfactor=5)
+    surfs.from_grid3d(mygrid, rfactor=2)
     surfs.describe()
+
+    tsetup.assert_almostequal(surfs.surfaces[-1].values.mean(), 1742.28, 0.02)
+    tsetup.assert_almostequal(surfs.surfaces[-1].values.min(), 1589.62, 0.02)
+    tsetup.assert_almostequal(surfs.surfaces[-1].values.max(), 1977.20, 0.02)
+    tsetup.assert_almostequal(surfs.surfaces[0].values.mean(), 1697.02, 0.02)
+
+    for srf in surfs.surfaces:
+        srf.to_file(join(TMPD, srf.name + ".gri"))
