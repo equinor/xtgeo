@@ -135,7 +135,11 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
         self.set_values1d(jvalues)
     else:
         self.set_values1d(svalues)
-        return ivalues, jvalues  # needed in special cases
+        isurf = self.copy()
+        jsurf = self.copy()
+        isurf.set_values1d(ivalues)
+        jsurf.set_values1d(jvalues)
+        return isurf, jsurf  # needed in special cases
 
 
 def _update_regsurf(self, template, grid, rfactor=1.0):

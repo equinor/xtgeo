@@ -1752,10 +1752,10 @@ int grd3d_point_in_cell(
 			);
 
 int grd3d_get_randomline(
-                         double *xvec,
-                         long nxvec,
-                         double *yvec,
-                         long nyvec,
+                         double *swig_np_dbl_in_v1,  // *xvec,
+                         long n_swig_np_dbl_in_v1,   // nxvec,
+                         double *swig_np_dbl_in_v2,  // *yvec,
+                         long n_swig_np_dbl_in_v2,   // nyvec,
                          double zmin,
                          double zmax,
                          int nzsam,
@@ -1783,8 +1783,8 @@ int grd3d_get_randomline(
                          double *p_actnumone_v,
                          double *p_val_v,
 
-                         double *values,
-                         long nvalues,
+                         double *swig_np_dbl_aout_v1,  // *values
+                         long n_swig_np_dbl_aout_v1,  // nvalues
                          int option,
                          int debug
                          );
