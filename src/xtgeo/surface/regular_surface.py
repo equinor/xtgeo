@@ -595,7 +595,6 @@ class RegularSurface(object):
     def filesrc(self, name):
         self._filesrc = name  # checking is currently missing
 
-
     # =============================================================================
     # Describe, import and export
     # =============================================================================
@@ -908,18 +907,22 @@ class RegularSurface(object):
 
         Returns:
             Object instance is updated in-place
+            When mode="depth", two RegularSurface: icols and jrows are also returned.
 
-        Example:
+        Example::
 
-            >>> mymap = RegularSurface()
-            >>> mygrid = Grid("REEK.EGRID")
-            >>> imap, jmap = mymap.from_grid3d(mygrid)
+            mymap = RegularSurface()
+            mygrid = Grid("REEK.EGRID")
+            # make surface from top (default)
+            mymap.from_grid3d(mygrid)
+            # return two additonal maps
+            ic, jr = mymap.from_grid3d(mygrid)
 
         .. versionadded:: 2.1.0
 
         """
 
-        _regsurf_grid3d.from_grid3d(
+        return _regsurf_grid3d.from_grid3d(
             self, grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
 

@@ -1751,6 +1751,43 @@ int grd3d_point_in_cell(
 			int   debug
 			);
 
+int grd3d_get_randomline(
+                         double *xvec,
+                         long nxvec,
+                         double *yvec,
+                         long nyvec,
+                         double zmin,
+                         double zmax,
+                         int nzsam,
+
+                         int mcol,
+                         int mrow,
+                         double xori,
+                         double yori,
+                         double xinc,
+                         double yinc,
+                         double rotation,
+                         double yflip,
+                         double *maptopi,
+                         double *maptopj,
+                         double *mapbasi,
+                         double *mapbasj,
+
+                         int nx,
+                         int ny,
+                         int nz,
+                         double *p_coor_v,
+                         double *p_zcorn_v,
+                         int *p_actnum_v,
+                         double *p_zcornone_v,
+                         double *p_actnumone_v,
+                         double *p_val_v,
+
+                         double *values,
+                         long nvalues,
+                         int option,
+                         int debug
+                         );
 
 void grd3d_collapse_inact (
 			   int   nx,
