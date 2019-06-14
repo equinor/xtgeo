@@ -155,15 +155,17 @@ def _rescale_v2(self, distance, addhlen, kind="slinear"):
     # is quite close
 
     self.hlen()
-
     idgroups = self.dataframe.groupby(self.pname)
 
     dfrlist = []
     for idx, grp in idgroups:
 
         points = [grp[self.xname], grp[self.yname], grp[self.zname]]
-        print(points)
         lenh = grp[self.hname].iloc[-1]
+
+        # to avoid numerical trouble of pure vertical sections
+        lenh = lenh - 0.001 * lenh
+
         nstep = int(lenh / distance)
         alpha = np.linspace(0, lenh, num=nstep, endpoint=True)
 
@@ -177,11 +179,8 @@ def _rescale_v2(self, distance, addhlen, kind="slinear"):
             splines = [
                 UnivariateSpline(grp[self.hname], crd) for crd in points
             ]
-            for spl in splines:
-                print(spl(alpha))
 
             ip = np.vstack(spl(alpha) for spl in splines).T
-            print(ip)
         else:
             raise ValueError("Invalid kind chosen: {}".format(kind))
 
@@ -309,7 +308,9 @@ def _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid):
         distance = hxlen / float(atleast)
 
     new.rescale(distance)
-    new.extend(distance, nsamples=nextend)
+    updated_distance = new.dataframe[new.dhname].median()
+    print(updated_distance)
+    new.extend(updated_distance, nsamples=nextend)
 
     if name:
         new.name = name
@@ -379,6 +380,9 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
     Note that DH at first location will be set equal to dHat location 1
     """
 
+    # Potential todo: Add an option that dH never gets 0.0 to avoid numerical trouble
+    # for e.g. rescale?
+
     if not isinstance(self, xtgeo.Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
@@ -390,7 +394,6 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
     hdist = np.array([])
     dhdist = np.array([])
     for _id, grp in idgroups:
-        print(grp)
         ier, hlenv, dhlenv = _cxtgeo.pol_geometrics(
             grp[self.xname].values,
             grp[self.yname].values,
@@ -422,7 +425,7 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
 def extend(self, distance, nsamples, addhlen=True):
     """Extend polygon by distance, nsamples times.
 
-    It is default to recompute HLEN from nsamples
+    It is default to recompute HLEN from nsamples.
     """
 
     if not isinstance(self, xtgeo.Polygons):
@@ -436,8 +439,9 @@ def extend(self, distance, nsamples, addhlen=True):
 
         rown = row0.copy()
 
+        # setting row0[2] as row1[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
-            row1[0], row1[1], row1[2], row0[0], row0[1], row0[2], distance, 2, XTGDEBUG
+            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 2, XTGDEBUG
         )
 
         if ier != 0:
@@ -445,6 +449,7 @@ def extend(self, distance, nsamples, addhlen=True):
                 "Error code from _cxtgeo.x_vector_linint2 is {}".format(ier)
             )
 
+        print(row0[0], row0[1], row0[2], newx, newy, _newz, distance)
         rown[self.xname] = newx
         rown[self.yname] = newy
 
@@ -458,8 +463,9 @@ def extend(self, distance, nsamples, addhlen=True):
 
         rown = row1.copy()
 
+        # setting row1[2] as row0[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
-            row0[0], row0[1], row0[2], row1[0], row1[1], row1[2], distance, 1, XTGDEBUG
+            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 1, XTGDEBUG
         )
 
         rown[self.xname] = newx

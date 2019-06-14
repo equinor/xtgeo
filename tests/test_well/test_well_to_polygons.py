@@ -26,7 +26,7 @@ def test_well_to_polygons():
 
     mywell = xtgeo.Well(WFILE)
 
-    poly = mywell.get_polygon()
+    poly = mywell.get_polygons()
 
     assert isinstance(poly, xtgeo.xyz.Polygons)
     print(poly.dataframe)

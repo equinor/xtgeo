@@ -972,7 +972,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
         _well_oper.rescale(self, delta=delta)
 
-    def get_polygon(self):
+    def get_polygons(self):
         """Return a Polygons object from the well trajectory.
 
         .. versionadded:: 2.1.0
@@ -1009,10 +1009,11 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             If not possible return False
         """
 
-        poly = self.get_polygon()
+        poly = self.get_polygons()
 
         if tvdmin is not None:
             poly.dataframe = poly.dataframe[poly.dataframe[poly.zname] >= tvdmin]
+            poly.dataframe.reset_index(drop=True, inplace=True)
 
         return poly.get_fence(distance=sampling, nextend=nextend, asnumpy=asnumpy)
 
