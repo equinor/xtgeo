@@ -148,6 +148,10 @@ class Grid(Grid3D):
         self._roxgrid = None
         self._roxindexer = None
 
+        # For storage of more private stuff in order to speed up certain functions
+        # See _grid3d_fence for instance
+        self._tmp = {}
+
         if len(args) == 1:
             # make an instance directly through import of a file
             fformat = kwargs.get("fformat", "guess")
@@ -1301,6 +1305,81 @@ class Grid(Grid3D):
         )
 
         return reports
+
+    # ==================================================================================
+    # Extract a fence/randomline by sampling, ready for plotting with e.g. matplotlib
+    # ==================================================================================
+    def get_randomline(
+        self,
+        fencespec,
+        prop,
+        zmin=None,
+        zmax=None,
+        zincrement=1.0,
+        hincrement=None,
+        atleast=5,
+        nextend=2,
+    ):
+        """Get a sampled randomline from a fence spesification.
+
+        This randomline will be a 2D numpy with depth on the vertical
+        axis, and length along as horizontal axis. Undefined values will have
+        the np.nan value.
+
+        The input fencespec is either a 2D numpy where each row is X, Y, Z, HLEN,
+        where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
+        length along the fence, or a Polygons instance.
+
+        If input fencspec is a numpy 2D, it is important that the HLEN array
+        has a constant increment and ideally a sampling that is less than the
+        Cube resolution. If a Polygons() instance, this is automated!
+
+        Args:
+            fencespec (:obj:`~numpy.ndarray` or :class:`~xtgeo.xyz.polygons.Polygons`):
+                2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
+            prop (GridProperty): The grid property so sample
+            zmin (float): Minimum Z (default is Grid Z minima/origin)
+            zmax (float): Maximum Z (default is Grid Z maximum)
+            zincrement (float): Sampling vertically, default is 1.0
+            hincrement (float or bool): Resampling horizontally. This applies only
+                if the fencespec is a Polygons() instance. If None (default),
+                the distance will be deduced automatically.
+            atleast (int): Minimum number of horizontal samples (only if
+                fencespec is a Polygons instance)
+            nextend (int): Extend with nextend * hincrement in both ends (only if
+                fencespec is a Polygons instance)
+
+        Returns:
+            A tuple: (hmin, hmax, vmin, vmax, ndarray2d)
+
+        Raises:
+            ValueError: Input fence is not according to spec.
+
+        .. versionadded:: 2.1.0
+
+        .. seealso::
+           Class :class:`~xtgeo.xyz.polygons.Polygons`
+              The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
+              used to pregenerate `fencespec`
+
+        """
+        if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
+            raise ValueError("fencespec must be a numpy or a Polygons() object")
+        logger.info("Getting randomline...")
+
+        res = _grid3d_utils.get_randomline(
+            self,
+            fencespec,
+            prop,
+            zmin=zmin,
+            zmax=zmax,
+            zincrement=zincrement,
+            hincrement=hincrement,
+            atleast=atleast,
+            nextend=nextend,
+        )
+        logger.info("Getting randomline... DONE")
+        return res
 
     # ----------------------------------------------------------------------------------
     # Private function

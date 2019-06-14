@@ -890,9 +890,10 @@ class GridProperty(Grid3D):
         else:
             logger.info("No need to convert, already discrete")
 
-    # =========================================================================
+
+    # ==================================================================================
     # Operations restricted to inside/outside polygons
-    # =========================================================================
+    # ==================================================================================
 
     def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for doing 3D grid property operations
