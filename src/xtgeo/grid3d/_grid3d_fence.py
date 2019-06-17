@@ -8,6 +8,7 @@ import numpy as np
 
 import xtgeo
 from xtgeo.grid3d import _gridprop_lowlevel as gl
+from xtgeo.surface import _regsurf_lowlevel as rl
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -33,6 +34,9 @@ def get_randomline(
 
     _update_tmpvars(self)
 
+    if isinstance(prop, str):
+        prop = self.get_prop_by_name(prop)
+
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]
     hcoords = fencespec[:, 3]
@@ -45,7 +49,7 @@ def get_randomline(
     nzsam = int((zmax - zmin) / zincrement)
     nsamples = xcoords.shape[0] * nzsam
 
-    _ier, values = _cxtgeo.grid3d_get_randomline(
+    _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,
         zmin,
@@ -58,20 +62,24 @@ def get_randomline(
         self._tmp["topd"].yori,
         self._tmp["topd"].xinc,
         self._tmp["topd"].yinc,
-        self._tmp["topd"].xori,
         self._tmp["topd"].rotation,
         self._tmp["topd"].yflip,
-        self._tmp["topi"].get_values1d(),
-        self._tmp["topj"].get_values1d(),
-        self._tmp["basi"].get_values1d(),
-        self._tmp["basj"].get_values1d(),
+        self._tmp["topi_carr"],
+        self._tmp["topj_carr"],
+        self._tmp["basi_carr"],
+        self._tmp["basj_carr"],
 
         self.ncol,
         self.nrow,
+        self.nlay,
         self._p_coord_v,
         self._p_zcorn_v,
         self._p_actnum_v,
         gl.update_carray(prop),
+
+        self._tmp["onegrid"]._p_zcorn_v,
+        self._tmp["onegrid"]._p_actnum_v,
+
         nsamples,
         0,
         XTGDEBUG
@@ -102,13 +110,17 @@ def _update_tmpvars(self):
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
         self._tmp["topd"] = xtgeo.RegularSurface()
         self._tmp["topi"], self._tmp["topj"] = self._tmp["topd"].from_grid3d(
-            where="top"
+            self, where="top"
         )
-
         self._tmp["basd"] = xtgeo.RegularSurface()
         self._tmp["basi"], self._tmp["basj"] = self._tmp["topd"].from_grid3d(
-            where="base"
+            self, where="base"
         )
+
+        self._tmp["topi_carr"] = rl.get_carr_double(self._tmp["topi"])
+        self._tmp["topj_carr"] = rl.get_carr_double(self._tmp["topj"])
+        self._tmp["basi_carr"] = rl.get_carr_double(self._tmp["basi"])
+        self._tmp["basj_carr"] = rl.get_carr_double(self._tmp["basj"])
 
         logger.info("Make a set of tmp surfaces for I J locations + depth... DONE")
     else:

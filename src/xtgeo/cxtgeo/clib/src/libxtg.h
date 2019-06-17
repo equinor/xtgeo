@@ -1767,7 +1767,7 @@ int grd3d_get_randomline(
                          double xinc,
                          double yinc,
                          double rotation,
-                         double yflip,
+                         int yflip,
                          double *maptopi,
                          double *maptopj,
                          double *mapbasi,
@@ -1779,12 +1779,13 @@ int grd3d_get_randomline(
                          double *p_coor_v,
                          double *p_zcorn_v,
                          int *p_actnum_v,
-                         double *p_zcornone_v,
-                         double *p_actnumone_v,
                          double *p_val_v,
+                         double *p_zcornone_v,
+                         int *p_actnumone_v,
 
                          double *swig_np_dbl_aout_v1,  // *values
                          long n_swig_np_dbl_aout_v1,  // nvalues
+
                          int option,
                          int debug
                          );

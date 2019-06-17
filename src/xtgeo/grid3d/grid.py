@@ -23,6 +23,7 @@ from . import _grid_import
 from . import _grid_export
 from . import _grid_refine
 from . import _grid_etc1
+from . import _grid3d_fence
 from . import _grid_roxapi
 from . import _gridprop_lowlevel
 
@@ -1367,7 +1368,7 @@ class Grid(Grid3D):
             raise ValueError("fencespec must be a numpy or a Polygons() object")
         logger.info("Getting randomline...")
 
-        res = _grid3d_utils.get_randomline(
+        res = _grid3d_fence.get_randomline(
             self,
             fencespec,
             prop,

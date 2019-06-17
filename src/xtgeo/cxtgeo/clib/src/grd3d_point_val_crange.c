@@ -35,7 +35,7 @@
  *     debug           i      debug/verbose flag
 
  * RETURNS:
- *     void
+ *     int: -1, then outside grid
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
