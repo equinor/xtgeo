@@ -202,13 +202,7 @@ class Map(BasePlot):
             else:
                 print("A polygon is not closed...")
 
-    def plot_polygons(
-        self,
-        fpoly,
-        idname="POLY_ID",
-        color="k",
-        linewidth=0.8,
-    ):
+    def plot_polygons(self, fpoly, idname="POLY_ID", color="k", linewidth=0.8):
         """Plot a polygons instance
 
         Args:
@@ -222,9 +216,7 @@ class Map(BasePlot):
 
         aff = fpoly.dataframe.groupby(idname)
 
-        print("XX", self._ax)
-
-        for name, group in aff:
+        for _name, group in aff:
 
             # make a dataframe sorted on groupname
             pname = fpoly.name
