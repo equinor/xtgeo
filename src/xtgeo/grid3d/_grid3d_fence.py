@@ -30,9 +30,14 @@ def get_randomline(
     nextend=2,
 ):
 
-    logger.info("Getting randomline...")
+    logger.info("Getting randomline from Grid...")
 
     _update_tmpvars(self)
+
+    if hincrement is None and isinstance(fencespec, xtgeo.Polygons):
+        logger.info("Estimate hincrement from Polygons instance...")
+        fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
+        logger.info("Estimate hincrement from Polygons instance... DONE")
 
     if isinstance(prop, str):
         prop = self.get_prop_by_name(prop)
@@ -46,7 +51,8 @@ def get_randomline(
     if zmax is None:
         zmax = self._tmp["basd"].values.max()
 
-    nzsam = int((zmax - zmin) / zincrement)
+    print(zmax, zmin, zincrement)
+    nzsam = int((zmax - zmin) / float(zincrement)) + 1
     nsamples = xcoords.shape[0] * nzsam
 
     _ier, values = _cxtgeo.grd3d_get_randomline(
@@ -110,12 +116,17 @@ def _update_tmpvars(self):
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
         self._tmp["topd"] = xtgeo.RegularSurface()
         self._tmp["topi"], self._tmp["topj"] = self._tmp["topd"].from_grid3d(
-            self, where="top"
+            self, where="top", rfactor=4
         )
         self._tmp["basd"] = xtgeo.RegularSurface()
         self._tmp["basi"], self._tmp["basj"] = self._tmp["topd"].from_grid3d(
-            self, where="base"
+            self, where="base", rfactor=4
         )
+
+        # self._tmp["topi"].to_file("topi.gri")
+        # self._tmp["topj"].to_file("topj.gri")
+        # self._tmp["basi"].to_file("basi.gri")
+        # self._tmp["basj"].to_file("basj.gri")
 
         self._tmp["topi_carr"] = rl.get_carr_double(self._tmp["topi"])
         self._tmp["topj_carr"] = rl.get_carr_double(self._tmp["topj"])
@@ -125,3 +136,21 @@ def _update_tmpvars(self):
         logger.info("Make a set of tmp surfaces for I J locations + depth... DONE")
     else:
         logger.info("Re-use existing tmp surfaces for I J")
+
+
+def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
+    """Compute a resampled fence from a Polygons instance"""
+
+    if hincrement is None:
+
+        geom = self.get_geometrics()
+
+        avgdxdy = 0.5 * (geom[10] + geom[11])
+        distance = 0.5 * avgdxdy
+
+    logger.info("Getting fence from a Polygons instance...")
+    fspec = fencespec.get_fence(
+        distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
+    )
+    logger.info("Getting fence from a Polygons instance... DONE")
+    return fspec

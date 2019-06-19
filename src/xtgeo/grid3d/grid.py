@@ -1333,22 +1333,25 @@ class Grid(Grid3D):
 
         If input fencspec is a numpy 2D, it is important that the HLEN array
         has a constant increment and ideally a sampling that is less than the
-        Cube resolution. If a Polygons() instance, this is automated!
+        Cube resolution. If a Polygons() instance, this is automated if hincrement is
+        None, and ignored if hincrement is False.
 
         Args:
             fencespec (:obj:`~numpy.ndarray` or :class:`~xtgeo.xyz.polygons.Polygons`):
                 2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
-            prop (GridProperty): The grid property so sample
+            prop (GridProperty or str): The grid property object, or name, which shall
+                be plotted.
             zmin (float): Minimum Z (default is Grid Z minima/origin)
             zmax (float): Maximum Z (default is Grid Z maximum)
             zincrement (float): Sampling vertically, default is 1.0
             hincrement (float or bool): Resampling horizontally. This applies only
                 if the fencespec is a Polygons() instance. If None (default),
-                the distance will be deduced automatically.
+                the distance will be deduced automatically. If False, then it assumes
+                the Polygons can be used as-is.
             atleast (int): Minimum number of horizontal samples (only if
-                fencespec is a Polygons instance)
+                fencespec is a Polygons instance and hincrement != False)
             nextend (int): Extend with nextend * hincrement in both ends (only if
-                fencespec is a Polygons instance)
+                fencespec is a Polygons instance and hincrement != False)
 
         Returns:
             A tuple: (hmin, hmax, vmin, vmax, ndarray2d)
