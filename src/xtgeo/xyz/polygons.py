@@ -98,6 +98,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._mname = "M_MDEPTH"
         self._hname = "H_CUMLEN"
         self._dhname = "H_DELTALEN"
+        self._tname = "T_CUMLEN"
+        self._dtname = "T_DELTALEN"
         self._name = "poly"  # the name of the Polygons() instance
         super(Polygons, self).__init__(*args, **kwargs)
 
@@ -220,6 +222,46 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             raise ValueError("Wrong type of input to dhname; must be string")
 
     @property
+    def tname(self):
+        """ Returns or set the name of the cumulative total length column,
+        if it exists.
+
+        .. versionadded: 2.1.0
+        """
+        if isinstance(self._tname, str):
+            if self._tname not in self._df.columns:
+                self._tname = None
+
+        return self._tname
+
+    @tname.setter
+    def tname(self, mytname):
+        if isinstance(mytname, str):
+            self._tname = mytname
+        else:
+            raise ValueError("Wrong type of input to tname; must be string")
+
+    @property
+    def dtname(self):
+        """ Returns or set the name of the delta total length column if
+        it exists.
+
+        .. versionadded: 2.1.0
+        """
+        if isinstance(self._dtname, str):
+            if self._dtname not in self._df.columns:
+                self._dtname = None
+
+        return self._dtname
+
+    @dtname.setter
+    def dtname(self, mydtname):
+        if isinstance(mydtname, str):
+            self._dtname = mydtname
+        else:
+            raise ValueError("Wrong type of input to dhname; must be string")
+
+    @property
     def dataframe(self):
         """ Returns or set the Pandas dataframe object"""
         return self._df
@@ -284,7 +326,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Supported import formats (fformat):
 
-        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+        * 'xyz' or 'poi' or 'pol': Simple XYZ or RMS text format
 
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
 
@@ -571,8 +613,24 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         self.dataframe = pd.concat(dflist)
 
+    def tlen(self, tname="T_CUMLEN", dtname="T_DELTALEN", atindex=0):
+        """Compute and add or replace columns for cum. total 3D length and delta length.
+
+        The instance is updated in-place.
+
+        Args:
+            tname (str): Name of cumulative total length. Default is T_CUMLEN.
+            dtname (str): Name of delta length column. Default is T_DELTALEN.
+            atindex (int): Which index which shall be 0.0 for cumulative length.
+
+        .. versionadded: 2.1.0
+        """
+
+        _xyz_oper.tlen(self, tname=tname, dtname=dtname, atindex=atindex)
+
     def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
-        """Compute and add or replace columns for cum. lenghth and delta length.
+        """Compute and add or replace columns for cum. horizontal length
+        and delta length.
 
         The instance is updated in-place.
 
@@ -586,22 +644,26 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
 
-    def extend(self, distance, nsamples=1):
+    def extend(self, distance, nsamples=1, mode2d=True):
         """Extend polyline by `distance` at both ends, nsmaples times.
 
         The instance is updated in-place.
 
         Args:
-            distance (float): The horizontal distance to extend
+            distance (float): The horizontal distance (sampling) to extend
             nsamples (int): Number of samples to extend.
+            mode2d (bool): XY extension (only True is supported)
 
         .. versionadded: 2.1.0
         """
 
-        _xyz_oper.extend(self, distance, nsamples)
+        _xyz_oper.extend(self, distance, nsamples, mode2d)
 
-    def rescale(self, distance, addhlen=True, kind="slinear"):
-        """Rescale (resample) by using a new horizontal increment.
+    def rescale(self, distance, addlen=False, kind="simple", mode2d=True):
+        """Rescale (resample) by using a new increment.
+
+        The increment (distance) may be a horizontal or a True 3D
+        distance dependent on mode2d.
 
         The instance is updated in-place.
 
@@ -611,15 +673,18 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Args:
             distance (float): New distance between points
-            addhlen (str): If True, a horizontal cum. and delta length columns will
-                will be added.
+            addhlen (str): If True, total and horizontal cum. and delta length
+                columns will be added.
             kind (str): What kind of rescaling: slinear/cubic/simple
+            mode2d (bool): The distance may be a 2D (XY) ora 3D (XYZ) mode.
 
         .. versionchanged:: 2.1.0 a new algorithm
 
         """
 
-        _xyz_oper.rescale_polygons(self, distance=distance, addhlen=addhlen, kind=kind)
+        _xyz_oper.rescale_polygons(
+            self, distance=distance, addlen=addlen, kind=kind, mode2d=mode2d
+        )
 
     def get_fence(
         self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None
@@ -628,11 +693,14 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         additonal H_CUMLEN and H_DELTALEN vectors, suitable for X sections.
 
         Args:
-            distance (float): New distance between points
+            distance (float): New horizontal distance between points
             atleast (int): Minimum number of point. If the true length/atleast is
                 less than distance, than distance will be be reset to
                 length/atleast.
-            nextend (int): Number of samples to extend at each end
+            nextend (int): Number of samples to extend at each end. Note that
+                in case of internal resetting of distance (due to 'atleast'), then
+                nextend internally will be modified in order to fulfill the
+                initial intention. Hence keep distance*nextend as target.
             name (str): Name of polygon (if asnumpy=False)
             asnumpy (bool): Return a [:, 5] numpy array with
                 columns X.., Y.., Z.., HLEN, dH
@@ -653,7 +721,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             name=name,
             asnumpy=asnumpy,
             polyid=polyid,
-            _version=2,
         )
 
     # ==================================================================================
@@ -668,11 +735,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         subtitle=None,
         infotext=None,
         linewidth=1.0,
-        color="r"
-        # xlabelrotation=None,
-        # colormap="rainbow",
+        color="r",
     ):
-        """Fast plotting of polygons using matplotlib.
+        """Simple plotting of polygons using matplotlib.
 
         Args:
             filename (str): Name of plot file; None will plot to screen.
@@ -680,9 +745,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             title (str): Title of plot
             subtitle (str): Subtitle of plot
             infotext (str): Additonal info on plot.
-            xlabelrotation (float): Rotation in degrees of X labels.
-            colormap (str): Name of matplotlib or RMS file or XTGeo
-                colormap. Default is matplotlib's 'rainbow'
+            color (str): Name of color (may use matplotib shortcuts, e.g. 'r' for 'red')
         """
         mymap = xtgeo.plot.Map()
         mymap.canvas(title=title, subtitle=subtitle, infotext=infotext)

@@ -84,21 +84,30 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     logger.info("Operations of points inside polygon(s)... done")
 
 
-def rescale_polygons(self, distance=10, addhlen=True, kind="slinear"):
-    """Rescale (resample) a polygons segment"""
+def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=False):
+    """Rescale (resample) a polygons segment
+    Default settings will make it backwards compatible with 2.0
+    New options were added in 2.1:
+    * addlen
+    * kind
+    * mode2d
+    """
 
     if kind in ("slinear", "cubic"):
-        _rescale_v2(self, distance, addhlen, kind=kind)
+        _rescale_v2(self, distance, addlen, kind=kind, mode2d=mode2d)
 
     else:
-        _rescale_v1(self, distance, addhlen)
+        _rescale_v1(self, distance, addlen, mode2d=mode2d)
 
 
-def _rescale_v1(self, distance, addhlen):
-    # version 1, simple approach
+def _rescale_v1(self, distance, addlen, mode2d):
+    # version 1, simple approach, will rescale in 2D since Shapely use 2D lengths
 
     if not self._ispolygons:
         raise ValueError("Not a Polygons object")
+
+    if not mode2d:
+        raise KeyError("Cannot combine 'simple' with mode2d True")
 
     idgroups = self.dataframe.groupby(self.pname)
 
@@ -121,12 +130,9 @@ def _rescale_v1(self, distance, addhlen):
     dfr = pd.concat(dfrlist)
     self.dataframe = dfr.reset_index(drop=True)
 
-    if addhlen:
+    if addlen:
         self.hlen()
-    else:
-        self.delete_columns([self.hname, self.dhname])
-
-    return None
+        self.tlen()
 
 
 def _redistribute_vertices(geom, distance):
@@ -149,36 +155,43 @@ def _redistribute_vertices(geom, distance):
     raise ValueError("Unhandled geometry {}".format(geom.geom_type))
 
 
-def _rescale_v2(self, distance, addhlen, kind="slinear"):
+def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
     # Rescaling to constant increment is perhaps impossible, but this is
-    # is quite close
+    # perhaps quite close
 
     self.hlen()
+    self.tlen()
+
     idgroups = self.dataframe.groupby(self.pname)
 
     dfrlist = []
     for idx, grp in idgroups:
 
         points = [grp[self.xname], grp[self.yname], grp[self.zname]]
-        lenh = grp[self.hname].iloc[-1]
+
+        print(grp)
+        leng = grp[self.hname].iloc[-1]
+        gname = self.hname
+
+        if not mode2d:
+            leng = grp[self.tname].iloc[-1]
+            gname = self.tname
 
         # to avoid numerical trouble of pure vertical sections
-        lenh = lenh - 0.001 * lenh
+        leng = leng - 0.001 * leng
 
-        nstep = int(lenh / distance)
-        alpha = np.linspace(0, lenh, num=nstep, endpoint=True)
+        nstep = int(leng / distance)
+        alpha = np.linspace(0, leng, num=nstep, endpoint=True)
 
         if kind == "slinear":
             points = np.array(points).T
             interpolator = interp1d(
-                grp[self.hname], points, kind="slinear", axis=0, assume_sorted=True
+                grp[gname], points, kind="slinear", axis=0, assume_sorted=True
             )
             ip = interpolator(alpha)
         elif kind == "cubic":
-            splines = [
-                UnivariateSpline(grp[self.hname], crd) for crd in points
-            ]
+            splines = [UnivariateSpline(grp[gname], crd) for crd in points]
 
             ip = np.vstack(spl(alpha) for spl in splines).T
         else:
@@ -192,106 +205,25 @@ def _rescale_v2(self, distance, addhlen, kind="slinear"):
     dfr = pd.concat(dfrlist)
     self.dataframe = dfr.reset_index(drop=True)
 
-    if addhlen:
+    if addlen:
+        self.tlen()
         self.hlen()
     else:
-        self.delete_columns([self.hname, self.dhname])
+        self.delete_columns([self.hname, self.dhname, self.tname, self.dtname])
 
 
 def get_fence(
-    self,
-    distance=20,
-    atleast=5,
-    nextend=2,
-    name=None,
-    asnumpy=True,
-    polyid=None,
-    _version=2,
+    self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None
 ):
     """Get a fence suitable for plotting xsections, either as a numpy or as a
     new Polygons instance.
 
     The atleast parameter will win over the distance, meaning that if total length
     horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
+    In such cases, nextend will be modified also to fulfill the original
+    nextend*distance (approx).
 
     """
-    if _version == 1:
-        return _fence_v1(self, distance, atleast, nextend, name, asnumpy)
-
-    return _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid)
-
-
-def _fence_v1(self, distance, atleast, nextend, name, asnumpy):
-
-    # POLYID NOT IMPLEMENTED!
-
-    if len(self._df) < 2:
-        xtg.warn("Well does not enough points in interval, outside range?")
-        return False
-
-    hxlen = self.get_shapely_objects()[0].length
-
-    if hxlen / float(atleast) < distance:
-        distance = hxlen / float(atleast)
-
-    nbuf = 1000000
-
-    logger.info("%s %s %s %s %s ", distance, atleast, nextend, name, asnumpy)
-    npxarr = np.zeros(nbuf, dtype=np.float64)
-    npyarr = np.zeros(nbuf, dtype=np.float64)
-    npzarr = np.zeros(nbuf, dtype=np.float64)
-    npharr = np.zeros(nbuf, dtype=np.float64)
-
-    logger.info("Calling C routine...")
-    # C function:
-    ier, npxarr, npyarr, npzarr, npharr, nlen = _cxtgeo.pol_resampling(
-        self._df[self.xname].values,
-        self._df[self.yname].values,
-        self._df[self.zname].values,
-        distance,
-        distance * nextend,
-        nbuf,
-        nbuf,
-        nbuf,
-        nbuf,
-        0,
-        XTGDEBUG,
-    )
-    logger.info("Calling C routine... DONE")
-
-    if ier != 0:
-        raise RuntimeError("Nonzero code from_cxtgeo.pol_resampling")
-
-    npxarr = npxarr[:nlen]
-    npyarr = npyarr[:nlen]
-    npzarr = npzarr[:nlen]
-    npharr = npharr[:nlen]
-
-    npdharr = np.subtract(npharr[1:], npharr[0 : nlen - 1])
-    npdharr = np.insert(npdharr, 0, [0.0])
-
-    if asnumpy is True:
-        rval = np.concatenate((npxarr, npyarr, npzarr, npharr, npdharr), axis=0)
-        rval = np.reshape(rval, (nlen, 5), order="F")
-    else:
-        rval = xtgeo.xyz.Polygons()
-        arr = np.vstack(
-            [npxarr, npyarr, npzarr, npharr, npdharr, np.zeros(nlen, dtype=np.int32)]
-        )
-        col = ["X_UTME", "Y_UTMN", "Z_TVDSS", "HLEN", "DHLEN", "ID"]
-        dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
-        dfr = dfr.astype({"ID": int})
-        if name:
-            dfr = dfr.assign(NAME=name)
-
-        rval.dataframe = dfr
-        if name:
-            rval.name = name
-
-    return rval
-
-
-def _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid):
 
     new = self.copy()
     new.hlen()
@@ -304,12 +236,18 @@ def _fence_v2(self, distance, atleast, nextend, name, asnumpy, polyid):
 
     hxlen = new.get_shapely_objects()[0].length
 
-    if hxlen / float(atleast) < distance:
-        distance = hxlen / float(atleast)
+    # perhaps a way to treat very vertical polys from wells:
+    if hxlen < 0.1 * distance:
+        hxlen = 0.1 * distance
 
-    new.rescale(distance)
+    if hxlen / float(atleast) < distance:
+        orig_extend = nextend * distance
+        distance = hxlen / float(atleast)
+        nextend = int(round(orig_extend / distance))
+
+    new.rescale(distance, kind="slinear", mode2d=True)
     updated_distance = new.dataframe[new.dhname].median()
-    print(updated_distance)
+    new.hlen()
     new.extend(updated_distance, nsamples=nextend)
 
     if name:
@@ -373,11 +311,25 @@ def snap_surface(self, surf, activeonly=True):
 
 
 def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
-    """Get the distance (cumulative and delta) between points in polygons.
+    """Get the horizontal distance (cumulative and delta) between points in polygons."""
 
-    The properties hname and dhname will be updated.
+    _generic_length(self, gname=hname, dgname=dhname, atindex=atindex, mode2d=True)
 
-    Note that DH at first location will be set equal to dHat location 1
+
+def tlen(self, tname="T_CUMLEN", dtname="T_DELTALEN", atindex=0):
+    """Get the true 3D distance (cumulative and delta) between points in polygons."""
+
+    _generic_length(self, gname=tname, dgname=dtname, atindex=atindex, mode2d=False)
+
+
+def _generic_length(
+    self, gname="G_CUMLEN", dgname="G_DELTALEN", atindex=0, mode2d=True
+):
+    """Get the true or horizontal distance (cum/delta) between points in polygons.
+
+    The properties gname and ghname will be updated.
+
+    Note that Dxx at first location will be set equal to that of location 1
     """
 
     # Potential todo: Add an option that dH never gets 0.0 to avoid numerical trouble
@@ -387,17 +339,19 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
     # delete existing self.hname and self.dhname columns
-    self.delete_columns([self.hname, self.dhname])
+    self.delete_columns([gname, dgname])
 
     idgroups = self._df.groupby(self.pname)
 
-    hdist = np.array([])
-    dhdist = np.array([])
+    gdist = np.array([])
+    dgdist = np.array([])
     for _id, grp in idgroups:
-        ier, hlenv, dhlenv = _cxtgeo.pol_geometrics(
+        ier, tlenv, dtlenv, hlenv, dhlenv = _cxtgeo.pol_geometrics(
             grp[self.xname].values,
             grp[self.yname].values,
             grp[self.zname].values,
+            len(grp),
+            len(grp),
             len(grp),
             len(grp),
             XTGDEBUG,
@@ -407,19 +361,33 @@ def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
                 "Error code from _cxtgeo.pol_geometrics is {}".format(ier)
             )
 
-        dhlenv[0] = dhlenv[1]
-        if atindex > 0:
-            cumval = hlenv[atindex]
-            hlenv -= cumval
+        if mode2d:
+            dhlenv[0] = dhlenv[1]
+            if atindex > 0:
+                cumval = hlenv[atindex]
+                hlenv -= cumval
 
-        hdist = np.append(hdist, hlenv)
-        dhdist = np.append(dhdist, dhlenv)
+            gdist = np.append(gdist, hlenv)
+            dgdist = np.append(dgdist, dhlenv)
 
-    self._df[hname] = hdist
-    self._df[dhname] = dhdist
+        else:
+            dtlenv[0] = dtlenv[1]
+            if atindex > 0:
+                cumval = tlenv[atindex]
+                tlenv -= cumval
 
-    self.hname = hname
-    self.dhname = dhname
+            gdist = np.append(gdist, tlenv)
+            dgdist = np.append(dgdist, dtlenv)
+
+    self._df[gname] = gdist
+    self._df[dgname] = dgdist
+
+    if mode2d:
+        self.hname = gname
+        self.dhname = dgname
+    else:
+        self.tname = gname
+        self.dtname = dgname
 
 
 def extend(self, distance, nsamples, addhlen=True):
