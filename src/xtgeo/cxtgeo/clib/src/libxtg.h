@@ -803,10 +803,14 @@ int pol_geometrics(
                    long   n_swig_np_dbl_in_v2,    // nyv
                    double *swig_np_dbl_in_v3,     // *zv
                    long   n_swig_np_dbl_in_v3,    // nzv
-                   double *swig_np_dbl_aout_v1,     // *hv
-                   long   n_swig_np_dbl_aout_v1,    // nhv
-                   double *swig_np_dbl_aout_v2,     // *dhv
-                   long   n_swig_np_dbl_aout_v2,    // ndhv
+                   double *swig_np_dbl_aout_v1,     // *tv
+                   long   n_swig_np_dbl_aout_v1,    // ntv
+                   double *swig_np_dbl_aout_v2,     // *dtv
+                   long   n_swig_np_dbl_aout_v2,    // ndtv
+                   double *swig_np_dbl_aout_v3,     // *hv
+                   long   n_swig_np_dbl_aout_v3,    // nhv
+                   double *swig_np_dbl_aout_v4,     // *dhv
+                   long   n_swig_np_dbl_aout_v4,    // ndhv
                    int debug
                    );
 

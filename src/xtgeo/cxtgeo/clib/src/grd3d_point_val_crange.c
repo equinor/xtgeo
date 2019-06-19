@@ -31,7 +31,7 @@
  *     value           o      value to return (UNDEF if not found)
  *     imin,.. kmax    i      cell index ranges in I J K
  *     ibs            i/o     Start point cell index, updated to actual cell index
- *     option          i      To be
+ *     option          i      If negative, do not compute value (p_prop_v can be dummy)
  *     debug           i      debug/verbose flag
 
  * RETURNS:
@@ -63,16 +63,12 @@ long _find_ib(double x, double y, double z, int imin, int imax,
     long ib = -1;
     double corners[24];
     char sbn[24] = "_find_ib";
-
     xtgverbose(debug);
 
     for (k = kmin; k <= kmax; k++) {
         for (j = jmin; j <= jmax; j++) {
             for (i = imin; i <= imax; i++) {
 
-                if (debug>2) {
-                    xtg_speak(sbn, 3, "Cell IJK: %d %d %d",i,j,k);
-                }
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 /* get the corner for the cell */
                 grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v,
@@ -80,7 +76,10 @@ long _find_ib(double x, double y, double z, int imin, int imax,
                 inside = x_chk_point_in_cell(x, y, z, corners, 1, debug);
 
                 if (inside > 0) {
-                    xtg_speak(sbn, 2, "Found at IJK: %d %d %d", i, j, k);
+                    if (debug>2) {
+                        xtg_speak(sbn, 3, "Point <%d %d %d> is inside cell: %d %d %d",
+                                  x, y, z, i, j, k);
+                    }
                     return ib;
                 }
 
@@ -127,6 +126,7 @@ int grd3d_point_val_crange(
     int i1, i2, j1, j2, k1, k2;
 
     xtgverbose(debug);
+
     xtg_speak(sbn, 2, "Entering %s", sbn);
 
     xtg_speak(sbn, 2, "IBSTART %d", ibstart);
@@ -152,6 +152,7 @@ int grd3d_point_val_crange(
     ib = _find_ib(x, y, z, i1, i2, j1, j2, k1, k2, nx, ny, nz,
                   p_coord_v, p_zcorn_v, debug);
 
+
     /* second try; fall back loop over fuller range */
     if (ib == -9) {
         ib = _find_ib(x, y, z, imin, imax, jmin, jmax, kmin, kmax, nx, ny, nz,
@@ -160,6 +161,8 @@ int grd3d_point_val_crange(
 
     if (ib > 0) {
         *ibs = ib;
+        if (option < 0) return EXIT_SUCCESS;
+
         if (p_actnum_v[ib] == 1) {
             *value = p_val_v[ib];
         }
