@@ -300,7 +300,7 @@ def get_randomline(
     if zincrement is None:
         zincrement = self._zinc / 2.0
 
-    nzsam = int((zmax - zmin) / zincrement)
+    nzsam = int((zmax - zmin) / zincrement) + 1
 
     nsamples = xcoords.shape[0] * nzsam
 
@@ -345,10 +345,11 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
         distance = 0.5 * avgdxdy
 
     logger.info("Getting fence from a Polygons instance...")
-    return fencespec.get_fence(
+    fspec = fencespec.get_fence(
         distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
     logger.info("Getting fence from a Polygons instance... DONE")
+    return fspec
 
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order
