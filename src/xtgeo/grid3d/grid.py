@@ -991,7 +991,9 @@ class Grid(Grid3D):
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
 
-    def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
+    def get_geometrics(
+        self, allcells=False, cellcenter=True, return_dict=False, _ver=1
+    ):
         """Get a list of grid geometrics such as origin, min, max, etc.
 
         This returns a tuple: (xori, yori, zori, xmin, xmax, ymin, ymax, zmin,
@@ -1005,6 +1007,7 @@ class Grid(Grid3D):
                 coords
             return_dict (bool): If True, return a dictionary instead of a
                 list, which is usually more convinient.
+            _ver (int): Private option; only for developer!
 
         Raises: Nothing
 
@@ -1017,7 +1020,11 @@ class Grid(Grid3D):
         """
 
         gresult = _grid_etc1.get_geometrics(
-            self, allcells=allcells, cellcenter=cellcenter, return_dict=return_dict
+            self,
+            allcells=allcells,
+            cellcenter=cellcenter,
+            return_dict=return_dict,
+            _ver=_ver,
         )
 
         return gresult
@@ -1333,7 +1340,7 @@ class Grid(Grid3D):
 
         If input fencspec is a numpy 2D, it is important that the HLEN array
         has a constant increment and ideally a sampling that is less than the
-        Cube resolution. If a Polygons() instance, this is automated if hincrement is
+        Grid resolution. If a Polygons() instance, this is automated if hincrement is
         None, and ignored if hincrement is False.
 
         Args:

@@ -353,7 +353,20 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     return tuple(grid_props)
 
 
-def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
+def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False, _ver=1):
+
+    if _ver == 1:
+        res = _get_geometrics_v1(
+            self, allcells=allcells, cellcenter=cellcenter, return_dict=return_dict
+        )
+    else:
+        res = _get_geometrics_v2(
+            self, allcells=allcells, cellcenter=cellcenter, return_dict=return_dict
+        )
+    return res
+
+
+def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False):
 
     ptr_x = []
     for i in range(13):
@@ -399,6 +412,68 @@ def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False):
     glist.append(quality)
 
     logger.info("Cell geometrics done")
+
+    if return_dict:
+        gdict = {}
+        gkeys = [
+            "xori",
+            "yori",
+            "zori",
+            "xmin",
+            "xmax",
+            "ymin",
+            "ymax",
+            "zmin",
+            "zmax",
+            "avg_rotation",
+            "avg_dx",
+            "avg_dy",
+            "avg_dz",
+            "grid_regularity_flag",
+        ]
+
+        for i, key in enumerate(gkeys):
+            gdict[key] = glist[i]
+
+        return gdict
+
+    return tuple(glist)
+
+
+def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False):
+    """Currently a workaround as there seems to be bugs in v1
+
+    Will only work with allcells False and cellcenter True
+    """
+
+    glist = []
+    if cellcenter and allcells:
+        xcor, ycor, zcor = self.get_xyz(asmasked=False)
+        glist.append(xcor.values[0, 0, 0])
+        glist.append(ycor.values[0, 0, 0])
+        glist.append(zcor.values[0, 0, 0])
+        glist.append(xcor.values.min())
+        glist.append(xcor.values.max())
+        glist.append(ycor.values.min())
+        glist.append(ycor.values.max())
+        glist.append(zcor.values.min())
+        glist.append(zcor.values.max())
+
+        # rotation (approx) for mid column
+        midcol = int(self.nrow / 2)
+        midlay = int(self.nlay / 2)
+        x0 = xcor.values[0, midcol, midlay]
+        y0 = ycor.values[0, midcol, midlay]
+        x1 = xcor.values[self.ncol - 1, midcol, midlay]
+        y1 = ycor.values[self.ncol - 1, midcol, midlay]
+        glist.append(degrees(atan2(y1 - y0, x1 - x0)))
+
+        dx, dy = self.get_dxdy(asmasked=False)
+        dz = self.get_dz(asmasked=False)
+        glist.append(dx.values.mean())
+        glist.append(dy.values.mean())
+        glist.append(dz.values.mean())
+        glist.append(1)
 
     if return_dict:
         gdict = {}
