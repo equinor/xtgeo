@@ -25,12 +25,15 @@ def from_grid3d(self, grid, subgrids, rfactor):
     layers = []
     names = []
     if subgrids and grid.subgrids is not None:
+        last = ""
         for sgrd, srange in grid.subgrids.items():
             layers.append(str(srange[0]) + "_top")
             names.append(sgrd + "_top")
+            last = str(srange[-1])
+            lastname = sgrd
         # base of last layer
-        layers.append(str(srange[-1]) + "_base")
-        names.append(sgrd + "_base")
+        layers.append(last + "_base")
+        names.append(lastname + "_base")
     else:
         layers.append("top")
         names.append("top")

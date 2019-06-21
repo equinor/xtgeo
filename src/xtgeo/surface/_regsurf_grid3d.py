@@ -72,9 +72,9 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
 def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
     """Private function for deriving a surface from a 3D grid.
 
-    .. versionadded:: 2.1.0
-
     Note that rotated maps is currently not supported!
+
+    .. versionadded:: 2.1.0
     """
 
     if where == "top":
@@ -131,8 +131,10 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
 
     if mode == "i":
         self.set_values1d(ivalues)
+        return None
     elif mode == "j":
         self.set_values1d(jvalues)
+        return None
     else:
         self.set_values1d(svalues)
         isurf = self.copy()

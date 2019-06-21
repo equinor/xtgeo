@@ -188,8 +188,6 @@ def test_xsect_larger_geogrid():
     )
 
     if XTGSHOW:
-        import matplotlib.pyplot as plt
-
         plt.figure()
         plt.imshow(arr1, cmap="rainbow", extent=(hmin1, hmax1, vmax1, vmin1))
         plt.axis("tight")
