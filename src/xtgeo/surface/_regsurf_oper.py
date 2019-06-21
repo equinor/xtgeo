@@ -315,6 +315,61 @@ def get_fence(self, xyfence):
     return xyfence
 
 
+def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
+    """Get surface values along fence."""
+
+    if hincrement is None and isinstance(fencespec, xtgeo.Polygons):
+        logger.info("Estimate hincrement from instance...")
+        fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
+        logger.info("Estimate hincrement from instance... DONE")
+
+    xcoords = fencespec[:, 0]
+    ycoords = fencespec[:, 1]
+    zcoords = fencespec[:, 2].copy()
+    hcoords = fencespec[:, 3]
+
+    # zcoords will be updated "inplace":
+    istat = _cxtgeo.surf_get_zv_from_xyv(
+        xcoords,
+        ycoords,
+        zcoords,
+        self.ncol,
+        self.nrow,
+        self.xori,
+        self.yori,
+        self.xinc,
+        self.yinc,
+        self.yflip,
+        self.rotation,
+        self.get_values1d(),
+        XTGDEBUG,
+    )
+
+    if istat != 0:
+        logger.warning("Seem to be rotten")
+
+    zcoords[zcoords > xtgeo.UNDEF_LIMIT] = np.nan
+    arr = np.vstack([hcoords, zcoords]).T
+
+    return arr
+
+
+def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
+    """Compute a resampled fence from a Polygons instance"""
+
+    if hincrement is None:
+
+        avgdxdy = 0.5 * (self.xinc + self.yinc)
+        distance = 0.5 * avgdxdy
+
+    logger.info("Getting fence from a Polygons instance...")
+    fspec = fencespec.get_fence(
+        distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
+    )
+    logger.info("Getting fence from a Polygons instance... DONE")
+    return fspec
+
+
 def operation_polygons(self, poly, value, opname="add", inside=True):
     """Operations restricted to polygons"""
 

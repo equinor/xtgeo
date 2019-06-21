@@ -147,13 +147,16 @@ def _update_regsurf(self, template, grid, rfactor=1.0):
     if template is None:
         # need to estimate map settings from the existing grid. this
         # may a bit time consuming for large grids.
-        geom = grid.get_geometrics(allcells=True, cellcenter=True, return_dict=True)
+        geom = grid.get_geometrics(
+            allcells=True, cellcenter=True, return_dict=True, _ver=2
+        )
 
         xlen = 1.1 * (geom["xmax"] - geom["xmin"])
         ylen = 1.1 * (geom["ymax"] - geom["ymin"])
         xori = geom["xmin"] - 0.05 * xlen
         yori = geom["ymin"] - 0.05 * ylen
         # take same xinc and yinc
+        print("XXX", geom["avg_dx"], geom["avg_dy"])
         xinc = yinc = (1.0 / rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)

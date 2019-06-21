@@ -2019,9 +2019,69 @@ class RegularSurface(object):
         Args:
             xyfence (np): A 2D numpy array with shape (N, 3) where columns
             are (X, Y, Z). The Z will be updated to the map.
+
+        Returns:
+            ndarray: A numpy 2D array similar as input, but with updated
         """
 
         xyfence = _regsurf_oper.get_fence(self, xyfence)
+
+        return xyfence
+
+    def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
+        """Extract a line along a fencespec, where horizontal axis is "length"
+        and vertical axis is sampled depth.
+
+        This is used for fence plots.
+
+        The input fencespec is either a 2D numpy where each row is X, Y, Z, HLEN,
+        where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
+        length along the fence, or a Polygons instance.
+
+        If input fencspec is a numpy 2D, it is important that the HLEN array
+        has a constant increment and ideally a sampling that is less than the
+        map resolution. If a Polygons() instance, this is automated if hincrement is
+        None, and ignored if hincrement is False.
+
+        Args:
+            fencespec (:obj:`~numpy.ndarray` or :class:`~xtgeo.xyz.polygons.Polygons`):
+                2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
+            hincrement (float or bool): Resampling horizontally. This applies only
+                if the fencespec is a Polygons() instance. If None (default),
+                the distance will be deduced automatically. If False, then it assumes
+                the Polygons can be used as-is.
+            atleast (int): Minimum number of horizontal samples (only if
+                fencespec is a Polygons instance and hincrement != False)
+            nextend (int): Extend with nextend * hincrement in both ends (only if
+                fencespec is a Polygons instance and hincrement != False)
+
+        Returns:
+            A tuple: (hmin, hmax, vmin, vmax, ndarray2d (:, 2))
+
+        Example::
+
+            fence = xtgeo.Polygons("somefile.pol")
+            fspec = fence.get_fence(distance=20, nextend=5, asnumpy=True)
+            surf = xtgeo.RegularSurface("somefile.gri")
+
+            arr = surf.get_randomline(fspec)
+
+            distance = arr[:, 0]
+            zval = arr[:, 1]
+            # matplotlib...
+            plt.plot(distance, zval)
+
+        .. versionadded:: 2.1.0
+
+        .. seealso::
+           Class :class:`~xtgeo.xyz.polygons.Polygons`
+              The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
+              used to pregenerate `fencespec`
+        """
+
+        xyfence = _regsurf_oper.get_randomline(
+            self, fencespec, hincrement=hincrement, atleast=atleast, nextend=nextend,
+        )
 
         return xyfence
 
