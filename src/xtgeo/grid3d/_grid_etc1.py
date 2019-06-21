@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 import inspect
 import warnings
 from copy import deepcopy
+from math import atan2, degrees
 from collections import OrderedDict
 
 import numpy as np

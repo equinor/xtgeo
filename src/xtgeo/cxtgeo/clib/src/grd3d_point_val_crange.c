@@ -127,9 +127,9 @@ int grd3d_point_val_crange(
 
     xtgverbose(debug);
 
-    xtg_speak(sbn, 2, "Entering %s", sbn);
+    xtg_speak(sbn, 3, "Entering %s", sbn);
 
-    xtg_speak(sbn, 2, "IBSTART %d", ibstart);
+    xtg_speak(sbn, 3, "IBSTART %d", ibstart);
 
     ibstart = *ibs;
 

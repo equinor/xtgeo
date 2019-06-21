@@ -91,8 +91,6 @@ int grd3d_geometrics(
     tmp_y = calloc(ncells, sizeof(double));
     tmp_z = calloc(ncells, sizeof(double));
 
-
-
     xtgverbose(debug);
     xtg_speak(s,2,"Entering %s",s);
     xtg_speak(s,3,"NX NY NZ: %d %d %d", nx, ny, nz);

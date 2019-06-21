@@ -30,7 +30,7 @@ def get_randomline(
     nextend=2,
 ):
 
-    logger.info("Getting randomline from Grid...")
+    logger.info("Enter get_randomline from Grid...")
 
     _update_tmpvars(self)
 
@@ -39,6 +39,7 @@ def get_randomline(
         fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
         logger.info("Estimate hincrement from Polygons instance... DONE")
 
+    logger.info("Get property...")
     if isinstance(prop, str):
         prop = self.get_prop_by_name(prop)
 
@@ -51,10 +52,10 @@ def get_randomline(
     if zmax is None:
         zmax = self._tmp["basd"].values.max()
 
-    print(zmax, zmin, zincrement)
     nzsam = int((zmax - zmin) / float(zincrement)) + 1
     nsamples = xcoords.shape[0] * nzsam
 
+    logger.info("Running C routine to get randomline...")
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,
@@ -90,6 +91,7 @@ def get_randomline(
         0,
         XTGDEBUG
     )
+    logger.info("Running C routine to get randomline... DONE")
 
     values[values > xtgeo.UNDEF_LIMIT] = np.nan
     arr = values.reshape((xcoords.shape[0], nzsam)).T
@@ -108,25 +110,23 @@ def _update_tmpvars(self):
         logger.info("Make a tmp onegrid instance...")
         self._tmp["onegrid"] = self.copy()
         self._tmp["onegrid"].reduce_to_one_layer()
+        one = self._tmp["onegrid"]
         logger.info("Make a tmp onegrid instance... DONE")
-    else:
-        logger.info("Re-use existing tmp onegrid instance...")
-
-    if "topd" not in self._tmp:
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
         self._tmp["topd"] = xtgeo.RegularSurface()
         self._tmp["topi"], self._tmp["topj"] = self._tmp["topd"].from_grid3d(
-            self, where="top", rfactor=4
-        )
-        self._tmp["basd"] = xtgeo.RegularSurface()
-        self._tmp["basi"], self._tmp["basj"] = self._tmp["topd"].from_grid3d(
-            self, where="base", rfactor=4
+            one, where="top", rfactor=4
         )
 
-        # self._tmp["topi"].to_file("topi.gri")
-        # self._tmp["topj"].to_file("topj.gri")
-        # self._tmp["basi"].to_file("basi.gri")
-        # self._tmp["basj"].to_file("basj.gri")
+        self._tmp["basd"] = xtgeo.RegularSurface()
+        self._tmp["basi"], self._tmp["basj"] = self._tmp["topd"].from_grid3d(
+            one, where="base", rfactor=4
+        )
+
+        self._tmp["topi"].fill()
+        self._tmp["topj"].fill()
+        self._tmp["basi"].fill()
+        self._tmp["basj"].fill()
 
         self._tmp["topi_carr"] = rl.get_carr_double(self._tmp["topi"])
         self._tmp["topj_carr"] = rl.get_carr_double(self._tmp["topj"])
@@ -135,7 +135,7 @@ def _update_tmpvars(self):
 
         logger.info("Make a set of tmp surfaces for I J locations + depth... DONE")
     else:
-        logger.info("Re-use existing tmp surfaces for I J")
+        logger.info("Re-use existing onegrid and tmp surfaces for I J")
 
 
 def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
