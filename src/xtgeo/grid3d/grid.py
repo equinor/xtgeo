@@ -1366,6 +1366,18 @@ class Grid(Grid3D):
         Raises:
             ValueError: Input fence is not according to spec.
 
+        Example::
+
+            mygrid = xtgeo.Grid("somegrid.roff")
+            poro = xtgeo.GridProperty("someporo.roff")
+            mywell = xtgeo.Well("somewell.rmswell")
+            fence = mywell.get_fence_polyline(sampling=5, tvdmin=1750, asnumpy=True)
+            (hmin, hmax, vmin, vmax, arr) = mygrid.get_randomline(
+                 fence, poro, zmin=1750, zmax=1850, zincrement=0.5,
+            )
+            # matplotlib ...
+            plt.imshow(arr, cmap="rainbow", extent=(hmin1, hmax1, vmax1, vmin1))
+
         .. versionadded:: 2.1.0
 
         .. seealso::
