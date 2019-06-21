@@ -10,12 +10,12 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 
-from xtgeo.common import XTGeoDialog
+import xtgeo
 from ._xyz import XYZ
 from ._xyz_io import _convert_idbased_xyz
 from . import _xyz_oper
 
-xtg = XTGeoDialog()
+xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
@@ -66,12 +66,12 @@ def polygons_from_roxar(project, name, category, stype="horizons", realisation=0
 # =============================================================================
 # CLASS
 class Polygons(XYZ):  # pylint: disable=too-many-public-methods
-    """Class for a polygons (connected points) in the XTGeo framework.
+    """Class for a polygons object (connected points) in the XTGeo framework.
 
-    The term Polygons is hereused in a wider context, as it includes
+    The term Polygons is here used in a wider context, as it includes
     polylines that do not connect into closed polygons. A Polygons
-    instance may contain several polylines/polygons, which are
-    identified by POLY_ID
+    instance may contain several pieces of polylines/polygons, which are
+    identified by POLY_ID.
 
     The polygons are stored in Python as a Pandas dataframe, which
     allow for flexible manipulation and fast execution.
@@ -96,6 +96,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._zname = "Z_TVDSS"
         self._pname = "POLY_ID"
         self._mname = "M_MDEPTH"
+        self._hname = "H_CUMLEN"
+        self._dhname = "H_DELTALEN"
+        self._tname = "T_CUMLEN"
+        self._dtname = "T_DELTALEN"
         self._name = "poly"  # the name of the Polygons() instance
         super(Polygons, self).__init__(*args, **kwargs)
 
@@ -114,7 +118,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def nrow(self):
-        """ Returns the Pandas dataframe object number of rows"""
+        """ Returns the Pandas dataframe object number of rows (read only)."""
         if self._df is None:
             return 0
 
@@ -131,13 +135,27 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def xname(self):
-        """ Returns the name of the X column"""
+        """ Returns or set the name of the X column."""
         return self._xname
+
+    @xname.setter
+    def xname(self, newname):
+        if isinstance(newname, str):
+            self._xname = newname
+        else:
+            raise ValueError("Wrong type of input to xname; must be string")
 
     @property
     def yname(self):
-        """ Returns the name of the Y column"""
+        """ Returns or set the name of the Y column."""
         return self._yname
+
+    @yname.setter
+    def yname(self, newname):
+        if isinstance(newname, str):
+            self._yname = newname
+        else:
+            raise ValueError("Wrong type of input to yname; must be string")
 
     @property
     def zname(self):
@@ -145,16 +163,103 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return self._zname
 
     @zname.setter
-    def zname(self, zname):
-        if isinstance(zname, str):
-            self._zname = zname
+    def zname(self, newname):
+        if isinstance(newname, str):
+            self._zname = newname
         else:
             raise ValueError("Wrong type of input to zname; must be string")
 
     @property
     def pname(self):
-        """ Returns the name of the POLY_ID column"""
+        """ Returns or set the name of the POLY_ID column"""
         return self._pname
+
+    @pname.setter
+    def pname(self, newname):
+        if isinstance(newname, str):
+            self._pname = newname
+        else:
+            raise ValueError("Wrong type of input to pname; must be string")
+
+    @property
+    def hname(self):
+        """ Returns or set the name of the cumulative horizontal length column,
+        if it exists.
+
+        .. versionadded: 2.1.0
+        """
+        if isinstance(self._hname, str):
+            if self._hname not in self._df.columns:
+                self._hname = None
+
+        return self._hname
+
+    @hname.setter
+    def hname(self, myhname):
+        if isinstance(myhname, str):
+            self._hname = myhname
+        else:
+            raise ValueError("Wrong type of input to hname; must be string")
+
+    @property
+    def dhname(self):
+        """ Returns or set the name of the delta horizontal length column if
+        it exists.
+
+        .. versionadded: 2.1.0
+        """
+        if isinstance(self._dhname, str):
+            if self._dhname not in self._df.columns:
+                self._dhname = None
+
+        return self._dhname
+
+    @dhname.setter
+    def dhname(self, mydhname):
+        if isinstance(mydhname, str):
+            self._dhname = mydhname
+        else:
+            raise ValueError("Wrong type of input to dhname; must be string")
+
+    @property
+    def tname(self):
+        """ Returns or set the name of the cumulative total length column,
+        if it exists.
+
+        .. versionadded: 2.1.0
+        """
+        if isinstance(self._tname, str):
+            if self._tname not in self._df.columns:
+                self._tname = None
+
+        return self._tname
+
+    @tname.setter
+    def tname(self, mytname):
+        if isinstance(mytname, str):
+            self._tname = mytname
+        else:
+            raise ValueError("Wrong type of input to tname; must be string")
+
+    @property
+    def dtname(self):
+        """ Returns or set the name of the delta total length column if
+        it exists.
+
+        .. versionadded: 2.1.0
+        """
+        if isinstance(self._dtname, str):
+            if self._dtname not in self._df.columns:
+                self._dtname = None
+
+        return self._dtname
+
+    @dtname.setter
+    def dtname(self, mydtname):
+        if isinstance(mydtname, str):
+            self._dtname = mydtname
+        else:
+            raise ValueError("Wrong type of input to dhname; must be string")
 
     @property
     def dataframe(self):
@@ -180,14 +285,52 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """Describe a Polygons instance"""
         super(Polygons, self).describe(flush=flush)
 
+    def delete_columns(self, clist, strict=False):
+        """Delete one or more columns by name in a safe way.
+
+        Note that the coordinate columns will be protected, as well as then
+        POLY_ID column (pname atribute).
+
+        Args:
+            clist (list): Name of columns
+            strict (bool): I False, will not trigger exception if a column is not
+                found. Otherways a ValueError will be raised.
+
+        Raises:
+            ValueError: If strict is True and columnname not present
+
+        Example::
+
+            mypoly.delete_columns(["WELL_ID", self.hname, self.dhname])
+
+        .. versionadded:: 2.1.0
+
+        """
+
+        for cname in clist:
+            if cname in (self.xname, self.yname, self.zname, self.pname):
+                xtg.warnuser(
+                    "The column {} is protected and will not be deleted".format(cname)
+                )
+                continue
+
+            if cname not in self._df:
+                if strict is True:
+                    raise ValueError("The column {} is not present".format(cname))
+
+            if cname in self._df:
+                self._df.drop(cname, axis=1, inplace=True)
+
     def from_file(self, pfile, fformat="xyz"):
         """Import Polygons from a file.
 
         Supported import formats (fformat):
 
-        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+        * 'xyz' or 'poi' or 'pol': Simple XYZ or RMS text format
 
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+
+        * 'rms_attr': RMS points formats with attributes (extra columns)
 
         * 'guess': Try to choose file format based on extension
 
@@ -444,34 +587,125 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         return (xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def rescale(self, distance):
-        """Rescale (resample) by using a new horizontal increment.
+    def filter_byid(self, polyid=None):
+        """Remove all line segments not in polyid.
 
-        As usual, the instance is updated in-place.
+        The instance is updated in-place.
+
+        Args:
+            polyid (int or list of int): Which ID(s) to keep, None means use first.
+
+        Example::
+
+            mypoly.filter_byid(polyid=[2, 4])  # keep POLY_ID 2 and 4
+
+        .. versionadded: 2.1.0
+        """
+        if polyid is None:
+            polyid = int(self.dataframe[self.pname].iloc[0])
+
+        if not isinstance(polyid, list):
+            polyid = [polyid]
+
+        dflist = []
+        for pid in polyid:
+            dflist.append(self.dataframe[self.dataframe[self.pname] == pid])
+
+        self.dataframe = pd.concat(dflist)
+
+    def tlen(self, tname="T_CUMLEN", dtname="T_DELTALEN", atindex=0):
+        """Compute and add or replace columns for cum. total 3D length and delta length.
+
+        The instance is updated in-place.
+
+        Args:
+            tname (str): Name of cumulative total length. Default is T_CUMLEN.
+            dtname (str): Name of delta length column. Default is T_DELTALEN.
+            atindex (int): Which index which shall be 0.0 for cumulative length.
+
+        .. versionadded: 2.1.0
+        """
+
+        _xyz_oper.tlen(self, tname=tname, dtname=dtname, atindex=atindex)
+
+    def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
+        """Compute and add or replace columns for cum. horizontal length
+        and delta length.
+
+        The instance is updated in-place.
+
+        Args:
+            hname (str): Name of cumulative horizontal length. Default is H_CUMLEN.
+            dhname (str): Name of delta length column. Default is H_DELTALEN.
+            atindex (int): Which index which shall be 0.0 for cumulative length.
+
+        .. versionadded: 2.1.0
+        """
+
+        _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
+
+    def extend(self, distance, nsamples=1, mode2d=True):
+        """Extend polyline by `distance` at both ends, nsmaples times.
+
+        The instance is updated in-place.
+
+        Args:
+            distance (float): The horizontal distance (sampling) to extend
+            nsamples (int): Number of samples to extend.
+            mode2d (bool): XY extension (only True is supported)
+
+        .. versionadded: 2.1.0
+        """
+
+        _xyz_oper.extend(self, distance, nsamples, mode2d)
+
+    def rescale(self, distance, addlen=False, kind="simple", mode2d=True):
+        """Rescale (resample) by using a new increment.
+
+        The increment (distance) may be a horizontal or a True 3D
+        distance dependent on mode2d.
+
+        The instance is updated in-place.
 
         If the distance is larger than the total input poly-line length,
         nothing is done. Note that the result distance may differ from then
         requested distance to rounding to fit original length.
 
         Args:
-             distance (float): New distance between points
+            distance (float): New distance between points
+            addhlen (str): If True, total and horizontal cum. and delta length
+                columns will be added.
+            kind (str): What kind of rescaling: slinear/cubic/simple
+            mode2d (bool): The distance may be a 2D (XY) ora 3D (XYZ) mode.
+
+        .. versionchanged:: 2.1.0 a new algorithm
+
         """
 
-        _xyz_oper.rescale_polygons(self, distance=distance)
+        _xyz_oper.rescale_polygons(
+            self, distance=distance, addlen=addlen, kind=kind, mode2d=mode2d
+        )
 
-    def get_fence(self, distance=20, atleast=5, extend=2, name=None, asnumpy=True):
+    def get_fence(
+        self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None
+    ):
         """Extracts a fence with constant horizontal sampling and
-        an additonal HLEN vector, suitable for X sections.
+        additonal H_CUMLEN and H_DELTALEN vectors, suitable for X sections.
 
         Args:
-            distance (float): New distance between points
+            distance (float): New horizontal distance between points
             atleast (int): Minimum number of point. If the true length/atleast is
                 less than distance, than distance will be be reset to
                 length/atleast.
-            extend (int): Number of samples to extend at each end
+            nextend (int): Number of samples to extend at each end. Note that
+                in case of internal resetting of distance (due to 'atleast'), then
+                nextend internally will be modified in order to fulfill the
+                initial intention. Hence keep distance*nextend as target.
             name (str): Name of polygon (if asnumpy=False)
             asnumpy (bool): Return a [:, 5] numpy array with
                 columns X.., Y.., Z.., HLEN, dH
+            polyid (int): Which POLY_ID to use. Default (if None) is to use the
+                first found.
 
         Returns:
             A numpy array (if asnumpy=True) or a new Polygons() object
@@ -480,13 +714,59 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
         logger.info("Getting fence within a Polygons instance...")
         return _xyz_oper.get_fence(
-            self, distance=distance, atleast=atleast, extend=extend,
-            name=name, asnumpy=asnumpy
+            self,
+            distance=distance,
+            atleast=atleast,
+            nextend=nextend,
+            name=name,
+            asnumpy=asnumpy,
+            polyid=polyid,
         )
 
-    # =========================================================================
+    # ==================================================================================
+    # Plotting
+    # ==================================================================================
+
+    def quickplot(
+        self,
+        others=None,
+        filename=None,
+        title="QuickPlot for Polygons",
+        subtitle=None,
+        infotext=None,
+        linewidth=1.0,
+        color="r",
+    ):
+        """Simple plotting of polygons using matplotlib.
+
+        Args:
+            filename (str): Name of plot file; None will plot to screen.
+            others (list of Polygons): List of other polygon instances to plot
+            title (str): Title of plot
+            subtitle (str): Subtitle of plot
+            infotext (str): Additonal info on plot.
+            color (str): Name of color (may use matplotib shortcuts, e.g. 'r' for 'red')
+        """
+        mymap = xtgeo.plot.Map()
+        mymap.canvas(title=title, subtitle=subtitle, infotext=infotext)
+
+        if others:
+            for other in others:
+                lwid = linewidth / 2.0
+                mymap.plot_polygons(
+                    other, idname=other.pname, linewidth=lwid, color="black"
+                )
+
+        mymap.plot_polygons(self, idname=self.pname, linewidth=linewidth, color=color)
+
+        if filename is None:
+            mymap.show()
+        else:
+            mymap.savefig(filename)
+
+    # ==================================================================================
     # Operations restricted to inside/outside polygons
-    # =========================================================================
+    # ==================================================================================
 
     def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for doing points operations restricted to inside

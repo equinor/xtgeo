@@ -235,3 +235,24 @@ def test_crop_grid_after_copy():
     grd2.crop((1, 30), (40, 80), (23, 46))
 
     grd2.describe(details=True)
+
+
+def test_reduce_to_one_layer():
+    """Crop a grid."""
+
+    logger.info('Read grid...')
+
+    grd1 = Grid(EMEGFILE2)
+    geom1v1 = grd1.get_geometrics(allcells=True, cellcenter=True)
+    geom1v2 = grd1.get_geometrics(allcells=True, cellcenter=True, _ver=2)
+
+    grd2 = Grid(EMEGFILE2)
+    grd2.reduce_to_one_layer()
+    geom2v1 = grd2.get_geometrics(allcells=True, cellcenter=True)
+    geom2v2 = grd2.get_geometrics(allcells=True, cellcenter=True, _ver=2)
+
+    print("XXXX1V1", geom1v1)
+    print("XXXX1V2", geom1v2)
+
+    print("XXXX2V1", geom2v1)
+    print("XXXX2V2", geom2v2)

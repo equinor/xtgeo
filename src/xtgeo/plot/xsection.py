@@ -607,7 +607,7 @@ class XSection(BasePlot):
 
         if self._wfence is None:
             wfence = self._well.get_fence_polyline(
-                sampling=20, extend=5, tvdmin=self._zmin
+                sampling=20, nextend=5, tvdmin=self._zmin
             )
             if wfence is False:
                 return
@@ -725,7 +725,7 @@ class XSection(BasePlot):
         # This fence is numpy vector [[XYZ ...]]
         if self._wfence is None:
             wfence = self._well.get_fence_polyline(
-                sampling=20, extend=5, tvdmin=self._zmin
+                sampling=20, nextend=5, tvdmin=self._zmin
             )
             if wfence is False:
                 return

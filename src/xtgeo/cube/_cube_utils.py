@@ -269,14 +269,14 @@ def get_randomline(
     zincrement=None,
     hincrement=None,
     atleast=5,
-    extend=2,
+    nextend=2,
     sampling="nearest",
 ):
     """Get a random line from a fence spesification"""
 
     if isinstance(fencespec, xtgeo.Polygons):
         logger.info("Estimate hincrement from Polygons instance...")
-        fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, extend)
+        fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
         logger.info("Estimate hincrement from Polygons instance... DONE")
 
     if not len(fencespec.shape) == 2:
@@ -300,7 +300,7 @@ def get_randomline(
     if zincrement is None:
         zincrement = self._zinc / 2.0
 
-    nzsam = int((zmax - zmin) / zincrement)
+    nzsam = int((zmax - zmin) / zincrement) + 1
 
     nsamples = xcoords.shape[0] * nzsam
 
@@ -331,12 +331,13 @@ def get_randomline(
         XTGDEBUG,
     )
 
+    values[values > xtgeo.UNDEF_LIMIT] = np.nan
     arr = values.reshape((xcoords.shape[0], nzsam)).T
 
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)
 
 
-def _get_randomline_fence(self, fencespec, hincrement, atleast, extend):
+def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
     """Compute a resampled fence from a Polygons instance"""
 
     if hincrement is None:
@@ -344,10 +345,11 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, extend):
         distance = 0.5 * avgdxdy
 
     logger.info("Getting fence from a Polygons instance...")
-    return fencespec.get_fence(
-        distance=distance, atleast=atleast, extend=extend, asnumpy=True
+    fspec = fencespec.get_fence(
+        distance=distance, atleast=atleast, nextend=nextend, asnumpy=True
     )
     logger.info("Getting fence from a Polygons instance... DONE")
+    return fspec
 
 
 # copy (update) values from SWIG carray to numpy, 3D array, Fortran order

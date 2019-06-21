@@ -69,7 +69,7 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
     return istat
 
 
-def from_grid3d(self, grid, template=None, where="top", mode="depth"):
+def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
     """Private function for deriving a surface from a 3D grid.
 
     .. versionadded:: 2.1.0
@@ -92,7 +92,10 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth"):
         if what == "base":
             option = 1
 
-    _update_regsurf(self, template, grid)
+    if rfactor < 0.5:
+        raise KeyError("Refinefactor rfactor is too small, should be >= 0.5")
+
+    _update_regsurf(self, template, grid, rfactor=float(rfactor))
 
     # call C function to make a map
     svalues = self.get_values1d() * 0.0 + xtgeo.UNDEF
@@ -132,21 +135,29 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth"):
         self.set_values1d(jvalues)
     else:
         self.set_values1d(svalues)
+        isurf = self.copy()
+        jsurf = self.copy()
+        isurf.set_values1d(ivalues)
+        jsurf.set_values1d(jvalues)
+        return isurf, jsurf  # needed in special cases
 
 
-def _update_regsurf(self, template, grid):
+def _update_regsurf(self, template, grid, rfactor=1.0):
 
     if template is None:
         # need to estimate map settings from the existing grid. this
         # may a bit time consuming for large grids.
-        geom = grid.get_geometrics(allcells=True, cellcenter=True, return_dict=True)
+        geom = grid.get_geometrics(
+            allcells=True, cellcenter=True, return_dict=True, _ver=2
+        )
 
         xlen = 1.1 * (geom["xmax"] - geom["xmin"])
         ylen = 1.1 * (geom["ymax"] - geom["ymin"])
         xori = geom["xmin"] - 0.05 * xlen
         yori = geom["ymin"] - 0.05 * ylen
         # take same xinc and yinc
-        xinc = yinc = 0.1 * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
+        print("XXX", geom["avg_dx"], geom["avg_dy"])
+        xinc = yinc = (1.0 / rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)
 

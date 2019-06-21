@@ -190,6 +190,23 @@ int x_vector_info2 (
 		    int     debug
 		    );
 
+
+int x_vector_linint2 (
+                      double x0,
+                      double y0,
+                      double z0,
+                      double x1,
+                      double y1,
+                      double z1,
+                      double dist,
+                      double *swig_dbl_out_p1,
+                      double *swig_dbl_out_p2,
+                      double *swig_dbl_out_p3,
+                      int option,
+                      int debug
+                      );
+
+
 double x_diff_angle (
 		     double ang1,
 		     double ang2,
@@ -779,9 +796,23 @@ int pol_set_entry (
 		   int    debug
 		   );
 
-int pol_geometrics(int nlen, double *xv, double *yv, double *zv,
-                   double *hlenv,
-                   int debug);
+int pol_geometrics(
+                   double *swig_np_dbl_in_v1,     // *xv
+                   long   n_swig_np_dbl_in_v1,    // nxv
+                   double *swig_np_dbl_in_v2,     // *yv
+                   long   n_swig_np_dbl_in_v2,    // nyv
+                   double *swig_np_dbl_in_v3,     // *zv
+                   long   n_swig_np_dbl_in_v3,    // nzv
+                   double *swig_np_dbl_aout_v1,     // *tv
+                   long   n_swig_np_dbl_aout_v1,    // ntv
+                   double *swig_np_dbl_aout_v2,     // *dtv
+                   long   n_swig_np_dbl_aout_v2,    // ndtv
+                   double *swig_np_dbl_aout_v3,     // *hv
+                   long   n_swig_np_dbl_aout_v3,    // nhv
+                   double *swig_np_dbl_aout_v4,     // *dhv
+                   long   n_swig_np_dbl_aout_v4,    // ndhv
+                   int debug
+                   );
 
 int pol_info(int nlen,
              double *xv,
@@ -1682,6 +1713,29 @@ int grd3d_translate (
 		     );
 
 
+int grd3d_point_val_crange(
+                           double x,
+                           double y,
+                           double z,
+                           int nx,
+                           int ny,
+                           int nz,
+                           double *p_coor_v,
+                           double *p_zcorn_v,
+                           int *p_actnum_v,
+                           double *p_val_v,
+                           double *value,
+                           int imin,
+                           int imax,
+                           int jmin,
+                           int jmax,
+                           int kmin,
+                           int kmax,
+                           long *ibs,
+                           int option,
+                           int debug
+                           );
+
 int grd3d_point_in_cell(
 			int ibstart,
 			int  kzonly,
@@ -1701,6 +1755,44 @@ int grd3d_point_in_cell(
 			int   debug
 			);
 
+int grd3d_get_randomline(
+                         double *swig_np_dbl_in_v1,  // *xvec,
+                         long n_swig_np_dbl_in_v1,   // nxvec,
+                         double *swig_np_dbl_in_v2,  // *yvec,
+                         long n_swig_np_dbl_in_v2,   // nyvec,
+                         double zmin,
+                         double zmax,
+                         int nzsam,
+
+                         int mcol,
+                         int mrow,
+                         double xori,
+                         double yori,
+                         double xinc,
+                         double yinc,
+                         double rotation,
+                         int yflip,
+                         double *maptopi,
+                         double *maptopj,
+                         double *mapbasi,
+                         double *mapbasj,
+
+                         int nx,
+                         int ny,
+                         int nz,
+                         double *p_coor_v,
+                         double *p_zcorn_v,
+                         int *p_actnum_v,
+                         double *p_val_v,
+                         double *p_zcornone_v,
+                         int *p_actnumone_v,
+
+                         double *swig_np_dbl_aout_v1,  // *values
+                         long n_swig_np_dbl_aout_v1,  // nvalues
+
+                         int option,
+                         int debug
+                         );
 
 void grd3d_collapse_inact (
 			   int   nx,

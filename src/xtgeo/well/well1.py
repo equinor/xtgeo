@@ -239,9 +239,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
                     self._wlogrecord = codes
 
-    # =========================================================================
+    # ==================================================================================
     # Properties
-    # =========================================================================
+    # ==================================================================================
 
     @property
     def rkb(self):
@@ -382,9 +382,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         mandatory X_UTME Y_UTMN Z_TVDSS)"""
         return list(self._df)[3:]
 
-    # =========================================================================
+    # ==================================================================================
     # Methods
-    # =========================================================================
+    # ==================================================================================
 
     def from_file(
         self, wfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
@@ -622,31 +622,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             Number of logs deleted
         """
 
-        self._ensure_consistency()
-        if not isinstance(lname, list):
-            lname = [lname]
-
-        lcount = 0
-        for logn in lname:
-            if logn not in self._wlognames:
-                logger.info("Log does no exist: %s", logn)
-                continue
-            else:
-                logger.info("Log exist and will be deleted: %s", logn)
-                lcount += 1
-                del self._wlogtype[logn]
-                del self._wlogrecord[logn]
-
-                self._df.drop(logn, axis=1, inplace=True)
-                self._ensure_consistency()
-
-                if self._mdlogname == logn:
-                    self._mdlogname = None
-                if self._zonelogname == logn:
-                    self._zonelogname = None
-
-        self._ensure_consistency()
-        return lcount
+        return _well_oper.delete_log(self, lname)
 
     def get_logtype(self, lname):
         """Returns the type of a give log (e.g. DISC or CONT)"""
@@ -778,28 +754,23 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         # extract numpies from XYZ trajectory logs
-        ptr_xv = self.get_carray("X_UTME")
-        ptr_yv = self.get_carray("Y_UTMN")
-        ptr_zv = self.get_carray("Z_TVDSS")
+        xv = self._df["X_UTME"].values
+        yv = self._df["Y_UTMN"].values
+        zv = self._df["Z_TVDSS"].values
 
         # get number of rows in pandas
         nlen = self.nrow
 
-        ptr_hlen = _cxtgeo.new_doublearray(nlen)
-
-        ier = _cxtgeo.pol_geometrics(nlen, ptr_xv, ptr_yv, ptr_zv, ptr_hlen, XTGDEBUG)
+        ier, _tlenv, _dtlenv, hlenv, _dhlenv = _cxtgeo.pol_geometrics(
+            xv, yv, zv, nlen, nlen, nlen, nlen, XTGDEBUG
+        )
 
         if ier != 0:
-            sys.exit(-9)
+            raise RuntimeError(
+                "Error code from _cxtgeo.pol_geometrics is {}".format(ier)
+            )
 
-        dnumpy = self._convert_carr_double_np(ptr_hlen)
-        self._df["R_HLEN"] = pd.Series(dnumpy, index=self._df.index)
-
-        # delete tmp pointers
-        _cxtgeo.delete_doublearray(ptr_xv)
-        _cxtgeo.delete_doublearray(ptr_yv)
-        _cxtgeo.delete_doublearray(ptr_zv)
-        _cxtgeo.delete_doublearray(ptr_hlen)
+        self._df["R_HLEN"] = pd.Series(hlenv, index=self._df.index)
 
     def geometrics(self):
         """Compute some well geometrical arrays MD, INCL, AZI, as logs.
@@ -979,7 +950,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
         _well_oper.rescale(self, delta=delta)
 
-    def get_polygon(self):
+    def get_polygons(self):
         """Return a Polygons object from the well trajectory.
 
         .. versionadded:: 2.1.0
@@ -999,104 +970,35 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return poly
 
-    def get_fence_polyline(self, sampling=20, extend=2, tvdmin=None, asnumpy=True):
+    def get_fence_polyline(self, sampling=20, nextend=2, tvdmin=None, asnumpy=True):
         """Return a fence polyline as a numpy array or a Polygons object.
 
+        The result will aim for a regular sampling interval, useful for extracting
+        fence plots (cross-sections).
+
         Args:
-            sampling (float): Sampling interval i.e. distance (input)
-            extend (int): Number if sampling to extend; e.g. 2 * 20
+            sampling (float): Sampling interval i.e. horizonal distance (input)
+            nextend (int): Number if sampling to extend; e.g. 2 * 20
             tvdmin (float): Minimum TVD starting point.
             as_numpy (bool): If True, a numpy array, otherwise a Polygons
                 object with 5 columns where the 2 last are HLEN and POLY_ID
                 and the POLY_ID will be set to 0.
 
         Returns:
-            A numpy array of shape (NLEN, 4) in F order,
+            A numpy array of shape (NLEN, 5) in F order,
             Or a Polygons object with 5 columns
-            If not possible return False
+            If not possible, return False
+
+        .. versionchanged: 2.1.0 improved algorithm
         """
 
-        poly = self.get_polygon()
+        poly = self.get_polygons()
 
         if tvdmin is not None:
             poly.dataframe = poly.dataframe[poly.dataframe[poly.zname] >= tvdmin]
+            poly.dataframe.reset_index(drop=True, inplace=True)
 
-        return poly.get_fence(distance=sampling, extend=extend, asnumpy=asnumpy)
-
-        # # pylint: disable=too-many-locals
-
-        # dfr = self._df
-
-        # if tvdmin is not None:
-        #     self._df = dfr[dfr["Z_TVDSS"] > tvdmin]
-
-        # if len(self._df) < 2:
-        #     xtg.warn("Well does not enough points in interval, outside range?")
-        #     return False
-
-        # ptr_xv = self.get_carray("X_UTME")
-        # ptr_yv = self.get_carray("Y_UTMN")
-        # ptr_zv = self.get_carray("Z_TVDSS")
-
-        # nbuf = 1000000
-        # ptr_xov = _cxtgeo.new_doublearray(nbuf)
-        # ptr_yov = _cxtgeo.new_doublearray(nbuf)
-        # ptr_zov = _cxtgeo.new_doublearray(nbuf)
-        # ptr_hlv = _cxtgeo.new_doublearray(nbuf)
-
-        # ptr_nlen = _cxtgeo.new_intpointer()
-
-        # ier = _cxtgeo.pol_resampling(
-        #     self.nrow,
-        #     ptr_xv,
-        #     ptr_yv,
-        #     ptr_zv,
-        #     sampling,
-        #     sampling * extend,
-        #     nbuf,
-        #     ptr_nlen,
-        #     ptr_xov,
-        #     ptr_yov,
-        #     ptr_zov,
-        #     ptr_hlv,
-        #     0,
-        #     XTGDEBUG,
-        # )
-
-        # if ier != 0:
-        #     sys.exit(-2)
-
-        # nlen = _cxtgeo.intpointer_value(ptr_nlen)
-
-        # npxarr = self._convert_carr_double_np(ptr_xov, nlen=nlen)
-        # npyarr = self._convert_carr_double_np(ptr_yov, nlen=nlen)
-        # npzarr = self._convert_carr_double_np(ptr_zov, nlen=nlen)
-        # npharr = self._convert_carr_double_np(ptr_hlv, nlen=nlen)
-        # # npharr = npharr - sampling * extend ???
-
-        # if asnumpy is True:
-        #     rval = np.concatenate((npxarr, npyarr, npzarr, npharr), axis=0)
-        #     rval = np.reshape(rval, (nlen, 4), order="F")
-        # else:
-        #     rval = xtgeo.xyz.Polygons()
-        #     wna = self.xwellname
-        #     idwell = [None] * extend + [wna] * (nlen - 2 * extend) + [None] * extend
-        #     arr = np.vstack(
-        #         [npxarr, npyarr, npzarr, npharr, np.zeros(nlen, dtype=np.int32)]
-        #     )
-        #     col = ["X_UTME", "Y_UTMN", "Z_TVDSS", "HLEN", "ID"]
-        #     dfr = pd.DataFrame(arr.T, columns=col, dtype=np.float64)
-        #     dfr = dfr.astype({"ID": int})
-        #     dfr = dfr.assign(WELL=idwell)
-        #     rval.dataframe = dfr
-        #     rval.name = self.xwellname
-
-        # _cxtgeo.delete_doublearray(ptr_xov)
-        # _cxtgeo.delete_doublearray(ptr_yov)
-        # _cxtgeo.delete_doublearray(ptr_zov)
-        # _cxtgeo.delete_doublearray(ptr_hlv)
-
-        # return rval
+        return poly.get_fence(distance=sampling, nextend=nextend, asnumpy=asnumpy)
 
     def report_zonation_holes(self, threshold=5):
         """Reports if well has holes in zonation, less or equal to N samples.
@@ -1404,18 +1306,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         _well_oper.get_gridproperties(self, gridprops, grid=grid, prop_id=prop_id)
 
-    # =========================================================================
+    # ==================================================================================
     # PRIVATE METHODS
     # should not be applied outside the class
-    # =========================================================================
+    # ==================================================================================
 
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
     # Import/Export methods for various formats
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
 
-    # -------------------------------------------------------------------------
-    # Special methods for nerds
-    # -------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------
+    # Special methods for nerds, todo is to move to private module
+    # ----------------------------------------------------------------------------------
 
     def _convert_np_carr_int(self, np_array):
         """Convert numpy 1D array to C array, assuming int type.

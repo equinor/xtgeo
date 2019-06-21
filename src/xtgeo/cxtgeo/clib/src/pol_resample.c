@@ -69,8 +69,10 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     int i, n, ier, nsam, nnext;
     double x0, y0, z0, x1=0.0, y1=0.0, z1, x2, y2, z2, xr, yr, zr;
     double length1, length2, delta, dscaler;
-    double tmp_hlen[nlen], xsmpl, xhlen, xect;
+    double tmp_tlen[nlen], tmp_dtlen[nlen];
+    double tmp_hlen[nlen], tmp_dhlen[nlen], xsmpl, xhlen, xect;
     double x00, x01, x10, x11, y00, y01, y10, y11;
+    double *tmptt, *tmpdt, *tmpdh;
 
     char  s[24]="pol_resample";
 
@@ -79,7 +81,8 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
               smpl, xv[0], yv[0], zv[0]);
 
     /* find the tmp_hlen vector, which is the horizontal cumulative length */
-    ier = pol_geometrics(nlen, xv, yv, zv, tmp_hlen, debug);
+    ier = pol_geometrics(xv, nlen, yv, nlen, zv, nlen, tmp_tlen, nlen,
+                         tmp_dtlen, nlen, tmp_hlen, nlen, tmp_dhlen, nlen, debug);
 
     xhlen = tmp_hlen[nlen - 1];  /* total horizontal length */
     if (xhlen < 1.0) xhlen = 1.0;
@@ -287,7 +290,12 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     xtg_speak(s, 2, "NOLEN is %d", *nolen);
 
     /* find the hlen vector */
-    ier = pol_geometrics(*nolen, xov, yov, zov, hlen, debug);
+    tmptt = calloc(*nolen, sizeof(double));
+    tmpdt = calloc(*nolen, sizeof(double));
+    tmpdh = calloc(*nolen, sizeof(double));
+
+    ier = pol_geometrics(xov, *nolen, yov, *nolen, zov, *nolen, tmptt, *nolen, tmpdt,
+                         *nolen, hlen, *nolen, tmpdh, *nolen, debug);
 
     if (debug > 1) {
         for (i=0; i<n; i++) {
@@ -306,6 +314,9 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
                   s, ier);
     }
 
+    free(tmptt);
+    free(tmpdt);
+    free(tmpdh);
 
     return(0);
 }

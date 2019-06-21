@@ -595,7 +595,6 @@ class RegularSurface(object):
     def filesrc(self, name):
         self._filesrc = name  # checking is currently missing
 
-
     # =============================================================================
     # Describe, import and export
     # =============================================================================
@@ -889,7 +888,7 @@ class RegularSurface(object):
 
         self._filesrc = cube.filesrc + " (derived surface)"
 
-    def from_grid3d(self, grid, template=None, where="top", mode="depth"):
+    def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
 
         """Extract a surface from a 3D grid.
@@ -902,22 +901,29 @@ class RegularSurface(object):
                 is layer no. 2 and _top indicates top of cell, while "_base"
                 indicates base of cell
             mode (str): "depth", "i" or "j"
+            rfactor (float): Determines how fine the extracted map is; higher values
+                for finer map (but computing time will increase). Will only apply if
+                template is None.
 
         Returns:
             Object instance is updated in-place
+            When mode="depth", two RegularSurface: icols and jrows are also returned.
 
-        Example:
+        Example::
 
-            >>> mymap = RegularSurface()
-            >>> mygrid = Grid("REEK.EGRID")
-            >>> imap, jmap = mymap.from_grid3d(mygrid)
+            mymap = RegularSurface()
+            mygrid = Grid("REEK.EGRID")
+            # make surface from top (default)
+            mymap.from_grid3d(mygrid)
+            # return two additonal maps
+            ic, jr = mymap.from_grid3d(mygrid)
 
         .. versionadded:: 2.1.0
 
         """
 
-        _regsurf_grid3d.from_grid3d(
-            self, grid, template=template, where=where, mode=mode
+        return _regsurf_grid3d.from_grid3d(
+            self, grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
 
     def copy(self):
@@ -2013,9 +2019,69 @@ class RegularSurface(object):
         Args:
             xyfence (np): A 2D numpy array with shape (N, 3) where columns
             are (X, Y, Z). The Z will be updated to the map.
+
+        Returns:
+            ndarray: A numpy 2D array similar as input, but with updated
         """
 
         xyfence = _regsurf_oper.get_fence(self, xyfence)
+
+        return xyfence
+
+    def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
+        """Extract a line along a fencespec, where horizontal axis is "length"
+        and vertical axis is sampled depth.
+
+        This is used for fence plots.
+
+        The input fencespec is either a 2D numpy where each row is X, Y, Z, HLEN,
+        where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
+        length along the fence, or a Polygons instance.
+
+        If input fencspec is a numpy 2D, it is important that the HLEN array
+        has a constant increment and ideally a sampling that is less than the
+        map resolution. If a Polygons() instance, this is automated if hincrement is
+        None, and ignored if hincrement is False.
+
+        Args:
+            fencespec (:obj:`~numpy.ndarray` or :class:`~xtgeo.xyz.polygons.Polygons`):
+                2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
+            hincrement (float or bool): Resampling horizontally. This applies only
+                if the fencespec is a Polygons() instance. If None (default),
+                the distance will be deduced automatically. If False, then it assumes
+                the Polygons can be used as-is.
+            atleast (int): Minimum number of horizontal samples (only if
+                fencespec is a Polygons instance and hincrement != False)
+            nextend (int): Extend with nextend * hincrement in both ends (only if
+                fencespec is a Polygons instance and hincrement != False)
+
+        Returns:
+            A tuple: (hmin, hmax, vmin, vmax, ndarray2d (:, 2))
+
+        Example::
+
+            fence = xtgeo.Polygons("somefile.pol")
+            fspec = fence.get_fence(distance=20, nextend=5, asnumpy=True)
+            surf = xtgeo.RegularSurface("somefile.gri")
+
+            arr = surf.get_randomline(fspec)
+
+            distance = arr[:, 0]
+            zval = arr[:, 1]
+            # matplotlib...
+            plt.plot(distance, zval)
+
+        .. versionadded:: 2.1.0
+
+        .. seealso::
+           Class :class:`~xtgeo.xyz.polygons.Polygons`
+              The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
+              used to pregenerate `fencespec`
+        """
+
+        xyfence = _regsurf_oper.get_randomline(
+            self, fencespec, hincrement=hincrement, atleast=atleast, nextend=nextend,
+        )
 
         return xyfence
 
@@ -2151,7 +2217,7 @@ class RegularSurface(object):
     def quickplot(
         self,
         filename=None,
-        title="QuickPlot",
+        title="QuickPlot for Surfaces",
         subtitle=None,
         infotext=None,
         minmax=(None, None),

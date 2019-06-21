@@ -176,20 +176,6 @@ double x_vector_len3d (
                        double z2
                        );
 
-int x_vector_linint2 (
-                      double x0,
-                      double y0,
-                      double z0,
-                      double x1,
-                      double y1,
-                      double z1,
-                      double dist,
-                      double *xr,
-                      double *yr,
-                      double *zr,
-                      int option,
-                      int debug
-                      );
 
 int x_interp_cube_nodes (
                          double *x_v,
