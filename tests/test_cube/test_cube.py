@@ -242,16 +242,16 @@ def test_cube_thinning(loadsfile1):
     logger.info("Import SEGY format via SEGYIO")
 
     incube = loadsfile1
-    incube.describe()
+    logger.info(incube)
 
     # thinning to evey second column and row, but not vertically
     incube.do_thinning(2, 2, 1)
-    incube.describe()
+    logger.info(incube)
 
     incube.to_file(join(TMD, "cube_thinned.segy"))
 
     incube2 = Cube(join(TMD, "cube_thinned.segy"))
-    incube2.describe()
+    logger.info(incube2)
 
 
 def test_cube_cropping(loadsfile1):
@@ -299,15 +299,15 @@ def test_cube_swapaxes():
     logger.info("Import SEGY format via SEGYIO")
 
     incube = Cube(SFILE4)
-    incube.describe()
+    logger.info(incube)
     val1 = incube.values.copy()
 
     incube.swapaxes()
-    incube.describe()
+    logger.info(incube)
 
     incube.swapaxes()
     val2 = incube.values.copy()
-    incube.describe()
+    logger.info(incube)
 
     diff = val1 - val2
 

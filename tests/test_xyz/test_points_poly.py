@@ -272,4 +272,4 @@ def test_fence_from_polygon():
     )
     logger.info(fence.dataframe)
 
-    tsetup.assert_almostequal(fence.dataframe.at[13, "X_UTME"], 100.0, 0.01)
+    tsetup.assert_almostequal(fence.dataframe.at[13, "X_UTME"], -202.3, 0.01)

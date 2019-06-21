@@ -220,7 +220,7 @@ def get_fence(
 
     The atleast parameter will win over the distance, meaning that if total length
     horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
-    In such cases, nextend will be modified also to fulfill the original
+    In such cases, nextend will be modified automatically also to fulfill the original
     nextend*distance (approx).
 
     """
@@ -246,8 +246,8 @@ def get_fence(
         nextend = int(round(orig_extend / distance))
 
     new.rescale(distance, kind="slinear", mode2d=True)
-    updated_distance = new.dataframe[new.dhname].median()
     new.hlen()
+    updated_distance = new.dataframe[new.dhname].median()
     new.extend(updated_distance, nsamples=nextend)
 
     if name:

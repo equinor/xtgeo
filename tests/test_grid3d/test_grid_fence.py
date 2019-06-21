@@ -49,7 +49,7 @@ def test_randomline_fence_from_well():
 
     # get the "image", which is a 2D numpy that can be plotted with e.g. imgshow
     hmin, hmax, vmin, vmax, por = grd.get_randomline(
-        fspec, "PORO", zmin=1200, zmax=1700, zincrement=1.0
+        fspec, "PORO", zmin=1600, zmax=1700, zincrement=1.0
     )
 
     if XTGSHOW:
@@ -57,7 +57,7 @@ def test_randomline_fence_from_well():
 
         plt.figure()
         plt.imshow(
-            por, cmap="seismic", interpolation="sinc", extent=(hmin, hmax, vmax, vmin)
+            por, cmap="rainbow", extent=(hmin, hmax, vmax, vmin)
         )
         plt.axis("tight")
         plt.colorbar()
