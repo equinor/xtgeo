@@ -158,7 +158,7 @@ int grd3d_get_randomline(
     int  ib, ic, izc, ier, ios, i1, i2, j1, j2, k1, k2;
     long ibs1, ibs2;
     double zsam, xc, yc, zc;
-    double value, *p_dummy_v;
+    double value, *p_dummy_v = NULL;
 
     xtgverbose(debug);
 

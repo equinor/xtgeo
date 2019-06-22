@@ -1226,6 +1226,25 @@ int cube_get_randomline(
  *=============================================================================
  */
 
+void grd3d_from_cube (
+                      int ncol,
+                      int nrow,
+                      int nlay,
+                      double *p_coord_v,
+                      double *p_zcorn_v,
+                      int *p_actnum_v,
+                      double xori,
+                      double yori,
+                      double zori,
+                      double xinc,
+                      double yinc,
+                      double zinc,
+                      double rotation,
+                      int yflip,
+                      int option,
+                      int debug
+                      );
+
 int grd3d_calc_dxdy(
                     int nx,
                     int ny,

@@ -34,10 +34,10 @@ if "XTG_SHOW" in os.environ:
 TESTSET1 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
 TESTSET2 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.gri'
 TESTSET3 = '../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr'
-TESTSET4a = '../xtgeo-testdata/surfaces/etc/ib_test-horizon.map'  # IJXYZ table
-TESTSET4b = '../xtgeo-testdata/surfaces/etc/ijxyz1.map'  # IJXYZ table
-TESTSET4d = '../xtgeo-testdata/surfaces/etc/ijxyz1.dat'  # IJXYZ table OW
-TESTSET4c = '../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map'
+TESTSET4A = '../xtgeo-testdata/surfaces/etc/ib_test-horizon.map'  # IJXYZ table
+TESTSET4B = '../xtgeo-testdata/surfaces/etc/ijxyz1.map'  # IJXYZ table
+TESTSET4D = '../xtgeo-testdata/surfaces/etc/ijxyz1.dat'  # IJXYZ table OW
+TESTSET4C = '../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map'
 TESTSET5 = '../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri'
 
 FENCE1 = "../xtgeo-testdata/polygons/reek/1/fence.pol"
@@ -62,7 +62,7 @@ def test_ijxyz_import1():
     logger.info('Import and export...')
 
     xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4a, fformat='ijxyz')
+    xsurf.from_file(TESTSET4A, fformat='ijxyz')
     xsurf.describe()
     tsetup.assert_almostequal(xsurf.xori, 600413.048444, 0.0001)
     tsetup.assert_almostequal(xsurf.xinc, 25.0, 0.0001)
@@ -76,7 +76,7 @@ def test_ijxyz_import2():
     logger.info('Import and export...')
 
     xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4b, fformat='ijxyz')
+    xsurf.from_file(TESTSET4B, fformat='ijxyz')
     xsurf.describe()
     tsetup.assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
     assert xsurf.ncol == 51
@@ -90,7 +90,7 @@ def test_ijxyz_import4_ow_messy_dat():
     logger.info('Import and export...')
 
     xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4d, fformat='ijxyz')
+    xsurf.from_file(TESTSET4D, fformat='ijxyz')
     xsurf.describe()
     tsetup.assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
     assert xsurf.ncol == 51
@@ -104,7 +104,7 @@ def test_ijxyz_import3():
     logger.info('Import and export...')
 
     xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4c, fformat='ijxyz')
+    xsurf.from_file(TESTSET4C, fformat='ijxyz')
     xsurf.describe()
     xsurf.to_file(os.path.join(td, 'ijxyz_set4c.gri'))
 
@@ -561,7 +561,7 @@ def test_fence():
     tsetup.assert_almostequal(newfence[1][2], 1720.9094, 0.01)
 
 
-def test_get_randomline_from_polygon():
+def test_get_randomline_frompolygon():
 
     fence = xtgeo.Polygons(FENCE1)
     xs = xtgeo.RegularSurface(TESTSET1)

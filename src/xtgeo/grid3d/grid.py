@@ -396,8 +396,27 @@ class Grid(Grid3D):
         return self._roxindexer
 
     # ==================================================================================
-    # Import/export
+    # Create/import/export
     # ==================================================================================
+
+    def create_box(
+        self,
+        dimension=(10, 12, 6),
+        origin=(10.0, 20.0, 1000.0),
+        increment=(100, 150, 5),
+        rotation=30.0,
+        flip=1,
+    ):
+        """Create a 'shoebox' grid from spec"""
+
+        _grid_etc1.create_box(
+            self,
+            dimension=dimension,
+            origin=origin,
+            increment=increment,
+            rotation=rotation,
+            flip=flip,
+        )
 
     def from_file(
         self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None

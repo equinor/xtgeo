@@ -58,6 +58,28 @@ def test_import_guess(load_gfile1):
     tsetup.assert_equal(grd.ncol, 70)
 
 
+def test_create_shoebox():
+    """Make a shoebox grid from scratch"""
+
+    grd = xtgeo.Grid()
+    grd.create_box()
+    grd.to_file(join(TMPDIR, "shoebox_default.roff"))
+
+    grd.create_box(flip=-1)
+    grd.to_file(join(TMPDIR, "shoebox_default_flipped.roff"))
+
+    timer1 = xtg.timer()
+    grd.create_box(
+        origin=(0, 0, 1000), dimension=(300, 200, 30), increment=(20, 20, 1), flip=-1
+    )
+    logger.info("Making a a 1,8 mill cell grid took %5.3f secs", xtg.timer(timer1))
+
+    dx, dy = grd.get_dxdy()
+
+    tsetup.assert_almostequal(dx.values.mean(), 20.0, 0.0001)
+    tsetup.assert_almostequal(dy.values.mean(), 20.0, 0.0001)
+
+
 def test_roffbin_get_dataframe_for_grid(load_gfile1):
     """Import ROFF grid and return a grid dataframe (no props)"""
 
