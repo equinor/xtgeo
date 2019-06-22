@@ -76,9 +76,8 @@ def test_create_shoebox():
 
     dx, dy = grd.get_dxdy()
 
-    grd.to_file(join(TMPDIR, "shoebox_large_flipped.roff"))
-
     tsetup.assert_almostequal(dx.values.mean(), 20.0, 0.0001)
+    tsetup.assert_almostequal(dy.values.mean(), 20.0, 0.0001)
 
 
 def test_roffbin_get_dataframe_for_grid(load_gfile1):
