@@ -28,6 +28,53 @@ XTGDEBUG = xtg.get_syslevel()
 # Note that "self" is the grid instance
 
 
+def create_box(
+    self,
+    dimension=(10, 12, 6),
+    origin=(10.0, 20.0, 1000.0),
+    increment=(100, 150, 5),
+    rotation=30.0,
+    flip=1,
+):
+    """Create a shoebox grid from cubi'sh spec"""
+
+    self._ncol, self._nrow, self._nlay = dimension
+    ntot = self.ncol * self.nrow * self.nlay
+    ncoord = (self.ncol + 1) * (self.nrow + 1) * 2 * 3
+    nzcorn = self.ncol * self.nrow * (self.nlay + 1) * 4
+
+    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+
+    _cxtgeo.grd3d_from_cube(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        origin[0],
+        origin[1],
+        origin[2],
+        increment[0],
+        increment[1],
+        increment[2],
+        rotation,
+        flip,
+        0,
+        XTGDEBUG,
+    )
+
+    self._actnum_indices = None
+    self._filesrc = None
+    self._props = None
+    self._subgrids = None
+    self._roxgrid = None
+    self._roxindexer = None
+    self._tmp = {}
+
+
 def get_dz(self, name="dZ", flip=True, asmasked=True):
     """Get dZ as property"""
     ntot = (self._ncol, self._nrow, self._nlay)
