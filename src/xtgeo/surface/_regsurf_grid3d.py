@@ -159,7 +159,7 @@ def _update_regsurf(self, template, grid, rfactor=1.0):
         xori = geom["xmin"] - 0.05 * xlen
         yori = geom["ymin"] - 0.05 * ylen
         # take same xinc and yinc
-        print("XXX", geom["avg_dx"], geom["avg_dy"])
+
         xinc = yinc = (1.0 / rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)

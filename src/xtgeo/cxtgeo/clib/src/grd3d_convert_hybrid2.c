@@ -322,11 +322,6 @@ void grd3d_convert_hybrid2 (
 		}
 		zhyb=0.125*zsumh; /* cell center */
 
-		/* debug */
-		//if (i==1 &&j==12) {
-		//    printf("ztop zhyb khyb actnumhyb   %8.2f   %8.2f   %6d %6d\n",ztop,zhyb,k,p_actnumhyb_v[ibh]);
-		//}
-
 		if (p_actnumhyb_v[ibh]==1 && zhyb<ztop) {
 		    p_actnumhyb_v[ibh]=0;
 		}
@@ -346,11 +341,6 @@ void grd3d_convert_hybrid2 (
 		    zsumh=zsumh+p_zcornhyb_v[4*inh + 1*ic - 1];
 		}
 		zhyb=0.125*zsumh;
-
-		/* debug */
-		//if (i==1 &&j==12) {
-		//    printf("zbot zhyb khyb actnumhyb   %8.2f   %8.2f   %6d %6d\n",zbot,zhyb,k,p_actnumhyb_v[inh]);
-		//}
 
 		if (p_actnumhyb_v[inh]==1 && zhyb>zbot) {
 		    p_actnumhyb_v[inh]=0;

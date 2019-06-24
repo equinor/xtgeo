@@ -681,7 +681,6 @@ def _rkwquery(fhandle, kws, name, swap):
     # -1 indicates that it is the swap flag which is looked for!
     if dtype == 1:
         xresult = _cxtgeo.intpointer_value(iresult)
-        print("xresult = {}".format(xresult))
         if swap == -1:
             if xresult == 1:
                 return 0
@@ -755,5 +754,4 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
         del inumpy
 
     vals = vals.reshape(ncol, nrow, nlay)
-    print(vals.min(), vals.max())
     return vals

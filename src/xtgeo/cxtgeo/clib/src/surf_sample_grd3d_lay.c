@@ -134,11 +134,6 @@ void surf_sample_grd3d_lay (
 	    if (mymin < 1)  mymin=1;
 	    if (mymax > my) mymax=my;
 
-	    if (j==99950 && i==50) {
-		printf("mxmin etc: %d %d %d %d\n", mxmin, mxmax, mymin, mymax);
-		printf("cxmin etc: %f %f %f %f\n", cxmin, cxmax, cymin, cymax);
-	    }
-
 	    /* now loop over the local map nodes */
 	    for (jj = mymin; jj <= mymax; jj++) {
 		for (ii = mxmin; ii <= mxmax; ii++) {
