@@ -32,6 +32,7 @@ def create_box(
     self,
     dimension=(10, 12, 6),
     origin=(10.0, 20.0, 1000.0),
+    oricenter=False,
     increment=(100, 150, 5),
     rotation=30.0,
     flip=1,
@@ -46,6 +47,10 @@ def create_box(
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
     self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+
+    option = 0
+    if oricenter:
+        option = 1
 
     _cxtgeo.grd3d_from_cube(
         self.ncol,
@@ -62,7 +67,7 @@ def create_box(
         increment[2],
         rotation,
         flip,
-        0,
+        option,
         XTGDEBUG,
     )
 

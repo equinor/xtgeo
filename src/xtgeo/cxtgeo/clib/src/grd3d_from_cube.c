@@ -29,7 +29,8 @@
  *    p_actnum_v    i/o    ACTNUM (must be allocated in caller)
  *    xori..zori     i     Origins
  *    xinc..zinc     i     Increments
- *    option         i     Options flag for later usage
+ *    option         i     0: input is lower left (top) corner node; 1 input
+ *                         lower left (top) cell center
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -71,6 +72,14 @@ void grd3d_from_cube (
    xtgverbose(debug);
 
    xtg_speak(sbn, 2, "Making Grid3D from cube or shoebox spec", sbn);
+
+   if (option == 1) {  /* input is cell center, not cell corner */
+       double res[8];
+       x_2d_rect_corners(xori, yori, xinc, yinc, rotation, res, debug);
+       xori = res[6];
+       yori = res[7];
+       zori = zori - 0.5 * zinc;
+   }
 
    /* make coord... */
 

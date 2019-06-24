@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 from collections import OrderedDict
 from os.path import join
+import math
 
 import pytest
 
@@ -78,6 +79,29 @@ def test_create_shoebox():
 
     tsetup.assert_almostequal(dx.values.mean(), 20.0, 0.0001)
     tsetup.assert_almostequal(dy.values.mean(), 20.0, 0.0001)
+
+    grd.create_box(
+        origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45,
+        increment=(20, 20, 1),
+    )
+
+    x, y, z = grd.get_xyz()
+
+    tsetup.assert_almostequal(x.values1d[0], 0.0, 0.001)
+    tsetup.assert_almostequal(y.values1d[0], 20 * math.cos(45 * math.pi / 180), 0.001)
+    tsetup.assert_almostequal(z.values1d[0], 1000.5, 0.001)
+
+    grd.create_box(
+        origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45,
+        increment=(20, 20, 1), oricenter=True,
+    )
+
+    x, y, z = grd.get_xyz()
+
+    tsetup.assert_almostequal(x.values1d[0], 0.0, 0.001)
+    tsetup.assert_almostequal(y.values1d[0], 0.0, 0.001)
+    tsetup.assert_almostequal(z.values1d[0], 1000.0, 0.001)
+
 
 
 def test_roffbin_get_dataframe_for_grid(load_gfile1):

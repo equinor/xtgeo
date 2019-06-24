@@ -403,16 +403,33 @@ class Grid(Grid3D):
         self,
         dimension=(10, 12, 6),
         origin=(10.0, 20.0, 1000.0),
+        oricenter=False,
         increment=(100, 150, 5),
         rotation=30.0,
         flip=1,
     ):
-        """Create a 'shoebox' grid from spec"""
+        """Create a rectangular 'shoebox' grid from spec.
+
+        Args:
+            dimension (tuple of int): A tuple of (NCOL, NROW, NLAY)
+            origin (tuple of float): Startpoint of grid (x, y, z)
+            oricenter (bool): If False, startpoint is node, if True, use cell center
+            increment (tuple of float): Grid increments (xinc, yinc, zinc)
+            rotation (float): Roations in degrees, anticlock from X axis.
+            flip (int): If 1, grid origin is lower left and left-handed; if 1, origin
+            is upper left and right-handed.
+
+        Returns:
+            Instance is updated (previous instance content will be erased)
+
+        .. versionadded:: 2.1.0
+        """
 
         _grid_etc1.create_box(
             self,
             dimension=dimension,
             origin=origin,
+            oricenter=oricenter,
             increment=increment,
             rotation=rotation,
             flip=flip,
