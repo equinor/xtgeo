@@ -79,9 +79,6 @@ class Grid3DSlice(BasePlot):
         # how to remove the masked elements (lol):
         pvalues = pvalues[~pvalues.mask]
 
-        logger.debug(pvalues)
-        print(pvalues.shape, grid.ncol * grid.nrow)
-
         geomlist = grid.get_geometrics(allcells=True, cellcenter=False)
 
         if window is None:
@@ -108,8 +105,6 @@ class Grid3DSlice(BasePlot):
             if nppol.mean() > 0.0:
                 polygon = Polygon(nppol, True)
                 patches.append(polygon)
-
-        print(pvalues.shape, len(patches))
 
         black = (0, 0, 0, 1)
         patchcoll = PatchCollection(patches, edgecolors=(black,), cmap=self.colormap)

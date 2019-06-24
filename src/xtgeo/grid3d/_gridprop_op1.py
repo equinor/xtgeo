@@ -98,8 +98,6 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     proxy.values *= 0.0
     cvals = gl.update_carray(proxy)
 
-    print(proxy.values.mean())
-
     idgroups = poly.dataframe.groupby(poly.pname)
 
     for id_, grp in idgroups:

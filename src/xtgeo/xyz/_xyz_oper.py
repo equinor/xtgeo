@@ -170,7 +170,6 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
 
         points = [grp[self.xname], grp[self.yname], grp[self.zname]]
 
-        print(grp)
         leng = grp[self.hname].iloc[-1]
         gname = self.hname
 
@@ -417,7 +416,6 @@ def extend(self, distance, nsamples, addhlen=True):
                 "Error code from _cxtgeo.x_vector_linint2 is {}".format(ier)
             )
 
-        print(row0[0], row0[1], row0[2], newx, newy, _newz, distance)
         rown[self.xname] = newx
         rown[self.yname] = newy
 

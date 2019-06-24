@@ -72,7 +72,7 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
 def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
     """Private function for deriving a surface from a 3D grid.
 
-    Note that rotated maps is currently not supported!
+    Note that rotated maps are currently not supported!
 
     .. versionadded:: 2.1.0
     """
@@ -132,16 +132,17 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
     if mode == "i":
         self.set_values1d(ivalues)
         return None
-    elif mode == "j":
+
+    if mode == "j":
         self.set_values1d(jvalues)
         return None
-    else:
-        self.set_values1d(svalues)
-        isurf = self.copy()
-        jsurf = self.copy()
-        isurf.set_values1d(ivalues)
-        jsurf.set_values1d(jvalues)
-        return isurf, jsurf  # needed in special cases
+
+    self.set_values1d(svalues)
+    isurf = self.copy()
+    jsurf = self.copy()
+    isurf.set_values1d(ivalues)
+    jsurf.set_values1d(jvalues)
+    return isurf, jsurf  # needed in special cases
 
 
 def _update_regsurf(self, template, grid, rfactor=1.0):
@@ -158,7 +159,7 @@ def _update_regsurf(self, template, grid, rfactor=1.0):
         xori = geom["xmin"] - 0.05 * xlen
         yori = geom["ymin"] - 0.05 * ylen
         # take same xinc and yinc
-        print("XXX", geom["avg_dx"], geom["avg_dy"])
+
         xinc = yinc = (1.0 / rfactor) * 0.5 * (geom["avg_dx"] + geom["avg_dy"])
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)

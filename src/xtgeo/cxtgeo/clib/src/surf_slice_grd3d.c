@@ -88,14 +88,8 @@ int surf_slice_grd3d (int mcol,
     /* loop grid3d columns innermost, and find approximate area for map
        to search */
 
-    int IDBG = 0;
-    int JDBG = 0;
 
     for (j = 1; j <= nrow; j++) {
-
-        /* if (j%10 == 0) { */
-        /*     printf("Working with row %d of %d\n", j, nrow) ; */
-        /* } */
 
         int i;
         for (i = 1; i <= ncol; i++) {
@@ -126,25 +120,13 @@ int surf_slice_grd3d (int mcol,
                 if (zgrdtop > zmapmax) {
                     kc2 = k;
 
-                    if (i==IDBG && j==JDBG) printf("ZMAP MIN MAX %f %f\n",
-                                                   zmapmin, zmapmax);
-                    if (i==IDBG && j==JDBG) printf("Propose K1 K2 %d %d\n",
-                                                   kc1, kc2);
-                    if (i==IDBG && j==JDBG) printf("K cells: %f %f\n",
-                                                   zgrdtop, zgrdbot);
                     break;
                 }
             }
 
             if (nactive == 0) continue;
 
-            if (i==IDBG && j==JDBG) printf("K cells final: %d %d for %d %d\n",
-                                           kc1, kc2, i, j);
-
             if (kc1 > kc2) kc2 = nlay;
-
-            if (i==IDBG && j==JDBG) printf("K cells final: %d %d for %d %d\n",
-                                           kc1, kc2, i, j);
 
             grd3d_corners(i, j, kc1, ncol, nrow, nlay, p_coord_v,
                           p_zcorn_v, corners, debug);
@@ -153,8 +135,6 @@ int surf_slice_grd3d (int mcol,
                 xc[ix] = corners[ix + kstep];
                 yc[ix] = corners[ix + kstep + 1];
                 kstep = kstep + 2;
-                if (i==IDBG && j==JDBG) printf("Top: IX: XC YC: %d %f %f\n", ix,
-                                               xc[ix], yc[ix]);
             }
 
             grd3d_corners(i, j, kc2, ncol, nrow, nlay, p_coord_v,
@@ -164,8 +144,6 @@ int surf_slice_grd3d (int mcol,
                 xc[ix] = corners[ix + kstep];
                 yc[ix] = corners[ix + kstep + 1];
                 kstep = kstep + 2;
-                if (i==IDBG && j==JDBG) printf("Bot: IX: XC YC: %d %f %f\n", ix,
-                                               xc[ix], yc[ix]);
             }
 
 
@@ -184,18 +162,12 @@ int surf_slice_grd3d (int mcol,
                     if (jm > jm2) jm2 = jm;
                 }
 
-                if (i==IDBG && j==JDBG) printf("IX: XC YC: %d %f %f\n", ix,
-                                               xc[ix], yc[ix]);
             }
 
             /* extend with buffer nodes to be certain */
             im1 -= buffer; im2 += buffer; jm1 -= buffer; jm2 += buffer;
             if (im1 < 1) im1 = 1; if (im2 > mcol) im2 = mcol;
             if (jm1 < 1) jm1 = 1; if (jm2 > mrow) jm2 = mrow;
-
-            if (i==IDBG && j==JDBG) printf("IM: %d %d -- %d %d\n", im1, im2,
-                                           jm1, jm2);
-
 
             for (k = kc1; k <= kc2; k++) {
                 /* get map cell corners: */
@@ -227,8 +199,6 @@ int surf_slice_grd3d (int mcol,
                             if (ios > 0) {
                                 imm = x_ijk2ic(im, jm, 1, mcol, mrow, 1, 0);
                                 p_map_v[imm] = cellvalue;
-                                if (i==IDBG && j==JDBG) printf("Found! %f\n",
-                                                               cellvalue);
                             }
                         }
                     }

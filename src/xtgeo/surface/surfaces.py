@@ -27,7 +27,7 @@ class Surfaces(object):
     .. versionadded: 2.1.0
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
 
         self._surfaces = []  # list of RegularSurface objects
         self._subtype = None  # could be "tops", "isochores" or None
@@ -95,9 +95,9 @@ class Surfaces(object):
 
         return new
 
-    def get_statistics(self):
-        "Returns a dictionary with statistical measures"
-        pass
+    # def get_statistics(self):
+    #     "Returns a dictionary with statistical measures"
+    #     pass
 
     def get_surface(self, name):
         """Get a RegularSurface() instance by name, or return None if name not found"""

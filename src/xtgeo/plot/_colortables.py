@@ -345,7 +345,7 @@ def colorsfromfile(fname, fformat="rms"):
     ctable = []
 
     if not _fileutils.file_exists(fname):
-        print("No such color file! STOP")
+        xtg.critical("No such color file! STOP")
         sys.exit(-1)
 
     with open(fname) as fc:

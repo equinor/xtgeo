@@ -103,6 +103,10 @@ int x_chk_point_in_cell (
 			 int   debug
 			 );
 
+void x_2d_rect_corners(double x, double y, double xinc, double yinc,
+                       double rot,
+                       double result[8], int debug);
+
 int x_kvpt3s (
 	      double pp[],
 	      double tri[][3],
