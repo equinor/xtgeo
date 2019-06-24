@@ -78,6 +78,10 @@ void grd3d_from_cube (
        x_2d_rect_corners(xori, yori, xinc, yinc, rotation, res, debug);
        xori = res[6];
        yori = res[7];
+       if (yflip == -1) {
+           xori = res[0];
+           yori = res[1];
+       }
        zori = zori - 0.5 * zinc;
    }
 
