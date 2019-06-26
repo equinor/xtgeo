@@ -84,7 +84,7 @@ void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, in
         ii2 = itop;
     }
 
-    /* extend with one to be sure */
+    /* extend with one to avoid edge effects missing values */
     if (ii1 > 1) ii1--;
     if (ii2 < mcol) ii2++;
 
@@ -97,7 +97,7 @@ void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, in
         jj2 = jtop;
     }
 
-    /* extend with one to be sure */
+    /* extend with one to avoid edge effects missing values */
     if (jj1 > 1) jj1--;
     if (jj2 < mrow) jj2++;
 
@@ -162,7 +162,7 @@ int grd3d_get_randomline(
 
     xtgverbose(debug);
 
-    if (debug > 2) xtg_speak(sbn, 3, "Entering routine %s", sbn);
+    xtg_speak(sbn, 1, "Entering routine %s", sbn);
 
     zsam = (zmax - zmin) / (nzsam - 1);
 
@@ -179,12 +179,12 @@ int grd3d_get_randomline(
     for (ic = 0; ic < nxvec; ic++) {
         xc = xvec[ic];
         yc = yvec[ic];
-        if (debug > 1) xtg_speak(sbn, 2, "Column %d... X Y %f12.2 %f12.2", ic, xc, yc);
+        if (debug > 2) xtg_speak(sbn, 3, "Column %d... X Y %f12.2 %f12.2", ic, xc, yc);
 
         _get_ij_range(&i1, &i2, &j1, &j2, xc, yc, mcol, mrow, xori, yori, xinc, yinc,
                       yflip, rotation, maptopi, maptopj, mapbasi, mapbasj, debug);
 
-        if (debug > 1) xtg_speak(sbn, 2, "I J range %d %d %d %d...", i1, i2, j1, j2);
+        if (debug > 2) xtg_speak(sbn, 3, "I J range %d %d %d %d...", i1, i2, j1, j2);
 
         for (izc = 0; izc < nzsam; izc++) {
 
@@ -222,7 +222,7 @@ int grd3d_get_randomline(
         }
     }
 
-    if (debug > 2) xtg_speak(sbn, 3, "Done ...");
+    xtg_speak(sbn, 1, "Exit from routine %s", sbn);
 
     return EXIT_SUCCESS;
 

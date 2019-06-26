@@ -29,7 +29,7 @@ def import_roff(self, gfile):
     tstart = xtg.timer()
     logger.info("Working with file %s", gfile)
 
-    logger.info("Scanning...")
+    logger.info("Scan file for dimensions...")
     ptr_ncol = _cxtgeo.new_intpointer()
     ptr_nrow = _cxtgeo.new_intpointer()
     ptr_nlay = _cxtgeo.new_intpointer()
@@ -54,7 +54,11 @@ def import_roff(self, gfile):
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
     subgrd_v = _cxtgeo.new_intarray(nsubs)
 
-    logger.info("Reading..., total number of cells is %s", ntot)
+    logger.info(
+        "Reading grid geometry..., total number of cells is %s (%.2f million)",
+        ntot,
+        float(ntot / 1.0e6),
+    )
     _cxtgeo.grd3d_import_roff_grid(
         ptr_num_act,
         ptr_nsubs,
@@ -67,7 +71,10 @@ def import_roff(self, gfile):
         XTGDEBUG,
     )
 
-    logger.info("Reading done. Active cells: %s", self.nactive)
+    logger.info("Reading grid geometry... DONE")
+    logger.info(
+        "Active cells: %s (%.2f million)", self.nactive, float(self.nactive) / 1.0e6
+    )
     logger.info("Number of subgrids: %s", nsubs)
 
     if nsubs > 1:

@@ -27,6 +27,8 @@ class XSection(BasePlot):
         surfaces (list): List of XTGeo RegularSurface objects
         surfacenames (list): List of surface names (str) for legend
         cube (Cube): A XTGeo Cube instance
+        grid (Grid): A XTGeo Grid instance
+        gridproperty (GridProperty): A XTGeo GridProperty instance
         colormap (str): Name of colormap, e.g. 'Set1'. Default is 'xtgeo'
         outline (obj): XTGeo Polygons object
 
@@ -38,10 +40,14 @@ class XSection(BasePlot):
         zmax=9999,
         well=None,
         surfaces=None,
+        sampling=20,
+        nextend=5,
         colormap=None,
         zonelogshift=0,
         surfacenames=None,
         cube=None,
+        grid=None,
+        gridproperty=None,
         outline=None,
     ):
 
@@ -50,14 +56,18 @@ class XSection(BasePlot):
         self._zmin = zmin
         self._zmax = zmax
         self._well = well
+        self._nextend = nextend
+        self._sampling = sampling
         self._surfaces = surfaces
         self._surfacenames = surfacenames
         self._cube = cube
+        self._grid = grid
+        self._gridproperty = gridproperty
         self._zonelogshift = zonelogshift
         self._outline = outline
 
         self._pagesize = "A4"
-        self._wfence = None
+        self._fence = None
         self._legendtitle = "Zones"
         self._legendsize = 5
 
@@ -67,6 +77,9 @@ class XSection(BasePlot):
 
         self._colormap_cube = None
         self._colorlegend_cube = False
+
+        self._colormap_grid = None
+        self._colorlegend_grid = False
 
         if colormap is None:
             self._colormap = plt.cm.get_cmap("viridis")
@@ -80,7 +93,7 @@ class XSection(BasePlot):
         self._colormap_perf_dict = {idx: idx for idx in range(100)}
 
         logger.info("Ran __init__ ...")
-        logger.info("Colormap is %s", self._colormap)
+        logger.debug("Colormap is %s", self._colormap)
 
     # ==================================================================================
     # Properties
@@ -150,6 +163,27 @@ class XSection(BasePlot):
         #                      'not ints!')
 
         self._colormap_perf_dict = xdict
+
+    @property
+    def fence(self):
+        """Set or get the fence spesification"""
+        if self._fence is None:
+            if self._well is not None:
+                wfence = self._well.get_fence_polyline(
+                    sampling=self._sampling, nextend=self._nextend, tvdmin=self._zmin
+                )
+                self._fence = wfence
+
+            # if wfence is False:
+            #     return
+            else:
+                raise ValueError("Input well is None")  # should be more flexible
+        return self._fence
+
+    @fence.setter
+    def fence(self, myfence):
+        # this can be extended with checks and various types of input...
+        self._fence = myfence
 
     # ==================================================================================
     # Functions methods (public)
@@ -594,7 +628,7 @@ class XSection(BasePlot):
             interpolation (str): Interpolation for plotting, cf. matplotlib
                 documentation on this. Also gaussianN is allowed, where
                 N = 1..9.
-            sampling (str): 'nearest' (default) or 'trilinear'
+            sampling (str): 'nearest' (default) or 'trilinear' (more precise)
 
         Raises:
             ValueError: No cube is loaded
@@ -605,18 +639,10 @@ class XSection(BasePlot):
 
         ax, _bba = self._currentax(axisname="main")
 
-        if self._wfence is None:
-            wfence = self._well.get_fence_polyline(
-                sampling=20, nextend=5, tvdmin=self._zmin
-            )
-            if wfence is False:
-                return
-            self._wfence = wfence
-
         zinc = self._cube.zinc / 2.0
 
         zvv = self._cube.get_randomline(
-            self._wfence,
+            self.fence,
             zmin=self._zmin,
             zmax=self._zmax,
             zincrement=zinc,
@@ -627,8 +653,6 @@ class XSection(BasePlot):
 
         # if vmin is not None or vmax is not None:
         #     arr = np.clip(arr, vmin, vmax)
-
-        logger.info("Number of masked elems: %s", ma.count_masked(arr))
 
         if self._colormap_cube is None:
             if colormap is None:
@@ -660,6 +684,59 @@ class XSection(BasePlot):
         if self._colorlegend_cube:
             self._fig.colorbar(img, ax=ax)
 
+    def plot_grid3d(self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7):
+        """Plot a sampled grid with gridproperty backdrop.
+
+        Args:
+            colormap (ColorMap): Name of color map (default 'rainbow')
+            vmin (float): Minimum value in plot.
+            vmax (float); Maximum value in plot
+            alpha (float): Alpha blending number beween 0 and 1.
+
+        Raises:
+            ValueError: No grid or gridproperty is loaded
+
+        """
+        if self._grid is None or self._gridproperty is None:
+            raise ValueError("Ask for plot of grid, but no grid is loaded")
+
+        ax, _bba = self._currentax(axisname="main")
+
+        zinc = 0.5  # tmp
+
+        zvv = self._grid.get_randomline(
+            self.fence,
+            self._gridproperty,
+            zmin=self._zmin,
+            zmax=self._zmax,
+            zincrement=zinc,
+        )
+
+        h1, h2, v1, v2, arr = zvv
+
+        # if vmin is not None or vmax is not None:
+        #     arr = np.clip(arr, vmin, vmax)
+
+        if self._colormap_grid is None:
+            if colormap is None:
+                colormap = "rainbow"
+            self._colormap_grid = self.define_any_colormap(colormap)
+
+        img = ax.imshow(
+            arr,
+            cmap=self._colormap_grid,
+            vmin=vmin,
+            vmax=vmax,
+            extent=(h1, h2, v2, v1),
+            aspect="auto",
+            alpha=alpha,
+        )
+
+        logger.info("Actual VMIN and VMAX: %s", img.get_clim())
+        # steer this?
+        if self._colorlegend_grid:
+            self._fig.colorbar(img, ax=ax)
+
     def plot_surfaces(
         self,
         fill=False,
@@ -678,9 +755,9 @@ class XSection(BasePlot):
         """Input a surface list (ordered from top to base) , and plot them."""
 
         ax, bba = self._currentax(axisname=axisname)
+
         # either use surfaces from __init__, or override with surfaces
         # speciefied here
-
         if surfaces is None:
             surfaces = self._surfaces
             surfacenames = self._surfacenames
@@ -720,21 +797,6 @@ class XSection(BasePlot):
             msg = "Too few colors in color table vs number of surfaces"
             raise SystemExit(msg)
 
-        # need to resample the surface along the well trajectory
-        # create a sampled fence from well path, and include extension
-        # This fence is numpy vector [[XYZ ...]]
-        if self._wfence is None:
-            wfence = self._well.get_fence_polyline(
-                sampling=20, nextend=5, tvdmin=self._zmin
-            )
-            if wfence is False:
-                return
-
-            self._wfence = wfence
-
-        if self._wfence is False:
-            return
-
         # sample the horizon to the fence:
         colortable = self.get_colormap_as_table()
         for i in range(nlen):
@@ -742,34 +804,34 @@ class XSection(BasePlot):
             if onecolor:
                 usecolor = onecolor
             if not fill:
-                hfence = surfaces[i].get_fence(self._wfence)
+                hfence = surfaces[i].get_randomline(self.fence)
                 if fancyline:
                     xcol = "white"
                     cxx = usecolor
                     if cxx[0] + cxx[1] + cxx[2] > 1.5:
                         xcol = "black"
                     ax.plot(
-                        hfence[:, 3], hfence[:, 2], linewidth=1.2 * linewidth, c=xcol
+                        hfence[:, 0], hfence[:, 1], linewidth=1.2 * linewidth, c=xcol
                     )
                 ax.plot(
-                    hfence[:, 3],
-                    hfence[:, 2],
+                    hfence[:, 0],
+                    hfence[:, 1],
                     linewidth=linewidth,
                     c=usecolor,
                     label=slegend[i],
                 )
                 if fancyline:
                     ax.plot(
-                        hfence[:, 3], hfence[:, 2], linewidth=0.3 * linewidth, c=xcol
+                        hfence[:, 0], hfence[:, 1], linewidth=0.3 * linewidth, c=xcol
                     )
             else:
                 # need copy() .. why?? found by debugging...
-                hfence1 = surfaces[i].get_fence(self._wfence).copy()
-                x1 = hfence1[:, 3]
-                y1 = hfence1[:, 2]
+                hfence1 = surfaces[i].get_randomline(self.fence).copy()
+                x1 = hfence1[:, 0]
+                y1 = hfence1[:, 1]
                 if i < (nlen - 1):
-                    hfence2 = surfaces[i + 1].get_fence(self._wfence).copy()
-                    y2 = hfence2[:, 2]
+                    hfence2 = surfaces[i + 1].get_randomline(self.fence).copy()
+                    y2 = hfence2[:, 1]
                 else:
                     y2 = y1.copy()
 
@@ -803,16 +865,16 @@ class XSection(BasePlot):
         """
         ax = self._ax2
 
-        if self._wfence is not None:
+        if self.fence is not None:
 
             xwellarray = self._well.dataframe["X_UTME"].values
             ywellarray = self._well.dataframe["Y_UTMN"].values
 
             ax.plot(xwellarray, ywellarray, linewidth=4, c="cyan")
 
-            ax.plot(self._wfence[:, 0], self._wfence[:, 1], linewidth=1, c="black")
-            ax.annotate("A", xy=(self._wfence[0, 0], self._wfence[0, 1]), fontsize=8)
-            ax.annotate("B", xy=(self._wfence[-1, 0], self._wfence[-1, 1]), fontsize=8)
+            ax.plot(self.fence[:, 0], self.fence[:, 1], linewidth=1, c="black")
+            ax.annotate("A", xy=(self.fence[0, 0], self.fence[0, 1]), fontsize=8)
+            ax.annotate("B", xy=(self.fence[-1, 0], self.fence[-1, 1]), fontsize=8)
             ax.set_aspect("equal", "datalim")
 
             left, right = ax.get_xlim()
@@ -844,13 +906,13 @@ class XSection(BasePlot):
             return
 
         ax = self._ax3
-        if self._wfence is not None:
+        if self.fence is not None:
 
             xp = self._outline.dataframe["X_UTME"].values
             yp = self._outline.dataframe["Y_UTMN"].values
             ip = self._outline.dataframe["POLY_ID"].values
 
-            ax.plot(self._wfence[:, 0], self._wfence[:, 1], linewidth=3, c="red")
+            ax.plot(self._fence[:, 0], self._fence[:, 1], linewidth=3, c="red")
 
             for i in range(int(ip.min()), int(ip.max()) + 1):
                 xpc = xp.copy()[ip == i]

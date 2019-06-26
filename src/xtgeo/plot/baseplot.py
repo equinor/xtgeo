@@ -78,7 +78,7 @@ class BasePlot(object):
         """
         valid_maps = sorted(m for m in plt.cm.datad)
 
-        logger.info(valid_maps)
+        logger.debug("Valid maps: %s", valid_maps)
 
         colors = []
 
@@ -108,12 +108,10 @@ class BasePlot(object):
             cmap.name = cfile
         elif cfile in valid_maps:
             cmap = plt.get_cmap(cfile)
-            logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
         else:
             cmap = plt.get_cmap("rainbow")
-            logger.info(cmap.N)
             for i in range(cmap.N):
                 colors.append(cmap(i))
 

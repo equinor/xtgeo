@@ -549,7 +549,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """Convert from POLY_ID based to XYZ, where a new polygon is marked
         with a 999.0 value as flag"""
 
-        logger.info(self.dataframe)
+        logger.debug("Data frame: \n%s", self.dataframe)
 
         return _convert_idbased_xyz(self, self.dataframe)
 

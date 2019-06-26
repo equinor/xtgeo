@@ -2056,7 +2056,7 @@ class RegularSurface(object):
                 fencespec is a Polygons instance and hincrement != False)
 
         Returns:
-            A tuple: (hmin, hmax, vmin, vmax, ndarray2d (:, 2))
+            An array: ndarray2d (:, 2)
 
         Example::
 

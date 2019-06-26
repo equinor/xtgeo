@@ -142,7 +142,7 @@ class XYZ(object):
             raise SystemExit
 
         logger.info("Reading from file %s... done", pfile)
-        logger.info("\n%s", self._df.head())
+        logger.debug("Dataframe head:\n%s", self._df.head())
         self._filesrc = pfile
 
         return self
