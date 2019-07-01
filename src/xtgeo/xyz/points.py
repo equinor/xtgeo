@@ -199,8 +199,15 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def pname(self):
-        """ Returns the name of the POLY_ID column"""
+        """ Return or set the name of the POLY_ID column"""
         return self._pname
+
+    @pname.setter
+    def pname(self, pname):
+        if isinstance(pname, str):
+            self._pname = pname
+        else:
+            raise ValueError("The pname property must be a string")
 
     # ----------------------------------------------------------------------------------
     # Methods
