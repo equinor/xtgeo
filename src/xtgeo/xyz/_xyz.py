@@ -152,7 +152,7 @@ class XYZ(object):
         self,
         pfile,
         fformat="xyz",
-        attributes="all",
+        attributes=False,
         pfilter=None,
         filter=None,  # deprecated, not in use (only signature)
         wcolumn=None,
@@ -164,8 +164,8 @@ class XYZ(object):
         Args:
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-            attributes (list): List of extra columns to export (some formats)
-                or 'all' for all attributes present
+            attributes (bool or list): List of extra columns to export (some formats)
+                or True for all attributes present
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
@@ -193,7 +193,7 @@ class XYZ(object):
             # NB! reuse export_rms_attr function, but no attributes
             # are possible
             ncount = _xyz_io.export_rms_attr(
-                self, pfile, attributes=None, pfilter=pfilter
+                self, pfile, attributes=False, pfilter=pfilter
             )
 
         elif fformat == "rms_attr":
@@ -204,6 +204,9 @@ class XYZ(object):
             ncount = _xyz_io.export_rms_wpicks(
                 self, pfile, hcolumn, wcolumn, mdcolumn=mdcolumn
             )
+
+        if ncount is None:
+            ncount = 0
 
         if ncount == 0:
             logger.warning("Nothing to export!")
@@ -267,7 +270,14 @@ class XYZ(object):
 
     @abc.abstractmethod
     def to_roxar(
-        self, project, name, category, stype="horizons", realisation=0, attributes=False
+        self,
+        project,
+        name,
+        category,
+        stype="horizons",
+        pfilter=None,
+        realisation=0,
+        attributes=False,
     ):
         """Export (store) a points/polygons item to a Roxar RMS project.
 
@@ -282,6 +292,8 @@ class XYZ(object):
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
             category (str): For horizons/zones/faults: for example 'DL_depth'
+            pfilter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}
             stype (str): RMS folder type, 'horizons' (default), 'zones'
                 or 'faults' or 'clipboard'
             realisation (int): Realisation number, default is 0
@@ -296,16 +308,22 @@ class XYZ(object):
 
         """
 
-        stype = stype.lower()
         valid_stypes = ["horizons", "zones", "faults", "clipboard"]
 
-        if stype not in valid_stypes:
+        if stype.lower() not in valid_stypes:
             raise ValueError(
                 "Invalid stype, only {} stypes is supported.".format(valid_stypes)
             )
 
         _xyz_roxapi.export_xyz_roxapi(
-            self, project, name, category, stype, realisation, attributes
+            self,
+            project,
+            name,
+            category,
+            stype.lower(),
+            pfilter,
+            realisation,
+            attributes,
         )
 
     # ==================================================================================
@@ -323,7 +341,6 @@ class XYZ(object):
     @dataframe.setter
     def dataframe(self, df):
         """Dataframe setter"""
-
 
     # @abc.abstractmethod
     # def get_carray(self, lname):

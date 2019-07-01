@@ -35,6 +35,7 @@ POLSET3 = join(TSTPATH, "polygons/etc/outline.pol")
 POLSET4 = join(TSTPATH, "polygons/etc/well16.pol")
 POINTSET2 = join(TSTPATH, "points/reek/1/pointset2.poi")
 POINTSET3 = join(TSTPATH, "points/battle/1/many.rmsattr")
+POINTSET4 = join(TSTPATH, "points/reek/1/poi_attr.rmsattr")
 
 
 def test_xyz():
@@ -63,6 +64,15 @@ def test_import():
     x0 = mypoints.dataframe["X_UTME"].values[0]
     logger.debug(x0)
     tsetup.assert_almostequal(x0, 460842.434326, 0.001)
+
+
+def test_export_points():
+    """Export XYZ points to file, various formats"""
+
+    mypoints = Points(POINTSET4)  # should guess based on extesion
+
+    print(mypoints.dataframe)
+    mypoints.to_file(join(TMPD, "poi_export1.rmsattr"), fformat="rms_attr")
 
 
 def test_import_zmap_and_xyz():
@@ -104,6 +114,19 @@ def test_import_rmsattr_format():
     # print(mypoi.dataframe.columns[3:])
     print(mypoi.dataframe["VerticalSep"].dtype)
     mypoi.to_file("TMP/attrs.rmsattr", fformat="rms_attr")
+
+
+def test_export_points_rmsattr():
+    """Export XYZ points to file, as rmsattr"""
+
+    mypoints = Points(POINTSET4)  # should guess based on extesion
+    logger.info(mypoints.dataframe)
+    mypoints.to_file(join(TMPD, "poi_export1.rmsattr"), fformat="rms_attr")
+    mypoints2 = Points(join(TMPD, "poi_export1.rmsattr"))
+
+    logger.info(mypoints2.dataframe)
+    assert mypoints.dataframe["Seg"].equals(mypoints2.dataframe["Seg"])
+    assert mypoints.dataframe["MyNum"].equals(mypoints2.dataframe["MyNum"])
 
 
 def test_import_export_polygons():

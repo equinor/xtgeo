@@ -228,7 +228,7 @@ def get_fence(
     new.hlen()
 
     if len(new.dataframe) < 2:
-        xtg.warn("Well does not enough points in interval, outside range?")
+        xtg.warn("Too few points in polygons for making a fence, return False")
         return False
 
     new.filter_byid(polyid)
