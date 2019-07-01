@@ -83,7 +83,9 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     The instance can be made either from file or by a spesification,
     e.g. from file::
 
-        xp = Points(xp.from_file('somefilename', fformat='xyz')
+        xp = Points().from_file('somefilename', fformat='xyz')
+        # or perhaps better
+        xp = xtgeo.points_from_file('somefilename', fformat='xyz')
         # show the Pandas dataframe
         print(xp.dataframe)
 
@@ -380,7 +382,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Raises:
             ValueError: Various types of invalid inputs.
 
-        .. versionchanged: 2.1.0 added pfilter option
+        .. versionchanged:: 2.1.0 added pfilter option
         """
 
         super(Points, self).to_roxar(
