@@ -88,7 +88,7 @@ def export_cube_roxapi(
     logger.debug("TODO: compression %s", compression)
 
     _roxapi_export_cube(
-        self, rox.project, name, domain=domain, compression=compression
+        self, rox.project, name, folder=folder, domain=domain, compression=compression
     )
 
 
