@@ -6,7 +6,6 @@ from __future__ import print_function
 
 try:
     import roxar
-    import _roxar
 except ImportError:
     pass
 
@@ -130,7 +129,7 @@ def clear_whatever_category(self, category, stype="horizons"):
     for catg in categories:
         for xitem in xtype:
             try:
-                item = xtype[xitem.name][category]
+                item = xtype[xitem.name][catg]
                 item.set_empty()
             except KeyError as kmsg:
                 print(kmsg)
