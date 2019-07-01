@@ -423,7 +423,14 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         )
 
     def to_roxar(
-        self, project, name, category, stype="horizons", realisation=0, attributes=False
+        self,
+        project,
+        name,
+        category,
+        stype="horizons",
+        pfilter=None,
+        realisation=0,
+        attributes=False,
     ):
         """Export/save/store a polygons item to a Roxar RMS project.
 
@@ -435,8 +442,11 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
             category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            pfilter (dict): Filter on e.g. top name(s) with keys TopName
+                or ZoneName as {'TopName': ['Top1', 'Top2']}
+             stype (str): RMS folder type, 'horizons' (default) or 'zones'
             realisation (int): Realisation number, default is 0
+            attributes (bool): Also use attributes, if True
 
         Raises:
             ValueError: Various types of invalid inputs.
@@ -444,14 +454,20 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
 
         super(Polygons, self).to_roxar(
-            project, name, category, stype=stype, realisation=realisation
+            project,
+            name,
+            category,
+            stype=stype,
+            pfilter=pfilter,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def to_file(
         self,
         pfile,
         fformat="xyz",
-        attributes=None,
+        attributes=False,
         pfilter=None,
         filter=None,  # deprecated
         wcolumn=None,
@@ -463,7 +479,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         Args:
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-            attributes (list): List of extra columns to export (some formats)
+            attributes (bool): Not is use for polygons
             pfilter (dict): Filter on e.g. top name(s) with keys
                  TopName or ZoneName as {'TopName': ['Top1', 'Top2']}
             wcolumn (str): Name of well column (rms_wellpicks format only)
@@ -549,7 +565,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """Convert from POLY_ID based to XYZ, where a new polygon is marked
         with a 999.0 value as flag"""
 
-        logger.info(self.dataframe)
+        logger.debug("Data frame: \n%s", self.dataframe)
 
         return _convert_idbased_xyz(self, self.dataframe)
 

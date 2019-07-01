@@ -15,6 +15,7 @@ except ImportError:
     pass
 
 from xtgeo.common import XTGeoDialog
+from . import _roxutils_etc
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -143,99 +144,62 @@ class RoxUtils(object):
 
         return self._versions.get(apiversion, None)
 
-    def create_horizon_category(
-        self, category, stype="horizons", domain="depth", htype="surface"
-    ):
+    def create_horizons_category(self, category, domain="depth", htype="surface"):
         """Create one or more a Horizons category entries.
 
         Args:
             category (str or list): Name(s) of category to make, either as
-                 a simple string or a list of strings.
-            stype (str): 'Super type' in RMS (horizons or zones).
-                Default is horizons
+                a simple string or a list of strings.
             domain (str): 'depth' (default) or 'time'
             htype (str): Horizon type: surface/lines/points
         """
 
-        project = self.project
-        categories = []
-
-        if isinstance(category, str):
-            categories.append(category)
-        else:
-            categories.extend(category)
-
-        for catg in categories:
-            geom = roxar.GeometryType.surface
-            if htype.lower() == "lines":
-                geom = roxar.GeometryType.lines
-            elif htype.lower() == "points":
-                geom = roxar.GeometryType.points
-
-            dom = roxar.VerticalDomain.depth
-            if domain.lower() == "time":
-                dom = roxar.GeometryType.lines
-
-            if stype.lower() == "horizons":
-                if catg not in project.horizons.representations:
-                    try:
-                        project.horizons.representations.create(catg, geom, dom)
-                    except Exception as exmsg:  # pylint: disable=broad-except
-                        print("Error: {}".format(exmsg))
-                else:
-                    print("Category <{}> already exists".format(catg))
-
-            elif stype.lower() == "zones":
-                if catg not in project.zones.representations:
-                    try:
-                        project.zones.representations.create(catg, geom, dom)
-                    except Exception as exmsg:  # pylint: disable=broad-except
-                        print("Error: {}".format(exmsg))
-                else:
-                    print("Category <{}> already exists".format(catg))
-
-    def create_zones_category(self, category, domain="thickness", htype="surface"):
-        """Same as create_horizon_category, but with stype='zones'."""
-
-        self.create_horizon_category(
-            category, stype="zones", domain=domain, htype=htype
+        _roxutils_etc.create_whatever_category(
+            self, category, stype="horizons", domain=domain, htype=htype
         )
 
-    def delete_horizon_category(self, category, stype="horizons"):
-        """Delete onelayergrid or more horizons or zones categories.
+    def create_zones_category(self, category, domain="thickness", htype="surface"):
+        """Create one or more a Horizons category entries.
 
         Args:
-            category (str or list): Name(s) of category to make, either
-                as a simple string or a list of strings.
-            stype (str): 'Super type', in RMS ('horizons' or 'zones').
-                Default is 'horizons'
+            category (str or list): Name(s) of category to make, either as
+                a simple string or a list of strings.
+            domain (str): 'thickness' (default) or ...?
+            htype (str): Horizon type: surface/lines/points
         """
 
-        project = self.project
-        categories = []
+        _roxutils_etc.create_whatever_category(
+            self, category, stype="zones", domain=domain, htype=htype
+        )
 
-        if isinstance(category, str):
-            categories.append(category)
-        else:
-            categories.extend(category)
+    def delete_horizons_category(self, category):
+        """Delete on or more horizons or zones categories"""
 
-        for catg in categories:
-            if stype.lower() == "horizons":
-                try:
-                    del project.horizons.representations[catg]
-                except KeyError as kerr:
-                    if kerr == catg:
-                        print("Cannot delete {}, does not exist".format(kerr))
-            elif stype.lower() == "zones":
-                try:
-                    del project.horizons.representations[catg]
-                except KeyError as kerr:
-                    if kerr == catg:
-                        print("Cannot delete {}, does not exist".format(kerr))
-            else:
-                raise ValueError("Wrong stype applied")
+        _roxutils_etc.delete_whatever_category(self, category, stype="horizons")
 
     def delete_zones_category(self, category):
         """Delete on or more horizons or zones categories. See previous"""
 
-        self.delete_horizon_category(category, stype="zones")
+        _roxutils_etc.delete_whatever_category(self, category, stype="zones")
+
+    def clear_horizon_category(self, category):
+        """Clear (or make empty) the content of one or more horizon categories.
+
+        Args:
+            category (str or list): Name(s) of category to empty, either as
+                 a simple string or a list of strings.
+
+        .. versionadded:: 2.1.0
+        """
+        _roxutils_etc.clear_whatever_category(self, category, stype="horizons")
+
+    def clear_zone_category(self, category):
+        """Clear (or make empty) the content of one or more zone categories.
+
+        Args:
+            category (str or list): Name(s) of category to empty, either as
+                 a simple string or a list of strings.
+
+        .. versionadded:: 2.1.0
+        """
+        _roxutils_etc.clear_whatever_category(self, category, stype="zones")

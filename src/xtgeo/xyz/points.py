@@ -83,7 +83,9 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     The instance can be made either from file or by a spesification,
     e.g. from file::
 
-        xp = Points(xp.from_file('somefilename', fformat='xyz')
+        xp = Points().from_file('somefilename', fformat='xyz')
+        # or perhaps better
+        xp = xtgeo.points_from_file('somefilename', fformat='xyz')
         # show the Pandas dataframe
         print(xp.dataframe)
 
@@ -197,8 +199,15 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def pname(self):
-        """ Returns the name of the POLY_ID column"""
+        """ Return or set the name of the POLY_ID column"""
         return self._pname
+
+    @pname.setter
+    def pname(self, pname):
+        if isinstance(pname, str):
+            self._pname = pname
+        else:
+            raise ValueError("The pname property must be a string")
 
     # ----------------------------------------------------------------------------------
     # Methods
@@ -245,7 +254,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         self,
         pfile,
         fformat="xyz",
-        attributes="all",
+        attributes=True,
         pfilter=None,
         filter=None,  # deprecated use (for backwards compatibility)
         wcolumn=None,
@@ -257,7 +266,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Args:
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-            attributes (list): List of extra columns to export (some formats)
+            attributes (bool or list): List of extra columns to export (some formats)
             pfilter (dict): (or filter) Filter on e.g. top name(s) with
                 keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
@@ -290,7 +299,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             )
             filter = None
 
-        super(Points, self).to_file(
+        return super(Points, self).to_file(
             pfile,
             fformat=fformat,
             attributes=attributes,
@@ -330,7 +339,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             category (str): For horizons/zones only: for example 'DL_depth'
             stype (str): RMS folder type, 'horizons' (default) or 'zones'
             realisation (int): Realisation number, default is 0
-            attributes (bool): If attributes should be included (requires
+            attributes (bool or list): If attributes should be included (requires
                 a workaround in the library code)
 
         Returns:
@@ -350,7 +359,14 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         )
 
     def to_roxar(
-        self, project, name, category, stype="horizons", realisation=0, attributes=False
+        self,
+        project,
+        name,
+        category,
+        stype="horizons",
+        pfilter=None,
+        realisation=0,
+        attributes=False,
     ):
         """Export/save/store a points item to a Roxar RMS project.
 
@@ -363,13 +379,17 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             name (str): Name of polygons item
             category (str): For horizons/zones only: for example 'DL_depth'
             stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            pfilter (dict): Filter on e.g. top name(s) with
+                keys TopName or ZoneName as e.g. {'TopName': ['Top1', 'Top2']}
+
             realisation (int): Realisation number, default is 0
-            attributes (bool): If attributes should be included (requires
+            attributes (bool or list): If attributes should be included (requires
                 a workaround in the library code)
 
         Raises:
             ValueError: Various types of invalid inputs.
 
+        .. versionchanged:: 2.1.0 added pfilter option
         """
 
         super(Points, self).to_roxar(
@@ -377,6 +397,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             name,
             category,
             stype=stype,
+            pfilter=pfilter,
             realisation=realisation,
             attributes=attributes,
         )
@@ -431,7 +452,14 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             return None
 
         for col in self._df.columns:
-            self._attrs[col] = "float"
+            if col == "Zone":
+                self._attrs[col] = "int"
+            elif col == "ZoneName":
+                self._attrs[col] = "str"
+            elif col == "WellName":
+                self._attrs[col] = "str"
+            else:
+                self._attrs[col] = "float"
 
         return len(dflist)
 
@@ -490,7 +518,14 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             return None
 
         for col in self._df.columns[3:]:
-            self._attrs[col] = "float"
+            if col == "Zone":
+                self._attrs[col] = "int"
+            elif col == "ZoneName":
+                self._attrs[col] = "str"
+            elif col == "WellName":
+                self._attrs[col] = "str"
+            else:
+                self._attrs[col] = "float"
 
         return len(dflist)
 

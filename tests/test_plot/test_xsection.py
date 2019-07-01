@@ -119,11 +119,6 @@ def test_simple_plot_with_seismics():
     mywell = xtgeo.Well(USEFILE7)
     mycube = xtgeo.Cube(USEFILE6)
 
-    # mycube.values += 10
-    # mycube.values *= 100
-    # noise = np.random.normal(0, 10, mycube.values.shape)
-    # mycube.values += noise
-
     mysurfaces = []
     mysurf = xtgeo.RegularSurface()
     mysurf.from_file(USEFILE2)
@@ -135,7 +130,13 @@ def test_simple_plot_with_seismics():
         mysurfaces.append(xsurf)
 
     myplot = XSection(
-        zmin=1000, zmax=1900, well=mywell, surfaces=mysurfaces, cube=mycube
+        zmin=1000,
+        zmax=1900,
+        well=mywell,
+        surfaces=mysurfaces,
+        cube=mycube,
+        sampling=10,
+        nextend=2,
     )
 
     # set the color table, from file
@@ -178,13 +179,13 @@ def test_xsect_larger_geogrid():
     fence1 = mywell1.get_fence_polyline(sampling=5, tvdmin=1750, asnumpy=True)
 
     (hmin1, hmax1, vmin1, vmax1, arr1) = mygrid.get_randomline(
-        fence1, poro, zmin=1750, zmax=2100, zincrement=0.2,
+        fence1, poro, zmin=1750, zmax=2100, zincrement=0.2
     )
 
     fence2 = mywell2.get_fence_polyline(sampling=5, tvdmin=1500, asnumpy=True)
 
     (hmin2, hmax2, vmin2, vmax2, arr2) = mygrid.get_randomline(
-        fence2, poro, zmin=1500, zmax=1850, zincrement=0.2,
+        fence2, poro, zmin=1500, zmax=1850, zincrement=0.2
     )
 
     if XTGSHOW:

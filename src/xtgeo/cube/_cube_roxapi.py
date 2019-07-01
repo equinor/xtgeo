@@ -6,6 +6,7 @@ from __future__ import print_function
 import numpy as np
 
 from xtgeo.common import XTGeoDialog
+from xtgeo import RoxUtils
 
 xtg = XTGeoDialog()
 
@@ -14,26 +15,31 @@ logger = xtg.functionlogger(__name__)
 XTGDEBUG = xtg.get_syslevel()
 
 
-def import_cube_roxapi(self, project, name):
-    """Import (transfer) a Cube via ROXAR API container to XTGeo."""
-    import roxar  # pylint: disable=import-error
+def import_cube_roxapi(self, project, name, folder=None):
+    """Import (transfer) a Cube via ROXAR API container to XTGeo.
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_import_cube(self, proj, name)
-    else:
-        _roxapi_import_cube(self, project, name)
+    .. versionadded:: 2.1.0
+    """
+    rox = RoxUtils(project, readonly=True)
+
+    proj = rox.project
+
+    _roxapi_import_cube(self, proj, name, folder)
 
 
-def _roxapi_import_cube(self, proj, name):
+def _roxapi_import_cube(self, proj, name, folder):
     # note that name must be in brackets
-    if [name] not in proj.seismic.data.keys():
+    path = [name]
+    if folder is not None:
+        fld = folder.split("/")
+        path = fld + path
+
+    if path not in proj.seismic.data.keys():
         raise ValueError(
-            "Name {} is not within RMS Seismic Cube container".format(name)
+            "Path {} is not within RMS Seismic Cube container".format(path)
         )
     try:
-        rcube = proj.seismic.data[[name]]
+        rcube = proj.seismic.data[path]
         _roxapi_cube_to_xtgeo(self, rcube)
     except KeyError as emsg:
         logger.error(emsg)
@@ -77,35 +83,34 @@ def export_cube_roxapi(
     self, project, name, folder=None, domain="time", compression=("wavelet", 5)
 ):
     """Export (store) a Seismic cube to RMS via ROXAR API spec."""
-    import roxar  # pylint: disable=import-error
+    rox = RoxUtils(project, readonly=False)
 
-    logger.debug("TODO: folder %s", folder)
     logger.debug("TODO: compression %s", compression)
 
-    if project is not None and isinstance(project, str):
-        projectname = project
-        with roxar.Project.open_import(projectname) as proj:
-            _roxapi_export_cube(
-                self, roxar, proj, name, domain=domain, compression=compression
-            )
-    else:
-        _roxapi_export_cube(
-            self, roxar, project, name, domain=domain, compression=compression
-        )
+    _roxapi_export_cube(
+        self, rox.project, name, folder=folder, domain=domain, compression=compression
+    )
 
 
 def _roxapi_export_cube(
-    self, roxar, proj, name, folder=None, domain="time", compression=("wavelet", 5)
+    self, proj, name, folder=None, domain="time", compression=("wavelet", 5)
 ):
+
+    try:
+        import roxar
+    except ImportError:
+        pass
 
     logger.info(
         "There are issues with compression%s, hence it {} is ignored", compression
     )
 
-    if folder is None:
-        rcube = proj.seismic.data.create_cube(name)
-    else:
-        rcube = proj.seismic.data.create_cube(name, folder)
+    path = []
+    if folder is not None:
+        fld = folder.split("/")
+        path = fld + path
+
+    rcube = proj.seismic.data.create_cube(name, path=path)
 
     # populate
     origin = (self.xori, self.yori)

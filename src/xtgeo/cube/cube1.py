@@ -46,8 +46,10 @@ def cube_from_file(mfile, fformat="guess"):
     return obj
 
 
-def cube_from_roxar(project, name):
+def cube_from_roxar(project, name, folder=None):
     """This makes an instance of a Cube directly from roxar input.
+
+    The folder is a string on form 'a' or 'a/b' if subfolders are present
 
     Example::
 
@@ -58,7 +60,7 @@ def cube_from_roxar(project, name):
 
     obj = Cube()
 
-    obj.from_roxar(project, name)
+    obj.from_roxar(project, name, folder=folder)
 
     return obj
 
@@ -707,13 +709,15 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         else:
             logger.error("Invalid file format")
 
-    def from_roxar(self, project, name):
+    def from_roxar(self, project, name, folder=None):
         """Import (transfer) a cube from a Roxar seismic object to XTGeo.
 
         Args:
             project (str): Inside RMS use the magic 'project', else use
                 path to RMS project
             name (str): Name of cube within RMS project.
+            folder (str): Folder name in in RMS if present; use '/' to seperate
+                subfolders
 
         Raises:
             To be described...
@@ -721,10 +725,10 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         Example::
 
             zz = Cube()
-            zz.from_roxar(project, 'truth_reek_seismic_depth_2000')
+            zz.from_roxar(project, 'truth_reek_seismic_depth_2000', folder="alt/depth")
 
         """
-        _cube_roxapi.import_cube_roxapi(self, project, name)
+        _cube_roxapi.import_cube_roxapi(self, project, name, folder=folder)
 
     def to_roxar(
         self, project, name, folder=None, domain="time", compression=("wavelet", 5)
@@ -735,7 +739,8 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             project (str): Inside RMS use the magic 'project', else use
                 path to RMS project
             name (str): Name of cube (seismic data) within RMS project.
-            folder (str): Cubes may be stored under a folder in the tree.
+            folder (str): Cubes may be stored under a folder in the tree, use '/'
+                to seperate subfolders.
             domain (str): 'time' (default) or 'depth'
             compression (tuple): description to come...
 

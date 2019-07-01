@@ -16,7 +16,11 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_xyz_roxapi(self, project, name, category, stype, realisation, attributes):
-    """Import a Points or Polygons item via ROXAR API spec."""
+    """Import a Points or Polygons item via ROXAR API spec.
+
+    'Import' here means transfer of data from Roxar API memory space to
+    XTGeo memory space.
+    """
 
     rox = RoxUtils(project)
 
@@ -31,7 +35,7 @@ def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
     try:
         import roxar
     except ImportError:
-        logger.critical("Cannot import roxar")
+        logger.critical("Cannot import module roxar")
         raise
 
     self._name = name
@@ -40,31 +44,9 @@ def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
     if not _check_category_etc(proj, name, category, stype, realisation):
         raise RuntimeError("Something is very wrong...")
 
+    roxxyz = _get_roxitem(proj, name, category, stype, mode="get")
+
     try:
-        if stype == "horizons":
-            roxxyz = proj.horizons[name][category]
-
-        elif stype == "zones":
-            roxxyz = proj.zones[name][category]
-
-        elif stype == "faults":
-            roxxyz = proj.faults[name][category]
-
-        elif stype == "clipboard":
-            if category:
-                if "|" in category:
-                    folders = category.split("|")
-                else:
-                    folders = category.split("/")
-                roxxyz = proj.clipboard.folders[folders]
-            else:
-                roxxyz = proj.clipboard
-            roxxyz = roxxyz[name]
-
-        else:
-            roxxyz = None
-            raise ValueError("Unsupported stype: {}".format(stype))
-
         # make a temporary folder and work within the with.. block
         with tempfile.TemporaryDirectory() as tmpdir:
             logger.info("Made a tmp folder: %s", tmpdir)
@@ -84,32 +66,12 @@ def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
     if not _check_category_etc(proj, name, category, stype, realisation):
         raise RuntimeError("Something is very wrong...")
 
+    roxxyz = _get_roxitem(proj, name, category, stype, mode="get")
+
     try:
-        if stype == "horizons":
-            roxxyz = proj.horizons[name][category].get_values(realisation)
+        roxitem = roxxyz.get_values(realisation)
+        _roxapi_xyz_to_xtgeo(self, roxitem)
 
-        elif stype == "zones":
-            roxxyz = proj.zones[name][category].get_values(realisation)
-
-        elif stype == "faults":
-            roxxyz = proj.faults[name][category].get_values(realisation)
-
-        elif stype == "clipboard":
-            if category:
-                if "|" in category:
-                    folders = category.split("|")
-                else:
-                    folders = category.split("/")
-                roxxyz = proj.clipboard.folders[folders]
-            else:
-                roxxyz = proj.clipboard
-            roxxyz = roxxyz[name].get_values(realisation)
-
-        else:
-            roxxyz = None
-            raise ValueError("Unsupported stype: {}".format(stype))
-
-        _roxapi_xyz_to_xtgeo(self, roxxyz)
     except KeyError as kwe:
         logger.error(kwe)
 
@@ -146,18 +108,25 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
     self._df = dfr
 
 
-def export_xyz_roxapi(self, project, name, category, stype, realisation, attributes):
+def export_xyz_roxapi(
+    self, project, name, category, stype, pfilter, realisation, attributes
+):
     """Export (store) a XYZ item to RMS via ROXAR API spec."""
 
     rox = RoxUtils(project)
 
     if attributes:
-        _roxapi_export_xyz_viafile(self, rox, name, category, stype, realisation)
+        _roxapi_export_xyz_viafile(
+            self, rox, name, category, stype, pfilter, realisation, attributes
+        )
     else:
-        _roxapi_export_xyz(self, rox, name, category, stype, realisation)
+        _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation)
 
 
-def _roxapi_export_xyz_viafile(self, rox, name, category, stype, realisation):
+def _roxapi_export_xyz_viafile(
+    self, rox, name, category, stype, pfilter, realisation, attributes
+):
+    """Set points/polys within RMS with attributes, using file workaround"""
 
     logger.warning("Realisation %s not in use", realisation)
 
@@ -172,35 +141,25 @@ def _roxapi_export_xyz_viafile(self, rox, name, category, stype, realisation):
     if not _check_category_etc:
         raise RuntimeError("Cannot access correct category or name in RMS")
 
-    if stype == "horizons":
-        roxxyz = proj.horizons[name][category]
-    elif stype == "zones":
-        roxxyz = proj.zones[name][category]
-    elif stype == "faults":
-        roxxyz = proj.faults[name][category]
-    elif stype == "clipboard":
-        if category:
-            if "|" in category:
-                folders = category.split("|")
-            else:
-                folders = category.split("/")
-            roxxyz = proj.clipboard.folders[folders]
-        else:
-            roxxyz = proj.clipboard
-    else:
-        roxxyz = None
-        raise ValueError("Unsupported stype: {}".format(stype))
+    roxxyz = _get_roxitem(proj, name, category, stype)
 
     # make a temporary folder and work within the with.. block
     with tempfile.TemporaryDirectory() as tmpdir:
         logger.info("Made a tmp folder: %s", tmpdir)
-        self.to_file(os.path.join(tmpdir, "generic.rmsattr"), fformat="rms_attr")
-        roxxyz.load(
-            os.path.join(tmpdir, "generic.rmsattr"), roxar.FileFormat.RMS_POINTS
+        ncount = self.to_file(
+            os.path.join(tmpdir, "generic.rmsattr"),
+            fformat="rms_attr",
+            pfilter=pfilter,
+            attributes=attributes,
         )
 
+        if ncount:
+            roxxyz.load(
+                os.path.join(tmpdir, "generic.rmsattr"), roxar.FileFormat.RMS_POINTS
+            )
 
-def _roxapi_export_xyz(self, rox, name, category, stype, realisation):
+
+def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
 
     logger.warning("Realisation %s not in use", realisation)
 
@@ -208,33 +167,33 @@ def _roxapi_export_xyz(self, rox, name, category, stype, realisation):
     if not _check_category_etc:
         raise RuntimeError("Cannot access correct category or name in RMS")
 
-    if stype == "horizons":
-        roxxyz = proj.horizons[name][category]
-    elif stype == "zones":
-        roxxyz = proj.zones[name][category]
-    elif stype == "faults":
-        roxxyz = proj.faults[name][category]
-    elif stype == "clipboard":
-        if category:
-            if "|" in category:
-                folders = category.split("|")
+    roxxyz = _get_roxitem(proj, name, category, stype)
+
+    nindex = len(self.dataframe.index)
+    if self.dataframe is None or nindex == 0:
+        return
+
+    df = self.dataframe.copy()
+    # apply pfilter if any
+    if pfilter:
+        for key, val in pfilter.items():
+            if key in df.columns:
+                df = df.loc[df[key].isin(val)]
             else:
-                folders = category.split("/")
-            roxxyz = proj.clipboard.folders[folders]
-        else:
-            roxxyz = proj.clipboard
-    else:
-        roxxyz = None
-        raise ValueError("Unsupported stype: {}".format(stype))
+                raise KeyError(
+                    "The requested pfilter key {} was not "
+                    "found in dataframe. Valid keys are "
+                    "{}".format(key, df.columns)
+                )
 
     if self._ispolygons:
         arrxyz = []
-        polys = self.dataframe.groupby(self.pname)
+        polys = df.groupby(self.pname)
         for _id, grp in polys:
             arr = np.stack([grp[self.xname], grp[self.yname], grp[self.zname]], axis=1)
             arrxyz.append(arr)
     else:
-        xyz = self.dataframe
+        xyz = df
         arrxyz = np.stack([xyz[self.xname], xyz[self.yname], xyz[self.zname]], axis=1)
     try:
         roxxyz.set_values(arrxyz)
@@ -285,3 +244,31 @@ def _check_category_etc(
         raise ValueError("Invalid stype")
 
     return True
+
+
+def _get_roxitem(proj, name, category, stype, mode="set"):
+
+    if stype == "horizons":
+        roxxyz = proj.horizons[name][category]
+    elif stype == "zones":
+        roxxyz = proj.zones[name][category]
+    elif stype == "faults":
+        roxxyz = proj.faults[name][category]
+    elif stype == "clipboard":
+        if category:
+            if "|" in category:
+                folders = category.split("|")
+            else:
+                folders = category.split("/")
+            roxxyz = proj.clipboard.folders[folders]
+        else:
+            roxxyz = proj.clipboard
+
+        if mode == "get":
+            roxxyz = roxxyz[name]
+
+    else:
+        roxxyz = None
+        raise ValueError("Unsupported stype: {}".format(stype))
+
+    return roxxyz
