@@ -174,8 +174,8 @@ class XSection(BasePlot):
                 )
                 self._fence = wfence
 
-            # if wfence is False:
-            #     return
+                if wfence is False:
+                    self._fence = None
             else:
                 raise ValueError("Input well is None")  # should be more flexible
         return self._fence
