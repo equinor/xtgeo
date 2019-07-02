@@ -180,8 +180,6 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
         logger.warning("Nothing to export")
         return 0
 
-    print("XXX1", attributes)
-
     if not attributes and self._pname in df.columns and self._ispolygons:
         # need to convert the dataframe
         df = _convert_idbased_xyz(self, df)
@@ -195,8 +193,6 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
                 attributes.remove(column)
             except ValueError:
                 continue
-
-        print("XXX2", attributes)
 
     if isinstance(attributes, list):
         mode = "a"

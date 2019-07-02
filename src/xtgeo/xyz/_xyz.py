@@ -295,7 +295,7 @@ class XYZ(object):
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
             stype (str): RMS folder type, 'horizons' (default), 'zones'
-                or 'faults' or 'clipboard'
+                or 'faults' or 'clipboard'  (in prep: well picks)
             realisation (int): Realisation number, default is 0
             attributes (bool): If True, attributes will be preserved (from RMS 11)
 
@@ -308,7 +308,7 @@ class XYZ(object):
 
         """
 
-        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+        valid_stypes = ["horizons", "zones", "faults", "clipboard", "horizon_picks"]
 
         if stype.lower() not in valid_stypes:
             raise ValueError(

@@ -115,12 +115,27 @@ def export_xyz_roxapi(
 
     rox = RoxUtils(project)
 
+    if stype == "horizon_picks":
+        _roxapi_export_xyz_hpicks(
+            self, rox, name, category, stype, realisation, attributes
+        )
+
     if attributes:
         _roxapi_export_xyz_viafile(
             self, rox, name, category, stype, pfilter, realisation, attributes
         )
     else:
         _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation)
+
+
+def _roxapi_export_xyz_hpicks(
+    self, rox, name, category, stype, realisation, attributes
+):
+    """
+    Export/store as RMS horizon picks; this is only valid if points belong to wells
+    """
+    # need to think on design!
+    raise NotImplementedError
 
 
 def _roxapi_export_xyz_viafile(
@@ -169,8 +184,8 @@ def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
 
     roxxyz = _get_roxitem(proj, name, category, stype)
 
-    nindex = len(self.dataframe.index)
-    if self.dataframe is None or nindex == 0:
+    # pylint: disable=len-as-condition
+    if self.dataframe is None or len(self.dataframe.index) == 0:
         return
 
     df = self.dataframe.copy()
