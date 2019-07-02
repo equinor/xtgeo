@@ -184,8 +184,8 @@ def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
 
     roxxyz = _get_roxitem(proj, name, category, stype)
 
-    nindex = len(self.dataframe.index)
-    if self.dataframe is None or nindex == 0:
+    # pylint: disable=len-as-condition
+    if self.dataframe is None or len(self.dataframe.index) == 0:
         return
 
     df = self.dataframe.copy()
