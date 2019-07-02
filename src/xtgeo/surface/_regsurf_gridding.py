@@ -9,7 +9,8 @@ import logging
 
 import numpy as np
 import numpy.ma as ma
-import scipy
+import scipy.interpolate
+import scipy.ndimage
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
