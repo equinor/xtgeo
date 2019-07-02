@@ -376,15 +376,22 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
+            name (str): Name of horizons/zone item or well picks set
             category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            stype (str): RMS category type, 'horizons', 'zones',
+                and in prep: 'horizon_picks'
             pfilter (dict): Filter on e.g. top name(s) with
                 keys TopName or ZoneName as e.g. {'TopName': ['Top1', 'Top2']}
 
             realisation (int): Realisation number, default is 0
             attributes (bool or list): If attributes should be included (requires
                 a workaround in the library code)
+
+        Examples::
+
+            # store as Well Picks:
+            wpoints.to_roxar(project, "MYPICKS", stype="horizon_picks")
+
 
         Raises:
             ValueError: Various types of invalid inputs.
