@@ -87,17 +87,18 @@ deploy:
       secure: "fN4ZaDGqv6lWwRWWHgBawE5L6h+9Epkn6HfgBCMKpMA5WG8F0H2vxDrP8+HnsNf7eVhr4Z6lG2k0pzpuJb9BUtpknORYPocREBp7sDOmxY/a/Y+3Q+1g1dXY6JcLJW8uQTANQSvVTd8b1QMP1FxoIsdxxk+65j/Pn5vjFNgEJu8d7JyJR2GWQ4YwLmODITWqmM6QBbs6vMPtDh6VwvJuArHmj/v0phoIQ0rBXshS5hdA78+nsIYE6RSBYuonBSCA6wcQq8bIvl3xugVvvEbJ3iqFObA/i5Xar8RRgea7xvVhaB27oRIkzlyg2kWAVUVkfWCJLvinn7VcBgJrfEJlfiaz8yHaQWjouGMdYAjEKWmZKpjJEMjJ3YgPymLKTIOmX5wVQE1NYcQt3TANg/NECB/t99K9Faidith6G58GVeAIRt+T564Ocr5ZXUxfWF35akWsbH8gBcPJLl9LHOOtYy1Wp7xs4t2aRzz9X0uNuL0C3WRYd7wLL8/fhXwPL/4dJTeHsyNp52vLLJ4ulqZRiDVEjq+dMniTKRrXXxuvhNTkR2b4BWIAdUj7bxY7EE2vEEFVfx2X5CzyAF10pTrbPJ85AJauWS9i7Xv8yyi9L+VTGw8jnVvg/hFmN99o7nPGG+BovdTK0zrhzRCmWNrv3BqJiDSsxtxPws4GUedhWBc="
     on:
       tags: True
+      draft: False
       repo: equinor/xtgeo
       # condition: -z $SOURCEDEPLOY
-  #- provider: pypi
-  #  server: https://testpypi.python.org/legacy
-  #  skip_cleanup: true
-  #  skip_upload_docs: true
-  #  distributions: build
-  #  user: $PYPI_USER
-  #  password: $PYPI_PASSWORD
-  #  on:
-  #    tags: True
-  #    draft: True
-  #    repo: equinor/xtgeo
-  #    # condition: -z $SOURCEDEPLOY
+  - provider: pypi
+    server: https://test.pypi.org/legacy/
+    skip_cleanup: true
+    skip_upload_docs: true
+    distributions: build
+    user: $PYPI_USER
+    password: $PYPI_PASSWORD
+    on:
+      tags: True
+      draft: True
+      repo: equinor/xtgeo
+      # condition: -z $SOURCEDEPLOY
