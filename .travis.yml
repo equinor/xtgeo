@@ -88,4 +88,15 @@ deploy:
     on:
       tags: True
       repo: equinor/xtgeo
+  - provider: pypi
+    server: https://test.pypi.org/legacy/
+    skip_cleanup: true
+    skip_upload_docs: true
+    distributions: build
+    user: $PYPI_USER
+    password: $PYPI_PASSWORD
+    distributions: "bdist_wheel"
+    on:
+      tags: False
+      repo: equinor/xtgeo
       # condition: -z $SOURCEDEPLOY
