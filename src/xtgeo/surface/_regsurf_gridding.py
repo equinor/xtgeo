@@ -9,7 +9,7 @@ import logging
 
 import numpy as np
 import numpy.ma as ma
-import scipy.interpolate
+import scipy
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
