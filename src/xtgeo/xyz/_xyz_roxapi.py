@@ -86,7 +86,7 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
     logger.info("Points/polygons/polylines from roxapi to xtgeo...")
     cnames = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
 
-    if isinstance(roxxyz, list):
+    if self._ispolygons and isinstance(roxxyz, list):
         # polylines/-gons
         dfs = []
         for idx, poly in enumerate(roxxyz):
@@ -95,9 +95,8 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
             dfs.append(dataset)
 
         dfr = pd.concat(dfs)
-        self._ispolygons = True
 
-    elif isinstance(roxxyz, np.ndarray):
+    elif not self._ispolygons and isinstance(roxxyz, np.ndarray):
         # points
         dfr = pd.DataFrame.from_records(roxxyz, columns=cnames)
         self._ispolygons = False
