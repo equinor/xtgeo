@@ -659,3 +659,20 @@ def test_fill():
     minv2 = srf.values.min()
     tsetup.assert_almostequal(srf.values.mean(), 1705.201, 0.001)
     tsetup.assert_almostequal(minv1, minv2, 0.000001)
+
+
+def test_smoothing():
+    """Smooth the the surface"""
+
+    srf = xtgeo.RegularSurface()
+    srf.from_file(TESTSET1, fformat="irap_binary")
+
+    mean1 = srf.values.mean()
+    tsetup.assert_almostequal(mean1, 1698.65, 0.1)
+
+    srf.smooth(iterations=1, width=5)
+
+    mean2 = srf.values.mean()
+    tsetup.assert_almostequal(mean2, 1698.65, 0.1)  # smoothed ~same mean
+
+    assert mean1 != mean2  # but not exacly same

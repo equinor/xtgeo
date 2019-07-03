@@ -20,7 +20,7 @@ or::
  mysurf = xtgeo.surface_from_roxar('some_rms_project', 'TopX', 'DepthSurface')
 
 """
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 # 'asmasked'=True will return a np.ma array, with some fill_value if
 # if asmasked = False
@@ -29,7 +29,7 @@ or::
 # out maked entries, or use np.nan if 'activeonly' is False
 #
 # For functions with mask=... ,the should be replaced with asmasked=...
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 # pylint: disable=too-many-public-methods
 
@@ -595,9 +595,9 @@ class RegularSurface(object):
     def filesrc(self, name):
         self._filesrc = name  # checking is currently missing
 
-    # =============================================================================
+    # ==================================================================================
     # Describe, import and export
-    # =============================================================================
+    # ==================================================================================
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
@@ -1407,7 +1407,7 @@ class RegularSurface(object):
         return xylist, valuelist
 
     # =========================================================================
-    # Interpolation or fill of values (possibly many methods here)
+    # Interpolation, smooth or fill of values (possibly many methods here)
     # =========================================================================
 
     def fill(self):
@@ -1423,9 +1423,25 @@ class RegularSurface(object):
 
         _regsurf_gridding.surf_fill(self)
 
-    # =========================================================================
+    def smooth(self, method="median", iterations=1, width=1):
+        """Various smoothing methods for surfaces.
+
+        Args:
+            method: Smoothing method (median)
+            iterations: Number of iterations
+            width: Range of influence (in nodes)
+
+        .. versionadded:: 2.1.0
+        """
+
+        if method == "median":
+            _regsurf_gridding.smooth_median(self, iterations=iterations, width=width)
+        else:
+            raise ValueError("Unsupported method for smoothing")
+
+    # ==================================================================================
     # Operation on map values (list to be extended)
-    # =========================================================================
+    # ==================================================================================
 
     def operation(self, opname, value):
         """Do operation on map values.
@@ -1453,9 +1469,9 @@ class RegularSurface(object):
         else:
             raise ValueError("Invalid operation name")
 
-    # =========================================================================
+    # ==================================================================================
     # Operations restricted to inside/outside polygons
-    # =========================================================================
+    # ==================================================================================
 
     def operation_polygons(self, poly, value, opname="add", inside=True):
         """A generic function for doing map operations restricted to inside
@@ -1579,9 +1595,9 @@ class RegularSurface(object):
 
         _regsurf_gridding.points_gridding(self, points, coarsen=coarsen, method=method)
 
-    # =========================================================================
+    # ==================================================================================
     # Interacion with other surface
-    # =========================================================================
+    # ==================================================================================
 
     def resample(self, other):
         """Resample a surface from another surface instance.
@@ -1601,9 +1617,9 @@ class RegularSurface(object):
 
         _regsurf_oper.resample(self, other)
 
-    # =========================================================================
+    # ==================================================================================
     # Change a surface more fundamentally
-    # =========================================================================
+    # ==================================================================================
 
     def unrotate(self, factor=2):
         """Unrotete a map instance, and this will also change nrow, ncol,
@@ -2080,7 +2096,7 @@ class RegularSurface(object):
         """
 
         xyfence = _regsurf_oper.get_randomline(
-            self, fencespec, hincrement=hincrement, atleast=atleast, nextend=nextend,
+            self, fencespec, hincrement=hincrement, atleast=atleast, nextend=nextend
         )
 
         return xyfence

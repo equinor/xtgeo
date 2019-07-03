@@ -343,3 +343,24 @@ def surf_fill(self):
                                                return_indices=True)
     self._values = self._values[tuple(ind)]
     logger.info("Do fill... DONE")
+
+
+def smooth_median(self, iterations=1, width=1):
+    """
+    Smooth a surface using a median filter.
+
+    .. versionadded:: 2.1.0
+    """
+
+    mask = ma.getmaskarray(self.values)
+    tmpv = ma.filled(self.values, fill_value=np.nan)
+
+    for itr in range(iterations):
+        tmpv = scipy.ndimage.median_filter(tmpv, width)
+
+    tmpv = ma.masked_invalid(tmpv)
+
+    # seems that false areas of invalids (masked) may be made; combat that:
+    self.values = tmpv
+    self.fill()
+    self.values = ma.array(self.values, mask=mask)
