@@ -107,12 +107,17 @@ def _rescale_v1(self, distance, addlen, mode2d):
         raise ValueError("Not a Polygons object")
 
     if not mode2d:
-        raise KeyError("Cannot combine 'simple' with mode2d True")
+        raise KeyError("Cannot combine 'simple' with mode2d False")
 
     idgroups = self.dataframe.groupby(self.pname)
 
     dfrlist = []
     for idx, grp in idgroups:
+
+        if len(grp.index) < 2:
+            logger.warning("Cannot rescale polygons with less than two points. Skip")
+            continue
+
         pxcor = grp[self.xname].values
         pycor = grp[self.yname].values
         pzcor = grp[self.zname].values
@@ -168,6 +173,10 @@ def _rescale_v2(self, distance, addlen, kind="slinear", mode2d=True):
     dfrlist = []
     for idx, grp in idgroups:
 
+        if len(grp.index) < 2:
+            logger.warning("Cannot rescale polygons with less than two points. Skip")
+            continue
+
         points = [grp[self.xname], grp[self.yname], grp[self.zname]]
 
         leng = grp[self.hname].iloc[-1]
@@ -220,7 +229,7 @@ def get_fence(
     The atleast parameter will win over the distance, meaning that if total length
     horizontally is 50, and distance is set to 20, the actual length will be 50/5=10
     In such cases, nextend will be modified automatically also to fulfill the original
-    nextend*distance (approx).
+    intention of nextend*distance (approx).
 
     """
 

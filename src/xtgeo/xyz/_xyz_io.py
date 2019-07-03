@@ -155,6 +155,11 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
     """
 
     df = self.dataframe.copy()
+
+    if not df.index.any():
+        logger.warning("Nothing to export")
+        return 0
+
     columns = [self._xname, self._yname, self.zname]
     df.fillna(value=999.0, inplace=True)
 
@@ -175,10 +180,6 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
                     "found in dataframe. Valid keys are "
                     "{}".format(key, df.columns)
                 )
-
-    if not df.index.any():
-        logger.warning("Nothing to export")
-        return 0
 
     if not attributes and self._pname in df.columns and self._ispolygons:
         # need to convert the dataframe
@@ -252,6 +253,10 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
     """
 
     df = self.dataframe.copy()
+
+    if not df.index.any():
+        logger.warning("Nothing to export")
+        return 0
 
     columns = []
 
