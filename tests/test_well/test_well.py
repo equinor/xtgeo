@@ -83,6 +83,38 @@ def test_import_long_well(loadwell3):
     tsetup.assert_almostequal(dfr['Q_AZI'][27], 91.856158, 0.0001)
 
 
+def test_import_well_selected_logs():
+    """Import a well but restrict on lognames"""
+
+    mywell = Well()
+    mywell.from_file(WELL1, lognames="all")
+    assert "ZONELOG" in mywell.dataframe
+
+    mywell.from_file(WELL1, lognames="GR")
+    assert "ZONELOG" not in mywell.dataframe
+
+    mywell.from_file(WELL1, lognames=["GR"])
+    assert "ZONELOG" not in mywell.dataframe
+
+    mywell.from_file(WELL1, lognames=["DUMMY"])
+    assert "ZONELOG" not in mywell.dataframe
+    assert "GR" not in mywell.dataframe
+
+    with pytest.raises(ValueError) as msg:
+        logger.info(msg)
+        mywell.from_file(WELL1, lognames=["DUMMY"], lognames_strict=True)
+
+    mywell.from_file(WELL1, mdlogname="GR")
+    assert mywell.mdlogname == "GR"
+
+    with pytest.raises(ValueError) as msg:
+        mywell.from_file(WELL1, mdlogname="DUMMY", strict=True)
+        logger.info(msg)
+
+    mywell.from_file(WELL1, mdlogname="DUMMY", strict=False)
+    assert mywell.mdlogname is None
+
+
 def test_change_a_lot_of_stuff(loadwell1):
     """Import well from file and try to change lognames etc."""
 

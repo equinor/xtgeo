@@ -898,10 +898,19 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         msg = "No well object in <{}> or invalid object; " "returns no result".format(
             this
         )
-        warnings.warn(UserWarning(msg))
+        xtg.warn(msg)
         return None
 
-    # qperf = True
+    if not well.zonelogname:
+        msg = (
+            "Asked for zone log <{}> but no such in <{}> for well {}; "
+            "return None".format(zonelogname, this, well.wellname)
+        )
+        xtg.warn(msg)
+        # warnings.warn(UserWarning(msg))
+        return None
+
+        # qperf = True
     if perflogname == "None" or perflogname is None:
         # qperf = False
         pass
@@ -911,7 +920,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
                 "Asked for perf log <{}> but no such in <{}> for well {}; "
                 "return None".format(perflogname, this, well.wellname)
             )
-            warnings.warn(UserWarning(msg))
+            xtg.warn(msg)
+            # warnings.warn(UserWarning(msg))
             return None
 
     logger.info("Process well object for %s...", well.wellname)

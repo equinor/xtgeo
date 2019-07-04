@@ -23,7 +23,7 @@ def import_well_roxapi(
     wname,
     trajectory="Drilled trajectory",
     logrun="log",
-    lognames=None,
+    lognames="all",
     lognames_strict=False,
     inclmd=False,
     inclsurvey=False,

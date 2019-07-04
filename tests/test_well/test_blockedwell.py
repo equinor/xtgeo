@@ -39,6 +39,8 @@ def test_import(loadwell1):
 
     mywell = loadwell1
 
+    print(mywell.dataframe)
+
     logger.debug('True well name:', mywell.truewellname)
     tsetup.assert_equal(mywell.xpos, 461809.6, 'XPOS')
     tsetup.assert_equal(mywell.ypos, 5932990.4, 'YPOS')

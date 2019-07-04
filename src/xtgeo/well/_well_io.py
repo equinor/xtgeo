@@ -13,14 +13,22 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None, strict=True):
+def import_rms_ascii(
+    self,
+    wfile,
+    mdlogname=None,
+    zonelogname=None,
+    strict=False,
+    lognames="all",
+    lognames_strict=False,
+):
     """Import RMS ascii table well"""
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    # pylint: disable=too-many-branches, too-many-statements
     wlogtype = dict()
     wlogrecord = dict()
 
-    lognames_all = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
-    lognames = []
+    xlognames_all = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
+    xlognames = []
 
     lnum = 1
     with open(wfile, "r") as fwell:
@@ -75,8 +83,8 @@ def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None, strict=True)
 
                 rxv = row[2:]
 
-                lognames_all.append(lname)
-                lognames.append(lname)
+                xlognames_all.append(lname)
+                xlognames.append(lname)
 
                 wlogtype[lname] = ltype
 
@@ -102,7 +110,7 @@ def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None, strict=True)
         delim_whitespace=True,
         skiprows=lnum,
         header=None,
-        names=lognames_all,
+        names=xlognames_all,
         dtype=np.float64,
         na_values=-999,
     )
@@ -110,37 +118,10 @@ def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None, strict=True)
     # undef values have a high float number? or keep Nan?
     # df.fillna(Well.UNDEF, inplace=True)
 
-    # check for MD log:
-    if mdlogname is not None:
-        if mdlogname in dfr.columns:
-            mdlogname = mdlogname
-        else:
-            msg = (
-                "mdlogname={} was requested but no such log "
-                "found for well {}".format(mdlogname, wname)
-            )
-
-            if strict:
-                raise ValueError(msg)
-
-            logger.warning(msg)
-
-    # check for zone log:
-    if zonelogname is not None:
-        if zonelogname in dfr.columns:
-            zonelogname = zonelogname
-        else:
-            msg = (
-                "zonelogname={} was requested but no such log "
-                "found for well {}".format(zonelogname, wname)
-            )
-
-            if strict:
-                raise ValueError(msg)
-
-            logger.warning(msg)
-
-    logger.debug(dfr.head())
+    dfr = _trim_on_lognames(dfr, lognames, lognames_strict, wname)
+    mdlogname, zonelogname = _check_special_logs(
+        dfr, mdlogname, zonelogname, strict, wname
+    )
 
     self._wlogtype = wlogtype
     self._wlogrecord = wlogrecord
@@ -151,6 +132,64 @@ def import_rms_ascii(self, wfile, mdlogname=None, zonelogname=None, strict=True)
     self._df = dfr
     self._mdlogname = mdlogname
     self._zonelogname = zonelogname
+
+
+def _trim_on_lognames(dfr, lognames, lognames_strict, wname):
+    """Reduce the dataframe based on provided list of lognames"""
+    if lognames == "all":
+        return dfr
+
+    uselnames = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
+    if isinstance(lognames, str):
+        uselnames.append(lognames)
+    elif isinstance(lognames, list):
+        uselnames.extend(lognames)
+
+    newdf = pd.DataFrame()
+    for lname in uselnames:
+        if lname in dfr.columns:
+            newdf[lname] = dfr[lname]
+        else:
+            if lognames_strict:
+                msg = "Logname <{0}> is not present for <{1}>".format(lname, wname)
+                msg += " (required log under condition lognames_strict=True)"
+                raise ValueError(msg)
+
+    return newdf
+
+
+def _check_special_logs(dfr, mdlogname, zonelogname, strict, wname):
+    """Check for MD log and Zonelog, if requested"""
+
+    mname = mdlogname
+    zname = zonelogname
+
+    if mdlogname is not None:
+        if mdlogname not in dfr.columns:
+            msg = (
+                "mdlogname={} was requested but no such log "
+                "found for well {}".format(mdlogname, wname)
+            )
+            mname = None
+            if strict:
+                raise ValueError(msg)
+
+            logger.warning(msg)
+
+    # check for zone log:
+    if zonelogname is not None:
+        if zonelogname not in dfr.columns:
+            msg = (
+                "zonelogname={} was requested but no such log "
+                "found for well {}".format(zonelogname, wname)
+            )
+            zname = None
+            if strict:
+                raise ValueError(msg)
+
+            logger.warning(msg)
+
+    return mname, zname
 
 
 def export_rms_ascii(self, wfile, precision=4):

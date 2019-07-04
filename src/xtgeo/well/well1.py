@@ -35,7 +35,13 @@ XTGDEBUG = xtg.syslevel
 
 
 def well_from_file(
-    wfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
+    wfile,
+    fformat="rms_ascii",
+    mdlogname=None,
+    zonelogname=None,
+    lognames="all",
+    lognames_strict=False,
+    strict=False,
 ):
     """Make an instance of a Well directly from file import.
 
@@ -44,12 +50,17 @@ def well_from_file(
         fformat (str): See :meth:`Well.from_file`
         mdlogname (str): See :meth:`Well.from_file`
         zonelogname (str): See :meth:`Well.from_file`
+        lognames (str or list): Name or list of lognames to import, default is "all"
         strict (bool): See :meth:`Well.from_file`
 
     Example::
 
         import xtgeo
         mywell = xtgeo.well_from_file('somewell.xxx')
+
+    .. versionchanged: 2.1.0 Added ``lognames`` and ``lognames_strict``
+    .. versionchanged: 2.1.0 ``strict`` now defaults to False
+
     """
 
     obj = Well()
@@ -70,7 +81,8 @@ def well_from_roxar(
     name,
     trajectory="Drilled trajectory",
     logrun="log",
-    lognames=None,
+    lognames="all",
+    lognames_strict=False,
     inclmd=False,
     inclsurvey=False,
 ):
@@ -87,6 +99,7 @@ def well_from_roxar(
         mywell = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
                                        logrun='log', lognames=mylogs)
 
+    .. versionchanged:: 2.1.0 lognames defaults to "all", not None
     """
 
     obj = Well()
@@ -169,12 +182,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             fformat = kwargs.get("fformat", "rms_ascii")
             mdlogname = kwargs.get("mdlogname", None)
             zonelogname = kwargs.get("zonelogname", None)
-            strict = kwargs.get("strict", True)
+            strict = kwargs.get("strict", False)
+            lognames = kwargs.get("lognames", "all")
             self.from_file(
                 wfile,
                 fformat=fformat,
                 mdlogname=mdlogname,
                 zonelogname=zonelogname,
+                lognames=lognames,
                 strict=strict,
             )
 
@@ -387,7 +402,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     # ==================================================================================
 
     def from_file(
-        self, wfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
+        self,
+        wfile,
+        fformat="rms_ascii",
+        mdlogname=None,
+        zonelogname=None,
+        strict=False,
+        lognames="all",
+        lognames_strict=False,
     ):
         """Import well from file.
 
@@ -399,7 +421,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             zonelogname (str): Name of zonation log, if any
             strict (bool): If True, then import will fail if
                 zonelogname or mdlogname are asked for but not present
-                in wells.
+                in wells. If False, and e.g. zonelogname is not present, the
+                attribute ``zonelogname`` will be set to None.
+            lognames (str or list): Name or list of lognames to import, default is "all"
+            lognames_strict (bool): Flag to require all logs in lognames (unless "all")
+                or to just accept that subset that is present. Default is `False`.
+
 
         Returns:
             Object instance (optionally)
@@ -409,6 +436,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             directly::
 
             >>> mywell = Well('31_2-6.w')
+
+        .. versionchanged:: 2.1.0 ``lognames`` and ``lognames_strict`` added
+        .. versionchanged: 2.1.0 ``strict`` now defaults to False
         """
 
         if os.path.isfile(wfile):
@@ -419,7 +449,13 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         if fformat is None or fformat == "rms_ascii":
             _well_io.import_rms_ascii(
-                self, wfile, mdlogname=mdlogname, zonelogname=zonelogname, strict=strict
+                self,
+                wfile,
+                mdlogname=mdlogname,
+                zonelogname=zonelogname,
+                strict=strict,
+                lognames=lognames,
+                lognames_strict=lognames_strict,
             )
         else:
             logger.error("Invalid file format")
@@ -479,7 +515,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         project = args[0]
         wname = args[1]
-        lognames = kwargs.get("lognames", None)
+        lognames = kwargs.get("lognames", "all")
         lognames_strict = kwargs.get("lognames_strict", False)
         trajectory = kwargs.get("trajectory", "Drilled trajecetry")
         logrun = kwargs.get("logrun", "log")

@@ -358,7 +358,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self._df.reset_index(inplace=True, drop=True)
 
     def from_roxar(
-        self, project, name, category, stype="horizons", realisation=0, attributes=False
+        self, project, name, category, stype="horizons", realisation=0
     ):
         """Load a polygons item from a Roxar RMS project.
 
@@ -407,7 +407,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             stype (str): RMS folder type, 'horizons' (default) or 'zones',
                 'faults', 'clipboard'.
             realisation (int): Realisation number, default is 0
-            attributes (bool): Not in use
 
         Returns:
             Object instance updated
@@ -416,7 +415,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             ValueError: Various types of invalid inputs.
 
         """
-        logger.info("Skip attributes: %s", attributes)
 
         super(Polygons, self).from_roxar(
             project, name, category, stype=stype, realisation=realisation
@@ -444,7 +442,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             category (str): For horizons/zones only: for example 'DL_depth'
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
-             stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
             realisation (int): Realisation number, default is 0
             attributes (bool): Also use attributes, if True
 
