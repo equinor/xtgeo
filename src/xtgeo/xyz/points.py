@@ -214,10 +214,16 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # ----------------------------------------------------------------------------------
 
     def copy(self, stype="points"):
-        """Deep copy of a Points instance
+        """Deep copy of a Points instance.
+
+        Example::
+
+            myp = xtgeo.points_from_file("somepoints.poi")
+            mypcopy = myp.copy()
 
         .. versionadded: 2.1.0
         """
+
         stype = "points"
         return super(Points, self).copy(stype)
 
@@ -329,15 +335,12 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
           import xtgeo
           mypoints = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPoints')
 
-        Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
-
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of polygons item
             category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            stype (str): RMS 'super type' i.e. 'horizons' (default), 'zones', ...
             realisation (int): Realisation number, default is 0
             attributes (bool or list): If attributes should be included (requires
                 a workaround in the library code)

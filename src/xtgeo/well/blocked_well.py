@@ -16,7 +16,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def blockedwell_from_file(
-    bwfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=True
+    bwfile, fformat="rms_ascii", mdlogname=None, zonelogname=None, strict=False
 ):
     """Make an instance of a BlockedWell directly from file import.
 

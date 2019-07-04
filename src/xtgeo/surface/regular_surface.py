@@ -66,7 +66,7 @@ from . import _regsurf_utils
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# =============================================================================
+# ======================================================================================
 # METHODS as wrappers to class init + import
 
 
@@ -155,7 +155,7 @@ def surface_from_cube(cube, value):
 #     return obj
 
 
-# =============================================================================
+# ======================================================================================
 # RegularSurface class:
 
 
@@ -278,7 +278,7 @@ class RegularSurface(object):
 
         logger.debug("Ran __init__ method for RegularSurface object")
 
-    # =========================================================================
+    # ==================================================================================
 
     def __repr__(self):
         # should be able to newobject = eval(repr(thisobject))
@@ -318,9 +318,9 @@ class RegularSurface(object):
 
         return news
 
-    # =========================================================================
+    # ==================================================================================
     # Class and static methods
-    # =========================================================================
+    # ==================================================================================
 
     @classmethod
     def methods(cls):
@@ -328,7 +328,13 @@ class RegularSurface(object):
 
         >>> print(RegularSurface.methods())
         """
-        return [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
+        mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
+
+        txt = "\nMETHODS for Surface():\n======================\n"
+        for met in mets:
+            txt += str(met) + "\n"
+
+        return txt
 
     def ensure_correct_values(self, ncol, nrow, values):
         """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
@@ -1406,9 +1412,9 @@ class RegularSurface(object):
 
         return xylist, valuelist
 
-    # =========================================================================
+    # ==================================================================================
     # Interpolation, smooth or fill of values (possibly many methods here)
-    # =========================================================================
+    # ==================================================================================
 
     def fill(self):
         """Fast infilling of undefined values.
@@ -1537,9 +1543,9 @@ class RegularSurface(object):
         """Eliminate current map values outside polygons"""
         self.operation_polygons(poly, 0, opname="eli", inside=False)
 
-    # =========================================================================
+    # ==================================================================================
     # Operation with secondary map
-    # =========================================================================
+    # ==================================================================================
 
     def add(self, other):
         """Add another map to current map"""
@@ -1561,9 +1567,9 @@ class RegularSurface(object):
 
         _regsurf_oper.operations_two(self, other, oper="div")
 
-    # =========================================================================
+    # ==================================================================================
     # Interacion with points
-    # =========================================================================
+    # ==================================================================================
 
     def gridding(self, points, method="linear", coarsen=1):
         """Grid a surface from points.
@@ -1787,9 +1793,9 @@ class RegularSurface(object):
         del proxy
         logger.info("Do coarsening... DONE")
 
-    # =========================================================================
+    # ==================================================================================
     # Interacion with a grid3d
-    # =========================================================================
+    # ==================================================================================
 
     def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
         """Slice the grid property and update the instance surface to sampled
@@ -1827,9 +1833,9 @@ class RegularSurface(object):
                 "Wrong status from routine; something went " "wrong. Contact the author"
             )
 
-    # =========================================================================
+    # ==================================================================================
     # Interacion with a cube
-    # =========================================================================
+    # ==================================================================================
 
     def slice_cube(
         self,
@@ -2022,9 +2028,9 @@ class RegularSurface(object):
         )
         return asurfs
 
-    # =========================================================================
+    # ==================================================================================
     # Special methods
-    # =========================================================================
+    # ==================================================================================
 
     def get_fence(self, xyfence):
         """

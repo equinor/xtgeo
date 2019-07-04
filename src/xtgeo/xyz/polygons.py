@@ -43,7 +43,9 @@ def polygons_from_file(wfile, fformat="xyz"):
     return obj
 
 
-def polygons_from_roxar(project, name, category, stype="horizons", realisation=0):
+def polygons_from_roxar(
+    project, name, category, stype="horizons", realisation=0, attributes=False
+):
     """This makes an instance of a Polygons directly from roxar input.
 
     For arguments, see :meth:`Polygons.from_roxar`.
@@ -58,7 +60,14 @@ def polygons_from_roxar(project, name, category, stype="horizons", realisation=0
 
     obj = Polygons()
 
-    obj.from_roxar(project, name, category, stype=stype, realisation=realisation)
+    obj.from_roxar(
+        project,
+        name,
+        category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
+    )
 
     return obj
 
@@ -407,7 +416,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             stype (str): RMS folder type, 'horizons' (default) or 'zones',
                 'faults', 'clipboard'.
             realisation (int): Realisation number, default is 0
-            attributes (bool): Not in use
+            attributes (bool): Currently inactive option
 
         Returns:
             Object instance updated
@@ -416,10 +425,14 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             ValueError: Various types of invalid inputs.
 
         """
-        logger.info("Skip attributes: %s", attributes)
 
         super(Polygons, self).from_roxar(
-            project, name, category, stype=stype, realisation=realisation
+            project,
+            name,
+            category,
+            stype=stype,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def to_roxar(
@@ -444,7 +457,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             category (str): For horizons/zones only: for example 'DL_depth'
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
                 or ZoneName as {'TopName': ['Top1', 'Top2']}
-             stype (str): RMS folder type, 'horizons' (default) or 'zones'
+            stype (str): RMS folder type, 'horizons' (default) or 'zones'
             realisation (int): Realisation number, default is 0
             attributes (bool): Also use attributes, if True
 
