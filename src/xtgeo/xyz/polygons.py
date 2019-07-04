@@ -60,7 +60,14 @@ def polygons_from_roxar(
 
     obj = Polygons()
 
-    obj.from_roxar(project, name, category, stype=stype, realisation=realisation)
+    obj.from_roxar(
+        project,
+        name,
+        category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
+    )
 
     return obj
 
