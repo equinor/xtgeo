@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""The surfaces module, which has the Surfaces class (collection of *Surface objects)"""
+"""The surfaces module, which has the Surfaces class (collection of Surface objects)"""
+
 from __future__ import division, absolute_import
 from __future__ import print_function
 
