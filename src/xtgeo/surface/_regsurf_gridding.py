@@ -338,16 +338,15 @@ def surf_fill(self):
     logger.info("Do fill...")
     invalid = ma.getmaskarray(self.values)
 
-    ind = scipy.ndimage.distance_transform_edt(invalid,
-                                               return_distances=False,
-                                               return_indices=True)
+    ind = scipy.ndimage.distance_transform_edt(
+        invalid, return_distances=False, return_indices=True
+    )
     self._values = self._values[tuple(ind)]
     logger.info("Do fill... DONE")
 
 
 def smooth_median(self, iterations=1, width=1):
-    """
-    Smooth a surface using a median filter.
+    """Smooth a surface using a median filter.
 
     .. versionadded:: 2.1.0
     """
@@ -355,7 +354,7 @@ def smooth_median(self, iterations=1, width=1):
     mask = ma.getmaskarray(self.values)
     tmpv = ma.filled(self.values, fill_value=np.nan)
 
-    for itr in range(iterations):
+    for _itr in range(iterations):
         tmpv = scipy.ndimage.median_filter(tmpv, width)
 
     tmpv = ma.masked_invalid(tmpv)
