@@ -328,7 +328,13 @@ class RegularSurface(object):
 
         >>> print(RegularSurface.methods())
         """
-        return [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
+        mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
+
+        txt = "\nMETHODS for Surface():\n======================\n"
+        for met in mets:
+            txt += str(met) + "\n"
+
+        return txt
 
     def ensure_correct_values(self, ncol, nrow, values):
         """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
