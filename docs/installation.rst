@@ -18,7 +18,10 @@ Stable release in Equinor
 Within Equinor, the stable release is pre-installed, so all you have
 to do is:
 
- import xtgeo
+.. code-block:: python
+
+   import xtgeo
+
 
 
 From sources
@@ -33,13 +36,20 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git@github.com:equinor/xtgeo
+   $ git clone git@github.com:equinor/xtgeo
 
 Also you will need test data at the same folder level as the source:
 
 .. code-block:: console
 
    $ git clone git@github.com:equinor/xtgeo-testdata
+
+Hence folder structure may look like
+
+.. code-block:: console
+
+   /some/path/to/xtgeo
+   /some/path/to/xtgeo-testdata
 
 Once you have a copy of the source, and you have a `virtual environment`_,
 then always run tests (run first compile with make cc):
