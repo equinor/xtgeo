@@ -71,6 +71,8 @@ def well_from_file(
         mdlogname=mdlogname,
         zonelogname=zonelogname,
         strict=strict,
+        lognames=lognames,
+        lognames_strict=lognames_strict,
     )
 
     return obj
@@ -110,6 +112,7 @@ def well_from_roxar(
         trajectory=trajectory,
         logrun=logrun,
         lognames=lognames,
+        lognames_strict=lognames_strict,
         inclmd=inclmd,
         inclsurvey=inclsurvey,
     )
@@ -337,7 +340,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def mdlogname(self):
-        """ Returns name of MD log, if any (None if not) (read only)."""
+        """ Returns name of MD log, if any (None if missing)."""
         return self._mdlogname
 
     @mdlogname.setter
@@ -345,7 +348,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if mname in self._wlognames:
             self._mdlogname = mname
         else:
-            raise ValueError("Cannot set mdlogname; {} not present".format(mname))
+            self._mdlogname = None
 
     @property
     def zonelogname(self):
@@ -357,7 +360,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if zname in self._wlognames:
             self._zonelogname = zname
         else:
-            raise ValueError("Cannot set zonelogname; {} not present".format(zname))
+            self._zonelogname = None
 
     @property
     def dataframe(self):

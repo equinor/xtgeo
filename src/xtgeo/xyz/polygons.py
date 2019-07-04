@@ -43,7 +43,9 @@ def polygons_from_file(wfile, fformat="xyz"):
     return obj
 
 
-def polygons_from_roxar(project, name, category, stype="horizons", realisation=0):
+def polygons_from_roxar(
+    project, name, category, stype="horizons", realisation=0, attributes=False
+):
     """This makes an instance of a Polygons directly from roxar input.
 
     For arguments, see :meth:`Polygons.from_roxar`.
@@ -358,7 +360,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self._df.reset_index(inplace=True, drop=True)
 
     def from_roxar(
-        self, project, name, category, stype="horizons", realisation=0
+        self, project, name, category, stype="horizons", realisation=0, attributes=False
     ):
         """Load a polygons item from a Roxar RMS project.
 
@@ -407,6 +409,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             stype (str): RMS folder type, 'horizons' (default) or 'zones',
                 'faults', 'clipboard'.
             realisation (int): Realisation number, default is 0
+            attributes (bool): Currently inactive option
 
         Returns:
             Object instance updated
@@ -417,7 +420,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """
 
         super(Polygons, self).from_roxar(
-            project, name, category, stype=stype, realisation=realisation
+            project,
+            name,
+            category,
+            stype=stype,
+            realisation=realisation,
+            attributes=attributes,
         )
 
     def to_roxar(
