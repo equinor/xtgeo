@@ -11,6 +11,7 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
+import xtgeo.common.xtgeo_system as xtgeosys
 
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export
@@ -701,6 +702,8 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             >>> zz = Cube('some.segy')
             >>> zz.to_file('some.rmsreg')
         """
+
+        xtgeosys.check_folder(sfile, raiseerror=OSError)
 
         if fformat == "segy":
             _cube_export.export_segy(self, sfile, pristine=pristine, engine=engine)

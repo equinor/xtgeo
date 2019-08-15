@@ -14,6 +14,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, XTGDescription
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
+import xtgeo.common.xtgeo_system as xtgeosys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -184,6 +185,8 @@ class XYZ(object):
             KeyError if pfilter is set and key(s) are invalid
 
         """
+        xtgeosys.check_folder(pfile, raiseerror=OSError)
+
         if self.dataframe is None:
             ncount = 0
             logger.warning("Nothing to export!")
