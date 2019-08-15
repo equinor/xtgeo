@@ -493,7 +493,7 @@ class Grid(Grid3D):
 
             xg.to_file("myfile.roff")
         """
-        xtgeosys.check_folder(pfile, raiseerror=OSError)
+        xtgeosys.check_folder(gfile, raiseerror=OSError)
 
         if fformat in ("roff", "roff_binary"):
             _grid_export.export_roff(self, gfile, 0)
