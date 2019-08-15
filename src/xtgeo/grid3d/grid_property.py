@@ -215,7 +215,7 @@ class GridProperty(Grid3D):
             self.from_file(args[0], fformat=fformat, name=name, grid=grid, date=date)
 
     def __del__(self):
-        logger.info("DELETING property instance %s", self.name)
+        # logger.info("DELETING property instance %s", self.name)
         self._values = None
         for myvar in vars(self).keys():
             del myvar

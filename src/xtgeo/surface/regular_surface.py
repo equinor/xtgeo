@@ -53,6 +53,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
+import xtgeo.common.xtgeo_system as xtgeosys
 
 from . import _regsurf_import
 from . import _regsurf_export
@@ -724,6 +725,8 @@ class RegularSurface(object):
             >>> x.to_file('myfile2.x', fformat = 'irap_ascii')
 
         """
+
+        xtgeosys.check_folder(mfile, raiseerror=OSError)
 
         logger.debug("Enter method...")
         logger.info("Export to file...")

@@ -53,9 +53,6 @@ class GridProperties(Grid3D):
         self._names = []  # list of GridProperty names
         self._dates = []  # list of dates (_after_ import) YYYYDDMM
 
-    def __del__(self):
-        logger.info("DELETING GridProperties instance")
-
     def __repr__(self):
         myrp = (
             "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "

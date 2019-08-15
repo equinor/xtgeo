@@ -14,6 +14,7 @@ import pandas as pd
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo.common.constants as const
+import xtgeo.common.xtgeo_system as xtgeosys
 
 from . import _wellmarkers
 from . import _well_io
@@ -480,6 +481,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             >>> x = Well()
 
         """
+
+        xtgeosys.check_folder(wfile, raiseerror=OSError)
+
         self._ensure_consistency()
 
         if fformat is None or fformat == "rms_ascii":

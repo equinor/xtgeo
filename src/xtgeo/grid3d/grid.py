@@ -15,6 +15,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
 from xtgeo.common import XTGDescription
+import xtgeo.common.xtgeo_system as xtgeosys
 
 from ._grid3d import Grid3D
 
@@ -171,7 +172,7 @@ class Grid(Grid3D):
     def __del__(self):
 
         if self._p_coord_v is not None:
-            logger.info("Deleting Grid instance %s", id(self))
+            # logger.info("Deleting Grid instance %s", id(self))
             _cxtgeo.delete_doublearray(self._p_coord_v)
             _cxtgeo.delete_doublearray(self._p_zcorn_v)
             _cxtgeo.delete_intarray(self._p_actnum_v)
@@ -179,7 +180,7 @@ class Grid(Grid3D):
 
             if self.props is not None:
                 for prop in self.props:
-                    logger.info("Deleting property instance %s", prop.name)
+                    # logger.info("Deleting property instance %s", prop.name)
                     prop.__del__()
 
     def __repr__(self):
@@ -484,10 +485,14 @@ class Grid(Grid3D):
             fformat (str): File format; roff/roff_binary/roff_ascii/
                 grdecl/bgrdecl/egrid.
 
+        Raises:
+            OSError: Directory does not exist
+
         Example::
 
             xg.to_file("myfile.roff")
         """
+        xtgeosys.check_folder(gfile, raiseerror=OSError)
 
         if fformat in ("roff", "roff_binary"):
             _grid_export.export_roff(self, gfile, 0)
