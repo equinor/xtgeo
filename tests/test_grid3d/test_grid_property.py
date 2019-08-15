@@ -370,6 +370,22 @@ def test_io_ecl_dates():
     assert px.date == 20030101
 
 
+def test_io_to_nonexisting_folder():
+    """Import a prop and try to save in a nonexisting folder"""
+
+    po = GridProperty()
+    mygrid = Grid(testfile5)
+    po.from_file(testfile7, fformat="unrst", name='PRESSURE', grid=mygrid,
+                 date='first')
+    with pytest.raises(OSError) as msg:
+        logger.info(msg)
+        po.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
+
+    with pytest.raises(OSError) as msg:
+        logger.info(msg)
+        po.to_file(os.path.join("/etc", "dummy.grdecl"), fformat="grdecl")
+
+
 def test_get_all_corners():
     """Get X Y Z for all corners as XTGeo GridProperty objects"""
 

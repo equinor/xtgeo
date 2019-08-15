@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+import xtgeo.common.xtgeo_system as xtgeosys
 from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = XTGeoDialog()
@@ -16,7 +17,9 @@ XTGDEBUG = xtg.get_syslevel()
 
 def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
     """Export the grid property to file."""
-    logger.debug("Export property to file...")
+    logger.debug("Export property to file %s", pfile)
+
+    xtgeosys.check_folder(pfile, raiseerror=OSError)
 
     if "roff" in fformat:
         if name is None:

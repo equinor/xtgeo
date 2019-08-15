@@ -3,6 +3,7 @@
 
 from __future__ import print_function, absolute_import
 
+import os
 import sys
 import json
 import warnings
@@ -484,10 +485,16 @@ class Grid(Grid3D):
             fformat (str): File format; roff/roff_binary/roff_ascii/
                 grdecl/bgrdecl/egrid.
 
+        Raises:
+            OSError: Directory does not exist
+
         Example::
 
             xg.to_file("myfile.roff")
         """
+        folder = os.path.dirname(gfile)
+        if not os.path.exists(folder):
+            raise OSError("Directory does not exist <{}>".format(folder))
 
         if fformat in ("roff", "roff_binary"):
             _grid_export.export_roff(self, gfile, 0)
