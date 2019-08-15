@@ -377,13 +377,8 @@ def test_io_to_nonexisting_folder():
     mygrid = Grid(testfile5)
     po.from_file(testfile7, fformat="unrst", name='PRESSURE', grid=mygrid,
                  date='first')
-    with pytest.raises(OSError) as msg:
-        logger.info(msg)
+    with pytest.raises(OSError):
         po.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
-
-    with pytest.raises(OSError) as msg:
-        logger.info(msg)
-        po.to_file(os.path.join("/etc", "dummy.grdecl"), fformat="grdecl")
 
 
 def test_get_all_corners():
