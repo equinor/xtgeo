@@ -92,7 +92,7 @@ def find_flip(xv, yv, zv):
     Return:
         Flip flag (1 of -1)
 
-"""
+    """
     flip = 0
 
     xv = np.array(xv)
@@ -109,3 +109,24 @@ def find_flip(xv, yv, zv):
         flip = -1
 
     return flip
+
+
+def angle2azimuth(inangle, mode="degrees"):
+    """Return the Azimuth angle given input normal angle.
+
+    Normal angle means counterclock rotation from X (East) axis, while
+    azimuth is clockwise from Y (North)
+
+    Args:
+        mode (str): "degrees" (default) or "radians"
+
+    Return:
+        Flip flag (1 of -1)
+    """
+    nmode1 = 0
+    nmode2 = 2
+    if mode == "radians":
+        nmode1 += 1
+        nmode2 += 1
+
+    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0, DBG)
