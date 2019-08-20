@@ -5,7 +5,6 @@ import time
 
 import pytest
 
-import xtgeo.common.calc as xcalc
 from xtgeo.common import XTGeoDialog
 
 # pylint: disable=invalid-name
@@ -165,27 +164,3 @@ def test_user_msg():
     xtg.warning('This is also a warning')
     xtg.error('This is an error')
     xtg.critical('This is a critical error', sysexit=False)
-
-
-def test_ijk_to_ib():
-    """Convert I J K to IB index."""
-
-    ib = xcalc.ijk_to_ib(2, 2, 2, 3, 4, 5)
-    logger.info(ib)
-    assert ib == 16
-
-
-def test_ib_to_ijk():
-    """Convert IB index to IJK tuple."""
-
-    ijk = xcalc.ib_to_ijk(16, 3, 4, 5)
-    logger.info(ijk)
-    assert ijk[0] == 2
-
-
-# def test_dialog_warndeprecated():
-
-#     with pytest.warns(DeprecationWarning) as rwarn:
-#         xtg.warndeprecated('Show a deprecated message')
-#     logger.info(rwarn[0].message)
-#     assert 'Show' in str(rwarn[0].message)

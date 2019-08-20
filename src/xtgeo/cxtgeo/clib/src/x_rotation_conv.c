@@ -30,7 +30,7 @@
  *                               1 radians, anti-clock from X
  *                               2 degrees, clock from Y (azimuth)
  *                               3 radians, clock from Y (azimuth)
- *    mode           i     Mode of returning angle (same format as ainmode)
+ *    mode           i     Mode of returning angle (same codes as ainmode)
  *    option         i     Options flag for later usage
  *    debug          i     Debug level
  *
@@ -57,8 +57,8 @@ double x_rotation_conv (
 		    )
 {
     /* locals */
-    char     s[24]="x_rotation_conv";
-    double   result=0.0;
+    char     s[24] = "x_rotation_conv";
+    double   result = 0.0;
 
 
     xtgverbose(debug);
@@ -84,6 +84,12 @@ double x_rotation_conv (
 	}
     }
 
+    /*
+     * ------------------------------------------------------------------------
+     * Use degrees when comptuting
+     * ------------------------------------------------------------------------
+     */
+    if (ainmode == 1 || ainmode == 3) ain = ain * 180.0 / PI;
 
     /*
      * ------------------------------------------------------------------------
@@ -91,16 +97,18 @@ double x_rotation_conv (
      * ------------------------------------------------------------------------
      */
 
-    /* convert degrees normal angle to degrees azimuth angle */
-    if (ainmode==0 && mode==2) {
-	result = 90 + ain;
+    /* from angle to azimuth */
+    if (ainmode <= 1 && mode >= 2) {
+	result = -ain + 90;
 	if (result > 360) result=result-360;
+        if (ainmode == 1) result = result * PI / 180.0;
     }
 
     /* convert degrees azimuth angle to degrees normal angle */
-    if (ainmode==2 && mode==0) {
+    if (ainmode >= 2 && mode <= 1) {
 	result = 450 - ain;
 	if (result > 360) result=result-360;
+        if (ainmode == 3) result = result * PI / 180.0;
     }
 
     /* convert radians azimuth angle to degrees normal angle */
