@@ -36,3 +36,25 @@ def test_angle2azimuth():
 
     res = xcalc.angle2azimuth(-30)
     assert res == 120.0
+
+    res = xcalc.angle2azimuth(-300)
+    assert res == 30
+
+
+def test_azimuth2angle():
+    """Test azimuth to school angle conversion"""
+
+    res = xcalc.azimuth2angle(60)
+    assert res == 30.0
+
+    a1 = 60 * math.pi / 180
+    a2 = 30 * math.pi / 180
+
+    res = xcalc.azimuth2angle(a1, mode="radians")
+    assert res == a2
+
+    res = xcalc.azimuth2angle(120)
+    assert res == 330
+
+    res = xcalc.azimuth2angle(-30)
+    assert res == 120

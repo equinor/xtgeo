@@ -115,16 +115,39 @@ def angle2azimuth(inangle, mode="degrees"):
     """Return the Azimuth angle given input normal angle.
 
     Normal angle means counterclock rotation from X (East) axis, while
-    azimuth is clockwise from Y (North)
+    azimuth is clockwise rotation from Y (North)
 
     Args:
+        inangle (float): Input angle in normal manner ("school")
         mode (str): "degrees" (default) or "radians"
 
     Return:
-        Flip flag (1 of -1)
+        Azimuth angle (in degrees or radian)
     """
     nmode1 = 0
     nmode2 = 2
+    if mode == "radians":
+        nmode1 += 1
+        nmode2 += 1
+
+    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0, DBG)
+
+
+def azimuth2angle(inangle, mode="degrees"):
+    """Return the "school" angle given input azimuth angle.
+
+    Normal "school" angle means counterclock rotation from X (East) axis, while
+    azimuth is clockwise rotation from Y (North)
+
+    Args:
+        inangle (float): Input angle in azimuth manner
+        mode (str): "degrees" (default) or "radians"
+
+    Return:
+        Angle (in degrees or radians)
+    """
+    nmode1 = 2
+    nmode2 = 0
     if mode == "radians":
         nmode1 += 1
         nmode2 += 1

@@ -105,9 +105,10 @@ double x_rotation_conv (
     }
 
     /* convert degrees azimuth angle to degrees normal angle */
-    if (ainmode==2 && mode==0) {
+    if (ainmode >= 2 && mode <= 1) {
 	result = 450 - ain;
 	if (result > 360) result=result-360;
+        if (ainmode == 3) result = result * PI / 180.0;
     }
 
     /* convert radians azimuth angle to degrees normal angle */
