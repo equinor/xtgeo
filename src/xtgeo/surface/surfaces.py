@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""The surfaces module, which has the Surfaces class (collection of Surface objects)"""
+"""The surfaces module, which has the Surfaces class (collection of surface objects)"""
 
 from __future__ import division, absolute_import
 from __future__ import print_function
@@ -14,7 +14,7 @@ logger = xtg.functionlogger(__name__)
 
 class Surfaces(object):
     """Class for a collection of Surface objects, for operations that involves
-    a number of surfaces.
+    a number of surfaces, such as statistical numbers.
 
     A collection of surfaces can be different things:
 
@@ -22,33 +22,25 @@ class Surfaces(object):
     * A collection of different realisations of the same surface
     * A collection of isochores
 
+    Args:
+        input (list, optional): A list of XTGeo objects and/or file names)
+        subtype (str): "tops", "isochores", or None (default)
+        order (str): Assummed order: "same", "stratigraphic", None(default)
+
     .. seealso::
        Class :class:`~xtgeo.surface.regular_surface.RegularSurface` class.
 
     .. versionadded: 2.1.0
     """
 
-    def __init__(self):
+    def __init__(self, *args, subtype=None, order=None):
 
         self._surfaces = []  # list of RegularSurface objects
-        self._subtype = None  # could be "tops", "isochores" or None
-        self._order = None  # could be "same", "stratigraphic" or None
+        self._subtype = subtype  # could be "tops", "isochores" or None
+        self._order = order  # could be "same", "stratigraphic" or None
 
-        # if args:
-        #     # make instance from file import
-        #     wfiles = args[0]
-        #     fformat = kwargs.get("fformat", "rms_ascii")
-        #     mdlogname = kwargs.get("mdlogname", None)
-        #     zonelogname = kwargs.get("zonelogname", None)
-        #     strict = kwargs.get("strict", True)
-        #     self.from_files(
-        #         wfiles,
-        #         fformat=fformat,
-        #         mdlogname=mdlogname,
-        #         zonelogname=zonelogname,
-        #         strict=strict,
-        #         append=False,
-        #     )
+        if args:
+            self.append(args[0])
 
     @property
     def surfaces(self):
@@ -65,6 +57,19 @@ class Surfaces(object):
                 raise ValueError("Element in list not a valid type of Surface")
 
         self._surfaces = slist
+
+    def append(self, slist):
+        """Append surfaces from either a list of RegularSurface objects,
+        a list of files, or a mix."""
+        for item in slist:
+            if isinstance(item, xtgeo.RegularSurface):
+                self._surfaces.append(item)
+            else:
+                try:
+                    sobj = xtgeo.surface_from_file(item, fformat="guess")
+                    self._surfaces.append(sobj)
+                except OSError:
+                    xtg.warnuser("Cannot read as file, skip: {}".format(item))
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -112,3 +117,12 @@ class Surfaces(object):
     def from_grid3d(self, grid, subgrids=True, rfactor=1):
         """Derive surfaces from a 3D grid"""
         _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
+
+    def statistics(self):
+        """Return a set of statistical measures from the surfaces.
+
+
+        Returns:
+            dict: A dictionary of values
+        """
+        pass

@@ -41,6 +41,38 @@ def test_create():
     assert isinstance(surfs, xtgeo.Surfaces)
 
 
+def test_create_init_objectlist():
+    """Create simple Surfaces instance, initiate with a list of objects"""
+
+    top = xtgeo.RegularSurface(TESTSET1A)
+    base = xtgeo.RegularSurface(TESTSET1B)
+    surfs = xtgeo.Surfaces([top, base])
+
+    assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
+    assert isinstance(surfs, xtgeo.Surfaces)
+
+
+def test_create_init_filelist():
+    """Create simple Surfaces instance, initiate with a list of files"""
+
+    flist = [TESTSET1A, TESTSET1B]
+    surfs = xtgeo.Surfaces(flist)
+
+    assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
+    assert isinstance(surfs, xtgeo.Surfaces)
+
+
+def test_create_init_mixlist():
+    """Create simple Surfaces instance, initiate with a list of files"""
+
+    top = xtgeo.RegularSurface(TESTSET1A)
+    flist = [top, TESTSET1B]
+    surfs = xtgeo.Surfaces(flist)
+
+    assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
+    assert isinstance(surfs, xtgeo.Surfaces)
+
+
 def test_get_surfaces_from_3dgrid():
     """Create surfaces from a 3D grid"""
 
