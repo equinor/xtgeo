@@ -2,6 +2,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+import math
 from os.path import join
 
 import xtgeo
@@ -71,6 +72,47 @@ def test_create_init_mixlist():
 
     assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
     assert isinstance(surfs, xtgeo.Surfaces)
+
+
+def test_statistics():
+    """Find the mean etc measures of the surfaces"""
+
+    flist = [TESTSET1A, TESTSET1B]
+    surfs = xtgeo.Surfaces(flist)
+    res = surfs.statistics()
+    res["mean"].to_file(join(TMPD, "surf_mean.gri"))
+    res["std"].to_file(join(TMPD, "surf_std.gri"))
+
+    tsetup.assert_almostequal(res["mean"].values.mean(), 1720.5029, 0.0001)
+    tsetup.assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
+
+
+def test_more_statistics():
+    """Find the mean etc measures of the surfaces"""
+
+    base = xtgeo.RegularSurface(TESTSET1A)
+    base.values *= 0.0
+    bmean = base.values.mean()
+    surfs = []
+    surfs.append(base)
+
+    # this will get 101 constant maps ranging from 0 til 100
+    for inum in range(1, 101):
+        tmp = base.copy()
+        tmp.values += float(inum)
+        surfs.append(tmp)
+
+    so = xtgeo.Surfaces(surfs)
+    res = so.statistics()
+
+    # theoretical stdev:
+    sum2 = 0.0
+    for inum in range(0, 101):
+        sum2 += (float(inum) - 50.0)**2
+    stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
+
+    tsetup.assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
+    tsetup.assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
 
 
 def test_get_surfaces_from_3dgrid():

@@ -5,6 +5,8 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+import numpy as np
+
 import xtgeo
 from . import _surfs_import
 
@@ -101,10 +103,6 @@ class Surfaces(object):
 
         return new
 
-    # def get_statistics(self):
-    #     "Returns a dictionary with statistical measures"
-    #     pass
-
     def get_surface(self, name):
         """Get a RegularSurface() instance by name, or return None if name not found"""
 
@@ -119,10 +117,56 @@ class Surfaces(object):
         _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
 
     def statistics(self):
-        """Return a set of statistical measures from the surfaces.
+        """Return statistical measures from the surfaces.
 
+        The statistics returned is:
+        * mean: the arithmetic mean surface
+        * std: the standard deviation surface (where ddof = 1)
+
+        Currently this function expects that the surfaces all have the same
+        shape/topology
 
         Returns:
-            dict: A dictionary of values
+            dict: A dictionary of statistical measures, see list above
+
+        Example::
+            surfs = Surfaces(mylist)  # mylist is a collection of files
+            stats = surfs.statistics()
+            # export the mean surface
+            stats["mean"].to_file("mymean.gri")
         """
-        pass
+        result = {}
+
+        template = self.surfaces[0].copy()
+
+        slist = []
+        for surf in self.surfaces:
+            status = template.compare_topology(surf, strict=False)
+            if not status:
+                raise ValueError("Cannot so statistics, surfaces differs in topology")
+            slist.append(np.ma.filled(surf.values, fill_value=np.nan))
+
+        xlist = np.array(slist)
+
+        # mean
+        template.values = np.nanmean(xlist, axis=0)
+        result["mean"] = template.copy()
+
+        # std, run with degree of freedom ddof=1, similar to RMS
+        template.values = np.nanstd(xlist, axis=0, ddof=1)
+        result["std"] = template.copy()
+
+        # # median P50 (SLOW!)
+        # template.values = np.nanpercentile(xlist, 50, axis=0)
+        # result["median"] = template.copy()
+        # result["p50"] = result["median"]
+
+        # # P10
+        # template.values = np.nanpercentile(xlist, 10, axis=0)
+        # result["p10"] = template.copy()
+
+        # # P90
+        # template.values = np.nanpercentile(xlist, 90, axis=0)
+        # result["p90"] = template.copy()
+
+        return result
