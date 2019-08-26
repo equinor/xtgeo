@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""The surfaces module, which has the Surfaces class (collection of Surface objects)"""
+"""The surfaces module, which has the Surfaces class (collection of surface objects)"""
 
 from __future__ import division, absolute_import
 from __future__ import print_function
+
+import numpy as np
 
 import xtgeo
 from . import _surfs_import
@@ -14,7 +16,7 @@ logger = xtg.functionlogger(__name__)
 
 class Surfaces(object):
     """Class for a collection of Surface objects, for operations that involves
-    a number of surfaces.
+    a number of surfaces, such as statistical numbers.
 
     A collection of surfaces can be different things:
 
@@ -22,33 +24,27 @@ class Surfaces(object):
     * A collection of different realisations of the same surface
     * A collection of isochores
 
+    Args:
+        input (list, optional): A list of XTGeo objects and/or file names)
+        subtype (str): "tops", "isochores", or None (default)
+        order (str): Assummed order: "same", "stratigraphic", None(default)
+
     .. seealso::
        Class :class:`~xtgeo.surface.regular_surface.RegularSurface` class.
 
     .. versionadded: 2.1.0
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
 
         self._surfaces = []  # list of RegularSurface objects
         self._subtype = None  # could be "tops", "isochores" or None
         self._order = None  # could be "same", "stratigraphic" or None
 
-        # if args:
-        #     # make instance from file import
-        #     wfiles = args[0]
-        #     fformat = kwargs.get("fformat", "rms_ascii")
-        #     mdlogname = kwargs.get("mdlogname", None)
-        #     zonelogname = kwargs.get("zonelogname", None)
-        #     strict = kwargs.get("strict", True)
-        #     self.from_files(
-        #         wfiles,
-        #         fformat=fformat,
-        #         mdlogname=mdlogname,
-        #         zonelogname=zonelogname,
-        #         strict=strict,
-        #         append=False,
-        #     )
+        if args:
+            self.append(args[0])
+            self._subtype = kwargs.get("subtype", None)
+            self._order = kwargs.get("order", None)
 
     @property
     def surfaces(self):
@@ -65,6 +61,19 @@ class Surfaces(object):
                 raise ValueError("Element in list not a valid type of Surface")
 
         self._surfaces = slist
+
+    def append(self, slist):
+        """Append surfaces from either a list of RegularSurface objects,
+        a list of files, or a mix."""
+        for item in slist:
+            if isinstance(item, xtgeo.RegularSurface):
+                self._surfaces.append(item)
+            else:
+                try:
+                    sobj = xtgeo.surface_from_file(item, fformat="guess")
+                    self._surfaces.append(sobj)
+                except OSError:
+                    xtg.warnuser("Cannot read as file, skip: {}".format(item))
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -96,10 +105,6 @@ class Surfaces(object):
 
         return new
 
-    # def get_statistics(self):
-    #     "Returns a dictionary with statistical measures"
-    #     pass
-
     def get_surface(self, name):
         """Get a RegularSurface() instance by name, or return None if name not found"""
 
@@ -112,3 +117,58 @@ class Surfaces(object):
     def from_grid3d(self, grid, subgrids=True, rfactor=1):
         """Derive surfaces from a 3D grid"""
         _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
+
+    def statistics(self):
+        """Return statistical measures from the surfaces.
+
+        The statistics returned is:
+        * mean: the arithmetic mean surface
+        * std: the standard deviation surface (where ddof = 1)
+
+        Currently this function expects that the surfaces all have the same
+        shape/topology
+
+        Returns:
+            dict: A dictionary of statistical measures, see list above
+
+        Example::
+            surfs = Surfaces(mylist)  # mylist is a collection of files
+            stats = surfs.statistics()
+            # export the mean surface
+            stats["mean"].to_file("mymean.gri")
+        """
+        result = {}
+
+        template = self.surfaces[0].copy()
+
+        slist = []
+        for surf in self.surfaces:
+            status = template.compare_topology(surf, strict=False)
+            if not status:
+                raise ValueError("Cannot so statistics, surfaces differs in topology")
+            slist.append(np.ma.filled(surf.values, fill_value=np.nan))
+
+        xlist = np.array(slist)
+
+        # mean
+        template.values = np.nanmean(xlist, axis=0)
+        result["mean"] = template.copy()
+
+        # std, run with degree of freedom ddof=1, similar to RMS
+        template.values = np.nanstd(xlist, axis=0, ddof=1)
+        result["std"] = template.copy()
+
+        # # median P50 (SLOW!)
+        # template.values = np.nanpercentile(xlist, 50, axis=0)
+        # result["median"] = template.copy()
+        # result["p50"] = result["median"]
+
+        # # P10
+        # template.values = np.nanpercentile(xlist, 10, axis=0)
+        # result["p10"] = template.copy()
+
+        # # P90
+        # template.values = np.nanpercentile(xlist, 90, axis=0)
+        # result["p90"] = template.copy()
+
+        return result
