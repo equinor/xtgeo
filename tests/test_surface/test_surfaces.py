@@ -108,7 +108,7 @@ def test_more_statistics():
     # theoretical stdev:
     sum2 = 0.0
     for inum in range(0, 101):
-        sum2 += (float(inum) - 50.0)**2
+        sum2 += (float(inum) - 50.0) ** 2
     stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
 
     tsetup.assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)

@@ -35,14 +35,16 @@ class Surfaces(object):
     .. versionadded: 2.1.0
     """
 
-    def __init__(self, *args, subtype=None, order=None):
+    def __init__(self, *args, **kwargs):
 
         self._surfaces = []  # list of RegularSurface objects
-        self._subtype = subtype  # could be "tops", "isochores" or None
-        self._order = order  # could be "same", "stratigraphic" or None
+        self._subtype = None  # could be "tops", "isochores" or None
+        self._order = None  # could be "same", "stratigraphic" or None
 
         if args:
             self.append(args[0])
+            self._subtype = kwargs.get("subtype", None)
+            self._order = kwargs.get("order", None)
 
     @property
     def surfaces(self):
