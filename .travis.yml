@@ -22,6 +22,7 @@ if: (branch =~ /^dev/) OR (repo == equinor/xtgeo)
 
 env:
   global:
+    - TRAVISRUN=true
     - REPO_DIR=.
     - UNICODE_WIDTH=32
     - PLAT=x86_64

@@ -30,7 +30,8 @@ function run_tests {
     apt-get -y install git > /dev/null
     git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
     pip install pytest
-
+    export TRAVISRUN=true
+    echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
     pytest tests
