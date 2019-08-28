@@ -3,7 +3,7 @@ import os
 import pytest
 import xtgeo.common.xtgeo_system as xsys
 
-TRAVIS = os.environ.get("TRAVIS", False)
+TRAVIS = os.environ.get("TRAVISRUN", False)
 
 # =============================================================================
 # Do tests of simple system functions
