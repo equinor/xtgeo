@@ -3,7 +3,9 @@ import os
 import pytest
 import xtgeo.common.xtgeo_system as xsys
 
-TRAVIS = os.environ.get("TRAVISRUN", False)
+TRAVIS = True
+if "travis" in os.environ:
+    TRAVIS = False
 
 # =============================================================================
 # Do tests of simple system functions
@@ -21,7 +23,6 @@ def test_check_folder():
 
     status = xsys.check_folder("src/xtgeo")
     assert status is True
-
     if not TRAVIS:
         # skipped for travis, as travis runs with root rights
         folder = "TMP/nonwritable"
