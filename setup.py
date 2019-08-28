@@ -96,7 +96,7 @@ class CMakeExtension(Extension):
 
 # get all C swig sources
 
-sources = ["src/xtgeo/cxtgeo/cxtgeo.i"]
+sources = ["src/xtgeo/cxtgeo/cxtgeo.i"]  
 
 
 # cxtgeo extension module
