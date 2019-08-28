@@ -4,7 +4,7 @@ import pytest
 import xtgeo.common.xtgeo_system as xsys
 
 TRAVIS = False
-if os.environ["USER"] in ("travis", "root"):
+if "TRAVISRUN" in os.environ:
     TRAVIS = True
 
 # =============================================================================
