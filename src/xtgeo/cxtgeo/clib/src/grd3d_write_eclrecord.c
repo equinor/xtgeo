@@ -58,10 +58,11 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
 {
 
     int ib, swap = 0;
-    int myint, myint2, mylen, nbyte;
+    int myint, mylen, nbyte;
     float myfloat;
     double mydouble;
     char mychar[9]="", mytype[5]="";
+    int nb = 0, nmax = 0, ic = 0, im = 0, nchunk = 0, ftn = 0, nn = 0;
 
     char sbn[24] = "grd3d_write_eclrecord";
     xtgverbose(debug);
@@ -90,41 +91,57 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
     myint = 16;
     if (swap) SWAP_INT(myint);
     fwrite(&myint, 4, 1, fc);
-    fwrite(mychar, 1, 8, fc);
+    fwrite(mychar, 1, 8, fc);  /* 8 or 9? */
     mylen = nrecs;
     if (swap) SWAP_INT(mylen);
     fwrite(&mylen, 4, 1, fc);
     fwrite(mytype, 1, 4, fc);
     fwrite(&myint, 4, 1, fc);
 
-    if (nrecs * nbyte > INT_MAX) {
-        xtg_error(sbn, "Record size > %d; not supported (yet)", INT_MAX);
+    /* the output is written in block chunks, where each chunk <= 4000 bytes */
+    /* for 4 byte entries: 1000, for 8 byte: 500 entries */
+
+    nmax = 4000 / nbyte;
+    ib = 0;
+    nb = nrecs;  /* remaining */
+
+    nchunk = 1 + nrecs / nmax;
+    for (im = 0; im < nchunk; im++){
+        ftn = nmax * nbyte;
+        if (nb == 0) break;
+        if (nb < nmax) {
+            ftn = nb * nbyte;
+            nn = nb;
+        }
+        else{
+            nn = nmax;
+        }
+
+        if (swap) SWAP_INT(ftn);
+        fwrite(&ftn, 4, 1, fc);
+
+        for (ic = 0; ic < nn; ic++) {
+
+            if (rectype == 1) {
+                myint = intv[ib];
+                if (swap) SWAP_INT(myint);
+                fwrite(&myint, 4, 1, fc);
+            }
+            else if (rectype == 2) {
+                myfloat = floatv[ib];
+                if (swap) SWAP_FLOAT(myfloat);
+                fwrite(&myfloat, 4, 1, fc);
+            }
+            else if (rectype == 3) {
+                mydouble = doublev[ib];
+                if (swap) SWAP_DOUBLE(mydouble);
+                fwrite(&mydouble, 8, 1, fc);
+            }
+            ib++;
+            nb--;
+        }
+        fwrite(&ftn, 4, 1, fc);
+
     }
-
-    myint2 = nrecs * nbyte;
-    xtg_speak(sbn, 2, "NRECS %d (total bytes %d) for <%s> of type <%s>",
-              nrecs, myint2, mychar, mytype);
-    if (swap) SWAP_INT(myint2);
-
-    fwrite(&myint2, 4, 1, fc);
-    for (ib = 0; ib < nrecs; ib++) {
-        if (rectype == 1) {
-            myint = intv[ib];
-            if (swap) SWAP_INT(myint);
-            fwrite(&myint, 4, 1, fc);
-        }
-        else if (rectype == 2) {
-            myfloat = floatv[ib];
-            if (swap) SWAP_FLOAT(myfloat);
-            fwrite(&myfloat, 4, 1, fc);
-        }
-        else if (rectype == 3) {
-            mydouble = doublev[ib];
-            if (swap) SWAP_DOUBLE(mydouble);
-            fwrite(&mydouble, 8, 1, fc);
-        }
-    }
-    fwrite(&myint2, 4, 1, fc);
-
     return EXIT_SUCCESS;
 }
