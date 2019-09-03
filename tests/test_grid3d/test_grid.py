@@ -3,8 +3,8 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os
-from collections import OrderedDict
 from os.path import join
+from collections import OrderedDict
 import math
 
 import pytest
@@ -35,6 +35,7 @@ BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
 # =============================================================================
 # Do tests
 # =============================================================================
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture()
@@ -81,8 +82,7 @@ def test_create_shoebox():
     tsetup.assert_almostequal(dy.values.mean(), 20.0, 0.0001)
 
     grd.create_box(
-        origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45,
-        increment=(20, 20, 1),
+        origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45, increment=(20, 20, 1)
     )
 
     x, y, z = grd.get_xyz()
@@ -92,8 +92,11 @@ def test_create_shoebox():
     tsetup.assert_almostequal(z.values1d[0], 1000.5, 0.001)
 
     grd.create_box(
-        origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45,
-        increment=(20, 20, 1), oricenter=True,
+        origin=(0, 0, 1000),
+        dimension=(30, 30, 3),
+        rotation=45,
+        increment=(20, 20, 1),
+        oricenter=True,
     )
 
     x, y, z = grd.get_xyz()
@@ -102,6 +105,18 @@ def test_create_shoebox():
     tsetup.assert_almostequal(y.values1d[0], 0.0, 0.001)
     tsetup.assert_almostequal(z.values1d[0], 1000.0, 0.001)
 
+
+def test_shoebox_egrid():
+    """Test the egrid format for different grid sizes"""
+
+    dimens = [(1000, 1, 1), (1000, 1, 200), (300, 200, 30)]
+
+    for dim in dimens:
+        grd = xtgeo.Grid()
+        grd.create_box(dimension=dim)
+        grd.to_file(join(TMPDIR, "E1.EGRID"), fformat="egrid")
+        grd1 = xtgeo.Grid(join(TMPDIR, "E1.EGRID"))
+        assert grd1.dimensions == dim
 
 
 def test_roffbin_get_dataframe_for_grid(load_gfile1):
@@ -151,7 +166,7 @@ def test_subgrids(load_gfile1):
 
     assert subs == newsub
 
-    i_index, j_index, k_index = grd.get_ijk()
+    _i_index, _j_index, k_index = grd.get_ijk()
 
     zprop = k_index.copy()
     zprop.values[k_index.values > 4] = 2
@@ -177,8 +192,8 @@ def test_roffbin_import1(load_gfile1):
     # get dZ...
     dzv = grd.get_dz()
 
-    logger.info("ACTNUM is {}".format(act))
-    logger.debug("DZ values are \n{}".format(dzv.values1d[888:999]))
+    logger.info("ACTNUM is %s", act)
+    logger.debug("DZ values are \n%s", dzv.values1d[888:999])
 
     dzval = dzv.values
     print("DZ mean and shape: ", dzval.mean(), dzval.shape)
@@ -295,25 +310,25 @@ def test_import_grdecl_and_bgrdecl():
 
 def test_eclgrid_import2():
     """Eclipse EGRID import, also change ACTNUM."""
-    g = Grid()
+    grd = Grid()
     logger.info("Import Eclipse GRID...")
-    g.from_file(REEKFILE, fformat="egrid")
+    grd.from_file(REEKFILE, fformat="egrid")
 
-    tsetup.assert_equal(g.ncol, 40, txt="EGrid NX from Eclipse")
-    tsetup.assert_equal(g.nrow, 64, txt="EGrid NY from Eclipse")
-    tsetup.assert_equal(g.nactive, 35838, txt="EGrid NTOTAL from Eclipse")
-    tsetup.assert_equal(g.ntotal, 35840, txt="EGrid NACTIVE from Eclipse")
+    tsetup.assert_equal(grd.ncol, 40, txt="EGrid NX from Eclipse")
+    tsetup.assert_equal(grd.nrow, 64, txt="EGrid NY from Eclipse")
+    tsetup.assert_equal(grd.nactive, 35838, txt="EGrid NTOTAL from Eclipse")
+    tsetup.assert_equal(grd.ntotal, 35840, txt="EGrid NACTIVE from Eclipse")
 
-    actnum = g.get_actnum()
+    actnum = grd.get_actnum()
     print(actnum.values[12:13, 22:24, 5:6])
     tsetup.assert_equal(actnum.values[12, 22, 5], 0, txt="ACTNUM 0")
 
     actnum.values[:, :, :] = 1
     actnum.values[:, :, 4:6] = 0
-    g.set_actnum(actnum)
-    newactive = g.ncol * g.nrow * g.nlay - 2 * (g.ncol * g.nrow)
-    tsetup.assert_equal(g.nactive, newactive, txt="Changed ACTNUM")
-    g.to_file(join(TMPDIR, "reek_new_actnum.roff"))
+    grd.set_actnum(actnum)
+    newactive = grd.ncol * grd.nrow * grd.nlay - 2 * (grd.ncol * grd.nrow)
+    tsetup.assert_equal(grd.nactive, newactive, txt="Changed ACTNUM")
+    grd.to_file(join(TMPDIR, "reek_new_actnum.roff"))
 
 
 def test_eclgrid_import3():
@@ -343,19 +358,19 @@ def test_eclgrid_import3():
 def test_geometrics_reek():
     """Import Reek and test geometrics"""
 
-    g = Grid(REEKFILE, fformat="egrid")
+    grd = Grid(REEKFILE, fformat="egrid")
 
-    geom = g.get_geometrics(return_dict=True, cellcenter=False)
+    geom = grd.get_geometrics(return_dict=True, cellcenter=False)
 
     for key, val in geom.items():
-        logger.info("{} is {}".format(key, val))
+        logger.info("%s is %s", key, val)
 
     # compared with RMS info:
     tsetup.assert_almostequal(geom["xmin"], 456510.6, 0.1, "Xmin")
     tsetup.assert_almostequal(geom["ymax"], 5938935.5, 0.1, "Ymax")
 
     # cellcenter True:
-    geom = g.get_geometrics(return_dict=True, cellcenter=True)
+    geom = grd.get_geometrics(return_dict=True, cellcenter=True)
     tsetup.assert_almostequal(geom["xmin"], 456620, 1, "Xmin cell center")
 
 
