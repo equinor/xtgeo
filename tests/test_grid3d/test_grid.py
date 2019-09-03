@@ -462,3 +462,11 @@ def test_ecl_run():
     tsetup.assert_almostequal(avg, -26.073, 0.001)
 
     pres1.to_file(os.path.join(TMPDIR, "pressurediff.roff"), name="PRESSUREDIFF")
+
+
+def test_subgrid_style(load_gfile1):
+    """Determine if a subgrid is topconform (T), baseconform (B), proportional (P)"""
+
+    grd = load_gfile1
+
+    code = grd.guess_subgrid_design(1)

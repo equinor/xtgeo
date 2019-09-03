@@ -1053,3 +1053,17 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
     _gridprop_lowlevel.update_values_from_carray(result, p_prop2, np.int32, delete=True)
     # return the property object
     return result
+
+
+def guess_subgrid_design(self, code):
+    """Guess subgrid design by examing DZ is some columns"""
+    actv = self.get_actnum().values
+
+    dzv = self.get_dz(asmasked=False).values
+    print("HE", self.subgrids)
+
+    # dzv = dzv[:, :, self.subgrids[code]]
+
+    # dzvc = dzv[0, 0, :]
+
+    # print(dzvc)

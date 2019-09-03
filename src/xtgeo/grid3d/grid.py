@@ -715,6 +715,26 @@ class Grid(Grid3D):
 
         return newd
 
+    def guess_subgrid_design(self, nsub=1):
+        """Get by guessing the vertical design of the subgrid.
+
+        Args:
+            nsub (int): Subgrid index to check
+
+        Returns:
+            code (str): P=proportional, T=topconform, B=baseconform, X=underdetermined
+                None if subgrids are missing, or nsub out of range.
+        """
+        if not self.subgrids:
+            return None
+
+        # if str(nsub) not in self.subgrids.keys():
+        #     return None
+
+        code = _grid_etc1.guess_subgrid_design(self, 1)
+
+        return code
+
     def subgrids_from_zoneprop(self, zoneprop):
         """Make subgrids from a zone property, which will replace the
         current if any.
