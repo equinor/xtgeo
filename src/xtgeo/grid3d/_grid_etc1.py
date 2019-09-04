@@ -1055,14 +1055,28 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
     return result
 
 
-def guess_subgrid_design(self, code):
+def guess_subgrid_design(self, nsub):
     """Guess subgrid design by examing DZ is some columns"""
     actv = self.get_actnum().values
 
     dzv = self.get_dz(asmasked=False).values
-    print("HE", self.subgrids)
 
-    # dzv = dzv[:, :, self.subgrids[code]]
+    nsubname = list(self.subgrids.keys())[nsub]
+
+    vrange = np.array(list(self.subgrids[nsubname])) - 1
+    print(vrange)
+    # find the dz for the actual subzone
+    dzv = dzv[:, :, vrange]
+
+    # find cumulative thickness
+    dzcum = np.sum(dzv, axis=2, keepdims=False)
+    idx, jdx = np.nonzero(dzcum)
+    slist = list(zip(idx.tolist(), jdx.tolist()))
+    print(len(slist))
+    slist = slist[::20]
+    for inum, (ii, jj) in enumerate(slist):
+        print(inum, ii, jj)
+        print(dzv[ii, jj, :])
 
     # dzvc = dzv[0, 0, :]
 
