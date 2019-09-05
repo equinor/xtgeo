@@ -462,3 +462,53 @@ def test_ecl_run():
     tsetup.assert_almostequal(avg, -26.073, 0.001)
 
     pres1.to_file(os.path.join(TMPDIR, "pressurediff.roff"), name="PRESSUREDIFF")
+
+
+def test_grid_design(load_gfile1):
+    """Determine if a subgrid is topconform (T), baseconform (B), proportional (P)
+
+    "design" refers to type of conformity
+    "dzsimbox" is avg or representative simbox thickness per cell
+
+    """
+
+    grd = load_gfile1
+
+    print(grd.subgrids)
+
+    code = grd.estimate_design(1)
+    assert code["design"] == "P"
+    tsetup.assert_almostequal(code["dzsimbox"], 2.5488, 0.001)
+
+    code = grd.estimate_design(2)
+    assert code["design"] == "T"
+    tsetup.assert_almostequal(code["dzsimbox"], 3.0000, 0.001)
+
+    code = grd.estimate_design("subgrid_0")
+    assert code["design"] == "P"
+
+    code = grd.estimate_design("subgrid_1")
+    assert code["design"] == "T"
+
+    code = grd.estimate_design("subgrid_2")
+    assert code is None
+
+    with pytest.raises(ValueError):
+        code = grd.estimate_design(nsub=None)
+
+
+def test_flip(load_gfile1):
+    """Determine if grid is flipped (lefthanded vs righthanded)"""
+
+    grd = load_gfile1
+
+    assert grd.estimate_flip() == 1
+
+    grd.create_box(dimension=(30, 20, 3), flip=-1)
+    assert grd.estimate_flip() == -1
+
+    grd.create_box(dimension=(30, 20, 3), rotation=30, flip=-1)
+    assert grd.estimate_flip() == -1
+
+    grd.create_box(dimension=(30, 20, 3), rotation=190, flip=-1)
+    assert grd.estimate_flip() == -1

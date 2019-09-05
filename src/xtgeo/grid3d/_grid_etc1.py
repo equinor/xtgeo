@@ -1,6 +1,6 @@
 """Private module, Grid ETC 1 methods, info/modify/report ...."""
 
-from __future__ import print_function, absolute_import
+from __future__ import print_function, absolute_import, division
 
 import inspect
 import warnings
@@ -13,6 +13,7 @@ import numpy.ma as ma
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
 from xtgeo.well import Well
 from . import _gridprop_lowlevel
@@ -1053,3 +1054,88 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
     _gridprop_lowlevel.update_values_from_carray(result, p_prop2, np.int32, delete=True)
     # return the property object
     return result
+
+
+def estimate_design(self, nsubname):
+    """Estimate (guess) (sub)grid design by examing DZ in median thickness column"""
+    actv = self.get_actnum().values
+
+    dzv = self.get_dz(asmasked=False).values
+
+    # treat inactive thicknesses as zero
+    dzv[actv == 0] = 0.0
+
+    if nsubname is None:
+        vrange = np.array(range(self.nlay))
+    else:
+        vrange = np.array(list(self.subgrids[nsubname])) - 1
+
+    # find the dz for the actual subzone
+    dzv = dzv[:, :, vrange]
+
+    # find cumulative thickness as a 2D array
+    dzcum = np.sum(dzv, axis=2, keepdims=False)
+
+    # find the average thickness for nonzero thicknesses
+    dzcum2 = dzcum.copy()
+    dzcum2[dzcum == 0.0] = np.nan
+    dzavg = np.nanmean(dzcum2) / dzv.shape[2]
+
+    # find the I J indices for the median value
+    argmed = np.stack(
+        np.nonzero(dzcum == np.percentile(dzcum, 50, interpolation="nearest")), axis=1
+    )
+    im, jm = argmed[0]
+
+    # find the dz stack of the median
+    dzmedian = dzv[im, jm, :]
+    logger.info("DZ median column is %s", dzmedian)
+
+    # to compare thicknesses with (divide on 2 to assure)
+    target = dzcum[im, jm] / (dzmedian.shape[0] * 2)
+    eps = target / 100.0
+
+    logger.info("Target and EPS values are %s, %s", target, eps)
+
+    status = "X"  # unknown or cannot determine
+
+    if dzmedian[0] > target and dzmedian[-1] <= eps:
+        status = "T"
+        dzavg = dzmedian[0]
+    elif dzmedian[0] < eps and dzmedian[-1] > target:
+        status = "B"
+        dzavg = dzmedian[-1]
+    elif dzmedian[0] > target and dzmedian[-1] > target:
+        ratio = dzmedian[0] / dzmedian[-1]
+        if 0.5 < ratio < 1.5:
+            status = "P"
+    elif dzmedian[0] < eps and dzmedian[-1] < eps:
+        status = "M"
+        middleindex = int(dzmedian.shape[0] / 2)
+        dzavg = dzmedian[middleindex]
+
+    return {"design": status, "dzsimbox": dzavg}
+
+
+def estimate_flip(self):
+    """Estimate if grid is left or right handed"""
+    # perhaps better to find these vectors in C as the
+    # operations here are costly
+
+    xc, yc, _zc = self.get_xyz(asmasked=False)
+
+    v1 = (
+        xc.values[1, 0, 0] - xc.values[0, 0, 0],
+        yc.values[1, 0, 0] - yc.values[0, 0, 0],
+        0.0,
+    )
+
+    v2 = (
+        xc.values[0, 1, 0] - xc.values[0, 0, 0],
+        yc.values[0, 1, 0] - yc.values[0, 0, 0],
+        0.0,
+    )
+
+    flipvalue = find_flip(v1, v2)
+
+    return flipvalue

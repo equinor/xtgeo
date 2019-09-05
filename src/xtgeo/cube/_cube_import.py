@@ -109,11 +109,8 @@ def _import_segy_io(self, sfile):
 
                 # find YFLIP by cross products
                 yvv = (cdpx - xori, cdpy - yori, 0)
-                zvv = (0, 0, -1)
 
-                yflip = xcalc.find_flip(xvv, yvv, zvv)
-                # due to bug in segyio?
-                yflip *= -1
+                yflip = xcalc.find_flip(xvv, yvv)
 
         rot2 = segyio.tools.rotation(segyfile)[0]
         logger.debug("SEGYIO rotation is %s", rot2 * 180 / 3.1415)
