@@ -189,7 +189,7 @@ int surf_slice_cube(
 
     /* less than 10% sampled */
     if (nm > 0 && nm < 0.1*nmap) {
-        xtg_warn(s, 1, "Less than 10\% nodes sampled in %s!", s);
+        xtg_warn(s, 1, "Less than 10%% nodes sampled in %s!", s);
         return -4;
     }
 

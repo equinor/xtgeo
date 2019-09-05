@@ -13,11 +13,15 @@ add_subdirectory(src)
 add_subdirectory(ctests)
 add_subdirectory(tap)
 
-
-install(FILES
+IF (WIN32)
+   install(FILES
+	      "${CMAKE_BUILD_PATH}/src/libcxtgeo.dll"
+	      DESTINATION ${CMAKE_SOURCE_DIR}/lib)
+else()
+	install(FILES
 	      "${CMAKE_BUILD_PATH}/src/libcxtgeo.a"
 	      DESTINATION ${CMAKE_SOURCE_DIR}/lib)
-
+endif()
 
 add_test(NAME test_x COMMAND test_x)
 add_test(NAME test_messages COMMAND test_messages)
