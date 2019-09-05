@@ -342,7 +342,7 @@ class Grid(Grid3D):
 
         When setting props, the current property list is replaced.
 
-        See also props_append() method to add a property to the current list.
+        See also append_prop() method to add a property to the current list.
 
         """
         # Note, internally, the _props is a GridProperties instance, which is
@@ -715,25 +715,64 @@ class Grid(Grid3D):
 
         return newd
 
-    def guess_subgrid_design(self, nsub=1):
-        """Get by guessing the vertical design of the subgrid.
+    def estimate_design(self, nsub=None):
+        """Get by clever guessing the design and simbox thickness of the
+        grid or a subgrid.
+
+        If the grid consists of several subgrids, and nsub is not specified, then
+        a failure should be raised
 
         Args:
-            nsub (int): Subgrid index to check
+            nsub (int or str): Subgrid index to check, either as anumber (starting
+                with 1) or as subgrid name. If set to None, the whole grid will
+                examined.
 
         Returns:
-            code (str): P=proportional, T=topconform, B=baseconform, X=underdetermined
-                None if subgrids are missing, or nsub out of range.
+            result (dict): where key "design" gives one letter in(P, T, B, X, M)
+                P=proportional, T=topconform, B=baseconform,
+                X=underdetermined, M=Mixed conform. Key "dzsimbox" is simbox thickness
+                estimate per cell. None if nsub is given, but subgrids are missing, or
+                nsub (name or number) is out of range.
+
+        Example::
+
+            grd = xtgeo.Grid("emerald.roff")
+            res = grd.estimate_design(nsub="Etive")
+            print("Subgrid design is ", res["design"])
+            print("Subgrid simbox thickness is ", res["dzsimbox"])
+
         """
-        if not self.subgrids:
-            return None
+        nsubname = None
 
-        # if str(nsub) not in self.subgrids.keys():
-        #     return None
+        if nsub is None and self.subgrids:
+            raise ValueError("Subgrids exists, nsub cannot be None")
 
-        code = _grid_etc1.guess_subgrid_design(self, 1)
+        if nsub is not None:
+            if not self.subgrids:
+                return None
 
-        return code
+            if isinstance(nsub, int):
+                try:
+                    nsubname = list(self.subgrids.keys())[nsub - 1]
+                except IndexError:
+                    return None
+
+            elif isinstance(nsub, str):
+                nsubname = nsub
+            else:
+                raise ValueError("Key nsub of wrong type, must be a number or a name")
+
+            if nsubname not in self.subgrids.keys():
+                return None
+
+        res = _grid_etc1.estimate_design(self, nsubname)
+
+        return res
+
+    def estimate_flip(self):
+        """Determine flip (handedness) of grid"""
+
+        return _grid_etc1.estimate_flip(self)
 
     def subgrids_from_zoneprop(self, zoneprop):
         """Make subgrids from a zone property, which will replace the

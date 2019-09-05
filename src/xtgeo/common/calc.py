@@ -78,35 +78,35 @@ def vectorinfo2(x1, x2, y1, y2, option=1):
     return llen, rad, deg
 
 
-def find_flip(xv, yv, zv):
-    """Find the flip status by computing the cross products.
+def find_flip(xv, yv):
+    """Find the XY flip status by computing the cross products.
 
-    If flip is 1, then the system is left-handed, typically
-    X is East, Y is North and Z downwards.
+    If flip is 1, then the system is right handed in school algebra
+    but left-handed in reservoir models (where typically
+    X is East, Y is North, assuming Z downwards).
 
     Args:
         xv (tuple): First vector (x1, y1, z1)
         yv (tuple): Second vector (x2, y2, z2)
-        zv (tuple): Third vector (x3, y3, z3)
 
     Return:
         Flip flag (1 of -1)
 
+    ..versionchanged: 2.1.0 Reverse the number returned, skip zv
     """
     flip = 0
 
     xv = np.array(xv)
     yv = np.array(yv)
-    zv = np.array(zv)
 
     xycross = np.cross(xv, yv)
 
     logger.debug("Cross product XY is %s", xycross)
 
     if xycross[2] < 0:
-        flip = 1
-    else:
         flip = -1
+    else:
+        flip = 1
 
     return flip
 
