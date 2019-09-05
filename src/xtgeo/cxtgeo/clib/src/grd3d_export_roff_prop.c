@@ -120,7 +120,7 @@ void grd3d_export_roff_prop (
     char   mybyte, mychar;
     char   mystring[ROFFSTRLEN];
     FILE   *fc;
-    char   *token, tmp_codenames[ncodes][32];
+    char   *token, **tmp_codenames;
     const char sep[2]="|";
 
     char   s[24]="grd3d_export_roff_prop";
@@ -133,6 +133,11 @@ void grd3d_export_roff_prop (
 
     if (strcmp(ptype,"double")==0) ptype="float";
 
+    tmp_codenames = malloc(ncodes * sizeof(char*));
+    for (i = 0; i < ncodes; i++) {
+        tmp_codenames[i] = (char *)malloc(32);
+    }
+    
     /*
      *-------------------------------------------------------------------------
      * It is possible to export just one subgrid (if isubgrd_to_export >0)
@@ -352,5 +357,11 @@ void grd3d_export_roff_prop (
 
     fclose(fc);
 
+    for (i = 0; i < ncodes; i++) {
+        free(tmp_codenames[i]);
+    }
+    free(tmp_codenames);
+
+    
     xtg_speak(s, 2, "Exit from export roff");
 }
