@@ -129,11 +129,6 @@ def test_surfaces_apply():
     so = xtgeo.Surfaces(surfs)
     res = so.apply(np.nanmean, axis=0)
 
-    # theoretical stdev:
-    sum2 = 0.0
-    for inum in range(0, 101):
-        sum2 += (float(inum) - 50.0) ** 2
-    stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
     tsetup.assert_almostequal(res.values.mean(), bmean + 50.0, 0.0001)
 
 def test_get_surfaces_from_3dgrid():
