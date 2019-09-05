@@ -120,8 +120,8 @@ class Surfaces(object):
 
     def apply(self, func, *args, **kwargs):
         """Apply a function to the surface array.
-        The return value of the function must be a numpy array of the same shape 
-        as the surface. 
+        The return value of the function must be a numpy array of the same shape
+        as the surface.
         E.g. surfs.apply(np.nanmean, axis=0) will return the mean surface.
 
         Args:
