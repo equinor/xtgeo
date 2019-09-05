@@ -5,6 +5,8 @@ from __future__ import print_function
 import math
 from os.path import join
 
+import numpy as np
+
 import xtgeo
 import test_common.test_xtg as tsetup
 
@@ -114,6 +116,25 @@ def test_more_statistics():
     tsetup.assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
     tsetup.assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
 
+def test_surfaces_apply():
+    base = xtgeo.RegularSurface(TESTSET1A)
+    base.values *= 0.0
+    bmean = base.values.mean()
+    surfs = [base]
+    for inum in range(1, 101):
+        tmp = base.copy()
+        tmp.values += float(inum)
+        surfs.append(tmp)
+
+    so = xtgeo.Surfaces(surfs)
+    res = so.apply(np.nanmean, axis=0)
+
+    # theoretical stdev:
+    sum2 = 0.0
+    for inum in range(0, 101):
+        sum2 += (float(inum) - 50.0) ** 2
+    stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
+    tsetup.assert_almostequal(res.values.mean(), bmean + 50.0, 0.0001)
 
 def test_get_surfaces_from_3dgrid():
     """Create surfaces from a 3D grid"""
