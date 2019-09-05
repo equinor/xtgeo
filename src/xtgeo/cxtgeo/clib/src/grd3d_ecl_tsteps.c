@@ -36,6 +36,21 @@
  ******************************************************************************
  */
 
+/* since windows is missing strsep() */
+char* _mystrsep(char **stringp, const char *delim)
+{
+  
+    char *start = *stringp, *p = start ? strpbrk(start, delim) : NULL;
+
+    if (!p) {
+        *stringp = NULL;
+    } else {
+        *p = 0;
+        *stringp = p + 1;
+    }
+
+    return start;
+}
 
 int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
                       int nmax, int debug)
@@ -73,7 +88,8 @@ int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
     tofree = keywords;
     ic = 0;
     nc = 0;
-    while ((token = strsep(&keywords, "|")) != NULL) {
+    //    while ((token = strsep(&keywords, "|")) != NULL) {
+    while ((token = _mystrsep(&keywords, "|")) != NULL) {
 
         if (strcmp(token, "SEQNUM  ") == 0) {
             keytype = 1;

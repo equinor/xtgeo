@@ -63,8 +63,10 @@ int grd3d_adj_cells (
     char sbn[24] = "grd3d_adj_cells";
     long ib;
     int icn, jcn, kcn, nni, faulted;
-    int useactnum[nprop1], nnc[6];
+    int *useactnum, nnc[6];
 
+    useactnum = calloc(nprop1, sizeof(int));
+    
     for (ib = 0; ib < nprop1; ib++) {
         if (iflag1 == 0) useactnum[ib] = p_actnum_v[ib];
         if (iflag1 == 1) useactnum[ib] = 1;
@@ -112,6 +114,7 @@ int grd3d_adj_cells (
             }
 	}
     }
+    free(useactnum);
     return EXIT_SUCCESS;
 
 }
