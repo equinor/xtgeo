@@ -6,6 +6,10 @@ endmacro(make_library)
 
 FILE(GLOB SOURCES *.c)
 set (SOURCE_FILES ${SOURCES})
-set (CMAKE_C_FLAGS "-Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99")
+if (MSVC)
+	set (CMAKE_C_FLAGS "/Wall /O2")
+else()
+	set (CMAKE_C_FLAGS "-Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99")
+endif()
 
 add_library(cxtgeo STATIC ${SOURCE_FILES})

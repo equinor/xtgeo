@@ -139,12 +139,15 @@ int surf_slice_cube_window(
     int im, jm, knum, ier, iat, ic;
     double xcor, ycor, zcor, zval;
     float value;
-    double tmpzval[nzincr];
-    double zattr[nattr];
+    double *tmpzval;
+    double *zattr;
     int option1a = 0;
     time_t t1, t2;
     double elapsed;
 
+    tmpzval = calloc(nzincr, sizeof(double));
+    zattr = calloc(nattr, sizeof(double));
+    
     xtgverbose(debug);
     xtg_speak(s, 2, "Entering routine %s", s);
 
@@ -235,5 +238,8 @@ int surf_slice_cube_window(
     }
     xtg_speak(s, 1, "Working with slices... DONE!");
 
+    free(tmpzval);
+    free(zattr);
+      
     return EXIT_SUCCESS;
 }
