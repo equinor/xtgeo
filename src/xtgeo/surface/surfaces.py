@@ -130,7 +130,7 @@ class Surfaces(object):
             kwargs: The function keyword arguments
 
         """
-        
+
         template = self.surfaces[0].copy()
         slist = []
         for surf in self.surfaces:
