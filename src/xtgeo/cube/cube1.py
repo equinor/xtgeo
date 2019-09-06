@@ -120,7 +120,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             fformat = kwargs.get("fformat", "guess")
             self.from_file(args[0], fformat=fformat)
         else:
-            self._filesrc = "NONE"
+            self._filesrc = None
             self._xori = kwargs.get("xori", 0.0)
             self._yori = kwargs.get("yori", 0.0)
             self._zori = kwargs.get("zori", 0.0)
@@ -390,10 +390,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             values=self.values.copy(),
         )
 
-        if self._filesrc is not None and "(copy)" not in self._filesrc:
-            xcube.filesrc = self._filesrc + " (copy)"
-        elif self._filesrc is not None:
-            xcube.filesrc = self._filesrc
+        xcube.filesrc = self._filesrc
 
         xcube.ilines = self._ilines.copy()
         xcube.xlines = self._xlines.copy()

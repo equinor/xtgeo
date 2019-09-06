@@ -99,7 +99,7 @@ def _roxapi_import_bwell(
 
     self._df = pd.DataFrame.from_dict(logs)
     self._gname = gname
-    self._filesrc = "RMS"
+    self._filesrc = None
 
     # finally get some other metadata like RKB and topside X Y; as they
     # seem to miss for the BW in RMS, try and get them from the

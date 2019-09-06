@@ -71,13 +71,14 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def surface_from_file(mfile, fformat=None, template=None):
+def surface_from_file(mfile, fformat=None, template=None, values=True):
     """Make an instance of a RegularSurface directly from file import.
 
     Args:
         mfile (str): Name of file
         fformat (str): See :meth:`RegularSurface.from_file`
         template (Cube or RegularSurface): See :meth:`RegularSurface.from_file`
+        values: If True, surface values will be read
 
     Example::
 
@@ -639,7 +640,7 @@ class RegularSurface(object):
 
         return dsc.astext()
 
-    def from_file(self, mfile, fformat=None, template=None):
+    def from_file(self, mfile, fformat=None, template=None, values=True):
         """Import surface (regular map) from file.
 
         Note that the fformat=None option will guess bye looking at the file
@@ -658,6 +659,9 @@ class RegularSurface(object):
             template (object): Only valid if ``ijxyz`` format, where an
                 existing Cube or RegularSurface instance is applied to
                 get correct topology.
+            values (bool): If True (default), then full array is read, if False
+                only metadata will be read. Valid for Irap binary only. This allows
+                lazy loading in e.g. ensembles.
 
         Returns:
             Object instance.
@@ -689,7 +693,7 @@ class RegularSurface(object):
             fformat = fext.lower().replace(".", "")
 
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
-            _regsurf_import.import_irap_binary(self, mfile)
+            _regsurf_import.import_irap_binary(self, mfile, value=value)
         elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
             _regsurf_import.import_irap_ascii(self, mfile)
         elif fformat == "ijxyz":
@@ -895,7 +899,7 @@ class RegularSurface(object):
             np.full((self._ncol, self._nrow), zlevel, dtype=np.float64)
         )
 
-        self._filesrc = cube.filesrc + " (derived surface)"
+        self._filesrc = None
 
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
@@ -962,11 +966,7 @@ class RegularSurface(object):
 
         xsurf.ilines = self._ilines.copy()
         xsurf.xlines = self._xlines.copy()
-
-        if self._filesrc is not None and "(copy)" not in self._filesrc:
-            xsurf.filesrc = self._filesrc + " (copy)"
-        elif self._filesrc is not None:
-            xsurf.filesrc = self._filesrc
+        xsurf.filesrc = self._filesrc
 
         logger.debug("New array + flags + ID")
         return xsurf
@@ -1695,8 +1695,6 @@ class RegularSurface(object):
         self._ilines = nonrot.ilines
         self._xlines = nonrot.xlines
 
-        if self._filesrc and "(resampled)" not in self._filesrc:
-            self._filesrc = self._filesrc + " (resampled)"
 
     def refine(self, factor):
         """Refine a surface with a factor, e.g. 2 for double.
@@ -1732,9 +1730,6 @@ class RegularSurface(object):
 
         self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
         self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-        if self._filesrc and "(refined)" not in self._filesrc:
-            self._filesrc = self._filesrc + " (refined)"
 
         self.resample(proxy)
 
@@ -1787,9 +1782,6 @@ class RegularSurface(object):
 
         self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
         self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-        if self._filesrc and "(coarsened)" not in self._filesrc:
-            self._filesrc = self._filesrc + " (coarsened)"
 
         self.resample(proxy)
 
