@@ -118,6 +118,32 @@ class Surfaces(object):
         """Derive surfaces from a 3D grid"""
         _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
 
+    def apply(self, func, *args, **kwargs):
+        """Apply a function to the surface array.
+        The return value of the function must be a numpy array of the same shape
+        as the surface.
+        E.g. surfs.apply(np.nanmean, axis=0) will return the mean surface.
+
+        Args:
+            func: Function to apply
+            args: The function arguments
+            kwargs: The function keyword arguments
+
+        """
+
+        template = self.surfaces[0].copy()
+        slist = []
+        for surf in self.surfaces:
+            status = template.compare_topology(surf, strict=False)
+            if not status:
+                raise ValueError("Cannot so statistics, surfaces differs in topology")
+            slist.append(np.ma.filled(surf.values, fill_value=np.nan))
+
+        xlist = np.array(slist)
+
+        template.values = func(xlist, *args, **kwargs)
+        return template.copy()
+
     def statistics(self):
         """Return statistical measures from the surfaces.
 
@@ -126,7 +152,7 @@ class Surfaces(object):
         * std: the standard deviation surface (where ddof = 1)
 
         Currently this function expects that the surfaces all have the same
-        shape/topology
+        shape/topology.
 
         Returns:
             dict: A dictionary of statistical measures, see list above
