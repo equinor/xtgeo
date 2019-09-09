@@ -119,6 +119,32 @@ def test_irapbin_import1():
     xsurf.describe()
 
 
+def test_irapbin_import_metadatafirst():
+    """Import Reek Irap binary, first with metadata only, then values."""
+    logger.info("Import and export...")
+
+    NSURF = 10
+    sur = []
+    t1 = xtg.timer()
+    for ix in range(NSURF):
+        sur.append(xtgeo.RegularSurface(TESTSET2, values=False))
+    t2 = xtg.timer(t1)
+    logger.info("Loading %s surfaces lazy took %s secs.", NSURF, t2)
+    assert sur[NSURF - 1].ncol == 1264
+    print(sur[0])
+
+    t1 = xtg.timer()
+    for ix in range(NSURF):
+        sur[ix].load_values()
+    t2 = xtg.timer(t1)
+    logger.info("Loading %s surfaces actual values took %s secs.", NSURF, t2)
+
+    assert sur[NSURF - 1].ncol == 1264
+    assert sur[NSURF - 1].nrow == 2010
+    tsetup.assert_almostequal(sur[NSURF - 1].values[11, 0], 1678.89733887, 0.00001)
+    print(sur[0])
+
+
 def test_swapaxes():
     """Import Reek Irap binary and swap axes."""
 

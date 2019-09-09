@@ -147,7 +147,7 @@ class Surfaces(object):
         xlist = np.array(slist)
 
         template.values = func(xlist, *args, **kwargs)
-        return template.copy()
+        return template
 
     def statistics(self):
         """Return statistical measures from the surfaces.
