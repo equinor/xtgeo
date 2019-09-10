@@ -71,23 +71,27 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def surface_from_file(mfile, fformat=None, template=None):
+def surface_from_file(mfile, fformat=None, template=None, values=True):
     """Make an instance of a RegularSurface directly from file import.
 
     Args:
         mfile (str): Name of file
         fformat (str): See :meth:`RegularSurface.from_file`
         template (Cube or RegularSurface): See :meth:`RegularSurface.from_file`
+        values: If True (default), surface values will be read (Irap binary only)
 
     Example::
 
         import xtgeo
         mysurf = xtgeo.surface_from_file('some_name.gri')
+
+    ..versionchanged:: 2.1.0
+      Key "values" for Irap binary maps added
     """
 
     obj = RegularSurface()
 
-    obj.from_file(mfile, fformat=fformat, template=template)
+    obj.from_file(mfile, fformat=fformat, template=template, values=values)
 
     return obj
 
@@ -222,13 +226,15 @@ class RegularSurface(object):
         self._yflip = 1
 
         self._values = None
+        self._isloaded = True  # assume True unless explicitly set
 
         if args:
             # make instance from file import
             mfile = args[0]
             fformat = kwargs.get("fformat", None)
             template = kwargs.get("template", None)
-            self.from_file(mfile, fformat=fformat, template=template)
+            values = kwargs.get("values", True)
+            self.from_file(mfile, fformat=fformat, template=template, values=values)
 
         else:
             # make instance by kw spesification
@@ -262,6 +268,7 @@ class RegularSurface(object):
             self._masked = kwargs.get("masked", True)
             self._filesrc = kwargs.get("filesrc", None)
             self._name = kwargs.get("name", "unknown")
+            self._isloaded = True
 
         if self._values is not None:
             logger.debug("Shape of value: and values")
@@ -272,7 +279,6 @@ class RegularSurface(object):
             self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
 
             if self._values.mask is ma.nomask:
-                logger.info("Ensure that mask is a full array")
                 self._values = ma.array(
                     self._values, mask=ma.getmaskarray(self._values)
                 )
@@ -356,6 +362,9 @@ class RegularSurface(object):
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
 
+        if not self._isloaded:
+            return None
+
         currentmask = None
         if self._values is not None:
             if isinstance(self._values, ma.MaskedArray):
@@ -417,7 +426,8 @@ class RegularSurface(object):
     @property
     def nactive(self):
         """Number of active map nodes (read only)."""
-        return self._values.count()
+        if self._isloaded:
+            return self._values.count()
 
     @property
     def rotation(self):
@@ -621,17 +631,20 @@ class RegularSurface(object):
         np.set_printoptions(threshold=16)
         dsc.txt("Inlines vector", self._ilines)
         dsc.txt("Xlines vector", self._xlines)
-        dsc.txt("Values", self._values.reshape(-1), self._values.dtype)
         np.set_printoptions(threshold=1000)
-        dsc.txt(
-            "Values: mean, stdev, minimum, maximum",
-            self.values.mean(),
-            self.values.std(),
-            self.values.min(),
-            self.values.max(),
-        )
-        msize = float(self.values.size * 8) / (1024 * 1024 * 1024)
-        dsc.txt("Minimum memory usage of array (GB)", msize)
+        if self._isloaded:
+            dsc.txt("Values", self._values.reshape(-1), self._values.dtype)
+            dsc.txt(
+                "Values: mean, stdev, minimum, maximum",
+                self.values.mean(),
+                self.values.std(),
+                self.values.min(),
+                self.values.max(),
+            )
+            msize = float(self.values.size * 8) / (1024 * 1024 * 1024)
+            dsc.txt("Minimum memory usage of array (GB)", msize)
+        else:
+            dsc.txt("Values:", "Not loaded")
 
         if flush:
             dsc.flush()
@@ -639,7 +652,7 @@ class RegularSurface(object):
 
         return dsc.astext()
 
-    def from_file(self, mfile, fformat=None, template=None):
+    def from_file(self, mfile, fformat=None, template=None, values=True):
         """Import surface (regular map) from file.
 
         Note that the fformat=None option will guess bye looking at the file
@@ -658,6 +671,9 @@ class RegularSurface(object):
             template (object): Only valid if ``ijxyz`` format, where an
                 existing Cube or RegularSurface instance is applied to
                 get correct topology.
+            values (bool): If True (default), then full array is read, if False
+                only metadata will be read. Valid for Irap binary only. This allows
+                lazy loading in e.g. ensembles.
 
         Returns:
             Object instance.
@@ -668,6 +684,8 @@ class RegularSurface(object):
 
             >>> mymapobject = RegularSurface().from_file('myfile.x')
 
+        ..versionchanged:: 2.1.0
+          Key "values" for Irap binary maps added
         """
 
         self._values = None
@@ -689,7 +707,10 @@ class RegularSurface(object):
             fformat = fext.lower().replace(".", "")
 
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
-            _regsurf_import.import_irap_binary(self, mfile)
+            _regsurf_import.import_irap_binary(self, mfile, values=values)
+            if not values:
+                self._isloaded = False
+
         elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
             _regsurf_import.import_irap_ascii(self, mfile)
         elif fformat == "ijxyz":
@@ -704,6 +725,31 @@ class RegularSurface(object):
         self._name = os.path.basename(froot)
         self.ensure_correct_values(self.ncol, self.nrow, self._values)
         return self
+
+    def load_values(self):
+        """Import surface values in cases where metadata only is loaded.
+
+        See :meth:`RegularSurface.from_file` in cases where values key is set to False.
+
+        Returns:
+            Updated object instance.
+
+        Example::
+
+            surfs = []
+            for i in range(1000):
+                surfs.append(RegularSurface())
+                surfs[i].from_file("myfile" + str(i) + ".gri", values=False)
+
+            # load values in number 88:
+            surfs[88].load_values()
+
+        ..versionadded: 2.1.0
+        """
+
+        if not self._isloaded:
+            self.from_file(self._filesrc)
+            self._isloaded = True
 
     def to_file(self, mfile, fformat="irap_binary"):
         """Export a surface (map) to file.
@@ -895,7 +941,7 @@ class RegularSurface(object):
             np.full((self._ncol, self._nrow), zlevel, dtype=np.float64)
         )
 
-        self._filesrc = cube.filesrc + " (derived surface)"
+        self._filesrc = None
 
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
@@ -962,11 +1008,7 @@ class RegularSurface(object):
 
         xsurf.ilines = self._ilines.copy()
         xsurf.xlines = self._xlines.copy()
-
-        if self._filesrc is not None and "(copy)" not in self._filesrc:
-            xsurf.filesrc = self._filesrc + " (copy)"
-        elif self._filesrc is not None:
-            xsurf.filesrc = self._filesrc
+        xsurf.filesrc = self._filesrc
 
         logger.debug("New array + flags + ID")
         return xsurf
@@ -1695,8 +1737,6 @@ class RegularSurface(object):
         self._ilines = nonrot.ilines
         self._xlines = nonrot.xlines
 
-        if self._filesrc and "(resampled)" not in self._filesrc:
-            self._filesrc = self._filesrc + " (resampled)"
 
     def refine(self, factor):
         """Refine a surface with a factor, e.g. 2 for double.
@@ -1732,9 +1772,6 @@ class RegularSurface(object):
 
         self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
         self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-        if self._filesrc and "(refined)" not in self._filesrc:
-            self._filesrc = self._filesrc + " (refined)"
 
         self.resample(proxy)
 
@@ -1787,9 +1824,6 @@ class RegularSurface(object):
 
         self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
         self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-        if self._filesrc and "(coarsened)" not in self._filesrc:
-            self._filesrc = self._filesrc + " (coarsened)"
 
         self.resample(proxy)
 

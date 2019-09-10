@@ -157,6 +157,13 @@ int surf_import_irap_bin(
 
     *p_mx = nx;
     *p_my = ny;
+    *p_xori = xori;
+    *p_yori = yori;
+    *p_xinc = xinc;
+    *p_yinc = yinc;
+
+    if (rot < 0.0) rot = rot + 360.0;
+    *p_rot = rot;
 
     /* if scan mode only: */
     if (mode==0) {
@@ -232,14 +239,6 @@ int surf_import_irap_bin(
     xtg_speak(s, 3, "Read data map ... OK");
 
     fclose(fc);
-
-    *p_xori = xori;
-    *p_yori = yori;
-    *p_xinc = xinc;
-    *p_yinc = yinc;
-
-    if (rot < 0.0) rot = rot + 360.0;
-    *p_rot = rot;
 
 
     return EXIT_SUCCESS;

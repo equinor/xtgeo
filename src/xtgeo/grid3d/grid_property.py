@@ -580,7 +580,7 @@ class GridProperty(Grid3D):
 
         """
 
-        self._filesrc = "ROXAR API GridModel:{} Property: {}".format(gname, pname)
+        self._filesrc = None
 
         _gridprop_roxapi.import_prop_roxapi(
             self, projectname, gname, pname, realisation
@@ -750,10 +750,7 @@ class GridProperty(Grid3D):
         xprop.roxorigin = self._roxorigin
         xprop.roxar_dtype = self._roxar_dtype
 
-        if self._filesrc is not None and "(copy)" not in self._filesrc:
-            xprop.filesrc = self._filesrc + " (copy)"
-        elif self._filesrc is not None:
-            xprop.filesrc = self._filesrc
+        xprop.filesrc = self._filesrc
 
         return xprop
 

@@ -116,8 +116,10 @@ def test_more_statistics():
     tsetup.assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
     tsetup.assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
 
+
 def test_surfaces_apply():
     base = xtgeo.RegularSurface(TESTSET1A)
+    base.describe()
     base.values *= 0.0
     bmean = base.values.mean()
     surfs = [base]
@@ -127,9 +129,13 @@ def test_surfaces_apply():
         surfs.append(tmp)
 
     so = xtgeo.Surfaces(surfs)
-    res = so.apply(np.nanmean, axis=0)
+    res = so.apply(np.nanmean)
 
     tsetup.assert_almostequal(res.values.mean(), bmean + 50.0, 0.0001)
+
+    res = so.apply(np.nanpercentile, 10, axis=0, interpolation="nearest")
+    tsetup.assert_almostequal(res.values.mean(), bmean + 10.0, 0.0001)
+
 
 def test_get_surfaces_from_3dgrid():
     """Create surfaces from a 3D grid"""

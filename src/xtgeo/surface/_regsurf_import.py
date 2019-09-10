@@ -19,26 +19,49 @@ if DEBUG < 0:
 _cxtgeo.xtg_verbose_file("NONE")
 
 
-def import_irap_binary(self, mfile):
+def import_irap_binary(self, mfile, values=True):
     """Import Irap binary format."""
-    # using swig type mapping
 
     logger.debug("Enter function...")
-    # need to call the C function...
-    _cxtgeo.xtg_verbose_file("NONE")
 
-    # read with mode 0, to get mx my
-    xlist = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, DEBUG)
+    # read with mode 0, to get mx my and other metadata
+    (
+        ier,
+        self._ncol,
+        self._nrow,
+        _ndef,
+        self._xori,
+        self._yori,
+        self._xinc,
+        self._yinc,
+        self._rotation,
+        val,
+    ) = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, DEBUG)
 
-    nval = xlist[1] * xlist[2]  # mx * my
+    self._yflip = 1
+    if self._yinc < 0.0:
+        self._yinc *= -1
+        self._yflip = -1
+
+    self._filesrc = mfile
+
+    self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+    self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+
+    # lazy loading, not reading the arrays
+    if not values:
+        self._values = None
+        return
+
+    nval = self._ncol * self._nrow
     xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0, DEBUG)
 
-    ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
+    val = xlist[-1]
 
     if ier != 0:
         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
-    val = np.reshape(val, (ncol, nrow), order="C")
+    val = np.reshape(val, (self._ncol, self._nrow), order="C")
 
     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
 
@@ -46,25 +69,7 @@ def import_irap_binary(self, mfile):
         logger.info("NaN values are found, will mask...")
         val = ma.masked_invalid(val)
 
-    yflip = 1
-    if yinc < 0.0:
-        yinc = yinc * -1
-        yflip = -1
-
-    self._ncol = ncol
-    self._nrow = nrow
-    self._xori = xori
-    self._yori = yori
-    self._xinc = xinc
-    self._yinc = yinc
-    self._yflip = yflip
-    self._rotation = rot
     self._values = val
-    self._filesrc = mfile
-
-    self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
-
 
 def import_irap_ascii(self, mfile):
     """Import Irap ascii format."""

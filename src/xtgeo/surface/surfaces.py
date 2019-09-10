@@ -119,15 +119,20 @@ class Surfaces(object):
         _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
 
     def apply(self, func, *args, **kwargs):
-        """Apply a function to the surface array.
-        The return value of the function must be a numpy array of the same shape
-        as the surface.
+        """Apply a function to the Surfaces array.
+
+        The return value of the function (numpy nan comptatible) will be a
+        numpy array of the same shape as the first surface.
+
         E.g. surfs.apply(np.nanmean, axis=0) will return the mean surface.
 
         Args:
             func: Function to apply
             args: The function arguments
             kwargs: The function keyword arguments
+
+        Raises:
+            ValueError: If surfaces differ in topology.
 
         """
 
@@ -136,13 +141,13 @@ class Surfaces(object):
         for surf in self.surfaces:
             status = template.compare_topology(surf, strict=False)
             if not status:
-                raise ValueError("Cannot so statistics, surfaces differs in topology")
+                raise ValueError("Cannot do statistics, surfaces differ in topology")
             slist.append(np.ma.filled(surf.values, fill_value=np.nan))
 
         xlist = np.array(slist)
 
         template.values = func(xlist, *args, **kwargs)
-        return template.copy()
+        return template
 
     def statistics(self):
         """Return statistical measures from the surfaces.
@@ -157,7 +162,11 @@ class Surfaces(object):
         Returns:
             dict: A dictionary of statistical measures, see list above
 
+        Raises:
+            ValueError: If surfaces differ in topology.
+
         Example::
+
             surfs = Surfaces(mylist)  # mylist is a collection of files
             stats = surfs.statistics()
             # export the mean surface
@@ -171,7 +180,7 @@ class Surfaces(object):
         for surf in self.surfaces:
             status = template.compare_topology(surf, strict=False)
             if not status:
-                raise ValueError("Cannot so statistics, surfaces differs in topology")
+                raise ValueError("Cannot do statistics, surfaces differ in topology")
             slist.append(np.ma.filled(surf.values, fill_value=np.nan))
 
         xlist = np.array(slist)
