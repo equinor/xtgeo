@@ -104,3 +104,17 @@ def test_randomline_fence_from_polygon():
         plt.axis("tight")
         plt.colorbar()
         plt.show()
+
+
+def test_randomline_fence_calczminzmax():
+    """Import ROFF grid with props and make fence from polygons, zmin/zmax auto"""
+
+    grd = xtgeo.Grid(REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"])
+    fence = xtgeo.Polygons(FENCE1)
+
+    fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
+
+    hmin, hmax, vmin, vmax, por = grd.get_randomline(
+        fspec, "PORO", zmin=None, zmax=None
+    )
+    tsetup.assert_almostequal(vmin, 1548.10098, 0.0001)

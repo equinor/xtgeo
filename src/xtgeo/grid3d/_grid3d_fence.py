@@ -119,7 +119,7 @@ def _update_tmpvars(self):
         )
 
         self._tmp["basd"] = xtgeo.RegularSurface()
-        self._tmp["basi"], self._tmp["basj"] = self._tmp["topd"].from_grid3d(
+        self._tmp["basi"], self._tmp["basj"] = self._tmp["basd"].from_grid3d(
             one, where="base", rfactor=4
         )
 
