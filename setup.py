@@ -12,6 +12,11 @@ from setuptools import setup, find_packages, Extension
 from distutils.command.build import build as _build
 from setuptools.command.build_ext import build_ext as _build_ext
 
+windows = False
+cmakeoption = ""
+if "Windows" in platform.system():
+    windows = True
+    cmakeoption = "-DCMAKE_GENERATOR_PLATFORM=x64"
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
@@ -85,9 +90,13 @@ class CMakeExtension(Extension):
         print(self.cmake_lists_dir)
         self.build_temp = os.path.join(self.cmake_lists_dir, "build")
 
+        if windows:
+            print("******** REMOVE BUILD {}".format(self.build_temp))
+            shutil.rmtree(self.build_temp)
+        
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
-            subprocess.check_call(["cmake", ".."], cwd=self.build_temp)
+            subprocess.check_call(["cmake", "..", cmakeoption], cwd=self.build_temp)
 
         subprocess.check_call(
             ["cmake", "--build", ".", "--target", "install"], cwd=self.build_temp
@@ -98,13 +107,16 @@ class CMakeExtension(Extension):
 
 sources = ["src/xtgeo/cxtgeo/cxtgeo.i"]  
 
+compile_args = ["-Wno-uninitialized", "-Wno-strict-prototypes"]
+if windows:
+    compile_args=["/wd4267", "/wd4244"]
 
 # cxtgeo extension module
 _cxtgeo = CMakeExtension(
     "xtgeo.cxtgeo._cxtgeo",
     cmake_lists_dir="src/xtgeo/cxtgeo/clib",
     sources=sources,
-    extra_compile_args=["-Wno-uninitialized", "-Wno-strict-prototypes"],
+    extra_compile_args=compile_args,
     include_dirs=["src/xtgeo/cxtgeo/clib/src"],
     library_dirs=["src/xtgeo/cxtgeo/clib/lib"],
     libraries=["cxtgeo"],
