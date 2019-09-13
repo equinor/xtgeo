@@ -17,7 +17,7 @@ endif()
 
 IF (WIN32)
    install(FILES
-	      "${CMAKE_BUILD_PATH}/src/libcxtgeo.dll"
+	      "${CMAKE_BUILD_PATH}/src/Debug/cxtgeo.lib"
 	      DESTINATION ${CMAKE_SOURCE_DIR}/lib)
 else()
 	install(FILES
