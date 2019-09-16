@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
-import pytest
-import xtgeo.common.xtgeo_system as xsys
 import platform
+
+import pytest
+
+import xtgeo.common.xtgeo_system as xsys
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:

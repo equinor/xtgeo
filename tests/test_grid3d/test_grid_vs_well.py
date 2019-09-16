@@ -21,15 +21,15 @@ TDMP = xtg.tmpdir
 # Do tests
 # =============================================================================
 
-gridfile = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
-zonefile = "../xtgeo-testdata/3dgrids/reek/reek_sim_zone.roff"
-well1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-well2 = "../xtgeo-testdata/wells/reek/1/OP_2.w"
-well3 = "../xtgeo-testdata/wells/reek/1/OP_3.w"
-well4 = "../xtgeo-testdata/wells/reek/1/OP_4.w"
-well5 = "../xtgeo-testdata/wells/reek/1/OP_5.w"
-well6 = "../xtgeo-testdata/wells/reek/1/WI_1.w"
-well7 = "../xtgeo-testdata/wells/reek/1/WI_3.w"
+GRIDFILE = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
+ZONEFILE = "../xtgeo-testdata/3dgrids/reek/reek_sim_zone.roff"
+WELL1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
+WELL2 = "../xtgeo-testdata/wells/reek/1/OP_2.w"
+WELL3 = "../xtgeo-testdata/wells/reek/1/OP_3.w"
+WELL4 = "../xtgeo-testdata/wells/reek/1/OP_4.w"
+WELL5 = "../xtgeo-testdata/wells/reek/1/OP_5.w"
+WELL6 = "../xtgeo-testdata/wells/reek/1/WI_1.w"
+WELL7 = "../xtgeo-testdata/wells/reek/1/WI_3.w"
 
 # A problem here is that the OP wells has very few samples, which
 # makes a assumed match of 100% (since only one point)
@@ -41,24 +41,24 @@ def test_report_zlog_mismatch():
     """Report zone log mismatch grid and well."""
     logger.info("Name is {}".format(__name__))
     g1 = Grid()
-    g1.from_file(gridfile)
+    g1.from_file(GRIDFILE)
 
     g2 = Grid()
-    g2.from_file(gridfile)
+    g2.from_file(GRIDFILE)
 
     g2.reduce_to_one_layer()
     g2.to_file(os.path.join(TDMP, "test.roff"), fformat="roff")
 
     z = GridProperty()
-    z.from_file(zonefile, name="Zone")
+    z.from_file(ZONEFILE, name="Zone")
 
-    w1 = Well(well1)
-    w2 = Well(well2)
-    w3 = Well(well3)
-    w4 = Well(well4)
-    w5 = Well(well5)
-    w6 = Well(well6)
-    w7 = Well(well7)
+    w1 = Well(WELL1)
+    w2 = Well(WELL2)
+    w3 = Well(WELL3)
+    w4 = Well(WELL4)
+    w5 = Well(WELL5)
+    w6 = Well(WELL6)
+    w7 = Well(WELL7)
 
     wells = [w1, w2, w3, w4, w5, w6, w7]
 
