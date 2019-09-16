@@ -33,7 +33,11 @@ def test_check_folder():
         folder = "TMP/nonwritable"
         myfile = os.path.join(folder, "somefile")
         if not os.path.exists(folder):
-            os.mkdir(folder, mode=0o440)
+            try:
+                os.mkdir(folder, mode=0o440)
+            except TypeError:
+                os.mkdir(folder, 0440)
+
         status = xsys.check_folder(myfile)
         assert status is False
 

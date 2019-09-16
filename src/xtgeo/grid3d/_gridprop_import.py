@@ -454,9 +454,9 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     fds, tmpfile = mkstemp(prefix="tmpxtgeo")
     os.close(fds)
 
-    with open(pfile, "rb") as oldfile, open(tmpfile, "wb") as newfile:
+    with open(pfile, "r") as oldfile, open(tmpfile, "w") as newfile:
         for line in oldfile:
-            if not (re.search(rb"^--", line) or re.search(rb"^\s+$", line)):
+            if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
                 newfile.write(line)
 
     # now read the property
