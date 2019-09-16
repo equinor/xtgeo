@@ -122,7 +122,7 @@ int surf_import_irap_bin(
      * Last record: Not sure what these mean, treat them as dummy
      */
 
-    fc = fopen(filename, "r");
+    fc = fopen(filename, "rb");
 
     /* check endianess */
     swap = 0;
@@ -220,7 +220,7 @@ int surf_import_irap_bin(
 	    //xtg_speak(s,2,"RECORD DATA STOP is %d", myint);
 	    mstop = myint;
 	    if (mstart != mstop) {
-		xtg_error(s,"Error en reading irap file");
+	      xtg_error(s,"Error en reading irap file (mstart %d mstop %d)", mstart, mstop);
 	    }
 	}
 	else{

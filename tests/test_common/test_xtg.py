@@ -2,6 +2,7 @@
 import os
 import warnings
 import time
+import platform
 
 import pytest
 
@@ -85,6 +86,11 @@ if 'ROXAR_RMS_ROOT' in os.environ:
 plotskipifroxar = pytest.mark.skipif(skipplot, reason='Skip test in as '
                                      'Roxar has matplotlib issues')
 
+skipwindows = False
+if 'WINDOWS' in platform.system().upper():
+    skipwindows = True
+
+skipifwindows = pytest.mark.skipif(skipwindows, reason='Skip test for Windows')
 
 # =============================================================================
 # Do tests

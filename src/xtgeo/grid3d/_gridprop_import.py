@@ -451,26 +451,20 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
 
     # This requires that the Python part clean up comments
     # etc, and make a tmp file.
+    fds, tmpfile = mkstemp(prefix="tmpxtgeo")
+    os.close(fds)
 
-    # make a temporary file
-    fds, tmpfile = mkstemp()
-    # make a temporary
-
-    with open(pfile) as oldfile, open(tmpfile, "w") as newfile:
+    with open(pfile, "rb") as oldfile, open(tmpfile, "wb") as newfile:
         for line in oldfile:
-            if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
+            if not (re.search(rb"^--", line) or re.search(rb"^\s+$", line)):
                 newfile.write(line)
-
-    newfile.close()
-    oldfile.close()
 
     # now read the property
     nlen = self._ncol * self._nrow * self._nlay
     ier, values = _cxtgeo.grd3d_import_grdecl_prop(
         tmpfile, self._ncol, self._nrow, self._nlay, name, nlen, 0, XTGDEBUG
     )
-    # remove tmpfile
-    os.close(fds)
+
     os.remove(tmpfile)
 
     if ier != 0:
@@ -479,7 +473,6 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
         )
 
     self.values = values.reshape(self.dimensions)
-
     self.values = ma.masked_equal(self.values, actnumv == 0)
 
     return 0

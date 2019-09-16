@@ -2,6 +2,7 @@
 import os
 import pytest
 import xtgeo.common.xtgeo_system as xsys
+import platform
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
@@ -23,6 +24,9 @@ def test_check_folder():
 
     status = xsys.check_folder("src/xtgeo")
     assert status is True
+
+    if "WINDOWS" in platform.system().upper():
+        return
     if not TRAVIS:
         print("Non travis test")
         # skipped for travis, as travis runs with root rights

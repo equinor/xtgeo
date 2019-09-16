@@ -12,26 +12,6 @@
 
 #define MAXIX 1000000
 
-void _scan_dimensions(FILE *fd, int *nx, int *ny, int debug);
-
-long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
-                     double *ybuffer, double *zbuffer,
-                     int *ilmin, int *ilmax, int *xlmin, int *xlmax,
-                     int debug);
-
-int _compute_map_vectors(int ilinemin, int ilinemax, int ncol,
-                         int xlinemin, int xlinemax, int nrow,
-                         long ixnummax,
-                         int *ilinesb, int *xlinesb,
-                         double *xbuffer, double *ybuffer, double *zbuffer,
-                         double *xcoord, double *ycoord,
-                         int *ilines, int *xlines, double *p_map_v,
-                         int debug);
-
-int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
-                       double *p_map_v,
-                       double *xori, double *yori, double *xinc, double *yinc,
-                       double *rot, int *yflip, int debug);
 
 /*
  ******************************************************************************
@@ -101,112 +81,6 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
  ******************************************************************************
  */
 
-int surf_import_ijxyz (
-                       char *file,
-                       int mode,
-                       int *nx,
-                       int *ny,
-                       long *ndef,
-                       double *xori,
-                       double *yori,
-                       double *xinc,
-                       double *yinc,
-                       double *rot,
-                       int *ilines,
-                       long ncol,
-                       int *xlines,
-                       long nrow,
-                       double *p_map_v,
-                       long nmap,
-                       int *yflip,
-                       int option,
-                       int debug
-                       )
-{
-
-    /* locals*/
-    int iok = 0;
-    int ilinemin, ilinemax, xlinemin, xlinemax;
-
-    FILE *fd;
-    char sbn[24] = "surf_import_ijxyz";
-    double *xbuffer, *ybuffer, *zbuffer, *xcoord, *ycoord;
-    int *ilinesb, *xlinesb;
-    int nncol, nnrow;
-
-
-    xtgverbose(debug);
-
-    /* read header */
-    xtg_speak(sbn, 2, "Entering routine %s", sbn);
-
-    fd = x_fopen(file, "r", debug);
-
-    /* ========================================================================
-     * scan mode; to determine dimensions */
-    if (mode == 0) {
-        _scan_dimensions(fd, nx, ny, debug);
-
-        fclose(fd);
-        xtg_speak(sbn, 1, "Dimensions: %d %d", *nx, *ny);
-        return EXIT_SUCCESS;
-    }
-
-    /* ========================================================================
-     * Read mode; now dimensions shall be known */
-
-    nncol = (int)ncol;
-    nnrow = (int)nrow;
-
-    *nx = nncol;
-    *ny = nnrow;
-
-    xtg_speak(sbn, 2, "Read mode in %s", sbn);
-    xtg_speak(sbn, 2, "Allocation of buffers for storing current data ...");
-
-    ilinesb = calloc(ncol * nrow + 10, sizeof(int));
-    xlinesb = calloc(ncol * nrow + 10, sizeof(int));
-    xbuffer = calloc(ncol * nrow + 10, sizeof(double));
-    ybuffer = calloc(ncol * nrow + 10, sizeof(double));
-    zbuffer = calloc(ncol * nrow + 10, sizeof(double));
-    xcoord = calloc(ncol * nrow + 10, sizeof(double));
-    ycoord = calloc(ncol * nrow + 10, sizeof(double));
-
-
-    *ndef = _collect_values(fd, ilinesb, xlinesb, xbuffer, ybuffer, zbuffer,
-                            &ilinemin, &ilinemax, &xlinemin, &xlinemax,
-                            debug);
-
-    fclose(fd);
-
-    xtg_speak(sbn, 2, "Done collecting values from file");
-
-    iok = _compute_map_vectors(ilinemin, ilinemax, nncol,
-                               xlinemin, xlinemax, nnrow,
-                               *ndef,
-                               ilinesb, xlinesb,
-                               xbuffer, ybuffer, zbuffer,
-                               xcoord, ycoord,
-                               ilines, xlines,
-                               p_map_v,
-                               debug);
-
-    iok = _compute_map_props(nncol, nnrow, xcoord, ycoord, p_map_v,
-                             xori, yori, xinc, yinc, rot, yflip, debug);
-
-    if (iok != 0) xtg_error(sbn, "Error, cannot compute map props");
-
-    free(ilinesb);
-    free(xlinesb);
-    free(xbuffer);
-    free(ybuffer);
-    free(zbuffer);
-    free(xcoord);
-    free(ycoord);
-
-    return EXIT_SUCCESS;
-
-}
 
 /*
  ******************************************************************************
@@ -219,12 +93,15 @@ void _scan_dimensions(FILE *fd, int *nx, int *ny, int debug)
     int inum, nrow, ncol, iline, xline, iok;
     int ilinemin, ilinemax, xlinemin, xlinemax;
     int ispacing, xspacing, ispace, mispace, mxspace;
-    int itmp[MAXIX], xtmp[MAXIX];
+    int *itmp, *xtmp;
     float rdum, filine, fxline;
     char sbn[24] = "_scan_dimensions";
-    char lbuffer[132];
+    char lbuffer[132] = "";
 
     xtgverbose(debug);
+
+    itmp = calloc(MAXIX, 4);
+    xtmp = calloc(MAXIX, 4);
 
     xtg_speak(sbn, 2, "Entering routine %s", sbn);
 
@@ -301,6 +178,10 @@ void _scan_dimensions(FILE *fd, int *nx, int *ny, int debug)
     *ny = (xlinemax - xlinemin)/xspacing + 1;
 
     xtg_speak(sbn, 2, "NX NY are %d %d", *nx, *ny);
+
+    free(itmp);
+    free(xtmp);
+
 }
 
 
@@ -518,4 +399,114 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
               *rot, *yflip);
 
     return EXIT_SUCCESS;
+}
+
+
+int surf_import_ijxyz (
+                       char *file,
+                       int mode,
+                       int *nx,
+                       int *ny,
+                       long *ndef,
+                       double *xori,
+                       double *yori,
+                       double *xinc,
+                       double *yinc,
+                       double *rot,
+                       int *ilines,
+                       long ncol,
+                       int *xlines,
+                       long nrow,
+                       double *p_map_v,
+                       long nmap,
+                       int *yflip,
+                       int option,
+                       int debug
+                       )
+{
+
+    /* locals*/
+    int iok = 0;
+    int ilinemin, ilinemax, xlinemin, xlinemax;
+
+    FILE *fd;
+    char sbn[24] = "surf_import_ijxyz";
+    double *xbuffer, *ybuffer, *zbuffer, *xcoord, *ycoord;
+    int *ilinesb, *xlinesb;
+    int nncol, nnrow;
+
+
+    xtgverbose(debug);
+
+    /* read header */
+    xtg_speak(sbn, 2, "Entering routine %s", sbn);
+
+    fd = x_fopen(file, "rb", debug);
+
+    /* ========================================================================
+     * scan mode; to determine dimensions */
+    if (mode == 0) {
+        printf("DING1\n");
+        _scan_dimensions(fd, nx, ny, debug);
+
+        printf("DING2\n");
+        fclose(fd);
+        xtg_speak(sbn, 1, "Dimensions: %d %d", *nx, *ny);
+        return EXIT_SUCCESS;
+    }
+
+    /* ========================================================================
+     * Read mode; now dimensions shall be known */
+
+    nncol = (int)ncol;
+    nnrow = (int)nrow;
+
+    *nx = nncol;
+    *ny = nnrow;
+
+    xtg_speak(sbn, 2, "Read mode in %s", sbn);
+    xtg_speak(sbn, 2, "Allocation of buffers for storing current data ...");
+
+    ilinesb = calloc(ncol * nrow + 10, sizeof(int));
+    xlinesb = calloc(ncol * nrow + 10, sizeof(int));
+    xbuffer = calloc(ncol * nrow + 10, sizeof(double));
+    ybuffer = calloc(ncol * nrow + 10, sizeof(double));
+    zbuffer = calloc(ncol * nrow + 10, sizeof(double));
+    xcoord = calloc(ncol * nrow + 10, sizeof(double));
+    ycoord = calloc(ncol * nrow + 10, sizeof(double));
+
+
+    *ndef = _collect_values(fd, ilinesb, xlinesb, xbuffer, ybuffer, zbuffer,
+                            &ilinemin, &ilinemax, &xlinemin, &xlinemax,
+                            debug);
+
+    fclose(fd);
+
+    xtg_speak(sbn, 2, "Done collecting values from file");
+
+    iok = _compute_map_vectors(ilinemin, ilinemax, nncol,
+                               xlinemin, xlinemax, nnrow,
+                               *ndef,
+                               ilinesb, xlinesb,
+                               xbuffer, ybuffer, zbuffer,
+                               xcoord, ycoord,
+                               ilines, xlines,
+                               p_map_v,
+                               debug);
+
+    iok = _compute_map_props(nncol, nnrow, xcoord, ycoord, p_map_v,
+                             xori, yori, xinc, yinc, rot, yflip, debug);
+
+    if (iok != 0) xtg_error(sbn, "Error, cannot compute map props");
+
+    free(ilinesb);
+    free(xlinesb);
+    free(xbuffer);
+    free(ybuffer);
+    free(zbuffer);
+    free(xcoord);
+    free(ycoord);
+
+    return EXIT_SUCCESS;
+
 }

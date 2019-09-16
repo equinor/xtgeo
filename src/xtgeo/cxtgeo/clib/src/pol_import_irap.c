@@ -47,7 +47,7 @@ void pol_import_irap (
 
     xtg_speak(s,2,"Entering <pox_import_irap>");
     xtg_speak(s,2,"Opening file: %s:", file);
-    fc=fopen(file,"r");
+    fc=fopen(file,"rb");
     if (fc==NULL) {
 	xtg_error(s,"Cannot open file (NULL signal) %s", file);
     }

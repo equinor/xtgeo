@@ -74,7 +74,7 @@ void grd3d_import_grdecl (
      */
 
     xtg_speak(s,2,"Opening GRDECL file...");
-    fc=fopen(filename,"r");
+    fc=fopen(filename,"rb");
     if (fc == NULL) {
 	xtg_error(s,"Cannot open file!");
     }
@@ -248,4 +248,5 @@ void grd3d_import_grdecl (
 	xtg_speak(s,2,"Conversion via MAPAXES... DONE");
     }
 
+    fclose(fc);
 }
