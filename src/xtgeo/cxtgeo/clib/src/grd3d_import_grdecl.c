@@ -76,6 +76,7 @@ void grd3d_import_grdecl (
     xtg_speak(s,2,"Opening GRDECL file...");
     fc=fopen(filename,"rb");
     if (fc == NULL) {
+        fclose(fc);
 	xtg_error(s,"Cannot open file!");
     }
     xtg_speak(s,2,"Opening file...OK!");
@@ -100,6 +101,7 @@ void grd3d_import_grdecl (
 	    xtg_speak(s,2,"SPECGRID found");
 	    ier=fscanf(fc,"%d %d %d", &nnx, &nny, &nnz);
 	    if (ier != 3) {
+                fclose(fc);
 		xtg_error(s,"Error in reading SPECGRID");
 	    }
 	}
@@ -109,6 +111,7 @@ void grd3d_import_grdecl (
 	    ier = fscanf(fc,"%lf %lf %lf %lf %lf %lf", &x1, &y1, &x2, &y2,
                          &x3, &y3);
 	    if (ier != 6) {
+                fclose(fc);
 		xtg_error(s,"Error in reading MAPAXES");
 	    }
 	    mamode=1;
@@ -119,8 +122,10 @@ void grd3d_import_grdecl (
 	    nfcoord=1;
 
 	    for (i=0; i<num_cornerlines; i++) {
-		if (fscanf(fc,"%lf",&fvalue) != 1)
+		if (fscanf(fc,"%lf",&fvalue) != 1) {
+                    fclose(fc);
                     xtg_error(s,"Error in reading COORD");
+                }
 		if (fvalue == 9999900.0000) {
 		    fvalue=-9999.99;
 		}
