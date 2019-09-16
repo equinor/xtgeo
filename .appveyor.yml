@@ -13,16 +13,16 @@ environment:
   matrix:
     # - PYTHON: C:\Python35
     #   PYTHON_VERSION: 35
-    # - PYTHON: C:\Python36
-    #   PYTHON_VERSION: 36
-    - PYTHON: C:\Python37
-      PYTHON_VERSION: 37
+    - PYTHON: C:\Python36
+      PYTHON_VERSION: 36
+    # - PYTHON: C:\Python37
+    #  PYTHON_VERSION: 37
 
 matrix:
   fast_finish: true
 
 install:
-  - ps: choco install -y --no-progress --allow-empty-checksums -r swig --version 3.0.9
+  - ps: choco install -y --no-progress --allow-empty-checksums -r swig
   - IF DEFINED PYTHON (IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64)
   - IF DEFINED PYTHON SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - IF DEFINED PYTHON pip install --upgrade
@@ -43,7 +43,7 @@ before_build:
 
 build_script:
   - git describe
-  # - IF DEFINED PYTHON python setup.py bdist_wheel -G %generator%
+  - IF DEFINED PYTHON python setup.py bdist_wheel
   # - ps: popd
 
 # before_deploy:

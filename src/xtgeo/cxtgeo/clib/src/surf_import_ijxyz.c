@@ -441,15 +441,13 @@ int surf_import_ijxyz (
     /* read header */
     xtg_speak(sbn, 2, "Entering routine %s", sbn);
 
-    fd = x_fopen(file, "rb", debug);
+    fd = x_fopen(file, "r", debug);
 
     /* ========================================================================
      * scan mode; to determine dimensions */
     if (mode == 0) {
-        printf("DING1\n");
         _scan_dimensions(fd, nx, ny, debug);
 
-        printf("DING2\n");
         fclose(fd);
         xtg_speak(sbn, 1, "Dimensions: %d %d", *nx, *ny);
         return EXIT_SUCCESS;

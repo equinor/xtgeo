@@ -70,7 +70,7 @@ void grd3d_export_egrid (
     if (mode == 0) xtg_speak(sbn, 2,"Opening binary EGRID file...");
     if (mode == 1) xtg_speak(sbn, 2,"Opening text EGRID file...");
 
-    fc = fopen(filename, "wb"); /* The b will ensure Unix style ASCII on win */
+    fc = fopen(filename, "wb");
     if (fc == NULL) xtg_error(sbn, "Cannot open file!");
 
     /*
