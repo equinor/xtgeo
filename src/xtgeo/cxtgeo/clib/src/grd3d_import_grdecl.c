@@ -1,18 +1,3 @@
-/*
- * ############################################################################
- * grd3d_import_eclipse_grdecl
- * Reading a Eclipse ASCII input grid
- * Author: JCR
- * ############################################################################
- * $Id: $
- * $Source: $
- *
- * $Log: $
- *
- * ############################################################################
- */
-
-
 
 #include <string.h>
 #include <stdlib.h>
@@ -23,7 +8,6 @@
  ******************************************************************************
  *                      ECLIPSE GRDECL FILE
  ******************************************************************************
- * ----------------------------------------------------------------------------
  *
  */
 
@@ -43,14 +27,14 @@ void grd3d_import_grdecl (
 
 {
     char cname[9];
-    int    i, j, k, kk, ib, line, nnx, nny, nnz, num_cornerlines, kzread;
-    int    ix, jy, kz, ier, nn;
-    int    nfact=0, nfzcorn=0, nfcoord=0;
+    int i, j, k, kk, ib, line, nnx, nny, nnz, num_cornerlines, kzread;
+    int ix, jy, kz, ier, nn;
+    int nfact=0, nfzcorn=0, nfcoord=0;
     double fvalue, fvalue1, fvalue2, xmin, xmax, ymin, ymax;
     double x1, y1, x2, y2, x3, y3, cx, cy;
-    int    dvalue, mamode;
-    FILE   *fc;
-    char   s[24]="grd3d_import_grdecl";
+    int dvalue, mamode;
+    FILE *fc;
+    char s[24]="grd3d_import_grdecl";
 
     xtgverbose(debug);
 
@@ -73,11 +57,8 @@ void grd3d_import_grdecl (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(s,2,"Opening GRDECL file...");
-    fc=fopen(filename,"r");
-    if (fc == NULL) {
-	xtg_error(s,"Cannot open file!");
-    }
+    xtg_speak(s,2,"Opening ASCII GRDECL file...");
+    fc = x_fopen(filename, "r", debug);
     xtg_speak(s,2,"Opening file...OK!");
 
 
@@ -247,5 +228,4 @@ void grd3d_import_grdecl (
 	}
 	xtg_speak(s,2,"Conversion via MAPAXES... DONE");
     }
-
 }

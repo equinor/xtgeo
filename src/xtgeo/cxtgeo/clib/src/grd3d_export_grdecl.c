@@ -69,11 +69,14 @@ void grd3d_export_grdecl (
      *-------------------------------------------------------------------------
      */
 
-    if (mode == 0) xtg_speak(sbn, 2,"Opening binary GRDECL file...");
-    if (mode == 1) xtg_speak(sbn, 2,"Opening text GRDECL file...");
-
-    fc = fopen(filename, "wb"); /* The b will ensure Unix style ASCII on win */
-    if (fc == NULL) xtg_error(sbn, "Cannot open file!");
+    if (mode == 0) {
+        xtg_speak(sbn, 2,"Opening binary GRDECL file...");
+        fc = x_fopen(filename, "wb", debug);
+    }
+    else{
+        xtg_speak(sbn, 2,"Opening text GRDECL file...");
+        fc = x_fopen(filename, "w", debug);
+    }
 
     /*
      *-------------------------------------------------------------------------

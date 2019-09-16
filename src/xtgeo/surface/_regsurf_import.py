@@ -23,7 +23,6 @@ def import_irap_binary(self, mfile, values=True):
     """Import Irap binary format."""
 
     logger.debug("Enter function...")
-
     # read with mode 0, to get mx my and other metadata
     (
         ier,

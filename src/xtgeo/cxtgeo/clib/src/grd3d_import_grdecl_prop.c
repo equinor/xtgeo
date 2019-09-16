@@ -69,7 +69,7 @@ int grd3d_import_grdecl_prop(
     xtg_speak(sbn,2,"Import Property on Eclipse GRDECL format ...");
 
     xtg_speak(sbn, 2, "Opening GRDECL file...");
-    fc = fopen(filename, "r");
+    fc = fopen(filename, "rb");
     if (fc == NULL) xtg_error(sbn,"Cannot open file!");
     xtg_speak(sbn, 2, "Opening file...OK!");
 
@@ -78,7 +78,10 @@ int grd3d_import_grdecl_prop(
     for (line = 1; line < 99999999; line++) {
 
 	/* Get word */
-	if (fgets(cname, 33, fc) == NULL) return -1;
+	if (fgets(cname, 33, fc) == NULL) {
+            fclose(fc);
+            return -1;
+        }
 
 	if (strncmp(cname, pname, nchar) == 0) {
 	    xtg_speak(sbn, 2, "Keyword found");

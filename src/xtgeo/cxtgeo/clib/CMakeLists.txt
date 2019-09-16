@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 set(CMAKE_BUILD_PATH "${CMAKE_SOURCE_DIR}/build")
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR})
+# set(default_build_type "Release")
 
 project(cxtgeo C)
 
@@ -15,7 +16,7 @@ IF (LINUX)
    add_subdirectory(tap)
 endif()
 
-IF (WIN32)
+IF (MSVC)
    install(FILES
 	      "${CMAKE_BUILD_PATH}/src/Debug/cxtgeo.lib"
 	      DESTINATION ${CMAKE_SOURCE_DIR}/lib)

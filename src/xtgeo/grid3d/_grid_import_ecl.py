@@ -127,8 +127,8 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
 def import_ecl_grdecl(self, gfile):
 
     # make a temporary file
-    fds, tmpfile = mkstemp()
-    # make a temporary
+    fds, tmpfile = mkstemp(prefix="tmpxtgeo")
+    os.close(fds)
 
     with open(gfile) as oldfile, open(tmpfile, "w") as newfile:
         for line in oldfile:
@@ -183,7 +183,6 @@ def import_ecl_grdecl(self, gfile):
     )
 
     # remove tmpfile
-    os.close(fds)
     os.remove(tmpfile)
 
     nact = _cxtgeo.intpointer_value(ptr_num_act)

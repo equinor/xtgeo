@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
+import platform
+
 import pytest
+
 import xtgeo.common.xtgeo_system as xsys
+import test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
@@ -12,6 +16,7 @@ if "TRAVISRUN" in os.environ:
 # =============================================================================
 
 
+@tsetup.equinor
 def test_check_folder():
     """testing that folder checks works in different scenaria"""
 
@@ -23,13 +28,17 @@ def test_check_folder():
 
     status = xsys.check_folder("src/xtgeo")
     assert status is True
+
+    if "WINDOWS" in platform.system().upper():
+        return
     if not TRAVIS:
         print("Non travis test")
         # skipped for travis, as travis runs with root rights
         folder = "TMP/nonwritable"
         myfile = os.path.join(folder, "somefile")
         if not os.path.exists(folder):
-            os.mkdir(folder, mode=0o440)
+            os.mkdir(folder, 0o440)
+
         status = xsys.check_folder(myfile)
         assert status is False
 

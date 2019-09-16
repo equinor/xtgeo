@@ -774,7 +774,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         oflag = False
         # if outfile is none, it means that you want to plot on STDOUT
         if outfile is None:
-            fx = tempfile.NamedTemporaryFile(delete=False)
+            fx = tempfile.NamedTemporaryFile(delete=False, prefix="tmpxgeo")
             fx.close()
             outfile = fx.name
             logger.info("TMP file name is %s", outfile)
@@ -805,7 +805,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         flag = False
         # if outfile is none, it means that you want to print on STDOUT
         if outfile is None:
-            fc = tempfile.NamedTemporaryFile(delete=False)
+            fc = tempfile.NamedTemporaryFile(delete=False, prefix="tmpxtgeo")
             fc.close()
             outfile = fc.name
             logger.info("TMP file name is %s", outfile)

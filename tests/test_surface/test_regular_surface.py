@@ -55,6 +55,7 @@ def test_create():
     x.describe()
 
 
+#@tsetup.skipifwindows
 def test_ijxyz_import1():
     """Import some IJ XYZ format, typical seismic."""
     logger.info("Import and export...")
@@ -69,6 +70,7 @@ def test_ijxyz_import1():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4a.gri"))
 
 
+#@tsetup.skipifwindows
 def test_ijxyz_import2():
     """Import some IJ XYZ small set with YFLIP-1"""
     logger.info("Import and export...")
@@ -83,6 +85,7 @@ def test_ijxyz_import2():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4b.gri"))
 
 
+#@tsetup.skipifwindows
 def test_ijxyz_import4_ow_messy_dat():
     """Import some IJ XYZ small set with YFLIP -1 from OW messy dat format."""
     logger.info("Import and export...")
@@ -97,6 +100,7 @@ def test_ijxyz_import4_ow_messy_dat():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4d.gri"))
 
 
+#@tsetup.skipifwindows
 def test_ijxyz_import3():
     """Import some IJ XYZ small set yet again"""
     logger.info("Import and export...")
@@ -131,7 +135,6 @@ def test_irapbin_import_metadatafirst():
     t2 = xtg.timer(t1)
     logger.info("Loading %s surfaces lazy took %s secs.", nsurf, t2)
     assert sur[nsurf - 1].ncol == 1264
-    print(sur[0])
 
     t1 = xtg.timer()
     for ix in range(nsurf):
@@ -142,7 +145,6 @@ def test_irapbin_import_metadatafirst():
     assert sur[nsurf - 1].ncol == 1264
     assert sur[nsurf - 1].nrow == 2010
     tsetup.assert_almostequal(sur[nsurf - 1].values[11, 0], 1678.89733887, 0.00001)
-    print(sur[0])
 
 
 def test_swapaxes():

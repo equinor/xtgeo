@@ -16,7 +16,13 @@ WINDOWS = False
 CMAKECMD = ["cmake", ".."]
 if "Windows" in platform.system():
     WINDOWS = True
-    CMAKECMD = ["cmake", "..", "-DCMAKE_GENERATOR_PLATFORM=x64"]
+    CMAKECMD = [
+        "cmake",
+        "..",
+        "-DCMAKE_GENERATOR_PLATFORM=x64",
+        "-DCMAKE_BUILD_TYPE=Release",
+    ]
+
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
@@ -65,6 +71,7 @@ class build_ext(_build_ext):
         # Prevent numpy from thinking it is still in its setup process:
         __builtins__.__NUMPY_SETUP__ = False
         import numpy
+
         self.include_dirs.append(numpy.get_include())
 
 
@@ -88,11 +95,21 @@ class CMakeExtension(Extension):
         Extension.__init__(self, name, sources=sources, **kwa)
         self.cmake_lists_dir = os.path.abspath(cmake_lists_dir)
         print(self.cmake_lists_dir)
+        self.build = os.path.join(".", "build")
         self.build_temp = os.path.join(self.cmake_lists_dir, "build")
+        self.lib = os.path.join(self.cmake_lists_dir, "lib")
 
         if WINDOWS:
             print("******** REMOVE BUILD {}".format(self.build_temp))
-            shutil.rmtree(self.build_temp)
+            if os.path.exists(self.build_temp):
+                shutil.rmtree(self.build_temp)
+            if os.path.exists(self.lib):
+                shutil.rmtree(self.lib)
+            if os.path.exists(self.build):
+                shutil.rmtree(self.build)
+
+        if not os.path.exists(self.lib):
+            os.makedirs(self.lib)
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)

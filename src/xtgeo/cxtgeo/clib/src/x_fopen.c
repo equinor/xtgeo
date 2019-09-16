@@ -20,5 +20,6 @@ FILE *x_fopen(const char *filename, const char *mode, int debug) {
                   " anyway: STOP!", s);
         exit(345);
     }
+
     return fc;
 }

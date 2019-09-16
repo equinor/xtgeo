@@ -79,7 +79,7 @@ int surf_import_irap_ascii (
     xtg_speak(s, 2, "Entering routine");
 
 
-    fd = fopen(file,"r");
+    fd = fopen(file, "rb");
     if (fd == NULL) {
 	xtg_speak(s,2,"Opening Irap ascii file FAILED!");
     }

@@ -367,6 +367,7 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
 
 
 @tsetup.skipifroxar
+@tsetup.skipifwindows
 def test_cube_slice_auto4d_data():
     """Get cube slice aka Auto4D input, with synthetic/scrambled data"""
 
