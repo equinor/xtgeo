@@ -5,6 +5,7 @@ import platform
 import pytest
 
 import xtgeo.common.xtgeo_system as xsys
+import test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
@@ -15,6 +16,7 @@ if "TRAVISRUN" in os.environ:
 # =============================================================================
 
 
+@tsetup.equinor
 def test_check_folder():
     """testing that folder checks works in different scenaria"""
 
