@@ -259,7 +259,7 @@ def _import_eclbinary_prop(
     # Use the ACTNUM index array for vectorized numpy remapping (need both C
     # and F order)
     gactnum = grid.get_actnum().values
-    gactindc = grid.get_actnum_indices()
+    gactindc = grid.actnum_indices
     gactindf = grid.get_actnum_indices(order="F")
 
     allvalues = (
@@ -282,6 +282,7 @@ def _import_eclbinary_prop(
     elif values.shape[0] == self._ncol * self._nrow * self._nlay:  # often case for PORV
         allvalues = values.copy()
     else:
+
         msg = (
             "BUG somehow... Is the file corrupt? If not contact "
             "the library developer(s)!\n" + msg
