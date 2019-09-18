@@ -5,7 +5,7 @@ import random
 import sys
 
 from xtgeo.common import XTGeoDialog
-import xtgeo.common._fileutils as _fileutils
+import xtgeo.common.xtgeo_system as xsys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -344,7 +344,7 @@ def colorsfromfile(fname, fformat="rms"):
     logger.info("Default style is %s", fformat)
     ctable = []
 
-    if not _fileutils.file_exists(fname):
+    if not xsys.file_exists(fname):
         xtg.critical("No such color file! STOP")
         sys.exit(-1)
 
