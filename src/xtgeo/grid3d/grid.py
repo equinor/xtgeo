@@ -103,6 +103,22 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=F
     return obj
 
 
+# --------------------------------------------------------------------------------------
+# Comment on dual porosity grids:
+#
+# Simulation grids may hold a "dual porosity" system. This is supported here for
+# EGRID format (only, so far), which:
+# * Index 5 in FILEHEAD will be 1 if dual poro is True
+# * ACTNUM values will be 2 (inactive) or 3 (active) instead of 0 / 1 in the file
+#   However, XTGeo will convert this 2 / 3 scheme back to 0 / 1 scheme!
+#
+# The property self._dualporo is True in case of Dual Porosity
+#
+# All properties in a dual poro system will be given a postfix "M" of "F", e.g.
+# PORO -->  POROM and POROF
+# --------------------------------------------------------------------------------------
+
+
 class Grid(Grid3D):
     """Class for a 3D grid geometry (corner point geometry).
 
@@ -145,6 +161,9 @@ class Grid(Grid3D):
 
         self._props = None  # None or a GridProperties instance
         self._subgrids = None  # A python dict if subgrids are given
+
+        # Simulators like Eclipse may have a dual porosity model
+        self._dualporo = False
 
         # Roxar api spesific:
         self._roxgrid = None
@@ -314,6 +333,11 @@ class Grid(Grid3D):
     def ntotal(self):
         """Returns the total number of cells (read only)."""
         return self._ncol * self._nrow * self._nlay
+
+    @property
+    def dualporo(self):
+        """Boolean flag for dual porosity scheme (read only)."""
+        return self._dualporo
 
     @property
     def gridprops(self):

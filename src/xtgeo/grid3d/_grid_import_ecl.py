@@ -12,9 +12,9 @@ import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
-from xtgeo.grid3d._gridprop_import import eclbin_record
+from xtgeo.grid3d._grid_eclbin_record import eclbin_record
 
-from xtgeo.common import _get_fhandle, _close_fhandle
+import xtgeo.common.xtgeo_system as xsys
 
 from . import _grid3d_utils as utils
 
@@ -28,12 +28,12 @@ XTGDEBUG = xtg.get_syslevel()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse result .EGRID
+# See notes in grid.py on dual porosity scheme.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_egrid(self, gfile):
-    """Import, private to this routine.
+    """Import, private to this routine."""
 
-    """
-    fhandle, pclose = _get_fhandle(gfile)
+    fhandle = xsys.get_fhandle(gfile)
 
     # scan file for property
     logger.info("Make kwlist by scanning")
@@ -44,9 +44,17 @@ def import_ecl_egrid(self, gfile):
     for name in ("COORD", "ZCORN", "ACTNUM", "MAPAXES"):
         bpos[name] = -1  # initially
 
+    self._dualporo = False
     for kwitem in kwlist:
         kwname, kwtype, kwlen, kwbyte = kwitem
-        if kwname == "GRIDHEAD":
+        if kwname == "FILEHEAD":
+            # read FILEHEAD record:
+            filehead = eclbin_record(fhandle, "FILEHEAD", kwlen, kwtype, kwbyte)
+            dualp = filehead[5].tolist()
+            logger.info("Dual porosity flag is %s", dualp)
+            if dualp == 1:
+                self._dualporo = True
+        elif kwname == "GRIDHEAD":
             # read GRIDHEAD record:
             gridhead = eclbin_record(fhandle, "GRIDHEAD", kwlen, kwtype, kwbyte)
             ncol, nrow, nlay = gridhead[1:4].tolist()
@@ -71,6 +79,10 @@ def import_ecl_egrid(self, gfile):
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
 
+    option = 0
+    if self._dualporo:
+        option = 1
+
     nact = _cxtgeo.grd3d_imp_ecl_egrid(
         fhandle,
         self._ncol,
@@ -83,12 +95,13 @@ def import_ecl_egrid(self, gfile):
         self._p_coord_v,
         self._p_zcorn_v,
         self._p_actnum_v,
+        option,
         XTGDEBUG,
     )
 
     self._nactive = nact
 
-    _close_fhandle(fhandle, pclose)
+    xsys.close_fhandle(fhandle)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,13 +204,14 @@ def import_ecl_grdecl(self, gfile):
     self._subgrids = None
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse binary GRDECL format
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout"""
 
-    fhandle, pclose = _get_fhandle(gfile)
+    local_fhandle = not xsys.is_fhandle(gfile)
+    fhandle = xsys.get_fhandle(gfile)
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
@@ -249,9 +263,10 @@ def import_ecl_bgrdecl(self, gfile):
         self._p_coord_v,
         self._p_zcorn_v,
         self._p_actnum_v,
+        0,
         XTGDEBUG,
     )
 
     self._nactive = nact
 
-    _close_fhandle(fhandle, pclose)
+    xsys.close_fhandle(fhandle, cond=local_fhandle)

@@ -5,6 +5,23 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os
+import os.path
+
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+from xtgeo.common import XTGeoDialog
+
+xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
+
+
+def file_exists(fname):
+    """Check if file exists, and returns True of OK."""
+    status = os.path.isfile(fname)
+
+    if not status:
+        logger.warning("File does not exist")
+
+    return status
 
 
 def check_folder(xfile, raiseerror=None):
@@ -21,6 +38,8 @@ def check_folder(xfile, raiseerror=None):
         status: True, if folder exists and is writable, False if not.
 
     """
+
+    # Here are issues here on Windows in particular
 
     status = True
 
@@ -48,34 +67,38 @@ def check_folder(xfile, raiseerror=None):
     return status
 
 
-# def file_exists(fname):
-#     """Check if file exists, and returns True of OK."""
-#     status = os.path.isfile(fname)
+def get_fhandle(pfile, mode="rb"):
+    """Return a new filehandle if pfile is not a filehandle already; otherwise
+    return as is
+    """
 
-#     if not status:
-#         logger.warning('File does not exist')
+    if "Swig Object of type 'FILE" in str(pfile):
+        return pfile
 
-#     return status
-
-
-# def _get_fhandle(pfile):
-#     """Examine for file or filehandle and return filehandle + a bool"""
-
-#     pclose = True
-#     if "Swig Object of type 'FILE" in str(pfile):
-#         fhandle = pfile
-#         pclose = False
-#     else:
-#         fhandle = _cxtgeo.xtg_fopen(pfile, 'rb')
-
-#     return fhandle, pclose
+    return _cxtgeo.xtg_fopen(pfile, mode)
 
 
-# def _close_fhandle(fh, flag):
-#     """Close file if flag is True"""
+def is_fhandle(pfile):
+    """Return True if pfile is a filehandle, not a file"""
 
-#     if flag:
-#         _cxtgeo.xtg_fclose(fh)
-#         logger.debug('File is now closed')
-#     else:
-#         logger.debug('File remains open')
+    if "Swig Object of type 'FILE" in str(pfile):
+        return True
+
+    return False
+
+
+def close_fhandle(fh, cond=True):
+    """Close file given that fh is is a filehandle (return True), otherwise do
+    nothing (return False).
+
+    If cond is False, othing is done (made in order to avoid ifs i callers)
+    """
+    if not cond:
+        return True
+
+    if is_fhandle(fh):
+        _cxtgeo.xtg_fclose(fh)
+        logger.debug("File is now closed")
+        return True
+
+    return False

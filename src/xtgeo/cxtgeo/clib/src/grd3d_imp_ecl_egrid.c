@@ -1,16 +1,16 @@
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * Import ECL EGRID (version 2)
  *
- *******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_imp_ecl_egrid.c
@@ -25,22 +25,26 @@
  *    MAPAXES, COORD, ZCORN, ACTNUM. Only binary format is supported.
  *
  * ARGUMENTS:
- *    points_v       i     a [9] matrix with X Y Z of 3 points
- *    nvector        o     a [4] vector with A B C D
- *    option         i     Options flag for later usage
+ *    fc             i     File descriptor (handled by caller)
+ *    nx, ny, nz     i     Dimensions
+ *    bpos_mapaxes   i     Byte position of MAPAXES
+ *    bpos_coord     i     Byte position of COORD
+ *    bpos_zcorn     i     Byte position of ZCORN
+ *    bpos_actnum    i     Byte position of ACTNUM
+ *    p_coord_v      o     Coordinate vector (xtgeo fmt)
+ *    p_zcorn_v      o     ZCORN vector (xtgeo fmt)
+ *    p_actnum_v     o     ACTNUM vector (xtgeo fmt)
+ *    option         i     Is 1 when dualporo system, otherwise 0
  *    debug          i     Debug level
  *
  * RETURNS:
- *    Function: 0: upon success. If problems:
- *              1: some input points are overlapping
- *              2: the input points forms a line
- *    Result nvector is updated
+ *    Number of active cells
  *
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
  *    CF XTGeo's LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -57,6 +61,7 @@ int grd3d_imp_ecl_egrid (
                          double *p_coord_v,
                          double *p_zcorn_v,
                          int *p_actnum_v,
+                         int option,
                          int debug
                          )
 {
@@ -76,9 +81,9 @@ int grd3d_imp_ecl_egrid (
     char sbn[24] = "grd3d_imp_ecl_egrid";
 
     /*
-     * ========================================================================
+     * =================================================================================
      * INITIAL TASKS
-     * ========================================================================
+     * =================================================================================
      */
     xtgverbose(debug);
 
@@ -92,7 +97,7 @@ int grd3d_imp_ecl_egrid (
     tmp_zcorn = calloc(nzcorn, sizeof(float));
     tmp_actnum = calloc(nxyz, sizeof(int));
 
-    /*=========================================================================
+    /*==================================================================================
      * Read MAPAXES, which is present if bpos_mapaxes > 0
      * MAPAXES format is 6 numbers:
      * xcoord_endof_yaxis ycoord_endof_yaxis xcoord_origin ycoord_origin
@@ -113,7 +118,7 @@ int grd3d_imp_ecl_egrid (
         xtg_speak(sbn, 2, "Mapaxes 0: %f", tmp_mapaxes[0]);
     }
 
-    /*=========================================================================
+    /*==================================================================================
      * Read COORD
      */
     grd3d_read_eclrecord(fc, bpos_coord, 2, idum, 0, tmp_coord, ncoord, ddum,
@@ -141,7 +146,7 @@ int grd3d_imp_ecl_egrid (
     }
     xtg_speak(sbn, 2, "Conversion... DONE");
 
-    /*=========================================================================
+    /*==================================================================================
      * Read ZCORN
      */
     xtg_speak(sbn, 2, "Read ZCORN...");
@@ -163,7 +168,7 @@ int grd3d_imp_ecl_egrid (
     xtg_speak(sbn, 2, "Transform ZCORN... DONE");
 
 
-    /*=========================================================================
+    /*==================================================================================
      * Read ACTNUM directly
      */
     grd3d_read_eclrecord(fc, bpos_actnum, 1, p_actnum_v, nxyz, fdum, 0, ddum,
@@ -171,6 +176,9 @@ int grd3d_imp_ecl_egrid (
 
     int nact = 0;
     for (ib = 0; ib < nxyz; ib++) {
+        if (option == 1) {
+            p_actnum_v[ib] -= 2;  /* dual poro have ACTNUM 2/3 in egrid, not 0/1 */
+        }
         if (p_actnum_v[ib] == 1) nact ++;
     }
 

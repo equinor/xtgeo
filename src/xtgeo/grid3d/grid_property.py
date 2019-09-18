@@ -166,6 +166,8 @@ class GridProperty(Grid3D):
 
         self._isdiscrete = discrete
 
+        self._dualporo = False
+
         # this is a link to the Grid instance, _only if needed_. It may
         # potentially make trouble for garbage collection
         self._geometry = None

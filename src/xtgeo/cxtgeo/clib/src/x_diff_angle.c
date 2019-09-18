@@ -97,9 +97,10 @@ double x_diff_angle (
     double full=2*M_PI, half=M_PI;
     double diff;
 
-    if (option == 1)
+    if (option == 1) {
         full = 360.0;
         half = 180.0;
+    }
 
     diff = fmod(ang2 - ang1, full);
     if (diff < -half) diff += full;

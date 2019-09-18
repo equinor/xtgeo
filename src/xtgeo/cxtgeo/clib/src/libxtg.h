@@ -1510,7 +1510,8 @@ int grd3d_imp_ecl_egrid (
                          double *p_coord_v,
                          double *p_zcorn_v,
                          int *actnum_v,
-                         int debug
+                         int debug,
+                         int option
                          );
 
 

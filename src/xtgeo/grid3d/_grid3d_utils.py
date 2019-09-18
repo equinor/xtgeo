@@ -8,7 +8,7 @@ import pandas as pd
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.common import _get_fhandle, _close_fhandle
+import xtgeo.common.xtgeo_system as xsys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -52,11 +52,12 @@ def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
     mon = _cxtgeo.new_intarray(maxdates)
     yer = _cxtgeo.new_intarray(maxdates)
 
-    fhandle, pclose = _get_fhandle(pfile)
+    local_fhandle = not xsys.is_fhandle(pfile)
+    fhandle = xsys.get_fhandle(pfile)
 
     nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates, XTGDEBUG)
 
-    _close_fhandle(fhandle, pclose)
+    xsys.close_fhandle(fhandle, cond=local_fhandle)
 
     sq = []
     da = []
@@ -94,13 +95,14 @@ def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
-    fhandle, pclose = _get_fhandle(pfile)
+    local_fhandle = not xsys.is_fhandle(pfile)
+    fhandle = xsys.get_fhandle(pfile)
 
     nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
         fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
     )
 
-    _close_fhandle(fhandle, pclose)
+    xsys.close_fhandle(fhandle, cond=local_fhandle)
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")
@@ -142,9 +144,14 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
 
     """Add a date column to the keyword"""
 
-    xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
+    local_fhandle = not xsys.is_fhandle(pfile)
+    fhandle = xsys.get_fhandle(pfile)
 
-    xdates = scan_dates(pfile, maxdates=maxkeys, dataframe=False)
+    xkeys = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=False)
+
+    xdates = scan_dates(fhandle, maxdates=maxkeys, dataframe=False)
+
+    xsys.close_fhandle(fhandle, cond=local_fhandle)
 
     result = []
     # now merge these two:
@@ -180,13 +187,14 @@ def _scan_roff_keywords(pfile, maxkeys=100000, dataframe=False):
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
-    fhandle, pclose = _get_fhandle(pfile)
+    local_fhandle = not xsys.is_fhandle(pfile)
+    fhandle = xsys.get_fhandle(pfile)
 
     nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
         fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
     )
 
-    _close_fhandle(fhandle, pclose)
+    xsys.close_fhandle(fhandle, cond=local_fhandle)
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")
