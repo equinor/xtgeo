@@ -58,3 +58,4 @@ def test_import_dualporo_grid():
     )
     swat.describe()
     tsetup.assert_almostequal(swat.values[0, 0, 0], 0.989687, 0.001)
+    swat.to_file("TMP/swat.roff")
