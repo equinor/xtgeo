@@ -24,7 +24,14 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self, pfile, fformat=None, name="unknown", grid=None, date=None, _roffapiv=1
+    self,
+    pfile,
+    fformat=None,
+    name="unknown",
+    grid=None,
+    date=None,
+    fracture=False,
+    _roffapiv=1,
 ):  # _roffapiv for devel.
 
     """Import grid property from file, and makes an instance of this."""
@@ -39,7 +46,9 @@ def from_file(
         import_roff(self, pfile, name, grid=grid, _roffapiv=_roffapiv)
 
     elif fformat.lower() == "init":
-        import_eclbinary(self, pfile, name=name, etype=1, date=None, grid=grid)
+        import_eclbinary(
+            self, pfile, name=name, etype=1, date=None, grid=grid, fracture=fracture
+        )
 
     elif fformat.lower() == "unrst":
         if date is None:
@@ -58,7 +67,9 @@ def from_file(
         if not isinstance(date, int):
             raise RuntimeError("Date is not int format")
 
-        import_eclbinary(self, pfile, name=name, etype=5, date=date, grid=grid)
+        import_eclbinary(
+            self, pfile, name=name, etype=5, date=date, grid=grid, fracture=fracture
+        )
 
     elif fformat.lower() == "grdecl":
         import_grdecl_prop(self, pfile, name=name, grid=grid)
@@ -70,8 +81,10 @@ def from_file(
         raise ValueError("Invalid file format")
 
     # if grid, then append this gridprop to the current grid object
-    if grid:
-        grid.append_prop(self)
+
+    # ###################################TMP skipped""
+    # if grid:
+    #     grid.append_prop(self)
 
     return self
 

@@ -21,7 +21,9 @@ _cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.get_syslevel()
 
 
-def import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
+def import_eclbinary(
+    self, pfile, name=None, etype=1, date=None, grid=None, fracture=False
+):
 
     # if pfile is a file, then the file is opened/closed here; otherwise, the
     # "outer" routine must handle that
@@ -61,9 +63,19 @@ def import_eclbinary(self, pfile, name=None, etype=1, date=None, grid=None):
             kwlist, name, etype, date
         )
 
-        if self._dualporo:
-            _import_eclbinary_dualprop(
-                self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype
+        if grid._dualporo:
+            _import_eclbinary_dualporo(
+                self,
+                grid,
+                fhandle,
+                kwname,
+                kwlen,
+                kwtype,
+                kwbyte,
+                name,
+                date,
+                etype,
+                fracture,
             )
         else:
             _import_eclbinary_prop(
@@ -123,7 +135,8 @@ def _import_eclbinary_meta(self, fhandle, etype, date, grid):
     # LOGIHEAD item [14] should be True, if needed to kind of verify if dualporo model:
     # However, skip this test; now just assume double number if the grid says so,
     # which doubles the layers when reading,
-    # and assign first half to Matrix (M) and second half to Fractures (F)
+    # and assign first half* to Matrix (M) and second half to Fractures (F).
+    # *half: The number of active cells per half may NOT be equal
 
     if grid.dualporo:
         self._dualporo = True
@@ -184,6 +197,10 @@ def _import_eclbinary_checks1(self, grid):
             self._ncol, self._nrow, self._nlay, grid.ncol, grid.ncol, 2 * grid.nlay
         )
         raise RuntimeError(msg)
+
+    # reset nlay for property when dualporo
+    if grid.dualporo:
+        self._nlay = grid.nlay
 
 
 def _import_eclbinary_checks2(kwlist, name, etype, date):
@@ -302,9 +319,85 @@ def _import_eclbinary_prop(
         self._date = date
 
 
-def _import_eclbinary_dualprop(
-    self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype
+def _import_eclbinary_dualporo(
+    self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype, fracture
 ):
     """Import the actual record for dual poro scheme"""
 
-    raise NotImplementedError
+    #
+    # TODO, merge this with routine above!
+    # A lot of code duplication here, as this is under testing
+    #
+
+    values = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
+
+    # arrays from Eclipse INIT or UNRST are usually for inactive values only.
+    # Use the ACTNUM index array for vectorized numpy remapping (need both C
+    # and F order)
+
+    gactnum = grid.get_actnum().values
+    gactindc = grid.get_actnum_indices(order="C", fracture=fracture)
+    gactindf = grid.get_actnum_indices(order="F", fracture=fracture)
+
+    indsize = gactindc.size
+    if kwlen == 2 * grid.ntotal:
+        indsize = grid.ntotal  # in case of e.g. PORV which is for all cells
+
+    if not fracture:
+        values = values[:indsize]
+    else:
+        values = values[values.size - indsize :]
+
+    self._isdiscrete = False
+    self.codes = {}
+
+    if kwtype == "INTE":
+        self._isdiscrete = True
+
+        # make the code list
+        uniq = np.unique(values).tolist()
+        codes = dict(zip(uniq, uniq))
+        codes = {key: str(val) for key, val in codes.items()}  # val: strings
+        self.codes = codes
+
+    else:
+        values = values.astype(np.float64)  # cast REAL (float32) to float64
+
+    allvalues = (
+        np.zeros((self._ncol * self._nrow * self._nlay), dtype=values.dtype)
+        + self.undef
+    )
+
+    if gactindc.shape[0] == values.shape[0]:
+        allvalues[gactindf] = values
+    elif values.shape[0] == self._ncol * self._nrow * self._nlay:  # often case for PORV
+        allvalues = values.copy()
+    else:
+
+        msg = (
+            "BUG somehow reading binary Eclipse! Is the file corrupt? If not contact "
+            "the library developer(s)!\n"
+        )
+        raise SystemExit(msg)
+
+    allvalues = allvalues.reshape((self._ncol, self._nrow, self.nlay), order="F")
+    allvalues = np.asanyarray(allvalues, order="C")
+    allvalues = ma.masked_where(gactnum < 1, allvalues)
+
+    if self._dualporo:
+        # set values which are tecnically ACTNUM active but still "UNDEF" to 0
+        allvalues[allvalues > self.undef_limit] = 0
+
+    self._values = allvalues
+
+    append = ""
+    if self._dualporo:
+        append = "M"
+        if fracture:
+            append = "F"
+
+    if etype == 1:
+        self._name = name + append
+    else:
+        self._name = name + append + "_" + str(date)
+        self._date = date

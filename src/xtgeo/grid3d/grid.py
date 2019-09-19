@@ -322,6 +322,9 @@ class Grid(Grid3D):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C order (read only).
 
+        In dual porosity systems, this will be the active indices for the
+        matrix cells. For fracture porosity, use the get_actnum_indices
+        method for additional options.
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
@@ -832,14 +835,30 @@ class Grid(Grid3D):
 
         raise NotImplementedError("Not yet; todo")
 
-    def get_actnum_indices(self, order="C"):
+    def get_actnum_indices(self, order="C", fracture=False):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C or F order.
 
+        The fracture option is only active for DUALPORO systems. In such
+        cases, different indices are used for matrix and fracture
+        properties.
         """
         actnumv = self.get_actnum().values.copy(order=order)
         actnumv = np.ravel(actnumv, order="K")
-        ind = np.flatnonzero(actnumv)
+
+        if self._dualporo:
+            if not fracture:
+                actnumvm = actnumv.copy()
+                actnumvm[(actnumv == 3) | (actnumv == 1)] = 1
+                actnumvm[(actnumv == 2) | (actnumv == 0)] = 0
+                ind = np.flatnonzero(actnumvm)
+            else:
+                actnumvf = actnumv.copy()
+                actnumvf[(actnumv == 3) | (actnumv == 2)] = 1
+                actnumvf[(actnumv == 1) | (actnumv == 0)] = 0
+                ind = np.flatnonzero(actnumvf)
+        else:
+            ind = np.flatnonzero(actnumv)
 
         return ind
 

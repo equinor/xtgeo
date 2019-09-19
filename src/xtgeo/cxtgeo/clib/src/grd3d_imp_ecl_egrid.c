@@ -24,6 +24,10 @@
  *    the byte positions of the relevant records are known. These records are:
  *    MAPAXES, COORD, ZCORN, ACTNUM. Only binary format is supported.
  *
+ *    ACTNUM will 0/1 for normal systems. For DUALPORO systems, ACTNUM may be
+ *    0, 1?, 2, 3 with particular meanings for either Matrix or Fracture
+ *    properties.
+ *
  * ARGUMENTS:
  *    fc             i     File descriptor (handled by caller)
  *    nx, ny, nz     i     Dimensions
@@ -34,7 +38,7 @@
  *    p_coord_v      o     Coordinate vector (xtgeo fmt)
  *    p_zcorn_v      o     ZCORN vector (xtgeo fmt)
  *    p_actnum_v     o     ACTNUM vector (xtgeo fmt)
- *    option         i     Is 1 when dualporo system, otherwise 0
+ *    option         i     Is 1 when dualporo system, otherwise 0 (not applied)
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -176,9 +180,6 @@ int grd3d_imp_ecl_egrid (
 
     int nact = 0;
     for (ib = 0; ib < nxyz; ib++) {
-        if (option == 1) {
-            p_actnum_v[ib] -= 2;  /* dual poro have ACTNUM 2/3 in egrid, not 0/1 */
-        }
         if (p_actnum_v[ib] == 1) nact ++;
     }
 
