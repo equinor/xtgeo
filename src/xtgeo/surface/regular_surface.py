@@ -140,24 +140,19 @@ def surface_from_cube(cube, value):
     return obj
 
 
-# def surface_from_grid3d(grid):
-#     """This makes 3 instances of a RegularSurface directly from a Grid() instance.
+def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
+    """This makes 3 instances of a RegularSurface directly from a Grid() instance.
 
-#     Args:
-#         grid (~xtgeo.grid3d.grid.Grid): 3D grid geometry
+    For usage, see :meth:`RegularSurface.from_grid3d`.
 
-#     Example::
+    ..versionadded:: 2.1.0
+    """
 
-#         mycube = xtgeo.cube_from_file('somefile.segy')
-#         mysurf = xtgeo.surface_from_cube(mycube, 1200)
+    obj = RegularSurface()
 
-#     """
+    obj.from_grid3d(grid, template=template, where=where, mode=mode, rfactor=rfactor)
 
-#     obj = RegularSurface()
-
-#     obj.from_cube(cube, value)
-
-#     return obj
+    return obj
 
 
 # ======================================================================================
@@ -212,6 +207,9 @@ class RegularSurface(object):
     def __init__(self, *args, **kwargs):  # pylint: disable=too-many-statements
         """Initiate a RegularSurface instance."""
 
+        self._undef = xtgeo.UNDEF
+        self._undef_limit = xtgeo.UNDEF_LIMIT
+
         self._masked = False
         self._filesrc = None  # Name of original input file, if any
         self._name = "unknown"
@@ -259,7 +257,7 @@ class RegularSurface(object):
                     order="C",
                 )
                 # make it masked
-                values = ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
+                values = ma.masked_greater(values, self.undef_limit)
                 self._masked = True
                 self._values = values
             else:
@@ -386,7 +384,7 @@ class RegularSurface(object):
                 raise
 
         # replace any undef or nan with mask
-        values = ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
+        values = ma.masked_greater(values, self.undef_limit)
         values = ma.masked_invalid(values)
 
         if not values.flags.c_contiguous:
@@ -604,6 +602,16 @@ class RegularSurface(object):
             self._name = newname
 
     @property
+    def undef(self):
+        """Returns the undef map value (read only)."""
+        return self._undef
+
+    @property
+    def undef_limit(self):
+        """Returns the undef_limit map value (read only)."""
+        return self._undef_limit
+
+    @property
     def filesrc(self):
         """Gives the name of the file source (if any)"""
         return self._filesrc
@@ -744,7 +752,7 @@ class RegularSurface(object):
             # load values in number 88:
             surfs[88].load_values()
 
-        ..versionadded: 2.1.0
+        ..versionadded:: 2.1.0
         """
 
         if not self._isloaded:
@@ -1067,7 +1075,7 @@ class RegularSurface(object):
         if not isinstance(val, ma.MaskedArray):
             val = ma.array(val)
 
-        val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
+        val = ma.masked_greater(val, self.undef_limit)
         val = ma.masked_invalid(val)
 
         self.values = val
@@ -1089,7 +1097,7 @@ class RegularSurface(object):
             "or get_values1d() instead"
         )
 
-        zval = self.get_values1d(order="F", asmasked=False, fill_value=xtgeo.UNDEF)
+        zval = self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
 
         return zval
 
@@ -1736,7 +1744,6 @@ class RegularSurface(object):
         self._yflip = nonrot.yflip
         self._ilines = nonrot.ilines
         self._xlines = nonrot.xlines
-
 
     def refine(self, factor):
         """Refine a surface with a factor, e.g. 2 for double.

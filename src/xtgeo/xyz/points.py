@@ -221,7 +221,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             myp = xtgeo.points_from_file("somepoints.poi")
             mypcopy = myp.copy()
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
 
         stype = "points"
