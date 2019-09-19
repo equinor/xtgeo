@@ -154,6 +154,7 @@ _xprint("Import various XTGeo wrappers...")
 from xtgeo.surface.regular_surface import surface_from_file
 from xtgeo.surface.regular_surface import surface_from_roxar
 from xtgeo.surface.regular_surface import surface_from_cube
+from xtgeo.surface.regular_surface import surface_from_grid3d
 
 from xtgeo.grid3d.grid import grid_from_file
 from xtgeo.grid3d.grid import grid_from_roxar
