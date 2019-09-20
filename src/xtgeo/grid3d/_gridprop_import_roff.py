@@ -294,3 +294,38 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
 
     vals = vals.reshape(ncol, nrow, nlay)
     return vals
+
+
+def _rkwxvec(fhandle, kws, name, swap):
+    """Local function for making C pointers to arrays."""
+
+    kwtypedict = {"int": 1, "float": 2, "double": 3, "byte": 5}
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    namefound = False
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            namefound = True
+        if "parameter!data" in items[0] and namefound:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    if dtype == 0:
+        raise ValueError("Cannot find property <{}> in file".format(name))
+
+    if reclen <= 1:
+        raise SystemError("Stuff is rotten here...")
+
+    xvec = None
+    if dtype == 2:
+        xvec = _cxtgeo.new_floatarray(reclen)
+        _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+
+    return xvec

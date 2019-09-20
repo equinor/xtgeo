@@ -9,7 +9,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 import xtgeo.common.xtgeo_system as xsys
 
-from ._gridprop_import_roff import _rkwquery
+from ._gridprop_import_roff import _rkwquery, _rkwxvec
 from . import _grid3d_utils as utils
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -147,3 +147,10 @@ def import_roff_v2(self, fhandle):
     yscale = _rkwquery(fhandle, kwords, "scale!yscale", byteswap)
     zscale = _rkwquery(fhandle, kwords, "scale!zscale", byteswap)
     logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)
+
+    # get the pointers to the arrays
+    p_cornerlines = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
+    p_zvalues = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
+
+    logger.info(p_cornerlines)
+    logger.info(p_zvalues)
