@@ -464,7 +464,13 @@ class Grid(Grid3D):
         )
 
     def from_file(
-        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+        self,
+        gfile,
+        fformat=None,
+        initprops=None,
+        restartprops=None,
+        restartdates=None,
+        _rapiv=1,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -481,6 +487,7 @@ class Grid(Grid3D):
                 is "eclipserun", then list the names of the properties here.
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
+            _rapiv (int): Developer option (i.e. don't change)
 
         Example::
 
@@ -500,6 +507,7 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
+            _rapiv=_rapiv,
         )
 
         return obj

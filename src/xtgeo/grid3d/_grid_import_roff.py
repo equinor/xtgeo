@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
+import xtgeo.common.xtgeo_system as xsys
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -21,10 +22,24 @@ XTGDEBUG = xtg.get_syslevel()
 #
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import roff binary
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_roff(self, gfile):
+def import_roff(self, gfile, _rapiv=1):
+    if _rapiv == 1:
+        import_roff_v1(self, gfile)
+    else:
+
+        local_fhandle = not xsys.is_fhandle(gfile)
+        fhandle = xsys.get_fhandle(gfile)
+
+        import_roff_v2(self, fhandle)
+
+        if not xsys.close_fhandle(fhandle, cond=local_fhandle):
+            raise RuntimeError("Error in closing file handle for binary Eclipse file")
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import roff binary (current version, rather slow on windows)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def import_roff_v1(self, gfile):
 
     tstart = xtg.timer()
     logger.info("Working with file %s", gfile)
@@ -92,3 +107,11 @@ def import_roff(self, gfile):
 
     logger.debug("Subgrids array %s", self._subgrids)
     logger.info("Total time for ROFF import was %6.2fs", xtg.timer(tstart))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Import roff binary (new version, in prep)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def import_roff_v2(self, fhandle):
+
+    pass
