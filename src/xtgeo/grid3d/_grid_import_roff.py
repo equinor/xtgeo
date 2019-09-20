@@ -9,6 +9,9 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 import xtgeo.common.xtgeo_system as xsys
 
+from ._gridprop_import_roff import _rkwquery
+from . import _grid3d_utils as utils
+
 xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
@@ -22,8 +25,8 @@ XTGDEBUG = xtg.get_syslevel()
 #
 
 
-def import_roff(self, gfile, _rapiv=1):
-    if _rapiv == 1:
+def import_roff(self, gfile, _roffapiv=1):
+    if _roffapiv == 1:
         import_roff_v1(self, gfile)
     else:
 
@@ -114,4 +117,33 @@ def import_roff_v1(self, gfile):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_roff_v2(self, fhandle):
 
-    pass
+    """Import ROFF format, version 2 (improved version)"""
+
+    # This routine do first a scan for all keywords. Then it grabs
+    # the relevant data by only reading relevant portions of the input file
+
+    fhandle = xsys.get_fhandle(fhandle)
+
+    print(fhandle)
+    kwords = utils.scan_keywords(fhandle, fformat="roff")
+
+    for kwd in kwords:
+        logger.info(kwd)
+
+    # byteswap:
+    byteswap = _rkwquery(fhandle, kwords, "filedata!byteswaptest", -1)
+
+    ncol = _rkwquery(fhandle, kwords, "dimensions!nX", byteswap)
+    nrow = _rkwquery(fhandle, kwords, "dimensions!nY", byteswap)
+    nlay = _rkwquery(fhandle, kwords, "dimensions!nZ", byteswap)
+    logger.info("Dimensions in ROFF file %s %s %s", ncol, nrow, nlay)
+
+    xshift = _rkwquery(fhandle, kwords, "translate!xoffset", byteswap)
+    yshift = _rkwquery(fhandle, kwords, "translate!yoffset", byteswap)
+    zshift = _rkwquery(fhandle, kwords, "translate!zoffset", byteswap)
+    logger.info("Shifts in ROFF file %s %s %s", xshift, yshift, zshift)
+
+    xscale = _rkwquery(fhandle, kwords, "scale!xscale", byteswap)
+    yscale = _rkwquery(fhandle, kwords, "scale!yscale", byteswap)
+    zscale = _rkwquery(fhandle, kwords, "scale!zscale", byteswap)
+    logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)

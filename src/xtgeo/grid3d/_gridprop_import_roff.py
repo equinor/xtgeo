@@ -202,6 +202,8 @@ def _rkwquery(fhandle, kws, name, swap):
             bytepos = items[3]
             break
 
+    logger.info("DTYPE is %s", dtype)
+
     if dtype == 0:
         raise ValueError("Cannot find property <{}> in file".format(name))
 
@@ -219,6 +221,9 @@ def _rkwquery(fhandle, kws, name, swap):
             if xresult == 1:
                 return 0
             return 1
+
+    elif dtype == 2:
+        xresult = _cxtgeo.floatpointer_value(presult)
 
     return xresult
 
