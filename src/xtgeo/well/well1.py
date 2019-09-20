@@ -59,8 +59,8 @@ def well_from_file(
         import xtgeo
         mywell = xtgeo.well_from_file('somewell.xxx')
 
-    .. versionchanged: 2.1.0 Added ``lognames`` and ``lognames_strict``
-    .. versionchanged: 2.1.0 ``strict`` now defaults to False
+    .. versionchanged:: 2.1.0 Added ``lognames`` and ``lognames_strict``
+    .. versionchanged:: 2.1.0 ``strict`` now defaults to False
 
     """
 
@@ -442,7 +442,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             >>> mywell = Well('31_2-6.w')
 
         .. versionchanged:: 2.1.0 ``lognames`` and ``lognames_strict`` added
-        .. versionchanged: 2.1.0 ``strict`` now defaults to False
+        .. versionchanged:: 2.1.0 ``strict`` now defaults to False
         """
 
         if os.path.isfile(wfile):
@@ -1032,7 +1032,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             Or a Polygons object with 5 columns
             If not possible, return False
 
-        .. versionchanged: 2.1.0 improved algorithm
+        .. versionchanged:: 2.1.0 improved algorithm
         """
 
         poly = self.get_polygons()

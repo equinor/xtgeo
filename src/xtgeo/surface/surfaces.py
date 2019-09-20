@@ -32,7 +32,7 @@ class Surfaces(object):
     .. seealso::
        Class :class:`~xtgeo.surface.regular_surface.RegularSurface` class.
 
-    .. versionadded: 2.1.0
+    .. versionadded:: 2.1.0
     """
 
     def __init__(self, *args, **kwargs):

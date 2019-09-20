@@ -195,7 +195,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """ Returns or set the name of the cumulative horizontal length column,
         if it exists.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
         if isinstance(self._hname, str):
             if self._hname not in self._df.columns:
@@ -215,7 +215,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """ Returns or set the name of the delta horizontal length column if
         it exists.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
         if isinstance(self._dhname, str):
             if self._dhname not in self._df.columns:
@@ -235,7 +235,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """ Returns or set the name of the cumulative total length column,
         if it exists.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
         if isinstance(self._tname, str):
             if self._tname not in self._df.columns:
@@ -255,7 +255,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """ Returns or set the name of the delta total length column if
         it exists.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
         if isinstance(self._dtname, str):
             if self._dtname not in self._df.columns:
@@ -286,7 +286,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def copy(self, stype="polygons"):
         """Deep copy of a Polygons instance.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
         return super(Polygons, self).copy(stype)
 
@@ -628,7 +628,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
             mypoly.filter_byid(polyid=[2, 4])  # keep POLY_ID 2 and 4
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
         if polyid is None:
             polyid = int(self.dataframe[self.pname].iloc[0])
@@ -652,7 +652,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             dtname (str): Name of delta length column. Default is T_DELTALEN.
             atindex (int): Which index which shall be 0.0 for cumulative length.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
 
         _xyz_oper.tlen(self, tname=tname, dtname=dtname, atindex=atindex)
@@ -668,7 +668,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             dhname (str): Name of delta length column. Default is H_DELTALEN.
             atindex (int): Which index which shall be 0.0 for cumulative length.
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
 
         _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
@@ -683,7 +683,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             nsamples (int): Number of samples to extend.
             mode2d (bool): XY extension (only True is supported)
 
-        .. versionadded: 2.1.0
+        .. versionadded:: 2.1.0
         """
 
         _xyz_oper.extend(self, distance, nsamples, mode2d)
