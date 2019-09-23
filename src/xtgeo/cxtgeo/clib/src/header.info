@@ -1,28 +1,22 @@
 /*
- *******************************************************************************
+ ***************************************************************************************
  *
- * A collection of 3D geomtrical vectors, planes, etc
+ * Short description
  *
- *******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- *******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
- *    x_plane_normalvector.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *    name.c
  *
  * DESCRIPTION:
- *    Find the normal vector for a plane based on 3 points in 3D
- *    Based on: http://paulbourke.net/geometry/pointlineplane/
- *    The standard equation is Ax + By +Cz + D = 0 where (A,B,C)
- *    is the N vector
+ *    Desciption, short or longer
  *
  * ARGUMENTS:
  *    points_v       i     a [9] matrix with X Y Z of 3 points
@@ -40,8 +34,12 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
-int x_plane_normalvector(double *points_v, double *nvector, int option,
-			 int debug)
+
+int whatever(....)
+
 {
+
+    char sbn[24] = "whatever";
+    xtgverbose(debug);

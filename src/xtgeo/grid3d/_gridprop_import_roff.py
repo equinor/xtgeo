@@ -297,7 +297,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
 
 
 def _rkwxvec(fhandle, kws, name, swap):
-    """Local function for making C pointers to arrays."""
+    """Local function for returning swig pointers to C arrays."""
 
     kwtypedict = {"int": 1, "float": 2, "double": 3, "byte": 5}
 
@@ -324,8 +324,17 @@ def _rkwxvec(fhandle, kws, name, swap):
         raise SystemError("Stuff is rotten here...")
 
     xvec = None
-    if dtype == 2:
+    if dtype == 1:
+        xvec = _cxtgeo.new_floatarray(reclen)
+        _cxtgeo.grd3d_imp_roffbin_ivec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+
+    elif dtype == 2:
         xvec = _cxtgeo.new_floatarray(reclen)
         _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+    elif dtype == 5:
+        xvec = _cxtgeo.new_chararray(reclen)
+        _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
 
+    else:
+        raise ValueError("Unhandled dtype: {}".format(dtype))
     return xvec

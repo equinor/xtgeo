@@ -113,7 +113,7 @@ def import_roff_v1(self, gfile):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import roff binary (new version, in prep)
+# Import roff binary (new version, in prep!!)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_roff_v2(self, fhandle):
 
@@ -124,7 +124,6 @@ def import_roff_v2(self, fhandle):
 
     fhandle = xsys.get_fhandle(fhandle)
 
-    print(fhandle)
     kwords = utils.scan_keywords(fhandle, fformat="roff")
 
     for kwd in kwords:
@@ -133,10 +132,10 @@ def import_roff_v2(self, fhandle):
     # byteswap:
     byteswap = _rkwquery(fhandle, kwords, "filedata!byteswaptest", -1)
 
-    ncol = _rkwquery(fhandle, kwords, "dimensions!nX", byteswap)
-    nrow = _rkwquery(fhandle, kwords, "dimensions!nY", byteswap)
-    nlay = _rkwquery(fhandle, kwords, "dimensions!nZ", byteswap)
-    logger.info("Dimensions in ROFF file %s %s %s", ncol, nrow, nlay)
+    self._ncol = _rkwquery(fhandle, kwords, "dimensions!nX", byteswap)
+    self._nrow = _rkwquery(fhandle, kwords, "dimensions!nY", byteswap)
+    self._nlay = _rkwquery(fhandle, kwords, "dimensions!nZ", byteswap)
+    logger.info("Dimensions in ROFF file %s %s %s", self._ncol, self._nrow, self._nlay)
 
     xshift = _rkwquery(fhandle, kwords, "translate!xoffset", byteswap)
     yshift = _rkwquery(fhandle, kwords, "translate!yoffset", byteswap)
@@ -149,8 +148,36 @@ def import_roff_v2(self, fhandle):
     logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)
 
     # get the pointers to the arrays
-    p_cornerlines = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
-    p_zvalues = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
+    p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
+    p_zvalues_v = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
+    # p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
+    p_splitenz_v = _cxtgeo.new_chararray(99)   # DUMMY!!!
 
-    logger.info(p_cornerlines)
-    logger.info(p_zvalues)
+    ntot = self._ncol * self._nrow * self._nlay
+    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+
+    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
+    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    _cxtgeo.grd3d_roff_to_xtgeo(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
+        p_cornerlines_v,
+        p_splitenz_v,
+        p_zvalues_v,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        XTGDEBUG,
+    )
+
+    # xsys.close_fhandle(fhandle)

@@ -1461,6 +1461,25 @@ int grd3d_read_eclrecord (
                           int    debug
                           );
 
+int grd3d_roff_to_xtgeo (
+                         int nx,
+                         int ny,
+                         int nz,
+                         float xoffset,
+                         float yoffset,
+                         float zoffset,
+                         float xscale,
+                         float yscale,
+                         float zscale,
+                         float *p_cornerlines_v,
+                         char *p_splitenz_v,
+                         float *p_zdata_v,
+                         double *p_coord_v,
+                         double *p_zcorn_v,
+                         int *p_actnum_v,
+                         int debug
+                         );
+
 int grd3d_write_eclrecord(FILE *fc,
                           char *recname,
                           int rectype,
