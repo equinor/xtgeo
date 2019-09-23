@@ -163,10 +163,29 @@ Edit a porosity in a 3D grid
 
     # now I want to limit porosity to 0.35 for values above 0.35:
 
-    poro.values[poro_values > 0.35] = 0.35
+    myporo.values[myporo.values > 0.35] = 0.35
 
     # store to another icon
     poro.to_roxar(project, 'Geomodel', 'PorNew')
+
+
+Edit a permeability given a porosity cutoff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   import numpy as np
+   import xtgeo
+
+   myporo = xtgeo.gridproperty_from_roxar(project, 'Geomodel', 'Por')
+   myperm = xtgeo.gridproperty_from_roxar(project, 'Geomodel', 'Perm')
+
+   # if poro < 0.01 then perm is 0.001, otherwise keep as is, illustrated with np.where()
+   myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
+
+   # store to another icon
+   poro.to_roxar(project, 'Geomodel', 'PermEdit')
+
 
 Edit a 3D grid porosity inside polygons
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
