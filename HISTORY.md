@@ -2,6 +2,36 @@
 
 ## Version 2
 
+### 2.1.0
+
+Several fixes and new features, most important:
+
+* Cube() class
+  * A general get_randomline() methods
+* Grid() class
+  * Make a rectular shoebox grid
+  * Get a randomline (sampling) along a 3D grid with property
+  * More robust support for binary GRDECL format
+  * Possible to input dual porosity models from Eclipse (EGRID, INIT, UNRST)
+* Surfaces
+  * Added a class for Surfaces(), a collection of RegularSurface instances
+  * Generate surface from 3D grid
+  * Lazy load of RegularSurfaces (if ROFF/RMS binary) for fast scan of metadata
+  * Clipboard support in from_roxar() and to_roxar() methods
+  * fill(), fast infill of undefined values
+  * smooth(), median smoothing
+  * get_randomline() method (more general and flexible)
+
+* Points/polygons
+  * Added copy() method
+  * Added snap to surface method (snap_surface)
+  * Several other methods related to xsections from polygons
+
+* Well() class
+  * Get polygon and and improved fence from well trajectory
+  * Look up IJK indices in 3D grid from well path
+
+
 ### 2.0.8
 
 * Fixed a backward compatibility issue with `filter` vs `pfilter` for points/polygons `to_file`
