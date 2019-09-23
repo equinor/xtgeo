@@ -56,7 +56,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def gridproperty_from_file(
-    pfile, fformat="guess", name="unknown", grid=None, date=None
+    pfile, fformat="guess", name="unknown", grid=None, date=None, fracture=False
 ):
     """Make a GridProperty instance directly from file import.
 
@@ -73,7 +73,9 @@ def gridproperty_from_file(
     """
 
     obj = GridProperty()
-    obj.from_file(pfile, fformat=fformat, name=name, grid=grid, date=date)
+    obj.from_file(
+        pfile, fformat=fformat, name=name, grid=grid, date=date, fracture=fracture
+    )
 
     return obj
 
@@ -159,12 +161,15 @@ class GridProperty(Grid3D):
         date = kwargs.get("date", None)
         discrete = kwargs.get("discrete", False)
         grid = kwargs.get("grid", None)
+        fracture = kwargs.get("fracture", False)
 
         self._ncol = ncol
         self._nrow = nrow
         self._nlay = nlay
 
         self._isdiscrete = discrete
+
+        self._dualporo = False
 
         # this is a link to the Grid instance, _only if needed_. It may
         # potentially make trouble for garbage collection
@@ -212,7 +217,14 @@ class GridProperty(Grid3D):
             name = kwargs.get("name", "unknown")
             date = kwargs.get("date", None)
             grid = kwargs.get("grid", None)
-            self.from_file(args[0], fformat=fformat, name=name, grid=grid, date=date)
+            self.from_file(
+                args[0],
+                fformat=fformat,
+                name=name,
+                grid=grid,
+                date=date,
+                fracture=fracture,
+            )
 
     def __del__(self):
         # logger.info("DELETING property instance %s", self.name)
@@ -490,7 +502,14 @@ class GridProperty(Grid3D):
     # =========================================================================
 
     def from_file(
-        self, pfile, fformat=None, name="unknown", grid=None, date=None, _roffapiv=1
+        self,
+        pfile,
+        fformat=None,
+        name="unknown",
+        grid=None,
+        date=None,
+        fracture=False,
+        _roffapiv=1,
     ):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
@@ -509,6 +528,9 @@ class GridProperty(Grid3D):
                 mnemonics like 'first', 'last' is also allowed.
             grid (Grid object): Grid Object for checks (optional for ROFF,
                 required for Eclipse).
+            fracture (bool): Only applicable for DUAL POROSITY systems, if True
+                then the fracture property is read; if False then the matrix
+                property is read. Names will be appended with "M" or "F"
 
         Examples::
 
@@ -531,6 +553,7 @@ class GridProperty(Grid3D):
             name=name,
             grid=grid,
             date=date,
+            fracture=fracture,
             _roffapiv=_roffapiv,
         )
         return obj
@@ -886,7 +909,6 @@ class GridProperty(Grid3D):
             self._roxar_dtype = np.uint16
         else:
             logger.info("No need to convert, already discrete")
-
 
     # ==================================================================================
     # Operations restricted to inside/outside polygons

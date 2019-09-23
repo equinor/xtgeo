@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module for basic XTGeo constants"""
 
-import xtgeo.cxtgeo
+import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 UNDEF = -999
 UNDEF_LIMIT = -999
@@ -12,11 +12,11 @@ VERYLARGENEGATIVE = -999
 
 
 try:
-    UNDEF = xtgeo.cxtgeo.cxtgeo.UNDEF
-    UNDEF_LIMIT = xtgeo.cxtgeo.cxtgeo.UNDEF_LIMIT
-    UNDEF_INT = xtgeo.cxtgeo.cxtgeo.UNDEF_INT
-    UNDEF_INT_LIMIT = xtgeo.cxtgeo.cxtgeo.UNDEF_INT_LIMIT
-    VERYLARGENEGATIVE = xtgeo.cxtgeo.cxtgeo.VERYLARGENEGATIVE
-    VERYLARGEPOSITIVE = xtgeo.cxtgeo.cxtgeo.VERYLARGEPOSITIVE
+    UNDEF = _cxtgeo.UNDEF
+    UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
+    UNDEF_INT = _cxtgeo.UNDEF_INT
+    UNDEF_INT_LIMIT = _cxtgeo.UNDEF_INT_LIMIT
+    VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
+    VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
 except AttributeError:
     print("Dummy settings")

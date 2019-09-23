@@ -75,6 +75,7 @@ int grd3d_imp_roffbin_data (FILE *fc, int swap, int dtype,
 
     char s[24] = "grd3d_imp_roffbin_data";
     int anint, iok;
+    float afloat;
 
     xtgverbose(debug);
 
@@ -86,6 +87,12 @@ int grd3d_imp_roffbin_data (FILE *fc, int swap, int dtype,
         iok = fread(&anint, 4, 1, fc);
         if (swap==1) SWAP_INT(anint);
         *p_int = anint;
+    }
+
+    else if (dtype == 2) {
+        iok = fread(&afloat, 4, 1, fc);
+        if (swap==1) SWAP_FLOAT(afloat);
+        *p_flt = afloat;
     }
 
     return EXIT_SUCCESS;

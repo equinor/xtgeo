@@ -103,6 +103,22 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=F
     return obj
 
 
+# --------------------------------------------------------------------------------------
+# Comment on dual porosity grids:
+#
+# Simulation grids may hold a "dual porosity" system. This is supported here for
+# EGRID format (only, so far), which:
+# * Index 5 in FILEHEAD will be 1 if dual poro is True
+# * ACTNUM values will be 2 (inactive) or 3 (active) instead of 0 / 1 in the file
+#   However, XTGeo will convert this 2 / 3 scheme back to 0 / 1 scheme!
+#
+# The property self._dualporo is True in case of Dual Porosity
+#
+# All properties in a dual poro system will be given a postfix "M" of "F", e.g.
+# PORO -->  POROM and POROF
+# --------------------------------------------------------------------------------------
+
+
 class Grid(Grid3D):
     """Class for a 3D grid geometry (corner point geometry).
 
@@ -145,6 +161,9 @@ class Grid(Grid3D):
 
         self._props = None  # None or a GridProperties instance
         self._subgrids = None  # A python dict if subgrids are given
+
+        # Simulators like Eclipse may have a dual porosity model
+        self._dualporo = False
 
         # Roxar api spesific:
         self._roxgrid = None
@@ -303,6 +322,9 @@ class Grid(Grid3D):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C order (read only).
 
+        In dual porosity systems, this will be the active indices for the
+        matrix cells. For fracture porosity, use the get_actnum_indices
+        method for additional options.
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
@@ -314,6 +336,11 @@ class Grid(Grid3D):
     def ntotal(self):
         """Returns the total number of cells (read only)."""
         return self._ncol * self._nrow * self._nlay
+
+    @property
+    def dualporo(self):
+        """Boolean flag for dual porosity scheme (read only)."""
+        return self._dualporo
 
     @property
     def gridprops(self):
@@ -437,7 +464,13 @@ class Grid(Grid3D):
         )
 
     def from_file(
-        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+        self,
+        gfile,
+        fformat=None,
+        initprops=None,
+        restartprops=None,
+        restartdates=None,
+        _roffapiv=1,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -454,6 +487,7 @@ class Grid(Grid3D):
                 is "eclipserun", then list the names of the properties here.
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
+            _roffapiv (int): Developer option (i.e. don't change)
 
         Example::
 
@@ -473,6 +507,7 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
+            _roffapiv=_roffapiv,
         )
 
         return obj
@@ -808,14 +843,30 @@ class Grid(Grid3D):
 
         raise NotImplementedError("Not yet; todo")
 
-    def get_actnum_indices(self, order="C"):
+    def get_actnum_indices(self, order="C", fracture=False):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C or F order.
 
+        The fracture option is only active for DUALPORO systems. In such
+        cases, different indices are used for matrix and fracture
+        properties.
         """
         actnumv = self.get_actnum().values.copy(order=order)
         actnumv = np.ravel(actnumv, order="K")
-        ind = np.flatnonzero(actnumv)
+
+        if self._dualporo:
+            if not fracture:
+                actnumvm = actnumv.copy()
+                actnumvm[(actnumv == 3) | (actnumv == 1)] = 1
+                actnumvm[(actnumv == 2) | (actnumv == 0)] = 0
+                ind = np.flatnonzero(actnumvm)
+            else:
+                actnumvf = actnumv.copy()
+                actnumvf[(actnumv == 3) | (actnumv == 2)] = 1
+                actnumvf[(actnumv == 1) | (actnumv == 0)] = 0
+                ind = np.flatnonzero(actnumvf)
+        else:
+            ind = np.flatnonzero(actnumv)
 
         return ind
 

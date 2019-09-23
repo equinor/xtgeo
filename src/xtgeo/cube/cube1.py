@@ -115,6 +115,8 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         self._xlines = np.array(range(1, 3 + 1), dtype=np.int32)
         self._rotation = 0.0
         self._traceidcodes = np.ones((5, 3), dtype=np.int32)
+        self._undef = xtgeo.UNDEF
+        self._undef_limit = xtgeo.UNDEF_LIMIT
 
         if len(args) >= 1:
             fformat = kwargs.get("fformat", "guess")

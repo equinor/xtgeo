@@ -285,6 +285,13 @@ def test_roffbin_import1(load_gfile1):
 #     tsetup.assert_equal(corners[22], allcorners[22].values[5, 7, 0])
 
 
+def test_roffbin_import_v2():
+    """Test roff binary import case 1 using new API"""
+
+    grd = Grid()
+    grd.from_file(EMEGFILE, _roffapiv=2)
+
+
 def test_import_grdecl_and_bgrdecl():
     """Eclipse import of GRDECL and binary GRDECL"""
     grd1 = Grid(REEKFIL2, fformat="grdecl")

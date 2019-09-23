@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import
 import numpy as np
 import pandas as pd
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import constants as const
@@ -228,18 +229,42 @@ def get_ijk_from_grid(self, grid, grid_id=""):
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
     """In prep! Getting gridprops as logs"""
 
-    raise NotImplementedError
+    if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
+        raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
 
-    # if not isinstance(gridprops, GridProperties):
-    #     raise ValueError('"gridprops" are not a GridProperties instance')
+    if isinstance(gridprops, xtgeo.GridProperty):
+        gprops = xtgeo.GridProperties()
+        gprops.append_props([gridprops])
+    else:
+        gprops = gridprops
 
-    # if isinstance(grid, tuple):
-    #     icl, jcl, kcl = grid
-    # elif isinstance(grid, Grid):
-    #     self.get_ijk_from_grid(grid, grid_id="_tmp")
-    #     # icl, jcl, kcl = ('ICELL_tmp', 'JCELL_tmp', 'KCELL_tmp')
-    # else:
-    #     raise ValueError('The "grid" is of wrong type, must be a tuple or ' "a Grid")
+    if isinstance(grid, tuple):
+        icl, jcl, kcl = grid
+    elif isinstance(grid, xtgeo.Grid):
+        self.make_ijk_from_grid(grid, grid_id="_tmp")
+        icl, jcl, kcl = ("ICELL_tmp", "JCELL_tmp", "KCELL_tmp")
+    else:
+        raise ValueError('The "grid" is of wrong type, must be a tuple or ' "a Grid")
+
+    iind = self.dataframe[icl].values - 1
+    jind = self.dataframe[jcl].values - 1
+    kind = self.dataframe[kcl].values - 1
+
+    xind = iind.copy()
+
+    iind[np.isnan(iind)] = 0
+    jind[np.isnan(jind)] = 0
+    kind[np.isnan(kind)] = 0
+
+    #    iind = np.ma.masked_where(iind[~np.isnan(iind)].astype('int')
+    iind = iind.astype('int')
+    jind = jind.astype('int')
+    kind = kind.astype('int')
+
+    for prop in gprops.props:
+        arr = prop.values[iind, jind, kind].astype("float")
+        arr[np.isnan(xind)] = np.nan
+        self.dataframe[prop.name + prop_id] = arr
 
 
 def report_zonation_holes(self, threshold=5):

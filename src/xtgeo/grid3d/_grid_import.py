@@ -17,7 +17,13 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+    self,
+    gfile,
+    fformat=None,
+    initprops=None,
+    restartprops=None,
+    restartdates=None,
+    _roffapiv=1,
 ):
 
     """Import grid geometry from file, and makes an instance of this class."""
@@ -61,7 +67,7 @@ def from_file(
         raise IOError("No such file: {}".format(test_gfile))
 
     if fformat == "roff":
-        _grid_import_roff.import_roff(self, gfile)
+        _grid_import_roff.import_roff(self, gfile, _roffapiv)
     elif fformat == "egrid":
         _grid_import_ecl.import_ecl_egrid(self, gfile)
     elif fformat == "eclipserun":

@@ -166,8 +166,10 @@ int surf_slice_grd3d (int mcol,
 
             /* extend with buffer nodes to be certain */
             im1 -= buffer; im2 += buffer; jm1 -= buffer; jm2 += buffer;
-            if (im1 < 1) im1 = 1; if (im2 > mcol) im2 = mcol;
-            if (jm1 < 1) jm1 = 1; if (jm2 > mrow) jm2 = mrow;
+            if (im1 < 1) im1 = 1;
+            if (im2 > mcol) im2 = mcol;
+            if (jm1 < 1) jm1 = 1;
+            if (jm2 > mrow) jm2 = mrow;
 
             for (k = kc1; k <= kc2; k++) {
                 /* get map cell corners: */

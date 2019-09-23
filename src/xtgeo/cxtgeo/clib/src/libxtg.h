@@ -1322,6 +1322,10 @@ int grd3d_imp_roffbin_arr (FILE *fc,
                            long n_swig_np_int_inplace_v1,  // *niarray
                            int debug);
 
+int grd3d_imp_roffbin_fvec (FILE *fc, int swp, long bpos, float *fvc, long nx, int dbg);
+int grd3d_imp_roffbin_ivec (FILE *fc, int swp, long bpos, int *ivc, long nx, int dbg);
+int grd3d_imp_roffbin_bvec (FILE *fc, int swp, long bpos, char *bvc, long nx, int dbg);
+
 int grd3d_imp_roffbin_data (FILE *fc,
                             int swap,
                             int dtype,
@@ -1457,6 +1461,25 @@ int grd3d_read_eclrecord (
                           int    debug
                           );
 
+int grd3d_roff_to_xtgeo (
+                         int nx,
+                         int ny,
+                         int nz,
+                         float xoffset,
+                         float yoffset,
+                         float zoffset,
+                         float xscale,
+                         float yscale,
+                         float zscale,
+                         float *p_cornerlines_v,
+                         char *p_splitenz_v,
+                         float *p_zdata_v,
+                         double *p_coord_v,
+                         double *p_zcorn_v,
+                         int *p_actnum_v,
+                         int debug
+                         );
+
 int grd3d_write_eclrecord(FILE *fc,
                           char *recname,
                           int rectype,
@@ -1510,7 +1533,8 @@ int grd3d_imp_ecl_egrid (
                          double *p_coord_v,
                          double *p_zcorn_v,
                          int *actnum_v,
-                         int debug
+                         int debug,
+                         int option
                          );
 
 

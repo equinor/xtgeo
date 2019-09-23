@@ -3,7 +3,7 @@
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.common import _get_fhandle, _close_fhandle
+import xtgeo.common.xtgeo_system as xsys
 
 from xtgeo.grid3d import _gridprop_import
 
@@ -30,7 +30,8 @@ def import_ecl_output(
     if not names:
         raise ValueError("Name list is empty (None)")
 
-    fhandle, pclose = _get_fhandle(pfile)
+    local_fhandle = not xsys.is_fhandle(pfile)
+    fhandle = xsys.get_fhandle(pfile)
 
     # scan valid keywords
     kwlist = utils.scan_keywords(fhandle)
@@ -122,17 +123,9 @@ def import_ecl_output(
 
             # use a private GridProperty function here, for convinience
             # (since filehandle)
-            ier = _gridprop_import.import_eclbinary(
+            _gridprop_import.import_eclbinary(
                 prop, fhandle, name=name, date=date, grid=grid, etype=etype
             )
-            if ier != 0:
-                raise ValueError(
-                    "Something went wrong, IER = {} while "
-                    "name={}, date={}, etype={}, propname={}".format(
-                        ier, name, date, etype, propname
-                    )
-                )
-
             if firstproperty:
                 ncol = prop.ncol
                 nrow = prop.nrow
@@ -150,4 +143,4 @@ def import_ecl_output(
     if validdates[0] != 0:
         props._dates = validdates
 
-    _close_fhandle(fhandle, pclose)
+    xsys.close_fhandle(fhandle, cond=local_fhandle)
