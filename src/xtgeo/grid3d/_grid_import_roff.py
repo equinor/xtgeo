@@ -36,7 +36,7 @@ def import_roff(self, gfile, _roffapiv=1):
         import_roff_v2(self, fhandle)
 
         if not xsys.close_fhandle(fhandle, cond=local_fhandle):
-            raise RuntimeError("Error in closing file handle for binary Eclipse file")
+            raise RuntimeError("Error in closing file handle for binary ROFF file")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
