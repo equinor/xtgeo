@@ -161,23 +161,27 @@ def import_roff_v2(self, fhandle):
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
 
-    _cxtgeo.grd3d_roff_to_xtgeo(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        xshift,
-        yshift,
-        zshift,
-        xscale,
-        yscale,
-        zscale,
-        p_cornerlines_v,
-        p_splitenz_v,
-        p_zvalues_v,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        XTGDEBUG,
-    )
+    logger.debug("Calling C routine")
+
+    # _cxtgeo.grd3d_roff_to_xtgeo(
+    #     self._ncol,
+    #     self._nrow,
+    #     self._nlay,
+    #     xshift,
+    #     yshift,
+    #     zshift,
+    #     xscale,
+    #     yscale,
+    #     zscale,
+    #     p_cornerlines_v,
+    #     p_splitenz_v,
+    #     p_zvalues_v,
+    #     self._p_coord_v,
+    #     self._p_zcorn_v,
+    #     self._p_actnum_v,
+    #     XTGDEBUG,
+    # )
+
+    logger.debug("Calling C routine, DONE")
 
     # xsys.close_fhandle(fhandle)

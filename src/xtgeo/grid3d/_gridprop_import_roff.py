@@ -202,7 +202,7 @@ def _rkwquery(fhandle, kws, name, swap):
             bytepos = items[3]
             break
 
-    logger.info("DTYPE is %s", dtype)
+    logger.debug("DTYPE is %s", dtype)
 
     if dtype == 0:
         raise ValueError("Cannot find property <{}> in file".format(name))
