@@ -86,4 +86,5 @@ int grd3d_roff_to_xtgeo (
             p_coord_v[ib + 5] = (p_cornerlines_v[ic + 2] + zoffset) * zscale;
         }
     }
+    return EXIT_SUCCESS;
 }
