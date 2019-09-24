@@ -150,8 +150,7 @@ def import_roff_v2(self, fhandle):
     # get the pointers to the arrays
     p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
     p_zvalues_v = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
-    # p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
-    p_splitenz_v = _cxtgeo.new_chararray(99)   # DUMMY!!!
+    p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
 
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
@@ -163,24 +162,24 @@ def import_roff_v2(self, fhandle):
 
     logger.debug("Calling C routine")
 
-    # _cxtgeo.grd3d_roff_to_xtgeo(
-    #     self._ncol,
-    #     self._nrow,
-    #     self._nlay,
-    #     xshift,
-    #     yshift,
-    #     zshift,
-    #     xscale,
-    #     yscale,
-    #     zscale,
-    #     p_cornerlines_v,
-    #     p_splitenz_v,
-    #     p_zvalues_v,
-    #     self._p_coord_v,
-    #     self._p_zcorn_v,
-    #     self._p_actnum_v,
-    #     XTGDEBUG,
-    # )
+    _cxtgeo.grd3d_roff_to_xtgeo(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
+        p_cornerlines_v,
+        p_splitenz_v,
+        p_zvalues_v,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        XTGDEBUG,
+    )
 
     logger.debug("Calling C routine, DONE")
 

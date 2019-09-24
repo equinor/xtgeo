@@ -28,6 +28,7 @@ EMEGFILE = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff"
 REEKFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
 REEKFIL2 = "../xtgeo-testdata/3dgrids/reek3/reek_sim.grdecl"  # ASCII GRDECL
 REEKFIL3 = "../xtgeo-testdata/3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
+REEKFIL4 = "../xtgeo-testdata/3dgrids/reek/reek_geo_grid.roff"
 REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
@@ -289,7 +290,7 @@ def test_roffbin_import_v2():
     """Test roff binary import case 1 using new API"""
 
     grd = Grid()
-    grd.from_file(EMEGFILE, _roffapiv=2)
+    grd.from_file(REEKFIL4, _roffapiv=2)
 
 
 def test_import_grdecl_and_bgrdecl():

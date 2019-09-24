@@ -1324,7 +1324,7 @@ int grd3d_imp_roffbin_arr (FILE *fc,
 
 int grd3d_imp_roffbin_fvec (FILE *fc, int swp, long bpos, float *fvc, long nx, int dbg);
 int grd3d_imp_roffbin_ivec (FILE *fc, int swp, long bpos, int *ivc, long nx, int dbg);
-int grd3d_imp_roffbin_bvec (FILE *fc, int swp, long bpos, char *bvc, long nx, int dbg);
+int grd3d_imp_roffbin_bvec (FILE *fc, int swp, long bpos, int *bvc, long nx, int dbg);
 
 int grd3d_imp_roffbin_data (FILE *fc,
                             int swap,
@@ -1472,7 +1472,7 @@ int grd3d_roff_to_xtgeo (
                          float yscale,
                          float zscale,
                          float *p_cornerlines_v,
-                         char *p_splitenz_v,
+                         int *p_splitenz_v,
                          float *p_zdata_v,
                          double *p_coord_v,
                          double *p_zcorn_v,

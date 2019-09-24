@@ -48,7 +48,7 @@ int grd3d_roff_to_xtgeo (
                          float yscale,
                          float zscale,
                          float *p_cornerlines_v,
-                         char *p_splitenz_v,
+                         int *p_splitenz_v,
                          float *p_zdata_v,
                          double *p_coord_v,
                          double *p_zcorn_v,
@@ -67,25 +67,38 @@ int grd3d_roff_to_xtgeo (
     xtg_speak(sbn, 2, "Transforming grid ROFF --> XTG representation ...");
 
     /*
-     *----------------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      * Pillars (COORD lines). ROFF order them from base to top in C order, while XTGeo
      * use the Eclipse style; top (X Y Z) to base (X Y Z) looping in F order.
-     *----------------------------------------------------------------------------------
-    /*  *\/ */
+     * ---------------------------------------------------------------------------------
+    */
 
-    /* for (j = 1;j <= ny + 1; j++) { */
-    /*     for (i = 1; i <= nx + 1; i++) { */
-    /*         ib = x_ijk2ib(i, j, 1, nx + 1, ny + 1, 1, 0);  /\* F order *\/ */
-    /*         ic = x_ijk2ic(i, j, 1, nx + 1, ny + 1, 1, 0);  /\* C order *\/ */
+    for (j = 1;j <= ny + 1; j++) {
+        for (i = 1; i <= nx + 1; i++) {
+            ib = x_ijk2ib(i, j, 1, nx + 1, ny + 1, 1, 0);  /* F order */
+            ic = x_ijk2ic(i, j, 1, nx + 1, ny + 1, 1, 0);  /* C order */
 
-    /*         p_coord_v[ib + 0] = (p_cornerlines_v[ic + 3] + xoffset) * xscale; */
-    /*         p_coord_v[ib + 1] = (p_cornerlines_v[ic + 4] + yoffset) * yscale; */
-    /*         p_coord_v[ib + 2] = (p_cornerlines_v[ic + 5] + zoffset) * zscale; */
-    /*         p_coord_v[ib + 3] = (p_cornerlines_v[ic + 0] + xoffset) * xscale; */
-    /*         p_coord_v[ib + 4] = (p_cornerlines_v[ic + 1] + yoffset) * yscale; */
-    /*         p_coord_v[ib + 5] = (p_cornerlines_v[ic + 2] + zoffset) * zscale; */
-    /*         if (debug > 2) xtg_speak(sbn, 3, "I=%d J=%d IB=%ld IC=%ld", i, j, ib, ic); */
-    /*     } */
+            /* printf("%f\n", p_cornerlines_v[ic + 0]); */
+            /* printf("%f\n", p_cornerlines_v[ic + 1]); */
+            /* printf("%f\n", p_cornerlines_v[ic + 2]); */
+            /* printf("%f\n", p_cornerlines_v[ic + 3]); */
+            /* printf("%f\n", p_cornerlines_v[ic + 4]); */
+            /* printf("%f\n", p_cornerlines_v[ic + 5]); */
+            /* printf("\n"); */
+
+            p_coord_v[ib + 0] = (p_cornerlines_v[ic + 3] + xoffset) * xscale;
+            p_coord_v[ib + 1] = (p_cornerlines_v[ic + 4] + yoffset) * yscale;
+            p_coord_v[ib + 2] = (p_cornerlines_v[ic + 5] + zoffset) * zscale;
+            p_coord_v[ib + 3] = (p_cornerlines_v[ic + 0] + xoffset) * xscale;
+            p_coord_v[ib + 4] = (p_cornerlines_v[ic + 1] + yoffset) * yscale;
+            p_coord_v[ib + 5] = (p_cornerlines_v[ic + 2] + zoffset) * zscale;
+            // printf("I=%d J=%d IB=%ld IC=%ld\n", i, j, ib, ic);
+            /* if (debug > 2) xtg_speak(sbn, 3, "I=%d J=%d IB=%ld IC=%ld", i, j, ib, ic); */
+        }
+    }
+
+    /* for (i = 0; i < 6; i++) { */
+    /*     printf("%f\n", p_coord_v[i]); */
     /* } */
     return EXIT_SUCCESS;
 }

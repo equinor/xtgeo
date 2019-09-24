@@ -332,7 +332,7 @@ def _rkwxvec(fhandle, kws, name, swap):
         xvec = _cxtgeo.new_floatarray(reclen)
         _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
     elif dtype == 5:
-        xvec = _cxtgeo.new_chararray(reclen)
+        xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte to int
         _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
 
     else:
