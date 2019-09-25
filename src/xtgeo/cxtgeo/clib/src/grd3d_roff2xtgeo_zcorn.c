@@ -121,28 +121,28 @@ int grd3d_roff2xtgeo_zcorn (
                 }
 
 
-		zz[1] = z_ne_v[4];
-		zz[2] = z_nw_v[5];
+		zz[0] = z_ne_v[4];
+		zz[1] = z_nw_v[5];
 
-		zz[3] = z_se_v[6];
-		zz[4] = z_sw_v[7];
+		zz[2] = z_se_v[6];
+		zz[3] = z_sw_v[7];
 
-		zz[5] = z_ne_v[0];
-		zz[6] = z_nw_v[1];
+		zz[4] = z_ne_v[0];
+		zz[5] = z_nw_v[1];
 
-		zz[7] = z_se_v[2];
-		zz[8] = z_sw_v[3];
+		zz[6] = z_se_v[2];
+		zz[7] = z_sw_v[3];
 
 
-		if (l>=0) {
-		    for (ic=1;ic<=4;ic++) {
+		if (l >=0 ) {
+		    for (ic = 0; ic < 4; ic++) {
 			p_zcorn_v[ib] = zz[ic];
 			ib++;
 		    }
 		}
 
 		if (l==-1) {
-		    for (ic=5;ic<=8;ic++) {
+		    for (ic = 4; ic < 8; ic++) {
 			p_zcorn_v[ib] = zz[ic];
 			ib++;
 		    }
