@@ -30,6 +30,7 @@ REEKFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
 REEKFIL2 = "../xtgeo-testdata/3dgrids/reek3/reek_sim.grdecl"  # ASCII GRDECL
 REEKFIL3 = "../xtgeo-testdata/3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
 REEKFIL4 = "../xtgeo-testdata/3dgrids/reek/reek_geo_grid.roff"
+REEKFIL5 = "../xtgeo-testdata/3dgrids/reek/reek_geo2_grid_3props.roff"
 REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
@@ -136,7 +137,7 @@ def test_roffbin_get_dataframe_for_grid(load_gfile1):
 
     assert len(df) == grd.nactive
 
-    assert df["X_UTME"][0] == 459176.7937727844
+    tsetup.assert_almostequal(df["X_UTME"][0], 459176.7937727844, 0.1)
 
     assert len(df.columns) == 6
 
@@ -337,6 +338,18 @@ def test_roffbin_import_v2stress():
         grd1.from_file(REEKFIL4, _roffapiv=1)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 1 took: ", t1)
+
+
+def test_roffbin_import_v2_wsubgrids():
+    """Test roff binary import ROFF using new API, now with subgrids"""
+
+    grd1 = Grid()
+    grd1.from_file(REEKFIL5, _roffapiv=1)
+    print(grd1.subgrids)
+
+    grd2 = Grid()
+    grd2.from_file(REEKFIL5, _roffapiv=2)
+    print(grd2.subgrids)
 
 
 def test_import_grdecl_and_bgrdecl():

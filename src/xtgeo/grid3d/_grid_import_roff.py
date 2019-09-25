@@ -9,7 +9,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 import xtgeo.common.xtgeo_system as xsys
 
-from ._gridprop_import_roff import _rkwquery, _rkwxvec
+from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec
 from . import _grid3d_utils as utils
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -146,6 +146,19 @@ def import_roff_v2(self, fhandle):
     yscale = _rkwquery(fhandle, kwords, "scale!yscale", byteswap)
     zscale = _rkwquery(fhandle, kwords, "scale!zscale", byteswap)
     logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)
+
+    subs = _rkwxlist(fhandle, kwords, "subgrids!nLayers", byteswap, strict=False)
+    if subs is not None and subs.size > 1:
+        subs = subs.tolist()  # from numpy array to list
+        nsubs = len(subs)
+        self._subgrids = OrderedDict()
+        prev = 1
+        for irange in range(nsubs):
+            val = subs[irange]
+            self._subgrids["subgrid_" + str(irange)] = range(prev, val + prev)
+            prev = val + prev
+    else:
+        self._subgrids = None
 
     # get the pointers to the arrays
     p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)

@@ -470,7 +470,7 @@ class Grid(Grid3D):
         initprops=None,
         restartprops=None,
         restartdates=None,
-        _roffapiv=1,
+        _roffapiv=2,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.

@@ -239,7 +239,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     parameter!data        float   35840            336
 
     Hence it is the parameter!data which comes after parameter!name!PORO which
-    is releveant here, given that name = PORO.
+    is relevant here, given that name = PORO.
 
     """
 
@@ -296,6 +296,45 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     return vals
 
 
+def _rkwxlist(fhandle, kws, name, swap, strict=True):
+    """Local function for _import_roff_v2, 1D arrays such as subgrids.
+
+    This parameters are translated to numpy data for the values
+    attribute usage.
+
+    Note from scan:
+      tag subgrids
+      array int nLayers 3
+           20           20           16
+    """
+
+    kwtypedict = {"int": 1}  # only int lists are supported
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    if dtype == 0:
+        if strict:
+            raise ValueError("Cannot find property <{}> in file".format(name))
+        else:
+            return None
+
+    if dtype == 1:
+        inumpy = np.zeros(reclen, dtype=np.int32)
+        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy, XTGDEBUG)
+    else:
+        raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
+
+    return inumpy
+
+
 def _rkwxvec(fhandle, kws, name, swap, strict=True):
     """Local function for returning swig pointers to C arrays.
 
@@ -308,14 +347,8 @@ def _rkwxvec(fhandle, kws, name, swap, strict=True):
     dtype = 0
     reclen = 0
     bytepos = 1
-    namefound = False
     for items in kws:
         if name in items[0]:
-            dtype = kwtypedict.get(items[1])
-            reclen = items[2]
-            bytepos = items[3]
-            namefound = True
-        if "parameter!data" in items[0] and namefound:
             dtype = kwtypedict.get(items[1])
             reclen = items[2]
             bytepos = items[3]
