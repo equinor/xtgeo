@@ -290,7 +290,12 @@ def test_roffbin_import_v2():
     """Test roff binary import case 1 using new API"""
 
     grd = Grid()
+    grd.from_file(REEKFIL4, _roffapiv=2)
+    grd.to_file("TMP/roff2.grdecl", fformat="grdecl")
+
+    grd = Grid()
     grd.from_file(REEKFIL4, _roffapiv=1)
+    grd.to_file("TMP/roff1.grdecl", fformat="grdecl")
 
 
 def test_import_grdecl_and_bgrdecl():

@@ -151,6 +151,7 @@ def import_roff_v2(self, fhandle):
     p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
     p_zvalues_v = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
     p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
+    p_act_v = _rkwxvec(fhandle, kwords, "active!data", byteswap)
 
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
@@ -160,9 +161,9 @@ def import_roff_v2(self, fhandle):
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
 
-    logger.debug("Calling C routine")
+    logger.debug("Calling C routines")
 
-    _cxtgeo.grd3d_roff_to_xtgeo(
+    _cxtgeo.grd3d_roff2xtgeo_coord(
         self._ncol,
         self._nrow,
         self._nlay,
@@ -173,12 +174,28 @@ def import_roff_v2(self, fhandle):
         yscale,
         zscale,
         p_cornerlines_v,
+        self._p_coord_v,
+        XTGDEBUG,
+    )
+
+    _cxtgeo.grd3d_roff2xtgeo_zcorn(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
         p_splitenz_v,
         p_zvalues_v,
-        self._p_coord_v,
         self._p_zcorn_v,
-        self._p_actnum_v,
         XTGDEBUG,
+    )
+
+    _cxtgeo.grd3d_roff2xtgeo_actnum(
+        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, XTGDEBUG
     )
 
     logger.debug("Calling C routine, DONE")

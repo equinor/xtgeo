@@ -1490,7 +1490,7 @@ int grd3d_roff2xtgeo_zcorn (
                             float *p_zdata_v,
                             double *p_zcorn_v,
                             int debug
-                            )
+                            );
 
 
 int grd3d_roff2xtgeo_actnum (

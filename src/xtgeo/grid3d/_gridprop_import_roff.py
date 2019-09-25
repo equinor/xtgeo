@@ -299,7 +299,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
 def _rkwxvec(fhandle, kws, name, swap):
     """Local function for returning swig pointers to C arrays."""
 
-    kwtypedict = {"int": 1, "float": 2, "double": 3, "byte": 5}
+    kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
 
     dtype = 0
     reclen = 0
@@ -331,8 +331,9 @@ def _rkwxvec(fhandle, kws, name, swap):
     elif dtype == 2:
         xvec = _cxtgeo.new_floatarray(reclen)
         _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
-    elif dtype == 5:
-        xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte to int
+
+    elif dtype >= 4:
+        xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte/bool to int
         _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
 
     else:

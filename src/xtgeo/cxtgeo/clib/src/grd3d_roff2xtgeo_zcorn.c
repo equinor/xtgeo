@@ -16,13 +16,16 @@
  *    grd3d_roff2xtgeo_zcorn.c
  *
  * DESCRIPTION:
- *    Convert from ROFF arrays to XTGeo arrays
+ *    Convert from ROFF arrays to XTGeo arrays: ZCORN
  *
  * ARGUMENTS:
- *    points_v       i     a [9] matrix with X Y Z of 3 points
- *    nvector        o     a [4] vector with A B C D
- *    option         i     Options flag for later usage
- *    debug          i     Debug level
+ *    nx, ny, nz       i     NCOL, NROW, NLAY dimens
+ *    *offset          i     Offsets in XYZ spesified in ROFF
+ *    *scale           i     Scaling in XYZ spesified in ROFF
+ *    p_splitenz_v     i     Split node vector
+ *    p_zdata_v        i     Input zdata array ROFF fmt
+ *    p_coord_v        o     Output zcorn array XTGEO fmt
+ *    debug            i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
@@ -55,9 +58,10 @@ int grd3d_roff2xtgeo_zcorn (
 
 {
 
-    long ib, ic, nxyz;
+    long ib, ic, nxyz, iuse;
     int i, j, k, l, ico, ipos, isplit;
     int *lookup_v, ncc[8];
+    double z;
     double z_sw_v[8], z_se_v[8], z_nw_v[8], z_ne_v[8], zz[8];
 
     char sbn[24] = "grd3d_roff2xtgeo_zcorn";
@@ -102,17 +106,17 @@ int grd3d_roff2xtgeo_zcorn (
                     ipos = lookup_v[iuse];
                     isplit = lookup_v[iuse + 1] - lookup_v[iuse];
                     if (isplit == 1) {
-                        z = (zdata_v[ipos] + zoffset) * zscale;
+                        z = (p_zdata_v[ipos] + zoffset) * zscale;
                         z_sw_v[ico] = z;
                         z_se_v[ico] = z;
                         z_nw_v[ico] = z;
                         z_ne_v[ico] = z;
                     }
                     if (isplit == 4) {
-                        z_sw_v[ico] = (zdata_v[ipos + 0] + zoffset) * zscale;
-                        z_se_v[ico] = (zdata_v[ipos + 1] + zoffset) * zscale;
-                        z_nw_v[ico] = (zdata_v[ipos + 2] + zoffset) * zscale;
-                        z_ne_v[ico] = (zdata_v[ipos + 3] + zoffset) * zscale;
+                        z_sw_v[ico] = (p_zdata_v[ipos + 0] + zoffset) * zscale;
+                        z_se_v[ico] = (p_zdata_v[ipos + 1] + zoffset) * zscale;
+                        z_nw_v[ico] = (p_zdata_v[ipos + 2] + zoffset) * zscale;
+                        z_ne_v[ico] = (p_zdata_v[ipos + 3] + zoffset) * zscale;
                     }
                 }
 

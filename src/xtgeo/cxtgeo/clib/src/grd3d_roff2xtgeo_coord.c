@@ -1,7 +1,7 @@
 /*
  ***************************************************************************************
  *
- * Convert from ROFF grid cornerpoint spec to XTGeo cornerpoint grid
+ * Convert from ROFF grid cornerpoint spec to XTGeo cornerpoint grid: COORD arrays
  *
  ***************************************************************************************
  */
@@ -13,22 +13,21 @@
  ***************************************************************************************
  *
  * NAME:
- *    name.c
+ *    grd3d_roff2xtgeo_coord.c
  *
  * DESCRIPTION:
- *    Desciption, short or longer
+ *    Convert from ROFF internal spec to XTGeo spec for coordinate lines
  *
  * ARGUMENTS:
- *    points_v       i     a [9] matrix with X Y Z of 3 points
- *    nvector        o     a [4] vector with A B C D
- *    option         i     Options flag for later usage
- *    debug          i     Debug level
+ *    nx, ny, nz       i     NCOL, NROW, NLAY dimens
+ *    *offset          i     Offsets in XYZ spesified in ROFF
+ *    *scale           i     Scaling in XYZ spesified in ROFF
+ *    p_cornerlines_v  i     Input cornerlines array ROFF fmt
+ *    p_coord_v        o     Output cornerlines array XTGEO fmt
+ *    debug            i     Debug level
  *
  * RETURNS:
- *    Function: 0: upon success. If problems:
- *              1: some input points are overlapping
- *              2: the input points forms a line
- *    Result nvector is updated
+ *    Function: 0: upon success. Update pointers
  *
  * TODO/ISSUES/BUGS:
  *
@@ -37,31 +36,27 @@
  ***************************************************************************************
  */
 
-int grd3d_roff_to_xtgeo (
-                         int nx,
-                         int ny,
-                         int nz,
-                         float xoffset,
-                         float yoffset,
-                         float zoffset,
-                         float xscale,
-                         float yscale,
-                         float zscale,
-                         float *p_cornerlines_v,
-                         int *p_splitenz_v,
-                         float *p_zdata_v,
-                         double *p_coord_v,
-                         double *p_zcorn_v,
-                         int *p_actnum_v,
-                         int debug
-                         )
+int grd3d_roff2xtgeo_coord (
+                            int nx,
+                            int ny,
+                            int nz,
+                            float xoffset,
+                            float yoffset,
+                            float zoffset,
+                            float xscale,
+                            float yscale,
+                            float zscale,
+                            float *p_cornerlines_v,
+                            double *p_coord_v,
+                            int debug
+                            )
 
 {
 
     long ib, ic;
     int i, j;
 
-    char sbn[24] = "grd3d_roff_to_xtgeo";
+    char sbn[24] = "grd3d_roff2xtgeo_coord";
     xtgverbose(debug);
 
     xtg_speak(sbn, 2, "Transforming grid ROFF coords --> XTG representation ...");
@@ -87,8 +82,5 @@ int grd3d_roff_to_xtgeo (
         }
     }
 
-    for (i = 0; i < 12; i++) {
-        printf("NEW %f\n", p_coord_v[i]);
-    }
     return EXIT_SUCCESS;
 }
