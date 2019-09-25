@@ -8,6 +8,7 @@ from collections import OrderedDict
 import math
 
 import pytest
+import numpy as np
 
 import xtgeo
 from xtgeo.grid3d import Grid
@@ -32,6 +33,9 @@ REEKFIL4 = "../xtgeo-testdata/3dgrids/reek/reek_geo_grid.roff"
 REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
+
+DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
+DUALFIL2 = "../xtgeo-testdata/3dgrids/etc/dual_grid_noactivetag.roff"
 
 # =============================================================================
 # Do tests
@@ -287,15 +291,52 @@ def test_roffbin_import1(load_gfile1):
 
 
 def test_roffbin_import_v2():
-    """Test roff binary import case 1 using new API"""
+    """Test roff binary import ROFF using new API"""
 
-    grd = Grid()
-    grd.from_file(REEKFIL4, _roffapiv=2)
-    grd.to_file("TMP/roff2.grdecl", fformat="grdecl")
+    grd1 = Grid()
+    grd1.from_file(REEKFIL4, _roffapiv=1)
+    cell1 = np.array(grd1.get_xyz_cell_corners(ijk=(12, 13, 4)))
 
-    grd = Grid()
-    grd.from_file(REEKFIL4, _roffapiv=1)
-    grd.to_file("TMP/roff1.grdecl", fformat="grdecl")
+    grd2 = Grid()
+    grd2.from_file(REEKFIL4, _roffapiv=2)
+    cell2 = np.array(grd2.get_xyz_cell_corners(ijk=(12, 13, 4)))
+
+    assert np.allclose(cell1, cell2)
+
+    grd3 = Grid()
+    grd3.from_file(DUALFIL1, _roffapiv=2)
+
+    grd4 = Grid()
+    grd4.from_file(DUALFIL2, _roffapiv=2)
+
+    grd5 = Grid()
+    grd5.from_file(DUALFIL1, _roffapiv=1)
+
+    cell3 = np.array(grd3.get_xyz_cell_corners(ijk=(2, 1, 0), zerobased=True))
+    cell4 = np.array(grd4.get_xyz_cell_corners(ijk=(2, 1, 0), zerobased=True))
+    cell5 = np.array(grd5.get_xyz_cell_corners(ijk=(2, 1, 0), zerobased=True))
+
+    assert np.allclose(cell3, cell5)
+    assert np.allclose(cell3, cell4)
+
+
+# @tsetup.bigtest
+def test_roffbin_import_v2stress():
+    """Test roff binary import ROFF using new API, comapre timing etc"""
+
+    t0 = xtg.timer()
+    for i in range(100):
+        grd1 = Grid()
+        grd1.from_file(REEKFIL4, _roffapiv=2)
+    t1 = xtg.timer(t0)
+    print("100 loops with ROXAPIV 2 took: ", t1)
+
+    t0 = xtg.timer()
+    for i in range(100):
+        grd1 = Grid()
+        grd1.from_file(REEKFIL4, _roffapiv=1)
+    t1 = xtg.timer(t0)
+    print("100 loops with ROXAPIV 1 took: ", t1)
 
 
 def test_import_grdecl_and_bgrdecl():

@@ -1499,6 +1499,7 @@ int grd3d_roff2xtgeo_actnum (
                             int nz,
                             int *iact,
                             int *p_actnum_v,
+                            int option,
                             int debug
                             );
 

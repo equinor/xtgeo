@@ -296,8 +296,12 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     return vals
 
 
-def _rkwxvec(fhandle, kws, name, swap):
-    """Local function for returning swig pointers to C arrays."""
+def _rkwxvec(fhandle, kws, name, swap, strict=True):
+    """Local function for returning swig pointers to C arrays.
+
+    If strict is True, a ValueError will be raised if keyword is not
+    found. If strict is False, None will be returned
+    """
 
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
 
@@ -318,7 +322,10 @@ def _rkwxvec(fhandle, kws, name, swap):
             break
 
     if dtype == 0:
-        raise ValueError("Cannot find property <{}> in file".format(name))
+        if strict:
+            raise ValueError("Cannot find property <{}> in file".format(name))
+        else:
+            return None
 
     if reclen <= 1:
         raise SystemError("Stuff is rotten here...")

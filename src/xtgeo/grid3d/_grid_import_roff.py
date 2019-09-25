@@ -151,7 +151,7 @@ def import_roff_v2(self, fhandle):
     p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
     p_zvalues_v = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
     p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
-    p_act_v = _rkwxvec(fhandle, kwords, "active!data", byteswap)
+    p_act_v = _rkwxvec(fhandle, kwords, "active!data", byteswap, strict=False)
 
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
@@ -194,10 +194,21 @@ def import_roff_v2(self, fhandle):
         XTGDEBUG,
     )
 
+    # ACTIVE may be missing, meaning all cells are missing!
+    option = 0
+    if p_act_v is None:
+        p_act_v = _cxtgeo.new_intarray(1)
+        option = 1
+
     _cxtgeo.grd3d_roff2xtgeo_actnum(
-        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, XTGDEBUG
+        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, option, XTGDEBUG
     )
 
-    logger.debug("Calling C routine, DONE")
+    _cxtgeo.delete_floatarray(p_cornerlines_v)
+    _cxtgeo.delete_floatarray(p_zvalues_v)
+    _cxtgeo.delete_intarray(p_splitenz_v)
+    _cxtgeo.delete_intarray(p_act_v)
+
+    logger.debug("Calling C routines, DONE")
 
     # xsys.close_fhandle(fhandle)
