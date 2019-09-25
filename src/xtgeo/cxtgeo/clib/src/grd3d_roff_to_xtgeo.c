@@ -64,7 +64,7 @@ int grd3d_roff_to_xtgeo (
     char sbn[24] = "grd3d_roff_to_xtgeo";
     xtgverbose(debug);
 
-    xtg_speak(sbn, 2, "Transforming grid ROFF --> XTG representation ...");
+    xtg_speak(sbn, 2, "Transforming grid ROFF coords --> XTG representation ...");
 
     /*
      * ---------------------------------------------------------------------------------
@@ -72,33 +72,23 @@ int grd3d_roff_to_xtgeo (
      * use the Eclipse style; top (X Y Z) to base (X Y Z) looping in F order.
      * ---------------------------------------------------------------------------------
     */
+    ib = 0;
+    for (j = 0;j <= ny; j++) {
+        for (i = 0; i <= nx; i++) {
 
-    for (j = 1;j <= ny + 1; j++) {
-        for (i = 1; i <= nx + 1; i++) {
-            ib = x_ijk2ib(i, j, 1, nx + 1, ny + 1, 1, 0);  /* F order */
-            ic = x_ijk2ic(i, j, 1, nx + 1, ny + 1, 1, 0);  /* C order */
+            ic = 6 * (i * (ny + 1) + j);
 
-            /* printf("%f\n", p_cornerlines_v[ic + 0]); */
-            /* printf("%f\n", p_cornerlines_v[ic + 1]); */
-            /* printf("%f\n", p_cornerlines_v[ic + 2]); */
-            /* printf("%f\n", p_cornerlines_v[ic + 3]); */
-            /* printf("%f\n", p_cornerlines_v[ic + 4]); */
-            /* printf("%f\n", p_cornerlines_v[ic + 5]); */
-            /* printf("\n"); */
-
-            p_coord_v[ib + 0] = (p_cornerlines_v[ic + 3] + xoffset) * xscale;
-            p_coord_v[ib + 1] = (p_cornerlines_v[ic + 4] + yoffset) * yscale;
-            p_coord_v[ib + 2] = (p_cornerlines_v[ic + 5] + zoffset) * zscale;
-            p_coord_v[ib + 3] = (p_cornerlines_v[ic + 0] + xoffset) * xscale;
-            p_coord_v[ib + 4] = (p_cornerlines_v[ic + 1] + yoffset) * yscale;
-            p_coord_v[ib + 5] = (p_cornerlines_v[ic + 2] + zoffset) * zscale;
-            // printf("I=%d J=%d IB=%ld IC=%ld\n", i, j, ib, ic);
-            /* if (debug > 2) xtg_speak(sbn, 3, "I=%d J=%d IB=%ld IC=%ld", i, j, ib, ic); */
+            p_coord_v[ib++] = (p_cornerlines_v[ic + 3] + xoffset) * xscale;
+            p_coord_v[ib++] = (p_cornerlines_v[ic + 4] + yoffset) * yscale;
+            p_coord_v[ib++] = (p_cornerlines_v[ic + 5] + zoffset) * zscale;
+            p_coord_v[ib++] = (p_cornerlines_v[ic + 0] + xoffset) * xscale;
+            p_coord_v[ib++] = (p_cornerlines_v[ic + 1] + yoffset) * yscale;
+            p_coord_v[ib++] = (p_cornerlines_v[ic + 2] + zoffset) * zscale;
         }
     }
 
-    /* for (i = 0; i < 6; i++) { */
-    /*     printf("%f\n", p_coord_v[i]); */
-    /* } */
+    for (i = 0; i < 12; i++) {
+        printf("NEW %f\n", p_coord_v[i]);
+    }
     return EXIT_SUCCESS;
 }

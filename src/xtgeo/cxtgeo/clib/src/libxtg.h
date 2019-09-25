@@ -1461,24 +1461,46 @@ int grd3d_read_eclrecord (
                           int    debug
                           );
 
-int grd3d_roff_to_xtgeo (
-                         int nx,
-                         int ny,
-                         int nz,
-                         float xoffset,
-                         float yoffset,
-                         float zoffset,
-                         float xscale,
-                         float yscale,
-                         float zscale,
-                         float *p_cornerlines_v,
-                         int *p_splitenz_v,
-                         float *p_zdata_v,
-                         double *p_coord_v,
-                         double *p_zcorn_v,
-                         int *p_actnum_v,
-                         int debug
-                         );
+
+int grd3d_roff2xtgeo_coord (
+                            int nx,
+                            int ny,
+                            int nz,
+                            float xoffset,
+                            float yoffset,
+                            float zoffset,
+                            float xscale,
+                            float yscale,
+                            float zscale,
+                            float *p_cornerlines_v,
+                            double *p_coord_v,
+                            int debug
+                            );
+int grd3d_roff2xtgeo_zcorn (
+                            int nx,
+                            int ny,
+                            int nz,
+                            float xoffset,
+                            float yoffset,
+                            float zoffset,
+                            float xscale,
+                            float yscale,
+                            float zscale,
+                            int *p_splitenz_v,
+                            float *p_zdata_v,
+                            double *p_zcorn_v,
+                            int debug
+                            )
+
+
+int grd3d_roff2xtgeo_actnum (
+                            int nx,
+                            int ny,
+                            int nz,
+                            int *iact,
+                            int *p_actnum_v,
+                            int debug
+                            );
 
 int grd3d_write_eclrecord(FILE *fc,
                           char *recname,
