@@ -37,6 +37,8 @@ else:
         "-DPYTHON_LIBRARY=" + PYLIB,
     ]
 
+print("CMAKE COMMAND: {}".format(CMAKECMD))
+
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""

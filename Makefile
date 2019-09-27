@@ -111,14 +111,8 @@ clean-examples:
 	find examples ! -name "*.py" ! -name "*.sh" -type f -exec rm -f {} +
 
 
-cc:
-	@if [ -d "${CXTGEOBUILD}" ]; then \
-	    cd ${CXTGEOBUILD}; make; make install; \
-	else \
-	    mkdir -p ${CXTGEOBUILD}; \
-	    cd ${CXTGEOBUILD}; cmake ..; make; make install; \
-	fi
-
+cc: allclean
+	python setup.py clean --all
 
 lint: ## check style with pylint
 	@${PYTHON} -m pylint ${APPLICATION} tests

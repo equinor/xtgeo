@@ -321,7 +321,14 @@ def test_roffbin_import_v2():
     assert np.allclose(cell3, cell4)
 
 
-# @tsetup.bigtest
+def test_roffbin_import_v2_emerald():
+    """Test roff binary import ROFF using new API, emerald"""
+
+    t0 = xtg.timer()
+    grd1 = Grid(EMEGFILE)
+    print("V2: ", xtg.timer(t0))
+
+@tsetup.bigtest
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc"""
 

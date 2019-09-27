@@ -82,5 +82,7 @@ int grd3d_roff2xtgeo_coord (
         }
     }
 
+    logger_info("Transforming grid ROFF coords --> XTG representation ... done");
+
     return EXIT_SUCCESS;
 }

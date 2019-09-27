@@ -152,5 +152,7 @@ int grd3d_roff2xtgeo_zcorn (
 
     free(lookup_v);
 
+    logger_info("Transforming grid ROFF coords --> XTG representation ... done");
+
     return EXIT_SUCCESS;
 }
