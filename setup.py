@@ -133,7 +133,7 @@ class CMakeExtension(Extension):
             subprocess.check_call(CMAKECMD, cwd=self.build_temp)
 
         subprocess.check_call(
-            ["cmake", "--build", ".", "--target", "install"], cwd=self.build_temp
+            ["cmake", "--build", ".", "--target", "install", "--config", "Release"], cwd=self.build_temp
         )
 
 
