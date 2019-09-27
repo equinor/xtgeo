@@ -58,12 +58,10 @@ before_install:
   - git clone https://github.com/matthew-brett/multibuild
   - ls -l
   - source multibuild/common_utils.sh
-  - python-config --includes
   - source multibuild/travis_steps.sh
   - before_install
 
 install:
-  - python-config --includes
   - pip install bandit
   - build_wheel $REPO_DIR $PLAT
 
@@ -71,7 +69,6 @@ before_script:
   - bandit -c bandit.yml -r src/xtgeo
 
 script:
-  - python-config --includes
   - install_run $PLAT
   - mv wheelhouse dist
 
