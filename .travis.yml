@@ -71,8 +71,8 @@ before_script:
   - bandit -c bandit.yml -r src/xtgeo
 
 script:
-  - install_run $PLAT
   - python-config --includes
+  - install_run $PLAT
   - mv wheelhouse dist
 
 after_success:
