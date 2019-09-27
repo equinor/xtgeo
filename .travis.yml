@@ -31,6 +31,7 @@ env:
     - BUILD_DEPENDS="cmake==3.13.3"
     - CONFIG_PATH=scripts/config.sh
     - TEST_DEPENDS="pytest"
+    - PYTHON_INCLUDE_DIR=/usr/include/python{$TRAVIS_PYTHON_VERSION}
 
 matrix:
   fast_finish: true
