@@ -8,10 +8,6 @@ macro(make_library target source)
     target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endmacro(make_library)
 
-IF( NOT CMAKE_BUILD_TYPE )
-     SET( CMAKE_BUILD_TYPE Release ... FORCE )
-ENDIF()
-
 FILE(GLOB SOURCES *.c)
 set (SOURCE_FILES ${SOURCES})
 if (MSVC)

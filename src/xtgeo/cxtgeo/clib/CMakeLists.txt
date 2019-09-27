@@ -6,6 +6,10 @@ set(CMAKE_BUILD_PATH "${CMAKE_SOURCE_DIR}/build")
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR})
 # set(default_build_type "Release")
 
+IF (NOT CMAKE_BUILD_TYPE )
+     SET( CMAKE_BUILD_TYPE Release ... FORCE )
+ENDIF()
+
 project(cxtgeo C)
 
 add_subdirectory(src)
