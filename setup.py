@@ -10,23 +10,16 @@ from os.path import basename
 from os.path import splitext
 from setuptools import setup, find_packages, Extension
 
-from distutils.sysconfig import get_python_inc
 import distutils.sysconfig as sysconfig
 
 from distutils.command.build import build as _build
 from setuptools.command.build_ext import build_ext as _build_ext
 
 
-PYINCDIR = get_python_inc()
+PYINCDIR = sysconfig.get_python_inc()
 PYLIB = sysconfig.get_config_var("LIBDIR")
 
 WINDOWS = False
-CMAKECMD = [
-    "cmake",
-    "..",
-    "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
-    "-DPYTHON_LIBRARY=" + PYLIB,
-]
 if "Windows" in platform.system():
     WINDOWS = True
     CMAKECMD = [
@@ -35,6 +28,13 @@ if "Windows" in platform.system():
         "-DCMAKE_GENERATOR_PLATFORM=x64",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
+    ]
+else:
+    CMAKECMD = [
+        "cmake",
+        "..",
+        "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
+        "-DPYTHON_LIBRARY=" + PYLIB,
     ]
 
 
