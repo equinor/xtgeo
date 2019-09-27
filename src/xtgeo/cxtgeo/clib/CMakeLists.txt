@@ -22,7 +22,7 @@ endif()
 
 IF (MSVC)
    install(FILES
-	      "${CMAKE_BUILD_PATH}/src/Debug/cxtgeo.lib"
+	      "${CMAKE_BUILD_PATH}/src/Release/cxtgeo.lib"
 	      DESTINATION ${CMAKE_SOURCE_DIR}/lib)
 else()
 	install(FILES
