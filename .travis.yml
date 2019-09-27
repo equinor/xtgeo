@@ -63,6 +63,7 @@ before_install:
   - before_install
 
 install:
+  - python-config --includes
   - pip install bandit
   - build_wheel $REPO_DIR $PLAT
 
@@ -71,6 +72,7 @@ before_script:
 
 script:
   - install_run $PLAT
+  - python-config --includes
   - mv wheelhouse dist
 
 after_success:
