@@ -2,15 +2,23 @@ find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIR})
 
 include_directories(.)
+
 macro(make_library target source)
     add_library(${target} ${source})
     target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endmacro(make_library)
 
+IF( NOT CMAKE_BUILD_TYPE )
+     SET( CMAKE_BUILD_TYPE Release ... FORCE )
+ENDIF()
+
+
 FILE(GLOB SOURCES *.c)
 set (SOURCE_FILES ${SOURCES})
 if (MSVC)
-	set (CMAKE_C_FLAGS "/Ox")
+   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Ox")
+   # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
+   # # set (CMAKE_C_FLAGS "/Ox")
 else()
 	set (CMAKE_C_FLAGS "-Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99")
 endif()
