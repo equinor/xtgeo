@@ -35,7 +35,6 @@ if "Windows" in platform.system():
         "-DCMAKE_GENERATOR_PLATFORM=x64",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
-        "-DPYTHON_LIBRARY=" + PYLIB,
     ]
 
 
