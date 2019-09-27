@@ -8,6 +8,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 /*
  ***************************************************************************************
@@ -64,10 +65,8 @@ int grd3d_roff2xtgeo_zcorn (
     double z;
     double z_sw_v[8], z_se_v[8], z_nw_v[8], z_ne_v[8], zz[8];
 
-    char sbn[24] = "grd3d_roff2xtgeo_zcorn";
-    xtgverbose(debug);
-
-    xtg_speak(sbn, 2, "Transforming grid ROFF coords --> XTG representation ...");
+    logger_init(__FUNCTION__);
+    logger_info("Transforming grid ROFF coords --> XTG representation ...");
 
     /*
      * ---------------------------------------------------------------------------------

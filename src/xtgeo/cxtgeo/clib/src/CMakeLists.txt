@@ -1,3 +1,7 @@
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+# target_link_libraries(cxtgeo ${PYTHON_LIBRARIES})
+
 include_directories(.)
 macro(make_library target source)
     add_library(${target} ${source})
