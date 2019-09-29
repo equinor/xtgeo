@@ -26,7 +26,6 @@
  *    p_splitenz_v     i     Split node vector
  *    p_zdata_v        i     Input zdata array ROFF fmt
  *    p_coord_v        o     Output zcorn array XTGEO fmt
- *    debug            i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
@@ -53,8 +52,7 @@ int grd3d_roff2xtgeo_zcorn (
                             float zscale,
                             int *p_splitenz_v,
                             float *p_zdata_v,
-                            double *p_zcorn_v,
-                            int debug
+                            double *p_zcorn_v
                             )
 
 {
@@ -65,15 +63,9 @@ int grd3d_roff2xtgeo_zcorn (
     double z;
     double z_sw_v[8], z_se_v[8], z_nw_v[8], z_ne_v[8], zz[8];
 
-    xtgverbose(debug);
     logger_init(__FUNCTION__);
-    logger_info("Transforming grid ROFF coords --> XTG representation ...");
+    logger_info("Transforming grid ROFF zcorn --> XTG representation ...");
 
-    /*
-     * ---------------------------------------------------------------------------------
-     * ZCORN...
-     * ---------------------------------------------------------------------------------
-    */
 
     nxyz = (nx + 1) * (ny + 1) * (nz + 1);
     lookup_v = calloc(nxyz + 2, sizeof(int));
@@ -88,7 +80,6 @@ int grd3d_roff2xtgeo_zcorn (
 	for (j = 0; j < ny; j++) {
 	    for (i = 0; i < nx; i++) {
 
-                xtg_speak("xxx", 1, "Rolling rolling");
 		k = l;
 		if (l == -1) k = 0;
 
@@ -154,7 +145,7 @@ int grd3d_roff2xtgeo_zcorn (
 
     free(lookup_v);
 
-    logger_info("Transforming grid ROFF coords --> XTG representation ... done");
+    logger_info("Transforming grid ROFF zcorn --> XTG representation ... done");
 
     return EXIT_SUCCESS;
 }

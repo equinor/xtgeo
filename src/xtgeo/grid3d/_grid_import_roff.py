@@ -188,7 +188,6 @@ def import_roff_v2(self, fhandle):
         zscale,
         p_cornerlines_v,
         self._p_coord_v,
-        XTGDEBUG,
     )
 
     _cxtgeo.grd3d_roff2xtgeo_zcorn(
@@ -204,7 +203,6 @@ def import_roff_v2(self, fhandle):
         p_splitenz_v,
         p_zvalues_v,
         self._p_zcorn_v,
-        XTGDEBUG,
     )
 
     # ACTIVE may be missing, meaning all cells are missing!
@@ -214,7 +212,7 @@ def import_roff_v2(self, fhandle):
         option = 1
 
     _cxtgeo.grd3d_roff2xtgeo_actnum(
-        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, option, XTGDEBUG
+        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, option
     )
 
     _cxtgeo.delete_floatarray(p_cornerlines_v)

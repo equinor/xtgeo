@@ -8,7 +8,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
-
+#include "logger.h"
 /*
  ***************************************************************************************
  *
@@ -24,7 +24,6 @@
  *    p_act_v          i     Input actnum array ROFF fmt
  *    p_actnum_v       o     Output actnum array XTGEO fmt
  *    option           i     If 1, the all cells shall be regarded as active
- *    debug            i     Debug level
  *
  * RETURNS:
  *    Number of active cells
@@ -42,8 +41,7 @@ int grd3d_roff2xtgeo_actnum (
                             int nz,
                             int *p_act_v,
                             int *p_actnum_v,
-                            int option,
-                            int debug
+                            int option
                             )
 
 {
@@ -51,10 +49,8 @@ int grd3d_roff2xtgeo_actnum (
     long ib = 0, ic = 0, nact = 0;
     int i, j, k;
 
-    char sbn[24] = "grd3d_roff2xtgeo_actnum";
-    xtgverbose(debug);
-
-    xtg_speak(sbn, 2, "Transforming grid ROFF actnum --> XTG representation ...");
+    logger_init(__FUNCTION__);
+    logger_info("Transforming grid ROFF actnum --> XTG representation ...");
 
     if (option == 1) {
         for (ib=0; ib < nx * ny * nz; ib++) {
@@ -74,6 +70,8 @@ int grd3d_roff2xtgeo_actnum (
             }
         }
     }
+
+    logger_info("Transforming grid ROFF actnum --> XTG representation ... done");
 
     return nact;
 }

@@ -17,7 +17,9 @@
  *    grd3d_roff2xtgeo_coord.c
  *
  * DESCRIPTION:
- *    Convert from ROFF internal spec to XTGeo spec for coordinate lines
+ *    Convert from ROFF internal spec to XTGeo spec for coordinate lines.
+ *    Pillars (COORD lines). ROFF order them from base to top in C order, while XTGeo
+ *    use the Eclipse style; top (X Y Z) to base (X Y Z) looping in F order.
  *
  * ARGUMENTS:
  *    nx, ny, nz       i     NCOL, NROW, NLAY dimens
@@ -25,7 +27,6 @@
  *    *scale           i     Scaling in XYZ spesified in ROFF
  *    p_cornerlines_v  i     Input cornerlines array ROFF fmt
  *    p_coord_v        o     Output cornerlines array XTGEO fmt
- *    debug            i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. Update pointers
@@ -48,8 +49,7 @@ int grd3d_roff2xtgeo_coord (
                             float yscale,
                             float zscale,
                             float *p_cornerlines_v,
-                            double *p_coord_v,
-                            int debug
+                            double *p_coord_v
                             )
 
 {
@@ -61,12 +61,6 @@ int grd3d_roff2xtgeo_coord (
 
     logger_info("Transforming grid ROFF coords --> XTG representation ...");
 
-    /*
-     * ---------------------------------------------------------------------------------
-     * Pillars (COORD lines). ROFF order them from base to top in C order, while XTGeo
-     * use the Eclipse style; top (X Y Z) to base (X Y Z) looping in F order.
-     * ---------------------------------------------------------------------------------
-    */
     ib = 0;
     for (j = 0;j <= ny; j++) {
         for (i = 0; i <= nx; i++) {

@@ -1480,8 +1480,7 @@ int grd3d_roff2xtgeo_coord (
                             float yscale,
                             float zscale,
                             float *p_cornerlines_v,
-                            double *p_coord_v,
-                            int debug
+                            double *p_coord_v
                             );
 int grd3d_roff2xtgeo_zcorn (
                             int nx,
@@ -1495,8 +1494,7 @@ int grd3d_roff2xtgeo_zcorn (
                             float zscale,
                             int *p_splitenz_v,
                             float *p_zdata_v,
-                            double *p_zcorn_v,
-                            int debug
+                            double *p_zcorn_v
                             );
 
 
@@ -1506,8 +1504,7 @@ int grd3d_roff2xtgeo_actnum (
                             int nz,
                             int *iact,
                             int *p_actnum_v,
-                            int option,
-                            int debug
+                            int option
                             );
 
 int grd3d_write_eclrecord(FILE *fc,

@@ -1,21 +1,21 @@
 #include "logger.h"
 
-char* _concat(const char *s1, const char *s2)
-{
-    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
-    strcpy(result, s1);
-    strcat(result, s2);
-    return result;
-}
+/* Logging levels: */
 
-
-
+/* CRITICAL: 50 */
+/* ERROR: 40 */
+/* WARNING: 30 */
+/* INFO: 20 */
+/* DEBUG: 10 */
+/* NOTSET: 0 */
 
 static PyObject *logger;
+static int logging_level;
 
 void logger_init(const char *fname)
 {
     static PyObject *logging = NULL;
+    char fullname[50];
 
     // import logging module on demand
     if (logging == NULL){
@@ -26,28 +26,115 @@ void logger_init(const char *fname)
         }
 
     }
-    char *fullname = _concat("<cxtgeo>:", fname);
+
+    sprintf(fullname, "<cxtgeo>: %s", fname);
+
     logger = PyObject_CallMethod(logging, "getLogger", "s", fullname);
-    free(fullname);
+
+    /* Get the effective logging level */
+    PyObject *meth = PyObject_GetAttrString(logger, "getEffectiveLevel");
+    PyObject *level = PyObject_CallFunctionObjArgs(meth, NULL);
+
+    Py_DECREF(meth);
+
+    if(level == NULL) {
+        logging_level = 50;
+    }
+    else{
+        logging_level = PyLong_AsLong(level);
+    }
+    if(PyErr_Occurred()){
+        Py_DECREF(level);
+        logging_level = 50;
+    }
+    Py_DECREF(level);
 }
 
 
-void logger_info(char *msg)
+void logger_debug(const char *fmt, ...)
 {
-    static PyObject *string = NULL;
+    if (logging_level <= 10) {
+        va_list ap;
+        static PyObject *string = NULL;
+        char message[150], msg[147];
 
-    string = Py_BuildValue("s", msg);
+        va_start(ap, fmt);
+        vsprintf(msg, fmt, ap);
+        sprintf(message, "C! %s", msg);
+        string = Py_BuildValue("s", message);
 
-    PyObject_CallMethod(logger, "info", "O", string);
-    Py_DECREF(string);
+        PyObject_CallMethod(logger, "debug", "O", string);
+        Py_DECREF(string);
+    }
 }
 
-void logger_warn(char *msg)
+
+void logger_info(const char *fmt, ...)
 {
-    static PyObject *string = NULL;
+    if (logging_level <= 20) {
+        va_list ap;
+        static PyObject *string = NULL;
+        char message[150], msg[147];
 
-    string = Py_BuildValue("s", msg);
+        va_start(ap, fmt);
+        vsprintf(msg, fmt, ap);
+        sprintf(message, "C! %s", msg);
+        string = Py_BuildValue("s", message);
 
-    PyObject_CallMethod(logger, "warning", "O", string);
-    Py_DECREF(string);
+        PyObject_CallMethod(logger, "info", "O", string);
+        Py_DECREF(string);
+    }
+}
+
+void logger_warn(const char *fmt, ...)
+{
+    if (logging_level <= 30) {
+        va_list ap;
+        static PyObject *string = NULL;
+        char message[150], msg[147];
+
+        va_start(ap, fmt);
+        vsprintf(msg, fmt, ap);
+        sprintf(message, "C! %s", msg);
+        string = Py_BuildValue("s", message);
+
+        PyObject_CallMethod(logger, "warning", "O", string);
+        Py_DECREF(string);
+    }
+}
+
+
+void logger_error(const char *fmt, ...)
+{
+    if (logging_level <= 40) {
+        va_list ap;
+        static PyObject *string = NULL;
+        char message[150], msg[147];
+
+        va_start(ap, fmt);
+        vsprintf(msg, fmt, ap);
+        sprintf(message, "C! %s", msg);
+        string = Py_BuildValue("s", message);
+
+        PyObject_CallMethod(logger, "error", "O", string);
+        Py_DECREF(string);
+    }
+}
+
+
+void logger_critical(const char *fmt, ...)
+{
+    if (logging_level <= 50) {
+        va_list ap;
+        static PyObject *string = NULL;
+        char message[150], msg[147];
+
+        va_start(ap, fmt);
+        vsprintf(msg, fmt, ap);
+        sprintf(message, "C! %s", msg);
+        string = Py_BuildValue("s", message);
+
+        PyObject_CallMethod(logger, "critical", "O", string);
+        Py_DECREF(string);
+    }
 }
