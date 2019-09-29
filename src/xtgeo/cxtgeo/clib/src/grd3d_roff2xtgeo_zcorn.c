@@ -65,6 +65,7 @@ int grd3d_roff2xtgeo_zcorn (
     double z;
     double z_sw_v[8], z_se_v[8], z_nw_v[8], z_ne_v[8], zz[8];
 
+    xtgverbose(debug);
     logger_init(__FUNCTION__);
     logger_info("Transforming grid ROFF coords --> XTG representation ...");
 
@@ -87,6 +88,7 @@ int grd3d_roff2xtgeo_zcorn (
 	for (j = 0; j < ny; j++) {
 	    for (i = 0; i < nx; i++) {
 
+                xtg_speak("xxx", 1, "Rolling rolling");
 		k = l;
 		if (l == -1) k = 0;
 

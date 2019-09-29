@@ -29,11 +29,10 @@
  *    swap            i     SWAP status, 0 of False, 1 if True
  *    bytepos         i     The byte position to the code data
  *    xvec           i/o    Pointer to floatInt/etc data
- *    nxvec           i     Length of float array
- *    debug           i     Debug level
+ *    n*vec           i     Length of float array
  *
  * RETURNS:
- *    Updated float pointer fvec
+ *    Updated float pointer *vec
  *
  * TODO/ISSUES/BUGS:
  *
@@ -42,20 +41,14 @@
  ***************************************************************************************
  */
 
-int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec,
-                           int debug)
+int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec)
 {
     /* Imports a ROFF binary array, update pointer */
 
-    char s[24] = "grd3d_imp_roffbin_fvec";
     float afloat;
     long i;
     int iok;
 
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
 
     fseek(fc, bytepos, SEEK_SET);
 
@@ -69,20 +62,14 @@ int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long n
     return EXIT_SUCCESS;
 }
 
-int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec,
-                           int debug)
+int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec)
 {
     /* Imports a ROFF binary array, update pointer */
 
-    char s[24] = "grd3d_imp_roffbin_ivec";
     int anint;
     long i;
     int iok;
 
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
 
     fseek(fc, bytepos, SEEK_SET);
 
@@ -96,20 +83,13 @@ int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long niv
     return EXIT_SUCCESS;
 }
 
-int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbvec,
-                           int debug)
+int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbvec)
 {
     /* Imports a ROFF binary array if type , update pointer. NB convert to INT! */
 
-    char s[24] = "grd3d_imp_roffbin_bvec";
     unsigned char achar;
     long i;
     int iok, anint;
-
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
 
     fseek(fc, bytepos, SEEK_SET);
 

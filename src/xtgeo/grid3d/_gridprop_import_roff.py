@@ -366,15 +366,15 @@ def _rkwxvec(fhandle, kws, name, swap, strict=True):
     xvec = None
     if dtype == 1:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_ivec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_ivec(fhandle, swap, bytepos, xvec, reclen)
 
     elif dtype == 2:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen)
 
     elif dtype >= 4:
         xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte/bool to int
-        _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen)
 
     else:
         raise ValueError("Unhandled dtype: {}".format(dtype))

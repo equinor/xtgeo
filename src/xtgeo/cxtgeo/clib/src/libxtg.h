@@ -1329,9 +1329,9 @@ int grd3d_imp_roffbin_ilist(FILE *fc,
                             long n_swig_np_int_inplace_v1,  // *niarray
                             int debug);
 
-int grd3d_imp_roffbin_fvec (FILE *fc, int swp, long bpos, float *fvc, long nx, int dbg);
-int grd3d_imp_roffbin_ivec (FILE *fc, int swp, long bpos, int *ivc, long nx, int dbg);
-int grd3d_imp_roffbin_bvec (FILE *fc, int swp, long bpos, int *bvc, long nx, int dbg);
+int grd3d_imp_roffbin_fvec (FILE *fc, int swp, long bpos, float *fvc, long nv);
+int grd3d_imp_roffbin_ivec (FILE *fc, int swp, long bpos, int *ivc, long nv);
+int grd3d_imp_roffbin_bvec (FILE *fc, int swp, long bpos, int *bvc, long nv);
 
 int grd3d_imp_roffbin_data (FILE *fc,
                             int swap,
