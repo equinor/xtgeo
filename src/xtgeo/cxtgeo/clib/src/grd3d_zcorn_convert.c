@@ -26,7 +26,6 @@
  *    zcorn          i     ZCORN as input from Eclipse
  *    p_coord_v      o     XTgeo's ZCORN repr
  *    option         i     Options flag for later usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
@@ -49,8 +48,7 @@ void grd3d_zcorn_convert (
                           int nz,
                           float *zcorn,
                           double *p_zcorn_v,
-                          int option,
-                          int debug
+                          int option
                           )
 {
 
@@ -60,9 +58,6 @@ void grd3d_zcorn_convert (
     float fvalue1;
     float fvalue2;
     int kk = 0, kz, ix, jy;
-    char sbn[24] = "grd3d_zcorn_convert";
-
-    xtgverbose(debug);
 
     for (kz = 1; kz <= 2 * nz; kz++) {
         if (kzread == 0) {
@@ -76,7 +71,6 @@ void grd3d_zcorn_convert (
 
         if (kzread == 1) {
             kk += 1;
-            xtg_speak(sbn, 2, "Reading layer: %d", kk);
         }
         for (jy = 1; jy <= ny; jy++) {
             /* "left" cell margin */

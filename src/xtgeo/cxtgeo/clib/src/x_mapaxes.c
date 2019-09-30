@@ -28,17 +28,12 @@ void x_mapaxes (
 		const double y2,
 		const double x3,
 		const double y3,
-		int   option,
-		int   debug
+		int   option
 		)
 {
     double  xval, yval, xnew, ynew;
     double  normx, normy;
     double  xx1, xx3, yy1, yy3;
-    char    sbn[24] = "x_mapaxes";
-
-    xtgverbose(debug);
-    xtg_speak(sbn, 2, "Enter %s", sbn);
 
     /* mode < 0 means no mapaxes transform */
     if (mode < 0) {

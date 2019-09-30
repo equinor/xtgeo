@@ -41,7 +41,7 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
     npdbl = np.zeros((dlen), dtype=np.float64)
 
     _cxtgeo.grd3d_read_eclrecord(
-        fhandle, kwbyte, kwntype, npint, npflt, npdbl, XTGDEBUG
+        fhandle, kwbyte, kwntype, npint, npflt, npdbl
     )
 
     npuse = None

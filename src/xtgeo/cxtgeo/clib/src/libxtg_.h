@@ -25,8 +25,7 @@ void x_mapaxes (
 		const double y2,
 		const double x3,
 		const double y3,
-		int   option,
-		int   debug
+		int   option
 		);
 
 

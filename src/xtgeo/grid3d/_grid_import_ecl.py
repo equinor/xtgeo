@@ -96,7 +96,6 @@ def import_ecl_egrid(self, gfile):
         self._p_zcorn_v,
         self._p_actnum_v,
         option,
-        XTGDEBUG,
     )
 
     self._nactive = nact
@@ -264,7 +263,6 @@ def import_ecl_bgrdecl(self, gfile):
         self._p_zcorn_v,
         self._p_actnum_v,
         0,
-        XTGDEBUG,
     )
 
     self._nactive = nact

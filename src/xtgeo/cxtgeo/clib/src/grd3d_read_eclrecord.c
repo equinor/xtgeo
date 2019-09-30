@@ -8,6 +8,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 /*
  ******************************************************************************
@@ -41,7 +42,6 @@
  *    nflt             i     The allocated record total length
  *    doublev          o     Preallocated Double array (if rectype is 3)
  *    ndbl             i     The allocated record total length if double
- *    debug            i     Debug level
  *
  * RETURNS:
  *    Function: nelements upon success, negative if problems
@@ -58,11 +58,8 @@
 
 int grd3d_read_eclrecord (FILE *fc, long recstart,
                           int rectype, int *intv, long nint, float *floatv,
-                          long nflt, double *doublev, long ndbl,
-                          int debug)
+                          long nflt, double *doublev, long ndbl)
 {
-
-    char s[24] = "grd3d_read_eclrecord";
 
     const int FAIL = -99;
     int ic, ier, myint, ftn1, ftn2, ftn_reclen = 0, nr, swap = 0;
@@ -70,34 +67,31 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     double mydouble;
     long reclength = 0, nrecs, icc;
 
-    xtgverbose(debug);
+    logger_init(__FUNCTION__);
 
     if (x_swap_check() == 1) swap = 1;
 
-    if (fc == NULL) xtg_error(s, "Cannot use file");
+    if (fc == NULL) logger_critical("Cannot use file (NULL pointer)");
 
     if (rectype == 1) reclength = nint;
     if (rectype == 2) reclength = nflt;
     if (rectype == 3) reclength = ndbl;
 
     /* go to file position */
-    if (debug > 2) xtg_speak(s, 3, "RECSTART is %ld", recstart);
     ier = fseek(fc, recstart + 24, SEEK_SET);  /* record header is 24 bytes */
 
     if (ier != 0) {
-        xtg_error(s, "Could not set FSEEK position");
+        logger_error("Could not set FSEEK position");
     }
 
     nrecs = reclength;
 
     icc = 0;
-    if (debug > 2) xtg_speak(s, 3, "NRECS is %d", nrecs);
+
     while (nrecs > 0) {
         if (fread(&ftn1, 4, 1, fc) != 1) return FAIL;
-        if (debug > 2) xtg_speak(s, 3, "FTN1 (pre) is %d", ftn1);
         if (swap) SWAP_INT(ftn1);
 
-        if (debug > 2) xtg_speak(s, 3, "FTN1 (swp) is %d", ftn1);
 
         if (rectype == 1) ftn_reclen = (ftn1 / sizeof(int));
         if (rectype == 2) ftn_reclen = (ftn1 / sizeof(float));
@@ -110,13 +104,8 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
             nr = nrecs;
         }
 
-        if (debug > 2) xtg_speak(s, 3, "FTN_RECLEN is %d", ftn_reclen);
-        if (debug > 2) xtg_speak(s, 3, "NR is %d", nr);
-
         /* read actual values with in the fortran block */
         for (ic = 0; ic < nr; ic++) {
-            if (debug > 2) xtg_speak(s, 3, "IC = %d of %d", ic, nr);
-
             if (rectype == 1) {
                 ier = fread(&myint, 4, 1, fc);
                 if (ier != 1) return FAIL;
@@ -147,8 +136,8 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     }
 
     if (icc != reclength) {
-        xtg_error(s, "Something is wrong with record lengths... "
-                  "icc=%d, reclength=%d", icc, reclength);
+        logger_error("Something is wrong with record lengths... "
+                     "icc=%d, reclength=%d", icc, reclength);
         return FAIL;
     }
 

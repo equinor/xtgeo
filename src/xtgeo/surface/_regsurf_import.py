@@ -35,7 +35,7 @@ def import_irap_binary(self, mfile, values=True):
         self._yinc,
         self._rotation,
         val,
-    ) = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0, DEBUG)
+    ) = _cxtgeo.surf_import_irap_bin(mfile, 0, 1, 0)
 
     self._yflip = 1
     if self._yinc < 0.0:
@@ -53,7 +53,7 @@ def import_irap_binary(self, mfile, values=True):
         return
 
     nval = self._ncol * self._nrow
-    xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0)
 
     val = xlist[-1]
 
@@ -70,13 +70,12 @@ def import_irap_binary(self, mfile, values=True):
 
     self._values = val
 
+
 def import_irap_ascii(self, mfile):
     """Import Irap ascii format."""
     # version using swig type mapping
 
     logger.debug("Enter function...")
-    # need to call the C function...
-    _cxtgeo.xtg_verbose_file("NONE")
 
     # read with mode 0, scan to get mx my
     xlist = _cxtgeo.surf_import_irap_ascii(mfile, 0, 1, 0, DEBUG)

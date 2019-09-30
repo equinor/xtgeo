@@ -8,10 +8,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
-
-/* local functions */
-int _intread(FILE *fc, int swap, int trg, char info[50], int debug);
-double _floatread(FILE *fc, int swap, float trg, char info[50], int debug);
+#include "logger.h"
 
 /*
  ******************************************************************************
@@ -39,7 +36,6 @@ double _floatread(FILE *fc, int swap, float trg, char info[50], int debug);
  *    p_surf_v       o     1D pointer to map/surface values pointer array
  *    nsurf          i     No. of map nodes (for allocation from Python/SWIG)
  *    option         i     Options flag for later usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -58,6 +54,59 @@ double _floatread(FILE *fc, int swap, float trg, char info[50], int debug);
  *    See XTGeo licence
  ******************************************************************************
  */
+/* Local functions: */
+
+#define ERROR -999999
+
+int _intread(FILE *fc, int swap, int trg, char info[50]) {
+    /* read an INT item in the IRAP binary header */
+    int ier, myint;
+    logger_init(__FUNCTION__);
+
+    ier = fread(&myint, sizeof(int), 1, fc);
+    if (ier != 1) {
+        logger_critical("Error in reading INT in Irap binary header");
+        return ERROR;
+    }
+    if (swap) SWAP_INT(myint);
+
+    /* test againts target if target > 0 */
+    if (trg > 0) {
+        if (myint != trg) {
+            logger_critical("Error in reading INT in Irap binary header");
+            return ERROR;
+        }
+    }
+    return myint;
+}
+
+
+double _floatread(FILE *fc, int swap, float trg, char info[50]) {
+    /* read a FLOAT item in the IRAP binary header, return as DOUBLE */
+    int ier;
+    float myfloat;
+    logger_init(__FUNCTION__);
+
+    ier = fread(&myfloat, sizeof(float), 1, fc);
+    if (ier != 1) {
+        logger_critical("Error in reading FLOAT in Irap binary header");
+        return ERROR;
+    }
+
+    if (swap) SWAP_FLOAT(myfloat);
+
+    /* test againts target if target > 0 */
+    if (trg > 0.0) {
+        if (myfloat != trg)  {
+            logger_critical("Error in reading FLOAT in Irap binary header");
+            return ERROR;
+        }
+    }
+
+    return (double)myfloat;
+}
+
+
 int surf_import_irap_bin(
 			 char *filename,
 			 int mode,
@@ -71,8 +120,7 @@ int surf_import_irap_bin(
 			 double *p_rot,
 			 double *p_map_v,
 			 long nsurf,
-			 int option,
-			 int debug
+			 int option
 			 )
 {
 
@@ -84,14 +132,11 @@ int surf_import_irap_bin(
 
     double xori, yori, xmax, ymax, xinc, yinc, rot, x0ori, y0ori, dval;
 
-    char s[24] = "surf_import_irap_bin";
 
     FILE *fc;
 
-    xtgverbose(debug);
-    xtg_speak(s, 1,"Read IRAP binary map file: %s", filename);
-
-    xtg_speak(s, 2, "Entering %s",s);
+    logger_init(__FUNCTION__);
+    logger_info("Read IRAP binary map file: %s", filename);
 
     /*
      * READ HEADER
@@ -129,31 +174,31 @@ int surf_import_irap_bin(
     if (x_swap_check() == 1) swap=1;
 
     /* record 1 */
-    ireclen = _intread(fc, swap, 32, "Record start (1)", debug);
-    idflag = _intread(fc, swap, 0, "ID flag for Irap map", debug);
-    ny = _intread(fc, swap, 0.0, "NY", debug);
-    xori = _floatread(fc, swap, 0.0, "XORI", debug);
-    xmax = _floatread(fc, swap, 0.0, "XMAX (not used by RMS)", debug);
-    yori = _floatread(fc, swap, 0.0, "YORI", debug);
-    ymax = _floatread(fc, swap, 0.0, "YMAX (not used by RMS)", debug);
-    xinc = _floatread(fc, swap, 0.0, "XINC", debug);
-    yinc = _floatread(fc, swap, 0.0, "YINC", debug);
-    ireclen = _intread(fc, swap, 32, "Record end (1)", debug);
+    ireclen = _intread(fc, swap, 32, "Record start (1)");
+    idflag = _intread(fc, swap, 0, "ID flag for Irap map");
+    ny = _intread(fc, swap, 0.0, "NY");
+    xori = _floatread(fc, swap, 0.0, "XORI");
+    xmax = _floatread(fc, swap, 0.0, "XMAX (not used by RMS)");
+    yori = _floatread(fc, swap, 0.0, "YORI");
+    ymax = _floatread(fc, swap, 0.0, "YMAX (not used by RMS)");
+    xinc = _floatread(fc, swap, 0.0, "XINC");
+    yinc = _floatread(fc, swap, 0.0, "YINC");
+    ireclen = _intread(fc, swap, 32, "Record end (1)");
 
     /* record 2 */
-    ireclen = _intread(fc, swap, 16, "Record start (2)", debug);
-    nx = _intread(fc, swap, 0, "NX", debug);
-    rot = _floatread(fc, swap, 0.0, "Rotation", debug);
-    x0ori = _floatread(fc, swap, 0.0, "Rotation origin X (not used)", debug);
-    y0ori = _floatread(fc, swap, 0.0, "Rotation origin Y (not used)", debug);
-    ireclen = _intread(fc, swap, 16, "Record end (2)", debug);
+    ireclen = _intread(fc, swap, 16, "Record start (2)");
+    nx = _intread(fc, swap, 0, "NX");
+    rot = _floatread(fc, swap, 0.0, "Rotation");
+    x0ori = _floatread(fc, swap, 0.0, "Rotation origin X (not used)");
+    y0ori = _floatread(fc, swap, 0.0, "Rotation origin Y (not used)");
+    ireclen = _intread(fc, swap, 16, "Record end (2)");
 
     /* record 3 */
-    ireclen = _intread(fc, swap, 28, "Record start (3)", debug);
+    ireclen = _intread(fc, swap, 28, "Record start (3)");
     for (i = 0; i < 7; i++) {
-        idum = _intread(fc, swap, 0, "INT FLAG (not used...)", debug);
+        idum = _intread(fc, swap, 0, "INT FLAG (not used...)");
     }
-    ireclen = _intread(fc, swap, 28, "Record end (3)", debug);
+    ireclen = _intread(fc, swap, 28, "Record end (3)");
 
     *p_mx = nx;
     *p_my = ny;
@@ -168,7 +213,7 @@ int surf_import_irap_bin(
     /* if scan mode only: */
     if (mode==0) {
 	fclose(fc);
-        xtg_speak(s, 2, "Scan mode!");
+        logger_info("Scan mode!");
 	return EXIT_SUCCESS;
     }
 
@@ -183,13 +228,12 @@ int surf_import_irap_bin(
     ier = 1;
     nn = 0;
     ntmp = 0;
-    xtg_speak(s, 3, "Read Irap map values...");
+    logger_info("Read Irap map values...");
 
     while (ier == 1) {
 	/* start of block integer */
 	ier = fread(&myint, sizeof(int), 1, fc); if (swap) SWAP_INT(myint);
 	if (ier == 1 && myint > 0) {
-	    //xtg_speak(s,2,"RECORD DATA START is %d", myint);
 	    mstart = myint;
 
 	    /* read data */
@@ -217,10 +261,10 @@ int surf_import_irap_bin(
 
 	    /* end of block integer */
 	    ier = fread(&myint, sizeof(int), 1, fc); if (swap) SWAP_INT(myint);
-	    //xtg_speak(s,2,"RECORD DATA STOP is %d", myint);
 	    mstop = myint;
 	    if (mstart != mstop) {
-	      xtg_error(s,"Error en reading irap file (mstart %d mstop %d)", mstart, mstop);
+	      logger_critical("Error en reading irap file (mstart %d mstop %d)",
+                              mstart, mstop);
 	    }
 	}
 	else{
@@ -230,69 +274,16 @@ int surf_import_irap_bin(
 
     *p_ndef = ntmp;
     if (nn != mx * my) {
-	xtg_error(s, "Error, number of map nodes read not equal to MX*MY");
+	logger_critical("Error, number of map nodes read not equal to MX*MY");
     }
     else{
-	xtg_speak(s, 2, "Number of map nodes read are: %d", nn);
-	xtg_speak(s, 2, "Number of defind map nodes read are: %d", ntmp);
+	logger_debug("Number of map nodes read are: %d", nn);
+	logger_debug("Number of defind map nodes read are: %d", ntmp);
     }
-    xtg_speak(s, 3, "Read data map ... OK");
 
     fclose(fc);
 
 
     return EXIT_SUCCESS;
 
-}
-
-
-/* Local functions: */
-
-int _intread(FILE *fc, int swap, int trg, char info[50], int debug) {
-    /* read an INT item in the IRAP binary header */
-    int ier, myint;
-    char s[24] = "_intread";
-    xtgverbose(debug);
-
-    ier = fread(&myint, sizeof(int), 1, fc);
-    if (ier != 1) xtg_error(s, "Error in reading Irap binary map header (32)");
-
-    if (swap) SWAP_INT(myint);
-
-    /* test againts target if target > 0 */
-    if (trg > 0) {
-        if (myint != trg) {
-            xtg_error(s, "Error in reading Irap binary map header (33)");
-        }
-    }
-    xtg_speak(s, 2, "Reading: %s; value is %d", info, myint);
-
-    return myint;
-}
-
-
-double _floatread(FILE *fc, int swap, float trg, char info[50], int debug) {
-    /* read a FLOAT item in the IRAP binary header, return as DOUBLE */
-    int ier;
-    float myfloat;
-    char s[24] = "_floatread";
-
-    xtgverbose(debug);
-
-    ier = fread(&myfloat, sizeof(float), 1, fc);
-    if (ier != 1) xtg_error(s, "Error in reading Irap binary map header "
-                            "(IER != 1) (%s)", info);
-
-    if (swap) SWAP_FLOAT(myfloat);
-
-    /* test againts target if target > 0 */
-    if (trg > 0.0) {
-        if (myfloat != trg) {
-            xtg_error(s, "Error in reading Irap binary map header "
-                      "(target val) (%s)", info);
-        }
-    }
-    xtg_speak(s, 2, "Reading: %s; value is %f", info, myfloat);
-
-    return (double)myfloat;
 }

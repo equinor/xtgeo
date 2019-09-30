@@ -271,8 +271,7 @@ int surf_import_irap_bin(
 			 double *swig_dbl_out_p5,       // *p_rot
 			 double *swig_np_dbl_aout_v1,   // *p_map_v
 			 long   n_swig_np_dbl_aout_v1,  // nmap
-			 int    option,
-			 int    debug
+			 int    option
 			 );
 
 
@@ -1464,8 +1463,7 @@ int grd3d_read_eclrecord (
                           float  *swig_np_flt_inplace_v1,
                           long   n_swig_np_flt_inplace_v1,
                           double *swig_np_dbl_inplace_v1,
-                          long   n_swig_np_dbl_inplace_v1,
-                          int    debug
+                          long   n_swig_np_dbl_inplace_v1
                           );
 
 
@@ -1507,16 +1505,19 @@ int grd3d_roff2xtgeo_actnum (
                             int option
                             );
 
-int grd3d_write_eclrecord(FILE *fc,
+int grd3d_write_eclrecord(
+                          FILE *fc,
                           char *recname,
                           int rectype,
                           int *intv,
                           float *floatv,
                           double *doublev,
                           long nrecs,
-                          int debug);
+                          int debug
+                          );
 
-int grd3d_write_eclinput(FILE *fc,
+int grd3d_write_eclinput(
+                         FILE *fc,
                          char *recname,
                          int rectype,
                          int *intv,
@@ -1525,7 +1526,8 @@ int grd3d_write_eclinput(FILE *fc,
                          long nrecs,
                          char *fmt,
                          int ncolumns,
-                         int debug);
+                         int debug
+                         );
 
 void grd3d_zcorn_convert (
                           int nx,
@@ -1533,8 +1535,7 @@ void grd3d_zcorn_convert (
                           int nz,
                           float *zcorn,
                           double *p_zcorn_v,
-                          int option,
-                          int debug
+                          int option
                           );
 
 int grd3d_ecl_tsteps (
@@ -1560,7 +1561,6 @@ int grd3d_imp_ecl_egrid (
                          double *p_coord_v,
                          double *p_zcorn_v,
                          int *actnum_v,
-                         int debug,
                          int option
                          );
 
@@ -1668,9 +1668,8 @@ int grd3d_copy(
                double *p_zcorn2_v,
                int *p_actnum2_v,
                int iflag,
-               int debug);
-
-
+               int debug
+               );
 
 int grd3d_crop_geometry (
                          int nx,
