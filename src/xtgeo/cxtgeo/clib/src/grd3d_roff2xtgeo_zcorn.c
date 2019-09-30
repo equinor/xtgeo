@@ -61,7 +61,7 @@ int grd3d_roff2xtgeo_zcorn (
     int i, j, k, l, ico, ipos, isplit;
     int *lookup_v, ncc[8];
     double z;
-    double z_sw_v[8], z_se_v[8], z_nw_v[8], z_ne_v[8], zz[8];
+    double z_sw_v[8] = {}, z_se_v[8] = {}, z_nw_v[8] = {}, z_ne_v[8] = {}, zz[8] = {};
 
     logger_init(__FUNCTION__);
     logger_info("Transforming grid ROFF zcorn --> XTG representation ...");
@@ -111,7 +111,6 @@ int grd3d_roff2xtgeo_zcorn (
                         z_ne_v[ico] = (p_zdata_v[ipos + 3] + zoffset) * zscale;
                     }
                 }
-
 
 		zz[0] = z_ne_v[4];
 		zz[1] = z_nw_v[5];
