@@ -71,7 +71,6 @@ def resample(self, other):
         self._rotation,
         svalues,
         0,
-        XTGDEBUG,
     )
 
     if ier != 0:

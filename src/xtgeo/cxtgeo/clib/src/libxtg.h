@@ -585,8 +585,7 @@ int surf_resample(
                   double rota2,
                   double *swig_np_dbl_inplace_v1,  // *mapv2 INPLACE
                   long   n_swig_np_dbl_inplace_v1,
-                  int    option,
-                  int    debug
+                  int    option
                   );
 
 
