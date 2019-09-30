@@ -111,9 +111,6 @@ clean-examples:
 	find examples ! -name "*.py" ! -name "*.sh" -type f -exec rm -f {} +
 
 
-cc: allclean
-	python setup.py clean --all
-
 lint: ## check style with pylint
 	@${PYTHON} -m pylint ${APPLICATION} tests
 
@@ -163,7 +160,7 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 
-dist: clean cc  ## builds wheel package
+dist: clean  ## builds wheel package
 	@echo "Running ${PYTHON} (${PYTHON_VERSION}) bdist_wheel..."
 	@${PYTHON} setup.py bdist_wheel
 
