@@ -1,0 +1,50 @@
+import numpy as np
+
+GRIDNAME = "GeoGrid"
+
+BW1 = "BW"
+BW2 = "BW_Tarbert"
+BW3 = "BW_result"
+
+ZNAME = "zone_log"
+
+WELLS = ["34_11-1", "34_11-A-2"]
+
+UNDEF = 999999
+
+def main():
+    gmodel = project.grid_models[GRIDNAME]
+    bwset1 = gmodel.blocked_wells_set[BW1]
+    bwset2 = gmodel.blocked_wells_set[BW2]
+
+    bwset3 = gmodel.blocked_wells_set[BW3]  # use for result
+
+
+    # get numpies; masked to normal numpies; replace undef with UNDEF
+    zones1 = np.ma.filled(bwset1.properties[ZNAME].get_values(), fill_value=UNDEF)
+    zones2 = np.ma.filled(bwset2.properties[ZNAME].get_values(), fill_value=UNDEF)
+
+    for prop in bwset1.properties:
+        propname = prop.name
+        print("Property name is: ", propname)
+        if propname in bwset2.properties:
+            pval1 = np.ma.filled(bwset1.properties[propname].get_values(), UNDEF)
+            pval2 = np.ma.filled(bwset2.properties[propname].get_values(), UNDEF)
+            pval3 = np.ma.filled(bwset3.properties[propname].get_values(), UNDEF)
+
+            res = pval1
+
+            for well in WELLS:
+                print(well)
+                dind = bwset1.get_data_indices([well])
+                z1 = zones1[dind]
+                upperz = z1.min()
+                resall = np.where(zones2 <= upperz, pval2, pval1)
+
+                # filtered on well indices only:
+                res[dind] = resall[dind]
+                res = np.ma.masked_greater_equal(res, UNDEF)
+
+            bwset3.properties[propname].set_values(res)
+
+
