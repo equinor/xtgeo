@@ -60,6 +60,7 @@ void logger_debug(const char *fmt, ...)
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
+        va_end(ap);
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
@@ -78,6 +79,7 @@ void logger_info(const char *fmt, ...)
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
+        va_end(ap);
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
@@ -95,6 +97,7 @@ void logger_warn(const char *fmt, ...)
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
+        va_end(ap);
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
@@ -113,6 +116,7 @@ void logger_error(const char *fmt, ...)
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
+        va_end(ap);
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
@@ -131,6 +135,7 @@ void logger_critical(const char *fmt, ...)
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
+        va_end(ap);
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 

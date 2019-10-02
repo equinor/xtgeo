@@ -47,13 +47,11 @@ int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long n
 
     float afloat;
     long i;
-    int iok;
-
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nfvec; i++) {
-        iok = fread(&afloat, 4, 1, fc);
+        if (fread(&afloat, 4, 1, fc) != 1) exit(EXIT_FAILURE);
         if (swap==1) SWAP_FLOAT(afloat);
         if (afloat == -999.0) afloat = UNDEF;
         fvec[i] = afloat;
@@ -68,13 +66,11 @@ int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long niv
 
     int anint;
     long i;
-    int iok;
-
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nivec; i++) {
-        iok = fread(&anint, 4, 1, fc);
+        if (fread(&anint, 4, 1, fc) != 1) exit(EXIT_FAILURE);
         if (swap==1) SWAP_FLOAT(anint);
         if (anint == -999.0) anint = UNDEF_INT;
         ivec[i] = anint;
@@ -89,12 +85,12 @@ int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbv
 
     unsigned char achar;
     long i;
-    int iok, anint;
+    int anint;
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nbvec; i++) {
-        iok = fread(&achar, 1, 1, fc);
+        if (fread(&achar, 1, 1, fc) != 1) exit(EXIT_FAILURE);
         anint = (int)achar;
         if (anint == 255) anint = UNDEF_INT;
         bvec[i] = anint;

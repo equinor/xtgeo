@@ -63,6 +63,7 @@ int grd3d_imp_roffbin_ilist(FILE *fc, int swap, long bytepos, int *iarray,
 
     for (ipos = 0; ipos < niarray; ipos++) {
         iok = fread(&anint, 4, 1, fc);
+        if (iok != 1) exit(EXIT_FAILURE);
         if (swap==1) SWAP_INT(anint);
         if (anint == -999) anint = UNDEF_INT;
         iarray[ipos] = anint;

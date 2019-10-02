@@ -12,10 +12,10 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
 from xtgeo.common.exceptions import WellNotFoundError
 
-try:
-    import roxar
-except ImportError:
-    pass
+# try:
+#     import roxar
+# except ImportError:
+#     pass
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -33,6 +33,19 @@ def import_bwell_roxapi(
     rox = RoxUtils(project, readonly=True)
 
     _roxapi_import_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
+
+    rox.safe_close()
+
+
+def export_bwell_roxapi(
+    self, project, gname, bwname, wname, realisation=0
+):
+    """Private function for loading project and ROXAPI blockwell import"""
+
+    logger.info("Opening RMS project ...")
+    rox = RoxUtils(project, readonly=True)
+
+    _roxapi_export_bwell(self, rox, gname, bwname, wname, realisation)
 
     rox.safe_close()
 

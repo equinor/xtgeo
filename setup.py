@@ -6,13 +6,14 @@ import subprocess
 from glob import glob
 import shutil
 import os
+import distutils.sysconfig as sysconfig
+
+from distutils.command.build import build as _build
+
 from os.path import basename
 from os.path import splitext
 from setuptools import setup, find_packages, Extension
 
-import distutils.sysconfig as sysconfig
-
-from distutils.command.build import build as _build
 from setuptools.command.build_ext import build_ext as _build_ext
 
 
@@ -133,7 +134,8 @@ class CMakeExtension(Extension):
             subprocess.check_call(CMAKECMD, cwd=self.build_temp)
 
         subprocess.check_call(
-            ["cmake", "--build", ".", "--target", "install", "--config", "Release"], cwd=self.build_temp
+            ["cmake", "--build", ".", "--target", "install", "--config", "Release"],
+            cwd=self.build_temp,
         )
 
 

@@ -326,21 +326,23 @@ def test_roffbin_import_v2_emerald():
 
     t0 = xtg.timer()
     grd1 = Grid(EMEGFILE)
+    tsetup.assert_equal(grd1.ncol, 70)
     print("V2: ", xtg.timer(t0))
+
 
 @tsetup.bigtest
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc"""
 
     t0 = xtg.timer()
-    for i in range(100):
+    for _ino in range(100):
         grd1 = Grid()
         grd1.from_file(REEKFIL4, _roffapiv=2)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 2 took: ", t1)
 
     t0 = xtg.timer()
-    for i in range(100):
+    for _ino in range(100):
         grd1 = Grid()
         grd1.from_file(REEKFIL4, _roffapiv=1)
     t1 = xtg.timer(t0)
