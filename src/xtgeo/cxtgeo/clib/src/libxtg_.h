@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 void x_fgets(char *, int, FILE *);
 void x_fread (void *, size_t , size_t , FILE *, char *, int);
 
 
 int x_nint(double);
+
 
 int x_cmp_sort (
 		const void *vp,
@@ -25,8 +25,7 @@ void x_mapaxes (
 		const double y2,
 		const double x3,
 		const double y3,
-		int   option,
-		int   debug
+		int   option
 		);
 
 

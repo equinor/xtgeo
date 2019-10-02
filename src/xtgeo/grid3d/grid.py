@@ -106,15 +106,25 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=F
 # --------------------------------------------------------------------------------------
 # Comment on dual porosity grids:
 #
-# Simulation grids may hold a "dual porosity" system. This is supported here for
-# EGRID format (only, so far), which:
+# Simulation grids may hold a "dual poro" or/and a "dual perm" system. This is
+# supported here for EGRID format (only, so far), which:
 # * Index 5 in FILEHEAD will be 1 if dual poro is True
-# * ACTNUM values will be 2 (inactive) or 3 (active) instead of 0 / 1 in the file
-#   However, XTGeo will convert this 2 / 3 scheme back to 0 / 1 scheme!
+# * Index 5 in FILEHEAD will be 2 if dual poro AND dual perm is True
+# * ACTNUM values will be: 0, 1, 2 (inactive) or 3 (active) instead of normal
+#   0 / 1 in the file:
+# * 0 both Fracture and Matrix are inactive
+# * 1 Matrix is active, Fracture is inactive (set to zero)
+# * 2 Matrix is inactive (set to zero), Fracture is active
+# * 3 Both Fracture and Matrix are active
+#
+#   However, XTGeo will convert this 0..3 scheme back to 0..1 scheme!
+#   In case of dualporo/perm, a special property holding the initial actnum
+#   will be made
 #
 # The property self._dualporo is True in case of Dual Porosity
+# BOTH self._dualperm AND self._dualporo are True in case of Dual Permeability
 #
-# All properties in a dual poro system will be given a postfix "M" of "F", e.g.
+# All properties in a dual p* system will be given a postfix "M" of "F", e.g.
 # PORO -->  POROM and POROF
 # --------------------------------------------------------------------------------------
 
@@ -162,8 +172,10 @@ class Grid(Grid3D):
         self._props = None  # None or a GridProperties instance
         self._subgrids = None  # A python dict if subgrids are given
 
-        # Simulators like Eclipse may have a dual porosity model
+        # Simulators like Eclipse may have a dual poro/perm model
         self._dualporo = False
+        self._dualperm = False
+        self._dualactnum = None  # will be a GridProperty()
 
         # Roxar api spesific:
         self._roxgrid = None
@@ -322,9 +334,8 @@ class Grid(Grid3D):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C order (read only).
 
-        In dual porosity systems, this will be the active indices for the
-        matrix cells. For fracture porosity, use the get_actnum_indices
-        method for additional options.
+        In dual poro/perm systems, this will be the active indices for the
+        matrix cells and/or fracture cells (i.e. actnum >= 1).
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
@@ -341,6 +352,11 @@ class Grid(Grid3D):
     def dualporo(self):
         """Boolean flag for dual porosity scheme (read only)."""
         return self._dualporo
+
+    @property
+    def dualperm(self):
+        """Boolean flag for dual porosity scheme (read only)."""
+        return self._dualperm
 
     @property
     def gridprops(self):
@@ -470,7 +486,7 @@ class Grid(Grid3D):
         initprops=None,
         restartprops=None,
         restartdates=None,
-        _roffapiv=1,
+        _roffapiv=2,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -843,30 +859,35 @@ class Grid(Grid3D):
 
         raise NotImplementedError("Not yet; todo")
 
-    def get_actnum_indices(self, order="C", fracture=False):
+    def get_actnum_indices(self, order="C"):
         """Returns the 1D ndarray which holds the indices for active cells
         given in 1D, C or F order.
-
-        The fracture option is only active for DUALPORO systems. In such
-        cases, different indices are used for matrix and fracture
-        properties.
         """
+
         actnumv = self.get_actnum().values.copy(order=order)
         actnumv = np.ravel(actnumv, order="K")
+        return np.flatnonzero(actnumv)
 
-        if self._dualporo:
-            if not fracture:
-                actnumvm = actnumv.copy()
-                actnumvm[(actnumv == 3) | (actnumv == 1)] = 1
-                actnumvm[(actnumv == 2) | (actnumv == 0)] = 0
-                ind = np.flatnonzero(actnumvm)
-            else:
-                actnumvf = actnumv.copy()
-                actnumvf[(actnumv == 3) | (actnumv == 2)] = 1
-                actnumvf[(actnumv == 1) | (actnumv == 0)] = 0
-                ind = np.flatnonzero(actnumvf)
+    def get_dualactnum_indices(self, order="C", fracture=False):
+        """Note in case of dual poro/perm; different indices are used for matrix
+        and fracture properties.
+        """
+        if not self._dualporo:
+            return None
+
+        actnumv = self._dualactnum.values.copy(order=order)
+        actnumv = np.ravel(actnumv, order="K")
+
+        if not fracture:
+            actnumvm = actnumv.copy()
+            actnumvm[(actnumv == 3) | (actnumv == 1)] = 1
+            actnumvm[(actnumv == 2) | (actnumv == 0)] = 0
+            ind = np.flatnonzero(actnumvm)
         else:
-            ind = np.flatnonzero(actnumv)
+            actnumvf = actnumv.copy()
+            actnumvf[(actnumv == 3) | (actnumv == 2)] = 1
+            actnumvf[(actnumv == 1) | (actnumv == 0)] = 0
+            ind = np.flatnonzero(actnumvf)
 
         return ind
 
@@ -925,6 +946,8 @@ class Grid(Grid3D):
             act.values = ma.masked_equal(act.values, 0)
 
         act.codes = {0: "0", 1: "1"}
+        if self._dualporo or self._dualperm:
+            act.codes = {0: "0", 1: "1", 2: "2", 3: "3"}
 
         # return the object
         return act
@@ -1212,7 +1235,11 @@ class Grid(Grid3D):
         """Activate all cells in the grid, by manipulating ACTNUM"""
 
         actnum = self.get_actnum()
-        actnum.values = np.ones(self.dimensions, dtype=np.int32)
+        if self._dualporo or self._dualperm:
+            actnum.values = np.where(self.dimensions, dtype=np.int32)
+        else:
+            actnum.values = np.ones(self.dimensions, dtype=np.int32)
+
         self.set_actnum(actnum)
 
     def inactivate_by_dz(self, threshold):

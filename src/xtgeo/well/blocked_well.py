@@ -173,3 +173,31 @@ class BlockedWell(Well):
         )
 
         self._ensure_consistency()
+
+    def to_roxar(self, *args, **kwargs):
+        """Set (export) a single blocked well item inside roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            gname (str): Name of GridModel icon in RMS
+            bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
+            wname (str): Name of well, as shown in RMS.
+            realisation (int): Realisation index (0 is default)
+        """
+        project = args[0]
+        gname = args[1]
+        bwname = args[2]
+        wname = args[3]
+        realisation = kwargs.get("realisation", 0)
+
+        _blockedwell_roxapi.export_bwell_roxapi(
+            self,
+            project,
+            gname,
+            bwname,
+            wname,
+            realisation=realisation,
+        )

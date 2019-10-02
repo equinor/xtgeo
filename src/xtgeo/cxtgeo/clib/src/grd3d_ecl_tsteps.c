@@ -39,7 +39,7 @@
 /* since windows is missing strsep() */
 char* _mystrsep(char **stringp, const char *delim)
 {
-  
+
     char *start = *stringp, *p = start ? strpbrk(start, delim) : NULL;
 
     if (!p) {
@@ -98,7 +98,7 @@ int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
             intrecord = calloc(rlen, sizeof(int));  /* knows this is int */
             nvals = grd3d_read_eclrecord(fc, rstart, keytype,
                                          intrecord, rlen, xfloat, 0,
-                                         xdouble, 0, debug);
+                                         xdouble, 0);
 
             seqnums[nc] = intrecord[0];
 
@@ -113,7 +113,7 @@ int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
             intrecord = calloc(rlen, sizeof(int));  /* knows this is int */
             nvals = grd3d_read_eclrecord(fc, rstart, keytype,
                                          intrecord, rlen, xfloat, 0,
-                                         xdouble, 0, debug);
+                                         xdouble, 0);
 
             day[nc] = intrecord[64];
             mon[nc] = intrecord[65];

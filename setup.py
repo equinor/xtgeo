@@ -6,14 +6,21 @@ import subprocess
 from glob import glob
 import shutil
 import os
+import distutils.sysconfig as sysconfig
+
+from distutils.command.build import build as _build
+
 from os.path import basename
 from os.path import splitext
 from setuptools import setup, find_packages, Extension
-from distutils.command.build import build as _build
+
 from setuptools.command.build_ext import build_ext as _build_ext
 
+
+PYINCDIR = sysconfig.get_python_inc()
+PYLIB = sysconfig.get_config_var("LIBDIR")
+
 WINDOWS = False
-CMAKECMD = ["cmake", ".."]
 if "Windows" in platform.system():
     WINDOWS = True
     CMAKECMD = [
@@ -21,7 +28,18 @@ if "Windows" in platform.system():
         "..",
         "-DCMAKE_GENERATOR_PLATFORM=x64",
         "-DCMAKE_BUILD_TYPE=Release",
+        "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
     ]
+else:
+    CMAKECMD = [
+        "cmake",
+        "..",
+        "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DPYTHON_LIBRARY=" + PYLIB,
+    ]
+
+print("CMAKE COMMAND: {}".format(CMAKECMD))
 
 
 def parse_requirements(filename):
@@ -116,7 +134,8 @@ class CMakeExtension(Extension):
             subprocess.check_call(CMAKECMD, cwd=self.build_temp)
 
         subprocess.check_call(
-            ["cmake", "--build", ".", "--target", "install"], cwd=self.build_temp
+            ["cmake", "--build", ".", "--target", "install", "--config", "Release"],
+            cwd=self.build_temp,
         )
 
 

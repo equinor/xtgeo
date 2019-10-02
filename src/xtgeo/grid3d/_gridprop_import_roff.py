@@ -202,7 +202,7 @@ def _rkwquery(fhandle, kws, name, swap):
             bytepos = items[3]
             break
 
-    logger.info("DTYPE is %s", dtype)
+    logger.debug("DTYPE is %s", dtype)
 
     if dtype == 0:
         raise ValueError("Cannot find property <{}> in file".format(name))
@@ -239,7 +239,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     parameter!data        float   35840            336
 
     Hence it is the parameter!data which comes after parameter!name!PORO which
-    is releveant here, given that name = PORO.
+    is relevant here, given that name = PORO.
 
     """
 
@@ -296,29 +296,69 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     return vals
 
 
-def _rkwxvec(fhandle, kws, name, swap):
-    """Local function for returning swig pointers to C arrays."""
+def _rkwxlist(fhandle, kws, name, swap, strict=True):
+    """Local function for _import_roff_v2, 1D arrays such as subgrids.
 
-    kwtypedict = {"int": 1, "float": 2, "double": 3, "byte": 5}
+    This parameters are translated to numpy data for the values
+    attribute usage.
+
+    Note from scan:
+      tag subgrids
+      array int nLayers 3
+           20           20           16
+    """
+
+    kwtypedict = {"int": 1}  # only int lists are supported
 
     dtype = 0
     reclen = 0
     bytepos = 1
-    namefound = False
     for items in kws:
         if name in items[0]:
-            dtype = kwtypedict.get(items[1])
-            reclen = items[2]
-            bytepos = items[3]
-            namefound = True
-        if "parameter!data" in items[0] and namefound:
             dtype = kwtypedict.get(items[1])
             reclen = items[2]
             bytepos = items[3]
             break
 
     if dtype == 0:
-        raise ValueError("Cannot find property <{}> in file".format(name))
+        if strict:
+            raise ValueError("Cannot find property <{}> in file".format(name))
+        else:
+            return None
+
+    if dtype == 1:
+        inumpy = np.zeros(reclen, dtype=np.int32)
+        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy, XTGDEBUG)
+    else:
+        raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
+
+    return inumpy
+
+
+def _rkwxvec(fhandle, kws, name, swap, strict=True):
+    """Local function for returning swig pointers to C arrays.
+
+    If strict is True, a ValueError will be raised if keyword is not
+    found. If strict is False, None will be returned
+    """
+
+    kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    if dtype == 0:
+        if strict:
+            raise ValueError("Cannot find property <{}> in file".format(name))
+        else:
+            return None
 
     if reclen <= 1:
         raise SystemError("Stuff is rotten here...")
@@ -326,14 +366,15 @@ def _rkwxvec(fhandle, kws, name, swap):
     xvec = None
     if dtype == 1:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_ivec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_ivec(fhandle, swap, bytepos, xvec, reclen)
 
     elif dtype == 2:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
-    elif dtype == 5:
-        xvec = _cxtgeo.new_chararray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen)
+
+    elif dtype >= 4:
+        xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte/bool to int
+        _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen)
 
     else:
         raise ValueError("Unhandled dtype: {}".format(dtype))

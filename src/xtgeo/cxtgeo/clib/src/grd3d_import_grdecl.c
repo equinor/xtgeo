@@ -222,7 +222,7 @@ void grd3d_import_grdecl (
 	for (ib=0; ib<(nx+1)*(ny+1)*6; ib=ib+3) {
 	    cx = p_coord_v[ib];
 	    cy = p_coord_v[ib+1];
-	    x_mapaxes(mamode, &cx, &cy, x1, y1, x2, y2, x3, y3, 0, debug);
+	    x_mapaxes(mamode, &cx, &cy, x1, y1, x2, y2, x3, y3, 0);
 	    p_coord_v[ib]   = cx;
 	    p_coord_v[ib+1] = cy;
 	}

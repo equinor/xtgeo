@@ -22,55 +22,55 @@
  ******************************************************************************
  * The ROFF (Roxar Open File Format) is like this:
  *
- *roff-asc 
+ *roff-asc
  *#ROFF file#
  *#Creator: RMS - Reservoir Modelling System, version 6.0#
- *tag filedata 
- *int byteswaptest 1           
+ *tag filedata
+ *int byteswaptest 1
  *char filetype  "grid"
  *char creationDate  "28/03/2000 16:59:16"
- *endtag 
- *tag version 
- *int major 2           
- *int minor 0           
- *endtag 
- *tag dimensions 
- *int nX 4           
- *int nY 4           
- *int nZ 3           
- *endtag 
- *tag translate 
+ *endtag
+ *tag version
+ *int major 2
+ *int minor 0
+ *endtag
+ *tag dimensions
+ *int nX 4
+ *int nY 4
+ *int nZ 3
+ *endtag
+ *tag translate
  *float xoffset   4.62994625E+05
  *float yoffset   5.93379900E+06
  *float zoffset  -3.37518921E+01
- *endtag 
- *tag scale 
+ *endtag
+ *tag scale
  *float xscale   1.00000000E+00
  *float yscale   1.00000000E+00
  *float zscale  -1.00000000E+00
- *endtag 
- *tag cornerLines 
- *array float data 150         
+ *endtag
+ *tag cornerLines
+ *array float data 150
  * -7.51105194E+01  -4.10773730E+03  -1.86212000E+03  -7.51105194E+01
  * -4.10773730E+03  -1.72856909E+03  -8.36509094E+02  -2.74306006E+03
  *  ....
- *endtag 
- *tag zvalues 
- *array byte splitEnz 100         
+ *endtag
+ *tag zvalues
+ *array byte splitEnz 100
  *  1   1   1   1   1   1   4   4   1   1   1   1
  * ....
  *endtag
- *tag active 
- *array bool data 48          
+ *tag active
+ *array bool data 48
  *  1   1   1   1   1   1   1   1   1   1   1   1
  *  1   1   1   1   1   1   1   1   1   1   1   1
  *  1   1   1   1   1   1   1   1   1   1   1   1
  *  1   1   1   1   1   1   1   1   1   1   1   1
- *endtag 
+ *endtag
  *... ETC
  * ----------------------------------------------------------------------------
  *
- */   
+ */
 
 
 void grd3d_import_roff_grid (
@@ -94,27 +94,27 @@ void grd3d_import_roff_grid (
     xtgverbose(debug);
 
     xtg_speak(sub,2,"==== Entering grd3d_import_roff_grid ====");
-    /* 
+    /*
      *-------------------------------------------------------------------------
      * Open file
      *-------------------------------------------------------------------------
      */
-  
+
     xtg_speak(sub,2,"Opening ROFF file...");
     fc=fopen(filename,"rb");
     if (fc == NULL) {
 	xtg_error(sub,"Cannot open file!");
     }
     xtg_speak(sub,2,"Opening ROFF file...OK!");
-    
-    
-    /* 
+
+
+    /*
      *=========================================================================
      * Loop file... It is NOT necessary to do many tests; that should be done
      * by the calling PERL script?
      *=========================================================================
      */
-     
+
     x_fread(cname,7,1,fc,__FILE__,__LINE__);
     fclose(fc);
     cname[7]='\0';
@@ -176,7 +176,7 @@ void _grd3d_imp_roff_asc_grd (
 
 
 {
-    
+
     int    iok, line;
     int    i, j, k, ipos, num_cornerlines, num_active, num_zdata, num_splitenz;
     int    nx, ny, nz, ivalue, nsub;
@@ -188,37 +188,37 @@ void _grd3d_imp_roff_asc_grd (
     char   cname[ROFFSTRLEN], cx[ROFFSTRLEN];
     FILE   *fc;
     char sub[24]="_grd3d_imp_roff_asc_grd";
-    
+
     xtgverbose(debug);
 
     xtg_speak(sub,2,"==== Entering _grd3d_imp_roff_asc_grd ====");
-    /* 
+    /*
      *-------------------------------------------------------------------------
      * Open file
      *-------------------------------------------------------------------------
      */
-  
+
     xtg_speak(sub,2,"Opening ROFF file...");
     fc=fopen(filename,"rb");
     if (fc == NULL) {
 	xtg_error(sub,"Cannot open file!");
     }
     xtg_speak(sub,2,"Opening ROFF file...OK!");
-    
 
-    /* 
+
+    /*
      *=========================================================================
      * Loop file... It is NOT necessary to do many tests; that should be done
      * by the calling PERL script?
      *=========================================================================
      */
-     
+
 
     for (line=1;line<9999999;line++) {
-	
+
 	/* Get offsets */
 	x_fgets(cline,132,fc);
-      
+
 	/*
 	 *---------------------------------------------------------------------
 	 * Getting 'translate' values
@@ -294,7 +294,7 @@ void _grd3d_imp_roff_asc_grd (
 	     * active. Must therefore initialize to 1.
 	     *
 	     */
-	    
+
 	    for (i=0; i<nx*ny*nz; i++) {
 		p_actnum_v[i]=1;
 	    }
@@ -337,9 +337,9 @@ void _grd3d_imp_roff_asc_grd (
 	if (strncmp(cline, "tag cornerLines", 15) == 0) {
 	    xtg_speak(sub,3,"Tag cornerLines was found");
 	    x_fgets(cline,132,fc);
-	    iok=sscanf(cline,"%s %s %s %d",carray, ctype, cname, 
+	    iok=sscanf(cline,"%s %s %s %d",carray, ctype, cname,
 		       &num_cornerlines);
-	    /* 
+	    /*
 	     * Allocating space
 	     */
 	    xtg_speak(sub,2,"Allocating memory for corneLines: %d of type %s",
@@ -376,7 +376,7 @@ void _grd3d_imp_roff_asc_grd (
 	    iok=sscanf(cline,"%s %s %s %d",carray, ctype, cname, &num_splitenz);
 	    /*
 	     * Read split values
-	     */ 
+	     */
  	    xtg_speak(sub,2,"Allocating memory for splitenz: %d of type %s",num_splitenz,ctype);
 	    splitenz_v=calloc(num_splitenz,1);
 	    xtg_speak(sub,2,"Allocating memory ... DONE!");
@@ -389,7 +389,7 @@ void _grd3d_imp_roff_asc_grd (
 	    xtg_speak(sub,2,"Reading <splitEnz>...OK!");
 	    /*
 	     * Read data values
-	     */      
+	     */
 	    x_fgets(cline,132,fc);
 	    iok=sscanf(cline,"%s %s %s %d",carray, ctype, cname, &num_zdata);
 	    xtg_speak(sub,2,"Reading <data>...");
@@ -429,12 +429,12 @@ void _grd3d_imp_roff_asc_grd (
 
 	    for (i=0;i<nx;i++) {
 		for (j=0;j<ny;j++) {
-		    for (k=0;k<nz;k++) {			    
+		    for (k=0;k<nz;k++) {
 			iok=fscanf(fc,"%d",&ivalue);
 			/* map directly to XTG form */
 			ipos=(nz-(k+1))*ny*nx + j*nx + i;
 			p_actnum_v[ipos]=ivalue;
-			    
+
 		    }
 		}
 	    }
@@ -527,12 +527,12 @@ void _grd3d_imp_roff_bin_grd (
     xtgverbose(debug);
 
     xtg_speak(sub,2,"==== Entering _grd3d_imp_roff_bin_grd ====");
-    /* 
+    /*
      *-------------------------------------------------------------------------
      * Check endiness
      *-------------------------------------------------------------------------
      */
-    
+
     iendiness=x_swap_check();
     if (iendiness==1) {
 	xtg_speak(sub,2,"Machine is little endian.");
@@ -541,12 +541,12 @@ void _grd3d_imp_roff_bin_grd (
 	xtg_speak(sub,2,"Machine is big endian");
     }
 
-    /* 
+    /*
      *-------------------------------------------------------------------------
      * Open file
      *-------------------------------------------------------------------------
      */
-  
+
     xtg_speak(sub,2,"NNSUB value is %d",nnsub);
 
     xtg_speak(sub,2,"Opening ROFF file...");
@@ -555,18 +555,18 @@ void _grd3d_imp_roff_bin_grd (
 	xtg_error(sub,"Cannot open file!");
     }
     xtg_speak(sub,2,"Opening ROFF file...OK!");
-    
-    /* 
+
+    /*
      *=========================================================================
-     * Loop file... 
+     * Loop file...
      *=========================================================================
      */
 
     _grd3d_roffbinstring(cname, fc);
     for (idum=1;idum<99999;idum++) {
-	
+
 	_grd3d_roffbinstring(cname, fc);
-      
+
 	if (strcmp(cname, "tag") == 0) {
 	    _grd3d_roffbinstring(cname, fc);
 
@@ -705,10 +705,10 @@ void _grd3d_imp_roff_bin_grd (
 		nnact = 0;
 		xtg_speak(sub,3,"Tag active was found");
 		num=_grd3d_getintvalue("array",fc);
-		
+
 		for (i=0;i<nx;i++) {
 		    for (j=0;j<ny;j++) {
-			for (k=0;k<nz;k++) {			    
+			for (k=0;k<nz;k++) {
 			    x_fread(&mybyte,1,1,fc,__FILE__,__LINE__);
 			    /* map directly to XTG form */
 			    ipos=(nz-(k+1))*ny*nx + j*nx + i;
@@ -725,8 +725,8 @@ void _grd3d_imp_roff_bin_grd (
 
 
     }
-    
-    
+
+
     xtg_speak(sub,2,"Number of active cells is %d",*num_act);
 
 
@@ -775,25 +775,25 @@ void _grd3d_imp_roff_bin_grd (
  *############################################################################
  */
 
-int _grd3d_roffbinstring(char *bla, FILE *fc) 
+int _grd3d_roffbinstring(char *bla, FILE *fc)
 
 {
     int i, ier;
     char mybyte;
-    
+
     for (i=0;i<ROFFSTRLEN;i++) {
         /* x_fread(&mybyte,1,1,fc,__FILE__,__LINE__); */
         ier=fread(&mybyte,1,1,fc);
 	bla[i]=mybyte;
         if (mybyte==0) break;
     }
-    
+
     return 1;
 }
- 
 
 
-float _grd3d_getfloatvalue(char *name, FILE *fc) 
+
+float _grd3d_getfloatvalue(char *name, FILE *fc)
 {
     char bla[ROFFSTRLEN];
     float myfloat;
@@ -811,7 +811,7 @@ float _grd3d_getfloatvalue(char *name, FILE *fc)
 }
 
 
-int _grd3d_getintvalue(char *name, FILE *fc) 
+int _grd3d_getintvalue(char *name, FILE *fc)
 {
     char bla[ROFFSTRLEN];
     int  myint;
@@ -843,7 +843,7 @@ int _grd3d_getintvalue(char *name, FILE *fc)
     return -1;
 }
 
-void _grd3d_getfloatarray(float *array, int num, FILE *fc) 
+void _grd3d_getfloatarray(float *array, int num, FILE *fc)
 {
     float afloat;
     int   i;
@@ -857,12 +857,12 @@ void _grd3d_getfloatarray(float *array, int num, FILE *fc)
 
     /* PREVIOUS WAY: fread(array,4,num,fc); */
 
-	
+
 
 
 }
 
-void _grd3d_getbytearray(char *array, int num, FILE *fc) 
+void _grd3d_getbytearray(char *array, int num, FILE *fc)
 {
     int  i;
     char abyte;
@@ -873,7 +873,7 @@ void _grd3d_getbytearray(char *array, int num, FILE *fc)
     }
 }
 
-void _grd3d_getintarray(int *array, int num, FILE *fc) 
+void _grd3d_getintarray(int *array, int num, FILE *fc)
 {
     int  i;
     int aint;
@@ -885,7 +885,7 @@ void _grd3d_getintarray(int *array, int num, FILE *fc)
     }
 }
 
-void _grd3d_getchararray(char **array, int num, FILE *fc) 
+void _grd3d_getchararray(char **array, int num, FILE *fc)
 {
     int  i, j;
     char c[ROFFSTRLEN];
@@ -898,7 +898,7 @@ void _grd3d_getchararray(char **array, int num, FILE *fc)
 	    array[i][j]=c[j];
 	    if (c[j] == '\0') break;
 	}
-    }    
+    }
 }
 
 
@@ -932,16 +932,16 @@ void _grd3d_roff_to_xtg_grid (
 			      int     *p_subgrd_v,
 			      int     debug
 			      )
-    
+
 {
 
     int    i, j, k, ij, iuse, icnt;
     int    l, isplit, ipos;
-    int    ib, ic, niijjkk, nipjjkk, niijpkk, niijjkp; 
+    int    ib, ic, niijjkk, nipjjkk, niijpkk, niijjkp;
     int	   nipjpkk, nipjjkp, niijpkp, nipjpkp;
     int    *lookup_v;
     int    nxyz;
-    double z, *z_nw_v, *z_se_v, *z_sw_v, *z_ne_v; 
+    double z, *z_nw_v, *z_se_v, *z_sw_v, *z_ne_v;
     double *xp_bot_v, *yp_bot_v, *zp_bot_v, *xp_top_v, *yp_top_v, *zp_top_v;
     double zz[9];
     char   sub[24]="_grd3d_roff_to_xtg_grid";
@@ -970,7 +970,7 @@ void _grd3d_roff_to_xtg_grid (
 
 
     /* Note that counting is j faster than i */
-    
+
     for (i=0;i<=nx;i++) {
 	for (j=0;j<=ny;j++) {
 	    ipos=6*(i*(ny+1)+j);
@@ -993,12 +993,12 @@ void _grd3d_roff_to_xtg_grid (
 
 	    }
 
-	    xp_bot_v[ij]=(xp_bot_v[ij]+xoffset)*xscale; 
-	    yp_bot_v[ij]=(yp_bot_v[ij]+yoffset)*yscale; 
-	    zp_bot_v[ij]=(zp_bot_v[ij]+zoffset)*zscale; 
-	    xp_top_v[ij]=(xp_top_v[ij]+xoffset)*xscale; 
-	    yp_top_v[ij]=(yp_top_v[ij]+yoffset)*yscale; 
-	    zp_top_v[ij]=(zp_top_v[ij]+zoffset)*zscale; 
+	    xp_bot_v[ij]=(xp_bot_v[ij]+xoffset)*xscale;
+	    yp_bot_v[ij]=(yp_bot_v[ij]+yoffset)*yscale;
+	    zp_bot_v[ij]=(zp_bot_v[ij]+zoffset)*zscale;
+	    xp_top_v[ij]=(xp_top_v[ij]+xoffset)*xscale;
+	    yp_top_v[ij]=(yp_top_v[ij]+yoffset)*yscale;
+	    zp_top_v[ij]=(zp_top_v[ij]+zoffset)*zscale;
 
 	    if (debug >= 4) {
 		xtg_speak(sub,4,"Pillar info TRANSLATED:");
@@ -1009,10 +1009,11 @@ void _grd3d_roff_to_xtg_grid (
 			xp_top_v[ij], yp_top_v[ij], zp_top_v[ij]);
 
 	    }
-	}   
+	}
     }
+
     xtg_speak(sub,3,"Extracting pillar tops and bottoms...OK!");
-    
+
     /*
      *---------------------------------------------------------------------
      * Getting corners of each i,j pillar
@@ -1027,20 +1028,20 @@ void _grd3d_roff_to_xtg_grid (
     else{
 	xtg_warn(sub,1,"NXYZ is %d NX NY NZ %d %d %d",nxyz, nx, ny, nz);
 	xtg_error(sub,"Allocating lookup_v FAILED");
-    }	
+    }
     lookup_v[0]=0;
     for (i=0; i<nxyz; i++) {
 	lookup_v[i+1]=lookup_v[i] + splitenz_v[i];
     }
     xtg_speak(sub,3,"Make splitnode lookup table...OK!");
-	
+
 
     /* xtg_speak(sub,3,"Make z pr 3D node..."); */
     z_sw_v=calloc(8, sizeof(double));
     z_se_v=calloc(8, sizeof(double));
     z_nw_v=calloc(8, sizeof(double));
     z_ne_v=calloc(8, sizeof(double));
-    
+
 
     xtg_speak(sub,4,"Creating arrays on XTG form...");
 
@@ -1070,7 +1071,6 @@ void _grd3d_roff_to_xtg_grid (
     }
     xtg_speak(sub,2,"Ordering COORDs ...DONE!");
 
-
     ib=0;
     for (l=(nz-1);l>=-1;l--) {
 	xtg_speak(sub,3,"Working with layer: %d",l);
@@ -1082,12 +1082,12 @@ void _grd3d_roff_to_xtg_grid (
 
 
 		niijjkk=i*(ny+1)*(nz+1)+j*(nz+1)+k;
-		nipjjkk=(i+1)*(ny+1)*(nz+1)+j*(nz+1)+k; 
-		niijpkk=i*(ny+1)*(nz+1)+(j+1)*(nz+1)+k; 
+		nipjjkk=(i+1)*(ny+1)*(nz+1)+j*(nz+1)+k;
+		niijpkk=i*(ny+1)*(nz+1)+(j+1)*(nz+1)+k;
 		nipjpkk=(i+1)*(ny+1)*(nz+1)+(j+1)*(nz+1)+k;
-		niijjkp=i*(ny+1)*(nz+1)+j*(nz+1)+(k+1); 
-		nipjjkp=(i+1)*(ny+1)*(nz+1)+j*(nz+1)+k+1; 
-		niijpkp=i*(ny+1)*(nz+1)+(j+1)*(nz+1)+k+1; 
+		niijjkp=i*(ny+1)*(nz+1)+j*(nz+1)+(k+1);
+		nipjjkp=(i+1)*(ny+1)*(nz+1)+j*(nz+1)+k+1;
+		niijpkp=i*(ny+1)*(nz+1)+(j+1)*(nz+1)+k+1;
 		nipjpkp=(i+1)*(ny+1)*(nz+1)+(j+1)*(nz+1)+(k+1);
 
 		iuse=niijjkk;
@@ -1241,42 +1241,42 @@ void _grd3d_roff_to_xtg_grid (
 		    z_ne_v[icnt] = (zdata_v[ipos+3]+zoffset)*zscale;
 		}
 
-    
 
-		
-		    
+
+
+
 		zz[1]=z_ne_v[4];
 		zz[2]=z_nw_v[5];
-		
+
 		zz[3]=z_se_v[6];
 		zz[4]=z_sw_v[7];
-		
+
 		zz[5]=z_ne_v[0];
 		zz[6]=z_nw_v[1];
-		
+
 		zz[7]=z_se_v[2];
 		zz[8]=z_sw_v[3];
-		
-		
-		
-		
+
+
+
+
 		if (l>=0) {
 		    for (ic=1;ic<=4;ic++) {
 			p_zcorn_v[ib] = zz[ic];
 			ib++;
 		    }
 		}
-		
 
-		if (l==-1) { 
+
+		if (l==-1) {
 		    for (ic=5;ic<=8;ic++) {
 			p_zcorn_v[ib] = zz[ic];
 			ib++;
 		    }
 		}
-				
-	    }	
-	}   
+
+	    }
+	}
     }
 
     xtg_speak(sub,3,"--> Grid array on XTG form...DONE!");
@@ -1284,7 +1284,7 @@ void _grd3d_roff_to_xtg_grid (
     xtg_speak(sub,3,"Creating arrays on XTG form...DONE!");
 
     xtg_speak(sub,3,"Transforming to internal XTG representation ... DONE!");
-    
+
     /* free temporary pointers */
     xtg_speak(sub,2,"Unallocating memory for tmp arrays ...");
     xtg_speak(sub,3,"Freeing lookup_v");
@@ -1309,5 +1309,3 @@ void _grd3d_roff_to_xtg_grid (
     xtg_speak(sub,2,"==== _grd3d_roff_to_xtg_grid ====");
 
 }
-
-

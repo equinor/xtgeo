@@ -29,11 +29,10 @@
  *    swap            i     SWAP status, 0 of False, 1 if True
  *    bytepos         i     The byte position to the code data
  *    xvec           i/o    Pointer to floatInt/etc data
- *    nxvec           i     Length of float array
- *    debug           i     Debug level
+ *    n*vec           i     Length of float array
  *
  * RETURNS:
- *    Updated float pointer fvec
+ *    Updated float pointer *vec
  *
  * TODO/ISSUES/BUGS:
  *
@@ -42,25 +41,17 @@
  ***************************************************************************************
  */
 
-int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec,
-                           int debug)
+int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec)
 {
     /* Imports a ROFF binary array, update pointer */
 
-    char s[24] = "grd3d_imp_roffbin_fvec";
     float afloat;
     long i;
-    int iok;
-
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nfvec; i++) {
-        iok = fread(&afloat, 4, 1, fc);
+        if (fread(&afloat, 4, 1, fc) != 1) exit(EXIT_FAILURE);
         if (swap==1) SWAP_FLOAT(afloat);
         if (afloat == -999.0) afloat = UNDEF;
         fvec[i] = afloat;
@@ -69,53 +60,40 @@ int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long n
     return EXIT_SUCCESS;
 }
 
-int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec,
-                           int debug)
+int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec)
 {
     /* Imports a ROFF binary array, update pointer */
 
-    char s[24] = "grd3d_imp_roffbin_ivec";
     int anint;
     long i;
-    int iok;
-
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nivec; i++) {
-        iok = fread(&anint, 4, 1, fc);
+        if (fread(&anint, 4, 1, fc) != 1) exit(EXIT_FAILURE);
         if (swap==1) SWAP_FLOAT(anint);
-        if (anint == -999.0) anint = UNDEF;
+        if (anint == -999.0) anint = UNDEF_INT;
         ivec[i] = anint;
     }
 
     return EXIT_SUCCESS;
 }
 
-int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, char *bvec, long nbvec,
-                           int debug)
+int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbvec)
 {
-    /* Imports a ROFF binary array, update pointer */
+    /* Imports a ROFF binary array if type , update pointer. NB convert to INT! */
 
-    char s[24] = "grd3d_imp_roffbin_bvec";
-    char achar;
+    unsigned char achar;
     long i;
-    int iok;
-
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
+    int anint;
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nbvec; i++) {
-        iok = fread(&achar, 1, 1, fc);
-        bvec[i] = achar;
+        if (fread(&achar, 1, 1, fc) != 1) exit(EXIT_FAILURE);
+        anint = (int)achar;
+        if (anint == 255) anint = UNDEF_INT;
+        bvec[i] = anint;
     }
 
     return EXIT_SUCCESS;

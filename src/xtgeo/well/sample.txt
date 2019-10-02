@@ -1,0 +1,27 @@
+import roxar
+import numpy as np
+
+grid_model = project.grid_models['Deterministic']
+
+# Create a new blocked well property
+blocked_wells = grid_model.blocked_wells_set['BW']
+bw_property = blocked_wells.properties.create('PoroFromGrid',
+                                                roxar.GridPropertyType.continuous,
+                                                np.float32)
+
+# Create a NumPy array of the correct size to store the values
+bw_property_values = blocked_wells.generate_values(discrete=False)
+
+# Get the cell numbers crossed by the well
+bw_cell_numbers = blocked_wells.get_cell_numbers()
+
+# Get blocked well property values
+grid_property_values = grid_model.properties['Poro'].get_values()
+
+# Iterate over every cell crossed by the well
+for i, cell_number in enumerate(bw_cell_numbers):
+    # update the bw property with the grid property value
+    bw_property_values[i] = grid_property_values[cell_number]
+
+# Set the property values
+bw_property.set_values(bw_property_values)

@@ -9,7 +9,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
 import xtgeo.common.xtgeo_system as xsys
 
-from ._gridprop_import_roff import _rkwquery, _rkwxvec
+from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec
 from . import _grid3d_utils as utils
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -36,7 +36,7 @@ def import_roff(self, gfile, _roffapiv=1):
         import_roff_v2(self, fhandle)
 
         if not xsys.close_fhandle(fhandle, cond=local_fhandle):
-            raise RuntimeError("Error in closing file handle for binary Eclipse file")
+            raise RuntimeError("Error in closing file handle for binary ROFF file")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,11 +147,24 @@ def import_roff_v2(self, fhandle):
     zscale = _rkwquery(fhandle, kwords, "scale!zscale", byteswap)
     logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)
 
+    subs = _rkwxlist(fhandle, kwords, "subgrids!nLayers", byteswap, strict=False)
+    if subs is not None and subs.size > 1:
+        subs = subs.tolist()  # from numpy array to list
+        nsubs = len(subs)
+        self._subgrids = OrderedDict()
+        prev = 1
+        for irange in range(nsubs):
+            val = subs[irange]
+            self._subgrids["subgrid_" + str(irange)] = range(prev, val + prev)
+            prev = val + prev
+    else:
+        self._subgrids = None
+
     # get the pointers to the arrays
     p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
     p_zvalues_v = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
-    # p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
-    p_splitenz_v = _cxtgeo.new_chararray(99)   # DUMMY!!!
+    p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
+    p_act_v = _rkwxvec(fhandle, kwords, "active!data", byteswap, strict=False)
 
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
@@ -161,7 +174,9 @@ def import_roff_v2(self, fhandle):
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
 
-    _cxtgeo.grd3d_roff_to_xtgeo(
+    logger.debug("Calling C routines")
+
+    _cxtgeo.grd3d_roff2xtgeo_coord(
         self._ncol,
         self._nrow,
         self._nlay,
@@ -172,12 +187,39 @@ def import_roff_v2(self, fhandle):
         yscale,
         zscale,
         p_cornerlines_v,
+        self._p_coord_v,
+    )
+
+    _cxtgeo.grd3d_roff2xtgeo_zcorn(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
         p_splitenz_v,
         p_zvalues_v,
-        self._p_coord_v,
         self._p_zcorn_v,
-        self._p_actnum_v,
-        XTGDEBUG,
     )
+
+    # ACTIVE may be missing, meaning all cells are missing!
+    option = 0
+    if p_act_v is None:
+        p_act_v = _cxtgeo.new_intarray(1)
+        option = 1
+
+    _cxtgeo.grd3d_roff2xtgeo_actnum(
+        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, option
+    )
+
+    _cxtgeo.delete_floatarray(p_cornerlines_v)
+    _cxtgeo.delete_floatarray(p_zvalues_v)
+    _cxtgeo.delete_intarray(p_splitenz_v)
+    _cxtgeo.delete_intarray(p_act_v)
+
+    logger.debug("Calling C routines, DONE")
 
     # xsys.close_fhandle(fhandle)

@@ -63,7 +63,7 @@ def import_eclbinary(
             kwlist, name, etype, date
         )
 
-        if grid._dualporo:
+        if grid._dualporo:  # _dualporo shall always be True if _dualperm is True
             _import_eclbinary_dualporo(
                 self,
                 grid,
@@ -132,14 +132,20 @@ def _import_eclbinary_meta(self, fhandle, etype, date, grid):
             kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
             break
 
-    # LOGIHEAD item [14] should be True, if needed to kind of verify if dualporo model:
+    # LOGIHEAD item [14] should be True, if dualporo model...
+    # LOGIHEAD item [14] and [15] should be True, if dualperm (+ dualporo) model.
+    #
     # However, skip this test; now just assume double number if the grid says so,
-    # which doubles the layers when reading,
+    # which kind if doubles (not exact!) the layers when reading,
     # and assign first half* to Matrix (M) and second half to Fractures (F).
     # *half: The number of active cells per half may NOT be equal
 
     if grid.dualporo:
         self._dualporo = True
+
+    if grid.dualperm:
+        self._dualporo = True
+        self._dualperm = True
 
     # read INTEHEAD record:
     intehead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
@@ -336,8 +342,8 @@ def _import_eclbinary_dualporo(
     # and F order)
 
     gactnum = grid.get_actnum().values
-    gactindc = grid.get_actnum_indices(order="C", fracture=fracture)
-    gactindf = grid.get_actnum_indices(order="F", fracture=fracture)
+    gactindc = grid.get_dualactnum_indices(order="C", fracture=fracture)
+    gactindf = grid.get_dualactnum_indices(order="F", fracture=fracture)
 
     indsize = gactindc.size
     if kwlen == 2 * grid.ntotal:

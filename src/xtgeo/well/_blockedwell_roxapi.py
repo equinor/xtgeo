@@ -12,12 +12,16 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
 from xtgeo.common.exceptions import WellNotFoundError
 
+# try:
+#     import roxar
+# except ImportError:
+#     pass
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-# Import from ROX api
+# Import / export via ROX api
 
 
 def import_bwell_roxapi(
@@ -33,10 +37,23 @@ def import_bwell_roxapi(
     rox.safe_close()
 
 
+def export_bwell_roxapi(
+    self, project, gname, bwname, wname, realisation=0
+):
+    """Private function for loading project and ROXAPI blockwell import"""
+
+    logger.info("Opening RMS project ...")
+    rox = RoxUtils(project, readonly=True)
+
+    _roxapi_export_bwell(self, rox, gname, bwname, wname, realisation)
+
+    rox.safe_close()
+
+
 def _roxapi_import_bwell(
     self, rox, gname, bwname, wname, lognames, ijk, realisation
 ):  # pylint: disable=too-many-statements
-    """Private function for ROXAPI well import"""
+    """Private function for ROXAPI well import (get well from Roxar)"""
 
     if gname in rox.project.grid_models:
         gmodel = rox.project.grid_models[gname]
@@ -104,9 +121,61 @@ def _roxapi_import_bwell(
     # finally get some other metadata like RKB and topside X Y; as they
     # seem to miss for the BW in RMS, try and get them from the
     # well itself...
+
     if wname in rox.project.wells:
         self._rkb = rox.project.wells[wname].rkb
         self._xpos, self._ypos = rox.project.wells[wname].wellhead
     else:
         self._rkb = None
         self._xpos, self._ypos = self._df["X_UTME"][0], self._df["Y_UTMN"][0]
+
+
+def _roxapi_export_bwell(
+    self, rox, gname, bwname, wname, realisation
+):  # pylint: disable=too-many-statements
+    """Private function for ROXAPI well export (set well with updated logs to Roxar)"""
+
+    raise NotImplementedError("Later!")
+
+    # if gname in rox.project.grid_models:
+    #     gmodel = rox.project.grid_models[gname]
+    #     logger.info("RMS grid model <%s> OK", gname)
+    # else:
+    #     raise ValueError("No such grid name present: {}".format(gname))
+
+    # if bwname in gmodel.blocked_wells_set:
+    #     bwset = gmodel.blocked_wells_set[bwname]
+    #     logger.info("Blocked well set <%s> OK", bwname)
+    # else:
+    #     raise ValueError("No such blocked well set: {}".format(bwname))
+
+    # if wname in bwset.get_well_names():
+    #     self._wname = wname
+    # else:
+    #     raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
+
+    # bwprops = [item for item in bwset.properties]
+    # bwnames = [item.name for item in bwset.properties]
+
+    # # get the current indices for the well
+    # dind = bwset.get_data_indices([self.wname])
+
+    # for lname in self.lognames:
+    #     if lname not in bwnames:
+    #         if self._wlogtype[lname] == "CONT":
+    #             bwlog = bwset.properties.create(lname,
+    #                                             roxar.GridPropertyType.continuous,
+    #                                             np.float32)
+    #             bwprop = bwset.generate_values(discrete=False)
+    #         else:
+    #             bwlog = bwset.properties.create(lname,
+    #                                             roxar.GridPropertyType.discrete,
+    #                                             np.uint16)
+    #             bwprop = bwset.generate_values(discrete=True)
+
+    #     bwlog =  bwprops[lname]
+    #     bwprop = bwlog.get_values(realisation=realisation)
+    #     bwsbwprop[dind]
+
+    #     # COFFEE!
+    #     bwprop.set_values(self.dataframe[lname].values)

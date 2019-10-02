@@ -28,7 +28,7 @@ XTGDEBUG = xtg.get_syslevel()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse result .EGRID
-# See notes in grid.py on dual porosity scheme.
+# See notes in grid.py on dual porosity / dual perm scheme.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_egrid(self, gfile):
     """Import, private to this routine."""
@@ -54,6 +54,10 @@ def import_ecl_egrid(self, gfile):
             logger.info("Dual porosity flag is %s", dualp)
             if dualp == 1:
                 self._dualporo = True
+                self._dualperm = False
+            elif dualp == 2:
+                self._dualporo = True
+                self._dualperm = True
         elif kwname == "GRIDHEAD":
             # read GRIDHEAD record:
             gridhead = eclbin_record(fhandle, "GRIDHEAD", kwlen, kwtype, kwbyte)
@@ -78,12 +82,13 @@ def import_ecl_egrid(self, gfile):
     self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+    p_nact = _cxtgeo.new_longpointer()
 
     option = 0
     if self._dualporo:
         option = 1
 
-    nact = _cxtgeo.grd3d_imp_ecl_egrid(
+    ier = _cxtgeo.grd3d_imp_ecl_egrid(
         fhandle,
         self._ncol,
         self._nrow,
@@ -95,11 +100,21 @@ def import_ecl_egrid(self, gfile):
         self._p_coord_v,
         self._p_zcorn_v,
         self._p_actnum_v,
+        p_nact,
         option,
-        XTGDEBUG,
     )
 
-    self._nactive = nact
+    if ier == -1:
+        raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
+
+    self._nactive = _cxtgeo.longpointer_value(p_nact)
+
+    # in case of DUAL PORO/PERM ACTNUM will be 0..3; need to convert
+    if self._dualporo:
+        self._dualactnum = self.get_actnum(name="DUALACTNUM")
+        acttmp = self._dualactnum.copy()
+        acttmp.values[acttmp.values >= 1] = 1
+        self.set_actnum(acttmp)
 
     xsys.close_fhandle(fhandle)
 
@@ -250,8 +265,9 @@ def import_ecl_bgrdecl(self, gfile):
     self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
     self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
     self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+    p_nact = _cxtgeo.new_longpointer()
 
-    nact = _cxtgeo.grd3d_imp_ecl_egrid(
+    ier = _cxtgeo.grd3d_imp_ecl_egrid(
         fhandle,
         self._ncol,
         self._nrow,
@@ -263,10 +279,13 @@ def import_ecl_bgrdecl(self, gfile):
         self._p_coord_v,
         self._p_zcorn_v,
         self._p_actnum_v,
+        p_nact,
         0,
-        XTGDEBUG,
     )
 
-    self._nactive = nact
+    if ier == -1:
+        raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
+
+    self._nactive = _cxtgeo.longpointer_value(p_nact)
 
     xsys.close_fhandle(fhandle, cond=local_fhandle)

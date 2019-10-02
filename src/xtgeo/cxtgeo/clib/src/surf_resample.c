@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    surf_resample.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Resample from one grid to another via bilinear interpolation
@@ -22,17 +19,16 @@
  *    rot2           i     Rotation of result
  *    mapv2         i/o    Result grid
  *    option         i     For future usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Int + Changed pointer to result map
  *
  * TODO:
- *    YFLIP handling
+ *    YFLIP handling?
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -60,18 +56,15 @@ int surf_resample(
                   double rota2,
                   double *mapv2,
                   long   nn2,
-                  int    option,
-                  int    debug
+                  int    option
                   )
 
 {
     /* locals */
-    char    s[24]="surf_resample";
     int i2, j2, ier2, ib2;
     double xc2, yc2, zc2, zc;
 
-    xtgverbose(debug);
-    xtg_speak(s, 2, "Entering routine %s", s);
+    int debug = 0;  /* tmp */
 
     for (i2 = 1; i2 <= nx2; i2++) {
         for (j2 = 1; j2 <= ny2; j2++) {

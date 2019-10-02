@@ -395,13 +395,13 @@ def test_get_all_corners():
     z1 = allc[5]
 
     # top of cell layer 2 in cell 5 5 (if 1 index start as RMS)
-    assert x0.values3d[4, 4, 1] == pytest.approx(457387.718, abs=0.01)
-    assert y0.values3d[4, 4, 1] == pytest.approx(5935461.29790, abs=0.01)
-    assert z0.values3d[4, 4, 1] == pytest.approx(1728.9429, abs=0.01)
+    assert x0.values3d[4, 4, 1] == pytest.approx(457387.718, abs=0.5)
+    assert y0.values3d[4, 4, 1] == pytest.approx(5935461.29790, abs=0.5)
+    assert z0.values3d[4, 4, 1] == pytest.approx(1728.9429, abs=0.1)
 
-    assert x1.values3d[4, 4, 1] == pytest.approx(457526.55367, abs=0.01)
-    assert y1.values3d[4, 4, 1] == pytest.approx(5935542.02467, abs=0.01)
-    assert z1.values3d[4, 4, 1] == pytest.approx(1728.57898, abs=0.01)
+    assert x1.values3d[4, 4, 1] == pytest.approx(457526.55367, abs=0.5)
+    assert y1.values3d[4, 4, 1] == pytest.approx(5935542.02467, abs=0.5)
+    assert z1.values3d[4, 4, 1] == pytest.approx(1728.57898, abs=0.1)
 
 
 def test_get_cell_corners():
@@ -411,7 +411,7 @@ def test_get_cell_corners():
     clist = grid.get_xyz_cell_corners(ijk=(4, 4, 1))
     logger.debug(clist)
 
-    tsetup.assert_almostequal(clist[0], 457168.358886, 0.001)
+    tsetup.assert_almostequal(clist[0], 457168.358886, 0.1)
 
 
 def test_get_xy_values_for_webportal():
