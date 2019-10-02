@@ -23,8 +23,8 @@
  *    MAPAXES, COORD, ZCORN, ACTNUM. Only binary format is supported.
  *
  *    ACTNUM will 0/1 for normal systems. For DUALPORO systems, ACTNUM may be
- *    0, 1?, 2, 3 with particular meanings for either Matrix or Fracture
- *    properties.
+ *    0, 1, 2, 3 with particular meanings for either Matrix or Fracture
+ *    properties. See grid.py.
  *
  * ARGUMENTS:
  *    fc             i     File descriptor (handled by caller)
@@ -36,10 +36,11 @@
  *    p_coord_v      o     Coordinate vector (xtgeo fmt)
  *    p_zcorn_v      o     ZCORN vector (xtgeo fmt)
  *    p_actnum_v     o     ACTNUM vector (xtgeo fmt)
+ *    nact           o     Number of active cells (only ACTNUM=0 are inactive)
  *    option         i     Is 1 when dualporo system, otherwise 0 (not applied)
  *
  * RETURNS:
- *    Number of active cells
+ *    Status, EXIT_FAILURE or EXIT_SUCCESS
  *
  * TODO/ISSUES/BUGS:
  *
@@ -62,6 +63,7 @@ int grd3d_imp_ecl_egrid (
                          double *p_coord_v,
                          double *p_zcorn_v,
                          int *p_actnum_v,
+                         long *nact,
                          int option
                          )
 {
@@ -74,9 +76,8 @@ int grd3d_imp_ecl_egrid (
     double xma1, yma1, xma2, yma2, xma3, yma3, cx, cy, cz;
 
     float *tmp_mapaxes, *tmp_coord, *tmp_zcorn;
-    int nxyz, nmapaxes, ncoord, nzcorn;
-    int *tmp_actnum;
-    int ib = 0;
+    long nxyz, nmapaxes, ncoord, nzcorn;
+    long ib = 0;
 
     logger_init(__FUNCTION__);
     logger_info("EGRID import ...");
@@ -94,7 +95,6 @@ int grd3d_imp_ecl_egrid (
     tmp_mapaxes = calloc(nmapaxes, sizeof(float));
     tmp_coord = calloc(ncoord, sizeof(float));
     tmp_zcorn = calloc(nzcorn, sizeof(float));
-    tmp_actnum = calloc(nxyz, sizeof(int));
 
     /*==================================================================================
      * Read MAPAXES, which is present if bpos_mapaxes > 0
@@ -168,17 +168,18 @@ int grd3d_imp_ecl_egrid (
 
     logger_info("Read ACTNUM ...");
 
-    int nact = 0;
+    long nnact = 0;
     for (ib = 0; ib < nxyz; ib++) {
-        if (p_actnum_v[ib] == 1) nact ++;
+        if (p_actnum_v[ib] == 1) nnact ++;
     }
+
+    *nact = nnact;
 
     free(tmp_mapaxes);
     free(tmp_coord);
     free(tmp_zcorn);
-    free(tmp_actnum);
 
     logger_info("EGRID import ... done");
 
-    return nact;  // shall be number of active cells
+    return EXIT_SUCCESS;
 }
