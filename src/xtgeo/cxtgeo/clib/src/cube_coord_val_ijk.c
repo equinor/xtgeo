@@ -34,7 +34,6 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
-#include "logger.h"
 
 int cube_coord_val_ijk(
                        int   i,
@@ -64,8 +63,6 @@ int cube_coord_val_ijk(
     int ier1, ier2;
     static double xcoord = 0.0, ycoord = 0.0;
 
-    logger_init(__FUNCTION__);
-
     /* find coordinates: */
 
     ier1 = 0;
@@ -92,8 +89,8 @@ int cube_coord_val_ijk(
     }
     else{
         /* something is wrong */
-        logger_critical("IER1 = %d IER2 = %d Error(?) in routine"
-                        " %s contact JRIV", ier1, ier2, __FUNCTION__);
+        printf("IER1 = %d IER2 = %d Error(?) in routine"
+               " %s contact JRIV", ier1, ier2, __FUNCTION__);
         *value = UNDEF;
         return -1;
     }

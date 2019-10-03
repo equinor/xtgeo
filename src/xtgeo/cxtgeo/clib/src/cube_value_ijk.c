@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_value_ijk.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given I J K, return cube value. If -UNDEF value is returned. Note here
@@ -26,13 +23,12 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
 #include "libxtg.h"
 #include "libxtg_.h"
-#include "logger.h"
 
 int cube_value_ijk(
                    int   i,
@@ -48,13 +44,10 @@ int cube_value_ijk(
     /* locals */
     long ib;
 
-    logger_init(__FUNCTION__);
-
     ib = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-
     if (ib<0) {
-	logger_warn("Problem in routine %s! Outside?", __FUNCTION__);
+	// logger_warn("Problem in routine %s! Outside?", __FUNCTION__);
         *value = UNDEF;
 	return(-1);
     }

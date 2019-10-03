@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_export_segy.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Export to SEGY format.
@@ -32,10 +29,9 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
-#include "logger.h"
 #include <limits.h>
 #include "libxtg.h"
 #include "libxtg_.h"
@@ -116,9 +112,6 @@ int cube_export_segy (
     float aval;
 
     double *xv, *yv;
-
-    logger_init(__FUNCTION__);
-    logger_info("Export SEGY ...");
 
     xv = calloc(nx*ny, sizeof(double));
     yv = calloc(nx*ny, sizeof(double));
@@ -291,7 +284,6 @@ int cube_export_segy (
     free(xv);
     free(yv);
 
-    logger_info("Export SEGY ... done");
 
     return EXIT_SUCCESS;
 }

@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_resample_cube.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *     Given two cubes, 1, and 2, resample values of no 2 into no 1.
@@ -40,7 +37,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
@@ -80,7 +77,7 @@ int cube_resample_cube(
 
 {
     /* locals */
-    int ic1, jc1, kc1;
+    int ic1, jc1, kc1, idum=1;
     int ier;
     long icn1, nm = 0;
     double xc, yc, zc;
@@ -122,7 +119,7 @@ int cube_resample_cube(
 
                 }
                 else{
-                    exit(-1);
+                    printf("Invalid option1 (%d) to %s", option1, __FUNCTION__);
                 }
 
 
@@ -132,7 +129,7 @@ int cube_resample_cube(
                 }
                 else if (ier == -1 && option2 == 0) {
                     /* option2 = 0 shall just keep cube value as is */
-                    continue;
+                    idum=0;
                 }
                 else if (ier == -1 && option2 == 1) {
                     /* option2 = 1 Use another value */

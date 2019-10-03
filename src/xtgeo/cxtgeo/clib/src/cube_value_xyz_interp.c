@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_value_xyz_interp.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given X Y Z, return interpolated cube value. The XYZ value is
@@ -31,13 +28,9 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
-
-
-
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 #include <math.h>
@@ -64,12 +57,12 @@ int cube_value_xyz_interp(
 {
     /* locals */
     long ib, useib, ibmax;
-    int  ic, jc, kc, i, j, k, ier, ier1, flag;
+    int  ic, jc, kc, i, j, k, ier, ier1, flag, idum=0;
     double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz;
     double usex, usey, dist, previousdist, avginc;
     float p_v[8], val;
 
-    logger_init(__FUNCTION__);
+    /* logger_init(__FUNCTION__); */
 
     /* need to determine the lower left corner coordinates of the point ie
        need to run with flag = 1 */
@@ -123,10 +116,11 @@ int cube_value_xyz_interp(
 
         avginc = 0.5 * (xinc + yinc);
         if (fabs(previousdist) > fabs(0.1 * avginc)) {
-            logger_warn("Warning, snapping distance is more than "
-                        "10 percent of avg cell size in XY: %f vs %f (%s). "
-                        "Consider to deactivate snapxy option?",
-                        previousdist, avginc, __FUNCTION__);
+            /* logger_warn("Warning, snapping distance is more than " */
+            /*             "10 percent of avg cell size in XY: %f vs %f (%s). " */
+            /*             "Consider to deactivate snapxy option?", */
+            /*             previousdist, avginc, __FUNCTION__); */
+            idum=1;
         }
 
         ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, usex, usey, zin,

@@ -1,22 +1,9 @@
-/*
- ******************************************************************************
- *
- * Import a cube using STORM format
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
 
 /*
  ******************************************************************************
  *
  * NAME:
  *    cube_import_storm.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *     Import a cube via the Storm petro binary format. The Storm format
@@ -41,6 +28,8 @@
  *    cf. XTGeo LICENSE
  *******************************************************************************
  */
+#include "libxtg.h"
+#include "libxtg_.h"
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>

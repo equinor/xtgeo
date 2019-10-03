@@ -28,9 +28,9 @@
  ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
-#include "logger.h"
 
 int cube_export_rmsregular (
                             int   nx,
