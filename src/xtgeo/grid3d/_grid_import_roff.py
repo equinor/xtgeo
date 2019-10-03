@@ -53,9 +53,7 @@ def import_roff_v1(self, gfile):
     ptr_nlay = _cxtgeo.new_intpointer()
     ptr_nsubs = _cxtgeo.new_intpointer()
 
-    _cxtgeo.grd3d_scan_roff_bingrid(
-        ptr_ncol, ptr_nrow, ptr_nlay, ptr_nsubs, gfile, XTGDEBUG
-    )
+    _cxtgeo.grd3d_scan_roff_bingrid(ptr_ncol, ptr_nrow, ptr_nlay, ptr_nsubs, gfile)
 
     self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
     self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
@@ -118,6 +116,8 @@ def import_roff_v1(self, gfile):
 def import_roff_v2(self, fhandle):
 
     """Import ROFF format, version 2 (improved version)"""
+
+    # pylint: disable=too-many-statements
 
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file

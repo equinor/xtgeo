@@ -426,6 +426,7 @@ class RegularSurface(object):
         """Number of active map nodes (read only)."""
         if self._isloaded:
             return self._values.count()
+        return None
 
     @property
     def rotation(self):

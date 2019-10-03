@@ -233,7 +233,7 @@ def test_cube_resampling(loadsfile1):
     tsetup.assert_almostequal(newcube.values.mean(), 5.3107, 0.0001)
     tsetup.assert_almostequal(newcube.values[20, 20, 20], 10.0, 0.0001)
 
-    newcube.to_file(join(TMD, "cube_resmaple1.segy"))
+    # newcube.to_file(join(TMD, "cube_resmaple1.segy"))
 
 
 def test_cube_thinning(loadsfile1):

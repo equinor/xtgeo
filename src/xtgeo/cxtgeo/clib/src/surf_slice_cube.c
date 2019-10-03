@@ -138,7 +138,7 @@ int surf_slice_cube(
             /* get the surface x, y, value (z) from IJ location */
             ier = surf_xyz_from_ij(im, jm, &x, &y, &z, xori, xinc,
                                    yori, yinc, mx, my, mapflip,
-                                   mrotation, p_zslice_v, nslice, 0, debug);
+                                   mrotation, p_zslice_v, nslice, 0);
 
             ier = 99;
 
@@ -151,8 +151,7 @@ int surf_slice_cube(
                     ier = cube_value_xyz_cell(x, y, z, cxori, cxinc, cyori,
                                               cyinc, czori, czinc, crotation,
                                               yflip, ncx, ncy, ncz,
-                                              p_cubeval_v, &value, 0,
-                                              debug);
+                                              p_cubeval_v, &value, 0);
                 }
                 else if (option1 == 1 || option1 == 2) {
 
@@ -162,8 +161,7 @@ int surf_slice_cube(
                     ier = cube_value_xyz_interp(x, y, z, cxori, cxinc, cyori,
                                                 cyinc, czori, czinc, crotation,
                                                 yflip, ncx, ncy, ncz,
-                                                p_cubeval_v, &value, option1a,
-                                                debug);
+                                                p_cubeval_v, &value, option1a);
 
 
                 }

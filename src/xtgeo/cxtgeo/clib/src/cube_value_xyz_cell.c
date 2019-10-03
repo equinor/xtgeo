@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_value_xyz_cell.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given X Y Z, return cell (nearest point) cube value.
@@ -18,7 +15,6 @@
  *    p_val_v        i     3D cube values
  *    value          o     Updated cube cell value
  *    option         i     For later use
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function:  0: upon success. If problems:
@@ -29,7 +25,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -53,38 +49,26 @@ int cube_value_xyz_cell(
                         int nz,
                         float *p_val_v,
                         float *value,
-                        int option,
-                        int debug
+                        int option
                         )
 {
     /* locals */
-    char s[24]="cube_value_xyz_cell";
     int  i, j, k, ier, istat;
     float val;
     double rx, ry, rz;
 
 
-    xtgverbose(debug);
-
-    if (debug > 2) xtg_speak(s,3,"Entering routine %s", s);
-
     /* first get IJK value from XYZ point */
     istat = cube_ijk_from_xyz(&i, &j, &k, &rx, &ry, &rz, x, y, z, xori, xinc,
                               yori, yinc, zori, zinc,
-                              nx, ny, nz, rot_deg, yflip, 0,
-                              debug
-                              );
+                              nx, ny, nz, rot_deg, yflip, 0);
 
     /* now get the cube cell value in IJK */
     if (istat == 0) {
         ier = cube_value_ijk(i, j, k, nx, ny, nz,
-                             p_val_v, &val, debug);
+                             p_val_v, &val);
         *value = val;
 
-        if (debug > 2) {
-            xtg_speak(s,3,"Cube I J K and value is %d %d %d ==> %f",
-                      i, j, k, val);
-        }
     }
     else{
         *value = UNDEF;

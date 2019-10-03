@@ -316,6 +316,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         else:
             self._syslevel = int(envsyslevel)
 
+        self._syslevel = 0  # TMP while chaning logging
+
     # for backward compatibility (to be phased out)
     def get_syslevel(self):
         return self._syslevel

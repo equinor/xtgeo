@@ -107,21 +107,21 @@ def import_rms_attr(self, pfile, zname="Z_TVDSS"):
             if len(fields) != 2:
                 skiprows = iline
                 break
+
+            dty, cname = fields
+            dtyx = None
+            if dty == "Discrete":
+                dtyx = "int"
+            elif dty == "String":
+                dtyx = "str"
+            elif dty == "Float":
+                dtyx = "float"
+            elif dty == "Int":
+                dtyx = "int"
             else:
-                dty, cname = fields
-                dtyx = None
-                if dty == "Discrete":
-                    dtyx = "int"
-                elif dty == "String":
-                    dtyx = "str"
-                elif dty == "Float":
-                    dtyx = "float"
-                elif dty == "Int":
-                    dtyx = "int"
-                else:
-                    dtyx = "str"
-                names.append(cname)
-                self._attrs[cname] = dtyx
+                dtyx = "str"
+            names.append(cname)
+            self._attrs[cname] = dtyx
 
     self._df = pd.read_csv(
         pfile,

@@ -452,8 +452,7 @@ int surf_xyz_from_ij(
 		     double rot_deg,
                      double *swig_np_dbl_in_v1,     // *p_map_v,
                      long   n_swig_np_dbl_in_v1,    // nn
-		     int    flag,
-		     int    debug
+		     int    flag
 		     );
 
 int surf_xyori_from_ij(
@@ -896,8 +895,7 @@ int sucu_ij_from_xy(
                     int    ny,
                     int yflip,
                     double rot_azi_deg,
-                    int    flag,
-                    int    debug
+                    int    flag
                     );
 
 
@@ -909,8 +907,7 @@ void cube_scan_segy_hdr (
 			 int   *gn_samplespertrace,
 			 int   *gn_measuresystem,
 			 int   option,
-                         char  *outfile,
-			 int   debug
+                         char  *outfile
 			 );
 
 int cube_import_storm (
@@ -921,8 +918,7 @@ int cube_import_storm (
                        int lstart,
                        float *swig_np_flt_aout_v1,   // *p_cube_v
                        long n_swig_np_flt_aout_v1,    // nxyz
-                       int option,
-                       int debug
+                       int option
                        );
 
 void cube_import_segy (
@@ -948,8 +944,7 @@ void cube_import_segy (
 		       double   *maxval,
 		       int      optscan,
 		       int      option,
-                       char     *outfile,
-		       int      debug
+                       char     *outfile
 		       );
 
 void cube_import_rmsregular (
@@ -963,8 +958,7 @@ void cube_import_rmsregular (
                              double *vmin,
                              double *vmax,
                              char  *file,
-                             int   *ierr,
-                             int   debug
+                             int   *ierr
                              );
 
 int cube_export_segy (
@@ -986,8 +980,7 @@ int cube_export_segy (
                       int *ilinesp,
                       int *xlinesp,
                       int *tracidp,
-                      int option,
-                      int debug
+                      int option
                       );
 
 int cube_export_rmsregular (
@@ -1004,8 +997,7 @@ int cube_export_rmsregular (
                             int yflip,
                             float *swig_np_flt_in_v1,   // *val_v
                             long n_swig_np_flt_in_v1,   // n total nx*ny*nz
-                            char  *file,
-                            int   debug
+                            char  *file
                             );
 int cube_swapaxes (
                    int *nx,
@@ -1021,8 +1013,7 @@ int cube_swapaxes (
                    long n_swig_np_flt_inplace_v1,   // nval, total nx*ny*nz
                    int *swig_np_int_inplace_v1,     // *p_traceid_v
                    long n_swig_np_int_inplace_v1,   // nval for traceid, nx*ny
-                   int option,
-                   int debug
+                   int option
                    );
 
 
@@ -1046,8 +1037,7 @@ int cube_coord_val_ijk(
                        double *y,
                        double *z,
                        float *value,
-                       int option,
-                       int   debug
+                       int option
                        );
 
 int cube_xy_from_ij(
@@ -1063,8 +1053,7 @@ int cube_xy_from_ij(
 		    int    ny,
                     int yflip,
 		    double rot_azi_deg,
-		    int    flag,
-		    int    debug
+		    int    flag
 		    );
 
 int cube_ijk_from_xyz(
@@ -1088,8 +1077,7 @@ int cube_ijk_from_xyz(
 		      int    nz,
 		      double rot_deg,
                       int    yflip,
-                      int    flag,
-		      int    debug
+                      int    flag
 		      );
 
 int cube_value_ijk(
@@ -1100,8 +1088,7 @@ int cube_value_ijk(
                    int    ny,
                    int    nz,
                    float *p_val_v,
-                   float *value,
-                   int    debug
+                   float *value
                    );
 
 int cube_value_xyz_cell(
@@ -1121,8 +1108,7 @@ int cube_value_xyz_cell(
                         int   nz,
                         float *p_val_v,
                         float *value,
-                        int option,
-                        int   debug
+                        int option
                         );
 
 int cube_value_xyz_interp(
@@ -1142,8 +1128,7 @@ int cube_value_xyz_interp(
                           int   nz,
                           float *p_val_v,
                           float *value,
-                          int option,
-                          int   debug
+                          int option
                           );
 
 
@@ -1154,8 +1139,7 @@ int cube_vertical_val_list(
 			   int    ny,
 			   int    nz,
 			   float *p_val_v,
-			   float *p_vertical_v,
-			   int    debug
+			   float *p_vertical_v
 			   );
 
 int cube_resample_cube(
@@ -1187,8 +1171,7 @@ int cube_resample_cube(
                        long n_swig_np_flt_in_v1,    // ncube2,
                        int option1,
                        int option2,
-                       float ovalue,
-                       int debug
+                       float ovalue
                        );
 
 int cube_get_randomline(
@@ -1214,8 +1197,7 @@ int cube_get_randomline(
                         long n_swig_np_flt_in_v1,    // ncube
                         double *swig_np_dbl_aout_v1,  // *values
                         long n_swig_np_dbl_aout_v1,  // nvalues
-                        int option,
-                        int debug
+                        int option
                         );
 /*
  *=============================================================================
@@ -1401,8 +1383,7 @@ void grd3d_scan_roff_bingrid (
 			      int     *ny,
 			      int     *nz,
 			      int     *nsubs,
-			      char    *filename,
-			      int     debug
+			      char    *filename
 			      );
 
 int grd3d_scan_roff_binpar (

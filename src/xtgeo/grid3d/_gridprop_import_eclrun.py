@@ -49,6 +49,14 @@ def import_eclbinary(
         self._date = date
         self._values = swat._values * -1 - sgas._values + 1.0
 
+        if self._dualporo and fracture:
+            # if fracture then self._dualactnum will be 1 at inactive fracture cells
+            self._values[self._dualactnum == 1] = 0.0
+
+        if self._dualporo and not fracture:
+            # if matrix then self._dualactnum will be 2 at inactive matrix cells
+            self._values[self._dualactnum == 2] = 0.0
+
         del swat
         del sgas
 

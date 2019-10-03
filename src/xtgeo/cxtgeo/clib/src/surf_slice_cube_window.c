@@ -147,7 +147,7 @@ int surf_slice_cube_window(
 
     tmpzval = calloc(nzincr, sizeof(double));
     zattr = calloc(nattr, sizeof(double));
-    
+
     xtgverbose(debug);
     xtg_speak(s, 2, "Entering routine %s", s);
 
@@ -169,7 +169,7 @@ int surf_slice_cube_window(
             /* get the surface x, y, value (z) from IJ location */
             ier = surf_xyz_from_ij(im, jm, &xcor, &ycor, &zcor, xori, xinc,
                                    yori, yinc, mx, my, mapflip,
-                                   mrotation, p_map_v, nmap, 0, debug);
+                                   mrotation, p_map_v, nmap, 0);
 
 
             if (zcor < UNDEF_LIMIT) {
@@ -185,8 +185,8 @@ int surf_slice_cube_window(
                             (xcor, ycor, zval, cxori, cxinc, cyori,
                              cyinc, czori, czinc, crotation,
                              yflip, ncx, ncy, ncz,
-                             p_cubeval_v, &value, 0,
-                             debug);
+                             p_cubeval_v, &value, 0);
+
                     }
                     else if (option1 == 1 || option1 == 2) {
 
@@ -199,8 +199,7 @@ int surf_slice_cube_window(
                             (xcor, ycor, zval, cxori, cxinc, cyori,
                              cyinc, czori, czinc, crotation,
                              yflip, ncx, ncy, ncz,
-                             p_cubeval_v, &value, option1a,
-                             debug);
+                             p_cubeval_v, &value, option1a);
 
 
                     }
@@ -240,6 +239,6 @@ int surf_slice_cube_window(
 
     free(tmpzval);
     free(zattr);
-      
+
     return EXIT_SUCCESS;
 }

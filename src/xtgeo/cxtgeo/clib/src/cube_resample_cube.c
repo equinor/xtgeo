@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_resample_cube.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *     Given two cubes, 1, and 2, resample values of no 2 into no 1.
@@ -30,7 +27,6 @@
  *    option2          i     0: Leave cube as-is if outside cube
  *                           1: Set cube values to a spesiric number if outsie
  *    ovalue           i     Value to use if option2 = 1
- *    debug            i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -41,9 +37,9 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
-
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -76,33 +72,29 @@ int cube_resample_cube(
                        long ncube2,
                        int option1,
                        int option2,
-                       float ovalue,
-                       int debug
+                       float ovalue
                        )
 
 {
     /* locals */
-    char s[24] = "cube_resample_cube";
-    int ic1, jc1, kc1;
+    int ic1, jc1, kc1, idum=1;
     int ier;
     long icn1, nm = 0;
     double xc, yc, zc;
     float value;
 
-
-    xtgverbose(debug);
+    logger_info("Resampling cube ... <%s>", __FUNCTION__);
 
     /* work with every cube1 node */
     for (ic1 = 1; ic1 <= ncx1; ic1++) {
-        if (debug > 2 ) xtg_speak(s, 3, "Working with cube IL %d of %d ...",
-                                  ic1, ncx1);
+
         for (jc1 = 1; jc1 <= ncy1; jc1++) {
             for (kc1 = 1; kc1 <= ncz1; kc1++) {
 
                 /* get the cube x, y, z for i j */
                 ier = cube_xy_from_ij(ic1, jc1, &xc, &yc, cxori1, cxinc1,
                                       cyori1, cyinc1, ncx1, ncy1, yflip1,
-                                      crotation1, 0, debug);
+                                      crotation1, 0);
 
                 zc = czori1 + czinc1 * (kc1 - 1);
 
@@ -115,8 +107,7 @@ int cube_resample_cube(
                                               cyinc2, czori2, czinc2,
                                               crotation2,
                                               yflip2, ncx2, ncy2, ncz2,
-                                              p_cubeval2_v, &value, 0,
-                                              debug);
+                                              p_cubeval2_v, &value, 0);
                 }
                 else if (option1 == 1) {
 
@@ -125,13 +116,13 @@ int cube_resample_cube(
                                                 cyinc2, czori2, czinc2,
                                                 crotation2,
                                                 yflip2, ncx2, ncy2, ncz2,
-                                                p_cubeval2_v, &value, 0,
-                                                debug);
+                                                p_cubeval2_v, &value, 0);
 
 
                 }
                 else{
-                    xtg_error(s, "Invalid option1 (%d) to %s", option1, s);
+                    logger_error("Invalid option1 (%d) to %s", option1, __FUNCTION__);
+                    exit(-1);
                 }
 
 
@@ -141,7 +132,7 @@ int cube_resample_cube(
                 }
                 else if (ier == -1 && option2 == 0) {
                     /* option2 = 0 shall just keep cube value as is */
-                    if (debug > 3) xtg_speak(s, 4, "Keep value as is");
+                    idum=0;
                 }
                 else if (ier == -1 && option2 == 1) {
                     /* option2 = 1 Use another value */
@@ -152,15 +143,14 @@ int cube_resample_cube(
     }
     /* less than 10% sampled */
     if (nm > 0 && nm < 0.1*ncube2) {
-        xtg_warn(s, 1, "Less than 10%% nodes sampled in %s!", s);
         return -4;
     }
 
     /* no nodes sampled */
     if (nm == 0) {
-        xtg_warn(s, 1, "No nodes sampled in %s!", s);
         return -5;
     }
 
+    logger_info("Resampling cube ... done");
     return EXIT_SUCCESS;
 }

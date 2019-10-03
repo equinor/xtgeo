@@ -1,9 +1,9 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * Find IJ coordinate in surface or cube given XY
  *
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include <math.h>
@@ -11,13 +11,10 @@
 #include "libxtg_.h"
 
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    sucu_ij_from_xy.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *     Routine(s) computing IJ in a rotated surf or cube given X,Y.
@@ -46,7 +43,6 @@
  *                         0: get cell nearest cell center coordinate
  *                         1: get lowerleft (i,j) corner, means that point
  *                            is within i,j  i,j+1  i+1,j  i+1,j+1
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems or outside <> 0:. Update pointers
@@ -56,7 +52,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
@@ -77,19 +73,14 @@ int sucu_ij_from_xy(
                     int ny,
                     int yflip,
                     double rot_deg,
-                    int flag,
-                    int debug
-                    )
+                    int flag                    )
 {
     /* locals */
-    char s[24] = "sucu_ij_from_xy";
     int ierx = 0, iery = 0;
     double angle, x1, x2, x3, y1, y2, y3, px, py, relx, rely, zin = 0.0;
     double x0, y0, z0;
     int ipos, jpos, option2;
 
-    xtgverbose(debug);
-    xtg_speak(s, 3, "Entering %s", s);
 
     angle = rot_deg * PI / 180.0;
 
@@ -118,21 +109,15 @@ int sucu_ij_from_xy(
     x3 = yinc * (ny - 1) * cos(angle + PI / 2.0);
     y3 = yinc * (ny - 1) * sin(angle + PI / 2.0);
 
-    if (debug > 2) xtg_speak(s, 3, "Coords: line: X1 Y1 X2 Y2 X3  Y3 %f %f"
-                             "   %f %f   %f %f",
-                             x1, y1, x2, y2, x3, y3);
-
     /* xin = xin - xori + 0.5 * FLOATEPS;  // Workaround: To avoid numerical trouble */
     /* y = y - yori + 0.5 * FLOATEPS;  // when points are exact overlapping... */
     xin = xin - xori;
     yin = yin - yori;
 
-    if (debug > 2) xtg_speak(s, 3, "Ask for relative point for: %f %f",
-                             xin, yin);
-
     /* determine _relative_ coordinate of point x y on X axis: */
     option2 = 2;  /* allow for numerical precision error for border */
 
+    int debug = 0;
     ierx = x_point_line_pos(x1, y1, 0.0, x2, y2, 0.0, xin, yin, zin,
                             &x0, &y0, &z0, &relx, option2, debug);
 
@@ -172,15 +157,6 @@ int sucu_ij_from_xy(
 
     *rx = px;
     *ry = py;
-
-    if (debug > 2) {
-        xtg_speak(s, 3, "Summary after %s:", s);
-        xtg_speak(s, 3, "Input XORI XINC   YORI YINC: %lf %lf   %lf %lf",
-                  xori, xinc, yori, yinc);
-        xtg_speak(s, 3, "Input Point X Y: %lf %lf", xin, yin);
-        xtg_speak(s, 3, "Output Point RX RY: %lf %lf", *rx, *ry);
-        xtg_speak(s, 3, "Output Point I J: %d %d", *i, *j);
-    }
 
     return EXIT_SUCCESS;
 }

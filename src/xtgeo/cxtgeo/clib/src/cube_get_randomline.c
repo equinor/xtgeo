@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_get_randomline.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given X Y Z vectors, return a a randomline array
@@ -20,7 +17,6 @@
  *    p_val_v        i     3D cube values
  *    value          o     Randomline array
  *    option         i     0: nearest value, 1: interpolate tri
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Array length, -1 if fail
@@ -29,7 +25,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -59,18 +55,12 @@ int cube_get_randomline(
                         long ncube,
                         double *values,
                         long nvalues,
-                        int option,
-                        int debug
+                        int option
                         )
 {
     /* locals */
-    char sbn[24] = "cube_get_randomline";
     int  ib, ic, izc, ier;
     float val, zsam, xc, yc, zc;
-
-    xtgverbose(debug);
-
-    if (debug > 2) xtg_speak(sbn, 3, "Entering routine %s", sbn);
 
     zsam = (zmax - zmin) / (nzsam - 1);
 
@@ -86,14 +76,12 @@ int cube_get_randomline(
             if (option == 0) {
                 ier = cube_value_xyz_cell(xc, yc, zc, xori, xinc, yori, yinc,
                                           zori, zinc, rot_deg, yflip,
-                                          nx, ny, nz, p_val_v, &val, 0,
-                                          debug);
+                                          nx, ny, nz, p_val_v, &val, 0);
             }
             else{
                 ier = cube_value_xyz_interp(xc, yc, zc, xori, xinc, yori, yinc,
                                             zori, zinc, rot_deg, yflip,
-                                            nx, ny, nz, p_val_v, &val, 0,
-                                            debug);
+                                            nx, ny, nz, p_val_v, &val, 0);
             }
 
             if (ier == 0) values[ib] = val;
@@ -104,7 +92,6 @@ int cube_get_randomline(
     }
 
     if (nvalues != ib) {
-        xtg_error(sbn, "Bug probably in %s", sbn);
         return -1;
     }
 

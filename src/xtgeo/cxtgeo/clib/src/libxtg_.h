@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define XTGDEBUG 0   /* this is a tmp solution */
+
+
 void x_fgets(char *, int, FILE *);
 void x_fread (void *, size_t , size_t , FILE *, char *, int);
 
@@ -405,8 +408,7 @@ int u_read_segy_bitem (int nc,
 		       int swap,
 		       char *txt,
 		       int *nb,
-		       int option,
-		       int debug);
+		       int option);
 
 
 void u_ibm_to_float (int *from,

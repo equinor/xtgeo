@@ -31,19 +31,19 @@ def delete_log(self, lname):
         if logn not in self._wlognames:
             logger.info("Log does no exist: %s", logn)
             continue
-        else:
-            logger.info("Log exist and will be deleted: %s", logn)
-            lcount += 1
-            del self._wlogtype[logn]
-            del self._wlogrecord[logn]
 
-            self._df.drop(logn, axis=1, inplace=True)
-            self._ensure_consistency()
+        logger.info("Log exist and will be deleted: %s", logn)
+        lcount += 1
+        del self._wlogtype[logn]
+        del self._wlogrecord[logn]
 
-            if self._mdlogname == logn:
-                self._mdlogname = None
-            if self._zonelogname == logn:
-                self._zonelogname = None
+        self._df.drop(logn, axis=1, inplace=True)
+        self._ensure_consistency()
+
+        if self._mdlogname == logn:
+            self._mdlogname = None
+        if self._zonelogname == logn:
+            self._zonelogname = None
 
     self._ensure_consistency()
     return lcount

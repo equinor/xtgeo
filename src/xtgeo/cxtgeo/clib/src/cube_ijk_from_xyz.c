@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_ijk_from_xyz.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Find the "best" (see flag) IJK index given one X Y Z
@@ -21,11 +18,10 @@
  *    yflip          i     If the Y axis is flipped then -1, else 1
  *    flag           i     Options flag:
  *                   i     0: cell mode; treat cube node as a cell center,
-                              return location of cell when P is closest
+ *                            return location of cell when P is closest
  *                   i     1: Node mode; find lower left corner IJK
  *                            i.e. P is within i,j i+1,j j+1,i, i+1,j+1
  *                         >= 10; skip I J calc (keep current, use static value)
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: -1: point is outside cube
@@ -39,7 +35,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -67,21 +63,15 @@ int cube_ijk_from_xyz(
 		      int nz,
 		      double rot_deg,
                       int yflip,
-		      int flag,
-		      int debug
+		      int flag
 		      )
 {
     /* locals */
-    char s[24]="cube_ijk_from_xyz";
     static int  ii = 0, jj = 0, ier = 0;
     int kk;
     double pz, usex, usey, usez;
     static double rrx = 0.0, rry = 0.0;
 
-
-    xtgverbose(debug);
-
-    if (debug>2) xtg_speak(s,3,"Entering routine %s", s);
 
     usex = x;
     usey = y;
@@ -90,7 +80,7 @@ int cube_ijk_from_xyz(
 
     if (flag < 10) {
         ier = sucu_ij_from_xy(&ii, &jj, &rrx, &rry, usex, usey, xori,
-                              xinc, yori, yinc, nx, ny, yflip, rot_deg, flag, debug);
+                              xinc, yori, yinc, nx, ny, yflip, rot_deg, flag);
     }
 
     *i = ii;
@@ -99,18 +89,12 @@ int cube_ijk_from_xyz(
     *rx = rrx;
     *ry = rry;
 
-    if (debug > 2) xtg_speak(s, 3, "FLAG is %d IER from sucu routine %d and "
-                             "I J %d %d yflip %d, X Y are %f %f",
-                             flag, ier, ii, jj, yflip, x, y);
-
     if (z < zori || z > zori + (nz - 1) * zinc) {
         /* point is above or below cube (node wise thinking) */
-        if (debug>2) xtg_speak(s,3,"Z outside cube at %f %f %f", x, y, z);
         return -1;
     }
 
     if (ier == -1) {
-        if (debug>2) xtg_speak(s,3,"X %f or Y %f outside cube", x, y);
         return -1;
     }
 

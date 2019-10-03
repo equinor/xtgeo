@@ -57,8 +57,6 @@ int grd3d_roff2xtgeo_coord (
     long ib, ic;
     int i, j;
 
-    logger_init(__FUNCTION__);
-
     logger_info("Transforming grid ROFF coords --> XTG representation ...");
 
     ib = 0;

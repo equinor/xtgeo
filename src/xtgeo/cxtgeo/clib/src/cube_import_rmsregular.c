@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_import_rmsregular.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Imports cube on RMS regular binary format. Need to scan the ASCII header
@@ -21,7 +18,6 @@
  *    vmin,vmax    o     Pointer to min/max values
  *    file         i     Filestring
  *    ierr         o     Flag for error
- *    debug        i     Debug flag
  *
  * RETURNS:
  *    Result vector and pointers are updated
@@ -44,8 +40,9 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -61,22 +58,16 @@ void cube_import_rmsregular (
                              double *vmin,
                              double *vmax,
                              char   *file,
-                             int    *ierr,
-                             int    debug
+                             int    *ierr
                              )
 {
 
     /* locals */
-    int i, nxyz, iok_close, not_def, idum;
+    int i, nxyz, iok_close, not_def;
     float myvalue;
     char string[132];
     FILE *fc;
-    char sub[24]="cube_import_rmsregular";
     int  swap;
-
-    idum=xtgverbose(debug);
-
-    xtg_speak(sub,4,"Setting VERBOSE....");
 
     swap=x_swap_check();
 
@@ -85,16 +76,12 @@ void cube_import_rmsregular (
 
 
     /* The Perl/py class should do a check if file exist! */
-    xtg_speak(sub,2,"Opening file %s",file);
     fc=fopen(file,"rb");
-    xtg_speak(sub,1,"Reading cube file %s",file);
 
     /* header is ASCII. NB remember the \n !... */
-    xtg_speak(sub,2,"Scanning header...");
     for (i = 1; i <= iline; i++) {
-        if (fgets(string, 132, fc) != NULL) xtg_speak(sub, 2, "Scanning...");
+        if (fgets(string, 132, fc) != NULL) logger_debug("Scanning...");
    }
-   xtg_speak(sub,2,"Scanning header...OK");
 
    *vmin=VERYLARGEFLOAT;
    *vmax=VERYSMALLFLOAT;

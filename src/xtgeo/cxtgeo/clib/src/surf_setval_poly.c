@@ -93,7 +93,7 @@ int surf_setval_poly(
             ier = surf_xyz_from_ij(ino, jno, &xcor, &ycor, &zval,
                                    xori, xinc, yori, yinc,
                                    ncol, nrow, yflip, rot_deg,
-                                   p_map_v, nmap, 0, debug);
+                                   p_map_v, nmap, 0);
 
             if (ier != 0) return -5;
 

@@ -156,7 +156,6 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
             self.rotation,
             zvalues,
             0,
-            XTGDEBUG,
         )
         if ier != 0:
             logger.critical("Error code %s, contact the author", ier)
@@ -445,7 +444,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             that = ma.filled(value, fill_value=1.0)
             mask = ma.getmaskarray(self.values)
             tmp = np.true_divide(this, that)
-            tmp[tmp == np.inf] = 0
+            tmp = np.where(np.isinf(tmp), 0, tmp)
             tmp = np.nan_to_num(tmp)
             tmp = ma.array(tmp, mask=mask)
 

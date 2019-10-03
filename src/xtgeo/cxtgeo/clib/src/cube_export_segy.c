@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_export_segy.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Export to SEGY format.
@@ -23,7 +20,6 @@
  *    xlinesp        i     Array in XLINE index
  *    tracidp        i     Array of traceidcodes
  *    option         i     Unused
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -33,7 +29,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include <limits.h>
@@ -103,13 +99,11 @@ int cube_export_segy (
                       int *ilinesp,
                       int *xlinesp,
                       int *tracidp,
-                      int option,
-                      int debug
+                      int option
                       )
 {
 
     FILE *fc = NULL;
-    char s[24] = "cube_export_segy";
     int ic, i, j, k, nc, nn, ier, swap;
     int ixv, iyv;
     long nxy = 0;
@@ -119,24 +113,14 @@ int cube_export_segy (
 
     double *xv, *yv;
 
-    xtg_speak(s, 3, "XORI %lf, XINC %lf, YORI %lf, YINC %lf, rot %lf",
-              xori, xinc, yori, yinc, rotation);
-
     xv = calloc(nx*ny, sizeof(double));
     yv = calloc(nx*ny, sizeof(double));
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 1, "Entering %s", s);
 
     fc = fopen(sfile, "wb");
 
     swap = x_swap_check();
 
     ilc = nx * ny * nz;
-
-
-    xtg_speak(s, 2, "Number of cells: %ld", ilc);
 
     /*
      * ========================================================================
@@ -192,8 +176,6 @@ int cube_export_segy (
     nc += _write_int_as_2bytes(fc, 0);
     nc += _write_int_as_2bytes(fc, 0);
     nc += _write_int_as_2bytes(fc, 0);              // Amplitude recovery
-    xtg_speak(s, 2, "Amplitute recovery at position %d (3254) (%d)",
-              nc + 3200, nc);
 
     nc += _write_int_as_2bytes(fc, 1);              // meters as meas.sys
     nc += _write_int_as_2bytes(fc, 0);
@@ -210,8 +192,6 @@ int cube_export_segy (
 
     nc += _write_nbytes(fc, 94);                    // unassigned in REV1
 
-    xtg_speak(s, 2, "Wrote %d binary header bytes", nc + 3200);
-
     /*
      * ========================================================================
      * Traces
@@ -221,9 +201,9 @@ int cube_export_segy (
     /* first get the X and Y coordinates */
     nxy = nx * ny;
     ier = surf_xy_as_values(xori, xinc, yori, yinc*yflip, nx, ny, rotation,
-                            xv, nxy, yv, nxy, 1, debug);
+                            xv, nxy, yv, nxy, 1, XTGDEBUG);
 
-    if (ier != 0) xtg_error(s, "Sir, we have a problem");
+    if (ier != 0) exit(-132);
 
     for (i = 1; i <= nx; i++) {  // inline
         for (j = 1; j <= ny; j++) {
@@ -269,10 +249,6 @@ int cube_export_segy (
             for (nn=41; nn <= 71; nn++) {nc += _write_int_as_2bytes(fc, 0);}
             ixv = (int)(xv[ilc] * 100);
             iyv = (int)(yv[ilc] * 100);
-            if (i == 1 && j == 1) {
-                xtg_speak(s, 2, "I=1, J=1: IXV = %d XV is %lf", ixv, xv[ilc]);
-                xtg_speak(s, 2, "I=1, J=1: IYV = %d YV is %lf", iyv, yv[ilc]);
-            }
             nc += _write_int_as_4bytes(fc, ixv);  // 72
             nc += _write_int_as_4bytes(fc, iyv);  // 73
 
@@ -285,9 +261,6 @@ int cube_export_segy (
             for (nn=86; nn <= 87; nn++) {nc += _write_int_as_4bytes(fc, 0);}
             for (nn=88; nn <= 93; nn++) {nc += _write_int_as_2bytes(fc, 0);}
 
-
-            if (debug > 2) xtg_speak(s, 3, "Wrote %d trace header bytes", nc);
-
             /*
              * ----------------------------------------------------------------
              * Binary values (use IEEE float)
@@ -298,12 +271,8 @@ int cube_export_segy (
                 ilc = x_ijk2ic(i, j, k, nx, ny, nz, 0);
                 aval = p_cube_v[ilc];
 
-                if (debug > 3) xtg_speak(s, 4, "Wrote value %f, at "
-                                         "location %ld", aval, ilc);
-
                 if (swap == 1) SWAP_FLOAT(aval);
                 if (fwrite(&aval, 4, 1, fc) != 1) {
-                    xtg_error(s, "Write failed of values in routine %s", s);
                     return -9;
                 }
             }
@@ -314,6 +283,7 @@ int cube_export_segy (
 
     free(xv);
     free(yv);
+
 
     return EXIT_SUCCESS;
 }

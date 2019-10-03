@@ -75,7 +75,7 @@ int surf_resample(
             /* get the x y location in the result: */
             ier2 = surf_xyz_from_ij(i2, j2, &xc2, &yc2, &zc2, xori2, xinc2,
                                     yori2, yinc2, nx2, ny2, yflip2, rota2,
-                                    mapv2, nn2, 1, debug);
+                                    mapv2, nn2, 1);
 
             /* based on this X Y, need to find Z value from origin: */
             if (ier2 == 0) {

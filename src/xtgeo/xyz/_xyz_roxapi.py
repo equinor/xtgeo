@@ -33,7 +33,7 @@ def import_xyz_roxapi(self, project, name, category, stype, realisation, attribu
 def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
 
     try:
-        import roxar
+        import roxar  # pylint: disable=import-outside-toplevel
     except ImportError:
         logger.critical("Cannot import module roxar")
         raise
@@ -145,7 +145,7 @@ def _roxapi_export_xyz_viafile(
     logger.warning("Realisation %s not in use", realisation)
 
     try:
-        import roxar
+        import roxar  # pylint: disable=import-outside-toplevel
     except ImportError:
         logger.critical("Cannot import roxar")
         raise

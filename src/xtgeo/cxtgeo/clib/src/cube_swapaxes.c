@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_swapaxes.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Do swapping of cube axes; will switch from a left handed system
@@ -21,7 +18,6 @@
  *    p_val_v        i     1D Array of cube values of ncx*ncy*ncz size
  *    p_traceid_v    i     1D Array of trace id values of ncx*ncy size
  *    option         i     For future use
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -31,7 +27,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
@@ -52,21 +48,16 @@ int cube_swapaxes (
                    long nval,
                    int *p_traceid_v,
                    long nval_traceid,
-                   int option,
-                   int debug
+                   int option
                    )
 {
 
     /* locals */
-    char s[24]="cube_swapaxes";
     int i, j, k, flip, nnx, nny;
     long nxyz, nxy, ib1, ib2;
     float *tmp1 = NULL;
     int *tmp2 = NULL;
     double xxinc, yyinc, rot;
-
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering routine %s", s);
 
     nnx = *nx;
     nny = *ny;
@@ -75,13 +66,11 @@ int cube_swapaxes (
     nxy = (long)nnx * (long)nny;
 
     /* intermediate array */
-    xtg_speak(s, 2, "Allocate..");
     tmp1 = calloc(nxyz, sizeof(float));
     tmp2 = calloc(nxy, sizeof(int));
 
     flip = *yflip;
 
-    xtg_speak(s, 2, "Swap...");
     ib2 = 0;
     /* reverse J I by looping J before I*/
     for (j = 1; j <= nny; j++) {
@@ -110,7 +99,6 @@ int cube_swapaxes (
         p_traceid_v[i] = tmp2[i];
     }
 
-    xtg_speak(s, 2, "Swap... done");
 
     nnx = *ny;
     nny = *nx;

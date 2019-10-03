@@ -85,7 +85,7 @@ double surf_get_z_from_xy(
 
     ier = sucu_ij_from_xy(&i, &j, &rx, &ry,
 			  x, y, xori, xinc, yori, yinc,
-			  nx, ny, yflip, rot_deg, 1, debug);
+			  nx, ny, yflip, rot_deg, 1);
 
 
     /* outside map, returning UNDEF value */
@@ -104,23 +104,22 @@ double surf_get_z_from_xy(
 
         /* find the x,y,z values of the four nodes */
         iex[0] = surf_xyz_from_ij(i, j, &xx, &yy, &zz, xori, xinc, yori, yinc,
-                                  nx, ny, yflip, rot_deg, p_map_v, nn, 0,
-                                  debug);
+                                  nx, ny, yflip, rot_deg, p_map_v, nn, 0);
         x_v[0]=xx; y_v[0]=yy; z_v[0]=zz;
 
         iex[1] = surf_xyz_from_ij(i+1, j, &xx, &yy, &zz, xori, xinc, yori,
                                   yinc, nx, ny, yflip, rot_deg, p_map_v,
-                                  nn, 0, debug);
+                                  nn, 0);
         x_v[1]=xx; y_v[1]=yy; z_v[1]=zz;
 
         iex[2] = surf_xyz_from_ij(i, j+1, &xx, &yy, &zz, xori, xinc, yori,
                                   yinc, nx, ny, yflip, rot_deg, p_map_v,
-                                  nn, 0, debug);
+                                  nn, 0);
         x_v[2]=xx; y_v[2]=yy; z_v[2]=zz;
 
         iex[3] = surf_xyz_from_ij(i+1, j+1, &xx, &yy, &zz, xori, xinc, yori,
                                   yinc, nx, ny, yflip, rot_deg, p_map_v,
-                                  nn, 0, debug);
+                                  nn, 0);
         x_v[3]=xx; y_v[3]=yy; z_v[3]=zz;
 
         for (i=0; i<4; i++) {

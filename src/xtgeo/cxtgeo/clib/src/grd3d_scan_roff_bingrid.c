@@ -6,7 +6,7 @@
  * ############################################################################
  */
 
-
+#include "logger.h"
 #include <string.h>
 #include <stdlib.h>
 #include "libxtg.h"
@@ -23,8 +23,7 @@ void grd3d_scan_roff_bingrid (
 			      int     *ny,
 			      int     *nz,
 			      int     *nsubs,
-			      char    *filename,
-			      int     debug
+			      char    *filename
 			      )
 
 
@@ -32,11 +31,9 @@ void grd3d_scan_roff_bingrid (
     FILE *fc;
     char cname[100];
     int  idum, mynx=0, myny=0, mynz=0, num=0, mybyte, iendian;
-    char sub[24]="grd3d_scan_roff_bingrid";
 
-    xtgverbose(debug);
+    logger_info("Entering routine %s", __FUNCTION__);
 
-    xtg_speak(sub,2,"Entering routine ...");
     /*
      *-------------------------------------------------------------------------
      * Check endiness
@@ -45,11 +42,11 @@ void grd3d_scan_roff_bingrid (
 
     iendian=x_swap_check();
     if (iendian==1) {
-	xtg_speak(sub,2,"Machine is little endian (linux intel, windows)");
+	logger_info("Machine is little endian (linux intel, windows)");
 	x_byteorder(1); /* assumed initially */
     }
     else{
-	xtg_speak(sub,2,"Machine is big endian (many unix)");
+	logger_info("Machine is big endian (many unix)");
 	x_byteorder(0); /* assumed initially */
     }
 
@@ -59,12 +56,11 @@ void grd3d_scan_roff_bingrid (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(sub,2,"Opening binary ROFF file...");
     fc=fopen(filename,"rb");
     if (fc == NULL) {
-	xtg_error(sub,"Cannot open file!");
+	logger_error("Cannot open file!");
+        exit(-1);
     }
-    xtg_speak(sub,2,"Opening ROFF file...OK!");
 
     /*
      *=========================================================================
@@ -86,16 +82,11 @@ void grd3d_scan_roff_bingrid (
              *-----------------------------------------------------------------
              */
             if (strcmp(cname, "filedata") == 0) {
-                xtg_speak(sub,3,"Tag filedata was found");
                 mybyte=_grd3d_getintvalue("byteswaptest",fc);
-                xtg_speak(sub,2,"bytewaptest is %d", mybyte);
 		if (mybyte != 1) {
 		    if (iendian==1) x_byteorder(2);
 		    if (iendian==0) x_byteorder(3);
 		    SWAP_INT(mybyte);
-		    xtg_speak(sub,1,"Roff file import need swapping");
-		    xtg_speak(sub,2,"Bytewaptest is now %d", mybyte);
-		    xtg_speak(sub,2,"Byte order flag is now %d", x_byteorder(-1));
 		}
 	    }
             /*
@@ -104,13 +95,9 @@ void grd3d_scan_roff_bingrid (
              *-----------------------------------------------------------------
              */
             if (strcmp(cname, "dimensions") == 0) {
-                xtg_speak(sub,3,"Tag dimensions was found");
                 mynx=_grd3d_getintvalue("nX",fc);
-                xtg_speak(sub,2,"nX is %d", mynx);
                 myny=_grd3d_getintvalue("nY",fc);
-                xtg_speak(sub,2,"nY is %d", myny);
                 mynz=_grd3d_getintvalue("nZ",fc);
-                xtg_speak(sub,2,"nZ is %d", mynz);
             }
             /*
              *-----------------------------------------------------------------
@@ -118,10 +105,8 @@ void grd3d_scan_roff_bingrid (
              *-----------------------------------------------------------------
              */
 	    if (strcmp(cname, "subgrids") == 0) {
-                xtg_speak(sub,3,"Tag subgrids was found");
                 num=_grd3d_getintvalue("array",fc);
 		if (num==-1) num=1;
-                xtg_speak(sub,2,"Number of subgrids are are %d", num);
                 break;
             }
 

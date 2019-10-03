@@ -72,6 +72,7 @@ def _roxapi_import_bwell(
     else:
         raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
 
+    # pylint: disable=unnecessary-comprehension
     bwprops = [item for item in bwset.properties]
     bwnames = [item.name for item in bwset.properties]
 
