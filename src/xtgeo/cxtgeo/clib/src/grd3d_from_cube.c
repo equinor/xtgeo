@@ -91,7 +91,7 @@ void grd3d_from_cube (
        for (i = 1; i <= ncol + 1; i++) {
 
            iok = cube_xy_from_ij(i, j, &xcoord, &ycoord, xori, xinc, yori,
-                                 yinc, ncol + 1, nrow + 1, yflip, rotation, 0, debug);
+                                 yinc, ncol + 1, nrow + 1, yflip, rotation, 0);
 
            if (iok != 0) xtg_error(sbn, "Bug in %s", sbn);
 

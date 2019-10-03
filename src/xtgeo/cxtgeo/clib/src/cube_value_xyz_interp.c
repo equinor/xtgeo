@@ -20,7 +20,6 @@
  *    value          o     Updated value valid for X Y Z postion
  *    option         i     If 1: snap to nearest cube node in X Y
  *                   i     If >= 10: Skip I J calculation
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function:  0: upon success.
@@ -36,6 +35,9 @@
  */
 
 
+
+
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 #include <math.h>
@@ -57,20 +59,17 @@ int cube_value_xyz_interp(
                           int nz,
                           float *p_val_v,
                           float *value,
-                          int option,
-                          int debug
+                          int option
                           )
 {
     /* locals */
-    char s[24] = "cube_value_xyz_interp";
     long ib, useib, ibmax;
     int  ic, jc, kc, i, j, k, ier, ier1, flag;
     double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz;
     double usex, usey, dist, previousdist, avginc;
     float p_v[8], val;
 
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering routine %s", s);
+    logger_init(__FUNCTION__);
 
     /* need to determine the lower left corner coordinates of the point ie
        need to run with flag = 1 */
@@ -79,8 +78,7 @@ int cube_value_xyz_interp(
 
     ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, xin, yin, zin,
                             xori, xinc, yori, yinc,
-                            zori, zinc, nx, ny, nz, rot_deg, yflip, flag,
-                            debug);
+                            zori, zinc, nx, ny, nz, rot_deg, yflip, flag);
 
     if (ier == -1) {
         *value = UNDEF;
@@ -100,7 +98,7 @@ int cube_value_xyz_interp(
                                              nx, ny, nz, xori, xinc, yori,
                                              yinc, zori, zinc, rot_deg, yflip,
                                              p_val_v, &xx, &yy, &zz, &val,
-                                             0, debug);
+                                             0);
                     if (ier == 0) {
                         x_v[ib] = xx; y_v[ib] = yy; z_v[ib] = zz;
                         ib++;
@@ -125,16 +123,15 @@ int cube_value_xyz_interp(
 
         avginc = 0.5 * (xinc + yinc);
         if (fabs(previousdist) > fabs(0.1 * avginc)) {
-            xtg_warn(s, 0, "Warning, snapping distance is more than "
-                     "10 percent of avg cell size in XY: %f vs %f (%s). "
-                     "Consider to deactivate snapxy option?",
-                     previousdist, avginc, s);
+            logger_warn("Warning, snapping distance is more than "
+                        "10 percent of avg cell size in XY: %f vs %f (%s). "
+                        "Consider to deactivate snapxy option?",
+                        previousdist, avginc, __FUNCTION__);
         }
 
         ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, usex, usey, zin,
                                 xori, xinc, yori, yinc,
-                                zori, zinc, nx, ny, nz, rot_deg, yflip, flag,
-                                debug);
+                                zori, zinc, nx, ny, nz, rot_deg, yflip, flag);
 
         if (ier == -1) {
             *value = UNDEF;
@@ -165,7 +162,7 @@ int cube_value_xyz_interp(
                                          nx, ny, nz, xori, xinc, yori,
                                          yinc, zori, zinc, rot_deg, yflip,
                                          p_val_v, &xx, &yy, &zz, &val,
-                                         flag, debug);
+                                         flag);
 
                 if (ier == 0) {
                     x_v[ib] = xx; y_v[ib] = yy; z_v[ib] = zz; p_v[ib] = val;
@@ -174,21 +171,12 @@ int cube_value_xyz_interp(
                     ier1 = ier;
                 }
 
-                if (debug > 2) xtg_speak(s, 3, "Corner %d: %lf %lf %lf",
-                                         i, x_v[ib], y_v[ib], z_v[ib]);
 
                 ib++;
             }
         }
     }
 
-    if (debug > 2) {
-        for (ib=0; ib<8; ib++) {
-            if (debug > 2) xtg_speak(s, 3, "(%d)  X Y Z VALUE: %lf   %lf"
-                                     "   %lf   %f", ib,
-                                     x_v[ib], y_v[ib], z_v[ib], p_v[ib]);
-        }
-    }
 
     /* value is outside cube */
     if (ier1 == -1) {
@@ -199,24 +187,16 @@ int cube_value_xyz_interp(
     /* now interpolate */
     ier = -9;
     if (ier1 == 0) {
-        ier = x_interp_cube_nodes(x_v, y_v, z_v, p_v, rx, ry, rz, &val, 1,
-                                  debug);
+        ier = x_interp_cube_nodes(x_v, y_v, z_v, p_v, rx, ry, rz, &val, 1, XTGDEBUG);
     }
 
     if (ier != 0) {
-        if (debug > 2) {
-            xtg_warn(s, 3, "Error code from interpolation: %d in %s", ier, s);
-            xtg_warn(s, 3, "XYZ position is %f % f %f ", usex, usey, zin);
-        }
-
         *value = UNDEF;
         return(ier);
     }
     else{
         *value = val;
     }
-
-    if (debug > 2) xtg_speak(s, 3, "Value is %f", val);
 
     return EXIT_SUCCESS;
 }

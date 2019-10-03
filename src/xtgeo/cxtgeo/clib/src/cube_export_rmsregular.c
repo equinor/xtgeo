@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_export_rmsregular.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *     Exports a cube to RMS regular format
@@ -19,7 +16,6 @@
  *    nval           i     Number of elements in array
  *    file           i     File to export to
  *    option         i     For future use
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -29,12 +25,12 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
-
+#include "logger.h"
 
 int cube_export_rmsregular (
                             int   nx,
@@ -50,22 +46,20 @@ int cube_export_rmsregular (
                             int yflip,
                             float *p_val_v,
                             long nval,
-                            char  *file,
-                            int   debug
+                            char  *file
                             )
 {
 
     /* locals */
-    char sub[24]="cube_export_rmsregular";
     FILE *fc;
     int swap, i, j, k;
     long ic;
     double xmax,ymax,zmax;
     float value;
 
-    xtgverbose(debug);
+    logger_init(__FUNCTION__);
 
-    xtg_speak(sub, 4, "Setting VERBOSE....");
+    logger_info("Export cube to RMS regular format");
 
     /* if (yflip == -1) { */
     /*     xtg_speak(sub, 2, "Swap axes..."); */
@@ -77,12 +71,7 @@ int cube_export_rmsregular (
     swap = x_swap_check();
 
     /* The Python/Perl class should do a check if file exist! */
-    xtg_speak(sub, 2, "Opening file %s", file);
     fc = fopen(file, "wb");
-    xtg_speak(sub, 2, "Exporting cube file %s", file);
-
-    /* header is ASCII. NB remember the \n !... */
-    xtg_speak(sub, 2, "Writing header ...");
 
     /* not sure if this xmax/ymax is the one that RMS wants...*/
     xmax = xori + xinc * (nx - 1);
@@ -95,9 +84,6 @@ int cube_export_rmsregular (
     fprintf(fc, "Zmin/Zmax/Zinc: %11.3lf %11.3lf %le\n", zori, zmax, zinc);
     fprintf(fc, "Rotation: %9.5f\n", rotation);
     fprintf(fc, "Nx/Ny/Nz: %d %d %d\n", nx, ny, nz);
-
-
-    xtg_speak(sub, 2, "Writing data ...");
 
     /* Data are written in Fortran order (columns fastest) */
     /* But input is C order. Hence x_ijk2ic */
@@ -117,7 +103,7 @@ int cube_export_rmsregular (
                 if (swap == 1) SWAP_FLOAT(value);
 
                 if (fwrite(&value, 4, 1, fc) !=1 ) {
-                    xtg_error(sub, "Write failed in routine %s", sub);
+                    logger_error("Write failed in routine %s", __FUNCTION__);
                     return -1;
                 }
             }

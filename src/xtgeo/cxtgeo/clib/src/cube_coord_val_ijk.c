@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_coord_ijk.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given I J K, return cube coordinates and value.
@@ -21,7 +18,6 @@
  *    xcor .. zcor   o     Cube coordinates in cell IJK
  *    value          o     Cube value in IJK
  *    option         i     If option >= 10, then x y calc is skipped
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function:  0: upon success. If problems:
@@ -32,7 +28,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -60,8 +56,7 @@ int cube_coord_val_ijk(
                        double *ycor,
                        double *zcor,
                        float *value,
-                       int option,
-                       int   debug
+                       int option
                        )
 {
 
@@ -98,7 +93,7 @@ int cube_coord_val_ijk(
     else{
         /* something is wrong */
         logger_critical("IER1 = %d IER2 = %d Error(?) in routine"
-                        " %s contact JRIV", ier1, ier2, s);
+                        " %s contact JRIV", ier1, ier2, __FUNCTION__);
         *value = UNDEF;
         return -1;
     }

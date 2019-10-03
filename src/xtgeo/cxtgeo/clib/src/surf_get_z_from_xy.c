@@ -85,7 +85,7 @@ double surf_get_z_from_xy(
 
     ier = sucu_ij_from_xy(&i, &j, &rx, &ry,
 			  x, y, xori, xinc, yori, yinc,
-			  nx, ny, yflip, rot_deg, 1, debug);
+			  nx, ny, yflip, rot_deg, 1);
 
 
     /* outside map, returning UNDEF value */

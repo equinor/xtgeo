@@ -159,7 +159,6 @@ def _export_segy_xtgeo(self, sfile):
         xlinesp,
         tracidp,
         0,
-        XTGDEBUG,
     )
 
     if status != 0:
@@ -189,7 +188,6 @@ def export_rmsreg(self, sfile):
         self.yflip,
         values1d,
         sfile,
-        XTGDEBUG,
     )
 
     if status != 0:

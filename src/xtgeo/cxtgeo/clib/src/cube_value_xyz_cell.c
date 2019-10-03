@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_value_xyz_cell.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given X Y Z, return cell (nearest point) cube value.
@@ -18,7 +15,6 @@
  *    p_val_v        i     3D cube values
  *    value          o     Updated cube cell value
  *    option         i     For later use
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function:  0: upon success. If problems:
@@ -29,7 +25,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -65,9 +61,7 @@ int cube_value_xyz_cell(
     /* first get IJK value from XYZ point */
     istat = cube_ijk_from_xyz(&i, &j, &k, &rx, &ry, &rz, x, y, z, xori, xinc,
                               yori, yinc, zori, zinc,
-                              nx, ny, nz, rot_deg, yflip, 0,
-                              debug
-                              );
+                              nx, ny, nz, rot_deg, yflip, 0);
 
     /* now get the cube cell value in IJK */
     if (istat == 0) {

@@ -83,7 +83,7 @@ int cube_ijk_from_xyz(
 
     if (flag < 10) {
         ier = sucu_ij_from_xy(&ii, &jj, &rrx, &rry, usex, usey, xori,
-                              xinc, yori, yinc, nx, ny, yflip, rot_deg, flag, debug);
+                              xinc, yori, yinc, nx, ny, yflip, rot_deg, flag);
     }
 
     *i = ii;

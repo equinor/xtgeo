@@ -199,8 +199,7 @@ int surf_slice_cube_window(
                             (xcor, ycor, zval, cxori, cxinc, cyori,
                              cyinc, czori, czinc, crotation,
                              yflip, ncx, ncy, ncz,
-                             p_cubeval_v, &value, option1a,
-                             debug);
+                             p_cubeval_v, &value, option1a);
 
 
                     }

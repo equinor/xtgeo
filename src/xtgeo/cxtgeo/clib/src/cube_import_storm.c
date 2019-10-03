@@ -29,7 +29,6 @@
  *    crotation      i     Cube rotation (deg, anticlock)
  *    p_cubeval_v    i     1D Array of cube values
  *    option         i     Options: 0 scan header, 1 do full import
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -106,7 +105,7 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream) {
     (*lineptr)[pos] = '\0';
     return pos;
 }
-    
+
 int cube_import_storm (
                        int nx,
                        int ny,
@@ -115,13 +114,11 @@ int cube_import_storm (
                        int nlines,
                        float *p_cube_v,
                        long nxyz,
-                       int option,
-                       int debug
+                       int option
                        )
 {
 
     FILE  *fc;
-    char s[24]="cube_import_storm";
     int i, j, k, iok_close, swap;
     long ic;
     float fval;
@@ -130,12 +127,10 @@ int cube_import_storm (
     size_t len = 0;
     ssize_t read;
 
-    xtgverbose(debug);
 
     swap = x_swap_check();
 
     /* The caller should do a check if file exist! */
-    xtg_speak(s, 2, "Opening file %s at line %d", file, nlines);
     fc = fopen(file, "rb");
 
     /* skip header as this is parsed in Python/Perl */
@@ -143,12 +138,9 @@ int cube_import_storm (
     for (i = 1; i < nlines; i++) {
         read = _getline(&line, &len, fc);  /* original a posix/gnu function */
         line[strcspn(line, "\n")] = 0;
-        xtg_speak(s, 2, "Retrieved header line no %d of length %zu : %s",
-                  i, read, line);
     }
 
 
-    xtg_speak(s, 2, "NX NY NZ %d %d %d", nx, ny, nz);
 
     for (k = 1; k <= nz; k++) {
         for (j = 1; j <= ny; j++) {
@@ -174,8 +166,6 @@ int cube_import_storm (
     if (iok_close != 0) {
         return(iok_close);
     }
-
-    xtg_speak(s,1,"STORM import done, OK");
 
     return(EXIT_SUCCESS);
 }

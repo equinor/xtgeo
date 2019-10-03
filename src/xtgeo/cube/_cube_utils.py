@@ -52,7 +52,6 @@ def swapaxes(self):
         values1d,
         traceid1d,
         0,
-        XTGDEBUG,
     )
     if ier != 0:
         raise Exception
@@ -145,7 +144,6 @@ def cropping(self, icols, jrows, klays):
         self.yflip,
         self.rotation,
         0,
-        XTGDEBUG,
     )
 
     if ier != 0:
@@ -206,7 +204,6 @@ def resample(self, other, sampling="nearest", outside_value=None):
         opt1,
         opt2,
         opt2value,
-        XTGDEBUG,
     )
 
     if ier == -4:
@@ -249,7 +246,6 @@ def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
             self._yflip,
             self.rotation,
             0,
-            XTGDEBUG,
         )
         if ier != 0:
             logger.critical("Error code %s, contact the author", ier)
@@ -328,7 +324,6 @@ def get_randomline(
         self._values.reshape(-1),
         nsamples,
         option,
-        XTGDEBUG,
     )
 
     values[values > xtgeo.UNDEF_LIMIT] = np.nan

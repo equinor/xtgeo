@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    cube_scan_segy_hdr.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Scan a SEGY header file.
@@ -21,7 +18,6 @@
  *    gn_samplespertrace  o     Number of samples per trace
  *    gn_measuresystem    o     Measure system...
  *    option              o     Options. 1=print to stdout
- *    debug               i     Debug level flag
  *
  * RETURNS:
  *    Result pointers are updated
@@ -30,7 +26,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -48,15 +44,13 @@ void cube_scan_segy_hdr (
                          int   *gn_measuresystem,
                          /* flags: */
                          int   option,
-                         char  *outfile,
-                         int   debug
+                         char  *outfile
                          )
 {
 
     /* locals */
     char   ebcdicheader[3200];
     FILE   *fc, *fout=NULL;
-    char   s[24]="cube_scan_segy_hdr";
     int    swap, n, i, j, nb, ic;
     int    n4;
     short  n2;
@@ -135,20 +129,13 @@ void cube_scan_segy_hdr (
                           "No of 3200-byte ext. hdrs."};
 
 
-    xtgverbose(debug);
-
-    xtg_speak(s,1,"Entering %s",s);
-
     swap=x_swap_check();
 
-    xtg_speak(s,1,"Swap status: %d",swap);
-
     /* The caller should do a check if file exist! */
-    xtg_speak(s,2,"Opening file %s",file);
     fc=fopen(file,"rb");
 
     if (fc == NULL) {
-        xtg_error(s, "Could not open file");
+        exit(-1); /* Could not open file */
     }
     /*
      *-------------------------------------------------------------------------
@@ -157,11 +144,10 @@ void cube_scan_segy_hdr (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(s,2,"Work 1");
 
     n = fread (ebcdicheader, 3200, 1, fc);
     if (n != 1) {
-        xtg_error(s,"Error reading SEGY EBCDIC header");
+        exit(-1);  /* Error reading SEGY EBCDIC header */
     }
 
     /*
@@ -174,8 +160,7 @@ void cube_scan_segy_hdr (
      for (i=0; i<40; i++) {
          asciiheader[i] = calloc(81, sizeof(char));
          if (asciiheader[i] == 0){
-             xtg_error(s,"Memory allocation of asciiheader failed");
-             return;
+             exit(-1);
          }
      }
 
@@ -192,7 +177,6 @@ void cube_scan_segy_hdr (
          asciiheader[i][80] = 0;
      }
 
-    xtg_speak(s,2,"Work 2");
 
      /* print to screen if option is 1 */
      if (option==1) {
@@ -228,13 +212,13 @@ void cube_scan_segy_hdr (
      /* read each chunk of either 4 byte or 2 byte integers */
      for (i=0;i<(sizeof(n4set1)/sizeof(n4set1[0])); i++) {
          n4        = u_read_segy_bitem(ic, i, &n4,sizeof(n4),1,fc, fout, swap,
-                                       des[ic],&nb,option,debug);
+                                       des[ic],&nb,option);
          n4set1[i] = n4;
          ic++;
      }
      for (i=0;i<(sizeof(n2set1)/sizeof(n2set1[0])); i++) {
          n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout, swap,
-                                       des[ic],&nb,option,debug);
+                                       des[ic],&nb,option);
          n2set1[i] = n2;
          ic++;
      }
@@ -242,7 +226,7 @@ void cube_scan_segy_hdr (
      i=0;
      unassign     = u_read_segy_bitem(ic, i, &unassigned,sizeof(unassigned),
                                       1,fc, fout, swap,"Unassigned",
-                                      &nb,option,debug);
+                                      &nb,option);
      ic++;
 
      /* frev number is a bit special, see the SEG documentation; handled by
@@ -252,13 +236,13 @@ void cube_scan_segy_hdr (
      option=option+2;
      frevnumber    = u_read_segy_bitem(ic, i, &frevnumber,sizeof(frevnumber),
                                        1,fc, fout, swap,
-                                       "Format rev number", &nb,option,debug);
+                                       "Format rev number", &nb,option);
      option=option-2;
      ic++;
 
      for (i=0;i<(sizeof(n2set2)/sizeof(n2set2[0])); i++) {
          n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout,
-                                       swap,des[ic],&nb,option,debug);
+                                       swap,des[ic],&nb,option);
          n2set2[i] = n2;
          ic++;
      }
@@ -302,26 +286,21 @@ void cube_scan_segy_hdr (
    binary header and trace headers */
 int u_read_segy_bitem (int ncount, int icount, void *ptr, size_t size,
                        size_t nmemb, FILE *fc, FILE *fout, int swap, char *txt,
-                       int *nb, int option, int debug)
+                       int *nb, int option)
 {
 
     int    ier = 0, icode, myreturn = -9, n1, n2;
     short  scode;
     unsigned char f1=0, f2=0;
-    char   s[24]="cube_read_segy_item";
     char   comment[30]="";
 
     n1 = *nb;
     n2 = n1 + size - 1;
 
-    xtgverbose(debug);
-
-    xtg_speak(s,4,"Size of item is %d",size);
-
     if (option<=1){
         ier=fread(ptr,size,nmemb,fc);
         if (ier != 1) {
-            xtg_error(s,"Error in reading SEGY item... IER = %d", ier);
+            exit(-1);
         }
 
         if (size == 4 && swap) {
@@ -341,9 +320,9 @@ int u_read_segy_bitem (int ncount, int icount, void *ptr, size_t size,
     /* special treatment, the record will be read as two single bytes */
     else{
         ier=fread(&f1,1,1,fc);
-        if (ier != 1) xtg_error(s,"Error in reading SEGY item...");
+        if (ier != 1) exit(-1); // xtg_error(s,"Error in reading SEGY item...");
         ier=fread(&f2,1,1,fc);
-        if (ier != 1) xtg_error(s,"Error in reading SEGY item...");
+        if (ier != 1) exit(-1); // xtg_error(s,"Error in reading SEGY item...");
         sprintf(comment,"SEGY version %02d.%02d",f1,f2);
         /* just return the main version */
         myreturn=f1;

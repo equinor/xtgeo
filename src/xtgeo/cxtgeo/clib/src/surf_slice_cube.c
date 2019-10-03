@@ -161,8 +161,7 @@ int surf_slice_cube(
                     ier = cube_value_xyz_interp(x, y, z, cxori, cxinc, cyori,
                                                 cyinc, czori, czinc, crotation,
                                                 yflip, ncx, ncy, ncz,
-                                                p_cubeval_v, &value, option1a,
-                                                debug);
+                                                p_cubeval_v, &value, option1a);
 
 
                 }

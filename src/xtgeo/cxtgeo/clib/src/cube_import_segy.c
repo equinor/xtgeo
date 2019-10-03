@@ -30,7 +30,6 @@
  *    optscan        i     Flag: 1 means scanning mode, 0 means read data
  *    option         i     option = 1: write info to outfile (if optscan=1)
  *    outfile        i     File name to print info too, if option=1 and optscan=1
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -73,13 +72,12 @@ void cube_import_segy (
 
                        int     optscan,
                        int     option,
-                       char    *outfile,
-                       int     debug
+                       char    *outfile
                        )
 {
 
     FILE   *fc, *fout=NULL;
-    char   s[24]="cube_import_segy";
+
     int    swap, i, nb, ic=0, offset=0, nzbytes=4,  ier;
     int    n4;
     short  n2;
@@ -221,13 +219,6 @@ void cube_import_segy (
         }
     }
 
-    xtgverbose(debug);
-
-    xtg_speak(s,1,"Entering %s",s);
-
-    if (optscan == 1) {
-        xtg_speak(s,1,"Scanning mode");
-    }
 
     swap=x_swap_check();
 
@@ -255,14 +246,10 @@ void cube_import_segy (
         nzbytes = 1;  /* 1 byte signed integer */
     }
     else{
-        xtg_error(s,"Format code for traces is not supported: %d",
-                  gn_formatcode);
+        exit(-1);
     }
 
-    xtg_speak(s,2,"Swap status: %d",swap);
-
     /* The caller should do a check if file exist! */
-    xtg_speak(s,2,"Opening file %s",file);
     fc=fopen(file,"rb");
 
 
@@ -303,19 +290,6 @@ void cube_import_segy (
 
     for (it=0; it<2000000; it++) {
 
-        if (ntracecount == ntraces) {
-            xtg_speak(s,2,"NTRACES vs COUNT %d vs %d (OPTSCAN = %d)",ntraces,
-                      ntracecount, optscan);
-        }
-
-        if (it % 1000 == 0) {
-            xtg_speak(s, 3, "IT is %ld", it);
-        }
-
-        if (it < 10) {
-            xtg_speak(s, 2, "TMP: IT(3) is %ld", it);
-        }
-
         /*
          *---------------------------------------------------------------------
          * The trace header; this one contains some interesting
@@ -345,62 +319,62 @@ void cube_import_segy (
         /* read each chunk of either 4 byte or 2 byte integers */
         for (i=0;i<(sizeof(n4set1)/sizeof(n4set1[0])); i++) {
             n4        = u_read_segy_bitem(ic, i, &n4,sizeof(n4),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n4set1[i] = n4;
             ic++;
         }
         for (i=0;i<(sizeof(n2set1)/sizeof(n2set1[0])); i++) {
             n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n2set1[i] = n2;
             ic++;
         }
         for (i=0;i<(sizeof(n4set2)/sizeof(n4set2[0])); i++) {
             n4        = u_read_segy_bitem(ic, i, &n4,sizeof(n4),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n4set2[i] = n4;
             ic++;
         }
         for (i=0;i<(sizeof(n2set2)/sizeof(n2set2[0])); i++) {
             n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n2set2[i] = n2;
             ic++;
         }
         for (i=0;i<(sizeof(n4set3)/sizeof(n4set3[0])); i++) {
             n4        = u_read_segy_bitem(ic, i, &n4,sizeof(n4),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n4set3[i] = n4;
             ic++;
         }
         for (i=0;i<(sizeof(n2set3)/sizeof(n2set3[0])); i++) {
             n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n2set3[i] = n2;
             ic++;
         }
         for (i=0;i<(sizeof(n4set4)/sizeof(n4set4[0])); i++) {
             n4        = u_read_segy_bitem(ic, i, &n4,sizeof(n4),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n4set4[i] = n4;
             ic++;
         }
         for (i=0;i<(sizeof(n2set4)/sizeof(n2set4[0])); i++) {
             n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n2set4[i] = n2;
             ic++;
         }
 
         for (i=0;i<(sizeof(n4set5)/sizeof(n4set5[0])); i++) {
             n4        = u_read_segy_bitem(ic, i, &n4,sizeof(n4),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n4set5[i] = n4;
             ic++;
         }
         for (i=0;i<(sizeof(n2set5)/sizeof(n2set5[0])); i++) {
             n2        = u_read_segy_bitem(ic, i, &n2,sizeof(n2),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
             n2set5[i] = n2;
             ic++;
         }
@@ -408,7 +382,7 @@ void cube_import_segy (
         i=0;
         unassign      = u_read_segy_bitem(ic, i, &unassigned,
                                           sizeof(unassigned),1,fc, fout, swap,
-                                          des[ic],&nb,option,debug);
+                                          des[ic],&nb,option);
         ic++;
 
 
@@ -432,8 +406,6 @@ void cube_import_segy (
             zscalar=-1.0/(double)n2set2[0];
         }
         else if (n2set2[0] == 0) {
-            xtg_speak(s,3,"The Trace header Z scalar (field 20) is zero. "
-                      "Assume no scaling");
             zscalar=1.0;
         }
 
@@ -446,23 +418,16 @@ void cube_import_segy (
             xyscalar = -1.0/(double)n2set2[1];
         }
         else if (n2set2[1] == 0) {
-            xtg_error(s,"The Trace header XY scalar (field 21) cannot be "
-                      "zero. STOP!");
+            exit(-1);
         }
 
-        xtg_speak(s,2,"The XY scalar is: %f (from %d) and Z scalar is %f "
-                  "(from %d) ",xyscalar,n2set2[1], zscalar, n2set2[0]);
         ntsamples  = n2set3[13];
         *zinc      = n2set3[14]/1000.0; /* from microseconds to milliseconds */
         *zori      = n2set3[10];
-        xtg_speak(s,2,"Number of Z samples in this trace is %d ",ntsamples);
-
 
         /* get the actual inline and x line */
         mi = n4set4[2];
         mj = n4set4[3];
-        xtg_speak(s,3,"Inline %d and xline %d",mi,mj);
-
 
         if (optscan <= 1) {
             ntrace[0]  = n4set1[0];
@@ -470,7 +435,6 @@ void cube_import_segy (
             nxline[0]  = n4set4[3];
             xpos[0]    = (double)n4set4[0]*xyscalar;
             ypos[0]    = (double)n4set4[1]*xyscalar;
-            xtg_speak(s,2,"First point on first inline: %f %f",xpos[0], ypos[0]);
 
         }
 
@@ -482,13 +446,10 @@ void cube_import_segy (
             /* last corner */
             xpos[3]    = (double)n4set4[0]*xyscalar;
             ypos[3]    = (double)n4set4[1]*xyscalar;
-            xtg_speak(s,2,"Last point on last inline: %f %f",xpos[3], ypos[3]);
 
             ninlines   = ninline[1] - ninline[0] + 1;
             nxlines    = nxline[1]  - nxline[0]  + 1;
             ntraces    = ninlines * nxlines;
-            xtg_speak(s,1,"Inlines (rows) and xlines (columns): %d %d",
-                      ninlines, nxlines);
 
         }
 
@@ -512,8 +473,6 @@ void cube_import_segy (
             fprintf(fout, "Number of samples per trace: %d\n",ntsamples);
             ntotal = ntsamples*nxlines;
             ntotal = ntotal*ninlines;
-            xtg_speak(s,2,"Num cells: %ld", ntotal);
-            xtg_speak(s,2,"Lim int32: %ld", INT_MAX);
             fprintf(fout, "Number of cells total is: %ld (%d %d %d)\n", ntotal,
                    ninlines,  nxlines, ntsamples);
 
@@ -538,12 +497,9 @@ void cube_import_segy (
          * +  Nsamples * Nbytes_in_data format
          */
 
-        xtg_speak(s,3,"Working ... OPTSCAN is %d", optscan);
-
         if (optscan<=1) {;
             /* test 240 + 251*4  =  1244 */
             offset =-1*(240 + ntsamples*nzbytes);
-            xtg_speak(s,3,"Offset from end of file is %d ",offset);
             fseek(fc, offset, SEEK_END);
             optscan=optscan+8;
         }
@@ -557,23 +513,12 @@ void cube_import_segy (
             /* allocate space for traces */
             ctracebuffer = calloc(4*ntsamples,sizeof(char));
             if (ctracebuffer == 0) {
-                xtg_error(s,"Memory allocation failure of traces. STOP");
+                exit(-1); /* Memory allocation failure of traces. STOP" */
             }
             ctracedata   = ctracebuffer; /* why + 240?? */
             itracedata   = (int*)ctracedata;
             ftracedata   = (float*)ctracedata;
             stracedata   = (short*)ctracedata;
-
-
-            /* /\* reallocate the result *\/ */
-            /* xtg_speak(s,2,"Reallocate memory ... "); */
-            /* p_val_v = realloc(p_val_v, ninlines*nxlines*ntsamples*
-               sizeof(p_val_v[0])); */
-
-            /* if (p_val_v == NULL) { */
-            /*  xtg_error(s,"Could not reallocate cube pointer. STOP!"); */
-            /* } */
-            /* xtg_speak(s,2,"Reallocate memory ... DONE"); */
 
             optscan = 5;
 
@@ -585,24 +530,18 @@ void cube_import_segy (
         else if (optscan == 5) {
 
             ntracecount++;
-            xtg_speak(s,2,"Formatcode is %d, NTsmaples = %d", gn_formatcode,
-                      ntsamples);
-
 
             /* read the trace */
             ier = fread(ctracebuffer, nzbytes*ntsamples, 1, fc);
             if (ier != 1) {
-                xtg_error(s,"Something is rotten i Denmark");
+                exit(-1);
             }
 
             ii = mi-ninline[0]  + 1;
             jj = mj-nxline[0]   + 1;
 
             tracepercent=100*(double)ntracecount/(double)ntraces;
-            xtg_speak(s,4,"I J %d %d of total traces %d (tracepercent is %4.1f)",
-                      ii,jj,ninlines*nxlines,tracepercent);
             if (tracepercent > tracepercentcount || (ntracecount==ntraces)) {
-                xtg_speak(s,1,"Trace %4.1f of 100 percent",tracepercent);
                 tracepercentcount+=10;
             }
 
@@ -611,21 +550,15 @@ void cube_import_segy (
             if (ii==1 && jj==nxlines) {
                 xpos[2]    = (double)n4set4[0]*xyscalar;
                 ypos[2]    = (double)n4set4[1]*xyscalar;
-                xtg_speak(s,2,"Last point on first inline: %f %f",
-                          xpos[2], ypos[2]);
             }
 
             if (ii==ninlines && jj==1) {
                 xpos[1]    = (double)n4set4[0]*xyscalar;
                 ypos[1]    = (double)n4set4[1]*xyscalar;
-                xtg_speak(s,2,"Last point on first xline: %f %f",
-                          xpos[1], ypos[1]);
             }
 
             /* 32 bit IBM float format */
             if (gn_formatcode == 1){
-
-                xtg_speak(s,2,"Read and convert... (1)");
 
                 /* convert... */;
                 u_ibm_to_float(itracedata, itracedata, ntsamples, 1, swap);
@@ -637,7 +570,6 @@ void cube_import_segy (
                     ib = x_ijk2ib(ii,jj,kk, ninlines, nxlines, ntsamples,0);
 
                     if (ib<0) {
-                        xtg_error(s,"Something is very wrong; negative IB");
                         exit(9);
                     }
 
@@ -647,11 +579,6 @@ void cube_import_segy (
 
                     if (p_val_v[ib]<trmin) trmin = p_val_v[ib];
                     if (p_val_v[ib]>trmax) trmax = p_val_v[ib];
-
-                    if (ii<3 && jj<3) {
-                        xtg_speak(s, 3, "Coordinate %5d %5d %5d value is %f "
-                                  "index %ld", ii, jj, kk, p_val_v[ib], ib);
-                    }
 
                 }
 
@@ -672,25 +599,14 @@ void cube_import_segy (
                     if (p_val_v[ib]<trmin) trmin = p_val_v[ib];
                     if (p_val_v[ib]>trmax) trmax = p_val_v[ib];
 
-                    if (debug>3) {
-                        xtg_speak(s,4,"Coordinate %4d %4d %4d value is %f",ii,
-                                  jj,kk,p_val_v[ib]);
-                    }
                 }
 
             }
 
             else{
-                xtg_error(s,"Reading SEGY, unsupported format code: %d. STOP!",
-                          gn_formatcode);
+                exit(-1);
             }
-
-
-
-
             if (ntracecount==ntraces) {
-                xtg_speak(s,2,"This was the last trace, %d of %d",ntracecount,
-                          ntraces);
                 break;
             }
 
@@ -718,8 +634,6 @@ void cube_import_segy (
         *yori      = ypos[0];
 
 
-        xtg_speak(s,1,"Min and max value is %f   %f ",trmin, trmax);
-
         *yflip = 0;
         *zflip = 0;
 
@@ -729,7 +643,7 @@ void cube_import_segy (
             /* rotation; compute for first inline... */
 
             x_vector_info2(xpos[0],xpos[1],ypos[0], ypos[1], &ss, &rotrad,
-                           &rot, 1, debug);
+                           &rot, 1, XTGDEBUG);
 
             *rotation = rot;
 
@@ -739,7 +653,7 @@ void cube_import_segy (
 
             /* Y dir */
             x_vector_info2(xpos[0],xpos[2],ypos[0], ypos[2], &ss, &rotrad,
-                           &rot2, 1, debug);
+                           &rot2, 1, XTGDEBUG);
 
             /* deltas for Y dir */
             *yinc = ss/(nxlines-1);
@@ -758,21 +672,10 @@ void cube_import_segy (
 
             *zflip = 1;
 
-
-            xtg_speak(s,1,"XANGLE, YANGLE    %6.2f  %6.2f DIFF: %6.2f",
-                      rot, rot2, rot2-rot);
-            xtg_speak(s,1,"XORI, XINC, ROTATION  %11.2f  %11.2f   %6.2f ",
-                      *xori, *xinc, *rotation);
-            xtg_speak(s,1,"YORI, YINC, YFLIP     %11.2f  %11.2f   %6d",
-                      *yori, *yinc, *yflip);
-            xtg_speak(s,1,"ZORI, ZINC            %11.2f  %11.2f",
-                      *zori, *zinc);
-
         }
 
 
         fclose(fc);
-        xtg_speak(s,1,"SEGY import done, OK");
 
     }
 

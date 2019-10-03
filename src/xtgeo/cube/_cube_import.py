@@ -177,7 +177,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         ptr_gn_measuresystem,
         option,
         outfile,
-        XTGDEBUG,
     )
 
     # get values
@@ -242,7 +241,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         optscan,
         option,
         outfile,
-        XTGDEBUG,
     )
 
     logger.debug("Scan via C wrapper... done")
@@ -289,7 +287,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         optscan,
         option,
         outfile,
-        XTGDEBUG,
     )
 
     logger.debug("Import via C wrapper...")
@@ -403,9 +400,7 @@ def import_stormcube(self, sfile):
         yflip = -1
         yinc = yinc * yflip  # not sure if this will ever happen
 
-    ier, values = _cxtgeo.cube_import_storm(
-        ncol, nrow, nlay, sfile, nlines, nrcl, 0, XTGDEBUG
-    )
+    ier, values = _cxtgeo.cube_import_storm(ncol, nrow, nlay, sfile, nlines, nrcl, 0)
 
     if ier != 0:
         raise RuntimeError(

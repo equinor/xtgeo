@@ -154,7 +154,7 @@ int surf_slice_grd3d (int mcol,
             for (ix = 0; ix < 8; ix++) {
                 ier = sucu_ij_from_xy(&im, &jm, &rx, &ry, xc[ix], yc[ix],
                                       xori, xinc, yori, yinc, mcol, mrow,
-                                      yflip, rotation, 0, debug);
+                                      yflip, rotation, 0);
                 if (ier == 0) {
                     if (im < im1) im1 = im;
                     if (im > im2) im2 = im;
