@@ -333,9 +333,9 @@ class XYZ(object):
     # Get and Set properties
     # ==================================================================================
 
-    @abc.abstractproperty
-    def nrow(self):
-        """NROW"""
+    # @abc.abstractproperty
+    # def nrow(self):
+    #     """NROW"""
 
     @abc.abstractproperty
     def dataframe(self):

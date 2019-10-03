@@ -29,11 +29,9 @@ def import_roff(self, pfile, name, grid=None, _roffapiv=1):
         raise ValueError("ROFF import cannot recieve a filehandle")
 
     if _roffapiv <= 1:
-        status = _import_roff_v1(self, pfile, name)
+        _import_roff_v1(self, pfile, name)
     elif _roffapiv == 2:
-        status = _import_roff_v2(self, pfile, name)
-
-    return status
+        _import_roff_v2(self, pfile, name)
 
 
 def _import_roff_v1(self, pfile, name):
@@ -323,8 +321,8 @@ def _rkwxlist(fhandle, kws, name, swap, strict=True):
     if dtype == 0:
         if strict:
             raise ValueError("Cannot find property <{}> in file".format(name))
-        else:
-            return None
+
+        return None
 
     if dtype == 1:
         inumpy = np.zeros(reclen, dtype=np.int32)
@@ -357,8 +355,8 @@ def _rkwxvec(fhandle, kws, name, swap, strict=True):
     if dtype == 0:
         if strict:
             raise ValueError("Cannot find property <{}> in file".format(name))
-        else:
-            return None
+
+        return None
 
     if reclen <= 1:
         raise SystemError("Stuff is rotten here...")

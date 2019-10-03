@@ -149,7 +149,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             that = np.ma.filled(value, fill_value=1.0)
             mask = np.ma.getmaskarray(self.values)
             tmp = np.true_divide(this, that)
-            tmp[tmp == np.inf] = 0
+            tmp = np.where(np.isinf(tmp), 0, tmp)
             tmp = np.nan_to_num(tmp)
             tmp = np.ma.array(tmp, mask=mask)
 

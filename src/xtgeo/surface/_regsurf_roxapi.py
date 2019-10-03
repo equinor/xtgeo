@@ -141,7 +141,7 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
 
 def _xtgeo_to_roxapi_grid(self):
     # Create a 2D grid
-    import roxar  # pylint: disable=import-error
+    import roxar  # pylint: disable=import-error, import-outside-toplevel
 
     grid2d = roxar.RegularGrid2D.create(
         x_origin=self.xori,

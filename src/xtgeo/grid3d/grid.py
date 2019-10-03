@@ -117,9 +117,9 @@ def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=F
 # * 2 Matrix is inactive (set to zero), Fracture is active
 # * 3 Both Fracture and Matrix are active
 #
-#   However, XTGeo will convert this 0..3 scheme back to 0..1 scheme!
+#   However, XTGeo will convert this 0..3 scheme back to 0..1 scheme for ACTNUM!
 #   In case of dualporo/perm, a special property holding the initial actnum
-#   will be made
+#   will be made, which is self._dualactnum
 #
 # The property self._dualporo is True in case of Dual Porosity
 # BOTH self._dualperm AND self._dualporo are True in case of Dual Permeability
@@ -1235,10 +1235,7 @@ class Grid(Grid3D):
         """Activate all cells in the grid, by manipulating ACTNUM"""
 
         actnum = self.get_actnum()
-        if self._dualporo or self._dualperm:
-            actnum.values = np.where(self.dimensions, dtype=np.int32)
-        else:
-            actnum.values = np.ones(self.dimensions, dtype=np.int32)
+        actnum.values = np.ones(self.dimensions, dtype=np.int32)
 
         self.set_actnum(actnum)
 

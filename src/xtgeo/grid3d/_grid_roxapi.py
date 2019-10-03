@@ -264,7 +264,7 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
 
     zco = np.ma.masked_greater(zco, xtgeo.UNDEF_LIMIT)
-    zco = zco.reshape(self.ncol + 1, self.nrow + 1, 4, (self.nlay + 1))
+    zco = zco.reshape((self.ncol + 1, self.nrow + 1, 4, self.nlay + 1))
 
     for ipi in range(self.ncol + 1):
         for jpi in range(self.nrow + 1):

@@ -117,6 +117,8 @@ def import_roff_v2(self, fhandle):
 
     """Import ROFF format, version 2 (improved version)"""
 
+    # pylint: disable=too-many-statements
+
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 

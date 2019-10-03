@@ -51,7 +51,7 @@ def import_rms_ascii(
                         try:
                             item = float(item)
                         except ValueError:
-                            item = item
+                            item = str(item)
                         newrow.append(item)
                     if all(isinstance(var, float) for var in newrow[-3:]):
                         if abs(newrow[-1] < 1000.0):
