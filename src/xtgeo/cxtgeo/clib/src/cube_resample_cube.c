@@ -115,8 +115,7 @@ int cube_resample_cube(
                                               cyinc2, czori2, czinc2,
                                               crotation2,
                                               yflip2, ncx2, ncy2, ncz2,
-                                              p_cubeval2_v, &value, 0,
-                                              debug);
+                                              p_cubeval2_v, &value, 0);
                 }
                 else if (option1 == 1) {
 

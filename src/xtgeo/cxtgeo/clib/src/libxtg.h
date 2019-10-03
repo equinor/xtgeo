@@ -452,8 +452,7 @@ int surf_xyz_from_ij(
 		     double rot_deg,
                      double *swig_np_dbl_in_v1,     // *p_map_v,
                      long   n_swig_np_dbl_in_v1,    // nn
-		     int    flag,
-		     int    debug
+		     int    flag
 		     );
 
 int surf_xyori_from_ij(
@@ -1063,8 +1062,7 @@ int cube_xy_from_ij(
 		    int    ny,
                     int yflip,
 		    double rot_azi_deg,
-		    int    flag,
-		    int    debug
+		    int    flag
 		    );
 
 int cube_ijk_from_xyz(
@@ -1088,8 +1086,7 @@ int cube_ijk_from_xyz(
 		      int    nz,
 		      double rot_deg,
                       int    yflip,
-                      int    flag,
-		      int    debug
+                      int    flag
 		      );
 
 int cube_value_ijk(
@@ -1100,8 +1097,7 @@ int cube_value_ijk(
                    int    ny,
                    int    nz,
                    float *p_val_v,
-                   float *value,
-                   int    debug
+                   float *value
                    );
 
 int cube_value_xyz_cell(
@@ -1121,8 +1117,7 @@ int cube_value_xyz_cell(
                         int   nz,
                         float *p_val_v,
                         float *value,
-                        int option,
-                        int   debug
+                        int option
                         );
 
 int cube_value_xyz_interp(
@@ -1142,8 +1137,7 @@ int cube_value_xyz_interp(
                           int   nz,
                           float *p_val_v,
                           float *value,
-                          int option,
-                          int   debug
+                          int option
                           );
 
 
@@ -1154,8 +1148,7 @@ int cube_vertical_val_list(
 			   int    ny,
 			   int    nz,
 			   float *p_val_v,
-			   float *p_vertical_v,
-			   int    debug
+			   float *p_vertical_v
 			   );
 
 int cube_resample_cube(
@@ -1187,8 +1180,7 @@ int cube_resample_cube(
                        long n_swig_np_flt_in_v1,    // ncube2,
                        int option1,
                        int option2,
-                       float ovalue,
-                       int debug
+                       float ovalue
                        );
 
 int cube_get_randomline(
@@ -1214,8 +1206,7 @@ int cube_get_randomline(
                         long n_swig_np_flt_in_v1,    // ncube
                         double *swig_np_dbl_aout_v1,  // *values
                         long n_swig_np_dbl_aout_v1,  // nvalues
-                        int option,
-                        int debug
+                        int option
                         );
 /*
  *=============================================================================

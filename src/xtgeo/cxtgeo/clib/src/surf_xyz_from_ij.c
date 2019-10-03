@@ -35,7 +35,6 @@
  *    p_map_v        i     map array
  *    nn             i     Array length
  *    flag           i     Options flag; 1 if z value (and map) is discarded)
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:.
@@ -69,24 +68,15 @@ int surf_xyz_from_ij(
                      double rot_deg,
                      double *p_map_v,
                      long nn,
-                     int flag,
-                     int debug
+                     int flag
                      )
 {
     /* locals */
-    char     s[24]="surf_xyz_from_ij";
     double   angle, xdist, ydist, dist, beta, gamma, dxrot, dyrot;
     int      ic;
 
 
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering routine %s", s);
-
     if (i<1 || i>nx || j<1 || j>ny) {
-        if (debug > 2) xtg_warn(s, 3, "%s: Problem(?) in I J spec: out of "
-                                "bounds %d %d. "
-                                "Reset if at boundaries (NX NY: %d %d)",
-                                s, i, j, nx, ny);
         if (i == 0) i=1;
         if (i == nx + 1) i = nx;
         if (j == 0) j = 1;
@@ -113,8 +103,6 @@ int surf_xyz_from_ij(
         return(0);
     }
 
-    if (debug>2) xtg_speak(s, 3, "YFLIP is %d", yflip);
-
     yinc = yinc * yflip;
 
     /* cube rotation: this should be the usual angle, anti-clock from x axis */
@@ -126,23 +114,13 @@ int surf_xyz_from_ij(
     /* distance of point from "origo" */
     dist = sqrt(xdist * xdist + ydist * ydist);
 
-    /* beta is the angle of line from origo to point, if nonrotated system */
-    xtg_speak(s, 3, "XDIST and YDIST and DIST %6.2f %6.2f  %6.2f",
-              xdist, ydist, dist);
-
     beta = acos(xdist / dist);
-
-    if (debug>2) {
-	   xtg_speak(s,3,"Angles are %6.2f  %6.2f", angle * 180 / PI,
-                     beta * 180 / PI);
-    }
 
     /* secure that angle is in right mode */
     /* if (xdist<0 && ydist<0)  beta=2*PI - beta; */
     /* if (xdist>=0 && ydist<0) beta=PI + beta; */
 
     if (beta < 0 || beta > PI/2.0) {
-	xtg_error(s,"FATAL: Beta is wrong, call JRIV...\n");
 	return(-9);
     }
 
@@ -150,10 +128,6 @@ int surf_xyz_from_ij(
 
     dxrot = dist * cos(gamma);
     dyrot = dist * sin(gamma);
-
-    if (debug>2) {
-	xtg_speak(s,3,"DXROOT DYROOT %f %f", dxrot, dyrot);
-    }
 
     *x = xori + dxrot;
     *y = yori + dyrot;

@@ -86,8 +86,7 @@ int cube_get_randomline(
             if (option == 0) {
                 ier = cube_value_xyz_cell(xc, yc, zc, xori, xinc, yori, yinc,
                                           zori, zinc, rot_deg, yflip,
-                                          nx, ny, nz, p_val_v, &val, 0,
-                                          debug);
+                                          nx, ny, nz, p_val_v, &val, 0);
             }
             else{
                 ier = cube_value_xyz_interp(xc, yc, zc, xori, xinc, yori, yinc,

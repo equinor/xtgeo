@@ -156,7 +156,6 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
             self.rotation,
             zvalues,
             0,
-            XTGDEBUG,
         )
         if ier != 0:
             logger.critical("Error code %s, contact the author", ier)

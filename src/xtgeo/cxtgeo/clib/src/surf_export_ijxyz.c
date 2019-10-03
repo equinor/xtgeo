@@ -97,7 +97,7 @@ int surf_export_ijxyz(
 
             iok = surf_xyz_from_ij(i, j, &xv, &yv, &zv, xori, xinc, yori,
                                    yinc, mx, my, yflip, rot, p_map_v,
-                                   nrow*ncol, 0, debug);
+                                   nrow*ncol, 0);
 
             if (iok != 0) {
                 xtg_error(s, "Error from %s", s);
