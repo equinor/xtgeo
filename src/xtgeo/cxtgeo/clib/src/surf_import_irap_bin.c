@@ -61,7 +61,6 @@
 int _intread(FILE *fc, int swap, int trg, char info[50]) {
     /* read an INT item in the IRAP binary header */
     int ier, myint;
-    logger_init(__FUNCTION__);
 
     ier = fread(&myint, sizeof(int), 1, fc);
     if (ier != 1) {
@@ -85,7 +84,6 @@ double _floatread(FILE *fc, int swap, float trg, char info[50]) {
     /* read a FLOAT item in the IRAP binary header, return as DOUBLE */
     int ier;
     float myfloat;
-    logger_init(__FUNCTION__);
 
     ier = fread(&myfloat, sizeof(float), 1, fc);
     if (ier != 1) {
@@ -135,7 +133,6 @@ int surf_import_irap_bin(
 
     FILE *fc;
 
-    logger_init(__FUNCTION__);
     logger_info("Read IRAP binary map file: %s", filename);
 
     /*

@@ -1383,8 +1383,7 @@ void grd3d_scan_roff_bingrid (
 			      int     *ny,
 			      int     *nz,
 			      int     *nsubs,
-			      char    *filename,
-			      int     debug
+			      char    *filename
 			      );
 
 int grd3d_scan_roff_binpar (

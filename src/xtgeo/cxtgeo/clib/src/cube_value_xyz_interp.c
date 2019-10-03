@@ -31,6 +31,7 @@
  ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 #include <math.h>
@@ -61,8 +62,6 @@ int cube_value_xyz_interp(
     double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz;
     double usex, usey, dist, previousdist, avginc;
     float p_v[8], val;
-
-    /* logger_init(__FUNCTION__); */
 
     /* need to determine the lower left corner coordinates of the point ie
        need to run with flag = 1 */

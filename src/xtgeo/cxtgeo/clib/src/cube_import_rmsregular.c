@@ -69,8 +69,6 @@ void cube_import_rmsregular (
     FILE *fc;
     int  swap;
 
-    logger_init(__FUNCTION__);
-
     swap=x_swap_check();
 
     /* ierr=0 if all OK */

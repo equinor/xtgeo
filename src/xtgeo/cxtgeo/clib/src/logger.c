@@ -10,12 +10,11 @@
 /* NOTSET: 0 */
 
 static PyObject *logger;
-static int logging_level;
+static int logging_level = 0;
 
 void logger_init(const char *fname)
 {
     static PyObject *logging = NULL;
-    char fullname[50];
 
     // import logging module on demand
     if (logging == NULL){
@@ -25,29 +24,32 @@ void logger_init(const char *fname)
                 "Could not import module 'logging'");
         }
 
+        logger = PyObject_CallMethod(logging, "getLogger", "s", "<cxtgeo>");
+
+
+        /* Get the effective logging level */
+        if (logging_level == 0) {
+            PyObject *meth = PyObject_GetAttrString(logger, "getEffectiveLevel");
+            PyObject *level = PyObject_CallFunctionObjArgs(meth, NULL);
+
+            Py_DECREF(meth);
+
+            if(level == NULL) {
+                logging_level = 50;
+            }
+            else{
+                logging_level = PyLong_AsLong(level);
+            }
+            if(PyErr_Occurred()){
+                Py_DECREF(level);
+                logging_level = 50;
+            }
+            Py_DECREF(level);
+        }
+        if (logging_level <= 20 && logging_level > 0) {
+            logger_info("Logging in C using Python logger is activated ***");
+        }
     }
-
-    sprintf(fullname, "<cxtgeo>: %s", fname);
-
-    logger = PyObject_CallMethod(logging, "getLogger", "s", fullname);
-
-    /* Get the effective logging level */
-    PyObject *meth = PyObject_GetAttrString(logger, "getEffectiveLevel");
-    PyObject *level = PyObject_CallFunctionObjArgs(meth, NULL);
-
-    Py_DECREF(meth);
-
-    if(level == NULL) {
-        logging_level = 50;
-    }
-    else{
-        logging_level = PyLong_AsLong(level);
-    }
-    if(PyErr_Occurred()){
-        Py_DECREF(level);
-        logging_level = 50;
-    }
-    Py_DECREF(level);
 }
 
 
@@ -77,6 +79,8 @@ void logger_info(const char *fmt, ...)
         static PyObject *string = NULL;
         char message[150], msg[147];
 
+        logger_init("");
+
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
         va_end(ap);
@@ -94,6 +98,8 @@ void logger_warn(const char *fmt, ...)
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
+
+        logger_init("");
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
@@ -114,6 +120,8 @@ void logger_error(const char *fmt, ...)
         static PyObject *string = NULL;
         char message[150], msg[147];
 
+        logger_init("");
+
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);
         va_end(ap);
@@ -132,6 +140,8 @@ void logger_critical(const char *fmt, ...)
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
+
+        logger_init("");
 
         va_start(ap, fmt);
         vsprintf(msg, fmt, ap);

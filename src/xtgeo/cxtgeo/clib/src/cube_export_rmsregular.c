@@ -57,8 +57,6 @@ int cube_export_rmsregular (
     double xmax,ymax,zmax;
     float value;
 
-    logger_init(__FUNCTION__);
-
     logger_info("Export cube to RMS regular format");
 
     /* if (yflip == -1) { */

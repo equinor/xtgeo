@@ -67,7 +67,6 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     double mydouble;
     long reclength = 0, nrecs, icc;
 
-    logger_init(__FUNCTION__);
 
     if (x_swap_check() == 1) swap = 1;
 

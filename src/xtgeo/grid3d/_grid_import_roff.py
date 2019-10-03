@@ -53,9 +53,7 @@ def import_roff_v1(self, gfile):
     ptr_nlay = _cxtgeo.new_intpointer()
     ptr_nsubs = _cxtgeo.new_intpointer()
 
-    _cxtgeo.grd3d_scan_roff_bingrid(
-        ptr_ncol, ptr_nrow, ptr_nlay, ptr_nsubs, gfile, XTGDEBUG
-    )
+    _cxtgeo.grd3d_scan_roff_bingrid(ptr_ncol, ptr_nrow, ptr_nlay, ptr_nsubs, gfile)
 
     self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
     self._nrow = _cxtgeo.intpointer_value(ptr_nrow)

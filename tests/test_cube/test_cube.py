@@ -227,9 +227,8 @@ def test_cube_resampling(loadsfile1):
         rotation=incube.rotation,
         yflip=incube.yflip,
     )
-    print("resample...")
+
     newcube.resample(incube, sampling="trilinear", outside_value=10.0)
-    print("resample... done")
 
     tsetup.assert_almostequal(newcube.values.mean(), 5.3107, 0.0001)
     tsetup.assert_almostequal(newcube.values[20, 20, 20], 10.0, 0.0001)
