@@ -41,8 +41,7 @@ before_build:
   - IF "%platform%" == "x64" set generator="Visual Studio 14 2015 Win64"
   - git submodule update --init --recursive
   - git fetch --tags
-  - ps: dir
-#  - git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
+  - git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
 
 
 build_script:
@@ -51,6 +50,7 @@ build_script:
   - ps: pushd dist
   - ps: dir
   - ps: popd
+  - IF DEFINED PYTHON python setup.py tests
 
 # before_deploy:
 #     - ps: pushd python
