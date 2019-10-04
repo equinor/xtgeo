@@ -22,7 +22,7 @@ XTGDEBUG = xtg.get_syslevel()
 
 
 def import_eclbinary(
-    self, pfile, name=None, etype=1, date=None, grid=None, fracture=False
+    self, pfile, name=None, etype=1, date=None, grid=None, fracture=False, _kwlist=None
 ):
 
     # if pfile is a file, then the file is opened/closed here; otherwise, the
@@ -30,44 +30,35 @@ def import_eclbinary(
 
     local_fhandle = not xsys.is_fhandle(pfile)
     fhandle = xsys.get_fhandle(pfile)
+    status = 0
 
-    if name == "SOIL":
-        # some recursive magic here
-        logger.info("Making SOIL from SWAT and SGAS ...")
-        logger.info("PFILE is %s", pfile)
+    logger.info("Import ECL binary, name requested is %s", name)
 
-        swat = self.__class__()
-        swat.from_file(fhandle, name="SWAT", grid=grid, date=date, fformat="unrst")
-
-        sgas = self.__class__()
-        sgas.from_file(fhandle, name="SGAS", grid=grid, date=date, fformat="unrst")
-
-        self.name = "SOIL" + "_" + str(date)
-        self._nrow = swat.nrow
-        self._ncol = swat.ncol
-        self._nlay = swat.nlay
-        self._date = date
-        self._values = swat._values * -1 - sgas._values + 1.0
-
-        if self._dualporo and fracture:
-            # if fracture then self._dualactnum will be 1 at inactive fracture cells
-            self._values[self._dualactnum == 1] = 0.0
-
-        if self._dualporo and not fracture:
-            # if matrix then self._dualactnum will be 2 at inactive matrix cells
-            self._values[self._dualactnum == 2] = 0.0
-
-        del swat
-        del sgas
-
+    # scan file for properties byte positions etc
+    if _kwlist is None:
+        logger.info("Make kwlist, scan keywords")
+        kwlist = utils.scan_keywords(
+            fhandle, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+        )
     else:
+        kwlist = _kwlist
+
+    if name == "SGAS":
+        status = _import_sgas(self, fhandle, kwlist, grid, date, fracture)
+
+    elif name == "SOIL":
+        status = _import_soil(self, fhandle, kwlist, grid, date, fracture)
+
+    if status == 0:
+        name = name.replace("{__}", "")
+
         logger.info("Importing %s", name)
 
-        kwlist, date = _import_eclbinary_meta(self, fhandle, etype, date, grid)
+        date = _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid)
 
         _import_eclbinary_checks1(self, grid)
 
-        kwlist, kwname, kwlen, kwtype, kwbyte = _import_eclbinary_checks2(
+        kwname, kwlen, kwtype, kwbyte = _import_eclbinary_checks2(
             kwlist, name, etype, date
         )
 
@@ -94,7 +85,97 @@ def import_eclbinary(
         raise RuntimeError("Error in closing file handle for binary Eclipse file")
 
 
-def _import_eclbinary_meta(self, fhandle, etype, date, grid):
+def _import_sgas(self, fhandle, kwlist, grid, date, fracture):
+    """Import SGAS; this may be lack of oil/water (need to verify)"""
+
+    xtg.show_runtimewarnings(False)
+    try:
+        logger.info("Ask for SGAS as SGAS{__} ...")  # name trick to avoid circular loop
+        import_eclbinary(
+            self,
+            fhandle,
+            name="SGAS{__}",
+            etype=5,
+            grid=grid,
+            date=date,
+            fracture=fracture,
+            _kwlist=kwlist,
+        )
+
+    except xtgeo.KeywordNotFoundError:
+        logger.info("SGAS is not present, assume SGAS is zero for all cells")
+
+        logger.info("Ask for SWAT")
+        swat = self.__class__()
+        import_eclbinary(
+            swat,
+            fhandle,
+            name="SWAT{__}",
+            etype=5,
+            grid=grid,
+            date=date,
+            fracture=fracture,
+            _kwlist=kwlist,
+        )
+
+        self.name = "SGAS" + "_" + str(date)
+        self._nrow = swat.nrow
+        self._ncol = swat.ncol
+        self._nlay = swat.nlay
+        self._date = date
+        self._values = swat._values * 0.0
+        self._values[swat._values <= _cxtgeo.FLOATEPS] = 0.0
+        del swat
+
+    xtg.show_runtimewarnings(True)
+
+    return 1
+
+
+def _import_soil(self, fhandle, kwlist, grid, date, fracture):
+    # some recursive magic here
+    logger.info("Making SOIL from SWAT and SGAS ...")
+
+    swat = self.__class__()
+    import_eclbinary(
+        swat,
+        fhandle,
+        name="SWAT{__}",
+        etype=5,
+        grid=grid,
+        date=date,
+        fracture=fracture,
+        _kwlist=kwlist,
+    )
+
+    sgas = self.__class__()
+    import_eclbinary(
+        sgas,
+        fhandle,
+        name="SGAS{__}",
+        etype=5,
+        grid=grid,
+        date=date,
+        fracture=fracture,
+        _kwlist=kwlist,
+    )
+
+    self.name = "SOIL" + "_" + str(date)
+    self._nrow = swat.nrow
+    self._ncol = swat.ncol
+    self._nlay = swat.nlay
+    self._date = date
+    self._values = swat._values * -1 - sgas._values + 1.0
+
+    self._values[swat._values <= _cxtgeo.FLOATEPS] = 0.0
+
+    del swat
+    del sgas
+
+    return 2
+
+
+def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
     """Find settings and metadata, private to this routine.
 
     Returns:
@@ -109,16 +190,16 @@ def _import_eclbinary_meta(self, fhandle, etype, date, grid):
         logger.info("Look for date %s", date)
 
         # scan for date and find SEQNUM entry number; also potentially update date!
-        dtlist = utils.scan_dates(fhandle)
+        dtlist = kwlist["DATE"].values.tolist()
         if date == 0:
-            date = dtlist[0][1]
+            date = dtlist[0]
         elif date == 9:
-            date = dtlist[-1][1]
+            date = dtlist[-1]
 
         logger.info("Redefined date is %s", date)
 
         for ientry, dtentry in enumerate(dtlist):
-            if str(dtentry[1]) == str(date):
+            if str(dtentry) == str(date):
                 datefound = True
                 nentry = ientry
                 break
@@ -128,14 +209,9 @@ def _import_eclbinary_meta(self, fhandle, etype, date, grid):
             xtg.warn(msg)
             raise xtgeo.DateNotFoundError(msg)
 
-    # scan file for property
-    logger.info("Make kwlist")
-    kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=100000, dataframe=False, dates=True
-    )
-
+    kwxlist = list(kwlist.itertuples(index=False, name=None))
     # INTEHEAD is needed to verify grid dimensions:
-    for kwitem in kwlist:
+    for kwitem in kwxlist:
         if kwitem[0] == "INTEHEAD":
             kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
             break
@@ -163,7 +239,7 @@ def _import_eclbinary_meta(self, fhandle, etype, date, grid):
     self._nrow = nrow
     self._nlay = nlay
 
-    return kwlist, date
+    return date  # updated date in case input is 0 or 9
 
 
 def _import_eclbinary_checks1(self, grid):
@@ -231,7 +307,8 @@ def _import_eclbinary_checks2(kwlist, name, etype, date):
         usedate = str(date)
         restart = True
 
-    for kwitem in kwlist:
+    kwxlist = list(kwlist.itertuples(index=False, name=None))
+    for kwitem in kwxlist:
         kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
         logger.debug("Keyword %s -  date: %s usedate: %s", kwname, kwdate, usedate)
         if name == kwname:
@@ -259,7 +336,7 @@ def _import_eclbinary_checks2(kwlist, name, etype, date):
             xtg.warn(msg)
             raise xtgeo.KeywordNotFoundError(msg)
 
-    return kwlist, kwname, kwlen, kwtype, kwbyte
+    return kwname, kwlen, kwtype, kwbyte
 
 
 def _import_eclbinary_prop(

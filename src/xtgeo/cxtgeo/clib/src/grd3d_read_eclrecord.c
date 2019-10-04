@@ -1,26 +1,16 @@
-/*
- ******************************************************************************
- *
- * Read an Eclipse binary record based on earlier scan
- *
- ******************************************************************************
- */
 
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
 
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_read_eclrecord.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
- *
  * DESCRIPTION:
- *    Based on a scan, the record potition in file and length is
+ *    Based on a scan, the record position in file and length is
  *    known in advance. This reads the actual data array and returns.
  *
  *    This is the format for GRID, EGRID, INIT and restart files.
@@ -51,7 +41,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -67,6 +57,8 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     double mydouble;
     long reclength = 0, nrecs, icc;
 
+
+    logger_info("Read binary ECL record from record position %ld", recstart);
 
     if (x_swap_check() == 1) swap = 1;
 
