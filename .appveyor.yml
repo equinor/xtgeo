@@ -30,6 +30,7 @@ install:
     numpy
     scipy
     pytest
+    pytest-runner
     setuptools
     setuptools_scm
     hypothesis
