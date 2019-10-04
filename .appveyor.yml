@@ -25,8 +25,8 @@ install:
   - ps: choco install -y --no-progress --allow-empty-checksums -r swig
   - IF DEFINED PYTHON (IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64)
   - IF DEFINED PYTHON SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-  - IF DEFINED PYTHON pip install pip --upgrade --user
-  - IF DEFINED PYTHON pip install --upgrade
+  - IF DEFINED PYTHON python -m pip install pip --upgrade --user
+  - IF DEFINED PYTHON python -m pip install --upgrade
     numpy
     scipy
     pytest
@@ -41,13 +41,13 @@ before_build:
   - IF "%platform%" == "x64" set generator="Visual Studio 14 2015 Win64"
   - git submodule update --init --recursive
   - git fetch --tags
+  - ps: dir
+#  - git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
+
 
 build_script:
   - git describe
   - IF DEFINED PYTHON python setup.py bdist_wheel
-  - ps: pushd build
-  - ps: dir
-  - ps: popd
   - ps: pushd dist
   - ps: dir
   - ps: popd
