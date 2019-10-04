@@ -25,6 +25,7 @@ install:
   - ps: choco install -y --no-progress --allow-empty-checksums -r swig
   - IF DEFINED PYTHON (IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64)
   - IF DEFINED PYTHON SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - IF DEFINED PYTHON pip install pip --upgrade
   - IF DEFINED PYTHON pip install --upgrade
     numpy
     scipy
@@ -44,7 +45,12 @@ before_build:
 build_script:
   - git describe
   - IF DEFINED PYTHON python setup.py bdist_wheel
-  # - ps: popd
+  - ps: pushd build
+  - ps: dir
+  - ps: popd
+  - ps: pushd dist
+  - ps: dir
+  - ps: popd
 
 # before_deploy:
 #     - ps: pushd python
