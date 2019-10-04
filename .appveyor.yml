@@ -37,7 +37,7 @@ install:
     twine
     wheel
   - echo %PYTHON_VERSION%
-  # - IF %PYTHON_VERSION%=="36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
+  - IF %PYTHON_VERSION%=="36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
 
 
 before_build:
