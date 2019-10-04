@@ -15,8 +15,8 @@ environment:
     #   PYTHON_VERSION: 35
     - PYTHON: C:\Python36
       PYTHON_VERSION: 36
-    # - PYTHON: C:\Python37
-    #  PYTHON_VERSION: 37
+    - PYTHON: C:\Python37
+      PYTHON_VERSION: 37
 
 matrix:
   fast_finish: true
@@ -38,6 +38,7 @@ install:
     wheel
   - echo %PYTHON_VERSION%
   - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
+  - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
 
 before_build:
