@@ -45,12 +45,10 @@ before_build:
 
 
 build_script:
-  - git describe
-  - IF DEFINED PYTHON python setup.py bdist_wheel
+  - IF DEFINED PYTHON python setup.py bdist_wheel test
   - ps: pushd dist
   - ps: dir
   - ps: popd
-  - IF DEFINED PYTHON python setup.py tests
 
 # before_deploy:
 #     - ps: pushd python
