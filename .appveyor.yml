@@ -11,15 +11,15 @@ platform:
 
 environment:
   matrix:
-    # - PYTHON: C:\Python35
-    #   PYTHON_VERSION: 35
+    - PYTHON: C:\Python35
+      PYTHON_VERSION: 35
     - PYTHON: C:\Python36
       PYTHON_VERSION: 36
     - PYTHON: C:\Python37
       PYTHON_VERSION: 37
 
-matrix:
-  fast_finish: true
+# matrix:
+#   fast_finish: true
 
 install:
   - ps: choco install -y --no-progress --allow-empty-checksums -r swig
@@ -36,7 +36,9 @@ install:
     hypothesis
     twine
     wheel
+
   - echo %PYTHON_VERSION%
+  - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
   - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
   - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
@@ -45,15 +47,15 @@ before_build:
   - set generator="Visual Studio 14 2015"
   - IF "%platform%" == "x64" set generator="Visual Studio 14 2015 Win64"
   - git submodule update --init --recursive
-  - git fetch --tags
+  # - git fetch --tags
   - git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
 
 
 build_script:
-  - IF DEFINED PYTHON python setup.py bdist_wheel test
-  - ps: pushd dist
-  - ps: dir
-  - ps: popd
+  - IF DEFINED PYTHON python setup.py bdist_wheel
+
+test_script:
+  - python setup.py test
 
 # before_deploy:
 #     - ps: pushd python
