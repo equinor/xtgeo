@@ -9,8 +9,8 @@
 /* DEBUG: 10 */
 /* NOTSET: 0 */
 
-static PyObject *logger;
-static int logging_level = 0;
+static PyObject *XPYlogger;
+static int XPYlogging_level = 0;
 
 void logger_init(const char *fname)
 {
@@ -24,29 +24,29 @@ void logger_init(const char *fname)
                 "Could not import module 'logging'");
         }
 
-        logger = PyObject_CallMethod(logging, "getLogger", "s", "<cxtgeo>");
+        XPYlogger = PyObject_CallMethod(logging, "getLogger", "s", "<cxtgeo>");
 
 
         /* Get the effective logging level */
-        if (logging_level == 0) {
-            PyObject *meth = PyObject_GetAttrString(logger, "getEffectiveLevel");
+        if (XPYlogging_level == 0) {
+            PyObject *meth = PyObject_GetAttrString(XPYlogger, "getEffectiveLevel");
             PyObject *level = PyObject_CallFunctionObjArgs(meth, NULL);
 
             Py_DECREF(meth);
 
             if(level == NULL) {
-                logging_level = 50;
+                XPYlogging_level = 50;
             }
             else{
-                logging_level = PyLong_AsLong(level);
+                XPYlogging_level = PyLong_AsLong(level);
             }
             if(PyErr_Occurred()){
                 Py_DECREF(level);
-                logging_level = 50;
+                XPYlogging_level = 50;
             }
             Py_DECREF(level);
         }
-        if (logging_level <= 20 && logging_level > 0) {
+        if (XPYlogging_level <= 20 && XPYlogging_level > 0) {
             logger_info("Logging in C using Python logger is activated ***");
         }
     }
@@ -55,7 +55,7 @@ void logger_init(const char *fname)
 
 void logger_debug(const char *fmt, ...)
 {
-    if (logging_level <= 10) {
+    if (XPYlogging_level <= 10) {
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
@@ -66,7 +66,7 @@ void logger_debug(const char *fmt, ...)
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
-        PyObject_CallMethod(logger, "debug", "O", string);
+        PyObject_CallMethod(XPYlogger, "debug", "O", string);
         Py_DECREF(string);
     }
 }
@@ -74,7 +74,7 @@ void logger_debug(const char *fmt, ...)
 
 void logger_info(const char *fmt, ...)
 {
-    if (logging_level <= 20) {
+    if (XPYlogging_level <= 20) {
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
@@ -87,14 +87,14 @@ void logger_info(const char *fmt, ...)
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
-        PyObject_CallMethod(logger, "info", "O", string);
+        PyObject_CallMethod(XPYlogger, "info", "O", string);
         Py_DECREF(string);
     }
 }
 
 void logger_warn(const char *fmt, ...)
 {
-    if (logging_level <= 30) {
+    if (XPYlogging_level <= 30) {
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
@@ -107,7 +107,7 @@ void logger_warn(const char *fmt, ...)
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
-        PyObject_CallMethod(logger, "warning", "O", string);
+        PyObject_CallMethod(XPYlogger, "warning", "O", string);
         Py_DECREF(string);
     }
 }
@@ -115,7 +115,7 @@ void logger_warn(const char *fmt, ...)
 
 void logger_error(const char *fmt, ...)
 {
-    if (logging_level <= 40) {
+    if (XPYlogging_level <= 40) {
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
@@ -128,7 +128,7 @@ void logger_error(const char *fmt, ...)
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
-        PyObject_CallMethod(logger, "error", "O", string);
+        PyObject_CallMethod(XPYlogger, "error", "O", string);
         Py_DECREF(string);
     }
 }
@@ -136,7 +136,7 @@ void logger_error(const char *fmt, ...)
 
 void logger_critical(const char *fmt, ...)
 {
-    if (logging_level <= 50) {
+    if (XPYlogging_level <= 50) {
         va_list ap;
         static PyObject *string = NULL;
         char message[150], msg[147];
@@ -149,7 +149,7 @@ void logger_critical(const char *fmt, ...)
         sprintf(message, "C! %s", msg);
         string = Py_BuildValue("s", message);
 
-        PyObject_CallMethod(logger, "critical", "O", string);
+        PyObject_CallMethod(XPYlogger, "critical", "O", string);
         Py_DECREF(string);
     }
 }
