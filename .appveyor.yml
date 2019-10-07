@@ -11,8 +11,6 @@ platform:
 
 environment:
   matrix:
-    - PYTHON: C:\Python35
-      PYTHON_VERSION: 35
     - PYTHON: C:\Python36
       PYTHON_VERSION: 36
     - PYTHON: C:\Python37
