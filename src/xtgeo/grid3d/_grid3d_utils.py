@@ -45,7 +45,6 @@ def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
 
     Cf. grid_properties.py description
     """
-    logger.info("Format supported as default is %s", fformat)
 
     seq = _cxtgeo.new_intarray(maxdates)
     day = _cxtgeo.new_intarray(maxdates)
@@ -147,6 +146,7 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
     local_fhandle = not xsys.is_fhandle(pfile)
     fhandle = xsys.get_fhandle(pfile)
 
+    logger.info("Scan keywords with dates...")
     xkeys = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=False)
 
     xdates = scan_dates(fhandle, maxdates=maxkeys, dataframe=False)
