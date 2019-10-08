@@ -26,7 +26,7 @@
  *    fc               i     Filehandle (file must be open)
  *    recstart         i     Start of record in file, in bytes
  *    rectype          i     Type of record to read (1=INT, 2=FLT, 3=DBL)
- *    intv             o     Preallocated Int array (if rectype is 1)
+ *    intv             o     Preallocated Int array (if rectype is 1 or 4)
  *    nint             i     The allocated record total length
  *    floatv           o     Preallocated Float array (if rectype is 2)
  *    nflt             i     The allocated record total length
@@ -56,7 +56,7 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     float myfloat;
     double mydouble;
     long reclength = 0, nrecs, icc;
-
+    char mychar;
 
     logger_info("Read binary ECL record from record position %ld", recstart);
 
@@ -67,6 +67,7 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     if (rectype == 1) reclength = nint;
     if (rectype == 2) reclength = nflt;
     if (rectype == 3) reclength = ndbl;
+    if (rectype == 5) reclength = nint;  /* LOGI */
 
     /* go to file position */
     ier = fseek(fc, recstart + 24, SEEK_SET);  /* record header is 24 bytes */
@@ -87,6 +88,7 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
         if (rectype == 1) ftn_reclen = (ftn1 / sizeof(int));
         if (rectype == 2) ftn_reclen = (ftn1 / sizeof(float));
         if (rectype == 3) ftn_reclen = (ftn1 / sizeof(double));
+        if (rectype == 5) ftn_reclen = (ftn1 / sizeof(int));
 
         if (ftn_reclen < nrecs) {
             nr = ftn_reclen;
@@ -114,6 +116,14 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
                 if (ier != 1) return FAIL;
                 if (swap) SWAP_DOUBLE(mydouble);
                 doublev[icc++] = mydouble;
+            }
+            else if (rectype == 5) {
+                /* LOGI is actually stored as INT, 0 forFalse, -1 for True */
+                ier = fread(&myint, 4, 1, fc);
+                if (ier != 1) return FAIL;
+                if (swap) SWAP_INT(myint);
+                myint *= -1;  /* store True as 1 */
+                intv[icc++] = myint;
             }
         }
 
