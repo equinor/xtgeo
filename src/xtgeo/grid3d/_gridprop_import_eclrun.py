@@ -20,6 +20,17 @@ logger = xtg.functionlogger(__name__)
 _cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.get_syslevel()
 
+# cf metadata["IPHS"]:
+PHASES = {
+    1: "oil",
+    2: "water",
+    3: "oil/water",
+    4: "gas",
+    5: "oil/gas",
+    6: "gas/water",
+    7: "oil/water/gas",
+}
+
 
 def import_eclbinary(
     self, pfile, name=None, etype=1, date=None, grid=None, fracture=False, _kwlist=None
@@ -43,18 +54,22 @@ def import_eclbinary(
     else:
         kwlist = _kwlist
 
+    metadata = _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid)
+    date = metadata["DATE"]
+
     if name == "SGAS":
-        status = _import_sgas(self, fhandle, kwlist, grid, date, fracture)
+        status = _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture)
 
     elif name == "SOIL":
-        status = _import_soil(self, fhandle, kwlist, grid, date, fracture)
+        status = _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture)
+
+    elif name == "SWAT":
+        status = _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture)
 
     if status == 0:
         name = name.replace("{__}", "")
 
         logger.info("Importing %s", name)
-
-        date = _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid)
 
         _import_eclbinary_checks1(self, grid)
 
@@ -85,12 +100,55 @@ def import_eclbinary(
         raise RuntimeError("Error in closing file handle for binary Eclipse file")
 
 
-def _import_sgas(self, fhandle, kwlist, grid, date, fracture):
+def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
+    """Import SWAT; this may lack in very special cases"""
+
+    if metadata["IPHS"] in (3, 6, 7):
+        import_eclbinary(
+            self,
+            fhandle,
+            name="SWAT{__}",
+            etype=5,
+            grid=grid,
+            date=date,
+            fracture=fracture,
+            _kwlist=kwlist,
+        )
+
+    else:
+
+        self.name = "SWAT" + "_" + str(date)
+        self._nrow = grid.nrow
+        self._ncol = grid.ncol
+        self._nlay = grid.nlay
+        self._date = date
+        if metadata["IPHS"] == 2:
+            self._values = np.ones(
+                (self._ncol, self._nrow, self.nlay), dtype=np.float64
+            )
+        else:
+            self._values = np.zeros(
+                (self._ncol, self._nrow, self.nlay), dtype=np.float64
+            )
+
+        if grid.dualporo:
+            if fracture:
+                self.name = "SWATF" + "_" + str(date)
+                self._values[grid._dualactnum.values == 1] = 0.0
+            else:
+                self.name = "SWATM" + "_" + str(date)
+                self._values[grid._dualactnum.values == 2] = 0.0
+
+    gactnum = grid.get_actnum().values
+    self._values = ma.masked_where(gactnum < 1, self._values)
+    return 3
+
+
+def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SGAS; this may be lack of oil/water (need to verify)"""
 
-    xtg.show_runtimewarnings(False)
-    try:
-        logger.info("Ask for SGAS as SGAS{__} ...")  # name trick to avoid circular loop
+    flag = 0
+    if metadata["IPHS"] in (5, 7):
         import_eclbinary(
             self,
             fhandle,
@@ -102,10 +160,9 @@ def _import_sgas(self, fhandle, kwlist, grid, date, fracture):
             _kwlist=kwlist,
         )
 
-    except xtgeo.KeywordNotFoundError:
-        logger.info("SGAS is not present, assume SGAS is zero for all cells")
-
-        logger.info("Ask for SWAT")
+    elif metadata["IPHS"] == 6:
+        flag = 1
+        logger.info("SGAS: ask for SWAT")
         swat = self.__class__()
         import_eclbinary(
             swat,
@@ -119,70 +176,134 @@ def _import_sgas(self, fhandle, kwlist, grid, date, fracture):
         )
 
         self.name = "SGAS" + "_" + str(date)
-        self._nrow = swat.nrow
-        self._ncol = swat.ncol
-        self._nlay = swat.nlay
+        self._nrow = grid.nrow
+        self._ncol = grid.ncol
+        self._nlay = grid.nlay
         self._date = date
-        self._values = swat._values * 0.0
-        self._values[swat._values <= _cxtgeo.FLOATEPS] = 0.0
+        self._values = swat._values * -1 + 1.0
         del swat
 
-    xtg.show_runtimewarnings(True)
+    elif metadata["IPHS"] in (1, 2, 3, 4):
+        flag = 1
+        logger.info("SGAS: asked for but 0% or 100%")
+        self.name = "SGAS" + "_" + str(date)
+        self._nrow = grid.nrow
+        self._ncol = grid.ncol
+        self._nlay = grid.nlay
+        self._date = date
+        if metadata["IPHS"] == 4:
+            self._values = np.ones(
+                (self._ncol, self._nrow, self.nlay), dtype=np.float64
+            )
+        else:
+            self._values = np.zeros(
+                (self._ncol, self._nrow, self.nlay), dtype=np.float64
+            )
 
+    if grid.dualporo and flag:
+        if fracture:
+            self.name = "SGASF" + "_" + str(date)
+            self._values[grid._dualactnum.values == 1] = 0.0
+        else:
+            self.name = "SGASM" + "_" + str(date)
+            self._values[grid._dualactnum.values == 2] = 0.0
+
+    gactnum = grid.get_actnum().values
+    self._values = ma.masked_where(gactnum < 1, self._values)
     return 1
 
 
-def _import_soil(self, fhandle, kwlist, grid, date, fracture):
-    # some recursive magic here
-    logger.info("Making SOIL from SWAT and SGAS ...")
+def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
 
-    swat = self.__class__()
-    import_eclbinary(
-        swat,
-        fhandle,
-        name="SWAT{__}",
-        etype=5,
-        grid=grid,
-        date=date,
-        fracture=fracture,
-        _kwlist=kwlist,
-    )
+    flag = 0
+    if metadata["IPHS"] in (3, 5, 7):
+        sgas = None
+        swat = None
+        flag = 1
+        logger.info("Making SOIL from SWAT and/or SGAS ...")
+        if metadata["IPHS"] in (3, 7):
+            swat = self.__class__()
+            import_eclbinary(
+                swat,
+                fhandle,
+                name="SWAT{__}",
+                etype=5,
+                grid=grid,
+                date=date,
+                fracture=fracture,
+                _kwlist=kwlist,
+            )
 
-    sgas = self.__class__()
-    import_eclbinary(
-        sgas,
-        fhandle,
-        name="SGAS{__}",
-        etype=5,
-        grid=grid,
-        date=date,
-        fracture=fracture,
-        _kwlist=kwlist,
-    )
+        if metadata["IPHS"] in (5, 7):  # og, owg
+            sgas = self.__class__()
+            import_eclbinary(
+                sgas,
+                fhandle,
+                name="SGAS{__}",
+                etype=5,
+                grid=grid,
+                date=date,
+                fracture=fracture,
+                _kwlist=kwlist,
+            )
 
-    self.name = "SOIL" + "_" + str(date)
-    self._nrow = swat.nrow
-    self._ncol = swat.ncol
-    self._nlay = swat.nlay
-    self._date = date
-    self._values = swat._values * -1 - sgas._values + 1.0
+        self.name = "SOIL" + "_" + str(date)
+        self._nrow = grid.nrow
+        self._ncol = grid.ncol
+        self._nlay = grid.nlay
+        self._date = date
+        if metadata["IPHS"] == 7:  # owg
+            self._values = swat._values * -1 - sgas._values + 1.0
+        elif metadata["IPHS"] == 5:  # og
+            self._values = sgas._values * -1 + 1.0
+        elif metadata["IPHS"] == 3:  # ow
+            self._values = swat._values * -1 + 1.0
 
-    self._values[swat._values <= _cxtgeo.FLOATEPS] = 0.0
+        if swat:
+            del swat
+        if sgas:
+            del sgas
 
-    del swat
-    del sgas
+    elif metadata["IPHS"] in (1, 2, 4, 6):
+        flag = 1
+        logger.info("SOIL: asked for but 0% or 100%")
+        self.name = "SOIL" + "_" + str(date)
+        self._nrow = grid.nrow
+        self._ncol = grid.ncol
+        self._nlay = grid.nlay
+        self._date = date
+        if metadata["IPHS"] == 1:
+            self._values = np.ones(
+                (self._ncol, self._nrow, self.nlay), dtype=np.float64
+            )
+        else:
+            self._values = np.zeros(
+                (self._ncol, self._nrow, self.nlay), dtype=np.float64
+            )
+
+    if grid.dualporo and flag:
+        if fracture:
+            self.name = "SOILF" + "_" + str(date)
+            self._values[grid._dualactnum.values == 1] = 0.0
+        else:
+            self.name = "SOILM" + "_" + str(date)
+            self._values[grid._dualactnum.values == 2] = 0.0
+
+    gactnum = grid.get_actnum().values
+    self._values = ma.masked_where(gactnum < 1, self._values)
 
     return 2
 
 
 def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
-    """Find settings and metadata, private to this routine.
+    """Find settings and metadata, private to this module.
 
     Returns:
-        A file scan as a kwlist
+        A dictionary of metadata
 
     """
     nentry = 0
+    metadata = {}
 
     datefound = True
     if etype == 5:
@@ -216,30 +337,46 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
             kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
             break
 
-    # LOGIHEAD item [14] should be True, if dualporo model...
-    # LOGIHEAD item [14] and [15] should be True, if dualperm (+ dualporo) model.
-    #
-    # However, skip this test; now just assume double number if the grid says so,
-    # which kind if doubles (not exact!) the layers when reading,
+    # read INTEHEAD record:
+    intehead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte).tolist()
+    ncol, nrow, nlay = intehead[8:11]
+    logger.info("Dimensions detected %s %s %s", ncol, nrow, nlay)
+
+    metadata["IPHS"] = intehead[14]  # phase indicator 1:o 2:w 3:ow 4:g 5:og 6:gw 7:owg
+    logger.info("Phase system is %s", PHASES[metadata["IPHS"]])
+
+    # LOGIHEAD item [14] in restart should be True, if dualporo model...
+    # LOGIHEAD item [15] in restart should be True, if dualperm (+ dualporo) model.
+    for kwitem in kwxlist:
+        if kwitem[0] == "LOGIHEAD":
+            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
+            break
+
+    # read INTEHEAD record:
+    logihead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte).tolist()
+
+    # DUAL; which kind if doubles (not exact!) the layers when reading,
     # and assign first half* to Matrix (M) and second half to Fractures (F).
     # *half: The number of active cells per half may NOT be equal
 
     if grid.dualporo:
+        logger.info("Dual poro system")
         self._dualporo = True
 
     if grid.dualperm:
+        logger.info("Dual poro + dual perm system")
         self._dualporo = True
         self._dualperm = True
 
-    # read INTEHEAD record:
-    intehead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
-    ncol, nrow, nlay = intehead[8:11].tolist()
+    if etype == 5 and (logihead[13] or logihead[14]) and not grid.dualporo:
+        raise RuntimeError("Some inconsistentcy wrt dual porosity model. Bug?")
 
     self._ncol = ncol
     self._nrow = nrow
     self._nlay = nlay
 
-    return date  # updated date in case input is 0 or 9
+    metadata["DATE"] = date
+    return metadata
 
 
 def _import_eclbinary_checks1(self, grid):
@@ -473,12 +610,14 @@ def _import_eclbinary_dualporo(
 
     allvalues = allvalues.reshape((self._ncol, self._nrow, self.nlay), order="F")
     allvalues = np.asanyarray(allvalues, order="C")
-    allvalues = ma.masked_where(gactnum < 1, allvalues)
 
     if self._dualporo:
-        # set values which are tecnically ACTNUM active but still "UNDEF" to 0
-        allvalues[allvalues > self.undef_limit] = 0
+        if fracture:
+            allvalues[grid._dualactnum.values == 1] = 0.0
+        else:
+            allvalues[grid._dualactnum.values == 2] = 0.0
 
+    allvalues = ma.masked_where(gactnum < 1, allvalues)
     self._values = allvalues
 
     append = ""
@@ -487,6 +626,7 @@ def _import_eclbinary_dualporo(
         if fracture:
             append = "F"
 
+    logger.info("Dual status is %s, and append is %s", self._dualporo, append)
     if etype == 1:
         self._name = name + append
     else:

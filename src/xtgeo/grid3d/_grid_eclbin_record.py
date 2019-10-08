@@ -27,6 +27,9 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
     elif kwtype == "DOUB":
         dlen = kwlen
         kwntype = 3
+    elif kwtype == "LOGI":
+        ilen = kwlen
+        kwntype = 5
     else:
         raise ValueError(
             "Wrong type of kwtype {} for {}, must be INTE, REAL "
@@ -53,6 +56,10 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
     if kwtype == "DOUB":
         npuse = npdbl
         del npint
+        del npflt
+    if kwtype == "LOGI":
+        npuse = npint
+        del npdbl
         del npflt
 
     return npuse
