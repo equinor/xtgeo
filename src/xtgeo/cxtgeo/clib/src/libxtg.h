@@ -260,7 +260,7 @@ double x_rotation_conv (
 /* the swg* names are for eventual typemaps signatures in the cxtgeo.i
  * file to SWIG */
 int surf_import_irap_bin(
-			 char   *filename,
+			 FILE   *fhandle,
 			 int    mode,
 			 int    *swig_int_out_p1,       // *p_mx
 			 int    *swig_int_out_p2,       // *p_my

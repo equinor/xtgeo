@@ -675,7 +675,7 @@ class RegularSurface(object):
         cube as template, and match by ILINE/XLINE numbering.
 
         Args:
-            mfile (str): Name of file
+            mfile (str): Name of file or a io:BytesIO instance
             fformat (str): File format, None/guess/irap_binary/irap_ascii/ijxyz
                 is currently supported.
             template (object): Only valid if ``ijxyz`` format, where an
@@ -696,22 +696,25 @@ class RegularSurface(object):
 
         ..versionchanged:: 2.1.0
           Key "values" for Irap binary maps added
+
+        ..versionchanged:: 2.2.0
+          Input io.BytesIO instance instead of file is now possible
         """
+
+        bytestream = False
+        if isinstance(mfile, io.BytesIO):
+            bytestream = True
 
         self._values = None
 
-        if isinstance(mfile, io.BytesIO):
-            _regsurf_import.import_irap_binarystream(self, mfile, values=values)
-            if not values:
-                self._isloaded = False
-            self._name = os.path.basename("<binarystream>")
-        else:
-            if not os.path.isfile(mfile):
-                msg = "Does file exist? {}".format(mfile)
-                logger.critical(msg)
-                raise IOError(msg)
+        if not bytestream and not os.path.isfile(mfile):
+            msg = "Does file or memory stream exist? {}".format(mfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
+        if not bytestream:
             froot, fext = os.path.splitext(mfile)
+
             if fformat is None or fformat == "guess":
                 if not fext:
                     msg = (
@@ -722,23 +725,26 @@ class RegularSurface(object):
 
                 fformat = fext.lower().replace(".", "")
 
-            if fformat in ("irap_binary", "gri", "bin", "irapbin"):
-                _regsurf_import.import_irap_binary(self, mfile, values=values)
-                if not values:
-                    self._isloaded = False
+        if fformat in ("irap_binary", "gri", "bin", "irapbin"):
+            _regsurf_import.import_irap_binary(self, mfile, values=values)
+            if not values:
+                self._isloaded = False
 
-            elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
-                _regsurf_import.import_irap_ascii(self, mfile)
-            elif fformat == "ijxyz":
-                if template:
-                    _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
-                else:
-                    _regsurf_import.import_ijxyz_ascii(self, mfile)
-
+        elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
+            _regsurf_import.import_irap_ascii(self, mfile)
+        elif fformat == "ijxyz":
+            if template:
+                _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
             else:
-                raise ValueError("Invalid file format: {}".format(fformat))
-            self._name = os.path.basename(froot)
+                _regsurf_import.import_ijxyz_ascii(self, mfile)
 
+        else:
+            raise ValueError("Invalid file format: {}".format(fformat))
+
+        if bytestream:
+            self._name = os.path.basename("<binarystream>")
+        else:
+            self._name = os.path.basename(froot)
 
         self.ensure_correct_values(self.ncol, self.nrow, self._values)
         return self
