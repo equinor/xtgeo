@@ -704,6 +704,7 @@ class RegularSurface(object):
             _regsurf_import.import_irap_binarystream(self, mfile, values=values)
             if not values:
                 self._isloaded = False
+            self._name = os.path.basename("<binarystream>")
         else:
             if not os.path.isfile(mfile):
                 msg = "Does file exist? {}".format(mfile)
@@ -736,8 +737,9 @@ class RegularSurface(object):
 
             else:
                 raise ValueError("Invalid file format: {}".format(fformat))
+            self._name = os.path.basename(froot)
 
-        self._name = os.path.basename(froot)
+
         self.ensure_correct_values(self.ncol, self.nrow, self._values)
         return self
 

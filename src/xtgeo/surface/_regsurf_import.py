@@ -72,9 +72,12 @@ def import_irap_binary(self, mfile, values=True):
 def import_irap_binarystream(self, mfile, values=True):
     """Import Irap binary formatm bu there mfile is a memory buffer"""
 
-    buf = mfile.getvalue()  # bytes type in Python3
-    buf = buf.decode("ASCII")
-    bsize = mfile.getbuffer().nbytes
+    buf = mfile.getvalue()  # bytes type in Python3, str in Python2
+    try:
+        bsize = mfile.getbuffer().nbytes
+    except AttributeError:
+        bsize = len(buf)
+
     logger.debug("Import binary stream, size is %s", bsize)
     # read with mode 0, to get mx my and other metadata
     (
@@ -106,7 +109,7 @@ def import_irap_binarystream(self, mfile, values=True):
         return
 
     nval = self._ncol * self._nrow
-    xlist = _cxtgeo.surf_import_irap_bin(mfile, 1, nval, 0)
+    xlist = _cxtgeo.surf_impbuf_irap_bin(buf, bsize, 1, nval, 0)
 
     val = xlist[-1]
 

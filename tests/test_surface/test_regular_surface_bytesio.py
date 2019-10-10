@@ -36,12 +36,10 @@ def test_irapbin_import_bytesio():
 
     with open(TESTSET1, "rb") as fin:
         stream = io.BytesIO(fin.read())
-    # print(dir(stream))
-    # print(type(stream.getvalue()))
+    print(dir(stream))
+    print(type(stream.getvalue()))
 
-    # xsurf = xtgeo.RegularSurface(stream)
-    # assert xsurf.ncol == 1264
-    # assert xsurf.nrow == 2010
-    # tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
-    # tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
-    # xsurf.describe()
+    xsurf = xtgeo.RegularSurface(stream)
+    assert xsurf.ncol == 554
+    assert xsurf.nrow == 451
+    xsurf.describe()
