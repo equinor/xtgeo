@@ -6,6 +6,7 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
+import xtgeo.common.xtgeo_system as xsys
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -19,6 +20,8 @@ if DEBUG < 0:
 
 def import_irap_binary(self, mfile, values=True):
     """Import Irap binary format."""
+
+    fhandle = xsys.get_fhandle(mfile)
 
     logger.debug("Enter function...")
     # read with mode 0, to get mx my and other metadata
