@@ -1,7 +1,7 @@
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
-#include "logger.h"
 
 /*
 ****************************************************************************************
@@ -56,7 +56,6 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     float myfloat;
     double mydouble;
     long reclength = 0, nrecs, icc;
-    char mychar;
 
     logger_info("Read binary ECL record from record position %ld", recstart);
 

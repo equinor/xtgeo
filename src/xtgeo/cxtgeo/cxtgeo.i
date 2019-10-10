@@ -9,6 +9,8 @@
 
 %include typemaps.i
 
+ // NOTE
+
 
 %include cpointer.i
 %include carrays.i
@@ -34,9 +36,9 @@
 %array_functions(char, chararray)
 
 
-//=============================================================================
+//======================================================================================
 // Numpy tranforms
-//=============================================================================
+//======================================================================================
 %include "numpy.i"
 %numpy_typemaps(double, NPY_DOUBLE, long)
 %numpy_typemaps(float, NPY_FLOAT, long)
@@ -45,10 +47,9 @@
 import_array();
 %}
 
-
-//=============================================================================
+//======================================================================================
 // Magic typemaps (cf libxtg.h)
-//=============================================================================
+//======================================================================================
 %apply double *OUTPUT { double *swig_dbl_out_p1 };
 %apply double *OUTPUT { double *swig_dbl_out_p2 };
 %apply double *OUTPUT { double *swig_dbl_out_p3 };
@@ -68,6 +69,15 @@ import_array();
 %apply int *INOUT { int *swig_int_inout_p1 };
 %apply int *INOUT { int *swig_int_inout_p2 };
 
+// https://stackoverflow.com/questions/41131554/
+// swig-pass-python-string-to-argument-of-type-void-pointer
+// Since Python3 deals with UNICODE, this is needed in order to
+// use true bytes:
+
+%typemap(in) (char *swig_bytes) {
+    Py_ssize_t len;
+    PyBytes_AsStringAndSize($input, &$1, &len);
+}
 
 // numpies (1D)
 // IN int32 no 1
@@ -153,9 +163,9 @@ import_array();
                                          long n_swig_np_int_aout_v5)};
 
 
-//=============================================================================
+//======================================================================================
 // Inline tranforms
-//=============================================================================
+//======================================================================================
 // double version
 %apply (double* ARGOUT_ARRAY1, long DIM1) {(double* np, long len)};
 %inline %{
@@ -195,7 +205,7 @@ import_array();
     }
     %}
 
-// ============================================================================
+//======================================================================================
 
 // double
 %apply (double* IN_ARRAY1, long DIM1) {(double* npinput, long len2)};
@@ -234,8 +244,8 @@ import_array();
     }
     %}
 
-//=============================================================================
-//The rest of the XTGeo functions:
-//Really, this is the lazy way of doing it!
+//======================================================================================
+// The rest of the XTGeo functions:
+// Really, this is the lazy way of doing it; but notice "magic naming" for typemaps!
 
 %include "clib/src/libxtg.h";

@@ -13,7 +13,7 @@ DEBUG = xtg.get_syslevel()
 if DEBUG < 0:
     DEBUG = 0
 
-_cxtgeo.xtg_verbose_file("NONE")
+# _cxtgeo.xtg_verbose_file("NONE")
 
 
 def from_grid3d(self, grid, subgrids, rfactor):

@@ -14,8 +14,8 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = xtg.get_syslevel()
-_cxtgeo.xtg_verbose_file("NONE")
+XTGDEBUG = 0
+# _cxtgeo.xtg_verbose_file("NONE")
 
 
 def get_randomline(

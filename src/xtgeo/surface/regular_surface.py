@@ -38,6 +38,7 @@ from __future__ import division
 
 import os
 import os.path
+import io
 
 from copy import deepcopy
 import math
@@ -699,39 +700,46 @@ class RegularSurface(object):
 
         self._values = None
 
-        if not os.path.isfile(mfile):
-            msg = "Does file exist? {}".format(mfile)
-            logger.critical(msg)
-            raise IOError(msg)
-
-        froot, fext = os.path.splitext(mfile)
-        if fformat is None or fformat == "guess":
-            if not fext:
-                msg = (
-                    'Stop: fformat is "guess" but file '
-                    "extension is missing for {}".format(froot)
-                )
-                raise ValueError(msg)
-
-            fformat = fext.lower().replace(".", "")
-
-        if fformat in ("irap_binary", "gri", "bin", "irapbin"):
-            _regsurf_import.import_irap_binary(self, mfile, values=values)
+        if isinstance(mfile, io.BytesIO):
+            _regsurf_import.import_irap_binarystream(self, mfile, values=values)
             if not values:
                 self._isloaded = False
-
-        elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
-            _regsurf_import.import_irap_ascii(self, mfile)
-        elif fformat == "ijxyz":
-            if template:
-                _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
-            else:
-                _regsurf_import.import_ijxyz_ascii(self, mfile)
-
+            self._name = os.path.basename("<binarystream>")
         else:
-            raise ValueError("Invalid file format: {}".format(fformat))
+            if not os.path.isfile(mfile):
+                msg = "Does file exist? {}".format(mfile)
+                logger.critical(msg)
+                raise IOError(msg)
 
-        self._name = os.path.basename(froot)
+            froot, fext = os.path.splitext(mfile)
+            if fformat is None or fformat == "guess":
+                if not fext:
+                    msg = (
+                        'Stop: fformat is "guess" but file '
+                        "extension is missing for {}".format(froot)
+                    )
+                    raise ValueError(msg)
+
+                fformat = fext.lower().replace(".", "")
+
+            if fformat in ("irap_binary", "gri", "bin", "irapbin"):
+                _regsurf_import.import_irap_binary(self, mfile, values=values)
+                if not values:
+                    self._isloaded = False
+
+            elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
+                _regsurf_import.import_irap_ascii(self, mfile)
+            elif fformat == "ijxyz":
+                if template:
+                    _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
+                else:
+                    _regsurf_import.import_ijxyz_ascii(self, mfile)
+
+            else:
+                raise ValueError("Invalid file format: {}".format(fformat))
+            self._name = os.path.basename(froot)
+
+
         self.ensure_correct_values(self.ncol, self.nrow, self._values)
         return self
 

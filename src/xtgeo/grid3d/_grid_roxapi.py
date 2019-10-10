@@ -19,7 +19,7 @@ logger = xtg.functionlogger(__name__)
 # logger.info(roxmsg)
 
 # self is Grid() instance
-_cxtgeo.xtg_verbose_file("NONE")
+# _cxtgeo.xtg_verbose_file("NONE")
 XTGDEBUG = xtg.syslevel
 
 

@@ -6,8 +6,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
-_cxtgeo.xtg_verbose_file("NONE")
-XTGDEBUG = xtg.get_syslevel()
+XTGDEBUG = 0
 
 logger = xtg.functionlogger(__name__)
 

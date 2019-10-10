@@ -12,7 +12,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = xtg.get_syslevel()
+XTGDEBUG = 0
 
 
 def import_cube_roxapi(self, project, name, folder=None):

@@ -10,10 +10,10 @@ from xtgeo.common import XTGeoDialog
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-_cxtgeo.xtg_verbose_file("NONE")
+# _cxtgeo.xtg_verbose_file("NONE")
 
 xtg = XTGeoDialog()
-XTGDEBUG = xtg.get_syslevel()
+XTGDEBUG = 0
 
 
 def import_segy(self, sfile, engine="segyio"):
