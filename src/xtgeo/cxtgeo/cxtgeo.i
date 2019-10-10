@@ -9,6 +9,9 @@
 
 %include typemaps.i
 
+ // NOTE
+
+ // https://stackoverflow.com/questions/41131554/swig-pass-python-string-to-argument-of-type-void-pointer
 
 %include cpointer.i
 %include carrays.i

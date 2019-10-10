@@ -24,9 +24,7 @@ from . import _well_oper
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# need to call the C function...
-_cxtgeo.xtg_verbose_file("NONE")
-XTGDEBUG = xtg.syslevel
+XTGDEBUG = 0
 
 # pylint: disable=too-many-public-methods
 

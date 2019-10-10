@@ -15,8 +15,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-_cxtgeo.xtg_verbose_file("NONE")
-XTG_DEBUG = xtg.get_syslevel()
+XTG_DEBUG = 0
 
 
 def delete_log(self, lname):

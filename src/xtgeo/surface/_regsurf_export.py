@@ -14,8 +14,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-DEBUG = xtg.get_syslevel()
-_cxtgeo.xtg_verbose_file("NONE")
+DEBUG = 0
 
 if DEBUG < 0:
     DEBUG = 0

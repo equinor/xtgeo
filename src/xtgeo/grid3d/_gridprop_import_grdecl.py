@@ -20,8 +20,7 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-_cxtgeo.xtg_verbose_file("NONE")
-XTGDEBUG = xtg.get_syslevel()
+XTGDEBUG = 0
 
 
 def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):

@@ -13,8 +13,7 @@ import xtgeo.common.xtgeo_system as xsys
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = xtg.get_syslevel()
-_cxtgeo.xtg_verbose_file("NONE")
+XTGDEBUG = 0
 
 
 def scan_keywords(

@@ -9,7 +9,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-DBG = xtg.get_syslevel()
+DBG = 0
 
 
 def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
@@ -63,7 +63,7 @@ def vectorinfo2(x1, x2, y1, y2, option=1):
     Option = 1 gives normal school angle (counterclock from X)
     """
 
-    _cxtgeo.xtg_verbose_file("NONE")
+    # _cxtgeo.xtg_verbose_file("NONE")
 
     lenp = _cxtgeo.new_doublepointer()
     radp = _cxtgeo.new_doublepointer()
