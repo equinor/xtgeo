@@ -275,7 +275,7 @@ int surf_import_irap_bin(
 			 );
 
 int surf_impbuf_irap_bin(
-			 char  *buf,
+			 char  *swig_bytes,             // cf typemap in cxtgeo.i
                          long   bufsize,
 			 int    mode,
 			 int    *swig_int_out_p1,       // *p_mx
