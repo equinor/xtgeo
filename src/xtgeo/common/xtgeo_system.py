@@ -6,12 +6,15 @@ from __future__ import print_function
 
 import os
 import os.path
+import io
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+NBUFFER = 0
 
 
 def file_exists(fname):
@@ -75,7 +78,12 @@ def get_fhandle(pfile, mode="rb"):
     if "Swig Object of type 'FILE" in str(pfile):
         return pfile
 
-    return _cxtgeo.xtg_fopen(pfile, mode)
+    if isinstance(pfile, io.BytesIO) and mode == "rb":
+        buf = pfile.getvalue()  # bytes type in Python3, str in Python2
+        # note that the typemap in swig computes the length for the buf!
+        return _cxtgeo.xtg_fopen_bytestream(buf, mode)
+    else:
+        return _cxtgeo.xtg_fopen(pfile, mode)
 
 
 def is_fhandle(pfile):

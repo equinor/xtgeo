@@ -69,15 +69,12 @@ import_array();
 %apply int *INOUT { int *swig_int_inout_p1 };
 %apply int *INOUT { int *swig_int_inout_p2 };
 
-// https://stackoverflow.com/questions/41131554/
-// swig-pass-python-string-to-argument-of-type-void-pointer
-// Since Python3 deals with UNICODE, this is needed in order to
-// use true bytes:
-
-%typemap(in) (char *swig_bytes) {
-    Py_ssize_t len;
-    PyBytes_AsStringAndSize($input, &$1, &len);
-}
+// https://stackoverflow.com/questions/16860792/swig-passing-binary-data-fails
+%typemap(in) (char* swig_bytes, long swig_bytes_len) (Py_ssize_t len) %{
+    if (PyBytes_AsStringAndSize($input, &$1, &len) == -1)
+        return NULL;
+    $2 = (long)len;
+%}
 
 // numpies (1D)
 // IN int32 no 1

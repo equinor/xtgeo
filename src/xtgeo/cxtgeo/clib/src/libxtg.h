@@ -117,6 +117,7 @@ int xtg_shout(
 	      );
 
 FILE *xtg_fopen(const char *filename, const char *mode);
+FILE *xtg_fopen_bytestream(char *swig_bytes, long swig_bytes_len, const char *mode);
 
 int xtg_fclose(FILE *fhandle);
 
@@ -259,7 +260,7 @@ double x_rotation_conv (
 /* the swg* names are for eventual typemaps signatures in the cxtgeo.i
  * file to SWIG */
 int surf_import_irap_bin(
-			 char   *filename,
+			 FILE   *fhandle,
 			 int    mode,
 			 int    *swig_int_out_p1,       // *p_mx
 			 int    *swig_int_out_p2,       // *p_my
@@ -274,22 +275,22 @@ int surf_import_irap_bin(
 			 int    option
 			 );
 
-int surf_impbuf_irap_bin(
-			 char  *swig_bytes,             // cf typemap in cxtgeo.i
-                         long   bufsize,
-			 int    mode,
-			 int    *swig_int_out_p1,       // *p_mx
-			 int    *swig_int_out_p2,       // *p_my
-			 long   *swig_lon_out_p1,       // *p_ndef
-			 double *swig_dbl_out_p1,       // *p_xori
-			 double *swig_dbl_out_p2,       // *p_yori
-			 double *swig_dbl_out_p3,       // *p_xinc
-			 double *swig_dbl_out_p4,       // *p_yinc
-			 double *swig_dbl_out_p5,       // *p_rot
-			 double *swig_np_dbl_aout_v1,   // *p_map_v
-			 long   n_swig_np_dbl_aout_v1,  // nmap
-			 int    option
-			 );
+/* int surf_impbuf_irap_bin( */
+/* 			 char  *swig_bytes,             // cf typemap in cxtgeo.i */
+/*                          long   bufsize, */
+/* 			 int    mode, */
+/* 			 int    *swig_int_out_p1,       // *p_mx */
+/* 			 int    *swig_int_out_p2,       // *p_my */
+/* 			 long   *swig_lon_out_p1,       // *p_ndef */
+/* 			 double *swig_dbl_out_p1,       // *p_xori */
+/* 			 double *swig_dbl_out_p2,       // *p_yori */
+/* 			 double *swig_dbl_out_p3,       // *p_xinc */
+/* 			 double *swig_dbl_out_p4,       // *p_yinc */
+/* 			 double *swig_dbl_out_p5,       // *p_rot */
+/* 			 double *swig_np_dbl_aout_v1,   // *p_map_v */
+/* 			 long   n_swig_np_dbl_aout_v1,  // nmap */
+/* 			 int    option */
+/* 			 ); */
 
 
 int surf_import_irap_ascii(
