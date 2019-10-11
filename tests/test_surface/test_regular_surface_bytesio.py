@@ -8,7 +8,6 @@ import io
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -39,7 +38,7 @@ def test_irapbin_import_bytesio():
     print(dir(stream))
     print(type(stream.getvalue()))
 
-    xsurf = xtgeo.RegularSurface(stream)
+    xsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
     xsurf.describe()

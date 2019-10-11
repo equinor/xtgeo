@@ -22,6 +22,7 @@ def import_irap_binary(self, mfile, values=True):
     """Import Irap binary format."""
 
     fhandle = xsys.get_fhandle(mfile)
+    print(fhandle)
 
     logger.debug("Enter function...")
     # read with mode 0, to get mx my and other metadata
@@ -38,6 +39,10 @@ def import_irap_binary(self, mfile, values=True):
         val,
     ) = _cxtgeo.surf_import_irap_bin(fhandle, 0, 1, 0)
 
+    if ier != 0:
+        xsys.close_fhandle(fhandle)
+        raise RuntimeError("Error in reading Irap binary file")
+
     self._yflip = 1
     if self._yinc < 0.0:
         self._yinc *= -1
@@ -51,15 +56,16 @@ def import_irap_binary(self, mfile, values=True):
     # lazy loading, not reading the arrays
     if not values:
         self._values = None
+        xsys.close_fhandle(fhandle)
         return
 
     nval = self._ncol * self._nrow
     xlist = _cxtgeo.surf_import_irap_bin(fhandle, 1, nval, 0)
+    if xlist[0] != 0:
+        xsys.close_fhandle(fhandle)
+        raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = xlist[-1]
-
-    if ier != 0:
-        raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = np.reshape(val, (self._ncol, self._nrow), order="C")
 

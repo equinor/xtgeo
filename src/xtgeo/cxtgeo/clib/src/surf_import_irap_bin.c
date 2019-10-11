@@ -23,7 +23,7 @@
  *    Imports a surface map on Irap binary format.
  *
  * ARGUMENTS:
- *    fhandle        i     Filehandle
+ *    fhandle        i     Filehandle (steered from caller)
  *    mode           i     0 = scan mode to find mx, my; 1 = normal mode
  *    p_mx           o     Map dimension X (I) pointer
  *    p_my           o     Map dimension Y (J) pointer
@@ -48,7 +48,7 @@
  *           and this is the same convention as XTGeo. But secure that
  *           angle is within 0:360 deg.
  *
- *           Result array is converted to C order (this format is F order).
+ *           Result array is converted to C order (this file format is F order).
  *
  * LICENCE:
  *    See XTGeo licence
@@ -132,8 +132,8 @@ int surf_import_irap_bin(
 
     logger_info("Read IRAP binary map file: %s", __FUNCTION__);
 
-    rewind(fc);
-
+    if (mode==0) logger_info("Scan mode!");
+    fseek(fc, 0, SEEK_SET);
     /*
      * READ HEADER
      * This is Fortran format, hence there will be an integer
@@ -206,8 +206,7 @@ int surf_import_irap_bin(
 
     /* if scan mode only: */
     if (mode==0) {
-	fclose(fc);
-        logger_info("Scan mode!");
+        logger_info("Scan mode done");
 	return EXIT_SUCCESS;
     }
 
@@ -254,11 +253,18 @@ int surf_import_irap_bin(
 	    }
 
 	    /* end of block integer */
-	    ier = fread(&myint, sizeof(int), 1, fc); if (swap) SWAP_INT(myint);
+	    if (fread(&myint, sizeof(int), 1, fc) != 1) {
+                logger_error("Error in reading end of block integer");
+                fclose(fc);
+                return EXIT_FAILURE;
+            }
+
+            if (swap) SWAP_INT(myint);
 	    mstop = myint;
 	    if (mstart != mstop) {
-	      logger_critical("Error en reading irap file (mstart %d mstop %d)",
-                              mstart, mstop);
+                logger_error("Error en reading irap file (mstart %d mstop %d)",
+                             mstart, mstop);
+                return EXIT_FAILURE;
 	    }
 	}
 	else{
@@ -268,167 +274,9 @@ int surf_import_irap_bin(
 
     *p_ndef = ntmp;
     if (nn != mx * my) {
-	logger_critical("Error, number of map nodes read not equal to MX*MY");
+	logger_error("Error, number of map nodes read not equal to MX*MY");
+        return EXIT_FAILURE;
     }
-    else{
-	logger_debug("Number of map nodes read are: %d", nn);
-	logger_debug("Number of defind map nodes read are: %d", ntmp);
-    }
-
 
     return EXIT_SUCCESS;
 }
-
-/* int surf_impbuf_irap_bin( */
-/*                          char *buf, */
-/*                          long bufsize, */
-/*                          int mode, */
-/*                          int *p_mx, */
-/*                          int *p_my, */
-/*                          long *p_ndef, */
-/*                          double *p_xori, */
-/*                          double *p_yori, */
-/*                          double *p_xinc, */
-/*                          double *p_yinc, */
-/*                          double *p_rot, */
-/*                          double *p_map_v, */
-/*                          long nsurf, */
-/*                          int option */
-/*                          ) */
-/* { */
-
-/*     /\* local declarations *\/ */
-/*     int swap, ier, myint, nvv, i, j, k, mstart, mstop, nx, ny, idum; */
-/*     int idflag, ireclen; */
-/*     long nn, ntmp, ib, ic, mx, my; */
-/*     float myfloat; */
-/*     void *buff; */
-
-/*     double xori, yori, xmax, ymax, xinc, yinc, rot, x0ori, y0ori, dval; */
-
-/*     FILE *fc; */
-
-/*     buff = (void*)buf; */
-
-/*     logger_info("Read IRAP binary map file from memory buffer"); */
-
-/*     fc = fmemopen(buff, bufsize, "rb"); */
-
-/*     /\* check endianess *\/ */
-/*     swap = 0; */
-/*     if (x_swap_check() == 1) swap=1; */
-
-/*     /\* record 1 *\/ */
-/*     ireclen = _intread(fc, swap, 32, "Record start (1)"); */
-/*     idflag = _intread(fc, swap, 0, "ID flag for Irap map"); */
-/*     ny = _intread(fc, swap, 0.0, "NY"); */
-/*     xori = _floatread(fc, swap, 0.0, "XORI"); */
-/*     xmax = _floatread(fc, swap, 0.0, "XMAX (not used by RMS)"); */
-/*     yori = _floatread(fc, swap, 0.0, "YORI"); */
-/*     ymax = _floatread(fc, swap, 0.0, "YMAX (not used by RMS)"); */
-/*     xinc = _floatread(fc, swap, 0.0, "XINC"); */
-/*     yinc = _floatread(fc, swap, 0.0, "YINC"); */
-/*     ireclen = _intread(fc, swap, 32, "Record end (1)"); */
-
-/*     /\* record 2 *\/ */
-/*     ireclen = _intread(fc, swap, 16, "Record start (2)"); */
-/*     nx = _intread(fc, swap, 0, "NX"); */
-/*     rot = _floatread(fc, swap, 0.0, "Rotation"); */
-/*     x0ori = _floatread(fc, swap, 0.0, "Rotation origin X (not used)"); */
-/*     y0ori = _floatread(fc, swap, 0.0, "Rotation origin Y (not used)"); */
-/*     ireclen = _intread(fc, swap, 16, "Record end (2)"); */
-
-/*     /\* record 3 *\/ */
-/*     ireclen = _intread(fc, swap, 28, "Record start (3)"); */
-/*     for (i = 0; i < 7; i++) { */
-/*         idum = _intread(fc, swap, 0, "INT FLAG (not used...)"); */
-/*     } */
-/*     ireclen = _intread(fc, swap, 28, "Record end (3)"); */
-
-/*     *p_mx = nx; */
-/*     *p_my = ny; */
-/*     *p_xori = xori; */
-/*     *p_yori = yori; */
-/*     *p_xinc = xinc; */
-/*     *p_yinc = yinc; */
-
-/*     if (rot < 0.0) rot = rot + 360.0; */
-/*     *p_rot = rot; */
-
-/*     /\* if scan mode only: *\/ */
-/*     if (mode==0) { */
-/* 	fclose(fc); */
-/*         logger_info("Scan mode!"); */
-/* 	return EXIT_SUCCESS; */
-/*     } */
-
-/*     mx = (long)nx; */
-/*     my = (long)ny; */
-
-/*     /\* */
-/*      * READ DATA */
-/*      * These are floats bounded by Fortran records, reading I (x) dir fastest */
-/*      *\/ */
-
-/*     ier = 1; */
-/*     nn = 0; */
-/*     ntmp = 0; */
-/*     logger_info("Read Irap map values..."); */
-
-/*     while (ier == 1) { */
-/* 	/\* start of block integer *\/ */
-/* 	ier = fread(&myint, sizeof(int), 1, fc); if (swap) SWAP_INT(myint); */
-/* 	if (ier == 1 && myint > 0) { */
-/* 	    mstart = myint; */
-
-/* 	    /\* read data *\/ */
-/* 	    nvv = mstart / sizeof(float); */
-/* 	    for (ib = 0; ib < nvv; ib++) { */
-/* 		ier = fread(&myfloat, sizeof(int), 1, fc); */
-/* 		if (swap) SWAP_FLOAT(myfloat); */
-
-/* 		if (myfloat > UNDEF_MAP_IRAPB_LIMIT) { */
-/* 		    dval = UNDEF_MAP; */
-/* 		} */
-/* 		else{ */
-/* 		    dval = myfloat; */
-/* 		    ntmp++; */
-/* 		} */
-
-/*                 /\* convert to C order *\/ */
-/*                 x_ib2ijk(nn, &i, &j, &k, mx, my, 1, 0); */
-/*                 ic = x_ijk2ic(i, j, 1, mx, my, 1, 0); */
-
-/*                 p_map_v[ic] = dval; */
-
-/* 		nn++; */
-/* 	    } */
-
-/* 	    /\* end of block integer *\/ */
-/* 	    ier = fread(&myint, sizeof(int), 1, fc); if (swap) SWAP_INT(myint); */
-/* 	    mstop = myint; */
-/* 	    if (mstart != mstop) { */
-/* 	      logger_critical("Error en reading irap file (mstart %d mstop %d)", */
-/*                               mstart, mstop); */
-/* 	    } */
-/* 	} */
-/* 	else{ */
-/* 	    break; */
-/* 	} */
-/*     } */
-
-/*     *p_ndef = ntmp; */
-/*     if (nn != mx * my) { */
-/* 	logger_critical("Error, number of map nodes read not equal to MX*MY"); */
-/*     } */
-/*     else{ */
-/* 	logger_debug("Number of map nodes read are: %d", nn); */
-/* 	logger_debug("Number of defind map nodes read are: %d", ntmp); */
-/*     } */
-
-/*     fclose(fc); */
-
-
-/*     return EXIT_SUCCESS; */
-
-/* } */

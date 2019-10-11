@@ -704,15 +704,16 @@ class RegularSurface(object):
         bytestream = False
         if isinstance(mfile, io.BytesIO):
             bytestream = True
+            logger.info('BYTE')
 
         self._values = None
 
-        if not bytestream and not os.path.isfile(mfile):
-            msg = "Does file or memory stream exist? {}".format(mfile)
-            logger.critical(msg)
-            raise IOError(msg)
-
         if not bytestream:
+            if isinstance(mfile, str) and not os.path.isfile(mfile):
+                msg = "Does file exist? {}".format(mfile)
+                logger.critical(msg)
+                raise IOError(msg)
+
             froot, fext = os.path.splitext(mfile)
 
             if fformat is None or fformat == "guess":
@@ -724,6 +725,9 @@ class RegularSurface(object):
                     raise ValueError(msg)
 
                 fformat = fext.lower().replace(".", "")
+        else:
+            if fformat is None:
+                fformat = "irap_binary"  # default
 
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
             _regsurf_import.import_irap_binary(self, mfile, values=values)

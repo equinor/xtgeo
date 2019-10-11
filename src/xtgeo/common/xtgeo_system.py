@@ -14,7 +14,7 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-NBUFFER = 1
+NBUFFER = 0
 
 
 def file_exists(fname):
@@ -80,11 +80,8 @@ def get_fhandle(pfile, mode="rb"):
 
     if isinstance(pfile, io.BytesIO) and mode == "rb":
         buf = pfile.getvalue()  # bytes type in Python3, str in Python2
-        try:
-            bsize = pfile.getbuffer().nbytes + NBUFFER  # py3
-        except AttributeError:
-            bsize = len(buf) + NBUFFER  # py2
-        return _cxtgeo.xtg_fopen_bytestream(buf, bsize, mode)
+        # note that the typemap in swig computes the length for the buf!
+        return _cxtgeo.xtg_fopen_bytestream(buf, mode)
     else:
         return _cxtgeo.xtg_fopen(pfile, mode)
 
