@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
 """Import/export of grid properties (cf GridProperties class)"""
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-import xtgeo.common.xtgeo_system as xsys
+import xtgeo
 
 from xtgeo.grid3d import _gridprop_import
 
 from .grid_property import GridProperty
 from . import _grid3d_utils as utils
 
-xtg = XTGeoDialog()
+xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 XTGDEBUG = 0
-# _cxtgeo.xtg_verbose_file("NONE")
 
 
 def import_ecl_output(
@@ -30,11 +27,13 @@ def import_ecl_output(
     if not names:
         raise ValueError("Name list is empty (None)")
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    local_fhandle = False
+    if not isinstance(pfile, xtgeo._XTGeoCFile):
+        pfile = xtgeo._XTGeoCFile()
+        local_fhandle = True
 
     # scan valid keywords
-    kwlist = utils.scan_keywords(fhandle)
+    kwlist = utils.scan_keywords(pfile.fhandle)
 
     usenames = list()
 
@@ -143,4 +142,4 @@ def import_ecl_output(
     if validdates[0] != 0:
         props._dates = validdates
 
-    xsys.close_fhandle(fhandle, cond=local_fhandle)
+    pfile.close(cond=local_fhandle)

@@ -24,8 +24,8 @@ def import_roff(self, pfile, name, grid=None, _roffapiv=1):
 
     logger.info("Keyword grid is inactive, values is: %s", grid)
 
-    if xsys.is_fhandle(pfile):
-        raise ValueError("ROFF import cannot recieve a filehandle")
+    if isinstance(pfile, xtgeo._XTGeoCFile):
+        raise ValueError("ROFF import cannot recieve a _XTGeoCFile instance")
 
     if _roffapiv <= 1:
         _import_roff_v1(self, pfile, name)
@@ -156,30 +156,30 @@ def _import_roff_v2(self, pfile, name):
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 
-    fhandle = xsys.get_fhandle(pfile)
+    pfile = xtgeo._XTGeoCFile()
 
-    kwords = utils.scan_keywords(fhandle, fformat="roff")
+    kwords = utils.scan_keywords(pfile.fhandle, fformat="roff")
 
     for kwd in kwords:
         logger.info(kwd)
 
     # byteswap:
-    byteswap = _rkwquery(fhandle, kwords, "filedata!byteswaptest", -1)
+    byteswap = _rkwquery(pfile.fhandle, kwords, "filedata!byteswaptest", -1)
 
-    ncol = _rkwquery(fhandle, kwords, "dimensions!nX", byteswap)
-    nrow = _rkwquery(fhandle, kwords, "dimensions!nY", byteswap)
-    nlay = _rkwquery(fhandle, kwords, "dimensions!nZ", byteswap)
+    ncol = _rkwquery(pfile.fhandle, kwords, "dimensions!nX", byteswap)
+    nrow = _rkwquery(pfile.fhandle, kwords, "dimensions!nY", byteswap)
+    nlay = _rkwquery(pfile.fhandle, kwords, "dimensions!nZ", byteswap)
     logger.info("Dimensions in ROFF file %s %s %s", ncol, nrow, nlay)
 
     # get the actual parameter:
     vals = _rarraykwquery(
-        fhandle, kwords, "parameter!name!" + name, byteswap, ncol, nrow, nlay
+        pfile.fhandle, kwords, "parameter!name!" + name, byteswap, ncol, nrow, nlay
     )
 
     self._values = vals
     self._name = name
 
-    xsys.close_fhandle(fhandle)
+    pfile.close()
 
 
 def _rkwquery(fhandle, kws, name, swap):

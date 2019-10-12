@@ -6,19 +6,16 @@ from __future__ import print_function
 
 import pandas as pd
 
+import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
-import xtgeo.common.xtgeo_system as xsys
 
-xtg = XTGeoDialog()
+xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 XTGDEBUG = 0
 
 
-def scan_keywords(
-    pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False
-):
+def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False):
     """Quick scan of keywords in Eclipse binary restart/init/... file,
     or ROFF binary files.
 
@@ -50,12 +47,16 @@ def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
     mon = _cxtgeo.new_intarray(maxdates)
     yer = _cxtgeo.new_intarray(maxdates)
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    local_fhandle = False
+    if not isinstance(pfile, xtgeo._XTGeoCFile):
+        pfile = xtgeo._XTGeoCFile()
+        local_fhandle = True
 
-    nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates, XTGDEBUG)
+    nstat = _cxtgeo.grd3d_ecl_tsteps(
+        pfile.fhandle, seq, day, mon, yer, maxdates, XTGDEBUG
+    )
 
-    xsys.close_fhandle(fhandle, cond=local_fhandle)
+    pfile.close(cond=local_fhandle)
 
     sq = []
     da = []
@@ -93,14 +94,16 @@ def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    local_fhandle = False
+    if not isinstance(pfile, xtgeo._XTGeoCFile):
+        pfile = xtgeo._XTGeoCFile()
+        local_fhandle = True
 
     nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+        pfile.fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
     )
 
-    xsys.close_fhandle(fhandle, cond=local_fhandle)
+    pfile.close(cond=local_fhandle)
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")
@@ -142,15 +145,17 @@ def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
 
     """Add a date column to the keyword"""
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    local_fhandle = False
+    if not isinstance(pfile, xtgeo._XTGeoCFile):
+        pfile = xtgeo._XTGeoCFile()
+        local_fhandle = True
 
     logger.info("Scan keywords with dates...")
-    xkeys = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=False)
+    xkeys = _scan_ecl_keywords(pfile.fhandle, maxkeys=maxkeys, dataframe=False)
 
-    xdates = scan_dates(fhandle, maxdates=maxkeys, dataframe=False)
+    xdates = scan_dates(pfile.fhandle, maxdates=maxkeys, dataframe=False)
 
-    xsys.close_fhandle(fhandle, cond=local_fhandle)
+    pfile.close(cond=local_fhandle)
 
     result = []
     # now merge these two:
@@ -186,14 +191,13 @@ def _scan_roff_keywords(pfile, maxkeys=100000, dataframe=False):
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    pfile = xtgeo._XTGeoCFile()
 
     nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+        pfile.fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
     )
 
-    xsys.close_fhandle(fhandle, cond=local_fhandle)
+    pfile.close()
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")

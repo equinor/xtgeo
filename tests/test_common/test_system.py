@@ -4,46 +4,66 @@ import platform
 
 import pytest
 
-import xtgeo.common.xtgeo_system as xsys
+import xtgeo
 import test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
     TRAVIS = True
 
+
+TESTFILE = "../../../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
 # =============================================================================
 # Do tests of simple system functions
 # =============================================================================
 
+def test_xtgeocfile():
 
-@tsetup.equinor
-def test_check_folder():
-    """testing that folder checks works in different scenaria"""
+    gfile = xtgeo._XTGeoCFile(TESTFILE)
 
-    status = xsys.check_folder("setup.py")
-    assert status is True
+    print(gfile)
+    assert isinstance(gfile, xtgeo.common.xtgeo_system._XTGeoCFile)
 
-    status = xsys.check_folder("xxxxx/whatever")
-    assert status is False
+   #  assert gfile._refcount == 1
 
-    status = xsys.check_folder("src/xtgeo")
-    assert status is True
+   #  gfile = xtgeo._XTGeoCFile(gfile)
+   #  print(gfile)
 
-    if "WINDOWS" in platform.system().upper():
-        return
-    if not TRAVIS:
-        print("Non travis test")
-        # skipped for travis, as travis runs with root rights
-        folder = "TMP/nonwritable"
-        myfile = os.path.join(folder, "somefile")
-        if not os.path.exists(folder):
-            os.mkdir(folder, 0o440)
+   # # assert id1 == id2
 
-        status = xsys.check_folder(myfile)
-        assert status is False
+   #  assert gfile._refcount == 2
 
-        status = xsys.check_folder(folder)
-        assert status is False
 
-        with pytest.raises(ValueError):
-            xsys.check_folder(folder, raiseerror=ValueError)
+
+
+# @tsetup.equinor
+# def test_check_folder():
+#     """testing that folder checks works in different scenaria"""
+
+#     status = xsys.check_folder("setup.py")
+#     assert status is True
+
+#     status = xsys.check_folder("xxxxx/whatever")
+#     assert status is False
+
+#     status = xsys.check_folder("src/xtgeo")
+#     assert status is True
+
+#     if "WINDOWS" in platform.system().upper():
+#         return
+#     if not TRAVIS:
+#         print("Non travis test")
+#         # skipped for travis, as travis runs with root rights
+#         folder = "TMP/nonwritable"
+#         myfile = os.path.join(folder, "somefile")
+#         if not os.path.exists(folder):
+#             os.mkdir(folder, 0o440)
+
+#         status = xsys.check_folder(myfile)
+#         assert status is False
+
+#         status = xsys.check_folder(folder)
+#         assert status is False
+
+#         with pytest.raises(ValueError):
+#             xsys.check_folder(folder, raiseerror=ValueError)

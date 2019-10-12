@@ -11,7 +11,6 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-import xtgeo.common.xtgeo_system as xsys
 
 from . import _grid_eclbin_record as _eclbin
 from . import _grid3d_utils as utils
@@ -26,13 +25,16 @@ XTGDEBUG = 0
 def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     """Import property from binary files with GRDECL layout"""
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    local_fhandle = True
+    if isinstance(pfile, xtgeo._XTGeoCFile):
+        local_fhandle = False
+    else:
+        propfile = xtgeo._XTGeoCFile(pfile)
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        propfile.fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
     bpos[name] = -1
@@ -52,7 +54,7 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     self._nrow = grid.nrow
     self._nlay = grid.nlay
 
-    values = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
+    values = _eclbin.eclbin_record(propfile.fhandle, kwname, kwlen, kwtype, kwbyte)
     if kwtype == "INTE":
         self._isdiscrete = True
         # make the code list
@@ -76,7 +78,7 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     self.values = allvalues
     self._name = name
 
-    if not xsys.close_fhandle(fhandle, cond=local_fhandle):
+    if not propfile.close(cond=local_fhandle):
         raise RuntimeError("Error in file handling; cannot close file")
 
 

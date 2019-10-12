@@ -10,15 +10,12 @@ from tempfile import mkstemp
 
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
-from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d._grid_eclbin_record import eclbin_record
 
-import xtgeo.common.xtgeo_system as xsys
-
 from . import _grid3d_utils as utils
 
-xtg = XTGeoDialog()
+xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
@@ -32,12 +29,12 @@ XTGDEBUG = 0
 def import_ecl_egrid(self, gfile):
     """Import, private to this routine."""
 
-    fhandle = xsys.get_fhandle(gfile)
+    eclfile = xtgeo._XTGeoCFile()
 
     # scan file for property
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        eclfile.fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
     for name in ("COORD", "ZCORN", "ACTNUM", "MAPAXES"):
@@ -48,7 +45,7 @@ def import_ecl_egrid(self, gfile):
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == "FILEHEAD":
             # read FILEHEAD record:
-            filehead = eclbin_record(fhandle, "FILEHEAD", kwlen, kwtype, kwbyte)
+            filehead = eclbin_record(eclfile.fhandle, "FILEHEAD", kwlen, kwtype, kwbyte)
             dualp = filehead[5].tolist()
             logger.info("Dual porosity flag is %s", dualp)
             if dualp == 1:
@@ -59,7 +56,7 @@ def import_ecl_egrid(self, gfile):
                 self._dualperm = True
         elif kwname == "GRIDHEAD":
             # read GRIDHEAD record:
-            gridhead = eclbin_record(fhandle, "GRIDHEAD", kwlen, kwtype, kwbyte)
+            gridhead = eclbin_record(eclfile.fhandle, "GRIDHEAD", kwlen, kwtype, kwbyte)
             ncol, nrow, nlay = gridhead[1:4].tolist()
             logger.info("%s %s %s", ncol, nrow, nlay)
         elif kwname in ("COORD", "ZCORN", "ACTNUM"):
@@ -88,7 +85,7 @@ def import_ecl_egrid(self, gfile):
         option = 1
 
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        fhandle,
+        eclfile.fhandle,
         self._ncol,
         self._nrow,
         self._nlay,
@@ -115,7 +112,7 @@ def import_ecl_egrid(self, gfile):
         acttmp.values[acttmp.values >= 1] = 1
         self.set_actnum(acttmp)
 
-    xsys.close_fhandle(fhandle)
+    eclfile.close()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -224,13 +221,16 @@ def import_ecl_grdecl(self, gfile):
 def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout"""
 
-    local_fhandle = not xsys.is_fhandle(gfile)
-    fhandle = xsys.get_fhandle(gfile)
+    local_fhandle = True
+    if isinstance(gfile, xtgeo._XTGeoCFile):
+        local_fhandle = False
+    else:
+        gfile = xtgeo._XTGeoCFile(gfile)
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        gfile.fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
     needkwlist = ["SPECGRID", "COORD", "ZCORN", "ACTNUM"]
@@ -242,7 +242,7 @@ def import_ecl_bgrdecl(self, gfile):
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == "SPECGRID":
             # read grid geometry record:
-            specgrid = eclbin_record(fhandle, "SPECGRID", kwlen, kwtype, kwbyte)
+            specgrid = eclbin_record(gfile.fhandle, "SPECGRID", kwlen, kwtype, kwbyte)
             ncol, nrow, nlay = specgrid[0:3].tolist()
             logger.info("%s %s %s", ncol, nrow, nlay)
         elif kwname in needkwlist:
@@ -267,7 +267,7 @@ def import_ecl_bgrdecl(self, gfile):
     p_nact = _cxtgeo.new_longpointer()
 
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        fhandle,
+        gfile.fhandle,
         self._ncol,
         self._nrow,
         self._nlay,
@@ -287,4 +287,4 @@ def import_ecl_bgrdecl(self, gfile):
 
     self._nactive = _cxtgeo.longpointer_value(p_nact)
 
-    xsys.close_fhandle(fhandle, cond=local_fhandle)
+    gfile.close(cond=local_fhandle)
