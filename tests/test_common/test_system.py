@@ -1,39 +1,42 @@
 # -*- coding: utf-8 -*-
 import os
-import platform
-
-import pytest
+import io
 
 import xtgeo
-import test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
     TRAVIS = True
 
 
-TESTFILE = "../../../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
+TESTFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
 # =============================================================================
 # Do tests of simple system functions
 # =============================================================================
 
+
 def test_xtgeocfile():
 
     gfile = xtgeo._XTGeoCFile(TESTFILE)
+    assert isinstance(gfile, xtgeo._XTGeoCFile)
 
-    print(gfile)
-    assert isinstance(gfile, xtgeo.common.sys._XTGeoCFile)
+    assert "Swig" in str(gfile.fhandle)
 
-   #  assert gfile._refcount == 1
-
-   #  gfile = xtgeo._XTGeoCFile(gfile)
-   #  print(gfile)
-
-   # # assert id1 == id2
-
-   #  assert gfile._refcount == 2
+    assert gfile.close() is True
 
 
+def test_xtgeocfile_bytesio():
+
+    with open(TESTFILE, "rb") as fin:
+        stream = io.BytesIO(fin.read())
+
+    gfile = xtgeo._XTGeoCFile(stream)
+
+    assert isinstance(gfile, xtgeo._XTGeoCFile)
+
+    assert "Swig" in str(gfile.fhandle)
+
+    assert gfile.close() is True
 
 
 # @tsetup.equinor

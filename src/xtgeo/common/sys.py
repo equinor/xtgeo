@@ -9,7 +9,6 @@ import os.path
 import io
 import platform as plf
 
-import xtgeo
 from .xtgeo_dialog import XTGeoDialog
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
@@ -20,41 +19,19 @@ logger = xtg.functionlogger(__name__)
 class _XTGeoCFile(object):
     """A private class for file handling of files in/out of CXTGeo"""
 
-    # refcount is used to count number of access to close. The file
-    # is closed when refcount is 1.
-
-    __instance = []
-
-    def __new__(cls, fobj, mode="rb"):
-        print("NEW..")
-        if fobj in _XTGeoCFile.__instance:
-            print("NEW2")
-            print("FOBJ")
-            self = fobj
-            print(self)
-            self._refcount += 1
-            return None
-        else:
-            print("NEW1")
-            self = object.__new__(cls)
-            self.__init__(fobj, mode)
-
     def __init__(self, fobj, mode="rb"):
 
-        print("DING")
-        _XTGeoCFile.__instance.append(self)
         self._name = fobj
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._fhandle = None
         self._mode = mode
-        self._refcount = len(_XTGeoCFile.__instance)
 
     @property
     def fhandle(self):  # was get_handle
         """File handle for CXTgeo (read only)"""
 
         if self._fhandle and "Swig Object of type 'FILE" in str(self._fhandle):
-            return self._handle
+            return self._fhandle
 
         fhandle = None
         if (
@@ -81,13 +58,17 @@ class _XTGeoCFile(object):
         return self._fhandle
 
     def exists(self):  # was: file_exists
-        """Check if file exists, and returns True of OK."""
-        status = os.path.isfile(self._name)
+        """Check if file or memerory stream exists, and returns True of OK."""
+        if ("r" in self._mode):
+            if isinstance(self._name, str) and os.path.isfile(self._name):
+                return True
 
-        if not status:
-            logger.warning("File <%s> does not exist", self._name)
+            elif isinstance(self._name, io.BytesIO):
+                return True
 
-        return status
+            return False
+
+        return True
 
     def check_folder(self, raiseerror=None):
         """Check if folder given in xfile exists and is writeable.
@@ -148,10 +129,8 @@ class _XTGeoCFile(object):
             return True
 
         if self._fhandle:
-            self._refcount -= 1
-            if self._refcount == 1 or force:
-                _cxtgeo.xtg_fclose(self._fhandle)
-                logger.debug("File is now closed")
+            _cxtgeo.xtg_fclose(self._fhandle)
+            logger.debug("File is now closed")
 
             return True
 

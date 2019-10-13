@@ -22,14 +22,14 @@ logger = xtg.functionlogger(__name__)
 XTGDEBUG = 0
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse result .EGRID
 # See notes in grid.py on dual porosity / dual perm scheme.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_egrid(self, gfile):
     """Import, private to this routine."""
 
-    eclfile = xtgeo._XTGeoCFile()
+    eclfile = xtgeo._XTGeoCFile(gfile)
 
     # scan file for property
     logger.info("Make kwlist by scanning")
@@ -115,10 +115,10 @@ def import_ecl_egrid(self, gfile):
     eclfile.close()
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import eclipse run suite: EGRID + properties from INIT and UNRST
 # For the INIT and UNRST, props dates shall be selected
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=None):
 
     ecl_grid = groot + ".EGRID"
@@ -145,9 +145,10 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     self.gridprops = grdprops
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import eclipse input .GRDECL
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Uses a tmp file so not very efficient
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_grdecl(self, gfile):
 
     # make a temporary file
@@ -221,10 +222,9 @@ def import_ecl_grdecl(self, gfile):
 def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout"""
 
-    local_fhandle = True
-    if isinstance(gfile, xtgeo._XTGeoCFile):
-        local_fhandle = False
-    else:
+    local_fhandle = False
+    if isinstance(gfile, str):
+        local_fhandle = True
         gfile = xtgeo._XTGeoCFile(gfile)
 
     # scan file for properties; these have similar binary format as e.g. EGRID
