@@ -8,6 +8,6 @@ from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.common.xtgeo_dialog import XTGDescription
 from xtgeo.common.xtgeo_dialog import XTGShowProgress
 
-from xtgeo.common.xtgeo_system import _XTGeoCFile
+from xtgeo.common.sys import _XTGeoCFile
 
 from xtgeo.common.exceptions import WellNotFoundError

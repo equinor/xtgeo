@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
-import xtgeo.common.xtgeo_system as xsys
+import xtgeo.common.sys as xsys
 
 from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec
 from . import _grid3d_utils as utils

@@ -14,7 +14,7 @@ import pandas as pd
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo.common.constants as const
-import xtgeo.common.xtgeo_system as xtgeosys
+import xtgeo.common.sys as xtgeosys
 
 from . import _wellmarkers
 from . import _well_io

@@ -15,7 +15,7 @@ import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 import xtgeo
 from xtgeo.common import XTGDescription
-import xtgeo.common.xtgeo_system as xtgeosys
+import xtgeo.common.sys as xtgeosys
 
 from ._grid3d import Grid3D
 

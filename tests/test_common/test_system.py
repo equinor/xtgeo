@@ -22,7 +22,7 @@ def test_xtgeocfile():
     gfile = xtgeo._XTGeoCFile(TESTFILE)
 
     print(gfile)
-    assert isinstance(gfile, xtgeo.common.xtgeo_system._XTGeoCFile)
+    assert isinstance(gfile, xtgeo.common.sys._XTGeoCFile)
 
    #  assert gfile._refcount == 1
 
