@@ -11,7 +11,7 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
-import xtgeo.common.xtgeo_system as xtgeosys
+import xtgeo.common.sys as xtgeosys
 
 from xtgeo.cube import _cube_import
 from xtgeo.cube import _cube_export

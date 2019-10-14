@@ -5,6 +5,7 @@
  * ############################################################################
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -21,6 +22,7 @@ FILE *xtg_fopen(const char *filename, const char *mode)
     return fhandle;
 }
 
+#ifdef __linux__
 FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
@@ -36,6 +38,14 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 
     return fhandle;
 }
+#else
+FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
+{
+    FILE *fhandle = NULL;
+    logger_critical("Opening bytestrem is not implemented on this platform!");
+    return fhandle;
+}
+#endif
 
 int xtg_fclose(FILE *fhandle)
 {

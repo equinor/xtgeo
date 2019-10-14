@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """Module for color tables."""
 
-import random
+import os
 import sys
+import random
 
 from xtgeo.common import XTGeoDialog
-import xtgeo.common.xtgeo_system as xsys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -344,7 +344,7 @@ def colorsfromfile(fname, fformat="rms"):
     logger.info("Default style is %s", fformat)
     ctable = []
 
-    if not xsys.file_exists(fname):
+    if not os.path.isfile(fname):
         xtg.critical("No such color file! STOP")
         sys.exit(-1)
 

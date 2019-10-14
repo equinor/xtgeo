@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 import xtgeo
-import xtgeo.common.xtgeo_system as xsys
 
 from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec
 from . import _grid3d_utils as utils
@@ -25,17 +24,22 @@ XTGDEBUG = 0
 #
 
 
-def import_roff(self, gfile, _roffapiv=1):
+def import_roff(self, gfile, _roffapiv=2):
+
     if _roffapiv == 1:
         import_roff_v1(self, gfile)
-    else:
 
-        local_fhandle = not xsys.is_fhandle(gfile)
-        fhandle = xsys.get_fhandle(gfile)
+    else:
+        local_fhandle = False
+        fhandle = gfile
+        if isinstance(gfile, str):
+            local_fhandle = True
+            gfile = xtgeo._XTGeoCFile(gfile)
+            fhandle = gfile.fhandle
 
         import_roff_v2(self, fhandle)
 
-        if not xsys.close_fhandle(fhandle, cond=local_fhandle):
+        if local_fhandle and not gfile.close(cond=local_fhandle):
             raise RuntimeError("Error in closing file handle for binary ROFF file")
 
 
@@ -121,8 +125,6 @@ def import_roff_v2(self, fhandle):
 
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
-
-    fhandle = xsys.get_fhandle(fhandle)
 
     kwords = utils.scan_keywords(fhandle, fformat="roff")
 

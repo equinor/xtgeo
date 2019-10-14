@@ -13,7 +13,6 @@ from __future__ import print_function, absolute_import
 import os
 
 import xtgeo
-from xtgeo.common import xtgeo_system as xsys
 from ._gridprop_import_eclrun import import_eclbinary
 from ._gridprop_import_grdecl import import_grdecl_prop, import_bgrdecl_prop
 from ._gridprop_import_roff import import_roff
@@ -38,7 +37,7 @@ def from_file(
 
     # it may be that pfile already is an open file; hence a filehandle
     # instead. Check for this, and skip actions if so
-    if not xsys.is_fhandle(pfile):
+    if not isinstance(pfile, xtgeo._XTGeoCFile):
         fformat = _chk_file(self, pfile, fformat)
 
     if fformat == "roff":

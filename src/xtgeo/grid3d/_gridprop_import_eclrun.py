@@ -8,8 +8,6 @@ import numpy.ma as ma
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
-from xtgeo.common import xtgeo_system as xsys
-
 from . import _grid_eclbin_record as _eclbin
 from . import _grid3d_utils as utils
 
@@ -38,8 +36,13 @@ def import_eclbinary(
     # if pfile is a file, then the file is opened/closed here; otherwise, the
     # "outer" routine must handle that
 
-    local_fhandle = not xsys.is_fhandle(pfile)
-    fhandle = xsys.get_fhandle(pfile)
+    local_fhandle = False
+    fhandle = pfile
+    if isinstance(pfile, str):
+        local_fhandle = True
+        pfile = xtgeo._XTGeoCFile(pfile)
+        fhandle = pfile.fhandle
+
     status = 0
 
     logger.info("Import ECL binary, name requested is %s", name)
@@ -95,7 +98,7 @@ def import_eclbinary(
                 self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype
             )
 
-    if not xsys.close_fhandle(fhandle, cond=local_fhandle):
+    if local_fhandle and not pfile.close(cond=local_fhandle):
         raise RuntimeError("Error in closing file handle for binary Eclipse file")
 
 

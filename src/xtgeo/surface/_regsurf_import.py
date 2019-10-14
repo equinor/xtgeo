@@ -6,7 +6,6 @@ import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
-import xtgeo.common.xtgeo_system as xsys
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -21,8 +20,7 @@ if DEBUG < 0:
 def import_irap_binary(self, mfile, values=True):
     """Import Irap binary format."""
 
-    fhandle = xsys.get_fhandle(mfile)
-    print(fhandle)
+    ifile = xtgeo._XTGeoCFile(mfile)
 
     logger.debug("Enter function...")
     # read with mode 0, to get mx my and other metadata
@@ -37,10 +35,10 @@ def import_irap_binary(self, mfile, values=True):
         self._yinc,
         self._rotation,
         val,
-    ) = _cxtgeo.surf_import_irap_bin(fhandle, 0, 1, 0)
+    ) = _cxtgeo.surf_import_irap_bin(ifile.fhandle, 0, 1, 0)
 
     if ier != 0:
-        xsys.close_fhandle(fhandle)
+        ifile.close()
         raise RuntimeError("Error in reading Irap binary file")
 
     self._yflip = 1
@@ -56,13 +54,13 @@ def import_irap_binary(self, mfile, values=True):
     # lazy loading, not reading the arrays
     if not values:
         self._values = None
-        xsys.close_fhandle(fhandle)
+        ifile.close()
         return
 
     nval = self._ncol * self._nrow
-    xlist = _cxtgeo.surf_import_irap_bin(fhandle, 1, nval, 0)
+    xlist = _cxtgeo.surf_import_irap_bin(ifile.fhandle, 1, nval, 0)
     if xlist[0] != 0:
-        xsys.close_fhandle(fhandle)
+        ifile.close()
         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = xlist[-1]
@@ -77,65 +75,7 @@ def import_irap_binary(self, mfile, values=True):
 
     self._values = val
 
-    xsys.close_fhandle(fhandle)
-
-
-# def import_irap_binarystream(self, mfile, values=True):
-#     """Import Irap binary formatm bu there mfile is a memory buffer"""
-
-#     buf = mfile.getvalue()  # bytes type in Python3, str in Python2
-#     try:
-#         bsize = mfile.getbuffer().nbytes
-#     except AttributeError:
-#         bsize = len(buf)
-
-#     logger.debug("Import binary stream, size is %s", bsize)
-#     # read with mode 0, to get mx my and other metadata
-#     (
-#         ier,
-#         self._ncol,
-#         self._nrow,
-#         _ndef,
-#         self._xori,
-#         self._yori,
-#         self._xinc,
-#         self._yinc,
-#         self._rotation,
-#         val,
-#     ) = _cxtgeo.surf_impbuf_irap_bin(buf, bsize, 0, 1, 0)
-
-#     self._yflip = 1
-#     if self._yinc < 0.0:
-#         self._yinc *= -1
-#         self._yflip = -1
-
-#     self._filesrc = mfile
-
-#     self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-#     self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-#     # lazy loading, not reading the arrays
-#     if not values:
-#         self._values = None
-#         return
-
-#     nval = self._ncol * self._nrow
-#     xlist = _cxtgeo.surf_impbuf_irap_bin(buf, bsize, 1, nval, 0)
-
-#     val = xlist[-1]
-
-#     if ier != 0:
-#         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
-
-#     val = np.reshape(val, (self._ncol, self._nrow), order="C")
-
-#     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
-
-#     if np.isnan(val).any():
-#         logger.info("NaN values are found, will mask...")
-#         val = ma.masked_invalid(val)
-
-#     self._values = val
+    ifile.close()
 
 
 def import_irap_ascii(self, mfile):

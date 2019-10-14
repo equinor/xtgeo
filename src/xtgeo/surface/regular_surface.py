@@ -54,7 +54,7 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
-import xtgeo.common.xtgeo_system as xtgeosys
+import xtgeo.common.sys as xtgeosys
 
 from . import _regsurf_import
 from . import _regsurf_export

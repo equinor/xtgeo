@@ -14,7 +14,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, XTGDescription
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
-import xtgeo.common.xtgeo_system as xtgeosys
+import xtgeo.common.sys as xtgeosys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)

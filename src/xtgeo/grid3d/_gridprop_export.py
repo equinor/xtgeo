@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import
 
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-import xtgeo.common.xtgeo_system as xtgeosys
+import xtgeo.common.sys as xtgeosys
 from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = XTGeoDialog()
