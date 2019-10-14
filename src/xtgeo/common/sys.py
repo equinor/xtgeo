@@ -7,7 +7,8 @@ from __future__ import print_function
 import os
 import os.path
 import io
-import platform as plf
+from platform import system as plfsys
+from tempfile import mkstemp
 
 from .xtgeo_dialog import XTGeoDialog
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
@@ -16,12 +17,21 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
+def check_folder(fname, raiseerror=None):
+    """General function to check folder"""
+    _nn = _XTGeoCFile(fname)
+    status = _nn.check_folder(raiseerror=raiseerror)
+    del _nn
+    return status
+
+
 class _XTGeoCFile(object):
     """A private class for file handling of files in/out of CXTGeo"""
 
     def __init__(self, fobj, mode="rb"):
 
         self._name = fobj
+        self._tmpfile = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._fhandle = None
         self._mode = mode
@@ -37,19 +47,27 @@ class _XTGeoCFile(object):
         if (
             isinstance(self._name, io.BytesIO)
             and self._mode == "rb"
-            and plf.system() == "Linux"
+            and plfsys() == "Linux"
         ):
             buf = self._name.getvalue()  # bytes type in Python3, str in Python2
 
             # note that the typemap in swig computes the length for the buf!
             fhandle = _cxtgeo.xtg_fopen_bytestream(buf, self._mode)
 
-        # elif isinstance(pfile, io.BytesIO) and mode == "rb" and plf.system() == "Windows":
-        #     # windows miss fmemopen; hence write buffer to a tmp instead as workaround
-        #     for
+        elif (
+            isinstance(self._name, io.BytesIO)
+            and self._mode == "rb"
+            and plfsys == "Windows"
+        ):
+            # windows miss fmemopen; hence write buffer to a tmp instead as workaround
+            fds, tmpfile = mkstemp(prefix="tmpxtgeoio")
+            os.close(fds)
+            with open(tmpfile, "wb") as newfile:
+                newfile.write(self._file.getvalue())
 
-        #     # note that the typemap in swig computes the length for the buf!
-        #     return _cxtgeo.xtg_fopen_bytestream(buf, mode)
+            # now open this a regular fhandle
+            fhandle = _cxtgeo.xtg_fopen(tmpfile, self._mode)
+            self._tmpfile = tmpfile
 
         else:
             fhandle = _cxtgeo.xtg_fopen(self._name, self._mode)
