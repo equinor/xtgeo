@@ -337,13 +337,13 @@ class XYZ(object):
     # def nrow(self):
     #     """NROW"""
 
-    @abc.abstractproperty
-    def dataframe(self):
-        """Dataframe"""
+    # @abc.abstractproperty
+    # def dataframe(self):
+    #     """Dataframe"""
 
-    @dataframe.setter
-    def dataframe(self, df):
-        """Dataframe setter"""
+    # @dataframe.setter
+    # def dataframe(self, df):
+    #     """Dataframe setter"""
 
     # @abc.abstractmethod
     # def get_carray(self, lname):

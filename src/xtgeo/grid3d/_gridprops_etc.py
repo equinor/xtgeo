@@ -5,7 +5,6 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 from ._grid3d import Grid3D

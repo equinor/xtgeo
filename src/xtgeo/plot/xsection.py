@@ -34,6 +34,8 @@ class XSection(BasePlot):
 
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(
         self,
         zmin=0,

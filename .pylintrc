@@ -35,3 +35,4 @@ disable=
     protected-access,
     C0330,
     useless-object-inheritance,
+    import-outside-toplevel,
