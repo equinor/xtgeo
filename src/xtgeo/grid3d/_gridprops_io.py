@@ -28,12 +28,14 @@ def import_ecl_output(
         raise ValueError("Name list is empty (None)")
 
     local_fhandle = False
+    fhandle = pfile
     if not isinstance(pfile, xtgeo._XTGeoCFile):
-        pfile = xtgeo._XTGeoCFile()
+        pfile = xtgeo._XTGeoCFile(pfile)
+        fhandle = pfile.fhandle
         local_fhandle = True
 
     # scan valid keywords
-    kwlist = utils.scan_keywords(pfile.fhandle)
+    kwlist = utils.scan_keywords(fhandle)
 
     usenames = list()
 
@@ -142,4 +144,5 @@ def import_ecl_output(
     if validdates[0] != 0:
         props._dates = validdates
 
-    pfile.close(cond=local_fhandle)
+    if local_fhandle:
+        pfile.close()

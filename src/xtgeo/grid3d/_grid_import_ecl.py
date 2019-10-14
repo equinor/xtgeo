@@ -223,14 +223,16 @@ def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout"""
 
     local_fhandle = False
+    fhandle = gfile
     if isinstance(gfile, str):
         local_fhandle = True
         gfile = xtgeo._XTGeoCFile(gfile)
+        fhandle = gfile.fhandle
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        gfile.fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
     needkwlist = ["SPECGRID", "COORD", "ZCORN", "ACTNUM"]
@@ -242,7 +244,7 @@ def import_ecl_bgrdecl(self, gfile):
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == "SPECGRID":
             # read grid geometry record:
-            specgrid = eclbin_record(gfile.fhandle, "SPECGRID", kwlen, kwtype, kwbyte)
+            specgrid = eclbin_record(fhandle, "SPECGRID", kwlen, kwtype, kwbyte)
             ncol, nrow, nlay = specgrid[0:3].tolist()
             logger.info("%s %s %s", ncol, nrow, nlay)
         elif kwname in needkwlist:
@@ -267,7 +269,7 @@ def import_ecl_bgrdecl(self, gfile):
     p_nact = _cxtgeo.new_longpointer()
 
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        gfile.fhandle,
+        fhandle,
         self._ncol,
         self._nrow,
         self._nlay,
@@ -287,4 +289,5 @@ def import_ecl_bgrdecl(self, gfile):
 
     self._nactive = _cxtgeo.longpointer_value(p_nact)
 
-    gfile.close(cond=local_fhandle)
+    if local_fhandle:
+        gfile.close(cond=local_fhandle)

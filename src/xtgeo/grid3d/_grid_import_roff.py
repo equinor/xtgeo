@@ -31,13 +31,15 @@ def import_roff(self, gfile, _roffapiv=2):
 
     else:
         local_fhandle = False
+        fhandle = gfile
         if isinstance(gfile, str):
             local_fhandle = True
             gfile = xtgeo._XTGeoCFile(gfile)
+            fhandle = gfile.fhandle
 
-        import_roff_v2(self, gfile.fhandle)
+        import_roff_v2(self, fhandle)
 
-        if not gfile.close(cond=local_fhandle):
+        if local_fhandle and not gfile.close(cond=local_fhandle):
             raise RuntimeError("Error in closing file handle for binary ROFF file")
 
 

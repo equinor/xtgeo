@@ -155,7 +155,7 @@ def _import_roff_v2(self, pfile, name):
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 
-    pfile = xtgeo._XTGeoCFile()
+    pfile = xtgeo._XTGeoCFile(pfile)
 
     kwords = utils.scan_keywords(pfile.fhandle, fformat="roff")
 

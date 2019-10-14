@@ -799,8 +799,7 @@ class RegularSurface(object):
 
         """
 
-        mf = xtgeo._XTGeoCFile(mfile)
-        mf.check_folder(raiseerror=OSError)
+        xtgeosys.check_folder(mfile, raiseerror=OSError)
 
         logger.debug("Enter method...")
         logger.info("Export to file...")

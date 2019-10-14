@@ -702,8 +702,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             >>> zz.to_file('some.rmsreg')
         """
 
-        sf = xtgeo._XTGeoCFile(sfile, mode="wb")
-        sf.check_folder(raiseerror=OSError)
+        xtgeosys.check_folder(sfile, raiseerror=OSError)
 
         if fformat == "segy":
             _cube_export.export_segy(self, sfile, pristine=pristine, engine=engine)

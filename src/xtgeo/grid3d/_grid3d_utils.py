@@ -25,9 +25,9 @@ def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=
     local_fhandle = False
     fhandle = pfile
     if isinstance(pfile, str):
-        px = xtgeo._XTGeoCFile(pfile)
+        pfile = xtgeo._XTGeoCFile(pfile)
         local_fhandle = True
-        fhandle = px.fhandle
+        fhandle = pfile.fhandle
 
     if fformat == "xecl":
         if dates:
@@ -60,15 +60,18 @@ def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
     yer = _cxtgeo.new_intarray(maxdates)
 
     local_fhandle = False
-    if not isinstance(pfile, xtgeo._XTGeoCFile):
+    fhandle = pfile
+    if isinstance(pfile, str):
         pfile = xtgeo._XTGeoCFile(pfile)
+        fhandle = pfile.fhandle
         local_fhandle = True
 
     nstat = _cxtgeo.grd3d_ecl_tsteps(
-        pfile.fhandle, seq, day, mon, yer, maxdates, XTGDEBUG
+        fhandle, seq, day, mon, yer, maxdates, XTGDEBUG
     )
 
-    pfile.close(cond=local_fhandle)
+    if local_fhandle:
+        pfile.close(cond=local_fhandle)
 
     sq = []
     da = []

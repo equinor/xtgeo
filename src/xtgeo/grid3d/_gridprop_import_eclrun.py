@@ -37,19 +37,26 @@ def import_eclbinary(
     # "outer" routine must handle that
 
     local_fhandle = False
+    fhandle = pfile
     if isinstance(pfile, str):
         local_fhandle = True
         pfile = xtgeo._XTGeoCFile(pfile)
+        fhandle = pfile.fhandle
 
     status = 0
-    fhandle = pfile.fhandle
 
     logger.info("Import ECL binary, name requested is %s", name)
 
     # scan file for properties byte positions etc
     if _kwlist is None:
         logger.info("Make kwlist, scan keywords")
-        kwlist = utils.scan_keywords(fhandle, kwlist, etype, date, grid)
+        kwlist = utils.scan_keywords(
+            fhandle, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+        )
+    else:
+        kwlist = _kwlist
+
+    metadata = _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid)
     date = metadata["DATE"]
 
     if name == "SGAS":
@@ -91,7 +98,7 @@ def import_eclbinary(
                 self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype
             )
 
-    if not pfile.close(cond=local_fhandle):
+    if local_fhandle and not pfile.close(cond=local_fhandle):
         raise RuntimeError("Error in closing file handle for binary Eclipse file")
 
 
