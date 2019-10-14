@@ -77,7 +77,7 @@ class _XTGeoCFile(object):
 
     def exists(self):  # was: file_exists
         """Check if file or memerory stream exists, and returns True of OK."""
-        if ("r" in self._mode):
+        if "r" in self._mode:
             if isinstance(self._name, str) and os.path.isfile(self._name):
                 return True
 
@@ -149,6 +149,12 @@ class _XTGeoCFile(object):
         if self._fhandle:
             _cxtgeo.xtg_fclose(self._fhandle)
             logger.debug("File is now closed")
+
+            if self._tmpfile:
+                try:
+                    os.remove(self._tmpfile)
+                except Exception as ex:
+                    logger.error("Could not remove tempfile for some reason: %s", ex)
 
             return True
 
