@@ -3,6 +3,7 @@ import os
 import io
 
 import xtgeo
+import test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
@@ -25,6 +26,7 @@ def test_xtgeocfile():
     assert gfile.close() is True
 
 
+@tsetup.skipifwindows
 def test_xtgeocfile_bytesio():
 
     with open(TESTFILE, "rb") as fin:

@@ -8,6 +8,7 @@ import io
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -29,6 +30,7 @@ if "XTG_SHOW" in os.environ:
 TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 
 
+@tsetup.skipifwindows
 def test_irapbin_import_bytesio():
     """Import Irap binary via bytesIO"""
     logger.info("Import and export...")
