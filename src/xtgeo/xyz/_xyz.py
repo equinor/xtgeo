@@ -337,11 +337,13 @@ class XYZ(object):
     # def nrow(self):
     #     """NROW"""
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def dataframe(self):
         """Dataframe"""
 
     @dataframe.setter
+    @abc.abstractmethod
     def dataframe(self, df):
         """Dataframe setter"""
 

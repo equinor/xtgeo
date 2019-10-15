@@ -6,7 +6,6 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
 
 from . import _grid_eclbin_record as _eclbin
 from . import _grid3d_utils as utils

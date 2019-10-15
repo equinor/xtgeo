@@ -10,8 +10,8 @@ import io
 from platform import system as plfsys
 from tempfile import mkstemp
 
-from .xtgeo_dialog import XTGeoDialog
 import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -57,13 +57,13 @@ class _XTGeoCFile(object):
         elif (
             isinstance(self._name, io.BytesIO)
             and self._mode == "rb"
-            and plfsys == "Windows"
+            and plfsys() == "Windows"
         ):
             # windows miss fmemopen; hence write buffer to a tmp instead as workaround
             fds, tmpfile = mkstemp(prefix="tmpxtgeoio")
             os.close(fds)
             with open(tmpfile, "wb") as newfile:
-                newfile.write(self._file.getvalue())
+                newfile.write(self._name.getvalue())
 
             # now open this a regular fhandle
             fhandle = _cxtgeo.xtg_fopen(tmpfile, self._mode)
@@ -81,7 +81,7 @@ class _XTGeoCFile(object):
             if isinstance(self._name, str) and os.path.isfile(self._name):
                 return True
 
-            elif isinstance(self._name, io.BytesIO):
+            if isinstance(self._name, io.BytesIO):
                 return True
 
             return False
@@ -107,7 +107,7 @@ class _XTGeoCFile(object):
         status = True
 
         if os.path.isdir(self._name):
-            folder = self.filename
+            folder = self._name
         else:
             folder = os.path.dirname(self._name)
             if folder == "":
@@ -137,7 +137,7 @@ class _XTGeoCFile(object):
 
         return False
 
-    def close(self, cond=True, force=False):  # was close_fhandle
+    def close(self, cond=True):
         """Close file handle given that filehandle exists (return True), otherwise do
         nothing (return False).
 
@@ -153,7 +153,7 @@ class _XTGeoCFile(object):
             if self._tmpfile:
                 try:
                     os.remove(self._tmpfile)
-                except Exception as ex:
+                except Exception as ex:  # pylint: disable=W0703
                     logger.error("Could not remove tempfile for some reason: %s", ex)
 
             return True

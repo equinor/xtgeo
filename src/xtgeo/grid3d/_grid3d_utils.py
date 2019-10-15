@@ -48,7 +48,7 @@ def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=
     return data
 
 
-def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
+def scan_dates(pfile, maxdates=1000, dataframe=False):
     """Quick scan dates in a simulation restart file.
 
     Cf. grid_properties.py description

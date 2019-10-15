@@ -359,22 +359,22 @@ def import_stormcube(self, sfile):
         xline = stf.readline()
         if not xline.strip():
             continue
-        else:
-            iline += 1
-            if iline == 1:
-                pass
-            elif iline == 2:
-                _nn, _modname, _undef_val = xline.strip().split()
-            elif iline == 3:
-                pass
-            elif iline == 4:
-                (xori, xlen, yori, ylen, zori, _zmax, _e1, _e2) = xline.strip().split()
-            elif iline == 5:
-                zlen, rot = xline.strip().split()
-            elif iline == 6:
-                ncol, nrow, nlay = xline.strip().split()
-                nlines = line + 2
-                break
+
+        iline += 1
+        if iline == 1:
+            pass
+        elif iline == 2:
+            _nn, _modname, _undef_val = xline.strip().split()
+        elif iline == 3:
+            pass
+        elif iline == 4:
+            (xori, xlen, yori, ylen, zori, _zmax, _e1, _e2) = xline.strip().split()
+        elif iline == 5:
+            zlen, rot = xline.strip().split()
+        elif iline == 6:
+            ncol, nrow, nlay = xline.strip().split()
+            nlines = line + 2
+            break
     stf.close()
 
     ncol = int(ncol)
