@@ -71,4 +71,5 @@ src/xtgeo/_theversion.py
 # other
 .idea/
 .projectile
+.dir-locals.el
 '.'/
