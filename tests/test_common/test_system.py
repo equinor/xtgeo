@@ -26,7 +26,7 @@ def test_xtgeocfile():
     assert gfile.close() is True
 
 
-@tsetup.skipifwindows
+#@tsetup.skipifwindows
 def test_xtgeocfile_bytesio():
 
     with open(TESTFILE, "rb") as fin:
