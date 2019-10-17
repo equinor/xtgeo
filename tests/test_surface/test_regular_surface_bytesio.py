@@ -56,12 +56,7 @@ def test_irapbin_load_meta_first_bytesio():
     with open(TESTSET1, "rb") as fin:
         stream = io.BytesIO(fin.read())
 
-    t0 = xtg.timer()
-    for _inum in range(1000):
-        # should go very fast
-        xsurf = xtgeo.RegularSurface(stream, fformat="irap_binary", values=False)
-    t1 = xtg.timer(t0)
-    logger.info("Time to import 1000 entries: %4.3f secs", t1)
+    xsurf = xtgeo.RegularSurface(stream, fformat="irap_binary", values=False)
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
     xsurf.describe()
