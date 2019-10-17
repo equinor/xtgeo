@@ -62,8 +62,8 @@ def import_ecl_output(
             if name == kwitem[0]:
                 namefound = True
         if not namefound:
-            if name == "SOIL":
-                pass  # will check for SWAT and SGAS later
+            if name in ("SOIL", "SGAS", "SWAT"):
+                pass  # check for sat's later; may be derived based on fluid system
             else:
                 raise ValueError(
                     "Keyword {} not found. Possible list: {}".format(name, possiblekw)
