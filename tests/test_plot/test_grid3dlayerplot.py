@@ -93,8 +93,8 @@ def test_slice_plot_many_grid_layers():
             mygrid, myprop, colormap=USEFILE3, index=k, minvalue=0.18, maxvalue=0.36
         )
         layslice2.savefig(
-            os.path.join(
-                TMPDIR, "layerslice2_" + str(k) + ".svg", fformat="svg", last=False
-            )
+            os.path.join(TMPDIR, "layerslice2_" + str(k) + ".svg"),
+            fformat="svg",
+            last=False,
         )
         layslice2.savefig(os.path.join(TMPDIR, "layerslice2_" + str(k) + ".png"))
