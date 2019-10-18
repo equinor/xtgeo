@@ -185,8 +185,7 @@ siteinstall: allclean dist ## Install to custom place using $PREFIX aka make sit
 	pip install --prefix=${PREFIX} .
 
 userinstall: dist ## Install to user home folder (mostly for testing) using $CUSTOM
-	export PYTHONUSERBASE=${CUSTOM}
-	@${PIP} install --upgrade --user .
+	PYTHONUSERBASE=${CUSTOM} ${PIP} install --upgrade --user .
 
 
 docsinstall: docsrun  ## install docs in Equinor

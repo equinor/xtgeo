@@ -86,6 +86,8 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
 
     if self._isdiscrete:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_INT_LIMIT)
+        self.codes = _fix_codes(roxprop.code_names)
+        logger.info("Fixed codes: %s", self.codes)
     else:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_LIMIT)
 
@@ -156,3 +158,19 @@ def _store_in_roxar(self, pname, roxgrid):
 
     if self.isdiscrete:
         rprop.code_names = self.codes.copy()
+
+
+def _fix_codes(codes):
+    """Roxar can provide a code list with empty strings; fix this issue here"""
+
+    newcodes = {}
+    for code, name in codes.items():
+        if not isinstance(code, int):
+            code = int(code)
+
+        if not name:
+            continue
+
+        newcodes[code] = str(name)
+
+    return newcodes
