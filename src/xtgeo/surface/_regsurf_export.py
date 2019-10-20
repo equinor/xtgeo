@@ -22,6 +22,9 @@ if DEBUG < 0:
 
 def export_irap_ascii(self, mfile):
     """Export to Irap RMS ascii format."""
+
+    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
+
     zmin = self.values.min()
     zmax = self.values.max()
 
@@ -29,7 +32,7 @@ def export_irap_ascii(self, mfile):
     logger.debug("SHAPE %s %s", vals.shape, vals.dtype)
 
     ier = _cxtgeo.surf_export_irap_ascii(
-        mfile,
+        fout.fhandle,
         self._ncol,
         self._nrow,
         self._xori,
@@ -41,20 +44,23 @@ def export_irap_ascii(self, mfile):
         zmin,
         zmax,
         0,
-        DEBUG,
     )
     if ier != 0:
         raise RuntimeError("Export to Irap Ascii went wrong, " "code is {}".format(ier))
 
     del vals
 
+    fout.close()
+
 
 def export_irap_binary(self, mfile):
     """Export to Irap RMS binary format."""
 
+    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
+
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     ier = _cxtgeo.surf_export_irap_bin(
-        mfile,
+        fout.fhandle,
         self._ncol,
         self._nrow,
         self._xori,
@@ -64,13 +70,14 @@ def export_irap_binary(self, mfile):
         self._rotation,
         vals,
         0,
-        DEBUG,
     )
 
     if ier != 0:
         raise RuntimeError(
             "Export to Irap Binary went wrong, " "code is {}".format(ier)
         )
+
+    fout.close()
 
 
 def export_ijxyz_ascii(self, mfile):
@@ -90,8 +97,7 @@ def export_ijxyz_ascii(self, mfile):
         self._ilines,
         self._xlines,
         vals,
-        0,
-        DEBUG,
+        0
     )
 
     if ier != 0:

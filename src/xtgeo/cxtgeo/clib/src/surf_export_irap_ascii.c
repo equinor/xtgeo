@@ -6,6 +6,7 @@
  *******************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -22,7 +23,7 @@
  *    Export a map on Irap ascii format.
  *
  * ARGUMENTS:
- *    filename       i     File name, character string
+ *    fc             i     File handle
  *    mx             i     Map dimension X (I)
  *    my             i     Map dimension Y (J)
  *    xori           i     X origin coordinate
@@ -32,7 +33,6 @@
  *    rot            i     Rotation (degrees, from X axis, anti-clock)
  *    p_surf_v       i     1D pointer to map/surface values pointer array
  *    option         i     Options flag for later usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -46,7 +46,7 @@
  *******************************************************************************
  */
 int surf_export_irap_ascii(
-                           char *filename,
+                           FILE *fc,
                            int mx,
                            int my,
                            double xori,
@@ -58,8 +58,7 @@ int surf_export_irap_ascii(
                            long mxy,
                            double zmin,
                            double zmax,
-                           int option,
-                           int debug
+                           int option
                            )
 {
 
@@ -67,14 +66,7 @@ int surf_export_irap_ascii(
     int     i, j, ic, nn, fcode;
     float   myfloat, xmax, ymax;
 
-    char    s[24]="surf_export_irap_ascii";
-
-    FILE    *fc;
-
-    xtgverbose(debug);
-    xtg_speak(s,1,"Write IRAP ascii map file ...",s);
-
-    xtg_speak(s,2,"Entering %s",s);
+    logger_info(s,1,"Write IRAP ascii map file ... (%s)", __FUNCTION__);
 
     /*
      * Do some computation first, to find best format
@@ -100,16 +92,6 @@ int surf_export_irap_ascii(
      * 0 0 0 0 0 0 0
      * -------------------------------------------------------------------------
      */
-
-    fc = fopen(filename,"wb");
-
-    if (fc == NULL) {
-        xtg_warn(s, 0, "Some thing is wrong with requested filename <%s>",
-                 filename);
-        xtg_error(s, "Could be: Non existing folder, wrong permissions ? ..."
-                  " anyway: STOP!", s);
-        return -9;
-    }
 
     fprintf(fc, "%d %d %lf %lf\n", -996, my, xinc, yinc);
     fprintf(fc, "%lf %f %lf %f\n", xori, xmax, yori, ymax);
@@ -144,7 +126,6 @@ int surf_export_irap_ascii(
     }
     fprintf(fc, "\n");
 
-    fclose(fc);
     return EXIT_SUCCESS;
 
 }

@@ -1,16 +1,17 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * Export to IJXYZ format (OW XYZ, with inline xline in two first columns)
  *
- ******************************************************************************
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    surf_export_ijxyz.c
@@ -53,7 +54,7 @@
  *
  * LICENCE:
  *    See XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
 int surf_export_ijxyz(
                       char *filename,
@@ -71,8 +72,7 @@ int surf_export_ijxyz(
                       long nrow,
                       double *p_map_v,
                       long mxy,
-                      int option,
-                      int debug
+                      int option
                       )
 {
 
@@ -80,14 +80,9 @@ int surf_export_ijxyz(
     int i, j, iok;
     double xv, yv, zv;
 
-    char s[24] = "surf_export_ijxyz";
-
     FILE *fc;
 
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering routine %s", s);
-
-    xtg_speak(s,1,"Write OW style map file INLINE XLINE X Y Z ...", s);
+    logger_info("Write OW style map file INLINE XLINE X Y Z (%s)", __FUNCTION__);
 
     fc = x_fopen(filename, "wb", debug);
 
@@ -100,7 +95,7 @@ int surf_export_ijxyz(
                                    nrow*ncol, 0);
 
             if (iok != 0) {
-                xtg_error(s, "Error from %s", s);
+                logger_error(s, "Error from %s", __FUNCTION__);
                 exit(313);
             }
 
