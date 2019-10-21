@@ -1,18 +1,19 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * Import map value on seismic points format (OW specific perhaps?) on the
  * premise that the map topology (through INLINE and XLINE is known); hence
  * map values are based on INLINE/XLINE match.
  *
- ******************************************************************************
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    surf_import_ijxyz_tmpl.c
@@ -66,48 +67,38 @@
  *
  * LICENCE:
  *    See XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
 
+
 int surf_import_ijxyz_tmpl(
-                           char *file,
+                           FILE *fd,
                            int *ilines,
                            long ncol,
                            int *xlines,
                            long nrow,
                            double *p_map_v,
                            long nmap,
-                           int option,
-                           int debug
+                           int option
                            )
 {
 
     /* locals*/
 
-    FILE *fd;
     int iok, iline, xline, nncol, nnrow, found, ili, xli;
     long ind, ic;
     float rdum, zval, filine, fxline;
     char lbuffer[132];
 
-    char sbn[24] = "surf_import_ijxyz_tmpl";
-    xtgverbose(debug);
-
-    /* read header */
-    xtg_speak(sbn, 2, "Entering routine %s", sbn);
-
     nncol = (int)ncol;
     nnrow = (int)nrow;
 
-
     for (ind = 0; ind < nnrow*nncol; ind++) p_map_v[ind] = UNDEF;
-
-    fd = x_fopen(file, "r", debug);
 
     while(fgets(lbuffer, 132, (FILE*) fd)) {
         if (strncmp(lbuffer, "\n", 1) == 0) continue;
         lbuffer[strcspn(lbuffer, "\n")] = 0;
-        if (debug > 2) xtg_speak(sbn, 3, "LBUFFER <%s>", lbuffer);
+
         if (strncmp(lbuffer, "#", 1) == 0) continue;
         if (strncmp(lbuffer, "@", 1) == 0) continue;
         if (strncmp(lbuffer, "E", 1) == 0) continue;
@@ -115,15 +106,13 @@ int surf_import_ijxyz_tmpl(
         iok = sscanf(lbuffer, "%f %f %f %f %f", &filine, &fxline,
                      &rdum, &rdum, &zval);
 
-        if (iok > 5) xtg_error(sbn, "Wrong file format for map file?");
-
         iline = (int)(filine + 0.01);
         xline = (int)(fxline + 0.01);
 
         /* some sanity tests first */
         if (iline < ilines[0] || iline > ilines[nncol - 1] ||
             xline < xlines[0] || xline > xlines[nnrow - 1]) {
-            xtg_error(sbn, "ILINE or XLINE in file outside template ranges");
+            logger_error("ILINE or XLINE in file outside template ranges");
             return -1;
         }
 
@@ -141,7 +130,6 @@ int surf_import_ijxyz_tmpl(
         }
 
     }
-    fclose(fd);
 
     return EXIT_SUCCESS;
 }

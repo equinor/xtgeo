@@ -310,7 +310,7 @@ int surf_import_irap_ascii(
                            );
 
 int surf_import_ijxyz(
-                      char *file,
+                      FILE *fc,
                       int mode,
                       int *swig_int_out_p1,         // *nx
                       int *swig_int_out_p2,         // *ny
@@ -327,20 +327,18 @@ int surf_import_ijxyz(
                       double *swig_np_dbl_aout_v1,  // *p_map_v
                       long n_swig_np_dbl_aout_v1,   // nmap = nrow*ncol
                       int *swig_int_out_p3,         // yflip
-                      int option,
-                      int debug
+                      int option
                       );
 
 int surf_import_ijxyz_tmpl(
-                           char *file,
+                           FILE *fc,
                            int *swig_np_int_in_v1,       // *ilines,
                            long n_swig_np_int_in_v1,     // nilines or ncol,
                            int *swig_np_int_in_v2,       // *xlines,
                            long n_swig_np_int_in_v2,     // nxlines or nrow,
                            double *swig_np_dbl_aout_v1,  // *p_map_v
                            long n_swig_np_dbl_aout_v1,   // nmap = nrow*ncol
-                           int option,
-                           int debug
+                           int option
                            );
 
 
@@ -495,8 +493,7 @@ double surf_get_z_from_ij(
                           double yinc,
                           double xori,
                           double yori,
-                          double *p_map_v,
-                          int debug
+                          double *p_map_v
                           );
 
 
@@ -512,8 +509,7 @@ double surf_get_z_from_xy(
                           int    yflip,
 			  double rot_deg,
                           double *swig_np_dbl_in_v1,    // *p_map_v
-                          long   n_swig_np_dbl_in_v1,   // nn
-			  int    debug
+                          long   n_swig_np_dbl_in_v1   // nn
 			  );
 
 int surf_get_zv_from_xyv(
@@ -532,8 +528,7 @@ int surf_get_zv_from_xyv(
                          int    yflip,
                          double rot_deg,
                          double *swig_np_dbl_in_v3,       // *p_map_v,
-                         long   n_swig_np_dbl_in_v3,
-                         int    debug
+                         long   n_swig_np_dbl_in_v3
                          );
 
 int surf_xy_as_values(
@@ -705,8 +700,7 @@ void surf_sample_grd3d_lay (
                             long n_swig_np_dbl_inplace_v2,
                             double *swig_np_dbl_inplace_v3,
                             long n_swig_np_dbl_inplace_v3,
-                            int option,
-                            int debug
+                            int option
                             );
 
 int surf_setval_poly(
@@ -2097,8 +2091,7 @@ int well_geometrics (
                      double *md,
                      double *incl,
                      double *az,
-                     int option,
-                     int debug
+                     int option
                      );
 
 int well_trunc_parallel(
@@ -2119,6 +2112,5 @@ int well_trunc_parallel(
                         double ztol,
                         double itol,
                         double atol,
-                        int option,
-                        int debug
+                        int option
                         );

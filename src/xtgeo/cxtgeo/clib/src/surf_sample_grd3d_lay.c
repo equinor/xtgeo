@@ -27,7 +27,6 @@
  *    jmap_v        i/o    Maps J row values
  *    njmap          i     Dimension (for SWIG np)
  *    option         i     0: top cell, 1: base cell
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Void + Changed pointers to map properties (z, i, j values)
@@ -39,6 +38,7 @@
  *    cf. XTGeo LICENSE
  ******************************************************************************
  */
+#include "logger.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -67,29 +67,21 @@ void surf_sample_grd3d_lay (
                            long nimap,
 			   double *jmap_v,
                            long njmap,
-			   int option,
-			   int debug
+			   int option
 			   )
 
 {
     /* locals */
-    char    s[24] = "surf_sample_grd3d_lay";
     double  corners_v[24];
     double  zval, xpos, ypos, cxmin, cxmax, cymin, cymax;
     int     mode, ibm, i, j;
     int     mxmin, mxmax, mymin, mymax, ii, jj;
     int     ishift;
 
-    xtgverbose(debug);
 
     if (rotation != 0.0) {
-        xtg_error(s, "Map rotation not supported so far...");
+        logger_error("Map rotation not supported so far...");
     }
-
-    xtg_speak(s,2,"Entering routine <%s> ...",s);
-
-    xtg_speak(s,3,"NX NY NZ: %d %d %d", nx, ny, nz);
-    xtg_speak(s,3,"MX and MY is: %d %d", mx, my);
 
     /*
      * Loop over 3D cells, finding the min/max edges per cell in XY
@@ -106,7 +98,7 @@ void surf_sample_grd3d_lay (
 
 	    /* get the corners for the cell */
 	    grd3d_corners(i , j, klayer, nx, ny, nz, p_coord_v,
-			  p_zcorn_v, corners_v, debug);
+			  p_zcorn_v, corners_v, XTGDEBUG);
 
 	    /* find cell min/max  both for X and Y */
 	    cxmin = 999999999;
@@ -142,7 +134,7 @@ void surf_sample_grd3d_lay (
 		    ypos = yori + yinc * (jj - 1);
 
 		    zval = x_sample_z_from_xy_cell(corners_v, xpos, ypos,
-                                                   mode, 0, debug);
+                                                   mode, 0, XTGDEBUG);
 
 		    if (zval < UNDEF_LIMIT && zval > -1*UNDEF_LIMIT){
 			map_v[ibm] = zval;
@@ -155,7 +147,5 @@ void surf_sample_grd3d_lay (
 
 	}
     }
-
-    xtg_speak(s,2,"Exit from routine <%s> ...",s);
 
 }

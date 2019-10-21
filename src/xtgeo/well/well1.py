@@ -846,7 +846,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_az = _cxtgeo.new_doublearray(nlen)
 
         ier = _cxtgeo.well_geometrics(
-            nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md, ptr_incl, ptr_az, 0, XTGDEBUG
+            nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md, ptr_incl, ptr_az, 0,
         )
 
         if ier != 0:
@@ -914,7 +914,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         zv2 = other._df["Z_TVDSS"].values
 
         ier = _cxtgeo.well_trunc_parallel(
-            xv1, yv1, zv1, xv2, yv2, zv2, xtol, ytol, ztol, itol, atol, 0, XTGDEBUG
+            xv1, yv1, zv1, xv2, yv2, zv2, xtol, ytol, ztol, itol, atol, 0
         )
 
         if ier != 0:

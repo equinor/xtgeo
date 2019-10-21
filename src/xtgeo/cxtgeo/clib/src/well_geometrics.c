@@ -1,9 +1,9 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * SINFO: Compute geometrics as azimuth, md based on X Y Z vectors
  *
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include <math.h>
@@ -11,13 +11,10 @@
 #include "libxtg_.h"
 
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    well_geometrics.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given a trajectory with X Y Z coordinsates, compute the avg angle etc
@@ -33,7 +30,6 @@
  *    az             o     Azimuth; azimith is in degrees, with hor.
  *                         path as 90 degrees
  *    option         i     Options: for future usage
- *    debug          i     Debug flag
  *
  * RETURNS:
  *    Function:  0: Upon success. If problems:
@@ -42,12 +38,8 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
-
-
-#include "libxtg.h"
-#include "libxtg_.h"
 
 
 int well_geometrics (
@@ -58,19 +50,14 @@ int well_geometrics (
                      double *md,
                      double *incl,
                      double *az,
-                     int option,
-                     int debug
+                     int option
                      )
 {
     /* locals */
-    char s[24] = "well_geometrics";
     int i;
     double incl1, incl2, zdiff;
     double vlen, arad, adeg1, adeg2;
     double tmp[2];
-
-    xtgverbose(debug);
-    xtg_speak(s,3,"Entering routine %s", s);
 
     for (i = 0; i < np; i ++) {
         if (i > 0) {
@@ -96,7 +83,7 @@ int well_geometrics (
             }
 
             x_vector_info2(xv[i-1], xv[i], yv[i-1], yv[i], &vlen, &arad,
-                           &adeg1, 0, debug);
+                           &adeg1, 0, XTGDEBUG);
 
             zdiff = fabs(zv[i] - zv[i + 1]);
             if (zdiff > FLOATEPS) {
@@ -110,7 +97,7 @@ int well_geometrics (
             }
 
             x_vector_info2(xv[i], xv[i+1], yv[i], yv[i+1], &vlen, &arad,
-                           &adeg2, 0, debug);
+                           &adeg2, 0, XTGDEBUG);
 
             tmp[0] = incl1; tmp[1] = incl2;
             incl[i] = x_avg_angles(tmp, 2);
@@ -125,13 +112,6 @@ int well_geometrics (
 
     az[0] = az[1];
     az[np - 1] = az[np - 2];
-
-    if (debug > 2) {
-        for (i = 0; i < np; i ++) {
-            xtg_speak(s, 3, "Inclination, azi and MD for pos %d: %f  %f  %f",
-                      i, incl[i], az[i], md[i]);
-        }
-    }
 
     return 0;
 }

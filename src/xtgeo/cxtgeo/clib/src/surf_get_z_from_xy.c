@@ -31,7 +31,6 @@
  *    rot_deg       i      Rotation
  *    p_map_v       i      Pointer to map values to update
  *    flag          i      Flag for options
- *    debug         i      Debug flag
  *
  * RETURNS:
  *    Z value at point
@@ -44,6 +43,7 @@
  ******************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -59,23 +59,16 @@ double surf_get_z_from_xy(
                           int yflip,
 			  double rot_deg,
 			  double *p_map_v,
-                          long nn,
-			  int debug
+                          long nn
 			  )
 {
     int  ib=-9, ier, iex[4], i=0, j=0;
-    char sub[24]="surf_get_z_from_xy";
     double x_v[4], y_v[4], z_v[4];
     double xx, yy, zz, z, rx, ry;
     int userelative=1;
 
-    xtgverbose(debug);
 
-
-    if (debug > 1) {
-        xtg_speak(sub,3,"Entering routine %s", sub);
-    }
-    if (nx*ny != nn) xtg_error(sub, "Fatal error");
+    if (nx*ny != nn) logger_error("Fatal error in %s", __FUNCTION__);
 
 
     ib=-1;
@@ -98,7 +91,7 @@ double surf_get_z_from_xy(
     if (userelative == 1) {
         /* map origin rleative is 0.0 */
         z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc, 0.0,
-                               0.0, p_map_v, debug);
+                               0.0, p_map_v);
     }
     else{
 
@@ -130,7 +123,7 @@ double surf_get_z_from_xy(
 
         // now find the Z value, using interpolation method 3 (bilinear w/rot.)
 
-        z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 3, debug);
+        z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 3, 0);
     }
 
 

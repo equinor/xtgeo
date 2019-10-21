@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    surf_get_zv_from_xyv.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Vector version of surf_get_z_from_xy.c
@@ -22,7 +19,6 @@
  *    rot_deg       i      Rotation
  *    p_map_v       i      Pointer to map values to update
  *    flag          i      Flag for options
- *    debug         i      Debug flag
  *
  * RETURNS:
  *    Z value at point
@@ -31,7 +27,7 @@
  *    - checking the handling of undef nodes; shall return UNDEF
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
@@ -53,22 +49,16 @@ int surf_get_zv_from_xyv(
                          int yflip,
                          double rot_deg,
                          double *p_map_v,
-                         long nn,
-                         int debug
+                         long nn
                          )
 {
     int i;
-    char s[24]="surf_get_zv_from_xyv";
-
-    xtgverbose(debug);
-
-    xtg_speak(s,2,"Entering routine %s", s);
 
     nn = nx*ny;
 
     for (i=0; i<nxv; i++) {
         zv[i] = surf_get_z_from_xy(xv[i], yv[i], nx, ny, xori, yori, xinc,
-                                   yinc, yflip, rot_deg, p_map_v, nn, debug);
+                                   yinc, yflip, rot_deg, p_map_v, nn);
     }
 
     return(0);

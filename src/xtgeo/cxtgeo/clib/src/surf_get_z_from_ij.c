@@ -59,20 +59,14 @@ double surf_get_z_from_ij(
 			double yinc,
 			double xori,
 			double yori,
-			double *p_map_v,
-
-			int debug
+			double *p_map_v
 			)
 {
 
 
     int  ibc=-9;
-    char s[24]="map_get_z_from_ij";
     double x_v[4], y_v[4], z_v[4];
     double z;
-
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering routine %s", s);
 
     // find the values of four nodes
 
@@ -100,7 +94,7 @@ double surf_get_z_from_ij(
 
     // now find the Z value, using interpolation method 2 (bilinear)
 
-    z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 2, debug);
+    z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 2, 0);
 
     return z;
 

@@ -64,13 +64,13 @@ void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, in
 
     /* get map value for I J from x y */
     itop = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                              yflip, rotation, maptopi, nmap, debug);
+                              yflip, rotation, maptopi, nmap);
     jtop = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                              yflip, rotation, maptopj, nmap, debug);
+                              yflip, rotation, maptopj, nmap);
     ibas = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                              yflip, rotation, mapbasi, nmap, debug);
+                              yflip, rotation, mapbasi, nmap);
     jbas = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                              yflip, rotation, mapbasj, nmap, debug);
+                              yflip, rotation, mapbasj, nmap);
 
     if (debug > 1) xtg_speak(sbn, 2, "ITOP IBAS  JTOP JBAS %d %d  %d %d...",
                              itop, ibas, jtop, jbas);
