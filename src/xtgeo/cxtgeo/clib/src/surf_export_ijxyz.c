@@ -16,9 +16,6 @@
  * NAME:
  *    surf_export_ijxyz.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
- *
  * DESCRIPTION:
  *    Export a map on DSG .map format. Columns with INL XL X Y Z, e.g.
  *
@@ -29,7 +26,7 @@
  *
  *
  * ARGUMENTS:
- *    filename       i     File name, character string
+ *    fc             i     File handle
  *    mx             i     Map dimension X (I)
  *    my             i     Map dimension Y (J)
  *    xori           i     X origin coordinate
@@ -57,7 +54,7 @@
  ***************************************************************************************
  */
 int surf_export_ijxyz(
-                      char *filename,
+                      FILE *fc,
                       int mx,
                       int my,
                       double xori,
@@ -80,11 +77,7 @@ int surf_export_ijxyz(
     int i, j, iok;
     double xv, yv, zv;
 
-    FILE *fc;
-
     logger_info("Write OW style map file INLINE XLINE X Y Z (%s)", __FUNCTION__);
-
-    fc = x_fopen(filename, "wb", debug);
 
     /* export in INLINE running fastest order */
     for (j = 1; j <= my; j++) {
@@ -95,7 +88,7 @@ int surf_export_ijxyz(
                                    nrow*ncol, 0);
 
             if (iok != 0) {
-                logger_error(s, "Error from %s", __FUNCTION__);
+                logger_error("Error from %s", __FUNCTION__);
                 exit(313);
             }
 
@@ -108,7 +101,6 @@ int surf_export_ijxyz(
         }
     }
     fprintf(fc, "\n");
-    fclose(fc);
 
     return EXIT_SUCCESS;
 

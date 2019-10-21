@@ -133,7 +133,9 @@ int surf_import_irap_bin(
     logger_info("Read IRAP binary map file: %s", __FUNCTION__);
 
     if (mode==0) logger_info("Scan mode!");
+
     fseek(fc, 0, SEEK_SET);
+
     /*
      * READ HEADER
      * This is Fortran format, hence there will be an integer
@@ -255,7 +257,6 @@ int surf_import_irap_bin(
 	    /* end of block integer */
 	    if (fread(&myint, sizeof(int), 1, fc) != 1) {
                 logger_error("Error in reading end of block integer");
-                fclose(fc);
                 return EXIT_FAILURE;
             }
 

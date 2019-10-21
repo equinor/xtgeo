@@ -98,8 +98,7 @@ def distance_from_point(self, point=(0, 0), azimuth=0.0):
         ypv,
         azimuth,
         svalues,
-        0,
-        XTGDEBUG,
+        0
     )
 
     if ier != 0:

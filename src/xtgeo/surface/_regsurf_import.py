@@ -83,16 +83,18 @@ def import_irap_ascii(self, mfile):
     # version using swig type mapping
 
     logger.debug("Enter function...")
+    ifile = xtgeo._XTGeoCFile(mfile)
 
     # read with mode 0, scan to get mx my
-    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 0, 1, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_irap_ascii(ifile.fhandle, 0, 1, 0)
 
     nvn = xlist[1] * xlist[2]  # mx * my
-    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 1, nvn, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_irap_ascii(ifile.fhandle, 1, nvn, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
+        ifile.close()
         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = np.reshape(val, (ncol, nrow), order="C")
@@ -121,6 +123,8 @@ def import_irap_ascii(self, mfile):
 
     self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
     self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
+
+    ifile.close()
 
 
 def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals

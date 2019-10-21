@@ -294,7 +294,7 @@ int surf_import_irap_bin(
 
 
 int surf_import_irap_ascii(
-                           char   *filename,
+                           FILE   *fc,
                            int    mode,
                            int    *swig_int_out_p1,       // *nx
                            int    *swig_int_out_p2,       // *ny
@@ -306,8 +306,7 @@ int surf_import_irap_ascii(
                            double *swig_dbl_out_p5,       // *rot
                            double *swig_np_dbl_aout_v1,   // *p_map_v
                            long   n_swig_np_dbl_aout_v1,  // nmap
-                           int    option,
-                           int    debug
+                           int    option
                            );
 
 int surf_import_ijxyz(
@@ -376,7 +375,7 @@ int surf_export_irap_ascii(
                            );
 
 int surf_export_zmap_ascii(
-                           char *filename,
+                           FILE *fc,
                            int mx,
                            int my,
                            double xori,
@@ -387,12 +386,11 @@ int surf_export_zmap_ascii(
                            long   n_swig_np_dbl_in_v1,    // mxy
                            double zmin,
                            double zmax,
-                           int option,
-                           int debug
+                           int option
                            );
 
 int surf_export_storm_bin(
-                          char *filename,
+                          FILE *fc,
                           int mx,
                           int my,
                           double xori,
@@ -403,12 +401,11 @@ int surf_export_storm_bin(
                           long   n_swig_np_dbl_in_v1,    // mxy
                           double zmin,
                           double zmax,
-                          int option,
-                          int debug
+                          int option
                           );
 
 int surf_export_ijxyz(
-                      char *filename,
+                      FILE *fc,
                       int mx,
                       int my,
                       double xori,
@@ -417,10 +414,10 @@ int surf_export_ijxyz(
                       double yinc,
                       double rot,
                       int yflip,
-                      int *swig_np_int_in_v1,      // ilines
-                      long n_swig_np_int_in_v1,    // ncol
-                      int *swig_np_int_in_v2,      // xlines
-                      long n_swig_np_int_in_v2,    // nrow
+                      int *swig_np_int_in_v1,        // ilines
+                      long n_swig_np_int_in_v1,      // ncol
+                      int *swig_np_int_in_v2,        // xlines
+                      long n_swig_np_int_in_v2,      // nrow
                       double *swig_np_dbl_in_v1,     // *p_map_v
                       long   n_swig_np_dbl_in_v1,    // mxy
                       int option
@@ -436,7 +433,7 @@ int surf_swapaxes (
                    double *yinc,
                    double *rotation,
                    double *swig_np_dbl_inplace_v1,   // *p_map_v
-                   long n_swig_np_dbl_inplace_v1,   // nval, total nx*ny*nz
+                   long n_swig_np_dbl_inplace_v1,    // nval, total nx*ny*nz
                    int option,
                    int debug
                    );
@@ -616,8 +613,7 @@ int surf_get_dist_values(
 			 double azimuth,
 			 double *swig_np_dbl_inplace_v1,  // *p_map_v INPLACE
                          long   n_swig_np_dbl_inplace_v1,
-			 int    flag,
-			 int    debug
+			 int    flag
 			 );
 
 

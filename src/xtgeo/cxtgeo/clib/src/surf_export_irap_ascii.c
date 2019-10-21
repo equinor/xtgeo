@@ -66,7 +66,7 @@ int surf_export_irap_ascii(
     int     i, j, ic, nn, fcode;
     float   myfloat, xmax, ymax;
 
-    logger_info(s,1,"Write IRAP ascii map file ... (%s)", __FUNCTION__);
+    logger_info("Write IRAP ascii map file ... (%s)", __FUNCTION__);
 
     /*
      * Do some computation first, to find best format
