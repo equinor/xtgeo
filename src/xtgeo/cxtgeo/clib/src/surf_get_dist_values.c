@@ -1,5 +1,5 @@
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    surf_get_dist_values.c
@@ -33,9 +33,10 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
@@ -53,18 +54,14 @@ int surf_get_dist_values(
 			 double azimuth,
 			 double *p_map_v,
                          long   nn,
-			 int    flag,
-			 int    debug
+			 int    flag
 			 )
 {
     /* locals */
-    char     s[24]="surf_get_dist_values";
+
     double   *xv, *yv, azi, angle, trueangle, dx, dy, distance;
     double   x1, y1, z1, x2, y2, z2, x3, y3, z3, pdist=0.1;
     int      i, j,ib, ier;
-
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering routine %s", s);
 
     /* azimuth rotation: */
     azi=(azimuth)*PI/180.0;  /* radians, positive */
@@ -75,10 +72,11 @@ int surf_get_dist_values(
 
     nn = nx * ny;
     ier = surf_xy_as_values(xori, xinc, yori, yinc, nx, ny, rot_deg, xv,
-                            nn, yv, nn, 0, debug);
+                            nn, yv, nn, 0, 0);
 
     if (ier != 0) {
-	xtg_error(s,"Something went wrong (ref surf_xy_as_values)!");
+	logger_error("Something went wrong in %s", __FUNCTION__);
+        return ier;
     }
 
     x1 = x0;
@@ -109,12 +107,9 @@ int surf_get_dist_values(
 
 
 	    ier = x_point_line_dist(x1, y1, z1, x2, y2, z2, x3, y3, z3,
-				    &distance, 0, 1, debug);
+				    &distance, 0, 1, 0);
 
-	    if (ier != 0) {
-		xtg_error(s,"Something went wrong! (x_point_line_dist"
-                          " IER = %d)", ier);
-	    }
+	    if (ier != 0) return ier;
 
 	    if (p_map_v[ib]<UNDEF_LIMIT) {
 		p_map_v[ib] = distance;

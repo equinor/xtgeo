@@ -83,16 +83,18 @@ def import_irap_ascii(self, mfile):
     # version using swig type mapping
 
     logger.debug("Enter function...")
+    ifile = xtgeo._XTGeoCFile(mfile)
 
     # read with mode 0, scan to get mx my
-    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 0, 1, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_irap_ascii(ifile.fhandle, 0, 1, 0)
 
     nvn = xlist[1] * xlist[2]  # mx * my
-    xlist = _cxtgeo.surf_import_irap_ascii(mfile, 1, nvn, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_irap_ascii(ifile.fhandle, 1, nvn, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
+        ifile.close()
         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = np.reshape(val, (ncol, nrow), order="C")
@@ -122,6 +124,8 @@ def import_irap_ascii(self, mfile):
     self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
     self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
 
+    ifile.close()
+
 
 def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     """Import OW/DSG IJXYZ ascii format."""
@@ -132,15 +136,18 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
 
     logger.debug("Read data from file... (scan for dimensions)")
 
-    xlist = _cxtgeo.surf_import_ijxyz(mfile, 0, 1, 1, 1, 0, DEBUG)
+    fin = xtgeo._XTGeoCFile(mfile)
+
+    xlist = _cxtgeo.surf_import_ijxyz(fin.fhandle, 0, 1, 1, 1, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
 
     if ier != 0:
+        fin.close()
         raise RuntimeError("Import from C is wrong...")
 
     # now real read mode
-    xlist = _cxtgeo.surf_import_ijxyz(mfile, 1, ncol, nrow, ncol * nrow, 0, DEBUG)
+    xlist = _cxtgeo.surf_import_ijxyz(fin.fhandle, 1, ncol, nrow, ncol * nrow, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
 
@@ -165,10 +172,14 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     self._ilines = iln
     self._xlines = xln
 
+    fin.close()
+
 
 def import_ijxyz_ascii_tmpl(self, mfile, template):
     """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface
     instance as template."""
+
+    fin = xtgeo._XTGeoCFile(mfile)
 
     if isinstance(template, (xtgeo.cube.Cube, xtgeo.surface.RegularSurface)):
         logger.info("OK template")
@@ -177,7 +188,7 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
 
     nxy = template.ncol * template.nrow
     _iok, val = _cxtgeo.surf_import_ijxyz_tmpl(
-        mfile, template.ilines, template.xlines, nxy, 0, DEBUG
+        fin.fhandle, template.ilines, template.xlines, nxy, 0
     )
 
     val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
@@ -195,3 +206,5 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
 
     self._ilines = template._ilines.copy()
     self._xlines = template._xlines.copy()
+
+    fin.close()

@@ -121,7 +121,6 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
         ivalues,
         jvalues,
         option,
-        XTGDEBUG,
     )
 
     logger.info("Extracted surfaces from 3D grid...")

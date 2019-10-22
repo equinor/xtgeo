@@ -98,8 +98,7 @@ def distance_from_point(self, point=(0, 0), azimuth=0.0):
         ypv,
         azimuth,
         svalues,
-        0,
-        XTGDEBUG,
+        0
     )
 
     if ier != 0:
@@ -126,7 +125,6 @@ def get_value_from_xy(self, point=(0.0, 0.0)):
         self.yflip,
         self.rotation,
         self.get_values1d(),
-        XTGDEBUG,
     )
 
     if zcoord > xtgeo.UNDEF_LIMIT:
@@ -300,7 +298,6 @@ def get_fence(self, xyfence):
         self.yflip,
         self.rotation,
         self.get_values1d(),
-        XTGDEBUG,
     )
 
     if istat != 0:
@@ -340,7 +337,6 @@ def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
         self.yflip,
         self.rotation,
         self.get_values1d(),
-        XTGDEBUG,
     )
 
     if istat != 0:

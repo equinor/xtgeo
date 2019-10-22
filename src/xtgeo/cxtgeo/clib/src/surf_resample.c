@@ -64,8 +64,6 @@ int surf_resample(
     int i2, j2, ier2, ib2;
     double xc2, yc2, zc2, zc;
 
-    int debug = 0;  /* tmp */
-
     for (i2 = 1; i2 <= nx2; i2++) {
         for (j2 = 1; j2 <= ny2; j2++) {
 
@@ -81,7 +79,7 @@ int surf_resample(
             if (ier2 == 0) {
                 zc = surf_get_z_from_xy(xc2, yc2, nx1, ny1, xori1, yori1,
                                         xinc1, yinc1, yflip1, rota1, mapv1,
-                                        nn1, debug);
+                                        nn1);
                 mapv2[ib2] = zc;
 
             }

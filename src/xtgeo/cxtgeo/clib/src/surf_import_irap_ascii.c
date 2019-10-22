@@ -1,16 +1,17 @@
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * Import Irap ascii map (with rotation)
  *
- *******************************************************************************
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    surf_import_irap_ascii.c
@@ -22,7 +23,7 @@
  *    Import a map on Irap ascii format.
  *
  * ARGUMENTS:
- *    filename       i     File name, character string
+ *    fd             i     File handle
  *    mx             i     Map dimension X (I)
  *    my             i     Map dimension Y (J)
  *    xori           i     X origin coordinate
@@ -32,7 +33,6 @@
  *    rot            i     Rotation (degrees, from X axis, anti-clock)
  *    p_surf_v       i     1D pointer to map/surface values pointer array
  *    option         i     0: read only dimensions (for memory alloc), 1 all
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -43,11 +43,11 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
 
 int surf_import_irap_ascii (
-                            char   *file,
+                            FILE   *fd,
                             int    mode,
                             int    *nx,
                             int    *ny,
@@ -59,48 +59,33 @@ int surf_import_irap_ascii (
                             double *rot,
                             double *p_map_v,
                             long   nmap,
-                            int    option,
-                            int    debug
+                            int    option
                             )
 {
 
     /* locals*/
     int idum, ib, ic, i, j, k, iok;
     long ncount;
-    FILE *fd;
-    char s[24] = "surf_import_irap_ascii";
 
     float rdum, value;
     double dval;
 
-    xtgverbose(debug);
-
-    /* read header */
-    xtg_speak(s, 2, "Entering routine");
-
-
-    fd = fopen(file, "rb");
-    if (fd == NULL) {
-	xtg_speak(s,2,"Opening Irap ascii file FAILED!");
-    }
-    else{
-	xtg_speak(s,2,"Opening Irap ascii file...OK!");
-    }
-
-
     ncount = 0;
 
-    /* read header */
-    xtg_speak(s,2,"Reading header!");
+    fseek(fd, 0, SEEK_SET);
 
+    /* read header */
     iok = fscanf(fd, "%d %d %lf %lf %lf %f %lf %f %d %lf %f %f %d %d %d %d %d "
                  "%d %d", &idum, ny, xinc, yinc,
                  xori, &rdum, yori, &rdum,
                  nx, rot, &rdum, &rdum,
                  &idum, &idum, &idum, &idum, &idum, &idum, &idum);
 
-    if (iok < 19) xtg_error(s, "Something went wrong with Irap ASCII import. "
-                            "Report as BUG");
+    if (iok < 19) {
+        logger_error("Something went wrong with Irap ASCII import. Report as BUG");
+        logger_error("IOK is %d", iok);
+        return -1;
+    }
 
     if (*rot < 0.0) *rot = *rot + 360.0;
 

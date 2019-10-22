@@ -14,187 +14,188 @@ int x_nint(double);
 
 
 int x_cmp_sort (
-		const void *vp,
-		const void *vq
-		);
+    const void *vp,
+    const void *vq
+    );
 
 void x_mapaxes (
-		int   mode,
-		double *x,
-		double *y,
-		const double x1,
-		const double y1,
-		const double x2,
-		const double y2,
-		const double x3,
-		const double y3,
-		int   option
-		);
+    int   mode,
+    double *x,
+    double *y,
+    const double x1,
+    const double y1,
+    const double x2,
+    const double y2,
+    const double x3,
+    const double y3,
+    int   option
+    );
 
 
 void x_stretch_points(
-		      int   np,
-		      double *p1_v,
-		      double *p2_v,
-		      int method,
-		      int debug
-		       );
+    int   np,
+    double *p1_v,
+    double *p2_v,
+    int method,
+    int debug
+    );
 
 void x_basicstats (
-		   int n,
-		   double undef,
-		   double *v,
-		   double *min,
-		   double *max,
-		   double *avg,
-		   int debug
-		   );
+    int n,
+    double undef,
+    double *v,
+    double *min,
+    double *max,
+    double *avg,
+    int debug
+    );
 
 void x_basicstats2 (
-                    int n,
-                    float undef,
-                    float *v,
-                    float *min,
-                    float *max,
-                    float *avg,
-                    int debug
-                    );
+    int n,
+    float undef,
+    float *v,
+    float *min,
+    float *max,
+    float *avg,
+    int debug
+    );
 
 void x_stretch_vector (
-		       double *z_v,
-		       int   nz,
-		       int   k1,
-		       int   k2,
-		       double z1n,
-		       double z2n,
-		       int debug
-		       );
+    double *z_v,
+    int   nz,
+    int   k1,
+    int   k2,
+    double z1n,
+    double z2n,
+    int debug
+    );
 
 
 
 int x_vector_extrapol (
-		       double x1,
-		       double y1,
-		       double z1,
-		       double *x2,
-		       double *y2,
-		       double *z2,
-		       double dlen,
-		       double xang,
-		       int   debug
-		       );
+    double x1,
+    double y1,
+    double z1,
+    double *x2,
+    double *y2,
+    double *z2,
+    double dlen,
+    double xang,
+    int   debug
+    );
 
 int x_vector_extrapol2 (
-                        double x1,
-                        double y1,
-                        double z1,
-                        double *x2,
-                        double *y2,
-                        double *z2,
-                        double dlen,
-                        double xang,
-                        int   debug
-                        );
+    double x1,
+    double y1,
+    double z1,
+    double *x2,
+    double *y2,
+    double *z2,
+    double dlen,
+    double xang,
+    int   debug
+    );
 
 int x_chk_point_in_cell (
-			 double x,
-			 double y,
-			 double z,
-			 double coor[],
-			 int   imethod,
-			 int   debug
-			 );
+    double x,
+    double y,
+    double z,
+    double coor[],
+    int   imethod,
+    int   debug
+    );
 
-void x_2d_rect_corners(double x, double y, double xinc, double yinc,
-                       double rot,
-                       double result[8], int debug);
+void x_2d_rect_corners(
+    double x, double y, double xinc, double yinc,
+    double rot,
+    double result[8], int debug);
 
 int x_kvpt3s (
-	      double pp[],
-	      double tri[][3],
-	      int   *ier
-	      );
+    double pp[],
+    double tri[][3],
+    int   *ier
+    );
 
 void x_kmgmps (
-	       double a[][3],
-	       int l[],
-	       double prmn,
-	       int m,
-	       int n,
-	       double eps,
-	       int *ier
-	       );
+    double a[][3],
+    int l[],
+    double prmn,
+    int m,
+    int n,
+    double eps,
+    int *ier
+    );
 
 void x_kmsubs (
-	       double x[],
-	       double a[][3],
-	       int m,
-	       int n,
-	       double b[],
-	       int l[],
-	       int *ier
-	       );
+    double x[],
+    double a[][3],
+    int m,
+    int n,
+    double b[],
+    int l[],
+    int *ier
+    );
 
 void x_regular_geom (
-                     double xmin,
-                     double xinc,
-                     double ymin,
-                     double yinc,
-                     double zmin,
-                     double zinc,
-                     int   nx,
-                     int   ny,
-                     int   nz,
-                     int   i,
-                     int   j,
-                     int   z,
-                     double rot_azi_deg,
-                     double *xcenter,
-                     double *ycenter,
-                     double *zcenter,
-                     double *corners_v,
-                     int   flag,
-                     int   debug
-                     );
+    double xmin,
+    double xinc,
+    double ymin,
+    double yinc,
+    double zmin,
+    double zinc,
+    int   nx,
+    int   ny,
+    int   nz,
+    int   i,
+    int   j,
+    int   z,
+    double rot_azi_deg,
+    double *xcenter,
+    double *ycenter,
+    double *zcenter,
+    double *corners_v,
+    int   flag,
+    int   debug
+    );
 
 
 
 int x_vector_linint (
-                     double x1,
-                     double y1,
-                     double z1,
-                     double x2,
-                     double y2,
-                     double z2,
-                     double dlen,
-                     double *xn,
-                     double *yn,
-                     double *zn,
-                     int   debug
-		     );
+    double x1,
+    double y1,
+    double z1,
+    double x2,
+    double y2,
+    double z2,
+    double dlen,
+    double *xn,
+    double *yn,
+    double *zn,
+    int   debug
+    );
 
 double x_vector_len3d (
-                       double x1,
-                       double x2,
-                       double y1,
-                       double y2,
-                       double z1,
-                       double z2
-                       );
+    double x1,
+    double x2,
+    double y1,
+    double y2,
+    double z1,
+    double z2
+    );
 
 
 int x_interp_cube_nodes (
-                         double *x_v,
-                         double *y_v,
-                         double *z_v,
-                         float *p_v,
-                         double x,
-                         double y,
-                         double z,
-                         float *value,
-                         int method,
-                         int debug
-                         );
+    double *x_v,
+    double *y_v,
+    double *z_v,
+    float *p_v,
+    double x,
+    double y,
+    double z,
+    float *value,
+    int method,
+    int debug
+    );
 
 int x_plane_normalvector(double *points_v, double *nvector, int option,
 			 int debug);
@@ -258,55 +259,55 @@ extern void *SwapEndian(void* Addr, const int Nb);
  */
 
 void _grd3d_imp_roff_asc_grd (
-			     int     *num_act,
-			     int     *num_subgrds,
-			     double  *p_coord_v,
-			     double  *p_zgrd3d_v,
-			     int     *p_actnum_v,
-			     int     *p_subgrd_v,
-			     int     nnsub,
-			     char    *filename,
-			     int     debug
-			     );
+    int     *num_act,
+    int     *num_subgrds,
+    double  *p_coord_v,
+    double  *p_zgrd3d_v,
+    int     *p_actnum_v,
+    int     *p_subgrd_v,
+    int     nnsub,
+    char    *filename,
+    int     debug
+    );
 
 void _grd3d_imp_roff_bin_grd (
-			      int     *num_act,
-			      int     *num_subgrds,
-			      double  *p_coord_v,
-			      double  *p_zgrd3d_v,
-			      int     *p_actnum_v,
-			      int     *p_subgrd_v,
-			      int     nnsub,
-			      char    *filename,
-			      int     debug
-			      );
+    int     *num_act,
+    int     *num_subgrds,
+    double  *p_coord_v,
+    double  *p_zgrd3d_v,
+    int     *p_actnum_v,
+    int     *p_subgrd_v,
+    int     nnsub,
+    char    *filename,
+    int     debug
+    );
 
 
 void _grd3d_imp_roff_asc_prp (
-			      int     nx,
-			      int     ny,
-			      int     nz,
-			      char    *prop_name,
-			      int     *p_int_v,
-			      double   *p_double_v,
-			      char    **codenames,
-			      int     *codevalues,
-			      char    *filename,
-			      int     debug
-			      );
+    int     nx,
+    int     ny,
+    int     nz,
+    char    *prop_name,
+    int     *p_int_v,
+    double   *p_double_v,
+    char    **codenames,
+    int     *codevalues,
+    char    *filename,
+    int     debug
+    );
 
 void _grd3d_imp_roff_bin_prp (
-			      int     nx,
-			      int     ny,
-			      int     nz,
-			      char    *prop_name,
-			      int     *p_int_v,
-			      double   *p_double_v,
-			      char    **codenames,
-			      int     *codevalues,
-			      char    *filename,
-			      int     debug
-			      );
+    int     nx,
+    int     ny,
+    int     nz,
+    char    *prop_name,
+    int     *p_int_v,
+    double   *p_double_v,
+    char    **codenames,
+    int     *codevalues,
+    char    *filename,
+    int     debug
+    );
 
 int _grd3d_roffbinstring(char *bla, FILE *fc);
 
@@ -326,26 +327,26 @@ void _grd3d_getchararray(char **array, int num, FILE *fc);
 void _grd3d_getchararray1d(char *array, int num, FILE *fc);
 
 void _grd3d_roff_to_xtg_grid (
-			      int     nx,
-			      int     ny,
-			      int     nz,
-			      float   xoffset,
-			      float   yoffset,
-			      float   zoffset,
-			      float   xscale,
-			      float   yscale,
-			      float   zscale,
-			      float   *cornerlines_v,
-			      char    *splitenz_v,
-			      float   *zdata_v,
-			      int     *num_act,
-			      int     *num_subgrds,
-			      double  *p_coord_v,
-			      double  *p_zgrd3d_v,
-			      int     *p_actnum_v,
-			      int     *p_subgrd_v,
-			      int     debug
-			      );
+    int     nx,
+    int     ny,
+    int     nz,
+    float   xoffset,
+    float   yoffset,
+    float   zoffset,
+    float   xscale,
+    float   yscale,
+    float   zscale,
+    float   *cornerlines_v,
+    char    *splitenz_v,
+    float   *zdata_v,
+    int     *num_act,
+    int     *num_subgrds,
+    double  *p_coord_v,
+    double  *p_zgrd3d_v,
+    int     *p_actnum_v,
+    int     *p_subgrd_v,
+    int     debug
+    );
 
 /* new from sep 2016 */
 int   x_roffbinstring(char *bla, FILE *fc);
@@ -365,75 +366,79 @@ void  x_roffgetchararray(char *array, int num, FILE *fc);
 
 
 int _grd3d_fnd_near_cell (
-			  int     *i,
-			  int     *j,
-			  int     *k,
-			  int     nx,
-			  int     ny,
-			  int     nz,
-			  float   *p_coord_v,
-			  float   *p_zgrd3d_v,
-			  int     *p_actnum_v,
-			  float   x,
-			  float   y,
-			  float   z,
-			  int     debug
-			  );
+    int     *i,
+    int     *j,
+    int     *k,
+    int     nx,
+    int     ny,
+    int     nz,
+    float   *p_coord_v,
+    float   *p_zgrd3d_v,
+    int     *p_actnum_v,
+    float   x,
+    float   y,
+    float   z,
+    int     debug
+    );
 
 int _grd3d_fnd_cell (
-		     int     *i,
-		     int     *j,
-		     int     *k,
-		     int     nx,
-		     int     ny,
-		     int     nz,
-		     float   *p_coord_v,
-		     float   *p_zgrd3d_v,
-		     int     *p_actnum_v,
-		     float   x,
-		     float   y,
-		     float   z,
-		     int     debug
-		     );
+    int     *i,
+    int     *j,
+    int     *k,
+    int     nx,
+    int     ny,
+    int     nz,
+    float   *p_coord_v,
+    float   *p_zgrd3d_v,
+    int     *p_actnum_v,
+    float   x,
+    float   y,
+    float   z,
+    int     debug
+    );
 
 
 
-int u_read_segy_bitem (int nc,
-		       int ic,
-		       void *ptr,
-		       size_t size,
-		       size_t nmemb,
-		       FILE *fc,
-		       FILE *fout,
-		       int swap,
-		       char *txt,
-		       int *nb,
-		       int option);
+int u_read_segy_bitem (
+    int nc,
+    int ic,
+    void *ptr,
+    size_t size,
+    size_t nmemb,
+    FILE *fc,
+    FILE *fout,
+    int swap,
+    char *txt,
+    int *nb,
+    int option
+    );
 
 
-void u_ibm_to_float (int *from,
-		     int *to,
-		     int n,
-		     int endian,
-		     int swap);
+void u_ibm_to_float (
+    int *from,
+    int *to,
+    int n,
+    int endian,
+    int swap
+    );
 
 
 
 int u_wri_ecl_bin_record (
-			  char    *cname,
-			  char    *ctype,
-			  int     reclen,
-			  int     *tmp_int_v,
-			  float   *tmp_float_v,
-			  double  *tmp_double_v,
-			  char    **tmp_string_v,
-			  int     *tmp_logi_v,
-			  FILE    *fc,
-			  int     debug
-			  );
+    char    *cname,
+    char    *ctype,
+    int     reclen,
+    int     *tmp_int_v,
+    float   *tmp_float_v,
+    double  *tmp_double_v,
+    char    **tmp_string_v,
+    int     *tmp_logi_v,
+    FILE    *fc,
+    int     debug
+    );
 
 
 
 int u_eightletter (
-		   char *cs
-		   );
+    char *cs
+    );
