@@ -49,26 +49,22 @@
  ***************************************************************************************
  */
 
-
-
-int grd3d_imp_ecl_egrid (
-                         FILE *fc,
-                         int nx,
-                         int ny,
-                         int nz,
-                         long bpos_mapaxes,
-                         long bpos_coord,
-                         long bpos_zcorn,
-                         long bpos_actnum,
-                         double *p_coord_v,
-                         double *p_zcorn_v,
-                         int *p_actnum_v,
-                         long *nact,
-                         int option
-                         )
+int
+grd3d_imp_ecl_egrid (FILE *fc,
+                     int nx,
+		     int ny,
+		     int nz,
+		     long bpos_mapaxes,
+		     long bpos_coord,
+		     long bpos_zcorn,
+		     long bpos_actnum,
+		     double *p_coord_v,
+		     double *p_zcorn_v,
+		     int *p_actnum_v,
+		     long *nact,
+		     int option)
 {
 
-    /* locals */
     int *idum = NULL;
     float *fdum = NULL;
     double *ddum = NULL;
@@ -149,7 +145,6 @@ int grd3d_imp_ecl_egrid (
     logger_info("Read and convert ZCORN ...");
     grd3d_read_eclrecord(fc, bpos_zcorn, 2, idum, 0, tmp_zcorn, nzcorn, ddum,
                          0);
-
     /*
      * ZCORN: Eclipse has 8 corners pr cell, while XTGeo format
      * use 4 corners (top of cell) except for last layer where also base is
