@@ -1,21 +1,16 @@
-/*
- * ############################################################################
- * x_mapaxes.c
- * ############################################################################
- */
 
+#include "logger.h"
 #include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- * ****************************************************************************
+ * *************************************************************************************
  *                              MAPAXES
- * ****************************************************************************
+ * *************************************************************************************
  * Based on a formula from ERT
  * MAPAXES has 6 elements, and encourage the growth of donkey ears...:
- * ----------------------------------------------------------------------------
- *
+ * -------------------------------------------------------------------------------------
  */
 
 void x_mapaxes (
@@ -34,6 +29,9 @@ void x_mapaxes (
     double  xval, yval, xnew, ynew;
     double  normx, normy;
     double  xx1, xx3, yy1, yy3;
+    double  div1, div2;
+
+    static int report_mapaxes = 0;
 
     /* mode < 0 means no mapaxes transform */
     if (mode < 0) {
@@ -42,6 +40,19 @@ void x_mapaxes (
 
     xval = *x;
     yval = *y;
+
+    /*
+     * Sometimes all values in MAPAXES are zero, then skip
+     */
+
+    if (report_mapaxes == 1) return;
+
+    if ((fabs(x1) < FLOATEPS) && (fabs(x2) < FLOATEPS) && (fabs(x3) < FLOATEPS) &&
+        (fabs(y1) < FLOATEPS) && (fabs(y2) < FLOATEPS) && (fabs(y3) < FLOATEPS)) {
+        logger_warn("All MAPAXES numbers ~zero in %s; dubious settings", __FUNCTION__);
+        report_mapaxes = 1;
+        return;
+    }
 
     /*
      * Borrowed from ERT method
@@ -54,8 +65,16 @@ void x_mapaxes (
     xx3 = x3 - x2;
     yy3 = y3 - y2;
 
-    normx = 1.0 / sqrt(xx3 * xx3 + yy3 * yy3);
-    normy = 1.0 / sqrt(xx1 * xx1 + yy1 * yy1);
+    div1 = sqrt(xx3 * xx3 + yy3 * yy3);
+    div2 = sqrt(xx1 * xx1 + yy1 * yy1);
+
+    if ((fabs(div1) < FLOATEPS) || (fabs(div2) < FLOATEPS)) {
+        logger_warn("Divisor wrt MAPAXES is ~zero in %s", __FUNCTION__);
+        return;
+    }
+
+    normx = 1.0 / div1;
+    normy = 1.0 / div2;
 
     xx3 = xx3 * normx;
     yy3 = yy3 * normx;
