@@ -86,6 +86,8 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
 
     if self._isdiscrete:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_INT_LIMIT)
+        self.codes = _fix_codes(roxprop.code_names)
+        logger.info("Fixed codes: %s", self.codes)
     else:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_LIMIT)
 
@@ -102,7 +104,7 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisati
 
     try:
         roxgrid = rox.project.grid_models[gname]
-        _store_in_roxar(self, pname, roxgrid)
+        _store_in_roxar(self, pname, roxgrid, realisation)
 
         if saveproject:
             try:
@@ -116,7 +118,7 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisati
     rox.safe_close()
 
 
-def _store_in_roxar(self, pname, roxgrid):
+def _store_in_roxar(self, pname, roxgrid, realisation):
 
     indexer = roxgrid.get_grid().grid_indexer
 
@@ -152,7 +154,23 @@ def _store_in_roxar(self, pname, roxgrid):
             pname, property_type=roxar.GridPropertyType.continuous, data_type=dtype
         )
 
-    rprop.set_values(pvalues.astype(dtype))
+    rprop.set_values(pvalues.astype(dtype), realisation=realisation)
 
     if self.isdiscrete:
         rprop.code_names = self.codes.copy()
+
+
+def _fix_codes(codes):
+    """Roxar can provide a code list with empty strings; fix this issue here"""
+
+    newcodes = {}
+    for code, name in codes.items():
+        if not isinstance(code, int):
+            code = int(code)
+
+        if not name:
+            continue
+
+        newcodes[code] = str(name)
+
+    return newcodes

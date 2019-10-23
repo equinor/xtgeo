@@ -59,6 +59,7 @@ PIP := ${PYTHON} -m pip
 
 PREFIX := ${SDP_BINDIST_ROOT}
 TARGET := ${PREFIX}/lib/python${PYTHON_SHORT}/site-packages
+CUSTOM := ${HOME}
 
 GID := res
 
@@ -182,6 +183,9 @@ siteinstall: allclean dist ## Install to custom place using $PREFIX aka make sit
 	\rm -fr  ${PREFIX}/${APPLICATION}
 	\rm -fr  ${PREFIX}/${APPLICATION}-*
 	pip install --prefix=${PREFIX} .
+
+userinstall: dist ## Install to user home folder (mostly for testing) using $CUSTOM
+	PYTHONUSERBASE=${CUSTOM} ${PIP} install --upgrade --user .
 
 
 docsinstall: docsrun  ## install docs in Equinor
