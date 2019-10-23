@@ -1,28 +1,26 @@
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * Export Irap binary map (with rotation)
  *
- *******************************************************************************
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    surf_export_irap_bin.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Export a map on Irap binary format.
  *
  * ARGUMENTS:
- *    filename       i     File name, character string
+ *    fc             i     File handle
  *    mx             i     Map dimension X (I)
  *    my             i     Map dimension Y (J)
  *    xori           i     X origin coordinate
@@ -44,10 +42,10 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
 int surf_export_irap_bin(
-			 char   *filename,
+			 FILE   *fc,
 			 int    mx,
 			 int    my,
 			 double xori,
@@ -57,8 +55,7 @@ int surf_export_irap_bin(
 			 double rot,
 			 double *p_map_v,
                          long   ntot,
-			 int    option,
-			 int    debug
+			 int    option
 			 )
 {
 
@@ -66,16 +63,10 @@ int surf_export_irap_bin(
     int     swap, ier, myint, nrec, i, j, ib;
     float   xmax, ymax, myfloat;
 
-    char    s[24]="surf_export_irap_bin";
-
-    FILE    *fc;
 
     /* code: */
 
-    xtgverbose(debug);
-    xtg_speak(s,1,"Write IRAP binary map file ...",s);
-
-    xtg_speak(s,2,"Entering %s",s);
+    logger_info("Write IRAP binary map file ... (%s)", __FUNCTION__);
 
     /* check endianess */
     swap=0;
@@ -83,80 +74,58 @@ int surf_export_irap_bin(
 
     /*
      * Do some computation first, find (pseudo) xmin, ymin, xmax, ymax
-     * -------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      */
+
     xmax = xori + xinc*(mx-1);
     ymax = yori + yinc*(my-1);
 
     /*
      * WRITE HEADER
-     * -------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      * Reverse engineering says that the binary header is
      * <32> ID MY XORI XMAX YORI YMAX XINC YINC <32>
      * <16> MX ROT X0ORI Y0ORI<16>
      * <28> 0 0 0 0 0 0 0 <28>
-     * -------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      */
 
-    fc = fopen(filename,"wb");
-
-    if (fc == NULL) {
-        xtg_warn(s, 0, "Some thing is wrong with requested filename <%s>",
-                 filename);
-        xtg_error(s, "Could be: Non existing folder, wrong permissions ? ..."
-                  " anyway: STOP!", s);
-    }
+    if (fc == NULL) return -1;
 
     /* first line in header */
     myint=32;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
     myint=-996;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
     myint=my;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
     myfloat=xori;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=xmax;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=yori;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=ymax;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=xinc;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=yinc;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myint=32;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
 
     /* second line in header */
     myint=16;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
     myint=mx;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
     myfloat=rot;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=xori;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myfloat=yori;
-    xtg_speak(s,2,"Write %f",myfloat);
     if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
     myint=16;
-    xtg_speak(s,2,"Write %d",myint);
     if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
 
     /* third line in header */
@@ -181,10 +150,10 @@ int surf_export_irap_bin(
 
 
     /*
-     * -------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      * WRITE DATA
      * These are floats bounded by Fortran records, reading I (x) dir fastest
-     * -------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      */
 
     /* record length */
@@ -213,8 +182,6 @@ int surf_export_irap_bin(
 	ier = fwrite(&myint,sizeof(int),1,fc);
     }
 
-
-    fclose(fc);
     return EXIT_SUCCESS;
 
 }

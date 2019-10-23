@@ -6,6 +6,7 @@
  ******************************************************************************
  */
 
+#include "logger.h"
 #include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
@@ -41,7 +42,6 @@
  *    nz2             i     Number of points
  *    xtol, ... itol  i     Tolerances for X Y Z, INCL
  *    option          i     Options: for future usage
- *    debug           i     Debug flag
  *
  * RETURNS:
  *    Function:  0: Upon success. If problems:
@@ -75,19 +75,14 @@ int well_trunc_parallel(
                         double ztol,
                         double itol,
                         double atol,
-                        int option,
-                        int debug
+                        int option
                         )
 {
     /* locals */
-    char sbn[24] = "well_trunc_parallel";
     int i1, i2, ier1, ier2;
     double *md1=NULL, *md2=NULL;
     double *in1=NULL, *in2=NULL;
     double *az1=NULL, *az2=NULL;
-
-    xtgverbose(debug);
-    if (debug > 2) xtg_speak(sbn, 3, "Entering routine %s", sbn);
 
     md1 = calloc(nx1, sizeof(double));
     in1 = calloc(nx1, sizeof(double));
@@ -97,11 +92,13 @@ int well_trunc_parallel(
     az2 = calloc(nx2, sizeof(double));
 
     /* first compute inclinations */
-    ier1 = well_geometrics(nx1, xv1, yv1, zv1, md1, in1, az1, 0, debug);
-    ier2 = well_geometrics(nx2, xv2, yv2, zv2, md2, in2, az2, 0, debug);
+    ier1 = well_geometrics(nx1, xv1, yv1, zv1, md1, in1, az1, 0);
+    ier2 = well_geometrics(nx2, xv2, yv2, zv2, md2, in2, az2, 0);
 
-    if (ier1 != 0 || ier2 != 0) xtg_error(sbn, "Something went wrong on well "
-                                          "geometrics in %s", sbn);
+    if (ier1 != 0 || ier2 != 0) {
+        logger_error("Something went wrong on well geometrics in %s", __FUNCTION__);
+        return EXIT_FAILURE;
+    }
 
     /* compare point by point and update 1 etc if close to a point in 2 */
     for (i1 = 0; i1 < nx1; i1++) {

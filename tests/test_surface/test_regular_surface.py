@@ -55,7 +55,7 @@ def test_create():
     x.describe()
 
 
-#@tsetup.skipifwindows
+# @tsetup.skipifwindows
 def test_ijxyz_import1():
     """Import some IJ XYZ format, typical seismic."""
     logger.info("Import and export...")
@@ -70,7 +70,7 @@ def test_ijxyz_import1():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4a.gri"))
 
 
-#@tsetup.skipifwindows
+# @tsetup.skipifwindows
 def test_ijxyz_import2():
     """Import some IJ XYZ small set with YFLIP-1"""
     logger.info("Import and export...")
@@ -85,7 +85,7 @@ def test_ijxyz_import2():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4b.gri"))
 
 
-#@tsetup.skipifwindows
+# @tsetup.skipifwindows
 def test_ijxyz_import4_ow_messy_dat():
     """Import some IJ XYZ small set with YFLIP -1 from OW messy dat format."""
     logger.info("Import and export...")
@@ -100,7 +100,7 @@ def test_ijxyz_import4_ow_messy_dat():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4d.gri"))
 
 
-#@tsetup.skipifwindows
+# @tsetup.skipifwindows
 def test_ijxyz_import3():
     """Import some IJ XYZ small set yet again"""
     logger.info("Import and export...")

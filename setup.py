@@ -35,6 +35,7 @@ else:
         "cmake",
         "..",
         "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DPYTHON_LIBRARY=" + PYLIB,
     ]
