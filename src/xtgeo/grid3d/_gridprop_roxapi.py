@@ -104,7 +104,7 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisati
 
     try:
         roxgrid = rox.project.grid_models[gname]
-        _store_in_roxar(self, pname, roxgrid)
+        _store_in_roxar(self, pname, roxgrid, realisation)
 
         if saveproject:
             try:
@@ -118,7 +118,7 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisati
     rox.safe_close()
 
 
-def _store_in_roxar(self, pname, roxgrid):
+def _store_in_roxar(self, pname, roxgrid, realisation):
 
     indexer = roxgrid.get_grid().grid_indexer
 
@@ -154,7 +154,7 @@ def _store_in_roxar(self, pname, roxgrid):
             pname, property_type=roxar.GridPropertyType.continuous, data_type=dtype
         )
 
-    rprop.set_values(pvalues.astype(dtype))
+    rprop.set_values(pvalues.astype(dtype), realisation=realisation)
 
     if self.isdiscrete:
         rprop.code_names = self.codes.copy()
