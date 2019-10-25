@@ -208,6 +208,8 @@ class RegularSurface(object):
     def __init__(self, *args, **kwargs):  # pylint: disable=too-many-statements
         """Initiate a RegularSurface instance."""
 
+        logger.debug("Start __init__ method for RegularSurface object %s", id(self))
+
         self._undef = xtgeo.UNDEF
         self._undef_limit = xtgeo.UNDEF_LIMIT
 
@@ -282,7 +284,7 @@ class RegularSurface(object):
                     self._values, mask=ma.getmaskarray(self._values)
                 )
 
-        logger.debug("Ran __init__ method for RegularSurface object")
+        logger.debug("Ran __init__ method for RegularSurface object %s", id(self))
 
     # ==================================================================================
 
@@ -704,7 +706,7 @@ class RegularSurface(object):
         bytestream = False
         if isinstance(mfile, io.BytesIO):
             bytestream = True
-            logger.info('BYTE')
+            logger.debug("File input is bytestream")
 
         self._values = None
 
@@ -730,6 +732,7 @@ class RegularSurface(object):
                 fformat = "irap_binary"  # default
 
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
+            logger.debug("Irap binary format to read")
             _regsurf_import.import_irap_binary(self, mfile, values=values)
             if not values:
                 self._isloaded = False
