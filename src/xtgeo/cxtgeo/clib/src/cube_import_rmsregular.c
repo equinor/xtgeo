@@ -80,7 +80,7 @@ void cube_import_rmsregular (
 
     /* header is ASCII. NB remember the \n !... */
     for (i = 1; i <= iline; i++) {
-        if (fgets(string, 132, fc) != NULL) logger_debug("Scanning...");
+        if (fgets(string, 132, fc) != NULL) logger_debug(__LINE__, "Scanning...");
    }
 
    *vmin=VERYLARGEFLOAT;

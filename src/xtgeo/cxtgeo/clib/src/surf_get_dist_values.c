@@ -75,7 +75,7 @@ int surf_get_dist_values(
                             nn, yv, nn, 0, 0);
 
     if (ier != 0) {
-	logger_error("Something went wrong in %s", __FUNCTION__);
+	logger_error(__LINE__, "Something went wrong in %s", __FUNCTION__);
         return ier;
     }
 

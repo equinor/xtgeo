@@ -157,7 +157,7 @@ _cxtgeo = CMakeExtension(
     include_dirs=["src/xtgeo/cxtgeo/clib/src"],
     library_dirs=["src/xtgeo/cxtgeo/clib/lib"],
     libraries=["cxtgeo"],
-    swig_opts=["-modern"],
+    swig_opts=[],
 )
 
 _CMDCLASS = {"build": build, "build_ext": build_ext}

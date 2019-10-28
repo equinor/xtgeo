@@ -42,7 +42,7 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
-    logger_critical("Opening bytestrem is not implemented on this platform!");
+    logger_critical(__LINE__, "Opening bytestrem is not implemented on this platform!");
     return fhandle;
 }
 #endif

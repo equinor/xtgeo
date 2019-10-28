@@ -66,7 +66,8 @@ int surf_export_irap_bin(
 
     /* code: */
 
-    logger_info("Write IRAP binary map file ... (%s)", __FUNCTION__);
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Write IRAP binary map file...");
 
     /* check endianess */
     swap=0;

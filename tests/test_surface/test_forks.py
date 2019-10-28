@@ -27,16 +27,16 @@ def test_surface_forks():
 
             futures = {executor.submit(_get_regsurf, i): i for i in range(nthread)}
 
-            # for future in concurrent.futures.as_completed(futures):
-            #     try:
-            #         surf = future.result()
-            #     except Exception as exc:
-            #         logger.error(f'Error: {exc}')
-            #     else:
-            #         surfs.append(surf)
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    surf = future.result()
+                except Exception as exc:
+                    logger.error(f'Error: {exc}')
+                else:
+                    surfs.append(surf)
 
-            # regular_surfaces = xtgeo.Surfaces(surfs)
-            # return regular_surfaces
+            regular_surfaces = xtgeo.Surfaces(surfs)
+            return regular_surfaces
 
     def _get_regsurf(i):
         logger.info("Start %s", i)
@@ -53,9 +53,9 @@ def test_surface_forks():
     #
     # main:
     #
-    nthread = 10
+    nthread = 100
     for n in range(nthread):
         x = xtgeo.RegularSurface()
         x.to_file(os.path.join(TMPD, str(n) + ".gri"))
 
-    _get_files_as_regularsurfaces_thread(nthread)
+    # _get_files_as_regularsurfaces_thread(nthread)

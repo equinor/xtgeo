@@ -68,7 +68,7 @@ double surf_get_z_from_xy(
     int userelative=1;
 
 
-    if (nx*ny != nn) logger_error("Fatal error in %s", __FUNCTION__);
+    if (nx*ny != nn) logger_error(__LINE__, "Fatal error in %s", __FUNCTION__);
 
 
     ib=-1;

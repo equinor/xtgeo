@@ -75,7 +75,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     long nxyz, nmapaxes, ncoord, nzcorn;
     long ib = 0;
 
-    logger_info("EGRID import ...");
+    logger_info(__LINE__, "EGRID import ...");
     /*
      * =================================================================================
      * INITIAL TASKS
@@ -114,7 +114,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     /*==================================================================================
      * Read COORD
      */
-    logger_info("Read and convert COORD ...");
+    logger_info(__LINE__, "Read and convert COORD ...");
 
     grd3d_read_eclrecord(fc, bpos_coord, 2, idum, 0, tmp_coord, ncoord, ddum,
                          0);
@@ -126,7 +126,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
         cy = tmp_coord[ib+1];
         cz = tmp_coord[ib+2];
         if (bpos_mapaxes >= 0) {
-            if (ib == 0) logger_debug("Mapaxes transform is present... "
+            if (ib == 0) logger_debug(__LINE__, "Mapaxes transform is present... "
                                       "xma1=%f, xma2=%f, xma3=%f, "
                                       "yma1=%f, yma2=%f, yma3=%f, ",
                                       xma1, xma2, xma3, yma1, yma2, yma3);
@@ -142,7 +142,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     /*==================================================================================
      * Read ZCORN
      */
-    logger_info("Read and convert ZCORN ...");
+    logger_info(__LINE__, "Read and convert ZCORN ...");
     grd3d_read_eclrecord(fc, bpos_zcorn, 2, idum, 0, tmp_zcorn, nzcorn, ddum,
                          0);
     /*
@@ -160,7 +160,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     grd3d_read_eclrecord(fc, bpos_actnum, 1, p_actnum_v, nxyz, fdum, 0, ddum,
                          0);
 
-    logger_info("Read ACTNUM ...");
+    logger_info(__LINE__, "Read ACTNUM ...");
 
     long nnact = 0;
     for (ib = 0; ib < nxyz; ib++) {
@@ -173,7 +173,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     free(tmp_coord);
     free(tmp_zcorn);
 
-    logger_info("EGRID import ... done");
+    logger_info(__LINE__, "EGRID import ... done");
 
     return EXIT_SUCCESS;
 }
