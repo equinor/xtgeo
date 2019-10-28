@@ -122,7 +122,7 @@ void _scan_dimensions(FILE *fd, int *nx, int *ny)
         iline = (int)(filine + 0.01);
         xline = (int)(fxline + 0.01);
 
-        if (iok > 5) logger_error("Wrong file format for map file?");
+        if (iok > 5) logger_error(__LINE__, "Wrong file format for map file?");
 
         if (iline < ilinemin) ilinemin = iline;
         if (iline > ilinemax) ilinemax = iline;
@@ -332,7 +332,7 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
     }
 
     if (okstatus == 0) {
-        logger_error("Could not find info to deduce map properties");
+        logger_error(__LINE__, "Could not find info to deduce map properties");
         return -9;
     }
 
@@ -385,8 +385,10 @@ int surf_import_ijxyz (
     int *ilinesb, *xlinesb;
     int nncol, nnrow;
 
+    logger_init(__FILE__, __FUNCTION__);
+
     /* read header */
-    logger_info("Entering routine %s", __FUNCTION__);
+    logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 
     fseek(fd, 0, SEEK_SET);
 
@@ -431,7 +433,7 @@ int surf_import_ijxyz (
     iok = _compute_map_props(nncol, nnrow, xcoord, ycoord, p_map_v,
                              xori, yori, xinc, yinc, rot, yflip);
 
-    if (iok != 0) logger_error("Error, cannot compute map props");
+    if (iok != 0) logger_error(__LINE__, "Error, cannot compute map props");
 
     free(ilinesb);
     free(xlinesb);

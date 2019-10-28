@@ -82,8 +82,8 @@ int surf_import_irap_ascii (
                  &idum, &idum, &idum, &idum, &idum, &idum, &idum);
 
     if (iok < 19) {
-        logger_error("Something went wrong with Irap ASCII import. Report as BUG");
-        logger_error("IOK is %d", iok);
+        logger_error(__LINE__, "Something went wrong with Irap ASCII import. Report as BUG");
+        logger_error(__LINE__, "IOK is %d", iok);
         return -1;
     }
 

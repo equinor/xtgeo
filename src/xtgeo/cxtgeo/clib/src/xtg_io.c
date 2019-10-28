@@ -4,10 +4,10 @@
  * Wrappers for file IO
  * ############################################################################
  */
-
 #include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#define _GNU_SOURCE 1
 
 FILE *xtg_fopen(const char *filename, const char *mode)
 {
@@ -42,7 +42,7 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
-    logger_critical("Opening bytestrem is not implemented on this platform!");
+    logger_critical(__LINE__, "Opening bytestrem is not implemented on this platform!");
     return fhandle;
 }
 #endif

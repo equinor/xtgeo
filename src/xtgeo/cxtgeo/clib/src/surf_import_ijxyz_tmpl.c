@@ -112,7 +112,7 @@ int surf_import_ijxyz_tmpl(
         /* some sanity tests first */
         if (iline < ilines[0] || iline > ilines[nncol - 1] ||
             xline < xlines[0] || xline > xlines[nnrow - 1]) {
-            logger_error("ILINE or XLINE in file outside template ranges");
+            logger_error(__LINE__, "ILINE or XLINE in file outside template ranges");
             return -1;
         }
 

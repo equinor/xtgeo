@@ -6,7 +6,6 @@ import subprocess
 from glob import glob
 import shutil
 import os
-import distutils.sysconfig as sysconfig
 
 from distutils.command.build import build as _build
 
@@ -17,9 +16,6 @@ from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
 
-PYINCDIR = sysconfig.get_python_inc()
-PYLIB = sysconfig.get_config_var("LIBDIR")
-
 WINDOWS = False
 if "Windows" in platform.system():
     WINDOWS = True
@@ -28,16 +24,13 @@ if "Windows" in platform.system():
         "..",
         "-DCMAKE_GENERATOR_PLATFORM=x64",
         "-DCMAKE_BUILD_TYPE=Release",
-        "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
     ]
 else:
     CMAKECMD = [
         "cmake",
         "..",
-        "-DPYTHON_INCLUDE_DIR=" + PYINCDIR,
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         "-DCMAKE_BUILD_TYPE=Release",
-        "-DPYTHON_LIBRARY=" + PYLIB,
     ]
 
 print("CMAKE COMMAND: {}".format(CMAKECMD))
@@ -157,7 +150,7 @@ _cxtgeo = CMakeExtension(
     include_dirs=["src/xtgeo/cxtgeo/clib/src"],
     library_dirs=["src/xtgeo/cxtgeo/clib/lib"],
     libraries=["cxtgeo"],
-    swig_opts=["-modern"],
+    swig_opts=[],
 )
 
 _CMDCLASS = {"build": build, "build_ext": build_ext}

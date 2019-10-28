@@ -45,7 +45,31 @@ def test_irapbin_import_bytesio():
     xsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
+    assert (abs(xsurf.values.mean() - 1698.648) < 0.01)
     xsurf.describe()
+
+
+def test_get_regsurfi():
+
+    sfile = TESTSET1
+    with open(sfile, "rb") as fin:
+        stream = io.BytesIO(fin.read())
+
+    logger.info("File is %s", sfile)
+    for _itmp in range(20):
+        rf = xtgeo.RegularSurface(stream, fformat="irap_binary")
+        assert (abs(rf.values.mean() - 1698.648) < 0.01)
+        print(_itmp)
+
+
+def test_get_regsurff():
+
+    sfile = TESTSET1
+    logger.info("File is %s", sfile)
+    for _itmp in range(20):
+        rf = xtgeo.RegularSurface(sfile, fformat="irap_binary")
+        assert (abs(rf.values.mean() - 1698.648) < 0.01)
+        print(_itmp)
 
 
 @tsetup.skipifwindows

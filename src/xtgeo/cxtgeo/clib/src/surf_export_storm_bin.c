@@ -65,7 +65,8 @@ int surf_export_storm_bin(
     double dbl_value;
     int swap = 0;
 
-    logger_info("Write Storm binary map file ... (%s)", __FUNCTION__);
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Write Storm binary map file ... (%s)", __FUNCTION__);
 
     swap=x_swap_check();
 
@@ -89,7 +90,7 @@ int surf_export_storm_bin(
 	if (swap == 1) SWAP_DOUBLE(dbl_value);
 
 	if (fwrite(&dbl_value, 8, 1, fc) != 1) {
-            logger_error("Error writing to Storm format. Bug?");
+            logger_error(__LINE__, "Error writing to Storm format. Bug?");
             return -1;
         }
     }

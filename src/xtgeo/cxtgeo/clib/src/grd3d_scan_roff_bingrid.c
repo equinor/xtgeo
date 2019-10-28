@@ -32,7 +32,8 @@ void grd3d_scan_roff_bingrid (
     char cname[100];
     int  idum, mynx=0, myny=0, mynz=0, num=0, mybyte, iendian;
 
-    logger_info("Entering routine %s", __FUNCTION__);
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 
     /*
      *-------------------------------------------------------------------------
@@ -42,11 +43,11 @@ void grd3d_scan_roff_bingrid (
 
     iendian=x_swap_check();
     if (iendian==1) {
-	logger_info("Machine is little endian (linux intel, windows)");
+	logger_info(__LINE__, "Machine is little endian (linux intel, windows)");
 	x_byteorder(1); /* assumed initially */
     }
     else{
-	logger_info("Machine is big endian (many unix)");
+	logger_info(__LINE__, "Machine is big endian (many unix)");
 	x_byteorder(0); /* assumed initially */
     }
 
@@ -58,7 +59,7 @@ void grd3d_scan_roff_bingrid (
 
     fc=fopen(filename,"rb");
     if (fc == NULL) {
-	logger_error("Cannot open file!");
+	logger_error(__LINE__, "Cannot open file!");
         exit(-1);
     }
 

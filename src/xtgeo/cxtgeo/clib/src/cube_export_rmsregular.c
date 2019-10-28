@@ -57,7 +57,9 @@ int cube_export_rmsregular (
     double xmax,ymax,zmax;
     float value;
 
-    logger_info("Export cube to RMS regular format");
+    logger_init(__FILE__, __FUNCTION__);
+
+    logger_info(__LINE__, "Export cube to RMS regular format");
 
     /* if (yflip == -1) { */
     /*     xtg_speak(sub, 2, "Swap axes..."); */
@@ -101,7 +103,7 @@ int cube_export_rmsregular (
                 if (swap == 1) SWAP_FLOAT(value);
 
                 if (fwrite(&value, 4, 1, fc) !=1 ) {
-                    logger_error("Write failed in routine %s", __FUNCTION__);
+                    logger_error(__LINE__, "Write failed in routine %s", __FUNCTION__);
                     return -1;
                 }
             }

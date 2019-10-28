@@ -35,6 +35,7 @@ class _XTGeoCFile(object):
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._fhandle = None
         self._mode = mode
+        logger.debug("Init ran for _XTGeoFile")
 
     @property
     def fhandle(self):  # was get_handle
@@ -53,6 +54,7 @@ class _XTGeoCFile(object):
 
             # note that the typemap in swig computes the length for the buf!
             fhandle = _cxtgeo.xtg_fopen_bytestream(buf, self._mode)
+            logger.debug("Filehandle for byte stream: %s", fhandle)
 
         elif (
             isinstance(self._name, io.BytesIO)
@@ -147,8 +149,11 @@ class _XTGeoCFile(object):
             return True
 
         if self._fhandle:
-            _cxtgeo.xtg_fclose(self._fhandle)
-            logger.debug("File is now closed")
+            ier = _cxtgeo.xtg_fclose(self._fhandle)
+            if ier != 0:
+                raise RuntimeError("Could not close C file")
+
+            logger.debug("File is now closed %s", self._fhandle)
 
             if self._tmpfile:
                 try:

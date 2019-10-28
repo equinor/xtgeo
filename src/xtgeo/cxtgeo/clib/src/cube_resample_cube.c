@@ -83,7 +83,8 @@ int cube_resample_cube(
     double xc, yc, zc;
     float value;
 
-    logger_info("Resampling cube ... <%s>", __FUNCTION__);
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Resampling cube ... <%s>", __FUNCTION__);
 
     /* work with every cube1 node */
     for (ic1 = 1; ic1 <= ncx1; ic1++) {
@@ -121,7 +122,7 @@ int cube_resample_cube(
 
                 }
                 else{
-                    logger_error("Invalid option1 (%d) to %s", option1, __FUNCTION__);
+                    logger_error(__LINE__, "Invalid option1 (%d) to %s", option1, __FUNCTION__);
                     exit(-1);
                 }
 
@@ -151,6 +152,6 @@ int cube_resample_cube(
         return -5;
     }
 
-    logger_info("Resampling cube ... done");
+    logger_info(__LINE__, "Resampling cube ... done");
     return EXIT_SUCCESS;
 }
