@@ -1,6 +1,3 @@
-find_package(PythonLibs REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIR})
-
 include_directories(.)
 
 macro(make_library target source)
@@ -13,7 +10,7 @@ set (SOURCE_FILES ${SOURCES})
 if (MSVC)
    set (CMAKE_C_FLAGS "/Ox")
 else()
-	set (CMAKE_C_FLAGS "-Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99")
+	set (CMAKE_C_FLAGS "-Wall -O2 -fPIC -Wno-unused-but-set-variable")
 endif()
 
 add_library(cxtgeo STATIC ${SOURCE_FILES})

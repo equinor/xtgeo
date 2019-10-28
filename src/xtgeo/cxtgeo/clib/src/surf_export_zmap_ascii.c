@@ -63,6 +63,7 @@ int surf_export_zmap_ascii(
     int     i, j, ib, nn, fcode;
     float   myfloat, xmax, ymax;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Write ZMAP plus ascii map file ... (%s)", __FUNCTION__);
 
     /*

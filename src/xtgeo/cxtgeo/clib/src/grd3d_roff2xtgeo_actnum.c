@@ -49,6 +49,7 @@ int grd3d_roff2xtgeo_actnum (
     long ib = 0, ic = 0, nact = 0;
     int i, j, k;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Transforming grid ROFF actnum --> XTG representation ...");
 
     if (option == 1) {

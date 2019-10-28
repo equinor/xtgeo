@@ -77,6 +77,7 @@ int surf_export_ijxyz(
     int i, j, iok;
     double xv, yv, zv;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Write OW style map file INLINE XLINE X Y Z (%s)", __FUNCTION__);
 
     /* export in INLINE running fastest order */

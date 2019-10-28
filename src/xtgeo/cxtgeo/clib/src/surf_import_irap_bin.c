@@ -130,11 +130,15 @@ int surf_import_irap_bin(
 
     double xori, yori, xmax, ymax, xinc, yinc, rot, x0ori, y0ori, dval;
 
-    // logger_info(__LINE__, "Read IRAP binary map file: %s", __FUNCTION__);
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Read IRAP binary map file: %s", __FUNCTION__);
 
-    // if (mode==0) logger_info("Scan mode!");
+    if (mode==0) logger_info(__LINE__, "Scan mode!");
+    if (mode==1) logger_info(__LINE__, "Values mode!");
 
+    logger_info(__LINE__, "FSEEK...! in %d", fileno(fc));
     fseek(fc, 0, SEEK_SET);
+    logger_info(__LINE__, "FSEEK done!");
 
     /*
      * READ HEADER
@@ -208,12 +212,14 @@ int surf_import_irap_bin(
 
     /* if scan mode only: */
     if (mode==0) {
-        // logger_info(__LINE__, "Scan mode done");
+        logger_info(__LINE__, "Scan mode done");
 	return EXIT_SUCCESS;
     }
 
     mx = (long)nx;
     my = (long)ny;
+
+    logger_info(__LINE__, "NX and NY %d %d", nx, ny);
 
     /*
      * READ DATA
@@ -223,7 +229,7 @@ int surf_import_irap_bin(
     ier = 1;
     nn = 0;
     ntmp = 0;
-    // logger_info(__LINE__, "Read Irap map values...");
+    logger_info(__LINE__, "Read Irap map values...");
 
     while (ier == 1) {
 	/* start of block integer */

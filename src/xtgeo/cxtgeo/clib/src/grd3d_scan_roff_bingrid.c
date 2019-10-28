@@ -32,6 +32,7 @@ void grd3d_scan_roff_bingrid (
     char cname[100];
     int  idum, mynx=0, myny=0, mynz=0, num=0, mybyte, iendian;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 
     /*

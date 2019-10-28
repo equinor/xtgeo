@@ -57,6 +57,8 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     double mydouble;
     long reclength = 0, nrecs, icc;
 
+    logger_init(__FILE__, __FUNCTION__);
+
     logger_info(__LINE__, "Read binary ECL record from record position %ld", recstart);
 
     if (x_swap_check() == 1) swap = 1;

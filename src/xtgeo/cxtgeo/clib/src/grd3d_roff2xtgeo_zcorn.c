@@ -64,6 +64,7 @@ int grd3d_roff2xtgeo_zcorn (
     double z_sw_v[8] = { 0 }, z_se_v[8] = { 0 }, z_nw_v[8] = { 0 };
     double z_ne_v[8] = { 0 }, zz[8] = { 0 };
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Transforming grid ROFF zcorn --> XTG representation ...");
 
 

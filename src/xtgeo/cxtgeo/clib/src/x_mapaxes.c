@@ -33,6 +33,7 @@ void x_mapaxes (
 
     static int report_mapaxes = 0;
 
+    logger_init(__FILE__, __FUNCTION__);
     /* mode < 0 means no mapaxes transform */
     if (mode < 0) {
 	return;
@@ -49,7 +50,7 @@ void x_mapaxes (
 
     if ((fabs(x1) < FLOATEPS) && (fabs(x2) < FLOATEPS) && (fabs(x3) < FLOATEPS) &&
         (fabs(y1) < FLOATEPS) && (fabs(y2) < FLOATEPS) && (fabs(y3) < FLOATEPS)) {
-        logger_warn("All MAPAXES numbers ~zero in %s; dubious settings", __FUNCTION__);
+        logger_warn(__LINE__, "All MAPAXES numbers ~zero; dubious settings");
         report_mapaxes = 1;
         return;
     }
@@ -69,7 +70,7 @@ void x_mapaxes (
     div2 = sqrt(xx1 * xx1 + yy1 * yy1);
 
     if ((fabs(div1) < FLOATEPS) || (fabs(div2) < FLOATEPS)) {
-        logger_warn("Divisor wrt MAPAXES is ~zero in %s", __FUNCTION__);
+        logger_warn(__LINE__, "Divisor wrt MAPAXES is ~zero");
         return;
     }
 

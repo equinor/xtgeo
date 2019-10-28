@@ -385,6 +385,8 @@ int surf_import_ijxyz (
     int *ilinesb, *xlinesb;
     int nncol, nnrow;
 
+    logger_init(__FILE__, __FUNCTION__);
+
     /* read header */
     logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 

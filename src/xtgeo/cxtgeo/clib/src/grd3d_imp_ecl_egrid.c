@@ -75,6 +75,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     long nxyz, nmapaxes, ncoord, nzcorn;
     long ib = 0;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "EGRID import ...");
     /*
      * =================================================================================

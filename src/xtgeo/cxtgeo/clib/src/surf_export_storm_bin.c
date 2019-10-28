@@ -65,6 +65,7 @@ int surf_export_storm_bin(
     double dbl_value;
     int swap = 0;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Write Storm binary map file ... (%s)", __FUNCTION__);
 
     swap=x_swap_check();

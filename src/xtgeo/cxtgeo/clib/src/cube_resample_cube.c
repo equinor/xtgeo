@@ -83,6 +83,7 @@ int cube_resample_cube(
     double xc, yc, zc;
     float value;
 
+    logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Resampling cube ... <%s>", __FUNCTION__);
 
     /* work with every cube1 node */

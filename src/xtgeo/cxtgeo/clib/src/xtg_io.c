@@ -4,10 +4,10 @@
  * Wrappers for file IO
  * ############################################################################
  */
-
 #include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#define _GNU_SOURCE 1
 
 FILE *xtg_fopen(const char *filename, const char *mode)
 {
