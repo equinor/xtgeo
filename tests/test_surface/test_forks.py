@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import division, absolute_import
+import os
 import subprocess
 import pytest
 import xtgeo
@@ -15,6 +16,7 @@ TESTFILE = "../xtgeo-testdata/surfaces/reek/1/basereek_rota_v2.gri"
 
 
 @pytest.mark.skipif("sys.version_info < (3, 6)")
+@pytest.mark.skipif("'TRAVISRUN' in os.environ")
 def test_surface_forks():
     """Testing when surfaces are read by multiple forks"""
 

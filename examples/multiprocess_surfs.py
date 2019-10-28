@@ -9,23 +9,24 @@ logger = logging.getLogger(__name__)
 
 
 TESTFILE = "../../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
+NTHREAD = 20
 
 
-def _get_files_as_regularsurfaces_thread(nthread, option=1):
+def _get_files_as_regularsurfaces_thread(option=1):
     surfs = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=nthread) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=NTHREAD) as executor:
 
         if option == 1:
-            futures = {executor.submit(_get_regsurff, i): i for i in range(nthread)}
+            futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
-            futures = {executor.submit(_get_regsurfi, i): i for i in range(nthread)}
+            futures = {executor.submit(_get_regsurfi, i): i for i in range(NTHREAD)}
 
         for future in concurrent.futures.as_completed(futures):
             try:
                 surf = future.result()
-            except Exception as exc:
-                logger.error("Error: ", exc)
+            except Exception as exc:  # pylint: disable=broad-except
+                logger.error("Error: %s", exc)
             else:
                 surfs.append(surf)
 
@@ -33,21 +34,21 @@ def _get_files_as_regularsurfaces_thread(nthread, option=1):
         return regular_surfaces
 
 
-def _get_files_as_regularsurfaces_multiprocess(nthread, option=1):
+def _get_files_as_regularsurfaces_multiprocess(option=1):
     surfs = []
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=nthread) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=NTHREAD) as executor:
 
         if option == 1:
-            futures = {executor.submit(_get_regsurff, i): i for i in range(nthread)}
+            futures = {executor.submit(_get_regsurff, i): i for i in range(NTHREAD)}
         else:
-            futures = {executor.submit(_get_regsurfi, i): i for i in range(nthread)}
+            futures = {executor.submit(_get_regsurfi, i): i for i in range(NTHREAD)}
 
         for future in concurrent.futures.as_completed(futures):
             try:
                 surf = future.result()
-            except Exception as exc:
-                logger.error("Error: ", exc)
+            except Exception as exc:  # pylint: disable=broad-except
+                logger.error("Error: %s", exc)
             else:
                 surfs.append(surf)
 
@@ -82,20 +83,18 @@ def _get_regsurfi(i):
 
 if __name__ == "__main__":
 
-    nthread = 20
+    SURFS1 = _get_files_as_regularsurfaces_thread(option=1)
+    for srf in SURFS1.surfaces:
+        logger.info("1 %s", srf.values.mean())
 
-    surfs1 = _get_files_as_regularsurfaces_thread(nthread, option=1)
-    for surf in surfs1.surfaces:
-        logger.info("1 %s", surf.values.mean())
+    SURFS2 = _get_files_as_regularsurfaces_thread(option=2)
+    for srf in SURFS2.surfaces:
+        logger.info("2 %s", srf.values.mean())
 
-    surfs2 = _get_files_as_regularsurfaces_thread(nthread, option=2)
-    for surf in surfs2.surfaces:
-        logger.info("2 %s", surf.values.mean())
+    SURFS3 = _get_files_as_regularsurfaces_multiprocess(option=1)
+    for srf in SURFS3.surfaces:
+        logger.info("3 %s", srf.values.mean())
 
-    surfs3 = _get_files_as_regularsurfaces_multiprocess(nthread, option=1)
-    for surf in surfs3.surfaces:
-        logger.info("3 %s", surf.values.mean())
-
-    surfs4 = _get_files_as_regularsurfaces_multiprocess(nthread, option=2)
-    for surf in surfs4.surfaces:
-        logger.info("4 %s", surf.values.mean())
+    SURFS4 = _get_files_as_regularsurfaces_multiprocess(option=2)
+    for srf in SURFS4.surfaces:
+        logger.info("4 %s", srf.values.mean())
