@@ -66,17 +66,30 @@ def rescale(self, delta=0.15, tvdrange=None):
 
     start = dfr.index[0]
     stop = dfr.index[-1]
+    startt = start
+    stopt = stop
 
     if tvdrange and isinstance(tvdrange, tuple) and len(tvdrange) == 2:
         tvd1, tvd2 = tvdrange
-        start = dfr.index[dfr["Z_TVDSS"] >= tvd1][0]
-        stop = dfr.index[dfr["Z_TVDSS"] >= tvd2][0]
 
-    nentry = int(round((stop - start) / delta))
+        try:
+            startt = dfr.index[dfr["Z_TVDSS"] >= tvd1][0]
+        except IndexError:
+            startt = start
 
-    dfr = dfr.reindex(dfr.index.union(np.linspace(start, stop, num=nentry)))
+        try:
+            stopt = dfr.index[dfr["Z_TVDSS"] >= tvd2][0]
+        except IndexError:
+            stopt = stop
+
+        dfr1 = dfr[start:startt]
+        dfr2 = dfr[stopt:stop]
+
+    nentry = int(round((stopt - startt) / delta))
+
+    dfr = dfr.reindex(dfr.index.union(np.linspace(startt, stopt, num=nentry)))
     dfr = dfr.interpolate("index", limit_area="inside").loc[
-        np.linspace(start, stop, num=nentry)
+        np.linspace(startt, stopt, num=nentry)
     ]
 
     dfr[self.mdlogname] = dfr.index
@@ -87,6 +100,8 @@ def rescale(self, delta=0.15, tvdrange=None):
             ltype = self._wlogtype[lname]
             if ltype == "DISC":
                 dfr = dfr.round({lname: 0})
+
+    dfr = pd.concat([dfr1, dfr, dfr2], sort=True).reset_index()
 
     logger.debug("Updated dataframe:\n%s", dfr)
 
@@ -261,9 +276,9 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     kind[np.isnan(kind)] = 0
 
     #    iind = np.ma.masked_where(iind[~np.isnan(iind)].astype('int')
-    iind = iind.astype('int')
-    jind = jind.astype('int')
-    kind = kind.astype('int')
+    iind = iind.astype("int")
+    jind = jind.astype("int")
+    kind = kind.astype("int")
 
     for prop in gprops.props:
         arr = prop.values[iind, jind, kind].astype("float")

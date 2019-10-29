@@ -989,6 +989,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             delta (float): Step length
             tvdrange (tuple of floats): Resampling can be limited to TVD interval
+
+        .. versionchanged:: 2.2.0 Added tvdrange
         """
         _well_oper.rescale(self, delta=delta, tvdrange=tvdrange)
 
