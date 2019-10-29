@@ -295,9 +295,6 @@ def test_rescale_well_tvdrange(loadwell1):
     """Rescale (resample) a well to a finer increment within a TVD range"""
 
     mywell = Well(WELL1)
-
-    mywell.geometrics()
-
     mywell.to_file(join(TMPD, "wll1_pre_rescale.w"))
     mywell.rescale(delta=2, tvdrange=(1286, 1333))
     mywell.to_file(join(TMPD, "wll1_post_rescale.w"))

@@ -61,6 +61,7 @@ def rescale(self, delta=0.15, tvdrange=None):
         self.geometrics()
 
     dfr = self._df.copy().set_index(self.mdlogname)
+    print(dfr.columns)
 
     logger.debug("Initial dataframe\n %s", dfr)
 
@@ -81,9 +82,14 @@ def rescale(self, delta=0.15, tvdrange=None):
             stopt = dfr.index[dfr["Z_TVDSS"] >= tvd2][0]
         except IndexError:
             stopt = stop
+        print(start, startt, stopt, stop)
 
-        dfr1 = dfr[start:startt]
-        dfr2 = dfr[stopt:stop]
+
+    dfr1 = dfr[start:startt]
+    print(dfr1.columns)
+    dfr2 = dfr[stopt:stop]
+    print(dfr2.columns)
+    print(dfr.columns)
 
     nentry = int(round((stopt - startt) / delta))
 
@@ -92,8 +98,12 @@ def rescale(self, delta=0.15, tvdrange=None):
         np.linspace(startt, stopt, num=nentry)
     ]
 
+    print("x", dfr.columns)
+    dfr = pd.concat([dfr1, dfr, dfr2], sort=False)
+    dfr.drop_duplicates(inplace=True)
     dfr[self.mdlogname] = dfr.index
     dfr.reset_index(inplace=True, drop=True)
+    print("y", dfr.columns)
 
     for lname in dfr.columns:
         if lname in self._wlogtype:
@@ -101,7 +111,6 @@ def rescale(self, delta=0.15, tvdrange=None):
             if ltype == "DISC":
                 dfr = dfr.round({lname: 0})
 
-    dfr = pd.concat([dfr1, dfr, dfr2], sort=True).reset_index()
 
     logger.debug("Updated dataframe:\n%s", dfr)
 
