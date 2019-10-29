@@ -48,7 +48,7 @@ def delete_log(self, lname):
     return lcount
 
 
-def rescale(self, delta=0.15):
+def rescale(self, delta=0.15, tvdrange=None):
     """Rescale by using a new MD increment
 
     The rescaling is technically done by interpolation in the Pandas dataframe
@@ -66,6 +66,11 @@ def rescale(self, delta=0.15):
 
     start = dfr.index[0]
     stop = dfr.index[-1]
+
+    if tvdrange and isinstance(tvdrange, tuple) and len(tvdrange) == 2:
+        tvd1, tvd2 = tvdrange
+        start = dfr.index[dfr["Z_TVDSS"] >= tvd1][0]
+        stop = dfr.index[dfr["Z_TVDSS"] >= tvd2][0]
 
     nentry = int(round((stop - start) / delta))
 

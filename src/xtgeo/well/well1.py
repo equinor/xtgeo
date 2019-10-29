@@ -982,14 +982,15 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         self._df = dfr.reset_index(drop=True)
 
-    def rescale(self, delta=0.15):
+    def rescale(self, delta=0.15, tvdrange=None):
         """Rescale (refine or coarse) a well by sampling a delta along the
         trajectory, in MD.
 
         Args:
             delta (float): Step length
+            tvdrange (tuple of floats): Resampling can be limited to TVD interval
         """
-        _well_oper.rescale(self, delta=delta)
+        _well_oper.rescale(self, delta=delta, tvdrange=tvdrange)
 
     def get_polygons(self):
         """Return a Polygons object from the well trajectory.
