@@ -2,6 +2,7 @@
 """Operations along a well, private module"""
 
 from __future__ import print_function, absolute_import
+import copy
 
 import numpy as np
 import pandas as pd
@@ -253,7 +254,7 @@ def get_ijk_from_grid(self, grid, grid_id=""):
 
 
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
-    """In prep! Getting gridprops as logs"""
+    """Gettting gridproperties as logs"""
 
     if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
@@ -290,7 +291,14 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     for prop in gprops.props:
         arr = prop.values[iind, jind, kind].astype("float")
         arr[np.isnan(xind)] = np.nan
-        self.dataframe[prop.name + prop_id] = arr
+        pname = prop.name + prop_id
+        self.dataframe[pname] = arr
+        self._wlognames.append(pname)
+        if prop.isdiscrete:
+            self._wlogtype[pname] = "DISC"
+            self._wlogrecord[pname] = copy.deepcopy(prop.codes)
+    self._ensure_consistency()
+    self.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
 
 
 def report_zonation_holes(self, threshold=5):

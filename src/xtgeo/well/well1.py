@@ -575,6 +575,19 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return dsc.astext()
 
+    def isdiscrete(self, logname):
+        """Return True of log is discrete, otherwise False.
+
+        Args:
+            logname (str): Name of log to check if discrete or not
+
+        .. versionadded: 2.2.0
+        """
+
+        if logname in self._wlognames and self.get_logtype(logname) == "DISC":
+            return True
+        return False
+
     def copy(self):
         """Copy a Well instance to a new unique Well instance."""
 
@@ -664,6 +677,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         return _well_oper.delete_log(self, lname)
+
+    delete_logs = delete_log  # alias function
 
     def get_logtype(self, lname):
         """Returns the type of a give log (e.g. DISC or CONT)"""
