@@ -291,6 +291,35 @@ def test_rescale_well(loadwell1):
     tsetup.assert_almostequal(df1['Poro'].mean(), df2['Poro'].mean(), 0.001)
 
 
+def test_rescale_well_tvdrange():
+    """Rescale (resample) a well to a finer increment within a TVD range"""
+
+    mywell = Well(WELL1)
+    mywell.to_file(join(TMPD, "wll1_pre_rescale.w"))
+    gr_avg1 = mywell.dataframe["GR"].mean()
+    mywell.rescale(delta=2, tvdrange=(1286, 1333))
+    mywell.to_file(join(TMPD, "wll1_post_rescale.w"))
+    gr_avg2 = mywell.dataframe["GR"].mean()
+    tsetup.assert_almostequal(gr_avg1, gr_avg2, 0.9)
+
+    mywell1 = Well(WELL1)
+    mywell1.rescale(delta=2)
+
+    mywell2 = Well(WELL1)
+    mywell2.rescale(delta=2, tvdrange=(0, 9999))
+    assert mywell1.dataframe["GR"].mean() == mywell2.dataframe["GR"].mean()
+    assert mywell1.dataframe["GR"].all() == mywell2.dataframe["GR"].all()
+
+
+def test_rescale_well_tvdrange_coarsen_upper():
+    """Rescale (resample) a well to a coarser increment in top part"""
+
+    mywell = Well(WELL1)
+    mywell.rescale(delta=20, tvdrange=(0, 1200))
+    mywell.to_file(join(TMPD, "wll1_rescale_coarsen.w"))
+    tsetup.assert_almostequal(mywell.dataframe.iat[10, 3], 365.8254, 0.1)
+
+
 def test_fence(loadwell1):
     """Return a resampled fence."""
 

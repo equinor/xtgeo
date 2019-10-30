@@ -2,6 +2,7 @@
 """Operations along a well, private module"""
 
 from __future__ import print_function, absolute_import
+import copy
 
 import numpy as np
 import pandas as pd
@@ -48,7 +49,7 @@ def delete_log(self, lname):
     return lcount
 
 
-def rescale(self, delta=0.15):
+def rescale(self, delta=0.15, tvdrange=None):
     """Rescale by using a new MD increment
 
     The rescaling is technically done by interpolation in the Pandas dataframe
@@ -57,8 +58,13 @@ def rescale(self, delta=0.15):
     pdrows = pd.options.display.max_rows
     pd.options.display.max_rows = 999
 
+    dfrcolumns0 = self._df.columns
+
     if self.mdlogname is None:
         self.geometrics()
+
+    dfrcolumns1 = self._df.columns
+    columnsadded = list(set(dfrcolumns1) - set(dfrcolumns0))  # new tmp columns, if any
 
     dfr = self._df.copy().set_index(self.mdlogname)
 
@@ -66,14 +72,34 @@ def rescale(self, delta=0.15):
 
     start = dfr.index[0]
     stop = dfr.index[-1]
+    startt = start
+    stopt = stop
 
-    nentry = int(round((stop - start) / delta))
+    if tvdrange and isinstance(tvdrange, tuple) and len(tvdrange) == 2:
+        tvd1, tvd2 = tvdrange
 
-    dfr = dfr.reindex(dfr.index.union(np.linspace(start, stop, num=nentry)))
+        try:
+            startt = dfr.index[dfr["Z_TVDSS"] >= tvd1][0]
+        except IndexError:
+            startt = start
+
+        try:
+            stopt = dfr.index[dfr["Z_TVDSS"] >= tvd2][0]
+        except IndexError:
+            stopt = stop
+
+    dfr1 = dfr[start:startt]
+    dfr2 = dfr[stopt:stop]
+
+    nentry = int(round((stopt - startt) / delta))
+
+    dfr = dfr.reindex(dfr.index.union(np.linspace(startt, stopt, num=nentry)))
     dfr = dfr.interpolate("index", limit_area="inside").loc[
-        np.linspace(start, stop, num=nentry)
+        np.linspace(startt, stopt, num=nentry)
     ]
 
+    dfr = pd.concat([dfr1, dfr, dfr2], sort=False)
+    dfr.drop_duplicates(inplace=True)
     dfr[self.mdlogname] = dfr.index
     dfr.reset_index(inplace=True, drop=True)
 
@@ -88,6 +114,8 @@ def rescale(self, delta=0.15):
     pd.options.display.max_rows = pdrows  # reset
 
     self._df = dfr
+    if columnsadded:
+        self.delete_log(columnsadded)
 
 
 def make_zone_qual_log(self, zqname):
@@ -226,7 +254,7 @@ def get_ijk_from_grid(self, grid, grid_id=""):
 
 
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
-    """In prep! Getting gridprops as logs"""
+    """Gettting gridproperties as logs"""
 
     if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
@@ -256,14 +284,21 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     kind[np.isnan(kind)] = 0
 
     #    iind = np.ma.masked_where(iind[~np.isnan(iind)].astype('int')
-    iind = iind.astype('int')
-    jind = jind.astype('int')
-    kind = kind.astype('int')
+    iind = iind.astype("int")
+    jind = jind.astype("int")
+    kind = kind.astype("int")
 
     for prop in gprops.props:
         arr = prop.values[iind, jind, kind].astype("float")
         arr[np.isnan(xind)] = np.nan
-        self.dataframe[prop.name + prop_id] = arr
+        pname = prop.name + prop_id
+        self.dataframe[pname] = arr
+        self._wlognames.append(pname)
+        if prop.isdiscrete:
+            self._wlogtype[pname] = "DISC"
+            self._wlogrecord[pname] = copy.deepcopy(prop.codes)
+    self._ensure_consistency()
+    self.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
 
 
 def report_zonation_holes(self, threshold=5):
