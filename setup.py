@@ -20,7 +20,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
 
 SWIGMINIMUM = "4.0.1"
 SWIGDL = "https://sourceforge.net/projects/swig/files/swig/swig-XX/swig-XX.tar.gz"
-PCREDL = "https://ftp.pcre.org/pub/pcre/pcre-8.43.tar.gz"
+PCREDL = "https://ftp.pcre.org/pub/pcre/pcre-8.38.tar.gz"
 
 
 WINDOWS = False
@@ -54,18 +54,18 @@ def parse_requirements(filename):
 
 try:
     with open("README.md") as readme_file:
-        readme = readme_file.read()
+        README = readme_file.read()
 except IOError:
-    readme = "See README.md"
+    README = "See README.md"
 
 
 try:
     with open("HISTORY.md") as history_file:
-        history = history_file.read()
+        HISTORY = history_file.read()
 except IOError:
-    history = "See HISTORY.md"
+    HISTORY = "See HISTORY.md"
 
-requirements = parse_requirements("requirements.txt")
+REQUIREMENTS = parse_requirements("requirements.txt")
 
 NUMPYVER = "numpy==1.13.3"
 if platform.python_version_tuple() < ("3", "4", "99"):
@@ -73,7 +73,7 @@ if platform.python_version_tuple() < ("3", "4", "99"):
 if platform.python_version_tuple() > ("3", "7", "0"):
     NUMPYVER = "numpy==1.16.3"
 
-setup_requirements = [
+SETUP_REQUIREMENTS = [
     NUMPYVER,
     "pytest-runner",
     "cmake==3.13.3",
@@ -81,10 +81,10 @@ setup_requirements = [
     "setuptools_scm>=3.2.0",
 ]
 
-test_requirements = ["pytest"]
+TEST_REQUIREMENTS = ["pytest"]
 
 
-class build_ext(_build_ext):
+class build_ext(_build_ext):  # pylint: disable=invalid-name
     def finalize_options(self):
         _build_ext.finalize_options(self)
         # Prevent numpy from thinking it is still in its setup process:
@@ -99,7 +99,7 @@ def src(x):
     return os.path.abspath(os.path.join(root, x))
 
 
-class build(_build):
+class build(_build):  # pylint: disable=invalid-name
     # different order: build_ext *before* build_py
     sub_commands = [
         ("build_ext", _build.has_ext_modules),
@@ -110,6 +110,7 @@ class build(_build):
 
 
 class CMakeExtension(Extension):
+    # pylint: disable=dangerous-default-value
     def __init__(self, name, cmake_lists_dir=".", sources=[], **kwa):
         Extension.__init__(self, name, sources=sources, **kwa)
         self.cmake_lists_dir = os.path.abspath(cmake_lists_dir)
@@ -155,10 +156,11 @@ class CMakeExtension(Extension):
         swigout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")
         swigver = re.findall(r"SWIG Version ([0-9.]+)", swigout)[0]
         if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
+            print("OK, found swig in system, version is >= ", SWIGMINIMUM)
             return True
-        else:
-            print("Found swig in system but version is < ", SWIGMINIMUM)
-            return False
+
+        print("Found swig in system but version is < ", SWIGMINIMUM)
+        return False
 
     def swiginstall(self):
         """Install correct SWIG unless it is available on system (which is preferred)"""
@@ -172,15 +174,32 @@ class CMakeExtension(Extension):
         swigtargz = swigver + ".tar.gz"
         swigdir = os.path.join(self.buildswig, swigver)
 
-        subprocess.check_call(["wget", swigdownload], cwd=self.buildswig)
-        subprocess.check_call(["tar", "xf", swigtargz], cwd=self.buildswig)
+        with open(os.path.join(self.buildswig, "swigdownload.log"), "w") as logfile:
+            print("Download swig and pcre...")
+            subprocess.check_call(
+                ["wget", swigdownload],
+                cwd=self.buildswig,
+                stdout=logfile,
+                stderr=logfile,
+            )
+            subprocess.check_call(
+                ["tar", "xf", swigtargz],
+                cwd=self.buildswig,
+                stdout=logfile,
+                stderr=logfile,
+            )
 
-        subprocess.check_call(["wget", PCREDL], cwd=swigdir)
-        print("Installing pcre and swig...")
+        with open(os.path.join(swigdir, "pcredownload.log"), "w") as logfile:
+            subprocess.check_call(
+                ["wget", PCREDL], cwd=swigdir, stdout=logfile, stderr=logfile
+            )
+
         with open(os.path.join(swigdir, "pcre_build.log"), "w") as logfile:
+            print("Compile and install pcre and swig...")
             subprocess.check_call(
                 ["Tools/pcre-build.sh"], cwd=swigdir, stdout=logfile, stderr=logfile
             )
+
         with open(os.path.join(swigdir, "swig_conf.log"), "w") as logfile:
             subprocess.check_call(
                 ["./configure", "--prefix=" + os.path.abspath(swigdir)],
@@ -190,25 +209,27 @@ class CMakeExtension(Extension):
             )
         with open(os.path.join(swigdir, "swig_make.log"), "w") as logfile:
             subprocess.check_call(["make"], cwd=swigdir, stdout=logfile)
+
         with open(os.path.join(swigdir, "swig_makeinstall.log"), "w") as logfile:
             subprocess.check_call(["make", "install"], cwd=swigdir, stdout=logfile)
+
         os.environ["PATH"] = swigdir + os.pathsep + os.environ["PATH"]
         print("Installing pcre and swig... DONE")
 
 
 # get all C swig sources
 
-sources = ["src/xtgeo/cxtgeo/cxtgeo.i"]
+SOURCES = ["src/xtgeo/cxtgeo/cxtgeo.i"]
 
 COMPILE_ARGS = ["-Wno-uninitialized", "-Wno-strict-prototypes"]
 if WINDOWS:
     COMPILE_ARGS = ["/wd4267", "/wd4244"]
 
 # cxtgeo extension module
-_cxtgeo = CMakeExtension(
+_CXTGEO = CMakeExtension(
     "xtgeo.cxtgeo._cxtgeo",
     cmake_lists_dir="src/xtgeo/cxtgeo/clib",
-    sources=sources,
+    sources=SOURCES,
     extra_compile_args=COMPILE_ARGS,
     include_dirs=["src/xtgeo/cxtgeo/clib/src"],
     library_dirs=["src/xtgeo/cxtgeo/clib/lib"],
@@ -218,7 +239,7 @@ _cxtgeo = CMakeExtension(
 
 _CMDCLASS = {"build": build, "build_ext": build_ext}
 
-_EXT_MODULES = [_cxtgeo]
+_EXT_MODULES = [_CXTGEO]
 
 # This is done for readthedocs purposes, which cannot deal with SWIG:
 if "SWIG_FAKE" in os.environ:
@@ -230,7 +251,7 @@ setup(
     name="xtgeo",
     cmdclass=_CMDCLASS,
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
-    long_description=readme + "\n\n" + history,
+    long_description=README + "\n\n" + HISTORY,
     long_description_content_type="text/markdown",
     author="Equinor R&T",
     url="https://github.com/equinor/xtgeo",
@@ -263,7 +284,7 @@ setup(
         "Topic :: Utilities",
     ],
     test_suite="tests",
-    install_requires=requirements,
-    tests_require=test_requirements,
-    setup_requires=setup_requirements,
+    install_requires=REQUIREMENTS,
+    tests_require=TEST_REQUIREMENTS,
+    setup_requires=SETUP_REQUIREMENTS,
 )
