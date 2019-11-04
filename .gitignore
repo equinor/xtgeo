@@ -72,4 +72,5 @@ src/xtgeo/_theversion.py
 .idea/
 .projectile
 .dir-locals.el
+tmp_buildswig
 '.'/

@@ -9,7 +9,7 @@ declare -a PYDIST=("cp27-cp27mu" "cp34-cp34m" "cp36-cp36m")
 
 SWIGURL="https://ftp.osuosl.org/pub/blfs/conglomeration/swig"
 
-SWIG="swig-3.0.12"
+SWIG="swig-4.0.1"
 
 # Install the SWIG package required by our library for install
 cd $TMP

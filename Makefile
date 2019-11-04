@@ -78,6 +78,7 @@ cclean: clean-cc ## remove all C compiling (CXTGeo) build
 
 clean-build: ## remove build artifacts
 	rm -fr build/
+	rm -fr tmp_buildswig/
 	rm -fr dist/
 	rm -fr wheel*/
 	rm -fr .eggs/
