@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
 import platform
-import subprocess
+import subprocess  # nosec
 from glob import glob
 import shutil
 import os
@@ -134,9 +134,9 @@ class CMakeExtension(Extension):
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
-            subprocess.check_call(CMAKECMD, cwd=self.build_temp)
+            subprocess.check_call(CMAKECMD, cwd=self.build_temp)  # nosec
 
-        subprocess.check_call(
+        subprocess.check_call(  # nosec
             ["cmake", "--build", ".", "--target", "install", "--config", "Release"],
             cwd=self.build_temp,
         )
@@ -153,8 +153,8 @@ class CMakeExtension(Extension):
         if not swigexe:
             print("Cannot find swig in system")
             return False
-        swigout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")
-        swigver = re.findall(r"SWIG Version ([0-9.]+)", swigout)[0]
+        sout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")  # nosec
+        swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
         if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
             print("OK, found swig in system, version is >= ", SWIGMINIMUM)
             return True
@@ -176,13 +176,13 @@ class CMakeExtension(Extension):
 
         with open(os.path.join(self.buildswig, "swigdownload.log"), "w") as logfile:
             print("Download swig and pcre...")
-            subprocess.check_call(
+            subprocess.check_call(  # nosec
                 ["wget", swigdownload],
                 cwd=self.buildswig,
                 stdout=logfile,
                 stderr=logfile,
             )
-            subprocess.check_call(
+            subprocess.check_call(  # nosec
                 ["tar", "xf", swigtargz],
                 cwd=self.buildswig,
                 stdout=logfile,
@@ -190,28 +190,30 @@ class CMakeExtension(Extension):
             )
 
         with open(os.path.join(swigdir, "pcredownload.log"), "w") as logfile:
-            subprocess.check_call(
+            subprocess.check_call(  # nosec
                 ["wget", PCREDL], cwd=swigdir, stdout=logfile, stderr=logfile
             )
 
         with open(os.path.join(swigdir, "pcre_build.log"), "w") as logfile:
             print("Compile and install pcre and swig...")
-            subprocess.check_call(
+            subprocess.check_call(  # nosec
                 ["Tools/pcre-build.sh"], cwd=swigdir, stdout=logfile, stderr=logfile
             )
 
         with open(os.path.join(swigdir, "swig_conf.log"), "w") as logfile:
-            subprocess.check_call(
+            subprocess.check_call(  # nosec
                 ["./configure", "--prefix=" + os.path.abspath(swigdir)],
                 cwd=swigdir,
                 stdout=logfile,
                 stderr=logfile,
             )
         with open(os.path.join(swigdir, "swig_make.log"), "w") as logfile:
-            subprocess.check_call(["make"], cwd=swigdir, stdout=logfile)
+            subprocess.check_call(["make"], cwd=swigdir, stdout=logfile)  # nosec
 
         with open(os.path.join(swigdir, "swig_makeinstall.log"), "w") as logfile:
-            subprocess.check_call(["make", "install"], cwd=swigdir, stdout=logfile)
+            subprocess.check_call(  # nosec
+                ["make", "install"], cwd=swigdir, stdout=logfile
+            )
 
         os.environ["PATH"] = swigdir + os.pathsep + os.environ["PATH"]
         print("Installing pcre and swig... DONE")
