@@ -6,14 +6,21 @@ import subprocess
 from glob import glob
 import shutil
 import os
+import re
 
 from distutils.command.build import build as _build
+from distutils.spawn import find_executable
+from distutils.version import LooseVersion
 
 from os.path import basename
 from os.path import splitext
 from setuptools import setup, find_packages, Extension
 
 from setuptools.command.build_ext import build_ext as _build_ext
+
+SWIGMINIMUM = "4.0.1"
+SWIGDL = "https://sourceforge.net/projects/swig/files/swig/swig-XX/swig-XX.tar.gz"
+PCREDL = "https://ftp.pcre.org/pub/pcre/pcre-8.43.tar.gz"
 
 
 WINDOWS = False
@@ -110,6 +117,7 @@ class CMakeExtension(Extension):
         self.build = os.path.join(".", "build")
         self.build_temp = os.path.join(self.cmake_lists_dir, "build")
         self.lib = os.path.join(self.cmake_lists_dir, "lib")
+        self.buildswig = os.path.abspath(os.path.join(".", "tmp_buildswig"))
 
         if WINDOWS:
             print("******** REMOVE BUILD {}".format(self.build_temp))
@@ -131,6 +139,61 @@ class CMakeExtension(Extension):
             ["cmake", "--build", ".", "--target", "install", "--config", "Release"],
             cwd=self.build_temp,
         )
+
+        if not self.swigok():
+            if WINDOWS:
+                raise SystemExit("SWIG is missing or wrong version in Windows")
+            self.swiginstall()
+
+    @staticmethod
+    def swigok():
+        """Check swig version"""
+        swigexe = find_executable("swig")
+        if not swigexe:
+            print("Cannot find swig in system")
+            return False
+        swigout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")
+        swigver = re.findall(r"SWIG Version ([0-9.]+)", swigout)[0]
+        if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
+            return True
+        else:
+            print("Found swig in system but version is < ", SWIGMINIMUM)
+            return False
+
+    def swiginstall(self):
+        """Install correct SWIG unless it is available on system (which is preferred)"""
+        print("Installing swig... {}".format(SWIGMINIMUM))
+        if os.path.exists(self.buildswig):
+            shutil.rmtree(self.buildswig)
+        os.makedirs(self.buildswig)
+
+        swigdownload = SWIGDL.replace("XX", SWIGMINIMUM)
+        swigver = "swig-" + SWIGMINIMUM
+        swigtargz = swigver + ".tar.gz"
+        swigdir = os.path.join(self.buildswig, swigver)
+
+        subprocess.check_call(["wget", swigdownload], cwd=self.buildswig)
+        subprocess.check_call(["tar", "xf", swigtargz], cwd=self.buildswig)
+
+        subprocess.check_call(["wget", PCREDL], cwd=swigdir)
+        print("Installing pcre and swig...")
+        with open(os.path.join(swigdir, "pcre_build.log"), "w") as logfile:
+            subprocess.check_call(
+                ["Tools/pcre-build.sh"], cwd=swigdir, stdout=logfile, stderr=logfile
+            )
+        with open(os.path.join(swigdir, "swig_conf.log"), "w") as logfile:
+            subprocess.check_call(
+                ["./configure", "--prefix=" + os.path.abspath(swigdir)],
+                cwd=swigdir,
+                stdout=logfile,
+                stderr=logfile,
+            )
+        with open(os.path.join(swigdir, "swig_make.log"), "w") as logfile:
+            subprocess.check_call(["make"], cwd=swigdir, stdout=logfile)
+        with open(os.path.join(swigdir, "swig_makeinstall.log"), "w") as logfile:
+            subprocess.check_call(["make", "install"], cwd=swigdir, stdout=logfile)
+        os.environ["PATH"] = swigdir + os.pathsep + os.environ["PATH"]
+        print("Installing pcre and swig... DONE")
 
 
 # get all C swig sources
@@ -184,7 +247,8 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+        "License :: OSI Approved :: GNU Lesser General Public "
+        "License v3 or later (LGPLv3+)",
         "Operating System :: POSIX :: Linux",
         "Natural Language :: English",
         "Programming Language :: Python",
