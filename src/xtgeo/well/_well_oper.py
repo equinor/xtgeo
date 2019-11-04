@@ -3,6 +3,7 @@
 
 from __future__ import print_function, absolute_import
 import copy
+from distutils.version import StrictVersion
 
 import numpy as np
 import pandas as pd
@@ -98,7 +99,11 @@ def rescale(self, delta=0.15, tvdrange=None):
         np.linspace(startt, stopt, num=nentry)
     ]
 
-    dfr = pd.concat([dfr1, dfr, dfr2], sort=False)
+    if StrictVersion(pd.__version__) > StrictVersion("0.23.0"):
+        dfr = pd.concat([dfr1, dfr, dfr2], sort=False)
+    else:
+        dfr = pd.concat([dfr1, dfr, dfr2])
+
     dfr.drop_duplicates(inplace=True)
     dfr[self.mdlogname] = dfr.index
     dfr.reset_index(inplace=True, drop=True)
