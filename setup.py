@@ -23,18 +23,26 @@ SWIGDL = "https://sourceforge.net/projects/swig/files/swig/swig-XX/swig-XX.tar.g
 PCREDL = "https://ftp.pcre.org/pub/pcre/pcre-8.38.tar.gz"
 
 
+def cmakeexe():
+    """Check cmakeexe version"""
+    cmake = find_executable("cmake3")
+    if not cmake:
+        cmake = "cmake"  # assume the version from "pip install cmake"?
+    return cmake
+
+
 WINDOWS = False
 if "Windows" in platform.system():
     WINDOWS = True
     CMAKECMD = [
-        "cmake",
+        cmakeexe(),
         "..",
         "-DCMAKE_GENERATOR_PLATFORM=x64",
         "-DCMAKE_BUILD_TYPE=Release",
     ]
 else:
     CMAKECMD = [
-        "cmake",
+        cmakeexe(),
         "..",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         "-DCMAKE_BUILD_TYPE=Release",
@@ -137,7 +145,7 @@ class CMakeExtension(Extension):
             subprocess.check_call(CMAKECMD, cwd=self.build_temp)  # nosec
 
         subprocess.check_call(  # nosec
-            ["cmake", "--build", ".", "--target", "install", "--config", "Release"],
+            [cmakeexe(), "--build", ".", "--target", "install", "--config", "Release"],
             cwd=self.build_temp,
         )
 
