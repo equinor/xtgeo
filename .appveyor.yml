@@ -30,7 +30,7 @@ install:
   - IF DEFINED PYTHON SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - IF DEFINED PYTHON python -m pip install pip --upgrade --user
   - IF DEFINED PYTHON python -m pip install --upgrade
-    numpy
+    numpy==1.13.3
     scipy
     pytest
     pytest-runner
