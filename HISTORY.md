@@ -2,6 +2,22 @@
 
 ## Version 2
 
+### 2.2.0
+
+Several fixes and new features, most important:
+
+  * Well() class
+    * Added tvd interval for rescaling of well logs.
+    * When sampling a discrete property to well, it will now be a discrete log
+    * Added a isdiscrete() method
+  * RegularSurface() class
+    * Support for read from bytestrings (memory) in addition to files (Irap binary format supported)
+    * Fast load of surfaces (will only read metadata) if requested
+    * Support for threading/multiprocessing (concurrent.futures) when importing surfaces from Irap binary.
+  * Grid() class
+    * Improvements and fixes for dual porosity and/or dual permeability models from Eclipse
+
+
 ### 2.1.0
 
 Several fixes and new features, most important:

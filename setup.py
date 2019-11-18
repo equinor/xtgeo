@@ -81,6 +81,9 @@ if platform.python_version_tuple() < ("3", "4", "99"):
 if platform.python_version_tuple() > ("3", "7", "0"):
     NUMPYVER = "numpy==1.16.3"
 
+if WINDOWS:
+    NUMPYVER = "numpy==1.17.3"
+
 SETUP_REQUIREMENTS = [
     NUMPYVER,
     "pytest-runner",
