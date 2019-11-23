@@ -3,6 +3,7 @@
 function pre_build {
     echo "Prebuild stage, install swig..."
     # quite verbose...
+    echo "Download and building swig...."
     build_swig > /dev/null
 }
 

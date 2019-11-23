@@ -67,6 +67,7 @@ target/
 # pyenv python configuration file
 .python-version
 src/xtgeo/_theversion.py
+src/xtgeo/cxtgeo/cxtgeo*
 
 # other
 .idea/
@@ -74,3 +75,4 @@ src/xtgeo/_theversion.py
 .dir-locals.el
 tmp_buildswig
 '.'/
+_skbuild/

@@ -25,10 +25,11 @@ env:
     - TRAVISRUN=true
     - REPO_DIR=.
     - UNICODE_WIDTH=32
+    - MB_ML_VER=2010
     - PLAT=x86_64
     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
     - VERSION=$(echo $TRAVIS_TAG)
-    - BUILD_DEPENDS="cmake==3.13.3"
+    - BUILD_DEPENDS=""
     - CONFIG_PATH=scripts/config.sh
     - TEST_DEPENDS="pytest"
 
@@ -63,6 +64,7 @@ before_install:
 
 install:
   - pip install bandit
+  - pip install -r requirements_setup.txt
   - build_wheel $REPO_DIR $PLAT
 
 before_script:

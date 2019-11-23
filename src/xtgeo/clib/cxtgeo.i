@@ -1,17 +1,10 @@
 %module "cxtgeo"
-
 %{
-  #define SWIG_FILE_WITH_INIT
-  #include "clib/src/libxtg.h"
-  #include "clib/src/libxtg_.h"
-  #include "clib/src/swap_endian.h"
+#define SWIG_FILE_WITH_INIT
+#include <libxtg.h>
 %}
 
 %include typemaps.i
-
- // NOTE
-
-
 %include cpointer.i
 %include carrays.i
 %include cstring.i
@@ -35,7 +28,6 @@
 %array_functions(double, doublearray)
 %array_functions(char, chararray)
 
-
 //======================================================================================
 // Numpy tranforms
 //======================================================================================
@@ -43,6 +35,7 @@
 %numpy_typemaps(double, NPY_DOUBLE, long)
 %numpy_typemaps(float, NPY_FLOAT, long)
 %numpy_typemaps(int, NPY_INT, long)
+
 %init %{
 import_array();
 %}
@@ -241,8 +234,4 @@ import_array();
     }
     %}
 
-//======================================================================================
-// The rest of the XTGeo functions:
-// Really, this is the lazy way of doing it; but notice "magic naming" for typemaps!
-
-%include "clib/src/libxtg.h";
+%include <libxtg.h>
