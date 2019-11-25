@@ -97,20 +97,6 @@ def parse_requirements(filename):
 
 
 REQUIREMENTS = parse_requirements("requirements.txt")
-NUMPYVER = "numpy==1.13.3"
-
-if platform.python_version_tuple() < ("3", "4", "99"):
-    NUMPYVER = "numpy==1.10.4"
-if platform.python_version_tuple() > ("3", "7", "0"):
-    NUMPYVER = "numpy==1.16.3"
-
-if "Windows" in platform.system():
-    NUMPYVER = "numpy==1.17.3"
-
-SETUP_REQUIREMENTS = [
-    NUMPYVER,
-    "pytest-runner",
-]
 
 TEST_REQUIREMENTS = ["pytest"]
 
