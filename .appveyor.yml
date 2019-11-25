@@ -8,8 +8,8 @@ version: 1.0.{build}
 configuration:
   - Release
 
-os: Visual Studio 2015
-image: Visual Studio 2015
+os: Visual Studio 2017
+image: Visual Studio 2017
 
 platform:
   - x64
@@ -29,36 +29,29 @@ install:
   - IF DEFINED PYTHON (IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64)
   - IF DEFINED PYTHON SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - IF DEFINED PYTHON python -m pip install pip --upgrade --user
-  - IF DEFINED PYTHON python -m pip install --upgrade
-    numpy
-    scipy
-    pytest
-    pytest-runner
-    setuptools
-    setuptools_scm
-    hypothesis
-    twine
-    wheel
 
   - echo %PYTHON_VERSION%
   - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
   - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
   - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
+  - IF DEFINED PYTHON python -m pip install -r requirements.txt
+  - IF DEFINED PYTHON python -m pip install -r requirements_setup.txt
+
 
 before_build:
-  - set generator="Visual Studio 14 2015"
-  - IF "%platform%" == "x64" set generator="Visual Studio 14 2015 Win64"
+  - set generator="Visual Studio 15 2017"
+  - IF "%platform%" == "x64" set generator="Visual Studio 15 2017 Win64"
   - git submodule update --init --recursive
   # - git fetch --tags
   - git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
 
 
 build_script:
-  - IF DEFINED PYTHON python setup.py bdist_wheel
+  - IF DEFINED PYTHON python setup.py bdist_wheel -G %generator%
 
-test_script:
-  - python setup.py test
+# test_script:
+#   - python setup.py test
 
 # before_deploy:
 #     - ps: pushd python
