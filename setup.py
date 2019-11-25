@@ -17,8 +17,6 @@ from skbuild.command import set_build_base_mixin
 from skbuild.utils import new_style
 from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
 
-import setuptools_scm
-
 # ======================================================================================
 # Overriding and extending setup commands
 # ======================================================================================

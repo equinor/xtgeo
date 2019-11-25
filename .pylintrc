@@ -1,6 +1,6 @@
 # PYLINT: General settings for XTGeo
 [MASTER]
-ignore=src/xtgeo/cxtgeo, src/xtgeo/_version
+ignore=src/xtgeo/cxtgeo, src/xtgeo/_theversion.py, setup.py
 
 [BASIC]
 good-names=logger, version, xtg, i, j, k, x, y, z, _
