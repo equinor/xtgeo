@@ -1,2 +1,11 @@
 [build-system]
-requires = ["pip>=19.0", "setuptools>=30.3.0", "wheel", "scikit-build", "cmake==3.15.3", "ninja", "setuptools_scm>=3.2.0", "numpy"]
+requires = [
+         "pip>=19.0",
+         "setuptools>=30.3.0",
+         "wheel",
+         "scikit-build",
+         "cmake==3.15.3",
+         "ninja",
+         "setuptools_scm>=3.2.0",
+         "numpy==1.13.3"
+         ]
