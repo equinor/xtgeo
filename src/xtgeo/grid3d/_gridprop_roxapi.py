@@ -48,14 +48,14 @@ def _get_gridprop_data(self, rox, gname, pname, realisation):
             self._isdiscrete = True
 
         self._roxorigin = True
-        _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop)
+        _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop, realisation)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
 
 
-def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
-
+def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop, realisation):
+    """Collect numpy array and convert to XTGeo fmt"""
     indexer = roxgrid.get_grid().grid_indexer
     self._ncol, self._nrow, self._nlay = indexer.dimensions
 
@@ -64,7 +64,7 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop):
     else:
         logger.info(indexer.handedness)
 
-    pvalues = roxprop.get_values()
+    pvalues = roxprop.get_values(realisation=realisation)
     self._roxar_dtype = pvalues.dtype
 
     if self._isdiscrete:
