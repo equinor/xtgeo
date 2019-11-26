@@ -122,8 +122,7 @@ TEST_REQUIREMENTS = ["pytest"]
 # This is done for readthedocs purposes, which cannot deal with SWIG:
 if "SWIG_FAKE" in os.environ:
     print("=================== FAKE SWIG SETUP ====================")
-    shutil.copyfile("src/xtgeo/cxtgeo/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
-    _EXT_MODULES = []
+    shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
 
 
 def src(x):
@@ -131,6 +130,9 @@ def src(x):
     return os.path.abspath(os.path.join(root, x))
 
 
+# ======================================================================================
+# Setup:
+# ======================================================================================
 skbuild.setup(
     name="xtgeo",
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
@@ -142,7 +144,7 @@ skbuild.setup(
     license="LGPL-3.0",
     # cmake_with_sdist=False,
     include_package_data=True,
-    cmake_args=[],
+    # cmake_args=["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"],
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
@@ -172,5 +174,4 @@ skbuild.setup(
     test_suite="tests",
     install_requires=REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
-    # setup_requires=["setuptools_scm"],
 )
