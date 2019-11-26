@@ -3,7 +3,6 @@
 """XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
 
 import os
-import platform
 import shutil
 from os.path import splitext, exists, dirname, basename
 from glob import glob
@@ -16,6 +15,8 @@ import skbuild
 from skbuild.command import set_build_base_mixin
 from skbuild.utils import new_style
 from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
+
+from sphinx.setup_command import BuildDoc
 
 # ======================================================================================
 # Overriding and extending setup commands
@@ -42,6 +43,10 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "wheel",
         ".pytest_cache",
         "xtgeo.egg-info",
+        "docs/apiref",
+        "docs/_build",
+        "docs/_static",
+        "docs/_templates",
     )
 
     CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
@@ -65,7 +70,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 
 
 # ======================================================================================
-# README stuff
+# README stuff and Sphinx
 # ======================================================================================
 
 try:
@@ -82,6 +87,16 @@ except IOError:
     HISTORY = "See HISTORY.md"
 
 
+cmdclass = {"build_sphinx": BuildDoc}
+
+CMDSPHINX = {
+    "build_sphinx": {
+        "project": ("setup.py", "xtgeo"),
+        "version": ("setup.py", "latest"),
+        "release": ("setup.py", ""),
+        "source_dir": ("setup.py", "docs"),
+    }
+}
 # ======================================================================================
 # Requirements:
 # ======================================================================================
@@ -134,6 +149,7 @@ skbuild.setup(
     cmdclass={"clean": CleanUp},
     zip_safe=False,
     keywords="xtgeo",
+    command_options=CMDSPHINX,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

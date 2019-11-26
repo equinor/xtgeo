@@ -5,3 +5,7 @@ cmake==3.15.3
 setuptools_scm==3.2.0
 scikit-build==0.10.0
 ninja==1.9.0.post1
+Sphinx
+sphinx-rtd-theme
+sphinxcontrib-apidoc
+m2r
