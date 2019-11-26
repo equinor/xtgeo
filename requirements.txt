@@ -3,5 +3,6 @@ shapely>=1.6
 matplotlib>=1.5
 scipy>=0.17
 segyio==1.8.8
-pandas>=0.20.3
+pandas>=0.21.0; python_version != "3.4"
+pandas==0.20.3; python_version == "3.4"
 six>=1.11
