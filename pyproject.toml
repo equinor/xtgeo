@@ -11,4 +11,8 @@ requires = [
          'numpy==1.10.4; python_version == "3.4"',
          'numpy==1.13.3; python_version >= "3.5" and python_version < "3.7"',
          'numpy==1.16.0; python_version >= "3.7" or python_version == "2.7"',
+         'Sphinx',
+         'sphinx-rtd-theme',
+         'sphinxcontrib-apidoc',
+         'm2r',
          ]
