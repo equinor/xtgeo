@@ -1,0 +1,1361 @@
+-- The C compiler identification is GNU 7.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build
+/home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -S/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib -B/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build --check-build-system CMakeFiles/Makefile.cmake 0
+/home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -E cmake_progress_start /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/CMakeFiles /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/CMakeFiles/progress.marks
+/usr/bin/make -f CMakeFiles/Makefile2 all
+make[1]: Entering directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+/usr/bin/make -f src/CMakeFiles/cxtgeo.dir/build.make src/CMakeFiles/cxtgeo.dir/depend
+make[2]: Entering directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build && /home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -E cmake_depends "Unix Makefiles" /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src/CMakeFiles/cxtgeo.dir/DependInfo.cmake --color=
+Scanning dependencies of target cxtgeo
+make[2]: Leaving directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+/usr/bin/make -f src/CMakeFiles/cxtgeo.dir/build.make src/CMakeFiles/cxtgeo.dir/build
+make[2]: Entering directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+[  0%] Building C object src/CMakeFiles/cxtgeo.dir/cube_coord_val_ijk.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_coord_val_ijk.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_coord_val_ijk.c
+[  1%] Building C object src/CMakeFiles/cxtgeo.dir/cube_export_rmsregular.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_export_rmsregular.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_export_rmsregular.c
+[  2%] Building C object src/CMakeFiles/cxtgeo.dir/cube_export_segy.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_export_segy.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_export_segy.c
+[  2%] Building C object src/CMakeFiles/cxtgeo.dir/cube_get_randomline.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_get_randomline.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_get_randomline.c
+[  3%] Building C object src/CMakeFiles/cxtgeo.dir/cube_ijk_from_xyz.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_ijk_from_xyz.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_ijk_from_xyz.c
+[  4%] Building C object src/CMakeFiles/cxtgeo.dir/cube_import_rmsregular.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_import_rmsregular.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_import_rmsregular.c
+[  4%] Building C object src/CMakeFiles/cxtgeo.dir/cube_import_segy.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_import_segy.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_import_segy.c
+[  5%] Building C object src/CMakeFiles/cxtgeo.dir/cube_import_storm.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_import_storm.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_import_storm.c
+[  6%] Building C object src/CMakeFiles/cxtgeo.dir/cube_resample_cube.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_resample_cube.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_resample_cube.c
+[  6%] Building C object src/CMakeFiles/cxtgeo.dir/cube_scan_segy_hdr.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_scan_segy_hdr.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_scan_segy_hdr.c
+[  7%] Building C object src/CMakeFiles/cxtgeo.dir/cube_swapaxes.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_swapaxes.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_swapaxes.c
+[  8%] Building C object src/CMakeFiles/cxtgeo.dir/cube_value_ijk.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_value_ijk.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_value_ijk.c
+[  8%] Building C object src/CMakeFiles/cxtgeo.dir/cube_value_xyz_cell.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_value_xyz_cell.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_value_xyz_cell.c
+[  9%] Building C object src/CMakeFiles/cxtgeo.dir/cube_value_xyz_interp.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_value_xyz_interp.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_value_xyz_interp.c
+[ 10%] Building C object src/CMakeFiles/cxtgeo.dir/cube_vertical_val_list.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_vertical_val_list.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_vertical_val_list.c
+[ 10%] Building C object src/CMakeFiles/cxtgeo.dir/cube_xy_from_ij.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/cube_xy_from_ij.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/cube_xy_from_ij.c
+[ 11%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_adj_cells.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_adj_cells.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_adj_cells.c
+[ 12%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_calc_dxdy.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_calc_dxdy.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_calc_dxdy.c
+[ 12%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_calc_dz.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_calc_dz.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_calc_dz.c
+[ 13%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_calc_xyz.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_calc_xyz.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_calc_xyz.c
+[ 14%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_check_cell_splits.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_check_cell_splits.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_check_cell_splits.c
+[ 14%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_collapse_inact.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_collapse_inact.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_collapse_inact.c
+[ 15%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_conv_grid_roxapi.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_conv_grid_roxapi.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_conv_grid_roxapi.c
+[ 16%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_conv_roxapi_grid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_conv_roxapi_grid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_conv_roxapi_grid.c
+[ 17%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_convert_hybrid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_convert_hybrid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid.c
+[ 17%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_convert_hybrid2.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_convert_hybrid2.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid2.c
+[ 18%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_copy.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_copy.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_copy.c
+[ 19%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_corners.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_corners.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_corners.c
+[ 19%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_crop_geometry.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_crop_geometry.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_crop_geometry.c
+[ 20%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_ecl_tsteps.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_ecl_tsteps.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_ecl_tsteps.c
+[ 21%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_egrid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_egrid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_egrid.c
+[ 21%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_grdecl.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_grdecl.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_grdecl.c
+[ 22%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_grdeclprop.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_grdeclprop.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop.c
+[ 23%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_grdeclprop2.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_grdeclprop2.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop2.c
+[ 23%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_roff_end.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_roff_end.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_end.c
+[ 24%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_roff_grid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_roff_grid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_grid.c
+[ 25%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_roff_prop.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_roff_prop.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_prop.c
+[ 25%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_export_roff_pstart.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_export_roff_pstart.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_pstart.c
+[ 26%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_from_cube.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_from_cube.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_from_cube.c
+[ 27%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_geometrics.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_geometrics.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_geometrics.c
+[ 27%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_get_all_corners.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_get_all_corners.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_get_all_corners.c
+[ 28%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_get_randomline.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_get_randomline.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_get_randomline.c
+[ 29%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_imp_ecl_egrid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_imp_ecl_egrid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_imp_ecl_egrid.c
+[ 29%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_imp_prop_roffbin.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_imp_prop_roffbin.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_imp_prop_roffbin.c
+[ 30%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_imp_roffbin_arr.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_imp_roffbin_arr.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_arr.c
+[ 31%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_imp_roffbin_xvec.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_imp_roffbin_xvec.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_xvec.c
+[ 31%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_import_grdecl.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_import_grdecl.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_import_grdecl.c
+[ 32%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_import_grdecl_prop.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_import_grdecl_prop.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_import_grdecl_prop.c
+[ 33%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_import_roff_grid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_import_roff_grid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_import_roff_grid.c
+[ 34%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_import_roffbin_data.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_import_roffbin_data.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_import_roffbin_data.c
+[ 34%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_inact_by_dz.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_inact_by_dz.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_inact_by_dz.c
+[ 35%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_inact_otside_pol.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_inact_otside_pol.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_inact_otside_pol.c
+[ 36%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_make_z_consistent.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_make_z_consistent.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_make_z_consistent.c
+[ 36%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_midpoint.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_midpoint.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_midpoint.c
+[ 37%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_point_in_cell.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_point_in_cell.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_point_in_cell.c
+[ 38%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_point_val_crange.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_point_val_crange.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_point_val_crange.c
+[ 38%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_read_eclrecord.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_read_eclrecord.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_read_eclrecord.c
+[ 39%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_reduce_onelayer.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_reduce_onelayer.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_reduce_onelayer.c
+[ 40%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_refine_vert.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_refine_vert.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_refine_vert.c
+[ 40%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_roff_to_xtgeo.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_roff_to_xtgeo.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_roff_to_xtgeo.c
+[ 41%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_rpt_zlog_vs_zon.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_rpt_zlog_vs_zon.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_rpt_zlog_vs_zon.c
+[ 42%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_scan_eclbinary.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_scan_eclbinary.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_scan_eclbinary.c
+[ 42%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_scan_roff_bingrid.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_scan_roff_bingrid.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_scan_roff_bingrid.c
+[ 43%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_scan_roff_binpar.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_scan_roff_binpar.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_scan_roff_binpar.c
+[ 44%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_scan_roffbinary.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_scan_roffbinary.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_scan_roffbinary.c
+[ 44%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_setval_poly.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_setval_poly.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_setval_poly.c
+[ 45%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_translate.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_translate.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_translate.c
+[ 46%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_well_ijk.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_well_ijk.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_well_ijk.c
+[ 46%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_write_eclinput.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_write_eclinput.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_write_eclinput.c
+[ 47%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_write_eclrecord.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_write_eclrecord.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_write_eclrecord.c
+[ 48%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_zcorn_convert.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_zcorn_convert.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_zcorn_convert.c
+[ 48%] Building C object src/CMakeFiles/cxtgeo.dir/grd3d_zminmax.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/grd3d_zminmax.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/grd3d_zminmax.c
+[ 49%] Building C object src/CMakeFiles/cxtgeo.dir/pol_chk_point_inside.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_chk_point_inside.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_chk_point_inside.c
+[ 50%] Building C object src/CMakeFiles/cxtgeo.dir/pol_close.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_close.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_close.c
+[ 51%] Building C object src/CMakeFiles/cxtgeo.dir/pol_do_points_inside.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_do_points_inside.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_do_points_inside.c
+[ 51%] Building C object src/CMakeFiles/cxtgeo.dir/pol_extend.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_extend.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_extend.c
+[ 52%] Building C object src/CMakeFiles/cxtgeo.dir/pol_geometrics.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_geometrics.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_geometrics.c
+[ 53%] Building C object src/CMakeFiles/cxtgeo.dir/pol_import_irap.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_import_irap.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_import_irap.c
+[ 53%] Building C object src/CMakeFiles/cxtgeo.dir/pol_info.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_info.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_info.c
+[ 54%] Building C object src/CMakeFiles/cxtgeo.dir/pol_refine.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_refine.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_refine.c
+[ 55%] Building C object src/CMakeFiles/cxtgeo.dir/pol_resample.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_resample.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_resample.c
+[ 55%] Building C object src/CMakeFiles/cxtgeo.dir/pol_resampling.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_resampling.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_resampling.c
+[ 56%] Building C object src/CMakeFiles/cxtgeo.dir/pol_set_entry.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/pol_set_entry.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/pol_set_entry.c
+[ 57%] Building C object src/CMakeFiles/cxtgeo.dir/polys_chk_point_inside.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/polys_chk_point_inside.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/polys_chk_point_inside.c
+[ 57%] Building C object src/CMakeFiles/cxtgeo.dir/sucu_ij_from_xy.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/sucu_ij_from_xy.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/sucu_ij_from_xy.c
+[ 58%] Building C object src/CMakeFiles/cxtgeo.dir/surf_export_ijxyz.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_export_ijxyz.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_export_ijxyz.c
+[ 59%] Building C object src/CMakeFiles/cxtgeo.dir/surf_export_irap_ascii.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_export_irap_ascii.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_export_irap_ascii.c
+[ 59%] Building C object src/CMakeFiles/cxtgeo.dir/surf_export_irap_bin.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_export_irap_bin.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_export_irap_bin.c
+[ 60%] Building C object src/CMakeFiles/cxtgeo.dir/surf_export_storm_bin.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_export_storm_bin.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_export_storm_bin.c
+[ 61%] Building C object src/CMakeFiles/cxtgeo.dir/surf_export_zmap_ascii.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_export_zmap_ascii.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_export_zmap_ascii.c
+[ 61%] Building C object src/CMakeFiles/cxtgeo.dir/surf_get_dist_values.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_get_dist_values.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_get_dist_values.c
+[ 62%] Building C object src/CMakeFiles/cxtgeo.dir/surf_get_z_from_ij.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_get_z_from_ij.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_get_z_from_ij.c
+[ 63%] Building C object src/CMakeFiles/cxtgeo.dir/surf_get_z_from_xy.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_get_z_from_xy.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_get_z_from_xy.c
+[ 63%] Building C object src/CMakeFiles/cxtgeo.dir/surf_get_zv_from_xyv.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_get_zv_from_xyv.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_get_zv_from_xyv.c
+[ 64%] Building C object src/CMakeFiles/cxtgeo.dir/surf_import_ijxyz.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_import_ijxyz.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_import_ijxyz.c
+[ 65%] Building C object src/CMakeFiles/cxtgeo.dir/surf_import_ijxyz_tmpl.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_import_ijxyz_tmpl.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_import_ijxyz_tmpl.c
+[ 65%] Building C object src/CMakeFiles/cxtgeo.dir/surf_import_irap_ascii.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_import_irap_ascii.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_import_irap_ascii.c
+[ 66%] Building C object src/CMakeFiles/cxtgeo.dir/surf_import_irap_bin.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_import_irap_bin.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_import_irap_bin.c
+[ 67%] Building C object src/CMakeFiles/cxtgeo.dir/surf_resample.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_resample.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_resample.c
+[ 68%] Building C object src/CMakeFiles/cxtgeo.dir/surf_sample_grd3d_lay.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_sample_grd3d_lay.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_sample_grd3d_lay.c
+[ 68%] Building C object src/CMakeFiles/cxtgeo.dir/surf_setval_poly.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_setval_poly.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_setval_poly.c
+[ 69%] Building C object src/CMakeFiles/cxtgeo.dir/surf_slice_cube.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_slice_cube.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_slice_cube.c
+[ 70%] Building C object src/CMakeFiles/cxtgeo.dir/surf_slice_cube_window.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_slice_cube_window.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_slice_cube_window.c
+[ 70%] Building C object src/CMakeFiles/cxtgeo.dir/surf_slice_grd3d.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_slice_grd3d.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_slice_grd3d.c
+[ 71%] Building C object src/CMakeFiles/cxtgeo.dir/surf_swapaxes.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_swapaxes.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_swapaxes.c
+[ 72%] Building C object src/CMakeFiles/cxtgeo.dir/surf_xy_as_values.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_xy_as_values.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_xy_as_values.c
+[ 72%] Building C object src/CMakeFiles/cxtgeo.dir/surf_xyori_from_ij.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_xyori_from_ij.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_xyori_from_ij.c
+[ 73%] Building C object src/CMakeFiles/cxtgeo.dir/surf_xyz_from_ij.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_xyz_from_ij.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_xyz_from_ij.c
+[ 74%] Building C object src/CMakeFiles/cxtgeo.dir/surf_zminmax.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/surf_zminmax.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/surf_zminmax.c
+[ 74%] Building C object src/CMakeFiles/cxtgeo.dir/u_eightletter.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/u_eightletter.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/u_eightletter.c
+[ 75%] Building C object src/CMakeFiles/cxtgeo.dir/u_wri_ecl_bin_record.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/u_wri_ecl_bin_record.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/u_wri_ecl_bin_record.c
+[ 76%] Building C object src/CMakeFiles/cxtgeo.dir/well_geometrics.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/well_geometrics.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/well_geometrics.c
+[ 76%] Building C object src/CMakeFiles/cxtgeo.dir/well_trunc_parallel.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/well_trunc_parallel.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/well_trunc_parallel.c
+[ 77%] Building C object src/CMakeFiles/cxtgeo.dir/x_2d_rect_corners.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_2d_rect_corners.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_2d_rect_corners.c
+[ 78%] Building C object src/CMakeFiles/cxtgeo.dir/x_3d_geom.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_3d_geom.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_3d_geom.c
+[ 78%] Building C object src/CMakeFiles/cxtgeo.dir/x_3d_geom2.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_3d_geom2.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_3d_geom2.c
+[ 79%] Building C object src/CMakeFiles/cxtgeo.dir/x_avg_angles.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_avg_angles.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_avg_angles.c
+[ 80%] Building C object src/CMakeFiles/cxtgeo.dir/x_chk_point_in_cell.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_chk_point_in_cell.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_chk_point_in_cell.c
+[ 80%] Building C object src/CMakeFiles/cxtgeo.dir/x_cmp_sort.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_cmp_sort.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_cmp_sort.c
+[ 81%] Building C object src/CMakeFiles/cxtgeo.dir/x_conv_vformats.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_conv_vformats.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_conv_vformats.c
+[ 82%] Building C object src/CMakeFiles/cxtgeo.dir/x_diff_angle.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_diff_angle.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_diff_angle.c
+[ 82%] Building C object src/CMakeFiles/cxtgeo.dir/x_fopen.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_fopen.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_fopen.c
+[ 83%] Building C object src/CMakeFiles/cxtgeo.dir/x_general.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_general.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_general.c
+[ 84%] Building C object src/CMakeFiles/cxtgeo.dir/x_ib2ijk.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_ib2ijk.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_ib2ijk.c
+[ 85%] Building C object src/CMakeFiles/cxtgeo.dir/x_ijk2ib.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_ijk2ib.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_ijk2ib.c
+[ 85%] Building C object src/CMakeFiles/cxtgeo.dir/x_interp_cube_nodes.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_interp_cube_nodes.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_interp_cube_nodes.c
+[ 86%] Building C object src/CMakeFiles/cxtgeo.dir/x_interp_map_nodes.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_interp_map_nodes.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_interp_map_nodes.c
+[ 87%] Building C object src/CMakeFiles/cxtgeo.dir/x_mapaxes.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_mapaxes.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_mapaxes.c
+[ 87%] Building C object src/CMakeFiles/cxtgeo.dir/x_nint.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_nint.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_nint.c
+[ 88%] Building C object src/CMakeFiles/cxtgeo.dir/x_regular_geom.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_regular_geom.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_regular_geom.c
+[ 89%] Building C object src/CMakeFiles/cxtgeo.dir/x_roffbin_utils.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_roffbin_utils.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_roffbin_utils.c
+[ 89%] Building C object src/CMakeFiles/cxtgeo.dir/x_rotation_conv.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_rotation_conv.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_rotation_conv.c
+[ 90%] Building C object src/CMakeFiles/cxtgeo.dir/x_statistics.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_statistics.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_statistics.c
+[ 91%] Building C object src/CMakeFiles/cxtgeo.dir/x_stretch_points.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_stretch_points.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_stretch_points.c
+[ 91%] Building C object src/CMakeFiles/cxtgeo.dir/x_stretch_vector.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_stretch_vector.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_stretch_vector.c
+[ 92%] Building C object src/CMakeFiles/cxtgeo.dir/x_swap_check.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_swap_check.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_swap_check.c
+[ 93%] Building C object src/CMakeFiles/cxtgeo.dir/x_swap_endian.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_swap_endian.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_swap_endian.c
+[ 93%] Building C object src/CMakeFiles/cxtgeo.dir/x_vector_extrapol.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_vector_extrapol.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_vector_extrapol.c
+[ 94%] Building C object src/CMakeFiles/cxtgeo.dir/x_vector_extrapol2.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_vector_extrapol2.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_vector_extrapol2.c
+[ 95%] Building C object src/CMakeFiles/cxtgeo.dir/x_vector_info.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_vector_info.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_vector_info.c
+[ 95%] Building C object src/CMakeFiles/cxtgeo.dir/x_vector_linint.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_vector_linint.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_vector_linint.c
+[ 96%] Building C object src/CMakeFiles/cxtgeo.dir/x_vector_linint2.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/x_vector_linint2.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/x_vector_linint2.c
+[ 97%] Building C object src/CMakeFiles/cxtgeo.dir/xtg_io.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/xtg_io.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/xtg_io.c
+[ 97%] Building C object src/CMakeFiles/cxtgeo.dir/xtg_messages.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/xtg_messages.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/xtg_messages.c
+[ 98%] Building C object src/CMakeFiles/cxtgeo.dir/xtg_msg_handler.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/xtg_msg_handler.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/xtg_msg_handler.c
+[ 99%] Building C object src/CMakeFiles/cxtgeo.dir/xtg_verbose.c.o
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /usr/bin/cc  -I/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/.  -Wall -O2 -fPIC -Wno-unused-but-set-variable -std=c99   -o CMakeFiles/cxtgeo.dir/xtg_verbose.c.o   -c /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/src/xtg_verbose.c
+[100%] Linking C static library libcxtgeo.a
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -P CMakeFiles/cxtgeo.dir/cmake_clean_target.cmake
+cd /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/src && /home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -E cmake_link_script CMakeFiles/cxtgeo.dir/link.txt --verbose=1
+/usr/bin/ar qc libcxtgeo.a  CMakeFiles/cxtgeo.dir/cube_coord_val_ijk.c.o CMakeFiles/cxtgeo.dir/cube_export_rmsregular.c.o CMakeFiles/cxtgeo.dir/cube_export_segy.c.o CMakeFiles/cxtgeo.dir/cube_get_randomline.c.o CMakeFiles/cxtgeo.dir/cube_ijk_from_xyz.c.o CMakeFiles/cxtgeo.dir/cube_import_rmsregular.c.o CMakeFiles/cxtgeo.dir/cube_import_segy.c.o CMakeFiles/cxtgeo.dir/cube_import_storm.c.o CMakeFiles/cxtgeo.dir/cube_resample_cube.c.o CMakeFiles/cxtgeo.dir/cube_scan_segy_hdr.c.o CMakeFiles/cxtgeo.dir/cube_swapaxes.c.o CMakeFiles/cxtgeo.dir/cube_value_ijk.c.o CMakeFiles/cxtgeo.dir/cube_value_xyz_cell.c.o CMakeFiles/cxtgeo.dir/cube_value_xyz_interp.c.o CMakeFiles/cxtgeo.dir/cube_vertical_val_list.c.o CMakeFiles/cxtgeo.dir/cube_xy_from_ij.c.o CMakeFiles/cxtgeo.dir/grd3d_adj_cells.c.o CMakeFiles/cxtgeo.dir/grd3d_calc_dxdy.c.o CMakeFiles/cxtgeo.dir/grd3d_calc_dz.c.o CMakeFiles/cxtgeo.dir/grd3d_calc_xyz.c.o CMakeFiles/cxtgeo.dir/grd3d_check_cell_splits.c.o CMakeFiles/cxtgeo.dir/grd3d_collapse_inact.c.o CMakeFiles/cxtgeo.dir/grd3d_conv_grid_roxapi.c.o CMakeFiles/cxtgeo.dir/grd3d_conv_roxapi_grid.c.o CMakeFiles/cxtgeo.dir/grd3d_convert_hybrid.c.o CMakeFiles/cxtgeo.dir/grd3d_convert_hybrid2.c.o CMakeFiles/cxtgeo.dir/grd3d_copy.c.o CMakeFiles/cxtgeo.dir/grd3d_corners.c.o CMakeFiles/cxtgeo.dir/grd3d_crop_geometry.c.o CMakeFiles/cxtgeo.dir/grd3d_ecl_tsteps.c.o CMakeFiles/cxtgeo.dir/grd3d_export_egrid.c.o CMakeFiles/cxtgeo.dir/grd3d_export_grdecl.c.o CMakeFiles/cxtgeo.dir/grd3d_export_grdeclprop.c.o CMakeFiles/cxtgeo.dir/grd3d_export_grdeclprop2.c.o CMakeFiles/cxtgeo.dir/grd3d_export_roff_end.c.o CMakeFiles/cxtgeo.dir/grd3d_export_roff_grid.c.o CMakeFiles/cxtgeo.dir/grd3d_export_roff_prop.c.o CMakeFiles/cxtgeo.dir/grd3d_export_roff_pstart.c.o CMakeFiles/cxtgeo.dir/grd3d_from_cube.c.o CMakeFiles/cxtgeo.dir/grd3d_geometrics.c.o CMakeFiles/cxtgeo.dir/grd3d_get_all_corners.c.o CMakeFiles/cxtgeo.dir/grd3d_get_randomline.c.o CMakeFiles/cxtgeo.dir/grd3d_imp_ecl_egrid.c.o CMakeFiles/cxtgeo.dir/grd3d_imp_prop_roffbin.c.o CMakeFiles/cxtgeo.dir/grd3d_imp_roffbin_arr.c.o CMakeFiles/cxtgeo.dir/grd3d_imp_roffbin_xvec.c.o CMakeFiles/cxtgeo.dir/grd3d_import_grdecl.c.o CMakeFiles/cxtgeo.dir/grd3d_import_grdecl_prop.c.o CMakeFiles/cxtgeo.dir/grd3d_import_roff_grid.c.o CMakeFiles/cxtgeo.dir/grd3d_import_roffbin_data.c.o CMakeFiles/cxtgeo.dir/grd3d_inact_by_dz.c.o CMakeFiles/cxtgeo.dir/grd3d_inact_otside_pol.c.o CMakeFiles/cxtgeo.dir/grd3d_make_z_consistent.c.o CMakeFiles/cxtgeo.dir/grd3d_midpoint.c.o CMakeFiles/cxtgeo.dir/grd3d_point_in_cell.c.o CMakeFiles/cxtgeo.dir/grd3d_point_val_crange.c.o CMakeFiles/cxtgeo.dir/grd3d_read_eclrecord.c.o CMakeFiles/cxtgeo.dir/grd3d_reduce_onelayer.c.o CMakeFiles/cxtgeo.dir/grd3d_refine_vert.c.o CMakeFiles/cxtgeo.dir/grd3d_roff_to_xtgeo.c.o CMakeFiles/cxtgeo.dir/grd3d_rpt_zlog_vs_zon.c.o CMakeFiles/cxtgeo.dir/grd3d_scan_eclbinary.c.o CMakeFiles/cxtgeo.dir/grd3d_scan_roff_bingrid.c.o CMakeFiles/cxtgeo.dir/grd3d_scan_roff_binpar.c.o CMakeFiles/cxtgeo.dir/grd3d_scan_roffbinary.c.o CMakeFiles/cxtgeo.dir/grd3d_setval_poly.c.o CMakeFiles/cxtgeo.dir/grd3d_translate.c.o CMakeFiles/cxtgeo.dir/grd3d_well_ijk.c.o CMakeFiles/cxtgeo.dir/grd3d_write_eclinput.c.o CMakeFiles/cxtgeo.dir/grd3d_write_eclrecord.c.o CMakeFiles/cxtgeo.dir/grd3d_zcorn_convert.c.o CMakeFiles/cxtgeo.dir/grd3d_zminmax.c.o CMakeFiles/cxtgeo.dir/pol_chk_point_inside.c.o CMakeFiles/cxtgeo.dir/pol_close.c.o CMakeFiles/cxtgeo.dir/pol_do_points_inside.c.o CMakeFiles/cxtgeo.dir/pol_extend.c.o CMakeFiles/cxtgeo.dir/pol_geometrics.c.o CMakeFiles/cxtgeo.dir/pol_import_irap.c.o CMakeFiles/cxtgeo.dir/pol_info.c.o CMakeFiles/cxtgeo.dir/pol_refine.c.o CMakeFiles/cxtgeo.dir/pol_resample.c.o CMakeFiles/cxtgeo.dir/pol_resampling.c.o CMakeFiles/cxtgeo.dir/pol_set_entry.c.o CMakeFiles/cxtgeo.dir/polys_chk_point_inside.c.o CMakeFiles/cxtgeo.dir/sucu_ij_from_xy.c.o CMakeFiles/cxtgeo.dir/surf_export_ijxyz.c.o CMakeFiles/cxtgeo.dir/surf_export_irap_ascii.c.o CMakeFiles/cxtgeo.dir/surf_export_irap_bin.c.o CMakeFiles/cxtgeo.dir/surf_export_storm_bin.c.o CMakeFiles/cxtgeo.dir/surf_export_zmap_ascii.c.o CMakeFiles/cxtgeo.dir/surf_get_dist_values.c.o CMakeFiles/cxtgeo.dir/surf_get_z_from_ij.c.o CMakeFiles/cxtgeo.dir/surf_get_z_from_xy.c.o CMakeFiles/cxtgeo.dir/surf_get_zv_from_xyv.c.o CMakeFiles/cxtgeo.dir/surf_import_ijxyz.c.o CMakeFiles/cxtgeo.dir/surf_import_ijxyz_tmpl.c.o CMakeFiles/cxtgeo.dir/surf_import_irap_ascii.c.o CMakeFiles/cxtgeo.dir/surf_import_irap_bin.c.o CMakeFiles/cxtgeo.dir/surf_resample.c.o CMakeFiles/cxtgeo.dir/surf_sample_grd3d_lay.c.o CMakeFiles/cxtgeo.dir/surf_setval_poly.c.o CMakeFiles/cxtgeo.dir/surf_slice_cube.c.o CMakeFiles/cxtgeo.dir/surf_slice_cube_window.c.o CMakeFiles/cxtgeo.dir/surf_slice_grd3d.c.o CMakeFiles/cxtgeo.dir/surf_swapaxes.c.o CMakeFiles/cxtgeo.dir/surf_xy_as_values.c.o CMakeFiles/cxtgeo.dir/surf_xyori_from_ij.c.o CMakeFiles/cxtgeo.dir/surf_xyz_from_ij.c.o CMakeFiles/cxtgeo.dir/surf_zminmax.c.o CMakeFiles/cxtgeo.dir/u_eightletter.c.o CMakeFiles/cxtgeo.dir/u_wri_ecl_bin_record.c.o CMakeFiles/cxtgeo.dir/well_geometrics.c.o CMakeFiles/cxtgeo.dir/well_trunc_parallel.c.o CMakeFiles/cxtgeo.dir/x_2d_rect_corners.c.o CMakeFiles/cxtgeo.dir/x_3d_geom.c.o CMakeFiles/cxtgeo.dir/x_3d_geom2.c.o CMakeFiles/cxtgeo.dir/x_avg_angles.c.o CMakeFiles/cxtgeo.dir/x_chk_point_in_cell.c.o CMakeFiles/cxtgeo.dir/x_cmp_sort.c.o CMakeFiles/cxtgeo.dir/x_conv_vformats.c.o CMakeFiles/cxtgeo.dir/x_diff_angle.c.o CMakeFiles/cxtgeo.dir/x_fopen.c.o CMakeFiles/cxtgeo.dir/x_general.c.o CMakeFiles/cxtgeo.dir/x_ib2ijk.c.o CMakeFiles/cxtgeo.dir/x_ijk2ib.c.o CMakeFiles/cxtgeo.dir/x_interp_cube_nodes.c.o CMakeFiles/cxtgeo.dir/x_interp_map_nodes.c.o CMakeFiles/cxtgeo.dir/x_mapaxes.c.o CMakeFiles/cxtgeo.dir/x_nint.c.o CMakeFiles/cxtgeo.dir/x_regular_geom.c.o CMakeFiles/cxtgeo.dir/x_roffbin_utils.c.o CMakeFiles/cxtgeo.dir/x_rotation_conv.c.o CMakeFiles/cxtgeo.dir/x_statistics.c.o CMakeFiles/cxtgeo.dir/x_stretch_points.c.o CMakeFiles/cxtgeo.dir/x_stretch_vector.c.o CMakeFiles/cxtgeo.dir/x_swap_check.c.o CMakeFiles/cxtgeo.dir/x_swap_endian.c.o CMakeFiles/cxtgeo.dir/x_vector_extrapol.c.o CMakeFiles/cxtgeo.dir/x_vector_extrapol2.c.o CMakeFiles/cxtgeo.dir/x_vector_info.c.o CMakeFiles/cxtgeo.dir/x_vector_linint.c.o CMakeFiles/cxtgeo.dir/x_vector_linint2.c.o CMakeFiles/cxtgeo.dir/xtg_io.c.o CMakeFiles/cxtgeo.dir/xtg_messages.c.o CMakeFiles/cxtgeo.dir/xtg_msg_handler.c.o CMakeFiles/cxtgeo.dir/xtg_verbose.c.o
+/usr/bin/ranlib libcxtgeo.a
+make[2]: Leaving directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+[100%] Built target cxtgeo
+make[1]: Leaving directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+/home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -E cmake_progress_start /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build/CMakeFiles 0
+/usr/bin/make -f CMakeFiles/Makefile2 preinstall
+make[1]: Entering directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+make[1]: Nothing to be done for 'preinstall'.
+make[1]: Leaving directory '/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/build'
+Install the project...
+/home/jan/venv/3.7.5/lib/python3.7/site-packages/cmake/data/bin/cmake -P cmake_install.cmake
+-- Install configuration: ""
+-- Installing: /home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib/lib/libcxtgeo.a
+/home/jan/work/git/xtg/testingstuff/xtgeo/src/xtgeo/cxtgeo/clib
+running bdist_wheel
+running build
+running build_ext
+building 'xtgeo.cxtgeo._cxtgeo' extension
+swigging src/xtgeo/cxtgeo/cxtgeo.i to src/xtgeo/cxtgeo/cxtgeo_wrap.c
+swig -python -modern -o src/xtgeo/cxtgeo/cxtgeo_wrap.c src/xtgeo/cxtgeo/cxtgeo.i
+creating build
+creating build/temp.linux-x86_64-3.7
+creating build/temp.linux-x86_64-3.7/src
+creating build/temp.linux-x86_64-3.7/src/xtgeo
+creating build/temp.linux-x86_64-3.7/src/xtgeo/cxtgeo
+x86_64-linux-gnu-gcc -pthread -DNDEBUG -g -fwrapv -O2 -Wall -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC -Isrc/xtgeo/cxtgeo/clib/src -I/home/jan/venv/3.7.5/include -I/usr/include/python3.7m -I/home/jan/work/git/xtg/testingstuff/xtgeo/.eggs/numpy-1.16.3-py3.7-linux-x86_64.egg/numpy/core/include -c src/xtgeo/cxtgeo/cxtgeo_wrap.c -o build/temp.linux-x86_64-3.7/src/xtgeo/cxtgeo/cxtgeo_wrap.o -Wno-uninitialized -Wno-strict-prototypes
+creating build/lib.linux-x86_64-3.7
+creating build/lib.linux-x86_64-3.7/xtgeo
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+x86_64-linux-gnu-gcc -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-Bsymbolic-functions -Wl,-z,relro -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 build/temp.linux-x86_64-3.7/src/xtgeo/cxtgeo/cxtgeo_wrap.o -Lsrc/xtgeo/cxtgeo/clib/lib -lcxtgeo -o build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/_cxtgeo.cpython-37m-x86_64-linux-gnu.so
+running build_py
+copying src/xtgeo/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo
+copying src/xtgeo/_theversion.py -> build/lib.linux-x86_64-3.7/xtgeo
+creating build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_export.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid3d.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid3d_fence.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_eclbin_record.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_import_roff.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprops_etc.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_op1.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_etc1.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_import_ecl.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_lowlevel.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/grid_property.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/grid.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_import.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprops_io.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_export.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_import_grdecl.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_refine.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_import.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_gridprop_import_eclrun.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_import_roff.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid_hybrid.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/_grid3d_utils.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+copying src/xtgeo/grid3d/grid_properties.py -> build/lib.linux-x86_64-3.7/xtgeo/grid3d
+creating build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/_xyz_lowlevel.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/points.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/_xyz_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/polygons.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/_xyz_oper.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/_xyz_io.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+copying src/xtgeo/xyz/_xyz.py -> build/lib.linux-x86_64-3.7/xtgeo/xyz
+creating build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_utils.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_gridding.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_import.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_export.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_cube.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/regular_surface.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_surfs_import.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_grid3d.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/surfaces.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_lowlevel.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+copying src/xtgeo/surface/_regsurf_oper.py -> build/lib.linux-x86_64-3.7/xtgeo/surface
+creating build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_well_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_well_io.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_wellmarkers.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_blockedwell_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/wells.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/well1.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/blocked_wells.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_wells_utils.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_well_oper.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/_blockedwells_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+copying src/xtgeo/well/blocked_well.py -> build/lib.linux-x86_64-3.7/xtgeo/well
+creating build/lib.linux-x86_64-3.7/xtgeo/roxutils
+copying src/xtgeo/roxutils/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/roxutils
+copying src/xtgeo/roxutils/roxutils.py -> build/lib.linux-x86_64-3.7/xtgeo/roxutils
+copying src/xtgeo/roxutils/_roxutils_etc.py -> build/lib.linux-x86_64-3.7/xtgeo/roxutils
+creating build/lib.linux-x86_64-3.7/xtgeo/cube
+copying src/xtgeo/cube/_cube_import.py -> build/lib.linux-x86_64-3.7/xtgeo/cube
+copying src/xtgeo/cube/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/cube
+copying src/xtgeo/cube/_cube_roxapi.py -> build/lib.linux-x86_64-3.7/xtgeo/cube
+copying src/xtgeo/cube/cube1.py -> build/lib.linux-x86_64-3.7/xtgeo/cube
+copying src/xtgeo/cube/_cube_export.py -> build/lib.linux-x86_64-3.7/xtgeo/cube
+copying src/xtgeo/cube/_cube_utils.py -> build/lib.linux-x86_64-3.7/xtgeo/cube
+creating build/lib.linux-x86_64-3.7/xtgeo/plot
+copying src/xtgeo/plot/xtmap.py -> build/lib.linux-x86_64-3.7/xtgeo/plot
+copying src/xtgeo/plot/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/plot
+copying src/xtgeo/plot/_colortables.py -> build/lib.linux-x86_64-3.7/xtgeo/plot
+copying src/xtgeo/plot/baseplot.py -> build/lib.linux-x86_64-3.7/xtgeo/plot
+copying src/xtgeo/plot/grid3d_slice.py -> build/lib.linux-x86_64-3.7/xtgeo/plot
+copying src/xtgeo/plot/xsection.py -> build/lib.linux-x86_64-3.7/xtgeo/plot
+creating build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/common/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/common/calc.py -> build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/common/constants.py -> build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/common/xtgeo_dialog.py -> build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/common/xtgeo_system.py -> build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/common/exceptions.py -> build/lib.linux-x86_64-3.7/xtgeo/common
+copying src/xtgeo/cxtgeo/__init__.py -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+copying src/xtgeo/cxtgeo/cxtgeo.py -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+copying src/xtgeo/cxtgeo/cxtgeo_fake.py -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+running egg_info
+creating src/xtgeo.egg-info
+writing src/xtgeo.egg-info/PKG-INFO
+writing dependency_links to src/xtgeo.egg-info/dependency_links.txt
+writing requirements to src/xtgeo.egg-info/requires.txt
+writing top-level names to src/xtgeo.egg-info/top_level.txt
+writing manifest file 'src/xtgeo.egg-info/SOURCES.txt'
+writing manifest file 'src/xtgeo.egg-info/SOURCES.txt'
+copying src/xtgeo/.pylintrc -> build/lib.linux-x86_64-3.7/xtgeo
+copying src/xtgeo/cxtgeo/.gitignore -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+copying src/xtgeo/cxtgeo/cxtgeo.i -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+copying src/xtgeo/cxtgeo/numpy.i -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib
+copying src/xtgeo/cxtgeo/clib/CMakeLists.txt -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/CMakeLists.txt -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_cube.c.keep -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_cubic_interpolation.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_ecl_readrecords.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_ecl_scan.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_eclgridprop.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_grd3d_onelayer.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_messages.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_point_in_cell_profiling.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_roff_scan.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_roffgrid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_roffpropgrid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_surf.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+copying src/xtgeo/cxtgeo/clib/ctests/test_x.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/C.i -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/CXTGeo.pm -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/MANIFEST -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/Makefile.PL -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/cxtgeo_py.i -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/grd3d_adj_z_local.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/grd3d_convert_hybrid2.c.backup -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/grd3d_flip_columns.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/makemake.sh -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/makemake4user.sh -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/map_export_geoeas.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/map_regrid_simple.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/pointer.i -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/pox_clip_inside_polys.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/ptrlang.i -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/swaptest.txt -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/test.html -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+copying src/xtgeo/cxtgeo/clib/extra/attic/test.pod -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/grd3d_fnd_cell.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/grd3d_fnd_near_cell.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/gtc_msg.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/libgtc.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/libgtc_.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/swap_endian.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying src/xtgeo/cxtgeo/clib/extra/attic/inactive_code/swap_test.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying src/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/grd3d_import_ecl_prop.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying src/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/libxtg.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying src/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/libxtg_.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying src/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/map_getcontour.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/.gitignore -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/COPYING -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/INSTALL -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/Makefile.win -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/README.md -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/tap.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+copying src/xtgeo/cxtgeo/clib/extra/libtap/tap.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/cmp_mem.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/cmp_mem.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/cmpok.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/cmpok.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/diag.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/diag.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/diesok.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/diesok.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/is.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/is.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/like.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/like.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/simple.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/simple.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/skip.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/skip.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/synopsis.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/synopsis.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/test.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/todo.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+copying src/xtgeo/cxtgeo/clib/extra/libtap/t/todo.expected -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/CMakeLists.txt -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_coord_val_ijk.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_export_rmsregular.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_export_segy.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_get_randomline.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_ijk_from_xyz.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_import_rmsregular.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_import_segy.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_import_storm.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_resample_cube.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_scan_segy_hdr.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_swapaxes.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_value_ijk.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_value_xyz_cell.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_value_xyz_interp.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_vertical_val_list.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/cube_xy_from_ij.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_adj_cells.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_calc_dxdy.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_calc_dz.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_calc_xyz.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_check_cell_splits.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_collapse_inact.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_conv_grid_roxapi.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_conv_roxapi_grid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid2.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_copy.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_corners.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_crop_geometry.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_ecl_tsteps.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_egrid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_grdecl.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop2.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_end.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_grid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_prop.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_export_roff_pstart.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_from_cube.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_geometrics.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_get_all_corners.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_get_randomline.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_imp_ecl_egrid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_imp_prop_roffbin.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_arr.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_xvec.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_import_grdecl.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_import_grdecl_prop.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_import_roff_grid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_import_roffbin_data.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_inact_by_dz.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_inact_otside_pol.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_make_z_consistent.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_midpoint.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_point_in_cell.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_point_val_crange.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_read_eclrecord.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_reduce_onelayer.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_refine_vert.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_roff_to_xtgeo.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_rpt_zlog_vs_zon.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_scan_eclbinary.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_scan_roff_bingrid.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_scan_roff_binpar.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_scan_roffbinary.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_setval_poly.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_translate.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_well_ijk.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_write_eclinput.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_write_eclrecord.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_zcorn_convert.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/grd3d_zminmax.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/header.info -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/libxtg.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/libxtg_.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_chk_point_inside.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_close.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_do_points_inside.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_extend.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_geometrics.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_import_irap.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_info.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_refine.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_resample.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_resampling.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/pol_set_entry.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/polys_chk_point_inside.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/sucu_ij_from_xy.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_export_ijxyz.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_export_irap_ascii.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_export_irap_bin.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_export_storm_bin.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_export_zmap_ascii.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_get_dist_values.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_get_z_from_ij.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_get_z_from_xy.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_get_zv_from_xyv.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_import_ijxyz.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_import_ijxyz_tmpl.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_import_irap_ascii.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_import_irap_bin.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_resample.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_sample_grd3d_lay.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_setval_poly.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_slice_cube.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_slice_cube_window.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_slice_grd3d.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_swapaxes.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_xy_as_values.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_xyori_from_ij.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_xyz_from_ij.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/surf_zminmax.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/swap_endian.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/u_eightletter.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/u_wri_ecl_bin_record.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/well_geometrics.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/well_trunc_parallel.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_2d_rect_corners.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_3d_geom.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_3d_geom2.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_avg_angles.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_chk_point_in_cell.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_cmp_sort.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_conv_vformats.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_diff_angle.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_fopen.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_general.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_get_1d_double_array.c.unfinished -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_ib2ijk.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_ijk2ib.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_interp_cube_nodes.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_interp_map_nodes.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_mapaxes.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_nint.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_regular_geom.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_roffbin_utils.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_rotation_conv.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_statistics.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_stretch_points.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_stretch_vector.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_swap_check.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_swap_endian.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_vector_extrapol.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_vector_extrapol2.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_vector_info.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_vector_linint.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/x_vector_linint2.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/xtg_io.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/xtg_messages.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/xtg_msg_handler.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+copying src/xtgeo/cxtgeo/clib/src/xtg_verbose.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src
+creating build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap
+copying src/xtgeo/cxtgeo/clib/tap/CMakeLists.txt -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap
+copying src/xtgeo/cxtgeo/clib/tap/tap.c -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap
+copying src/xtgeo/cxtgeo/clib/tap/tap.h -> build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap
+installing to build/bdist.linux-x86_64/wheel
+running install
+running install_lib
+creating build/bdist.linux-x86_64
+creating build/bdist.linux-x86_64/wheel
+creating build/bdist.linux-x86_64/wheel/xtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/.pylintrc -> build/bdist.linux-x86_64/wheel/xtgeo
+creating build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_export.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid3d.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid3d_fence.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_eclbin_record.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_import_roff.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprops_etc.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_op1.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_etc1.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_import_ecl.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_lowlevel.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/grid_property.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/grid.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_import.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprops_io.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_export.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_import_grdecl.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_refine.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_import.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_gridprop_import_eclrun.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_import_roff.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid_hybrid.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/_grid3d_utils.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+copying build/lib.linux-x86_64-3.7/xtgeo/grid3d/grid_properties.py -> build/bdist.linux-x86_64/wheel/xtgeo/grid3d
+creating build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/_xyz_lowlevel.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/points.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/_xyz_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/polygons.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/_xyz_oper.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/_xyz_io.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+copying build/lib.linux-x86_64-3.7/xtgeo/xyz/_xyz.py -> build/bdist.linux-x86_64/wheel/xtgeo/xyz
+creating build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_utils.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_gridding.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_import.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_export.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_cube.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/regular_surface.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_surfs_import.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_grid3d.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/surfaces.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_lowlevel.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+copying build/lib.linux-x86_64-3.7/xtgeo/surface/_regsurf_oper.py -> build/bdist.linux-x86_64/wheel/xtgeo/surface
+creating build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_well_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_well_io.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_wellmarkers.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_blockedwell_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/wells.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/well1.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/blocked_wells.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_wells_utils.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_well_oper.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/_blockedwells_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+copying build/lib.linux-x86_64-3.7/xtgeo/well/blocked_well.py -> build/bdist.linux-x86_64/wheel/xtgeo/well
+creating build/bdist.linux-x86_64/wheel/xtgeo/roxutils
+copying build/lib.linux-x86_64-3.7/xtgeo/roxutils/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/roxutils
+copying build/lib.linux-x86_64-3.7/xtgeo/roxutils/roxutils.py -> build/bdist.linux-x86_64/wheel/xtgeo/roxutils
+copying build/lib.linux-x86_64-3.7/xtgeo/roxutils/_roxutils_etc.py -> build/bdist.linux-x86_64/wheel/xtgeo/roxutils
+copying build/lib.linux-x86_64-3.7/xtgeo/_theversion.py -> build/bdist.linux-x86_64/wheel/xtgeo
+creating build/bdist.linux-x86_64/wheel/xtgeo/cube
+copying build/lib.linux-x86_64-3.7/xtgeo/cube/_cube_import.py -> build/bdist.linux-x86_64/wheel/xtgeo/cube
+copying build/lib.linux-x86_64-3.7/xtgeo/cube/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/cube
+copying build/lib.linux-x86_64-3.7/xtgeo/cube/_cube_roxapi.py -> build/bdist.linux-x86_64/wheel/xtgeo/cube
+copying build/lib.linux-x86_64-3.7/xtgeo/cube/cube1.py -> build/bdist.linux-x86_64/wheel/xtgeo/cube
+copying build/lib.linux-x86_64-3.7/xtgeo/cube/_cube_export.py -> build/bdist.linux-x86_64/wheel/xtgeo/cube
+copying build/lib.linux-x86_64-3.7/xtgeo/cube/_cube_utils.py -> build/bdist.linux-x86_64/wheel/xtgeo/cube
+creating build/bdist.linux-x86_64/wheel/xtgeo/plot
+copying build/lib.linux-x86_64-3.7/xtgeo/plot/xtmap.py -> build/bdist.linux-x86_64/wheel/xtgeo/plot
+copying build/lib.linux-x86_64-3.7/xtgeo/plot/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/plot
+copying build/lib.linux-x86_64-3.7/xtgeo/plot/_colortables.py -> build/bdist.linux-x86_64/wheel/xtgeo/plot
+copying build/lib.linux-x86_64-3.7/xtgeo/plot/baseplot.py -> build/bdist.linux-x86_64/wheel/xtgeo/plot
+copying build/lib.linux-x86_64-3.7/xtgeo/plot/grid3d_slice.py -> build/bdist.linux-x86_64/wheel/xtgeo/plot
+copying build/lib.linux-x86_64-3.7/xtgeo/plot/xsection.py -> build/bdist.linux-x86_64/wheel/xtgeo/plot
+creating build/bdist.linux-x86_64/wheel/xtgeo/common
+copying build/lib.linux-x86_64-3.7/xtgeo/common/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/common
+copying build/lib.linux-x86_64-3.7/xtgeo/common/calc.py -> build/bdist.linux-x86_64/wheel/xtgeo/common
+copying build/lib.linux-x86_64-3.7/xtgeo/common/constants.py -> build/bdist.linux-x86_64/wheel/xtgeo/common
+copying build/lib.linux-x86_64-3.7/xtgeo/common/xtgeo_dialog.py -> build/bdist.linux-x86_64/wheel/xtgeo/common
+copying build/lib.linux-x86_64-3.7/xtgeo/common/xtgeo_system.py -> build/bdist.linux-x86_64/wheel/xtgeo/common
+copying build/lib.linux-x86_64-3.7/xtgeo/common/exceptions.py -> build/bdist.linux-x86_64/wheel/xtgeo/common
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/_cxtgeo.cpython-37m-x86_64-linux-gnu.so -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/__init__.py -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/numpy.i -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/cxtgeo.py -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/tap.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/Makefile.win -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/INSTALL -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/.gitignore -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/COPYING -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/README.md -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/tap.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/test.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/diag.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/is.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/cmp_mem.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/diag.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/simple.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/is.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/skip.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/diesok.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/diesok.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/skip.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/cmp_mem.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/like.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/synopsis.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/todo.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/simple.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/like.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/cmpok.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/todo.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/cmpok.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/libtap/t/synopsis.expected -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/libtap/t
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/cxtgeo_py.i -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/test.html -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/makemake.sh -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/swaptest.txt -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/grd3d_convert_hybrid2.c.backup -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/test.pod -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/grd3d_fnd_near_cell.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/gtc_msg.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/swap_endian.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/swap_test.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/grd3d_fnd_cell.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/libgtc.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/inactive_code/libgtc_.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/inactive_code
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/CXTGeo.pm -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/grd3d_adj_z_local.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/Makefile.PL -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/grd3d_flip_columns.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/MANIFEST -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/C.i -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/pointer.i -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/map_regrid_simple.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/ptrlang.i -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/pox_clip_inside_polys.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/makemake4user.sh -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/map_export_geoeas.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/libxtg.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/grd3d_import_ecl_prop.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/libxtg_.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/extra/attic/snippets_tests/map_getcontour.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/extra/attic/snippets_tests
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/tap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap/tap.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/tap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap/tap.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/tap
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/tap/CMakeLists.txt -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/tap
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_ecl_readrecords.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_eclgridprop.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_roffgrid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_cube.c.keep -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_messages.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_point_in_cell_profiling.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_roffpropgrid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_grd3d_onelayer.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_cubic_interpolation.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_surf.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/CMakeLists.txt -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_x.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_ecl_scan.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/ctests/test_roff_scan.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/ctests
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/CMakeLists.txt -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib
+creating build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_zcorn_convert.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/xtg_messages.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_slice_cube.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/well_trunc_parallel.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_2d_rect_corners.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_mapaxes.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_close.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_get_z_from_xy.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_egrid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_export_rmsregular.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_chk_point_inside.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_zminmax.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_regular_geom.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_import_grdecl_prop.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_adj_cells.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_setval_poly.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/header.info -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_scan_eclbinary.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_inact_by_dz.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_stretch_vector.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_roff_prop.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop2.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_geometrics.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_roff_pstart.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_import_irap.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/sucu_ij_from_xy.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_calc_dxdy.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_import_ijxyz_tmpl.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_inact_otside_pol.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_value_xyz_interp.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_swap_check.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_export_segy.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_roff_grid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_conv_grid_roxapi.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/xtg_io.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_get_all_corners.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_interp_map_nodes.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/libxtg.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_vector_extrapol2.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_get_z_from_ij.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_ijk_from_xyz.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_diff_angle.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_resample.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_rpt_zlog_vs_zon.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_point_val_crange.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_midpoint.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/xtg_msg_handler.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/polys_chk_point_inside.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_get_randomline.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_cmp_sort.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_imp_ecl_egrid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/xtg_verbose.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_import_storm.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_ecl_tsteps.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_chk_point_in_cell.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_do_points_inside.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_crop_geometry.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_coord_val_ijk.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_swapaxes.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_vector_linint.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_reduce_onelayer.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_roff_end.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_nint.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_vertical_val_list.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/libxtg_.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_geometrics.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_export_zmap_ascii.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_extend.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_3d_geom2.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_write_eclinput.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_conv_roxapi_grid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_value_xyz_cell.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_calc_xyz.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_conv_vformats.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_import_grdecl.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_export_irap_bin.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_zminmax.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_get_dist_values.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/u_eightletter.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_point_in_cell.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_import_irap_bin.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_write_eclrecord.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_corners.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_arr.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_rotation_conv.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_export_ijxyz.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_scan_roff_bingrid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_slice_grd3d.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid2.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_scan_roffbinary.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_resample.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/u_wri_ecl_bin_record.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/swap_endian.h -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_statistics.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_xyz_from_ij.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_sample_grd3d_lay.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_refine.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_general.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_get_randomline.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_swap_endian.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_calc_dz.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_imp_prop_roffbin.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_export_grdecl.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_xy_as_values.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_scan_segy_hdr.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_read_eclrecord.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_avg_angles.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_export_storm_bin.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_copy.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_resample_cube.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_fopen.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_export_irap_ascii.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_get_1d_double_array.c.unfinished -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_interp_cube_nodes.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_translate.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_stretch_points.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_slice_cube_window.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/CMakeLists.txt -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_from_cube.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_roff_to_xtgeo.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_3d_geom.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_import_segy.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_xy_from_ij.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_xyori_from_ij.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_import_roff_grid.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_refine_vert.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_well_ijk.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_ib2ijk.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_setval_poly.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_set_entry.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_get_zv_from_xyv.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_import_irap_ascii.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/surf_import_ijxyz.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_make_z_consistent.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_info.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_collapse_inact.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/pol_resampling.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_vector_info.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_ijk2ib.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_vector_extrapol.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_value_ijk.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_xvec.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/well_geometrics.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_check_cell_splits.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_swapaxes.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_scan_roff_binpar.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/cube_import_rmsregular.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_vector_linint2.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/grd3d_import_roffbin_data.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/clib/src/x_roffbin_utils.c -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo/clib/src
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/.gitignore -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/cxtgeo_fake.py -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+copying build/lib.linux-x86_64-3.7/xtgeo/cxtgeo/cxtgeo.i -> build/bdist.linux-x86_64/wheel/xtgeo/cxtgeo
+running install_egg_info
+Copying src/xtgeo.egg-info to build/bdist.linux-x86_64/wheel/xtgeo-2.1.1.dev0+g5543756.d20191127.egg-info
+running install_scripts
+adding license file "LICENSE.md" (matched pattern "LICEN[CS]E*")
+creating build/bdist.linux-x86_64/wheel/xtgeo-2.1.1.dev0+g5543756.d20191127.dist-info/WHEEL
+creating 'dist/xtgeo-2.1.1.dev0+g5543756.d20191127-cp37-cp37m-linux_x86_64.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+adding 'xtgeo/.pylintrc'
+adding 'xtgeo/__init__.py'
+adding 'xtgeo/_theversion.py'
+adding 'xtgeo/common/__init__.py'
+adding 'xtgeo/common/calc.py'
+adding 'xtgeo/common/constants.py'
+adding 'xtgeo/common/exceptions.py'
+adding 'xtgeo/common/xtgeo_dialog.py'
+adding 'xtgeo/common/xtgeo_system.py'
+adding 'xtgeo/cube/__init__.py'
+adding 'xtgeo/cube/_cube_export.py'
+adding 'xtgeo/cube/_cube_import.py'
+adding 'xtgeo/cube/_cube_roxapi.py'
+adding 'xtgeo/cube/_cube_utils.py'
+adding 'xtgeo/cube/cube1.py'
+adding 'xtgeo/cxtgeo/.gitignore'
+adding 'xtgeo/cxtgeo/__init__.py'
+adding 'xtgeo/cxtgeo/_cxtgeo.cpython-37m-x86_64-linux-gnu.so'
+adding 'xtgeo/cxtgeo/cxtgeo.i'
+adding 'xtgeo/cxtgeo/cxtgeo.py'
+adding 'xtgeo/cxtgeo/cxtgeo_fake.py'
+adding 'xtgeo/cxtgeo/numpy.i'
+adding 'xtgeo/cxtgeo/clib/CMakeLists.txt'
+adding 'xtgeo/cxtgeo/clib/ctests/CMakeLists.txt'
+adding 'xtgeo/cxtgeo/clib/ctests/test_cube.c.keep'
+adding 'xtgeo/cxtgeo/clib/ctests/test_cubic_interpolation.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_ecl_readrecords.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_ecl_scan.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_eclgridprop.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_grd3d_onelayer.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_messages.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_point_in_cell_profiling.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_roff_scan.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_roffgrid.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_roffpropgrid.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_surf.c'
+adding 'xtgeo/cxtgeo/clib/ctests/test_x.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/C.i'
+adding 'xtgeo/cxtgeo/clib/extra/attic/CXTGeo.pm'
+adding 'xtgeo/cxtgeo/clib/extra/attic/MANIFEST'
+adding 'xtgeo/cxtgeo/clib/extra/attic/Makefile.PL'
+adding 'xtgeo/cxtgeo/clib/extra/attic/cxtgeo_py.i'
+adding 'xtgeo/cxtgeo/clib/extra/attic/grd3d_adj_z_local.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/extra/attic/grd3d_convert_hybrid2.c.backup'
+adding 'xtgeo/cxtgeo/clib/extra/attic/grd3d_flip_columns.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/extra/attic/makemake.sh'
+adding 'xtgeo/cxtgeo/clib/extra/attic/makemake4user.sh'
+adding 'xtgeo/cxtgeo/clib/extra/attic/map_export_geoeas.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/extra/attic/map_regrid_simple.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/extra/attic/pointer.i'
+adding 'xtgeo/cxtgeo/clib/extra/attic/pox_clip_inside_polys.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/extra/attic/ptrlang.i'
+adding 'xtgeo/cxtgeo/clib/extra/attic/swaptest.txt'
+adding 'xtgeo/cxtgeo/clib/extra/attic/test.html'
+adding 'xtgeo/cxtgeo/clib/extra/attic/test.pod'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/grd3d_fnd_cell.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/grd3d_fnd_near_cell.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/gtc_msg.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/libgtc.h'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/libgtc_.h'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/swap_endian.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/inactive_code/swap_test.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/snippets_tests/grd3d_import_ecl_prop.c'
+adding 'xtgeo/cxtgeo/clib/extra/attic/snippets_tests/libxtg.h'
+adding 'xtgeo/cxtgeo/clib/extra/attic/snippets_tests/libxtg_.h'
+adding 'xtgeo/cxtgeo/clib/extra/attic/snippets_tests/map_getcontour.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/.gitignore'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/COPYING'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/INSTALL'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/Makefile.win'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/README.md'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/tap.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/tap.h'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/cmp_mem.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/cmp_mem.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/cmpok.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/cmpok.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/diag.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/diag.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/diesok.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/diesok.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/is.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/is.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/like.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/like.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/simple.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/simple.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/skip.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/skip.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/synopsis.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/synopsis.expected'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/test.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/todo.c'
+adding 'xtgeo/cxtgeo/clib/extra/libtap/t/todo.expected'
+adding 'xtgeo/cxtgeo/clib/src/CMakeLists.txt'
+adding 'xtgeo/cxtgeo/clib/src/cube_coord_val_ijk.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_export_rmsregular.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_export_segy.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_get_randomline.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_ijk_from_xyz.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_import_rmsregular.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_import_segy.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_import_storm.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_resample_cube.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_scan_segy_hdr.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_swapaxes.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_value_ijk.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_value_xyz_cell.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_value_xyz_interp.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_vertical_val_list.c'
+adding 'xtgeo/cxtgeo/clib/src/cube_xy_from_ij.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_adj_cells.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_calc_dxdy.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_calc_dz.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_calc_xyz.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_check_cell_splits.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_collapse_inact.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_conv_grid_roxapi.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_conv_roxapi_grid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_convert_hybrid2.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_copy.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_corners.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_crop_geometry.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_ecl_tsteps.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_egrid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_grdecl.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_grdeclprop2.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_roff_end.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_roff_grid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_roff_prop.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_export_roff_pstart.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_from_cube.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_geometrics.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_get_all_corners.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_get_randomline.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_imp_ecl_egrid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_imp_prop_roffbin.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_arr.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_imp_roffbin_xvec.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_import_grdecl.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_import_grdecl_prop.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_import_roff_grid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_import_roffbin_data.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_inact_by_dz.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_inact_otside_pol.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_make_z_consistent.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_midpoint.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_point_in_cell.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_point_val_crange.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_read_eclrecord.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_reduce_onelayer.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_refine_vert.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_roff_to_xtgeo.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_rpt_zlog_vs_zon.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_scan_eclbinary.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_scan_roff_bingrid.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_scan_roff_binpar.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_scan_roffbinary.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_setval_poly.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_translate.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_well_ijk.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_write_eclinput.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_write_eclrecord.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_zcorn_convert.c'
+adding 'xtgeo/cxtgeo/clib/src/grd3d_zminmax.c'
+adding 'xtgeo/cxtgeo/clib/src/header.info'
+adding 'xtgeo/cxtgeo/clib/src/libxtg.h'
+adding 'xtgeo/cxtgeo/clib/src/libxtg_.h'
+adding 'xtgeo/cxtgeo/clib/src/pol_chk_point_inside.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_close.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_do_points_inside.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_extend.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_geometrics.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_import_irap.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_info.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_refine.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_resample.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_resampling.c'
+adding 'xtgeo/cxtgeo/clib/src/pol_set_entry.c'
+adding 'xtgeo/cxtgeo/clib/src/polys_chk_point_inside.c'
+adding 'xtgeo/cxtgeo/clib/src/sucu_ij_from_xy.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_export_ijxyz.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_export_irap_ascii.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_export_irap_bin.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_export_storm_bin.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_export_zmap_ascii.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_get_dist_values.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_get_z_from_ij.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_get_z_from_xy.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_get_zv_from_xyv.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_import_ijxyz.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_import_ijxyz_tmpl.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_import_irap_ascii.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_import_irap_bin.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_resample.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_sample_grd3d_lay.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_setval_poly.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_slice_cube.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_slice_cube_window.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_slice_grd3d.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_swapaxes.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_xy_as_values.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_xyori_from_ij.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_xyz_from_ij.c'
+adding 'xtgeo/cxtgeo/clib/src/surf_zminmax.c'
+adding 'xtgeo/cxtgeo/clib/src/swap_endian.h'
+adding 'xtgeo/cxtgeo/clib/src/u_eightletter.c'
+adding 'xtgeo/cxtgeo/clib/src/u_wri_ecl_bin_record.c'
+adding 'xtgeo/cxtgeo/clib/src/well_geometrics.c'
+adding 'xtgeo/cxtgeo/clib/src/well_trunc_parallel.c'
+adding 'xtgeo/cxtgeo/clib/src/x_2d_rect_corners.c'
+adding 'xtgeo/cxtgeo/clib/src/x_3d_geom.c'
+adding 'xtgeo/cxtgeo/clib/src/x_3d_geom2.c'
+adding 'xtgeo/cxtgeo/clib/src/x_avg_angles.c'
+adding 'xtgeo/cxtgeo/clib/src/x_chk_point_in_cell.c'
+adding 'xtgeo/cxtgeo/clib/src/x_cmp_sort.c'
+adding 'xtgeo/cxtgeo/clib/src/x_conv_vformats.c'
+adding 'xtgeo/cxtgeo/clib/src/x_diff_angle.c'
+adding 'xtgeo/cxtgeo/clib/src/x_fopen.c'
+adding 'xtgeo/cxtgeo/clib/src/x_general.c'
+adding 'xtgeo/cxtgeo/clib/src/x_get_1d_double_array.c.unfinished'
+adding 'xtgeo/cxtgeo/clib/src/x_ib2ijk.c'
+adding 'xtgeo/cxtgeo/clib/src/x_ijk2ib.c'
+adding 'xtgeo/cxtgeo/clib/src/x_interp_cube_nodes.c'
+adding 'xtgeo/cxtgeo/clib/src/x_interp_map_nodes.c'
+adding 'xtgeo/cxtgeo/clib/src/x_mapaxes.c'
+adding 'xtgeo/cxtgeo/clib/src/x_nint.c'
+adding 'xtgeo/cxtgeo/clib/src/x_regular_geom.c'
+adding 'xtgeo/cxtgeo/clib/src/x_roffbin_utils.c'
+adding 'xtgeo/cxtgeo/clib/src/x_rotation_conv.c'
+adding 'xtgeo/cxtgeo/clib/src/x_statistics.c'
+adding 'xtgeo/cxtgeo/clib/src/x_stretch_points.c'
+adding 'xtgeo/cxtgeo/clib/src/x_stretch_vector.c'
+adding 'xtgeo/cxtgeo/clib/src/x_swap_check.c'
+adding 'xtgeo/cxtgeo/clib/src/x_swap_endian.c'
+adding 'xtgeo/cxtgeo/clib/src/x_vector_extrapol.c'
+adding 'xtgeo/cxtgeo/clib/src/x_vector_extrapol2.c'
+adding 'xtgeo/cxtgeo/clib/src/x_vector_info.c'
+adding 'xtgeo/cxtgeo/clib/src/x_vector_linint.c'
+adding 'xtgeo/cxtgeo/clib/src/x_vector_linint2.c'
+adding 'xtgeo/cxtgeo/clib/src/xtg_io.c'
+adding 'xtgeo/cxtgeo/clib/src/xtg_messages.c'
+adding 'xtgeo/cxtgeo/clib/src/xtg_msg_handler.c'
+adding 'xtgeo/cxtgeo/clib/src/xtg_verbose.c'
+adding 'xtgeo/cxtgeo/clib/tap/CMakeLists.txt'
+adding 'xtgeo/cxtgeo/clib/tap/tap.c'
+adding 'xtgeo/cxtgeo/clib/tap/tap.h'
+adding 'xtgeo/grid3d/__init__.py'
+adding 'xtgeo/grid3d/_grid3d.py'
+adding 'xtgeo/grid3d/_grid3d_fence.py'
+adding 'xtgeo/grid3d/_grid3d_utils.py'
+adding 'xtgeo/grid3d/_grid_eclbin_record.py'
+adding 'xtgeo/grid3d/_grid_etc1.py'
+adding 'xtgeo/grid3d/_grid_export.py'
+adding 'xtgeo/grid3d/_grid_hybrid.py'
+adding 'xtgeo/grid3d/_grid_import.py'
+adding 'xtgeo/grid3d/_grid_import_ecl.py'
+adding 'xtgeo/grid3d/_grid_import_roff.py'
+adding 'xtgeo/grid3d/_grid_refine.py'
+adding 'xtgeo/grid3d/_grid_roxapi.py'
+adding 'xtgeo/grid3d/_gridprop_export.py'
+adding 'xtgeo/grid3d/_gridprop_import.py'
+adding 'xtgeo/grid3d/_gridprop_import_eclrun.py'
+adding 'xtgeo/grid3d/_gridprop_import_grdecl.py'
+adding 'xtgeo/grid3d/_gridprop_import_roff.py'
+adding 'xtgeo/grid3d/_gridprop_lowlevel.py'
+adding 'xtgeo/grid3d/_gridprop_op1.py'
+adding 'xtgeo/grid3d/_gridprop_roxapi.py'
+adding 'xtgeo/grid3d/_gridprops_etc.py'
+adding 'xtgeo/grid3d/_gridprops_io.py'
+adding 'xtgeo/grid3d/grid.py'
+adding 'xtgeo/grid3d/grid_properties.py'
+adding 'xtgeo/grid3d/grid_property.py'
+adding 'xtgeo/plot/__init__.py'
+adding 'xtgeo/plot/_colortables.py'
+adding 'xtgeo/plot/baseplot.py'
+adding 'xtgeo/plot/grid3d_slice.py'
+adding 'xtgeo/plot/xsection.py'
+adding 'xtgeo/plot/xtmap.py'
+adding 'xtgeo/roxutils/__init__.py'
+adding 'xtgeo/roxutils/_roxutils_etc.py'
+adding 'xtgeo/roxutils/roxutils.py'
+adding 'xtgeo/surface/__init__.py'
+adding 'xtgeo/surface/_regsurf_cube.py'
+adding 'xtgeo/surface/_regsurf_export.py'
+adding 'xtgeo/surface/_regsurf_grid3d.py'
+adding 'xtgeo/surface/_regsurf_gridding.py'
+adding 'xtgeo/surface/_regsurf_import.py'
+adding 'xtgeo/surface/_regsurf_lowlevel.py'
+adding 'xtgeo/surface/_regsurf_oper.py'
+adding 'xtgeo/surface/_regsurf_roxapi.py'
+adding 'xtgeo/surface/_regsurf_utils.py'
+adding 'xtgeo/surface/_surfs_import.py'
+adding 'xtgeo/surface/regular_surface.py'
+adding 'xtgeo/surface/surfaces.py'
+adding 'xtgeo/well/__init__.py'
+adding 'xtgeo/well/_blockedwell_roxapi.py'
+adding 'xtgeo/well/_blockedwells_roxapi.py'
+adding 'xtgeo/well/_well_io.py'
+adding 'xtgeo/well/_well_oper.py'
+adding 'xtgeo/well/_well_roxapi.py'
+adding 'xtgeo/well/_wellmarkers.py'
+adding 'xtgeo/well/_wells_utils.py'
+adding 'xtgeo/well/blocked_well.py'
+adding 'xtgeo/well/blocked_wells.py'
+adding 'xtgeo/well/well1.py'
+adding 'xtgeo/well/wells.py'
+adding 'xtgeo/xyz/__init__.py'
+adding 'xtgeo/xyz/_xyz.py'
+adding 'xtgeo/xyz/_xyz_io.py'
+adding 'xtgeo/xyz/_xyz_lowlevel.py'
+adding 'xtgeo/xyz/_xyz_oper.py'
+adding 'xtgeo/xyz/_xyz_roxapi.py'
+adding 'xtgeo/xyz/points.py'
+adding 'xtgeo/xyz/polygons.py'
+adding 'xtgeo-2.1.1.dev0+g5543756.d20191127.dist-info/LICENSE.md'
+adding 'xtgeo-2.1.1.dev0+g5543756.d20191127.dist-info/METADATA'
+adding 'xtgeo-2.1.1.dev0+g5543756.d20191127.dist-info/WHEEL'
+adding 'xtgeo-2.1.1.dev0+g5543756.d20191127.dist-info/top_level.txt'
+adding 'xtgeo-2.1.1.dev0+g5543756.d20191127.dist-info/RECORD'
+removing build/bdist.linux-x86_64/wheel
