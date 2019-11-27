@@ -443,9 +443,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionchanged:: 2.1.0 ``strict`` now defaults to False
         """
 
-        if os.path.isfile(wfile):
-            pass
-        else:
+        if not os.path.isfile(wfile):
             msg = "Does file exist? {}".format(wfile)
             logger.critical(msg)
             raise IOError(msg)
