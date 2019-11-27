@@ -664,8 +664,9 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         if os.path.isfile(sfile):
             pass
         else:
-            logger.critical("Not OK file")
-            raise IOError("Input file for Cube cannot be read")
+            msg = "Does file exist? {}".format(sfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
         # work on file extension
         _froot, fext = os.path.splitext(sfile)

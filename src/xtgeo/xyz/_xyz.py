@@ -121,8 +121,9 @@ class XYZ(object):
         if os.path.isfile(pfile):
             pass
         else:
-            logger.critical("Not OK file")
-            raise os.error
+            msg = "Does file exist? {}".format(pfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
         froot, fext = os.path.splitext(pfile)
         if fformat == "guess":
