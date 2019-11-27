@@ -6,6 +6,7 @@ if (MSVC)
   set(XTGFLAGS /Ox)
 else()
   set(XTGFLAGS -Wall -Wno-unused-but-set-variable -fPIC)
+  set(CXTGEOFLAGS -Wl,--no-undefined)
 endif()
 
 set (SRC "${CMAKE_CURRENT_LIST_DIR}/xtg")
@@ -93,6 +94,6 @@ target_include_directories(cxtgeo PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}
   )
 
-target_compile_options(cxtgeo PUBLIC -Wl,--no-undefined)
+target_compile_options(cxtgeo PUBLIC ${CXTGEOFLAGS})
 
 swig_link_libraries(cxtgeo xtg)
