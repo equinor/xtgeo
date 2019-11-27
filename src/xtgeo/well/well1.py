@@ -446,8 +446,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if os.path.isfile(wfile):
             pass
         else:
-            logger.critical("Not OK file")
-            raise os.error
+            msg = "Does file exist? {}".format(wfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
         if fformat is None or fformat == "rms_ascii":
             _well_io.import_rms_ascii(
