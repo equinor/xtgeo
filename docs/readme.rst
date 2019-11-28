@@ -10,7 +10,7 @@ modelling, in relation with RMS. XTGeo is developed in Equinor.
 Feature summary
 ---------------
 
--  Python 2.7+ and 3.4+ is supported (Linux). Windows soon!
+-  Python 2.7+ and 3.4+ is supported, Linux and Windows 64bit.
 -  Focus on high speed, using numpy and pandas with C backend
 -  Regular surfaces, i.e. 2D maps with regular sampling and rotation
 -  3D grids (corner-point), supporting several formats such as RMS and
@@ -25,7 +25,7 @@ Feature summary
 Quick Installation
 ------------------
 
-For Linux PYPI installation is enabled:
+For Linux and Windows, PYPI installation is enabled:
 
 ::
 
@@ -33,6 +33,9 @@ For Linux PYPI installation is enabled:
 
 For detailed installation instructions (implies C compiling), see
 :doc:`installation`.
+
+For Windows, a `manual install of Shapely`_ is currently required as a first step.
+
 
 Getting started
 ---------------
@@ -42,7 +45,7 @@ Getting started
    from xtgeo.surface import RegularSurface
 
    # create an instance of a surface, read from file
-   mysurf = RegularSurface('myfile.gri')  # Irap binary as default
+   mysurf = RegularSurface("myfile.gri")  # Irap binary as default
 
    print('Mean is {}'.format(mysurf.values.mean()))
 
@@ -52,7 +55,7 @@ Getting started
    mysurface.values[mysurface.values < 2000] = 2000
 
    # export the modified surface:
-   mysurface.to_file('newfile.gri')
+   mysurface.to_file("newfile.gri")
 
 Note on RMS Roxar API integration
 ---------------------------------
@@ -64,3 +67,4 @@ Roxar API (RMS):
    use of it needs a software license agreement in place.
 
 .. _segyio: https://github.com/equinor/segyio
+.. _manual install of Shapely: https://towardsdatascience.com/install-shapely-on-windows-72b6581bb46c

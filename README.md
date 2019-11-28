@@ -29,13 +29,13 @@ Detailed documentation for [XTGeo at Read *the* Docs](https://xtgeo.readthedocs.
    * Support of well data, line and polygons (still somewhat immature)
    * Operations between the data types listed above; e.g. slice a surface
      with a seismic cube
-   * Integration to ROXAR API python for several data types is supported
+   * Integration with ROXAR API python for several data types is supported
      (see note later)
-   * Currently, Linux only is supported
+   * Linux is main development platform. From version 2.2.0, Windows 64bit is supported.
 
 ## Installation ##
 
-For some versions, PYPI installation is possible:
+For Linux and Windows 64bit, PYPI installation is enabled:
 
 ```
 pip install xtgeo

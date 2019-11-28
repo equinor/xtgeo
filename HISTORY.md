@@ -2,6 +2,11 @@
 
 ## Version 2
 
+### 2.2.1
+
+* Full C code and compile restructuring, now using scikit-build!
+* Use of realisation in gridproperty_from_roxar() was not working
+
 ### 2.2.0
 
 Several fixes and new features, most important:
