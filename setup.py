@@ -97,7 +97,7 @@ CMDSPHINX = {
 # think readthedocs still need this:
 if "SWIG_FAKE" in os.environ:
     print("=================== FAKE SWIG SETUP ====================")
-    shutil.copyfile("src/xtgeo/cxtgeo/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
+    shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
 
 # ======================================================================================
 # README stuff and Sphinx
