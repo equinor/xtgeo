@@ -7,9 +7,13 @@ Installation
 From pip
 --------
 
-For a selection of platforms (currently Linux only) and Python versions:
+For a selection of platforms (Linux and Windows) and Python versions:
 
- pip install xtgeo
+.. code-block:: console
+
+   $ pip install xtgeo
+
+For Windows, a `manual install of Shapely`_ is currently required as a first step.
 
 
 Stable release in Equinor
@@ -23,12 +27,24 @@ to do is:
    import xtgeo
 
 
-
-From sources
+From github
 ------------
 
-This is only verified on Linux. You will need `swig` (version 2 or later)
-installed, in addition to a C compiler (gcc)
+You will need `swig` (version 3 or later) installed, in addition to a C compiler (see below).
+
+.. code-block:: console
+
+   $ pip install git+https://github.com/equinor/xtgeo
+
+
+From downloaded sources
+-----------------------
+
+You will need `swig`_ (version 3 or later) installed, in addition to a C compiler.
+Tested compilers are:
+
+* gcc on Linux (Version 4 and later)
+* Visual studio 2015 and 2017 on Windows
 
 The sources for XTGeo can be downloaded from the `Equinor Github repo`_.
 
@@ -51,25 +67,31 @@ Hence folder structure may look like
    /some/path/to/xtgeo
    /some/path/to/xtgeo-testdata
 
+For required python packages, see the requirements*.txt files and the
+pyproject.toml file in the root folder.
+
 Once you have a copy of the source, and you have a `virtual environment`_,
-then always run tests (run first compile with make cc):
+then always run tests (run first compile and install with ``pip install .``):
 
 .. code-block:: console
 
-   $ make test
+   $ pytest
 
 Next you can install it with:
 
 .. code-block:: console
 
-   $ make install
+   $ pip install .
 
 Or to install in developing mode with the VE:
 
 .. code-block:: console
 
-   $ make develop
+   $ pip install -e
+
 
 
 .. _Equinor Github repo: https://github.com/equinor/xtgeo
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+.. _manual install of Shapely: https://towardsdatascience.com/install-shapely-on-windows-72b6581bb46c
+.. _swig: http://swig.org

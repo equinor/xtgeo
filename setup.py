@@ -16,7 +16,8 @@ from skbuild.command import set_build_base_mixin
 from skbuild.utils import new_style
 from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
 
-from sphinx.setup_command import BuildDoc
+from sphinx.setup_command import BuildDoc as _BuildDoc
+from setuptools_scm import get_version
 
 # ======================================================================================
 # Overriding and extending setup commands
@@ -70,6 +71,35 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 
 
 # ======================================================================================
+# Sphinx
+# ======================================================================================
+
+class BuildDocCustom(_BuildDoc):
+    """Trick issue with cxtgeo prior to docs are built """
+
+    shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
+
+    def run(self):
+        super(BuildDocCustom, self).run()
+
+
+cmdclass = {"build_sphinx": BuildDocCustom}
+
+CMDSPHINX = {
+    "build_sphinx": {
+        "project": ("setup.py", "xtgeo"),
+        "version": ("setup.py", get_version()),
+        "release": ("setup.py", ""),
+        "source_dir": ("setup.py", "docs"),
+    }
+}
+
+# think readthedocs still need this:
+if "SWIG_FAKE" in os.environ:
+    print("=================== FAKE SWIG SETUP ====================")
+    shutil.copyfile("src/xtgeo/cxtgeo/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
+
+# ======================================================================================
 # README stuff and Sphinx
 # ======================================================================================
 
@@ -87,20 +117,9 @@ except IOError:
     HISTORY = "See HISTORY.md"
 
 
-cmdclass = {"build_sphinx": BuildDoc}
-
-CMDSPHINX = {
-    "build_sphinx": {
-        "project": ("setup.py", "xtgeo"),
-        "version": ("setup.py", "latest"),
-        "release": ("setup.py", ""),
-        "source_dir": ("setup.py", "docs"),
-    }
-}
 # ======================================================================================
 # Requirements:
 # ======================================================================================
-
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
@@ -115,15 +134,10 @@ REQUIREMENTS = parse_requirements("requirements.txt")
 
 TEST_REQUIREMENTS = ["pytest"]
 
+
 # ======================================================================================
 # Special:
 # ======================================================================================
-
-# This is done for readthedocs purposes, which cannot deal with SWIG:
-if "SWIG_FAKE" in os.environ:
-    print("=================== FAKE SWIG SETUP ====================")
-    shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
-
 
 def src(x):
     root = os.path.dirname(__file__)
@@ -133,6 +147,7 @@ def src(x):
 # ======================================================================================
 # Setup:
 # ======================================================================================
+
 skbuild.setup(
     name="xtgeo",
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
