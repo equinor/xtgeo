@@ -443,11 +443,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionchanged:: 2.1.0 ``strict`` now defaults to False
         """
 
-        if os.path.isfile(wfile):
-            pass
-        else:
-            logger.critical("Not OK file")
-            raise os.error
+        if not os.path.isfile(wfile):
+            msg = "Does file exist? {}".format(wfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
         if fformat is None or fformat == "rms_ascii":
             _well_io.import_rms_ascii(

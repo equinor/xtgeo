@@ -118,11 +118,10 @@ class XYZ(object):
 
         logger.info("Reading from file %s...", pfile)
 
-        if os.path.isfile(pfile):
-            pass
-        else:
-            logger.critical("Not OK file")
-            raise os.error
+        if not os.path.isfile(pfile):
+            msg = "Does file exist? {}".format(pfile)
+            logger.critical(msg)
+            raise IOError(msg)
 
         froot, fext = os.path.splitext(pfile)
         if fformat == "guess":
