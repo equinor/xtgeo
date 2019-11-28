@@ -662,7 +662,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         """
         if not os.path.isfile(sfile):
-            msg = "Does file exist? {}".format("test")
+            msg = "Does file exist? {}".format(sfile)
             logger.critical(msg)
             raise IOError(msg)
 
