@@ -54,7 +54,7 @@ test_script:
   - pytest
 
 deploy_script:
-  - echo "Upload for user %TWINE_USER% if tag..."
+  - echo "Upload to PYPI if tag..."
   - ps: |
         Write-Host "TAG: $env:APPVEYOR_REPO_TAG"
         If ($env:APPVEYOR_REPO_TAG -eq "false") { return }
