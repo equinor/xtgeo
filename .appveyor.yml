@@ -26,43 +26,38 @@ matrix:
 
 install:
   - ps: choco install -y --no-progress --allow-empty-checksums -r swig
-  - IF DEFINED PYTHON (IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64)
-  - IF DEFINED PYTHON SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-  - IF DEFINED PYTHON python -m pip install pip --upgrade --user
+  - IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64
+  - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - python -m pip install pip --upgrade --user
 
   - echo %PYTHON_VERSION%
   - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
   - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
   - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
-  - IF DEFINED PYTHON python -m pip install -r requirements.txt
-  - IF DEFINED PYTHON python -m pip install -r requirements_setup.txt
-
+  - python -m pip install -r requirements_setup.txt
 
 before_build:
   - set generator="Visual Studio 15 2017"
   - IF "%platform%" == "x64" set generator="Visual Studio 15 2017 Win64"
-  - git submodule update --init --recursive
-  # - git fetch --tags
+  - git fetch --tags
   - git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
 
 
 build_script:
-  - IF DEFINED PYTHON python setup.py bdist_wheel -G %generator%
+  - python setup.py bdist_wheel -G %generator%
+  - ps: pip install $(ls dist/*.whl | % {$_.FullName})
+  - pip freeze --all
 
-# test_script:
-#   - python setup.py test
+test_script:
+  - pytest
 
-# before_deploy:
-#     - ps: pushd python
+deploy_script:
+  - echo "Upload for user %TWINE_USER% if tag..."
+  - ps: |
+        Write-Host "TAG: $env:APPVEYOR_REPO_TAG"
+        If ($env:APPVEYOR_REPO_TAG -eq "false") { return }
 
-# after_deploy:
-#     - ps: popd
-
-# deploy_script:
-#     - ps: |
-#           Write-Host "TAG: $env:APPVEYOR_REPO_TAG"
-#           If ($env:APPVEYOR_REPO_TAG -eq "false") { return }
-#           Write-Host "Uploading wheels to pypi"
-#           Invoke-Expression "twine upload -u statoil-travis --skip-existing dist/*"
-#           If ($LastExitCode -ne 0) { $host.SetShouldExit($LastExitCode) }
+        Write-Host "Uploading wheels to pypi"
+        Invoke-Expression "twine upload -u %TWINE_USER% --skip-existing dist/*"
+        If ($LastExitCode -ne 0) { $host.SetShouldExit($LastExitCode) }
