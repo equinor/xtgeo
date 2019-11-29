@@ -318,6 +318,9 @@ def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
         fencespec = _get_randomline_fence(self, fencespec, hincrement, atleast, nextend)
         logger.info("Estimate hincrement from instance... DONE")
 
+    if fencespec is None or fencespec is False:
+        return
+
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]
     zcoords = fencespec[:, 2].copy()
