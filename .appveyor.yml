@@ -36,6 +36,7 @@ install:
   - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
   - python -m pip install -r requirements_setup.txt
+  - pip install twine
 
 before_build:
   - set generator="Visual Studio 15 2017"
