@@ -308,6 +308,10 @@ class XSection(BasePlot):
         wellcrossings=None,
     ):
         """Input an XTGeo Well object and plot it."""
+
+        if self.fence is None:
+            return
+
         wo = self._well
 
         # reduce the well data by Pandas operations
@@ -636,6 +640,10 @@ class XSection(BasePlot):
             ValueError: No cube is loaded
 
         """
+
+        if self.fence is None:
+            return
+
         if self._cube is None:
             raise ValueError("Ask for plot cube, but noe cube is loaded")
 
@@ -699,6 +707,10 @@ class XSection(BasePlot):
             ValueError: No grid or gridproperty is loaded
 
         """
+
+        if self.fence is None:
+            return
+
         if self._grid is None or self._gridproperty is None:
             raise ValueError("Ask for plot of grid, but no grid is loaded")
 
@@ -755,6 +767,9 @@ class XSection(BasePlot):
     ):  # pylint: disable=too-many-branches, too-many-statements
 
         """Input a surface list (ordered from top to base) , and plot them."""
+
+        if self.fence is None:
+            return
 
         ax, bba = self._currentax(axisname=axisname)
 
@@ -903,6 +918,9 @@ class XSection(BasePlot):
 
     def plot_map(self):
         """Plot well location map as an overall view (with field outline)."""
+
+        if self.fence is None:
+            return
 
         if not self._outline:
             return
