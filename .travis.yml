@@ -18,7 +18,7 @@ services: docker
 
 sudo: required
 
-if: (branch != "master") OR (tag IS present)
+if: (branch != "master") OR (tag IS present) AND (repo == "equinor/xtgeo")
 
 env:
   global:
