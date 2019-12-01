@@ -16,7 +16,7 @@ environment:
       TAG_SCENARIO: False
     - PYTHON: C:\Python37
       PYTHON_VERSION: 37
-      TAG_SCENARIO: False
+      TAG_SCENARIO: True
 
 matrix:
   fast_finish: true
@@ -24,7 +24,7 @@ matrix:
 for:
   matrix:
     only:
-      - TAG_SCENARIO: False
+      - TAG_SCENARIO: True
     skip_non_tags: True
 
 install:
