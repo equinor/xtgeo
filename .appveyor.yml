@@ -22,6 +22,7 @@ matrix:
   fast_finish: true
 
 for:
+-
   matrix:
     only:
       - TAG_SCENARIO: True
