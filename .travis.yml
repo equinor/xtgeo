@@ -6,6 +6,8 @@ python:
 os:
   - linux
 
+if: (type = pull_request) OR (tag IS true)
+
 git:
   depth: false
 
@@ -17,8 +19,6 @@ addons:
 services: docker
 
 sudo: required
-
-if: (commit_message !~ /^Merge pull request/) OR (tag IS present)
 
 env:
   global:
