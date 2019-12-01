@@ -26,7 +26,7 @@ for:
   matrix:
     only:
       - TAG_SCENARIO: True
-    skip_non_tags: True
+  skip_non_tags: True
 
 install:
   - ps: choco install -y --no-progress --allow-empty-checksums -r swig
