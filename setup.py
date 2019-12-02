@@ -8,6 +8,7 @@ from os.path import splitext, exists, dirname, basename
 from glob import glob
 from shutil import rmtree
 from distutils.command.clean import clean as _clean
+import fnmatch
 from setuptools import find_packages
 
 import skbuild
@@ -50,7 +51,28 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "docs/_templates",
     )
 
+    CLEANFOLDERSRECURSIVE = ["__pycache__"]
+    CLEANFILESRECURSIVE = ["*.pyc", "*.pyo"]
+
     CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
+
+    @staticmethod
+    def ffind(pattern, path):
+        result = []
+        for root, dirs, files in os.walk(path):
+            for name in files:
+                if fnmatch.fnmatch(name, pattern):
+                    result.append(os.path.join(root, name))
+        return result
+
+    @staticmethod
+    def dfind(pattern, path):
+        result = []
+        for root, dirs, files in os.walk(path):
+            for name in dirs:
+                if fnmatch.fnmatch(name, pattern):
+                    result.append(os.path.join(root, name))
+        return result
 
     def run(self):
         """After calling the super class implementation, this function removes
@@ -63,6 +85,16 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
             if not self.dry_run and exists(dir_):
                 rmtree(dir_)
 
+        for dir_ in CleanUp.CLEANFOLDERSRECURSIVE:
+            for pd in self.dfind(dir_, "."):
+                print("Remove folder {}".format(pd))
+                rmtree(pd)
+
+        for fil_ in CleanUp.CLEANFILESRECURSIVE:
+            for pf in self.ffind(fil_, "."):
+                print("Remove file {}".format(pf))
+                pf.unlink()
+
         for fil_ in CleanUp.CLEANFILES:
             if exists(fil_):
                 print("Removing: {}".format(fil_))
@@ -73,6 +105,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 # ======================================================================================
 # Sphinx
 # ======================================================================================
+
 
 class BuildDocCustom(_BuildDoc):
     """Trick issue with cxtgeo prior to docs are built """
@@ -117,6 +150,7 @@ except IOError:
 # Requirements:
 # ======================================================================================
 
+
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
     try:
@@ -134,6 +168,7 @@ TEST_REQUIREMENTS = ["pytest"]
 # ======================================================================================
 # Special:
 # ======================================================================================
+
 
 def src(x):
     root = os.path.dirname(__file__)
