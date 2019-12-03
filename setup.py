@@ -3,12 +3,18 @@
 """XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
 
 import os
+import sys
 import shutil
-from os.path import splitext, exists, dirname, basename
+import re
+from os.path import exists, dirname
 from glob import glob
 from shutil import rmtree
 from distutils.command.clean import clean as _clean
 import fnmatch
+from distutils.spawn import find_executable
+from distutils.version import LooseVersion
+import subprocess  # nosec
+
 from setuptools import find_packages
 
 import skbuild
@@ -19,6 +25,9 @@ from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
 
 from sphinx.setup_command import BuildDoc as _BuildDoc
 from setuptools_scm import get_version
+
+CMD = sys.argv[1]
+
 
 # ======================================================================================
 # Overriding and extending setup commands
@@ -51,7 +60,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "docs/_templates",
     )
 
-    CLEANFOLDERSRECURSIVE = ["__pycache__"]
+    CLEANFOLDERSRECURSIVE = ["__pycache__", "_tmp_*"]
     CLEANFILESRECURSIVE = ["*.pyc", "*.pyo"]
 
     CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
@@ -145,6 +154,38 @@ try:
 except IOError:
     HISTORY = "See HISTORY.md"
 
+
+# ======================================================================================
+# Detect if swig is present (and if case not, do a tmp install on some platforms)
+# ======================================================================================
+
+SWIGMINIMUM = "3.0.1"
+
+
+def swigok():
+    """Check swig version"""
+    if CMD == "clean":
+        return True
+    swigexe = find_executable("swig")
+    if not swigexe:
+        print("Cannot find swig in system")
+        return False
+    sout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")  # nosec
+    swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
+    if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
+        print("OK, found swig in system, version is >= ", SWIGMINIMUM)
+        return False  # True
+
+    print("Found swig in system but version is < ", SWIGMINIMUM)
+    return False
+
+
+if not swigok():
+    print("Installing swig from source (tmp) ...")
+    subprocess.check_call(  # nosec
+        ["bash", "swig_install.sh"],
+        cwd="scripts",
+    )
 
 # ======================================================================================
 # Requirements:
