@@ -8,7 +8,7 @@ mkdir -p _tmp_swiginstall
 rm -fr _tmp_swig
 mkdir -p _tmp_swig
 
-INST=`pwd`
+INST=$(pwd)
 
 pushd _tmp_swiginstall
 wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.tar.gz
