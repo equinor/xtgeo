@@ -9,6 +9,7 @@ import re
 from os.path import exists, dirname
 from glob import glob
 from shutil import rmtree
+import platform
 from distutils.command.clean import clean as _clean
 import fnmatch
 from distutils.spawn import find_executable
@@ -174,18 +175,21 @@ def swigok():
     swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
     if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
         print("OK, found swig in system, version is >= ", SWIGMINIMUM)
-        return False  # True
+        return True
 
     print("Found swig in system but version is < ", SWIGMINIMUM)
     return False
 
 
 if not swigok():
-    print("Installing swig from source (tmp) ...")
-    subprocess.check_call(  # nosec
-        ["bash", "swig_install.sh"],
-        cwd="scripts",
-    )
+    if "Linux" in platform.system():
+        print("Installing swig from source (tmp) ...")
+        subprocess.check_call(  # nosec
+            ["bash", "swig_install.sh"],
+            cwd="scripts",
+        )
+    else:
+        raise SystemExit("Cannot find valid swig install")
 
 # ======================================================================================
 # Requirements:
