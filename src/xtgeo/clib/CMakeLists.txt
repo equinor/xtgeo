@@ -25,6 +25,9 @@ target_compile_options(xtg PRIVATE ${XTGFLAGS})
 # Find Python and SWIG
 # ======================================================================================
 
+LIST(APPEND CMAKE_PROGRAM_PATH "${PROJECT_SOURCE_DIR}/scripts/_tmp_swig/bin")
+
+
 # These policies are related to SWIG python libraries naming
 cmake_policy(SET CMP0078 NEW)
 cmake_policy(SET CMP0086 NEW)
