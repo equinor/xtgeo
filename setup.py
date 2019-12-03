@@ -3,11 +3,19 @@
 """XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
 
 import os
+import sys
 import shutil
-from os.path import splitext, exists, dirname, basename
+import re
+from os.path import exists, dirname
 from glob import glob
 from shutil import rmtree
+import platform
 from distutils.command.clean import clean as _clean
+import fnmatch
+from distutils.spawn import find_executable
+from distutils.version import LooseVersion
+import subprocess  # nosec
+
 from setuptools import find_packages
 
 import skbuild
@@ -18,6 +26,9 @@ from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
 
 from sphinx.setup_command import BuildDoc as _BuildDoc
 from setuptools_scm import get_version
+
+CMD = sys.argv[1]
+
 
 # ======================================================================================
 # Overriding and extending setup commands
@@ -50,7 +61,28 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "docs/_templates",
     )
 
+    CLEANFOLDERSRECURSIVE = ["__pycache__", "_tmp_*"]
+    CLEANFILESRECURSIVE = ["*.pyc", "*.pyo"]
+
     CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
+
+    @staticmethod
+    def ffind(pattern, path):
+        result = []
+        for root, dirs, files in os.walk(path):
+            for name in files:
+                if fnmatch.fnmatch(name, pattern):
+                    result.append(os.path.join(root, name))
+        return result
+
+    @staticmethod
+    def dfind(pattern, path):
+        result = []
+        for root, dirs, files in os.walk(path):
+            for name in dirs:
+                if fnmatch.fnmatch(name, pattern):
+                    result.append(os.path.join(root, name))
+        return result
 
     def run(self):
         """After calling the super class implementation, this function removes
@@ -63,6 +95,16 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
             if not self.dry_run and exists(dir_):
                 rmtree(dir_)
 
+        for dir_ in CleanUp.CLEANFOLDERSRECURSIVE:
+            for pd in self.dfind(dir_, "."):
+                print("Remove folder {}".format(pd))
+                rmtree(pd)
+
+        for fil_ in CleanUp.CLEANFILESRECURSIVE:
+            for pf in self.ffind(fil_, "."):
+                print("Remove file {}".format(pf))
+                pf.unlink()
+
         for fil_ in CleanUp.CLEANFILES:
             if exists(fil_):
                 print("Removing: {}".format(fil_))
@@ -73,6 +115,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 # ======================================================================================
 # Sphinx
 # ======================================================================================
+
 
 class BuildDocCustom(_BuildDoc):
     """Trick issue with cxtgeo prior to docs are built """
@@ -114,8 +157,44 @@ except IOError:
 
 
 # ======================================================================================
+# Detect if swig is present (and if case not, do a tmp install on some platforms)
+# ======================================================================================
+
+SWIGMINIMUM = "3.0.1"
+
+
+def swigok():
+    """Check swig version"""
+    if CMD == "clean":
+        return True
+    swigexe = find_executable("swig")
+    if not swigexe:
+        print("Cannot find swig in system")
+        return False
+    sout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")  # nosec
+    swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
+    if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
+        print("OK, found swig in system, version is >= ", SWIGMINIMUM)
+        return True
+
+    print("Found swig in system but version is < ", SWIGMINIMUM)
+    return False
+
+
+if not swigok():
+    if "Linux" in platform.system():
+        print("Installing swig from source (tmp) ...")
+        subprocess.check_call(  # nosec
+            ["bash", "swig_install.sh"],
+            cwd="scripts",
+        )
+    else:
+        raise SystemExit("Cannot find valid swig install")
+
+# ======================================================================================
 # Requirements:
 # ======================================================================================
+
 
 def parse_requirements(filename):
     """Load requirements from a pip requirements file"""
@@ -135,6 +214,7 @@ TEST_REQUIREMENTS = ["pytest"]
 # Special:
 # ======================================================================================
 
+
 def src(x):
     root = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(root, x))
@@ -153,12 +233,9 @@ skbuild.setup(
     author="Equinor R&T",
     url="https://github.com/equinor/xtgeo",
     license="LGPL-3.0",
-    # cmake_with_sdist=False,
-    include_package_data=True,
     # cmake_args=["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"],
     packages=find_packages("src"),
     package_dir={"": "src"},
-    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     cmdclass={"clean": CleanUp},
     zip_safe=False,
     keywords="xtgeo",

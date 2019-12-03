@@ -49,6 +49,7 @@ coverage.xml
 TMP/
 examples/*
 !examples/*.py
+_tmp_*
 
 # Translations
 *.mo

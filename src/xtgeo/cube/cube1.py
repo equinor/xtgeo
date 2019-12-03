@@ -616,7 +616,8 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         """
         if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
-            raise ValueError("fencespec must be a numpy or a Polygons() object")
+            raise ValueError("fencespec must be a numpy or a Polygons() object. "
+                             "Current type is {}".format(type(fencespec)))
         logger.info("Getting randomline...")
         res = _cube_utils.get_randomline(
             self,
