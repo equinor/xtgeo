@@ -3,12 +3,11 @@ from __future__ import print_function, absolute_import
 
 import os
 import matplotlib.pyplot as plt
+import pytest
 
-# import pytest
-
-# from xtgeo.plot import Grid3DSlice
-# from xtgeo.grid3d import Grid
-# from xtgeo.grid3d import GridProperty
+from xtgeo.plot import Grid3DSlice
+from xtgeo.grid3d import Grid
+from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
@@ -53,7 +52,7 @@ def test_very_basic():
 
 
 # @tsetup.skipifroxar
-# def test_slice_simple():
+# def test_slice_simple_layer():
 #     """Trigger XSection class, and do some simple things basically."""
 #     layslice = Grid3DSlice()
 
@@ -62,9 +61,9 @@ def test_very_basic():
 
 #     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
-#     layslice.canvas(title="My Grid plot")
-#     wnd = (454000, 455000, 6782000, 6783000)
-#     layslice.plot_gridslice(mygrid, myprop, window=wnd, colormap=USEFILE3)
+#     wd = None  # [457000, 464000, 1650, 1800]
+#     layslice.canvas(title="My Grid Layer plot")
+#     layslice.plot_gridslice(mygrid, prop=None, mode="layer", index=1, window=wd)
 
 #     if XTGSHOW:
 #         layslice.show()
@@ -74,6 +73,30 @@ def test_very_basic():
 #             "use XTG_SHOW env variable"
 #         )
 #         layslice.savefig(os.path.join(TMPDIR, "layerslice.png"))
+
+
+# @tsetup.skipifroxar
+# def test_slice_simple_row():
+#     """Trigger XSection class, and do some simple things basically."""
+#     layslice = Grid3DSlice()
+
+#     mygrid = Grid(USEFILE1)
+#     myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
+
+#     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
+
+#     wd = [457000, 464000, 1650, 1800]
+#     layslice.canvas(title="My Grid Row plot")
+#     layslice.plot_gridslice(mygrid, prop=None, mode="row", index=5, window=wd)
+
+#     if XTGSHOW:
+#         layslice.show()
+#     else:
+#         print(
+#             "Output to screen disabled (will plotto screen); "
+#             "use XTG_SHOW env variable"
+#         )
+#         layslice.savefig(os.path.join(TMPDIR, "rowslice.png"))
 
 
 # @tsetup.skipifroxar

@@ -78,26 +78,26 @@ def import_irap_binary(self, mfile, values=True):
     ifile.close()
 
 
-def import_irap_binary2(self, mfile, values=True):
-    """Import Irap binary format, variant 2."""
+# def import_irap_binary2(self, mfile, values=True):
+#     """Import Irap binary format, variant 2."""
 
-    logger.debug("Enter function (v2)...")
+#     logger.debug("Enter function (v2)...")
 
-    pmx = _cxtgeo.new_intpointer()
-    pmy = _cxtgeo.new_intpointer()
-    pll = _cxtgeo.new_longpointer()
-    pxori = _cxtgeo.new_doublepointer()
-    pyori = _cxtgeo.new_doublepointer()
-    pxinc = _cxtgeo.new_doublepointer()
-    pyinc = _cxtgeo.new_doublepointer()
-    prot = _cxtgeo.new_doublepointer()
-    pmap = _cxtgeo.new_doublearray(1)
-    logger.debug("Enter function (v2)... scanning start")
+#     pmx = _cxtgeo.new_intpointer()
+#     pmy = _cxtgeo.new_intpointer()
+#     pll = _cxtgeo.new_longpointer()
+#     pxori = _cxtgeo.new_doublepointer()
+#     pyori = _cxtgeo.new_doublepointer()
+#     pxinc = _cxtgeo.new_doublepointer()
+#     pyinc = _cxtgeo.new_doublepointer()
+#     prot = _cxtgeo.new_doublepointer()
+#     pmap = _cxtgeo.new_doublearray(1)
+#     logger.debug("Enter function (v2)... scanning start")
 
-    _cxtgeo.surf_import_irap_bin2(mfile, 0, pmx, pmy, pll, pxori, pyori, pxinc, pyinc,
-                                  prot, pmap, 1, 0)
+#     _cxtgeo.surf_import_irap_bin2(mfile, 0, pmx, pmy, pll, pxori, pyori, pxinc, pyinc,
+#                                   prot, pmap, 1, 0)
 
-    logger.debug("Enter function (v2)... scanning done")
+#     logger.debug("Enter function (v2)... scanning done")
 
 
     # # read with mode 0, to get mx my and other metadata

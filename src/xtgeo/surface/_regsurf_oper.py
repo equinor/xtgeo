@@ -319,7 +319,7 @@ def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
         logger.info("Estimate hincrement from instance... DONE")
 
     if fencespec is None or fencespec is False:
-        return
+        return None
 
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]

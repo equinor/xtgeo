@@ -1356,14 +1356,29 @@ class Grid(Grid3D):
         region=None,
         region_number=None,
     ):
-        """Convert to hybrid grid, either globally or in a selected region..
+        """Convert to hybrid grid, either globally or in a selected region.
+
+        Note that the resulting hybrid will have a increased number of layers.
+        In the initial grid has N layers, and the number of horizontal layers
+        is NHDIV, then the result grid will have N * 2 + NHDIV layers.
 
         Args:
             nhdiv (int): Number of hybrid layers.
             toplevel (float): Top of hybrid grid.
             bottomlevel (float): Base of hybrid grid.
-            region (GridProperty): Region property (if needed).
-            region_number (int): Which region to apply hybrid grid in.
+            region (GridProperty, optional): Region property (if needed).
+            region_number (int): Which region to apply hybrid grid in if region.
+
+        Example:
+
+            Create a hybridgrid from file, based on a GRDECL file (no region)::
+
+               import xtgeo
+               grd = xtgeo.grid_from_file("simgrid.grdecl", fformat="grdecl")
+               grd.convert_to_hybrid(nhdiv=12, toplevel=2200, bottomlevel=2250)
+               # save in binary GRDECL fmt:
+               grd.to_file("simgrid_hybrid.bgrdecl", fformat="bgrdecl")
+
         """
 
         _grid_hybrid.make_hybridgrid(
