@@ -211,6 +211,59 @@ Edit a 3D grid porosity inside polygons
    # Save in RMS as a new icon
    myprop.to_roxar(project, 'Reek_sim', 'NEWPORO_setinside')
 
+Make a hybrid grid
+^^^^^^^^^^^^^^^^^^
+
+XTGeo can convert a conventional grid to a so-called hybrid-grid where
+a certain depth interval has horizontal layers.
+
+.. code-block:: python
+
+   import xtgeo
+
+   PRJ = project  # noqa
+   GNAME_INPUT = "Mothergrid"
+   GNAME_HYBRID = "Simgrid"
+   REGNAME = "Region"
+   HREGNAME = "Hregion"
+
+   NHDIV = 22
+   REGNO = 1
+   TOP = 1536
+   BASE = 1580
+
+
+   def hregion():
+       """Make a custom region property for hybrid grid"""
+       tgrid = xtgeo.grid_from_roxar(PRJ, GNAME_INPUT)
+       reg = xtgeo.gridproperty_from_roxar(PRJ, GNAME_INPUT, REGNAME)
+
+       reg.values[:, :, :] = 1
+       reg.values[:, 193:, :] = 0  # remember 0 base in NP arrays
+
+       reg.to_roxar(PRJ, GNAME_INPUT, HREGNAME)  # store for info/check
+
+       return tgrid, reg
+
+
+   def make_hybrid(grd, reg):
+       """Convert to hybrid and store in RMS project"""
+       grd.convert_to_hybrid(nhdiv=NHDIV, toplevel=TOP, bottomlevel=BASE, region=reg,
+                             region_number=1)
+
+       grd.inactivate_by_dz(0.001)
+       grd.to_roxar(PRJ, GNAME_HYBRID)
+
+
+   if __name__ == "__main__":
+
+       print("Make hybrid...")
+       grd, reg = hregion()
+       make_hybrid(grd, reg)
+       print("Make hybrid... done!")
+
+
+.. figure:: images/hybridgrid.png
 
 Cube data
 ---------
