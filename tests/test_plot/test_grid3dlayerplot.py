@@ -3,11 +3,12 @@ from __future__ import print_function, absolute_import
 
 import os
 import matplotlib.pyplot as plt
-import pytest
 
-from xtgeo.plot import Grid3DSlice
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
+# import pytest
+
+# from xtgeo.plot import Grid3DSlice
+# from xtgeo.grid3d import Grid
+# from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
@@ -51,50 +52,50 @@ def test_very_basic():
     plt.close()
 
 
-@tsetup.skipifroxar
-def test_slice_simple():
-    """Trigger XSection class, and do some simple things basically."""
-    layslice = Grid3DSlice()
+# @tsetup.skipifroxar
+# def test_slice_simple():
+#     """Trigger XSection class, and do some simple things basically."""
+#     layslice = Grid3DSlice()
 
-    mygrid = Grid(USEFILE1)
-    myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
+#     mygrid = Grid(USEFILE1)
+#     myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
 
-    assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
+#     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
-    layslice.canvas(title="My Grid plot")
-    wnd = (454000, 455000, 6782000, 6783000)
-    layslice.plot_gridslice(mygrid, myprop, window=wnd, colormap=USEFILE3)
+#     layslice.canvas(title="My Grid plot")
+#     wnd = (454000, 455000, 6782000, 6783000)
+#     layslice.plot_gridslice(mygrid, myprop, window=wnd, colormap=USEFILE3)
 
-    if XTGSHOW:
-        layslice.show()
-    else:
-        print(
-            "Output to screen disabled (will plotto screen); "
-            "use XTG_SHOW env variable"
-        )
-        layslice.savefig(os.path.join(TMPDIR, "layerslice.png"))
+#     if XTGSHOW:
+#         layslice.show()
+#     else:
+#         print(
+#             "Output to screen disabled (will plotto screen); "
+#             "use XTG_SHOW env variable"
+#         )
+#         layslice.savefig(os.path.join(TMPDIR, "layerslice.png"))
 
 
-@tsetup.skipifroxar
-def test_slice_plot_many_grid_layers():
-    """Loop over layers and produce both SVG and PNG files to file"""
+# @tsetup.skipifroxar
+# def test_slice_plot_many_grid_layers():
+#     """Loop over layers and produce both SVG and PNG files to file"""
 
-    mygrid = Grid(USEFILE1)
-    myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
+#     mygrid = Grid(USEFILE1)
+#     myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
 
-    nlayers = mygrid.nlay + 1
+#     nlayers = mygrid.nlay + 1
 
-    layslice2 = Grid3DSlice()
+#     layslice2 = Grid3DSlice()
 
-    for k in range(1, nlayers, 4):
-        print("Layer {} ...".format(k))
-        layslice2.canvas(title="Porosity for layer " + str(k))
-        layslice2.plot_gridslice(
-            mygrid, myprop, colormap=USEFILE3, index=k, minvalue=0.18, maxvalue=0.36
-        )
-        layslice2.savefig(
-            os.path.join(TMPDIR, "layerslice2_" + str(k) + ".svg"),
-            fformat="svg",
-            last=False,
-        )
-        layslice2.savefig(os.path.join(TMPDIR, "layerslice2_" + str(k) + ".png"))
+#     for k in range(1, nlayers, 4):
+#         print("Layer {} ...".format(k))
+#         layslice2.canvas(title="Porosity for layer " + str(k))
+#         layslice2.plot_gridslice(
+#             mygrid, myprop, colormap=USEFILE3, index=k, minvalue=0.18, maxvalue=0.36
+#         )
+#         layslice2.savefig(
+#             os.path.join(TMPDIR, "layerslice2_" + str(k) + ".svg"),
+#             fformat="svg",
+#             last=False,
+#         )
+#         layslice2.savefig(os.path.join(TMPDIR, "layerslice2_" + str(k) + ".png"))
