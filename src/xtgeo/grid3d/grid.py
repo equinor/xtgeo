@@ -1185,8 +1185,8 @@ class Grid(Grid3D):
             activeonly (bool): If True, only return active cells
 
         Returns:
-            layerarray (np): On the form [[10 elem...], [10 elem...]...]
-            ibarray (np): On the form [ib1, ib2, ...] where ib is cell count
+            layerarray (np): [[[X0, Y0], [X1, Y1]...[X4, Y4]], [[..][..]]...]
+            icarray (np): On the form [ic1, ic2, ...] where ic is cell count (C order)
 
         Example:
 
