@@ -92,6 +92,13 @@ if 'WINDOWS' in platform.system().upper():
 
 skipifwindows = pytest.mark.skipif(skipwindows, reason='Skip test for Windows')
 
+skipmac = False
+if 'DARWIN' in platform.system().upper():
+    skipmac = True
+
+skipifwindows = pytest.mark.skipif(skipwindows, reason='Skip test for Windows')
+skipifmac = pytest.mark.skipif(skipmac, reason='Skip test for MacOS')
+
 # =============================================================================
 # Do tests
 # =============================================================================
