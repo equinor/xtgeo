@@ -51,6 +51,14 @@ matrix:
       env:
         - MB_PYTHON_VERSION=3.7
         - SOURCEDEPLOY=1
+    - os: osx
+      language: generic
+      env: MB_PYTHON_VERSION=3.6
+      python: 3.6
+    - os: osx
+      language: generic
+      env: MB_PYTHON_VERSION=3.7
+      python: 3.7
 
 before_install:
   - echo "PWD is $PWD"
@@ -63,6 +71,9 @@ before_install:
   - before_install
 
 install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew update && brew install swig;
+    fi
   - pip install bandit
   - pip install -r requirements_setup.txt
   - build_wheel $REPO_DIR $PLAT
