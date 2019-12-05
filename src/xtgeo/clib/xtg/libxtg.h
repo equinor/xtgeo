@@ -1678,6 +1678,22 @@ int grd3d_reduce_onelayer (
     int    debug
     );
 
+int grd3d_get_lay_slice(
+    int nx,
+    int ny,
+    int nz,
+    double *p_coord_v,
+    double *p_zcorn_v,
+    int *p_actnum_v,
+    int kslice,
+    int koption,
+    int actonly,
+
+    double *swig_np_dbl_aout_v1,   // *slicev
+    long n_swig_np_dbl_aout_v1,    // nslicev,
+    long *swig_np_lng_aout_v1,     // *ibv,
+    long n_swig_np_lng_aout_v1     // nibv
+    );
 
 int grd3d_refine_vert(
     int nx,

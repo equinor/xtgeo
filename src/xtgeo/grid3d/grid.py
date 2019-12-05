@@ -1165,6 +1165,39 @@ class Grid(Grid3D):
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
 
+    def get_layer_slice(self, layer, top=True, activeonly=True):
+        """Get numpy arrays for cell coordinates e.g. for plotting.
+
+        In each cell there are 5 XY pairs, making a closed polygon as illustrated here:
+
+          XY3      XY2
+           !~~~~~~~!
+           !       ! ^
+           !~~~~~~~! |
+          XY0 ->  XY1
+        XY5
+
+        Args:
+            layer (int): K layer, starting with 1 as topmost
+            tip (bool): If True use top of cell, otherwise use base
+            activeonly (bool): If True, only return active cells
+
+        Returns:
+            layerarray (np): On the form [[10 elem...], [10 elem...]...]
+            ibarray (np): On the form [ib1, ib2, ...] where ib is cell count
+
+        Example:
+
+            Return two arrays forr cell corner for bottom layer::
+
+                grd = Grid()
+                grd.from_file(REEKFILE)
+
+                parr, ibarr = grd.get_layer_slice(grd.nlay, top=False)
+        """
+
+        return _grid_etc1.get_layer_slice(self, layer, top=top, activeonly=activeonly)
+
     def get_geometrics(
         self, allcells=False, cellcenter=True, return_dict=False, _ver=1
     ):
