@@ -8,7 +8,6 @@ wheel>=0.29.0
 flake8==2.6.0
 tox==2.3.1
 coverage==4.1
-pytest>=2.9.2
 pytest-runner>=2.11.1
 coverage==4.1
 Sphinx
@@ -25,6 +24,8 @@ pandas==0.20.3; python_version == "3.4"
 segyio==1.8.8
 matplotlib>=1.5
 scipy>=0.17
+shapely
 black
 autopep8
 pylint
+pytest>=2.9.2

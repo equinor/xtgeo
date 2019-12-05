@@ -32,6 +32,7 @@ if "XTG_SHOW" in os.environ:
 TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 
 
+@tsetup.skipifmac
 @tsetup.skipifwindows
 def test_irapbin_import_bytesio():
     """Import Irap binary via bytesIO"""
@@ -49,6 +50,7 @@ def test_irapbin_import_bytesio():
     xsurf.describe()
 
 
+@tsetup.skipifmac
 def test_get_regsurfi():
 
     sfile = TESTSET1
@@ -62,6 +64,7 @@ def test_get_regsurfi():
         print(_itmp)
 
 
+@tsetup.skipifmac
 def test_get_regsurff():
 
     sfile = TESTSET1
@@ -72,6 +75,7 @@ def test_get_regsurff():
         print(_itmp)
 
 
+@tsetup.skipifmac
 @tsetup.skipifwindows
 def test_irapbin_load_meta_first_bytesio():
     """Import Irap binary via bytesIO, by just loading metadata first"""

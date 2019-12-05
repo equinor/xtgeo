@@ -588,3 +588,15 @@ def test_flip(load_gfile1):
 
     grd.create_box(dimension=(30, 20, 3), rotation=190, flip=-1)
     assert grd.estimate_flip() == -1
+
+
+def test_grid_layer_slice():
+    """Test the egrid format for different grid sizes"""
+
+    grd = Grid()
+    grd.from_file(REEKFILE)
+
+    sarr, _ibarr = grd.get_layer_slice(1)
+    sarr, _ibarr = grd.get_layer_slice(grd.nlay, top=False)
+
+    logger.info(sarr[0, :])

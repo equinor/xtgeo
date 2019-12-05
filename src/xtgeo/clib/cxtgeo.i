@@ -35,6 +35,7 @@
 %numpy_typemaps(double, NPY_DOUBLE, long)
 %numpy_typemaps(float, NPY_FLOAT, long)
 %numpy_typemaps(int, NPY_INT, long)
+%numpy_typemaps(long, NPY_LONG, long)
 
 %init %{
 import_array();
@@ -102,6 +103,11 @@ import_array();
 %apply (int* INPLACE_ARRAY1, long DIM1) {(int *swig_np_int_inplace_v1,
                                           long n_swig_np_int_inplace_v1)};
 
+
+// INPLACE long no 1
+%apply (long* INPLACE_ARRAY1, long DIM1) {(long *swig_np_long_inplace_v1,
+                                          long n_swig_np_long_inplace_v1)};
+
 // INPLACE float no 1
 %apply (float* INPLACE_ARRAY1, long DIM1) {(float *swig_np_flt_inplace_v1,
                                             long n_swig_np_flt_inplace_v1)};
@@ -152,6 +158,9 @@ import_array();
 %apply (int* ARGOUT_ARRAY1, long DIM1) {(int *swig_np_int_aout_v5,
                                          long n_swig_np_int_aout_v5)};
 
+// ARGOUT long no 1
+%apply (long* ARGOUT_ARRAY1, long DIM1) {(long *swig_np_lng_aout_v1,
+                                          long n_swig_np_lng_aout_v1)};
 
 //======================================================================================
 // Inline tranforms
