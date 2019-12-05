@@ -103,7 +103,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         for fil_ in CleanUp.CLEANFILESRECURSIVE:
             for pf in self.ffind(fil_, "."):
                 print("Remove file {}".format(pf))
-                pf.unlink()
+                os.unlink(pf)
 
         for fil_ in CleanUp.CLEANFILES:
             if exists(fil_):
