@@ -414,8 +414,8 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
         opt1 = 1
 
     opt2 = 1
-    if not top:
-        opt1 = 0
+    if not activeonly:
+        opt2 = 0
 
     icn, lay_array, ic_array = _cxtgeo.grd3d_get_lay_slice(
         self._ncol,

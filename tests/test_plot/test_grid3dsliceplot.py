@@ -62,7 +62,7 @@ def test_slice_simple_layer():
     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
     wd = None  # [457000, 464000, 1650, 1800]
-    for lay in (range(1, mygrid.nlay + 1)):
+    for lay in range(1, mygrid.nlay + 1):
         layslice.canvas(title="My Grid Layer plot for layer {}".format(lay))
         layslice.plot_gridslice(mygrid, prop=myprop, mode="layer", index=lay, window=wd)
 

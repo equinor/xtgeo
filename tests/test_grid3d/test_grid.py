@@ -596,7 +596,7 @@ def test_grid_layer_slice():
     grd = Grid()
     grd.from_file(REEKFILE)
 
-    sarr, ibarr = grd.get_layer_slice(1)
-    sarr, ibarr = grd.get_layer_slice(grd.nlay, top=False)
+    sarr, _ibarr = grd.get_layer_slice(1)
+    sarr, _ibarr = grd.get_layer_slice(grd.nlay, top=False)
 
     logger.info(sarr[0, :])

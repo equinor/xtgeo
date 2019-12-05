@@ -37,6 +37,8 @@ class Grid3DSlice(BasePlot):
         self._actnum = None
         self._window = None
         self._active = True
+        self._minvalue = None
+        self._maxvalue = None
 
     # ==================================================================================
     # Functions methods (public)
@@ -84,12 +86,15 @@ class Grid3DSlice(BasePlot):
 
         self._active = activeonly
 
-        if mode == "column":
-            self._plot_row()
-        elif mode == "row":
-            self._plot_row()
-        else:
-            self._plot_layer()
+        self._minvalue = minvalue
+        self._maxvalue = maxvalue
+
+        # if mode == "column":
+        #     self._plot_row()
+        # elif mode == "row":
+        #     self._plot_row()
+        # else:
+        self._plot_layer()
 
     # def _plot_row(self):
 
@@ -174,7 +179,15 @@ class Grid3DSlice(BasePlot):
 
             patchcoll.set_array(pvalues)
 
-            patchcoll.set_clim([pvalues.min(), pvalues.max()])
+            pmin = self._minvalue
+            if self._minvalue is None:
+                pmin = pvalues.min()
+
+            pmax = self._minvalue
+            if self._maxvalue is None:
+                pmax = pvalues.min()
+
+            patchcoll.set_clim([pmin, pmax])
 
         im = self._ax.add_collection(patchcoll)
         self._ax.set_xlim((xmin, xmax))
