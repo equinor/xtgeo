@@ -417,7 +417,7 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
     if not top:
         opt1 = 0
 
-    ibn, lay_array, ib_array = _cxtgeo.grd3d_get_lay_slice(
+    icn, lay_array, ic_array = _cxtgeo.grd3d_get_lay_slice(
         self._ncol,
         self._nrow,
         self._nlay,
@@ -431,16 +431,12 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
         ntot,
     )
 
-    print("IBN", ibn)
-    print("LAY", lay_array, len(lay_array))
-    print("IBA", ib_array, len(ib_array))
+    lay_array = lay_array[: 10 * icn]
+    ic_array = ic_array[:icn]
 
-    lay_array = lay_array[: 10 * ibn]
-    ib_array = ib_array[:ibn]
+    lay_array = lay_array.reshape((icn, 5, 2))
 
-    lay_array = lay_array.reshape((ibn, 10))
-
-    return lay_array, ib_array
+    return lay_array, ic_array
 
 
 def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False, _ver=1):

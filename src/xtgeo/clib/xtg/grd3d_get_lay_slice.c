@@ -10,6 +10,8 @@
  *    So if 3000 active cells, then the array will be 3000*10 = 30000 entries.
  *    This will e.g. be a basis for matplotlib plotting of layers.
  *
+ *    Note that the result in in C order (row fastest)
+ *
  * ARGUMENTS:
  *    nx...nz          i     Grid dimensions
  *    p_*              i     Grid geometries arrays
@@ -18,7 +20,7 @@
  *    actonly          i     If 1 only return active cells
  *    slicev          i/o    Return array with 5 corner XY per cell
  *    nslicev          i     Allocated length of slicev
- *    ibv             i/o    Returned ib number of cells
+ *    icv             i/o    Returned ib number of cells
  *    nibv             i     Allocated length of slicev
  *
  * RETURNS:
@@ -50,17 +52,18 @@ int grd3d_get_lay_slice(
 
     double *slicev,
     long nslicev,
-    long *ibv,
-    long nibv
+    long *icv,
+    long nicv
     )
 
 {
     double crs[24];
     int i, j, kshift;
-    long ib, ic, ibn;
+    long ib, ic, icx, icn;
 
     logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Getting layer slice: %s", __FUNCTION__);
+    logger_info(__LINE__, "Dimens for arrays %ld %ld", nslicev, nicv);
 
     if (kslice > nz || kslice < 1) {
         logger_warn(__LINE__, "Slice is outside range, return");
@@ -70,26 +73,29 @@ int grd3d_get_lay_slice(
     kshift = 0;
     if (koption == 1) kshift = 12;  /* lower cell layer, not upper */
 
-    ic = 0;
-    ibn = 0;
-    for (j = 1; j <= ny; j++) {
-        for (i = 1; i <= nx; i++) {
+    icx = 0;
+    icn = 0;
+    for (i = 1; i <= nx; i++) {
+        for (j = 1; j <= ny; j++) {
             ib = x_ijk2ib(i, j, kslice, nx, ny, nz, 0);
+            ic = x_ijk2ic(i, j, kslice, nx, ny, nz, 0);
             grd3d_corners(i, j, kslice, nx, ny, nz, p_coord_v,
                           p_zcorn_v, crs, 0);
 
             if (actonly == 1 && p_actnum_v[ib] == 0) continue;
 
-            slicev[ic++] = crs[0 + kshift]; slicev[ic++] = crs[1 + kshift];
-            slicev[ic++] = crs[3 + kshift]; slicev[ic++] = crs[4 + kshift];
-            slicev[ic++] = crs[9 + kshift]; slicev[ic++] = crs[10 + kshift];
-            slicev[ic++] = crs[6 + kshift]; slicev[ic++] = crs[7 + kshift];
-            slicev[ic++] = crs[0 + kshift]; slicev[ic++] = crs[1 + kshift]; /*close*/
+            slicev[icx++] = crs[0 + kshift]; slicev[icx++] = crs[1 + kshift];
+            slicev[icx++] = crs[3 + kshift]; slicev[icx++] = crs[4 + kshift];
+            slicev[icx++] = crs[9 + kshift]; slicev[icx++] = crs[10 + kshift];
+            slicev[icx++] = crs[6 + kshift]; slicev[icx++] = crs[7 + kshift];
+            slicev[icx++] = crs[0 + kshift]; slicev[icx++] = crs[1 + kshift]; /*close*/
 
-            ibv[ibn++] = ib;
+            icv[icn++] = ic;
         }
 
     }
 
-    return ibn;
+    logger_info(__LINE__, "Getting layer slice done! %s", __FUNCTION__);
+
+    return icn;
 }

@@ -51,28 +51,29 @@ def test_very_basic():
     plt.close()
 
 
-# @tsetup.skipifroxar
-# def test_slice_simple_layer():
-#     """Trigger XSection class, and do some simple things basically."""
-#     layslice = Grid3DSlice()
+@tsetup.skipifroxar
+def test_slice_simple_layer():
+    """Trigger XSection class, and do some simple things basically."""
+    layslice = Grid3DSlice()
 
-#     mygrid = Grid(USEFILE1)
-#     myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
+    mygrid = Grid(USEFILE1)
+    myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
 
-#     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
+    assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 
-#     wd = None  # [457000, 464000, 1650, 1800]
-#     layslice.canvas(title="My Grid Layer plot")
-#     layslice.plot_gridslice(mygrid, prop=None, mode="layer", index=1, window=wd)
+    wd = None  # [457000, 464000, 1650, 1800]
+    for lay in (range(1, mygrid.nlay + 1)):
+        layslice.canvas(title="My Grid Layer plot for layer {}".format(lay))
+        layslice.plot_gridslice(mygrid, prop=myprop, mode="layer", index=lay, window=wd)
 
-#     if XTGSHOW:
-#         layslice.show()
-#     else:
-#         print(
-#             "Output to screen disabled (will plotto screen); "
-#             "use XTG_SHOW env variable"
-#         )
-#         layslice.savefig(os.path.join(TMPDIR, "layerslice.png"))
+        if XTGSHOW:
+            layslice.show()
+        else:
+            print(
+                "Output to screen disabled (will plot to screen); "
+                "use XTG_SHOW env variable"
+            )
+            layslice.savefig(os.path.join(TMPDIR, "layerslice_" + str(lay) + ".png"))
 
 
 # @tsetup.skipifroxar

@@ -1175,7 +1175,9 @@ class Grid(Grid3D):
            !       ! ^
            !~~~~~~~! |
           XY0 ->  XY1
-        XY5
+        XY4
+
+        Note that cell ordering is C ordering (row is fastest)
 
         Args:
             layer (int): K layer, starting with 1 as topmost
@@ -1194,6 +1196,8 @@ class Grid(Grid3D):
                 grd.from_file(REEKFILE)
 
                 parr, ibarr = grd.get_layer_slice(grd.nlay, top=False)
+
+        .. versionadded:: 2.3.0
         """
 
         return _grid_etc1.get_layer_slice(self, layer, top=top, activeonly=activeonly)
