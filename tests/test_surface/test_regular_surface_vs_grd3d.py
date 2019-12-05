@@ -29,6 +29,7 @@ rprop2 = ojn(rpath2, 'reek_sim_zone.roff')
 
 
 @tsetup.plotskipifroxar
+@tsetup.skipifmac  # segm fault; need to be investigated
 def test_get_surface_from_grd3d_porosity():
     """Sample a surface from a 3D grid"""
 

@@ -59,9 +59,9 @@ class _XTGeoCFile(object):
         elif (
             isinstance(self._name, io.BytesIO)
             and self._mode == "rb"
-            and plfsys() == "Windows"
+            and (plfsys() == "Windows" or plfsys() == "Darwin")
         ):
-            # windows miss fmemopen; hence write buffer to a tmp instead as workaround
+            # windows/mac miss fmemopen; write buffer to a tmp instead as workaround
             fds, tmpfile = mkstemp(prefix="tmpxtgeoio")
             os.close(fds)
             with open(tmpfile, "wb") as newfile:
@@ -104,7 +104,7 @@ class _XTGeoCFile(object):
 
         """
 
-        # Here are issues here on Windows in particular
+        # Here are issues here on Windows/Mac in particular
 
         status = True
 

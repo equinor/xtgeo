@@ -1,17 +1,25 @@
 #!/bin/bash
 
 function pre_build {
-    echo "Prebuild stage, install swig..."
-    # quite verbose...
-    echo "Download and building swig...."
-    build_swig > /dev/null
+    SYS=$(uname)
+    if [[ "$SYS" == "Linux" ]]; then
+        echo "Prebuild stage, install swig..."
+        # quite verbose...
+        echo "Download and building swig...."
+        build_swig > /dev/null
+    else
+        echo "OSX is running"
+    fi
 }
 
 function run_tests {
     set -x
+    SYS=$(uname)
     # need to install git on the test docker image to get the test data
-    apt-get -y update > /dev/null
-    apt-get -y install git > /dev/null
+    if [[ "$SYS" == "Linux" ]]; then
+        apt-get -y update > /dev/null
+        apt-get -y install git > /dev/null
+    fi
     git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
     pip install pytest
     export TRAVISRUN=true
