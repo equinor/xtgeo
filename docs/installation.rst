@@ -7,7 +7,7 @@ Installation
 From pip
 --------
 
-For a selection of platforms (Linux and Windows) and Python versions:
+For a selection of platforms (Linux/Windows/MacOS; all 64bit) and Python versions:
 
 .. code-block:: console
 
@@ -82,13 +82,6 @@ Next you can install it with:
 .. code-block:: console
 
    $ pip install .
-
-Or to install in developing mode with the VE:
-
-.. code-block:: console
-
-   $ pip install -e
-
 
 
 .. _Equinor Github repo: https://github.com/equinor/xtgeo
