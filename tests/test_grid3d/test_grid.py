@@ -38,6 +38,8 @@ BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
 DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
 DUALFIL2 = "../xtgeo-testdata/3dgrids/etc/dual_grid_noactivetag.roff"
 
+DUALFIL3 = "../xtgeo-testdata/3dgrids/etc/TEST_DPDK.EGRID"
+
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -540,6 +542,29 @@ def test_ecl_run():
     pres1.to_file(os.path.join(TMPDIR, "pressurediff.roff"), name="PRESSUREDIFF")
 
 
+def test_npvalues1d():
+    """Different ways of getting np arrays"""
+
+    grd = Grid(DUALFIL3)
+    dz = grd.get_dz()
+
+    dz1 = dz.get_npvalues1d(activeonly=False)  # [  1.   1.   1.   1.   1.  nan  ...]
+    dz2 = dz.get_npvalues1d(activeonly=True)  # [  1.   1.   1.   1.   1.  1. ...]
+
+    assert dz1[0] == 1.0
+    assert np.isnan(dz1[5])
+    assert dz1[0] == 1.0
+    assert not np.isnan(dz2[5])
+
+    grd = Grid(DUALFIL1)  # all cells active
+    dz = grd.get_dz()
+
+    dz1 = dz.get_npvalues1d(activeonly=False)
+    dz2 = dz.get_npvalues1d(activeonly=True)
+
+    assert dz1.all() == dz2.all()
+
+
 def test_grid_design(load_gfile1):
     """Determine if a subgrid is topconform (T), baseconform (B), proportional (P)
 
@@ -590,13 +615,35 @@ def test_flip(load_gfile1):
     assert grd.estimate_flip() == -1
 
 
+def test_xyz_cell_corners():
+    """Test xyz variations"""
+
+    grd = Grid(DUALFIL1)
+
+    allcorners = grd.get_xyz_corners()
+    assert len(allcorners) == 24
+    assert allcorners[0].get_npvalues1d()[0] == 0.0
+    assert allcorners[23].get_npvalues1d()[-1] == 1001.
+
+
 def test_grid_layer_slice():
-    """Test the egrid format for different grid sizes"""
+    """Test grid slice coordinates"""
 
     grd = Grid()
     grd.from_file(REEKFILE)
 
-    sarr, _ibarr = grd.get_layer_slice(1)
-    sarr, _ibarr = grd.get_layer_slice(grd.nlay, top=False)
+    sarr1, _ibarr = grd.get_layer_slice(1)
+    sarrn, _ibarr = grd.get_layer_slice(grd.nlay, top=False)
 
-    logger.info(sarr[0, :])
+    cell1 = grd.get_xyz_cell_corners(ijk=(1, 1, 1))
+    celln = grd.get_xyz_cell_corners(ijk=(1, 1, grd.nlay))
+    celll = grd.get_xyz_cell_corners(ijk=(grd.ncol, grd.nrow, grd.nlay))
+
+    assert sarr1[0, 0, 0] == cell1[0]
+    assert sarr1[0, 0, 1] == cell1[1]
+
+    assert sarrn[0, 0, 0] == celln[12]
+    assert sarrn[0, 0, 1] == celln[13]
+
+    assert sarrn[-1, 0, 0] == celll[12]
+    assert sarrn[-1, 0, 1] == celll[13]
