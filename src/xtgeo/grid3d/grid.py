@@ -705,7 +705,9 @@ class Grid(Grid3D):
         """
 
         if self.gridprops is None:
-            self.gridprops = xtgeo.grid3d.GridProperties()
+            self.gridprops = xtgeo.grid3d.GridProperties(
+                ncol=self.ncol, nrow=self.nrow, nlay=self.nlay
+            )
 
         return self.gridprops.dataframe(
             activeonly=activeonly,
