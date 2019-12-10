@@ -2,6 +2,18 @@
 
 ## Version 2
 
+### 2.3.0
+
+* Added support for MacOS on PYPI (Python 3.6, 3.7)
+* Added functionality on grid slices as method ()
+* More flexible reading on phases present in Eclipse/IX UNRST files
+* Several minor bugfixes and improvements
+
+### 2.2.2
+
+* Several smaller bug fixes
+* Use of realisation in gridproperty_from_roxar() was not working
+
 ### 2.2.1
 
 * Full C code and compile restructuring, now using scikit-build!
