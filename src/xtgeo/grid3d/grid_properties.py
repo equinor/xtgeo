@@ -42,12 +42,12 @@ class GridProperties(Grid3D):
     See also the :class:`GridProperty` class.
     """
 
-    def __init__(self):
-        super(GridProperties, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(GridProperties, self).__init__(*args, **kwargs)
 
-        self._ncol = 10
-        self._nrow = 12
-        self._nlay = 14
+        self._ncol = kwargs.get("ncol", 5)
+        self._nrow = kwargs.get("nrow", 12)
+        self._nlay = kwargs.get("nlay", 2)
 
         self._props = []  # list of GridProperty objects
         self._names = []  # list of GridProperty names

@@ -107,7 +107,7 @@ A Cube is described by:
 * An ``yflip`` indicator. Normally the system is left-handed (with Z axis
   positive down). If yflip is -1, then the cube is right-handed.
 
-* A 2D array (numpy) of ``values``, for a total of ncol * nrow * nlay entries.
+* A 3D array (numpy) of ``values``, for a total of ncol * nrow * nlay entries.
   All nodes are defined. The 3D numpy array is stored in C-order
   (row-major). Default is 32 bit Float.
 

@@ -12,8 +12,10 @@ logger = xtg.functionlogger(__name__)
 DBG = 0
 
 
-def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
+def ib_to_ijk(ib, nx, ny, nz, ibbase=0, forder=True):
     """Convert a 1D index (starting from ibbase) to cell indices I J K.
+
+    The default is F-order, but ``forder=False`` gives C order
 
     Returns I J K as a tuple.
     """
@@ -24,7 +26,10 @@ def ib_to_ijk(ib, nx, ny, nz, ibbase=0):
     jp = _cxtgeo.new_intpointer()
     kp = _cxtgeo.new_intpointer()
 
-    _cxtgeo.x_ib2ijk(ib, ip, jp, kp, nx, ny, nz, ibbase)
+    if forder:
+        _cxtgeo.x_ib2ijk(ib, ip, jp, kp, nx, ny, nz, ibbase)
+    else:
+        _cxtgeo.x_ic2ijk(ib, ip, jp, kp, nx, ny, nz, ibbase)
 
     i = _cxtgeo.intpointer_value(ip)
     j = _cxtgeo.intpointer_value(jp)
@@ -92,7 +97,7 @@ def find_flip(xv, yv):
     Return:
         Flip flag (1 of -1)
 
-    ..versionchanged:: 2.1.0 Reverse the number returned, skip zv
+    .. versionchanged:: 2.1.0 Reverse the number returned, skip zv
     """
     flip = 0
 

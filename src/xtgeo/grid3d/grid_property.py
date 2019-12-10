@@ -747,7 +747,7 @@ class GridProperty(Grid3D):
 
         return self.get_npvalues1d(activeonly=True)
 
-    def get_npvalues1d(self, activeonly=True):
+    def get_npvalues1d(self, activeonly=False):
         """Return the grid property as a 1D numpy array (copy) for active or all
         cells, but inactive have NaN value.
 
@@ -755,11 +755,9 @@ class GridProperty(Grid3D):
         """
         vact = self.values1d.copy()
         if activeonly:
-            vact = vact[~vact.mask]
-            return np.array(vact)
+            return vact.compressed()  # safer than vact[~vact.mask] if no masked
 
-        vact = vact.filled(np.nan)
-        return vact
+        return vact.filled(np.nan)
 
     def copy(self, newname=None):
         """Copy a xtgeo.grid3d.GridProperty() object to another instance.

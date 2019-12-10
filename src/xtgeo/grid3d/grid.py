@@ -705,7 +705,9 @@ class Grid(Grid3D):
         """
 
         if self.gridprops is None:
-            self.gridprops = xtgeo.grid3d.GridProperties()
+            self.gridprops = xtgeo.grid3d.GridProperties(
+                ncol=self.ncol, nrow=self.nrow, nlay=self.nlay
+            )
 
         return self.gridprops.dataframe(
             activeonly=activeonly,
@@ -1170,11 +1172,11 @@ class Grid(Grid3D):
 
         In each cell there are 5 XY pairs, making a closed polygon as illustrated here:
 
-          XY3      XY2
-           !~~~~~~~!
-           !       ! ^
-           !~~~~~~~! |
-          XY0 ->  XY1
+        XY3  <  XY2
+        !~~~~~~~!
+        !       ! ^
+        !~~~~~~~!
+        XY0 ->  XY1
         XY4
 
         Note that cell ordering is C ordering (row is fastest)
