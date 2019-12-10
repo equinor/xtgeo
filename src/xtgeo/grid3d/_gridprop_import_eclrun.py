@@ -18,6 +18,7 @@ XTGDEBUG = 0
 
 # cf metadata["IPHS"]:
 PHASES = {
+    0: "e300_unknown",
     1: "oil",
     2: "water",
     3: "oil/water",
@@ -25,7 +26,11 @@ PHASES = {
     5: "oil/gas",
     6: "gas/water",
     7: "oil/water/gas",
+    -2345: "ix_unknown"
 }
+
+# cf metadata["SIMULATOR"]:
+SIMULATOR = {100: "E100", 300: "E300", 700: "IX"}
 
 
 def import_eclbinary(
@@ -57,6 +62,10 @@ def import_eclbinary(
 
     metadata = _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid)
     date = metadata["DATE"]
+
+    # Importing phases is a challenge. It depends on the fluid system and simulator; e.g
+    # typically in a 3 phase system, only SGAS and SWAT is given while SOIL must be
+    # computed, if E100. E300 and IX may behave different...
 
     if name == "SGAS":
         status = _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture)
@@ -104,7 +113,7 @@ def import_eclbinary(
 def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SWAT; this may lack in very special cases"""
 
-    if metadata["IPHS"] in (3, 6, 7):
+    if metadata["IPHS"] in (0, 3, 6, 7, -2345):
         import_eclbinary(
             self,
             fhandle,
@@ -149,7 +158,7 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SGAS; this may be lack of oil/water (need to verify)"""
 
     flag = 0
-    if metadata["IPHS"] in (5, 7):
+    if metadata["IPHS"] in (0, 5, 7, -2345):
         import_eclbinary(
             self,
             fhandle,
@@ -217,7 +226,19 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
 def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
 
     flag = 0
-    if metadata["IPHS"] in (3, 5, 7):
+    if metadata["IPHS"] in (0, -2345):
+        import_eclbinary(
+            self,
+            fhandle,
+            name="SOIL{__}",
+            etype=5,
+            grid=grid,
+            date=date,
+            fracture=fracture,
+            _kwlist=kwlist,
+        )
+
+    elif metadata["IPHS"] in (3, 5, 7):
         sgas = None
         swat = None
         flag = 1
@@ -342,6 +363,9 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
     intehead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte).tolist()
     ncol, nrow, nlay = intehead[8:11]
     logger.info("Dimensions detected %s %s %s", ncol, nrow, nlay)
+
+    metadata["SIMULATOR"] = SIMULATOR[intehead[94]]
+    logger.info("Simulator is %s", metadata["SIMULATOR"])
 
     metadata["IPHS"] = intehead[14]  # phase indicator 1:o 2:w 3:ow 4:g 5:og 6:gw 7:owg
     logger.info("Phase system is %s", PHASES[metadata["IPHS"]])
