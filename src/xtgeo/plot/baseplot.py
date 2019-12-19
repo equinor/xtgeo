@@ -50,7 +50,7 @@ class BasePlot(object):
         if isinstance(cmap, LinearSegmentedColormap):
             self._colormap = cmap
         elif isinstance(cmap, str):
-            logger.info("Definition of a colormap from string name...")
+            logger.info("Definition of a colormap from string name: %s", cmap)
             self.define_colormap(cmap)
         else:
             raise ValueError("Input incorrect")
@@ -78,7 +78,7 @@ class BasePlot(object):
         """
         valid_maps = sorted(m for m in plt.cm.datad)
 
-        logger.debug("Valid maps: %s", valid_maps)
+        logger.info("Valid color maps: %s", valid_maps)
 
         colors = []
 
@@ -111,6 +111,11 @@ class BasePlot(object):
             for i in range(cmap.N):
                 colors.append(cmap(i))
         else:
+            logger.warning(
+                "Trying to access as color map not installed in "
+                "this version of matplotlib: %s. Revert to rainbow",
+                cfile,
+            )
             cmap = plt.get_cmap("rainbow")
             for i in range(cmap.N):
                 colors.append(cmap(i))

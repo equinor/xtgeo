@@ -123,6 +123,19 @@ def test_irapbin_import1():
     xsurf.describe()
 
 
+def test_irapbin_import_quickplot():
+    """Import Reek Irap binary and do quickplot."""
+    logger.info("Import and export...")
+
+    xsurf = xtgeo.RegularSurface(TESTSET2)
+    cmap = "gist_earth"
+
+    if XTGSHOW:
+        xsurf.quickplot(colormap=cmap)
+    else:
+        xsurf.quickplot(os.path.join(TMPD, "qplot.jpg"), colormap=cmap)
+
+
 def test_irapbin_import_metadatafirst():
     """Import Reek Irap binary, first with metadata only, then values."""
     logger.info("Import and export...")
