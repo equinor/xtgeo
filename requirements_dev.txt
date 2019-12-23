@@ -21,10 +21,11 @@ numpy==1.16.0; python_version >= "3.7" or python_version == "2.7" and platform_s
 numpy==1.16.4; python_version >= "3.7" or python_version == "2.7" or platform_system != "Linux"
 pandas>=0.21.0; python_version != "3.4"
 pandas==0.20.3; python_version == "3.4"
-segyio==1.8.8
+segyio>=1.8.6
 matplotlib>=1.5
 scipy>=0.17
-shapely
+shapely>=1.6.2; python_version < "3.8"
+shapely==1.7a2; python_version == "3.8"
 black
 autopep8
 pylint
