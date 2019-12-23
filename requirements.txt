@@ -3,7 +3,8 @@ shapely>=1.6.2; python_version < "3.8"
 shapely==1.7a2; python_version == "3.8"
 matplotlib>=1.5
 scipy>=0.17
-segyio>=1.8.6
+segyio==1.8.6; python_version == "3.4"
+segyio>=1.8.6; python_version != "3.4"
 pandas>=0.21.0; python_version != "3.4"
 pandas==0.20.3; python_version == "3.4"
 six>=1.11
