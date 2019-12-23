@@ -130,6 +130,8 @@ class Map(BasePlot):
 
         # zi = ma.masked_where(zimask, zi)
         # zi = ma.masked_greater(zi, _cxtgeo.UNDEF_LIMIT)
+        logger.info("Current colormap is %s, requested is %s", self.colormap, colormap)
+        logger.info("Current colormap name is %s", self.colormap.name)
 
         if ma.std(zi) > 1e-07:
             uselevels = levels

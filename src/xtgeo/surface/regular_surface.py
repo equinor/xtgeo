@@ -2355,10 +2355,14 @@ class RegularSurface(object):
         minvalue = minmax[0]
         maxvalue = minmax[1]
 
+        logger.debug("Colormap is %s and colortable %s", colormap, colortable)
+
         if colortable is not None:
             colormap = colortable
 
         mymap.colormap = colormap
+
+        logger.debug("Colormap in use %s", mymap.colormap.name)
 
         mymap.plot_surface(
             self,
