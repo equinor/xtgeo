@@ -59,6 +59,9 @@ int grd3d_write_eclinput (FILE *fc,
     char sbn[24] = "grd3d_write_eclinput";
     int icwrap = 0;
     long icc = 0;
+    int itmp = 0;
+    float ftmp = 0.0;
+    double dtmp = 0.0;
 
     if (debug > 2) xtg_speak(sbn, 3, "Enter %s", sbn);
 
@@ -67,7 +70,9 @@ int grd3d_write_eclinput (FILE *fc,
     if (rectype == 1) {
         icwrap = 0;
         for (icc = 0; icc < nrecs; icc++) {
-            fprintf(fc, fmt, intv[icc]);
+            itmp = intv[icc];
+            if (itmp > UNDEF_INT_LIMIT) itmp = 0;
+            fprintf(fc, fmt, itmp);
             icwrap++;
             if (icwrap >= ncolumns) {
                 fprintf(fc, "\n");
@@ -79,7 +84,9 @@ int grd3d_write_eclinput (FILE *fc,
     if (rectype == 2) {
         icwrap = 0;
         for (icc = 0; icc < nrecs; icc++) {
-            fprintf(fc, fmt, floatv[icc]);
+            ftmp = floatv[icc];
+            if (ftmp > UNDEF_LIMIT) ftmp = 0.0;
+            fprintf(fc, fmt, ftmp);
             icwrap++;
             if (icwrap >= ncolumns) {
                 fprintf(fc, "\n");
@@ -91,7 +98,9 @@ int grd3d_write_eclinput (FILE *fc,
     if (rectype == 3) {
         icwrap = 0;
         for (icc = 0; icc < nrecs; icc++) {
-            fprintf(fc, fmt, doublev[icc]);
+            dtmp = doublev[icc];
+            if (dtmp > UNDEF_LIMIT) dtmp = 0.0;
+            fprintf(fc, fmt, ftmp);
             icwrap++;
             if (icwrap >= ncolumns) {
                 fprintf(fc, "\n");
