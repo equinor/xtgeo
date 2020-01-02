@@ -153,7 +153,7 @@ class XTGDescription(object):
         for line in self._txt:
             thetext += line + "\n"
 
-        return thetext[:-1]
+        return thetext[:-1]  # skip last \n
 
     @staticmethod
     def _smartfmt(atxt):

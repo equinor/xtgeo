@@ -292,7 +292,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     def describe(self, flush=True):
         """Describe a Polygons instance"""
-        super(Polygons, self).describe(flush=flush)
+        return super(Polygons, self).describe(flush=flush)
 
     def delete_columns(self, clist, strict=False):
         """Delete one or more columns by name in a safe way.
