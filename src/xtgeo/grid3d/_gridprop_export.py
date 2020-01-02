@@ -20,9 +20,10 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
 
     xtgeosys.check_folder(pfile, raiseerror=OSError)
 
+    if name is None:
+        name = self.name
+
     if "roff" in fformat:
-        if name is None:
-            name = self.name
 
         binary = True
         if "asc" in fformat:
@@ -40,9 +41,11 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
     elif fformat == "bgrdecl":
         export_grdecl(self, pfile, name, append=append, binary=True, dtype=dtype)
 
+    else:
+        raise ValueError("Cannot export, invalid fformat: {}".format(fformat))
+
 
 # Export ascii or binary ROFF format
-
 
 def export_roff(self, pfile, name, append=False, last=True, binary=True):
 
@@ -204,7 +207,7 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None):
         iarr,
         farr,
         darr,
-        self.name,
+        name,
         pfile,
         mode,
         appendmode,

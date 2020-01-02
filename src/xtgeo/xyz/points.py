@@ -213,6 +213,21 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
+    def _random(self, nrandom=10):
+        """Generate nrandom random points within the range 0..1
+
+        Args:
+            nrandom (int): Number of random points (default 10)
+
+        .. versionadded:: 2.3.0
+        """
+
+        # currently a non-published method
+
+        self._df = pd.DataFrame(np.random.rand(nrandom, 3),
+                                columns=[self._xname, self._yname, self._zname])
+
+
     def copy(self, stype="points"):
         """Deep copy of a Points instance.
 
@@ -229,7 +244,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     def describe(self, flush=True):
         """Describe a Points instance"""
-        super(Points, self).describe(flush=flush)
+        return super(Points, self).describe(flush=flush)
 
     def from_file(self, pfile, fformat="xyz"):
         """Import points.

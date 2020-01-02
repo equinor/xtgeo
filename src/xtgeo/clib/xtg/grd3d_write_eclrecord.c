@@ -124,16 +124,19 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
 
             if (rectype == 1) {
                 myint = intv[ib];
+                if (myint > UNDEF_INT_LIMIT) myint = 0;
                 if (swap) SWAP_INT(myint);
                 fwrite(&myint, 4, 1, fc);
             }
             else if (rectype == 2) {
                 myfloat = floatv[ib];
+                if (myfloat > UNDEF_LIMIT) myfloat = 0.0;
                 if (swap) SWAP_FLOAT(myfloat);
                 fwrite(&myfloat, 4, 1, fc);
             }
             else if (rectype == 3) {
                 mydouble = doublev[ib];
+                if (mydouble > UNDEF_LIMIT) mydouble = 0.0;
                 if (swap) SWAP_DOUBLE(mydouble);
                 fwrite(&mydouble, 8, 1, fc);
             }
