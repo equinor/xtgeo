@@ -52,6 +52,9 @@ polyfile = '../xtgeo-testdata/polygons/reek/1/polset2.pol'
 testfile12a = '../xtgeo-testdata/3dgrids/reek/reek_sim_grid.grdecl'
 testfile12b = '../xtgeo-testdata/3dgrids/reek/reek_sim_poro.grdecl'
 
+testfile13a = "../xtgeo-testdata/3dgrids/etc/TEST_SP.EGRID"
+testfile13b = "../xtgeo-testdata/3dgrids/etc/TEST_SP.INIT"
+
 
 def test_create():
     """Create a simple property"""
@@ -214,6 +217,19 @@ def test_eclinit_import_reek():
 
     pv = GridProperty(testfile6, name='PORV', grid=gg)
     logger.info(pv.values.mean())
+
+
+def test_eclinit_simple_importexport():
+    """Property import and export with anoother name"""
+
+    # let me guess the format (shall be egrid)
+    gg = Grid(testfile13a, fformat='egrid')
+    po = GridProperty(testfile13b, name='PORO', grid=gg)
+
+    po.to_file(os.path.join(td, "simple.grdecl"), fformat="grdecl", name="PORO2")
+
+    p2 = GridProperty(os.path.join(td, "simple.grdecl"), grid=gg, name="PORO2")
+    assert p2.name == "PORO2"
 
 
 def test_eclunrst_import_reek():
