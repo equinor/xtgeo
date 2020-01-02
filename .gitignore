@@ -77,3 +77,4 @@ src/xtgeo/cxtgeo/cxtgeo*
 tmp_buildswig
 '.'/
 _skbuild/
+pip-wheel-metadata/
