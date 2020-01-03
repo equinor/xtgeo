@@ -36,6 +36,13 @@ def assert_almostequal(this, that, tol, txt=''):
     assert this == pytest.approx(that, abs=tol), txt
 
 
+# SKIP IF TRAVIS --------------------------------------------------------------
+qtravis = False
+if 'TRAVISRUN' in os.environ:
+    qtravis = True
+
+skipiftravis = pytest.mark.skipif(qtravis, reason='Test skipped on Travis')
+
 # EQUINOR ONLY ----------------------------------------------------------------
 qequinor = False
 if 'KOMODO_RELEASE' in os.environ:
