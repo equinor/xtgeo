@@ -34,6 +34,7 @@ TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 
 @tsetup.skipifmac
 @tsetup.skipifwindows
+@tsetup.skipiftravis
 def test_irapbin_import_bytesio():
     """Import Irap binary via bytesIO"""
     logger.info("Import and export...")
@@ -51,6 +52,7 @@ def test_irapbin_import_bytesio():
 
 
 @tsetup.skipifmac
+@tsetup.skipiftravis
 def test_get_regsurfi():
 
     sfile = TESTSET1
@@ -65,6 +67,7 @@ def test_get_regsurfi():
 
 
 @tsetup.skipifmac
+@tsetup.skipiftravis
 def test_get_regsurff():
 
     sfile = TESTSET1
@@ -77,6 +80,7 @@ def test_get_regsurff():
 
 @tsetup.skipifmac
 @tsetup.skipifwindows
+@tsetup.skipiftravis
 def test_irapbin_load_meta_first_bytesio():
     """Import Irap binary via bytesIO, by just loading metadata first"""
     logger.info("Import and export...")
