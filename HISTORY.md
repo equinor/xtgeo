@@ -2,6 +2,16 @@
 
 ## Version 2
 
+### 2.3.1
+
+* Preliminary support for Python 3.8 (Linux only)
+* Several bug fixes:
+  * User warning when requested colour map is not found
+  * Printing of a Points of Polygons instance shall now work
+  * UNDEF values in property (b)grdecl export shall now be 0.0, not a large number
+  * Name in GridProperty `to_file(name=...)` is fixed
+  * If `fformat` in GridProperty import is mispelled, an exception will be raised
+
 ### 2.3.0
 
 * Added support for MacOS on PYPI (Python 3.6, 3.7)
