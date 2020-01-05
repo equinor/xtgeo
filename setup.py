@@ -19,6 +19,7 @@ import subprocess  # nosec
 from setuptools import find_packages
 
 import skbuild
+from setuptools import setup as zetup
 
 from skbuild.command import set_build_base_mixin
 from skbuild.utils import new_style
@@ -49,6 +50,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         skroot,
         "TMP",
         "__pycache__",
+        "pip-wheel-metadata",
         ".eggs",
         "dist",
         "sdist",
@@ -234,7 +236,7 @@ skbuild.setup(
     url="https://github.com/equinor/xtgeo",
     license="LGPL-3.0",
     # cmake_args=["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"],
-    packages=find_packages("src"),
+    packages=["xtgeo"],
     package_dir={"": "src"},
     cmdclass={"clean": CleanUp},
     zip_safe=False,
