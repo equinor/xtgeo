@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
 
+# Remember to run "python setup.py clean" before every install command
+
 import os
 import sys
 import shutil
@@ -17,6 +19,7 @@ from distutils.version import LooseVersion
 import subprocess  # nosec
 
 from setuptools import find_packages
+from setuptools import setup as setuptools_setup
 
 import skbuild
 
@@ -34,7 +37,6 @@ CMD = sys.argv[1]
 # Overriding and extending setup commands
 # ======================================================================================
 
-
 class CleanUp(set_build_base_mixin, new_style(_clean)):
     """Custom implementation of ``clean`` setuptools command.
 
@@ -49,6 +51,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         skroot,
         "TMP",
         "__pycache__",
+        "pip-wheel-metadata",
         ".eggs",
         "dist",
         "sdist",
@@ -185,8 +188,7 @@ if not swigok():
     if "Linux" in platform.system():
         print("Installing swig from source (tmp) ...")
         subprocess.check_call(  # nosec
-            ["bash", "swig_install.sh"],
-            cwd="scripts",
+            ["bash", "swig_install.sh"], cwd="scripts",
         )
     else:
         raise SystemExit("Cannot find valid swig install")
@@ -233,8 +235,8 @@ skbuild.setup(
     author="Equinor R&T",
     url="https://github.com/equinor/xtgeo",
     license="LGPL-3.0",
-    # cmake_args=["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"],
-    packages=find_packages("src"),
+    cmake_args=["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"],
+    packages=find_packages(where="src"),
     package_dir={"": "src"},
     cmdclass={"clean": CleanUp},
     zip_safe=False,
@@ -264,3 +266,28 @@ skbuild.setup(
     install_requires=REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
 )
+
+# Below is a hack to make "python setup.py develop" or "pip install -e ." to work.
+# Without this, the xtgeo.egg-link file will be wrong, e.g.:
+# /home/jan/work/git/xtg/xtgeo
+# .
+#
+# instead of the correct:
+# /home/jan/work/git/xtg/xtgeo/src
+# ../
+#
+# The wrong egg-link comes when find_packages(where="src") finds a list of packages in
+# scikit-build version of setup(). No clue why...
+
+if CMD == "develop":
+    print("Run in DEVELOP mode")
+    setuptools_setup(  # use setuptools version of setup
+        name="xtgeo",
+        use_scm_version={"root": src(""), "write_to": src("src/xtgeo/_theversion.py")},
+        packages=find_packages(where="src"),
+        package_dir={"": "src"},
+        zip_safe=False,
+        test_suite="tests",
+        install_requires=REQUIREMENTS,
+        tests_require=TEST_REQUIREMENTS,
+    )
