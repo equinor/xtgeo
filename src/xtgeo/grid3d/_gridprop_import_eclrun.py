@@ -32,6 +32,13 @@ PHASES = {
 # cf metadata["SIMULATOR"]:
 SIMULATOR = {100: "E100", 300: "E300", 700: "IX"}
 
+# The handling of saturations is special. E100 seems to have a system according to
+# phases set in metadata (metadata["IPHS"]). For E300 and IX it is difficult to
+# find any descent rules. E.g. there are cases with E300 where SGAS/SWAT/SOIL all
+# are written for some time steps, while other time steps only have SGAS/SWAT
+# (in same UNRST file!). Try to combat this here as good as possible, but this
+# is not easy or optimal...
+
 
 def import_eclbinary(
     self, pfile, name=None, etype=1, date=None, grid=None, fracture=False, _kwlist=None
@@ -113,7 +120,12 @@ def import_eclbinary(
 def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SWAT; this may lack in very special cases"""
 
-    if metadata["IPHS"] in (0, 3, 6, 7, -2345):
+    logger.info("Import SWAT, %s", metadata["IPHS"])
+    logger.info("KWLIST \n%s", kwlist)
+
+    s_exists = ((kwlist["KEYWORD"] == "SWAT") & (kwlist["DATE"] == date)).any()
+
+    if s_exists or metadata["IPHS"] in (0, 3, 6, 7, -2345):
         import_eclbinary(
             self,
             fhandle,
@@ -157,8 +169,10 @@ def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
 def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SGAS; this may be lack of oil/water (need to verify)"""
 
+    s_exists = ((kwlist["KEYWORD"] == "SGAS") & (kwlist["DATE"] == date)).any()
+
     flag = 0
-    if metadata["IPHS"] in (0, 5, 7, -2345):
+    if s_exists or metadata["IPHS"] in (0, 5, 7, -2345):
         import_eclbinary(
             self,
             fhandle,
@@ -225,8 +239,19 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
 
 def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
 
+    s_exists = ((kwlist["KEYWORD"] == "SOIL") & (kwlist["DATE"] == date)).any()
+
+    phases = metadata["IPHS"]
+
+    if not s_exists:
+        logger.info("SOIL does not exist for date %s, need to estimate...", date)
+        if metadata["SIMULATOR"] != "E100":
+            phases = 7  # just assume this; hope its works...
+    else:
+        logger.info("SOIL property exists for date %s", date)
+
     flag = 0
-    if metadata["IPHS"] in (0, -2345):
+    if s_exists or phases in (0, -2345):
         import_eclbinary(
             self,
             fhandle,
@@ -238,12 +263,12 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
             _kwlist=kwlist,
         )
 
-    elif metadata["IPHS"] in (3, 5, 7):
+    elif phases in (3, 5, 7):
         sgas = None
         swat = None
         flag = 1
         logger.info("Making SOIL from SWAT and/or SGAS ...")
-        if metadata["IPHS"] in (3, 7):
+        if phases in (3, 7):
             swat = self.__class__()
             import_eclbinary(
                 swat,
@@ -256,7 +281,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
                 _kwlist=kwlist,
             )
 
-        if metadata["IPHS"] in (5, 7):  # og, owg
+        if phases in (5, 7):
             sgas = self.__class__()
             import_eclbinary(
                 sgas,
@@ -274,11 +299,13 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
         self._ncol = grid.ncol
         self._nlay = grid.nlay
         self._date = date
-        if metadata["IPHS"] == 7:  # owg
+        if phases == 7:  # owg
             self._values = swat._values * -1 - sgas._values + 1.0
-        elif metadata["IPHS"] == 5:  # og
+            self._values[self._values < 0.0] = 0.0
+            self._values[self._values > 1.0] = 1.0
+        elif phases == 5:  # og
             self._values = sgas._values * -1 + 1.0
-        elif metadata["IPHS"] == 3:  # ow
+        elif phases == 3:  # ow
             self._values = swat._values * -1 + 1.0
 
         if swat:
@@ -286,7 +313,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
         if sgas:
             del sgas
 
-    elif metadata["IPHS"] in (1, 2, 4, 6):
+    elif phases in (1, 2, 4, 6):
         flag = 1
         logger.info("SOIL: asked for but 0% or 100%")
         self.name = "SOIL" + "_" + str(date)
@@ -294,7 +321,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
         self._ncol = grid.ncol
         self._nlay = grid.nlay
         self._date = date
-        if metadata["IPHS"] == 1:
+        if phases == 1:
             self._values = np.ones(
                 (self._ncol, self._nrow, self.nlay), dtype=np.float64
             )
