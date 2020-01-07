@@ -2,6 +2,9 @@
 
 ## Version 2
 
+### 2.4.1
+* Push to trigger travis build and deploy
+
 ### 2.4.0
 
 * New features:
