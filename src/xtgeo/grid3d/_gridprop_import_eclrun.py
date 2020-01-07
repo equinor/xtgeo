@@ -117,13 +117,20 @@ def import_eclbinary(
         raise RuntimeError("Error in closing file handle for binary Eclipse file")
 
 
+def _chk_kw_date(df, keyword, date):
+    """Check if a keyword exists for a given date"""
+
+    for ir in range(len(df)):
+        if df.loc[ir, "KEYWORD"] == keyword and str(df.loc[ir, "DATE"]) == str(date):
+            return True
+    return False
+
+
 def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SWAT; this may lack in very special cases"""
 
-    logger.info("Import SWAT, %s", metadata["IPHS"])
-    logger.info("KWLIST \n%s", kwlist)
-
-    s_exists = ((kwlist["KEYWORD"] == "SWAT") & (kwlist["DATE"] == date)).any()
+    s_exists = _chk_kw_date(kwlist, "SWAT", date)
+    logger.info("SWAT: S_EXISTS %s for date %s", s_exists, date)
 
     if s_exists or metadata["IPHS"] in (0, 3, 6, 7, -2345):
         import_eclbinary(
@@ -169,7 +176,8 @@ def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
 def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
     """Import SGAS; this may be lack of oil/water (need to verify)"""
 
-    s_exists = ((kwlist["KEYWORD"] == "SGAS") & (kwlist["DATE"] == date)).any()
+    s_exists = _chk_kw_date(kwlist, "SGAS", date)
+    logger.info("SGAS: S_EXISTS %s for date %s", s_exists, date)
 
     flag = 0
     if s_exists or metadata["IPHS"] in (0, 5, 7, -2345):
@@ -239,7 +247,8 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
 
 def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
 
-    s_exists = ((kwlist["KEYWORD"] == "SOIL") & (kwlist["DATE"] == date)).any()
+    s_exists = _chk_kw_date(kwlist, "SOIL", date)
+    logger.info("SOIL: S_EXISTS %s for date %s", s_exists, date)
 
     phases = metadata["IPHS"]
 
@@ -383,7 +392,7 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
     # INTEHEAD is needed to verify grid dimensions:
     for kwitem in kwxlist:
         if kwitem[0] == "INTEHEAD":
-            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
+            kwname, kwtype, kwlen, kwbyte, *_kwdate = kwitem
             break
 
     # read INTEHEAD record:
@@ -401,7 +410,7 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
     # LOGIHEAD item [15] in restart should be True, if dualperm (+ dualporo) model.
     for kwitem in kwxlist:
         if kwitem[0] == "LOGIHEAD":
-            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
+            kwname, kwtype, kwlen, kwbyte, *_kwdate = kwitem
             break
 
     # read INTEHEAD record:

@@ -3,7 +3,7 @@
 
 import xtgeo
 
-from xtgeo.grid3d import _gridprop_import
+from xtgeo.grid3d import _gridprop_import_eclrun
 
 from .grid_property import GridProperty
 from . import _grid3d_utils as utils
@@ -35,7 +35,10 @@ def import_ecl_output(
         local_fhandle = True
 
     # scan valid keywords
-    kwlist = utils.scan_keywords(fhandle)
+    kwlist = utils.scan_keywords(fhandle, fformat="xecl", maxkeys=100000,
+                                 dataframe=True, dates=True)
+
+    kwxlist = list(kwlist.itertuples(index=False, name=None))
 
     usenames = list()
 
@@ -43,8 +46,8 @@ def import_ecl_output(
         nact = grid.nactive
         ntot = grid.ntotal
 
-        for kw in kwlist:
-            kwname, _tmp1, nlen, _bs1 = kw
+        for kw in kwxlist:
+            kwname, _tmp1, nlen, *_whatever = kw
             if nlen in (nact, ntot):
                 usenames.append(kwname)
     else:
@@ -57,7 +60,7 @@ def import_ecl_output(
     possiblekw = []
     for name in lookfornames:
         namefound = False
-        for kwitem in kwlist:
+        for kwitem in kwxlist:
             possiblekw.append(kwitem[0])
             if name == kwitem[0]:
                 namefound = True
@@ -112,6 +115,8 @@ def import_ecl_output(
 
         for name in use2names:
 
+            logger.info("Get %s", name)
+
             if date is None:
                 date = None
                 propname = name
@@ -124,8 +129,9 @@ def import_ecl_output(
 
             # use a private GridProperty function here, for convinience
             # (since filehandle)
-            _gridprop_import.import_eclbinary(
-                prop, fhandle, name=name, date=date, grid=grid, etype=etype
+            _gridprop_import_eclrun.import_eclbinary(
+                prop, fhandle, name=name, date=date, grid=grid, etype=etype,
+                _kwlist=kwlist
             )
             if firstproperty:
                 ncol = prop.ncol
