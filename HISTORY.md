@@ -2,6 +2,9 @@
 
 ## Version 2
 
+### 2.4.2
+* Fix a bug that occurs when reading Eclipse properties from E300 runs
+
 ### 2.4.1
 * Push to trigger travis build and deploy
 
