@@ -13,7 +13,7 @@ from __future__ import print_function, absolute_import
 import os
 
 import xtgeo
-from ._gridprop_import_eclrun import import_eclbinary
+from ._gridprop_import_eclrun import import_eclbinary as impeclbin
 from ._gridprop_import_grdecl import import_grdecl_prop, import_bgrdecl_prop
 from ._gridprop_import_roff import import_roff
 
@@ -45,7 +45,7 @@ def from_file(
         import_roff(self, pfile, name, grid=grid, _roffapiv=_roffapiv)
 
     elif fformat.lower() == "init":
-        import_eclbinary(
+        impeclbin(
             self, pfile, name=name, etype=1, date=None, grid=grid, fracture=fracture
         )
 
@@ -66,7 +66,7 @@ def from_file(
         if not isinstance(date, int):
             raise RuntimeError("Date is not int format")
 
-        import_eclbinary(
+        impeclbin(
             self, pfile, name=name, etype=5, date=date, grid=grid, fracture=fracture
         )
 
