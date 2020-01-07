@@ -392,7 +392,7 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
     # INTEHEAD is needed to verify grid dimensions:
     for kwitem in kwxlist:
         if kwitem[0] == "INTEHEAD":
-            kwname, kwtype, kwlen, kwbyte, *_kwdate = kwitem
+            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
             break
 
     # read INTEHEAD record:
@@ -410,7 +410,7 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
     # LOGIHEAD item [15] in restart should be True, if dualperm (+ dualporo) model.
     for kwitem in kwxlist:
         if kwitem[0] == "LOGIHEAD":
-            kwname, kwtype, kwlen, kwbyte, *_kwdate = kwitem
+            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
             break
 
     # read INTEHEAD record:

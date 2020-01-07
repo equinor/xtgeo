@@ -47,7 +47,7 @@ def import_ecl_output(
         ntot = grid.ntotal
 
         for kw in kwxlist:
-            kwname, _tmp1, nlen, *_whatever = kw
+            kwname, _tmp1, nlen, _bs, _date = kw
             if nlen in (nact, ntot):
                 usenames.append(kwname)
     else:
