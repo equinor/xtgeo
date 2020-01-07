@@ -2,6 +2,16 @@
 
 ## Version 2
 
+### 2.4.0
+
+* New features:
+  * Added a general **kwargs to `savefig()` in plot module, so e.g. dpi keyword can be passed to matplotlib
+* Bug fixes:
+  * More robust on reading saturations from UNRST files from Eclipse 300 and IX, where "IPHS" metadata
+    (describing phases present) is unreliable.
+* Fixes for developers:
+  *  setup can now be ran in "develop mode"
+
 ### 2.3.1
 
 * Preliminary support for Python 3.8 (Linux only)
