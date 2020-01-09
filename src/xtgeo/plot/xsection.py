@@ -398,27 +398,19 @@ class XSection(BasePlot):
         """Get segment and color array for plotting matplotlib lineCollection"""
 
         df_idx = pd.DataFrame(
-            {
-                'idx_log': list(idx.keys()),
-                'idx_color': list(idx.values())
-            }
+            {"idx_log": list(idx.keys()), "idx_color": list(idx.values())}
         )
 
         df_ctable = df_idx.merge(
-            pd.DataFrame({'ctable': ctable}),
-            how='left',
-            left_on='idx_color',
-            right_index=True
+            pd.DataFrame({"ctable": ctable}),
+            how="left",
+            left_on="idx_color",
+            right_index=True,
         )
 
-        dff = df.merge(
-            df_ctable,
-            how='left',
-            left_on=logname,
-            right_on='idx_log'
-        )
+        dff = df.merge(df_ctable, how="left", left_on=logname, right_on="idx_log")
 
-        dff['point'] = list(zip(dff['R_HLEN'], dff['Z_TVDSS']))
+        dff["point"] = list(zip(dff["R_HLEN"], dff["Z_TVDSS"]))
 
         # find line segments
         segments = []
@@ -426,7 +418,7 @@ class XSection(BasePlot):
         colorlist = []
         previous_color = None
 
-        for point, color in zip(dff['point'], dff['ctable']):
+        for point, color in zip(dff["point"], dff["ctable"]):
             if np.any(np.isnan(color)):
                 color = fillnavalue
 
@@ -486,15 +478,12 @@ class XSection(BasePlot):
 
         fillnavalue = (0.9, 0.9, 0.9)
         segments, segments_colors = self._line_segments_colors(
-            df,
-            idx_zshift,
-            ctable,
-            zonelogname,
-            fillnavalue
+            df, idx_zshift, ctable, zonelogname, fillnavalue
         )
 
-        lc = mc.LineCollection(segments, colors=segments_colors,
-                               linewidth=logwidth, zorder=202)
+        lc = mc.LineCollection(
+            segments, colors=segments_colors, linewidth=logwidth, zorder=202
+        )
 
         ax.add_collection(lc)
 
@@ -513,8 +502,7 @@ class XSection(BasePlot):
 
             self._drawproxylegend(ax, bba, items=zcolors, title="Zonelog")
 
-    def _plot_well_faclog(self, df, ax, bba,
-                          facieslogname, logwidth=9, legend=True):
+    def _plot_well_faclog(self, df, ax, bba, facieslogname, logwidth=9, legend=True):
         """Plot the facies log as colored segments.
 
         Args:
@@ -534,10 +522,12 @@ class XSection(BasePlot):
 
         fillnavalue = (0, 0, 0, 0)  # transparent
         segments, segments_colors = self._line_segments_colors(
-            df, idx, ctable, facieslogname, fillnavalue)
+            df, idx, ctable, facieslogname, fillnavalue
+        )
 
-        lc = mc.LineCollection(segments, colors=segments_colors,
-                               linewidth=logwidth, zorder=201)
+        lc = mc.LineCollection(
+            segments, colors=segments_colors, linewidth=logwidth, zorder=201
+        )
 
         ax.add_collection(lc)
 
@@ -556,8 +546,7 @@ class XSection(BasePlot):
 
             self._drawproxylegend(ax, bba, items=fcolors, title="Facies")
 
-    def _plot_well_perflog(self, df, ax, bba,
-                           perflogname, logwidth=12, legend=True):
+    def _plot_well_perflog(self, df, ax, bba, perflogname, logwidth=12, legend=True):
         """Plot the perforation log as colored segments.
 
         Args:
@@ -692,7 +681,7 @@ class XSection(BasePlot):
             bbox_to_anchor=bba,
             prop={"size": self._legendsize},
             title=title,
-            handlelength=2
+            handlelength=2,
         )
 
     def _drawlegend(self, ax, bba, title=None):
