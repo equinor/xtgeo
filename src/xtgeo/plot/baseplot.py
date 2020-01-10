@@ -218,17 +218,18 @@ class BasePlot(object):
             last (bool): Default is true, meaning that memory will be cleared;
                 however if several plot types for the same instance, let last
                 be False fora all except the last plots.
-            **kwargs: Additional keyword arguments that are passed
+            kwargs: Additional keyword arguments that are passed
                 to matplotlib when saving the figure
 
         Returns:
             True of plotting is done; otherwise False
 
         Example::
+
             myplot.savefig('TMP/layerslice.svg', fformat='svg', last=False)
             myplot.savefig('TMP/layerslice.png')
 
-        .. versionchanged:: 2.4.0 added **kwargs option
+        .. versionchanged:: 2.4.0 added kwargs option
 
         """
         if self._tight:
