@@ -55,7 +55,6 @@ def polygons_from_roxar(
         # inside RMS:
         import xtgeo
         mypolys = xtgeo.polygons_from_roxar(project, 'TopEtive', 'DL_polys')
-
     """
 
     obj = Polygons()
@@ -448,7 +447,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """Export/save/store a polygons item to a Roxar RMS project.
 
         Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
+        otherwise an Exception will be raised. This is not the case for
+        stype="clipboard" where "folders" will be created on demand.
 
         Args:
             project (str or special): Name of project (as folder) if
@@ -463,6 +463,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Raises:
             ValueError: Various types of invalid inputs.
+
+        .. seealso::
+           The equivalent ``Points`` method :meth:`~xtgeo.xyz.points.Points.to_roxar()`
+           for examples.
 
         """
 

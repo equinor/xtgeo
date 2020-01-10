@@ -11,7 +11,7 @@
 ### 2.4.0
 
 * New features:
-  * Added a general **kwargs to `savefig()` in plot module, so e.g. dpi keyword can be passed to matplotlib
+  * Added a general kwargs to `savefig()` in plot module, so e.g. dpi keyword can be passed to matplotlib
 * Bug fixes:
   * More robust on reading saturations from UNRST files from Eclipse 300 and IX, where "IPHS" metadata
     (describing phases present) is unreliable.
@@ -24,7 +24,7 @@
 * Several bug fixes:
   * User warning when requested colour map is not found
   * Printing of a Points of Polygons instance shall now work
-  * UNDEF values in property (b)grdecl export shall now be 0.0, not a large number
+  * UNDEF values in property grdecl or bgrdecl export shall now be 0.0, not a large number
   * Name in GridProperty `to_file(name=...)` is fixed
   * If `fformat` in GridProperty import is mispelled, an exception will be raised
 

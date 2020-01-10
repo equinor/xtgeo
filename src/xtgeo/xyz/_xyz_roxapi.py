@@ -42,9 +42,12 @@ def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
     proj = rox.project
 
     if not _check_category_etc(proj, name, category, stype, realisation):
-        raise RuntimeError("Something is very wrong...")
+        raise RuntimeError(
+            "It appears that name and or category is not present: "
+            "name={}, category/folder={}, stype={}".format(name, category, stype)
+        )
 
-    roxxyz = _get_roxitem(proj, name, category, stype, mode="get")
+    roxxyz = _get_roxitem(self, proj, name, category, stype, mode="get")
 
     try:
         # make a temporary folder and work within the with.. block
@@ -60,13 +63,16 @@ def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
 
 
 def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
-
+    """From RMS to XTGeo"""
     self._name = name
 
     if not _check_category_etc(proj, name, category, stype, realisation):
-        raise RuntimeError("Something is very wrong...")
+        raise RuntimeError(
+            "It appears that name and or category is not present: "
+            "name={}, category/folder={}, stype={}".format(name, category, stype)
+        )
 
-    roxxyz = _get_roxitem(proj, name, category, stype, mode="get")
+    roxxyz = _get_roxitem(self, proj, name, category, stype, mode="get")
 
     try:
         roxitem = roxxyz.get_values(realisation)
@@ -110,7 +116,7 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
 def export_xyz_roxapi(
     self, project, name, category, stype, pfilter, realisation, attributes
 ):
-    """Export (store) a XYZ item to RMS via ROXAR API spec."""
+    """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
 
     rox = RoxUtils(project)
 
@@ -152,10 +158,10 @@ def _roxapi_export_xyz_viafile(
 
     proj = rox.project
 
-    if not _check_category_etc:
+    if not _check_category_etc(proj, name, category, stype, realisation, mode="set"):
         raise RuntimeError("Cannot access correct category or name in RMS")
 
-    roxxyz = _get_roxitem(proj, name, category, stype)
+    roxxyz = _get_roxitem(self, proj, name, category, stype, mode="set")
 
     # make a temporary folder and work within the with.. block
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -178,10 +184,10 @@ def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
     logger.warning("Realisation %s not in use", realisation)
 
     proj = rox.project
-    if not _check_category_etc:
+    if not _check_category_etc(proj, name, category, stype, realisation, mode="set"):
         raise RuntimeError("Cannot access correct category or name in RMS")
 
-    roxxyz = _get_roxitem(proj, name, category, stype)
+    roxxyz = _get_roxitem(self, proj, name, category, stype, mode="set")
 
     # pylint: disable=len-as-condition
     if self.dataframe is None or len(self.dataframe.index) == 0:
@@ -216,51 +222,61 @@ def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
 
 
 def _check_category_etc(
-    proj, name, category, stype, realisation
+    proj, name, category, stype, realisation, mode="get"
 ):  # pylint: disable=too-many-branches
+
     """Helper to check if valid placeholder' whithin RMS."""
 
     logger.warning("Realisation %s not in use", realisation)
 
-    if stype == "horizons":
-        if name not in proj.horizons:
-            raise ValueError("Name {} is not within Horizons".format(name))
-        if category not in proj.horizons.representations:
-            raise ValueError(
-                "Category {} is not within Horizons categories".format(category)
-            )
-    elif stype == "zones":
-        if name not in proj.zones:
-            raise ValueError("Name {} is not within Zones".format(name))
-        if category not in proj.zones.representations:
-            raise ValueError(
-                "Category {} is not within Zones categories".format(category)
-            )
-    elif stype == "faults":
-        if name not in proj.faults:
-            raise ValueError("Name {} is not within Faults".format(name))
-        if category not in proj.zones.representations:
-            raise ValueError(
-                "Category {} is not within Faults categories".format(category)
-            )
-    elif stype == "clipboard":
+    stypedict = {"horizons": proj.horizons, "zones": proj.zones, "faults": proj.faults}
+
+    if stype in stypedict.keys():
+        if name not in stypedict[stype]:
+            logger.error("Cannot access name in stype=%s: %s", stype, name)
+            return False
+        if category not in stypedict[stype].representations:
+            logger.error("Cannot access category in stype=%s: %s", stype, category)
+            return False
+
+    elif stype == "clipboard" and mode == "get":
+        folders = None
         if category:
-            if "|" in category:
+            if isinstance(category, list):
+                folders = category
+            elif isinstance(category, str) and "|" in category:
                 folders = category.split("|")
-            else:
+            elif isinstance(category, str) and "/" in category:
                 folders = category.split("/")
-            roxxyz = proj.clipboard.folders[folders]
+            elif isinstance(category, str):
+                folders = []
+                folders.append(category)
+            else:
+                raise RuntimeError(
+                    "Cannot parse category: {}, see documentation!".format(category)
+                )
+            try:
+                roxxyz = proj.clipboard.folders[folders]
+            except KeyError as keyerr:
+                logger.error(
+                    "Cannot access clipboards folder (not existing?): %s", keyerr
+                )
+                return False
         else:
             roxxyz = proj.clipboard
-        if name not in roxxyz:
+
+        if name not in roxxyz.keys():
             raise ValueError("Name {} is not within Clipboard...".format(name))
+
+    elif stype == "clipboard" and mode == "set":
+        logger.info("No need to check clipboard while setting data")
     else:
         raise ValueError("Invalid stype")
 
     return True
 
 
-def _get_roxitem(proj, name, category, stype, mode="set"):
+def _get_roxitem(self, proj, name, category, stype, mode="set"):
 
     if stype == "horizons":
         roxxyz = proj.horizons[name][category]
@@ -269,17 +285,36 @@ def _get_roxitem(proj, name, category, stype, mode="set"):
     elif stype == "faults":
         roxxyz = proj.faults[name][category]
     elif stype == "clipboard":
+        folders = None
+        roxxyz = proj.clipboard
         if category:
-            if "|" in category:
+            if isinstance(category, list):
+                folders = category
+            elif isinstance(category, str) and "|" in category:
                 folders = category.split("|")
-            else:
+            elif isinstance(category, str) and "/" in category:
                 folders = category.split("/")
-            roxxyz = proj.clipboard.folders[folders]
-        else:
-            roxxyz = proj.clipboard
+            elif isinstance(category, str):
+                folders = []
+                folders.append(category)
+            else:
+                raise RuntimeError(
+                    "Cannot parse category: {}, see documentation!".format(category)
+                )
+
+            if mode == "get":
+                roxxyz = proj.clipboard.folders[folders]
 
         if mode == "get":
             roxxyz = roxxyz[name]
+
+        elif mode == "set":
+
+            # clipboard folders will be created if not present, and overwritten else
+            if self._ispolygons:
+                roxxyz = proj.clipboard.create_polylines(name, folders)
+            else:
+                roxxyz = proj.clipboard.create_points(name, folders)
 
     else:
         roxxyz = None
