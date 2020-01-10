@@ -119,7 +119,7 @@ class XYZ(object):
         logger.info("Reading from file %s...", pfile)
 
         if not os.path.isfile(pfile):
-            msg = "Does file exist? {}".format(pfile)
+            msg = "Does file exist? [{}]".format(pfile)
             logger.critical(msg)
             raise IOError(msg)
 
