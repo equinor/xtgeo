@@ -227,7 +227,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         self._df = pd.DataFrame(np.random.rand(nrandom, 3),
                                 columns=[self._xname, self._yname, self._zname])
 
-
     def copy(self, stype="points"):
         """Deep copy of a Points instance.
 
@@ -252,6 +251,8 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Supported import formats (fformat):
 
         * 'xyz' or 'poi' or 'pol': Simple XYZ format
+
+        * 'rms_attr' or 'rmsattr': RMS points formats with attributes (extra columns)
 
         * 'guess': Try to choose file format based on extension
 
@@ -391,24 +392,36 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Note also that horizon/zone name and category must exists in advance,
         otherwise an Exception will be raised.
 
+        For stype=clipboard, category will be created automatically if not existing.
+
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
             name (str): Name of horizons/zone item or well picks set
-            category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS category type, 'horizons', 'zones',
-                and in prep: 'horizon_picks'
+            category (str): For horizons/zones only: for example 'DL_depth', for
+                clipboard, see examples.
+            stype (str): RMS "super type": 'horizons', 'zones', 'clipboard'
             pfilter (dict): Filter on e.g. top name(s) with
                 keys TopName or ZoneName as e.g. {'TopName': ['Top1', 'Top2']}
-
-            realisation (int): Realisation number, default is 0
+            realisation (int): Realisation number, default is 0 (partly implemented)
             attributes (bool or list): If attributes should be included (requires
                 a workaround in the library code)
 
         Examples::
 
-            # store as Well Picks:
-            wpoints.to_roxar(project, "MYPICKS", stype="horizon_picks")
+            # store in Horizons:
+            wpoints.to_roxar(project, "MyTop", "MyCategory", stype="horizons")
+
+        For Clipboard, the category can have a nested structure. The following forms are
+        all legal::
+
+            p.to_roxar(project, "thename", None, stype="clipboard")  # no subfolder
+            p.to_roxar(project, "thename", "", stype="clipboard")  # no subfolder
+            p.to_roxar(project, "thename", "dir1", stype="clipboard")  # one level
+            # two levels examples, all forms possible:
+            p.to_roxar(project, "thename", "dir1/dir2", stype="clipboard")
+            p.to_roxar(project, "thename", "dir1|dir2", stype="clipboard")
+            p.to_roxar(project, "thename", ["dir1", "dir2"], stype="clipboard")
 
 
         Raises:
