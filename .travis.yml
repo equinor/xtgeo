@@ -25,7 +25,7 @@ env:
     - TRAVISRUN=true
     - REPO_DIR=.
     - UNICODE_WIDTH=32
-    - MB_ML_VER=2010
+    - MB_ML_VER=1
     - PLAT=x86_64
     - MB_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION
     - VERSION=$(echo $TRAVIS_TAG)

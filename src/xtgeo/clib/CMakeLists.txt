@@ -1,4 +1,4 @@
-message(STATUS "XTGeo ddd library...")
+message(STATUS "XTGeo library...")
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/xtg)
 
@@ -29,8 +29,17 @@ LIST(APPEND CMAKE_PROGRAM_PATH "${PROJECT_SOURCE_DIR}/scripts/_tmp_swig/bin")
 
 
 # These policies are related to SWIG python libraries naming
-cmake_policy(SET CMP0078 NEW)
-cmake_policy(SET CMP0086 NEW)
+if (POLICY CMP0078)  # cmake 3.13+
+  # UseSWIG generates standard target names
+  cmake_policy(SET CMP0078 NEW)
+endif()
+
+if (POLICY CMP0086)  # cmake 3.14+
+  # The NEW behavior is to pass -module option to SWIG compiler
+  # if SWIG_MODULE_NAME is specified (not sure if this is needed).
+  cmake_policy(SET CMP0086 NEW)
+endif()
+
 find_package(SWIG 3.0.1 REQUIRED)
 include(${SWIG_USE_FILE})
 

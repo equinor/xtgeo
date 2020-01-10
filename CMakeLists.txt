@@ -1,6 +1,6 @@
 # main CMakeLists.txt file
 
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(clib LANGUAGES C)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
