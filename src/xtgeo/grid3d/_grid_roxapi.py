@@ -206,9 +206,10 @@ def export_grid_roxapi(self, projectname, gname, realisation, info=False, method
     rox = RoxUtils(projectname, readonly=False)
 
     if method != "cpg" and not rox.version_required("1.2"):
+        minimumrms = rox.rmsversion("1.2")
         raise NotImplementedError(
-            "Grid load/import not possible in this API "
-            "version: {}. Version 1.2 is required".format(rox.roxversion)
+            "Not supported in this ROXAPI version. Grid load/import requires "
+            "RMS version {}".format(minimumrms)
         )
 
     if method == "cpg" and not rox.version_required("1.3"):

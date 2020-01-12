@@ -24,6 +24,14 @@ def import_xyz_roxapi(self, project, name, category, stype, realisation, attribu
 
     rox = RoxUtils(project)
 
+    if stype == "clipboard" and not rox.version_required("1.2"):
+        minimumrms = rox.rmsversion("1.2")
+        msg = (
+            "Not supported in this ROXAPI version. Points/polygons access "
+            "to clipboard requires RMS {}".format(minimumrms)
+        )
+        raise NotImplementedError(msg)
+
     if attributes:
         _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation)
     else:
@@ -119,6 +127,14 @@ def export_xyz_roxapi(
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
 
     rox = RoxUtils(project)
+
+    if stype == "clipboard" and not rox.version_required("1.2"):
+        minimumrms = rox.rmsversion("1.2")
+        msg = (
+            "Not supported in this ROXAPI version. Points/polygons access "
+            "to clipboard requires RMS {}".format(minimumrms)
+        )
+        raise NotImplementedError(msg)
 
     if stype == "horizon_picks":
         _roxapi_export_xyz_hpicks(
