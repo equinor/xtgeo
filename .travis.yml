@@ -51,11 +51,13 @@ matrix:
       env:
         - MB_PYTHON_VERSION=3.7
         - SOURCEDEPLOY=1
+        - MB_ML_VER=2010
     - os: linux
       dist: xenial
       sudo: true
       env:
         - MB_PYTHON_VERSION=3.8
+        - MB_ML_VER=2010
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.6

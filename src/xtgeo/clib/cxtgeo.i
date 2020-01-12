@@ -1,4 +1,4 @@
-%module _cxtgeo
+%module cxtgeo
 %{
 #define SWIG_FILE_WITH_INIT
 #include <libxtg.h>

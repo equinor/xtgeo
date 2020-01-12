@@ -15,4 +15,4 @@ add_subdirectory(src/xtgeo/clib)
 python_extension_module(_cxtgeo)
 message(STATUS "<0> Installing...")
 
-install(TARGETS cxtgeo LIBRARY DESTINATION src/xtgeo/cxtgeo)
+install(TARGETS _cxtgeo LIBRARY DESTINATION src/xtgeo/cxtgeo)

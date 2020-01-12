@@ -94,15 +94,15 @@ message(STATUS "XTGeo Numpy include path: ${PYTHON_NUMPY_INCLUDE_DIR}")
 # Swigging and linking
 # ======================================================================================
 
-swig_add_library(cxtgeo LANGUAGE python SOURCES cxtgeo.i)
+swig_add_library(_cxtgeo LANGUAGE python SOURCES cxtgeo.i)
 message(STATUS "Swigging")
 
-target_include_directories(cxtgeo PUBLIC
+target_include_directories(_cxtgeo PUBLIC
   ${PYTHON_INCLUDE_DIRS}
   ${PYTHON_NUMPY_INCLUDE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   )
 
-target_compile_options(cxtgeo PUBLIC ${CXTGEOFLAGS})
+target_compile_options(_cxtgeo PUBLIC ${CXTGEOFLAGS})
 
-swig_link_libraries(cxtgeo xtg)
+swig_link_libraries(_cxtgeo xtg)

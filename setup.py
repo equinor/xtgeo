@@ -57,17 +57,17 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "sdist",
         "wheel",
         ".pytest_cache",
-        "xtgeo.egg-info",
         "docs/apiref",
         "docs/_build",
         "docs/_static",
         "docs/_templates",
     )
 
-    CLEANFOLDERSRECURSIVE = ["__pycache__", "_tmp_*"]
+    CLEANFOLDERSRECURSIVE = ["__pycache__", "_tmp_*", "xtgeo.egg-info"]
     CLEANFILESRECURSIVE = ["*.pyc", "*.pyo"]
 
     CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
+    CLEANFILES.extend(glob("src/xtgeo/cxtgeo/_cxtgeo*"))
 
     @staticmethod
     def ffind(pattern, path):
@@ -123,7 +123,8 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 class BuildDocCustom(_BuildDoc):
     """Trick issue with cxtgeo prior to docs are built """
 
-    # shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
+    if (CMD == "build_sphinx"):
+        shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/_cxtgeo.py")
 
     def run(self):
         super(BuildDocCustom, self).run()
