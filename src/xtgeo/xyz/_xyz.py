@@ -307,6 +307,7 @@ class XYZ(object):
 
         Raises:
             ValueError: Various types of invalid inputs.
+            NotImplementedError: Not supported in this ROXAPI version
 
         """
 
