@@ -11,7 +11,7 @@ from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma  # pylint: disable=useless-import-alias
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 import xtgeo
 from xtgeo.common import XTGDescription

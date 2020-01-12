@@ -6,7 +6,7 @@ from __future__ import print_function, absolute_import
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 

@@ -7,7 +7,7 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel as gl
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 

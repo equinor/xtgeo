@@ -6,7 +6,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from . import _grid3d_utils as utils
 from . import _gridprop_lowlevel

@@ -9,7 +9,7 @@ import os
 from tempfile import mkstemp
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from xtgeo.grid3d._grid_eclbin_record import eclbin_record
 

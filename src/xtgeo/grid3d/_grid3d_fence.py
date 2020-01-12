@@ -9,7 +9,7 @@ import numpy as np
 import xtgeo
 from xtgeo.grid3d import _gridprop_lowlevel as gl
 from xtgeo.surface import _regsurf_lowlevel as rl
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)

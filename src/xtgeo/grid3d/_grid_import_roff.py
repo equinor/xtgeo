@@ -5,7 +5,7 @@ from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo
 
 from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec

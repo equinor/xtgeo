@@ -7,7 +7,7 @@ from __future__ import print_function
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)

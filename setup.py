@@ -123,7 +123,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 class BuildDocCustom(_BuildDoc):
     """Trick issue with cxtgeo prior to docs are built """
 
-    shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
+    # shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/cxtgeo.py")
 
     def run(self):
         super(BuildDocCustom, self).run()
