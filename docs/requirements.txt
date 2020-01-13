@@ -1,6 +1,6 @@
 pip>=19.1.1
 setuptools>=30.3.0
-cmake==3.15.3
+cmake==3.13.3
 scikit-build
 ninja
 setuptools_scm

@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()

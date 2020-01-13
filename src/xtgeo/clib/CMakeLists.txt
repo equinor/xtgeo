@@ -1,4 +1,4 @@
-message(STATUS "XTGeo ddd library...")
+message(STATUS "XTGeo library...")
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/xtg)
 
@@ -29,8 +29,14 @@ LIST(APPEND CMAKE_PROGRAM_PATH "${PROJECT_SOURCE_DIR}/scripts/_tmp_swig/bin")
 
 
 # These policies are related to SWIG python libraries naming
-cmake_policy(SET CMP0078 NEW)
-cmake_policy(SET CMP0086 NEW)
+if (POLICY CMP0078)
+  cmake_policy(SET CMP0078 NEW)
+endif()
+
+if (POLICY CMP0086)
+  cmake_policy(SET CMP0086 NEW)
+endif()
+
 find_package(SWIG 3.0.1 REQUIRED)
 include(${SWIG_USE_FILE})
 
@@ -88,15 +94,15 @@ message(STATUS "XTGeo Numpy include path: ${PYTHON_NUMPY_INCLUDE_DIR}")
 # Swigging and linking
 # ======================================================================================
 
-swig_add_library(cxtgeo LANGUAGE python SOURCES cxtgeo.i)
+swig_add_library(_cxtgeo LANGUAGE python SOURCES cxtgeo.i)
 message(STATUS "Swigging")
 
-target_include_directories(cxtgeo PUBLIC
+target_include_directories(_cxtgeo PUBLIC
   ${PYTHON_INCLUDE_DIRS}
   ${PYTHON_NUMPY_INCLUDE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   )
 
-target_compile_options(cxtgeo PUBLIC ${CXTGEOFLAGS})
+target_compile_options(_cxtgeo PUBLIC ${CXTGEOFLAGS})
 
-swig_link_libraries(cxtgeo xtg)
+swig_link_libraries(_cxtgeo xtg)

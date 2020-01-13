@@ -1,6 +1,6 @@
 # main CMakeLists.txt file
 
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(clib LANGUAGES C)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -12,9 +12,7 @@ endif()
 find_package(PythonExtensions REQUIRED)
 
 add_subdirectory(src/xtgeo/clib)
-python_extension_module(cxtgeo)
+python_extension_module(_cxtgeo)
 message(STATUS "<0> Installing...")
 
-install(TARGETS cxtgeo LIBRARY DESTINATION src/xtgeo/cxtgeo)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/xtgeo/clib/cxtgeo.py"
-  DESTINATION src/xtgeo/cxtgeo)
+install(TARGETS _cxtgeo LIBRARY DESTINATION src/xtgeo/cxtgeo)

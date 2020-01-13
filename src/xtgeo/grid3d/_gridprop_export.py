@@ -2,7 +2,7 @@
 
 from __future__ import print_function, absolute_import
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 import xtgeo.common.sys as xtgeosys
 from xtgeo.grid3d import _gridprop_lowlevel

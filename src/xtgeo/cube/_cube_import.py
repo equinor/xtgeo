@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 import segyio
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.calc as xcalc
 from xtgeo.common import XTGeoDialog
 

@@ -6,7 +6,7 @@ from __future__ import print_function
 import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel
 

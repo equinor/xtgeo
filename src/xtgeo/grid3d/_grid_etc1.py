@@ -11,7 +11,7 @@ from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons

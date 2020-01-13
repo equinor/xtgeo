@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module for basic XTGeo constants"""
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 UNDEF = -999
 UNDEF_LIMIT = -999

@@ -7,7 +7,7 @@ import numpy.ma as ma
 
 import xtgeo
 from xtgeo.xyz import Polygons
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()

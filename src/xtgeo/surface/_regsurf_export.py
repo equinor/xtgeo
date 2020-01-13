@@ -6,7 +6,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo  # pylint: disable=import-error
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()

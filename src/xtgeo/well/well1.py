@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.constants as const
 import xtgeo.common.sys as xtgeosys
 

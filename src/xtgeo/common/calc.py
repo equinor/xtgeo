@@ -1,7 +1,7 @@
 """Some common XTGEO calculation routines."""
 
 import numpy as np
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from xtgeo.common import XTGeoDialog
 

@@ -10,7 +10,7 @@ import io
 from platform import system as plfsys
 from tempfile import mkstemp
 
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()

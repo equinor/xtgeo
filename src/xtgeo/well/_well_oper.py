@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo.cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import constants as const
 
