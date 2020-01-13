@@ -2,6 +2,10 @@
 
 ## Version 2
 
+### 2.4.3
+* Fix of bugs when exporting points/polygons to Roxar API
+* Fix (for developers) various setup in cmake/swig etc so that cmake can be downgraded to 3.13.3 and hence a ``manylinux1`` image is available in PYPI for Linux (Python versions < 3.7)
+
 ### 2.4.2
 * Fix a bug that occurs when reading Eclipse properties from E300 runs
 
