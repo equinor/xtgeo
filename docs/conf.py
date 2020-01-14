@@ -4,11 +4,6 @@
 import sys
 import os
 
-cwd = os.getcwd()
-project_root = os.path.dirname(cwd) + "/src"
-
-sys.path.insert(0, project_root)
-
 import xtgeo
 
 print("VERSION is {}".format(xtgeo.__version__))
