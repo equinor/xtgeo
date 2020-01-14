@@ -6,7 +6,6 @@
 
 import os
 import sys
-import shutil
 import re
 from os.path import exists, dirname
 from glob import glob
@@ -27,7 +26,6 @@ from skbuild.command import set_build_base_mixin
 from skbuild.utils import new_style
 from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
 
-from sphinx.setup_command import BuildDoc as _BuildDoc
 from setuptools_scm import get_version
 
 CMD = sys.argv[1]
@@ -118,19 +116,6 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
 # ======================================================================================
 # Sphinx
 # ======================================================================================
-
-
-class BuildDocCustom(_BuildDoc):
-    """Trick issue with cxtgeo prior to docs are built """
-
-    if (CMD == "build_sphinx"):
-        shutil.copyfile("src/xtgeo/clib/cxtgeo_fake.py", "src/xtgeo/cxtgeo/_cxtgeo.py")
-
-    def run(self):
-        super(BuildDocCustom, self).run()
-
-
-cmdclass = {"build_sphinx": BuildDocCustom}
 
 CMDSPHINX = {
     "build_sphinx": {
