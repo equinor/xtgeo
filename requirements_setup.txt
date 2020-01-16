@@ -4,7 +4,7 @@ numpy==1.16.4; python_version >= "3.7" or python_version == "2.7" or platform_sy
 cmake==3.13.3; python_version < "3.7" and platform_system == "Linux"
 cmake==3.15.3; python_version >= "3.7" and platform_system == "Linux"
 cmake==3.15.3; platform_system != "Linux"
-setuptools_scm==3.2.0
+setuptools_scm>=3.2.0
 scikit-build==0.10.0
 ninja==1.9.0.post1
 pytest>=2.9.2
