@@ -25,8 +25,8 @@ target_compile_options(xtg PRIVATE ${XTGFLAGS})
 # Find Python and SWIG
 # ======================================================================================
 
+# in case SWIG is built from setup.py
 LIST(APPEND CMAKE_PROGRAM_PATH "${PROJECT_SOURCE_DIR}/scripts/_tmp_swig/bin")
-
 
 # These policies are related to SWIG python libraries naming
 if (CMAKE_VERSION VERSION_GREATER 3.12)
@@ -58,6 +58,10 @@ message(STATUS "XTGeo Python executable ok: ${PYTHON_EXECUTABLE}")
 # via https://github.com/DeepLearnPhysics/larcv3/blob/src/CMakeLists.txt
 # ======================================================================================
 
+if (POLICY CMP0053)
+  cmake_policy(SET CMP0053 OLD)
+endif()
+
 if(NOT PYTHON_EXECUTABLE)
   if(NumPy_FIND_QUIETLY)
     find_package(PythonInterp QUIET)
@@ -70,15 +74,13 @@ endif()
 if (PYTHON_EXECUTABLE)
   # Find out the include path
   execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" -c
-            "from __future__ import print_function\ntry: import numpy; \
-             print(numpy.get_include(), end='')\nexcept:pass\n"
-            OUTPUT_VARIABLE __numpy_path)
+    COMMAND @PYTHON_EXECUTABLE@ -c
+    "from __future__ import print_function\ntry: import numpy; print(numpy.get_include(), end='')\nexcept:pass\n"
+    OUTPUT_VARIABLE __numpy_path)
   # And the version
   execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" -c
-            "from __future__ import print_function\ntry: import numpy; \
-             print(numpy.__version__, end='')\nexcept:pass\n"
+    COMMAND @PYTHON_EXECUTABLE@ -c
+            "from __future__ import print_function\ntry: import numpy; print(numpy.__version__, end='')\nexcept:pass\n"
             OUTPUT_VARIABLE __numpy_version)
     message(STATUS "Detected NumPy: ${__numpy_path}; version ${__numpy_version}")
 elseif(__numpy_out)
@@ -95,7 +97,7 @@ endif(PYTHON_NUMPY_INCLUDE_DIR)
 message(STATUS "XTGeo Numpy include path: ${PYTHON_NUMPY_INCLUDE_DIR}")
 
 # ======================================================================================
-# Swigging and linking
+# Swigging and linking, with backward compatibility to older cmake versions
 # ======================================================================================
 message(STATUS "Swigging")
 
@@ -107,19 +109,19 @@ else()
   swig_add_module(${LIBRARYNAME} python cxtgeo.i)
 endif()
 
+set(SWIGTARGET ${SWIG_MODULE_${LIBRARYNAME}_REAL_NAME})
 
-target_include_directories(${SWIG_MODULE_${LIBRARYNAME}_REAL_NAME} PUBLIC
+target_include_directories(${SWIGTARGET} PUBLIC
   ${PYTHON_INCLUDE_DIRS}
   ${PYTHON_NUMPY_INCLUDE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   )
-
-target_compile_options(${SWIG_MODULE_${LIBRARYNAME}_REAL_NAME} PUBLIC ${CXTGEOFLAGS})
+target_compile_options(${SWIGTARGET} PUBLIC ${CXTGEOFLAGS})
 
 swig_link_libraries(${LIBRARYNAME} xtg)
 
-python_extension_module(${SWIG_MODULE_${LIBRARYNAME}_REAL_NAME})
+python_extension_module(${SWIGTARGET})
 
-set(CXTGEO "src/xtgeo/cxtgeo")
+set(CXTGEO src/xtgeo/cxtgeo)
 
-install(TARGETS ${SWIG_MODULE_${LIBRARYNAME}_REAL_NAME} LIBRARY DESTINATION ${CXTGEO})
+install(TARGETS ${SWIGTARGET} LIBRARY DESTINATION ${CXTGEO})
