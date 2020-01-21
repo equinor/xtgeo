@@ -163,10 +163,12 @@ def swigok():
     sout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")  # nosec
     swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
     if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
-        print("OK, found swig in system, version is >= ", SWIGMINIMUM)
+        print("OK, found swig in system, version is >= {} ({})"
+              .format(SWIGMINIMUM, swigexe))
         return True
 
-    print("Found swig in system but version is < ", SWIGMINIMUM)
+    print("Found swig in system but version is < {} ({})"
+          .format(SWIGMINIMUM, swigexe))
     return False
 
 
