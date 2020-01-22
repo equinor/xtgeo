@@ -28,6 +28,12 @@ target_compile_options(xtg PRIVATE ${XTGFLAGS})
 # in case SWIG is built from setup.py
 LIST(APPEND CMAKE_PROGRAM_PATH "${PROJECT_SOURCE_DIR}/scripts/_tmp_swig/bin")
 
+if (DEFINED ENV{BUILD_KOMODO_XTGEO})
+  set(SWIG_EXECUTABLE "/project/res/x86_64_RH_6/bin/swig")
+  message(STATUS "Using Swig from /project/res")
+endif()
+
+
 # These policies are related to SWIG python libraries naming
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   if (POLICY CMP0078)
