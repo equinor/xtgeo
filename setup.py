@@ -173,7 +173,9 @@ def swigok():
 
 
 if not swigok():
-    if "Linux" in platform.system():
+    if "SWIG_BY_KOMODO" in os.environ:
+        print("Spesial handling of swig in komodo (Equinor) setup...")
+    elif "Linux" in platform.system():
         print("Installing swig from source (tmp) ...")
         subprocess.check_call(  # nosec
             ["bash", "swig_install.sh"], cwd="scripts",
