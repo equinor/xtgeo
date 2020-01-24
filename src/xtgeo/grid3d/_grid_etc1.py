@@ -902,8 +902,7 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         ty,
         tz,
         self._p_coord_v,
-        self._p_zcorn_v,
-        XTGDEBUG,
+        self._p_zcorn_v
     )
     if ier != 0:
         raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
