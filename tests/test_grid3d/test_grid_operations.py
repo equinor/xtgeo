@@ -11,6 +11,7 @@ import pytest
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
+import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -31,6 +32,8 @@ EMERFILE = '../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff'
 
 EMEGFILE2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero_grid.roff'
 EMEZFILE2 = '../xtgeo-testdata/3dgrids/eme/2/emerald_hetero.roff'
+
+DUAL = '../xtgeo-testdata/3dgrids/etc/dual_distorted2.grdecl'
 
 
 def test_hybridgrid1():
@@ -177,8 +180,55 @@ def test_refine_vertically_per_zone():
     #     grd.refine_vertically({1: 200}, zoneprop=zone)
 
 
-def test_copy_grid():
+def test_swap_row_axis_box():
     """Crop a grid."""
+
+    grd = Grid()
+    grd.create_box(origin=(1000, 4000, 300), increment=(100, 100, 2),
+                   dimension=(2, 3, 1), rotation=0)
+
+    assert grd.ijk_handedness() == "left"
+    grd.to_file(join(TDP, "swap_left.grdecl"), fformat="grdecl")
+    grd.swap_row_axis()
+    # assert grd.ijk_handedness() == "right"
+    grd.to_file(join(TDP, "swap_right.grdecl"), fformat="grdecl")
+
+
+def test_swap_row_axis_dual():
+    """Swap axis for distorted but small grid"""
+
+    grd = Grid(DUAL)
+
+    assert grd.ijk_handedness() == "left"
+    grd.to_file(join(TDP, "dual_left.grdecl"), fformat="grdecl")
+    cellcorners1 = grd.get_xyz_cell_corners((5, 1, 1))
+    grd.swap_row_axis()
+    assert grd.ijk_handedness() == "right"
+    grd.to_file(join(TDP, "dual_right.grdecl"), fformat="grdecl")
+    cellcorners2 = grd.get_xyz_cell_corners((5, 3, 1))
+
+    assert cellcorners1[7] == cellcorners2[1]
+
+
+def test_swap_row_axis_eme():
+    """Swap axis for emerald grid"""
+
+    grd1 = Grid(EMEGFILE)
+
+    assert grd1.ijk_handedness() == "left"
+    grd1.to_file(join(TDP, "eme_left.roff"), fformat="roff")
+    grd2 = grd1.copy()
+    geom1 = grd1.get_geometrics(return_dict=True)
+    grd2.swap_row_axis()
+    assert grd2.ijk_handedness() == "right"
+    grd2.to_file(join(TDP, "eme_right.roff"), fformat="roff")
+    geom2 = grd2.get_geometrics(return_dict=True)
+
+    tsetup.assert_almostequal(geom1["avg_rotation"], geom2["avg_rotation"], 0.01)
+
+
+def test_copy_grid():
+    """Copy a grid."""
 
     grd = Grid(EMEGFILE2)
     grd2 = grd.copy()

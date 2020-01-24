@@ -911,6 +911,27 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
     logger.info("Translation of coords done")
 
 
+def swap_row_axis(self, ijk_handedness=None):
+    """Translate grid coordinates"""
+
+    if ijk_handedness == self.ijk_handedness:
+        return
+
+    ier = _cxtgeo.grd3d_jswapping(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v
+    )
+
+    if ier != 0:
+        raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
+
+    logger.info("Swapping of rows done")
+
+
 def report_zone_mismatch(  # pylint: disable=too-many-statements
     self,
     well=None,

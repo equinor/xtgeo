@@ -171,6 +171,7 @@ class Grid(Grid3D):
 
         self._props = None  # None or a GridProperties instance
         self._subgrids = None  # A python dict if subgrids are given
+        self._ijk_handedness = None
 
         # Simulators like Eclipse may have a dual poro/perm model
         self._dualporo = False
@@ -255,6 +256,33 @@ class Grid(Grid3D):
     def dimensions(self):
         """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
         return (self._ncol, self._nrow, self._nlay)
+
+    @property
+    def ijk_handedness(self):
+        """IJK handedness for grids, "right" or "left"
+
+        For a non-rotated grid, 'left' is corner in lower-left, while 'right'
+        is origin in upper-left corner.
+
+        """
+        if self._ijk_handedness is None:
+            nflip = _grid_etc1.estimate_flip(self)
+            if nflip == 1:
+                self._ijk_handedness = "left"
+            elif nflip == -1:
+                self._ijk_handedness = "right"
+            else:
+                self._ijk_handedness = None  # cannot determine
+
+        return self._ijk_handedness
+
+    @ijk_handedness.setter
+    def ijk_handedness(self, value):
+        if value in ("right", "left"):
+            self.swap_row_axis(ijk_handedness=value)
+        else:
+            raise ValueError("The value must be 'right' or 'left'")
+        self._ijk_handedness = value
 
     @property
     def subgrids(self):
@@ -823,7 +851,9 @@ class Grid(Grid3D):
         return res
 
     def estimate_flip(self):
-        """Determine flip (handedness) of grid"""
+        """Determine flip (handedness) of grid returns; 1 for left-handed,
+        -1 for right-handed
+        """
 
         return _grid_etc1.estimate_flip(self)
 
@@ -1377,6 +1407,19 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.translate_coordinates(self, translate=translate, flip=flip)
+
+    def swap_row_axis(self, ijk_handedness=None):
+        """Swap row (J indices)
+
+        Args:
+            ijk_handedness (str): If set to "right" or "left", do only swap if
+                handedness is not already achieved.
+
+        .. versionadded:: 2.4.0
+
+        """
+
+        _grid_etc1.swap_row_axis(self, ijk_handedness=ijk_handedness)
 
     def make_zconsistent(self, zsep=1e-5):
         """Make the 3D grid consistent in Z, by a minimal gap (zsep).
