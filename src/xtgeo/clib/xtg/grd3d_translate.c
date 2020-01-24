@@ -1,5 +1,5 @@
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_translate.c
@@ -29,10 +29,10 @@
  *    cf. XTGeo LICENSE
  *
  * CODING STANDARD:
- *    Pure C, 79 columns, Stroustrup do/if braces
- *******************************************************************************
+ *    Pure C, 88 columns, Stroustrup do/if braces
+ ***************************************************************************************
  */
-
+#include "logger.h"
 #include "libxtg.h"
 
 int grd3d_translate (
@@ -46,18 +46,15 @@ int grd3d_translate (
 		     double yshift,
 		     double zshift,
 		     double *p_coord_v,
-		     double *p_zcorn_v,
-		     int   debug
+		     double *p_zcorn_v
 		     )
 
 {
     /* locals */
     int    i, j, ic, ib, nzcorn, iok=0;
-    char sub[24]="grd3d_translate";
 
-    xtgverbose(debug);
-
-    xtg_speak(sub,2,"Entering routine ...%s", sub);
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Do translation or pure flipping");
 
     if ((xflip == 1 || xflip == -1) &&
 	(yflip == 1 || yflip == -1) &&
@@ -67,7 +64,7 @@ int grd3d_translate (
 
     if (iok == 0) {
 	/* flip out of range */
-	xtg_warn(sub,1,"Error in flips ...%d %d %d", xflip, yflip, zflip);
+	logger_warn(__LINE__,"Error in flips ...%d %d %d", xflip, yflip, zflip);
 	return (-1);
     }
 
@@ -91,6 +88,6 @@ int grd3d_translate (
 	p_zcorn_v[ic]=zflip*(p_zcorn_v[ic] + zshift);
     }
 
-    xtg_speak(sub,2,"Exit from routine %s", sub);
+    logger_info(__LINE__,"Exit from routine");
     return(0);
 }
