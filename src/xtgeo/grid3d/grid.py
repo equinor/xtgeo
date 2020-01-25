@@ -171,6 +171,7 @@ class Grid(Grid3D):
 
         self._props = None  # None or a GridProperties instance
         self._subgrids = None  # A python dict if subgrids are given
+        self._ijk_handedness = None
 
         # Simulators like Eclipse may have a dual poro/perm model
         self._dualporo = False
@@ -255,6 +256,32 @@ class Grid(Grid3D):
     def dimensions(self):
         """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
         return (self._ncol, self._nrow, self._nlay)
+
+    @property
+    def ijk_handedness(self):
+        """IJK handedness for grids, "right" or "left"
+
+        For a non-rotated grid with K increasing with depth, 'left' is corner in
+        lower-left, while 'right' is origin in upper-left corner.
+
+        """
+        nflip = _grid_etc1.estimate_flip(self)
+        if nflip == 1:
+            self._ijk_handedness = "left"
+        elif nflip == -1:
+            self._ijk_handedness = "right"
+        else:
+            self._ijk_handedness = None  # cannot determine
+
+        return self._ijk_handedness
+
+    @ijk_handedness.setter
+    def ijk_handedness(self, value):
+        if value in ("right", "left"):
+            self.reverse_row_axis(ijk_handedness=value)
+        else:
+            raise ValueError("The value must be 'right' or 'left'")
+        self._ijk_handedness = value
 
     @property
     def subgrids(self):
@@ -461,7 +488,7 @@ class Grid(Grid3D):
             increment (tuple of float): Grid increments (xinc, yinc, zinc)
             rotation (float): Roations in degrees, anticlock from X axis.
             flip (int): If 1, grid origin is lower left and left-handed; if 1, origin
-            is upper left and right-handed.
+            is upper left and right-handed (row flip).
 
         Returns:
             Instance is updated (previous instance content will be erased)
@@ -823,7 +850,11 @@ class Grid(Grid3D):
         return res
 
     def estimate_flip(self):
-        """Determine flip (handedness) of grid"""
+        """Determine flip (handedness) of grid returns; 1 for left-handed,
+        -1 for right-handed.
+
+        .. seealso:: :py:attr:`~ijk_handedness`
+        """
 
         return _grid_etc1.estimate_flip(self)
 
@@ -980,12 +1011,13 @@ class Grid(Grid3D):
 
         Args:
             name (str): name of property
-            flip (bool): Use False for Petrel grids (experimental)
+            flip (bool): Use False for Petrel grids were Z is negative down
+                (experimental)
             asmasked (bool): True if only for active cells, False for all cells
             mask (bool): Deprecated, use asmasked instead!
 
         Returns:
-            A XTGeo GridProperty object
+            A XTGeo GridProperty object for flip
         """
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
@@ -1368,8 +1400,11 @@ class Grid(Grid3D):
     def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         """Translate (move) and/or flip grid coordinates in 3D.
 
+        By 'flip' here, it means that the full coordinate array are multiplied
+        with -1.
+
         Args:
-            translate (tuple): Tranlattion distance in X, Y, Z coordinates
+            translate (tuple): Translation distance in X, Y, Z coordinates
             flip (tuple): Flip array. The flip values must be 1 or -1.
 
         Raises:
@@ -1377,6 +1412,37 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.translate_coordinates(self, translate=translate, flip=flip)
+
+    def reverse_row_axis(self, ijk_handedness=None):
+        """Reverse the row axis (J indices).
+
+        This means that IJK system will switched between a left vs right handed system.
+        It is here (by using ijk_handedness key), possible to set a wanted stated.
+
+        Note that properties that are assosiated with the grid (through the
+        :py:attr:`~gridprops` or :py:attr:`~props` attribute) will also be
+        reversed (which is desirable).
+
+        Args:
+            ijk_handedness (str): If set to "right" or "left", do only reverse rows if
+                handedness is not already achieved.
+
+        Example::
+
+            grd = xtgeo.Grid("somefile.roff")
+            prop1 = xtgeo.GridProperty("somepropfile1.roff")
+            prop2 = xtgeo.GridProperty("somepropfile2.roff")
+
+            grd.props = [prop1, prop2]
+
+            # secure that the grid geometry is IJK right-handed
+            grd.reverse_row_axis(ijk_handedness="right")
+
+        .. versionadded:: 2.4.0
+
+        """
+
+        _grid_etc1.reverse_row_axis(self, ijk_handedness=ijk_handedness)
 
     def make_zconsistent(self, zsep=1e-5):
         """Make the 3D grid consistent in Z, by a minimal gap (zsep).

@@ -903,12 +903,39 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         tz,
         self._p_coord_v,
         self._p_zcorn_v,
-        XTGDEBUG,
     )
     if ier != 0:
         raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
 
     logger.info("Translation of coords done")
+
+
+def reverse_row_axis(self, ijk_handedness=None):
+    """Reverse rows (aka flip) for geometry and assosiated properties"""
+
+    if ijk_handedness == self.ijk_handedness:
+        return
+
+    ier = _cxtgeo.grd3d_reverse_jrows(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+    )
+
+    if ier != 0:
+        raise RuntimeError("Something went wrong in jswapping, code: {}".format(ier))
+
+    if self._props is None:
+        return
+
+    # do it for properties
+    for prp in self._props.props:
+        prp.values = prp.values[:, ::-1, :]
+
+    logger.info("Reversing of rows done")
 
 
 def report_zone_mismatch(  # pylint: disable=too-many-statements

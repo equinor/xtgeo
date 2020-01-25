@@ -1770,10 +1770,17 @@ int grd3d_translate (
     double yshift,
     double zshift,
     double *p_coord_v,
-    double *p_zcorn_v,
-    int   debug
+    double *p_zcorn_v
     );
 
+int grd3d_reverse_jrows (
+    int   nx,
+    int   ny,
+    int   nz,
+    double *p_coord_v,
+    double *p_zcorn_v,
+    int *p_actnum_v
+    );
 
 int grd3d_point_val_crange(
     double x,
