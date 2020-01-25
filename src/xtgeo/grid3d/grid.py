@@ -278,7 +278,7 @@ class Grid(Grid3D):
     @ijk_handedness.setter
     def ijk_handedness(self, value):
         if value in ("right", "left"):
-            self.swap_row_axis(ijk_handedness=value)
+            self.reverse_row_axis(ijk_handedness=value)
         else:
             raise ValueError("The value must be 'right' or 'left'")
         self._ijk_handedness = value
