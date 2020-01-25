@@ -1773,7 +1773,7 @@ int grd3d_translate (
     double *p_zcorn_v
     );
 
-int grd3d_jswapping (
+int grd3d_reverse_jrows (
     int   nx,
     int   ny,
     int   nz,

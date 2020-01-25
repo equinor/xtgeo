@@ -1,7 +1,7 @@
 /*
  ***************************************************************************************
  *
- * Do flipping (swapping) of J coordinates in the grid
+ * Do reversing / flipping  of J coordinates in the grid
  *
  ***************************************************************************************
  */
@@ -14,7 +14,7 @@
  ***************************************************************************************
  *
  * NAME:
- *    grd3d_jswapping.c
+ *    grd3d_reverse_jrows.c
  *
  * DESCRIPTION:
  *    Reverting J axes, i.e. grid goes from right-handed to left-handed or vice-versa
@@ -35,7 +35,7 @@
  ***************************************************************************************
  */
 
-int grd3d_jswapping (
+int grd3d_reverse_jrows (
     int nx,
     int ny,
     int nz,
