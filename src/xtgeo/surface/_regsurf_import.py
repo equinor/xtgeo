@@ -22,7 +22,8 @@ def import_irap_binary(self, mfile, values=True):
 
     ifile = xtgeo._XTGeoCFile(mfile)
 
-    logger.debug("Enter function...")
+    logger.info("Enter function %s", __name__)
+    logger.info("File handle %s", ifile.fhandle)
     # read with mode 0, to get mx my and other metadata
     (
         ier,

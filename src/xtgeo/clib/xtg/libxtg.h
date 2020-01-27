@@ -121,7 +121,11 @@ int xtg_shout(
 FILE *xtg_fopen(const char *filename, const char *mode);
 FILE *xtg_fopen_bytestream(char *swig_bytes, long swig_bytes_len, const char *mode);
 
+int xtg_fseek_start(FILE *fhandle);
+int xtg_fflush(FILE *fhandle);
+long xtg_ftell(FILE *fhandle);
 int xtg_fclose(FILE *fhandle);
+int xtg_get_fbuffer(FILE *fhandle, char *swig_bytes, long swig_bytes_len);
 
 /*
  *=============================================================================
