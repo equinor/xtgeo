@@ -81,7 +81,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         brew update && brew install swig;
     fi
-  - pip install pip -U
+  - pip install pip==19.3.1
   - pip install bandit
   - pip install -r requirements_setup.txt
   - build_wheel $REPO_DIR $PLAT

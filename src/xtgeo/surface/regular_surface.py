@@ -272,9 +272,7 @@ class RegularSurface(object):
             self._isloaded = True
 
         if self._values is not None:
-            logger.debug("Shape of value: and values")
-            logger.debug("\n%s", self._values.shape)
-            logger.debug("\n%s", self._values)
+            logger.debug("Shape of values %s", self._values.shape)
 
             self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
             self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
@@ -793,16 +791,26 @@ class RegularSurface(object):
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz. Default is irap_binary.
 
-        Example::
+        Examples::
 
-            >>> x = RegularSurface()
-            >>> x.from_file('myfile.x', fformat = 'irap_ascii')
-            >>> x.values = x.values + 300
-            >>> x.to_file('myfile2.x', fformat = 'irap_ascii')
+            # read and write to ordinary file
+            surf = RegularSurface()
+            surf.from_file('myfile.x', fformat = 'irap_ascii')
+            surf.values = surf.values + 300
+            surf.to_file('myfile2.x', fformat = 'irap_ascii')
 
+            # writing to io.BytesIO:
+            stream = io.BytesIO()
+            surf.to_file(stream, fformat="irap_binary")
+
+            # read from memory stream:
+            newsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
+
+        .. versionchanged:: 2.4.0 Added support for BytesIO
         """
 
-        xtgeosys.check_folder(mfile, raiseerror=OSError)
+        if not isinstance(mfile, io.BytesIO):
+            xtgeosys.check_folder(mfile, raiseerror=OSError)
 
         logger.debug("Enter method...")
         logger.info("Export to file...")

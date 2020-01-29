@@ -54,7 +54,10 @@ def export_irap_ascii(self, mfile):
 
 
 def export_irap_binary(self, mfile):
-    """Export to Irap RMS binary format."""
+    """Export to Irap RMS binary format.
+
+    Note that mfile can also a be a BytesIO instance
+    """
 
     fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
@@ -74,7 +77,7 @@ def export_irap_binary(self, mfile):
 
     if ier != 0:
         raise RuntimeError(
-            "Export to Irap Binary went wrong, " "code is {}".format(ier)
+            "Export to Irap Binary went wrong, code is {}".format(ier)
         )
 
     fout.close()

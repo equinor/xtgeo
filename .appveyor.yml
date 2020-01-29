@@ -32,7 +32,8 @@ install:
   - ps: choco install -y --no-progress --allow-empty-checksums -r swig
   - IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-  - python -m pip install pip --upgrade --user
+  - SET PIP_DISABLE_PIP_VERSION_CHECK=1
+  - python -m pip install pip==19.3.1 --upgrade --user
 
   - echo %PYTHON_VERSION%
   - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
@@ -40,7 +41,8 @@ install:
   - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
   - python -m pip install -r requirements_setup.txt
-  - pip install twine
+  - python -m pip install -r requirements_appveyor.txt
+  - python -m pip install twine
 
 before_build:
   - set generator="Visual Studio 15 2017"
@@ -51,8 +53,10 @@ before_build:
 
 build_script:
   - python setup.py bdist_wheel -G %generator%
-  - ps: pip install $(ls dist/*.whl | % {$_.FullName})
-  - pip freeze --all
+  - ps: ls dist/*.whl
+  - ps: python -m pip install $(ls dist/*.whl | % {$_.FullName}) --force
+  - python -m pip freeze --all
+  - python -m pip list
 
 test_script:
   - pytest

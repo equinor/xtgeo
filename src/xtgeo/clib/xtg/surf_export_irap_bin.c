@@ -163,25 +163,26 @@ int surf_export_irap_bin(
     ib=0;
     for (j=1;j<=my;j++) {
 
-	myint = nrec;
-	if (swap) SWAP_INT(myint);
-	ier = fwrite(&myint,sizeof(int),1,fc);
+        myint = nrec;
+        if (swap) SWAP_INT(myint);
+        ier = fwrite(&myint,sizeof(int),1,fc);
 
-	for (i=1;i<=mx;i++) {
+        for (i=1;i<=mx;i++) {
 
             ib = x_ijk2ic(i, j, 1, mx, my, 1, 0); /* conv from C order */
 
-	    myfloat=p_map_v[ib];
-	    if (myfloat > UNDEF_MAP_LIMIT) myfloat = UNDEF_MAP_IRAPB;
-	    if (swap) SWAP_FLOAT(myfloat);
-	    ier=fwrite(&myfloat,sizeof(float),1,fc);
-	    ib++;
-	}
+            myfloat=p_map_v[ib];
+            if (myfloat > UNDEF_MAP_LIMIT) myfloat = UNDEF_MAP_IRAPB;
+            if (swap) SWAP_FLOAT(myfloat);
+            ier=fwrite(&myfloat,sizeof(float),1,fc);
+            ib++;
+        }
 
-	myint = nrec;
-	if (swap) SWAP_INT(myint);
-	ier = fwrite(&myint,sizeof(int),1,fc);
+        myint = nrec;
+        if (swap) SWAP_INT(myint);
+        ier = fwrite(&myint,sizeof(int),1,fc);
     }
+
 
     return EXIT_SUCCESS;
 

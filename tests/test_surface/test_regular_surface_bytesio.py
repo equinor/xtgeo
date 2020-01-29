@@ -3,7 +3,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os
-import os.path
+from os.path import join
 import io
 
 import pytest
@@ -35,9 +35,10 @@ TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 @tsetup.skipifmac
 @tsetup.skipifwindows
 @tsetup.skipiftravis
+@tsetup.skipifpython2
 def test_irapbin_import_bytesio():
     """Import Irap binary via bytesIO"""
-    logger.info("Import and export...")
+    logger.info("Import file as BytesIO")
 
     with open(TESTSET1, "rb") as fin:
         stream = io.BytesIO(fin.read())
@@ -52,7 +53,42 @@ def test_irapbin_import_bytesio():
 
 
 @tsetup.skipifmac
+@tsetup.skipifwindows
 @tsetup.skipiftravis
+@tsetup.skipifpython2
+def test_irapbin_export_bytesio():
+    """Export Irap binary to bytesIO, then read again"""
+    logger.info("Import and export to bytesio")
+
+    xsurf = xtgeo.RegularSurface(TESTSET1, fformat="irap_binary")
+    assert xsurf.ncol == 554
+    assert xsurf.nrow == 451
+    assert (abs(xsurf.values.mean() - 1698.648) < 0.01)
+    xsurf.describe()
+    xsurf.to_file(join(TMPD, "bytesio1.gri"), fformat="irap_binary")
+
+    xsurf.values -= 200
+
+    stream = io.BytesIO()
+
+    xsurf.to_file(stream, fformat="irap_binary")
+
+    xsurfx = xtgeo.RegularSurface(stream, fformat="irap_binary")
+    logger.info("XSURFX mean %s", xsurfx.values.mean())
+
+    with open(join(TMPD, "bytesio2.gri"), "wb") as myfile:
+        myfile.write(stream.getvalue())
+
+    xsurf1 = xtgeo.RegularSurface(join(TMPD, "bytesio1.gri"), fformat="irap_binary")
+    xsurf2 = xtgeo.RegularSurface(join(TMPD, "bytesio2.gri"), fformat="irap_binary")
+    assert abs(xsurf1.values.mean() - xsurf2.values.mean() - 200) < 0.001
+
+    stream.close()
+
+
+@tsetup.skipifmac
+@tsetup.skipiftravis
+@tsetup.skipifpython2
 def test_get_regsurfi():
 
     sfile = TESTSET1
@@ -81,6 +117,7 @@ def test_get_regsurff():
 @tsetup.skipifmac
 @tsetup.skipifwindows
 @tsetup.skipiftravis
+@tsetup.skipifpython2
 def test_irapbin_load_meta_first_bytesio():
     """Import Irap binary via bytesIO, by just loading metadata first"""
     logger.info("Import and export...")

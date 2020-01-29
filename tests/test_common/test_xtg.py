@@ -3,6 +3,7 @@ import os
 import warnings
 import time
 import platform
+import six
 
 import pytest
 
@@ -35,6 +36,9 @@ def assert_almostequal(this, that, tol, txt=''):
     logger.debug('Test if values are almost equal...')
     assert this == pytest.approx(that, abs=tol), txt
 
+
+# SKIP IF PYTHON2 -------------------------------------------------------------
+skipifpython2 = pytest.mark.skipif(six.PY2, reason='Test skipped for PY2')
 
 # SKIP IF TRAVIS --------------------------------------------------------------
 qtravis = False
