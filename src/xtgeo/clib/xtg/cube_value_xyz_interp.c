@@ -57,10 +57,9 @@ int cube_value_xyz_interp(
                           )
 {
     /* locals */
-    long ib, useib, ibmax;
-    int  ic, jc, kc, i, j, k, ier, ier1, flag, idum=0;
+    long ib;
+    int  ic, jc, kc, i, j, k, ier, ier1, flag;
     double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz;
-    double usex, usey, dist, previousdist, avginc;
     float p_v[8], val;
 
     /* need to determine the lower left corner coordinates of the point ie
@@ -76,9 +75,6 @@ int cube_value_xyz_interp(
         *value = UNDEF;
         return -1;
     }
-
-    usex = xin;
-    usey = yin;
 
     /* make possibility to snap to nearest cube corner (auto4d request) */
     if (option == 1 || option == 11) {
@@ -98,28 +94,28 @@ int cube_value_xyz_interp(
                 }
             }
         }
-        ibmax = ib;
+        long ibmax = ib;
         /* determine closest corner: */
-        useib = 0;
-        previousdist = 10E20;
+        long useib = 0;
+        double previousdist = 10E20;
         for (ib = 0; ib < ibmax; ib ++) {
             /* find horizontal distance; hence z1 and z2 are both zin */
-            dist = x_vector_len3d(x_v[ib], xin, y_v[ib], yin, zin, zin);
+            double dist = x_vector_len3d(x_v[ib], xin, y_v[ib], yin, zin, zin);
             if (dist < previousdist) {
                 useib = ib;
                 previousdist = dist;
             }
         }
-        usex = x_v[useib];
-        usey = y_v[useib];
+        double usex = x_v[useib];
+        double usey = y_v[useib];
 
-        avginc = 0.5 * (xinc + yinc);
+        double avginc = 0.5 * (xinc + yinc);
         if (fabs(previousdist) > fabs(0.1 * avginc)) {
             /* logger_warn("Warning, snapping distance is more than " */
             /*             "10 percent of avg cell size in XY: %f vs %f (%s). " */
             /*             "Consider to deactivate snapxy option?", */
             /*             previousdist, avginc, __FUNCTION__); */
-            idum=1;
+
         }
 
         ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, usex, usey, zin,

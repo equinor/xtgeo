@@ -60,18 +60,18 @@ int cube_get_randomline(
 {
     /* locals */
     int  ib, ic, izc, ier;
-    float val, zsam, xc, yc, zc;
+    float val, zsam;
 
     zsam = (zmax - zmin) / (nzsam - 1);
 
     ib = 0;
     for (ic = 0; ic < nxvec; ic++) {
-        xc = xvec[ic];
-        yc = yvec[ic];
+        float xc = xvec[ic];
+        float yc = yvec[ic];
 
         for (izc = 0; izc < nzsam; izc++) {
 
-            zc = zmin + izc * zsam;
+            float zc = zmin + izc * zsam;
 
             if (option == 0) {
                 ier = cube_value_xyz_cell(xc, yc, zc, xori, xinc, yori, yinc,

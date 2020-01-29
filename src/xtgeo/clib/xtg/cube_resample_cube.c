@@ -77,7 +77,7 @@ int cube_resample_cube(
 
 {
     /* locals */
-    int ic1, jc1, kc1, idum=1;
+    int ic1, jc1, kc1;
     int ier;
     long icn1, nm = 0;
     double xc, yc, zc;
@@ -133,7 +133,6 @@ int cube_resample_cube(
                 }
                 else if (ier == -1 && option2 == 0) {
                     /* option2 = 0 shall just keep cube value as is */
-                    idum=0;
                 }
                 else if (ier == -1 && option2 == 1) {
                     /* option2 = 1 Use another value */

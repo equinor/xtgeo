@@ -89,12 +89,12 @@ class Grid3DSlice(BasePlot):
         self._minvalue = minvalue
         self._maxvalue = maxvalue
 
-        # if mode == "column":
-        #     self._plot_row()
-        # elif mode == "row":
-        #     self._plot_row()
-        # else:
-        self._plot_layer()
+        if mode == "column":
+            pass  # self._plot_row()
+        elif mode == "row":
+            pass  # self._plot_row()
+        else:
+            self._plot_layer()
 
     # def _plot_row(self):
 

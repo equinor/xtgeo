@@ -58,7 +58,6 @@ int cube_export_rmsregular (
     float value;
 
     logger_init(__FILE__, __FUNCTION__);
-
     logger_info(__LINE__, "Export cube to RMS regular format");
 
     /* if (yflip == -1) { */
@@ -104,6 +103,7 @@ int cube_export_rmsregular (
 
                 if (fwrite(&value, 4, 1, fc) !=1 ) {
                     logger_error(__LINE__, "Write failed in routine %s", __FUNCTION__);
+                    fclose(fc);
                     return -1;
                 }
             }

@@ -94,12 +94,11 @@
 
 int x_roffbinstring(char *bla, FILE *fc)
 {
-    int i, ier;
     char mybyte;
 
-    for (i=0;i<ROFFSTRLEN;i++) {
+    for (int i = 0; i < ROFFSTRLEN; i++) {
         /* x_fread(&mybyte,1,1,fc,__FILE__,__LINE__); */
-        ier=fread(&mybyte,1,1,fc);
+        int ier=fread(&mybyte,1,1,fc);
 	bla[i]=mybyte;
         if (mybyte==0) break;
     }
@@ -247,7 +246,7 @@ void x_roffgetchararray(char *array, int num, FILE *fc)
     for (i=0;i<num;i++) {
 	x_roffbinstring(c,fc);
 	xtg_speak(sub,4,"Reading: <%s>",c);
-	for (j=0;j<99999;j++) {
+	for (j=0;j<ROFFSTRLEN;j++) {
 	    if (c[j] == '\0' && j==0) {
 		/* to replace missing string with a code */
 		m = i + 1;

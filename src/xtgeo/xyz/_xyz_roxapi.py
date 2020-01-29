@@ -293,7 +293,7 @@ def _check_category_etc(
 
 
 def _get_roxitem(self, proj, name, category, stype, mode="set"):
-
+    # pylint: disable=too-many-branches
     if stype == "horizons":
         roxxyz = proj.horizons[name][category]
     elif stype == "zones":

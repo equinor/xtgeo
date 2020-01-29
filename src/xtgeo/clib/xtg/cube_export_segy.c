@@ -103,7 +103,6 @@ int cube_export_segy (
                       )
 {
 
-    FILE *fc = NULL;
     int ic, i, j, k, nc, nn, ier, swap;
     int ixv, iyv;
     long nxy = 0;
@@ -116,11 +115,9 @@ int cube_export_segy (
     xv = calloc(nx*ny, sizeof(double));
     yv = calloc(nx*ny, sizeof(double));
 
-    fc = fopen(sfile, "wb");
+    FILE *fc = fopen(sfile, "wb");
 
     swap = x_swap_check();
-
-    ilc = nx * ny * nz;
 
     /*
      * ========================================================================
@@ -273,6 +270,7 @@ int cube_export_segy (
 
                 if (swap == 1) SWAP_FLOAT(aval);
                 if (fwrite(&aval, 4, 1, fc) != 1) {
+                    fclose(fc);
                     return -9;
                 }
             }

@@ -246,7 +246,7 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
 
 
 def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
-
+    # pylint: disable=too-many-branches, too-many-statements
     s_exists = _chk_kw_date(kwlist, "SOIL", date)
     logger.info("SOIL: S_EXISTS %s for date %s", s_exists, date)
 
