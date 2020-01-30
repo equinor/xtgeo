@@ -34,7 +34,6 @@
  *                         (if even sampling, the points ratio will eq
  *                         length ratio)
  *    iflag          i     Options flag
- *    debug          i     Debug level
  *
  * RETURNS:
  *    The C macro EXIT_SUCCESS unless problems
@@ -48,6 +47,7 @@
  */
 
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -70,15 +70,13 @@ int grd3d_rpt_zlog_vs_zon(
 			  double *p_zcorn_onelay_v,
 			  int    *p_actnum_onelay_v,
 			  double *results,
-			  int    iflag,
-			  int    debug
+			  int    iflag
 			  )
 
 {
     /* locals */
     double  zconst, x, y, z;
     int    m, i, j, k, ib, ibstart, ibstart0, ibstart2, lzone, nzone;
-    char   s[24]="grd3d_rpt_zlog_vs_zon";
     int    *p_zsample_v, *p_icell_v, *p_jcell_v, *p_kcell_v;
     int    mtopmark, mbotmark, matchcount, totalcount, outside, nradsearch;
     int    mlimit=100;
@@ -90,13 +88,8 @@ int grd3d_rpt_zlog_vs_zon(
     p_jcell_v   = calloc(nval+1,sizeof(int));
     p_kcell_v   = calloc(nval+1,sizeof(int));
 
-    xtgverbose(debug);
-
-    xtg_speak(s, 2, "Entering <grd3d_adj_z_from_zlog>");
-    xtg_speak(s, 3, "Using IFLAG: %d", iflag);
-
-    xtg_speak(s, 3, "NX NY NZ: %d %d %d", nx, ny, nz);
-
+    logger_init(__FILE__, __FUNCTION__);
+    logger_info(__LINE__, "Entering %s", __FUNCTION__);
 
     /*
      * Must be sure that grid is consistent in z, and also has
@@ -112,7 +105,7 @@ int grd3d_rpt_zlog_vs_zon(
 			    p_zcorn_v,
 			    p_actnum_v,
 			    zconst,
-			    debug
+			    0
 			    );
 
 
@@ -131,8 +124,6 @@ int grd3d_rpt_zlog_vs_zon(
     ibstart2 = ibstart0;
 
 
-    xtg_speak(s,2,"Working ...");
-
     /*
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      * need to find the first and last point of the zone log interval, and
@@ -147,20 +138,18 @@ int grd3d_rpt_zlog_vs_zon(
 
 	if (lzone >= zlmin && lzone <= zlmax && mtopmark<0) {
 	    mtopmark = m;
-	    xtg_speak(s,2,"First valid zonelog value at position %d", mtopmark);
 	}
 	if (lzone >= zlmin && lzone <= zlmax) {
 	    mbotmark = m;
-	    xtg_speak(s,2,"Last valid zonelog value at position %d", mbotmark);
 	}
     }
 
     if (mtopmark>mbotmark) {
-	xtg_error(s,"Something is wrong with MTOPMARK and MBOTMARK. Call JRIV");
+	logger_critical(__LINE__, "Bug in %s (mtopmark > mbotmark)", __FUNCTION__);
     }
 
     if (mtopmark==-1 || mbotmark==-1) {
-	xtg_warn(s,1,"No zonation for well?");
+        x_free(4, p_zsample_v, p_icell_v, p_jcell_v, p_kcell_v);
 	return(2);
     }
 
@@ -169,11 +158,6 @@ int grd3d_rpt_zlog_vs_zon(
      * loop from mtopmark and go below
      */
 
-    xtg_speak(s,2,"MTOPMARK is %d and MBOTMARK is %d (n=%d)",
-	      mtopmark, mbotmark, mbotmark - mtopmark +1);
-
-
-    outside=-999;
 
     /* initial search options in grd3d_point_in_cell */
     maxradsearch=5;
@@ -199,16 +183,13 @@ int grd3d_rpt_zlog_vs_zon(
 	    */
 
 
-	    xtg_speak(s,2,"Check via grid envelope");
-
-
 	    /* loop cells in simplified (one layer) grid */
 	    ib=grd3d_point_in_cell(ibstart2, 0, x, y, z, nx, ny, 1,
 				   p_coord_v,
 				   p_zcorn_onelay_v, p_actnum_onelay_v,
 				   maxradsearch,
 				   sflag, &nradsearch,
-				   0, debug);
+				   0, 0);
 
 	    if (ib>=0) {
 		outside=0;
@@ -218,19 +199,10 @@ int grd3d_rpt_zlog_vs_zon(
 		outside=-777;
 	    }
 
-	    xtg_speak(s,2,"Check via grid envelope DONE, outside status: %d",
-		      outside);
-
-
 	    /* now go further if the point is inside the single layer grid
 	     */
 
 	    if (outside==0) {
-
-		xtg_speak(s,2,"Well point zone (%d) is:  %9.2f   %9.2f   %8.2f"
-			  "(ZLMIN ZLMAX is %d %d)",
-			  lzone, x, y, z, zlmin, zlmax);
-
 
 
 		/* loop cells in simplified (one layer) grid */
@@ -239,7 +211,7 @@ int grd3d_rpt_zlog_vs_zon(
 				       p_zcorn_v, p_actnum_v,
 				       maxradsearch,
 				       sflag, &nradsearch,
-				       0, debug);
+				       0, 0);
 
 
 
@@ -248,21 +220,6 @@ int grd3d_rpt_zlog_vs_zon(
 		    if (p_actnum_v[ib]==1) {
 			nzone=p_zon_v[ib];
 
-			if (nradsearch>3 && nradsearch<=20) {
-			    xtg_speak(s,2,"Search radius is >3: %d",nradsearch);
-			}
-			if (nradsearch>maxradsearch) {
-			    xtg_speak(s,1,"Search radius is large, %d",
-				      nradsearch);
-			}
-
-			if (m%1000==0) {
-			    xtg_speak(s,2,"[%d]: Point %9.2f %9.2f %8.2f, the "
-				      "index is %d (%d %d %d) "
-				      "and zone is %d [wzone = %d]."
-				      " Search radius is %d",
-				      m, x,y,z,ib,i,j,k,nzone,lzone,nradsearch);
-			}
 			p_zsample_v[m]=nzone;
 
 			p_icell_v[m]=i;
@@ -272,11 +229,6 @@ int grd3d_rpt_zlog_vs_zon(
 
 		    }
 		    else{
-			xtg_speak(s,2,"INACTIVE CELL "
-				  "Point %9.2f %9.2f %8.2f, the cell index is "
-				  "%d (%d %d %d) but inactive cell",
-				  x,y,z,ib,i,j,k);
-
 			p_zsample_v[m]=-777;
 
 		    }
@@ -286,9 +238,6 @@ int grd3d_rpt_zlog_vs_zon(
 
 		}
 		else{
-		    xtg_speak(s,2,"OUTSIDE Point %9.2f %9.2f %8.2f "
-			      "is outside grid",
-			      x,y,z);
 		    p_zsample_v[m]=-999;
 		    ibstart=ibstart0;
 		}
@@ -297,8 +246,6 @@ int grd3d_rpt_zlog_vs_zon(
 
     }
 
-    xtg_speak(s,1,"Number of points inside: %d", countpoints);
-
 
     /*
      * ========================================================================
@@ -306,16 +253,9 @@ int grd3d_rpt_zlog_vs_zon(
      * ========================================================================
      */
 
-    xtg_speak(s,2,"---------------------------------------------------------");
-    xtg_speak(s,2,"Well zonation vs grid zonation:");
-    xtg_speak(s,2," >>    %4s %4s  (%9s %9s %8s) [cell %4s %4s %4s]",
-	      "WELL", "ZONE", "x", "y", "z", "I", "J", "K");
-
     /* count match to compute match % */
     matchcount=0;
     totalcount=0;
-
-    if (debug>1) mlimit=99999;
 
     for (m=0;m<=nval;m++) {
 
@@ -341,28 +281,29 @@ int grd3d_rpt_zlog_vs_zon(
 		}
 
 		if (totalcount < mlimit) {
-		    xtg_speak(s,2," >>   %4d %4d  (%9.2f %9.2f %8.2f) "
+		    logger_info(__LINE__, " >>   %4d %4d  (%9.2f %9.2f %8.2f) "
 			      "[cell %4d %4d %4d]",
 			      lzone, nzone, x, y, z, i, j, k);
 		}
 		else if (totalcount == mlimit) {
-		    xtg_speak(s,2,"Etc... (The rest is not displayed)");
+		    logger_info(__LINE__, "Etc... (The rest is not displayed)");
 		}
 
 	    }
 	}
     }
 
-    results[0]=100*(double)matchcount/(double)totalcount;
-    results[1]=(double)totalcount;
-    results[2]=(double)matchcount;
+    results[0] = 100 * (double)matchcount / (double)totalcount;
+    results[1] = (double)totalcount;
+    results[2] = (double)matchcount;
 
-    xtg_speak(s,2,"Match count is %7.2f percent",results[0]);
+    logger_info(__LINE__, "Match count is %7.2f percent",results[0]);
 
 
-    xtg_speak(s,2,"Adjusting grid to zlog ... DONE!");
-    xtg_speak(s,2,"Exiting <grd3d_adj_z_from_zlog>");
+    logger_info(__LINE__, "Adjusting grid to zlog ... DONE!");
+    logger_info(__LINE__, "Exiting <grd3d_adj_z_from_zlog>");
 
+    x_free(4, p_zsample_v, p_icell_v, p_jcell_v, p_kcell_v);
 
     return EXIT_SUCCESS;
 

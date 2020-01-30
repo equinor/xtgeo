@@ -359,5 +359,10 @@ int grd3d_geometrics(
 
 
     xtg_speak(s,2,"Exit from %s",s);
+
+    free(tmp_x);
+    free(tmp_y);
+    free(tmp_z);
+
     return (istat);
 }

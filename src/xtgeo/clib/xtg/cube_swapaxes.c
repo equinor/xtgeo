@@ -13,11 +13,10 @@
  * ARGUMENTS:
  *    nx...nz       i/o    Cube dimensions
  *    yflip         i/o    Cube YFLIP index (pointer, will be updated)
- *    xori ...      i/o    Cube origin and increments
+ *    xinc..        i/o    Cube increments
  *    rotation      i/o    Cube rotation
  *    p_val_v        i     1D Array of cube values of ncx*ncy*ncz size
  *    p_traceid_v    i     1D Array of trace id values of ncx*ncy size
- *    option         i     For future use
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -39,24 +38,21 @@ int cube_swapaxes (
                    int *ny,
                    int nz,
                    int *yflip,
-                   double xori,
                    double *xinc,
-                   double yori,
                    double *yinc,
                    double *rotation,
                    float *p_val_v,
                    long nval,
                    int *p_traceid_v,
-                   long nval_traceid,
-                   int option
+                   long nval_traceid
                    )
 {
 
     /* locals */
     int i, j, k, flip, nnx, nny;
-    long nxyz, nxy, ib1, ib2;
-    float *tmp1 = NULL;
-    int *tmp2 = NULL;
+    long nxyz, nxy;
+    float *tmp1;
+    int *tmp2;
     double xxinc, yyinc, rot;
 
     nnx = *nx;
@@ -71,13 +67,12 @@ int cube_swapaxes (
 
     flip = *yflip;
 
-    ib2 = 0;
     /* reverse J I by looping J before I*/
     for (j = 1; j <= nny; j++) {
         for (i = 1; i <= nnx; i++) {
             for (k = 1; k <= nz; k++) {
-                ib1 = x_ijk2ic(i, j, k, nnx, nny, nz, 0);
-                ib2 = x_ijk2ic(j, i, k, nny, nnx, nz, 0);
+                long ib1 = x_ijk2ic(i, j, k, nnx, nny, nz, 0);
+                long ib2 = x_ijk2ic(j, i, k, nny, nnx, nz, 0);
                 tmp1[ib2] = p_val_v[ib1];
             }
         }
@@ -89,8 +84,8 @@ int cube_swapaxes (
 
     for (j = 1; j <= nny; j++) {
         for (i = 1; i <= nnx; i++) {
-            ib1 = x_ijk2ic(i, j, 1, nnx, nny, 1, 0);
-            ib2 = x_ijk2ic(j, i, 1, nny, nnx, 1, 0);
+            long ib1 = x_ijk2ic(i, j, 1, nnx, nny, 1, 0);
+            long ib2 = x_ijk2ic(j, i, 1, nny, nnx, 1, 0);
             tmp2[ib2] = p_traceid_v[ib1];
         }
     }
@@ -119,8 +114,7 @@ int cube_swapaxes (
     *yflip = flip * -1;
     *rotation = rot;
 
-    free(tmp1);
-    free(tmp2);
+    x_free(2, tmp1, tmp2);
 
     return EXIT_SUCCESS;
 }

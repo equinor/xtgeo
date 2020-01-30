@@ -824,8 +824,7 @@ int pol_refine (
     double *p_y_v,
     double *p_z_v,
     double dist,
-    int    option,
-    int    debug
+    int    option
     );
 
 int pol_extend (
@@ -998,16 +997,13 @@ int cube_swapaxes (
     int *ny,
     int nz,
     int *yflip,
-    double xori,
     double *xinc,
-    double yori,
     double *yinc,
     double *rotation,
     float *swig_np_flt_inplace_v1,   // *p_val_v
     long n_swig_np_flt_inplace_v1,   // nval, total nx*ny*nz
     int *swig_np_int_inplace_v1,     // *p_traceid_v
-    long n_swig_np_int_inplace_v1,   // nval for traceid, nx*ny
-    int option
+    long n_swig_np_int_inplace_v1    // nval for traceid, nx*ny
     );
 
 
@@ -2077,8 +2073,7 @@ int grd3d_rpt_zlog_vs_zon (
     double *p_zcorn_onelay_v,
     int    *p_actnum_onelay_v,
     double *results,
-    int   iflag,
-    int   debug
+    int   iflag
     );
 
 int grd3d_well_ijk(

@@ -114,7 +114,6 @@ int cube_import_storm (
 
     char *line = NULL;
     size_t len = 0;
-    ssize_t read;
 
 
     swap = x_swap_check();
@@ -125,8 +124,9 @@ int cube_import_storm (
     /* skip header as this is parsed in Python/Perl */
 
     for (i = 1; i < nlines; i++) {
-        read = _getline(&line, &len, fc);  /* original a posix/gnu function */
-        line[strcspn(line, "\n")] = 0;
+        if (_getline(&line, &len, fc) >= 0){  /* original a posix/gnu function */
+            line[strcspn(line, "\n")] = 0;
+        }
     }
 
 
@@ -138,6 +138,7 @@ int cube_import_storm (
                 /* read a single value at the time */
 
                 if (fread (&fval, 4, 1, fc) != 1) {
+                    fclose(fc);
                     return -4;
                 }
 

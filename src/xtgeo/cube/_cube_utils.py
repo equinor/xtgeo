@@ -44,14 +44,11 @@ def swapaxes(self):
         nrow,
         self.nlay,
         yflip,
-        self.xori,
         xinc,
-        self.yori,
         yinc,
         rota,
         values1d,
         traceid1d,
-        0,
     )
     if ier != 0:
         raise Exception

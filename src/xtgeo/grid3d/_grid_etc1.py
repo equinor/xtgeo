@@ -1042,8 +1042,7 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         onelayergrid._p_zcorn_v,
         onelayergrid._p_actnum_v,
         ptr_results,
-        option,
-        XTGDEBUG,
+        option
     )
 
     _gridprop_lowlevel.delete_carray(zoneprop, ptr_zprop)
