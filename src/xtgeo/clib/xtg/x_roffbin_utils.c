@@ -95,12 +95,16 @@
 int x_roffbinstring(char *bla, FILE *fc)
 {
     char mybyte;
-
-    for (int i = 0; i < ROFFSTRLEN; i++) {
+    int i;
+    for (i = 0; i < ROFFSTRLEN; i++) {
         /* x_fread(&mybyte,1,1,fc,__FILE__,__LINE__); */
-        int ier=fread(&mybyte,1,1,fc);
-	bla[i]=mybyte;
-        if (mybyte==0) break;
+        if (fread(&mybyte,1,1,fc) == 1){
+            bla[i]=mybyte;
+            if (mybyte==0) break;
+        }
+        else{
+            break;
+        }
     }
     return 0;
 }

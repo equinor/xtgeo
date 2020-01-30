@@ -12,6 +12,7 @@ void x_fread (void *, size_t , size_t , FILE *, char *, int);
 
 int x_nint(double);
 
+void x_free(int num, ...);
 
 int x_cmp_sort (
     const void *vp,

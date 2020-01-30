@@ -238,8 +238,7 @@ int pol_resampling(
      * ========================================================================
      */
     int nnnf = 0;
-    nnnf = pol_refine(nlenx + 2, naddr, txv, tyv, tzv, usmpl/2.0,
-                      1, debug);
+    nnnf = pol_refine(nlenx + 2, naddr, txv, tyv, tzv, usmpl/2.0, 1);
 
     /* ========================================================================
      * Part three, resample along the t*v vectors
