@@ -17,6 +17,9 @@ environment:
     - PYTHON: C:\Python37
       PYTHON_VERSION: 37
       TAG_SCENARIO: True
+    - PYTHON: C:\Python38
+      PYTHON_VERSION: 38
+      TAG_SCENARIO: True
 
 matrix:
   fast_finish: true
@@ -36,12 +39,12 @@ install:
   - python -m pip install pip==19.3.1 --upgrade --user
 
   - echo %PYTHON_VERSION%
-  - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
-  - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
-  - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
+  # - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
+  # - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
+  # - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
 
-  - python -m pip install -r requirements_setup.txt
-  - python -m pip install -r requirements_appveyor.txt
+  - python -m pip install -r scripts/requirements_setup.txt
+  - python -m pip install -r scripts/requirements_appveyor.txt
   - python -m pip install twine
 
 before_build:
