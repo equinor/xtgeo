@@ -15,6 +15,7 @@ function pre_build {
 function run_tests {
     set -x
     SYS=$(uname)
+
     # need to install git on the test docker image to get the test data
     if [[ "$SYS" == "Linux" ]]; then
         apt-get -y update > /dev/null
