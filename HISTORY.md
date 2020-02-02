@@ -2,6 +2,15 @@
 
 ## Version 2
 
+### 2.5.0
+* New features:
+  * Be able to write surfaces to BytesIO (memory streams), Linux only
+  * Add the ability for 3D grids to detect and swap handedness of a 3D grid.
+  * Available on Python 3.8 on all platforms
+* Fixes for developers
+  * Now backward compatible to cmake 2.8.12
+  * Many internal build fixes and improves, including requirements.txt
+
 ### 2.4.3
 * Fix of bugs when exporting points/polygons to Roxar API
 * Fix (for developers) various setup in cmake/swig etc so that cmake can be downgraded to 3.13.3 and hence a ``manylinux1`` image is available in PYPI for Linux (Python versions < 3.7)

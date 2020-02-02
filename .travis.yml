@@ -54,6 +54,7 @@ matrix:
         - MB_PYTHON_VERSION=3.7
         - SOURCEDEPLOY=1
         - MB_ML_VER=2010
+      if: tag IS present
     - os: linux
       dist: xenial
       sudo: true
@@ -65,10 +66,12 @@ matrix:
       language: generic
       env: MB_PYTHON_VERSION=3.6
       python: 3.6
+      if: tag IS present
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.7
       python: 3.7
+      if: tag IS present
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.8
