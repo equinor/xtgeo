@@ -1438,7 +1438,7 @@ class Grid(Grid3D):
             # secure that the grid geometry is IJK right-handed
             grd.reverse_row_axis(ijk_handedness="right")
 
-        .. versionadded:: 2.4.0
+        .. versionadded:: 2.5.0
 
         """
 

@@ -27,5 +27,5 @@ function run_tests {
     echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
-    pytest tests
+    pytest tests --disable-warnings
 }

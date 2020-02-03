@@ -806,7 +806,7 @@ class RegularSurface(object):
             # read from memory stream:
             newsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
 
-        .. versionchanged:: 2.4.0 Added support for BytesIO
+        .. versionchanged:: 2.5.0 Added support for BytesIO
         """
 
         if not isinstance(mfile, io.BytesIO):

@@ -9,7 +9,7 @@ setuptools_scm>=3.2.0
 scikit-build==0.10.0
 ninja==1.8.2; python_version < "3.7" and platform_system == "Linux"
 ninja>=1.8.2; python_version >= "3.7" and platform_system == "Linux"
-ninja==1.8.2.post2; platform_system != "Linux"
+ninja>=1.8.2.post2; platform_system != "Linux"
 pytest>=2.9.2
 pytest-runner>=2.11.1
 Sphinx

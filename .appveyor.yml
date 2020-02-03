@@ -19,7 +19,7 @@ environment:
       TAG_SCENARIO: True
     - PYTHON: C:\Python38
       PYTHON_VERSION: 38
-      TAG_SCENARIO: True
+      TAG_SCENARIO: False
 
 matrix:
   fast_finish: true
@@ -36,14 +36,9 @@ install:
   - IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - SET PIP_DISABLE_PIP_VERSION_CHECK=1
-  - python -m pip install pip==19.3.1 --upgrade --user
+  - python -m pip install pip>=19.3.1 --upgrade --user
 
   - echo %PYTHON_VERSION%
-  # - IF "%PYTHON_VERSION%" == "35" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp35-cp35m-win_amd64.whl
-  # - IF "%PYTHON_VERSION%" == "36" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl
-  # - IF "%PYTHON_VERSION%" == "37" python -m pip install .thirdparty/Shapely-1.6.4.post2-cp37-cp37m-win_amd64.whl
-
-  - python -m pip install -r scripts/requirements_setup.txt
   - python -m pip install -r scripts/requirements_appveyor.txt
   - python -m pip install twine
 
@@ -57,12 +52,12 @@ before_build:
 build_script:
   - python setup.py bdist_wheel -G %generator%
   - ps: ls dist/*.whl
-  - ps: python -m pip install $(ls dist/*.whl | % {$_.FullName}) --force
+  - ps: python -m pip install $(ls dist/*.whl | % {$_.FullName}) --force --no-deps
   - python -m pip freeze --all
   - python -m pip list
 
 test_script:
-  - pytest
+  - pytest --disable-warnings
 
 deploy_script:
   - echo "Upload to PYPI if tag..."
