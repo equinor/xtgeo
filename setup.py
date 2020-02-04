@@ -173,7 +173,7 @@ def swigok():
 
 
 if not swigok():
-    if "SWIG_BY_KOMODO" in os.environ:
+    if "SWIG_INSTALL_KOMODO" in os.environ:
         print("Spesial handling of swig in komodo (Equinor) setup...")
     elif "Linux" in platform.system():
         print("Installing swig from source (tmp) ...")
