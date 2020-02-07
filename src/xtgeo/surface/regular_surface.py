@@ -818,6 +818,8 @@ class RegularSurface(object):
             _regsurf_export.export_irap_ascii(self, mfile)
         elif fformat == "irap_binary":
             _regsurf_export.export_irap_binary(self, mfile)
+        elif fformat == "irap_binary_x":
+            _regsurf_export.export_irap_binary_purepy(self, mfile)
         elif fformat == "zmap_ascii":
             _regsurf_export.export_zmap_ascii(self, mfile)
         elif fformat == "storm_binary":

@@ -587,6 +587,16 @@ def test_irapbin_io_loop():
 
         assert m1 == pytest.approx(m2 - 300)
 
+def test_irapbin_export_py():
+    """Export Irapbin with pure python"""
+
+    num = 10
+
+    x = xtgeo.RegularSurface()
+    x.from_file(TESTSET1, fformat="irap_binary")
+    x.to_file("TMP/purepy.gri", fformat="irap_binary_x")
+    x.to_file("TMP/purec.gri", fformat="irap_binary")
+
 
 def test_distance_from_point():
     """Distance from point."""

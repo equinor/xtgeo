@@ -4,6 +4,8 @@
 # pylint: disable=protected-access
 from __future__ import division, absolute_import
 from __future__ import print_function
+from struct import pack
+import numpy as np
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
@@ -81,6 +83,30 @@ def export_irap_binary(self, mfile):
         )
 
     fout.close()
+
+
+def export_irap_binary_purepy(self, mfile):
+    """Export to Irap RMS binary format but use python only."""
+
+    vals = self.get_values1d(fill_value=_cxtgeo.UNDEF_MAP_IRAPB)
+    vals = vals.reshape((self._ncol, self._nrow))
+    vals = vals.astype(np.float32)
+
+    ap = pack('>3i6f3i3f10i',
+              32, -996, self.nrow, self.xori,
+              self.xori + self.xinc * (self.ncol - 1),
+              self.yori, self.yori + self.yinc * (self.nrow - 1),
+              self.xinc, self.yinc, 32,
+              16, self.ncol, self.rotation, self.xori, self.yori, 16,
+              28, 0, 0, 0, 0, 0, 0, 0, 28
+              )
+    for ix in range(self.ncol):
+        ap += pack('>ix', self.nrow * 4)
+        ap += pack('>{:d}f'.format(self.nrow), *vals[ix, :])
+        ap += pack('>ix', self.nrow * 4)
+
+    with open(mfile, "wb") as fout:
+        fout.write(ap)
 
 
 def export_ijxyz_ascii(self, mfile):
