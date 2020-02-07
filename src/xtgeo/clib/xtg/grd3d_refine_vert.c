@@ -71,7 +71,7 @@ int grd3d_refine_vert (
 
     xtg_speak(s, 1, "Entering <%s>", s);
 
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, p_actnum_v, 0.0, debug);
+    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, 0.0);
 
     for (j = 1; j <= ny; j++) {
 	for (i = 1; i <= nx; i++) {

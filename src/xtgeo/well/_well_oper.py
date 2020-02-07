@@ -218,8 +218,7 @@ def get_ijk_from_grid(self, grid, grid_id=""):
         wivec,
         wjvec,
         wkvec,
-        0,
-        XTG_DEBUG,
+        0
     )
 
     if cstatus != 0:

@@ -620,13 +620,7 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        zsep,
-        XTGDEBUG,
+        self.ncol, self.nrow, self.nlay, self._p_zcorn_v, zsep,
     )
 
 
@@ -1042,7 +1036,7 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         onelayergrid._p_zcorn_v,
         onelayergrid._p_actnum_v,
         ptr_results,
-        option
+        option,
     )
 
     _gridprop_lowlevel.delete_carray(zoneprop, ptr_zprop)

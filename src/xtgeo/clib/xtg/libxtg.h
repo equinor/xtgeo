@@ -14,7 +14,6 @@
 
 #include <stdio.h>
 
-
 #define PI  3.14159265358979323846
 #define M_PI  3.14159265358979323846
 #define PIHALF  1.57079632679489661923
@@ -1747,17 +1746,13 @@ void grd3d_convert_hybrid2(
     int   debug
     );
 
-
 void grd3d_make_z_consistent (
     int    nx,
     int    ny,
     int    nz,
     double *p_zcorn_v,
-    int    *p_actnum_v,
-    double  zsep,
-    int    debug
+    double  zsep
     );
-
 
 int grd3d_translate (
     int   nx,
@@ -2092,8 +2087,7 @@ int grd3d_well_ijk(
     int *ivector,
     int *jvector,
     int *kvector,
-    int iflag,
-    int debug
+    int iflag
     );
 
 int well_geometrics (

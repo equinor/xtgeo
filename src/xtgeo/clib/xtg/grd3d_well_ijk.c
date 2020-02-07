@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_well_ijk.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Look along a well trajectory (X Y Z coords), and for each point find
@@ -14,19 +11,20 @@
  *    Note, the cell index is 1 based.
  *
  * ARGUMENTS:
- *    nx,ny,nz       i     Grid dimensions
- *    p_coord_v      i     Grid coordinate lines
- *    p_zcorn_v      i     Grid Z corners
- *    p_actnum_v     i     Grid ACTNUM parameter
- *    nval           i     Position of last point for well log
- *    p_utme_v       i     East coordinate vector for well log
- *    p_utmn_v       i     North coordinate vector for well log
- *    p_tvds_v       i     TVD (SS) coordinate vector for well log
- *    ivector        o     Returning I coordinates (UNDEF if not in grid)
- *    jvector        o     Returning J coordinates (UNDEF if not in grid)
- *    kvector        o     Returning K coordinates (UNDEF if not in grid)
- *    iflag          i     Options flag
- *    debug          i     Debug level
+ *    nx,ny,nz           i     Grid dimensions ncol, nrow, nlay
+ *    p_coord_v          i     Grid coordinate lines
+ *    p_zcorn_v          i     Grid Z corners
+ *    p_actnum_v         i     Grid ACTNUM parameter
+ *    p_zcorn_onelay_v   i     Grid Z corners, top bot only
+ *    p_actnum_onelay_v  i     Grid ACTNUM parameter top bot only
+ *    nval               i     Position of last point for well log
+ *    p_utme_v           i     East coordinate vector for well log
+ *    p_utmn_v           i     North coordinate vector for well log
+ *    p_tvds_v           i     TVD (SS) coordinate vector for well log
+ *    ivector            o     Returning I coordinates (UNDEF if not in grid)
+ *    jvector            o     Returning J coordinates (UNDEF if not in grid)
+ *    kvector            o     Returning K coordinates (UNDEF if not in grid)
+ *    iflag              i     Options flag
  *
  * RETURNS:
  *    The C macro EXIT_SUCCESS unless problems
@@ -37,43 +35,39 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
-
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
+#define DEBUG 0
 
 int grd3d_well_ijk(
-                   int nx,
-                   int ny,
-                   int nz,
-                   double *p_coord_v,
-                   double *p_zcorn_v,
-                   int *p_actnum_v,
-                   double *p_zcorn_onelay_v,
-                   int *p_actnum_onelay_v,
-                   int nval,
-                   double *p_utme_v,
-                   double *p_utmn_v,
-                   double *p_tvds_v,
-                   int *ivector,
-                   int *jvector,
-                   int *kvector,
-                   int iflag,
-                   int debug
-                   )
+    int nx,
+    int ny,
+    int nz,
+    double *p_coord_v,
+    double *p_zcorn_v,
+    int *p_actnum_v,
+    double *p_zcorn_onelay_v,
+    int *p_actnum_onelay_v,
+    int nval,
+    double *p_utme_v,
+    double *p_utmn_v,
+    double *p_tvds_v,
+    int *ivector,
+    int *jvector,
+    int *kvector,
+    int iflag
+    )
 
 {
 
-    char   sbn[24] = "grd3d_well_ijk";
+    logger_init(__FILE__, __FUNCTION__);
 
-    xtgverbose(debug);
-
-    xtg_speak(sbn, 2, "Entering %s", sbn);
-    xtg_speak(sbn, 3, "Using IFLAG: %d", iflag);
-    xtg_speak(sbn, 3, "NX NY NZ: %d %d %d", nx, ny, nz);
+    logger_info(__LINE__, "Entering %s", __FUNCTION__);
 
     /*
      * Must be sure that grid is consistent in z, and also has
@@ -82,7 +76,7 @@ int grd3d_well_ijk(
      */
 
     double zconst = 0.000001;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, p_actnum_v, zconst, debug);
+    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, zconst);
 
     /*
      * ========================================================================
@@ -95,8 +89,6 @@ int grd3d_well_ijk(
     long ibstart  = ibstart0;
     long ibstart2 = ibstart0;
 
-    xtg_speak(sbn,2,"Working ...");
-
     int outside = -999;
 
     /* initial search options in grd3d_point_in_cell */
@@ -106,13 +98,13 @@ int grd3d_well_ijk(
 		       attempt */
 
     int mnum;
-    int icol = 0, jrow = 0, klay = 0, countpoints = 0;
+    int icol = 0, jrow = 0, klay = 0;
 
     for (mnum = 0; mnum < nval; mnum++) {
 	double xcor = p_utme_v[mnum];
 	double ycor = p_utmn_v[mnum];
 	double zcor = p_tvds_v[mnum];
-        xtg_speak(sbn, 1, "Check point %lf   %lf   %lf", xcor, ycor, zcor);
+        logger_debug(__LINE__, "Check point %lf   %lf   %lf", xcor, ycor, zcor);
 
 	ivector[mnum] = 0;
 	jvector[mnum] = 0;
@@ -122,7 +114,7 @@ int grd3d_well_ijk(
            unneccasary searching and looping; hence use a one layer grid...
         */
 
-        xtg_speak(sbn,2,"Check via grid envelope");
+        logger_debug(__LINE__,"Check via grid envelope");
 
         /* loop cells in simplified (one layer) grid */
         long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor,
@@ -131,19 +123,17 @@ int grd3d_well_ijk(
                                        p_zcorn_onelay_v, p_actnum_onelay_v,
                                        maxradsearch,
                                        sflag, &nradsearch,
-                                       0, debug);
+                                       0, DEBUG);
 
         if (ib1 >= 0) {
             outside = 0;
             ibstart2 = ib1;
-            xtg_speak(sbn, 1, "INSIDE GRID, nradsearch is %d", nradsearch);
         }
         else{
             outside = -777;
         }
 
-        xtg_speak(sbn, 2, "Check via grid envelope DONE, outside status: %d",
-                  outside);
+        logger_info(__LINE__, "Check grid envelope DONE, outside status: %d", outside);
 
         /* now go further if the point is inside the single layer grid */
 
@@ -157,7 +147,7 @@ int grd3d_well_ijk(
                                            p_zcorn_v, p_actnum_v,
                                            maxradsearch,
                                            sflag, &nradsearch,
-                                           0, debug);
+                                           0, DEBUG);
 
             if (ib2 >= 0) {
 
@@ -165,54 +155,23 @@ int grd3d_well_ijk(
 
                 if (p_actnum_v[ib2] == 1) {
 
-                    if (nradsearch > 3 && nradsearch <= 20) {
-                        xtg_speak(sbn, 2, "Search radius is > 3: %d",
-                                  nradsearch);
-                    }
-                    if (nradsearch>maxradsearch) {
-                        xtg_speak(sbn, 1, "Search radius is large, %d",
-                                  nradsearch);
-                    }
-
-                    if (mnum % 1000 == 0) {
-                        xtg_speak(sbn, 2, "[%d]: Point %9.2f %9.2f %8.2f, the "
-                                  "index is %d (%d %d %d). "
-                                  "Search radius is %d",
-                                  mnum, xcor, ycor, zcor, ib2, icol,
-                                  jrow, klay, nradsearch);
-                    }
-
                     ivector[mnum] = icol;
                     jvector[mnum] = jrow;
                     kvector[mnum] = klay;
-
-
-                }
-                else{
-                    xtg_speak(sbn,2,"INACTIVE CELL "
-                              "Point %9.2f %9.2f %8.2f, the cell index is "
-                              "%d (%d %d %d) but inactive cell",
-                              xcor, ycor, zcor, ib2, icol, jrow, klay);
-
-
                 }
 
                 ibstart  = ib2;
-                countpoints++;
 
             }
             else{
-                xtg_speak(sbn,2,"OUTSIDE Point %9.2f %9.2f %8.2f "
-                          "is outside grid",
-                          xcor, ycor, zcor);
+                /* outside grid */
                 ibstart = ibstart0;
             }
         }
 
     }
 
-    // xtg_speak(sbn,1,"Number of points inside: %d", countpoints);
-
+    logger_info(__LINE__, "Exit from %s", __FUNCTION__);
     return EXIT_SUCCESS;
 
 }
