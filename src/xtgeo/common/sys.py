@@ -178,6 +178,7 @@ class _XTGeoCFile(object):
             ier = _cxtgeo.xtg_get_fbuffer(self._fhandle, buf)
             if ier == 0:
                 self._name.write(buf)  # write to bytesIO instance
+                _cxtgeo.xtg_fflush(self._fhandle)
             else:
                 raise RuntimeError("Could not write stream for unknown reasons")
 
