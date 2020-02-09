@@ -595,13 +595,13 @@ def test_irapbin_export_py():
     x.from_file(TESTSET1, fformat="irap_binary")
 
     t0 = xtg.timer()
-    for i in range(10):
+    for _ in range(10):
         x.to_file("TMP/purecx.gri", fformat="irap_binary", engine="cxtgeo")
     t1 = xtg.timer(t0)
     print("CXTGeo based write: {:3.4f}".format(t1))
 
     t0 = xtg.timer()
-    for i in range(10):
+    for _ in range(10):
         x.to_file("TMP/purepy.gri", fformat="irap_binary", engine="python")
     t2 = xtg.timer(t0)
     print("Python based write: {:3.4f}".format(t2))

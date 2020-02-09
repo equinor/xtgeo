@@ -142,7 +142,7 @@ int surf_export_irap_bin(
     size_t nbyte = sizeof(float);
     int nmax = FORTRANRECLEN / (int)nbyte;
     long nb = mx * my, ib = 0;
-    int nn = 0, nchunk = 1 + nb / nmax;
+    int nn, nchunk = 1 + nb / nmax;
 
     for (i = 0; i < nchunk; i++) {
         int ftn = nmax * (int)nbyte;
