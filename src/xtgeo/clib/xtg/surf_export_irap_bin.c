@@ -44,6 +44,26 @@
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
+
+void _writeint(FILE *fc, int ival, int swap)
+{
+    if (swap) SWAP_INT(ival);
+
+    if (fwrite(&ival, sizeof(int), 1, fc) != 1) {
+        logger_critical(__LINE__, "Cannot write int to file! <%s>", __FUNCTION__);
+    }
+}
+
+void _writefloat(FILE *fc, float fval, int swap)
+{
+    if (swap) SWAP_FLOAT(fval);
+
+    if (fwrite(&fval, sizeof(float), 1, fc) != 1) {
+        logger_critical(__LINE__, "Cannot write float to file! <%s>", __FUNCTION__);
+    }
+}
+
+
 int surf_export_irap_bin(
 			 FILE   *fc,
 			 int    mx,
@@ -60,9 +80,8 @@ int surf_export_irap_bin(
 {
 
     /* local declarations */
-    int     swap, ier, myint, nrec, i, j, ib;
-    float   xmax, ymax, myfloat;
-
+    int     swap, ier, myint, nrec, i, j;
+    float   xmax, ymax;
 
     /* code: */
 
@@ -91,98 +110,48 @@ int surf_export_irap_bin(
      * ---------------------------------------------------------------------------------
      */
 
-    if (fc == NULL) return -1;
+    if (fc == NULL) return EXIT_FAILURE;
 
     /* first line in header */
-    myint=32;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=-996;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=my;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myfloat=xori;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=xmax;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=yori;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=ymax;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=xinc;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=yinc;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myint=32;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
+    _writeint(fc, 32, swap);
+    _writeint(fc, -996, swap);
+    _writeint(fc, my, swap);
+    _writefloat(fc, xori, swap);
+    _writefloat(fc, xmax, swap);
+    _writefloat(fc, yori, swap);
+    _writefloat(fc, ymax, swap);
+    _writefloat(fc, xinc, swap);
+    _writefloat(fc, yinc, swap);
+    _writeint(fc, 32, swap);
 
     /* second line in header */
-    myint=16;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=mx;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myfloat=rot;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=xori;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myfloat=yori;
-    if (swap) SWAP_FLOAT(myfloat); ier=fwrite(&myfloat,sizeof(float),1,fc);
-    myint=16;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
+    _writeint(fc, 16, swap);
+    _writeint(fc, mx, swap);
+    _writefloat(fc, rot, swap);
+    _writefloat(fc, xori, swap);
+    _writefloat(fc, yori, swap);
+    _writeint(fc, 16, swap);
 
     /* third line in header */
-    myint=28;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=0;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-    myint=28;
-    if (swap) SWAP_INT(myint); ier=fwrite(&myint,sizeof(int),1,fc);
-
-
-    /*
-     * ---------------------------------------------------------------------------------
-     * WRITE DATA
-     * These are floats bounded by Fortran records, reading I (x) dir fastest
-     * ---------------------------------------------------------------------------------
-     */
+    _writeint(fc, 28, swap);
+    for (i = 0; i < 7; i++) _writeint(fc, 0, swap);
+    _writeint(fc, 28, swap);
 
     /* record length */
-    nrec = mx*sizeof(float);
+    nrec = mx * sizeof(float);
 
-    ib=0;
+    long ib = 0;
     for (j=1;j<=my;j++) {
 
-        myint = nrec;
-        if (swap) SWAP_INT(myint);
-        ier = fwrite(&myint,sizeof(int),1,fc);
+        _writeint(fc, nrec, swap);
 
         for (i=1;i<=mx;i++) {
-
-            ib = x_ijk2ic(i, j, 1, mx, my, 1, 0); /* conv from C order */
-
-            myfloat=p_map_v[ib];
-            if (myfloat > UNDEF_MAP_LIMIT) myfloat = UNDEF_MAP_IRAPB;
-            if (swap) SWAP_FLOAT(myfloat);
-            ier=fwrite(&myfloat,sizeof(float),1,fc);
+            _writefloat(fc, (float)p_map_v[ib], swap);
             ib++;
         }
 
-        myint = nrec;
-        if (swap) SWAP_INT(myint);
-        ier = fwrite(&myint,sizeof(int),1,fc);
+        _writeint(fc, nrec, swap);
     }
-
 
     return EXIT_SUCCESS;
 
