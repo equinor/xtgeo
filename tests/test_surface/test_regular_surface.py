@@ -220,7 +220,7 @@ def test_zmapasc_irapasc_export():
 
 
 def test_irapasc_export_and_import():
-    """Export Irap ASCII and import again."""
+    """Export Irap ASCII and binary and import again."""
 
     logger.info("Export to Irap Classic and Binary")
 
@@ -242,7 +242,7 @@ def test_irapasc_export_and_import():
 
     fsize = os.path.getsize("TMP/irap2_b.gri")
     logger.info(fsize)
-    tsetup.assert_equal(fsize, 48900)
+    tsetup.assert_equal(fsize, 48196)
 
     # import irap ascii
     y = xtgeo.RegularSurface()
@@ -586,6 +586,33 @@ def test_irapbin_io_loop():
         x.to_file("TMP/troll.gri", fformat="irap_binary")
 
         assert m1 == pytest.approx(m2 - 300)
+
+
+def test_irapbin_export_py():
+    """Export Irapbin with pure python"""
+
+    x = xtgeo.RegularSurface()
+    x.from_file(TESTSET1, fformat="irap_binary")
+
+    t0 = xtg.timer()
+    for _ in range(10):
+        x.to_file("TMP/purecx.gri", fformat="irap_binary", engine="cxtgeo")
+    t1 = xtg.timer(t0)
+    print("CXTGeo based write: {:3.4f}".format(t1))
+
+    t0 = xtg.timer()
+    for _ in range(10):
+        x.to_file("TMP/purepy.gri", fformat="irap_binary", engine="python")
+    t2 = xtg.timer(t0)
+    print("Python based write: {:3.4f}".format(t2))
+    print("Ratio python based / cxtgeo based {:3.4f}".format(t2 / t1))
+
+    s1 = xtgeo.RegularSurface("TMP/purecx.gri")
+    s2 = xtgeo.RegularSurface("TMP/purepy.gri")
+
+    assert s1.values.mean() == s2.values.mean()
+
+    assert s1.values[100, 100] == s2.values[100, 100]
 
 
 def test_distance_from_point():

@@ -4,6 +4,7 @@
 # pylint: disable=protected-access
 from __future__ import division, absolute_import
 from __future__ import print_function
+from struct import pack
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
@@ -53,15 +54,24 @@ def export_irap_ascii(self, mfile):
     fout.close()
 
 
-def export_irap_binary(self, mfile):
+def export_irap_binary(self, mfile, engine="cxtgeo", bstream=False):
     """Export to Irap RMS binary format.
 
     Note that mfile can also a be a BytesIO instance
     """
 
+    if engine == "cxtgeo":
+        _export_irap_binary_cxtgeo(self, mfile)
+    else:
+        _export_irap_binary_python(self, mfile, bstream=bstream)
+
+
+def _export_irap_binary_cxtgeo(self, mfile):
+    """Export to Irap RMS binary format."""
+
     fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
-    vals = self.get_values1d(fill_value=xtgeo.UNDEF)
+    vals = self.get_values1d(fill_value=_cxtgeo.UNDEF_MAP_IRAPB, order="F")
     ier = _cxtgeo.surf_export_irap_bin(
         fout.fhandle,
         self._ncol,
@@ -76,11 +86,66 @@ def export_irap_binary(self, mfile):
     )
 
     if ier != 0:
-        raise RuntimeError(
-            "Export to Irap Binary went wrong, code is {}".format(ier)
-        )
+        raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
 
     fout.close()
+
+
+def _export_irap_binary_python(self, mfile, bstream=False):
+    """Export to Irap RMS binary format but use python only.
+
+    This is approx 2-5 times slower than the C method, but may a be more robust in cases
+    with BytesIO.
+    """
+
+    vals = self.get_values1d(fill_value=_cxtgeo.UNDEF_MAP_IRAPB, order="F")
+
+    ap = pack(
+        ">3i6f3i3f10i",  # > means big endian storage
+        32,
+        -996,
+        self.nrow,
+        self.xori,
+        self.xori + self.xinc * (self.ncol - 1),
+        self.yori,
+        self.yori + self.yinc * (self.nrow - 1),
+        self.xinc,
+        self.yinc,
+        32,
+        16,
+        self.ncol,
+        self.rotation,
+        self.xori,
+        self.yori,
+        16,
+        28,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        28,
+    )
+    inum = self.nrow * self.ncol
+
+    # export to Irap binary in 4000 byte blocks/chunks; 1000 cells for 4byte Float
+    chunks = [1000] * (inum // 1000)
+    if (inum % 1000) > 0:
+        chunks.append(inum % 1000)
+    start = 0
+    for chunk in chunks:
+        ap += pack(">i", chunk * 4)
+        ap += pack(">{:d}f".format(chunk), *vals[start : start + chunk])
+        ap += pack(">i", chunk * 4)
+        start += chunk
+
+    if bstream:
+        mfile.write(ap)
+    else:
+        with open(mfile, "wb") as fout:
+            fout.write(ap)
 
 
 def export_ijxyz_ascii(self, mfile):

@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 from os.path import join
 import io
+import threading
 
 import pytest
 
@@ -30,6 +31,20 @@ if "XTG_SHOW" in os.environ:
 # =============================================================================
 
 TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
+
+
+@tsetup.skipifmac
+@tsetup.skipifwindows
+@tsetup.skipifpython2
+def test_irapbin_bytesio_threading():
+    """Test threading for segfaults"""
+
+    def test_xtgeo():
+        stream = io.BytesIO()
+        surface = xtgeo.RegularSurface()
+        surface.to_file(stream)
+        print("XTGeo succeeded")
+    threading.Timer(1.0, test_xtgeo).start()
 
 
 @tsetup.skipifmac

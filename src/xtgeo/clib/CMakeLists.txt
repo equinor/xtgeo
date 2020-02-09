@@ -2,6 +2,9 @@ message(STATUS "XTGeo library...")
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/xtg)
 
+find_package(Threads)
+
+
 if (MSVC)
   set(XTGFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
   set(CXTGEOFLAGS /Ox /wd4996 /wd4267 /wd4244 /wd4305)
@@ -125,7 +128,7 @@ target_include_directories(${SWIGTARGET} PUBLIC
   )
 target_compile_options(${SWIGTARGET} PUBLIC ${CXTGEOFLAGS})
 
-swig_link_libraries(${LIBRARYNAME} xtg)
+swig_link_libraries(${LIBRARYNAME} xtg ${PTHREAD_LIBRARY})
 
 python_extension_module(${SWIGTARGET})
 
