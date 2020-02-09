@@ -587,15 +587,32 @@ def test_irapbin_io_loop():
 
         assert m1 == pytest.approx(m2 - 300)
 
+
 def test_irapbin_export_py():
     """Export Irapbin with pure python"""
 
-    num = 10
-
     x = xtgeo.RegularSurface()
     x.from_file(TESTSET1, fformat="irap_binary")
-    x.to_file("TMP/purepy.gri", fformat="irap_binary_x")
-    x.to_file("TMP/purec.gri", fformat="irap_binary")
+
+    t0 = xtg.timer()
+    for i in range(10):
+        x.to_file("TMP/purecx.gri", fformat="irap_binary", engine="cxtgeo")
+    t1 = xtg.timer(t0)
+    print("CXTGeo based write: {:3.4f}".format(t1))
+
+    t0 = xtg.timer()
+    for i in range(10):
+        x.to_file("TMP/purepy.gri", fformat="irap_binary", engine="python")
+    t2 = xtg.timer(t0)
+    print("Python based write: {:3.4f}".format(t2))
+    print("Ratio python based / cxtgeo based {:3.4f}".format(t2 / t1))
+
+    s1 = xtgeo.RegularSurface("TMP/purecx.gri")
+    s2 = xtgeo.RegularSurface("TMP/purepy.gri")
+
+    assert s1.values.mean() == s2.values.mean()
+
+    assert s1.values[100, 100] == s2.values[100, 100]
 
 
 def test_distance_from_point():
