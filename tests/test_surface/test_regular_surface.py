@@ -220,7 +220,7 @@ def test_zmapasc_irapasc_export():
 
 
 def test_irapasc_export_and_import():
-    """Export Irap ASCII and import again."""
+    """Export Irap ASCII and binary and import again."""
 
     logger.info("Export to Irap Classic and Binary")
 
@@ -242,7 +242,7 @@ def test_irapasc_export_and_import():
 
     fsize = os.path.getsize("TMP/irap2_b.gri")
     logger.info(fsize)
-    tsetup.assert_equal(fsize, 48900)
+    tsetup.assert_equal(fsize, 48196)
 
     # import irap ascii
     y = xtgeo.RegularSurface()
