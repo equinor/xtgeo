@@ -146,4 +146,5 @@ void logger_critical(int line, const char *fmt, ...)
     va_end(ap);
     sprintf(message, "C! %s", msg);
     _logger_tell(line, message, "CRITICAL", 50);
+    exit(666);
 }
