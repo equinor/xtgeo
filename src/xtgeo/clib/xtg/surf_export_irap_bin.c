@@ -137,22 +137,50 @@ int surf_export_irap_bin(
     for (i = 0; i < 7; i++) _writeint(fc, 0, swap);
     _writeint(fc, 28, swap);
 
+
     /* record length */
-    nrec = mx * sizeof(float);
+    size_t nbyte = sizeof(float);
+    int nmax = FORTRANRECLEN / (int)nbyte;
+    long nb = mx * my, ib = 0;
+    int nn = 0, nchunk = 1 + nb / nmax;
 
-    long ib = 0;
-    for (j=1;j<=my;j++) {
-
-        _writeint(fc, nrec, swap);
-
-        for (i=1;i<=mx;i++) {
-            _writefloat(fc, (float)p_map_v[ib], swap);
-            ib++;
+    for (i = 0; i < nchunk; i++) {
+        int ftn = nmax * (int)nbyte;
+        if (nb == 0) break;
+        if (nb < nmax) {
+            ftn = nb * (int)nbyte;
+            nn = nb;
+        }
+        else{
+            nn = nmax;
         }
 
-        _writeint(fc, nrec, swap);
+        _writeint(fc, ftn, swap);
+        int ic;
+        for (ic = 0; ic < nn; ic++) {
+            _writefloat(fc, (float)p_map_v[ib], swap);
+            ib++;
+            nb--;
+        }
+        _writeint(fc, ftn, swap);
     }
 
     return EXIT_SUCCESS;
 
 }
+
+/* earlier version */
+    /* /\* record length *\/ */
+    /* nrec = mx * sizeof(float); */
+    /* long ib = 0; */
+    /* for (j=1;j<=my;j++) { */
+
+    /*     _writeint(fc, nrec, swap); */
+
+    /*     for (i=1;i<=mx;i++) { */
+    /*         _writefloat(fc, (float)p_map_v[ib], swap); */
+    /*         ib++; */
+    /*     } */
+
+    /*     _writeint(fc, nrec, swap); */
+    /* } */

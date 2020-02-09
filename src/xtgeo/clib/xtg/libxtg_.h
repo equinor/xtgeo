@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define XTGDEBUG 0   /* this is a tmp solution */
-
+#define FORTRANRECLEN 4000  /* Max record length of Fortran files */
 
 void x_fgets(char *, int, FILE *);
 void x_fread (void *, size_t , size_t , FILE *, char *, int);
