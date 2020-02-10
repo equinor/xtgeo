@@ -174,7 +174,10 @@ def swigok():
 
 if not swigok():
     if "SWIG_INSTALL_KOMODO" in os.environ:
-        print("Spesial handling of swig in komodo (Equinor) setup...")
+        print("Hmm KOMODO setup but still cannot find swig... workaround required!")
+        with open(".swigtmp", "w") as tmpfile:
+            tmpfile.write("SWIG")
+
     elif "Linux" in platform.system():
         print("Installing swig from source (tmp) ...")
         subprocess.check_call(  # nosec
