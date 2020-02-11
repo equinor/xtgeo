@@ -98,6 +98,65 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):
     return obj
 
 
+def gridproperty_create(grid, discrete=False, initial=0, name="unknown"):
+
+    """Make an empty GridProperty instance directly based on an existing grid.
+
+    Args:
+        grid (Grid): The grid geometry instance
+        discrete (bool): True if discrete
+        initial (int, float or ndarray): The initial value can be a single number or
+            a full 3D numpy array with correct shape. If one number, that number
+            will be used in all cells.
+        name (str): Name of property
+    Example::
+
+        import xtgeo
+        grd = xtgeo.grid_from_file("my.roff")
+        myporo = xtgeo.gridproperty_create(grd, name="PORO")
+        myfacies = xtgeo.gridproperty_create(grd, discrete=True, initial=1,
+                                             name="Facies")
+
+    Return:
+        GridProperty() instance
+
+    .. versionadded:: 2.6.0
+
+    """
+
+    if isinstance(initial, (int, float)):
+        dtype = np.float64
+        if discrete:
+            dtype = np.int32
+
+        if isinstance(initial, int):
+            initial = int(initial)
+        else:
+            initial = float(initial)
+
+        vals = np.zeros(grid.dimensions, dtype=dtype) + initial
+    else:
+        vals = initial.copy()  # do copy do avoid potensial reference issues
+
+    act = grid.get_actnum(asmasked=True)
+    vals = np.ma.array(vals, mask=np.ma.getmaskarray(act.values))
+
+    obj = GridProperty(
+        ncol=grid.ncol,
+        nrow=grid.nrow,
+        nlay=grid.nlay,
+        discrete=discrete,
+        values=vals,
+        name=name,
+    )
+
+    del act
+
+    grid.append_prop(obj)
+
+    return obj
+
+
 # =============================================================================
 # GridProperty class
 # =============================================================================

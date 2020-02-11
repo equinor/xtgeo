@@ -9,6 +9,7 @@ import pytest
 import numpy as np
 import numpy.ma as npma
 
+import xtgeo
 from xtgeo.xyz import Polygons
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
@@ -78,6 +79,22 @@ def test_create_actnum():
     print(x.ntotal)
 
     assert x.nactive < x.ntotal
+
+
+def test_create_from_grid():
+    """Create a simple property from grid"""
+
+    gg = Grid(testfile5, fformat='egrid')
+    poro = xtgeo.gridproperty_create(gg, name="poro", initial=0.33)
+    assert poro.ncol == gg.ncol
+    assert poro.values.mean() == 0.33
+
+    assert poro.values.dtype.kind == "f"
+
+    faci = xtgeo.gridproperty_create(gg, name="FAC", initial=1, discrete=True)
+    assert faci.nlay == gg.nlay
+
+    assert faci.values.dtype.kind == "i"
 
 
 def test_roffbin_import1():
