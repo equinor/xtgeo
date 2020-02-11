@@ -164,7 +164,6 @@ from xtgeo.grid3d.grid import grid_from_roxar
 
 from xtgeo.grid3d.grid_property import gridproperty_from_file
 from xtgeo.grid3d.grid_property import gridproperty_from_roxar
-from xtgeo.grid3d.grid_property import gridproperty_create
 
 from xtgeo.cube.cube1 import cube_from_file
 from xtgeo.cube.cube1 import cube_from_roxar

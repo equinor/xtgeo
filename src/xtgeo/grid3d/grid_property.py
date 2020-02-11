@@ -25,6 +25,7 @@ import numpy as np
 import xtgeo
 
 from ._grid3d import Grid3D
+from . import _gridprop_etc
 from . import _gridprop_op1
 from . import _gridprop_import
 from . import _gridprop_roxapi
@@ -98,65 +99,6 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):
     return obj
 
 
-def gridproperty_create(grid, discrete=False, initial=0, name="unknown"):
-
-    """Make an empty GridProperty instance directly based on an existing grid.
-
-    Args:
-        grid (Grid): The grid geometry instance
-        discrete (bool): True if discrete
-        initial (int, float or ndarray): The initial value can be a single number or
-            a full 3D numpy array with correct shape. If one number, that number
-            will be used in all cells.
-        name (str): Name of property
-    Example::
-
-        import xtgeo
-        grd = xtgeo.grid_from_file("my.roff")
-        myporo = xtgeo.gridproperty_create(grd, name="PORO")
-        myfacies = xtgeo.gridproperty_create(grd, discrete=True, initial=1,
-                                             name="Facies")
-
-    Return:
-        GridProperty() instance
-
-    .. versionadded:: 2.6.0
-
-    """
-
-    if isinstance(initial, (int, float)):
-        dtype = np.float64
-        if discrete:
-            dtype = np.int32
-
-        if isinstance(initial, int):
-            initial = int(initial)
-        else:
-            initial = float(initial)
-
-        vals = np.zeros(grid.dimensions, dtype=dtype) + initial
-    else:
-        vals = initial.copy()  # do copy do avoid potensial reference issues
-
-    act = grid.get_actnum(asmasked=True)
-    vals = np.ma.array(vals, mask=np.ma.getmaskarray(act.values))
-
-    obj = GridProperty(
-        ncol=grid.ncol,
-        nrow=grid.nrow,
-        nlay=grid.nlay,
-        discrete=discrete,
-        values=vals,
-        name=name,
-    )
-
-    del act
-
-    grid.append_prop(obj)
-
-    return obj
-
-
 # =============================================================================
 # GridProperty class
 # =============================================================================
@@ -205,6 +147,13 @@ class GridProperty(Grid3D):
 
         myprop = GridProperty('emerald.roff', name='PORO')
 
+        # or create properties from a Grid() instance
+
+        mygrid = Grid("grid.roff")
+        myprop1 = GridProperty(mygrid, name='PORO')
+        myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1)
+
+    .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
 
     """
 
@@ -212,79 +161,37 @@ class GridProperty(Grid3D):
 
         super(GridProperty, self).__init__(*args, **kwargs)
 
-        ncol = kwargs.get("ncol", 5)
-        nrow = kwargs.get("nrow", 12)
-        nlay = kwargs.get("nlay", 2)
-        values = kwargs.get("values", None)
-        name = kwargs.get("name", "unknown")
-        date = kwargs.get("date", None)
-        discrete = kwargs.get("discrete", False)
-        grid = kwargs.get("grid", None)
-        fracture = kwargs.get("fracture", False)
+        # instance attributes defaults:
+        self._ncol = kwargs.get("ncol", 5)
+        self._nrow = kwargs.get("nrow", 12)
+        self._nlay = kwargs.get("nlay", 2)
+        self._name = kwargs.get("name", "unknown")
+        self._date = kwargs.get("date", None)
+        self._isdiscrete = kwargs.get("discrete", False)
+        self._geometry = kwargs.get("grid", None)
+        self._fracture = kwargs.get("fracture", False)
 
-        self._ncol = ncol
-        self._nrow = nrow
-        self._nlay = nlay
-
-        self._isdiscrete = discrete
-
-        self._dualporo = False
-        self._dualperm = False
-
-        # this is a link to the Grid instance, _only if needed_. It may
-        # potentially make trouble for garbage collection
-        self._geometry = None
-
-        testmask = False
-        if values is None:
-            values = np.ma.zeros((ncol, nrow, nlay))
-            values += 99
-            testmask = True
-
-        if values.shape != (ncol, nrow, nlay):
-            values = values.reshape((ncol, nrow, nlay), order="C")
-
-        if not isinstance(values, np.ma.MaskedArray):
-            values = np.ma.array(values)
-
-        self._values = values  # numpy version of properties (as 3D array)
-
-        self._name = name  # property name
-        self._date = None  # property may have an assosiated date
-        self._codes = {}  # code dictionary (for discrete)
+        self._dualporo = kwargs.get("dualporo", False)
+        self._dualperm = kwargs.get("dualperm", False)
+        self._codes = kwargs.get("codes", dict())  # code dictionary (for discrete)
         self._filesrc = None
-
         self._actnum_indices = None
-
         self._roxorigin = False  # true if the object comes from the ROXAPI
+        self._roxar_dtype = kwargs.get("roxar_dtype", np.float32)
 
-        self._roxar_dtype = np.float32
-        if self._isdiscrete:
-            self._values = self._values.astype(np.int32)
-            self._roxar_dtype = np.uint8
-
-        if testmask:
-            # make some undef cells (for test)
-            self._values[0:4, 0, 0:2] = xtgeo.UNDEF
-            # make it masked
-            self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
+        self._values = kwargs.get("values", None)
 
         if len(args) == 1:
-            # make instance through file import
+            # make instance through grid instance or file import
+            if isinstance(args[0], xtgeo.grid3d.Grid):
+                _gridprop_etc.gridproperty_fromgrid(self, args[0])
 
-            logger.debug("Import from file...")
-            fformat = kwargs.get("fformat", "guess")
-            name = kwargs.get("name", "unknown")
-            date = kwargs.get("date", None)
-            grid = kwargs.get("grid", None)
-            self.from_file(
-                args[0],
-                fformat=fformat,
-                name=name,
-                grid=grid,
-                date=date,
-                fracture=fracture,
-            )
+            elif isinstance(args[0], str):
+                _gridprop_etc.gridproperty_fromfile(self, args[0], **kwargs)
+
+        else:
+            # make instance purely from kwargs spec
+            _gridprop_etc.gridproperty_fromspec(self, **kwargs)
 
     def __del__(self):
         # logger.info("DELETING property instance %s", self.name)
@@ -926,7 +833,7 @@ class GridProperty(Grid3D):
         res = np.ma.masked_equal(res, 0)  # mask all
 
         # get indices where defined (note the , after valids)
-        valids, = np.where(~np.isnan(iarr))
+        (valids,) = np.where(~np.isnan(iarr))
 
         iarr = iarr[~np.isnan(iarr)]
         jarr = jarr[~np.isnan(jarr)]
@@ -976,7 +883,7 @@ class GridProperty(Grid3D):
             uniq = np.unique(val).tolist()
             codes = dict(zip(uniq, uniq))
             codes = {k: str(v) for k, v in codes.items()}  # val as strings
-            self.codes = codes
+            self._codes = codes
             self._roxar_dtype = np.uint16
         else:
             logger.info("No need to convert, already discrete")
