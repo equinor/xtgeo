@@ -1819,6 +1819,45 @@ int grd3d_point_in_cell(
     int   debug
     );
 
+int grd3d_points_ijk_cells(
+    double *swig_np_dbl_in_v1,    // *xvec
+    long n_swig_np_dbl_in_v1,     // nxvec
+    double *swig_np_dbl_in_v2,    // *yvec
+    long n_swig_np_dbl_in_v2,     // nyvec
+    double *swig_np_dbl_in_v3,    // *zvec
+    long n_swig_np_dbl_in_v3,     // nzvec
+
+    int mcol,
+    int mrow,
+    double xori,
+    double yori,
+    double xinc,
+    double yinc,
+    double rotation,
+    int yflip,
+    double *maptopi,
+    double *maptopj,
+    double *mapbasi,
+    double *mapbasj,
+
+    int nx,
+    int ny,
+    int nz,
+    double *p_coor_v,
+    double *p_zcorn_v,
+    int *p_actnum_v,
+    double *p_val_v,
+    double *p_zcornone_v,
+    int *p_actnumone_v,
+
+    int *swig_np_int_aout_v1,     // *ivec
+    long n_swig_np_int_aout_v1,   // nivec
+    int *swig_np_int_aout_v2,     // *jvec
+    long n_swig_np_int_aout_v2,   // njvec
+    int *swig_np_int_aout_v3,     // *kvec
+    long n_swig_np_int_aout_v3    // nkvec
+    );
+
 int grd3d_get_randomline(
     double *swig_np_dbl_in_v1,  // *xvec,
     long n_swig_np_dbl_in_v1,   // nxvec,
