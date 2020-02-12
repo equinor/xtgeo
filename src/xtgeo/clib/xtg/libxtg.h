@@ -1846,9 +1846,12 @@ int grd3d_points_ijk_cells(
     double *p_coor_v,
     double *p_zcorn_v,
     int *p_actnum_v,
-    double *p_val_v,
+
     double *p_zcornone_v,
     int *p_actnumone_v,
+
+    int actnumoption,
+    int flip,
 
     int *swig_np_int_aout_v1,     // *ivec
     long n_swig_np_int_aout_v1,   // nivec

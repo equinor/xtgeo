@@ -26,7 +26,8 @@
  *    p_val_v             i     3D Grid values
  *    p_zcornone_v        i     Grid ZCORN for onelayer grid
  *    p_acnumone_v        i     Grid ACTNUM for onelayer grid
- *
+ *    actnumoption        i     if 1, then only report if cell is active
+ *    flip                i     1, or -1 if right handed with K down
  *    ivec, jvec, kvec    o     IJK arrays
  *    n*vec               i     array lengths (for swig/numpies)
  *
@@ -44,6 +45,7 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
+#include <math.h>
 
 /*
 ****************************************************************************************
@@ -106,45 +108,48 @@ void _get_ij_range2(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, i
 }
 
 
-long _grd3d_point_in_cell(int ic, int jc, double xc, double yc,
-                          double zc, int nx, int ny, int   nz,
-                          double *p_coor_v, double *p_zcorn_v)
+long _grd3d_point_in_cell(int ic, int jc, int kc, double xc, double yc,
+                          double zc, int nx, int ny, int nz,
+                          double *p_coor_v, double *p_zcorn_v, int *score, int flip,
+                          int dbg)
 
 {
     /*
      * This is a special version of the finding a point in cell, optimised
-     * for this work flow. The search will basically be in vertical direction.
+     * for this work flow.
      *
-     * ic, jc        Proposed cell I J (estimated by previous steps in work flow)
+     * ic, jc, kc    Proposed cell I J (estimated by previous steps in work flow)
      * xc, yc, zc    Point to evaluate if inside cell
      * nx, ny, nz    Dimensions
      * p_coor_v      Coordinates (grid)
      * p_zcorn_v     ZCORN (grid)
+     * score         This is a number telling how good the match is, going from -1 to 24
      */
 
 
-    int k;
     long ib;
 
-    for (k = 1; k <= nz; k++) {
-        ib = x_ijk2ib(ic, jc, k, nx, ny, nz, 0);
-        /* get the corner for the cell */
-        double corners[24];
-        grd3d_corners(ic, jc, k, nx, ny, nz, p_coor_v, p_zcorn_v,
-                      corners, XTGDEBUG);
+    ib = x_ijk2ib(ic, jc, kc, nx, ny, nz, 0);
 
-        if (x_chk_point_in_cell(xc, yc, zc, corners, 1, XTGDEBUG) > 0) {
-            return ib;
-        }
+    /* get the corner for the cell */
+    double corners[24];
+    grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, p_zcorn_v,
+                  corners, XTGDEBUG);
+
+    *score = x_chk_point_in_octahedron(xc, yc, zc, corners, flip);
+
+
+    if (*score > 12) {
+        return ib;
     }
 
     return -1; /* if nothing found */
 }
 
 
-void _point_val_ij(int *ires, int *jres, double xc, double yc, double zc, int nx,
-                   int ny, double *p_coor_v, double *p_zcornone_v,
-                   int i1, int i2, int j1, int j2)
+long _point_val_ij(double xc, double yc, double zc, int nx, int ny, double *p_coor_v,
+                   double *p_zcornone_v, int i1, int i2, int j1, int j2, int flip,
+                   int dbg)
 {
     /*
      * The purpose here is to search the one layer grid for IJ location of point XYZ
@@ -162,21 +167,73 @@ void _point_val_ij(int *ires, int *jres, double xc, double yc, double zc, int nx
 
     int ii, jj;
 
-    *ires = UNDEF_INT;
-    *jres = UNDEF_INT;
+    int score;
 
+    long ib_alternatives[24];
+    int ibn;
+    for (ibn = 0; ibn < 24; ibn++) ib_alternatives[ibn] = -1;
+
+    int nnn = 0;
     for (jj = j1; jj <= j2; jj++) {
         for (ii = i1; ii <= i2; ii++) {
 
-            long ibfound = _grd3d_point_in_cell(ii, jj, xc, yc, zc, nx, ny, 1,
-                                                p_coor_v, p_zcornone_v);
-            if (ibfound >= 0) {
-                int kres;
-                x_ib2ijk(ibfound, ires, jres, &kres, nx, ny, 1, 0);
-                return;
+            score = 0;
+            long ibfound = _grd3d_point_in_cell(ii, jj, 1, xc, yc, zc, nx, ny, 1,
+                                                p_coor_v, p_zcornone_v, &score, flip,
+                                                dbg);
+
+            if (score > 12) {
+                ib_alternatives[nnn++] = ibfound;
             }
         }
     }
+
+    if (nnn > 0) {
+        return ib_alternatives[nnn / 2];
+    }
+
+    return -1;
+
+}
+
+
+long _point_val_ijk(double xc, double yc, double zc, int nx, int ny, int nz,
+                    double *p_coor_v, double *p_zcorn_v, int iin, int jin, int flip,
+                    int dbg)
+{
+    /*
+     * The purpose here is to search the final layer grid for K location of point XYZ
+     *
+     * xc, yc, zc       Points to evaluate if inside
+     * nx, ny, nz       Dimensions
+     * p_coor_v         Coordinates COORD
+     * p_zcorn_v        Coordinates ZCORN
+     * iin, jin         I J column
+     */
+
+    int score;
+
+    long ib_alternatives[24];
+    int ibn;
+    for (ibn = 0; ibn < 24; ibn++) ib_alternatives[ibn] = -1;
+
+
+    int k;
+    int nnn = 0;
+    for (k = 1; k <= nz; k++) {
+        long ibfound = _grd3d_point_in_cell(iin, jin, k, xc, yc, zc, nx, ny, nz,
+                                            p_coor_v, p_zcorn_v, &score, flip, dbg);
+
+        if (score > 12) {
+            ib_alternatives[nnn++] = ibfound;
+        }
+    }
+
+    if (nnn > 0) {
+        return ib_alternatives[nnn / 2];
+    }
+
+    return -1;
 }
 
 /*
@@ -209,12 +266,16 @@ int grd3d_points_ijk_cells(
     int nx,
     int ny,
     int nz,
+
     double *p_coor_v,
     double *p_zcorn_v,
     int *p_actnum_v,
-    double *p_val_v,
+
     double *p_zcornone_v,
     int *p_actnumone_v,
+
+    int actnumoption,
+    int flip,
 
     int *ivec,
     long nivec,
@@ -245,6 +306,9 @@ int grd3d_points_ijk_cells(
         double yc = yvec[ic];
         double zc = zvec[ic];
 
+        int dbg = 0;
+        /* if (fabs(xc - 464266.16874143924) < 0.0000001) dbg = 1; */
+
         /*
          * first get an approximate I and J range based on these maps
          * This is based on xc, yc postion in the regular map
@@ -259,27 +323,36 @@ int grd3d_points_ijk_cells(
          * This should pin I J coordinate
          */
 
-        int ires, jres;
-        _point_val_ij(&ires, &jres, xc, yc, zc, nx, ny, p_coor_v, p_zcornone_v,
-                      i1, i2, j1, j2);
+        long ibfound = _point_val_ij(xc, yc, zc, nx, ny, p_coor_v, p_zcornone_v,
+                                     i1, i2, j1, j2, flip, dbg);
 
-        ivec[ic] = ires;
-        jvec[ic] = jres;
+        ivec[ic] = UNDEF_INT;
+        jvec[ic] = UNDEF_INT;
         kvec[ic] = UNDEF_INT;
 
-        if (ires < UNDEF_INT_LIMIT) {
-
+        if (ibfound >= 0) {
+            if (dbg) logger_info(__LINE__, "Use Return IB %d", ib);
             /*
              * means that the  X Y Z point is somewhere inside
              * so now it is time to find exact K location
              */
+            int ires, jres, kres;
+            x_ib2ijk(ibfound, &ires, &jres, &kres, nx, ny, 1, 0);
 
-            long ibfound = _grd3d_point_in_cell(ires, jres, xc, yc, zc, nx, ny, nz,
-                                                p_coor_v, p_zcorn_v);
-            if (ibfound >= 0) {
-                int kres;
-                x_ib2ijk(ibfound, &ires, &jres, &kres, nx, ny, nz, 0);
+            long ibfound2 = _point_val_ijk(xc, yc, zc, nx, ny, nz, p_coor_v,
+                                           p_zcorn_v, ires, jres, flip, dbg);
+            if (ibfound2 >= 0) {
+                x_ib2ijk(ibfound2, &ires, &jres, &kres, nx, ny, nz, 0);
+                ivec[ic] = ires;
+                jvec[ic] = jres;
                 kvec[ic] = kres;
+
+                if (actnumoption == 1 && p_actnum_v[ibfound2] == 0) {
+                    /*  reset to undef in inactivecell */
+                    ivec[ic] = UNDEF_INT;
+                    jvec[ic] = UNDEF_INT;
+                    kvec[ic] = UNDEF_INT;
+                }
             }
         }
     }
