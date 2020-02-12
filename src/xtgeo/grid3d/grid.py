@@ -1089,6 +1089,27 @@ class Grid(Grid3D):
         # return the objects
         return ixc, jyc, kzc
 
+    def get_ijk_from_points(self, points, activeonly=True, zerobased=False):
+        """Returns a list/dataframe of cell indices based on a Points()
+        instance
+
+        If a point is outside the grid, Undef values are returned
+
+        Args:
+            points (Points): A XTGeo Points instance
+            activeonly: If True, UNDEF cells are not included
+            zerobased: If True, counter start from 0, otherwise 1 (default=1).
+
+        .. versionadded:: 2.6.0
+        """
+
+        ijklist = _grid_etc1.get_ijk_from_points(
+            self, points, activeonly=activeonly, zerobased=zerobased
+        )
+
+        # return the objects
+        return ijklist
+
     def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True, mask=None):
         """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,
         ycoordinate, zcoordinate.

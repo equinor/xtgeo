@@ -225,6 +225,12 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     return ix, jy, kz
 
 
+def get_ijk_from_points(self, points, activeonly=True, zerobased=False):
+    """Get I J K as a list of tuples or a dataframe"""
+
+
+
+
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
 
