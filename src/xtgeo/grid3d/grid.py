@@ -1089,25 +1089,40 @@ class Grid(Grid3D):
         # return the objects
         return ixc, jyc, kzc
 
-    def get_ijk_from_points(self, points, activeonly=True, zerobased=False):
+    def get_ijk_from_points(
+        self,
+        points,
+        activeonly=True,
+        zerobased=False,
+        dataframe=True,
+        includepoints=True,
+    ):
         """Returns a list/dataframe of cell indices based on a Points()
         instance
 
-        If a point is outside the grid, Undef values are returned
+        If a point is outside the grid, -1 values are returned
 
         Args:
             points (Points): A XTGeo Points instance
-            activeonly: If True, UNDEF cells are not included
-            zerobased: If True, counter start from 0, otherwise 1 (default=1).
+            activeonly (bool): If True, UNDEF cells are not included
+            zerobased (bool): If True, counter start from 0, otherwise 1 (default=1).
+            dataframe (bool): If True result is Pandas dataframe, otherwise a list
+                of tuples
+            includepoints (bool): If True, include the input points in result
 
         .. versionadded:: 2.6.0
         """
 
         ijklist = _grid_etc1.get_ijk_from_points(
-            self, points, activeonly=activeonly, zerobased=zerobased
+            self,
+            points,
+            activeonly=activeonly,
+            zerobased=zerobased,
+            dataframe=dataframe,
+            includepoints=includepoints,
         )
 
-        # return the objects
+        # return the dataframe or list of tuples
         return ijklist
 
     def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True, mask=None):
