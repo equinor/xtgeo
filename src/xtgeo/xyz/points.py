@@ -89,6 +89,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         # show the Pandas dataframe
         print(xp.dataframe)
 
+    You can also make points from list of tuples in Python::
+
+        plist = [(234, 556, 12), (235, 559, 14), (255, 577, 12)]
+        mypoints = Points(plist)
+
     Default column names in the dataframe:
 
     * X_UTME: UTM X coordinate  as self._xname
@@ -224,8 +229,9 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         # currently a non-published method
 
-        self._df = pd.DataFrame(np.random.rand(nrandom, 3),
-                                columns=[self._xname, self._yname, self._zname])
+        self._df = pd.DataFrame(
+            np.random.rand(nrandom, 3), columns=[self._xname, self._yname, self._zname]
+        )
 
     def copy(self, stype="points"):
         """Deep copy of a Points instance.
@@ -271,6 +277,26 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         super(Points, self).from_file(pfile, fformat=fformat)
 
         self._df.dropna(inplace=True)
+
+    def from_list(self, plist):
+        """Import points from list.
+
+        [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...]
+
+        It is currently not much error checking that lists/tuples are consistent, e.g.
+        if there always is either 3 or 4 elements per tuple, or that 4 number is
+        an integer.
+
+        Args:
+            plist (str): List of tuples, each tuple is length 3 or 4
+
+        Raises:
+            ValueError: If something is wrong with input
+
+        .. versionadded: 2.6
+
+        """
+        super(Points, self).from_list(plist)
 
     def to_file(
         self,

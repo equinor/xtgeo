@@ -54,6 +54,19 @@ def test_xyz():
     assert ok is True
 
 
+def test_custom_points():
+    """Make points from list of tuples."""
+
+    plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
+
+    mypoints = Points(plist)
+
+    x0 = mypoints.dataframe["X_UTME"].values[0]
+    z2 = mypoints.dataframe["Z_TVDSS"].values[2]
+    assert x0 == 234
+    assert z2 == 12
+
+
 def test_import():
     """Import XYZ points from file."""
 
