@@ -38,7 +38,7 @@
  ***************************************************************************************
  */
 
-
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
@@ -52,13 +52,10 @@
 void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, int mcol,
                    int mrow, double xori, double yori, double xinc, double yinc,
                    int yflip, double rotation, double *maptopi, double *maptopj,
-                   double *mapbasi, double *mapbasj, int debug)
+                   double *mapbasi, double *mapbasj)
 {
-    char sbn[24] = "_get_ijrange";
     long nmap;
     int itop, jtop, ibas, jbas, ii1, ii2, jj1, jj2;
-
-    xtgverbose(debug);
 
     nmap = mcol * mrow;
 
@@ -72,8 +69,6 @@ void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, in
     jbas = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc,
                               yflip, rotation, mapbasj, nmap);
 
-    if (debug > 1) xtg_speak(sbn, 2, "ITOP IBAS  JTOP JBAS %d %d  %d %d...",
-                             itop, ibas, jtop, jbas);
 
     if (itop <= ibas){
         ii1 = itop;
@@ -149,8 +144,7 @@ int grd3d_get_randomline(
                          double *values,
                          long nvalues,
 
-                         int option,
-                         int debug
+                         int option
                          )
 {
     /* locals */
@@ -160,9 +154,9 @@ int grd3d_get_randomline(
     double zsam, xc, yc, zc;
     double value, *p_dummy_v = NULL;
 
-    xtgverbose(debug);
+    logger_init(__FILE__, __FUNCTION__);
 
-    xtg_speak(sbn, 1, "Entering routine %s", sbn);
+    logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 
     zsam = (zmax - zmin) / (nzsam - 1);
 
@@ -174,17 +168,12 @@ int grd3d_get_randomline(
     k1 = 1;
     k2 = nz;
 
-    xtg_speak(sbn, 2, "Total number of XY poinst and Z points are %d %d", nxvec, nzsam);
-
     for (ic = 0; ic < nxvec; ic++) {
         xc = xvec[ic];
         yc = yvec[ic];
-        if (debug > 2) xtg_speak(sbn, 3, "Column %d... X Y %f12.2 %f12.2", ic, xc, yc);
 
         _get_ij_range(&i1, &i2, &j1, &j2, xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                      yflip, rotation, maptopi, maptopj, mapbasi, mapbasj, debug);
-
-        if (debug > 2) xtg_speak(sbn, 3, "I J range %d %d %d %d...", i1, i2, j1, j2);
+                      yflip, rotation, maptopi, maptopj, mapbasi, mapbasj);
 
         for (izc = 0; izc < nzsam; izc++) {
 
@@ -193,18 +182,16 @@ int grd3d_get_randomline(
             /* check the onelayer version of the grid first (speed up) */
             ier = grd3d_point_val_crange(xc, yc, zc, nx, ny, 1, p_coor_v,
                                          p_zcornone_v, p_actnumone_v, p_dummy_v, &value,
-                                         i1, i2, j1, j2, 1, 1, &ibs1, -1, debug);
+                                         i1, i2, j1, j2, 1, 1, &ibs1, -1, XTGDEBUG);
 
 
             if (ier == 0) {
 
-                if (debug > 2 && ier == 0) xtg_speak(sbn, 3, "Trying K1 K2 %d %d",
-                                                     k1, k2);
 
                 ios = grd3d_point_val_crange(xc, yc, zc, nx, ny, nz, p_coor_v,
                                              p_zcorn_v, p_actnum_v, p_val_v,
                                              &value, i1, i2, j1, j2, k1, k2,
-                                             &ibs2, 0, debug);
+                                             &ibs2, 0, XTGDEBUG);
 
                 if (ios == 0) {
                     values[ib++] = value;
@@ -222,7 +209,7 @@ int grd3d_get_randomline(
         }
     }
 
-    xtg_speak(sbn, 1, "Exit from routine %s", sbn);
+    logger_info(__LINE__, "Exit from routine %s", __FUNCTION__);
 
     return EXIT_SUCCESS;
 
