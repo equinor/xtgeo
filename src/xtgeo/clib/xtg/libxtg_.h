@@ -106,6 +106,14 @@ int x_chk_point_in_cell (
     int   debug
     );
 
+int x_chk_point_in_octahedron (
+    double x,
+    double y,
+    double z,
+    double *coor,
+    int flip
+    );
+
 void x_2d_rect_corners(
     double x, double y, double xinc, double yinc,
     double rot,
