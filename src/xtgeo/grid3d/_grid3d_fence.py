@@ -88,8 +88,7 @@ def get_randomline(
         self._tmp["onegrid"]._p_actnum_v,
 
         nsamples,
-        0,
-        XTGDEBUG
+        0
     )
     logger.info("Running C routine to get randomline... DONE")
 

@@ -1893,8 +1893,7 @@ int grd3d_get_randomline(
     double *swig_np_dbl_aout_v1,  // *values
     long n_swig_np_dbl_aout_v1,  // nvalues
 
-    int option,
-    int debug
+    int option
     );
 
 void grd3d_collapse_inact (
