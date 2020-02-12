@@ -1012,8 +1012,9 @@ def reverse_row_axis(self, ijk_handedness=None):
         return
 
     # do it for properties
-    for prp in self._props.props:
-        prp.values = prp.values[:, ::-1, :]
+    if self._props.props:
+        for prp in self._props.props:
+            prp.values = prp.values[:, ::-1, :]
 
     logger.info("Reversing of rows done")
 
