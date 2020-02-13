@@ -9,6 +9,7 @@ from collections import OrderedDict
 from copy import deepcopy
 
 import six
+import pandas as pd
 
 import xtgeo
 from xtgeo.common import XTGeoDialog, XTGDescription
@@ -41,13 +42,19 @@ class XYZ(object):
         # ~ ('str', 'int', 'float', 'bool')
         self._attrs = OrderedDict()
 
-        if len(args) >= 1:
-            # make instance from file import
-            pfile = args[0]
-            if isinstance(pfile, str):
+        if len(args) == 1:
+            if isinstance(args[0], str):
+                # make instance from file import
+                pfile = args[0]
                 logger.info("Instance from file")
                 fformat = kwargs.get("fformat", "guess")
                 self.from_file(pfile, fformat=fformat)
+
+            if isinstance(args[0], list):
+                # make instance from a list of 3 or 4 tuples
+                plist = args[0]
+                logger.info("Instance from list")
+                self.from_list(plist)
 
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
 
@@ -146,6 +153,40 @@ class XYZ(object):
         self._filesrc = pfile
 
         return self
+
+    @abc.abstractmethod
+    def from_list(self, plist):
+        """Import Points or Polygons from a list.
+
+        [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...]
+
+        It is currently not much error checking that lists/tuples are consistent, e.g.
+        if there always is either 3 or 4 elements per tuple, or that 4 number is
+        an integer.
+
+        Args:
+            plist (str): List of tuples, each tuple is length 3 or 4
+
+        Raises:
+            ValueError: If something is wrong with input
+
+        .. versionadded: 2.6
+        """
+
+        first = plist[0]
+        if len(first) == 3:
+            self._df = pd.DataFrame(
+                plist, columns=[self._xname, self._yname, self._zname]
+            )
+
+        elif len(first) == 4:
+            self._df = pd.DataFrame(
+                plist, columns=[self._xname, self._yname, self._zname, self._pname]
+            )
+        else:
+            raise ValueError(
+                "Wrong length detected of first tuple: {}".format(len(first))
+            )
 
     @abc.abstractmethod
     def to_file(

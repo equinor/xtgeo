@@ -43,7 +43,7 @@ def dataframe(
             proplist["KZ"] = kz.get_active_npvalues1d()
         else:
             logger.info("All cells (1)")
-            act = master.get_actnum()
+            act = master.get_actnum(dual=True)
             ix, jy, kz = grid.get_ijk(asmasked=False)
             proplist["ACTNUM"] = act.values1d
             proplist["IX"] = ix.values1d

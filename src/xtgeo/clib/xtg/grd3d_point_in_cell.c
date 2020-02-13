@@ -5,16 +5,15 @@
  * Created:   2002?
  * Updates:   2015-09-11 Polished and also expanded to see in 2D only
  * #############################################################################
- * Find which cell (ib) that contains the current point. An input ib gives 
+ * Find which cell (ib) that contains the current point. An input ib gives
  * a much faster search if the next point is close to the first one
  *
  * Arguments:
  *     ibstart          which IB to start search from
- *     kzonly           A number in [1..nz] if only looking within a 
+ *     kzonly           A number in [1..nz] if only looking within a
  *                      cell layer, 0 otherwise
  *     x,y,z            input points. If z is -999 it means a 2D search only
  *     nx..nz           grid dimensions
- *     p_xp_v p_yp_v    polygon array (X Y)
  *     p_coord_v        grid coords
  *     p_zcorn_v        grid zcorn
  *     p_actnum_v       grid active cell indicator
@@ -42,11 +41,11 @@
  *     ---> I
  *
  *   0 1 2  ------------------ 3 4 5     12 13 14  ------------------ 15 16  17
- *          |                |		            |                |	      
- *          |     TOP        |		            |     BOT        |	      
- *          |                |		            |                |	      
+ *          |                |		            |                |
+ *          |     TOP        |		            |     BOT        |
+ *          |                |		            |                |
  *   6 7 8  ----------------- 9 10 11	  18 19 20  -----------------  21 22 23
- * 
+ *
  *     |
  *     v J
  *
@@ -75,7 +74,7 @@ int grd3d_point_in_cell(
 			int   option,
 			int   debug
 			)
-    
+
 {
     /* locals */
     int i, j, k, ib, inside, irad;
@@ -115,7 +114,7 @@ int grd3d_point_in_cell(
     for (irad=0; irad<=(maxrad+1); irad++) {
 
 	xtg_speak(s,2,"Search radi %d",irad);
-	
+
 	if (irad>0) {
 	    i1-=1;
 	    i2+=1;
@@ -124,7 +123,7 @@ int grd3d_point_in_cell(
 	    k1-=1;
 	    k2+=1;
 	}
-	
+
 	if (sflag>0 && irad>maxrad) {
 	    i1=1;
 	    i2=nx;
@@ -133,7 +132,7 @@ int grd3d_point_in_cell(
 	    k1=1;
 	    k2=nz;
 	}
-	
+
 	*nradsearch=irad;
 
 	if (i1<1)  i1=1;
@@ -142,21 +141,21 @@ int grd3d_point_in_cell(
 	if (i2>nx) i2=nx;
 	if (j2>ny) j2=ny;
 	if (k2>nz) k2=nz;
-	
+
 	if (kzonly>0) {
 	    k1=kzonly;
 	    k2=kzonly;
 	}
 
 	if (debug>3) {
-	    xtg_speak(s,4,"I1 I2  J1 J2  K1 K2  %d %d  %d %d  %d %d", 
+	    xtg_speak(s,4,"I1 I2  J1 J2  K1 K2  %d %d  %d %d  %d %d",
 		      i1,i2,j1,j2,k1,k2);
 	}
 
 	for (k = k1; k <= k2; k++) {
 	    for (j = j1; j <= j2; j++) {
 		for (i = i1; i <= i2; i++) {
-		    
+
 		    if (debug>3) {
 			xtg_speak(s,3,"Cell IJK: %d %d %d",i,j,k);
 		    }
@@ -170,10 +169,10 @@ int grd3d_point_in_cell(
 		    if (option==0) {
 			/* 3D cell */
 			inside=x_chk_point_in_cell(x,y,z,corners,1,debug);
-			
+
 		    }
 		    else {
-			/*2D view ...  make a closed polygon in XY 
+			/*2D view ...  make a closed polygon in XY
 			  from the corners */
 			polx[0]=0.5*(corners[0]+corners[12]);
 			poly[0]=0.5*(corners[1]+corners[13]);
@@ -185,7 +184,7 @@ int grd3d_point_in_cell(
 			poly[3]=0.5*(corners[7]+corners[19]);
 			polx[4]=polx[0];
 			poly[4]=poly[0];
-			
+
 			if (debug>2) {
 			    for (m=0;m<5;m++) {
 				xtg_speak(s,3,"Corner no %d:  %9.2f   %9.2f ",
@@ -200,13 +199,13 @@ int grd3d_point_in_cell(
 			    xtg_speak(s,3,"Inside status: %d", inside);
 			}
 		    }
-		    
+
 		    if (inside > 0) {
 			xtg_speak(s,2,"Found at IJK: %d %d %d",i,j,k);
-			return ib;		
+			return ib;
 		    }
-		    
-		} 				   
+
+		}
 	    }
 	}
 
@@ -216,6 +215,3 @@ int grd3d_point_in_cell(
 
     return -1; /* if nothing found */
 }
-
-
-

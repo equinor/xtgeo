@@ -365,6 +365,27 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self._df.dropna(axis=0, inplace=True)
             self._df.reset_index(inplace=True, drop=True)
 
+    def from_list(self, plist):
+        """Import points from list.
+
+        [(x1, y1, z1, id1), (x2, y2, z2, id2), ...]
+
+        It is currently not much error checking that lists/tuples are consistent, e.g.
+        if there always is either 3 or 4 elements per tuple, or that 4 number is
+        an integer.
+
+        Args:
+            plist (str): List of tuples, each tuple is length 3 or 4
+
+        Raises:
+            ValueError: If something is wrong with input
+
+        .. versionadded: 2.6
+
+        """
+        super(Polygons, self).from_list(plist)
+        self._df.dropna(inplace=True)
+
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False
     ):

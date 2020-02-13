@@ -9,7 +9,7 @@
 %include carrays.i
 %include cstring.i
 
- /* output strings, bounded with \0 and a max length */
+/* output strings, bounded with \0 and a max length */
 %cstring_bounded_output(char *swig_bnd_char_10k, 10000);
 %cstring_bounded_output(char *swig_bnd_char_100k, 100000);
 %cstring_bounded_output(char *swig_bnd_char_1m, 1000000);
@@ -194,7 +194,7 @@ import_array();
 %inline %{
     /* INT: convert carray to numpy array (copy from carray to numpy)*/
     void swig_carr_to_numpy_i1d(int* npi, long nnlen, int *carri) {
-       long i;
+        long i;
 	for (i=0;i<nnlen;i++) {
 	    npi[i] = carri[i];
 	    /* if (i==0) printf("Item 0 <%d>\n", npi[i]); */

@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 import numpy as np
 import numpy.ma as ma
+import pandas as pd
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -18,6 +19,7 @@ from xtgeo.xyz.polygons import Polygons
 from xtgeo.well import Well
 from . import _gridprop_lowlevel
 from .grid_property import GridProperty
+from ._grid3d_fence import _update_tmpvars
 
 xtg = XTGeoDialog()
 
@@ -223,6 +225,89 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
 
     # return the objects
     return ix, jy, kz
+
+
+def get_ijk_from_points(
+    self, points, activeonly=True, zerobased=False, dataframe=True, includepoints=True
+):
+    """Get I J K indices as a list of tuples or a dataframe
+
+    It is here tried to get fast execution. This requires a preprosessing
+    of the grid to store a onlayer version, and maps with IJ positions
+    """
+
+    logger.info("Getting IJK indices from Points...")
+
+    actnumoption = 1
+    if not activeonly:
+        actnumoption = 0
+
+    _update_tmpvars(self, force=True)
+
+    arrsize = points.dataframe[points.xname].values.size
+
+    flip = 1
+    if self.ijk_handedness == "left":
+        flip = -1
+
+    logger.info("Grid is FLIP %s", flip)
+
+    logger.info("Running C routine...")
+    _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
+        points.dataframe[points.xname].values,
+        points.dataframe[points.yname].values,
+        points.dataframe[points.zname].values,
+        self._tmp["topd"].ncol,
+        self._tmp["topd"].nrow,
+        self._tmp["topd"].xori,
+        self._tmp["topd"].yori,
+        self._tmp["topd"].xinc,
+        self._tmp["topd"].yinc,
+        self._tmp["topd"].rotation,
+        self._tmp["topd"].yflip,
+        self._tmp["topi_carr"],
+        self._tmp["topj_carr"],
+        self._tmp["basi_carr"],
+        self._tmp["basj_carr"],
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._p_coord_v,
+        self._p_zcorn_v,
+        self._p_actnum_v,
+        self._tmp["onegrid"]._p_zcorn_v,
+        actnumoption,
+        flip,
+        arrsize,
+        arrsize,
+        arrsize,
+    )
+    logger.info("Running C routine... DONE")
+
+    if zerobased:
+        # zero based cell indexing
+        iarr -= 1
+        jarr -= 1
+        karr -= 1
+
+    proplist = OrderedDict()
+    if includepoints:
+        proplist["X_UTME"] = points.dataframe[points.xname].values
+        proplist["Y_UTME"] = points.dataframe[points.yname].values
+        proplist["Z_TVDSS"] = points.dataframe[points.zname].values
+
+    proplist["IX"] = iarr
+    proplist["JY"] = jarr
+    proplist["KZ"] = karr
+
+    mydataframe = pd.DataFrame.from_dict(proplist)
+    mydataframe.replace(_cxtgeo.UNDEF_INT, -1, inplace=True)
+
+    result = mydataframe
+    if not dataframe:
+        result = list(mydataframe.itertuples(index=False, name=None))
+
+    return result
 
 
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
@@ -926,8 +1011,9 @@ def reverse_row_axis(self, ijk_handedness=None):
         return
 
     # do it for properties
-    for prp in self._props.props:
-        prp.values = prp.values[:, ::-1, :]
+    if self._props.props:
+        for prp in self._props.props:
+            prp.values = prp.values[:, ::-1, :]
 
     logger.info("Reversing of rows done")
 

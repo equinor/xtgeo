@@ -183,7 +183,7 @@ class Grid(Grid3D):
         self._roxindexer = None
 
         # For storage of more private stuff in order to speed up certain functions
-        # See _grid3d_fence for instance
+        # See _grid3d_fence for instance; note! reset this if any kind of grid change!
         self._tmp = {}
 
         if len(args) == 1:
@@ -505,6 +505,7 @@ class Grid(Grid3D):
             rotation=rotation,
             flip=flip,
         )
+        self._tmp = {}
 
     def from_file(
         self,
@@ -552,6 +553,7 @@ class Grid(Grid3D):
             restartdates=restartdates,
             _roffapiv=_roffapiv,
         )
+        self._tmp = {}
 
         return obj
 
@@ -609,6 +611,7 @@ class Grid(Grid3D):
         _grid_roxapi.import_grid_roxapi(
             self, projectname, gname, realisation, dimensions_only, info
         )
+        self._tmp = {}
 
     def to_roxar(self, projectname, gname, realisation=0, info=False, method="cpg"):
         """Export a grid to RMS via Roxar API (in prep.)"""
@@ -633,7 +636,6 @@ class Grid(Grid3D):
 
         logger.info("Copy a Grid instance")
         other = _grid_etc1.copy(self)
-
         return other
 
     def describe(self, details=False, flush=True):
@@ -945,7 +947,7 @@ class Grid(Grid3D):
         """Returns the C pointer object reference to the ACTNUM array."""
         return self._p_actnum_v  # the SWIG pointer to the C structure
 
-    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
+    def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.
 
         Args:
@@ -953,33 +955,40 @@ class Grid(Grid3D):
             asmasked (bool): Actnum is returned with all cells shown
                 as default. Use asmasked=True to make 0 entries masked.
             mask (bool): Deprecated, use asmasked instead!
+            dual (bool): If True, and the grid is a dualporo/perm grid, an
+                extended ACTNUM is applied (numbers 0..3)
 
         Example::
 
             act = mygrid.get_actnum()
             print("{}% cells are active".format(act.values.mean() * 100))
+
+        .. versionchanged:: 2.6.0 Added ``dual`` keyword
         """
 
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        act = xtgeo.grid3d.GridProperty(
-            ncol=self._ncol,
-            nrow=self._nrow,
-            nlay=self._nlay,
-            values=np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32),
-            name=name,
-            discrete=True,
-        )
+        if dual and self._dualactnum:
+            act = self._dualactnum.copy()
+        else:
+            act = xtgeo.grid3d.GridProperty(
+                ncol=self._ncol,
+                nrow=self._nrow,
+                nlay=self._nlay,
+                values=np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32),
+                name=name,
+                discrete=True,
+            )
 
-        carray = self._p_actnum_v  # the SWIG pointer to the C structure
-        _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
+            carray = self._p_actnum_v  # the SWIG pointer to the C structure
+            _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
 
         if asmasked:
             act.values = ma.masked_equal(act.values, 0)
 
         act.codes = {0: "0", 1: "1"}
-        if self._dualporo or self._dualperm:
+        if dual and self._dualactnum:
             act.codes = {0: "0", 1: "1", 2: "2", 3: "3"}
 
         # return the object
@@ -1088,6 +1097,42 @@ class Grid(Grid3D):
 
         # return the objects
         return ixc, jyc, kzc
+
+    def get_ijk_from_points(
+        self,
+        points,
+        activeonly=True,
+        zerobased=False,
+        dataframe=True,
+        includepoints=True,
+    ):
+        """Returns a list/dataframe of cell indices based on a Points()
+        instance
+
+        If a point is outside the grid, -1 values are returned
+
+        Args:
+            points (Points): A XTGeo Points instance
+            activeonly (bool): If True, UNDEF cells are not included
+            zerobased (bool): If True, counter start from 0, otherwise 1 (default=1).
+            dataframe (bool): If True result is Pandas dataframe, otherwise a list
+                of tuples
+            includepoints (bool): If True, include the input points in result
+
+        .. versionadded:: 2.6.0
+        """
+
+        ijklist = _grid_etc1.get_ijk_from_points(
+            self,
+            points,
+            activeonly=activeonly,
+            zerobased=zerobased,
+            dataframe=dataframe,
+            includepoints=includepoints,
+        )
+
+        # return the dataframe or list of tuples
+        return ijklist
 
     def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True, mask=None):
         """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,
@@ -1309,11 +1354,13 @@ class Grid(Grid3D):
         actnum.values = np.ones(self.dimensions, dtype=np.int32)
 
         self.set_actnum(actnum)
+        self._tmp = {}
 
     def inactivate_by_dz(self, threshold):
         """Inactivate cells thinner than a given threshold."""
 
         _grid_etc1.inactivate_by_dz(self, threshold)
+        self._tmp = {}
 
     def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
         """Inacativate grid inside a polygon.
@@ -1337,6 +1384,7 @@ class Grid(Grid3D):
         _grid_etc1.inactivate_inside(
             self, poly, layer_range=layer_range, inside=inside, force_close=force_close
         )
+        self._tmp = {}
 
     def inactivate_outside(self, poly, layer_range=None, force_close=False):
         """Inacativate grid outside a polygon. (cf inactivate_inside)"""
@@ -1344,11 +1392,13 @@ class Grid(Grid3D):
         self.inactivate_inside(
             poly, layer_range=layer_range, inside=False, force_close=force_close
         )
+        self._tmp = {}
 
     def collapse_inactive_cells(self):
         """ Collapse inactive layers where, for I J with other active cells."""
 
         _grid_etc1.collapse_inactive_cells(self)
+        self._tmp = {}
 
     def crop(self, colcrop, rowcrop, laycrop, props=None):
         """Reduce the grid size by cropping, the grid will have new dimensions.
@@ -1379,6 +1429,7 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.crop(self, (colcrop, rowcrop, laycrop), props=props)
+        self._tmp = {}
 
     def reduce_to_one_layer(self):
         """Reduce the grid to one single layer.
@@ -1396,6 +1447,7 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.reduce_to_one_layer(self)
+        self._tmp = {}
 
     def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         """Translate (move) and/or flip grid coordinates in 3D.
@@ -1412,6 +1464,7 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.translate_coordinates(self, translate=translate, flip=flip)
+        self._tmp = {}
 
     def reverse_row_axis(self, ijk_handedness=None):
         """Reverse the row axis (J indices).
@@ -1443,6 +1496,7 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.reverse_row_axis(self, ijk_handedness=ijk_handedness)
+        self._tmp = {}
 
     def make_zconsistent(self, zsep=1e-5):
         """Make the 3D grid consistent in Z, by a minimal gap (zsep).
@@ -1452,6 +1506,7 @@ class Grid(Grid3D):
         """
 
         _grid_etc1.make_zconsistent(self, zsep)
+        self._tmp = {}
 
     def convert_to_hybrid(
         self,
@@ -1494,6 +1549,7 @@ class Grid(Grid3D):
             region=region,
             region_number=region_number,
         )
+        self._tmp = {}
 
     def refine_vertically(self, rfactor, zoneprop=None):
         """Refine vertically, proportionally
@@ -1544,6 +1600,7 @@ class Grid(Grid3D):
         """
 
         _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
+        self._tmp = {}
 
     def report_zone_mismatch(
         self,
