@@ -41,10 +41,6 @@ matrix:
     - os: linux
       env: MB_PYTHON_VERSION=2.7
     - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.4
-        - TEST_DEPENDS="pytest shapely==1.6.2 pandas==0.20.3 numpy==1.15.4 segyio==1.8.1"
-    - os: linux
       env: MB_PYTHON_VERSION=3.5
       if: tag IS present
     - os: linux
