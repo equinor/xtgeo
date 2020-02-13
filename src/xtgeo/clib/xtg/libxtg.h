@@ -1848,7 +1848,6 @@ int grd3d_points_ijk_cells(
     int *p_actnum_v,
 
     double *p_zcornone_v,
-    int *p_actnumone_v,
 
     int actnumoption,
     int flip,
