@@ -297,6 +297,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         """
         super(Points, self).from_list(plist)
+        self._df.dropna(inplace=True)
 
     def to_file(
         self,

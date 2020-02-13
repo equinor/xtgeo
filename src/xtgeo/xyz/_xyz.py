@@ -181,7 +181,7 @@ class XYZ(object):
 
         elif len(first) == 4:
             self._df = pd.DataFrame(
-                plist, columns=[self._xname, self._yname, self._zname, self._id]
+                plist, columns=[self._xname, self._yname, self._zname, self._pname]
             )
         else:
             raise ValueError(

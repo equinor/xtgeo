@@ -384,6 +384,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         """
         super(Polygons, self).from_list(plist)
+        self._df.dropna(inplace=True)
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False
