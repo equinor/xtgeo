@@ -11,16 +11,14 @@ TESTPATH = xtg.testpath
 # Do tests
 # =============================================================================
 
-reekgrid = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
+REEKGRID = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
+SMALL1 = "../xtgeo-testdata/3dgrids/etc/TEST_SP.EGRID"
+SMALL2 = "../xtgeo-testdata/3dgrids/etc/TEST_DP.EGRID"
 
 
 def test_get_ijk_from_points():
     """Testing getting IJK coordinates from points"""
-    g1 = xtgeo.grid3d.Grid(reekgrid)
-
-    df = g1.get_dataframe()
-
-    print(df)
+    g1 = xtgeo.grid3d.Grid(REEKGRID)
 
     pointset = [
         (456620.790918, 5.935660e06, 1727.649124),  # 1, 1, 1
@@ -40,30 +38,34 @@ def test_get_ijk_from_points():
     assert ijk["IX"][1] == 1
     assert ijk["IX"][2] == 40
 
+    assert ijk["JY"][0] == 1
+
     assert ijk["KZ"][0] == 1
     assert ijk["KZ"][1] == 5
     assert ijk["KZ"][2] == 14
 
     assert ijk["KZ"][3] == -1
-    # assert ijk["KZ"][4] == 14
-    # assert ijk["KZ"][5] == 11
+    assert ijk["KZ"][4] == 14
+    assert ijk["KZ"][5] == 11
 
-    # if g1.ijk_handedness == "right":
-    #     g1.ijk_handedness = "left"
+    if g1.ijk_handedness == "right":
+        g1.ijk_handedness = "left"
+        g1._tmp = {}
 
-    # ijk = g1.get_ijk_from_points(po)
-    # print(ijk)
+    ijk = g1.get_ijk_from_points(po)
+    print(ijk)
 
-    # assert ijk["IX"][0] == 1
-    # assert ijk["IX"][1] == 1
-    # assert ijk["IX"][2] == 40
+    assert ijk["IX"][0] == 1
+    assert ijk["IX"][1] == 1
+    assert ijk["IX"][2] == 40
 
-
+    assert ijk["JY"][0] == 64
 
 
 def test_get_ijk_from_points_full():
     """Testing getting IJK coordinates from points, for all cells"""
-    g1 = xtgeo.grid3d.Grid(reekgrid)
+
+    g1 = xtgeo.grid3d.Grid(REEKGRID)
     df1 = g1.get_dataframe(ijk=True, xyz=False)
     df2 = g1.get_dataframe(ijk=False, xyz=True)
 
@@ -100,3 +102,30 @@ def test_get_ijk_from_points_full():
             logger.info("%s %s %s: input %s vs output %s", x, y, z, ijkt, df1t)
 
     assert notok / allc * 100 < 0.5  # < 0.5% deviation; x_chk_in_cell ~4 % error!
+
+
+def test_get_ijk_from_points_small():
+    """Test IJK getting in small grid, test for active or not cells"""
+
+    g1 = xtgeo.grid3d.Grid(SMALL1)
+
+    pointset = [
+        (1.5, 1.5, 1000.5),  # 2, 2, 1  is active
+        (3.5, 2.5, 1000.5),  # 4, 3, 1  is inactive, but dualporo is active
+    ]
+
+    po = xtgeo.Points(pointset)
+
+    ijk = g1.get_ijk_from_points(po)
+
+    assert ijk["JY"][0] == 2
+    assert ijk["JY"][1] == -1
+
+    # activeonly False
+    ijk = g1.get_ijk_from_points(po, activeonly=False)
+    assert ijk["JY"][1] == 3
+
+    # dualporo grid
+    g1 = xtgeo.grid3d.Grid(SMALL2)
+    ijk = g1.get_ijk_from_points(po, activeonly=False)
+    assert ijk["JY"][1] == 3
