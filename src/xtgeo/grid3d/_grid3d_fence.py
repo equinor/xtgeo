@@ -99,13 +99,13 @@ def get_randomline(
     return (hcoords[0], hcoords[-1], zmin, zmax, arr)
 
 
-def _update_tmpvars(self):
+def _update_tmpvars(self, force=False):
     """The self._tmp variables are needed to speed up calculations.
 
     If they are already created, the no need to recreate
     """
 
-    if "onegrid" not in self._tmp:
+    if "onegrid" not in self._tmp or force:
         logger.info("Make a tmp onegrid instance...")
         self._tmp["onegrid"] = self.copy()
         self._tmp["onegrid"].reduce_to_one_layer()

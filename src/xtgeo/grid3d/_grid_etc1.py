@@ -230,7 +230,7 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
 def get_ijk_from_points(
     self, points, activeonly=True, zerobased=False, dataframe=True, includepoints=True
 ):
-    """Get I J K as a list of tuples or a dataframe
+    """Get I J K indices as a list of tuples or a dataframe
 
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onlayer version, and maps with IJ positions
@@ -238,13 +238,13 @@ def get_ijk_from_points(
 
     logger.info("Getting IJK indices from Points...")
 
-    _update_tmpvars(self)
+    actnumoption = 1
+    if not activeonly:
+        actnumoption = 0
+
+    _update_tmpvars(self, force=True)
 
     arrsize = points.dataframe[points.xname].values.size
-
-    actnumoption = 0
-    if activeonly:
-        actnumoption = 1
 
     flip = 1
     if self.ijk_handedness == "left":
@@ -276,7 +276,6 @@ def get_ijk_from_points(
         self._p_zcorn_v,
         self._p_actnum_v,
         self._tmp["onegrid"]._p_zcorn_v,
-        self._tmp["onegrid"]._p_actnum_v,
         actnumoption,
         flip,
         arrsize,

@@ -8,8 +8,17 @@
  *    Jan C. Rivenaes
  *
  * DESCRIPTION:
- *    Given X Y Z vectors, determine if a point is inside or on the boundary of a
- *    octahedron.
+ *    Given X Y Z vectors, determine if a point is inside or outside the boundary of a
+ *    octahedron. This routine is an alternative to x_chk_point_cell.c. It is based
+ *    on making normal vectors of triangles per side. For each side, 4 triangles are
+ *    made
+ *
+ *    Remember that irregular octahedrons are NONTRIVIAL when deciding a point is inside
+ *    or outside; it is always an approximation!
+ *
+ *    It appears that
+ *    > This routine is somewhat faster
+ *    > This routine is more precise
  *
  * ARGUMENTS:
  *    x, y, z             i     point
@@ -111,15 +120,6 @@ int x_chk_point_in_octahedron (
     int flip
     )
 {
-
-    /* double pp[3], pm[3], tri[4][3]; */
-    /* int   istat[13], ier; */
-    /* double cbig=1.0e14, vminx, vmaxx, vminy, vmaxy, vminz, vmaxz; */
-    /* int   i, ic, isum; */
-
-    /*
-     * Initialize
-     */
 
     if (_check_envelope(x, y, z, coor) == -1) return -1;
 
