@@ -52,7 +52,7 @@
 void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, int mcol,
                    int mrow, double xori, double yori, double xinc, double yinc,
                    int yflip, double rotation, double *maptopi, double *maptopj,
-                   double *mapbasi, double *mapbasj)
+                   double *mapbasi, double *mapbasj, int nx, int ny)
 {
     long nmap;
     int itop, jtop, ibas, jbas, ii1, ii2, jj1, jj2;
@@ -95,6 +95,16 @@ void _get_ij_range(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, in
     /* extend with one to avoid edge effects missing values */
     if (jj1 > 1) jj1--;
     if (jj2 < mrow) jj2++;
+
+    /*  if numbers are unphysical for some reason, revert to grid limits */
+    if (ii1 < 1 || ii1 >= nx) ii1 = 1;
+    if (ii2 <= 1 || ii2 > nx) ii2 = nx;
+    if (jj1 < 1 || jj1 >= ny) jj1 = 1;
+    if (jj2 <= 1 || jj2 > ny) jj2 = ny;
+
+    if (ii2 <= ii1 || (ii2 - ii1) >= nx || jj2 <= jj1 || (jj2 - jj1) >= ny) {
+        ii1 = 1; ii2 = nx; jj1 = 1; jj2 = ny;
+    }
 
     *i1 = ii1;
     *i2 = ii2;
@@ -148,10 +158,9 @@ int grd3d_get_randomline(
                          )
 {
     /* locals */
-    char sbn[24] = "grd3d_get_randomline";
     int  ib, ic, izc, ier, ios, i1, i2, j1, j2, k1, k2;
     long ibs1, ibs2;
-    double zsam, xc, yc, zc;
+    double zsam;
     double value, *p_dummy_v = NULL;
 
     logger_init(__FILE__, __FUNCTION__);
@@ -159,6 +168,10 @@ int grd3d_get_randomline(
     logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 
     zsam = (zmax - zmin) / (nzsam - 1);
+
+    if (nxvec != nyvec || nxvec != nvalues) {
+        logger_error(__LINE__, "Bug in %s", __FUNCTION__);
+    }
 
     ib = 0;
 
@@ -169,15 +182,15 @@ int grd3d_get_randomline(
     k2 = nz;
 
     for (ic = 0; ic < nxvec; ic++) {
-        xc = xvec[ic];
-        yc = yvec[ic];
+        double xc = xvec[ic];
+        double yc = yvec[ic];
 
         _get_ij_range(&i1, &i2, &j1, &j2, xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                      yflip, rotation, maptopi, maptopj, mapbasi, mapbasj);
+                      yflip, rotation, maptopi, maptopj, mapbasi, mapbasj, nx, ny);
 
         for (izc = 0; izc < nzsam; izc++) {
 
-            zc = zmin + izc * zsam;
+            double zc = zmin + izc * zsam;
 
             /* check the onelayer version of the grid first (speed up) */
             ier = grd3d_point_val_crange(xc, yc, zc, nx, ny, 1, p_coor_v,
