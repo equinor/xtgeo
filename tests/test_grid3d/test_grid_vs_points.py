@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import division, absolute_import
+from __future__ import print_function
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -24,7 +27,7 @@ def test_get_ijk_from_points():
         (456620.790918, 5.935660e06, 1727.649124),  # 1, 1, 1
         (456620.806270, 5.935660e06, 1744.557755),  # 1, 1, 5
         (467096.108653, 5.930145e06, 1812.760864),  # 40, 64, 14
-        (333333, 5555555, 1333),                    # outside
+        (333333, 5555555, 1333),  # outside
         (459168.0442550212, 5931614.347020548, 1715.4637298583984),  # 2, 31, 14
         (464266.1687414392, 5933844.674959661, 1742.2762298583984),  # 36, 35, 11
     ]
@@ -88,20 +91,22 @@ def test_get_ijk_from_points_full():
     notok = 0
     allc = 0
 
-    for inum in range(len(ijk_i)):
+    for inum, _val in enumerate(ijk_i):
         allc += 1
-        x = df2['X_UTME'].values[inum]
-        y = df2['Y_UTMN'].values[inum]
-        z = df2['Z_TVDSS'].values[inum]
+        x = df2["X_UTME"].values[inum]
+        y = df2["Y_UTMN"].values[inum]
+        z = df2["Z_TVDSS"].values[inum]
 
         ijkt = tuple((ijk_i[inum], ijk_j[inum], ijk_k[inum]))
         df1t = tuple((df1_i[inum], df1_j[inum], df1_k[inum]))
 
-        if (ijkt != df1t):
+        if ijkt != df1t:
             notok += 1
             logger.info("%s %s %s: input %s vs output %s", x, y, z, ijkt, df1t)
 
-    assert notok / allc * 100 < 0.5  # < 0.5% deviation; x_chk_in_cell ~4 % error!
+    fails = notok / allc * 100
+    print("Percent failing: ", fails)
+    assert fails < 0.5  # < 0.5% deviation; x_chk_in_cell ~4 % error!
 
 
 def test_get_ijk_from_points_small():
