@@ -80,13 +80,15 @@ int surf_export_irap_bin(
 {
 
     /* local declarations */
-    int     swap, ier, myint, nrec, i, j;
+    int     swap,  i;
     float   xmax, ymax;
 
     /* code: */
 
     logger_init(__FILE__, __FUNCTION__);
     logger_info(__LINE__, "Write IRAP binary map file...");
+
+    if (ntot != mx * my) logger_critical(__LINE__, "Bug in %", __FUNCTION__);
 
     /* check endianess */
     swap=0;
