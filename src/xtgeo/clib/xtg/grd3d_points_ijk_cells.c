@@ -56,7 +56,7 @@
 void _get_ij_range2(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, int mcol,
                     int mrow, double xori, double yori, double xinc, double yinc,
                     int yflip, double rotation, double *maptopi, double *maptopj,
-                    double *mapbasi, double *mapbasj)
+                    double *mapbasi, double *mapbasj, int nx, int ny)
 {
     long nmap;
     int itop, jtop, ibas, jbas, ii1, ii2, jj1, jj2;
@@ -99,6 +99,16 @@ void _get_ij_range2(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, i
     /* extend with one to avoid edge effects missing values */
     if (jj1 > 1) jj1--;
     if (jj2 < mrow) jj2++;
+
+    /*  if numbers are unphysical for some reason, revert to grid limits */
+    if (ii1 < 1 || ii1 >= nx) ii1 = 1;
+    if (ii2 <= 1 || ii2 > nx) ii2 = nx;
+    if (jj1 < 1 || jj1 >= ny) jj1 = 1;
+    if (jj2 <= 1 || jj2 > ny) jj2 = ny;
+
+    if (ii2 <= ii1 || (ii2 - ii1) >= nx || jj2 <= jj1 || (jj2 - jj1) >= ny) {
+        ii1 = 1; ii2 = nx; jj1 = 1; jj2 = ny;
+    }
 
     *i1 = ii1;
     *i2 = ii2;
@@ -272,7 +282,6 @@ int grd3d_points_ijk_cells(
     int *p_actnum_v,
 
     double *p_zcornone_v,
-    int *p_actnumone_v,
 
     int actnumoption,
     int flip,
@@ -291,14 +300,10 @@ int grd3d_points_ijk_cells(
     logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
 
     if (nxvec != nyvec || nyvec != nzvec) logger_critical(__LINE__, "Input bug");
+    if (nivec != njvec || nivec != nkvec) logger_critical(__LINE__, "Input bug");
 
     long ib = 0;
 
-    long ibs1 = -1;
-    long ibs2 = -1;
-
-    int k1 = 1;
-    int k2 = nz;
 
     int ic;
     for (ic = 0; ic < nxvec; ic++) {
@@ -307,7 +312,7 @@ int grd3d_points_ijk_cells(
         double zc = zvec[ic];
 
         int dbg = 0;
-        /* if (fabs(xc - 464266.16874143924) < 0.0000001) dbg = 1; */
+        if (fabs(xc - 456620.790918) < 0.0000001) dbg = 1;
 
         /*
          * first get an approximate I and J range based on these maps
@@ -316,7 +321,7 @@ int grd3d_points_ijk_cells(
 
         int i1, i2, j1, j2;
         _get_ij_range2(&i1, &i2, &j1, &j2, xc, yc, mcol, mrow, xori, yori, xinc, yinc,
-                       yflip, rotation, maptopi, maptopj, mapbasi, mapbasj);
+                       yflip, rotation, maptopi, maptopj, mapbasi, mapbasj, nx, ny);
 
         /*
          * next check the onelayer version of the grid first (speed up)
