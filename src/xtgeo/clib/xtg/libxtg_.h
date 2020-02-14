@@ -106,7 +106,7 @@ int x_chk_point_in_cell (
     int   debug
     );
 
-int x_chk_point_in_octahedron (
+int x_chk_point_in_hexahedron (
     double x,
     double y,
     double z,
