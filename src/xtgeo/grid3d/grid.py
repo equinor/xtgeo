@@ -368,6 +368,8 @@ class Grid(Grid3D):
         actnumv = np.ravel(actnumv.values)
         self._actnum_indices = np.flatnonzero(actnumv)
 
+        print("XXX",  actnumv)
+
         return self._actnum_indices
 
     @property

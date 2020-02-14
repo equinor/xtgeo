@@ -151,7 +151,10 @@ class GridProperty(Grid3D):
 
         mygrid = Grid("grid.roff")
         myprop1 = GridProperty(mygrid, name='PORO')
-        myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1)
+        myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1,
+                               linkgeometry=True)  # alternative 1
+        myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
+
 
     .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
 
@@ -184,8 +187,10 @@ class GridProperty(Grid3D):
         if len(args) == 1:
             # make instance through grid instance or file import
             if isinstance(args[0], xtgeo.grid3d.Grid):
-                geometry = kwargs.get("geometry", False)
-                _gridprop_etc.gridproperty_fromgrid(self, args[0], geometry=geometry)
+                linkgeometry = kwargs.get("linkgeometry", False)
+                _gridprop_etc.gridproperty_fromgrid(
+                    self, args[0], linkgeometry=linkgeometry
+                )
 
             elif isinstance(args[0], str):
                 _gridprop_etc.gridproperty_fromfile(self, args[0], **kwargs)
@@ -908,6 +913,13 @@ class GridProperty(Grid3D):
         """
 
         if self.geometry is None:
+            msg = """
+            You need to link the property to a grid geometry:"
+
+                myprop.geometry = mygrid
+
+            """
+            xtg.warnuser(msg)
             raise ValueError("The geometry attribute is not set")
 
         _gridprop_op1.operation_polygons(
