@@ -184,7 +184,8 @@ class GridProperty(Grid3D):
         if len(args) == 1:
             # make instance through grid instance or file import
             if isinstance(args[0], xtgeo.grid3d.Grid):
-                _gridprop_etc.gridproperty_fromgrid(self, args[0])
+                geometry = kwargs.get("geometry", False)
+                _gridprop_etc.gridproperty_fromgrid(self, args[0], geometry=geometry)
 
             elif isinstance(args[0], str):
                 _gridprop_etc.gridproperty_fromfile(self, args[0], **kwargs)

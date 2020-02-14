@@ -18,12 +18,13 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def gridproperty_fromgrid(self, grid):
+def gridproperty_fromgrid(self, grid, geometry=False):
 
     """Make an simple GridProperty instance directly based on an existing grid.
 
     Args:
         grid (Grid): The grid geometry instance
+        geometry (bool): If True, connect the property.geometry to the input grid
     Example::
 
         import xtgeo
@@ -63,7 +64,11 @@ def gridproperty_fromgrid(self, grid):
 
     del act
 
-    self.geometry = grid  # assosiate this grid property with grid instance
+    if geometry:
+        # assosiate this grid property with grid instance. This is not default
+        # since sunch links may affect garbish collection
+        self.geometry = grid
+
     grid.append_prop(self)
 
 
