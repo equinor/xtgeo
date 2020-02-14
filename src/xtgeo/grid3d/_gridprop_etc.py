@@ -63,6 +63,7 @@ def gridproperty_fromgrid(self, grid):
 
     del act
 
+    self.geometry = grid  # assosiate this grid property with grid instance
     grid.append_prop(self)
 
 
