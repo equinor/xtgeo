@@ -146,7 +146,7 @@ long _grd3d_point_in_cell(int ic, int jc, int kc, double xc, double yc,
     grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, p_zcorn_v,
                   corners, XTGDEBUG);
 
-    *score = x_chk_point_in_octahedron(xc, yc, zc, corners, flip);
+    *score = x_chk_point_in_hexahedron(xc, yc, zc, corners, flip);
 
 
     if (*score > 12) {

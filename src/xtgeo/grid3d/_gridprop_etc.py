@@ -18,18 +18,20 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def gridproperty_fromgrid(self, grid):
+def gridproperty_fromgrid(self, grid, linkgeometry=False):
 
     """Make an simple GridProperty instance directly based on an existing grid.
 
     Args:
         grid (Grid): The grid geometry instance
+        linkgeometry (bool): If True, connect the property.geometry to the input grid
     Example::
 
         import xtgeo
         grd = xtgeo.grid_from_file("my.roff")
         myporo = xtgeo.GridProperty(grd, name="PORO")
-        myfacies = xtgeo.GridProperty(grd, name="Facies")
+        myfacies = xtgeo.GridProperty(grd, name="Facies", linkgeometry=grd)
+        myfacies.geomery = grd  # alternative way to link geometry
 
     .. versionadded:: 2.6.0
 
@@ -62,6 +64,11 @@ def gridproperty_fromgrid(self, grid):
     self._values = np.ma.array(vals, mask=np.ma.getmaskarray(act.values))
 
     del act
+
+    if linkgeometry:
+        # assosiate this grid property with grid instance. This is not default
+        # since sunch links may affect garbish collection
+        self.geometry = grid
 
     grid.append_prop(self)
 

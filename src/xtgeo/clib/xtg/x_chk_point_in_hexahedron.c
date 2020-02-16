@@ -2,18 +2,18 @@
  ***************************************************************************************
  *
  * NAME:
- *    x_chk_point_in_octagedron.c
+ *    x_chk_point_in_hexagedron.c
  *
  * AUTHOR(S):
  *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Given X Y Z vectors, determine if a point is inside or outside the boundary of a
- *    octahedron. This routine is an alternative to x_chk_point_cell.c. It is based
+ *    hexahedron. This routine is an alternative to x_chk_point_cell.c. It is based
  *    on making normal vectors of triangles per side. For each side, 4 triangles are
  *    made
  *
- *    Remember that irregular octahedrons are NONTRIVIAL when deciding a point is inside
+ *    Remember that irregular hexahedrons are NONTRIVIAL when deciding a point is inside
  *    or outside; it is always an approximation!
  *
  *    It appears that
@@ -112,7 +112,7 @@ int _inside_plane(int ic0, int ic1, int ic2, double x, double y, double z,
     return 0;
 }
 
-int x_chk_point_in_octahedron (
+int x_chk_point_in_hexahedron (
     double x,
     double y,
     double z,

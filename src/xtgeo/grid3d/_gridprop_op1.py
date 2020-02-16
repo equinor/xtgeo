@@ -88,10 +88,13 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     if not isinstance(poly, xtgeo.xyz.Polygons):
         raise ValueError("The poly input is not a Polygons instance")
 
-    # make a copy of the RegularSurface which is used a "filter" or "proxy"
+    # make a copy of the array which is used a "filter" or "proxy"
     # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
+    dtype = self.dtype
 
     proxy = self.copy()
+    proxy.discrete_to_continuous()
+
     proxy.values *= 0.0
     cvals = gl.update_carray(proxy)
 
@@ -152,6 +155,9 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     elif opname == "set":
         tmp = self.values.copy() * 0 + value
+
+    # convert tmp back to correct dtype
+    tmp = tmp.astype(dtype)
 
     self.values[proxyv == proxytarget] = tmp[proxyv == proxytarget]
     del tmp

@@ -19,4 +19,5 @@ try:
     VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
     VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
 except AttributeError:
-    print("Dummy settings")
+    print("Cannot import cxtgeo")
+    raise
