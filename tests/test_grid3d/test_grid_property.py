@@ -491,7 +491,6 @@ def test_get_values_by_ijk():
 
 def test_values_in_polygon():
     """Test replace values in polygons"""
-    logger.info("Name is {}".format(__name__))
 
     xprop = GridProperty()
     logger.info("Import roff...")
@@ -499,18 +498,32 @@ def test_values_in_polygon():
     xprop.from_file(testfile1, fformat="roff", name="PORO", grid=grid)
     poly = Polygons(polyfile)
     xprop.geometry = grid
+    xorig = xprop.copy()
 
     xprop.operation_polygons(poly, 99, inside=True)
     tsetup.assert_almostequal(xprop.values.mean(), 25.1788, 0.01)
 
-    # geom = grid.get_geometrics(return_dict=True)
+    xp2 = xorig.copy()
+    xp2.values *= 100
+    xp2.continuous_to_discrete()
+    xp2.set_inside(poly, 44)
 
-    # layslice = xtgeo.plot.Grid3DSlice()
-    # layslice.canvas(title="Layer 1")
-    # layslice.plot_gridslice(grid, xprop, window=(geom['xmin'], geom['xmax'],
-    #                                              geom['ymin'], geom['ymax']))
-    # layslice.show()
+    xp2.dtype = np.uint8
+    xp2.set_inside(poly, 44)
+    print(xp2.values)
 
+    xp2.dtype = np.uint16
+    xp2.set_inside(poly, 44)
+    print(xp2.values)
+
+    xp3 = xorig.copy()
+    xp3.values *= 100
+    print(xp3.values.mean())
+    xp3.dtype = np.float32
+    xp3.set_inside(poly, 44)
+    print(xp3.values.mean())
+
+    tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
 
 # def test_get_xy_values_for_webportal_bri():
 #     """Get lists on webportal format, small BRILLIG case"""

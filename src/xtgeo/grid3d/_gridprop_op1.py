@@ -92,15 +92,11 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
     dtype = self.dtype
 
-    print(self.values)
-    print(self.values.mean())
-
     proxy = self.copy()
     proxy.discrete_to_continuous()
 
     proxy.values *= 0.0
     cvals = gl.update_carray(proxy)
-    print(proxy.values)
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
@@ -126,9 +122,6 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             print("## Polygon no {} is not closed".format(id_ + 1))
 
     gl.update_values_from_carray(proxy, cvals, np.float64, delete=True)
-
-    print(proxy.values)
-    print(proxy.values.mean())
 
     proxyv = proxy.values.astype(np.int8)
 
