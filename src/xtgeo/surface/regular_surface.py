@@ -336,7 +336,7 @@ class RegularSurface(object):
         """
         mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
 
-        txt = "\nMETHODS for Surface():\n======================\n"
+        txt = "\nMETHODS for RegularSurface():\n======================\n"
         for met in mets:
             txt += str(met) + "\n"
 
