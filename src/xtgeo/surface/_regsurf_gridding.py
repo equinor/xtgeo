@@ -13,7 +13,6 @@ import scipy.interpolate
 import scipy.ndimage
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 
