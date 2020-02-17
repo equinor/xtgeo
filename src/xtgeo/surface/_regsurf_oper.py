@@ -47,7 +47,7 @@ def operations_two(self, other, oper="add"):
         self.values = self.values / useother.values
 
     if useother is not other:
-        del useouther
+        del useother
 
 
 def resample(self, other):
