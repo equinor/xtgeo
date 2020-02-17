@@ -325,7 +325,7 @@ class RegularSurface(object):
         return news
 
     # ==================================================================================
-    # Class and static methods
+    # Class and special methods
     # ==================================================================================
 
     @classmethod
@@ -336,7 +336,7 @@ class RegularSurface(object):
         """
         mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
 
-        txt = "\nMETHODS for Surface():\n======================\n"
+        txt = "\nMETHODS for RegularSurface():\n======================\n"
         for met in mets:
             txt += str(met) + "\n"
 
@@ -1252,7 +1252,7 @@ class RegularSurface(object):
         return True
 
     def swapaxes(self):
-        """Swap the axes columns vs rows, keep origin byt reverse yflip."""
+        """Swap (flip) the axes columns vs rows, keep origin but reverse yflip."""
 
         _regsurf_utils.swapaxes(self)
 
@@ -1698,14 +1698,31 @@ class RegularSurface(object):
     # ==================================================================================
 
     def resample(self, other):
-        """Resample a surface from another surface instance.
+        """Resample an instance surface values from another surface instance.
 
         Note that there may be some 'loss' of nodes at the edges of the
         updated map, as only the 'inside' nodes in the updated map
         versus the input map are applied.
 
+        The interpolation algorithm in resample is bilinear interpolation. The
+        topolopogy of the surface (map definitions, rotation, ...) will not change,
+        only the map values. Areas with undefined nodes in ``other`` will become
+        undefined in the instance.
+
         Args:
             other (RegularSurface): Surface to resample from.
+
+        Example::
+
+            from xtgeo import RegularSurface
+            surf1 = RegularSurface("some1.gri")  # map with 230x210 columns, rotation 20
+            surf2 = RegularSurface("some2.gri")  # map with 270x190 columns, rotation 0
+
+            surf1.resample(surf2)  # will sample (interpolate) surf2's values to surf1
+
+        Returns:
+            Instance's surface values will be updated in-place.
+
         """
 
         if not isinstance(other, RegularSurface):

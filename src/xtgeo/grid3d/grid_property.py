@@ -19,6 +19,7 @@ values1d property, e.g.::
 from __future__ import print_function, absolute_import
 
 import copy
+from types import FunctionType
 
 import numpy as np
 
@@ -385,6 +386,11 @@ class GridProperty(Grid3D):
 
     @values.setter
     def values(self, values):
+
+        # self._values = self.ensure_correct_values(
+        #     self.ncol, self.nrow, self.nlay, values
+        # )
+
         if isinstance(values, np.ndarray) and not isinstance(values, np.ma.MaskedArray):
 
             values = np.ma.array(values)
@@ -396,6 +402,10 @@ class GridProperty(Grid3D):
             raise ValueError("Problems with values in {}".format(__name__))
 
         self._values = values
+
+        trydiscrete = False
+        if "int" in str(values.dtype):
+            trydiscrete = True
 
         trydiscrete = False
         if "int" in str(values.dtype):
@@ -470,9 +480,78 @@ class GridProperty(Grid3D):
 
         return xtgeo.UNDEF_LIMIT
 
-    # =========================================================================
+    # ==================================================================================
+    # Class and special methods
+    # ==================================================================================
+
+    @classmethod
+    def methods(cls):
+        """Returns the names of the methods in the class.
+
+        >>> print(RegularSurface.methods())
+        """
+        mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
+
+        txt = "\nMETHODS for GridProperty():\n======================\n"
+        for met in mets:
+            txt += str(met) + "\n"
+
+        return txt
+
+    def ensure_correct_values(self, ncol, nrow, nlay, invalues):
+        """IN PREP! Ensures that values is a 3D masked numpy (ncol, nrol, nlay).
+
+        Expected behaviour:
+           TODO
+
+        Args:
+            ncol (int): Number of columns.
+            nrow (int): Number of rows.
+            nlay (int): Number of layers.
+            invalues (array or scalar): Values to process.
+
+        Return:
+            values (MaskedArray): Numpy masked array on correct format.
+
+        """
+
+        currentmask = None
+        if self._values is not None:
+            if isinstance(self._values, np.ma.MaskedArray):
+                currentmask = np.ma.getmaskarray(self._values)
+
+        if np.isscalar(invalues):
+            vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)
+            vals = np.ma.array(vals, mask=currentmask)
+            values = vals + invalues
+
+        if not isinstance(invalues, np.ma.MaskedArray):
+            values = np.ma.array(invalues, mask=currentmask, order="C")
+        else:
+            values = invalues  # new mask is possible
+
+        if values.shape != (ncol, nrow, nlay):
+            try:
+                values = np.ma.reshape(values, (ncol, nrow, nlay), order="C")
+            except ValueError as emsg:
+                xtg.error("Cannot reshape array: {}".format(emsg))
+                raise
+
+        # replace any undef or nan with mask
+        values = np.ma.masked_greater(values, self.undef_limit)
+        values = np.ma.masked_invalid(values)
+
+        if not values.flags.c_contiguous:
+            mask = np.ma.getmaskarray(values)
+            mask = np.asanyarray(mask, order="C")
+            values = np.asanyarray(values, order="C")
+            values = np.ma.array(values, mask=mask, order="C")
+
+        return values
+
+    # ==================================================================================
     # Import and export
-    # =========================================================================
+    # ==================================================================================
 
     def from_file(
         self,

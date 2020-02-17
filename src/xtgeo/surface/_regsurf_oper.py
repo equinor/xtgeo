@@ -28,26 +28,38 @@ def operations_two(self, other, oper="add"):
 
     okstatus = self.compare_topology(other)
 
+    useother = other
     if not okstatus:
-        other.resample(self)
+        # to avoid that the "other" instance is changed
+        useother = other.copy()
+        useother.resample(self)
 
     if oper == "add":
-        self.values = self.values + other.values
+        self.values = self.values + useother.values
 
     if oper == "sub":
-        self.values = self.values - other.values
+        self.values = self.values - useother.values
 
     if oper == "mul":
-        self.values = self.values * other.values
+        self.values = self.values * useother.values
 
     if oper == "div":
-        self.values = self.values / other.values
+        self.values = self.values / useother.values
+
+    if useother is not other:
+        del useother
 
 
 def resample(self, other):
     """Resample from other surface object to this surf"""
 
     logger.info("Resampling...")
+
+    # a special case occur of the maps have same topology, but
+    # different masks
+    if self.compare_topology(other, strict=False):
+        self.values = other.values.copy()
+        return
 
     svalues = self.get_values1d()
 
@@ -98,7 +110,7 @@ def distance_from_point(self, point=(0, 0), azimuth=0.0):
         ypv,
         azimuth,
         svalues,
-        0
+        0,
     )
 
     if ier != 0:
