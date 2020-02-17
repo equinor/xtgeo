@@ -55,6 +55,12 @@ def resample(self, other):
 
     logger.info("Resampling...")
 
+    # a special case occur of the maps have same topology, but
+    # different masks
+    if self.compare_topology(other, strict=False):
+        self.values = other.values.copy()
+        return
+
     svalues = self.get_values1d()
 
     ier = _cxtgeo.surf_resample(
