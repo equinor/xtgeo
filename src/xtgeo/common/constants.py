@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 """Module for basic XTGeo constants"""
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+# align with cxtgeo libxtg.h!
 
-UNDEF = -999
-UNDEF_LIMIT = -999
-UNDEF_INT = -999
-UNDEF_INT_LIMIT = -999
-VERYLARGEPOSITIVE = -999
-VERYLARGENEGATIVE = -999
+M_PI = 3.14159265358979323846
+PI = M_PI
+PIHALF = 1.57079632679489661923
 
+UNDEF = 10E32
+UNDEF_LIMIT = 9.9E32
+UNDEF_INT = 2000000000
+UNDEF_INT_LIMIT = 1999999999
 
-try:
-    UNDEF = _cxtgeo.UNDEF
-    UNDEF_LIMIT = _cxtgeo.UNDEF_LIMIT
-    UNDEF_INT = _cxtgeo.UNDEF_INT
-    UNDEF_INT_LIMIT = _cxtgeo.UNDEF_INT_LIMIT
-    VERYLARGENEGATIVE = _cxtgeo.VERYLARGENEGATIVE
-    VERYLARGEPOSITIVE = _cxtgeo.VERYLARGEPOSITIVE
-except AttributeError:
-    print("Cannot import cxtgeo")
-    raise
+VERYLARGEPOSITIVE = 10E30
+VERYLARGENEGATIVE = -10E30
+
+UNDEF_MAP_IRAPB = 1E30

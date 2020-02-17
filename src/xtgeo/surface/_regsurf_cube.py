@@ -6,6 +6,7 @@ from __future__ import print_function
 import numpy as np
 import numpy.ma as ma
 
+import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGShowProgress
@@ -58,7 +59,7 @@ def slice_cube(
 
     if deadtraces:
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
-        olddead = cube.values_dead_traces(_cxtgeo.UNDEF)
+        olddead = cube.values_dead_traces(xtgeo.UNDEF)
 
     cubeval1d = np.ravel(cube.values, order="C")
 
@@ -335,7 +336,7 @@ def _slice_constant_window2(  # pylint: disable=unused-argument
 
     if deadtraces:
         # set dead traces to cxtgeo UNDEF -> special treatment in the C code
-        olddead = cube.values_dead_traces(_cxtgeo.UNDEF)
+        olddead = cube.values_dead_traces(xtgeo.UNDEF)
 
     cubeval1d = np.ravel(cube.values, order="C")
 

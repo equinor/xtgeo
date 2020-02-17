@@ -9,6 +9,7 @@ import numpy as np
 import numpy.ma as ma
 import six
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from .baseplot import BasePlot
 
@@ -129,7 +130,7 @@ class Map(BasePlot):
         plt.setp(self._ax.xaxis.get_majorticklabels(), rotation=xlabelrotation)
 
         # zi = ma.masked_where(zimask, zi)
-        # zi = ma.masked_greater(zi, _cxtgeo.UNDEF_LIMIT)
+        # zi = ma.masked_greater(zi, xtgeo.UNDEF_LIMIT)
         logger.info("Current colormap is %s, requested is %s", self.colormap, colormap)
         logger.info("Current colormap name is %s", self.colormap.name)
 
