@@ -9,7 +9,6 @@ import numpy as np
 import numpy.ma as ma
 import six
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 from .baseplot import BasePlot
 
