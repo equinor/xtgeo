@@ -131,10 +131,11 @@ def _export_irap_binary_python(self, mfile, bstream=False):
     )
     inum = self.nrow * self.ncol
 
-    # export to Irap binary in 4000 byte blocks/chunks; 1000 cells for 4byte Float
-    chunks = [1000] * (inum // 1000)
-    if (inum % 1000) > 0:
-        chunks.append(inum % 1000)
+    # export to Irap binary in ncol chunks (only chunk size accepted by RMS)
+    nchunk = self.ncol
+    chunks = [nchunk] * (inum // nchunk)
+    if (inum % nchunk) > 0:
+        chunks.append(inum % nchunk)
     start = 0
     for chunk in chunks:
         ap += pack(">i", chunk * 4)

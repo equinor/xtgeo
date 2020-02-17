@@ -1508,18 +1508,26 @@ class RegularSurface(object):
     # Interpolation, smooth or fill of values (possibly many methods here)
     # ==================================================================================
 
-    def fill(self):
+    def fill(self, fill_value=None):
         """Fast infilling of undefined values.
 
         Note that minimum and maximum values will not change.
+
+        Algorithm if `fill_value` is not set is based on a nearest node extrapolation.
+        Technically, ``scipy.ndimage.distance_transform_edt`` is applied. If fill_value
+        is set by a scalar, that (constant) value be be applied
+
+        Args:
+            fill_value (float): If defined, fills all undefined cells with that value.
 
         Returns:
             RegularSurface instance is updated in-place
 
         .. versionadded:: 2.1.0
+        .. versionchanged:: 2.6.0 Added option key `fill_value`
         """
 
-        _regsurf_gridding.surf_fill(self)
+        _regsurf_gridding.surf_fill(self, fill_value=fill_value)
 
     def smooth(self, method="median", iterations=1, width=1):
         """Various smoothing methods for surfaces.
