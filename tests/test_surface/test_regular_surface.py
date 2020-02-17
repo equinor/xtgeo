@@ -728,6 +728,11 @@ def test_fill():
     tsetup.assert_almostequal(srf.values.mean(), 1705.201, 0.001)
     tsetup.assert_almostequal(minv1, minv2, 0.000001)
 
+    srf = xtgeo.RegularSurface()
+    srf.from_file(TESTSET1, fformat="irap_binary")
+    srf.fill(444)
+    tsetup.assert_almostequal(srf.values.mean(), 1342.10498, 0.001)
+
 
 def test_smoothing():
     """Smooth the the surface"""
