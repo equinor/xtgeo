@@ -7,6 +7,7 @@ from __future__ import print_function
 from struct import pack
 
 import xtgeo
+from xtgeo.common.constants import UNDEF_MAP_IRAPB
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
@@ -71,7 +72,7 @@ def _export_irap_binary_cxtgeo(self, mfile):
 
     fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
-    vals = self.get_values1d(fill_value=_cxtgeo.UNDEF_MAP_IRAPB, order="F")
+    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
     ier = _cxtgeo.surf_export_irap_bin(
         fout.fhandle,
         self._ncol,
@@ -98,7 +99,7 @@ def _export_irap_binary_python(self, mfile, bstream=False):
     with BytesIO.
     """
 
-    vals = self.get_values1d(fill_value=_cxtgeo.UNDEF_MAP_IRAPB, order="F")
+    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
 
     ap = pack(
         ">3i6f3i3f10i",  # > means big endian storage

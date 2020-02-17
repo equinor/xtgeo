@@ -12,6 +12,7 @@ import numpy as np
 import numpy.ma as ma
 import pandas as pd
 
+import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import find_flip
@@ -301,7 +302,7 @@ def get_ijk_from_points(
     proplist["KZ"] = karr
 
     mydataframe = pd.DataFrame.from_dict(proplist)
-    mydataframe.replace(_cxtgeo.UNDEF_INT, -1, inplace=True)
+    mydataframe.replace(xtgeo.UNDEF_INT, -1, inplace=True)
 
     result = mydataframe
     if not dataframe:

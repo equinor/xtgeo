@@ -12,7 +12,6 @@ import numpy.ma as ma
 import scipy.interpolate
 import scipy.ndimage
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -118,7 +117,7 @@ def avgsum_from_3dprops_gridding(
         maxpp = ppx.max()
 
     # avoid artifacts from inactive cells that slips through somehow...(?)
-    if dzprop.max() > _cxtgeo.UNDEF_LIMIT:
+    if dzprop.max() > xtgeo.UNDEF_LIMIT:
         raise RuntimeError("Bug: DZ with unphysical values present")
 
     trimbydz = False
@@ -316,8 +315,8 @@ def _zone_averaging(
         mpr = ma.dstack(newm)
         zpr.astype(np.int32)
 
-    xpr = ma.filled(xpr, fill_value=_cxtgeo.UNDEF)
-    ypr = ma.filled(ypr, fill_value=_cxtgeo.UNDEF)
+    xpr = ma.filled(xpr, fill_value=xtgeo.UNDEF)
+    ypr = ma.filled(ypr, fill_value=xtgeo.UNDEF)
     zpr = ma.filled(zpr, fill_value=0)
     dpr = ma.filled(dpr, fill_value=0.0)
 

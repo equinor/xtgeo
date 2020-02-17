@@ -68,7 +68,7 @@ def import_irap_binary(self, mfile, values=True):
 
     val = np.reshape(val, (self._ncol, self._nrow), order="C")
 
-    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
     if np.isnan(val).any():
         logger.info("NaN values are found, will mask...")
@@ -144,7 +144,7 @@ def import_irap_binary(self, mfile, values=True):
 
     # val = np.reshape(val, (self._ncol, self._nrow), order="C")
 
-    # val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+    # val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
     # if np.isnan(val).any():
     #     logger.info("NaN values are found, will mask...")
@@ -174,7 +174,7 @@ def import_irap_ascii(self, mfile):
 
     val = np.reshape(val, (ncol, nrow), order="C")
 
-    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
     if np.isnan(val).any():
         logger.info("NaN values are found, will mask...")
@@ -231,7 +231,7 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
 
     logger.info(xlist)
 
-    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
     self._xori = xori
     self._xinc = xinc
@@ -266,7 +266,7 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
         fin.fhandle, template.ilines, template.xlines, nxy, 0
     )
 
-    val = ma.masked_greater(val, _cxtgeo.UNDEF_LIMIT)
+    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
     self._xori = template.xori
     self._xinc = template.xinc
