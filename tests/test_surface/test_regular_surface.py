@@ -242,7 +242,7 @@ def test_irapasc_export_and_import():
 
     fsize = os.path.getsize("TMP/irap2_b.gri")
     logger.info(fsize)
-    tsetup.assert_equal(fsize, 48196)
+    tsetup.assert_equal(fsize, 48900)
 
     # import irap ascii
     y = xtgeo.RegularSurface()
