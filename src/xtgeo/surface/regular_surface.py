@@ -325,7 +325,7 @@ class RegularSurface(object):
         return news
 
     # ==================================================================================
-    # Class and static methods
+    # Class and special methods
     # ==================================================================================
 
     @classmethod
