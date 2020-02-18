@@ -68,6 +68,27 @@ def test_create():
     (repr(m.values))
 
 
+def test_assign():
+    """Create a simple property and assign all values a constant"""
+
+    vals = np.array(range(12)).reshape((3, 2, 2))
+    x = GridProperty(ncol=3, nrow=2, nlay=2, values=vals)
+
+    # shall be a maskedarray although input is a np array:
+    assert isinstance(x.values, npma.core.MaskedArray)
+    assert x.values.mean() == 5.5
+
+    x.values = npma.masked_greater(x.values, 5)
+    assert x.values.mean() == 2.5
+
+    # this shall now broadcast the value 33 to all activecells
+    x.values = 33
+    assert x.dtype == np.int
+
+    x.values = 44.0221
+    assert x.dtype == np.float
+
+
 def test_create_actnum():
     """Test creating ACTNUM"""
     x = GridProperty()
@@ -524,6 +545,7 @@ def test_values_in_polygon():
     print(xp3.values.mean())
 
     tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
+
 
 # def test_get_xy_values_for_webportal_bri():
 #     """Get lists on webportal format, small BRILLIG case"""

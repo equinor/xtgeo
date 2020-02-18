@@ -387,38 +387,9 @@ class GridProperty(Grid3D):
     @values.setter
     def values(self, values):
 
-        # self._values = self.ensure_correct_values(
-        #     self.ncol, self.nrow, self.nlay, values
-        # )
-
-        if isinstance(values, np.ndarray) and not isinstance(values, np.ma.MaskedArray):
-
-            values = np.ma.array(values)
-            values = values.reshape((self._ncol, self._nrow, self._nlay))
-
-        elif isinstance(values, np.ma.MaskedArray):
-            values = values.reshape((self._ncol, self._nrow, self._nlay))
-        else:
-            raise ValueError("Problems with values in {}".format(__name__))
+        values = self.ensure_correct_values(self.ncol, self.nrow, self.nlay, values)
 
         self._values = values
-
-        trydiscrete = False
-        if "int" in str(values.dtype):
-            trydiscrete = True
-
-        trydiscrete = False
-        if "int" in str(values.dtype):
-            trydiscrete = True
-
-        if trydiscrete is not self._isdiscrete:
-            if trydiscrete:
-                self.continuous_to_discrete()
-            else:
-                self.discrete_to_continuous()
-
-        logger.debug("Values shape: %s", self._values.shape)
-        logger.debug("Flags: %s", self._values.flags.c_contiguous)
 
     @property
     def ntotal(self):
@@ -499,10 +470,7 @@ class GridProperty(Grid3D):
         return txt
 
     def ensure_correct_values(self, ncol, nrow, nlay, invalues):
-        """IN PREP! Ensures that values is a 3D masked numpy (ncol, nrol, nlay).
-
-        Expected behaviour:
-           TODO
+        """Ensures that values is a 3D masked numpy (ncol, nrol, nlay).
 
         Args:
             ncol (int): Number of columns.
@@ -524,6 +492,7 @@ class GridProperty(Grid3D):
             vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)
             vals = np.ma.array(vals, mask=currentmask)
             values = vals + invalues
+            invalues = values
 
         if not isinstance(invalues, np.ma.MaskedArray):
             values = np.ma.array(invalues, mask=currentmask, order="C")
@@ -546,6 +515,16 @@ class GridProperty(Grid3D):
             mask = np.asanyarray(mask, order="C")
             values = np.asanyarray(values, order="C")
             values = np.ma.array(values, mask=mask, order="C")
+
+        trydiscrete = False
+        if "int" in str(values.dtype):
+            trydiscrete = True
+
+        if trydiscrete is not self._isdiscrete:
+            if trydiscrete:
+                self.continuous_to_discrete()
+            else:
+                self.discrete_to_continuous()
 
         return values
 
