@@ -163,9 +163,10 @@ class Grid(Grid3D):
 
         super(Grid, self).__init__(*args, **kwargs)
 
-        self._p_coord_v = None  # carray swig pointer to coords vector
-        self._p_zcorn_v = None  # carray swig pointer to zcorns vector
-        self._p_actnum_v = None  # carray swig pointer to actnum vector
+        self._x_coord_v = None  # carray swig pointer (or numpy array) to coords vector
+        self._x_zcorn_v = None  # carray swig pointer (or numpy array) to zcorns vector
+        self._x_actnum_v = None  # carray swig pointer (or numpy array) to actnum vector
+
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
@@ -203,12 +204,12 @@ class Grid(Grid3D):
 
     def __del__(self):
 
-        if self._p_coord_v is not None:
+        if self._x_coord_v is not None:
             # logger.info("Deleting Grid instance %s", id(self))
-            _cxtgeo.delete_doublearray(self._p_coord_v)
-            _cxtgeo.delete_doublearray(self._p_zcorn_v)
-            _cxtgeo.delete_intarray(self._p_actnum_v)
-            self._p_coord_v = None
+            _cxtgeo.delete_doublearray(self._x_coord_v)
+            _cxtgeo.delete_doublearray(self._x_zcorn_v)
+            _cxtgeo.delete_intarray(self._x_actnum_v)
+            self._x_coord_v = None
 
             if self.props is not None:
                 for prop in self.props:
@@ -233,9 +234,9 @@ class Grid(Grid3D):
 
         return self.describe(flush=False)
 
-    # =========================================================================
-    # Properties:
-    # =========================================================================
+    # ==================================================================================
+    # Public Properties:
+    # ==================================================================================
 
     @property
     def ncol(self):
@@ -467,6 +468,61 @@ class Grid(Grid3D):
         return self._roxindexer
 
     # ==================================================================================
+    # Nonpublic properties, needed as wrappers
+    # ==================================================================================
+
+    @property
+    def _p_coord_v(self):
+        """A pointer (Swig Object) to the grid geometry pillars coords."""
+        if "Swig" not in str(type(self._x_coord_v)):
+            self.denumpify_carrays()
+
+        return self._x_coord_v
+
+    @_p_coord_v.setter
+    def _p_coord_v(self, value):
+        if "Swig" in str(type(value)):
+            self._x_coord_v = value
+        else:
+            raise RuntimeError(
+                "Setting _p_coord_v error, input is {}".format(type(value))
+            )
+
+    @property
+    def _p_zcorn_v(self):
+        """A pointer (Swig Object) to the grid geometry zcorn."""
+        if "Swig" not in str(type(self._x_zcorn_v)):
+            self.denumpify_carrays()
+
+        return self._x_zcorn_v
+
+    @_p_zcorn_v.setter
+    def _p_zcorn_v(self, value):
+        if "Swig" in str(type(value)):
+            self._x_zcorn_v = value
+        else:
+            raise RuntimeError(
+                "Setting _p_zcorn_v error, input is {}".format(type(value))
+            )
+
+    @property
+    def _p_actnum_v(self):
+        """A pointer (Swig Object) to the grid actnum array."""
+        if "Swig" not in str(type(self._x_actnum_v)):
+            self.denumpify_carrays()
+
+        return self._x_actnum_v
+
+    @_p_actnum_v.setter
+    def _p_actnum_v(self, value):
+        if "Swig" in str(type(value)):
+            self._x_actnum_v = value
+        else:
+            raise RuntimeError(
+                "Setting _p_actnum_v error, input is {}".format(type(value))
+            )
+
+    # ==================================================================================
     # Create/import/export
     # ==================================================================================
 
@@ -620,9 +676,47 @@ class Grid(Grid3D):
             self, projectname, gname, realisation, info=info, method=method
         )
 
-    # =========================================================================
+    # ==================================================================================
     # Various public methods
-    # =========================================================================
+    # ==================================================================================
+
+    def numpify_carrays(self):
+        """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
+
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+        ntot = self._ncol * self._nrow * self._nlay
+
+        if "SwigPyObject" not in str(type(self._x_coord_v)) or self._x_coord_v is None:
+            logger.info("Tried to numpify but input is not numpy")
+            return
+
+        self._x_coord_v = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._x_coord_v)
+        self._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._x_zcorn_v)
+        self._x_actnum_v = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._x_actnum_v)
+
+    def denumpify_carrays(self):
+        """Convert 1D numpies of geometry arrays to C SWIG pointers pointers."""
+
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+        ntot = self._ncol * self._nrow * self._nlay
+
+        if not isinstance(self._x_coord_v, np.ndarray) or self._x_coord_v is None:
+            logger.info("Tried to denumpify but input is not numpy")
+            return
+
+        carray = _cxtgeo.new_doublearray(ncoord)
+        _cxtgeo.swig_numpy_to_carr_1d(self._x_coord_v, carray)
+        self._x_coord_v = carray
+
+        carray = _cxtgeo.new_doublearray(nzcorn)
+        _cxtgeo.swig_numpy_to_carr_1d(self._x_zcorn_v, carray)
+        self._x_zcorn_v = carray
+
+        carray = _cxtgeo.new_intarray(ntot)
+        _cxtgeo.swig_numpy_to_carr_i1d(self._x_actnum_v, carray)
+        self._x_actnum_v = carray
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
