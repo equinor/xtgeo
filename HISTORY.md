@@ -2,6 +2,22 @@
 
 ## Version 2
 
+### 2.6.0
+* New features:
+  * A Grid() instance can now be "numpified" so that pickling can be done, method `numpify_carrays()`
+  * An existing GridProperty() instance should now accept scalar input which will be broadcasted to
+    the full array
+  * Added a method so one can create a GridProperty instance directly for a Grid() instance
+  * Added several alternatives to instantate Points(), e.g. from a list of tuples
+  * A general method that finds the IJK indices in a 3D grid from from Points() is made `get_ijk_from_points`
+* Bug fixes:
+  * Making surface write to BytesIO stream threading safe (Irap binary format)
+  * Assigning a GridProperty() inside/outside a polygon is now more robust.
+  * Many internal build fixes and improves, including requirements.txt
+  * For surfaces, some operator overload function changed unintentionally the `other` instance
+  * For surfaces, operator overload on instances with same topology will not unintentionally trigger resampling
+
+
 ### 2.5.0
 * New features:
   * Be able to write surfaces to BytesIO (memory streams), Linux only
@@ -29,7 +45,7 @@
   * More robust on reading saturations from UNRST files from Eclipse 300 and IX, where "IPHS" metadata
     (describing phases present) is unreliable.
 * Fixes for developers:
-  *  setup can now be ran in "develop mode"
+  * Setup can now be ran in "develop mode"
 
 ### 2.3.1
 
