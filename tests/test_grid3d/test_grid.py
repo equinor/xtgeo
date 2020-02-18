@@ -68,6 +68,20 @@ def test_import_guess(load_gfile1):
     tsetup.assert_equal(grd.ncol, 70)
 
 
+def test_numpify(load_gfile1):
+    """Numpify the grid instnce and do operation afterwards"""
+
+    grd = load_gfile1
+
+    grd.numpify_carrays()
+
+    assert isinstance(grd._x_coord_v, np.ndarray)
+
+    dx, dy = grd.get_dxdy()  # should automatically denumpify behind the scene
+
+    assert not isinstance(grd._x_coord_v, np.ndarray)
+
+
 def test_create_shoebox():
     """Make a shoebox grid from scratch"""
 
