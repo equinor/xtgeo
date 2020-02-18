@@ -77,7 +77,7 @@ def test_numpify(load_gfile1):
 
     assert isinstance(grd._x_coord_v, np.ndarray)
 
-    dx, dy = grd.get_dxdy()  # should automatically denumpify behind the scene
+    _ = grd.get_dz()  # should automatically denumpify behind the scene
 
     assert not isinstance(grd._x_coord_v, np.ndarray)
 
