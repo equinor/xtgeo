@@ -276,7 +276,66 @@ Examples to come...
 Well data
 ---------
 
-Examples to comes...
+Get average properties per zone
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+   import xtgeo
+
+   PRJ = project  # noqa
+   WELLNAME = "DC1-1V4_ref"
+   TRAJNAME = "Imported trajectory"
+   ZONELOGNAME = "ZONELOG"
+   ZNAMES = {0: "UPPER", 1: "MIDDLE", 2: "LOWER"}
+
+
+   def get_well():
+       """Get XTGeo Well() object"""
+       wll = xtgeo.well_from_roxar(PRJ, WELLNAME, trajectory=TRAJNAME)
+       return wll
+
+
+   def compute_avg_per_zone(wll):
+       """Compute avg per zone without any other criteria"""
+
+       df = wll.dataframe
+       df_avgs = df.groupby(ZONELOGNAME).mean()
+       df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with true name
+
+       print("Average properties per zone")
+        print(df_avgs)
+
+        # e.g. get avg PORO for MIDDLE, rounded to 3 decimals:
+        print("\nAVG poro for MIDDLE is {:2.3f}\n".format(df_avgs.loc["MIDDLE", "PORO"]))
+
+
+    def compute_avg_per_zone_smarter(wll):
+        """Compute avg per zone by looking only at intervals that increase"""
+
+        wll.zonelogname = ZONELOGNAME
+        wll.make_zone_qual_log("QUAL")
+
+        # This quality log will be 1 if zonelog is truly increasing, or 2 if truly
+        # decreasing, so here I will only here filter on increasing (downward)
+        # cf: https://xtgeo.readthedocs.io/en/latest/apiref/xtgeo.well.well1.html#
+        # xtgeo.well.well1.Well.make_zone_qual_log
+
+        df = wll.dataframe[wll.dataframe.QUAL == 1]  # only get the increasing part
+        df_avgs = df.groupby(ZONELOGNAME).mean()
+        df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with name
+
+        print("\n\nAverage properties per zone where penetrating zone downwards")
+        print(df_avgs)
+
+
+    def main():
+        mywell = get_well()
+        compute_avg_per_zone(mywell)
+        compute_avg_per_zone_smarter(mywell)
+
+
+    if __name__ == "__main__":
+        main()
 
 
 Line point data
