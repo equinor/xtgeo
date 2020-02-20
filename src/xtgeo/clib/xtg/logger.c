@@ -191,48 +191,9 @@ void logger_critical(int line, char *file, const char *func, const char *fmt, ..
 #define NANOS_PER_SECF 1000000000.0
 #define USECS_PER_SEC 1000000
 
+#if defined(_WIN32)
 
-#ifdef __unix__
-
-#include <unistd.h>
-
-#if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK)
-/* If we have it, use clock_gettime and CLOCK_MONOTONIC. */
-
-#include <time.h>
-
-double monotonic_seconds() {
-    struct timespec time;
-    // Note: Make sure to link with -lrt to define clock_gettime.
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    return ((double) time.tv_sec) + ((double) time.tv_nsec / (NANOS_PER_SECF));
-}
-
-#elif defined(__APPLE__)
-// If we don't have CLOCK_MONOTONIC, we might be on a Mac. There we instead
-// use mach_absolute_time().
-
-#include <mach/mach_time.h>
-
-static mach_timebase_info_data_t info;
-static void __attribute__((constructor)) init_info() {
-    mach_timebase_info(&info);
-}
-
-double monotonic_seconds() {
-    uint64_t time = mach_absolute_time();
-    double dtime = (double) time;
-    dtime *= (double) info.numer;
-    dtime /= (double) info.denom;
-    return dtime / NANOS_PER_SECF;
-}
-#endif  /* _POSIX... */
-
-
-
-#elif defined(_MSC_VER)
-// On Windows, use QueryPerformanceCounter and QueryPerformanceFrequency.
-
+/* On Windows, use QueryPerformanceCounter and QueryPerformanceFrequency. */
 #include <windows.h>
 
 #define BILLION (1E9)
@@ -263,13 +224,25 @@ int _clock_gettime(int dummy, struct timespec *ct)
     }
 
     ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
-    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
+    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) /
+        g_counts_per_sec.QuadPart;
 
     return 0;
 }
 double monotonic_seconds() {
     struct timespec time;
     _clock_gettime(0, &time);
+    return ((double) time.tv_sec) + ((double) time.tv_nsec / (NANOS_PER_SECF));
+}
+
+#else
+
+#include <time.h>
+
+double monotonic_seconds() {
+    struct timespec time;
+    // Note: Make sure to link with -lrt to define clock_gettime.
+    clock_gettime(CLOCK_MONOTONIC, &time);
     return ((double) time.tv_sec) + ((double) time.tv_nsec / (NANOS_PER_SECF));
 }
 
