@@ -27,6 +27,19 @@ unsigned long _get_time() {
     return ret;
 }
 
+const char* _basename(const char *path)
+{
+    const char *name = NULL, *tmp = NULL;
+    if (path && *path) {
+        name = strrchr(path, '/');
+        tmp = strrchr(path, '\\');
+        if (tmp) {
+             return name && name > tmp ? name + 1 : tmp + 1;
+        }
+    }
+    return name ? name + 1 : path;
+}
+
 int _logger_init()
 {
     /* This function shall only be ran once */
@@ -44,14 +57,13 @@ int _logger_init()
     if (llevel == NULL) {
         return -1;
     }
-    else if (llevel != NULL) {
-        if (strcmp(llevel, "INFO") == 0) llev = 20;
-        if (strcmp(llevel, "DEBUG") == 0) llev = 10;
-        if (strcmp(llevel, "WARN") == 0) llev = 30;
-        if (strcmp(llevel, "WARNING") == 0) llev = 30;
-        if (strcmp(llevel, "ERROR") == 0) llev = 40;
-        if (strcmp(llevel, "CRITICAL") == 0) llev = 50;
-    }
+
+    if (strcmp(llevel, "INFO") == 0) llev = 20;
+    if (strcmp(llevel, "DEBUG") == 0) llev = 10;
+    if (strcmp(llevel, "WARN") == 0) llev = 30;
+    if (strcmp(llevel, "WARNING") == 0) llev = 30;
+    if (strcmp(llevel, "ERROR") == 0) llev = 40;
+    if (strcmp(llevel, "CRITICAL") == 0) llev = 50;
 
     XTG_LOGGING_LEVEL = llev;
 
@@ -65,13 +77,13 @@ int _logger_init()
         printf("Logging details:\n");
         printf("Logging level: %d\n", XTG_LOGGING_LEVEL);
         printf("Logging format: %d\n", XTG_LOGGING_FORMAT);
-        printf("Start time: %ld\n", XTG_START_TIME);
+        printf("Start time: %lu\n", XTG_START_TIME);
     }
     return -1;
 }
 
 
-void _logger_tell(int line, char *filename, const char *func, const char *message,
+void _logger_tell(int line, const char *filename, const char *func, const char *message,
                    const char *ltype, int level)
 {
 
@@ -100,7 +112,7 @@ void logger_debug(int line, char *file, const char *func, const char *fmt, ...)
     va_list ap;
     char message[550], msg[547];
 
-    char *filename = basename(file);
+    const char *filename = _basename(file);
 
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
@@ -117,7 +129,7 @@ void logger_info(int line, char *file, const char *func, const char *fmt, ...)
     va_list ap;
     char message[550], msg[547];
 
-    char *filename = basename(file);
+    const char *filename = _basename(file);
 
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
@@ -134,7 +146,7 @@ void logger_warn(int line, char *file, const char *func, const char *fmt, ...)
     va_list ap;
     char message[550], msg[547];
 
-    char *filename = basename(file);
+    const char *filename = _basename(file);
 
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
@@ -151,7 +163,7 @@ void logger_error(int line, char *file, const char *func, const char *fmt, ...)
     va_list ap;
     char message[550], msg[547];
 
-    char *filename = basename(file);
+    const char *filename = _basename(file);
 
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
@@ -168,7 +180,7 @@ void logger_critical(int line, char *file, const char *func, const char *fmt, ..
     va_list ap;
     char message[550], msg[547];
 
-    char *filename = basename(file);
+    const char *filename = _basename(file);
 
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
