@@ -235,27 +235,42 @@ double monotonic_seconds() {
 
 #include <windows.h>
 
-static double PCFreq = 0.0;
+#define BILLION (1E9)
 
-// According to http://stackoverflow.com/q/1113409/447288, this will
-// make this function a constructor.
-// TODO(awreece) Actually attempt to compile on windows.
-static void __cdecl init_pcfreq();
-__declspec(allocate(".CRT$XCU")) void (__cdecl*init_pcfreq_)() = init_pcfreq;
-static void __cdecl init_pcfreq() {
-    // Accoring to http://stackoverflow.com/a/1739265/447288, this will
-    // properly initialize the QueryPerformanceCounter.
-    LARGE_INTEGER li;
-    int has_qpc = QueryPerformanceFrequency(&li);
-    assert(has_qpc);
+static BOOL g_first_time = 1;
+static LARGE_INTEGER g_counts_per_sec;
 
-    PCFreq = (double) li.QuadPart;
+struct timespec { long tv_sec; long tv_nsec; };
+
+int _clock_gettime(int dummy, struct timespec *ct)
+{
+    LARGE_INTEGER count;
+
+    if (g_first_time)
+    {
+        g_first_time = 0;
+
+        if (0 == QueryPerformanceFrequency(&g_counts_per_sec))
+        {
+            g_counts_per_sec.QuadPart = 0;
+        }
+    }
+
+    if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
+            (0 == QueryPerformanceCounter(&count)))
+    {
+        return -1;
+    }
+
+    ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
+    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
+
+    return 0;
 }
-
 double monotonic_seconds() {
-    LARGE_INTEGER li;
-    QueryPerformanceCounter(&li);
-    return ((double) li.QuadPart) / PCFreq;
+    struct timespec time;
+    _clock_gettime(0, &time);
+    return ((double) time.tv_sec) + ((double) time.tv_nsec / (NANOS_PER_SECF));
 }
 
 
