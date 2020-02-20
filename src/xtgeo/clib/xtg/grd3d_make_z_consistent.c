@@ -38,8 +38,8 @@ void grd3d_make_z_consistent(
     )
 
 {
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Entering %s with zsep %lf", __FUNCTION__, zsep);
+
+    logger_info(LI, FI, FU, "Entering %s with zsep %lf", FU, zsep);
 
     int    i, j, k;
 
@@ -63,5 +63,5 @@ void grd3d_make_z_consistent(
 	}
     }
 
-    logger_info(__LINE__, "Exit from %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Exit from %s", FU);
 }

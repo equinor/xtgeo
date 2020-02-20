@@ -65,9 +65,7 @@ int grd3d_well_ijk(
 
 {
 
-    logger_init(__FILE__, __FUNCTION__);
-
-    logger_info(__LINE__, "Entering %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Entering %s", FU);
 
     /*
      * Must be sure that grid is consistent in z, and also has
@@ -104,7 +102,7 @@ int grd3d_well_ijk(
 	double xcor = p_utme_v[mnum];
 	double ycor = p_utmn_v[mnum];
 	double zcor = p_tvds_v[mnum];
-        logger_debug(__LINE__, "Check point %lf   %lf   %lf", xcor, ycor, zcor);
+        logger_debug(LI, FI, FU, "Check point %lf   %lf   %lf", xcor, ycor, zcor);
 
 	ivector[mnum] = 0;
 	jvector[mnum] = 0;
@@ -114,7 +112,7 @@ int grd3d_well_ijk(
            unneccasary searching and looping; hence use a one layer grid...
         */
 
-        logger_debug(__LINE__,"Check via grid envelope");
+        logger_debug(LI, FI, FU,"Check via grid envelope");
 
         /* loop cells in simplified (one layer) grid */
         long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor,
@@ -133,7 +131,7 @@ int grd3d_well_ijk(
             outside = -777;
         }
 
-        logger_info(__LINE__, "Check grid envelope DONE, outside status: %d", outside);
+        logger_info(LI, FI, FU, "Check grid envelope DONE, outside status: %d", outside);
 
         /* now go further if the point is inside the single layer grid */
 
@@ -171,7 +169,7 @@ int grd3d_well_ijk(
 
     }
 
-    logger_info(__LINE__, "Exit from %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Exit from %s", FU);
     return EXIT_SUCCESS;
 
 }

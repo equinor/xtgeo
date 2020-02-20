@@ -61,12 +61,11 @@ int grd3d_get_lay_slice(
     int i, j, kshift;
     long ib, ic, icx, icn;
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Getting layer slice: %s", __FUNCTION__);
-    logger_info(__LINE__, "Dimens for arrays %ld %ld", nslicev, nicv);
+    logger_info(LI, FI, FU, "Getting layer slice: %s", FU);
+    logger_info(LI, FI, FU, "Dimens for arrays %ld %ld", nslicev, nicv);
 
     if (kslice > nz || kslice < 1) {
-        logger_warn(__LINE__, "Slice is outside range, return");
+        logger_warn(LI, FI, FU, "Slice is outside range, return");
         return -1;
     }
 
@@ -95,7 +94,7 @@ int grd3d_get_lay_slice(
 
     }
 
-    logger_info(__LINE__, "Getting layer slice done! %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Getting layer slice done! %s", FU);
 
     return icn;
 }

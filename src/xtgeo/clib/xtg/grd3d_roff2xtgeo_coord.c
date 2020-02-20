@@ -57,8 +57,7 @@ int grd3d_roff2xtgeo_coord (
     long ib, ic;
     int i, j;
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Transforming grid ROFF coords --> XTG representation ...");
+    logger_info(LI, FI, FU, "Transforming grid ROFF coords -> XTG representation ...");
 
     ib = 0;
     for (j = 0;j <= ny; j++) {
@@ -75,7 +74,7 @@ int grd3d_roff2xtgeo_coord (
         }
     }
 
-    logger_info(__LINE__, "Transforming grid ROFF coords --> XTG representation ... done");
+    logger_info(LI, FI, FU, "Transforming grid ROFF coords -> XTG representation done");
 
     return EXIT_SUCCESS;
 }

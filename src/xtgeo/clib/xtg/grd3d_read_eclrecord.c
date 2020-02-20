@@ -57,13 +57,11 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     double mydouble;
     long reclength = 0, nrecs, icc;
 
-    logger_init(__FILE__, __FUNCTION__);
-
-    logger_info(__LINE__, "Read binary ECL record from record position %ld", recstart);
+    logger_info(LI, FI, FU, "Read binary ECL record from record position %ld", recstart);
 
     if (x_swap_check() == 1) swap = 1;
 
-    if (fc == NULL) logger_critical(__LINE__, "Cannot use file (NULL pointer)");
+    if (fc == NULL) logger_critical(LI, FI, FU, "Cannot use file (NULL pointer)");
 
     if (rectype == 1) reclength = nint;
     if (rectype == 2) reclength = nflt;
@@ -74,7 +72,7 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     ier = fseek(fc, recstart + 24, SEEK_SET);  /* record header is 24 bytes */
 
     if (ier != 0) {
-        logger_error(__LINE__, "Could not set FSEEK position");
+        logger_error(LI, FI, FU, "Could not set FSEEK position");
     }
 
     nrecs = reclength;
@@ -138,7 +136,7 @@ int grd3d_read_eclrecord (FILE *fc, long recstart,
     }
 
     if (icc != reclength) {
-        logger_error(__LINE__, "Something is wrong with record lengths... "
+        logger_error(LI, FI, FU, "Something is wrong with record lengths... "
                      "icc=%d, reclength=%d", icc, reclength);
         return FAIL;
     }

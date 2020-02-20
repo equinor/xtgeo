@@ -80,7 +80,7 @@ void surf_sample_grd3d_lay (
 
 
     if (rotation != 0.0) {
-        logger_error(__LINE__, "Map rotation not supported so far...");
+        logger_error(LI, FI, FU, "Map rotation not supported so far...");
     }
 
     /*

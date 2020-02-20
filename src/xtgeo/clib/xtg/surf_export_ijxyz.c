@@ -77,8 +77,7 @@ int surf_export_ijxyz(
     int i, j, iok;
     double xv, yv, zv;
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Write OW style map file INLINE XLINE X Y Z (%s)", __FUNCTION__);
+    logger_info(LI, FI, FU, "Write OW style map file INLINE XLINE X Y Z (%s)", __FUNCTION__);
 
     /* export in INLINE running fastest order */
     for (j = 1; j <= my; j++) {
@@ -89,7 +88,7 @@ int surf_export_ijxyz(
                                    nrow*ncol, 0);
 
             if (iok != 0) {
-                logger_error(__LINE__, "Error from %s", __FUNCTION__);
+                logger_error(LI, FI, FU, "Error from %s", __FUNCTION__);
                 exit(313);
             }
 

@@ -52,14 +52,13 @@ int grd3d_reverse_jrows (
     double *tmpcv;
     int *itmp;
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Flip/swap J axis");
+    logger_info(LI, FI, FU, "Flip/swap J axis");
 
     ntot = (nx + 1) * (ny + 1) * 6;  /*  COORD values */
     tmpcv = calloc(ntot, sizeof(double));
 
-    logger_info(__LINE__, "J swapping COORD");
-    logger_info(__LINE__, "NX NY NZ %d %d %d", nx, ny, nz);
+    logger_info(LI, FI, FU, "J swapping COORD");
+    logger_info(LI, FI, FU, "NX NY NZ %d %d %d", nx, ny, nz);
     ib2 = 0;
     for (j = 1; j <= ny + 1; j++) {
         for (i = 1; i <= nx + 1; i++) {
@@ -78,7 +77,7 @@ int grd3d_reverse_jrows (
     free(tmpcv);
 
     /*  ***************************************************************************** */
-    logger_info(__LINE__, "J swapping ZCORN");
+    logger_info(LI, FI, FU, "J swapping ZCORN");
 
     ntot = nx * ny * (nz + 1) * 4;  /*  ZCORN values */
     tmpcv = calloc(ntot, sizeof(double));
@@ -100,7 +99,7 @@ int grd3d_reverse_jrows (
     free(tmpcv);
 
     /*  ***************************************************************************** */
-    logger_info(__LINE__, "J swapping ACTNUM");
+    logger_info(LI, FI, FU, "J swapping ACTNUM");
 
     ntot = nx * ny * nz;  /*  ACTNUM values */
     itmp = calloc(ntot, sizeof(int));
