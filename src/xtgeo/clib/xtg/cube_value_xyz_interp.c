@@ -114,7 +114,7 @@ int cube_value_xyz_interp(
             /* logger_warn("Warning, snapping distance is more than " */
             /*             "10 percent of avg cell size in XY: %f vs %f (%s). " */
             /*             "Consider to deactivate snapxy option?", */
-            /*             previousdist, avginc, __FUNCTION__); */
+            /*             previousdist, avginc, FU); */
 
         }
 

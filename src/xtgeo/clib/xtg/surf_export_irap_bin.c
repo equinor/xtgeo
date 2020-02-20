@@ -50,7 +50,7 @@ void _writeint(FILE *fc, int ival, int swap)
     if (swap) SWAP_INT(ival);
 
     if (fwrite(&ival, sizeof(int), 1, fc) != 1) {
-        logger_critical(__LINE__, "Cannot write int to file! <%s>", __FUNCTION__);
+        logger_critical(LI, FI, FU, "Cannot write int to file! <%s>", FU);
     }
 }
 
@@ -59,7 +59,7 @@ void _writefloat(FILE *fc, float fval, int swap)
     if (swap) SWAP_FLOAT(fval);
 
     if (fwrite(&fval, sizeof(float), 1, fc) != 1) {
-        logger_critical(__LINE__, "Cannot write float to file! <%s>", __FUNCTION__);
+        logger_critical(LI, FI, FU, "Cannot write float to file! <%s>", FU);
     }
 }
 
@@ -85,10 +85,9 @@ int surf_export_irap_bin(
 
     /* code: */
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Write IRAP binary map file...");
+    logger_info(LI, FI, FU, "Write IRAP binary map file...");
 
-    if (ntot != mx * my) logger_critical(__LINE__, "Bug in %", __FUNCTION__);
+    if (ntot != mx * my) logger_critical(LI, FI, FU, "Bug in %", FU);
 
     /* check endianess */
     swap=0;

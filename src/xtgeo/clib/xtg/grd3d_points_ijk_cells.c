@@ -295,12 +295,10 @@ int grd3d_points_ijk_cells(
     )
 {
 
-    logger_init(__FILE__, __FUNCTION__);
+    logger_info(LI, FI, FU, "Entering routine %s", FU);
 
-    logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
-
-    if (nxvec != nyvec || nyvec != nzvec) logger_critical(__LINE__, "Input bug");
-    if (nivec != njvec || nivec != nkvec) logger_critical(__LINE__, "Input bug");
+    if (nxvec != nyvec || nyvec != nzvec) logger_critical(LI, FI, FU, "Input bug");
+    if (nivec != njvec || nivec != nkvec) logger_critical(LI, FI, FU, "Input bug");
 
     long ib = 0;
 
@@ -336,7 +334,7 @@ int grd3d_points_ijk_cells(
         kvec[ic] = UNDEF_INT;
 
         if (ibfound >= 0) {
-            if (dbg) logger_info(__LINE__, "Use Return IB %d", ib);
+            if (dbg) logger_info(LI, FI, FU, "Use Return IB %d", ib);
             /*
              * means that the  X Y Z point is somewhere inside
              * so now it is time to find exact K location
@@ -362,7 +360,7 @@ int grd3d_points_ijk_cells(
         }
     }
 
-    logger_info(__LINE__, "Exit from routine %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Exit from routine %s", FU);
 
     return EXIT_SUCCESS;
 

@@ -88,8 +88,7 @@ int grd3d_rpt_zlog_vs_zon(
     p_jcell_v   = calloc(nval+1,sizeof(int));
     p_kcell_v   = calloc(nval+1,sizeof(int));
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Entering %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Entering %s", FU);
 
     /*
      * Must be sure that grid is consistent in z, and also has
@@ -134,7 +133,7 @@ int grd3d_rpt_zlog_vs_zon(
     }
 
     if (mtopmark>mbotmark) {
-	logger_critical(__LINE__, "Bug in %s (mtopmark > mbotmark)", __FUNCTION__);
+	logger_critical(LI, FI, FU, "Bug in %s (mtopmark > mbotmark)", FU);
     }
 
     if (mtopmark==-1 || mbotmark==-1) {
@@ -270,12 +269,12 @@ int grd3d_rpt_zlog_vs_zon(
 		}
 
 		if (totalcount < mlimit) {
-		    logger_info(__LINE__, " >>   %4d %4d  (%9.2f %9.2f %8.2f) "
+		    logger_info(LI, FI, FU, " >>   %4d %4d  (%9.2f %9.2f %8.2f) "
 			      "[cell %4d %4d %4d]",
 			      lzone, nzone, x, y, z, i, j, k);
 		}
 		else if (totalcount == mlimit) {
-		    logger_info(__LINE__, "Etc... (The rest is not displayed)");
+		    logger_info(LI, FI, FU, "Etc... (The rest is not displayed)");
 		}
 
 	    }
@@ -286,11 +285,11 @@ int grd3d_rpt_zlog_vs_zon(
     results[1] = (double)totalcount;
     results[2] = (double)matchcount;
 
-    logger_info(__LINE__, "Match count is %7.2f percent",results[0]);
+    logger_info(LI, FI, FU, "Match count is %7.2f percent",results[0]);
 
 
-    logger_info(__LINE__, "Adjusting grid to zlog ... DONE!");
-    logger_info(__LINE__, "Exiting <grd3d_adj_z_from_zlog>");
+    logger_info(LI, FI, FU, "Adjusting grid to zlog ... DONE!");
+    logger_info(LI, FI, FU, "Exiting <grd3d_adj_z_from_zlog>");
 
     x_free(4, p_zsample_v, p_icell_v, p_jcell_v, p_kcell_v);
 

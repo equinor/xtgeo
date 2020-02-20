@@ -28,9 +28,7 @@ int pol_refine (
     double  dist2d, dist3d, usedist, len, frac, x, y, z;
     double  *xv, *yv, *zv;
 
-    logger_init(__FILE__, __FUNCTION__);
-
-    logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Entering routine %s", __FUNCTION__);
 
     /* allocate the tmp arrays to something big */
     xv=calloc(99999,sizeof(double));
@@ -70,14 +68,14 @@ int pol_refine (
 		frac = (len/usedist)*ii;
 
 		if (frac>1) {
-		    logger_critical(__LINE__,"Bug in %s (frac > 1)", __FUNCTION__);
+		    logger_critical(LI, FI, FU,"Bug in %s (frac > 1)", __FUNCTION__);
 		}
 
 		iostat=x_vector_linint(p_x_v[i],p_y_v[i],p_z_v[i],
 				       p_x_v[i+1],p_y_v[i+1],p_z_v[i+1],
 				       frac, &x, &y, &z, 0);
 		if (iostat<0) {
-		    logger_critical(__LINE__,"Bug in %s (iostat < 0)", __FUNCTION__);
+		    logger_critical(LI, FI, FU,"Bug in %s (iostat < 0)", __FUNCTION__);
 		}
 
 

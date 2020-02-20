@@ -163,14 +163,12 @@ int grd3d_get_randomline(
     double zsam;
     double value, *p_dummy_v = NULL;
 
-    logger_init(__FILE__, __FUNCTION__);
-
-    logger_info(__LINE__, "Entering routine %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Entering routine %s", FU);
 
     zsam = (zmax - zmin) / (nzsam - 1);
 
     if (nxvec != nyvec || nxvec != nvalues) {
-        logger_error(__LINE__, "Bug in %s", __FUNCTION__);
+        logger_error(LI, FI, FU, "Bug in %s", FU);
     }
 
     ib = 0;
@@ -222,7 +220,7 @@ int grd3d_get_randomline(
         }
     }
 
-    logger_info(__LINE__, "Exit from routine %s", __FUNCTION__);
+    logger_info(LI, FI, FU, "Exit from routine %s", FU);
 
     return EXIT_SUCCESS;
 

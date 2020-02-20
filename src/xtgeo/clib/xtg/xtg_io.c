@@ -27,11 +27,10 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
 
-    logger_init(__FILE__, __FUNCTION__);
 
     if (strncmp(mode, "w", 1) == 0) {
         size_t len;
-        logger_info(__LINE__, "Write to memory buffer");
+        logger_info(LI, FI, FU, "Write to memory buffer");
 
         fhandle = open_memstream(&stream, &len);
 
@@ -41,7 +40,7 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
     }
     else{
         void *buff;
-        logger_info(__LINE__, "Read from memory buffer");
+        logger_info(LI, FI, FU, "Read from memory buffer");
 
         buff = (void*)stream;
 
@@ -57,8 +56,7 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
-    logger_init(__FILE__, __FUNCTION__);
-    logger_critical(__LINE__, "Bytestream open is not implemented on this platform!");
+    logger_critical(LI, FI, FU, "Bytestream open is not implemented on this platform!");
     return fhandle;
 }
 #endif
@@ -92,8 +90,7 @@ int xtg_get_fbuffer(FILE *fhandle, char *stream, long nstream)
     npos = ftell(fhandle); /* ftell given the current file offset */
 
     if (npos > nstream) {
-        logger_init(__FILE__, __FUNCTION__);
-        logger_critical(__LINE__, "NPOS = %ld > NSTREAM = %ld", npos, nstream);
+        logger_critical(LI, FI, FU, "NPOS = %ld > NSTREAM = %ld", npos, nstream);
         return EXIT_FAILURE;
     }
 

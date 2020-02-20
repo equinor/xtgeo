@@ -96,7 +96,7 @@ int well_trunc_parallel(
     ier2 = well_geometrics(nx2, xv2, yv2, zv2, md2, in2, az2, 0);
 
     if (ier1 != 0 || ier2 != 0) {
-        logger_error(__LINE__, "Something went wrong on well geometrics in %s", __FUNCTION__);
+        logger_error(LI, FI, FU, "Something went wrong on well geometrics in %s", FU);
         return EXIT_FAILURE;
     }
 

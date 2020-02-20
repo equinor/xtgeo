@@ -49,8 +49,7 @@ int grd3d_roff2xtgeo_actnum (
     long ib = 0, ic = 0, nact = 0;
     int i, j, k;
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Transforming grid ROFF actnum --> XTG representation ...");
+    logger_info(LI, FI, FU, "Transforming grid ROFF actnum --> XTG representation ...");
 
     if (option == 1) {
         for (ib=0; ib < nx * ny * nz; ib++) {
@@ -71,7 +70,7 @@ int grd3d_roff2xtgeo_actnum (
         }
     }
 
-    logger_info(__LINE__, "Transforming grid ROFF actnum --> XTG representation ... done");
+    logger_info(LI, FI, FU, "Transforming grid ROFF actnum -> XTG representation done");
 
     return nact;
 }

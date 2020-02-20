@@ -53,8 +53,7 @@ int grd3d_translate (
     /* locals */
     int    i, j, ic, ib, nzcorn, iok=0;
 
-    logger_init(__FILE__, __FUNCTION__);
-    logger_info(__LINE__, "Do translation or pure flipping");
+    logger_info(LI, FI, FU, "Do translation or pure flipping");
 
     if ((xflip == 1 || xflip == -1) &&
 	(yflip == 1 || yflip == -1) &&
@@ -64,7 +63,7 @@ int grd3d_translate (
 
     if (iok == 0) {
 	/* flip out of range */
-	logger_warn(__LINE__,"Error in flips ...%d %d %d", xflip, yflip, zflip);
+	logger_warn(LI, FI, FU,"Error in flips ...%d %d %d", xflip, yflip, zflip);
 	return (-1);
     }
 
@@ -88,6 +87,6 @@ int grd3d_translate (
 	p_zcorn_v[ic]=zflip*(p_zcorn_v[ic] + zshift);
     }
 
-    logger_info(__LINE__,"Exit from routine");
+    logger_info(LI, FI, FU,"Exit from routine");
     return(0);
 }

@@ -47,7 +47,7 @@ int cube_value_ijk(
     ib = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
     if (ib<0) {
-	// logger_warn("Problem in routine %s! Outside?", __FUNCTION__);
+	// logger_warn("Problem in routine %s! Outside?", FU);
         *value = UNDEF;
 	return(-1);
     }
