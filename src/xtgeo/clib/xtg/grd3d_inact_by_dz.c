@@ -67,8 +67,9 @@ void grd3d_inact_by_dz(
     p_dztmp_v = calloc(nx * ny * nz, sizeof(double));
 
 
-    grd3d_calc_dz(nx, ny, nz, p_zcorn_v, p_actnum_v,
-		  p_dztmp_v, flip, 0, debug);
+    /* lengths of p_zorn etc are dummy */
+    grd3d_calc_dz(nx, ny, nz, p_zcorn_v, 0, p_actnum_v, 0,
+		  p_dztmp_v, 0, flip, 0);
 
     ndone = 0;
 
@@ -78,9 +79,10 @@ void grd3d_inact_by_dz(
 	    for (i = 1; i <= nx; i++) {
 
 		/* parameter counting */
-		ib = x_ijk2ib(i,j,k,nx,ny,nz,0);
+		long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+		long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-		if (p_dztmp_v[ib] < threshold && p_actnum_v[ib] > 0) {
+		if (p_dztmp_v[ic] < threshold && p_actnum_v[ic] > 0) {
 		    p_actnum_v[ib] = 0;
 		    ndone++;
 		}

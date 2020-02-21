@@ -259,6 +259,17 @@ class Grid(Grid3D):
         return (self._ncol, self._nrow, self._nlay)
 
     @property
+    def vectordimensions(self):
+        """3-tuple: The storage grid array dimensions tuple of 3 integers (read only) as
+        (nzcorn, ncoord, nactnum)
+        """
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        ntot = self._ncol * self._nrow * self._nlay
+
+        return(nzcorn, ncoord, ntot)
+
+    @property
     def ijk_handedness(self):
         """IJK handedness for grids, "right" or "left"
 

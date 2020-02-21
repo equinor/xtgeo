@@ -1199,9 +1199,12 @@ void grd3d_from_cube (
     int ncol,
     int nrow,
     int nlay,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int *p_actnum_v,
+    double *swig_np_dbl_inplace_v1,  // *p_coord_v,
+    long n_swig_np_dbl_inplace_v1,   // ncoord,
+    double *swig_np_dbl_inplace_v2,  // *p_zcorn_v,
+    long n_swig_np_dbl_inplace_v2,   // nzcorn,
+    int *swig_np_int_inplace_v1,     // *p_actnum_v,
+    long n_swig_np_int_inplace_v1,   // nactnum,
     double xori,
     double yori,
     double zori,
@@ -1210,35 +1213,40 @@ void grd3d_from_cube (
     double zinc,
     double rotation,
     int yflip,
-    int option,
-    int debug
+    int option
     );
 
 int grd3d_calc_dxdy(
     int nx,
     int ny,
     int nz,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int *p_actnum_v,
-    double *dx,
-    double *dy,
+    double *swig_np_dbl_in_v1,       // *p_coord_v,
+    long n_swig_np_dbl_in_v1,        // ncoord,
+    double *swig_np_dbl_in_v2,       // *p_zcorn_v,
+    long n_swig_np_dbl_in_v2,        // nzcorn,
+    int *swig_np_int_in_v1,          // *p_actnum_v,
+    long n_swig_np_int_in_v1,        // nactnum,
+    double *swig_np_dbl_inplace_v1,  // *dx,
+    long n_swig_np_dbl_inplace_v1,   // ntot,
+    double *swig_np_dbl_inplace_v2,  // *dy,
+    long n_swig_np_dbl_inplace_v2,   // ntot,
     int option1,
-    int option2,
-    int debug
-    ); //FIXHD
+    int option2
+    );
 
 void grd3d_calc_dz(
     int nx,
     int ny,
     int nz,
-    double *p_zcorn_v,
-    int *p_actnum_v,
-    double *p_dz_v,
+    double *swig_np_dbl_in_v1,       // *p_zcorn_v,
+    long n_swig_np_dbl_in_v1,        // nzcorn,
+    int *swig_np_int_in_v1,          // *p_actnum_v,
+    long n_swig_np_int_in_v1,        // nactnum,
+    double *swig_np_dbl_inplace_v1,  // *p_dz_v,
+    long n_swig_np_dbl_inplace_v1,   // ntot,
     int flip,
-    int option,
-    int debug
-    ); //FIXHD
+    int option
+    );
 
 void grd3d_calc_xyz(
     int nx,

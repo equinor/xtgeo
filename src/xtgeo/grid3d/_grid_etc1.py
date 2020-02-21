@@ -43,13 +43,11 @@ def create_box(
     """Create a shoebox grid from cubi'sh spec"""
 
     self._ncol, self._nrow, self._nlay = dimension
-    ntot = self.ncol * self.nrow * self.nlay
-    ncoord = (self.ncol + 1) * (self.nrow + 1) * 2 * 3
-    nzcorn = self.ncol * self.nrow * (self.nlay + 1) * 4
+    nzcorn, ncoord, ntot = self.vectordimensions
 
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
+    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
+    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
 
     option = 0
     if oricenter:
@@ -59,9 +57,9 @@ def create_box(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         origin[0],
         origin[1],
         origin[2],
@@ -71,7 +69,6 @@ def create_box(
         rotation,
         flip,
         option,
-        XTGDEBUG,
     )
 
     self._actnum_indices = None
@@ -96,7 +93,7 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
         discrete=False,
     )
 
-    ptr_dz_v = _cxtgeo.new_doublearray(self.ntotal)
+    dz = np.zeros(self.ntotal, dtype=np.float64)
 
     nflip = 1
     if not flip:
@@ -106,21 +103,21 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
     if asmasked:
         option = 1
 
+    self.numpify_carrays()   # !! TMP !!
+
     _cxtgeo.grd3d_calc_dz(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_dz_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+        dz,
         nflip,
-        option,
-        XTGDEBUG,
+        option
     )
 
-    _gridprop_lowlevel.update_values_from_carray(dzv, ptr_dz_v, np.float64, delete=True)
+    dzv.values = np.ma.masked_greater(dz, xtgeo.UNDEF_LIMIT)
     # return the property object
-
     logger.info("DZ mean value: %s", dzv.values.mean())
 
     return dzv
@@ -129,11 +126,14 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     """Get dX, dY as properties"""
     ntot = self._ncol * self._nrow * self._nlay
+
+    dxval = np.zeros(ntot, dtype=np.float64)
+    dyval = np.zeros(ntot, dtype=np.float64)
+
     dx = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
         name=names[0],
         discrete=False,
     )
@@ -141,13 +141,9 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
         name=names[1],
         discrete=False,
     )
-
-    ptr_dx_v = _cxtgeo.new_doublearray(self.ntotal)
-    ptr_dy_v = _cxtgeo.new_doublearray(self.ntotal)
 
     option1 = 0
     option2 = 0
@@ -155,22 +151,23 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     if asmasked:
         option1 = 1
 
+    self.numpify_carrays()   # !! TMP !!
+
     _cxtgeo.grd3d_calc_dxdy(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_dx_v,
-        ptr_dy_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+        dxval,
+        dyval,
         option1,
         option2,
-        XTGDEBUG,
     )
 
-    _gridprop_lowlevel.update_values_from_carray(dx, ptr_dx_v, np.float64, delete=True)
-    _gridprop_lowlevel.update_values_from_carray(dy, ptr_dy_v, np.float64, delete=True)
+    dx.values = np.ma.masked_greater(dxval, xtgeo.UNDEF_LIMIT)
+    dy.values = np.ma.masked_greater(dyval, xtgeo.UNDEF_LIMIT)
 
     # return the property objects
     return dx, dy
