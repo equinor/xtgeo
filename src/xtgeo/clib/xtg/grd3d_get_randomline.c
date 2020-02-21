@@ -168,7 +168,9 @@ int grd3d_get_randomline(
     zsam = (zmax - zmin) / (nzsam - 1);
 
     if (nxvec != nyvec || nxvec != nvalues) {
-        logger_error(LI, FI, FU, "Bug in %s", FU);
+        logger_warn(LI, FI, FU, "There seems to be issues in %s:"
+                    "NXVEC = %ld, NYVEC = %ld, NVALUES = %ld", FU,
+                    nxvec, nyvec, nvalues);
     }
 
     ib = 0;
