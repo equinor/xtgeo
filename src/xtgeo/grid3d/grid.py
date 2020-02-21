@@ -204,7 +204,7 @@ class Grid(Grid3D):
 
     def __del__(self):
 
-        if self._x_coord_v is not None:
+        if self._p_coord_v is not None:
             # logger.info("Deleting Grid instance %s", id(self))
             _cxtgeo.delete_doublearray(self._x_coord_v)
             _cxtgeo.delete_doublearray(self._x_zcorn_v)
@@ -687,13 +687,27 @@ class Grid(Grid3D):
         nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         ntot = self._ncol * self._nrow * self._nlay
 
-        if "SwigPyObject" not in str(type(self._x_coord_v)) or self._x_coord_v is None:
+        if "SwigPyObject" not in str(type(self._x_zcorn_v)) or self._x_zcorn_v is None:
             logger.info("Tried to numpify but input is not numpy")
             return
 
         self._x_coord_v = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._x_coord_v)
         self._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._x_zcorn_v)
         self._x_actnum_v = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._x_actnum_v)
+
+        if not self._tmp:
+            return
+
+        if "SwigPyObject" in str(type(self._tmp["onegrid"]._x_zcorn_v)):
+            nzcorn = self._ncol * self._nrow * (1 + 1) * 4
+            ntot = self._ncol * self._nrow * 1
+
+            self._tmp["onegrid"]._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(
+                nzcorn, self._tmp["onegrid"]._x_zcorn_v
+            )
+            self._tmp["onegrid"]._x_actnum_v = _cxtgeo.swig_carr_to_numpy_1d(
+                ntot, self._tmp["onegrid"]._x_actnum_v
+            )
 
     def denumpify_carrays(self):
         """Convert 1D numpies of geometry arrays to C SWIG pointers pointers."""
@@ -702,21 +716,20 @@ class Grid(Grid3D):
         nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         ntot = self._ncol * self._nrow * self._nlay
 
-        if not isinstance(self._x_coord_v, np.ndarray) or self._x_coord_v is None:
-            logger.info("Tried to denumpify but input is not numpy")
-            return
+        if isinstance(self._x_coord_v, np.ndarray):
+            carray = _cxtgeo.new_doublearray(ncoord)
+            _cxtgeo.swig_numpy_to_carr_1d(self._x_coord_v, carray)
+            self._x_coord_v = carray
 
-        carray = _cxtgeo.new_doublearray(ncoord)
-        _cxtgeo.swig_numpy_to_carr_1d(self._x_coord_v, carray)
-        self._x_coord_v = carray
+        if isinstance(self._x_zcorn_v, np.ndarray):
+            carray = _cxtgeo.new_doublearray(nzcorn)
+            _cxtgeo.swig_numpy_to_carr_1d(self._x_zcorn_v, carray)
+            self._x_zcorn_v = carray
 
-        carray = _cxtgeo.new_doublearray(nzcorn)
-        _cxtgeo.swig_numpy_to_carr_1d(self._x_zcorn_v, carray)
-        self._x_zcorn_v = carray
-
-        carray = _cxtgeo.new_intarray(ntot)
-        _cxtgeo.swig_numpy_to_carr_i1d(self._x_actnum_v, carray)
-        self._x_actnum_v = carray
+        if isinstance(self._x_actnum_v, np.ndarray):
+            carray = _cxtgeo.new_intarray(ntot)
+            _cxtgeo.swig_numpy_to_carr_i1d(self._x_actnum_v, carray)
+            self._x_actnum_v = carray
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
