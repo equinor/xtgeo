@@ -52,6 +52,8 @@ void grd3d_calc_dz(
     int     i, j, k;
     double  top_z_avg, bot_z_avg;
 
+    logger_info(LI, FI, FU, "Compute DZ...");
+
     for (k = 1; k <= nz; k++) {
 	for (j = 1; j <= ny; j++) {
 	    for (i = 1; i <= nx; i++) {
@@ -83,4 +85,5 @@ void grd3d_calc_dz(
 	    }
 	}
     }
+    logger_info(LI, FI, FU, "Compute DZ... done");
 }

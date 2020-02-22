@@ -1,18 +1,6 @@
 /*
 ****************************************************************************************
  *
- * Import ECL EGRID (version 2)
- *
- ***************************************************************************************
- */
-
-#include "logger.h"
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
-****************************************************************************************
- *
  * NAME:
  *    grd3d_imp_ecl_egrid.c
  *
@@ -49,6 +37,11 @@
  ***************************************************************************************
  */
 
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
+
 int
 grd3d_imp_ecl_egrid (FILE *fc,
                      int nx,
@@ -59,8 +52,11 @@ grd3d_imp_ecl_egrid (FILE *fc,
 		     long bpos_zcorn,
 		     long bpos_actnum,
 		     double *p_coord_v,
+                     long ncoord,
 		     double *p_zcorn_v,
+                     long nzcorn,
 		     int *p_actnum_v,
+                     long nxyz,
 		     long *nact,
 		     int option)
 {
@@ -72,7 +68,6 @@ grd3d_imp_ecl_egrid (FILE *fc,
     double xma1, yma1, xma2, yma2, xma3, yma3, cx, cy, cz;
 
     float *tmp_mapaxes, *tmp_coord, *tmp_zcorn;
-    long nxyz, nmapaxes, ncoord, nzcorn;
     long ib = 0;
 
     logger_info(LI, FI, FU, "EGRID import ...");
@@ -81,15 +76,13 @@ grd3d_imp_ecl_egrid (FILE *fc,
      * INITIAL TASKS
      * =================================================================================
      */
-
-    nxyz = nx * ny * nz;
-    nmapaxes = 6;
-    ncoord = (nx + 1) * (ny + 1) * 2 * 3;
-    nzcorn = nx * ny *nz * 8;
+    long nmapaxes = 6;
+    long nzcornecl = nx * ny * nz * 8;
+    long ncoordecl = (nx + 1) * (ny + 1) * 2 * 3;
 
     tmp_mapaxes = calloc(nmapaxes, sizeof(float));
-    tmp_coord = calloc(ncoord, sizeof(float));
-    tmp_zcorn = calloc(nzcorn, sizeof(float));
+    tmp_coord = calloc(ncoordecl, sizeof(float));
+    tmp_zcorn = calloc(nzcornecl, sizeof(float));
 
     /*==================================================================================
      * Read MAPAXES, which is present if bpos_mapaxes > 0
@@ -121,7 +114,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
 
     /* convert from MAPAXES, if present */
 
-    for (ib = 0; ib < ncoord; ib = ib + 3) {
+    for (ib = 0; ib < ncoordecl; ib = ib + 3) {
         cx = tmp_coord[ib];
         cy = tmp_coord[ib+1];
         cz = tmp_coord[ib+2];
@@ -143,7 +136,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
      * Read ZCORN
      */
     logger_info(LI, FI, FU, "Read and convert ZCORN ...");
-    grd3d_read_eclrecord(fc, bpos_zcorn, 2, idum, 0, tmp_zcorn, nzcorn, ddum,
+    grd3d_read_eclrecord(fc, bpos_zcorn, 2, idum, 0, tmp_zcorn, nzcornecl, ddum,
                          0);
     /*
      * ZCORN: Eclipse has 8 corners pr cell, while XTGeo format
@@ -157,8 +150,7 @@ grd3d_imp_ecl_egrid (FILE *fc,
     /*==================================================================================
      * Read ACTNUM directly
      */
-    grd3d_read_eclrecord(fc, bpos_actnum, 1, p_actnum_v, nxyz, fdum, 0, ddum,
-                         0);
+    grd3d_read_eclrecord(fc, bpos_actnum, 1, p_actnum_v, nxyz, fdum, 0, ddum, 0);
 
     logger_info(LI, FI, FU, "Read ACTNUM ...");
 

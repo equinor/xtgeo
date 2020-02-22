@@ -1,22 +1,11 @@
 /*
  ***************************************************************************************
  *
- * Convert from ROFF grid cornerpoint spec to XTGeo cornerpoint grid: ACTNUM array
- *
- ***************************************************************************************
- */
-
-#include "logger.h"
-#include "libxtg.h"
-#include "libxtg_.h"
-/*
- ***************************************************************************************
- *
  * NAME:
  *    grd3d_roff2xtgeo_actnum.c
  *
  * DESCRIPTION:
- *    Convert fro ROFF internal spec to XTGeo spec for ACTNUM, The spec differs in
+ *    Convert from ROFF internal spec to XTGeo spec for ACTNUM, The spec differs in
  *    ordering, where XTGeo is column major ala Eclipse.
  *
  * ARGUMENTS:
@@ -35,12 +24,18 @@
  ***************************************************************************************
  */
 
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
+
 int grd3d_roff2xtgeo_actnum (
                             int nx,
                             int ny,
                             int nz,
                             int *p_act_v,
                             int *p_actnum_v,
+                            long nactnum,
                             int option
                             )
 
@@ -49,7 +44,7 @@ int grd3d_roff2xtgeo_actnum (
     long ib = 0, ic = 0, nact = 0;
     int i, j, k;
 
-    logger_info(LI, FI, FU, "Transforming grid ROFF actnum --> XTG representation ...");
+    logger_info(LI, FI, FU, "Transforming grid ROFF actnum -> XTG representation ...");
 
     if (option == 1) {
         for (ib=0; ib < nx * ny * nz; ib++) {

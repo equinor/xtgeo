@@ -261,13 +261,13 @@ class Grid(Grid3D):
     @property
     def vectordimensions(self):
         """3-tuple: The storage grid array dimensions tuple of 3 integers (read only) as
-        (nzcorn, ncoord, nactnum)
+        (ncoord, nzcorn, nactnum)
         """
-        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         ntot = self._ncol * self._nrow * self._nlay
 
-        return(nzcorn, ncoord, ntot)
+        return(ncoord, nzcorn, ntot)
 
     @property
     def ijk_handedness(self):
@@ -581,7 +581,6 @@ class Grid(Grid3D):
         initprops=None,
         restartprops=None,
         restartdates=None,
-        _roffapiv=2,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -618,7 +617,6 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
-            _roffapiv=_roffapiv,
         )
         self._tmp = {}
 

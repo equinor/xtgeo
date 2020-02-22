@@ -1,18 +1,6 @@
 /*
  ***************************************************************************************
  *
- * Convert from ROFF grid cornerpoint ZCORN spec to XTGeo
- *
- ***************************************************************************************
- */
-
-#include "logger.h"
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ***************************************************************************************
- *
  * NAME:
  *    grd3d_roff2xtgeo_zcorn.c
  *
@@ -40,6 +28,12 @@
  ***************************************************************************************
  */
 
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
+
 int grd3d_roff2xtgeo_zcorn (
                             int nx,
                             int ny,
@@ -52,7 +46,8 @@ int grd3d_roff2xtgeo_zcorn (
                             float zscale,
                             int *p_splitenz_v,
                             float *p_zdata_v,
-                            double *p_zcorn_v
+                            double *p_zcorn_v,
+                            long nzcorn
                             )
 
 {
@@ -64,7 +59,7 @@ int grd3d_roff2xtgeo_zcorn (
     double z_sw_v[8] = { 0 }, z_se_v[8] = { 0 }, z_nw_v[8] = { 0 };
     double z_ne_v[8] = { 0 }, zz[8] = { 0 };
 
-    logger_info(LI, FI, FU, "Transforming grid ROFF zcorn --> XTG representation ...");
+    logger_info(LI, FI, FU, "Transforming grid ROFF zcorn -> XTG representation ...");
 
 
     nxyz = (nx + 1) * (ny + 1) * (nz + 1);
@@ -144,7 +139,7 @@ int grd3d_roff2xtgeo_zcorn (
 
     free(lookup_v);
 
-    logger_info(LI, FI, FU, "Transforming grid ROFF zcorn --> XTG representation done");
+    logger_info(LI, FI, FU, "Transforming grid ROFF zcorn -> XTG representation done");
 
     return EXIT_SUCCESS;
 }

@@ -43,7 +43,7 @@ def create_box(
     """Create a shoebox grid from cubi'sh spec"""
 
     self._ncol, self._nrow, self._nlay = dimension
-    nzcorn, ncoord, ntot = self.vectordimensions
+    ncoord, nzcorn, ntot = self.vectordimensions
 
     self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
     self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)

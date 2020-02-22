@@ -1,18 +1,6 @@
 /*
  ***************************************************************************************
  *
- * Convert from ROFF grid cornerpoint spec to XTGeo cornerpoint grid: COORD arrays
- *
- ***************************************************************************************
- */
-
-#include "logger.h"
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ***************************************************************************************
- *
  * NAME:
  *    grd3d_roff2xtgeo_coord.c
  *
@@ -38,6 +26,12 @@
  ***************************************************************************************
  */
 
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
+
 int grd3d_roff2xtgeo_coord (
                             int nx,
                             int ny,
@@ -49,7 +43,8 @@ int grd3d_roff2xtgeo_coord (
                             float yscale,
                             float zscale,
                             float *p_cornerlines_v,
-                            double *p_coord_v
+                            double *p_coord_v,
+                            long ncoord
                             )
 
 {

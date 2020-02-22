@@ -1461,8 +1461,10 @@ int grd3d_roff2xtgeo_coord (
     float yscale,
     float zscale,
     float *p_cornerlines_v,
-    double *p_coord_v
+    double *swig_np_dbl_inplace_v1,    // *p_coord_v,
+    long n_swig_np_dbl_inplace_v1      // ncoord
     );
+
 int grd3d_roff2xtgeo_zcorn (
     int nx,
     int ny,
@@ -1475,7 +1477,8 @@ int grd3d_roff2xtgeo_zcorn (
     float zscale,
     int *p_splitenz_v,
     float *p_zdata_v,
-    double *p_zcorn_v
+    double *swig_np_dbl_inplace_v1,    // *p_zcorn_v,
+    long n_swig_np_dbl_inplace_v1      // nzcorn
     );
 
 
@@ -1483,8 +1486,9 @@ int grd3d_roff2xtgeo_actnum (
     int nx,
     int ny,
     int nz,
-    int *iact,
-    int *p_actnum_v,
+    int *p_act_v,
+    int *swig_np_int_inplace_v1,        // *p_actnum_v,
+    long n_swig_np_int_inplace_v1,      // nactnum
     int option
     );
 
@@ -1541,24 +1545,29 @@ int grd3d_imp_ecl_egrid (
     long bpos_coord,
     long bpos_zcorn,
     long bpos_actnum,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int *actnum_v,
+    double *swig_np_dbl_inplace_v1,    // *p_coord_v,
+    long n_swig_np_dbl_inplace_v1,     // ncoord
+    double *swig_np_dbl_inplace_v2,    // *p_zcorn_v,
+    long n_swig_np_dbl_inplace_v2,     // nzcorn
+    int *swig_np_int_inplace_v1,       // *p_actnumv_v,
+    long n_swig_np_int_inplace_v1,     // nactnum or ntot
     long *nact,
     int option
     );
 
 
 void grd3d_import_grdecl (
-    int     nx,
-    int     ny,
-    int     nz,
-    double  *p_coord_v,
-    double  *p_zcorn_v,
-    int     *p_actnum_v,
-    int     *nact,
-    char    *filename,
-    int     debug
+    FILE *fc,
+    int nx,
+    int ny,
+    int nz,
+    double *swig_np_dbl_inplace_v1,    // *p_coord_v,
+    long n_swig_np_dbl_inplace_v1,     // ncoord
+    double *swig_np_dbl_inplace_v2,    // *p_zcorn_v,
+    long n_swig_np_dbl_inplace_v2,     // nzcorn
+    int *swig_np_int_inplace_v1,       // *p_actnumv_v,
+    long n_swig_np_int_inplace_v1,     // nactnum or ntot
+    int *nact
     );
 
 int grd3d_import_grdecl_prop(
