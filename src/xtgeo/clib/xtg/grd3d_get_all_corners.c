@@ -1,59 +1,86 @@
+/*
+****************************************************************************************
+ *
+ * NAME:
+ *    grd3d_get_all_corners.c
+ *
+ * DESCRIPTION:
+ *    Get all cell corners as single arrays
+ *
+ * ARGUMENTS:
+ *    nx, ny, nz     i     Dimensions
+ *    p_coord_v      i     Coordinate vector (xtgeo fmt)
+ *    p_zcorn_v      i     ZCORN vector (xtgeo fmt)
+ *    p_actnum_v     i     ACTNUM vector (xtgeo fmt)
+ *    x1, ... z8     o     Single vectors for all X Y Z for all 8 corners
+ *    option         i     if 0, cells with ACTNUM 0 becomes UNDEF
+ *
+ * RETURNS:
+ *    Status, EXIT_FAILURE or EXIT_SUCCESS
+ *
+ * TODO/ISSUES/BUGS:
+ *
+ * LICENCE:
+ *    CF XTGeo's LICENSE
+ ***************************************************************************************
+ */
 
-#include <string.h>
-#include <stdlib.h>
+
 #include "libxtg.h"
 #include "libxtg_.h"
 
 
-
 void grd3d_get_all_corners(
-                           int nx,
-                           int ny,
-                           int nz,
-                           double *p_coord_v,
-                           double *p_zcorn_v,
-                           int *p_actnum_v,
-                           double* x1,
-                           double* y1,
-                           double* z1,
-                           double* x2,
-                           double* y2,
-                           double* z2,
-                           double* x3,
-                           double* y3,
-                           double* z3,
-                           double* x4,
-                           double* y4,
-                           double* z4,
-                           double* x5,
-                           double* y5,
-                           double* z5,
-                           double* x6,
-                           double* y6,
-                           double* z6,
-                           double* x7,
-                           double* y7,
-                           double* z7,
-                           double* x8,
-                           double* y8,
-                           double* z8,
-                           int option,
-                           int debug
-                           )
+    int nx,
+    int ny,
+    int nz,
+
+    double *p_coord_v,
+    long ncoordin,
+    double *p_zcorn_v,
+    long nzcornin,
+    int *p_actnum_v,
+    long nactin,
+
+    double* x1,
+    double* y1,
+    double* z1,
+    double* x2,
+    double* y2,
+    double* z2,
+    double* x3,
+    double* y3,
+    double* z3,
+    double* x4,
+    double* y4,
+    double* z4,
+    double* x5,
+    double* y5,
+    double* z5,
+    double* x6,
+    double* y6,
+    double* z6,
+    double* x7,
+    double* y7,
+    double* z7,
+    double* x8,
+    double* y8,
+    double* z8,
+    int option
+    )
 
 
 {
     double crs[24];
-    int i, j, k, ib;
-
-    char   s[24]="grd3d_get_all_corners";
-    xtgverbose(debug);
+    int i, j, k;
 
 
     for (k = 1; k <= nz; k++) {
         for (j = 1; j <= ny; j++) {
             for (i = 1; i <= nx; i++) {
-                ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+
+                long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+
                 if (option == 1 && p_actnum_v[ib] == 0) {
                     x1[ib] = UNDEF; y1[ib] = UNDEF; z1[ib] = UNDEF;
                     x2[ib] = UNDEF; y2[ib] = UNDEF; z2[ib] = UNDEF;
@@ -65,8 +92,8 @@ void grd3d_get_all_corners(
                     x8[ib] = UNDEF; y8[ib] = UNDEF; z8[ib] = UNDEF;
                 }
                 else{
-                    grd3d_corners(i, j, k, nx, ny, nz, p_coord_v,
-                                  p_zcorn_v, crs, debug);
+                    grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, 0,
+                                  p_zcorn_v, 0, crs);
 
                     x1[ib] = crs[0]; y1[ib] = crs[1]; z1[ib] = crs[2];
                     x2[ib] = crs[3]; y2[ib] = crs[4]; z2[ib] = crs[5];
@@ -81,6 +108,4 @@ void grd3d_get_all_corners(
             }
         }
     }
-    xtg_speak(s,4,"Exit from %s", s);
-
 }

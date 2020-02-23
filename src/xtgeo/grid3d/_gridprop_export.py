@@ -111,7 +111,7 @@ def _export_roff_discrete(self, pfile, name, append=False, last=True, binary=Tru
     )
 
     if last:
-        _cxtgeo.grd3d_export_roff_end(mode, pfile, XTGDEBUG)
+        _cxtgeo.grd3d_export_roff_end(mode, pfile)
 
     _gridprop_lowlevel.delete_carray(self, carray)
 
@@ -155,7 +155,7 @@ def _export_roff_continuous(self, pfile, name, append=False, last=True, binary=T
     )
 
     if last:
-        _cxtgeo.grd3d_export_roff_end(mode, pfile, XTGDEBUG)
+        _cxtgeo.grd3d_export_roff_end(mode, pfile)
 
     _gridprop_lowlevel.delete_carray(self, carray)
 

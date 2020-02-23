@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_export_roff_prop.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Export a property in ROFF ASCII or BINARY form
@@ -37,17 +34,16 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
-#include <string.h>
-#include <stdlib.h>
+
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /*
-*******************************************************************************
+****************************************************************************************
  *                         ROFF FORMAT
- ******************************************************************************
+ ***************************************************************************************
  * The ROFF (Roxar Open File Format) is like this:
  *
  *roff-asc
@@ -85,7 +81,7 @@
  *            1            2
  *array int data 112000
  *     ...numbers...
- * ----------------------------------------------------------------------------
+ * -------------------------------------------------------------------------------------
  *
  */
 
@@ -137,7 +133,7 @@ void grd3d_export_roff_prop (
     for (i = 0; i < ncodes; i++) {
         tmp_codenames[i] = (char *)malloc(32);
     }
-    
+
     /*
      *-------------------------------------------------------------------------
      * It is possible to export just one subgrid (if isubgrd_to_export >0)
@@ -195,11 +191,11 @@ void grd3d_export_roff_prop (
     }
     else if (mode==0) {
         xtg_speak(s, 3, "BINARY mode");
-	ier=fwrite("tag\0parameter\0",1,14,fc);
-	ier=fwrite("char\0name\0",1,10,fc);
+	fwrite("tag\0parameter\0",1,14,fc);
+	fwrite("char\0name\0",1,10,fc);
 	for (i=0;i<=100;i++) {
 	    mychar=pname[i];
-	    ier=fwrite(&mychar,1,1,fc);
+	    fwrite(&mychar,1,1,fc);
 	    if (pname[i]=='\0') break;
 	}
     }
@@ -244,22 +240,22 @@ void grd3d_export_roff_prop (
 	    if (i_tmp!=1)fprintf(fc,"\n");
 	}
 	else{
-	    ier=fwrite("array\0char\0codeNames\0",21,1,fc);
+	    fwrite("array\0char\0codeNames\0",21,1,fc);
 	    myint=ncodes;
-	    ier=fwrite(&myint,4,1,fc);
+	    fwrite(&myint,4,1,fc);
 	    for (i=0;i<ncodes;i++) {
 		for (j=0;j<33;j++) {
 		    mystring[j]=tmp_codenames[i][j];
 		    if (mystring[j]=='\0') break;
 		}
-		ier=fwrite(mystring,1,j+1,fc);
+		fwrite(mystring,1,j+1,fc);
 	    }
-	    ier=fwrite("array\0int\0codeValues\0",21,1,fc);
+	    fwrite("array\0int\0codeValues\0",21,1,fc);
 	    myint=ncodes;
-	    ier=fwrite(&myint,4,1,fc);
+	    fwrite(&myint,4,1,fc);
 	    for (i=0;i<ncodes;i++) {
 		myint=codevalues[i];
-		ier=fwrite(&myint,4,1,fc);
+		fwrite(&myint,4,1,fc);
 	    }
 	}
     }
@@ -274,16 +270,16 @@ void grd3d_export_roff_prop (
     else if (mode==0) {
 	/* double exported as floats */
 	if (strcmp(ptype,"double")==0 || strcmp(ptype,"float")==0) {
-	    ier=fwrite("array\0float\0data\0",1,17,fc);
+	    fwrite("array\0float\0data\0",1,17,fc);
 	}
 	else if (strcmp(ptype,"int")==0) {
-	    ier=fwrite("array\0int\0data\0",1,15,fc);
+	    fwrite("array\0int\0data\0",1,15,fc);
 	}
 	else if (strcmp(ptype,"byte")==0) {
-	    ier=fwrite("array\0byte\0data\0",1,16,fc);
+	    fwrite("array\0byte\0data\0",1,16,fc);
 	}
 	myint = ntotal;
-	ier=fwrite(&myint,4,1,fc);
+	fwrite(&myint,4,1,fc);
         xtg_speak(s, 2, "NTOTAL %d", myint);
     }
 
@@ -305,7 +301,7 @@ void grd3d_export_roff_prop (
 		    }
 		    else{
 			myfloat = p_double_v[ib];
-			ier = fwrite(&myfloat,4,1,fc);
+			fwrite(&myfloat,4,1,fc);
 		    }
 		}
 		else if (strcmp(ptype,"int")==0) {
@@ -319,7 +315,7 @@ void grd3d_export_roff_prop (
 		    }
 		    else{
 			myint = p_int_v[ib];
-			ier = fwrite(&myint,4,1,fc);
+			fwrite(&myint,4,1,fc);
 		    }
 		}
 		else if (strcmp(ptype,"byte")==0) {
@@ -338,7 +334,7 @@ void grd3d_export_roff_prop (
 			}
 		    }
 		    else{
-			ier=fwrite(&mybyte,1,1,fc);
+			fwrite(&mybyte,1,1,fc);
 		    }
 		}
 	    }
@@ -350,7 +346,7 @@ void grd3d_export_roff_prop (
 	fprintf(fc,"endtag\n");
     }
     else if (mode==0) {
-	ier=fwrite("endtag\0", 1, 7, fc);
+	fwrite("endtag\0", 1, 7, fc);
     }
 
     xtg_speak(s, 2, "Writing property...DONE!");
@@ -362,6 +358,6 @@ void grd3d_export_roff_prop (
     }
     free(tmp_codenames);
 
-    
+
     xtg_speak(s, 2, "Exit from export roff");
 }

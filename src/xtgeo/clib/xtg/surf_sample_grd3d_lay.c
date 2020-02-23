@@ -97,8 +97,8 @@ void surf_sample_grd3d_lay (
 	for (i=1; i<=nx; i++) {
 
 	    /* get the corners for the cell */
-	    grd3d_corners(i , j, klayer, nx, ny, nz, p_coord_v,
-			  p_zcorn_v, corners_v, XTGDEBUG);
+	    grd3d_corners(i , j, klayer, nx, ny, nz, p_coord_v, 0,
+			  p_zcorn_v, 0, corners_v);
 
 	    /* find cell min/max  both for X and Y */
 	    cxmin = 999999999;

@@ -128,8 +128,8 @@ int surf_slice_grd3d (int mcol,
 
             if (kc1 > kc2) kc2 = nlay;
 
-            grd3d_corners(i, j, kc1, ncol, nrow, nlay, p_coord_v,
-                          p_zcorn_v, corners, debug);
+            grd3d_corners(i, j, kc1, ncol, nrow, nlay, p_coord_v, 0,
+                          p_zcorn_v, 0, corners);
             kstep = 0;
             for (ix = 0; ix < 4; ix++) {
                 xc[ix] = corners[ix + kstep];
@@ -137,8 +137,8 @@ int surf_slice_grd3d (int mcol,
                 kstep = kstep + 2;
             }
 
-            grd3d_corners(i, j, kc2, ncol, nrow, nlay, p_coord_v,
-                          p_zcorn_v, corners, debug);
+            grd3d_corners(i, j, kc2, ncol, nrow, nlay, p_coord_v, 0,
+                          p_zcorn_v, 0, corners);
             kstep = 8;
             for (ix = 4; ix < 8; ix++) {
                 xc[ix] = corners[ix + kstep];
@@ -173,8 +173,8 @@ int surf_slice_grd3d (int mcol,
 
             for (k = kc1; k <= kc2; k++) {
                 /* get map cell corners: */
-                grd3d_corners(i, j, k, ncol, nrow, nlay, p_coord_v,
-                              p_zcorn_v, corners, debug);
+                grd3d_corners(i, j, k, ncol, nrow, nlay, p_coord_v, 0,
+                              p_zcorn_v, 0, corners);
 
                 ib = x_ijk2ib(i, j, k, ncol, nrow, nlay, 0);
                 if (p_actnum_v[ib] == 1) {

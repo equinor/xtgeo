@@ -161,8 +161,8 @@ int grd3d_point_in_cell(
 		    }
 		    ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
 		    /* get the corner for the cell */
-		    grd3d_corners(i,j,k,nx,ny,nz,p_coor_v,p_zcorn_v,
-			      corners,debug);
+		    grd3d_corners(i,j,k,nx,ny,nz,p_coor_v, 0, p_zcorn_v, 0,
+			      corners);
 
 
 

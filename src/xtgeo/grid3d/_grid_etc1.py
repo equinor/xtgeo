@@ -250,6 +250,8 @@ def get_ijk_from_points(
 
     logger.info("Grid is FLIP %s", flip)
 
+    self.numpify_carrays()   # !! TMP !!
+
     logger.info("Running C routine...")
     _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
         points.dataframe[points.xname].values,
@@ -270,10 +272,10 @@ def get_ijk_from_points(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        self._tmp["onegrid"]._p_zcorn_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+        self._tmp["onegrid"]._x_zcorn_v,
         actnumoption,
         flip,
         arrsize,
@@ -311,64 +313,61 @@ def get_ijk_from_points(
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
 
-    ntot = self.ntotal
-
-    x = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
-        name=names[0],
-        discrete=False,
-    )
-
-    y = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
-        name=names[1],
-        discrete=False,
-    )
-
-    z = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
-        name=names[2],
-        discrete=False,
-    )
-
-    ptr_x_v = _cxtgeo.new_doublearray(self.ntotal)
-    ptr_y_v = _cxtgeo.new_doublearray(self.ntotal)
-    ptr_z_v = _cxtgeo.new_doublearray(self.ntotal)
+    xv = np.zeros(self.ntotal, dtype=np.float64)
+    yv = np.zeros(self.ntotal, dtype=np.float64)
+    zv = np.zeros(self.ntotal, dtype=np.float64)
 
     option = 0
     if asmasked:
         option = 1
 
+    self.numpify_carrays()   # !! TMP !!
+
     _cxtgeo.grd3d_calc_xyz(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_x_v,
-        ptr_y_v,
-        ptr_z_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+        xv,
+        yv,
+        zv,
         option,
-        XTGDEBUG,
     )
 
-    _gridprop_lowlevel.update_values_from_carray(x, ptr_x_v, np.float64, delete=True)
-    _gridprop_lowlevel.update_values_from_carray(y, ptr_y_v, np.float64, delete=True)
-    _gridprop_lowlevel.update_values_from_carray(z, ptr_z_v, np.float64, delete=True)
+    xv = np.ma.masked_greater(xv, xtgeo.UNDEF_LIMIT)
+    yv = np.ma.masked_greater(yv, xtgeo.UNDEF_LIMIT)
+    zv = np.ma.masked_greater(zv, xtgeo.UNDEF_LIMIT)
 
-    # Note: C arrays are deleted in the update_values_from_carray()
+    xo = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=xv,
+        name=names[0],
+        discrete=False,
+    )
 
-    return x, y, z
+    yo = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=yv,
+        name=names[1],
+        discrete=False,
+    )
+
+    zo = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=zv,
+        name=names[2],
+        discrete=False,
+    )
+
+    return xo, yo, zo
 
 
 def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
@@ -387,6 +386,8 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
 
     pcorners = _cxtgeo.new_doublearray(24)
 
+    self.numpify_carrays()   # !! TMP !!
+
     _cxtgeo.grd3d_corners(
         i + shift,
         j + shift,
@@ -394,10 +395,9 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
         pcorners,
-        XTGDEBUG,
     )
 
     cornerlist = []
@@ -459,15 +459,17 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
     option = 0
 
+    self.numpify_carrays()   # !! TMP !!
+
     # note, fool the argument list to unpack ptr_coord with * ...
     _cxtgeo.grd3d_get_all_corners(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        *(ptr_coord + [option] + [XTGDEBUG])
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+        *(ptr_coord + [option])
     )
 
     for i in range(0, 24, 3):
@@ -500,13 +502,15 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
     if not activeonly:
         opt2 = 0
 
+    self.numpify_carrays()   # !! TMP !!
+
     icn, lay_array, ic_array = _cxtgeo.grd3d_get_lay_slice(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         layer,
         opt1,
         opt2,
@@ -857,20 +861,22 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     nzcorn = nncol * nnrow * (nnlay + 1) * 4
 
     new_num_act = _cxtgeo.new_intpointer()
-    new_p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    new_p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    new_p_actnum_v = _cxtgeo.new_intarray(ntot)
+    new_x_coord_v = np.zeros(ncoord, dtype=np.float64)
+    new_x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
+    new_x_actnum_v = np.zeros(ntot, dtype=np.int32)
+
+    self.numpify_carrays()   # !! TMP !!
 
     _cxtgeo.grd3d_crop_geometry(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        new_p_coord_v,
-        new_p_zcorn_v,
-        new_p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+        new_x_coord_v,
+        new_x_zcorn_v,
+        new_x_actnum_v,
         ic1,
         ic2,
         jc1,
@@ -879,12 +885,11 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
         kc2,
         new_num_act,
         0,
-        XTGDEBUG,
     )
 
-    self._p_coord_v = new_p_coord_v
-    self._p_zcorn_v = new_p_zcorn_v
-    self._p_actnum_v = new_p_actnum_v
+    self._x_coord_v = new_x_coord_v
+    self._x_zcorn_v = new_x_zcorn_v
+    self._x_actnum_v = new_x_actnum_v
 
     self._ncol = nncol
     self._nrow = nnrow
@@ -935,30 +940,32 @@ def reduce_to_one_layer(self):
     """
 
     # need new pointers in C (not for coord)
+    # Note this could probably be done with pure numpy operations
 
     ptr_new_num_act = _cxtgeo.new_intpointer()
 
     nnum = (1 + 1) * 4
-    ptr_new_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow * nnum)
 
-    ptr_new_actnum_v = _cxtgeo.new_intarray(self.ncol * self.nrow * 1)
+    new_zcorn = np.zeros(self.ncol * self.nrow * nnum, dtype=np.float64)
+    new_actnum = np.zeros(self.ncol * self.nrow * 1, dtype=np.int32)
+
+    self.numpify_carrays()
 
     _cxtgeo.grd3d_reduce_onelayer(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_zcorn_v,
-        ptr_new_zcorn_v,
-        self._p_actnum_v,
-        ptr_new_actnum_v,
+        self._x_zcorn_v,
+        new_zcorn,
+        self._x_actnum_v,
+        new_actnum,
         ptr_new_num_act,
         0,
-        XTGDEBUG,
     )
 
     self._nlay = 1
-    self._p_zcorn_v = ptr_new_zcorn_v
-    self._p_actnum_v = ptr_new_actnum_v
+    self._x_zcorn_v = new_zcorn
+    self._x_actnum_v = new_actnum
     self._props = None
     self._subgrids = None
 

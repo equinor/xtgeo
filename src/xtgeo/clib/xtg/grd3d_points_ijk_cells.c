@@ -143,8 +143,8 @@ long _grd3d_point_in_cell(int ic, int jc, int kc, double xc, double yc,
 
     /* get the corner for the cell */
     double corners[24];
-    grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, p_zcorn_v,
-                  corners, XTGDEBUG);
+    grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, 0, p_zcorn_v, 0,
+                  corners);
 
     *score = x_chk_point_in_hexahedron(xc, yc, zc, corners, flip);
 
@@ -278,10 +278,14 @@ int grd3d_points_ijk_cells(
     int nz,
 
     double *p_coor_v,
+    long ncoordin,
     double *p_zcorn_v,
+    long nzcornin,
     int *p_actnum_v,
+    long nactin,
 
     double *p_zcornone_v,
+    long nzcornonein,
 
     int actnumoption,
     int flip,

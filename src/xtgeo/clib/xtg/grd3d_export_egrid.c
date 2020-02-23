@@ -1,16 +1,5 @@
 /*
- ******************************************************************************
- *
- * Export to binary EGRID format for grid geometry
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_export_egrid.c
@@ -23,17 +12,21 @@
  *    p_coord_v      i     COORD array
  *    p_zcorn_v      i     ZCORN array
  *    p_actnum_v     i     ACTNUM array
- *    gfile          i     File name
+ *    filename       i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Void function
  *
  * LICENCE:
  *    CF. XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
+
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
 
 
 void grd3d_export_egrid (
@@ -41,11 +34,13 @@ void grd3d_export_egrid (
                          int ny,
                          int nz,
                          double *p_coord_v,
+                         long ncoordin,
                          double *p_zcorn_v,
+                         long nzcornin,
                          int *p_actnum_v,
+                         long nactin,
                          char *filename,
-                         int mode,
-                         int debug
+                         int mode
                          )
 
 {
@@ -58,8 +53,7 @@ void grd3d_export_egrid (
     double ddum;
     int itmp[100];
 
-    char sbn[24] = "grd3d_export_egrid";
-    xtgverbose(debug);
+    logger_info(LI, FI, FU, "Export to EGRID format, file: %s ...", filename);
 
     /*
      *-------------------------------------------------------------------------
@@ -67,11 +61,9 @@ void grd3d_export_egrid (
      *-------------------------------------------------------------------------
      */
 
-    if (mode == 0) xtg_speak(sbn, 2,"Opening binary EGRID file...");
-    if (mode == 1) xtg_speak(sbn, 2,"Opening text EGRID file...");
-
     fc = fopen(filename, "wb");
-    if (fc == NULL) xtg_error(sbn, "Cannot open file!");
+
+    if (fc == NULL) logger_critical(LI, FI, FU, "Cannot open file %s", filename);
 
     /*
      *-------------------------------------------------------------------------
@@ -83,9 +75,8 @@ void grd3d_export_egrid (
 
     itmp[0] = 3; itmp[1] = 2017;
 
-    xtg_speak(sbn, 2, "Exporting FILEHEAD...");
     grd3d_write_eclrecord(fc, "FILEHEAD", 1, itmp, &fdum,
-                          &ddum, 100, debug);
+                          &ddum, 100, XTGDEBUG);
 
     /*
      *-------------------------------------------------------------------------
@@ -98,16 +89,14 @@ void grd3d_export_egrid (
     itmp[0] = 1; itmp[1] = nx; itmp[2] = ny; itmp[3] = nz;
     // itmp[24] = 1; itmp[25] = 1;
 
-    xtg_speak(sbn, 2, "Exporting GRIDHEAD...");
     grd3d_write_eclrecord(fc, "GRIDHEAD", 1, itmp, &fdum,
-                          &ddum, 100, debug);
+                          &ddum, 100, XTGDEBUG);
 
     /*
      *-------------------------------------------------------------------------
      * COORD
      *-------------------------------------------------------------------------
      */
-    xtg_speak(sbn, 2, "Exporting COORD...");
     ncoord = (nx + 1) * (ny + 1) * 6;
     farr = calloc(ncoord, sizeof(float));
 
@@ -123,7 +112,7 @@ void grd3d_export_egrid (
     }
 
     grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
-                          debug);
+                          XTGDEBUG);
 
     free(farr);
 
@@ -139,8 +128,6 @@ void grd3d_export_egrid (
      *                        |_____|
      *                        1     2
      */
-
-    xtg_speak(sbn, 2, "Exporting ZCORN...");
 
     nzcorn = nx * ny * nz * 8;  /* 8 Z values per cell for ZCORN */
     farr = calloc(nzcorn, sizeof(float));
@@ -180,7 +167,7 @@ void grd3d_export_egrid (
     }
 
     grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
-                          debug);
+                          XTGDEBUG);
     free(farr);
 
     /*
@@ -188,12 +175,10 @@ void grd3d_export_egrid (
      * ACTNUM
      *-------------------------------------------------------------------------
      */
-    xtg_speak(sbn, 2,"Exporting ACTNUM...");
-
     nact = nx * ny * nz;
 
     grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
-                          &ddum, nact, debug);
+                          &ddum, nact, XTGDEBUG);
 
     /*
      *-------------------------------------------------------------------------
@@ -203,9 +188,8 @@ void grd3d_export_egrid (
 
     itmp[0] = 0;
 
-    xtg_speak(sbn, 2, "Exporting ENDGRID...");
     grd3d_write_eclrecord(fc, "ENDGRID", 1, itmp, &fdum,
-                          &ddum, 1, debug);
+                          &ddum, 1, XTGDEBUG);
 
     /*
      *-------------------------------------------------------------------------
@@ -214,4 +198,7 @@ void grd3d_export_egrid (
      */
 
     fclose(fc);
+
+    logger_info(LI, FI, FU, "Export to EGRID format, done!");
+
 }

@@ -60,8 +60,8 @@ long _find_ib(double x, double y, double z, int imin, int imax,
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 /* get the corner for the cell */
-                grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v,
-			      corners, debug);
+                grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, 0, p_zcorn_v, 0,
+			      corners);
                 inside = x_chk_point_in_cell(x, y, z, corners, 1, debug);
 
                 if (inside > 0) {

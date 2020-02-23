@@ -157,7 +157,7 @@ int grd3d_geometrics(
 		    ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
 
 		    grd3d_corners(i, j, k, nx, ny, nz,
-				  p_coord_v, p_zcorn_v, c, debug);
+				  p_coord_v, 0, p_zcorn_v, 0, c);
 
 		    /* get the origon of cell 1 1 1, corner 1 */
 		    if (i==1 && j==1 && k==1) {

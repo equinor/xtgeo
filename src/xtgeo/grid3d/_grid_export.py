@@ -6,8 +6,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
-XTGDEBUG = 0
-
 logger = xtg.functionlogger(__name__)
 
 
@@ -30,6 +28,8 @@ def export_roff(self, gfile, option):
     # get the geometrics list to find the xshift, etc
     gx = self.get_geometrics()
 
+    self.numpify_carrays()  # TMP!!
+
     _cxtgeo.grd3d_export_roff_grid(
         option,
         self._ncol,
@@ -40,18 +40,15 @@ def export_roff(self, gfile, option):
         gx[3],
         gx[5],
         gx[7],
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         subgrd_v,
         gfile,
-        XTGDEBUG,
     )
 
-    # skip parameters for now (cf Perl code)
-
     # end tag
-    _cxtgeo.grd3d_export_roff_end(option, gfile, XTGDEBUG)
+    _cxtgeo.grd3d_export_roff_end(option, gfile)
 
 
 def export_grdecl(self, gfile, mode):
@@ -61,16 +58,17 @@ def export_grdecl(self, gfile, mode):
 
     logger.debug("Export to ascii or binary GRDECL...")
 
+    self.numpify_carrays()  # TMP!!
+
     _cxtgeo.grd3d_export_grdecl(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         gfile,
         mode,
-        XTGDEBUG,
     )
 
 
@@ -79,14 +77,15 @@ def export_egrid(self, gfile):
 
     logger.debug("Export to binary EGRID...")
 
+    self.numpify_carrays()  # TMP!!
+
     _cxtgeo.grd3d_export_egrid(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         gfile,
         0,
-        XTGDEBUG,
     )

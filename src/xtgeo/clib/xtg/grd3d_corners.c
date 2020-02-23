@@ -1,5 +1,5 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_corners.c
@@ -24,7 +24,6 @@
  *    p_coord_v      i     Grid Z coord for input
  *    p_zcorn_v      i     Grid Z corners for input
  *    corners        o     Array, 24 length
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Corners
@@ -33,40 +32,40 @@
  *    None known
  *
  * LICENCE:
- *    Equinor property
- ******************************************************************************
+ *    cf. XTGeo License
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 #include <math.h>
 
+
 void grd3d_corners (
-		    int     i,
-		    int     j,
-		    int     k,
-		    int     nx,
-		    int     ny,
-		    int     nz,
-		    double  *p_coord_v,
-		    double  *p_zcorn_v,
-		    double  corners[],
-		    int     debug
-		    )
+    int i,
+    int j,
+    int k,
+    int nx,
+    int ny,
+    int nz,
+    double *p_coord_v,
+    long ncoordin,
+    double *p_zcorn_v,
+    long nzcornin,
+    double corners[]
+    )
 
 {
-    int    ic, cl, im, jm, ibb, ibt;
     double xtop[5], ytop[5], ztop[5];
     double xbot[5], ybot[5], zbot[5];
-    char   s[24] = "grd3d_corners";
-
-    xtgverbose(debug);
 
     /* each cell is defined by 4 pillars */
 
+    int ic;
     for (ic = 1; ic <= 4; ic++) {
-	jm = 0;
-	im = 0;
+	int jm = 0;
+	int im = 0;
 	if (ic == 1 || ic == 2) jm = 1;
 	if (ic == 1 || ic == 3) im = 1;
 
@@ -80,8 +79,8 @@ void grd3d_corners (
     }
 
     /* cell and cell below*/
-    ibt = x_ijk2ib(i,j,k,nx,ny,nz+1,0);
-    ibb = x_ijk2ib(i,j,k+1,nx,ny,nz+1,0);
+    long ibt = x_ijk2ib(i,j,k,nx,ny,nz+1,0);
+    long ibb = x_ijk2ib(i,j,k+1,nx,ny,nz+1,0);
 
 
     corners[2]  = p_zcorn_v[4*ibt + 1*1 - 1];
@@ -95,7 +94,7 @@ void grd3d_corners (
     corners[23] = p_zcorn_v[4*ibb + 1*4 - 1];
 
     for (ic = 1; ic <= 8; ic++) {
-	cl = ic;
+	int cl = ic;
 	if (ic == 5) cl = 1;
 	if (ic == 6) cl = 2;
 	if (ic == 7) cl = 3;
@@ -107,28 +106,10 @@ void grd3d_corners (
 	    corners[3*(ic-1)+1]=ytop[cl]-(corners[3*(ic-1)+2]-ztop[cl])*
 		(ytop[cl]-ybot[cl])/(zbot[cl]-ztop[cl]);
 	}
-	//else if ((zbot[cl]-ztop[cl]) < -0.01) {
-	//    xtg_warn(s,1,"Cell I,J,K: %d %d %d", i, j, k);
-	//    xtg_warn(s,1,"ZBOT: %f  ZTOP: %f  Cornerline: %d",zbot[cl],ztop[cl], cl);
-	//    xtg_error(s,"Pillar is inverted. STOP!");
-	//}
 	else{
 	    corners[3*(ic-1)+0]=xtop[cl];
 	    corners[3*(ic-1)+1]=ytop[cl];
 	}
     }
-
-    if (debug>3) {
-	ibb=0;
-	for (ic=0;ic<8;ic++) {
-	    xtg_speak(s,4,"Corner %d: ",ic);
-	    for (im=0;im<3;im++) {
-		xtg_speak(s,4,"Corner coord no %d: %11.2f",im,corners[ibb++]);
-	    }
-	}
-    }
-
-
-    xtg_speak(s,4,"==== Exiting grd3d_corners ====");
 
 }

@@ -1,16 +1,6 @@
-/*
- ******************************************************************************
- *
- * Export to GRDECL format for grid geometry
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
 
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_export_grdecl.c
@@ -20,20 +10,23 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     NCOL, NROW, NLAY
- *    p_coord_v      i     COORD array
- *    p_zcorn_v      i     ZCORN array
- *    p_actnum_v     i     ACTNUM array
- *    gfile          i     File name
+ *    p_coord_v      i     COORD array w/ len
+ *    p_zcorn_v      i     ZCORN array w/ len
+ *    p_actnum_v     i     ACTNUM array w/ len
+ *    filename       i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Void function
  *
  * LICENCE:
  *    CF. XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
 
 
 void grd3d_export_grdecl (
@@ -41,11 +34,13 @@ void grd3d_export_grdecl (
 			  int ny,
 			  int nz,
 			  double *p_coord_v,
+                          long ncoordin,
 			  double *p_zcorn_v,
+                          long nzcornin,
 			  int *p_actnum_v,
+                          long nactin,
 			  char *filename,
-                          int mode,
-			  int debug
+                          int mode
 			  )
 
 {
@@ -58,10 +53,8 @@ void grd3d_export_grdecl (
     double ddum;
     int itmp[4];
 
-    char sbn[24] = "grd3d_export_grdecl";
-    xtgverbose(debug);
 
-    xtg_speak(sbn, 1,"Entering %s", sbn);
+    logger_info(LI, FI, FU, "Entering %s", FU);
 
     /*
      *-------------------------------------------------------------------------
@@ -70,12 +63,12 @@ void grd3d_export_grdecl (
      */
 
     if (mode == 0) {
-        xtg_speak(sbn, 2,"Opening binary GRDECL file...");
-        fc = x_fopen(filename, "wb", debug);
+        logger_info(LI, FI, FU, "Opening binary GRDECL file...");
+        fc = x_fopen(filename, "wb", XTGDEBUG);
     }
     else{
-        xtg_speak(sbn, 2,"Opening text GRDECL file...");
-        fc = x_fopen(filename, "w", debug);
+        logger_info(LI, FI, FU, "Opening text GRDECL file...");
+        fc = x_fopen(filename, "w", XTGDEBUG);
     }
 
     /*
@@ -84,18 +77,15 @@ void grd3d_export_grdecl (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(sbn, 2, "Exporting SPECGRID... ... .. ");
     itmp[0] = nx; itmp[1] = ny; itmp[2] = nz; itmp[3] = 1;
 
-    xtg_speak(sbn, 2, "Exporting SPECGRID......");
     if (mode == 0) {
-        xtg_speak(sbn, 2, "Exporting binary SPECGRID...");
         grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, &fdum,
-                              &ddum, 4, debug);
+                              &ddum, 4, XTGDEBUG);
     }
     else{
         grd3d_write_eclinput(fc, "SPECGRID", 1, itmp, &fdum,
-                             &ddum, 4, "  %5d", 10, debug);
+                             &ddum, 4, "  %5d", 10, XTGDEBUG);
     }
 
     /*
@@ -103,7 +93,6 @@ void grd3d_export_grdecl (
      * COORD
      *-------------------------------------------------------------------------
      */
-    xtg_speak(sbn, 2, "Exporting COORD...");
     ncoord = (nx + 1) * (ny + 1) * 6;
     farr = calloc(ncoord, sizeof(float));
 
@@ -120,11 +109,11 @@ void grd3d_export_grdecl (
 
     if (mode == 0) {
         grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
-                              debug);
+                              XTGDEBUG);
     }
     else{
         grd3d_write_eclinput(fc, "COORD", 2, &idum, farr, &ddum, ncoord,
-                             "  %15.3f", 6, debug);
+                             "  %15.3f", 6, XTGDEBUG);
     }
     free(farr);
 
@@ -141,7 +130,6 @@ void grd3d_export_grdecl (
      *                        1     2
      */
 
-    xtg_speak(sbn, 2, "Exporting ZCORN...");
 
     nzcorn = nx * ny * nz * 8;  /* 8 Z values per cell for ZCORN */
     farr = calloc(nzcorn, sizeof(float));
@@ -182,11 +170,11 @@ void grd3d_export_grdecl (
 
     if (mode == 0) {
         grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
-                              debug);
+                              XTGDEBUG);
     }
     else {
         grd3d_write_eclinput(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn,
-                              "  %11.3f", 6, debug);
+                              "  %11.3f", 6, XTGDEBUG);
     }
     free(farr);
 
@@ -195,17 +183,15 @@ void grd3d_export_grdecl (
      * ACTNUM
      *-------------------------------------------------------------------------
      */
-    xtg_speak(sbn, 2,"Exporting ACTNUM...");
-
     nact = nx * ny * nz;
 
     if (mode == 0) {
         grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
-                              &ddum, nact, debug);
+                              &ddum, nact, XTGDEBUG);
     }
     else{
         grd3d_write_eclinput(fc, "ACTNUM", 1, p_actnum_v, &fdum,
-                             &ddum, nact, "  %1d", 12, debug);
+                             &ddum, nact, "  %1d", 12, XTGDEBUG);
     }
 
     /*

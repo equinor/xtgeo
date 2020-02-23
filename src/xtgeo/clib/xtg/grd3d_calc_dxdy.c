@@ -76,7 +76,7 @@ int grd3d_calc_dxdy(
                 }
 
                 grd3d_corners(i, j, k, nx, ny, nz,
-                              p_coord_v, p_zcorn_v, c, XTGDEBUG);
+                              p_coord_v, 0, p_zcorn_v, 0, c);
 
                 /* get the length of all lines forming DX */
                 plen = 0.0;
