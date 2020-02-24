@@ -1754,40 +1754,33 @@ int grd3d_refine_vert(
     int debug
     );
 
-void grd3d_convert_hybrid (
+void grd3d_convert_hybrid(
     int   nx,
     int   ny,
     int   nz,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int   *p_actnum_v,
-    int   nzhyb,
-    double *p_zcornhyb_v,
-    int   *p_actnumhyb_v,
-    int   *p_num_act,
-    double toplevel,
-    double botlevel,
-    int   ndiv,
-    int   debug
-    );
 
-void grd3d_convert_hybrid2(
-    int   nx,
-    int   ny,
-    int   nz,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int   *p_actnum_v,
+    double *swig_np_dbl_in_v1,     // *p_coord_v
+    long n_swig_np_dbl_in_v1,      // ncoord
+    double *swig_np_dbl_in_v2,     // *p_zcorn_v
+    long n_swig_np_dbl_in_v2,      // nzcorn
+    int *swig_np_int_in_v1,        // *p_actnum_v
+    long n_swig_np_int_in_v1,      // nact
+
     int   nzhyb,
-    double *p_zcornhyb_v,
-    int   *p_actnumhyb_v,
-    int   *p_num_act,
+
+    double *swig_np_dbl_inplace_v1,     // *p_zcornhyb_v
+    long n_swig_np_dbl_inplace_v1,      // nzcornhybin
+    int *swig_np_int_inplace_v1,        // *p_actnumhyb_v
+    long n_swig_np_int_inplace_v1,      // nacthybin
+
     double toplevel,
     double botlevel,
     int   ndiv,
-    double *p_region_v,
-    int   region,
-    int   debug
+
+    int *swig_np_int_in_v2,        // *p_region_v
+    long n_swig_np_int_in_v2,      // nreg
+
+    int   region
     );
 
 void grd3d_make_z_consistent (
@@ -2146,22 +2139,31 @@ void grd3d_get_all_corners(
 
 
 int grd3d_rpt_zlog_vs_zon (
-    int   nx,
-    int   ny,
-    int   nz,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int   *p_actnum_v,
-    int   *p_zon_v,
-    int   nval,
+    int nx,
+    int ny,
+    int nz,
+
+    double *swig_np_dbl_in_v1,    // *p_coord_v
+    long n_swig_np_dbl_in_v1,     // ncoordin
+    double *swig_np_dbl_in_v2,    // *p_zcoord_v
+    long n_swig_np_dbl_in_v2,     // nzcornin
+    int *swig_np_int_in_v1,       // *p_actnum_v
+    long n_swig_np_int_in_v1,     // nactin
+
+    int *p_zon_v,
+    int nval,
     double *p_utme_v,
     double *p_utmn_v,
     double *p_tvds_v,
-    int   *p_zlog_v,
-    int   zlmin,
-    int   zlmax,
-    double *p_zcorn_onelay_v,
-    int    *p_actnum_onelay_v,
+    int *p_zlog_v,
+    int zlmin,
+    int zlmax,
+
+    double *swig_np_dbl_in_v3,    // *p_zcoord_onelay_v
+    long n_swig_np_dbl_in_v3,     // nzcornonein
+    int *swig_np_int_in_v2,       // *p_actnum_onelay_v
+    long n_swig_np_int_in_v2,     // nactonein
+
     double *results,
     int   iflag
     );

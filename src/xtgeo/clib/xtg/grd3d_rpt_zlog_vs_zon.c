@@ -1,5 +1,5 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_rpt_zlog_vs_zon.c
@@ -15,9 +15,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions
- *    p_coord_v      i     Grid coordinate lines
- *    p_zcorn_v      i     Grid Z corners
- *    p_actnum_v     i     Grid ACTNUM parameter
+ *    p_coord_v      i     Grid coordinate lines w/ numpy dimensions
+ *    p_zcorn_v      i     Grid Z corners w/ numpy dimensions
+ *    p_actnum_v     i     Grid ACTNUM parameter w/ numpy dimensions
  *    p_zon_v        i     Grid zone parameter
  *    nval           i     Position of last point for well log
  *    p_utme_v       i     East coordinate vector for well log
@@ -39,11 +39,11 @@
  *    The C macro EXIT_SUCCESS unless problems
  *
  * TODO/ISSUES/BUGS:
- *    Code is not finished
+ *    Code is not finished, rewrite is required
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -53,25 +53,34 @@
 
 
 int grd3d_rpt_zlog_vs_zon(
-			  int    nx,
-			  int    ny,
-			  int    nz,
-			  double *p_coord_v,
-			  double *p_zcorn_v,
-			  int    *p_actnum_v,
-			  int    *p_zon_v,
-			  int    nval,
-			  double *p_utme_v,
-			  double *p_utmn_v,
-			  double *p_tvds_v,
-			  int    *p_zlog_v,
-			  int    zlmin,
-			  int    zlmax,
-			  double *p_zcorn_onelay_v,
-			  int    *p_actnum_onelay_v,
-			  double *results,
-			  int    iflag
-			  )
+    int nx,
+    int ny,
+    int nz,
+
+    double *p_coord_v,
+    long ncoordin,
+    double *p_zcorn_v,
+    long nzcorndin,
+    int *p_actnum_v,
+    long nactin,
+
+    int *p_zon_v,
+    int nval,
+    double *p_utme_v,
+    double *p_utmn_v,
+    double *p_tvds_v,
+    int *p_zlog_v,
+    int zlmin,
+    int zlmax,
+
+    double *p_zcorn_onelay_v,
+    long nzcornonein,
+    int *p_actnum_onelay_v,
+    long nactonein,
+
+    double *results,
+    int iflag
+    )
 
 {
     /* locals */

@@ -1109,13 +1109,15 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
 
     ptr_zprop = _gridprop_lowlevel.update_carray(zoneprop)
 
+    self.numpify_carrays()
+
     cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         ptr_zprop,
         nval,
         ptr_xc,
@@ -1124,8 +1126,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         ptr_zo,
         zonelogrange[0],
         zonelogrange[1],
-        onelayergrid._p_zcorn_v,
-        onelayergrid._p_actnum_v,
+        onelayergrid._x_zcorn_v,
+        onelayergrid._x_actnum_v,
         ptr_results,
         option,
     )
