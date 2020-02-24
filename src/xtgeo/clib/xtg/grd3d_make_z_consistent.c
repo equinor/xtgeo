@@ -11,7 +11,7 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz         i     Grid dimensions ncol, nrow, nlay
- *    p_zcorn_v         i/o    Grid Z corners
+ *    p_zcorn_v         i/o    Grid Z corners (with numpy dimensions)
  *    zsep               i     Minimum seperation distance
  *
  * RETURNS:
@@ -34,6 +34,7 @@ void grd3d_make_z_consistent(
     int ny,
     int nz,
     double *p_zcorn_v,
+    long nzcorn,
     double zsep
     )
 

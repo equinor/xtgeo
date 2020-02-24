@@ -74,7 +74,7 @@ int grd3d_well_ijk(
      */
 
     double zconst = 0.000001;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, zconst);
+    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, 0, zconst);
 
     /*
      * ========================================================================

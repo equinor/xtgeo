@@ -6,9 +6,6 @@
  *******************************************************************************
  */
 
-#include "libxtg.h"
-#include "libxtg_.h"
-
 /*
  *******************************************************************************
  *
@@ -39,33 +36,29 @@
  *******************************************************************************
  */
 
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
+
 void grd3d_inact_by_dz(
-		       int nx,
-		       int ny,
-		       int nz,
-		       double *p_zcorn_v,
-		       int   *p_actnum_v,
-		       double threshold,
-		       int   flip,
-		       int   debug
-		       )
+    int nx,
+    int ny,
+    int nz,
+    double *p_zcorn_v,
+    long nzcornin,
+    int *p_actnum_v,
+    long nactin,
+    double threshold,
+    int   flip
+    )
 
 {
     /* locals */
     int    i, j, k, ib, ndone;
-    char   s[24] = "grd3d_inact_by_dz";
     double  *p_dztmp_v;
 
-    xtgverbose(debug);
-    xtg_speak(s, 2, "Entering routine...");
-    xtg_speak(s, 3, "NX NY NZ: %d %d %d", nx, ny, nz);
-
-
-    xtg_speak(s, 2, "Finding grid DZ parameter...");
-
-    xtg_speak(s, 2, "Allocating memory to pointer");
     p_dztmp_v = calloc(nx * ny * nz, sizeof(double));
-
 
     /* lengths of p_zorn etc are dummy */
     grd3d_calc_dz(nx, ny, nz, p_zcorn_v, 0, p_actnum_v, 0,
@@ -74,7 +67,6 @@ void grd3d_inact_by_dz(
     ndone = 0;
 
     for (k = 1; k <= nz; k++) {
-	xtg_speak(s,3,"Finished layer %d of %d",k,nz);
 	for (j = 1; j <= ny; j++) {
 	    for (i = 1; i <= nx; i++) {
 
@@ -91,9 +83,6 @@ void grd3d_inact_by_dz(
 	}
     }
 
-    xtg_speak(s,2,"Number of cells made active was: %d",ndone);
-
     free(p_dztmp_v);
 
-    xtg_speak(s,2,"Exiting %s",s);
 }

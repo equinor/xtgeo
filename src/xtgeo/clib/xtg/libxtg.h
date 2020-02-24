@@ -1787,7 +1787,8 @@ void grd3d_make_z_consistent (
     int    nx,
     int    ny,
     int    nz,
-    double *p_zcorn_v,
+    double *swig_np_dbl_inplace_v1,     // *p_zcorn_v
+    long n_swig_np_dbl_inplace_v1,      // nzcorn
     double  zsep
     );
 
@@ -1940,14 +1941,14 @@ int grd3d_get_randomline(
     );
 
 void grd3d_collapse_inact (
-    int   nx,
-    int   ny,
-    int   nz,
-    double *p_zcorn_v,
-    int   *p_actnum_v,
-    int   debug
+    int nx,
+    int ny,
+    int nz,
+    double *swig_np_dbl_inplace_v1,  // *p_zcorn_v
+    long n_swig_np_dbl_inplace_v1,   // nzcorn
+    int *swig_np_int_inplace_v1,     // *p_actnum_v
+    long n_swig_np_int_inplace_v1    // nactnum
     );
-
 
 void grd3d_midpoint (
     int     i,
@@ -1963,9 +1964,6 @@ void grd3d_midpoint (
     double  *z,
     int     debug
     );
-
-
-
 
 int grd3d_inact_outside_pol(
     double *swig_np_dbl_in_v1,    // polygons X
@@ -2033,11 +2031,14 @@ void grd3d_inact_by_dz(
     int nx,
     int ny,
     int nz,
-    double *p_zcorn_v,
-    int   *p_actnum_v,
+
+    double *swig_np_dbl_inplace_v1,     // *p_zcorn_v
+    long n_swig_np_dbl_inplace_v1,      // nzcorn
+    int *swig_np_int_inplace_v1,        // *p_actnum_v
+    long n_swig_np_int_inplace_v1,      // nact
+
     double threshold,
-    int   flip,
-    int   debug
+    int   flip
     );
 
 

@@ -106,7 +106,7 @@ int grd3d_rpt_zlog_vs_zon(
      */
 
     zconst=0.01;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, zconst);
+    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, 0, zconst);
 
     /*
      * =========================================================================

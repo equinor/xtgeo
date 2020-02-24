@@ -686,15 +686,16 @@ def inactivate_by_dz(self, threshold):
     # assumption (unless somebody finds a Petrel made grid):
     nflip = 1
 
+    self.numpify_carrays()
+
     _cxtgeo.grd3d_inact_by_dz(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         threshold,
         nflip,
-        XTGDEBUG,
     )
 
 
@@ -706,8 +707,10 @@ def make_zconsistent(self, zsep):
     if not isinstance(zsep, float):
         raise ValueError('The "zsep" is not a float or int')
 
+    self.numpify_carrays()
+
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol, self.nrow, self.nlay, self._p_zcorn_v, zsep,
+        self.ncol, self.nrow, self.nlay, self._x_zcorn_v, zsep,
     )
 
 
@@ -758,8 +761,11 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
 
 def collapse_inactive_cells(self):
     """Collapse inactive cells"""
+
+    self.numpify_carrays()
+
     _cxtgeo.grd3d_collapse_inact(
-        self.ncol, self.nrow, self.nlay, self._p_zcorn_v, self._p_actnum_v, XTGDEBUG
+        self.ncol, self.nrow, self.nlay, self._x_zcorn_v, self._x_actnum_v, XTGDEBUG
     )
 
 
