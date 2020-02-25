@@ -38,6 +38,8 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
 
     p_prop = _gridprop_lowlevel.update_carray(prop, discrete=False)
 
+    grid.numpify_carrays()
+
     istat, updatedval = _cxtgeo.surf_slice_grd3d(
         self.ncol,
         self.nrow,
@@ -52,13 +54,11 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
         grid.ncol,
         grid.nrow,
         grid.nlay,
-        grid._p_coord_v,
-        grid._p_zcorn_v,
-        grid._p_actnum_v,
+        grid._x_coord_v,
+        grid._x_zcorn_v,
+        grid._x_actnum_v,
         p_prop,
         sbuffer,
-        0,
-        XTGDEBUG,
     )
 
     if istat != 0:

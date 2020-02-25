@@ -100,6 +100,8 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
+    grid.numpify_carrays()
+
     for id_, grp in idgroups:
         xcor = grp[poly.xname].values
         ycor = grp[poly.yname].values
@@ -110,13 +112,11 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             self.ncol,
             self.nrow,
             self.nlay,
-            grid._p_coord_v,
-            grid._p_zcorn_v,
-            grid._p_actnum_v,
+            grid._x_coord_v,
+            grid._x_zcorn_v,
+            grid._x_actnum_v,
             cvals,
             1,
-            0,
-            XTGDEBUG,
         )
         if ier == -9:
             print("## Polygon no {} is not closed".format(id_ + 1))

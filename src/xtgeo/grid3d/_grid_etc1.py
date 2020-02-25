@@ -251,6 +251,7 @@ def get_ijk_from_points(
     logger.info("Grid is FLIP %s", flip)
 
     self.numpify_carrays()  # !! TMP !!
+    self._tmp["onegrid"].numpify_carrays()  # !! TMP !!
 
     logger.info("Running C routine...")
     _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
@@ -755,7 +756,6 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
         k2,
         iforce,
         method,
-        XTGDEBUG,
     )
 
     if ier == 1:
@@ -780,6 +780,8 @@ def copy(self):
     """
 
     other = self.__class__()
+
+    self.numpify_carrays()
 
     other._x_coord_v = self._x_coord_v.copy()
     other._x_zcorn_v = self._x_zcorn_v.copy()
@@ -962,6 +964,8 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
     tx, ty, tz = translate
     fx, fy, fz = flip
 
+    self.numpify_carrays()
+
     ier = _cxtgeo.grd3d_translate(
         self._ncol,
         self._nrow,
@@ -972,8 +976,8 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         tx,
         ty,
         tz,
-        self._p_coord_v,
-        self._p_zcorn_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
     )
     if ier != 0:
         raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
@@ -987,13 +991,15 @@ def reverse_row_axis(self, ijk_handedness=None):
     if ijk_handedness == self.ijk_handedness:
         return
 
+    self.numpify_carrays()
+
     ier = _cxtgeo.grd3d_reverse_jrows(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
     )
 
     if ier != 0:
@@ -1166,13 +1172,15 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
 
     iflag2 = 1
 
+    self.numpify_carrays()
+
     _cxtgeo.grd3d_adj_cells(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         p_prop1,
         self.ntotal,
         val1,
@@ -1181,7 +1189,6 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
         self.ntotal,
         iflag1,
         iflag2,
-        XTGDEBUG,
     )
 
     _gridprop_lowlevel.update_values_from_carray(result, p_prop2, np.int32, delete=True)

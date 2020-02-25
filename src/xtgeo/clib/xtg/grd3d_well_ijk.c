@@ -48,11 +48,19 @@ int grd3d_well_ijk(
     int nx,
     int ny,
     int nz,
+
     double *p_coord_v,
+    long ncoordin,
     double *p_zcorn_v,
+    long nzcornin,
     int *p_actnum_v,
+    long nactin,
+
     double *p_zcorn_onelay_v,
+    long nzcornonein,
     int *p_actnum_onelay_v,
+    long nactonein,
+
     int nval,
     double *p_utme_v,
     double *p_utmn_v,

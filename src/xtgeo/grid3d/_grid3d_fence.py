@@ -55,10 +55,15 @@ def get_randomline(
     nzsam = int((zmax - zmin) / float(zincrement)) + 1
     nsamples = xcoords.shape[0] * nzsam
 
+    self.numpify_carrays()
+
+    self._tmp["onegrid"].numpify_carrays()
+
     logger.info("Running C routine to get randomline...")
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,
+
         zmin,
         zmax,
         nzsam,
@@ -79,17 +84,19 @@ def get_randomline(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
+
         gl.update_carray(prop),
 
-        self._tmp["onegrid"]._p_zcorn_v,
-        self._tmp["onegrid"]._p_actnum_v,
+        self._tmp["onegrid"]._x_zcorn_v,
+        self._tmp["onegrid"]._x_actnum_v,
 
         nsamples,
-        0
     )
+
     logger.info("Running C routine to get randomline... DONE")
 
     values[values > xtgeo.UNDEF_LIMIT] = np.nan
