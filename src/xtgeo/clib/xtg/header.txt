@@ -1,0 +1,30 @@
+/*
+****************************************************************************************
+*
+* NAME:
+*    some.c
+*
+* DESCRIPTION:
+*    Some
+*
+* ARGUMENTS:
+*    fc             i     File descriptor (handled by caller)
+*    nx, ny, nz     i     Dimensions
+*    p_coord_v      o     Coordinate vector (with numpy dimensions)
+*    p_zcorn_v      o     ZCORN vector (with numpy dimensions)
+*    p_actnum_v     o     ACTNUM vector (with numpy dimensions)
+*    option         i     Is 1 when dualporo system, otherwise 0 (not applied)
+*
+* RETURNS:
+*    Status, EXIT_FAILURE or EXIT_SUCCESS
+*
+* TODO/ISSUES/BUGS:
+*
+* LICENCE:
+*    CF XTGeo's LICENSE
+***************************************************************************************
+*/
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"

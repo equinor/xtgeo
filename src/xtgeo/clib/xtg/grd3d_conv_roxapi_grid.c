@@ -1,16 +1,6 @@
-/*
- ******************************************************************************
- *
- * Getting grid geometry from Roxar API
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
 
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_conv_roxapi_grid.c
@@ -38,22 +28,30 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
 void grd3d_conv_roxapi_grid (
-                             int nx,
-                             int ny,
-                             int nz,
-                             long nxyz,
-                             int *cact,
-                             double *crds,
-                             double *p_coord_v,
-                             double *p_zcorn_v,
-                             int *p_actnum_v,
-                             int debug
-                             )
+    int nx,
+    int ny,
+    int nz,
+    long nxyz,
+    int *cact,
+    long ncactin,
+    double *crds,
+    long ncrdsin,
+    double *p_coord_v,
+    long ncoordin,
+    double *p_zcorn_v,
+    long nzcornin,
+    int *p_actnum_v,
+    long nactin
+    )
 {
 
     /* locals */
@@ -61,13 +59,10 @@ void grd3d_conv_roxapi_grid (
     long           id, nc, ib, ibt, ibb, ia;
     int            ic, i, j, k, ix, jy, kz;
 
-    char           s[24]="grd3d_conv_roxapi_g..";
-
-    xtgverbose(debug);
-    xtg_speak(s, 1, "Entering routine %s...", s);
-
+    logger_info(LI, FI, FU, "Convert ROXAPI grid...");
 
     cellcorners = (double**) malloc(nxyz*sizeof(double*));
+
     for (ia = 0; ia < nxyz; ia++)  {
         cellcorners[ia] = (double*) malloc(24*sizeof(double));
     }
@@ -180,5 +175,5 @@ void grd3d_conv_roxapi_grid (
     }
     free(cellcorners);
 
-    xtg_speak(s, 1, "Leaving routine ...");
+    logger_info(LI, FI, FU, "Convert ROXAPI grid... done");
 }

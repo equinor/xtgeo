@@ -38,17 +38,17 @@
 
 
 int grd3d_copy(
-               int ncol,
-               int nrow,
-               int nlay,
-               double *p_coord1_v,
-               double *p_zcorn1_v,
-               int *p_actnum1_v,
-               double *p_coord2_v,
-               double *p_zcorn2_v,
-               int *p_actnum2_v,
-               int iflag,
-               int debug)
+    int ncol,
+    int nrow,
+    int nlay,
+    double *p_coord1_v,
+    double *p_zcorn1_v,
+    int *p_actnum1_v,
+    double *p_coord2_v,
+    double *p_zcorn2_v,
+    int *p_actnum2_v,
+    int iflag,
+    int debug)
 {
     /* locals */
     char sbn[24] = "grd3d_copy";

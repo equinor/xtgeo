@@ -137,21 +137,13 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     corners = corners.ravel(order="K")
     actnum = actnum.ravel(order="K")
 
-    logger.info("Convert to C pointers...")
-
-    nnum = ncol * nrow * nlay * 24
-    ccorners = _cxtgeo.new_doublearray(nnum)
     ntot = ncol * nrow * nlay
-    cactnum = _cxtgeo.new_intarray(ntot)
     ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
     nzcorn = ncol * nrow * (nlay + 1) * 4
 
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
-
-    _cxtgeo.swig_numpy_to_carr_1d(corners, ccorners)
-    _cxtgeo.swig_numpy_to_carr_i1d(actnum, cactnum)
+    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
+    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
+    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
 
     # next task is to convert geometry to cxtgeo internal format
     logger.info("Run XTGeo C code...")
@@ -160,18 +152,17 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
         nrow,
         nlay,
         ntot,
-        cactnum,
-        ccorners,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        XTGDEBUG,
+        actnum,
+        corners,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
     )
     logger.info("Run XTGeo C code... done")
-
-    _cxtgeo.delete_doublearray(ccorners)
-    _cxtgeo.delete_intarray(cactnum)
     logger.info("Converting to XTGeo internals... done")
+
+    del corners
+    del actnum
 
     # subgrids
     if len(indexer.zonation) > 1:
@@ -248,13 +239,15 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * 4 * (self.nlay + 1)
 
+    self.numpify_carrays()
+
     _ier, tpi, bpi, zco = _cxtgeo.grd3d_conv_grid_roxapi(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._x_coord_v,
+        self._x_zcorn_v,
+        self._x_actnum_v,
         npill,
         npill,
         nzcrn,

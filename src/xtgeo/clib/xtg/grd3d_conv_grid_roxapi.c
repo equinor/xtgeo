@@ -1,16 +1,5 @@
 /*
- ******************************************************************************
- *
- * Convert to ROXAPI pillar grid corner point format
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_conv_grid_roxapi.c
@@ -33,40 +22,45 @@
  *
  * LICENCE:
  *    CF. XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
 
 
 int grd3d_conv_grid_roxapi (
-                            int ncol,
-                            int nrow,
-                            int nlay,
-                            double *p_coord_v,
-                            double *p_zcorn_v,
-                            int *p_actnum_v,
-                            double *tpillars,
-                            long ntpillars,
-                            double *bpillars,
-                            long nbpillars,
-                            double *zcorners,
-                            long nzcorners,
-                            int debug
-                            )
+    int ncol,
+    int nrow,
+    int nlay,
+
+    double *p_coord_v,
+    long ncoordin,
+    double *p_zcorn_v,
+    long nzcornin,
+    int *p_actnum_v,
+    long nactin,
+
+    double *tpillars,
+    long ntpillars,
+    double *bpillars,
+    long nbpillars,
+    double *zcorners,
+    long nzcorners
+    )
 
 {
     long ic, ib, ib0, ib1, ib2, ib3;
     int icn, jcn, nn, i = 0, j = 0, k = 0;
     double z0, z1, z2, z3;
 
-    char sbn[24] = "grd3d_conv_grid_roxapi";
-    xtgverbose(debug);
-
-    xtg_speak(sbn, 2, "Entering %s", sbn);
+    logger_info(LI, FI, FU, "From XTGeo grid to ROXAPI grid...");
 
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * COORD --> pillars
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      */
 
     ic = 0;
@@ -74,8 +68,6 @@ int grd3d_conv_grid_roxapi (
         for (jcn = 1; jcn <= nrow + 1; jcn++) {  /* J (rows) cycling fastest */
             ib = 6 * ((jcn - 1) * (ncol + 1) + icn - 1);
             for (nn = 0; nn < 3; nn++) {
-                if (debug > 0) xtg_speak(sbn, 1, "I J and IB: %d %d %d, %f",
-                                          i, j, ib, p_coord_v[ib + nn]);
                 tpillars[ic + nn] = p_coord_v[ib + nn];
                 bpillars[ic + nn] = p_coord_v[ib + nn + 3];
             }
@@ -84,9 +76,9 @@ int grd3d_conv_grid_roxapi (
     }
 
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * ZCORN -- zcorners per pillar
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * XTGeo format having 4 corners pr cell layer as
      *                        3_____4
      *                        |     |
@@ -115,6 +107,7 @@ int grd3d_conv_grid_roxapi (
                 z1 = UNDEF;
                 z2 = UNDEF;
                 z3 = UNDEF;
+
                 if (i == 1 && j == 1) {
                     z3 = p_zcorn_v[4 * ib3 + 1 * 1 - 1];
                 }
@@ -157,5 +150,8 @@ int grd3d_conv_grid_roxapi (
             }
         }
     }
+
+    logger_info(LI, FI, FU, "From XTGeo grid to ROXAPI grid... done");
+
     return EXIT_SUCCESS;
 }

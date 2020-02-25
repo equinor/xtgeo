@@ -1,6 +1,6 @@
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <math.h>
 
 /*
  *=============================================================================
@@ -35,27 +35,25 @@
  *=============================================================================
  */
 
-int polys_chk_point_inside(
-			   double x,
-			   double y,
-			   double *p_xp_v,
-			   double *p_yp_v,
-			   int    np1,
-			   int    np2,
-			   int    debug
-			   )
+int
+polys_chk_point_inside(double x,
+                       double y,
+                       double *p_xp_v,
+                       double *p_yp_v,
+                       int np1,
+                       int np2,
+                       int debug)
 
 {
     double cnull, cen, pih, topi, eps;
-    double x1 ,x2, y1, y2, vin, vinsum, an, an1, an2, xp, pp;
+    double x1, x2, y1, y2, vin, vinsum, an, an1, an2, xp, pp;
     double cosv, dtmp, diffx, diffy;
-    int    i;
-    char  s[24]="polys_chk_point_inside";
-
+    int i;
+    char s[24] = "polys_chk_point_inside";
 
     xtgverbose(debug);
 
-    xtg_speak(s,2,"Entering routine %s", s);
+    xtg_speak(s, 2, "Entering routine %s", s);
 
     /*
      *-------------------------------------------------------------------------
@@ -63,12 +61,12 @@ int polys_chk_point_inside(
      *-------------------------------------------------------------------------
      */
 
-    cnull=0.0;
-    cen=1.0;
-    pih=asin(cen);
-    topi=4.0*pih;
-    dtmp=np2-np1+1;
-    eps=sqrt(dtmp)*1.0e-3; /*works better than e-09 in pp */
+    cnull = 0.0;
+    cen = 1.0;
+    pih = asin(cen);
+    topi = 4.0 * pih;
+    dtmp = np2 - np1 + 1;
+    eps = sqrt(dtmp) * 1.0e-3; /*works better than e-09 in pp */
 
     /*
      *-------------------------------------------------------------------------
@@ -84,66 +82,61 @@ int polys_chk_point_inside(
         return -9;
     }
 
-    vinsum=cnull;
-    x2=p_xp_v[np2]-x;
-    y2=p_yp_v[np2]-y;
+    vinsum = cnull;
+    x2 = p_xp_v[np2] - x;
+    y2 = p_yp_v[np2] - y;
 
-    for (i=np1;i<=np2;i++) {
-	/* differences and norms */
-	x1=x2;
-	y1=y2;
-	x2=p_xp_v[i]-x;
-	y2=p_yp_v[i]-y;
-	an1=sqrt(x1*x1 + y1*y1);
-	an2=sqrt(x2*x2 + y2*y2);
-	an=an1*an2;
+    for (i = np1; i <= np2; i++) {
+        /* differences and norms */
+        x1 = x2;
+        y1 = y2;
+        x2 = p_xp_v[i] - x;
+        y2 = p_yp_v[i] - y;
+        an1 = sqrt(x1 * x1 + y1 * y1);
+        an2 = sqrt(x2 * x2 + y2 * y2);
+        an = an1 * an2;
 
-	if (an == cnull) {
-	    /* points is on a corner */
-	    return(1);
-	}
-	/* cross-product and dot-product */
-	xp = x1*y2 - x2*y1;
-	pp = x1*x2 + y2*y1;
+        if (an == cnull) {
+            /* points is on a corner */
+            return (1);
+        }
+        /* cross-product and dot-product */
+        xp = x1 * y2 - x2 * y1;
+        pp = x1 * x2 + y2 * y1;
 
-	/* compute scalar value of angle: 0 <= vin <= pi */
-	cosv=pp/an;
-	if (cosv > cen) cosv=cen;
-	if (cosv < -1*cen) cosv = -1*cen;
-	vin=acos(cosv);
+        /* compute scalar value of angle: 0 <= vin <= pi */
+        cosv = pp / an;
+        if (cosv > cen)
+            cosv = cen;
+        if (cosv < -1 * cen)
+            cosv = -1 * cen;
+        vin = acos(cosv);
 
-	if (xp == cnull) {
-	    if (vin >= pih) {
-		/* vin==pi -> point on edge */
-		return(1);
-	    }
-	    else{
-		vin=cnull;
-	    }
-	}
-	else{
-	    /* angle use same +- sign as cross-product (implement Fortran SIGN)*/
-	    if (xp >= 0.0) {
-		vin=fabs(vin);
-	    }
-	    else{
-		vin=-1*fabs(vin);
-	    }
-
-	}
-	vinsum=vinsum+vin;
-
+        if (xp == cnull) {
+            if (vin >= pih) {
+                /* vin==pi -> point on edge */
+                return (1);
+            } else {
+                vin = cnull;
+            }
+        } else {
+            /* angle use same +- sign as cross-product (implement Fortran SIGN)*/
+            if (xp >= 0.0) {
+                vin = fabs(vin);
+            } else {
+                vin = -1 * fabs(vin);
+            }
+        }
+        vinsum = vinsum + vin;
     }
-    vinsum=fabs(vinsum);
+    vinsum = fabs(vinsum);
 
     /* determine inside or... */
-    if (fabs(vinsum-topi) <= eps) {
-	return(2);
-    }
-    else if (vinsum <= eps) {
-	return(0);
-    }
-    else{
-	return(-1);
+    if (fabs(vinsum - topi) <= eps) {
+        return (2);
+    } else if (vinsum <= eps) {
+        return (0);
+    } else {
+        return (-1);
     }
 }

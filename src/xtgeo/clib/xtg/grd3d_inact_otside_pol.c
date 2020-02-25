@@ -1,16 +1,6 @@
-/*
- ******************************************************************************
- *
- * Inactivate (actnum) inside or outside a closed polygon
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
 
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_inact_outs_pol.c
@@ -47,60 +37,52 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ **************************************************************************************
  */
 
-/* the Python version; skip subgrids; use K ranges, multiple polygons */
-int grd3d_inact_outside_pol(
-                            double *p_xp_v,
-                            long   npx,
-                            double *p_yp_v,
-                            long   npy,
-                            int    nx,
-                            int    ny,
-                            int    nz,
-                            double *p_coord_v,
-                            double *p_zcorn_v,
-                            int    *p_actnum_v,
-                            int    k1,
-                            int    k2,
-                            int    force_close,
-                            int    option,
-                            int    debug
-                            )
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
+
+/* skip subgrids; use K ranges, multiple polygons allowed */
+
+int
+grd3d_inact_outside_pol(double *p_xp_v,
+                        long npx,
+                        double *p_yp_v,
+                        long npy,
+                        int nx,
+                        int ny,
+                        int nz,
+                        double *p_coord_v,
+                        long ncoordin,
+                        double *p_zcorn_v,
+                        long nzcornin,
+                        int *p_actnum_v,
+                        long nact,
+                        int k1,
+                        int k2,
+                        int force_close,
+                        int option)
 {
-    int i, j, k, ic, istat, ib, np1, np2, ier=0;
-    double  xg, yg, zg;
+    int i, j, k, ic, istat, np1, np2, ier = 0;
+    double xg, yg, zg;
     int iflag, npoly;
 
-    char s[24]="grd3d_inact_outside_pol";
-
-    xtgverbose(debug);
-
-    if (option==0) {
-	xtg_speak(s,1,"Masking a grid with polygon (UNDEF outside) ...");
+    if (option == 0) {
+        logger_info(LI, FI, FU, "Masking a grid with polygon (UNDEF outside) ...");
+    } else {
+        logger_info(LI, FI, FU, "Masking a grid with polygon (UNDEF inside) ...");
     }
-    else{
-	xtg_speak(s,1,"Masking a grid with polygon (UNDEF inside) ...");
-    }
-
-    xtg_speak(s,2,"NX NY NZ is %d %d %d", nx, ny, nz);
-
 
     for (k = k1; k <= k2; k++) {
-	xtg_speak(s, 2, "Layer is %d", k);
 
-	for (j=1; j<=ny; j++) {
-	    for (i=1; i<=nx; i++) {
-		grd3d_midpoint(i, j, k, nx, ny, nz, p_coord_v,
-			       p_zcorn_v, &xg, &yg, &zg, debug);
+        for (j = 1; j <= ny; j++) {
+            for (i = 1; i <= nx; i++) {
+                grd3d_midpoint(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v, &xg, &yg, &zg,
+                               XTGDEBUG);
 
-		istat=0;
-
-		ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
-
-		xtg_speak(s,3,"Midpoint is %f %f for %d %d %d",
-                          xg, yg, i, j, k);
+                long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
                 /* check all polygons */
                 /* for outside, need to make flag system so the cell is */
@@ -109,52 +91,43 @@ int grd3d_inact_outside_pol(
                 iflag = 0;
 
                 np1 = 0;
-                np2 = 0;
                 npoly = 0;
-                for (ic=0; ic < npx; ic++) {
+
+                for (ic = 0; ic < npx; ic++) {
                     if (p_xp_v[ic] == 999.0) {
                         np2 = ic - 1;
                         if (np2 > np1 + 2) {
-                            xtg_speak(s, 2, "IC = %d  NP1 NP2 %d %d",
-                                      ic, np1, np2);
-                            xtg_speak(s, 2, "X at NP1 NP2 %f %f",
-                                      p_xp_v[np1], p_xp_v[np2]);
 
-
-                            istat = polys_chk_point_inside(xg, yg, p_xp_v,
-                                                           p_yp_v,
-                                                           np1, np2, debug);
+                            istat = polys_chk_point_inside(xg, yg, p_xp_v, p_yp_v, np1,
+                                                           np2, XTGDEBUG);
 
                             if (istat < 0) {
                                 /* some problems, .eg. poly is not closed */
-                                xtg_warn(s, 2, "A polygon is not closed");
                                 ier = 1;
-                            }
-                            else{
-                                if (option==0 && istat>0 ) {
+                            } else {
+                                if (option == 0 && istat > 0) {
                                     iflag = 1;
                                 }
 
-                                else if (option==1 && istat==0 ) {
-                                    iflag ++;
+                                else if (option == 1 && istat == 0) {
+                                    iflag++;
                                 }
-                                npoly ++;
+                                npoly++;
                             }
                         }
                         np1 = ic + 1;
                     }
                 }
 
-                xtg_speak(s, 2, "NPOLY and IFLAG  %d  %d", npoly, iflag);
-
                 if (option == 0 && iflag == 1) {
-                    p_actnum_v[ib]=0;
+                    p_actnum_v[ib] = 0;
                 }
-                if (option == 1 && iflag > 0 && iflag==npoly) {
-                    p_actnum_v[ib]=0;
+                if (option == 1 && iflag > 0 && iflag == npoly) {
+                    p_actnum_v[ib] = 0;
                 }
             }
         }
     }
+    logger_info(LI, FI, FU, "Masking a grid with polygon... done");
     return ier;
 }

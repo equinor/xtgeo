@@ -697,9 +697,10 @@ class Grid(Grid3D):
         ntot = self._ncol * self._nrow * self._nlay
 
         if "SwigPyObject" not in str(type(self._x_zcorn_v)) or self._x_zcorn_v is None:
-            logger.info("Tried to numpify but input is not numpy")
+            logger.info("Tried to numpify but input is already numpy")
             return
 
+        logger.info("Numpifying C arrays...")
         self._x_coord_v = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._x_coord_v)
         self._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._x_zcorn_v)
         self._x_actnum_v = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._x_actnum_v)
