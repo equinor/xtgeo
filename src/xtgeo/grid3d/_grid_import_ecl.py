@@ -99,6 +99,7 @@ def import_ecl_egrid(self, gfile):
         option,
     )
 
+    logger.info("Reading ECL EGRID (C code) done")
     if ier == -1:
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
 
@@ -112,6 +113,7 @@ def import_ecl_egrid(self, gfile):
         self.set_actnum(acttmp)
 
     eclfile.close()
+    logger.info("File is closed")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -204,7 +204,8 @@ class Grid(Grid3D):
 
     def __del__(self):
 
-        if self._p_coord_v is not None:
+        if not isinstance(self._x_coord_v, np.ndarray) and self._x_coord_v is not None:
+
             # logger.info("Deleting Grid instance %s", id(self))
             _cxtgeo.delete_doublearray(self._x_coord_v)
             _cxtgeo.delete_doublearray(self._x_zcorn_v)
@@ -267,7 +268,7 @@ class Grid(Grid3D):
         nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         ntot = self._ncol * self._nrow * self._nlay
 
-        return(ncoord, nzcorn, ntot)
+        return (ncoord, nzcorn, ntot)
 
     @property
     def ijk_handedness(self):
@@ -575,12 +576,7 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def from_file(
-        self,
-        gfile,
-        fformat=None,
-        initprops=None,
-        restartprops=None,
-        restartdates=None,
+        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -788,10 +784,6 @@ class Grid(Grid3D):
         dsc = XTGDescription()
         dsc.title("Description of Grid instance")
         dsc.txt("Object ID", id(self))
-        if details:
-            dsc.txt("SWIG ID to coordinates pointer", self._p_coord_v)
-            dsc.txt("SWIG ID to zcorn pointer", self._p_zcorn_v)
-            dsc.txt("SWIG ID to actnum pointer", self._p_actnum_v)
         dsc.txt("File source", self._filesrc)
         dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
         dsc.txt("Number of active cells", self.nactive)
@@ -1085,7 +1077,7 @@ class Grid(Grid3D):
 
         .. versionchanged:: 2.6.0 Added ``dual`` keyword
         """
-
+        self.numpify_carrays()
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
@@ -1101,8 +1093,9 @@ class Grid(Grid3D):
                 discrete=True,
             )
 
-            carray = self._p_actnum_v  # the SWIG pointer to the C structure
-            _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
+            values = _gridprop_lowlevel.f2c_order(self, self._x_actnum_v)
+            act.values = values
+            act.mask_undef()
 
         if asmasked:
             act.values = ma.masked_equal(act.values, 0)
@@ -1128,8 +1121,9 @@ class Grid(Grid3D):
             act.values[:, :, 4] = 0
             grid.set_actnum(act)
         """
+        val1d = actnum.values.ravel(order="K")
 
-        self._p_actnum_v = _gridprop_lowlevel.update_carray(actnum, discrete=True)
+        self._x_actnum_v = _gridprop_lowlevel.c2f_order(self, val1d)
 
     def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
         """
