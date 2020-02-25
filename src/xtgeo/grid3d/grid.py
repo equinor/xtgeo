@@ -727,16 +727,19 @@ class Grid(Grid3D):
         ntot = self._ncol * self._nrow * self._nlay
 
         if isinstance(self._x_coord_v, np.ndarray):
+            logger.info("Denumpify coords...")
             carray = _cxtgeo.new_doublearray(ncoord)
             _cxtgeo.swig_numpy_to_carr_1d(self._x_coord_v, carray)
             self._x_coord_v = carray
 
         if isinstance(self._x_zcorn_v, np.ndarray):
+            logger.info("Denumpify zcorn...")
             carray = _cxtgeo.new_doublearray(nzcorn)
             _cxtgeo.swig_numpy_to_carr_1d(self._x_zcorn_v, carray)
             self._x_zcorn_v = carray
 
         if isinstance(self._x_actnum_v, np.ndarray):
+            logger.info("Denumpify actnum...")
             carray = _cxtgeo.new_intarray(ntot)
             _cxtgeo.swig_numpy_to_carr_i1d(self._x_actnum_v, carray)
             self._x_actnum_v = carray
