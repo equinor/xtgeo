@@ -1243,12 +1243,11 @@ class RegularSurface(object):
             if np.array_equal(mas1, mas2):
                 pass
             else:
-                logger.info("CMP mask %s %s", mas1, mas2)
-                logger.warning("CMP mask %s %s", mas1, mas2)
                 if strict:
                     return False
+                else:
+                    logger.warning("Masks differ, not consistent with 'strict'")
 
-        logger.debug("Surfaces have same topology")
         return True
 
     def swapaxes(self):

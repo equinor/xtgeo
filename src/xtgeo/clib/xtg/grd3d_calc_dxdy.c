@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_calc_dxdy.c
@@ -31,74 +31,80 @@
  ***************************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-
-int grd3d_calc_dxdy(
-    int nx,
-    int ny,
-    int nz,
-    double *p_coord_v,
-    long ncoord,
-    double *p_zcorn_v,
-    long nzcorn,
-    int *p_actnum_v,
-    long nactnum,
-    double *dx,
-    long ndx,
-    double *dy,
-    long ndy,
-    int option1,
-    int option2
-    )
+int
+grd3d_calc_dxdy(int nx,
+                int ny,
+                int nz,
+                double *p_coord_v,
+                long ncoord,
+                double *p_zcorn_v,
+                long nzcorn,
+                int *p_actnum_v,
+                long nactnum,
+                double *dx,
+                long ndx,
+                double *dy,
+                long ndy,
+                int option1,
+                int option2)
 
 {
     /* locals */
-    int     i, j, k, n, ii;
+    int i, j, k, n, ii;
 
-    double  c[24], plen, vlen, arad, adeg;
+    double c[24], plen, vlen, arad, adeg;
 
     logger_info(LI, FI, FU, "Compute DX DY...");
 
-    for (k = 1; k <= nz; k++) {
-	for (j = 1; j <= ny; j++) {
-	    for (i = 1; i <= nx; i++) {
+    long ntot[3] = { nactnum, ndx, ndy };
 
-		long ib = x_ijk2ib(i,j,k,nx,ny,nz,0);
-		long ic = x_ijk2ic(i,j,k,nx,ny,nz,0);
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 3) != 0)
+        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
+
+    if (option2 == 0)
+        logger_debug(LI, FI, FU, "Option2 not in use");
+
+    for (k = 1; k <= nz; k++) {
+        for (j = 1; j <= ny; j++) {
+            for (i = 1; i <= nx; i++) {
+
+                long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
                 if (option1 == 1 && p_actnum_v[ib] == 0) {
                     dx[ic] = UNDEF;
-                    dx[ic] = UNDEF;
+                    dy[ic] = UNDEF;
                     continue;
                 }
 
-                grd3d_corners(i, j, k, nx, ny, nz,
-                              p_coord_v, 0, p_zcorn_v, 0, c);
+                grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, 0, p_zcorn_v, 0, c);
 
                 /* get the length of all lines forming DX */
                 plen = 0.0;
                 for (n = 0; n <= 3; n++) {
-                    ii = 0 + n*6;
-                    x_vector_info2(c[ii], c[ii+3], c[ii+1], c[ii+4],
-                                   &vlen, &arad, &adeg, 1, XTGDEBUG);
+                    ii = 0 + n * 6;
+                    x_vector_info2(c[ii], c[ii + 3], c[ii + 1], c[ii + 4], &vlen, &arad,
+                                   &adeg, 1, XTGDEBUG);
                     plen = plen + vlen;
                 }
-                dx[ic] = plen/4.0;
+                dx[ic] = plen / 4.0;
 
                 /* get the length of all lines forming DY */
                 plen = 0.0;
                 for (n = 0; n <= 3; n++) {
-                    ii = 0 + n*3;
-                    if (n >= 2) ii = 6 + n*3;
+                    ii = 0 + n * 3;
+                    if (n >= 2)
+                        ii = 6 + n * 3;
 
-                    x_vector_info2(c[ii], c[ii+6], c[ii+1], c[ii+7],
-                                   &vlen, &arad, &adeg, 1, XTGDEBUG);
+                    x_vector_info2(c[ii], c[ii + 6], c[ii + 1], c[ii + 7], &vlen, &arad,
+                                   &adeg, 1, XTGDEBUG);
                     plen = plen + vlen;
                 }
-                dy[ic] = plen/4.0;
+                dy[ic] = plen / 4.0;
             }
         }
     }
