@@ -28,8 +28,6 @@ def export_roff(self, gfile, option):
     # get the geometrics list to find the xshift, etc
     gx = self.get_geometrics()
 
-    self.numpify_carrays()  # TMP!!
-
     _cxtgeo.grd3d_export_roff_grid(
         option,
         self._ncol,
@@ -58,8 +56,6 @@ def export_grdecl(self, gfile, mode):
 
     logger.debug("Export to ascii or binary GRDECL...")
 
-    self.numpify_carrays()  # TMP!!
-
     _cxtgeo.grd3d_export_grdecl(
         self._ncol,
         self._nrow,
@@ -76,8 +72,6 @@ def export_egrid(self, gfile):
     """Export grid to Eclipse EGRID format, binary."""
 
     logger.debug("Export to binary EGRID...")
-
-    self.numpify_carrays()  # TMP!!
 
     _cxtgeo.grd3d_export_egrid(
         self._ncol,

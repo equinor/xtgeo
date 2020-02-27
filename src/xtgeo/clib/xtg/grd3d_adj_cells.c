@@ -55,7 +55,11 @@ grd3d_adj_cells(int ncol,
                 int iflag1,
                 int iflag2)
 {
-    /* locals */
+
+    long ntotv[3] = { nactin, nprop1, nprop2 };
+    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 3) != 0)
+        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
+
     long ib, nnc[6];
     int icn, jcn, kcn, nni, faulted;
     int *useactnum;
@@ -103,9 +107,8 @@ grd3d_adj_cells(int ncol,
                             p_prop2[ib] = 1;
                         /* check if the two cells are faulted in XY */
                         if (iflag2 > 0 && nni < 4) {
-                            faulted = grd3d_check_cell_splits(ncol, nrow, nlay,
-                                                              p_coord_v, p_zcorn_v, ib,
-                                                              nnc[nni]);
+                            faulted = grd3d_check_cell_splits(
+                              ncol, nrow, nlay, p_coord_v, p_zcorn_v, ib, nnc[nni]);
                             if (faulted == 1)
                                 p_prop2[ib] = 2;
                         }

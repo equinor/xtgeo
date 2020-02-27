@@ -55,10 +55,6 @@ def get_randomline(
     nzsam = int((zmax - zmin) / float(zincrement)) + 1
     nsamples = xcoords.shape[0] * nzsam
 
-    self.numpify_carrays()
-
-    self._tmp["onegrid"].numpify_carrays()
-
     logger.info("Running C routine to get randomline...")
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,

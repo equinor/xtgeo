@@ -93,8 +93,6 @@ def refine_vertically(self, rfactor, zoneprop=None):
     )
     ref_x_actnum_v = np.zeros(self.ncol * self.nrow * newnlay, dtype=np.int32)
 
-    self.numpify_carrays()
-
     ier = _cxtgeo.grd3d_refine_vert(
         self.ncol,
         self.nrow,

@@ -239,8 +239,6 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * 4 * (self.nlay + 1)
 
-    self.numpify_carrays()
-
     _ier, tpi, bpi, zco = _cxtgeo.grd3d_conv_grid_roxapi(
         self.ncol,
         self.nrow,

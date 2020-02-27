@@ -43,8 +43,7 @@ grd3d_check_cell_splits(int ncol,
                         long ib1,
                         long ib2)
 {
-    /* locals */
-    char sbn[24] = "grd3d_check_cells_splits";
+
     int ic1, ic2, jc1, jc2, kc1, kc2;
     int scase, flag;
     double corners1[24], corners2[24];

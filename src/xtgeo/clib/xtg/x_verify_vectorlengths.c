@@ -1,28 +1,28 @@
 /*
-****************************************************************************************
-*
-* NAME:
-*    x_verify_vectorlengths.c
-*
-* DESCRIPTION:
-*    Verify typical grid vector lengths
-*
-* ARGUMENTS:
-*    nx, ny, nz     i     Dimensions
-*    ncoord         i     Lenghts of coord vector (use 0 or less to skip)
-*    nzcorn         i     Lenghts of zcorn vector (use 0 or less to skip)
-*    ntot           i     Array: Lenghts of ntot vector (use 0 or less to skip)
-*    ntotlen        i     Length of ntot array
-*
-* RETURNS:
-*    Status, EXIT_FAILURE or EXIT_SUCCESS
-*
-* TODO/ISSUES/BUGS:
-*
-* LICENCE:
-*    CF XTGeo's LICENSE
-***************************************************************************************
-*/
+ ***************************************************************************************
+ *
+ * NAME:
+ *    x_verify_vectorlengths.c
+ *
+ * DESCRIPTION:
+ *    Verify typical grid vector lengths
+ *
+ * ARGUMENTS:
+ *    nx, ny, nz     i     Dimensions
+ *    ncoord         i     Lenghts of coord vector (use 0 or less to skip)
+ *    nzcorn         i     Lenghts of zcorn vector (use 0 or less to skip)
+ *    ntot           i     Array: Lenghts of ntot vector (use 0 or less to skip)
+ *    ntotlen        i     Length of ntot array
+ *
+ * RETURNS:
+ *    Status, EXIT_FAILURE or EXIT_SUCCESS
+ *
+ * TODO/ISSUES/BUGS:
+ *
+ * LICENCE:
+ *    CF XTGeo's LICENSE
+ ***************************************************************************************
+ */
 
 #include "libxtg.h"
 #include "libxtg_.h"

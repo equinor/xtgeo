@@ -103,8 +103,6 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
     if asmasked:
         option = 1
 
-    self.numpify_carrays()  # !! TMP !!
-
     _cxtgeo.grd3d_calc_dz(
         self._ncol,
         self._nrow,
@@ -150,8 +148,6 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
 
     if asmasked:
         option1 = 1
-
-    self.numpify_carrays()  # !! TMP !!
 
     _cxtgeo.grd3d_calc_dxdy(
         self._ncol,
@@ -250,9 +246,6 @@ def get_ijk_from_points(
 
     logger.info("Grid is FLIP %s", flip)
 
-    self.numpify_carrays()  # !! TMP !!
-    self._tmp["onegrid"].numpify_carrays()  # !! TMP !!
-
     logger.info("Running C routine...")
     _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
         points.dataframe[points.xname].values,
@@ -322,8 +315,6 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     if asmasked:
         option = 1
 
-    self.numpify_carrays()  # !! TMP !!
-
     _cxtgeo.grd3d_calc_xyz(
         self._ncol,
         self._nrow,
@@ -386,8 +377,6 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
             return None
 
     pcorners = _cxtgeo.new_doublearray(24)
-
-    self.numpify_carrays()  # !! TMP !!
 
     _cxtgeo.grd3d_corners(
         i + shift,
@@ -460,8 +449,6 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
     option = 0
 
-    self.numpify_carrays()  # !! TMP !!
-
     # note, fool the argument list to unpack ptr_coord with * ...
     _cxtgeo.grd3d_get_all_corners(
         self._ncol,
@@ -502,8 +489,6 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
     opt2 = 1
     if not activeonly:
         opt2 = 0
-
-    self.numpify_carrays()  # !! TMP !!
 
     icn, lay_array, ic_array = _cxtgeo.grd3d_get_lay_slice(
         self._ncol,
@@ -553,8 +538,6 @@ def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False)
     option2 = 1
     if not cellcenter:
         option2 = 0
-
-    self.numpify_carrays()
 
     quality = _cxtgeo.grd3d_geometrics(
         self._ncol,
@@ -688,8 +671,6 @@ def inactivate_by_dz(self, threshold):
     # assumption (unless somebody finds a Petrel made grid):
     nflip = 1
 
-    self.numpify_carrays()
-
     _cxtgeo.grd3d_inact_by_dz(
         self.ncol,
         self.nrow,
@@ -708,8 +689,6 @@ def make_zconsistent(self, zsep):
 
     if not isinstance(zsep, float):
         raise ValueError('The "zsep" is not a float or int')
-
-    self.numpify_carrays()
 
     _cxtgeo.grd3d_make_z_consistent(
         self.ncol, self.nrow, self.nlay, self._x_zcorn_v, zsep,
@@ -741,8 +720,6 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
     xc = dfxyz["X_UTME"].values.copy()
     yc = dfxyz["Y_UTMN"].values.copy()
 
-    self.numpify_carrays()
-
     ier = _cxtgeo.grd3d_inact_outside_pol(
         xc,
         yc,
@@ -765,8 +742,6 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
 def collapse_inactive_cells(self):
     """Collapse inactive cells"""
 
-    self.numpify_carrays()
-
     _cxtgeo.grd3d_collapse_inact(
         self.ncol, self.nrow, self.nlay, self._x_zcorn_v, self._x_actnum_v, XTGDEBUG
     )
@@ -780,8 +755,6 @@ def copy(self):
     """
 
     other = self.__class__()
-
-    self.numpify_carrays()
 
     other._x_coord_v = self._x_coord_v.copy()
     other._x_zcorn_v = self._x_zcorn_v.copy()
@@ -853,8 +826,6 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     new_x_coord_v = np.zeros(ncoord, dtype=np.float64)
     new_x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
     new_x_actnum_v = np.zeros(ntot, dtype=np.int32)
-
-    self.numpify_carrays()  # !! TMP !!
 
     _cxtgeo.grd3d_crop_geometry(
         self.ncol,
@@ -938,8 +909,6 @@ def reduce_to_one_layer(self):
     new_zcorn = np.zeros(self.ncol * self.nrow * nnum, dtype=np.float64)
     new_actnum = np.zeros(self.ncol * self.nrow * 1, dtype=np.int32)
 
-    self.numpify_carrays()
-
     _cxtgeo.grd3d_reduce_onelayer(
         self.ncol,
         self.nrow,
@@ -963,8 +932,6 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
     """Translate grid coordinates"""
     tx, ty, tz = translate
     fx, fy, fz = flip
-
-    self.numpify_carrays()
 
     ier = _cxtgeo.grd3d_translate(
         self._ncol,
@@ -990,8 +957,6 @@ def reverse_row_axis(self, ijk_handedness=None):
 
     if ijk_handedness == self.ijk_handedness:
         return
-
-    self.numpify_carrays()
 
     ier = _cxtgeo.grd3d_reverse_jrows(
         self._ncol,
@@ -1102,8 +1067,6 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
 
     ptr_zprop = _gridprop_lowlevel.update_carray(zoneprop)
 
-    self.numpify_carrays()
-
     cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(
         self._ncol,
         self._nrow,
@@ -1171,8 +1134,6 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
         iflag1 = 0
 
     iflag2 = 1
-
-    self.numpify_carrays()
 
     _cxtgeo.grd3d_adj_cells(
         self._ncol,

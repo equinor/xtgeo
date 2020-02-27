@@ -100,8 +100,6 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
-    grid.numpify_carrays()
-
     for id_, grp in idgroups:
         xcor = grp[poly.xname].values
         ycor = grp[poly.yname].values

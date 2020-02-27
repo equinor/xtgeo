@@ -36,8 +36,6 @@ def make_hybridgrid(
         rvalues = np.ma.filled(region.values, fill_value=xtgeo.UNDEF_INT)
         rvalues = rvalues.ravel()
 
-    self.numpify_carrays()
-
     _cxtgeo.grd3d_convert_hybrid(
         self.ncol,
         self.nrow,

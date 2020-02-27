@@ -70,6 +70,11 @@ grd3d_imp_ecl_egrid(FILE *fc,
     long ib = 0;
 
     logger_info(LI, FI, FU, "EGRID import ...");
+
+    long ntot[1] = { nxyz };
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 1) != 0)
+        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
+
     /*
      * =================================================================================
      * INITIAL TASKS
