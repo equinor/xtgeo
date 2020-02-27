@@ -12,7 +12,7 @@ int main () {
     int    nx, ny, nz, ptype, ncodes;
     double xori, yori, xinc, yinc, rot;
     int    mode, debug, ndef, nklist, ndates;
-    double *p_double_v, *p_zcorn_v, *p_coord_v;
+    double *p_double_v, *zcornsv, *coordsv;
     int    *p_actnum_v;
     char   *p_codenames_v;
     int    *p_int_v, *p_codevalues_v;
@@ -43,13 +43,13 @@ int main () {
     /*     		    file, debug); */
 
 
-    /* p_coord_v = calloc((nx+1)*(ny+1)*2*3, 8); */
-    /* p_zcorn_v = calloc(nx*ny*(nz+1)*4, 8); */
+    /* coordsv = calloc((nx+1)*(ny+1)*2*3, 8); */
+    /* zcornsv = calloc(nx*ny*(nz+1)*4, 8); */
     /* p_actnum_v = calloc(nx*ny*nz, 4); */
 
     /* grd3d_import_ecl_egrid (0, nx, ny, nz, */
     /*     		    &ndef, */
-    /*     		    p_coord_v, p_zcorn_v, */
+    /*     		    coordsv, zcornsv, */
     /*     		    p_actnum_v, file, debug); */
 
 

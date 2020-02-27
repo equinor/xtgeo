@@ -21,8 +21,8 @@ void grd3d_adj_z_local (
 			     int nx,
 			     int ny,
 			     int nz,
-			     double *p_coord_v,
-			     double *p_zcorn_v,
+			     double *coordsv,
+			     double *zcornsv,
 			     int *p_actnum_v,
 			     int iuse,
 			     int juse,
@@ -43,7 +43,7 @@ void grd3d_adj_z_local (
 
     xtg_speak(s,2,"Entering <grd3d_adj_z_local>");
     xtg_speak(s,3,"Using IFLAG: %d", iflag);
-    
+
     xtg_speak(s,3,"NX NY NZ: %d %d %d", nx, ny, nz);
 
 
@@ -56,7 +56,7 @@ void grd3d_adj_z_local (
 			    nx,
 			    ny,
 			    nz,
-			    p_zcorn_v,
+			    zcornsv,
 			    p_actnum_v,
 			    0.001,
 			    debug
@@ -64,16 +64,16 @@ void grd3d_adj_z_local (
 
     kstart=1;
     kstop=nz;
-   
-    /* Adjust all values along pillar: */	
-    if (iflag==0) {			
+
+    /* Adjust all values along pillar: */
+    if (iflag==0) {
 	for (k = 1; k <= nz+1; k+=1) {
 	    ib=x_ijk2ib(i,j,k,nx,ny,nz+1,0);
-	    p_zcorn_v[4*ib + 1*ic - 1] = 
-		p_zcorn_v[4*ib + 1*ic - 1] + zadj;		    
+	    zcornsv[4*ib + 1*ic - 1] =
+		zcornsv[4*ib + 1*ic - 1] + zadj;
 	}
     }
-    
+
 
 
 
@@ -88,7 +88,7 @@ void grd3d_adj_z_local (
 			    nx,
 			    ny,
 			    nz,
-			    p_zcorn_v,
+			    zcornsv,
 			    p_actnum_v,
 			    0.001,
 			    debug
@@ -97,6 +97,3 @@ void grd3d_adj_z_local (
     xtg_speak(s,1,"Adjusting grid to map ... DONE!");
     xtg_speak(s,2,"Exiting <grd3d_adj_z_from_map>");
 }
-
-
-

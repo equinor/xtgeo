@@ -12,8 +12,8 @@
 #define VERYLARGEFLOAT 10E30;
 #define VERYSMALLFLOAT -10E30;
 
-/* 
- * Undefined values etc 
+/*
+ * Undefined values etc
  */
 
 #define UNDEF_MAP -9999.9900000000000
@@ -37,7 +37,7 @@
 #define POINTS_UNDEF -888888.0000
 
 
-/* 
+/*
  * ============================================================================
  * Importing maps
  * ============================================================================
@@ -47,10 +47,10 @@
 /*
  *-----------------------------------------------------------------------------
  * Importing Irap ASCII map
- * ndef          = (O) Number of defined nodes 
+ * ndef          = (O) Number of defined nodes
  * nx, ny        = (O) nodes in X (EW) and Y (NS) dir
- * xstep, ystep  = (O) Mesh width 
- * x/ymin x/ymax = (O) Start and end of mesh (xmax=(nx-1)*xstep+xmin) 
+ * xstep, ystep  = (O) Mesh width
+ * x/ymin x/ymax = (O) Start and end of mesh (xmax=(nx-1)*xstep+xmin)
  * zmin, zmax    = (O) Min and Max of max value
  * array         = (O) Actual map values (#: nx*ny)
  * file          = (I) Name of file
@@ -61,18 +61,18 @@
 
 void grd2d_import_irap_ascii (
 			      int *ndef,
-			      int *nx, 
-			      int *ny, 
-			      float *xstep, 
+			      int *nx,
+			      int *ny,
+			      float *xstep,
 			      float *ystep,
-			      float *xmin, 
-			      float *xmax, 
-			      float *ymin, 
-			      float *ymax, 
+			      float *xmin,
+			      float *xmax,
+			      float *ymin,
+			      float *ymax,
 			      float *zmin,
 			      float *zmax,
 			      float *p_grd2d_v,
-			      char  *file, 
+			      char  *file,
 			      int *ierr,
 			      int debug
 			      );
@@ -87,24 +87,24 @@ void grd2d_import_irap_ascii (
 
 void grd2d_import_storm_binary (
 				int   *ndef,
-				int   *nx, 
-				int   *ny, 
-				float *xstep, 
+				int   *nx,
+				int   *ny,
+				float *xstep,
 				float *ystep,
-				float *xmin, 
-				float *xmax, 
-				float *ymin, 
-				float *ymax, 
-				float *zmin, 
-				float *zmax, 
+				float *xmin,
+				float *xmax,
+				float *ymin,
+				float *ymax,
+				float *zmin,
+				float *zmax,
 				float *p_grd2d_v,
-				char  *file, 
+				char  *file,
 				int   *ierr,
 				int   debug
 				);
 
 
-/* 
+/*
  * ============================================================================
  * Exporting maps
  * ============================================================================
@@ -121,21 +121,21 @@ void grd2d_import_storm_binary (
  *-----------------------------------------------------------------------------
  */
 void grd2d_export_storm_binary (
-				int nx, 
-				int ny, 
-				float xstep, 
+				int nx,
+				int ny,
+				float xstep,
 				float ystep,
-				float xmin, 
-				float xmax, 
-				float ymin, 
-				float ymax, 
+				float xmin,
+				float xmax,
+				float ymin,
+				float ymax,
 				float *p_grd2d_v,
-				char  *file, 
+				char  *file,
 				int   debug
-				); 
+				);
 
 
-/* 
+/*
  * ============================================================================
  * Importing 3D grids and parameters
  * ============================================================================
@@ -170,8 +170,8 @@ void grd3d_import_eclipse_grid (
  * is implemented)
  * num_act         = (O) Number of active cells (not in use now)
  * num_subs        = (O) Number of sub_grids
- * p_coord_v       = (O) Holds the top and bottom pillar XYZ coords
- * p_zcorn_v       = (O) Holds the top 4 Z corners of each cell
+ * coordsv       = (O) Holds the top and bottom pillar XYZ coords
+ * zcornsv       = (O) Holds the top 4 Z corners of each cell
  * p_actnum_v      = (O) Holds ACTNUM array
  * p_subgrd_v      = (O) Small array that holds the number of layers pr sub.
  * filename        = (I) Name of file
@@ -182,7 +182,7 @@ void grd3d_import_eclipse_grid (
 void grd3d_import_roff_grid (
 			    int     *num_act,
 			    int     *num_subs,
-			    float   *p_coord_v,
+			    float   *coordsv,
 			    float   *p_zgrd3d_v,
 			    int     *p_actnum_v,
 			    int     *p_subgrd_v,
@@ -228,7 +228,7 @@ void grd3d_import_grdecl (
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
+			  float   *coordsv,
 			  float   *p_zgrd3d_v,
 			  int     *p_actnum_v,
 			  char    *filename,
@@ -258,7 +258,7 @@ int grd3d_import_storm_binary (
 			       int   *actnum_v,
 			       char  *filename,
 			       int   debug
-			       ); 
+			       );
 
 /*
 int grd3d_import_storm_param (
@@ -271,7 +271,7 @@ int grd3d_import_storm_param (
 			      double *double_v,
 			      char   *filename,
 			      int    debug
-			      );			       
+			      );
 
 */
 void grd3d_import_eclipse_param (
@@ -289,7 +289,7 @@ void grd3d_import_eclipse_param (
 				 int    debug
 				 );
 
-/* 
+/*
  * ============================================================================
  * Exporting 3D grids and parameters
  * ============================================================================
@@ -307,7 +307,7 @@ void grd3d_export_roff_grid (
 			    float   xscale,
 			    float   yscale,
 			    float   zscale,
-			    float   *p_coord_v,
+			    float   *coordsv,
 			    float   *p_zgrd3d_v,
 			    int     *p_actnum_v,
 			    int     *p_subgrd_v,
@@ -341,9 +341,9 @@ void grd3d_export_roff_pstart (
 			      int     mode,
 			      int     nx,
 			      int     ny,
-			      int     nz,	
-			      char    *filename,	
-			      int     debug	
+			      int     nz,
+			      char    *filename,
+			      int     debug
 			      );
 
 
@@ -359,7 +359,7 @@ void grd3d_export_grdecl (
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
+			  float   *coordsv,
 			  float   *p_zgrd3d_v,
 			  int     *p_actnum_v,
 			  char    *filename,
@@ -374,8 +374,8 @@ void grd3d_export_eclipse_grid (
 				int     nx,
 				int     ny,
 				int     nz,
-				float   *p_coord_v,
-				float   *p_zcorn_v,
+				float   *coordsv,
+				float   *zcornsv,
 				int     *p_actnum_v,
 				char    *filename,
 				int     mode,
@@ -412,7 +412,7 @@ void grd3d_export_eclipse_param (
 
 
 
-/* 
+/*
  * ============================================================================
  * Pure Map functions
  * ============================================================================
@@ -435,8 +435,8 @@ void grd2d_set_value (
 		     );
 
 void grd2d_operation_map (
-			  int   nx, 
-			  int   ny, 
+			  int   nx,
+			  int   ny,
 			  float *p_grd2d1_v,
 			  float *p_grd2d2_v,
 			  int   iop,
@@ -448,10 +448,10 @@ void grd2d_getcontour(
 		      float z0,
 		      int nx,
 		      int ny,
-		      float xstep, 
+		      float xstep,
 		      float ystep,
-		      float xmin, 
-		      float ymin, 
+		      float xmin,
+		      float ymin,
 		      float *p_grd2d_v,
 		      int debug
 		      );
@@ -459,18 +459,18 @@ void grd2d_getcontour(
 
 int grd2d_get_corners_xy(
 			 float x,
-			 float y,			 
+			 float y,
 			 int nx,
 			 int ny,
-			 float xstep, 
+			 float xstep,
 			 float ystep,
-			 float xmin, 
-			 float ymin, 
-			 float *p_grd2d_v,			 
+			 float xmin,
+			 float ymin,
+			 float *p_grd2d_v,
 			 int debug
 			 );
 
-/* 
+/*
  * ============================================================================
  * Map and point functions
  * ============================================================================
@@ -483,30 +483,30 @@ void grd2d_chk_point_between(
 
                              int nx1,
                              int ny1,
-                             float xstep1, 
+                             float xstep1,
                              float ystep1,
-                             float xmin1, 
-                             float ymin1, 
+                             float xmin1,
+                             float ymin1,
                              float *p_grd2d1_v,
-                             
+
                              int nx2,
                              int ny2,
-                             float xstep2, 
+                             float xstep2,
                              float ystep2,
-                             float xmin2, 
-                             float ymin2, 
+                             float xmin2,
+                             float ymin2,
                              float *p_grd2d2_v,
-                             
+
                              int   *outside,
                              float *zdiff,
 
                              int debug
                              );
 
- 
 
 
-/* 
+
+/*
  * ============================================================================
  * Pure 3D grid functions
  * ============================================================================
@@ -520,7 +520,7 @@ void grd3d_corners (
 		    int     nx,
 		    int     ny,
 		    int     nz,
-		    float   *p_coord_v,
+		    float   *coordsv,
 		    float   *p_zgrd3d_v,
 		    float   corners[],
 		    int     debug
@@ -549,7 +549,7 @@ void grd3d_make_z_consistent (
 			      int   nx,
 			      int   ny,
 			      int   nz,
-			      float *p_zcorn_v,
+			      float *zcornsv,
 			      int   *p_actnum_v,
 			      float zsep,
 			      int   debug
@@ -573,8 +573,8 @@ void grd3d_calc_cell_dip(
 			 int nx,
 			 int ny,
 			 int nz,
-			 float *p_coord_v,
-			 float *p_zcorn_v,
+			 float *coordsv,
+			 float *zcornsv,
 			 float *p_dip_v,
 			 int   debug
 			 );
@@ -612,8 +612,8 @@ void grd3d_fault_marks(
 		       int nx,
 		       int ny,
 		       int nz,
-		       float *p_coord_v,
-		       float *p_zcorn_v,
+		       float *coordsv,
+		       float *zcornsv,
 		       int   *p_actnum_v,
 		       int   *p_fmark_v,
 		       float flimit,
@@ -631,8 +631,8 @@ void grd3d_print_cellinfo (
 			   int nx,
 			   int ny,
 			   int nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
+			   float *coordsv,
+			   float *zcornsv,
 			   int   *actnum_v,
 			   int debug
 			   );
@@ -647,14 +647,14 @@ int grd3d_point_in_cell(
 			int ny,
 			int nz,
 			float *p_coor_v,
-			float *p_zcorn_v,
+			float *zcornsv,
 			int   debug
 			);
 
 
 
 
-/* 
+/*
  * ============================================================================
  * Pure point polygons ... functions
  * ============================================================================
@@ -677,7 +677,7 @@ void points_export_irap_ascii (
 			       int    debug
 			       );
 
-/* 
+/*
  * ============================================================================
  * Combined 3D grid and map functions
  * ============================================================================
@@ -687,8 +687,8 @@ void grd3d_adj_z_from_map (
 			   int nx,
 			   int ny,
 			   int nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
+			   float *coordsv,
+			   float *zcornsv,
 			   int   *p_actnum_v,
 			   int mx,
 			   int my,
@@ -707,8 +707,8 @@ void grd2d_wiener_from_grd3d (
 			      int nx,
 			      int ny,
 			      int nz,
-			      float *p_coord_v,
-			      float *p_zcorn_v,
+			      float *coordsv,
+			      float *zcornsv,
 			      char  *ptype,
 			      int   *p_int_v,
 			      float *p_float_v,
@@ -723,7 +723,7 @@ void grd2d_wiener_from_grd3d (
 			      );
 
 
-/* 
+/*
  * ============================================================================
  * Combined 2D (map) grid and polygon functions
  * ============================================================================
@@ -734,10 +734,10 @@ void grd2d_wiener_from_grd3d (
 void grd2d_polygon_mask(
 			int nx,
 			int ny,
-			float xstep, 
+			float xstep,
 			float ystep,
-			float xmin, 
-			float ymin, 
+			float xmin,
+			float ymin,
 			float *p_grd2d_v,
 			double *p_xp_v,
 			double *p_yp_v,
@@ -752,7 +752,7 @@ void grd2d_polygon_mask(
 
 
 
-/* 
+/*
  * ============================================================================
  *                               OTHER STUFF
  * ============================================================================
@@ -760,11 +760,11 @@ void grd2d_polygon_mask(
 
 
 int ijk2ib (
-	    int i, 
-	    int j, 
-	    int k, 
-	    int nx, 
-	    int ny, 
+	    int i,
+	    int j,
+	    int k,
+	    int nx,
+	    int ny,
 	    int nz,
 	    int ia_offset
 	    );
@@ -805,13 +805,8 @@ int chk_point_in_cell (
 
 
 
-/* 
+/*
  * ============================================================================
  *                                  THE END
  * ============================================================================
  */
-
-
-
-
-

@@ -9,8 +9,8 @@
 *
 * ARGUMENTS:
 *    ncol, ..nlay   i     NCOL, NROW, NLAY
-*    p_coord_v      i     COORD array
-*    p_zcorn_v      i     ZCORN array
+*    coordsv      i     COORD array
+*    zcornsv      i     ZCORN array
 *    p_actnum_v     i     ACTNUM array
 *    tpillars       o     Top node pillars (ncol+1 * nrow+1)*3, nrow fastest
 *    bpillars       o     Base node pillars (ncol+1 * nrow+1)*3, nrow fastest
@@ -34,9 +34,9 @@ grd3d_conv_grid_roxapi(int ncol,
                        int nrow,
                        int nlay,
 
-                       double *p_coord_v,
+                       double *coordsv,
                        long ncoordin,
-                       double *p_zcorn_v,
+                       double *zcornsv,
                        long nzcornin,
                        int *p_actnum_v,
                        long nactin,
@@ -71,8 +71,8 @@ grd3d_conv_grid_roxapi(int ncol,
         for (jcn = 1; jcn <= nrow + 1; jcn++) { /* J (rows) cycling fastest */
             ib = 6 * ((jcn - 1) * (ncol + 1) + icn - 1);
             for (nn = 0; nn < 3; nn++) {
-                tpillars[ic + nn] = p_coord_v[ib + nn];
-                bpillars[ic + nn] = p_coord_v[ib + nn + 3];
+                tpillars[ic + nn] = coordsv[ib + nn];
+                bpillars[ic + nn] = coordsv[ib + nn + 3];
             }
             ic = ic + 3;
         }
@@ -112,30 +112,30 @@ grd3d_conv_grid_roxapi(int ncol,
                 z3 = UNDEF;
 
                 if (i == 1 && j == 1) {
-                    z3 = p_zcorn_v[4 * ib3 + 1 * 1 - 1];
+                    z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 } else if (i == 1 && j == nrow + 1) {
-                    z1 = p_zcorn_v[4 * ib1 + 1 * 3 - 1];
+                    z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
                 } else if (i == ncol + 1 && j == 1) {
-                    z2 = p_zcorn_v[4 * ib2 + 1 * 2 - 1];
+                    z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
                 } else if (i == ncol + 1 && j == nrow + 1) {
-                    z0 = p_zcorn_v[4 * ib0 + 1 * 4 - 1];
+                    z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
                 } else if (i == 1) {
-                    z1 = p_zcorn_v[4 * ib1 + 1 * 3 - 1];
-                    z3 = p_zcorn_v[4 * ib3 + 1 * 1 - 1];
+                    z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
+                    z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 } else if (i == ncol + 1) {
-                    z0 = p_zcorn_v[4 * ib0 + 1 * 4 - 1];
-                    z2 = p_zcorn_v[4 * ib2 + 1 * 2 - 1];
+                    z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
+                    z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
                 } else if (j == 1) {
-                    z2 = p_zcorn_v[4 * ib2 + 1 * 2 - 1];
-                    z3 = p_zcorn_v[4 * ib3 + 1 * 1 - 1];
+                    z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
+                    z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 } else if (j == nrow + 1) {
-                    z1 = p_zcorn_v[4 * ib1 + 1 * 3 - 1];
-                    z0 = p_zcorn_v[4 * ib0 + 1 * 4 - 1];
+                    z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
+                    z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
                 } else {
-                    z0 = p_zcorn_v[4 * ib0 + 1 * 4 - 1];
-                    z1 = p_zcorn_v[4 * ib1 + 1 * 3 - 1];
-                    z2 = p_zcorn_v[4 * ib2 + 1 * 2 - 1];
-                    z3 = p_zcorn_v[4 * ib3 + 1 * 1 - 1];
+                    z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
+                    z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
+                    z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
+                    z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 }
 
                 zcorners[ic++] = z0;

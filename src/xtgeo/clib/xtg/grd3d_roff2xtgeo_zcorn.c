@@ -13,7 +13,7 @@
  *    *scale           i     Scaling in XYZ spesified in ROFF
  *    p_splitenz_v     i     Split node vector
  *    p_zdata_v        i     Input zdata array ROFF fmt
- *    p_coord_v        o     Output zcorn array XTGEO fmt
+ *    coordsv        o     Output zcorn array XTGEO fmt
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
@@ -46,7 +46,7 @@ int grd3d_roff2xtgeo_zcorn (
                             float zscale,
                             int *p_splitenz_v,
                             float *p_zdata_v,
-                            double *p_zcorn_v,
+                            double *zcornsv,
                             long nzcorn
                             )
 
@@ -122,14 +122,14 @@ int grd3d_roff2xtgeo_zcorn (
 
 		if (l >=0 ) {
 		    for (ic = 0; ic < 4; ic++) {
-			p_zcorn_v[ib] = zz[ic];
+			zcornsv[ib] = zz[ic];
 			ib++;
 		    }
 		}
 
 		if (l==-1) {
 		    for (ic = 4; ic < 8; ic++) {
-			p_zcorn_v[ib] = zz[ic];
+			zcornsv[ib] = zz[ic];
 			ib++;
 		    }
 		}

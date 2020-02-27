@@ -11,11 +11,11 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz         i     Grid dimensions ncol, nrow, nlay
- *    p_zcorn_v         i/o    Grid Z corners (with numpy dimensions)
+ *    zcornsv         i/o    Grid Z corners (with numpy dimensions)
  *    zsep               i     Minimum seperation distance
  *
  * RETURNS:
- *    Void function; updated p_zcorn_v pointer
+ *    Void function; updated zcornsv pointer
  *
  * TODO/ISSUES/BUGS:
  *
@@ -33,7 +33,7 @@ void grd3d_make_z_consistent(
     int nx,
     int ny,
     int nz,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcorn,
     double zsep
     )
@@ -53,11 +53,11 @@ void grd3d_make_z_consistent(
 
                 int ic;
 		for (ic = 1; ic <= 4; ic++) {
-		    double z1 = p_zcorn_v[4 * ibp + 1 * ic - 1];
-		    double z2 = p_zcorn_v[4 * ibx + 1 * ic - 1];
+		    double z1 = zcornsv[4 * ibp + 1 * ic - 1];
+		    double z2 = zcornsv[4 * ibx + 1 * ic - 1];
 
 		    if ((z2 - z1) < zsep) {
-			p_zcorn_v[4 * ibx + 1 * ic - 1] = z1 + zsep;
+			zcornsv[4 * ibx + 1 * ic - 1] = z1 + zsep;
 		    }
 		}
 	    }

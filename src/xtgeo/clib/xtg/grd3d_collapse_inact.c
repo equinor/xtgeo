@@ -30,7 +30,7 @@ void grd3d_collapse_inact (
     int nx,
     int ny,
     int nz,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     int *p_actnum_v,
     long nactin
@@ -83,15 +83,15 @@ void grd3d_collapse_inact (
 
 			ibx=x_ijk2ib(i,j,k2,nx,ny,nz+1,0);
 			for (ic=1;ic<=4;ic++) {
-			    z1=p_zcorn_v[4*ibp + 1*ic - 1];
-			    z2=p_zcorn_v[4*ibx + 1*ic - 1];
+			    z1=zcornsv[4*ibp + 1*ic - 1];
+			    z2=zcornsv[4*ibx + 1*ic - 1];
 			    if ((z2-z1) > 0.0) {
 				/* k-1 */
-				p_zcorn_v[4*ibp + 1*ic - 1] = 0.5*(z1 + z2);
+				zcornsv[4*ibp + 1*ic - 1] = 0.5*(z1 + z2);
 				/* all the other below */
 				for (kkk= k; kkk <= k2; kkk++) {
 				    ibx=x_ijk2ib(i,j,kkk,nx,ny,nz+1,0);
-				    p_zcorn_v[4*ibx + 1*ic - 1] = 0.5*(z1 + z2);
+				    zcornsv[4*ibx + 1*ic - 1] = 0.5*(z1 + z2);
 				}
 			    }
 			}

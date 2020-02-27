@@ -21,8 +21,8 @@
 *    bpos_coord     i     Byte position of COORD
 *    bpos_zcorn     i     Byte position of ZCORN
 *    bpos_actnum    i     Byte position of ACTNUM
-*    p_coord_v      o     Coordinate vector (xtgeo fmt)
-*    p_zcorn_v      o     ZCORN vector (xtgeo fmt)
+*    coordsv      o     Coordinate vector (xtgeo fmt)
+*    zcornsv      o     ZCORN vector (xtgeo fmt)
 *    p_actnum_v     o     ACTNUM vector (xtgeo fmt)
 *    nact           o     Number of active cells (only ACTNUM=0 are inactive)
 *    option         i     Is 1 when dualporo system, otherwise 0 (not applied)
@@ -50,9 +50,9 @@ grd3d_imp_ecl_egrid(FILE *fc,
                     long bpos_coord,
                     long bpos_zcorn,
                     long bpos_actnum,
-                    double *p_coord_v,
+                    double *coordsv,
                     long ncoord,
-                    double *p_zcorn_v,
+                    double *zcornsv,
                     long nzcorn,
                     int *p_actnum_v,
                     long nxyz,
@@ -136,9 +136,9 @@ grd3d_imp_ecl_egrid(FILE *fc,
 
             x_mapaxes(bpos_mapaxes, &cx, &cy, xma1, yma1, xma2, yma2, xma3, yma3, 0);
         }
-        p_coord_v[ib] = cx;
-        p_coord_v[ib + 1] = cy;
-        p_coord_v[ib + 2] = cz;
+        coordsv[ib] = cx;
+        coordsv[ib + 1] = cy;
+        coordsv[ib + 2] = cz;
     }
 
     /*==================================================================================
@@ -153,7 +153,7 @@ grd3d_imp_ecl_egrid(FILE *fc,
      * format (like BRILLD test case); however rare...
      */
 
-    grd3d_zcorn_convert(nx, ny, nz, tmp_zcorn, p_zcorn_v, 0);
+    grd3d_zcorn_convert(nx, ny, nz, tmp_zcorn, zcornsv, 0);
 
     /*==================================================================================
      * Read ACTNUM directly

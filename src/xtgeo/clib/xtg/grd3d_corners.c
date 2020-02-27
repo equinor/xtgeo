@@ -21,8 +21,8 @@
  * ARGUMENTS:
  *    i, j, k        i     Cell number
  *    nx,ny,nz       i     Grid dimensions
- *    p_coord_v      i     Grid Z coord for input
- *    p_zcorn_v      i     Grid Z corners for input
+ *    coordsv      i     Grid Z coord for input
+ *    zcornsv      i     Grid Z corners for input
  *    corners        o     Array, 24 length
  *
  * RETURNS:
@@ -49,9 +49,9 @@ void grd3d_corners (
     int nx,
     int ny,
     int nz,
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     double corners[]
     )
@@ -69,12 +69,12 @@ void grd3d_corners (
 	if (ic == 1 || ic == 2) jm = 1;
 	if (ic == 1 || ic == 3) im = 1;
 
-	xtop[ic] = p_coord_v[6 * ((j - jm) * (nx + 1) + i - im) + 0];
-	ytop[ic] = p_coord_v[6 * ((j - jm) * (nx + 1) + i - im) + 1];
-	ztop[ic] = p_coord_v[6 * ((j - jm) * (nx + 1) + i - im) + 2];
-	xbot[ic] = p_coord_v[6 * ((j - jm) * (nx + 1) + i - im) + 3];
-	ybot[ic] = p_coord_v[6 * ((j - jm) * (nx + 1) + i - im) + 4];
-	zbot[ic] = p_coord_v[6 * ((j - jm) * (nx + 1) + i - im) + 5];
+	xtop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 0];
+	ytop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 1];
+	ztop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 2];
+	xbot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 3];
+	ybot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 4];
+	zbot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 5];
 
     }
 
@@ -83,15 +83,15 @@ void grd3d_corners (
     long ibb = x_ijk2ib(i,j,k+1,nx,ny,nz+1,0);
 
 
-    corners[2]  = p_zcorn_v[4*ibt + 1*1 - 1];
-    corners[5]  = p_zcorn_v[4*ibt + 1*2 - 1];
-    corners[8]  = p_zcorn_v[4*ibt + 1*3 - 1];
-    corners[11] = p_zcorn_v[4*ibt + 1*4 - 1];
+    corners[2]  = zcornsv[4*ibt + 1*1 - 1];
+    corners[5]  = zcornsv[4*ibt + 1*2 - 1];
+    corners[8]  = zcornsv[4*ibt + 1*3 - 1];
+    corners[11] = zcornsv[4*ibt + 1*4 - 1];
 
-    corners[14] = p_zcorn_v[4*ibb + 1*1 - 1];
-    corners[17] = p_zcorn_v[4*ibb + 1*2 - 1];
-    corners[20] = p_zcorn_v[4*ibb + 1*3 - 1];
-    corners[23] = p_zcorn_v[4*ibb + 1*4 - 1];
+    corners[14] = zcornsv[4*ibb + 1*1 - 1];
+    corners[17] = zcornsv[4*ibb + 1*2 - 1];
+    corners[20] = zcornsv[4*ibb + 1*3 - 1];
+    corners[23] = zcornsv[4*ibb + 1*4 - 1];
 
     for (ic = 1; ic <= 8; ic++) {
 	int cl = ic;

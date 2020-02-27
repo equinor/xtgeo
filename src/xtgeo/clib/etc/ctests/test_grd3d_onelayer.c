@@ -17,7 +17,7 @@ int main () {
     int    numact, numsubs, nx, ny, nz, nactive, status;
     int    *p_actnum_v, *p_subgrd_v;
     int    *p_actnum2_v, *p_subgrd2_v;
-    double *p_coord_v, *p_zcorn_v, *p_zcorn2_v;
+    double *coordsv, *zcornsv, *p_zcorn2_v;
 
 
     xtgverbose(debug);
@@ -38,14 +38,14 @@ int main () {
     nz=14;
 
     /* allocate */
-    p_coord_v = calloc((nx+1)*(ny+1)*2*3,sizeof(double));
-    p_zcorn_v = calloc(nx*ny*(nz+1)*4,sizeof(double));
+    coordsv = calloc((nx+1)*(ny+1)*2*3,sizeof(double));
+    zcornsv = calloc(nx*ny*(nz+1)*4,sizeof(double));
     p_actnum_v = calloc(nx*ny*nz,sizeof(int));
     p_subgrd_v = calloc(1,sizeof(int));
 
 
     printf("Reading grid\n");
-    grd3d_import_roff_grid(&numact, &numsubs, p_coord_v, p_zcorn_v,
+    grd3d_import_roff_grid(&numact, &numsubs, coordsv, zcornsv,
 			   p_actnum_v, p_subgrd_v, 1, file, debug);
 
     printf("Reading grid done\n");
@@ -62,7 +62,7 @@ int main () {
 			  nx,
 			  ny,
 			  nz,
-			  p_zcorn_v,
+			  zcornsv,
 			  p_zcorn2_v,
 			  p_actnum_v,
 			  p_actnum2_v,
@@ -88,7 +88,7 @@ int main () {
 			    450000,
 			    6700000,
 			    0,
-			    p_coord_v,
+			    coordsv,
 			    p_zcorn2_v,
 			    p_actnum2_v,
 			    p_subgrd2_v,
@@ -102,7 +102,7 @@ int main () {
 			 nx,
 			 ny,
 			 1,
-			 p_coord_v,
+			 coordsv,
 			 p_zcorn2_v,
 			 p_actnum2_v,
 			 file,

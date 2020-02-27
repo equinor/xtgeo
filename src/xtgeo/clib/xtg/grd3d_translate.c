@@ -14,8 +14,8 @@
  *    nx, ny, nx     i     Grid I J K
  *    *flip          i     Flip for X Y Z coords
  *    *shift         i     Shift for X Y Z coords
- *    p_coord_v     i/o    Coordinates vector
- *    p_zcorn_v     i/o    Corners vector
+ *    coordsv     i/o    Coordinates vector
+ *    zcornsv     i/o    Corners vector
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -45,9 +45,9 @@ grd3d_translate(int nx,
                 double xshift,
                 double yshift,
                 double zshift,
-                double *p_coord_v,
+                double *coordsv,
                 long ncooordin,
-                double *p_zcorn_v,
+                double *zcornsv,
                 long nzcornin)
 
 {
@@ -71,12 +71,12 @@ grd3d_translate(int nx,
     ib = 0;
     for (j = 0; j <= ny; j++) {
         for (i = 0; i <= nx; i++) {
-            p_coord_v[ib + 0] = xflip * (p_coord_v[ib + 0] + xshift);
-            p_coord_v[ib + 1] = yflip * (p_coord_v[ib + 1] + yshift);
-            p_coord_v[ib + 2] = zflip * (p_coord_v[ib + 2] + zshift);
-            p_coord_v[ib + 3] = xflip * (p_coord_v[ib + 3] + xshift);
-            p_coord_v[ib + 4] = yflip * (p_coord_v[ib + 4] + yshift);
-            p_coord_v[ib + 5] = zflip * (p_coord_v[ib + 5] + zshift);
+            coordsv[ib + 0] = xflip * (coordsv[ib + 0] + xshift);
+            coordsv[ib + 1] = yflip * (coordsv[ib + 1] + yshift);
+            coordsv[ib + 2] = zflip * (coordsv[ib + 2] + zshift);
+            coordsv[ib + 3] = xflip * (coordsv[ib + 3] + xshift);
+            coordsv[ib + 4] = yflip * (coordsv[ib + 4] + yshift);
+            coordsv[ib + 5] = zflip * (coordsv[ib + 5] + zshift);
             ib = ib + 6;
         }
     }
@@ -84,7 +84,7 @@ grd3d_translate(int nx,
     /* zcorn section     */
     nzcorn = 4 * nx * ny * (nz + 1);
     for (ic = 0; ic <= nzcorn; ic++) {
-        p_zcorn_v[ic] = zflip * (p_zcorn_v[ic] + zshift);
+        zcornsv[ic] = zflip * (zcornsv[ic] + zshift);
     }
 
     logger_info(LI, FI, FU, "Exit from routine");

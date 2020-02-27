@@ -18,8 +18,8 @@
  *    xori..rotation      i     Map settings
  *    maptopi..mapbasj    i     Map arrays for I J top/base
  *    nx ny nz            i     Grid dimensions
- *    p_zcorn_v           i     Grid Zcorn
- *    p_coord_v           i     Grid ZCORN
+ *    zcornsv           i     Grid Zcorn
+ *    coordsv           i     Grid ZCORN
  *    p_acnum_v           i     Grid ACTNUM
  *    p_val_v             i     3D Grid values
  *    p_zcornone_v        i     Grid ZCORN
@@ -168,9 +168,9 @@ grd3d_get_randomline(double *xvec,
                      int ny,
                      int nz,
 
-                     double *p_coord_v,
+                     double *coordsv,
                      long ncoordin,
-                     double *p_zcorn_v,
+                     double *zcornsv,
                      long nzcronin,
                      int *p_actnum_v,
                      long nactin,
@@ -222,14 +222,14 @@ grd3d_get_randomline(double *xvec,
             double zc = zmin + izc * zsam;
 
             /* check the onelayer version of the grid first (speed up) */
-            ier = grd3d_point_val_crange(xc, yc, zc, nx, ny, 1, p_coord_v, p_zcornone_v,
+            ier = grd3d_point_val_crange(xc, yc, zc, nx, ny, 1, coordsv, p_zcornone_v,
                                          p_actnumone_v, p_dummy_v, &value, i1, i2, j1,
                                          j2, 1, 1, &ibs1, -1, XTGDEBUG);
 
             if (ier == 0) {
 
-                ios = grd3d_point_val_crange(xc, yc, zc, nx, ny, nz, p_coord_v,
-                                             p_zcorn_v, p_actnum_v, p_val_v, &value, i1,
+                ios = grd3d_point_val_crange(xc, yc, zc, nx, ny, nz, coordsv,
+                                             zcornsv, p_actnum_v, p_val_v, &value, i1,
                                              i2, j1, j2, k1, k2, &ibs2, 0, XTGDEBUG);
 
                 if (ios == 0) {

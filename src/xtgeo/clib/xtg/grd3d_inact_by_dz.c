@@ -12,7 +12,7 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     Grid dimensions
- *    p_zcorn_v      i     ZCORN array
+ *    zcornsv      i     ZCORN array
  *    p_actnum_v    i/o    ACTNUM array
  *    threshold      i     Mid cell cell thickness criteria
  *    flip           i     Flip indicator
@@ -36,7 +36,7 @@ void
 grd3d_inact_by_dz(int nx,
                   int ny,
                   int nz,
-                  double *p_zcorn_v,
+                  double *zcornsv,
                   long nzcornin,
                   int *p_actnum_v,
                   long nactin,
@@ -51,7 +51,7 @@ grd3d_inact_by_dz(int nx,
     p_dztmp_v = calloc(nx * ny * nz, sizeof(double));
 
     /* lengths of p_zorn etc are dummy */
-    grd3d_calc_dz(nx, ny, nz, p_zcorn_v, 0, p_actnum_v, 0, p_dztmp_v, 0, flip, 0);
+    grd3d_calc_dz(nx, ny, nz, zcornsv, 0, p_actnum_v, 0, p_dztmp_v, 0, flip, 0);
 
     ndone = 0;
 

@@ -16,8 +16,8 @@
  *    p_slice_v      i     map array, e.g a FWL
  *    p_map_v        o     map array, to update to output
  *    ncol, .. nlay  i     Grid dimensions I J K
- *    p_coord_v      i     Grid COORD
- *    p_zcorn_v      i     Grid Z corners for input
+ *    coordsv      i     Grid COORD
+ *    zcornsv      i     Grid Z corners for input
  *    p_actnum_v     i     Grid ACTNUM parameter input
  *    p_prop_v       i     Grid property to extract values for
  *    buffer         i     A buffer number of nodes to extend sampling
@@ -53,9 +53,9 @@ surf_slice_grd3d(int mcol,
                  int ncol,
                  int nrow,
                  int nlay,
-                 double *p_coord_v,
+                 double *coordsv,
                  long ncoord,
-                 double *p_zcorn_v,
+                 double *zcornsv,
                  long nzcorn,
                  int *p_actnum_v,
                  long nact,
@@ -89,9 +89,9 @@ surf_slice_grd3d(int mcol,
         for (i = 1; i <= ncol; i++) {
 
             /* if the whole column is outside zmap minmax, then skip */
-            zgrdtop = grd3d_zminmax(i, j, 1, ncol, nrow, nlay, p_zcorn_v, 0, XTGDEBUG);
+            zgrdtop = grd3d_zminmax(i, j, 1, ncol, nrow, nlay, zcornsv, 0, XTGDEBUG);
             zgrdbot =
-              grd3d_zminmax(i, j, nlay, ncol, nrow, nlay, p_zcorn_v, 1, XTGDEBUG);
+              grd3d_zminmax(i, j, nlay, ncol, nrow, nlay, zcornsv, 1, XTGDEBUG);
 
             if (zgrdbot < zmapmin)
                 continue;
@@ -108,9 +108,9 @@ surf_slice_grd3d(int mcol,
                     nactive++;
 
                 zgrdtop =
-                  grd3d_zminmax(i, j, k, ncol, nrow, nlay, p_zcorn_v, 0, XTGDEBUG);
+                  grd3d_zminmax(i, j, k, ncol, nrow, nlay, zcornsv, 0, XTGDEBUG);
                 zgrdbot =
-                  grd3d_zminmax(i, j, k, ncol, nrow, nlay, p_zcorn_v, 1, XTGDEBUG);
+                  grd3d_zminmax(i, j, k, ncol, nrow, nlay, zcornsv, 1, XTGDEBUG);
 
                 if (zgrdbot < zmapmin)
                     kc1 = k;
@@ -127,7 +127,7 @@ surf_slice_grd3d(int mcol,
             if (kc1 > kc2)
                 kc2 = nlay;
 
-            grd3d_corners(i, j, kc1, ncol, nrow, nlay, p_coord_v, 0, p_zcorn_v, 0,
+            grd3d_corners(i, j, kc1, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
                           corners);
             kstep = 0;
             for (ix = 0; ix < 4; ix++) {
@@ -136,7 +136,7 @@ surf_slice_grd3d(int mcol,
                 kstep = kstep + 2;
             }
 
-            grd3d_corners(i, j, kc2, ncol, nrow, nlay, p_coord_v, 0, p_zcorn_v, 0,
+            grd3d_corners(i, j, kc2, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
                           corners);
             kstep = 8;
             for (ix = 4; ix < 8; ix++) {
@@ -183,7 +183,7 @@ surf_slice_grd3d(int mcol,
 
             for (k = kc1; k <= kc2; k++) {
                 /* get map cell corners: */
-                grd3d_corners(i, j, k, ncol, nrow, nlay, p_coord_v, 0, p_zcorn_v, 0,
+                grd3d_corners(i, j, k, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
                               corners);
 
                 ib = x_ijk2ib(i, j, k, ncol, nrow, nlay, 0);

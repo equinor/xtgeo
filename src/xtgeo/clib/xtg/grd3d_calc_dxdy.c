@@ -12,8 +12,8 @@
  *
  * ARGUMENTS:
  *    nx...nz        i     Dimensions
- *    p_coord_v      i     Coordinates (with size)
- *    p_zcorn_v      i     Z corners (with size)
+ *    coordsv      i     Coordinates (with size)
+ *    zcornsv      i     Z corners (with size)
  *    p_actnum_v     i     ACTNUM (with size)
  *    dx            i/o    Array to be updated
  *    dy            i/o    Array to be updated
@@ -39,9 +39,9 @@ int
 grd3d_calc_dxdy(int nx,
                 int ny,
                 int nz,
-                double *p_coord_v,
+                double *coordsv,
                 long ncoord,
-                double *p_zcorn_v,
+                double *zcornsv,
                 long nzcorn,
                 int *p_actnum_v,
                 long nactnum,
@@ -81,7 +81,7 @@ grd3d_calc_dxdy(int nx,
                     continue;
                 }
 
-                grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, 0, p_zcorn_v, 0, c);
+                grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, c);
 
                 /* get the length of all lines forming DX */
                 plen = 0.0;

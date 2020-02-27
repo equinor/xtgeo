@@ -46,9 +46,9 @@ grd3d_setval_poly(double *p_xp_v,
                   int ny,
                   int nz,
 
-                  double *p_coord_v,
+                  double *coordsv,
                   long ncoordin,
-                  double *p_zcorn_v,
+                  double *zcornsv,
                   long nzcornin,
                   int *p_actnum_v,
                   long nactin,
@@ -68,7 +68,7 @@ grd3d_setval_poly(double *p_xp_v,
 
             for (i = 1; i <= nx; i++) {
 
-                grd3d_midpoint(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v, &xg, &yg, &zg,
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xg, &yg, &zg,
                                XTGDEBUG);
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);

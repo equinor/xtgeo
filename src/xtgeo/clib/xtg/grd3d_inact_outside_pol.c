@@ -54,9 +54,9 @@ grd3d_inact_outside_pol(double *p_xp_v,
                         int nx,
                         int ny,
                         int nz,
-                        double *p_coord_v,
+                        double *coordsv,
                         long ncoordin,
-                        double *p_zcorn_v,
+                        double *zcornsv,
                         long nzcornin,
                         int *p_actnum_v,
                         long nact,
@@ -79,7 +79,7 @@ grd3d_inact_outside_pol(double *p_xp_v,
 
         for (j = 1; j <= ny; j++) {
             for (i = 1; i <= nx; i++) {
-                grd3d_midpoint(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v, &xg, &yg, &zg,
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xg, &yg, &zg,
                                XTGDEBUG);
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);

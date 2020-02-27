@@ -67,8 +67,8 @@
  *    num_subgrds         i     Number of subgrids
  *    isubgrd_to_export   i     Which subgrd to export
  *    *offset             i     coordinate offsets
- *    p_coord_v           i     COORD array w/ len
- *    p_zcorn_v           i     ZCORN array w/ len
+ *    coordsv           i     COORD array w/ len
+ *    zcornsv           i     ZCORN array w/ len
  *    p_actnum_v          i     ACTNUM array w/ len
  *    p_subgrd_v          i     Subgrid array
  *    filename            i     File name
@@ -100,9 +100,9 @@ void grd3d_export_roff_grid (
     double xoffset,
     double yoffset,
     double zoffset,
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     int *p_actnum_v,
     long nactin,
@@ -325,27 +325,27 @@ void grd3d_export_roff_grid (
 	for (j=0; j<=ny; j++) {
 	    ipos=6*(j*(nx+1)+i);
 	    if (mode > 0) {
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+3]/xscale)-xoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+4]/yscale)-yoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+5]/zscale)-zoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+0]/xscale)-xoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+1]/yscale)-yoffset);
-		m=fprintf(fc,"  %e\n",(p_coord_v[ipos+2]/zscale)-zoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+3]/xscale)-xoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+4]/yscale)-yoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+5]/zscale)-zoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+0]/xscale)-xoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+1]/yscale)-yoffset);
+		m=fprintf(fc,"  %e\n",(coordsv[ipos+2]/zscale)-zoffset);
 	    }
 	    else{
-		myfloat=(p_coord_v[ipos+3]/xscale)-xoffset;
+		myfloat=(coordsv[ipos+3]/xscale)-xoffset;
 		n=fwrite(&myfloat,4,1,fc);
 
 
-		myfloat=(p_coord_v[ipos+4]/yscale)-yoffset;
+		myfloat=(coordsv[ipos+4]/yscale)-yoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+5]/zscale)-zoffset;
+		myfloat=(coordsv[ipos+5]/zscale)-zoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+0]/xscale)-xoffset;
+		myfloat=(coordsv[ipos+0]/xscale)-xoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+1]/yscale)-yoffset;
+		myfloat=(coordsv[ipos+1]/yscale)-yoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+2]/zscale)-zoffset;
+		myfloat=(coordsv[ipos+2]/zscale)-zoffset;
 		n=fwrite(&myfloat,4,1,fc);
 
 	    }
@@ -407,19 +407,19 @@ void grd3d_export_roff_grid (
 			/* need a value for later use (data array) */
 			if (i==0 && j==0) {
 			    ibne=x_ijk2ib(i+1,j+1,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibne + 1*1 - 1];
+			    zzzz=zcornsv[4*ibne + 1*1 - 1];
 			}
 			if (i==0 && j==ny) {
 			    ibse=x_ijk2ib(i+1,j,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibse + 1*3 - 1];
+			    zzzz=zcornsv[4*ibse + 1*3 - 1];
 			}
 			if (i==nx && j==0) {
 			    ibnw=x_ijk2ib(i,j+1,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibnw + 1*2 - 1];
+			    zzzz=zcornsv[4*ibnw + 1*2 - 1];
 			}
 			if (i==nx && j==ny) {
 			    ibsw=x_ijk2ib(i,j,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibsw + 1*4 - 1];
+			    zzzz=zcornsv[4*ibsw + 1*4 - 1];
 			}
 
 		    }
@@ -428,8 +428,8 @@ void grd3d_export_roff_grid (
 			ibse=x_ijk2ib(i+1,j,k,nx,ny,nzz,0);
 			ibne=x_ijk2ib(i+1,j+1,k,nx,ny,nzz,0);
 
-			zseb=p_zcorn_v[4*ibse + 1*3 - 1];
-			zneb=p_zcorn_v[4*ibne + 1*1 - 1];
+			zseb=zcornsv[4*ibse + 1*3 - 1];
+			zneb=zcornsv[4*ibne + 1*1 - 1];
 			znwb=zneb;
 			zswb=zseb;
 			kftype=2;
@@ -440,8 +440,8 @@ void grd3d_export_roff_grid (
 
 			ibnw=x_ijk2ib(i,j+1,k,nx,ny,nzz,0);
 			ibsw=x_ijk2ib(i,j,k,nx,ny,nzz,0);
-			zswb=p_zcorn_v[4*ibsw + 1*4 - 1];
-			znwb=p_zcorn_v[4*ibnw + 1*2 - 1];
+			zswb=zcornsv[4*ibsw + 1*4 - 1];
+			znwb=zcornsv[4*ibnw + 1*2 - 1];
 			zneb=znwb;
 			zseb=zswb;
 			kftype=3;
@@ -452,8 +452,8 @@ void grd3d_export_roff_grid (
 
 			ibnw=x_ijk2ib(i,j+1,k,nx,ny,nzz,0);
 			ibne=x_ijk2ib(i+1,j+1,k,nx,ny,nzz,0);
-			znwb=p_zcorn_v[4*ibnw + 1*2 - 1];
-			zneb=p_zcorn_v[4*ibne + 1*1 - 1];
+			znwb=zcornsv[4*ibnw + 1*2 - 1];
+			zneb=zcornsv[4*ibne + 1*1 - 1];
 			zseb=zneb;
 			zswb=znwb;
 			kftype=4;
@@ -463,8 +463,8 @@ void grd3d_export_roff_grid (
 			/* go along edge of grid */
 			ibsw=x_ijk2ib(i,j,k,nx,ny,nzz,0);
 			ibse=x_ijk2ib(i+1,j,k,nx,ny,nzz,0);
-			zswb=p_zcorn_v[4*ibsw + 1*4 - 1];
-			zseb=p_zcorn_v[4*ibse + 1*3 - 1];
+			zswb=zcornsv[4*ibsw + 1*4 - 1];
+			zseb=zcornsv[4*ibse + 1*3 - 1];
 			zneb=zseb;
 			znwb=zswb;
 			kftype=5;
@@ -480,10 +480,10 @@ void grd3d_export_roff_grid (
 			/* below, ETC */
 
 			/* look at bottom part of cell: */
-			zswb=p_zcorn_v[4*ibsw + 1*4 - 1];
-			zseb=p_zcorn_v[4*ibse + 1*3 - 1];
-			znwb=p_zcorn_v[4*ibnw + 1*2 - 1];
-			zneb=p_zcorn_v[4*ibne + 1*1 - 1];
+			zswb=zcornsv[4*ibsw + 1*4 - 1];
+			zseb=zcornsv[4*ibse + 1*3 - 1];
+			znwb=zcornsv[4*ibnw + 1*2 - 1];
+			zneb=zcornsv[4*ibne + 1*1 - 1];
 
 
 			kftype=6;

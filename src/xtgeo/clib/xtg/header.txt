@@ -10,8 +10,8 @@
 * ARGUMENTS:
 *    fc             i     File descriptor (handled by caller)
 *    nx, ny, nz     i     Dimensions
-*    p_coord_v      o     Coordinate vector (with numpy dimensions)
-*    p_zcorn_v      o     ZCORN vector (with numpy dimensions)
+*    coordsv      o     Coordinate vector (with numpy dimensions)
+*    zcornsv      o     ZCORN vector (with numpy dimensions)
 *    p_actnum_v     o     ACTNUM vector (with numpy dimensions)
 *    option         i     Is 1 when dualporo system, otherwise 0 (not applied)
 *

@@ -12,8 +12,8 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     3D grid dimensions I J K
- *    p_zcorn_v      i     ZCorn values
- *    p_coord_v      i     Coord values
+ *    zcornsv      i     ZCorn values
+ *    coordsv      i     Coord values
  *    p_actnum_v     i     ACTNUM values
  *    klayer         i     Actual K layer to sample from...
  *    mx, my         i     Map dimension
@@ -49,9 +49,9 @@ void
 surf_sample_grd3d_lay(int nx,
                       int ny,
                       int nz,
-                      double *p_coord_v,
+                      double *coordsv,
                       long ncoord,
-                      double *p_zcorn_v,
+                      double *zcornsv,
                       long nzcorn,
                       int *p_actnum_v,
                       long nact,
@@ -103,7 +103,7 @@ surf_sample_grd3d_lay(int nx,
         for (i = 1; i <= nx; i++) {
 
             /* get the corners for the cell */
-            grd3d_corners(i, j, klayer, nx, ny, nz, p_coord_v, 0, p_zcorn_v, 0,
+            grd3d_corners(i, j, klayer, nx, ny, nz, coordsv, 0, zcornsv, 0,
                           corners_v);
 
             /* find cell min/max  both for X and Y */

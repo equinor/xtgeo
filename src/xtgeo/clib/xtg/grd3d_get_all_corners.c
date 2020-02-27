@@ -9,8 +9,8 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     Dimensions
- *    p_coord_v      i     Coordinate vector (xtgeo fmt)
- *    p_zcorn_v      i     ZCORN vector (xtgeo fmt)
+ *    coordsv      i     Coordinate vector (xtgeo fmt)
+ *    zcornsv      i     ZCORN vector (xtgeo fmt)
  *    p_actnum_v     i     ACTNUM vector (xtgeo fmt)
  *    x1, ... z8     o     Single vectors for all X Y Z for all 8 corners
  *    option         i     if 0, cells with ACTNUM 0 becomes UNDEF
@@ -35,9 +35,9 @@ void grd3d_get_all_corners(
     int ny,
     int nz,
 
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     int *p_actnum_v,
     long nactin,
@@ -92,8 +92,8 @@ void grd3d_get_all_corners(
                     x8[ib] = UNDEF; y8[ib] = UNDEF; z8[ib] = UNDEF;
                 }
                 else{
-                    grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, 0,
-                                  p_zcorn_v, 0, crs);
+                    grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0,
+                                  zcornsv, 0, crs);
 
                     x1[ib] = crs[0]; y1[ib] = crs[1]; z1[ib] = crs[2];
                     x2[ib] = crs[3]; y2[ib] = crs[4]; z2[ib] = crs[5];

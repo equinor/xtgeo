@@ -44,9 +44,9 @@ int grd3d_get_lay_slice(
     int ny,
     int nz,
 
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     int *p_actnum_v,
     long nactin,
@@ -83,8 +83,8 @@ int grd3d_get_lay_slice(
         for (j = 1; j <= ny; j++) {
             ib = x_ijk2ib(i, j, kslice, nx, ny, nz, 0);
             ic = x_ijk2ic(i, j, kslice, nx, ny, nz, 0);
-            grd3d_corners(i, j, kslice, nx, ny, nz, p_coord_v, 0,
-                          p_zcorn_v, 0, crs);
+            grd3d_corners(i, j, kslice, nx, ny, nz, coordsv, 0,
+                          zcornsv, 0, crs);
 
             if (actonly == 1 && p_actnum_v[ib] == 0) continue;
 

@@ -9,8 +9,8 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz       i     NCOL, NROW, NLAY dimens
- *    p_coord_v       i/o    Cornerlines, pillars w/ numpy dimensions
- *    p_zcorn_v       i/o    ZCORN w/ numpy dimensions
+ *    coordsv       i/o    Cornerlines, pillars w/ numpy dimensions
+ *    zcornsv       i/o    ZCORN w/ numpy dimensions
  *    p_actnum_v      i/o    ACTNUM values w/ numpy dimensions
  *
  * RETURNS:
@@ -31,9 +31,9 @@ int
 grd3d_reverse_jrows(int nx,
                     int ny,
                     int nz,
-                    double *p_coord_v,
+                    double *coordsv,
                     long ncoord,
-                    double *p_zcorn_v,
+                    double *zcornsv,
                     long nzcorn,
                     int *p_actnum_v,
                     long nact
@@ -60,21 +60,21 @@ grd3d_reverse_jrows(int nx,
             int jx = ny + 1 - j + 1;
 
             tmpcv[6 * ((jx - 1) * (nx + 1) + i - 1) + 0] =
-              p_coord_v[6 * ((j - 1) * (nx + 1) + i - 1) + 0];
+              coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 0];
             tmpcv[6 * ((jx - 1) * (nx + 1) + i - 1) + 1] =
-              p_coord_v[6 * ((j - 1) * (nx + 1) + i - 1) + 1];
+              coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 1];
             tmpcv[6 * ((jx - 1) * (nx + 1) + i - 1) + 2] =
-              p_coord_v[6 * ((j - 1) * (nx + 1) + i - 1) + 2];
+              coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 2];
             tmpcv[6 * ((jx - 1) * (nx + 1) + i - 1) + 3] =
-              p_coord_v[6 * ((j - 1) * (nx + 1) + i - 1) + 3];
+              coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 3];
             tmpcv[6 * ((jx - 1) * (nx + 1) + i - 1) + 4] =
-              p_coord_v[6 * ((j - 1) * (nx + 1) + i - 1) + 4];
+              coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 4];
             tmpcv[6 * ((jx - 1) * (nx + 1) + i - 1) + 5] =
-              p_coord_v[6 * ((j - 1) * (nx + 1) + i - 1) + 5];
+              coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 5];
         }
     }
     for (ic = 0; ic < ntot; ic++)
-        p_coord_v[ic] = tmpcv[ic];
+        coordsv[ic] = tmpcv[ic];
     free(tmpcv);
 
     /*  ***************************************************************************** */
@@ -88,16 +88,16 @@ grd3d_reverse_jrows(int nx,
         for (j = ny; j >= 1; j--) {
             for (i = 1; i <= nx; i++) {
                 ib1 = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
-                tmpcv[4 * ib2 + 0] = p_zcorn_v[4 * ib1 + 2];
-                tmpcv[4 * ib2 + 1] = p_zcorn_v[4 * ib1 + 3];
-                tmpcv[4 * ib2 + 2] = p_zcorn_v[4 * ib1 + 0];
-                tmpcv[4 * ib2 + 3] = p_zcorn_v[4 * ib1 + 1];
+                tmpcv[4 * ib2 + 0] = zcornsv[4 * ib1 + 2];
+                tmpcv[4 * ib2 + 1] = zcornsv[4 * ib1 + 3];
+                tmpcv[4 * ib2 + 2] = zcornsv[4 * ib1 + 0];
+                tmpcv[4 * ib2 + 3] = zcornsv[4 * ib1 + 1];
                 ib2++;
             }
         }
     }
     for (ic = 0; ic < ntot; ic++)
-        p_zcorn_v[ic] = tmpcv[ic];
+        zcornsv[ic] = tmpcv[ic];
     free(tmpcv);
 
     /*  ***************************************************************************** */

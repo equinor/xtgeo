@@ -3,11 +3,11 @@
  * Find the nearesst cell given a XYZ point and a start IJK cell. The search
  * should be smart to minimuze CPU usage. It will be applied by other routines
  * that tries to find points that comes close after eachother
- * The routine return 0 if no cell is found 
+ * The routine return 0 if no cell is found
 * Author: JCR
  * ############################################################################
- * $Id: $ 
- * $Source: $ 
+ * $Id: $
+ * $Source: $
  *
  * $Log: $
  * ############################################################################
@@ -30,7 +30,7 @@ int _grd3d_fnd_near_cell (
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
+			  float   *coordsv,
 			  float   *p_zgrd3d_v,
 			  int     *p_actnum_v,
 			  float   x,
@@ -50,15 +50,15 @@ int _grd3d_fnd_near_cell (
 
     xtg_speak(s,1,"==== Entering routine %s ====",s);
 
-    /* 
+    /*
      * The quest for the search is to go from I,J,K
      * and seek out as a "square blowing balloon"
      */
-    
+
     maxrad=nx;
     if (ny>maxrad) maxrad=ny;
     if (nz>maxrad) maxrad=nz;
-    
+
     xtg_speak(s,1,"Maxrad is %d", maxrad);
 
     ix = *i; jy = *j; kz = *k;
@@ -66,7 +66,7 @@ int _grd3d_fnd_near_cell (
     xtg_speak(s,1,"I J K are %d %d %d", ix, jy, kz);
     xtg_speak(s,1,"NX NY NZ %d %d %d", nx, ny, nz);
 
-    /* 
+    /*
      * ------------------------------------------------------------------------
      * check the current cell
      * ------------------------------------------------------------------------
@@ -75,24 +75,24 @@ int _grd3d_fnd_near_cell (
 
     /* get the cell corners */
     grd3d_corners(ix,jy,kz,nx,ny,nz,
-		  p_coord_v, p_zgrd3d_v,
+		  coordsv, p_zgrd3d_v,
 		  corners, debug);
-    
-    
+
+
     /* check if point is inside current cell */
-    
+
     ib=x_ijk2ib(ix,jy,kz,nx,ny,nz,0);
-    ia=p_actnum_v[ib];	    
+    ia=p_actnum_v[ib];
     ok=x_chk_point_in_cell(x,y,z,corners,1,debug);
-    
+
     if (ok>0) {
 	*i=ix; *j=jy; *k=kz;
 	xtg_speak(s,1,"Value found in current cell");
 	return ia; /* 1 if active, 0 if inactive */
     }
-			
 
-    /* 
+
+    /*
      * ------------------------------------------------------------------------
      * ...or, check the other cells in a close neighbourhood. If they
      * are not there, then they ARE not there ... (assuming that map
@@ -119,32 +119,30 @@ int _grd3d_fnd_near_cell (
 
 		/* get the cell corners */
 		grd3d_corners(ii,jj,kk,nx,ny,nz,
-			      p_coord_v, p_zgrd3d_v,
+			      coordsv, p_zgrd3d_v,
 			      corners, debug);
-		
-		
+
+
 		/* check if point is inside cell */
-		
+
 		ib=x_ijk2ib(ii,jj,kk,nx,ny,nz,0);
-		ia=p_actnum_v[ib];	    
+		ia=p_actnum_v[ib];
 		ok=x_chk_point_in_cell(x,y,z,corners,1,debug);
-		
+
 		if (ok>0) {
 		    *i=ii; *j=jj; *k=kk;
 		    return ia; /* 1 if active, 0 if inactive */
-		    
+
 		}
 
 	    }
 	}
     }
-    
 
-    
+
+
     xtg_speak(s,4,"==== Exiting routine ====");
-    
+
     /* nothing found */
     return -1;
 }
-
-

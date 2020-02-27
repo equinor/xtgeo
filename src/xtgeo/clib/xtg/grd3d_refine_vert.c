@@ -13,8 +13,8 @@
  *
  * ARGUMENTS:
  *    nx .. nz       i     Dimensions
- *    p_coord_v      i     Coordinates
- *    p_zcorn_v      i     Z corners input
+ *    coordsv      i     Coordinates
+ *    zcornsv      i     Z corners input
  *    p_actnum_v     i     ACTNUM, input
  *    nzref          i     New NZ
  *    p_zcornref_v   o     Z corners output (must be allocated before)
@@ -41,7 +41,7 @@ grd3d_refine_vert(int nx,
                   int ny,
                   int nz,
 
-                  double *p_zcorn_v,
+                  double *zcornsv,
                   long nzcorn,
                   int *p_actnum_v,
                   long nact,
@@ -60,7 +60,7 @@ grd3d_refine_vert(int nx,
     int i, j, k, ic, kr, kk, rfactor, iact;
     double rdz, ztop, zbot;
 
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, 0, 0.0);
+    grd3d_make_z_consistent(nx, ny, nz, zcornsv, 0, 0.0);
 
     for (j = 1; j <= ny; j++) {
         for (i = 1; i <= nx; i++) {
@@ -81,8 +81,8 @@ grd3d_refine_vert(int nx,
                 iact = p_actnum_v[ib];
 
                 for (ic = 1; ic <= 4; ic++) {
-                    ztop = p_zcorn_v[4 * ibt + 1 * ic - 1];
-                    zbot = p_zcorn_v[4 * ibb + 1 * ic - 1];
+                    ztop = zcornsv[4 * ibt + 1 * ic - 1];
+                    zbot = zcornsv[4 * ibb + 1 * ic - 1];
 
                     /* now divide and assign to new zcorn for refined: */
                     rdz = (zbot - ztop) / rfactor;

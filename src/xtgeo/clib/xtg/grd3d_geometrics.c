@@ -9,8 +9,8 @@
 *
 * ARGUMENTS:
 *    nx, ny, nz        i     Dimensions
-*    p_coord_v         o     Coordinate vector (with numpy dimensions)
-*    p_zcorn_v         o     ZCORN vector (with numpy dimensions)
+*    coordsv         o     Coordinate vector (with numpy dimensions)
+*    zcornsv         o     ZCORN vector (with numpy dimensions)
 *    p_actnum_v        o     ACTNUM vector (with numpy dimensions)
 *    xori...zori       o     Return values for XYZ origin
 *    xmin, xmax, ...   o     Pointers to return values for X Y Z min and max
@@ -48,9 +48,9 @@ int
 grd3d_geometrics(int nx,
                  int ny,
                  int nz,
-                 double *p_coord_v,
+                 double *coordsv,
                  long ncoordin,
-                 double *p_zcorn_v,
+                 double *zcornsv,
                  long nzcornin,
                  int *p_actnum_v,
                  long nactin,
@@ -137,7 +137,7 @@ grd3d_geometrics(int nx,
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
-                grd3d_midpoint(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v, &xv, &yv, &zv,
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xv, &yv, &zv,
                                XTGDEBUG);
 
                 tmp_x[ib] = xv;
@@ -151,7 +151,7 @@ grd3d_geometrics(int nx,
 
                     ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
-                    grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, 0, p_zcorn_v, 0, c);
+                    grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, c);
 
                     /* get the origon of cell 1 1 1, corner 1 */
                     if (i == 1 && j == 1 && k == 1) {

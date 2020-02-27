@@ -10,8 +10,8 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     NCOL, NROW, NLAY
- *    p_coord_v      i     COORD array w/ len
- *    p_zcorn_v      i     ZCORN array w/ len
+ *    coordsv      i     COORD array w/ len
+ *    zcornsv      i     ZCORN array w/ len
  *    p_actnum_v     i     ACTNUM array w/ len
  *    filename       i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
@@ -33,9 +33,9 @@ void grd3d_export_grdecl (
 			  int nx,
 			  int ny,
 			  int nz,
-			  double *p_coord_v,
+			  double *coordsv,
                           long ncoordin,
-			  double *p_zcorn_v,
+			  double *zcornsv,
                           long nzcornin,
 			  int *p_actnum_v,
                           long nactin,
@@ -101,7 +101,7 @@ void grd3d_export_grdecl (
     for (j = 0; j <= ny; j++) {
 	for (i = 0;i <= nx; i++) {
 
-            for (jj = 0; jj < 6; jj++) farr[ncc++] = p_coord_v[ib + jj];
+            for (jj = 0; jj < 6; jj++) farr[ncc++] = coordsv[ib + jj];
 
             ib = ib + 6;
         }
@@ -139,15 +139,15 @@ void grd3d_export_grdecl (
 	    for (i = 1; i <= nx; i++) {
 		ib = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
 
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 1 - 1];
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 2 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 1 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 2 - 1];
 	    }
 
 	    for (i = 1; i <= nx; i++) {
 		ib = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
 
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 3 - 1];
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 4 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 3 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 4 - 1];
 	    }
 	}
 
@@ -156,14 +156,14 @@ void grd3d_export_grdecl (
 	    for (i=1; i<=nx; i++) {
 		ib=x_ijk2ib(i, j, k+1, nx, ny, nz+1, 0);
 
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 1 - 1];
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 2 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 1 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 2 - 1];
 	    }
 	    for (i=1; i<=nx; i++) {
 		ib=x_ijk2ib(i, j, k+1, nx, ny, nz+1, 0);
 
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 3 - 1];
-                farr[ic++] = p_zcorn_v[4 * ib + 1 * 4 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 3 - 1];
+                farr[ic++] = zcornsv[4 * ib + 1 * 4 - 1];
 	    }
 	}
     }

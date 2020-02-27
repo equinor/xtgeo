@@ -12,7 +12,7 @@
  *
  * ARGUMENTS:
  *    nx...nz        i     Dimensions
- *    p_zcorn_v      i     Z corners (with size)
+ *    zcornsv      i     Z corners (with size)
  *    p_actnum_v     i     ACTNUM (with size)
  *    p_dz_v        i/o    Array to be updated
  *    flip           i     Vertical flip flag
@@ -38,7 +38,7 @@ void grd3d_calc_dz(
     int nx,
     int ny,
     int nz,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcorn,
     int *p_actnum_v,
     long nactnum,
@@ -67,14 +67,14 @@ void grd3d_calc_dz(
 		long iq = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
 
 		/* each cell */
-		top_z_avg=0.25*(p_zcorn_v[4 * ip + 1 - 1]+
-				p_zcorn_v[4 * ip + 2 - 1]+
-				p_zcorn_v[4 * ip + 3 - 1]+
-				p_zcorn_v[4 * ip + 4 - 1]);
-		bot_z_avg=0.25*(p_zcorn_v[4 * iq + 1 - 1]+
-				p_zcorn_v[4 * iq + 2 - 1]+
-				p_zcorn_v[4 * iq + 3 - 1]+
-				p_zcorn_v[4 * iq + 4 - 1]);
+		top_z_avg=0.25*(zcornsv[4 * ip + 1 - 1]+
+				zcornsv[4 * ip + 2 - 1]+
+				zcornsv[4 * ip + 3 - 1]+
+				zcornsv[4 * ip + 4 - 1]);
+		bot_z_avg=0.25*(zcornsv[4 * iq + 1 - 1]+
+				zcornsv[4 * iq + 2 - 1]+
+				zcornsv[4 * iq + 3 - 1]+
+				zcornsv[4 * iq + 4 - 1]);
 
 		p_dz_v[ic] = (double) flip * (bot_z_avg - top_z_avg);
 		// will do it correct for flipped grids

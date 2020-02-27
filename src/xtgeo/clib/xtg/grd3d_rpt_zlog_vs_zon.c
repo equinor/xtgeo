@@ -15,8 +15,8 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions
- *    p_coord_v      i     Grid coordinate lines w/ numpy dimensions
- *    p_zcorn_v      i     Grid Z corners w/ numpy dimensions
+ *    coordsv      i     Grid coordinate lines w/ numpy dimensions
+ *    zcornsv      i     Grid Z corners w/ numpy dimensions
  *    p_actnum_v     i     Grid ACTNUM parameter w/ numpy dimensions
  *    p_zon_v        i     Grid zone parameter
  *    nval           i     Position of last point for well log
@@ -57,9 +57,9 @@ int grd3d_rpt_zlog_vs_zon(
     int ny,
     int nz,
 
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcorndin,
     int *p_actnum_v,
     long nactin,
@@ -106,7 +106,7 @@ int grd3d_rpt_zlog_vs_zon(
      */
 
     zconst=0.01;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, 0, zconst);
+    grd3d_make_z_consistent(nx, ny, nz, zcornsv, 0, zconst);
 
     /*
      * =========================================================================
@@ -182,7 +182,7 @@ int grd3d_rpt_zlog_vs_zon(
 
 	    /* loop cells in simplified (one layer) grid */
 	    ib=grd3d_point_in_cell(ibstart2, 0, x, y, z, nx, ny, 1,
-				   p_coord_v,
+				   coordsv,
 				   p_zcorn_onelay_v, p_actnum_onelay_v,
 				   maxradsearch,
 				   sflag, &nradsearch,
@@ -204,8 +204,8 @@ int grd3d_rpt_zlog_vs_zon(
 
 		/* loop cells in simplified (one layer) grid */
 		ib=grd3d_point_in_cell(ibstart, 0, x, y, z, nx, ny, nz,
-				       p_coord_v,
-				       p_zcorn_v, p_actnum_v,
+				       coordsv,
+				       zcornsv, p_actnum_v,
 				       maxradsearch,
 				       sflag, &nradsearch,
 				       0, 0);

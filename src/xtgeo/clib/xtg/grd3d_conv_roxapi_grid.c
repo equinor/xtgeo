@@ -16,8 +16,8 @@
  *    cact
  *    crds           i     Input array flatened with 8 corners (* 3 = 24 xyz)
  *                         for all cells, length = nx * ny * nz * 24
- *    p_coord_v      o     Updated coord array
- *    p_zcorn_v      o     Updated zcorn array
+ *    coordsv      o     Updated coord array
+ *    zcornsv      o     Updated zcorn array
  *    p_actnum_v     o     Updated actnum array
  *    debug          i     Debug level
  *
@@ -45,9 +45,9 @@ void grd3d_conv_roxapi_grid (
     long ncactin,
     double *crds,
     long ncrdsin,
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     int *p_actnum_v,
     long nactin
@@ -95,24 +95,24 @@ void grd3d_conv_roxapi_grid (
             k=1;
             ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
 
-            p_coord_v[6*((j-1)*(nx+1)+i-1)+0] = cellcorners[ib][0];
-            p_coord_v[6*((j-1)*(nx+1)+i-1)+1] = cellcorners[ib][1];
-            p_coord_v[6*((j-1)*(nx+1)+i-1)+2] = cellcorners[ib][2];
+            coordsv[6*((j-1)*(nx+1)+i-1)+0] = cellcorners[ib][0];
+            coordsv[6*((j-1)*(nx+1)+i-1)+1] = cellcorners[ib][1];
+            coordsv[6*((j-1)*(nx+1)+i-1)+2] = cellcorners[ib][2];
 
             if (i==nx) {
-        	p_coord_v[6*((j-1)*(nx+1)+i-0)+0] = cellcorners[ib][3];
-        	p_coord_v[6*((j-1)*(nx+1)+i-0)+1] = cellcorners[ib][4];
-        	p_coord_v[6*((j-1)*(nx+1)+i-0)+2] = cellcorners[ib][5];
+        	coordsv[6*((j-1)*(nx+1)+i-0)+0] = cellcorners[ib][3];
+        	coordsv[6*((j-1)*(nx+1)+i-0)+1] = cellcorners[ib][4];
+        	coordsv[6*((j-1)*(nx+1)+i-0)+2] = cellcorners[ib][5];
             }
             if (j==ny) {
-        	p_coord_v[6*((j-0)*(nx+1)+i-1)+0] = cellcorners[ib][6];
-        	p_coord_v[6*((j-0)*(nx+1)+i-1)+1] = cellcorners[ib][7];
-        	p_coord_v[6*((j-0)*(nx+1)+i-1)+2] = cellcorners[ib][8];
+        	coordsv[6*((j-0)*(nx+1)+i-1)+0] = cellcorners[ib][6];
+        	coordsv[6*((j-0)*(nx+1)+i-1)+1] = cellcorners[ib][7];
+        	coordsv[6*((j-0)*(nx+1)+i-1)+2] = cellcorners[ib][8];
 
         	if (i==nx) {
-        	    p_coord_v[6*((j-0)*(nx+1)+i-0)+0] = cellcorners[ib][9];
-        	    p_coord_v[6*((j-0)*(nx+1)+i-0)+1] = cellcorners[ib][10];
-        	    p_coord_v[6*((j-0)*(nx+1)+i-0)+2] = cellcorners[ib][11];
+        	    coordsv[6*((j-0)*(nx+1)+i-0)+0] = cellcorners[ib][9];
+        	    coordsv[6*((j-0)*(nx+1)+i-0)+1] = cellcorners[ib][10];
+        	    coordsv[6*((j-0)*(nx+1)+i-0)+2] = cellcorners[ib][11];
         	}
             }
 
@@ -121,24 +121,24 @@ void grd3d_conv_roxapi_grid (
             k = nz;
             ib = x_ijk2ib(i,j,k,nx,ny,nz,0);
 
-            p_coord_v[6*((j-1)*(nx+1)+i-1)+3] = cellcorners[ib][12];
-            p_coord_v[6*((j-1)*(nx+1)+i-1)+4] = cellcorners[ib][13];
-            p_coord_v[6*((j-1)*(nx+1)+i-1)+5] = cellcorners[ib][14];
+            coordsv[6*((j-1)*(nx+1)+i-1)+3] = cellcorners[ib][12];
+            coordsv[6*((j-1)*(nx+1)+i-1)+4] = cellcorners[ib][13];
+            coordsv[6*((j-1)*(nx+1)+i-1)+5] = cellcorners[ib][14];
 
             if (i==nx) {
-        	p_coord_v[6*((j-1)*(nx+1)+i-0)+3] = cellcorners[ib][15];
-        	p_coord_v[6*((j-1)*(nx+1)+i-0)+4] = cellcorners[ib][16];
-        	p_coord_v[6*((j-1)*(nx+1)+i-0)+5] = cellcorners[ib][17];
+        	coordsv[6*((j-1)*(nx+1)+i-0)+3] = cellcorners[ib][15];
+        	coordsv[6*((j-1)*(nx+1)+i-0)+4] = cellcorners[ib][16];
+        	coordsv[6*((j-1)*(nx+1)+i-0)+5] = cellcorners[ib][17];
             }
             if (j==ny) {
-        	p_coord_v[6*((j-0)*(nx+1)+i-1)+3] = cellcorners[ib][18];
-        	p_coord_v[6*((j-0)*(nx+1)+i-1)+4] = cellcorners[ib][19];
-        	p_coord_v[6*((j-0)*(nx+1)+i-1)+5] = cellcorners[ib][20];
+        	coordsv[6*((j-0)*(nx+1)+i-1)+3] = cellcorners[ib][18];
+        	coordsv[6*((j-0)*(nx+1)+i-1)+4] = cellcorners[ib][19];
+        	coordsv[6*((j-0)*(nx+1)+i-1)+5] = cellcorners[ib][20];
 
         	if (i==nx) {
-        	    p_coord_v[6*((j-0)*(nx+1)+i-0)+3] = cellcorners[ib][21];
-        	    p_coord_v[6*((j-0)*(nx+1)+i-0)+4] = cellcorners[ib][22];
-        	    p_coord_v[6*((j-0)*(nx+1)+i-0)+5] = cellcorners[ib][23];
+        	    coordsv[6*((j-0)*(nx+1)+i-0)+3] = cellcorners[ib][21];
+        	    coordsv[6*((j-0)*(nx+1)+i-0)+4] = cellcorners[ib][22];
+        	    coordsv[6*((j-0)*(nx+1)+i-0)+5] = cellcorners[ib][23];
         	}
             }
 
@@ -157,15 +157,15 @@ void grd3d_conv_roxapi_grid (
         	ibb=x_ijk2ib(ix,jy,kz+1,nx,ny,nz+1,0);
         	ib=x_ijk2ib(ix,jy,kz,nx,ny,nz,0);
 
-        	p_zcorn_v[4*ibt + 1*1 - 1] = cellcorners[ib][2];
-        	p_zcorn_v[4*ibt + 1*2 - 1] = cellcorners[ib][5];
-        	p_zcorn_v[4*ibt + 1*3 - 1] = cellcorners[ib][8];
-        	p_zcorn_v[4*ibt + 1*4 - 1] = cellcorners[ib][11];
+        	zcornsv[4*ibt + 1*1 - 1] = cellcorners[ib][2];
+        	zcornsv[4*ibt + 1*2 - 1] = cellcorners[ib][5];
+        	zcornsv[4*ibt + 1*3 - 1] = cellcorners[ib][8];
+        	zcornsv[4*ibt + 1*4 - 1] = cellcorners[ib][11];
 
-        	p_zcorn_v[4*ibb + 1*1 - 1] = cellcorners[ib][14];
-        	p_zcorn_v[4*ibb + 1*2 - 1] = cellcorners[ib][17];
-        	p_zcorn_v[4*ibb + 1*3 - 1] = cellcorners[ib][20];
-        	p_zcorn_v[4*ibb + 1*4 - 1] = cellcorners[ib][23];
+        	zcornsv[4*ibb + 1*1 - 1] = cellcorners[ib][14];
+        	zcornsv[4*ibb + 1*2 - 1] = cellcorners[ib][17];
+        	zcornsv[4*ibb + 1*3 - 1] = cellcorners[ib][20];
+        	zcornsv[4*ibb + 1*4 - 1] = cellcorners[ib][23];
             }
         }
     }

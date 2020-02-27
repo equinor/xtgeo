@@ -9,9 +9,9 @@
  *
  * ARGUMENTS:
  *     nx..nz           grid dimensions
- *     p_coord_v        Coordinates
- *     p_zcorn_v        ZCORN array (pointer) of input
- *     p_coord_v
+ *     coordsv        Coordinates
+ *     zcornsv        ZCORN array (pointer) of input
+ *     coordsv
  *     p_x_v .. p_z_v   Return arrays for X Y Z
  *     option           0: use all cells, 1: make undef if ACTNUM=0
  *     debug            debug/verbose flag
@@ -35,9 +35,9 @@ void
 grd3d_calc_xyz(int nx,
                int ny,
                int nz,
-               double *p_coord_v,
+               double *coordsv,
                long ncoord,
-               double *p_zcorn_v,
+               double *zcornsv,
                long nzcorn,
                int *p_actnum_v,
                long nact,
@@ -65,7 +65,7 @@ grd3d_calc_xyz(int nx,
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-                grd3d_midpoint(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v, &xv, &yv, &zv,
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xv, &yv, &zv,
                                XTGDEBUG);
 
                 p_x_v[ic] = xv;

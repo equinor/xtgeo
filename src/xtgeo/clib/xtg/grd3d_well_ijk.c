@@ -12,8 +12,8 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz           i     Grid dimensions ncol, nrow, nlay
- *    p_coord_v          i     Grid coordinate lines
- *    p_zcorn_v          i     Grid Z corners
+ *    coordsv          i     Grid coordinate lines
+ *    zcornsv          i     Grid Z corners
  *    p_actnum_v         i     Grid ACTNUM parameter
  *    p_zcorn_onelay_v   i     Grid Z corners, top bot only
  *    p_actnum_onelay_v  i     Grid ACTNUM parameter top bot only
@@ -49,9 +49,9 @@ int grd3d_well_ijk(
     int ny,
     int nz,
 
-    double *p_coord_v,
+    double *coordsv,
     long ncoordin,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcornin,
     int *p_actnum_v,
     long nactin,
@@ -82,7 +82,7 @@ int grd3d_well_ijk(
      */
 
     double zconst = 0.000001;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, 0, zconst);
+    grd3d_make_z_consistent(nx, ny, nz, zcornsv, 0, zconst);
 
     /*
      * ========================================================================
@@ -125,7 +125,7 @@ int grd3d_well_ijk(
         /* loop cells in simplified (one layer) grid */
         long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor,
                                        nx, ny, 1,
-                                       p_coord_v,
+                                       coordsv,
                                        p_zcorn_onelay_v, p_actnum_onelay_v,
                                        maxradsearch,
                                        sflag, &nradsearch,
@@ -149,8 +149,8 @@ int grd3d_well_ijk(
             /* loop cells in full grid */
             long ib2 = grd3d_point_in_cell(ibstart, 0, xcor, ycor, zcor,
                                            nx, ny, nz,
-                                           p_coord_v,
-                                           p_zcorn_v, p_actnum_v,
+                                           coordsv,
+                                           zcornsv, p_actnum_v,
                                            maxradsearch,
                                            sflag, &nradsearch,
                                            0, DEBUG);

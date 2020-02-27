@@ -9,8 +9,8 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions I J K in input
- *    p_coord_v      i     Grid Z coord for input
- *    p_zcorn_v      i     Grid Z corners for input
+ *    coordsv      i     Grid Z coord for input
+ *    zcornsv      i     Grid Z corners for input
  *    p_actnum_v     i     Grid ACTNUM parameter input
  *    ib1            i     Cell count position1
  *    ib2            i     Cell count position2
@@ -38,8 +38,8 @@ int
 grd3d_check_cell_splits(int ncol,
                         int nrow,
                         int nlay,
-                        double *p_coord_v,
-                        double *p_zcorn_v,
+                        double *coordsv,
+                        double *zcornsv,
                         long ib1,
                         long ib2)
 {
@@ -51,10 +51,10 @@ grd3d_check_cell_splits(int ncol,
     x_ib2ijk(ib1, &ic1, &jc1, &kc1, ncol, nrow, nlay, 0);
     x_ib2ijk(ib2, &ic2, &jc2, &kc2, ncol, nrow, nlay, 0);
 
-    grd3d_corners(ic1, jc1, kc1, ncol, nrow, nlay, p_coord_v, 0, p_zcorn_v, 0,
+    grd3d_corners(ic1, jc1, kc1, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
                   corners1);
 
-    grd3d_corners(ic2, jc2, kc2, ncol, nrow, nlay, p_coord_v, 0, p_zcorn_v, 0,
+    grd3d_corners(ic2, jc2, kc2, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
                   corners2);
 
     scase = 0;

@@ -10,8 +10,8 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions I J K in input
- *    p_coord_v      i     Grid Z coord for input
- *    p_zcorn_v      i     Grid Z corners for input
+ *    coordsv      i     Grid Z coord for input
+ *    zcornsv      i     Grid Z corners for input
  *    p_actnum_v     i     Grid ACTNUM parameter input
  *    p_prop1        i     Grid Z coord for output
  *    nprop          i     Number of cells in gridprop (shall be nx*ny*nz)
@@ -40,9 +40,9 @@ int
 grd3d_adj_cells(int ncol,
                 int nrow,
                 int nlay,
-                double *p_coord_v,
+                double *coordsv,
                 long ncoordin,
-                double *p_zcorn_v,
+                double *zcornsv,
                 long nzcornin,
                 int *p_actnum_v,
                 long nactin,
@@ -108,7 +108,7 @@ grd3d_adj_cells(int ncol,
                         /* check if the two cells are faulted in XY */
                         if (iflag2 > 0 && nni < 4) {
                             faulted = grd3d_check_cell_splits(
-                              ncol, nrow, nlay, p_coord_v, p_zcorn_v, ib, nnc[nni]);
+                              ncol, nrow, nlay, coordsv, zcornsv, ib, nnc[nni]);
                             if (faulted == 1)
                                 p_prop2[ib] = 2;
                         }

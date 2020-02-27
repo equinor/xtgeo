@@ -38,8 +38,8 @@ void
 _grd3d_convert_hybrid1(int nx,
                        int ny,
                        int nz,
-                       double *p_coord_v,
-                       double *p_zcorn_v,
+                       double *coordsv,
+                       double *zcornsv,
                        int *p_actnum_v,
                        int nzhyb,
                        double *p_zcornhyb_v,
@@ -70,7 +70,7 @@ _grd3d_convert_hybrid1(int nx,
                 /* do for all corners */
                 zsum = 0.0;
                 for (ic = 1; ic <= 4; ic++) {
-                    z1 = p_zcorn_v[4 * ibp + 1 * ic - 1];
+                    z1 = zcornsv[4 * ibp + 1 * ic - 1];
                     if (z1 > toplevel) {
                         p_zcornhyb_v[4 * ibh + 1 * ic - 1] = toplevel;
                     } else {
@@ -105,7 +105,7 @@ _grd3d_convert_hybrid1(int nx,
                 /* do for all corners */
                 zsum = 0.0;
                 for (ic = 1; ic <= 4; ic++) {
-                    z1 = p_zcorn_v[4 * ibp + 1 * ic - 1];
+                    z1 = zcornsv[4 * ibp + 1 * ic - 1];
                     if (z1 < botlevel) {
                         p_zcornhyb_v[4 * ibh + 1 * ic - 1] = botlevel;
                     } else {
@@ -185,8 +185,8 @@ void
 _grd3d_convert_hybrid2(int nx,
                        int ny,
                        int nz,
-                       double *p_coord_v,
-                       double *p_zcorn_v,
+                       double *coordsv,
+                       double *zcornsv,
                        int *p_actnum_v,
                        int nzhyb,
                        double *p_zcornhyb_v,
@@ -242,10 +242,10 @@ _grd3d_convert_hybrid2(int nx,
                 /* this will end with last bottom layer unless hybrid region is
                  * found...*/
                 if (actual_region != region && iflagr == 0) {
-                    usetoplevel1 = p_zcorn_v[4 * ibp + 1 * 1 - 1];
-                    usetoplevel2 = p_zcorn_v[4 * ibp + 1 * 2 - 1];
-                    usetoplevel3 = p_zcorn_v[4 * ibp + 1 * 3 - 1];
-                    usetoplevel4 = p_zcorn_v[4 * ibp + 1 * 4 - 1];
+                    usetoplevel1 = zcornsv[4 * ibp + 1 * 1 - 1];
+                    usetoplevel2 = zcornsv[4 * ibp + 1 * 2 - 1];
+                    usetoplevel3 = zcornsv[4 * ibp + 1 * 3 - 1];
+                    usetoplevel4 = zcornsv[4 * ibp + 1 * 4 - 1];
                 }
 
                 if (actual_region == region) {
@@ -269,7 +269,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = 0.0;
 
                 /* CORNER 1 */
-                z1 = p_zcorn_v[4 * ibp + 1 * 1 - 1];
+                z1 = zcornsv[4 * ibp + 1 * 1 - 1];
                 if (z1 > usetoplevel1) {
                     p_zcornhyb_v[4 * ibh + 1 * 1 - 1] = usetoplevel1;
                 } else {
@@ -279,7 +279,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = zsum + z1;
 
                 /* CORNER 2 */
-                z2 = p_zcorn_v[4 * ibp + 1 * 2 - 1];
+                z2 = zcornsv[4 * ibp + 1 * 2 - 1];
                 if (z2 > usetoplevel2) {
                     p_zcornhyb_v[4 * ibh + 1 * 2 - 1] = usetoplevel2;
                 } else {
@@ -289,7 +289,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = zsum + z2;
 
                 /* CORNER 3 */
-                z3 = p_zcorn_v[4 * ibp + 1 * 3 - 1];
+                z3 = zcornsv[4 * ibp + 1 * 3 - 1];
                 if (z3 > usetoplevel3) {
                     p_zcornhyb_v[4 * ibh + 1 * 3 - 1] = usetoplevel3;
                 } else {
@@ -299,7 +299,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = zsum + z3;
 
                 /* CORNER 4 */
-                z4 = p_zcorn_v[4 * ibp + 1 * 4 - 1];
+                z4 = zcornsv[4 * ibp + 1 * 4 - 1];
                 if (z4 > usetoplevel4) {
                     p_zcornhyb_v[4 * ibh + 1 * 4 - 1] = usetoplevel4;
                 } else {
@@ -354,7 +354,7 @@ _grd3d_convert_hybrid2(int nx,
                 }
 
                 /* CORNER 1 */
-                z1 = p_zcorn_v[4 * ibp + 1 * 1 - 1];
+                z1 = zcornsv[4 * ibp + 1 * 1 - 1];
                 if (z1 < usebotlevel1) {
                     p_zcornhyb_v[4 * ibh + 1 * 1 - 1] = usebotlevel1;
                 } else {
@@ -364,7 +364,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = zsum + z1;
 
                 /* CORNER 2 */
-                z2 = p_zcorn_v[4 * ibp + 1 * 2 - 1];
+                z2 = zcornsv[4 * ibp + 1 * 2 - 1];
                 if (z2 < usebotlevel2) {
                     p_zcornhyb_v[4 * ibh + 1 * 2 - 1] = usebotlevel2;
                 } else {
@@ -374,7 +374,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = zsum + z2;
 
                 /* CORNER 3 */
-                z3 = p_zcorn_v[4 * ibp + 1 * 3 - 1];
+                z3 = zcornsv[4 * ibp + 1 * 3 - 1];
                 if (z3 < usebotlevel3) {
                     p_zcornhyb_v[4 * ibh + 1 * 3 - 1] = usebotlevel3;
                 } else {
@@ -384,7 +384,7 @@ _grd3d_convert_hybrid2(int nx,
                 zsum = zsum + z3;
 
                 /* CORNER 4 */
-                z4 = p_zcorn_v[4 * ibp + 1 * 4 - 1];
+                z4 = zcornsv[4 * ibp + 1 * 4 - 1];
                 if (z4 < usebotlevel4) {
                     p_zcornhyb_v[4 * ibh + 1 * 4 - 1] = usebotlevel4;
                 } else {
@@ -470,9 +470,9 @@ grd3d_convert_hybrid(int nx,
                      int ny,
                      int nz,
 
-                     double *p_coord_v,
+                     double *coordsv,
                      long ncoordin,
-                     double *p_zcorn_v,
+                     double *zcornsv,
                      long nzcornin,
                      int *p_actnum_v,
                      long nactin,
@@ -495,11 +495,11 @@ grd3d_convert_hybrid(int nx,
 {
 
     if (region <= 0) {
-        _grd3d_convert_hybrid1(nx, ny, nz, p_coord_v, p_zcorn_v, p_actnum_v, nzhyb,
+        _grd3d_convert_hybrid1(nx, ny, nz, coordsv, zcornsv, p_actnum_v, nzhyb,
                                p_zcornhyb_v, p_actnumhyb_v, toplevel, botlevel, ndiv);
     } else {
 
-        _grd3d_convert_hybrid2(nx, ny, nz, p_coord_v, p_zcorn_v, p_actnum_v, nzhyb,
+        _grd3d_convert_hybrid2(nx, ny, nz, coordsv, zcornsv, p_actnum_v, nzhyb,
                                p_zcornhyb_v, p_actnumhyb_v, toplevel, botlevel, ndiv,
                                p_region_v, region);
     }

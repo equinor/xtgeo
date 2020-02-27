@@ -10,8 +10,8 @@
  * ARGUMENTS:
  *    fc             i     File handler
  *    nx, ny, nz     i     Dimensions
- *    p_coord_v     i/o    Coordinate vector (xtgeo fmt)
- *    p_zcorn_v     i/o    ZCORN vector (xtgeo fmt)
+ *    coordsv     i/o    Coordinate vector (xtgeo fmt)
+ *    zcornsv     i/o    ZCORN vector (xtgeo fmt)
  *    p_actnum_v    i/o    ACTNUM vector (xtgeo fmt)
  *    nact           o     Number of active cells
  *
@@ -35,9 +35,9 @@ void grd3d_import_grdecl (
     int nx,
     int ny,
     int nz,
-    double *p_coord_v,
+    double *coordsv,
     long ncoord,
-    double *p_zcorn_v,
+    double *zcornsv,
     long nzcorn,
     int *p_actnum_v,
     long nactnum,
@@ -106,18 +106,18 @@ void grd3d_import_grdecl (
 		if (fvalue == 9999900.0000) {
 		    fvalue=-9999.99;
 		}
-		p_coord_v[i]=fvalue;
+		coordsv[i]=fvalue;
 
 		if (ix==1) {
-		    if (p_coord_v[i]<xmin) xmin = p_coord_v[i];
-		    if (p_coord_v[i]>xmax) xmax = p_coord_v[i];
+		    if (coordsv[i]<xmin) xmin = coordsv[i];
+		    if (coordsv[i]>xmax) xmax = coordsv[i];
 		    ix=0;
 		    jy=1;
 		    kz=0;
 		}
 		else if (jy==1) {
-		    if (p_coord_v[i]<ymin) ymin = p_coord_v[i];
-		    if (p_coord_v[i]>ymax) ymax = p_coord_v[i];
+		    if (coordsv[i]<ymin) ymin = coordsv[i];
+		    if (coordsv[i]>ymax) ymax = coordsv[i];
 		    ix=0;
 		    jy=0;
 		    kz=1;
@@ -164,8 +164,8 @@ void grd3d_import_grdecl (
 
 			ib=x_ijk2ib(i,j,kk,nx,ny,nz+1,0);
 			if (kzread==1) {
-			    p_zcorn_v[4*ib+1*1-1]=fvalue1;
-			    p_zcorn_v[4*ib+1*2-1]=fvalue2;
+			    zcornsv[4*ib+1*1-1]=fvalue1;
+			    zcornsv[4*ib+1*2-1]=fvalue2;
 			}
 		    }
 		    /* "right" cell margin */
@@ -176,8 +176,8 @@ void grd3d_import_grdecl (
                             logger_error(LI, FI, FU, "Error in reading ZCORN");
 			ib=x_ijk2ib(i,j,kk,nx,ny,nz+1,0);
 			if (kzread==1) {
-			    p_zcorn_v[4*ib+1*3-1]=fvalue1;
-			    p_zcorn_v[4*ib+1*4-1]=fvalue2;
+			    zcornsv[4*ib+1*3-1]=fvalue1;
+			    zcornsv[4*ib+1*4-1]=fvalue2;
 			}
 		    }
 		}
@@ -214,11 +214,11 @@ void grd3d_import_grdecl (
    /* convert from MAPAXES, if present */
     if (mamode==1) {
 	for (ib=0; ib<(nx+1)*(ny+1)*6; ib=ib+3) {
-	    cx = p_coord_v[ib];
-	    cy = p_coord_v[ib+1];
+	    cx = coordsv[ib];
+	    cy = coordsv[ib+1];
 	    x_mapaxes(mamode, &cx, &cy, x1, y1, x2, y2, x3, y3, 0);
-	    p_coord_v[ib]   = cx;
-	    p_coord_v[ib+1] = cy;
+	    coordsv[ib]   = cx;
+	    coordsv[ib+1] = cy;
 	}
     }
 }
