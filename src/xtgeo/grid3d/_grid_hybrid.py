@@ -26,8 +26,8 @@ def make_hybridgrid(
     newnactnum = self.ncol * self.nrow * newnlay
 
     # initialize
-    hyb_x_zcorn_v = np.zeros(newnzcorn, dtype=np.float64)
-    hyb_x_actnum_v = np.zeros(newnactnum, dtype=np.int32)
+    hyb_zcornsv = np.zeros(newnzcorn, dtype=np.float64)
+    hyb_actnumsv = np.zeros(newnactnum, dtype=np.int32)
 
     if region is None:
         region_number = -1
@@ -40,12 +40,12 @@ def make_hybridgrid(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         newnlay,
-        hyb_x_zcorn_v,
-        hyb_x_actnum_v,
+        hyb_zcornsv,
+        hyb_actnumsv,
         toplevel,
         bottomlevel,
         nhdiv,
@@ -56,5 +56,5 @@ def make_hybridgrid(
     del rvalues
 
     self._nlay = newnlay
-    self._x_zcorn_v = hyb_x_zcorn_v
-    self._x_actnum_v = hyb_x_actnum_v
+    self._zcornsv = hyb_zcornsv
+    self._actnumsv = hyb_actnumsv

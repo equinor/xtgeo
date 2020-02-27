@@ -81,14 +81,14 @@ def get_randomline(
         self.nrow,
         self.nlay,
 
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
 
         gl.update_carray(prop),
 
-        self._tmp["onegrid"]._x_zcorn_v,
-        self._tmp["onegrid"]._x_actnum_v,
+        self._tmp["onegrid"]._zcornsv,
+        self._tmp["onegrid"]._actnumsv,
 
         nsamples,
     )

@@ -141,9 +141,9 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
     nzcorn = ncol * nrow * (nlay + 1) * 4
 
-    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     # next task is to convert geometry to cxtgeo internal format
     logger.info("Run XTGeo C code...")
@@ -154,9 +154,9 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
         ntot,
         actnum,
         corners,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
     )
     logger.info("Run XTGeo C code... done")
     logger.info("Converting to XTGeo internals... done")
@@ -243,9 +243,9 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         npill,
         npill,
         nzcrn,

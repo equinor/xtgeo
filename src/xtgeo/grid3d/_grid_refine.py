@@ -88,23 +88,23 @@ def refine_vertically(self, rfactor, zoneprop=None):
     for inn, rfi in enumerate(totvector):
         _cxtgeo.intarray_setitem(refinefactors, inn, rfi)
 
-    ref_x_zcorn_v = np.zeros(
+    ref_zcornsv = np.zeros(
         self.ncol * self.nrow * (newnlay + 1) * 4, dtype=np.float64
     )
-    ref_x_actnum_v = np.zeros(self.ncol * self.nrow * newnlay, dtype=np.int32)
+    ref_actnumsv = np.zeros(self.ncol * self.nrow * newnlay, dtype=np.int32)
 
     ier = _cxtgeo.grd3d_refine_vert(
         self.ncol,
         self.nrow,
         self.nlay,
 
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._zcornsv,
+        self._actnumsv,
 
         newnlay,
 
-        ref_x_zcorn_v,
-        ref_x_actnum_v,
+        ref_zcornsv,
+        ref_actnumsv,
 
         refinefactors,
     )
@@ -117,8 +117,8 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     # update instance:
     self._nlay = newnlay
-    self._x_zcorn_v = ref_x_zcorn_v
-    self._x_actnum_v = ref_x_actnum_v
+    self._zcornsv = ref_zcornsv
+    self._actnumsv = ref_actnumsv
 
     if self.subgrids is None or len(self.subgrids) <= 1:
         self.subgrids = None

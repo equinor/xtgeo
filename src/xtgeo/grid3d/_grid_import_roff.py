@@ -92,9 +92,9 @@ def _import_roff(self, fhandle):
 
     ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     logger.debug("Calling C routines")
 
@@ -109,7 +109,7 @@ def _import_roff(self, fhandle):
         yscale,
         zscale,
         p_cornerlines_v,
-        self._x_coord_v,
+        self._coordsv,
     )
 
     logger.info("OK")
@@ -126,7 +126,7 @@ def _import_roff(self, fhandle):
         zscale,
         p_splitenz_v,
         p_zvalues_v,
-        self._x_zcorn_v,
+        self._zcornsv,
     )
 
     # ACTIVE may be missing, meaning all cells are missing!
@@ -136,7 +136,7 @@ def _import_roff(self, fhandle):
         option = 1
 
     _cxtgeo.grd3d_roff2xtgeo_actnum(
-        self._ncol, self._nrow, self._nlay, p_act_v, self._x_actnum_v, option
+        self._ncol, self._nrow, self._nlay, p_act_v, self._actnumsv, option
     )
 
     _cxtgeo.delete_floatarray(p_cornerlines_v)

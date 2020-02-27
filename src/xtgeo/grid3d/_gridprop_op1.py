@@ -110,9 +110,9 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             self.ncol,
             self.nrow,
             self.nlay,
-            grid._x_coord_v,
-            grid._x_zcorn_v,
-            grid._x_actnum_v,
+            grid._coordsv,
+            grid._zcornsv,
+            grid._actnumsv,
             cvals,
             1,
         )

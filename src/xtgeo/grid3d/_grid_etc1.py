@@ -45,9 +45,9 @@ def create_box(
     self._ncol, self._nrow, self._nlay = dimension
     ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     option = 0
     if oricenter:
@@ -57,9 +57,9 @@ def create_box(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         origin[0],
         origin[1],
         origin[2],
@@ -107,8 +107,8 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._zcornsv,
+        self._actnumsv,
         dz,
         nflip,
         option,
@@ -153,9 +153,9 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         dxval,
         dyval,
         option1,
@@ -266,10 +266,10 @@ def get_ijk_from_points(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
-        self._tmp["onegrid"]._x_zcorn_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        self._tmp["onegrid"]._zcornsv,
         actnumoption,
         flip,
         arrsize,
@@ -319,9 +319,9 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         xv,
         yv,
         zv,
@@ -385,8 +385,8 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
+        self._coordsv,
+        self._zcornsv,
         pcorners,
     )
 
@@ -454,9 +454,9 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         *(ptr_coord + [option])
     )
 
@@ -494,9 +494,9 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         layer,
         opt1,
         opt2,
@@ -543,9 +543,9 @@ def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False)
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         ptr_x[0],
         ptr_x[1],
         ptr_x[2],
@@ -675,8 +675,8 @@ def inactivate_by_dz(self, threshold):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._zcornsv,
+        self._actnumsv,
         threshold,
         nflip,
     )
@@ -691,7 +691,7 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol, self.nrow, self.nlay, self._x_zcorn_v, zsep,
+        self.ncol, self.nrow, self.nlay, self._zcornsv, zsep,
     )
 
 
@@ -726,9 +726,9 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,  # is modified!
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,  # is modified!
         k1,
         k2,
         iforce,
@@ -743,7 +743,7 @@ def collapse_inactive_cells(self):
     """Collapse inactive cells"""
 
     _cxtgeo.grd3d_collapse_inact(
-        self.ncol, self.nrow, self.nlay, self._x_zcorn_v, self._x_actnum_v, XTGDEBUG
+        self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv, XTGDEBUG
     )
 
 
@@ -756,9 +756,9 @@ def copy(self):
 
     other = self.__class__()
 
-    other._x_coord_v = self._x_coord_v.copy()
-    other._x_zcorn_v = self._x_zcorn_v.copy()
-    other._x_actnum_v = self._x_actnum_v.copy()
+    other._coordsv = self._coordsv.copy()
+    other._zcornsv = self._zcornsv.copy()
+    other._actnumsv = self._actnumsv.copy()
 
     other._ncol = self.ncol
     other._nrow = self.nrow
@@ -823,20 +823,20 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     nzcorn = nncol * nnrow * (nnlay + 1) * 4
 
     new_num_act = _cxtgeo.new_intpointer()
-    new_x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    new_x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    new_x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    new_coordsv = np.zeros(ncoord, dtype=np.float64)
+    new_zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    new_actnumsv = np.zeros(ntot, dtype=np.int32)
 
     _cxtgeo.grd3d_crop_geometry(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
-        new_x_coord_v,
-        new_x_zcorn_v,
-        new_x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        new_coordsv,
+        new_zcornsv,
+        new_actnumsv,
         ic1,
         ic2,
         jc1,
@@ -847,9 +847,9 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
         0,
     )
 
-    self._x_coord_v = new_x_coord_v
-    self._x_zcorn_v = new_x_zcorn_v
-    self._x_actnum_v = new_x_actnum_v
+    self._coordsv = new_coordsv
+    self._zcornsv = new_zcornsv
+    self._actnumsv = new_actnumsv
 
     self._ncol = nncol
     self._nrow = nnrow
@@ -913,17 +913,17 @@ def reduce_to_one_layer(self):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._x_zcorn_v,
+        self._zcornsv,
         new_zcorn,
-        self._x_actnum_v,
+        self._actnumsv,
         new_actnum,
         ptr_new_num_act,
         0,
     )
 
     self._nlay = 1
-    self._x_zcorn_v = new_zcorn
-    self._x_actnum_v = new_actnum
+    self._zcornsv = new_zcorn
+    self._actnumsv = new_actnum
     self._props = None
     self._subgrids = None
 
@@ -943,8 +943,8 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         tx,
         ty,
         tz,
-        self._x_coord_v,
-        self._x_zcorn_v,
+        self._coordsv,
+        self._zcornsv,
     )
     if ier != 0:
         raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
@@ -962,9 +962,9 @@ def reverse_row_axis(self, ijk_handedness=None):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
     )
 
     if ier != 0:
@@ -1071,9 +1071,9 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         ptr_zprop,
         nval,
         ptr_xc,
@@ -1082,8 +1082,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         ptr_zo,
         zonelogrange[0],
         zonelogrange[1],
-        onelayergrid._x_zcorn_v,
-        onelayergrid._x_actnum_v,
+        onelayergrid._zcornsv,
+        onelayergrid._actnumsv,
         ptr_results,
         option,
     )
@@ -1139,9 +1139,9 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         p_prop1,
         self.ntotal,
         val1,

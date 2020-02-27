@@ -11,8 +11,6 @@ from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma  # pylint: disable=useless-import-alias
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-
 import xtgeo
 from xtgeo.common import XTGDescription
 import xtgeo.common.sys as xtgeosys
@@ -163,9 +161,9 @@ class Grid(Grid3D):
 
         super(Grid, self).__init__(*args, **kwargs)
 
-        self._x_coord_v = None  # carray swig pointer (or numpy array) to coords vector
-        self._x_zcorn_v = None  # carray swig pointer (or numpy array) to zcorns vector
-        self._x_actnum_v = None  # carray swig pointer (or numpy array) to actnum vector
+        self._coordsv = None  # carray swig pointer (or numpy array) to coords vector
+        self._zcornsv = None  # carray swig pointer (or numpy array) to zcorns vector
+        self._actnumsv = None  # carray swig pointer (or numpy array) to actnum vector
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
@@ -204,13 +202,13 @@ class Grid(Grid3D):
 
     def __del__(self):
 
-        if not isinstance(self._x_coord_v, np.ndarray) and self._x_coord_v is not None:
+        if not isinstance(self._coordsv, np.ndarray) and self._coordsv is not None:
 
             # logger.info("Deleting Grid instance %s", id(self))
-            _cxtgeo.delete_doublearray(self._x_coord_v)
-            _cxtgeo.delete_doublearray(self._x_zcorn_v)
-            _cxtgeo.delete_intarray(self._x_actnum_v)
-            self._x_coord_v = None
+            _cxtgeo.delete_doublearray(self._coordsv)
+            _cxtgeo.delete_doublearray(self._zcornsv)
+            _cxtgeo.delete_intarray(self._actnumsv)
+            self._coordsv = None
 
             if self.props is not None:
                 for prop in self.props:
@@ -638,27 +636,27 @@ class Grid(Grid3D):
         # nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         # ntot = self._ncol * self._nrow * self._nlay
 
-        # if "SwigPyObject" not in str(type(self._x_zcorn_v)) or self._x_zcorn_v is None:
+        # if "SwigPyObject" not in str(type(self._zcornsv)) or self._zcornsv is None:
         #     logger.info("Tried to numpify but input is already numpy")
         #     return
 
         # logger.info("Numpifying C arrays...")
-        # self._x_coord_v = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._x_coord_v)
-        # self._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._x_zcorn_v)
-        # self._x_actnum_v = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._x_actnum_v)
+        # self._coordsv = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._coordsv)
+        # self._zcornsv = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._zcornsv)
+        # self._actnumsv = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._actnumsv)
 
         # if not self._tmp:
         #     return
 
-        # if "SwigPyObject" in str(type(self._tmp["onegrid"]._x_zcorn_v)):
+        # if "SwigPyObject" in str(type(self._tmp["onegrid"]._zcornsv)):
         #     nzcorn = self._ncol * self._nrow * (1 + 1) * 4
         #     ntot = self._ncol * self._nrow * 1
 
-        #     self._tmp["onegrid"]._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(
-        #         nzcorn, self._tmp["onegrid"]._x_zcorn_v
+        #     self._tmp["onegrid"]._zcornsv = _cxtgeo.swig_carr_to_numpy_1d(
+        #         nzcorn, self._tmp["onegrid"]._zcornsv
         #     )
-        #     self._tmp["onegrid"]._x_actnum_v = _cxtgeo.swig_carr_to_numpy_1d(
-        #         ntot, self._tmp["onegrid"]._x_actnum_v
+        #     self._tmp["onegrid"]._actnumsv = _cxtgeo.swig_carr_to_numpy_1d(
+        #         ntot, self._tmp["onegrid"]._actnumsv
         #     )
 
     def denumpify_carrays(self):
@@ -670,23 +668,23 @@ class Grid(Grid3D):
         # nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
         # ntot = self._ncol * self._nrow * self._nlay
 
-        # if isinstance(self._x_coord_v, np.ndarray):
+        # if isinstance(self._coordsv, np.ndarray):
         #     logger.info("Denumpify coords...")
         #     carray = _cxtgeo.new_doublearray(ncoord)
-        #     _cxtgeo.swig_numpy_to_carr_1d(self._x_coord_v, carray)
-        #     self._x_coord_v = carray
+        #     _cxtgeo.swig_numpy_to_carr_1d(self._coordsv, carray)
+        #     self._coordsv = carray
 
-        # if isinstance(self._x_zcorn_v, np.ndarray):
+        # if isinstance(self._zcornsv, np.ndarray):
         #     logger.info("Denumpify zcorn...")
         #     carray = _cxtgeo.new_doublearray(nzcorn)
-        #     _cxtgeo.swig_numpy_to_carr_1d(self._x_zcorn_v, carray)
-        #     self._x_zcorn_v = carray
+        #     _cxtgeo.swig_numpy_to_carr_1d(self._zcornsv, carray)
+        #     self._zcornsv = carray
 
-        # if isinstance(self._x_actnum_v, np.ndarray):
+        # if isinstance(self._actnumsv, np.ndarray):
         #     logger.info("Denumpify actnum...")
         #     carray = _cxtgeo.new_intarray(ntot)
-        #     _cxtgeo.swig_numpy_to_carr_i1d(self._x_actnum_v, carray)
-        #     self._x_actnum_v = carray
+        #     _cxtgeo.swig_numpy_to_carr_i1d(self._actnumsv, carray)
+        #     self._actnumsv = carray
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
@@ -1041,7 +1039,7 @@ class Grid(Grid3D):
                 discrete=True,
             )
 
-            values = _gridprop_lowlevel.f2c_order(self, self._x_actnum_v)
+            values = _gridprop_lowlevel.f2c_order(self, self._actnumsv)
             act.values = values
             act.mask_undef()
 
@@ -1071,7 +1069,7 @@ class Grid(Grid3D):
         """
         val1d = actnum.values.ravel(order="K")
 
-        self._x_actnum_v = _gridprop_lowlevel.c2f_order(self, val1d)
+        self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)
 
     def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
         """

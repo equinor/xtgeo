@@ -75,11 +75,11 @@ def test_numpify(load_gfile1):
 
     # grd.numpify_carrays()
 
-    # assert isinstance(grd._x_coord_v, np.ndarray)
+    # assert isinstance(grd._coordsv, np.ndarray)
 
     # _ = grd.get_dz()  # should automatically denumpify behind the scene
 
-    # assert not isinstance(grd._x_coord_v, np.ndarray)
+    # assert not isinstance(grd._coordsv, np.ndarray)
 
 
 def test_create_shoebox():

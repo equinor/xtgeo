@@ -74,9 +74,9 @@ def import_ecl_egrid(self, gfile):
     # allocate dimensions:
     ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
     p_nact = _cxtgeo.new_longpointer()
 
     option = 0
@@ -92,9 +92,9 @@ def import_ecl_egrid(self, gfile):
         bpos["COORD"],
         bpos["ZCORN"],
         bpos["ACTNUM"],
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         p_nact,
         option,
     )
@@ -189,9 +189,9 @@ def import_ecl_grdecl(self, gfile):
 
     logger.info("Reading...")
 
-    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     ptr_num_act = _cxtgeo.new_intpointer()
 
@@ -202,9 +202,9 @@ def import_ecl_grdecl(self, gfile):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         ptr_num_act
     )
 
@@ -263,9 +263,9 @@ def import_ecl_bgrdecl(self, gfile):
     # allocate dimensions:
     ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._x_coord_v = np.zeros(ncoord, dtype=np.float64)
-    self._x_zcorn_v = np.zeros(nzcorn, dtype=np.float64)
-    self._x_actnum_v = np.zeros(ntot, dtype=np.int32)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     p_nact = _cxtgeo.new_longpointer()
 
@@ -278,9 +278,9 @@ def import_ecl_bgrdecl(self, gfile):
         bpos["COORD"],
         bpos["ZCORN"],
         bpos["ACTNUM"],
-        self._x_coord_v,
-        self._x_zcorn_v,
-        self._x_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         p_nact,
         0,
     )
