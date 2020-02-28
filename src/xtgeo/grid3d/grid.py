@@ -202,18 +202,14 @@ class Grid(Grid3D):
 
     def __del__(self):
 
-        if not isinstance(self._coordsv, np.ndarray) and self._coordsv is not None:
+        self._coordsv = None
+        self._zcornsv = None
+        self._actnumsv = None
 
-            # logger.info("Deleting Grid instance %s", id(self))
-            _cxtgeo.delete_doublearray(self._coordsv)
-            _cxtgeo.delete_doublearray(self._zcornsv)
-            _cxtgeo.delete_intarray(self._actnumsv)
-            self._coordsv = None
-
-            if self.props is not None:
-                for prop in self.props:
-                    # logger.info("Deleting property instance %s", prop.name)
-                    prop.__del__()
+        if self.props is not None:
+            for prop in self.props:
+                # logger.info("Deleting property instance %s", prop.name)
+                prop.__del__()
 
     def __repr__(self):
         logger.info("Invoke __repr__ for grid")
@@ -631,7 +627,7 @@ class Grid(Grid3D):
     def numpify_carrays(self):
         """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
         warnings.warn(
-            "Method numpify_carrays is deprecated and can be removed.",
+            "Method numpify_carrays is deprecated and can be removed ({})".format(self),
             DeprecationWarning,
             stacklevel=2,
         )
@@ -952,9 +948,9 @@ class Grid(Grid3D):
         return None
 
     def get_cactnum(self):
-        """Returns the C pointer object reference to the ACTNUM array."""
+        """Returns the C pointer object reference to the ACTNUM array (deprecated)."""
         warnings.warn(
-            "Method get_cactnum is deprecated and will be removed.",
+            "Method get_cactnum is deprecated and will be removed. ({})".format(self),
             DeprecationWarning,
             stacklevel=2,
         )
@@ -977,7 +973,6 @@ class Grid(Grid3D):
 
         .. versionchanged:: 2.6.0 Added ``dual`` keyword
         """
-        self.numpify_carrays()
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
