@@ -20,8 +20,8 @@
  *    xori..rotation      i     Map settings
  *    maptopi..mapbasj    i     Map arrays for I J top/base
  *    nx ny nz            i     Grid dimensions
- *    zcornsv           i     Grid ZCORN
- *    coordsv           i     Grid COORD
+ *    zcornsv             i     Grid ZCORN
+ *    coordsv             i     Grid COORD
  *    p_acnum_v           i     Grid ACTNUM
  *    p_val_v             i     3D Grid values
  *    p_zcornone_v        i     Grid ZCORN for onelayer grid
@@ -281,7 +281,7 @@ int grd3d_points_ijk_cells(
     long ncoordin,
     double *zcornsv,
     long nzcornin,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactin,
 
     double *p_zcornone_v,
@@ -354,7 +354,7 @@ int grd3d_points_ijk_cells(
                 jvec[ic] = jres;
                 kvec[ic] = kres;
 
-                if (actnumoption == 1 && p_actnum_v[ibfound2] == 0) {
+                if (actnumoption == 1 && actnumsv[ibfound2] == 0) {
                     /*  reset to undef in inactivecell */
                     ivec[ic] = UNDEF_INT;
                     jvec[ic] = UNDEF_INT;

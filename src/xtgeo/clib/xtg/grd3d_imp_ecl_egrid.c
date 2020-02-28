@@ -21,9 +21,9 @@
 *    bpos_coord     i     Byte position of COORD
 *    bpos_zcorn     i     Byte position of ZCORN
 *    bpos_actnum    i     Byte position of ACTNUM
-*    coordsv      o     Coordinate vector (xtgeo fmt)
-*    zcornsv      o     ZCORN vector (xtgeo fmt)
-*    p_actnum_v     o     ACTNUM vector (xtgeo fmt)
+*    coordsv        o     Coordinate vector (xtgeo fmt)
+*    zcornsv        o     ZCORN vector (xtgeo fmt)
+*    actnumsv       o     ACTNUM vector (xtgeo fmt)
 *    nact           o     Number of active cells (only ACTNUM=0 are inactive)
 *    option         i     Is 1 when dualporo system, otherwise 0 (not applied)
 *
@@ -54,7 +54,7 @@ grd3d_imp_ecl_egrid(FILE *fc,
                     long ncoord,
                     double *zcornsv,
                     long nzcorn,
-                    int *p_actnum_v,
+                    int *actnumsv,
                     long nxyz,
                     long *nact,
                     int option)
@@ -158,13 +158,13 @@ grd3d_imp_ecl_egrid(FILE *fc,
     /*==================================================================================
      * Read ACTNUM directly
      */
-    grd3d_read_eclrecord(fc, bpos_actnum, 1, p_actnum_v, nxyz, fdum, 0, ddum, 0);
+    grd3d_read_eclrecord(fc, bpos_actnum, 1, actnumsv, nxyz, fdum, 0, ddum, 0);
 
     logger_info(LI, FI, FU, "Read ACTNUM ...");
 
     long nnact = 0;
     for (ib = 0; ib < nxyz; ib++) {
-        if (p_actnum_v[ib] == 1)
+        if (actnumsv[ib] == 1)
             nnact++;
     }
 

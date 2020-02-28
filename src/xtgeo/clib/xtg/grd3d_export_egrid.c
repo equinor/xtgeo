@@ -9,9 +9,9 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     NCOL, NROW, NLAY
- *    coordsv      i     COORD array
- *    zcornsv      i     ZCORN array
- *    p_actnum_v     i     ACTNUM array
+ *    coordsv        i     COORD array
+ *    zcornsv        i     ZCORN array
+ *    actnumsv       i     ACTNUM array
  *    filename       i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
  *
@@ -37,7 +37,7 @@ void grd3d_export_egrid (
                          long ncoordin,
                          double *zcornsv,
                          long nzcornin,
-                         int *p_actnum_v,
+                         int *actnumsv,
                          long nactin,
                          char *filename,
                          int mode
@@ -177,7 +177,7 @@ void grd3d_export_egrid (
      */
     nact = nx * ny * nz;
 
-    grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
+    grd3d_write_eclrecord(fc, "ACTNUM", 1, actnumsv, &fdum,
                           &ddum, nact, XTGDEBUG);
 
     /*

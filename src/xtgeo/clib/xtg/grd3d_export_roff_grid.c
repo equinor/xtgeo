@@ -67,9 +67,9 @@
  *    num_subgrds         i     Number of subgrids
  *    isubgrd_to_export   i     Which subgrd to export
  *    *offset             i     coordinate offsets
- *    coordsv           i     COORD array w/ len
- *    zcornsv           i     ZCORN array w/ len
- *    p_actnum_v          i     ACTNUM array w/ len
+ *    coordsv             i     COORD array w/ len
+ *    zcornsv             i     ZCORN array w/ len
+ *    actnumsv            i     ACTNUM array w/ len
  *    p_subgrd_v          i     Subgrid array
  *    filename            i     File name
  *
@@ -104,7 +104,7 @@ void grd3d_export_roff_grid (
     long ncoordin,
     double *zcornsv,
     long nzcornin,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactin,
     int *p_subgrd_v,
     char *filename
@@ -586,7 +586,7 @@ void grd3d_export_roff_grid (
 		ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
 
 		if (mode>0) {
-		    m=fprintf(fc,"%2d",p_actnum_v[ib]);
+		    m=fprintf(fc,"%2d",actnumsv[ib]);
 		    i_tmp++;
 		    if (i_tmp > 12) {
 			i_tmp=1;
@@ -594,7 +594,7 @@ void grd3d_export_roff_grid (
 		    }
 		}
 		else{
-		    mybyte=p_actnum_v[ib];
+		    mybyte=actnumsv[ib];
 		    n=fwrite(&mybyte,1,1,fc);
 		}
 	    }

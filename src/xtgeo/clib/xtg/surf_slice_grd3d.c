@@ -16,9 +16,9 @@
  *    p_slice_v      i     map array, e.g a FWL
  *    p_map_v        o     map array, to update to output
  *    ncol, .. nlay  i     Grid dimensions I J K
- *    coordsv      i     Grid COORD
- *    zcornsv      i     Grid Z corners for input
- *    p_actnum_v     i     Grid ACTNUM parameter input
+ *    coordsv        i     Grid COORD
+ *    zcornsv        i     Grid Z corners for input
+ *    actnumsv       i     Grid ACTNUM parameter input
  *    p_prop_v       i     Grid property to extract values for
  *    buffer         i     A buffer number of nodes to extend sampling
  *
@@ -57,7 +57,7 @@ surf_slice_grd3d(int mcol,
                  long ncoord,
                  double *zcornsv,
                  long nzcorn,
-                 int *p_actnum_v,
+                 int *actnumsv,
                  long nact,
                  double *p_prop_v,
                  int buffer)
@@ -104,7 +104,7 @@ surf_slice_grd3d(int mcol,
             for (k = 1; k <= nlay; k++) {
 
                 ib = x_ijk2ib(i, j, k, ncol, nrow, nlay, 0);
-                if (p_actnum_v[ib] == 1)
+                if (actnumsv[ib] == 1)
                     nactive++;
 
                 zgrdtop =
@@ -187,7 +187,7 @@ surf_slice_grd3d(int mcol,
                               corners);
 
                 ib = x_ijk2ib(i, j, k, ncol, nrow, nlay, 0);
-                if (p_actnum_v[ib] == 1) {
+                if (actnumsv[ib] == 1) {
                     cellvalue = p_prop_v[ib];
                 } else {
                     continue;

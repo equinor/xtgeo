@@ -10,9 +10,9 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     NCOL, NROW, NLAY
- *    coordsv      i     COORD array w/ len
- *    zcornsv      i     ZCORN array w/ len
- *    p_actnum_v     i     ACTNUM array w/ len
+ *    coordsv        i     COORD array w/ len
+ *    zcornsv        i     ZCORN array w/ len
+ *    actnumsv       i     ACTNUM array w/ len
  *    filename       i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
  *
@@ -37,7 +37,7 @@ void grd3d_export_grdecl (
                           long ncoordin,
 			  double *zcornsv,
                           long nzcornin,
-			  int *p_actnum_v,
+			  int *actnumsv,
                           long nactin,
 			  char *filename,
                           int mode
@@ -186,11 +186,11 @@ void grd3d_export_grdecl (
     nact = nx * ny * nz;
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ACTNUM", 1, p_actnum_v, &fdum,
+        grd3d_write_eclrecord(fc, "ACTNUM", 1, actnumsv, &fdum,
                               &ddum, nact, XTGDEBUG);
     }
     else{
-        grd3d_write_eclinput(fc, "ACTNUM", 1, p_actnum_v, &fdum,
+        grd3d_write_eclinput(fc, "ACTNUM", 1, actnumsv, &fdum,
                              &ddum, nact, "  %1d", 12, XTGDEBUG);
     }
 

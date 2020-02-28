@@ -50,7 +50,7 @@ grd3d_setval_poly(double *p_xp_v,
                   long ncoordin,
                   double *zcornsv,
                   long nzcornin,
-                  int *p_actnum_v,
+                  int *actnumsv,
                   long nactin,
 
                   double *p_prop_v,
@@ -79,7 +79,7 @@ grd3d_setval_poly(double *p_xp_v,
                 if (istat == -9)
                     return istat; /* poly is not closed */
 
-                if (istat > 0 && p_actnum_v[ib] == 1)
+                if (istat > 0 && actnumsv[ib] == 1)
                     p_prop_v[ib] = value;
             }
         }

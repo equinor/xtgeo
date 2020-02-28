@@ -1,17 +1,6 @@
 /*
  ******************************************************************************
  *
- * Export to GRDECL format for grid properties
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
- *
  * NAME:
  *    grd3d_export_grdeclprops2.c
  *
@@ -27,7 +16,6 @@
  *    pfile          i     File name
  *    mode           i     File mode, 1 ascii, 0  is binary
  *    flag           i     0: new file, 1 append
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Void function
@@ -37,30 +25,26 @@
  ******************************************************************************
  */
 
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
 
-void grd3d_export_grdeclprop2 (
-                               int nx,
-                               int ny,
-                               int nz,
-                               int ptype,
-                               int *p_iprop_v,
-                               float *p_fprop_v,
-                               double *p_dprop_v,
-                               char *pname,
-                               char *filename,
-                               int mode,
-                               int flag,
-                               int debug
-                               )
+void
+grd3d_export_grdeclprop2(int nx,
+                         int ny,
+                         int nz,
+                         int ptype,
+                         int *p_iprop_v,
+                         float *p_fprop_v,
+                         double *p_dprop_v,
+                         char *pname,
+                         char *filename,
+                         int mode,
+                         int flag)
 
 {
     long nlen;
     FILE *fc = NULL;
-
-    char sbn[24] = "grd3d_exp..grdeclprop2";
-    xtgverbose(debug);
-
-    xtg_speak(sbn, 2,"Enter %s", sbn);
 
     /*
      *-------------------------------------------------------------------------
@@ -68,24 +52,25 @@ void grd3d_export_grdeclprop2 (
      *-------------------------------------------------------------------------
      */
 
-    if (mode == 0) xtg_speak(sbn, 2,"Opening binary GRDECL file...");
-    if (mode == 1) xtg_speak(sbn, 2,"Opening text GRDECL file...");
+    if (mode == 0)
+        logger_info(LI, FI, FU, "Opening binary GRDECL file...");
+    if (mode == 1)
+        logger_info(LI, FI, FU, "Opening text GRDECL file...");
 
-    if (flag == 0) fc = fopen(filename, "wb");
-    if (flag == 1) fc = fopen(filename, "ab");
+    if (flag == 0)
+        fc = fopen(filename, "wb");
+    if (flag == 1)
+        fc = fopen(filename, "ab");
 
-    if (fc == NULL) xtg_error(sbn, "Cannot open file!");
-
-
-    xtg_speak(sbn, 2,"Exporting property %s", pname);
+    if (fc == NULL)
+        logger_critical(LI, FI, FU, "Cannot open file: %s ", filename);
 
     nlen = nx * ny * nz;
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, pname, ptype, p_iprop_v, p_fprop_v,
-                              p_dprop_v, nlen, debug);
-    }
-    else{
+        grd3d_write_eclrecord(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen,
+                              XTGDEBUG);
+    } else {
         /* todo: smart analysis of values to decide formatting */
         char fmt[10] = " %8d";
         int ncol = 6;
@@ -93,9 +78,10 @@ void grd3d_export_grdeclprop2 (
             strcpy(fmt, " %13.4f");
         }
 
-        grd3d_write_eclinput(fc, pname, ptype, p_iprop_v, p_fprop_v,
-                             p_dprop_v, nlen, fmt, ncol, debug);
+        grd3d_write_eclinput(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen,
+                             fmt, ncol, XTGDEBUG);
     }
 
+    logger_info(LI, FI, FU, "Writing prop to (B)GRDECL file... done");
     fclose(fc);
 }

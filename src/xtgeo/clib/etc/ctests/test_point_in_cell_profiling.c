@@ -8,7 +8,7 @@ int main () {
     int ib, ier, inside, i;
     double nvector[4], line_v[6], point_v[3], c[24], myz;
     int    debug=1, nx, ny, nz, numact, numsubs;
-    int    *p_actnum_v, *p_subgrd_v, ns;
+    int    *actnumsv, *p_subgrd_v, ns;
     double *coordsv, *zcornsv;
     char file[70];
     double x, y, z, zadd;
@@ -30,13 +30,13 @@ int main () {
     /* allocate */
     coordsv = calloc((nx+1)*(ny+1)*2*3,sizeof(double));
     zcornsv = calloc(nx*ny*(nz+1)*4,sizeof(double));
-    p_actnum_v = calloc(nx*ny*nz,sizeof(int));
+    actnumsv = calloc(nx*ny*nz,sizeof(int));
     p_subgrd_v = calloc(1,sizeof(int));
 
 
     printf("Reading grid\n");
     grd3d_import_roff_grid(&numact, &numsubs, coordsv, zcornsv,
-			   p_actnum_v, p_subgrd_v, 1, file, debug);
+			   actnumsv, p_subgrd_v, 1, file, debug);
 
     printf("Reading grid done\n");
 
@@ -59,7 +59,7 @@ int main () {
     /*     		       nz, */
     /*     		       coordsv, */
     /*     		       zcornsv, */
-    /*     		       p_actnum_v, */
+    /*     		       actnumsv, */
     /*     		       5, */
     /*     		       1, */
     /*     		       &ns, */

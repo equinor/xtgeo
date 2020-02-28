@@ -39,7 +39,7 @@ grd3d_calc_xyz(int nx,
                long ncoord,
                double *zcornsv,
                long nzcorn,
-               int *p_actnum_v,
+               int *actnumsv,
                long nact,
                double *p_x_v,
                long npx,
@@ -72,7 +72,7 @@ grd3d_calc_xyz(int nx,
                 p_y_v[ic] = yv;
                 p_z_v[ic] = zv;
 
-                if (option == 1 && p_actnum_v[ib] == 0) {
+                if (option == 1 && actnumsv[ib] == 0) {
                     p_x_v[ic] = UNDEF;
                     p_y_v[ic] = UNDEF;
                     p_z_v[ic] = UNDEF;

@@ -12,9 +12,9 @@
  *
  * ARGUMENTS:
  *    nx...nz        i     Dimensions
- *    coordsv      i     Coordinates (with size)
- *    zcornsv      i     Z corners (with size)
- *    p_actnum_v     i     ACTNUM (with size)
+ *     coordsv       i     Coordinates (with size)
+ *    zcornsv        i     Z corners (with size)
+ *    actnumsv       i     ACTNUM (with size)
  *    dx            i/o    Array to be updated
  *    dy            i/o    Array to be updated
  *    option1        i     If 1, set dx dy to UNDEF for inactive cells
@@ -43,7 +43,7 @@ grd3d_calc_dxdy(int nx,
                 long ncoord,
                 double *zcornsv,
                 long nzcorn,
-                int *p_actnum_v,
+                int *actnumsv,
                 long nactnum,
                 double *dx,
                 long ndx,
@@ -75,7 +75,7 @@ grd3d_calc_dxdy(int nx,
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-                if (option1 == 1 && p_actnum_v[ib] == 0) {
+                if (option1 == 1 && actnumsv[ib] == 0) {
                     dx[ic] = UNDEF;
                     dy[ic] = UNDEF;
                     continue;

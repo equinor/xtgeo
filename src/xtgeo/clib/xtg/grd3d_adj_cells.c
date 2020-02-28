@@ -10,9 +10,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions I J K in input
- *    coordsv      i     Grid Z coord for input
- *    zcornsv      i     Grid Z corners for input
- *    p_actnum_v     i     Grid ACTNUM parameter input
+ *     coordv       i     Grid Z coord for input
+ *    zcornsv        i     Grid Z corners for input
+ *    actnumsv       i     Grid ACTNUM parameter input
  *    p_prop1        i     Grid Z coord for output
  *    nprop          i     Number of cells in gridprop (shall be nx*ny*nz)
  *    val1           i     value1 (basic value)
@@ -44,7 +44,7 @@ grd3d_adj_cells(int ncol,
                 long ncoordin,
                 double *zcornsv,
                 long nzcornin,
-                int *p_actnum_v,
+                int *actnumsv,
                 long nactin,
                 int *p_prop1,
                 long nprop1,
@@ -68,7 +68,7 @@ grd3d_adj_cells(int ncol,
 
     for (ib = 0; ib < nprop1; ib++) {
         if (iflag1 == 0)
-            useactnum[ib] = p_actnum_v[ib];
+            useactnum[ib] = actnumsv[ib];
         if (iflag1 == 1)
             useactnum[ib] = 1;
         p_prop2[ib] = 0;

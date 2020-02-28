@@ -9,9 +9,9 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz       i     NCOL, NROW, NLAY dimens
- *    coordsv       i/o    Cornerlines, pillars w/ numpy dimensions
- *    zcornsv       i/o    ZCORN w/ numpy dimensions
- *    p_actnum_v      i/o    ACTNUM values w/ numpy dimensions
+ *    coordsv         i/o    Cornerlines, pillars w/ numpy dimensions
+ *    zcornsv         i/o    ZCORN w/ numpy dimensions
+ *    actnumsv        i/o    ACTNUM values w/ numpy dimensions
  *
  * RETURNS:
  *    Function: 0: upon success. Update pointers in-place
@@ -35,7 +35,7 @@ grd3d_reverse_jrows(int nx,
                     long ncoord,
                     double *zcornsv,
                     long nzcorn,
-                    int *p_actnum_v,
+                    int *actnumsv,
                     long nact
     )
 
@@ -111,12 +111,12 @@ grd3d_reverse_jrows(int nx,
             for (i = 1; i <= nx; i++) {
                 ib1 = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 ib2 = x_ijk2ib(i, ny - j + 1, k, nx, ny, nz, 0);
-                itmp[ib1] = p_actnum_v[ib2];
+                itmp[ib1] = actnumsv[ib2];
             }
         }
     }
     for (ic = 0; ic < ntot; ic++)
-        p_actnum_v[ic] = itmp[ic];
+        actnumsv[ic] = itmp[ic];
     free(itmp);
 
     return EXIT_SUCCESS;

@@ -9,9 +9,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions I J K in input
- *    coordsv      i     Grid Z coord for input
- *    zcornsv      i     Grid Z corners for input
- *    p_actnum_v     i     Grid ACTNUM parameter input
+ *     coordsv       i     Grid Z coord for input
+ *    zcornsv        i     Grid Z corners for input
+ *    actnumsv       i     Grid ACTNUM parameter input
  *    ib1            i     Cell count position1
  *    ib2            i     Cell count position2
  *    debug          i     Debug level

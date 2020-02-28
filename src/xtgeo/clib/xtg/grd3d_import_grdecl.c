@@ -10,9 +10,9 @@
  * ARGUMENTS:
  *    fc             i     File handler
  *    nx, ny, nz     i     Dimensions
- *    coordsv     i/o    Coordinate vector (xtgeo fmt)
- *    zcornsv     i/o    ZCORN vector (xtgeo fmt)
- *    p_actnum_v    i/o    ACTNUM vector (xtgeo fmt)
+ *    coordsv       i/o    Coordinate vector (xtgeo fmt)
+ *    zcornsv       i/o    ZCORN vector (xtgeo fmt)
+ *    actnumsv      i/o    ACTNUM vector (xtgeo fmt)
  *    nact           o     Number of active cells
  *
  * RETURNS:
@@ -39,7 +39,7 @@ void grd3d_import_grdecl (
     long ncoord,
     double *zcornsv,
     long nzcorn,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactnum,
     int *nact
     )
@@ -192,7 +192,7 @@ void grd3d_import_grdecl (
 		for (j=1; j<=ny; j++) {
 		    for (i=1; i<=nx; i++) {
 			if (fscanf(fc,"%d",&dvalue)==1) {
-			    p_actnum_v[ib++]=dvalue;
+			    actnumsv[ib++]=dvalue;
 			    if (dvalue==1) nn++;
 			}
 			else{

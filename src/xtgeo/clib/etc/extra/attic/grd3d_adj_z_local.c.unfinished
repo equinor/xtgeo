@@ -23,7 +23,7 @@ void grd3d_adj_z_local (
 			     int nz,
 			     double *coordsv,
 			     double *zcornsv,
-			     int *p_actnum_v,
+			     int *actnumsv,
 			     int iuse,
 			     int juse,
 			     int kuse,
@@ -57,7 +57,7 @@ void grd3d_adj_z_local (
 			    ny,
 			    nz,
 			    zcornsv,
-			    p_actnum_v,
+			    actnumsv,
 			    0.001,
 			    debug
 			    );
@@ -89,7 +89,7 @@ void grd3d_adj_z_local (
 			    ny,
 			    nz,
 			    zcornsv,
-			    p_actnum_v,
+			    actnumsv,
 			    0.001,
 			    debug
 			    );

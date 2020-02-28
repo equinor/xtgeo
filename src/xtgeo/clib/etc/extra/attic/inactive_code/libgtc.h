@@ -172,7 +172,7 @@ void grd3d_import_eclipse_grid (
  * num_subs        = (O) Number of sub_grids
  * coordsv       = (O) Holds the top and bottom pillar XYZ coords
  * zcornsv       = (O) Holds the top 4 Z corners of each cell
- * p_actnum_v      = (O) Holds ACTNUM array
+ * actnumsv      = (O) Holds ACTNUM array
  * p_subgrd_v      = (O) Small array that holds the number of layers pr sub.
  * filename        = (I) Name of file
  * debug           = (I) A.a.
@@ -183,8 +183,8 @@ void grd3d_import_roff_grid (
 			    int     *num_act,
 			    int     *num_subs,
 			    float   *coordsv,
-			    float   *p_zgrd3d_v,
-			    int     *p_actnum_v,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    int     *p_subgrd_v,
 			    char    *filename,
 			    int     debug
@@ -229,8 +229,8 @@ void grd3d_import_grdecl (
 			  int     ny,
 			  int     nz,
 			  float   *coordsv,
-			  float   *p_zgrd3d_v,
-			  int     *p_actnum_v,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  char    *filename,
 			  int     debug
 			  );
@@ -308,8 +308,8 @@ void grd3d_export_roff_grid (
 			    float   yscale,
 			    float   zscale,
 			    float   *coordsv,
-			    float   *p_zgrd3d_v,
-			    int     *p_actnum_v,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    int     *p_subgrd_v,
 			    char    *filename,
 			    int     debug
@@ -360,8 +360,8 @@ void grd3d_export_grdecl (
 			  int     ny,
 			  int     nz,
 			  float   *coordsv,
-			  float   *p_zgrd3d_v,
-			  int     *p_actnum_v,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  char    *filename,
 			  int     debug
 			  );
@@ -376,7 +376,7 @@ void grd3d_export_eclipse_grid (
 				int     nz,
 				float   *coordsv,
 				float   *zcornsv,
-				int     *p_actnum_v,
+				int     *actnumsv,
 				char    *filename,
 				int     mode,
 				int     debug
@@ -388,7 +388,7 @@ void grd3d_export_eclipse_pstart (
 				  int     nx,
 				  int     ny,
 				  int     nz,
-				  int     *p_actnum_v,
+				  int     *actnumsv,
 				  char    *filename,
 				  int     debug
 				  );
@@ -405,7 +405,7 @@ void grd3d_export_eclipse_param (
 				 double  *double_v,
 				 char    **string_v,
 				 int     *logi_v,
-				 int     *p_actnum_v,
+				 int     *actnumsv,
 				 char    *filename,
 				 int     debug
 				 );
@@ -521,7 +521,7 @@ void grd3d_corners (
 		    int     ny,
 		    int     nz,
 		    float   *coordsv,
-		    float   *p_zgrd3d_v,
+		    float   *zcornsv,
 		    float   corners[],
 		    int     debug
 		    );
@@ -550,7 +550,7 @@ void grd3d_make_z_consistent (
 			      int   ny,
 			      int   nz,
 			      float *zcornsv,
-			      int   *p_actnum_v,
+			      int   *actnumsv,
 			      float zsep,
 			      int   debug
 			      );
@@ -593,7 +593,7 @@ void grd3d_calc_sum_dz(
 		      int ny,
 		      int nz,
 		      float *p_grd3d_v,
-		      int   *p_actnum_v,
+		      int   *actnumsv,
 		      float *p_dz_v,
 		      int   debug
 		      );
@@ -614,7 +614,7 @@ void grd3d_fault_marks(
 		       int nz,
 		       float *coordsv,
 		       float *zcornsv,
-		       int   *p_actnum_v,
+		       int   *actnumsv,
 		       int   *p_fmark_v,
 		       float flimit,
 		       int   debug
@@ -689,7 +689,7 @@ void grd3d_adj_z_from_map (
 			   int nz,
 			   float *coordsv,
 			   float *zcornsv,
-			   int   *p_actnum_v,
+			   int   *actnumsv,
 			   int mx,
 			   int my,
 			   float xmin,

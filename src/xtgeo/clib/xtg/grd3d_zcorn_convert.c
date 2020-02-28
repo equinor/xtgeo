@@ -24,7 +24,7 @@
  * ARGUMENTS:
  *    nx, ny, nc     i     Dimensions
  *    zcorn          i     ZCORN as input from Eclipse
- *    coordsv      o     XTgeo's ZCORN repr
+ *    coordsv        o     XTgeo's ZCORN repr
  *    option         i     Options flag for later usage
  *
  * RETURNS:

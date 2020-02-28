@@ -211,7 +211,6 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None):
         pfile,
         mode,
         appendmode,
-        XTGDEBUG,
     )
 
     _gridprop_lowlevel.delete_carray(self, carray)

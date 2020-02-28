@@ -14,8 +14,8 @@
  *    nx, ny, nx     i     Grid I J K
  *    *flip          i     Flip for X Y Z coords
  *    *shift         i     Shift for X Y Z coords
- *    coordsv     i/o    Coordinates vector
- *    zcornsv     i/o    Corners vector
+ *    coordsv       i/o    Coordinates vector
+ *    zcornsv       i/o    Corners vector
  *    debug          i     Debug level
  *
  * RETURNS:

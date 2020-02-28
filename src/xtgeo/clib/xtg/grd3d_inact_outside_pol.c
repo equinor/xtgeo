@@ -58,7 +58,7 @@ grd3d_inact_outside_pol(double *p_xp_v,
                         long ncoordin,
                         double *zcornsv,
                         long nzcornin,
-                        int *p_actnum_v,
+                        int *actnumsv,
                         long nact,
                         int k1,
                         int k2,
@@ -120,10 +120,10 @@ grd3d_inact_outside_pol(double *p_xp_v,
                 }
 
                 if (option == 0 && iflag == 1) {
-                    p_actnum_v[ib] = 0;
+                    actnumsv[ib] = 0;
                 }
                 if (option == 1 && iflag > 0 && iflag == npoly) {
-                    p_actnum_v[ib] = 0;
+                    actnumsv[ib] = 0;
                 }
             }
         }

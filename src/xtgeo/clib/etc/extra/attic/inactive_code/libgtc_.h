@@ -93,8 +93,8 @@ void import_roff_ascii_grid (
 			     int     *num_act,
 			     int     *num_subgrds,
 			     float   *coordsv,
-			     float   *p_zgrd3d_v,
-			     int     *p_actnum_v,
+			     float   *zcornsv,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     char    *filename,
 			     int     debug
@@ -104,8 +104,8 @@ void import_roff_binary_grid (
 			      int     *num_act,
 			      int     *num_subgrds,
 			      float   *coordsv,
-			      float   *p_zgrd3d_v,
-			      int     *p_actnum_v,
+			      float   *zcornsv,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      char    *filename,
 			      int     debug
@@ -157,8 +157,8 @@ void roff_to_gtc_grid (
 		       int     *num_act,
 		       int     *num_subgrds,
 		       float   *coordsv,
-		       float   *p_zgrd3d_v,
-		       int     *p_actnum_v,
+		       float   *zcornsv,
+		       int     *actnumsv,
 		       int     *p_subgrd_v,
 		       int     debug
 		       );

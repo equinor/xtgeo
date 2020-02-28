@@ -15,7 +15,7 @@
  * *************************************************************************************************
  *                        GRD3D_IMPORT_ECLIPSE_PROP
  * *************************************************************************************************
- * This is the format for INIT and restart files. 
+ * This is the format for INIT and restart files.
  *
  * 'INTEHEAD'         200 'INTE'
  * -1617152669        9701           2       -2345       -2345       -2345
@@ -35,7 +35,7 @@
  *
  * -------------------------------------------------------------------------------------------------
  * Parameter list:
- * ftype                Type of file: 
+ * ftype                Type of file:
  *                      1 = Binary INIT file
  *                      2 = ASCII  INIT file
  *                      3 = Binary RESTART file (non-unified)
@@ -44,7 +44,7 @@
  *                      6 = ASCII  RESTART file (unified)
  *
  * nxyz                 Total number of cells, estimated by calling routine
- * p_actnum_v           Active cell array (input)
+ * actnumsv           Active cell array (input)
  * nklist               Number of keywords to look for (input)
  * klist                Keywords to look for (one string PORO|PERMX|...|)
  * ndates               Number of dates entries to look for
@@ -53,9 +53,9 @@
  * year                 array of year (e.g. 2010)
  * filename             Name of file to read from
  * dvector_v            Array of double; will be filled. NB stores also float and ints!
- * nktype               Returning the _type_ the _actual_ keys found, 
+ * nktype               Returning the _type_ the _actual_ keys found,
  *                      1=int, 2=float/real, 3=double, -1=means undef (ie keyword not found)
- *                      nktype[0]=2 means that first keyword asked for is FLOAT (or REAL) 
+ *                      nktype[0]=2 means that first keyword asked for is FLOAT (or REAL)
  * norder               Returning the actual order. For instance, the input list
  *                      0=PORO,1=PERMX,2=PORV,3=PERMY. This can for example return the actual
  *                      "found-in-order" list:
@@ -68,18 +68,18 @@
  *                      reuested was found, but not the two next
  * debug                Debug (verbose) level
  * -------------------------------------------------------------------------------------------------
- */   
+ */
 
 void grd3d_import_ecl_prop (
 			     int    ftype,
 			     int    nxyz,
-			     int    *p_actnum_v,
+			     int    *actnumsv,
 			     int    nklist,
 			     char   *klist,
 			     int    ndates,
 			     int    *day,
 			     int    *month,
-			     int    *year,			     
+			     int    *year,
 			     char   *filename,
 			     double *dvector_v,
 			     int    *nktype,
@@ -122,11 +122,11 @@ void grd3d_import_ecl_prop (
      */
 
     /* get the first token */
-    token = strtok(klist, sep); 
+    token = strtok(klist, sep);
     nn=0;
     while (token != NULL) {
        strcpy(tmp_keywords[nn],token);
-       xtg_speak(s,1,"Keyword no %d: [%s]",nn,tmp_keywords[nn]);       
+       xtg_speak(s,1,"Keyword no %d: [%s]",nn,tmp_keywords[nn]);
        token = strtok(NULL, sep);
        nn++;
     }
@@ -139,9 +139,9 @@ void grd3d_import_ecl_prop (
      *----------------------------------------------------------------------------------------------
      */
 
-    xtg_speak(s,2,"Allocating memory ...");       
+    xtg_speak(s,2,"Allocating memory ...");
     // max_alloc_int = system('kw_list_largest.pl ) something like this ...
-       
+
     max_alloc_int    = 100*nxyz;
     max_alloc_float  = 100*nxyz;
     max_alloc_double = 100*nxyz;
@@ -155,10 +155,10 @@ void grd3d_import_ecl_prop (
 
 
     /* the string vector is 2D */
-    tmp_string_v=calloc(max_alloc_char, sizeof(char *)); 
+    tmp_string_v=calloc(max_alloc_char, sizeof(char *));
     for (i=0; i<max_alloc_char; i++) tmp_string_v[i]=calloc(9, sizeof(char));
 
-    xtg_speak(s,2,"Allocating memory ... DONE");       
+    xtg_speak(s,2,"Allocating memory ... DONE");
 
     /*
      *----------------------------------------------------------------------------------------------
@@ -168,14 +168,14 @@ void grd3d_import_ecl_prop (
     xtg_speak(s,2,"Opening %s",filename);
 
     strcpy(fmode,"r");
-    if (ftype==1 || ftype==3 || ftype==5) strcpy(fmode,"rb"); 
+    if (ftype==1 || ftype==3 || ftype==5) strcpy(fmode,"rb");
 
     fc=fopen(filename,fmode);
 
     xtg_speak(s,2,"Finish opening %s",filename);
-    
+
     xtg_speak(s,2,"Number of requested keys: %d",nklist);
-    
+
     /* initialise a success array for dates */
     for (i=0;i<ndates;i++) {
 	dsuccess[i]=0;
@@ -194,12 +194,12 @@ void grd3d_import_ecl_prop (
      * START READING!
      *==============================================================================================
      */
-    
+
     xtg_speak(s,1,"Looking for data... scanning file...");
 
 
     while (ios == 0) {
-	
+
 
 	if (ftype == 1 || ftype==3 || ftype==5) {
 	    ios=u_read_ecl_bin_record (
@@ -234,8 +234,8 @@ void grd3d_import_ecl_prop (
 				       fc,
 				       debug
 				       );
-	}	    
-	
+	}
+
 
 	if (ios != 0) break;
 
@@ -244,7 +244,7 @@ void grd3d_import_ecl_prop (
 
 
 
-	
+
 
 	xtg_speak(s,3,"NKFOUND is %d and $nklist is %d", nkfound, nklist);
 
@@ -259,7 +259,7 @@ void grd3d_import_ecl_prop (
 	}
 
 
-	/* 
+	/*
 	 * -----------------------------------------------------------------------------------------
 	 * The RESTART LOOP
 	 * See if dates are matching, and if so, turn on "look for property flag": iproplook
@@ -267,7 +267,7 @@ void grd3d_import_ecl_prop (
 	 */
 	if (ndates>0 && iproplook==0) {
 	    xtg_speak(s,2,"Looking for dates...");
-	    
+
 	    nkfound=0;
 
 
@@ -275,10 +275,10 @@ void grd3d_import_ecl_prop (
 		aday   = tmp_int_v[64];
 		amonth = tmp_int_v[65];
 		ayear  = tmp_int_v[66];
-		
+
 		xtg_speak(s,2,"INTEHEAD found...");
 		xtg_speak(s,1,"Restart date is %d %d %d ...",aday, amonth, ayear);
-	    
+
 		/* see if input dates matches */
 		for (i=0; i<ndates; i++) {
 		    if (day[i] == aday && month[i] == amonth && year[i] == ayear) {
@@ -300,7 +300,7 @@ void grd3d_import_ecl_prop (
 	}
 
 
-	/* 
+	/*
 	 * -----------------------------------------------------------------------------------------
 	 * The PROPERTY LOOP
 	 * See if keywords are matching (within a date SEQNUM if restart)
@@ -311,30 +311,30 @@ void grd3d_import_ecl_prop (
 
 	if (iproplook==1 && nkfound<nklist) {
 	    xtg_speak(s,2,"Property to look for is <%s>",cname);
-	    
-	    
+
+
 	    for (nn=0; nn<nklist; nn++) {
 		strcpy(keyword,tmp_keywords[nn]);
-		xtg_speak(s,2,"Looking for <%s>",keyword); 
+		xtg_speak(s,2,"Looking for <%s>",keyword);
 		if (strncmp(cname, keyword,8) == 0) {
-		    
+
 		    xtg_speak(s,2,"--> Found keyword: <%s>",cname);
-		    nkfound++;		    
+		    nkfound++;
 
 		    /* map the tmp_* to the actual keyword */
 
  		    if (strcmp(ctype, "REAL") == 0) {
 			xtg_speak(s,2,"--> Reading REALs...");
-			
+
 			nktype[nn]  = 2;
 			norder[nn]  = nd_counter;
 			nd_counter++;
-			
+
 			i=0;
 			for (ib=0;ib<nxyz;ib++) {
 			    /* only active cells are stored... normal for PORO etc*/
 			    if (nact<nxyz) {
-				if (p_actnum_v[ib]==1) {
+				if (actnumsv[ib]==1) {
 				    dvector_v[iprop]=tmp_float_v[i];
 				    i++;
 				}
@@ -342,11 +342,11 @@ void grd3d_import_ecl_prop (
 				    dvector_v[iprop]=UNDEF;
 				}
 			    }
-			    
+
 			    /* all cells are stored... normal for PORV */
 			    else{
 				xtg_speak(s,4,"IF and IB  %d  %d", iprop, ib);
-				
+
 				dvector_v[iprop]=tmp_float_v[i];
 				i++;
 			    }
@@ -355,16 +355,16 @@ void grd3d_import_ecl_prop (
 		    }
 		    else  if (strcmp(ctype, "DOUB") == 0) {
 			xtg_speak(s,2,"--> Reading DOUBs...");
-			
+
 			nktype[nn]  = 3;
 			norder[nn]  = nd_counter;
 			nd_counter++;
-			
+
 			i=0;
 			for (ib=0;ib<nxyz;ib++) {
 			    /* only active cells are stored... normal for PORO etc*/
 			    if (nact<nxyz) {
-				if (p_actnum_v[ib]==1) {
+				if (actnumsv[ib]==1) {
 				    dvector_v[iprop]=tmp_double_v[i];
 				    i++;
 				}
@@ -372,11 +372,11 @@ void grd3d_import_ecl_prop (
 				    dvector_v[iprop]=UNDEF;
 				}
 			    }
-			    
+
 			    /* all cells are stored... normal for PORV */
 			    else{
 				xtg_speak(s,4,"IF and IB  %d  %d", iprop, ib);
-				
+
 				dvector_v[iprop]=tmp_double_v[i];
 				i++;
 			    }
@@ -385,16 +385,16 @@ void grd3d_import_ecl_prop (
 		    }
  		    else if (strcmp(ctype, "INTE") == 0) {
 			xtg_speak(s,2,"--> Reading INTEs...");
-			
+
 			nktype[nn]  = 1;
 			norder[nn] = nd_counter;
 			nd_counter++;
-			
+
 			i=0;
 			for (ib=0;ib<nxyz;ib++) {
 			    /* only active cells are stored... normal for PORO etc*/
 			    if (nact<nxyz) {
-				if (p_actnum_v[ib]==1) {
+				if (actnumsv[ib]==1) {
 				    dvector_v[iprop]=tmp_int_v[i];
 				    i++;
 				}
@@ -402,11 +402,11 @@ void grd3d_import_ecl_prop (
 				    dvector_v[iprop]=UNDEF_INT;
 				}
 			    }
-			    
+
 			    /* all cells are stored... normal for PORV */
 			    else{
 				xtg_speak(s,4,"IF and IB  %d  %d", iprop, ib);
-				
+
 				dvector_v[iprop]=tmp_int_v[i];
 				i++;
 			    }
@@ -429,7 +429,7 @@ void grd3d_import_ecl_prop (
     for (i=0;i<ndates;i++) {
 	if (dsuccess[i]==0) {
 	    xtg_speak(s,1,"Date did not match anywhere: day=%d month=%d year=%d",day[i],month[i],year[i]);
-	    
+
 	}
     }
 
@@ -441,7 +441,7 @@ void grd3d_import_ecl_prop (
 
 	    for (nn=0; nn<nklist; nn++) {
 		strcpy(keyword,tmp_keywords[nn]);
-		xtg_speak(s,2,"Keyword is <%s>, type is <%d> and order is <%d>",keyword,nktype[nn],norder[nn]); 
+		xtg_speak(s,2,"Keyword is <%s>, type is <%d> and order is <%d>",keyword,nktype[nn],norder[nn]);
 	    }
 	}
     }
@@ -452,19 +452,19 @@ void grd3d_import_ecl_prop (
 
 
     /* free allocated space ... not needed?? */
-    
+
     /* if (tmp_int_v != NULL) { */
     /* 	xtg_speak(s,3,"Freeing allocated tmp arrays for INT:"); */
     /* 	free(tmp_int_v); */
     /* 	tmp_int_v = NULL; */
     /* } */
-    
+
     /* if (tmp_logi_v != NULL) { */
     /* 	xtg_speak(s,3,"Freeing allocated tmp arrays for LOGI:"); */
     /* 	free(tmp_logi_v); */
     /* 	tmp_logi_v = NULL; */
     /* } */
-    
+
     /* if (tmp_double_v != NULL) { */
     /* 	xtg_speak(s,3,"Freeing allocated tmp arrays for DOUBLE:"); */
     /* 	free(tmp_double_v); */
@@ -478,13 +478,11 @@ void grd3d_import_ecl_prop (
     /* } */
 
     /* xtg_speak(s,3,"Freeing allocated tmp arrays for STRING:"); */
-    
+
     /* for (i=0; i<max_alloc_char; i++) free(tmp_string_v[i]);  */
     /* free(tmp_string_v);  */
 
 
-    xtg_speak(s,4,"Freeing allocated tmp arrays...Finished!"); 
-    
+    xtg_speak(s,4,"Freeing allocated tmp arrays...Finished!");
+
 }
-
-

@@ -21,7 +21,7 @@ void grd3d_midpoint (
 		     int     ny,
 		     int     nz,
 		     double  *coordsv,
-		     double  *p_zgrd3d_v,
+		     double  *zcornsv,
 		     double  *x,
 		     double  *y,
 		     double  *z,
@@ -42,7 +42,7 @@ void grd3d_midpoint (
     /* get all 24 corners */
     xtg_speak(s,3,"Corners...");
 
-    grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, p_zgrd3d_v, 0, c);
+    grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, c);
     xtg_speak(s,3,"Corners... DONE");
 
     /* find the midpoint for X,Y,Z (is this OK algorithm?)*/

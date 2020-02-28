@@ -15,9 +15,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions
- *    coordsv      i     Grid coordinate lines w/ numpy dimensions
- *    zcornsv      i     Grid Z corners w/ numpy dimensions
- *    p_actnum_v     i     Grid ACTNUM parameter w/ numpy dimensions
+ *    coordsv        i     Grid coordinate lines w/ numpy dimensions
+ *    zcornsv        i     Grid Z corners w/ numpy dimensions
+ *    actnumsv       i     Grid ACTNUM parameter w/ numpy dimensions
  *    p_zon_v        i     Grid zone parameter
  *    nval           i     Position of last point for well log
  *    p_utme_v       i     East coordinate vector for well log
@@ -61,7 +61,7 @@ int grd3d_rpt_zlog_vs_zon(
     long ncoordin,
     double *zcornsv,
     long nzcorndin,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactin,
 
     int *p_zon_v,
@@ -205,7 +205,7 @@ int grd3d_rpt_zlog_vs_zon(
 		/* loop cells in simplified (one layer) grid */
 		ib=grd3d_point_in_cell(ibstart, 0, x, y, z, nx, ny, nz,
 				       coordsv,
-				       zcornsv, p_actnum_v,
+				       zcornsv, actnumsv,
 				       maxradsearch,
 				       sflag, &nradsearch,
 				       0, 0);
@@ -214,7 +214,7 @@ int grd3d_rpt_zlog_vs_zon(
 
 		if (ib>=0) {
 		    x_ib2ijk(ib,&i,&j,&k,nx,ny,nz,0);
-		    if (p_actnum_v[ib]==1) {
+		    if (actnumsv[ib]==1) {
 			nzone=p_zon_v[ib];
 
 			p_zsample_v[m]=nzone;

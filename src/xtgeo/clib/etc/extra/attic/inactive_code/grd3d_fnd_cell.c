@@ -30,8 +30,8 @@ int _grd3d_fnd_cell (
 		     int     ny,
 		     int     nz,
 		     float   *coordsv,
-		     float   *p_zgrd3d_v,
-		     int     *p_actnum_v,
+		     float   *zcornsv,
+		     int     *actnumsv,
 		     float   x,
 		     float   y,
 		     float   z,
@@ -60,14 +60,14 @@ int _grd3d_fnd_cell (
 
 	  /* get the cell corners */
 	  grd3d_corners(ii,jj,kk,nx,ny,nz,
-			coordsv, p_zgrd3d_v,
+			coordsv, zcornsv,
 			corners, debug);
 
 
 	  /* check if point is inside cell */
 
 	  ib=x_ijk2ib(ii,jj,kk,nx,ny,nz,0);
-	  ia=p_actnum_v[ib];
+	  ia=actnumsv[ib];
 	  ok=x_chk_point_in_cell(x,y,z,corners,1,debug);
 
 	  if (ok>0) {

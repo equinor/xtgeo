@@ -13,9 +13,9 @@
  *
  * ARGUMENTS:
  *    ncol..nlay     i     Dimensions
- *    coordsv     i/o    Coordinates (must be allocated in caller)
- *    zcornsv     i/o    Z corners (must be allocated in called)
- *    p_actnum_v    i/o    ACTNUM (must be allocated in caller)
+ *    coordsv       i/o    Coordinates (must be allocated in caller)
+ *    zcornsv       i/o    Z corners (must be allocated in called)
+ *    actnumsv      i/o    ACTNUM (must be allocated in caller)
  *    xori..zori     i     Origins
  *    xinc..zinc     i     Increments
  *    option         i     0: input is lower left (top) corner node; 1 input
@@ -45,7 +45,7 @@ void grd3d_from_cube (
                       long ncoord,
                       double *zcornsv,
                       long nzcorn,
-                      int *p_actnum_v,
+                      int *actnumsv,
                       long nactnum,
                       double xori,
                       double yori,
@@ -108,7 +108,7 @@ void grd3d_from_cube (
 
                for (nn = 0; nn < 4; nn++) zcornsv[ibz++] = zlevel;
 
-               if (k <= nlay) p_actnum_v[iba++] = 1;
+               if (k <= nlay) actnumsv[iba++] = 1;
 
            }
        }

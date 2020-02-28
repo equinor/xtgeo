@@ -11,7 +11,7 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz         i     Grid dimensions ncol, nrow, nlay
- *    zcornsv         i/o    Grid Z corners (with numpy dimensions)
+ *    zcornsv           i/o    Grid Z corners (with numpy dimensions)
  *    zsep               i     Minimum seperation distance
  *
  * RETURNS:

@@ -24,7 +24,7 @@
  * ARGUMENTS:
  *    i, j, k        i     Cell number (1 based)
  *    nx, ny, nz     i     Grid dimensions
- *    zcornsv      i     Z coordinates
+ *    zcornsv        i     Z coordinates
  *    option         i     Option: 0 return minimum, 1 return maximum
  *    debug          i     Debug level
  *

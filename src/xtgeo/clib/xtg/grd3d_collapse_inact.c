@@ -32,7 +32,7 @@ void grd3d_collapse_inact (
     int nz,
     double *zcornsv,
     long nzcornin,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactin
     )
 
@@ -52,7 +52,7 @@ void grd3d_collapse_inact (
 
 
 		ibp=x_ijk2ib(i,j,k-1,nx,ny,nz+1,0);
-		if (p_actnum_v[ibp]==1) {
+		if (actnumsv[ibp]==1) {
 		    iflag=1;
 		}
 
@@ -65,7 +65,7 @@ void grd3d_collapse_inact (
 		    ibp=x_ijk2ib(i,j,k-1,nx,ny,nz+1,0);
 		    /* find inactive cell */
 
-		    if (p_actnum_v[ibp]==0) {
+		    if (actnumsv[ibp]==0) {
 
 			/* find next active cell */
 			for (kk = k; kk <= nz+1; kk++) {
@@ -73,7 +73,7 @@ void grd3d_collapse_inact (
 			    if (kk < nz+1) {
 				ibx=x_ijk2ib(i,j,kk,nx,ny,nz+1,0);
 
-				if (p_actnum_v[ibx]==1) {
+				if (actnumsv[ibx]==1) {
 				    k2=kk;
 				    break;
 				}

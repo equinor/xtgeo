@@ -16,9 +16,9 @@
  *    cact
  *    crds           i     Input array flatened with 8 corners (* 3 = 24 xyz)
  *                         for all cells, length = nx * ny * nz * 24
- *    coordsv      o     Updated coord array
- *    zcornsv      o     Updated zcorn array
- *    p_actnum_v     o     Updated actnum array
+ *    coordsv        o     Updated coord array
+ *    zcornsv        o     Updated zcorn array
+ *    actnumsv       o     Updated actnum array
  *    debug          i     Debug level
  *
  * RETURNS:
@@ -49,7 +49,7 @@ void grd3d_conv_roxapi_grid (
     long ncoordin,
     double *zcornsv,
     long nzcornin,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactin
     )
 {
@@ -81,7 +81,7 @@ void grd3d_conv_roxapi_grid (
                 for (ic = 0; ic < 24; ic++) {
                     cellcorners[id][ic] = crds[nc++];
                 }
-                p_actnum_v[id] = cact[ia++];
+                actnumsv[id] = cact[ia++];
             }
         }
     }

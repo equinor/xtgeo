@@ -9,9 +9,9 @@
 *
 * ARGUMENTS:
 *    nx, ny, nz        i     Dimensions
-*    coordsv         o     Coordinate vector (with numpy dimensions)
-*    zcornsv         o     ZCORN vector (with numpy dimensions)
-*    p_actnum_v        o     ACTNUM vector (with numpy dimensions)
+*    coordsv           o     Coordinate vector (with numpy dimensions)
+*    zcornsv           o     ZCORN vector (with numpy dimensions)
+*    actnumsv          o     ACTNUM vector (with numpy dimensions)
 *    xori...zori       o     Return values for XYZ origin
 *    xmin, xmax, ...   o     Pointers to return values for X Y Z min and max
 *    rotation          o     rotation in degrees fro X axis anticlockwise,
@@ -52,7 +52,7 @@ grd3d_geometrics(int nx,
                  long ncoordin,
                  double *zcornsv,
                  long nzcornin,
-                 int *p_actnum_v,
+                 int *actnumsv,
                  long nactin,
                  double *xori,
                  double *yori,
@@ -160,7 +160,7 @@ grd3d_geometrics(int nx,
                         vzori = c[2];
                     }
 
-                    if ((option1 == 1 && p_actnum_v[ib] == 1) || option1 == 0 ||
+                    if ((option1 == 1 && actnumsv[ib] == 1) || option1 == 0 ||
                         option1 == 2) {
 
                         /* the x coords */
@@ -180,7 +180,7 @@ grd3d_geometrics(int nx,
                         }
 
                         /* the z coords */
-                        if (option1 == 0 || (option1 >= 1 && p_actnum_v[ib] == 1)) {
+                        if (option1 == 0 || (option1 >= 1 && actnumsv[ib] == 1)) {
                             for (n = 2; n < 24; n = n + 3) {
                                 if (vzmin > c[n])
                                     vzmin = c[n];
@@ -202,7 +202,7 @@ grd3d_geometrics(int nx,
                         vzori = zv;
                     }
 
-                    if ((option1 == 1 && p_actnum_v[ib] == 1) || option1 == 0 ||
+                    if ((option1 == 1 && actnumsv[ib] == 1) || option1 == 0 ||
                         option1 == 2) {
 
                         if (vxmin > xv)
@@ -215,7 +215,7 @@ grd3d_geometrics(int nx,
                         if (vymax < yv)
                             vymax = yv;
 
-                        if (option1 == 0 || (option1 >= 1 && p_actnum_v[ib] == 1)) {
+                        if (option1 == 0 || (option1 >= 1 && actnumsv[ib] == 1)) {
                             if (vzmin > zv)
                                 vzmin = zv;
                             if (vzmax < zv)
@@ -299,7 +299,7 @@ grd3d_geometrics(int nx,
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 ibn = x_ijk2ib(i, j, k + 1, nx, ny, nz, 0);
 
-                if (p_actnum_v[ib] == 1 && p_actnum_v[ibn] == 1) {
+                if (actnumsv[ib] == 1 && actnumsv[ibn] == 1) {
                     vdz_ic = fabs(tmp_z[ibn] - tmp_z[ib]);
                     vdz = (sumz + vdz_ic) / ic;
                     sumz = sumz + vdz_ic;

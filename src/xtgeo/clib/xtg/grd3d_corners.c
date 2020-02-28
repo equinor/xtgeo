@@ -21,8 +21,8 @@
  * ARGUMENTS:
  *    i, j, k        i     Cell number
  *    nx,ny,nz       i     Grid dimensions
- *    coordsv      i     Grid Z coord for input
- *    zcornsv      i     Grid Z corners for input
+ *    coordsv        i     Grid Z coord for input
+ *    zcornsv        i     Grid Z corners for input
  *    corners        o     Array, 24 length
  *
  * RETURNS:

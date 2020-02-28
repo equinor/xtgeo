@@ -15,7 +15,7 @@
  *     nx..nz          i      grid dimensions
  *     coordsv       i      grid coords
  *     zcornsv       i      grid zcorn
- *     p_actnum_v      i      grid active cell indicator
+ *     actnumsv      i      grid active cell indicator
  *     p_prop_v        i      property to work with
  *     value           o      value to return (UNDEF if not found)
  *     imin,.. kmax    i      cell index ranges in I J K
@@ -93,7 +93,7 @@ int grd3d_point_val_crange(
                            int nz,
                            double *coordsv,
                            double *zcornsv,
-                           int *p_actnum_v,
+                           int *actnumsv,
                            double *p_val_v,
                            double *value,
                            int imin,
@@ -152,7 +152,7 @@ int grd3d_point_val_crange(
         *ibs = ib;
         if (option < 0) return EXIT_SUCCESS;
 
-        if (p_actnum_v[ib] == 1) {
+        if (actnumsv[ib] == 1) {
             *value = p_val_v[ib];
         }
         return EXIT_SUCCESS;

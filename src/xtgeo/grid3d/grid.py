@@ -1003,7 +1003,7 @@ class Grid(Grid3D):
 
     def get_cactnum(self):
         """Returns the C pointer object reference to the ACTNUM array."""
-        return self._p_actnum_v  # the SWIG pointer to the C structure
+        return self._actnumsv  # the SWIG pointer to the C structure
 
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.

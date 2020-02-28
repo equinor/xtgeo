@@ -12,9 +12,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     3D grid dimensions I J K
- *    zcornsv      i     ZCorn values
- *    coordsv      i     Coord values
- *    p_actnum_v     i     ACTNUM values
+ *    zcornsv        i     ZCorn values
+ *    coordsv        i     Coord values
+ *    actnumsv       i     ACTNUM values
  *    klayer         i     Actual K layer to sample from...
  *    mx, my         i     Map dimension
  *    xori,xinc      i     Maps X settings
@@ -53,7 +53,7 @@ surf_sample_grd3d_lay(int nx,
                       long ncoord,
                       double *zcornsv,
                       long nzcorn,
-                      int *p_actnum_v,
+                      int *actnumsv,
                       long nact,
                       int klayer,
                       int mx,

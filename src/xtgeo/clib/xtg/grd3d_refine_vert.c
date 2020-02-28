@@ -13,9 +13,9 @@
  *
  * ARGUMENTS:
  *    nx .. nz       i     Dimensions
- *    coordsv      i     Coordinates
- *    zcornsv      i     Z corners input
- *    p_actnum_v     i     ACTNUM, input
+ *    coordsv        i     Coordinates
+ *    zcornsv        i     Z corners input
+ *    actnumsv       i     ACTNUM, input
  *    nzref          i     New NZ
  *    p_zcornref_v   o     Z corners output (must be allocated before)
  *    p_actnumref_v  o     ACTNUM, new (must be allocated)
@@ -43,7 +43,7 @@ grd3d_refine_vert(int nx,
 
                   double *zcornsv,
                   long nzcorn,
-                  int *p_actnum_v,
+                  int *actnumsv,
                   long nact,
 
                   int nzref,
@@ -78,7 +78,7 @@ grd3d_refine_vert(int nx,
                 rfactor = rfac[k - 1]; /* as array is 0 base */
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
-                iact = p_actnum_v[ib];
+                iact = actnumsv[ib];
 
                 for (ic = 1; ic <= 4; ic++) {
                     ztop = zcornsv[4 * ibt + 1 * ic - 1];

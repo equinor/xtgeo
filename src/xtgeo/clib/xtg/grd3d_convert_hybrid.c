@@ -40,7 +40,7 @@ _grd3d_convert_hybrid1(int nx,
                        int nz,
                        double *coordsv,
                        double *zcornsv,
-                       int *p_actnum_v,
+                       int *actnumsv,
                        int nzhyb,
                        double *p_zcornhyb_v,
                        int *p_actnumhyb_v,
@@ -81,11 +81,11 @@ _grd3d_convert_hybrid1(int nx,
                 }
                 /* now store top depth in input grid */
                 if (k <= nz) {
-                    if (p_actnum_v[ibp] == 1 && iflagt == 1) {
+                    if (actnumsv[ibp] == 1 && iflagt == 1) {
                         ztop = zsum / 4.0;
                         iflagt = 0;
                     }
-                    p_actnumhyb_v[ibh] = p_actnum_v[ibp];
+                    p_actnumhyb_v[ibh] = actnumsv[ibp];
                 }
             }
 
@@ -116,11 +116,11 @@ _grd3d_convert_hybrid1(int nx,
                 }
                 /* now bot depth from input grid */
                 if (k > 1) {
-                    if (p_actnum_v[inp] == 1 && iflagb == 1) {
+                    if (actnumsv[inp] == 1 && iflagb == 1) {
                         zbot = zsum / 4.0;
                         iflagb = 0;
                     }
-                    p_actnumhyb_v[inh] = p_actnum_v[inp];
+                    p_actnumhyb_v[inh] = actnumsv[inp];
                 }
                 khyb--;
             }
@@ -187,7 +187,7 @@ _grd3d_convert_hybrid2(int nx,
                        int nz,
                        double *coordsv,
                        double *zcornsv,
-                       int *p_actnum_v,
+                       int *actnumsv,
                        int nzhyb,
                        double *p_zcornhyb_v,
                        int *p_actnumhyb_v,
@@ -311,13 +311,13 @@ _grd3d_convert_hybrid2(int nx,
                 /* now store top depth in input grid; it will be needed for later usage
                  */
                 if (k <= nz) {
-                    if (p_actnum_v[ibp] == 1 && iflagt == 1) {
+                    if (actnumsv[ibp] == 1 && iflagt == 1) {
                         ztop = zsum / 4.0;
                         iflagt = 0;
                     }
 
                     /* inherit the ACTNUM */
-                    p_actnumhyb_v[ibh] = p_actnum_v[ibp];
+                    p_actnumhyb_v[ibh] = actnumsv[ibp];
                 }
             }
 
@@ -395,11 +395,11 @@ _grd3d_convert_hybrid2(int nx,
 
                 /* now bot depth from input grid */
                 if (k > 1) {
-                    if (p_actnum_v[inp] == 1 && iflagb == 1) {
+                    if (actnumsv[inp] == 1 && iflagb == 1) {
                         zbot = zsum / 4.0;
                         iflagb = 0;
                     }
-                    p_actnumhyb_v[inh] = p_actnum_v[inp];
+                    p_actnumhyb_v[inh] = actnumsv[inp];
                 }
                 khyb--;
             }
@@ -474,7 +474,7 @@ grd3d_convert_hybrid(int nx,
                      long ncoordin,
                      double *zcornsv,
                      long nzcornin,
-                     int *p_actnum_v,
+                     int *actnumsv,
                      long nactin,
 
                      int nzhyb,
@@ -495,11 +495,11 @@ grd3d_convert_hybrid(int nx,
 {
 
     if (region <= 0) {
-        _grd3d_convert_hybrid1(nx, ny, nz, coordsv, zcornsv, p_actnum_v, nzhyb,
+        _grd3d_convert_hybrid1(nx, ny, nz, coordsv, zcornsv, actnumsv, nzhyb,
                                p_zcornhyb_v, p_actnumhyb_v, toplevel, botlevel, ndiv);
     } else {
 
-        _grd3d_convert_hybrid2(nx, ny, nz, coordsv, zcornsv, p_actnum_v, nzhyb,
+        _grd3d_convert_hybrid2(nx, ny, nz, coordsv, zcornsv, actnumsv, nzhyb,
                                p_zcornhyb_v, p_actnumhyb_v, toplevel, botlevel, ndiv,
                                p_region_v, region);
     }

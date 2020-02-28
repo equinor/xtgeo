@@ -9,9 +9,9 @@
 *
 * ARGUMENTS:
 *    ncol, ..nlay   i     NCOL, NROW, NLAY
-*    coordsv      i     COORD array
-*    zcornsv      i     ZCORN array
-*    p_actnum_v     i     ACTNUM array
+*    coordsv          i     COORD array
+*    zcornsv        i     ZCORN array
+*    actnumsv       i     ACTNUM array
 *    tpillars       o     Top node pillars (ncol+1 * nrow+1)*3, nrow fastest
 *    bpillars       o     Base node pillars (ncol+1 * nrow+1)*3, nrow fastest
 *    zcorners       o     Z value pillars, 4 per pillar, per depth
@@ -38,7 +38,7 @@ grd3d_conv_grid_roxapi(int ncol,
                        long ncoordin,
                        double *zcornsv,
                        long nzcornin,
-                       int *p_actnum_v,
+                       int *actnumsv,
                        long nactin,
 
                        double *tpillars,

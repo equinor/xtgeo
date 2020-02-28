@@ -18,8 +18,8 @@
  *    xori..rotation      i     Map settings
  *    maptopi..mapbasj    i     Map arrays for I J top/base
  *    nx ny nz            i     Grid dimensions
- *    zcornsv           i     Grid Zcorn
- *    coordsv           i     Grid ZCORN
+ *    zcornsv             i     Grid Zcorn
+ *    coordsv             i     Grid ZCORN
  *    p_acnum_v           i     Grid ACTNUM
  *    p_val_v             i     3D Grid values
  *    p_zcornone_v        i     Grid ZCORN
@@ -172,7 +172,7 @@ grd3d_get_randomline(double *xvec,
                      long ncoordin,
                      double *zcornsv,
                      long nzcronin,
-                     int *p_actnum_v,
+                     int *actnumsv,
                      long nactin,
 
                      double *p_val_v,
@@ -229,7 +229,7 @@ grd3d_get_randomline(double *xvec,
             if (ier == 0) {
 
                 ios = grd3d_point_val_crange(xc, yc, zc, nx, ny, nz, coordsv,
-                                             zcornsv, p_actnum_v, p_val_v, &value, i1,
+                                             zcornsv, actnumsv, p_val_v, &value, i1,
                                              i2, j1, j2, k1, k2, &ibs2, 0, XTGDEBUG);
 
                 if (ios == 0) {

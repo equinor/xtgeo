@@ -12,8 +12,8 @@
  *
  * ARGUMENTS:
  *    nx...nz        i     Dimensions
- *    zcornsv      i     Z corners (with size)
- *    p_actnum_v     i     ACTNUM (with size)
+ *    zcornsv        i     Z corners (with size)
+ *    actnumsv       i     ACTNUM (with size)
  *    p_dz_v        i/o    Array to be updated
  *    flip           i     Vertical flip flag
  *    option         i     0: all cells, 1: make ACTNUM  UNDEF
@@ -40,7 +40,7 @@ void grd3d_calc_dz(
     int nz,
     double *zcornsv,
     long nzcorn,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactnum,
     double *p_dz_v,
     long ndz,
@@ -79,7 +79,7 @@ void grd3d_calc_dz(
 		p_dz_v[ic] = (double) flip * (bot_z_avg - top_z_avg);
 		// will do it correct for flipped grids
 
-		if (option == 1 && p_actnum_v[ib] == 0) {
+		if (option == 1 && actnumsv[ib] == 0) {
 		    p_dz_v[ic] = UNDEF;
 		}
 	    }

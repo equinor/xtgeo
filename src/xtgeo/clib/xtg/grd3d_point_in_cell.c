@@ -16,7 +16,7 @@
  *     nx..nz           grid dimensions
  *     coordsv        grid coords
  *     zcornsv        grid zcorn
- *     p_actnum_v       grid active cell indicator
+ *     actnumsv       grid active cell indicator
  *     p_prop_v         property to work with
  *     value            value to set
  *     ronly            replace-only-this value
@@ -67,7 +67,7 @@ int grd3d_point_in_cell(
 			int   nz,
 			double *p_coor_v,
 			double *zcornsv,
-			int   *p_actnum_v,
+			int   *actnumsv,
 			int   maxrad,
 			int   sflag,
 			int   *nradsearch,

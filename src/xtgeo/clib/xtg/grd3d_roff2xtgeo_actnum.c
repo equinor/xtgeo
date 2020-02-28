@@ -11,7 +11,7 @@
  * ARGUMENTS:
  *    nx, ny, nz       i     NCOL, NROW, NLAY dimens
  *    p_act_v          i     Input actnum array ROFF fmt
- *    p_actnum_v       o     Output actnum array XTGEO fmt
+ *    actnumsv         o     Output actnum array XTGEO fmt
  *    option           i     If 1, the all cells shall be regarded as active
  *
  * RETURNS:
@@ -34,7 +34,7 @@ int grd3d_roff2xtgeo_actnum (
                             int ny,
                             int nz,
                             int *p_act_v,
-                            int *p_actnum_v,
+                            int *actnumsv,
                             long nactnum,
                             int option
                             )
@@ -48,7 +48,7 @@ int grd3d_roff2xtgeo_actnum (
 
     if (option == 1) {
         for (ib=0; ib < nx * ny * nz; ib++) {
-            p_actnum_v[ib] = 1;
+            actnumsv[ib] = 1;
         }
         return nx * ny * nz;
     }
@@ -58,9 +58,9 @@ int grd3d_roff2xtgeo_actnum (
         for (j = 0;j < ny; j++) {
             for (k = 0;k < nz; k++) {
                 ib = (nz - (k + 1)) * ny * nx + j * nx + i;
-                p_actnum_v[ib] = p_act_v[ic];
+                actnumsv[ib] = p_act_v[ic];
                 ic += 1;
-                if (p_actnum_v[ib] == 1) nact++;
+                if (actnumsv[ib] == 1) nact++;
             }
         }
     }

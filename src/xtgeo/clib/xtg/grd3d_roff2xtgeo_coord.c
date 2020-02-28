@@ -14,7 +14,7 @@
  *    *offset          i     Offsets in XYZ spesified in ROFF
  *    *scale           i     Scaling in XYZ spesified in ROFF
  *    p_cornerlines_v  i     Input cornerlines array ROFF fmt
- *    coordsv        o     Output cornerlines array XTGEO fmt
+ *    coordsv          o     Output cornerlines array XTGEO fmt
  *
  * RETURNS:
  *    Function: 0: upon success. Update pointers

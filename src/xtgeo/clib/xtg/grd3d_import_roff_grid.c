@@ -78,7 +78,7 @@ void grd3d_import_roff_grid (
 			     int     *num_subgrds,
 			     double  *coordsv,
 			     double  *zcornsv,
-			     int     *p_actnum_v,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     int     nnsubs,
 			     char    *filename,
@@ -127,7 +127,7 @@ void grd3d_import_roff_grid (
 			       num_subgrds,
 			       coordsv,
 			       zcornsv,
-			       p_actnum_v,
+			       actnumsv,
 			       p_subgrd_v,
 			       nnsubs,
 			       filename,
@@ -141,7 +141,7 @@ void grd3d_import_roff_grid (
 				num_subgrds,
 				coordsv,
 				zcornsv,
-				p_actnum_v,
+				actnumsv,
 				p_subgrd_v,
 				nnsubs,
 				filename,
@@ -167,7 +167,7 @@ void _grd3d_imp_roff_asc_grd (
 			     int     *num_subgrds,
 			     double  *coordsv,
 			     double  *zcornsv,
-			     int     *p_actnum_v,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     int     nnsubs,
 			     char    *filename,
@@ -296,7 +296,7 @@ void _grd3d_imp_roff_asc_grd (
 	     */
 
 	    for (i=0; i<nx*ny*nz; i++) {
-		p_actnum_v[i]=1;
+		actnumsv[i]=1;
 	    }
 
 	}
@@ -433,7 +433,7 @@ void _grd3d_imp_roff_asc_grd (
 			iok=fscanf(fc,"%d",&ivalue);
 			/* map directly to XTG form */
 			ipos=(nz-(k+1))*ny*nx + j*nx + i;
-			p_actnum_v[ipos]=ivalue;
+			actnumsv[ipos]=ivalue;
 
 		    }
 		}
@@ -473,7 +473,7 @@ void _grd3d_imp_roff_asc_grd (
 			    num_subgrds,
 			    coordsv,
 			    zcornsv,
-			    p_actnum_v,
+			    actnumsv,
 			    p_subgrd_v,
 			    debug
 			    );
@@ -503,7 +503,7 @@ void _grd3d_imp_roff_bin_grd (
 			      int     *num_subgrds,
 			      double  *coordsv,
 			      double  *zcornsv,
-			      int     *p_actnum_v,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      int     nnsub,
 			      char    *filename,
@@ -712,8 +712,8 @@ void _grd3d_imp_roff_bin_grd (
 			    x_fread(&mybyte,1,1,fc,__FILE__,__LINE__);
 			    /* map directly to XTG form */
 			    ipos=(nz-(k+1))*ny*nx + j*nx + i;
-			    p_actnum_v[ipos]=mybyte;
-			    if (p_actnum_v[ipos]==1) nnact++;
+			    actnumsv[ipos]=mybyte;
+			    if (actnumsv[ipos]==1) nnact++;
 			}
 		    }
 		}
@@ -750,7 +750,7 @@ void _grd3d_imp_roff_bin_grd (
 			    num_subgrds,
 			    coordsv,
 			    zcornsv,
-			    p_actnum_v,
+			    actnumsv,
 			    p_subgrd_v,
 			    debug
 			    );
@@ -928,7 +928,7 @@ void _grd3d_roff_to_xtg_grid (
 			      int     *num_subgrds,
 			      double  *coordsv,
 			      double  *zcornsv,
-			      int     *p_actnum_v,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      int     debug
 			      )

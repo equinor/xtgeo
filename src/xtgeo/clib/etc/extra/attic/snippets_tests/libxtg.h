@@ -431,7 +431,7 @@ void map_slice_grd3d (
 		      int   nz,
 		      float *coordsv,
 		      float *zcornsv,
-		      int   *p_actnum_v,
+		      int   *actnumsv,
 		      int   mx,
 		      int   my,
 		      float xmin,
@@ -763,8 +763,8 @@ void grd3d_import_roff_grid (
 			    int     *num_act,
 			    int     *num_subgrds,
 			    float   *coordsv,
-			    float   *p_zgrd3d_v,
-			    int     *p_actnum_v,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    int     *p_subgrd_v,
 			    int     nnsub,
 			    char    *filename,
@@ -798,8 +798,8 @@ void grd3d_export_roff_grid (
 			    float   yoffset,
 			    float   zoffset,
 			    float   *coordsv,
-			    float   *p_zgrd3d_v,
-			    int     *p_actnum_v,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    int     *p_subgrd_v,
 			    char    *filename,
 			    int     debug
@@ -908,7 +908,7 @@ void grd3d_import_ecl_grid (
 void grd3d_import_ecl_prop (
 			    int    ftype,
 			    int    nxyz,
-			    int    *p_actnum_v,
+			    int    *actnumsv,
 			    int    nklist,
 			    char   *klist,
 			    int    ndates,
@@ -977,7 +977,7 @@ void grd3d_export_ecl_grid (
 			    int     nz,
 			    float   *coordsv,
 			    float   *zcornsv,
-			    int     *p_actnum_v,
+			    int     *actnumsv,
 			    char    *filename,
 			    int     mode,
 			    int     debug
@@ -989,7 +989,7 @@ void grd3d_export_ecl_pstart (
 			      int     nx,
 			      int     ny,
 			      int     nz,
-			      int     *p_actnum_v,
+			      int     *actnumsv,
 			      char    *filename,
 			      int     debug
 			      );
@@ -1006,7 +1006,7 @@ void grd3d_export_ecl_prop (
 			     double  *double_v,
 			     char    **string_v,
 			     int     *logi_v,
-			     int     *p_actnum_v,
+			     int     *actnumsv,
 			     char    *filename,
 			     int     debug
 			     );
@@ -1017,7 +1017,7 @@ void grd3d_import_grdecl (
 			  int     nz,
 			  float   *coordsv,
 			  float   *zcornsv,
-			  int     *p_actnum_v,
+			  int     *actnumsv,
 			  char    *filename,
 			  int     debug
 			  );
@@ -1028,7 +1028,7 @@ void grd3d_export_grdecl (
 			  int     nz,
 			  float   *coordsv,
 			  float   *zcornsv,
-			  int     *p_actnum_v,
+			  int     *actnumsv,
 			  char    *filename,
 			  int     debug
 			  );
@@ -1065,7 +1065,7 @@ void grd3d_export_flgrs(
 			int nz,
 			float *coordsv,
 			float *p_zc_v,
-			int   *p_actnum_v,
+			int   *actnumsv,
 			float flimit,
 			char  *file,
 			int   mdiv,
@@ -1083,7 +1083,7 @@ void grd3d_fault_marks(
 		       int nz,
 		       float *coordsv,
 		       float *zcornsv,
-		       int   *p_actnum_v,
+		       int   *actnumsv,
 		       int   *p_fmark_v,
 		       float flimit,
 		       int   debug
@@ -1095,7 +1095,7 @@ int grd3d_pol_ftrace(
 		     int    nz,
 		     float  *coordsv,
 		     float  *zcornsv,
-		     int    *p_actnum_v,
+		     int    *actnumsv,
 		     float  *p_fprop_v,
 		     float  *p_fprop2_v,
 		     int    klayer,
@@ -1127,7 +1127,7 @@ int grd3d_cell_faultthrows(
 			   int   nz,
 			   float *coordsv,
 			   float *zcornsv,
-			   int   *p_actnum_v,
+			   int   *actnumsv,
 			   float throw[],
 			   int   option,
 			   int   debug
@@ -1136,7 +1136,7 @@ int grd3d_cell_faultthrows(
 int grd3d_count_prop_int(
 			 int   nxyz,
 			 int   *p_nprop_v,
-			 int   *p_actnum_v,
+			 int   *actnumsv,
 			 int   nval,
 			 int   debug
 			 );
@@ -1148,7 +1148,7 @@ void grd3d_convert_hybrid (
 			   int   nz,
 			   float *coordsv,
 			   float *zcornsv,
-			   int   *p_actnum_v,
+			   int   *actnumsv,
 			   int   nzhyb,
 			   float *p_zcornhyb_v,
 			   int   *p_actnumhyb_v,
@@ -1165,7 +1165,7 @@ void grd3d_convert_hybrid2(
 			   int   nz,
 			   float *coordsv,
 			   float *zcornsv,
-			   int   *p_actnum_v,
+			   int   *actnumsv,
 			   int   nzhyb,
 			   float *p_zcornhyb_v,
 			   int   *p_actnumhyb_v,
@@ -1202,7 +1202,7 @@ void grd3d_make_z_consistent (
 			      int   ny,
 			      int   nz,
 			      float *zcornsv,
-			      int   *p_actnum_v,
+			      int   *actnumsv,
 			      float zsep,
 			      int   debug
 			      );
@@ -1225,7 +1225,7 @@ void grd3d_set_dz_cell (
 			int   ny,
 			int   nz,
 			float *zcornsv,
-			int   *p_actnum_v,
+			int   *actnumsv,
 			float zsep,
 			int   debug
 			);
@@ -1242,7 +1242,7 @@ int grd3d_point_in_cell(
 			int nz,
 			float *p_coor_v,
 			float *zcornsv,
-			int   *p_actnum_v,
+			int   *actnumsv,
 			int   option,
 			int   debug
 			);
@@ -1253,7 +1253,7 @@ void grd3d_collapse_inact (
 			   int   ny,
 			   int   nz,
 			   float *zcornsv,
-			   int   *p_actnum_v,
+			   int   *actnumsv,
 			   int   debug
 			   );
 
@@ -1266,7 +1266,7 @@ void grd3d_midpoint (
 		     int     ny,
 		     int     nz,
 		     float   *coordsv,
-		     float   *p_zgrd3d_v,
+		     float   *zcornsv,
 		     float   *x,
 		     float   *y,
 		     float   *z,
@@ -1282,7 +1282,7 @@ void grd3d_cellpoint (
 		      int     nz,
 		      int     ftype,
 		      float   *coordsv,
-		      float   *p_zgrd3d_v,
+		      float   *zcornsv,
 		      float   *x,
 		      float   *y,
 		      float   *z,
@@ -1301,7 +1301,7 @@ void grd3d_make_active(
 		       int     nx,
 		       int     ny,
 		       int     nz,
-		       int     *p_actnum_v,
+		       int     *actnumsv,
 		       int     debug
 		       );
 
@@ -1315,7 +1315,7 @@ void grd3d_inact_outs_pol(
 			  int     nz,
 			  float   *coordsv,
 			  float   *zcornsv,
-			  int     *p_actnum_v,
+			  int     *actnumsv,
 			  int     *p_subgrd_v,
 			  int     isub,
 			  int     nsub,
@@ -1333,7 +1333,7 @@ void grd3d_set_prop_by_pol(
 			   int    nz,
 			   float  *coordsv,
 			   float  *zcornsv,
-			   int    *p_actnum_v,
+			   int    *actnumsv,
 			   float  *p_prop_v,
 			   float  value,
 			   float  ronly,
@@ -1356,7 +1356,7 @@ void grd3d_set_prop_in_pol(
 			   int    nz,
 			   float  *coordsv,
 			   float  *zcornsv,
-			   int    *p_actnum_v,
+			   int    *actnumsv,
 			   int    *p_prop_v,
 			   float  value,
 			   int    i1,
@@ -1378,7 +1378,7 @@ void grd3d_split_prop_by_pol(
 			     int    nz,
 			     float  *coordsv,
 			     float  *zcornsv,
-			     int    *p_actnum_v,
+			     int    *actnumsv,
 			     int    *p_prop_v,
 			     float  *p_propfilter_v,
 			     float  filterval,
@@ -1397,7 +1397,7 @@ void grd3d_inact_by_dz(
 		       int ny,
 		       int nz,
 		       float *zcornsv,
-		       int   *p_actnum_v,
+		       int   *actnumsv,
 		       float threshold,
 		       int   flip,
 		       int   debug
@@ -1472,7 +1472,7 @@ int grd3d_count_active(
 		       int     nx,
 		       int     ny,
 		       int     nz,
-		       int    *p_actnum_v,
+		       int    *actnumsv,
 		       int debug
 		       );
 
@@ -1508,7 +1508,7 @@ int grd3d_prop_infill1_int(
 			   int k2,
 			   float *coordsv,
 			   float *zcornsv,
-			   int   *p_actnum_v,
+			   int   *actnumsv,
 			   int   *p_xxx_v,
 			   int   value,
 			   int   debug
@@ -1529,7 +1529,7 @@ void grd3d_interp_prop_verti(
 			     int   ny,
 			     int   nz,
 			     float *zcornsv,
-			     int   *p_actnum_v,
+			     int   *actnumsv,
 			     float *p_xxx_v,
 			     float bgval,
 			     float dzmax,
@@ -1546,7 +1546,7 @@ void grd3d_interp_prop_vertii(
 			      int   j1,
 			      int   j2,
 			      float *zcornsv,
-			      int   *p_actnum_v,
+			      int   *actnumsv,
 			      int   *p_xxx_v,
 			      int   bgval,
 			      float dzmax,
@@ -1566,7 +1566,7 @@ int grd3d_getcell_by_prop(
 			  int     k2,
 			  float   *coordsv,
 			  float   *zcornsv,
-			  int     *p_actnum_v,
+			  int     *actnumsv,
 			  float   *p_xxx_v,
 			  float   pmin,
 			  float   pmax,
@@ -1581,7 +1581,7 @@ void grd3d_calc_sum_dz(
 		       int ny,
 		       int nz,
 		       float *zcornsv,
-		       int   *p_actnum_v,
+		       int   *actnumsv,
 		       float *p_sumdz_v,
 		       int   flip,
 		       int   debug
@@ -1624,7 +1624,7 @@ void grd3d_corners (
 		    int     ny,
 		    int     nz,
 		    float   *coordsv,
-		    float   *p_zgrd3d_v,
+		    float   *zcornsv,
 		    float   corners[],
 		    int     debug
 		    );
@@ -1652,7 +1652,7 @@ void grd3d_pzcorns (
 		    int     ny,
 		    int     nz,
 		    float   *coordsv,
-		    float   *p_zgrd3d_v,
+		    float   *zcornsv,
 		    float   *p,
 		    int     *flag,
 		    int     debug
@@ -1665,7 +1665,7 @@ void grd3d_adj_z_from_zlog (
 			    int   nz,
 			    float *coordsv,
 			    float *zcornsv,
-			    int   *p_actnum_v,
+			    int   *actnumsv,
 			    int   *p_zon_v,
 			    int   nval,
 			    float *p_utme_v,
@@ -1684,7 +1684,7 @@ void grd3d_adj_z_from_map (
 			   int nz,
 			   float *coordsv,
 			   float *zcornsv,
-			   int *p_actnum_v,
+			   int *actnumsv,
 			   int mx,
 			   int my,
 			   float xmin,
@@ -1704,7 +1704,7 @@ void grd3d_adj_z_from_mapv2 (
 			     int nz,
 			     float *coordsv,
 			     float *zcornsv,
-			     int *p_actnum_v,
+			     int *actnumsv,
 			     int mx,
 			     int my,
 			     float xmin,
@@ -1722,7 +1722,7 @@ void grd3d_adj_z_from_mapv3 (
 			     int nz,
 			     float *coordsv,
 			     float *zcornsv,
-			     int *p_actnum_v,
+			     int *actnumsv,
 			     int mx,
 			     int my,
 			     float xmin,
@@ -1786,7 +1786,7 @@ int grd3d_set_active(
 		     int   j2,
 		     int   k1,
 		     int   k2,
-		     int   *p_actnum_v,
+		     int   *actnumsv,
 		     int   debug
 		     );
 
@@ -1795,7 +1795,7 @@ void grd3d_zdominance_int(
 			  int   ny,
 			  int   nz,
 			  float *zcornsv,
-			  int   *p_actnum_v,
+			  int   *actnumsv,
 			  int   *p_xxx_v,
 			  int   option,
 			  int   debug

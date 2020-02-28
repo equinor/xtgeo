@@ -463,7 +463,7 @@ surf_slice_grd3d(int mcol,
                  long n_swig_np_dbl_in_v2,   // ncoord,
                  double *swig_np_dbl_in_v3,  // *zcornsv,
                  long n_swig_np_dbl_in_v3,   // nzcorn,
-                 int *swig_np_int_in_v1,     // *p_actnum_v,
+                 int *swig_np_int_in_v1,     // *actnumsv,
                  long n_swig_np_int_in_v1,   // nactnum,
 
                  double *p_prop_v,
@@ -578,7 +578,7 @@ surf_sample_grd3d_lay(int nx,
                       long n_swig_np_dbl_in_v1,   // ncoord,
                       double *swig_np_dbl_in_v2,  // *zcornsv,
                       long n_swig_np_dbl_in_v2,   // nzcorn,
-                      int *swig_np_int_in_v1,     // *p_actnum_v,
+                      int *swig_np_int_in_v1,     // *actnumsv,
                       long n_swig_np_int_in_v1,   // nactnum,
                       int klayer,
                       int mx,
@@ -1088,7 +1088,7 @@ grd3d_from_cube(int ncol,
                 long n_swig_np_dbl_inplace_v1,   // ncoord,
                 double *swig_np_dbl_inplace_v2,  // *zcornsv,
                 long n_swig_np_dbl_inplace_v2,   // nzcorn,
-                int *swig_np_int_inplace_v1,     // *p_actnum_v,
+                int *swig_np_int_inplace_v1,     // *actnumsv,
                 long n_swig_np_int_inplace_v1,   // nactnum,
                 double xori,
                 double yori,
@@ -1108,7 +1108,7 @@ grd3d_calc_dxdy(int nx,
                 long n_swig_np_dbl_in_v1,        // ncoord,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
-                int *swig_np_int_in_v1,          // *p_actnum_v,
+                int *swig_np_int_in_v1,          // *actnumsv,
                 long n_swig_np_int_in_v1,        // nactnum,
                 double *swig_np_dbl_inplace_v1,  // *dx,
                 long n_swig_np_dbl_inplace_v1,   // ntot,
@@ -1123,7 +1123,7 @@ grd3d_calc_dz(int nx,
               int nz,
               double *swig_np_dbl_in_v1,       // *zcornsv,
               long n_swig_np_dbl_in_v1,        // nzcorn,
-              int *swig_np_int_in_v1,          // *p_actnum_v,
+              int *swig_np_int_in_v1,          // *actnumsv,
               long n_swig_np_int_in_v1,        // nactnum,
               double *swig_np_dbl_inplace_v1,  // *p_dz_v,
               long n_swig_np_dbl_inplace_v1,   // ntot,
@@ -1138,7 +1138,7 @@ grd3d_calc_xyz(int nx,
                long n_swig_np_dbl_in_v1,        // ncoord,
                double *swig_np_dbl_in_v2,       // *zcornsv,
                long n_swig_np_dbl_in_v2,        // nzcorn,
-               int *swig_np_int_in_v1,          // *p_actnum_v,
+               int *swig_np_int_in_v1,          // *actnumsv,
                long n_swig_np_int_in_v1,        // nactnum,
                double *swig_np_dbl_inplace_v1,  // *p_x_v,
                long n_swig_np_dbl_inplace_v1,   // npx,
@@ -1174,7 +1174,7 @@ grd3d_conv_roxapi_grid(int nx,
                        long n_swig_np_dbl_inplace_v1,   // ncoord
                        double *swig_np_dbl_inplace_v2,  // *zcornsv
                        long n_swig_np_dbl_inplace_v2,   // nzcorn
-                       int *swig_np_int_inplace_v1,     // *p_actnum_v
+                       int *swig_np_int_inplace_v1,     // *actnumsv
                        long n_swig_np_int_inplace_v1    // nactnum
 );
 
@@ -1223,7 +1223,7 @@ grd3d_import_roff_grid(int *num_act,
                        int *num_subgrds,
                        double *coordsv,
                        double *zcornsv,
-                       int *p_actnum_v,
+                       int *actnumsv,
                        int *p_subgrd_v,
                        int nnsub,
                        char *filename,
@@ -1260,7 +1260,7 @@ grd3d_export_roff_grid(int mode,
                        long n_swig_np_dbl_in_v1,   // ncoord
                        double *swig_np_dbl_in_v2,  // *zcornsv
                        long n_swig_np_dbl_in_v2,   // nzcorn
-                       int *swig_np_int_in_v1,     // *p_actnum_v
+                       int *swig_np_int_in_v1,     // *actnumsv
                        long n_swig_np_int_in_v1,   // nact
 
                        int *p_subgrd_v,
@@ -1352,7 +1352,7 @@ grd3d_roff2xtgeo_actnum(int nx,
                         int ny,
                         int nz,
                         int *p_act_v,
-                        int *swig_np_int_inplace_v1,    // *p_actnum_v,
+                        int *swig_np_int_inplace_v1,    // *actnumsv,
                         long n_swig_np_int_inplace_v1,  // nactnum
                         int option);
 
@@ -1446,7 +1446,7 @@ grd3d_export_grdecl(int nx,
                     long n_swig_np_dbl_in_v1,   // ncoord
                     double *swig_np_dbl_in_v2,  // *zcornsv
                     long n_swig_np_dbl_in_v2,   // nzcorn
-                    int *swig_np_int_in_v1,     // *p_actnum_v
+                    int *swig_np_int_in_v1,     // *actnumsv
                     long n_swig_np_int_in_v1,   // nact
                     char *filename,
                     int mode);
@@ -1459,7 +1459,7 @@ grd3d_export_egrid(int nx,
                    long n_swig_np_dbl_in_v1,   // ncoord
                    double *swig_np_dbl_in_v2,  // *zcornsv
                    long n_swig_np_dbl_in_v2,   // nzcorn
-                   int *swig_np_int_in_v1,     // *p_actnum_v
+                   int *swig_np_int_in_v1,     // *actnumsv
                    long n_swig_np_int_in_v1,   // nact
                    char *filename,
                    int mode);
@@ -1472,8 +1472,7 @@ grd3d_export_grdeclprop(int nx,
                         char *propname,
                         double *p_fprop_v,
                         char *filename,
-                        int filemode,
-                        int debug);
+                        int filemode);
 
 void
 grd3d_export_grdeclprop2(int nx,
@@ -1486,8 +1485,7 @@ grd3d_export_grdeclprop2(int nx,
                          char *pname,
                          char *filename,
                          int mode,
-                         int flag,
-                         int debug);
+                         int flag);
 
 int
 grd3d_conv_grid_roxapi(int ncol,
@@ -1498,7 +1496,7 @@ grd3d_conv_grid_roxapi(int ncol,
                        long n_swig_np_dbl_in_v1,   // ncoord
                        double *swig_np_dbl_in_v2,  // *zcornsv
                        long n_swig_np_dbl_in_v2,   // nzcorn
-                       int *swig_np_int_in_v1,     // *p_actnum_v
+                       int *swig_np_int_in_v1,     // *actnumsv
                        long n_swig_np_int_in_v1,   // nact
 
                        double *swig_np_dbl_aout_v1,  // *tpillars
@@ -1574,7 +1572,7 @@ grd3d_get_lay_slice(int nx,
                     long n_swig_np_dbl_in_v1,   // ncoord
                     double *swig_np_dbl_in_v2,  // *zcornsv
                     long n_swig_np_dbl_in_v2,   // nzcorn
-                    int *swig_np_int_in_v1,     // *p_actnum_v
+                    int *swig_np_int_in_v1,     // *actnumsv
                     long n_swig_np_int_in_v1,   // nact
 
                     int kslice,
@@ -1594,7 +1592,7 @@ grd3d_refine_vert(int nx,
 
                   double *swig_np_dbl_in_v2,  // *zcornsv
                   long n_swig_np_dbl_in_v2,   // nzcorn
-                  int *swig_np_int_in_v1,     // *p_actnum_v
+                  int *swig_np_int_in_v1,     // *actnumsv
                   long n_swig_np_int_in_v1,   // nact
 
                   int nzref,
@@ -1615,7 +1613,7 @@ grd3d_convert_hybrid(int nx,
                      long n_swig_np_dbl_in_v1,   // ncoord
                      double *swig_np_dbl_in_v2,  // *zcornsv
                      long n_swig_np_dbl_in_v2,   // nzcorn
-                     int *swig_np_int_in_v1,     // *p_actnum_v
+                     int *swig_np_int_in_v1,     // *actnumsv
                      long n_swig_np_int_in_v1,   // nact
 
                      int nzhyb,
@@ -1665,7 +1663,7 @@ grd3d_reverse_jrows(int nx,
                     long n_swig_np_dbl_inplace_v1,   // ncoord
                     double *swig_np_dbl_inplace_v2,  // *zcornsv
                     long n_swig_np_dbl_inplace_v2,   // nzcorn
-                    int *swig_np_int_inplace_v1,     // *p_actnum_v
+                    int *swig_np_int_inplace_v1,     // *actnumsv
                     long n_swig_np_int_inplace_v1);  // nact
 
 int
@@ -1677,7 +1675,7 @@ grd3d_point_val_crange(double x,
                        int nz,
                        double *p_coor_v,
                        double *zcornsv,
-                       int *p_actnum_v,
+                       int *actnumsv,
                        double *p_val_v,
                        double *value,
                        int imin,
@@ -1701,7 +1699,7 @@ grd3d_point_in_cell(int ibstart,
                     int nz,
                     double *p_coor_v,
                     double *zcornsv,
-                    int *p_actnum_v,
+                    int *actnumsv,
                     int maxrad,
                     int sflag,
                     int *nradsearch,
@@ -1736,7 +1734,7 @@ grd3d_points_ijk_cells(double *swig_np_dbl_in_v1,  // *xvec
                        long n_swig_np_dbl_in_v4,   // ncoordin
                        double *swig_np_dbl_in_v5,  // *p_zcoord_v
                        long n_swig_np_dbl_in_v5,   // nzcornin
-                       int *swig_np_int_in_v1,     // *p_actnum_v
+                       int *swig_np_int_in_v1,     // *actnumsv
                        long n_swig_np_int_in_v1,   // nactin
 
                        double *swig_np_dbl_in_v6,  // *p_zcoordone_v
@@ -1783,7 +1781,7 @@ grd3d_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,
                      long n_swig_np_dbl_in_v3,   // ncoordin
                      double *swig_np_dbl_in_v4,  // *p_zcoord_v
                      long n_swig_np_dbl_in_v4,   // nzcornin
-                     int *swig_np_int_in_v1,     // *p_actnum_v
+                     int *swig_np_int_in_v1,     // *actnumsv
                      long n_swig_np_int_in_v1,   // nactin
 
                      double *p_val_v,
@@ -1802,7 +1800,7 @@ grd3d_collapse_inact(int nx,
                      int nz,
                      double *swig_np_dbl_inplace_v1,  // *zcornsv
                      long n_swig_np_dbl_inplace_v1,   // nzcorn
-                     int *swig_np_int_inplace_v1,     // *p_actnum_v
+                     int *swig_np_int_inplace_v1,     // *actnumsv
                      long n_swig_np_int_inplace_v1    // nactnum
 );
 
@@ -1832,7 +1830,7 @@ grd3d_inact_outside_pol(double *swig_np_dbl_in_v1,  // polygons X
                         long n_swig_np_dbl_in_v3,       // ncoordin
                         double *swig_np_dbl_in_v4,      // *zcornsv
                         long n_swig_np_dbl_in_v4,       // nzcornin
-                        int *swig_np_int_inplace_v1,    // *p_actnum_v
+                        int *swig_np_int_inplace_v1,    // *actnumsv
                         long n_swig_np_int_inplace_v1,  // nact
                         int k1,
                         int k2,
@@ -1853,7 +1851,7 @@ grd3d_setval_poly(double *swig_np_dbl_in_v1,  // polygons X
                   long n_swig_np_dbl_in_v3,   // ncoordin
                   double *swig_np_dbl_in_v4,  // *zcornsv
                   long n_swig_np_dbl_in_v4,   // nzcornin
-                  int *swig_np_int_in_v1,     // *p_actnum_v
+                  int *swig_np_int_in_v1,     // *actnumsv
                   long n_swig_np_int_in_v1,   // nactin
 
                   double *p_val_v,
@@ -1868,7 +1866,7 @@ grd3d_geometrics(int nx,
                  long n_swig_np_dbl_in_v1,   // ncoord
                  double *swig_np_dbl_in_v2,  // *zcornsv
                  long n_swig_np_dbl_in_v2,   // nzcorn
-                 int *swig_np_int_in_v1,     // *p_actnum_v
+                 int *swig_np_int_in_v1,     // *actnumsv
                  long n_swig_np_int_in_v1,   // nact
 
                  double *xori,
@@ -1894,7 +1892,7 @@ grd3d_inact_by_dz(int nx,
 
                   double *swig_np_dbl_inplace_v1,  // *zcornsv
                   long n_swig_np_dbl_inplace_v1,   // nzcorn
-                  int *swig_np_int_inplace_v1,     // *p_actnum_v
+                  int *swig_np_int_inplace_v1,     // *actnumsv
                   long n_swig_np_int_inplace_v1,   // nact
 
                   double threshold,
@@ -1917,7 +1915,7 @@ grd3d_adj_cells(int ncol,
                 long n_swig_np_dbl_in_v1,       // ncoordin
                 double *swig_np_dbl_in_v2,      // *zcornsv
                 long n_swig_np_dbl_in_v2,       // nzcornin
-                int *swig_np_int_inplace_v1,    // *p_actnum_v
+                int *swig_np_int_inplace_v1,    // *actnumsv
                 long n_swig_np_int_inplace_v1,  // nact
                 int *p_prop1,
                 long nprop1,
@@ -1963,7 +1961,7 @@ grd3d_get_all_corners(int nx,
                       long n_swig_np_dbl_in_v1,   // ncoordin
                       double *swig_np_dbl_in_v2,  // *p_zcoord_v
                       long n_swig_np_dbl_in_v2,   // nzcornin
-                      int *swig_np_int_in_v1,     // *p_actnum_v
+                      int *swig_np_int_in_v1,     // *actnumsv
                       long n_swig_np_int_in_v1,   // nactin
 
                       double *x1,
@@ -2001,7 +1999,7 @@ grd3d_rpt_zlog_vs_zon(int nx,
                       long n_swig_np_dbl_in_v1,   // ncoordin
                       double *swig_np_dbl_in_v2,  // *p_zcoord_v
                       long n_swig_np_dbl_in_v2,   // nzcornin
-                      int *swig_np_int_in_v1,     // *p_actnum_v
+                      int *swig_np_int_in_v1,     // *actnumsv
                       long n_swig_np_int_in_v1,   // nactin
 
                       int *p_zon_v,
@@ -2030,7 +2028,7 @@ grd3d_well_ijk(int nx,
                long n_swig_np_dbl_in_v1,   // ncoordin
                double *swig_np_dbl_in_v2,  // *p_zcoord_v
                long n_swig_np_dbl_in_v2,   // nzcornin
-               int *swig_np_int_in_v1,     // *p_actnum_v
+               int *swig_np_int_in_v1,     // *actnumsv
                long n_swig_np_int_in_v1,   // nactin
 
                double *swig_np_dbl_in_v3,  // *p_zcoord_onelay_v

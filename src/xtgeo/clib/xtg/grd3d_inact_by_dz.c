@@ -12,8 +12,8 @@
  *
  * ARGUMENTS:
  *    nx, ny, nz     i     Grid dimensions
- *    zcornsv      i     ZCORN array
- *    p_actnum_v    i/o    ACTNUM array
+ *    zcornsv        i     ZCORN array
+ *    actnumsv      i/o    ACTNUM array
  *    threshold      i     Mid cell cell thickness criteria
  *    flip           i     Flip indicator
  *    debug          i     Debug level
@@ -38,7 +38,7 @@ grd3d_inact_by_dz(int nx,
                   int nz,
                   double *zcornsv,
                   long nzcornin,
-                  int *p_actnum_v,
+                  int *actnumsv,
                   long nactin,
                   double threshold,
                   int flip)
@@ -51,7 +51,7 @@ grd3d_inact_by_dz(int nx,
     p_dztmp_v = calloc(nx * ny * nz, sizeof(double));
 
     /* lengths of p_zorn etc are dummy */
-    grd3d_calc_dz(nx, ny, nz, zcornsv, 0, p_actnum_v, 0, p_dztmp_v, 0, flip, 0);
+    grd3d_calc_dz(nx, ny, nz, zcornsv, 0, actnumsv, 0, p_dztmp_v, 0, flip, 0);
 
     ndone = 0;
 
@@ -63,8 +63,8 @@ grd3d_inact_by_dz(int nx,
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-                if (p_dztmp_v[ic] < threshold && p_actnum_v[ic] > 0) {
-                    p_actnum_v[ib] = 0;
+                if (p_dztmp_v[ic] < threshold && actnumsv[ic] > 0) {
+                    actnumsv[ib] = 0;
                     ndone++;
                 }
             }

@@ -12,9 +12,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz           i     Grid dimensions ncol, nrow, nlay
- *    coordsv          i     Grid coordinate lines
- *    zcornsv          i     Grid Z corners
- *    p_actnum_v         i     Grid ACTNUM parameter
+ *    coordsv            i     Grid coordinate lines
+ *    zcornsv            i     Grid Z corners
+ *    actnumsv           i     Grid ACTNUM parameter
  *    p_zcorn_onelay_v   i     Grid Z corners, top bot only
  *    p_actnum_onelay_v  i     Grid ACTNUM parameter top bot only
  *    nval               i     Position of last point for well log
@@ -53,7 +53,7 @@ int grd3d_well_ijk(
     long ncoordin,
     double *zcornsv,
     long nzcornin,
-    int *p_actnum_v,
+    int *actnumsv,
     long nactin,
 
     double *p_zcorn_onelay_v,
@@ -150,7 +150,7 @@ int grd3d_well_ijk(
             long ib2 = grd3d_point_in_cell(ibstart, 0, xcor, ycor, zcor,
                                            nx, ny, nz,
                                            coordsv,
-                                           zcornsv, p_actnum_v,
+                                           zcornsv, actnumsv,
                                            maxradsearch,
                                            sflag, &nradsearch,
                                            0, DEBUG);
@@ -159,7 +159,7 @@ int grd3d_well_ijk(
 
                 x_ib2ijk(ib2, &icol, &jrow, &klay, nx, ny, nz, 0);
 
-                if (p_actnum_v[ib2] == 1) {
+                if (actnumsv[ib2] == 1) {
 
                     ivector[mnum] = icol;
                     jvector[mnum] = jrow;

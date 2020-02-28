@@ -13,7 +13,7 @@
  *    *scale           i     Scaling in XYZ spesified in ROFF
  *    p_splitenz_v     i     Split node vector
  *    p_zdata_v        i     Input zdata array ROFF fmt
- *    coordsv        o     Output zcorn array XTGEO fmt
+ *    coordsv          o     Output zcorn array XTGEO fmt
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
