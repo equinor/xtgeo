@@ -630,61 +630,11 @@ class Grid(Grid3D):
 
     def numpify_carrays(self):
         """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
-        pass
-
-        # ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-        # nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
-        # ntot = self._ncol * self._nrow * self._nlay
-
-        # if "SwigPyObject" not in str(type(self._zcornsv)) or self._zcornsv is None:
-        #     logger.info("Tried to numpify but input is already numpy")
-        #     return
-
-        # logger.info("Numpifying C arrays...")
-        # self._coordsv = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._coordsv)
-        # self._zcornsv = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._zcornsv)
-        # self._actnumsv = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._actnumsv)
-
-        # if not self._tmp:
-        #     return
-
-        # if "SwigPyObject" in str(type(self._tmp["onegrid"]._zcornsv)):
-        #     nzcorn = self._ncol * self._nrow * (1 + 1) * 4
-        #     ntot = self._ncol * self._nrow * 1
-
-        #     self._tmp["onegrid"]._zcornsv = _cxtgeo.swig_carr_to_numpy_1d(
-        #         nzcorn, self._tmp["onegrid"]._zcornsv
-        #     )
-        #     self._tmp["onegrid"]._actnumsv = _cxtgeo.swig_carr_to_numpy_1d(
-        #         ntot, self._tmp["onegrid"]._actnumsv
-        #     )
-
-    def denumpify_carrays(self):
-        """Convert 1D numpies of geometry arrays to C SWIG pointers pointers."""
-
-        raise RuntimeError("DENUMPIFY REACHED!")
-
-        # ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-        # nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
-        # ntot = self._ncol * self._nrow * self._nlay
-
-        # if isinstance(self._coordsv, np.ndarray):
-        #     logger.info("Denumpify coords...")
-        #     carray = _cxtgeo.new_doublearray(ncoord)
-        #     _cxtgeo.swig_numpy_to_carr_1d(self._coordsv, carray)
-        #     self._coordsv = carray
-
-        # if isinstance(self._zcornsv, np.ndarray):
-        #     logger.info("Denumpify zcorn...")
-        #     carray = _cxtgeo.new_doublearray(nzcorn)
-        #     _cxtgeo.swig_numpy_to_carr_1d(self._zcornsv, carray)
-        #     self._zcornsv = carray
-
-        # if isinstance(self._actnumsv, np.ndarray):
-        #     logger.info("Denumpify actnum...")
-        #     carray = _cxtgeo.new_intarray(ntot)
-        #     _cxtgeo.swig_numpy_to_carr_i1d(self._actnumsv, carray)
-        #     self._actnumsv = carray
+        warnings.warn(
+            "Method numpify_carrays is deprecated and can be removed.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
@@ -1003,7 +953,11 @@ class Grid(Grid3D):
 
     def get_cactnum(self):
         """Returns the C pointer object reference to the ACTNUM array."""
-        return self._actnumsv  # the SWIG pointer to the C structure
+        warnings.warn(
+            "Method get_cactnum is deprecated and will be removed.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.
