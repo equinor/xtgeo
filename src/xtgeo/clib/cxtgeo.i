@@ -99,6 +99,14 @@ import_array();
 %apply (double* IN_ARRAY1, long DIM1) {(double *swig_np_dbl_in_v4,
                                         long n_swig_np_dbl_in_v4)};
 
+// IN float64 / double no 5
+%apply (double* IN_ARRAY1, long DIM1) {(double *swig_np_dbl_in_v5,
+                                        long n_swig_np_dbl_in_v5)};
+
+// IN float64 / double no 6
+%apply (double* IN_ARRAY1, long DIM1) {(double *swig_np_dbl_in_v6,
+                                        long n_swig_np_dbl_in_v6)};
+
 // INPLACE int no 1
 %apply (int* INPLACE_ARRAY1, long DIM1) {(int *swig_np_int_inplace_v1,
                                           long n_swig_np_int_inplace_v1)};

@@ -14,9 +14,9 @@
  *                      cell layer, 0 otherwise
  *     x,y,z            input points. If z is -999 it means a 2D search only
  *     nx..nz           grid dimensions
- *     p_coord_v        grid coords
- *     p_zcorn_v        grid zcorn
- *     p_actnum_v       grid active cell indicator
+ *     coordsv        grid coords
+ *     zcornsv        grid zcorn
+ *     actnumsv       grid active cell indicator
  *     p_prop_v         property to work with
  *     value            value to set
  *     ronly            replace-only-this value
@@ -66,8 +66,8 @@ int grd3d_point_in_cell(
 			int   ny,
 			int   nz,
 			double *p_coor_v,
-			double *p_zcorn_v,
-			int   *p_actnum_v,
+			double *zcornsv,
+			int   *actnumsv,
 			int   maxrad,
 			int   sflag,
 			int   *nradsearch,
@@ -161,8 +161,8 @@ int grd3d_point_in_cell(
 		    }
 		    ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
 		    /* get the corner for the cell */
-		    grd3d_corners(i,j,k,nx,ny,nz,p_coor_v,p_zcorn_v,
-			      corners,debug);
+		    grd3d_corners(i,j,k,nx,ny,nz,p_coor_v, 0, zcornsv, 0,
+			      corners);
 
 
 

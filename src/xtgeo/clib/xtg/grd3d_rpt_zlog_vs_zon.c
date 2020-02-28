@@ -1,5 +1,5 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_rpt_zlog_vs_zon.c
@@ -15,9 +15,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz       i     Grid dimensions
- *    p_coord_v      i     Grid coordinate lines
- *    p_zcorn_v      i     Grid Z corners
- *    p_actnum_v     i     Grid ACTNUM parameter
+ *    coordsv        i     Grid coordinate lines w/ numpy dimensions
+ *    zcornsv        i     Grid Z corners w/ numpy dimensions
+ *    actnumsv       i     Grid ACTNUM parameter w/ numpy dimensions
  *    p_zon_v        i     Grid zone parameter
  *    nval           i     Position of last point for well log
  *    p_utme_v       i     East coordinate vector for well log
@@ -39,11 +39,11 @@
  *    The C macro EXIT_SUCCESS unless problems
  *
  * TODO/ISSUES/BUGS:
- *    Code is not finished
+ *    Code is not finished, rewrite is required
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -53,25 +53,34 @@
 
 
 int grd3d_rpt_zlog_vs_zon(
-			  int    nx,
-			  int    ny,
-			  int    nz,
-			  double *p_coord_v,
-			  double *p_zcorn_v,
-			  int    *p_actnum_v,
-			  int    *p_zon_v,
-			  int    nval,
-			  double *p_utme_v,
-			  double *p_utmn_v,
-			  double *p_tvds_v,
-			  int    *p_zlog_v,
-			  int    zlmin,
-			  int    zlmax,
-			  double *p_zcorn_onelay_v,
-			  int    *p_actnum_onelay_v,
-			  double *results,
-			  int    iflag
-			  )
+    int nx,
+    int ny,
+    int nz,
+
+    double *coordsv,
+    long ncoordin,
+    double *zcornsv,
+    long nzcorndin,
+    int *actnumsv,
+    long nactin,
+
+    int *p_zon_v,
+    int nval,
+    double *p_utme_v,
+    double *p_utmn_v,
+    double *p_tvds_v,
+    int *p_zlog_v,
+    int zlmin,
+    int zlmax,
+
+    double *p_zcorn_onelay_v,
+    long nzcornonein,
+    int *p_actnum_onelay_v,
+    long nactonein,
+
+    double *results,
+    int iflag
+    )
 
 {
     /* locals */
@@ -97,7 +106,7 @@ int grd3d_rpt_zlog_vs_zon(
      */
 
     zconst=0.01;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, zconst);
+    grd3d_make_z_consistent(nx, ny, nz, zcornsv, 0, zconst);
 
     /*
      * =========================================================================
@@ -173,7 +182,7 @@ int grd3d_rpt_zlog_vs_zon(
 
 	    /* loop cells in simplified (one layer) grid */
 	    ib=grd3d_point_in_cell(ibstart2, 0, x, y, z, nx, ny, 1,
-				   p_coord_v,
+				   coordsv,
 				   p_zcorn_onelay_v, p_actnum_onelay_v,
 				   maxradsearch,
 				   sflag, &nradsearch,
@@ -195,8 +204,8 @@ int grd3d_rpt_zlog_vs_zon(
 
 		/* loop cells in simplified (one layer) grid */
 		ib=grd3d_point_in_cell(ibstart, 0, x, y, z, nx, ny, nz,
-				       p_coord_v,
-				       p_zcorn_v, p_actnum_v,
+				       coordsv,
+				       zcornsv, actnumsv,
 				       maxradsearch,
 				       sflag, &nradsearch,
 				       0, 0);
@@ -205,7 +214,7 @@ int grd3d_rpt_zlog_vs_zon(
 
 		if (ib>=0) {
 		    x_ib2ijk(ib,&i,&j,&k,nx,ny,nz,0);
-		    if (p_actnum_v[ib]==1) {
+		    if (actnumsv[ib]==1) {
 			nzone=p_zon_v[ib];
 
 			p_zsample_v[m]=nzone;

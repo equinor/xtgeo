@@ -12,8 +12,8 @@ int main () {
     int    nx, ny, nz, ptype, ncodes;
     double xori, yori, xinc, yinc, rot;
     int    mode, debug, ndef, nklist, ndates;
-    double *p_double_v, *p_zcorn_v, *p_coord_v;
-    int    *p_actnum_v;
+    double *p_double_v, *zcornsv, *coordsv;
+    int    *actnumsv;
     char   *p_codenames_v;
     int    *p_int_v, *p_codevalues_v;
     int    *day, *mon, *year, *nktype, *dsuccess, *norder, nklist3;
@@ -43,14 +43,14 @@ int main () {
     /*     		    file, debug); */
 
 
-    /* p_coord_v = calloc((nx+1)*(ny+1)*2*3, 8); */
-    /* p_zcorn_v = calloc(nx*ny*(nz+1)*4, 8); */
-    /* p_actnum_v = calloc(nx*ny*nz, 4); */
+    /* coordsv = calloc((nx+1)*(ny+1)*2*3, 8); */
+    /* zcornsv = calloc(nx*ny*(nz+1)*4, 8); */
+    /* actnumsv = calloc(nx*ny*nz, 4); */
 
     /* grd3d_import_ecl_egrid (0, nx, ny, nz, */
     /*     		    &ndef, */
-    /*     		    p_coord_v, p_zcorn_v, */
-    /*     		    p_actnum_v, file, debug); */
+    /*     		    coordsv, zcornsv, */
+    /*     		    actnumsv, file, debug); */
 
 
     /* printf("%d\n",nx); */
@@ -92,7 +92,7 @@ int main () {
 
     /* grd3d_import_ecl_prop(5, */
     /* 			  nx*ny*nz, */
-    /* 			  p_actnum_v, */
+    /* 			  actnumsv, */
     /* 			  nklist, */
     /* 			  useprops, */
     /* 			  ndates, */

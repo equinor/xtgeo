@@ -1,98 +1,114 @@
 /*
- * #############################################################################
- * Name:      grd3d_calc_dxdy.c
- * Author:    jriv@statoil.com
- * #############################################################################
- * Compute dx,dy per cell
+ ***************************************************************************************
  *
- * Arguments:
- *     nx..nz           grid dimensions
- *     p_coord_v        Coordinates
- *     p_zcorn_v        ZCORN array (pointer) of input
- *     p_actnum_v       ZCORN array (pointer) of input
- *     dx               DX per cell (output)
- *     dy               DY per cell (output)
- *     option1          0: all cells; 1 set UNDEF if ACTNUM=0
- *     option2          0: not in use
- *     debug            debug/verbose flag
+ * NAME:
+ *    grd3d_calc_dxdy.c
  *
- * Return:
- *     The routine returns an int number stating the success (=0)
+ * AUTHOR(S):
+ *    Jan C. Rivenaes
  *
- * Caveeats/issues:
- *     DX DY does not match RMS's calculations fully, but I don't know why
+ * DESCRIPTION:
+ *    Computes the DX DY avg per cell
  *
- * #############################################################################
+ * ARGUMENTS:
+ *    nx...nz        i     Dimensions
+ *     coordsv       i     Coordinates (with size)
+ *    zcornsv        i     Z corners (with size)
+ *    actnumsv       i     ACTNUM (with size)
+ *    dx            i/o    Array to be updated
+ *    dy            i/o    Array to be updated
+ *    option1        i     If 1, set dx dy to UNDEF for inactive cells
+ *    option2        i     Unused
+ *
+ * RETURNS:
+ *    Success (0) or failure. Pointers to arrays are updated
+ *
+ * NOTES:
+ *    The returned arrays are now C order
+ *
+ * LICENCE:
+ *    cf. XTGeo LICENSE
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-
-int grd3d_calc_dxdy(
-                    int      nx,
-                    int      ny,
-                    int      nz,
-                    double   *p_coord_v,
-                    double   *p_zcorn_v,
-                    int      *p_actnum_v,
-                    double   *dx,
-                    double   *dy,
-                    int      option1,
-                    int      option2,
-                    int      debug
-                    )
+int
+grd3d_calc_dxdy(int nx,
+                int ny,
+                int nz,
+                double *coordsv,
+                long ncoord,
+                double *zcornsv,
+                long nzcorn,
+                int *actnumsv,
+                long nactnum,
+                double *dx,
+                long ndx,
+                double *dy,
+                long ndy,
+                int option1,
+                int option2)
 
 {
     /* locals */
-    int     i, j, k, n, ii, ib;
-    char    s[24]="grd3d_calc_dxdy";
-    double  c[24], plen, vlen, arad, adeg;
+    int i, j, k, n, ii;
 
-    xtgverbose(debug);
+    double c[24], plen, vlen, arad, adeg;
+
+    logger_info(LI, FI, FU, "Compute DX DY...");
+
+    long ntot[3] = { nactnum, ndx, ndy };
+
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 3) != 0)
+        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
+
+    if (option2 == 0)
+        logger_debug(LI, FI, FU, "Option2 not in use");
 
     for (k = 1; k <= nz; k++) {
-	xtg_speak(s,3,"Finished layer %d of %d",k,nz);
-	for (j = 1; j <= ny; j++) {
-	    for (i = 1; i <= nx; i++) {
+        for (j = 1; j <= ny; j++) {
+            for (i = 1; i <= nx; i++) {
 
-		ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
+                long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-                if (option1 == 1 && p_actnum_v[ib] == 0) {
-                    dx[ib] = UNDEF;
-                    dx[ib] = UNDEF;
+                if (option1 == 1 && actnumsv[ib] == 0) {
+                    dx[ic] = UNDEF;
+                    dy[ic] = UNDEF;
                     continue;
                 }
 
-                grd3d_corners(i, j, k, nx, ny, nz,
-                              p_coord_v, p_zcorn_v, c, debug);
+                grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, c);
 
                 /* get the length of all lines forming DX */
                 plen = 0.0;
                 for (n = 0; n <= 3; n++) {
-                    ii = 0 + n*6;
-                    x_vector_info2(c[ii], c[ii+3], c[ii+1], c[ii+4],
-                                   &vlen, &arad, &adeg, 1, debug);
+                    ii = 0 + n * 6;
+                    x_vector_info2(c[ii], c[ii + 3], c[ii + 1], c[ii + 4], &vlen, &arad,
+                                   &adeg, 1, XTGDEBUG);
                     plen = plen + vlen;
                 }
-                dx[ib] = plen/4.0;
+                dx[ic] = plen / 4.0;
 
                 /* get the length of all lines forming DY */
                 plen = 0.0;
                 for (n = 0; n <= 3; n++) {
-                    ii = 0 + n*3;
-                    if (n >= 2) ii = 6 + n*3;
+                    ii = 0 + n * 3;
+                    if (n >= 2)
+                        ii = 6 + n * 3;
 
-                    x_vector_info2(c[ii], c[ii+6], c[ii+1], c[ii+7],
-                                   &vlen, &arad, &adeg, 1, debug);
+                    x_vector_info2(c[ii], c[ii + 6], c[ii + 1], c[ii + 7], &vlen, &arad,
+                                   &adeg, 1, XTGDEBUG);
                     plen = plen + vlen;
                 }
-                dy[ib] = plen/4.0;
+                dy[ic] = plen / 4.0;
             }
         }
     }
 
-
-    xtg_speak(s,2,"Exit from %s",s);
-    return (0);
+    logger_info(LI, FI, FU, "Compute DX DY... done");
+    return EXIT_SUCCESS;
 }

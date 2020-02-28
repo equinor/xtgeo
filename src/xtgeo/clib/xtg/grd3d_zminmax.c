@@ -24,7 +24,7 @@
  * ARGUMENTS:
  *    i, j, k        i     Cell number (1 based)
  *    nx, ny, nz     i     Grid dimensions
- *    p_zcorn_v      i     Z coordinates
+ *    zcornsv        i     Z coordinates
  *    option         i     Option: 0 return minimum, 1 return maximum
  *    debug          i     Debug level
  *
@@ -45,7 +45,7 @@ double grd3d_zminmax(
                      int nx,
                      int ny,
                      int nz,
-                     double *p_zcorn_v,
+                     double *zcornsv,
                      int option,
                      int debug
                      )
@@ -69,17 +69,17 @@ double grd3d_zminmax(
     }
 
     if (option == 0) {
-        zmin = p_zcorn_v[4*ibt + 1*1 - 1];
+        zmin = zcornsv[4*ibt + 1*1 - 1];
         for (ic = 2; ic < 5; ic++) {
-            zval = p_zcorn_v[4 * ibt + 1 * ic - 1];
+            zval = zcornsv[4 * ibt + 1 * ic - 1];
             if (zval < zmin) zmin = zval;
         }
         return zmin;
     }
     else if (option == 1) {
-        zmax = p_zcorn_v[4*ibb + 1*1 - 1];
+        zmax = zcornsv[4*ibb + 1*1 - 1];
         for (ic = 2; ic < 5; ic++) {
-            zval = p_zcorn_v[4 * ibb + 1 * ic - 1];
+            zval = zcornsv[4 * ibb + 1 * ic - 1];
             if (zval > zmax) zmax = zval;
         }
         return zmax;

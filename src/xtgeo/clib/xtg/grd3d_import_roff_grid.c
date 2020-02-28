@@ -76,9 +76,9 @@
 void grd3d_import_roff_grid (
 			     int     *num_act,
 			     int     *num_subgrds,
-			     double  *p_coord_v,
-			     double  *p_zcorn_v,
-			     int     *p_actnum_v,
+			     double  *coordsv,
+			     double  *zcornsv,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     int     nnsubs,
 			     char    *filename,
@@ -125,9 +125,9 @@ void grd3d_import_roff_grid (
 	_grd3d_imp_roff_asc_grd(
 			       num_act,
 			       num_subgrds,
-			       p_coord_v,
-			       p_zcorn_v,
-			       p_actnum_v,
+			       coordsv,
+			       zcornsv,
+			       actnumsv,
 			       p_subgrd_v,
 			       nnsubs,
 			       filename,
@@ -139,9 +139,9 @@ void grd3d_import_roff_grid (
 	_grd3d_imp_roff_bin_grd(
 				num_act,
 				num_subgrds,
-				p_coord_v,
-				p_zcorn_v,
-				p_actnum_v,
+				coordsv,
+				zcornsv,
+				actnumsv,
 				p_subgrd_v,
 				nnsubs,
 				filename,
@@ -165,9 +165,9 @@ void grd3d_import_roff_grid (
 void _grd3d_imp_roff_asc_grd (
 			     int     *num_act,
 			     int     *num_subgrds,
-			     double  *p_coord_v,
-			     double  *p_zcorn_v,
-			     int     *p_actnum_v,
+			     double  *coordsv,
+			     double  *zcornsv,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     int     nnsubs,
 			     char    *filename,
@@ -296,7 +296,7 @@ void _grd3d_imp_roff_asc_grd (
 	     */
 
 	    for (i=0; i<nx*ny*nz; i++) {
-		p_actnum_v[i]=1;
+		actnumsv[i]=1;
 	    }
 
 	}
@@ -433,7 +433,7 @@ void _grd3d_imp_roff_asc_grd (
 			iok=fscanf(fc,"%d",&ivalue);
 			/* map directly to XTG form */
 			ipos=(nz-(k+1))*ny*nx + j*nx + i;
-			p_actnum_v[ipos]=ivalue;
+			actnumsv[ipos]=ivalue;
 
 		    }
 		}
@@ -471,9 +471,9 @@ void _grd3d_imp_roff_asc_grd (
 			    zdata_v,
 			    num_act,
 			    num_subgrds,
-			    p_coord_v,
-			    p_zcorn_v,
-			    p_actnum_v,
+			    coordsv,
+			    zcornsv,
+			    actnumsv,
 			    p_subgrd_v,
 			    debug
 			    );
@@ -501,9 +501,9 @@ void _grd3d_imp_roff_asc_grd (
 void _grd3d_imp_roff_bin_grd (
 			      int     *num_act,
 			      int     *num_subgrds,
-			      double  *p_coord_v,
-			      double  *p_zcorn_v,
-			      int     *p_actnum_v,
+			      double  *coordsv,
+			      double  *zcornsv,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      int     nnsub,
 			      char    *filename,
@@ -712,8 +712,8 @@ void _grd3d_imp_roff_bin_grd (
 			    x_fread(&mybyte,1,1,fc,__FILE__,__LINE__);
 			    /* map directly to XTG form */
 			    ipos=(nz-(k+1))*ny*nx + j*nx + i;
-			    p_actnum_v[ipos]=mybyte;
-			    if (p_actnum_v[ipos]==1) nnact++;
+			    actnumsv[ipos]=mybyte;
+			    if (actnumsv[ipos]==1) nnact++;
 			}
 		    }
 		}
@@ -748,9 +748,9 @@ void _grd3d_imp_roff_bin_grd (
 			    zdata_v,
 			    num_act,
 			    num_subgrds,
-			    p_coord_v,
-			    p_zcorn_v,
-			    p_actnum_v,
+			    coordsv,
+			    zcornsv,
+			    actnumsv,
 			    p_subgrd_v,
 			    debug
 			    );
@@ -926,9 +926,9 @@ void _grd3d_roff_to_xtg_grid (
 			      float   *zdata_v,
 			      int     *num_act,
 			      int     *num_subgrds,
-			      double  *p_coord_v,
-			      double  *p_zcorn_v,
-			      int     *p_actnum_v,
+			      double  *coordsv,
+			      double  *zcornsv,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      int     debug
 			      )
@@ -1061,12 +1061,12 @@ void _grd3d_roff_to_xtg_grid (
     for (j=0;j<=ny;j++) {
 	for (i=0;i<=nx;i++) {
 	    ij=(i*(ny+1)+j); /* ij is counted from 0 and j fastest */
-	    p_coord_v[ib++]=xp_top_v[ij];
-	    p_coord_v[ib++]=yp_top_v[ij];
-	    p_coord_v[ib++]=zp_top_v[ij];
-	    p_coord_v[ib++]=xp_bot_v[ij];
-	    p_coord_v[ib++]=yp_bot_v[ij];
-	    p_coord_v[ib++]=zp_bot_v[ij];
+	    coordsv[ib++]=xp_top_v[ij];
+	    coordsv[ib++]=yp_top_v[ij];
+	    coordsv[ib++]=zp_top_v[ij];
+	    coordsv[ib++]=xp_bot_v[ij];
+	    coordsv[ib++]=yp_bot_v[ij];
+	    coordsv[ib++]=zp_bot_v[ij];
 	}
     }
     xtg_speak(sub,2,"Ordering COORDs ...DONE!");
@@ -1262,7 +1262,7 @@ void _grd3d_roff_to_xtg_grid (
 
 		if (l>=0) {
 		    for (ic=1;ic<=4;ic++) {
-			p_zcorn_v[ib] = zz[ic];
+			zcornsv[ib] = zz[ic];
 			ib++;
 		    }
 		}
@@ -1270,7 +1270,7 @@ void _grd3d_roff_to_xtg_grid (
 
 		if (l==-1) {
 		    for (ic=5;ic<=8;ic++) {
-			p_zcorn_v[ib] = zz[ic];
+			zcornsv[ib] = zz[ic];
 			ib++;
 		    }
 		}

@@ -162,8 +162,8 @@ a corner-point grid (Grid class), and a number of assosiated properties
 (GridProperty class):
 
 * The geometry is stored as pointers to C arrays; hence the geometry itself is not
-  directly accessible in Python. The C arrays are usually named p_coord_v, p_zcorn_v,
-  and p_actnum_v. They are one dimensionial arrays.
+  directly accessible in Python. The C arrays are usually named coordsv, zcornsv,
+  and actnumsv. They are one dimensionial arrays.
 
 * The grid dimensions are given by ``ncol * nrow * nlay``
 

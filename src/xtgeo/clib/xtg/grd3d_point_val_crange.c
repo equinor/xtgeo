@@ -13,9 +13,9 @@
  *
  *     x,y,z           i      input points
  *     nx..nz          i      grid dimensions
- *     p_coord_v       i      grid coords
- *     p_zcorn_v       i      grid zcorn
- *     p_actnum_v      i      grid active cell indicator
+ *     coordsv       i      grid coords
+ *     zcornsv       i      grid zcorn
+ *     actnumsv      i      grid active cell indicator
  *     p_prop_v        i      property to work with
  *     value           o      value to return (UNDEF if not found)
  *     imin,.. kmax    i      cell index ranges in I J K
@@ -44,7 +44,7 @@
 
 long _find_ib(double x, double y, double z, int imin, int imax,
               int jmin, int jmax, int kmin, int kmax, int nx, int ny, int nz,
-              double *p_coord_v, double *p_zcorn_v, int debug)
+              double *coordsv, double *zcornsv, int debug)
 {
     /* cell not found -9; otherwise >= 0 but active may be 0 if inactive cell*/
 
@@ -60,8 +60,8 @@ long _find_ib(double x, double y, double z, int imin, int imax,
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 /* get the corner for the cell */
-                grd3d_corners(i, j, k, nx, ny, nz, p_coord_v, p_zcorn_v,
-			      corners, debug);
+                grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0,
+			      corners);
                 inside = x_chk_point_in_cell(x, y, z, corners, 1, debug);
 
                 if (inside > 0) {
@@ -91,9 +91,9 @@ int grd3d_point_val_crange(
                            int nx,
                            int ny,
                            int nz,
-                           double *p_coord_v,
-                           double *p_zcorn_v,
-                           int *p_actnum_v,
+                           double *coordsv,
+                           double *zcornsv,
+                           int *actnumsv,
                            double *p_val_v,
                            double *value,
                            int imin,
@@ -139,20 +139,20 @@ int grd3d_point_val_crange(
     i2 = istart + 1; if (i2 > imax) i2 = imax;
 
     ib = _find_ib(x, y, z, i1, i2, j1, j2, k1, k2, nx, ny, nz,
-                  p_coord_v, p_zcorn_v, debug);
+                  coordsv, zcornsv, debug);
 
 
     /* second try; fall back loop over fuller range */
     if (ib == -9) {
         ib = _find_ib(x, y, z, imin, imax, jmin, jmax, kmin, kmax, nx, ny, nz,
-                      p_coord_v, p_zcorn_v, debug);
+                      coordsv, zcornsv, debug);
     }
 
     if (ib > 0) {
         *ibs = ib;
         if (option < 0) return EXIT_SUCCESS;
 
-        if (p_actnum_v[ib] == 1) {
+        if (actnumsv[ib] == 1) {
             *value = p_val_v[ib];
         }
         return EXIT_SUCCESS;

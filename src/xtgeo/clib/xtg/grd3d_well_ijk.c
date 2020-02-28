@@ -12,9 +12,9 @@
  *
  * ARGUMENTS:
  *    nx,ny,nz           i     Grid dimensions ncol, nrow, nlay
- *    p_coord_v          i     Grid coordinate lines
- *    p_zcorn_v          i     Grid Z corners
- *    p_actnum_v         i     Grid ACTNUM parameter
+ *    coordsv            i     Grid coordinate lines
+ *    zcornsv            i     Grid Z corners
+ *    actnumsv           i     Grid ACTNUM parameter
  *    p_zcorn_onelay_v   i     Grid Z corners, top bot only
  *    p_actnum_onelay_v  i     Grid ACTNUM parameter top bot only
  *    nval               i     Position of last point for well log
@@ -48,11 +48,19 @@ int grd3d_well_ijk(
     int nx,
     int ny,
     int nz,
-    double *p_coord_v,
-    double *p_zcorn_v,
-    int *p_actnum_v,
+
+    double *coordsv,
+    long ncoordin,
+    double *zcornsv,
+    long nzcornin,
+    int *actnumsv,
+    long nactin,
+
     double *p_zcorn_onelay_v,
+    long nzcornonein,
     int *p_actnum_onelay_v,
+    long nactonein,
+
     int nval,
     double *p_utme_v,
     double *p_utmn_v,
@@ -74,7 +82,7 @@ int grd3d_well_ijk(
      */
 
     double zconst = 0.000001;
-    grd3d_make_z_consistent(nx, ny, nz, p_zcorn_v, zconst);
+    grd3d_make_z_consistent(nx, ny, nz, zcornsv, 0, zconst);
 
     /*
      * ========================================================================
@@ -117,7 +125,7 @@ int grd3d_well_ijk(
         /* loop cells in simplified (one layer) grid */
         long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor,
                                        nx, ny, 1,
-                                       p_coord_v,
+                                       coordsv,
                                        p_zcorn_onelay_v, p_actnum_onelay_v,
                                        maxradsearch,
                                        sflag, &nradsearch,
@@ -141,8 +149,8 @@ int grd3d_well_ijk(
             /* loop cells in full grid */
             long ib2 = grd3d_point_in_cell(ibstart, 0, xcor, ycor, zcor,
                                            nx, ny, nz,
-                                           p_coord_v,
-                                           p_zcorn_v, p_actnum_v,
+                                           coordsv,
+                                           zcornsv, actnumsv,
                                            maxradsearch,
                                            sflag, &nradsearch,
                                            0, DEBUG);
@@ -151,7 +159,7 @@ int grd3d_well_ijk(
 
                 x_ib2ijk(ib2, &icol, &jrow, &klay, nx, ny, nz, 0);
 
-                if (p_actnum_v[ib2] == 1) {
+                if (actnumsv[ib2] == 1) {
 
                     ivector[mnum] = icol;
                     jvector[mnum] = jrow;

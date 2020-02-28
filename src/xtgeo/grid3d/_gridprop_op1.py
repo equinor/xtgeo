@@ -110,13 +110,11 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             self.ncol,
             self.nrow,
             self.nlay,
-            grid._p_coord_v,
-            grid._p_zcorn_v,
-            grid._p_actnum_v,
+            grid._coordsv,
+            grid._zcornsv,
+            grid._actnumsv,
             cvals,
             1,
-            0,
-            XTGDEBUG,
         )
         if ier == -9:
             print("## Polygon no {} is not closed".format(id_ + 1))

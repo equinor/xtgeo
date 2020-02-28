@@ -16,6 +16,26 @@ logger = xtg.functionlogger(__name__)
 XTGDEBUG = 0
 
 
+def f2c_order(obj, values1d):
+    """Convert values1d from Fortran to C order, obj can be a Grid() or GridProperty()
+    instance
+    """
+    val = np.reshape(values1d, (obj.ncol, obj.nrow, obj.nlay), order="F")
+    val = np.asanyarray(val, order="C")
+    val = val.ravel(order="K")
+    return val
+
+
+def c2f_order(obj, values1d):
+    """Convert values1d from C to F order, obj can be a Grid() or GridProperty()
+    instance
+    """
+    val = np.reshape(values1d, (obj.ncol, obj.nrow, obj.nlay), order="C")
+    val = np.asanyarray(val, order="F")
+    val = val.ravel(order="K")
+    return val
+
+
 def update_values_from_carray(self, carray, dtype, delete=False):
     """Transfer values from SWIG 1D carray to numpy, 3D array"""
 

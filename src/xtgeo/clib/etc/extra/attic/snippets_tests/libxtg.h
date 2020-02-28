@@ -15,11 +15,11 @@
 #define VERYLARGEFLOAT 10E30;
 #define VERYSMALLFLOAT -10E30;
 
-/* 
- * Undefined values etc 
+/*
+ * Undefined values etc
  */
 
-/* 
+/*
  * ----------------------------------------------------------------------------
  * Maps. Undef values set to very high values. Map values > UNDEF_MAP_LIMIT
  * are undefined
@@ -65,7 +65,7 @@
 #define UNDEF_ROFFINT -999
 
 
-/* 
+/*
  * ============================================================================
  * Importing maps
  * ============================================================================
@@ -75,11 +75,11 @@
 /*
  *-----------------------------------------------------------------------------
  * Importing Irap ASCII, Storm map, etc
- * ndef          = (O) Number of defined nodes 
- * ndefsum       = (O) sum of IB's 
+ * ndef          = (O) Number of defined nodes
+ * ndefsum       = (O) sum of IB's
  * nx, ny        = (O) nodes in X (EW) and Y (NS) dir
- * xstep, ystep  = (O) Mesh width 
- * x/ymin x/ymax = (O) Start and end of mesh (xmax=(nx-1)*xstep+xmin) 
+ * xstep, ystep  = (O) Mesh width
+ * x/ymin x/ymax = (O) Start and end of mesh (xmax=(nx-1)*xstep+xmin)
  * zmin, zmax    = (O) Min and Max of max value
  * array         = (O) Actual map values (#: nx*ny)
  * file          = (I) Name of file
@@ -91,18 +91,18 @@
 void map_import_irap_ascii (
 			    int *ndef,
 			    int *ndefsum,
-			    int *nx, 
-			    int *ny, 
-			    float *xstep, 
+			    int *nx,
+			    int *ny,
+			    float *xstep,
 			    float *ystep,
-			    float *xmin, 
-			    float *xmax, 
-			    float *ymin, 
-			    float *ymax, 
+			    float *xmin,
+			    float *xmax,
+			    float *ymin,
+			    float *ymax,
 			    float *zmin,
 			    float *zmax,
 			    float *p_map_v,
-			    char  *file, 
+			    char  *file,
 			    int *ierr,
 			    int debug
 			    );
@@ -110,18 +110,18 @@ void map_import_irap_ascii (
 void map_import_surfer_ascii (
 			      int *ndef,
 			      int *ndefsum,
-			      int *nx, 
-			      int *ny, 
-			      float *xstep, 
+			      int *nx,
+			      int *ny,
+			      float *xstep,
 			      float *ystep,
-			      float *xmin, 
-			      float *xmax, 
-			      float *ymin, 
-			      float *ymax, 
+			      float *xmin,
+			      float *xmax,
+			      float *ymin,
+			      float *ymax,
 			      float *zmin,
 			      float *zmax,
 			      float *p_map_v,
-			      char  *file, 
+			      char  *file,
 			      int *ierr,
 			      int debug
 			      );
@@ -129,18 +129,18 @@ void map_import_surfer_ascii (
 void map_import_storm_binary (
 			      int   *ndef,
 			      int   *ndefsum,
-			      int   *nx, 
-			      int   *ny, 
-			      float *xstep, 
+			      int   *nx,
+			      int   *ny,
+			      float *xstep,
 			      float *ystep,
-			      float *xmin, 
-			      float *xmax, 
-			      float *ymin, 
-			      float *ymax, 
-			      float *zmin, 
-			      float *zmax, 
+			      float *xmin,
+			      float *xmax,
+			      float *ymin,
+			      float *ymax,
+			      float *zmin,
+			      float *zmax,
 			      float *p_map_v,
-			      char  *file, 
+			      char  *file,
 			      int   *ierr,
 			      int   debug
 			      );
@@ -148,66 +148,66 @@ void map_import_storm_binary (
 void map_import_arcflt (
 		       int   *ndef,
 		       int   *ndefsum,
-		       int   *nx, 
-		       int   *ny, 
-		       float *xstep, 
+		       int   *nx,
+		       int   *ny,
+		       float *xstep,
 		       float *ystep,
-		       float *xmin, 
-		       float *xmax, 
-		       float *ymin, 
-		       float *ymax, 
-		       float *zmin, 
-		       float *zmax, 
+		       float *xmin,
+		       float *xmax,
+		       float *ymin,
+		       float *ymax,
+		       float *zmin,
+		       float *zmax,
 		       float *p_map_v,
-		       char  *file1, 
-		       char  *file2, 
+		       char  *file1,
+		       char  *file2,
 		       int   *ierr,
 		       int   debug
 		       );
 
 
 void map_export_storm_binary (
-			      int nx, 
-			      int ny, 
-			      float xstep, 
+			      int nx,
+			      int ny,
+			      float xstep,
 			      float ystep,
-			      float xmin, 
-			      float xmax, 
-			      float ymin, 
-			      float ymax, 
+			      float xmin,
+			      float xmax,
+			      float ymin,
+			      float ymax,
 			      float *p_map_v,
-			      char  *file, 
+			      char  *file,
 			      int   debug
-			      ); 
+			      );
 
 void map_export_arcflt (
-			int nx, 
-			int ny, 
-			float xstep, 
+			int nx,
+			int ny,
+			float xstep,
 			float ystep,
-			float xmin, 
-			float xmax, 
-			float ymin, 
-			float ymax, 
+			float xmin,
+			float xmax,
+			float ymin,
+			float ymax,
 			float *p_map_v,
-			char  *file1, 
-			char  *file2, 
+			char  *file1,
+			char  *file2,
 			int   debug
-			); 
+			);
 
 void map_export_surfer_ascii (
-			      int nx, 
-			      int ny, 
-			      float xstep, 
+			      int nx,
+			      int ny,
+			      float xstep,
 			      float ystep,
-			      float xmin, 
-			      float xmax, 
-			      float ymin, 
-			      float ymax, 
+			      float xmin,
+			      float xmax,
+			      float ymin,
+			      float ymax,
 			      float *p_map_v,
-			      char  *file, 
+			      char  *file,
 			      int   debug
-			      ); 
+			      );
 
 /*
  *=============================================================================
@@ -250,57 +250,57 @@ int map_median_filter (
 void map_pol_mask(
 		  int nx,
 		  int ny,
-		  float xstep, 
+		  float xstep,
 		  float ystep,
-		  float xmin, 
-		  float ymin, 
+		  float xmin,
+		  float ymin,
 		  float *p_map_v,
 		  double *p_xp_v,
 		  double *p_yp_v,
 		  int   np,
 		  int   debug
 		  );
-    
+
 
 void map_chk_point_between(
 			   float x,
 			   float y,
 			   float z,
-			   
+
 			   int nx1,
 			   int ny1,
-			   float xstep1, 
+			   float xstep1,
 			   float ystep1,
-			   float xmin1, 
-			   float ymin1, 
+			   float xmin1,
+			   float ymin1,
 			   float *p_map1_v,
-			   
+
 			   int nx2,
 			   int ny2,
-			   float xstep2, 
+			   float xstep2,
 			   float ystep2,
-			   float xmin2, 
-			   float ymin2, 
+			   float xmin2,
+			   float ymin2,
 			   float *p_map2_v,
-			   
+
 			   int   *outside,
 			   float *zdiff,
-			   
+
 			   int debug
 			   );
 
 int map_get_corners_xy(
 		       float x,
 		       float y,
-		       
+
 		       int nx,
 		       int ny,
-		       float xstep, 
+		       float xstep,
 		       float ystep,
-		       float xmin, 
-		       float ymin, 
+		       float xmin,
+		       float ymin,
 		       float *p_map_v,
-		       
+
 		       int debug
 		       );
 
@@ -311,12 +311,12 @@ float map_get_z_from_xy(
 
 			int nx,
 			int ny,
-			float xstep, 
+			float xstep,
 			float ystep,
-			float xmin, 
-			float ymin, 
+			float xmin,
+			float ymin,
 			float *p_map_v,
-			
+
 			int debug
 			);
 
@@ -335,8 +335,8 @@ void map_simple_stats (
 
 
 void map_tilt (
-	       int   nx, 
-	       int   ny, 
+	       int   nx,
+	       int   ny,
 	       float dx,
 	       float dy,
 	       float xstart,
@@ -351,20 +351,20 @@ void map_tilt (
 
 /* operations between to maps */
 void map_operation_map (
-			int   nx, 
-			int   ny, 
+			int   nx,
+			int   ny,
 			float *p_map1_v,
 			float *p_map2_v,
 			int   iop,
 			float factor,
 			int   debug
-			); 
+			);
 
 
 
 void map_merge_map (
-			  int   nx, 
-			  int   ny, 
+			  int   nx,
+			  int   ny,
 			  float xmin,
 			  float ymin,
 			  float xinc,
@@ -385,8 +385,8 @@ void map_wiener_from_grd3d (
 			    int nx,
 			    int ny,
 			    int nz,
-			    float *p_coord_v,
-			    float *p_zcorn_v,
+			    float *coordsv,
+			    float *zcornsv,
 			    char  *ptype,
 			    int   *p_int_v,
 			    float *p_float_v,
@@ -419,31 +419,31 @@ void map_slice_cube (
 		     float ymin,
 		     float ystep,
 		     float *p_zslice_v,
-		     float *p_map_v, 
+		     float *p_map_v,
 		     int   option,
 		     int   debug
 		     );
-     
+
 
 void map_slice_grd3d (
 		      int   nx,
 		      int   ny,
 		      int   nz,
-		      float *p_coord_v,
-		      float *p_zcorn_v,
-		      int   *p_actnum_v,
+		      float *coordsv,
+		      float *zcornsv,
+		      int   *actnumsv,
 		      int   mx,
 		      int   my,
 		      float xmin,
 		      float xstep,
 		      float ymin,
 		      float ystep,
-		      float *p_zval_v, 
-		      int   *p_ib_v, 
+		      float *p_zval_v,
+		      int   *p_ib_v,
 		      int   option,
 		      int   debug
 		      );
-     
+
 void map_sample_grd3d_prop (
 			    int   nx,
 			    int   ny,
@@ -453,8 +453,8 @@ void map_sample_grd3d_prop (
 			    float *p_fprop_v,
 			    int   mx,
 			    int   my,
-			    float *p_zval_v, 
-			    int   *p_ib_v,   
+			    float *p_zval_v,
+			    int   *p_ib_v,
 			    int   debug
 			    );
 
@@ -477,11 +477,11 @@ float x_interp_map_nodes (
 			 );
 
 int x_ijk2ib (
-	      int i, 
-	      int j, 
-	      int k, 
-	      int nx, 
-	      int ny, 
+	      int i,
+	      int j,
+	      int k,
+	      int nx,
+	      int ny,
 	      int nz,
 	      int ia_start
 	      );
@@ -537,42 +537,42 @@ void pox_export_irap_ascii (
 
 
 double pox_zsum (
-		 double *p_z1_v, 
-		 int    np1, 
+		 double *p_z1_v,
+		 int    np1,
 		 int    debug
 		 );
 
 
 int pox_copy_pox (
-		  int   np, 
-		  double *p_x1_v, 
-		  double *p_y1_v, 
-		  double *p_z1_v, 
-		  double *p_x2_v, 
-		  double *p_y2_v, 
-		  double *p_z2_v, 
+		  int   np,
+		  double *p_x1_v,
+		  double *p_y1_v,
+		  double *p_z1_v,
+		  double *p_x2_v,
+		  double *p_y2_v,
+		  double *p_z2_v,
 		  int   debug
 		  );
 
 int pox_operation_scalar (
-			  double *p_x1_v, 
-			  double *p_y1_v, 
-			  double *p_z1_v, 
-			  int    np1, 
-			  double value, 
+			  double *p_x1_v,
+			  double *p_y1_v,
+			  double *p_z1_v,
+			  int    np1,
+			  double value,
 			  int    iop,
 			  int    debug
 			  );
 
 int pox_operation_pox (
-		       double *p_x1_v, 
-		       double *p_y1_v, 
-		       double *p_z1_v, 
-		       int   np1, 
-		       double *p_x2_v, 
-		       double *p_y2_v, 
-		       double *p_z2_v, 
-		       int   np2, 
+		       double *p_x1_v,
+		       double *p_y1_v,
+		       double *p_z1_v,
+		       int   np1,
+		       double *p_x2_v,
+		       double *p_y2_v,
+		       double *p_z2_v,
+		       int   np2,
 		       int   iop,
 		       float tol,
 		       int   debug
@@ -599,7 +599,7 @@ int pol_chk_point_inside(
 			 int    np,
 			 int    debug
 			 );
- 
+
 int polys_chk_point_inside(
 			   double x,
 			   double y,
@@ -609,12 +609,12 @@ int polys_chk_point_inside(
 			   int    np2,
 			   int    debug
 			   );
- 
+
 int pol_close(
-	       int     np, 
-	       double *p_x_v, 
-	       double *p_y_v, 
-	       double *p_z_v, 
+	       int     np,
+	       double *p_x_v,
+	       double *p_y_v,
+	       double *p_z_v,
 	       double dist,
 	       int    option,
 	       int    debug
@@ -626,34 +626,34 @@ int pol_set_entry (
 		   double y,
 		   double z,
 		   int    npmax,
-		   double *p_x_v, 
-		   double *p_y_v, 
-		   double *p_z_v, 
-		   int    option, 
+		   double *p_x_v,
+		   double *p_y_v,
+		   double *p_z_v,
+		   int    option,
 		   int    debug
 		   );
 
 
 int pol_refine (
-		int    np, 
-		int    npmax, 
-		double *p_x_v, 
-		double *p_y_v, 
-		double *p_z_v, 
+		int    np,
+		int    npmax,
+		double *p_x_v,
+		double *p_y_v,
+		double *p_z_v,
 		double dist,
 		int    option,
 		int    debug
 		);
 
 int pol_extend (
-		int    np, 
-		double *p_x_v, 
-		double *p_y_v, 
-		double *p_z_v, 
+		int    np,
+		double *p_x_v,
+		double *p_y_v,
+		double *p_z_v,
 		double dist,
 		int    mode,
 		double xang,
-		int    option,  /* 0: look in 3D, 1: look in 2d XY */ 
+		int    option,  /* 0: look in 3D, 1: look in 2d XY */
 		int    debug
 		);
 
@@ -679,18 +679,18 @@ void cube_import_rmsregular (
                              );
 
 void cube_export_rmsregular (
-			     int   nx, 
+			     int   nx,
 			     int   ny,
 			     int   nz,
-			     float xmin, 
-			     float ymin, 
-			     float zmin, 
-			     float xinc, 
-			     float yinc, 
-			     float zinc, 
+			     float xmin,
+			     float ymin,
+			     float zmin,
+			     float xinc,
+			     float yinc,
+			     float zinc,
 			     float rotation,
 			     float *val_v,
-			     char  *file, 
+			     char  *file,
 			     int   debug
 			     );
 
@@ -762,9 +762,9 @@ int cube_vertical_val_list(
 void grd3d_import_roff_grid (
 			    int     *num_act,
 			    int     *num_subgrds,
-			    float   *p_coord_v,
-			    float   *p_zgrd3d_v,
-			    int     *p_actnum_v,
+			    float   *coordsv,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    int     *p_subgrd_v,
 			    int     nnsub,
 			    char    *filename,
@@ -797,9 +797,9 @@ void grd3d_export_roff_grid (
 			    float   xoffset,
 			    float   yoffset,
 			    float   zoffset,
-			    float   *p_coord_v,
-			    float   *p_zgrd3d_v,
-			    int     *p_actnum_v,
+			    float   *coordsv,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    int     *p_subgrd_v,
 			    char    *filename,
 			    int     debug
@@ -833,9 +833,9 @@ void grd3d_export_roff_pstart (
 			      int     mode,
 			      int     nx,
 			      int     ny,
-			      int     nz,	
-			      char    *filename,	
-			      int     debug	
+			      int     nz,
+			      char    *filename,
+			      int     debug
 			      );
 
 
@@ -854,7 +854,7 @@ void grd3d_export_roff_prop (
 			      double  *p_double_v,
 			      int     ncodes,
 			      char    **codenames,
-			      int     *codevalues,			      
+			      int     *codevalues,
 			      char    *filename,
 			      int     debug
 			      );
@@ -908,7 +908,7 @@ void grd3d_import_ecl_grid (
 void grd3d_import_ecl_prop (
 			    int    ftype,
 			    int    nxyz,
-			    int    *p_actnum_v,
+			    int    *actnumsv,
 			    int    nklist,
 			    char   *klist,
 			    int    ndates,
@@ -975,9 +975,9 @@ void grd3d_export_ecl_grid (
 			    int     nx,
 			    int     ny,
 			    int     nz,
-			    float   *p_coord_v,
-			    float   *p_zcorn_v,
-			    int     *p_actnum_v,
+			    float   *coordsv,
+			    float   *zcornsv,
+			    int     *actnumsv,
 			    char    *filename,
 			    int     mode,
 			    int     debug
@@ -989,7 +989,7 @@ void grd3d_export_ecl_pstart (
 			      int     nx,
 			      int     ny,
 			      int     nz,
-			      int     *p_actnum_v,
+			      int     *actnumsv,
 			      char    *filename,
 			      int     debug
 			      );
@@ -1006,7 +1006,7 @@ void grd3d_export_ecl_prop (
 			     double  *double_v,
 			     char    **string_v,
 			     int     *logi_v,
-			     int     *p_actnum_v,
+			     int     *actnumsv,
 			     char    *filename,
 			     int     debug
 			     );
@@ -1015,9 +1015,9 @@ void grd3d_import_grdecl (
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
-			  float   *p_zcorn_v,
-			  int     *p_actnum_v,
+			  float   *coordsv,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  char    *filename,
 			  int     debug
 			  );
@@ -1026,9 +1026,9 @@ void grd3d_export_grdecl (
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
-			  float   *p_zcorn_v,
-			  int     *p_actnum_v,
+			  float   *coordsv,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  char    *filename,
 			  int     debug
 			  );
@@ -1056,16 +1056,16 @@ void grd3d_import_grdeclpar (
 			     char    *filename,
 			     int     debug
 			     );
-     
+
 
 
 void grd3d_export_flgrs(
                         int nx,
 			int ny,
 			int nz,
-			float *p_coord_v,
+			float *coordsv,
 			float *p_zc_v,
-			int   *p_actnum_v,
+			int   *actnumsv,
 			float flimit,
 			char  *file,
 			int   mdiv,
@@ -1081,21 +1081,21 @@ void grd3d_fault_marks(
 		       int nx,
 		       int ny,
 		       int nz,
-		       float *p_coord_v,
-		       float *p_zcorn_v,
-		       int   *p_actnum_v,
+		       float *coordsv,
+		       float *zcornsv,
+		       int   *actnumsv,
 		       int   *p_fmark_v,
 		       float flimit,
 		       int   debug
 		       );
-    
+
 int grd3d_pol_ftrace(
 		     int    nx,
 		     int    ny,
 		     int    nz,
-		     float  *p_coord_v,
-		     float  *p_zcorn_v,
-		     int    *p_actnum_v,
+		     float  *coordsv,
+		     float  *zcornsv,
+		     int    *actnumsv,
 		     float  *p_fprop_v,
 		     float  *p_fprop2_v,
 		     int    klayer,
@@ -1125,9 +1125,9 @@ int grd3d_cell_faultthrows(
 			   int   nx,
 			   int   ny,
 			   int   nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
-			   int   *p_actnum_v,
+			   float *coordsv,
+			   float *zcornsv,
+			   int   *actnumsv,
 			   float throw[],
 			   int   option,
 			   int   debug
@@ -1136,7 +1136,7 @@ int grd3d_cell_faultthrows(
 int grd3d_count_prop_int(
 			 int   nxyz,
 			 int   *p_nprop_v,
-			 int   *p_actnum_v,
+			 int   *actnumsv,
 			 int   nval,
 			 int   debug
 			 );
@@ -1146,9 +1146,9 @@ void grd3d_convert_hybrid (
 			   int   nx,
 			   int   ny,
 			   int   nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
-			   int   *p_actnum_v,
+			   float *coordsv,
+			   float *zcornsv,
+			   int   *actnumsv,
 			   int   nzhyb,
 			   float *p_zcornhyb_v,
 			   int   *p_actnumhyb_v,
@@ -1163,9 +1163,9 @@ void grd3d_convert_hybrid2(
 			   int   nx,
 			   int   ny,
 			   int   nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
-			   int   *p_actnum_v,
+			   float *coordsv,
+			   float *zcornsv,
+			   int   *actnumsv,
 			   int   nzhyb,
 			   float *p_zcornhyb_v,
 			   int   *p_actnumhyb_v,
@@ -1195,14 +1195,14 @@ void grd3d_merge_grids (
 			int   option,
 			int   debug
 			);
-    
+
 
 void grd3d_make_z_consistent (
 			      int   nx,
 			      int   ny,
 			      int   nz,
-			      float *p_zcorn_v,
-			      int   *p_actnum_v,
+			      float *zcornsv,
+			      int   *actnumsv,
 			      float zsep,
 			      int   debug
 			      );
@@ -1211,8 +1211,8 @@ void grd3d_flip_depth (
 		       int   nx,
 		       int   ny,
 		       int   nz,
-		       float *p_coord_v,
-		       float *p_zcorn_v,
+		       float *coordsv,
+		       float *zcornsv,
 		       int   debug
 		       );
 
@@ -1224,8 +1224,8 @@ void grd3d_set_dz_cell (
 			int   nx,
 			int   ny,
 			int   nz,
-			float *p_zcorn_v,
-			int   *p_actnum_v,
+			float *zcornsv,
+			int   *actnumsv,
 			float zsep,
 			int   debug
 			);
@@ -1241,8 +1241,8 @@ int grd3d_point_in_cell(
 			int ny,
 			int nz,
 			float *p_coor_v,
-			float *p_zcorn_v,
-			int   *p_actnum_v,
+			float *zcornsv,
+			int   *actnumsv,
 			int   option,
 			int   debug
 			);
@@ -1252,8 +1252,8 @@ void grd3d_collapse_inact (
 			   int   nx,
 			   int   ny,
 			   int   nz,
-			   float *p_zcorn_v,
-			   int   *p_actnum_v,
+			   float *zcornsv,
+			   int   *actnumsv,
 			   int   debug
 			   );
 
@@ -1265,8 +1265,8 @@ void grd3d_midpoint (
 		     int     nx,
 		     int     ny,
 		     int     nz,
-		     float   *p_coord_v,
-		     float   *p_zgrd3d_v,
+		     float   *coordsv,
+		     float   *zcornsv,
 		     float   *x,
 		     float   *y,
 		     float   *z,
@@ -1281,8 +1281,8 @@ void grd3d_cellpoint (
 		      int     ny,
 		      int     nz,
 		      int     ftype,
-		      float   *p_coord_v,
-		      float   *p_zgrd3d_v,
+		      float   *coordsv,
+		      float   *zcornsv,
 		      float   *x,
 		      float   *y,
 		      float   *z,
@@ -1301,7 +1301,7 @@ void grd3d_make_active(
 		       int     nx,
 		       int     ny,
 		       int     nz,
-		       int     *p_actnum_v,
+		       int     *actnumsv,
 		       int     debug
 		       );
 
@@ -1313,9 +1313,9 @@ void grd3d_inact_outs_pol(
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
-			  float   *p_zcorn_v,
-			  int     *p_actnum_v,
+			  float   *coordsv,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  int     *p_subgrd_v,
 			  int     isub,
 			  int     nsub,
@@ -1331,9 +1331,9 @@ void grd3d_set_prop_by_pol(
 			   int    nx,
 			   int    ny,
 			   int    nz,
-			   float  *p_coord_v,
-			   float  *p_zcorn_v,
-			   int    *p_actnum_v,
+			   float  *coordsv,
+			   float  *zcornsv,
+			   int    *actnumsv,
 			   float  *p_prop_v,
 			   float  value,
 			   float  ronly,
@@ -1354,9 +1354,9 @@ void grd3d_set_prop_in_pol(
 			   int    nx,
 			   int    ny,
 			   int    nz,
-			   float  *p_coord_v,
-			   float  *p_zcorn_v,
-			   int    *p_actnum_v,
+			   float  *coordsv,
+			   float  *zcornsv,
+			   int    *actnumsv,
 			   int    *p_prop_v,
 			   float  value,
 			   int    i1,
@@ -1376,9 +1376,9 @@ void grd3d_split_prop_by_pol(
 			     int    nx,
 			     int    ny,
 			     int    nz,
-			     float  *p_coord_v,
-			     float  *p_zcorn_v,
-			     int    *p_actnum_v,
+			     float  *coordsv,
+			     float  *zcornsv,
+			     int    *actnumsv,
 			     int    *p_prop_v,
 			     float  *p_propfilter_v,
 			     float  filterval,
@@ -1396,8 +1396,8 @@ void grd3d_inact_by_dz(
 		       int nx,
 		       int ny,
 		       int nz,
-		       float *p_zcorn_v,
-		       int   *p_actnum_v,
+		       float *zcornsv,
+		       int   *actnumsv,
 		       float threshold,
 		       int   flip,
 		       int   debug
@@ -1449,7 +1449,7 @@ float grd3d_frac_prop_within_ii(
 			       int   talen,
 			       int   debug
 				);
-    
+
 void grd3d_remap_prop_g2g(
 			   int   nx1,
 			   int   ny1,
@@ -1472,7 +1472,7 @@ int grd3d_count_active(
 		       int     nx,
 		       int     ny,
 		       int     nz,
-		       int    *p_actnum_v,
+		       int    *actnumsv,
 		       int debug
 		       );
 
@@ -1481,7 +1481,7 @@ void grd3d_calc_dz(
 		   int nx,
 		   int ny,
 		   int nz,
-		   float *p_zcorn_v,
+		   float *zcornsv,
 		   float *p_dz_v,
 		   int flip,
 		   int debug
@@ -1491,7 +1491,7 @@ void grd3d_calc_z(
 		  int nx,
 		  int ny,
 		  int nz,
-		  float *p_zcorn_v,
+		  float *zcornsv,
 		  float *p_z_v,
 		  int debug
 		  );
@@ -1506,9 +1506,9 @@ int grd3d_prop_infill1_int(
 			   int j2,
 			   int k1,
 			   int k2,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
-			   int   *p_actnum_v,
+			   float *coordsv,
+			   float *zcornsv,
+			   int   *actnumsv,
 			   int   *p_xxx_v,
 			   int   value,
 			   int   debug
@@ -1518,8 +1518,8 @@ void grd3d_calc_cell_dip(
 			 int nx,
 			 int ny,
 			 int nz,
-			 float *p_coord_v,
-			 float *p_zcorn_v,
+			 float *coordsv,
+			 float *zcornsv,
 			 float *p_dip_v,
 			 int   debug
 			 );
@@ -1528,8 +1528,8 @@ void grd3d_interp_prop_verti(
 			     int   nx,
 			     int   ny,
 			     int   nz,
-			     float *p_zcorn_v,
-			     int   *p_actnum_v,
+			     float *zcornsv,
+			     int   *actnumsv,
 			     float *p_xxx_v,
 			     float bgval,
 			     float dzmax,
@@ -1541,12 +1541,12 @@ void grd3d_interp_prop_vertii(
 			      int   nx,
 			      int   ny,
 			      int   nz,
-			      int   i1,			      
+			      int   i1,
 			      int   i2,
 			      int   j1,
 			      int   j2,
-			      float *p_zcorn_v,
-			      int   *p_actnum_v,
+			      float *zcornsv,
+			      int   *actnumsv,
 			      int   *p_xxx_v,
 			      int   bgval,
 			      float dzmax,
@@ -1564,9 +1564,9 @@ int grd3d_getcell_by_prop(
 			  int     j2,
 			  int     k1,
 			  int     k2,
-			  float   *p_coord_v,
-			  float   *p_zcorn_v,
-			  int     *p_actnum_v,
+			  float   *coordsv,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  float   *p_xxx_v,
 			  float   pmin,
 			  float   pmax,
@@ -1575,13 +1575,13 @@ int grd3d_getcell_by_prop(
 			  int     debug
 			  );
 
-    
+
 void grd3d_calc_sum_dz(
 		       int nx,
 		       int ny,
 		       int nz,
-		       float *p_zcorn_v,
-		       int   *p_actnum_v,
+		       float *zcornsv,
+		       int   *actnumsv,
 		       float *p_sumdz_v,
 		       int   flip,
 		       int   debug
@@ -1610,12 +1610,12 @@ void grd3d_print_cellinfo (
 			   int   nx,
 			   int   ny,
 			   int   nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
+			   float *coordsv,
+			   float *zcornsv,
 			   int   *actnum_v,
 			   int   debug
 			   );
-  
+
 void grd3d_corners (
 		    int     i,
 		    int     j,
@@ -1623,8 +1623,8 @@ void grd3d_corners (
 		    int     nx,
 		    int     ny,
 		    int     nz,
-		    float   *p_coord_v,
-		    float   *p_zgrd3d_v,
+		    float   *coordsv,
+		    float   *zcornsv,
 		    float   corners[],
 		    int     debug
 		    );
@@ -1643,7 +1643,7 @@ void grd3d_set_propval_float(
 			     int     debug
 			     );
 
-    
+
 void grd3d_pzcorns (
 		    int     i,
 		    int     j,
@@ -1651,8 +1651,8 @@ void grd3d_pzcorns (
 		    int     nx,
 		    int     ny,
 		    int     nz,
-		    float   *p_coord_v,
-		    float   *p_zgrd3d_v,
+		    float   *coordsv,
+		    float   *zcornsv,
 		    float   *p,
 		    int     *flag,
 		    int     debug
@@ -1663,9 +1663,9 @@ void grd3d_adj_z_from_zlog (
 			    int   nx,
 			    int   ny,
 			    int   nz,
-			    float *p_coord_v,
-			    float *p_zcorn_v,
-			    int   *p_actnum_v,
+			    float *coordsv,
+			    float *zcornsv,
+			    int   *actnumsv,
 			    int   *p_zon_v,
 			    int   nval,
 			    float *p_utme_v,
@@ -1682,9 +1682,9 @@ void grd3d_adj_z_from_map (
 			   int nx,
 			   int ny,
 			   int nz,
-			   float *p_coord_v,
-			   float *p_zcorn_v,
-			   int *p_actnum_v,
+			   float *coordsv,
+			   float *zcornsv,
+			   int *actnumsv,
 			   int mx,
 			   int my,
 			   float xmin,
@@ -1702,9 +1702,9 @@ void grd3d_adj_z_from_mapv2 (
 			     int nx,
 			     int ny,
 			     int nz,
-			     float *p_coord_v,
-			     float *p_zcorn_v,
-			     int *p_actnum_v,
+			     float *coordsv,
+			     float *zcornsv,
+			     int *actnumsv,
 			     int mx,
 			     int my,
 			     float xmin,
@@ -1720,9 +1720,9 @@ void grd3d_adj_z_from_mapv3 (
 			     int nx,
 			     int ny,
 			     int nz,
-			     float *p_coord_v,
-			     float *p_zcorn_v,
-			     int *p_actnum_v,
+			     float *coordsv,
+			     float *zcornsv,
+			     int *actnumsv,
 			     int mx,
 			     int my,
 			     float xmin,
@@ -1763,7 +1763,7 @@ void grd3d_adj_dzcorn (
 		       int nx,
 		       int ny,
 		       int nz,
-		       float *p_zcorn_v,
+		       float *zcornsv,
 		       float *p_dz1_v,
 		       float *p_dz2_v,
 		       float *p_dz3_v,
@@ -1786,7 +1786,7 @@ int grd3d_set_active(
 		     int   j2,
 		     int   k1,
 		     int   k2,
-		     int   *p_actnum_v,
+		     int   *actnumsv,
 		     int   debug
 		     );
 
@@ -1794,8 +1794,8 @@ void grd3d_zdominance_int(
 			  int   nx,
 			  int   ny,
 			  int   nz,
-			  float *p_zcorn_v,
-			  int   *p_actnum_v,
+			  float *zcornsv,
+			  int   *actnumsv,
 			  int   *p_xxx_v,
 			  int   option,
 			  int   debug

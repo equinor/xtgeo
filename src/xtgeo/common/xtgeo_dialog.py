@@ -194,7 +194,7 @@ class _TimeFilter(logging.Filter):  # pylint: disable=too-few-public-methods
             record.relativeCreated / 1000.0
         ) - dtime.fromtimestamp(last / 1000.0)
 
-        record.relative = "{0:.2f}".format(dlt.seconds + dlt.microseconds / MLS)
+        record.relative = "{0:7.3f}".format(dlt.seconds + dlt.microseconds / MLS)
 
         self.last = record.relativeCreated
         return True

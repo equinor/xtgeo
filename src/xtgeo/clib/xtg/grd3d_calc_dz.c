@@ -1,105 +1,89 @@
 /*
-* #############################################################################
-* Name:      grd3d_calc_dz.c
- * Author:    JRIV@statoil.com
- * Created:   2001-12-12
- * Updates:   2016-10-19 include actnum
- * ############################################################################
- * Calculates DZ per cell
+****************************************************************************************
  *
- * Arguments:
- *     nx..nz           grid dimensions
- *     p_zcorn_v        ZCORN array (pointer) of input
- *     p_actnum_v       ACTNUM array (pointer) of input
- *     p_dz_v           array (pointer) with DZ values of output
- *     flip             Flag for flipped option, use 1 or -1
- *     option           0: all cells, 1 make actnum 0 cells to undef value
- *     debug            debug/verbose flag
+ * NAME:
+ *    grd3d_calc_dz.c
  *
- * Caveeats/issues:
+ * AUTHOR(S):
+ *    Jan C. Rivenaes
  *
- * ############################################################################
+ * DESCRIPTION:
+ *    Computes the DZ avg per cell
+ *
+ * ARGUMENTS:
+ *    nx...nz        i     Dimensions
+ *    zcornsv        i     Z corners (with size)
+ *    actnumsv       i     ACTNUM (with size)
+ *    p_dz_v        i/o    Array to be updated
+ *    flip           i     Vertical flip flag
+ *    option         i     0: all cells, 1: make ACTNUM  UNDEF
+ *
+ * RETURNS:
+ *    Void. Pointers to arrays are updated
+ *
+ * NOTES:
+ *    The returned array is now C order
+ *
+ * LICENCE:
+ *    cf. XTGeo LICENSE
+ ***************************************************************************************
  */
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 
 void grd3d_calc_dz(
-		   int     nx,
-		   int     ny,
-		   int     nz,
-		   double  *p_zcorn_v,
-		   int     *p_actnum_v,
-		   double  *p_dz_v,
-		   int     flip,
-		   int     option,
-		   int     debug
-		   )
+    int nx,
+    int ny,
+    int nz,
+    double *zcornsv,
+    long nzcorn,
+    int *actnumsv,
+    long nactnum,
+    double *p_dz_v,
+    long ndz,
+    int flip,
+    int option
+    )
 
 {
-    /* locals */
-    int     i, j, k, ib, ip, iq;
+    int     i, j, k;
     double  top_z_avg, bot_z_avg;
-    char    s[24]="grd3d_calc_dz";
 
-    xtgverbose(debug);
-    xtg_speak(s,2,"Entering <grd3d_calc_dz>");
-    xtg_speak(s,3,"NX NY NZ: %d %d %d", nx, ny, nz);
-
-
-    xtg_speak(s,2,"Finding grid DZ parameter...");
+    logger_info(LI, FI, FU, "Compute DZ...");
 
     for (k = 1; k <= nz; k++) {
-	xtg_speak(s,3,"Finished layer %d of %d",k,nz);
 	for (j = 1; j <= ny; j++) {
 	    for (i = 1; i <= nx; i++) {
 
 		/* parameter counting */
-		ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
+		long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);  /* C order */
+		long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);  /* F order */
 
 		/* grid */
-		ip=x_ijk2ib(i,j,k,  nx,ny,nz+1,0);
-		iq=x_ijk2ib(i,j,k+1,nx,ny,nz+1,0);
+		long ip = x_ijk2ib(i, j, k,  nx, ny, nz + 1, 0);
+		long iq = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
 
 		/* each cell */
-		top_z_avg=0.25*(p_zcorn_v[4*ip + 1 - 1]+
-				p_zcorn_v[4*ip + 2 - 1]+
-				p_zcorn_v[4*ip + 3 - 1]+
-				p_zcorn_v[4*ip + 4 - 1]);
-		bot_z_avg=0.25*(p_zcorn_v[4*iq + 1 - 1]+
-				p_zcorn_v[4*iq + 2 - 1]+
-				p_zcorn_v[4*iq + 3 - 1]+
-				p_zcorn_v[4*iq + 4 - 1]);
+		top_z_avg=0.25*(zcornsv[4 * ip + 1 - 1]+
+				zcornsv[4 * ip + 2 - 1]+
+				zcornsv[4 * ip + 3 - 1]+
+				zcornsv[4 * ip + 4 - 1]);
+		bot_z_avg=0.25*(zcornsv[4 * iq + 1 - 1]+
+				zcornsv[4 * iq + 2 - 1]+
+				zcornsv[4 * iq + 3 - 1]+
+				zcornsv[4 * iq + 4 - 1]);
 
-		p_dz_v[ib]=(double)flip*(bot_z_avg - top_z_avg);
+		p_dz_v[ic] = (double) flip * (bot_z_avg - top_z_avg);
 		// will do it correct for flipped grids
 
-		if (option==1 && p_actnum_v[ib]==0) {
-		    p_dz_v[ib]=UNDEF;
+		if (option == 1 && actnumsv[ib] == 0) {
+		    p_dz_v[ic] = UNDEF;
 		}
-
-                if (debug > 2 && p_actnum_v[ib]==1) {
-                    xtg_speak(s, 3, "Value is %f actnum is %d",
-                              p_dz_v[ib], p_actnum_v[ib]);
-                }
-
-		if (p_dz_v[ib]<0.0) {
-		    xtg_warn(s,1,"Negative dZ for cell %d %d %d ...\n",i,j,k);
-		    xtg_warn(s,1,"(Flip status is %d)\n",flip);
-		    xtg_warn(s,3,"TOP   1      2     3     4\n");
-		    xtg_warn(s,3,"      %8.2f %8.2f %8.2f %8.2f\n",
-			     p_zcorn_v[4*ip + 1 - 1], p_zcorn_v[4*ip + 2 - 1],
-			     p_zcorn_v[4*ip + 3 - 1], p_zcorn_v[4*ip + 4 - 1]);
-		    xtg_warn(s,3,"BOT   1      2     3     4\n");
-		    xtg_warn(s,3,"      %8.2f %8.2f %8.2f %8.2f\n",
-			     p_zcorn_v[4*iq + 1 - 1], p_zcorn_v[4*iq + 2 - 1],
-			     p_zcorn_v[4*iq + 3 - 1], p_zcorn_v[4*iq + 4 - 1]);
-
-		}
-
 	    }
 	}
     }
-    xtg_speak(s,2,"Exiting <grd3d_calc_dz>");
+    logger_info(LI, FI, FU, "Compute DZ... done");
 }

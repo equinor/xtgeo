@@ -20,8 +20,8 @@ void grd3d_flip_columns (
 			 int   nx,
 			 int   ny,
 			 int   nz,
-			 double *p_coord_v,
-			 double *p_zcorn_v,
+			 double *coordsv,
+			 double *zcornsv,
 			 int   debug
 			 )
 
@@ -46,27 +46,24 @@ void grd3d_flip_columns (
 
     for (j=0;j<=ny; j++) {
 	for (i=0;i<=nx; i++) {
-	    tmpcoord=[iq+0] = p_coord_v[ib+0];
-	    tmpcoord=[iq+1] = p_coord_v[ib+1];
-	    tmpcoord=[iq+2] = p_coord_v[ib+2];
-	    tmpcoord=[iq+3] = p_coord_v[ib+3];
-	    tmpcoord=[iq+4] = p_coord_v[ib+4];
-	    tmpcoord=[iq+5] = p_coord_v[ib+5];
+	    tmpcoord=[iq+0] = coordsv[ib+0];
+	    tmpcoord=[iq+1] = coordsv[ib+1];
+	    tmpcoord=[iq+2] = coordsv[ib+2];
+	    tmpcoord=[iq+3] = coordsv[ib+3];
+	    tmpcoord=[iq+4] = coordsv[ib+4];
+	    tmpcoord=[iq+5] = coordsv[ib+5];
 	    iq=iq+6;
 	    ib=ib-6-i*(nx+1);
 	}
     }
 
     // zcorn section
-    
+
     nzcorn=4*nx*ny*(nz+1);
     for (ic=0; ic<=nzcorn; ic++) {
-	p_zcorn_v[ic]=-1*p_zcorn_v[ic];
+	zcornsv[ic]=-1*zcornsv[ic];
     }
-	
-    
+
+
     xtg_speak(sub,2,"Exit from flipping routine");
 }
-
-
-

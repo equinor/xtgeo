@@ -1,5 +1,5 @@
 /*
- *******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_reduce_onelayer.c
@@ -28,36 +28,34 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
 
 
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 
 int grd3d_reduce_onelayer (
-			   int    nx,
-			   int    ny,
-			   int    nz,
+			   int nx,
+			   int ny,
+			   int nz,
 			   double *p_zcorn1_v,
+                           long nzornin1,
 			   double *p_zcorn2_v,
-			   int    *p_actnum1_v,
-			   int    *p_actnum2_v,
-			   int    *nactive,
-			   int    iflag,
-			   int    debug
+                           long nzornin2,
+			   int *p_actnum1_v,
+                           long nactin1,
+			   int *p_actnum2_v,
+                           long nactin2,
+			   int *nactive,
+			   int iflag
 			   )
 {
     /* locals */
-    char s[24]="grd3d_reduce_onelayer";
     int  i, j, ic, ib, ibt, ibb, ncc;
 
-    xtgverbose(debug);
-
-    xtg_speak(s,1,"Entering routine <%s>",s);
-
-    xtg_speak(s,2,"Map Z corners, top and base...");
 
     for (j = 1; j <= ny; j++) {
 	for (i = 1; i <= nx; i++) {
@@ -84,20 +82,16 @@ int grd3d_reduce_onelayer (
     ncc=0;
 
     if (iflag==0) {
-	xtg_speak(s,2,"ACTNUM = 1 for all cells...");
 	for (ib=0; ib<nx*ny*1; ib++) {
 	    p_actnum2_v[ib]=1;
 	    ncc++;
 	}
     }
     else{
-	xtg_error(s,"IFLAG other than 0 not implemented yet for <%s>",s);
+	logger_critical(LI, FI, FU, "IFLAG other than 0 not implemented for <%s>", FU);
     }
 
     *nactive=ncc;
-
-
-    xtg_speak(s,1,"Exit from <%s>",s);
 
     return EXIT_SUCCESS;
 

@@ -11,8 +11,6 @@ from collections import OrderedDict
 import numpy as np
 import numpy.ma as ma  # pylint: disable=useless-import-alias
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-
 import xtgeo
 from xtgeo.common import XTGDescription
 import xtgeo.common.sys as xtgeosys
@@ -163,9 +161,9 @@ class Grid(Grid3D):
 
         super(Grid, self).__init__(*args, **kwargs)
 
-        self._x_coord_v = None  # carray swig pointer (or numpy array) to coords vector
-        self._x_zcorn_v = None  # carray swig pointer (or numpy array) to zcorns vector
-        self._x_actnum_v = None  # carray swig pointer (or numpy array) to actnum vector
+        self._coordsv = None  # carray swig pointer (or numpy array) to coords vector
+        self._zcornsv = None  # carray swig pointer (or numpy array) to zcorns vector
+        self._actnumsv = None  # carray swig pointer (or numpy array) to actnum vector
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
@@ -204,17 +202,14 @@ class Grid(Grid3D):
 
     def __del__(self):
 
-        if self._p_coord_v is not None:
-            # logger.info("Deleting Grid instance %s", id(self))
-            _cxtgeo.delete_doublearray(self._x_coord_v)
-            _cxtgeo.delete_doublearray(self._x_zcorn_v)
-            _cxtgeo.delete_intarray(self._x_actnum_v)
-            self._x_coord_v = None
+        self._coordsv = None
+        self._zcornsv = None
+        self._actnumsv = None
 
-            if self.props is not None:
-                for prop in self.props:
-                    # logger.info("Deleting property instance %s", prop.name)
-                    prop.__del__()
+        if self.props is not None:
+            for prop in self.props:
+                # logger.info("Deleting property instance %s", prop.name)
+                prop.__del__()
 
     def __repr__(self):
         logger.info("Invoke __repr__ for grid")
@@ -257,6 +252,17 @@ class Grid(Grid3D):
     def dimensions(self):
         """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
         return (self._ncol, self._nrow, self._nlay)
+
+    @property
+    def vectordimensions(self):
+        """3-tuple: The storage grid array dimensions tuple of 3 integers (read only) as
+        (ncoord, nzcorn, nactnum)
+        """
+        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
+        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+        ntot = self._ncol * self._nrow * self._nlay
+
+        return (ncoord, nzcorn, ntot)
 
     @property
     def ijk_handedness(self):
@@ -468,61 +474,6 @@ class Grid(Grid3D):
         return self._roxindexer
 
     # ==================================================================================
-    # Nonpublic properties, needed as wrappers
-    # ==================================================================================
-
-    @property
-    def _p_coord_v(self):
-        """A pointer (Swig Object) to the grid geometry pillars coords."""
-        if "Swig" not in str(type(self._x_coord_v)):
-            self.denumpify_carrays()
-
-        return self._x_coord_v
-
-    @_p_coord_v.setter
-    def _p_coord_v(self, value):
-        if "Swig" in str(type(value)):
-            self._x_coord_v = value
-        else:
-            raise RuntimeError(
-                "Setting _p_coord_v error, input is {}".format(type(value))
-            )
-
-    @property
-    def _p_zcorn_v(self):
-        """A pointer (Swig Object) to the grid geometry zcorn."""
-        if "Swig" not in str(type(self._x_zcorn_v)):
-            self.denumpify_carrays()
-
-        return self._x_zcorn_v
-
-    @_p_zcorn_v.setter
-    def _p_zcorn_v(self, value):
-        if "Swig" in str(type(value)):
-            self._x_zcorn_v = value
-        else:
-            raise RuntimeError(
-                "Setting _p_zcorn_v error, input is {}".format(type(value))
-            )
-
-    @property
-    def _p_actnum_v(self):
-        """A pointer (Swig Object) to the grid actnum array."""
-        if "Swig" not in str(type(self._x_actnum_v)):
-            self.denumpify_carrays()
-
-        return self._x_actnum_v
-
-    @_p_actnum_v.setter
-    def _p_actnum_v(self, value):
-        if "Swig" in str(type(value)):
-            self._x_actnum_v = value
-        else:
-            raise RuntimeError(
-                "Setting _p_actnum_v error, input is {}".format(type(value))
-            )
-
-    # ==================================================================================
     # Create/import/export
     # ==================================================================================
 
@@ -564,13 +515,7 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def from_file(
-        self,
-        gfile,
-        fformat=None,
-        initprops=None,
-        restartprops=None,
-        restartdates=None,
-        _roffapiv=2,
+        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
     ):
 
         """Import grid geometry from file, and makes an instance of this class.
@@ -607,7 +552,6 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
-            _roffapiv=_roffapiv,
         )
         self._tmp = {}
 
@@ -682,54 +626,11 @@ class Grid(Grid3D):
 
     def numpify_carrays(self):
         """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
-
-        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
-        ntot = self._ncol * self._nrow * self._nlay
-
-        if "SwigPyObject" not in str(type(self._x_zcorn_v)) or self._x_zcorn_v is None:
-            logger.info("Tried to numpify but input is not numpy")
-            return
-
-        self._x_coord_v = _cxtgeo.swig_carr_to_numpy_1d(ncoord, self._x_coord_v)
-        self._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(nzcorn, self._x_zcorn_v)
-        self._x_actnum_v = _cxtgeo.swig_carr_to_numpy_i1d(ntot, self._x_actnum_v)
-
-        if not self._tmp:
-            return
-
-        if "SwigPyObject" in str(type(self._tmp["onegrid"]._x_zcorn_v)):
-            nzcorn = self._ncol * self._nrow * (1 + 1) * 4
-            ntot = self._ncol * self._nrow * 1
-
-            self._tmp["onegrid"]._x_zcorn_v = _cxtgeo.swig_carr_to_numpy_1d(
-                nzcorn, self._tmp["onegrid"]._x_zcorn_v
-            )
-            self._tmp["onegrid"]._x_actnum_v = _cxtgeo.swig_carr_to_numpy_1d(
-                ntot, self._tmp["onegrid"]._x_actnum_v
-            )
-
-    def denumpify_carrays(self):
-        """Convert 1D numpies of geometry arrays to C SWIG pointers pointers."""
-
-        ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-        nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
-        ntot = self._ncol * self._nrow * self._nlay
-
-        if isinstance(self._x_coord_v, np.ndarray):
-            carray = _cxtgeo.new_doublearray(ncoord)
-            _cxtgeo.swig_numpy_to_carr_1d(self._x_coord_v, carray)
-            self._x_coord_v = carray
-
-        if isinstance(self._x_zcorn_v, np.ndarray):
-            carray = _cxtgeo.new_doublearray(nzcorn)
-            _cxtgeo.swig_numpy_to_carr_1d(self._x_zcorn_v, carray)
-            self._x_zcorn_v = carray
-
-        if isinstance(self._x_actnum_v, np.ndarray):
-            carray = _cxtgeo.new_intarray(ntot)
-            _cxtgeo.swig_numpy_to_carr_i1d(self._x_actnum_v, carray)
-            self._x_actnum_v = carray
+        warnings.warn(
+            "Method numpify_carrays is deprecated and can be removed ({})".format(self),
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
@@ -775,10 +676,6 @@ class Grid(Grid3D):
         dsc = XTGDescription()
         dsc.title("Description of Grid instance")
         dsc.txt("Object ID", id(self))
-        if details:
-            dsc.txt("SWIG ID to coordinates pointer", self._p_coord_v)
-            dsc.txt("SWIG ID to zcorn pointer", self._p_zcorn_v)
-            dsc.txt("SWIG ID to actnum pointer", self._p_actnum_v)
         dsc.txt("File source", self._filesrc)
         dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
         dsc.txt("Number of active cells", self.nactive)
@@ -1051,8 +948,12 @@ class Grid(Grid3D):
         return None
 
     def get_cactnum(self):
-        """Returns the C pointer object reference to the ACTNUM array."""
-        return self._p_actnum_v  # the SWIG pointer to the C structure
+        """Returns the C pointer object reference to the ACTNUM array (deprecated)."""
+        warnings.warn(
+            "Method get_cactnum is deprecated and will be removed. ({})".format(self),
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.
@@ -1072,7 +973,6 @@ class Grid(Grid3D):
 
         .. versionchanged:: 2.6.0 Added ``dual`` keyword
         """
-
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
@@ -1088,8 +988,9 @@ class Grid(Grid3D):
                 discrete=True,
             )
 
-            carray = self._p_actnum_v  # the SWIG pointer to the C structure
-            _gridprop_lowlevel.update_values_from_carray(act, carray, np.int32)
+            values = _gridprop_lowlevel.f2c_order(self, self._actnumsv)
+            act.values = values
+            act.mask_undef()
 
         if asmasked:
             act.values = ma.masked_equal(act.values, 0)
@@ -1115,8 +1016,9 @@ class Grid(Grid3D):
             act.values[:, :, 4] = 0
             grid.set_actnum(act)
         """
+        val1d = actnum.values.ravel(order="K")
 
-        self._p_actnum_v = _gridprop_lowlevel.update_carray(actnum, discrete=True)
+        self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)
 
     def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
         """

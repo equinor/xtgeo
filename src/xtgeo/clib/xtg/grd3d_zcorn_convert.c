@@ -19,12 +19,12 @@
  *    Jan C. Rivenaes
  *
  * DESCRIPTION:
- *    Eclipse style ZCORN to XTGeo style p_zcorn_v
+ *    Eclipse style ZCORN to XTGeo style zcornsv
  *
  * ARGUMENTS:
  *    nx, ny, nc     i     Dimensions
  *    zcorn          i     ZCORN as input from Eclipse
- *    p_coord_v      o     XTgeo's ZCORN repr
+ *    coordsv        o     XTgeo's ZCORN repr
  *    option         i     Options flag for later usage
  *
  * RETURNS:
@@ -47,7 +47,7 @@ void grd3d_zcorn_convert (
                           int ny,
                           int nz,
                           float *zcorn,
-                          double *p_zcorn_v,
+                          double *zcornsv,
                           int option
                           )
 {
@@ -80,8 +80,8 @@ void grd3d_zcorn_convert (
 
                 ibb = x_ijk2ib(ix, jy, kk, nx, ny, nz+1, 0);
                 if (kzread == 1) {
-                    p_zcorn_v[4*ibb+1*1-1]=fvalue1;
-                    p_zcorn_v[4*ibb+1*2-1]=fvalue2;
+                    zcornsv[4*ibb+1*1-1]=fvalue1;
+                    zcornsv[4*ibb+1*2-1]=fvalue2;
                 }
             }
             /* "right" cell margin */
@@ -91,8 +91,8 @@ void grd3d_zcorn_convert (
 
                 ibb = x_ijk2ib(ix, jy, kk, nx, ny, nz + 1, 0);
                 if (kzread == 1) {
-                    p_zcorn_v[4 * ibb + 1 * 3 - 1] = fvalue1;
-                    p_zcorn_v[4 * ibb + 1 * 4 - 1] = fvalue2;
+                    zcornsv[4 * ibb + 1 * 3 - 1] = fvalue1;
+                    zcornsv[4 * ibb + 1 * 4 - 1] = fvalue2;
                 }
             }
         }

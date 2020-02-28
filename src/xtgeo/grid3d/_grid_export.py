@@ -6,8 +6,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
 
-XTGDEBUG = 0
-
 logger = xtg.functionlogger(__name__)
 
 
@@ -40,18 +38,15 @@ def export_roff(self, gfile, option):
         gx[3],
         gx[5],
         gx[7],
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         subgrd_v,
         gfile,
-        XTGDEBUG,
     )
 
-    # skip parameters for now (cf Perl code)
-
     # end tag
-    _cxtgeo.grd3d_export_roff_end(option, gfile, XTGDEBUG)
+    _cxtgeo.grd3d_export_roff_end(option, gfile)
 
 
 def export_grdecl(self, gfile, mode):
@@ -65,12 +60,11 @@ def export_grdecl(self, gfile, mode):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         gfile,
         mode,
-        XTGDEBUG,
     )
 
 
@@ -83,10 +77,9 @@ def export_egrid(self, gfile):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         gfile,
         0,
-        XTGDEBUG,
     )

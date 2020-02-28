@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    cube_coord_ijk.c
@@ -31,33 +31,31 @@
  ***************************************************************************************
  */
 
-
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-int cube_coord_val_ijk(
-                       int   i,
-                       int   j,
-                       int   k,
-                       int   nx,
-                       int   ny,
-                       int   nz,
-                       double xori,
-                       double xinc,
-                       double yori,
-                       double yinc,
-                       double zori,
-                       double zinc,
-                       double rot_deg,
-                       int yflip,
-                       float *p_val_v,
-                       double *xcor,
-                       double *ycor,
-                       double *zcor,
-                       float *value,
-                       int option
-                       )
+int
+cube_coord_val_ijk(int i,
+                   int j,
+                   int k,
+                   int nx,
+                   int ny,
+                   int nz,
+                   double xori,
+                   double xinc,
+                   double yori,
+                   double yinc,
+                   double zori,
+                   double zinc,
+                   double rot_deg,
+                   int yflip,
+                   float *p_val_v,
+                   double *xcor,
+                   double *ycor,
+                   double *zcor,
+                   float *value,
+                   int option)
 {
 
     /* locals */
@@ -68,13 +66,14 @@ int cube_coord_val_ijk(
 
     ier1 = 0;
     if (option < 10) {
-        ier1 = cube_xy_from_ij(i, j, &xcoord, &ycoord, xori, xinc, yori,
-                               yinc, nx, ny, yflip, rot_deg, 0);
+        ier1 = cube_xy_from_ij(i, j, &xcoord, &ycoord, xori, xinc, yori, yinc, nx, ny,
+                               yflip, rot_deg, 0);
     }
     *xcor = xcoord;
     *ycor = ycoord;
 
-    if (ier1 != 0) exit(-1);
+    if (ier1 != 0)
+        exit(-1);
 
     *zcor = zori + (k - 1) * zinc;
 
@@ -87,14 +86,14 @@ int cube_coord_val_ijk(
 
     if (ier1 == 0 && ier2 == 0) {
         return EXIT_SUCCESS;
-    }
-    else{
+    } else {
         /* something is wrong */
-        logger_error(LI, FI, FU, "IER1 = %d IER2 = %d Error(?) in routine"
-                     " %s contact JRIV", ier1, ier2, FU);
+        logger_error(LI, FI, FU,
+                     "IER1 = %d IER2 = %d Error(?) in routine"
+                     " %s contact repo owner",
+                     ier1, ier2, FU);
 
         *value = UNDEF;
         return -1;
     }
-
 }

@@ -1,105 +1,114 @@
 /*
- * ############################################################################
- * grd3d_export_roff_grid
- * Exporting a Roff grid to file
- * Current version: Keeping pillars and 4 Z corners pr layers (add 1 pseudo layer)
- * !! See also: <grd3d_export_roff_end>
- * Author: JCR
- * ############################################################################
+****************************************************************************************
  *
- * ############################################################################
+ * NAME:
+ *    grd3d_export_roff_grid.c
+ *
+ * DESCRIPTION:
+ *    Export to ROFF format.  See also: grd3d_export_roff_end
+ *
+ *    ----------------------------------------------------------------------------------
+ *    roff-asc
+ *     #ROFF file#
+ *     #Creator: RMS - Reservoir Modelling System, version 6.0#
+ *     tag filedata
+ *     int byteswaptest 1
+ *     char filetype  "grid"
+ *     char creationDate  "28/03/2000 16:59:16"
+ *     endtag
+ *     tag version
+ *     int major 2
+ *     int minor 0
+ *     endtag
+ *     tag dimensions
+ *     int nX 4
+ *     int nY 4
+ *     int nZ 3
+ *     endtag
+ *     tag translate
+ *     float xoffset   4.62994625E+05
+ *     float yoffset   5.93379900E+06
+ *     float zoffset  -3.37518921E+01
+ *     endtag
+ *     tag scale
+ *     float xscale   1.00000000E+00
+ *     float yscale   1.00000000E+00
+ *     float zscale  -1.00000000E+00
+ *     endtag
+ *     tag subgrids
+ *     array int nLayers 16
+ *          1            1            5            8           10           10
+ *         10           15            8           20           20           20
+ *          8            6            8            2
+ *    endtag
+ *    tag cornerLines
+ *    array float data 150
+ *     -7.51105194E+01  -4.10773730E+03  -1.86212000E+03  -7.51105194E+01
+ *     -4.10773730E+03  -1.72856909E+03  -8.36509094E+02  -2.74306006E+03
+ *     ....
+ *    endtag
+ *    tag zvalues
+ *    array byte splitEnz 100
+ *     1   1   1   1   1   1   4   4   1   1   1   1
+ *    ....
+ *    endtag
+ *    tag active
+ *    array bool data 48
+ *     1   1   1   1   1   1   1   1   1   1   1   1
+ *     1   1   1   1   1   1   1   1   1   1   1   1
+ *     1   1   1   1   1   1   1   1   1   1   1   1
+ *     1   1   1   1   1   1   1   1   1   1   1   1
+ *    endtag
+ *     ... ETC
+ *
+ * ARGUMENTS:
+ *    mode                i     txt or binary
+ *    nx, ny, nz          i     NCOL, NROW, NLAY
+ *    num_subgrds         i     Number of subgrids
+ *    isubgrd_to_export   i     Which subgrd to export
+ *    *offset             i     coordinate offsets
+ *    coordsv             i     COORD array w/ len
+ *    zcornsv             i     ZCORN array w/ len
+ *    actnumsv            i     ACTNUM array w/ len
+ *    p_subgrd_v          i     Subgrid array
+ *    filename            i     File name
+ *
+ * RETURNS:
+ *    Void function
+ *
+ * LICENCE:
+ *    CF. XTGeo license
+ ***************************************************************************************
  */
 
-
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
+#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
 
 /* minimum split in noded accepted to be a split-node */
 #define ZMINSPLIT 0.0000
 
-/*
- * ****************************************************************************
- *                      READ_ROFF_ASCII_GRID
- ****************************************************************************
- * The ROFF (Roxar Open File Format) is like this:
- *
- *roff-asc
- *#ROFF file#
- *#Creator: RMS - Reservoir Modelling System, version 6.0#
- *tag filedata
- *int byteswaptest 1
- *char filetype  "grid"
- *char creationDate  "28/03/2000 16:59:16"
- *endtag
- *tag version
- *int major 2
- *int minor 0
- *endtag
- *tag dimensions
- *int nX 4
- *int nY 4
- *int nZ 3
- *endtag
- *tag translate
- *float xoffset   4.62994625E+05
- *float yoffset   5.93379900E+06
- *float zoffset  -3.37518921E+01
- *endtag
- *tag scale
- *float xscale   1.00000000E+00
- *float yscale   1.00000000E+00
- *float zscale  -1.00000000E+00
- *endtag
- *tag subgrids
- *array int nLayers 16
- *          1            1            5            8           10           10
- *         10           15            8           20           20           20
- *          8            6            8            2
- *endtag
- *tag cornerLines
- *array float data 150
- * -7.51105194E+01  -4.10773730E+03  -1.86212000E+03  -7.51105194E+01
- * -4.10773730E+03  -1.72856909E+03  -8.36509094E+02  -2.74306006E+03
- *  ....
- *endtag
- *tag zvalues
- *array byte splitEnz 100
- *  1   1   1   1   1   1   4   4   1   1   1   1
- * ....
- *endtag
- *tag active
- *array bool data 48
- *  1   1   1   1   1   1   1   1   1   1   1   1
- *  1   1   1   1   1   1   1   1   1   1   1   1
- *  1   1   1   1   1   1   1   1   1   1   1   1
- *  1   1   1   1   1   1   1   1   1   1   1   1
- *endtag
- *... ETC
- * ----------------------------------------------------------------------------
- *
- */
-
 
 void grd3d_export_roff_grid (
-			    int     mode,
-			    int     nx,
-			    int     ny,
-			    int     nz,
-			    int     num_subgrds,
-			    int     isubgrd_to_export,
-			    double   xoffset,
-			    double   yoffset,
-			    double   zoffset,
-			    double  *p_coord_v,
-			    double  *p_zcorn_v,
-			    int     *p_actnum_v,
-			    int     *p_subgrd_v,
-			    char    *filename,
-			    int     debug
-			    )
+    int mode,
+    int nx,
+    int ny,
+    int nz,
+    int num_subgrds,
+    int isubgrd_to_export,
+    double xoffset,
+    double yoffset,
+    double zoffset,
+    double *coordsv,
+    long ncoordin,
+    double *zcornsv,
+    long nzcornin,
+    int *actnumsv,
+    long nactin,
+    int *p_subgrd_v,
+    char *filename
+    )
 
 
 {
@@ -113,46 +122,21 @@ void grd3d_export_roff_grid (
     double  xscale, yscale, zscale;
     float myfloat;
     double  zseb=0.0, zneb=0.0, znwb=0.0, zswb=0.0, zzzz=0.0;
-    char   sub[24]="grd3d_exp_roff_grid";
     int    m;
     size_t n;
 
     FILE   *fc;
 
-    xtgverbose(debug);
-
-    xtg_speak(sub,2,"Entering routine ...");
-
-
-    /*
-     *-------------------------------------------------------------------------
-     * Checks (mainly for debugging)
-     *-------------------------------------------------------------------------
-     */
-    if (debug>2) {
-	xtg_speak(sub,3,"Mode = %d    NX =%d    NY=%d    NZ=%d  NUM_SUBGRIDS=%d",
-		  mode, nx, ny, nz, num_subgrds);
-
-    }
-
-    /*
-     *-------------------------------------------------------------------------
-     * Open file ...
-     *-------------------------------------------------------------------------
-     */
-
-    xtg_speak(sub,2,"Opening ROFF file...");
 
     fc=fopen(filename,"wb");
 
-    xtg_speak(sub,2,"Opening ROFF file...DONE!");
-
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * It is possible to export just one subgrid (if isubgrd_to_export >0)
      * Must do some calculations for this here:
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      */
+
     nz_true=nz;
     nz1=1;
     nz2=nz;
@@ -169,13 +153,12 @@ void grd3d_export_roff_grid (
 	    }
 	    nz1=k+1;
 	    nz2=k+p_subgrd_v[isubgrd_to_export-1];
-	    xtg_speak(sub,2,"Exporting subgrid, using K range: %d - %d",nz1,nz2);
 	}
     }
     else{
-	xtg_error(sub,"Fatal error: isubgrd_to_export too large");
+        fclose(fc);
+	logger_critical(LI, FI, FU, "Fatal error: isubgrd_to_export too large");
     }
-
 
     /*
      *-------------------------------------------------------------------------
@@ -183,11 +166,8 @@ void grd3d_export_roff_grid (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(sub,2,"Output ROFF header ...");
-
 
     if (mode > 0) {
-	xtg_speak(sub,2,"ASCII header ...");
 	m=fprintf(fc,"roff-asc\n");
 	m=fprintf(fc,"#ROFF file#\n");
 	m=fprintf(fc,"#Creator: GTC subsystem of GPLib by JCR#\n");
@@ -220,9 +200,6 @@ void grd3d_export_roff_grid (
     else{
 
 	/* binary output */
-
-	xtg_speak(sub,2,"BINARY header ...");
-
 	n=fwrite("roff-bin\0",1,9,fc);
 
 	n=fwrite("#ROFF file#\0",1,12,fc);
@@ -280,10 +257,6 @@ void grd3d_export_roff_grid (
 
 	n=fwrite("endtag\0",1,7,fc);
     }
-
-    xtg_speak(sub,2,"Output ROFF header ... DONE");
-
-
 
     /*
      *-------------------------------------------------------------------------
@@ -346,38 +319,33 @@ void grd3d_export_roff_grid (
 
     nzz=nz2+1;
 
-    xtg_speak(sub,2,"CornerLines ...");
-
-
-
-
     /* printing ... and scale/translate back*/
 
     for (i=0; i<=nx; i++) {
 	for (j=0; j<=ny; j++) {
 	    ipos=6*(j*(nx+1)+i);
 	    if (mode > 0) {
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+3]/xscale)-xoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+4]/yscale)-yoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+5]/zscale)-zoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+0]/xscale)-xoffset);
-		m=fprintf(fc,"  %e"  ,(p_coord_v[ipos+1]/yscale)-yoffset);
-		m=fprintf(fc,"  %e\n",(p_coord_v[ipos+2]/zscale)-zoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+3]/xscale)-xoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+4]/yscale)-yoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+5]/zscale)-zoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+0]/xscale)-xoffset);
+		m=fprintf(fc,"  %e"  ,(coordsv[ipos+1]/yscale)-yoffset);
+		m=fprintf(fc,"  %e\n",(coordsv[ipos+2]/zscale)-zoffset);
 	    }
 	    else{
-		myfloat=(p_coord_v[ipos+3]/xscale)-xoffset;
+		myfloat=(coordsv[ipos+3]/xscale)-xoffset;
 		n=fwrite(&myfloat,4,1,fc);
 
 
-		myfloat=(p_coord_v[ipos+4]/yscale)-yoffset;
+		myfloat=(coordsv[ipos+4]/yscale)-yoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+5]/zscale)-zoffset;
+		myfloat=(coordsv[ipos+5]/zscale)-zoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+0]/xscale)-xoffset;
+		myfloat=(coordsv[ipos+0]/xscale)-xoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+1]/yscale)-yoffset;
+		myfloat=(coordsv[ipos+1]/yscale)-yoffset;
 		n=fwrite(&myfloat,4,1,fc);
-		myfloat=(p_coord_v[ipos+2]/zscale)-zoffset;
+		myfloat=(coordsv[ipos+2]/zscale)-zoffset;
 		n=fwrite(&myfloat,4,1,fc);
 
 	    }
@@ -391,12 +359,6 @@ void grd3d_export_roff_grid (
     else{
 	n=fwrite("endtag\0",1,7,fc);
     }
-
-    xtg_speak(sub,2,"CornerLines ...DONE!");
-
-
-    xtg_speak(sub,2,"Writing splitEnz...");
-
 
     if (mode>0) {
 	m=fprintf(fc,"tag zvalues\n");
@@ -445,19 +407,19 @@ void grd3d_export_roff_grid (
 			/* need a value for later use (data array) */
 			if (i==0 && j==0) {
 			    ibne=x_ijk2ib(i+1,j+1,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibne + 1*1 - 1];
+			    zzzz=zcornsv[4*ibne + 1*1 - 1];
 			}
 			if (i==0 && j==ny) {
 			    ibse=x_ijk2ib(i+1,j,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibse + 1*3 - 1];
+			    zzzz=zcornsv[4*ibse + 1*3 - 1];
 			}
 			if (i==nx && j==0) {
 			    ibnw=x_ijk2ib(i,j+1,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibnw + 1*2 - 1];
+			    zzzz=zcornsv[4*ibnw + 1*2 - 1];
 			}
 			if (i==nx && j==ny) {
 			    ibsw=x_ijk2ib(i,j,k,nx,ny,nzz,0);
-			    zzzz=p_zcorn_v[4*ibsw + 1*4 - 1];
+			    zzzz=zcornsv[4*ibsw + 1*4 - 1];
 			}
 
 		    }
@@ -466,8 +428,8 @@ void grd3d_export_roff_grid (
 			ibse=x_ijk2ib(i+1,j,k,nx,ny,nzz,0);
 			ibne=x_ijk2ib(i+1,j+1,k,nx,ny,nzz,0);
 
-			zseb=p_zcorn_v[4*ibse + 1*3 - 1];
-			zneb=p_zcorn_v[4*ibne + 1*1 - 1];
+			zseb=zcornsv[4*ibse + 1*3 - 1];
+			zneb=zcornsv[4*ibne + 1*1 - 1];
 			znwb=zneb;
 			zswb=zseb;
 			kftype=2;
@@ -478,8 +440,8 @@ void grd3d_export_roff_grid (
 
 			ibnw=x_ijk2ib(i,j+1,k,nx,ny,nzz,0);
 			ibsw=x_ijk2ib(i,j,k,nx,ny,nzz,0);
-			zswb=p_zcorn_v[4*ibsw + 1*4 - 1];
-			znwb=p_zcorn_v[4*ibnw + 1*2 - 1];
+			zswb=zcornsv[4*ibsw + 1*4 - 1];
+			znwb=zcornsv[4*ibnw + 1*2 - 1];
 			zneb=znwb;
 			zseb=zswb;
 			kftype=3;
@@ -490,8 +452,8 @@ void grd3d_export_roff_grid (
 
 			ibnw=x_ijk2ib(i,j+1,k,nx,ny,nzz,0);
 			ibne=x_ijk2ib(i+1,j+1,k,nx,ny,nzz,0);
-			znwb=p_zcorn_v[4*ibnw + 1*2 - 1];
-			zneb=p_zcorn_v[4*ibne + 1*1 - 1];
+			znwb=zcornsv[4*ibnw + 1*2 - 1];
+			zneb=zcornsv[4*ibne + 1*1 - 1];
 			zseb=zneb;
 			zswb=znwb;
 			kftype=4;
@@ -501,8 +463,8 @@ void grd3d_export_roff_grid (
 			/* go along edge of grid */
 			ibsw=x_ijk2ib(i,j,k,nx,ny,nzz,0);
 			ibse=x_ijk2ib(i+1,j,k,nx,ny,nzz,0);
-			zswb=p_zcorn_v[4*ibsw + 1*4 - 1];
-			zseb=p_zcorn_v[4*ibse + 1*3 - 1];
+			zswb=zcornsv[4*ibsw + 1*4 - 1];
+			zseb=zcornsv[4*ibse + 1*3 - 1];
 			zneb=zseb;
 			znwb=zswb;
 			kftype=5;
@@ -518,10 +480,10 @@ void grd3d_export_roff_grid (
 			/* below, ETC */
 
 			/* look at bottom part of cell: */
-			zswb=p_zcorn_v[4*ibsw + 1*4 - 1];
-			zseb=p_zcorn_v[4*ibse + 1*3 - 1];
-			znwb=p_zcorn_v[4*ibnw + 1*2 - 1];
-			zneb=p_zcorn_v[4*ibne + 1*1 - 1];
+			zswb=zcornsv[4*ibsw + 1*4 - 1];
+			zseb=zcornsv[4*ibse + 1*3 - 1];
+			znwb=zcornsv[4*ibnw + 1*2 - 1];
+			zneb=zcornsv[4*ibne + 1*1 - 1];
 
 
 			kftype=6;
@@ -543,18 +505,6 @@ void grd3d_export_roff_grid (
 			    zzzz=zswb; /* just choose one */
 			}
 		    }
-
-		    if (isplit==4 && debug >= 4) {
-			xtg_speak(sub,4,"-------------------------------");
-			xtg_speak(sub,4,"SPLIT type 4:");
-			xtg_speak(sub,4,"Node ijk: %d %d %d", i, j, k);
-			xtg_speak(sub,4,"nw ne se sw: %f %f %f %f",
-				znwb, zneb, zseb, zswb);
-			xtg_speak(sub,4,"Split sub-type: %d", kftype);
-		    }
-
-
-		    /* printing! */
 
 
 		    if (ipass == 0) {
@@ -617,12 +567,6 @@ void grd3d_export_roff_grid (
 	n=fwrite("endtag\0",1,7,fc);
     }
 
-
-
-    xtg_speak(sub,2,"Writing zdata...DONE!");
-
-    xtg_speak(sub,2,"Writing <active>...!");
-    xtg_speak(sub,3,"NZ is %d",nz_true);
     nn=nx*ny*nz_true;
 
     if (mode>0) {
@@ -642,7 +586,7 @@ void grd3d_export_roff_grid (
 		ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
 
 		if (mode>0) {
-		    m=fprintf(fc,"%2d",p_actnum_v[ib]);
+		    m=fprintf(fc,"%2d",actnumsv[ib]);
 		    i_tmp++;
 		    if (i_tmp > 12) {
 			i_tmp=1;
@@ -650,7 +594,7 @@ void grd3d_export_roff_grid (
 		    }
 		}
 		else{
-		    mybyte=p_actnum_v[ib];
+		    mybyte=actnumsv[ib];
 		    n=fwrite(&mybyte,1,1,fc);
 		}
 	    }
@@ -665,12 +609,7 @@ void grd3d_export_roff_grid (
     else{
 	n=fwrite("endtag\0",1,7,fc);
     }
-    xtg_speak(sub,2,"Writing <active>...DONE!");
-
 
     fclose(fc);
-
-
-    xtg_speak(sub,2,"==== Exiting <grd3d_export_roff_grid> ====");
 
 }

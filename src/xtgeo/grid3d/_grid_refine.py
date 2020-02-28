@@ -3,6 +3,8 @@
 from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
+import numpy as np
+
 from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
@@ -74,34 +76,37 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     logger.debug("New layers: %s", newnlay)
 
-    # rfac is an array with length nlay; has N refinements per single K layer
-    rfac = _cxtgeo.new_intarray(self.nlay)
+    # refinefactors is an array with length nlay; has N refinements per single K layer
+    refinefactors = _cxtgeo.new_intarray(self.nlay)
 
     totvector = []
+
     for (_tmp1, rfi), (_tmp2, arr) in zip(rfactord.items(), self.subgrids.items()):
         for _elem in range(len(arr)):
             totvector.append(rfi)
-    for inn, rfi in enumerate(totvector):
-        _cxtgeo.intarray_setitem(rfac, inn, rfi)
 
-    ref_num_act = _cxtgeo.new_intpointer()
-    ref_p_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow * (newnlay + 1) * 4)
-    ref_p_actnum_v = _cxtgeo.new_intarray(self.ncol * self.nrow * newnlay)
+    for inn, rfi in enumerate(totvector):
+        _cxtgeo.intarray_setitem(refinefactors, inn, rfi)
+
+    ref_zcornsv = np.zeros(
+        self.ncol * self.nrow * (newnlay + 1) * 4, dtype=np.float64
+    )
+    ref_actnumsv = np.zeros(self.ncol * self.nrow * newnlay, dtype=np.int32)
 
     ier = _cxtgeo.grd3d_refine_vert(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+
+        self._zcornsv,
+        self._actnumsv,
+
         newnlay,
-        ref_p_zcorn_v,
-        ref_p_actnum_v,
-        ref_num_act,
-        rfac,
-        0,
-        XTGDEBUG,
+
+        ref_zcornsv,
+        ref_actnumsv,
+
+        refinefactors,
     )
 
     if ier != 0:
@@ -112,8 +117,9 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     # update instance:
     self._nlay = newnlay
-    self._p_zcorn_v = ref_p_zcorn_v
-    self._p_actnum_v = ref_p_actnum_v
+    self._zcornsv = ref_zcornsv
+    self._actnumsv = ref_actnumsv
+
     if self.subgrids is None or len(self.subgrids) <= 1:
         self.subgrids = None
     else:

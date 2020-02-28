@@ -43,13 +43,11 @@ def create_box(
     """Create a shoebox grid from cubi'sh spec"""
 
     self._ncol, self._nrow, self._nlay = dimension
-    ntot = self.ncol * self.nrow * self.nlay
-    ncoord = (self.ncol + 1) * (self.nrow + 1) * 2 * 3
-    nzcorn = self.ncol * self.nrow * (self.nlay + 1) * 4
+    ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     option = 0
     if oricenter:
@@ -59,9 +57,9 @@ def create_box(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         origin[0],
         origin[1],
         origin[2],
@@ -71,7 +69,6 @@ def create_box(
         rotation,
         flip,
         option,
-        XTGDEBUG,
     )
 
     self._actnum_indices = None
@@ -96,7 +93,7 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
         discrete=False,
     )
 
-    ptr_dz_v = _cxtgeo.new_doublearray(self.ntotal)
+    dz = np.zeros(self.ntotal, dtype=np.float64)
 
     nflip = 1
     if not flip:
@@ -110,17 +107,15 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_dz_v,
+        self._zcornsv,
+        self._actnumsv,
+        dz,
         nflip,
         option,
-        XTGDEBUG,
     )
 
-    _gridprop_lowlevel.update_values_from_carray(dzv, ptr_dz_v, np.float64, delete=True)
+    dzv.values = np.ma.masked_greater(dz, xtgeo.UNDEF_LIMIT)
     # return the property object
-
     logger.info("DZ mean value: %s", dzv.values.mean())
 
     return dzv
@@ -129,11 +124,14 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     """Get dX, dY as properties"""
     ntot = self._ncol * self._nrow * self._nlay
+
+    dxval = np.zeros(ntot, dtype=np.float64)
+    dyval = np.zeros(ntot, dtype=np.float64)
+
     dx = GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
         name=names[0],
         discrete=False,
     )
@@ -141,13 +139,9 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
         name=names[1],
         discrete=False,
     )
-
-    ptr_dx_v = _cxtgeo.new_doublearray(self.ntotal)
-    ptr_dy_v = _cxtgeo.new_doublearray(self.ntotal)
 
     option1 = 0
     option2 = 0
@@ -159,18 +153,17 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_dx_v,
-        ptr_dy_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        dxval,
+        dyval,
         option1,
         option2,
-        XTGDEBUG,
     )
 
-    _gridprop_lowlevel.update_values_from_carray(dx, ptr_dx_v, np.float64, delete=True)
-    _gridprop_lowlevel.update_values_from_carray(dy, ptr_dy_v, np.float64, delete=True)
+    dx.values = np.ma.masked_greater(dxval, xtgeo.UNDEF_LIMIT)
+    dy.values = np.ma.masked_greater(dyval, xtgeo.UNDEF_LIMIT)
 
     # return the property objects
     return dx, dy
@@ -273,10 +266,10 @@ def get_ijk_from_points(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        self._tmp["onegrid"]._p_zcorn_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        self._tmp["onegrid"]._zcornsv,
         actnumoption,
         flip,
         arrsize,
@@ -314,38 +307,9 @@ def get_ijk_from_points(
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
 
-    ntot = self.ntotal
-
-    x = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
-        name=names[0],
-        discrete=False,
-    )
-
-    y = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
-        name=names[1],
-        discrete=False,
-    )
-
-    z = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
-        name=names[2],
-        discrete=False,
-    )
-
-    ptr_x_v = _cxtgeo.new_doublearray(self.ntotal)
-    ptr_y_v = _cxtgeo.new_doublearray(self.ntotal)
-    ptr_z_v = _cxtgeo.new_doublearray(self.ntotal)
+    xv = np.zeros(self.ntotal, dtype=np.float64)
+    yv = np.zeros(self.ntotal, dtype=np.float64)
+    zv = np.zeros(self.ntotal, dtype=np.float64)
 
     option = 0
     if asmasked:
@@ -355,23 +319,47 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_x_v,
-        ptr_y_v,
-        ptr_z_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        xv,
+        yv,
+        zv,
         option,
-        XTGDEBUG,
     )
 
-    _gridprop_lowlevel.update_values_from_carray(x, ptr_x_v, np.float64, delete=True)
-    _gridprop_lowlevel.update_values_from_carray(y, ptr_y_v, np.float64, delete=True)
-    _gridprop_lowlevel.update_values_from_carray(z, ptr_z_v, np.float64, delete=True)
+    xv = np.ma.masked_greater(xv, xtgeo.UNDEF_LIMIT)
+    yv = np.ma.masked_greater(yv, xtgeo.UNDEF_LIMIT)
+    zv = np.ma.masked_greater(zv, xtgeo.UNDEF_LIMIT)
 
-    # Note: C arrays are deleted in the update_values_from_carray()
+    xo = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=xv,
+        name=names[0],
+        discrete=False,
+    )
 
-    return x, y, z
+    yo = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=yv,
+        name=names[1],
+        discrete=False,
+    )
+
+    zo = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=zv,
+        name=names[2],
+        discrete=False,
+    )
+
+    return xo, yo, zo
 
 
 def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
@@ -397,10 +385,9 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
+        self._coordsv,
+        self._zcornsv,
         pcorners,
-        XTGDEBUG,
     )
 
     cornerlist = []
@@ -467,10 +454,10 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        *(ptr_coord + [option] + [XTGDEBUG])
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        *(ptr_coord + [option])
     )
 
     for i in range(0, 24, 3):
@@ -507,9 +494,9 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         layer,
         opt1,
         opt2,
@@ -556,9 +543,9 @@ def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False)
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         ptr_x[0],
         ptr_x[1],
         ptr_x[2],
@@ -574,7 +561,6 @@ def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False)
         ptr_x[12],
         option1,
         option2,
-        XTGDEBUG,
     )
 
     glist = []
@@ -689,11 +675,10 @@ def inactivate_by_dz(self, threshold):
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._zcornsv,
+        self._actnumsv,
         threshold,
         nflip,
-        XTGDEBUG,
     )
 
 
@@ -706,7 +691,7 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol, self.nrow, self.nlay, self._p_zcorn_v, zsep,
+        self.ncol, self.nrow, self.nlay, self._zcornsv, zsep,
     )
 
 
@@ -741,14 +726,13 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,  # is modified!
         k1,
         k2,
         iforce,
         method,
-        XTGDEBUG,
     )
 
     if ier == 1:
@@ -757,8 +741,9 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
 
 def collapse_inactive_cells(self):
     """Collapse inactive cells"""
+
     _cxtgeo.grd3d_collapse_inact(
-        self.ncol, self.nrow, self.nlay, self._p_zcorn_v, self._p_actnum_v, XTGDEBUG
+        self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv, XTGDEBUG
     )
 
 
@@ -771,31 +756,9 @@ def copy(self):
 
     other = self.__class__()
 
-    ntot = self.ncol * self.nrow * self.nlay
-    ncoord = (self.ncol + 1) * (self.nrow + 1) * 2 * 3
-    nzcorn = self.ncol * self.nrow * (self.nlay + 1) * 4
-
-    new_p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    new_p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    new_p_actnum_v = _cxtgeo.new_intarray(ntot)
-
-    _cxtgeo.grd3d_copy(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        new_p_coord_v,
-        new_p_zcorn_v,
-        new_p_actnum_v,
-        0,
-        XTGDEBUG,
-    )
-
-    other._p_coord_v = new_p_coord_v
-    other._p_zcorn_v = new_p_zcorn_v
-    other._p_actnum_v = new_p_actnum_v
+    other._coordsv = self._coordsv.copy()
+    other._zcornsv = self._zcornsv.copy()
+    other._actnumsv = self._actnumsv.copy()
 
     other._ncol = self.ncol
     other._nrow = self.nrow
@@ -860,20 +823,20 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     nzcorn = nncol * nnrow * (nnlay + 1) * 4
 
     new_num_act = _cxtgeo.new_intpointer()
-    new_p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    new_p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    new_p_actnum_v = _cxtgeo.new_intarray(ntot)
+    new_coordsv = np.zeros(ncoord, dtype=np.float64)
+    new_zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    new_actnumsv = np.zeros(ntot, dtype=np.int32)
 
     _cxtgeo.grd3d_crop_geometry(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        new_p_coord_v,
-        new_p_zcorn_v,
-        new_p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        new_coordsv,
+        new_zcornsv,
+        new_actnumsv,
         ic1,
         ic2,
         jc1,
@@ -882,12 +845,11 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
         kc2,
         new_num_act,
         0,
-        XTGDEBUG,
     )
 
-    self._p_coord_v = new_p_coord_v
-    self._p_zcorn_v = new_p_zcorn_v
-    self._p_actnum_v = new_p_actnum_v
+    self._coordsv = new_coordsv
+    self._zcornsv = new_zcornsv
+    self._actnumsv = new_actnumsv
 
     self._ncol = nncol
     self._nrow = nnrow
@@ -938,30 +900,30 @@ def reduce_to_one_layer(self):
     """
 
     # need new pointers in C (not for coord)
+    # Note this could probably be done with pure numpy operations
 
     ptr_new_num_act = _cxtgeo.new_intpointer()
 
     nnum = (1 + 1) * 4
-    ptr_new_zcorn_v = _cxtgeo.new_doublearray(self.ncol * self.nrow * nnum)
 
-    ptr_new_actnum_v = _cxtgeo.new_intarray(self.ncol * self.nrow * 1)
+    new_zcorn = np.zeros(self.ncol * self.nrow * nnum, dtype=np.float64)
+    new_actnum = np.zeros(self.ncol * self.nrow * 1, dtype=np.int32)
 
     _cxtgeo.grd3d_reduce_onelayer(
         self.ncol,
         self.nrow,
         self.nlay,
-        self._p_zcorn_v,
-        ptr_new_zcorn_v,
-        self._p_actnum_v,
-        ptr_new_actnum_v,
+        self._zcornsv,
+        new_zcorn,
+        self._actnumsv,
+        new_actnum,
         ptr_new_num_act,
         0,
-        XTGDEBUG,
     )
 
     self._nlay = 1
-    self._p_zcorn_v = ptr_new_zcorn_v
-    self._p_actnum_v = ptr_new_actnum_v
+    self._zcornsv = new_zcorn
+    self._actnumsv = new_actnum
     self._props = None
     self._subgrids = None
 
@@ -981,8 +943,8 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
         tx,
         ty,
         tz,
-        self._p_coord_v,
-        self._p_zcorn_v,
+        self._coordsv,
+        self._zcornsv,
     )
     if ier != 0:
         raise RuntimeError("Something went wrong in translate, code: {}".format(ier))
@@ -1000,9 +962,9 @@ def reverse_row_axis(self, ijk_handedness=None):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
     )
 
     if ier != 0:
@@ -1109,9 +1071,9 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         ptr_zprop,
         nval,
         ptr_xc,
@@ -1120,8 +1082,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
         ptr_zo,
         zonelogrange[0],
         zonelogrange[1],
-        onelayergrid._p_zcorn_v,
-        onelayergrid._p_actnum_v,
+        onelayergrid._zcornsv,
+        onelayergrid._actnumsv,
         ptr_results,
         option,
     )
@@ -1177,9 +1139,9 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         p_prop1,
         self.ntotal,
         val1,
@@ -1188,7 +1150,6 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
         self.ntotal,
         iflag1,
         iflag2,
-        XTGDEBUG,
     )
 
     _gridprop_lowlevel.update_values_from_carray(result, p_prop2, np.int32, delete=True)

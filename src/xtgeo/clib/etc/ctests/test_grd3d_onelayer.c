@@ -15,9 +15,9 @@ int main () {
     double xstep, ystep, xori, xmin, xmax, yori, ymin, ymax, zmin, zmax;
     double *zval_v, *zval2_v;
     int    numact, numsubs, nx, ny, nz, nactive, status;
-    int    *p_actnum_v, *p_subgrd_v;
+    int    *actnumsv, *p_subgrd_v;
     int    *p_actnum2_v, *p_subgrd2_v;
-    double *p_coord_v, *p_zcorn_v, *p_zcorn2_v;
+    double *coordsv, *zcornsv, *p_zcorn2_v;
 
 
     xtgverbose(debug);
@@ -38,19 +38,19 @@ int main () {
     nz=14;
 
     /* allocate */
-    p_coord_v = calloc((nx+1)*(ny+1)*2*3,sizeof(double));
-    p_zcorn_v = calloc(nx*ny*(nz+1)*4,sizeof(double));
-    p_actnum_v = calloc(nx*ny*nz,sizeof(int));
+    coordsv = calloc((nx+1)*(ny+1)*2*3,sizeof(double));
+    zcornsv = calloc(nx*ny*(nz+1)*4,sizeof(double));
+    actnumsv = calloc(nx*ny*nz,sizeof(int));
     p_subgrd_v = calloc(1,sizeof(int));
 
 
     printf("Reading grid\n");
-    grd3d_import_roff_grid(&numact, &numsubs, p_coord_v, p_zcorn_v,
-			   p_actnum_v, p_subgrd_v, 1, file, debug);
+    grd3d_import_roff_grid(&numact, &numsubs, coordsv, zcornsv,
+			   actnumsv, p_subgrd_v, 1, file, debug);
 
     printf("Reading grid done\n");
 
-    ok(p_actnum_v[33]==1, "ACTNUM of location 33");
+    ok(actnumsv[33]==1, "ACTNUM of location 33");
 
 
     p_zcorn2_v = calloc(nx*ny*(1+1)*4,sizeof(double));
@@ -62,9 +62,9 @@ int main () {
 			  nx,
 			  ny,
 			  nz,
-			  p_zcorn_v,
+			  zcornsv,
 			  p_zcorn2_v,
-			  p_actnum_v,
+			  actnumsv,
 			  p_actnum2_v,
 			  &nactive,
 			  0,
@@ -88,7 +88,7 @@ int main () {
 			    450000,
 			    6700000,
 			    0,
-			    p_coord_v,
+			    coordsv,
 			    p_zcorn2_v,
 			    p_actnum2_v,
 			    p_subgrd2_v,
@@ -102,7 +102,7 @@ int main () {
 			 nx,
 			 ny,
 			 1,
-			 p_coord_v,
+			 coordsv,
 			 p_zcorn2_v,
 			 p_actnum2_v,
 			 file,

@@ -1,9 +1,10 @@
 # coding: utf-8
-"""Private module, Grid Import private functions"""
+"""Private module, Grid Import private functions for ROFF format"""
 
 from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
+import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo
@@ -18,107 +19,24 @@ logger = xtg.functionlogger(__name__)
 
 XTGDEBUG = 0
 
-#
-# NOTE:
-# self is the xtgeo.grid3d.Grid instance
-#
+
+def import_roff(self, gfile):
+
+    local_fhandle = False
+    fhandle = gfile
+
+    if isinstance(gfile, str):
+        local_fhandle = True
+        gfile = xtgeo._XTGeoCFile(gfile)
+        fhandle = gfile.fhandle
+
+    _import_roff(self, fhandle)
+
+    if local_fhandle and not gfile.close(cond=local_fhandle):
+        raise RuntimeError("Error in closing file handle for binary ROFF file")
 
 
-def import_roff(self, gfile, _roffapiv=2):
-
-    if _roffapiv == 1:
-        import_roff_v1(self, gfile)
-
-    else:
-        local_fhandle = False
-        fhandle = gfile
-        if isinstance(gfile, str):
-            local_fhandle = True
-            gfile = xtgeo._XTGeoCFile(gfile)
-            fhandle = gfile.fhandle
-
-        import_roff_v2(self, fhandle)
-
-        if local_fhandle and not gfile.close(cond=local_fhandle):
-            raise RuntimeError("Error in closing file handle for binary ROFF file")
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import roff binary (current version, rather slow on windows)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_roff_v1(self, gfile):
-
-    tstart = xtg.timer()
-    logger.info("Working with file %s", gfile)
-
-    logger.info("Scan file for dimensions...")
-    ptr_ncol = _cxtgeo.new_intpointer()
-    ptr_nrow = _cxtgeo.new_intpointer()
-    ptr_nlay = _cxtgeo.new_intpointer()
-    ptr_nsubs = _cxtgeo.new_intpointer()
-
-    _cxtgeo.grd3d_scan_roff_bingrid(ptr_ncol, ptr_nrow, ptr_nlay, ptr_nsubs, gfile)
-
-    self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
-    self._nrow = _cxtgeo.intpointer_value(ptr_nrow)
-    self._nlay = _cxtgeo.intpointer_value(ptr_nlay)
-    nsubs = _cxtgeo.intpointer_value(ptr_nsubs)
-
-    ntot = self._ncol * self._nrow * self._nlay
-    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
-
-    ptr_num_act = _cxtgeo.new_intpointer()
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
-    subgrd_v = _cxtgeo.new_intarray(nsubs)
-
-    logger.info(
-        "Reading grid geometry..., total number of cells is %s (%.2f million)",
-        ntot,
-        float(ntot / 1.0e6),
-    )
-    _cxtgeo.grd3d_import_roff_grid(
-        ptr_num_act,
-        ptr_nsubs,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        subgrd_v,
-        nsubs,
-        gfile,
-        XTGDEBUG,
-    )
-
-    logger.info("Reading grid geometry... DONE")
-    logger.info(
-        "Active cells: %s (%.2f million)", self.nactive, float(self.nactive) / 1.0e6
-    )
-    logger.info("Number of subgrids: %s", nsubs)
-
-    if nsubs > 1:
-        self._subgrids = OrderedDict()
-        prev = 1
-        for irange in range(nsubs):
-            val = _cxtgeo.intarray_getitem(subgrd_v, irange)
-
-            logger.debug("VAL is %s", val)
-            logger.debug("RANGE is %s", range(prev, val + prev))
-            self._subgrids["subgrid_" + str(irange)] = range(prev, val + prev)
-            prev = val + prev
-    else:
-        self._subgrids = None
-
-    logger.debug("Subgrids array %s", self._subgrids)
-    logger.info("Total time for ROFF import was %6.2fs", xtg.timer(tstart))
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import roff binary (new version, in prep!!)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_roff_v2(self, fhandle):
-
+def _import_roff(self, fhandle):
     """Import ROFF format, version 2 (improved version)"""
 
     # pylint: disable=too-many-statements
@@ -172,9 +90,11 @@ def import_roff_v2(self, fhandle):
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
     nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
 
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+    ncoord, nzcorn, ntot = self.vectordimensions
+
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
     logger.debug("Calling C routines")
 
@@ -189,8 +109,10 @@ def import_roff_v2(self, fhandle):
         yscale,
         zscale,
         p_cornerlines_v,
-        self._p_coord_v,
+        self._coordsv,
     )
+
+    logger.info("OK")
 
     _cxtgeo.grd3d_roff2xtgeo_zcorn(
         self._ncol,
@@ -204,7 +126,7 @@ def import_roff_v2(self, fhandle):
         zscale,
         p_splitenz_v,
         p_zvalues_v,
-        self._p_zcorn_v,
+        self._zcornsv,
     )
 
     # ACTIVE may be missing, meaning all cells are missing!
@@ -214,7 +136,7 @@ def import_roff_v2(self, fhandle):
         option = 1
 
     _cxtgeo.grd3d_roff2xtgeo_actnum(
-        self._ncol, self._nrow, self._nlay, p_act_v, self._p_actnum_v, option
+        self._ncol, self._nrow, self._nlay, p_act_v, self._actnumsv, option
     )
 
     _cxtgeo.delete_floatarray(p_cornerlines_v)

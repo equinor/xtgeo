@@ -1,5 +1,5 @@
 /*
- ******************************************************************************
+****************************************************************************************
  *
  * NAME:
  *    grd3d_crop_geometry.c
@@ -21,7 +21,6 @@
  *    ic1, ... kc2   i     Crop from-to (inclusive)
  *    nactive        o     Number of active cells
  *    iflag          i     Options flag (future use)
- *    debug          i     Debug level
  *
  * RETURNS:
  *    The C macro EXIT_SUCCESS unless problems + changed pointers
@@ -31,7 +30,7 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
 
@@ -40,37 +39,40 @@
 
 
 int grd3d_crop_geometry (
-                         int nx,
-                         int ny,
-                         int nz,
-                         double *p_coord1_v,
-                         double *p_zcorn1_v,
-                         int *p_actnum1_v,
-                         double *p_coord2_v,
-                         double *p_zcorn2_v,
-                         int *p_actnum2_v,
-                         int ic1, int ic2, int jc1, int jc2, int kc1, int kc2,
-                         int *nactive,
-                         int iflag,
-                         int debug
-                         )
+    int nx,
+    int ny,
+    int nz,
+
+    double *p_coord1_v,
+    long ncoordin1,
+    double *p_zcorn1_v,
+    long nzcornin1,
+    int *p_actnum1_v,
+    long nact1,
+
+    double *p_coord2_v,
+    long ncoordin2,
+    double *p_zcorn2_v,
+    long nzcornin2,
+    int *p_actnum2_v,
+    long nact2,
+
+    int ic1, int ic2, int jc1, int jc2, int kc1, int kc2,
+    int *nactive,
+    int iflag
+    )
 {
     /* locals */
-    char sbn[24] = "grd3d_crop_geometry";
     int newnx, newny, newnz, ic, icn, jcn, kcn, ncc, ixn, jxn, kxn;
     long ibb, ibt, ijo;
-
-    xtgverbose(debug);
-    xtg_speak(sbn, 1, "Entering routine <%s>", sbn);
 
     newnx = ic2 - ic1 + 1;
     newny = jc2 - jc1 + 1;
     newnz = kc2 - kc1 + 1;
 
-    ibt=0;
-    ncc=0;
+    ibt = 0;
+    ncc = 0;
 
-    xtg_speak(sbn, 2, "Remapping COORDS, ZCORNs ACNUMs...");
     for (kcn = kc1; kcn <= kc2 + 1; kcn++) {
         for (jcn = jc1; jcn <= jc2; jcn++) {
             for (icn = ic1; icn <= ic2; icn++) {
@@ -158,8 +160,6 @@ int grd3d_crop_geometry (
     }
 
     *nactive=ncc;
-
-    xtg_speak(sbn, 1, "Exit from <%s>", sbn);
 
     return EXIT_SUCCESS;
 

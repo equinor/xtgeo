@@ -1,18 +1,6 @@
 /*
  ***************************************************************************************
  *
- * Convert from ROFF grid cornerpoint spec to XTGeo cornerpoint grid: COORD arrays
- *
- ***************************************************************************************
- */
-
-#include "logger.h"
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ***************************************************************************************
- *
  * NAME:
  *    grd3d_roff2xtgeo_coord.c
  *
@@ -26,7 +14,7 @@
  *    *offset          i     Offsets in XYZ spesified in ROFF
  *    *scale           i     Scaling in XYZ spesified in ROFF
  *    p_cornerlines_v  i     Input cornerlines array ROFF fmt
- *    p_coord_v        o     Output cornerlines array XTGEO fmt
+ *    coordsv          o     Output cornerlines array XTGEO fmt
  *
  * RETURNS:
  *    Function: 0: upon success. Update pointers
@@ -37,6 +25,12 @@
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
+
+
+#include "logger.h"
+#include "libxtg.h"
+#include "libxtg_.h"
+
 
 int grd3d_roff2xtgeo_coord (
                             int nx,
@@ -49,7 +43,8 @@ int grd3d_roff2xtgeo_coord (
                             float yscale,
                             float zscale,
                             float *p_cornerlines_v,
-                            double *p_coord_v
+                            double *coordsv,
+                            long ncoord
                             )
 
 {
@@ -65,12 +60,12 @@ int grd3d_roff2xtgeo_coord (
 
             ic = 6 * (i * (ny + 1) + j);
 
-            p_coord_v[ib++] = (p_cornerlines_v[ic + 3] + xoffset) * xscale;
-            p_coord_v[ib++] = (p_cornerlines_v[ic + 4] + yoffset) * yscale;
-            p_coord_v[ib++] = (p_cornerlines_v[ic + 5] + zoffset) * zscale;
-            p_coord_v[ib++] = (p_cornerlines_v[ic + 0] + xoffset) * xscale;
-            p_coord_v[ib++] = (p_cornerlines_v[ic + 1] + yoffset) * yscale;
-            p_coord_v[ib++] = (p_cornerlines_v[ic + 2] + zoffset) * zscale;
+            coordsv[ib++] = (p_cornerlines_v[ic + 3] + xoffset) * xscale;
+            coordsv[ib++] = (p_cornerlines_v[ic + 4] + yoffset) * yscale;
+            coordsv[ib++] = (p_cornerlines_v[ic + 5] + zoffset) * zscale;
+            coordsv[ib++] = (p_cornerlines_v[ic + 0] + xoffset) * xscale;
+            coordsv[ib++] = (p_cornerlines_v[ic + 1] + yoffset) * yscale;
+            coordsv[ib++] = (p_cornerlines_v[ic + 2] + zoffset) * zscale;
         }
     }
 

@@ -81,7 +81,7 @@ int gtc_error(
 int gtc_verbose(int);
 
 int cmp_sort (
-	      const void *vp, 
+	      const void *vp,
 	      const void *vq
 	      );
 
@@ -92,9 +92,9 @@ int cmp_sort (
 void import_roff_ascii_grid (
 			     int     *num_act,
 			     int     *num_subgrds,
-			     float   *p_coord_v,
-			     float   *p_zgrd3d_v,
-			     int     *p_actnum_v,
+			     float   *coordsv,
+			     float   *zcornsv,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     char    *filename,
 			     int     debug
@@ -103,9 +103,9 @@ void import_roff_ascii_grid (
 void import_roff_binary_grid (
 			      int     *num_act,
 			      int     *num_subgrds,
-			      float   *p_coord_v,
-			      float   *p_zgrd3d_v,
-			      int     *p_actnum_v,
+			      float   *coordsv,
+			      float   *zcornsv,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      char    *filename,
 			      int     debug
@@ -156,9 +156,9 @@ void roff_to_gtc_grid (
 		       float   *zdata_v,
 		       int     *num_act,
 		       int     *num_subgrds,
-		       float   *p_coord_v,
-		       float   *p_zgrd3d_v,
-		       int     *p_actnum_v,
+		       float   *coordsv,
+		       float   *zcornsv,
+		       int     *actnumsv,
 		       int     *p_subgrd_v,
 		       int     debug
 		       );
@@ -193,19 +193,19 @@ int chk_point_in_polygon (
 
 
 int kvpt3s (
-	    float pp[], 
+	    float pp[],
 	    float tri[][3],
 	    int   *ier
-	    ); 
+	    );
 
 
 void kmgmps (
-	     float a[][3], 
-	     int l[], 
-	     float prmn, 
-	     int m, 
-	     int n, 
-	     float eps, 
+	     float a[][3],
+	     int l[],
+	     float prmn,
+	     int m,
+	     int n,
+	     float eps,
 	     int *ier
 	     );
 void kmsubs (
@@ -227,4 +227,3 @@ void getfloatarray  (float *array, int num, FILE *fc);
 void getbytearray   (char *array, int num, FILE *fc);
 void getintarray    (int *array, int num, FILE *fc);
 void getchararray   (char **array, int num, FILE *fc);
-

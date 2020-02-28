@@ -7,6 +7,7 @@ from __future__ import print_function, absolute_import
 import re
 import os
 from tempfile import mkstemp
+import numpy as np
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -71,13 +72,11 @@ def import_ecl_egrid(self, gfile):
     logger.info("Grid dimensions in EGRID file: %s %s %s", ncol, nrow, nlay)
 
     # allocate dimensions:
-    ntot = self._ncol * self._nrow * self._nlay
-    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+    ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
     p_nact = _cxtgeo.new_longpointer()
 
     option = 0
@@ -93,13 +92,14 @@ def import_ecl_egrid(self, gfile):
         bpos["COORD"],
         bpos["ZCORN"],
         bpos["ACTNUM"],
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         p_nact,
         option,
     )
 
+    logger.info("Reading ECL EGRID (C code) done")
     if ier == -1:
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
 
@@ -113,6 +113,7 @@ def import_ecl_egrid(self, gfile):
         self.set_actnum(acttmp)
 
     eclfile.close()
+    logger.info("File is closed")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,30 +185,31 @@ def import_ecl_grdecl(self, gfile):
 
     logger.info("NX NY NZ in grdecl file: %s %s %s", self._ncol, self._nrow, self._nlay)
 
-    ntot = self._ncol * self._nrow * self._nlay
-    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+    ncoord, nzcorn, ntot = self.vectordimensions
 
     logger.info("Reading...")
 
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
+
     ptr_num_act = _cxtgeo.new_intpointer()
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+
+    eclfile = xtgeo._XTGeoCFile(tmpfile)
 
     _cxtgeo.grd3d_import_grdecl(
+        eclfile.fhandle,
         self._ncol,
         self._nrow,
         self._nlay,
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
-        ptr_num_act,
-        tmpfile,
-        XTGDEBUG,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        ptr_num_act
     )
 
-    # remove tmpfile
+    # close and remove tmpfile
+    eclfile.close()
     os.remove(tmpfile)
 
     nact = _cxtgeo.intpointer_value(ptr_num_act)
@@ -259,13 +261,12 @@ def import_ecl_bgrdecl(self, gfile):
     logger.info("Grid dimensions in binary GRDECL file: %s %s %s", ncol, nrow, nlay)
 
     # allocate dimensions:
-    ntot = self._ncol * self._nrow * self._nlay
-    ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
-    nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
+    ncoord, nzcorn, ntot = self.vectordimensions
 
-    self._p_coord_v = _cxtgeo.new_doublearray(ncoord)
-    self._p_zcorn_v = _cxtgeo.new_doublearray(nzcorn)
-    self._p_actnum_v = _cxtgeo.new_intarray(ntot)
+    self._coordsv = np.zeros(ncoord, dtype=np.float64)
+    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    self._actnumsv = np.zeros(ntot, dtype=np.int32)
+
     p_nact = _cxtgeo.new_longpointer()
 
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
@@ -277,9 +278,9 @@ def import_ecl_bgrdecl(self, gfile):
         bpos["COORD"],
         bpos["ZCORN"],
         bpos["ACTNUM"],
-        self._p_coord_v,
-        self._p_zcorn_v,
-        self._p_actnum_v,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
         p_nact,
         0,
     )

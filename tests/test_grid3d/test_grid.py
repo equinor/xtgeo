@@ -68,20 +68,6 @@ def test_import_guess(load_gfile1):
     tsetup.assert_equal(grd.ncol, 70)
 
 
-def test_numpify(load_gfile1):
-    """Numpify the grid instnce and do operation afterwards"""
-
-    grd = load_gfile1
-
-    grd.numpify_carrays()
-
-    assert isinstance(grd._x_coord_v, np.ndarray)
-
-    _ = grd.get_dz()  # should automatically denumpify behind the scene
-
-    assert not isinstance(grd._x_coord_v, np.ndarray)
-
-
 def test_create_shoebox():
     """Make a shoebox grid from scratch"""
 
@@ -307,36 +293,6 @@ def test_roffbin_import1(load_gfile1):
 #     tsetup.assert_equal(corners[22], allcorners[22].values[5, 7, 0])
 
 
-def test_roffbin_import_v2():
-    """Test roff binary import ROFF using new API"""
-
-    grd1 = Grid()
-    grd1.from_file(REEKFIL4, _roffapiv=1)
-    cell1 = np.array(grd1.get_xyz_cell_corners(ijk=(12, 13, 4)))
-
-    grd2 = Grid()
-    grd2.from_file(REEKFIL4, _roffapiv=2)
-    cell2 = np.array(grd2.get_xyz_cell_corners(ijk=(12, 13, 4)))
-
-    assert np.allclose(cell1, cell2)
-
-    grd3 = Grid()
-    grd3.from_file(DUALFIL1, _roffapiv=2)
-
-    grd4 = Grid()
-    grd4.from_file(DUALFIL2, _roffapiv=2)
-
-    grd5 = Grid()
-    grd5.from_file(DUALFIL1, _roffapiv=1)
-
-    cell3 = np.array(grd3.get_xyz_cell_corners(ijk=(2, 1, 0), zerobased=True))
-    cell4 = np.array(grd4.get_xyz_cell_corners(ijk=(2, 1, 0), zerobased=True))
-    cell5 = np.array(grd5.get_xyz_cell_corners(ijk=(2, 1, 0), zerobased=True))
-
-    assert np.allclose(cell3, cell5)
-    assert np.allclose(cell3, cell4)
-
-
 def test_roffbin_import_v2_emerald():
     """Test roff binary import ROFF using new API, emerald"""
 
@@ -353,28 +309,17 @@ def test_roffbin_import_v2stress():
     t0 = xtg.timer()
     for _ino in range(100):
         grd1 = Grid()
-        grd1.from_file(REEKFIL4, _roffapiv=2)
+        grd1.from_file(REEKFIL4)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 2 took: ", t1)
-
-    t0 = xtg.timer()
-    for _ino in range(100):
-        grd1 = Grid()
-        grd1.from_file(REEKFIL4, _roffapiv=1)
-    t1 = xtg.timer(t0)
-    print("100 loops with ROXAPIV 1 took: ", t1)
 
 
 def test_roffbin_import_v2_wsubgrids():
     """Test roff binary import ROFF using new API, now with subgrids"""
 
     grd1 = Grid()
-    grd1.from_file(REEKFIL5, _roffapiv=1)
+    grd1.from_file(REEKFIL5)
     print(grd1.subgrids)
-
-    grd2 = Grid()
-    grd2.from_file(REEKFIL5, _roffapiv=2)
-    print(grd2.subgrids)
 
 
 def test_import_grdecl_and_bgrdecl():

@@ -1,0 +1,4 @@
+
+    long ntotv[1] = { nxyz };
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntotv, 1) != 0)
+        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);

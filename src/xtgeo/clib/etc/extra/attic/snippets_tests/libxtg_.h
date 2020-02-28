@@ -35,7 +35,7 @@ int xtgverbose(int);
 int x_nint(float);
 
 int x_cmp_sort (
-		const void *vp, 
+		const void *vp,
 		const void *vq
 		);
 
@@ -58,7 +58,7 @@ void x_mapaxes (
 		);
 
 
-void x_stretch_points( 
+void x_stretch_points(
 		      int   np,
 		      float *p1_v,
 		      float *p2_v,
@@ -101,18 +101,18 @@ int x_chk_point_in_cell (
 			 );
 
 int x_kvpt3s (
-	      float pp[], 
+	      float pp[],
 	      float tri[][3],
 	      int   *ier
 	      );
 
 void x_kmgmps (
-	       float a[][3], 
-	       int l[], 
-	       float prmn, 
-	       int m, 
-	       int n, 
-	       float eps, 
+	       float a[][3],
+	       int l[],
+	       float prmn,
+	       int m,
+	       int n,
+	       float eps,
 	       int *ier
 	       );
 
@@ -220,9 +220,9 @@ extern void *SwapEndian(void* Addr, const int Nb);
 void _grd3d_imp_roff_asc_grd (
 			     int     *num_act,
 			     int     *num_subgrds,
-			     float   *p_coord_v,
-			     float   *p_zgrd3d_v,
-			     int     *p_actnum_v,
+			     float   *coordsv,
+			     float   *zcornsv,
+			     int     *actnumsv,
 			     int     *p_subgrd_v,
 			     int     nnsub,
 			     char    *filename,
@@ -232,9 +232,9 @@ void _grd3d_imp_roff_asc_grd (
 void _grd3d_imp_roff_bin_grd (
 			      int     *num_act,
 			      int     *num_subgrds,
-			      float   *p_coord_v,
-			      float   *p_zgrd3d_v,
-			      int     *p_actnum_v,
+			      float   *coordsv,
+			      float   *zcornsv,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      int     nnsub,
 			      char    *filename,
@@ -297,9 +297,9 @@ void _grd3d_roff_to_xtg_grid (
 			      float   *zdata_v,
 			      int     *num_act,
 			      int     *num_subgrds,
-			      float   *p_coord_v,
-			      float   *p_zgrd3d_v,
-			      int     *p_actnum_v,
+			      float   *coordsv,
+			      float   *zcornsv,
+			      int     *actnumsv,
 			      int     *p_subgrd_v,
 			      int     debug
 			      );
@@ -319,9 +319,9 @@ int _grd3d_fnd_near_cell (
 			  int     nx,
 			  int     ny,
 			  int     nz,
-			  float   *p_coord_v,
-			  float   *p_zgrd3d_v,
-			  int     *p_actnum_v,
+			  float   *coordsv,
+			  float   *zcornsv,
+			  int     *actnumsv,
 			  float   x,
 			  float   y,
 			  float   z,
@@ -335,9 +335,9 @@ int _grd3d_fnd_cell (
 		     int     nx,
 		     int     ny,
 		     int     nz,
-		     float   *p_coord_v,
-		     float   *p_zgrd3d_v,
-		     int     *p_actnum_v,
+		     float   *coordsv,
+		     float   *zcornsv,
+		     int     *actnumsv,
 		     float   x,
 		     float   y,
 		     float   z,

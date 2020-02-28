@@ -20,8 +20,8 @@
  *    xori..rotation      i     Map settings
  *    maptopi..mapbasj    i     Map arrays for I J top/base
  *    nx ny nz            i     Grid dimensions
- *    p_zcorn_v           i     Grid ZCORN
- *    p_coord_v           i     Grid COORD
+ *    zcornsv             i     Grid ZCORN
+ *    coordsv             i     Grid COORD
  *    p_acnum_v           i     Grid ACTNUM
  *    p_val_v             i     3D Grid values
  *    p_zcornone_v        i     Grid ZCORN for onelayer grid
@@ -120,7 +120,7 @@ void _get_ij_range2(int *i1,  int *i2, int *j1, int *j2, double xc, double yc, i
 
 long _grd3d_point_in_cell(int ic, int jc, int kc, double xc, double yc,
                           double zc, int nx, int ny, int nz,
-                          double *p_coor_v, double *p_zcorn_v, int *score, int flip,
+                          double *p_coor_v, double *zcornsv, int *score, int flip,
                           int dbg)
 
 {
@@ -132,7 +132,7 @@ long _grd3d_point_in_cell(int ic, int jc, int kc, double xc, double yc,
      * xc, yc, zc    Point to evaluate if inside cell
      * nx, ny, nz    Dimensions
      * p_coor_v      Coordinates (grid)
-     * p_zcorn_v     ZCORN (grid)
+     * zcornsv     ZCORN (grid)
      * score         This is a number telling how good the match is, going from -1 to 24
      */
 
@@ -143,8 +143,8 @@ long _grd3d_point_in_cell(int ic, int jc, int kc, double xc, double yc,
 
     /* get the corner for the cell */
     double corners[24];
-    grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, p_zcorn_v,
-                  corners, XTGDEBUG);
+    grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, 0, zcornsv, 0,
+                  corners);
 
     *score = x_chk_point_in_hexahedron(xc, yc, zc, corners, flip);
 
@@ -171,7 +171,7 @@ long _point_val_ij(double xc, double yc, double zc, int nx, int ny, double *p_co
      * xc, yc, zc       Points to evaluate if inside
      * nx, ny, nz       Dimensions
      * p_coor_v         Coordinates COORD
-     * p_zcorn_v        Coordinates ZCORN
+     * zcornsv        Coordinates ZCORN
      * i1, i2, j1, j2   I J search range
      */
 
@@ -208,7 +208,7 @@ long _point_val_ij(double xc, double yc, double zc, int nx, int ny, double *p_co
 
 
 long _point_val_ijk(double xc, double yc, double zc, int nx, int ny, int nz,
-                    double *p_coor_v, double *p_zcorn_v, int iin, int jin, int flip,
+                    double *p_coor_v, double *zcornsv, int iin, int jin, int flip,
                     int dbg)
 {
     /*
@@ -217,7 +217,7 @@ long _point_val_ijk(double xc, double yc, double zc, int nx, int ny, int nz,
      * xc, yc, zc       Points to evaluate if inside
      * nx, ny, nz       Dimensions
      * p_coor_v         Coordinates COORD
-     * p_zcorn_v        Coordinates ZCORN
+     * zcornsv        Coordinates ZCORN
      * iin, jin         I J column
      */
 
@@ -232,7 +232,7 @@ long _point_val_ijk(double xc, double yc, double zc, int nx, int ny, int nz,
     int nnn = 0;
     for (k = 1; k <= nz; k++) {
         long ibfound = _grd3d_point_in_cell(iin, jin, k, xc, yc, zc, nx, ny, nz,
-                                            p_coor_v, p_zcorn_v, &score, flip, dbg);
+                                            p_coor_v, zcornsv, &score, flip, dbg);
 
         if (score > 12) {
             ib_alternatives[nnn++] = ibfound;
@@ -278,10 +278,14 @@ int grd3d_points_ijk_cells(
     int nz,
 
     double *p_coor_v,
-    double *p_zcorn_v,
-    int *p_actnum_v,
+    long ncoordin,
+    double *zcornsv,
+    long nzcornin,
+    int *actnumsv,
+    long nactin,
 
     double *p_zcornone_v,
+    long nzcornonein,
 
     int actnumoption,
     int flip,
@@ -343,14 +347,14 @@ int grd3d_points_ijk_cells(
             x_ib2ijk(ibfound, &ires, &jres, &kres, nx, ny, 1, 0);
 
             long ibfound2 = _point_val_ijk(xc, yc, zc, nx, ny, nz, p_coor_v,
-                                           p_zcorn_v, ires, jres, flip, dbg);
+                                           zcornsv, ires, jres, flip, dbg);
             if (ibfound2 >= 0) {
                 x_ib2ijk(ibfound2, &ires, &jres, &kres, nx, ny, nz, 0);
                 ivec[ic] = ires;
                 jvec[ic] = jres;
                 kvec[ic] = kres;
 
-                if (actnumoption == 1 && p_actnum_v[ibfound2] == 0) {
+                if (actnumoption == 1 && actnumsv[ibfound2] == 0) {
                     /*  reset to undef in inactivecell */
                     ivec[ic] = UNDEF_INT;
                     jvec[ic] = UNDEF_INT;
