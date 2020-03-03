@@ -5,12 +5,12 @@
  * ############################################################################
  */
 
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <math.h>
 
-
-double x_avg_angles(double *angles, int nsize)
+double
+x_avg_angles(double *angles, long nsize)
 {
     double y_part = 0, x_part = 0, angle;
     int i;
@@ -20,11 +20,12 @@ double x_avg_angles(double *angles, int nsize)
         y_part += sin(angles[i] * M_PI / 180);
     }
 
-    angle = atan2 (y_part / nsize, x_part / nsize) * 180 / M_PI;
+    angle = atan2(y_part / nsize, x_part / nsize) * 180 / M_PI;
 
     /* keep in [0, 360 > */
-    while (angle < 0.0) angle += 360;
-    while (angle >= 360.0) angle -= 360;
+    while (angle < 0.0)
+        angle += 360;
+    while (angle >= 360.0)
+        angle -= 360;
     return angle;
-
 }

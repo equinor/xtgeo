@@ -1,17 +1,6 @@
 /*
  ******************************************************************************
  *
- * Convert angles (rotation) different modes
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
- *
  * NAME:
  *    x_rotation_convert.c
  *
@@ -32,7 +21,6 @@
  *                               3 radians, clock from Y (azimuth)
  *    mode           i     Mode of returning angle (same codes as ainmode)
  *    option         i     Options flag for later usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Transformed angle.
@@ -52,17 +40,12 @@ double x_rotation_conv (
 			double  ain,
 			int     ainmode,
 			int     mode,
-			int     option,
-			int     debug
+			int     option
 		    )
 {
     /* locals */
-    char     s[24] = "x_rotation_conv";
     double   result = 0.0;
 
-
-    xtgverbose(debug);
-    xtg_speak(s,3,"Entering routine");
 
     /*
      * ------------------------------------------------------------------------
@@ -72,14 +55,12 @@ double x_rotation_conv (
 
     if (ainmode == 0 || ainmode == 2) {
 	if (ain<-360 || ain>360) {
-	    xtg_error(s,"Input angle (degrees) out of boundary: %f",ain);
 	    return -9;
 	}
     }
 
     if (ainmode == 1 || ainmode == 3) {
 	if (ain<-2*PI || ain>2*PI) {
-	    xtg_error(s,"Input angle (radians) out of boundary: %f",ain);
 	    return -9;
 	}
     }

@@ -106,8 +106,8 @@ int well_trunc_parallel(
             if (fabs(xv1[i1] - xv2[i2]) > xtol) continue;
             if (fabs(yv1[i1] - yv2[i2]) > ytol) continue;
             if (fabs(zv1[i1] - zv2[i2]) > ztol) continue;
-            if (fabs(x_diff_angle(in1[i1], in2[i2], 1, 0)) > itol) continue;
-            if (fabs(x_diff_angle(az1[i1], az2[i2], 1, 0)) > atol) continue;
+            if (fabs(x_diff_angle(in1[i1], in2[i2], 1)) > itol) continue;
+            if (fabs(x_diff_angle(az1[i1], az2[i2], 1)) > atol) continue;
 
             xv1[i1] = UNDEF;
             yv1[i1] = UNDEF;

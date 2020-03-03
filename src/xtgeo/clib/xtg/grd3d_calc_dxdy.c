@@ -88,7 +88,7 @@ grd3d_calc_dxdy(int nx,
                 for (n = 0; n <= 3; n++) {
                     ii = 0 + n * 6;
                     x_vector_info2(c[ii], c[ii + 3], c[ii + 1], c[ii + 4], &vlen, &arad,
-                                   &adeg, 1, XTGDEBUG);
+                                   &adeg, 1);
                     plen = plen + vlen;
                 }
                 dx[ic] = plen / 4.0;
@@ -101,7 +101,7 @@ grd3d_calc_dxdy(int nx,
                         ii = 6 + n * 3;
 
                     x_vector_info2(c[ii], c[ii + 6], c[ii + 1], c[ii + 7], &vlen, &arad,
-                                   &adeg, 1, XTGDEBUG);
+                                   &adeg, 1);
                     plen = plen + vlen;
                 }
                 dy[ic] = plen / 4.0;

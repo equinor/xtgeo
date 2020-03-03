@@ -261,7 +261,7 @@ grd3d_geometrics(int nx,
                 /* rotation (test along x, sufficient?)*/
 
                 x_vector_info2(tmp_x[ib], tmp_x[ibn], tmp_y[ib], tmp_y[ibn], &dum1,
-                               &dum2, &vrotx_ic, 1, XTGDEBUG);
+                               &dum2, &vrotx_ic, 1);
 
                 /* special case if angle is close to 0 or 360: then problems
                    in averaging may occur. The solution is to avoid numbers

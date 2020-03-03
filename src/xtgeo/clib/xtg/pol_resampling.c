@@ -177,9 +177,9 @@ int pol_resampling(
             x3 = x0; y3 = y0;
         }
         x_vector_info2(x1, x0, y1, y0, &vlen, &angr_start,
-                       &angd, 1, debug);
+                       &angd, 1);
         x_vector_info2(x3, x2, y3, y2, &vlen, &angr_end,
-                   &angd, 1, debug);
+                   &angd, 1);
     }
     else{
         angr_start = PI; angr_end = 0.0;  /* west - east slice */

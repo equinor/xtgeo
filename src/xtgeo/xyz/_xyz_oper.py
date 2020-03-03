@@ -417,7 +417,7 @@ def extend(self, distance, nsamples, addhlen=True):
 
         # setting row0[2] as row1[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
-            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 2, XTGDEBUG
+            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 2
         )
 
         if ier != 0:
@@ -440,7 +440,7 @@ def extend(self, distance, nsamples, addhlen=True):
 
         # setting row1[2] as row0[2] is intentional, as this shall be a 2D lenght!
         ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
-            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 1, XTGDEBUG
+            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 1
         )
 
         rown[self.xname] = newx

@@ -123,7 +123,7 @@ double surf_get_z_from_xy(
 
         // now find the Z value, using interpolation method 3 (bilinear w/rot.)
 
-        z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 3, 0);
+        z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 3);
     }
 
 

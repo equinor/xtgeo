@@ -9,8 +9,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-DBG = 0
-
 
 def ib_to_ijk(ib, nx, ny, nz, ibbase=0, forder=True):
     """Convert a 1D index (starting from ibbase) to cell indices I J K.
@@ -22,20 +20,12 @@ def ib_to_ijk(ib, nx, ny, nz, ibbase=0, forder=True):
 
     logger.info("IB to IJK")
 
-    ip = _cxtgeo.new_intpointer()
-    jp = _cxtgeo.new_intpointer()
-    kp = _cxtgeo.new_intpointer()
-
     if forder:
-        _cxtgeo.x_ib2ijk(ib, ip, jp, kp, nx, ny, nz, ibbase)
+        iv, jv, kv = _cxtgeo.x_ib2ijk(ib, nx, ny, nz, ibbase)
     else:
-        _cxtgeo.x_ic2ijk(ib, ip, jp, kp, nx, ny, nz, ibbase)
+        iv, jv, kv = _cxtgeo.x_ic2ijk(ib, nx, ny, nz, ibbase)
 
-    i = _cxtgeo.intpointer_value(ip)
-    j = _cxtgeo.intpointer_value(jp)
-    k = _cxtgeo.intpointer_value(kp)
-
-    return (i, j, k)
+    return (iv, jv, kv)
 
 
 def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
@@ -65,22 +55,34 @@ def vectorinfo2(x1, x2, y1, y2, option=1):
     """
     Get length and angles from 2 points in space (2D plane).
 
-    Option = 1 gives normal school angle (counterclock from X)
+    Option = 1 gives normal school angle (counterclock from X), while 0 gives azimuth:
+    positive direction clockwise from North.
     """
 
-    # _cxtgeo.xtg_verbose_file("NONE")
-
-    lenp = _cxtgeo.new_doublepointer()
-    radp = _cxtgeo.new_doublepointer()
-    degp = _cxtgeo.new_doublepointer()
-
-    _cxtgeo.x_vector_info2(x1, x2, y1, y2, lenp, radp, degp, option, DBG)
-
-    llen = _cxtgeo.doublepointer_value(lenp)
-    rad = _cxtgeo.doublepointer_value(radp)
-    deg = _cxtgeo.doublepointer_value(degp)
+    llen, rad, deg = _cxtgeo.x_vector_info2(x1, x2, y1, y2, option)
 
     return llen, rad, deg
+
+
+def diffangle(angle1, angle2, option=1):
+    """
+    Find the minimim difference between two angles, option=1 means degress,
+    otherwise radians. The routine think clockwise for differences.
+
+    Examples::
+
+        res = diffangle(30, 40)  # res shall be -10
+        res = diffangle(360, 170)  # res shall be -170
+    """
+
+    return _cxtgeo.x_diff_angle(angle1, angle2, option)
+
+
+def averageangle(anglelist):
+    """
+    Find the average of a list of angles, in degress
+    """
+    return _cxtgeo.x_avg_angles(anglelist)
 
 
 def find_flip(xv, yv):
@@ -135,7 +137,7 @@ def angle2azimuth(inangle, mode="degrees"):
         nmode1 += 1
         nmode2 += 1
 
-    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0, DBG)
+    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
 
 
 def azimuth2angle(inangle, mode="degrees"):
@@ -157,4 +159,4 @@ def azimuth2angle(inangle, mode="degrees"):
         nmode1 += 1
         nmode2 += 1
 
-    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0, DBG)
+    return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
