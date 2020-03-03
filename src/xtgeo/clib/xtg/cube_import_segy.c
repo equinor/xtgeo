@@ -640,7 +640,7 @@ void cube_import_segy (
             /* rotation; compute for first inline... */
 
             x_vector_info2(xpos[0],xpos[1],ypos[0], ypos[1], &ss, &rotrad,
-                           &rot, 1, XTGDEBUG);
+                           &rot, 1);
 
             *rotation = rot;
 
@@ -650,7 +650,7 @@ void cube_import_segy (
 
             /* Y dir */
             x_vector_info2(xpos[0],xpos[2],ypos[0], ypos[2], &ss, &rotrad,
-                           &rot2, 1, XTGDEBUG);
+                           &rot2, 1);
 
             /* deltas for Y dir */
             *yinc = ss/(nxlines-1);

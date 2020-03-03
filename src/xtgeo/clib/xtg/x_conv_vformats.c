@@ -6,67 +6,41 @@
  * v2     output vector of format y
  * JRIV
  * ############################################################################
+ * In use?
  * ############################################################################
  */
-
-
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int x_conv_int2float (
-		      int n,
-		      int *v1,
-		      float *v2,
-		      int debug
-		      )
+void
+x_conv_int2float(int n, int *v1, float *v2)
 {
     int i;
-    
-    
-    
-    for (i=0;i<n;i++) {
-	v2[i]=(float)v1[i];
+
+    for (i = 0; i < n; i++) {
+        v2[i] = (float)v1[i];
     }
-    
-    return 1;
 }
 
-int x_conv_int2double (
-		       int n,
-		       int *v1,
-		       double *v2,
-		       int debug
-		      )
+void
+x_conv_int2double(int n, int *v1, double *v2)
 {
     int i;
-    
-    
-    
-    for (i=0;i<n;i++) {       
-	v2[i]=(double)v1[i];
-	if (v2[i] > UNDEF_INT_LIMIT) v2[i]=UNDEF;
+
+    for (i = 0; i < n; i++) {
+        v2[i] = (double)v1[i];
+        if (v2[i] > UNDEF_INT_LIMIT)
+            v2[i] = UNDEF;
     }
-    
-    return 1;
 }
 
-
-int x_conv_double2float (
-			 int n,
-			 double *v1,
-			 float  *v2,
-			 int debug
-			 )
+void
+x_conv_double2float(int n, double *v1, float *v2)
 {
     int i;
-    
-    
-    
-    for (i=0;i<n;i++) {
-	v2[i]=(float)v1[i];
-    }
-    
-    return 1;
-}
 
+    for (i = 0; i < n; i++) {
+        v2[i] = (float)v1[i];
+    }
+}

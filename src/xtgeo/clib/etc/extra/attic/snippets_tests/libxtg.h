@@ -472,8 +472,7 @@ float x_interp_map_nodes (
 			 float *z_v,
 			 float x,
 			 float y,
-			 int method,
-			 int debug
+			 int method
 			 );
 
 int x_ijk2ib (

@@ -1,7 +1,7 @@
 /*
- * ----------------------------------------------------------------------------
+ * -------------------------------------------------------------------------------------
  * Python stuff SWIG (examples...; see cxtgeo.i):
- * ----------------------------------------------------------------------------
+ * -------------------------------------------------------------------------------------
  * int    *swig_int_out_p1,         // Value of output pointers
  * double *swig_np_dbl_aout_v1,     // *p_xx_v to update argout for numpy
  * long   n_swig_np_dbl_aout_v1,    // length of nmpy array
@@ -27,10 +27,10 @@
 #define VERYLARGENEGATIVE -10E30;
 
 /*
- * ----------------------------------------------------------------------------
+ * -------------------------------------------------------------------------------------
  * Maps etc. Undef values set to very high values. Map values > UNDEF_MAP_LIMIT
  * are undefined
- * ----------------------------------------------------------------------------
+ * -------------------------------------------------------------------------------------
  */
 
 /* general limits in XTGeo are recoemmended for all XTGeo data types! */
@@ -77,9 +77,9 @@
 #define UNDEF_ECLFLOAT 0
 
 /*
- *=============================================================================
+ *======================================================================================
  * GENERAL XTGEO
- *=============================================================================
+ *======================================================================================
  */
 
 int
@@ -104,24 +104,29 @@ xtg_shout(char *, char *, ...);
 
 FILE *
 xtg_fopen(const char *filename, const char *mode);
+
 FILE *
 xtg_fopen_bytestream(char *swig_bytes, long swig_bytes_len, const char *mode);
 
 int
 xtg_fseek_start(FILE *fhandle);
+
 int
 xtg_fflush(FILE *fhandle);
+
 long
 xtg_ftell(FILE *fhandle);
+
 int
 xtg_fclose(FILE *fhandle);
+
 int
 xtg_get_fbuffer(FILE *fhandle, char *swig_bytes, long swig_bytes_len);
 
 /*
- *=============================================================================
+ *======================================================================================
  * GENERAL FUNCTIONS
- *=============================================================================
+ *======================================================================================
  */
 
 double
@@ -130,8 +135,7 @@ x_interp_map_nodes(double *x_v,
                    double *z_v,
                    double x,
                    double y,
-                   int method,
-                   int debug);
+                   int method);
 
 long
 x_ijk2ib(int i, int j, int k, int nx, int ny, int nz, int ia_start);
@@ -140,21 +144,34 @@ long
 x_ijk2ic(int i, int j, int k, int nx, int ny, int nz, int ia_start);
 
 void
-x_ib2ijk(long ib, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start);
+x_ib2ijk(long ib,
+         int *swig_int_out_p1,  // *i
+         int *swig_int_out_p2,  // *j
+         int *swig_int_out_p3,  // *k
+         int nx,
+         int ny,
+         int nz,
+         int ia_start);
 
 void
-x_ic2ijk(long ic, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start);
+x_ic2ijk(long ic,
+         int *swig_int_out_p1,  // *i
+         int *swig_int_out_p2,  // *j
+         int *swig_int_out_p3,  // *k
+         int nx,
+         int ny,
+         int nz,
+         int ia_start);
 
-int
+void
 x_vector_info2(double x1,
                double x2,
                double y1,
                double y2,
-               double *vlen,
-               double *xangle_radian,
-               double *xangle_degrees,
-               int option,
-               int debug);
+               double *swig_dbl_out_p1,  // *vlen
+               double *swig_dbl_out_p2,  // *xangle_radian
+               double *swig_dbl_out_p3,  // *xangle_degrees
+               int option);
 
 int
 x_vector_linint2(double x0,
@@ -164,37 +181,37 @@ x_vector_linint2(double x0,
                  double y1,
                  double z1,
                  double dist,
-                 double *swig_dbl_out_p1,
-                 double *swig_dbl_out_p2,
-                 double *swig_dbl_out_p3,
-                 int option,
-                 int debug);
+                 double *swig_dbl_out_p1,  // *xr
+                 double *swig_dbl_out_p2,  // *yr
+                 double *swig_dbl_out_p3,  // *zr
+                 int option);
 
 double
-x_diff_angle(double ang1, double ang2, int option, int debug);
+x_diff_angle(double ang1, double ang2, int option);
 
 double
-x_avg_angles(double *angles, int nsize);
+x_avg_angles(double *swig_np_dbl_in_v1,  // *angles
+             long n_swig_np_dbl_in_v1);  // nsize,
 
-int
-x_conv_int2float(int n, int *v1, float *v2, int debug);
+void
+x_conv_int2float(int n, int *v1, float *v2);
 
-int
-x_conv_int2double(int n, int *v1, double *v2, int debug);
+void
+x_conv_int2double(int n, int *v1, double *v2);
 
-int
-x_conv_double2float(int n, double *v1, float *v2, int debug);
+void
+x_conv_double2float(int n, double *v1, float *v2);
 
 double
-x_rotation_conv(double ain, int aimode, int mode, int option, int debug);
+x_rotation_conv(double ain, int aimode, int mode, int option);
 
 /*
- * ============================================================================
+ * =====================================================================================
  * surf_* for regular maps/surfaces
- * ============================================================================
+ * =====================================================================================
  */
 
-/* the swg* names are for eventual typemaps signatures in the cxtgeo.i
+/* the swig* names are for eventual typemaps signatures in the cxtgeo.i
  * file to SWIG */
 int
 surf_import_irap_bin(FILE *fhandle,
@@ -615,9 +632,9 @@ surf_setval_poly(double xori,
                  int flag,
                  int debug);
 /*
- *=============================================================================
+ *======================================================================================
  * POLYGON/POINTS
- *=============================================================================
+ *======================================================================================
  */
 
 void
@@ -771,11 +788,13 @@ pol_resampling(double *swig_np_dbl_in_v1,  // *xv,
                int debug);
 
 /*
- *=============================================================================
+ *======================================================================================
  * CUBE (REGULAR 3D)
- *=============================================================================
+ *======================================================================================
  */
+
 /* sucu_* is common for surf and cube: */
+
 int
 sucu_ij_from_xy(int *i,
                 int *j,
@@ -884,7 +903,7 @@ cube_export_rmsregular(int nx,
                        double zinc,
                        double rotation,
                        int yflip,
-                       float *swig_np_flt_in_v1,  // *val_v
+                       float *swig_np_flt_in_v1,  // *cubevalsv
                        long n_swig_np_flt_in_v1,  // n total nx*ny*nz
                        char *file);
 int
@@ -1074,10 +1093,10 @@ cube_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,
                     long n_swig_np_dbl_aout_v1,   // nvalues
                     int option);
 /*
- *=============================================================================
+ *======================================================================================
  * GRID (3D) CORNERPOINTS
  * FIXHD: codefix needed
- *=============================================================================
+ *======================================================================================
  */
 
 void
@@ -1379,12 +1398,7 @@ grd3d_write_eclinput(FILE *fc,
                      int debug);
 
 void
-grd3d_zcorn_convert(int nx,
-                    int ny,
-                    int nz,
-                    float *zcorn,
-                    double *zcornsv,
-                    int option);
+grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
 
 int
 grd3d_ecl_tsteps(FILE *fc,
@@ -2044,6 +2058,12 @@ grd3d_well_ijk(int nx,
                int *jvector,
                int *kvector,
                int iflag);
+
+/*
+ *======================================================================================
+ * WELL spesific
+ *======================================================================================
+ */
 
 int
 well_geometrics(int np,

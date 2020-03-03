@@ -83,7 +83,7 @@ int well_geometrics (
             }
 
             x_vector_info2(xv[i-1], xv[i], yv[i-1], yv[i], &vlen, &arad,
-                           &adeg1, 0, XTGDEBUG);
+                           &adeg1, 0);
 
             zdiff = fabs(zv[i] - zv[i + 1]);
             if (zdiff > FLOATEPS) {
@@ -97,7 +97,7 @@ int well_geometrics (
             }
 
             x_vector_info2(xv[i], xv[i+1], yv[i], yv[i+1], &vlen, &arad,
-                           &adeg2, 0, XTGDEBUG);
+                           &adeg2, 0);
 
             tmp[0] = incl1; tmp[1] = incl2;
             incl[i] = x_avg_angles(tmp, 2);

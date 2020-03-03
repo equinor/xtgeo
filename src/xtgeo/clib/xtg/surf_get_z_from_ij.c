@@ -94,7 +94,7 @@ double surf_get_z_from_ij(
 
     // now find the Z value, using interpolation method 2 (bilinear)
 
-    z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 2, 0);
+    z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 2);
 
     return z;
 

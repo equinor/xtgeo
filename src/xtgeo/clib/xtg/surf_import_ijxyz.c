@@ -337,8 +337,8 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
     }
 
 
-    x_vector_info2(xc0, xc1, yc0, yc1, xinc, &a1rad, rot, 1, 0);
-    x_vector_info2(xc0, xc2, yc0, yc2, yinc, &a2rad, &roty, 1, 0);
+    x_vector_info2(xc0, xc1, yc0, yc1, xinc, &a1rad, rot, 1);
+    x_vector_info2(xc0, xc2, yc0, yc2, yinc, &a2rad, &roty, 1);
 
     /* compute yflip: sin (y-x) = sin(y)*cos(x) - sin(x)*cos(y) */
     *yflip = 1;

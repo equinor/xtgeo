@@ -85,7 +85,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     tmp_hlen = calloc(nlen, sizeof(double));
     tmp_dhlen = calloc(nlen, sizeof(double));
 
-    
+
     /* find the tmp_hlen vector, which is the horizontal cumulative length */
     ier = pol_geometrics(xv, nlen, yv, nlen, zv, nlen, tmp_tlen, nlen,
                          tmp_dtlen, nlen, tmp_hlen, nlen, tmp_dhlen, nlen, debug);
@@ -151,7 +151,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
     if (nnext > 0) {
         for (i=nnext; i>0; i--) {
             ier = x_vector_linint2(x00, y00, z0, x01, y01, z1, xsmpl*i,
-                                   &xr, &yr, &zr, 1, debug);
+                                   &xr, &yr, &zr, 1);
 
             if (ier != 0) {
                 xtg_error(s, "Something went wrong in %s IER = %d", s, ier);
@@ -261,7 +261,7 @@ int pol_resample(int nlen, double *xv, double *yv, double *zv,
 
         for (i=0; i<=nnext; i++) {
             ier = x_vector_linint2(x10, y10, z0, x11, y11, z1, xsmpl*i,  // xsmpl not smpl?
-                                   &xr, &yr, &zr, 2, debug);
+                                   &xr, &yr, &zr, 2);
 
             if (ier != 0) {
                 xtg_error(s, "Something went wrong in %s IER = %d", s, ier);
