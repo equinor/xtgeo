@@ -1,6 +1,8 @@
 """Import RegularSurface data."""
 # pylint: disable=protected-access
 
+from struct import unpack
+
 import numpy as np
 import numpy.ma as ma
 
@@ -101,56 +103,56 @@ def import_irap_binary(self, mfile, values=True):
 #     logger.debug("Enter function (v2)... scanning done")
 
 
-    # # read with mode 0, to get mx my and other metadata
-    # (
-    #     ier,
-    #     self._ncol,
-    #     self._nrow,
-    #     _ndef,
-    #     self._xori,
-    #     self._yori,
-    #     self._xinc,
-    #     self._yinc,
-    #     self._rotation,
-    #     val,
-    # ) = _cxtgeo.surf_import_irap_bin2(mfile, 0, 1, 0)
+# # read with mode 0, to get mx my and other metadata
+# (
+#     ier,
+#     self._ncol,
+#     self._nrow,
+#     _ndef,
+#     self._xori,
+#     self._yori,
+#     self._xinc,
+#     self._yinc,
+#     self._rotation,
+#     val,
+# ) = _cxtgeo.surf_import_irap_bin2(mfile, 0, 1, 0)
 
-    # logger.debug("Enter function (v2)... scanning done")
+# logger.debug("Enter function (v2)... scanning done")
 
-    # if ier != 0:
-    #     raise RuntimeError("Error in reading Irap binary file")
+# if ier != 0:
+#     raise RuntimeError("Error in reading Irap binary file")
 
-    # self._yflip = 1
-    # if self._yinc < 0.0:
-    #     self._yinc *= -1
-    #     self._yflip = -1
+# self._yflip = 1
+# if self._yinc < 0.0:
+#     self._yinc *= -1
+#     self._yflip = -1
 
-    # self._filesrc = mfile
+# self._filesrc = mfile
 
-    # self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-    # self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+# self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+# self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
 
-    # # lazy loading, not reading the arrays
-    # if not values:
-    #     self._values = None
-    #     return
+# # lazy loading, not reading the arrays
+# if not values:
+#     self._values = None
+#     return
 
-    # nval = self._ncol * self._nrow
-    # xlist = _cxtgeo.surf_import_irap_bin2(mfile, 1, nval, 0)
-    # if xlist[0] != 0:
-    #     raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
+# nval = self._ncol * self._nrow
+# xlist = _cxtgeo.surf_import_irap_bin2(mfile, 1, nval, 0)
+# if xlist[0] != 0:
+#     raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
-    # val = xlist[-1]
+# val = xlist[-1]
 
-    # val = np.reshape(val, (self._ncol, self._nrow), order="C")
+# val = np.reshape(val, (self._ncol, self._nrow), order="C")
 
-    # val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
+# val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
-    # if np.isnan(val).any():
-    #     logger.info("NaN values are found, will mask...")
-    #     val = ma.masked_invalid(val)
+# if np.isnan(val).any():
+#     logger.info("NaN values are found, will mask...")
+#     val = ma.masked_invalid(val)
 
-    # self._values = val
+# self._values = val
 
 
 def import_irap_ascii(self, mfile):
@@ -283,3 +285,58 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     self._xlines = template._xlines.copy()
 
     fin.close()
+
+
+def import_petromod_binary(self, mfile, values=True):
+    """Import Petromod binary format."""
+
+    ifile = xtgeo._XTGeoCFile(mfile)
+
+    logger.info("Enter function %s", __name__)
+
+    # read with mode 0, to get mx my and other metadata
+    dsc, dummy = _cxtgeo.surf_import_petromod_bin(ifile.fhandle, 0, 0.0, 0, 0, 0)
+
+    print("DSC", dsc)
+
+    fields = dsc.split(",")
+    for field in fields:
+        key, value = field.split("=")
+        if key == "GridNoX":
+            self._ncol = int(value)
+        if key == "GridNoY":
+            self._nrow = int(value)
+        if key == "OriginX":
+            self._xori = float(value)
+        if key == "OriginY":
+            self._yori = float(value)
+        if key == "RotationOriginX":
+            rota_xori = float(value)
+        if key == "RotationOriginY":
+            rota_yori = float(value)
+        if key == "GridStepX":
+            self._xinc = int(value)
+        if key == "GridStepY":
+            self._yinc = int(value)
+        if key == "RotationAngle":
+            self._rotation = float(value)
+        if key == "Undefined":
+            undef = float(value)
+
+    if rota_xori != self._xori or rota_yori != self._yori:
+        raise RuntimeError("Rotation origin and data origin do match")
+
+    # reread file for map values
+
+    dsc, values = _cxtgeo.surf_import_petromod_bin(
+        ifile.fhandle, 1, undef, self._ncol, self._nrow, self._ncol * self._nrow
+    )
+
+    values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
+
+    values = values.reshape(self._ncol, self._nrow)
+
+    self.values = values
+    self.filesrc = mfile
+
+    ifile.close()

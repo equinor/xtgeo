@@ -737,6 +737,10 @@ class RegularSurface(object):
 
         elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
             _regsurf_import.import_irap_ascii(self, mfile)
+
+        elif fformat in ("pmd", "petromod"):
+            _regsurf_import.import_petromod_binary(self, mfile)
+
         elif fformat == "ijxyz":
             if template:
                 _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
