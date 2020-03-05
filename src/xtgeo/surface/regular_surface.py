@@ -662,7 +662,10 @@ class RegularSurface(object):
 
         return dsc.astext()
 
-    def from_file(self, mfile, fformat=None, template=None, values=True):
+    def from_file(
+        self, mfile, fformat=None, template=None, values=True
+    ):  # pylint: disable=too-many-branches
+
         """Import surface (regular map) from file.
 
         Note that the fformat=None option will guess bye looking at the file
@@ -1257,8 +1260,8 @@ class RegularSurface(object):
             else:
                 if strict:
                     return False
-                else:
-                    logger.warning("Masks differ, not consistent with 'strict'")
+
+                logger.warning("Masks differ, not consistent with 'strict'")
 
         return True
 

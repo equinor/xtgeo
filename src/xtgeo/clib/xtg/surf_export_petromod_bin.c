@@ -50,7 +50,7 @@ surf_export_petromod_bin(FILE *fc, char *dsc, double *surfzv, long nsurf)
     char mynull[1] = {'\0'};
     fwrite(&mynull, 1, 1, fc);
 
-    float myvalue = 0.0;
+    float myvalue;
     int ic;
     for (ic = 0; ic < nsurf; ic++) {
         myvalue = (float)surfzv[ic];

@@ -48,6 +48,9 @@ surf_import_petromod_bin(FILE *fc,
 
     logger_info(LI, FI, FU, "Read PETROMOD binary map file: %s", FU);
 
+    if (mx * my != nsurf)
+        logger_critical(LI, FI, FU, "mx * my != nsurf, bug in %s", FU);
+
     if (mode == 0)
         logger_info(LI, FI, FU, "Scan mode!");
     if (mode == 1)
