@@ -273,6 +273,16 @@ surf_import_ijxyz_tmpl(FILE *fc,
                        long n_swig_np_dbl_aout_v1,   // nmap = nrow*ncol
                        int option);
 
+void
+surf_import_petromod_bin(FILE *fhandle,
+                         int mode,
+                         float undef,
+                         char *swig_bnd_char_10k,  // *dsc
+                         int mx,
+                         int my,
+                         double *swig_np_dbl_aout_v1,  // *p_map_v
+                         long n_swig_np_dbl_aout_v1);  // nmap
+
 int
 surf_export_irap_bin(FILE *fc,
                      int mx,
@@ -328,6 +338,12 @@ surf_export_storm_bin(FILE *fc,
                       double zmin,
                       double zmax,
                       int option);
+
+void
+surf_export_petromod_bin(FILE *fc,
+                         char *dsc,
+                         double *swig_np_dbl_in_v1,  // *surfzv
+                         long n_swig_np_dbl_in_v1);  // nsurf
 
 int
 surf_export_ijxyz(FILE *fc,

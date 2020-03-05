@@ -37,6 +37,8 @@ TESTSET4B = "../xtgeo-testdata/surfaces/etc/ijxyz1.map"  # IJXYZ table
 TESTSET4D = "../xtgeo-testdata/surfaces/etc/ijxyz1.dat"  # IJXYZ table OW
 TESTSET4C = "../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map"
 TESTSET5 = "../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri"
+TESTSET6A = "../xtgeo-testdata/surfaces/etc/seabed_p.pmd"
+TESTSET6B = "../xtgeo-testdata/surfaces/etc/seabed_p.gri"
 
 FENCE1 = "../xtgeo-testdata/polygons/reek/1/fence.pol"
 
@@ -158,6 +160,22 @@ def test_irapbin_import_metadatafirst():
     assert sur[nsurf - 1].ncol == 1264
     assert sur[nsurf - 1].nrow == 2010
     tsetup.assert_almostequal(sur[nsurf - 1].values[11, 0], 1678.89733887, 0.00001)
+
+
+def test_petromodbin_import_export():
+    """Import Petromod PDM binary example."""
+    logger.info("Import and export...")
+
+    petromod = xtgeo.RegularSurface(TESTSET6A)
+    irapbin = xtgeo.RegularSurface(TESTSET6B)
+    assert petromod.ncol == irapbin.ncol
+    assert petromod.nrow == irapbin.nrow
+    assert petromod.values1d[200000] == irapbin.values1d[200000]
+
+    testfile = os.path.join(TMPD, "petromod.pmd")
+    petromod.to_file(testfile, fformat="petromod")
+    petromod_again = xtgeo.RegularSurface(testfile)
+    assert petromod_again.values1d[200000] == irapbin.values1d[200000]
 
 
 def test_swapaxes():

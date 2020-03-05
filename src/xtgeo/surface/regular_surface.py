@@ -662,7 +662,10 @@ class RegularSurface(object):
 
         return dsc.astext()
 
-    def from_file(self, mfile, fformat=None, template=None, values=True):
+    def from_file(
+        self, mfile, fformat=None, template=None, values=True
+    ):  # pylint: disable=too-many-branches
+
         """Import surface (regular map) from file.
 
         Note that the fformat=None option will guess bye looking at the file
@@ -737,6 +740,10 @@ class RegularSurface(object):
 
         elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
             _regsurf_import.import_irap_ascii(self, mfile)
+
+        elif fformat in ("pmd", "petromod"):
+            _regsurf_import.import_petromod_binary(self, mfile)
+
         elif fformat == "ijxyz":
             if template:
                 _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
@@ -789,7 +796,7 @@ class RegularSurface(object):
         Args:
             mfile (str): Name of file
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
-                storm_binary/ijxyz. Default is irap_binary.
+                storm_binary/ijxyz/petromod. Default is irap_binary.
             **kwargs: Special settings (for developers)
 
         Examples::
@@ -821,18 +828,26 @@ class RegularSurface(object):
 
         logger.debug("Enter method...")
         logger.info("Export to file...")
+
         if fformat == "irap_ascii":
             _regsurf_export.export_irap_ascii(self, mfile)
+
         elif fformat == "irap_binary":
             _regsurf_export.export_irap_binary(
                 self, mfile, engine=engine, bstream=bstream
             )
         elif fformat == "zmap_ascii":
             _regsurf_export.export_zmap_ascii(self, mfile)
+
         elif fformat == "storm_binary":
             _regsurf_export.export_storm_binary(self, mfile)
+
+        elif fformat == "petromod":
+            _regsurf_export.export_petromod_binary(self, mfile)
+
         elif fformat == "ijxyz":
             _regsurf_export.export_ijxyz_ascii(self, mfile)
+
         else:
             logger.critical("Invalid file format")
 
@@ -1245,8 +1260,8 @@ class RegularSurface(object):
             else:
                 if strict:
                     return False
-                else:
-                    logger.warning("Masks differ, not consistent with 'strict'")
+
+                logger.warning("Masks differ, not consistent with 'strict'")
 
         return True
 
