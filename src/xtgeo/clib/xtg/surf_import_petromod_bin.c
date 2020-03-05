@@ -76,7 +76,7 @@ surf_import_petromod_bin(FILE *fc,
     if (mode == 0)
         return; /* scan mode */
 
-    int nlen = strlen(dsc);
+    int nlen = strnlen(dsc, 500);
     logger_info(LI, FI, FU, "Length of description is %d", nlen);
 
     fseek(fc, nlen + 5, SEEK_SET);

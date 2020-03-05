@@ -162,7 +162,7 @@ def test_irapbin_import_metadatafirst():
     tsetup.assert_almostequal(sur[nsurf - 1].values[11, 0], 1678.89733887, 0.00001)
 
 
-def test_petromodbin_import1():
+def test_petromodbin_import_export():
     """Import Petromod PDM binary example."""
     logger.info("Import and export...")
 
@@ -171,8 +171,11 @@ def test_petromodbin_import1():
     assert petromod.ncol == irapbin.ncol
     assert petromod.nrow == irapbin.nrow
     assert petromod.values1d[200000] == irapbin.values1d[200000]
-    petromod.describe()
-    irapbin.describe()
+
+    testfile = os.path.join(TMPD, "petromod.pmd")
+    petromod.to_file(testfile, fformat="petromod")
+    petromod_again = xtgeo.RegularSurface(testfile)
+    assert petromod_again.values1d[200000] == irapbin.values1d[200000]
 
 
 def test_swapaxes():

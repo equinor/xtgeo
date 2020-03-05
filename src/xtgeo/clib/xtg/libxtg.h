@@ -339,6 +339,12 @@ surf_export_storm_bin(FILE *fc,
                       double zmax,
                       int option);
 
+void
+surf_export_petromod_bin(FILE *fc,
+                         char *dsc,
+                         double *swig_np_dbl_in_v1,  // *surfzv
+                         long n_swig_np_dbl_in_v1);  // nsurf
+
 int
 surf_export_ijxyz(FILE *fc,
                   int mx,

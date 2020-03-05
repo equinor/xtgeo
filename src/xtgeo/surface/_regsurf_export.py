@@ -5,6 +5,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 from struct import pack
+import numpy as np
 
 import xtgeo
 from xtgeo.common.constants import UNDEF_MAP_IRAPB
@@ -258,5 +259,36 @@ def export_storm_binary(self, mfile):
             "Export to Storm binary went wrong, " "code is {}".format(ier)
         )
     del scopy
+
+    fout.close()
+
+
+def export_petromod_binary(self, mfile):
+    """Export to petromod binary format."""
+
+    undef = 99999
+    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
+
+    dsc = "Content=Map,"
+    dsc += "DataUnitDistance=15,"
+    dsc += "DataUnitZ=10,"
+    dsc += "GridNoX={},".format(self.ncol)
+    dsc += "GridNoY={},".format(self.nrow)
+    dsc += "GridStepX={},".format(self.xinc)
+    dsc += "GridStepY={},".format(self.yinc)
+    dsc += "MapType=GridMap,"
+    dsc += "OriginX={},".format(self.xori)
+    dsc += "OriginY={},".format(self.yori)
+    dsc += "RotationAngle={},".format(self.rotation)
+    dsc += "RotationOriginX={},".format(self.xori)
+    dsc += "RotationOriginY={},".format(self.yori)
+    dsc += "Undefined={},".format(undef)
+    dsc += "Version=1.0"
+
+    values = np.ma.filled(self.values1d, fill_value=undef)
+
+    _cxtgeo.surf_export_petromod_bin(
+        fout.fhandle, dsc, values,
+    )
 
     fout.close()

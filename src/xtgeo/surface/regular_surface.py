@@ -793,7 +793,7 @@ class RegularSurface(object):
         Args:
             mfile (str): Name of file
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
-                storm_binary/ijxyz. Default is irap_binary.
+                storm_binary/ijxyz/petromod. Default is irap_binary.
             **kwargs: Special settings (for developers)
 
         Examples::
@@ -825,18 +825,26 @@ class RegularSurface(object):
 
         logger.debug("Enter method...")
         logger.info("Export to file...")
+
         if fformat == "irap_ascii":
             _regsurf_export.export_irap_ascii(self, mfile)
+
         elif fformat == "irap_binary":
             _regsurf_export.export_irap_binary(
                 self, mfile, engine=engine, bstream=bstream
             )
         elif fformat == "zmap_ascii":
             _regsurf_export.export_zmap_ascii(self, mfile)
+
         elif fformat == "storm_binary":
             _regsurf_export.export_storm_binary(self, mfile)
+
+        elif fformat == "petromod":
+            _regsurf_export.export_petromod_binary(self, mfile)
+
         elif fformat == "ijxyz":
             _regsurf_export.export_ijxyz_ascii(self, mfile)
+
         else:
             logger.critical("Invalid file format")
 
