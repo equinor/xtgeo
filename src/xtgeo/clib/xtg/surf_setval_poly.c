@@ -6,9 +6,9 @@
  ******************************************************************************
  */
 
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <math.h>
 
 /*
  ******************************************************************************
@@ -50,29 +50,27 @@
  ******************************************************************************
  */
 
-
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int surf_setval_poly(
-                     double xori,
-                     double xinc,
-                     double yori,
-                     double yinc,
-                     int ncol,
-                     int nrow,
-                     int yflip,
-                     double rot_deg,
-                     double *p_map_v,
-                     long nmap,
-                     double *p_xp_v,
-                     long npolx,
-                     double *p_yp_v,
-                     long npoly,
-                     double value,
-                     int flag,
-                     int debug
-                     )
+int
+surf_setval_poly(double xori,
+                 double xinc,
+                 double yori,
+                 double yinc,
+                 int ncol,
+                 int nrow,
+                 int yflip,
+                 double rot_deg,
+                 double *p_map_v,
+                 long nmap,
+                 double *p_xp_v,
+                 long npolx,
+                 double *p_yp_v,
+                 long npoly,
+                 double value,
+                 int flag,
+                 int debug)
 {
     /* locals */
     int ino, jno;
@@ -83,26 +81,27 @@ int surf_setval_poly(
     char sbn[24] = "surf_setval_poly";
     xtgverbose(debug);
 
-    if (debug > 2) xtg_speak(sbn, 3, "Entering routine %s", sbn);
+    if (debug > 2)
+        xtg_speak(sbn, 3, "Entering routine %s", sbn);
 
     for (ino = 1; ino <= ncol; ino++) {
         for (jno = 1; jno <= nrow; jno++) {
 
             ic = x_ijk2ic(ino, jno, 1, ncol, nrow, 1, 0);
 
-            ier = surf_xyz_from_ij(ino, jno, &xcor, &ycor, &zval,
-                                   xori, xinc, yori, yinc,
-                                   ncol, nrow, yflip, rot_deg,
-                                   p_map_v, nmap, 0);
+            ier = surf_xyz_from_ij(ino, jno, &xcor, &ycor, &zval, xori, xinc, yori,
+                                   yinc, ncol, nrow, yflip, rot_deg, p_map_v, nmap, 0);
 
-            if (ier != 0) return -5;
+            if (ier != 0)
+                return -5;
 
-            status = pol_chk_point_inside(xcor, ycor, p_xp_v, p_yp_v, npolx,
-                                          debug);
+            status = pol_chk_point_inside(xcor, ycor, p_xp_v, p_yp_v, npolx);
 
-            if (status == -9) return -9;  /* polygon is not closed */
+            if (status == -9)
+                return -9; /* polygon is not closed */
 
-            if (status > 0 && p_map_v[ic] < UNDEF_LIMIT) p_map_v[ic] = value;
+            if (status > 0 && p_map_v[ic] < UNDEF_LIMIT)
+                p_map_v[ic] = value;
         }
     }
 

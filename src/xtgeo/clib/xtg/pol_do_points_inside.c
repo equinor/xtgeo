@@ -52,22 +52,21 @@
  ******************************************************************************
  */
 
-int pol_do_points_inside(
-			 double *xpoi,
-                         long nxpoi,
-			 double *ypoi,
-                         long nypoi,
-			 double *zpoi,
-                         long nzpoi,
-			 double *xpol,
-                         long nxpol,
-			 double *ypol,
-                         long nypol,
-                         double value,
-                         int option,
-                         int inside,
-                         int debug
-			 )
+int
+pol_do_points_inside(double *xpoi,
+                     long nxpoi,
+                     double *ypoi,
+                     long nypoi,
+                     double *zpoi,
+                     long nzpoi,
+                     double *xpol,
+                     long nxpol,
+                     double *ypol,
+                     long nypol,
+                     double value,
+                     int option,
+                     int inside,
+                     int debug)
 
 {
     int ic, dowork = 0, istat;
@@ -80,45 +79,38 @@ int pol_do_points_inside(
      */
     xtg_speak(sbn, 2, "Check points inside a polygon...");
 
-
     for (ic = 0; ic < nzpoi; ic++) {
         dowork = 0;
-        istat = pol_chk_point_inside(xpoi[ic], ypoi[ic], xpol, ypol, nxpol,
-                                     debug);
+        istat = pol_chk_point_inside(xpoi[ic], ypoi[ic], xpol, ypol, nxpol);
 
         if (istat == -9) {
             xtg_warn(sbn, 1, "Polygon is not closed");
             return 1;
         }
 
-        if (istat > 0 && inside == 1) dowork=1;
-        if (istat == 0 && inside == 0) dowork=1;
+        if (istat > 0 && inside == 1)
+            dowork = 1;
+        if (istat == 0 && inside == 0)
+            dowork = 1;
 
         if (dowork == 1) {
             if (option == 1) {
                 zpoi[ic] = value;
-            }
-            else if (option == 2) {
+            } else if (option == 2) {
                 zpoi[ic] += value;
-            }
-            else if (option == 3) {
+            } else if (option == 3) {
                 zpoi[ic] -= value;
-            }
-            else if (option == 4) {
+            } else if (option == 4) {
                 zpoi[ic] *= value;
-            }
-            else if (option == 5) {
+            } else if (option == 5) {
                 if (fabs(value) < FLOATEPS) {
                     zpoi[ic] = UNDEF;
-                }
-                else{
+                } else {
                     zpoi[ic] /= value;
                 }
-            }
-            else if (option == 11) {
+            } else if (option == 11) {
                 zpoi[ic] = UNDEF;
-            }
-            else{
+            } else {
                 return 2;
             }
         }

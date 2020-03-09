@@ -61,10 +61,10 @@ grd3d_export_grdecl(int nx,
 
     if (mode == 0) {
         logger_info(LI, FI, FU, "Opening binary GRDECL file...");
-        fc = x_fopen(filename, "wb", XTGDEBUG);
+        fc = x_fopen(filename, "wb");
     } else {
         logger_info(LI, FI, FU, "Opening text GRDECL file...");
-        fc = x_fopen(filename, "w", XTGDEBUG);
+        fc = x_fopen(filename, "w");
     }
 
     /*

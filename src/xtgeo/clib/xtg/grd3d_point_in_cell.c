@@ -33,7 +33,6 @@
  * #############################################################################
  */
 
-
 /*
  * ----------------------------------------------------------------------------
  *
@@ -51,166 +50,165 @@
  *
  */
 
-
 #include "libxtg.h"
 #include "libxtg_.h"
 
-
-int grd3d_point_in_cell(
-			int   ibstart,
-			int   kzonly,
-			double x,
-			double y,
-			double z,
-			int   nx,
-			int   ny,
-			int   nz,
-			double *p_coor_v,
-			double *zcornsv,
-			int   *actnumsv,
-			int   maxrad,
-			int   sflag,
-			int   *nradsearch,
-			int   option,
-			int   debug
-			)
+int
+grd3d_point_in_cell(int ibstart,
+                    int kzonly,
+                    double x,
+                    double y,
+                    double z,
+                    int nx,
+                    int ny,
+                    int nz,
+                    double *p_coor_v,
+                    double *zcornsv,
+                    int *actnumsv,
+                    int maxrad,
+                    int sflag,
+                    int *nradsearch,
+                    int option,
+                    int debug)
 
 {
     /* locals */
     int i, j, k, ib, inside, irad;
     int i1, i2, j1, j2, k1, k2;
-    int istart, jstart, kstart,m;
+    int istart, jstart, kstart, m;
     double corners[24];
     double polx[5], poly[5];
-    char  s[24]="grd3d_point_in_cell";
+    char s[24] = "grd3d_point_in_cell";
 
     xtgverbose(debug);
-    xtg_speak(s,2,"Entering <grd3d_point_in_cell>");
-    xtg_speak(s,2,"NX NY NZ: %d %d %d", nx, ny, nz);
+    xtg_speak(s, 2, "Entering <grd3d_point_in_cell>");
+    xtg_speak(s, 2, "NX NY NZ: %d %d %d", nx, ny, nz);
 
-    xtg_speak(s,2,"IBSTART %d", ibstart);
+    xtg_speak(s, 2, "IBSTART %d", ibstart);
 
-    if (ibstart<0) ibstart=0;
+    if (ibstart < 0)
+        ibstart = 0;
 
-    if (kzonly>0 && ibstart==0) {
-	ibstart=x_ijk2ib(1,1,kzonly,nx,ny,nz,0);
+    if (kzonly > 0 && ibstart == 0) {
+        ibstart = x_ijk2ib(1, 1, kzonly, nx, ny, nz, 0);
     }
 
-    x_ib2ijk(ibstart,&istart,&jstart,&kstart,nx,ny,nz,0);
+    x_ib2ijk(ibstart, &istart, &jstart, &kstart, nx, ny, nz, 0);
 
     /*
      * Will search in a growing radius around a start point
      * in order to optimize speed
      */
 
-    i1=istart;
-    j1=jstart;
-    k1=kstart;
+    i1 = istart;
+    j1 = jstart;
+    k1 = kstart;
 
-    i2=istart;
-    j2=jstart;
-    k2=kstart;
+    i2 = istart;
+    j2 = jstart;
+    k2 = kstart;
 
-    for (irad=0; irad<=(maxrad+1); irad++) {
+    for (irad = 0; irad <= (maxrad + 1); irad++) {
 
-	xtg_speak(s,2,"Search radi %d",irad);
+        xtg_speak(s, 2, "Search radi %d", irad);
 
-	if (irad>0) {
-	    i1-=1;
-	    i2+=1;
-	    j1-=1;
-	    j2+=1;
-	    k1-=1;
-	    k2+=1;
-	}
+        if (irad > 0) {
+            i1 -= 1;
+            i2 += 1;
+            j1 -= 1;
+            j2 += 1;
+            k1 -= 1;
+            k2 += 1;
+        }
 
-	if (sflag>0 && irad>maxrad) {
-	    i1=1;
-	    i2=nx;
-	    j1=1;
-	    j2=ny;
-	    k1=1;
-	    k2=nz;
-	}
+        if (sflag > 0 && irad > maxrad) {
+            i1 = 1;
+            i2 = nx;
+            j1 = 1;
+            j2 = ny;
+            k1 = 1;
+            k2 = nz;
+        }
 
-	*nradsearch=irad;
+        *nradsearch = irad;
 
-	if (i1<1)  i1=1;
-	if (j1<1)  j1=1;
-	if (k1<1)  k1=1;
-	if (i2>nx) i2=nx;
-	if (j2>ny) j2=ny;
-	if (k2>nz) k2=nz;
+        if (i1 < 1)
+            i1 = 1;
+        if (j1 < 1)
+            j1 = 1;
+        if (k1 < 1)
+            k1 = 1;
+        if (i2 > nx)
+            i2 = nx;
+        if (j2 > ny)
+            j2 = ny;
+        if (k2 > nz)
+            k2 = nz;
 
-	if (kzonly>0) {
-	    k1=kzonly;
-	    k2=kzonly;
-	}
+        if (kzonly > 0) {
+            k1 = kzonly;
+            k2 = kzonly;
+        }
 
-	if (debug>3) {
-	    xtg_speak(s,4,"I1 I2  J1 J2  K1 K2  %d %d  %d %d  %d %d",
-		      i1,i2,j1,j2,k1,k2);
-	}
+        if (debug > 3) {
+            xtg_speak(s, 4, "I1 I2  J1 J2  K1 K2  %d %d  %d %d  %d %d", i1, i2, j1, j2,
+                      k1, k2);
+        }
 
-	for (k = k1; k <= k2; k++) {
-	    for (j = j1; j <= j2; j++) {
-		for (i = i1; i <= i2; i++) {
+        for (k = k1; k <= k2; k++) {
+            for (j = j1; j <= j2; j++) {
+                for (i = i1; i <= i2; i++) {
 
-		    if (debug>3) {
-			xtg_speak(s,3,"Cell IJK: %d %d %d",i,j,k);
-		    }
-		    ib=x_ijk2ib(i,j,k,nx,ny,nz,0);
-		    /* get the corner for the cell */
-		    grd3d_corners(i,j,k,nx,ny,nz,p_coor_v, 0, zcornsv, 0,
-			      corners);
+                    if (debug > 3) {
+                        xtg_speak(s, 3, "Cell IJK: %d %d %d", i, j, k);
+                    }
+                    ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                    /* get the corner for the cell */
+                    grd3d_corners(i, j, k, nx, ny, nz, p_coor_v, 0, zcornsv, 0,
+                                  corners);
 
+                    if (option == 0) {
+                        /* 3D cell */
+                        inside = x_chk_point_in_cell(x, y, z, corners, 1);
 
+                    } else {
+                        /*2D view ...  make a closed polygon in XY
+                          from the corners */
+                        polx[0] = 0.5 * (corners[0] + corners[12]);
+                        poly[0] = 0.5 * (corners[1] + corners[13]);
+                        polx[1] = 0.5 * (corners[3] + corners[15]);
+                        poly[1] = 0.5 * (corners[4] + corners[16]);
+                        polx[2] = 0.5 * (corners[9] + corners[21]);
+                        poly[2] = 0.5 * (corners[10] + corners[22]);
+                        polx[3] = 0.5 * (corners[6] + corners[18]);
+                        poly[3] = 0.5 * (corners[7] + corners[19]);
+                        polx[4] = polx[0];
+                        poly[4] = poly[0];
 
-		    if (option==0) {
-			/* 3D cell */
-			inside=x_chk_point_in_cell(x,y,z,corners,1,debug);
+                        if (debug > 2) {
+                            for (m = 0; m < 5; m++) {
+                                xtg_speak(s, 3, "Corner no %d:  %9.2f   %9.2f ", m + 1,
+                                          polx[m], poly[m]);
+                            }
+                        }
 
-		    }
-		    else {
-			/*2D view ...  make a closed polygon in XY
-			  from the corners */
-			polx[0]=0.5*(corners[0]+corners[12]);
-			poly[0]=0.5*(corners[1]+corners[13]);
-			polx[1]=0.5*(corners[3]+corners[15]);
-			poly[1]=0.5*(corners[4]+corners[16]);
-			polx[2]=0.5*(corners[9]+corners[21]);
-			poly[2]=0.5*(corners[10]+corners[22]);
-			polx[3]=0.5*(corners[6]+corners[18]);
-			poly[3]=0.5*(corners[7]+corners[19]);
-			polx[4]=polx[0];
-			poly[4]=poly[0];
+                        inside =
+                          pol_chk_point_inside((double)x, (double)y, polx, poly, 5);
+                        if (debug > 2) {
+                            xtg_speak(s, 3, "Inside status: %d", inside);
+                        }
+                    }
 
-			if (debug>2) {
-			    for (m=0;m<5;m++) {
-				xtg_speak(s,3,"Corner no %d:  %9.2f   %9.2f ",
-					  m+1,polx[m],poly[m]);
-			    }
-			}
+                    if (inside > 0) {
+                        xtg_speak(s, 2, "Found at IJK: %d %d %d", i, j, k);
+                        return ib;
+                    }
+                }
+            }
+        }
 
-
-			inside=pol_chk_point_inside((double)x,(double)y,
-						    polx,poly,5,debug);
-			if (debug>2) {
-			    xtg_speak(s,3,"Inside status: %d", inside);
-			}
-		    }
-
-		    if (inside > 0) {
-			xtg_speak(s,2,"Found at IJK: %d %d %d",i,j,k);
-			return ib;
-		    }
-
-		}
-	    }
-	}
-
-	if (i1==1 && i2==nx && j1==1 && j2==ny && k1==1 && k2==nz) break;
-
+        if (i1 == 1 && i2 == nx && j1 == 1 && j2 == ny && k1 == 1 && k2 == nz)
+            break;
     }
 
     return -1; /* if nothing found */
