@@ -1,5 +1,5 @@
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_adj_cells.c
@@ -29,7 +29,7 @@
  *
  * LICENCE:
  *    cf XTGeo License
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
@@ -107,8 +107,8 @@ grd3d_adj_cells(int ncol,
                             p_prop2[ib] = 1;
                         /* check if the two cells are faulted in XY */
                         if (iflag2 > 0 && nni < 4) {
-                            faulted = grd3d_check_cell_splits(
-                              ncol, nrow, nlay, coordsv, zcornsv, ib, nnc[nni]);
+                            faulted = grd3d_check_cell_splits(ncol, nrow, nlay, coordsv,
+                                                              zcornsv, ib, nnc[nni]);
                             if (faulted == 1)
                                 p_prop2[ib] = 2;
                         }

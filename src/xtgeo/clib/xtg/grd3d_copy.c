@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_copy.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Copy from input pointer arrays to new
@@ -29,36 +26,29 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
-
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-
-int grd3d_copy(
-    int ncol,
-    int nrow,
-    int nlay,
-    double *p_coord1_v,
-    double *p_zcorn1_v,
-    int *p_actnum1_v,
-    double *p_coord2_v,
-    double *p_zcorn2_v,
-    int *p_actnum2_v,
-    int iflag,
-    int debug)
+int
+grd3d_copy(int ncol,
+           int nrow,
+           int nlay,
+           double *p_coord1_v,
+           double *p_zcorn1_v,
+           int *p_actnum1_v,
+           double *p_coord2_v,
+           double *p_zcorn2_v,
+           int *p_actnum2_v,
+           int iflag)
 {
     /* locals */
-    char sbn[24] = "grd3d_copy";
     int ic, icn, jcn, kcn;
     long ijo, ibt;
 
-    xtgverbose(debug);
-    xtg_speak(sbn, 1, "Entering routine <%s>", sbn);
-
-    xtg_speak(sbn, 2, "Copy COORDS, ZCORNs ACNUMs...");
     for (kcn = 1; kcn <= nlay + 1; kcn++) {
         for (jcn = 1; jcn <= nrow; jcn++) {
             for (icn = 1; icn <= ncol; icn++) {
@@ -108,30 +98,24 @@ int grd3d_copy(
                         p_coord2_v[ijo + 3] = p_coord1_v[ijo + 3];
                         p_coord2_v[ijo + 4] = p_coord1_v[ijo + 4];
                         p_coord2_v[ijo + 5] = p_coord1_v[ijo + 5];
-
                     }
                 }
 
-
                 ibt = x_ijk2ib(icn, jcn, kcn, ncol, nrow, nlay + 1, 0);
 
-                for (ic=1;ic<=4;ic++) {
-                    p_zcorn2_v[4 * ibt + 1 * ic - 1] =
-                        p_zcorn1_v[4 * ibt + 1 * ic - 1];
+                for (ic = 1; ic <= 4; ic++) {
+                    p_zcorn2_v[4 * ibt + 1 * ic - 1] = p_zcorn1_v[4 * ibt + 1 * ic - 1];
                 }
 
                 if (kcn <= nlay) {
                     ibt = x_ijk2ib(icn, jcn, kcn, ncol, nrow, nlay, 0);
 
                     p_actnum2_v[ibt] = p_actnum1_v[ibt];
-
                 }
             }
-	}
+        }
     }
 
-    xtg_speak(sbn, 1, "Exit from <%s>", sbn);
 
     return EXIT_SUCCESS;
-
 }

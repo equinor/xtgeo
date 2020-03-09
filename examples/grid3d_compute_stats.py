@@ -10,12 +10,12 @@ import xtgeo
 
 # from memory_profiler import profile
 
-EXPATH1 = '../../xtgeo-testdata/3dgrids/reek'
+EXPATH1 = "../../xtgeo-testdata/3dgrids/reek"
 
-GRIDFILEROOT = ojn(EXPATH1, 'REEK')
+GRIDFILEROOT = ojn(EXPATH1, "REEK")
 
-INITPROPS = ['PORO', 'PERMX']
-RESTARTPROPS = ['PRESSURE', 'SWAT', 'SOIL']
+INITPROPS = ["PORO", "PERMX"]
+RESTARTPROPS = ["PRESSURE", "SWAT", "SOIL"]
 RDATES = [20001101, 20030101]
 
 NRUN = 10
@@ -33,15 +33,20 @@ def sum_stats():
     for irel in range(NRUN):
         # load as Eclipse run; this will look for EGRID, INIT, UNRST
 
-        print('Loading realization no {}'.format(irel))
+        print("Loading realization no {}".format(irel))
         grd = xtgeo.grid3d.Grid()
-        grd.from_file(GRIDFILEROOT, fformat='eclipserun', initprops=INITPROPS,
-                      restartprops=RESTARTPROPS, restartdates=RDATES)
+        grd.from_file(
+            GRIDFILEROOT,
+            fformat="eclipserun",
+            initprops=INITPROPS,
+            restartprops=RESTARTPROPS,
+            restartdates=RDATES,
+        )
 
         for prop in grd.props:
             if prop.name not in propsd:
                 propsd[prop.name] = []
-            if prop.name == 'PORO':
+            if prop.name == "PORO":
                 prop.values += irel * 0.001  # mimic variability aka ensembles
             else:
                 prop.values += irel * 1  # just to mimic variability
@@ -49,7 +54,7 @@ def sum_stats():
             propsd[prop.name].append(prop.values1d)
 
     # find the averages:
-    porovalues = npma.vstack(propsd['PORO'])
+    porovalues = npma.vstack(propsd["PORO"])
     poromeanarray = porovalues.mean(axis=0)
     porostdarray = porovalues.std(axis=0)
     print(poromeanarray)
@@ -68,21 +73,25 @@ def sum_running_stats():
     for irel in range(NRUN):
         # load as Eclipse run; this will look for EGRID, INIT, UNRST
 
-        print('Loading realization no {}'.format(irel))
+        print("Loading realization no {}".format(irel))
 
         grd = xtgeo.grid3d.Grid()
-        grd.from_file(GRIDFILEROOT, fformat='eclipserun',
-                      restartprops=RESTARTPROPS, restartdates=RDATES,
-                      initprops=INITPROPS)
+        grd.from_file(
+            GRIDFILEROOT,
+            fformat="eclipserun",
+            restartprops=RESTARTPROPS,
+            restartdates=RDATES,
+            initprops=INITPROPS,
+        )
 
         nnum = float(irel + 1)
         for prop in grd.props:
-            if prop.name == 'PORO':
+            if prop.name == "PORO":
                 prop.values += irel * 0.001  # mimic variability aka ensembles
             else:
                 prop.values += irel * 1  # just to mimic variability
 
-            if prop.name == 'PORO':
+            if prop.name == "PORO":
                 if irel == 0:
                     pcum = prop.values1d
                 else:
@@ -97,10 +106,10 @@ def sum_running_stats():
     return pcum.mean()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     AVG1 = sum_stats()
     AVG2 = sum_running_stats()
 
     if AVG1 == AVG2:
-        print('Same result, OK!')
+        print("Same result, OK!")

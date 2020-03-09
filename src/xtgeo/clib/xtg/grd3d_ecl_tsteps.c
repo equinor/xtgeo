@@ -1,16 +1,5 @@
 /*
- ******************************************************************************
- *
- * Reports the Eclipse restart TSTEPS in UNRST like files
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_ecl_tsteps.c
@@ -33,11 +22,15 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
+#include "libxtg.h"
+#include "libxtg_.h"
+
 /* since windows is missing strsep() */
-char* _mystrsep(char **stringp, const char *delim)
+char *
+_mystrsep(char **stringp, const char *delim)
 {
 
     char *start = *stringp, *p = start ? strpbrk(start, delim) : NULL;
@@ -52,8 +45,14 @@ char* _mystrsep(char **stringp, const char *delim)
     return start;
 }
 
-int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
-                      int nmax, int debug)
+int
+grd3d_ecl_tsteps(FILE *fc,
+                 int *seqnums,
+                 int *day,
+                 int *mon,
+                 int *year,
+                 int nmax,
+                 int debug)
 {
 
     char s[24] = "grd3d_ecl_tsteps";
@@ -71,18 +70,18 @@ int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
 
     int maxkw = 1000000;
 
-    keywords = (char *) calloc(maxkw*10, sizeof(char));
-    rectypes = (int *) calloc(maxkw, sizeof(int));
-    reclengths = (long *) calloc(maxkw, sizeof(long));
-    recstarts = (long *) calloc(maxkw, sizeof(long));
+    keywords = (char *)calloc(maxkw * 10, sizeof(char));
+    rectypes = (int *)calloc(maxkw, sizeof(int));
+    reclengths = (long *)calloc(maxkw, sizeof(long));
+    recstarts = (long *)calloc(maxkw, sizeof(long));
 
     xtgverbose(debug);
 
     rewind(fc);
 
     /* do scan */
-    nkeys = grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths,
-                                 recstarts, maxkw, debug);
+    nkeys =
+      grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw, debug);
 
     /* now look for SEQNUM and INTEHEADs */
     tofree = keywords;
@@ -95,25 +94,22 @@ int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
             keytype = 1;
             rlen = reclengths[ic];
             rstart = recstarts[ic];
-            intrecord = calloc(rlen, sizeof(int));  /* knows this is int */
-            nvals = grd3d_read_eclrecord(fc, rstart, keytype,
-                                         intrecord, rlen, xfloat, 0,
-                                         xdouble, 0);
+            intrecord = calloc(rlen, sizeof(int)); /* knows this is int */
+            nvals = grd3d_read_eclrecord(fc, rstart, keytype, intrecord, rlen, xfloat,
+                                         0, xdouble, 0);
 
             seqnums[nc] = intrecord[0];
 
             free(intrecord);
-
         }
 
         if (strcmp(token, "INTEHEAD") == 0) {
             keytype = 1;
             rlen = reclengths[ic];
             rstart = recstarts[ic];
-            intrecord = calloc(rlen, sizeof(int));  /* knows this is int */
-            nvals = grd3d_read_eclrecord(fc, rstart, keytype,
-                                         intrecord, rlen, xfloat, 0,
-                                         xdouble, 0);
+            intrecord = calloc(rlen, sizeof(int)); /* knows this is int */
+            nvals = grd3d_read_eclrecord(fc, rstart, keytype, intrecord, rlen, xfloat,
+                                         0, xdouble, 0);
 
             day[nc] = intrecord[64];
             mon[nc] = intrecord[65];
@@ -138,5 +134,5 @@ int grd3d_ecl_tsteps (FILE *fc, int *seqnums, int *day, int *mon, int *year,
     free(reclengths);
     free(recstarts);
 
-    return(nc);
+    return (nc);
 }

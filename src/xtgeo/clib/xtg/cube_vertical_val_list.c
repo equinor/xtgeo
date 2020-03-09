@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    cube_vertical_list.c
@@ -29,33 +29,26 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
-
-int cube_vertical_val_list(
-			   int   i,
-			   int   j,
-			   int   nx,
-			   int   ny,
-			   int   nz,
-			   float *p_val_v,
-			   float *p_vertical_v
-			   )
+int
+cube_vertical_val_list(int i,
+                       int j,
+                       int nx,
+                       int ny,
+                       int nz,
+                       float *p_val_v,
+                       float *p_vertical_v)
 {
     /* locals */
-    long     k, ib;
+    long k, ib;
 
+    for (k = 1; k <= nz; k++) {
+        ib = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-
-    for (k=1; k<=nz; k++) {
-	ib=x_ijk2ic(i, j, k, nx, ny, nz, 0);
-
-	if (ib<0) {
-	    return -1;
-	}
-	else{
-	    p_vertical_v[k-1]=p_val_v[ib];
-	}
-
+        if (ib < 0) {
+            return -1;
+        } else {
+            p_vertical_v[k - 1] = p_val_v[ib];
+        }
     }
     return 0;
-
 }
