@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -77,7 +77,6 @@ def import_irap_binary(self, mfile, values=True):
     self._values = val
 
     ifile.close()
-
 
 
 def import_irap_ascii(self, mfile):
