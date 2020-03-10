@@ -119,8 +119,6 @@ grd3d_export_roff_grid(int mode,
     double xscale, yscale, zscale;
     float myfloat;
     double zseb = 0.0, zneb = 0.0, znwb = 0.0, zswb = 0.0, zzzz = 0.0;
-    int m;
-    size_t n;
 
     FILE *fc;
 
@@ -162,103 +160,103 @@ grd3d_export_roff_grid(int mode,
      */
 
     if (mode > 0) {
-        m = fprintf(fc, "roff-asc\n");
-        m = fprintf(fc, "#ROFF file#\n");
-        m = fprintf(fc, "#Creator: GTC subsystem of GPLib by JCR#\n");
-        m = fprintf(fc, "tag filedata\n");
-        m = fprintf(fc, "int byteswaptest 1\n");
-        m = fprintf(fc, "char filetype \"grid\"\n");
-        m = fprintf(fc, "char creationDate \"01/01/2000 01:01:01\"\n");
-        m = fprintf(fc, "endtag\n");
-        m = fprintf(fc, "tag version\n");
-        m = fprintf(fc, "int major 2\n");
-        m = fprintf(fc, "int minor 0\n");
-        m = fprintf(fc, "endtag\n");
-        m = fprintf(fc, "tag dimensions\n");
-        m = fprintf(fc, "int nX %d\n", nx);
-        m = fprintf(fc, "int nY %d\n", ny);
-        m = fprintf(fc, "int nZ %d\n", nz_true);
-        m = fprintf(fc, "endtag\n");
-        m = fprintf(fc, "tag translate\n");
-        m = fprintf(fc, "float xoffset %f\n", xoffset);
-        m = fprintf(fc, "float yoffset %f\n", yoffset);
-        m = fprintf(fc, "float zoffset %f\n", zoffset);
-        m = fprintf(fc, "endtag\n");
-        m = fprintf(fc, "tag scale\n");
+        fprintf(fc, "roff-asc\n");
+        fprintf(fc, "#ROFF file#\n");
+        fprintf(fc, "#Creator: GTC subsystem of GPLib by JCR#\n");
+        fprintf(fc, "tag filedata\n");
+        fprintf(fc, "int byteswaptest 1\n");
+        fprintf(fc, "char filetype \"grid\"\n");
+        fprintf(fc, "char creationDate \"01/01/2000 01:01:01\"\n");
+        fprintf(fc, "endtag\n");
+        fprintf(fc, "tag version\n");
+        fprintf(fc, "int major 2\n");
+        fprintf(fc, "int minor 0\n");
+        fprintf(fc, "endtag\n");
+        fprintf(fc, "tag dimensions\n");
+        fprintf(fc, "int nX %d\n", nx);
+        fprintf(fc, "int nY %d\n", ny);
+        fprintf(fc, "int nZ %d\n", nz_true);
+        fprintf(fc, "endtag\n");
+        fprintf(fc, "tag translate\n");
+        fprintf(fc, "float xoffset %f\n", xoffset);
+        fprintf(fc, "float yoffset %f\n", yoffset);
+        fprintf(fc, "float zoffset %f\n", zoffset);
+        fprintf(fc, "endtag\n");
+        fprintf(fc, "tag scale\n");
         xscale = 1.0;
         yscale = 1.0;
         zscale = -1.0;
-        m = fprintf(fc, "float xscale %f\n", xscale);
-        m = fprintf(fc, "float yscale %f\n", yscale);
-        m = fprintf(fc, "float zscale %f\n", zscale);
-        m = fprintf(fc, "endtag\n");
+        fprintf(fc, "float xscale %f\n", xscale);
+        fprintf(fc, "float yscale %f\n", yscale);
+        fprintf(fc, "float zscale %f\n", zscale);
+        fprintf(fc, "endtag\n");
     } else {
 
         /* binary output */
-        n = fwrite("roff-bin\0", 1, 9, fc);
+        fwrite("roff-bin\0", 1, 9, fc);
 
-        n = fwrite("#ROFF file#\0", 1, 12, fc);
-        n = fwrite("#Creator: CXTGeo subsystem of XTGeo by JCR#\0", 1, 44, fc);
-        n = fwrite("tag\0filedata\0", 1, 13, fc);
-        n = fwrite("int\0byteswaptest\0", 1, 17, fc);
+        fwrite("#ROFF file#\0", 1, 12, fc);
+        fwrite("#Creator: CXTGeo subsystem of XTGeo by JCR#\0", 1, 44, fc);
+        fwrite("tag\0filedata\0", 1, 13, fc);
+        fwrite("int\0byteswaptest\0", 1, 17, fc);
         myint = 1;
-        n = fwrite(&myint, 4, 1, fc);
-        n = fwrite("char\0filetype\0grid\0", 1, 19, fc);
-        n = fwrite("char\0creationDate\0UNKNOWN\0", 1, 25, fc);
-        n = fwrite("endtag\0", 1, 7, fc);
-        n = fwrite("tag\0version\0", 1, 12, fc);
-        n = fwrite("int\0major\0", 1, 10, fc);
+        fwrite(&myint, 4, 1, fc);
+        fwrite("char\0filetype\0grid\0", 1, 19, fc);
+        fwrite("char\0creationDate\0UNKNOWN\0", 1, 25, fc);
+        fwrite("endtag\0", 1, 7, fc);
+        fwrite("tag\0version\0", 1, 12, fc);
+        fwrite("int\0major\0", 1, 10, fc);
         myint = 2;
-        n = fwrite(&myint, 4, 1, fc);
-        n = fwrite("int\0minor\0", 1, 10, fc);
+        fwrite(&myint, 4, 1, fc);
+        fwrite("int\0minor\0", 1, 10, fc);
         myint = 0;
-        n = fwrite(&myint, 4, 1, fc);
-        n = fwrite("endtag\0", 1, 7, fc);
-        n = fwrite("tag\0dimensions\0", 1, 15, fc);
-        n = fwrite("int\0nX\0", 1, 7, fc);
+        fwrite(&myint, 4, 1, fc);
+        fwrite("endtag\0", 1, 7, fc);
+        fwrite("tag\0dimensions\0", 1, 15, fc);
+        fwrite("int\0nX\0", 1, 7, fc);
         myint = nx;
-        n = fwrite(&myint, 4, 1, fc);
-        n = fwrite("int\0nY\0", 1, 7, fc);
+        fwrite(&myint, 4, 1, fc);
+        fwrite("int\0nY\0", 1, 7, fc);
         myint = ny;
-        n = fwrite(&myint, 4, 1, fc);
-        n = fwrite("int\0nZ\0", 1, 7, fc);
+        fwrite(&myint, 4, 1, fc);
+        fwrite("int\0nZ\0", 1, 7, fc);
         myint = nz_true;
 
-        n = fwrite(&myint, 4, 1, fc);
-        n = fwrite("endtag\0", 1, 7, fc);
+        fwrite(&myint, 4, 1, fc);
+        fwrite("endtag\0", 1, 7, fc);
 
-        n = fwrite("tag\0translate\0", 1, 14, fc);
+        fwrite("tag\0translate\0", 1, 14, fc);
 
-        n = fwrite("float\0xoffset\0", 1, 14, fc);
+        fwrite("float\0xoffset\0", 1, 14, fc);
         myfloat = xoffset;
-        n = fwrite(&myfloat, 4, 1, fc);
+        fwrite(&myfloat, 4, 1, fc);
 
-        n = fwrite("float\0yoffset\0", 1, 14, fc);
+        fwrite("float\0yoffset\0", 1, 14, fc);
         myfloat = yoffset;
-        n = fwrite(&myfloat, 4, 1, fc);
+        fwrite(&myfloat, 4, 1, fc);
 
-        n = fwrite("float\0zoffset\0", 1, 14, fc);
+        fwrite("float\0zoffset\0", 1, 14, fc);
         myfloat = zoffset;
-        n = fwrite(&myfloat, 4, 1, fc);
-        n = fwrite("endtag\0", 1, 7, fc);
+        fwrite(&myfloat, 4, 1, fc);
+        fwrite("endtag\0", 1, 7, fc);
 
-        n = fwrite("tag\0scale\0", 1, 10, fc);
+        fwrite("tag\0scale\0", 1, 10, fc);
         xscale = 1.0;
         yscale = 1.0;
         zscale = -1.0;
-        n = fwrite("float\0xscale\0", 1, 13, fc);
+        fwrite("float\0xscale\0", 1, 13, fc);
         myfloat = xscale;
-        n = fwrite(&myfloat, 4, 1, fc);
+        fwrite(&myfloat, 4, 1, fc);
 
-        n = fwrite("float\0yscale\0", 1, 13, fc);
+        fwrite("float\0yscale\0", 1, 13, fc);
         myfloat = yscale;
-        n = fwrite(&myfloat, 4, 1, fc);
+        fwrite(&myfloat, 4, 1, fc);
 
-        n = fwrite("float\0zscale\0", 1, 13, fc);
+        fwrite("float\0zscale\0", 1, 13, fc);
         myfloat = zscale;
-        n = fwrite(&myfloat, 4, 1, fc);
+        fwrite(&myfloat, 4, 1, fc);
 
-        n = fwrite("endtag\0", 1, 7, fc);
+        fwrite("endtag\0", 1, 7, fc);
     }
 
     /*
@@ -268,35 +266,35 @@ grd3d_export_roff_grid(int mode,
      */
     if (num_subgrds > 1 && isubgrd_to_export < 1) {
         if (mode > 0) {
-            m = fprintf(fc, "tag subgrids\n");
-            m = fprintf(fc, "array int nLayers %d\n", num_subgrds);
+            fprintf(fc, "tag subgrids\n");
+            fprintf(fc, "array int nLayers %d\n", num_subgrds);
         } else {
-            n = fwrite("tag\0subgrids\0", 1, 13, fc);
-            n = fwrite("array\0int\0nLayers\0", 1, 18, fc);
+            fwrite("tag\0subgrids\0", 1, 13, fc);
+            fwrite("array\0int\0nLayers\0", 1, 18, fc);
             myint = num_subgrds;
-            n = fwrite(&myint, 4, 1, fc);
+            fwrite(&myint, 4, 1, fc);
         }
         if (mode > 0) {
             i_tmp = 1;
             for (i = 0; i < num_subgrds; i++) {
-                m = fprintf(fc, "%6d", p_subgrd_v[i]);
+                fprintf(fc, "%6d", p_subgrd_v[i]);
             }
             i_tmp++;
             if (i_tmp > 6) {
-                m = fprintf(fc, "\n");
+                fprintf(fc, "\n");
                 i_tmp = 1;
             }
 
             if (i_tmp != 1)
-                m = fprintf(fc, "\n");
-            m = fprintf(fc, "endtag\n");
+                fprintf(fc, "\n");
+            fprintf(fc, "endtag\n");
         } else {
             for (i = 0; i < num_subgrds; i++) {
                 myint = p_subgrd_v[i];
-                n = fwrite(&myint, 4, 1, fc);
+                fwrite(&myint, 4, 1, fc);
             }
             /*n=fwrite(p_subgrd_v,4,num_subgrds,fc);*/
-            n = fwrite("endtag\0", 1, 7, fc);
+            fwrite("endtag\0", 1, 7, fc);
         }
     }
 
@@ -306,13 +304,13 @@ grd3d_export_roff_grid(int mode,
      *-------------------------------------------------------------------------
      */
     if (mode > 0) {
-        m = fprintf(fc, "tag cornerLines\n");
-        m = fprintf(fc, "array float data %d\n", (nx + 1) * (ny + 1) * 2 * 3);
+        fprintf(fc, "tag cornerLines\n");
+        fprintf(fc, "array float data %d\n", (nx + 1) * (ny + 1) * 2 * 3);
     } else {
-        n = fwrite("tag\0cornerLines\0", 1, 16, fc);
-        n = fwrite("array\0float\0data\0", 1, 17, fc);
+        fwrite("tag\0cornerLines\0", 1, 16, fc);
+        fwrite("array\0float\0data\0", 1, 17, fc);
         myint = (nx + 1) * (ny + 1) * 2 * 3;
-        n = fwrite(&myint, 4, 1, fc);
+        fwrite(&myint, 4, 1, fc);
     }
 
     /* looping the grid and extracting bottom and top pillar XYZ */
@@ -325,46 +323,45 @@ grd3d_export_roff_grid(int mode,
         for (j = 0; j <= ny; j++) {
             ipos = 6 * (j * (nx + 1) + i);
             if (mode > 0) {
-                m = fprintf(fc, "  %e", (coordsv[ipos + 3] / xscale) - xoffset);
-                m = fprintf(fc, "  %e", (coordsv[ipos + 4] / yscale) - yoffset);
-                m = fprintf(fc, "  %e", (coordsv[ipos + 5] / zscale) - zoffset);
-                m = fprintf(fc, "  %e", (coordsv[ipos + 0] / xscale) - xoffset);
-                m = fprintf(fc, "  %e", (coordsv[ipos + 1] / yscale) - yoffset);
-                m = fprintf(fc, "  %e\n", (coordsv[ipos + 2] / zscale) - zoffset);
+                fprintf(fc, "  %e", (coordsv[ipos + 3] / xscale) - xoffset);
+                fprintf(fc, "  %e", (coordsv[ipos + 4] / yscale) - yoffset);
+                fprintf(fc, "  %e", (coordsv[ipos + 5] / zscale) - zoffset);
+                fprintf(fc, "  %e", (coordsv[ipos + 0] / xscale) - xoffset);
+                fprintf(fc, "  %e", (coordsv[ipos + 1] / yscale) - yoffset);
+                fprintf(fc, "  %e\n", (coordsv[ipos + 2] / zscale) - zoffset);
             } else {
                 myfloat = (coordsv[ipos + 3] / xscale) - xoffset;
-                n = fwrite(&myfloat, 4, 1, fc);
+                fwrite(&myfloat, 4, 1, fc);
 
                 myfloat = (coordsv[ipos + 4] / yscale) - yoffset;
-                n = fwrite(&myfloat, 4, 1, fc);
+                fwrite(&myfloat, 4, 1, fc);
                 myfloat = (coordsv[ipos + 5] / zscale) - zoffset;
-                n = fwrite(&myfloat, 4, 1, fc);
+                fwrite(&myfloat, 4, 1, fc);
                 myfloat = (coordsv[ipos + 0] / xscale) - xoffset;
-                n = fwrite(&myfloat, 4, 1, fc);
+                fwrite(&myfloat, 4, 1, fc);
                 myfloat = (coordsv[ipos + 1] / yscale) - yoffset;
-                n = fwrite(&myfloat, 4, 1, fc);
+                fwrite(&myfloat, 4, 1, fc);
                 myfloat = (coordsv[ipos + 2] / zscale) - zoffset;
-                n = fwrite(&myfloat, 4, 1, fc);
+                fwrite(&myfloat, 4, 1, fc);
             }
         }
     }
 
     if (mode > 0) {
-        m = fprintf(fc, "endtag\n");
+        fprintf(fc, "endtag\n");
     } else {
-        n = fwrite("endtag\0", 1, 7, fc);
+        fwrite("endtag\0", 1, 7, fc);
     }
 
     if (mode > 0) {
-        m = fprintf(fc, "tag zvalues\n");
-        m =
-          fprintf(fc, "array byte splitEnz %d\n", (nx + 1) * (ny + 1) * (nz_true + 1));
+        fprintf(fc, "tag zvalues\n");
+        fprintf(fc, "array byte splitEnz %d\n", (nx + 1) * (ny + 1) * (nz_true + 1));
         i_tmp = 1;
     } else {
-        n = fwrite("tag\0zvalues\0", 1, 12, fc);
-        n = fwrite("array\0byte\0splitEnz\0", 1, 20, fc);
+        fwrite("tag\0zvalues\0", 1, 12, fc);
+        fwrite("array\0byte\0splitEnz\0", 1, 20, fc);
         myint = (nx + 1) * (ny + 1) * (nz_true + 1);
-        n = fwrite(&myint, 4, 1, fc);
+        fwrite(&myint, 4, 1, fc);
     }
 
     /* Looping this twice - first splitEnz is written, next time zdata */
@@ -373,11 +370,11 @@ grd3d_export_roff_grid(int mode,
             nzdata = 0;
         } else {
             if (mode > 0) {
-                m = fprintf(fc, "array float data %d\n", nzdata);
+                fprintf(fc, "array float data %d\n", nzdata);
             } else {
-                n = fwrite("array\0float\0data\0", 1, 17, fc);
+                fwrite("array\0float\0data\0", 1, 17, fc);
                 myint = nzdata;
-                n = fwrite(&myint, 4, 1, fc);
+                fwrite(&myint, 4, 1, fc);
             }
         }
 
@@ -491,15 +488,15 @@ grd3d_export_roff_grid(int mode,
 
                     if (ipass == 0) {
                         if (mode > 0) {
-                            m = fprintf(fc, "%4d", isplit);
+                            fprintf(fc, "%4d", isplit);
                             i_tmp++;
                             if (i_tmp > 12) {
                                 i_tmp = 1;
-                                m = fprintf(fc, "\n");
+                                fprintf(fc, "\n");
                             }
                         } else {
                             mybyte = isplit;
-                            n = fwrite(&mybyte, 1, 1, fc);
+                            fwrite(&mybyte, 1, 1, fc);
                         }
                         /* collecting the number of zdata */
                         nzdata += isplit;
@@ -507,27 +504,27 @@ grd3d_export_roff_grid(int mode,
                         /* collect and print zdata */
                         if (isplit == 4) {
                             if (mode > 0) {
-                                m = fprintf(fc, "  %e", (zswb / zscale) - zoffset);
-                                m = fprintf(fc, "  %e", (zseb / zscale) - zoffset);
-                                m = fprintf(fc, "  %e", (znwb / zscale) - zoffset);
-                                m = fprintf(fc, "  %e\n", (zneb / zscale) - zoffset);
+                                fprintf(fc, "  %e", (zswb / zscale) - zoffset);
+                                fprintf(fc, "  %e", (zseb / zscale) - zoffset);
+                                fprintf(fc, "  %e", (znwb / zscale) - zoffset);
+                                fprintf(fc, "  %e\n", (zneb / zscale) - zoffset);
 
                             } else {
                                 myfloat = (zswb / zscale) - zoffset;
-                                n = fwrite(&myfloat, 4, 1, fc);
+                                fwrite(&myfloat, 4, 1, fc);
                                 myfloat = (zseb / zscale) - zoffset;
-                                n = fwrite(&myfloat, 4, 1, fc);
+                                fwrite(&myfloat, 4, 1, fc);
                                 myfloat = (znwb / zscale) - zoffset;
-                                n = fwrite(&myfloat, 4, 1, fc);
+                                fwrite(&myfloat, 4, 1, fc);
                                 myfloat = (zneb / zscale) - zoffset;
-                                n = fwrite(&myfloat, 4, 1, fc);
+                                fwrite(&myfloat, 4, 1, fc);
                             }
                         } else {
                             if (mode > 0) {
-                                m = fprintf(fc, "  %e\n", (zzzz / zscale) - zoffset);
+                                fprintf(fc, "  %e\n", (zzzz / zscale) - zoffset);
                             } else {
                                 myfloat = (zzzz / zscale) - zoffset;
-                                n = fwrite(&myfloat, 4, 1, fc);
+                                fwrite(&myfloat, 4, 1, fc);
                             }
                         }
                     }
@@ -535,25 +532,25 @@ grd3d_export_roff_grid(int mode,
             }
         }
         if (mode > 0 && i_tmp != 1)
-            m = fprintf(fc, "\n");
+            fprintf(fc, "\n");
         i_tmp = 1;
     }
     if (mode > 0) {
-        m = fprintf(fc, "endtag\n");
+        fprintf(fc, "endtag\n");
     } else {
-        n = fwrite("endtag\0", 1, 7, fc);
+        fwrite("endtag\0", 1, 7, fc);
     }
 
     nn = nx * ny * nz_true;
 
     if (mode > 0) {
-        m = fprintf(fc, "tag active\n");
-        m = fprintf(fc, "array bool data %d\n", nn);
+        fprintf(fc, "tag active\n");
+        fprintf(fc, "array bool data %d\n", nn);
     } else {
-        n = fwrite("tag\0active\0", 1, 11, fc);
-        n = fwrite("array\0bool\0data\0", 1, 16, fc);
+        fwrite("tag\0active\0", 1, 11, fc);
+        fwrite("array\0bool\0data\0", 1, 16, fc);
         myint = nn;
-        n = fwrite(&myint, 4, 1, fc);
+        fwrite(&myint, 4, 1, fc);
     }
     i_tmp = 1;
     for (i = 1; i <= nx; i++) {
@@ -562,27 +559,27 @@ grd3d_export_roff_grid(int mode,
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
                 if (mode > 0) {
-                    m = fprintf(fc, "%2d", actnumsv[ib]);
+                    fprintf(fc, "%2d", actnumsv[ib]);
                     i_tmp++;
                     if (i_tmp > 12) {
                         i_tmp = 1;
-                        m = fprintf(fc, "\n");
+                        fprintf(fc, "\n");
                     }
                 } else {
                     mybyte = actnumsv[ib];
-                    n = fwrite(&mybyte, 1, 1, fc);
+                    fwrite(&mybyte, 1, 1, fc);
                 }
             }
         }
     }
 
     if (mode > 0 && i_tmp != 1)
-        m = fprintf(fc, "\n");
+        fprintf(fc, "\n");
 
     if (mode > 0) {
-        m = fprintf(fc, "endtag\n");
+        fprintf(fc, "endtag\n");
     } else {
-        n = fwrite("endtag\0", 1, 7, fc);
+        fwrite("endtag\0", 1, 7, fc);
     }
 
     fclose(fc);

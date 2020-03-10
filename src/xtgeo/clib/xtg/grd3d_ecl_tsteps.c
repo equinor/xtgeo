@@ -27,6 +27,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 /* since windows is missing strsep() */
 char *
@@ -83,6 +84,9 @@ grd3d_ecl_tsteps(FILE *fc,
     nkeys =
       grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw, debug);
 
+    if (nkeys <= 0)
+        logger_error(LI, FI, FU, "No keys received");
+
     /* now look for SEQNUM and INTEHEADs */
     tofree = keywords;
     ic = 0;
@@ -108,8 +112,8 @@ grd3d_ecl_tsteps(FILE *fc,
             rlen = reclengths[ic];
             rstart = recstarts[ic];
             intrecord = calloc(rlen, sizeof(int)); /* knows this is int */
-            nvals = grd3d_read_eclrecord(fc, rstart, keytype, intrecord, rlen, xfloat,
-                                         0, xdouble, 0);
+            grd3d_read_eclrecord(fc, rstart, keytype, intrecord, rlen, xfloat, 0,
+                                 xdouble, 0);
 
             day[nc] = intrecord[64];
             mon[nc] = intrecord[65];

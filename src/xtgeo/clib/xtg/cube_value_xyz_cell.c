@@ -51,7 +51,7 @@ cube_value_xyz_cell(double x,
                     int option)
 {
     /* locals */
-    int i, j, k, ier, istat;
+    int i, j, k, istat;
     float val;
     double rx, ry, rz;
 
@@ -61,7 +61,7 @@ cube_value_xyz_cell(double x,
 
     /* now get the cube cell value in IJK */
     if (istat == 0) {
-        ier = cube_value_ijk(i, j, k, nx, ny, nz, p_val_v, &val);
+        cube_value_ijk(i, j, k, nx, ny, nz, p_val_v, &val);
         *value = val;
 
     } else {
