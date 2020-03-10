@@ -1,7 +1,7 @@
 # PYLINT: General settings for XTGeo
 [MASTER]
 ignore=src/xtgeo/cxtgeo, src/xtgeo/clib, src/xtgeo/_theversion.py, setup.py
-extension-pkg-whitelist=xtgeo.cxtgeo._cxtgeo, numpy, matplotlib
+extension-pkg-whitelist=xtgeo.cxtgeo._cxtgeo, _cxtgeo, numpy, matplotlib
 
 [BASIC]
 good-names=logger, version, xtg, i, j, k, x, y, z, _
@@ -38,3 +38,4 @@ disable=
     useless-object-inheritance,
     import-outside-toplevel,
     import-error,
+    no-name-in-module
