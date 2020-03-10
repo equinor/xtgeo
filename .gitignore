@@ -78,3 +78,4 @@ tmp_buildswig
 '.'/
 _skbuild/
 pip-wheel-metadata/
+.vscode/

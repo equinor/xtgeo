@@ -11,9 +11,9 @@ import xtgeo
 
 # from memory_profiler import profile
 
-EXPATH1 = '../../xtgeo-testdata/surfaces/reek/2/01_topreek_rota.gri'
+EXPATH1 = "../../xtgeo-testdata/surfaces/reek/2/01_topreek_rota.gri"
 
-GRIDFILEROOT = ojn(EXPATH1, 'REEK')
+GRIDFILEROOT = ojn(EXPATH1, "REEK")
 
 
 NRUN = 1000
@@ -28,7 +28,7 @@ def sum_running_stats():
     for irel in range(NRUN):
         # load as Eclipse run; this will look for EGRID, INIT, UNRST
 
-        print('Loading realization no {}'.format(irel))
+        print("Loading realization no {}".format(irel))
 
         srf = xtgeo.RegularSurface(EXPATH1)
 
@@ -58,7 +58,7 @@ def sum_running_stats_bytestream():
     for irel in range(NRUN):
         # load as Eclipse run; this will look for EGRID, INIT, UNRST
 
-        print('Loading realization no {}'.format(irel))
+        print("Loading realization no {}".format(irel))
 
         with open(EXPATH1, "rb") as myfile:
             stream = io.BytesIO(myfile.read())
@@ -82,7 +82,7 @@ def sum_running_stats_bytestream():
     return pcum.mean()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     AVG1 = sum_running_stats()
 

@@ -21,6 +21,7 @@ from . import _grid_etc1
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
+
 # --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 #
