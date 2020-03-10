@@ -39,6 +39,7 @@ TESTSET4C = "../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map"
 TESTSET5 = "../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri"
 TESTSET6A = "../xtgeo-testdata/surfaces/etc/seabed_p.pmd"
 TESTSET6B = "../xtgeo-testdata/surfaces/etc/seabed_p.gri"
+TESTSET6C = "../xtgeo-testdata/surfaces/etc/seabed_p_v2.pmd"
 
 FENCE1 = "../xtgeo-testdata/polygons/reek/1/fence.pol"
 
@@ -176,6 +177,12 @@ def test_petromodbin_import_export():
     petromod.to_file(testfile, fformat="petromod")
     petromod_again = xtgeo.RegularSurface(testfile)
     assert petromod_again.values1d[200000] == irapbin.values1d[200000]
+
+    # test with roation 0 and rotation origins 0
+    petromod = xtgeo.RegularSurface(TESTSET6C)
+    assert petromod.ncol == irapbin.ncol
+    assert petromod.nrow == irapbin.nrow
+    assert petromod.values1d[200000] == irapbin.values1d[200000]
 
 
 def test_swapaxes():

@@ -1,24 +1,24 @@
 #include "libxtg.h"
 #include "libxtg_.h"
-
+#include "logger.h"
 
 /* improved fopen; checks more stuff */
 
-FILE *x_fopen(const char *filename, const char *mode, int debug) {
+FILE *
+x_fopen(const char *filename, const char *mode)
+{
 
     FILE *fc;
-    char s[24] = "x_fopen";
-    xtgverbose(debug);
-
 
     fc = fopen(filename, mode);
 
     if (fc == NULL) {
-        xtg_warn(s, 0, "Some thing is wrong with requested filename <%s>",
-                 filename);
-        xtg_error(s, "Could be: Non existing folder, wrong permissions ? ..."
-                  " anyway: STOP!", s);
-        exit(345);
+        logger_warn(LI, FI, FU, "Some thing is wrong with requested filename <%s>",
+                    filename);
+        logger_critical(LI, FI, FU,
+                        "Could be: Non existing folder, wrong permissions ? ..."
+                        " anyway: STOP!",
+                        FU);
     }
 
     return fc;

@@ -28,6 +28,14 @@ def import_cube_roxapi(self, project, name, folder=None):
 
 
 def _roxapi_import_cube(self, proj, name, folder):
+    """Short summary.
+
+    Args:
+        proj (object): RMS magic project.
+        name (str): Name of cube.
+        folder (str): Cube folder in RMS.
+
+    """
     # note that name must be in brackets
     path = [name]
     if folder is not None:

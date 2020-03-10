@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -77,7 +77,6 @@ def import_irap_binary(self, mfile, values=True):
     self._values = val
 
     ifile.close()
-
 
 
 def import_irap_ascii(self, mfile):
@@ -246,8 +245,8 @@ def import_petromod_binary(self, mfile, values=True):
         if key == "Undefined":
             undef = float(value)
 
-    if rota_xori != self._xori or rota_yori != self._yori:
-        raise RuntimeError("Rotation origin and data origin do match")
+    if self._rotation != 0.0 and (rota_xori != self._xori or rota_yori != self._yori):
+        xtg.warnuser("Rotation origin and data origin do match")
 
     # reread file for map values
 

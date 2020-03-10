@@ -47,6 +47,7 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
 
 # Export ascii or binary ROFF format
 
+
 def export_roff(self, pfile, name, append=False, last=True, binary=True):
 
     logger.info("Export roff to %s", pfile)
@@ -86,7 +87,7 @@ def _export_roff_discrete(self, pfile, name, append=False, last=True, binary=Tru
 
     if not append:
         _cxtgeo.grd3d_export_roff_pstart(
-            mode, self._ncol, self._nrow, self._nlay, pfile, XTGDEBUG
+            mode, self._ncol, self._nrow, self._nlay, pfile
         )
 
     nsub = 0
@@ -107,7 +108,6 @@ def _export_roff_discrete(self, pfile, name, append=False, last=True, binary=Tru
         codenames,
         ptr_codes,
         pfile,
-        XTGDEBUG,
     )
 
     if last:
@@ -128,7 +128,7 @@ def _export_roff_continuous(self, pfile, name, append=False, last=True, binary=T
 
     if not append:
         _cxtgeo.grd3d_export_roff_pstart(
-            mode, self._ncol, self._nrow, self._nlay, pfile, XTGDEBUG
+            mode, self._ncol, self._nrow, self._nlay, pfile
         )
 
     # now the actual data
@@ -151,7 +151,6 @@ def _export_roff_continuous(self, pfile, name, append=False, last=True, binary=T
         "",
         ptr_idum,
         pfile,
-        XTGDEBUG,
     )
 
     if last:

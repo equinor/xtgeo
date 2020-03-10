@@ -94,12 +94,7 @@ x_vector_extrapol2(double x1,
                    int debug);
 
 int
-x_chk_point_in_cell(double x,
-                    double y,
-                    double z,
-                    double coor[],
-                    int imethod,
-                    int debug);
+x_chk_point_in_cell(double x, double y, double z, double coor[], int imethod);
 
 int
 x_chk_point_in_hexahedron(double x, double y, double z, double *coor, int flip);
@@ -224,7 +219,7 @@ x_point_line_pos(double x1,
                  int debug);
 
 FILE *
-x_fopen(const char *filename, const char *mode, int debug);
+x_fopen(const char *filename, const char *mode);
 
 /*
  *-----------------------------------------------------------------------------

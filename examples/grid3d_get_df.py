@@ -18,12 +18,12 @@ be shown.
 from os.path import join as ojn
 import xtgeo
 
-EXPATH = '../../xtgeo-testdata/3dgrids/reek'
+EXPATH = "../../xtgeo-testdata/3dgrids/reek"
 
-GRIDFILEROOT = ojn(EXPATH, 'REEK')
+GRIDFILEROOT = ojn(EXPATH, "REEK")
 
-INITS = ['PORO', 'PERMX']
-RESTARTS = ['PRESSURE', 'SWAT', 'SOIL']
+INITS = ["PORO", "PERMX"]
+RESTARTS = ["PRESSURE", "SWAT", "SOIL"]
 MYDATES = [20001101, 20030101]
 
 
@@ -31,14 +31,19 @@ def extractdf():
     """Extract dataframe from Eclipse case"""
 
     # gete dataframe from the grid only
-    grd = xtgeo.grid3d.Grid(GRIDFILEROOT + '.EGRID')
+    grd = xtgeo.grid3d.Grid(GRIDFILEROOT + ".EGRID")
     dataframe = grd.dataframe()  # will not have any grid props
     print(dataframe)
 
     # load as Eclipse run; this will automatically look for EGRID, INIT, UNRST
     grd = xtgeo.grid3d.Grid()
-    grd.from_file(GRIDFILEROOT, fformat='eclipserun', initprops=INITS,
-                  restartprops=RESTARTS, restartdates=MYDATES)
+    grd.from_file(
+        GRIDFILEROOT,
+        fformat="eclipserun",
+        initprops=INITS,
+        restartprops=RESTARTS,
+        restartdates=MYDATES,
+    )
 
     # dataframe from a GridProperties instance, in this case grd.gridprops
     dataframe = grd.gridprops.dataframe()  # properties for all cells
@@ -56,8 +61,8 @@ def extractdf():
 
     print(dataframe)
 
-    dataframe.to_csv('reek_sim.csv')
+    dataframe.to_csv("reek_sim.csv")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     extractdf()

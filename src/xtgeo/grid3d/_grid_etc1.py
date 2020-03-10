@@ -24,6 +24,7 @@ from ._grid3d_fence import _update_tmpvars
 
 xtg = XTGeoDialog()
 
+
 logger = xtg.functionlogger(__name__)
 
 XTGDEBUG = 0

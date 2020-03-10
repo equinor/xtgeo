@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    cube_value_xyz_interp.c
@@ -31,45 +31,44 @@
  ***************************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 
-int cube_value_xyz_interp(
-                          double xin,
-                          double yin,
-                          double zin,
-                          double xori,
-                          double xinc,
-                          double yori,
-                          double yinc,
-                          double zori,
-                          double zinc,
-                          double rot_deg,
-                          int yflip,
-                          int nx,
-                          int ny,
-                          int nz,
-                          float *p_val_v,
-                          float *value,
-                          int option
-                          )
+int
+cube_value_xyz_interp(double xin,
+                      double yin,
+                      double zin,
+                      double xori,
+                      double xinc,
+                      double yori,
+                      double yinc,
+                      double zori,
+                      double zinc,
+                      double rot_deg,
+                      int yflip,
+                      int nx,
+                      int ny,
+                      int nz,
+                      float *p_val_v,
+                      float *value,
+                      int option)
 {
     /* locals */
     long ib;
-    int  ic, jc, kc, i, j, k, ier, ier1, flag;
+    int ic, jc, kc, i, j, k, ier, ier1, flag;
     double x_v[8], y_v[8], z_v[8], xx, yy, zz, rx, ry, rz;
     float p_v[8], val;
 
     /* need to determine the lower left corner coordinates of the point ie
        need to run with flag = 1 */
     flag = 1;
-    if (option >= 10) flag = 11;
+    if (option >= 10)
+        flag = 11;
 
-    ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, xin, yin, zin,
-                            xori, xinc, yori, yinc,
-                            zori, zinc, nx, ny, nz, rot_deg, yflip, flag);
+    ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, xin, yin, zin, xori, xinc,
+                            yori, yinc, zori, zinc, nx, ny, nz, rot_deg, yflip, flag);
 
     if (ier == -1) {
         *value = UNDEF;
@@ -82,13 +81,13 @@ int cube_value_xyz_interp(
         for (k = 0; k <= 1; k++) {
             for (j = 0; j <= 1; j++) {
                 for (i = 0; i <= 1; i++) {
-                    ier = cube_coord_val_ijk(ic + i, jc + j, kc + k,
-                                             nx, ny, nz, xori, xinc, yori,
-                                             yinc, zori, zinc, rot_deg, yflip,
-                                             p_val_v, &xx, &yy, &zz, &val,
-                                             0);
+                    ier = cube_coord_val_ijk(ic + i, jc + j, kc + k, nx, ny, nz, xori,
+                                             xinc, yori, yinc, zori, zinc, rot_deg,
+                                             yflip, p_val_v, &xx, &yy, &zz, &val, 0);
                     if (ier == 0) {
-                        x_v[ib] = xx; y_v[ib] = yy; z_v[ib] = zz;
+                        x_v[ib] = xx;
+                        y_v[ib] = yy;
+                        z_v[ib] = zz;
                         ib++;
                     }
                 }
@@ -98,7 +97,7 @@ int cube_value_xyz_interp(
         /* determine closest corner: */
         long useib = 0;
         double previousdist = 10E20;
-        for (ib = 0; ib < ibmax; ib ++) {
+        for (ib = 0; ib < ibmax; ib++) {
             /* find horizontal distance; hence z1 and z2 are both zin */
             double dist = x_vector_len3d(x_v[ib], xin, y_v[ib], yin, zin, zin);
             if (dist < previousdist) {
@@ -115,19 +114,17 @@ int cube_value_xyz_interp(
             /*             "10 percent of avg cell size in XY: %f vs %f (%s). " */
             /*             "Consider to deactivate snapxy option?", */
             /*             previousdist, avginc, FU); */
-
         }
 
-        ier = cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, usex, usey, zin,
-                                xori, xinc, yori, yinc,
-                                zori, zinc, nx, ny, nz, rot_deg, yflip, flag);
+        ier =
+          cube_ijk_from_xyz(&ic, &jc, &kc, &rx, &ry, &rz, usex, usey, zin, xori, xinc,
+                            yori, yinc, zori, zinc, nx, ny, nz, rot_deg, yflip, flag);
 
         if (ier == -1) {
             *value = UNDEF;
             return -1;
         }
     }
-
 
     /* need to get coordinates and values from all 8 corner values */
     ib = 0;
@@ -143,29 +140,27 @@ int cube_value_xyz_interp(
     /* Note boundaries, and K as outer is intensional
        (also with numpy in C order */
 
-    for (k=0; k<=1; k++) {
-        for (j=0; j<=1; j++) {
-            for (i=0; i<=1; i++) {
+    for (k = 0; k <= 1; k++) {
+        for (j = 0; j <= 1; j++) {
+            for (i = 0; i <= 1; i++) {
 
-                ier = cube_coord_val_ijk(ic + i, jc + j, kc + k,
-                                         nx, ny, nz, xori, xinc, yori,
-                                         yinc, zori, zinc, rot_deg, yflip,
-                                         p_val_v, &xx, &yy, &zz, &val,
-                                         flag);
+                ier = cube_coord_val_ijk(ic + i, jc + j, kc + k, nx, ny, nz, xori, xinc,
+                                         yori, yinc, zori, zinc, rot_deg, yflip,
+                                         p_val_v, &xx, &yy, &zz, &val, flag);
 
                 if (ier == 0) {
-                    x_v[ib] = xx; y_v[ib] = yy; z_v[ib] = zz; p_v[ib] = val;
-                }
-                else{
+                    x_v[ib] = xx;
+                    y_v[ib] = yy;
+                    z_v[ib] = zz;
+                    p_v[ib] = val;
+                } else {
                     ier1 = ier;
                 }
-
 
                 ib++;
             }
         }
     }
-
 
     /* value is outside cube */
     if (ier1 == -1) {
@@ -181,9 +176,8 @@ int cube_value_xyz_interp(
 
     if (ier != 0) {
         *value = UNDEF;
-        return(ier);
-    }
-    else{
+        return (ier);
+    } else {
         *value = val;
     }
 

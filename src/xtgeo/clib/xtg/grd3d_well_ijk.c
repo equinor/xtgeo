@@ -1,5 +1,4 @@
 /*
-****************************************************************************************
  *
  * NAME:
  *    grd3d_well_ijk.c
@@ -38,38 +37,37 @@
  ***************************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 #define DEBUG 0
 
-int grd3d_well_ijk(
-    int nx,
-    int ny,
-    int nz,
+int
+grd3d_well_ijk(int nx,
+               int ny,
+               int nz,
 
-    double *coordsv,
-    long ncoordin,
-    double *zcornsv,
-    long nzcornin,
-    int *actnumsv,
-    long nactin,
+               double *coordsv,
+               long ncoordin,
+               double *zcornsv,
+               long nzcornin,
+               int *actnumsv,
+               long nactin,
 
-    double *p_zcorn_onelay_v,
-    long nzcornonein,
-    int *p_actnum_onelay_v,
-    long nactonein,
+               double *p_zcorn_onelay_v,
+               long nzcornonein,
+               int *p_actnum_onelay_v,
+               long nactonein,
 
-    int nval,
-    double *p_utme_v,
-    double *p_utmn_v,
-    double *p_tvds_v,
-    int *ivector,
-    int *jvector,
-    int *kvector,
-    int iflag
-    )
+               int nval,
+               double *p_utme_v,
+               double *p_utmn_v,
+               double *p_tvds_v,
+               int *ivector,
+               int *jvector,
+               int *kvector,
+               int iflag)
 
 {
 
@@ -92,7 +90,7 @@ int grd3d_well_ijk(
 
     /* find a smart global startcell; middle of IJ and K=1 */
     long ibstart0 = x_ijk2ib(nx / 2, ny / 2, 1, nx, ny, nz, 0);
-    long ibstart  = ibstart0;
+    long ibstart = ibstart0;
     long ibstart2 = ibstart0;
 
     int outside = -999;
@@ -100,60 +98,51 @@ int grd3d_well_ijk(
     /* initial search options in grd3d_point_in_cell */
     int maxradsearch = 5;
     int nradsearch;
-    int sflag = 1;  /* SFLAG=1 means that search shall take full grid as a last
-		       attempt */
+    int sflag = 1; /* SFLAG=1 means that search shall take full grid as a last
+                      attempt */
 
     int mnum;
     int icol = 0, jrow = 0, klay = 0;
 
     for (mnum = 0; mnum < nval; mnum++) {
-	double xcor = p_utme_v[mnum];
-	double ycor = p_utmn_v[mnum];
-	double zcor = p_tvds_v[mnum];
+        double xcor = p_utme_v[mnum];
+        double ycor = p_utmn_v[mnum];
+        double zcor = p_tvds_v[mnum];
         logger_debug(LI, FI, FU, "Check point %lf   %lf   %lf", xcor, ycor, zcor);
 
-	ivector[mnum] = 0;
-	jvector[mnum] = 0;
-	kvector[mnum] = 0;
+        ivector[mnum] = 0;
+        jvector[mnum] = 0;
+        kvector[mnum] = 0;
 
         /* now check that the point is between top and base to avoid
            unneccasary searching and looping; hence use a one layer grid...
         */
 
-        logger_debug(LI, FI, FU,"Check via grid envelope");
+        logger_debug(LI, FI, FU, "Check via grid envelope");
 
         /* loop cells in simplified (one layer) grid */
-        long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor,
-                                       nx, ny, 1,
-                                       coordsv,
-                                       p_zcorn_onelay_v, p_actnum_onelay_v,
-                                       maxradsearch,
-                                       sflag, &nradsearch,
-                                       0, DEBUG);
+        long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor, nx, ny, 1,
+                                       coordsv, p_zcorn_onelay_v, p_actnum_onelay_v,
+                                       maxradsearch, sflag, &nradsearch, 0, DEBUG);
 
         if (ib1 >= 0) {
             outside = 0;
             ibstart2 = ib1;
-        }
-        else{
+        } else {
             outside = -777;
         }
 
-        logger_info(LI, FI, FU, "Check grid envelope DONE, outside status: %d", outside);
+        logger_info(LI, FI, FU, "Check grid envelope DONE, outside status: %d",
+                    outside);
 
         /* now go further if the point is inside the single layer grid */
 
         if (outside == 0) {
 
-
             /* loop cells in full grid */
-            long ib2 = grd3d_point_in_cell(ibstart, 0, xcor, ycor, zcor,
-                                           nx, ny, nz,
-                                           coordsv,
-                                           zcornsv, actnumsv,
-                                           maxradsearch,
-                                           sflag, &nradsearch,
-                                           0, DEBUG);
+            long ib2 = grd3d_point_in_cell(ibstart, 0, xcor, ycor, zcor, nx, ny, nz,
+                                           coordsv, zcornsv, actnumsv, maxradsearch,
+                                           sflag, &nradsearch, 0, DEBUG);
 
             if (ib2 >= 0) {
 
@@ -166,18 +155,15 @@ int grd3d_well_ijk(
                     kvector[mnum] = klay;
                 }
 
-                ibstart  = ib2;
+                ibstart = ib2;
 
-            }
-            else{
+            } else {
                 /* outside grid */
                 ibstart = ibstart0;
             }
         }
-
     }
 
     logger_info(LI, FI, FU, "Exit from %s", FU);
     return EXIT_SUCCESS;
-
 }

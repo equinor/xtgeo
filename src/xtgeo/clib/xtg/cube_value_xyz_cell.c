@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    cube_value_xyz_cell.c
@@ -28,53 +28,46 @@
  ***************************************************************************************
  */
 
-
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int cube_value_xyz_cell(
-                        double x,
-                        double y,
-                        double z,
-                        double xori,
-                        double xinc,
-                        double yori,
-                        double yinc,
-                        double zori,
-                        double zinc,
-                        double rot_deg,
-                        int yflip,
-                        int nx,
-                        int ny,
-                        int nz,
-                        float *p_val_v,
-                        float *value,
-                        int option
-                        )
+int
+cube_value_xyz_cell(double x,
+                    double y,
+                    double z,
+                    double xori,
+                    double xinc,
+                    double yori,
+                    double yinc,
+                    double zori,
+                    double zinc,
+                    double rot_deg,
+                    int yflip,
+                    int nx,
+                    int ny,
+                    int nz,
+                    float *p_val_v,
+                    float *value,
+                    int option)
 {
     /* locals */
-    int  i, j, k, ier, istat;
+    int i, j, k, istat;
     float val;
     double rx, ry, rz;
 
-
     /* first get IJK value from XYZ point */
-    istat = cube_ijk_from_xyz(&i, &j, &k, &rx, &ry, &rz, x, y, z, xori, xinc,
-                              yori, yinc, zori, zinc,
-                              nx, ny, nz, rot_deg, yflip, 0);
+    istat = cube_ijk_from_xyz(&i, &j, &k, &rx, &ry, &rz, x, y, z, xori, xinc, yori,
+                              yinc, zori, zinc, nx, ny, nz, rot_deg, yflip, 0);
 
     /* now get the cube cell value in IJK */
     if (istat == 0) {
-        ier = cube_value_ijk(i, j, k, nx, ny, nz,
-                             p_val_v, &val);
+        cube_value_ijk(i, j, k, nx, ny, nz, p_val_v, &val);
         *value = val;
 
-    }
-    else{
+    } else {
         *value = UNDEF;
         return -1;
     }
-
 
     return EXIT_SUCCESS;
 }

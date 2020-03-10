@@ -34,7 +34,6 @@
 #include "libxtg_.h"
 #include "logger.h"
 
-
 /* the Python version; simple as possible, (more operations in numpy)*/
 int
 grd3d_setval_poly(double *p_xp_v,
@@ -74,7 +73,7 @@ grd3d_setval_poly(double *p_xp_v,
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
                 /* check polygon */
-                istat = pol_chk_point_inside(xg, yg, p_xp_v, p_yp_v, npx, XTGDEBUG);
+                istat = pol_chk_point_inside(xg, yg, p_xp_v, p_yp_v, npx);
 
                 if (istat == -9)
                     return istat; /* poly is not closed */

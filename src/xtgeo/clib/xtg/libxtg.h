@@ -663,12 +663,7 @@ pol_import_irap(int i1,
                 int debug);
 
 int
-pol_chk_point_inside(double x,
-                     double y,
-                     double *p_xp_v,
-                     double *p_yp_v,
-                     int np,
-                     int debug);
+pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np);
 
 int
 pol_do_points_inside(double *swig_np_dbl_in_v1,  // xpoi
@@ -1311,7 +1306,7 @@ int
 grd3d_scan_roff_binpar(char *parname, char *filename, int *ndcodes, int debug);
 
 void
-grd3d_export_roff_pstart(int mode, int nx, int ny, int nz, char *filename, int debug);
+grd3d_export_roff_pstart(int mode, int nx, int ny, int nz, char *filename);
 
 void
 grd3d_export_roff_prop(int mode,
@@ -1328,8 +1323,7 @@ grd3d_export_roff_prop(int mode,
                        int ncodes,
                        char *codenames,
                        int *codevalues,
-                       char *filename,
-                       int debug);
+                       char *filename);
 
 long
 grd3d_scan_eclbinary(FILE *fc,
@@ -1547,8 +1541,7 @@ grd3d_copy(int ncol,
            double *p_coord2_v,
            double *p_zcorn2_v,
            int *p_actnum2_v,
-           int iflag,
-           int debug);
+           int iflag);
 
 int
 grd3d_crop_geometry(int nx,

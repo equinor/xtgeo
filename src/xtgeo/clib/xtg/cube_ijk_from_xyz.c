@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    cube_ijk_from_xyz.c
@@ -38,49 +38,45 @@
  ***************************************************************************************
  */
 
-
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int cube_ijk_from_xyz(
-		      int *i,
-		      int *j,
-		      int *k,
-		      double *rx,
-		      double *ry,
-		      double *rz,
-		      double x,
-		      double y,
-		      double z,
-		      double xori,
-		      double xinc,
-		      double yori,
-		      double yinc,
-		      double zori,
-		      double zinc,
-		      int nx,
-		      int ny,
-		      int nz,
-		      double rot_deg,
-                      int yflip,
-		      int flag
-		      )
+int
+cube_ijk_from_xyz(int *i,
+                  int *j,
+                  int *k,
+                  double *rx,
+                  double *ry,
+                  double *rz,
+                  double x,
+                  double y,
+                  double z,
+                  double xori,
+                  double xinc,
+                  double yori,
+                  double yinc,
+                  double zori,
+                  double zinc,
+                  int nx,
+                  int ny,
+                  int nz,
+                  double rot_deg,
+                  int yflip,
+                  int flag)
 {
     /* locals */
-    static int  ii = 0, jj = 0, ier = 0;
+    static int ii = 0, jj = 0, ier = 0;
     int kk;
     double pz, usex, usey, usez;
     static double rrx = 0.0, rry = 0.0;
-
 
     usex = x;
     usey = y;
     usez = z;
 
-
     if (flag < 10) {
-        ier = sucu_ij_from_xy(&ii, &jj, &rrx, &rry, usex, usey, xori,
-                              xinc, yori, yinc, nx, ny, yflip, rot_deg, flag);
+        ier = sucu_ij_from_xy(&ii, &jj, &rrx, &rry, usex, usey, xori, xinc, yori, yinc,
+                              nx, ny, yflip, rot_deg, flag);
     }
 
     *i = ii;
@@ -98,7 +94,8 @@ int cube_ijk_from_xyz(
         return -1;
     }
 
-    if (ier != 0) return ier;
+    if (ier != 0)
+        return ier;
 
     pz = usez - zori;
 
@@ -108,8 +105,7 @@ int cube_ijk_from_xyz(
             return -1;
         }
         *k = kk;
-    }
-    else{
+    } else {
         kk = (int)(pz / zinc) + 1;
         if (kk < 1 || kk >= nz) {
             return -1;

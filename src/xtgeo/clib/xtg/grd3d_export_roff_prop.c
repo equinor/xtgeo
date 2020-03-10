@@ -39,6 +39,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 /*
  ***************************************************************************************
@@ -100,8 +101,7 @@ grd3d_export_roff_prop(int mode,
                        int ncodes,
                        char *codenames,
                        int *codevalues,
-                       char *filename,
-                       int debug)
+                       char *filename)
 
 {
 
@@ -114,14 +114,6 @@ grd3d_export_roff_prop(int mode,
     FILE *fc;
     char *token, **tmp_codenames;
     const char sep[2] = "|";
-
-    char s[24] = "grd3d_export_roff_prop";
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 2, "Entering %s", s);
-
-    xtg_speak(s, 2, "Property name is <%s>", pname);
 
     if (strcmp(ptype, "double") == 0)
         ptype = "float";
@@ -153,20 +145,17 @@ grd3d_export_roff_prop(int mode,
             }
             nz1 = k + 1;
             nz2 = k + p_subgrd_v[isubgrd_to_export - 1];
-            xtg_speak(s, 2, "Exporting subgrid, K range: %d - %d", nz1, nz2);
         }
     } else {
-        xtg_error(s, "Fatal error: isubgrd_to_export too large");
+        logger_critical(LI, FI, FU, "Fatal error: isubgrd_to_export too large");
     }
 
-    xtg_speak(s, 2, "Opening ROFF file (append)...");
+    logger_info(LI, FI, FU, "Opening ROFF file (append)...");
     if (mode == 0) {
         fc = fopen(filename, "ab");
     } else {
         fc = fopen(filename, "ab");
     }
-
-    xtg_speak(s, 1, "Opening ROFF file ... DONE!");
 
     /*
      *----------------------------------------------------------------------------------
@@ -178,11 +167,9 @@ grd3d_export_roff_prop(int mode,
     ntotal = nx * ny * nz_true;
 
     if (mode == 1) {
-        xtg_speak(s, 3, "ASCII mode");
         fprintf(fc, "tag parameter\n");
         fprintf(fc, "char name \"%s\"\n", pname);
     } else if (mode == 0) {
-        xtg_speak(s, 3, "BINARY mode");
         fwrite("tag\0parameter\0", 1, 14, fc);
         fwrite("char\0name\0", 1, 10, fc);
         for (i = 0; i <= 100; i++) {
@@ -198,7 +185,6 @@ grd3d_export_roff_prop(int mode,
      */
     if (ncodes > 0) {
 
-        xtg_speak(s, 2, "NCODES > 0 ...");
         /* need to make a list of keywords from the 1D stuff
            input format is "name1|name2|..."
         */
@@ -206,7 +192,6 @@ grd3d_export_roff_prop(int mode,
         nn = 0;
         while (token != NULL) {
             strcpy(tmp_codenames[nn], token);
-            xtg_speak(s, 3, "Keyword no %d: [%s]", nn, tmp_codenames[nn]);
             token = strtok(NULL, sep);
             nn++;
         }
@@ -272,7 +257,6 @@ grd3d_export_roff_prop(int mode,
         }
         myint = ntotal;
         fwrite(&myint, 4, 1, fc);
-        xtg_speak(s, 2, "NTOTAL %d", myint);
     }
 
     i_tmp = 1;
@@ -307,7 +291,7 @@ grd3d_export_roff_prop(int mode,
                     }
                 } else if (strcmp(ptype, "byte") == 0) {
                     if (p_int_v[ib] == UNDEF_ROFFINT) {
-                        mybyte = UNDEF_ROFFBYTE;
+                        mybyte = 255;
                     } else {
                         mybyte = p_int_v[ib];
                     }
@@ -334,14 +318,10 @@ grd3d_export_roff_prop(int mode,
         fwrite("endtag\0", 1, 7, fc);
     }
 
-    xtg_speak(s, 2, "Writing property...DONE!");
-
     fclose(fc);
 
     for (i = 0; i < ncodes; i++) {
         free(tmp_codenames[i]);
     }
     free(tmp_codenames);
-
-    xtg_speak(s, 2, "Exit from export roff");
 }

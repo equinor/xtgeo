@@ -9,16 +9,16 @@ from __future__ import print_function
 from os.path import join as ojn
 import xtgeo
 
-EXPATH1 = '../../xtgeo-testdata/3dgrids/reek2'
+EXPATH1 = "../../xtgeo-testdata/3dgrids/reek2"
 
-ROOT = 'geogrid'
-EXT = '.roff'
+ROOT = "geogrid"
+EXT = ".roff"
 
 GRIDFILE = ojn(EXPATH1, ROOT + EXT)
 
-PROPS = ['perm', 'poro']
-FACIES = 'facies'
-FACIESFILE = ojn(EXPATH1, ROOT + '--' + FACIES + EXT)
+PROPS = ["perm", "poro"]
+FACIES = "facies"
+FACIESFILE = ojn(EXPATH1, ROOT + "--" + FACIES + EXT)
 
 
 def show_stats():
@@ -32,25 +32,29 @@ def show_stats():
 
     # read facies (to be used as filter)
     facies = xtgeo.gridproperty_from_file(FACIESFILE, name=FACIES, grid=grd)
-    print('Facies codes are: {}'. format(facies.codes))
+    print("Facies codes are: {}".format(facies.codes))
 
     for propname in PROPS:
-        PFILE = ojn(EXPATH1, ROOT + '--' + propname + EXT)
-        pname = 'geogrid--' + propname
-        prop = xtgeo.gridproperty_from_file(PFILE, name=pname, grid=grd)
-        print('Working with {}'.format(prop.name))
+        pfile = ojn(EXPATH1, ROOT + "--" + propname + EXT)
+        pname = "geogrid--" + propname
+        prop = xtgeo.gridproperty_from_file(pfile, name=pname, grid=grd)
+        print("Working with {}".format(prop.name))
 
         # now find statistics for each facies, and all facies
         for key, fname in facies.codes.items():
             avg = prop.values[facies.values == key].mean()
             std = prop.values[facies.values == key].std()
-            print('For property {} in facies {}, avg is {:10.3f} and '
-                  'stddev is {:9.3f}'.format(propname, fname, avg, std))
+            print(
+                "For property {} in facies {}, avg is {:10.3f} and "
+                "stddev is {:9.3f}".format(propname, fname, avg, std)
+            )
 
         avg = prop.values.mean()
         std = prop.values.std()
-        print('For property {} in ALL facies, avg is {:10.3f} and '
-              'stddev is {:9.3f}'.format(propname, avg, std))
+        print(
+            "For property {} in ALL facies, avg is {:10.3f} and "
+            "stddev is {:9.3f}".format(propname, avg, std)
+        )
 
 
 def show_stats_inside_rms():
@@ -61,34 +65,38 @@ def show_stats_inside_rms():
     is quite similar.
     """
 
-    prj = project  # noqa
+    prj = project  # pylint: disable=undefined-variable
     # names of icons...
-    gridmodel = 'Reek'
-    faciesname = 'Facies'
-    propnames = ['Poro', 'Perm']
+    gridmodel = "Reek"
+    faciesname = "Facies"
+    propnames = ["Poro", "Perm"]
 
     # read facies (to be used as filter)
     facies = xtgeo.gridproperty_from_roxar(prj, gridmodel, faciesname)
-    print('Facies codes are: {}'. format(facies.codes))
+    print("Facies codes are: {}".format(facies.codes))
 
     for propname in propnames:
         prop = xtgeo.gridproperty_from_roxar(prj, gridmodel, propname)
-        print('Working with {}'.format(prop.name))
+        print("Working with {}".format(prop.name))
 
         # now find statistics for each facies, and all facies
         for key, fname in facies.codes.items():
             avg = prop.values[facies.values == key].mean()
             std = prop.values[facies.values == key].std()
-            print('For property {} in facies {}, avg is {:10.3f} and '
-                  'stddev is {:9.3f}'.format(propname, fname, avg, std))
+            print(
+                "For property {} in facies {}, avg is {:10.3f} and "
+                "stddev is {:9.3f}".format(propname, fname, avg, std)
+            )
 
         avg = prop.values.mean()
         std = prop.values.std()
-        print('For property {} in ALL facies, avg is {:10.3f} and '
-              'stddev is {:9.3f}'.format(propname, avg, std))
+        print(
+            "For property {} in ALL facies, avg is {:10.3f} and "
+            "stddev is {:9.3f}".format(propname, avg, std)
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     show_stats()
     # show_stats_inside_rms()

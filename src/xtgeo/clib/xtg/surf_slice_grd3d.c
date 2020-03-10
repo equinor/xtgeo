@@ -90,8 +90,7 @@ surf_slice_grd3d(int mcol,
 
             /* if the whole column is outside zmap minmax, then skip */
             zgrdtop = grd3d_zminmax(i, j, 1, ncol, nrow, nlay, zcornsv, 0, XTGDEBUG);
-            zgrdbot =
-              grd3d_zminmax(i, j, nlay, ncol, nrow, nlay, zcornsv, 1, XTGDEBUG);
+            zgrdbot = grd3d_zminmax(i, j, nlay, ncol, nrow, nlay, zcornsv, 1, XTGDEBUG);
 
             if (zgrdbot < zmapmin)
                 continue;
@@ -127,8 +126,7 @@ surf_slice_grd3d(int mcol,
             if (kc1 > kc2)
                 kc2 = nlay;
 
-            grd3d_corners(i, j, kc1, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
-                          corners);
+            grd3d_corners(i, j, kc1, ncol, nrow, nlay, coordsv, 0, zcornsv, 0, corners);
             kstep = 0;
             for (ix = 0; ix < 4; ix++) {
                 xc[ix] = corners[ix + kstep];
@@ -136,8 +134,7 @@ surf_slice_grd3d(int mcol,
                 kstep = kstep + 2;
             }
 
-            grd3d_corners(i, j, kc2, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
-                          corners);
+            grd3d_corners(i, j, kc2, ncol, nrow, nlay, coordsv, 0, zcornsv, 0, corners);
             kstep = 8;
             for (ix = 4; ix < 8; ix++) {
                 xc[ix] = corners[ix + kstep];
@@ -201,7 +198,7 @@ surf_slice_grd3d(int mcol,
 
                         if (ier3 == 0 && zm < UNDEF_LIMIT) {
 
-                            ios = x_chk_point_in_cell(xm, ym, zm, corners, 0, XTGDEBUG);
+                            ios = x_chk_point_in_cell(xm, ym, zm, corners, 0);
 
                             if (ios > 0) {
                                 imm = x_ijk2ic(im, jm, 1, mcol, mrow, 1, 0);
