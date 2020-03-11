@@ -9,6 +9,12 @@ import os.path
 import io
 from platform import system as plfsys
 from tempfile import mkstemp
+
+try:
+    from pathlib import Path
+except ImportError:
+    pass
+
 import six
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -57,11 +63,9 @@ class _XTGeoCFile(object):
                     "Reading BytesIO not fully supported in Python 2"
                 )
 
-            buf = self._name.getvalue()  # bytes type in Python3, str in Python2
+            fobj = self._name.getvalue()  # bytes type in Python3, str in Python2
 
             # note that the typemap in swig computes the length for the buf!
-            fhandle = _cxtgeo.xtg_fopen_bytestream(buf, self._mode)
-            logger.info("Filehandle for byte stream: %s", fhandle)
             self._memstream = True
 
         elif (
@@ -74,9 +78,7 @@ class _XTGeoCFile(object):
                     "Writing to BytesIO not supported in Python 2"
                 )
 
-            buf = bytes()
-            fhandle = _cxtgeo.xtg_fopen_bytestream(buf, self._mode)
-            logger.info("Filehandle for byte stream: %s", fhandle)
+            fobj = bytes()
             self._memstream = True
 
         elif (
@@ -85,17 +87,32 @@ class _XTGeoCFile(object):
             and (plfsys() == "Windows" or plfsys() == "Darwin")
         ):
             # windows/mac miss fmemopen; write buffer to a tmp instead as workaround
-            fds, tmpfile = mkstemp(prefix="tmpxtgeoio")
+            fds, fobj = mkstemp(prefix="tmpxtgeoio")
             os.close(fds)
-            with open(tmpfile, "wb") as newfile:
+            with open(fobj, "wb") as newfile:
                 newfile.write(self._name.getvalue())
 
-            # now open this a regular fhandle
-            fhandle = _cxtgeo.xtg_fopen(tmpfile, self._mode)
-            self._tmpfile = tmpfile
+            self._tmpfile = fobj
 
         else:
-            fhandle = _cxtgeo.xtg_fopen(self._name, self._mode)
+            if six.PY3 and isinstance(self._name, Path):
+                fobj = str(self._name.resolve())
+            else:
+                fobj = self._name
+
+        if self._memstream:
+            fhandle = _cxtgeo.xtg_fopen_bytestream(fobj, self._mode)
+
+        else:
+            try:
+                fhandle = _cxtgeo.xtg_fopen(fobj, self._mode)
+            except TypeError as err:
+                reason = ""
+                if six.PY2:
+                    reason = "In Python 2, do not use __future__ UnicodeLiterals!"
+                logger.critical("Cannot open file: %s. %s", err, reason)
+            else:
+                logger.critical("Cannot open file, unknown reason")
 
         self._fhandle = fhandle
         return self._fhandle
