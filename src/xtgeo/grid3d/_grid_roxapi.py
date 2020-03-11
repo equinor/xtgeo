@@ -53,7 +53,7 @@ def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
         if info:
             _display_roxapi_grid_info(rox, roxgrid)
 
-        _convert_to_xtgeo_grid(self, rox, roxgrid, corners)
+        _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
@@ -87,7 +87,7 @@ def _display_roxapi_grid_info(rox, roxgrid):
                 xtg.say("Depths\n{}".format(zco))
 
 
-def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
+def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):
     """Convert from RMS API to XTGeo API"""
 
     # pylint: disable=too-many-statements
@@ -103,6 +103,8 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners):
     self._ncol = ncol
     self._nrow = nrow
     self._nlay = nlay
+
+    self.name = gname
 
     if corners is None:
         logger.info("Asked for dimensions_only: No geometry read!")

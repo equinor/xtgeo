@@ -17,12 +17,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self,
-    gfile,
-    fformat=None,
-    initprops=None,
-    restartprops=None,
-    restartdates=None,
+    self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
 ):
 
     """Import grid geometry from file, and makes an instance of this class."""
@@ -83,5 +78,7 @@ def from_file(
         _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
     else:
         raise SystemExit("Invalid file format")
+
+    self.name = os.path.splitext(os.path.basename(gfile))[0]
 
     return self
