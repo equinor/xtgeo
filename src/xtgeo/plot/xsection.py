@@ -5,7 +5,11 @@ from __future__ import print_function
 from collections import OrderedDict
 
 import numpy.ma as ma
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import collections as mc
+from matplotlib.lines import Line2D
 from scipy.ndimage.filters import gaussian_filter
 
 from xtgeo.common import XTGeoDialog
@@ -94,6 +98,9 @@ class XSection(BasePlot):
         self._colormap_perf = self.define_any_colormap("xtgeo")
         self._colormap_perf_dict = {idx: idx for idx in range(100)}
 
+        self._colormap_zonelog = None
+        self._colormap_zonelog_dict = {idx: idx for idx in range(100)}
+
         logger.info("Ran __init__ ...")
         logger.debug("Colormap is %s", self._colormap)
 
@@ -124,6 +131,15 @@ class XSection(BasePlot):
     @colormap_facies.setter
     def colormap_facies(self, cmap):
         self._colormap_facies = self.define_any_colormap(cmap)
+
+    @property
+    def colormap_zonelog(self):
+        """Set or get the zonelog colormap"""
+        return self._colormap_zonelog
+
+    @colormap_zonelog.setter
+    def colormap_zonelog(self, cmap):
+        self._colormap_zonelog = self.define_any_colormap(cmap)
 
     @property
     def colormap_perf(self):
@@ -165,6 +181,22 @@ class XSection(BasePlot):
         #                      'not ints!')
 
         self._colormap_perf_dict = xdict
+
+    @property
+    def colormap_zonelog_dict(self):
+        """Set or get the zonelog colormap actual dict table"""
+        return self._colormap_zonelog_dict
+
+    @colormap_zonelog_dict.setter
+    def colormap_zonelog_dict(self, xdict):
+        if not isinstance(xdict, dict):
+            raise ValueError("Input is not a dict")
+
+        # if not all(isinstance(item, int) for item in list(xdict.values)):
+        #     raise ValueError('Dict values is a list, but some elems are '
+        #                      'not ints!')
+
+        self._colormap_zonelog_dict = xdict
 
     @property
     def fence(self):
@@ -333,18 +365,19 @@ class XSection(BasePlot):
         # plot the perflog, if any, first
         if perflogname:
             ax, bba = self._currentax(axisname="perf")
-            self._plot_well_perflog(dfr, ax, bba, zv, hv, perflogname)
+            self._plot_well_perflog(dfr, ax, bba, perflogname)
 
         # plot the facies, if any, behind the trajectory; ie. first or second
         if facieslogname:
             ax, bba = self._currentax(axisname="facies")
-            self._plot_well_faclog(dfr, ax, bba, zv, hv, facieslogname)
+            self._plot_well_faclog(dfr, ax, bba, facieslogname)
 
         axx, _bbxa = self._currentax(axisname="well")
         self._plot_well_traj(axx, zv, hv)
 
         if zonelogname:
-            self._plot_well_zlog(dfr, axx, zv, hv, zonelogname)
+            ax, bba = self._currentax(axisname="main")
+            self._plot_well_zlog(dfr, axx, bba, zonelogname)
 
         if wellcrossings is not None and wellcrossings.empty:
             wellcrossings = None
@@ -360,13 +393,60 @@ class XSection(BasePlot):
 
         ax.plot(hv_copy, zv_copy, linewidth=6, c="black")
 
-    def _plot_well_zlog(self, df, ax, zv, hv, zonelogname):
+    @staticmethod
+    def _line_segments_colors(df, idx, ctable, logname, fillnavalue):
+        """Get segment and color array for plotting matplotlib lineCollection"""
+
+        df_idx = pd.DataFrame(
+            {"idx_log": list(idx.keys()), "idx_color": list(idx.values())}
+        )
+
+        df_ctable = df_idx.merge(
+            pd.DataFrame({"ctable": ctable}),
+            how="left",
+            left_on="idx_color",
+            right_index=True,
+        )
+
+        dff = df.merge(df_ctable, how="left", left_on=logname, right_on="idx_log")
+
+        dff["point"] = list(zip(dff["R_HLEN"], dff["Z_TVDSS"]))
+
+        # find line segments
+        segments = []
+        segments_i = -1
+        colorlist = []
+        previous_color = None
+
+        for point, color in zip(dff["point"], dff["ctable"]):
+            if np.any(np.isnan(color)):
+                color = fillnavalue
+
+            if color == previous_color:
+                segments[segments_i].append(point)
+                previous_color = color
+            else:
+                # add endpoint to current segment
+                if segments_i > 0:
+                    segments[segments_i].append(point)
+
+                # start new segment
+                segments.append([point])
+                colorlist.append(color)
+
+                previous_color = color
+                segments_i += 1
+
+        colorlist = np.asarray(colorlist)
+
+        return segments, colorlist
+
+    def _plot_well_zlog(self, df, ax, bba, zonelogname, logwidth=4, legend=False):
         """Plot the zone log as colored segments."""
 
         if zonelogname not in df.columns:
             return
 
-        zo = df[zonelogname].values
         zomin = 0
         zomax = 0
 
@@ -383,34 +463,54 @@ class XSection(BasePlot):
         if self._zonelogshift != 0:
             zshift = self._zonelogshift
 
-        # let the part with ZONELOG have a colour
-        ctable = self.get_colormap_as_table()
+        if self.colormap_zonelog is not None:
+            cmap = self.colormap_zonelog
+            ctable = self.get_any_colormap_as_table(cmap)
+        else:
+            ctable = self.get_colormap_as_table()
 
-        for zone in range(zomin, zomax + 1):
+        idx = self.colormap_zonelog_dict
 
-            # the minus one since zone no 1 use color entry no 0
-            if (zone + zshift - 1) < 0:
-                color = (0.9, 0.9, 0.9)
-            else:
-                color = ctable[zone + zshift - 1]
+        # adjust for zoneshift.
+        idx_zshift = dict()
+        for key in idx:
+            idx_zshift[key - zshift + 1] = idx[key]
 
-            zv_copy = ma.masked_where(zo != zone, zv)
-            hv_copy = ma.masked_where(zo != zone, hv)
+        fillnavalue = (0.9, 0.9, 0.9)
+        segments, segments_colors = self._line_segments_colors(
+            df, idx_zshift, ctable, zonelogname, fillnavalue
+        )
 
-            logger.debug("Zone is %s, color no is %s", zone, zone + zshift - 1)
+        lc = mc.LineCollection(
+            segments, colors=segments_colors, linewidth=logwidth, zorder=202
+        )
 
-            ax.plot(hv_copy, zv_copy, linewidth=4, c=color, solid_capstyle="butt")
+        ax.add_collection(lc)
 
-    def _plot_well_faclog(self, df, ax, bba, zv, hv, facieslogname, facieslist=None):
+        if legend:
+            zrecord = self._well.get_logrecord(zonelogname)
+            zrecord = {val: zname for val, zname in zrecord.items() if val >= 0}
+
+            zcolors = dict()
+            for zone in zrecord:
+                if isinstance(idx[zone], str):
+                    color = idx[zone]
+                else:
+                    color = ctable[idx[zone]]
+
+                zcolors[zrecord[zone]] = color
+
+            self._drawproxylegend(ax, bba, items=zcolors, title="Zonelog")
+
+    def _plot_well_faclog(self, df, ax, bba, facieslogname, logwidth=9, legend=True):
         """Plot the facies log as colored segments.
 
         Args:
             df (dataframe): The Well dataframe.
             ax (axes): The ax plot object.
-            zv (ndarray): The numpy Z TVD array.
-            hv (ndarray): The numpy Length  array.
             facieslogname (str): name of the facies log.
-            facieslist (list): List of values to be plotted as facies
+            logwidth (int): Log linewidth.
+            legend (bool): Plot log legend?
         """
 
         if facieslogname not in df.columns:
@@ -420,36 +520,33 @@ class XSection(BasePlot):
         ctable = self.get_any_colormap_as_table(cmap)
         idx = self.colormap_facies_dict
 
-        frecord = self._well.get_logrecord(facieslogname)
-        frecord = {val: fname for val, fname in frecord.items() if val >= 0}
+        fillnavalue = (0, 0, 0, 0)  # transparent
+        segments, segments_colors = self._line_segments_colors(
+            df, idx, ctable, facieslogname, fillnavalue
+        )
 
-        if facieslist is None:
-            facieslist = list(frecord.keys())
+        lc = mc.LineCollection(
+            segments, colors=segments_colors, linewidth=logwidth, zorder=201
+        )
 
-        fa = df[facieslogname].values
+        ax.add_collection(lc)
 
-        for fcc in frecord:
+        if legend:
+            frecord = self._well.get_logrecord(facieslogname)
+            frecord = {val: fname for val, fname in frecord.items() if val >= 0}
 
-            if isinstance(idx[fcc], str):
-                color = idx[fcc]
-            else:
-                color = ctable[idx[fcc]]
+            fcolors = dict()
+            for facies in frecord:
+                if isinstance(idx[facies], str):
+                    color = idx[facies]
+                else:
+                    color = ctable[idx[facies]]
 
-            zv_copy = ma.masked_where(fa != fcc, zv)
-            hv_copy = ma.masked_where(fa != fcc, hv)
+                fcolors[frecord[facies]] = color
 
-            _myline, = ax.plot(
-                hv_copy,
-                zv_copy,
-                linewidth=9,
-                c=color,
-                label=frecord[fcc],
-                solid_capstyle="butt",
-            )
+            self._drawproxylegend(ax, bba, items=fcolors, title="Facies")
 
-        self._drawlegend(ax, bba, title="Facies")
-
-    def _plot_well_perflog(self, df, ax, bba, zv, hv, perflogname, perflist=None):
+    def _plot_well_perflog(self, df, ax, bba, perflogname, logwidth=12, legend=True):
         """Plot the perforation log as colored segments.
 
         Args:
@@ -458,7 +555,8 @@ class XSection(BasePlot):
             zv (ndarray): The numpy Z TVD array.
             hv (ndarray): The numpy Length  array.
             perflogname (str): name of the perforation log.
-            perflist (list): List of values to be plotted as PERF
+            logwidth (int): Log linewidth.
+            legend (bool): Plot log legend?
         """
 
         if perflogname not in df.columns:
@@ -466,38 +564,33 @@ class XSection(BasePlot):
 
         cmap = self.colormap_perf
         ctable = self.get_any_colormap_as_table(cmap)
-
-        precord = self._well.get_logrecord(perflogname)
-        precord = {val: pname for val, pname in precord.items() if val >= 0}
-
         idx = self.colormap_perf_dict
 
-        if perflist is None:
-            perflist = list(precord.keys())
+        fillnavalue = (0, 0, 0, 0)  # transparent
+        segments, segments_colors = self._line_segments_colors(
+            df, idx, ctable, perflogname, fillnavalue
+        )
 
-        prf = df[perflogname].values
+        lc = mc.LineCollection(
+            segments, colors=segments_colors, linewidth=logwidth, zorder=200
+        )
 
-        # let the part with ZONELOG have a colour
-        for perf in perflist:
+        ax.add_collection(lc)
 
-            if isinstance(idx[perf], str):
-                color = idx[perf]
-            else:
-                color = ctable[idx[perf]]
+        if legend:
+            precord = self._well.get_logrecord(perflogname)
+            precord = {val: pname for val, pname in precord.items() if val >= 0}
 
-            zv_copy = ma.masked_where(perf != prf, zv)
-            hv_copy = ma.masked_where(perf != prf, hv)
+            pcolors = dict()
+            for perf in precord:
+                if isinstance(idx[perf], str):
+                    color = idx[perf]
+                else:
+                    color = ctable[idx[perf]]
 
-            ax.plot(
-                hv_copy,
-                zv_copy,
-                linewidth=15,
-                c=color,
-                label=precord[perf],
-                solid_capstyle="butt",
-            )
+                pcolors[precord[perf]] = color
 
-        self._drawlegend(ax, bba, title="Perforations")
+            self._drawproxylegend(ax, bba, items=pcolors, title="Perforations")
 
     @staticmethod
     def _plot_well_crossings(dfr, ax, wcross):
@@ -547,7 +640,7 @@ class XSection(BasePlot):
                 marker="o",
                 color="black",
                 s=70,
-                zorder=100,
+                zorder=300,
             )
             ax.scatter(
                 dfrc.R_HLEN[minindx],
@@ -555,7 +648,7 @@ class XSection(BasePlot):
                 marker="o",
                 color="orange",
                 s=38,
-                zorder=102,
+                zorder=302,
             )
 
             modulo = index % 5
@@ -571,6 +664,25 @@ class XSection(BasePlot):
                 ),
                 color="black",
             )
+
+    def _drawproxylegend(self, ax, bba, items, title=None):
+        proxies = []
+        labels = []
+
+        for item in items:
+            color = items[item]
+            proxies.append(Line2D([0, 1], [0, 1], color=color, linewidth=5))
+            labels.append(item)
+
+        ax.legend(
+            proxies,
+            labels,
+            loc="upper left",
+            bbox_to_anchor=bba,
+            prop={"size": self._legendsize},
+            title=title,
+            handlelength=2,
+        )
 
     def _drawlegend(self, ax, bba, title=None):
 
