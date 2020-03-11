@@ -5,12 +5,18 @@ from __future__ import print_function
 import os
 import os.path
 
+import six
+
 import pytest
 import numpy as np
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
+
+if six.PY3:
+    from pathlib import Path
+
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -124,6 +130,18 @@ def test_irapbin_import1():
     tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
     tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
     xsurf.describe()
+
+
+@tsetup.skipifpython2
+def test_irapbin_import_use_pathib():
+    """Import Reek Irap binary."""
+    logger.info("Import and export...")
+
+    pobj = Path(TESTSET2)
+
+    xsurf = xtgeo.RegularSurface(pobj)
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
 
 
 def test_irapbin_import_quickplot():
