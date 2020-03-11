@@ -786,7 +786,7 @@ class RegularSurface(object):
             self.from_file(self._filesrc)
             self._isloaded = True
 
-    def to_file(self, mfile, fformat="irap_binary", **kwargs):
+    def to_file(self, mfile, fformat="irap_binary", pmd_dataunits=(15, 10), **kwargs):
         """Export a surface (map) to file.
 
         Note, for zmap_ascii and storm_binary an unrotation will be done
@@ -797,6 +797,8 @@ class RegularSurface(object):
             mfile (str): Name of file
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz/petromod. Default is irap_binary.
+            pmd_dataunits (tuple): A tuple of length 2 for petromod format,
+                spesifying metadata for units (DataUnitDistance, DataUnitZ)
             **kwargs: Special settings (for developers)
 
         Examples::
@@ -843,7 +845,7 @@ class RegularSurface(object):
             _regsurf_export.export_storm_binary(self, mfile)
 
         elif fformat == "petromod":
-            _regsurf_export.export_petromod_binary(self, mfile)
+            _regsurf_export.export_petromod_binary(self, mfile, pmd_dataunits)
 
         elif fformat == "ijxyz":
             _regsurf_export.export_ijxyz_ascii(self, mfile)
