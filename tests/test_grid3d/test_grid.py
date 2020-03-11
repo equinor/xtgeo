@@ -61,11 +61,15 @@ def test_import_wrong():
 
 
 def test_import_guess(load_gfile1):
-    """Import with guessing fformat"""
+    """Import with guessing fformat, and also test name attribute"""
 
     grd = load_gfile1
 
     tsetup.assert_equal(grd.ncol, 70)
+    tsetup.assert_equal(grd.name, "emerald_hetero_grid")
+
+    grd.name = "xxx"
+    tsetup.assert_equal(grd.name, "xxx")
 
 
 def test_create_shoebox():
@@ -582,7 +586,7 @@ def test_xyz_cell_corners():
     allcorners = grd.get_xyz_corners()
     assert len(allcorners) == 24
     assert allcorners[0].get_npvalues1d()[0] == 0.0
-    assert allcorners[23].get_npvalues1d()[-1] == 1001.
+    assert allcorners[23].get_npvalues1d()[-1] == 1001.0
 
 
 def test_grid_layer_slice():

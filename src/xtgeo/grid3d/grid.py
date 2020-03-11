@@ -161,14 +161,15 @@ class Grid(Grid3D):
 
         super(Grid, self).__init__(*args, **kwargs)
 
-        self._coordsv = None  # carray swig pointer (or numpy array) to coords vector
-        self._zcornsv = None  # carray swig pointer (or numpy array) to zcorns vector
-        self._actnumsv = None  # carray swig pointer (or numpy array) to actnum vector
+        self._coordsv = None  # numpy array to coords vector
+        self._zcornsv = None  # numpy array to zcorns vector
+        self._actnumsv = None  # numpy array to actnum vector
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
         self._props = None  # None or a GridProperties instance
+        self._name = "noname"
         self._subgrids = None  # A python dict if subgrids are given
         self._ijk_handedness = None
 
@@ -232,6 +233,18 @@ class Grid(Grid3D):
     # ==================================================================================
     # Public Properties:
     # ==================================================================================
+
+    @property
+    def name(self):
+        """str: Name attribute of grid"""
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        if isinstance(name, str):
+            self._name = name
+        else:
+            raise ValueError("Input name is not a text string")
 
     @property
     def ncol(self):
