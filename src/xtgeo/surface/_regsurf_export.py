@@ -22,6 +22,22 @@ DEBUG = 0
 if DEBUG < 0:
     DEBUG = 0
 
+PMD_DATAUNITDISTANCE = {
+    15: "meter",
+    16: "km",
+    17: "feet",
+    18: "yard",
+    19: "mile",
+    221: "global",
+}
+
+PMD_DATAUNITZ = {
+    10: "10",
+    31: "31",
+    300: "300",
+    44: "44",
+}
+
 
 def export_irap_ascii(self, mfile):
     """Export to Irap RMS ascii format."""
@@ -263,15 +279,28 @@ def export_storm_binary(self, mfile):
     fout.close()
 
 
-def export_petromod_binary(self, mfile):
+def export_petromod_binary(self, mfile, pmd_dataunits):
     """Export to petromod binary format."""
+
+    validunits = False
+    if isinstance(pmd_dataunits, tuple) and len(pmd_dataunits) == 2:
+        unitd, unitz = pmd_dataunits
+        if isinstance(unitd, int) and isinstance(unitz, int):
+            if unitd in PMD_DATAUNITDISTANCE.keys() and unitz in PMD_DATAUNITZ.keys():
+                validunits = True
+
+    if not validunits:
+        raise ValueError(
+            "Format or values for pmd_dataunits invalid: Pair should be in ranges "
+            "{} and {}".format(PMD_DATAUNITDISTANCE, PMD_DATAUNITZ)
+        )
 
     undef = 99999
     fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
     dsc = "Content=Map,"
-    dsc += "DataUnitDistance=15,"
-    dsc += "DataUnitZ=10,"
+    dsc += "DataUnitDistance={},".format(unitd)
+    dsc += "DataUnitZ={},".format(unitz)
     dsc += "GridNoX={},".format(self.ncol)
     dsc += "GridNoY={},".format(self.nrow)
     dsc += "GridStepX={},".format(self.xinc)

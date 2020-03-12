@@ -202,6 +202,13 @@ def test_petromodbin_import_export():
     assert petromod.nrow == irapbin.nrow
     assert petromod.values1d[200000] == irapbin.values1d[200000]
 
+    testfile = os.path.join(TMPD, "petromod_other_units.pmd")
+    petromod.to_file(testfile, fformat="petromod", pmd_dataunits=(16, 300))
+    petromod.from_file(testfile, fformat="petromod")
+
+    with pytest.raises(ValueError):
+        petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(1, 999))
+
 
 def test_swapaxes():
     """Import Reek Irap binary and swap axes."""
