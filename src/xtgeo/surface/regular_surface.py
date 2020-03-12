@@ -797,7 +797,7 @@ class RegularSurface(object):
             mfile (str): Name of file
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz/petromod. Default is irap_binary.
-            pmd_dataunits (tuple): A tuple of length 2 for petromod format,
+            pmd_dataunits (tuple of int): A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ)
             **kwargs: Special settings (for developers)
 
