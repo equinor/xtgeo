@@ -34,8 +34,8 @@ PMD_DATAUNITDISTANCE = {
 PMD_DATAUNITZ = {
     10: "10",
     31: "31",
-    300: "300",
     44: "44",
+    300: "300",
 }
 
 
@@ -289,9 +289,12 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
             if unitd in PMD_DATAUNITDISTANCE.keys() and unitz in PMD_DATAUNITZ.keys():
                 validunits = True
 
+            if unitd <= 0 or unitz <= 0:
+                raise ValueError("Values for pmd_dataunits cannot be negative!")
+
     if not validunits:
-        raise ValueError(
-            "Format or values for pmd_dataunits invalid: Pair should be in ranges "
+        UserWarning(
+            "Format or values for pmd_dataunits out of range: Pair should be in ranges "
             "{} and {}".format(PMD_DATAUNITDISTANCE, PMD_DATAUNITZ)
         )
 

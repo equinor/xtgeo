@@ -207,7 +207,7 @@ def test_petromodbin_import_export():
     petromod.from_file(testfile, fformat="petromod")
 
     with pytest.raises(ValueError):
-        petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(1, 999))
+        petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(-2, 999))
 
 
 def test_swapaxes():
