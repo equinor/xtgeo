@@ -2,6 +2,19 @@
 
 ## Version 2
 
+## 2.7.0
+* New features:
+  * Support for petromod binary format for RegularSurface()
+  * Added name attribute for Grid()
+  * Enhanced plotting for well logs
+  * The arrays stored Grid() are no longer SWIG C pointers, but numpy arrays. This simplifies pickling.
+* Bug fixes:
+  * File names used in e.g. from_file should now handle pathlib instances
+  * Improved error messages if issues with e.g. file names used in export/import
+  * Fix of excessive logger output in 
+* Fixes for developers:
+  * General refactorizion of C code, to improve speed and stability. Also change logger method in C (still ongoing)
+
 ### 2.6.0
 * New features:
   * A Grid() instance can now be "numpified" so that pickling can be done, method `numpify_carrays()`
