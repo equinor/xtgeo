@@ -83,6 +83,8 @@ def avgsum_from_3dprops_gridding(
 
     qlog = logging.getLogger().isEnabledFor(logging.INFO)
 
+    logger.info("Avgsum calculation %s", __name__)
+
     if zone_minmax is None:
         raise ValueError("zone_minmax is required")
 
@@ -230,6 +232,7 @@ def avgsum_from_3dprops_gridding(
         vvz = ma.masked_less(vvz, truncate_le)
 
     self.values = vvz
+    logger.info("Avgsum calculation done! %s", __name__)
 
     return True
 

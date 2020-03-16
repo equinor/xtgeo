@@ -6,9 +6,9 @@
  *******************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 /*
  *******************************************************************************
@@ -45,28 +45,37 @@
  *    cf. XTGeo LICENSE
  *******************************************************************************
  */
-int surf_export_irap_ascii(
-                           FILE *fc,
-                           int mx,
-                           int my,
-                           double xori,
-                           double yori,
-                           double xinc,
-                           double yinc,
-                           double rot,
-                           double *p_map_v,
-                           long mxy,
-                           double zmin,
-                           double zmax,
-                           int option
-                           )
+int
+surf_export_irap_ascii(FILE *fc,
+                       int mx,
+                       int my,
+                       double xori,
+                       double yori,
+                       double xinc,
+                       double yinc,
+                       double rot,
+                       double *p_map_v,
+                       long mxy,
+                       int option)
 {
 
     /* local declarations */
-    int     i, j, ic, nn, fcode;
-    float   myfloat, xmax, ymax;
+    int i, j, ic, nn, fcode;
+    float myfloat, xmax, ymax;
 
     logger_info(LI, FI, FU, "Write IRAP ascii map file ... (%s)", __FUNCTION__);
+
+    long ib;
+    double zmin = VERYLARGEPOSITIVE;
+    double zmax = VERYLARGENEGATIVE;
+    for (ib = 0; ib < mxy; ib++) {
+        if (p_map_v[ib] < UNDEF_LIMIT) {
+            if (p_map_v[ib] < zmin)
+                zmin = p_map_v[ib];
+            if (p_map_v[ib] > zmax)
+                zmax = p_map_v[ib];
+        }
+    }
 
     /*
      * Do some computation first, to find best format
@@ -74,8 +83,7 @@ int surf_export_irap_ascii(
      */
     if (zmin > -10 && zmax < 10) {
         fcode = 1;
-    }
-    else{
+    } else {
         fcode = 2;
     }
 
@@ -100,19 +108,19 @@ int surf_export_irap_ascii(
 
     nn = 0;
     /* export in F order */
-    for (j=1; j<=my; j++) {
-	for (i=1; i<=mx; i++) {
+    for (j = 1; j <= my; j++) {
+        for (i = 1; i <= mx; i++) {
 
             /* C order input */
             ic = x_ijk2ic(i, j, 1, mx, my, 1, 0);
             myfloat = p_map_v[ic];
 
-            if (myfloat > UNDEF_MAP_LIMIT) myfloat = UNDEF_MAP_IRAP;
+            if (myfloat > UNDEF_MAP_LIMIT)
+                myfloat = UNDEF_MAP_IRAP;
 
             if (fcode == 1) {
                 fprintf(fc, " %.7f", myfloat);
-            }
-            else{
+            } else {
                 fprintf(fc, " %.4f", myfloat);
             }
 
@@ -122,10 +130,9 @@ int surf_export_irap_ascii(
                 fprintf(fc, "\n");
                 nn = 0;
             }
-	}
+        }
     }
     fprintf(fc, "\n");
 
     return EXIT_SUCCESS;
-
 }

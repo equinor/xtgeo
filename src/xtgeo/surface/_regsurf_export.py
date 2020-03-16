@@ -44,11 +44,7 @@ def export_irap_ascii(self, mfile):
 
     fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
-    zmin = self.values.min()
-    zmax = self.values.max()
-
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
-    logger.debug("SHAPE %s %s", vals.shape, vals.dtype)
 
     ier = _cxtgeo.surf_export_irap_ascii(
         fout.fhandle,
@@ -60,8 +56,6 @@ def export_irap_ascii(self, mfile):
         self._yflip * self._yinc,
         self._rotation,
         vals,
-        zmin,
-        zmax,
         0,
     )
     if ier != 0:

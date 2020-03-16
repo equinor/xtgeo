@@ -2,6 +2,12 @@
 import os
 import io
 
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
+import pytest
 import xtgeo
 import test_common.test_xtg as tsetup
 
@@ -11,19 +17,54 @@ if "TRAVISRUN" in os.environ:
 
 
 TESTFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-# =============================================================================
-# Do tests of simple system functions
-# =============================================================================
+TESTFOLDER = "../xtgeo-testdata/3dgrids/reek"
+TESTNOEXISTFILE = "../xtgeo-testdata/3dgrids/reek/NOSUCH.EGRID"
+TESTNOEXISTFOLDER = "../xtgeo-testdata/3dgrids/noreek/NOSUCH.EGRID"
 
 
 def test_xtgeocfile():
+    """Test basic system file io etc functions"""
 
     gfile = xtgeo._XTGeoCFile(TESTFILE)
+    xfile = xtgeo._XTGeoCFile(TESTNOEXISTFILE)
+    yfile = xtgeo._XTGeoCFile(TESTNOEXISTFOLDER)
+    gfolder = xtgeo._XTGeoCFile(TESTFOLDER)
+
     assert isinstance(gfile, xtgeo._XTGeoCFile)
 
-    assert "Swig" in str(gfile.fhandle)
+    assert isinstance(gfile._file, pathlib.Path)
 
+    assert gfile._memstream is False
+    assert gfile._mode == "rb"
+    assert gfile._delete_after is False
+    assert gfile.name == os.path.abspath(TESTFILE)
+    assert xfile.name == os.path.abspath(TESTNOEXISTFILE)
+
+    # exists, check_*
+    assert gfile.exists() is True
+    assert gfolder.exists() is True
+    assert xfile.exists() is False
+
+    assert gfile.check_file() is True
+    assert xfile.check_file() is False
+    assert yfile.check_file() is False
+
+    with pytest.raises(IOError):
+        xfile.check_file(raiseerror=IOError)
+
+    assert gfile.check_folder() is True
+    assert xfile.check_folder() is True
+    assert yfile.check_folder() is False
+    with pytest.raises(IOError):
+        yfile.check_folder(raiseerror=IOError)
+
+    assert "Swig" in str(gfile.fhandle)
     assert gfile.close() is True
+
+    # extensions:
+    stem, suff = gfile.splitext(lower=False)
+    assert stem == "REEK"
+    assert suff == "EGRID"
 
 
 @tsetup.skipifwindows
