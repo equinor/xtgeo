@@ -206,9 +206,7 @@ def _rkwquery(fhandle, kws, name, swap):
     if reclen != 1:
         raise SystemError("Stuff is rotten here...")
 
-    _cxtgeo.grd3d_imp_roffbin_data(
-        fhandle, swap, dtype, bytepos, iresult, presult, XTGDEBUG
-    )
+    _cxtgeo.grd3d_imp_roffbin_data(fhandle, swap, dtype, bytepos, iresult, presult)
 
     # -1 indicates that it is the swap flag which is looked for!
     if dtype == 1:
@@ -267,7 +265,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     fnumpy = np.zeros(ncol * nrow * nlay, dtype=np.float32)
 
     _cxtgeo.grd3d_imp_roffbin_arr(
-        fhandle, swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy, XTGDEBUG
+        fhandle, swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy
     )
 
     # remember that for grid props, order=F in CXTGEO, while order=C

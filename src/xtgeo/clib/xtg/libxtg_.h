@@ -148,8 +148,7 @@ x_vector_linint(double x1,
                 double dlen,
                 double *xn,
                 double *yn,
-                double *zn,
-                int debug);
+                double *zn);
 
 double
 x_vector_len3d(double x1, double x2, double y1, double y2, double z1, double z2);

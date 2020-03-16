@@ -1,19 +1,5 @@
 /*
- *******************************************************************************
- *
- * Read ROFF binary data (new 2018 import model)
- *
- *******************************************************************************
- */
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_imp_roffbin_data.c
@@ -44,7 +30,6 @@
  *    recstarts       i     A long int with record starts (in bytes)
  *    p_int           o     pointer to return data, if int
  *    p_dbl           o     pointer to return data, if double
- *    debug           i     Debug level
  *
  * RETURNS:
  *    0 if OK
@@ -61,37 +46,40 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
 
-/* ######################################################################### */
-/* LIBRARY FUNCTION                                                          */
-/* ######################################################################### */
+#include "libxtg.h"
+#include "libxtg_.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int grd3d_imp_roffbin_data (FILE *fc, int swap, int dtype,
-                            long bytepos, int *p_int,
-                            float *p_flt, int debug)
+int
+grd3d_imp_roffbin_data(FILE *fc,
+                       int swap,
+                       int dtype,
+                       long bytepos,
+                       int *p_int,
+                       float *p_flt)
 {
 
-    char s[24] = "grd3d_imp_roffbin_data";
-    int anint, iok;
+    int anint;
     float afloat;
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 2, "Running %s", s);
 
     fseek(fc, bytepos, SEEK_SET);
 
     if (dtype == 1) {
-        iok = fread(&anint, 4, 1, fc);
-        if (swap==1) SWAP_INT(anint);
+        fread(&anint, 4, 1, fc);
+        if (swap == 1)
+            SWAP_INT(anint);
         *p_int = anint;
     }
 
     else if (dtype == 2) {
-        iok = fread(&afloat, 4, 1, fc);
-        if (swap==1) SWAP_FLOAT(afloat);
+        fread(&afloat, 4, 1, fc);
+        if (swap == 1)
+            SWAP_FLOAT(afloat);
         *p_flt = afloat;
     }
 

@@ -35,9 +35,7 @@ def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=
                 fhandle, maxkeys=maxkeys, dataframe=dataframe
             )
         else:
-            data = _scan_ecl_keywords(
-                fhandle, maxkeys=maxkeys, dataframe=dataframe
-            )
+            data = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=dataframe)
 
     else:
         data = _scan_roff_keywords(fhandle, maxkeys=maxkeys, dataframe=dataframe)
@@ -66,9 +64,7 @@ def scan_dates(pfile, maxdates=1000, dataframe=False):
         fhandle = pfile.fhandle
         local_fhandle = True
 
-    nstat = _cxtgeo.grd3d_ecl_tsteps(
-        fhandle, seq, day, mon, yer, maxdates, XTGDEBUG
-    )
+    nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates)
 
     if local_fhandle:
         pfile.close(cond=local_fhandle)

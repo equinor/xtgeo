@@ -1214,11 +1214,10 @@ grd3d_imp_roffbin_arr(FILE *fc,
                       int nz,
                       long bytepos,
                       int dtype,
-                      float *swig_np_flt_inplace_v1,  // *farray
-                      long n_swig_np_flt_inplace_v1,  // *nfarray
-                      int *swig_np_int_inplace_v1,    // *iarray
-                      long n_swig_np_int_inplace_v1,  // *niarray
-                      int debug);
+                      float *swig_np_flt_inplace_v1,   // *farray
+                      long n_swig_np_flt_inplace_v1,   // *nfarray
+                      int *swig_np_int_inplace_v1,     // *iarray
+                      long n_swig_np_int_inplace_v1);  // *niarray
 
 int
 grd3d_imp_roffbin_ilist(FILE *fc,
@@ -1241,8 +1240,7 @@ grd3d_imp_roffbin_data(FILE *fc,
                        int dtype,
                        long bytepos,
                        int *pidata,
-                       float *pfdata,
-                       int debug);
+                       float *pfdata);
 
 /* --> last generation import roff binary to here */
 
@@ -1409,13 +1407,7 @@ void
 grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
 
 int
-grd3d_ecl_tsteps(FILE *fc,
-                 int *seqnums,
-                 int *day,
-                 int *mon,
-                 int *year,
-                 int nmax,
-                 int debug);
+grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
 
 /* new version */
 int

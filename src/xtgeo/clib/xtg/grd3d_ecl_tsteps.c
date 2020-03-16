@@ -47,16 +47,8 @@ _mystrsep(char **stringp, const char *delim)
 }
 
 int
-grd3d_ecl_tsteps(FILE *fc,
-                 int *seqnums,
-                 int *day,
-                 int *mon,
-                 int *year,
-                 int nmax,
-                 int debug)
+grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax)
 {
-
-    char s[24] = "grd3d_ecl_tsteps";
 
     char *keywords;
     int *rectypes;
@@ -64,7 +56,7 @@ grd3d_ecl_tsteps(FILE *fc,
 
     char *token, *tofree;
     int ic, nc, nkeys, keytype;
-    long rlen, rstart, nvals;
+    long rlen, rstart;
     int *intrecord;
     float *xfloat = NULL;
     double *xdouble = NULL;
@@ -76,13 +68,11 @@ grd3d_ecl_tsteps(FILE *fc,
     reclengths = (long *)calloc(maxkw, sizeof(long));
     recstarts = (long *)calloc(maxkw, sizeof(long));
 
-    xtgverbose(debug);
-
     rewind(fc);
 
     /* do scan */
-    nkeys =
-      grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw, debug);
+    nkeys = grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw,
+                                 XTGDEBUG);
 
     if (nkeys <= 0)
         logger_error(LI, FI, FU, "No keys received");
@@ -99,8 +89,8 @@ grd3d_ecl_tsteps(FILE *fc,
             rlen = reclengths[ic];
             rstart = recstarts[ic];
             intrecord = calloc(rlen, sizeof(int)); /* knows this is int */
-            nvals = grd3d_read_eclrecord(fc, rstart, keytype, intrecord, rlen, xfloat,
-                                         0, xdouble, 0);
+            grd3d_read_eclrecord(fc, rstart, keytype, intrecord, rlen, xfloat, 0,
+                                 xdouble, 0);
 
             seqnums[nc] = intrecord[0];
 
@@ -124,7 +114,7 @@ grd3d_ecl_tsteps(FILE *fc,
             nc++;
 
             if (nc >= nmax) {
-                xtg_error(s, "Fail in dimensions in %s", s);
+                logger_critical(LI, FI, FU, "Fail in dimensions in %s", FU);
             }
         }
 

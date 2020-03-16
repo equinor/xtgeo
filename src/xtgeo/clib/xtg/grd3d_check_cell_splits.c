@@ -1,5 +1,5 @@
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_check_cell_splits.c
@@ -27,7 +27,7 @@
  *
  * LICENCE:
  *    Equinor property
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
@@ -51,11 +51,9 @@ grd3d_check_cell_splits(int ncol,
     x_ib2ijk(ib1, &ic1, &jc1, &kc1, ncol, nrow, nlay, 0);
     x_ib2ijk(ib2, &ic2, &jc2, &kc2, ncol, nrow, nlay, 0);
 
-    grd3d_corners(ic1, jc1, kc1, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
-                  corners1);
+    grd3d_corners(ic1, jc1, kc1, ncol, nrow, nlay, coordsv, 0, zcornsv, 0, corners1);
 
-    grd3d_corners(ic2, jc2, kc2, ncol, nrow, nlay, coordsv, 0, zcornsv, 0,
-                  corners2);
+    grd3d_corners(ic2, jc2, kc2, ncol, nrow, nlay, coordsv, 0, zcornsv, 0, corners2);
 
     scase = 0;
     if (ic2 > 1 && ic1 == ic2 - 1 && jc1 == jc2)
