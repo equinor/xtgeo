@@ -22,6 +22,8 @@ TESTNOEXISTFILE = "../xtgeo-testdata/3dgrids/reek/NOSUCH.EGRID"
 TESTNOEXISTFOLDER = "../xtgeo-testdata/3dgrids/noreek/NOSUCH.EGRID"
 
 
+@tsetup.skipifmac
+@tsetup.skipifwindows
 def test_xtgeocfile():
     """Test basic system file io etc functions"""
 
@@ -67,20 +69,20 @@ def test_xtgeocfile():
     assert suff == "EGRID"
 
 
-@tsetup.skipifwindows
-@tsetup.skipifpython2
-def test_xtgeocfile_bytesio():
+# @tsetup.skipifwindows
+# @tsetup.skipifpython2
+# def test_xtgeocfile_bytesio():
 
-    with open(TESTFILE, "rb") as fin:
-        stream = io.BytesIO(fin.read())
+#     with open(TESTFILE, "rb") as fin:
+#         stream = io.BytesIO(fin.read())
 
-    gfile = xtgeo._XTGeoCFile(stream)
+#     gfile = xtgeo._XTGeoCFile(stream)
 
-    assert isinstance(gfile, xtgeo._XTGeoCFile)
+#     assert isinstance(gfile, xtgeo._XTGeoCFile)
 
-    assert "Swig" in str(gfile.fhandle)
+#     assert "Swig" in str(gfile.fhandle)
 
-    assert gfile.close() is True
+#     assert gfile.close() is True
 
 
 # @tsetup.equinor

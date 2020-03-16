@@ -36,6 +36,7 @@ TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 @tsetup.skipifmac
 @tsetup.skipifwindows
 @tsetup.skipifpython2
+@tsetup.skipiftravis
 def test_irapbin_bytesio_threading():
     """Test threading for segfaults"""
 
@@ -104,6 +105,7 @@ def test_irapbin_export_bytesio():
 
 @tsetup.skipifmac
 @tsetup.skipiftravis
+@tsetup.skipifwindows
 @tsetup.skipifpython2
 def test_get_regsurfi():
 
@@ -118,8 +120,10 @@ def test_get_regsurfi():
         print(_itmp)
 
 
+@tsetup.skipifwindows
 @tsetup.skipifmac
 @tsetup.skipiftravis
+@tsetup.skipifpython2
 def test_get_regsurff():
 
     sfile = TESTSET1
