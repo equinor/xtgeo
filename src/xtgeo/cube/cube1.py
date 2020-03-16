@@ -616,8 +616,10 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         """
         if not isinstance(fencespec, (np.ndarray, xtgeo.Polygons)):
-            raise ValueError("fencespec must be a numpy or a Polygons() object. "
-                             "Current type is {}".format(type(fencespec)))
+            raise ValueError(
+                "fencespec must be a numpy or a Polygons() object. "
+                "Current type is {}".format(type(fencespec))
+            )
         logger.info("Getting randomline...")
         res = _cube_utils.get_randomline(
             self,
@@ -662,30 +664,28 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
 
         """
-        if not os.path.isfile(sfile):
-            msg = "Does file exist? {}".format(sfile)
-            logger.critical(msg)
-            raise IOError(msg)
+        fobj = xtgeosys._XTGeoCFile(sfile)
+        fobj.check_file(raiseerror=IOError)
 
-        # work on file extension
-        _froot, fext = os.path.splitext(sfile)
+        _froot, fext = fobj.splitext(lower=True)
+
         if fformat == "guess":
             if not fext:
                 logger.critical("File extension missing. STOP")
                 sys.exit(9)
             else:
-                fformat = fext.lower().replace(".", "")
+                fformat = fext.lower()
 
-        if "rms" in fformat.lower():
-            _cube_import.import_rmsregular(self, sfile)
-        elif fformat.lower() == "segy" or fformat.lower() == "sgy":
-            _cube_import.import_segy(self, sfile, engine=engine)
+        if "rms" in fformat:
+            _cube_import.import_rmsregular(self, fobj.name)
+        elif fformat == "segy" or fformat == "sgy":
+            _cube_import.import_segy(self, fobj.name, engine=engine)
         elif fformat == "storm":
-            _cube_import.import_stormcube(self, sfile)
+            _cube_import.import_stormcube(self, fobj.name)
         else:
             logger.error("Invalid or unknown file format")
 
-        self._filesrc = sfile
+        self._filesrc = fobj.name
 
     def to_file(self, sfile, fformat="segy", pristine=False, engine="xtgeo"):
         """Export cube data to file.
@@ -701,13 +701,14 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             >>> zz = Cube('some.segy')
             >>> zz.to_file('some.rmsreg')
         """
+        fobj = xtgeosys._XTGeoCFile(sfile, mode="wb")
 
-        xtgeosys.check_folder(sfile, raiseerror=OSError)
+        fobj.check_folder(raiseerror=OSError)
 
         if fformat == "segy":
-            _cube_export.export_segy(self, sfile, pristine=pristine, engine=engine)
+            _cube_export.export_segy(self, fobj.name, pristine=pristine, engine=engine)
         elif fformat == "rms_regular":
-            _cube_export.export_rmsreg(self, sfile)
+            _cube_export.export_rmsreg(self, fobj.name)
         else:
             logger.error("Invalid file format")
 

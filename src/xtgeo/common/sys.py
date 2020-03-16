@@ -4,16 +4,17 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
 import os
-import os.path
+from os.path import join
 import io
 from platform import system as plfsys
 from tempfile import mkstemp
 
-try:
-    from pathlib import Path
-except ImportError:
-    pass
 
 import six
 
@@ -21,7 +22,7 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__name__)
+logger = xtg.functionlogger(__file__)
 
 
 def check_folder(fname, raiseerror=None):
@@ -37,7 +38,7 @@ class _XTGeoCFile(object):
 
     def __init__(self, fobj, mode="rb"):
 
-        self._name = fobj
+        self._file = None  # Path instance
         self._tmpfile = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._fhandle = None
@@ -45,16 +46,60 @@ class _XTGeoCFile(object):
         self._memstream = False
         logger.debug("Init ran for _XTGeoFile")
 
+        # The self._file must be a Pathlib or a BytesIO instance
+        if isinstance(fobj, pathlib.Path):
+            self._file = fobj
+        elif isinstance(fobj, str):
+            self._file = pathlib.Path(fobj)
+        elif isinstance(fobj, io.BytesIO):
+            self._file = fobj
+            self._memstream = True
+
+        logger.info("Ran init of %s", __name__)
+
+    @property
+    def memstream(self):
+        """Read only: Get True if file object is a memory stream (BytesIO)"""
+        return self._memstream
+
+    @property
+    def file(self):
+        """Read only: Get Path object (if input was file) or BytesIO object"""
+        return self._file
+
+    @property
+    def name(self):
+        """The absolute path name of a file"""
+
+        logger.info("Get absolute name of file...")
+
+        try:
+            logger.debug("Try resolve...")
+            fname = str(self._file.resolve())
+        except FileNotFoundError:
+            try:
+                logger.debug("Try resolve parent, then file...")
+                fname = os.path.abspath(
+                    join(str(self._file.parent.resolve()), str(self._file.name))
+                )
+            except FileNotFoundError:
+                # means that also folder is invalid
+                logger.debug("Last attempt of name resolving...")
+                fname = os.path.abspath(str(self._file))
+        return fname
+
     @property
     def fhandle(self):  # was get_handle
-        """File handle for CXTgeo, the filehandle is a read only property"""
+        """SWIG file handle for CXTgeo, the filehandle is a read only property"""
+
+        logger.info("Get SWIG fhandle...")
 
         if self._fhandle and "Swig Object of type 'FILE" in str(self._fhandle):
             return self._fhandle
 
         fhandle = None
         if (
-            isinstance(self._name, io.BytesIO)
+            isinstance(self._file, io.BytesIO)
             and self._mode == "rb"
             and plfsys() == "Linux"
         ):
@@ -63,13 +108,13 @@ class _XTGeoCFile(object):
                     "Reading BytesIO not fully supported in Python 2"
                 )
 
-            fobj = self._name.getvalue()  # bytes type in Python3, str in Python2
+            fobj = self._file.getvalue()  # bytes type in Python3, str in Python2
 
-            # note that the typemap in swig computes the length for the buf!
+            # note that the typemap in swig computes the length for the buf/fobj!
             self._memstream = True
 
         elif (
-            isinstance(self._name, io.BytesIO)
+            isinstance(self._file, io.BytesIO)
             and self._mode == "wb"
             and plfsys() == "Linux"
         ):
@@ -82,7 +127,7 @@ class _XTGeoCFile(object):
             self._memstream = True
 
         elif (
-            isinstance(self._name, io.BytesIO)
+            isinstance(self._file, io.BytesIO)
             and self._mode == "rb"
             and (plfsys() == "Windows" or plfsys() == "Darwin")
         ):
@@ -90,15 +135,12 @@ class _XTGeoCFile(object):
             fds, fobj = mkstemp(prefix="tmpxtgeoio")
             os.close(fds)
             with open(fobj, "wb") as newfile:
-                newfile.write(self._name.getvalue())
+                newfile.write(self._file.getvalue())
 
             self._tmpfile = fobj
 
         else:
-            if six.PY3 and isinstance(self._name, Path):
-                fobj = str(self._name.resolve())
-            else:
-                fobj = self._name
+            fobj = self.name
 
         if self._memstream:
             fhandle = _cxtgeo.xtg_fopen_bytestream(fobj, self._mode)
@@ -111,65 +153,106 @@ class _XTGeoCFile(object):
                 if six.PY2:
                     reason = "In Python 2, do not use __future__ UnicodeLiterals!"
                 logger.critical("Cannot open file: %s. %s", err, reason)
-            else:
-                logger.critical("Cannot open file, unknown reason")
 
         self._fhandle = fhandle
         return self._fhandle
 
     def exists(self):  # was: file_exists
-        """Check if file or memerory stream exists, and returns True of OK."""
+        """Check if 'r' file, memory stream or folder exists, and returns True of OK."""
         if "r" in self._mode:
-            if isinstance(self._name, str) and os.path.isfile(self._name):
+            if self._file.exists():
                 return True
 
-            if isinstance(self._name, io.BytesIO):
+            if isinstance(self._file, io.BytesIO):
                 return True
 
             return False
 
         return True
 
-    def check_folder(self, raiseerror=None):
+    def check_file(self, raiseerror=None, raisetext=None):
+        """Check if a file exists, and raises an IOError if not. Only
+        meaningful for 'r' files
+
+        Args:
+            raiseerror (Exception): Type of Exception, default is None, which means
+                no Excpetion, just return False or True
+            raisetext (str): Which message to display if raiseerror, None gives a
+                default message.
+
+        Return:
+            status: True, if file exists and is readable, False if not.
+        """
+        logger.info("Checking file...")
+
+        if raisetext is None:
+            raisetext = "File {} does not exist or cannot be accessed".format(self.name)
+
+        if "r" in self._mode:
+            if not self._file.is_file() or not self.exists():
+                if raiseerror is not None:
+                    raise raiseerror(raisetext)
+
+                return False
+
+        return True
+
+    def check_folder(self, raiseerror=None, raisetext=None):
         """Check if folder given in xfile exists and is writeable.
 
         The file itself may not exist (yet), only the folder is checked
 
         Args:
-            raiseerror (excpetion): If none, then return True or False, else raise the
+            raiseerror (exception): If none, then return True or False, else raise the
                 given Exception if False
 
         Return:
             status: True, if folder exists and is writable, False if not.
 
         """
-
-        # Here are issues here on Windows/Mac in particular
+        logger.info("Checking folder...")
 
         status = True
+        folder = self._file.parent
+        if raisetext is None:
+            raisetext = "Folder {} does not exist or cannot be accessed".format(
+                folder.name
+            )
 
-        if os.path.isdir(self._name):
-            folder = self._name
-        else:
-            folder = os.path.dirname(self._name)
-            if folder == "":
-                folder = "."
-
-        if not os.path.exists(folder):
+        if not folder.exists():
             if raiseerror:
-                raise raiseerror("Folder does not exist: <{}>".format(folder))
-
-            status = False
-
-        if os.path.exists(folder) and not os.access(folder, os.W_OK):
-            if raiseerror:
-                raise raiseerror(
-                    "Folder does exist but is not writable: <{}>".format(folder)
-                )
+                raise raiseerror(raisetext)
 
             status = False
 
         return status
+
+        # # Here are issues here on Windows/Mac in particular
+
+        # status = True
+
+        # if os.path.isdir(self._file):
+        #     folder = self._file
+        # else:
+        #     folder = os.path.dirname(self._file)
+        #     if folder == "":
+        #         folder = "."
+
+        # if not os.path.exists(folder):
+        #     if raiseerror:
+        #         raise raiseerror("Folder does not exist: <{}>".format(folder))
+
+        #     status = False
+
+        # if os.path.exists(folder) and not os.access(folder, os.W_OK):
+        #     if raiseerror:
+        #         raise raiseerror(
+        #             "Folder does exist but is not writable: <{}>".format(folder)
+        #         )
+
+        #     status = False
+
+        # return status
 
     def has_fhandle(self):  # was is_fhandle
         """Return True if pfile is a filehandle, not a file"""
@@ -179,12 +262,30 @@ class _XTGeoCFile(object):
 
         return False
 
+    def splitext(self, lower=False):
+        """Return file stem and suffix, always lowercase if lower is True"""
+
+        logger.info("Run splitext to get stem and suffix...")
+
+        stem = self._file.stem
+        suffix = self._file.suffix
+        suffix = suffix.replace(".", "")
+
+        if lower:
+            stem = stem.lower()
+            suffix = suffix.lower()
+
+        return stem, suffix
+
     def close(self, cond=True):
         """Close file handle given that filehandle exists (return True), otherwise do
         nothing (return False).
 
         If cond is False, nothing is done (made in order to avoid ifs in callers)
         """
+
+        logger.info("Close SWIG fhandle...")
+
         if not cond:
             return True
 
@@ -194,7 +295,7 @@ class _XTGeoCFile(object):
             buf = bytes(npos)
             ier = _cxtgeo.xtg_get_fbuffer(self._fhandle, buf)
             if ier == 0:
-                self._name.write(buf)  # write to bytesIO instance
+                self._file.write(buf)  # write to bytesIO instance
                 _cxtgeo.xtg_fflush(self._fhandle)
             else:
                 raise RuntimeError("Could not write stream for unknown reasons")

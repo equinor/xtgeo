@@ -38,7 +38,6 @@ from __future__ import division
 
 import os
 import os.path
-import io
 
 from copy import deepcopy
 import math
@@ -704,22 +703,20 @@ class RegularSurface(object):
           Input io.BytesIO instance instead of file is now possible
         """
 
+        fobj = xtgeosys._XTGeoCFile(mfile)
+
+        if fformat is None:
+            fformat = "guess"  # default
+
         bytestream = False
-        if isinstance(mfile, io.BytesIO):
+        if fobj.memstream is True:
             bytestream = True
-            logger.debug("File input is bytestream")
+            fformat = "irap_binary"
+        else:
+            fobj.check_file(raiseerror=IOError)
+            froot, fext = fobj.splitext(lower=True)
 
-        self._values = None
-
-        if not bytestream:
-            if isinstance(mfile, str) and not os.path.isfile(mfile):
-                msg = "Does file exist? {}".format(mfile)
-                logger.critical(msg)
-                raise IOError(msg)
-
-            froot, fext = os.path.splitext(mfile)
-
-            if fformat is None or fformat == "guess":
+            if fformat == "guess":
                 if not fext:
                     msg = (
                         'Stop: fformat is "guess" but file '
@@ -727,10 +724,7 @@ class RegularSurface(object):
                     )
                     raise ValueError(msg)
 
-                fformat = fext.lower().replace(".", "")
-        else:
-            if fformat is None:
-                fformat = "irap_binary"  # default
+                fformat = fext
 
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
             logger.debug("Irap binary format to read")
@@ -794,7 +788,7 @@ class RegularSurface(object):
         original map in order to prevent aliasing. See :func:`unrotate`.
 
         Args:
-            mfile (str): Name of file
+            mfile (str): Name of file, Path instance or IOBytestream instance
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz/petromod. Default is irap_binary.
             pmd_dataunits (tuple of int): A tuple of length 2 for petromod format,
@@ -822,8 +816,10 @@ class RegularSurface(object):
         engine = kwargs.get("engine", "cxtgeo")
         bstream = False
 
-        if not isinstance(mfile, io.BytesIO):
-            xtgeosys.check_folder(mfile, raiseerror=OSError)
+        fobj = xtgeosys._XTGeoCFile(mfile)
+
+        if not fobj.memstream:
+            fobj.check_folder(raiseerror=OSError)
         else:
             engine = "python"
             bstream = True  # write to byte stream, not file

@@ -307,8 +307,6 @@ surf_export_irap_ascii(FILE *fc,
                        double rot,
                        double *swig_np_dbl_in_v1,  // *p_map_v
                        long n_swig_np_dbl_in_v1,   // mxy
-                       double zmin,
-                       double zmax,
                        int option);
 
 int

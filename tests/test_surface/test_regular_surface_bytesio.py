@@ -36,6 +36,7 @@ TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 @tsetup.skipifmac
 @tsetup.skipifwindows
 @tsetup.skipifpython2
+@tsetup.skipiftravis
 def test_irapbin_bytesio_threading():
     """Test threading for segfaults"""
 
@@ -44,6 +45,7 @@ def test_irapbin_bytesio_threading():
         surface = xtgeo.RegularSurface()
         surface.to_file(stream)
         print("XTGeo succeeded")
+
     threading.Timer(1.0, test_xtgeo).start()
 
 
@@ -63,7 +65,7 @@ def test_irapbin_import_bytesio():
     xsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
-    assert (abs(xsurf.values.mean() - 1698.648) < 0.01)
+    assert abs(xsurf.values.mean() - 1698.648) < 0.01
     xsurf.describe()
 
 
@@ -78,7 +80,7 @@ def test_irapbin_export_bytesio():
     xsurf = xtgeo.RegularSurface(TESTSET1, fformat="irap_binary")
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
-    assert (abs(xsurf.values.mean() - 1698.648) < 0.01)
+    assert abs(xsurf.values.mean() - 1698.648) < 0.01
     xsurf.describe()
     xsurf.to_file(join(TMPD, "bytesio1.gri"), fformat="irap_binary")
 
@@ -103,6 +105,7 @@ def test_irapbin_export_bytesio():
 
 @tsetup.skipifmac
 @tsetup.skipiftravis
+@tsetup.skipifwindows
 @tsetup.skipifpython2
 def test_get_regsurfi():
 
@@ -113,19 +116,21 @@ def test_get_regsurfi():
     logger.info("File is %s", sfile)
     for _itmp in range(20):
         rf = xtgeo.RegularSurface(stream, fformat="irap_binary")
-        assert (abs(rf.values.mean() - 1698.648) < 0.01)
+        assert abs(rf.values.mean() - 1698.648) < 0.01
         print(_itmp)
 
 
+@tsetup.skipifwindows
 @tsetup.skipifmac
 @tsetup.skipiftravis
+@tsetup.skipifpython2
 def test_get_regsurff():
 
     sfile = TESTSET1
     logger.info("File is %s", sfile)
     for _itmp in range(20):
         rf = xtgeo.RegularSurface(sfile, fformat="irap_binary")
-        assert (abs(rf.values.mean() - 1698.648) < 0.01)
+        assert abs(rf.values.mean() - 1698.648) < 0.01
         print(_itmp)
 
 
