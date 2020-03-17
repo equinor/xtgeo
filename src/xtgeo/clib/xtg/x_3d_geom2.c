@@ -6,9 +6,9 @@
  ******************************************************************************
  */
 
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <math.h>
 
 /*
  ******************************************************************************
@@ -17,7 +17,7 @@
  *    x_point_line_dist.c
  *
  * AUTHOR(S):
- *    Jan C. Rivenaes
+ *
  *
  * DESCRIPTION:
  *    Distance between a point (or segment) and a line (3D)
@@ -51,82 +51,91 @@
  *    cf. XTGeo LICENSE
  ******************************************************************************
  */
-int x_point_line_dist(double x1, double y1, double z1,
-		      double x2, double y2, double z2,
-		      double x3, double y3, double z3,
-		      double *distance,
-		      int option1, int option2, int debug)
+int
+x_point_line_dist(double x1,
+                  double y1,
+                  double z1,
+                  double x2,
+                  double y2,
+                  double z2,
+                  double x3,
+                  double y3,
+                  double z3,
+                  double *distance,
+                  int option1,
+                  int option2,
+                  int debug)
 {
-    char    s[24]="x_point_line_dist";
-    double  sign, u, dlen, x0, y0, z0;
+    char s[24] = "x_point_line_dist";
+    double sign, u, dlen, x0, y0, z0;
 
     xtgverbose(debug);
 
-    xtg_speak(s,3,"Entering %s",s);
+    xtg_speak(s, 3, "Entering %s", s);
 
     /* some checks */
-    if (x1==x2 && y1==y2 && z1==z2) {
-	/* the two points forms no line*/
-	return(1);
+    if (x1 == x2 && y1 == y2 && z1 == z2) {
+        /* the two points forms no line*/
+        return (1);
     }
 
     /* length of segment */
-    dlen = sqrt (pow(x2-x1,2) + pow(y2-y1,2) + pow(z2-z1,2));
-
+    dlen = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) + pow(z2 - z1, 2));
 
     if (dlen < 1e-20) {
-    	return(3);
+        return (3);
     }
 
     /* find u */
-    u = (((x3-x1)*(x2-x1)) + ((y3-y1) * (y2-y1)) + ((z3-z1) * (z2-z1)))/
-	pow(dlen,2);
+    u = (((x3 - x1) * (x2 - x1)) + ((y3 - y1) * (y2 - y1)) + ((z3 - z1) * (z2 - z1))) /
+        pow(dlen, 2);
 
-    if (option1 == 2 && (u<0 || u > 1)) {
-        return(-1);
+    if (option1 == 2 && (u < 0 || u > 1)) {
+        return (-1);
     }
-
 
     if (option1 == 1) {
-	if (u<0) u=0;
-	if (u>1) u=1;
+        if (u < 0)
+            u = 0;
+        if (u > 1)
+            u = 1;
     }
 
-
     /* this gives the point on the line (or segment): */
-    x0 = x1 + u*(x2-x1);
-    y0 = y1 + u*(y2-y1);
-    z0 = z1 + u*(z2-z1);
-
+    x0 = x1 + u * (x2 - x1);
+    y0 = y1 + u * (y2 - y1);
+    z0 = z1 + u * (z2 - z1);
 
     /* the actual distance: */
-    dlen = sqrt (pow(x3-x0,2) + pow(y3-y0,2) + pow(z3-z0,2));
+    dlen = sqrt(pow(x3 - x0, 2) + pow(y3 - y0, 2) + pow(z3 - z0, 2));
 
     /* give sign according to side seen in XY plane ... */
 
     sign = 0;
     if (option2 == 1) {
-	if (x2>x1) {
-	    if (y3>=y0) sign=1;
-	    if (y3<y0) sign=-1;
-	}
-	else if (x2<x1) {
-	    if (y3>=y0) sign=-1;
-	    if (y3<y0) sign=1;
-	}
-	else{
-	    if (x3>=x0) sign=1;
-	    if (x3<x0) sign=-1;
-	}
-	dlen = dlen*sign;
+        if (x2 > x1) {
+            if (y3 >= y0)
+                sign = 1;
+            if (y3 < y0)
+                sign = -1;
+        } else if (x2 < x1) {
+            if (y3 >= y0)
+                sign = -1;
+            if (y3 < y0)
+                sign = 1;
+        } else {
+            if (x3 >= x0)
+                sign = 1;
+            if (x3 < x0)
+                sign = -1;
+        }
+        dlen = dlen * sign;
     }
 
     *distance = dlen;
 
-    return(0);
+    return (0);
 }
-
-
 
 /*
  ******************************************************************************
@@ -135,7 +144,7 @@ int x_point_line_dist(double x1, double y1, double z1,
  *    x_point_line_pos.c
  *
  * AUTHOR(S):
- *    Jan C. Rivenaes
+ *
  *
  * DESCRIPTION:
  *    Projected XYZ on line between a point and a line (3D)
@@ -167,53 +176,64 @@ int x_point_line_dist(double x1, double y1, double z1,
  *    cf. XTGeo LICENSE
  ******************************************************************************
  */
-int x_point_line_pos(double x1, double y1, double z1,
-                     double x2, double y2, double z2,
-                     double x3, double y3, double z3,
-                     double *x, double *y, double *z,
-                     double *rel,
-                     int option1, int debug)
+int
+x_point_line_pos(double x1,
+                 double y1,
+                 double z1,
+                 double x2,
+                 double y2,
+                 double z2,
+                 double x3,
+                 double y3,
+                 double z3,
+                 double *x,
+                 double *y,
+                 double *z,
+                 double *rel,
+                 int option1,
+                 int debug)
 {
-    char    s[24]="x_point_line_pos";
-    double  u, dlen, rellen, fullen, x0, y0, z0;
+    char s[24] = "x_point_line_pos";
+    double u, dlen, rellen, fullen, x0, y0, z0;
 
     xtgverbose(debug);
 
-    xtg_speak(s,3,"Entering %s",s);
+    xtg_speak(s, 3, "Entering %s", s);
 
     /* some checks */
-    if (x1==x2 && y1==y2 && z1==z2) {
-	/* the two points forms no line*/
-	return(1);
+    if (x1 == x2 && y1 == y2 && z1 == z2) {
+        /* the two points forms no line*/
+        return (1);
     }
 
     /* length of segment */
-    dlen = sqrt (pow(x2-x1,2) + pow(y2-y1,2) + pow(z2-z1,2));
-
+    dlen = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) + pow(z2 - z1, 2));
 
     if (dlen < 1e-20) {
-    	return(3);
+        return (3);
     }
 
     /* find u */
-    u = (((x3 - x1) * (x2 - x1)) + ((y3 - y1) * (y2 - y1)) +
-         ((z3 - z1) * (z2 - z1))) / pow(dlen, 2);
+    u = (((x3 - x1) * (x2 - x1)) + ((y3 - y1) * (y2 - y1)) + ((z3 - z1) * (z2 - z1))) /
+        pow(dlen, 2);
 
     if (option1 == 1 && (u < 0 || u > 1)) {
-        return(-1);
+        return (-1);
     }
 
     if (option1 == 2) {
-        if (u < (0.0 - FLOATEPS) || u > (1 + FLOATEPS)) return(-1);
-        if (u < 0.0) u = 0.0 + FLOATEPS;  /* making edge points being inside */
-        if (u > 1.0) u = 1.0 - FLOATEPS;  /* making edge points being inside */
+        if (u < (0.0 - FLOATEPS) || u > (1 + FLOATEPS))
+            return (-1);
+        if (u < 0.0)
+            u = 0.0 + FLOATEPS; /* making edge points being inside */
+        if (u > 1.0)
+            u = 1.0 - FLOATEPS; /* making edge points being inside */
     }
 
     /* this gives the point on the line (or segment): */
     x0 = x1 + u * (x2 - x1);
     y0 = y1 + u * (y2 - y1);
     z0 = z1 + u * (z2 - z1);
-
 
     /* the actual relative distance: */
     rellen = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2) + pow(z1 - z0, 2));
@@ -224,5 +244,5 @@ int x_point_line_pos(double x1, double y1, double z1,
     *y = y0;
     *z = z0;
 
-    return(0);
+    return (0);
 }

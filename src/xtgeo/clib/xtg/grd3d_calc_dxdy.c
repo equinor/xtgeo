@@ -4,9 +4,6 @@
  * NAME:
  *    grd3d_calc_dxdy.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
- *
  * DESCRIPTION:
  *    Computes the DX DY avg per cell
  *

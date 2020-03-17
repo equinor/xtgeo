@@ -1,22 +1,12 @@
-/*
- ******************************************************************************
- *
- * Do operations inside or outside a polygon for an array of points
- *
- ******************************************************************************
- */
 
-#include "libxtg.h"
-#include "libxtg_.h"
-#include <math.h>
 /*
  ******************************************************************************
  *
  * NAME:
  *    pol_do_points_inside.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Do operations on Z array for an array of points
@@ -37,7 +27,6 @@
  *                         1: set; 2: add; 3; subtract; 4: mul, 5: div
  *                         11: eli
  *    inside         i     inside flag: 1= True for inside; 0: outside
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
@@ -52,6 +41,11 @@
  ******************************************************************************
  */
 
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
+#include <math.h>
+
 int
 pol_do_points_inside(double *xpoi,
                      long nxpoi,
@@ -65,26 +59,23 @@ pol_do_points_inside(double *xpoi,
                      long nypol,
                      double value,
                      int option,
-                     int inside,
-                     int debug)
+                     int inside)
 
 {
     int ic, dowork = 0, istat;
-    char sbn[24] = "pol_do_points_inside";
 
     /*
      *-------------------------------------------------------------------------
      * Loop over all points
      *-------------------------------------------------------------------------
      */
-    xtg_speak(sbn, 2, "Check points inside a polygon...");
 
     for (ic = 0; ic < nzpoi; ic++) {
         dowork = 0;
         istat = pol_chk_point_inside(xpoi[ic], ypoi[ic], xpol, ypol, nxpol);
 
         if (istat == -9) {
-            xtg_warn(sbn, 1, "Polygon is not closed");
+            logger_warn(LI, FI, FU, "Polygon is not closed");
             return 1;
         }
 
@@ -115,6 +106,5 @@ pol_do_points_inside(double *xpoi,
             }
         }
     }
-    xtg_speak(sbn, 2, "Check points inside a polygon... done");
     return EXIT_SUCCESS;
 }

@@ -4,8 +4,8 @@
  * NAME:
  *    surf_slice_grd3d.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Sample values from grd3d based on map values
@@ -72,7 +72,7 @@ surf_slice_grd3d(int mcol,
     long ib, ic, nactive = 0;
 
     /* determine Z window for map (could speed up if flat OWC contact) */
-    ier = surf_zminmax(mcol, mrow, p_slice_v, &zmapmin, &zmapmax, XTGDEBUG);
+    ier = surf_zminmax(mcol, mrow, p_slice_v, &zmapmin, &zmapmax);
 
     if (ier == -2)
         logger_error(LI, FI, FU, "Only UNDEF in input map!");
@@ -89,8 +89,8 @@ surf_slice_grd3d(int mcol,
         for (i = 1; i <= ncol; i++) {
 
             /* if the whole column is outside zmap minmax, then skip */
-            zgrdtop = grd3d_zminmax(i, j, 1, ncol, nrow, nlay, zcornsv, 0, XTGDEBUG);
-            zgrdbot = grd3d_zminmax(i, j, nlay, ncol, nrow, nlay, zcornsv, 1, XTGDEBUG);
+            zgrdtop = grd3d_zminmax(i, j, 1, ncol, nrow, nlay, zcornsv, 0);
+            zgrdbot = grd3d_zminmax(i, j, nlay, ncol, nrow, nlay, zcornsv, 1);
 
             if (zgrdbot < zmapmin)
                 continue;
@@ -106,10 +106,8 @@ surf_slice_grd3d(int mcol,
                 if (actnumsv[ib] == 1)
                     nactive++;
 
-                zgrdtop =
-                  grd3d_zminmax(i, j, k, ncol, nrow, nlay, zcornsv, 0, XTGDEBUG);
-                zgrdbot =
-                  grd3d_zminmax(i, j, k, ncol, nrow, nlay, zcornsv, 1, XTGDEBUG);
+                zgrdtop = grd3d_zminmax(i, j, k, ncol, nrow, nlay, zcornsv, 0);
+                zgrdbot = grd3d_zminmax(i, j, k, ncol, nrow, nlay, zcornsv, 1);
 
                 if (zgrdbot < zmapmin)
                     kc1 = k;

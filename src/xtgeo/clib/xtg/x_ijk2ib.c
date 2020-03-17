@@ -2,7 +2,7 @@
  * ############################################################################
  * x_ijk2ib.c
  * Converting from sequential block number to I,J,K cell
- * Author: J.C. Rivenaes (based on Tor Barkve's numlib)
+ *: J.C. Rivenaes (based on Tor Barkve's numlib)
  */
 
 #include "libxtg_.h"

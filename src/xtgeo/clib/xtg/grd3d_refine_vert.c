@@ -5,8 +5,8 @@
  * NAME:
  *    grd3d_refine_vert.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Proportional refinement per layer

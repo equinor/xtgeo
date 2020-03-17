@@ -4,8 +4,8 @@
  * NAME:
  *    grd3d_translate.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Translate the coordinates in 3D (linear)

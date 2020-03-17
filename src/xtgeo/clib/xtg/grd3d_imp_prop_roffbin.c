@@ -1,28 +1,14 @@
-/*
- *******************************************************************************
- *
- * Import ROFF binary property (new implementation sep 2016)
- *
- *******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- *******************************************************************************
+/* REDUNDANT!
+ ***************************************************************************************
  *
  * NAME:
  *    surf_import_irap_bin.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Imports a property on ROFF binary formats. Shall be able to search in
  *    files with multiple records.
  *    Format:
- *------------------------------------------------------------------------------
+ *--------------------------------------------------------------------------------------
  *
  * [INTEGER or BYTE or BOOL or CHAR(?):]
  *
@@ -56,7 +42,7 @@
  *      15           14           14           14           13           13
  *      12           12           11           11           11           10
  *      ...
- *------------------------------------------------------------------------------
+ *--------------------------------------------------------------------------------------
  *
  * [FLOAT:]
  * char name  "PORO"
@@ -64,7 +50,7 @@
  *  0.00000000E+00   0.00000000E+00   3.34683023E-02   2.26940989E-01
  *  2.51200527E-01   2.42778420E-01   2.46708006E-01   2.03249753E-01
  * ...
- *------------------------------------------------------------------------------
+ *--------------------------------------------------------------------------------------
  *
  * ARGUMENTS:
  *    filename       i     File name, character string
@@ -80,7 +66,6 @@
  *    p_codenames_v  o     if int: array of chars divided with | -> strings
  *    p_codevalues_v o     if int: array of int codes
  *    option         i     Options flag for later usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success (parameter OK). If problems <> 0:
@@ -94,59 +79,53 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- *******************************************************************************
+ ***************************************************************************************
  */
 
-int grd3d_imp_prop_roffbin (
-			    char    *filename,
-			    int     scanmode,
-			    int     *p_type,
-			    int     *p_nx,
-			    int     *p_ny,
-			    int     *p_nz,
-			    int     *p_ncodes,
-			    char    *prop_name,
-			    int     *p_int_v,
-			    double  *p_double_v,
-			    char    *p_codenames_v,
-			    int     *p_codevalues_v,
-			    int     option,
-			    int     debug
-			    )
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
 
+int
+grd3d_imp_prop_roffbin(char *filename,
+                       int scanmode,
+                       int *p_type,
+                       int *p_nx,
+                       int *p_ny,
+                       int *p_nz,
+                       int *p_ncodes,
+                       char *prop_name,
+                       int *p_int_v,
+                       double *p_double_v,
+                       char *p_codenames_v,
+                       int *p_codevalues_v,
+                       int option)
 
 {
-    int   storevalue;
-    int   probablyfound;
+    int storevalue;
+    int probablyfound;
 
-    int   i, j, k, ic, n, m, idum, ncodes=1, iok, ntype=1, nn=0;
-    int   nx=100, ny=100, nz=100;
-    int   swap;
-    char  cname[ROFFSTRLEN], ctype[ROFFSTRLEN], csome[ROFFSTRLEN];
-    int   propstatus=-1;
+    int i, j, k, ic, n, m, idum, ncodes = 1, iok, ntype = 1, nn = 0;
+    int nx = 100, ny = 100, nz = 100;
+    int swap;
+    char cname[ROFFSTRLEN], ctype[ROFFSTRLEN], csome[ROFFSTRLEN];
+    int propstatus = -1;
 
-    float *p_ftmp_v=NULL;
-    int *p_itmp_v=NULL;
-    char *p_ctmp_v=NULL;
-    unsigned char *p_btmp_v=NULL;
+    float *p_ftmp_v = NULL;
+    int *p_itmp_v = NULL;
+    char *p_ctmp_v = NULL;
+    unsigned char *p_btmp_v = NULL;
 
-    FILE   *fc=NULL;
+    FILE *fc = NULL;
 
-    char   s[24]="grd3d_imp_prop_roffbin";
+    logger_info(LI, FI, FU, "Running import of roff %", FU);
+    swap = 0;
+    if (x_byteorder(-1) > 1)
+        swap = 1;
 
-    xtgverbose(debug);
-    xtg_speak(s,2,"==== Entering grd3d_import_roff_prop ====");
-    xtg_speak(s,2,"Looking for <%s>",prop_name);
+    *p_ncodes = ncodes; /* initial */
 
-    swap=0;
-    if (x_byteorder(-1)>1) swap=1;
-
-    *p_ncodes=ncodes; /* initial */
-
-    strcpy(p_codenames_v,"DUMMY");
-    xtg_speak(s,2,"Initial (2) codenames string read as: <%s> %d",
-              p_codenames_v, &p_codenames_v);
-
+    strcpy(p_codenames_v, "DUMMY");
 
     /*
      *-------------------------------------------------------------------------
@@ -154,15 +133,11 @@ int grd3d_imp_prop_roffbin (
      *-------------------------------------------------------------------------
      */
 
-    xtg_speak(s,2,"Opening ROFF file...");
-    fc=fopen(filename,"rb");
-    if (fc==NULL) {
-	xtg_error(s,"Cannot open file!");
-    }
-    xtg_speak(s,2,"Opening ROFF file...OK!");
+    fc = fopen(filename, "rb");
 
-    swap=0;
-    if (x_byteorder(-1)>1) swap=1;
+    swap = 0;
+    if (x_byteorder(-1) > 1)
+        swap = 1;
 
     /*
      *=========================================================================
@@ -172,315 +147,257 @@ int grd3d_imp_prop_roffbin (
 
     x_roffbinstring(cname, fc);
     if (strcmp(cname, "roff-bin") != 0) {
-	xtg_error(s,"Not a roff binary file. Stop");
-	return(-9);
+        logger_critical(LI, FI, FU, "Not a roff binary file. Stop");
+        return (-9);
     }
 
-    for (idum=1;idum<999999;idum++) {
+    for (idum = 1; idum < 999999; idum++) {
 
-	x_roffbinstring(cname, fc);
-	xtg_speak(s,4,"Reading: %s",cname);
+        x_roffbinstring(cname, fc);
 
+        if (strcmp(cname, "endtag") == 0) {
+            logger_info(LI, FI, FU, "Reading: %s", cname);
+        } else if (strcmp(cname, "tag") == 0) {
+            x_roffbinstring(cname, fc);
 
-	if (strcmp(cname, "endtag") == 0) {
-	    xtg_speak(s,2,"Reading: %s",cname);
-	}
-	else if (strcmp(cname, "tag") == 0) {
-	    x_roffbinstring(cname, fc);
+            /*
+             *-----------------------------------------------------------------
+             * Getting 'eof' values
+             *-----------------------------------------------------------------
+             */
+            if (strcmp(cname, "eof") == 0) {
+                goto finally;
+            }
+            /*
+             *-----------------------------------------------------------------
+             * Getting 'dimensions' values
+             *-----------------------------------------------------------------
+             */
+            else if (strcmp(cname, "dimensions") == 0) {
+                nx = x_roffgetintvalue("nX", fc);
+                ny = x_roffgetintvalue("nY", fc);
+                nz = x_roffgetintvalue("nZ", fc);
 
+                *p_nx = nx;
+                *p_ny = ny;
+                *p_nz = nz;
 
-	    /*
-	     *-----------------------------------------------------------------
-	     * Getting 'eof' values
-	     *-----------------------------------------------------------------
-	     */
-	    if (strcmp(cname, "eof") == 0) {
-		xtg_speak(s,2,"Tag eof was found");
-		goto finally;
-	    }
-	    /*
-	     *-----------------------------------------------------------------
-	     * Getting 'dimensions' values
-	     *-----------------------------------------------------------------
-	     */
-	    else if (strcmp(cname, "dimensions") == 0) {
-		xtg_speak(s,2,"Tag dimensions was found");
-		nx = x_roffgetintvalue("nX", fc);
-		ny = x_roffgetintvalue("nY", fc);
-		nz = x_roffgetintvalue("nZ", fc);
+                p_ftmp_v = calloc(nx * ny * nz, sizeof(float));
+                p_itmp_v = calloc(nx * ny * nz, sizeof(int));
+                p_btmp_v = calloc(nx * ny * nz, sizeof(unsigned char));
 
-		*p_nx = nx;
-		*p_ny = ny;
-		*p_nz = nz;
+            }
 
-		xtg_speak(s,2,"Dimensions are %d %d %d", nx, ny, nz);
+            /*
+             *-----------------------------------------------------------------
+             * Getting 'parameter' values
+             * Needs reprogramming ... not very elegant ...
+             *-----------------------------------------------------------------
+             */
+            else if (strcmp(cname, "parameter") == 0) {
 
-		xtg_speak(s,2,"Allocate memory for tmp arrays...");
-		p_ftmp_v = calloc(nx*ny*nz, sizeof(float));
-		p_itmp_v = calloc(nx*ny*nz, sizeof(int));
-		p_btmp_v = calloc(nx*ny*nz, sizeof(unsigned char));
+                x_roffbinstring(cname, fc); /*char*/
+                x_roffbinstring(cname, fc); /*name*/
+                x_roffbinstring(cname, fc); /*actual property name*/
 
+                /*
+                 * Due to a BUG in RMS IPL RoffExport, the property name
+                 * may be "" (empty).
+                 * In such cases, it is assumed to be correct!
+                 * Must rely on structured programming
+                 */
 
-	    }
+                probablyfound = 0;
+                if (strcmp(cname, "") == 0)
+                    probablyfound = 1;
 
-	    /*
-	     *-----------------------------------------------------------------
-	     * Getting 'parameter' values
-	     * Needs reprogramming ... not very elegant ...
-	     *-----------------------------------------------------------------
-	     */
-	    else if (strcmp(cname, "parameter") == 0) {
+                if (strcmp(prop_name, "generic") == 0)
+                    probablyfound = 1;
 
-		xtg_speak(s,2,"Tag parameter was found");
+                if (strcmp(prop_name, "unknown") == 0)
+                    probablyfound = 1;
 
-		x_roffbinstring(cname,fc); /*char*/
-		x_roffbinstring(cname,fc); /*name*/
-		x_roffbinstring(cname,fc); /*actual property name*/
+                if (probablyfound || strcmp(cname, prop_name) == 0) {
+                    storevalue = 1;
+                    propstatus = 0;
+                } else {
+                    storevalue = 0;
+                }
 
-		xtg_speak(s,3,"Property name is <%s>",cname);
+                if (scanmode == 0)
+                    storevalue = 0;
 
-		/*
-		 * Due to a BUG in RMS IPL RoffExport, the property name
-		 * may be "" (empty).
-		 * In such cases, it is assumed to be correct!
-		 * Must rely on structured programming
-		 */
+            readarray:
 
-		probablyfound=0;
-		if (strcmp(cname,"")==0) probablyfound=1;
+                x_roffbinstring(cname, fc); /*array or...*/
 
-		if (strcmp(prop_name,"generic")==0) probablyfound=1;
+                if (strcmp(cname, "array") == 0) {
+                    x_roffbinstring(ctype, fc); /*int or float or ...*/
+                    x_roffbinstring(cname, fc); /*data or codeNames or ...?*/
 
-		if (strcmp(prop_name,"unknown")==0) probablyfound=1;
+                    /*
+                     *----------------------------------------------------------
+                     * data:
+                     * Note that ROFF use indexing where K runs fastest, from
+                     * base!, then J, then I. For XTGeo an Eclipse order
+                     * is used, I fastest, then J, then K (from top)
+                     * hence the: m=(nz-(k+1))*ny*nx + j*nx + i;
+                     *----------------------------------------------------------
+                     */
 
-		if (probablyfound || strcmp(cname,prop_name)==0) {
-		    xtg_speak(s,3,"<%s> found!!",cname);
-		    storevalue=1;
-		    propstatus=0;
-		}
-		else{
-		    storevalue=0;
-		}
+                    if (strcmp(cname, "data") == 0) {
+                        iok = fread(&n, 4, 1, fc);
+                        if (swap == 1)
+                            SWAP_INT(n);
 
-		if (scanmode == 0) storevalue=0;
+                        if (n != nx * ny * nz) {
+                            logger_critical(LI, FI, FU,
+                                            "Error in reading ROFF as n != nx*ny*nz.");
+                        }
 
-	    readarray:
+                        if (strcmp(ctype, "float") == 0) {
+                            x_roffgetfloatarray(p_ftmp_v, n, fc);
+                            ntype = 1;
+                        } else if (strcmp(ctype, "int") == 0) {
+                            x_roffgetintarray(p_itmp_v, n, fc);
+                            ntype = 2;
+                        } else if (strcmp(ctype, "byte") == 0) {
+                            x_roffgetbytearray(p_btmp_v, n, fc);
+                            ntype = 3;
+                        } else {
+                            logger_critical(LI, FI, FU, "Error code 9349 from %s", FU);
+                        }
 
-		x_roffbinstring(cname,fc); /*array or...*/
-		xtg_speak(s,2,"Reading <%s>",cname);
+                        if (propstatus == 0) {
+                            *p_type = ntype;
+                        }
 
-		if (strcmp(cname,"array")==0) {
-		    x_roffbinstring(ctype,fc); /*int or float or ...*/
-		    x_roffbinstring(cname,fc); /*data or codeNames or ...?*/
+                        if (storevalue == 1) {
+                            ic = 0;
+                            for (i = 0; i < nx; i++) {
+                                for (j = 0; j < ny; j++) {
+                                    for (k = 0; k < nz; k++) {
 
-		    /*
-		     *----------------------------------------------------------
-		     * data:
-		     * Note that ROFF use indexing where K runs fastest, from
-		     * base!, then J, then I. For XTGeo an Eclipse order
-		     * is used, I fastest, then J, then K (from top)
-		     * hence the: m=(nz-(k+1))*ny*nx + j*nx + i;
-		     *----------------------------------------------------------
-		     */
+                                        m = (nz - (k + 1)) * ny * nx + j * nx + i;
 
+                                        if (ntype == 1) {
+                                            if (p_ftmp_v[ic] == UNDEF_ROFFFLOAT) {
+                                                p_double_v[m] = UNDEF;
+                                            } else {
+                                                p_double_v[m] = p_ftmp_v[ic];
+                                            }
+                                        } else if (ntype == 2) {
+                                            if (p_itmp_v[ic] == UNDEF_ROFFINT) {
+                                                p_int_v[m] = UNDEF_INT;
+                                            } else {
+                                                p_int_v[m] = p_itmp_v[ic];
+                                            }
+                                        } else if (ntype == 3) {
+                                            if (p_btmp_v[ic] == UNDEF_ROFFBYTE) {
+                                                p_int_v[m] = UNDEF_INT;
+                                            } else {
+                                                /* store as int */
+                                                p_int_v[m] = p_btmp_v[ic];
+                                            }
+                                        }
+                                        /* char/bool ? etc still missing ...*/
+                                        ic++;
+                                    }
+                                }
+                            }
+                        }
 
-		    if (strcmp(cname,"data")==0) {
-			xtg_speak(s,2,"Reading <%s>",cname);
-			iok=fread(&n,4,1,fc);
-			if (swap==1) SWAP_INT(n);
+                        if (storevalue == 1 || (propstatus == 0 && scanmode == 0)) {
+                            goto finally;
+                        }
 
-			if (n != nx*ny*nz) {
-			    xtg_error(s,"Error in reading ROFF as "
-				      "n != nx*ny*nz. Contact JRIV...");
-			}
+                    }
 
-			if (strcmp(ctype,"float")==0) {
-			    x_roffgetfloatarray(p_ftmp_v,n,fc);
-			    ntype=1;
-			}
-			else if (strcmp(ctype,"int")==0) {
-			    x_roffgetintarray(p_itmp_v,n,fc);
-			    ntype=2;
-			}
-			else if (strcmp(ctype,"byte")==0) {
-			    x_roffgetbytearray(p_btmp_v,n,fc);
-			    ntype=3;
-			}
-			else{
-			    xtg_error(s, "Error code 9349");
-			}
+                    /*
+                     *----------------------------------------------------------
+                     * codeNames array (and codeValues):
+                     *----------------------------------------------------------
+                     */
 
-			xtg_speak(s,2,"PROPTYPE is %d", ntype);
+                    else if (strcmp(cname, "codeNames") == 0) {
 
-			if (propstatus==0) {
-			    *p_type=ntype;
-			}
+                        /* get the number of codes */
+                        iok = fread(&ncodes, 4, 1, fc);
+                        if (swap == 1)
+                            SWAP_INT(ncodes);
 
-			xtg_speak(s,2,"Store value if %d is 1", storevalue);
+                        if (propstatus == 0 && scanmode == 0) {
+                            *p_ncodes = ncodes;
+                        }
 
-			if (storevalue==1) {
-			    ic=0;
-			    for (i=0;i<nx;i++) {
-				for (j=0;j<ny;j++) {
-				    for (k=0;k<nz;k++) {
-
-					m=(nz-(k+1))*ny*nx + j*nx + i;
-
-					if (ntype==1) {
-					    if (p_ftmp_v[ic]==UNDEF_ROFFFLOAT) {
-						p_double_v[m]=UNDEF;
-					    }
-					    else{
-						p_double_v[m]=p_ftmp_v[ic];
-					    }
-					}
-					else if (ntype==2) {
-					    if (p_itmp_v[ic]==UNDEF_ROFFINT) {
-						p_int_v[m]=UNDEF_INT;
-					    }
-					    else{
-						p_int_v[m]=p_itmp_v[ic];
-					    }
-					}
-					else if (ntype==3) {
-					    if (p_btmp_v[ic]==UNDEF_ROFFBYTE) {
-						p_int_v[m]=UNDEF_INT;
-					    }
-					    else{
-						/* store as int */
-						p_int_v[m]=p_btmp_v[ic];
-					    }
-					}
-					/* char/bool ? etc still missing ...*/
-					ic++;
-				    }
-				}
-			    }
-			}
-
-			xtg_speak(s,2,"Store value done");
-
-			if (storevalue==1 || (propstatus==0 && scanmode==0)) {
-			    if (storevalue == 1) {
-				xtg_speak(s,2,"Store value, return with "
-					  "code %d", propstatus);
-			    }
-			    else{
-				xtg_speak(s,2,"Scan done, property found OK");
-			    }
-			    goto finally;
-			}
-
-		    }
-
-		    /*
-		     *----------------------------------------------------------
-		     * codeNames array (and codeValues):
-		     *----------------------------------------------------------
-		     */
-
-		    else if (strcmp(cname,"codeNames")==0) {
-			xtg_speak(s,3,"codeNames found: ",cname);
-
-			/* get the number of codes */
-			iok=fread(&ncodes,4,1,fc);
-			if (swap==1) SWAP_INT(ncodes);
-			xtg_speak(s,3,"Number of codes: %d",ncodes);
-
-			if (propstatus==0 && scanmode==0) {
-			    *p_ncodes=ncodes;
-			}
-
-			/*get the codenames*/
+                        /*get the codenames*/
                         p_ctmp_v = calloc(ncodes * 32, sizeof(char));
-			x_roffgetchararray(p_ctmp_v,ncodes,fc);
+                        x_roffgetchararray(p_ctmp_v, ncodes, fc);
 
+                        // strcpy(p_codenames_v,"SCAN");
 
-			//strcpy(p_codenames_v,"SCAN");
-
-			if (storevalue==1) {
+                        if (storevalue == 1) {
                             strcpy(p_codenames_v, p_ctmp_v);
-                            xtg_speak(s,3,"Codenames read as: <%s> (ptr: %d)",
-                                      p_codenames_v, &p_codenames_v);
-			}
-			else{
-			     xtg_speak(s,3,"Codenames tmp read as: <%s>",
-				       p_ctmp_v);
-			}
+                        }
 
-			/* getting values array */
-			x_roffbinstring(cname,fc); /*array ...*/
-			x_roffbinstring(ctype,fc); /*int ...*/
-			x_roffbinstring(cname,fc); /*codeValues*/
+                        /* getting values array */
+                        x_roffbinstring(cname, fc); /*array ...*/
+                        x_roffbinstring(ctype, fc); /*int ...*/
+                        x_roffbinstring(cname, fc); /*codeValues*/
 
-			xtg_speak(s,3,"CNAME is <%s>", cname);
-			xtg_speak(s,3,"CTYPE is <%s>", ctype);
-			iok=fread(&ncodes,4,1,fc);
-			if (swap==1) SWAP_INT(ncodes);
-			if (strcmp(ctype,"int")==0) {
-			    x_roffgetintarray(p_itmp_v,ncodes,fc);
-			}
-			if (storevalue==1) {
-			    for (i=0;i<ncodes;i++) {
-				p_codevalues_v[i]=p_itmp_v[i];
-                                xtg_speak(s,3,"CODE VALUE: <%d>", p_itmp_v[i]);
-			    }
-			}
+                        iok = fread(&ncodes, 4, 1, fc);
+                        if (swap == 1)
+                            SWAP_INT(ncodes);
+                        if (strcmp(ctype, "int") == 0) {
+                            x_roffgetintarray(p_itmp_v, ncodes, fc);
+                        }
+                        if (storevalue == 1) {
+                            for (i = 0; i < ncodes; i++) {
+                                p_codevalues_v[i] = p_itmp_v[i];
+                            }
+                        }
 
-			xtg_speak(s,3,"Codevalues read...");
-			goto readarray;
-		    }
-		}
-	    }
-	    /*
-	     *------------------------------------------------------------------
-	     * Getting 'other' tag values (just to scan through)
-	     * filedata/version/...
-	     *------------------------------------------------------------------
-	     */
-	    else if (strcmp(cname, "filedata") == 0) {
-		xtg_speak(s,2,"Tag filedata was found");
-		for (i=0; i<10; i++) {
-		    x_roffbinstring(ctype,fc); /*int ...*/
-		    if (strcmp(ctype,"int")==0) {
-			x_roffbinstring(cname,fc); /* ...xx.. */
-			iok=fread(&nn,4,1,fc);
-		    }
-		    else if (strcmp(ctype,"char")==0) {
-			x_roffbinstring(cname,fc); /* ...xx.. */
-			x_roffbinstring(csome,fc); /* ...xx.. */
-		    }
-		    else if (strcmp(ctype,"endtag")==0) {
-			xtg_speak(s,2,"Endtag was found");
-			break;
-		    }
-		}
-	    }
-	    else if (strcmp(cname, "version") == 0) {
-		xtg_speak(s,2,"Tag version was found");
-		for (i=0; i<10; i++) {
-		    x_roffbinstring(ctype,fc); /*int ...*/
-		    if (strcmp(ctype,"int")==0) {
-			x_roffbinstring(cname,fc); /* ...xx.. */
-			iok=fread(&nn,4,1,fc);
-		    }
-		    else if (strcmp(ctype,"char")==0) {
-			x_roffbinstring(cname,fc); /* ...xx.. */
-			x_roffbinstring(csome,fc); /* ...xx.. */
-		    }
-		    else if (strcmp(ctype,"endtag")==0) {
-			xtg_speak(s,2,"Endtag was found");
-			break;
-		    }
-		}
-	    }
-	}
+                        goto readarray;
+                    }
+                }
+            }
+            /*
+             *------------------------------------------------------------------
+             * Getting 'other' tag values (just to scan through)
+             * filedata/version/...
+             *------------------------------------------------------------------
+             */
+            else if (strcmp(cname, "filedata") == 0) {
+                for (i = 0; i < 10; i++) {
+                    x_roffbinstring(ctype, fc); /*int ...*/
+                    if (strcmp(ctype, "int") == 0) {
+                        x_roffbinstring(cname, fc); /* ...xx.. */
+                        iok = fread(&nn, 4, 1, fc);
+                    } else if (strcmp(ctype, "char") == 0) {
+                        x_roffbinstring(cname, fc); /* ...xx.. */
+                        x_roffbinstring(csome, fc); /* ...xx.. */
+                    } else if (strcmp(ctype, "endtag") == 0) {
+                        break;
+                    }
+                }
+            } else if (strcmp(cname, "version") == 0) {
+                for (i = 0; i < 10; i++) {
+                    x_roffbinstring(ctype, fc); /*int ...*/
+                    if (strcmp(ctype, "int") == 0) {
+                        x_roffbinstring(cname, fc); /* ...xx.. */
+                        iok = fread(&nn, 4, 1, fc);
+                    } else if (strcmp(ctype, "char") == 0) {
+                        x_roffbinstring(cname, fc); /* ...xx.. */
+                        x_roffbinstring(csome, fc); /* ...xx.. */
+                    } else if (strcmp(ctype, "endtag") == 0) {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
-
- finally:
-
-    xtg_speak(s,2,"Reached finally mark...");
+finally:
 
     free(p_btmp_v);
     free(p_ctmp_v);
@@ -489,9 +406,9 @@ int grd3d_imp_prop_roffbin (
 
     fclose(fc);
 
-    if (propstatus<0) {
-	xtg_speak(s,2,"Requested property <%s> not found!", prop_name);
+    if (propstatus < 0) {
+        logger_warn(LI, FI, FU, "Requested property <%s> not found!", prop_name);
     }
 
-    return(propstatus);
+    return (propstatus);
 }

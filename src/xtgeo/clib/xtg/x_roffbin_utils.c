@@ -22,8 +22,8 @@
  *    x_roffgetintarray
  *    x_roffgetchararray
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Imports maps on Irap binary formats.
@@ -84,7 +84,6 @@
  *******************************************************************************
  */
 
-
 /*
  *******************************************************************************
  * Reading a string in binary file terminated with NULL
@@ -92,23 +91,23 @@
  *******************************************************************************
  */
 
-int x_roffbinstring(char *bla, FILE *fc)
+int
+x_roffbinstring(char *bla, FILE *fc)
 {
     char mybyte;
     int i;
     for (i = 0; i < ROFFSTRLEN; i++) {
         /* x_fread(&mybyte,1,1,fc,__FILE__,__LINE__); */
-        if (fread(&mybyte,1,1,fc) == 1){
-            bla[i]=mybyte;
-            if (mybyte==0) break;
-        }
-        else{
+        if (fread(&mybyte, 1, 1, fc) == 1) {
+            bla[i] = mybyte;
+            if (mybyte == 0)
+                break;
+        } else {
             break;
         }
     }
     return 0;
 }
-
 
 /*
  *******************************************************************************
@@ -116,82 +115,84 @@ int x_roffbinstring(char *bla, FILE *fc)
  * e.g: <float xoffset   4.62994625E+05>
  *******************************************************************************
  */
-float x_roffgetfloatvalue(char *name, FILE *fc)
+float
+x_roffgetfloatvalue(char *name, FILE *fc)
 {
     char bla[ROFFSTRLEN];
     float myfloat;
 
     x_roffbinstring(bla, fc);
-    if (strcmp(bla,"float")==0) {
-	x_roffbinstring(bla, fc);
-	if (strcmp(bla,name)==0) {
-	    x_fread(&myfloat,4,1,fc,__FILE__,__LINE__);
-	    if (x_byteorder(-1)>1) SWAP_FLOAT(myfloat);
-	    return myfloat;
-	}
+    if (strcmp(bla, "float") == 0) {
+        x_roffbinstring(bla, fc);
+        if (strcmp(bla, name) == 0) {
+            x_fread(&myfloat, 4, 1, fc, __FILE__, __LINE__);
+            if (x_byteorder(-1) > 1)
+                SWAP_FLOAT(myfloat);
+            return myfloat;
+        }
     }
     return -1.0;
 }
-
-
 
 /*
  *******************************************************************************
  * Reading an int, e.g. <int nX 4>
  *******************************************************************************
  */
-int x_roffgetintvalue(char *name, FILE *fc)
+int
+x_roffgetintvalue(char *name, FILE *fc)
 {
     char bla[ROFFSTRLEN];
-    int  myint;
+    int myint;
 
-    if (strcmp(name,"array")==0) {
+    if (strcmp(name, "array") == 0) {
 
-	/* return -1 in case not a array as suggested... */
-	x_roffbinstring(bla, fc); /* array */
-	if (strcmp(bla,"array")!=0) {
-	    return -1;
-	}
-	x_roffbinstring(bla, fc); /* int or float */
-	x_roffbinstring(bla, fc); /* data */
-	x_fread(&myint,4,1,fc,__FILE__,__LINE__);
-	if (x_byteorder(-1)>1) SWAP_INT(myint);
-	return myint;
-    }
-    else{
-	x_roffbinstring(bla, fc);
-	if (strcmp(bla,"int")==0) {
-	    x_roffbinstring(bla, fc);
-	    if (strcmp(bla,name)==0) {
-		x_fread(&myint,4,1,fc,__FILE__,__LINE__);
-		if (x_byteorder(-1)>1) SWAP_INT(myint);
-		return myint;
-	    }
-	}
+        /* return -1 in case not a array as suggested... */
+        x_roffbinstring(bla, fc); /* array */
+        if (strcmp(bla, "array") != 0) {
+            return -1;
+        }
+        x_roffbinstring(bla, fc); /* int or float */
+        x_roffbinstring(bla, fc); /* data */
+        x_fread(&myint, 4, 1, fc, __FILE__, __LINE__);
+        if (x_byteorder(-1) > 1)
+            SWAP_INT(myint);
+        return myint;
+    } else {
+        x_roffbinstring(bla, fc);
+        if (strcmp(bla, "int") == 0) {
+            x_roffbinstring(bla, fc);
+            if (strcmp(bla, name) == 0) {
+                x_fread(&myint, 4, 1, fc, __FILE__, __LINE__);
+                if (x_byteorder(-1) > 1)
+                    SWAP_INT(myint);
+                return myint;
+            }
+        }
     }
     return -1;
 }
-
 
 /*
  *******************************************************************************
  * Reading a  float array
  *******************************************************************************
  */
-void x_roffgetfloatarray(float *array, int num, FILE *fc)
+void
+x_roffgetfloatarray(float *array, int num, FILE *fc)
 {
     float afloat;
-    int   i;
+    int i;
 
-    for (i=0;i<num;i++) {
-	x_fread(&afloat,4,1,fc,__FILE__,__LINE__);
-	if (x_byteorder(-1)>1) SWAP_FLOAT(afloat);
-	array[i]=afloat;
+    for (i = 0; i < num; i++) {
+        x_fread(&afloat, 4, 1, fc, __FILE__, __LINE__);
+        if (x_byteorder(-1) > 1)
+            SWAP_FLOAT(afloat);
+        array[i] = afloat;
     }
 
     /* PREVIOUS WAY: fread(array,4,num,fc); */
 }
-
 
 /*
  *******************************************************************************
@@ -200,32 +201,34 @@ void x_roffgetfloatarray(float *array, int num, FILE *fc)
  *   1   1   1   1   1 ...
  *******************************************************************************
  */
-void x_roffgetbytearray(unsigned char *array, int num, FILE *fc)
+void
+x_roffgetbytearray(unsigned char *array, int num, FILE *fc)
 {
-    int  i;
+    int i;
     unsigned char abyte;
 
-    for (i=0;i<num;i++) {
-	x_fread(&abyte,1,1,fc,__FILE__,__LINE__);
-	array[i]=abyte;
+    for (i = 0; i < num; i++) {
+        x_fread(&abyte, 1, 1, fc, __FILE__, __LINE__);
+        array[i] = abyte;
     }
 }
-
 
 /*
  *******************************************************************************
  * Reading a int array
  *******************************************************************************
  */
-void x_roffgetintarray(int *array, int num, FILE *fc)
+void
+x_roffgetintarray(int *array, int num, FILE *fc)
 {
-    int  i;
+    int i;
     int aint;
 
-    for (i=0;i<num;i++) {
-	x_fread(&aint,4,1,fc,__FILE__,__LINE__);
-	if (x_byteorder(-1)>1) SWAP_SHORT(aint);   /* SHORT? */
-	array[i]=aint;
+    for (i = 0; i < num; i++) {
+        x_fread(&aint, 4, 1, fc, __FILE__, __LINE__);
+        if (x_byteorder(-1) > 1)
+            SWAP_SHORT(aint); /* SHORT? */
+        array[i] = aint;
     }
 }
 
@@ -239,45 +242,44 @@ void x_roffgetintarray(int *array, int num, FILE *fc)
  * array is number of total chars, and sufficient large enough
  *******************************************************************************
  */
-void x_roffgetchararray(char *array, int num, FILE *fc)
+void
+x_roffgetchararray(char *array, int num, FILE *fc)
 {
-    int  i, ic, j, m, n, nc;
+    int i, ic, j, m, n, nc;
     char c[ROFFSTRLEN];
-    char sub[24]="x_roffgetchararray";
+    char sub[24] = "x_roffgetchararray";
     char xstr[8];
 
-    ic=0;
-    for (i=0;i<num;i++) {
-	x_roffbinstring(c,fc);
-	xtg_speak(sub,4,"Reading: <%s>",c);
-	for (j=0;j<ROFFSTRLEN;j++) {
-	    if (c[j] == '\0' && j==0) {
-		/* to replace missing string with a code */
-		m = i + 1;
-		sprintf(xstr, "%d", m);
-		n = strlen(xstr);
-		for (nc=0; nc<n; nc++) {
-		    array[ic]=xstr[nc];
-		    ic++;
-		    if (nc == (n-1)) {
-			array[ic]='|';
-			ic++;
-			break;
-		    }
-		}
-		break;
-	    }
-	    else if (c[j] == '\0') {
-		array[ic]='|';
-		ic++;
-		break;
-	    }
-	    else{
-		array[ic]=c[j];
-		ic++;
-	    }
-	}
+    ic = 0;
+    for (i = 0; i < num; i++) {
+        x_roffbinstring(c, fc);
+        xtg_speak(sub, 4, "Reading: <%s>", c);
+        for (j = 0; j < ROFFSTRLEN; j++) {
+            if (c[j] == '\0' && j == 0) {
+                /* to replace missing string with a code */
+                m = i + 1;
+                sprintf(xstr, "%d", m);
+                n = strlen(xstr);
+                for (nc = 0; nc < n; nc++) {
+                    array[ic] = xstr[nc];
+                    ic++;
+                    if (nc == (n - 1)) {
+                        array[ic] = '|';
+                        ic++;
+                        break;
+                    }
+                }
+                break;
+            } else if (c[j] == '\0') {
+                array[ic] = '|';
+                ic++;
+                break;
+            } else {
+                array[ic] = c[j];
+                ic++;
+            }
+        }
     }
     /* terminate char array with null string */
-    //array[ic-1]='\0';
+    // array[ic-1]='\0';
 }

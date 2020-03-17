@@ -372,11 +372,10 @@ surf_swapaxes(int *nx,
               double *rotation,
               double *swig_np_dbl_inplace_v1,  // *p_map_v
               long n_swig_np_dbl_inplace_v1,   // nval, total nx*ny*nz
-              int option,
-              int debug);
+              int option);
 
 int
-surf_zminmax(int nx, int ny, double *p_map_v, double *zmin, double *zmax, int debug);
+surf_zminmax(int nx, int ny, double *p_map_v, double *zmin, double *zmax);
 
 int
 surf_xyz_from_ij(int i,
@@ -409,8 +408,7 @@ surf_xyori_from_ij(int i,
                    int ny,
                    int yflip,
                    double rot_deg,
-                   int flag,
-                   int debug);
+                   int flag);
 
 double
 surf_get_z_from_ij(int ic,
@@ -470,8 +468,7 @@ surf_xy_as_values(double xori,
                   long n_swig_np_dbl_aout_v1,   // nn1
                   double *swig_np_dbl_aout_v2,  // *p_y_v
                   long n_swig_np_dbl_aout_v2,   // nn2
-                  int flag,
-                  int debug);
+                  int flag);
 
 int
 surf_slice_grd3d(int mcol,
@@ -565,8 +562,7 @@ surf_slice_cube(int ncx,
                 double *swig_np_dbl_aout_v1,  // *p_map_v to update argout
                 long n_swig_np_dbl_aout_v1,
                 int option1,
-                int option2,
-                int debug);
+                int option2);
 
 int
 surf_slice_cube_window(int ncx,
@@ -598,8 +594,7 @@ surf_slice_cube_window(int ncx,
                        long n_swig_np_dbl_aout_v1,   // nattrsmap
                        int nattr,
                        int option1,
-                       int option2,
-                       int debug);
+                       int option2);
 
 void
 surf_sample_grd3d_lay(int nx,
@@ -643,22 +638,12 @@ surf_setval_poly(double xori,
                  double *swig_np_dbl_in_v2,       // *p_yp_v,
                  long n_swig_np_dbl_in_v2,        // npoly
                  double value,
-                 int flag,
-                 int debug);
+                 int flag);
 /*
  *======================================================================================
  * POLYGON/POINTS
  *======================================================================================
  */
-
-void
-pol_import_irap(int i1,
-                int i2,
-                double *p_xp_v,
-                double *p_yp_v,
-                double *p_zp_v,
-                char *file,
-                int debug);
 
 int
 pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np);
@@ -676,8 +661,7 @@ pol_do_points_inside(double *swig_np_dbl_in_v1,  // xpoi
                      long n_swig_np_dbl_in_v4,
                      double new_value,
                      int option,
-                     int inside,
-                     int debug);
+                     int inside);
 
 int
 polys_chk_point_inside(double x,
@@ -685,29 +669,7 @@ polys_chk_point_inside(double x,
                        double *p_xp_v,
                        double *p_yp_v,
                        int np1,
-                       int np2,
-                       int debug);
-
-int
-pol_close(int np,
-          double *p_x_v,
-          double *p_y_v,
-          double *p_z_v,
-          double dist,
-          int option,
-          int debug);
-
-int
-pol_set_entry(int i,
-              double x,
-              double y,
-              double z,
-              int npmax,
-              double *p_x_v,
-              double *p_y_v,
-              double *p_z_v,
-              int option,
-              int debug);
+                       int np2);
 
 int
 pol_geometrics(double *swig_np_dbl_in_v1,    // *xv
@@ -723,78 +685,7 @@ pol_geometrics(double *swig_np_dbl_in_v1,    // *xv
                double *swig_np_dbl_aout_v3,  // *hv
                long n_swig_np_dbl_aout_v3,   // nhv
                double *swig_np_dbl_aout_v4,  // *dhv
-               long n_swig_np_dbl_aout_v4,   // ndhv
-               int debug);
-
-int
-pol_info(int nlen,
-         double *xv,
-         double *yv,
-         double *zv,
-         double *xmin,
-         double *xmax,
-         double *ymin,
-         double *ymax,
-         int *closed,
-         int debug);
-
-int
-pol_refine(int np,
-           int npmax,
-           double *p_x_v,
-           double *p_y_v,
-           double *p_z_v,
-           double dist,
-           int option);
-
-int
-pol_extend(int np,
-           double *p_x_v,
-           double *p_y_v,
-           double *p_z_v,
-           double dist,
-           int mode,
-           double xang,
-           int option, /* 0: look in 3D, 1: look in 2d XY */
-           int debug);
-
-int
-pol_resample(int nlen,
-             double *xv,
-             double *yv,
-             double *zv,
-             double smpl,
-             int next,
-             int nbuf,
-             int *nolen,
-             double *xov,
-             double *yov,
-             double *zov,
-             double *hlen,
-             int option,
-             int debug);
-
-/* better version than pol_resample: */
-int
-pol_resampling(double *swig_np_dbl_in_v1,  // *xv,
-               long n_swig_np_dbl_in_v1,
-               double *swig_np_dbl_in_v2,  // *yv,
-               long n_swig_np_dbl_in_v2,
-               double *swig_np_dbl_in_v3,  // *zv,
-               long n_swig_np_dbl_in_v3,
-               double smpl,
-               double hext,
-               double *swig_np_dbl_aout_v1,  // *xov
-               long n_swig_np_dbl_aout_v1,
-               double *swig_np_dbl_aout_v2,  // *yov
-               long n_swig_np_dbl_aout_v2,
-               double *swig_np_dbl_aout_v3,  // *zov
-               long n_swig_np_dbl_aout_v3,
-               double *swig_np_dbl_aout_v4,  // *hlen
-               long n_swig_np_dbl_aout_v4,
-               int *swig_int_out_p1,  // *nolen
-               int option,
-               int debug);
+               long n_swig_np_dbl_aout_v4);  // ndhv
 
 /*
  *======================================================================================
@@ -1184,8 +1075,7 @@ grd3d_scan_roffbinary(FILE *fc,
                       int *rectypes,
                       long *reclengths,
                       long *recstarts,
-                      long maxkw,
-                      int debug);
+                      long maxkw);
 
 void
 grd3d_conv_roxapi_grid(int nx,
@@ -1223,9 +1113,8 @@ int
 grd3d_imp_roffbin_ilist(FILE *fc,
                         int swap,
                         long bytepos,
-                        int *swig_np_int_inplace_v1,    // *iarray
-                        long n_swig_np_int_inplace_v1,  // *niarray
-                        int debug);
+                        int *swig_np_int_inplace_v1,     // *iarray
+                        long n_swig_np_int_inplace_v1);  // *niarray
 
 int
 grd3d_imp_roffbin_fvec(FILE *fc, int swp, long bpos, float *fvc, long nv);
@@ -1242,19 +1131,6 @@ grd3d_imp_roffbin_data(FILE *fc,
                        int *pidata,
                        float *pfdata);
 
-/* --> last generation import roff binary to here */
-
-void
-grd3d_import_roff_grid(int *num_act,
-                       int *num_subgrds,
-                       double *coordsv,
-                       double *zcornsv,
-                       int *actnumsv,
-                       int *p_subgrd_v,
-                       int nnsub,
-                       char *filename,
-                       int debug);
-
 int
 grd3d_imp_prop_roffbin(char *filename,
                        int scanmode,
@@ -1268,8 +1144,7 @@ grd3d_imp_prop_roffbin(char *filename,
                        double *p_double_v,
                        char *swig_bnd_char_10k,  // p_codenames_v,
                        int *p_codevalues_v,
-                       int option,
-                       int debug);
+                       int option);
 
 void
 grd3d_export_roff_grid(int mode,
@@ -1298,9 +1173,6 @@ grd3d_export_roff_end(int mode, char *filename);
 void
 grd3d_scan_roff_bingrid(int *nx, int *ny, int *nz, int *nsubs, char *filename);
 
-int
-grd3d_scan_roff_binpar(char *parname, char *filename, int *ndcodes, int debug);
-
 void
 grd3d_export_roff_pstart(int mode, int nx, int ny, int nz, char *filename);
 
@@ -1327,8 +1199,7 @@ grd3d_scan_eclbinary(FILE *fc,
                      int *rectype,
                      long *reclengths,
                      long *recstarts,
-                     long maxkw,
-                     int debug);
+                     long maxkw);
 
 int
 grd3d_read_eclrecord(FILE *fc,
@@ -1388,8 +1259,7 @@ grd3d_write_eclrecord(FILE *fc,
                       int *intv,
                       float *floatv,
                       double *doublev,
-                      long nrecs,
-                      int debug);
+                      long nrecs);
 
 int
 grd3d_write_eclinput(FILE *fc,
@@ -1400,8 +1270,7 @@ grd3d_write_eclinput(FILE *fc,
                      double *doublev,
                      long nrecs,
                      char *fmt,
-                     int ncolumns,
-                     int debug);
+                     int ncolumns);
 
 void
 grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
@@ -1449,8 +1318,7 @@ grd3d_import_grdecl_prop(char *filename,
                          char *pname,
                          double *swig_np_dbl_aout_v1,  // p_prop_v
                          long n_swig_np_dbl_aout_v1,   // nlen
-                         int option,
-                         int debug);
+                         int option);
 
 void
 grd3d_export_grdecl(int nx,
@@ -1698,11 +1566,10 @@ grd3d_point_val_crange(double x,
                        int kmin,
                        int kmax,
                        long *ibs,
-                       int option,
-                       int debug);
+                       int option);
 
-int
-grd3d_point_in_cell(int ibstart,
+long
+grd3d_point_in_cell(long ibstart,
                     int kzonly,
                     double x,
                     double y,
@@ -1716,8 +1583,7 @@ grd3d_point_in_cell(int ibstart,
                     int maxrad,
                     int sflag,
                     int *nradsearch,
-                    int option,
-                    int debug);
+                    int option);
 
 int
 grd3d_points_ijk_cells(double *swig_np_dbl_in_v1,  // *xvec
@@ -1825,11 +1691,12 @@ grd3d_midpoint(int i,
                int ny,
                int nz,
                double *coordsv,
+               long ncoord,
                double *zcornsv,
+               long nzcorn,
                double *x,
                double *y,
-               double *z,
-               int debug);
+               double *z);
 
 int
 grd3d_inact_outside_pol(double *swig_np_dbl_in_v1,  // polygons X
@@ -1955,15 +1822,7 @@ grd3d_corners(int i,
               double corners[]);
 
 double
-grd3d_zminmax(int i,
-              int j,
-              int k,
-              int nx,
-              int ny,
-              int nz,
-              double *zcornsv,
-              int option,
-              int debug);
+grd3d_zminmax(int i, int j, int k, int nx, int ny, int nz, double *zcornsv, int option);
 
 void
 grd3d_get_all_corners(int nx,

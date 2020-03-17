@@ -1,18 +1,6 @@
 /*
  ******************************************************************************
  *
- * Set a map value inside a polygon
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-#include <math.h>
-
-/*
- ******************************************************************************
- *
  * NAME:
  *    surf_setval_poly.c
  *
@@ -36,7 +24,6 @@
  *    nny            i     Polygons X array length (nny = nnx; entry for swig)
  *    value          i     Value to set inside polygon
  *    option         i     Options flag; for future usage
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0:
@@ -69,20 +56,13 @@ surf_setval_poly(double xori,
                  double *p_yp_v,
                  long npoly,
                  double value,
-                 int flag,
-                 int debug)
+                 int flag)
 {
     /* locals */
     int ino, jno;
     long ic;
     double xcor, ycor, zval;
     int ier, status;
-
-    char sbn[24] = "surf_setval_poly";
-    xtgverbose(debug);
-
-    if (debug > 2)
-        xtg_speak(sbn, 3, "Entering routine %s", sbn);
 
     for (ino = 1; ino <= ncol; ino++) {
         for (jno = 1; jno <= nrow; jno++) {

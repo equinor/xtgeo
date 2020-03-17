@@ -4,8 +4,8 @@
  * NAME:
  *    surf_get_z_from_ij.c (same as map_get_z_from_ij, but C order lookup)
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Given lower left IJ point and P(x,y), the map Z value is returned.
@@ -48,37 +48,35 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
-double surf_get_z_from_ij(
-			int ic,
-			int jc,
-                        double x,
-                        double y,
-			int nx,
-			int ny,
-			double xinc,
-			double yinc,
-			double xori,
-			double yori,
-			double *p_map_v
-			)
+double
+surf_get_z_from_ij(int ic,
+                   int jc,
+                   double x,
+                   double y,
+                   int nx,
+                   int ny,
+                   double xinc,
+                   double yinc,
+                   double xori,
+                   double yori,
+                   double *p_map_v)
 {
 
-
-    int  ibc=-9;
+    int ibc = -9;
     double x_v[4], y_v[4], z_v[4];
     double z;
 
     // find the values of four nodes
 
-    x_v[0] = xori + (ic-1) * xinc;
-    x_v[1] = xori + (ic) * xinc;
-    x_v[2] = xori + (ic-1) * xinc;
-    x_v[3] = xori + (ic) * xinc;
+    x_v[0] = xori + (ic - 1) * xinc;
+    x_v[1] = xori + (ic)*xinc;
+    x_v[2] = xori + (ic - 1) * xinc;
+    x_v[3] = xori + (ic)*xinc;
 
-    y_v[0] = yori + (jc-1) * yinc;
-    y_v[1] = yori + (jc-1) * yinc;
-    y_v[2] = yori + (jc) * yinc;
-    y_v[3] = yori + (jc) * yinc;
+    y_v[0] = yori + (jc - 1) * yinc;
+    y_v[1] = yori + (jc - 1) * yinc;
+    y_v[2] = yori + (jc)*yinc;
+    y_v[3] = yori + (jc)*yinc;
 
     ibc = x_ijk2ic(ic, jc, 1, nx, ny, 1, 0);
     z_v[0] = p_map_v[ibc];
@@ -97,5 +95,4 @@ double surf_get_z_from_ij(
     z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 2);
 
     return z;
-
 }

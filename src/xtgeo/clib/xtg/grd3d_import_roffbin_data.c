@@ -4,8 +4,8 @@
  * NAME:
  *    grd3d_imp_roffbin_data.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Note, this is for SINGLE data. For arrays, see grd3d_imp_roffbin_arr.c

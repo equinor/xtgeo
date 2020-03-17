@@ -5,9 +5,6 @@
 * NAME:
 *    grd3d_conv_roxapi_grid.c
 *
-* AUTHOR(S):
-*    Jan C. Rivenaes
-*
 * DESCRIPTION:
 *    Retrieve the grid
 *

@@ -817,7 +817,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         nlen = self.nrow
 
         ier, _tlenv, _dtlenv, hlenv, _dhlenv = _cxtgeo.pol_geometrics(
-            xv, yv, zv, nlen, nlen, nlen, nlen, XTGDEBUG
+            xv, yv, zv, nlen, nlen, nlen, nlen
         )
 
         if ier != 0:

@@ -1,13 +1,3 @@
-/*
- *******************************************************************************
- *
- * Import a property on GRDECL ASCII format
- *
- *******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
 
 /*
  ******************************************************************************
@@ -43,17 +33,19 @@
  ******************************************************************************
  */
 
-int grd3d_import_grdecl_prop(
-                             char *filename,
-                             int ncol,
-                             int nrow,
-                             int nlay,
-                             char *pname,
-                             double *p_prop_v,
-                             long nlen,
-                             int option,
-                             int debug
-                             )
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
+
+int
+grd3d_import_grdecl_prop(char *filename,
+                         int ncol,
+                         int nrow,
+                         int nlay,
+                         char *pname,
+                         double *p_prop_v,
+                         long nlen,
+                         int option)
 
 {
     char cname[33];
@@ -63,34 +55,27 @@ int grd3d_import_grdecl_prop(
     double fvalue;
     FILE *fc;
 
-    char sbn[24] = "grd3d_imp..grdecl_prop";
-    xtgverbose(debug);
+    logger_info(LI, FI, FU, "Import Property on Eclipse GRDECL format ...");
 
-    xtg_speak(sbn,2,"Import Property on Eclipse GRDECL format ...");
-
-    xtg_speak(sbn, 2, "Opening GRDECL file...");
     fc = fopen(filename, "rb");
-    if (fc == NULL) xtg_error(sbn,"Cannot open file!");
-    xtg_speak(sbn, 2, "Opening file...OK!");
 
     nchar = strlen(pname);
 
     for (line = 1; line < 99999999; line++) {
 
-	/* Get word */
-	if (fgets(cname, 33, fc) == NULL) {
+        /* Get word */
+        if (fgets(cname, 33, fc) == NULL) {
             fclose(fc);
             return -1;
         }
 
-	if (strncmp(cname, pname, nchar) == 0) {
-	    xtg_speak(sbn, 2, "Keyword found");
+        if (strncmp(cname, pname, nchar) == 0) {
             found = 1;
-	    for (klay = 1; klay <= nlay; klay++) {
+            for (klay = 1; klay <= nlay; klay++) {
                 for (jrow = 1; jrow <= nrow; jrow++) {
                     for (icol = 1; icol <= ncol; icol++) {
                         if (fscanf(fc, "%lf", &fvalue) != 1)
-                            xtg_error(sbn,"Error in reading %s", pname);
+                            logger_error(LI, FI, FU, "Error in reading %s", pname);
 
                         /* map directly to C order */
                         ic = x_ijk2ic(icol, jrow, klay, ncol, nrow, nlay, 0);
@@ -104,7 +89,8 @@ int grd3d_import_grdecl_prop(
 
     fclose(fc);
 
-    if (found == 0) return -1;
+    if (found == 0)
+        return -1;
 
     return EXIT_SUCCESS;
 }

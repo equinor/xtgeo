@@ -66,7 +66,6 @@ def _import_roff_v1(self, pfile, name):
         ptr_ddum,
         ptr_idum,
         0,
-        XTGDEBUG,
     )
 
     if ier == -1:
@@ -123,7 +122,6 @@ def _import_roff_v1(self, pfile, name):
         ptr_pval_v,
         ptr_ccodes_v,
         0,
-        XTGDEBUG,
     )
 
     if self._isdiscrete:
@@ -322,7 +320,7 @@ def _rkwxlist(fhandle, kws, name, swap, strict=True):
 
     if dtype == 1:
         inumpy = np.zeros(reclen, dtype=np.int32)
-        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy)
     else:
         raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
 

@@ -4,8 +4,8 @@
  * NAME:
  *    grd3d_get_randomline.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Given X Y Z vectors, return a a randomline array from a 3D grid property
@@ -224,13 +224,13 @@ grd3d_get_randomline(double *xvec,
             /* check the onelayer version of the grid first (speed up) */
             ier = grd3d_point_val_crange(xc, yc, zc, nx, ny, 1, coordsv, p_zcornone_v,
                                          p_actnumone_v, p_dummy_v, &value, i1, i2, j1,
-                                         j2, 1, 1, &ibs1, -1, XTGDEBUG);
+                                         j2, 1, 1, &ibs1, -1);
 
             if (ier == 0) {
 
-                ios = grd3d_point_val_crange(xc, yc, zc, nx, ny, nz, coordsv,
-                                             zcornsv, actnumsv, p_val_v, &value, i1,
-                                             i2, j1, j2, k1, k2, &ibs2, 0, XTGDEBUG);
+                ios = grd3d_point_val_crange(xc, yc, zc, nx, ny, nz, coordsv, zcornsv,
+                                             actnumsv, p_val_v, &value, i1, i2, j1, j2,
+                                             k1, k2, &ibs2, 0);
 
                 if (ios == 0) {
                     values[ib++] = value;

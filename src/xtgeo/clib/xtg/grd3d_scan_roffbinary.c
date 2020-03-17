@@ -1,25 +1,11 @@
 /*
- *******************************************************************************
- *
- * Scan ROFF binary files for data
- *
- *******************************************************************************
- */
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_scan_roffbinary.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    This is a new line of ROFF handling function (from 2018). Here is a
@@ -59,43 +45,57 @@
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
- ******************************************************************************
+ ***************************************************************************************
  */
+
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* ######################################################################### */
 /* LOCAL FUNCTIONS                                                           */
 /* ######################################################################### */
 
-# define ROFFSTRLEN 100
-# define ROFFARRLEN 15
-# define TAGRECORDMAX 100
-# define TAGDATAMAX 100
+#define ROFFSTRLEN 100
+#define ROFFARRLEN 15
+#define TAGRECORDMAX 100
+#define TAGDATAMAX 100
 
-int _roffbinstring(FILE *fc, char *mystring)
+int
+_roffbinstring(FILE *fc, char *mystring)
 
 {
     /* read a string; return the number of bytes (including 0 termination) */
-    int i, ier;
+    int i;
     char mybyte;
 
     strcpy(mystring, "");
 
-    for (i = 0;i < ROFFSTRLEN; i++) {
-        ier = fread(&mybyte,1,1,fc);
-	mystring[i] = mybyte;
-        if (mybyte == '\0') return i + 1;
+    for (i = 0; i < ROFFSTRLEN; i++) {
+        fread(&mybyte, 1, 1, fc);
+        mystring[i] = mybyte;
+        if (mybyte == '\0')
+            return i + 1;
     }
 
     return -1;
 }
 
-
-int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
-                          long npos1, long *npos2, int *numrec,
-                          char cname[ROFFARRLEN][ROFFSTRLEN],
-                          char pname[ROFFARRLEN][ROFFSTRLEN],
-                          int cntype[ROFFARRLEN], long bytepos[ROFFARRLEN],
-                          long reclen[ROFFARRLEN], int debug)
+int
+_scan_roff_bin_record(FILE *fc,
+                      int *swap,
+                      char tagname[ROFFSTRLEN],
+                      long npos1,
+                      long *npos2,
+                      int *numrec,
+                      char cname[ROFFARRLEN][ROFFSTRLEN],
+                      char pname[ROFFARRLEN][ROFFSTRLEN],
+                      int cntype[ROFFARRLEN],
+                      long bytepos[ROFFARRLEN],
+                      long reclen[ROFFARRLEN])
 {
     /*
      * tagname: is the name of the tag
@@ -106,8 +106,6 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
      * rnlen: is the record length, if > 1 then it is an array type.
      *        => if 1, then it may have several sub keys
      */
-
-    char s[24] = "_scan_roff_bin_record";
 
     /* int swap = 0; */
     int ndat, nrec, i, n, ic;
@@ -122,13 +120,12 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
     double ddum;
     unsigned char bdum;
 
-    xtgverbose(debug);
-
-    if (fseek(fc, npos1, SEEK_SET) != 0) return FAIL;
+    if (fseek(fc, npos1, SEEK_SET) != 0)
+        return FAIL;
 
     ncum = ncum + npos1;
 
-    nrec = 0;  /* record counter (subtag) */
+    nrec = 0; /* record counter (subtag) */
 
     strcpy(tagname, "");
 
@@ -136,10 +133,7 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
 
         ncum += _roffbinstring(fc, tmpname);
 
-        xtg_speak(s, 2, "TMPNAME is %s, ncum = %ld", tmpname, ncum);
-
-        if (npos1 == 0 && i == 0 &&
-            strncmp(tmpname, "roff-bin", 8) != 0) {
+        if (npos1 == 0 && i == 0 && strncmp(tmpname, "roff-bin", 8) != 0) {
             /* not a ROFF binary file! */
             return -9;
         }
@@ -174,15 +168,16 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
 
                     /* special treatment of byteswap */
                     if (strncmp(cname[nrec], "byteswaptest", 13) == 0) {
-                        if (idum == 1) *swap = 0;
-                        if (idum != 1) *swap = 1;
+                        if (idum == 1)
+                            *swap = 0;
+                        if (idum != 1)
+                            *swap = 1;
                     }
 
                     reclen[nrec] = 1;
                     cntype[nrec] = 1;
                     nrec++;
-                }
-                else if (strncmp(tmpname, "float", 5) == 0) {
+                } else if (strncmp(tmpname, "float", 5) == 0) {
                     ncum += _roffbinstring(fc, cname[nrec]);
                     bytepos[nrec] = ncum;
                     ncum += fread(&fdum, sizeof(float), 1, fc) * sizeof(float);
@@ -190,18 +185,15 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
                     reclen[nrec] = 1;
                     nrec++;
 
-                }
-                else if (strncmp(tmpname, "double", 6) == 0) {
+                } else if (strncmp(tmpname, "double", 6) == 0) {
                     /* never in use? */
                     ncum += _roffbinstring(fc, cname[nrec]);
                     bytepos[nrec] = ncum;
-                    ncum += fread(&ddum, sizeof(double), 1, fc)
-                        * sizeof(double);
+                    ncum += fread(&ddum, sizeof(double), 1, fc) * sizeof(double);
                     cntype[nrec] = 3;
                     reclen[nrec] = 1;
                     nrec++;
-                }
-                else if (strncmp(tmpname, "char", 4) == 0) {
+                } else if (strncmp(tmpname, "char", 4) == 0) {
                     ncum += _roffbinstring(fc, cname[nrec]);
                     bytepos[nrec] = ncum;
                     /* char in ROFF is actually a string: */
@@ -211,47 +203,46 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
 
                     /* special treatment of parameter names (extra info) */
                     if (strncmp(cname[nrec], "name", 4) == 0) {
-                        if (strlen(cdum) == 0) strcpy(cdum, "unknown");
+                        if (strlen(cdum) == 0)
+                            strcpy(cdum, "unknown");
                         strcpy(pname[nrec], cdum);
                     }
                     nrec++;
-                }
-                else if (strncmp(tmpname, "bool", 4) == 0) {
+                } else if (strncmp(tmpname, "bool", 4) == 0) {
                     ncum += _roffbinstring(fc, cname[nrec]);
                     bytepos[nrec] = ncum;
-                    ncum += fread(&bdum, sizeof(unsigned char), 1, fc)
-                        * sizeof(unsigned char);
+                    ncum += fread(&bdum, sizeof(unsigned char), 1, fc) *
+                            sizeof(unsigned char);
                     cntype[nrec] = 5;
                     reclen[nrec] = 1;
                     nrec++;
-                }
-                else if (strncmp(tmpname, "byte", 4) == 0) {
+                } else if (strncmp(tmpname, "byte", 4) == 0) {
                     ncum += _roffbinstring(fc, cname[nrec]);
                     bytepos[nrec] = ncum;
-                    ncum += fread(&bdum, sizeof(unsigned char), 1, fc)
-                        * sizeof(unsigned char);
+                    ncum += fread(&bdum, sizeof(unsigned char), 1, fc) *
+                            sizeof(unsigned char);
                     cntype[nrec] = 6;
                     reclen[nrec] = 1;
                     nrec++;
-                }
-                else if (strncmp(tmpname, "array", 5) == 0) {
+                } else if (strncmp(tmpname, "array", 5) == 0) {
                     ncum += _roffbinstring(fc, tmpname);
 
                     if (strncmp(tmpname, "int", 3) == 0) {
                         bsize = 4;
                         ncum += _roffbinstring(fc, cname[nrec]);
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
-                        if (*swap) SWAP_INT(ndat);
+                        if (*swap)
+                            SWAP_INT(ndat);
                         cntype[nrec] = 1;
                         bytepos[nrec] = ncum;
                         reclen[nrec] = ndat;
                         nrec++;
-                    }
-                    else if (strncmp(tmpname, "float", 5) == 0) {
+                    } else if (strncmp(tmpname, "float", 5) == 0) {
                         bsize = 4;
                         ncum += _roffbinstring(fc, cname[nrec]);
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
-                        if (*swap) SWAP_INT(ndat);
+                        if (*swap)
+                            SWAP_INT(ndat);
                         bytepos[nrec] = ncum;
                         cntype[nrec] = 2;
                         reclen[nrec] = ndat;
@@ -262,32 +253,33 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
                     /* double never in use? */
 
                     else if (strncmp(tmpname, "char", 4) == 0) {
-                    /* Note: arrays of type char (ie strings) have UNKNOWN */
-                    /* lenghts; hence need special processing! -> bsize 0 */
+                        /* Note: arrays of type char (ie strings) have UNKNOWN */
+                        /* lenghts; hence need special processing! -> bsize 0 */
                         bsize = 0;
                         ncum += _roffbinstring(fc, cname[nrec]);
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
-                        if (*swap) SWAP_INT(ndat);
+                        if (*swap)
+                            SWAP_INT(ndat);
                         cntype[nrec] = 4;
                         bytepos[nrec] = ncum;
                         reclen[nrec] = ndat;
                         nrec++;
-                    }
-                    else if (strncmp(tmpname, "bool", 4) == 0) {
+                    } else if (strncmp(tmpname, "bool", 4) == 0) {
                         bsize = 1;
                         ncum += _roffbinstring(fc, cname[nrec]);
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
-                        if (*swap) SWAP_INT(ndat);
+                        if (*swap)
+                            SWAP_INT(ndat);
                         bytepos[nrec] = ncum;
                         cntype[nrec] = 5;
                         reclen[nrec] = ndat;
                         nrec++;
-                    }
-                    else if (strncmp(tmpname, "byte", 4) == 0) {
+                    } else if (strncmp(tmpname, "byte", 4) == 0) {
                         bsize = 1;
                         ncum += _roffbinstring(fc, cname[nrec]);
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
-                        if (*swap) SWAP_INT(ndat);
+                        if (*swap)
+                            SWAP_INT(ndat);
                         bytepos[nrec] = ncum;
                         cntype[nrec] = 6;
                         reclen[nrec] = ndat;
@@ -298,10 +290,10 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
                         for (ic = 0; ic < ndat; ic++) {
                             ncum += _roffbinstring(fc, cname[nrec]);
                         }
-                    }
-                    else{
+                    } else {
                         ncum += bsize * ndat;
-                        if (fseek(fc, ncum, SEEK_SET) != 0) return FAIL;
+                        if (fseek(fc, ncum, SEEK_SET) != 0)
+                            return FAIL;
                     }
                 }
             }
@@ -311,27 +303,26 @@ int _scan_roff_bin_record(FILE *fc, int *swap, char tagname[ROFFSTRLEN],
     return EXIT_SUCCESS;
 }
 
-
 /* ######################################################################### */
 /* LIBRARY FUNCTION                                                          */
 /* ######################################################################### */
 
-long grd3d_scan_roffbinary (FILE *fc, int *swap, char *tags, int *rectypes,
-                            long *reclengths, long *recstarts, long maxkw,
-                            int debug)
+long
+grd3d_scan_roffbinary(FILE *fc,
+                      int *swap,
+                      char *tags,
+                      int *rectypes,
+                      long *reclengths,
+                      long *recstarts,
+                      long maxkw)
 {
 
-    char s[24] = "grd3d_scan_roffbinary";
     char tagname[ROFFSTRLEN] = "";
     char cname[ROFFARRLEN][ROFFSTRLEN];
     char pname[ROFFARRLEN][ROFFSTRLEN];
     int i, j, numrec, ios, cntype[ROFFARRLEN];
     long npos1, npos2, bytepos[ROFFARRLEN], reclen[ROFFARRLEN];
-    long nrec=0;
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 2, "Scanning ROFF ...");
+    long nrec = 0;
 
     npos1 = 0;
 
@@ -343,27 +334,20 @@ long grd3d_scan_roffbinary (FILE *fc, int *swap, char *tags, int *rectypes,
 
     for (i = 0; i < maxkw; i++) {
         tagname[0] = '\0';
-        ios = _scan_roff_bin_record(fc, swap, tagname, npos1, &npos2, &numrec,
-                                    cname, pname, cntype,
-                                    bytepos, reclen, debug);
+        ios = _scan_roff_bin_record(fc, swap, tagname, npos1, &npos2, &numrec, cname,
+                                    pname, cntype, bytepos, reclen);
 
         if (ios == -9) {
-            xtg_error(s, "Not a ROFF binary file. STOP!");
+            logger_error(LI, FI, FU, "Not a ROFF binary file. STOP!");
             return ios;
-        }
-        else if (ios < 0) {
-            xtg_error(s, "Unspesified error when reading ROFF binary: %d",
-                      ios);
+        } else if (ios < 0) {
             return -10;
         }
 
-        if (strcmp(tagname, "eof") == 0 || ios == 10) break;
+        if (strcmp(tagname, "eof") == 0 || ios == 10)
+            break;
 
         for (j = 0; j < numrec; j++) {
-            xtg_speak(s, 2, "Tag is <%s>, subtags: <%s>, "
-                      "bytepos: <%ld>, reclen: <%ld>, "
-                      "npos1 and npos2: <%ld> <%ld>",
-                      tagname, cname[j], bytepos[j], reclen[j], npos1, npos2);
             strcat(tags, tagname);
             strcat(tags, "!");
             strcat(tags, cname[j]);
@@ -379,7 +363,7 @@ long grd3d_scan_roffbinary (FILE *fc, int *swap, char *tags, int *rectypes,
             rectypes[nrec] = cntype[j];
             reclengths[nrec] = reclen[j];
             recstarts[nrec] = bytepos[j];
-            nrec ++;
+            nrec++;
         }
 
         npos1 = npos2;

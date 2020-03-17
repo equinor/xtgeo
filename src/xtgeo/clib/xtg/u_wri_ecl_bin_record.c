@@ -4,7 +4,7 @@
  * Utility sub routine:
  * Writes single Eclipse output records on binary format
  * TODO: Not sure on how to handle string records
- * Author: JCR
+ *: JCR
  * ############################################################################
  * $Id: $ 
  * $Source: $ 

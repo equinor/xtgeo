@@ -2,7 +2,7 @@
  * ############################################################################
  * x_ib2ijk.c
  * Converting from I,J,K to sequential block number IB
- * Author: J.C. Rivenaes
+ *: J.C. Rivenaes
  * ############################################################################
  * $Id: ib2ijk.c,v 1.1 2000/12/12 17:24:54 bg54276 Exp $
  * $Source: /h/bg54276/jcr/prg/lib/gplext/GPLExt/RCS/ib2ijk.c,v $

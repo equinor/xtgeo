@@ -1,9 +1,5 @@
-#include "libxtg.h"
-#include "libxtg_.h"
-#include <math.h>
-
 /*
- *=============================================================================
+ *======================================================================================
  * Check if a point is within a polygon in 2D. The poly has to be organizated
  * cyclic, either clockwise or opposite.
  * Strange forms (stars etc) should be OK.
@@ -13,7 +9,7 @@
  * 1 if on edge
  * 0 outside
  * -1 undetermined
- * JCR 17-FEB-2002
+
  *=============================================================================
  * Notice:
  * p_xp_v and p_yp_v may contain several polygons. It is important that this
@@ -35,30 +31,28 @@
  *=============================================================================
  */
 
+#include "libxtg.h"
+#include "libxtg_.h"
+#include <math.h>
+
 int
 polys_chk_point_inside(double x,
                        double y,
                        double *p_xp_v,
                        double *p_yp_v,
                        int np1,
-                       int np2,
-                       int debug)
+                       int np2)
 
 {
     double cnull, cen, pih, topi, eps;
     double x1, x2, y1, y2, vin, vinsum, an, an1, an2, xp, pp;
     double cosv, dtmp, diffx, diffy;
     int i;
-    char s[24] = "polys_chk_point_inside";
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 2, "Entering routine %s", s);
 
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * Constants
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      */
 
     cnull = 0.0;
@@ -69,9 +63,9 @@ polys_chk_point_inside(double x,
     eps = sqrt(dtmp) * 1.0e-3; /*works better than e-09 in pp */
 
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * Loop over all corners (edges)
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      */
 
     diffx = fabs(p_xp_v[np1] - p_xp_v[np2]);

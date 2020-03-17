@@ -3,7 +3,7 @@
  * Some wrappers on common C function to avoid warning messages while compile:
  *     - fgets
  * 
- * Author: JRIV
+ *: JRIV
  * ############################################################################
  * ############################################################################
  */

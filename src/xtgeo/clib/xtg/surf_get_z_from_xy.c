@@ -4,8 +4,8 @@
  * NAME:
  *    surf_get_z_from_xy.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Given a map and a x,y point, the map Z value is returned. This should
@@ -43,79 +43,77 @@
  ******************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-double surf_get_z_from_xy(
-			  double x,
-			  double y,
-			  int nx,
-			  int ny,
-			  double xori,
-			  double yori,
-			  double xinc,
-			  double yinc,
-                          int yflip,
-			  double rot_deg,
-			  double *p_map_v,
-                          long nn
-			  )
+double
+surf_get_z_from_xy(double x,
+                   double y,
+                   int nx,
+                   int ny,
+                   double xori,
+                   double yori,
+                   double xinc,
+                   double yinc,
+                   int yflip,
+                   double rot_deg,
+                   double *p_map_v,
+                   long nn)
 {
-    int  ib=-9, ier, iex[4], i=0, j=0;
+    int ib = -9, ier, iex[4], i = 0, j = 0;
     double x_v[4], y_v[4], z_v[4];
     double xx, yy, zz, z, rx, ry;
-    int userelative=1;
+    int userelative = 1;
 
+    if (nx * ny != nn)
+        logger_error(LI, FI, FU, "Fatal error in %s", FU);
 
-    if (nx*ny != nn) logger_error(LI, FI, FU, "Fatal error in %s", FU);
-
-
-    ib=-1;
-
+    ib = -1;
 
     /* get i and j for lower left corner, given a point X Y*/
 
-    ier = sucu_ij_from_xy(&i, &j, &rx, &ry,
-			  x, y, xori, xinc, yori, yinc,
-			  nx, ny, yflip, rot_deg, 1);
-
+    ier = sucu_ij_from_xy(&i, &j, &rx, &ry, x, y, xori, xinc, yori, yinc, nx, ny, yflip,
+                          rot_deg, 1);
 
     /* outside map, returning UNDEF value */
-    if (ier<0) {
-	return UNDEF;
+    if (ier < 0) {
+        return UNDEF;
     }
 
     /* two approaches here; the 'userelative' is more clean and safe? */
 
     if (userelative == 1) {
         /* map origin rleative is 0.0 */
-        z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc, 0.0,
-                               0.0, p_map_v);
-    }
-    else{
+        z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc, 0.0, 0.0, p_map_v);
+    } else {
 
         /* find the x,y,z values of the four nodes */
-        iex[0] = surf_xyz_from_ij(i, j, &xx, &yy, &zz, xori, xinc, yori, yinc,
+        iex[0] = surf_xyz_from_ij(i, j, &xx, &yy, &zz, xori, xinc, yori, yinc, nx, ny,
+                                  yflip, rot_deg, p_map_v, nn, 0);
+        x_v[0] = xx;
+        y_v[0] = yy;
+        z_v[0] = zz;
+
+        iex[1] = surf_xyz_from_ij(i + 1, j, &xx, &yy, &zz, xori, xinc, yori, yinc, nx,
+                                  ny, yflip, rot_deg, p_map_v, nn, 0);
+        x_v[1] = xx;
+        y_v[1] = yy;
+        z_v[1] = zz;
+
+        iex[2] = surf_xyz_from_ij(i, j + 1, &xx, &yy, &zz, xori, xinc, yori, yinc, nx,
+                                  ny, yflip, rot_deg, p_map_v, nn, 0);
+        x_v[2] = xx;
+        y_v[2] = yy;
+        z_v[2] = zz;
+
+        iex[3] = surf_xyz_from_ij(i + 1, j + 1, &xx, &yy, &zz, xori, xinc, yori, yinc,
                                   nx, ny, yflip, rot_deg, p_map_v, nn, 0);
-        x_v[0]=xx; y_v[0]=yy; z_v[0]=zz;
+        x_v[3] = xx;
+        y_v[3] = yy;
+        z_v[3] = zz;
 
-        iex[1] = surf_xyz_from_ij(i+1, j, &xx, &yy, &zz, xori, xinc, yori,
-                                  yinc, nx, ny, yflip, rot_deg, p_map_v,
-                                  nn, 0);
-        x_v[1]=xx; y_v[1]=yy; z_v[1]=zz;
-
-        iex[2] = surf_xyz_from_ij(i, j+1, &xx, &yy, &zz, xori, xinc, yori,
-                                  yinc, nx, ny, yflip, rot_deg, p_map_v,
-                                  nn, 0);
-        x_v[2]=xx; y_v[2]=yy; z_v[2]=zz;
-
-        iex[3] = surf_xyz_from_ij(i+1, j+1, &xx, &yy, &zz, xori, xinc, yori,
-                                  yinc, nx, ny, yflip, rot_deg, p_map_v,
-                                  nn, 0);
-        x_v[3]=xx; y_v[3]=yy; z_v[3]=zz;
-
-        for (i=0; i<4; i++) {
+        for (i = 0; i < 4; i++) {
             if (iex[i] != 0) {
                 return UNDEF;
             }
@@ -125,7 +123,6 @@ double surf_get_z_from_xy(
 
         z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 3);
     }
-
 
     return z;
 }

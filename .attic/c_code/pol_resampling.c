@@ -123,7 +123,7 @@ pol_resampling(double *xv,
 
     /* find the hlen vector, which is the horizontal cumulative length */
     ier = pol_geometrics(xv, nlenx, yv, nlenx, zv, nlenx, ttlenx, nlenx, tdtlenx, nlenx,
-                         thlen, nlenx, tdhlenx, nlenx, debug);
+                         thlen, nlenx, tdhlenx, nlenx);
 
     if (debug > 2) {
         for (i = 0; i < nlenx; i++) {
@@ -235,7 +235,7 @@ pol_resampling(double *xv,
         /* debugging only work */
         ier = pol_geometrics(txv, nlenx + 2, tyv, nlenx + 2, tzv, nlenx + 2, ttlenx,
                              nlenx + 2, tdtlenx, nlenx + 2, thlenx, nlenx + 2, tdhlenx,
-                             nlenx + 2, debug);
+                             nlenx + 2);
         for (i = 0; i < (nlenx + 2); i++) {
             delta = 0.0;
             if (i > 0)
@@ -328,7 +328,7 @@ pol_resampling(double *xv,
 
     /* find the new hlen vector */
     ier = pol_geometrics(xov, *nolen, yov, *nolen, zov, *nolen, tmptt, *nolen, tmpdt,
-                         *nolen, hlen, *nolen, tmpdh, *nolen, debug);
+                         *nolen, hlen, *nolen, tmpdh, *nolen);
 
     for (i = 0; i < nct; i++)
         hlen[i] -= uhext;

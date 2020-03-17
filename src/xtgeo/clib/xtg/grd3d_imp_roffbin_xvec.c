@@ -6,11 +6,11 @@
  ***************************************************************************************
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  ***************************************************************************************
@@ -19,7 +19,7 @@
  *    grd3d_imp_roffbin_xvec.c
  *
  * AUTHOR(S):
- *    Jan C. Rivenaes
+ *
  *
  * DESCRIPTION:
  *    Get the pointer to the a general X (float, int, ...) array
@@ -41,7 +41,8 @@
  ***************************************************************************************
  */
 
-int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec)
+int
+grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec)
 {
     /* Imports a ROFF binary array, update pointer */
 
@@ -51,16 +52,20 @@ int grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long n
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nfvec; i++) {
-        if (fread(&afloat, 4, 1, fc) != 1) exit(EXIT_FAILURE);
-        if (swap==1) SWAP_FLOAT(afloat);
-        if (afloat == -999.0) afloat = UNDEF;
+        if (fread(&afloat, 4, 1, fc) != 1)
+            exit(EXIT_FAILURE);
+        if (swap == 1)
+            SWAP_FLOAT(afloat);
+        if (afloat == -999.0)
+            afloat = UNDEF;
         fvec[i] = afloat;
     }
 
     return EXIT_SUCCESS;
 }
 
-int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec)
+int
+grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec)
 {
     /* Imports a ROFF binary array, update pointer */
 
@@ -70,16 +75,20 @@ int grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long niv
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nivec; i++) {
-        if (fread(&anint, 4, 1, fc) != 1) exit(EXIT_FAILURE);
-        if (swap==1) SWAP_FLOAT(anint);
-        if (anint == -999.0) anint = UNDEF_INT;
+        if (fread(&anint, 4, 1, fc) != 1)
+            exit(EXIT_FAILURE);
+        if (swap == 1)
+            SWAP_FLOAT(anint);
+        if (anint == -999.0)
+            anint = UNDEF_INT;
         ivec[i] = anint;
     }
 
     return EXIT_SUCCESS;
 }
 
-int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbvec)
+int
+grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbvec)
 {
     /* Imports a ROFF binary array if type , update pointer. NB convert to INT! */
 
@@ -90,9 +99,11 @@ int grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbv
     fseek(fc, bytepos, SEEK_SET);
 
     for (i = 0; i < nbvec; i++) {
-        if (fread(&achar, 1, 1, fc) != 1) exit(EXIT_FAILURE);
+        if (fread(&achar, 1, 1, fc) != 1)
+            exit(EXIT_FAILURE);
         anint = (int)achar;
-        if (anint == 255) anint = UNDEF_INT;
+        if (anint == 255)
+            anint = UNDEF_INT;
         bvec[i] = anint;
     }
 

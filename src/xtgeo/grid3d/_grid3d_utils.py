@@ -106,7 +106,7 @@ def _scan_ecl_keywords(fhandle, maxkeys=100000, dataframe=False):
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
     nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+        fhandle, rectypes, reclens, recstarts, maxkeys
     )
 
     keywords = keywords.replace(" ", "")
@@ -189,7 +189,7 @@ def _scan_roff_keywords(fhandle, maxkeys=100000, dataframe=False):
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
     nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+        fhandle, rectypes, reclens, recstarts, maxkeys
     )
 
     keywords = keywords.replace(" ", "")

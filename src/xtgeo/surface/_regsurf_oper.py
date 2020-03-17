@@ -246,7 +246,6 @@ def get_xy_values(self, order="C", asmasked=False):
         nno,
         nno,
         0,
-        XTGDEBUG,
     )
     if ier != 0:
         logger.critical("Error code %s, contact the author", ier)
@@ -423,7 +422,6 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             ycor,
             1.0,
             0,
-            XTGDEBUG,
         )
         if ier == -9:
             xtg.warn("Polygon is not closed")

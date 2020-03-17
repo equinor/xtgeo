@@ -4,8 +4,8 @@
  * NAME:
  *    x_interp_cube_node.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    This routine finds the interpolation within a set of 8 cube nodes
@@ -46,32 +46,31 @@
  ******************************************************************************
  */
 
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <math.h>
 
-
-int x_interp_cube_nodes (
-                         double *x_v,
-                         double *y_v,
-                         double *z_v,
-                         float *p_v,
-                         double x,
-                         double y,
-                         double z,
-                         float *value,
-                         int method,
-                         int debug
-                         )
+int
+x_interp_cube_nodes(double *x_v,
+                    double *y_v,
+                    double *z_v,
+                    float *p_v,
+                    double x,
+                    double y,
+                    double z,
+                    float *value,
+                    int method,
+                    int debug)
 {
     /* locals */
     char s[24] = "x_interp_cube_nodes";
-    double len1, len2, len3, tlen1, tlen2, tlen3, vtot, vsub,
-        w[8], sumw = 0.0, vv = 0.0;
+    double len1, len2, len3, tlen1, tlen2, tlen3, vtot, vsub, w[8], sumw = 0.0,
+                                                                    vv = 0.0;
     int i, flagundef = 0;
 
     xtgverbose(debug);
-    if (debug > 2) xtg_speak(s, 3, "Entering %s", s);
+    if (debug > 2)
+        xtg_speak(s, 3, "Entering %s", s);
 
     /*
      * ########################################################################
@@ -80,20 +79,20 @@ int x_interp_cube_nodes (
      * File:Trilinear_interpolation_visualisation.svg)
      * ########################################################################
      */
-    if (method==1) {
+    if (method == 1) {
 
-        flagundef = 0;  /* to take dead traces with UNDEF value into account */
+        flagundef = 0; /* to take dead traces with UNDEF value into account */
 
-	/*
-	 * OK, we are inside mapnodes. Now I need the weights (in 3D)
-	 * |---------------|   To get the wight of point Q, need to compute
-	 * |   qw      |   |   the opposite volume qw (3D) and divide by total
-	 * |-----------*   |   total valume. This is done for ALL corners
-	 * |               |
-	 * |               |
-	 * |               |
-	 * |---------------Q
-	 */
+        /*
+         * OK, we are inside mapnodes. Now I need the weights (in 3D)
+         * |---------------|   To get the wight of point Q, need to compute
+         * |   qw      |   |   the opposite volume qw (3D) and divide by total
+         * |-----------*   |   total valume. This is done for ALL corners
+         * |               |
+         * |               |
+         * |               |
+         * |---------------Q
+         */
 
         /* total volume: */
         tlen1 = fabs(x_v[0] - x_v[1]) + FLOATEPS;  // Add FLOATEPS:
@@ -102,23 +101,22 @@ int x_interp_cube_nodes (
 
         vtot = tlen1 * tlen2 * tlen3;
 
-        if (debug > 2) xtg_speak(s,3,"Vtot is %f (%f %f %f)",
-                                 vtot, tlen1, tlen2, tlen3);
+        if (debug > 2)
+            xtg_speak(s, 3, "Vtot is %f (%f %f %f)", vtot, tlen1, tlen2, tlen3);
 
-        if (debug > 2) xtg_speak(s,3,"Relative point (%f %f %f)",
-                                 x, y, z);
-
+        if (debug > 2)
+            xtg_speak(s, 3, "Relative point (%f %f %f)", x, y, z);
 
         /* corner 0 has the opposite corner 7 etc */
         sumw = 0.0;
         vv = 0.0;
         for (i = 0; i < 8; i++) {
-            len1 = fabs(x_v[7-i] - x);
-            len2 = fabs(y_v[7-i] - y);
-            len3 = fabs(z_v[7-i] - z);
+            len1 = fabs(x_v[7 - i] - x);
+            len2 = fabs(y_v[7 - i] - y);
+            len3 = fabs(z_v[7 - i] - z);
 
-            if (debug > 2) xtg_speak(s, 3, "LEN 1 2 3 %f %f %f",
-                                     len1, len2, len3);
+            if (debug > 2)
+                xtg_speak(s, 3, "LEN 1 2 3 %f %f %f", len1, len2, len3);
 
             if (len1 > tlen1 || len2 > tlen2 || len3 > tlen3) {
                 xtg_warn(s, 2, "Point outside, skip");
@@ -130,18 +128,16 @@ int x_interp_cube_nodes (
 
             if (p_v[i] > UNDEF_LIMIT) {
                 flagundef = 1;
-            }
-            else if (p_v[i] < UNDEF_LIMIT) {
+            } else if (p_v[i] < UNDEF_LIMIT) {
                 vv = vv + p_v[i] * w[i];
                 sumw += w[i];
             }
 
-            if (debug > 2) xtg_speak(s, 3, "Corner %d: %lf %lf %lf",
-                                     i, x_v[i], y_v[i], z_v[i]);
+            if (debug > 2)
+                xtg_speak(s, 3, "Corner %d: %lf %lf %lf", i, x_v[i], y_v[i], z_v[i]);
 
-            if (debug > 2) xtg_speak(s, 3, "Input value + weigth %lf %lf",
-                                     p_v[i], w[i]);
-
+            if (debug > 2)
+                xtg_speak(s, 3, "Input value + weigth %lf %lf", p_v[i], w[i]);
         }
 
         if (flagundef == 0 && fabs(sumw - 1.0) > 5.0 * FLOATEPS) {
@@ -151,9 +147,8 @@ int x_interp_cube_nodes (
 
         if (flagundef == 1) {
             if (sumw > FLOATEPS) {
-                vv = vv * 1.0/sumw;  /* scale weights */
-            }
-            else{
+                vv = vv * 1.0 / sumw; /* scale weights */
+            } else {
                 vv = UNDEF;
             }
         }

@@ -2,7 +2,7 @@
  * ############################################################################
  * x_nint.c
  * Getting the nearest integer of a double float, similar to Fortrans NINT
- * Author: J.C. Rivenaes
+ *: J.C. Rivenaes
  * ############################################################################
  *
  */

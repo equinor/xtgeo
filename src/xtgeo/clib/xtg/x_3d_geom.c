@@ -15,8 +15,8 @@
  * NAME:
  *    x_plane_normalvector.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Find the normal vector for a plane based on 3 points in 3D
@@ -98,8 +98,8 @@ x_plane_normalvector(double *points_v, double *nvector, int option, int debug)
  * NAME:
  *    x_isect_line_plane
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Finds the xyz coordinates where a line intersect a plane. The plane
@@ -182,8 +182,8 @@ x_isect_line_plane(double *nvector,
  * NAME:
  *    x_angle_vectors
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Find the angle in radians between two 3D vectors in space.
@@ -232,8 +232,8 @@ x_angle_vectors(double *avec, double *bvec, int debug)
  * NAME:
  *    x_sample_z_from_xy_cell
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes, May 2016
+ *(S):
+ *, May 2016
  *
  * DESCRIPTION:
  *    Given a XY point in 3D, does it intersect a cell top or base,

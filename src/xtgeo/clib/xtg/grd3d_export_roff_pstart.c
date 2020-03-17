@@ -4,8 +4,8 @@
  * NAME:
  *    grd3d_export_roff_psta.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Export a ROFF header only, ASCII or BINARY

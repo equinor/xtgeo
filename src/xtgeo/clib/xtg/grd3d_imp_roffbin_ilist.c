@@ -1,24 +1,11 @@
 /*
  ***************************************************************************************
  *
- * Read ROFF integer list like data (after a scanning is done first)
- *
- ***************************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ***************************************************************************************
- *
  * NAME:
  *    grd3d_imp_roffbin_ilist.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
- *
  * DESCRIPTION:
+ *    Read ROFF integer list like data (after a scanning is done first).
  *    This routine goes directly to the byte position(s) which are found from
  *    scanning, and reads the array.
  *
@@ -47,25 +34,28 @@
  ***************************************************************************************
  */
 
-int grd3d_imp_roffbin_ilist(FILE *fc, int swap, long bytepos, int *iarray,
-                            long niarray, int debug)
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
+
+int
+grd3d_imp_roffbin_ilist(FILE *fc, int swap, long bytepos, int *iarray, long niarray)
 {
 
-    char sbn[24] = "grd3d_imp_roffbin_ilist";
     int anint, iok;
 
     long ipos;
-
-    xtgverbose(debug);
-    xtg_speak(sbn, 2, "Entering %s", sbn);
 
     fseek(fc, bytepos, SEEK_SET);
 
     for (ipos = 0; ipos < niarray; ipos++) {
         iok = fread(&anint, 4, 1, fc);
-        if (iok != 1) exit(EXIT_FAILURE);
-        if (swap==1) SWAP_INT(anint);
-        if (anint == -999) anint = UNDEF_INT;
+        if (iok != 1)
+            exit(EXIT_FAILURE);
+        if (swap == 1)
+            SWAP_INT(anint);
+        if (anint == -999)
+            anint = UNDEF_INT;
         iarray[ipos] = anint;
     }
     return EXIT_SUCCESS;

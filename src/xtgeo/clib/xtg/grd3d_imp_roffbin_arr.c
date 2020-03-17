@@ -18,8 +18,8 @@
  * NAME:
  *    grd3d_imp_roffbin_arr.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    This routine goes directly to the byte position(s) which are found from

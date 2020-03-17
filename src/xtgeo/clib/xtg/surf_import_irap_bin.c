@@ -6,9 +6,9 @@
  ******************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 /*
  ******************************************************************************
@@ -17,7 +17,7 @@
  *    surf_import_irap_bin.c
  *
  * AUTHOR(S):
- *    Jan C. Rivenaes
+ *
  *
  * DESCRIPTION:
  *    Imports a surface map on Irap binary format.
@@ -58,7 +58,9 @@
 
 #define ERROR -999999
 
-int _intread(FILE *fc, int swap, int trg, char info[50]) {
+int
+_intread(FILE *fc, int swap, int trg, char info[50])
+{
     /* read an INT item in the IRAP binary header */
     int ier, myint;
 
@@ -67,7 +69,8 @@ int _intread(FILE *fc, int swap, int trg, char info[50]) {
         logger_critical(LI, FI, FU, "Error in reading INT in Irap binary header");
         return ERROR;
     }
-    if (swap) SWAP_INT(myint);
+    if (swap)
+        SWAP_INT(myint);
 
     /* test againts target if target > 0 */
     if (trg > 0) {
@@ -79,8 +82,9 @@ int _intread(FILE *fc, int swap, int trg, char info[50]) {
     return myint;
 }
 
-
-double _floatread(FILE *fc, int swap, float trg, char info[50]) {
+double
+_floatread(FILE *fc, int swap, float trg, char info[50])
+{
     /* read a FLOAT item in the IRAP binary header, return as DOUBLE */
     int ier;
     float myfloat;
@@ -91,12 +95,13 @@ double _floatread(FILE *fc, int swap, float trg, char info[50]) {
         return ERROR;
     }
 
-    if (swap) SWAP_FLOAT(myfloat);
+    if (swap)
+        SWAP_FLOAT(myfloat);
 
     /* test againts target if target > 0 */
     if (trg > 0.0) {
-        if (myfloat != trg)  {
-            logger_critical(LI, FI, FU,"Error in reading FLOAT in Irap binary header");
+        if (myfloat != trg) {
+            logger_critical(LI, FI, FU, "Error in reading FLOAT in Irap binary header");
             return ERROR;
         }
     }
@@ -104,21 +109,20 @@ double _floatread(FILE *fc, int swap, float trg, char info[50]) {
     return (double)myfloat;
 }
 
-int surf_import_irap_bin(
-			 FILE *fc,
-			 int mode,
-			 int *p_mx,
-			 int *p_my,
-			 long *p_ndef,
-			 double *p_xori,
-			 double *p_yori,
-			 double *p_xinc,
-			 double *p_yinc,
-			 double *p_rot,
-			 double *p_map_v,
-			 long nsurf,
-			 int option
-			 )
+int
+surf_import_irap_bin(FILE *fc,
+                     int mode,
+                     int *p_mx,
+                     int *p_my,
+                     long *p_ndef,
+                     double *p_xori,
+                     double *p_yori,
+                     double *p_xinc,
+                     double *p_yinc,
+                     double *p_rot,
+                     double *p_map_v,
+                     long nsurf,
+                     int option)
 {
 
     /* local declarations */
@@ -131,8 +135,10 @@ int surf_import_irap_bin(
 
     logger_info(LI, FI, FU, "Read IRAP binary map file: %s", FU);
 
-    if (mode==0) logger_info(LI, FI, FU, "Scan mode!");
-    if (mode==1) logger_info(LI, FI, FU, "Values mode!");
+    if (mode == 0)
+        logger_info(LI, FI, FU, "Scan mode!");
+    if (mode == 1)
+        logger_info(LI, FI, FU, "Values mode!");
 
     logger_info(LI, FI, FU, "FSEEK...! in %d", fileno(fc));
     fseek(fc, 0, SEEK_SET);
@@ -169,7 +175,8 @@ int surf_import_irap_bin(
 
     /* check endianess */
     swap = 0;
-    if (x_swap_check() == 1) swap=1;
+    if (x_swap_check() == 1)
+        swap = 1;
 
     /* record 1 */
     ireclen = _intread(fc, swap, 32, "Record start (1)");
@@ -205,13 +212,14 @@ int surf_import_irap_bin(
     *p_xinc = xinc;
     *p_yinc = yinc;
 
-    if (rot < 0.0) rot = rot + 360.0;
+    if (rot < 0.0)
+        rot = rot + 360.0;
     *p_rot = rot;
 
     /* if scan mode only: */
-    if (mode==0) {
+    if (mode == 0) {
         logger_info(LI, FI, FU, "Scan mode done");
-	return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     }
 
     mx = (long)nx;
@@ -230,24 +238,26 @@ int surf_import_irap_bin(
     logger_info(LI, FI, FU, "Read Irap map values...");
 
     while (ier == 1) {
-	/* start of block integer */
-	ier = fread(&myint, sizeof(int), 1, fc); if (swap) SWAP_INT(myint);
-	if (ier == 1 && myint > 0) {
-	    mstart = myint;
+        /* start of block integer */
+        ier = fread(&myint, sizeof(int), 1, fc);
+        if (swap)
+            SWAP_INT(myint);
+        if (ier == 1 && myint > 0) {
+            mstart = myint;
 
-	    /* read data */
-	    nvv = mstart / sizeof(float);
-	    for (ib = 0; ib < nvv; ib++) {
-		ier = fread(&myfloat, sizeof(int), 1, fc);
-		if (swap) SWAP_FLOAT(myfloat);
+            /* read data */
+            nvv = mstart / sizeof(float);
+            for (ib = 0; ib < nvv; ib++) {
+                ier = fread(&myfloat, sizeof(int), 1, fc);
+                if (swap)
+                    SWAP_FLOAT(myfloat);
 
-		if (myfloat > UNDEF_MAP_IRAPB_LIMIT) {
-		    dval = UNDEF_MAP;
-		}
-		else{
-		    dval = myfloat;
-		    ntmp++;
-		}
+                if (myfloat > UNDEF_MAP_IRAPB_LIMIT) {
+                    dval = UNDEF_MAP;
+                } else {
+                    dval = myfloat;
+                    ntmp++;
+                }
 
                 /* convert to C order */
                 x_ib2ijk(nn, &i, &j, &k, mx, my, 1, 0);
@@ -255,31 +265,32 @@ int surf_import_irap_bin(
 
                 p_map_v[ic] = dval;
 
-		nn++;
-	    }
+                nn++;
+            }
 
-	    /* end of block integer */
-	    if (fread(&myint, sizeof(int), 1, fc) != 1) {
+            /* end of block integer */
+            if (fread(&myint, sizeof(int), 1, fc) != 1) {
                 logger_error(LI, FI, FU, "Error in reading end of block integer");
                 return EXIT_FAILURE;
             }
 
-            if (swap) SWAP_INT(myint);
-	    mstop = myint;
-	    if (mstart != mstop) {
-                logger_error(LI, FI, FU, "Error en reading irap file (mstart %d mstop %d)",
-                             mstart, mstop);
+            if (swap)
+                SWAP_INT(myint);
+            mstop = myint;
+            if (mstart != mstop) {
+                logger_error(LI, FI, FU,
+                             "Error en reading irap file (mstart %d mstop %d)", mstart,
+                             mstop);
                 return EXIT_FAILURE;
-	    }
-	}
-	else{
-	    break;
-	}
+            }
+        } else {
+            break;
+        }
     }
 
     *p_ndef = ntmp;
     if (nn != mx * my) {
-	logger_error(LI, FI, FU, "Error, number of map nodes read not equal to MX*MY");
+        logger_error(LI, FI, FU, "Error, number of map nodes read not equal to MX*MY");
         return EXIT_FAILURE;
     }
 

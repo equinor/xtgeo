@@ -6,7 +6,7 @@
  * stretch between two given nodes. The stretch is proportional. Outside
  * an equal movement is done.
  * 
- * Author: Jan C. Rivenaes
+ *: Jan C. Rivenaes
  * ############################################################################
  * Arguments:
  * z_v        The float vector, input and output

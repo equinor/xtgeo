@@ -1,60 +1,49 @@
 /*
- * #############################################################################
- * Name:      grd3d_point_in_cell.c
- * Author:    JRIV@statoil.com
- * Created:   2002?
- * Updates:   2015-09-11 Polished and also expanded to see in 2D only
- * #############################################################################
- * Find which cell (ib) that contains the current point. An input ib gives
- * a much faster search if the next point is close to the first one
+ ***************************************************************************************
  *
- * Arguments:
- *     ibstart          which IB to start search from
- *     kzonly           A number in [1..nz] if only looking within a
+ * NAME:
+ *    grd3d_point_in_cell.c
+ *
+ * DESCRIPTION:
+ *    Find which cell (ib) that contains the current point. An input ib gives
+ *    a much faster search if the next point is close to the first one.
+ *
+ *    Note there are several variant of this in the library, as the need for speed
+ *    is most chellenging
+ *
+ * ARGUMENTS:
+ *    ibstart          which IB to start search from
+ *    kzonly           A number in [1..nz] if only looking within a
  *                      cell layer, 0 otherwise
- *     x,y,z            input points. If z is -999 it means a 2D search only
- *     nx..nz           grid dimensions
- *     coordsv        grid coords
- *     zcornsv        grid zcorn
- *     actnumsv       grid active cell indicator
- *     p_prop_v         property to work with
- *     value            value to set
- *     ronly            replace-only-this value
- *     i1, i2...k2      cell index range in I J K
- *     option           0 for looking in cell 3D, 1 for looking in 2D bird view
- *     debug            debug/verbose flag
+ *    x,y,z            input points. If z is -999 it means a 2D search only
+ *    nx..nz           grid dimensions
+ *    coordsv          grid coords
+ *    zcornsv          grid zcorn
+ *    actnumsv         grid active cell indicator
+ *    p_prop_v         property to work with
+ *    value            value to set
+ *    ronly            replace-only-this value
+ *    i1, i2...k2      cell index range in I J K
+ *    option           0 for looking in cell 3D, 1 for looking in 2D bird view
  *
- * Return:
- *     A value ranging from 0 to nx*ny*nz-1 of found. -1 otherwise
-
- * Caveeats/issues:
- *     - consistency if ibstart > 0 but not in correct kzonly layer?
- *     - how to use ACTNUM (not used so far)
- * #############################################################################
- */
-
-/*
- * ----------------------------------------------------------------------------
+ * RETURNS:
+ *    A value ranging from 0 to nx*ny*nz-1 of found.
  *
- * CELL CORNERS is a 24 vector long (x y z x y z ....)
- *     ---> I
+ * TODO/ISSUES/BUGS:
+ *    * consistency if ibstart > 0 but not in correct kzonly layer?
+ *    * how to use ACTNUM (not used so far)
  *
- *   0 1 2  ------------------ 3 4 5     12 13 14  ------------------ 15 16  17
- *          |                |		            |                |
- *          |     TOP        |		            |     BOT        |
- *          |                |		            |                |
- *   6 7 8  ----------------- 9 10 11	  18 19 20  -----------------  21 22 23
- *
- *     |
- *     v J
- *
+ * LICENCE:
+ *    CF XTGeo's LICENSE
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-int
-grd3d_point_in_cell(int ibstart,
+long
+grd3d_point_in_cell(long ibstart,
                     int kzonly,
                     double x,
                     double y,
@@ -68,23 +57,15 @@ grd3d_point_in_cell(int ibstart,
                     int maxrad,
                     int sflag,
                     int *nradsearch,
-                    int option,
-                    int debug)
+                    int option)
 
 {
     /* locals */
-    int i, j, k, ib, inside, irad;
-    int i1, i2, j1, j2, k1, k2;
-    int istart, jstart, kstart, m;
-    double corners[24];
-    double polx[5], poly[5];
-    char s[24] = "grd3d_point_in_cell";
+    // long ib;
+    // int i, j, k, inside, irad;
+    // int i1, i2, j1, j2, k1, k2;
 
-    xtgverbose(debug);
-    xtg_speak(s, 2, "Entering <grd3d_point_in_cell>");
-    xtg_speak(s, 2, "NX NY NZ: %d %d %d", nx, ny, nz);
-
-    xtg_speak(s, 2, "IBSTART %d", ibstart);
+    logger_info(LI, FI, FU, "Finding if point in cell: %s, ibstart %ld", FU, ibstart);
 
     if (ibstart < 0)
         ibstart = 0;
@@ -93,6 +74,7 @@ grd3d_point_in_cell(int ibstart,
         ibstart = x_ijk2ib(1, 1, kzonly, nx, ny, nz, 0);
     }
 
+    int istart, jstart, kstart;
     x_ib2ijk(ibstart, &istart, &jstart, &kstart, nx, ny, nz, 0);
 
     /*
@@ -100,17 +82,16 @@ grd3d_point_in_cell(int ibstart,
      * in order to optimize speed
      */
 
-    i1 = istart;
-    j1 = jstart;
-    k1 = kstart;
+    int i1 = istart;
+    int j1 = jstart;
+    int k1 = kstart;
 
-    i2 = istart;
-    j2 = jstart;
-    k2 = kstart;
+    int i2 = istart;
+    int j2 = jstart;
+    int k2 = kstart;
 
+    int irad;
     for (irad = 0; irad <= (maxrad + 1); irad++) {
-
-        xtg_speak(s, 2, "Search radi %d", irad);
 
         if (irad > 0) {
             i1 -= 1;
@@ -150,23 +131,20 @@ grd3d_point_in_cell(int ibstart,
             k2 = kzonly;
         }
 
-        if (debug > 3) {
-            xtg_speak(s, 4, "I1 I2  J1 J2  K1 K2  %d %d  %d %d  %d %d", i1, i2, j1, j2,
-                      k1, k2);
-        }
-
+        int i, j, k;
         for (k = k1; k <= k2; k++) {
             for (j = j1; j <= j2; j++) {
                 for (i = i1; i <= i2; i++) {
 
-                    if (debug > 3) {
-                        xtg_speak(s, 3, "Cell IJK: %d %d %d", i, j, k);
-                    }
-                    ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                    long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                    double corners[24];
+                    double polx[5], poly[5];
+
                     /* get the corner for the cell */
                     grd3d_corners(i, j, k, nx, ny, nz, p_coor_v, 0, zcornsv, 0,
                                   corners);
 
+                    int inside = 0;
                     if (option == 0) {
                         /* 3D cell */
                         inside = x_chk_point_in_cell(x, y, z, corners, 1);
@@ -185,22 +163,11 @@ grd3d_point_in_cell(int ibstart,
                         polx[4] = polx[0];
                         poly[4] = poly[0];
 
-                        if (debug > 2) {
-                            for (m = 0; m < 5; m++) {
-                                xtg_speak(s, 3, "Corner no %d:  %9.2f   %9.2f ", m + 1,
-                                          polx[m], poly[m]);
-                            }
-                        }
-
                         inside =
                           pol_chk_point_inside((double)x, (double)y, polx, poly, 5);
-                        if (debug > 2) {
-                            xtg_speak(s, 3, "Inside status: %d", inside);
-                        }
                     }
 
                     if (inside > 0) {
-                        xtg_speak(s, 2, "Found at IJK: %d %d %d", i, j, k);
                         return ib;
                     }
                 }

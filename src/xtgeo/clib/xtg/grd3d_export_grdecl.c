@@ -79,10 +79,9 @@ grd3d_export_grdecl(int nx,
     itmp[3] = 1;
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, &fdum, &ddum, 4, XTGDEBUG);
+        grd3d_write_eclrecord(fc, "SPECGRID", 1, itmp, &fdum, &ddum, 4);
     } else {
-        grd3d_write_eclinput(fc, "SPECGRID", 1, itmp, &fdum, &ddum, 4, "  %5d", 10,
-                             XTGDEBUG);
+        grd3d_write_eclinput(fc, "SPECGRID", 1, itmp, &fdum, &ddum, 4, "  %5d", 10);
     }
 
     /*
@@ -106,10 +105,9 @@ grd3d_export_grdecl(int nx,
     }
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord, XTGDEBUG);
+        grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord);
     } else {
-        grd3d_write_eclinput(fc, "COORD", 2, &idum, farr, &ddum, ncoord, "  %15.3f", 6,
-                             XTGDEBUG);
+        grd3d_write_eclinput(fc, "COORD", 2, &idum, farr, &ddum, ncoord, "  %15.3f", 6);
     }
     free(farr);
 
@@ -164,10 +162,9 @@ grd3d_export_grdecl(int nx,
     }
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn, XTGDEBUG);
+        grd3d_write_eclrecord(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn);
     } else {
-        grd3d_write_eclinput(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn, "  %11.3f", 6,
-                             XTGDEBUG);
+        grd3d_write_eclinput(fc, "ZCORN", 2, &idum, farr, &ddum, nzcorn, "  %11.3f", 6);
     }
     free(farr);
 
@@ -179,10 +176,10 @@ grd3d_export_grdecl(int nx,
     nact = nx * ny * nz;
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, "ACTNUM", 1, actnumsv, &fdum, &ddum, nact, XTGDEBUG);
+        grd3d_write_eclrecord(fc, "ACTNUM", 1, actnumsv, &fdum, &ddum, nact);
     } else {
-        grd3d_write_eclinput(fc, "ACTNUM", 1, actnumsv, &fdum, &ddum, nact, "  %1d", 12,
-                             XTGDEBUG);
+        grd3d_write_eclinput(fc, "ACTNUM", 1, actnumsv, &fdum, &ddum, nact, "  %1d",
+                             12);
     }
 
     /*

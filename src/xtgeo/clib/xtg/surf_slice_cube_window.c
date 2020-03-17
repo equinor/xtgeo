@@ -4,8 +4,8 @@
  * NAME:
  *    surf_slice_cube_window.c  IN PROGRESS
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *     Given a map and a cube, sample a series if cube values based on maps
@@ -37,7 +37,6 @@
  *                         2: trilinear interpolation and snap to closest X Y
  *    option2        i     0: Leave surf undef if outside cube
  *                         1: Keep surface values as is outside cube
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Function: 0: upon success. If problems <> 0: TODO: UPDATE LIST
@@ -56,16 +55,18 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 #include <time.h>
 
-
-void _compute_attrs(double *tmpzval, int nzval, double *zattrv, int nattr) {
+void
+_compute_attrs(double *tmpzval, int nzval, double *zattrv, int nattr)
+{
 
     /* tmpzval: stack of zvalues from nzval slices */
     /* zattrv: attribute result value, for nattr attributes */
 
-    int icn, iat;
+    int icn;
 
     int nact = 0;
     double zmin = UNDEF;
@@ -78,99 +79,82 @@ void _compute_attrs(double *tmpzval, int nzval, double *zattrv, int nattr) {
             nact++;
             zsum = zsum + tmpzval[icn];
             z2sum = z2sum + pow(tmpzval[icn], 2);
-            if (tmpzval[icn] < zmin) zmin = tmpzval[icn];
-            if (tmpzval[icn] > zmax) zmax = tmpzval[icn];
+            if (tmpzval[icn] < zmin)
+                zmin = tmpzval[icn];
+            if (tmpzval[icn] > zmax)
+                zmax = tmpzval[icn];
         }
     }
 
-    if ((zmax - (-1 * UNDEF)) < FLOATEPS) zmax = UNDEF;
+    if ((zmax - (-1 * UNDEF)) < FLOATEPS)
+        zmax = UNDEF;
 
     if (nact == 0) {
-        for (iat = 0; iat < nattr; iat++) zattrv[iat] = UNDEF;
+        int iat;
+        for (iat = 0; iat < nattr; iat++)
+            zattrv[iat] = UNDEF;
         return;
-    }
-    else{
+    } else {
         zattrv[0] = zmin;
         zattrv[1] = zmax;
         zattrv[2] = zsum / nact;
-        zattrv[3] = zsum / nact;  // shall be std
+        zattrv[3] = zsum / nact;         // shall be std
         zattrv[4] = sqrt(z2sum / nact);  // rms
     }
 }
 
-
-int surf_slice_cube_window(
-                           int ncx,
-                           int ncy,
-                           int ncz,
-                           double cxori,
-                           double cxinc,
-                           double cyori,
-                           double cyinc,
-                           double czori,
-                           double czinc,
-                           double crotation,
-                           int yflip,
-                           float *p_cubeval_v,
-                           long ncube,
-                           int mx,
-                           int my,
-                           double xori,
-                           double xinc,
-                           double yori,
-                           double yinc,
-                           int mapflip,
-                           double mrotation,
-                           double *p_map_v,
-                           long nmap,
-                           double zincr,
-                           int nzincr,
-                           double *p_attrs_v,
-                           long nattrmaps,
-                           int nattr,
-                           int option1,
-                           int option2,
-                           int debug
-                           )
+int
+surf_slice_cube_window(int ncx,
+                       int ncy,
+                       int ncz,
+                       double cxori,
+                       double cxinc,
+                       double cyori,
+                       double cyinc,
+                       double czori,
+                       double czinc,
+                       double crotation,
+                       int yflip,
+                       float *p_cubeval_v,
+                       long ncube,
+                       int mx,
+                       int my,
+                       double xori,
+                       double xinc,
+                       double yori,
+                       double yinc,
+                       int mapflip,
+                       double mrotation,
+                       double *p_map_v,
+                       long nmap,
+                       double zincr,
+                       int nzincr,
+                       double *p_attrs_v,
+                       long nattrmaps,
+                       int nattr,
+                       int option1,
+                       int option2)
 
 {
     /* locals */
-    char s[24] = "surf_slice_cube_window";
     int im, jm, knum, ier, iat, ic;
     double xcor, ycor, zcor, zval;
     float value;
     double *tmpzval;
     double *zattr;
     int option1a = 0;
-    time_t t1, t2;
-    double elapsed;
 
     tmpzval = calloc(nzincr, sizeof(double));
     zattr = calloc(nattr, sizeof(double));
 
-    xtgverbose(debug);
-    xtg_speak(s, 2, "Entering routine %s", s);
-
-    xtg_speak(s, 1, "Working with slice...");
-
-    time(&t1);
     /* work with every map node */
     for (im = 1; im <= mx; im++) {
-        if (debug > 0 && im % 10 == 0) {
-            time(&t2);
-            elapsed = difftime(t2, t1);
-            xtg_speak(s, 1, "Working with map column %d of %d ...(%6.2lf)",
-                      im, mx, elapsed);
-            time(&t1);
-        }
 
         for (jm = 1; jm <= my; jm++) {
 
             /* get the surface x, y, value (z) from IJ location */
-            ier = surf_xyz_from_ij(im, jm, &xcor, &ycor, &zcor, xori, xinc,
-                                   yori, yinc, mx, my, mapflip,
-                                   mrotation, p_map_v, nmap, 0);
-
+            ier = surf_xyz_from_ij(im, jm, &xcor, &ycor, &zcor, xori, xinc, yori, yinc,
+                                   mx, my, mapflip, mrotation, p_map_v, nmap, 0);
 
             if (zcor < UNDEF_LIMIT) {
 
@@ -178,44 +162,38 @@ int surf_slice_cube_window(
                 for (knum = 0; knum < nzincr; knum++) {
                     zval = zcor + knum * zincr;
 
-
                     if (option1 == 0) {
 
-                        ier = cube_value_xyz_cell
-                            (xcor, ycor, zval, cxori, cxinc, cyori,
-                             cyinc, czori, czinc, crotation,
-                             yflip, ncx, ncy, ncz,
-                             p_cubeval_v, &value, 0);
+                        ier = cube_value_xyz_cell(
+                          xcor, ycor, zval, cxori, cxinc, cyori, cyinc, czori, czinc,
+                          crotation, yflip, ncx, ncy, ncz, p_cubeval_v, &value, 0);
 
-                    }
-                    else if (option1 == 1 || option1 == 2) {
+                    } else if (option1 == 1 || option1 == 2) {
 
                         option1a = 0;
-                        if (option1 == 2) option1a = 1;  // snap to closest XY
-                        if (knum > 0) option1a += 10;    // Skip IJ calculation
+                        if (option1 == 2)
+                            option1a = 1;  // snap to closest XY
+                        if (knum > 0)
+                            option1a += 10;  // Skip IJ calculation
 
                         /* TIDSTYV! */
-                        ier = cube_value_xyz_interp
-                            (xcor, ycor, zval, cxori, cxinc, cyori,
-                             cyinc, czori, czinc, crotation,
-                             yflip, ncx, ncy, ncz,
-                             p_cubeval_v, &value, option1a);
+                        ier = cube_value_xyz_interp(xcor, ycor, zval, cxori, cxinc,
+                                                    cyori, cyinc, czori, czinc,
+                                                    crotation, yflip, ncx, ncy, ncz,
+                                                    p_cubeval_v, &value, option1a);
 
-
+                    } else {
+                        logger_error(LI, FI, FU, "Invalid option1 (%d) to %s", option1,
+                                     FU);
                     }
-                    else{
-                        xtg_error(s, "Invalid option1 (%d) to %s", option1, s);
-                    }
-
 
                     if (ier == EXIT_SUCCESS) {
                         tmpzval[knum] = value;
-                    }
-                    else if (ier == -1 && option2 == 0) {
+                    } else if (ier == -1 && option2 == 0) {
                         tmpzval[knum] = UNDEF_MAP;
                     }
-                    if (zval > UNDEF_LIMIT) tmpzval[knum] = UNDEF_MAP;
-
+                    if (zval > UNDEF_LIMIT)
+                        tmpzval[knum] = UNDEF_MAP;
                 }
 
                 _compute_attrs(tmpzval, nzincr, zattr, nattr);
@@ -225,17 +203,16 @@ int surf_slice_cube_window(
                     ic = x_ijk2ib(im, jm, iat + 1, mx, my, nattr, 0);
                     p_attrs_v[ic] = zattr[iat];
                 }
-            /* } */
-            /* else{ */
-            /*     /\* maps is undefined *\/ */
-            /*     for (iat = 0; iat < nattr; iat++) { */
-            /*         ic = x_ijk2ib(im, jm, iat + 1, mx, my, nattr, 0); */
-            /*         p_attrs_v[ic] = UNDEF; */
+                /* } */
+                /* else{ */
+                /*     /\* maps is undefined *\/ */
+                /*     for (iat = 0; iat < nattr; iat++) { */
+                /*         ic = x_ijk2ib(im, jm, iat + 1, mx, my, nattr, 0); */
+                /*         p_attrs_v[ic] = UNDEF; */
                 /* } */
             }
         }
     }
-    xtg_speak(s, 1, "Working with slices... DONE!");
 
     free(tmpzval);
     free(zattr);

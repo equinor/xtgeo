@@ -67,8 +67,8 @@ grd3d_setval_poly(double *p_xp_v,
 
             for (i = 1; i <= nx; i++) {
 
-                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xg, &yg, &zg,
-                               XTGDEBUG);
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, ncoordin, zcornsv,
+                               nzcornin, &xg, &yg, &zg);
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 

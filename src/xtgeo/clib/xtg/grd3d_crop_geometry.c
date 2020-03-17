@@ -4,8 +4,8 @@
  * NAME:
  *    grd3d_crop_geometry.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Reduce the grid by cropping in I, J, K

@@ -4,8 +4,8 @@
  * NAME:
  *    grd3d_ecl_tsteps.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *
@@ -71,8 +71,7 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
     rewind(fc);
 
     /* do scan */
-    nkeys = grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw,
-                                 XTGDEBUG);
+    nkeys = grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw);
 
     if (nkeys <= 0)
         logger_error(LI, FI, FU, "No keys received");

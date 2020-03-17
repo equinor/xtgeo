@@ -35,7 +35,7 @@ def swapaxes(self):
     val = self.get_values1d(fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_swapaxes(
-        ncol, nrow, yflip, self.xori, xinc, self.yori, yinc, rota, val, 0, XTGDEBUG
+        ncol, nrow, yflip, self.xori, xinc, self.yori, yinc, rota, val, 0
     )
     if ier != 0:
         raise RuntimeError(

@@ -5,8 +5,8 @@
  * NAME:
  *    grd3d_inact_outs_pol.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
+ *(S):
+ *
  *
  * DESCRIPTION:
  *    Check all cells in a layer or subgrid, and set active to zero if outside
@@ -79,8 +79,8 @@ grd3d_inact_outside_pol(double *p_xp_v,
 
         for (j = 1; j <= ny; j++) {
             for (i = 1; i <= nx; i++) {
-                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xg, &yg, &zg,
-                               XTGDEBUG);
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, ncoordin, zcornsv,
+                               nzcornin, &xg, &yg, &zg);
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
@@ -98,8 +98,8 @@ grd3d_inact_outside_pol(double *p_xp_v,
                         np2 = ic - 1;
                         if (np2 > np1 + 2) {
 
-                            istat = polys_chk_point_inside(xg, yg, p_xp_v, p_yp_v, np1,
-                                                           np2, XTGDEBUG);
+                            istat =
+                              polys_chk_point_inside(xg, yg, p_xp_v, p_yp_v, np1, np2);
 
                             if (istat < 0) {
                                 /* some problems, .eg. poly is not closed */
