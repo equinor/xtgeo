@@ -15,7 +15,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # _cxtgeo.xtg_verbose_file("NONE")
-XTGDEBUG = 0
+
 
 # self = RegularSurface instance!
 # pylint: disable=protected-access

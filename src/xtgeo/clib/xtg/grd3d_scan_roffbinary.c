@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_scan_roffbinary.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    This is a new line of ROFF handling function (from 2018). Here is a

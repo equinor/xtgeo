@@ -15,8 +15,6 @@
  * NAME:
  *    grd3d_zcorn_convert.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Eclipse style ZCORN to XTGeo style zcornsv

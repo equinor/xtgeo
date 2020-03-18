@@ -7,11 +7,10 @@ xtg = XTGeoDialog()
 
 # _cxtgeo.xtg_verbose_file("NONE")
 
-XTGDEBUG = 0
-
 
 # ======================================================================================
 # Helper methods, for internal usage
+
 
 def get_carr_double(self):
     """Return the SWIG Carray object"""
@@ -21,6 +20,7 @@ def get_carr_double(self):
     _cxtgeo.swig_numpy_to_carr_1d(self.get_values1d(), carr)
 
     return carr
+
 
 # ======================================================================================
 # METHODS BELOW SHALL BE DEPRECATED!!
@@ -110,8 +110,6 @@ def get_carr_double(self):
 #                      .format(ncol, nrow, self._ncol, self._nrow))
 #         return False
 #     return True
-
-
 
 
 # def _convert_carr_double_np(self, carray, nlen=None):

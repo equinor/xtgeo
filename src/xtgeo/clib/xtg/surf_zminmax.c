@@ -5,8 +5,6 @@
  * NAME:
  *    surf_zminmax.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    get min and max Z value

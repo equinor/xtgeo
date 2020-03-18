@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_ecl_tsteps.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *

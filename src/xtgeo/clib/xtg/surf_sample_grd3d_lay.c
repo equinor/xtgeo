@@ -4,8 +4,6 @@
  * NAME:
  *    surf_sample_grd3d_lay.c (based on map_sample_grd3d_lay)
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Sample values from 3D grid layer to regular map (with possible rotation)
@@ -146,8 +144,7 @@ surf_sample_grd3d_lay(int nx,
                     xpos = xori + xinc * (ii - 1);
                     ypos = yori + yinc * (jj - 1);
 
-                    zval =
-                      x_sample_z_from_xy_cell(corners_v, xpos, ypos, mode, 0, XTGDEBUG);
+                    zval = x_sample_z_from_xy_cell(corners_v, xpos, ypos, mode, 0);
 
                     if (zval < UNDEF_LIMIT && zval > -1 * UNDEF_LIMIT) {
                         map_v[ibm] = zval;

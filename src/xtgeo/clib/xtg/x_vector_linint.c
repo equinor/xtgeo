@@ -4,7 +4,7 @@
  * x1..z1 first point
  * x2..z2 second point
  * dlen   requested divider or scaler. 0.5 means in the middle
- * *x ... vectors of new points
+ *x ... vectors of new points
  * JRIV
  * ############################################################################
  * ############################################################################

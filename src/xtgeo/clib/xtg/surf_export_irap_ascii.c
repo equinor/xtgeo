@@ -16,8 +16,6 @@
  * NAME:
  *    surf_export_irap_ascii.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Export a map on Irap ascii format.

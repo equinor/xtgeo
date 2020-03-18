@@ -24,7 +24,6 @@ from . import _well_oper
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 # pylint: disable=too-many-public-methods
 

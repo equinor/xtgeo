@@ -11,8 +11,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
     """Export the grid property to file."""

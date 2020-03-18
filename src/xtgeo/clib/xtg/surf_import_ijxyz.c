@@ -202,8 +202,6 @@ _collect_values(FILE *fd,
     double xval, yval, zval;
     char lbuffer[132];
 
-    char sbn[24] = "_collect_values";
-
     ilinemin = 999999999;
     ilinemax = -99999999;
     xlinemin = 999999999;
@@ -250,9 +248,6 @@ _collect_values(FILE *fd,
     *ilmax = ilinemax;
     *xlmin = xlinemin;
     *xlmax = xlinemax;
-
-    xtg_speak(sbn, 2, "Range ILINES: %d - %d", ilinemin, ilinemax);
-    xtg_speak(sbn, 2, "Range XLINES: %d - %d", xlinemin, xlinemax);
 
     return ixnum;
 }

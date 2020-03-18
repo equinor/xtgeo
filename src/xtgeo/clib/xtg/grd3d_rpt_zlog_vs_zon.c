@@ -4,8 +4,7 @@
 * NAME:
 *    grd3d_rpt_zlog_vs_zon.c
 *
-*(S):
-*
+**
 *
 * DESCRIPTION:
 *    Reports zone log vs zone in grid mismatch.

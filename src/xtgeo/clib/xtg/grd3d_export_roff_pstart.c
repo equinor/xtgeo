@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_export_roff_psta.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Export a ROFF header only, ASCII or BINARY

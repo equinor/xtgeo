@@ -171,7 +171,7 @@ surf_slice_cube(int ncx,
 
     /* no nodes */
     if (nm == 0) {
-        xtg_warn(LI, FI, FU, "No nodes sampled in %s!", FU);
+        logger_warn(LI, FI, FU, "No nodes sampled in %s!", FU);
         return -5;
     }
 

@@ -5,8 +5,6 @@
  * NAME:
  *    pol_do_points_inside.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Do operations on Z array for an array of points

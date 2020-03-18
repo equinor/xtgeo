@@ -5,8 +5,6 @@
  * NAME:
  *    grd3d_refine_vert.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Proportional refinement per layer

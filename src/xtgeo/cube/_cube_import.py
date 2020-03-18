@@ -13,7 +13,6 @@ logger.addHandler(logging.NullHandler())
 # _cxtgeo.xtg_verbose_file("NONE")
 
 xtg = XTGeoDialog()
-XTGDEBUG = 0
 
 
 def import_segy(self, sfile, engine="segyio"):

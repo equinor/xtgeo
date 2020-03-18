@@ -9,7 +9,6 @@ from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = XTGeoDialog()
-XTGDEBUG = xtg.syslevel
 
 logger = xtg.functionlogger(__name__)
 
@@ -88,24 +87,18 @@ def refine_vertically(self, rfactor, zoneprop=None):
     for inn, rfi in enumerate(totvector):
         _cxtgeo.intarray_setitem(refinefactors, inn, rfi)
 
-    ref_zcornsv = np.zeros(
-        self.ncol * self.nrow * (newnlay + 1) * 4, dtype=np.float64
-    )
+    ref_zcornsv = np.zeros(self.ncol * self.nrow * (newnlay + 1) * 4, dtype=np.float64)
     ref_actnumsv = np.zeros(self.ncol * self.nrow * newnlay, dtype=np.int32)
 
     ier = _cxtgeo.grd3d_refine_vert(
         self.ncol,
         self.nrow,
         self.nlay,
-
         self._zcornsv,
         self._actnumsv,
-
         newnlay,
-
         ref_zcornsv,
         ref_actnumsv,
-
         refinefactors,
     )
 

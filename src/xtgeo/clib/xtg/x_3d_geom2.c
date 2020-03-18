@@ -8,6 +8,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 
 /*
@@ -63,15 +64,9 @@ x_point_line_dist(double x1,
                   double z3,
                   double *distance,
                   int option1,
-                  int option2,
-                  int debug)
+                  int option2)
 {
-    char s[24] = "x_point_line_dist";
     double sign, u, dlen, x0, y0, z0;
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 3, "Entering %s", s);
 
     /* some checks */
     if (x1 == x2 && y1 == y2 && z1 == z2) {
@@ -190,15 +185,9 @@ x_point_line_pos(double x1,
                  double *y,
                  double *z,
                  double *rel,
-                 int option1,
-                 int debug)
+                 int option1)
 {
-    char s[24] = "x_point_line_pos";
     double u, dlen, rellen, fullen, x0, y0, z0;
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 3, "Entering %s", s);
 
     /* some checks */
     if (x1 == x2 && y1 == y2 && z1 == z2) {

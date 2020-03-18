@@ -19,8 +19,6 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     """Import property from binary files with GRDECL layout"""

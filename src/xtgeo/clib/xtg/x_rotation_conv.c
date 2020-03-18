@@ -4,8 +4,6 @@
  * NAME:
  *    x_rotation_convert.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Transforms different rotation schemes. Ie. to transform from radians

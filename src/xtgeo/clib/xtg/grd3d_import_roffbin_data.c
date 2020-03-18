@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_imp_roffbin_data.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Note, this is for SINGLE data. For arrays, see grd3d_imp_roffbin_arr.c
@@ -51,9 +49,6 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 int
 grd3d_imp_roffbin_data(FILE *fc,
@@ -70,14 +65,14 @@ grd3d_imp_roffbin_data(FILE *fc,
     fseek(fc, bytepos, SEEK_SET);
 
     if (dtype == 1) {
-        fread(&anint, 4, 1, fc);
+        x_fread(&anint, 4, 1, fc);
         if (swap == 1)
             SWAP_INT(anint);
         *p_int = anint;
     }
 
     else if (dtype == 2) {
-        fread(&afloat, 4, 1, fc);
+        x_fread(&afloat, 4, 1, fc);
         if (swap == 1)
             SWAP_FLOAT(afloat);
         *p_flt = afloat;

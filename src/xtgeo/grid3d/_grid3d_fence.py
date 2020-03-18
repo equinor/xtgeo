@@ -14,7 +14,7 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
+
 # _cxtgeo.xtg_verbose_file("NONE")
 
 
@@ -59,11 +59,9 @@ def get_randomline(
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,
-
         zmin,
         zmax,
         nzsam,
-
         self._tmp["topd"].ncol,
         self._tmp["topd"].nrow,
         self._tmp["topd"].xori,
@@ -76,20 +74,15 @@ def get_randomline(
         self._tmp["topj_carr"],
         self._tmp["basi_carr"],
         self._tmp["basj_carr"],
-
         self.ncol,
         self.nrow,
         self.nlay,
-
         self._coordsv,
         self._zcornsv,
         self._actnumsv,
-
         gl.update_carray(prop),
-
         self._tmp["onegrid"]._zcornsv,
         self._tmp["onegrid"]._actnumsv,
-
         nsamples,
     )
 

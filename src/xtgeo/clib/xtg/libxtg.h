@@ -82,25 +82,25 @@
  *======================================================================================
  */
 
-int
-xtgverbose(int);
+// int
+// xtgverbose(int);
 
-int
-xtg_silent(int value);
-char *
-xtg_verbose_file(char *filename);
+// int
+// xtg_silent(int value);
+// char *
+// xtg_verbose_file(char *filename);
 
-int
-xtg_speak(char *, int, char *, ...);
+// int
+// xtg_speak(char *, int, char *, ...);
 
-int
-xtg_warn(char *, int, char *, ...);
+// int
+// xtg_warn(char *, int, char *, ...);
 
-int
-xtg_error(char *, char *, ...);
+// int
+// xtg_error(char *, char *, ...);
 
-int
-xtg_shout(char *, char *, ...);
+// int
+// xtg_shout(char *, char *, ...);
 
 FILE *
 xtg_fopen(const char *filename, const char *mode);
@@ -1169,9 +1169,6 @@ grd3d_export_roff_grid(int mode,
 
 void
 grd3d_export_roff_end(int mode, char *filename);
-
-void
-grd3d_scan_roff_bingrid(int *nx, int *ny, int *nz, int *nsubs, char *filename);
 
 void
 grd3d_export_roff_pstart(int mode, int nx, int ny, int nz, char *filename);

@@ -4,8 +4,6 @@
  * NAME:
  *    surf_swapaxes.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Do swapping of surface axes; will switch from a left handed system

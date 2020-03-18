@@ -9,7 +9,7 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-XTGDEBUG = 0
+
 
 logger = xtg.functionlogger(__name__)
 

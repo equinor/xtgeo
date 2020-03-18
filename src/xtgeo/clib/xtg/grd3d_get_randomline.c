@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_get_randomline.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Given X Y Z vectors, return a a randomline array from a 3D grid property

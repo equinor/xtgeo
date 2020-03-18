@@ -5,8 +5,6 @@
  * NAME:
  *    grd3d_inact_outs_pol.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Check all cells in a layer or subgrid, and set active to zero if outside

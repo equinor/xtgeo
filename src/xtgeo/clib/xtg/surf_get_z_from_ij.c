@@ -4,8 +4,6 @@
  * NAME:
  *    surf_get_z_from_ij.c (same as map_get_z_from_ij, but C order lookup)
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Given lower left IJ point and P(x,y), the map Z value is returned.

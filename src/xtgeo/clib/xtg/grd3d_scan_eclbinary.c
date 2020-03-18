@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_scan_eclbinary.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Quick scan Eclipse output (GRID/EGRID/INIT/UNRST...) and return:

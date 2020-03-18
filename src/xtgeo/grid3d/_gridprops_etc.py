@@ -13,7 +13,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
+
 # _cxtgeo.xtg_verbose_file("NONE")
 
 # self = GridProperties instance

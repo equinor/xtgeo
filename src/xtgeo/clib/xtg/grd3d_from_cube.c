@@ -66,7 +66,7 @@ grd3d_from_cube(int ncol,
 
     if (option == 1) { /* input is cell center, not cell corner */
         double res[8];
-        x_2d_rect_corners(xori, yori, xinc, yinc, rotation, res, XTGDEBUG);
+        x_2d_rect_corners(xori, yori, xinc, yinc, rotation, res);
         xori = res[6];
         yori = res[7];
         if (yflip == -1) {

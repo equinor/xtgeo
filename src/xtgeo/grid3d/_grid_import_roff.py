@@ -17,9 +17,6 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-XTGDEBUG = 0
-
-
 def import_roff(self, gfile):
 
     local_fhandle = False

@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_translate.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Translate the coordinates in 3D (linear)

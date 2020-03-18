@@ -4,8 +4,6 @@
  * NAME:
  *    surf_slice_grd3d.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Sample values from grd3d based on map values

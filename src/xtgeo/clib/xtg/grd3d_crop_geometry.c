@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_crop_geometry.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Reduce the grid by cropping in I, J, K

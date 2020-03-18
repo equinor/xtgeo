@@ -4,8 +4,6 @@
  * NAME:
  *    pol_geometrics.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Compute various geometrical measures such a length, etc

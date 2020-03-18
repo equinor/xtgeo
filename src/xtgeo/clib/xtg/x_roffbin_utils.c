@@ -125,7 +125,7 @@ x_roffgetfloatvalue(char *name, FILE *fc)
     if (strcmp(bla, "float") == 0) {
         x_roffbinstring(bla, fc);
         if (strcmp(bla, name) == 0) {
-            x_fread(&myfloat, 4, 1, fc, __FILE__, __LINE__);
+            x_fread(&myfloat, 4, 1, fc);
             if (x_byteorder(-1) > 1)
                 SWAP_FLOAT(myfloat);
             return myfloat;
@@ -154,7 +154,7 @@ x_roffgetintvalue(char *name, FILE *fc)
         }
         x_roffbinstring(bla, fc); /* int or float */
         x_roffbinstring(bla, fc); /* data */
-        x_fread(&myint, 4, 1, fc, __FILE__, __LINE__);
+        x_fread(&myint, 4, 1, fc);
         if (x_byteorder(-1) > 1)
             SWAP_INT(myint);
         return myint;
@@ -163,7 +163,7 @@ x_roffgetintvalue(char *name, FILE *fc)
         if (strcmp(bla, "int") == 0) {
             x_roffbinstring(bla, fc);
             if (strcmp(bla, name) == 0) {
-                x_fread(&myint, 4, 1, fc, __FILE__, __LINE__);
+                x_fread(&myint, 4, 1, fc);
                 if (x_byteorder(-1) > 1)
                     SWAP_INT(myint);
                 return myint;
@@ -185,7 +185,7 @@ x_roffgetfloatarray(float *array, int num, FILE *fc)
     int i;
 
     for (i = 0; i < num; i++) {
-        x_fread(&afloat, 4, 1, fc, __FILE__, __LINE__);
+        x_fread(&afloat, 4, 1, fc);
         if (x_byteorder(-1) > 1)
             SWAP_FLOAT(afloat);
         array[i] = afloat;
@@ -208,7 +208,7 @@ x_roffgetbytearray(unsigned char *array, int num, FILE *fc)
     unsigned char abyte;
 
     for (i = 0; i < num; i++) {
-        x_fread(&abyte, 1, 1, fc, __FILE__, __LINE__);
+        x_fread(&abyte, 1, 1, fc);
         array[i] = abyte;
     }
 }
@@ -225,7 +225,7 @@ x_roffgetintarray(int *array, int num, FILE *fc)
     int aint;
 
     for (i = 0; i < num; i++) {
-        x_fread(&aint, 4, 1, fc, __FILE__, __LINE__);
+        x_fread(&aint, 4, 1, fc);
         if (x_byteorder(-1) > 1)
             SWAP_SHORT(aint); /* SHORT? */
         array[i] = aint;
@@ -253,7 +253,6 @@ x_roffgetchararray(char *array, int num, FILE *fc)
     ic = 0;
     for (i = 0; i < num; i++) {
         x_roffbinstring(c, fc);
-        xtg_speak(sub, 4, "Reading: <%s>", c);
         for (j = 0; j < ROFFSTRLEN; j++) {
             if (c[j] == '\0' && j == 0) {
                 /* to replace missing string with a code */

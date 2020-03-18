@@ -35,7 +35,6 @@ pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np)
     double x1, x2, y1, y2, vin, vinsum, an, an1, an2, xp, pp;
     double cosv, dtmp, xdiff, ydiff;
     int i;
-    char s[24] = "pol_chk_point_inside";
 
     /*
      *-------------------------------------------------------------------------
@@ -64,7 +63,7 @@ pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np)
         p_xp_v[np - 1] = p_xp_v[0];
         p_yp_v[np - 1] = p_yp_v[0];
     } else {
-        xtg_warn(s, 2, "Not a closed polygon, return -9");
+        logger_warn(LI, FI, FU, "Not a closed polygon, return -9");
         return -9;
     }
 

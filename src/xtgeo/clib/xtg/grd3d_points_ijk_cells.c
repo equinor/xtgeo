@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_points_ijk_cells.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Given X Y Z vectors, return the corresponding I J K vectors for the cell indices

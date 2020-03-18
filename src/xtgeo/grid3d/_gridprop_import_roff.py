@@ -15,8 +15,6 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def import_roff(self, pfile, name, grid=None, _roffapiv=1):
     """Import ROFF format"""

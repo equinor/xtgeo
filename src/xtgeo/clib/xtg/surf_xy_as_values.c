@@ -4,8 +4,6 @@
  * NAME:
  *    surf_xy_as_values.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Returns the X and Y coordinates as map values
@@ -36,7 +34,6 @@
  */
 
 #include "libxtg.h"
-#include "libxtg_.h"
 #include "logger.h"
 #include <math.h>
 
@@ -93,24 +90,14 @@ surf_xy_as_values(double xori,
                 /* beta is the angle of line from origo to point, assuming
                    nonrotated system */
 
-                if (debug > 2) {
-                    xtg_speak(s, 3, "XDIST / YDIST / DIST %6.2f %6.2f  %6.2f", xdist,
-                              ydist, dist);
-                }
-
                 beta = acos(xdist / dist);
-
-                if (debug > 2) {
-                    xtg_speak(s, 3, "Angles are %6.2f  %6.2f", angle * 180 / PI,
-                              beta * 180 / PI);
-                }
 
                 /* secure that angle is in right mode */
                 /* if (xdist<0 && ydist<0)  beta=2*PI - beta; */
                 /* if (xdist>=0 && ydist<0) beta=PI + beta; */
 
                 if (beta < 0 || beta > PI / 2.0) {
-                    xtg_error(s, "Beta is wrong, call JRIV...\n");
+                    logger_error(LI, FI, FU, "Beta is wrong in %s", FU);
                     return (-1);
                 }
 

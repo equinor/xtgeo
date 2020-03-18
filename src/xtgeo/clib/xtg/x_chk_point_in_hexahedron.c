@@ -4,8 +4,6 @@
  * NAME:
  *    x_chk_point_in_hexagedron.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Given X Y Z vectors, determine if a point is inside or outside the boundary of a
@@ -120,7 +118,7 @@ _inside_plane(int ic0,
     pt[6] = coor[3 * ic - 3];
     pt[7] = coor[3 * ic - 2], pt[8] = coor[3 * ic - 1];
 
-    int ier = x_plane_normalvector(pt, nvec, 0, 0);
+    int ier = x_plane_normalvector(pt, nvec, 0);
 
     if (ier != 0) {
         /*  could not make normal vector... */

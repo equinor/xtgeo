@@ -14,11 +14,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-
-XTGDEBUG = 0
-if XTGDEBUG < 0:
-    XTGDEBUG = 0
-
 # _cxtgeo.xtg_verbose_file("NONE")
 # pylint: disable=protected-access
 

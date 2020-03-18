@@ -5,8 +5,6 @@
  * NAME:
  *    x_vector_linint2.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Give 2 points in space, do a "forecast" of a point with a given distance

@@ -4,8 +4,7 @@
 * NAME:
 *    surf_get_dist_values.c
 *
-*(S):
-*
+**
 *
 * DESCRIPTION:
 *    Given a point in space, and an azimuth, then compute map values as
@@ -102,7 +101,7 @@ surf_get_dist_values(double xori,
             z3 = 0;
 
             ier =
-              x_point_line_dist(x1, y1, z1, x2, y2, z2, x3, y3, z3, &distance, 0, 1, 0);
+              x_point_line_dist(x1, y1, z1, x2, y2, z2, x3, y3, z3, &distance, 0, 1);
 
             if (ier != 0)
                 return ier;

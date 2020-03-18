@@ -60,7 +60,6 @@ grd3d_write_eclrecord(FILE *fc,
     int nb = 0, nmax = 0, ic = 0, im = 0, nchunk = 0, ftn = 0, nn = 0;
 
     sprintf(mychar, "%-8s", recname);
-    // u_eightletter(mychar);
 
     if (x_swap_check() == 1)
         swap = 1;

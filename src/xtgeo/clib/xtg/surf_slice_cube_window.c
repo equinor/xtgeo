@@ -4,8 +4,6 @@
  * NAME:
  *    surf_slice_cube_window.c  IN PROGRESS
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *     Given a map and a cube, sample a series if cube values based on maps

@@ -4,8 +4,6 @@
  * NAME:
  *    surf_get_z_from_xy.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Given a map and a x,y point, the map Z value is returned. This should

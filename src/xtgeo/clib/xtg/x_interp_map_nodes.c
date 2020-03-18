@@ -167,7 +167,7 @@ x_interp_map_nodes(double *x_v,
 
         /* find normal X distance from edge to point  */
         ier = x_point_line_dist(x_v[0], y_v[0], 0.0, x_v[2], y_v[2], 0.0, x, y, 0.0,
-                                &dxx, 0, 0, XTGDEBUG);
+                                &dxx, 0, 0);
 
         if (ier == 2)
             dxx = 0.0;
@@ -176,7 +176,7 @@ x_interp_map_nodes(double *x_v,
 
         /* find normal Y distance from edge to point  */
         ier = x_point_line_dist(x_v[0], y_v[0], 0.0, x_v[1], y_v[1], 0.0, x, y, 0.0,
-                                &dyy, 0, 0, XTGDEBUG);
+                                &dyy, 0, 0);
 
         if (ier == 2)
             dyy = 0.0;
@@ -185,7 +185,6 @@ x_interp_map_nodes(double *x_v,
 
         a = dxx / dx;
         b = dyy / dy;
-
 
         if (a > 1 || b > 1) {
             if (a > 1)

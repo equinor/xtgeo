@@ -5,9 +5,9 @@
  *
  ***************************************************************************************
  */
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <math.h>
 
 /*
  ***************************************************************************************
@@ -26,7 +26,6 @@
  *    rotation       i     Angle in degrees, anticlock from X axis
  *    result         o     an array (x, y, ...starting from relative upper left
  *                         in clockwise direction
- *    debug          i     Debug level
  *
  * RETURNS:
  *    Void
@@ -35,11 +34,14 @@
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
-void x_2d_rect_corners(double x, double y, double xinc, double yinc, double rot,
-                      double result[8], int debug)
+void
+x_2d_rect_corners(double x,
+                  double y,
+                  double xinc,
+                  double yinc,
+                  double rot,
+                  double result[8])
 {
-    xtgverbose(debug);
-
     rot = rot * PI / 180.0;
 
     double cv = cos(rot);

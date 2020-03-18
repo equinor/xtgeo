@@ -5,11 +5,8 @@
  * ############################################################################
  */
 
-
-
 #include "libxtg.h"
 #include "libxtg_.h"
-
 
 /*
  * ############################################################################
@@ -24,76 +21,64 @@
  * ############################################################################
  */
 
-void x_basicstats (
-		   int n,
-		   double undef,
-		   double *v,
-		   double *min,
-		   double *max,
-		   double *avg,
-		   int debug
-		   )
+void
+x_basicstats(int n, double undef, double *v, double *min, double *max, double *avg)
 {
-    int   i, m;
+    int i, m;
     double sum, vmin, vmax;
 
-    vmin=VERYLARGEFLOAT;
-    vmax=VERYSMALLFLOAT;
+    vmin = VERYLARGEFLOAT;
+    vmax = VERYSMALLFLOAT;
 
-    m=0;
-    sum=0.0;
+    m = 0;
+    sum = 0.0;
 
-    for (i=0;i<n;i++) {
-	if (v[i] != undef) {
-	    if (v[i]<vmin) vmin=v[i];
-	    if (v[i]>vmax) vmax=v[i];
-	    sum=sum+v[i];
-	    m++;
-	}
+    for (i = 0; i < n; i++) {
+        if (v[i] != undef) {
+            if (v[i] < vmin)
+                vmin = v[i];
+            if (v[i] > vmax)
+                vmax = v[i];
+            sum = sum + v[i];
+            m++;
+        }
     }
 
     /* results */
-    if (m>0) {
-	* avg = sum/m;
+    if (m > 0) {
+        *avg = sum / m;
     }
     *min = vmin;
     *max = vmax;
-
 }
 
-void x_basicstats2 (
-		   int n,
-		   float undef,
-		   float *v,
-		   float *min,
-		   float *max,
-		   float *avg,
-		   int debug
-		   )
+void
+x_basicstats2(int n, float undef, float *v, float *min, float *max, float *avg)
 {
-    int   i, m;
+    int i, m;
     float sum, vmin, vmax;
 
-    vmin=VERYLARGEFLOAT;
-    vmax=VERYSMALLFLOAT;
+    vmin = VERYLARGEFLOAT;
+    vmax = VERYSMALLFLOAT;
 
-    m=0;
-    sum=0.0;
+    m = 0;
+    sum = 0.0;
 
-    for (i=0;i<n;i++) {
-	if (v[i] != undef) {
-	    if (v[i]<vmin) vmin=v[i];
-	    if (v[i]>vmax) vmax=v[i];
-	    sum=sum+v[i];
-	    m++;
-	}
+    for (i = 0; i < n; i++) {
+        if (v[i] != undef) {
+            if (v[i] < vmin)
+                vmin = v[i];
+            if (v[i] > vmax)
+                vmax = v[i];
+            sum = sum + v[i];
+            m++;
+        }
     }
 
     /* results */
-    if (m>0) {
-	* avg = sum/m;
+    if (m > 0) {
+        *avg = sum / m;
     }
     *min = vmin;
     *max = vmax;
-
 }

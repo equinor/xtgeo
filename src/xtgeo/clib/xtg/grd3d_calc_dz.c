@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_calc_dz.c
  *
- *(S):
- *
  *
  * DESCRIPTION:
  *    Computes the DZ avg per cell

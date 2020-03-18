@@ -12,8 +12,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False):
     """Quick scan of keywords in Eclipse binary restart/init/... file,
