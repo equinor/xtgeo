@@ -12,6 +12,7 @@
 
 #define _GNU_SOURCE 1
 
+#include <stdint.h>
 #include <stdio.h>
 
 #define PI 3.14159265358979323846
@@ -81,6 +82,8 @@
  * GENERAL XTGEO
  *======================================================================================
  */
+
+typedef uint8_t mbool;  // used for numpy bool e.g. mask arrays
 
 // int
 // xtgverbose(int);
@@ -295,6 +298,20 @@ surf_export_irap_bin(FILE *fc,
                      double *swig_np_dbl_in_v1,  // *p_map_v,
                      long n_swig_np_dbl_in_v1,   // mxy
                      int option);
+
+int
+surf_export_irap_bin_test(FILE *fc,
+                          int mx,
+                          int my,
+                          double xori,
+                          double yori,
+                          double xinc,
+                          double yinc,
+                          double rot,
+                          double *swig_np_dbl_inplaceflat_v1,  // *rsurfv,
+                          long n_swig_np_dbl_inplaceflat_v1,   // nsurf
+                          mbool *swig_np_boo_inplaceflat_v1,   // *maskv,
+                          long n_swig_np_boo_inplaceflat_v1);  // nmask
 
 int
 surf_export_irap_ascii(FILE *fc,

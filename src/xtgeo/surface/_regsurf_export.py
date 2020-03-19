@@ -74,6 +74,8 @@ def export_irap_binary(self, mfile, engine="cxtgeo", bstream=False):
 
     if engine == "cxtgeo":
         _export_irap_binary_cxtgeo(self, mfile)
+    elif engine == "cxtgeotest":
+        _export_irap_binary_cxtgeotest(self, mfile)
     else:
         _export_irap_binary_python(self, mfile, bstream=bstream)
 
@@ -95,6 +97,32 @@ def _export_irap_binary_cxtgeo(self, mfile):
         self._rotation,
         vals,
         0,
+    )
+
+    if ier != 0:
+        raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
+
+    fout.close()
+
+
+def _export_irap_binary_cxtgeotest(self, mfile):
+    """Export to Irap RMS binary format. TEST SWIG FLAT"""
+
+    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
+
+    print(self.values.mask.astype(np.uint8).mean())
+
+    ier = _cxtgeo.surf_export_irap_bin_test(
+        fout.fhandle,
+        self._ncol,
+        self._nrow,
+        self._xori,
+        self._yori,
+        self._xinc,
+        self._yflip * self._yinc,
+        self._rotation,
+        self.values.data,
+        self.values.mask,
     )
 
     if ier != 0:

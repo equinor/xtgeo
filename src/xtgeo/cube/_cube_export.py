@@ -13,8 +13,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-# _cxtgeo.xtg_verbose_file("NONE")
-
 
 def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):
     """Export on SEGY using segyio library.
