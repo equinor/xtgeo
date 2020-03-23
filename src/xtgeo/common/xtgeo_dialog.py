@@ -25,28 +25,6 @@ be used in client scripts::
   xtg.error('This is an error, will continue')
   xtg.critical('This is a big error, will exit')
 
-How it should works:
-
-Enviroment variable XTG_VERBOSE_LEVEL will steer the output from lowelevel
-C routines; normally they are quiet
-
-XTG_VERBOSE_LEVEL is undefined: xtg.say works to screen
-
-XTG_VERBOSE_LEVEL > 1 starts to print C messages
-
-XTG_VERBOSE_LEVEL < 0 skip also xtg.say
-
-XTG_LOGGING_LEVEL is for Python logging (string, as INFO)
-
-XTG_LOGGING_FORMAT is for Python logging (number, 0 ,1, 2, ...)
-
-The system here is:
-syslevel is the actual level when code is executed:
-
--1: quiet dialog, no warnings only errors and critical
-
-0 : quiet dialog, only warnings and errors will be displayed
-
 In addition there are other classes:
 
 * XTGShowProgress()
@@ -180,7 +158,7 @@ class _TimeFilter(logging.Filter):  # pylint: disable=too-few-public-methods
     """handling difftimes in logging..."""
 
     # cf https://stackoverflow.com/questions/31521859/
-    # python-logging-module-time-since-last-log
+    # \python-logging-module-time-since-last-log
 
     def filter(self, record):
         # pylint: disable=access-member-before-definition
@@ -217,7 +195,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         self._logginglevel = "CRITICAL"
         self._logginglevel_fromenv = None
         self._loggingname = ""
-        self._syslevel = 1
         self._test_env = True
         self._tmpdir = "TMP"
         self._testpath = None
@@ -235,37 +212,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         if loggingformat is not None:
             self._lformatlevel = int(loggingformat)
-
-        # a number, for C routines
-        envsyslevel = os.environ.get("XTG_VERBOSE_LEVEL")
-        if envsyslevel is None:
-            self._syslevel = 0
-        else:
-            self._syslevel = int(envsyslevel)
-
-        # # a string, for Python logging:
-        # logginglevel = os.environ.get('XTG_LOGGING_LEVEL')
-
-        # # a number, for format, 1 is simple, 2 is more info etc
-        # loggingformat = os.environ.get('XTG_LOGGING_FORMAT')
-
-        # if logginglevel is None:
-        #     self._logginglevel = 'CRITICAL'
-        # else:
-        #     self._logginglevel = str(logginglevel)
-
-        # if loggingformat is None:
-        #     self._lformatlevel = 1
-        # else:
-        #     self._lformatlevel = int(loggingformat)
-
-    # @staticmethod
-    # def UNDEF():
-    #     return UNDEF
-
-    # @staticmethod
-    # def UNDEF_LIMIT():
-    #     return UNDEF_LIMIT
 
     @property
     def bigtests(self):
@@ -296,44 +242,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             )
 
         self._testpath = newtestpath
-
-    @property
-    def syslevel(self):
-        """This is about logging from the C compiled parts"""
-        return self._syslevel
-
-    @syslevel.setter
-    def syslevel(self, mylevel):
-        if 5 > mylevel >= 0:
-            self._syslevel = mylevel
-        else:
-            print("Invalid range for syslevel")
-
-        envsyslevel = os.environ.get("XTG_VERBOSE_LEVEL")
-
-        if envsyslevel is None:
-            pass
-        else:
-            self._syslevel = int(envsyslevel)
-
-        self._syslevel = 0  # TMP while chaning logging
-
-    # for backward compatibility (to be phased out)
-    def get_syslevel(self):
-        return self._syslevel
-
-    # @property
-    # def logginglevel(self):
-    #     """Will return a logging level property, e.g. logging.CRITICAL"""
-    #     ll = logging.CRITICAL
-    #     if self._logginglevel == 'INFO':
-    #         ll = logging.INFO
-    #     elif self._logginglevel == 'WARNING':
-    #         ll = logging.WARNING
-    #     elif self._logginglevel == 'DEBUG':
-    #         ll = logging.DEBUG
-
-    #     return ll
 
     @property
     def logginglevel(self):
@@ -664,23 +572,16 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             prefix = CRITICAL + "!!"
             endfix = ENDC
 
-        prompt = False
-        if level <= self._syslevel:
-            prompt = True
+        ulevel = str(level)
+        if level == -5:
+            ulevel = "M"
+        if level == -8:
+            ulevel = "E"
+        if level == -9:
+            ulevel = "W"
+        print(
+            "{0} <{1}> [{2:23s}->{3:>33s}] {4}{5}".format(
+                prefix, ulevel, self._callclass, self._caller, string, endfix
+            )
+        )
 
-        if prompt:
-            if self._syslevel <= 1:
-                print("{} {}{}".format(prefix, string, endfix))
-            else:
-                ulevel = str(level)
-                if level == -5:
-                    ulevel = "M"
-                if level == -8:
-                    ulevel = "E"
-                if level == -9:
-                    ulevel = "W"
-                print(
-                    "{0} <{1}> [{2:23s}->{3:>33s}] {4}{5}".format(
-                        prefix, ulevel, self._callclass, self._caller, string, endfix
-                    )
-                )

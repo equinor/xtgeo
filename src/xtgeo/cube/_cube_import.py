@@ -1,5 +1,4 @@
 """Import Cube data via SegyIO library or XTGeo CLIB."""
-import logging
 import numpy as np
 
 import segyio
@@ -7,12 +6,8 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.calc as xcalc
 from xtgeo.common import XTGeoDialog
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
-# _cxtgeo.xtg_verbose_file("NONE")
-
 xtg = XTGeoDialog()
+logger = xtg.functionlogger(__name__)
 
 
 def import_segy(self, sfile, engine="segyio"):

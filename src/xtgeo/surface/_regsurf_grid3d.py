@@ -14,7 +14,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-# _cxtgeo.xtg_verbose_file("NONE")
+#
 
 
 # self = RegularSurface instance!

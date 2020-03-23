@@ -1,17 +1,5 @@
 /*
- ******************************************************************************
- *
- * Import Irap binary map (with rotation)
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-#include "logger.h"
-
-/*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    surf_import_irap_bin.c
@@ -52,9 +40,12 @@
  *
  * LICENCE:
  *    See XTGeo licence
- ******************************************************************************
+ ***************************************************************************************
  */
-/* Local functions: */
+
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
 
 #define ERROR -999999
 
@@ -127,7 +118,7 @@ surf_import_irap_bin(FILE *fc,
 
     /* local declarations */
     int swap, ier, myint, nvv, i, j, k, mstart, mstop, nx, ny, idum;
-    int idflag, ireclen;
+    int idflag;
     long nn, ntmp, ib, ic, mx, my;
     float myfloat;
 
@@ -149,7 +140,7 @@ surf_import_irap_bin(FILE *fc,
      * This is Fortran format, hence there will be an integer
      * in both ends, defining the record length in bytes. The Irap
      * ASCII header looks like this:
-     * ------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      *  -996    53     25.000000     25.000000
      * 464308.406250   465733.406250  7337233.500000  7338533.500000
      * 58      -70.000008   464308.406250  7337233.500000
@@ -159,7 +150,7 @@ surf_import_irap_bin(FILE *fc,
      * XORI  XMAX  YORI  YMAX
      * NX  ROTATION  X0ORI  Y0ORI
      * 0     0     0     0     0     0     0
-     * ------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      * However!!, reverse engineering says that the BINARY header is
      * <32> IDFLAG NY XORI XMAX YORI YMAX XINC YINC <32>
      * <16> NX ROT X0ORI Y0ORI<16>
@@ -169,7 +160,7 @@ surf_import_irap_bin(FILE *fc,
      * not used directly? =>
      * XINC = (XMAX-XORI)/(NX-1) etc
      * X0ORI/Y0ORI seems to be rotation origin? Set them equal to XORI/YORI
-     * ------------------------------------------------------------------------
+     * ---------------------------------------------------------------------------------
      * Last record: Not sure what these mean, treat them as dummy
      */
 
@@ -179,7 +170,7 @@ surf_import_irap_bin(FILE *fc,
         swap = 1;
 
     /* record 1 */
-    ireclen = _intread(fc, swap, 32, "Record start (1)");
+    _intread(fc, swap, 32, "Record start (1)");
     idflag = _intread(fc, swap, 0, "ID flag for Irap map");
     ny = _intread(fc, swap, 0.0, "NY");
     xori = _floatread(fc, swap, 0.0, "XORI");
@@ -188,22 +179,22 @@ surf_import_irap_bin(FILE *fc,
     ymax = _floatread(fc, swap, 0.0, "YMAX (not used by RMS)");
     xinc = _floatread(fc, swap, 0.0, "XINC");
     yinc = _floatread(fc, swap, 0.0, "YINC");
-    ireclen = _intread(fc, swap, 32, "Record end (1)");
+    _intread(fc, swap, 32, "Record end (1)");
 
     /* record 2 */
-    ireclen = _intread(fc, swap, 16, "Record start (2)");
+    _intread(fc, swap, 16, "Record start (2)");
     nx = _intread(fc, swap, 0, "NX");
     rot = _floatread(fc, swap, 0.0, "Rotation");
     x0ori = _floatread(fc, swap, 0.0, "Rotation origin X (not used)");
     y0ori = _floatread(fc, swap, 0.0, "Rotation origin Y (not used)");
-    ireclen = _intread(fc, swap, 16, "Record end (2)");
+    _intread(fc, swap, 16, "Record end (2)");
 
     /* record 3 */
-    ireclen = _intread(fc, swap, 28, "Record start (3)");
+    _intread(fc, swap, 28, "Record start (3)");
     for (i = 0; i < 7; i++) {
         idum = _intread(fc, swap, 0, "INT FLAG (not used...)");
     }
-    ireclen = _intread(fc, swap, 28, "Record end (3)");
+    _intread(fc, swap, 28, "Record end (3)");
 
     *p_mx = nx;
     *p_my = ny;

@@ -85,26 +85,6 @@
 
 typedef uint8_t mbool;  // used for numpy bool e.g. mask arrays
 
-// int
-// xtgverbose(int);
-
-// int
-// xtg_silent(int value);
-// char *
-// xtg_verbose_file(char *filename);
-
-// int
-// xtg_speak(char *, int, char *, ...);
-
-// int
-// xtg_warn(char *, int, char *, ...);
-
-// int
-// xtg_error(char *, char *, ...);
-
-// int
-// xtg_shout(char *, char *, ...);
-
 FILE *
 xtg_fopen(const char *filename, const char *mode);
 

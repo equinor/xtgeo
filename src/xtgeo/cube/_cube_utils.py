@@ -10,7 +10,7 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-# _cxtgeo.xtg_verbose_file("NONE")
+#
 
 
 logger = xtg.functionlogger(__name__)

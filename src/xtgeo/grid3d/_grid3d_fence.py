@@ -15,7 +15,7 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-# _cxtgeo.xtg_verbose_file("NONE")
+#
 
 
 def get_randomline(

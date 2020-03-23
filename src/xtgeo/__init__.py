@@ -29,7 +29,7 @@ TIME0 = _timer()
 
 DEBUG = 19
 
-if os.environ.get("XTG_VERBOSE_LEVEL") is None:
+if os.environ.get("XTG_DEBUG_DEV") is None:
     DEBUG = 0
 
 
