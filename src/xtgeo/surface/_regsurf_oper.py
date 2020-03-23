@@ -14,12 +14,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-
-XTGDEBUG = 0
-if XTGDEBUG < 0:
-    XTGDEBUG = 0
-
-# _cxtgeo.xtg_verbose_file("NONE")
+#
 # pylint: disable=protected-access
 
 
@@ -246,7 +241,6 @@ def get_xy_values(self, order="C", asmasked=False):
         nno,
         nno,
         0,
-        XTGDEBUG,
     )
     if ier != 0:
         logger.critical("Error code %s, contact the author", ier)
@@ -423,7 +417,6 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
             ycor,
             1.0,
             0,
-            XTGDEBUG,
         )
         if ier == -9:
             xtg.warn("Polygon is not closed")

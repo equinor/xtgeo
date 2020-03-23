@@ -13,15 +13,14 @@
  *
  *     x,y,z           i      input points
  *     nx..nz          i      grid dimensions
- *     coordsv       i      grid coords
- *     zcornsv       i      grid zcorn
- *     actnumsv      i      grid active cell indicator
+ *     coordsv         i      grid coords
+ *     zcornsv         i      grid zcorn
+ *     actnumsv        i      grid active cell indicator
  *     p_prop_v        i      property to work with
  *     value           o      value to return (UNDEF if not found)
  *     imin,.. kmax    i      cell index ranges in I J K
  *     ibs            i/o     Start point cell index, updated to actual cell index
  *     option          i      If negative, do not compute value (p_prop_v can be dummy)
- *     debug           i      debug/verbose flag
 
  * RETURNS:
  *     int: -1, then outside grid
@@ -55,31 +54,24 @@ _find_ib(double x,
          int ny,
          int nz,
          double *coordsv,
-         double *zcornsv,
-         int debug)
+         double *zcornsv)
 {
     /* cell not found -9; otherwise >= 0 but active may be 0 if inactive cell*/
 
     int i, j, k, inside;
     long ib = -1;
-    double corners[24];
-    char sbn[24] = "_find_ib";
-    xtgverbose(debug);
 
     for (k = kmin; k <= kmax; k++) {
         for (j = jmin; j <= jmax; j++) {
             for (i = imin; i <= imax; i++) {
 
+                double corners[24];
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 /* get the corner for the cell */
                 grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, corners);
                 inside = x_chk_point_in_cell(x, y, z, corners, 1);
 
                 if (inside > 0) {
-                    if (debug > 2) {
-                        xtg_speak(sbn, 3, "Point <%d %d %d> is inside cell: %d %d %d",
-                                  x, y, z, i, j, k);
-                    }
                     return ib;
                 }
             }
@@ -113,21 +105,13 @@ grd3d_point_val_crange(double x,
                        int kmin,
                        int kmax,
                        long *ibs,
-                       int option,
-                       int debug)
+                       int option)
 
 {
     /* locals */
     long ibstart = 0, ib;
     int istart, jstart, kstart;
-    char sbn[24] = "grd3d_point_val_crange";
     int i1, i2, j1, j2, k1, k2;
-
-    xtgverbose(debug);
-
-    xtg_speak(sbn, 3, "Entering %s", sbn);
-
-    xtg_speak(sbn, 3, "IBSTART %d", ibstart);
 
     ibstart = *ibs;
 
@@ -159,12 +143,12 @@ grd3d_point_val_crange(double x,
     if (i2 > imax)
         i2 = imax;
 
-    ib = _find_ib(x, y, z, i1, i2, j1, j2, k1, k2, nx, ny, nz, coordsv, zcornsv, debug);
+    ib = _find_ib(x, y, z, i1, i2, j1, j2, k1, k2, nx, ny, nz, coordsv, zcornsv);
 
     /* second try; fall back loop over fuller range */
     if (ib == -9) {
         ib = _find_ib(x, y, z, imin, imax, jmin, jmax, kmin, kmax, nx, ny, nz, coordsv,
-                      zcornsv, debug);
+                      zcornsv);
     }
 
     if (ib > 0) {

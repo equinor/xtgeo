@@ -19,8 +19,6 @@ logger = xtg.functionlogger(__name__)
 # logger.info(roxmsg)
 
 # self is Grid() instance
-# _cxtgeo.xtg_verbose_file("NONE")
-XTGDEBUG = xtg.syslevel
 
 
 # =============================================================================
@@ -251,7 +249,6 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
         npill,
         npill,
         nzcrn,
-        XTGDEBUG,
     )
 
     tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)

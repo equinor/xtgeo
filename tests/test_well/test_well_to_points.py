@@ -1,24 +1,11 @@
-import os
-import sys
-import logging
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
 
-
-path = 'TMP'
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
 xtg = XTGeoDialog()
-format = xtg.loggingformat
 
-logging.basicConfig(format=format, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+TMPD = xtg.tmpdir
 
-logger = logging.getLogger(__name__)
+logger = xtg.basiclogger(__name__)
 
 # =========================================================================
 # Do tests
@@ -31,7 +18,7 @@ def test_wellzone_to_points():
     wfile = "../xtgeo-testdata/wells/reek/1/OP_1.w"
 
     mywell = Well(wfile, zonelogname="Zonelog")
-    logger.info("Imported {}".format(wfile))
+    logger.info("Imported %s", wfile)
 
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points()

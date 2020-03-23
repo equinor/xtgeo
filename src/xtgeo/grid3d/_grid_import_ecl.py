@@ -20,8 +20,6 @@ xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse result .EGRID
@@ -205,7 +203,7 @@ def import_ecl_grdecl(self, gfile):
         self._coordsv,
         self._zcornsv,
         self._actnumsv,
-        ptr_num_act
+        ptr_num_act,
     )
 
     # close and remove tmpfile

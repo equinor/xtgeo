@@ -5,7 +5,6 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import warnings
-import logging
 
 import numpy as np
 import numpy.ma as ma
@@ -81,8 +80,6 @@ def avgsum_from_3dprops_gridding(
     # - Xprop and yprop must be made for all cells
     # - Also dzprop for all cells, and dzprop = 0 for inactive cells!
 
-    qlog = logging.getLogger().isEnabledFor(logging.INFO)
-
     logger.info("Avgsum calculation %s", __name__)
 
     if zone_minmax is None:
@@ -104,19 +101,6 @@ def avgsum_from_3dprops_gridding(
     )
 
     gnlay = xprop.shape[2]
-
-    uprops = {
-        "xprop": xprop,
-        "yprop": yprop,
-        "zoneprop": zoneprop,
-        "dzprop": dzprop,
-        "mprop": mprop,
-    }
-
-    # some sanity checks
-    for _name, ppx in uprops.items():
-        minpp = ppx.min()
-        maxpp = ppx.max()
 
     # avoid artifacts from inactive cells that slips through somehow...(?)
     if dzprop.max() > xtgeo.UNDEF_LIMIT:
@@ -181,14 +165,6 @@ def avgsum_from_3dprops_gridding(
         mvv = mvv[xcc < 1e20]
         dzv = dzv[xcc < 1e20]
         wei = wei[xcc < 1e20]
-
-        # some sanity checks
-        if qlog:
-            uprops = {"xcv": xcv, "ycv": ycv, "mvv": mvv, "dzv": dzv}
-            for _name, ppx in uprops.items():
-                minpp = ppx.min()
-                maxpp = ppx.max()
-                logger.info("Min max is %s %s ...", minpp, maxpp)
 
         if summing:
             mvdz = mvv * wei

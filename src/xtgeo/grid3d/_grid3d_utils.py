@@ -12,8 +12,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False):
     """Quick scan of keywords in Eclipse binary restart/init/... file,
@@ -35,9 +33,7 @@ def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=
                 fhandle, maxkeys=maxkeys, dataframe=dataframe
             )
         else:
-            data = _scan_ecl_keywords(
-                fhandle, maxkeys=maxkeys, dataframe=dataframe
-            )
+            data = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=dataframe)
 
     else:
         data = _scan_roff_keywords(fhandle, maxkeys=maxkeys, dataframe=dataframe)
@@ -66,9 +62,7 @@ def scan_dates(pfile, maxdates=1000, dataframe=False):
         fhandle = pfile.fhandle
         local_fhandle = True
 
-    nstat = _cxtgeo.grd3d_ecl_tsteps(
-        fhandle, seq, day, mon, yer, maxdates, XTGDEBUG
-    )
+    nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates)
 
     if local_fhandle:
         pfile.close(cond=local_fhandle)
@@ -110,7 +104,7 @@ def _scan_ecl_keywords(fhandle, maxkeys=100000, dataframe=False):
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
     nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+        fhandle, rectypes, reclens, recstarts, maxkeys
     )
 
     keywords = keywords.replace(" ", "")
@@ -193,7 +187,7 @@ def _scan_roff_keywords(fhandle, maxkeys=100000, dataframe=False):
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
     nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys, XTGDEBUG
+        fhandle, rectypes, reclens, recstarts, maxkeys
     )
 
     keywords = keywords.replace(" ", "")

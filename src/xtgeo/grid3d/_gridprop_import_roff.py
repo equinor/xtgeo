@@ -15,8 +15,6 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def import_roff(self, pfile, name, grid=None, _roffapiv=1):
     """Import ROFF format"""
@@ -66,7 +64,6 @@ def _import_roff_v1(self, pfile, name):
         ptr_ddum,
         ptr_idum,
         0,
-        XTGDEBUG,
     )
 
     if ier == -1:
@@ -123,7 +120,6 @@ def _import_roff_v1(self, pfile, name):
         ptr_pval_v,
         ptr_ccodes_v,
         0,
-        XTGDEBUG,
     )
 
     if self._isdiscrete:
@@ -206,9 +202,7 @@ def _rkwquery(fhandle, kws, name, swap):
     if reclen != 1:
         raise SystemError("Stuff is rotten here...")
 
-    _cxtgeo.grd3d_imp_roffbin_data(
-        fhandle, swap, dtype, bytepos, iresult, presult, XTGDEBUG
-    )
+    _cxtgeo.grd3d_imp_roffbin_data(fhandle, swap, dtype, bytepos, iresult, presult)
 
     # -1 indicates that it is the swap flag which is looked for!
     if dtype == 1:
@@ -267,7 +261,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     fnumpy = np.zeros(ncol * nrow * nlay, dtype=np.float32)
 
     _cxtgeo.grd3d_imp_roffbin_arr(
-        fhandle, swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy, XTGDEBUG
+        fhandle, swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy
     )
 
     # remember that for grid props, order=F in CXTGEO, while order=C
@@ -324,7 +318,7 @@ def _rkwxlist(fhandle, kws, name, swap, strict=True):
 
     if dtype == 1:
         inumpy = np.zeros(reclen, dtype=np.int32)
-        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy, XTGDEBUG)
+        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy)
     else:
         raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
 

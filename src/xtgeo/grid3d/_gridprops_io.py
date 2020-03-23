@@ -12,8 +12,6 @@ xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def import_ecl_output(
     props, pfile, names=None, dates=None, grid=None, namestyle=0
@@ -35,8 +33,9 @@ def import_ecl_output(
         local_fhandle = True
 
     # scan valid keywords
-    kwlist = utils.scan_keywords(fhandle, fformat="xecl", maxkeys=100000,
-                                 dataframe=True, dates=True)
+    kwlist = utils.scan_keywords(
+        fhandle, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+    )
 
     kwxlist = list(kwlist.itertuples(index=False, name=None))
 
@@ -130,8 +129,13 @@ def import_ecl_output(
             # use a private GridProperty function here, for convinience
             # (since filehandle)
             _gridprop_import_eclrun.import_eclbinary(
-                prop, fhandle, name=name, date=date, grid=grid, etype=etype,
-                _kwlist=kwlist
+                prop,
+                fhandle,
+                name=name,
+                date=date,
+                grid=grid,
+                etype=etype,
+                _kwlist=kwlist,
             )
             if firstproperty:
                 ncol = prop.ncol

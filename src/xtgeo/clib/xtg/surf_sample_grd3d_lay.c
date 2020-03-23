@@ -4,8 +4,6 @@
  * NAME:
  *    surf_sample_grd3d_lay.c (based on map_sample_grd3d_lay)
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Sample values from 3D grid layer to regular map (with possible rotation)
@@ -103,8 +101,7 @@ surf_sample_grd3d_lay(int nx,
         for (i = 1; i <= nx; i++) {
 
             /* get the corners for the cell */
-            grd3d_corners(i, j, klayer, nx, ny, nz, coordsv, 0, zcornsv, 0,
-                          corners_v);
+            grd3d_corners(i, j, klayer, nx, ny, nz, coordsv, 0, zcornsv, 0, corners_v);
 
             /* find cell min/max  both for X and Y */
             cxmin = 999999999;
@@ -147,8 +144,7 @@ surf_sample_grd3d_lay(int nx,
                     xpos = xori + xinc * (ii - 1);
                     ypos = yori + yinc * (jj - 1);
 
-                    zval =
-                      x_sample_z_from_xy_cell(corners_v, xpos, ypos, mode, 0, XTGDEBUG);
+                    zval = x_sample_z_from_xy_cell(corners_v, xpos, ypos, mode, 0);
 
                     if (zval < UNDEF_LIMIT && zval > -1 * UNDEF_LIMIT) {
                         map_v[ibm] = zval;

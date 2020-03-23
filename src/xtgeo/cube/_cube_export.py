@@ -9,11 +9,9 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-XTGDEBUG = 0
+
 
 logger = xtg.functionlogger(__name__)
-
-# _cxtgeo.xtg_verbose_file("NONE")
 
 
 def export_segy(self, sfile, template=None, pristine=False, engine="xtgeo"):

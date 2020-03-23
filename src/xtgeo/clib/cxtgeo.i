@@ -4,6 +4,8 @@
 #include <libxtg.h>
 %}
 
+typedef uint8_t mbool;
+
 %include typemaps.i
 %include cpointer.i
 %include carrays.i
@@ -36,6 +38,7 @@
 %numpy_typemaps(float, NPY_FLOAT, long)
 %numpy_typemaps(int, NPY_INT, long)
 %numpy_typemaps(long, NPY_LONG, long)
+%numpy_typemaps(mbool, NPY_BOOL, long)
 
 %init %{
 import_array();
@@ -71,6 +74,14 @@ import_array();
 %}
 
 // numpies (1D)
+
+
+// ==IN=================================================================================
+
+// IN bool no 1
+%apply (int* IN_ARRAY1, long DIM1)
+    {(int *swig_np_boo_in_v1, long n_swig_np_boo_in_v1)};
+
 // IN int32 no 1
 %apply (int* IN_ARRAY1, long DIM1) {(int *swig_np_int_in_v1,
                                      long n_swig_np_int_in_v1)};
@@ -107,10 +118,21 @@ import_array();
 %apply (double* IN_ARRAY1, long DIM1) {(double *swig_np_dbl_in_v6,
                                         long n_swig_np_dbl_in_v6)};
 
+// ==INPLACE_FLAT=======================================================================
+
+// INPLACE_FLAT CHAR no 1
+%apply (mbool* INPLACE_ARRAY_FLAT, long DIM_FLAT)
+    {(mbool *swig_np_boo_inplaceflat_v1, long n_swig_np_boo_inplaceflat_v1)};
+
+// INPLACE_FLAT DOUBLE no 1
+%apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *swig_np_dbl_inplaceflat_v1,
+                                                    long n_swig_np_dbl_inplaceflat_v1)};
+
+// ==INPLACE============================================================================
+
 // INPLACE int no 1
 %apply (int* INPLACE_ARRAY1, long DIM1) {(int *swig_np_int_inplace_v1,
                                           long n_swig_np_int_inplace_v1)};
-
 
 // INPLACE long no 1
 %apply (long* INPLACE_ARRAY1, long DIM1) {(long *swig_np_long_inplace_v1,
@@ -129,6 +151,8 @@ import_array();
 // INPLACE float64 / double no 3
 %apply (double* INPLACE_ARRAY1, long DIM1) {(double *swig_np_dbl_inplace_v3,
                                              long n_swig_np_dbl_inplace_v3)};
+
+// ==ARGOUT=============================================================================
 
 // ARGOUT float64 / double no 1
 %apply (double* ARGOUT_ARRAY1, long DIM1) {(double *swig_np_dbl_aout_v1,

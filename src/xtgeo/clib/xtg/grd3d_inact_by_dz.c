@@ -4,8 +4,6 @@
  * NAME:
  *    grd3d_inact_by_dz.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Set ACTNUM = 0 for cells below a thickness

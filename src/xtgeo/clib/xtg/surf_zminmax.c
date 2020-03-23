@@ -1,15 +1,10 @@
-#include <math.h>
-#include "libxtg.h"
-#include "libxtg_.h"
 
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    surf_zminmax.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    get min and max Z value
@@ -27,28 +22,21 @@
  *
  * LICENCE:
  *    CF XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
 
-int surf_zminmax(
-                 int nx,
-                 int ny,
-                 double *p_map_v,
-                 double *zmin,
-                 double *zmax,
-                 int debug
-                 )
+#include "libxtg.h"
+#include "libxtg_.h"
+#include <math.h>
+
+int
+surf_zminmax(int nx, int ny, double *p_map_v, double *zmin, double *zmax)
 {
     /* locals */
-    char sbn[24] = "surf_zminmax";
-
-    xtgverbose(debug);
-    xtg_speak(sbn, 2, "Running %s", sbn);
 
     long mxy = nx * ny;
     long ic;
     int found = 0;
-
 
     double zzmin = VERYLARGEPOSITIVE;
     double zzmax = VERYLARGENEGATIVE;
@@ -56,14 +44,18 @@ int surf_zminmax(
     for (ic = 0; ic < mxy; ic++) {
         if (p_map_v[ic] < UNDEF_LIMIT) {
             found = 1;
-            if (p_map_v[ic] > zzmax) zzmax = p_map_v[ic];
-            if (p_map_v[ic] < zzmin) zzmin = p_map_v[ic];
+            if (p_map_v[ic] > zzmax)
+                zzmax = p_map_v[ic];
+            if (p_map_v[ic] < zzmin)
+                zzmin = p_map_v[ic];
         }
     }
 
-    xtg_speak(sbn, 2, "Map min max %f %f", zzmin, zzmax);
-
-    if (found == 0) {*zmin = UNDEF; *zmax = UNDEF; return -2;}
+    if (found == 0) {
+        *zmin = UNDEF;
+        *zmax = UNDEF;
+        return -2;
+    }
 
     *zmin = zzmin;
     *zmax = zzmax;

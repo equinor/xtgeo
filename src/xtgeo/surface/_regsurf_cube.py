@@ -15,7 +15,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 ALLATTRS = [
     "max",
@@ -97,7 +96,6 @@ def slice_cube(
         nsurf,
         usesampling,
         opt2,
-        XTGDEBUG,
     )
 
     if istat != 0:
@@ -378,7 +376,6 @@ def _slice_constant_window2(  # pylint: disable=unused-argument
         nattr,
         usesampling,
         opt2,
-        XTGDEBUG,
     )
 
     if istat != 0:

@@ -1,17 +1,5 @@
 /*
- ******************************************************************************
- *
- * Write an Eclipse binary record to file
- *
- ******************************************************************************
- */
-
-#include <limits.h>
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_write_eclrecord.c
@@ -47,32 +35,37 @@
  *
  * LICENCE:
  *    Cf. XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
 
+#include "libxtg.h"
+#include "libxtg_.h"
+#include <limits.h>
 
-int grd3d_write_eclrecord (FILE *fc, char *recname,
-                           int rectype, int *intv, float *floatv,
-                           double *doublev, long nrecs,
-                           int debug)
+int
+grd3d_write_eclrecord(FILE *fc,
+                      char *recname,
+                      int rectype,
+                      int *intv,
+                      float *floatv,
+                      double *doublev,
+                      long nrecs)
 {
 
     int ib, swap = 0;
     int myint, mylen, nbyte;
     float myfloat;
     double mydouble;
-    char mychar[9]="", mytype[5]="";
+    char mychar[9] = "", mytype[5] = "";
     int nb = 0, nmax = 0, ic = 0, im = 0, nchunk = 0, ftn = 0, nn = 0;
 
-    char sbn[24] = "grd3d_write_eclrecord";
-    xtgverbose(debug);
-
     sprintf(mychar, "%-8s", recname);
-    // u_eightletter(mychar);
 
-    if (x_swap_check() == 1) swap = 1;
+    if (x_swap_check() == 1)
+        swap = 1;
 
-    if (fc == NULL) xtg_error(sbn, "Cannot use file, file descriptor is NULL");
+    if (fc == NULL)
+        return EXIT_FAILURE;
 
     if (rectype == 1) {
         nbyte = 4;
@@ -87,13 +80,15 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
         strncpy(mytype, "DBLE", 4);
     }
 
- /* header: */
+    /* header: */
     myint = 16;
-    if (swap) SWAP_INT(myint);
+    if (swap)
+        SWAP_INT(myint);
     fwrite(&myint, 4, 1, fc);
-    fwrite(mychar, 1, 8, fc);  /* 8 or 9? */
+    fwrite(mychar, 1, 8, fc); /* 8 or 9? */
     mylen = nrecs;
-    if (swap) SWAP_INT(mylen);
+    if (swap)
+        SWAP_INT(mylen);
     fwrite(&mylen, 4, 1, fc);
     fwrite(mytype, 1, 4, fc);
     fwrite(&myint, 4, 1, fc);
@@ -103,48 +98,52 @@ int grd3d_write_eclrecord (FILE *fc, char *recname,
 
     nmax = 4000 / nbyte;
     ib = 0;
-    nb = nrecs;  /* remaining */
+    nb = nrecs; /* remaining */
 
     nchunk = 1 + nrecs / nmax;
-    for (im = 0; im < nchunk; im++){
+    for (im = 0; im < nchunk; im++) {
         ftn = nmax * nbyte;
-        if (nb == 0) break;
+        if (nb == 0)
+            break;
         if (nb < nmax) {
             ftn = nb * nbyte;
             nn = nb;
-        }
-        else{
+        } else {
             nn = nmax;
         }
 
-        if (swap) SWAP_INT(ftn);
+        if (swap)
+            SWAP_INT(ftn);
         fwrite(&ftn, 4, 1, fc);
 
         for (ic = 0; ic < nn; ic++) {
 
             if (rectype == 1) {
                 myint = intv[ib];
-                if (myint > UNDEF_INT_LIMIT) myint = 0;
-                if (swap) SWAP_INT(myint);
+                if (myint > UNDEF_INT_LIMIT)
+                    myint = 0;
+                if (swap)
+                    SWAP_INT(myint);
                 fwrite(&myint, 4, 1, fc);
-            }
-            else if (rectype == 2) {
+            } else if (rectype == 2) {
                 myfloat = floatv[ib];
-                if (myfloat > UNDEF_LIMIT) myfloat = 0.0;
-                if (swap) SWAP_FLOAT(myfloat);
+                if (myfloat > UNDEF_LIMIT)
+                    myfloat = 0.0;
+                if (swap)
+                    SWAP_FLOAT(myfloat);
                 fwrite(&myfloat, 4, 1, fc);
-            }
-            else if (rectype == 3) {
+            } else if (rectype == 3) {
                 mydouble = doublev[ib];
-                if (mydouble > UNDEF_LIMIT) mydouble = 0.0;
-                if (swap) SWAP_DOUBLE(mydouble);
+                if (mydouble > UNDEF_LIMIT)
+                    mydouble = 0.0;
+                if (swap)
+                    SWAP_DOUBLE(mydouble);
                 fwrite(&mydouble, 8, 1, fc);
             }
             ib++;
             nb--;
         }
         fwrite(&ftn, 4, 1, fc);
-
     }
     return EXIT_SUCCESS;
 }

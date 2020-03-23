@@ -171,7 +171,7 @@ cube_value_xyz_interp(double xin,
     /* now interpolate */
     ier = -9;
     if (ier1 == 0) {
-        ier = x_interp_cube_nodes(x_v, y_v, z_v, p_v, rx, ry, rz, &val, 1, XTGDEBUG);
+        ier = x_interp_cube_nodes(x_v, y_v, z_v, p_v, rx, ry, rz, &val, 1);
     }
 
     if (ier != 0) {

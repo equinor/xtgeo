@@ -14,7 +14,6 @@ xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 # cf metadata["IPHS"]:
 PHASES = {
@@ -26,7 +25,7 @@ PHASES = {
     5: "oil/gas",
     6: "gas/water",
     7: "oil/water/gas",
-    -2345: "ix_unknown"
+    -2345: "ix_unknown",
 }
 
 # cf metadata["SIMULATOR"]:

@@ -1,18 +1,17 @@
 /*
 ****************************************************************************************
- *
- * Import maps on seismic points format (OW specific perhaps?)
- *
- ***************************************************************************************
- */
+*
+* Import maps on seismic points format (OW specific perhaps?)
+*
+***************************************************************************************
+*/
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 
 #define MAXIX 1000000
-
 
 /*
 ****************************************************************************************
@@ -79,14 +78,14 @@
  ***************************************************************************************
  */
 
-
 /*
 ****************************************************************************************
- * Local routine to scan for NX, NY
- ***************************************************************************************
- */
+* Local routine to scan for NX, NY
+***************************************************************************************
+*/
 
-void _scan_dimensions(FILE *fd, int *nx, int *ny)
+void
+_scan_dimensions(FILE *fd, int *nx, int *ny)
 {
     int inum, nrow, ncol, iline, xline, iok;
     int ilinemin, ilinemax, xlinemin, xlinemax;
@@ -101,82 +100,100 @@ void _scan_dimensions(FILE *fd, int *nx, int *ny)
     nrow = 0;
     ncol = 0;
 
-    for (inum = 0; inum < MAXIX; inum++) itmp[inum] = 0;
-    for (inum = 0; inum < MAXIX; inum++) xtmp[inum] = 0;
+    for (inum = 0; inum < MAXIX; inum++)
+        itmp[inum] = 0;
+    for (inum = 0; inum < MAXIX; inum++)
+        xtmp[inum] = 0;
 
     ilinemin = 999999999;
     ilinemax = -99999999;
     xlinemin = 999999999;
     xlinemax = -99999999;
     iok = 1;
-    while(fgets(lbuffer, 132, (FILE*) fd)) {
-        if (strncmp(lbuffer, "\n", 1) == 0) continue;
+    while (fgets(lbuffer, 132, (FILE *)fd)) {
+        if (strncmp(lbuffer, "\n", 1) == 0)
+            continue;
         lbuffer[strcspn(lbuffer, "\n")] = 0;
-        if (strncmp(lbuffer, "#", 1) == 0) continue;
-        if (strncmp(lbuffer, "@", 1) == 0) continue;
-        if (strncmp(lbuffer, "E", 1) == 0) continue;
+        if (strncmp(lbuffer, "#", 1) == 0)
+            continue;
+        if (strncmp(lbuffer, "@", 1) == 0)
+            continue;
+        if (strncmp(lbuffer, "E", 1) == 0)
+            continue;
 
-        iok = sscanf(lbuffer, "%f %f %f %f %f", &filine, &fxline,
-                     &rdum, &rdum, &rdum);
+        iok = sscanf(lbuffer, "%f %f %f %f %f", &filine, &fxline, &rdum, &rdum, &rdum);
 
         iline = (int)(filine + 0.01);
         xline = (int)(fxline + 0.01);
 
-        if (iok > 5) logger_error(LI, FI, FU, "Wrong file format for map file?");
+        if (iok > 5)
+            logger_error(LI, FI, FU, "Wrong file format for map file?");
 
-        if (iline < ilinemin) ilinemin = iline;
-        if (iline > ilinemax) ilinemax = iline;
-        if (xline < xlinemin) xlinemin = xline;
-        if (xline > xlinemax) xlinemax = xline;
+        if (iline < ilinemin)
+            ilinemin = iline;
+        if (iline > ilinemax)
+            ilinemax = iline;
+        if (xline < xlinemin)
+            xlinemin = xline;
+        if (xline > xlinemax)
+            xlinemax = xline;
         itmp[iline] = 1;
         xtmp[xline] = 1;
     }
 
-    mispace = (ilinemax - ilinemin)/4;
-    mxspace = (xlinemax - xlinemin)/4;
+    mispace = (ilinemax - ilinemin) / 4;
+    mxspace = (xlinemax - xlinemin) / 4;
 
     /* find minimum spacing in INLINES */
     ispacing = 0;
-    for (ispace = 1; ispace < mispace; ispace ++) {
+    for (ispace = 1; ispace < mispace; ispace++) {
         for (inum = ilinemin; inum < ilinemax - mispace; inum++) {
             if (itmp[inum] == 1 && itmp[inum + ispace] == 1) {
                 ispacing = ispace;
                 break;
             }
         }
-        if (ispacing > 0) break;
+        if (ispacing > 0)
+            break;
     }
 
     /* find minimum spacing in XLINES */
     xspacing = 0;
-    for (ispace = 1; ispace < mxspace; ispace ++) {
+    for (ispace = 1; ispace < mxspace; ispace++) {
         for (inum = xlinemin; inum < xlinemax - mxspace; inum++) {
             if (xtmp[inum] == 1 && xtmp[inum + ispace] == 1) {
                 xspacing = ispace;
                 break;
             }
         }
-        if (xspacing > 0) break;
+        if (xspacing > 0)
+            break;
     }
 
-    *nx = (ilinemax - ilinemin)/ispacing + 1;
-    *ny = (xlinemax - xlinemin)/xspacing + 1;
+    *nx = (ilinemax - ilinemin) / ispacing + 1;
+    *ny = (xlinemax - xlinemin) / xspacing + 1;
 
     free(itmp);
     free(xtmp);
-
 }
-
 
 /*
 ****************************************************************************************
- * Local routine to collect all values form file as 1D buffers
- ***************************************************************************************
- */
+* Local routine to collect all values form file as 1D buffers
+***************************************************************************************
+*/
 
-long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
-                     double *ybuffer, double *zbuffer,
-                     int *ilmin, int *ilmax, int *xlmin, int *xlmax)
+long
+_collect_values(FILE *fd,
+                int *ilinesb,
+                int *xlinesb,
+                double *xbuffer,
+                double *ybuffer,
+                double *zbuffer,
+                int *ilmin,
+                int *ilmax,
+                int *xlmin,
+                int *xlmax)
 {
     int ilinemin, ilinemax, xlinemin, xlinemax, iok;
     int iline, xline;
@@ -185,26 +202,26 @@ long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
     double xval, yval, zval;
     char lbuffer[132];
 
-
-    char sbn[24] = "_collect_values";
-
     ilinemin = 999999999;
     ilinemax = -99999999;
     xlinemin = 999999999;
     xlinemax = -99999999;
 
-
     ixnum = 0;
     iok = 1;
-    while(fgets(lbuffer, 132, (FILE*) fd)) {
-        if (strncmp(lbuffer, "\n", 1) == 0) continue;
+    while (fgets(lbuffer, 132, (FILE *)fd)) {
+        if (strncmp(lbuffer, "\n", 1) == 0)
+            continue;
         lbuffer[strcspn(lbuffer, "\n")] = 0;
-        if (strncmp(lbuffer, "#", 1) == 0) continue;
-        if (strncmp(lbuffer, "@", 1) == 0) continue;
-        if (strncmp(lbuffer, "E", 1) == 0) continue;
+        if (strncmp(lbuffer, "#", 1) == 0)
+            continue;
+        if (strncmp(lbuffer, "@", 1) == 0)
+            continue;
+        if (strncmp(lbuffer, "E", 1) == 0)
+            continue;
 
-        iok = sscanf(lbuffer, "%f %f %lf %lf %lf", &filine, &fxline,
-                     &xval, &yval, &zval);
+        iok =
+          sscanf(lbuffer, "%f %f %lf %lf %lf", &filine, &fxline, &xval, &yval, &zval);
 
         iline = (int)(filine + 0.01);
         xline = (int)(fxline + 0.01);
@@ -215,10 +232,14 @@ long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
         ybuffer[ixnum] = yval;
         zbuffer[ixnum] = zval;
 
-        if (iline < ilinemin) ilinemin = iline;
-        if (iline > ilinemax) ilinemax = iline;
-        if (xline < xlinemin) xlinemin = xline;
-        if (xline > xlinemax) xlinemax = xline;
+        if (iline < ilinemin)
+            ilinemin = iline;
+        if (iline > ilinemax)
+            ilinemax = iline;
+        if (xline < xlinemin)
+            xlinemin = xline;
+        if (xline > xlinemax)
+            xlinemax = xline;
 
         ixnum++;
     }
@@ -228,47 +249,54 @@ long _collect_values(FILE *fd, int *ilinesb, int *xlinesb, double *xbuffer,
     *xlmin = xlinemin;
     *xlmax = xlinemax;
 
-    xtg_speak(sbn, 2, "Range ILINES: %d - %d", ilinemin, ilinemax);
-    xtg_speak(sbn, 2, "Range XLINES: %d - %d", xlinemin, xlinemax);
-
     return ixnum;
 }
 
-
 /*
 ****************************************************************************************
- * Compute map vectors
- */
+* Compute map vectors
+*/
 
-int _compute_map_vectors(int ilinemin, int ilinemax, int ncol,
-                         int xlinemin, int xlinemax, int nrow,
-                         long ixnummax,
-                         int *ilinesb, int *xlinesb,
-                         double *xbuffer, double *ybuffer, double *zbuffer,
-                         double *xcoord, double *ycoord,
-                         /* result vectors: */
-                         int *ilines, int *xlines, double *p_map_v
-                         )
+int
+_compute_map_vectors(int ilinemin,
+                     int ilinemax,
+                     int ncol,
+                     int xlinemin,
+                     int xlinemax,
+                     int nrow,
+                     long ixnummax,
+                     int *ilinesb,
+                     int *xlinesb,
+                     double *xbuffer,
+                     double *ybuffer,
+                     double *zbuffer,
+                     double *xcoord,
+                     double *ycoord,
+                     /* result vectors: */
+                     int *ilines,
+                     int *xlines,
+                     double *p_map_v)
 {
     int i, itrue, jtrue;
     long ic, ixnum;
     int ilinestep, xlinestep;
 
-
     ilinestep = (ilinemax - ilinemin) / (ncol - 1);
     xlinestep = (xlinemax - xlinemin) / (nrow - 1);
 
     /* set the *ilines and *xlines results vectors */
-    for (i = 0; i < ncol; i++) ilines[i] = ilinemin + i * ilinestep;
-    for (i = 0; i < nrow; i++) xlines[i] = xlinemin + i * xlinestep;
-
+    for (i = 0; i < ncol; i++)
+        ilines[i] = ilinemin + i * ilinestep;
+    for (i = 0; i < nrow; i++)
+        xlines[i] = xlinemin + i * xlinestep;
 
     /* setting Z values; UNDEF initially */
-    for (ic = 0; ic < ncol * nrow; ic++) p_map_v[ic] = UNDEF;
+    for (ic = 0; ic < ncol * nrow; ic++)
+        p_map_v[ic] = UNDEF;
 
     for (ixnum = 0; ixnum < ixnummax; ixnum++) {
-        itrue = (ilinesb[ixnum] / ilinestep) - ilinemin / ilinestep + 1;  /* base = 1 */
-        jtrue = (xlinesb[ixnum] / xlinestep) - xlinemin / xlinestep + 1;  /* base = 1 */
+        itrue = (ilinesb[ixnum] / ilinestep) - ilinemin / ilinestep + 1; /* base = 1 */
+        jtrue = (xlinesb[ixnum] / xlinestep) - xlinemin / xlinestep + 1; /* base = 1 */
 
         /* get the C order index */
         ic = x_ijk2ic(itrue, jtrue, 1, ncol, nrow, 1, 0);
@@ -282,17 +310,25 @@ int _compute_map_vectors(int ilinemin, int ilinemax, int ncol,
 
 /*
 ****************************************************************************************
- * Compute map properties in XTGeo format, need to deduce from "incomplete
- * data". This version is rather basic, it looks only on one step. It may be
- * more precise to look at long vectors, but that is more complicated to
- * get correct.
- ***************************************************************************************
- */
+* Compute map properties in XTGeo format, need to deduce from "incomplete
+* data". This version is rather basic, it looks only on one step. It may be
+* more precise to look at long vectors, but that is more complicated to
+* get correct.
+***************************************************************************************
+*/
 
-int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
-                       double *p_map_v,
-                       double *xori, double *yori, double *xinc, double *yinc,
-                       double *rot, int *yflip)
+int
+_compute_map_props(int ncol,
+                   int nrow,
+                   double *xcoord,
+                   double *ycoord,
+                   double *p_map_v,
+                   double *xori,
+                   double *yori,
+                   double *xinc,
+                   double *yinc,
+                   double *rot,
+                   int *yflip)
 {
 
     int okstatus = 0, icol, jrow;
@@ -326,9 +362,11 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
                 okstatus = 1;
                 break;
             }
-            if (okstatus == 1) break;
+            if (okstatus == 1)
+                break;
         }
-        if (okstatus == 1) break;
+        if (okstatus == 1)
+            break;
     }
 
     if (okstatus == 0) {
@@ -336,45 +374,41 @@ int _compute_map_props(int ncol, int nrow, double *xcoord, double *ycoord,
         return -9;
     }
 
-
     x_vector_info2(xc0, xc1, yc0, yc1, xinc, &a1rad, rot, 1);
     x_vector_info2(xc0, xc2, yc0, yc2, yinc, &a2rad, &roty, 1);
 
     /* compute yflip: sin (y-x) = sin(y)*cos(x) - sin(x)*cos(y) */
     *yflip = 1;
-    sinusrad = sin(a2rad) * cos(a1rad) - sin(a1rad) * cos (a2rad);
-    if (sinusrad < 0) *yflip = -1;
+    sinusrad = sin(a2rad) * cos(a1rad) - sin(a1rad) * cos(a2rad);
+    if (sinusrad < 0)
+        *yflip = -1;
 
     /* find origin */
-    surf_xyori_from_ij(ic0, jc0, xc0, yc0, xori, *xinc, yori, *yinc,
-                       ncol, nrow, *yflip, *rot, 0, 0);
-
+    surf_xyori_from_ij(ic0, jc0, xc0, yc0, xori, *xinc, yori, *yinc, ncol, nrow, *yflip,
+                       *rot, 0);
 
     return EXIT_SUCCESS;
 }
 
-
-
-int surf_import_ijxyz (
-                       FILE *fd,
-                       int mode,
-                       int *nx,
-                       int *ny,
-                       long *ndef,
-                       double *xori,
-                       double *yori,
-                       double *xinc,
-                       double *yinc,
-                       double *rot,
-                       int *ilines,
-                       long ncol,
-                       int *xlines,
-                       long nrow,
-                       double *p_map_v,
-                       long nmap,
-                       int *yflip,
-                       int option
-                       )
+int
+surf_import_ijxyz(FILE *fd,
+                  int mode,
+                  int *nx,
+                  int *ny,
+                  long *ndef,
+                  double *xori,
+                  double *yori,
+                  double *xinc,
+                  double *yinc,
+                  double *rot,
+                  int *ilines,
+                  long ncol,
+                  int *xlines,
+                  long nrow,
+                  double *p_map_v,
+                  long nmap,
+                  int *yflip,
+                  int option)
 {
 
     /* locals*/
@@ -415,23 +449,18 @@ int surf_import_ijxyz (
     xcoord = calloc(ncol * nrow + 10, sizeof(double));
     ycoord = calloc(ncol * nrow + 10, sizeof(double));
 
+    *ndef = _collect_values(fd, ilinesb, xlinesb, xbuffer, ybuffer, zbuffer, &ilinemin,
+                            &ilinemax, &xlinemin, &xlinemax);
 
-    *ndef = _collect_values(fd, ilinesb, xlinesb, xbuffer, ybuffer, zbuffer,
-                            &ilinemin, &ilinemax, &xlinemin, &xlinemax);
+    iok = _compute_map_vectors(ilinemin, ilinemax, nncol, xlinemin, xlinemax, nnrow,
+                               *ndef, ilinesb, xlinesb, xbuffer, ybuffer, zbuffer,
+                               xcoord, ycoord, ilines, xlines, p_map_v);
 
-    iok = _compute_map_vectors(ilinemin, ilinemax, nncol,
-                               xlinemin, xlinemax, nnrow,
-                               *ndef,
-                               ilinesb, xlinesb,
-                               xbuffer, ybuffer, zbuffer,
-                               xcoord, ycoord,
-                               ilines, xlines,
-                               p_map_v);
+    iok = _compute_map_props(nncol, nnrow, xcoord, ycoord, p_map_v, xori, yori, xinc,
+                             yinc, rot, yflip);
 
-    iok = _compute_map_props(nncol, nnrow, xcoord, ycoord, p_map_v,
-                             xori, yori, xinc, yinc, rot, yflip);
-
-    if (iok != 0) logger_error(LI, FI, FU, "Error, cannot compute map props");
+    if (iok != 0)
+        logger_error(LI, FI, FU, "Error, cannot compute map props");
 
     free(ilinesb);
     free(xlinesb);
@@ -442,5 +471,4 @@ int surf_import_ijxyz (
     free(ycoord);
 
     return EXIT_SUCCESS;
-
 }

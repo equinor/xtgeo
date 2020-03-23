@@ -1,22 +1,8 @@
 /*
- ******************************************************************************
- *
- * Finding extreme Z for a cell i j k
- *
- ******************************************************************************
- */
-
-#include "libxtg.h"
-#include "libxtg_.h"
-
-/*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_zminmax.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Find the upper and lower Z coordinate of a given cell
@@ -26,7 +12,6 @@
  *    nx, ny, nz     i     Grid dimensions
  *    zcornsv        i     Z coordinates
  *    option         i     Option: 0 return minimum, 1 return maximum
- *    debug          i     Debug level
  *
  * RETURNS:
  *    ZMIN or ZMAX for option 0 or 1
@@ -36,55 +21,45 @@
  *
  * LICENCE:
  *    cf. XTGeo license
- ******************************************************************************
+ ***************************************************************************************
  */
-double grd3d_zminmax(
-                     int i,
-                     int j,
-                     int k,
-                     int nx,
-                     int ny,
-                     int nz,
-                     double *zcornsv,
-                     int option,
-                     int debug
-                     )
+#include "libxtg.h"
+#include "libxtg_.h"
+#include "logger.h"
+
+double
+grd3d_zminmax(int i, int j, int k, int nx, int ny, int nz, double *zcornsv, int option)
 
 {
     int ic;
     long ibb, ibt;
     double zmin, zmax, zval;
-    char sbn[24] = "grd3d_zminmax";
-
-    xtgverbose(debug);
-
-    if (debug > 2) xtg_speak(sbn, 3, "Enter %s", sbn);
 
     /* cell and cell below*/
-    ibt = x_ijk2ib(i,j,k,nx,ny,nz+1,0);
-    ibb = x_ijk2ib(i,j,k+1,nx,ny,nz+1,0);
+    ibt = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+    ibb = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
 
     if (ibb < 0 || ibt < 0) {
-        xtg_error(sbn, "Error in routine %s", sbn);
+        logger_error(LI, FI, FU, "Error in routine %s", FU);
     }
 
     if (option == 0) {
-        zmin = zcornsv[4*ibt + 1*1 - 1];
+        zmin = zcornsv[4 * ibt + 1 * 1 - 1];
         for (ic = 2; ic < 5; ic++) {
             zval = zcornsv[4 * ibt + 1 * ic - 1];
-            if (zval < zmin) zmin = zval;
+            if (zval < zmin)
+                zmin = zval;
         }
         return zmin;
-    }
-    else if (option == 1) {
-        zmax = zcornsv[4*ibb + 1*1 - 1];
+    } else if (option == 1) {
+        zmax = zcornsv[4 * ibb + 1 * 1 - 1];
         for (ic = 2; ic < 5; ic++) {
             zval = zcornsv[4 * ibb + 1 * ic - 1];
-            if (zval > zmax) zmax = zval;
+            if (zval > zmax)
+                zmax = zval;
         }
         return zmax;
-    }
-    else{
+    } else {
         return UNDEF;
     }
 }

@@ -24,7 +24,6 @@ from . import _well_oper
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 # pylint: disable=too-many-public-methods
 
@@ -817,7 +816,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         nlen = self.nrow
 
         ier, _tlenv, _dtlenv, hlenv, _dhlenv = _cxtgeo.pol_geometrics(
-            xv, yv, zv, nlen, nlen, nlen, nlen, XTGDEBUG
+            xv, yv, zv, nlen, nlen, nlen, nlen
         )
 
         if ier != 0:

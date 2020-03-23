@@ -181,6 +181,31 @@ def test_irapbin_import_metadatafirst():
     tsetup.assert_almostequal(sur[nsurf - 1].values[11, 0], 1678.89733887, 0.00001)
 
 
+def test_irapbin_export_test():
+    """Import Reek Irap binary using different numpy details, test timing"""
+    logger.info("Import and export...")
+
+    nsurf = 10
+    surf = xtgeo.RegularSurface(TESTSET5)
+
+    t1 = xtg.timer()
+    for _ix in range(nsurf):
+        surf.to_file("TMP/tull1", engine="cxtgeo")
+
+    t2a = xtg.timer(t1)
+    logger.info("Saving %s surfaces xtgeo %s secs.", nsurf, t2a)
+
+    t1 = xtg.timer()
+    for _ix in range(nsurf):
+        surf.to_file("TMP/tull2", engine="cxtgeotest")
+
+    t2b = xtg.timer(t1)
+    logger.info("TEST Saving %s surfaces xtgeo %s secs.", nsurf, t2b)
+
+    gain = (t2a - t2b) / t2a
+    logger.info("Speed gain %s percent", gain * 100)
+
+
 def test_petromodbin_import_export():
     """Import Petromod PDM binary example."""
     logger.info("Import and export...")

@@ -8,10 +8,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-DEBUG = xtg.get_syslevel()
-if DEBUG < 0:
-    DEBUG = 0
-
 
 def from_grid3d(self, grid, subgrids, rfactor):
     """Get surfaces from 3D grid, including subgrids"""

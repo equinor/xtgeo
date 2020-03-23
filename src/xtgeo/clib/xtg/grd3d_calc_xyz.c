@@ -65,8 +65,8 @@ grd3d_calc_xyz(int nx,
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
-                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xv, &yv, &zv,
-                               XTGDEBUG);
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, ncoord, zcornsv, nzcorn,
+                               &xv, &yv, &zv);
 
                 p_x_v[ic] = xv;
                 p_y_v[ic] = yv;

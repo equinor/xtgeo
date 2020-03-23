@@ -4,8 +4,6 @@
  * NAME:
  *    x_rotation_convert.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Transforms different rotation schemes. Ie. to transform from radians
@@ -35,17 +33,11 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
-
-double x_rotation_conv (
-			double  ain,
-			int     ainmode,
-			int     mode,
-			int     option
-		    )
+double
+x_rotation_conv(double ain, int ainmode, int mode, int option)
 {
     /* locals */
-    double   result = 0.0;
-
+    double result = 0.0;
 
     /*
      * ------------------------------------------------------------------------
@@ -54,15 +46,15 @@ double x_rotation_conv (
      */
 
     if (ainmode == 0 || ainmode == 2) {
-	if (ain<-360 || ain>360) {
-	    return -9;
-	}
+        if (ain < -360 || ain > 360) {
+            return -9;
+        }
     }
 
     if (ainmode == 1 || ainmode == 3) {
-	if (ain<-2*PI || ain>2*PI) {
-	    return -9;
-	}
+        if (ain < -2 * PI || ain > 2 * PI) {
+            return -9;
+        }
     }
 
     /*
@@ -70,7 +62,8 @@ double x_rotation_conv (
      * Use degrees when comptuting
      * ------------------------------------------------------------------------
      */
-    if (ainmode == 1 || ainmode == 3) ain = ain * 180.0 / PI;
+    if (ainmode == 1 || ainmode == 3)
+        ain = ain * 180.0 / PI;
 
     /*
      * ------------------------------------------------------------------------
@@ -80,25 +73,29 @@ double x_rotation_conv (
 
     /* from angle to azimuth */
     if (ainmode <= 1 && mode >= 2) {
-	result = -ain + 90;
-	if (result > 360) result=result-360;
-        if (ainmode == 1) result = result * PI / 180.0;
+        result = -ain + 90;
+        if (result > 360)
+            result = result - 360;
+        if (ainmode == 1)
+            result = result * PI / 180.0;
     }
 
     /* convert degrees azimuth angle to degrees normal angle */
     if (ainmode >= 2 && mode <= 1) {
-	result = 450 - ain;
-	if (result > 360) result=result-360;
-        if (ainmode == 3) result = result * PI / 180.0;
+        result = 450 - ain;
+        if (result > 360)
+            result = result - 360;
+        if (ainmode == 3)
+            result = result * PI / 180.0;
     }
 
     /* convert radians azimuth angle to degrees normal angle */
-    if (ainmode==3 && mode==0) {
+    if (ainmode == 3 && mode == 0) {
         ain = ain * 180 / PI;
-	result = 450 - ain;
-	if (result > 360) result=result-360;
+        result = 450 - ain;
+        if (result > 360)
+            result = result - 360;
     }
-
 
     return result;
 }

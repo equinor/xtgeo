@@ -6,10 +6,10 @@
  ******************************************************************************
  */
 
-#include "logger.h"
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
+#include <math.h>
 
 /*
  ******************************************************************************
@@ -18,7 +18,7 @@
  *    well_trunc_parallel.c
  *
  * AUTHOR(S):
- *    Jan C. Rivenaes
+ *
  *
  * DESCRIPTION:
  *    Look at one well traj and compare with other. If points are rather equal,
@@ -53,36 +53,34 @@
  ******************************************************************************
  */
 
-
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int well_trunc_parallel(
-                        double *xv1,
-                        long nx1,
-                        double *yv1,
-                        long ny1,
-                        double *zv1,
-                        long nz1,
-                        double *xv2,
-                        long nx2,
-                        double *yv2,
-                        long ny2,
-                        double *zv2,
-                        long nz2,
-                        double xtol,
-                        double ytol,
-                        double ztol,
-                        double itol,
-                        double atol,
-                        int option
-                        )
+int
+well_trunc_parallel(double *xv1,
+                    long nx1,
+                    double *yv1,
+                    long ny1,
+                    double *zv1,
+                    long nz1,
+                    double *xv2,
+                    long nx2,
+                    double *yv2,
+                    long ny2,
+                    double *zv2,
+                    long nz2,
+                    double xtol,
+                    double ytol,
+                    double ztol,
+                    double itol,
+                    double atol,
+                    int option)
 {
     /* locals */
     int i1, i2, ier1, ier2;
-    double *md1=NULL, *md2=NULL;
-    double *in1=NULL, *in2=NULL;
-    double *az1=NULL, *az2=NULL;
+    double *md1 = NULL, *md2 = NULL;
+    double *in1 = NULL, *in2 = NULL;
+    double *az1 = NULL, *az2 = NULL;
 
     md1 = calloc(nx1, sizeof(double));
     in1 = calloc(nx1, sizeof(double));
@@ -103,11 +101,16 @@ int well_trunc_parallel(
     /* compare point by point and update 1 etc if close to a point in 2 */
     for (i1 = 0; i1 < nx1; i1++) {
         for (i2 = 0; i2 < nx2; i2++) {
-            if (fabs(xv1[i1] - xv2[i2]) > xtol) continue;
-            if (fabs(yv1[i1] - yv2[i2]) > ytol) continue;
-            if (fabs(zv1[i1] - zv2[i2]) > ztol) continue;
-            if (fabs(x_diff_angle(in1[i1], in2[i2], 1)) > itol) continue;
-            if (fabs(x_diff_angle(az1[i1], az2[i2], 1)) > atol) continue;
+            if (fabs(xv1[i1] - xv2[i2]) > xtol)
+                continue;
+            if (fabs(yv1[i1] - yv2[i2]) > ytol)
+                continue;
+            if (fabs(zv1[i1] - zv2[i2]) > ztol)
+                continue;
+            if (fabs(x_diff_angle(in1[i1], in2[i2], 1)) > itol)
+                continue;
+            if (fabs(x_diff_angle(az1[i1], az2[i2], 1)) > atol)
+                continue;
 
             xv1[i1] = UNDEF;
             yv1[i1] = UNDEF;

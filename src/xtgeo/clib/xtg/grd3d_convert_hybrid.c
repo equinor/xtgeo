@@ -1,33 +1,33 @@
 /*
-****************************************************************************************
-*
-* NAME:
-*    grd3d_convert_hybrid.c
-*
-* DESCRIPTION:
-*    Convert a 3D grid to a hybrid grid; i.e. horisontal layers between two levels
-*
-* ARGUMENTS:
-*    nx, ny, nz     i     Dimensions
-*    p_*_v          i     Geometry arrays (w numpy dimensions)
-*    nzhyb          i     Number of NZ for hybrid
-*    p_*hyb_v       o     New geometry arrays
-*    toplevel       i     Where to start hybrid (depth)
-*    botlevel       i     Where to stop hybrid (depth)
-*    ndiv           i     Divisison in hybridpart
-*    p_region_v     i     region array w/ numpy dimensions
-*    region         i     Actual region to update
-*
-* RETURNS:
-*    Void, update array pointer
-*
-* TODO/ISSUES/BUGS:
-*    Code rewriting needed at some point
-*
-* LICENCE:
-*    CF XTGeo's LICENSE
-***************************************************************************************
-*/
+ ***************************************************************************************
+ *
+ * NAME:
+ *    grd3d_convert_hybrid.c
+ *
+ * DESCRIPTION:
+ *    Convert a 3D grid to a hybrid grid; i.e. horisontal layers between two levels
+ *
+ * ARGUMENTS:
+ *    nx, ny, nz     i     Dimensions
+ *    p_*_v          i     Geometry arrays (w numpy dimensions)
+ *    nzhyb          i     Number of NZ for hybrid
+ *    p_*hyb_v       o     New geometry arrays
+ *    toplevel       i     Where to start hybrid (depth)
+ *    botlevel       i     Where to stop hybrid (depth)
+ *    ndiv           i     Divisison in hybridpart
+ *    p_region_v     i     region array w/ numpy dimensions
+ *    region         i     Actual region to update
+ *
+ * RETURNS:
+ *    Void, update array pointer
+ *
+ * TODO/ISSUES/BUGS:
+ *    Code rewriting needed at some point
+ *
+ * LICENCE:
+ *    CF XTGeo's LICENSE
+ ***************************************************************************************
+ */
 
 #include "libxtg.h"
 #include "libxtg_.h"

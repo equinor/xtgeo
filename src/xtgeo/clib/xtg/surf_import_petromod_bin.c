@@ -4,8 +4,6 @@
  * NAME:
  *    surf_import_petromod_bin.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Imports a surface map on Petromod pdm binary format.

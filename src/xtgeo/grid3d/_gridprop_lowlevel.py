@@ -13,8 +13,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def f2c_order(obj, values1d):
     """Convert values1d from Fortran to C order, obj can be a Grid() or GridProperty()

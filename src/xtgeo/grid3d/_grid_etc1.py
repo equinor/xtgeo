@@ -27,7 +27,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 # Note that "self" is the grid instance
 
@@ -744,7 +743,7 @@ def collapse_inactive_cells(self):
     """Collapse inactive cells"""
 
     _cxtgeo.grd3d_collapse_inact(
-        self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv, XTGDEBUG
+        self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv
     )
 
 

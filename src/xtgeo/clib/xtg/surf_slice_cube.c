@@ -1,11 +1,8 @@
 /*
- ******************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    surf_slice_cube.c
- *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *     Given a map and a cube, sample cube values to the map and return a
@@ -70,75 +67,63 @@
  *            <cube_value_ijk>, find cube value from cube IJK
  *            return this value!
  *
- ******************************************************************************
+ ***************************************************************************************
  */
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 
-int surf_slice_cube(
-                    int ncx,
-                    int ncy,
-                    int ncz,
-                    double cxori,
-                    double cxinc,
-                    double cyori,
-                    double cyinc,
-                    double czori,
-                    double czinc,
-                    double crotation,
-                    int yflip,
-                    float *p_cubeval_v,
-                    long ncube,
-                    int mx,
-                    int my,
-                    double xori,
-                    double xinc,
-                    double yori,
-                    double yinc,
-                    int mapflip,
-                    double mrotation,
-                    double *p_zslice_v,
-                    long nslice,
-                    double *p_map_v,
-                    long nmap,
-                    int option1,
-                    int option2,
-                    int debug
-                    )
+int
+surf_slice_cube(int ncx,
+                int ncy,
+                int ncz,
+                double cxori,
+                double cxinc,
+                double cyori,
+                double cyinc,
+                double czori,
+                double czinc,
+                double crotation,
+                int yflip,
+                float *p_cubeval_v,
+                long ncube,
+                int mx,
+                int my,
+                double xori,
+                double xinc,
+                double yori,
+                double yinc,
+                int mapflip,
+                double mrotation,
+                double *p_zslice_v,
+                long nslice,
+                double *p_map_v,
+                long nmap,
+                int option1,
+                int option2)
 
 {
     /* locals */
-    char s[24] = "surf_slice_cube";
     int im, jm, ier;
     long ibm = 0;
     double x, y, z;
     float value;
     int nm = 0, option1a = 0;
 
-    xtgverbose(debug);
-    xtg_speak(s, 2, "Entering routine %s", s);
-
-
     if (nmap != nslice) {
-        xtg_error(s, "Something is plain wrong in %s (nmap vs nslice)", s);
+        logger_error(LI, FI, FU, "Something is plain wrong in %s (nmap vs nslice)", FU);
     }
-
-    xtg_speak(s, 2, "Mapflip is %d", mapflip);
 
     /* work with every map node */
     for (im = 1; im <= mx; im++) {
-        if (debug > 2) xtg_speak(s, 3, "Working with map column %d of %d ...",
-                                 im, mx);
 
         for (jm = 1; jm <= my; jm++) {
-            if (debug > 2) xtg_speak(s, 3, "... map row %d of %d", jm, my);
 
             /* get the surface x, y, value (z) from IJ location */
-            ier = surf_xyz_from_ij(im, jm, &x, &y, &z, xori, xinc,
-                                   yori, yinc, mx, my, mapflip,
-                                   mrotation, p_zslice_v, nslice, 0);
+            ier = surf_xyz_from_ij(im, jm, &x, &y, &z, xori, xinc, yori, yinc, mx, my,
+                                   mapflip, mrotation, p_zslice_v, nslice, 0);
 
             ier = 99;
 
@@ -148,52 +133,45 @@ int surf_slice_cube(
 
                 if (option1 == 0) {
 
-                    ier = cube_value_xyz_cell(x, y, z, cxori, cxinc, cyori,
-                                              cyinc, czori, czinc, crotation,
-                                              yflip, ncx, ncy, ncz,
-                                              p_cubeval_v, &value, 0);
-                }
-                else if (option1 == 1 || option1 == 2) {
+                    ier = cube_value_xyz_cell(x, y, z, cxori, cxinc, cyori, cyinc,
+                                              czori, czinc, crotation, yflip, ncx, ncy,
+                                              ncz, p_cubeval_v, &value, 0);
+                } else if (option1 == 1 || option1 == 2) {
 
                     option1a = 0;
-                    if (option1 == 2) option1a = 1;  // snap to closest XY
+                    if (option1 == 2)
+                        option1a = 1;  // snap to closest XY
 
-                    ier = cube_value_xyz_interp(x, y, z, cxori, cxinc, cyori,
-                                                cyinc, czori, czinc, crotation,
-                                                yflip, ncx, ncy, ncz,
-                                                p_cubeval_v, &value, option1a);
+                    ier = cube_value_xyz_interp(
+                      x, y, z, cxori, cxinc, cyori, cyinc, czori, czinc, crotation,
+                      yflip, ncx, ncy, ncz, p_cubeval_v, &value, option1a);
 
-
+                } else {
+                    logger_error(LI, FI, FU, "Invalid option1 (%d) to %s", option1, FU);
                 }
-                else{
-                    xtg_error(s, "Invalid option1 (%d) to %s", option1, s);
-                }
-
 
                 if (ier == EXIT_SUCCESS) {
                     p_map_v[ibm] = value;
-                    nm ++;
-                }
-                else if (ier == -1 && option2 == 0) {
+                    nm++;
+                } else if (ier == -1 && option2 == 0) {
                     /* option2 = 1 shall just keep map value as is */
                     p_map_v[ibm] = UNDEF_MAP;
                 }
-            }
-            else{
+            } else {
                 p_map_v[ibm] = UNDEF_MAP;
             }
         }
     }
 
     /* less than 10% sampled */
-    if (nm > 0 && nm < 0.1*nmap) {
-        xtg_warn(s, 1, "Less than 10%% nodes sampled in %s!", s);
+    if (nm > 0 && nm < 0.1 * nmap) {
+        logger_warn(LI, FI, FU, "Less than 10%% nodes sampled in %s!", FU);
         return -4;
     }
 
     /* no nodes */
     if (nm == 0) {
-        xtg_warn(s, 1, "No nodes sampled in %s!", s);
+        logger_warn(LI, FI, FU, "No nodes sampled in %s!", FU);
         return -5;
     }
 

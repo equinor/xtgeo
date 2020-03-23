@@ -13,7 +13,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 # pylint: disable=protected-access
 

@@ -6,11 +6,11 @@
  ***************************************************************************************
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  ***************************************************************************************
@@ -18,8 +18,6 @@
  * NAME:
  *    grd3d_imp_roffbin_arr.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    This routine goes directly to the byte position(s) which are found from
@@ -57,13 +55,21 @@
  ***************************************************************************************
  */
 
-int grd3d_imp_roffbin_arr (FILE *fc, int swap, int nx, int ny, int nz,
-                           long bytepos, int dtype, float *farray,
-                           long nfarray, int *iarray, long niarray, int debug)
+int
+grd3d_imp_roffbin_arr(FILE *fc,
+                      int swap,
+                      int nx,
+                      int ny,
+                      int nz,
+                      long bytepos,
+                      int dtype,
+                      float *farray,
+                      long nfarray,
+                      int *iarray,
+                      long niarray)
 {
     /* Imports a ROFF binary array which has nx * ny * nz data points */
 
-    char s[24] = "grd3d_imp_roffbin_arr";
     int anint;
     float afloat;
     double adouble;
@@ -71,11 +77,6 @@ int grd3d_imp_roffbin_arr (FILE *fc, int swap, int nx, int ny, int nz,
 
     int i, j, k, iok, kactual;
     long ipos;
-
-    xtgverbose(debug);
-
-
-    xtg_speak(s, 2, "Importing a roff array with NX * NY * NZ entries");
 
     fseek(fc, bytepos, SEEK_SET);
 
@@ -90,30 +91,37 @@ int grd3d_imp_roffbin_arr (FILE *fc, int swap, int nx, int ny, int nz,
 
                 if (dtype == 1) {
                     iok = fread(&anint, 4, 1, fc);
-                    if (swap==1) SWAP_INT(anint);
-                    if (anint == -999) anint = UNDEF_INT;
+                    if (swap == 1)
+                        SWAP_INT(anint);
+                    if (anint == -999)
+                        anint = UNDEF_INT;
                     iarray[ipos] = anint;
                 }
 
                 else if (dtype == 2) {
                     iok = fread(&afloat, 4, 1, fc);
-                    if (swap==1) SWAP_FLOAT(afloat);
-                    if (afloat == -999.0) afloat = UNDEF;
+                    if (swap == 1)
+                        SWAP_FLOAT(afloat);
+                    if (afloat == -999.0)
+                        afloat = UNDEF;
                     farray[ipos] = afloat;
                 }
 
                 else if (dtype == 3) {
                     /* not sure if this ever happens; no double in ROFF? */
                     iok = fread(&adouble, 8, 1, fc);
-                    if (swap==1) SWAP_DOUBLE(adouble);
-                    if (adouble == -999.0) adouble = UNDEF;
+                    if (swap == 1)
+                        SWAP_DOUBLE(adouble);
+                    if (adouble == -999.0)
+                        adouble = UNDEF;
                     farray[ipos] = (float)adouble;
                 }
 
                 else if (dtype == 5) {
                     iok = fread(&abyte, 1, 1, fc);
-                    anint = abyte;  /* convert to int */
-                    if (anint == 255) anint = UNDEF_INT;
+                    anint = abyte; /* convert to int */
+                    if (anint == 255)
+                        anint = UNDEF_INT;
                     iarray[ipos] = anint;
                 }
             }

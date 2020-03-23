@@ -1,12 +1,6 @@
-/*
- ***************************************************************************************
- *
- * A collection of 3D geomtrical vectors, planes, etc
- *
- ***************************************************************************************
- */
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 
 /*
@@ -15,8 +9,6 @@
  * NAME:
  *    x_plane_normalvector.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Find the normal vector for a plane based on 3 points in 3D
@@ -43,14 +35,9 @@
  ***************************************************************************************
  */
 int
-x_plane_normalvector(double *points_v, double *nvector, int option, int debug)
+x_plane_normalvector(double *points_v, double *nvector, int option)
 {
     double x1, x2, x3, y1, y2, y3, z1, z2, z3, a, b, c, d;
-    char s[24] = "x_plane_normalvector";
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 3, "Entering %s", s);
 
     x1 = points_v[0];
     y1 = points_v[1];
@@ -98,8 +85,6 @@ x_plane_normalvector(double *points_v, double *nvector, int option, int debug)
  * NAME:
  *    x_isect_line_plane
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Finds the xyz coordinates where a line intersect a plane. The plane
@@ -125,19 +110,10 @@ x_plane_normalvector(double *points_v, double *nvector, int option, int debug)
  ***************************************************************************************
  */
 int
-x_isect_line_plane(double *nvector,
-                   double *line_v,
-                   double *point_v,
-                   int option,
-                   int debug)
+x_isect_line_plane(double *nvector, double *line_v, double *point_v, int option)
 {
     double x1, x2, y1, y2, z1, z2, a, b, c, d;
     double u, nom, dnom;
-    char s[24] = "x_isect_line_plane";
-
-    xtgverbose(debug);
-
-    xtg_speak(s, 3, "Enter %s", s);
 
     x1 = line_v[0];
     y1 = line_v[1];
@@ -182,8 +158,6 @@ x_isect_line_plane(double *nvector,
  * NAME:
  *    x_angle_vectors
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Find the angle in radians between two 3D vectors in space.
@@ -203,15 +177,9 @@ x_isect_line_plane(double *nvector,
  ***************************************************************************************
  */
 double
-x_angle_vectors(double *avec, double *bvec, int debug)
+x_angle_vectors(double *avec, double *bvec)
 {
-    char s[24] = "x_angle_vector";
     double dotproduct, maga, magb, angle;
-
-    xtgverbose(debug);
-
-    if (debug > 2)
-        xtg_speak(s, 3, "Enter %s", s);
 
     dotproduct = avec[0] * bvec[0] + avec[1] * bvec[1] + avec[2] * bvec[2];
 
@@ -232,8 +200,7 @@ x_angle_vectors(double *avec, double *bvec, int debug)
  * NAME:
  *    x_sample_z_from_xy_cell
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes, May 2016
+ *, May 2016
  *
  * DESCRIPTION:
  *    Given a XY point in 3D, does it intersect a cell top or base,
@@ -272,23 +239,13 @@ x_angle_vectors(double *avec, double *bvec, int debug)
  ***************************************************************************************
  */
 double
-x_sample_z_from_xy_cell(double *cell_v,
-                        double x,
-                        double y,
-                        int option,
-                        int option2,
-                        int debug)
+x_sample_z_from_xy_cell(double *cell_v, double x, double y, int option, int option2)
 {
     double x1, x2, x3, x4, y1, y2, y3, y4, z1, z2, z3, z4;
-    char s[24] = "x_sample_z_from_xy_cell";
     int add, insidecell, inside, nfound, ier;
     double px[5], py[5], points[9], nvector1[4], nvector2[4], point_v[3];
     double line_v[6];
     double angle12, angle34, zloc1, zloc2, myzloc;
-
-    xtgverbose(debug);
-
-    // xtg_speak(s,3,"Into %s",s);
 
     /* make the XY point to a line in XYZ */
     line_v[0] = x;
@@ -298,12 +255,8 @@ x_sample_z_from_xy_cell(double *cell_v,
     line_v[4] = y;
     line_v[5] = 1000;
 
-    // xtg_speak(s,3,"Hmmm");
-
     zloc1 = UNDEF;
     zloc2 = UNDEF;
-
-    // xtg_speak(s,3,"Evaluate %f %f ...",x,y);
 
     add = 0;
     if (option == 1)
@@ -374,16 +327,16 @@ x_sample_z_from_xy_cell(double *cell_v,
     points[7] = y3;
     points[8] = z3;
 
-    ier = x_plane_normalvector(points, nvector1, 0, debug);
+    ier = x_plane_normalvector(points, nvector1, 0);
     if (ier != 0)
-        xtg_error(s, "Unforseen problems; report bug");
+        logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
 
     if (inside > 0) {
         nfound = 1;
         /* find the intersection */
-        ier = x_isect_line_plane(nvector1, line_v, point_v, 0, debug);
+        ier = x_isect_line_plane(nvector1, line_v, point_v, 0);
         if (ier != 0)
-            xtg_error(s, "Unforseen problems; report bug");
+            logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
         zloc1 = point_v[2];
     } else {
         nfound = 0;
@@ -410,18 +363,18 @@ x_sample_z_from_xy_cell(double *cell_v,
     points[7] = y4;
     points[8] = z4;
 
-    ier = x_plane_normalvector(points, nvector2, 0, debug);
+    ier = x_plane_normalvector(points, nvector2, 0);
 
     if (nfound == 0 && inside > 0) {
         nfound = 1;
         /* find the intersection */
-        ier = x_isect_line_plane(nvector2, line_v, point_v, 0, debug);
+        ier = x_isect_line_plane(nvector2, line_v, point_v, 0);
         if (ier != 0)
-            xtg_error(s, "Unforseen problems; report bug");
+            logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
         zloc1 = point_v[2];
     }
 
-    angle12 = x_angle_vectors(nvector1, nvector2, debug);
+    angle12 = x_angle_vectors(nvector1, nvector2);
 
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     /* (1) triangle 1 --> 2 --> 3  */
@@ -451,16 +404,16 @@ x_sample_z_from_xy_cell(double *cell_v,
     points[8] = z3;
 
     /* find normal vector */
-    ier = x_plane_normalvector(points, nvector1, 0, debug);
+    ier = x_plane_normalvector(points, nvector1, 0);
     if (ier != 0)
-        xtg_error(s, "Unforseen problems; report bug");
+        logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
 
     if (inside > 0) {
         nfound = 1;
         /* find the intersection */
-        ier = x_isect_line_plane(nvector1, line_v, point_v, 0, debug);
+        ier = x_isect_line_plane(nvector1, line_v, point_v, 0);
         if (ier != 0)
-            xtg_error(s, "Unforseen problems; report bug");
+            logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
         zloc2 = point_v[2];
     } else {
         nfound = 0;
@@ -489,27 +442,29 @@ x_sample_z_from_xy_cell(double *cell_v,
     points[8] = z4;
 
     /* find normal vector */
-    ier = x_plane_normalvector(points, nvector2, 0, debug);
+    ier = x_plane_normalvector(points, nvector2, 0);
     if (ier != 0)
-        xtg_error(s, "Unforseen problems; report bug");
+        logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
 
     if (nfound == 0 && inside > 0) {
         nfound = 1;
         /* find the intersection */
-        ier = x_isect_line_plane(nvector2, line_v, point_v, 0, debug);
+        ier = x_isect_line_plane(nvector2, line_v, point_v, 0);
         if (ier != 0)
-            xtg_error(s, "Unforseen problems; report bug");
+            logger_critical(LI, FI, FU, "Unforseen problems; report bug %s", FU);
         zloc2 = point_v[2];
     }
 
-    angle34 = x_angle_vectors(nvector1, nvector2, debug);
+    angle34 = x_angle_vectors(nvector1, nvector2);
 
     if (zloc1 > UNDEF_LIMIT && zloc2 < UNDEF_LIMIT) {
-        xtg_error(s, "Something fishy ZLOC1 is undef while not ZLOC2: %f vs %f", zloc1,
-                  zloc2);
+        logger_error(LI, FI, FU,
+                     "Something fishy ZLOC1 is undef while not ZLOC2: %f vs %f", zloc1,
+                     zloc2);
     } else if (zloc1 < UNDEF_LIMIT && zloc2 > UNDEF_LIMIT) {
-        xtg_error(s, "Something fishy ZLOC2 is undef while not ZLOC1: %f vs %f", zloc2,
-                  zloc1);
+        logger_error(LI, FI, FU,
+                     "Something fishy ZLOC2 is undef while not ZLOC1: %f vs %f", zloc2,
+                     zloc1);
     }
 
     /* the final Z coordinate is as default the average of zloc1 and zloc2

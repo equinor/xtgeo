@@ -123,7 +123,7 @@ grd3d_well_ijk(int nx,
         /* loop cells in simplified (one layer) grid */
         long ib1 = grd3d_point_in_cell(ibstart2, 0, xcor, ycor, zcor, nx, ny, 1,
                                        coordsv, p_zcorn_onelay_v, p_actnum_onelay_v,
-                                       maxradsearch, sflag, &nradsearch, 0, DEBUG);
+                                       maxradsearch, sflag, &nradsearch, 0);
 
         if (ib1 >= 0) {
             outside = 0;
@@ -142,7 +142,7 @@ grd3d_well_ijk(int nx,
             /* loop cells in full grid */
             long ib2 = grd3d_point_in_cell(ibstart, 0, xcor, ycor, zcor, nx, ny, nz,
                                            coordsv, zcornsv, actnumsv, maxradsearch,
-                                           sflag, &nradsearch, 0, DEBUG);
+                                           sflag, &nradsearch, 0);
 
             if (ib2 >= 0) {
 

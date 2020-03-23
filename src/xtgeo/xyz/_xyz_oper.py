@@ -16,7 +16,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
 
 # pylint: disable=protected-access
 
@@ -68,7 +67,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
         logger.info("C function for polygon %s...", id_)
 
         ies = _cxtgeo.pol_do_points_inside(
-            xcor, ycor, zcor, pxcor, pycor, pvalue, oper[opname], insidevalue, XTGDEBUG
+            xcor, ycor, zcor, pxcor, pycor, pvalue, oper[opname], insidevalue
         )
         logger.info("C function for polygon %s... done", id_)
 
@@ -362,7 +361,6 @@ def _generic_length(
             len(grp),
             len(grp),
             len(grp),
-            XTGDEBUG,
         )
         if ier != 0:
             raise RuntimeError(

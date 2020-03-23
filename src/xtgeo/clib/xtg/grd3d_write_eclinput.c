@@ -1,3 +1,5 @@
+
+
 /*
  ******************************************************************************
  *
@@ -15,8 +17,6 @@
  * NAME:
  *    grd3d_write_eclinput.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Feed data from XTGeo to the Eclipse input deck. The XTGeo DATA
@@ -35,7 +35,6 @@
  *    nrecs            i     The record total length
  *    fmt              i     Format specifier e.g. "  %8.2f", NB with col space
  *    ncolumns         i     Number of columns
- *    debug            i     Debug level
  *
  * RETURNS:
  *    Function: EXIT_SUCCESS upon success
@@ -49,29 +48,29 @@
  ******************************************************************************
  */
 
-int grd3d_write_eclinput (FILE *fc,
-                          char *recname,
-                          int rectype, int *intv, float *floatv,
-                          double *doublev, long nrecs,
-                          char *fmt, int ncolumns, int debug)
+int
+grd3d_write_eclinput(FILE *fc,
+                     char *recname,
+                     int rectype,
+                     int *intv,
+                     float *floatv,
+                     double *doublev,
+                     long nrecs,
+                     char *fmt,
+                     int ncolumns)
 {
 
-    char sbn[24] = "grd3d_write_eclinput";
     int icwrap = 0;
     long icc = 0;
-    int itmp;
-    float ftmp;
-    double dtmp;
 
-    if (debug > 2) xtg_speak(sbn, 3, "Enter %s", sbn);
-
-    fprintf(fc,"%-8s\n", recname);
+    fprintf(fc, "%-8s\n", recname);
 
     if (rectype == 1) {
         icwrap = 0;
         for (icc = 0; icc < nrecs; icc++) {
-            itmp = intv[icc];
-            if (itmp > UNDEF_INT_LIMIT) itmp = 0;
+            int itmp = intv[icc];
+            if (itmp > UNDEF_INT_LIMIT)
+                itmp = 0;
             fprintf(fc, fmt, itmp);
             icwrap++;
             if (icwrap >= ncolumns) {
@@ -84,8 +83,9 @@ int grd3d_write_eclinput (FILE *fc,
     if (rectype == 2) {
         icwrap = 0;
         for (icc = 0; icc < nrecs; icc++) {
-            ftmp = floatv[icc];
-            if (ftmp > UNDEF_LIMIT) ftmp = 0.0;
+            float ftmp = floatv[icc];
+            if (ftmp > UNDEF_LIMIT)
+                ftmp = 0.0;
             fprintf(fc, fmt, ftmp);
             icwrap++;
             if (icwrap >= ncolumns) {
@@ -98,8 +98,9 @@ int grd3d_write_eclinput (FILE *fc,
     if (rectype == 3) {
         icwrap = 0;
         for (icc = 0; icc < nrecs; icc++) {
-            dtmp = doublev[icc];
-            if (dtmp > UNDEF_LIMIT) dtmp = 0.0;
+            double dtmp = doublev[icc];
+            if (dtmp > UNDEF_LIMIT)
+                dtmp = 0.0;
             fprintf(fc, fmt, dtmp);
             icwrap++;
             if (icwrap >= ncolumns) {
@@ -109,8 +110,10 @@ int grd3d_write_eclinput (FILE *fc,
         }
     }
 
-    if (icwrap == 0) fprintf(fc, "/\n\n");
-    if (icwrap > 0) fprintf(fc, "\n/\n\n");
+    if (icwrap == 0)
+        fprintf(fc, "/\n\n");
+    if (icwrap > 0)
+        fprintf(fc, "\n/\n\n");
 
     return EXIT_SUCCESS;
 }

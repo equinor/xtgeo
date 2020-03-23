@@ -15,8 +15,6 @@
  * NAME:
  *    grd3d_zcorn_convert.c
  *
- * AUTHOR(S):
- *    Jan C. Rivenaes
  *
  * DESCRIPTION:
  *    Eclipse style ZCORN to XTGeo style zcornsv
@@ -40,16 +38,8 @@
  ******************************************************************************
  */
 
-
-
-void grd3d_zcorn_convert (
-                          int nx,
-                          int ny,
-                          int nz,
-                          float *zcorn,
-                          double *zcornsv,
-                          int option
-                          )
+void
+grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option)
 {
 
     int ibb = 0;
@@ -62,12 +52,12 @@ void grd3d_zcorn_convert (
     for (kz = 1; kz <= 2 * nz; kz++) {
         if (kzread == 0) {
             kzread = 1;
-        }
-        else{
+        } else {
             kzread = 0;
         }
 
-        if (kz == 2*nz && kzread == 0) kzread=1;
+        if (kz == 2 * nz && kzread == 0)
+            kzread = 1;
 
         if (kzread == 1) {
             kk += 1;
@@ -78,14 +68,14 @@ void grd3d_zcorn_convert (
                 fvalue1 = zcorn[ibz++];
                 fvalue2 = zcorn[ibz++];
 
-                ibb = x_ijk2ib(ix, jy, kk, nx, ny, nz+1, 0);
+                ibb = x_ijk2ib(ix, jy, kk, nx, ny, nz + 1, 0);
                 if (kzread == 1) {
-                    zcornsv[4*ibb+1*1-1]=fvalue1;
-                    zcornsv[4*ibb+1*2-1]=fvalue2;
+                    zcornsv[4 * ibb + 1 * 1 - 1] = fvalue1;
+                    zcornsv[4 * ibb + 1 * 2 - 1] = fvalue2;
                 }
             }
             /* "right" cell margin */
-            for (ix=1; ix<=nx; ix++) {
+            for (ix = 1; ix <= nx; ix++) {
                 fvalue1 = zcorn[ibz++];
                 fvalue2 = zcorn[ibz++];
 

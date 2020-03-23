@@ -3,7 +3,7 @@
  * grd3d_export_eclipse_grdeclprop
  * Exporting an Eclipse ASCII input grid property record
  * Eclipse GRDECL has no clue about float/int differences...
- * Author: JCR
+ *: JCR
  * ############################################################################
  */
 
@@ -63,7 +63,7 @@ grd3d_export_grdeclprop(int nx,
 
     if (formatspec == 2) {
 
-        x_basicstats(nx * ny * nz, UNDEF, p_fprop_v, &min, &max, &avg, XTGDEBUG);
+        x_basicstats(nx * ny * nz, UNDEF, p_fprop_v, &min, &max, &avg);
 
         if (max < 1) {
             strcpy(uformat, "%7.6f  ");

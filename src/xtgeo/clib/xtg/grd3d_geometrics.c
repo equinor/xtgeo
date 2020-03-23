@@ -137,8 +137,8 @@ grd3d_geometrics(int nx,
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
-                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, zcornsv, &xv, &yv, &zv,
-                               XTGDEBUG);
+                grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, ncoordin, zcornsv,
+                               nzcornin, &xv, &yv, &zv);
 
                 tmp_x[ib] = xv;
                 tmp_y[ib] = yv;
@@ -243,7 +243,6 @@ grd3d_geometrics(int nx,
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
 
                 /* ========================================= along X axis: */
-                ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 ibn = x_ijk2ib(i + 1, j, k, nx, ny, nz, 0);
 
                 lx = fabs(tmp_x[ibn] - tmp_x[ib]);

@@ -12,8 +12,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTGDEBUG = 0
-
 
 def import_cube_roxapi(self, project, name, folder=None):
     """Import (transfer) a Cube via ROXAR API container to XTGeo.

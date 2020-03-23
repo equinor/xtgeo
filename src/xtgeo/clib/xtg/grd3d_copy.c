@@ -16,7 +16,6 @@
  *    p_zcorn2_v      o     Grid Z corners for output
  *    p_actnum2_v     o     Grid ACTNUM parameter output
  *    iflag           i     Options flag (future use)
- *    debug           i     Debug level
  *
  * RETURNS:
  *    The C macro EXIT_SUCCESS unless problems + changed pointers
@@ -115,7 +114,6 @@ grd3d_copy(int ncol,
             }
         }
     }
-
 
     return EXIT_SUCCESS;
 }

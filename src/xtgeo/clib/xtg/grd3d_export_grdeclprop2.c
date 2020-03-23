@@ -68,8 +68,7 @@ grd3d_export_grdeclprop2(int nx,
     nlen = nx * ny * nz;
 
     if (mode == 0) {
-        grd3d_write_eclrecord(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen,
-                              XTGDEBUG);
+        grd3d_write_eclrecord(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen);
     } else {
         /* todo: smart analysis of values to decide formatting */
         char fmt[10] = " %8d";
@@ -79,7 +78,7 @@ grd3d_export_grdeclprop2(int nx,
         }
 
         grd3d_write_eclinput(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen,
-                             fmt, ncol, XTGDEBUG);
+                             fmt, ncol);
     }
 
     logger_info(LI, FI, FU, "Writing prop to (B)GRDECL file... done");

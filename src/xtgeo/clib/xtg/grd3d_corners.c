@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_corners.c
@@ -36,25 +36,23 @@
  ***************************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #include <math.h>
 
-
-void grd3d_corners (
-    int i,
-    int j,
-    int k,
-    int nx,
-    int ny,
-    int nz,
-    double *coordsv,
-    long ncoordin,
-    double *zcornsv,
-    long nzcornin,
-    double corners[]
-    )
+void
+grd3d_corners(int i,
+              int j,
+              int k,
+              int nx,
+              int ny,
+              int nz,
+              double *coordsv,
+              long ncoordin,
+              double *zcornsv,
+              long nzcornin,
+              double corners[])
 
 {
     double xtop[5], ytop[5], ztop[5];
@@ -64,52 +62,56 @@ void grd3d_corners (
 
     int ic;
     for (ic = 1; ic <= 4; ic++) {
-	int jm = 0;
-	int im = 0;
-	if (ic == 1 || ic == 2) jm = 1;
-	if (ic == 1 || ic == 3) im = 1;
+        int jm = 0;
+        int im = 0;
+        if (ic == 1 || ic == 2)
+            jm = 1;
+        if (ic == 1 || ic == 3)
+            im = 1;
 
-	xtop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 0];
-	ytop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 1];
-	ztop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 2];
-	xbot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 3];
-	ybot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 4];
-	zbot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 5];
-
+        xtop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 0];
+        ytop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 1];
+        ztop[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 2];
+        xbot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 3];
+        ybot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 4];
+        zbot[ic] = coordsv[6 * ((j - jm) * (nx + 1) + i - im) + 5];
     }
 
     /* cell and cell below*/
-    long ibt = x_ijk2ib(i,j,k,nx,ny,nz+1,0);
-    long ibb = x_ijk2ib(i,j,k+1,nx,ny,nz+1,0);
+    long ibt = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+    long ibb = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
 
+    corners[2] = zcornsv[4 * ibt + 1 * 1 - 1];
+    corners[5] = zcornsv[4 * ibt + 1 * 2 - 1];
+    corners[8] = zcornsv[4 * ibt + 1 * 3 - 1];
+    corners[11] = zcornsv[4 * ibt + 1 * 4 - 1];
 
-    corners[2]  = zcornsv[4*ibt + 1*1 - 1];
-    corners[5]  = zcornsv[4*ibt + 1*2 - 1];
-    corners[8]  = zcornsv[4*ibt + 1*3 - 1];
-    corners[11] = zcornsv[4*ibt + 1*4 - 1];
-
-    corners[14] = zcornsv[4*ibb + 1*1 - 1];
-    corners[17] = zcornsv[4*ibb + 1*2 - 1];
-    corners[20] = zcornsv[4*ibb + 1*3 - 1];
-    corners[23] = zcornsv[4*ibb + 1*4 - 1];
+    corners[14] = zcornsv[4 * ibb + 1 * 1 - 1];
+    corners[17] = zcornsv[4 * ibb + 1 * 2 - 1];
+    corners[20] = zcornsv[4 * ibb + 1 * 3 - 1];
+    corners[23] = zcornsv[4 * ibb + 1 * 4 - 1];
 
     for (ic = 1; ic <= 8; ic++) {
-	int cl = ic;
-	if (ic == 5) cl = 1;
-	if (ic == 6) cl = 2;
-	if (ic == 7) cl = 3;
-	if (ic == 8) cl = 4;
+        int cl = ic;
+        if (ic == 5)
+            cl = 1;
+        if (ic == 6)
+            cl = 2;
+        if (ic == 7)
+            cl = 3;
+        if (ic == 8)
+            cl = 4;
 
-	if (fabs(zbot[cl]-ztop[cl]) > 0.01) {
-	    corners[3*(ic-1)+0]=xtop[cl]-(corners[3*(ic-1)+2]-ztop[cl])*
-		(xtop[cl]-xbot[cl])/(zbot[cl]-ztop[cl]);
-	    corners[3*(ic-1)+1]=ytop[cl]-(corners[3*(ic-1)+2]-ztop[cl])*
-		(ytop[cl]-ybot[cl])/(zbot[cl]-ztop[cl]);
-	}
-	else{
-	    corners[3*(ic-1)+0]=xtop[cl];
-	    corners[3*(ic-1)+1]=ytop[cl];
-	}
+        if (fabs(zbot[cl] - ztop[cl]) > 0.01) {
+            corners[3 * (ic - 1) + 0] =
+              xtop[cl] - (corners[3 * (ic - 1) + 2] - ztop[cl]) *
+                           (xtop[cl] - xbot[cl]) / (zbot[cl] - ztop[cl]);
+            corners[3 * (ic - 1) + 1] =
+              ytop[cl] - (corners[3 * (ic - 1) + 2] - ztop[cl]) *
+                           (ytop[cl] - ybot[cl]) / (zbot[cl] - ztop[cl]);
+        } else {
+            corners[3 * (ic - 1) + 0] = xtop[cl];
+            corners[3 * (ic - 1) + 1] = ytop[cl];
+        }
     }
-
 }
