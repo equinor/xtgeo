@@ -201,7 +201,7 @@ class GridProperty(Grid3D):
             _gridprop_etc.gridproperty_fromspec(self, **kwargs)
 
     def __del__(self):
-        # logger.info("DELETING property instance %s", self.name)
+        logger.debug("DELETING property instance %s", self.name)
         self._values = None
         for myvar in vars(self).keys():
             del myvar
@@ -538,6 +538,7 @@ class GridProperty(Grid3D):
         fformat=None,
         name="unknown",
         grid=None,
+        gridlink=True,
         date=None,
         fracture=False,
         _roffapiv=1,
@@ -559,6 +560,10 @@ class GridProperty(Grid3D):
                 mnemonics like 'first', 'last' is also allowed.
             grid (Grid object): Grid Object for checks (optional for ROFF,
                 required for Eclipse).
+            gridlink (bool): If True, and grid is not None, a link from the grid
+                instance to the property is made. If False, no such link is made.
+                Avoiding links is recommended when running statistics of multiple
+                realisations of a property
             fracture (bool): Only applicable for DUAL POROSITY systems, if True
                 then the fracture property is read; if False then the matrix
                 property is read. Names will be appended with "M" or "F"
@@ -587,6 +592,10 @@ class GridProperty(Grid3D):
             fracture=fracture,
             _roffapiv=_roffapiv,
         )
+
+        if grid and gridlink:
+            grid.append_prop(self)
+
         return obj
 
     def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
