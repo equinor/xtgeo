@@ -1252,15 +1252,14 @@ class RegularSurface(object):
         # check that masks are equal
         mas1 = ma.getmaskarray(self.values)
         mas2 = ma.getmaskarray(other.values)
-        if isinstance(mas1, np.ndarray) and isinstance(mas2, np.ndarray):
-            if np.array_equal(mas1, mas2):
-                pass
-            else:
-                if strict:
-                    return False
-
-                logger.warning("Masks differ, not consistent with 'strict'")
-
+        if (
+            strict
+            and isinstance(mas1, np.ndarray)
+            and isinstance(mas2, np.ndarray)
+            and not np.array_equal(mas1, mas2)
+        ):
+            logger.warning("Masks differ, not consistent with 'strict'")
+            return False
         return True
 
     def swapaxes(self):
