@@ -90,6 +90,7 @@ def gridproperty_fromfile(self, pfile, **kwargs):
         fformat=fformat,
         name=self._name,
         grid=self._geometry,
+        gridlink=kwargs.get("gridlink"),
         date=self._date,
         fracture=self._fracture,
     )
