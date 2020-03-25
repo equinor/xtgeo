@@ -160,6 +160,8 @@ def test_more_logging_tests(caplog):
     locallogger.warning("Display warning")
     locallogger.critical("Display critical")
 
+    os.environ["XTG_LOGGING_LEVEL"] = "CRITICAL"
+
 
 def test_timer(capsys):
     """Test the timer function"""
