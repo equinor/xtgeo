@@ -17,8 +17,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-XTG_DEBUG = 0
-
 
 def delete_log(self, lname):
     """Delete/remove an existing log, or list of logs."""
@@ -218,7 +216,7 @@ def get_ijk_from_grid(self, grid, grid_id=""):
         wivec,
         wjvec,
         wkvec,
-        0
+        0,
     )
 
     if cstatus != 0:

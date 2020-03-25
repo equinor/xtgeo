@@ -182,10 +182,14 @@ class GridProperties(Grid3D):
 
         for prop in proplist:
             if isinstance(prop, GridProperty):
+                # an prop instance can only occur once
+                if prop not in self._props:
 
-                self._props.append(prop)
-                self._names.append(prop.name)
-                self._dates.append(prop.date)
+                    self._props.append(prop)
+                    self._names.append(prop.name)
+                    self._dates.append(prop.date)
+                else:
+                    logger.info("Not added. GridProperty instance already present")
             else:
                 raise ValueError("Input property is not a valid GridProperty " "object")
 

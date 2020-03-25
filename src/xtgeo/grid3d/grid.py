@@ -201,16 +201,16 @@ class Grid(Grid3D):
             )
         logger.info("Ran __init__ for %s", repr(self))
 
-    def __del__(self):
+    # def __del__(self):
 
-        self._coordsv = None
-        self._zcornsv = None
-        self._actnumsv = None
+    #     self._coordsv = None
+    #     self._zcornsv = None
+    #     self._actnumsv = None
 
-        if self.props is not None:
-            for prop in self.props:
-                # logger.info("Deleting property instance %s", prop.name)
-                prop.__del__()
+    #     if self.props is not None:
+    #         for prop in self.props:
+    #             logger.info("Deleting property instance %s", prop.name)
+    #             prop.__del__()
 
     def __repr__(self):
         logger.info("Invoke __repr__ for grid")
@@ -407,8 +407,7 @@ class Grid(Grid3D):
 
     @property
     def gridprops(self):
-        """Return or set a XTGeo GridProperties objects attached to the Grid.
-        """
+        """Return or set a XTGeo GridProperties objects attached to the Grid."""
         # Note, internally, the _props is a GridProperties instance, which is
         # a class that holds a list of properties.
 

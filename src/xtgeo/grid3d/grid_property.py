@@ -7,7 +7,7 @@ property from file, but it can also be created directly, as e.g.::
 
  poro = GridProperty(ncol=233, nrow=122, nlay=32)
 
-The grid property values `someinstance.values` by themselves are 3D masked
+The grid property values ``someinstance.values`` by themselves are 3D masked
 numpy as either float64 (double) or int32 (if discrete), and undefined
 cells are displayed as masked. The array order is now C_CONTIGUOUS.
 (i.e. not in Eclipse manner). A 1D view (C order) is achieved by the
@@ -58,7 +58,13 @@ logger = xtg.functionlogger(__name__)
 
 
 def gridproperty_from_file(
-    pfile, fformat="guess", name="unknown", grid=None, date=None, fracture=False
+    pfile,
+    fformat="guess",
+    name="unknown",
+    grid=None,
+    gridlink=True,
+    date=None,
+    fracture=False,
 ):
     """Make a GridProperty instance directly from file import.
 
@@ -76,7 +82,13 @@ def gridproperty_from_file(
 
     obj = GridProperty()
     obj.from_file(
-        pfile, fformat=fformat, name=name, grid=grid, date=date, fracture=fracture
+        pfile,
+        fformat=fformat,
+        name=name,
+        grid=grid,
+        gridlink=gridlink,
+        date=date,
+        fracture=fracture,
     )
 
     return obj
@@ -200,11 +212,11 @@ class GridProperty(Grid3D):
             # make instance purely from kwargs spec
             _gridprop_etc.gridproperty_fromspec(self, **kwargs)
 
-    def __del__(self):
-        # logger.info("DELETING property instance %s", self.name)
-        self._values = None
-        for myvar in vars(self).keys():
-            del myvar
+    # def __del__(self):
+    #     logger.debug("DELETING property instance %s", self.name)
+    #     self._values = None
+    #     for myvar in vars(self).keys():
+    #         del myvar
 
     def __repr__(self):
         myrp = (
@@ -243,8 +255,7 @@ class GridProperty(Grid3D):
 
     @property
     def geometry(self):
-        """Returns or set the linked geometry, i.e. the Grid instance)
-        """
+        """Returns or set the linked geometry, i.e. the Grid instance)"""
         return self._geometry
 
     @geometry.setter
@@ -538,6 +549,7 @@ class GridProperty(Grid3D):
         fformat=None,
         name="unknown",
         grid=None,
+        gridlink=True,
         date=None,
         fracture=False,
         _roffapiv=1,
@@ -559,6 +571,10 @@ class GridProperty(Grid3D):
                 mnemonics like 'first', 'last' is also allowed.
             grid (Grid object): Grid Object for checks (optional for ROFF,
                 required for Eclipse).
+            gridlink (bool): If True, and grid is not None, a link from the grid
+                instance to the property is made. If False, no such link is made.
+                Avoiding gridlink is recommended when running statistics of multiple
+                realisations of a property.
             fracture (bool): Only applicable for DUAL POROSITY systems, if True
                 then the fracture property is read; if False then the matrix
                 property is read. Names will be appended with "M" or "F"
@@ -575,6 +591,8 @@ class GridProperty(Grid3D):
 
         Returns:
            True if success, otherwise False
+
+        .. versionchanged:: 2.8 Added gridlink option, default is True
         """
 
         obj = _gridprop_import.from_file(
@@ -587,6 +605,10 @@ class GridProperty(Grid3D):
             fracture=fracture,
             _roffapiv=_roffapiv,
         )
+
+        if grid and gridlink:
+            grid.append_prop(self)
+
         return obj
 
     def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
@@ -637,7 +659,7 @@ class GridProperty(Grid3D):
         self._filesrc = None
 
         _gridprop_roxapi.import_prop_roxapi(
-            self, projectname, gname, pname, realisation
+            self, projectname, gname, pname, realisation,
         )
 
     def to_roxar(self, projectname, gname, pname, saveproject=False, realisation=0):

@@ -1,5 +1,5 @@
 /*
-****************************************************************************************
+ ***************************************************************************************
  *
  * NAME:
  *    grd3d_make_z_consistent.c
@@ -24,44 +24,42 @@
  ***************************************************************************************
  */
 
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-
-void grd3d_make_z_consistent(
-    int nx,
-    int ny,
-    int nz,
-    double *zcornsv,
-    long nzcorn,
-    double zsep
-    )
+void
+grd3d_make_z_consistent(int nx,
+                        int ny,
+                        int nz,
+                        double *zcornsv,
+                        long nzcorn,
+                        double zsep)
 
 {
 
     logger_info(LI, FI, FU, "Entering %s with zsep %lf", FU, zsep);
 
-    int    i, j, k;
+    int i, j, k;
 
     for (j = 1; j <= ny; j++) {
-	for (i = 1; i <= nx; i++) {
-	    for (k = 2; k <= nz + 1; k++) {
+        for (i = 1; i <= nx; i++) {
+            for (k = 2; k <= nz + 1; k++) {
 
-		long ibp = x_ijk2ib(i, j, k - 1, nx, ny, nz + 1, 0);
-		long ibx = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+                long ibp = x_ijk2ib(i, j, k - 1, nx, ny, nz + 1, 0);
+                long ibx = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
 
                 int ic;
-		for (ic = 1; ic <= 4; ic++) {
-		    double z1 = zcornsv[4 * ibp + 1 * ic - 1];
-		    double z2 = zcornsv[4 * ibx + 1 * ic - 1];
+                for (ic = 1; ic <= 4; ic++) {
+                    double z1 = zcornsv[4 * ibp + 1 * ic - 1];
+                    double z2 = zcornsv[4 * ibx + 1 * ic - 1];
 
-		    if ((z2 - z1) < zsep) {
-			zcornsv[4 * ibx + 1 * ic - 1] = z1 + zsep;
-		    }
-		}
-	    }
-	}
+                    if ((z2 - z1) < zsep) {
+                        zcornsv[4 * ibx + 1 * ic - 1] = z1 + zsep;
+                    }
+                }
+            }
+        }
     }
 
     logger_info(LI, FI, FU, "Exit from %s", FU);
