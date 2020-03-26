@@ -18,7 +18,7 @@
 *    mdoutv, doutv  o     output vectors for MD and directions.
 *
 * RETURNS:
-*    Function:  0: Upon success. Updated arrays
+*    Function:  0: Number of points found. Updated arrays
 *
 * TODO/ISSUES/BUGS:
 *
@@ -63,6 +63,9 @@ well_surf_picks(double *xv,
                 int *doutv,
                 long ndoutv)
 {
+
+    logger_info(LI, FI, FU, "Finding picks, intersections well surface: %s", FU);
+
     double zd[nzv];
 
     surf_get_zv_from_xyv(xv, nxv, yv, nyv, zd, nzv, ncol, nrow, xori, yori, xinc, yinc,
@@ -92,7 +95,7 @@ well_surf_picks(double *xv,
             mdoutv[ili] = UNDEF;
             if (mdv[i - 1] < UNDEF_LIMIT && mdv[i] < UNDEF_LIMIT)
                 mdoutv[ili] = x_vector_linint3(z0, 0.0, z2, mdv[i - 1], mdv[i]);
-            logger_info(LI, FI, FU, "Point found %d %lf", ili, zoutv[ili]);
+            logger_debug(LI, FI, FU, "Point found %d %lf", ili, zoutv[ili]);
             ili++;
         }
         if (z0 >= 0 && z2 < 0) {
@@ -103,10 +106,12 @@ well_surf_picks(double *xv,
             mdoutv[ili] = UNDEF;
             if (mdv[i - 1] < UNDEF_LIMIT && mdv[i] < UNDEF_LIMIT)
                 mdoutv[ili] = x_vector_linint3(z2, 0.0, z0, mdv[i], mdv[i - 1]);
-            logger_info(LI, FI, FU, "Point found %d %lf", ili, zoutv[ili]);
+            logger_debug(LI, FI, FU, "Point found %d %lf", ili, zoutv[ili]);
             ili++;
         }
     }
+
+    logger_info(LI, FI, FU, "Finding picks, intersections well surface, done: %s", FU);
 
     return ili;
 }

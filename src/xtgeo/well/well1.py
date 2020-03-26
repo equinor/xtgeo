@@ -1291,10 +1291,21 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return dfr
 
     def get_surface_picks(self, surf):
-        """Get a list of (X,Y,Z,MD,DIR) picks from surface where well crosses
+        """Get a :class:`.Points` instance where well crosses the surface (horizon
+        picks).
+
+        There may be several points in the Points() dataframe attribute.
+        Also a ``DIRECTION`` column will show 1 if surface is penetrated from
+        above, and -1 if penetrated from below.
 
         Args:
-            surf (RegularSurface): RegularSurface() instance
+            surf (RegularSurface): The surface instance
+
+        Returns:
+            A :class:`.Points` instance, or None if no crossing points
+
+        .. versionadded:: 2.8.0
+
         """
 
         return _wellmarkers.get_surface_picks(self, surf)
