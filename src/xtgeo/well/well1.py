@@ -1290,6 +1290,15 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return dfr
 
+    def get_surface_picks(self, surf):
+        """Get a list of (X,Y,Z,MD,DIR) picks from surface where well crosses
+
+        Args:
+            surf (RegularSurface): RegularSurface() instance
+        """
+
+        return _wellmarkers.get_surface_picks(self, surf)
+
     def make_ijk_from_grid(self, grid, grid_id=""):
         """Look through a Grid and add grid I J K as discrete logs.
 
