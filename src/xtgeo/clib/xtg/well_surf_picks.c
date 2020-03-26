@@ -66,7 +66,9 @@ well_surf_picks(double *xv,
 
     logger_info(LI, FI, FU, "Finding picks, intersections well surface: %s", FU);
 
-    double zd[nzv];
+    double *zd;
+
+    zd = calloc(nzv, sizeof(double));
 
     surf_get_zv_from_xyv(xv, nxv, yv, nyv, zd, nzv, ncol, nrow, xori, yori, xinc, yinc,
                          yflip, rot, surfv, nsurf);
@@ -113,5 +115,6 @@ well_surf_picks(double *xv,
 
     logger_info(LI, FI, FU, "Finding picks, intersections well surface, done: %s", FU);
 
+    free(zd);
     return ili;
 }
