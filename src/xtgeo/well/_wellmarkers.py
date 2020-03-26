@@ -364,7 +364,7 @@ def get_surface_picks(self, surf):
         surf.yinc,
         surf.yflip,
         surf.rotation,
-        surf.values1d,
+        surf.npvalues1d,
         xcor.size,
         xcor.size,
         xcor.size,
