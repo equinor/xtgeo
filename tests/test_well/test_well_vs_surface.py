@@ -3,6 +3,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 from os.path import join
+import pytest
 
 import xtgeo
 
@@ -26,4 +27,4 @@ def test_get_well_x_surf():
     surf = xtgeo.RegularSurface(SFILE)
     top = wll.get_surface_picks(surf)
 
-    print(top.dataframe)
+    assert top.dataframe.Q_MDEPTH[5] == pytest.approx(5209.636860, abs=0.001)
