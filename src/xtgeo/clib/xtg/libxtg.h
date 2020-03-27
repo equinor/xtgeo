@@ -1946,3 +1946,35 @@ well_trunc_parallel(double *swig_np_dbl_inplace_v1,  // *xv1,
                     double itol,
                     double atol,
                     int option);
+
+int
+well_surf_picks(double *swig_np_dbl_in_v1,  //*xv
+                long n_swig_np_dbl_in_v1,   // nxv
+                double *swig_np_dbl_in_v2,  //*yv
+                long n_swig_np_dbl_in_v2,   // nyv
+                double *swig_np_dbl_in_v3,  //*zv
+                long n_swig_np_dbl_in_v3,   // nzv
+                double *swig_np_dbl_in_v4,  //*mdv
+                long n_swig_np_dbl_in_v4,   // nmdv
+
+                int ncol,
+                int nrow,
+                double xori,
+                double yori,
+                double xinc,
+                double yinc,
+                int yflip,
+                double rot,
+                double *swig_np_dbl_in_v5,  // *surfv
+                long n_swig_np_dbl_in_v5,   // nsurf,
+
+                double *swig_np_dbl_aout_v1,  //*xoutv,
+                long n_swig_np_dbl_aout_v1,
+                double *swig_np_dbl_aout_v2,  //*youtv,
+                long n_swig_np_dbl_aout_v2,
+                double *swig_np_dbl_aout_v3,  //*zoutv,
+                long n_swig_np_dbl_aout_v3,
+                double *swig_np_dbl_aout_v4,  //*mdoutv,
+                long n_swig_np_dbl_aout_v4,
+                int *swig_np_int_aout_v1,  //*zoutv,
+                long n_swig_np_int_aout_v1);

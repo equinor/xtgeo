@@ -7,6 +7,8 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 
+import xtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 import xtgeo.common.constants as const
 
@@ -335,3 +337,59 @@ def get_fraction_per_zone(
     self.delete_log("_QFLAG")
 
     return None
+
+
+def get_surface_picks(self, surf):
+    """get Surface picks"""
+
+    xcor = self._df["X_UTME"].values
+    ycor = self._df["Y_UTMN"].values
+    zcor = self._df["Z_TVDSS"].values
+
+    if self.mdlogname:
+        mcor = self._df[self.mdlogname].values
+    else:
+        mcor = np.zeros(xcor.size, dtype=np.float64) + xtgeo.UNDEF
+
+    nval, xres, yres, zres, mres, dres = _cxtgeo.well_surf_picks(
+        xcor,
+        ycor,
+        zcor,
+        mcor,
+        surf.ncol,
+        surf.nrow,
+        surf.xori,
+        surf.yori,
+        surf.xinc,
+        surf.yinc,
+        surf.yflip,
+        surf.rotation,
+        surf.npvalues1d,
+        xcor.size,
+        xcor.size,
+        xcor.size,
+        xcor.size,
+        xcor.size,
+    )
+
+    if nval > 0:
+        poi = xtgeo.Points()
+
+        mres[mres > xtgeo.UNDEF_LIMIT] = np.nan
+
+        res = OrderedDict()
+        res[poi.xname] = xres[:nval]
+        res[poi.yname] = yres[:nval]
+        res[poi.zname] = zres[:nval]
+        if self.mdlogname:
+            res[self.mdlogname] = mres[:nval]
+        res["DIRECTION"] = dres[:nval]
+        res["WELLNAME"] = self.wellname
+
+        poi.dataframe = pd.DataFrame.from_dict(res)
+
+        return poi
+
+    return None
+
+    # return a xtgeo Poinst() object with points as dataframe, given that nval > 0

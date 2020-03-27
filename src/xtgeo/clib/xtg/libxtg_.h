@@ -84,6 +84,9 @@ x_vector_linint(double x1,
                 double *zn);
 
 double
+x_vector_linint3(double x0, double x1, double x2, double y0, double y2);
+
+double
 x_vector_len3d(double x1, double x2, double y1, double y2, double z1, double z2);
 
 int

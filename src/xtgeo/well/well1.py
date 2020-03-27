@@ -1290,6 +1290,26 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return dfr
 
+    def get_surface_picks(self, surf):
+        """Get a :class:`.Points` instance where well crosses the surface (horizon
+        picks).
+
+        There may be several points in the Points() dataframe attribute.
+        Also a ``DIRECTION`` column will show 1 if surface is penetrated from
+        above, and -1 if penetrated from below.
+
+        Args:
+            surf (RegularSurface): The surface instance
+
+        Returns:
+            A :class:`.Points` instance, or None if no crossing points
+
+        .. versionadded:: 2.8.0
+
+        """
+
+        return _wellmarkers.get_surface_picks(self, surf)
+
     def make_ijk_from_grid(self, grid, grid_id=""):
         """Look through a Grid and add grid I J K as discrete logs.
 
