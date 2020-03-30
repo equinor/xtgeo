@@ -2,7 +2,6 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 import os
-import sys
 
 from xtgeo.grid3d import Grid
 from xtgeo.well import Well
@@ -13,7 +12,7 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
-    sys.exit(-9)
+    raise SystemExit
 
 TDMP = xtg.tmpdir
 
@@ -39,18 +38,11 @@ WELL7 = "../xtgeo-testdata/wells/reek/1/WI_3.w"
 
 def test_report_zlog_mismatch():
     """Report zone log mismatch grid and well."""
-    logger.info("Name is {}".format(__name__))
     g1 = Grid()
     g1.from_file(GRIDFILE)
 
-    g2 = Grid()
-    g2.from_file(GRIDFILE)
-
-    g2.reduce_to_one_layer()
-    g2.to_file(os.path.join(TDMP, "test.roff"), fformat="roff")
-
-    z = GridProperty()
-    z.from_file(ZONEFILE, name="Zone")
+    zo = GridProperty()
+    zo.from_file(ZONEFILE, name="Zone")
 
     w1 = Well(WELL1)
     w2 = Well(WELL2)
@@ -66,14 +58,13 @@ def test_report_zlog_mismatch():
     # matchd = {'WI_1': 69, 'WI_3': 70, 'OP_4': 74, 'OP_5': 75, 'OP_1': 75,
     #           'OP_2': 74, 'OP_3': 70}
 
-    for w in wells:
+    for wll in wells:
         response = g1.report_zone_mismatch(
-            well=w,
+            well=wll,
             zonelogname="Zonelog",
-            zoneprop=z,
+            zoneprop=zo,
             onelayergrid=g2,
             zonelogrange=(1, 3),
-            option=0,
             depthrange=[1300, 9999],
         )
 
@@ -83,7 +74,7 @@ def test_report_zlog_mismatch():
             logger.info(response)
             match = int(float("{0:.4f}".format(response[0])))
             logger.info(match)
-            resultd[w.wellname] = match
+            resultd[wll.wellname] = match
 
 
 #    assert resultd == matchd
