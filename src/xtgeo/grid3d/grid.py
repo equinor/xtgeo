@@ -22,6 +22,7 @@ from . import _grid_import
 from . import _grid_export
 from . import _grid_refine
 from . import _grid_etc1
+from . import _grid_wellzone
 from . import _grid3d_fence
 from . import _grid_roxapi
 from . import _gridprop_lowlevel
@@ -1126,6 +1127,9 @@ class Grid(Grid3D):
         zerobased=False,
         dataframe=True,
         includepoints=True,
+        columnnames=("IX", "JY", "KZ"),
+        fmt="int",
+        undef=-1,
     ):
         """Returns a list/dataframe of cell indices based on a Points()
         instance
@@ -1139,8 +1143,12 @@ class Grid(Grid3D):
             dataframe (bool): If True result is Pandas dataframe, otherwise a list
                 of tuples
             includepoints (bool): If True, include the input points in result
+            columnnames (tuple): Name of columns if dataframe is returned
+            fmt (str): Format of IJK arrays (int/float). Default is "int"
+            undef (int or float): Value to assign to undefined (outside) entries.
 
         .. versionadded:: 2.6.0
+        .. versionchanged:: 2.8.0 Added keywords `columnnames`, `fmt`, `undef`
         """
 
         ijklist = _grid_etc1.get_ijk_from_points(
@@ -1150,6 +1158,9 @@ class Grid(Grid3D):
             zerobased=zerobased,
             dataframe=dataframe,
             includepoints=includepoints,
+            columnnames=columnnames,
+            fmt=fmt,
+            undef=undef,
         )
 
         # return the dataframe or list of tuples
@@ -1632,7 +1643,6 @@ class Grid(Grid3D):
         zonelogrange=(0, 9999),
         zonelogshift=0,
         depthrange=None,
-        option=0,
         perflogname=None,
     ):
         """Reports mismatch between wells and a zone.
@@ -1643,10 +1653,9 @@ class Grid(Grid3D):
             zoneprop (xtgeo.grid3d.GridProperty): Grid property to use for
                 zonation
             zonelogrange (tuple): zone log range, from - to (inclusive)
-            onelayergrid (xtgeo.grid3d.Grid): Object as one layer grid
+            onelayergrid (xtgeo.grid3d.Grid): Object as one layer grid REDUNDANT
             zonelogshift (int): Deviation (shift) between grid and zonelog
             depthrange (tuple): Interval for search in TVD depth, to speed up
-            option (int): Some option)
             perflogname (str): Name of perforation log
 
         Example::
@@ -1672,7 +1681,7 @@ class Grid(Grid3D):
                 depthrange=(1700, 9999))
         """
 
-        reports = _grid_etc1.report_zone_mismatch(
+        reports = _grid_wellzone.report_zone_mismatch(
             self,
             well=well,
             zonelogname=zonelogname,
@@ -1681,7 +1690,6 @@ class Grid(Grid3D):
             zonelogrange=zonelogrange,
             zonelogshift=zonelogshift,
             depthrange=depthrange,
-            option=option,
             perflogname=perflogname,
         )
 
