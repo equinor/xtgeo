@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import
 from __future__ import print_function
-import os
 
 from xtgeo.grid3d import Grid
 from xtgeo.well import Well
@@ -63,18 +62,15 @@ def test_report_zlog_mismatch():
             well=wll,
             zonelogname="Zonelog",
             zoneprop=zo,
-            onelayergrid=g2,
             zonelogrange=(1, 3),
             depthrange=[1300, 9999],
         )
 
-        if response is None:
-            continue
-        else:
-            logger.info(response)
-            match = int(float("{0:.4f}".format(response[0])))
-            logger.info(match)
-            resultd[wll.wellname] = match
+        if response is not None:
+            print(response)
+            # match = int(float("{0:.4f}".format(response[0])))
+            # logger.info(match)
+            # resultd[wll.wellname] = match
 
 
 #    assert resultd == matchd
