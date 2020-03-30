@@ -283,7 +283,6 @@ def _make_ijk_from_grid_v2(self, grid, grid_id=""):
     """
 
     # establish a Points instance and make points dataframe from well trajectory X Y Z
-    print("XXXXNEW")
     wpoints = xtgeo.Points()
     wpdf = self.dataframe.loc[:, ["X_UTME", "Y_UTMN", "Z_TVDSS"]].copy()
     wpoints.dataframe = wpdf
