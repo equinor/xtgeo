@@ -77,7 +77,6 @@ def report_zone_mismatch(
     #
     df.insert(df.shape[1], "zmatch", 0.0, True)
     df["zmatch"][df[zmodel] == df[zonelogname]] = 1
-    print(df.to_string())
 
     res = df["zmatch"].mean()
 
