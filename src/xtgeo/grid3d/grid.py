@@ -1607,7 +1607,7 @@ class Grid(Grid3D):
 
         Returns:
             ValueError: if..
-            RuntimeError: if mimatch in dimensions for rfactor and zoneprop
+            RuntimeError: if mismatch in dimensions for rfactor and zoneprop
 
 
         Examples::
@@ -1644,41 +1644,76 @@ class Grid(Grid3D):
         zonelogshift=0,
         depthrange=None,
         perflogname=None,
+        filterlogname=None,
+        resultformat=1,
     ):
         """Reports mismatch between wells and a zone.
 
+        Approaches on matching:
+            1. Use the well zonelog as basis, and compare sampled zone with that
+               interval. This means that zone cells outside well range will not be
+               counted
+            2. Compare intervals with wellzonation in range or grid zonations in
+               range. This gives a wider comparison, and will capture cases
+               where grid zonations is outside well zonation
+
+        .. image:: ../../docs/images/zone-well-mismatch-plain.svg
+           :width: 200
+           :align: center
+
+        Note if `zonelogname` and/or `filterlogname` and/or `perflogname` is given,
+        and such log(s) are not present, then this function will return ``None``.
+
         Args:
-            well (xtgeo.well.Well): a XTGeo well object
+            well (Well): a XTGeo well object
             zonelogname (str): Name of the zone logger
-            zoneprop (xtgeo.grid3d.GridProperty): Grid property to use for
+            zoneprop (GridProperty): Grid property instance to use for
                 zonation
             zonelogrange (tuple): zone log range, from - to (inclusive)
-            onelayergrid (xtgeo.grid3d.Grid): Object as one layer grid REDUNDANT
-            zonelogshift (int): Deviation (shift) between grid and zonelog
+            onelayergrid (Grid): Redundant from version 2.8, please skip!
+            zonelogshift (int): Deviation (numerical shift) between grid and zonelog
             depthrange (tuple): Interval for search in TVD depth, to speed up
-            perflogname (str): Name of perforation log
+            perflogname (str): Name of perforation log to filter on (> 0).
+            filterlogname (str): General filter, work as perflog, filter on values > 0
+            resultformat (int): If 1, consider the zonelogrange in the well as
+                basis for match ratio, return (percent, match count, total count).
+                If 2 then a dictionary is returned with various result members
+
+        Returns:
+            res (tuple or dict): report dependent on `resultformat`
+                * A tuple with 3 members:
+                    (match_as_percent, number of matches, total count) approach 1
+                * A dictionary with keys:
+                    * MATCH1 - match as percent, approach 1
+                    * MCOUNT1 - number of match samples approach 1
+                    * TCOUNT1 - total number of samples approach 1
+                    * MATCH2 - match as percent, approach 2
+                    * MCOUNT2 - a.a for option 2
+                    * TCOUNT2 - a.a. for option 2
+                    * WELLINTV - a Well() instance for the actual interval
+                * None, if perflogname or zonelogname of filtername is given, but
+                  the log does not exists for the well
 
         Example::
 
-            g1 = Grid("../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff")
-            g2 = Grid("../xtgeo-testdata/3dgrids/gfb/gullfaks2.roff")
-            g2.reduce_to_one_layer()
+            g1 = xtgeo.Grid("gullfaks2.roff")
 
-            z = GridProperty()
-            z.from_file("../xtgeo-testdata/3dgrids/gfb/gullfaks2_zone.roff",
-                        name="Zone")
+            z = xtgeo.GridProperty(gullfaks2_zone.roff", name="Zone")
 
-            w2 = Well("../xtgeo-testdata/wells/gfb/1/34_10-1.w")
+            w2 = xtgeo.Well("34_10-1.w", zonelogname="Zonelog")
 
-            w3 = Well("../xtgeo-testdata/wells/gfb/1/34_10-B-21_B.w")
+            w3 = xtgeo.Well("34_10-B-21_B.w", zonelogname="Zonelog"))
 
             wells = [w2, w3]
 
             for w in wells:
                 response = g1.report_zone_mismatch(
-                well=w, zonelogname="ZONELOG", mode=0, zoneprop=z,
-                onelayergrid=g2, zonelogrange=(0, 19), option=0,
-                depthrange=(1700, 9999))
+                    well=w, zonelogname="ZONELOG", zoneprop=z,
+                    zonelogrange=(0, 19), depthrange=(1700, 9999))
+
+                print(response)
+
+        .. versionchanged:: 2.8.0 Added several new keys and better precision in result
         """
 
         reports = _grid_wellzone.report_zone_mismatch(
@@ -1691,6 +1726,8 @@ class Grid(Grid3D):
             zonelogshift=zonelogshift,
             depthrange=depthrange,
             perflogname=perflogname,
+            filterlogname=filterlogname,
+            resultformat=resultformat,
         )
 
         return reports
