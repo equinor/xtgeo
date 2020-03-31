@@ -1856,34 +1856,6 @@ grd3d_get_all_corners(int nx,
                       double *z8,
                       int option);
 
-int
-grd3d_rpt_zlog_vs_zon(int nx,
-                      int ny,
-                      int nz,
-
-                      double *swig_np_dbl_in_v1,  // *coordsv
-                      long n_swig_np_dbl_in_v1,   // ncoordin
-                      double *swig_np_dbl_in_v2,  // *p_zcoord_v
-                      long n_swig_np_dbl_in_v2,   // nzcornin
-                      int *swig_np_int_in_v1,     // *actnumsv
-                      long n_swig_np_int_in_v1,   // nactin
-
-                      int *p_zon_v,
-                      int nval,
-                      double *p_utme_v,
-                      double *p_utmn_v,
-                      double *p_tvds_v,
-                      int *p_zlog_v,
-                      int zlmin,
-                      int zlmax,
-
-                      double *swig_np_dbl_in_v3,  // *p_zcoord_onelay_v
-                      long n_swig_np_dbl_in_v3,   // nzcornonein
-                      int *swig_np_int_in_v2,     // *p_actnum_onelay_v
-                      long n_swig_np_int_in_v2,   // nactonein
-
-                      double *results,
-                      int iflag);
 
 int
 grd3d_well_ijk(int nx,
