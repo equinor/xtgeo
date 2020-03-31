@@ -593,7 +593,7 @@ class GridProperty(Grid3D):
         Returns:
            True if success, otherwise False
 
-        .. versionchanged:: 2.8 Added gridlink option, default is True
+        .. versionchanged:: 2.8.0 Added gridlink option, default is True
         """
 
         obj = _gridprop_import.from_file(
