@@ -22,7 +22,7 @@ def report_zone_mismatch(
     perflogname=None,
     filterlogname=None,
     resultformat=1,
-):
+):  # pylint: disable=too-many-locals
     """
     Reports well to zone mismatch; this works together with a Well object.
 
@@ -54,7 +54,6 @@ def report_zone_mismatch(
 
     # get the IJK along the well as logs; use a copy of the well instance
     wll = well.copy()
-    # wll._df.loc[(wll._df[zonelogname] == 0)] = np.nan
     wll._df[zonelogname] += zonelogshift
 
     if depthrange:
