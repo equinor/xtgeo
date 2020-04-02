@@ -394,11 +394,9 @@ x_kvpt3s(double pp[], double tri[][3], int *ier)
 void
 x_kmgmps(double a[][3], int l[], double prmn, int m, int n, double eps, int *ier)
 {
-    int n1, i, ip, iq, j, k, k1;
-    double am, amx, pr, cnull, cen;
 
-    cnull = 0.0e0;
-    cen = 1.0e0;
+    double cnull = 0.0e0;
+    double cen = 1.0e0;
 
     /* error check */
 
@@ -406,14 +404,16 @@ x_kmgmps(double a[][3], int l[], double prmn, int m, int n, double eps, int *ier
 
     /* init: */
     *ier = 0;
-    n1 = n - 1;
-    amx = cnull;
+    int n1 = n - 1;
+    double amx = cnull;
     prmn = cen;
 
     /* OOPS fabs for floats/doubles, not abs!! */
 
+    int i;
     for (i = 0; i < n; i++) {
         l[i] = i;
+        int j;
         for (j = 0; j < n; j++) {
             if (amx < fabs(a[i][j]))
                 amx = fabs(a[i][j]);
@@ -425,18 +425,20 @@ x_kmgmps(double a[][3], int l[], double prmn, int m, int n, double eps, int *ier
     }
 
     /* elimination */
+    int k;
+    int jj = 0;
     for (k = 0; k < n1; k++) {
-        am = cnull;
+        double am = cnull;
         for (i = k; i < n; i++) {
             if (fabs(a[l[i]][k]) > am) {
                 am = fabs(a[l[i]][k]);
-                j = i;
+                jj = i;
             }
         }
         /* pivot element is a[l[j]][k] */
 
         /* singularity control */
-        pr = am / amx;
+        double pr = am / amx;
         if (prmn >= pr)
             prmn = pr;
 
@@ -446,18 +448,19 @@ x_kmgmps(double a[][3], int l[], double prmn, int m, int n, double eps, int *ier
         }
 
         /* interchange */
-        ip = l[j];
-        l[j] = l[k];
+        int ip = l[jj];
+        l[jj] = l[k];
         l[k] = ip;
 
-        k1 = k + 1;
+        int k1 = k + 1;
 
         for (i = k1; i < n; i++) {
-            j = l[i];
-            am = a[j][k] / a[ip][k];
-            a[j][k] = am;
+            jj = l[i];
+            am = a[jj][k] / a[ip][k];
+            a[jj][k] = am;
+            int iq;
             for (iq = k1; iq < n; iq++) {
-                a[j][iq] = a[j][iq] - am * a[ip][iq];
+                a[jj][iq] = a[jj][iq] - am * a[ip][iq];
             }
         }
     }
@@ -473,7 +476,6 @@ void
 x_kmsubs(double x[], double a[][3], int m, int n, double b[], int l[], int *ier)
 {
     int n1, k, k1, i, j;
-    double s;
 
     /* init: */
     *ier = 0;
@@ -496,7 +498,7 @@ x_kmsubs(double x[], double a[][3], int m, int n, double b[], int l[], int *ier)
 
         k1 = k + 1;
         i = l[k];
-        s = b[i];
+        double s = b[i];
         for (j = k1; j < n; j++) {
             s = s - a[i][j] * x[j];
         }

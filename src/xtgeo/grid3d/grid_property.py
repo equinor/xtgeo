@@ -31,6 +31,7 @@ from . import _gridprop_op1
 from . import _gridprop_import
 from . import _gridprop_roxapi
 from . import _gridprop_export
+from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -592,7 +593,7 @@ class GridProperty(Grid3D):
         Returns:
            True if success, otherwise False
 
-        .. versionchanged:: 2.8 Added gridlink option, default is True
+        .. versionchanged:: 2.8.0 Added gridlink option, default is True
         """
 
         obj = _gridprop_import.from_file(
@@ -799,17 +800,27 @@ class GridProperty(Grid3D):
 
         return self.get_npvalues1d(activeonly=True)
 
-    def get_npvalues1d(self, activeonly=False):
+    def get_npvalues1d(self, activeonly=False, fill_value=np.nan, order="C"):
         """Return the grid property as a 1D numpy array (copy) for active or all
-        cells, but inactive have NaN value.
+        cells, but inactive have a fill value.
+
+        Args:
+            activeonly (bool): If True, then only return active cells
+            fill_value (float): Fill value for inactive cells
+            order (str): Array internal order; default is "C", alternative is "F"
 
         .. versionadded:: 2.3.0
+        .. versionchanged:: 2.8.0 Added `fill_value` and `order`
         """
         vact = self.values1d.copy()
+
+        if order == "F":
+            vact = _gridprop_lowlevel.c2f_order(self, vact)
+
         if activeonly:
             return vact.compressed()  # safer than vact[~vact.mask] if no masked
 
-        return vact.filled(np.nan)
+        return vact.filled(fill_value)
 
     def copy(self, newname=None):
         """Copy a xtgeo.grid3d.GridProperty() object to another instance.

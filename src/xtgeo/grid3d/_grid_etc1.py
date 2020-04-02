@@ -222,7 +222,15 @@ def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
 
 
 def get_ijk_from_points(
-    self, points, activeonly=True, zerobased=False, dataframe=True, includepoints=True
+    self,
+    points,
+    activeonly=True,
+    zerobased=False,
+    dataframe=True,
+    includepoints=True,
+    columnnames=("IX", "JY", "KZ"),
+    fmt="int",
+    undef=-1,
 ):
     """Get I J K indices as a list of tuples or a dataframe
 
@@ -240,11 +248,11 @@ def get_ijk_from_points(
 
     arrsize = points.dataframe[points.xname].values.size
 
-    flip = 1
+    useflip = 1
     if self.ijk_handedness == "left":
-        flip = -1
+        useflip = -1
 
-    logger.info("Grid is FLIP %s", flip)
+    logger.info("Grid FLIP for C code is %s", useflip)
 
     logger.info("Running C routine...")
     _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
@@ -271,7 +279,7 @@ def get_ijk_from_points(
         self._actnumsv,
         self._tmp["onegrid"]._zcornsv,
         actnumoption,
-        flip,
+        useflip,
         arrsize,
         arrsize,
         arrsize,
@@ -290,12 +298,22 @@ def get_ijk_from_points(
         proplist["Y_UTME"] = points.dataframe[points.yname].values
         proplist["Z_TVDSS"] = points.dataframe[points.zname].values
 
-    proplist["IX"] = iarr
-    proplist["JY"] = jarr
-    proplist["KZ"] = karr
+    proplist[columnnames[0]] = iarr
+    proplist[columnnames[1]] = jarr
+    proplist[columnnames[2]] = karr
 
     mydataframe = pd.DataFrame.from_dict(proplist)
     mydataframe.replace(xtgeo.UNDEF_INT, -1, inplace=True)
+
+    if fmt == "float":
+        mydataframe[columnnames[0]] = mydataframe[columnnames[0]].astype("float")
+        mydataframe[columnnames[1]] = mydataframe[columnnames[1]].astype("float")
+        mydataframe[columnnames[2]] = mydataframe[columnnames[2]].astype("float")
+
+    if undef != -1:
+        mydataframe[columnnames[0]].replace(-1, undef, inplace=True)
+        mydataframe[columnnames[1]].replace(-1, undef, inplace=True)
+        mydataframe[columnnames[2]].replace(-1, undef, inplace=True)
 
     result = mydataframe
     if not dataframe:

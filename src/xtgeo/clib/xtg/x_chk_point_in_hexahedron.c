@@ -2,7 +2,7 @@
  ***************************************************************************************
  *
  * NAME:
- *    x_chk_point_in_hexagedron.c
+ *    x_chk_point_in_hexahedron.c
  *
  *
  * DESCRIPTION:
@@ -20,7 +20,8 @@
  *
  * ARGUMENTS:
  *    x, y, z             i     point
- *    coor                i     The coordinates as 24 lenth array
+ *    coor                i     The coordinates as 24 length array
+ *    flip                i     1 for right handed, -1 for left handed (here)
  *
  * RETURNS:
  *    -1 if outside, 0 on boundary and 1 if inside
@@ -37,7 +38,7 @@
 
 #define CBIG 1E32
 
-int
+static int
 _check_envelope(double x, double y, double z, double *coor)
 {
 
@@ -85,7 +86,7 @@ _check_envelope(double x, double y, double z, double *coor)
     return 0;
 }
 
-int
+static int
 _inside_plane(int ic0,
               int ic1,
               int ic2,
@@ -100,7 +101,7 @@ _inside_plane(int ic0,
      * A plane consists of 3 corners, and the normal vector result is positive
      * upwards when a normal right handed system. So be careful when thinking base;
      * then turn head upside down!
-     * If flip, we have a left handed system insted. Corners counts from 1 to 8
+     * If flip, we have a left handed system instead. Corners counts from 1 to 8
      */
 
     double nvec[4], pt[9];

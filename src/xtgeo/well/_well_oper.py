@@ -185,8 +185,26 @@ def make_zone_qual_log(self, zqname):
     del dff
 
 
-def get_ijk_from_grid(self, grid, grid_id=""):
-    """Getting IJK from a grid as well logs."""
+def make_ijk_from_grid(self, grid, grid_id="", algorithm=1):
+
+    logger.info("Using algorithm %s in %s", algorithm, __name__)
+
+    if algorithm == 1:
+        _make_ijk_from_grid_v1(self, grid, grid_id=grid_id)
+    else:
+        _make_ijk_from_grid_v2(self, grid, grid_id=grid_id)
+
+    logger.info("Using algorithm %s in %s done", algorithm, __name__)
+
+
+def _make_ijk_from_grid_v1(self, grid, grid_id=""):
+    """
+    Getting IJK from a grid and make as well logs.
+
+    This is the first version, using _cxtgeo.grd3d_well_ijk from C
+
+    """
+    logger.info("Using algorithm 1 in %s", __name__)
 
     wxarr = self.get_carray("X_UTME")
     wyarr = self.get_carray("Y_UTMN")
@@ -255,8 +273,48 @@ def get_ijk_from_grid(self, grid, grid_id=""):
     del onelayergrid
 
 
+def _make_ijk_from_grid_v2(self, grid, grid_id=""):
+    """
+    Getting IJK from a grid and make as well logs.
+
+    This is a newer version, using grid.get_ijk_from_points which in turn
+    use the from C method x_chk_point_in_hexahedron, while v1 use the
+    x_chk_point_in_cell. This one is believed to be more precise!
+    """
+
+    # establish a Points instance and make points dataframe from well trajectory X Y Z
+    wpoints = xtgeo.Points()
+    wpdf = self.dataframe.loc[:, ["X_UTME", "Y_UTMN", "Z_TVDSS"]].copy()
+    wpoints.dataframe = wpdf
+    wpoints.dataframe.reset_index(inplace=True, drop=True)
+
+    # column names
+    cna = ("ICELL" + grid_id, "JCELL" + grid_id, "KCELL" + grid_id)
+
+    df = grid.get_ijk_from_points(
+        wpoints,
+        activeonly=True,
+        zerobased=False,
+        dataframe=True,
+        includepoints=False,
+        columnnames=cna,
+        fmt="float",
+        undef=np.nan,
+    )
+
+    # The resulting df shall have same length as the well's dataframe,
+    # but the well index may not start from one. So first ignore index, then
+    # re-establish
+    wellindex = self.dataframe.index
+
+    newdf = pd.concat([self.dataframe.reset_index(drop=True), df], axis=1)
+    newdf.index = wellindex
+
+    self.dataframe = newdf
+
+
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
-    """Gettting gridproperties as logs"""
+    """Getting gridproperties as logs"""
 
     if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
@@ -270,7 +328,7 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
     if isinstance(grid, tuple):
         icl, jcl, kcl = grid
     elif isinstance(grid, xtgeo.Grid):
-        self.make_ijk_from_grid(grid, grid_id="_tmp")
+        self.make_ijk_from_grid(grid, grid_id="_tmp", algorithm=2)
         icl, jcl, kcl = ("ICELL_tmp", "JCELL_tmp", "KCELL_tmp")
     else:
         raise ValueError('The "grid" is of wrong type, must be a tuple or ' "a Grid")

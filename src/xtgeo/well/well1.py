@@ -1310,7 +1310,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return _wellmarkers.get_surface_picks(self, surf)
 
-    def make_ijk_from_grid(self, grid, grid_id=""):
+    def make_ijk_from_grid(self, grid, grid_id="", **kwargs):
         """Look through a Grid and add grid I J K as discrete logs.
 
         Note that the the grid counting has base 1 (first row is 1 etc).
@@ -1321,13 +1321,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             grid (Grid): A XTGeo Grid instance
             grid_id (str): Add a tag (optional) to the current log name
+            **kwargs: Special developer settings
 
         Raises:
             RuntimeError: 'Error from C routine, code is ...'
         """
-        # renamed from get_ijk_from_grid
+        algo = kwargs.get("algorithm", 2)
 
-        _well_oper.get_ijk_from_grid(self, grid, grid_id=grid_id)
+        _well_oper.make_ijk_from_grid(self, grid, grid_id=grid_id, algorithm=algo)
 
     def make_zone_qual_log(self, zqname):
         """Create a zone quality/indicator (flag) log.
@@ -1369,7 +1370,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         Args:
             gridprops (Grid): A XTGeo GridProperties instance (a collection
-                of properties)
+                of properties) or a single GridProperty instance
             grid (Grid or tuple): A XTGeo Grid instance or a reference
                 via tuple. If this is tuple with log names,
                 it states that these logs already contains
