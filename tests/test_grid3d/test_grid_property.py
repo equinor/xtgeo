@@ -125,14 +125,14 @@ def test_pathlib():
     grdp = GridProperty()
     grdp.from_file(pfile, name="POROM")
 
-    # assert grdp.dimensions == (5, 3, 1)
+    assert grdp.dimensions == (5, 3, 1)
 
-    # out = pathlib.Path() / TMPDIR / "grdpathtest.roff"
-    # grd.to_file(out, fformat="roff")
+    out = pathlib.Path() / TMPDIR / "grdpathtest.roff"
+    grdp.to_file(out, fformat="roff")
 
-    # with pytest.raises(IOError):
-    #     out = pathlib.Path() / "nosuchdir" / "grdpathtest.roff"
-    #     grd.to_file(out, fformat="roff")
+    with pytest.raises(IOError):
+        out = pathlib.Path() / "nosuchdir" / "grdpathtest.roff"
+        grdp.to_file(out, fformat="roff")
 
 
 def test_roffbin_import1():

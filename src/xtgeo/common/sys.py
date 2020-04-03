@@ -72,6 +72,10 @@ class _XTGeoCFile(object):
         elif isinstance(fobj, io.BytesIO):
             self._file = fobj
             self._memstream = True
+        elif isinstance(fobj, _XTGeoCFile):
+            raise RuntimeError("Reinstancing object, not allowed", self.__class__)
+        else:
+            raise RuntimeError("Illegal input, cannot continue", self.__class__)
 
         logger.info("Ran init of %s", __name__)
 
