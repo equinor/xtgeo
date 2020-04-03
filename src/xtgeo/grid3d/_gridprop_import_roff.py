@@ -38,7 +38,8 @@ def _import_roff_v1(self, pfile, name):
     # e.g. that a ROFF file may contain both a grid an numerous
     # props
 
-    logger.info("Looking for %s in file %s", name, pfile)
+    pfile = xtgeo._XTGeoCFile(pfile)
+    logger.info("Looking for %s in file %s", name, pfile.name)
 
     ptr_ncol = _cxtgeo.new_intpointer()
     ptr_nrow = _cxtgeo.new_intpointer()
@@ -52,7 +53,7 @@ def _import_roff_v1(self, pfile, name):
     # read with mode 0, to scan for ncol, nrow, nlay and ndcodes, and if
     # property is found...
     ier, _codenames = _cxtgeo.grd3d_imp_prop_roffbin(
-        pfile,
+        pfile.name,
         0,
         ptr_type,
         ptr_ncol,
@@ -108,7 +109,7 @@ def _import_roff_v1(self, pfile, name):
     # Then the argument for *p_codevalues_v in C is OMITTED here!
 
     ier, cnames = _cxtgeo.grd3d_imp_prop_roffbin(
-        pfile,
+        pfile.name,
         1,
         ptr_type,
         ptr_ncol,
@@ -174,6 +175,9 @@ def _import_roff_v2(self, pfile, name):
     self._values = vals
     self._name = name
 
+    # if vals.dtype != "float":
+    #     subs = _rkwxlist(fhandle, kwords, "subgrids!nLayers", byteswap, strict=False)
+
     pfile.close()
 
 
@@ -219,7 +223,8 @@ def _rkwquery(fhandle, kws, name, swap):
 
 
 def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
-    """Local function for _import_roff_v2, 3D parameter arrays.
+    """
+    Local function for _import_roff_v2, 3D parameter arrays.
 
     This parameters are translated to numpy data for the values
     attribute usage.
@@ -264,19 +269,13 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
         fhandle, swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy
     )
 
-    # remember that for grid props, order=F in CXTGEO, while order=C
-    # in xtgeo-python!
     if dtype == 1:
         vals = inumpy
-        # vals = inumpy.reshape((ncol, nrow, nlay), order='F')
-        # vals = np.asanyarray(vals, order='C')
         vals = ma.masked_greater(vals, xtgeo.UNDEF_INT_LIMIT)
         del fnumpy
         del inumpy
     elif dtype == 2:
         vals = fnumpy
-        # vals = fnumpy.reshape((ncol, nrow, nlay), order='F')
-        # vals = np.asanyarray(vals, order='C')
         vals = ma.masked_greater(vals, xtgeo.UNDEF_LIMIT)
         vals = vals.astype(np.float64)
         del fnumpy
