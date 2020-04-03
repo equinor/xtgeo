@@ -4,10 +4,13 @@
 from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
+
+
 import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo
+from xtgeo import pathlib
 
 from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec
 from . import _grid3d_utils as utils
@@ -22,7 +25,7 @@ def import_roff(self, gfile):
     local_fhandle = False
     fhandle = gfile
 
-    if isinstance(gfile, str):
+    if isinstance(gfile, (str, pathlib.Path)):
         local_fhandle = True
         gfile = xtgeo._XTGeoCFile(gfile)
         fhandle = gfile.fhandle

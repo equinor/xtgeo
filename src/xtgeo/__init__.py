@@ -8,6 +8,12 @@ from __future__ import print_function
 import os
 import timeit
 
+# this will for modules be `from xtgeo import pathlib`:
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
 try:
     from ._theversion import version
 

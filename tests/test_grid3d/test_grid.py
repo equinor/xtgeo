@@ -5,12 +5,16 @@ from __future__ import print_function
 import os
 from os.path import join
 from collections import OrderedDict
+
+
 import math
+
 
 import pytest
 import numpy as np
 
 import xtgeo
+from xtgeo import pathlib
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
@@ -526,6 +530,23 @@ def test_npvalues1d():
     dz2 = dz.get_npvalues1d(activeonly=True)
 
     assert dz1.all() == dz2.all()
+
+
+def test_pathlib():
+    """Import and export via pathlib"""
+
+    pfile = pathlib.Path(DUALFIL1)
+    grd = Grid()
+    grd.from_file(pfile)
+
+    assert grd.dimensions == (5, 3, 1)
+
+    out = pathlib.Path() / TMPDIR / "grdpathtest.roff"
+    grd.to_file(out, fformat="roff")
+
+    with pytest.raises(IOError):
+        out = pathlib.Path() / "nosuchdir" / "grdpathtest.roff"
+        grd.to_file(out, fformat="roff")
 
 
 def test_grid_design(load_gfile1):

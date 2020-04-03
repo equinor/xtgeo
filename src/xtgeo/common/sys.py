@@ -4,10 +4,6 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
 
 import os
 from os.path import join
@@ -19,6 +15,8 @@ from tempfile import mkstemp
 import six
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo import pathlib
+
 from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -34,7 +32,27 @@ def check_folder(fname, raiseerror=None):
 
 
 class _XTGeoCFile(object):
-    """A private class for file handling of files in/out of CXTGeo"""
+    """
+    A private class for file handling of files in/out of CXTGeo
+
+    Interesting attributes:
+
+    xfile = _XTGeoCFile(..some Path or  str or BytesIO ...)
+
+    xfile.name: The absolute path to the file (str)
+    xfile.file: The pathlib.Path instance
+    xfile.memstream: Is True if memory stream
+    xfile.fhandle: The C SWIG file handle
+
+    xfile.exist(): Returns True (provided mode 'r') if file exists, always True for 'w'
+    xfile.check_file(...): As above but may raise an Excpetion
+    xfile.check_folder(...): For folder; may raise an Excpetion
+    xfile.has_fhandle(): Check is fhandle already exists
+    xfile.splitext(): return file's stem and extension
+    xfile.close(): Close current filehandle
+
+
+    """
 
     def __init__(self, fobj, mode="rb"):
 
@@ -176,7 +194,7 @@ class _XTGeoCFile(object):
 
         Args:
             raiseerror (Exception): Type of Exception, default is None, which means
-                no Excpetion, just return False or True
+                no Exception, just return False or True
             raisetext (str): Which message to display if raiseerror, None gives a
                 default message.
 

@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
 
 import pytest
 import xtgeo
+from xtgeo import pathlib
 import test_common.test_xtg as tsetup
 
 TRAVIS = False
