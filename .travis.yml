@@ -50,6 +50,7 @@ matrix:
         - MB_PYTHON_VERSION=3.7
         - SOURCEDEPLOY=1
         - MB_ML_VER=2010
+        - COVERAGE=1
       if: tag IS present
     - os: linux
       dist: xenial
@@ -100,7 +101,7 @@ script:
 
 after_success:
   - ls -l ${TRAVIS_BUILD_DIR}/dist
-  # - codecov
+  - ls -l
 
 before_deploy:
   - pip install numpy

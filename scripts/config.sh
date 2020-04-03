@@ -30,4 +30,10 @@ function run_tests {
     pushd ..
     pytest tests --disable-warnings
     # codecov
+    if [[ $COVERAGE ]]; then
+        pytest tests --disable-warnings --cov
+    else
+        pytest tests --disable-warnings
+    fi
+    ls -l
 }
