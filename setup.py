@@ -61,10 +61,11 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "docs/_build",
         "docs/_static",
         "docs/_templates",
+        "htmlcov",
     )
 
     CLEANFOLDERSRECURSIVE = ["__pycache__", "_tmp_*", "xtgeo.egg-info"]
-    CLEANFILESRECURSIVE = ["*.pyc", "*.pyo"]
+    CLEANFILESRECURSIVE = ["*.pyc", "*.pyo", ".coverage", "coverage.xml"]
 
     CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
     CLEANFILES.extend(glob("src/xtgeo/cxtgeo/_cxtgeo*"))
@@ -206,7 +207,7 @@ def parse_requirements(filename):
 
 REQUIREMENTS = parse_requirements("requirements.txt")
 
-TEST_REQUIREMENTS = ["pytest"]
+TEST_REQUIREMENTS = ["pytest", "pytest-cov"]
 
 
 # ======================================================================================
