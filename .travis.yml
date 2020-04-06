@@ -100,8 +100,9 @@ script:
   - mv wheelhouse dist
 
 after_success:
-  - ls -l ${TRAVIS_BUILD_DIR}/dist
-  - ls -la
+  - ls -la ${TRAVIS_BUILD_DIR}/dist
+  - ls -la .
+  - if [[ -f ".coverage" ]]; then codecov; fi
 
 before_deploy:
   - pip install numpy

@@ -23,7 +23,6 @@ function run_tests {
     fi
     git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
     pip install pytest
-    pip install pytest-cov
     export TRAVISRUN=true
     echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
@@ -32,13 +31,11 @@ function run_tests {
     PYV=$(python --version | cut -d" " -f2  | cut -d. -f1,2)
     # codecov
     if [[ $SYS == "Linux" && $PYV == "3.8" ]]; then
+        pip install pytest-cov
         pytest tests --disable-warnings --cov
-        cp .coverage ../.
     else
         pytest tests --disable-warnings
     fi
-    ls -la
-    ls -la ..
     pwd
 
 }
