@@ -18,12 +18,21 @@ if DEBUG < 0:
 
 
 def import_irap_binary(self, mfile, values=True):
-    """Import Irap binary format."""
+    """Import Irap binary format.
 
-    ifile = xtgeo._XTGeoCFile(mfile)
+    Args:
+        mfile (_XTGeoFile): Instance of xtgeo file class
+        values (bool, optional): Getting values or just scan. Defaults to True.
+
+    Raises:
+        RuntimeError: Error in reading Irap binary file
+        RuntimeError: Problem....
+    """
 
     logger.info("Enter function %s", __name__)
-    logger.info("File handle %s", ifile.fhandle)
+
+    cfhandle = mfile.get_cfhandle()
+
     # read with mode 0, to get mx my and other metadata
     (
         ier,
@@ -36,10 +45,10 @@ def import_irap_binary(self, mfile, values=True):
         self._yinc,
         self._rotation,
         val,
-    ) = _cxtgeo.surf_import_irap_bin(ifile.fhandle, 0, 1, 0)
+    ) = _cxtgeo.surf_import_irap_bin(cfhandle, 0, 1, 0)
 
     if ier != 0:
-        ifile.close()
+        mfile.cfclose()
         raise RuntimeError("Error in reading Irap binary file")
 
     self._yflip = 1
@@ -47,7 +56,7 @@ def import_irap_binary(self, mfile, values=True):
         self._yinc *= -1
         self._yflip = -1
 
-    self._filesrc = mfile
+    self._filesrc = mfile.name
 
     self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
     self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
@@ -55,13 +64,13 @@ def import_irap_binary(self, mfile, values=True):
     # lazy loading, not reading the arrays
     if not values:
         self._values = None
-        ifile.close()
+        mfile.cfclose()
         return
 
     nval = self._ncol * self._nrow
-    xlist = _cxtgeo.surf_import_irap_bin(ifile.fhandle, 1, nval, 0)
+    xlist = _cxtgeo.surf_import_irap_bin(cfhandle, 1, nval, 0)
     if xlist[0] != 0:
-        ifile.close()
+        mfile.cfclose()
         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = xlist[-1]
@@ -76,7 +85,7 @@ def import_irap_binary(self, mfile, values=True):
 
     self._values = val
 
-    ifile.close()
+    mfile.cfclose()
 
 
 def import_irap_ascii(self, mfile):
@@ -84,18 +93,18 @@ def import_irap_ascii(self, mfile):
     # version using swig type mapping
 
     logger.debug("Enter function...")
-    ifile = xtgeo._XTGeoCFile(mfile)
+    cfhandle = mfile.get_cfhandle()
 
     # read with mode 0, scan to get mx my
-    xlist = _cxtgeo.surf_import_irap_ascii(ifile.fhandle, 0, 1, 0)
+    xlist = _cxtgeo.surf_import_irap_ascii(cfhandle, 0, 1, 0)
 
     nvn = xlist[1] * xlist[2]  # mx * my
-    xlist = _cxtgeo.surf_import_irap_ascii(ifile.fhandle, 1, nvn, 0)
+    xlist = _cxtgeo.surf_import_irap_ascii(cfhandle, 1, nvn, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, val = xlist
 
     if ier != 0:
-        ifile.close()
+        mfile.cfclose()
         raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
     val = np.reshape(val, (ncol, nrow), order="C")
@@ -125,7 +134,7 @@ def import_irap_ascii(self, mfile):
     self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
     self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
 
-    ifile.close()
+    mfile.cfclose()
 
 
 def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
@@ -137,18 +146,18 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
 
     logger.debug("Read data from file... (scan for dimensions)")
 
-    fin = xtgeo._XTGeoCFile(mfile)
+    cfhandle = mfile.get_cfhandle()
 
-    xlist = _cxtgeo.surf_import_ijxyz(fin.fhandle, 0, 1, 1, 1, 0)
+    xlist = _cxtgeo.surf_import_ijxyz(cfhandle, 0, 1, 1, 1, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
 
     if ier != 0:
-        fin.close()
+        mfile.cfclose()
         raise RuntimeError("Import from C is wrong...")
 
     # now real read mode
-    xlist = _cxtgeo.surf_import_ijxyz(fin.fhandle, 1, ncol, nrow, ncol * nrow, 0)
+    xlist = _cxtgeo.surf_import_ijxyz(cfhandle, 1, ncol, nrow, ncol * nrow, 0)
 
     ier, ncol, nrow, _ndef, xori, yori, xinc, yinc, rot, iln, xln, val, yflip = xlist
 
@@ -173,14 +182,14 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     self._ilines = iln
     self._xlines = xln
 
-    fin.close()
+    mfile.cfclose()
 
 
 def import_ijxyz_ascii_tmpl(self, mfile, template):
     """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface
     instance as template."""
 
-    fin = xtgeo._XTGeoCFile(mfile)
+    cfhandle = mfile.get_cfhandle()
 
     if isinstance(template, (xtgeo.cube.Cube, xtgeo.surface.RegularSurface)):
         logger.info("OK template")
@@ -189,7 +198,7 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
 
     nxy = template.ncol * template.nrow
     _iok, val = _cxtgeo.surf_import_ijxyz_tmpl(
-        fin.fhandle, template.ilines, template.xlines, nxy, 0
+        cfhandle, template.ilines, template.xlines, nxy, 0
     )
 
     val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
@@ -208,18 +217,18 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     self._ilines = template._ilines.copy()
     self._xlines = template._xlines.copy()
 
-    fin.close()
+    mfile.cfclose()
 
 
 def import_petromod_binary(self, mfile, values=True):
     """Import Petromod binary format."""
 
-    ifile = xtgeo._XTGeoCFile(mfile)
+    cfhandle = mfile.get_cfhandle()
 
     logger.info("Enter function %s", __name__)
 
     # read with mode 0, to get mx my and other metadata
-    dsc, dummy = _cxtgeo.surf_import_petromod_bin(ifile.fhandle, 0, 0.0, 0, 0, 0)
+    dsc, dummy = _cxtgeo.surf_import_petromod_bin(cfhandle, 0, 0.0, 0, 0, 0)
 
     fields = dsc.split(",")
     for field in fields:
@@ -251,7 +260,7 @@ def import_petromod_binary(self, mfile, values=True):
     # reread file for map values
 
     dsc, values = _cxtgeo.surf_import_petromod_bin(
-        ifile.fhandle, 1, undef, self._ncol, self._nrow, self._ncol * self._nrow
+        cfhandle, 1, undef, self._ncol, self._nrow, self._ncol * self._nrow
     )
 
     values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
@@ -261,4 +270,4 @@ def import_petromod_binary(self, mfile, values=True):
     self.values = values
     self.filesrc = mfile
 
-    ifile.close()
+    mfile.cfclose()

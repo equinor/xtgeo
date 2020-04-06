@@ -18,13 +18,13 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TESTPATH = '../xtgeo-testdata-equinor/data/rmsprojects'
+TESTPATH = "../xtgeo-testdata-equinor/data/rmsprojects"
 
 PROJ = dict()
-PROJ['1.1'] = os.path.join(TESTPATH, 'reek.rms10.1.1')
-PROJ['1.1.1'] = os.path.join(TESTPATH, 'reek.rms10.1.3')
-PROJ['1.2.1'] = os.path.join(TESTPATH, 'reek.rms11.0.1')
-PROJ['1.3'] = os.path.join(TESTPATH, 'reek.rms11.1.0')
+PROJ["1.1"] = os.path.join(TESTPATH, "reek.rms10.1.1")
+PROJ["1.1.1"] = os.path.join(TESTPATH, "reek.rms10.1.3")
+PROJ["1.2.1"] = os.path.join(TESTPATH, "reek.rms11.0.1")
+PROJ["1.3"] = os.path.join(TESTPATH, "reek.rms11.1.0")
 
 
 @tsetup.equinor
@@ -33,10 +33,10 @@ def test_rox_get_gridproperty():
     """Get a grid property from a RMS project."""
     from roxar import __version__ as ver
 
-    logger.info('Project is {}'.format(PROJ[ver]))
+    logger.info("Project is {}".format(PROJ[ver]))
 
     poro = xtgeo.grid3d.GridProperty()
-    poro.from_roxar(PROJ[ver], 'Reek_sim', 'PORO')
+    poro.from_roxar(PROJ[ver], "Reek_sim", "PORO")
 
     tsetup.assert_almostequal(poro.values.mean(), 0.1588, 0.001)
     assert poro.dimensions == (40, 64, 14)
@@ -51,12 +51,12 @@ def test_rox_get_modify_set_gridproperty():
     from roxar import __version__ as ver
 
     poro = xtgeo.grid3d.GridProperty()
-    poro.from_roxar(PROJ[ver], 'Reek_sim', 'PORO')
+    poro.from_roxar(PROJ[ver], "Reek_sim", "PORO")
 
     adder = 0.9
     poro.values = poro.values + adder
 
-    poro.to_roxar(PROJ[ver], 'Reek_sim', 'PORO_NEW', saveproject=True)
+    poro.to_roxar(PROJ[ver], "Reek_sim", "PORO_NEW", saveproject=True)
 
-    poro.from_roxar(PROJ[ver], 'Reek_sim', 'PORO_NEW')
+    poro.from_roxar(PROJ[ver], "Reek_sim", "PORO_NEW")
     tsetup.assert_almostequal(poro.values[1, 0, 0], 0.113876 + adder, 0.0001)

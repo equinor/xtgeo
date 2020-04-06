@@ -13,7 +13,7 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
+def eclbin_record(gfile, kwname, kwlen, kwtype, kwbyte):
     # generic: read a single binary Eclipse record via cxtgeo
 
     ilen = flen = dlen = 1
@@ -42,8 +42,14 @@ def eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte):
 
     _cxtgeo.grd3d_read_eclrecord(
         # int(kwbyte) .. to solve a deep type issue in pandas < 0.21
-        fhandle, int(kwbyte), kwntype, npint, npflt, npdbl
+        gfile.get_cfhandle(),
+        int(kwbyte),
+        kwntype,
+        npint,
+        npflt,
+        npdbl,
     )
+    gfile.cfclose()
 
     npuse = None
     if kwtype == "INTE":

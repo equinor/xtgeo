@@ -4,6 +4,8 @@
 from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
+
+
 import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -19,21 +21,14 @@ logger = xtg.functionlogger(__name__)
 
 def import_roff(self, gfile):
 
-    local_fhandle = False
-    fhandle = gfile
+    gfile.get_cfhandle()
 
-    if isinstance(gfile, str):
-        local_fhandle = True
-        gfile = xtgeo._XTGeoCFile(gfile)
-        fhandle = gfile.fhandle
+    _import_roff(self, gfile)
 
-    _import_roff(self, fhandle)
-
-    if local_fhandle and not gfile.close(cond=local_fhandle):
-        raise RuntimeError("Error in closing file handle for binary ROFF file")
+    gfile.cfclose()
 
 
-def _import_roff(self, fhandle):
+def _import_roff(self, gfile):
     """Import ROFF format, version 2 (improved version)"""
 
     # pylint: disable=too-many-statements
@@ -41,30 +36,30 @@ def _import_roff(self, fhandle):
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 
-    kwords = utils.scan_keywords(fhandle, fformat="roff")
+    kwords = utils.scan_keywords(gfile, fformat="roff")
 
     for kwd in kwords:
         logger.info(kwd)
 
     # byteswap:
-    byteswap = _rkwquery(fhandle, kwords, "filedata!byteswaptest", -1)
+    byteswap = _rkwquery(gfile, kwords, "filedata!byteswaptest", -1)
 
-    self._ncol = _rkwquery(fhandle, kwords, "dimensions!nX", byteswap)
-    self._nrow = _rkwquery(fhandle, kwords, "dimensions!nY", byteswap)
-    self._nlay = _rkwquery(fhandle, kwords, "dimensions!nZ", byteswap)
+    self._ncol = _rkwquery(gfile, kwords, "dimensions!nX", byteswap)
+    self._nrow = _rkwquery(gfile, kwords, "dimensions!nY", byteswap)
+    self._nlay = _rkwquery(gfile, kwords, "dimensions!nZ", byteswap)
     logger.info("Dimensions in ROFF file %s %s %s", self._ncol, self._nrow, self._nlay)
 
-    xshift = _rkwquery(fhandle, kwords, "translate!xoffset", byteswap)
-    yshift = _rkwquery(fhandle, kwords, "translate!yoffset", byteswap)
-    zshift = _rkwquery(fhandle, kwords, "translate!zoffset", byteswap)
+    xshift = _rkwquery(gfile, kwords, "translate!xoffset", byteswap)
+    yshift = _rkwquery(gfile, kwords, "translate!yoffset", byteswap)
+    zshift = _rkwquery(gfile, kwords, "translate!zoffset", byteswap)
     logger.info("Shifts in ROFF file %s %s %s", xshift, yshift, zshift)
 
-    xscale = _rkwquery(fhandle, kwords, "scale!xscale", byteswap)
-    yscale = _rkwquery(fhandle, kwords, "scale!yscale", byteswap)
-    zscale = _rkwquery(fhandle, kwords, "scale!zscale", byteswap)
+    xscale = _rkwquery(gfile, kwords, "scale!xscale", byteswap)
+    yscale = _rkwquery(gfile, kwords, "scale!yscale", byteswap)
+    zscale = _rkwquery(gfile, kwords, "scale!zscale", byteswap)
     logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)
 
-    subs = _rkwxlist(fhandle, kwords, "subgrids!nLayers", byteswap, strict=False)
+    subs = _rkwxlist(gfile, kwords, "subgrids!nLayers", byteswap, strict=False)
     if subs is not None and subs.size > 1:
         subs = subs.tolist()  # from numpy array to list
         nsubs = len(subs)
@@ -78,10 +73,10 @@ def _import_roff(self, fhandle):
         self._subgrids = None
 
     # get the pointers to the arrays
-    p_cornerlines_v = _rkwxvec(fhandle, kwords, "cornerLines!data", byteswap)
-    p_zvalues_v = _rkwxvec(fhandle, kwords, "zvalues!data", byteswap)
-    p_splitenz_v = _rkwxvec(fhandle, kwords, "zvalues!splitEnz", byteswap)
-    p_act_v = _rkwxvec(fhandle, kwords, "active!data", byteswap, strict=False)
+    p_cornerlines_v = _rkwxvec(gfile, kwords, "cornerLines!data", byteswap)
+    p_zvalues_v = _rkwxvec(gfile, kwords, "zvalues!data", byteswap)
+    p_splitenz_v = _rkwxvec(gfile, kwords, "zvalues!splitEnz", byteswap)
+    p_act_v = _rkwxvec(gfile, kwords, "active!data", byteswap, strict=False)
 
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
@@ -142,5 +137,3 @@ def _import_roff(self, fhandle):
     _cxtgeo.delete_intarray(p_act_v)
 
     logger.debug("Calling C routines, DONE")
-
-    # xsys.close_fhandle(fhandle)

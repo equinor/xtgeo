@@ -28,12 +28,10 @@ logger = xtg.functionlogger(__name__)
 def import_ecl_egrid(self, gfile):
     """Import, private to this routine."""
 
-    eclfile = xtgeo._XTGeoCFile(gfile)
-
     # scan file for property
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        eclfile.fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        gfile, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
     for name in ("COORD", "ZCORN", "ACTNUM", "MAPAXES"):
@@ -44,7 +42,7 @@ def import_ecl_egrid(self, gfile):
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == "FILEHEAD":
             # read FILEHEAD record:
-            filehead = eclbin_record(eclfile.fhandle, "FILEHEAD", kwlen, kwtype, kwbyte)
+            filehead = eclbin_record(gfile, "FILEHEAD", kwlen, kwtype, kwbyte)
             dualp = filehead[5].tolist()
             logger.info("Dual porosity flag is %s", dualp)
             if dualp == 1:
@@ -55,7 +53,7 @@ def import_ecl_egrid(self, gfile):
                 self._dualperm = True
         elif kwname == "GRIDHEAD":
             # read GRIDHEAD record:
-            gridhead = eclbin_record(eclfile.fhandle, "GRIDHEAD", kwlen, kwtype, kwbyte)
+            gridhead = eclbin_record(gfile, "GRIDHEAD", kwlen, kwtype, kwbyte)
             ncol, nrow, nlay = gridhead[1:4].tolist()
             logger.info("%s %s %s", ncol, nrow, nlay)
         elif kwname in ("COORD", "ZCORN", "ACTNUM"):
@@ -81,8 +79,9 @@ def import_ecl_egrid(self, gfile):
     if self._dualporo:
         option = 1
 
+    cfhandle = gfile.get_cfhandle()
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        eclfile.fhandle,
+        cfhandle,
         self._ncol,
         self._nrow,
         self._nlay,
@@ -97,6 +96,8 @@ def import_ecl_egrid(self, gfile):
         option,
     )
 
+    gfile.cfclose()
+
     logger.info("Reading ECL EGRID (C code) done")
     if ier == -1:
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
@@ -110,7 +111,6 @@ def import_ecl_egrid(self, gfile):
         acttmp.values[acttmp.values >= 1] = 1
         self.set_actnum(acttmp)
 
-    eclfile.close()
     logger.info("File is closed")
 
 
@@ -124,6 +124,10 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     ecl_init = groot + ".INIT"
     ecl_rsta = groot + ".UNRST"
 
+    ecl_grid = xtgeo._XTGeoFile(ecl_grid)
+    ecl_init = xtgeo._XTGeoFile(ecl_init)
+    ecl_rsta = xtgeo._XTGeoFile(ecl_rsta)
+
     # import the grid
     import_ecl_egrid(self, ecl_grid)
 
@@ -132,13 +136,17 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     # import the init properties unless list is empty
     if initprops:
         grdprops.from_file(
-            ecl_init, names=initprops, fformat="init", dates=None, grid=self
+            ecl_init.name, names=initprops, fformat="init", dates=None, grid=self
         )
 
     # import the restart properties for dates unless lists are empty
     if restartprops and restartdates:
         grdprops.from_file(
-            ecl_rsta, names=restartprops, fformat="unrst", dates=restartdates, grid=self
+            ecl_rsta.name,
+            names=restartprops,
+            fformat="unrst",
+            dates=restartdates,
+            grid=self,
         )
 
     self.gridprops = grdprops
@@ -154,7 +162,7 @@ def import_ecl_grdecl(self, gfile):
     fds, tmpfile = mkstemp(prefix="tmpxtgeo")
     os.close(fds)
 
-    with open(gfile) as oldfile, open(tmpfile, "w") as newfile:
+    with open(gfile.name) as oldfile, open(tmpfile, "w") as newfile:
         for line in oldfile:
             if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
                 newfile.write(line)
@@ -193,10 +201,10 @@ def import_ecl_grdecl(self, gfile):
 
     ptr_num_act = _cxtgeo.new_intpointer()
 
-    eclfile = xtgeo._XTGeoCFile(tmpfile)
+    cfhandle = gfile.get_cfhandle()
 
     _cxtgeo.grd3d_import_grdecl(
-        eclfile.fhandle,
+        cfhandle,
         self._ncol,
         self._nrow,
         self._nlay,
@@ -207,7 +215,7 @@ def import_ecl_grdecl(self, gfile):
     )
 
     # close and remove tmpfile
-    eclfile.close()
+    gfile.cfclose()
     os.remove(tmpfile)
 
     nact = _cxtgeo.intpointer_value(ptr_num_act)
@@ -222,18 +230,14 @@ def import_ecl_grdecl(self, gfile):
 def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout"""
 
-    local_fhandle = False
-    fhandle = gfile
-    if isinstance(gfile, str):
-        local_fhandle = True
-        gfile = xtgeo._XTGeoCFile(gfile)
-        fhandle = gfile.fhandle
+    cfhandle = gfile.get_cfhandle()
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        gfile, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
+
     bpos = {}
     needkwlist = ["SPECGRID", "COORD", "ZCORN", "ACTNUM"]
     optkwlist = ["MAPAXES"]
@@ -244,7 +248,7 @@ def import_ecl_bgrdecl(self, gfile):
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == "SPECGRID":
             # read grid geometry record:
-            specgrid = eclbin_record(fhandle, "SPECGRID", kwlen, kwtype, kwbyte)
+            specgrid = eclbin_record(gfile, "SPECGRID", kwlen, kwtype, kwbyte)
             ncol, nrow, nlay = specgrid[0:3].tolist()
             logger.info("%s %s %s", ncol, nrow, nlay)
         elif kwname in needkwlist:
@@ -268,7 +272,7 @@ def import_ecl_bgrdecl(self, gfile):
     p_nact = _cxtgeo.new_longpointer()
 
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        fhandle,
+        cfhandle,
         self._ncol,
         self._nrow,
         self._nlay,
@@ -288,5 +292,7 @@ def import_ecl_bgrdecl(self, gfile):
 
     self._nactive = _cxtgeo.longpointer_value(p_nact)
 
-    if local_fhandle:
-        gfile.close(cond=local_fhandle)
+    # if local_fhandle:
+    #     gfile.close(cond=local_fhandle)
+    if gfile.cfclose():
+        logger.info("Closed SWIG C file")

@@ -8,6 +8,12 @@ from __future__ import print_function
 import os
 import timeit
 
+# this will for modules be `from xtgeo import pathlib`:
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
 try:
     from ._theversion import version
 
@@ -92,7 +98,7 @@ from xtgeo.common.exceptions import GridNotFoundError
 from xtgeo.common.exceptions import BlockedWellsNotFoundError
 
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
-from xtgeo.common.sys import _XTGeoCFile
+from xtgeo.common.sys import _XTGeoFile
 
 _xprint("Import common... done")
 

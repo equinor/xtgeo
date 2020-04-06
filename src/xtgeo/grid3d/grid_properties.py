@@ -4,9 +4,9 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-import os.path
 import warnings
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
 
@@ -196,7 +196,6 @@ class GridProperties(Grid3D):
     def get_ijk(
         self, names=("IX", "JY", "KZ"), zerobased=False, asmasked=False, mask=None
     ):
-
         """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
         J counter, K counter.
 
@@ -260,7 +259,7 @@ class GridProperties(Grid3D):
         (number of total or active cells in the grid) will be read
 
         Args:
-            pfile (str): Name of file with properties
+            pfile (str or Path): Name of file with properties
             fformat (str): roff/init/unrst
             names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
             dates: list of dates on YYYYMMDD format, for restart files
@@ -280,8 +279,10 @@ class GridProperties(Grid3D):
 
         """
 
+        pfile = xtgeo._XTGeoFile(pfile, mode="rb")
+
         # work on file extension
-        froot, fext = os.path.splitext(pfile)
+        froot, fext = pfile.splitext(lower=True)
         if not fext:
             # file extension is missing, guess from format
             logger.info("File extension missing; guessing...")
@@ -298,11 +299,7 @@ class GridProperties(Grid3D):
 
         logger.info("File name to be used is %s", pfile)
 
-        if os.path.isfile(pfile):
-            logger.info("File %s exists OK", pfile)
-        else:
-            logger.warning("No such file: %s", pfile)
-            raise IOError("No such file: {}".format(pfile))
+        pfile.check_file(raiseerror=OSError)
 
         if fformat.lower() == "roff":
             lst = list()
@@ -315,7 +312,7 @@ class GridProperties(Grid3D):
                 self, pfile, dates=dates, grid=grid, names=names, namestyle=namestyle
             )
         else:
-            raise IOError("Invalid file format")
+            raise OSError("Invalid file format")
 
     def to_file(self, pfile, fformat="roff"):
         """Export grid property to file. NB not working!
@@ -414,6 +411,8 @@ class GridProperties(Grid3D):
 
         """
 
+        pfile = xtgeo._XTGeoFile(pfile)
+
         dlist = utils.scan_keywords(
             pfile, fformat=fformat, maxkeys=maxkeys, dataframe=dataframe, dates=dates
         )
@@ -439,6 +438,8 @@ class GridProperties(Grid3D):
             >>> dlist = props.scan_dates('ECL.UNRST')
 
         """
+        pfile = xtgeo._XTGeoFile(pfile)
+
         logger.info("Format supported as default is %s", fformat)
 
         dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)

@@ -17,9 +17,10 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 # self is the XTGeo GridProperty instance
+# pragma: no cover
 
 
-def import_prop_roxapi(self, project, gname, pname, realisation):
+def import_prop_roxapi(self, project, gname, pname, realisation):  # pragma: no cover
     """Import a Property via ROXAR API spec."""
 
     logger.info("Opening RMS project ...")
@@ -30,7 +31,7 @@ def import_prop_roxapi(self, project, gname, pname, realisation):
     rox.safe_close()
 
 
-def _get_gridprop_data(self, rox, gname, pname, realisation):
+def _get_gridprop_data(self, rox, gname, pname, realisation):  # pragma: no cover
     # inside a RMS project
 
     logger.info("Realisation key not applied yet: %s", realisation)
@@ -54,7 +55,9 @@ def _get_gridprop_data(self, rox, gname, pname, realisation):
         raise RuntimeError(keyerror)
 
 
-def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop, realisation):
+def _convert_to_xtgeo_prop(
+    self, rox, pname, roxgrid, roxprop, realisation
+):  # pragma: no cover
     """Collect numpy array and convert to XTGeo fmt"""
     indexer = roxgrid.get_grid().grid_indexer
     self._ncol, self._nrow, self._nlay = indexer.dimensions
@@ -95,7 +98,9 @@ def _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop, realisation):
     self._name = pname
 
 
-def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisation=0):
+def export_prop_roxapi(
+    self, project, gname, pname, saveproject=False, realisation=0
+):  # pragma: no cover
     """Export (i.e. store) to a Property in RMS via ROXAR API spec."""
 
     rox = xtgeo.RoxUtils(project, readonly=False)
@@ -118,7 +123,7 @@ def export_prop_roxapi(self, project, gname, pname, saveproject=False, realisati
     rox.safe_close()
 
 
-def _store_in_roxar(self, pname, roxgrid, realisation):
+def _store_in_roxar(self, pname, roxgrid, realisation):  # pragma: no cover
 
     indexer = roxgrid.get_grid().grid_indexer
 
@@ -160,7 +165,7 @@ def _store_in_roxar(self, pname, roxgrid, realisation):
         rprop.code_names = self.codes.copy()
 
 
-def _fix_codes(codes):
+def _fix_codes(codes):  # pragma: no cover
     """Roxar can provide a code list with empty strings; fix this issue here"""
 
     newcodes = {}

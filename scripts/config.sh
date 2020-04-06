@@ -23,9 +23,17 @@ function run_tests {
     fi
     git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
     pip install pytest
+    pip install pytest-cov
     export TRAVISRUN=true
     echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
-    pytest tests --disable-warnings
+
+    # codecov
+    if [[ $COVERAGE ]]; then
+        pytest tests --disable-warnings --cov
+    else
+        pytest tests --disable-warnings
+    fi
+    ls -l
 }

@@ -4,7 +4,6 @@
 from __future__ import print_function, absolute_import
 
 import abc
-import os.path
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -15,7 +14,6 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, XTGDescription
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
-import xtgeo.common.sys as xtgeosys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -112,7 +110,7 @@ class XYZ(object):
         * 'guess': Try to choose file format based on extension
 
         Args:
-            pfile (str): Name of file
+            pfile (str): Name of file or pathlib.Path instance
             fformat (str): File format, see list above
 
         Returns:
@@ -123,34 +121,33 @@ class XYZ(object):
 
         """
 
-        logger.info("Reading from file %s...", pfile)
+        pfile = xtgeo._XTGeoFile(pfile)
 
-        if not os.path.isfile(pfile):
-            msg = "Does file exist? [{}]".format(pfile)
-            logger.critical(msg)
-            raise IOError(msg)
+        logger.info("Reading from file %s...", pfile.name)
 
-        froot, fext = os.path.splitext(pfile)
+        pfile.check_file(raiseerror=OSError)
+
+        froot, fext = pfile.splitext(lower=True)
         if fformat == "guess":
             if not fext:
                 logger.critical("File extension missing. STOP")
                 raise SystemExit
 
-            fformat = fext.lower().replace(".", "")
+            fformat = fext
 
         if fformat in ["xyz", "poi", "pol"]:
-            _xyz_io.import_xyz(self, pfile)
+            _xyz_io.import_xyz(self, pfile.name)
         elif fformat == "zmap":
-            _xyz_io.import_zmap(self, pfile)
+            _xyz_io.import_zmap(self, pfile.name)
         elif fformat in ("rms_attr", "rmsattr"):
-            _xyz_io.import_rms_attr(self, pfile)
+            _xyz_io.import_rms_attr(self, pfile.name)
         else:
             logger.error("Invalid file format (not supported): %s", fformat)
             raise SystemExit
 
-        logger.info("Reading from file %s... done", pfile)
+        logger.info("Reading from file %s... done", pfile.name)
         logger.debug("Dataframe head:\n%s", self._df.head())
-        self._filesrc = pfile
+        self._filesrc = pfile.name
 
         return self
 
@@ -225,7 +222,9 @@ class XYZ(object):
             KeyError if pfilter is set and key(s) are invalid
 
         """
-        xtgeosys.check_folder(pfile, raiseerror=OSError)
+
+        pfile = xtgeo._XTGeoFile(pfile)
+        pfile.check_folder(raiseerror=OSError)
 
         if self.dataframe is None:
             ncount = 0
@@ -236,16 +235,16 @@ class XYZ(object):
             # NB! reuse export_rms_attr function, but no attributes
             # are possible
             ncount = _xyz_io.export_rms_attr(
-                self, pfile, attributes=False, pfilter=pfilter
+                self, pfile.name, attributes=False, pfilter=pfilter
             )
 
         elif fformat == "rms_attr":
             ncount = _xyz_io.export_rms_attr(
-                self, pfile, attributes=attributes, pfilter=pfilter
+                self, pfile.name, attributes=attributes, pfilter=pfilter
             )
         elif fformat == "rms_wellpicks":
             ncount = _xyz_io.export_rms_wpicks(
-                self, pfile, hcolumn, wcolumn, mdcolumn=mdcolumn
+                self, pfile.name, hcolumn, wcolumn, mdcolumn=mdcolumn
             )
 
         if ncount is None:

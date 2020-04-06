@@ -20,26 +20,20 @@ def scan_keywords(pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=
     Cf. grid_properties.py description
     """
 
-    local_fhandle = False
-    fhandle = pfile
-    if isinstance(pfile, str):
-        pfile = xtgeo._XTGeoCFile(pfile)
-        local_fhandle = True
-        fhandle = pfile.fhandle
+    pfile.get_cfhandle()  # just to keep cfhanclecounter correct
 
     if fformat == "xecl":
         if dates:
             data = _scan_ecl_keywords_w_dates(
-                fhandle, maxkeys=maxkeys, dataframe=dataframe
+                pfile, maxkeys=maxkeys, dataframe=dataframe
             )
         else:
-            data = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=dataframe)
+            data = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
 
     else:
-        data = _scan_roff_keywords(fhandle, maxkeys=maxkeys, dataframe=dataframe)
+        data = _scan_roff_keywords(pfile, maxkeys=maxkeys, dataframe=dataframe)
 
-    if local_fhandle:
-        pfile.close(cond=local_fhandle)
+    pfile.cfclose()
 
     return data
 
@@ -55,17 +49,11 @@ def scan_dates(pfile, maxdates=1000, dataframe=False):
     mon = _cxtgeo.new_intarray(maxdates)
     yer = _cxtgeo.new_intarray(maxdates)
 
-    local_fhandle = False
-    fhandle = pfile
-    if isinstance(pfile, str):
-        pfile = xtgeo._XTGeoCFile(pfile)
-        fhandle = pfile.fhandle
-        local_fhandle = True
+    cfhandle = pfile.get_cfhandle()
 
-    nstat = _cxtgeo.grd3d_ecl_tsteps(fhandle, seq, day, mon, yer, maxdates)
+    nstat = _cxtgeo.grd3d_ecl_tsteps(cfhandle, seq, day, mon, yer, maxdates)
 
-    if local_fhandle:
-        pfile.close(cond=local_fhandle)
+    pfile.cfclose()
 
     sq = []
     da = []
@@ -90,10 +78,7 @@ def scan_dates(pfile, maxdates=1000, dataframe=False):
     return zdates
 
 
-def _scan_ecl_keywords(fhandle, maxkeys=100000, dataframe=False):
-
-    # In case fhandle is not a file name but a swig pointer to a file handle,
-    # the file must not be closed
+def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
 
     ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
     if maxkeys > ultramax:
@@ -103,9 +88,13 @@ def _scan_ecl_keywords(fhandle, maxkeys=100000, dataframe=False):
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
+    cfhandle = pfile.get_cfhandle()
+
     nkeys, keywords = _cxtgeo.grd3d_scan_eclbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys
+        cfhandle, rectypes, reclens, recstarts, maxkeys
     )
+
+    pfile.cfclose()
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")
@@ -143,14 +132,13 @@ def _scan_ecl_keywords(fhandle, maxkeys=100000, dataframe=False):
     return result
 
 
-def _scan_ecl_keywords_w_dates(fhandle, maxkeys=100000, dataframe=False):
-
+def _scan_ecl_keywords_w_dates(pfile, maxkeys=100000, dataframe=False):
     """Add a date column to the keyword"""
 
     logger.info("Scan keywords with dates...")
-    xkeys = _scan_ecl_keywords(fhandle, maxkeys=maxkeys, dataframe=False)
+    xkeys = _scan_ecl_keywords(pfile, maxkeys=maxkeys, dataframe=False)
 
-    xdates = scan_dates(fhandle, maxdates=maxkeys, dataframe=False)
+    xdates = scan_dates(pfile, maxdates=maxkeys, dataframe=False)
 
     result = []
     # now merge these two:
@@ -173,10 +161,7 @@ def _scan_ecl_keywords_w_dates(fhandle, maxkeys=100000, dataframe=False):
     return result
 
 
-def _scan_roff_keywords(fhandle, maxkeys=100000, dataframe=False):
-
-    # In case fhandle is not a file name but a swig pointer to a file handle,
-    # the file must not be closed
+def _scan_roff_keywords(pfile, maxkeys=100000, dataframe=False):
 
     ultramax = int(1000000 / 9)  # cf *swig_bnd_char_1m in cxtgeo.i
     if maxkeys > ultramax:
@@ -186,9 +171,13 @@ def _scan_roff_keywords(fhandle, maxkeys=100000, dataframe=False):
     reclens = _cxtgeo.new_longarray(maxkeys)
     recstarts = _cxtgeo.new_longarray(maxkeys)
 
+    cfhandle = pfile.get_cfhandle()
+
     nkeys, _tmp1, keywords = _cxtgeo.grd3d_scan_roffbinary(
-        fhandle, rectypes, reclens, recstarts, maxkeys
+        cfhandle, rectypes, reclens, recstarts, maxkeys
     )
+
+    pfile.cfclose()
 
     keywords = keywords.replace(" ", "")
     keywords = keywords.split("|")

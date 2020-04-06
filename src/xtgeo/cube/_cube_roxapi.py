@@ -13,7 +13,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_cube_roxapi(self, project, name, folder=None):
+def import_cube_roxapi(self, project, name, folder=None):  # pragma: no cover
     """Import (transfer) a Cube via ROXAR API container to XTGeo.
 
     .. versionadded:: 2.1.0
@@ -25,7 +25,7 @@ def import_cube_roxapi(self, project, name, folder=None):
     _roxapi_import_cube(self, proj, name, folder)
 
 
-def _roxapi_import_cube(self, proj, name, folder):
+def _roxapi_import_cube(self, proj, name, folder):  # pragma: no cover
     """Short summary.
 
     Args:
@@ -52,7 +52,7 @@ def _roxapi_import_cube(self, proj, name, folder):
         raise
 
 
-def _roxapi_cube_to_xtgeo(self, rcube):
+def _roxapi_cube_to_xtgeo(self, rcube):  # pragma: no cover
     """Tranforming cube from ROXAPI to XTGeo object."""
     logger.info("Cube from roxapi to xtgeo...")
     self._xori, self._yori = rcube.origin
@@ -87,7 +87,7 @@ def _roxapi_cube_to_xtgeo(self, rcube):
 
 def export_cube_roxapi(
     self, project, name, folder=None, domain="time", compression=("wavelet", 5)
-):
+):  # pragma: no cover
     """Export (store) a Seismic cube to RMS via ROXAR API spec."""
     rox = RoxUtils(project, readonly=False)
 
@@ -100,7 +100,7 @@ def export_cube_roxapi(
 
 def _roxapi_export_cube(
     self, proj, name, folder=None, domain="time", compression=("wavelet", 5)
-):
+):  # pragma: no cover
 
     try:
         import roxar

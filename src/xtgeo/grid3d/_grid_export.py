@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
@@ -11,6 +12,9 @@ logger = xtg.functionlogger(__name__)
 
 def export_roff(self, gfile, option):
     """Export grid to ROFF format (binary)"""
+
+    gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+    gfile.check_folder(raiseerror=OSError)
 
     logger.debug("Export to ROFF...")
 
@@ -42,11 +46,11 @@ def export_roff(self, gfile, option):
         self._zcornsv,
         self._actnumsv,
         subgrd_v,
-        gfile,
+        gfile.name,
     )
 
     # end tag
-    _cxtgeo.grd3d_export_roff_end(option, gfile)
+    _cxtgeo.grd3d_export_roff_end(option, gfile.name)
 
 
 def export_grdecl(self, gfile, mode):

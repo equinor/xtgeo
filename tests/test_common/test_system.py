@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
 
 import pytest
 import xtgeo
+from xtgeo import pathlib
 import test_common.test_xtg as tsetup
 
 TRAVIS = False
@@ -26,12 +23,12 @@ TESTNOEXISTFOLDER = "../xtgeo-testdata/3dgrids/noreek/NOSUCH.EGRID"
 def test_xtgeocfile():
     """Test basic system file io etc functions"""
 
-    gfile = xtgeo._XTGeoCFile(TESTFILE)
-    xfile = xtgeo._XTGeoCFile(TESTNOEXISTFILE)
-    yfile = xtgeo._XTGeoCFile(TESTNOEXISTFOLDER)
-    gfolder = xtgeo._XTGeoCFile(TESTFOLDER)
+    gfile = xtgeo._XTGeoFile(TESTFILE)
+    xfile = xtgeo._XTGeoFile(TESTNOEXISTFILE)
+    yfile = xtgeo._XTGeoFile(TESTNOEXISTFOLDER)
+    gfolder = xtgeo._XTGeoFile(TESTFOLDER)
 
-    assert isinstance(gfile, xtgeo._XTGeoCFile)
+    assert isinstance(gfile, xtgeo._XTGeoFile)
 
     assert isinstance(gfile._file, pathlib.Path)
 
@@ -50,22 +47,41 @@ def test_xtgeocfile():
     assert xfile.check_file() is False
     assert yfile.check_file() is False
 
-    with pytest.raises(IOError):
-        xfile.check_file(raiseerror=IOError)
+    with pytest.raises(OSError):
+        xfile.check_file(raiseerror=OSError)
 
     assert gfile.check_folder() is True
     assert xfile.check_folder() is True
     assert yfile.check_folder() is False
-    with pytest.raises(IOError):
-        yfile.check_folder(raiseerror=IOError)
+    with pytest.raises(OSError):
+        yfile.check_folder(raiseerror=OSError)
 
-    assert "Swig" in str(gfile.fhandle)
-    assert gfile.close() is True
+    assert "Swig" in str(gfile.get_cfhandle())
+    assert gfile.cfclose() is True
 
     # extensions:
     stem, suff = gfile.splitext(lower=False)
     assert stem == "REEK"
     assert suff == "EGRID"
+
+
+@tsetup.skipifmac
+@tsetup.skipifwindows
+def test_xtgeocfile_fhandle():
+    """Test in particular C handle SWIG system"""
+
+    gfile = xtgeo._XTGeoFile(TESTFILE)
+
+    chandle1 = gfile.get_cfhandle()
+    chandle2 = gfile.get_cfhandle()
+    assert gfile._cfhandlecount == 2
+    assert chandle1 == chandle2
+    assert gfile.cfclose() is False
+    assert gfile.cfclose() is True
+
+    # try to close a cfhandle that does not exist
+    with pytest.raises(RuntimeError):
+        gfile.cfclose()
 
 
 # @tsetup.skipifwindows
@@ -75,9 +91,9 @@ def test_xtgeocfile():
 #     with open(TESTFILE, "rb") as fin:
 #         stream = io.BytesIO(fin.read())
 
-#     gfile = xtgeo._XTGeoCFile(stream)
+#     gfile = xtgeo._XTGeoFile(stream)
 
-#     assert isinstance(gfile, xtgeo._XTGeoCFile)
+#     assert isinstance(gfile, xtgeo._XTGeoFile)
 
 #     assert "Swig" in str(gfile.fhandle)
 

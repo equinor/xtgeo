@@ -19,8 +19,7 @@ m2r
 bandit
 numpy==1.10.4; python_version == "3.4"
 numpy==1.13.3; python_version >= "3.5" and python_version < "3.7"
-numpy==1.16.0; python_version >= "3.7" or python_version == "2.7" and platform_system == "Linux"
-numpy==1.16.4; python_version >= "3.7" or python_version == "2.7" or platform_system != "Linux"
+numpy>=1.16.0; python_version >= "3.7" or python_version == "2.7"
 pandas>=0.21.0; python_version != "3.4"
 pandas==0.20.3; python_version == "3.4"
 segyio==1.8.6; python_version == "3.4"
@@ -29,7 +28,8 @@ matplotlib>=1.5
 scipy>=0.17
 shapely>=1.6.2; python_version < "3.8"
 shapely==1.7a2; python_version == "3.8"
-black
+black; python_version >= "3.6"
 autopep8
 pylint
 pytest>=2.9.2
+pytest-cov

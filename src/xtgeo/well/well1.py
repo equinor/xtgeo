@@ -4,7 +4,6 @@
 from __future__ import print_function, absolute_import
 
 import sys
-import os.path
 from copy import deepcopy
 from distutils.version import StrictVersion
 
@@ -14,7 +13,6 @@ import pandas as pd
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.constants as const
-import xtgeo.common.sys as xtgeosys
 
 from . import _wellmarkers
 from . import _well_io
@@ -44,7 +42,7 @@ def well_from_file(
     """Make an instance of a Well directly from file import.
 
     Args:
-        mfile (str): Name of file
+        mfile (str): File path, either a string or a pathlib.Path instance
         fformat (str): See :meth:`Well.from_file`
         mdlogname (str): See :meth:`Well.from_file`
         zonelogname (str): See :meth:`Well.from_file`
@@ -415,7 +413,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """Import well from file.
 
         Args:
-            wfile (str): Name of file
+            wfile (str): Name of file as string or pathlib.Path
             fformat (str): File format, rms_ascii (rms well) is
                 currently supported and default format.
             mdlogname (str): Name of measured depth log, if any
@@ -442,15 +440,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionchanged:: 2.1.0 ``strict`` now defaults to False
         """
 
-        if not os.path.isfile(wfile):
-            msg = "Does file exist? {}".format(wfile)
-            logger.critical(msg)
-            raise IOError(msg)
+        wfile = xtgeo._XTGeoFile(wfile)
+
+        wfile.check_file(raiseerror=OSError)
 
         if fformat is None or fformat == "rms_ascii":
             _well_io.import_rms_ascii(
                 self,
-                wfile,
+                wfile.name,
                 mdlogname=mdlogname,
                 zonelogname=zonelogname,
                 strict=strict,
@@ -461,7 +458,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             logger.error("Invalid file format")
 
         self._ensure_consistency()
-        self._filesrc = wfile
+        self._filesrc = wfile.name
         return self
 
     def to_file(self, wfile, fformat="rms_ascii"):
@@ -469,25 +466,28 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Export well to file
 
         Args:
-            wfile (str): Name of file
-            fformat (str): File format
+            wfile (str): Name of file or pathlib.Path instance
+            fformat (str): File format ('rms_ascii'/'rmswell', 'hdf5')
 
         Example::
 
-            >>> x = Well()
+            xwell = Well("somefile.rmswell")
+            xwell.dataframe['PHIT'] += 0.1
+            xwell.to_file("somefile_copy.rmswell")
 
         """
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb")
 
-        xtgeosys.check_folder(wfile, raiseerror=OSError)
+        wfile.check_folder(raiseerror=OSError)
 
         self._ensure_consistency()
 
-        if fformat is None or fformat == "rms_ascii":
-            _well_io.export_rms_ascii(self, wfile)
+        if fformat in (None, "rms_ascii", "rmswell"):
+            _well_io.export_rms_ascii(self, wfile.name)
 
         elif fformat == "hdf5":
             with pd.HDFStore(wfile, "a", complevel=9, complib="zlib") as store:
-                logger.info("export to HDF5 %s", wfile)
+                logger.info("export to HDF5 %s", wfile.name)
                 store[self._wname] = self._df
                 meta = dict()
                 meta["name"] = self._wname

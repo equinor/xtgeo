@@ -26,7 +26,9 @@ logger = xtg.functionlogger(__name__)
 # =============================================================================
 
 
-def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
+def import_grid_roxapi(
+    self, projectname, gname, realisation, dimonly, info
+):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
 
     rox = RoxUtils(projectname, readonly=True)
@@ -59,7 +61,7 @@ def import_grid_roxapi(self, projectname, gname, realisation, dimonly, info):
     rox.safe_close()
 
 
-def _display_roxapi_grid_info(rox, roxgrid):
+def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
     # in prep!
     """Push info to screen (mostly for debugging)"""
     cpgeom = False
@@ -85,7 +87,7 @@ def _display_roxapi_grid_info(rox, roxgrid):
                 xtg.say("Depths\n{}".format(zco))
 
 
-def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):
+def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):  # pragma: no cover
     """Convert from RMS API to XTGeo API"""
 
     # pylint: disable=too-many-statements
@@ -183,7 +185,9 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):
 # =============================================================================
 
 
-def export_grid_roxapi(self, projectname, gname, realisation, info=False, method="cpg"):
+def export_grid_roxapi(
+    self, projectname, gname, realisation, info=False, method="cpg"
+):  # pragma: no cover
     """Export (i.e. store in RMS) via ROXAR API spec.
 
     Using method 'cpg' means that the CPG method is applied (from ROXAPI 1.3).
@@ -218,7 +222,9 @@ def export_grid_roxapi(self, projectname, gname, realisation, info=False, method
     rox.safe_close()
 
 
-def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
+def _export_grid_cornerpoint_roxapi(
+    self, rox, gname, realisation, info
+):  # pragma: no cover
     """Convert xtgeo geometry to pillar spec in ROXAPI and store"""
 
     try:
@@ -279,7 +285,7 @@ def _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info):
     grid.set_geometry(geom)
 
 
-def _export_grid_viaroff_roxapi(self, rox, gname, realisation):
+def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover
     """Convert xtgeo geometry to internal RMS via i/o ROFF tricks"""
 
     logger.info("Realisation is %s", realisation)

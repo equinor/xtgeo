@@ -2,9 +2,9 @@
 
 from __future__ import print_function, absolute_import
 
+import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-import xtgeo.common.sys as xtgeosys
 from xtgeo.grid3d import _gridprop_lowlevel
 
 xtg = XTGeoDialog()
@@ -16,7 +16,8 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
     """Export the grid property to file."""
     logger.debug("Export property to file %s", pfile)
 
-    xtgeosys.check_folder(pfile, raiseerror=OSError)
+    fobj = xtgeo._XTGeoFile(pfile, mode="rb")
+    fobj.check_folder(raiseerror=OSError)
 
     if name is None:
         name = self.name
@@ -31,13 +32,13 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
         append = False
         last = True
 
-        export_roff(self, pfile, name, append=append, last=last, binary=binary)
+        export_roff(self, fobj.name, name, append=append, last=last, binary=binary)
 
     elif fformat == "grdecl":
-        export_grdecl(self, pfile, name, append=append, binary=False, dtype=dtype)
+        export_grdecl(self, fobj.name, name, append=append, binary=False, dtype=dtype)
 
     elif fformat == "bgrdecl":
-        export_grdecl(self, pfile, name, append=append, binary=True, dtype=dtype)
+        export_grdecl(self, fobj.name, name, append=append, binary=True, dtype=dtype)
 
     else:
         raise ValueError("Cannot export, invalid fformat: {}".format(fformat))

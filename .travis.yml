@@ -58,6 +58,7 @@ matrix:
         - MB_PYTHON_VERSION=3.8
         - MB_ML_VER=2010
         - TEST_DEPENDS="pytest segyio==1.9.0"
+        - COVERAGE=1
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.6
@@ -88,6 +89,7 @@ install:
     fi
   - pip install pip==19.3.1
   - pip install bandit
+  - pip install codecov
   - build_wheel $REPO_DIR $PLAT
 
 before_script:
@@ -99,6 +101,7 @@ script:
 
 after_success:
   - ls -l ${TRAVIS_BUILD_DIR}/dist
+  - ls -l
 
 before_deploy:
   - pip install numpy

@@ -96,7 +96,6 @@ def gridproperty_from_file(
 
 
 def gridproperty_from_roxar(project, gname, pname, realisation=0):
-
     """Make a GridProperty instance directly inside RMS.
 
     For arguments, see :func:`GridProperty.from_roxar()`
@@ -596,6 +595,8 @@ class GridProperty(Grid3D):
         .. versionchanged:: 2.8.0 Added gridlink option, default is True
         """
 
+        pfile = xtgeo._XTGeoFile(pfile, mode="rb")
+
         obj = _gridprop_import.from_file(
             self,
             pfile,
@@ -616,7 +617,7 @@ class GridProperty(Grid3D):
         """Export the grid property to file.
 
         Args:
-            pfile (str): File name to export to
+            pfile (str or Path): File name or pathlib.Path to export to
             fformat (str): The file format to be used. Default is
                 roff binary , else roff_ascii/grdecl/bgrdecl
             name (str): If provided, will explicitly give property name;
@@ -645,7 +646,6 @@ class GridProperty(Grid3D):
         )
 
     def from_roxar(self, projectname, gname, pname, realisation=0):
-
         """Import grid model property from RMS project, and makes an instance.
 
         Arguments:
@@ -664,7 +664,6 @@ class GridProperty(Grid3D):
         )
 
     def to_roxar(self, projectname, gname, pname, saveproject=False, realisation=0):
-
         """Store a grid model property into a RMS project.
 
         Arguments:
