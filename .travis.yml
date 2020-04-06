@@ -101,7 +101,7 @@ script:
 
 after_success:
   - ls -l ${TRAVIS_BUILD_DIR}/dist
-  - ls -l
+  - ls -la
 
 before_deploy:
   - pip install numpy
