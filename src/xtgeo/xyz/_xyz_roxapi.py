@@ -15,7 +15,9 @@ logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 
-def import_xyz_roxapi(self, project, name, category, stype, realisation, attributes):
+def import_xyz_roxapi(
+    self, project, name, category, stype, realisation, attributes
+):  # pragma: no cover
     """Import a Points or Polygons item via ROXAR API spec.
 
     'Import' here means transfer of data from Roxar API memory space to
@@ -38,7 +40,9 @@ def import_xyz_roxapi(self, project, name, category, stype, realisation, attribu
         _roxapi_import_xyz(self, rox.project, name, category, stype, realisation)
 
 
-def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
+def _roxapi_import_xyz_viafile(
+    self, rox, name, category, stype, realisation
+):  # pragma: no cover
 
     try:
         import roxar  # pylint: disable=import-outside-toplevel
@@ -70,7 +74,9 @@ def _roxapi_import_xyz_viafile(self, rox, name, category, stype, realisation):
         logger.error(kwe)
 
 
-def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
+def _roxapi_import_xyz(
+    self, proj, name, category, stype, realisation
+):  # pragma: no cover
     """From RMS to XTGeo"""
     self._name = name
 
@@ -90,7 +96,7 @@ def _roxapi_import_xyz(self, proj, name, category, stype, realisation):
         logger.error(kwe)
 
 
-def _roxapi_xyz_to_xtgeo(self, roxxyz):
+def _roxapi_xyz_to_xtgeo(self, roxxyz):  # pragma: no cover
     """Tranforming some XYZ from ROXAPI to XTGeo object."""
 
     # In ROXAPI, polygons is a list of numpies, while
@@ -123,7 +129,7 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):
 
 def export_xyz_roxapi(
     self, project, name, category, stype, pfilter, realisation, attributes
-):
+):  # pragma: no cover
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
 
     rox = RoxUtils(project)
@@ -151,7 +157,7 @@ def export_xyz_roxapi(
 
 def _roxapi_export_xyz_hpicks(
     self, rox, name, category, stype, realisation, attributes
-):
+):  # pragma: no cover
     """
     Export/store as RMS horizon picks; this is only valid if points belong to wells
     """
@@ -161,7 +167,7 @@ def _roxapi_export_xyz_hpicks(
 
 def _roxapi_export_xyz_viafile(
     self, rox, name, category, stype, pfilter, realisation, attributes
-):
+):  # pragma: no cover
     """Set points/polys within RMS with attributes, using file workaround"""
 
     logger.warning("Realisation %s not in use", realisation)
@@ -195,7 +201,9 @@ def _roxapi_export_xyz_viafile(
             )
 
 
-def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
+def _roxapi_export_xyz(
+    self, rox, name, category, stype, pfilter, realisation
+):  # pragma: no cover
 
     logger.warning("Realisation %s not in use", realisation)
 
@@ -239,7 +247,7 @@ def _roxapi_export_xyz(self, rox, name, category, stype, pfilter, realisation):
 
 def _check_category_etc(
     proj, name, category, stype, realisation, mode="get"
-):  # pylint: disable=too-many-branches
+):  # pylint: disable=too-many-branches  pragma: no cover
 
     """Helper to check if valid placeholder' whithin RMS."""
 
@@ -292,7 +300,7 @@ def _check_category_etc(
     return True
 
 
-def _get_roxitem(self, proj, name, category, stype, mode="set"):
+def _get_roxitem(self, proj, name, category, stype, mode="set"):  # pragma: no cover
     # pylint: disable=too-many-branches
     if stype == "horizons":
         roxxyz = proj.horizons[name][category]

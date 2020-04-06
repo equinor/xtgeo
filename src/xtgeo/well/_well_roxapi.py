@@ -16,7 +16,7 @@ logger = xtg.functionlogger(__name__)
 
 
 # Import from ROX api
-# -------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 def import_well_roxapi(
     self,
     project,
@@ -27,7 +27,7 @@ def import_well_roxapi(
     lognames_strict=False,
     inclmd=False,
     inclsurvey=False,
-):
+):  # pragma: no cover
     """Private function for loading project and ROXAPI well import"""
 
     rox = RoxUtils(project, readonly=True)
@@ -49,7 +49,7 @@ def import_well_roxapi(
 
 def _roxapi_import_well(
     self, rox, wname, traj, lrun, lognames, lognames_strict, inclmd, inclsurvey
-):
+):  # pragma: no cover
     """Private function for ROXAPI well import"""
 
     if wname in rox.project.wells:
@@ -93,7 +93,7 @@ def _roxapi_import_well(
     self._df = pd.DataFrame.from_dict(logs)
 
 
-def _roxapi_traj(self, roxtraj, roxlrun, inclmd, inclsurvey):
+def _roxapi_traj(self, roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no cover
     """Get trajectory in ROXAPI"""
     # compute trajectory
 
@@ -129,7 +129,7 @@ def _roxapi_traj(self, roxtraj, roxlrun, inclmd, inclsurvey):
     return logs
 
 
-def _get_roxlog(self, roxlrun, lname):
+def _get_roxlog(self, roxlrun, lname):  # pragma: no cover
     roxcurve = roxlrun.log_curves[lname]
     tmplog = roxcurve.get_values().astype(np.float64)
     tmplog = npma.filled(tmplog, fill_value=np.nan)

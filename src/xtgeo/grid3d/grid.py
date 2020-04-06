@@ -13,8 +13,6 @@ import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo
 from xtgeo.common import XTGDescription
-import xtgeo.common.sys as xtgeosys
-
 from ._grid3d import Grid3D
 
 from . import _grid_hybrid
@@ -68,7 +66,9 @@ def grid_from_file(gfile, fformat=None):
     return obj
 
 
-def grid_from_roxar(project, gname, realisation=0, dimensions_only=False, info=False):
+def grid_from_roxar(
+    project, gname, realisation=0, dimensions_only=False, info=False
+):  # pragma: no cover
     """Read a grid inside a RMS project and return a Grid() instance.
 
     Args:
@@ -606,7 +606,7 @@ class Grid(Grid3D):
 
     def from_roxar(
         self, projectname, gname, realisation=0, dimensions_only=False, info=False
-    ):
+    ):  # pragma: no cover
         """Import grid model geometry from RMS project, and makes an instance.
 
         Args:
@@ -629,7 +629,9 @@ class Grid(Grid3D):
         )
         self._tmp = {}
 
-    def to_roxar(self, projectname, gname, realisation=0, info=False, method="cpg"):
+    def to_roxar(
+        self, projectname, gname, realisation=0, info=False, method="cpg"
+    ):  # pragma: no cover
         """Export a grid to RMS via Roxar API (in prep.)"""
 
         _grid_roxapi.export_grid_roxapi(
