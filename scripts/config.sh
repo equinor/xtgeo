@@ -28,12 +28,15 @@ function run_tests {
     echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
-
+    # PYV=$(python -c 'import sys; v = sys.version_info; print("{}.{}".format(v[0], v[1]))')
+    PYV=$(python --version | cut -d" " -f2  | cut -d. -f1,2)
     # codecov
-    if [[ $COVERAGE ]]; then
+    if [[ $PYV == "3.8" ]]; then
         pytest tests --disable-warnings --cov
     else
         pytest tests --disable-warnings
     fi
-    ls -l
+    ls -la
+    pwd
+
 }
