@@ -13,7 +13,7 @@ logger = xtg.functionlogger(__name__)
 def export_roff(self, gfile, option):
     """Export grid to ROFF format (binary)"""
 
-    gfile = xtgeo._XTGeoCFile(gfile, mode="wb")
+    gfile = xtgeo._XTGeoFile(gfile, mode="wb")
     gfile.check_folder(raiseerror=IOError)
 
     logger.debug("Export to ROFF...")

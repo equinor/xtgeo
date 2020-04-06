@@ -46,12 +46,7 @@ def import_eclbinary(
     # if pfile is a file, then the file is opened/closed here; otherwise, the
     # "outer" routine must handle that
 
-    local_fhandle = False
-    fhandle = pfile
-    if isinstance(pfile, str):
-        local_fhandle = True
-        pfile = xtgeo._XTGeoCFile(pfile)
-        fhandle = pfile.fhandle
+    pfile.get_cfhandle()
 
     status = 0
 
@@ -61,12 +56,12 @@ def import_eclbinary(
     if _kwlist is None:
         logger.info("Make kwlist, scan keywords")
         kwlist = utils.scan_keywords(
-            fhandle, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+            pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
         )
     else:
         kwlist = _kwlist
 
-    metadata = _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid)
+    metadata = _import_eclbinary_meta(self, pfile, kwlist, etype, date, grid)
     date = metadata["DATE"]
 
     # Importing phases is a challenge. It depends on the fluid system and simulator; e.g
@@ -74,13 +69,13 @@ def import_eclbinary(
     # computed, if E100. E300 and IX may behave different...
 
     if name == "SGAS":
-        status = _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture)
+        status = _import_sgas(self, pfile, kwlist, metadata, grid, date, fracture)
 
     elif name == "SOIL":
-        status = _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture)
+        status = _import_soil(self, pfile, kwlist, metadata, grid, date, fracture)
 
     elif name == "SWAT":
-        status = _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture)
+        status = _import_swat(self, pfile, kwlist, metadata, grid, date, fracture)
 
     if status == 0:
         name = name.replace("{__}", "")
@@ -97,7 +92,7 @@ def import_eclbinary(
             _import_eclbinary_dualporo(
                 self,
                 grid,
-                fhandle,
+                pfile,
                 kwname,
                 kwlen,
                 kwtype,
@@ -109,11 +104,10 @@ def import_eclbinary(
             )
         else:
             _import_eclbinary_prop(
-                self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype
+                self, grid, pfile, kwname, kwlen, kwtype, kwbyte, name, date, etype
             )
 
-    if local_fhandle and not pfile.close(cond=local_fhandle):
-        raise RuntimeError("Error in closing file handle for binary Eclipse file")
+    pfile.cfclose()
 
 
 def _chk_kw_date(df, keyword, date):
@@ -125,7 +119,7 @@ def _chk_kw_date(df, keyword, date):
     return False
 
 
-def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
+def _import_swat(self, pfile, kwlist, metadata, grid, date, fracture):
     """Import SWAT; this may lack in very special cases"""
 
     s_exists = _chk_kw_date(kwlist, "SWAT", date)
@@ -134,7 +128,7 @@ def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
     if s_exists or metadata["IPHS"] in (0, 3, 6, 7, -2345):
         import_eclbinary(
             self,
-            fhandle,
+            pfile,
             name="SWAT{__}",
             etype=5,
             grid=grid,
@@ -172,7 +166,7 @@ def _import_swat(self, fhandle, kwlist, metadata, grid, date, fracture):
     return 3
 
 
-def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
+def _import_sgas(self, pfile, kwlist, metadata, grid, date, fracture):
     """Import SGAS; this may be lack of oil/water (need to verify)"""
 
     s_exists = _chk_kw_date(kwlist, "SGAS", date)
@@ -182,7 +176,7 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
     if s_exists or metadata["IPHS"] in (0, 5, 7, -2345):
         import_eclbinary(
             self,
-            fhandle,
+            pfile,
             name="SGAS{__}",
             etype=5,
             grid=grid,
@@ -197,7 +191,7 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
         swat = self.__class__()
         import_eclbinary(
             swat,
-            fhandle,
+            pfile,
             name="SWAT{__}",
             etype=5,
             grid=grid,
@@ -244,7 +238,7 @@ def _import_sgas(self, fhandle, kwlist, metadata, grid, date, fracture):
     return 1
 
 
-def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
+def _import_soil(self, pfile, kwlist, metadata, grid, date, fracture):
     # pylint: disable=too-many-branches, too-many-statements
     s_exists = _chk_kw_date(kwlist, "SOIL", date)
     logger.info("SOIL: S_EXISTS %s for date %s", s_exists, date)
@@ -262,7 +256,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
     if s_exists or phases in (0, -2345):
         import_eclbinary(
             self,
-            fhandle,
+            pfile,
             name="SOIL{__}",
             etype=5,
             grid=grid,
@@ -280,7 +274,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
             swat = self.__class__()
             import_eclbinary(
                 swat,
-                fhandle,
+                pfile,
                 name="SWAT{__}",
                 etype=5,
                 grid=grid,
@@ -293,7 +287,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
             sgas = self.__class__()
             import_eclbinary(
                 sgas,
-                fhandle,
+                pfile,
                 name="SGAS{__}",
                 etype=5,
                 grid=grid,
@@ -352,7 +346,7 @@ def _import_soil(self, fhandle, kwlist, metadata, grid, date, fracture):
     return 2
 
 
-def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
+def _import_eclbinary_meta(self, pfile, kwlist, etype, date, grid):
     """Find settings and metadata, private to this module.
 
     Returns:
@@ -395,7 +389,7 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
             break
 
     # read INTEHEAD record:
-    intehead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte).tolist()
+    intehead = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte).tolist()
     ncol, nrow, nlay = intehead[8:11]
     logger.info("Dimensions detected %s %s %s", ncol, nrow, nlay)
 
@@ -413,7 +407,7 @@ def _import_eclbinary_meta(self, fhandle, kwlist, etype, date, grid):
             break
 
     # read INTEHEAD record:
-    logihead = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte).tolist()
+    logihead = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte).tolist()
 
     # DUAL; which kind if doubles (not exact!) the layers when reading,
     # and assign first half* to Matrix (M) and second half to Fractures (F).
@@ -537,11 +531,11 @@ def _import_eclbinary_checks2(kwlist, name, etype, date):
 
 
 def _import_eclbinary_prop(
-    self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype
+    self, grid, pfile, kwname, kwlen, kwtype, kwbyte, name, date, etype
 ):
     """Import the actual record"""
 
-    values = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
+    values = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte)
 
     self._isdiscrete = False
     use_undef = xtgeo.UNDEF
@@ -608,7 +602,7 @@ def _import_eclbinary_prop(
 
 
 def _import_eclbinary_dualporo(
-    self, grid, fhandle, kwname, kwlen, kwtype, kwbyte, name, date, etype, fracture
+    self, grid, pfile, kwname, kwlen, kwtype, kwbyte, name, date, etype, fracture
 ):
     """Import the actual record for dual poro scheme"""
 
@@ -617,7 +611,7 @@ def _import_eclbinary_dualporo(
     # A lot of code duplication here, as this is under testing
     #
 
-    values = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
+    values = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte)
 
     # arrays from Eclipse INIT or UNRST are usually for inactive values only.
     # Use the ACTNUM index array for vectorized numpy remapping (need both C

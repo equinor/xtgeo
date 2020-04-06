@@ -1,5 +1,3 @@
-import os
-
 import pytest
 import numpy as np
 import numpy.ma as ma
@@ -10,45 +8,37 @@ from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
-path = "TMP"
-try:
-    os.makedirs(path)
-except OSError:
-    if not os.path.isdir(path):
-        raise
-
 # set default level
 xtg = XTGeoDialog()
 
-
 logger = xtg.basiclogger(__name__)
 
-roff1_grid = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff"
-roff1_props = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff"
+ROFF1_GRID = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff"
+ROFF1_PROPS = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff"
 
 
 @tsetup.skipifroxar
 def test_hcpvfz1():
     """HCPV thickness map."""
 
-    # It is important that inpyut are pure numpies, not masked
+    # It is important that input are pure numpies, not masked
 
     logger.info("Name is %s", __name__)
-    g = Grid()
+    grd = Grid()
     logger.info("Import roff...")
-    g.from_file(roff1_grid, fformat="roff")
+    grd.from_file(ROFF1_GRID, fformat="roff")
 
     # get the hcpv
     st = GridProperty()
     to = GridProperty()
 
-    st.from_file(roff1_props, name="Oil_HCPV")
+    st.from_file(ROFF1_PROPS, name="Oil_HCPV")
 
-    to.from_file(roff1_props, name="Oil_bulk")
+    to.from_file(ROFF1_PROPS, name="Oil_bulk")
 
     # get the dz and the coordinates, with no mask (ie get value for outside)
-    dz = g.get_dz(mask=False)
-    xc, yc, _zc = g.get_xyz(mask=False)
+    dz = grd.get_dz(mask=False)
+    xc, yc, _zc = grd.get_xyz(mask=False)
 
     xcv = ma.filled(xc.values3d)
     ycv = ma.filled(yc.values3d)
@@ -67,11 +57,9 @@ def test_hcpvfz1():
     xinc = (xmax - xmin) / 50
     yinc = (ymax - ymin) / 50
 
-    logger.debug(
-        "xmin xmax ymin ymax, xinc, yinc: {} {} {} {} {} {} ".format(
-            xmin, xmax, ymin, ymax, xinc, yinc
-        )
-    )
+    logger.debug("xmin xmax ymin ymax, xinc, yinc: %s %s %s %s %s %s",
+                 xmin, xmax, ymin, ymax, xinc, yinc
+                 )
 
     hcmap = RegularSurface(
         nx=50,
@@ -93,7 +81,7 @@ def test_hcpvfz1():
         values=np.zeros((50, 50)),
     )
 
-    zp = np.ones((g.ncol, g.nrow, g.nlay))
+    zp = np.ones((grd.ncol, grd.nrow, grd.nlay))
     # now make hcpf map
 
     t1 = xtg.timer()
@@ -110,7 +98,7 @@ def test_hcpvfz1():
 
     t2 = xtg.timer(t1)
 
-    logger.info("Speed basic is {}".format(t2))
+    logger.info("Speed basic is %s", t2)
 
     t1 = xtg.timer()
     hcmap2.hc_thickness_from_3dprops(
@@ -126,7 +114,7 @@ def test_hcpvfz1():
     )
     t2 = xtg.timer(t1)
 
-    logger.info("Speed zoneavg coarsen 2 is {}".format(t2))
+    logger.info("Speed zoneavg coarsen 2 is %s", t2)
 
     hcmap.quickplot(filename="TMP/quickplot_hcpv.png")
     hcmap2.quickplot(filename="TMP/quickplot_hcpv_zavg_coarsen.png")

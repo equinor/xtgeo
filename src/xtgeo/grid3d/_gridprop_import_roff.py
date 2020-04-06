@@ -21,9 +21,6 @@ def import_roff(self, pfile, name, grid=None, _roffapiv=1):
 
     logger.info("Keyword grid is inactive, values is: %s", grid)
 
-    if isinstance(pfile, xtgeo._XTGeoCFile):
-        raise ValueError("ROFF import cannot recieve a _XTGeoCFile instance")
-
     if _roffapiv <= 1:
         _import_roff_v1(self, pfile, name)
     elif _roffapiv == 2:
@@ -38,7 +35,6 @@ def _import_roff_v1(self, pfile, name):
     # e.g. that a ROFF file may contain both a grid an numerous
     # props
 
-    pfile = xtgeo._XTGeoCFile(pfile)
     logger.info("Looking for %s in file %s", name, pfile.name)
 
     ptr_ncol = _cxtgeo.new_intpointer()
@@ -152,36 +148,36 @@ def _import_roff_v2(self, pfile, name):
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 
-    pfile = xtgeo._XTGeoCFile(pfile)
+    pfile.get_cfhandle()
 
-    kwords = utils.scan_keywords(pfile.fhandle, fformat="roff")
+    kwords = utils.scan_keywords(pfile, fformat="roff")
 
     for kwd in kwords:
         logger.info(kwd)
 
     # byteswap:
-    byteswap = _rkwquery(pfile.fhandle, kwords, "filedata!byteswaptest", -1)
+    byteswap = _rkwquery(pfile, kwords, "filedata!byteswaptest", -1)
 
-    ncol = _rkwquery(pfile.fhandle, kwords, "dimensions!nX", byteswap)
-    nrow = _rkwquery(pfile.fhandle, kwords, "dimensions!nY", byteswap)
-    nlay = _rkwquery(pfile.fhandle, kwords, "dimensions!nZ", byteswap)
+    ncol = _rkwquery(pfile, kwords, "dimensions!nX", byteswap)
+    nrow = _rkwquery(pfile, kwords, "dimensions!nY", byteswap)
+    nlay = _rkwquery(pfile, kwords, "dimensions!nZ", byteswap)
     logger.info("Dimensions in ROFF file %s %s %s", ncol, nrow, nlay)
 
     # get the actual parameter:
     vals = _rarraykwquery(
-        pfile.fhandle, kwords, "parameter!name!" + name, byteswap, ncol, nrow, nlay
+        pfile, kwords, "parameter!name!" + name, byteswap, ncol, nrow, nlay
     )
 
     self._values = vals
     self._name = name
 
     # if vals.dtype != "float":
-    #     subs = _rkwxlist(fhandle, kwords, "subgrids!nLayers", byteswap, strict=False)
+    #     subs = _rkwxlist(pfile, kwords, "subgrids!nLayers", byteswap, strict=False)
 
-    pfile.close()
+    pfile.cfclose()
 
 
-def _rkwquery(fhandle, kws, name, swap):
+def _rkwquery(gfile, kws, name, swap):
     """Local function for _import_roff_v2, single data"""
 
     kwtypedict = {"int": 1, "float": 2}
@@ -206,7 +202,11 @@ def _rkwquery(fhandle, kws, name, swap):
     if reclen != 1:
         raise SystemError("Stuff is rotten here...")
 
-    _cxtgeo.grd3d_imp_roffbin_data(fhandle, swap, dtype, bytepos, iresult, presult)
+    _cxtgeo.grd3d_imp_roffbin_data(
+        gfile.get_cfhandle(), swap, dtype, bytepos, iresult, presult
+    )
+
+    gfile.cfclose()
 
     # -1 indicates that it is the swap flag which is looked for!
     if dtype == 1:
@@ -222,7 +222,7 @@ def _rkwquery(fhandle, kws, name, swap):
     return xresult
 
 
-def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
+def _rarraykwquery(gfile, kws, name, swap, ncol, nrow, nlay):
     """
     Local function for _import_roff_v2, 3D parameter arrays.
 
@@ -266,8 +266,10 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     fnumpy = np.zeros(ncol * nrow * nlay, dtype=np.float32)
 
     _cxtgeo.grd3d_imp_roffbin_arr(
-        fhandle, swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy
+        gfile.get_cfhandle(), swap, ncol, nrow, nlay, bytepos, dtype, fnumpy, inumpy
     )
+
+    gfile.cfclose()
 
     if dtype == 1:
         vals = inumpy
@@ -285,7 +287,7 @@ def _rarraykwquery(fhandle, kws, name, swap, ncol, nrow, nlay):
     return vals
 
 
-def _rkwxlist(fhandle, kws, name, swap, strict=True):
+def _rkwxlist(gfile, kws, name, swap, strict=True):
     """Local function for _import_roff_v2, 1D arrays such as subgrids.
 
     This parameters are translated to numpy data for the values
@@ -317,14 +319,15 @@ def _rkwxlist(fhandle, kws, name, swap, strict=True):
 
     if dtype == 1:
         inumpy = np.zeros(reclen, dtype=np.int32)
-        _cxtgeo.grd3d_imp_roffbin_ilist(fhandle, swap, bytepos, inumpy)
+        _cxtgeo.grd3d_imp_roffbin_ilist(gfile.get_cfhandle(), swap, bytepos, inumpy)
+        gfile.cfclose()
     else:
         raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
 
     return inumpy
 
 
-def _rkwxvec(fhandle, kws, name, swap, strict=True):
+def _rkwxvec(gfile, kws, name, swap, strict=True):
     """Local function for returning swig pointers to C arrays.
 
     If strict is True, a ValueError will be raised if keyword is not
@@ -353,18 +356,23 @@ def _rkwxvec(fhandle, kws, name, swap, strict=True):
         raise SystemError("Stuff is rotten here...")
 
     xvec = None
+    cfhandle = gfile.get_cfhandle()
+
     if dtype == 1:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_ivec(fhandle, swap, bytepos, xvec, reclen)
+        _cxtgeo.grd3d_imp_roffbin_ivec(cfhandle, swap, bytepos, xvec, reclen)
 
     elif dtype == 2:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_fvec(fhandle, swap, bytepos, xvec, reclen)
+        _cxtgeo.grd3d_imp_roffbin_fvec(cfhandle, swap, bytepos, xvec, reclen)
 
     elif dtype >= 4:
         xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte/bool to int
-        _cxtgeo.grd3d_imp_roffbin_bvec(fhandle, swap, bytepos, xvec, reclen)
+        _cxtgeo.grd3d_imp_roffbin_bvec(cfhandle, swap, bytepos, xvec, reclen)
 
     else:
+        gfile.cfclose()
         raise ValueError("Unhandled dtype: {}".format(dtype))
+
+    gfile.cfclose()
     return xvec

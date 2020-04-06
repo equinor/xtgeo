@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 
 import os
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d import _grid_import_roff
@@ -19,12 +20,14 @@ logger = xtg.functionlogger(__name__)
 def from_file(
     self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
 ):
-
     """Import grid geometry from file, and makes an instance of this class."""
 
     # pylint: disable=too-many-branches
 
-    self._filesrc = gfile
+    if not isinstance(gfile, xtgeo._XTGeoFile):
+        raise RuntimeError("Error gfile must be a _XTGeoFile instance")
+
+    self._filesrc = gfile.name
 
     if fformat is None:
         fformat = "guess"
@@ -37,9 +40,7 @@ def from_file(
         )
 
     # work on file extension
-    _froot, fext = os.path.splitext(gfile)
-    fext = fext.replace(".", "")
-    fext = fext.lower()
+    _froot, fext = gfile.splitext(lower=True)
 
     if fformat == "guess":
         logger.info("Format is <guess>")
@@ -49,11 +50,11 @@ def from_file(
         elif fext and fext not in fflist:
             fformat = "roff"  # try to assume binary ROFF...
 
-    logger.info("File name to be used is %s", gfile)
+    logger.info("File name to be used is %s", gfile.name)
 
-    test_gfile = gfile
+    test_gfile = gfile.name
     if fformat == "eclipserun":
-        test_gfile = gfile + ".EGRID"
+        test_gfile = gfile.name + ".EGRID"
 
     if os.path.isfile(test_gfile):
         logger.info("File %s exists OK", test_gfile)
@@ -67,7 +68,7 @@ def from_file(
     elif fformat == "eclipserun":
         _grid_import_ecl.import_ecl_run(
             self,
-            gfile,
+            gfile.name,
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
@@ -79,6 +80,6 @@ def from_file(
     else:
         raise SystemExit("Invalid file format")
 
-    self.name = os.path.splitext(os.path.basename(gfile))[0]
+    self.name = gfile.file.stem
 
     return self

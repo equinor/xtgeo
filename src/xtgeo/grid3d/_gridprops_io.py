@@ -19,22 +19,20 @@ def import_ecl_output(
 
     logger.debug("'namestyle' is %s (not in use)", namestyle)
 
+    if not isinstance(pfile, xtgeo._XTGeoFile):
+        raise RuntimeError("BUG kode 84728")
+
     if not grid:
         raise ValueError("Grid Geometry object is missing")
 
     if not names:
         raise ValueError("Name list is empty (None)")
 
-    local_fhandle = False
-    fhandle = pfile
-    if not isinstance(pfile, xtgeo._XTGeoCFile):
-        pfile = xtgeo._XTGeoCFile(pfile)
-        fhandle = pfile.fhandle
-        local_fhandle = True
+    pfile.get_cfhandle()  # increase filehandle count
 
     # scan valid keywords
     kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+        pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
     )
 
     kwxlist = list(kwlist.itertuples(index=False, name=None))
@@ -76,7 +74,7 @@ def import_ecl_output(
 
     validdates = [None]
     if dates:
-        dlist = utils.scan_dates(fhandle)
+        dlist = utils.scan_dates(pfile)
 
         validdates = []
         alldates = []
@@ -130,7 +128,7 @@ def import_ecl_output(
             # (since filehandle)
             _gridprop_import_eclrun.import_eclbinary(
                 prop,
-                fhandle,
+                pfile,
                 name=name,
                 date=date,
                 grid=grid,
@@ -154,5 +152,4 @@ def import_ecl_output(
     if validdates[0] != 0:
         props._dates = validdates
 
-    if local_fhandle:
-        pfile.close()
+    pfile.cfclose()

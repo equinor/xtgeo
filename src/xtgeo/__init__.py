@@ -98,7 +98,7 @@ from xtgeo.common.exceptions import GridNotFoundError
 from xtgeo.common.exceptions import BlockedWellsNotFoundError
 
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
-from xtgeo.common.sys import _XTGeoCFile
+from xtgeo.common.sys import _XTGeoFile
 
 _xprint("Import common... done")
 

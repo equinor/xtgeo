@@ -16,7 +16,7 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
     """Export the grid property to file."""
     logger.debug("Export property to file %s", pfile)
 
-    fobj = xtgeo._XTGeoCFile(pfile, mode="rb")
+    fobj = xtgeo._XTGeoFile(pfile, mode="rb")
     fobj.check_folder(raiseerror=OSError)
 
     if name is None:

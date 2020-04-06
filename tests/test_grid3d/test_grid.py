@@ -544,7 +544,7 @@ def test_pathlib():
     out = pathlib.Path() / TMPDIR / "grdpathtest.roff"
     grd.to_file(out, fformat="roff")
 
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         out = pathlib.Path() / "nosuchdir" / "grdpathtest.roff"
         grd.to_file(out, fformat="roff")
 

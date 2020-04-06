@@ -25,31 +25,30 @@ logger = xtg.functionlogger(__file__)
 
 def check_folder(fname, raiseerror=None):
     """General function to check folder"""
-    _nn = _XTGeoCFile(fname)
+    _nn = _XTGeoFile(fname)
     status = _nn.check_folder(raiseerror=raiseerror)
     del _nn
     return status
 
 
-class _XTGeoCFile(object):
+class _XTGeoFile(object):
     """
-    A private class for file handling of files in/out of CXTGeo
+    A private class for file handling of files in/out of XTGeo and possibly CXTGeo
 
     Interesting attributes:
 
-    xfile = _XTGeoCFile(..some Path or  str or BytesIO ...)
+    xfile = _XTGeoFile(..some Path or  str or BytesIO ...)
 
     xfile.name: The absolute path to the file (str)
     xfile.file: The pathlib.Path instance
     xfile.memstream: Is True if memory stream
-    xfile.fhandle: The C SWIG file handle
 
     xfile.exist(): Returns True (provided mode 'r') if file exists, always True for 'w'
     xfile.check_file(...): As above but may raise an Excpetion
     xfile.check_folder(...): For folder; may raise an Excpetion
-    xfile.has_fhandle(): Check is fhandle already exists
     xfile.splitext(): return file's stem and extension
-    xfile.close(): Close current filehandle
+    xfile.get_cfhandle(): Get C SWIG file handle
+    xfile.cfclose(): Close current C SWIG filehandle
 
 
     """
@@ -59,9 +58,11 @@ class _XTGeoCFile(object):
         self._file = None  # Path instance
         self._tmpfile = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
-        self._fhandle = None
         self._mode = mode
         self._memstream = False
+
+        self._cfhandle = 0
+        self._cfhandlecount = 0
         logger.debug("Init ran for _XTGeoFile")
 
         # The self._file must be a Pathlib or a BytesIO instance
@@ -72,7 +73,7 @@ class _XTGeoCFile(object):
         elif isinstance(fobj, io.BytesIO):
             self._file = fobj
             self._memstream = True
-        elif isinstance(fobj, _XTGeoCFile):
+        elif isinstance(fobj, _XTGeoFile):
             raise RuntimeError("Reinstancing object, not allowed", self.__class__)
         else:
             raise RuntimeError("Illegal input, cannot continue", self.__class__)
@@ -95,89 +96,23 @@ class _XTGeoCFile(object):
 
         logger.info("Get absolute name of file...")
 
+        if self._memstream:
+            return self._file
+
         try:
             logger.debug("Try resolve...")
             fname = str(self._file.resolve())
-        except FileNotFoundError:
+        except IOError:
             try:
                 logger.debug("Try resolve parent, then file...")
                 fname = os.path.abspath(
                     join(str(self._file.parent.resolve()), str(self._file.name))
                 )
-            except FileNotFoundError:
+            except IOError:
                 # means that also folder is invalid
                 logger.debug("Last attempt of name resolving...")
                 fname = os.path.abspath(str(self._file))
         return fname
-
-    @property
-    def fhandle(self):  # was get_handle
-        """SWIG file handle for CXTgeo, the filehandle is a read only property"""
-
-        logger.info("Get SWIG fhandle...")
-
-        if self._fhandle and "Swig Object of type 'FILE" in str(self._fhandle):
-            return self._fhandle
-
-        fhandle = None
-        if (
-            isinstance(self._file, io.BytesIO)
-            and self._mode == "rb"
-            and plfsys() == "Linux"
-        ):
-            if six.PY2:
-                raise NotImplementedError(
-                    "Reading BytesIO not fully supported in Python 2"
-                )
-
-            fobj = self._file.getvalue()  # bytes type in Python3, str in Python2
-
-            # note that the typemap in swig computes the length for the buf/fobj!
-            self._memstream = True
-
-        elif (
-            isinstance(self._file, io.BytesIO)
-            and self._mode == "wb"
-            and plfsys() == "Linux"
-        ):
-            if six.PY2:
-                raise NotImplementedError(
-                    "Writing to BytesIO not supported in Python 2"
-                )
-
-            fobj = bytes()
-            self._memstream = True
-
-        elif (
-            isinstance(self._file, io.BytesIO)
-            and self._mode == "rb"
-            and (plfsys() == "Windows" or plfsys() == "Darwin")
-        ):
-            # windows/mac miss fmemopen; write buffer to a tmp instead as workaround
-            fds, fobj = mkstemp(prefix="tmpxtgeoio")
-            os.close(fds)
-            with open(fobj, "wb") as newfile:
-                newfile.write(self._file.getvalue())
-
-            self._tmpfile = fobj
-
-        else:
-            fobj = self.name
-
-        if self._memstream:
-            fhandle = _cxtgeo.xtg_fopen_bytestream(fobj, self._mode)
-
-        else:
-            try:
-                fhandle = _cxtgeo.xtg_fopen(fobj, self._mode)
-            except TypeError as err:
-                reason = ""
-                if six.PY2:
-                    reason = "In Python 2, do not use __future__ UnicodeLiterals!"
-                logger.critical("Cannot open file: %s. %s", err, reason)
-
-        self._fhandle = fhandle
-        return self._fhandle
 
     def exists(self):  # was: file_exists
         """Check if 'r' file, memory stream or folder exists, and returns True of OK."""
@@ -276,14 +211,6 @@ class _XTGeoCFile(object):
 
         # return status
 
-    def has_fhandle(self):  # was is_fhandle
-        """Return True if pfile is a filehandle, not a file"""
-
-        if self._fhandle and "Swig Object of type 'FILE" in str(self._fhandle):
-            return True
-
-        return False
-
     def splitext(self, lower=False):
         """Return file stem and suffix, always lowercase if lower is True"""
 
@@ -299,42 +226,128 @@ class _XTGeoCFile(object):
 
         return stem, suffix
 
-    def close(self, cond=True):
-        """Close file handle given that filehandle exists (return True), otherwise do
-        nothing (return False).
+    def get_cfhandle(self):  # was get_handle
+        """
+        Get SWIG C file handle for CXTgeo
 
-        If cond is False, nothing is done (made in order to avoid ifs in callers)
+        This is tied to cfclose() which closes the file.
+
+        if _cfhandle already exists, then _cfhandle is increased with 1
+
         """
 
-        logger.info("Close SWIG fhandle...")
+        logger.info("Get SWIG C fhandle...")
 
-        if not cond:
-            return True
+        if self._cfhandle and "Swig Object of type 'FILE" in str(self._cfhandle):
+            self._cfhandlecount += 1
+            return self._cfhandle
 
-        if self._memstream and self._fhandle and "w" in self._mode:
-            # this assumes that the file pointer is in the end of the current filehandle
-            npos = _cxtgeo.xtg_ftell(self._fhandle)
+        if (
+            isinstance(self._file, io.BytesIO)
+            and self._mode == "rb"
+            and plfsys() == "Linux"
+        ):
+            if six.PY2:
+                raise NotImplementedError(
+                    "Reading BytesIO not fully supported in Python 2"
+                )
+
+            fobj = self._file.getvalue()  # bytes type in Python3, str in Python2
+
+            # note that the typemap in swig computes the length for the buf/fobj!
+            self._memstream = True
+
+        elif (
+            isinstance(self._file, io.BytesIO)
+            and self._mode == "wb"
+            and plfsys() == "Linux"
+        ):
+            if six.PY2:
+                raise NotImplementedError(
+                    "Writing to BytesIO not supported in Python 2"
+                )
+
+            fobj = bytes()
+            self._memstream = True
+
+        elif (
+            isinstance(self._file, io.BytesIO)
+            and self._mode == "rb"
+            and (plfsys() == "Windows" or plfsys() == "Darwin")
+        ):
+            # windows/mac miss fmemopen; write buffer to a tmp instead as workaround
+            fds, fobj = mkstemp(prefix="tmpxtgeoio")
+            os.close(fds)
+            with open(fobj, "wb") as newfile:
+                newfile.write(self._file.getvalue())
+
+            self._tmpfile = fobj
+
+        else:
+            fobj = self.name
+
+        if self._memstream:
+            cfhandle = _cxtgeo.xtg_fopen_bytestream(fobj, self._mode)
+
+        else:
+            try:
+                cfhandle = _cxtgeo.xtg_fopen(fobj, self._mode)
+            except TypeError as err:
+                reason = ""
+                if six.PY2:
+                    reason = "In Python 2, do not use __future__ UnicodeLiterals!"
+                logger.critical("Cannot open file: %s. %s", err, reason)
+
+        self._cfhandle = cfhandle
+        self._cfhandlecount = 1
+
+        return self._cfhandle
+
+    def cfclose(self, strict=True):
+        """
+        Close SWIG C file handle by keeping track of _cfhandlecount
+
+        Return True if cfhandle is really closed.
+        """
+
+        logger.info("Request for closing SWIG fhandle...")
+
+        if self._cfhandle is None or self._cfhandlecount == 0:
+            if strict:
+                raise RuntimeError("Ask to close a nonexisting C file handle")
+            else:
+                self._cfhandle = None
+                self._cfhandlecount = 0
+                return True
+
+        if self._cfhandlecount > 1 or self._cfhandlecount == 0:
+            self._cfhandlecount -= 1
+            return False
+
+        if self._memstream and self._cfhandle and "w" in self._mode:
+            # this assures that the file pointer is in the end of the current filehandle
+            npos = _cxtgeo.xtg_ftell(self._cfhandle)
             buf = bytes(npos)
-            ier = _cxtgeo.xtg_get_fbuffer(self._fhandle, buf)
+            ier = _cxtgeo.xtg_get_fbuffer(self._cfhandle, buf)
             if ier == 0:
                 self._file.write(buf)  # write to bytesIO instance
-                _cxtgeo.xtg_fflush(self._fhandle)
+                _cxtgeo.xtg_fflush(self._cfhandle)
             else:
                 raise RuntimeError("Could not write stream for unknown reasons")
 
-        if self._fhandle:
-            ier = _cxtgeo.xtg_fclose(self._fhandle)
-            if ier != 0:
-                raise RuntimeError("Could not close C file, code {}".format(ier))
+        ier = _cxtgeo.xtg_fclose(self._cfhandle)
+        if ier != 0:
+            raise RuntimeError("Could not close C file, code {}".format(ier))
 
-            logger.debug("File is now closed %s", self._fhandle)
+        logger.debug("File is now closed for C io: %s", self.name)
 
-            if self._tmpfile:
-                try:
-                    os.remove(self._tmpfile)
-                except Exception as ex:  # pylint: disable=W0703
-                    logger.error("Could not remove tempfile for some reason: %s", ex)
+        if self._tmpfile:
+            try:
+                os.remove(self._tmpfile)
+            except Exception as ex:  # pylint: disable=W0703
+                logger.error("Could not remove tempfile for some reason: %s", ex)
 
-            return True
+        self._cfhandle = None
+        self._cfhandlecount = 0
 
-        return False
+        return True

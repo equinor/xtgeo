@@ -530,7 +530,6 @@ class Grid(Grid3D):
     def from_file(
         self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
     ):
-
         """Import grid geometry from file, and makes an instance of this class.
 
         If file extension is missing, then the extension will guess the fformat
@@ -538,7 +537,7 @@ class Grid(Grid3D):
         will try to input INIT and UNRST file in addition the grid in "one go".
 
         Arguments:
-            gfile (str): File name to be imported
+            gfile (str or Path): File name to be imported
             fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
                 (None is default and means "guess")
             initprops (str list): Optional, if given, and file format
@@ -558,6 +557,9 @@ class Grid(Grid3D):
         Raises:
             IOError: if file is not found etc
         """
+
+        gfile = xtgeo._XTGeoFile(gfile, mode="rb")
+
         obj = _grid_import.from_file(
             self,
             gfile,
@@ -585,25 +587,26 @@ class Grid(Grid3D):
 
             xg.to_file("myfile.roff")
         """
-        xtgeosys.check_folder(gfile, raiseerror=OSError)
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+
+        gfile.check_folder(raiseerror=OSError)
 
         if fformat in ("roff", "roff_binary"):
-            _grid_export.export_roff(self, gfile, 0)
+            _grid_export.export_roff(self, gfile.name, 0)
         elif fformat == "roff_ascii":
-            _grid_export.export_roff(self, gfile, 1)
+            _grid_export.export_roff(self, gfile.name, 1)
         elif fformat == "grdecl":
-            _grid_export.export_grdecl(self, gfile, 1)
+            _grid_export.export_grdecl(self, gfile.name, 1)
         elif fformat == "bgrdecl":
-            _grid_export.export_grdecl(self, gfile, 0)
+            _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat == "egrid":
-            _grid_export.export_egrid(self, gfile)
+            _grid_export.export_egrid(self, gfile.name)
         else:
             raise SystemExit("Invalid file format")
 
     def from_roxar(
         self, projectname, gname, realisation=0, dimensions_only=False, info=False
     ):
-
         """Import grid model geometry from RMS project, and makes an instance.
 
         Args:
@@ -1352,7 +1355,6 @@ class Grid(Grid3D):
         return gresult
 
     def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
-
         """Go through the grid for a discrete property and reports val1
         properties that are neighbouring val2.
 

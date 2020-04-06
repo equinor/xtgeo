@@ -28,7 +28,7 @@ function run_tests {
     echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
-    pytest tests --disable-warnings
+
     # codecov
     if [[ $COVERAGE ]]; then
         pytest tests --disable-warnings --cov

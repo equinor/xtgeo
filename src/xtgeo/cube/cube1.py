@@ -646,7 +646,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         on file extension (e.g. segy og sgy for SEGY format)
 
         Args:
-            sfile (str): Filename
+            sfile (str): Filename (as string or pathlib.Path)
             fformat (str): file format guess/segy/rms_regular
                 where 'guess' is default
             engine (str): For the SEGY reader, 'xtgeo' is builtin
@@ -664,7 +664,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
 
         """
-        fobj = xtgeosys._XTGeoCFile(sfile)
+        fobj = xtgeosys._XTGeoFile(sfile)
         fobj.check_file(raiseerror=IOError)
 
         _froot, fext = fobj.splitext(lower=True)
@@ -701,7 +701,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
             >>> zz = Cube('some.segy')
             >>> zz.to_file('some.rmsreg')
         """
-        fobj = xtgeosys._XTGeoCFile(sfile, mode="wb")
+        fobj = xtgeosys._XTGeoFile(sfile, mode="wb")
 
         fobj.check_folder(raiseerror=OSError)
 

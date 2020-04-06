@@ -664,7 +664,6 @@ class RegularSurface(object):
     def from_file(
         self, mfile, fformat=None, template=None, values=True
     ):  # pylint: disable=too-many-branches
-
         """Import surface (regular map) from file.
 
         Note that the fformat=None option will guess bye looking at the file
@@ -703,18 +702,18 @@ class RegularSurface(object):
           Input io.BytesIO instance instead of file is now possible
         """
 
-        fobj = xtgeosys._XTGeoCFile(mfile)
+        mfile = xtgeosys._XTGeoFile(mfile)
 
         if fformat is None:
             fformat = "guess"  # default
 
         bytestream = False
-        if fobj.memstream is True:
+        if mfile.memstream is True:
             bytestream = True
             fformat = "irap_binary"
         else:
-            fobj.check_file(raiseerror=IOError)
-            froot, fext = fobj.splitext(lower=True)
+            mfile.check_file(raiseerror=IOError)
+            froot, fext = mfile.splitext(lower=True)
 
             if fformat == "guess":
                 if not fext:
@@ -816,10 +815,10 @@ class RegularSurface(object):
         engine = kwargs.get("engine", "cxtgeo")
         bstream = False
 
-        fobj = xtgeosys._XTGeoCFile(mfile)
+        mfile = xtgeosys._XTGeoFile(mfile, mode="wb")
 
-        if not fobj.memstream:
-            fobj.check_folder(raiseerror=OSError)
+        if not mfile.memstream:
+            mfile.check_folder(raiseerror=OSError)
         else:
             engine = "python"
             bstream = True  # write to byte stream, not file
@@ -1005,7 +1004,6 @@ class RegularSurface(object):
 
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
-
         """Extract a surface from a 3D grid.
 
         Args:

@@ -42,12 +42,10 @@ PMD_DATAUNITZ = {
 def export_irap_ascii(self, mfile):
     """Export to Irap RMS ascii format."""
 
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
-
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_export_irap_ascii(
-        fout.fhandle,
+        mfile.get_cfhandle(),
         self._ncol,
         self._nrow,
         self._xori,
@@ -63,7 +61,7 @@ def export_irap_ascii(self, mfile):
 
     del vals
 
-    fout.close()
+    mfile.cfclose()
 
 
 def export_irap_binary(self, mfile, engine="cxtgeo", bstream=False):
@@ -81,13 +79,18 @@ def export_irap_binary(self, mfile, engine="cxtgeo", bstream=False):
 
 
 def _export_irap_binary_cxtgeo(self, mfile):
-    """Export to Irap RMS binary format."""
+    """Export to Irap binary using C backend
 
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
+    Args:
+        mfile (_XTGeoFile): xtgeo file instance
+
+    Raises:
+        RuntimeError: Export to Irap Binary went wrong...
+    """
 
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
     ier = _cxtgeo.surf_export_irap_bin(
-        fout.fhandle,
+        mfile.get_cfhandle(),
         self._ncol,
         self._nrow,
         self._xori,
@@ -100,20 +103,19 @@ def _export_irap_binary_cxtgeo(self, mfile):
     )
 
     if ier != 0:
+        mfile.cfclose(strict=False)  # strict False as C routine may have closed
         raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
 
-    fout.close()
+    mfile.cfclose()
 
 
 def _export_irap_binary_cxtgeotest(self, mfile):
     """Export to Irap RMS binary format. TEST SWIG FLAT"""
 
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
-
     print(self.values.mask.astype(np.uint8).mean())
 
     ier = _cxtgeo.surf_export_irap_bin_test(
-        fout.fhandle,
+        mfile.get_cfhandle(),
         self._ncol,
         self._nrow,
         self._xori,
@@ -128,7 +130,7 @@ def _export_irap_binary_cxtgeotest(self, mfile):
     if ier != 0:
         raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
 
-    fout.close()
+    mfile.cfclose()
 
 
 def _export_irap_binary_python(self, mfile, bstream=False):
@@ -183,20 +185,18 @@ def _export_irap_binary_python(self, mfile, bstream=False):
         start += chunk
 
     if bstream:
-        mfile.write(ap)
+        mfile.file.write(ap)
     else:
-        with open(mfile, "wb") as fout:
+        with open(mfile.name, "wb") as fout:
             fout.write(ap)
 
 
 def export_ijxyz_ascii(self, mfile):
     """Export to DSG IJXYZ ascii format."""
 
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
-
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     ier = _cxtgeo.surf_export_ijxyz(
-        fout.fhandle,
+        mfile.get_cfhandle(),
         self._ncol,
         self._nrow,
         self._xori,
@@ -216,7 +216,7 @@ def export_ijxyz_ascii(self, mfile):
             "Export to IJXYZ format went wrong, " "code is {}".format(ier)
         )
 
-    fout.close()
+    mfile.cfclose()
 
 
 def export_zmap_ascii(self, mfile):
@@ -225,8 +225,6 @@ def export_zmap_ascii(self, mfile):
     # zmap can only deal with non-rotated formats; hence make a copy
     # of the instance and derotate that prior to export, so that the
     # original instance is unchanged
-
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
     scopy = self.copy()
 
@@ -241,7 +239,7 @@ def export_zmap_ascii(self, mfile):
     vals = scopy.get_values1d(order="F", asmasked=False, fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_export_zmap_ascii(
-        fout.fhandle,
+        mfile.get_cfhandle(),
         scopy._ncol,
         scopy._nrow,
         scopy._xori,
@@ -257,7 +255,7 @@ def export_zmap_ascii(self, mfile):
         raise RuntimeError("Export to ZMAP Ascii went wrong, " "code is {}".format(ier))
     del scopy
 
-    fout.close()
+    mfile.cfclose()
 
 
 def export_storm_binary(self, mfile):
@@ -266,8 +264,6 @@ def export_storm_binary(self, mfile):
     # storm can only deal with non-rotated formats; hence make a copy
     # of the instance and derotate that prior to export, so that the
     # original instance is unchanged
-
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
     scopy = self.copy()
 
@@ -280,7 +276,7 @@ def export_storm_binary(self, mfile):
     yinc = scopy._yinc * scopy._yflip
 
     ier = _cxtgeo.surf_export_storm_bin(
-        fout.fhandle,
+        mfile.get_cfhandle(),
         scopy._ncol,
         scopy._nrow,
         scopy._xori,
@@ -298,7 +294,7 @@ def export_storm_binary(self, mfile):
         )
     del scopy
 
-    fout.close()
+    mfile.cfclose()
 
 
 def export_petromod_binary(self, mfile, pmd_dataunits):
@@ -321,7 +317,6 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
         )
 
     undef = 99999
-    fout = xtgeo._XTGeoCFile(mfile, mode="wb")
 
     dsc = "Content=Map,"
     dsc += "DataUnitDistance={},".format(unitd)
@@ -342,7 +337,7 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     values = np.ma.filled(self.values1d, fill_value=undef)
 
     _cxtgeo.surf_export_petromod_bin(
-        fout.fhandle, dsc, values,
+        mfile.get_cfhandle(), dsc, values,
     )
 
-    fout.close()
+    mfile.cfclose()

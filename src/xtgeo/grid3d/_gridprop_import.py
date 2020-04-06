@@ -32,13 +32,14 @@ def from_file(
     fracture=False,
     _roffapiv=1,
 ):  # _roffapiv for devel.
-
     """Import grid property from file, and makes an instance of this."""
 
     # it may be that pfile already is an open file; hence a filehandle
     # instead. Check for this, and skip actions if so
-    if not isinstance(pfile, xtgeo._XTGeoCFile):
-        fformat = _chk_file(self, pfile, fformat)
+    if not isinstance(pfile, xtgeo._XTGeoFile):
+        raise RuntimeError("Internal error, pfile is not a _XTGeoFile instance")
+
+    fformat = _chk_file(self, pfile.name, fformat)
 
     if fformat == "roff":
         logger.info("Importing ROFF...")

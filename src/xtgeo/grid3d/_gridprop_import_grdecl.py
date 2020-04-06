@@ -21,19 +21,23 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
-    """Import property from binary files with GRDECL layout"""
+    """Import prop for binary files with GRDECL layout.
 
-    local_fhandle = False
-    fhandle = pfile
-    if isinstance(pfile, str):
-        local_fhandle = True
-        pfile = xtgeo._XTGeoCFile(pfile)
-        fhandle = pfile.fhandle
+    Args:
+        pfile (_XTgeoCFile): xtgeo file instance
+        name (str, optional): Name of parameter. Defaults to "unknown".
+        grid (Grid(), optional): XTGeo Grid instance. Defaults to None.
+
+    Raises:
+        xtgeo.KeywordNotFoundError: Cannot find property...
+    """
+
+    pfile.get_cfhandle()
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
-        fhandle, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
+        pfile, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
     )
     bpos = {}
     bpos[name] = -1
@@ -47,13 +51,13 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
 
     if bpos[name] == -1:
         raise xtgeo.KeywordNotFoundError(
-            "Cannot find property name {} in file {}".format(name, pfile)
+            "Cannot find property name {} in file {}".format(name, pfile.name)
         )
     self._ncol = grid.ncol
     self._nrow = grid.nrow
     self._nlay = grid.nlay
 
-    values = _eclbin.eclbin_record(fhandle, kwname, kwlen, kwtype, kwbyte)
+    values = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte)
     if kwtype == "INTE":
         self._isdiscrete = True
         # make the code list
@@ -77,8 +81,7 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     self.values = allvalues
     self._name = name
 
-    if local_fhandle and not pfile.close(cond=local_fhandle):
-        raise RuntimeError("Error in file handling; cannot close file")
+    pfile.cfclose()
 
 
 def import_grdecl_prop(self, pfile, name="unknown", grid=None):
@@ -99,7 +102,7 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     fds, tmpfile = mkstemp(prefix="tmpxtgeo")
     os.close(fds)
 
-    with open(pfile, "r") as oldfile, open(tmpfile, "w") as newfile:
+    with open(pfile.name, "r") as oldfile, open(tmpfile, "w") as newfile:
         for line in oldfile:
             if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
                 newfile.write(line)
