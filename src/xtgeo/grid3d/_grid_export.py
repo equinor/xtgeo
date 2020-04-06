@@ -14,7 +14,7 @@ def export_roff(self, gfile, option):
     """Export grid to ROFF format (binary)"""
 
     gfile = xtgeo._XTGeoFile(gfile, mode="wb")
-    gfile.check_folder(raiseerror=IOError)
+    gfile.check_folder(raiseerror=OSError)
 
     logger.debug("Export to ROFF...")
 

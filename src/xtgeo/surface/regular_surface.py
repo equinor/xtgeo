@@ -712,7 +712,7 @@ class RegularSurface(object):
             bytestream = True
             fformat = "irap_binary"
         else:
-            mfile.check_file(raiseerror=IOError)
+            mfile.check_file(raiseerror=OSError)
             froot, fext = mfile.splitext(lower=True)
 
             if fformat == "guess":

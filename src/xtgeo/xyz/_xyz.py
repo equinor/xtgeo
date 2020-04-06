@@ -125,7 +125,7 @@ class XYZ(object):
 
         logger.info("Reading from file %s...", pfile.name)
 
-        pfile.check_file(raiseerror=IOError)
+        pfile.check_file(raiseerror=OSError)
 
         froot, fext = pfile.splitext(lower=True)
         if fformat == "guess":

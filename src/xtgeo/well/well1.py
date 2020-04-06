@@ -442,7 +442,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         wfile = xtgeo._XTGeoFile(wfile)
 
-        wfile.check_file(raiseerror=IOError)
+        wfile.check_file(raiseerror=OSError)
 
         if fformat is None or fformat == "rms_ascii":
             _well_io.import_rms_ascii(

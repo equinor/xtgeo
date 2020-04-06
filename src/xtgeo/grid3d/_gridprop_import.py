@@ -96,7 +96,7 @@ def _chk_file(self, pfile, fformat):
     if os.path.isfile(pfile):
         logger.debug("File %s exists OK", pfile)
     else:
-        raise IOError("No such file: {}".format(pfile))
+        raise OSError("No such file: {}".format(pfile))
 
     # work on file extension
     _froot, fext = os.path.splitext(pfile)

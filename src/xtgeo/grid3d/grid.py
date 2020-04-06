@@ -555,7 +555,7 @@ class Grid(Grid3D):
             >>> xg = Grid(myfile)  # will guess the file format
 
         Raises:
-            IOError: if file is not found etc
+            OSError: if file is not found etc
         """
 
         gfile = xtgeo._XTGeoFile(gfile, mode="rb")

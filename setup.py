@@ -137,14 +137,14 @@ CMDSPHINX = {
 try:
     with open("README.md") as readme_file:
         README = readme_file.read()
-except IOError:
+except OSError:
     README = "See README.md"
 
 
 try:
     with open("HISTORY.md") as history_file:
         HISTORY = history_file.read()
-except IOError:
+except OSError:
     HISTORY = "See HISTORY.md"
 
 
@@ -201,7 +201,7 @@ def parse_requirements(filename):
     try:
         lineiter = (line.strip() for line in open(filename))
         return [line for line in lineiter if line and not line.startswith("#")]
-    except IOError:
+    except OSError:
         return []
 
 

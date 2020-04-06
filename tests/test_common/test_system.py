@@ -47,14 +47,14 @@ def test_xtgeocfile():
     assert xfile.check_file() is False
     assert yfile.check_file() is False
 
-    with pytest.raises(IOError):
-        xfile.check_file(raiseerror=IOError)
+    with pytest.raises(OSError):
+        xfile.check_file(raiseerror=OSError)
 
     assert gfile.check_folder() is True
     assert xfile.check_folder() is True
     assert yfile.check_folder() is False
-    with pytest.raises(IOError):
-        yfile.check_folder(raiseerror=IOError)
+    with pytest.raises(OSError):
+        yfile.check_folder(raiseerror=OSError)
 
     assert "Swig" in str(gfile.get_cfhandle())
     assert gfile.cfclose() is True

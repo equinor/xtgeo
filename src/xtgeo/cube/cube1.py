@@ -655,7 +655,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
                 only). Default is UNDEF value (a very large number)
 
         Raises:
-            IOError if the file cannot be read (e.g. not found)
+            OSError if the file cannot be read (e.g. not found)
 
         Example::
 
@@ -665,7 +665,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         """
         fobj = xtgeosys._XTGeoFile(sfile)
-        fobj.check_file(raiseerror=IOError)
+        fobj.check_file(raiseerror=OSError)
 
         _froot, fext = fobj.splitext(lower=True)
 

@@ -102,13 +102,13 @@ class _XTGeoFile(object):
         try:
             logger.debug("Try resolve...")
             fname = str(self._file.resolve())
-        except IOError:
+        except OSError:
             try:
                 logger.debug("Try resolve parent, then file...")
                 fname = os.path.abspath(
                     join(str(self._file.parent.resolve()), str(self._file.name))
                 )
-            except IOError:
+            except OSError:
                 # means that also folder is invalid
                 logger.debug("Last attempt of name resolving...")
                 fname = os.path.abspath(str(self._file))
@@ -128,7 +128,7 @@ class _XTGeoFile(object):
         return True
 
     def check_file(self, raiseerror=None, raisetext=None):
-        """Check if a file exists, and raises an IOError if not. Only
+        """Check if a file exists, and raises an OSError if not. Only
         meaningful for 'r' files
 
         Args:

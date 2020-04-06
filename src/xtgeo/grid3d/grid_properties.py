@@ -299,7 +299,7 @@ class GridProperties(Grid3D):
 
         logger.info("File name to be used is %s", pfile)
 
-        pfile.check_file(raiseerror=IOError)
+        pfile.check_file(raiseerror=OSError)
 
         if fformat.lower() == "roff":
             lst = list()
@@ -312,7 +312,7 @@ class GridProperties(Grid3D):
                 self, pfile, dates=dates, grid=grid, names=names, namestyle=namestyle
             )
         else:
-            raise IOError("Invalid file format")
+            raise OSError("Invalid file format")
 
     def to_file(self, pfile, fformat="roff"):
         """Export grid property to file. NB not working!
