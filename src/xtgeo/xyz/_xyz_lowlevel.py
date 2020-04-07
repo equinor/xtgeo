@@ -12,7 +12,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def convert_np_carr_int(xyz, np_array):
+def convert_np_carr_int(xyz, np_array):  # pragma: no cover
     """Convert numpy 1D array to C array, assuming int type."""
 
     # The numpy is always a double (float64), so need to convert first
@@ -27,7 +27,7 @@ def convert_np_carr_int(xyz, np_array):
     return carr
 
 
-def convert_np_carr_double(xyz, np_array):
+def convert_np_carr_double(xyz, np_array):  # pragma: no cover
     """Convert numpy 1D array to C array, assuming double type."""
 
     carr = _cxtgeo.new_doublearray(xyz.nrow)
@@ -37,7 +37,7 @@ def convert_np_carr_double(xyz, np_array):
     return carr
 
 
-def convert_carr_double_np(xyz, carray, nlen=None):
+def convert_carr_double_np(xyz, carray, nlen=None):  # pragma: no cover
     """Convert a C array to numpy, assuming double type."""
 
     if nlen is None:

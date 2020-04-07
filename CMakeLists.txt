@@ -17,4 +17,4 @@ endif()
 
 find_package(PythonExtensions REQUIRED)
 
-add_subdirectory(src/xtgeo/clib)
+add_subdirectory(src/clib)
