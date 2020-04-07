@@ -103,9 +103,10 @@ script:
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  # - if [[ $TRAVIS_EVENT_TYPE == "push" && -f ".coverage" ]]; then
-  #       bash <(curl -s https://codecov.io/bash);
-  #   fi
+  - CODECOV=/tmp/cov.xml
+  - if [[ -f $CODECOV ]]; then
+        bash <(curl -s https://codecov.io/bash) -Z -c -f $CODECOV;
+    fi
 
 before_deploy:
   - pip install numpy
