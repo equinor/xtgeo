@@ -6,8 +6,6 @@ python:
 os:
   - linux
 
-if: (type = pull_request) OR (tag IS true)
-
 git:
   depth: false
 
@@ -40,25 +38,26 @@ matrix:
   include:
     - os: linux
       env: MB_PYTHON_VERSION=2.7
+      if: (type = pull_request) OR (tag IS true)
     - os: linux
       env: MB_PYTHON_VERSION=3.5
-      if: tag IS present
+      if: tag IS true
     - os: linux
       env: MB_PYTHON_VERSION=3.6
+      if: (type = pull_request) OR (tag IS true)
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.7
         - SOURCEDEPLOY=1
         - MB_ML_VER=2010
-      if: tag IS present
+      if: (type = pull_request) OR (tag IS true)
     - os: linux
       dist: xenial
       sudo: true
       env:
         - MB_PYTHON_VERSION=3.8
         - MB_ML_VER=2010
-        - TEST_DEPENDS="pytest segyio==1.9.0"
-        - COVERAGE=1
+        - TEST_DEPENDS="pytest segyio==1.9.1"
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.6
@@ -73,6 +72,7 @@ matrix:
       language: generic
       env: MB_PYTHON_VERSION=3.8
       python: 3.8
+      if: (type = pull_request) OR (tag IS true)
 
 before_install:
   - echo "PWD is $PWD"
@@ -102,7 +102,7 @@ script:
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  - if [[ -f ".coverage" ]]; then codecov; fi
+  - if [[ $TRAVIS_EVENT_TYPE == "push" && -f ".coverage" ]]; then codecov; fi
 
 before_deploy:
   - pip install numpy
