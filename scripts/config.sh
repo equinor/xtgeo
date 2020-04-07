@@ -34,7 +34,7 @@ function run_tests {
         # apt-get -y install curl > /dev/null
         pip install pytest-cov
         pip install codecov
-        COVERAGE_FNAME="/tmp/test_coverage.xml"
+        COVERAGE_FNAME="/tmp/cov.xml"
         pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:$COVERAGE_FNAME
         # bash <(curl -s https://codecov.io/bash) -Z -c -f $COVERAGE_FNAME
     else
