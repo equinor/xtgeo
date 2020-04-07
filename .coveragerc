@@ -1,5 +1,5 @@
 [run]
-source=src/xtgeo
+source=xtgeo
 branch = True
 omit =
     *roxapi*
