@@ -712,7 +712,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         else:
             logger.error("Invalid file format")
 
-    def from_roxar(self, project, name, folder=None):
+    def from_roxar(self, project, name, folder=None):  # pragma: no cover
         """Import (transfer) a cube from a Roxar seismic object to XTGeo.
 
         Args:
@@ -735,7 +735,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
     def to_roxar(
         self, project, name, folder=None, domain="time", compression=("wavelet", 5)
-    ):
+    ):  # pragma: no cover
         """Export (transfer) a cube from a XTGeo cube object to Roxar data.
 
         Args:

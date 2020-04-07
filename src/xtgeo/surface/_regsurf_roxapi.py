@@ -8,7 +8,9 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_horizon_roxapi(self, project, name, category, stype, realisation):
+def import_horizon_roxapi(
+    self, project, name, category, stype, realisation
+):  # pragma: no cover
     """Import a Horizon surface via ROXAR API spec."""
 
     rox = RoxUtils(project, readonly=True)
@@ -20,7 +22,9 @@ def import_horizon_roxapi(self, project, name, category, stype, realisation):
     rox.safe_close()
 
 
-def _roxapi_import_surface(self, proj, name, category, stype, realisation):
+def _roxapi_import_surface(
+    self, proj, name, category, stype, realisation
+):  # pragma: no cover
 
     self._name = name
 
@@ -66,7 +70,7 @@ def _roxapi_import_surface(self, proj, name, category, stype, realisation):
         raise ValueError("Invalid stype")
 
 
-def _roxapi_horizon_to_xtgeo(self, rox):
+def _roxapi_horizon_to_xtgeo(self, rox):  # pragma: no cover
     """Tranforming surfaces from ROXAPI to XTGeo object."""
     # local function
     logger.info("Surface from roxapi to xtgeo...")
@@ -79,7 +83,9 @@ def _roxapi_horizon_to_xtgeo(self, rox):
     logger.info("Surface from roxapi to xtgeo... DONE")
 
 
-def export_horizon_roxapi(self, project, name, category, stype, realisation):
+def export_horizon_roxapi(
+    self, project, name, category, stype, realisation
+):  # pragma: no cover
     """Export (store) a Horizon surface to RMS via ROXAR API spec."""
     rox = RoxUtils(project, readonly=False)
 
@@ -90,7 +96,9 @@ def export_horizon_roxapi(self, project, name, category, stype, realisation):
     rox.safe_close()
 
 
-def _roxapi_export_surface(self, proj, name, category, stype, realisation):
+def _roxapi_export_surface(
+    self, proj, name, category, stype, realisation
+):  # pragma: no cover
     if stype == "horizons":
         if name not in proj.horizons:
             raise ValueError("Name {} is not within Horizons".format(name))
@@ -139,7 +147,7 @@ def _roxapi_export_surface(self, proj, name, category, stype, realisation):
         raise ValueError("Invalid stype")
 
 
-def _xtgeo_to_roxapi_grid(self):
+def _xtgeo_to_roxapi_grid(self):  # pragma: no cover
     # Create a 2D grid
     import roxar  # pylint: disable=import-error, import-outside-toplevel
 

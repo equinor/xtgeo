@@ -95,7 +95,7 @@ def gridproperty_from_file(
     return obj
 
 
-def gridproperty_from_roxar(project, gname, pname, realisation=0):
+def gridproperty_from_roxar(project, gname, pname, realisation=0):  # pragma: no cover
     """Make a GridProperty instance directly inside RMS.
 
     For arguments, see :func:`GridProperty.from_roxar()`
@@ -645,7 +645,7 @@ class GridProperty(Grid3D):
             self, pfile, fformat=fformat, name=name, append=append, dtype=dtype
         )
 
-    def from_roxar(self, projectname, gname, pname, realisation=0):
+    def from_roxar(self, projectname, gname, pname, realisation=0):  # pragma: no cover
         """Import grid model property from RMS project, and makes an instance.
 
         Arguments:
@@ -663,7 +663,9 @@ class GridProperty(Grid3D):
             self, projectname, gname, pname, realisation,
         )
 
-    def to_roxar(self, projectname, gname, pname, saveproject=False, realisation=0):
+    def to_roxar(
+        self, projectname, gname, pname, saveproject=False, realisation=0
+    ):  # pragma: no cover
         """Store a grid model property into a RMS project.
 
         Arguments:

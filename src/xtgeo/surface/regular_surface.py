@@ -848,7 +848,9 @@ class RegularSurface(object):
         else:
             logger.critical("Invalid file format")
 
-    def from_roxar(self, project, name, category, stype="horizons", realisation=0):
+    def from_roxar(
+        self, project, name, category, stype="horizons", realisation=0
+    ):  # pragma: no cover
         """Load a surface from a Roxar RMS project.
 
         The import from the RMS project can be done either within the project
@@ -905,7 +907,9 @@ class RegularSurface(object):
             self, project, name, category, stype, realisation
         )
 
-    def to_roxar(self, project, name, category, stype="horizons", realisation=0):
+    def to_roxar(
+        self, project, name, category, stype="horizons", realisation=0
+    ):  # pragma: no cover
         """Store (export) a regular surface to a Roxar RMS project.
 
         The export to the RMS project can be done either within the project
