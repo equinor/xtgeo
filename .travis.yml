@@ -58,6 +58,7 @@ matrix:
         - MB_PYTHON_VERSION=3.8
         - MB_ML_VER=2010
         - TEST_DEPENDS="pytest segyio==1.9.1"
+      if: (type = pull_request) OR (tag IS true)
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.6
@@ -102,9 +103,9 @@ script:
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  - if [[ $TRAVIS_EVENT_TYPE == "push" && -f ".coverage" ]]; then
-        bash <(curl -s https://codecov.io/bash);
-    fi
+  # - if [[ $TRAVIS_EVENT_TYPE == "push" && -f ".coverage" ]]; then
+  #       bash <(curl -s https://codecov.io/bash);
+  #   fi
 
 before_deploy:
   - pip install numpy
