@@ -102,7 +102,9 @@ script:
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  - if [[ $TRAVIS_EVENT_TYPE == "push" && -f ".coverage" ]]; then codecov; fi
+  - if [[ $TRAVIS_EVENT_TYPE == "push" && -f ".coverage" ]]; then
+        bash <(curl -s https://codecov.io/bash);
+    fi
 
 before_deploy:
   - pip install numpy
