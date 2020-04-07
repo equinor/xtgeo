@@ -21,7 +21,7 @@ Detailed documentation for [XTGeo at Read *the* Docs](https://xtgeo.readthedocs.
 
 ## Feature summary ##
 
-   * Python 2.7+ and 3.4+ support
+   * Python 2.7+ and 3.5+ support
    * Focus on high speed, using numpy and pandas with C backend
    * Regular surfaces, i.e. 2D maps with regular sampling and rotation
    * 3D grids (corner-point), supporting several formats such as
