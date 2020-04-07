@@ -31,7 +31,7 @@ function run_tests {
     PYV=$(python --version | cut -d" " -f2  | cut -d. -f1,2)
     # codecov
     if [[ $SYS == "Linux" && $PYV == "3.8" ]]; then
-        yum install curl
+        apt-get -y install curl > /dev/null
         pip install pytest-cov
         pip install codecov
         COVERAGE_FNAME="/tmp/test_coverage.xml"
