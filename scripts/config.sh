@@ -33,7 +33,7 @@ function run_tests {
     if [[ $SYS == "Linux" && $PYV == "3.8" ]]; then
         pip install pytest-cov
         pip install codecov
-        $COVERAGE_FNAME="/tmp/test_coverage.xml"
+        COVERAGE_FNAME="/tmp/test_coverage.xml"
         pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:$COVERAGE_FNAME
         bash <(curl -s https://codecov.io/bash) -Z -c -f $COVERAGE_FNAME
     else
