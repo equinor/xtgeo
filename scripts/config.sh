@@ -27,12 +27,16 @@ function run_tests {
     echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
-    # PYV=$(python -c 'import sys; v = sys.version_info; print("{}.{}".format(v[0], v[1]))')
     PYV=$(python --version | cut -d" " -f2  | cut -d. -f1,2)
-    # codecov
+
+    # code coverage is ran for PY 3.8 only
     if [[ $SYS == "Linux" && $PYV == "3.8" ]]; then
         pip install pytest-cov
-        pytest tests --disable-warnings --cov
+        mkdir mbcov
+        chmod 777 mbcov
+        COVERAGE="mbcov/mbcoverage.xml"
+        pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:$COVERAGE
+        chmod 666 $COVERAGE
     else
         pytest tests --disable-warnings
     fi
