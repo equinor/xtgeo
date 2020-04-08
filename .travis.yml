@@ -105,10 +105,7 @@ after_success:
   - ls -la .
   - CODECOV="mbcov/mbcoverage.xml"
   - if [[ -f $CODECOV ]]; then
-        pushd mbcov
-        echo "Upload coverage report..."
-        bash <(curl -s https://codecov.io/bash) -Z -c -f mbcoverage.xml;
-        popd
+        bash <(curl -s https://codecov.io/bash) -Z -c -f $CODECOV;
     fi
 
 before_deploy:
