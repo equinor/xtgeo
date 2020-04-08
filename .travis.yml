@@ -103,11 +103,12 @@ script:
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  - ls -la /tmp/
-  - CODECOV="/tmp/mbcoverage.xml"
+  - CODECOV="mbcov/mbcoverage.xml"
   - if [[ -f $CODECOV ]]; then
+        pushd mbcov
         echo "Upload coverage report..."
-        bash <(curl -s https://codecov.io/bash) -Z -c -f $CODECOV;
+        bash <(curl -s https://codecov.io/bash) -Z -c -f mbcoverage.xml;
+        popd
     fi
 
 before_deploy:
