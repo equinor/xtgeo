@@ -32,7 +32,8 @@ function run_tests {
     # code coverage is ran for PY 3.8 only
     if [[ $SYS == "Linux" && $PYV == "3.8" ]]; then
         pip install pytest-cov
-        COVERAGE="mbcoverage.xml"
+        mkdir mbcov
+        COVERAGE="mbcov/mbcoverage.xml"
         pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:$COVERAGE
     else
         pytest tests --disable-warnings
