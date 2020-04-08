@@ -103,7 +103,8 @@ script:
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  - CODECOV="mbcov/mbcoverage.xml"
+  - ls -la /tmp/
+  - CODECOV="/tmp/mbcoverage.xml"
   - if [[ -f $CODECOV ]]; then
         echo "Upload coverage report..."
         bash <(curl -s https://codecov.io/bash) -Z -c -f $CODECOV;
