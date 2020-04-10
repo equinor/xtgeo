@@ -21,25 +21,17 @@ function run_tests {
         apt-get -y update > /dev/null
         apt-get -y install git > /dev/null
     fi
-    git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../../xtgeo-testdata
     pip install pytest
     export TRAVISRUN=true
-    echo $USER
     python -c "import xtgeo; print(xtgeo.__version__)"
     pushd ..
     PYV=$(python --version | cut -d" " -f2  | cut -d. -f1,2)
 
-    # code coverage is ran for PY 3.8 only
-    if [[ $SYS == "Linux" && $PYV == "3.8" ]]; then
-        pip install pytest-cov
-        mkdir mbcov
-        chmod 777 mbcov
-        COVERAGE="mbcov/mbcoverage.xml"
-        pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:$COVERAGE
-        chmod 666 $COVERAGE
+    if [[ $SYS == "Linux" && $PYV == "3.6" ]]; then
+        echo "For Python 3.6 / Linux, run pytest with coverage report in travis main"
     else
+        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
         pytest tests --disable-warnings
     fi
-    pwd
 
 }

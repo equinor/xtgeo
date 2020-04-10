@@ -41,16 +41,15 @@ matrix:
       if: (type = pull_request) OR (tag IS true)
     - os: linux
       env: MB_PYTHON_VERSION=3.5
-      if: tag IS true
+      if: (type = pull_request) OR (tag IS true)
     - os: linux
       env: MB_PYTHON_VERSION=3.6
       if: (type = pull_request) OR (tag IS true)
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.7
-        - SOURCEDEPLOY=1
         - MB_ML_VER=2010
-      if: (type = pull_request) OR (tag IS true)
+      if: (tag IS true)
     - os: linux
       dist: xenial
       sudo: true
@@ -59,6 +58,7 @@ matrix:
         - MB_ML_VER=2010
         - TEST_DEPENDS="pytest segyio==1.9.1"
       if: (type = pull_request) OR (tag IS true)
+
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.6
@@ -68,12 +68,12 @@ matrix:
       language: generic
       env: MB_PYTHON_VERSION=3.7
       python: 3.7
-      if: tag IS present
+      if: (type = pull_request) OR (tag IS true)
     - os: osx
       language: generic
       env: MB_PYTHON_VERSION=3.8
       python: 3.8
-      if: (type = pull_request) OR (tag IS true)
+      if: tag IS true
 
 before_install:
   - echo "PWD is $PWD"
@@ -90,7 +90,6 @@ install:
     fi
   - pip install pip==19.3.1
   - pip install bandit
-  - pip install codecov
   - build_wheel $REPO_DIR $PLAT
 
 before_script:
@@ -99,13 +98,25 @@ before_script:
 script:
   - install_run $PLAT
   - mv wheelhouse dist
+  - ls -la .
+  # for a given version, the test is ran outside the multibuild docker in order to run coverage
+  # see also scripts/config.sh
+  - if [[ "$MB_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux"  ]]; then
+        export TRAVISRUN=true;
+        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata;
+        pip install -r requirements.txt;
+        pip install dist/*.whl --force;
+        pip install pytest pytest-cov;
+        pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
+    fi
+
 
 after_success:
   - ls -la ${TRAVIS_BUILD_DIR}/dist
   - ls -la .
-  - CODECOV="mbcov/mbcoverage.xml"
-  - if [[ -f $CODECOV ]]; then
-        bash <(curl -s https://codecov.io/bash) -Z -c -f $CODECOV;
+  # upload coverage report to codecov server
+  - if [[ -f "xtgeocoverage.xml" ]]; then
+        bash <(curl -s https://codecov.io/bash) -Z -c -f xtgeocoverage.xml;
     fi
 
 before_deploy:

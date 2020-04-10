@@ -52,9 +52,9 @@ the documentation.
 from xtgeo.surface import RegularSurface
 
 # create an instance of a surface, read from file
-mysurf = RegularSurface('myfile.gri')  # Irap binary as default
+mysurf = RegularSurface("myfile.gri")  # Irap binary as default
 
-print('Mean is {}'.format(mysurf.values.mean()))
+print("Mean is {}".format(mysurf.values.mean()))
 
 # change date so all values less than 2000 becomes 2000
 # The values attribute gives the Numpy array
@@ -62,7 +62,7 @@ print('Mean is {}'.format(mysurf.values.mean()))
 mysurface.values[mysurface.values < 2000] = 2000
 
 # export the modified surface:
-mysurface.to_file('newfile.gri')
+mysurface.to_file("newfile.gri")
 ```
 
 ## Note on RMS Roxar API integration ##
