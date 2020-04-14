@@ -20,11 +20,13 @@ logger = xtg.functionlogger(__name__)
 
 def gridproperty_fromgrid(self, grid, linkgeometry=False):
 
-    """Make an simple GridProperty instance directly based on an existing grid.
+    """Make an simple GridProperty instance directly based on an existing grid or
+    gridproperty.
 
     Args:
-        grid (Grid): The grid geometry instance
+        grid (Grid or GridProperty): The grid(property) geometry instance
         linkgeometry (bool): If True, connect the property.geometry to the input grid
+            which is only applicable if Grid as input
     Example::
 
         import xtgeo
@@ -59,18 +61,23 @@ def gridproperty_fromgrid(self, grid, linkgeometry=False):
     else:
         vals = vals.copy()  # do copy do avoid potensial reference issues
 
-    act = grid.get_actnum(asmasked=True)
+    if isinstance(grid, xtgeo.grid3d.Grid):
 
-    self._values = np.ma.array(vals, mask=np.ma.getmaskarray(act.values))
+        act = grid.get_actnum(asmasked=True)
 
-    del act
+        self._values = np.ma.array(vals, mask=np.ma.getmaskarray(act.values))
 
-    if linkgeometry:
-        # assosiate this grid property with grid instance. This is not default
-        # since sunch links may affect garbish collection
-        self.geometry = grid
+        del act
 
-    grid.append_prop(self)
+        if linkgeometry:
+            # assosiate this grid property with grid instance. This is not default
+            # since sunch links may affect garbish collection
+            self.geometry = grid
+
+        grid.append_prop(self)
+
+    else:
+        self._values = np.ma.array(vals, mask=np.ma.getmaskarray(grid.values))
 
 
 def gridproperty_fromfile(self, pfile, **kwargs):
