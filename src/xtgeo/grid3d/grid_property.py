@@ -527,15 +527,12 @@ class GridProperty(Grid3D):
             values = np.asanyarray(values, order="C")
             values = np.ma.array(values, mask=mask, order="C")
 
-        trydiscrete = False
-        if "int" in str(values.dtype):
-            trydiscrete = True
+        # the self._isdiscrete property shall win over numpy dtype
+        if "int" in str(values.dtype) and not self._isdiscrete:
+            values = values.astype(np.float64)
 
-        if trydiscrete is not self._isdiscrete:
-            if trydiscrete:
-                self.continuous_to_discrete()
-            else:
-                self.discrete_to_continuous()
+        if "float" in str(values.dtype) and self._isdiscrete:
+            values = values.astype(np.int32)
 
         return values
 
