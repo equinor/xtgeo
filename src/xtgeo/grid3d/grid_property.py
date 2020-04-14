@@ -199,7 +199,7 @@ class GridProperty(Grid3D):
 
         if len(args) == 1:
             # make instance through grid instance or file import
-            if isinstance(args[0], xtgeo.grid3d.Grid):
+            if isinstance(args[0], (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
                 linkgeometry = kwargs.get("linkgeometry", False)
                 _gridprop_etc.gridproperty_fromgrid(
                     self, args[0], linkgeometry=linkgeometry
