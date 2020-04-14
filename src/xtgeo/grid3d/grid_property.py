@@ -126,6 +126,8 @@ class GridProperty(Grid3D):
     The numpy array representing the values is a 3D masked numpy.
 
     Args:
+        *args: If a value exists, it should either be a file name, a Grid()
+            or a GridProperty() instance. See examples below
         ncol (int): Number of columns.
         nrow (int): Number of rows.
         nlay (int): Number of layers.
@@ -168,8 +170,16 @@ class GridProperty(Grid3D):
                                linkgeometry=True)  # alternative 1
         myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
 
+        # from Grid instance:
+        grd = Grid("somefile_grid_file")
+        myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
+
+        # or from existing GridProperty instance:
+        myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
+
 
     .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
+    .. versionchanged:: 2.8 Possible to base it existing GridProperty() instance
 
     """
 
@@ -198,7 +208,7 @@ class GridProperty(Grid3D):
         self._values = kwargs.get("values", None)
 
         if len(args) == 1:
-            # make instance through grid instance or file import
+            # make instance through grid/gridprop instance or file import
             if isinstance(args[0], (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
                 linkgeometry = kwargs.get("linkgeometry", False)
                 _gridprop_etc.gridproperty_fromgrid(
@@ -311,7 +321,14 @@ class GridProperty(Grid3D):
         """Return or set the values numpy dtype.
 
         When setting, note that the the dtype must correspond to the
-        `isdiscrete` property.
+        `isdiscrete` property. Hence dtype cannot alter isdiscrete status
+
+        Example::
+
+            if myprop.isdiscrete:
+                myprop.dtype = np.uint16
+
+
         """
         return self._values.dtype
 
@@ -727,6 +744,8 @@ class GridProperty(Grid3D):
         Note that Numpy dtype will be reset; int32 if discrete or float64 if
         continuous. The reason for this is to avoid inconsistensies regarding
         UNDEF values.
+
+        If fill_value is not None, than the returning dtype is always `np.float64`.
 
         Args:
             fill_value: Value of masked entries. Default is None which

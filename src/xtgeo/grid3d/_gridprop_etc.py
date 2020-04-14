@@ -26,7 +26,7 @@ def gridproperty_fromgrid(self, grid, linkgeometry=False):
     Args:
         grid (Grid or GridProperty): The grid(property) geometry instance
         linkgeometry (bool): If True, connect the property.geometry to the input grid
-            which is only applicable if Grid as input
+            which is only applicable if Grid is input
     Example::
 
         import xtgeo
