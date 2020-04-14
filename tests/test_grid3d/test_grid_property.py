@@ -107,6 +107,8 @@ def test_create_from_grid():
     gg = Grid(TESTFILE5, fformat="egrid")
     poro = GridProperty(gg, name="poro", values=0.33)
     assert poro.ncol == gg.ncol
+
+    assert poro.isdiscrete is False
     assert poro.values.mean() == 0.33
 
     assert poro.values.dtype.kind == "f"
@@ -116,6 +118,32 @@ def test_create_from_grid():
     assert faci.values.mean() == 1
 
     assert faci.values.dtype.kind == "i"
+
+    some = xtgeo.GridProperty(gg, name="SOME")
+    assert some.isdiscrete is False
+    some.values = np.where(some.values == 0, 0, 1)
+    assert some.isdiscrete is False
+
+
+def test_create_from_gridproperty():
+    """Create a simple property from grid"""
+
+    gg = Grid(TESTFILE5, fformat="egrid")
+    poro = GridProperty(gg, name="poro", values=0.33)
+    assert poro.ncol == gg.ncol
+
+    # create from gridproperty
+    faci = xtgeo.GridProperty(poro, name="FAC", values=1, discrete=True)
+    assert faci.nlay == gg.nlay
+    assert faci.values.mean() == 1
+
+    assert faci.values.dtype.kind == "i"
+
+    some = xtgeo.GridProperty(faci, name="SOME", values=22)
+    assert some.values.mean() == 22.0
+    assert some.isdiscrete is False
+    some.values = np.where(some.values == 0, 0, 1)
+    assert some.isdiscrete is False
 
 
 def test_pathlib():
