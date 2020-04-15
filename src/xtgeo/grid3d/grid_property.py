@@ -1,21 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Module for a 3D grid property.
+"""Module for a 3D grid property."""
 
-The grid property instances may or may not belong to a grid geometry
-object. Normally the instance is created when importing a grid
-property from file, but it can also be created directly, as e.g.::
-
- poro = GridProperty(ncol=233, nrow=122, nlay=32)
-
-The grid property values ``someinstance.values`` by themselves are 3D masked
-numpy as either float64 (double) or int32 (if discrete), and undefined
-cells are displayed as masked. The array order is now C_CONTIGUOUS.
-(i.e. not in Eclipse manner). A 1D view (C order) is achieved by the
-values1d property, e.g.::
-
- poronumpy = poro.values1d
-
-"""
 from __future__ import print_function, absolute_import
 
 import copy
@@ -36,7 +21,7 @@ from . import _gridprop_lowlevel
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 #
 # 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
@@ -48,14 +33,14 @@ logger = xtg.functionlogger(__name__)
 # Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 # pylint: disable=logging-format-interpolation, too-many-public-methods
 
-# =============================================================================
+# ======================================================================================
 # Functions outside the class, for rapid access. Will be exposed as
 # xxx = xtgeo.gridproperty_from_file. pylint: disable=fixme
-# =============================================================================
+# ======================================================================================
 
 
 def gridproperty_from_file(
@@ -112,18 +97,31 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):  # pragma: no
     return obj
 
 
-# =============================================================================
+# ======================================================================================
 # GridProperty class
-# =============================================================================
+# ======================================================================================
 
 
 class GridProperty(Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
 
-    An instance may or may not 'belong' to a grid (geometry) object. E.g. for
-    for ROFF, ncol, nrow, nlay are given in the import file.
+    An GridProperty instance may or may not 'belong' to a grid (geometry) object.
+     E.g. for ROFF input, ncol, nrow, nlay are given in the import file and the grid
+     geometry file is not needed. For many Eclipse files, the grid geometry is needed
+     as this holds the active number indices (ACTNUM).
 
-    The numpy array representing the values is a 3D masked numpy.
+    Normally the instance is created when importing a grid
+    property from file, but it can also be created directly, as e.g.::
+
+        poro = GridProperty(ncol=233, nrow=122, nlay=32)
+
+    The grid property values ``someinstance.values`` by themselves is a 3D masked
+    numpy usually as either float64 (double) or int32 (if discrete), and undefined
+    cells are displayed as masked. The internal array order is now C_CONTIGUOUS.
+    (i.e. not in Eclipse manner). A 1D view (C order) is achieved by the
+    values1d property, e.g.::
+
+       poronumpy = poro.values1d
 
     Args:
         *args: If a value exists, it should either be a file name, a Grid()
@@ -135,6 +133,8 @@ class GridProperty(Grid3D):
         name (str): Name of property.
         discrete (bool): True if discrete property
             (default is false).
+        fracture (bool): Indicates a fracture setup (for flow simulator)
+        codes (dict): A code to name dictionary (for discrete)
 
     Alternatively, the same arguments as the from_file() method
     can be used.
@@ -179,7 +179,7 @@ class GridProperty(Grid3D):
 
 
     .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
-    .. versionchanged:: 2.8 Possible to base it existing GridProperty() instance
+    .. versionchanged:: 2.8 Possible to base it on existing GridProperty() instance
 
     """
 
@@ -196,10 +196,11 @@ class GridProperty(Grid3D):
         self._isdiscrete = kwargs.get("discrete", False)
         self._geometry = kwargs.get("grid", None)
         self._fracture = kwargs.get("fracture", False)
+        self._codes = kwargs.get("codes", dict())  # code dictionary (for discrete)
 
+        # not primary input:
         self._dualporo = kwargs.get("dualporo", False)
         self._dualperm = kwargs.get("dualperm", False)
-        self._codes = kwargs.get("codes", dict())  # code dictionary (for discrete)
         self._filesrc = None
         self._actnum_indices = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
@@ -222,11 +223,8 @@ class GridProperty(Grid3D):
             # make instance purely from kwargs spec
             _gridprop_etc.gridproperty_fromspec(self, **kwargs)
 
-    # def __del__(self):
-    #     logger.debug("DELETING property instance %s", self.name)
-    #     self._values = None
-    #     for myvar in vars(self).keys():
-    #         del myvar
+    def __del__(self):
+        logger.debug("DELETING property instance %s", self.name)
 
     def __repr__(self):
         myrp = (
@@ -240,9 +238,10 @@ class GridProperty(Grid3D):
         # user friendly print
         return self.describe(flush=False)
 
-    # =========================================================================
+    # ==================================================================================
     # Properties
-    # =========================================================================
+    # Some proprerties such as ncol, nrow, nlay are from the Super class
+    # ==================================================================================
 
     @property
     def name(self):
@@ -701,9 +700,9 @@ class GridProperty(Grid3D):
             realisation=realisation,
         )
 
-    # =========================================================================
+    # ==================================================================================
     # Various public methods
-    # =========================================================================
+    # ==================================================================================
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -1074,11 +1073,3 @@ class GridProperty(Grid3D):
     def set_outside(self, poly, value):
         """Set a value (scalar) outside polygons"""
         self.operation_polygons(poly, value, opname="set", inside=False)
-
-    # ----------------------------------------------------------------------------------
-    # Private function
-    # ----------------------------------------------------------------------------------
-
-    # def _evaluate_mask(self, mask):
-    #     # the super version is used instead; need this to override abstract method
-    #     pass
