@@ -16,7 +16,75 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def extract_ztops(
+def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef):
+    """
+    Getting zonation tops (private routine)
+
+    Args, see calling routine
+    """
+
+    zlist = []
+    # get the relevant logs:
+
+    self.geometrics()  # note the caller has made a copy of the true self
+
+    # as zlog is float64; need to convert to int array with high
+    # number as undef
+    if self.zonelogname is not None:
+        if use_undef:
+            self._df.dropna(subset=[self.zonelogname], inplace=True)
+        zlog = self._df[self.zonelogname].values
+        zlog[np.isnan(zlog)] = const.UNDEF_INT
+        zlog = np.rint(zlog).astype(int)
+    else:
+        return None
+
+    xvv = self._df["X_UTME"].values
+    yvv = self._df["Y_UTMN"].values
+    zvv = self._df["Z_TVDSS"].values
+    incl = self._df["Q_INCL"].values
+    mdv = self._df["Q_MDEPTH"].values
+
+    if self.mdlogname is not None:
+        mdv = self._df[self.mdlogname].values
+
+    if zonelist is None:
+        # need to declare as list; otherwise Py3 will get dict.keys
+        zonelist = list(self.get_logrecord(self.zonelogname).keys())
+
+    logger.info("Find values for %s", zonelist)
+
+    ztops, ztopnames, zisos, zisonames = _extract_ztops(
+        self,
+        zonelist,
+        xvv,
+        yvv,
+        zvv,
+        zlog,
+        mdv,
+        incl,
+        tops=tops,
+        incl_limit=incl_limit,
+        prefix=top_prefix,
+        use_undef=use_undef,
+    )
+
+    if tops:
+        zlist = ztops
+    else:
+        zlist = zisos
+
+    logger.debug(zlist)
+
+    if tops:
+        dfr = pd.DataFrame(zlist, columns=ztopnames)
+    else:
+        dfr = pd.DataFrame(zlist, columns=zisonames)
+
+    return dfr
+
+
+def _extract_ztops(
     self,
     zonelist,
     xcv,
@@ -34,7 +102,7 @@ def extract_ztops(
 
     Args:
         zonelist (list-like): The zonelog list numbers to apply; either
-            as a list, or a tuple; 2 entries forms a range [start, stop)
+            as a list, or a tuple; 2 entries forms a range [start, stop]
         xcv (np): X Position numpy array
         ycv (np): Y Position numpy array
         zcv (np): Z Position numpy array
@@ -51,9 +119,6 @@ def extract_ztops(
     # The wellpoints will be a list of tuples (one tuple per hit)
     wpts = []
     zlogname = self.zonelogname
-
-    logger.debug(zlog)
-    logger.info("Well name is %s", self.wellname)
 
     if not tops and incl_limit is None:
         incl_limit = 80

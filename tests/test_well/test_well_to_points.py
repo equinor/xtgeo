@@ -7,20 +7,16 @@ TMPD = xtg.tmpdir
 
 logger = xtg.basiclogger(__name__)
 
-# =========================================================================
-# Do tests
-# =========================================================================
-
 
 def test_wellzone_to_points():
     """Import well from file and put zone boundaries to a Pandas object."""
 
-    wfile = "../xtgeo-testdata/wells/reek/1/OP_1.w"
+    wfile = "../xtgeo-testdata/wells/etc/otest.rmswell"
 
-    mywell = Well(wfile, zonelogname="Zonelog")
+    mywell = Well(wfile, zonelogname="Zone_model", mdlogname="M_DEPTH")
     logger.info("Imported %s", wfile)
 
     # get the zpoints which is a Pandas
-    zpoints = mywell.get_zonation_points()
+    zpoints = mywell.get_zonation_points(use_undef=False)
 
-    print(zpoints)
+    print(zpoints.to_string())
