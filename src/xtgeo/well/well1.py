@@ -1094,13 +1094,16 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         is tops (i.e. tops=True).
 
         The `zonelist` can be a list of zones, or a tuple with two members specifying
-        first and last member. E.g.::
+        first and last member. Note however that the zonation shall be without jumps
+        and increasing. E.g.::
 
             zonelist=(1, 5)  # meaning [1, 2, 3, 4, 5]
             # or
-            zonelist=[1, 4, 6, 7]
+            zonelist=[1, 2, 3, 4]
+            # while _not_ legal:
+            zonelist=[1, 4, 8]
 
-        Zone numbers less than 0 is not accepted
+        Zone numbers less than 0 are not accepted
 
         Args:
             tops (bool): If True then compute tops, else (thickness) points.

@@ -133,24 +133,30 @@ def _extract_ztops(
     else:
         raise ValueError("Something is wrong with zonelist input")
 
+    # check if increasing monotonic and with no jumps:
+    if not all(i + 1 == j for i, j in zip(usezonerange, usezonerange[1:])):
+        raise ValueError("The zonelist is not valid! C.f. documentation")
+
     iundef = const.UNDEF_INT
     iundeflimit = const.UNDEF_INT_LIMIT
     pzone = iundef
 
     if use_undef:
-        pzone = zlog.min() - 1
+        pzone = usezonerange[0] - 1
 
     for ind, zone in np.ndenumerate(zlog):
 
         ino = ind[0]  # since ind is a tuple...
 
-        if use_undef and zone > iundeflimit:
-            zone = zlog.min() - 1
-
         if pzone != zone and pzone < iundeflimit and zone < iundeflimit:
             logger.debug("Found break in zonation")
             if pzone < zone:
-                logger.debug("Found match with zonation increasing")
+                logger.debug(
+                    "Found match, increasing zonation at %s < %s (MD %s)",
+                    pzone,
+                    zone,
+                    mdv[ino],
+                )
                 for kzv in range(pzone + 1, zone + 1):
                     if kzv in usezonerange:
                         zname = self.get_logrecord_codename(zlogname, kzv)
@@ -168,7 +174,12 @@ def _extract_ztops(
                         )
                         wpts.append(ztop)
             if pzone > zone and ino > 0:
-                logger.info("Found match, decreasing zonation")
+                logger.debug(
+                    "Found match, decreasing zonation at %s > %s (MD %s)",
+                    pzone,
+                    zone,
+                    mdv[ino - 1],
+                )
                 for kzv in range(pzone, zone, -1):
                     if kzv in usezonerange:
                         zname = self.get_logrecord_codename(zlogname, kzv)
@@ -187,15 +198,11 @@ def _extract_ztops(
                         wpts.append(ztop)
         pzone = zone
 
-    mdname = "Q_MDEPTH"
-    if self.mdlogname is not None:
-        mdname = "M_MDEPTH"
-
     wpts_names = [
         "X_UTME",
         "Y_UTMN",
         "Z_TVDSS",
-        mdname,
+        self.mdlogname,
         "Q_INCL",
         "Q_AZI",
         "Zone",
@@ -213,7 +220,7 @@ def _extract_ztops(
         "X_UTME",
         "Y_UTMN",
         "Z_TVDSS",
-        mdname + "_AVG",
+        self.mdlogname + "_AVG",
         "Q_MD1",
         "Q_MD2",
         "Q_INCL",
