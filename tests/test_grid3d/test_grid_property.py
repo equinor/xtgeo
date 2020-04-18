@@ -41,17 +41,17 @@ TESTFILE5 = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
 TESTFILE6 = "../xtgeo-testdata/3dgrids/reek/REEK.INIT"
 TESTFILE7 = "../xtgeo-testdata/3dgrids/reek/REEK.UNRST"
 TESTFILE8 = "../xtgeo-testdata/3dgrids/reek/reek_sim_zone.roff"
-TESTFILE8a = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
+TESTFILE8A = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
 TESTFILE9 = TESTFILE1
 TESTFILE10 = "../xtgeo-testdata/3dgrids/bri/b_grid.roff"
 TESTFILE11 = "../xtgeo-testdata/3dgrids/bri/b_poro.roff"
-polyfile = "../xtgeo-testdata/polygons/reek/1/polset2.pol"
+POLYFILE = "../xtgeo-testdata/polygons/reek/1/polset2.pol"
 
-TESTFILE12a = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.grdecl"
-TESTFILE12b = "../xtgeo-testdata/3dgrids/reek/reek_sim_poro.grdecl"
+TESTFILE12A = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.grdecl"
+TESTFILE12B = "../xtgeo-testdata/3dgrids/reek/reek_sim_poro.grdecl"
 
-TESTFILE13a = "../xtgeo-testdata/3dgrids/etc/TEST_SP.EGRID"
-TESTFILE13b = "../xtgeo-testdata/3dgrids/etc/TEST_SP.INIT"
+TESTFILE13A = "../xtgeo-testdata/3dgrids/etc/TEST_SP.EGRID"
+TESTFILE13B = "../xtgeo-testdata/3dgrids/etc/TEST_SP.INIT"
 
 DUALROFF = "../xtgeo-testdata/3dgrids/etc/dual_grid_w_props.roff"
 
@@ -81,11 +81,13 @@ def test_assign():
     assert x.values.mean() == 2.5
 
     # this shall now broadcast the value 33 to all activecells
+    x.isdiscrete = True
     x.values = 33
-    assert x.dtype == np.int
+    assert x.dtype == np.int32
 
+    x.isdiscrete = False
     x.values = 44.0221
-    assert x.dtype == np.float
+    assert x.dtype == np.float64
 
 
 def test_create_actnum():
@@ -101,12 +103,69 @@ def test_create_actnum():
     assert x.nactive < x.ntotal
 
 
+def test_undef():
+    """Test getting UNDEF value"""
+    xx = GridProperty()
+    act = xx.get_actnum()
+
+    assert xx.undef == xtgeo.UNDEF
+    assert act.undef == xtgeo.UNDEF_INT
+
+
+def test_class_methods():
+    """Test getting class methods"""
+    result = GridProperty.methods()
+    assert "from_file" in result
+
+
+def test_describe():
+    """Test getting the describe text"""
+    xx = GridProperty()
+    desc = xx.describe(flush=False)
+    assert "Name" in desc
+
+
+def test_npvalues3d():
+    """Test getting numpy values as 3d"""
+    xx = GridProperty()
+    mynp = xx.get_npvalues3d()
+
+    assert mynp.shape == (5, 12, 2)
+    assert mynp[0, 0, 0] == xtgeo.UNDEF
+
+    xx.isdiscrete = True
+    mynp = xx.get_npvalues3d()
+    assert mynp[0, 0, 0] == xtgeo.UNDEF_INT
+
+    mynp2 = xx.get_npvalues3d(fill_value=-999)
+    assert mynp2[0, 0, 0] == -999
+
+
+def test_dtype():
+    """Test dtype property"""
+    xx = GridProperty()
+    act = xx.get_actnum()
+
+    if not xx.isdiscrete:
+        xx.dtype = np.float16
+
+    assert xx.dtype == np.float16
+    with pytest.raises(ValueError):
+        xx.dtype = np.int32
+
+    assert act.dtype == np.int32
+    with pytest.raises(ValueError):
+        act.dtype = np.float64
+
+
 def test_create_from_grid():
     """Create a simple property from grid"""
 
     gg = Grid(TESTFILE5, fformat="egrid")
     poro = GridProperty(gg, name="poro", values=0.33)
     assert poro.ncol == gg.ncol
+
+    assert poro.isdiscrete is False
     assert poro.values.mean() == 0.33
 
     assert poro.values.dtype.kind == "f"
@@ -116,6 +175,32 @@ def test_create_from_grid():
     assert faci.values.mean() == 1
 
     assert faci.values.dtype.kind == "i"
+
+    some = xtgeo.GridProperty(gg, name="SOME")
+    assert some.isdiscrete is False
+    some.values = np.where(some.values == 0, 0, 1)
+    assert some.isdiscrete is False
+
+
+def test_create_from_gridproperty():
+    """Create a simple property from grid"""
+
+    gg = Grid(TESTFILE5, fformat="egrid")
+    poro = GridProperty(gg, name="poro", values=0.33)
+    assert poro.ncol == gg.ncol
+
+    # create from gridproperty
+    faci = xtgeo.GridProperty(poro, name="FAC", values=1, discrete=True)
+    assert faci.nlay == gg.nlay
+    assert faci.values.mean() == 1
+
+    assert faci.values.dtype.kind == "i"
+
+    some = xtgeo.GridProperty(faci, name="SOME", values=22)
+    assert some.values.mean() == 22.0
+    assert some.isdiscrete is False
+    some.values = np.where(some.values == 0, 0, 1)
+    assert some.isdiscrete is False
 
 
 def test_pathlib():
@@ -279,8 +364,8 @@ def test_eclinit_simple_importexport():
     """Property import and export with anoother name"""
 
     # let me guess the format (shall be egrid)
-    gg = Grid(TESTFILE13a, fformat="egrid")
-    po = GridProperty(TESTFILE13b, name="PORO", grid=gg)
+    gg = Grid(TESTFILE13A, fformat="egrid")
+    po = GridProperty(TESTFILE13B, name="PORO", grid=gg)
 
     po.to_file(os.path.join(TMPDIR, "simple.grdecl"), fformat="grdecl", name="PORO2")
 
@@ -323,11 +408,11 @@ def test_eclunrst_import_soil_reek():
 def test_grdecl_import_reek():
     """Property GRDECL import from Eclipse. Reek"""
 
-    rgrid = Grid(TESTFILE12a, fformat="grdecl")
+    rgrid = Grid(TESTFILE12A, fformat="grdecl")
 
     assert rgrid.dimensions == (40, 64, 14)
 
-    poro = GridProperty(TESTFILE12b, name="PORO", fformat="grdecl", grid=rgrid)
+    poro = GridProperty(TESTFILE12B, name="PORO", fformat="grdecl", grid=rgrid)
 
     poro2 = GridProperty(TESTFILE1, name="PORO", fformat="roff", grid=rgrid)
 
@@ -335,7 +420,7 @@ def test_grdecl_import_reek():
     tsetup.assert_almostequal(poro.values.std(), poro2.values.std(), 0.001)
 
     with pytest.raises(KeywordNotFoundError):
-        poro3 = GridProperty(TESTFILE12b, name="XPORO", fformat="grdecl", grid=rgrid)
+        poro3 = GridProperty(TESTFILE12B, name="XPORO", fformat="grdecl", grid=rgrid)
         logger.debug("Keyword failed as expected for instance %s", poro3)
 
     # Export to ascii grdecl and import that again...
@@ -449,7 +534,7 @@ def test_io_to_nonexisting_folder():
 def test_get_all_corners():
     """Get X Y Z for all corners as XTGeo GridProperty objects"""
 
-    grid = Grid(TESTFILE8a)
+    grid = Grid(TESTFILE8A)
     allc = grid.get_xyz_corners()
 
     x0 = allc[0]
@@ -472,7 +557,7 @@ def test_get_all_corners():
 def test_get_cell_corners():
     """Get X Y Z for one cell as tuple"""
 
-    grid = Grid(TESTFILE8a)
+    grid = Grid(TESTFILE8A)
     clist = grid.get_xyz_cell_corners(ijk=(4, 4, 1))
     logger.debug(clist)
 
@@ -482,7 +567,7 @@ def test_get_cell_corners():
 def test_get_xy_values_for_webportal():
     """Get lists on webportal format"""
 
-    grid = Grid(TESTFILE8a)
+    grid = Grid(TESTFILE8A)
     prop = GridProperty(TESTFILE9, grid=grid, name="PORO")
 
     start = xtg.timer()
@@ -537,7 +622,7 @@ def test_values_in_polygon():
     logger.info("Import roff...")
     grid = Grid(TESTFILE5)
     xprop.from_file(TESTFILE1, fformat="roff", name="PORO", grid=grid)
-    poly = Polygons(polyfile)
+    poly = Polygons(POLYFILE)
     xprop.geometry = grid
     xorig = xprop.copy()
 

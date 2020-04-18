@@ -1,21 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Module for a 3D grid property.
+"""Module for a 3D grid property."""
 
-The grid property instances may or may not belong to a grid geometry
-object. Normally the instance is created when importing a grid
-property from file, but it can also be created directly, as e.g.::
-
- poro = GridProperty(ncol=233, nrow=122, nlay=32)
-
-The grid property values ``someinstance.values`` by themselves are 3D masked
-numpy as either float64 (double) or int32 (if discrete), and undefined
-cells are displayed as masked. The array order is now C_CONTIGUOUS.
-(i.e. not in Eclipse manner). A 1D view (C order) is achieved by the
-values1d property, e.g.::
-
- poronumpy = poro.values1d
-
-"""
 from __future__ import print_function, absolute_import
 
 import copy
@@ -36,7 +21,7 @@ from . import _gridprop_lowlevel
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Comment on 'asmasked' vs 'activeonly:
 #
 # 'asmasked'=True will return a np.ma array, while 'asmasked' = False will
@@ -48,14 +33,14 @@ logger = xtg.functionlogger(__name__)
 # Use word 'zerobased' for a bool regrading startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 # pylint: disable=logging-format-interpolation, too-many-public-methods
 
-# =============================================================================
+# ======================================================================================
 # Functions outside the class, for rapid access. Will be exposed as
 # xxx = xtgeo.gridproperty_from_file. pylint: disable=fixme
-# =============================================================================
+# ======================================================================================
 
 
 def gridproperty_from_file(
@@ -112,20 +97,35 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):  # pragma: no
     return obj
 
 
-# =============================================================================
+# ======================================================================================
 # GridProperty class
-# =============================================================================
+# ======================================================================================
 
 
 class GridProperty(Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
 
-    An instance may or may not 'belong' to a grid (geometry) object. E.g. for
-    for ROFF, ncol, nrow, nlay are given in the import file.
+    An GridProperty instance may or may not 'belong' to a grid (geometry) object.
+     E.g. for ROFF input, ncol, nrow, nlay are given in the import file and the grid
+     geometry file is not needed. For many Eclipse files, the grid geometry is needed
+     as this holds the active number indices (ACTNUM).
 
-    The numpy array representing the values is a 3D masked numpy.
+    Normally the instance is created when importing a grid
+    property from file, but it can also be created directly, as e.g.::
+
+        poro = GridProperty(ncol=233, nrow=122, nlay=32)
+
+    The grid property values ``someinstance.values`` by themselves is a 3D masked
+    numpy usually as either float64 (double) or int32 (if discrete), and undefined
+    cells are displayed as masked. The internal array order is now C_CONTIGUOUS.
+    (i.e. not in Eclipse manner). A 1D view (C order) is achieved by the
+    values1d property, e.g.::
+
+       poronumpy = poro.values1d
 
     Args:
+        *args: If a value exists, it should either be a file name, a Grid()
+            or a GridProperty() instance. See examples below
         ncol (int): Number of columns.
         nrow (int): Number of rows.
         nlay (int): Number of layers.
@@ -133,6 +133,8 @@ class GridProperty(Grid3D):
         name (str): Name of property.
         discrete (bool): True if discrete property
             (default is false).
+        fracture (bool): Indicates a fracture setup (for flow simulator)
+        codes (dict): A code to name dictionary (for discrete)
 
     Alternatively, the same arguments as the from_file() method
     can be used.
@@ -168,8 +170,16 @@ class GridProperty(Grid3D):
                                linkgeometry=True)  # alternative 1
         myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
 
+        # from Grid instance:
+        grd = Grid("somefile_grid_file")
+        myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
+
+        # or from existing GridProperty instance:
+        myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
+
 
     .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
+    .. versionchanged:: 2.8 Possible to base it on existing GridProperty() instance
 
     """
 
@@ -186,10 +196,11 @@ class GridProperty(Grid3D):
         self._isdiscrete = kwargs.get("discrete", False)
         self._geometry = kwargs.get("grid", None)
         self._fracture = kwargs.get("fracture", False)
+        self._codes = kwargs.get("codes", dict())  # code dictionary (for discrete)
 
+        # not primary input:
         self._dualporo = kwargs.get("dualporo", False)
         self._dualperm = kwargs.get("dualperm", False)
-        self._codes = kwargs.get("codes", dict())  # code dictionary (for discrete)
         self._filesrc = None
         self._actnum_indices = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
@@ -198,8 +209,8 @@ class GridProperty(Grid3D):
         self._values = kwargs.get("values", None)
 
         if len(args) == 1:
-            # make instance through grid instance or file import
-            if isinstance(args[0], xtgeo.grid3d.Grid):
+            # make instance through grid/gridprop instance or file import
+            if isinstance(args[0], (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
                 linkgeometry = kwargs.get("linkgeometry", False)
                 _gridprop_etc.gridproperty_fromgrid(
                     self, args[0], linkgeometry=linkgeometry
@@ -212,11 +223,8 @@ class GridProperty(Grid3D):
             # make instance purely from kwargs spec
             _gridprop_etc.gridproperty_fromspec(self, **kwargs)
 
-    # def __del__(self):
-    #     logger.debug("DELETING property instance %s", self.name)
-    #     self._values = None
-    #     for myvar in vars(self).keys():
-    #         del myvar
+    def __del__(self):
+        logger.debug("DELETING property instance %s", self.name)
 
     def __repr__(self):
         myrp = (
@@ -230,9 +238,10 @@ class GridProperty(Grid3D):
         # user friendly print
         return self.describe(flush=False)
 
-    # =========================================================================
+    # ==================================================================================
     # Properties
-    # =========================================================================
+    # Some proprerties such as ncol, nrow, nlay are from the Super class
+    # ==================================================================================
 
     @property
     def name(self):
@@ -311,7 +320,14 @@ class GridProperty(Grid3D):
         """Return or set the values numpy dtype.
 
         When setting, note that the the dtype must correspond to the
-        `isdiscrete` property.
+        `isdiscrete` property. Hence dtype cannot alter isdiscrete status
+
+        Example::
+
+            if myprop.isdiscrete:
+                myprop.dtype = np.uint16
+
+
         """
         return self._values.dtype
 
@@ -527,15 +543,12 @@ class GridProperty(Grid3D):
             values = np.asanyarray(values, order="C")
             values = np.ma.array(values, mask=mask, order="C")
 
-        trydiscrete = False
-        if "int" in str(values.dtype):
-            trydiscrete = True
+        # the self._isdiscrete property shall win over numpy dtype
+        if "int" in str(values.dtype) and not self._isdiscrete:
+            values = values.astype(np.float64)
 
-        if trydiscrete is not self._isdiscrete:
-            if trydiscrete:
-                self.continuous_to_discrete()
-            else:
-                self.discrete_to_continuous()
+        if "float" in str(values.dtype) and self._isdiscrete:
+            values = values.astype(np.int32)
 
         return values
 
@@ -687,9 +700,9 @@ class GridProperty(Grid3D):
             realisation=realisation,
         )
 
-    # =========================================================================
+    # ==================================================================================
     # Various public methods
-    # =========================================================================
+    # ==================================================================================
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -730,6 +743,8 @@ class GridProperty(Grid3D):
         Note that Numpy dtype will be reset; int32 if discrete or float64 if
         continuous. The reason for this is to avoid inconsistensies regarding
         UNDEF values.
+
+        If fill_value is not None, than the returning dtype is always `np.float64`.
 
         Args:
             fill_value: Value of masked entries. Default is None which
@@ -1058,11 +1073,3 @@ class GridProperty(Grid3D):
     def set_outside(self, poly, value):
         """Set a value (scalar) outside polygons"""
         self.operation_polygons(poly, value, opname="set", inside=False)
-
-    # ----------------------------------------------------------------------------------
-    # Private function
-    # ----------------------------------------------------------------------------------
-
-    # def _evaluate_mask(self, mask):
-    #     # the super version is used instead; need this to override abstract method
-    #     pass

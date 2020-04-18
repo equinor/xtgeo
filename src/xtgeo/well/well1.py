@@ -220,7 +220,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     # Consistency checking. As well log names are columns in the Pandas DF,
     # there are additional attributes per log that have to be "in sync"
-    def _ensure_consistency(self):
+    def _ensure_consistency(self):  # pragma: no coverage
         """Ensure consistency within an object (private function)"""
 
         if self._df is None:
@@ -1093,13 +1093,25 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Currently it is either 'Tops' or 'Zone' (thicknesses); default
         is tops (i.e. tops=True).
 
+        The `zonelist` can be a list of zones, or a tuple with two members specifying
+        first and last member. Note however that the zonation shall be without jumps
+        and increasing. E.g.::
+
+            zonelist=(1, 5)  # meaning [1, 2, 3, 4, 5]
+            # or
+            zonelist=[1, 2, 3, 4]
+            # while _not_ legal:
+            zonelist=[1, 4, 8]
+
+        Zone numbers less than 0 are not accepted
+
         Args:
             tops (bool): If True then compute tops, else (thickness) points.
             incl_limit (float): If given, and usezone is True, the max
                 angle of inclination to be  used as input to zonation points.
             top_prefix (str): As well logs usually have isochore (zone) name,
                 this prefix could be Top, e.g. 'SO43' --> 'TopSO43'
-            zonelist (list of int): Zones to use
+            zonelist (list of int or tuple): Zones to use
             use_undef (bool): If True, then transition from UNDEF is also
                 used.
 
@@ -1109,63 +1121,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             if a zonelog is missing
         """
 
-        zlist = []
-        # get the relevant logs:
+        # make a copy of the well instance as some tmp well logs are made
+        scopy = self.copy()
 
-        self.geometrics()
-
-        # as zlog is float64; need to convert to int array with high
-        # number as undef
-        if self.zonelogname is not None:
-            zlog = self._df[self.zonelogname].values
-            zlog[np.isnan(zlog)] = const.UNDEF_INT
-            zlog = np.rint(zlog).astype(int)
-        else:
-            return None
-
-        xvv = self._df["X_UTME"].values
-        yvv = self._df["Y_UTMN"].values
-        zvv = self._df["Z_TVDSS"].values
-        incl = self._df["Q_INCL"].values
-        mdv = self._df["Q_MDEPTH"].values
-
-        if self.mdlogname is not None:
-            mdv = self._df[self.mdlogname].values
-
-        if zonelist is None:
-            # need to declare as list; otherwise Py3 will get dict.keys
-            zonelist = list(self.get_logrecord(self.zonelogname).keys())
-
-        logger.info("Find values for %s", zonelist)
-
-        ztops, ztopnames, zisos, zisonames = _wellmarkers.extract_ztops(
-            self,
-            zonelist,
-            xvv,
-            yvv,
-            zvv,
-            zlog,
-            mdv,
-            incl,
-            tops=tops,
-            incl_limit=incl_limit,
-            prefix=top_prefix,
-            use_undef=use_undef,
+        dfr = _wellmarkers.get_zonation_points(
+            scopy, tops, incl_limit, top_prefix, zonelist, use_undef
         )
 
-        if tops:
-            zlist = ztops
-        else:
-            zlist = zisos
-
-        logger.debug(zlist)
-
-        if tops:
-            dfr = pd.DataFrame(zlist, columns=ztopnames)
-        else:
-            dfr = pd.DataFrame(zlist, columns=zisonames)
-
-        logger.debug(dfr)
+        del scopy
 
         return dfr
 
