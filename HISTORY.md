@@ -2,7 +2,27 @@
 
 ## Version 2
 
-## 2.7.0
+### 2.8.0
+* New features:
+  * Added gridlink option in GridProperty import, #329
+  * More keyword options in Grid get_ijk_from_points() #327
+  * Well method report_zone_mismatch() rewritten and improved
+  * Well: added get_surface_picks() #
+  * Initialise a new GridProperty instance from existing GridProperty
+  * Grid(): added name as attribute #319
+* Bug fixes:
+  * The gridproperty list in GridProperty() is now unique
+  * Fixed bug in Well: get_zonation_points
+  * More fixes on pathlib (general rewrite) #332
+* Fixes for developers:
+  * Replace logging methods in the C part, and relocated clib folder
+  * Added code coverage in travis CI
+
+### 2.7.1
+* Bugfig:
+  * Issue with pathlib solved, #332
+
+### 2.7.0
 * New features:
   * Support for petromod binary format for RegularSurface()
   * Added name attribute for Grid()
