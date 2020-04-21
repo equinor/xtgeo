@@ -7,7 +7,7 @@
   * Added gridlink option in GridProperty import, #329
   * More keyword options in Grid get_ijk_from_points() #327
   * Well method report_zone_mismatch() rewritten and improved
-  * Well: added get_surface_picks() #
+  * Well: added get_surface_picks()
   * Initialise a new GridProperty instance from existing GridProperty
   * Grid(): added name as attribute #319
 * Bug fixes:
