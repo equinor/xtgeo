@@ -39,7 +39,7 @@ def test_single_slice_yflip_positive_snapxy(loadsfile1):
 
         surf1.slice_cube(cube1, sampling=sampling, snapxy=True)
 
-        assert surf1.values.mean() == pytest.approx(cube1.values[0, 0, 0], abs=0.0001)
+        assert surf1.values.mean() == pytest.approx(cube1.values[0, 0, 0], abs=0.01)
         print(surf1.values.mean())
         print(cube1.values[0, 0, 0])
 
