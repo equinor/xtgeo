@@ -37,7 +37,9 @@ matrix:
     - python: 3.6
   include:
     - os: linux
-      env: MB_PYTHON_VERSION=2.7
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - MB_ML_VER=2010
       if: (type = pull_request) OR (tag IS true)
     - os: linux
       env: MB_PYTHON_VERSION=3.5

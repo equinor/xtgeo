@@ -45,7 +45,7 @@ def slice_cube(
     if zsurf is not None:
         other = zsurf
     else:
-        logger.info('The current surface is copied as "other"')
+        logger.info("The current surface is copied as 'other'")
         other = self.copy()
 
     if not self.compare_topology(other, strict=False):
