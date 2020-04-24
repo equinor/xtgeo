@@ -2,6 +2,9 @@
 
 ## Version 2
 
+### 2.8.1
+* Fix a clib related issue that made XTGeo import feil on RHEL6 in Python2, #346
+
 ### 2.8.0
 * New features:
   * Added gridlink option in GridProperty import, #329
