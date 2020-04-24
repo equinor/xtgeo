@@ -206,71 +206,89 @@ logger_critical(int line, char *file, const char *func, const char *fmt, ...)
  * Based on:
  * https://github.com/awreece/monotonic_timer/blob/master/monotonic_timer.c
  * Copyright 2013 Alex Reece. A cross platform monotonic timer.
- * But slightly adapted
+ * But slightly adapted.
+ * A special solution for linux, as RHEL6 has weird trouble with clock_gettime
+ * for Python27, cf #346
  */
 
 #define NANOS_PER_SECF 1000000000.0
 #define USECS_PER_SEC 1000000
 
-#if defined(_WIN32)
+#ifdef _WIN32
 
-/* On Windows, use QueryPerformanceCounter and QueryPerformanceFrequency. */
-#include <windows.h>
+    /* On Windows, use QueryPerformanceCounter and QueryPerformanceFrequency. */
+    #include <windows.h>
 
-#define BILLION (1E9)
+    #define BILLION (1E9)
 
-static BOOL g_first_time = 1;
-static LARGE_INTEGER g_counts_per_sec;
+    static BOOL g_first_time = 1;
+    static LARGE_INTEGER g_counts_per_sec;
 
-struct timespec
-{
-    long tv_sec;
-    long tv_nsec;
-};
+    struct timespec
+    {
+        long tv_sec;
+        long tv_nsec;
+    };
 
-int
-_clock_gettime(int dummy, struct timespec *ct)
-{
-    LARGE_INTEGER count;
+    int
+    _clock_gettime(int dummy, struct timespec *ct)
+    {
+        LARGE_INTEGER count;
 
-    if (g_first_time) {
-        g_first_time = 0;
+        if (g_first_time) {
+            g_first_time = 0;
 
-        if (0 == QueryPerformanceFrequency(&g_counts_per_sec)) {
-            g_counts_per_sec.QuadPart = 0;
+            if (0 == QueryPerformanceFrequency(&g_counts_per_sec)) {
+                g_counts_per_sec.QuadPart = 0;
+            }
         }
+
+        if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
+            (0 == QueryPerformanceCounter(&count))) {
+            return -1;
+        }
+
+        ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
+        ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) /
+                    g_counts_per_sec.QuadPart;
+
+        return 0;
+    }
+    double
+    monotonic_seconds()
+    {
+        struct timespec time;
+        _clock_gettime(0, &time);
+        return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
     }
 
-    if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
-        (0 == QueryPerformanceCounter(&count))) {
-        return -1;
+#elif __APPLE__
+
+    #include <time.h>
+
+    double
+    monotonic_seconds()
+    {
+        struct timespec time;
+        // Note: Make sure to link with -lrt to define clock_gettime.
+        clock_gettime(CLOCK_MONOTONIC, &time);
+        return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
     }
 
-    ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
-    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) /
-                  g_counts_per_sec.QuadPart;
+#elif __linux__
 
-    return 0;
-}
-double
-monotonic_seconds()
-{
-    struct timespec time;
-    _clock_gettime(0, &time);
-    return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
-}
+    /* cf #346 */
+    #include <sys/time.h>
+    #include <sys/resource.h>
 
-#else
-
-#include <time.h>
-
-double
-monotonic_seconds()
-{
-    struct timespec time;
-    // Note: Make sure to link with -lrt to define clock_gettime.
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
-}
+    double
+    monotonic_seconds()
+    {
+        struct rusage buf;
+        getrusage(RUSAGE_SELF, &buf);
+        double secs = (double) buf.ru_stime.tv_sec +
+            (double) buf.ru_stime.tv_usec / (double) 1000000;
+        return secs;
+    }
 
 #endif
