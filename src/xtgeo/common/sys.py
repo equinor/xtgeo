@@ -63,6 +63,10 @@ class _XTGeoFile(object):
 
         self._cfhandle = 0
         self._cfhandlecount = 0
+
+        # for internal usage in tests; mimick window/mac with no fmemopen in C
+        self._fake_nofmem = False
+
         logger.debug("Init ran for _XTGeoFile")
 
         # The self._file must be a Pathlib or a BytesIO instance
@@ -232,21 +236,22 @@ class _XTGeoFile(object):
 
         This is tied to cfclose() which closes the file.
 
-        if _cfhandle already exists, then _cfhandle is increased with 1
+        if _cfhandle already exists, then _cfhandlecount is increased with 1
 
         """
 
         logger.info("Get SWIG C fhandle...")
 
+        # differ on Linux and other OS as Linux can use fmemopen() in C
+        islinux = True
+        if plfsys() != "Linux":
+            islinux = False
+
         if self._cfhandle and "Swig Object of type 'FILE" in str(self._cfhandle):
             self._cfhandlecount += 1
             return self._cfhandle
 
-        if (
-            isinstance(self._file, io.BytesIO)
-            and self._mode == "rb"
-            and plfsys() == "Linux"
-        ):
+        if isinstance(self._file, io.BytesIO) and self._mode == "rb" and islinux:
             if six.PY2:
                 raise NotImplementedError(
                     "Reading BytesIO not fully supported in Python 2"
@@ -257,11 +262,7 @@ class _XTGeoFile(object):
             # note that the typemap in swig computes the length for the buf/fobj!
             self._memstream = True
 
-        elif (
-            isinstance(self._file, io.BytesIO)
-            and self._mode == "wb"
-            and plfsys() == "Linux"
-        ):
+        elif isinstance(self._file, io.BytesIO) and self._mode == "wb" and islinux:
             if six.PY2:
                 raise NotImplementedError(
                     "Writing to BytesIO not supported in Python 2"
@@ -273,21 +274,22 @@ class _XTGeoFile(object):
         elif (
             isinstance(self._file, io.BytesIO)
             and self._mode == "rb"
-            and (plfsys() == "Windows" or plfsys() == "Darwin")
+            and not islinux  # Windows or Darwin
         ):
             # windows/mac miss fmemopen; write buffer to a tmp instead as workaround
-            fds, fobj = mkstemp(prefix="tmpxtgeoio")
+            fds, self._tmpfile = mkstemp(prefix="tmpxtgeoio")
             os.close(fds)
-            with open(fobj, "wb") as newfile:
+            with open(self._tmpfile, "wb") as newfile:
                 newfile.write(self._file.getvalue())
-
-            self._tmpfile = fobj
 
         else:
             fobj = self.name
 
         if self._memstream:
-            cfhandle = _cxtgeo.xtg_fopen_bytestream(fobj, self._mode)
+            if islinux:
+                cfhandle = _cxtgeo.xtg_fopen_bytestream(fobj, self._mode)
+            else:
+                cfhandle = _cxtgeo.xtg_fopen(self._tmpfile, self._mode)
 
         else:
             try:
