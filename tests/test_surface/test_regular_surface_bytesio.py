@@ -161,6 +161,7 @@ def test_irapbin_load_meta_first_bytesio():
     assert "I/O operation on closed file" in str(verr.value)
 
 
+@tsetup.skipifpython2
 def test_bytesio_string_encoded():
     """Test a case where the string is encoded, then decoded"""
     with open(TESTSET1, "rb") as fin:
