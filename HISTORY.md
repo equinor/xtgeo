@@ -2,6 +2,9 @@
 
 ## Version 2
 
+### 2.8.2
+* Fix a bug wrt writing bytestream instances on non-Linux, #342
+
 ### 2.8.1
 * Fix a clib related issue that made XTGeo import feil on RHEL6 in Python2, #346
 

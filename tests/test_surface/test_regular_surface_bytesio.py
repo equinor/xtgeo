@@ -6,6 +6,7 @@ import os
 from os.path import join
 import io
 import threading
+import base64
 
 import pytest
 
@@ -158,3 +159,25 @@ def test_irapbin_load_meta_first_bytesio():
     with pytest.raises(ValueError) as verr:
         xsurf = xtgeo.RegularSurface(stream, fformat="irap_binary", values=False)
     assert "I/O operation on closed file" in str(verr.value)
+
+
+@tsetup.skipifpython2
+def test_bytesio_string_encoded():
+    """Test a case where the string is encoded, then decoded"""
+    with open(TESTSET1, "rb") as fin:
+        stream = io.BytesIO(fin.read())
+
+    mystream = stream.read()
+
+    # this mimics data from a browser that are base64 encoded
+    encodedstream = base64.urlsafe_b64encode(mystream).decode("utf-8")
+    assert isinstance(encodedstream, str)
+
+    # now decode this and read
+    decodedstream = base64.urlsafe_b64decode(encodedstream)
+    assert isinstance(decodedstream, bytes)
+
+    content_string = io.BytesIO(decodedstream)
+    xsurf = xtgeo.surface_from_file(content_string, fformat="irap_binary")
+    assert xsurf.ncol == 554
+    assert xsurf.nrow == 451
