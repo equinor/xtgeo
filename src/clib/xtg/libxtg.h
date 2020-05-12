@@ -1267,6 +1267,9 @@ grd3d_write_eclinput(FILE *fc,
                      int ncolumns);
 
 void
+grd3d_write_free_eclinput(FILE *fc, char *recname, char *freetext);
+
+void
 grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
 
 int
