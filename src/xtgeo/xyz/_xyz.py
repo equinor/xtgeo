@@ -3,6 +3,7 @@
 
 from __future__ import print_function, absolute_import
 
+import inspect
 import abc
 from collections import OrderedDict
 from copy import deepcopy
@@ -17,6 +18,13 @@ from xtgeo.xyz import _xyz_roxapi
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+def _abstractproperty(func):
+    if six.PY3:
+        return property(abc.abstractmethod(func))
+
+    return abc.abstractproperty(func)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -55,6 +63,39 @@ class XYZ(object):
                 self.from_list(plist)
 
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
+
+    @property
+    @abc.abstractmethod
+    def xname(self):
+        """ Returns or set the name of the X column."""
+        return self._xname
+
+    @property
+    @abc.abstractmethod
+    def yname(self):
+        """ Returns or set the name of the Y column."""
+        return self._yname
+
+    @property
+    @abc.abstractmethod
+    def zname(self):
+        """ Returns or set the name of the Z column."""
+        return self._zname
+
+    def _name_setter(self, newname):
+        """Generic setter for xname yname zname"""
+        caller = str(inspect.stack()[1][3])
+
+        attr = "_" + caller  # e.g. _xname
+
+        if isinstance(newname, str):
+            oldname = getattr(self, attr)
+            setattr(self, attr, newname)
+            if oldname and self._df is not None:
+                self._df.rename(columns={oldname: newname}, inplace=True)
+
+        else:
+            raise ValueError("Wrong type of input to xname; must be string")
 
     @abc.abstractmethod
     def copy(self, stype):

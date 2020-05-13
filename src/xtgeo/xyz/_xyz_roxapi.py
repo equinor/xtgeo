@@ -104,7 +104,7 @@ def _roxapi_xyz_to_xtgeo(self, roxxyz):  # pragma: no cover
     # by being a list after import
 
     logger.info("Points/polygons/polylines from roxapi to xtgeo...")
-    cnames = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
+    cnames = [self._xname, self._yname, self._zname]
 
     if self._ispolygons and isinstance(roxxyz, list):
         # polylines/-gons
