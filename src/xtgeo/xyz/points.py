@@ -109,7 +109,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         # instance variables listed
         self._df = None
-        self._isPoints = False
+        self._ispolygons = False
         self._xname = "X_UTME"
         self._yname = "Y_UTMN"
         self._zname = "Z_TVDSS"
@@ -305,7 +305,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         hcolumn=None,
         mdcolumn="M_MDEPTH",
     ):  # pylint: disable=redefined-builtin
-        """Export XYZ (Points/Points) to file.
+        """Export XYZ (Points/Polygons) to file.
 
         Args:
             pfile (str): Name of file
@@ -657,10 +657,10 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         _xyz_oper.snap_surface(self, surf, activeonly=activeonly)
 
     # ==================================================================================
-    # Operations restricted to inside/outside Points
+    # Operations restricted to inside/outside polygons
     # ==================================================================================
 
-    def operation_Points(self, poly, value, opname="add", inside=True, where=True):
+    def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
         """A generic function for doing points operations restricted to inside
         or outside polygon(s).
 
@@ -680,62 +680,62 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             poi = Points(POINTSET2)
             pol = Points(POLSET2)
 
-            poi.operation_Points(pol, 0, opname='eli', inside=True)
+            poi.operation_polygons(pol, 0, opname='eli', inside=True)
 
 
 
         """
 
-        _xyz_oper.operation_Points(
+        _xyz_oper.operation_polygons(
             self, poly, value, opname=opname, inside=inside, where=where
         )
 
     # shortforms
     def add_inside(self, poly, value, where=True):
-        """Add a value (scalar) inside Points (see `operation_Points`)"""
-        self.operation_Points(poly, value, opname="add", inside=True, where=where)
+        """Add a value (scalar) inside Points (see `operation_polygons`)"""
+        self.operation_polygons(poly, value, opname="add", inside=True, where=where)
 
     def add_outside(self, poly, value, where=True):
         """Add a value (scalar) outside Points"""
-        self.operation_Points(poly, value, opname="add", inside=False, where=where)
+        self.operation_polygons(poly, value, opname="add", inside=False, where=where)
 
     def sub_inside(self, poly, value, where=True):
         """Subtract a value (scalar) inside Points"""
-        self.operation_Points(poly, value, opname="sub", inside=True, where=where)
+        self.operation_polygons(poly, value, opname="sub", inside=True, where=where)
 
     def sub_outside(self, poly, value, where=True):
         """Subtract a value (scalar) outside Points"""
-        self.operation_Points(poly, value, opname="sub", inside=False, where=where)
+        self.operation_polygons(poly, value, opname="sub", inside=False, where=where)
 
     def mul_inside(self, poly, value, where=True):
         """Multiply a value (scalar) inside Points"""
-        self.operation_Points(poly, value, opname="mul", inside=True, where=where)
+        self.operation_polygons(poly, value, opname="mul", inside=True, where=where)
 
     def mul_outside(self, poly, value, where=True):
         """Multiply a value (scalar) outside Points"""
-        self.operation_Points(poly, value, opname="mul", inside=False, where=where)
+        self.operation_polygons(poly, value, opname="mul", inside=False, where=where)
 
     def div_inside(self, poly, value, where=True):
         """Divide a value (scalar) inside Points"""
-        self.operation_Points(poly, value, opname="div", inside=True, where=where)
+        self.operation_polygons(poly, value, opname="div", inside=True, where=where)
 
     def div_outside(self, poly, value, where=True):
         """Divide a value (scalar) outside Points (value 0.0 will give
         result 0)"""
-        self.operation_Points(poly, value, opname="div", inside=False, where=where)
+        self.operation_polygons(poly, value, opname="div", inside=False, where=where)
 
     def set_inside(self, poly, value, where=True):
         """Set a value (scalar) inside Points"""
-        self.operation_Points(poly, value, opname="set", inside=True, where=where)
+        self.operation_polygons(poly, value, opname="set", inside=True, where=where)
 
     def set_outside(self, poly, value, where=True):
         """Set a value (scalar) outside Points"""
-        self.operation_Points(poly, value, opname="set", inside=False, where=where)
+        self.operation_polygons(poly, value, opname="set", inside=False, where=where)
 
     def eli_inside(self, poly, where=True):
         """Eliminate current map values inside Points"""
-        self.operation_Points(poly, 0, opname="eli", inside=True, where=where)
+        self.operation_polygons(poly, 0, opname="eli", inside=True, where=where)
 
     def eli_outside(self, poly, where=True):
         """Eliminate current map values outside Points"""
-        self.operation_Points(poly, 0, opname="eli", inside=False, where=where)
+        self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)
