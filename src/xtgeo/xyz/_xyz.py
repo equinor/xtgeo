@@ -95,7 +95,7 @@ class XYZ(object):
                 self._df.rename(columns={oldname: newname}, inplace=True)
 
         else:
-            raise ValueError("Wrong type of input to xname; must be string")
+            raise ValueError("Wrong type of input to {}; must be string".format(caller))
 
     @abc.abstractmethod
     def copy(self, stype):
