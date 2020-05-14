@@ -143,39 +143,27 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def xname(self):
-        """ Returns or set the name of the X column."""
-        return self._xname
+        return super(Polygons, self).xname
 
     @xname.setter
     def xname(self, newname):
-        if isinstance(newname, str):
-            self._xname = newname
-        else:
-            raise ValueError("Wrong type of input to xname; must be string")
+        super(Polygons, self)._name_setter(newname)
 
     @property
     def yname(self):
-        """ Returns or set the name of the Y column."""
-        return self._yname
+        return super(Polygons, self).yname
 
     @yname.setter
     def yname(self, newname):
-        if isinstance(newname, str):
-            self._yname = newname
-        else:
-            raise ValueError("Wrong type of input to yname; must be string")
+        super(Polygons, self)._name_setter(newname)
 
     @property
     def zname(self):
-        """ Returns or set the name of the Z/VALUE column"""
-        return self._zname
+        return super(Polygons, self).zname
 
     @zname.setter
     def zname(self, newname):
-        if isinstance(newname, str):
-            self._zname = newname
-        else:
-            raise ValueError("Wrong type of input to zname; must be string")
+        super(Polygons, self)._name_setter(newname)
 
     @property
     def pname(self):

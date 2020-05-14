@@ -309,3 +309,21 @@ def test_fence_from_polygon():
     logger.info(fence.dataframe)
 
     tsetup.assert_almostequal(fence.dataframe.at[13, "X_UTME"], -202.3, 0.01)
+
+
+def test_rename_columns():
+    """Renaming xname, yname, zname"""
+
+    pol = Polygons(POLSET2)
+    assert pol.xname == "X_UTME"
+
+    pol.xname = "NEWX"
+    assert pol.xname == "NEWX"
+
+    assert "NEWX" in pol.dataframe
+
+    pol.yname = "NEWY"
+    assert pol.yname == "NEWY"
+    assert pol.xname != "NEWY"
+
+    assert "NEWY" in pol.dataframe

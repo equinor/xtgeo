@@ -175,32 +175,27 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def xname(self):
-        """ Returns the name of the X column"""
-        return self._xname
+        return super(Points, self).xname
+
+    @xname.setter
+    def xname(self, newname):
+        super(Points, self)._name_setter(newname)
 
     @property
     def yname(self):
-        """ Returns the name of the Y column"""
-        return self._yname
+        return super(Points, self).yname
+
+    @yname.setter
+    def yname(self, newname):
+        super(Points, self)._name_setter(newname)
 
     @property
     def zname(self):
-        """ Returns or set the name of the Z/VALUE column"""
-        return self._zname
+        return super(Points, self).zname
 
     @zname.setter
-    def zname(self, zname):
-        if zname == self._zname:
-            return
-
-        if isinstance(zname, str):
-            self._df.rename(index=str, columns={self._zname: zname}, inplace=True)
-            self._zname = zname
-        else:
-            raise ValueError(
-                "Wrong type of input to zname; must be string, "
-                "input is {}".format(type(zname))
-            )
+    def zname(self, newname):
+        super(Points, self)._name_setter(newname)
 
     @property
     def pname(self):
@@ -381,7 +376,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
+            name (str): Name of Points item
             category (str): For horizons/zones only: for example 'DL_depth'
             stype (str): RMS 'super type' i.e. 'horizons' (default), 'zones', ...
             realisation (int): Realisation number, default is 0
@@ -670,20 +665,20 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         or outside polygon(s).
 
         Args:
-            poly (Polygons): A XTGeo Polygons instance
+            poly (Points): A XTGeo Points instance
             value(float or str): Value to add, subtract etc. If 'poly'
                 then use the avg Z value from each polygon.
             opname (str): Name of operation... 'add', 'sub', etc
-            inside (bool): If True do operation inside polygons; else outside.
+            inside (bool): If True do operation inside Points; else outside.
             where (bool): A logical filter (current not implemented)
 
         Examples::
 
             # assume a point set where you want eliminate number inside
-            # polygons, given that the points Z value inside this polygon is
+            # Points, given that the points Z value inside this polygon is
             # larger than 1700:
             poi = Points(POINTSET2)
-            pol = Polygons(POLSET2)
+            pol = Points(POLSET2)
 
             poi.operation_polygons(pol, 0, opname='eli', inside=True)
 
@@ -697,50 +692,50 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     # shortforms
     def add_inside(self, poly, value, where=True):
-        """Add a value (scalar) inside polygons (see `operation_polygons`)"""
+        """Add a value (scalar) inside Points (see `operation_polygons`)"""
         self.operation_polygons(poly, value, opname="add", inside=True, where=where)
 
     def add_outside(self, poly, value, where=True):
-        """Add a value (scalar) outside polygons"""
+        """Add a value (scalar) outside Points"""
         self.operation_polygons(poly, value, opname="add", inside=False, where=where)
 
     def sub_inside(self, poly, value, where=True):
-        """Subtract a value (scalar) inside polygons"""
+        """Subtract a value (scalar) inside Points"""
         self.operation_polygons(poly, value, opname="sub", inside=True, where=where)
 
     def sub_outside(self, poly, value, where=True):
-        """Subtract a value (scalar) outside polygons"""
+        """Subtract a value (scalar) outside Points"""
         self.operation_polygons(poly, value, opname="sub", inside=False, where=where)
 
     def mul_inside(self, poly, value, where=True):
-        """Multiply a value (scalar) inside polygons"""
+        """Multiply a value (scalar) inside Points"""
         self.operation_polygons(poly, value, opname="mul", inside=True, where=where)
 
     def mul_outside(self, poly, value, where=True):
-        """Multiply a value (scalar) outside polygons"""
+        """Multiply a value (scalar) outside Points"""
         self.operation_polygons(poly, value, opname="mul", inside=False, where=where)
 
     def div_inside(self, poly, value, where=True):
-        """Divide a value (scalar) inside polygons"""
+        """Divide a value (scalar) inside Points"""
         self.operation_polygons(poly, value, opname="div", inside=True, where=where)
 
     def div_outside(self, poly, value, where=True):
-        """Divide a value (scalar) outside polygons (value 0.0 will give
+        """Divide a value (scalar) outside Points (value 0.0 will give
         result 0)"""
         self.operation_polygons(poly, value, opname="div", inside=False, where=where)
 
     def set_inside(self, poly, value, where=True):
-        """Set a value (scalar) inside polygons"""
+        """Set a value (scalar) inside Points"""
         self.operation_polygons(poly, value, opname="set", inside=True, where=where)
 
     def set_outside(self, poly, value, where=True):
-        """Set a value (scalar) outside polygons"""
+        """Set a value (scalar) outside Points"""
         self.operation_polygons(poly, value, opname="set", inside=False, where=where)
 
     def eli_inside(self, poly, where=True):
-        """Eliminate current map values inside polygons"""
+        """Eliminate current map values inside Points"""
         self.operation_polygons(poly, 0, opname="eli", inside=True, where=where)
 
     def eli_outside(self, poly, where=True):
-        """Eliminate current map values outside polygons"""
+        """Eliminate current map values outside Points"""
         self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)
