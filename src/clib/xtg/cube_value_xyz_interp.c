@@ -34,7 +34,6 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
-#include <math.h>
 
 int
 cube_value_xyz_interp(double xin,

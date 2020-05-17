@@ -120,13 +120,29 @@ import_array();
 
 // ==INPLACE_FLAT=======================================================================
 
-// INPLACE_FLAT CHAR no 1
+// INPLACE_FLAT BOOL no 1
 %apply (mbool* INPLACE_ARRAY_FLAT, long DIM_FLAT)
     {(mbool *swig_np_boo_inplaceflat_v1, long n_swig_np_boo_inplaceflat_v1)};
+
+// INPLACE_FLAT BOOL no 2
+%apply (mbool* INPLACE_ARRAY_FLAT, long DIM_FLAT)
+    {(mbool *swig_np_boo_inplaceflat_v2, long n_swig_np_boo_inplaceflat_v2)};
+
+// INPLACE_FLAT FLOAT no 1
+%apply (float* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(float *swig_np_flt_inplaceflat_v1,
+                                                    long n_swig_np_flt_inplaceflat_v1)};
 
 // INPLACE_FLAT DOUBLE no 1
 %apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *swig_np_dbl_inplaceflat_v1,
                                                     long n_swig_np_dbl_inplaceflat_v1)};
+
+// INPLACE_FLAT DOUBLE no 2
+%apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *swig_np_dbl_inplaceflat_v2,
+                                                    long n_swig_np_dbl_inplaceflat_v2)};
+
+// INPLACE_FLAT DOUBLE no 3
+%apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *swig_np_dbl_inplaceflat_v3,
+                                                    long n_swig_np_dbl_inplaceflat_v3)};
 
 // ==INPLACE============================================================================
 

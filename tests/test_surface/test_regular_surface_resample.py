@@ -11,7 +11,7 @@ xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 XTGSHOW = False
-if 'XTG_SHOW' in os.environ:
+if "XTG_SHOW" in os.environ:
     XTGSHOW = True
 
 if not xtg.testsetup():
@@ -22,13 +22,39 @@ TMPD = xtg.tmpdir
 # =============================================================================
 # Do tests
 # =============================================================================
-ftop1 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
+FTOP1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 
 
-@pytest.fixture()
-def reek_map():
-    logger.info('Loading surface')
-    return RegularSurface(ftop1)
+@pytest.fixture(name="reek_map")
+def fixture_reek_map():
+    logger.info("Loading surface")
+    return RegularSurface(FTOP1)
+
+
+def test_resample_small():
+    """Do resampling with minimal dataset to test for various yflip etc"""
+
+    xs1 = RegularSurface(
+        xori=0, yori=0, ncol=3, nrow=3, xinc=100, yinc=100, values=-888.0, yflip=1,
+    )
+    xs2 = RegularSurface(
+        xori=0, yori=0, ncol=3, nrow=3, xinc=100, yinc=100, values=888.0, yflip=1,
+    )
+    xs3 = RegularSurface(
+        xori=0, yori=200, ncol=3, nrow=3, xinc=100, yinc=100, values=2888.0, yflip=-1,
+    )
+
+    xsx = xs1.copy()
+    xsx.resample(xs2)
+    assert xsx.values.mean() == 888.0
+
+    xsx = xs3.copy()
+    xsx.resample(xs2)
+    assert xsx.values.mean() == 888.0
+
+    xsx = xs1.copy()
+    xsx.resample(xs3)
+    assert xsx.values.mean() == 2888.0
 
 
 def test_resample(reek_map):
@@ -43,13 +69,20 @@ def test_resample(reek_map):
     ncol = int((xs.xmax - xs.xmin) / 10)
     nrow = int((xs.ymax - xs.ymin) / 10)
     values = np.zeros((nrow, ncol))
-    snew = RegularSurface(xori=xs.xmin, xinc=10, yori=xs.ymin, yinc=10,
-                          nrow=nrow, ncol=ncol, values=values)
+    snew = RegularSurface(
+        xori=xs.xmin,
+        xinc=10,
+        yori=xs.ymin,
+        yinc=10,
+        nrow=nrow,
+        ncol=ncol,
+        values=values,
+    )
 
     snew.resample(xs)
 
-    fout = os.path.join(TMPD, 'reek_resampled.gri')
-    snew.to_file(fout, fformat='irap_binary')
+    fout = os.path.join(TMPD, "reek_resampled.gri")
+    snew.to_file(fout, fformat="irap_binary")
 
     tsetup.assert_almostequal(snew.values.mean(), 1698.458, 2)
     tsetup.assert_almostequal(snew.values.mean(), xs.values.mean(), 2)
@@ -70,15 +103,15 @@ def test_refine(reek_map):
     xs_orig = xs.copy()
     xs.refine(4)
 
-    fout = os.path.join(TMPD, 'reek_refined.gri')
-    xs.to_file(fout, fformat='irap_binary')
+    fout = os.path.join(TMPD, "reek_refined.gri")
+    xs.to_file(fout, fformat="irap_binary")
 
     tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
 
     if XTGSHOW:
-        logger.info('Output plots to file (may be time consuming)')
-        xs_orig.quickplot(filename=os.path.join(TMPD, 'reek_orig.png'))
-        xs.quickplot(filename=os.path.join(TMPD, 'reek_refined4.png'))
+        logger.info("Output plots to file (may be time consuming)")
+        xs_orig.quickplot(filename=os.path.join(TMPD, "reek_orig.png"))
+        xs.quickplot(filename=os.path.join(TMPD, "reek_refined4.png"))
 
 
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
@@ -91,15 +124,15 @@ def test_coarsen(reek_map):
     xs_orig = xs.copy()
     xs.coarsen(3)
 
-    fout = os.path.join(TMPD, 'reek_coarsened.gri')
-    xs.to_file(fout, fformat='irap_binary')
+    fout = os.path.join(TMPD, "reek_coarsened.gri")
+    xs.to_file(fout, fformat="irap_binary")
 
     tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
 
     if XTGSHOW:
-        logger.info('Output plots to file (may be time consuming)')
-        xs_orig.quickplot(filename=os.path.join(TMPD, 'reek_orig.png'))
-        xs.quickplot(filename=os.path.join(TMPD, 'reek_coarsen3.png'))
+        logger.info("Output plots to file (may be time consuming)")
+        xs_orig.quickplot(filename=os.path.join(TMPD, "reek_orig.png"))
+        xs.quickplot(filename=os.path.join(TMPD, "reek_coarsen3.png"))
 
 
 @tsetup.bigtest
@@ -111,9 +144,9 @@ def test_points_gridding(reek_map):
 
     xyz = Points(xs)
 
-    xyz.dataframe['Z_TVDSS'] = xyz.dataframe['Z_TVDSS'] + 300
+    xyz.dataframe["Z_TVDSS"] = xyz.dataframe["Z_TVDSS"] + 300
 
-    logger.info('Avg of points: {}'.format(xyz.dataframe['Z_TVDSS'].mean()))
+    logger.info("Avg of points: %s", xyz.dataframe["Z_TVDSS"].mean())
 
     xscopy = xs.copy()
 
@@ -124,11 +157,10 @@ def test_points_gridding(reek_map):
     xscopy.gridding(xyz, coarsen=1)  # coarsen will speed up test a lot
 
     if XTGSHOW:
-        logger.info('Output plots to file (may be time consuming)')
-        xs.quickplot(filename=os.path.join(TMPD, 's1.png'))
-        xscopy.quickplot(filename=os.path.join(TMPD, '/tmp/s2.png'))
+        logger.info("Output plots to file (may be time consuming)")
+        xs.quickplot(filename=os.path.join(TMPD, "s1.png"))
+        xscopy.quickplot(filename=os.path.join(TMPD, "s2.png"))
 
     tsetup.assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
 
-    xscopy.to_file(os.path.join(TMPD, 'reek_points_to_map.gri'),
-                   fformat='irap_binary')
+    xscopy.to_file(os.path.join(TMPD, "reek_points_to_map.gri"), fformat="irap_binary")
