@@ -2,6 +2,10 @@
 
 ## Version 2
 
+### 2.8.3
+* Fix a bug for renaming points and polygons coordinate columns, ref #349
+* Added and "F" in SPECGRID when exporting 3D grid to GRDECL format
+
 ### 2.8.2
 * Fix a bug wrt writing bytestream instances on non-Linux, #342
 
