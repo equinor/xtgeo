@@ -1290,8 +1290,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             RuntimeError: 'Error from C routine, code is ...'
         """
         algo = kwargs.get("algorithm", 2)
+        tolerance = kwargs.get("tolerance", 0.5)  # tolerance in grid matching algo 2
 
-        _well_oper.make_ijk_from_grid(self, grid, grid_id=grid_id, algorithm=algo)
+        _well_oper.make_ijk_from_grid(self, grid, grid_id=grid_id, algorithm=algo, 
+                                      tolerance=tolerance)
 
     def make_zone_qual_log(self, zqname):
         """Create a zone quality/indicator (flag) log.

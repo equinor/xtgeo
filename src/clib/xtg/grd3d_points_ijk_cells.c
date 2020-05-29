@@ -28,6 +28,7 @@
  *    flip                i     1, or -1 if right handed with K down
  *    ivec, jvec, kvec    o     IJK arrays
  *    n*vec               i     array lengths (for swig/numpies)
+ *    tolerance           i     Tolerance of matching grid cells (0..1)
  *
  * RETURNS:
  *    Update IJK pointers, array length, -1 if fail
@@ -153,6 +154,7 @@ _grd3d_point_in_cell(int ic,
                      double *zcornsv,
                      int *score,
                      int flip,
+                     int tolopt,
                      int dbg)
 
 {
@@ -178,7 +180,7 @@ _grd3d_point_in_cell(int ic,
 
     *score = x_chk_point_in_hexahedron(xc, yc, zc, corners, flip);
 
-    if (*score > 12) {
+    if (*score > tolopt) {
         return ib;
     }
 
@@ -198,6 +200,7 @@ _point_val_ij(double xc,
               int j1,
               int j2,
               int flip,
+              int tolopt,
               int dbg)
 {
     /*
@@ -230,9 +233,9 @@ _point_val_ij(double xc,
             score = 0;
             long ibfound =
               _grd3d_point_in_cell(ii, jj, 1, xc, yc, zc, nx, ny, 1, p_coor_v,
-                                   p_zcornone_v, &score, flip, dbg);
+                                   p_zcornone_v, &score, flip, tolopt, dbg);
 
-            if (score > 12) {
+            if (score > tolopt) {
                 ib_alternatives[nnn++] = ibfound;
             }
         }
@@ -257,6 +260,7 @@ _point_val_ijk(double xc,
                int iin,
                int jin,
                int flip,
+               int tolopt,
                int dbg)
 {
     /*
@@ -280,9 +284,9 @@ _point_val_ijk(double xc,
     int nnn = 0;
     for (k = 1; k <= nz; k++) {
         long ibfound = _grd3d_point_in_cell(iin, jin, k, xc, yc, zc, nx, ny, nz,
-                                            p_coor_v, zcornsv, &score, flip, dbg);
+                                            p_coor_v, zcornsv, &score, flip, tolopt, dbg);
 
-        if (score > 12) {
+        if (score > tolopt) {
             ib_alternatives[nnn++] = ibfound;
         }
     }
@@ -343,7 +347,8 @@ grd3d_points_ijk_cells(double *xvec,
                        int *jvec,
                        long njvec,
                        int *kvec,
-                       long nkvec)
+                       long nkvec,
+                       float tolerance)
 {
 
     logger_info(LI, FI, FU, "Entering routine %s", FU);
@@ -354,6 +359,8 @@ grd3d_points_ijk_cells(double *xvec,
         logger_critical(LI, FI, FU, "Input bug");
 
     long ib = 0;
+
+    int tolopt = x_nint(24 - (24 * tolerance));  // inverse
 
     int ic;
     for (ic = 0; ic < nxvec; ic++) {
@@ -380,7 +387,7 @@ grd3d_points_ijk_cells(double *xvec,
          */
 
         long ibfound = _point_val_ij(xc, yc, zc, nx, ny, p_coor_v, p_zcornone_v, i1, i2,
-                                     j1, j2, flip, dbg);
+                                     j1, j2, flip, tolopt, dbg);
 
         ivec[ic] = UNDEF_INT;
         jvec[ic] = UNDEF_INT;
@@ -397,7 +404,7 @@ grd3d_points_ijk_cells(double *xvec,
             x_ib2ijk(ibfound, &ires, &jres, &kres, nx, ny, 1, 0);
 
             long ibfound2 = _point_val_ijk(xc, yc, zc, nx, ny, nz, p_coor_v, zcornsv,
-                                           ires, jres, flip, dbg);
+                                           ires, jres, flip, tolopt, dbg);
             if (ibfound2 >= 0) {
                 x_ib2ijk(ibfound2, &ires, &jres, &kres, nx, ny, nz, 0);
                 ivec[ic] = ires;
