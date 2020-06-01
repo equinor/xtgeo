@@ -45,7 +45,7 @@ def operations_two(self, other, oper="add"):
         del useother
 
 
-def resample(self, other):
+def resample(self, other, mask=True):
     """Resample from other surface object to this surf"""
 
     logger.info("Resampling...")
@@ -57,6 +57,10 @@ def resample(self, other):
         return
 
     svalues = self.get_values1d()
+
+    optmask = 1
+    if not mask:
+        optmask = 0
 
     ier = _cxtgeo.surf_resample(
         other._ncol,
@@ -77,7 +81,7 @@ def resample(self, other):
         self._yflip,
         self._rotation,
         svalues,
-        0,
+        optmask,
     )
 
     if ier != 0:

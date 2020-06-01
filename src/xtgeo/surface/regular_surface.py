@@ -58,6 +58,7 @@ import xtgeo.common.sys as xtgeosys
 from . import _regsurf_import
 from . import _regsurf_export
 from . import _regsurf_cube
+from . import _regsurf_cube_window
 from . import _regsurf_grid3d
 from . import _regsurf_roxapi
 from . import _regsurf_gridding
@@ -1287,8 +1288,8 @@ class RegularSurface(object):
         xc1 = self._xori + (self.ncol - 1) * math.cos(rot1) * self._xinc
         yc1 = self._yori + (self.ncol - 1) * math.sin(rot1) * self._xinc
 
-        xc2 = self._xori + (self.nrow - 1) * math.cos(rot2) * self._yinc
-        yc2 = self._yori + (self.nrow - 1) * math.sin(rot2) * self._yinc
+        xc2 = self._xori + (self.nrow - 1) * math.cos(rot2) * self._yinc * self._yflip
+        yc2 = self._yori + (self.nrow - 1) * math.sin(rot2) * self._yinc * self._yflip
 
         xc3 = xc2 + (self.ncol - 1) * math.cos(rot1) * self._xinc
         yc3 = yc2 + (self.ncol - 1) * math.sin(rot1) * self._xinc
@@ -1718,7 +1719,7 @@ class RegularSurface(object):
     # Interacion with other surface
     # ==================================================================================
 
-    def resample(self, other):
+    def resample(self, other, mask=True):
         """Resample an instance surface values from another surface instance.
 
         Note that there may be some 'loss' of nodes at the edges of the
@@ -1728,10 +1729,12 @@ class RegularSurface(object):
         The interpolation algorithm in resample is bilinear interpolation. The
         topolopogy of the surface (map definitions, rotation, ...) will not change,
         only the map values. Areas with undefined nodes in ``other`` will become
-        undefined in the instance.
+        undefined in the instance if mask is True; othewise they will be kept as is.
 
         Args:
             other (RegularSurface): Surface to resample from.
+            mask (bool): If True (default) nodes outise will be made undefined, if False
+                then values will be kept as original
 
         Example::
 
@@ -1744,6 +1747,10 @@ class RegularSurface(object):
         Returns:
             Instance's surface values will be updated in-place.
 
+
+        .. versionchanged:: 2.9.0
+           Added ``mask`` keyword, default is True for backward compatibility.
+
         """
 
         if not isinstance(other, RegularSurface):
@@ -1751,7 +1758,7 @@ class RegularSurface(object):
 
         logger.info("Do resampling...")
 
-        _regsurf_oper.resample(self, other)
+        _regsurf_oper.resample(self, other, mask=mask)
 
     # ==================================================================================
     # Change a surface more fundamentally
@@ -1966,6 +1973,7 @@ class RegularSurface(object):
         mask=True,
         snapxy=False,
         deadtraces=True,
+        algorithm=2,
     ):
         """Slice the cube and update the instance surface to sampled cube
         values.
@@ -1980,13 +1988,15 @@ class RegularSurface(object):
             sampling (str): 'nearest' for nearest node (default), or
                 'trilinear' for trilinear interpolation.
             mask (bool): If True (default), then the map values outside
-                the cube will be undef.
+                the cube will be undef. Otherwise, map will be kept as is.
             snapxy (bool): If True (optional), then the map values will get
                 values at nearest Cube XY location. Only relevant to use if
                 surface is derived from seismic coordinates (e.g. Auto4D).
             deadtraces (bool): If True (default) then dead cube traces
                 (given as value 2 in SEGY trace headers), are treated as
-                undefined, nad map will be undefined at dead trace location.
+                undefined, and map will become undefined at dead trace location.
+            algorithm (int): 1 for legacy method, 2 (default from 2.9) for
+                new method available in xtgeo from version 2.9
 
         Example::
 
@@ -1998,6 +2008,8 @@ class RegularSurface(object):
         Raises:
             Exception if maps have different definitions (topology)
             RuntimeWarning if number of sampled nodes is less than 10%
+
+        .. versionchanged:: 2.9.0 Added ``algorithm`` keyword, default is 2
         """
 
         ier = _regsurf_cube.slice_cube(
@@ -2008,7 +2020,9 @@ class RegularSurface(object):
             mask=mask,
             snapxy=snapxy,
             deadtraces=deadtraces,
+            algorithm=algorithm,
         )
+
         if ier == -4:
             xtg.warnuser(
                 "Number of sampled surface nodes < 10 percent of " "Cube nodes"
@@ -2032,12 +2046,12 @@ class RegularSurface(object):
         snapxy=False,
         showprogress=False,
         deadtraces=True,
-        algorithm=1,
+        algorithm=2,
     ):
         """Slice the cube within a vertical window and get the statistical
-        attrubute.
+        attrubutes.
 
-        The statistical attribute can be min, max etc. Attributes are:
+        The statistical attributes can be min, max etc. Attributes are:
 
         * 'max' for maximum
 
@@ -2047,17 +2061,17 @@ class RegularSurface(object):
 
         * 'mean' for expected value
 
-        * 'var' for variance
+        * 'var' for variance (population var; https://en.wikipedia.org/wiki/Variance)
 
         * 'maxpos' for maximum of positive values
 
-        * 'maxneg' for maximum of negative values ??
+        * 'maxneg' for negative maximum of negative values
 
         * 'maxabs' for maximum of absolute values
 
-        * 'sumpos' for sum of positive values
+        * 'sumpos' for sum of positive values using cube sampling resolution
 
-        * 'sumneg' for sum of negative values
+        * 'sumneg' for sum of negative values using cube sampling resolution
 
         * 'meanabs' for mean of absolute values
 
@@ -2078,16 +2092,20 @@ class RegularSurface(object):
             other (RegularSurface): Instance of other surface if window is
                 between surfaces instead of a static window. The zrange
                 input is then not applied.
-            sampling (str): 'nearest' for nearest node (default), or
-                'trilinear' for trilinear interpolation.
+            sampling (str): 'nearest'/'trilinear'/'cube' for nearest node (default),
+                 or 'trilinear' for trilinear interpolation. The 'cube' option is
+                 only available with algorithm = 2 and will overrule ndiv and sample
+                 at the cube's Z increment resolution.
             mask (bool): If True (default), then the map values outside
-                the cube will be undef.
+                the cube will be undef, otherwise map will be kept as-is
             zrange (float): The one-sided "radius" range of the window, e.g. 10
                 (10 is default) units (e.g. meters if in depth mode).
                 The full window is +- zrange (i.e. diameter).
                 If other surface is present, zrange is computed based on that.
             ndiv (int): Number of intervals for sampling within zrange. None
-                means 'auto' sampling, using 0.5 of cube Z increment as basis.
+                means 'auto' sampling, using 0.5 of cube Z increment as basis. If
+                algorithm = 2 and sampling is 'cube', the cube Z increment
+                will be used.
             attribute (str or list): The requested attribute(s), e.g.
                 'max' value. May also be a list of attributes, e.g.
                 ['min', 'rms', 'max']. By such, a dict of surface objects is
@@ -2101,7 +2119,8 @@ class RegularSurface(object):
             deadtraces (bool): If True (default) then dead cube traces
                 (given as value 2 in SEGY trace headers), are treated as
                 undefined, nad map will be undefined at dead trace location.
-            algorithm (int): 1 for old method, 2 for new alternative.
+            algorithm (int): 1 for legacy method, 2 (default) for new faster
+                and more precise method available from xtgeo version 2.9.
 
         Example::
 
@@ -2122,15 +2141,18 @@ class RegularSurface(object):
             ValueError if attribute is invalid.
 
         Returns:
-            If attribute is a string, then the instance is updated and
-            None is returned. If attribute is a list, then a dictionary
+            If `attribute` is a string, then the instance is updated and
+            None is returned. If `attribute` is a list, then a dictionary
             of surface objects is returned.
+
+        .. versionchanged:: 2.9.0 Added ``algorithm`` keyword, default is now 2,
+                            while 1 is the legacy version
         """
 
         if other is None and zrange is None:
             zrange = 10
 
-        asurfs = _regsurf_cube.slice_cube_window(
+        asurfs = _regsurf_cube_window.slice_cube_window(
             self,
             cube,
             zsurf=zsurf,
@@ -2147,6 +2169,7 @@ class RegularSurface(object):
             deadtraces=deadtraces,
             algorithm=algorithm,
         )
+
         return asurfs
 
     # ==================================================================================

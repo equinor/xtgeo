@@ -1,3 +1,5 @@
+#pragma once
+#include "xtg.h"
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -17,6 +19,18 @@ x_nint(double);
 
 void
 x_free(int num, ...);
+
+double **
+x_allocate_2d_double(int n1, int n2);
+
+void
+x_free_2d_double(double **ptr_array);
+
+mbool **
+x_allocate_2d_mbool(int n1, int n2);
+
+void
+x_free_2d_mbool(mbool **ptr_array);
 
 int
 x_cmp_sort(const void *vp, const void *vq);
@@ -82,6 +96,9 @@ x_vector_linint(double x1,
                 double *xn,
                 double *yn,
                 double *zn);
+
+double
+x_vector_linint1d(double dval, double *dist, double *vals, int nval, int option);
 
 double
 x_vector_linint3(double x0, double x1, double x2, double y0, double y2);

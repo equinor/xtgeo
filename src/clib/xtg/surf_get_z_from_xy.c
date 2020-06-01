@@ -83,7 +83,8 @@ surf_get_z_from_xy(double x,
 
     if (userelative == 1) {
         /* map origin rleative is 0.0 */
-        z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc, 0.0, 0.0, p_map_v);
+        z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc * yflip, 0.0, 0.0,
+                               p_map_v);
     } else {
 
         /* find the x,y,z values of the four nodes */
