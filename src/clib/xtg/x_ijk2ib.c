@@ -67,13 +67,12 @@ long x_ijk2ic(
 
     nzy  = nz*ny;
 
-
     /*some error checking*/
     if ( i>nx || j>ny || k>nz ){
-	return -2;
+	    return -2;
     }
     else if( i<1 || j<1 || k<1 ) {
-	return -2;
+	    return -2;
     }
 
     ic = (i-1)*nzy;

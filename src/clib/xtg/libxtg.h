@@ -12,6 +12,9 @@
 
 #define _GNU_SOURCE 1
 
+#pragma once
+
+#include "xtg.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -20,12 +23,12 @@
 #define PIHALF 1.57079632679489661923
 
 #define FLOATEPS 1.0E-05
-#define VERYLARGEFLOAT 10E30;
-#define VERYSMALLFLOAT -10E30;
+#define VERYLARGEFLOAT 10E30
+#define VERYSMALLFLOAT -10E30
 
 /* better? */
-#define VERYLARGEPOSITIVE 10E30;
-#define VERYLARGENEGATIVE -10E30;
+#define VERYLARGEPOSITIVE 10E30
+#define VERYLARGENEGATIVE -10E30
 
 /*
  * -------------------------------------------------------------------------------------
@@ -82,8 +85,6 @@
  * GENERAL XTGEO
  *======================================================================================
  */
-
-typedef uint8_t mbool;  // used for numpy bool e.g. mask arrays
 
 FILE *
 xtg_fopen(const char *filename, const char *mode);
@@ -562,6 +563,53 @@ surf_slice_cube(int ncx,
                 int option2);
 
 int
+surf_slice_cube_v2(int ncol,
+                   int nrow,
+                   int nlay,
+                   double czori,
+                   double czinc,
+                   float *swig_np_flt_inplaceflat_v1,
+                   long n_swig_np_flt_inplaceflat_v1,
+                   double *swig_np_dbl_inplaceflat_v1,
+                   long n_swig_np_dbl_inplaceflat_v1,
+                   double *swig_np_dbl_inplaceflat_v2,
+                   long n_swig_np_dbl_inplaceflat_v2,
+                   mbool *swig_np_boo_inplaceflat_v1,  // *maskv,
+                   long n_swig_np_boo_inplaceflat_v1,
+                   int optnearest,
+                   int optmask);
+
+int
+surf_slice_cube_v3(int ncol,
+                   int nrow,
+                   int nlay,
+                   double czori,
+                   double czinc,
+                   float *swig_np_flt_inplaceflat_v1,
+                   long n_swig_np_flt_inplaceflat_v1,
+                   double *swig_np_dbl_inplaceflat_v1,
+                   long n_swig_np_dbl_inplaceflat_v1,
+                   double *swig_np_dbl_inplaceflat_v2,
+                   long n_swig_np_dbl_inplaceflat_v2,
+                   mbool *swig_np_boo_inplaceflat_v1,  // *maskv,
+                   long n_swig_np_boo_inplaceflat_v1,
+                   int optnearest,
+                   int optmask);
+
+int
+surf_stack_slice_cube(int ncol,
+                      int nrow,
+                      int nlay,
+                      int nstack,
+                      double czori,
+                      double czinc,
+                      float *cubevalsv,
+                      double **stack,
+                      mbool **rmask,
+                      int optnearest,
+                      int optmask);
+
+int
 surf_slice_cube_window(int ncx,
                        int ncy,
                        int ncz,
@@ -592,6 +640,34 @@ surf_slice_cube_window(int ncx,
                        int nattr,
                        int option1,
                        int option2);
+
+// WIP
+int
+surf_cube_attr_intv(int ncol,
+                    int nrow,
+                    int nlay,
+                    double czori,
+                    double czinc,
+                    float *swig_np_flt_inplaceflat_v1,
+                    long n_swig_np_flt_inplaceflat_v1,
+                    double *swig_np_dbl_inplaceflat_v1,
+                    long n_swig_np_dbl_inplaceflat_v1,
+                    double *swig_np_dbl_inplaceflat_v2,
+                    long n_swig_np_dbl_inplaceflat_v2,
+                    mbool *swig_np_boo_inplaceflat_v1,  // *maskv1,
+                    long n_swig_np_boo_inplaceflat_v1,
+                    mbool *swig_np_boo_inplaceflat_v2,  // *maskv2,
+                    long n_swig_np_boo_inplaceflat_v2,
+                    double slicezinc,
+                    int ndiv,
+                    int ndivdisc,
+                    double *swig_np_dbl_inplaceflat_v3,
+                    long n_swig_np_dbl_inplaceflat_v3,
+                    int optnearest,
+                    int optmask,
+                    int optprogress,
+                    double maskthreshold,
+                    int optsum);
 
 void
 surf_sample_grd3d_lay(int nx,
@@ -1859,7 +1935,6 @@ grd3d_get_all_corners(int nx,
                       double *y8,
                       double *z8,
                       int option);
-
 
 int
 grd3d_well_ijk(int nx,
