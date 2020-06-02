@@ -1273,7 +1273,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         return _wellmarkers.get_surface_picks(self, surf)
 
-    def make_ijk_from_grid(self, grid, grid_id="", **kwargs):
+    def make_ijk_from_grid(self, grid, grid_id="", tolerance=0.5, algorithm=2):
         """Look through a Grid and add grid I J K as discrete logs.
 
         Note that the the grid counting has base 1 (first row is 1 etc).
@@ -1284,16 +1284,17 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             grid (Grid): A XTGeo Grid instance
             grid_id (str): Add a tag (optional) to the current log name
-            **kwargs: Special developer settings
-
+            tolerance (float): In case of doubt if a point is inside, 0.5 means
+                50% likelihood. Lower numbers means that "doubt cells" may be included.
+            algorithm (int): Which interbal algorithm to use, default is 2 (expert
+                setting)
         Raises:
             RuntimeError: 'Error from C routine, code is ...'
         """
-        algo = kwargs.get("algorithm", 2)
-        tolerance = kwargs.get("tolerance", 0.5)  # tolerance in grid matching algo 2
 
-        _well_oper.make_ijk_from_grid(self, grid, grid_id=grid_id, algorithm=algo, 
-                                      tolerance=tolerance)
+        _well_oper.make_ijk_from_grid(
+            self, grid, grid_id=grid_id, algorithm=algorithm, tolerance=tolerance
+        )
 
     def make_zone_qual_log(self, zqname):
         """Create a zone quality/indicator (flag) log.

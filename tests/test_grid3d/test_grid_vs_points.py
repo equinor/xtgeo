@@ -34,7 +34,7 @@ def test_get_ijk_from_points():
 
     po = xtgeo.Points(pointset)
 
-    ijk = g1.get_ijk_from_points(po)
+    ijk = g1.get_ijk_from_points(po, tolerance=0.6)
     print(ijk)
 
     assert ijk["IX"][0] == 1

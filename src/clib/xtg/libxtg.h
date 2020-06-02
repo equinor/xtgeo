@@ -1701,8 +1701,7 @@ grd3d_points_ijk_cells(double *swig_np_dbl_in_v1,  // *xvec
                        long n_swig_np_int_aout_v2,  // njvec
                        int *swig_np_int_aout_v3,    // *kvec
                        long n_swig_np_int_aout_v3,  // nkvec
-                       float tolerance
-);
+                       float tolerance);
 
 int
 grd3d_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,

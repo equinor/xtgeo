@@ -29,9 +29,9 @@ testpath = xtg.testpath
 WFILES = "../xtgeo-testdata/wells/battle/1/*.rmswell"
 
 
-@pytest.fixture()
-def loadwells1():
-    logger.info('Load well 1')
+@pytest.fixture(name="loadwells1")
+def fixture_loadwells1():
+    logger.info("Load well 1")
     wlist = []
     for wfile in glob.glob(WFILES):
         wlist.append(Well(wfile))
@@ -46,7 +46,7 @@ def test_import_wells(loadwells1):
     mywells = Wells()
     mywells.wells = mywell_list
 
-    assert 'WELL33' in mywells.names
+    assert "WELL33" in mywells.names
 
 
 def test_get_dataframe_allwells(loadwells1):
@@ -72,7 +72,7 @@ def test_quickplot_wells(loadwells1):
 
     mywells = Wells()
     mywells.wells = mywell_list
-    mywells.quickplot(filename=ojoin(td, 'quickwells.png'))
+    mywells.quickplot(filename=ojoin(td, "quickwells.png"))
 
 
 def test_wellintersections(loadwells1):
@@ -84,7 +84,7 @@ def test_wellintersections(loadwells1):
     mywells.wells = mywell_list
     dfr = mywells.wellintersections()
     logger.info(dfr)
-    dfr.to_csv(ojoin(td, 'wells_crossings.csv'))
+    dfr.to_csv(ojoin(td, "wells_crossings.csv"))
 
 
 def test_wellintersections_tvdrange_nowfilter(loadwells1):
@@ -94,10 +94,10 @@ def test_wellintersections_tvdrange_nowfilter(loadwells1):
 
     mywells = Wells()
     mywells.wells = mywell_list
-    print('Limit TVD and downsample...')
+    print("Limit TVD and downsample...")
     mywells.limit_tvd(1300, 1400)
     mywells.downsample(interval=6)
-    print('Limit TVD and downsample...DONE')
+    print("Limit TVD and downsample...DONE")
 
     dfr = mywells.wellintersections()
     print(dfr)
@@ -112,10 +112,10 @@ def test_wellintersections_tvdrange_no_wfilter(loadwells1):
 
     mywells = Wells()
     mywells.wells = mywell_list
-    print('Limit TVD and downsample...')
+    print("Limit TVD and downsample...")
     mywells.limit_tvd(1300, 1400)
     mywells.downsample(interval=6)
-    print('Limit TVD and downsample...DONE')
+    print("Limit TVD and downsample...DONE")
 
     dfr = mywells.wellintersections()
     print(dfr)
@@ -126,18 +126,19 @@ def test_wellintersections_tvdrange_wfilter(loadwells1):
     wfilter settings.
     """
 
-    wfilter = {'parallel': {'xtol': 4.0, 'ytol': 4.0, 'ztol': 2.0, 'itol': 10,
-                            'atol': 5.0}}
+    wfilter = {
+        "parallel": {"xtol": 4.0, "ytol": 4.0, "ztol": 2.0, "itol": 10, "atol": 5.0}
+    }
 
     mywell_list = loadwells1
 
     mywells = Wells()
     mywells.wells = mywell_list
-    print('Limit TVD and downsample...')
+    print("Limit TVD and downsample...")
     mywells.limit_tvd(1300, 1400)
     mywells.downsample(interval=6)
-    print('Limit TVD and downsample...DONE')
+    print("Limit TVD and downsample...DONE")
 
     dfr = mywells.wellintersections(wfilter=wfilter)
-    dfr.to_csv(ojoin(td, 'wells_crossings_filter.csv'))
+    dfr.to_csv(ojoin(td, "wells_crossings_filter.csv"))
     print(dfr)

@@ -52,7 +52,7 @@
 ****************************************************************************************
 */
 
-void
+static void
 _get_ij_range2(int *i1,
                int *i2,
                int *j1,
@@ -140,7 +140,7 @@ _get_ij_range2(int *i1,
     *j2 = jj2;
 }
 
-long
+static long
 _grd3d_point_in_cell(int ic,
                      int jc,
                      int kc,
@@ -187,7 +187,7 @@ _grd3d_point_in_cell(int ic,
     return -1; /* if nothing found */
 }
 
-long
+static long
 _point_val_ij(double xc,
               double yc,
               double zc,
@@ -248,7 +248,7 @@ _point_val_ij(double xc,
     return -1;
 }
 
-long
+static long
 _point_val_ijk(double xc,
                double yc,
                double zc,
@@ -283,8 +283,9 @@ _point_val_ijk(double xc,
     int k;
     int nnn = 0;
     for (k = 1; k <= nz; k++) {
-        long ibfound = _grd3d_point_in_cell(iin, jin, k, xc, yc, zc, nx, ny, nz,
-                                            p_coor_v, zcornsv, &score, flip, tolopt, dbg);
+        long ibfound =
+          _grd3d_point_in_cell(iin, jin, k, xc, yc, zc, nx, ny, nz, p_coor_v, zcornsv,
+                               &score, flip, tolopt, dbg);
 
         if (score > tolopt) {
             ib_alternatives[nnn++] = ibfound;
