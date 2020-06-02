@@ -185,14 +185,18 @@ def make_zone_qual_log(self, zqname):
     del dff
 
 
-def make_ijk_from_grid(self, grid, grid_id="", algorithm=1, tolerance=0.5):
+def make_ijk_from_grid(
+    self, grid, grid_id="", algorithm=1, tolerance=0.5, activeonly=True
+):
 
     logger.info("Using algorithm %s in %s", algorithm, __name__)
 
     if algorithm == 1:
         _make_ijk_from_grid_v1(self, grid, grid_id=grid_id)
     else:
-        _make_ijk_from_grid_v2(self, grid, grid_id=grid_id, tolerance=tolerance)
+        _make_ijk_from_grid_v2(
+            self, grid, grid_id=grid_id, tolerance=tolerance, activeonly=activeonly
+        )
 
     logger.info("Using algorithm %s in %s done", algorithm, __name__)
 
@@ -273,7 +277,7 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
     del onelayergrid
 
 
-def _make_ijk_from_grid_v2(self, grid, grid_id="", tolerance=0.5):
+def _make_ijk_from_grid_v2(self, grid, grid_id="", tolerance=0.5, activeonly=True):
     """
     Getting IJK from a grid and make as well logs.
 
@@ -293,7 +297,7 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", tolerance=0.5):
 
     df = grid.get_ijk_from_points(
         wpoints,
-        activeonly=True,
+        activeonly=activeonly,
         zerobased=False,
         dataframe=True,
         includepoints=False,
