@@ -187,7 +187,7 @@ _grd3d_point_in_cell(int ic,
     return -1; /* if nothing found */
 }
 
-static long
+static int
 _point_val_ij(double xc,
               double yc,
               double zc,
@@ -201,6 +201,7 @@ _point_val_ij(double xc,
               int j2,
               int flip,
               int tolopt,
+              long *ibalts,
               int dbg)
 {
     /*
@@ -213,7 +214,8 @@ _point_val_ij(double xc,
      * xc, yc, zc       Points to evaluate if inside
      * nx, ny, nz       Dimensions
      * p_coor_v         Coordinates COORD
-     * zcornsv        Coordinates ZCORN
+     * zcornsv          Coordinates ZCORN
+     * ibalts           It may be that several IB ranges may be valid
      * i1, i2, j1, j2   I J search range
      */
 
@@ -221,10 +223,9 @@ _point_val_ij(double xc,
 
     int score;
 
-    long ib_alternatives[24];
     int ibn;
     for (ibn = 0; ibn < 24; ibn++)
-        ib_alternatives[ibn] = -1;
+        ibalts[ibn] = -1;
 
     int nnn = 0;
     for (jj = j1; jj <= j2; jj++) {
@@ -236,13 +237,14 @@ _point_val_ij(double xc,
                                    p_zcornone_v, &score, flip, tolopt, dbg);
 
             if (score > tolopt) {
-                ib_alternatives[nnn++] = ibfound;
+                ibalts[nnn] = ibfound;
+                nnn++;
             }
         }
     }
 
     if (nnn > 0) {
-        return ib_alternatives[nnn / 2];
+        return nnn;
     }
 
     return -1;
@@ -276,9 +278,13 @@ _point_val_ijk(double xc,
     int score;
 
     long ib_alternatives[24];
+    int nscore[24];
+
     int ibn;
-    for (ibn = 0; ibn < 24; ibn++)
+    for (ibn = 0; ibn < 24; ibn++) {
         ib_alternatives[ibn] = -1;
+        nscore[ibn] = -1;
+    }
 
     int k;
     int nnn = 0;
@@ -288,17 +294,49 @@ _point_val_ijk(double xc,
                                &score, flip, tolopt, dbg);
 
         if (score > tolopt) {
-            ib_alternatives[nnn++] = ibfound;
+            nscore[nnn] = score;
+            ib_alternatives[nnn] = ibfound;
+            nnn++;
         }
     }
 
-    if (nnn > 0) {
+    return ib_alternatives[nnn / 2];  // tmp
+
+    // TODO: There must be a bug here somewhere!
+
+    if (nnn == 0) {
+        return -1;
+    } else if (nnn == 1) {
+        return ib_alternatives[0];
+
+    } else if (nnn == 2) {
+        return ib_alternatives[0];
+
+    } else if (nnn == 3) {
+        return ib_alternatives[1];
+
+    } else {
+        // find the entry with higest score
+        int n;
+        int usen = 0;
+        int prevscore = -1;
+        int ires, jres, kres;
+        printf("NNN is %d for I J %d %d, point is %lf %lf %lf\n", nnn, iin, jin, xc, yc,
+               zc);
+
+        for (n = 0; n < nnn; n++) {
+            x_ib2ijk(ib_alternatives[n], &ires, &jres, &kres, nx, ny, nz, 0);
+            printf("NSCORE is %d for cell %d %d %d\n", nscore[n], ires, jres, kres);
+            if (nscore[n] > prevscore) {
+                usen = n;
+                prevscore = nscore[n];
+            }
+        }
+        printf("Return is %ld  for USEN %d\n", ib_alternatives[usen], usen);
+        // return ib_alternatives[usen];
         return ib_alternatives[nnn / 2];
     }
-
-    return -1;
 }
-
 /*
 ****************************************************************************************
 * public function
@@ -386,37 +424,40 @@ grd3d_points_ijk_cells(double *xvec,
          * next check the onelayer version of the grid first (speed up)
          * This should pin I J coordinate
          */
-
-        long ibfound = _point_val_ij(xc, yc, zc, nx, ny, p_coor_v, p_zcornone_v, i1, i2,
-                                     j1, j2, flip, tolopt, dbg);
+        long ibalts[24];
+        int nibtot = _point_val_ij(xc, yc, zc, nx, ny, p_coor_v, p_zcornone_v, i1, i2,
+                                   j1, j2, flip, tolopt, ibalts, dbg);
 
         ivec[ic] = UNDEF_INT;
         jvec[ic] = UNDEF_INT;
         kvec[ic] = UNDEF_INT;
 
-        if (ibfound >= 0) {
-            if (dbg)
-                logger_info(LI, FI, FU, "Use Return IB %d", ib);
+        if (nibtot >= 0) {
             /*
              * means that the  X Y Z point is somewhere inside
              * so now it is time to find exact K location
              */
-            int ires, jres, kres;
-            x_ib2ijk(ibfound, &ires, &jres, &kres, nx, ny, 1, 0);
+            int nib;
+            for (nib = 0; nib < nibtot; nib++) {
 
-            long ibfound2 = _point_val_ijk(xc, yc, zc, nx, ny, nz, p_coor_v, zcornsv,
-                                           ires, jres, flip, tolopt, dbg);
-            if (ibfound2 >= 0) {
-                x_ib2ijk(ibfound2, &ires, &jres, &kres, nx, ny, nz, 0);
-                ivec[ic] = ires;
-                jvec[ic] = jres;
-                kvec[ic] = kres;
+                int ires, jres, kres;
+                x_ib2ijk(ibalts[nib], &ires, &jres, &kres, nx, ny, 1, 0);
 
-                if (actnumoption == 1 && actnumsv[ibfound2] == 0) {
-                    /*  reset to undef in inactivecell */
-                    ivec[ic] = UNDEF_INT;
-                    jvec[ic] = UNDEF_INT;
-                    kvec[ic] = UNDEF_INT;
+                long ibfound2 = _point_val_ijk(xc, yc, zc, nx, ny, nz, p_coor_v,
+                                               zcornsv, ires, jres, flip, tolopt, dbg);
+                if (ibfound2 >= 0) {
+                    x_ib2ijk(ibfound2, &ires, &jres, &kres, nx, ny, nz, 0);
+                    ivec[ic] = ires;
+                    jvec[ic] = jres;
+                    kvec[ic] = kres;
+
+                    if (actnumoption == 1 && actnumsv[ibfound2] == 0) {
+                        /*  reset to undef in inactivecell */
+                        ivec[ic] = UNDEF_INT;
+                        jvec[ic] = UNDEF_INT;
+                        kvec[ic] = UNDEF_INT;
+                    }
+                    break;
                 }
             }
         }

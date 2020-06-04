@@ -255,7 +255,6 @@ def get_ijk_from_points(
 
     logger.info("Grid FLIP for C code is %s", useflip)
 
-
     logger.info("Running C routine...")
     _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
         points.dataframe[points.xname].values,
@@ -1241,8 +1240,9 @@ def estimate_design(self, nsubname):
 
 def estimate_flip(self):
     """Estimate if grid is left or right handed"""
-    # perhaps better to find these vectors in C as the
-    # operations here are costly
+
+    if self.ncol == 1 or self.nrow == 1:
+        return -1  # TODO!
 
     xc, yc, _zc = self.get_xyz(asmasked=False)
 
