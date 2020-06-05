@@ -178,9 +178,9 @@ _grd3d_point_in_cell(int ic,
     double corners[24];
     grd3d_corners(ic, jc, kc, nx, ny, nz, p_coor_v, 0, zcornsv, 0, corners);
 
-    *score = x_chk_point_in_hexahedron(xc, yc, zc, corners, flip);
+    *score = x_point_in_hexahedron(xc, yc, zc, corners, 24);
 
-    if (*score > tolopt) {
+    if (*score > 0) {
         return ib;
     }
 
@@ -236,7 +236,7 @@ _point_val_ij(double xc,
               _grd3d_point_in_cell(ii, jj, 1, xc, yc, zc, nx, ny, 1, p_coor_v,
                                    p_zcornone_v, &score, flip, tolopt, dbg);
 
-            if (score > tolopt) {
+            if (score > 0) {
                 ibalts[nnn] = ibfound;
                 nnn++;
             }
@@ -278,12 +278,10 @@ _point_val_ijk(double xc,
     int score;
 
     long ib_alternatives[24];
-    int nscore[24];
 
     int ibn;
     for (ibn = 0; ibn < 24; ibn++) {
         ib_alternatives[ibn] = -1;
-        nscore[ibn] = -1;
     }
 
     int k;
@@ -293,8 +291,7 @@ _point_val_ijk(double xc,
           _grd3d_point_in_cell(iin, jin, k, xc, yc, zc, nx, ny, nz, p_coor_v, zcornsv,
                                &score, flip, tolopt, dbg);
 
-        if (score > tolopt) {
-            nscore[nnn] = score;
+        if (score > 50) {
             ib_alternatives[nnn] = ibfound;
             nnn++;
         }
@@ -316,24 +313,6 @@ _point_val_ijk(double xc,
         return ib_alternatives[1];
 
     } else {
-        // find the entry with higest score
-        int n;
-        int usen = 0;
-        int prevscore = -1;
-        int ires, jres, kres;
-        printf("NNN is %d for I J %d %d, point is %lf %lf %lf\n", nnn, iin, jin, xc, yc,
-               zc);
-
-        for (n = 0; n < nnn; n++) {
-            x_ib2ijk(ib_alternatives[n], &ires, &jres, &kres, nx, ny, nz, 0);
-            printf("NSCORE is %d for cell %d %d %d\n", nscore[n], ires, jres, kres);
-            if (nscore[n] > prevscore) {
-                usen = n;
-                prevscore = nscore[n];
-            }
-        }
-        printf("Return is %ld  for USEN %d\n", ib_alternatives[usen], usen);
-        // return ib_alternatives[usen];
         return ib_alternatives[nnn / 2];
     }
 }
@@ -408,8 +387,6 @@ grd3d_points_ijk_cells(double *xvec,
         double zc = zvec[ic];
 
         int dbg = 0;
-        if (fabs(xc - 456620.790918) < 0.0000001)
-            dbg = 1;
 
         /*
          * first get an approximate I and J range based on these maps

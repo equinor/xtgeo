@@ -37,7 +37,8 @@
 int
 x_plane_normalvector(double *points_v, double *nvector, int option)
 {
-    double x1, x2, x3, y1, y2, y3, z1, z2, z3, a, b, c, d;
+    double x1, x2, x3, y1, y2, y3, z1, z2, z3;
+    double a, b, c, d;
 
     x1 = points_v[0];
     y1 = points_v[1];

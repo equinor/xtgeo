@@ -189,6 +189,24 @@ x_conv_double2float(int n, double *v1, float *v2);
 double
 x_rotation_conv(double ain, int aimode, int mode, int option);
 
+double
+x_tetrahedron_volume(double *swig_np_dbl_inplaceflat_v1,
+                     long n_swig_np_dbl_inplaceflat_v1);
+
+int
+x_point_in_tetrahedron(double x0,
+                       double y0,
+                       double z0,
+                       double *swig_np_dbl_inplaceflat_v1,
+                       long n_swig_np_dbl_inplaceflat_v1);
+
+int
+x_point_in_hexahedron(double x0,
+                      double y0,
+                      double z0,
+                      double *swig_np_dbl_inplaceflat_v1,
+                      long n_swig_np_dbl_inplaceflat_v1);
+
 /*
  * =====================================================================================
  * surf_* for regular maps/surfaces

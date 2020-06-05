@@ -109,15 +109,18 @@ _inside_plane(int ic0,
 
     ic = ic0; /*  cell corners, 1..8 */
     pt[0] = coor[3 * ic - 3];
-    pt[1] = coor[3 * ic - 2], pt[2] = coor[3 * ic - 1];
+    pt[1] = coor[3 * ic - 2];
+    pt[2] = coor[3 * ic - 1];
 
     ic = ic1;
     pt[3] = coor[3 * ic - 3];
-    pt[4] = coor[3 * ic - 2], pt[5] = coor[3 * ic - 1];
+    pt[4] = coor[3 * ic - 2];
+    pt[5] = coor[3 * ic - 1];
 
     ic = ic2;
     pt[6] = coor[3 * ic - 3];
-    pt[7] = coor[3 * ic - 2], pt[8] = coor[3 * ic - 1];
+    pt[7] = coor[3 * ic - 2];
+    pt[8] = coor[3 * ic - 1];
 
     int ier = x_plane_normalvector(pt, nvec, 0);
 
@@ -128,7 +131,7 @@ _inside_plane(int ic0,
 
     double prod = (nvec[0] * x + nvec[1] * y + nvec[2] * z + nvec[3]) * flip;
 
-    if (prod < 0.0)
+    if (prod <= 0.0)
         return 1; /*  1 for "INSIDE" */
     if (prod > 0.0)
         return -1; /* for OUTSIDE */
@@ -153,9 +156,12 @@ x_chk_point_in_hexahedron(double x, double y, double z, double *coor, int flip)
      */
     int score = 0, i, ist[24];
 
+    for (i = 0; i < 24; i++)
+        ist[i] = -2;
+
     /* top and base */
-    ist[0] = _inside_plane(1, 2, 3, x, y, z, coor, flip);
-    ist[1] = _inside_plane(4, 3, 2, x, y, z, coor, flip);
+    ist[0] = _inside_plane(1, 3, 2, x, y, z, coor, flip);
+    ist[1] = _inside_plane(4, 2, 3, x, y, z, coor, flip);
     ist[2] = _inside_plane(2, 4, 1, x, y, z, coor, flip);
     ist[3] = _inside_plane(3, 1, 4, x, y, z, coor, flip);
     score = 0;
@@ -167,8 +173,8 @@ x_chk_point_in_hexahedron(double x, double y, double z, double *coor, int flip)
 
     ist[4] = _inside_plane(5, 7, 6, x, y, z, coor, flip);
     ist[5] = _inside_plane(8, 6, 7, x, y, z, coor, flip);
-    ist[6] = _inside_plane(6, 5, 8, x, y, z, coor, flip);
-    ist[7] = _inside_plane(7, 8, 5, x, y, z, coor, flip);
+    ist[6] = _inside_plane(6, 8, 5, x, y, z, coor, flip);
+    ist[7] = _inside_plane(7, 5, 8, x, y, z, coor, flip);
     score = 0;
     for (i = 4; i < 8; i++)
         score += ist[i];

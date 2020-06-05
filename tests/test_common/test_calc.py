@@ -11,6 +11,7 @@ import xtgeo.common.calc as xcalc
 # Do tests of simple calc routines
 # =============================================================================
 
+
 def test_vectorinfo2():
     """Testing vectorinfo2 function"""
     llen, rad, deg = xcalc.vectorinfo2(0, 10, 0, 10, option=1)
@@ -105,3 +106,87 @@ def test_averageangle():
 
     # input with many elements
     assert xcalc.averageangle([340, 5, 355, 20]) == 0.0
+
+
+def test_tetrahedron_volume():
+    """Compute volume of general tetrahedron"""
+
+    # verfied vs http://tamivox.org/redbear/tetra_calc/index.html
+
+    vert = [0, 0, 0, 2, 1, 0, 0, 2, 0, 0, 0, 2]
+
+    vert = np.array(vert, dtype=np.float64)
+
+    vol = xcalc.tetrehedron_volume(vert)
+
+    assert vol == pytest.approx(1.33333, abs=0.0001)
+
+    vert = [0.9, 111.0, 17, 2, 1, 0, 333, 444, 555, 0, 0, 2]
+
+    assert xcalc.tetrehedron_volume(vert) == pytest.approx(31178.35000000, abs=0.01)
+
+    vert = [0.9, 111.0, 17, 2, 1, 0, 333, 444, 555, 0, 0, 2]
+    vert = np.array(vert)
+    vert = vert.reshape((4, 3))
+
+    assert xcalc.tetrehedron_volume(vert) == pytest.approx(31178.35000000, abs=0.01)
+
+
+def test_point_in_tetrahedron():
+    """Test if a point is inside a tetrahedron"""
+
+    vert = [0, 0, 0, 2, 1, 0, 0, 2, 0, 0, 0, 2]
+
+    assert xcalc.point_in_tetrahedron(0, 0, 0, vert) is True
+    assert xcalc.point_in_tetrahedron(-1, 0, 0, vert) is False
+    assert xcalc.point_in_tetrahedron(2, 1, 0, vert) is True
+    assert xcalc.point_in_tetrahedron(0, 2, 0, vert) is True
+    assert xcalc.point_in_tetrahedron(0, 0, 2, vert) is True
+
+
+def test_point_in_hexahedron():
+    """Test if a point is inside a hexahedron"""
+
+    vrt = [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1]
+
+    vertices = np.array(vrt, dtype=np.float64).reshape(8, 3)
+
+    # assert xcalc.point_in_hexahedron(0, 0, 0, vertices) is True
+    assert xcalc.point_in_hexahedron(0.5, 0.5, 0.5, vertices) is True
+    assert xcalc.point_in_hexahedron(-0.1, 0.5, 0.5, vertices) is False
+
+    vert = [
+        461351.493253,
+        5938298.477428,
+        1850,
+        461501.758690,
+        5938385.850231,
+        1850,
+        461440.718409,
+        5938166.753852,
+        1850.1,
+        461582.200838,
+        5938248.702782,
+        1850,
+        461354.611430,
+        5938300.454809,
+        1883.246948,
+        461504.611754,
+        5938387.700867,
+        1915.005005,
+        461443.842986,
+        5938169.007646,
+        1904.730957,
+        461585.338388,
+        5938250.905010,
+        1921.021973,
+    ]
+
+    assert (
+        xcalc.point_in_hexahedron(461467.513586, 5938273.910537, 1850, vert)
+        is True  # shall be False
+    )
+    assert (
+        xcalc.point_in_hexahedron(461467.513586, 5938273.910537, 1849.99, vert)
+        is False  # shall be False
+    )
