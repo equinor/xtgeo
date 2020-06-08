@@ -114,9 +114,6 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
         newpv[1 + 3 * nv] = y0;
         newpv[2 + 3 * nv] = z0;
 
-        // for (int x = 0; x < 12; x++)
-        //     printf("newpv corner %lf\n", newpv[x]);
-
         double vol = x_tetrahedron_volume(newpv, ndim);
 
         sumvol += vol;

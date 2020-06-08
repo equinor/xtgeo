@@ -412,7 +412,8 @@ grd3d_points_ijk_cells(double *xvec,
                                    j1, j2, flip, ibfound);
 
         if (nfound > 0) {
-            for (int ibn = 0; ibn < nfound; ibn++) {
+            int ibn;
+            for (ibn = 0; ibn < nfound; ibn++) {
 
                 /*
                  * means that the  X Y Z point is somewhere inside
