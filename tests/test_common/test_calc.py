@@ -182,11 +182,35 @@ def test_point_in_hexahedron():
         1921.021973,
     ]
 
+    assert xcalc.point_in_hexahedron(461467.513586, 5938273.910537, 1850, vert) is True
     assert (
-        xcalc.point_in_hexahedron(461467.513586, 5938273.910537, 1850, vert)
-        is True  # shall be False
-    )
-    assert (
-        xcalc.point_in_hexahedron(461467.513586, 5938273.910537, 1849.99, vert)
+        xcalc.point_in_hexahedron(461467.513586, 5938273.910537, 1849.95, vert)
         is False  # shall be False
     )
+    vrt = [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        100.0,
+        0.0,
+        100.0,
+        0.0,
+        0.0,
+        100.0,
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        100.0,
+        1.0,
+        100.0,
+        0.0,
+        1.0,
+        100.0,
+        100.0,
+        1.0,
+    ]
+    assert xcalc.point_in_hexahedron(0.1, 0.1, 0.1, vrt) is True
