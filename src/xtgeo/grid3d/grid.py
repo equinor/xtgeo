@@ -1135,7 +1135,6 @@ class Grid(Grid3D):
         columnnames=("IX", "JY", "KZ"),
         fmt="int",
         undef=-1,
-        tolerance=0.5,
     ):
         """Returns a list/dataframe of cell indices based on a Points()
         instance
@@ -1152,8 +1151,6 @@ class Grid(Grid3D):
             columnnames (tuple): Name of columns if dataframe is returned
             fmt (str): Format of IJK arrays (int/float). Default is "int"
             undef (int or float): Value to assign to undefined (outside) entries.
-            tolerance (float): In case of doubt if a point is inside, 0.5 means
-                50% likelihood. Lower numbers means that "doubt cells" may be included.
 
         .. versionadded:: 2.6.0
         .. versionchanged:: 2.8.0 Added keywords `columnnames`, `fmt`, `undef`
@@ -1169,7 +1166,6 @@ class Grid(Grid3D):
             columnnames=columnnames,
             fmt=fmt,
             undef=undef,
-            tolerance=tolerance,
         )
 
         # return the dataframe or list of tuples

@@ -1713,13 +1713,12 @@ grd3d_points_ijk_cells(double *swig_np_dbl_in_v1,  // *xvec
                        int actnumoption,
                        int flip,
 
-                       int *swig_np_int_aout_v1,    // *ivec
-                       long n_swig_np_int_aout_v1,  // nivec
-                       int *swig_np_int_aout_v2,    // *jvec
-                       long n_swig_np_int_aout_v2,  // njvec
-                       int *swig_np_int_aout_v3,    // *kvec
-                       long n_swig_np_int_aout_v3,  // nkvec
-                       float tolerance);
+                       int *swig_np_int_aout_v1,     // *ivec
+                       long n_swig_np_int_aout_v1,   // nivec
+                       int *swig_np_int_aout_v2,     // *jvec
+                       long n_swig_np_int_aout_v2,   // njvec
+                       int *swig_np_int_aout_v3,     // *kvec
+                       long n_swig_np_int_aout_v3);  // nkvec
 
 int
 grd3d_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,

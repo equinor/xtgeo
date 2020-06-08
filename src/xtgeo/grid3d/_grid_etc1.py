@@ -231,7 +231,6 @@ def get_ijk_from_points(
     columnnames=("IX", "JY", "KZ"),
     fmt="int",
     undef=-1,
-    tolerance=0.5,
 ):
     """Get I J K indices as a list of tuples or a dataframe
 
@@ -284,7 +283,6 @@ def get_ijk_from_points(
         arrsize,
         arrsize,
         arrsize,
-        tolerance,
     )
     logger.info("Running C routine... DONE")
 

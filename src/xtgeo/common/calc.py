@@ -197,7 +197,7 @@ def point_in_tetrahedron(x0, y0, z0, vertices):
 
     status = _cxtgeo.x_point_in_tetrahedron(x0, y0, z0, vertices)
 
-    if status == 1:
+    if status == 100:
         return True
 
     return False

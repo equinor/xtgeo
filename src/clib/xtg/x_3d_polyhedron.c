@@ -37,6 +37,10 @@ x_tetrahedron_volume(double *pv, long ndim)
     e = x_vector_len3dx(pv[3], pv[4], pv[5], pv[9], pv[10], pv[11]);
     f = x_vector_len3dx(pv[6], pv[7], pv[8], pv[9], pv[10], pv[11]);
 
+    if (a < FLOATEPS || b < FLOATEPS || c < FLOATEPS || d < FLOATEPS || e < FLOATEPS ||
+        f < FLOATEPS)
+        return 0.0;
+
     double ap = pow(a, 2);
     double bp = pow(b, 2);
     double cp = pow(c, 2);
@@ -47,6 +51,9 @@ x_tetrahedron_volume(double *pv, long ndim)
     double vol = 4 * (cp * ap * bp) - cp * pow((ap + bp - dp), 2) -
                  ap * pow((bp + cp - fp), 2) - bp * pow((cp + ap - ep), 2) +
                  (ap + bp - dp) * (bp + cp - fp) * (cp + ap - ep);
+
+    if (fabs(vol) < FLOATEPS)
+        return 0.0;
 
     vol = sqrt(vol) / 12.0;
 
@@ -70,7 +77,15 @@ x_tetrahedron_volume(double *pv, long ndim)
  *    pv            i     a [12] array with X Y Z of 4 vertices, x1, y1, z1, x2, y2, ...
  *
  * RETURNS:
- *    1 if inside, 0 else
+ *    100 if 100% inside, otherwise 0:
+ *
+ *    IN PREP:
+ *    Otherwise a number between from 0 to 99 telling the
+ *    "closeness" of being inside. In particular:
+ *    If the sumvol >= 2 * truevol, then return zero
+ *    Otherwise return a number which is "scaled" ,e.g.:
+ *       if truevol is 40 and sumvol is 50:  100 * 0.8 = 80
+ *       if truevol is 40 and sumvol is 80:  100 * 0.5 = 50
  *
  * LICENCE:
  *    cf. XTGeo LICENSE
@@ -83,33 +98,47 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
 
     double truevol = x_tetrahedron_volume(pv, 12);
 
+    if (truevol < FLOATEPS)
+        return 0;
+
     int i, nv;
     double newpv[12];
     double sumvol;
 
     sumvol = 0.0;
     for (nv = 0; nv < 4; nv++) {
-        /* code */
         for (i = 0; i < ndim; i++) {
             newpv[i] = pv[i];
         }
         newpv[0 + 3 * nv] = x0;
         newpv[1 + 3 * nv] = y0;
         newpv[2 + 3 * nv] = z0;
+
+        // for (int x = 0; x < 12; x++)
+        //     printf("newpv corner %lf\n", newpv[x]);
+
         double vol = x_tetrahedron_volume(newpv, ndim);
+
         sumvol += vol;
     }
 
-    double relerror = truevol * 0.0001;
+    double relerror = truevol * 0.001;
     double diff = sumvol - truevol;
+
     if (diff < -1 * relerror) {
         logger_critical(LI, FI, FU, "Something is wrong in %s!", FU);
-        printf("Something is rotten sumvol vs total %lf %lf\n", sumvol, truevol);
-        return -1;
+        exit(323);
     } else if (diff > relerror) {
+        // LATER: make aloirthm more smart
+        // if (sumvol / truevol < 5 && sumvol > 0.0) {
+        //     int res = (int)100 * (truevol / sumvol);
+        //     logger_debug(LI, FI, FU, "Sumvol TrueVol %lf %lf Return %d", sumvol,
+        //                  truevol, res);
+        //     return res;
+        // }
         return 0;
     } else {
-        return 1;
+        return 100;
     }
 }
 
@@ -128,6 +157,7 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
  *    x0, y0, z0    i     Point coords
  *    corners       i     a [24] array with X Y Z of 8 vertices, x1, y1, z1, x2, y2, ...
  *                        arranged as usual for corner point cells
+ *
  * RETURNS:
  *    100 if inside, 50 if possibly inside, 0 else (aka percent)
  *
@@ -172,27 +202,39 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
     cset[2][3] = 7;
     cset[3][3] = 5;
 
-    cset[0][4] = 5;
-    cset[1][4] = 6;
-    cset[2][4] = 0;
-    cset[3][4] = 3;
+    cset[0][4] = 0;
+    cset[1][4] = 3;
+    cset[2][4] = 5;
+    cset[3][4] = 6;
 
     int icset;
     double thd[12];
 
-    int status = 0;
+    int status1 = 0;
+    int set1score = 0;
     for (icset = 0; icset < 5; icset++) {
         ic = 0;
         for (i = 0; i < 4; i++) {
             thd[ic + 0] = crn[cset[i][icset]][0];
             thd[ic + 1] = crn[cset[i][icset]][1];
             thd[ic + 2] = crn[cset[i][icset]][2];
+
             ic += 3;
         }
-        if (x_point_in_tetrahedron(x0, y0, z0, thd, 12) == 1) {
-            status += 50;
+
+        int score = x_point_in_tetrahedron(x0, y0, z0, thd, 12);
+
+        if (score == 100) {
+            status1 += 50;
+            set1score = 0;
             break;
+        } else if (score > 0 && score > set1score) {
+            set1score += score;
         }
+    }
+
+    if (set1score > 0) {
+        status1 = set1score / 2;
     }
 
     // alternative arrangment of tetrahedrons
@@ -222,20 +264,36 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
     cset[2][4] = 4;
     cset[3][4] = 7;
 
+    int status2 = 0;
+    int set2score = 0;
     for (icset = 0; icset < 5; icset++) {
         ic = 0;
         for (i = 0; i < 4; i++) {
             thd[ic + 0] = crn[cset[i][icset]][0];
             thd[ic + 1] = crn[cset[i][icset]][1];
             thd[ic + 2] = crn[cset[i][icset]][2];
+
             ic += 3;
         }
-        if (x_point_in_tetrahedron(x0, y0, z0, thd, 12) == 1) {
-            status += 50;
+
+        int score = x_point_in_tetrahedron(x0, y0, z0, thd, 12);
+
+        if (score == 100) {
+            status2 += 50;
+            set2score = 0;
             break;
+        } else if (score > 0 && score > set2score) {
+            set2score += score;
         }
     }
 
+    if (set2score > 0) {
+        status2 = set2score / 2;
+    }
+
+    int status = status1 + status2;
+
+    logger_debug(LI, FI, FU, "Total score for point %6.2lf is %d", z0, status);
     x_free_2d_double(crn);
     x_free_2d_int(cset);
 
