@@ -2,8 +2,6 @@
 import os
 from os.path import join
 
-import numpy as np
-import pandas as pd
 import pytest
 
 import xtgeo
@@ -21,10 +19,10 @@ if not xtg.testsetup():
 TMD = xtg.tmpdir
 TPATH = xtg.testpath
 
+XTGSHOW = False
+if "XTGSHOW" in os.environ:
+    XTGSHOW = True
 
-# =============================================================================
-# Do tests
-# =============================================================================
 
 SFILE1 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 SFILE3 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
@@ -319,27 +317,28 @@ def test_cube_swapaxes():
 def test_cube_randomline():
     """Import a cube, and compute a randomline given a simple Polygon"""
 
-    # import matplotlib.pyplot as plt
+    if XTGEOPLOT:
+        import matplotlib.pyplot as plt
 
     incube = Cube(SFILE4)
 
-    # make a polyline with two points
-    dfr = pd.DataFrame(
-        np.array([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]]),
-        columns=["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"],
-    )
     poly = xtgeo.Polygons()
-    poly.dataframe = dfr
+    poly.from_list([[778133, 6737650, 2000, 1], [776880, 6738820, 2000, 1]])
 
     logger.info("Generate random line...")
     hmin, hmax, vmin, vmax, random = incube.get_randomline(poly)
 
-    # tsetup.assert_almostequal(hmin, -15.655932861802714, 0.001)
-    # tsetup.assert_almostequal(random.mean(), -11.8755, 0.001)
+    tsetup.assert_almostequal(hmin, -15.7, 0.1)
+    tsetup.assert_almostequal(random.mean(), -12.5, 0.1)
 
-    # plt.figure()
-    # plt.imshow(random, cmap='seismic', interpolation='sinc',
-    #            extent=(hmin, hmax, vmax, vmin))
-    # plt.axis('tight')
-    # plt.colorbar()
-    # plt.show()
+    if XTGSHOW:
+        plt.figure()
+        plt.imshow(
+            random,
+            cmap="seismic",
+            interpolation="sinc",
+            extent=(hmin, hmax, vmax, vmin),
+        )
+        plt.axis("tight")
+        plt.colorbar()
+        plt.show()
