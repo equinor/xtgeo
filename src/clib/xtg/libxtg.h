@@ -1711,7 +1711,6 @@ grd3d_points_ijk_cells(double *swig_np_dbl_in_v1,  // *xvec
                        long n_swig_np_dbl_in_v6,   // nzcornonein
 
                        int actnumoption,
-                       int flip,
 
                        int *swig_np_int_aout_v1,     // *ivec
                        long n_swig_np_int_aout_v1,   // nivec

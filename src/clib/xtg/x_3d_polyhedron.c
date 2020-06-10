@@ -24,6 +24,7 @@
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
+
 double
 x_tetrahedron_volume(double *pv, long ndim)
 {
@@ -75,6 +76,7 @@ x_tetrahedron_volume(double *pv, long ndim)
  * ARGUMENTS:
  *    x0, y0, z0    i     Point coords
  *    pv            i     a [12] array with X Y Z of 4 vertices, x1, y1, z1, x2, y2, ...
+ *    ndim          i     Dimension (for Python SWIG bindings)
  *
  * RETURNS:
  *    100 if 100% inside, otherwise 0:
@@ -126,10 +128,10 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
         logger_critical(LI, FI, FU, "Something is wrong in %s!", FU);
         exit(323);
     } else if (diff > relerror) {
-        // LATER: make aloirthm more smart
+        // LATER: make algorithm more smart to tell "closeness" of point
         // if (sumvol / truevol < 5 && sumvol > 0.0) {
         //     int res = (int)100 * (truevol / sumvol);
-        //     logger_debug(LI, FI, FU, "Sumvol TrueVol %lf %lf Return %d", sumvol,
+        //     // logger_debug(LI, FI, FU, "Sumvol TrueVol %lf %lf Return %d", sumvol,
         //                  truevol, res);
         //     return res;
         // }
@@ -163,9 +165,31 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
  ***************************************************************************************
  */
 
+static double
+_x_hexahedron_dz(double *corners)
+{
+    // TODO: This does not account for overall zflip ala Petrel or cells that
+    // are malformed
+
+    int ico;
+    double dzsum = 0.0;
+    for (ico = 0; ico < 4; ico++) {
+        double zcsum = fabs(corners[3 * ico + 2] - corners[3 * ico + 2 + 12]);
+        dzsum += zcsum;
+    }
+
+    return dzsum / 4.0;
+}
+
 int
 x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndim)
 {
+
+    // first avoid cells that collapsed in some way
+    if (_x_hexahedron_dz(corners) < FLOATEPS) {
+        return 0;
+    }
+
     double **crn = x_allocate_2d_double(8, 3);
     int **cset = x_allocate_2d_int(4, 5);
 
@@ -177,7 +201,7 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
         }
     }
 
-    // the hexehedron consists of 5 tetrahedrons
+    // the hexahedron consists of 5 tetrahedrons
 
     cset[0][0] = 0;
     cset[1][0] = 2;
@@ -215,10 +239,8 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
             thd[ic + 0] = crn[cset[i][icset]][0];
             thd[ic + 1] = crn[cset[i][icset]][1];
             thd[ic + 2] = crn[cset[i][icset]][2];
-
             ic += 3;
         }
-
         int score = x_point_in_tetrahedron(x0, y0, z0, thd, 12);
 
         if (score == 100) {
@@ -290,7 +312,6 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
 
     int status = status1 + status2;
 
-    logger_debug(LI, FI, FU, "Total score for point %6.2lf is %d", z0, status);
     x_free_2d_double(crn);
     x_free_2d_int(cset);
 

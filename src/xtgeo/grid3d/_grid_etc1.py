@@ -279,7 +279,6 @@ def get_ijk_from_points(
         self._actnumsv,
         self._tmp["onegrid"]._zcornsv,
         actnumoption,
-        useflip,
         arrsize,
         arrsize,
         arrsize,
@@ -1239,22 +1238,10 @@ def estimate_design(self, nsubname):
 def estimate_flip(self):
     """Estimate if grid is left or right handed"""
 
-    if self.ncol == 1 or self.nrow == 1:
-        return -1  # TODO!
+    corners = self.get_xyz_cell_corners(activeonly=False)  # for cell 1, 1, 1
 
-    xc, yc, _zc = self.get_xyz(asmasked=False)
-
-    v1 = (
-        xc.values[1, 0, 0] - xc.values[0, 0, 0],
-        yc.values[1, 0, 0] - yc.values[0, 0, 0],
-        0.0,
-    )
-
-    v2 = (
-        xc.values[0, 1, 0] - xc.values[0, 0, 0],
-        yc.values[0, 1, 0] - yc.values[0, 0, 0],
-        0.0,
-    )
+    v1 = (corners[3] - corners[0], corners[4] - corners[1], 0.0)
+    v2 = (corners[6] - corners[0], corners[7] - corners[1], 0.0)
 
     flipvalue = find_flip(v1, v2)
 
