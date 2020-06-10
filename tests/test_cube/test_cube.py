@@ -317,7 +317,7 @@ def test_cube_swapaxes():
 def test_cube_randomline():
     """Import a cube, and compute a randomline given a simple Polygon"""
 
-    if XTGEOPLOT:
+    if XTGSHOW:
         import matplotlib.pyplot as plt
 
     incube = Cube(SFILE4)
