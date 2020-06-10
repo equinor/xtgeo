@@ -1733,8 +1733,8 @@ class RegularSurface(object):
 
         Args:
             other (RegularSurface): Surface to resample from.
-            mask (bool): If True (default) nodes outise will be made undefined, if False
-                then values will be kept as original
+            mask (bool): If True (default) nodes outside will be made undefined,
+                if False then values will be kept as original
 
         Example::
 
