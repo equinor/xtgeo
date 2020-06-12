@@ -106,7 +106,6 @@ x_vector_info2(double x1,
     }
 
     *xangle_degrees = *(xangle_radian)*180 / PI;
-
 }
 
 /*
@@ -129,7 +128,21 @@ x_vector_len3d(double x1, double x2, double y1, double y2, double z1, double z2)
     if (x1 == x2 && y1 == y2 && z1 == z2) {
         vlen = 10E-20;
     } else {
-        vlen = sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2) + powf(z2 - z1, 2));
+        vlen = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) + pow(z2 - z1, 2));
+    }
+    return vlen;
+}
+
+double
+x_vector_len3dx(double x1, double y1, double z1, double x2, double y2, double z2)
+// aa but different order of input items
+{
+    double vlen;
+
+    if (x1 == x2 && y1 == y2 && z1 == z2) {
+        vlen = 10E-20;
+    } else {
+        vlen = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) + pow(z2 - z1, 2));
     }
     return vlen;
 }

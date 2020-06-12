@@ -178,7 +178,7 @@ def test_avg_surface(loadsfile1):
         snapxy=True,
         ndiv=None,
         algorithm=2,
-        showprogress=True,
+        showprogress=False,
     )
 
     for name in attributes.keys():

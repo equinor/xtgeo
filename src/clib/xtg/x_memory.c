@@ -46,6 +46,30 @@ x_free_2d_double(double **ptr_array)
     free(ptr_array);
 }
 
+int **
+x_allocate_2d_int(int n1, int n2)
+{
+    int i;
+
+    int *data = malloc(sizeof(int) * n1 * n2);
+
+    int **ptr_array = malloc(sizeof(int *) * n1);
+    for (i = 0; i < n1; i++) {
+        ptr_array[i] = data + (i * n2);
+    }
+    return ptr_array;
+}
+
+void
+x_free_2d_int(int **ptr_array)
+{
+    if (!ptr_array)
+        return;
+    if (ptr_array[0])
+        free(ptr_array[0]);
+    free(ptr_array);
+}
+
 mbool **
 x_allocate_2d_mbool(int n1, int n2)
 {

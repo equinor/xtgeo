@@ -26,6 +26,12 @@ x_allocate_2d_double(int n1, int n2);
 void
 x_free_2d_double(double **ptr_array);
 
+int **
+x_allocate_2d_int(int n1, int n2);
+
+void
+x_free_2d_int(int **ptr_array);
+
 mbool **
 x_allocate_2d_mbool(int n1, int n2);
 
@@ -105,6 +111,9 @@ x_vector_linint3(double x0, double x1, double x2, double y0, double y2);
 
 double
 x_vector_len3d(double x1, double x2, double y1, double y2, double z1, double z2);
+
+double
+x_vector_len3dx(double x1, double y1, double z1, double x2, double y2, double z2);
 
 int
 x_interp_cube_nodes(double *x_v,

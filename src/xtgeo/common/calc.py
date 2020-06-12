@@ -160,3 +160,77 @@ def azimuth2angle(inangle, mode="degrees"):
         nmode2 += 1
 
     return _cxtgeo.x_rotation_conv(inangle, nmode1, nmode2, 0)
+
+
+def tetrehedron_volume(vertices):
+    """Compute volume of an irregular tetrahedron
+
+    Input is an array of lenght 12 element, and is "list-like" meaning that
+    both lists and contiguous numpy arrays are accepted
+
+    Args:
+        vertices (list-like): Vertices as e.g. numpy array [[x1, y1, z1], [x2, y2, ...]
+
+    Returns:
+        Volume
+    """
+
+    vertices = np.array(vertices, dtype=np.float64)
+
+    return _cxtgeo.x_tetrahedron_volume(vertices)
+
+
+def point_in_tetrahedron(x0, y0, z0, vertices):
+    """Check if point P0 is inside a tetrahedron.
+
+    Args:
+        x0 (double): X xoord of point P0
+        y0 (double): Y xoord of point P0
+        z0 (double): Z xoord of point P0
+        vertices (list-like): Vertices as e.g. numpy array [[x1, y1, z1], [x2, y2, ...]
+
+    Returns:
+        True of inside or on edge, False else
+    """
+
+    vertices = np.array(vertices, dtype=np.float64)
+
+    status = _cxtgeo.x_point_in_tetrahedron(x0, y0, z0, vertices)
+
+    if status == 100:
+        return True
+
+    return False
+
+
+def point_in_hexahedron(x0, y0, z0, vertices):
+    """Check if point P0 is inside a tetrahedron.
+
+    Vertices my be in order of what 3D cells normally have
+
+       3        4     7        8      Note in C code, cell corners may be starting
+       |--------|     |--------|      with 0 index, not 1 as shown here
+       |  top   |     |        |
+       |        |     |        |
+       |--------|     |--------|
+       1        2     5        6
+
+
+    Args:
+        x0 (double): X xoord of point P0
+        y0 (double): Y xoord of point P0
+        z0 (double): Z xoord of point P0
+        vertices (list-like): Vertices as e.g. numpy array [[x1, y1, z1], [x2, y2, ...]
+
+    Returns:
+        True of inside or on edge, False else
+    """
+
+    vertices = np.array(vertices, dtype=np.float64)
+
+    status = _cxtgeo.x_point_in_hexahedron(x0, y0, z0, vertices)
+
+    if status >= 1:
+        return True
+
+    return False

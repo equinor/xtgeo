@@ -36,6 +36,7 @@ if "XTG_SHOW" in os.environ:
 # =============================================================================
 
 TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
+TESTSET1A = "../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
 TESTSET2 = "../xtgeo-testdata/surfaces/reek/1/topupperreek.gri"
 TESTSET3 = "../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr"
 TESTSET4A = "../xtgeo-testdata/surfaces/etc/ib_test-horizon.map"  # IJXYZ table
@@ -339,6 +340,46 @@ def test_minmax_rotated_map():
     tsetup.assert_almostequal(x.xmax, 468895.1, 0.1)
     tsetup.assert_almostequal(x.ymin, 5925995.0, 0.1)
     tsetup.assert_almostequal(x.ymax, 5939998.7, 0.1)
+
+
+def test_twosurfaces_oper():
+    """Test operations between two surface in different ways"""
+
+    surf1 = xtgeo.RegularSurface(TESTSET1)
+    surf2 = xtgeo.RegularSurface(TESTSET1A)
+
+    iso1 = surf2.copy()
+    iso1.values -= surf1.values
+    iso1mean = iso1.values.mean()
+    tsetup.assert_almostequal(iso1mean, 43.71, 0.01)
+
+    iso2 = surf2.copy()
+    iso2.subtract(surf1)
+    iso2mean = iso2.values.mean()
+    tsetup.assert_almostequal(iso2mean, 43.71, 0.01)
+    assert iso1.values.all() == iso2.values.all()
+
+    iso3 = surf2 - surf1
+    assert iso1.values.all() == iso3.values.all()
+    assert isinstance(iso3, xtgeo.RegularSurface)
+
+    sum1 = surf2.copy()
+    sum1.values += surf1.values
+    tsetup.assert_almostequal(sum1.values.mean(), 3441.0, 0.01)
+
+    sum2 = surf2.copy()
+    sum2.add(surf1)
+    assert sum1.values.all() == sum2.values.all()
+
+    sum3 = surf1 + surf2
+    assert sum1.values.all() == sum3.values.all()
+
+    zrf2 = surf2.copy()
+    zrf1 = surf1.copy()
+    newzrf1 = surf1.copy()
+
+    newzrf1.values = zrf2.values / zrf1.values
+    assert newzrf1.values.mean() == pytest.approx(1.0257524251848058)
 
 
 @tsetup.bigtest
