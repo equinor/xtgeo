@@ -47,7 +47,7 @@ class RoxUtils(object):
         path = '/some/path/to/rmsprject.rmsx'
 
         ext = xtgeo.RoxUtils(path, readonly=True)
-        # ...do somthing
+        # ...do something
         ext.safe_close()
 
     """
@@ -64,7 +64,8 @@ class RoxUtils(object):
             "1.1.1": ["10.1.3"],
             "1.2": ["11.0.0"],
             "1.2.1": ["11.0.1"],
-            "1.3": ["11.1.0"],
+            "1.3": ["11.1.0", "11.1.1"],
+            "1.4": ["12.0.0"],
         }
 
         if project is not None and isinstance(project, str):
