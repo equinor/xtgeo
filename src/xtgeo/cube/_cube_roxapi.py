@@ -8,9 +8,9 @@ measured from X axis.
 
 roxarapi uses rotation of inline direction (rows) relative to Y axis.
 api < 1.4: counterclockwise "rotation"
-api >= 1.4 clokwise "orientation"
+api >= 1.4 clockwise "orientation"
 
-It appears that handedness also must be taken into account...
+Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering/testing
 
 """
 from __future__ import division, absolute_import
@@ -19,7 +19,6 @@ from __future__ import print_function
 import numpy as np
 
 from xtgeo.common import XTGeoDialog
-from xtgeo.common import calc as xcalc
 from xtgeo import RoxUtils
 
 xtg = XTGeoDialog()
@@ -84,15 +83,16 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
     self._ncol, self._nrow, self._nlay = rcube.dimensions
     self._xinc, self._yinc = rcube.increment
 
-    if roxhandedness == "right":
-        self._rotation = roxrotation * -1
-        self._yflip = -1
-    else:
-        self._rotation = xcalc.azimuth2angle(roxrotation) - 90
-        if self._rotation < 0:
-            self._rotation += 360
+    self._rotation = roxrotation * -1
 
-        self._yflip = 1
+    if self._rotation < 0:
+        self._rotation += 360
+    elif self._rotation > 360:
+        self._rotation -= 360
+
+    self._yflip = 1
+    if roxhandedness == "right":
+        self._yflip = -1
 
     ilstart = rcube.get_inline(0)
     xlstart = rcube.get_crossline(0)
@@ -143,7 +143,7 @@ def _roxapi_export_cube(
         pass
 
     logger.info(
-        "There are issues with compression%s, hence it {} is ignored", compression
+        "There are issues with compression %s, hence it is ignored", compression
     )
 
     path = []
@@ -165,12 +165,9 @@ def _roxapi_export_cube(
 
     values = self.values.copy()  # copy() needed?
 
-    handedness = roxar.Direction.right
-    if self.yflip == 1:
-        handedness = roxar.Direction.left
-        roxrotation = xcalc.azimuth2angle(self._rotation) + 90
-        if roxrotation > 360:
-            roxrotation -= 360
+    handedness = roxar.Direction.left
+    if self.yflip == -1:
+        handedness = roxar.Direction.right
 
     # inline xline vector
     ilstart = self.ilines[0]
