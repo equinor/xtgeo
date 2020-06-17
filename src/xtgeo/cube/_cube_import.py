@@ -38,6 +38,14 @@ def _import_segy_io(self, sfile):
 
         values = segyio.tools.cube(segyfile)
 
+        logger.info(values.dtype)
+        if values.dtype != np.float32:
+            xtg.warnuser(
+                "Values are converted from {} to {}".format(values.dtype, "float32")
+            )
+
+            values = values.astype(np.float32)
+
         if np.isnan(np.sum(values)):
             raise ValueError("The input contains NaN values which is trouble!")
 

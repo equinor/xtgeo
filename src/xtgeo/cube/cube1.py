@@ -526,13 +526,19 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         try:
             logger.info(self._values.shape)
-            logger.info(self._traceidcodes.shape)
+            logger.info("%s %s", self._traceidcodes.shape, self._traceidcodes.dtype)
             minval = self._values[self._traceidcodes == 2].min()
             maxval = self._values[self._traceidcodes == 2].max()
+            logger.info("MIN MAX %s %s", minval, maxval)
             avgold = 0.5 * (minval + maxval)
             self._values[self._traceidcodes == 2] = newvalue
+            # self._values = np.where(
+            #     self._traceidcodes == 2, newvalue, self._values
+            # )
+            logger.info("Setting dead traces done")
         except ValueError:
             avgold = None
+            logger.info("No dead traces")
 
         return avgold
 
@@ -678,7 +684,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         if "rms" in fformat:
             _cube_import.import_rmsregular(self, fobj.name)
-        elif fformat == "segy" or fformat == "sgy":
+        elif fformat in ("segy", "sgy"):
             _cube_import.import_segy(self, fobj.name, engine=engine)
         elif fformat == "storm":
             _cube_import.import_stormcube(self, fobj.name)
