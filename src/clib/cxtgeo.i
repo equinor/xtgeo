@@ -144,7 +144,7 @@ import_array();
 %apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *swig_np_dbl_inplaceflat_v3,
                                                     long n_swig_np_dbl_inplaceflat_v3)};
 
-// ==INPLACE============================================================================
+// ==INPLACE 1D=========================================================================
 
 // INPLACE int no 1
 %apply (int* INPLACE_ARRAY1, long DIM1) {(int *swig_np_int_inplace_v1,

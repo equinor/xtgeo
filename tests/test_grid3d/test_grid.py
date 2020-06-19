@@ -38,6 +38,7 @@ REEKFIL5 = "../xtgeo-testdata/3dgrids/reek/reek_geo2_grid_3props.roff"
 REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
+BANAL6 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
 
 DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
 DUALFIL2 = "../xtgeo-testdata/3dgrids/etc/dual_grid_noactivetag.roff"
@@ -320,6 +321,30 @@ def test_roffbin_import_v2stress():
         grd1.from_file(REEKFIL4)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 2 took: ", t1)
+
+
+def test_roffbin_banal6():
+    """Test roff binary for banal no. 6 case"""
+
+    grd1 = Grid()
+    grd1.from_file(BANAL6)
+    print(grd1._coordsv)
+    print(grd1._zcornsv)
+
+
+@tsetup.bigtest
+def test_roffbin_bigbox():
+    """Test roff binary for bigbox, to monitor performance"""
+
+    BIGBOX = "/tmp/bigbox.roff"
+    if not os.path.exists(BIGBOX):
+        logger.info("Create tmp big roff grid file...")
+        grd0 = Grid()
+        grd0.create_box(dimension=(500, 500, 500))
+        grd0.to_file(BIGBOX)
+
+    grd1 = Grid()
+    grd1.from_file(BIGBOX)
 
 
 def test_roffbin_import_v2_wsubgrids():

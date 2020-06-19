@@ -35,10 +35,19 @@ def test_diffangle():
 
 
 def test_ijk_to_ib():
-    """Convert I J K to IB index."""
+    """Convert I J K to IB index (F or C order)"""
 
     ib = xcalc.ijk_to_ib(2, 2, 2, 3, 4, 5)
     assert ib == 16
+
+    ib = xcalc.ijk_to_ib(3, 1, 1, 3, 4, 5)
+    assert ib == 2
+
+    ic = xcalc.ijk_to_ib(2, 2, 2, 3, 4, 5, forder=False)
+    assert ic == 26
+
+    ic = xcalc.ijk_to_ib(3, 1, 1, 3, 4, 5, forder=False)
+    assert ic == 40
 
 
 def test_ib_to_ijk():
@@ -52,6 +61,12 @@ def test_ib_to_ijk():
 
     ijk = xcalc.ib_to_ijk(5, 3, 4, 1, forder=False)
     assert ijk == (2, 2, 1)
+
+    ijk = xcalc.ib_to_ijk(40, 3, 4, 5, forder=False)
+    assert ijk == (3, 1, 1)
+
+    ijk = xcalc.ib_to_ijk(2, 3, 4, 5, forder=True)
+    assert ijk == (3, 1, 1)
 
 
 def test_angle2azimuth():

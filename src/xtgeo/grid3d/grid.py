@@ -166,6 +166,11 @@ class Grid(Grid3D):
         self._zcornsv = None  # numpy array to zcorns vector
         self._actnumsv = None  # numpy array to actnum vector
 
+        # _xtgformat: internal flag for storage structure. 1 is the "current" while 2
+        # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
+        # are organized! The corresponding C routines for 1: grd3d_*, while 2: grid3d_*
+        self._xtgformat = 1
+
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
@@ -548,7 +553,7 @@ class Grid(Grid3D):
 
         Example::
 
-            >>> myfile = ../../testdata/Zone/gullfaks.roff
+            >>> myfile = "../../testdata/Zone/gullfaks.roff"
             >>> xg = Grid()
             >>> xg.from_file(myfile, fformat="roff")
             >>> # or shorter:

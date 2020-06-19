@@ -1331,6 +1331,24 @@ grd3d_roff2xtgeo_zcorn(int nx,
                        long n_swig_np_dbl_inplace_v1    // nzcorn
 );
 
+void
+grd3d_roff2xtgeo_zcorn_v2(int nx,
+                          int ny,
+                          int nz,
+                          float xoffset,
+                          float yoffset,
+                          float zoffset,
+                          float xscale,
+                          float yscale,
+                          float zscale,
+                          int *p_splitenz_v,
+                          long n1,
+                          float *p_zdata_v,
+                          long n2,
+                          double *swig_np_dbl_inplace_v1,  // *zcornsv,
+                          long n_swig_np_dbl_inplace_v1    // nzcorn
+);
+
 int
 grd3d_roff2xtgeo_actnum(int nx,
                         int ny,
@@ -1976,6 +1994,27 @@ grd3d_well_ijk(int nx,
                int *jvector,
                int *kvector,
                int iflag);
+
+/*
+ *======================================================================================
+ * New format spec for corner point 3D grid, cpgrd_*. Cf xtgformat = 2 in grid class
+ *======================================================================================
+ */
+
+int
+cpgrd_imp_roffbin_coordsv(FILE *fc,
+                          int swap,
+                          long bytepos,
+                          int nncol,
+                          int nnrow,
+                          float xoffset,
+                          float yoffset,
+                          float zoffset,
+                          float xscale,
+                          float yscale,
+                          float zscale,
+                          double *swig_np_dbl_inplaceflat_v1,
+                          long n_swig_np_dbl_inplaceflat_v1);
 
 /*
  *======================================================================================

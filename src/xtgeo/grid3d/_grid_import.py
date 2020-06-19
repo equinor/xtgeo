@@ -62,9 +62,13 @@ def from_file(
         raise OSError("No such file: {}".format(test_gfile))
 
     if fformat == "roff":
-        _grid_import_roff.import_roff(self, gfile)
+        _grid_import_roff.import_roff(
+            self, gfile, xtgformat=1
+        )  # xtgformat is a developer switch
+
     elif fformat == "egrid":
         _grid_import_ecl.import_ecl_egrid(self, gfile)
+
     elif fformat == "eclipserun":
         _grid_import_ecl.import_ecl_run(
             self,

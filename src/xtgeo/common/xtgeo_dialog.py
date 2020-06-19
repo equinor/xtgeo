@@ -38,6 +38,7 @@ from __future__ import print_function
 
 import os
 import sys
+import re
 from datetime import datetime as dtime
 import getpass
 import platform
@@ -45,6 +46,8 @@ import inspect
 import logging
 import warnings
 import timeit
+
+import six
 
 import xtgeo
 
@@ -178,6 +181,30 @@ class _TimeFilter(logging.Filter):  # pylint: disable=too-few-public-methods
         return True
 
 
+class _Formatter(logging.Formatter):
+    """Override record.pathname to truncate strings"""
+
+    # https://stackoverflow.com/questions/14429724/
+    # python-logging-how-do-i-truncate-the-pathname-to-just-the-last-few-characters
+    def format(self, record):
+
+        if six.PY3:
+            if "pathname" in record.__dict__.keys():
+                # truncate the pathname
+                filename = record.pathname
+                if len(filename) > 40:
+                    filename = re.sub(r".*src/", "", filename)
+                record.pathname = filename
+        else:
+            if isinstance(record.args, dict) and "pathname" in record.args:
+                filename = record.pathname
+                if len(filename) > 40:
+                    filename = re.sub(r".*src/", "", filename)
+            record.args["pathname"] = filename
+
+        return super(_Formatter, self).format(record)
+
+
 class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     """System for handling dialogs and messages in XTGeo.
 
@@ -286,8 +313,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             fmt = logging.Formatter(fmt="%(levelname)8s: (%(relative)ss) \t%(message)s")
 
         elif self._lformatlevel == 2:
-            fmt = logging.Formatter(
-                fmt="%(levelname)8s (%(relative)ss) %(name)44s "
+            fmt = _Formatter(
+                fmt="%(levelname)8s (%(relative)ss) %(pathname)44s "
                 "[%(funcName)40s()] %(lineno)4d >> \t%(message)s"
             )
 
@@ -584,4 +611,3 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
                 prefix, ulevel, self._callclass, self._caller, string, endfix
             )
         )
-
