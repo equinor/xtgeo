@@ -2,7 +2,7 @@
  ***************************************************************************************
  *
  * NAME:
- *    cpgrd_imp_roff_coordsv.c
+ *    grdcp3d_imp_roff_coordsv.c
  *
  * DESCRIPTION:
  *    Fast import of COORDSV data in xtgformat=2. This format is C ordered in rows
@@ -32,27 +32,26 @@
 #include "logger.h"
 
 int
-cpgrd_imp_roffbin_coordsv(FILE *fc,
-                          int swap,
-                          long bytepos,
-                          int nncol,
-                          int nnrow,
-                          float xoffset,
-                          float yoffset,
-                          float zoffset,
-                          float xscale,
-                          float yscale,
-                          float zscale,
-                          double *coordsv,
-                          long nitems)
+grdcp3d_imp_roffbin_coordsv(FILE *fc,
+                            int swap,
+                            long bytepos,
+                            int nncol,
+                            int nnrow,
+                            float xoffset,
+                            float yoffset,
+                            float zoffset,
+                            float xscale,
+                            float yscale,
+                            float zscale,
+                            double *coordsv,
+                            long nitems)
 {
     /* Imports a ROFF binary array, update pointer */
 
     float afloat;
-    double top[3], base[3];
+    double top[3] = { 0.0 }, base[3] = { 0.0 };
     size_t i, j, n;
 
-    logger_info(LI, FI, FU, "Reading COORDSV...");
     logger_info(LI, FI, FU, "Reading COORDSV from byte position %ld with swap %d",
                 bytepos, swap);
 
@@ -65,24 +64,18 @@ cpgrd_imp_roffbin_coordsv(FILE *fc,
                 for (n = 0; n < 6; n++) {
                     if (fread(&afloat, 4, 1, fc) != 1)
                         return EXIT_FAILURE;
-
-                    if (afloat == -999.0) {
-                        afloat = UNDEF;
-
-                    } else {
-                        if (n == 0) {
-                            base[0] = (afloat / xscale) - xoffset;
-                        } else if (n == 1) {
-                            base[1] = (afloat / yscale) - yoffset;
-                        } else if (n == 2) {
-                            base[2] = (afloat / zscale) - zoffset;
-                        } else if (n == 3) {
-                            top[0] = (afloat / xscale) - xoffset;
-                        } else if (n == 4) {
-                            top[1] = (afloat / yscale) - yoffset;
-                        } else if (n == 5) {
-                            top[2] = (afloat / zscale) - zoffset;
-                        }
+                    if (n == 0) {
+                        base[0] = (afloat + xoffset) * xscale;
+                    } else if (n == 1) {
+                        base[1] = (afloat + yoffset) * yscale;
+                    } else if (n == 2) {
+                        base[2] = (afloat + zoffset) * zscale;
+                    } else if (n == 3) {
+                        top[0] = (afloat + xoffset) * xscale;
+                    } else if (n == 4) {
+                        top[1] = (afloat + yoffset) * yscale;
+                    } else if (n == 5) {
+                        top[2] = (afloat + zoffset) * zscale;
                     }
                 }
                 for (n = 0; n < 3; n++)
@@ -100,23 +93,18 @@ cpgrd_imp_roffbin_coordsv(FILE *fc,
 
                     SWAP_FLOAT(afloat);
 
-                    if (afloat == -999.0) {
-                        afloat = UNDEF;
-
-                    } else {
-                        if (n == 0) {
-                            base[0] = (afloat / xscale) - xoffset;
-                        } else if (n == 1) {
-                            base[1] = (afloat / yscale) - yoffset;
-                        } else if (n == 2) {
-                            base[2] = (afloat / zscale) - zoffset;
-                        } else if (n == 3) {
-                            top[0] = (afloat / xscale) - xoffset;
-                        } else if (n == 4) {
-                            top[1] = (afloat / yscale) - yoffset;
-                        } else if (n == 5) {
-                            top[2] = (afloat / zscale) - zoffset;
-                        }
+                    if (n == 0) {
+                        base[0] = (afloat + xoffset) * xscale;
+                    } else if (n == 1) {
+                        base[1] = (afloat + yoffset) * yscale;
+                    } else if (n == 2) {
+                        base[2] = (afloat + zoffset) * zscale;
+                    } else if (n == 3) {
+                        top[0] = (afloat + xoffset) * xscale;
+                    } else if (n == 4) {
+                        top[1] = (afloat + yoffset) * yscale;
+                    } else if (n == 5) {
+                        top[2] = (afloat + zoffset) * zscale;
                     }
                 }
                 for (n = 0; n < 3; n++)

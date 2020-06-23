@@ -12,6 +12,7 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo
 
 from ._grid_roff_lowlevel import _rkwquery, _rkwxlist, _rkwxvec, _rkwxvec_coordsv
+from ._grid_roff_lowlevel import _rkwxvec_zcornsv, _rkwxvec_prop
 from . import _grid3d_utils as utils
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -22,8 +23,6 @@ logger = xtg.functionlogger(__name__)
 def import_roff(self, gfile, xtgformat=1):
 
     gfile.get_cfhandle()
-
-    xtgformat = 1
 
     if xtgformat == 1:
         _import_roff_xtgformat1(self, gfile)
@@ -164,7 +163,7 @@ def _import_roff_xtgformat1(self, gfile):
 def _import_roff_xtgformat2(self, gfile):
     """Import ROFF grids using xtgformat=2 storage"""
 
-    self._xtgversion = 2
+    self._xtgformat = 2
 
     kwords = utils.scan_keywords(gfile, fformat="roff")
 
@@ -203,14 +202,38 @@ def _import_roff_xtgformat2(self, gfile):
         self._subgrids = None
 
     logger.info("Initilize arrays...")
-    self._coordsv = np.zeros((self._ncol + 1, self._ncol + 1, 6), dtype=np.float64)
+    self._coordsv = np.zeros((self._ncol + 1, self._nrow + 1, 6), dtype=np.float64)
     self._zcornsv = np.zeros(
-        (self._ncol + 1, self._ncol + 1, self._nlay + 1, 4), dtype=np.float64
+        (self._ncol + 1, self._nrow + 1, self._nlay + 1, 4), dtype=np.float32
     )
-    self._actnumsv = np.zeros((self._ncol, self._ncol, self._nlay), dtype=np.int32)
     logger.info("Initilize arrays... done")
 
     _rkwxvec_coordsv(
         self, gfile, kwords, byteswap, xshift, yshift, zshift, xscale, yscale, zscale,
     )
+
+    logger.info("ZCORN related...")
+    p_splitenz_v = _rkwxvec(gfile, kwords, "zvalues!splitEnz", byteswap)
+
+    _rkwxvec_zcornsv(
+        self,
+        gfile,
+        kwords,
+        byteswap,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
+        p_splitenz_v,
+    )
+    logger.info("ZCORN related... done")
+
+    logger.info("ACTNUM...")
+    self._actnumsv = _rkwxvec_prop(
+        self, gfile, kwords, "active!data", byteswap, strict=True,
+    )
+    logger.info("ACTNUM... done")
+    logger.info("XTGFORMAT is %s", self._xtgformat)
 

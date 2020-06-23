@@ -85,7 +85,12 @@ def slice_cube_window(
 
     if isinstance(attrs, dict) and len(attrs) == 1:
 
-        self.values = attrs[attribute].values
+        if isinstance(attribute, list):
+            myattr = attribute[0]
+        else:
+            myattr = attribute
+
+        self.values = attrs[myattr].values
         return None
 
     return attrs

@@ -220,6 +220,61 @@ def _rkwxvec(gfile, kws, name, swap, strict=True):
     return xvec
 
 
+def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
+    """Local function for making numpy array directly for a prop while reading roff.
+
+    This is made for xtgversion=2
+
+    If strict is True, a ValueError will be raised if keyword is not
+    found. If strict is False, None will be returned
+    """
+
+    kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    if dtype == 0:
+        if strict:
+            raise ValueError("Cannot find property <{}> in file".format(name))
+
+        return None
+
+    if reclen <= 1:
+        raise SystemError("Stuff is rotten here...")
+
+    xvec = None
+    cfhandle = gfile.get_cfhandle()
+    logger.info("Reading %s from file...", name)
+
+    proparr = None
+    if dtype == 1:
+        proparr = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+        _cxtgeo.grdcp3d_imp_roffbin_prop_ivec(
+            cfhandle, swap, bytepos, self._ncol, self._nrow, self._nlay, proparr
+        )
+    elif dtype in (4, 5):
+        proparr = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+        _cxtgeo.grdcp3d_imp_roffbin_prop_bvec(
+            cfhandle, swap, bytepos, self._ncol, self._nrow, self._nlay, proparr
+        )
+    else:
+        gfile.cfclose()
+        raise ValueError("Unhandled dtype: {}".format(dtype))
+
+    logger.info("Reading %s from file done", name)
+
+    gfile.cfclose()
+    return proparr
+
+
 def _rkwxvec_coordsv(
     self, gfile, kws, swap, xoffset, yoffset, zoffset, xscale, yscale, zscale,
 ):
@@ -247,7 +302,7 @@ def _rkwxvec_coordsv(
     cfhandle = gfile.get_cfhandle()
     logger.info("Reading %s from file...", name)
 
-    status = _cxtgeo.cpgrd_imp_roffbin_coordsv(
+    status = _cxtgeo.grdcp3d_imp_roffbin_coordsv(
         cfhandle,
         swap,
         bytepos,
@@ -270,3 +325,66 @@ def _rkwxvec_coordsv(
 
     gfile.cfclose()
 
+
+def _rkwxvec_zcornsv(
+    self,
+    gfile,
+    kws,
+    swap,
+    xoffset,
+    yoffset,
+    zoffset,
+    xscale,
+    yscale,
+    zscale,
+    p_splitenz_v,
+):
+    """
+    Special for importing ROFF binary for ZCORNS type data when _xtgversion=2
+    """
+
+    name = "zvalues!data"
+
+    kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
+
+    dtype = 0
+    reclen = 0
+    bytepos = 1
+    for items in kws:
+        if name in items[0]:
+            dtype = kwtypedict.get(items[1])
+            reclen = items[2]
+            bytepos = items[3]
+            break
+
+    if dtype == 0:
+        raise ValueError("COORD not present")
+
+    cfhandle = gfile.get_cfhandle()
+    logger.info("Reading %s from file...", name)
+
+    status = _cxtgeo.grdcp3d_imp_roffbin_zcornsv(
+        cfhandle,
+        swap,
+        bytepos,
+        self._ncol + 1,
+        self._nrow + 1,
+        self._nlay + 1,
+        xoffset,
+        yoffset,
+        zoffset,
+        xscale,
+        yscale,
+        zscale,
+        p_splitenz_v,
+        (self._ncol + 1) * (self._nrow + 1) * (self._nlay + 1),
+        self._zcornsv,
+    )
+
+    if status != 0:
+        gfile.cfclose()
+        raise RuntimeError("Error running _rkwxvec_coordsv")
+
+    logger.info("Reading %s from file done", name)
+
+    gfile.cfclose()

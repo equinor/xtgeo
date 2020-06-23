@@ -110,7 +110,7 @@ def test_various_attrs_algorithm2(loadsfile1):
         cube1,
         other=surf2,
         other_position="below",
-        attribute="mean",
+        attribute=["mean"],
         sampling="trilinear",
         snapxy=True,
         ndiv=None,

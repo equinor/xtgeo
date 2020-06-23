@@ -128,9 +128,22 @@ import_array();
 %apply (mbool* INPLACE_ARRAY_FLAT, long DIM_FLAT)
     {(mbool *swig_np_boo_inplaceflat_v2, long n_swig_np_boo_inplaceflat_v2)};
 
+
+// INPLACE_FLAT INT no 1
+%apply (int* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(int *swig_np_int_inplaceflat_v1,
+                                                  long n_swig_np_int_inplaceflat_v1)};
+
+// INPLACE_FLAT INT no 2
+%apply (int* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(int *swig_np_int_inplaceflat_v2,
+                                                  long n_swig_np_int_inplaceflat_v2)};
+
 // INPLACE_FLAT FLOAT no 1
 %apply (float* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(float *swig_np_flt_inplaceflat_v1,
                                                     long n_swig_np_flt_inplaceflat_v1)};
+
+// INPLACE_FLAT FLOAT no 2
+%apply (float* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(float *swig_np_flt_inplaceflat_v2,
+                                                    long n_swig_np_flt_inplaceflat_v2)};
 
 // INPLACE_FLAT DOUBLE no 1
 %apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *swig_np_dbl_inplaceflat_v1,

@@ -395,17 +395,30 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
 
     pcorners = _cxtgeo.new_doublearray(24)
 
-    _cxtgeo.grd3d_corners(
-        i + shift,
-        j + shift,
-        k + shift,
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        pcorners,
-    )
+    if self._xtgformat == 1:
+        _cxtgeo.grd3d_corners(
+            i + shift,
+            j + shift,
+            k + shift,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            self._coordsv,
+            self._zcornsv,
+            pcorners,
+        )
+    else:
+        _cxtgeo.grdcp3d_corners(
+            i + shift - 1,
+            j + shift - 1,
+            k + shift - 1,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            self._coordsv,
+            self._zcornsv,
+            pcorners,
+        )
 
     cornerlist = []
     for i in range(24):

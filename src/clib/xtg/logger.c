@@ -17,7 +17,7 @@ static int XTG_LOGGING_LEVEL = 30;
 static int XTG_LOGGING_FORMAT = 1;
 static double XTG_START_TIME = 0.0;
 
-const char *
+static const char *
 _basename(const char *path)
 {
     const char *name = NULL, *tmp = NULL;
@@ -31,7 +31,7 @@ _basename(const char *path)
     return name ? name + 1 : path;
 }
 
-int
+static int
 _logger_init()
 {
     /* This function shall only be ran once */
@@ -80,10 +80,10 @@ _logger_init()
         printf("Logging format: %d\n", XTG_LOGGING_FORMAT);
         printf("Start time: %lf\n", XTG_START_TIME);
     }
-    return -1;
+    return 0;
 }
 
-void
+static void
 _logger_tell(int line,
              const char *filename,
              const char *func,

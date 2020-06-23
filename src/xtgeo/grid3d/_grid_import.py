@@ -18,7 +18,13 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
+    self,
+    gfile,
+    fformat=None,
+    initprops=None,
+    restartprops=None,
+    restartdates=None,
+    _xtgformat=1,
 ):
     """Import grid geometry from file, and makes an instance of this class."""
 
@@ -63,7 +69,7 @@ def from_file(
 
     if fformat == "roff":
         _grid_import_roff.import_roff(
-            self, gfile, xtgformat=1
+            self, gfile, xtgformat=_xtgformat
         )  # xtgformat is a developer switch
 
     elif fformat == "egrid":
