@@ -1331,24 +1331,6 @@ grd3d_roff2xtgeo_zcorn(int nx,
                        long n_swig_np_dbl_inplace_v1    // nzcorn
 );
 
-void
-grd3d_roff2xtgeo_zcorn_v2(int nx,
-                          int ny,
-                          int nz,
-                          float xoffset,
-                          float yoffset,
-                          float zoffset,
-                          float xscale,
-                          float yscale,
-                          float zscale,
-                          int *p_splitenz_v,
-                          long n1,
-                          float *p_zdata_v,
-                          long n2,
-                          double *swig_np_dbl_inplace_v1,  // *zcornsv,
-                          long n_swig_np_dbl_inplace_v1    // nzcorn
-);
-
 int
 grd3d_roff2xtgeo_actnum(int nx,
                         int ny,

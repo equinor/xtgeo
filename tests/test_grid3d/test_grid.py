@@ -345,7 +345,7 @@ def test_roffbin_banal6():
 def test_roffbin_bigbox(tmpdir):
     """Test roff binary for bigbox, to monitor performance"""
 
-    bigbox = os.path.join(tmpdir, "bigbox.roff"
+    bigbox = os.path.join(tmpdir, "bigbox.roff")
     if not os.path.exists(bigbox):
         logger.info("Create tmp big roff grid file...")
         grd0 = Grid()
