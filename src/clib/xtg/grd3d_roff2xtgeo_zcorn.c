@@ -28,27 +28,24 @@
  ***************************************************************************************
  */
 
-
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-
-int grd3d_roff2xtgeo_zcorn (
-                            int nx,
-                            int ny,
-                            int nz,
-                            float xoffset,
-                            float yoffset,
-                            float zoffset,
-                            float xscale,
-                            float yscale,
-                            float zscale,
-                            int *p_splitenz_v,
-                            float *p_zdata_v,
-                            double *zcornsv,
-                            long nzcorn
-                            )
+int
+grd3d_roff2xtgeo_zcorn(int nx,
+                       int ny,
+                       int nz,
+                       float xoffset,
+                       float yoffset,
+                       float zoffset,
+                       float xscale,
+                       float yscale,
+                       float zscale,
+                       int *p_splitenz_v,
+                       float *p_zdata_v,
+                       double *zcornsv,
+                       long nzcorn)
 
 {
 
@@ -61,31 +58,34 @@ int grd3d_roff2xtgeo_zcorn (
 
     logger_info(LI, FI, FU, "Transforming grid ROFF zcorn -> XTG representation ...");
 
-
     nxyz = (nx + 1) * (ny + 1) * (nz + 1);
     lookup_v = calloc(nxyz + 2, sizeof(int));
 
     lookup_v[0] = 0;
+    logger_info(LI, FI, FU, "Lookup...");
     for (i = 0; i < nxyz; i++) {
-	lookup_v[i + 1] = lookup_v[i] + p_splitenz_v[i];
+        lookup_v[i + 1] = lookup_v[i] + p_splitenz_v[i];
     }
+    logger_info(LI, FI, FU, "Lookup...done");
 
     ib = 0;
-    for (l = (nz - 1);l >= -1; l--) {
-	for (j = 0; j < ny; j++) {
-	    for (i = 0; i < nx; i++) {
+    logger_info(LI, FI, FU, "Triple loop...");
+    for (l = (nz - 1); l >= -1; l--) {
+        for (j = 0; j < ny; j++) {
+            for (i = 0; i < nx; i++) {
 
-		k = l;
-		if (l == -1) k = 0;
+                k = l;
+                if (l == -1)
+                    k = 0;
 
-		ncc[0] = i * (ny + 1) * (nz + 1) + j * (nz + 1) + k;
-		ncc[1] = (i + 1) * (ny + 1) * (nz + 1) + j * (nz + 1) + k;
-		ncc[2] = i * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k;
-		ncc[3] = (i + 1) * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k;
-		ncc[4] = i * (ny + 1) * (nz + 1) + j * (nz + 1) + (k + 1);
-		ncc[5] = (i + 1) * (ny + 1) * (nz + 1) + j*(nz + 1) + k + 1;
-		ncc[6] = i * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k + 1;
-		ncc[7] = (i + 1) * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + (k + 1);
+                ncc[0] = i * (ny + 1) * (nz + 1) + j * (nz + 1) + k;
+                ncc[1] = (i + 1) * (ny + 1) * (nz + 1) + j * (nz + 1) + k;
+                ncc[2] = i * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k;
+                ncc[3] = (i + 1) * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k;
+                ncc[4] = i * (ny + 1) * (nz + 1) + j * (nz + 1) + (k + 1);
+                ncc[5] = (i + 1) * (ny + 1) * (nz + 1) + j * (nz + 1) + k + 1;
+                ncc[6] = i * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k + 1;
+                ncc[7] = (i + 1) * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + (k + 1);
 
                 for (ico = 0; ico < 8; ico++) {
 
@@ -107,35 +107,35 @@ int grd3d_roff2xtgeo_zcorn (
                     }
                 }
 
-		zz[0] = z_ne_v[4];
-		zz[1] = z_nw_v[5];
+                zz[0] = z_ne_v[4];
+                zz[1] = z_nw_v[5];
 
-		zz[2] = z_se_v[6];
-		zz[3] = z_sw_v[7];
+                zz[2] = z_se_v[6];
+                zz[3] = z_sw_v[7];
 
-		zz[4] = z_ne_v[0];
-		zz[5] = z_nw_v[1];
+                zz[4] = z_ne_v[0];
+                zz[5] = z_nw_v[1];
 
-		zz[6] = z_se_v[2];
-		zz[7] = z_sw_v[3];
+                zz[6] = z_se_v[2];
+                zz[7] = z_sw_v[3];
 
+                if (l >= 0) {
+                    for (ic = 0; ic < 4; ic++) {
+                        zcornsv[ib] = zz[ic];
+                        ib++;
+                    }
+                }
 
-		if (l >=0 ) {
-		    for (ic = 0; ic < 4; ic++) {
-			zcornsv[ib] = zz[ic];
-			ib++;
-		    }
-		}
-
-		if (l==-1) {
-		    for (ic = 4; ic < 8; ic++) {
-			zcornsv[ib] = zz[ic];
-			ib++;
-		    }
-		}
+                if (l == -1) {
+                    for (ic = 4; ic < 8; ic++) {
+                        zcornsv[ib] = zz[ic];
+                        ib++;
+                    }
+                }
             }
         }
     }
+    logger_info(LI, FI, FU, "Triple loop...done");
 
     free(lookup_v);
 

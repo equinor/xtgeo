@@ -26,6 +26,12 @@ x_allocate_2d_double(int n1, int n2);
 void
 x_free_2d_double(double **ptr_array);
 
+float **
+x_allocate_2d_float(int n1, int n2);
+
+void
+x_free_2d_float(float **ptr_array);
+
 int **
 x_allocate_2d_int(int n1, int n2);
 
@@ -108,6 +114,9 @@ x_vector_linint1d(double dval, double *dist, double *vals, int nval, int option)
 
 double
 x_vector_linint3(double x0, double x1, double x2, double y0, double y2);
+
+int
+x_linint3d(double *p0, double *p1, double zp, double *xp, double *yp);
 
 double
 x_vector_len3d(double x1, double x2, double y1, double y2, double z1, double z2);

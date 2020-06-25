@@ -317,10 +317,10 @@ class _XTGeoFile(object):
         if self._cfhandle is None or self._cfhandlecount == 0:
             if strict:
                 raise RuntimeError("Ask to close a nonexisting C file handle")
-            else:
-                self._cfhandle = None
-                self._cfhandlecount = 0
-                return True
+
+            self._cfhandle = None
+            self._cfhandlecount = 0
+            return True
 
         if self._cfhandlecount > 1 or self._cfhandlecount == 0:
             self._cfhandlecount -= 1
@@ -341,7 +341,7 @@ class _XTGeoFile(object):
         if ier != 0:
             raise RuntimeError("Could not close C file, code {}".format(ier))
 
-        logger.debug("File is now closed for C io: %s", self.name)
+        logger.info("File is now closed for C io: %s", self.name)
 
         if self._tmpfile:
             try:

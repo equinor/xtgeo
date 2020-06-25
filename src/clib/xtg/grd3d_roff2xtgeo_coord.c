@@ -26,36 +26,34 @@
  ***************************************************************************************
  */
 
-
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
-
-int grd3d_roff2xtgeo_coord (
-                            int nx,
-                            int ny,
-                            int nz,
-                            float xoffset,
-                            float yoffset,
-                            float zoffset,
-                            float xscale,
-                            float yscale,
-                            float zscale,
-                            float *p_cornerlines_v,
-                            double *coordsv,
-                            long ncoord
-                            )
+int
+grd3d_roff2xtgeo_coord(int nx,
+                       int ny,
+                       int nz,
+                       float xoffset,
+                       float yoffset,
+                       float zoffset,
+                       float xscale,
+                       float yscale,
+                       float zscale,
+                       float *p_cornerlines_v,
+                       double *coordsv,
+                       long ncoord)
 
 {
 
     long ib, ic;
     int i, j;
 
-    logger_info(LI, FI, FU, "Transforming grid ROFF coords -> XTG representation ...");
+    logger_info(LI, FI, FU, "Enter %s", FU);
+    logger_info(LI, FI, FU, "Transforming grid ROFF coords -> XTG representation...");
 
     ib = 0;
-    for (j = 0;j <= ny; j++) {
+    for (j = 0; j <= ny; j++) {
         for (i = 0; i <= nx; i++) {
 
             ic = 6 * (i * (ny + 1) + j);

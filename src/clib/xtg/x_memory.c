@@ -46,6 +46,30 @@ x_free_2d_double(double **ptr_array)
     free(ptr_array);
 }
 
+float **
+x_allocate_2d_float(int n1, int n2)
+{
+    int i;
+
+    float *data = malloc(sizeof(float) * n1 * n2);
+
+    float **ptr_array = malloc(sizeof(float *) * n1);
+    for (i = 0; i < n1; i++) {
+        ptr_array[i] = data + (i * n2);
+    }
+    return ptr_array;
+}
+
+void
+x_free_2d_float(float **ptr_array)
+{
+    if (!ptr_array)
+        return;
+    if (ptr_array[0])
+        free(ptr_array[0]);
+    free(ptr_array);
+}
+
 int **
 x_allocate_2d_int(int n1, int n2)
 {

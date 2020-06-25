@@ -12,6 +12,8 @@ import numpy as np
 import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+
 from xtgeo.common import XTGDescription
 from ._grid3d import Grid3D
 
@@ -165,6 +167,11 @@ class Grid(Grid3D):
         self._coordsv = None  # numpy array to coords vector
         self._zcornsv = None  # numpy array to zcorns vector
         self._actnumsv = None  # numpy array to actnum vector
+
+        # _xtgformat: internal flag for storage structure. 1 is the "current" while 2
+        # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
+        # are organized! The corresponding C routines for 1: grd3d_*, while 2: grdcp3d_*
+        self._xtgformat = 1
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
@@ -528,7 +535,13 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def from_file(
-        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
+        self,
+        gfile,
+        fformat=None,
+        initprops=None,
+        restartprops=None,
+        restartdates=None,
+        _xtgformat=1,
     ):
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -544,11 +557,11 @@ class Grid(Grid3D):
                 is "eclipserun", then list the names of the properties here.
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
-            _roffapiv (int): Developer option (i.e. don't change)
+            _xtgformat (int): TMP developer option (i.e. don't change!)
 
         Example::
 
-            >>> myfile = ../../testdata/Zone/gullfaks.roff
+            >>> myfile = "../../testdata/Zone/gullfaks.roff"
             >>> xg = Grid()
             >>> xg.from_file(myfile, fformat="roff")
             >>> # or shorter:
@@ -567,6 +580,7 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
+            _xtgformat=_xtgformat,
         )
         self._tmp = {}
 
@@ -1827,9 +1841,41 @@ class Grid(Grid3D):
         return res
 
     # ----------------------------------------------------------------------------------
-    # Private function
+    # Special private functions; these may only live for while
     # ----------------------------------------------------------------------------------
 
-    # def _evaluate_mask(self, mask):  # pylint: disable=useless-super-delegation
-    #     # need to delegate since the base class is abstract
-    #     return super(Grid, self)._evaluate_mask(mask)  # in super class
+    def _convert_xtgformat2to1(self):
+        """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
+
+        if self._xtgformat == 1:
+            logger.info("No conversion, format is already xtgformat == 1")
+            return
+
+        logger.info("Convert grid from new xtgformat to legacy format...")
+
+        newcoordsv = np.zeros(
+            ((self._ncol + 1) * (self._nrow + 1) * 6), dtype=np.float64
+        )
+        newzcornsv = np.zeros(
+            (self._ncol * self._nrow * (self._nlay + 1) * 4), dtype=np.float64
+        )
+        newactnumsv = np.zeros((self._ncol * self._nrow * self._nlay), dtype=np.int32)
+
+        _cxtgeo.grd3cp3d_xtgformat2to1_geom(
+            self._ncol,
+            self._nrow,
+            self._nlay,
+            newcoordsv,
+            self._coordsv,
+            newzcornsv,
+            self._zcornsv,
+            newactnumsv,
+            self._actnumsv,
+        )
+
+        self._coordsv = newcoordsv
+        self._zcornsv = newzcornsv
+        self._actnumsv = newactnumsv
+        self._xtgformat = 1
+
+        logger.info("Convert grid from new xtgformat to legacy format... done")

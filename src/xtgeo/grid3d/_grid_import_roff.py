@@ -11,7 +11,8 @@ import numpy as np
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo
 
-from ._gridprop_import_roff import _rkwquery, _rkwxlist, _rkwxvec
+from ._grid_roff_lowlevel import _rkwquery, _rkwxlist, _rkwxvec, _rkwxvec_coordsv
+from ._grid_roff_lowlevel import _rkwxvec_zcornsv, _rkwxvec_prop
 from . import _grid3d_utils as utils
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -19,17 +20,20 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_roff(self, gfile):
+def import_roff(self, gfile, xtgformat=1):
 
     gfile.get_cfhandle()
 
-    _import_roff(self, gfile)
+    if xtgformat == 1:
+        _import_roff_xtgformat1(self, gfile)
+    else:
+        _import_roff_xtgformat2(self, gfile)
 
     gfile.cfclose()
 
 
-def _import_roff(self, gfile):
-    """Import ROFF format, version 2 (improved version)"""
+def _import_roff_xtgformat1(self, gfile):
+    """Import ROFF grids using xtgformat=1 storage"""
 
     # pylint: disable=too-many-statements
 
@@ -72,12 +76,6 @@ def _import_roff(self, gfile):
     else:
         self._subgrids = None
 
-    # get the pointers to the arrays
-    p_cornerlines_v = _rkwxvec(gfile, kwords, "cornerLines!data", byteswap)
-    p_zvalues_v = _rkwxvec(gfile, kwords, "zvalues!data", byteswap)
-    p_splitenz_v = _rkwxvec(gfile, kwords, "zvalues!splitEnz", byteswap)
-    p_act_v = _rkwxvec(gfile, kwords, "active!data", byteswap, strict=False)
-
     ntot = self._ncol * self._nrow * self._nlay
     ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
     nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
@@ -88,7 +86,11 @@ def _import_roff(self, gfile):
     self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
     self._actnumsv = np.zeros(ntot, dtype=np.int32)
 
-    logger.debug("Calling C routines")
+    # read the pointers to the arrays
+    p_cornerlines_v = _rkwxvec(gfile, kwords, "cornerLines!data", byteswap)
+    p_splitenz_v = _rkwxvec(gfile, kwords, "zvalues!splitEnz", byteswap)
+    p_zvalues_v = _rkwxvec(gfile, kwords, "zvalues!data", byteswap)
+    p_act_v = _rkwxvec(gfile, kwords, "active!data", byteswap, strict=False)
 
     _cxtgeo.grd3d_roff2xtgeo_coord(
         self._ncol,
@@ -103,8 +105,6 @@ def _import_roff(self, gfile):
         p_cornerlines_v,
         self._coordsv,
     )
-
-    logger.info("OK")
 
     _cxtgeo.grd3d_roff2xtgeo_zcorn(
         self._ncol,
@@ -137,3 +137,81 @@ def _import_roff(self, gfile):
     _cxtgeo.delete_intarray(p_act_v)
 
     logger.debug("Calling C routines, DONE")
+
+
+def _import_roff_xtgformat2(self, gfile):
+    """Import ROFF grids using xtgformat=2 storage"""
+
+    self._xtgformat = 2
+
+    kwords = utils.scan_keywords(gfile, fformat="roff")
+
+    for kwd in kwords:
+        logger.info(kwd)
+
+    # byteswap:
+    byteswap = _rkwquery(gfile, kwords, "filedata!byteswaptest", -1)
+
+    self._ncol = _rkwquery(gfile, kwords, "dimensions!nX", byteswap)
+    self._nrow = _rkwquery(gfile, kwords, "dimensions!nY", byteswap)
+    self._nlay = _rkwquery(gfile, kwords, "dimensions!nZ", byteswap)
+    logger.info("Dimensions in ROFF file %s %s %s", self._ncol, self._nrow, self._nlay)
+
+    xshift = _rkwquery(gfile, kwords, "translate!xoffset", byteswap)
+    yshift = _rkwquery(gfile, kwords, "translate!yoffset", byteswap)
+    zshift = _rkwquery(gfile, kwords, "translate!zoffset", byteswap)
+    logger.info("Shifts in ROFF file %s %s %s", xshift, yshift, zshift)
+
+    xscale = _rkwquery(gfile, kwords, "scale!xscale", byteswap)
+    yscale = _rkwquery(gfile, kwords, "scale!yscale", byteswap)
+    zscale = _rkwquery(gfile, kwords, "scale!zscale", byteswap)
+    logger.info("Scaling in ROFF file %s %s %s", xscale, yscale, zscale)
+
+    subs = _rkwxlist(gfile, kwords, "subgrids!nLayers", byteswap, strict=False)
+    if subs is not None and subs.size > 1:
+        subs = subs.tolist()  # from numpy array to list
+        nsubs = len(subs)
+        self._subgrids = OrderedDict()
+        prev = 1
+        for irange in range(nsubs):
+            val = subs[irange]
+            self._subgrids["subgrid_" + str(irange)] = range(prev, val + prev)
+            prev = val + prev
+    else:
+        self._subgrids = None
+
+    logger.info("Initilize arrays...")
+    self._coordsv = np.zeros((self._ncol + 1, self._nrow + 1, 6), dtype=np.float64)
+    self._zcornsv = np.zeros(
+        (self._ncol + 1, self._nrow + 1, self._nlay + 1, 4), dtype=np.float32
+    )
+    logger.info("Initilize arrays... done")
+
+    _rkwxvec_coordsv(
+        self, gfile, kwords, byteswap, xshift, yshift, zshift, xscale, yscale, zscale,
+    )
+
+    logger.info("ZCORN related...")
+    p_splitenz_v = _rkwxvec(gfile, kwords, "zvalues!splitEnz", byteswap)
+
+    _rkwxvec_zcornsv(
+        self,
+        gfile,
+        kwords,
+        byteswap,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
+        p_splitenz_v,
+    )
+    logger.info("ZCORN related... done")
+
+    logger.info("ACTNUM...")
+    self._actnumsv = _rkwxvec_prop(
+        self, gfile, kwords, "active!data", byteswap, strict=True,
+    )
+    logger.info("ACTNUM... done")
+    logger.info("XTGFORMAT is %s", self._xtgformat)

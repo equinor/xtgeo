@@ -17,7 +17,7 @@ static int XTG_LOGGING_LEVEL = 30;
 static int XTG_LOGGING_FORMAT = 1;
 static double XTG_START_TIME = 0.0;
 
-const char *
+static const char *
 _basename(const char *path)
 {
     const char *name = NULL, *tmp = NULL;
@@ -31,7 +31,7 @@ _basename(const char *path)
     return name ? name + 1 : path;
 }
 
-int
+static int
 _logger_init()
 {
     /* This function shall only be ran once */
@@ -80,10 +80,10 @@ _logger_init()
         printf("Logging format: %d\n", XTG_LOGGING_FORMAT);
         printf("Start time: %lf\n", XTG_START_TIME);
     }
-    return -1;
+    return 0;
 }
 
-void
+static void
 _logger_tell(int line,
              const char *filename,
              const char *func,
@@ -216,79 +216,79 @@ logger_critical(int line, char *file, const char *func, const char *fmt, ...)
 
 #ifdef _WIN32
 
-    /* On Windows, use QueryPerformanceCounter and QueryPerformanceFrequency. */
-    #include <windows.h>
+/* On Windows, use QueryPerformanceCounter and QueryPerformanceFrequency. */
+#include <windows.h>
 
-    #define BILLION (1E9)
+#define BILLION (1E9)
 
-    static BOOL g_first_time = 1;
-    static LARGE_INTEGER g_counts_per_sec;
+static BOOL g_first_time = 1;
+static LARGE_INTEGER g_counts_per_sec;
 
-    struct timespec
-    {
-        long tv_sec;
-        long tv_nsec;
-    };
+struct timespec
+{
+    long tv_sec;
+    long tv_nsec;
+};
 
-    int
-    _clock_gettime(int dummy, struct timespec *ct)
-    {
-        LARGE_INTEGER count;
+int
+_clock_gettime(int dummy, struct timespec *ct)
+{
+    LARGE_INTEGER count;
 
-        if (g_first_time) {
-            g_first_time = 0;
+    if (g_first_time) {
+        g_first_time = 0;
 
-            if (0 == QueryPerformanceFrequency(&g_counts_per_sec)) {
-                g_counts_per_sec.QuadPart = 0;
-            }
+        if (0 == QueryPerformanceFrequency(&g_counts_per_sec)) {
+            g_counts_per_sec.QuadPart = 0;
         }
-
-        if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
-            (0 == QueryPerformanceCounter(&count))) {
-            return -1;
-        }
-
-        ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
-        ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) /
-                    g_counts_per_sec.QuadPart;
-
-        return 0;
     }
-    double
-    monotonic_seconds()
-    {
-        struct timespec time;
-        _clock_gettime(0, &time);
-        return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
+
+    if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
+        (0 == QueryPerformanceCounter(&count))) {
+        return -1;
     }
+
+    ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
+    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) /
+                  g_counts_per_sec.QuadPart;
+
+    return 0;
+}
+double
+monotonic_seconds()
+{
+    struct timespec time;
+    _clock_gettime(0, &time);
+    return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
+}
 
 #elif __APPLE__
 
-    #include <time.h>
+#include <time.h>
 
-    double
-    monotonic_seconds()
-    {
-        struct timespec time;
-        // Note: Make sure to link with -lrt to define clock_gettime.
-        clock_gettime(CLOCK_MONOTONIC, &time);
-        return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
-    }
+double
+monotonic_seconds()
+{
+    struct timespec time;
+    // Note: Make sure to link with -lrt to define clock_gettime.
+    clock_gettime(CLOCK_MONOTONIC, &time);
+    return ((double)time.tv_sec) + ((double)time.tv_nsec / (NANOS_PER_SECF));
+}
 
 #elif __linux__
 
-    /* cf #346 */
-    #include <sys/time.h>
-    #include <sys/resource.h>
+/* cf #346 */
+#include <sys/resource.h>
+#include <sys/time.h>
 
-    double
-    monotonic_seconds()
-    {
-        struct rusage buf;
-        getrusage(RUSAGE_SELF, &buf);
-        double secs = (double) buf.ru_stime.tv_sec +
-            (double) buf.ru_stime.tv_usec / (double) 1000000;
-        return secs;
-    }
+double
+monotonic_seconds()
+{
+    struct rusage buf;
+    getrusage(RUSAGE_SELF, &buf);
+    double secs =
+      (double)buf.ru_utime.tv_sec + (double)buf.ru_utime.tv_usec / (double)1000000;
+    return secs;
+}
 
 #endif

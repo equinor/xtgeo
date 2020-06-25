@@ -38,6 +38,7 @@ REEKFIL5 = "../xtgeo-testdata/3dgrids/reek/reek_geo2_grid_3props.roff"
 REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
+BANAL6 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
 
 DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
 DUALFIL2 = "../xtgeo-testdata/3dgrids/etc/dual_grid_noactivetag.roff"
@@ -320,6 +321,64 @@ def test_roffbin_import_v2stress():
         grd1.from_file(REEKFIL4)
     t1 = xtg.timer(t0)
     print("100 loops with ROXAPIV 2 took: ", t1)
+
+
+def test_roffbin_banal6():
+    """Test roff binary for banal no. 6 case"""
+
+    grd1 = Grid()
+    grd1.from_file(BANAL6)
+
+    grd2 = Grid()
+    grd2.from_file(BANAL6, _xtgformat=2)
+
+    assert grd1.get_xyz_cell_corners() == grd2.get_xyz_cell_corners()
+
+    assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
+
+    grd2._convert_xtgformat2to1()
+
+    assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
+
+
+@tsetup.bigtest
+def test_roffbin_bigbox(tmpdir):
+    """Test roff binary for bigbox, to monitor performance"""
+
+    bigbox = os.path.join(tmpdir, "bigbox.roff")
+    if not os.path.exists(bigbox):
+        logger.info("Create tmp big roff grid file...")
+        grd0 = Grid()
+        grd0.create_box(dimension=(500, 500, 500))
+        grd0.to_file(bigbox)
+
+    grd1 = Grid()
+    t0 = xtg.timer()
+    grd1.from_file(bigbox, _xtgformat=1)
+    t_old = xtg.timer(t0)
+    logger.info("Reading bigbox xtgeformat=1 took %s seconds", t_old)
+    cell1 = grd1.get_xyz_cell_corners((13, 14, 15))
+
+    grd2 = Grid()
+    t0 = xtg.timer()
+    t1 = xtg.timer()
+    grd2.from_file(bigbox, _xtgformat=2)
+    t_new = xtg.timer(t0)
+    logger.info("Reading bigbox xtgformat=2 took %s seconds", t_new)
+    cell2a = grd2.get_xyz_cell_corners((13, 14, 15))
+
+    t0 = xtg.timer()
+    grd2._convert_xtgformat2to1()
+    cell2b = grd2.get_xyz_cell_corners((13, 14, 15))
+    logger.info("Conversion to xtgformat1 took %s seconds", xtg.timer(t0))
+    t_newtot = xtg.timer(t1)
+    logger.info("Total run time xtgformat=2 + conv took %s seconds", t_newtot)
+
+    logger.info("Speed gain new vs old: %s", t_old / t_new)
+    logger.info("Speed gain new incl conv vs old: %s", t_old / t_newtot)
+
+    assert cell1 == cell2a
+    assert cell1 == cell2b
 
 
 def test_roffbin_import_v2_wsubgrids():
