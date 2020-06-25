@@ -106,41 +106,20 @@ def _import_roff_xtgformat1(self, gfile):
         self._coordsv,
     )
 
-    _localversion = 1
-
-    if _localversion == 1:
-        _cxtgeo.grd3d_roff2xtgeo_zcorn(
-            self._ncol,
-            self._nrow,
-            self._nlay,
-            xshift,
-            yshift,
-            zshift,
-            xscale,
-            yscale,
-            zscale,
-            p_splitenz_v,
-            p_zvalues_v,
-            self._zcornsv,
-        )
-    else:
-        # still bugs here:
-        _cxtgeo.grd3d_roff2xtgeo_zcorn_v2(
-            self._ncol,
-            self._nrow,
-            self._nlay,
-            xshift,
-            yshift,
-            zshift,
-            xscale,
-            yscale,
-            zscale,
-            p_splitenz_v,
-            ntot,
-            p_zvalues_v,
-            ntot,
-            self._zcornsv,
-        )
+    _cxtgeo.grd3d_roff2xtgeo_zcorn(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
+        p_splitenz_v,
+        p_zvalues_v,
+        self._zcornsv,
+    )
 
     # ACTIVE may be missing, meaning all cells are missing!
     option = 0
