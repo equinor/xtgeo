@@ -3,7 +3,6 @@
 from __future__ import print_function, absolute_import
 
 import numpy as np
-import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -176,4 +175,3 @@ def _import_roff_v2(self, pfile, name):
     #     subs = _rkwxlist(pfile, kwords, "subgrids!nLayers", byteswap, strict=False)
 
     pfile.cfclose()
-

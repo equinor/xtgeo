@@ -342,19 +342,19 @@ def test_roffbin_banal6():
 
 
 @tsetup.bigtest
-def test_roffbin_bigbox():
+def test_roffbin_bigbox(tmpdir):
     """Test roff binary for bigbox, to monitor performance"""
 
-    BIGBOX = "/tmp/bigbox.roff"
-    if not os.path.exists(BIGBOX):
+    bigbox = os.path.join(tmpdir, "bigbox.roff"
+    if not os.path.exists(bigbox):
         logger.info("Create tmp big roff grid file...")
         grd0 = Grid()
         grd0.create_box(dimension=(500, 500, 500))
-        grd0.to_file(BIGBOX)
+        grd0.to_file(bigbox)
 
     grd1 = Grid()
     t0 = xtg.timer()
-    grd1.from_file(BIGBOX, _xtgformat=1)
+    grd1.from_file(bigbox, _xtgformat=1)
     t_old = xtg.timer(t0)
     logger.info("Reading bigbox xtgeformat=1 took %s seconds", t_old)
     cell1 = grd1.get_xyz_cell_corners((13, 14, 15))
@@ -362,7 +362,7 @@ def test_roffbin_bigbox():
     grd2 = Grid()
     t0 = xtg.timer()
     t1 = xtg.timer()
-    grd2.from_file(BIGBOX, _xtgformat=2)
+    grd2.from_file(bigbox, _xtgformat=2)
     t_new = xtg.timer(t0)
     logger.info("Reading bigbox xtgformat=2 took %s seconds", t_new)
     cell2a = grd2.get_xyz_cell_corners((13, 14, 15))

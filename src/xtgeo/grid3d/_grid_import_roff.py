@@ -215,4 +215,3 @@ def _import_roff_xtgformat2(self, gfile):
     )
     logger.info("ACTNUM... done")
     logger.info("XTGFORMAT is %s", self._xtgformat)
-

@@ -39,23 +39,24 @@ grd3d_roff2xtgeo_actnum(int nx,
 
 {
 
-    long ib = 0, ic = 0, nact = 0;
     int i, j, k;
 
     logger_info(LI, FI, FU, "Transforming grid ROFF actnum -> XTG representation ...");
 
     if (option == 1) {
+        long ib;
         for (ib = 0; ib < nx * ny * nz; ib++) {
             actnumsv[ib] = 1;
         }
         return nx * ny * nz;
     }
 
-    ic = 0;
+    long ic = 0;
+    long nact = 0;
     for (i = 0; i < nx; i++) {
         for (j = 0; j < ny; j++) {
             for (k = 0; k < nz; k++) {
-                ib = (nz - (k + 1)) * ny * nx + j * nx + i;
+                long ib = (nz - (k + 1)) * ny * nx + j * nx + i;
                 actnumsv[ib] = p_act_v[ic];
                 ic += 1;
                 if (actnumsv[ib] == 1)

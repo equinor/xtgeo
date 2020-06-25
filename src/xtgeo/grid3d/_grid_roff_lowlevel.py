@@ -8,9 +8,6 @@ import numpy.ma as ma
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
-from . import _grid3d_utils as utils
-from . import _gridprop_lowlevel
-
 xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
@@ -250,7 +247,7 @@ def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
     if reclen <= 1:
         raise SystemError("Stuff is rotten here...")
 
-    xvec = None
+    proparr = None
     cfhandle = gfile.get_cfhandle()
     logger.info("Reading %s from file...", name)
 
@@ -348,12 +345,10 @@ def _rkwxvec_zcornsv(
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
 
     dtype = 0
-    reclen = 0
     bytepos = 1
     for items in kws:
         if name in items[0]:
             dtype = kwtypedict.get(items[1])
-            reclen = items[2]
             bytepos = items[3]
             break
 
