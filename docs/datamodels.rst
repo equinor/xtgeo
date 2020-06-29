@@ -77,6 +77,11 @@ Supported import/export formats
      - Yes
      - No map rotation
      - Output auto derotated
+   * - Petromod binary pmd
+     - Yes
+     - Yes
+     -
+     -
    * - Storm binary
      - No
      - Yes
@@ -161,15 +166,17 @@ A 3D grid consists of two parts, a geometry which follows a simplified version o
 a corner-point grid (Grid class), and a number of assosiated properties
 (GridProperty class):
 
-* The geometry is stored as pointers to C arrays; hence the geometry itself is not
-  directly accessible in Python. The C arrays are usually named coordsv, zcornsv,
-  and actnumsv. They are one dimensionial arrays.
+* The geometry is stored as numpy arrays; but currently the geometry itself is not
+  directly accessible in Python. The corresponding C arrays are usually named
+  coordsv, zcornsv, and actnumsv. They are one dimensionial arrays in internal
+  _xtgformat=1, or multidimensional arrays in xtgformat=2 (details on demand).
 
 * The grid dimensions are given by ``ncol * nrow * nlay``
 
-* The properties are stored as 3D masked numpy arrays in python. Undefined cells are masked.
-  The machine order in python is C-order. For historical reasons, the order of the property
-  arrays in C code (when applied) is F-order.
+* The properties are stored as 3D masked numpy arrays in python. Undefined cells are
+  masked. The machine order in python is C-order. For historical reasons, the order
+  of the property arrays in C code (when applied) is F-order for _xtgformat=1, while
+  _xtgformat=2 uses C order.
 
 
 Description
@@ -215,10 +222,10 @@ Supported import/export formats
      -
      -
    * - Eclipse GRID
-     - Yes
+     - No
      - No
      -
-     - Rarely applied?
+     - Rarely applied nowadays?
    * - Pandas dataframes
      - No
      - Yes
