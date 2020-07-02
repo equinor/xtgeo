@@ -574,9 +574,11 @@ def test_cube_slice_w_ignore_dead_traces_nearest():
     # swap surface
     surf2 = surf1.copy()
     surf2.values = 1000.1
+
     surf2.swapaxes()
 
     surf2.slice_cube(cube1, deadtraces=False)
+
     assert surf2.values.mean() == pytest.approx(surf1.values.mean(), rel=0.001)
 
     # swap surface and cube

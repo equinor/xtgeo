@@ -21,28 +21,64 @@ logger = xtg.functionlogger(__name__)
 def operations_two(self, other, oper="add"):
     """General operations between two maps"""
 
+    other = _check_other(self, other)
+
     okstatus = self.compare_topology(other)
 
     useother = other
     if not okstatus:
         # to avoid that the "other" instance is changed
-        useother = other.copy()
-        useother.resample(self)
+        useother = self.copy()
+        useother.resample(other)
 
     if oper == "add":
         self.values = self.values + useother.values
-
-    if oper == "sub":
+    elif oper == "iadd":
+        self.values += useother.values
+    elif oper == "sub":
         self.values = self.values - useother.values
-
-    if oper == "mul":
+    elif oper == "isub":
+        self._values -= useother._values
+    elif oper == "mul":
         self.values = self.values * useother.values
-
-    if oper == "div":
+    elif oper == "imul":
+        self._values *= useother._values
+    elif oper == "div":
         self.values = self.values / useother.values
+    elif oper == "idiv":
+        self._values /= useother._values
+
+    # comparisons:
+    elif oper == "lt":
+        return self.values < other.values
+    elif oper == "gt":
+        return self.values > other.values
+    elif oper == "le":
+        return self.values <= other.values
+    elif oper == "ge":
+        return self.values >= other.values
+    elif oper == "eq":
+        return self.values == other.values
+    elif oper == "ne":
+        return self.values != other.values
 
     if useother is not other:
         del useother
+
+    self._filesrc = "Calculated"
+
+
+def _check_other(self, other):
+    """Will convert an other scalar to a valid numpy array"""
+
+    if np.isscalar(other):
+        vals = other
+        other = self.copy()
+        other.values *= 0
+        other.values += vals
+        other._filesrc = None
+
+    return other
 
 
 def resample(self, other, mask=True):
@@ -88,6 +124,7 @@ def resample(self, other, mask=True):
         raise RuntimeError("Resampling went wrong, " "code is {}".format(ier))
 
     self.set_values1d(svalues)
+    self._filesrc = "Resampled"
 
 
 def distance_from_point(self, point=(0, 0), azimuth=0.0):
