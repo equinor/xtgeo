@@ -264,7 +264,8 @@ class RegularSurface(object):
                 self._masked = True
                 self._values = values
             else:
-                self._values = self.ensure_correct_values(self.ncol, self.nrow, values)
+                self._ensure_correct_values(values)
+
             self._yflip = kwargs.get("yflip", 1)
             self._masked = kwargs.get("masked", True)
             self._filesrc = kwargs.get("filesrc", None)
@@ -303,26 +304,77 @@ class RegularSurface(object):
         # user friendly print
         return self.describe(flush=False)
 
+    def __getitem__(self, index):
+        col, row = index
+        return self._values[col, row]
+
     def __add__(self, other):
 
         news = self.copy()
-        news.add(other)
+        _regsurf_oper.operations_two(news, other, oper="add")
 
         return news
+
+    def __iadd__(self, other):
+
+        _regsurf_oper.operations_two(self, other, oper="iadd")
+        return self
 
     def __sub__(self, other):
 
         news = self.copy()
-        news.subtract(other)
+        _regsurf_oper.operations_two(news, other, oper="sub")
 
         return news
+
+    def __isub__(self, other):
+
+        _regsurf_oper.operations_two(self, other, oper="isub")
+        return self
 
     def __mul__(self, other):
 
         news = self.copy()
-        news.multiply(other)
+        _regsurf_oper.operations_two(news, other, oper="mul")
 
         return news
+
+    def __imul__(self, other):
+
+        _regsurf_oper.operations_two(self, other, oper="imul")
+        return self
+
+    def __truediv__(self, other):
+
+        news = self.copy()
+        _regsurf_oper.operations_two(news, other, oper="div")
+
+        return news
+
+    def __idiv__(self, other):
+
+        _regsurf_oper.operations_two(self, other, oper="idiv")
+        return self
+
+    # comparison operators, return boolean arrays
+
+    def __lt__(self, other):
+        return _regsurf_oper.operations_two(self, other, oper="lt")
+
+    def __gt__(self, other):
+        return _regsurf_oper.operations_two(self, other, oper="gt")
+
+    def __le__(self, other):
+        return _regsurf_oper.operations_two(self, other, oper="le")
+
+    def __ge__(self, other):
+        return _regsurf_oper.operations_two(self, other, oper="ge")
+
+    def __eq__(self, other):
+        return _regsurf_oper.operations_two(self, other, oper="eq")
+
+    def __ne__(self, other):
+        return _regsurf_oper.operations_two(self, other, oper="ne")
 
     # ==================================================================================
     # Class and special methods
@@ -345,6 +397,8 @@ class RegularSurface(object):
     def ensure_correct_values(self, ncol, nrow, values):
         """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
 
+        This function is deprecated
+
         Args:
             ncol (int): Number of columns.
             nrow (int): Number of rows.
@@ -360,6 +414,11 @@ class RegularSurface(object):
             # secure that the values are masked, in correct format and shape:
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
+
+        warnings.warn(
+            "This function 'ensure_correct_values' is obsolute and will removed soon",
+            FutureWarning,
+        )
 
         if not self._isloaded:
             return None
@@ -550,21 +609,17 @@ class RegularSurface(object):
         When setting values as a scalar, the current mask will be preserved.
         """
 
-        if not self._values.flags.c_contiguous:
-            logger.warning("Not C order in numpy")
-
         return self._values
 
     @values.setter
     def values(self, values):
         logger.debug("Enter method...")
 
-        values = self.ensure_correct_values(self.ncol, self.nrow, values)
+        self._ensure_correct_values(values)
 
-        self._values = values
-
-        logger.debug("Values shape: %s", self._values.shape)
-        logger.debug("Flags: %s", self._values.flags)
+        if values is not None:
+            logger.debug("Values shape: %s", self._values.shape)
+            logger.debug("Flags: %s", self._values.flags)
 
     @property
     def values1d(self):
@@ -752,7 +807,6 @@ class RegularSurface(object):
         else:
             self._name = os.path.basename(froot)
 
-        self.ensure_correct_values(self.ncol, self.nrow, self._values)
         return self
 
     def load_values(self):
@@ -1677,7 +1731,7 @@ class RegularSurface(object):
         _regsurf_oper.operations_two(self, other, oper="mul")
 
     def divide(self, other):
-        """Multiply another map and current map"""
+        """Divide current map with another map"""
 
         _regsurf_oper.operations_two(self, other, oper="div")
 
@@ -2493,3 +2547,83 @@ class RegularSurface(object):
         # note the Z coordinates are perhaps not depth
         # numpy operation:
         self.values = self.values + zshift
+
+    # ==================================================================================
+    # Private
+    # ==================================================================================
+
+    def _ensure_correct_values(self, values):
+        """Ensures that values is a 2D masked numpy (ncol, nrow), C order.
+
+        This is an improved but private version over ensure_correct_values
+
+        Args:
+            values (array or scalar): Values to process.
+
+        Return:
+            Nothing, self._values will be updated inplace
+
+        """
+        if not self._isloaded:
+            return
+
+        if values is None:
+            self._values = None
+            return
+
+        currentmask = None
+        if isinstance(self._values, ma.MaskedArray):
+            currentmask = ma.getmaskarray(self._values)
+
+        if isinstance(values, ma.MaskedArray):
+            newmask = ma.getmaskarray(values)
+
+            if (
+                currentmask is not None
+                and currentmask.all() == newmask.all()
+                and self._values.shape == values.shape
+                and values.flags.c_contiguous is True
+            ):
+                vals = values.astype(np.float64)
+                vals = ma.masked_greater(vals, self.undef_limit)
+                vals = ma.masked_invalid(vals)
+                self._values *= 0
+                self._values += vals
+
+            else:
+                # replace any undef or nan with mask, return a view (copy=False)
+                vals = values.astype(np.float64)
+                vals = ma.masked_greater(vals, self.undef_limit, copy=True)
+                vals = ma.masked_invalid(vals, copy=True)
+                vals = vals.reshape((self._ncol, self._nrow))
+
+                if not vals.flags.c_contiguous:
+                    mask = ma.getmaskarray(values)
+                    mask = np.asanyarray(mask, order="C")
+                    vals = np.asanyarray(vals, order="C")
+                    vals = ma.array(vals, mask=mask, order="C")
+                self._values = vals
+                return
+
+        elif np.isscalar(values):
+            if currentmask is not None:
+                self._values *= 0
+                self._values += values
+                return
+            else:
+                vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=np.float64)
+                self._values = vals + float(values)
+
+        elif isinstance(values, np.ndarray):  # ie values ~ a numpy array
+            vals = ma.array(values, order="C", dtype=np.float64)
+            vals = ma.masked_greater(vals, self.undef_limit, copy=True)
+            vals = ma.masked_invalid(vals, copy=True)
+
+            if vals.shape != (self.ncol, self.nrow):
+                try:
+                    vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
+                except ValueError as emsg:
+                    xtg.error("Cannot reshape array: {}".format(emsg))
+                    raise
+
+            self._values = vals

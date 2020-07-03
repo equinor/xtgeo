@@ -65,6 +65,33 @@ def test_create():
     x.describe()
 
 
+def test_values():
+    """Test behaviour of values attribute"""
+    srf = xtgeo.RegularSurface()
+    id1 = id(srf.values)
+
+    newvalues = srf.values.copy()
+    srf.values = newvalues
+    assert id(srf.values) == id1
+
+    srf.values = 44
+    assert id(srf.values) == id1
+
+    srf.values = None
+    assert srf.values is None
+
+    srf = xtgeo.RegularSurface()
+    id1 = id(srf.values)
+    newvalues = np.ones((srf.ncol, srf.nrow))
+    srf.values = newvalues
+    assert isinstance(srf.values, np.ma.MaskedArray)
+
+    newvalues = np.arange(15).reshape(srf.ncol, srf.nrow)
+    newvalues = np.ma.masked_where(newvalues < 3, newvalues)
+    srf.values = newvalues
+    assert id(srf.values) != id1
+
+
 # @tsetup.skipifwindows
 def test_ijxyz_import1():
     """Import some IJ XYZ format, typical seismic."""
@@ -342,8 +369,30 @@ def test_minmax_rotated_map():
     tsetup.assert_almostequal(x.ymax, 5939998.7, 0.1)
 
 
-def test_twosurfaces_oper():
+def test_operator_overload():
     """Test operations between two surface in different ways"""
+
+    surf1 = xtgeo.RegularSurface(ncol=100, nrow=50, rotation=10, values=100)
+    assert surf1.values.mean() == 100.0
+    id1 = id(surf1)
+    id1v = id(surf1.values)
+
+    surf2 = xtgeo.RegularSurface(ncol=100, nrow=50, rotation=0, values=100)
+    diff = surf1 - surf2
+    assert id(diff) != id1
+    assert diff.values.mean() == 0.0
+
+    assert id(surf1) == id1
+    surf1 += diff
+    assert id(surf1) == id1
+    assert id(surf1.values) == id1v
+
+    surf1 /= diff
+    assert (surf1.values.count()) == 0
+
+
+def test_twosurfaces_oper():
+    """Test operations between two surface in more different ways"""
 
     surf1 = xtgeo.RegularSurface(TESTSET1)
     surf2 = xtgeo.RegularSurface(TESTSET1A)
@@ -379,7 +428,61 @@ def test_twosurfaces_oper():
     newzrf1 = surf1.copy()
 
     newzrf1.values = zrf2.values / zrf1.values
-    assert newzrf1.values.mean() == pytest.approx(1.0257524251848058)
+    assert newzrf1.values.mean() == pytest.approx(1.0257, abs=0.01)
+
+
+def test_surface_comparisons():
+    """Test the surface comparison overload"""
+    surf1 = xtgeo.RegularSurface()
+    id1 = id(surf1)
+
+    surf2 = surf1.copy()
+
+    cmp = surf1 == surf2
+    np.testing.assert_equal(cmp, True)
+
+    cmp = surf1 != surf2
+    np.testing.assert_equal(cmp, False)
+
+    cmp = surf1 <= surf2
+    np.testing.assert_equal(cmp, True)
+
+    cmp = surf1 < surf2
+    np.testing.assert_equal(cmp, False)
+
+    cmp = surf1 > surf2
+    np.testing.assert_equal(cmp, False)
+
+    surf2.values[0, 0] = -2
+    cmp = surf1 == surf2
+    assert bool(cmp[0, 0]) is False
+
+    assert id(surf1) == id1
+
+
+def test_surface_subtract_etc():
+    """Test the simple surf.subtract etc methods"""
+    surf1 = xtgeo.RegularSurface()
+    id1 = id(surf1)
+    mean1 = surf1.values.mean()
+
+    surf2 = surf1.copy()
+    surf1.subtract(surf2)
+    assert surf1.values.mean() == 0.0
+    assert id(surf1) == id1
+
+    surf1.add(surf2)
+    assert surf1.values.mean() == mean1
+    assert id(surf1) == id1
+
+    surf1.multiply(surf2)
+    surf1.divide(surf2)
+    assert surf1.values.mean() == mean1
+    assert id(surf1) == id1
+
+    surf1.subtract(2)
+    assert surf1.values.mean() == mean1 - 2
+    assert id(surf1) == id1
 
 
 @tsetup.bigtest
@@ -780,6 +883,7 @@ def test_fence():
 
     logger.debug("NP:")
     logger.debug(myfence)
+    print(myfence)
 
     x = xtgeo.RegularSurface(TESTSET1)
 
@@ -787,6 +891,7 @@ def test_fence():
 
     logger.debug("updated NP:")
     logger.debug(newfence)
+    print(newfence)
 
     tsetup.assert_almostequal(newfence[1][2], 1720.9094, 0.01)
 
@@ -862,6 +967,6 @@ def test_smoothing():
     srf.smooth(iterations=1, width=5)
 
     mean2 = srf.values.mean()
-    tsetup.assert_almostequal(mean2, 1698.65, 0.1)  # smoothed ~same mean
+    tsetup.assert_almostequal(mean2, 1698.65, 0.3)  # smoothed ~same mean
 
     assert mean1 != mean2  # but not exacly same

@@ -53,9 +53,7 @@ def points_gridding(self, points, method="linear", coarsen=1):
 
     logger.info("Gridding point ... DONE")
 
-    znew = self.ensure_correct_values(self.ncol, self.nrow, znew)
-
-    self.values = znew
+    self._ensure_correct_values(znew)
 
 
 def avgsum_from_3dprops_gridding(
