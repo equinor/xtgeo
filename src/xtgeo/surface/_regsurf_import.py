@@ -231,6 +231,8 @@ def import_petromod_binary(self, mfile, values=True):
     dsc, dummy = _cxtgeo.surf_import_petromod_bin(cfhandle, 0, 0.0, 0, 0, 0)
 
     fields = dsc.split(",")
+    print(fields)
+
     for field in fields:
         key, value = field.split("=")
         if key == "GridNoX":
@@ -246,9 +248,9 @@ def import_petromod_binary(self, mfile, values=True):
         if key == "RotationOriginY":
             rota_yori = float(value)
         if key == "GridStepX":
-            self._xinc = int(value)
+            self._xinc = float(value)
         if key == "GridStepY":
-            self._yinc = int(value)
+            self._yinc = float(value)
         if key == "RotationAngle":
             self._rotation = float(value)
         if key == "Undefined":
