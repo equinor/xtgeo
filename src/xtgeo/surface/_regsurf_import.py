@@ -12,10 +12,6 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-DEBUG = 0
-if DEBUG < 0:
-    DEBUG = 0
-
 
 def import_irap_binary(self, mfile, values=True):
     """Import Irap binary format.
