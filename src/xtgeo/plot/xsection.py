@@ -806,7 +806,14 @@ class XSection(BasePlot):
         if self._colorlegend_cube:
             self._fig.colorbar(img, ax=ax)
 
-    def plot_grid3d(self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7):
+    def plot_grid3d(
+        self,
+        colormap="rainbow",
+        vmin=None,
+        vmax=None,
+        alpha=0.7,
+        zinc=0.5
+    ):
         """Plot a sampled grid with gridproperty backdrop.
 
         Args:
@@ -814,6 +821,7 @@ class XSection(BasePlot):
             vmin (float): Minimum value in plot.
             vmax (float); Maximum value in plot
             alpha (float): Alpha blending number beween 0 and 1.
+            zinc (float): Sampling vertically, default is 0.5
 
         Raises:
             ValueError: No grid or gridproperty is loaded
@@ -827,8 +835,6 @@ class XSection(BasePlot):
             raise ValueError("Ask for plot of grid, but no grid is loaded")
 
         ax, _bba = self._currentax(axisname="main")
-
-        zinc = 0.5  # tmp
 
         zvv = self._grid.get_randomline(
             self.fence,
