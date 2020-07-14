@@ -72,6 +72,8 @@ class XSection(BasePlot):
         self._zonelogshift = zonelogshift
         self._outline = outline
 
+        self._legends = True
+
         self._pagesize = "A4"
         self._fence = None
         self._legendtitle = "Zones"
@@ -122,6 +124,16 @@ class XSection(BasePlot):
     def legendsize(self, lsize):
         """Returns or set the legend size"""
         self._legendsize = lsize
+
+    @property
+    def legends(self):
+        """Returns or set the legends"""
+        return self._legends
+
+    @legends.setter
+    def legends(self, value):
+        """Returns or set the legends"""
+        self._legends = value
 
     @property
     def colormap_facies(self):
@@ -243,29 +255,49 @@ class XSection(BasePlot):
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
+        ax1["main"] = plt.subplot2grid(
+            (20, 28),
+            (0, 0),
+            rowspan=20,
+            colspan=23
+        )
 
-        ax2 = plt.subplot2grid((20, 28), (10, 23), rowspan=5, colspan=5)
-        ax3 = plt.subplot2grid((20, 28), (15, 23), rowspan=5, colspan=5)
-        # indicate A to B
-        plt.text(
-            0.02,
-            0.98,
-            "A",
-            ha="left",
-            va="top",
-            transform=ax1["main"].transAxes,
-            fontsize=8,
+        ax2 = plt.subplot2grid(
+            (20, 28),
+            (10, 23),
+            rowspan=5,
+            colspan=5,
+            frame_on=self._legends
         )
-        plt.text(
-            0.98,
-            0.98,
-            "B",
-            ha="right",
-            va="top",
-            transform=ax1["main"].transAxes,
-            fontsize=8,
+
+        ax3 = plt.subplot2grid(
+            (20, 28),
+            (15, 23),
+            rowspan=5,
+            colspan=5,
+            frame_on=self._legends
         )
+
+        if self._legends:
+            # indicate A to B
+            plt.text(
+                0.02,
+                0.98,
+                "A",
+                ha="left",
+                va="top",
+                transform=ax1["main"].transAxes,
+                fontsize=8,
+            )
+            plt.text(
+                0.98,
+                0.98,
+                "B",
+                ha="right",
+                va="top",
+                transform=ax1["main"].transAxes,
+                fontsize=8,
+            )
 
         # title here:
         if title is not None:
@@ -365,19 +397,19 @@ class XSection(BasePlot):
         # plot the perflog, if any, first
         if perflogname:
             ax, bba = self._currentax(axisname="perf")
-            self._plot_well_perflog(dfr, ax, bba, perflogname)
+            self._plot_well_perflog(dfr, ax, bba, perflogname, legend=self._legends)
 
         # plot the facies, if any, behind the trajectory; ie. first or second
         if facieslogname:
             ax, bba = self._currentax(axisname="facies")
-            self._plot_well_faclog(dfr, ax, bba, facieslogname)
+            self._plot_well_faclog(dfr, ax, bba, facieslogname, legend=self._legends)
 
         axx, _bbxa = self._currentax(axisname="well")
         self._plot_well_traj(axx, zv, hv)
 
         if zonelogname:
             ax, bba = self._currentax(axisname="main")
-            self._plot_well_zlog(dfr, axx, bba, zonelogname)
+            self._plot_well_zlog(dfr, axx, bba, zonelogname, legend=self._legends)
 
         if wellcrossings is not None and wellcrossings.empty:
             wellcrossings = None
