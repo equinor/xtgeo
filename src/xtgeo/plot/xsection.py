@@ -72,7 +72,7 @@ class XSection(BasePlot):
         self._zonelogshift = zonelogshift
         self._outline = outline
 
-        self._legends = True
+        self._has_legend = True
 
         self._pagesize = "A4"
         self._fence = None
@@ -126,14 +126,17 @@ class XSection(BasePlot):
         self._legendsize = lsize
 
     @property
-    def legends(self):
+    def has_legend(self):
         """Returns or set the legends"""
-        return self._legends
+        return self._has_legend
 
-    @legends.setter
-    def legends(self, value):
+    @has_legend.setter
+    def has_legend(self, value):
         """Returns or set the legends"""
-        self._legends = value
+        if not isinstance(value, bool):
+            raise ValueError("Input is not a bool")
+
+        self._has_legend = value
 
     @property
     def colormap_facies(self):
@@ -267,7 +270,7 @@ class XSection(BasePlot):
             (10, 23),
             rowspan=5,
             colspan=5,
-            frame_on=self._legends
+            frame_on=self._has_legend
         )
 
         ax3 = plt.subplot2grid(
@@ -275,10 +278,10 @@ class XSection(BasePlot):
             (15, 23),
             rowspan=5,
             colspan=5,
-            frame_on=self._legends
+            frame_on=self._has_legend
         )
 
-        if self._legends:
+        if self._has_legend:
             # indicate A to B
             plt.text(
                 0.02,
@@ -397,19 +400,19 @@ class XSection(BasePlot):
         # plot the perflog, if any, first
         if perflogname:
             ax, bba = self._currentax(axisname="perf")
-            self._plot_well_perflog(dfr, ax, bba, perflogname, legend=self._legends)
+            self._plot_well_perflog(dfr, ax, bba, perflogname, legend=self._has_legend)
 
         # plot the facies, if any, behind the trajectory; ie. first or second
         if facieslogname:
             ax, bba = self._currentax(axisname="facies")
-            self._plot_well_faclog(dfr, ax, bba, facieslogname, legend=self._legends)
+            self._plot_well_faclog(dfr, ax, bba, facieslogname, legend=self._has_legend)
 
         axx, _bbxa = self._currentax(axisname="well")
         self._plot_well_traj(axx, zv, hv)
 
         if zonelogname:
             ax, bba = self._currentax(axisname="main")
-            self._plot_well_zlog(dfr, axx, bba, zonelogname, legend=self._legends)
+            self._plot_well_zlog(dfr, axx, bba, zonelogname, legend=self._has_legend)
 
         if wellcrossings is not None and wellcrossings.empty:
             wellcrossings = None
