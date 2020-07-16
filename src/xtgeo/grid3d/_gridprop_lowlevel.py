@@ -101,7 +101,7 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
         values = np.asfortranarray(values)
         values1d = np.ravel(values, order="K")
 
-    if values1d.dtype == "float64" and dstatus:
+    if values1d.dtype == "float64" and dstatus and not dtype:
         values1d = values1d.astype("int32")
         logger.debug("Casting has been done")
 
