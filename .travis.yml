@@ -88,8 +88,8 @@ before_install:
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        # brew update && brew install swig;
-        brew install swig;
+        brew update && brew install swig;
+        # brew install swig;
     fi
   - pip install pip==19.3.1
   - pip install bandit
@@ -97,6 +97,7 @@ install:
 
 before_script:
   - bandit -c bandit.yml -r src/xtgeo
+  - brew link --overwrite python
 
 script:
   - install_run $PLAT
