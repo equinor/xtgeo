@@ -95,8 +95,8 @@ install:
   - build_wheel $REPO_DIR $PLAT
 
 before_script:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        brew link --overwrite python
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew link --overwrite python;
     fi
   - bandit -c bandit.yml -r src/xtgeo
 
