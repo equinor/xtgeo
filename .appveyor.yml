@@ -32,7 +32,7 @@ for:
   skip_non_tags: True
 
 install:
-  - ps: choco install -y --no-progress --allow-empty-checksums -r swig
+  - ps: choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1
   - IF "%platform%" == "x64" SET PYTHON=%PYTHON%-x64
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - SET PIP_DISABLE_PIP_VERSION_CHECK=1
