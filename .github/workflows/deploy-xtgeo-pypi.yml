@@ -54,8 +54,8 @@ jobs:
           ls -l wheelhouse
           ls -latr
         if: matrix.os == 'ubuntu-18.04'
-        
-      - name: Build and publish
+
+      - name: Publish to PYPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
