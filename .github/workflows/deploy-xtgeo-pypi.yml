@@ -10,8 +10,6 @@ env:
   CIBW_BEFORE_ALL_MACOS: "brew install swig"
   CIBW_TEST_COMMAND: "python -c \"import xtgeo\""
   CIBW_BUILD: |
-    cp27-manylinux_x86_64
-    cp35-manylinux_x86_64
     cp36-manylinux_x86_64
     cp37-manylinux_x86_64
     cp38-manylinux_x86_64
