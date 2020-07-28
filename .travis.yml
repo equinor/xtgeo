@@ -43,10 +43,10 @@ matrix:
       if: (tag IS true)
     - os: linux
       env: MB_PYTHON_VERSION=3.5
-      if: (type = pull_request) OR (tag IS true)
+      if: (tag IS true)
     - os: linux
       env: MB_PYTHON_VERSION=3.6
-      if: (type = pull_request) OR (tag IS true)
+      if: (tag IS true)
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.7
@@ -59,7 +59,7 @@ matrix:
         - MB_PYTHON_VERSION=3.8
         - MB_ML_VER=2010
         - TEST_DEPENDS="pytest segyio==1.9.1"
-      if: (type = pull_request) OR (tag IS true)
+      if: (tag IS true) # (type = pull_request) OR (tag IS true)
 
     # - os: osx
     #   language: generic
