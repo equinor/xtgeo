@@ -8,7 +8,7 @@ env:
   CIBW_BEFORE_ALL_LINUX: "sh scripts/swig_manylinux.sh"
   CIBW_BEFORE_ALL_WINDOWS: "choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
   CIBW_BEFORE_ALL_MACOS: "brew install swig"
-  CIBW_TEST_COMMAND: "python -c \"import xtgeo\""
+  CIBW_TEST_COMMAND: "python -c \"import xtgeo; print(xtgeo.__version__)\""
   CIBW_BUILD: |
     cp36-manylinux_x86_64
     cp37-manylinux_x86_64
@@ -22,7 +22,7 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Deploy wheels to PYPI for ${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
 
@@ -44,18 +44,13 @@ jobs:
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
       - name: Check wheels and paths (ubuntu only)
         run: |
           ls -l wheelhouse
           ls -latr
         if: matrix.os == 'ubuntu-18.04'
-        
-      - name: Build and publish
+
+      - name: Publish to PYPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

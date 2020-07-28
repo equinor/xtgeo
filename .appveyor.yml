@@ -13,13 +13,13 @@ environment:
   matrix:
     - PYTHON: C:\Python36
       PYTHON_VERSION: 36
-      TAG_SCENARIO: False
+      TAG_SCENARIO: True
     - PYTHON: C:\Python37
       PYTHON_VERSION: 37
       TAG_SCENARIO: True
     - PYTHON: C:\Python38
       PYTHON_VERSION: 38
-      TAG_SCENARIO: False
+      TAG_SCENARIO: True
 
 matrix:
   fast_finish: true

@@ -1,0 +1,37 @@
+# Not using manylinux images; only Ubuntu but all python versions
+# Todo: coverage and linting
+
+name: Ubuntu, all supported py versions
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  build_wheels:
+    name: PY ${{ matrix.python-version }} on linux
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install xtgeo
+        run: |
+          pip install pip -U
+          pip install .
+
+      - name: Test with pytest
+        run: |
+          git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+          pip install pytest
+          pytest --disable-warnings
