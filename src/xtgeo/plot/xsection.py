@@ -15,6 +15,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Polygons
+from xtgeo.well import Well
 
 from .baseplot import BasePlot
 
@@ -383,7 +384,9 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor="b",
+        wellcrossingnames=True,
+        wellcrossingyear=False,
+        welltrajcolor="b"
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -429,7 +432,13 @@ class XSection(BasePlot):
             wellcrossings = None
 
         if wellcrossings is not None:
-            self._plot_well_crossings(dfr, axx, wellcrossings)
+            self._plot_well_crossings(
+                dfr,
+                axx,
+                wellcrossings,
+                wellcrossingnames,
+                wellcrossingyear
+            )
 
     def set_xaxis_md(self, gridlines=False):
         """Set x-axis labels to measured depth."""
@@ -673,7 +682,7 @@ class XSection(BasePlot):
             self._drawproxylegend(ax, bba, items=pcolors, title="Perforations")
 
     @staticmethod
-    def _plot_well_crossings(dfr, ax, wcross):
+    def _plot_well_crossings(dfr, ax, wcross, names=True, year=False):
         """Plot well crossing based on dataframe (wcross)
 
         The well crossing coordinates are identified for this well,
@@ -687,10 +696,15 @@ class XSection(BasePlot):
         * Coordinate Y named Y_UTMN
         * Coordinate Z named Z_TVDSS
 
+        Optional column:
+        * Drilled year of crossing well CYEAR
+
         Args:
             dfr: Well dataframe
             ax: current axis
             wcross: A pandas dataframe with precomputed well crossings
+            names: Display the names of the crossed wells
+            year: Display the drilled year of the crossed wells
         """
 
         placings = {
@@ -733,17 +747,27 @@ class XSection(BasePlot):
 
             modulo = index % 5
 
-            ax.annotate(
-                row.CWELL,
-                size=6,
-                xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
-                xytext=placings[modulo],
-                textcoords="offset points",
-                arrowprops=dict(
-                    arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
-                ),
-                color="black",
-            )
+            if names:
+                text = Well.get_short_wellname(row.CWELL)
+
+            if year:
+                if names:
+                    text = text + '\n' + row.CYEAR
+                else:
+                    text = row.CYEAR
+            
+            if names or year:
+                ax.annotate(
+                    text,
+                    size=6,
+                    xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
+                    xytext=placings[modulo],
+                    textcoords="offset points",
+                    arrowprops=dict(
+                        arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
+                    ),
+                    color="black",
+                )
 
     def _drawproxylegend(self, ax, bba, items, title=None):
         proxies = []
