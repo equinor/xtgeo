@@ -1023,6 +1023,49 @@ class XSection(BasePlot):
         if axisname == "main" and gridlines:
             ax.grid(color="grey", linewidth=0.2)
 
+    def plot_md_data(
+        self,
+        data=None,
+        markersize=10,
+        color='red',
+        linestyle="",
+        label=False,
+        zorder=350,
+        **kwargs
+    ):
+        """
+        Plot MD vs TVD data as lines and/or markers
+
+        The input pandas dataframe points shall have the following columns:
+        * Name of well(s) named WELL
+        * Coordinate X named MDEPTH
+        * Coordinate Y named Z_TVDSS
+        """
+
+        ax, bba = self._currentax(axisname="main")
+
+        well = self._well
+        data_well = data.copy()
+        data_well = data_well.loc[data_well["WELL"] == well.xwellname]
+        del data_well["WELL"]
+
+        md_start = well.dataframe["MDEPTH"].iloc[0]
+        data_well['R_HLEN'] = data_well['MDEPTH']
+        data_well['R_HLEN'] = data_well['R_HLEN'].subtract(md_start)
+
+        data_well.plot(
+            ax=ax,
+            x="R_HLEN",
+            y="Z_TVDSS",
+            legend=None,
+            linestyle=linestyle,
+            markersize=markersize,
+            color=color,
+            label=label,
+            zorder=zorder,
+            **kwargs
+        )
+
     def plot_wellmap(self, otherwells=None, expand=1):
         """Plot well map as local view, optionally with nearby wells.
 
