@@ -72,6 +72,7 @@ class XSection(BasePlot):
         self._zonelogshift = zonelogshift
         self._outline = outline
 
+        self._has_axes = True
         self._has_legend = True
 
         self._pagesize = "A4"
@@ -137,6 +138,19 @@ class XSection(BasePlot):
             raise ValueError("Input is not a bool")
 
         self._has_legend = value
+
+    @property
+    def has_axes(self):
+        """Returns or set the axes status"""
+        return self._has_axes
+
+    @has_axes.setter
+    def has_axes(self, value):
+        """Returns or set the axes status"""
+        if not isinstance(value, bool):
+            raise ValueError("Input is not a bool")
+
+        self._has_axes = value
 
     @property
     def colormap_facies(self):
@@ -253,6 +267,14 @@ class XSection(BasePlot):
         # overriding the base class canvas
 
         plt.rcParams["axes.xmargin"] = 0  # fill the plot margins
+
+        if not self._has_axes:
+            plt.rcParams["axes.titlecolor"] = (0, 0, 0, 0)
+            plt.rcParams["axes.edgecolor"] = (0, 0, 0, 0)
+            plt.rcParams["axes.labelcolor"] = (0, 0, 0, 0)
+            plt.rcParams["axes.titlecolor"] = (0, 0, 0, 0)
+            plt.rcParams["xtick.color"] = (0, 0, 0, 0)
+            plt.rcParams["ytick.color"] = (0, 0, 0, 0)
 
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
