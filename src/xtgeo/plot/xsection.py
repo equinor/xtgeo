@@ -373,7 +373,8 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor='b'
+        welltrajcolor='black',
+        welltrajwidth=6,
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -409,7 +410,13 @@ class XSection(BasePlot):
             self._plot_well_faclog(dfr, ax, bba, facieslogname, legend=self._has_legend)
 
         axx, _bbxa = self._currentax(axisname="well")
-        self._plot_well_traj(axx, zv, hv, welltrajcolor=welltrajcolor)
+        self._plot_well_traj(
+            axx,
+            zv,
+            hv,
+            welltrajcolor=welltrajcolor,
+            linewidth=welltrajwidth
+        )
 
         if zonelogname:
             ax, bba = self._currentax(axisname="main")
@@ -421,13 +428,13 @@ class XSection(BasePlot):
         if wellcrossings is not None:
             self._plot_well_crossings(dfr, axx, wellcrossings)
 
-    def _plot_well_traj(self, ax, zv, hv, welltrajcolor):
+    def _plot_well_traj(self, ax, zv, hv, welltrajcolor, linewidth):
         """Plot the trajectory as a black line"""
 
         zv_copy = ma.masked_where(zv < self._zmin, zv)
         hv_copy = ma.masked_where(zv < self._zmin, hv)
 
-        ax.plot(hv_copy, zv_copy, linewidth=6, c=welltrajcolor)
+        ax.plot(hv_copy, zv_copy, linewidth=linewidth, c=welltrajcolor)
 
     @staticmethod
     def _line_segments_colors(df, idx, ctable, logname, fillnavalue):
