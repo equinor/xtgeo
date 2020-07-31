@@ -258,27 +258,14 @@ class XSection(BasePlot):
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1["main"] = plt.subplot2grid(
-            (20, 28),
-            (0, 0),
-            rowspan=20,
-            colspan=23
-        )
+        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
         ax2 = plt.subplot2grid(
-            (20, 28),
-            (10, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (10, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         ax3 = plt.subplot2grid(
-            (20, 28),
-            (15, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (15, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         if self._has_legend:
@@ -373,7 +360,7 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor='b'
+        welltrajcolor="b",
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -843,12 +830,7 @@ class XSection(BasePlot):
             self._fig.colorbar(img, ax=ax)
 
     def plot_grid3d(
-        self,
-        colormap="rainbow",
-        vmin=None,
-        vmax=None,
-        alpha=0.7,
-        zinc=0.5
+        self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7, zinc=0.5
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
@@ -913,7 +895,7 @@ class XSection(BasePlot):
         colormap=None,
         onecolor=None,
         linewidth=1.0,
-        linestyle='-',
+        linestyle="-",
         legend=True,
         legendtitle=None,
         fancyline=False,
@@ -991,7 +973,7 @@ class XSection(BasePlot):
                     linewidth=linewidth,
                     c=usecolor,
                     label=slegend[i],
-                    linestyle=linestyle
+                    linestyle=linestyle,
                 )
                 if fancyline:
                     ax.plot(
@@ -1008,7 +990,9 @@ class XSection(BasePlot):
                 else:
                     y2 = y1.copy()
 
-                ax.plot(x1, y1, linewidth=0.1 * linewidth, linestyle=linestyle, c="black")
+                ax.plot(
+                    x1, y1, linewidth=0.1 * linewidth, linestyle=linestyle, c="black"
+                )
                 ax.fill_between(x1, y1, y2, facecolor=colortable[i], label=slegend[i])
 
         # invert min,max to invert the Y axis
