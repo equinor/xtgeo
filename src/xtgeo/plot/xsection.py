@@ -258,27 +258,14 @@ class XSection(BasePlot):
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1["main"] = plt.subplot2grid(
-            (20, 28),
-            (0, 0),
-            rowspan=20,
-            colspan=23
-        )
+        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
         ax2 = plt.subplot2grid(
-            (20, 28),
-            (10, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (10, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         ax3 = plt.subplot2grid(
-            (20, 28),
-            (15, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (15, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         if self._has_legend:
@@ -373,7 +360,7 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor='b'
+        welltrajcolor="b",
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -843,12 +830,7 @@ class XSection(BasePlot):
             self._fig.colorbar(img, ax=ax)
 
     def plot_grid3d(
-        self,
-        colormap="rainbow",
-        vmin=None,
-        vmax=None,
-        alpha=0.7,
-        zinc=0.5
+        self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7, zinc=0.5
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
@@ -1027,7 +1009,7 @@ class XSection(BasePlot):
         self,
         data=None,
         markersize=10,
-        color='red',
+        color="red",
         linestyle="",
         label=False,
         zorder=350,
@@ -1050,8 +1032,8 @@ class XSection(BasePlot):
         del data_well["WELL"]
 
         md_start = well.dataframe["MDEPTH"].iloc[0]
-        data_well['R_HLEN'] = data_well['MDEPTH']
-        data_well['R_HLEN'] = data_well['R_HLEN'].subtract(md_start)
+        data_well["R_HLEN"] = data_well["MDEPTH"]
+        data_well["R_HLEN"] = data_well["R_HLEN"].subtract(md_start)
 
         data_well.plot(
             ax=ax,
