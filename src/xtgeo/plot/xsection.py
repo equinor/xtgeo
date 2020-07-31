@@ -437,7 +437,7 @@ class XSection(BasePlot):
                 axx,
                 wellcrossings,
                 wellcrossingnames,
-                wellcrossingyear
+                wellcrossingyears
             )
 
     def set_xaxis_md(self, gridlines=False):
@@ -682,7 +682,7 @@ class XSection(BasePlot):
             self._drawproxylegend(ax, bba, items=pcolors, title="Perforations")
 
     @staticmethod
-    def _plot_well_crossings(dfr, ax, wcross, names=True, year=False):
+    def _plot_well_crossings(dfr, ax, wcross, names=True, years=False):
         """Plot well crossing based on dataframe (wcross)
 
         The well crossing coordinates are identified for this well,
@@ -697,14 +697,14 @@ class XSection(BasePlot):
         * Coordinate Z named Z_TVDSS
 
         Optional column:
-        * Drilled year of crossing well CYEAR
+        * Drilled year of crossing well named CYEAR
 
         Args:
             dfr: Well dataframe
             ax: current axis
             wcross: A pandas dataframe with precomputed well crossings
             names: Display the names of the crossed wells
-            year: Display the drilled year of the crossed wells
+            years: Display the drilled year of the crossed wells
         """
 
         placings = {
@@ -750,13 +750,13 @@ class XSection(BasePlot):
             if names:
                 text = Well.get_short_wellname(row.CWELL)
 
-            if year:
+            if years:
                 if names:
-                    text = text + '\n' + row.CYEAR
+                    text = text + "\n" + row.CYEAR
                 else:
                     text = row.CYEAR
             
-            if names or year:
+            if names or years:
                 ax.annotate(
                     text,
                     size=6,
