@@ -46,7 +46,6 @@ def test_xyz():
         myxyz = XYZ()
     except TypeError as tt:
         ok = True
-        logger.info(tt)
         assert "abstract" in str(tt)
     else:
         logger.info(myxyz)
@@ -72,10 +71,7 @@ def test_import():
 
     mypoints = Points(PFILE)  # should guess based on extesion
 
-    logger.debug(mypoints.dataframe)
-
     x0 = mypoints.dataframe["X_UTME"].values[0]
-    logger.debug(x0)
     tsetup.assert_almostequal(x0, 460842.434326, 0.001)
 
 
@@ -102,11 +98,6 @@ def test_import_zmap_and_xyz():
     assert mypol2a.nrow == mypol2b.nrow
     assert mypol2b.nrow == mypol2c.nrow
 
-    logger.info(mypol2a.nrow, mypol2b.nrow)
-
-    logger.info(mypol2a.dataframe)
-    logger.info(mypol2b.dataframe)
-
     for col in ["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]:
         status = np.allclose(
             mypol2a.dataframe[col].values, mypol2b.dataframe[col].values
@@ -122,9 +113,6 @@ def test_import_rmsattr_format():
 
     mypoi.from_file(POINTSET3, fformat="rms_attr")
 
-    logger.info(id(mypoi))
-    logger.info(mypoi._df.head())
-    # print(mypoi.dataframe.columns[3:])
     print(mypoi.dataframe["VerticalSep"].dtype)
     mypoi.to_file("TMP/attrs.rmsattr", fformat="rms_attr")
 
@@ -137,7 +125,6 @@ def test_export_points_rmsattr():
     mypoints.to_file(join(TMPD, "poi_export1.rmsattr"), fformat="rms_attr")
     mypoints2 = Points(join(TMPD, "poi_export1.rmsattr"))
 
-    logger.info(mypoints2.dataframe)
     assert mypoints.dataframe["Seg"].equals(mypoints2.dataframe["Seg"])
     assert mypoints.dataframe["MyNum"].equals(mypoints2.dataframe["MyNum"])
 
@@ -152,8 +139,6 @@ def test_import_export_polygons():
     z0 = mypoly.dataframe["Z_TVDSS"].values[0]
 
     tsetup.assert_almostequal(z0, 2266.996338, 0.001)
-
-    logger.debug(mypoly.dataframe)
 
     mypoly.dataframe["Z_TVDSS"] += 100
 
@@ -231,19 +216,16 @@ def test_points_in_polygon():
     poi = Points(POINTSET2)
     pol = Polygons(POLSET2)
     assert poi.nrow == 30
-    logger.info(poi.dataframe)
 
     # remove points in polygon
     poi.operation_polygons(pol, 0, opname="eli", where=True)
 
-    logger.info(poi.dataframe)
     assert poi.nrow == 19
     poi.to_file(join(TMPD, "poi_test.poi"))
 
     poi = Points(POINTSET2)
     # remove points outside polygon
     poi.operation_polygons(pol, 0, opname="eli", inside=False, where=True)
-    logger.info(poi.dataframe)
     assert poi.nrow == 1
 
 
