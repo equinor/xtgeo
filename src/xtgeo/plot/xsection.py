@@ -421,11 +421,7 @@ class XSection(BasePlot):
 
         axx, _bbxa = self._currentax(axisname="well")
         self._plot_well_traj(
-            axx,
-            zv,
-            hv,
-            welltrajcolor=welltrajcolor,
-            linewidth=welltrajwidth
+            axx, zv, hv, welltrajcolor=welltrajcolor, linewidth=welltrajwidth
         )
 
         if zonelogname:
