@@ -66,7 +66,7 @@ def test_grid_inactivate_inside():
 
     # assert int(act1[20, 38, 4]) == int(act2[20, 38, 4])
 
-    print(np.sum(act1), np.sum(act2))
+    #print(np.sum(act1), np.sum(act2))
 
 
 def test_grid_inactivate_outside():
@@ -92,4 +92,4 @@ def test_grid_inactivate_outside():
 
     assert int(act1[20, 38, 4]) == int(act2[20, 38, 4])
 
-    logger.info(np.sum(act1), np.sum(act2))
+    # logger.info(np.sum(act1), np.sum(act2))
