@@ -7,7 +7,7 @@ from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
-path = 'TMP'
+path = "TMP"
 try:
     os.makedirs(path)
 except OSError:
@@ -33,17 +33,17 @@ def test_get_polygons_one_well():
 
     wlist = []
     for w in glob.glob(wfiles1):
-        wlist.append(Well(w, zonelogname='Zonelog'))
-        logger.info('Imported well {}'.format(w))
+        wlist.append(Well(w, zonelogname="Zonelog"))
+        logger.info("Imported well {}".format(w))
 
     mypoly = Polygons()
     nwell = mypoly.from_wells(wlist, 2)
 
     print(mypoly.dataframe)
 
-    logger.info('Number of well made to tops: {}'.format(nwell))
+    logger.info("Number of well made to tops: {}".format(nwell))
 
-    mypoly.to_file('TMP/poly_w1.irapasc')
+    mypoly.to_file("TMP/poly_w1.irapasc")
 
 
 @tsetup.skipifroxar
@@ -52,14 +52,14 @@ def test_get_polygons_many_wells():
 
     wlist = []
     for w in glob.glob(wfiles2):
-        wlist.append(Well(w, zonelogname='Zonelog'))
-        print('Imported well {}'.format(w))
+        wlist.append(Well(w, zonelogname="Zonelog"))
+        print("Imported well {}".format(w))
 
     mypoly = Polygons()
     nwell = mypoly.from_wells(wlist, 2, resample=10)
 
     print(mypoly.dataframe)
 
-    print('Number of well made to tops: {}'.format(nwell))
+    print("Number of well made to tops: {}".format(nwell))
 
-    mypoly.to_file('TMP/poly_w1_many.irapasc')
+    mypoly.to_file("TMP/poly_w1_many.irapasc")

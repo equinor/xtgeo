@@ -12,6 +12,7 @@ import test_common.test_xtg as tsetup
 roxver = None
 try:
     import roxar
+
     roxver = roxar.__version__
     import _roxar
 except ImportError:
@@ -30,10 +31,10 @@ testpath = xtg.testpath
 # =============================================================================
 
 PROJ = {}
-PROJ['1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.1'
-PROJ['1.1.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.3'
-PROJ['1.2.1'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.1'
-PROJ['1.3'] = '../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.1.0'
+PROJ["1.1"] = "../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.1"
+PROJ["1.1.1"] = "../xtgeo-testdata-equinor/data/rmsprojects/reek.rms10.1.3"
+PROJ["1.2.1"] = "../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.0.1"
+PROJ["1.3"] = "../xtgeo-testdata-equinor/data/rmsprojects/reek.rms11.1.0"
 
 
 @pytest.fixture()
@@ -42,8 +43,9 @@ def load_reek():
 
     print(roxver)
     if not os.path.isdir(PROJ[roxver]):
-        raise RuntimeError('RMS test project is missing for roxar version {}'
-                           .format(roxver))
+        raise RuntimeError(
+            "RMS test project is missing for roxar version {}".format(roxver)
+        )
     return RoxUtils(PROJ[roxver])
 
 

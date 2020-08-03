@@ -2,6 +2,7 @@
 import sys
 import xtgeo.plot._colortables as ct
 from xtgeo.common import XTGeoDialog
+
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
@@ -19,7 +20,7 @@ testpath = xtg.testpath
 def test_readfromfile():
     """Read color table from RMS file."""
 
-    cfile = '../xtgeo-testdata/etc/colortables/colfacies.txt'
+    cfile = "../xtgeo-testdata/etc/colortables/colfacies.txt"
 
     ctable = ct.colorsfromfile(cfile)
 

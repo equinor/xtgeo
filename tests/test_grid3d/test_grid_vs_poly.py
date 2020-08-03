@@ -14,7 +14,7 @@ if not xtg.testsetup():
 td = xtg.tmpdir
 testpath = xtg.testpath
 
-if 'XTG_SHOW' in os.environ:
+if "XTG_SHOW" in os.environ:
     xtgshow = True
 else:
     xtgshow = False
@@ -24,8 +24,8 @@ else:
 # Do tests
 # =============================================================================
 
-reekgrid = '../xtgeo-testdata/3dgrids/reek/REEK.EGRID'
-reekpoly = '../xtgeo-testdata/polygons/reek/1/mypoly.pol'
+reekgrid = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
+reekpoly = "../xtgeo-testdata/polygons/reek/1/mypoly.pol"
 
 
 def test_grid_inactivate_inside():
@@ -43,7 +43,7 @@ def test_grid_inactivate_inside():
     except RuntimeError as rw:
         print(rw)
 
-    g1.to_file(os.path.join(td, 'reek_inact_ins_pol.roff'))
+    g1.to_file(os.path.join(td, "reek_inact_ins_pol.roff"))
 
     # geom = g1.get_geometrics(return_dict=True)
 
@@ -66,7 +66,7 @@ def test_grid_inactivate_inside():
 
     # assert int(act1[20, 38, 4]) == int(act2[20, 38, 4])
 
-    #print(np.sum(act1), np.sum(act2))
+    # print(np.sum(act1), np.sum(act2))
 
 
 def test_grid_inactivate_outside():
@@ -84,7 +84,7 @@ def test_grid_inactivate_outside():
     except RuntimeError as rw:
         print(rw)
 
-    g1.to_file(os.path.join(td, 'reek_inact_out_pol.roff'))
+    g1.to_file(os.path.join(td, "reek_inact_out_pol.roff"))
 
     act2 = g1.get_actnum().values3d
     n2 = act2[3, 56, 1]

@@ -56,9 +56,7 @@ def test_randomline_fence_from_well():
         import matplotlib.pyplot as plt
 
         plt.figure()
-        plt.imshow(
-            por, cmap="rainbow", extent=(hmin, hmax, vmax, vmin)
-        )
+        plt.imshow(por, cmap="rainbow", extent=(hmin, hmax, vmax, vmin))
         plt.axis("tight")
         plt.colorbar()
         plt.show()

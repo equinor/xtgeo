@@ -4,4 +4,4 @@
 
 def pytest_runtest_setup(item):
     # called for running each test in 'a' directory
-    print ("\nSetting up test\n", item)
+    print("\nSetting up test\n", item)

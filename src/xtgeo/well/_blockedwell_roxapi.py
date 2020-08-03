@@ -37,9 +37,7 @@ def import_bwell_roxapi(
     rox.safe_close()
 
 
-def export_bwell_roxapi(
-    self, project, gname, bwname, wname, realisation=0
-):
+def export_bwell_roxapi(self, project, gname, bwname, wname, realisation=0):
     """Private function for loading project and ROXAPI blockwell import"""
 
     logger.info("Opening RMS project ...")
