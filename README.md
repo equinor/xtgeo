@@ -1,5 +1,6 @@
 ![XTGeo](https://github.com/equinor/xtgeo/blob/master/docs/images/xtgeo-logo-wide.png)
-![Run CI tests](https://github.com/equinor/xtgeo/workflows/Run%20CI%20tests/badge.svg)
+![builds](https://github.com/equinor/xtgeo/workflows/builds/badge.svg)
+![linting](https://github.com/equinor/xtgeo/workflows/linting/badge.svg)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c209aeed6a2a40b08ea859aeadf31cb0)](https://www.codacy.com/app/jcrivenaes/xtgeo?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=equinor/xtgeo&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/equinor/xtgeo/branch/master/graph/badge.svg)](https://codecov.io/gh/equinor/xtgeo)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
