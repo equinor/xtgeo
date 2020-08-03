@@ -1,4 +1,4 @@
-name: builds
+name: buildsall
 
 on:
   pull_request:
