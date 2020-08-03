@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from collections import OrderedDict
 
+import math
 import numpy.ma as ma
 import numpy as np
 import pandas as pd
@@ -72,6 +73,7 @@ class XSection(BasePlot):
         self._zonelogshift = zonelogshift
         self._outline = outline
 
+        self._has_axes = True
         self._has_legend = True
 
         self._pagesize = "A4"
@@ -137,6 +139,19 @@ class XSection(BasePlot):
             raise ValueError("Input is not a bool")
 
         self._has_legend = value
+
+    @property
+    def has_axes(self):
+        """Returns or set the axes status"""
+        return self._has_axes
+
+    @has_axes.setter
+    def has_axes(self, value):
+        """Returns or set the axes status"""
+        if not isinstance(value, bool):
+            raise ValueError("Input is not a bool")
+
+        self._has_axes = value
 
     @property
     def colormap_facies(self):
@@ -254,31 +269,26 @@ class XSection(BasePlot):
 
         plt.rcParams["axes.xmargin"] = 0  # fill the plot margins
 
+        if not self._has_axes:
+            plt.rcParams["axes.titlecolor"] = (0, 0, 0, 0)
+            plt.rcParams["axes.edgecolor"] = (0, 0, 0, 0)
+            plt.rcParams["axes.labelcolor"] = (0, 0, 0, 0)
+            plt.rcParams["axes.titlecolor"] = (0, 0, 0, 0)
+            plt.rcParams["xtick.color"] = (0, 0, 0, 0)
+            plt.rcParams["ytick.color"] = (0, 0, 0, 0)
+
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1["main"] = plt.subplot2grid(
-            (20, 28),
-            (0, 0),
-            rowspan=20,
-            colspan=23
-        )
+        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
         ax2 = plt.subplot2grid(
-            (20, 28),
-            (10, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (10, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         ax3 = plt.subplot2grid(
-            (20, 28),
-            (15, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (15, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         if self._has_legend:
@@ -373,7 +383,7 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor='b'
+        welltrajcolor="b",
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -420,6 +430,40 @@ class XSection(BasePlot):
 
         if wellcrossings is not None:
             self._plot_well_crossings(dfr, axx, wellcrossings)
+
+    def set_xaxis_md(self, gridlines=False):
+        """Set x-axis labels to measured depth."""
+
+        md_start = self._well.dataframe["MDEPTH"].iloc[0]
+        md_start_round = int(math.floor(md_start / 100.0)) * 100
+        md_start_delta = md_start - md_start_round
+
+        auto_ticks = plt.xticks()
+        auto_ticks_delta = auto_ticks[0][1] - auto_ticks[0][0]
+
+        ax, bba = self._currentax(axisname="main")
+        lim = ax.get_xlim()
+
+        new_ticks = []
+        new_tick_labels = []
+        delta = 0
+        for tick in auto_ticks[0]:
+            new_ticks.append(int(float(tick) - md_start_delta))
+            new_tick_labels.append(int(md_start_round + delta))
+            delta += auto_ticks_delta
+
+        # Set new xticks and labels
+        plt.xticks(new_ticks, new_tick_labels)
+
+        if gridlines:
+            ax.tick_params(axis="y", direction="in", which="both")
+            ax.minorticks_on()
+            ax.grid(color="black", linewidth=0.8, which="major", linestyle='-')
+            ax.grid(color="black", linewidth=0.5, which="minor", linestyle='--')
+
+        # Restore xaxis limits and set axis title
+        ax.set_xlim(lim)
+        ax.set_xlabel("Measured Depth [m]", fontsize=12)
 
     def _plot_well_traj(self, ax, zv, hv, welltrajcolor):
         """Plot the trajectory as a black line"""
@@ -843,12 +887,7 @@ class XSection(BasePlot):
             self._fig.colorbar(img, ax=ax)
 
     def plot_grid3d(
-        self,
-        colormap="rainbow",
-        vmin=None,
-        vmax=None,
-        alpha=0.7,
-        zinc=0.5
+        self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7, zinc=0.5
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
@@ -913,6 +952,7 @@ class XSection(BasePlot):
         colormap=None,
         onecolor=None,
         linewidth=1.0,
+        linestyle="-",
         legend=True,
         legendtitle=None,
         fancyline=False,
@@ -990,6 +1030,7 @@ class XSection(BasePlot):
                     linewidth=linewidth,
                     c=usecolor,
                     label=slegend[i],
+                    linestyle=linestyle,
                 )
                 if fancyline:
                     ax.plot(
@@ -1006,7 +1047,9 @@ class XSection(BasePlot):
                 else:
                     y2 = y1.copy()
 
-                ax.plot(x1, y1, linewidth=0.1 * linewidth, c="black")
+                ax.plot(
+                    x1, y1, linewidth=0.1 * linewidth, linestyle=linestyle, c="black"
+                )
                 ax.fill_between(x1, y1, y2, facecolor=colortable[i], label=slegend[i])
 
         # invert min,max to invert the Y axis
@@ -1022,6 +1065,49 @@ class XSection(BasePlot):
 
         if axisname == "main" and gridlines:
             ax.grid(color="grey", linewidth=0.2)
+
+    def plot_md_data(
+        self,
+        data=None,
+        markersize=10,
+        color="red",
+        linestyle="",
+        label=False,
+        zorder=350,
+        **kwargs
+    ):
+        """
+        Plot MD vs TVD data as lines and/or markers
+
+        The input pandas dataframe points shall have the following columns:
+        * Name of well(s) named WELL
+        * Coordinate X named MDEPTH
+        * Coordinate Y named Z_TVDSS
+        """
+
+        ax, bba = self._currentax(axisname="main")
+
+        well = self._well
+        data_well = data.copy()
+        data_well = data_well.loc[data_well["WELL"] == well.xwellname]
+        del data_well["WELL"]
+
+        md_start = well.dataframe["MDEPTH"].iloc[0]
+        data_well["R_HLEN"] = data_well["MDEPTH"]
+        data_well["R_HLEN"] = data_well["R_HLEN"].subtract(md_start)
+
+        data_well.plot(
+            ax=ax,
+            x="R_HLEN",
+            y="Z_TVDSS",
+            legend=None,
+            linestyle=linestyle,
+            markersize=markersize,
+            color=color,
+            label=label,
+            zorder=zorder,
+            **kwargs
+        )
 
     def plot_wellmap(self, otherwells=None, expand=1):
         """Plot well map as local view, optionally with nearby wells.
