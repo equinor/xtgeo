@@ -385,8 +385,8 @@ class XSection(BasePlot):
         perflogname=None,
         wellcrossings=None,
         wellcrossingnames=True,
-        wellcrossingyear=False,
-        welltrajcolor="b"
+        wellcrossingyears=False,
+        welltrajcolor="b",
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -433,11 +433,7 @@ class XSection(BasePlot):
 
         if wellcrossings is not None:
             self._plot_well_crossings(
-                dfr,
-                axx,
-                wellcrossings,
-                wellcrossingnames,
-                wellcrossingyears
+                dfr, axx, wellcrossings, wellcrossingnames, wellcrossingyears
             )
 
     def set_xaxis_md(self, gridlines=False):
@@ -755,7 +751,7 @@ class XSection(BasePlot):
                     text = text + "\n" + row.CYEAR
                 else:
                     text = row.CYEAR
-            
+
             if names or years:
                 ax.annotate(
                     text,
