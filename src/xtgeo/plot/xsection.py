@@ -281,27 +281,14 @@ class XSection(BasePlot):
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1["main"] = plt.subplot2grid(
-            (20, 28),
-            (0, 0),
-            rowspan=20,
-            colspan=23
-        )
+        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
         ax2 = plt.subplot2grid(
-            (20, 28),
-            (10, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (10, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         ax3 = plt.subplot2grid(
-            (20, 28),
-            (15, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (15, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         if self._has_legend:
@@ -396,7 +383,7 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor='b'
+        welltrajcolor="b",
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -900,12 +887,7 @@ class XSection(BasePlot):
             self._fig.colorbar(img, ax=ax)
 
     def plot_grid3d(
-        self,
-        colormap="rainbow",
-        vmin=None,
-        vmax=None,
-        alpha=0.7,
-        zinc=0.5
+        self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7, zinc=0.5
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
@@ -1079,6 +1061,49 @@ class XSection(BasePlot):
 
         if axisname == "main" and gridlines:
             ax.grid(color="grey", linewidth=0.2)
+
+    def plot_md_data(
+        self,
+        data=None,
+        markersize=10,
+        color="red",
+        linestyle="",
+        label=False,
+        zorder=350,
+        **kwargs
+    ):
+        """
+        Plot MD vs TVD data as lines and/or markers
+
+        The input pandas dataframe points shall have the following columns:
+        * Name of well(s) named WELL
+        * Coordinate X named MDEPTH
+        * Coordinate Y named Z_TVDSS
+        """
+
+        ax, bba = self._currentax(axisname="main")
+
+        well = self._well
+        data_well = data.copy()
+        data_well = data_well.loc[data_well["WELL"] == well.xwellname]
+        del data_well["WELL"]
+
+        md_start = well.dataframe["MDEPTH"].iloc[0]
+        data_well["R_HLEN"] = data_well["MDEPTH"]
+        data_well["R_HLEN"] = data_well["R_HLEN"].subtract(md_start)
+
+        data_well.plot(
+            ax=ax,
+            x="R_HLEN",
+            y="Z_TVDSS",
+            legend=None,
+            linestyle=linestyle,
+            markersize=markersize,
+            color=color,
+            label=label,
+            zorder=zorder,
+            **kwargs
+        )
 
     def plot_wellmap(self, otherwells=None, expand=1):
         """Plot well map as local view, optionally with nearby wells.
