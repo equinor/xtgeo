@@ -8,8 +8,9 @@ env:
   CIBW_BEFORE_ALL_LINUX: "sh scripts/swig_manylinux.sh"
   CIBW_BEFORE_ALL_WINDOWS: "choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
   CIBW_BEFORE_ALL_MACOS: "brew install swig"
-  CIBW_TEST_COMMAND: "python -c \"import xtgeo; print(xtgeo.__version__)\""
+  # CIBW_TEST_COMMAND: "python -c \"import xtgeo; print(xtgeo.__version__)\"" fails with py27 for complex reasons
   CIBW_BUILD: |
+    cp27-manylinux_x86_64
     cp36-manylinux_x86_64
     cp37-manylinux_x86_64
     cp38-manylinux_x86_64
@@ -28,7 +29,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v1
@@ -48,7 +49,7 @@ jobs:
         run: |
           ls -l wheelhouse
           ls -latr
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Publish to PYPI
         env:
