@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from collections import OrderedDict
 
+import math
 import numpy.ma as ma
 import numpy as np
 import pandas as pd
@@ -442,6 +443,40 @@ class XSection(BasePlot):
 
         if wellcrossings is not None:
             self._plot_well_crossings(dfr, axx, wellcrossings)
+
+    def set_xaxis_md(self, gridlines=False):
+        """Set x-axis labels to measured depth."""
+
+        md_start = self._well.dataframe["MDEPTH"].iloc[0]
+        md_start_round = int(math.floor(md_start / 100.0)) * 100
+        md_start_delta = md_start - md_start_round
+
+        auto_ticks = plt.xticks()
+        auto_ticks_delta = auto_ticks[0][1] - auto_ticks[0][0]
+
+        ax, bba = self._currentax(axisname="main")
+        lim = ax.get_xlim()
+
+        new_ticks = []
+        new_tick_labels = []
+        delta = 0
+        for tick in auto_ticks[0]:
+            new_ticks.append(int(float(tick) - md_start_delta))
+            new_tick_labels.append(int(md_start_round + delta))
+            delta += auto_ticks_delta
+
+        # Set new xticks and labels
+        plt.xticks(new_ticks, new_tick_labels)
+
+        if gridlines:
+            ax.tick_params(axis="y", direction="in", which="both")
+            ax.minorticks_on()
+            ax.grid(color="black", linewidth=0.8, which="major", linestyle='-')
+            ax.grid(color="black", linewidth=0.5, which="minor", linestyle='--')
+
+        # Restore xaxis limits and set axis title
+        ax.set_xlim(lim)
+        ax.set_xlabel("Measured Depth [m]", fontsize=12)
 
     def _plot_well_traj(self, ax, zv, hv, welltrajcolor):
         """Plot the trajectory as a black line"""
