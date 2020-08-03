@@ -57,9 +57,15 @@ def test_hcpvfz1():
     xinc = (xmax - xmin) / 50
     yinc = (ymax - ymin) / 50
 
-    logger.debug("xmin xmax ymin ymax, xinc, yinc: %s %s %s %s %s %s",
-                 xmin, xmax, ymin, ymax, xinc, yinc
-                 )
+    logger.debug(
+        "xmin xmax ymin ymax, xinc, yinc: %s %s %s %s %s %s",
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        xinc,
+        yinc,
+    )
 
     hcmap = RegularSurface(
         nx=50,

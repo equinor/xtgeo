@@ -458,8 +458,8 @@ class XSection(BasePlot):
         if gridlines:
             ax.tick_params(axis="y", direction="in", which="both")
             ax.minorticks_on()
-            ax.grid(color="black", linewidth=0.8, which="major", linestyle='-')
-            ax.grid(color="black", linewidth=0.5, which="minor", linestyle='--')
+            ax.grid(color="black", linewidth=0.8, which="major", linestyle="-")
+            ax.grid(color="black", linewidth=0.5, which="minor", linestyle="--")
 
         # Restore xaxis limits and set axis title
         ax.set_xlim(lim)

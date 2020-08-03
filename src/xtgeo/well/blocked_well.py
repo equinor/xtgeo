@@ -194,10 +194,5 @@ class BlockedWell(Well):
         realisation = kwargs.get("realisation", 0)
 
         _blockedwell_roxapi.export_bwell_roxapi(
-            self,
-            project,
-            gname,
-            bwname,
-            wname,
-            realisation=realisation,
+            self, project, gname, bwname, wname, realisation=realisation,
         )

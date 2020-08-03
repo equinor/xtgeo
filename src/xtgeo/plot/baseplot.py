@@ -113,8 +113,7 @@ class BasePlot(object):
         else:
             xtg.warnuser(
                 "Trying to access as color map not installed in "
-                "this version of matplotlib: <{}>. Revert to <rainbow>".
-                format(cfile)
+                "this version of matplotlib: <{}>. Revert to <rainbow>".format(cfile)
             )
             cmap = plt.get_cmap("rainbow")
             for i in range(cmap.N):

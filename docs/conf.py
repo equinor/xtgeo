@@ -25,9 +25,9 @@ extensions = [
     "m2r",
 ]
 
-apidoc_module_dir = '../src/xtgeo'
-apidoc_output_dir = 'apiref'
-apidoc_excluded_paths = ['tests']
+apidoc_module_dir = "../src/xtgeo"
+apidoc_output_dir = "apiref"
+apidoc_excluded_paths = ["tests"]
 apidoc_separate_modules = True
 apidoc_module_first = True
 apidoc_extra_args = ["-H", "XTGeo API description"]
@@ -54,7 +54,7 @@ pygments_style = "sphinx"
 html_theme = "sphinx_rtd_theme"
 
 html_theme_options = {
-    'style_nav_header_background': '#C0C0C0',
+    "style_nav_header_background": "#C0C0C0",
 }
 
 

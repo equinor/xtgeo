@@ -17,14 +17,14 @@ if not xtg.testsetup():
 # Do tests
 # =============================================================================
 
-SURF1 = '../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri'
-POLY1 = '../xtgeo-testdata/polygons/reek/1/closedpoly1.pol'
+SURF1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
+POLY1 = "../xtgeo-testdata/polygons/reek/1/closedpoly1.pol"
 
 
 def test_operations_inside_outside_polygon_generic():
     """Do perations in relation to polygons in a generic way"""
 
-    logger.info('Simple case...')
+    logger.info("Simple case...")
 
     surf = xtgeo.surface.RegularSurface(SURF1)
     tsetup.assert_almostequal(surf.values.mean(), 1698.65, 0.01)
@@ -59,8 +59,8 @@ def test_operations_inside_outside_polygon_shortforms():
     # divide on zero
     surf = zurf.copy()
     surf.div_inside(poly, 0.0)
-    surf.to_file('TMP/div2.gri')
-    surf.to_file('TMP/div2.fgr', fformat='irap_ascii')
+    surf.to_file("TMP/div2.gri")
+    surf.to_file("TMP/div2.fgr", fformat="irap_ascii")
 
     # set inside
     surf = zurf.copy()

@@ -19,13 +19,13 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TESTPATH = '../xtgeo-testdata-equinor/data/rmsprojects'
+TESTPATH = "../xtgeo-testdata-equinor/data/rmsprojects"
 
 PROJ = dict()
-PROJ['1.1'] = os.path.join(TESTPATH, 'reek.rms10.1.1')
-PROJ['1.1.1'] = os.path.join(TESTPATH, 'reek.rms10.1.3')
-PROJ['1.2.1'] = os.path.join(TESTPATH, 'reek.rms11.0.1')
-PROJ['1.3'] = os.path.join(TESTPATH, 'reek.rms11.1.0')
+PROJ["1.1"] = os.path.join(TESTPATH, "reek.rms10.1.1")
+PROJ["1.1.1"] = os.path.join(TESTPATH, "reek.rms10.1.3")
+PROJ["1.2.1"] = os.path.join(TESTPATH, "reek.rms11.0.1")
+PROJ["1.3"] = os.path.join(TESTPATH, "reek.rms11.1.0")
 
 
 @tsetup.equinor
@@ -34,11 +34,10 @@ def test_rox_get_blockedwell():
     """Get a blocked well from a RMS project."""
     from roxar import __version__ as ver
 
-    logger.info('Project is {}'.format(PROJ[ver]))
+    logger.info("Project is {}".format(PROJ[ver]))
 
     bwell = xtgeo.well.BlockedWell()
-    bwell.from_roxar(PROJ[ver], 'Reek_geo', 'BW', 'OP_1', ijk=False,
-                     lognames=['Poro'])
+    bwell.from_roxar(PROJ[ver], "Reek_geo", "BW", "OP_1", ijk=False, lognames=["Poro"])
     logger.info(bwell.dataframe.head())
 
 
@@ -48,8 +47,9 @@ def test_rox_get_blockedwell_oneliner():
     """Get a blocked well from a RMS project using a oneliner."""
     from roxar import __version__ as ver
 
-    logger.info('Project is {}'.format(PROJ[ver]))
+    logger.info("Project is {}".format(PROJ[ver]))
 
-    bwell = xtgeo.blockedwell_from_roxar(PROJ[ver], 'Reek_geo', 'BW', 'OP_1',
-                                         ijk=False, lognames=['Poro'])
+    bwell = xtgeo.blockedwell_from_roxar(
+        PROJ[ver], "Reek_geo", "BW", "OP_1", ijk=False, lognames=["Poro"]
+    )
     logger.info(bwell.dataframe.head())

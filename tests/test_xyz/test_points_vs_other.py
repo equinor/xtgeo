@@ -18,9 +18,9 @@ TSTPATH = xtg.testpath
 # Do tests
 # =========================================================================
 
-SFILE1A = join(TSTPATH, 'surfaces/reek/1/topupperreek.gri')
-SFILE2A = join(TSTPATH, 'surfaces/reek/2/01_topreek_rota.gri')
-PFILE3 = join(TSTPATH, 'points/reek/1/pointset3.poi')
+SFILE1A = join(TSTPATH, "surfaces/reek/1/topupperreek.gri")
+SFILE2A = join(TSTPATH, "surfaces/reek/2/01_topreek_rota.gri")
+PFILE3 = join(TSTPATH, "points/reek/1/pointset3.poi")
 
 
 def test_snap_to_surface():
