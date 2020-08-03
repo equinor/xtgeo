@@ -306,24 +306,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         E.g.: '31/2-G-5 AH' -> 'G-5AH', '6472_11-F-23_AH_T2' -> 'F-23AHT2'
 
         """
-        newname = []
-        first1 = False
-        first2 = False
-        for letter in self.wellname:
-            if first1 and first2:
-                newname.append(letter)
-                continue
-            if letter in ("_", "/"):
-                first1 = True
-                continue
-            if first1 and letter == "-":
-                first2 = True
-                continue
-
-        xname = "".join(newname)
-        xname = xname.replace("_", "")
-        xname = xname.replace(" ", "")
-        return xname
+        return self.get_short_wellname(self.wellname)
 
     @property
     def truewellname(self):
@@ -399,6 +382,32 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     # ==================================================================================
     # Methods
     # ==================================================================================
+
+    @staticmethod
+    def get_short_wellname(wellname):
+        """Returns well name on a short name form where blockname and spaces
+        are removed (read only).
+        This should cope with both North Sea style and Haltenbanken style.
+        E.g.: '31/2-G-5 AH' -> 'G-5AH', '6472_11-F-23_AH_T2' -> 'F-23AHT2'
+        """
+        newname = []
+        first1 = False
+        first2 = False
+        for letter in wellname:
+            if first1 and first2:
+                newname.append(letter)
+                continue
+            if letter in ("_", "/"):
+                first1 = True
+                continue
+            if first1 and letter == "-":
+                first2 = True
+                continue
+
+        xname = "".join(newname)
+        xname = xname.replace("_", "")
+        xname = xname.replace(" ", "")
+        return xname
 
     def from_file(
         self,
