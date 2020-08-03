@@ -258,27 +258,14 @@ class XSection(BasePlot):
         self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
-        ax1["main"] = plt.subplot2grid(
-            (20, 28),
-            (0, 0),
-            rowspan=20,
-            colspan=23
-        )
+        ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
 
         ax2 = plt.subplot2grid(
-            (20, 28),
-            (10, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (10, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         ax3 = plt.subplot2grid(
-            (20, 28),
-            (15, 23),
-            rowspan=5,
-            colspan=5,
-            frame_on=self._has_legend
+            (20, 28), (15, 23), rowspan=5, colspan=5, frame_on=self._has_legend
         )
 
         if self._has_legend:
@@ -373,7 +360,8 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor='b'
+        welltrajcolor="black",
+        welltrajwidth=6,
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -409,7 +397,9 @@ class XSection(BasePlot):
             self._plot_well_faclog(dfr, ax, bba, facieslogname, legend=self._has_legend)
 
         axx, _bbxa = self._currentax(axisname="well")
-        self._plot_well_traj(axx, zv, hv, welltrajcolor=welltrajcolor)
+        self._plot_well_traj(
+            axx, zv, hv, welltrajcolor=welltrajcolor, linewidth=welltrajwidth
+        )
 
         if zonelogname:
             ax, bba = self._currentax(axisname="main")
@@ -421,13 +411,13 @@ class XSection(BasePlot):
         if wellcrossings is not None:
             self._plot_well_crossings(dfr, axx, wellcrossings)
 
-    def _plot_well_traj(self, ax, zv, hv, welltrajcolor):
+    def _plot_well_traj(self, ax, zv, hv, welltrajcolor, linewidth):
         """Plot the trajectory as a black line"""
 
         zv_copy = ma.masked_where(zv < self._zmin, zv)
         hv_copy = ma.masked_where(zv < self._zmin, hv)
 
-        ax.plot(hv_copy, zv_copy, linewidth=6, c=welltrajcolor)
+        ax.plot(hv_copy, zv_copy, linewidth=linewidth, c=welltrajcolor)
 
     @staticmethod
     def _line_segments_colors(df, idx, ctable, logname, fillnavalue):
@@ -843,12 +833,7 @@ class XSection(BasePlot):
             self._fig.colorbar(img, ax=ax)
 
     def plot_grid3d(
-        self,
-        colormap="rainbow",
-        vmin=None,
-        vmax=None,
-        alpha=0.7,
-        zinc=0.5
+        self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7, zinc=0.5
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
