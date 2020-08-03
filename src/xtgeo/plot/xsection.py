@@ -952,6 +952,7 @@ class XSection(BasePlot):
         colormap=None,
         onecolor=None,
         linewidth=1.0,
+        linestyle="-",
         legend=True,
         legendtitle=None,
         fancyline=False,
@@ -1029,6 +1030,7 @@ class XSection(BasePlot):
                     linewidth=linewidth,
                     c=usecolor,
                     label=slegend[i],
+                    linestyle=linestyle,
                 )
                 if fancyline:
                     ax.plot(
@@ -1045,7 +1047,9 @@ class XSection(BasePlot):
                 else:
                     y2 = y1.copy()
 
-                ax.plot(x1, y1, linewidth=0.1 * linewidth, c="black")
+                ax.plot(
+                    x1, y1, linewidth=0.1 * linewidth, linestyle=linestyle, c="black"
+                )
                 ax.fill_between(x1, y1, y2, facecolor=colortable[i], label=slegend[i])
 
         # invert min,max to invert the Y axis
