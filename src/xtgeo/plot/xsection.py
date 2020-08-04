@@ -15,6 +15,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Polygons
+from xtgeo.well import Well
 
 from .baseplot import BasePlot
 
@@ -383,7 +384,10 @@ class XSection(BasePlot):
         facieslogname=None,
         perflogname=None,
         wellcrossings=None,
-        welltrajcolor="b",
+        wellcrossingnames=True,
+        wellcrossingyears=False,
+        welltrajcolor="black",
+        welltrajwidth=6,
     ):
         """Input an XTGeo Well object and plot it."""
 
@@ -419,7 +423,9 @@ class XSection(BasePlot):
             self._plot_well_faclog(dfr, ax, bba, facieslogname, legend=self._has_legend)
 
         axx, _bbxa = self._currentax(axisname="well")
-        self._plot_well_traj(axx, zv, hv, welltrajcolor=welltrajcolor)
+        self._plot_well_traj(
+            axx, zv, hv, welltrajcolor=welltrajcolor, linewidth=welltrajwidth
+        )
 
         if zonelogname:
             ax, bba = self._currentax(axisname="main")
@@ -429,7 +435,9 @@ class XSection(BasePlot):
             wellcrossings = None
 
         if wellcrossings is not None:
-            self._plot_well_crossings(dfr, axx, wellcrossings)
+            self._plot_well_crossings(
+                dfr, axx, wellcrossings, wellcrossingnames, wellcrossingyears
+            )
 
     def set_xaxis_md(self, gridlines=False):
         """Set x-axis labels to measured depth."""
@@ -465,13 +473,13 @@ class XSection(BasePlot):
         ax.set_xlim(lim)
         ax.set_xlabel("Measured Depth [m]", fontsize=12)
 
-    def _plot_well_traj(self, ax, zv, hv, welltrajcolor):
+    def _plot_well_traj(self, ax, zv, hv, welltrajcolor, linewidth):
         """Plot the trajectory as a black line"""
 
         zv_copy = ma.masked_where(zv < self._zmin, zv)
         hv_copy = ma.masked_where(zv < self._zmin, hv)
 
-        ax.plot(hv_copy, zv_copy, linewidth=6, c=welltrajcolor)
+        ax.plot(hv_copy, zv_copy, linewidth=linewidth, c=welltrajcolor)
 
     @staticmethod
     def _line_segments_colors(df, idx, ctable, logname, fillnavalue):
@@ -673,7 +681,7 @@ class XSection(BasePlot):
             self._drawproxylegend(ax, bba, items=pcolors, title="Perforations")
 
     @staticmethod
-    def _plot_well_crossings(dfr, ax, wcross):
+    def _plot_well_crossings(dfr, ax, wcross, names=True, years=False):
         """Plot well crossing based on dataframe (wcross)
 
         The well crossing coordinates are identified for this well,
@@ -687,10 +695,15 @@ class XSection(BasePlot):
         * Coordinate Y named Y_UTMN
         * Coordinate Z named Z_TVDSS
 
+        Optional column:
+        * Drilled year of crossing well named CYEAR
+
         Args:
             dfr: Well dataframe
             ax: current axis
             wcross: A pandas dataframe with precomputed well crossings
+            names: Display the names of the crossed wells
+            years: Display the drilled year of the crossed wells
         """
 
         placings = {
@@ -733,17 +746,27 @@ class XSection(BasePlot):
 
             modulo = index % 5
 
-            ax.annotate(
-                row.CWELL,
-                size=6,
-                xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
-                xytext=placings[modulo],
-                textcoords="offset points",
-                arrowprops=dict(
-                    arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
-                ),
-                color="black",
-            )
+            if names:
+                text = Well.get_short_wellname(row.CWELL)
+
+            if years:
+                if names:
+                    text = text + "\n" + row.CYEAR
+                else:
+                    text = row.CYEAR
+
+            if names or years:
+                ax.annotate(
+                    text,
+                    size=6,
+                    xy=(dfrc.R_HLEN[minindx], row.Z_TVDSS),
+                    xytext=placings[modulo],
+                    textcoords="offset points",
+                    arrowprops=dict(
+                        arrowstyle="->", connectionstyle="angle3,angleA=0,angleB=90"
+                    ),
+                    color="black",
+                )
 
     def _drawproxylegend(self, ax, bba, items, title=None):
         proxies = []
