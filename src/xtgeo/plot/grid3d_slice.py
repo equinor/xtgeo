@@ -29,6 +29,7 @@ class Grid3DSlice(BasePlot):
         self._legendtitle = "Map"
 
         self._colormap = "rainbow"
+        self._linecolor = "black"
         self._clist = None
         self._prop = None
         self._grid = None
@@ -53,6 +54,7 @@ class Grid3DSlice(BasePlot):
         minvalue=None,
         maxvalue=None,
         colormap=None,
+        linecolor="black",
         index=1,
         window=None,
         activeonly=True,
@@ -66,14 +68,19 @@ class Grid3DSlice(BasePlot):
             mode (str): Choose between 'column', 'row', 'layer' (default)
             minvalue (float): Minimum level color scale (default: from data)
             maxvalue (float): Maximum level color scale (default: from data)
-            index: Index to plot e.g layer number if layer slice (first=1)
-            colormap: Color map to use, e.g. 'rainbow' or an rmscol file
+            index (int): Index to plot e.g layer number if layer slice (first=1)
+            colormap: Color map to use for cells, e.g. 'rainbow' or an rmscol file
+            linecolor (str): Color of grid lines (black/white/grey)
 
         """
 
         self._index = index
         if colormap is not None:
             self._colormap = colormap
+
+        self._linecolor = linecolor
+        if linecolor not in ("black", "grey", "white"):
+            raise ValueError("Value of linecolor is invalid")
 
         self._clist = grid.get_xyz_corners()  # get XYZ for each corner, 24 arrays
         self._grid = grid
@@ -143,7 +150,7 @@ class Grid3DSlice(BasePlot):
 
     def _plot_layer(self):
 
-        xyc, ibn = self._grid.get_layer_slice(1, activeonly=self._active)
+        xyc, ibn = self._grid.get_layer_slice(self._index, activeonly=self._active)
 
         xval = xyc[:, :, 0]
         yval = xyc[:, :, 1]
@@ -169,8 +176,9 @@ class Grid3DSlice(BasePlot):
                 polygon = Polygon(nppol, True)
                 patches.append(polygon)
 
-        black = (0, 0, 0, 1)
-        patchcoll = PatchCollection(patches, edgecolors=(black,), cmap=self.colormap)
+        patchcoll = PatchCollection(
+            patches, edgecolors=(self._linecolor,), cmap=self.colormap
+        )
 
         if self._prop:
             pvalues = self._prop.values
@@ -185,7 +193,7 @@ class Grid3DSlice(BasePlot):
 
             pmax = self._minvalue
             if self._maxvalue is None:
-                pmax = pvalues.min()
+                pmax = pvalues.max()
 
             patchcoll.set_clim([pmin, pmax])
 
