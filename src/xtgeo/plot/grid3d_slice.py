@@ -70,7 +70,8 @@ class Grid3DSlice(BasePlot):
             maxvalue (float): Maximum level color scale (default: from data)
             index (int): Index to plot e.g layer number if layer slice (first=1)
             colormap: Color map to use for cells, e.g. 'rainbow' or an rmscol file
-            linecolor (str): Color of grid lines (black/white/grey)
+            linecolor (str or tuple): Color of grid lines (black/white/grey
+                or a tuple with 4 numbers on valid matplotlib format)
 
         """
 
@@ -79,7 +80,11 @@ class Grid3DSlice(BasePlot):
             self._colormap = colormap
 
         self._linecolor = linecolor
-        if linecolor not in ("black", "grey", "white"):
+        if not isinstance(linecolor, tuple) and linecolor not in (
+            "black",
+            "grey",
+            "white",
+        ):
             raise ValueError("Value of linecolor is invalid")
 
         self._clist = grid.get_xyz_corners()  # get XYZ for each corner, 24 arrays
