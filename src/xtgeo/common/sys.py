@@ -80,7 +80,11 @@ class _XTGeoFile(object):
         elif isinstance(fobj, _XTGeoFile):
             raise RuntimeError("Reinstancing object, not allowed", self.__class__)
         else:
-            raise RuntimeError("Illegal input, cannot continue ({}) {}: {}".format(self.__class__, fobj, type(fobj)))
+            raise RuntimeError(
+                "Illegal input, cannot continue ({}) {}: {}".format(
+                    self.__class__, fobj, type(fobj)
+                )
+            )
 
         logger.info("Ran init of %s", __name__)
 
