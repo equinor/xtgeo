@@ -150,7 +150,7 @@ def test_simple_plot_with_seismics():
 
     myplot.set_colortable(cfil1, colorlist=None)
 
-    myplot.canvas(title="Manamana", subtitle="My Dear Well")
+    myplot.canvas(title="Plot with seismics", subtitle="Some well")
 
     myplot.plot_cube()
     myplot.plot_surfaces(fill=False)

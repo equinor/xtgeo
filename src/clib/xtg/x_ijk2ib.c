@@ -13,8 +13,8 @@ x_ijk2ib(int i, int j, int k, int nx, int ny, int nz, int ia_start)
         return -2;
     }
 
-    long ib = (k - 1) * nx * ny;
-    ib = ib + (j - 1) * nx;
+    long ib = ((long)k - 1) * (long)nx * (long)ny;
+    ib = ib + ((long)j - 1) * (long)nx;
     ib = ib + i;
 
     if (ia_start == 0)
@@ -34,9 +34,10 @@ x_ijk2ic(int i, int j, int k, int nx, int ny, int nz, int ia_start)
         return -2;
     }
 
-    long ic = (i - 1) * nz * ny;
-    ic = ic + (j - 1) * nz;
-    ic = ic + k;
+
+    long ic = ((long)i - 1) * (long)nz * (long)ny;
+    ic = ic + ((long)j - 1) * nz;
+    ic = ic + (long)k;
 
     if (ia_start == 0)
         ic--;
