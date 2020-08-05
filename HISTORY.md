@@ -2,6 +2,17 @@
 
 ## Version 2
 
+### 2.9.0 and 2.9.1
+* Full rewrite of surface slice cube methods, they will now be much faster #354
+* Added `activeonly` key in `make_ijk_from_grid` for Well()
+* Improving points in cell detection algorithm (full rewrite)
+* Fix bug in cube orientation when importing fro Roxar API #359
+* Introducing new faster reading of roff grids (will not be default until later)
+* Fix of xinc/yinc for PMD map format #367
+* Improvements in various plot routines, in particular xsections
+* Changed CI and deploy from travis/appveyor to Github actions using `cibuildwheel`
+
+
 ### 2.8.3
 * Fix a bug for renaming points and polygons coordinate columns, ref #349
 * Added and "F" in SPECGRID when exporting 3D grid to GRDECL format
@@ -41,7 +52,7 @@
 * Bug fixes:
   * File names used in e.g. from_file should now handle pathlib instances
   * Improved error messages if issues with e.g. file names used in export/import
-  * Fix of excessive logger output in 
+  * Fix of excessive logger output in
 * Fixes for developers:
   * General refactorizion of C code, to improve speed and stability. Also change logger method in C (still ongoing)
 
