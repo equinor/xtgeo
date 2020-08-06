@@ -20,7 +20,7 @@ from xtgeo import pathlib
 from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.functionlogger(__file__)
+logger = xtg.functionlogger(__name__)
 
 
 def check_folder(fname, raiseerror=None):
