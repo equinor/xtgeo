@@ -910,7 +910,13 @@ class XSection(BasePlot):
             self._fig.colorbar(img, ax=ax)
 
     def plot_grid3d(
-        self, colormap="rainbow", vmin=None, vmax=None, alpha=0.7, zinc=0.5
+        self,
+        colormap="rainbow",
+        vmin=None,
+        vmax=None,
+        alpha=0.7,
+        zinc=0.5,
+        interpolation="antialiased",
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
@@ -920,6 +926,8 @@ class XSection(BasePlot):
             vmax (float); Maximum value in plot
             alpha (float): Alpha blending number beween 0 and 1.
             zinc (float): Sampling vertically, default is 0.5
+            interpolation (str): Interpolation for plotting, cf. matplotlib
+                documentation on this.
 
         Raises:
             ValueError: No grid or gridproperty is loaded
@@ -952,6 +960,9 @@ class XSection(BasePlot):
                 colormap = "rainbow"
             self._colormap_grid = self.define_any_colormap(colormap)
 
+        if self._gridproperty.isdiscrete:
+            interpolation = "nearest"
+
         img = ax.imshow(
             arr,
             cmap=self._colormap_grid,
@@ -960,6 +971,7 @@ class XSection(BasePlot):
             extent=(h1, h2, v2, v1),
             aspect="auto",
             alpha=alpha,
+            interpolation=interpolation,
         )
 
         logger.info("Actual VMIN and VMAX: %s", img.get_clim())
