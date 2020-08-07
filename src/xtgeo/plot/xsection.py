@@ -471,6 +471,7 @@ class XSection(BasePlot):
 
         # Restore xaxis limits and set axis title
         ax.set_xlim(lim)
+        ax.set_ylabel("TVD MSL [m]", fontsize=12.0)
         ax.set_xlabel("Measured Depth [m]", fontsize=12)
 
     def _plot_well_traj(self, ax, zv, hv, welltrajcolor, linewidth):
@@ -927,7 +928,8 @@ class XSection(BasePlot):
             alpha (float): Alpha blending number beween 0 and 1.
             zinc (float): Sampling vertically, default is 0.5
             interpolation (str): Interpolation for plotting, cf. matplotlib
-                documentation on this.
+                documentation on this. "auto" uses "nearest" for discrete
+                parameters and "antialiased" for floats.
 
         Raises:
             ValueError: No grid or gridproperty is loaded
