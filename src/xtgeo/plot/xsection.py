@@ -916,7 +916,7 @@ class XSection(BasePlot):
         vmax=None,
         alpha=0.7,
         zinc=0.5,
-        interpolation="antialiased",
+        interpolation="auto",
     ):
         """Plot a sampled grid with gridproperty backdrop.
 
@@ -960,8 +960,11 @@ class XSection(BasePlot):
                 colormap = "rainbow"
             self._colormap_grid = self.define_any_colormap(colormap)
 
-        if self._gridproperty.isdiscrete:
-            interpolation = "nearest"
+        if interpolation == "auto":
+            if self._gridproperty.isdiscrete:
+                interpolation = "nearest"
+            else:
+                interpolation = "antialiased"
 
         img = ax.imshow(
             arr,
