@@ -6,7 +6,7 @@ API dependent tests.
 Then run tests in Roxar API which focus on IO
 
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment; hence
-the decarator "roxapilicense"
+the decorator "roxapilicense"
 
 """
 from os.path import join, isdir
