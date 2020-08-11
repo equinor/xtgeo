@@ -644,12 +644,18 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def to_roxar(
-        self, projectname, gname, realisation=0, info=False, method="cpg"
+        self, project, gname, realisation=0, info=False, method="cpg"
     ):  # pragma: no cover
         """Export a grid to RMS via Roxar API
 
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
+
         Args:
-            projectname (str or obj): Name of projecy or magic `project`
+            project (str or roxar._project): Inside RMS use the magic 'project',
+                else use path to RMS project, or a project reference        Arguments:
             gname (str): Name of grid in RMS
             realisation (int): Realisation umber, default 0
             info (bool): TBD
@@ -658,7 +664,7 @@ class Grid(Grid3D):
         """
 
         _grid_roxapi.export_grid_roxapi(
-            self, projectname, gname, realisation, info=info, method=method
+            self, project, gname, realisation, info=info, method=method
         )
 
     # ==================================================================================

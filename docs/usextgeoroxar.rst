@@ -9,6 +9,63 @@ data with RMS. The integration will be continuosly improved.
 Note that all these script examples are assumed to be ran inside
 a python job within RMS.
 
+Get and set data
+----------------
+
+In general, data are imported into XTGeo by a ``from_roxar()`` or by a
+``xtgeo.xxx_from_roxar()`` (where xx is "surface", "grid", etc). Then the
+altered instance can be stored in roxar/RMS by a ``to_roxar()`` method.
+
+The ``to_roxar()`` method will not do a project save when inside RMS or when inside
+a virtual project setting. However, if a project is applied as a file path, then
+``to_roxar`` will save implicitly. Examples:
+
+Inside RMS GUI
+^^^^^^^^^^^^^^
+.. code-block:: python
+
+    import xtgeo
+
+    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_extracted")
+    surf.values += 100
+    surf.to_roxar(project)
+
+    # Note: project save needs to be done by user (GUI action)
+
+Outside RMS, direct access
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+    import xtgeo
+
+    myproject = "/some/file/path/reek.rms11.1.1"
+
+    surf = xtgeo.surface_from_roxar(myproject, "TopReek", "DS_extracted")
+    surf.values += 100
+    surf.to_roxar(myproject)
+
+    # Note: project save is done automatic
+
+Outside RMS, project mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: python
+
+    import xtgeo
+
+    myproject = "/some/file/path/reek.rms11.1.1"
+    rox = xtgeo.RoxUtils(myproject)
+
+    surf = xtgeo.surface_from_roxar(rox.project, "TopReek", "DS_extracted")
+    surf.values += 100
+    surf.to_roxar(rox.project)
+
+    # Note: project save is not done automatic, you need to:
+
+    rox.project.save()
+    rox.project.close()
+
+
+
 Surface data
 ------------
 
@@ -22,15 +79,15 @@ Export a surface in RMS to irap binary format
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo and export
-    surf = xtgeo.surface_from_roxar(project, 'TopReek', 'DS_extracted')
+    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_extracted")
 
-    surf.to_file('topreek.gri')
+    surf.to_file("topreek.gri")
 
     # modify surface, add 1000 to all map nodes
     surf.values += 1000
 
     # store in RMS (category must exist)
-    surf.to_roxar(project, 'TopReek', 'DS_whatever')
+    surf.to_roxar(project, "TopReek", "DS_whatever")
 
 
 Export a surface in RMS to zmap ascii format
@@ -44,15 +101,15 @@ grid will be done in case the RMS map has a rotation.
     import xtgeo as xt
 
     # surface names
-    hnames = ['TopReek', 'MiddleReek', 'LowerReek']
+    hnames = ["TopReek", "MiddleReek", "LowerReek"]
 
     # loop over stratigraphy
     for name in hnames:
-        surf = xt.surface_from_roxar(project, name, 'DS_extracted')
+        surf = xt.surface_from_roxar(project, name, "DS_extracted")
         fname = name.lower()  # lower case file name
-        surf.to_file(fname + '.zmap', fformat='zmap_ascii')
+        surf.to_file(fname + ".zmap", fformat="zmap_ascii")
 
-    print('Export done')
+    print("Export done")
 
 Take a surface in RMS and multiply values with 2:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -61,12 +118,12 @@ Take a surface in RMS and multiply values with 2:
 
     import xtgeo
 
-    surf = xtgeo.surface_from_roxar(project, 'TopReek', 'DS_tmp')
+    surf = xtgeo.surface_from_roxar(project, "TopReek", "DS_tmp")
 
     surf.values *= 2  # values is the masked 2D numpy array property
 
     # store the surface back to RMS
-    surf.to_roxar(project, 'TopReek', 'DS_tmp')
+    surf.to_roxar(project, "TopReek", "DS_tmp")
 
 
 Do operations on surfaces, also inside polygons:
@@ -146,9 +203,9 @@ Exporting geometry to ROFF file
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo and export
-    mygrid = xtgeo.grid_from_roxar(project, 'Geomodel')
+    mygrid = xtgeo.grid_from_roxar(project, "Geomodel")
 
-    mygrid.to_file('topreek.roff')  # roff binary is default format
+    mygrid.to_file("topreek.roff")  # roff binary is default format
 
 
 Edit a porosity in a 3D grid
@@ -159,14 +216,14 @@ Edit a porosity in a 3D grid
     import xtgeo
 
     # import (transfer) data from RMS to XTGeo
-    myporo = xtgeo.gridproperty_from_roxar(project, 'Geomodel', 'Por')
+    myporo = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Por")
 
     # now I want to limit porosity to 0.35 for values above 0.35:
 
     myporo.values[myporo.values > 0.35] = 0.35
 
     # store to another icon
-    poro.to_roxar(project, 'Geomodel', 'PorNew')
+    poro.to_roxar(project, "Geomodel", "PorNew")
 
 
 Edit a permeability given a porosity cutoff
@@ -177,14 +234,14 @@ Edit a permeability given a porosity cutoff
    import numpy as np
    import xtgeo
 
-   myporo = xtgeo.gridproperty_from_roxar(project, 'Geomodel', 'Por')
-   myperm = xtgeo.gridproperty_from_roxar(project, 'Geomodel', 'Perm')
+   myporo = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Por")
+   myperm = xtgeo.gridproperty_from_roxar(project, "Geomodel", "Perm")
 
    # if poro < 0.01 then perm is 0.001, otherwise keep as is, illustrated with np.where()
    myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
 
    # store to another icon
-   poro.to_roxar(project, 'Geomodel', 'PermEdit')
+   poro.to_roxar(project, "Geomodel", "PermEdit")
 
 
 Edit a 3D grid porosity inside polygons
@@ -197,11 +254,11 @@ Edit a 3D grid porosity inside polygons
 
    import xtgeo
 
-   mygrid = xtgeo.grid_from_roxar(project, 'Reek_sim')
-   myprop = xtgeo.gridproperty_from_roxar(project, 'Reek_sim', 'PORO')
+   mygrid = xtgeo.grid_from_roxar(project, "Reek_sim")
+   myprop = xtgeo.gridproperty_from_roxar(project, "Reek_sim", "PORO")
 
    # read polygon(s), from Horizons, Faults, Zones or Clipboard
-   mypoly = xtgeo.polygons_from_roxar(project, 'TopUpperReek', 'DL_test')
+   mypoly = xtgeo.polygons_from_roxar(project, "TopUpperReek", "DL_test")
 
    # need to connect property to grid geometry when using polygons
    myprop.geometry = mygrid
@@ -209,7 +266,7 @@ Edit a 3D grid porosity inside polygons
    myprop.set_inside(mypoly, 99)
 
    # Save in RMS as a new icon
-   myprop.to_roxar(project, 'Reek_sim', 'NEWPORO_setinside')
+   myprop.to_roxar(project, "Reek_sim", "NEWPORO_setinside")
 
 Make a hybrid grid
 ^^^^^^^^^^^^^^^^^^

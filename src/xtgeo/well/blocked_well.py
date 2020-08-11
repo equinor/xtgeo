@@ -180,8 +180,13 @@ class BlockedWell(Well):
         Note this method works only when inside RMS, or when RMS license is
         activated.
 
+        Note:
+           When project is file path (direct access, outside RMS) then
+           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           will not be saved until the user do an explicit project save action.
+
         Args:
-            project (str): Magic string 'project' or file path to project
+            project (str or object): Magic object 'project' or file path to project
             gname (str): Name of GridModel icon in RMS
             bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
             wname (str): Name of well, as shown in RMS.
