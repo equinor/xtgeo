@@ -646,7 +646,16 @@ class Grid(Grid3D):
     def to_roxar(
         self, projectname, gname, realisation=0, info=False, method="cpg"
     ):  # pragma: no cover
-        """Export a grid to RMS via Roxar API (in prep.)"""
+        """Export a grid to RMS via Roxar API
+
+        Args:
+            projectname (str or obj): Name of projecy or magic `project`
+            gname (str): Name of grid in RMS
+            realisation (int): Realisation umber, default 0
+            info (bool): TBD
+            method (str): Save approach
+
+        """
 
         _grid_roxapi.export_grid_roxapi(
             self, projectname, gname, realisation, info=info, method=method
