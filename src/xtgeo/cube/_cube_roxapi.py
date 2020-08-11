@@ -132,6 +132,11 @@ def export_cube_roxapi(
         compression=compression,
     )
 
+    if rox._roxexternal:
+        rox.project.save()
+
+    rox.safe_close()
+
 
 def _roxapi_export_cube(
     self, proj, rox, name, folder=None, domain="time", compression=("wavelet", 5)

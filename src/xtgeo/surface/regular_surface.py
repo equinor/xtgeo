@@ -971,8 +971,13 @@ class RegularSurface(object):
         or outside the project. The storing is done to the Horizons or the
         Zones folder in RMS.
 
-        Note that horizon or zone name and category must exists in advance,
-        otherwise an Exception will be raised.
+        Note:
+            The horizon or zone name and category must exists in advance,
+            otherwise an Exception will be raised.
+
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
 
         Args:
             project (str or special): Name of project (as folder) if

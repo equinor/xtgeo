@@ -459,6 +459,11 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         otherwise an Exception will be raised. This is not the case for
         stype="clipboard" where "folders" will be created on demand.
 
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
+
         Args:
             project (str or special): Name of project (as folder) if
                 outside RMS, og just use the magic project word if within RMS.

@@ -180,9 +180,9 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):  # pragma: no co
         self.subgrids = subz
 
 
-# =============================================================================
+# ======================================================================================
 # Save/export
-# =============================================================================
+# ======================================================================================
 
 
 def export_grid_roxapi(
@@ -218,6 +218,9 @@ def export_grid_roxapi(
         _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info)
     else:
         _export_grid_viaroff_roxapi(self, rox, gname, realisation)
+
+    if rox._roxexternal:
+        rox.project.save()
 
     rox.safe_close()
 

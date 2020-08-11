@@ -37,7 +37,7 @@ class RoxUtils(object):
 
     Args:
         project (_roxar.Project or str): Reference to a RMS project
-            either a instance or a RMS project folder path.
+            either an existing instance or a RMS project folder path.
         readonly (bool). Default is False. If readonly, then it cannot be
             saved to this project (which is the case for "secondary" projects).
 
@@ -56,7 +56,7 @@ class RoxUtils(object):
         self._project = None
 
         self._version = roxar.__version__
-        self._roxarapps = True
+        self._roxexternal = True
 
         self._versions = {
             "1.0": ["10.0.x"],
@@ -77,8 +77,12 @@ class RoxUtils(object):
             logger.info("Open RMS project from %s", projectname)
 
         elif isinstance(project, _roxar.Project):
-            # this will only happen for _current_ project inside RMS
-            self._roxarapps = False
+            # this will happen for _current_ project inside RMS or if
+            # project is opened already e.g. by roxar.Project.open(). In the latter
+            # case, the user should also close the project by project.close() as
+            # an explicit action.
+
+            self._roxexternal = False
             self._project = project
             logger.info("RMS project instance is already open as <%s>", project)
         else:
@@ -96,9 +100,12 @@ class RoxUtils(object):
 
     def safe_close(self):
         """Close the project but only if roxarapps (external) mode, i.e.
-        not current RMS project.
+        not current RMS project
+
+        In case roxar.Project.open() is done explicitly, safe_close() will do nothing.
+
         """
-        if self._roxarapps:
+        if self._roxexternal:
             try:
                 self._project.close()
                 logger.info("RMS project instance is closed")

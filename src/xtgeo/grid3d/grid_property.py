@@ -673,31 +673,31 @@ class GridProperty(Grid3D):
         self._filesrc = None
 
         _gridprop_roxapi.import_prop_roxapi(
-            self, projectname, gname, pname, realisation,
+            self, projectname, gname, pname, realisation
         )
 
-    def to_roxar(
-        self, projectname, gname, pname, saveproject=False, realisation=0
-    ):  # pragma: no cover
+    def to_roxar(self, project, gname, pname, realisation=0):  # pragma: no cover
         """Store a grid model property into a RMS project.
 
-        Arguments:
-            projectname (str): Name of RMS project ('project' if inside a
-                RMS project)
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
+
+        Args:
+            project (str or roxar._project): Inside RMS use the magic 'project',
+                else use path to RMS project, or a project reference
             gfile (str): Name of grid model
             pfile (str): Name of grid property
             projectname (str): Name of RMS project (None if inside a project)
-            saveproject (bool): If True, a saveproject job will be ran.
             realisation (int): Realisation number (default 0 first)
+
+        .. versionchanged: 2.10
+            Key `saveproject` has been removed and will have no effect
 
         """
         _gridprop_roxapi.export_prop_roxapi(
-            self,
-            projectname,
-            gname,
-            pname,
-            saveproject=saveproject,
-            realisation=realisation,
+            self, project, gname, pname, realisation=realisation
         )
 
     # ==================================================================================

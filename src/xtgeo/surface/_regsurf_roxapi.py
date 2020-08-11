@@ -92,6 +92,9 @@ def export_horizon_roxapi(
     logger.info("Surface from xtgeo to roxapi...")
     _roxapi_export_surface(self, rox.project, name, category, stype, realisation)
 
+    if rox._roxexternal:
+        rox.project.save()
+
     logger.info("Surface from xtgeo to roxapi... DONE")
     rox.safe_close()
 

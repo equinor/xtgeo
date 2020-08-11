@@ -744,9 +744,14 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     ):  # pragma: no cover
         """Export (transfer) a cube from a XTGeo cube object to Roxar data.
 
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
+
         Args:
-            project (str): Inside RMS use the magic 'project', else use
-                path to RMS project
+            project (str or roxar._project): Inside RMS use the magic 'project',
+                else use path to RMS project, or a project reference
             name (str): Name of cube (seismic data) within RMS project.
             folder (str): Cubes may be stored under a folder in the tree, use '/'
                 to seperate subfolders.

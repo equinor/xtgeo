@@ -98,9 +98,7 @@ def _convert_to_xtgeo_prop(
     self._name = pname
 
 
-def export_prop_roxapi(
-    self, project, gname, pname, saveproject=False, realisation=0
-):  # pragma: no cover
+def export_prop_roxapi(self, project, gname, pname, realisation=0):  # pragma: no cover
     """Export (i.e. store) to a Property in RMS via ROXAR API spec."""
 
     rox = xtgeo.RoxUtils(project, readonly=False)
@@ -111,14 +109,11 @@ def export_prop_roxapi(
         roxgrid = rox.project.grid_models[gname]
         _store_in_roxar(self, pname, roxgrid, realisation)
 
-        if saveproject:
-            try:
-                rox.project.save()
-            except RuntimeError:
-                xtg.warn("Could not save project!")
-
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
+
+    if rox._roxexternal:
+        rox.project.save()
 
     rox.safe_close()
 
