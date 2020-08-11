@@ -88,7 +88,8 @@ if "ROXENV" in os.environ:
 
 skipifroxar = pytest.mark.skipif(roxar, reason="Skip test in Roxar python")
 
-skipunlessroxar = pytest.mark.skipif(not roxar, reason="Skip if NOT Roxar python")
+skipunlessroxar = pytest.mark.skipif(True, reason="Skip if NOT Roxar python OLD")
+roxapilicenseneeded = pytest.mark.skipif(not roxar, reason="Skip if NOT Roxar python")
 
 skipplot = False
 if "ROXAR_RMS_ROOT" in os.environ:
