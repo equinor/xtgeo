@@ -617,7 +617,7 @@ class RegularSurface(object):
         When setting values, list-like input (lists, tuples) is also accepted, as
         long as the length is correct and the entries are number-like.
 
-        In order to spesify undefined values, you can spesify the ``undef`` attribute
+        In order to specify undefined values, you can specify the ``undef`` attribute
         in the list, or use ``float("nan")``.
 
         Example::
