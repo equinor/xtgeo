@@ -2576,7 +2576,9 @@ class RegularSurface(object):
     # Private
     # ==================================================================================
 
-    def _ensure_correct_values(self, values):
+    def _ensure_correct_values(
+        self, values
+    ):  # pylint: disable=too-many-branches, too-many-statements
         """Ensures that values is a 2D masked numpy (ncol, nrow), C order.
 
         This is an improved but private version over ensure_correct_values
@@ -2654,7 +2656,7 @@ class RegularSurface(object):
                 try:
                     vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
                 except ValueError as emsg:
-                    logger.critical("Cannot reshape array: %", emsg)
+                    logger.critical("Cannot reshape array: %s", emsg)
                     raise
 
             self._values = vals
@@ -2668,7 +2670,7 @@ class RegularSurface(object):
                 try:
                     vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
                 except ValueError as emsg:
-                    logger.critical("Cannot reshape array: %", emsg)
+                    logger.critical("Cannot reshape array: %s", emsg)
                     raise
 
             self._values = vals
