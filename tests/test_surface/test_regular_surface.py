@@ -103,12 +103,10 @@ def test_values():
     newvalues[2] = srf.undef
     with pytest.raises(ValueError) as err:
         srf.values = newvalues
-    assert "incomplete" in str(err)
 
     # plain wrong input
     with pytest.raises(ValueError) as err:
         srf.values = "text"
-    assert "invalid" in str(err)
 
 
 # @tsetup.skipifwindows
