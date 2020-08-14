@@ -39,6 +39,7 @@ from __future__ import division
 import os
 import os.path
 
+import numbers
 from copy import deepcopy
 import math
 from types import FunctionType
@@ -428,7 +429,7 @@ class RegularSurface(object):
             if isinstance(self._values, ma.MaskedArray):
                 currentmask = ma.getmaskarray(self._values)
 
-        if np.isscalar(values):
+        if isinstance(values, numbers.Number):
             vals = ma.zeros((ncol, nrow), order="C", dtype=np.float64)
             vals = ma.array(vals, mask=currentmask)
             values = vals + float(values)
@@ -468,6 +469,11 @@ class RegularSurface(object):
     def nrow(self):
         """The NROW (NY or N-Jdir) number, as property (read only)."""
         return self._nrow
+
+    @property
+    def dimensions(self):
+        """2-tuple: The surface dimensions as a tuple of 2 integers (read only)"""
+        return (self._ncol, self._nrow)
 
     @property
     def nx(self):  # pylint: disable=C0103
@@ -607,6 +613,19 @@ class RegularSurface(object):
         """The map values, as 2D masked numpy (float64), shape (ncol, nrow).
 
         When setting values as a scalar, the current mask will be preserved.
+
+        When setting values, list-like input (lists, tuples) is also accepted, as
+        long as the length is correct and the entries are number-like.
+
+        In order to spesify undefined values, you can spesify the ``undef`` attribute
+        in the list, or use ``float("nan")``.
+
+        Example::
+
+            # list like input where nrow=3 and ncol=5 (15 entries)
+            newvalues = list(range(15))
+            newvalues[2] = srf.undef
+            srf.values = newvalues  # here, entry 2 will be undefined
         """
 
         return self._values
@@ -2563,7 +2582,7 @@ class RegularSurface(object):
         This is an improved but private version over ensure_correct_values
 
         Args:
-            values (array or scalar): Values to process.
+            values (array-like or scalar): Values to process.
 
         Return:
             Nothing, self._values will be updated inplace
@@ -2608,13 +2627,20 @@ class RegularSurface(object):
                     vals = np.asanyarray(vals, order="C")
                     vals = ma.array(vals, mask=mask, order="C")
                 self._values = vals
-                return
 
-        elif np.isscalar(values):
+        elif isinstance(values, numbers.Number):
             if currentmask is not None:
                 self._values *= 0
-                self._values += values
-                return
+                vals = np.ones(self.dimensions, dtype=np.float64) * values
+                vals = np.ma.array(vals, mask=currentmask)
+
+                # there maybe cases where values scalar input is some kind of UNDEF
+                # which will change the mask
+                vals = ma.masked_greater(vals, self.undef_limit, copy=False)
+                vals = ma.masked_invalid(vals, copy=False)
+
+                self._values += vals
+
             else:
                 vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=np.float64)
                 self._values = vals + float(values)
@@ -2628,7 +2654,24 @@ class RegularSurface(object):
                 try:
                     vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
                 except ValueError as emsg:
-                    xtg.error("Cannot reshape array: {}".format(emsg))
+                    logger.critical("Cannot reshape array: %", emsg)
                     raise
 
             self._values = vals
+
+        elif isinstance(values, (list, tuple)):  # ie values ~ list-like
+            vals = ma.array(values, order="C", dtype=np.float64)
+            vals = ma.masked_greater(vals, self.undef_limit, copy=True)
+            vals = ma.masked_invalid(vals, copy=True)
+
+            if vals.shape != (self.ncol, self.nrow):
+                try:
+                    vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
+                except ValueError as emsg:
+                    logger.critical("Cannot reshape array: %", emsg)
+                    raise
+
+            self._values = vals
+
+        else:
+            raise ValueError("Input values are in invalid format: {}".format(values))
