@@ -101,11 +101,11 @@ def test_values():
     # list like input with wrong (non-broadcastable) length
     newvalues = list(range(14))
     newvalues[2] = srf.undef
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         srf.values = newvalues
 
     # plain wrong input
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         srf.values = "text"
 
 
