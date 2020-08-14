@@ -284,12 +284,10 @@ def _rkwxvec_coordsv(
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
 
     dtype = 0
-    reclen = 0
     bytepos = 1
     for items in kws:
         if name in items[0]:
             dtype = kwtypedict.get(items[1])
-            reclen = items[2]
             bytepos = items[3]
             break
 

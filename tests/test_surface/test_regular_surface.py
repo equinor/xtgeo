@@ -91,6 +91,23 @@ def test_values():
     srf.values = newvalues
     assert id(srf.values) != id1
 
+    # list like input with undefined value
+    newvalues = list(range(15))
+    newvalues[2] = srf.undef
+    newvalues[4] = float("nan")  # alternative
+    srf.values = newvalues
+    assert np.ma.count_masked(srf.values) == 2
+
+    # list like input with wrong (non-broadcastable) length
+    newvalues = list(range(14))
+    newvalues[2] = srf.undef
+    with pytest.raises(ValueError):
+        srf.values = newvalues
+
+    # plain wrong input
+    with pytest.raises(ValueError):
+        srf.values = "text"
+
 
 # @tsetup.skipifwindows
 def test_ijxyz_import1():

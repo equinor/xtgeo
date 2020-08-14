@@ -2,6 +2,7 @@
 """Various operations"""
 from __future__ import print_function, absolute_import
 
+import numbers
 import numpy as np
 import numpy.ma as ma
 
@@ -71,7 +72,7 @@ def operations_two(self, other, oper="add"):
 def _check_other(self, other):
     """Will convert an other scalar to a valid numpy array"""
 
-    if np.isscalar(other):
+    if isinstance(other, numbers.Number):
         vals = other
         other = self.copy()
         other.values *= 0
