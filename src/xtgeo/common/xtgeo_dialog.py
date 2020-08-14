@@ -327,9 +327,9 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
                 "\t%(message)s"
             )
 
-        log = self._rootlogger
-        _tmp1 = [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
-        _tmp2 = [hndl.setFormatter(fmt) for hndl in log.handlers]
+        # log = self._rootlogger
+        # _tmp1 = [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
+        # _tmp2 = [hndl.setFormatter(fmt) for hndl in log.handlers]
 
         self._lformat = fmt._fmt  # private attribute in Formatter()
         return self._lformat

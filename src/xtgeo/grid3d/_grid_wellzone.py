@@ -44,7 +44,7 @@ def report_zone_mismatch(
     if not isinstance(well, xtgeo.Well):
         raise ValueError("Input well is not a Well() instance")
 
-    if not zonelogname in well.dataframe.columns:
+    if zonelogname not in well.dataframe.columns:
         logger.warning("Zonelog %s is missing for well %s", zonelogname, well.name)
         return None
 
