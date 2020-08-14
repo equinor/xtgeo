@@ -4,6 +4,7 @@
 from __future__ import print_function, absolute_import
 
 import copy
+import numbers
 from types import FunctionType
 
 import numpy as np
@@ -515,7 +516,7 @@ class GridProperty(Grid3D):
             if isinstance(self._values, np.ma.MaskedArray):
                 currentmask = np.ma.getmaskarray(self._values)
 
-        if np.isscalar(invalues):
+        if isinstance(invalues, numbers.Number):
             vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)
             vals = np.ma.array(vals, mask=currentmask)
             values = vals + invalues
