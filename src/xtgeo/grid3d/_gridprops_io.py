@@ -76,7 +76,7 @@ def import_ecl_output(
     if dates:
         dlist = utils.scan_dates(pfile)
 
-        usedates = [thedate.replace("-", "") for thedate in dates]
+        usedates = [str(thedate).replace("-", "") for thedate in dates]
 
         validdates = []
         alldates = []
