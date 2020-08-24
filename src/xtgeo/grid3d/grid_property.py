@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 
 import copy
 import numbers
+import hashlib
 from types import FunctionType
 
 import numpy as np
@@ -482,6 +483,27 @@ class GridProperty(Grid3D):
     # ==================================================================================
     # Class and special methods
     # ==================================================================================
+
+    def generate_hash(self):
+        """str: Return a unique hash ID for current grid; can e.g. be used to compare
+        two gridproperty instances with same source.
+
+        .. versionadded:: 2.10
+        """
+
+        mhash = hashlib.sha256()
+        gid = "{}{}{}{}{}{}{}".format(
+            self._filesrc,
+            self._ncol,
+            self._nrow,
+            self._nlay,
+            self._values.mean(),
+            self._values.min(),
+            self._values.max(),
+        )
+
+        mhash.update(gid.encode())
+        return mhash.hexdigest()
 
     @classmethod
     def methods(cls):

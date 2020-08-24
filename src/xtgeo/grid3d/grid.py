@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import
 import sys
 import json
 import warnings
+import hashlib
 from collections import OrderedDict
 
 import numpy as np
@@ -241,6 +242,11 @@ class Grid(Grid3D):
     # ==================================================================================
     # Public Properties:
     # ==================================================================================
+
+    @property
+    def filesrc(self):
+        """str: Source for grid (filepath or name in RMS)"""
+        return self._filesrc
 
     @property
     def name(self):
@@ -492,6 +498,27 @@ class Grid(Grid3D):
         object"""
 
         return self._roxindexer
+
+    def generate_hash(self):
+        """str: Return a unique hash ID for current grid; can e.g. be used to compare
+        two grid instances with same source.
+
+        .. versionadded:: 2.10
+        """
+
+        mhash = hashlib.sha256()
+        gid = "{}{}{}{}{}{}{}".format(
+            self._filesrc,
+            self._ncol,
+            self._nrow,
+            self._nlay,
+            self._coordsv.mean(),
+            self._zcornsv.mean(),
+            self._actnumsv.mean(),
+        )
+
+        mhash.update(gid.encode())
+        return mhash.hexdigest()
 
     # ==================================================================================
     # Create/import/export
