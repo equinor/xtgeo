@@ -120,8 +120,8 @@ Within the C code (backend for python functions), arrays are stored in 1D,
 C-order and are usually named ``p_cube_v`` in the code.
 
 
-Description
-^^^^^^^^^^^
+Description of cubes
+^^^^^^^^^^^^^^^^^^^^
 
 Cubes are quite similar to maps, only that a third dimension is added.
 
