@@ -5,6 +5,7 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import warnings
+import hashlib
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -164,6 +165,29 @@ class GridProperties(Grid3D):
             dsc.flush()
             return None
         return dsc.astext()
+
+    def generate_hash(self):
+        """str: Return a unique hash ID for current gridproperties instance.
+
+        .. versionadded:: 2.10
+        """
+
+        mhash = hashlib.sha256()
+
+        hashinput = ""
+        for prop in self._props:
+            gid = "{}{}{}{}{}{}".format(
+                prop.ncol,
+                prop.nrow,
+                prop.nlay,
+                prop.values.mean(),
+                prop.values.min(),
+                prop.values.max(),
+            )
+            hashinput += gid
+
+        mhash.update(hashinput.encode())
+        return mhash.hexdigest()
 
     def get_prop_by_name(self, name):
         """Find and return a property object (GridProperty) by name."""

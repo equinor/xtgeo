@@ -76,21 +76,23 @@ def import_ecl_output(
     if dates:
         dlist = utils.scan_dates(pfile)
 
+        usedates = [str(thedate).replace("-", "") for thedate in dates]
+
         validdates = []
         alldates = []
-        for date in dates:
+        for date in usedates:
             for ditem in dlist:
                 alldates.append(str(ditem[1]))
                 if str(date) == str(ditem[1]):
                     validdates.append(date)
 
         if not validdates:
-            msg = "No valid dates given (dates: {} vs {})".format(dates, alldates)
+            msg = "No valid dates given (dates: {} vs {})".format(usedates, alldates)
             xtg.error(msg)
             raise ValueError(msg)
 
-        if len(dates) > len(validdates):
-            invalidddates = list(set(dates).difference(validdates))
+        if len(usedates) > len(validdates):
+            invalidddates = list(set(usedates).difference(validdates))
             msg = (
                 "In file {}: Some dates not found: {}, but will continue "
                 "with dates: {}".format(pfile, invalidddates, validdates)

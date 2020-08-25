@@ -690,3 +690,14 @@ def test_grid_layer_slice():
 
     assert sarrn[-1, 0, 0] == celll[12]
     assert sarrn[-1, 0, 1] == celll[13]
+
+
+def test_generate_hash():
+    """Generate hash for two grid instances with same input and compare"""
+
+    grd1 = Grid(REEKFILE)
+    grd2 = Grid(REEKFILE)
+
+    assert id(grd1) != id(grd2)
+
+    assert grd1.generate_hash() == grd2.generate_hash()
