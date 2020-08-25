@@ -241,7 +241,7 @@ Edit a permeability given a porosity cutoff
    myperm.values = np.where(myporo.values < 0.1, 0.001, myperm.values)
 
    # store to another icon
-   poro.to_roxar(project, "Geomodel", "PermEdit")
+   myperm.to_roxar(project, "Geomodel", "PermEdit")
 
 
 Edit a 3D grid porosity inside polygons
