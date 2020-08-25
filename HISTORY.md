@@ -2,6 +2,14 @@
 
 ## Version 2
 
+### 2.10.0
+* New features:
+  * Added interpolation option in xsection when plotting 3D grids #401
+* Fixes:
+  * Improvements in Roxar API interface, e.g. behaviour on when projects are saved or not
+  * Fix on surface values, which data that can be accepted, issue #405
+  * Some other minor fixes in code and documentation
+
 ### 2.9.0 and 2.9.1
 * Full rewrite of surface slice cube methods, they will now be much faster #354
 * Added `activeonly` key in `make_ijk_from_grid` for Well()
