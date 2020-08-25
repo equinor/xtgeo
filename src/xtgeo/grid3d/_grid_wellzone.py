@@ -20,7 +20,9 @@ def report_zone_mismatch(
     zonelogshift=0,
     depthrange=None,
     perflogname=None,
+    perflogrange=(1, 9999),
     filterlogname=None,
+    filterlogrange=(1e-32, 9999.0),
     resultformat=1,
 ):  # pylint: disable=too-many-locals
     """
@@ -73,18 +75,23 @@ def report_zone_mismatch(
     skiprange = list(range(zmin, z1)) + list(range(z2 + 1, zmax + 1))
 
     for zname in (zonelogname, zmodel):
-        df[zname].replace(skiprange, -888, inplace=True)
+        if skiprange:  # needed check; du to a bug in pandas version 0.21 .. 0.23
+            df[zname].replace(skiprange, -888, inplace=True)
         df[zname].fillna(-999, inplace=True)
         if perflogname:
             if perflogname in df.columns:
                 df[perflogname].replace(np.nan, -1, inplace=True)
-                df[zname] = np.where(df[perflogname] <= 0, -899, df[zname])
+                pfr1, pfr2 = perflogrange
+                df[zname] = np.where(df[perflogname] < pfr1, -899, df[zname])
+                df[zname] = np.where(df[perflogname] > pfr2, -899, df[zname])
             else:
                 return None
         if filterlogname:
             if filterlogname in df.columns:
                 df[filterlogname].replace(np.nan, -1, inplace=True)
-                df[zname] = np.where(df[filterlogname] <= 0, -919, df[zname])
+                ffr1, ffr2 = filterlogrange
+                df[zname] = np.where(df[filterlogname] < ffr1, -919, df[zname])
+                df[zname] = np.where(df[filterlogname] > ffr2, -919, df[zname])
             else:
                 return None
 

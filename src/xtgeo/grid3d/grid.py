@@ -1704,7 +1704,9 @@ class Grid(Grid3D):
         zonelogshift=0,
         depthrange=None,
         perflogname=None,
+        perflogrange=(1, 9999),
         filterlogname=None,
+        filterlogrange=(1e-32, 9999.0),
         resultformat=1,
     ):
         """Reports mismatch between wells and a zone.
@@ -1731,10 +1733,14 @@ class Grid(Grid3D):
                 zonation
             zonelogrange (tuple): zone log range, from - to (inclusive)
             onelayergrid (Grid): Redundant from version 2.8, please skip!
-            zonelogshift (int): Deviation (numerical shift) between grid and zonelog
+            zonelogshift (int): Deviation (numerical shift) between grid and zonelog,
+                e.g. if Zone property starts with 1 and this corresponds to a zonelog
+                index of 3 in the well, the shift shall be -2.
             depthrange (tuple): Interval for search in TVD depth, to speed up
-            perflogname (str): Name of perforation log to filter on (> 0).
+            perflogname (str): Name of perforation log to filter on (> 0 default).
+            perflogrange (tuple): Range of values where perforations are present.
             filterlogname (str): General filter, work as perflog, filter on values > 0
+            filterlogrange (tuple): Range of values where filter shall be present.
             resultformat (int): If 1, consider the zonelogrange in the well as
                 basis for match ratio, return (percent, match count, total count).
                 If 2 then a dictionary is returned with various result members
@@ -1774,6 +1780,7 @@ class Grid(Grid3D):
                 print(response)
 
         .. versionchanged:: 2.8.0 Added several new keys and better precision in result
+        .. versionchanged:: 2.11.0 Added ``perflogrange`` and ``filterlogrange``
         """
 
         reports = _grid_wellzone.report_zone_mismatch(
@@ -1786,7 +1793,9 @@ class Grid(Grid3D):
             zonelogshift=zonelogshift,
             depthrange=depthrange,
             perflogname=perflogname,
+            perflogrange=perflogrange,
             filterlogname=filterlogname,
+            filterlogrange=filterlogrange,
             resultformat=resultformat,
         )
 

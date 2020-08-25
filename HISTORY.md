@@ -2,6 +2,11 @@
 
 ## Version 2
 
+### 2.11.0 (in prep)
+* New features:
+  * Added kesy ``perflogrange`` and ``filterlogrange`` in Grid report_zone_mismatch()
+
+
 ### 2.10.0
 * New features:
   * Added interpolation option in xsection when plotting 3D grids #401
