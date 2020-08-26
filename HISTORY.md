@@ -2,9 +2,9 @@
 
 ## Version 2
 
-### 2.11.0 (in prep)
+### 2.11.0
 * New features:
-  * Added kesy ``perflogrange`` and ``filterlogrange`` in Grid report_zone_mismatch()
+  * Added keys ``perflogrange`` and ``filterlogrange`` in Grid report_zone_mismatch()
 
 
 ### 2.10.0
