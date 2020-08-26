@@ -105,15 +105,25 @@ def report_zone_mismatch(
     dfuse1 = dfuse1.loc[dfuse1[zonelogname] > -888]
 
     dfuse1["zmatch1"] = np.where(dfuse1[zmodel] == dfuse1[zonelogname], 1, 0)
-    mcount1 = int(dfuse1["zmatch1"].sum())
-    tcount1 = int(dfuse1["zmatch1"].count())
+    mcount1 = dfuse1["zmatch1"].sum()
+    tcount1 = dfuse1["zmatch1"].count()
+    if not np.isnan(mcount1):
+        mcount1 = int(mcount1)
+    if not np.isnan(tcount1):
+        tcount1 = int(tcount1)
+
     res1 = dfuse1["zmatch1"].mean() * 100
 
     dfuse2 = df.copy(deep=True)
     dfuse2 = dfuse2.loc[(df[zmodel] > -888) | (df[zonelogname] > -888)]
     dfuse2["zmatch2"] = np.where(dfuse2[zmodel] == dfuse2[zonelogname], 1, 0)
-    mcount2 = int(dfuse2["zmatch2"].sum())
-    tcount2 = int(dfuse2["zmatch2"].count())
+    mcount2 = dfuse2["zmatch2"].sum()
+    tcount2 = dfuse2["zmatch2"].count()
+    if not np.isnan(mcount2):
+        mcount2 = int(mcount2)
+    if not np.isnan(tcount2):
+        tcount2 = int(tcount2)
+
     res2 = dfuse2["zmatch2"].mean() * 100
 
     # update Well() copy (segment only)
