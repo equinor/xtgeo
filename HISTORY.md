@@ -2,6 +2,10 @@
 
 ## Version 2
 
+### 2.12.0 (in prep)
+* New features:
+  * Added method ``rename_subgrids`` for Grid() class.
+
 ### 2.11.0
 * New features:
   * Added keys ``perflogrange`` and ``filterlogrange`` in Grid report_zone_mismatch()
