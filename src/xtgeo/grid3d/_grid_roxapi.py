@@ -171,6 +171,7 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):  # pragma: no co
         logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
         subz = OrderedDict()
         for inum, zrange in indexer.zonation.items():
+
             logger.debug("inum: %s, zrange: %s", inum, zrange)
             zname = roxgrid.zone_names[inum]
             logger.debug("zname is: %s", zname)
@@ -286,6 +287,16 @@ def _export_grid_cornerpoint_roxapi(
 
     geom.set_defined_cells(self.get_actnum().values.astype(np.bool))
     grid.set_geometry(geom)
+
+    # this does not work as subgrid zonation is read only!! :-(
+    # indexer = grid.grid_indexer
+    # if self.subgrids is not None and len(self.subgrids) > 1:
+    #     subs = self.subgrids
+    #     for inum, sub in enumerate(subs.items()):
+    #         name, arr = sub
+    #         thesub = [subitem - 1 for subitem in arr]
+    #         indexer.zonation[inum] = thesub
+    #         # grid.zone_names.append(name)
 
 
 def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover

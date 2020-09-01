@@ -20,18 +20,22 @@ logger = xtg.functionlogger(__name__)
 # pragma: no cover
 
 
-def import_prop_roxapi(self, project, gname, pname, realisation):  # pragma: no cover
+def import_prop_roxapi(
+    self, project, gname, pname, realisation, faciescodes
+):  # pragma: no cover
     """Import a Property via ROXAR API spec."""
 
     logger.info("Opening RMS project ...")
     rox = xtgeo.RoxUtils(project, readonly=True)
 
-    _get_gridprop_data(self, rox, gname, pname, realisation)
+    _get_gridprop_data(self, rox, gname, pname, realisation, faciescodes)
 
     rox.safe_close()
 
 
-def _get_gridprop_data(self, rox, gname, pname, realisation):  # pragma: no cover
+def _get_gridprop_data(
+    self, rox, gname, pname, realisation, faciescodes
+):  # pragma: no cover
     # inside a RMS project
 
     logger.info("Realisation key not applied yet: %s", realisation)
@@ -45,18 +49,20 @@ def _get_gridprop_data(self, rox, gname, pname, realisation):  # pragma: no cove
         roxgrid = rox.project.grid_models[gname]
         roxprop = roxgrid.properties[pname]
 
-        if str(roxprop.type) == "discrete":
+        if str(roxprop.type) in ("discrete", "body_facies"):
             self._isdiscrete = True
 
         self._roxorigin = True
-        _convert_to_xtgeo_prop(self, rox, pname, roxgrid, roxprop, realisation)
+        _convert_to_xtgeo_prop(
+            self, rox, pname, roxgrid, roxprop, realisation, faciescodes
+        )
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
 
 
 def _convert_to_xtgeo_prop(
-    self, rox, pname, roxgrid, roxprop, realisation
+    self, rox, pname, roxgrid, roxprop, realisation, faciescodes
 ):  # pragma: no cover
     """Collect numpy array and convert to XTGeo fmt"""
     indexer = roxgrid.get_grid().grid_indexer
@@ -68,6 +74,11 @@ def _convert_to_xtgeo_prop(
         logger.info(indexer.handedness)
 
     pvalues = roxprop.get_values(realisation=realisation)
+
+    if str(roxprop.type) == "body_facies" and faciescodes:
+        fmap = roxprop.get_facies_map(realisation=realisation)
+        pvalues = fmap[pvalues]  # numpy magics
+
     self._roxar_dtype = pvalues.dtype
 
     if self._isdiscrete:
@@ -98,8 +109,10 @@ def _convert_to_xtgeo_prop(
     self._name = pname
 
 
-def export_prop_roxapi(self, project, gname, pname, realisation=0):  # pragma: no cover
-    """Export (i.e. store) to a Property in RMS via ROXAR API spec."""
+def export_prop_roxapi(
+    self, project, gname, pname, realisation=0, casting="unsafe"
+):  # pragma: no cover
+    """Export (i.e. store or save) to a Property icon in RMS via ROXAR API spec."""
 
     rox = xtgeo.RoxUtils(project, readonly=False)
 
@@ -107,7 +120,7 @@ def export_prop_roxapi(self, project, gname, pname, realisation=0):  # pragma: n
 
     try:
         roxgrid = rox.project.grid_models[gname]
-        _store_in_roxar(self, pname, roxgrid, realisation)
+        _store_in_roxar(self, pname, roxgrid, realisation, casting)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
@@ -118,7 +131,7 @@ def export_prop_roxapi(self, project, gname, pname, realisation=0):  # pragma: n
     rox.safe_close()
 
 
-def _store_in_roxar(self, pname, roxgrid, realisation):  # pragma: no cover
+def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no cover
 
     indexer = roxgrid.get_grid().grid_indexer
 
@@ -136,25 +149,29 @@ def _store_in_roxar(self, pname, roxgrid, realisation):  # pragma: no cover
 
     dtype = self._roxar_dtype
     logger.info("DTYPE is %s for %s", dtype, pname)
+
     if self.isdiscrete:
         pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
+        roxar_property_type = roxar.GridPropertyType.discrete
+
     else:
         pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
+        roxar_property_type = roxar.GridPropertyType.continuous
 
     pvalues[cellno] = val3d[iind, jind, kind]
 
     properties = roxgrid.properties
 
-    if self.isdiscrete:
+    if pname not in properties:
         rprop = properties.create(
-            pname, property_type=roxar.GridPropertyType.discrete, data_type=dtype
+            pname, property_type=roxar_property_type, data_type=dtype
         )
     else:
-        rprop = properties.create(
-            pname, property_type=roxar.GridPropertyType.continuous, data_type=dtype
-        )
+        rprop = properties[pname]
+        dtype = rprop.data_type
 
-    rprop.set_values(pvalues.astype(dtype), realisation=realisation)
+    # casting will
+    rprop.set_values(pvalues.astype(dtype, casting=casting), realisation=realisation)
 
     if self.isdiscrete:
         rprop.code_names = self.codes.copy()

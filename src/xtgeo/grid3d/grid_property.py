@@ -82,7 +82,9 @@ def gridproperty_from_file(
     return obj
 
 
-def gridproperty_from_roxar(project, gname, pname, realisation=0):  # pragma: no cover
+def gridproperty_from_roxar(
+    project, gname, pname, realisation=0, faciescodes=False
+):  # pragma: no cover
     """Make a GridProperty instance directly inside RMS.
 
     For arguments, see :func:`GridProperty.from_roxar()`
@@ -94,7 +96,9 @@ def gridproperty_from_roxar(project, gname, pname, realisation=0):  # pragma: no
 
     """
     obj = GridProperty()
-    obj.from_roxar(project, gname, pname, realisation=realisation)
+    obj.from_roxar(
+        project, gname, pname, realisation=realisation, faciescodes=faciescodes
+    )
 
     return obj
 
@@ -681,7 +685,9 @@ class GridProperty(Grid3D):
             self, pfile, fformat=fformat, name=name, append=append, dtype=dtype
         )
 
-    def from_roxar(self, projectname, gname, pname, realisation=0):  # pragma: no cover
+    def from_roxar(
+        self, projectname, gname, pname, realisation=0, faciescodes=False
+    ):  # pragma: no cover
         """Import grid model property from RMS project, and makes an instance.
 
         Arguments:
@@ -690,22 +696,40 @@ class GridProperty(Grid3D):
             gfile (str): Name of grid model
             pfile (str): Name of grid property
             realisation (int): Realisation number (default 0; first)
+            faciescodes (bool): If a Roxar property is of the special ``body_facies``
+                type (e.g. result from a channel facies object modelling), the
+                default is to get the body code values. If faciescodes is True,
+                the facies code values will be read instead. For other roxar properties
+                this key is not relevant.
+
+        .. versionadded:: 2.12  Key `faciescodes` was added
 
         """
 
         self._filesrc = None
 
         _gridprop_roxapi.import_prop_roxapi(
-            self, projectname, gname, pname, realisation
+            self, projectname, gname, pname, realisation, faciescodes
         )
 
-    def to_roxar(self, project, gname, pname, realisation=0):  # pragma: no cover
+    def to_roxar(
+        self, project, gname, pname, realisation=0, casting="unsafe"
+    ):  # pragma: no cover
         """Store a grid model property into a RMS project.
 
         Note:
             When project is file path (direct access, outside RMS) then
             ``to_roxar()`` will implicitly do a project save. Otherwise, the project
             will not be saved until the user do an explicit project save action.
+
+        Note:
+            Beware values casting, see ``casting`` key.
+            Default is "unsafe" which may create issues if your property has
+            values that is outside the valid range. I.e. for float values XTGeo
+            normally use `float64` (8 byte) while roxar use `float32` (4 byte).
+            With extreme values, e.g. 10e40, such values will be truncated if
+            "unsafe" casting. More common is casting issues with discrete as
+            Roxar (RMS) often use `uint8` which only allow values in range 1..256.
 
         Args:
             project (str or roxar._project): Inside RMS use the magic 'project',
@@ -714,13 +738,17 @@ class GridProperty(Grid3D):
             pfile (str): Name of grid property
             projectname (str): Name of RMS project (None if inside a project)
             realisation (int): Realisation number (default 0 first)
+            casting (str): This refers to numpy `astype(... casting=...)` settings.
+
 
         .. versionchanged: 2.10
             Key `saveproject` has been removed and will have no effect
 
+        .. versionadded:: 2.12 Key `casting` was added
+
         """
         _gridprop_roxapi.export_prop_roxapi(
-            self, project, gname, pname, realisation=realisation
+            self, project, gname, pname, realisation=realisation, casting=casting
         )
 
     # ==================================================================================

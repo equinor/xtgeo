@@ -2,9 +2,17 @@
 
 ## Version 2
 
+### 2.12.0 (in prep)
+* New features:
+  * Added method ``rename_subgrids`` for Grid() class.
+  * Added key ``casting`` to method ``to_roxar()`` for GridProperty() class
+  * Added key ``faciescodes`` to method ``from_roxar`` and
+    ``gridproperty_from_roxar()`` for GridProperty() class
+
 ### 2.11.0
 * New features:
-  * Added keys ``perflogrange`` and ``filterlogrange`` in Grid report_zone_mismatch()
+  * Added keys ``perflogrange`` and ``filterlogrange`` in Grid()
+    ``report_zone_mismatch()``
 
 
 ### 2.10.0

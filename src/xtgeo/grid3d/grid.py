@@ -875,6 +875,39 @@ class Grid(Grid3D):
 
         return newd
 
+    def rename_subgrids(self, names):
+        """Rename the names in the subgrids with the new names.
+
+        Args:
+            names (list): List of new names, length of list must be same as length of
+                subgrids
+
+
+        Example::
+
+            grd = xtgeo.Grid("somefile.roff")
+
+            if len(grd.subgrids) == 3:
+                grd.rename_subgrids(["Inky", "Tinky", "Pinky"])
+
+        Raises:
+            ValueError: Input names not a list or a tuple
+            ValueError: Lenght of names list not same as number of subgrids
+
+        .. versionadded:: 2.12
+        """
+        if not isinstance(names, (list, tuple)):
+            raise ValueError("Input names not a list or a tuple")
+
+        if len(names) != len(list(self.subgrids.keys())):
+            raise ValueError("Lenght of names list not same as number of subgrids")
+
+        subs = self.get_subgrids().copy()
+        for num, oldname in enumerate(self.subgrids.keys()):
+            subs[str(names[num])] = subs.pop(oldname)
+
+        self.set_subgrids(subs)
+
     def estimate_design(self, nsub=None):
         """Get by clever guessing the design and simbox thickness of the
         grid or a subgrid.
