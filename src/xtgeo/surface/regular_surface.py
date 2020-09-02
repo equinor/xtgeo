@@ -1401,7 +1401,7 @@ class RegularSurface(object):
                 and submit the numpy array (use surf.get_values1d()).
 
         Returns:
-            The z value at location iloc, jloc, None if undefined cell.
+            The x, y, z values at location iloc, jloc
         """
 
         xval, yval, value = _regsurf_oper.get_xy_value_from_ij(
@@ -1597,8 +1597,23 @@ class RegularSurface(object):
         return xylist, valuelist
 
     # ==================================================================================
-    # Interpolation, smooth or fill of values (possibly many methods here)
+    # Crop, interpolation, smooth or fill of values (possibly many methods here)
     # ==================================================================================
+
+    def autocrop(self):
+        """Automatic cropping of the surface to minimize undefined areas.
+
+        This method is simply removing undefined "white areas". The
+        instance will be updated with new values for xori, yori, ncol, etc. Rotation
+        will never change
+
+        Returns:
+            RegularSurface instance is updated in-place
+
+        .. versionadded:: 2.12.0
+        """
+
+        _regsurf_utils.autocrop(self)
 
     def fill(self, fill_value=None):
         """Fast infilling of undefined values.
