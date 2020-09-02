@@ -1,5 +1,6 @@
 # coding: utf-8
 """Roxar API functions for XTGeo RegularSurface"""
+import numpy as np
 from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
 
@@ -78,6 +79,8 @@ def _roxapi_horizon_to_xtgeo(self, rox):  # pragma: no cover
     self._ncol, self._nrow = rox.dimensions
     self._xinc, self._yinc = rox.increment
     self._rotation = rox.rotation
+    self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+    self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
 
     self._values = rox.get_values()
     logger.info("Surface from roxapi to xtgeo... DONE")
