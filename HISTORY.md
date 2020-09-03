@@ -2,12 +2,14 @@
 
 ## Version 2
 
-### 2.12.0 (in prep)
+### 2.12.0
 * New features:
   * Added method ``rename_subgrids`` for Grid() class.
   * Added key ``casting`` to method ``to_roxar()`` for GridProperty() class
   * Added key ``faciescodes`` to method ``from_roxar`` and
     ``gridproperty_from_roxar()`` for GridProperty() class
+  * It is now possible to write blocked wells and ordinary wells to Roxar API
+  * Added a ``autocrop()`` function for RegularSurface()
 
 ### 2.11.0
 * New features:
