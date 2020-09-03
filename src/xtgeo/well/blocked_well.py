@@ -129,7 +129,7 @@ class BlockedWell(Well):
 
     @property
     def gridname(self):
-        """ Returns or set (rename) the grid name that the blocked wells
+        """Returns or set (rename) the grid name that the blocked wells
         belongs to."""
         return self._gridname
 
@@ -152,12 +152,12 @@ class BlockedWell(Well):
         activated.
 
         Args:
-            project (str): Magic string 'project' or file path to project
+            project (str): Magic string `project` or file path to project
             gname (str): Name of GridModel icon in RMS
             bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
             wname (str): Name of well, as shown in RMS.
             lognames (list): List of lognames to include, or use 'all' for
-                all current blocked logs for this well. Defaault is 'all'.
+                all current blocked logs for this well. Default is 'all'.
             realisation (int): Realisation index (0 is default)
             ijk (bool): If True, then make additional logs with grid IJK as I_INDEX,
                 etc, default is False
@@ -205,6 +205,9 @@ class BlockedWell(Well):
             realisation (int): Realisation index (0 is default)
             ijk (bool): If True, then also write special index logs if they exist,
                 such as I_INDEX, J_INDEX, K_INDEX, etc. Default is False
+
+        .. versionadded: 2.12.0
+
         """
         project = args[0]
         gname = args[1]

@@ -551,10 +551,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._ensure_consistency()
 
     def to_roxar(self, *args, **kwargs):
-        """Import (retrieve) well from roxar project.
+        """Export (save/store) a well to a roxar project.
 
         Note this method works only when inside RMS, or when RMS license is
         activated.
+
+        The current implementation will only update existing well names, and
+        the well log array size must not change.
+
+        Note:
+           When project is file path (direct access, outside RMS) then
+           ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+           will not be saved until the user do an explicit project save action.
 
         Args:
             project (str): Magic string 'project' or file path to project
@@ -564,6 +572,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             realisation (int): Currently inactive
             trajectory (str): Name of trajectory in RMS
             logrun (str): Name of logrun in RMS
+
+        .. versionadded:: 2.12.0
 
         """
 
@@ -627,7 +637,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             logname (str): Name of log to check if discrete or not
 
-        .. versionadded: 2.2.0
+        .. versionadded:: 2.2.0
         """
 
         if logname in self._wlognames and self.get_logtype(logname) == "DISC":
@@ -1396,7 +1406,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Raises:
             None
 
-        ..versionadded:: 2.1.0
+        .. versionadded:: 2.1.0
 
         """
 
