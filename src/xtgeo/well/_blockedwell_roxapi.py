@@ -43,9 +43,12 @@ def export_bwell_roxapi(
     """Private function for blockwell export (store in RMS) from XTGeo to RoxarAPI"""
 
     logger.info("Opening RMS project ...")
-    rox = RoxUtils(project, readonly=True)
+    rox = RoxUtils(project, readonly=False)
 
     _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
+
+    if rox._roxexternal:
+        rox.project.save()
 
     rox.safe_close()
 
@@ -135,8 +138,6 @@ def _roxapi_export_bwell(
     self, rox, gname, bwname, wname, lognames, ijk, realisation
 ):  # pylint: disable=too-many-statements
     """Private function for ROXAPI well export (set well with updated logs to Roxar)"""
-
-    # raise NotImplementedError("Later!")
 
     if gname in rox.project.grid_models:
         gmodel = rox.project.grid_models[gname]

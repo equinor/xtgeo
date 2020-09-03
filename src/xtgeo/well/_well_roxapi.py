@@ -157,9 +157,12 @@ def export_well_roxapi(
     """Private function for well export (store in RMS) from XTGeo to RoxarAPI"""
 
     logger.info("Opening RMS project ...")
-    rox = RoxUtils(project, readonly=True)
+    rox = RoxUtils(project, readonly=False)
 
     _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+
+    if rox._roxexternal:
+        rox.project.save()
 
     rox.safe_close()
 
@@ -178,6 +181,8 @@ def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisat
     Also, the length of arrays should not change, at least not for now.
 
     """
+
+    logger.info("Not in use: %s", realisation)
 
     well = rox.project.wells[wname]
     traj = well.wellbore.trajectories[trajectory]
@@ -224,4 +229,8 @@ def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisat
 
 
 def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation):
+
+    logger.info("Not in use: %s, %s, %s, %s, %s", self, rox, wname, lognames, logrun)
+    logger.info("Not in use: %s, %s ", trajectory, realisation)
+
     raise NotImplementedError("In prep")
