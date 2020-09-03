@@ -337,33 +337,33 @@ Get average properties per zone
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
 
-   import xtgeo
+    import xtgeo
 
-   PRJ = project  # noqa
-   WELLNAME = "DC1-1V4_ref"
-   TRAJNAME = "Imported trajectory"
-   ZONELOGNAME = "ZONELOG"
-   ZNAMES = {0: "UPPER", 1: "MIDDLE", 2: "LOWER"}
-
-
-   def get_well():
-       """Get XTGeo Well() object"""
-       wll = xtgeo.well_from_roxar(PRJ, WELLNAME, trajectory=TRAJNAME)
-       return wll
+    PRJ = project  # noqa
+    WELLNAME = "DC1-1V4_ref"
+    TRAJNAME = "Imported trajectory"
+    ZONELOGNAME = "ZONELOG"
+    ZNAMES = {0: "UPPER", 1: "MIDDLE", 2: "LOWER"}
 
 
-   def compute_avg_per_zone(wll):
-       """Compute avg per zone without any other criteria"""
+    def get_well():
+        """Get XTGeo Well() object"""
+        wll = xtgeo.well_from_roxar(PRJ, WELLNAME, trajectory=TRAJNAME)
+        return wll
 
-       df = wll.dataframe
-       df_avgs = df.groupby(ZONELOGNAME).mean()
-       df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with true name
 
-       print("Average properties per zone")
-        print(df_avgs)
+    def compute_avg_per_zone(wll):
+        """Compute avg per zone without any other criteria"""
 
-        # e.g. get avg PORO for MIDDLE, rounded to 3 decimals:
-        print("\nAVG poro for MIDDLE is {:2.3f}\n".format(df_avgs.loc["MIDDLE", "PORO"]))
+        df = wll.dataframe
+        df_avgs = df.groupby(ZONELOGNAME).mean()
+        df_avgs.rename(index=ZNAMES, inplace=True)  # rename zonelog numbers with true name
+
+        print("Average properties per zone")
+            print(df_avgs)
+
+            # e.g. get avg PORO for MIDDLE, rounded to 3 decimals:
+            print("\nAVG poro for MIDDLE is {:2.3f}\n".format(df_avgs.loc["MIDDLE", "PORO"]))
 
 
     def compute_avg_per_zone_smarter(wll):
@@ -395,7 +395,66 @@ Get average properties per zone
         main()
 
 
+Blocked well data
+-----------------
+
+Remember that RMS define blocked wells as a special grid property while XTGeo treats
+blocked wells as a subclass of Well() data.
+
+
+Make new blocked logs from facies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the following example, the blocked facies is used to make new logs that will
+be input to Equinor's APS module.
+
+.. code-block:: python
+
+    import numpy as np
+    import xtgeo
+
+    PRJ = project  # noqa pylint: disable=undefined-variable
+    GNAME = "Geogrid_Valysar"
+    BWNAME = "BW"
+    FACIES = "Facies"
+
+    APS_FACIES = {0: "Floodplain", 1: "Channel", 2: "Crevasse", 5: "Coal"}
+    PREFIX = "aps_"
+
+    # note it is possible to "play with" probabilities that are not just 0 or 1
+    MINPROB = 0.0
+    MAXPROB = 1.0
+
+    def main():
+        """Main work, looping wells and make APS relevant logs"""
+
+        for well in PRJ.wells:
+
+            blw = xtgeo.blockedwell_from_roxar(
+                PRJ, GNAME, BWNAME, well.name, lognames=[FACIES]
+            )
+            dfr = blw.dataframe.copy(deep=True)
+            for code, faciesname in APS_FACIES.items():
+                newname = PREFIX + faciesname
+                dfr[newname] = MINPROB
+                dfr[newname][dfr[FACIES] == code] = MAXPROB
+
+                # if facies is undefined, also probability shall be undefined
+                dfr[newname][np.isnan(dfr[FACIES])] = np.nan
+
+            blw.dataframe = dfr
+            blw.to_roxar(PRJ, GNAME, BWNAME, well.name)
+
+
+    if __name__ == "__main__":
+        main()
+
+
+
 Line point data
 ---------------
 
 Examples to comes...
+
+
+

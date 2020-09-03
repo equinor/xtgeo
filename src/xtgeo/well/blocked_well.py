@@ -80,6 +80,10 @@ class BlockedWell(Well):
     Similar to Wells, the blocked well logs are stored as Pandas dataframe,
     which make manipulation easy and fast.
 
+    For blocked well logs, the numbers of rows cannot be changed if you want to
+    save the result in RMS, as this is derived from the grid. Also the blocked well
+    icon must exist before save.
+
     The well trajectory are here represented as logs, and XYZ have magic names:
     X_UTME, Y_UTMN, Z_TVDSS, which are the three first Pandas columns.
 
@@ -103,11 +107,13 @@ class BlockedWell(Well):
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
 
-    The instance can be made either from file or (todo!) by spesification::
+    The instance can be made either from file or, if in RMS, from RMS icon::
 
         >>> well1 = BlockedWell('somefilename')  # assume RMS ascii well
         >>> well2 = BlockedWell('somefilename', fformat='rms_ascii')
         >>> well3 = xtgeo.blockedwell_from_file('somefilename')
+        >>> well4 = xtgeo.blockedwell_from_roxar(project, 'gridname', 'bwname',
+                                                 'wellname')
 
     For arguments, see method under :meth:`from_file`.
 
@@ -123,7 +129,7 @@ class BlockedWell(Well):
 
     @property
     def gridname(self):
-        """ Returns or set (rename) the grid name that the blocked wells
+        """Returns or set (rename) the grid name that the blocked wells
         belongs to."""
         return self._gridname
 
@@ -137,6 +143,8 @@ class BlockedWell(Well):
 
         newbw._gridname = self._gridname
 
+        return newbw
+
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) a single blocked well from roxar project.
 
@@ -144,20 +152,21 @@ class BlockedWell(Well):
         activated.
 
         Args:
-            project (str): Magic string 'project' or file path to project
+            project (str): Magic string `project` or file path to project
             gname (str): Name of GridModel icon in RMS
             bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
             wname (str): Name of well, as shown in RMS.
             lognames (list): List of lognames to include, or use 'all' for
-                all current blocked logs for this well.
+                all current blocked logs for this well. Default is 'all'.
             realisation (int): Realisation index (0 is default)
-            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
+            ijk (bool): If True, then make additional logs with grid IJK as I_INDEX,
+                etc, default is False
         """
         project = args[0]
         gname = args[1]
         bwname = args[2]
         wname = args[3]
-        lognames = kwargs.get("lognames", None)
+        lognames = kwargs.get("lognames", "all")
         ijk = kwargs.get("ijk", False)
         realisation = kwargs.get("realisation", 0)
 
@@ -190,14 +199,31 @@ class BlockedWell(Well):
             gname (str): Name of GridModel icon in RMS
             bwname (str): Name of Blocked Well icon in RMS, usually 'BW'
             wname (str): Name of well, as shown in RMS.
+            lognames (list or "all"): List of lognames to include, or use 'all' for
+                all current blocked logs for this well (except index logs). Default is
+                "all".
             realisation (int): Realisation index (0 is default)
+            ijk (bool): If True, then also write special index logs if they exist,
+                such as I_INDEX, J_INDEX, K_INDEX, etc. Default is False
+
+        .. versionadded: 2.12.0
+
         """
         project = args[0]
         gname = args[1]
         bwname = args[2]
         wname = args[3]
+        lognames = kwargs.get("lognames", "all")
+        ijk = kwargs.get("ijk", False)
         realisation = kwargs.get("realisation", 0)
 
         _blockedwell_roxapi.export_bwell_roxapi(
-            self, project, gname, bwname, wname, realisation=realisation,
+            self,
+            project,
+            gname,
+            bwname,
+            wname,
+            lognames=lognames,
+            ijk=ijk,
+            realisation=realisation,
         )

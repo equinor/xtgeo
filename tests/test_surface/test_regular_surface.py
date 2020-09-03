@@ -301,6 +301,19 @@ def test_swapaxes():
     tsetup.assert_almostequal(valdiff.std(), 0.0, 0.00001)
 
 
+def test_autocrop():
+    """Import Reek Irap binary and autocrop surface"""
+
+    xsurf = xtgeo.RegularSurface(TESTSET5)
+    xcopy = xsurf.copy()
+
+    xcopy.autocrop()
+
+    assert xsurf.ncol > xcopy.ncol
+    assert xcopy.nrow == 442
+    assert xsurf.values.mean() == xcopy.values.mean()
+
+
 def test_irapasc_import1():
     """Import Reek Irap ascii."""
     logger.info("Import and export...")

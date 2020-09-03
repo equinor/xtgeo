@@ -12,10 +12,10 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
 from xtgeo.common.exceptions import WellNotFoundError
 
-# try:
-#     import roxar
-# except ImportError:
-#     pass
+try:
+    import roxar
+except ImportError:
+    pass
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -37,13 +37,18 @@ def import_bwell_roxapi(
     rox.safe_close()
 
 
-def export_bwell_roxapi(self, project, gname, bwname, wname, realisation=0):
-    """Private function for loading project and ROXAPI blockwell import"""
+def export_bwell_roxapi(
+    self, project, gname, bwname, wname, lognames="all", ijk=False, realisation=0
+):
+    """Private function for blockwell export (store in RMS) from XTGeo to RoxarAPI"""
 
     logger.info("Opening RMS project ...")
-    rox = RoxUtils(project, readonly=True)
+    rox = RoxUtils(project, readonly=False)
 
-    _roxapi_export_bwell(self, rox, gname, bwname, wname, realisation)
+    _roxapi_export_bwell(self, rox, gname, bwname, wname, lognames, ijk, realisation)
+
+    if rox._roxexternal:
+        rox.project.save()
 
     rox.safe_close()
 
@@ -130,51 +135,69 @@ def _roxapi_import_bwell(
 
 
 def _roxapi_export_bwell(
-    self, rox, gname, bwname, wname, realisation
+    self, rox, gname, bwname, wname, lognames, ijk, realisation
 ):  # pylint: disable=too-many-statements
     """Private function for ROXAPI well export (set well with updated logs to Roxar)"""
 
-    raise NotImplementedError("Later!")
+    if gname in rox.project.grid_models:
+        gmodel = rox.project.grid_models[gname]
+        logger.info("RMS grid model <%s> OK", gname)
+    else:
+        raise ValueError("No such grid name present: {}".format(gname))
 
-    # if gname in rox.project.grid_models:
-    #     gmodel = rox.project.grid_models[gname]
-    #     logger.info("RMS grid model <%s> OK", gname)
-    # else:
-    #     raise ValueError("No such grid name present: {}".format(gname))
+    if bwname in gmodel.blocked_wells_set:
+        bwset = gmodel.blocked_wells_set[bwname]
+        logger.info("Blocked well set <%s> OK", bwname)
+        bwprops = bwset.properties
+    else:
+        raise ValueError("No such blocked well set: {}".format(bwname))
 
-    # if bwname in gmodel.blocked_wells_set:
-    #     bwset = gmodel.blocked_wells_set[bwname]
-    #     logger.info("Blocked well set <%s> OK", bwname)
-    # else:
-    #     raise ValueError("No such blocked well set: {}".format(bwname))
+    if wname in bwset.get_well_names():
+        self._wname = wname
+    else:
+        raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
 
-    # if wname in bwset.get_well_names():
-    #     self._wname = wname
-    # else:
-    #     raise WellNotFoundError("No such well in blocked well set: {}".format(wname))
+    bwnames = [item.name for item in bwset.properties]
 
-    # bwprops = [item for item in bwset.properties]
-    # bwnames = [item.name for item in bwset.properties]
+    # get the current indices for the well
+    dind = bwset.get_data_indices([self._wname])
 
-    # # get the current indices for the well
-    # dind = bwset.get_data_indices([self.wname])
+    for lname in self.lognames:
+        if not ijk and "_INDEX" in lname:
+            continue
 
-    # for lname in self.lognames:
-    #     if lname not in bwnames:
-    #         if self._wlogtype[lname] == "CONT":
-    #             bwlog = bwset.properties.create(lname,
-    #                                             roxar.GridPropertyType.continuous,
-    #                                             np.float32)
-    #             bwprop = bwset.generate_values(discrete=False)
-    #         else:
-    #             bwlog = bwset.properties.create(lname,
-    #                                             roxar.GridPropertyType.discrete,
-    #                                             np.uint16)
-    #             bwprop = bwset.generate_values(discrete=True)
+        if lognames != "all" and lname not in lognames:
+            continue
 
-    #     bwlog =  bwprops[lname]
-    #     bwprop = bwlog.get_values(realisation=realisation)
-    #     bwsbwprop[dind]
+        if lname not in bwnames:
+            if self._wlogtype[lname] == "CONT":
+                print("Create CONT", lname, "for", wname)
+                bwlog = bwset.properties.create(
+                    lname, roxar.GridPropertyType.continuous, np.float32
+                )
+                bwprop = bwset.generate_values(discrete=False, fill_value=0.0)
+            else:
+                print("Create DISK", lname, "for", wname)
+                bwlog = bwset.properties.create(
+                    lname, roxar.GridPropertyType.discrete, np.int32
+                )
+                bwprop = bwset.generate_values(discrete=True, fill_value=0)
 
-    #     # COFFEE!
-    #     bwprop.set_values(self.dataframe[lname].values)
+        else:
+            bwlog = bwprops[lname]
+            bwprop = bwlog.get_values(realisation=realisation)
+
+        usedtype = bwprop.dtype
+        dind = bwset.get_data_indices([self._wname])
+
+        if self.dataframe[lname].values.size != dind.size:
+            raise ValueError(
+                "Dataframe is of wrong size, changing numbers of rows is not possible"
+            )
+
+        maskedvalues = np.ma.masked_invalid(self.dataframe[lname].values).astype(
+            usedtype
+        )
+
+        bwprop[dind] = maskedvalues
+        bwlog.set_values(bwprop)
