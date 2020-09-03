@@ -8,6 +8,7 @@ import numpy as np
 import numpy.ma as npma
 import pandas as pd
 
+import xtgeo
 from xtgeo.roxutils import RoxUtils
 from xtgeo.common import XTGeoDialog
 
@@ -142,3 +143,85 @@ def _get_roxlog(self, roxlrun, lname):  # pragma: no cover
         self._wlogrecord[lname] = None
 
     return tmplog
+
+
+def export_well_roxapi(
+    self,
+    project,
+    wname,
+    lognames="all",
+    logrun="log",
+    trajectory="Drilled trajectory",
+    realisation=0,
+):
+    """Private function for well export (store in RMS) from XTGeo to RoxarAPI"""
+
+    logger.info("Opening RMS project ...")
+    rox = RoxUtils(project, readonly=True)
+
+    _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+
+    rox.safe_close()
+
+
+def _roxapi_export_well(self, rox, wname, lognames, logrun, trajectory, realisation):
+
+    if wname in rox.project.wells:
+        _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+    else:
+        _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation)
+
+
+def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisation):
+    """Assume well is to updated only with logs, new or changed.
+
+    Also, the length of arrays should not change, at least not for now.
+
+    """
+
+    well = rox.project.wells[wname]
+    traj = well.wellbore.trajectories[trajectory]
+    lrun = traj.log_runs[logrun]
+
+    lrun.log_curves.clear()
+
+    if lognames == "all":
+        uselognames = self.lognames
+    else:
+        uselognames = lognames
+
+    for lname in uselognames:
+
+        isdiscrete = False
+        xtglimit = xtgeo.UNDEF_LIMIT
+        if self._wlogtype[lname] == "DISC":
+            isdiscrete = True
+            xtglimit = xtgeo.UNDEF_INT_LIMIT
+
+        if isdiscrete:
+            thelog = lrun.log_curves.create_discrete(name=lname)
+        else:
+            thelog = lrun.log_curves.create(name=lname)
+
+        values = thelog.generate_values()
+
+        if values.size != self.dataframe[lname].values.size:
+            raise ValueError("New logs have different sampling or size, not possible")
+
+        usedtype = values.dtype
+
+        vals = np.ma.masked_invalid(self.dataframe[lname].values)
+        vals = np.ma.masked_greater(vals, xtglimit)
+        vals = vals.astype(usedtype)
+        thelog.set_values(vals)
+
+        if isdiscrete:
+            # roxarapi requires keys to int, while xtgeo can accept any, e.g. strings
+            codedict = {
+                int(key): str(value) for key, value in self._wlogrecord[lname].items()
+            }
+            thelog.set_code_names(codedict)
+
+
+def _roxapi_create_well(self, rox, wname, lognames, logrun, trajectory, realisation):
+    raise NotImplementedError("In prep")

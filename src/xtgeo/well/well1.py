@@ -529,7 +529,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         wname = args[1]
         lognames = kwargs.get("lognames", "all")
         lognames_strict = kwargs.get("lognames_strict", False)
-        trajectory = kwargs.get("trajectory", "Drilled trajecetry")
+        trajectory = kwargs.get("trajectory", "Drilled trajectory")
         logrun = kwargs.get("logrun", "log")
         inclmd = kwargs.get("inclmd", False)
         inclsurvey = kwargs.get("inclsurvey", False)
@@ -549,6 +549,45 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             inclsurvey=inclsurvey,
         )
         self._ensure_consistency()
+
+    def to_roxar(self, *args, **kwargs):
+        """Import (retrieve) well from roxar project.
+
+        Note this method works only when inside RMS, or when RMS license is
+        activated.
+
+        Args:
+            project (str): Magic string 'project' or file path to project
+            wname (str): Name of well, as shown in RMS.
+            lognames (:obj:list or :obj:str): List of lognames to save, or
+                use simply 'all' for current logs for this well. Default is 'all'
+            realisation (int): Currently inactive
+            trajectory (str): Name of trajectory in RMS
+            logrun (str): Name of logrun in RMS
+
+        """
+
+        # use *args, **kwargs since this method is overrided in blocked_well, and
+        # signature should be the same
+
+        project = args[0]
+        wname = args[1]
+        lognames = kwargs.get("lognames", "all")
+        trajectory = kwargs.get("trajectory", "Drilled trajectory")
+        logrun = kwargs.get("logrun", "log")
+        realisation = kwargs.get("realisation", 0)
+
+        logger.debug("Not in use: realisation %s", realisation)
+
+        _well_roxapi.export_well_roxapi(
+            self,
+            project,
+            wname,
+            lognames=lognames,
+            trajectory=trajectory,
+            logrun=logrun,
+            realisation=realisation,
+        )
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -868,7 +907,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         ptr_az = _cxtgeo.new_doublearray(nlen)
 
         ier = _cxtgeo.well_geometrics(
-            nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md, ptr_incl, ptr_az, 0,
+            nlen, ptr_xv, ptr_yv, ptr_zv, ptr_md, ptr_incl, ptr_az, 0
         )
 
         if ier != 0:
@@ -1303,7 +1342,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
 
         _well_oper.make_ijk_from_grid(
-            self, grid, grid_id=grid_id, algorithm=algorithm, activeonly=activeonly,
+            self, grid, grid_id=grid_id, algorithm=algorithm, activeonly=activeonly
         )
 
     def make_zone_qual_log(self, zqname):
