@@ -13,7 +13,6 @@ import numpy as np
 import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from xtgeo.common import XTGDescription
 from ._grid3d import Grid3D
@@ -568,7 +567,6 @@ class Grid(Grid3D):
         initprops=None,
         restartprops=None,
         restartdates=None,
-        _xtgformat=1,
     ):
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -584,7 +582,6 @@ class Grid(Grid3D):
                 is "eclipserun", then list the names of the properties here.
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
-            _xtgformat (int): TMP developer option (i.e. don't change!)
 
         Example::
 
@@ -607,7 +604,6 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
-            _xtgformat=_xtgformat,
         )
         self._tmp = {}
 
@@ -1046,8 +1042,7 @@ class Grid(Grid3D):
         return self._props
 
     def get_prop_by_name(self, name):
-        """Gets a property object by name lookup, return None if not present.
-        """
+        """Gets a property object by name lookup, return None if not present."""
         for obj in self.props:
             if obj.name == name:
                 return obj
@@ -1528,28 +1523,28 @@ class Grid(Grid3D):
     def crop(self, colcrop, rowcrop, laycrop, props=None):
         """Reduce the grid size by cropping, the grid will have new dimensions.
 
-        If props is "all" then all properties assosiated (linked) to then
-        grid are also cropped, and the instances are updated.
+            If props is "all" then all properties assosiated (linked) to then
+            grid are also cropped, and the instances are updated.
 
-    Args:
-        colcrop (tuple): A tuple on the form (i1, i2)
-            where 1 represents start number, and 2 represent end. The range
-            is inclusive for both ends, and the number start index is 1 based.
-        rowcrop (tuple): A tuple on the form (j1, j2)
-        laycrop (tuple): A tuple on the form (k1, k2)
-        props (list or str): None is default, while properties can be listed.
-            If "all", then all GridProperty objects which are linked to the
-            Grid instance are updated.
+        Args:
+            colcrop (tuple): A tuple on the form (i1, i2)
+                where 1 represents start number, and 2 represent end. The range
+                is inclusive for both ends, and the number start index is 1 based.
+            rowcrop (tuple): A tuple on the form (j1, j2)
+            laycrop (tuple): A tuple on the form (k1, k2)
+            props (list or str): None is default, while properties can be listed.
+                If "all", then all GridProperty objects which are linked to the
+                Grid instance are updated.
 
-    Returns:
-        The instance is updated (cropped)
+        Returns:
+            The instance is updated (cropped)
 
-    Example::
+        Example::
 
-            >>> from xtgeo.grid3d import Grid
-            >>> gf = Grid("gullfaks2.roff")
-            >>> gf.crop((3, 6), (4, 20), (1, 10))
-            >>> gf.to_file("gf_reduced.roff")
+                >>> from xtgeo.grid3d import Grid
+                >>> gf = Grid("gullfaks2.roff")
+                >>> gf.crop((3, 6), (4, 20), (1, 10))
+                >>> gf.to_file("gf_reduced.roff")
 
         """
 
@@ -1931,35 +1926,17 @@ class Grid(Grid3D):
     def _convert_xtgformat2to1(self):
         """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
 
-        if self._xtgformat == 1:
-            logger.info("No conversion, format is already xtgformat == 1")
-            return
+        _grid_etc1._convert_xtgformat2to1(self)
 
-        logger.info("Convert grid from new xtgformat to legacy format...")
+    def _convert_xtgformat1to2(self):
+        """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
 
-        newcoordsv = np.zeros(
-            ((self._ncol + 1) * (self._nrow + 1) * 6), dtype=np.float64
-        )
-        newzcornsv = np.zeros(
-            (self._ncol * self._nrow * (self._nlay + 1) * 4), dtype=np.float64
-        )
-        newactnumsv = np.zeros((self._ncol * self._nrow * self._nlay), dtype=np.int32)
+        _grid_etc1._convert_xtgformat1to2(self)
 
-        _cxtgeo.grd3cp3d_xtgformat2to1_geom(
-            self._ncol,
-            self._nrow,
-            self._nlay,
-            newcoordsv,
-            self._coordsv,
-            newzcornsv,
-            self._zcornsv,
-            newactnumsv,
-            self._actnumsv,
-        )
+    def _xtgformat1(self):
+        """Shortform... arrays from new structure xtgformat=2 to legacy xtgformat=1 """
+        self._convert_xtgformat2to1()
 
-        self._coordsv = newcoordsv
-        self._zcornsv = newzcornsv
-        self._actnumsv = newactnumsv
-        self._xtgformat = 1
-
-        logger.info("Convert grid from new xtgformat to legacy format... done")
+    def _xtgformat2(self):
+        """Shortform... arrays from old structure xtgformat=1 to new xtgformat=2"""
+        self._convert_xtgformat1to2()

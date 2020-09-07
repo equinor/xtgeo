@@ -122,10 +122,10 @@ x_interp_map_nodes(double *x_v,
                    int method);
 
 long
-x_ijk2ib(int i, int j, int k, int nx, int ny, int nz, int ia_start);
+x_ijk2ib(long i, long j, long k, long nx, long ny, long nz, int ia_start);
 
 long
-x_ijk2ic(int i, int j, int k, int nx, int ny, int nz, int ia_start);
+x_ijk2ic(long i, long j, long k, long nx, long ny, long nz, int ia_start);
 
 void
 x_ib2ijk(long ib,
@@ -1980,6 +1980,7 @@ grd3d_well_ijk(int nx,
 /*
  *======================================================================================
  * New format spec for corner point 3D grid, grdcp3d_*. Cf xtgformat = 2 in grid class
+ * Also, all dimenstions nrow, ncol etc shall be long
  *======================================================================================
  */
 
@@ -1987,8 +1988,8 @@ int
 grdcp3d_imp_roffbin_coordsv(FILE *fc,
                             int swap,
                             long bytepos,
-                            int nncol,
-                            int nnrow,
+                            long nncol,
+                            long nnrow,
                             float xoffset,
                             float yoffset,
                             float zoffset,
@@ -2002,9 +2003,9 @@ int
 grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                             int swap,
                             long bytepos,
-                            int nncol,
-                            int nnrow,
-                            int nnlay,
+                            long nncol,
+                            long nnrow,
+                            long nnlay,
                             float xoffset,
                             float yoffset,
                             float zoffset,
@@ -2017,9 +2018,26 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                             long n_swig_np_flt_inplaceflat_v1);
 
 int
-grd3cp3d_xtgformat2to1_geom(int ncol,
-                            int nrow,
-                            int nlay,
+grd3cp3d_xtgformat1to2_geom(long ncol,
+                            long nrow,
+                            long nlay,
+                            double *swig_np_dbl_inplaceflat_v1,  // coordsv1
+                            long n_swig_np_dbl_inplaceflat_v1,
+                            double *swig_np_dbl_inplaceflat_v2,  // coordsv2
+                            long n_swig_np_dbl_inplaceflat_v2,
+                            double *swig_np_dbl_inplaceflat_v3,  // zcornsv1
+                            long n_swig_np_dbl_inplaceflat_v3,
+                            float *swig_np_flt_inplaceflat_v1,  // zcornsv2 (float)
+                            long n_swig_np_flt_inplaceflat_v1,
+                            int *swig_np_int_inplaceflat_v1,  // actnumsv1
+                            long n_swig_np_int_inplaceflat_v1,
+                            int *swig_np_int_inplaceflat_v2,  // actnumsv2
+                            long n_swig_np_int_inplaceflat_v2);
+
+int
+grd3cp3d_xtgformat2to1_geom(long ncol,
+                            long nrow,
+                            long nlay,
                             double *swig_np_dbl_inplaceflat_v1,  // coordsv1
                             long n_swig_np_dbl_inplaceflat_v1,
                             double *swig_np_dbl_inplaceflat_v2,  // coordsv2
@@ -2037,9 +2055,9 @@ int
 grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
                               int swap,
                               long bytepos,
-                              int ncol,
-                              int nrow,
-                              int nlay,
+                              long ncol,
+                              long nrow,
+                              long nlay,
                               int *swig_np_int_inplaceflat_v1,  // actnumsv1
                               long n_swig_np_int_inplaceflat_v1);
 
@@ -2047,19 +2065,19 @@ int
 grdcp3d_imp_roffbin_prop_bvec(FILE *fc,
                               int swap,
                               long bytepos,
-                              int ncol,
-                              int nrow,
-                              int nlay,
+                              long ncol,
+                              long nrow,
+                              long nlay,
                               int *swig_np_int_inplaceflat_v1,  // actnumsv1
                               long n_swig_np_int_inplaceflat_v1);
 
 void
-grdcp3d_corners(int ic,
-                int jc,
-                int kc,
-                int ncol,
-                int nrow,
-                int nlay,
+grdcp3d_corners(long ic,
+                long jc,
+                long kc,
+                long ncol,
+                long nrow,
+                long nlay,
                 double *swig_np_dbl_inplaceflat_v1,  // coordsv
                 long n_swig_np_dbl_inplaceflat_v1,
                 float *swig_np_flt_inplaceflat_v1,  // zcornsv

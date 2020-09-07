@@ -21,7 +21,7 @@ from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
+logger = xtg.basiclogger(__name__, info=True)
 
 if not xtg.testsetup():
     raise SystemExit
@@ -218,101 +218,87 @@ def test_roffbin_import1(load_gfile1):
 
     dzval = dzv.values
     print("DZ mean and shape: ", dzval.mean(), dzval.shape)
-    # # get the value is cell 32 73 1 shall be 2.761
-    # mydz = float(dzval[31:32, 72:73, 0:1])
-    # tsetup.assert_almostequal(mydz, 2.761, 0.001, txt='Grid DZ Emerald')
+    # get the value is cell 32 73 1 shall be 2.761
+    mydz = float(dzval[31:32, 72:73, 0:1])
+    tsetup.assert_almostequal(mydz, 2.761, 0.001, txt="Grid DZ Emerald")
 
-    # # get dX dY
-    # logger.info('Get dX dY')
-    # dx, dy = g.get_dxdy()
+    # get dX dY
+    logger.info("Get dX dY")
+    dxv, dyv = grd.get_dxdy()
 
-    # mydx = float(dx.values3d[31:32, 72:73, 0:1])
-    # mydy = float(dy.values3d[31:32, 72:73, 0:1])
+    mydx = float(dxv.values3d[31:32, 72:73, 0:1])
+    mydy = float(dyv.values3d[31:32, 72:73, 0:1])
 
-    # tsetup.assert_almostequal(mydx, 118.51, 0.01, txt='Grid DX Emerald')
-    # tsetup.assert_almostequal(mydy, 141.21, 0.01, txt='Grid DY Emerald')
+    tsetup.assert_almostequal(mydx, 118.51, 0.01, txt="Grid DX Emerald")
+    tsetup.assert_almostequal(mydy, 141.26, 0.01, txt="Grid DY Emerald")
 
-    # # get X Y Z coordinates (as GridProperty objects) in one go
-    # logger.info('Get X Y Z...')
-    # x, y, z = g.get_xyz(names=['xxx', 'yyy', 'zzz'])
+    # get X Y Z coordinates (as GridProperty objects) in one go
+    logger.info("Get X Y Z...")
+    xvv, yvv, zvv = grd.get_xyz(names=["xxx", "yyy", "zzz"])
 
-    # logger.info('X is {}'.format(act))
-    # logger.debug('X values are \n{}'.format(x.values[888:999]))
+    tsetup.assert_equal(xvv.name, "xxx", txt="Name of X coord")
+    xvv.name = "Xerxes"
 
-    # tsetup.assert_equal(x.name, 'xxx', txt='Name of X coord')
-    # x.name = 'Xerxes'
+    # attach some properties to grid
+    grd.props = [xvv, yvv]
 
-    # logger.info('X name is now {}'.format(x.name))
+    logger.info(grd.props)
+    grd.props = [zvv]
 
-    # logger.info('Y is {}'.format(act))
-    # logger.debug('Y values are \n{}'.format(y.values[888:999]))
+    logger.info(grd.props)
 
-    # # attach some properties to grid
-    # g.props = [x, y]
+    grd.props.append(xvv)
+    logger.info(grd.propnames)
 
-    # logger.info(g.props)
-    # g.props = [z]
-
-    # logger.info(g.props)
-
-    # g.props.append(x)
-    # logger.info(g.propnames)
-
-    # # get the property of name Xerxes
-    # myx = g.get_prop_by_name('Xerxes')
-    # if myx is None:
-    #     logger.info(myx)
-    # else:
-    #     logger.info("Got nothing!")
+    # get the property of name Xerxes
+    myx = grd.get_prop_by_name("Xerxes")
+    if myx is None:
+        logger.info(myx)
+    else:
+        logger.info("Got nothing!")
 
 
-# def test_eclgrid_import1():
-#     """Eclipse GRID import."""
-
-#     g = Grid()
-#     logger.info("Import Eclipse GRID...")
-#     g.from_file(brilfile, fformat="grid")
-
-#     tsetup.assert_equal(g.ncol, 20, txt='Grid NCOL from Eclipse')
-#     tsetup.assert_equal(g.nrow, 15, txt='Grid NROW from Eclipse')
-
-
-# def test_eclgrid_import1_cells():
-#     """Eclipse GRID import, test for cell corners."""
-
-#     g = Grid()
-#     logger.info("Import Eclipse GRID...")
-#     g.from_file(brilfile, fformat="grid")
-
-#     corners = g.get_xyz_cell_corners(ijk=(6, 8, 1))
-
-#     tsetup.assert_almostequal(corners[0], 5071.91, 0.1)
-#     tsetup.assert_almostequal(corners[1], 7184.34, 0.1)
-#     tsetup.assert_almostequal(corners[2], 7274.81, 0.1)
-
-#     tsetup.assert_almostequal(corners[21], 5995.31, 0.1)
-#     tsetup.assert_almostequal(corners[22], 7893.03, 0.1)
-#     tsetup.assert_almostequal(corners[23], 7228.98, 0.1)
-
-#     allcorners = g.get_xyz_corners()
-#     for corn in allcorners:
-#         logger.info(corn.name)
-
-#     logger.info(allcorners[0].values[5, 7, 0])  # x for corn0 at 6, 8, 1
-#     logger.info(allcorners[1].values[5, 7, 0])  # y for corn0 at 6, 8, 1
-#     logger.info(allcorners[2].values[5, 7, 0])  # z for corn0 at 6, 8, 1
-
-#     tsetup.assert_equal(corners[1], allcorners[1].values[5, 7, 0])
-#     tsetup.assert_equal(corners[22], allcorners[22].values[5, 7, 0])
-
-
-def test_roffbin_import_v2_emerald():
-    """Test roff binary import ROFF using new API, emerald"""
+def test_roffbin_import_v2_banal():
+    """Test roff binary import ROFF using new API, banal case"""
 
     t0 = xtg.timer()
-    grd1 = Grid(EMEGFILE)
-    tsetup.assert_equal(grd1.ncol, 70)
+    grd1 = Grid(BANAL6)
+    print("V1: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+
+    grd2 = Grid()
+    grd2._xtgformat = 2
+    grd2.from_file(BANAL6)
     print("V2: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    grd3 = Grid()
+    grd3._xtgformat = 2
+    grd3.from_file(BANAL6)
+    grd3._convert_xtgformat2to1()
+    print("V3: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    grd4 = Grid()
+    grd4._xtgformat = 1
+    grd4.from_file(BANAL6)
+    grd4._convert_xtgformat1to2()
+    print("V4: ", xtg.timer(t0))
+
+    for irange in range(grd1.ncol):
+        for jrange in range(grd1.nrow):
+            for krange in range(grd1.nlay):
+                cell = (irange + 1, jrange + 1, krange + 1)
+
+                xx1 = grd1.get_xyz_cell_corners(cell, activeonly=False)
+                xx2 = grd2.get_xyz_cell_corners(cell, activeonly=False)
+                xx3 = grd3.get_xyz_cell_corners(cell, activeonly=False)
+                xx4 = grd4.get_xyz_cell_corners(cell, activeonly=False)
+
+                assert np.allclose(np.array(xx1), np.array(xx2)) is True
+                assert np.allclose(np.array(xx1), np.array(xx3)) is True
+                assert np.allclose(np.array(xx1), np.array(xx4)) is True
 
 
 @tsetup.bigtest
@@ -334,13 +320,18 @@ def test_roffbin_banal6():
     grd1.from_file(BANAL6)
 
     grd2 = Grid()
-    grd2.from_file(BANAL6, _xtgformat=2)
+    grd2._xtgformat = 2
+    grd2.from_file(BANAL6)
 
     assert grd1.get_xyz_cell_corners() == grd2.get_xyz_cell_corners()
 
     assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
 
     grd2._convert_xtgformat2to1()
+
+    assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
+
+    grd2._convert_xtgformat1to2()
 
     assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
 
@@ -353,12 +344,12 @@ def test_roffbin_bigbox(tmpdir):
     if not os.path.exists(bigbox):
         logger.info("Create tmp big roff grid file...")
         grd0 = Grid()
-        grd0.create_box(dimension=(500, 500, 500))
+        grd0.create_box(dimension=(500, 500, 100))
         grd0.to_file(bigbox)
 
     grd1 = Grid()
     t0 = xtg.timer()
-    grd1.from_file(bigbox, _xtgformat=1)
+    grd1.from_file(bigbox)
     t_old = xtg.timer(t0)
     logger.info("Reading bigbox xtgeformat=1 took %s seconds", t_old)
     cell1 = grd1.get_xyz_cell_corners((13, 14, 15))
@@ -366,7 +357,8 @@ def test_roffbin_bigbox(tmpdir):
     grd2 = Grid()
     t0 = xtg.timer()
     t1 = xtg.timer()
-    grd2.from_file(bigbox, _xtgformat=2)
+    grd2._xtgformat = 2
+    grd2.from_file(bigbox)
     t_new = xtg.timer(t0)
     logger.info("Reading bigbox xtgformat=2 took %s seconds", t_new)
     cell2a = grd2.get_xyz_cell_corners((13, 14, 15))

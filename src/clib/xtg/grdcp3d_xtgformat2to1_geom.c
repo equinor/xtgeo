@@ -9,8 +9,8 @@
  *
  * ARGUMENTS:
  *    ncol, nrow, nlay       i     NCOL, NROW, NLAY dimens
- *    zcornsv2               i     zcorn, on xtgformat == 2 with dimension
- *    zcornsv1               i     zcorn, on xtgformat == 1 with dimension
+ *    *v2                    i     zcorn etc, on xtgformat == 2 with dimensions
+ *    *v1                    i     zcorn etc, on xtgformat == 1 with dimensions
  *
  * RETURNS:
  *    Function: 0: upon success. If problems:
@@ -30,9 +30,9 @@
 #include "logger.h"
 
 int
-grd3cp3d_xtgformat2to1_geom(int ncol,
-                            int nrow,
-                            int nlay,
+grd3cp3d_xtgformat2to1_geom(long ncol,
+                            long nrow,
+                            long nlay,
                             double *coordsv1,
                             long ncoordsv1,
                             double *coordsv2,
@@ -48,18 +48,18 @@ grd3cp3d_xtgformat2to1_geom(int ncol,
 
 {
 
-    long ib = 0;
-    int nncol = ncol + 1;
-    int nnrow = nrow + 1;
-    int nnlay = nlay + 1;
+    long nncol = ncol + 1;
+    long nnrow = nrow + 1;
+    long nnlay = nlay + 1;
 
     logger_info(LI, FI, FU, "Dimensions: %d %d %d", ncol, nrow, nlay);
     logger_info(LI, FI, FU, "Transforming grid coordsv -> XTG internal format 2 to 1");
-    int j;
+    long ib = 0;
+    long j;
     for (j = 0; j < nnrow; j++) {
-        int i;
+        long i;
         for (i = 0; i < nncol; i++) {
-            int p;
+            long p;
             for (p = 0; p < 6; p++) {
                 coordsv1[ib++] = coordsv2[i * nnrow * 6 + j * 6 + p];
             }
@@ -69,12 +69,12 @@ grd3cp3d_xtgformat2to1_geom(int ncol,
 
     logger_info(LI, FI, FU, "Transforming grid zcornsv -> XTG internal format 2 to 1");
 
-    int k;
+    long k;
     ib = 0;
     for (k = 0; k < nnlay; k++) {  // nnlay is intentional
-        int j;
+        long j;
         for (j = 0; j < nrow; j++) {
-            int i;
+            long i;
             for (i = 0; i < ncol; i++) {
 
                 long nc0 = 4 * (i * nnrow * nnlay + j * nnlay + k) + 3;
@@ -101,9 +101,9 @@ grd3cp3d_xtgformat2to1_geom(int ncol,
     logger_info(LI, FI, FU, "Transforming grid actnumsv -> XTG internal format 2 to 1");
     ib = 0;
     for (k = 0; k < nlay; k++) {
-        int j;
+        long j;
         for (j = 0; j < nrow; j++) {
-            int i;
+            long i;
             for (i = 0; i < ncol; i++) {
                 actnumsv1[ib++] = actnumsv2[i * nrow * nlay + j * nlay + k];
             }

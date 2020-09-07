@@ -20,11 +20,11 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_roff(self, gfile, xtgformat=1):
+def import_roff(self, gfile):
 
     gfile.get_cfhandle()
 
-    if xtgformat == 1:
+    if self._xtgformat == 1:
         _import_roff_xtgformat1(self, gfile)
     else:
         _import_roff_xtgformat2(self, gfile)
@@ -40,6 +40,7 @@ def _import_roff_xtgformat1(self, gfile):
     # This routine do first a scan for all keywords. Then it grabs
     # the relevant data by only reading relevant portions of the input file
 
+    logger.info("Importing using xtgformat 1")
     kwords = utils.scan_keywords(gfile, fformat="roff")
 
     for kwd in kwords:
@@ -121,7 +122,7 @@ def _import_roff_xtgformat1(self, gfile):
         self._zcornsv,
     )
 
-    # ACTIVE may be missing, meaning all cells are missing!
+    # ACTIVE may be missing, meaning all cells are active?
     option = 0
     if p_act_v is None:
         p_act_v = _cxtgeo.new_intarray(1)
@@ -142,6 +143,7 @@ def _import_roff_xtgformat1(self, gfile):
 def _import_roff_xtgformat2(self, gfile):
     """Import ROFF grids using xtgformat=2 storage"""
 
+    logger.info("Importing using xtgformat 2")
     self._xtgformat = 2
 
     kwords = utils.scan_keywords(gfile, fformat="roff")
@@ -188,7 +190,16 @@ def _import_roff_xtgformat2(self, gfile):
     logger.info("Initilize arrays... done")
 
     _rkwxvec_coordsv(
-        self, gfile, kwords, byteswap, xshift, yshift, zshift, xscale, yscale, zscale,
+        self,
+        gfile,
+        kwords,
+        byteswap,
+        xshift,
+        yshift,
+        zshift,
+        xscale,
+        yscale,
+        zscale,
     )
 
     logger.info("ZCORN related...")
@@ -211,7 +222,15 @@ def _import_roff_xtgformat2(self, gfile):
 
     logger.info("ACTNUM...")
     self._actnumsv = _rkwxvec_prop(
-        self, gfile, kwords, "active!data", byteswap, strict=True,
+        self,
+        gfile,
+        kwords,
+        "active!data",
+        byteswap,
+        strict=False,
     )
+    if self._actnumsv is None:
+        self._actnumsv = np.ones((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+
     logger.info("ACTNUM... done")
     logger.info("XTGFORMAT is %s", self._xtgformat)

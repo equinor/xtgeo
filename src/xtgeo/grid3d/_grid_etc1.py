@@ -42,6 +42,8 @@ def create_box(
 ):
     """Create a shoebox grid from cubi'sh spec"""
 
+    self._convert_xtgformat2to1()
+
     self._ncol, self._nrow, self._nlay = dimension
     ncoord, nzcorn, ntot = self.vectordimensions
 
@@ -82,6 +84,9 @@ def create_box(
 
 def get_dz(self, name="dZ", flip=True, asmasked=True):
     """Get dZ as property"""
+
+    self._xtgformat1()
+
     ntot = (self._ncol, self._nrow, self._nlay)
 
     dzv = GridProperty(
@@ -396,6 +401,7 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
     pcorners = _cxtgeo.new_doublearray(24)
 
     if self._xtgformat == 1:
+        logger.info("Use xtgformat 1...")
         _cxtgeo.grd3d_corners(
             i + shift,
             j + shift,
@@ -408,6 +414,7 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
             pcorners,
         )
     else:
+        logger.info("Use xtgformat 2...")
         _cxtgeo.grdcp3d_corners(
             i + shift - 1,
             j + shift - 1,
@@ -721,7 +728,11 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol, self.nrow, self.nlay, self._zcornsv, zsep,
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._zcornsv,
+        zsep,
     )
 
 
@@ -1259,3 +1270,73 @@ def estimate_flip(self):
     flipvalue = find_flip(v1, v2)
 
     return flipvalue
+
+
+def _convert_xtgformat2to1(self):
+    """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
+
+    if self._xtgformat == 1:
+        logger.info("No conversion, format is already xtgformat == 1")
+        return
+
+    logger.info("Convert grid from new xtgformat to legacy format...")
+
+    newcoordsv = np.zeros(((self._ncol + 1) * (self._nrow + 1) * 6), dtype=np.float64)
+    newzcornsv = np.zeros(
+        (self._ncol * self._nrow * (self._nlay + 1) * 4), dtype=np.float64
+    )
+    newactnumsv = np.zeros((self._ncol * self._nrow * self._nlay), dtype=np.int32)
+
+    _cxtgeo.grd3cp3d_xtgformat2to1_geom(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        newcoordsv,
+        self._coordsv,
+        newzcornsv,
+        self._zcornsv,
+        newactnumsv,
+        self._actnumsv,
+    )
+
+    self._coordsv = newcoordsv
+    self._zcornsv = newzcornsv
+    self._actnumsv = newactnumsv
+    self._xtgformat = 1
+
+    logger.info("Convert grid from new xtgformat to legacy format... done")
+
+
+def _convert_xtgformat1to2(self):
+    """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
+
+    if self._xtgformat == 2:
+        logger.info("No conversion, format is already xtgformat == 1")
+        return
+
+    logger.info("Convert grid from legacy xtgformat to new format...")
+
+    newcoordsv = np.zeros((self._ncol + 1, self._nrow + 1, 6), dtype=np.float64)
+    newzcornsv = np.zeros(
+        (self._ncol + 1, self._nrow + 1, self._nlay + 1, 4), dtype=np.float32
+    )
+    newactnumsv = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+
+    _cxtgeo.grd3cp3d_xtgformat1to2_geom(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv,
+        newcoordsv,
+        self._zcornsv,
+        newzcornsv,
+        self._actnumsv,
+        newactnumsv,
+    )
+
+    self._coordsv = newcoordsv
+    self._zcornsv = newzcornsv
+    self._actnumsv = newactnumsv
+    self._xtgformat = 2
+
+    logger.info("Convert grid from new xtgformat to legacy format... done")

@@ -44,25 +44,25 @@ int
 grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
                               int swap,
                               long bytepos,
-                              int ncol,
-                              int nrow,
-                              int nlay,
+                              long ncol,
+                              long nrow,
+                              long nlay,
                               int *pvec,
                               long nvec)
 {
     /* Imports a ROFF binary array, update pointer */
 
-    int anint;
+    size_t anint;
 
     fseek(fc, bytepos, SEEK_SET);
 
     if (swap == 0) {
         long ic = 0;
-        int i;
+        long i;
         for (i = 0; i < ncol; i++) {
-            int j;
+            long j;
             for (j = 0; j < nrow; j++) {
-                int k;
+                long k;
                 for (k = (nlay - 1); k >= 0; k--) {
                     if (fread(&anint, 4, 1, fc) != 1)
                         return EXIT_FAILURE;
@@ -74,11 +74,11 @@ grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
         }
     } else {
         long ic = 0;
-        int i;
+        long i;
         for (i = 0; i < ncol; i++) {
-            int j;
+            long j;
             for (j = 0; j < nrow; j++) {
-                int k;
+                long k;
                 for (k = (nlay - 1); k >= 0; k--) {
                     if (fread(&anint, 4, 1, fc) != 1)
                         return EXIT_FAILURE;
@@ -97,9 +97,9 @@ int
 grdcp3d_imp_roffbin_prop_bvec(FILE *fc,
                               int swap,
                               long bytepos,
-                              int ncol,
-                              int nrow,
-                              int nlay,
+                              long ncol,
+                              long nrow,
+                              long nlay,
                               int *pvec,
                               long nvec)
 {
@@ -111,11 +111,11 @@ grdcp3d_imp_roffbin_prop_bvec(FILE *fc,
     fseek(fc, bytepos, SEEK_SET);
 
     long ic = 0;
-    int i;
+    long i;
     for (i = 0; i < ncol; i++) {
-        int j;
+        long j;
         for (j = 0; j < nrow; j++) {
-            int k;
+            long k;
             for (k = (nlay - 1); k >= 0; k--) {
                 if (fread(&abyte, 1, 1, fc) != 1)
                     return EXIT_FAILURE;

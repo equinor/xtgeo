@@ -14,6 +14,7 @@
  *    bytepos            i     The byte position to the code data
  *    nncol, .., nnlay   i     Number of cell nodes in 3D (ncol + 1, etc)
  *    xoffset, ...       i     Offsets and scaling from Roxar API
+ *    splitenz           i     Split array from Roxar API
  *    zcornsv           i/o    Pointer array to be updated (initilised outside)
  *    nitems             i     Length of coordsv array (nncol * nncol * 6)
  *
@@ -35,9 +36,9 @@ int
 grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                             int swap,
                             long bytepos,
-                            int nncol,
-                            int nnrow,
-                            int nnlay,
+                            long nncol,
+                            long nnrow,
+                            long nnlay,
                             float xoffset,
                             float yoffset,
                             float zoffset,
@@ -64,16 +65,16 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
 
         // just a global swap to read without swap eval for every item to improve speed
         long ic = 0;
-        int i, j;
+        long i, j;
 
         for (i = 0; i < nncol; i++) {
             for (j = 0; j < nnrow; j++) {
-                int k;
+                long k;
                 for (k = 0; k < nnlay; k++) {
 
-                    int nsplit = splitenz[i * nnrow * nnlay + j * nnlay + k];
+                    long nsplit = splitenz[i * nnrow * nnlay + j * nnlay + k];
 
-                    int n;
+                    long n;
                     if (nsplit == 4) {
                         for (n = 0; n < 4; n++) {
                             if (fread(&afloat, 4, 1, fc) != 1)
@@ -94,7 +95,7 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                     }
                 }
                 for (k = (nnlay - 1); k >= 0; k--) {
-                    int n;
+                    long n;
                     for (n = 0; n < 4; n++) {
                         zcornsv[ic++] = pillar[k][n];
                     }
@@ -104,16 +105,16 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
     } else {
 
         long ic = 0;
-        size_t i, j;
+        long i, j;
 
         for (i = 0; i < nncol; i++) {
             for (j = 0; j < nnrow; j++) {
-                int k;
+                long k;
                 for (k = 0; k < nnlay; k++) {
 
-                    int nsplit = splitenz[(i * nnrow + j) * nnrow + k];
+                    long nsplit = splitenz[(i * nnrow + j) * nnrow + k];
 
-                    int n;
+                    long n;
                     if (nsplit == 4) {
                         for (n = 0; n < 4; n++) {
                             if (fread(&afloat, 4, 1, fc) != 1)
@@ -134,7 +135,7 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                     }
                 }
                 for (k = (nnlay - 1); k >= 0; k--) {
-                    int n;
+                    long n;
                     for (n = 0; n < 4; n++) {
                         zcornsv[ic++] = pillar[k][n];
                     }
