@@ -216,7 +216,11 @@ def export_grid_roxapi(
         method = "other"
 
     if method == "cpg":
-        _export_grid_cornerpoint_roxapi(self, rox, gname, realisation, info)
+        if self._xtgformat == 1:
+            _export_grid_cornerpoint_roxapi_v1(self, rox, gname, realisation, info)
+        else:
+            _export_grid_cornerpoint_roxapi_v2(self, rox, gname, realisation, info)
+
     else:
         _export_grid_viaroff_roxapi(self, rox, gname, realisation)
 
@@ -226,7 +230,7 @@ def export_grid_roxapi(
     rox.safe_close()
 
 
-def _export_grid_cornerpoint_roxapi(
+def _export_grid_cornerpoint_roxapi_v1(
     self, rox, gname, realisation, info
 ):  # pragma: no cover
     """Convert xtgeo geometry to pillar spec in ROXAPI and store"""
@@ -297,6 +301,64 @@ def _export_grid_cornerpoint_roxapi(
     #         thesub = [subitem - 1 for subitem in arr]
     #         indexer.zonation[inum] = thesub
     #         # grid.zone_names.append(name)
+
+
+def _export_grid_cornerpoint_roxapi_v2(
+    self, rox, gname, realisation, info
+):  # pragma: no cover
+    """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2"""
+
+    try:
+        from roxar.grids import CornerPointGridGeometry as CPG
+    except ImportError:
+        raise RuntimeError("Cannot load Roxar module")
+
+    grid_model = rox.project.grid_models.create(gname)
+    grid_model.set_empty(realisation)
+    grid = grid_model.get_grid(realisation)
+
+    geom = CPG.create(self.dimensions)
+
+    npill = (self.ncol + 1) * (self.nrow + 1) * 3
+    nzcrn = (self.ncol + 1) * (self.nrow + 1) * (self.nlay + 1) * 4
+
+    _ier, tpi, bpi, zco = _cxtgeo.grdcp3d_conv_grid_roxapi(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        npill,
+        npill,
+        nzcrn,
+    )
+
+    tpi = tpi.reshape(self.ncol + 1, self.nrow + 1, 3)
+    bpi = bpi.reshape(self.ncol + 1, self.nrow + 1, 3)
+
+    zco = np.ma.masked_greater(zco, xtgeo.UNDEF_LIMIT)
+    zco = zco.reshape((self.ncol + 1, self.nrow + 1, 4, self.nlay + 1))
+
+    for ipi in range(self.ncol + 1):
+        for jpi in range(self.nrow + 1):
+            zzco = zco[ipi, jpi].reshape((self.nlay + 1), 4).T
+            geom.set_pillar_data(
+                ipi,
+                jpi,
+                top_point=tpi[ipi, jpi],
+                bottom_point=bpi[ipi, jpi],
+                depth_values=zzco,
+            )
+            if info and ipi < 5 and jpi < 5:
+                if ipi == 0 and jpi == 0:
+                    xtg.say("Showing info for i<5 and j<5 only!")
+                xtg.say("XTGeo pillar {}, {}\n".format(ipi, jpi))
+                xtg.say("XTGeo Tops\n{}".format(tpi[ipi, jpi]))
+                xtg.say("XTGeo Bots\n{}".format(bpi[ipi, jpi]))
+                xtg.say("XTGeo Depths\n{}".format(zzco))
+
+    geom.set_defined_cells(self._actnumsv.astype(np.bool))
+    grid.set_geometry(geom)
 
 
 def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover

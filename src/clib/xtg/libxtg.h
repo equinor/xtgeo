@@ -2083,6 +2083,24 @@ grdcp3d_corners(long ic,
                 float *swig_np_flt_inplaceflat_v1,  // zcornsv
                 long n_swig_np_flt_inplaceflat_v1,
                 double corners[]);
+
+int
+grdcp3d_conv_grid_roxapi(long ncol,
+                         long nrow,
+                         long nlay,
+
+                         double *swig_np_dbl_inplaceflat_v1,  // coordsv
+                         long n_swig_np_dbl_inplaceflat_v1,
+                         float *swig_np_flt_inplaceflat_v1,  // zcornsv
+                         long n_swig_np_flt_inplaceflat_v1,
+
+                         double *swig_np_dbl_aout_v1,  // *tpillars
+                         long n_swig_np_dbl_aout_v1,   // ntpillars
+                         double *swig_np_dbl_aout_v2,  // *bpillars
+                         long n_swig_np_dbl_aout_v2,   // nbpillars
+                         double *swig_np_dbl_aout_v3,  // *zcorners
+                         long n_swig_np_dbl_aout_v3);  // nzcorners
+
 /*
  *======================================================================================
  * WELL spesific
