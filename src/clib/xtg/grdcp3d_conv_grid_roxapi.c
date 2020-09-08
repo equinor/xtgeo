@@ -60,15 +60,20 @@ grdcp3d_conv_grid_roxapi(long ncol,
     long nnlay = nlay + 1;
 
     long ic = 0;
+    long ict = 0;
+    long icb = 0;
     long icn, jcn;
     for (icn = 0; icn < nncol; icn++) {
         for (jcn = 0; jcn < nnrow; jcn++) {
             int nn;
-            for (nn = 0; nn < 3; nn++) {
-                tpillars[ic + nn] = coordsv[ic + nn];
-                bpillars[ic + nn] = coordsv[ic + nn + 3];
+            for (nn = 0; nn < 6; nn++) {
+                if (nn < 3) {
+                    tpillars[ict++] = coordsv[ic++];
+                }
+                else{
+                    bpillars[icb++] = coordsv[ic++];
+                }
             }
-            ic = ic + 3;
         }
     }
 
@@ -85,15 +90,34 @@ grdcp3d_conv_grid_roxapi(long ncol,
      */
 
     ic = 0;
+    long iz = 0;
     long icol, jrow, klay;
+
     for (icol = 0; icol < nncol; icol++) {
         for (jrow = 0; jrow < nnrow; jrow++) {
+
+            double pz0 = VERYLARGENEGATIVE;
+            double pz1 = VERYLARGENEGATIVE;
+            double pz2 = VERYLARGENEGATIVE;
+            double pz3 = VERYLARGENEGATIVE;
+
             for (klay = 0; klay < nnlay; klay++) {
 
-                double z0 = 4 * (icol * nnrow * nnlay + jrow * nnlay + klay) + 0;
-                double z1 = 4 * (icol * nnrow * nnlay + jrow * nnlay + klay) + 1;
-                double z2 = 4 * (icol * nnrow * nnlay + jrow * nnlay + klay) + 2;
-                double z3 = 4 * (icol * nnrow * nnlay + jrow * nnlay + klay) + 3;
+                double z0 = (double)zcornsv[iz++];
+                double z1 = (double)zcornsv[iz++];
+                double z2 = (double)zcornsv[iz++];
+                double z3 = (double)zcornsv[iz++];
+
+                /* avoid depths that crosses in depth */
+                if (z0 < pz0) z0 = pz0;
+                if (z1 < pz1) z1 = pz1;
+                if (z2 < pz2) z2 = pz2;
+                if (z3 < pz3) z3 = pz3;
+
+                pz0 = z0;
+                pz1 = z1;
+                pz2 = z2;
+                pz3 = z3;
 
                 if (icol == 0) {
                     z0 = UNDEF;

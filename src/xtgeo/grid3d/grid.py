@@ -561,12 +561,7 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def from_file(
-        self,
-        gfile,
-        fformat=None,
-        initprops=None,
-        restartprops=None,
-        restartdates=None,
+        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
     ):
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -1090,7 +1085,11 @@ class Grid(Grid3D):
                 discrete=True,
             )
 
-            values = _gridprop_lowlevel.f2c_order(self, self._actnumsv)
+            if self._xtgformat == 1:
+                values = _gridprop_lowlevel.f2c_order(self, self._actnumsv)
+            else:
+                values = self._actnumsv
+
             act.values = values
             act.mask_undef()
 
@@ -1120,7 +1119,10 @@ class Grid(Grid3D):
         """
         val1d = actnum.values.ravel(order="K")
 
-        self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)
+        if self._xtgformat == 1:
+            self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)
+        else:
+            self._actnumsv = np.ma.filled(actnum.values, fill_value=0).astype(np.int32)
 
     def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
         """
@@ -1470,10 +1472,11 @@ class Grid(Grid3D):
     def activate_all(self):
         """Activate all cells in the grid, by manipulating ACTNUM"""
 
-        actnum = self.get_actnum()
-        actnum.values = np.ones(self.dimensions, dtype=np.int32)
+        self._actnumsv = np.ones(self.dimensions, dtype=np.int32)
 
-        self.set_actnum(actnum)
+        if self._xtgformat == 1:
+            self._actnumsv = self._actnumsv.flatten()
+
         self._tmp = {}
 
     def inactivate_by_dz(self, threshold):

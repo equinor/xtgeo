@@ -57,7 +57,6 @@ grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
     fseek(fc, bytepos, SEEK_SET);
 
     if (swap == 0) {
-        long ic = 0;
         long i;
         for (i = 0; i < ncol; i++) {
             long j;
@@ -68,12 +67,11 @@ grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
                         return EXIT_FAILURE;
                     if (anint == -999.0)
                         anint = UNDEF_INT;
-                    pvec[ic++] = anint;
+                    pvec[i * nrow * nlay + j * nlay + k] = anint;
                 }
             }
         }
     } else {
-        long ic = 0;
         long i;
         for (i = 0; i < ncol; i++) {
             long j;
@@ -85,7 +83,7 @@ grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
                     SWAP_INT(anint);
                     if (anint == -999.0)
                         anint = UNDEF_INT;
-                    pvec[ic++] = anint;
+                    pvec[i * nrow * nlay + j * nlay + k] = anint;
                 }
             }
         }
@@ -122,7 +120,7 @@ grdcp3d_imp_roffbin_prop_bvec(FILE *fc,
                 anint = (int)abyte;
                 if (anint == 255)
                     anint = UNDEF_INT;
-                pvec[ic++] = anint;
+                pvec[i * nrow * nlay + j * nlay + k] = anint;
             }
         }
     }
