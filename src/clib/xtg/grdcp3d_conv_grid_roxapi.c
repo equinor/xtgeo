@@ -22,7 +22,7 @@
 *
 * LICENCE:
 *    CF. XTGeo license
-***************************************************************************************
+****************************************************************************************
 */
 
 #include "libxtg.h"
@@ -69,8 +69,7 @@ grdcp3d_conv_grid_roxapi(long ncol,
             for (nn = 0; nn < 6; nn++) {
                 if (nn < 3) {
                     tpillars[ict++] = coordsv[ic++];
-                }
-                else{
+                } else {
                     bpillars[icb++] = coordsv[ic++];
                 }
             }
@@ -109,10 +108,14 @@ grdcp3d_conv_grid_roxapi(long ncol,
                 double z3 = (double)zcornsv[iz++];
 
                 /* avoid depths that crosses in depth */
-                if (z0 < pz0) z0 = pz0;
-                if (z1 < pz1) z1 = pz1;
-                if (z2 < pz2) z2 = pz2;
-                if (z3 < pz3) z3 = pz3;
+                if (z0 < pz0)
+                    z0 = pz0;
+                if (z1 < pz1)
+                    z1 = pz1;
+                if (z2 < pz2)
+                    z2 = pz2;
+                if (z3 < pz3)
+                    z3 = pz3;
 
                 pz0 = z0;
                 pz1 = z1;
