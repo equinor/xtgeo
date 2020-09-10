@@ -2,6 +2,7 @@
 %{
 #define SWIG_FILE_WITH_INIT
 #include <libxtg.h>
+#include <libxtg2.h>
 %}
 
 typedef uint8_t mbool;
@@ -307,3 +308,45 @@ import_array();
     %}
 
 %include <libxtg.h>
+
+// #####################################################################################
+
+%apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *coordsv1, long ncoord1)};
+%apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *coordsv2, long ncoord2)};
+%apply (double* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(double *zcornsv1, long nzcorn1)};
+%apply (float* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(float *zcornsv2, long nzcorn2)};
+%apply (int* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(int *actnumsv1, long nact1)};
+%apply (int* INPLACE_ARRAY_FLAT, long DIM_FLAT) {(int *actnumsv2, long nact2)};
+
+%inline %{
+    /* wrapping grd3cp3d_xtgformat1to2_geom_test */
+
+    int grd3cp3d_xtgformat1to2_geom2(long ncol,
+                                     long nrow,
+                                     long nlay,
+
+                                     double *coordsv1,
+                                     long ncoord1,
+                                     double *zcornsv1,
+                                     long nzcorn1,
+                                     int *actnumsv1,
+                                     long nact1,
+
+                                     double *coordsv2,
+                                     long ncoord2,
+                                     float *zcornsv2,
+                                     long nzcorn2,
+                                     int *actnumsv2,
+                                     long nact2)
+    {
+    int grd3cp3d_xtgformat1to2_geom_test(long ncol,
+                                         long nrow,
+                                         long nlay,
+                                         double *coordsv1,
+                                         double *zcornsv1,
+                                         int *actnumsv1,
+                                         double *coordsv2,
+                                         float *zcornsv2,
+                                         int *actnumsv2);
+    }
+%}

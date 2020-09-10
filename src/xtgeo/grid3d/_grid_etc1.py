@@ -1334,6 +1334,19 @@ def _convert_xtgformat1to2(self):
         newactnumsv,
     )
 
+    # test, not working
+    # _cxtgeo.grd3cp3d_xtgformat1to2_geom2(
+    #     self._ncol,
+    #     self._nrow,
+    #     self._nlay,
+    #     self._coordsv,
+    #     self._zcornsv,
+    #     self._actnumsv,
+    #     newcoordsv,
+    #     newzcornsv,
+    #     newactnumsv,
+    # )
+
     self._coordsv = newcoordsv
     self._zcornsv = newzcornsv
     self._actnumsv = newactnumsv
