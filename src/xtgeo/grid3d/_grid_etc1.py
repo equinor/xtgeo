@@ -1311,7 +1311,7 @@ def _convert_xtgformat1to2(self):
     """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
 
     if self._xtgformat == 2:
-        logger.info("No conversion, format is already xtgformat == 1")
+        logger.info("No conversion, format is already xtgformat == 2")
         return
 
     logger.info("Convert grid from legacy xtgformat to new format...")
