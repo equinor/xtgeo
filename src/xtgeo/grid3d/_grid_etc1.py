@@ -1353,3 +1353,34 @@ def _convert_xtgformat1to2(self):
     self._xtgformat = 2
 
     logger.info("Convert grid from new xtgformat to legacy format... done")
+
+
+def get_gridquality_properties(self):
+    """Get the grid quality properties"""
+
+    numqual = 4
+
+    self._xtgformat2()
+
+    fresults = np.ones((numqual, self.ncol * self.nrow * self.nlay), dtype=np.float32)
+
+    _cxtgeo.grdcp3d_quality_indicators(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        fresults,
+    )
+
+    minangle = xtgeo.GridProperty(self, name="minangle")
+    minangle.values = fresults[0, :]
+
+    maxangle = xtgeo.GridProperty(self, name="maxangle")
+    maxangle.values = fresults[1, :]
+
+    grdprops = xtgeo.GridProperties()
+    grdprops.props = [minangle, maxangle]
+
+    return grdprops
