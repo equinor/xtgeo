@@ -1466,6 +1466,23 @@ class Grid(Grid3D):
 
         return presult
 
+    def get_gridquality_properties(self):
+        """Return a GridProperties() instance with grid quality measures.
+
+        These measures are:
+
+        * minangle_topbase (degrees) - minimum angle of top and base
+        * maxangle_topbase (degrees) - maximum angle of top and base
+        * minangle_topbase_proj (degrees) min angle projected (bird view)
+        * maxangle_topbase_proj (degrees) max angle projected (bird view)
+
+
+        """
+
+        gprops = _grid_etc1.get_gridquality_properties(self)
+
+        return gprops
+
     # =========================================================================
     # Some more special operations that changes the grid or actnum
     # =========================================================================

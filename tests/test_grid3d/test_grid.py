@@ -39,6 +39,7 @@ REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
 BANAL6 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
+GRIDQC1 = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
 
 DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
 DUALFIL2 = "../xtgeo-testdata/3dgrids/etc/dual_grid_noactivetag.roff"
@@ -697,3 +698,13 @@ def test_generate_hash():
     assert id(grd1) != id(grd2)
 
     assert grd1.generate_hash() == grd2.generate_hash()
+
+
+def test_gridquality_properties():
+    """Get grid quality props"""
+
+    grd1 = Grid()
+    grd1._xtgformat = 2
+    grd1.from_file(GRIDQC1)
+
+    grd1.get_gridquality_properties()

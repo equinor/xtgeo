@@ -44,7 +44,7 @@
 #include "logger.h"
 #include <math.h>
 
-static struct MyData
+static struct
 {
     long icol;
     long jrow;
@@ -54,28 +54,50 @@ static struct MyData
     long nlay;
     long icount;
     double *coordsv;
-    long ncoordin;
+    long ncoord;
     float *zcornsv;
-    long nzcornin;
+    long nzcorn;
+    int *actnum;
     float *fresults;
-};
+} data;
 
 static void
-_cellangles(struct MyData data)
+_cellangles()
 {
     /* update the result vector with angle data */
-    double amin, amax;
+    double amin, amax, aminp, amaxp;
     double corners[24];
     grdcp3d_corners(data.icol, data.jrow, data.klay, data.ncol, data.nrow, data.nlay,
-                    data.coordsv, data.ncoordin, data.zcornsv, data.nzcornin, corners);
-    int ier = x_minmax_cellangles(corners, 24, &amin, &amax, 0, 1);
-    if (ier != 0) {
+                    data.coordsv, data.ncoord, data.zcornsv, data.nzcorn, corners);
+    int ier1 = x_minmax_cellangles(corners, 24, &amin, &amax, 0, 1);
+    int ier2 = x_minmax_cellangles(corners, 24, &aminp, &amaxp, 1, 1);
+    if (ier1 != 0) {
         amin = UNDEF;
         amax = UNDEF;
     }
-    data.fresults[data.icount * 1] = amin;
-    data.fresults[data.icount * 2] = amax;
+    if (ier2 != 0) {
+        aminp = UNDEF;
+        amaxp = UNDEF;
+    }
+
+    // if (data.actnum[data.icount] == 0) {
+    //     amin = -999;
+    //     amax = -999;
+    // }
+
+    long ncount = data.ncol * data.nrow * data.nlay;
+
+    data.fresults[ncount * 0 + data.icount] = amin;
+    data.fresults[ncount * 1 + data.icount] = amax;
+    data.fresults[ncount * 2 + data.icount] = aminp;
+    data.fresults[ncount * 3 + data.icount] = amaxp;
 }
+
+/*
+ * -------------------------------------------------------------------------------------
+ * public function
+ * -------------------------------------------------------------------------------------
+ */
 
 void
 grdcp3d_quality_indicators(long ncol,
@@ -95,15 +117,16 @@ grdcp3d_quality_indicators(long ncol,
 
     logger_info(LI, FI, FU, "Grid quality measures...");
 
-    struct MyData data;
+    // struct data;
 
     data.ncol = ncol;
     data.nrow = nrow;
     data.nlay = nlay;
     data.coordsv = coordsv;
-    data.ncoordin = ncoordin;
+    data.ncoord = ncoordin;
     data.zcornsv = zcornsv;
-    data.nzcornin = nzcornin;
+    data.nzcorn = nzcornin;
+    data.actnum = actnumsv;
     data.fresults = fresults;
 
     long i, j, k;
@@ -112,8 +135,6 @@ grdcp3d_quality_indicators(long ncol,
             for (k = 0; k < nlay; k++) {
 
                 long ic = i * nrow * nlay + j * nlay + k;
-                if (actnumsv[ic] == 0)
-                    continue;
 
                 data.icol = i;
                 data.jrow = j;
@@ -124,4 +145,6 @@ grdcp3d_quality_indicators(long ncol,
         }
         logger_info(LI, FI, FU, "Grid quality measures... done");
     }
+
+    // fresults = data.fresults;
 }

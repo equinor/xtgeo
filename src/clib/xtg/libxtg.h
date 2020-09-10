@@ -2108,29 +2108,30 @@ grdcp3d_conv_grid_roxapi(long ncol,
                          long nlay,
 
                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
-                         long n_swig_np_dbl_inplaceflat_v1,
-                         float *swig_np_flt_inplaceflat_v1,  // zcornsv
-                         long n_swig_np_flt_inplaceflat_v1,
+                         long n_swig_np_dbl_inplaceflat_v1,   // ncoord
+                         float *swig_np_flt_inplaceflat_v1,   // zcornsv
+                         long n_swig_np_flt_inplaceflat_v1,   // nzcorn
 
-                         double *swig_np_dbl_aout_v1,  // *tpillars
+                         double *swig_np_dbl_aout_v1,  // tpillars
                          long n_swig_np_dbl_aout_v1,   // ntpillars
-                         double *swig_np_dbl_aout_v2,  // *bpillars
+                         double *swig_np_dbl_aout_v2,  // bpillars
                          long n_swig_np_dbl_aout_v2,   // nbpillars
-                         double *swig_np_dbl_aout_v3,  // *zqualis
+                         double *swig_np_dbl_aout_v3,  // zcornsv
                          long n_swig_np_dbl_aout_v3);  // nzcorners
 
 void
 grdcp3d_quality_indicators(long ncol,
                            long nrow,
                            long nlay,
-                           double *coordsv,
-                           long ncoordin,
-                           float *zcornsv,
-                           long nzcornin,
-                           int *actnumsv,
-                           long nact,
-                           float *fresults,
-                           long nfresults);
+                           double *swig_np_dbl_inplaceflat_v1,  // coordsv,
+                           long n_swig_np_dbl_inplaceflat_v1,   // ncoordin,
+                           float *swig_np_flt_inplaceflat_v1,   // zcornsv,
+                           long n_swig_np_flt_inplaceflat_v1,   // nzcorn,
+                           int *swig_np_int_inplaceflat_v1,     // actnumsv,
+                           long n_swig_np_int_inplaceflat_v1,   // nactnum
+                           float *swig_np_flt_inplaceflat_v2,   // fresults
+                           long n_swig_np_flt_inplaceflat_v2);  // nactnum
+
 /*
  *======================================================================================
  * WELL spesific
