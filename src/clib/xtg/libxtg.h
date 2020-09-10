@@ -207,6 +207,24 @@ x_point_in_hexahedron(double x0,
                       double *swig_np_dbl_inplaceflat_v1,
                       long n_swig_np_dbl_inplaceflat_v1);
 
+double
+x_vectorpair_angle3d(double *swig_np_dbl_in_v1,
+                     long n_swig_np_dbl_in_v1,
+                     double *swig_np_dbl_in_v2,
+                     long n_swig_np_dbl_in_v2,
+                     double *swig_np_dbl_in_v3,
+                     long n_swig_np_dbl_in_v3,
+                     int degrees,
+                     int option);
+
+int
+x_minmax_cellangles(double *swig_np_dbl_in_v1,
+                    long n_swig_np_dbl_in_v1,
+                    double *swig_dbl_out_p1,
+                    double *swig_dbl_out_p2,
+                    int option,
+                    int degrees);
+
 /*
  * =====================================================================================
  * surf_* for regular maps/surfaces
@@ -2098,9 +2116,21 @@ grdcp3d_conv_grid_roxapi(long ncol,
                          long n_swig_np_dbl_aout_v1,   // ntpillars
                          double *swig_np_dbl_aout_v2,  // *bpillars
                          long n_swig_np_dbl_aout_v2,   // nbpillars
-                         double *swig_np_dbl_aout_v3,  // *zcorners
+                         double *swig_np_dbl_aout_v3,  // *zqualis
                          long n_swig_np_dbl_aout_v3);  // nzcorners
 
+void
+grdcp3d_quality_indicators(long ncol,
+                           long nrow,
+                           long nlay,
+                           double *coordsv,
+                           long ncoordin,
+                           float *zcornsv,
+                           long nzcornin,
+                           int *actnumsv,
+                           long nact,
+                           float *fresults,
+                           long nfresults);
 /*
  *======================================================================================
  * WELL spesific
