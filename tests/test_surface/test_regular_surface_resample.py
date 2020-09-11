@@ -35,13 +35,34 @@ def test_resample_small():
     """Do resampling with minimal dataset to test for various yflip etc"""
 
     xs1 = RegularSurface(
-        xori=0, yori=0, ncol=3, nrow=3, xinc=100, yinc=100, values=-888.0, yflip=1,
+        xori=0,
+        yori=0,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=-888.0,
+        yflip=1,
     )
     xs2 = RegularSurface(
-        xori=0, yori=0, ncol=3, nrow=3, xinc=100, yinc=100, values=888.0, yflip=1,
+        xori=0,
+        yori=0,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=888.0,
+        yflip=1,
     )
     xs3 = RegularSurface(
-        xori=0, yori=200, ncol=3, nrow=3, xinc=100, yinc=100, values=2888.0, yflip=-1,
+        xori=0,
+        yori=200,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=2888.0,
+        yflip=-1,
     )
 
     xsx = xs1.copy()

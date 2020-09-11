@@ -65,7 +65,12 @@ def test_slice_simple_layer():
     for lay in range(1, mygrid.nlay + 1):
         layslice.canvas(title="My Grid Layer plot for layer {}".format(lay))
         layslice.plot_gridslice(
-            mygrid, prop=myprop, mode="layer", index=lay, window=wd, linecolor="black",
+            mygrid,
+            prop=myprop,
+            mode="layer",
+            index=lay,
+            window=wd,
+            linecolor="black",
         )
 
         if XTGSHOW:

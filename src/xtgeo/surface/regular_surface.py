@@ -1125,7 +1125,7 @@ class RegularSurface(object):
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
 
-            >>> mymapcopy = mymap.copy()
+        >>> mymapcopy = mymap.copy()
 
         """
         # pylint: disable=protected-access

@@ -39,7 +39,15 @@ def swapaxes(self):
     traceid1d = self._traceidcodes.reshape(-1)
 
     ier = _cxtgeo.cube_swapaxes(
-        ncol, nrow, self.nlay, yflip, xinc, yinc, rota, values1d, traceid1d,
+        ncol,
+        nrow,
+        self.nlay,
+        yflip,
+        xinc,
+        yinc,
+        rota,
+        values1d,
+        traceid1d,
     )
     if ier != 0:
         raise Exception
