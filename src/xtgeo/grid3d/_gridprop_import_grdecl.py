@@ -110,13 +110,7 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     # now read the property
     nlen = self._ncol * self._nrow * self._nlay
     ier, values = _cxtgeo.grd3d_import_grdecl_prop(
-        tmpfile,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        name,
-        nlen,
-        0,
+        tmpfile, self._ncol, self._nrow, self._nlay, name, nlen, 0,
     )
 
     os.remove(tmpfile)

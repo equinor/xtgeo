@@ -273,16 +273,7 @@ def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
 
 
 def _rkwxvec_coordsv(
-    self,
-    gfile,
-    kws,
-    swap,
-    xoffset,
-    yoffset,
-    zoffset,
-    xscale,
-    yscale,
-    zscale,
+    self, gfile, kws, swap, xoffset, yoffset, zoffset, xscale, yscale, zscale,
 ):
     """
     Special for importing ROFF binary for COORD type data when _xtgversion=2

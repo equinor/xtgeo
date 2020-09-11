@@ -190,16 +190,7 @@ def _import_roff_xtgformat2(self, gfile):
     logger.info("Initilize arrays... done")
 
     _rkwxvec_coordsv(
-        self,
-        gfile,
-        kwords,
-        byteswap,
-        xshift,
-        yshift,
-        zshift,
-        xscale,
-        yscale,
-        zscale,
+        self, gfile, kwords, byteswap, xshift, yshift, zshift, xscale, yscale, zscale,
     )
 
     logger.info("ZCORN related...")
@@ -222,12 +213,7 @@ def _import_roff_xtgformat2(self, gfile):
 
     logger.info("ACTNUM...")
     self._actnumsv = _rkwxvec_prop(
-        self,
-        gfile,
-        kwords,
-        "active!data",
-        byteswap,
-        strict=False,
+        self, gfile, kwords, "active!data", byteswap, strict=False,
     )
     if self._actnumsv is None:
         self._actnumsv = np.ones((self._ncol, self._nrow, self._nlay), dtype=np.int32)

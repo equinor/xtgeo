@@ -28,7 +28,7 @@ matplotlib>=1.5
 scipy>=0.17
 shapely>=1.6.2; python_version < "3.8"
 shapely==1.7a2; python_version == "3.8"
-black; python_version >= "3.6"
+black==19.10b; python_version >= "3.6"
 autopep8
 pylint
 pytest>=2.9.2
