@@ -21,12 +21,23 @@ logger = xtg.functionlogger(__name__)
 # self is Grid() instance
 
 
-# =============================================================================
+# ======================================================================================
 # Load/import
-# =============================================================================
+# ======================================================================================
 
 
 def import_grid_roxapi(
+    self, projectname, gname, realisation, dimonly, info
+):  # pragma: no cover
+    """Import a Grid via ROXAR API spec."""
+
+    if self._xtgformat == 1:
+        _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
+    else:
+        _import_grid_roxapi_v2(self, projectname, gname, realisation, dimonly, info)
+
+
+def _import_grid_roxapi_v1(
     self, projectname, gname, realisation, dimonly, info
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
@@ -53,12 +64,13 @@ def import_grid_roxapi(
         if info:
             _display_roxapi_grid_info(rox, roxgrid)
 
-        _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname)
+        _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
 
-    rox.safe_close()
+    if rox._roxexternal:
+        rox.safe_close()
 
 
 def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
@@ -87,7 +99,7 @@ def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
                 xtg.say("Depths\n{}".format(zco))
 
 
-def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):  # pragma: no cover
+def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no cover
     """Convert from RMS API to XTGeo API"""
 
     # pylint: disable=too-many-statements
@@ -165,6 +177,93 @@ def _convert_to_xtgeo_grid(self, rox, roxgrid, corners, gname):  # pragma: no co
 
     del corners
     del actnum
+
+    # subgrids
+    if len(indexer.zonation) > 1:
+        logger.debug("Zonation length (N subzones) is %s", len(indexer.zonation))
+        subz = OrderedDict()
+        for inum, zrange in indexer.zonation.items():
+
+            logger.debug("inum: %s, zrange: %s", inum, zrange)
+            zname = roxgrid.zone_names[inum]
+            logger.debug("zname is: %s", zname)
+            zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
+            subz[zname] = zra
+
+        self.subgrids = subz
+
+
+def _import_grid_roxapi_v2(
+    self, projectname, gname, realisation, dimonly, info
+):  # pragma: no cover
+    """Import a Grid via ROXAR API spec."""
+
+    rox = RoxUtils(projectname, readonly=True)
+
+    proj = rox.project
+
+    if not rox.version_required("1.3"):
+        raise NotImplementedError("Functionality to implemented for Roxar API < 1.3")
+
+    logger.info("Loading grid with realisation %s...", realisation)
+    try:
+        if gname not in proj.grid_models:
+            raise KeyError("No such gridmodel: {}".format(gname))
+
+        logger.info("Get roxgrid...")
+        roxgrid = proj.grid_models[gname].get_grid()
+
+        if info:
+            _display_roxapi_grid_info(rox, roxgrid)
+
+        _convert_to_xtgeo_grid_v2(self, roxgrid, gname)
+
+    except KeyError as keyerror:
+        raise RuntimeError(keyerror)
+
+    if rox._roxexternal:
+        rox.safe_close()
+
+
+def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
+    """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2"""
+
+    indexer = roxgrid.grid_indexer
+
+    ncol, nrow, nlay = indexer.dimensions
+
+    # update other attributes
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
+
+    nncol = ncol + 1
+    nnrow = nrow + 1
+    nnlay = nlay + 1
+
+    self.name = gname
+
+    geom = roxgrid.get_geometry()
+
+    coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
+    zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
+    actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+
+    for icol in range(nncol):
+        for jrow in range(nnrow):
+            topc, basc, zcorn = geom.get_pillar_data(icol, jrow)
+            coordsv[icol, jrow, 0: 3] = topc
+            coordsv[icol, jrow, 3: 6] = basc
+
+            zcorn = np.ma.filled(zcorn, fill_value=0.0)
+
+            zcornsv[icol, jrow, :, :] = zcorn.T
+
+    self._coordsv = coordsv
+    self._zcornsv = zcornsv
+
+    actnumsv[geom.get_defined_cells()] = 1
+    self._actnumsv = actnumsv
 
     # subgrids
     if len(indexer.zonation) > 1:
