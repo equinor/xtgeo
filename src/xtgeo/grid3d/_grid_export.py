@@ -12,7 +12,7 @@ logger = xtg.functionlogger(__name__)
 
 def export_roff(self, gfile, option):
     """Export grid to ROFF format (binary)"""
-    if self._xtformat = 1:
+    if self._xtgformat == 1:
         _export_roff_v1(self, gfile, option)
     else:
         _export_roff_v2(self, gfile, option)
