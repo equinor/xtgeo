@@ -2001,6 +2001,8 @@ grd3d_well_ijk(int nx,
  * Also, all dimenstions nrow, ncol etc shall be long
  *======================================================================================
  */
+void
+grdcp3d_export_roff_bin_start_end(int option, long ncol, long nrow, long nlay, FILE *fc);
 
 int
 grdcp3d_imp_roffbin_coordsv(FILE *fc,

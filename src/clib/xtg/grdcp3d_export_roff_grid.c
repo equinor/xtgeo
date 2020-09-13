@@ -89,11 +89,12 @@
 /* minimum split in noded accepted to be a split-node */
 #define ZMINSPLIT 0.0000
 
+// TODO: subgrids
+
 void
 grdcp3d_export_roff_grid(int ncol,
                          int nrow,
                          int nlay,
-                         int num_subgrds,
                          double xoffset,
                          double yoffset,
                          double zoffset,
@@ -103,50 +104,14 @@ grdcp3d_export_roff_grid(int ncol,
                          long nlaycornin,
                          int *actnumsv,
                          long nactin,
-                         int *p_subgrd_v,
                          FILE *fc)
 
 {
-
     /*
      *----------------------------------------------------------------------------------
-     * Header part
+     * Initial part
      *----------------------------------------------------------------------------------
      */
-
-    fwrite("roff-bin\0", 1, 9, fc);
-    fwrite("#ROFF file#\0", 1, 12, fc);
-    fwrite("#Creator: CXTGeo subsystem of XTGeo#\0", 1, 37, fc);
-    fwrite("tag\0filedata\0", 1, 13, fc);
-    fwrite("int\0byteswaptest\0", 1, 17, fc);
-
-    int myint = 1;
-    fwrite(&myint, 4, 1, fc);
-    fwrite("char\0filetype\0grid\0", 1, 19, fc);
-    fwrite("char\0creationDate\0UNKNOWN\0", 1, 25, fc);
-    fwrite("endtag\0", 1, 7, fc);
-    fwrite("tag\0version\0", 1, 12, fc);
-    fwrite("int\0major\0", 1, 10, fc);
-    myint = 2;
-    fwrite(&myint, 4, 1, fc);
-    fwrite("int\0minor\0", 1, 10, fc);
-    myint = 0;
-    fwrite(&myint, 4, 1, fc);
-    fwrite("endtag\0", 1, 7, fc);
-    fwrite("tag\0dimensions\0", 1, 15, fc);
-    fwrite("int\0ncol\0", 1, 7, fc);
-
-    myint = ncol;
-    fwrite(&myint, 4, 1, fc);
-    fwrite("int\0nrow\0", 1, 7, fc);
-    myint = nrow;
-    fwrite(&myint, 4, 1, fc);
-    fwrite("int\0nlay\0", 1, 7, fc);
-    myint = nlay;
-
-    fwrite(&myint, 4, 1, fc);
-    fwrite("endtag\0", 1, 7, fc);
-
     fwrite("tag\0translate\0", 1, 14, fc);
 
     fwrite("float\0xoffset\0", 1, 14, fc);
@@ -183,32 +148,12 @@ grdcp3d_export_roff_grid(int ncol,
 
     /*
      *----------------------------------------------------------------------------------
-     * Subgrid info
-     *----------------------------------------------------------------------------------
-     */
-
-    if (num_subgrds > 1) {
-        fwrite("tag\0subgrids\0", 1, 13, fc);
-        fwrite("array\0int\0nLayers\0", 1, 18, fc);
-        myint = num_subgrds;
-        fwrite(&myint, 4, 1, fc);
-        int i;
-        for (i = 0; i < num_subgrds; i++) {
-            myint = p_subgrd_v[i];
-            fwrite(&myint, 4, 1, fc);
-        }
-        /*n=fwrite(p_subgrd_v,4,num_subgrds,fc);*/
-        fwrite("endtag\0", 1, 7, fc);
-    }
-
-    /*
-     *----------------------------------------------------------------------------------
      * Corner lines
      *----------------------------------------------------------------------------------
      */
     fwrite("tag\0cornerLines\0", 1, 16, fc);
     fwrite("array\0float\0data\0", 1, 17, fc);
-    myint = (ncol + 1) * (nrow + 1) * 2 * 3;
+    int myint = (ncol + 1) * (nrow + 1) * 2 * 3;
     fwrite(&myint, 4, 1, fc);
 
     long icol, jrow;
@@ -233,19 +178,26 @@ grdcp3d_export_roff_grid(int ncol,
 
     /*
      *----------------------------------------------------------------------------------
-     * Z corner values, first splitenz
+     * Z corner values
      *----------------------------------------------------------------------------------
      */
 
     fwrite("tag\0zvalues\0", 1, 12, fc);
     fwrite("array\0byte\0splitEnz\0", 1, 20, fc);
     int ntot = (ncol + 1) * (nrow + 1) * (nlay + 1);
+    int ntotcell = ncol * nrow * nlay;
     fwrite(&ntot, 4, 1, fc);
+    /*
+     *----------------------------------------------------------------------------------
+     * Z corner values
+     *----------------------------------------------------------------------------------
+     */
 
     int *splitv = calloc(ntot, sizeof(int));
     float *znodes = calloc(ntot * 4, sizeof(float));
 
     icc = 0;
+    long izz = 0;
     for (icol = 0; icol <= ncol; icol++) {
         for (jrow = 0; jrow <= nrow; jrow++) {
             long klay;
@@ -271,33 +223,45 @@ grdcp3d_export_roff_grid(int ncol,
                 fwrite(&splitenz, 4, 1, fc);
 
                 splitv[icc++] = splitenz;
-                if (splitenz == 4)
-                    ...
+                if (splitenz == 4) {
+                    for (inode = 0; inode < 4; inode++)
+                        znodes[izz++] = znode[inode] / zscale - zoffset;
+                } else {
+                    znodes[izz++] = znode[0] / zscale - zoffset;
+                }
             }
         }
     }
     fwrite("endtag\0", 1, 7, fc);
 
+    long nznodes = izz;
+    fwrite("array\0float\0data\0", 1, 17, fc);
+    myint = (int)nznodes;
+    fwrite(&myint, 4, 1, fc);
+    for (izz = 0; izz < nznodes; izz++)
+        fwrite(&znodes[izz], 4, 1, fc);
+
+    free(splitv);
+    free(znodes);
+
     /*
      *----------------------------------------------------------------------------------
-     * Z corner values, now zvalues
+     * ACTNUMS
      *----------------------------------------------------------------------------------
      */
-
-    fwrite("tag\0zvalues\0", 1, 12, fc);
-
+    fwrite("tag\0active\0", 1, 11, fc);
+    fwrite("array\0bool\0data\0", 1, 16, fc);
+    myint = (int)ntotcell;
+    fwrite(&myint, 4, 1, fc);
     for (icol = 0; icol <= ncol; icol++) {
         for (jrow = 0; jrow <= nrow; jrow++) {
             long klay;
             for (klay = nlay; klay >= 0; klay--) {
-                int node;
-                float znode[4];
-                int splitenz = 1;
-                for (node = 0; node < 4; node++) {
-                    icc = 4 * (icol * nrow * nlay + jrow * nlay + klay) + node;
-                    znode[node] = zcornsv[icc];
-                }
-                TO BE CONTINUED
-
-                  free(splitv);
+                long icc = icol * nrow * nlay + jrow * nlay + klay;
+                char mybyte = actnumsv[icc];
+                fwrite(&mybyte, 1, 1, fc);
             }
+        }
+    }
+    fwrite("endtag\0", 1, 7, fc);
+}

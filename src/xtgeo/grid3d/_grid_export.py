@@ -15,7 +15,7 @@ def export_roff(self, gfile, option):
     if self._xtgformat == 1:
         _export_roff_v1(self, gfile, option)
     else:
-        _export_roff_v2(self, gfile, option)
+        _export_roff_v2(self, gfile)
 
 
 def _export_roff_v1(self, gfile, option):
@@ -61,7 +61,7 @@ def _export_roff_v1(self, gfile, option):
     _cxtgeo.grd3d_export_roff_end(option, gfile.name)
 
 
-def _export_roff_v2(self, gfile, option):
+def _export_roff_v2(self, gfile):
     """Export grid to ROFF format (binary) _xtgformat=2"""
 
     gfile = xtgeo._XTGeoFile(gfile, mode="wb")
@@ -83,25 +83,31 @@ def _export_roff_v2(self, gfile, option):
     # get the geometrics list to find the xshift, etc
     gx = self.get_geometrics()
 
+    _cxtgeo.grdcp3d_export_roff_start_end(
+        0, self.ncol, self.nrow, self.nlay, gfile.get_cfhandle()
+    )
+
+    # TODO: subgrids
     _cxtgeo.grdcp3d_export_roff_grid(
-        option,
         self._ncol,
         self._nrow,
         self._nlay,
         nsubs,
-        0,
         gx[3],
         gx[5],
         gx[7],
         self._coordsv,
         self._zcornsv,
         self._actnumsv,
-        subgrd_v,
-        gfile.name,
+        gfile.get_cfhandle(),
     )
 
+    # TODO: export assosiated properties
+
     # end tag
-    _cxtgeo.grd3d_export_roff_end(option, gfile.name)
+    _cxtgeo.grdcp3d_export_roff_start_end(
+        1, self.ncol, self.nrow, self.nlay, gfile.get_cfhandle()
+    )
 
 
 def export_grdecl(self, gfile, mode):
