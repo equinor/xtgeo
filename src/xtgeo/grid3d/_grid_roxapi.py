@@ -252,8 +252,8 @@ def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
     for icol in range(nncol):
         for jrow in range(nnrow):
             topc, basc, zcorn = geom.get_pillar_data(icol, jrow)
-            coordsv[icol, jrow, 0: 3] = topc
-            coordsv[icol, jrow, 3: 6] = basc
+            coordsv[icol, jrow, 0:3] = topc
+            coordsv[icol, jrow, 3:6] = basc
 
             zcorn = np.ma.filled(zcorn, fill_value=0.0)
 
