@@ -37,7 +37,7 @@ grdcp3d_export_roff_bin_start_end(int option, long ncol, long nrow, long nlay, F
         char timestring[32];
         time_t now;
 
-        logger_info(LI, FI, FU, "Binary roff export, start session");
+        logger_info(LI, FI, FU, "Binary roff export, start session...");
         now = time(NULL);
         strcpy(timestring, ctime(&now));
         timestring[strlen(timestring) - 1] = '\0';
@@ -72,10 +72,12 @@ grdcp3d_export_roff_bin_start_end(int option, long ncol, long nrow, long nlay, F
         myint = (int)nlay;
         fwrite(&myint, 4, 1, fc);
         fwrite("endtag\0", 1, 7, fc);
+        logger_info(LI, FI, FU, "Binary roff export, start session... done");
 
     } else {
-        logger_info(LI, FI, FU, "Binary roff export, ending session");
+        logger_info(LI, FI, FU, "Binary roff export, ending session...");
         fprintf(fc, "tag eof\n");
         fprintf(fc, "endtag\n");
+        logger_info(LI, FI, FU, "Binary roff export, ending session... done");
     }
 }

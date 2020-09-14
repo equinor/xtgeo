@@ -128,6 +128,8 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
 
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     """Get dX, dY as properties"""
+
+    self._xtgformat1()
     ntot = self._ncol * self._nrow * self._nlay
 
     dxval = np.zeros(ntot, dtype=np.float64)
@@ -176,7 +178,7 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
 
 def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     """Get I J K as properties"""
-
+    self._xtgformat1()
     ashape = (self._ncol, self._nrow, self._nlay)
 
     ix, jy, kz = np.indices(ashape)
@@ -242,7 +244,7 @@ def get_ijk_from_points(
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onlayer version, and maps with IJ positions
     """
-
+    self._xtgformat1()
     logger.info("Getting IJK indices from Points...")
 
     actnumoption = 1
@@ -329,6 +331,8 @@ def get_ijk_from_points(
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
 
+    self._xtgformat1()
+
     xv = np.zeros(self.ntotal, dtype=np.float64)
     yv = np.zeros(self.ntotal, dtype=np.float64)
     zv = np.zeros(self.ntotal, dtype=np.float64)
@@ -386,6 +390,8 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
 
 def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
     """Get X Y Z cell corners for one cell."""
+
+    self._xtgformat1()
     i, j, k = ijk
 
     shift = 0
@@ -437,6 +443,8 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
 
 def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     """Get X Y Z cell corners for all cells (as 24 GridProperty objects)"""
+
+    self._xtgformat1()
     ntot = (self._ncol, self._nrow, self._nlay)
 
     grid_props = []
@@ -517,6 +525,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
 def get_layer_slice(self, layer, top=True, activeonly=True):
     """Get X Y cell corners (XY per cell; 5 per cell) as array"""
+    self._xtgformat1()
     ntot = self._ncol * self._nrow * self._nlay
 
     opt1 = 0
@@ -550,6 +559,8 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
 
 
 def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False, _ver=1):
+
+    self._xtgformat1()
 
     if _ver == 1:
         res = _get_geometrics_v1(
@@ -699,6 +710,9 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
 
 def inactivate_by_dz(self, threshold):
     """Inactivate by DZ"""
+
+    self._xtgformat1()
+
     if isinstance(threshold, int):
         threshold = float(threshold)
 
@@ -721,6 +735,8 @@ def inactivate_by_dz(self, threshold):
 
 def make_zconsistent(self, zsep):
     """Make consistent in z"""
+
+    self._xtgformat1()
     if isinstance(zsep, int):
         zsep = float(zsep)
 
@@ -734,6 +750,8 @@ def make_zconsistent(self, zsep):
 
 def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
     """Inactivate inside a polygon (or outside)"""
+
+    self._xtgformat1()
     if not isinstance(poly, Polygons):
         raise ValueError("Input polygon not a XTGeo Polygons instance")
 
@@ -778,7 +796,7 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
 
 def collapse_inactive_cells(self):
     """Collapse inactive cells"""
-
+    self._xtgformat1()
     _cxtgeo.grd3d_collapse_inact(
         self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv
     )
@@ -813,6 +831,8 @@ def copy(self):
         other._filesrc = self._filesrc + " (copy)"
     elif self._filesrc is not None:
         other._filesrc = self._filesrc
+
+    other._xtgformat = self._xtgformat
 
     return other
 

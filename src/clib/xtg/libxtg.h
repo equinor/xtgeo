@@ -2015,12 +2015,12 @@ grdcp3d_export_roff_grid(int ncol,
                          double xoffset,
                          double yoffset,
                          double zoffset,
-                         double *coordsv,
-                         long ncoordin,
-                         double *zcornsv,
-                         long nlaycornin,
-                         int *actnumsv,
-                         long nactin,
+                         double *swig_np_dbl_inplaceflat_v1,  // coordsv1
+                         long n_swig_np_dbl_inplaceflat_v1,
+                         float *swig_np_flt_inplaceflat_v1,  // zcornsv2 (float)
+                         long n_swig_np_flt_inplaceflat_v1,
+                         int *swig_np_int_inplaceflat_v1,  // actnumsv1
+                         long n_swig_np_int_inplaceflat_v1,
                          FILE *fc);
 
 int

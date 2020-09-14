@@ -337,6 +337,16 @@ def test_roffbin_banal6():
     assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
 
 
+def test_roffbin_export_v2_banal6():
+    """Test roff binary export v2 for banal no. 6 case"""
+    # export
+    grd1 = Grid()
+    grd1._xtgformat = 2
+    grd1.from_file(BANAL6)
+
+    grd1.to_file(join(TMPDIR, "b6_export.roff"))
+
+
 @tsetup.bigtest
 def test_roffbin_bigbox(tmpdir):
     """Test roff binary for bigbox, to monitor performance"""

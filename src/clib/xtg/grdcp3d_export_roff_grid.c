@@ -97,7 +97,7 @@ grdcp3d_export_roff_grid(int ncol,
                          double zoffset,
                          double *coordsv,
                          long ncoordin,
-                         double *zcornsv,
+                         float *zcornsv,
                          long nlaycornin,
                          int *actnumsv,
                          long nactin,
@@ -109,6 +109,9 @@ grdcp3d_export_roff_grid(int ncol,
      * Initial part
      *----------------------------------------------------------------------------------
      */
+
+    logger_info(LI, FI, FU, "Initial part...");
+
     fwrite("tag\0translate\0", 1, 14, fc);
 
     fwrite("float\0xoffset\0", 1, 14, fc);
@@ -142,12 +145,15 @@ grdcp3d_export_roff_grid(int ncol,
     fwrite(&myfloat, 4, 1, fc);
 
     fwrite("endtag\0", 1, 7, fc);
+    logger_info(LI, FI, FU, "Initial part... done");
 
     /*
      *----------------------------------------------------------------------------------
      * Corner lines
      *----------------------------------------------------------------------------------
      */
+    logger_info(LI, FI, FU, "Corner lines...");
+
     fwrite("tag\0cornerLines\0", 1, 16, fc);
     fwrite("array\0float\0data\0", 1, 17, fc);
     int myint = (ncol + 1) * (nrow + 1) * 2 * 3;
@@ -172,12 +178,15 @@ grdcp3d_export_roff_grid(int ncol,
         }
     }
     fwrite("endtag\0", 1, 7, fc);
+    logger_info(LI, FI, FU, "Corner lines... done");
 
     /*
      *----------------------------------------------------------------------------------
      * Z corner values
      *----------------------------------------------------------------------------------
      */
+
+    logger_info(LI, FI, FU, "ZCorners...");
 
     fwrite("tag\0zvalues\0", 1, 12, fc);
     fwrite("array\0byte\0splitEnz\0", 1, 20, fc);
@@ -190,8 +199,10 @@ grdcp3d_export_roff_grid(int ncol,
      *----------------------------------------------------------------------------------
      */
 
-    int *splitv = calloc(ntot, sizeof(int));
-    float *znodes = calloc(ntot * 4, sizeof(float));
+    int *splitv;
+    splitv = calloc(ntot, sizeof(int));
+    float *znodes;
+    znodes = calloc(ntot * 4, sizeof(float));
 
     icc = 0;
     long izz = 0;
@@ -230,6 +241,7 @@ grdcp3d_export_roff_grid(int ncol,
         }
     }
     fwrite("endtag\0", 1, 7, fc);
+    logger_info(LI, FI, FU, "ZCorners... ...");
 
     long nznodes = izz;
     fwrite("array\0float\0data\0", 1, 17, fc);
