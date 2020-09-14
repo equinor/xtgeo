@@ -86,9 +86,6 @@
 #include "logger.h"
 #include <math.h>
 
-/* minimum split in noded accepted to be a split-node */
-#define ZMINSPLIT 0.0000
-
 // TODO: subgrids
 
 void
