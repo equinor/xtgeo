@@ -80,8 +80,11 @@ def _export_roff_v2(self, gfile, ascii_fmt):
     else:
         sublist = np.zeros((1), dtype=np.int32)
 
-    # get the geometrics list to find the xshift, etc
-    # gx = self.get_geometrics()
+    # for *shift values
+    midcell = (self.ncol // 2, self.nrow // 2, self.nlay // 2)
+    midcorners = self.get_xyz_cell_corners(
+        ijk=midcell, activeonly=False, zerobased=True
+    )
 
     _cxtgeo.grdcp3d_export_roff_bin_start_end(
         0, ascii_fmt, "grid", self.ncol, self.nrow, self.nlay, cfhandle
@@ -92,9 +95,9 @@ def _export_roff_v2(self, gfile, ascii_fmt):
         self._ncol,
         self._nrow,
         self._nlay,
-        0.0,
-        0.0,
-        0.0,
+        midcorners[0],
+        midcorners[1],
+        midcorners[2],
         sublist,
         self._coordsv,
         self._zcornsv,
