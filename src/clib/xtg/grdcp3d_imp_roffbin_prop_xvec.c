@@ -108,7 +108,6 @@ grdcp3d_imp_roffbin_prop_bvec(FILE *fc,
 
     fseek(fc, bytepos, SEEK_SET);
 
-    long ic = 0;
     long i;
     for (i = 0; i < ncol; i++) {
         long j;
