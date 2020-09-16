@@ -82,9 +82,9 @@ intwrite(int mode, int value, FILE *stream)
         fwrite(&value, 4, 1, stream);
     } else {
         if (mode == 1) {
-            fprintf(stream, "%d\n", value);
+            fprintf(stream, "%6d\n", value);
         } else {
-            fprintf(stream, "%d ", value);
+            fprintf(stream, "%6d ", value);
         }
     }
 }
