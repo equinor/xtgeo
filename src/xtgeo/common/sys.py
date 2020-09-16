@@ -86,7 +86,7 @@ class _XTGeoFile(object):
                 )
             )
 
-        logger.info("Ran init of %s", __name__)
+        logger.info("Ran init of %s, ID is %s", __name__, id(self))
 
     @property
     def memstream(self):
@@ -244,8 +244,6 @@ class _XTGeoFile(object):
 
         """
 
-        logger.info("Get SWIG C fhandle...")
-
         # differ on Linux and other OS as Linux can use fmemopen() in C
         islinux = True
         if plfsys() != "Linux":
@@ -253,6 +251,7 @@ class _XTGeoFile(object):
 
         if self._cfhandle and "Swig Object of type 'FILE" in str(self._cfhandle):
             self._cfhandlecount += 1
+            logger.info("Get SWIG C fhandle no %s", self._cfhandlecount)
             return self._cfhandle
 
         if isinstance(self._file, io.BytesIO) and self._mode == "rb" and islinux:
@@ -307,6 +306,7 @@ class _XTGeoFile(object):
         self._cfhandle = cfhandle
         self._cfhandlecount = 1
 
+        logger.info("Get initial SWIG C fhandle no %s", self._cfhandlecount)
         return self._cfhandle
 
     def cfclose(self, strict=True):
@@ -316,7 +316,7 @@ class _XTGeoFile(object):
         Return True if cfhandle is really closed.
         """
 
-        logger.info("Request for closing SWIG fhandle...")
+        logger.info("Request for closing SWIG fhandle no: %s", self._cfhandlecount)
 
         if self._cfhandle is None or self._cfhandlecount == 0:
             if strict:
@@ -328,6 +328,9 @@ class _XTGeoFile(object):
 
         if self._cfhandlecount > 1 or self._cfhandlecount == 0:
             self._cfhandlecount -= 1
+            logger.info(
+                "Remaining SWIG cfhandles: %s, do not close...", self._cfhandlecount
+            )
             return False
 
         if self._memstream and self._cfhandle and "w" in self._mode:
@@ -355,5 +358,6 @@ class _XTGeoFile(object):
 
         self._cfhandle = None
         self._cfhandlecount = 0
+        logger.info("Remaining SWIG cfhandles: %s, return is True", self._cfhandlecount)
 
         return True
