@@ -90,16 +90,20 @@
 // TODO: subgrids
 
 static int
-_lineshift(int *counter, int limit1, long limit2)
+_lineshift(int *counter, int limit1, long totcounter, long limit2)
 {
     // for line shifting when ascii mode
-    (*counter)++;
 
     int adder = 10;
-    if (*counter >= limit1 || *counter >= limit2) {
+
+    (*counter)++;
+    int ntot = totcounter + 1;
+
+    if (*counter >= limit1 || ntot >= limit2) {
         adder = 0;
         *counter = 0;
     }
+
     return adder;
 }
 
@@ -111,6 +115,8 @@ grdcp3d_export_roff_grid(int mode,
                          double xoffset,
                          double yoffset,
                          double zoffset,
+                         int *subgrids,
+                         long nsubs,
                          double *coordsv,
                          long ncoordin,
                          float *zcornsv,
@@ -160,6 +166,27 @@ grdcp3d_export_roff_grid(int mode,
     long nncol = ncol + 1;
     long nnrow = nrow + 1;
     long nnlay = nlay + 1;
+
+    /*
+     *----------------------------------------------------------------------------------
+     * Subgrids
+     *----------------------------------------------------------------------------------
+     */
+    int cnt = 0;
+
+    if (nsubs > 1) {
+        logger_info(LI, FI, FU, "Subgrids...");
+        strwrite(mode, "tag^subgrids$", fc);
+        strwrite(mode, "array^int^nLayers^", fc);
+        intwrite(mode, (int)nsubs, fc);
+        int n;
+        for (n = 0; n < nsubs; n++) {
+            int add = _lineshift(&cnt, 6, n, nsubs);
+            intwrite(mode + add, (int)subgrids[n], fc);
+        }
+        strwrite(mode, "endtag$", fc);
+        logger_info(LI, FI, FU, "Subgrids... done");
+    }
 
     /*
      *----------------------------------------------------------------------------------
@@ -220,7 +247,8 @@ grdcp3d_export_roff_grid(int mode,
     icc = 0;
     long izz = 0;
 
-    int cnt = 0;
+    cnt = 0;
+    long tcnt = 0;
     for (icol = 0; icol < nncol; icol++) {
         for (jrow = 0; jrow < nnrow; jrow++) {
             long klay;
@@ -243,8 +271,9 @@ grdcp3d_export_roff_grid(int mode,
                 if (icol == 0 || jrow == 0 || icol == ncol || jrow == nrow)
                     splitenz = 4;
 
-                int add = _lineshift(&cnt, 12, ntot);
+                int add = _lineshift(&cnt, 12, tcnt, ntot);
                 boolwrite(mode + add, splitenz, fc);
+                tcnt++;
 
                 if (splitenz == 4) {
                     int inode;
@@ -266,7 +295,7 @@ grdcp3d_export_roff_grid(int mode,
     cnt = 0;
     for (izz = 0; izz < nznodes; izz++) {
         float zn = znodes[izz];
-        int add = _lineshift(&cnt, 4, (nznodes - 1));
+        int add = _lineshift(&cnt, 4, izz, nznodes);
         fltwrite(mode + add, zn, fc);
     }
 
@@ -286,13 +315,14 @@ grdcp3d_export_roff_grid(int mode,
     intwrite(mode, (int)ntotcell, fc);
 
     cnt = 0;
+    tcnt = 0;
     for (icol = 0; icol < ncol; icol++) {
         for (jrow = 0; jrow < nrow; jrow++) {
             long klay;
             for (klay = (nlay - 1); klay >= 0; klay--) {
                 long icc = icol * nrow * nlay + jrow * nlay + klay;
 
-                int add = _lineshift(&cnt, 12, ntotcell);
+                int add = _lineshift(&cnt, 12, tcnt++, ntotcell);
                 boolwrite(mode + add, actnumsv[icc], fc);
             }
         }

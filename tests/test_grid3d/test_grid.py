@@ -354,6 +354,11 @@ def test_roffbin_export_v2_banal6():
 
     assert cell1 == cell2
 
+    reek = Grid()
+    reek._xtgformat = 2
+    reek.from_file(REEKFIL4)
+    reek.to_file("TMP/reek_xtgformat2", fformat="roff_ascii")
+
 
 @tsetup.bigtest
 def test_roffbin_bigbox(tmpdir):

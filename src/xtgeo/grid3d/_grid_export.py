@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
 
+import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -73,16 +74,11 @@ def _export_roff_v2(self, gfile, ascii_fmt):
 
     logger.debug("Export to ROFF... ascii_fmt = %s", ascii_fmt)
 
-    # nsubs = 0
-    # if self.subgrids is None:
-    #     logger.debug("Create a pointer for subgrd_v ...")
-    #     subgrd_v = _cxtgeo.new_intpointer()
-    # else:
-    #     nsubs = len(self.subgrids)
-    #     subgrd_v = _cxtgeo.new_intarray(nsubs)
-    #     for inum, (sname, sarray) in enumerate(self.subgrids.items()):
-    #         logger.info("INUM SUBGRID: %s %s", inum, sname)
-    #         _cxtgeo.intarray_setitem(subgrd_v, inum, len(sarray))
+    subs = self.get_subgrids()
+    if subs:
+        sublist = np.array(list(subs.values()), dtype=np.int32)
+    else:
+        sublist = np.zeros((1), dtype=np.int32)
 
     # get the geometrics list to find the xshift, etc
     # gx = self.get_geometrics()
@@ -91,7 +87,6 @@ def _export_roff_v2(self, gfile, ascii_fmt):
         0, ascii_fmt, "grid", self.ncol, self.nrow, self.nlay, cfhandle
     )
 
-    # TODO: subgrids
     _cxtgeo.grdcp3d_export_roff_grid(
         ascii_fmt,
         self._ncol,
@@ -100,6 +95,7 @@ def _export_roff_v2(self, gfile, ascii_fmt):
         0.0,
         0.0,
         0.0,
+        sublist,
         self._coordsv,
         self._zcornsv,
         self._actnumsv,
