@@ -623,9 +623,9 @@ class Grid(Grid3D):
 
         gfile.check_folder(raiseerror=OSError)
 
-        if fformat in ("roff", "roff_binary"):
+        if fformat in ("roff", "roff_binary", "roff_bin", "roffbin"):
             _grid_export.export_roff(self, gfile.name, 0)
-        elif fformat == "roff_ascii":
+        elif fformat in ("roff_ascii", "roff_asc", "roffasc"):
             _grid_export.export_roff(self, gfile.name, 1)
         elif fformat == "grdecl":
             _grid_export.export_grdecl(self, gfile.name, 1)
