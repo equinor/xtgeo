@@ -133,11 +133,14 @@ _scan_roff_bin_record(FILE *fc,
 
         if (npos1 == 0 && i == 0 && strncmp(tmpname, "roff-bin", 8) != 0) {
             /* not a ROFF binary file! */
+            logger_debug(LI, FI, FU, "Not a valid ROFF binary file!");
             return -9;
         }
 
         if (strncmp(tmpname, "tag", 3) == 0) {
             ncum += _roffbinstring(fc, tagname);
+
+            logger_debug(LI, FI, FU, "Tag name %s", tagname);
 
             if (strncmp(tagname, "eof", 3) == 0) {
                 return 10;
