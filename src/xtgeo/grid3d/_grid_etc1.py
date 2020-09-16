@@ -178,7 +178,7 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
 
 def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     """Get I J K as properties"""
-    self._xtgformat1()
+
     ashape = (self._ncol, self._nrow, self._nlay)
 
     ix, jy, kz = np.indices(ashape)
