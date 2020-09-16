@@ -2003,13 +2003,16 @@ grd3d_well_ijk(int nx,
  */
 void
 grdcp3d_export_roff_bin_start_end(int option,
+                                  int mode,
+                                  char *type,
                                   long ncol,
                                   long nrow,
                                   long nlay,
                                   FILE *fc);
 
 void
-grdcp3d_export_roff_grid(int ncol,
+grdcp3d_export_roff_grid(int mode,
+                         int ncol,
                          int nrow,
                          int nlay,
                          double xoffset,
