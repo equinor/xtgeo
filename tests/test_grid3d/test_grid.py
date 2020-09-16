@@ -344,7 +344,15 @@ def test_roffbin_export_v2_banal6():
     grd1._xtgformat = 2
     grd1.from_file(BANAL6)
 
-    grd1.to_file(join(TMPDIR, "b6_export.roff"))
+    logger.info("EXPORT")
+    grd1.to_file(join(TMPDIR, "b6_export.roffasc"), fformat="roff_asc")
+    grd1.to_file(join(TMPDIR, "b6_export.roffbin"), fformat="roff_bin")
+
+    grd2 = Grid(join(TMPDIR, "b6_export.roffbin"))
+    cell1 = grd1.get_xyz_cell_corners((2, 2, 2))
+    cell2 = grd2.get_xyz_cell_corners((2, 2, 2))
+
+    assert cell1 == cell2
 
 
 @tsetup.bigtest
