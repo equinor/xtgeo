@@ -73,10 +73,13 @@ _roffbinstring(FILE *fc, char *mystring)
     strcpy(mystring, "");
 
     for (i = 0; i < ROFFSTRLEN; i++) {
-        fread(&mybyte, 1, 1, fc);
-        mystring[i] = mybyte;
-        if (mybyte == '\0')
-            return i + 1;
+        if (fread(&mybyte, 1, 1, fc) == 1) {
+            mystring[i] = mybyte;
+            if (mybyte == '\0')
+                return i + 1;
+        } else {
+            return -99;
+        }
     }
 
     return -1;
