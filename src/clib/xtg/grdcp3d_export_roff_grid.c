@@ -84,12 +84,28 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 #include "logger.h"
+#include "roffstuff.h"
 #include <math.h>
 
 // TODO: subgrids
 
+static int
+_lineshift(int *counter, int limit1, long limit2)
+{
+    // for line shifting when ascii mode
+    (*counter)++;
+
+    int adder = 10;
+    if (*counter >= limit1 || *counter >= limit2) {
+        adder = 0;
+        *counter = 0;
+    }
+    return adder;
+}
+
 void
-grdcp3d_export_roff_grid(int ncol,
+grdcp3d_export_roff_grid(int mode,
+                         int ncol,
                          int nrow,
                          int nlay,
                          double xoffset,
@@ -112,72 +128,71 @@ grdcp3d_export_roff_grid(int ncol,
 
     logger_info(LI, FI, FU, "Initial part...");
 
-    fwrite("tag\0translate\0", 1, 14, fc);
+    strwrite(mode, "tag^translate$", fc);
 
-    fwrite("float\0xoffset\0", 1, 14, fc);
-    float myfloat = xoffset;
-    fwrite(&myfloat, 4, 1, fc);
+    strwrite(mode, "float^xoffset^", fc);
+    fltwrite(mode, xoffset, fc);
 
-    fwrite("float\0yoffset\0", 1, 14, fc);
-    myfloat = yoffset;
-    fwrite(&myfloat, 4, 1, fc);
+    strwrite(mode, "float^yoffset^", fc);
+    fltwrite(mode, yoffset, fc);
 
-    fwrite("float\0zoffset\0", 1, 14, fc);
-    myfloat = zoffset;
-    fwrite(&myfloat, 4, 1, fc);
-    fwrite("endtag\0", 1, 7, fc);
+    strwrite(mode, "float^zoffset^", fc);
+    fltwrite(mode, zoffset, fc);
 
-    fwrite("tag\0scale\0", 1, 10, fc);
+    strwrite(mode, "endtag$", fc);
+    strwrite(mode, "tag^scale$", fc);
     float xscale = 1.0;
     float yscale = 1.0;
     float zscale = -1.0;
 
-    fwrite("float\0xscale\0", 1, 13, fc);
-    myfloat = xscale;
-    fwrite(&myfloat, 4, 1, fc);
+    strwrite(mode, "float^xscale^", fc);
+    fltwrite(mode, xscale, fc);
 
-    fwrite("float\0yscale\0", 1, 13, fc);
-    myfloat = yscale;
-    fwrite(&myfloat, 4, 1, fc);
+    strwrite(mode, "float^yscale^", fc);
+    fltwrite(mode, yscale, fc);
 
-    fwrite("float\0zscale\0", 1, 13, fc);
-    myfloat = zscale;
-    fwrite(&myfloat, 4, 1, fc);
+    strwrite(mode, "float^zscale^", fc);
+    fltwrite(mode, zscale, fc);
 
-    fwrite("endtag\0", 1, 7, fc);
+    strwrite(mode, "endtag$", fc);
     logger_info(LI, FI, FU, "Initial part... done");
+
+    long nncol = ncol + 1;
+    long nnrow = nrow + 1;
+    long nnlay = nlay + 1;
 
     /*
      *----------------------------------------------------------------------------------
      * Corner lines
      *----------------------------------------------------------------------------------
      */
-    logger_info(LI, FI, FU, "Corner lines...");
 
-    fwrite("tag\0cornerLines\0", 1, 16, fc);
-    fwrite("array\0float\0data\0", 1, 17, fc);
+    strwrite(mode, "tag^cornerLines$", fc);
+    strwrite(mode, "array^float^data^", fc);
     int myint = (ncol + 1) * (nrow + 1) * 2 * 3;
-    fwrite(&myint, 4, 1, fc);
+    intwrite(mode, myint, fc);
+
+    logger_info(LI, FI, FU, "Corner lines... %d", myint);
 
     long icol, jrow;
     long icc = 0;
-    for (icol = 0; icol <= ncol; icol++) {
-        for (jrow = 0; jrow <= nrow; jrow++) {
+    for (icol = 0; icol < nncol; icol++) {
+        for (jrow = 0; jrow < nnrow; jrow++) {
             float xtop = (coordsv[icc++] / xscale) - xoffset;
             float ytop = (coordsv[icc++] / yscale) - yoffset;
             float ztop = (coordsv[icc++] / zscale) - zoffset;
             float xbot = (coordsv[icc++] / xscale) - xoffset;
             float ybot = (coordsv[icc++] / yscale) - yoffset;
             float zbot = (coordsv[icc++] / zscale) - zoffset;
-            fwrite(&xbot, 4, 1, fc);
-            fwrite(&ybot, 4, 1, fc);
-            fwrite(&zbot, 4, 1, fc);
-            fwrite(&xtop, 4, 1, fc);
-            fwrite(&ytop, 4, 1, fc);
-            fwrite(&ztop, 4, 1, fc);
+            fltwrite(mode + 10, xbot, fc);
+            fltwrite(mode + 10, ybot, fc);
+            fltwrite(mode + 10, zbot, fc);
+            fltwrite(mode + 10, xtop, fc);
+            fltwrite(mode + 10, ytop, fc);
+            fltwrite(mode, ztop, fc);
         }
     }
-    fwrite("endtag\0", 1, 7, fc);
+    strwrite(mode, "endtag$", fc);
     logger_info(LI, FI, FU, "Corner lines... done");
 
     /*
@@ -188,50 +203,51 @@ grdcp3d_export_roff_grid(int ncol,
 
     logger_info(LI, FI, FU, "ZCorners...");
 
-    fwrite("tag\0zvalues\0", 1, 12, fc);
-    fwrite("array\0byte\0splitEnz\0", 1, 20, fc);
+    strwrite(mode, "tag^zvalues$", fc);
+    strwrite(mode, "array^byte^splitEnz^", fc);
     int ntot = (ncol + 1) * (nrow + 1) * (nlay + 1);
     int ntotcell = ncol * nrow * nlay;
-    fwrite(&ntot, 4, 1, fc);
+    intwrite(mode, ntot, fc);
     /*
      *----------------------------------------------------------------------------------
      * Z corner values
      *----------------------------------------------------------------------------------
      */
 
-    int *splitv;
-    splitv = calloc(ntot, sizeof(int));
     float *znodes;
     znodes = calloc(ntot * 4, sizeof(float));
 
     icc = 0;
     long izz = 0;
-    for (icol = 0; icol <= ncol; icol++) {
-        for (jrow = 0; jrow <= nrow; jrow++) {
+
+    int cnt = 0;
+    for (icol = 0; icol < nncol; icol++) {
+        for (jrow = 0; jrow < nnrow; jrow++) {
             long klay;
             for (klay = nlay; klay >= 0; klay--) {
                 int node;
                 float znode[4];
                 int splitenz = 1;
+                float znodeavg = 0.0;
                 for (node = 0; node < 4; node++) {
-                    icc = 4 * (icol * nrow * nlay + jrow * nlay + klay) + node;
-                    znode[node] = zcornsv[icc];
+                    long ino = 4 * (icol * nnrow * nnlay + jrow * nnlay + klay) + node;
+                    znode[node] = zcornsv[ino];
+                    znodeavg += 0.25 * znode[node];
                 }
-                int inode;
-                for (inode = 0; inode < 4; inode++) {
-                    for (node = 0; node < 4; node++) {
-                        if (znode[inode] != znode[node])
-                            splitenz = 4;
-                    }
+                for (node = 0; node < 4; node++) {
+                    if (fabs(znode[node] - znodeavg) > FLOATEPS)
+                        splitenz = 4;
                 }
 
                 // splitnode always 4 at edges
                 if (icol == 0 || jrow == 0 || icol == ncol || jrow == nrow)
                     splitenz = 4;
-                fwrite(&splitenz, 4, 1, fc);
 
-                splitv[icc++] = splitenz;
+                int add = _lineshift(&cnt, 12, ntot);
+                boolwrite(mode + add, splitenz, fc);
+
                 if (splitenz == 4) {
+                    int inode;
                     for (inode = 0; inode < 4; inode++)
                         znodes[izz++] = znode[inode] / zscale - zoffset;
                 } else {
@@ -240,37 +256,47 @@ grdcp3d_export_roff_grid(int ncol,
             }
         }
     }
-    fwrite("endtag\0", 1, 7, fc);
-    logger_info(LI, FI, FU, "ZCorners... ...");
 
     long nznodes = izz;
-    fwrite("array\0float\0data\0", 1, 17, fc);
-    myint = (int)nznodes;
-    fwrite(&myint, 4, 1, fc);
-    for (izz = 0; izz < nznodes; izz++)
-        fwrite(&znodes[izz], 4, 1, fc);
+    logger_info(LI, FI, FU, "nznodes (izz): %ld %d", nznodes, izz);
 
-    free(splitv);
+    strwrite(mode, "array^float^data^", fc);
+    myint = (int)nznodes;
+    intwrite(mode, myint, fc);
+    cnt = 0;
+    for (izz = 0; izz < nznodes; izz++) {
+        float zn = znodes[izz];
+        int add = _lineshift(&cnt, 4, (nznodes - 1));
+        fltwrite(mode + add, zn, fc);
+    }
+
+    strwrite(mode, "endtag$", fc);
     free(znodes);
+
+    // logger_info(LI, FI, FU, "ZCorners... done");
 
     /*
      *----------------------------------------------------------------------------------
      * ACTNUMS
      *----------------------------------------------------------------------------------
      */
-    fwrite("tag\0active\0", 1, 11, fc);
-    fwrite("array\0bool\0data\0", 1, 16, fc);
-    myint = (int)ntotcell;
-    fwrite(&myint, 4, 1, fc);
-    for (icol = 0; icol <= ncol; icol++) {
-        for (jrow = 0; jrow <= nrow; jrow++) {
+    logger_info(LI, FI, FU, "ACTNUM...");
+    strwrite(mode, "tag^active$", fc);
+    strwrite(mode, "array^bool^data^", fc);
+    intwrite(mode, (int)ntotcell, fc);
+
+    cnt = 0;
+    for (icol = 0; icol < ncol; icol++) {
+        for (jrow = 0; jrow < nrow; jrow++) {
             long klay;
-            for (klay = nlay; klay >= 0; klay--) {
+            for (klay = (nlay - 1); klay >= 0; klay--) {
                 long icc = icol * nrow * nlay + jrow * nlay + klay;
-                char mybyte = actnumsv[icc];
-                fwrite(&mybyte, 1, 1, fc);
+
+                int add = _lineshift(&cnt, 12, ntotcell);
+                boolwrite(mode + add, actnumsv[icc], fc);
             }
         }
     }
-    fwrite("endtag\0", 1, 7, fc);
+    strwrite(mode, "endtag$", fc);
+    logger_info(LI, FI, FU, "ACTNUM... done");
 }
