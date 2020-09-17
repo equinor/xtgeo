@@ -78,6 +78,7 @@ _roffbinstring(FILE *fc, char *mystring)
             if (mybyte == '\0')
                 return i + 1;
         } else {
+            logger_critical(LI, FI, FU, "Did not reach end of ROFF string");
             return -99;
         }
     }
