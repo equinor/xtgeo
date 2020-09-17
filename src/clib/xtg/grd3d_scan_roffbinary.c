@@ -57,7 +57,7 @@
 /* LOCAL FUNCTIONS                                                           */
 /* ######################################################################### */
 
-#define ROFFSTRLEN 100
+#define ROFFSTRLEN 200
 #define ROFFARRLEN 15
 #define TAGRECORDMAX 100
 #define TAGDATAMAX 100
