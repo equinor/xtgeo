@@ -30,6 +30,8 @@ def get_randomline(
     nextend=2,
 ):
 
+    self._xtgformat1()
+
     logger.info("Enter get_randomline from Grid...")
 
     _update_tmpvars(self)

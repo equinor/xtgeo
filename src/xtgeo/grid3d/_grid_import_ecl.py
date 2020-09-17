@@ -103,6 +103,7 @@ def import_ecl_egrid(self, gfile):
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
 
     self._nactive = _cxtgeo.longpointer_value(p_nact)
+    self._xtgformat = 1
 
     # in case of DUAL PORO/PERM ACTNUM will be 0..3; need to convert
     if self._dualporo:
@@ -222,6 +223,7 @@ def import_ecl_grdecl(self, gfile):
 
     logger.info("Number of active cells: %s", nact)
     self._subgrids = None
+    self._xtgformat = 1
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -291,6 +293,7 @@ def import_ecl_bgrdecl(self, gfile):
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
 
     self._nactive = _cxtgeo.longpointer_value(p_nact)
+    self._xtgformat = 1
 
     # if local_fhandle:
     #     gfile.close(cond=local_fhandle)

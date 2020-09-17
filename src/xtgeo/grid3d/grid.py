@@ -39,7 +39,7 @@ logger = xtg.functionlogger(__name__)
 # The "activeonly" will filter out masked entries, or use None or np.nan
 # if "activeonly" is False.
 #
-# Use word "zerobased" for a bool regrading startcell basis is 1 or 0
+# Use word "zerobased" for a bool regarding if startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
@@ -145,13 +145,12 @@ class Grid(Grid3D):
     Example::
 
         import xtgeo
-        from xtgeo.grid3d import Grid
 
-        geo = Grid()
+        geo = xtgeo.Grid()
         geo.from_file("myfile.roff")
 
         # alternative (make instance directly from file):
-        geo = Grid("myfile.roff")
+        geo = xtgeo.Grid("myfile.roff")
 
         # or use
         geo = xtgeo.grid_from_file("myfile.roff")
@@ -171,7 +170,7 @@ class Grid(Grid3D):
         # _xtgformat: internal flag for storage structure. 1 is the "current" while 2
         # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
         # are organized! The corresponding C routines for 1: grd3d_*, while 2: grdcp3d_*
-        self._xtgformat = 1
+        self._xtgformat = 2
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None

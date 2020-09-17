@@ -40,6 +40,8 @@ def report_zone_mismatch(
     This method was completely redesigned in version 2.8
     """
 
+    self._xtgformat1()
+
     if onelayergrid is not None:
         xtg.warndeprecated("Using key 'onelayergrid' is redundant and can be skipped")
 

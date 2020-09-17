@@ -21,6 +21,8 @@ def make_hybridgrid(
 
     """Make hybrid grid."""
 
+    self._xtgformat1()
+
     newnlay = self.nlay * 2 + nhdiv
     newnzcorn = self.ncol * self.nrow * (newnlay + 1) * 4
     newnactnum = self.ncol * self.nrow * newnlay

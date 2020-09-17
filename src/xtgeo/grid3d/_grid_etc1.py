@@ -42,8 +42,6 @@ def create_box(
 ):
     """Create a shoebox grid from cubi'sh spec"""
 
-    self._convert_xtgformat2to1()
-
     self._ncol, self._nrow, self._nlay = dimension
     ncoord, nzcorn, ntot = self.vectordimensions
 
@@ -80,6 +78,7 @@ def create_box(
     self._roxgrid = None
     self._roxindexer = None
     self._tmp = {}
+    self._xtgformat = 1
 
 
 def get_dz(self, name="dZ", flip=True, asmasked=True):
@@ -855,6 +854,8 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
         The instance is updated (cropped)
     """
 
+    self._xtgformat1()
+
     (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
 
     if (
@@ -958,6 +959,7 @@ def reduce_to_one_layer(self):
 
     # need new pointers in C (not for coord)
     # Note this could probably be done with pure numpy operations
+    self._xtgformat1()
 
     ptr_new_num_act = _cxtgeo.new_intpointer()
 
@@ -987,6 +989,9 @@ def reduce_to_one_layer(self):
 
 def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
     """Translate grid coordinates"""
+
+    self._xtgformat1()
+
     tx, ty, tz = translate
     fx, fy, fz = flip
 
@@ -1011,6 +1016,8 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
 
 def reverse_row_axis(self, ijk_handedness=None):
     """Reverse rows (aka flip) for geometry and assosiated properties"""
+
+    self._xtgformat1()
 
     if ijk_handedness == self.ijk_handedness:
         return
@@ -1051,6 +1058,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
     perflogname=None,
 ):
     """Reports well to zone mismatch; this works together with a Well object."""
+
+    self._xtgformat1()
 
     this = inspect.currentframe().f_code.co_name
 
@@ -1168,6 +1177,9 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
 
 def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
     """Get adjacents cells"""
+
+    self._xtgformat1()
+
     if not isinstance(prop, GridProperty):
         raise ValueError("The argument prop is not a xtgeo.GridPropery")
 
@@ -1291,8 +1303,8 @@ def estimate_flip(self):
 def _convert_xtgformat2to1(self):
     """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
 
-    if self._xtgformat == 1:
-        logger.info("No conversion, format is already xtgformat == 1")
+    if self._xtgformat == 1 or self._coordsv is None:
+        logger.info("No conversion, format is already xtgformat == 1 or unset")
         return
 
     logger.info("Convert grid from new xtgformat to legacy format...")
@@ -1326,8 +1338,8 @@ def _convert_xtgformat2to1(self):
 def _convert_xtgformat1to2(self):
     """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
 
-    if self._xtgformat == 2:
-        logger.info("No conversion, format is already xtgformat == 2")
+    if self._xtgformat == 2 or self._coordsv is None:
+        logger.info("No conversion, format is already xtgformat == 2 or unset")
         return
 
     logger.info("Convert grid from legacy xtgformat to new format...")
@@ -1349,19 +1361,6 @@ def _convert_xtgformat1to2(self):
         self._actnumsv,
         newactnumsv,
     )
-
-    # test, not working
-    # _cxtgeo.grd3cp3d_xtgformat1to2_geom2(
-    #     self._ncol,
-    #     self._nrow,
-    #     self._nlay,
-    #     self._coordsv,
-    #     self._zcornsv,
-    #     self._actnumsv,
-    #     newcoordsv,
-    #     newzcornsv,
-    #     newactnumsv,
-    # )
 
     self._coordsv = newcoordsv
     self._zcornsv = newzcornsv

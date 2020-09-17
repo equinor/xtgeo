@@ -81,13 +81,15 @@ def _export_roff_v2(self, gfile, ascii_fmt):
         sublist = np.zeros((1), dtype=np.int32)
 
     # for *shift values
-    midcell = (self.ncol // 2, self.nrow // 2, self.nlay // 2)
-    midcorners = self.get_xyz_cell_corners(
-        ijk=midcell, activeonly=False, zerobased=True
-    )
+    midi, midj, midk = (self.ncol // 2, self.nrow // 2, self.nlay // 2)
+    midx = float(self._coordsv[midi, midj, 0])
+    midy = float(self._coordsv[midi, midj, 1])
+    midz = float(self._zcornsv[midi, midj, midk, 0])
+
+    info = "#" + xtg.get_xtgeo_info() + "#$"  # last $ is for lineshift trick in roffasc
 
     _cxtgeo.grdcp3d_export_roff_bin_start_end(
-        0, ascii_fmt, "grid", self.ncol, self.nrow, self.nlay, cfhandle
+        0, info, ascii_fmt, "grid", self.ncol, self.nrow, self.nlay, cfhandle
     )
 
     _cxtgeo.grdcp3d_export_roff_grid(
@@ -95,9 +97,9 @@ def _export_roff_v2(self, gfile, ascii_fmt):
         self._ncol,
         self._nrow,
         self._nlay,
-        midcorners[0],
-        midcorners[1],
-        midcorners[2],
+        midx,
+        midy,
+        midz,
         sublist,
         self._coordsv,
         self._zcornsv,
@@ -109,15 +111,15 @@ def _export_roff_v2(self, gfile, ascii_fmt):
 
     # end tag
     _cxtgeo.grdcp3d_export_roff_bin_start_end(
-        1, ascii_fmt, "xxxx", self.ncol, self.nrow, self.nlay, cfhandle
+        1, info, ascii_fmt, "xxxx", self.ncol, self.nrow, self.nlay, cfhandle
     )
     gfile.cfclose()
 
 
 def export_grdecl(self, gfile, mode):
-    """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary
-    (mode=0).
-    """
+    """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary (mode=0)."""
+
+    self._xtgformat1()
 
     logger.debug("Export to ascii or binary GRDECL...")
 
@@ -135,6 +137,8 @@ def export_grdecl(self, gfile, mode):
 
 def export_egrid(self, gfile):
     """Export grid to Eclipse EGRID format, binary."""
+
+    self._xtgformat1()
 
     logger.debug("Export to binary EGRID...")
 
