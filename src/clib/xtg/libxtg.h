@@ -2003,6 +2003,7 @@ grd3d_well_ijk(int nx,
  */
 void
 grdcp3d_export_roff_bin_start_end(int option,
+                                  const char *info,
                                   int mode,
                                   char *type,
                                   long ncol,

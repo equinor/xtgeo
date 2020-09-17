@@ -32,6 +32,7 @@
 
 void
 grdcp3d_export_roff_bin_start_end(int option,
+                                  const char *info,
                                   int mode,
                                   char *rtype,
                                   long ncol,
@@ -55,7 +56,7 @@ grdcp3d_export_roff_bin_start_end(int option,
             strwrite(mode, "roff-asc$", fc);
         }
         strwrite(mode, "#ROFF file#$", fc);
-        strwrite(mode, "#Creator: CLib subsystem of XTGeo#$", fc);
+        strwrite(mode, info, fc);
         strwrite(mode, "tag^filedata$", fc);
         strwrite(mode, "int^byteswaptest^", fc);
         myint = 1;
