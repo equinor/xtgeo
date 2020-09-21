@@ -2096,6 +2096,13 @@ grd3cp3d_xtgformat2to1_geom(long ncol,
                             int *swig_np_int_inplaceflat_v2,  // actnumsv2
                             long n_swig_np_int_inplaceflat_v2);
 
+void
+grdcp3d_process_edges(long ncol,
+                      long nrow,
+                      long nlay,
+                      float *swig_np_flt_inplaceflat_v1,
+                      long n_swig_np_flt_inplaceflat_v1);
+
 int
 grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
                               int swap,

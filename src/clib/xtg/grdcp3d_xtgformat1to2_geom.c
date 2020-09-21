@@ -125,6 +125,9 @@ grd3cp3d_xtgformat1to2_geom(long ncol,
         return EXIT_FAILURE;
     }
 
+    // probably not needed?
+    grdcp3d_process_edges(ncol, nrow, nlay, zcornsv2, 0);
+
     logger_info(LI, FI, FU, "Transforming grid ROFF zcorn -> XTG representation done");
 
     logger_info(LI, FI, FU,

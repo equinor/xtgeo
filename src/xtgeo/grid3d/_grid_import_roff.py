@@ -210,6 +210,7 @@ def _import_roff_xtgformat2(self, gfile):
         p_splitenz_v,
     )
     logger.info("ZCORN related... done")
+    _cxtgeo.grdcp3d_process_edges(self.ncol, self.nrow, self.nlay, self._zcornsv)
 
     logger.info("ACTNUM...")
     self._actnumsv = _rkwxvec_prop(

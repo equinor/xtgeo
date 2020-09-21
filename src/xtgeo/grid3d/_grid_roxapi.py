@@ -31,10 +31,10 @@ def import_grid_roxapi(
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
 
-    if self._xtgformat == 1:
+    if self._xtgformat == 1 or dimonly:
         _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
     else:
-        _import_grid_roxapi_v2(self, projectname, gname, realisation, dimonly, info)
+        _import_grid_roxapi_v2(self, projectname, gname, realisation, info)
 
 
 def _import_grid_roxapi_v1(
@@ -194,7 +194,7 @@ def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no
 
 
 def _import_grid_roxapi_v2(
-    self, projectname, gname, realisation, dimonly, info
+    self, projectname, gname, realisation, info
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
 
@@ -261,6 +261,7 @@ def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
 
     self._coordsv = coordsv
     self._zcornsv = zcornsv
+    _cxtgeo.grdcp3d_process_edges(self.ncol, self.nrow, self.nlay, self._zcornsv)
 
     actnumsv[geom.get_defined_cells()] = 1
     self._actnumsv = actnumsv
