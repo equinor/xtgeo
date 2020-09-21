@@ -263,7 +263,9 @@ def test_roffbin_import_v2_banal():
     """Test roff binary import ROFF using new API, banal case"""
 
     t0 = xtg.timer()
-    grd1 = Grid(BANAL6)
+    grd1 = Grid()
+    grd1._xtgformat = 1
+    grd1.from_file(BANAL6)
     print("V1: ", xtg.timer(t0))
 
     t0 = xtg.timer()
@@ -373,6 +375,7 @@ def test_roffbin_bigbox(tmpdir):
 
     grd1 = Grid()
     t0 = xtg.timer()
+    grd1._xtgformat = 1
     grd1.from_file(bigbox)
     t_old = xtg.timer(t0)
     logger.info("Reading bigbox xtgeformat=1 took %s seconds", t_old)
