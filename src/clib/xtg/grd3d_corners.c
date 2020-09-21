@@ -59,7 +59,6 @@ grd3d_corners(int i,
     double xbot[5], ybot[5], zbot[5];
 
     /* each cell is defined by 4 pillars */
-    logger_info(LI, FI, FU, "Get cell corners...");
 
     int ic;
     for (ic = 1; ic <= 4; ic++) {
@@ -115,5 +114,4 @@ grd3d_corners(int i,
             corners[3 * (ic - 1) + 1] = ytop[cl];
         }
     }
-    logger_info(LI, FI, FU, "Get cell corners... done");
 }

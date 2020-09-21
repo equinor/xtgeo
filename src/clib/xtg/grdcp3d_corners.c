@@ -63,8 +63,6 @@ grdcp3d_corners(long ic,
     long nnlay = nlay + 1;
     /* each cell is defined by 4 pillars */
 
-    logger_info(LI, FI, FU, "Get cell corners...");
-
     long nn = 0;
     long i, j, k;
     for (j = 0; j < 2; j++) {
@@ -114,5 +112,4 @@ grdcp3d_corners(long ic,
             cz++;
         }
     }
-    logger_info(LI, FI, FU, "Get cell corners... done");
 }
