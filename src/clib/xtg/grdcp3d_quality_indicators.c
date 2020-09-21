@@ -53,11 +53,13 @@ static struct
     long nrow;
     long nlay;
     long icount;
+    long ncount;
     double *coordsv;
     long ncoord;
     float *zcornsv;
     long nzcorn;
     int *actnum;
+    double *corners;
     float *fresults;
 } data;
 
@@ -66,11 +68,9 @@ _cellangles()
 {
     /* update the result vector with angle data */
     double amin, amax, aminp, amaxp;
-    double corners[24];
-    grdcp3d_corners(data.icol, data.jrow, data.klay, data.ncol, data.nrow, data.nlay,
-                    data.coordsv, data.ncoord, data.zcornsv, data.nzcorn, corners);
-    int ier1 = x_minmax_cellangles(corners, 24, &amin, &amax, 0, 1);
-    int ier2 = x_minmax_cellangles(corners, 24, &aminp, &amaxp, 1, 1);
+
+    int ier1 = x_minmax_cellangles(data.corners, 24, &amin, &amax, 0, 1);
+    int ier2 = x_minmax_cellangles(data.corners, 24, &aminp, &amaxp, 1, 1);
     if (ier1 != 0) {
         amin = UNDEF;
         amax = UNDEF;
@@ -85,12 +85,58 @@ _cellangles()
     //     amax = -999;
     // }
 
-    long ncount = data.ncol * data.nrow * data.nlay;
+    data.ncount = data.ncol * data.nrow * data.nlay;
 
-    data.fresults[ncount * 0 + data.icount] = amin;
-    data.fresults[ncount * 1 + data.icount] = amax;
-    data.fresults[ncount * 2 + data.icount] = aminp;
-    data.fresults[ncount * 3 + data.icount] = amaxp;
+    data.fresults[data.ncount * 0 + data.icount] = (float)amin;
+    data.fresults[data.ncount * 1 + data.icount] = (float)amax;
+    data.fresults[data.ncount * 2 + data.icount] = (float)aminp;
+    data.fresults[data.ncount * 3 + data.icount] = (float)amaxp;
+}
+
+static void
+_collapsed()
+{
+    // Cells are collapsed vertically in one or more corners
+
+    int ic;
+    float iscollapsed = 0.0;
+    for (ic = 2; ic < 12; ic += 3) {
+        if (fabs(data.corners[ic + 12] - data.corners[ic]) < FLOATEPS) {
+            iscollapsed = 1.0;
+            break;
+        }
+    }
+
+    data.fresults[data.ncount * 4 + data.icount] = iscollapsed;
+}
+
+static void
+_faulted()
+{
+    // Detect faulted splitnodes
+
+    int ic, jc, kc;
+    float isfaulted = 0.0;
+    long nnrow = data.nrow + 1;
+    long nnlay = data.nlay + 1;
+
+    for (ic = 0; ic < 2; ic++) {
+        for (jc = 0; jc < 2; jc++) {
+            for (kc = 0; kc < 2; kc++) {
+                long nc = 4 * ((data.icol + ic) * nnrow * nnlay +
+                               (data.jrow + jc) * nnlay + (data.klay + kc));
+                double sw = data.zcornsv[nc + 0];
+                double se = data.zcornsv[nc + 1];
+                double nw = data.zcornsv[nc + 2];
+                double ne = data.zcornsv[nc + 3];
+
+                if (sw != se || sw != nw || nw != ne || ne != se) {
+                    isfaulted = 1.0;
+                }
+            }
+        }
+    }
+    data.fresults[data.ncount * 5 + data.icount] = isfaulted;
 }
 
 /*
@@ -116,6 +162,7 @@ grdcp3d_quality_indicators(long ncol,
     /* each cell is defined by 4 pillars */
 
     logger_info(LI, FI, FU, "Grid quality measures...");
+    double *corners = calloc(24, sizeof(double));
 
     // struct data;
 
@@ -129,6 +176,9 @@ grdcp3d_quality_indicators(long ncol,
     data.actnum = actnumsv;
     data.fresults = fresults;
 
+    data.corners = corners;
+    data.ncount = data.ncol * data.nrow * data.nlay;
+
     long i, j, k;
     for (i = 0; i < ncol; i++) {
         for (j = 0; j < nrow; j++) {
@@ -140,11 +190,15 @@ grdcp3d_quality_indicators(long ncol,
                 data.jrow = j;
                 data.klay = k;
                 data.icount = ic;
-                _cellangles(data);
+                grdcp3d_corners(data.icol, data.jrow, data.klay, data.ncol, data.nrow,
+                                data.nlay, data.coordsv, data.ncoord, data.zcornsv,
+                                data.nzcorn, data.corners);
+                _cellangles();
+                _collapsed();
+                _faulted();
             }
         }
         logger_info(LI, FI, FU, "Grid quality measures... done");
     }
-
-    // fresults = data.fresults;
+    free(corners);
 }
