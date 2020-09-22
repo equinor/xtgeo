@@ -738,6 +738,11 @@ def test_dataframe_simple():
 
     tsetup.assert_almostequal(dfrc["X_UTME"][2], 461582.562498, 0.01)
 
+    xmap.coarsen(2)
+    dfrc = xmap.dataframe()
+
+    tsetup.assert_almostequal(dfrc["X_UTME"][2], 461577.5575, 0.01)
+
 
 @tsetup.bigtest
 def test_dataframe_more():
