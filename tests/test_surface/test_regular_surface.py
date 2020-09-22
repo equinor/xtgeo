@@ -203,6 +203,14 @@ def test_irapbin_import_quickplot():
         xsurf.quickplot(os.path.join(TMPD, "qplot.jpg"), colormap=cmap)
 
 
+def test_irapbin_import_metadatafirst_simple():
+    srf = xtgeo.RegularSurface(TESTSET2, values=False)
+    assert srf.values is None
+    assert srf.ncol == 1264
+
+    srf.load_values()
+
+
 def test_irapbin_import_metadatafirst():
     """Import Reek Irap binary, first with metadata only, then values."""
     logger.info("Import and export...")
@@ -723,6 +731,17 @@ def test_dataframe_simple():
     dfrc = xmap.dataframe(ijcolumns=True, order="C", activeonly=True)
 
     tsetup.assert_almostequal(dfrc["X_UTME"][2], 465956.274, 0.01)
+
+    xmap = xtgeo.surface_from_file(TESTSET2)
+
+    dfrc = xmap.dataframe()
+
+    tsetup.assert_almostequal(dfrc["X_UTME"][2], 461582.562498, 0.01)
+
+    xmap.coarsen(2)
+    dfrc = xmap.dataframe()
+
+    tsetup.assert_almostequal(dfrc["X_UTME"][2], 461577.5575, 0.01)
 
 
 @tsetup.bigtest

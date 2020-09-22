@@ -79,7 +79,8 @@ def import_irap_binary(self, mfile, values=True):
         logger.info("NaN values are found, will mask...")
         val = ma.masked_invalid(val)
 
-    self._values = val
+    self._isloaded = True
+    self.values = val
 
     mfile.cfclose()
 
@@ -124,8 +125,9 @@ def import_irap_ascii(self, mfile):
     self._yinc = yinc
     self._yflip = yflip
     self._rotation = rot
-    self._values = val
     self._filesrc = mfile
+
+    self.values = val
 
     self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
     self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
@@ -172,8 +174,9 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     self._nrow = nrow
     self._rotation = rot
     self._yflip = yflip
-    self._values = val.reshape((self._ncol, self._nrow))
     self._filesrc = mfile
+
+    self.values = val.reshape((self._ncol, self._nrow))
 
     self._ilines = iln
     self._xlines = xln
@@ -207,7 +210,7 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     self._nrow = template.nrow
     self._rotation = template.rotation
     self._yflip = template.yflip
-    self._values = val.reshape((self._ncol, self._nrow))
+    self.values = val.reshape((self._ncol, self._nrow))
     self._filesrc = mfile
 
     self._ilines = template._ilines.copy()

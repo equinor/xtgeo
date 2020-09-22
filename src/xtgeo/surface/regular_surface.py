@@ -1125,7 +1125,7 @@ class RegularSurface(object):
     def copy(self):
         """Copy a xtgeo.surface.RegularSurface object to another instance::
 
-            >>> mymapcopy = mymap.copy()
+        >>> mymapcopy = mymap.copy()
 
         """
         # pylint: disable=protected-access
@@ -1518,7 +1518,6 @@ class RegularSurface(object):
         Returns:
             A Pandas dataframe object.
         """
-
         xcoord, ycoord, values = self.get_xyz_values1d(
             order=order, activeonly=activeonly, fill_value=fill_value
         )
@@ -2608,7 +2607,7 @@ class RegularSurface(object):
         if not self._isloaded:
             return
 
-        if values is None:
+        if values is None or values is False:
             self._values = None
             return
 
@@ -2692,3 +2691,14 @@ class RegularSurface(object):
 
         else:
             raise ValueError("Input values are in invalid format: {}".format(values))
+
+        if self._values is not None:
+
+            if self._ilines is None:
+                self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+                self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+
+            if self._values.mask is ma.nomask:
+                self._values = ma.array(
+                    self._values, mask=ma.getmaskarray(self._values)
+                )
