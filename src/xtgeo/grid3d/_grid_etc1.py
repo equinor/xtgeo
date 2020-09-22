@@ -1401,11 +1401,11 @@ def get_gridquality_properties(self):
     maxanglep = xtgeo.GridProperty(self, name="maxanglep")
     maxanglep.values = fresults[3, :]
 
-    collapsed = xtgeo.GridProperty(self, name="collapsed")
-    collapsed.values = fresults[4, :]
+    collapsed = xtgeo.GridProperty(self, name="collapsed", discrete=True)
+    collapsed.values = fresults[4, :].astype(np.int32)
 
-    faulted = xtgeo.GridProperty(self, name="faulted")
-    collapsed.values = fresults[5, :]
+    faulted = xtgeo.GridProperty(self, name="faulted", discrete=True)
+    faulted.values = fresults[5, :].astype(np.int32)
 
     grdprops = xtgeo.GridProperties()
     grdprops.props = [minangle, maxangle, minanglep, maxanglep, collapsed, faulted]
