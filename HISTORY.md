@@ -2,6 +2,9 @@
 
 ## Version 2
 
+### 2.12.1
+* Fix of ``get_dataframe()`` for ``RegularSurface`` which fails in some case, cf issue #415
+
 ### 2.12.0
 * New features:
   * Added method ``rename_subgrids`` for Grid() class.
