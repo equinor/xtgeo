@@ -218,12 +218,19 @@ x_vectorpair_angle3d(double *swig_np_dbl_in_v1,
                      int option);
 
 int
-x_minmax_cellangles(double *swig_np_dbl_in_v1,
-                    long n_swig_np_dbl_in_v1,
-                    double *swig_dbl_out_p1,
-                    double *swig_dbl_out_p2,
-                    int option,
-                    int degrees);
+x_minmax_cellangles_topbase(double *swig_np_dbl_in_v1,
+                            long n_swig_np_dbl_in_v1,
+                            double *swig_dbl_out_p1,
+                            double *swig_dbl_out_p2,
+                            int option,
+                            int degrees);
+
+int
+x_minmax_cellangles_sides(double *swig_np_dbl_in_v1,
+                          long n_swig_np_dbl_in_v1,
+                          double *swig_dbl_out_p1,
+                          double *swig_dbl_out_p2,
+                          int degrees);
 
 /*
  * =====================================================================================

@@ -265,19 +265,33 @@ def test_vectorpair_angle3d():
 
 
 def test_x_cellangles():
-    """Test x_vector_angle3cell function (lowlevel call)"""
+    """Test x_minmax_cellangles* functions (lowlevel call)"""
 
     grd = xtgeo.Grid(TESTGRID)
     cell1 = grd.get_xyz_cell_corners((6, 4, 1))
+    cell2 = grd.get_xyz_cell_corners((6, 3, 1))
+    cell3 = grd.get_xyz_cell_corners((4, 7, 1))
 
-    cell1 = np.array(cell1)
-    _ier, amin, amax = _cxtgeo.x_minmax_cellangles(cell1, 0, 1)
+    _ier, amin, amax = _cxtgeo.x_minmax_cellangles_topbase(cell1, 0, 1)
 
     assert amin == pytest.approx(71.329, abs=0.01)
     assert amax == pytest.approx(102.673, abs=0.01)
 
     # birdview
-    _ier, amin, amax = _cxtgeo.x_minmax_cellangles(cell1, 1, 1)
+    _ier, amin, amax = _cxtgeo.x_minmax_cellangles_topbase(cell1, 1, 1)
 
     assert amin == pytest.approx(89.701, abs=0.01)
     assert amax == pytest.approx(90.274, abs=0.01)
+
+    # side cells
+    _ier, amin, amax = _cxtgeo.x_minmax_cellangles_sides(cell1, 1)
+
+    _ier, amin, amax = _cxtgeo.x_minmax_cellangles_sides(cell2, 1)
+
+    assert amin == pytest.approx(49.231, abs=0.01)
+    assert amax == pytest.approx(130.77, abs=0.01)
+
+    _ier, amin, amax = _cxtgeo.x_minmax_cellangles_sides(cell3, 1)
+
+    assert amin == pytest.approx(75.05, abs=0.01)
+    assert amax == pytest.approx(104.95, abs=0.01)

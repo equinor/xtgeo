@@ -743,7 +743,11 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol, self.nrow, self.nlay, self._zcornsv, zsep,
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._zcornsv,
+        zsep,
     )
 
 
@@ -1373,7 +1377,7 @@ def _convert_xtgformat1to2(self):
 def get_gridquality_properties(self):
     """Get the grid quality properties"""
 
-    numqual = 6
+    numqual = 8
 
     self._xtgformat2()
 
@@ -1389,25 +1393,40 @@ def get_gridquality_properties(self):
         fresults,
     )
 
-    minangle = xtgeo.GridProperty(self, name="minangle")
+    minangle = xtgeo.GridProperty(self, name="minangle_topbase")
     minangle.values = fresults[0, :]
 
-    maxangle = xtgeo.GridProperty(self, name="maxangle")
+    maxangle = xtgeo.GridProperty(self, name="maxangle_topbase")
     maxangle.values = fresults[1, :]
 
-    minanglep = xtgeo.GridProperty(self, name="minanglep")
+    minanglep = xtgeo.GridProperty(self, name="minangle_topbase_proj")
     minanglep.values = fresults[2, :]
 
-    maxanglep = xtgeo.GridProperty(self, name="maxanglep")
+    maxanglep = xtgeo.GridProperty(self, name="maxangle_topbase_proj")
     maxanglep.values = fresults[3, :]
 
+    minangles = xtgeo.GridProperty(self, name="minangle_sides")
+    minangles.values = fresults[4, :]
+
+    maxangles = xtgeo.GridProperty(self, name="maxangle_sides")
+    maxangles.values = fresults[5, :]
+
     collapsed = xtgeo.GridProperty(self, name="collapsed", discrete=True)
-    collapsed.values = fresults[4, :].astype(np.int32)
+    collapsed.values = fresults[6, :].astype(np.int32)
 
     faulted = xtgeo.GridProperty(self, name="faulted", discrete=True)
-    faulted.values = fresults[5, :].astype(np.int32)
+    faulted.values = fresults[7, :].astype(np.int32)
 
     grdprops = xtgeo.GridProperties()
-    grdprops.props = [minangle, maxangle, minanglep, maxanglep, collapsed, faulted]
+    grdprops.props = [
+        minangle,
+        maxangle,
+        minanglep,
+        maxanglep,
+        minangles,
+        maxangles,
+        collapsed,
+        faulted,
+    ]
 
     return grdprops

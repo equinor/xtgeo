@@ -276,7 +276,7 @@ def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
 
     angle = _cxtgeo.x_vectorpair_angle3d(p0, p1, p2, degs, bird)
 
-    if angle == -1:
+    if angle == -999:
         return None
 
     return angle

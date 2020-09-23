@@ -67,10 +67,11 @@ static void
 _cellangles()
 {
     /* update the result vector with angle data */
-    double amin, amax, aminp, amaxp;
+    double amin, amax, aminp, amaxp, amins, amaxs;
 
-    int ier1 = x_minmax_cellangles(data.corners, 24, &amin, &amax, 0, 1);
-    int ier2 = x_minmax_cellangles(data.corners, 24, &aminp, &amaxp, 1, 1);
+    int ier1 = x_minmax_cellangles_topbase(data.corners, 24, &amin, &amax, 0, 1);
+    int ier2 = x_minmax_cellangles_topbase(data.corners, 24, &aminp, &amaxp, 1, 1);
+    int ier3 = x_minmax_cellangles_sides(data.corners, 24, &amins, &amaxs, 1);
     if (ier1 != 0) {
         amin = UNDEF;
         amax = UNDEF;
@@ -78,6 +79,10 @@ _cellangles()
     if (ier2 != 0) {
         aminp = UNDEF;
         amaxp = UNDEF;
+    }
+    if (ier3 != 0) {
+        amins = UNDEF;
+        amaxs = UNDEF;
     }
 
     // if (data.actnum[data.icount] == 0) {
@@ -91,6 +96,8 @@ _cellangles()
     data.fresults[data.ncount * 1 + data.icount] = (float)amax;
     data.fresults[data.ncount * 2 + data.icount] = (float)aminp;
     data.fresults[data.ncount * 3 + data.icount] = (float)amaxp;
+    data.fresults[data.ncount * 4 + data.icount] = (float)amins;
+    data.fresults[data.ncount * 5 + data.icount] = (float)amaxs;
 }
 
 static void
@@ -107,7 +114,7 @@ _collapsed()
         }
     }
 
-    data.fresults[data.ncount * 4 + data.icount] = iscollapsed;
+    data.fresults[data.ncount * 6 + data.icount] = iscollapsed;
 }
 
 static void
@@ -136,7 +143,7 @@ _faulted()
             }
         }
     }
-    data.fresults[data.ncount * 5 + data.icount] = isfaulted;
+    data.fresults[data.ncount * 7 + data.icount] = isfaulted;
 }
 
 /*
