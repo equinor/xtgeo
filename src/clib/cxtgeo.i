@@ -2,7 +2,6 @@
 %{
 #define SWIG_FILE_WITH_INIT
 #include <libxtg.h>
-#include <libxtg2.h>
 %}
 
 typedef uint8_t mbool;
