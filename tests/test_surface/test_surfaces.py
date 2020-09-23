@@ -7,8 +7,8 @@ from os.path import join
 
 import numpy as np
 
-import xtgeo
 import test_common.test_xtg as tsetup
+import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
