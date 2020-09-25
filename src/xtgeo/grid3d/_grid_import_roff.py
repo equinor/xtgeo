@@ -254,7 +254,9 @@ def import_xtgeo(self, gfile):
     if ier != 0:
         raise ValueError("Cannot import, error code is: {}".format(ier))
 
-    print("Dimensions are", ncol, nrow, nlay)
+    self._ncol = ncol
+    self._nrow = nrow
+    self._nlay = nlay
 
     nncol = ncol + 1
     nnrow = nrow + 1
@@ -265,7 +267,7 @@ def import_xtgeo(self, gfile):
     self._actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
     # read data
-    ier, self.ncol, self.nrow, self.nlay, _metadata = _cxtgeo.grdcp3d_import_xtgeo_grid(
+    ier, ncol, nrow, nlay, _metadata = _cxtgeo.grdcp3d_import_xtgeo_grid(
         1,
         self._coordsv,
         self._zcornsv,
@@ -277,6 +279,6 @@ def import_xtgeo(self, gfile):
         raise ValueError("Error in reading file, error code is: {}".format(ier))
 
     # themeta = json.loads(metadata, object_pairs_hook=OrderedDict)
-    self.subgrids = None  # tmp
+    self._subgrids = None  # tmp
 
     gfile.cfclose()
