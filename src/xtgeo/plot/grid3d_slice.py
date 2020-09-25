@@ -196,7 +196,7 @@ class Grid3DSlice(BasePlot):
             if self._minvalue is None:
                 pmin = pvalues.min()
 
-            pmax = self._minvalue
+            pmax = self._maxvalue
             if self._maxvalue is None:
                 pmax = pvalues.max()
 
