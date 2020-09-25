@@ -137,8 +137,18 @@ _faulted()
                 double nw = data.zcornsv[nc + 2];
                 double ne = data.zcornsv[nc + 3];
 
-                if (sw != se || sw != nw || nw != ne || ne != se) {
-                    isfaulted = 1.0;
+                double diff[4];
+                diff[0] = fabs(sw - se);
+                diff[1] = fabs(sw - nw);
+                diff[2] = fabs(sw - ne);
+                diff[3] = fabs(se - nw);
+
+                int i;
+                for (i = 0; i < 4; i++) {
+                    if (diff[i] > FLOATEPS) {
+                        isfaulted = 1.0;
+                        break;
+                    }
                 }
             }
         }
@@ -146,6 +156,24 @@ _faulted()
     data.fresults[data.ncount * 7 + data.icount] = isfaulted;
 }
 
+static void
+_negativethickness()
+{
+    // Detect negative thickness
+
+    double zdiff;
+
+    int i;
+    int n = 0;
+    float isnegative = 0.0;
+    for (i = 2; i < 12; i += 3) {
+        zdiff = data.corners[i + 12] - data.corners[i];
+        if (zdiff < 0.0)
+            isnegative = 1.0;
+    }
+
+    data.fresults[data.ncount * 8 + data.icount] = isnegative;
+}
 /*
  * -------------------------------------------------------------------------------------
  * public function
@@ -203,6 +231,7 @@ grdcp3d_quality_indicators(long ncol,
                 _cellangles();
                 _collapsed();
                 _faulted();
+                _negativethickness();
             }
         }
         logger_info(LI, FI, FU, "Grid quality measures... done");

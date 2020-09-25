@@ -1377,7 +1377,7 @@ def _convert_xtgformat1to2(self):
 def get_gridquality_properties(self):
     """Get the grid quality properties"""
 
-    numqual = 8
+    numqual = 9
 
     self._xtgformat2()
 
@@ -1417,6 +1417,9 @@ def get_gridquality_properties(self):
     faulted = xtgeo.GridProperty(self, name="faulted", discrete=True)
     faulted.values = fresults[7, :].astype(np.int32)
 
+    negthickness = xtgeo.GridProperty(self, name="negative_thickness", discrete=True)
+    negthickness.values = fresults[8, :].astype(np.int32)
+
     grdprops = xtgeo.GridProperties()
     grdprops.props = [
         minangle,
@@ -1427,6 +1430,7 @@ def get_gridquality_properties(self):
         maxangles,
         collapsed,
         faulted,
+        negthickness,
     ]
 
     return grdprops
