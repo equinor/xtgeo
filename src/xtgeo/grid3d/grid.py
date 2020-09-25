@@ -632,6 +632,9 @@ class Grid(Grid3D):
             _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat == "egrid":
             _grid_export.export_egrid(self, gfile.name)
+        elif fformat == "xtgeo":
+            # experimental
+            _grid_export.export_xtgeo(self, gfile.name)
         else:
             raise SystemExit("Invalid file format")
 

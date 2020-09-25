@@ -2008,6 +2008,34 @@ grd3d_well_ijk(int nx,
  * Also, all dimenstions nrow, ncol etc shall be long
  *======================================================================================
  */
+
+void
+grdcp3d_export_xtgeo_grid(long ncol,
+                          long nrow,
+                          long nlay,
+                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
+                          long n_swig_np_dbl_inplaceflat_v1,   // ncoord
+                          float *swig_np_flt_inplaceflat_v1,   // zcornsv (float)
+                          long n_swig_np_flt_inplaceflat_v1,   // nzcorn
+                          int *swig_np_int_inplaceflat_v2,     // actnumsv
+                          long n_swig_np_int_inplaceflat_v2,   // nact
+                          char *metadata,
+                          FILE *fc);
+
+int
+grdcp3d_import_xtgeo_grid(int mode,
+                          long *swig_lon_out_p1,
+                          long *swig_lon_out_p2,
+                          long *swig_lon_out_p3,
+                          double *swig_np_dbl_inplaceflat_v1,  // coordsv
+                          long n_swig_np_dbl_inplaceflat_v1,   // ncoord
+                          float *swig_np_flt_inplaceflat_v1,   // zcornsv (float)
+                          long n_swig_np_flt_inplaceflat_v1,   // nzcorn
+                          int *swig_np_int_inplaceflat_v2,     // actnumsv
+                          long n_swig_np_int_inplaceflat_v2,   // nact
+                          char *swig_bnd_char_100k,            // metadata
+                          FILE *fc);
+
 void
 grdcp3d_export_roff_bin_start_end(int option,
                                   const char *info,

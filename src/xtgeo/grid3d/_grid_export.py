@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
 
+import json
 import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -152,3 +153,31 @@ def export_egrid(self, gfile):
         gfile,
         0,
     )
+
+
+def export_xtgeo(self, gfile):
+    """Export grid to binary XTGeo format."""
+
+    self._xtgformat2()
+
+    gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+
+    logger.debug("Export to binary XTGEO...")
+
+    meta = {"subgrids": self.get_subgrids()}
+    jmeta = json.dumps(meta)
+
+    _cxtgeo.grdcp3d_export_xtgeo_grid(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        jmeta,
+        gfile.get_cfhandle(),
+    )
+
+    gfile.cfclose()
+
+    logger.debug("Export to binary XTGEO... done")

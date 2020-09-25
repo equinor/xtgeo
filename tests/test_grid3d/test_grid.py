@@ -13,12 +13,13 @@ import math
 import pytest
 import numpy as np
 
+import test_common.test_xtg as tsetup
+
 import xtgeo
 from xtgeo import pathlib
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__, info=True)
@@ -40,6 +41,7 @@ REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
 BANAL6 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
 GRIDQC1 = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
+GRIDQC2 = "../xtgeo-testdata/3dgrids/etc/gridqc_negthick_twisted.roff"
 
 DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
 DUALFIL2 = "../xtgeo-testdata/3dgrids/etc/dual_grid_noactivetag.roff"
@@ -135,6 +137,40 @@ def test_shoebox_egrid():
         grd.to_file(join(TMPDIR, "E1.EGRID"), fformat="egrid")
         grd1 = xtgeo.Grid(join(TMPDIR, "E1.EGRID"))
         assert grd1.dimensions == dim
+
+
+def test_shoebox_xtgeo_vs_roff():
+    """Test the egrid format for different grid sizes"""
+
+    dimens = (20, 30, 50)
+
+    grd = xtgeo.Grid()
+    grd.create_box(dimension=dimens)
+    grd._xtgformat2()
+    t0 = xtg.timer()
+    grd.to_file(join(TMPDIR, "show.xtgeogrid"), fformat="xtgeo")
+    t1 = xtg.timer(t0)
+    logger.info("TIME XTGEO %s", t1)
+    t0 = xtg.timer()
+    grd.to_file(join(TMPDIR, "show.roff"), fformat="roff")
+    t1 = xtg.timer(t0)
+    logger.info("TIME ROFF %s", t1)
+    t0 = xtg.timer()
+    grd.to_file(join(TMPDIR, "show.egrid"), fformat="egrid")
+    t1 = xtg.timer(t0)
+    logger.info("TIME EGRID (incl conv) %s", t1)
+
+    t0 = xtg.timer()
+    grd2 = xtgeo.Grid()
+    grd2.from_file(join(TMPDIR, "show.xtgeogrid"), fformat="xtgeo")
+    t1 = xtg.timer(t0)
+    logger.info("TIME READ xtgeo %s", t1)
+
+    t0 = xtg.timer()
+    grd2 = xtgeo.Grid()
+    grd2.from_file(join(TMPDIR, "show.roff"), fformat="roff")
+    t1 = xtg.timer(t0)
+    logger.info("TIME READ roff %s", t1)
 
 
 def test_roffbin_get_dataframe_for_grid(load_gfile1):
@@ -729,8 +765,15 @@ def test_generate_hash():
 def test_gridquality_properties():
     """Get grid quality props"""
 
-    grd1 = Grid()
-    grd1._xtgformat = 2
-    grd1.from_file(GRIDQC1)
+    grd1 = Grid(GRIDQC1)
 
-    grd1.get_gridquality_properties()
+    props1 = grd1.get_gridquality_properties()
+    minang = props1.get_prop_by_name("minangle_topbase")
+    assert minang.values[5, 2, 1] == pytest.approx(71.05561, abs=0.001)
+
+    grd2 = Grid(GRIDQC2)
+    props2 = grd2.get_gridquality_properties()
+
+    neg = props2.get_prop_by_name("negative_thickness")
+    assert neg.values[0, 0, 0] == 0
+    assert neg.values[2, 1, 0] == 1
