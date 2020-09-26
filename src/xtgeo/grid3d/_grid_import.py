@@ -4,12 +4,12 @@
 from __future__ import print_function, absolute_import
 
 import os
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d import _grid_import_roff
 from xtgeo.grid3d import _grid_import_ecl
+from xtgeo.grid3d import _grid_import_xtgeo
 
 
 xtg = XTGeoDialog()
@@ -18,12 +18,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self,
-    gfile,
-    fformat=None,
-    initprops=None,
-    restartprops=None,
-    restartdates=None,
+    self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
 ):
     """Import grid geometry from file, and makes an instance of this class."""
 
@@ -86,7 +81,7 @@ def from_file(
         _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
     elif fformat == "xtgeo":
         # experimental
-        _grid_import_roff.import_xtgeo(self, gfile)
+        _grid_import_xtgeo.import_xtgeo(self, gfile)
     else:
         raise SystemExit("Invalid file format")
 

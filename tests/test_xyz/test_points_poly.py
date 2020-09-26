@@ -43,7 +43,7 @@ def test_xyz():
 
     ok = False
     try:
-        myxyz = XYZ()
+        myxyz = XYZ()  # pylint: disable=abstract-class-instantiated
     except TypeError as tt:
         ok = True
         assert "abstract" in str(tt)

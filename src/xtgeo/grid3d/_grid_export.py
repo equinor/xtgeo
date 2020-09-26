@@ -156,7 +156,11 @@ def export_egrid(self, gfile):
 
 
 def export_xtgeo(self, gfile):
-    """Export grid to binary XTGeo format."""
+    """Export grid to binary XTGeo format (in prep).
+
+    Args:
+        gfile(str): Name of output file
+    """
 
     self._xtgformat2()
 
@@ -164,6 +168,7 @@ def export_xtgeo(self, gfile):
 
     logger.debug("Export to binary XTGEO...")
 
+    # TODO: Improve metadata
     meta = {"subgrids": self.get_subgrids()}
     jmeta = json.dumps(meta)
 
