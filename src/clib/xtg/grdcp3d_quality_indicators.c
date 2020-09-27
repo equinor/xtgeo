@@ -161,13 +161,10 @@ _negativethickness()
 {
     // Detect negative thickness
 
-    double zdiff;
-
     int i;
-    int n = 0;
     float isnegative = 0.0;
     for (i = 2; i < 12; i += 3) {
-        zdiff = data.corners[i + 12] - data.corners[i];
+        double zdiff = data.corners[i + 12] - data.corners[i];
         if (zdiff < 0.0)
             isnegative = 1.0;
     }
