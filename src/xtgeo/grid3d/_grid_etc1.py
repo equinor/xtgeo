@@ -743,11 +743,7 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._zcornsv,
-        zsep,
+        self.ncol, self.nrow, self.nlay, self._zcornsv, zsep,
     )
 
 
