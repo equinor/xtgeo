@@ -45,8 +45,8 @@ Within the C code (backend for python functions), arrays are stored in 1D,
 C-order and are usually named ``p_map_v`` in the code.
 
 
-Supported import/export formats
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RegularSurface supported import/export formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table:: RegularSurface format support
    :widths: 20 8 8 20 30
@@ -125,8 +125,8 @@ Description of cubes
 
 Cubes are quite similar to maps, only that a third dimension is added.
 
-Supported import/export formats
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Cube supported import/export formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table:: Cube format support
    :widths: 20 8 8 20 30
@@ -174,13 +174,13 @@ a corner-point grid (Grid class), and a number of assosiated properties
 * The grid dimensions are given by ``ncol * nrow * nlay``
 
 * The properties are stored as 3D masked numpy arrays in python. Undefined cells are
-  masked. The machine order in python is C-order. For historical reasons, the order
-  of the property arrays in C code (when applied) is F-order for _xtgformat=1, while
-  _xtgformat=2 uses C order.
+  masked. The machine order in python is C-order. For historical reasons, the memory
+  order of the property arrays in C code (when applied) is F-order for _xtgformat=1,
+  while _xtgformat=2 uses C order.
 
 
-Description
-^^^^^^^^^^^
+Description of 3D grid formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In prep.
 
@@ -202,10 +202,15 @@ Supported import/export formats
      -
      - Default
    * - ROFF ASCII
-     - No?
+     - No
      - Yes
      -
      -
+   * - XTGeo binary
+     - Yes
+     - Yes
+     -
+     - Fast binary format that allows metadata
    * - Eclipse ASCII GRDECL
      - Yes
      - Yes
@@ -294,8 +299,8 @@ metadata.
 
 A special subclass is Blocked Well data.
 
-Supported import/export formats
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Well data supported import/export formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In prep.
 
@@ -313,7 +318,68 @@ can either form an open polyline or are closed polygon. A Polygons() instance ma
 have a number of individual polygon "pieces", which are defined by
 a ``POLY_ID`` (default name) column. This design is borrowed from RMS.
 
-Supported import/export formats
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+XYZ data supported import/export formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In prep.
+
+
+--------------------
+XTGeo binary formats
+--------------------
+
+(in prep)
+
+XTGeo is developing it own binary data storage due to limitations in existing systems.
+Examples of such limitions are:
+
+* Cube data: SEGY format is a complex, old and difficult format, for the purpose
+  of Cube data in XTGeo
+
+* 3D grid data: There is no existing format that handles named subgrids
+
+* General lack of support for metadata, where metadata shall both have mandatory
+  and optional members
+
+* Efficient data structures for read and write
+
+XTGeo general binary layout
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In prep.
+
+XTGeo 3D grid format
+^^^^^^^^^^^^^^^^^^^^
+
+.. rst-class:: dl-parameters
+
+Record 1:
+  An 4 byte integer. This integer is an "endian" indicator and will read as 1
+  if no bytewap is required.
+
+Record 2:
+  A 16 (15 char + null) byte magic word, which serves as a type and version
+  information. For 3D grids, this word is ">XTGGRIDCP3D_V1"
+
+Records 3 to 5:
+  Three 8 byte (C type long) integer numbers for `ncol`, `nrow`, `nlay`
+
+Record 6:
+  Coordinates with shape (ncol + 1) * (nrow + 1) * 6, C order.
+
+Record 7:
+  Zcorners, with shape (ncol + 1) * (nrow + 1) * (nlay + 1) * 4.
+
+Record 8:
+  A 16 byte magic word. THis is used to verify that data structures are
+  read correctly. For 3D grids, this word is "<XTGGRIDCP3D_V1"
+
+Record 9:
+  A JSON text structure of free length (until 100,000 bytes) that represents
+  metadata
+
+
+XTGeo layout for other data types
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In prep.
