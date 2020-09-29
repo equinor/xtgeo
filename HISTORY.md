@@ -2,6 +2,16 @@
 
 ## Version 2
 
+## Version 2.13.0 (in prep)
+* Skip support for Python 2.7 and 3.5. Now only Python 3.6+ is supported
+* New features:
+  * Grid quality indicators for Grid(): ``get_gridquality_properties()``
+
+* Improvements and bug fixes
+  * Reorganizing internal storage of 3D corner point grids
+  * Faster read and write to ROFF binary for Grid() (read almost 4 times faster)
+  * Faster read/write to Roxar API
+
 ### 2.12.1
 * Fix of ``get_dataframe()`` for ``RegularSurface`` which fails in some case, cf issue #415
 
