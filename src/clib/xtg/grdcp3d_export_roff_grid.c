@@ -244,7 +244,6 @@ grdcp3d_export_roff_grid(int mode,
     float *znodes;
     znodes = calloc(ntot * 4, sizeof(float));
 
-    icc = 0;
     long izz = 0;
 
     cnt = 0;

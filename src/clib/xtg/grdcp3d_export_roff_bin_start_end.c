@@ -48,7 +48,7 @@ grdcp3d_export_roff_bin_start_end(int option,
         logger_info(LI, FI, FU, "Binary or ascii roff export, start session...");
         now = time(NULL);
         strcpy(timestring, ctime(&now));
-        timestring[strlen(timestring) - 1] = '\0';
+        timestring[strnlen(timestring, 32) - 1] = '\0';
 
         if (mode == 0) {
             strwrite(mode, "roff-bin$", fc);

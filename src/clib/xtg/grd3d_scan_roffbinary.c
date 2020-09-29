@@ -208,7 +208,7 @@ _scan_roff_bin_record(FILE *fc,
 
                     /* special treatment of parameter names (extra info) */
                     if (strncmp(cname[nrec], "name", 4) == 0) {
-                        if (strlen(cdum) == 0)
+                        if (strnlen(cdum, ROFFSTRLEN) == 0)
                             strcpy(cdum, "unknown");
                         strcpy(pname[nrec], cdum);
                     }
