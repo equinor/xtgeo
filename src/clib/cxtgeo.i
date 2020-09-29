@@ -62,6 +62,8 @@ import_array();
 %apply int *OUTPUT { int *swig_int_out_p3 };
 
 %apply long *OUTPUT { long *swig_lon_out_p1 };
+%apply long *OUTPUT { long *swig_lon_out_p2 };
+%apply long *OUTPUT { long *swig_lon_out_p3 };
 
 %apply int *INOUT { int *swig_int_inout_p1 };
 %apply int *INOUT { int *swig_int_inout_p2 };

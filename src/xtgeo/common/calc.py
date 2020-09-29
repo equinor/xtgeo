@@ -234,3 +234,49 @@ def point_in_hexahedron(x0, y0, z0, vertices):
         return True
 
     return False
+
+
+def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
+    """Find angle in 3D for two vectors
+
+             / p1
+            /
+           / ) a
+          /---------------- p2
+        p0
+
+    Args:
+        p0 (list like): Common point P0 (x y z)
+        p1 (list like): Point P1 (x y z)
+        p2 (list like): Point P2 (x y z)
+        degrees (bool): The get result in degrees if True, radians if False
+        birdview (bool): If True, find angles projected in Z (bird perspective)
+
+    Returns:
+        Angle. If some problem, e.g. one vector is too short, None is returned
+
+    Raises:
+        ValueError: Errors in input dimensions, all points must have 3 values
+    """
+
+    p0 = np.array(p0)
+    p1 = np.array(p1)
+    p2 = np.array(p2)
+
+    if p0.size != p1.size or p0.size != p2.size or p0.size != 3:
+        raise ValueError("Errors in input dimensions, all points must have 3 values")
+
+    degs = 1
+    if not degrees:
+        degs = 0
+
+    bird = 0
+    if birdview:
+        bird = 1
+
+    angle = _cxtgeo.x_vectorpair_angle3d(p0, p1, p2, degs, bird)
+
+    if angle == -999:
+        return None
+
+    return angle

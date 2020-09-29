@@ -57,7 +57,7 @@
 /* LOCAL FUNCTIONS                                                           */
 /* ######################################################################### */
 
-#define ROFFSTRLEN 100
+#define ROFFSTRLEN 200
 #define ROFFARRLEN 15
 #define TAGRECORDMAX 100
 #define TAGDATAMAX 100
@@ -73,10 +73,14 @@ _roffbinstring(FILE *fc, char *mystring)
     strcpy(mystring, "");
 
     for (i = 0; i < ROFFSTRLEN; i++) {
-        fread(&mybyte, 1, 1, fc);
-        mystring[i] = mybyte;
-        if (mybyte == '\0')
-            return i + 1;
+        if (fread(&mybyte, 1, 1, fc) == 1) {
+            mystring[i] = mybyte;
+            if (mybyte == '\0')
+                return i + 1;
+        } else {
+            logger_critical(LI, FI, FU, "Did not reach end of ROFF string");
+            return -99;
+        }
     }
 
     return -1;
@@ -133,11 +137,14 @@ _scan_roff_bin_record(FILE *fc,
 
         if (npos1 == 0 && i == 0 && strncmp(tmpname, "roff-bin", 8) != 0) {
             /* not a ROFF binary file! */
+            logger_debug(LI, FI, FU, "Not a valid ROFF binary file!");
             return -9;
         }
 
         if (strncmp(tmpname, "tag", 3) == 0) {
             ncum += _roffbinstring(fc, tagname);
+
+            logger_debug(LI, FI, FU, "Tag name %s", tagname);
 
             if (strncmp(tagname, "eof", 3) == 0) {
                 return 10;
@@ -201,7 +208,7 @@ _scan_roff_bin_record(FILE *fc,
 
                     /* special treatment of parameter names (extra info) */
                     if (strncmp(cname[nrec], "name", 4) == 0) {
-                        if (strlen(cdum) == 0)
+                        if (strnlen(cdum, ROFFSTRLEN) == 0)
                             strcpy(cdum, "unknown");
                         strcpy(pname[nrec], cdum);
                     }

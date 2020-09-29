@@ -24,6 +24,7 @@ logger = xtg.functionlogger(__name__)
 def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
     """Private function for the Grid3D slicing."""
 
+    grid._xtgformat1()
     if zsurf is not None:
         other = zsurf
     else:

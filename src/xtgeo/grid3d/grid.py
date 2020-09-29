@@ -13,7 +13,6 @@ import numpy as np
 import numpy.ma as ma  # pylint: disable=useless-import-alias
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from xtgeo.common import XTGDescription
 from ._grid3d import Grid3D
@@ -40,7 +39,7 @@ logger = xtg.functionlogger(__name__)
 # The "activeonly" will filter out masked entries, or use None or np.nan
 # if "activeonly" is False.
 #
-# Use word "zerobased" for a bool regrading startcell basis is 1 or 0
+# Use word "zerobased" for a bool regarding if startcell basis is 1 or 0
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
@@ -146,13 +145,12 @@ class Grid(Grid3D):
     Example::
 
         import xtgeo
-        from xtgeo.grid3d import Grid
 
-        geo = Grid()
+        geo = xtgeo.Grid()
         geo.from_file("myfile.roff")
 
         # alternative (make instance directly from file):
-        geo = Grid("myfile.roff")
+        geo = xtgeo.Grid("myfile.roff")
 
         # or use
         geo = xtgeo.grid_from_file("myfile.roff")
@@ -172,7 +170,7 @@ class Grid(Grid3D):
         # _xtgformat: internal flag for storage structure. 1 is the "current" while 2
         # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
         # are organized! The corresponding C routines for 1: grd3d_*, while 2: grdcp3d_*
-        self._xtgformat = 1
+        self._xtgformat = 2
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
@@ -562,13 +560,7 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def from_file(
-        self,
-        gfile,
-        fformat=None,
-        initprops=None,
-        restartprops=None,
-        restartdates=None,
-        _xtgformat=1,
+        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
     ):
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -584,7 +576,6 @@ class Grid(Grid3D):
                 is "eclipserun", then list the names of the properties here.
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
-            _xtgformat (int): TMP developer option (i.e. don't change!)
 
         Example::
 
@@ -607,7 +598,6 @@ class Grid(Grid3D):
             initprops=initprops,
             restartprops=restartprops,
             restartdates=restartdates,
-            _xtgformat=_xtgformat,
         )
         self._tmp = {}
 
@@ -632,9 +622,9 @@ class Grid(Grid3D):
 
         gfile.check_folder(raiseerror=OSError)
 
-        if fformat in ("roff", "roff_binary"):
+        if fformat in ("roff", "roff_binary", "roff_bin", "roffbin"):
             _grid_export.export_roff(self, gfile.name, 0)
-        elif fformat == "roff_ascii":
+        elif fformat in ("roff_ascii", "roff_asc", "roffasc"):
             _grid_export.export_roff(self, gfile.name, 1)
         elif fformat == "grdecl":
             _grid_export.export_grdecl(self, gfile.name, 1)
@@ -642,6 +632,9 @@ class Grid(Grid3D):
             _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat == "egrid":
             _grid_export.export_egrid(self, gfile.name)
+        elif fformat == "xtgeo":
+            # experimental
+            _grid_export.export_xtgeo(self, gfile.name)
         else:
             raise SystemExit("Invalid file format")
 
@@ -1046,8 +1039,7 @@ class Grid(Grid3D):
         return self._props
 
     def get_prop_by_name(self, name):
-        """Gets a property object by name lookup, return None if not present.
-        """
+        """Gets a property object by name lookup, return None if not present."""
         for obj in self.props:
             if obj.name == name:
                 return obj
@@ -1095,7 +1087,11 @@ class Grid(Grid3D):
                 discrete=True,
             )
 
-            values = _gridprop_lowlevel.f2c_order(self, self._actnumsv)
+            if self._xtgformat == 1:
+                values = _gridprop_lowlevel.f2c_order(self, self._actnumsv)
+            else:
+                values = self._actnumsv
+
             act.values = values
             act.mask_undef()
 
@@ -1125,7 +1121,10 @@ class Grid(Grid3D):
         """
         val1d = actnum.values.ravel(order="K")
 
-        self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)
+        if self._xtgformat == 1:
+            self._actnumsv = _gridprop_lowlevel.c2f_order(self, val1d)
+        else:
+            self._actnumsv = np.ma.filled(actnum.values, fill_value=0).astype(np.int32)
 
     def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
         """
@@ -1469,16 +1468,34 @@ class Grid(Grid3D):
 
         return presult
 
+    def get_gridquality_properties(self):
+        """Return a GridProperties() instance with grid quality measures.
+
+        These measures are:
+
+        * minangle_topbase (degrees) - minimum angle of top and base
+        * maxangle_topbase (degrees) - maximum angle of top and base
+        * minangle_topbase_proj (degrees) min angle projected (bird view)
+        * maxangle_topbase_proj (degrees) max angle projected (bird view)
+
+
+        """
+
+        gprops = _grid_etc1.get_gridquality_properties(self)
+
+        return gprops
+
     # =========================================================================
     # Some more special operations that changes the grid or actnum
     # =========================================================================
     def activate_all(self):
         """Activate all cells in the grid, by manipulating ACTNUM"""
 
-        actnum = self.get_actnum()
-        actnum.values = np.ones(self.dimensions, dtype=np.int32)
+        self._actnumsv = np.ones(self.dimensions, dtype=np.int32)
 
-        self.set_actnum(actnum)
+        if self._xtgformat == 1:
+            self._actnumsv = self._actnumsv.flatten()
+
         self._tmp = {}
 
     def inactivate_by_dz(self, threshold):
@@ -1528,28 +1545,28 @@ class Grid(Grid3D):
     def crop(self, colcrop, rowcrop, laycrop, props=None):
         """Reduce the grid size by cropping, the grid will have new dimensions.
 
-        If props is "all" then all properties assosiated (linked) to then
-        grid are also cropped, and the instances are updated.
+            If props is "all" then all properties assosiated (linked) to then
+            grid are also cropped, and the instances are updated.
 
-    Args:
-        colcrop (tuple): A tuple on the form (i1, i2)
-            where 1 represents start number, and 2 represent end. The range
-            is inclusive for both ends, and the number start index is 1 based.
-        rowcrop (tuple): A tuple on the form (j1, j2)
-        laycrop (tuple): A tuple on the form (k1, k2)
-        props (list or str): None is default, while properties can be listed.
-            If "all", then all GridProperty objects which are linked to the
-            Grid instance are updated.
+        Args:
+            colcrop (tuple): A tuple on the form (i1, i2)
+                where 1 represents start number, and 2 represent end. The range
+                is inclusive for both ends, and the number start index is 1 based.
+            rowcrop (tuple): A tuple on the form (j1, j2)
+            laycrop (tuple): A tuple on the form (k1, k2)
+            props (list or str): None is default, while properties can be listed.
+                If "all", then all GridProperty objects which are linked to the
+                Grid instance are updated.
 
-    Returns:
-        The instance is updated (cropped)
+        Returns:
+            The instance is updated (cropped)
 
-    Example::
+        Example::
 
-            >>> from xtgeo.grid3d import Grid
-            >>> gf = Grid("gullfaks2.roff")
-            >>> gf.crop((3, 6), (4, 20), (1, 10))
-            >>> gf.to_file("gf_reduced.roff")
+                >>> from xtgeo.grid3d import Grid
+                >>> gf = Grid("gullfaks2.roff")
+                >>> gf.crop((3, 6), (4, 20), (1, 10))
+                >>> gf.to_file("gf_reduced.roff")
 
         """
 
@@ -1931,35 +1948,17 @@ class Grid(Grid3D):
     def _convert_xtgformat2to1(self):
         """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
 
-        if self._xtgformat == 1:
-            logger.info("No conversion, format is already xtgformat == 1")
-            return
+        _grid_etc1._convert_xtgformat2to1(self)
 
-        logger.info("Convert grid from new xtgformat to legacy format...")
+    def _convert_xtgformat1to2(self):
+        """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
 
-        newcoordsv = np.zeros(
-            ((self._ncol + 1) * (self._nrow + 1) * 6), dtype=np.float64
-        )
-        newzcornsv = np.zeros(
-            (self._ncol * self._nrow * (self._nlay + 1) * 4), dtype=np.float64
-        )
-        newactnumsv = np.zeros((self._ncol * self._nrow * self._nlay), dtype=np.int32)
+        _grid_etc1._convert_xtgformat1to2(self)
 
-        _cxtgeo.grd3cp3d_xtgformat2to1_geom(
-            self._ncol,
-            self._nrow,
-            self._nlay,
-            newcoordsv,
-            self._coordsv,
-            newzcornsv,
-            self._zcornsv,
-            newactnumsv,
-            self._actnumsv,
-        )
+    def _xtgformat1(self):
+        """Shortform... arrays from new structure xtgformat=2 to legacy xtgformat=1 """
+        self._convert_xtgformat2to1()
 
-        self._coordsv = newcoordsv
-        self._zcornsv = newzcornsv
-        self._actnumsv = newactnumsv
-        self._xtgformat = 1
-
-        logger.info("Convert grid from new xtgformat to legacy format... done")
+    def _xtgformat2(self):
+        """Shortform... arrays from old structure xtgformat=1 to new xtgformat=2"""
+        self._convert_xtgformat1to2()

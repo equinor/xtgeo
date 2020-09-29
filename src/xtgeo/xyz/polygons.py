@@ -179,7 +179,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def hname(self):
-        """ Returns or set the name of the cumulative horizontal length column,
+        """Returns or set the name of the cumulative horizontal length column,
         if it exists.
 
         .. versionadded:: 2.1.0
@@ -199,7 +199,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def dhname(self):
-        """ Returns or set the name of the delta horizontal length column if
+        """Returns or set the name of the delta horizontal length column if
         it exists.
 
         .. versionadded:: 2.1.0
@@ -219,7 +219,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def tname(self):
-        """ Returns or set the name of the cumulative total length column,
+        """Returns or set the name of the cumulative total length column,
         if it exists.
 
         .. versionadded:: 2.1.0
@@ -239,7 +239,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def dtname(self):
-        """ Returns or set the name of the delta total length column if
+        """Returns or set the name of the delta total length column if
         it exists.
 
         .. versionadded:: 2.1.0

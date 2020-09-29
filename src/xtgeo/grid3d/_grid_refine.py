@@ -21,6 +21,8 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     See details in caller.
     """
+    self._xtgformat1()
+
     rfactord = OrderedDict()
 
     # case 1 rfactor as scalar value.

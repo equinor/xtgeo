@@ -373,7 +373,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     def copy(self):
         """Copy a xtgeo.cube.Cube object to another instance::
 
-            >>> mycube2 = mycube.copy()
+        >>> mycube2 = mycube.copy()
 
         """
         xcube = Cube(

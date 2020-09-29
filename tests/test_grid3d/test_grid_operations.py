@@ -319,21 +319,11 @@ def test_crop_grid_after_copy():
 
 
 def test_reduce_to_one_layer():
-    """Crop a grid."""
+    """Reduce grid to one layer"""
 
     logger.info("Read grid...")
 
     grd1 = Grid(EMEGFILE2)
-    geom1v1 = grd1.get_geometrics(allcells=True, cellcenter=True)
-    geom1v2 = grd1.get_geometrics(allcells=True, cellcenter=True, _ver=2)
+    grd1.reduce_to_one_layer()
 
-    grd2 = Grid(EMEGFILE2)
-    grd2.reduce_to_one_layer()
-    geom2v1 = grd2.get_geometrics(allcells=True, cellcenter=True)
-    geom2v2 = grd2.get_geometrics(allcells=True, cellcenter=True, _ver=2)
-
-    print("XXXX1V1", geom1v1)
-    print("XXXX1V2", geom1v2)
-
-    print("XXXX2V1", geom2v1)
-    print("XXXX2V2", geom2v2)
+    assert grd1.nlay == 1

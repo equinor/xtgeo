@@ -32,8 +32,8 @@ def gridproperty_fromgrid(self, grid, linkgeometry=False):
         import xtgeo
         grd = xtgeo.grid_from_file("my.roff")
         myporo = xtgeo.GridProperty(grd, name="PORO")
-        myfacies = xtgeo.GridProperty(grd, name="Facies", linkgeometry=grd)
-        myfacies.geomery = grd  # alternative way to link geometry
+        myfacies = xtgeo.GridProperty(grd, name="Facies", linkgeometry=True)
+        myfacies.geometry = grd  # alternative way to link geometry
 
     .. versionadded:: 2.6.0
 

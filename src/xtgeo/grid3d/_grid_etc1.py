@@ -78,10 +78,14 @@ def create_box(
     self._roxgrid = None
     self._roxindexer = None
     self._tmp = {}
+    self._xtgformat = 1
 
 
 def get_dz(self, name="dZ", flip=True, asmasked=True):
     """Get dZ as property"""
+
+    self._xtgformat1()
+
     ntot = (self._ncol, self._nrow, self._nlay)
 
     dzv = GridProperty(
@@ -123,6 +127,8 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
 
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     """Get dX, dY as properties"""
+
+    self._xtgformat1()
     ntot = self._ncol * self._nrow * self._nlay
 
     dxval = np.zeros(ntot, dtype=np.float64)
@@ -237,7 +243,7 @@ def get_ijk_from_points(
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onlayer version, and maps with IJ positions
     """
-
+    self._xtgformat1()
     logger.info("Getting IJK indices from Points...")
 
     actnumoption = 1
@@ -324,6 +330,8 @@ def get_ijk_from_points(
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
     """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
 
+    self._xtgformat1()
+
     xv = np.zeros(self.ntotal, dtype=np.float64)
     yv = np.zeros(self.ntotal, dtype=np.float64)
     zv = np.zeros(self.ntotal, dtype=np.float64)
@@ -381,6 +389,8 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
 
 def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
     """Get X Y Z cell corners for one cell."""
+
+    self._xtgformat1()
     i, j, k = ijk
 
     shift = 0
@@ -396,6 +406,7 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
     pcorners = _cxtgeo.new_doublearray(24)
 
     if self._xtgformat == 1:
+        logger.info("Use xtgformat 1...")
         _cxtgeo.grd3d_corners(
             i + shift,
             j + shift,
@@ -408,6 +419,7 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
             pcorners,
         )
     else:
+        logger.info("Use xtgformat 2...")
         _cxtgeo.grdcp3d_corners(
             i + shift - 1,
             j + shift - 1,
@@ -430,6 +442,8 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
 
 def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     """Get X Y Z cell corners for all cells (as 24 GridProperty objects)"""
+
+    self._xtgformat1()
     ntot = (self._ncol, self._nrow, self._nlay)
 
     grid_props = []
@@ -510,6 +524,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
 def get_layer_slice(self, layer, top=True, activeonly=True):
     """Get X Y cell corners (XY per cell; 5 per cell) as array"""
+    self._xtgformat1()
     ntot = self._ncol * self._nrow * self._nlay
 
     opt1 = 0
@@ -543,6 +558,8 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
 
 
 def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False, _ver=1):
+
+    self._xtgformat1()
 
     if _ver == 1:
         res = _get_geometrics_v1(
@@ -692,6 +709,9 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
 
 def inactivate_by_dz(self, threshold):
     """Inactivate by DZ"""
+
+    self._xtgformat1()
+
     if isinstance(threshold, int):
         threshold = float(threshold)
 
@@ -714,6 +734,8 @@ def inactivate_by_dz(self, threshold):
 
 def make_zconsistent(self, zsep):
     """Make consistent in z"""
+
+    self._xtgformat1()
     if isinstance(zsep, int):
         zsep = float(zsep)
 
@@ -727,6 +749,8 @@ def make_zconsistent(self, zsep):
 
 def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
     """Inactivate inside a polygon (or outside)"""
+
+    self._xtgformat1()
     if not isinstance(poly, Polygons):
         raise ValueError("Input polygon not a XTGeo Polygons instance")
 
@@ -771,7 +795,7 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
 
 def collapse_inactive_cells(self):
     """Collapse inactive cells"""
-
+    self._xtgformat1()
     _cxtgeo.grd3d_collapse_inact(
         self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv
     )
@@ -807,6 +831,8 @@ def copy(self):
     elif self._filesrc is not None:
         other._filesrc = self._filesrc
 
+    other._xtgformat = self._xtgformat
+
     return other
 
 
@@ -827,6 +853,8 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     Returns:
         The instance is updated (cropped)
     """
+
+    self._xtgformat1()
 
     (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
 
@@ -931,6 +959,7 @@ def reduce_to_one_layer(self):
 
     # need new pointers in C (not for coord)
     # Note this could probably be done with pure numpy operations
+    self._xtgformat1()
 
     ptr_new_num_act = _cxtgeo.new_intpointer()
 
@@ -960,6 +989,9 @@ def reduce_to_one_layer(self):
 
 def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
     """Translate grid coordinates"""
+
+    self._xtgformat1()
+
     tx, ty, tz = translate
     fx, fy, fz = flip
 
@@ -984,6 +1016,8 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
 
 def reverse_row_axis(self, ijk_handedness=None):
     """Reverse rows (aka flip) for geometry and assosiated properties"""
+
+    self._xtgformat1()
 
     if ijk_handedness == self.ijk_handedness:
         return
@@ -1024,6 +1058,8 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
     perflogname=None,
 ):
     """Reports well to zone mismatch; this works together with a Well object."""
+
+    self._xtgformat1()
 
     this = inspect.currentframe().f_code.co_name
 
@@ -1141,6 +1177,9 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
 
 def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
     """Get adjacents cells"""
+
+    self._xtgformat1()
+
     if not isinstance(prop, GridProperty):
         raise ValueError("The argument prop is not a xtgeo.GridPropery")
 
@@ -1259,3 +1298,135 @@ def estimate_flip(self):
     flipvalue = find_flip(v1, v2)
 
     return flipvalue
+
+
+def _convert_xtgformat2to1(self):
+    """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
+
+    if self._xtgformat == 1 or self._coordsv is None:
+        logger.info("No conversion, format is already xtgformat == 1 or unset")
+        return
+
+    logger.info("Convert grid from new xtgformat to legacy format...")
+
+    newcoordsv = np.zeros(((self._ncol + 1) * (self._nrow + 1) * 6), dtype=np.float64)
+    newzcornsv = np.zeros(
+        (self._ncol * self._nrow * (self._nlay + 1) * 4), dtype=np.float64
+    )
+    newactnumsv = np.zeros((self._ncol * self._nrow * self._nlay), dtype=np.int32)
+
+    _cxtgeo.grd3cp3d_xtgformat2to1_geom(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        newcoordsv,
+        self._coordsv,
+        newzcornsv,
+        self._zcornsv,
+        newactnumsv,
+        self._actnumsv,
+    )
+
+    self._coordsv = newcoordsv
+    self._zcornsv = newzcornsv
+    self._actnumsv = newactnumsv
+    self._xtgformat = 1
+
+    logger.info("Convert grid from new xtgformat to legacy format... done")
+
+
+def _convert_xtgformat1to2(self):
+    """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
+
+    if self._xtgformat == 2 or self._coordsv is None:
+        logger.info("No conversion, format is already xtgformat == 2 or unset")
+        return
+
+    logger.info("Convert grid from legacy xtgformat to new format...")
+
+    newcoordsv = np.zeros((self._ncol + 1, self._nrow + 1, 6), dtype=np.float64)
+    newzcornsv = np.zeros(
+        (self._ncol + 1, self._nrow + 1, self._nlay + 1, 4), dtype=np.float32
+    )
+    newactnumsv = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+
+    _cxtgeo.grd3cp3d_xtgformat1to2_geom(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv,
+        newcoordsv,
+        self._zcornsv,
+        newzcornsv,
+        self._actnumsv,
+        newactnumsv,
+    )
+
+    self._coordsv = newcoordsv
+    self._zcornsv = newzcornsv
+    self._actnumsv = newactnumsv
+    self._xtgformat = 2
+
+    logger.info("Convert grid from new xtgformat to legacy format... done")
+
+
+def get_gridquality_properties(self):
+    """Get the grid quality properties"""
+
+    numqual = 9
+
+    self._xtgformat2()
+
+    fresults = np.ones((numqual, self.ncol * self.nrow * self.nlay), dtype=np.float32)
+
+    _cxtgeo.grdcp3d_quality_indicators(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        fresults,
+    )
+
+    minangle = xtgeo.GridProperty(self, name="minangle_topbase")
+    minangle.values = fresults[0, :]
+
+    maxangle = xtgeo.GridProperty(self, name="maxangle_topbase")
+    maxangle.values = fresults[1, :]
+
+    minanglep = xtgeo.GridProperty(self, name="minangle_topbase_proj")
+    minanglep.values = fresults[2, :]
+
+    maxanglep = xtgeo.GridProperty(self, name="maxangle_topbase_proj")
+    maxanglep.values = fresults[3, :]
+
+    minangles = xtgeo.GridProperty(self, name="minangle_sides")
+    minangles.values = fresults[4, :]
+
+    maxangles = xtgeo.GridProperty(self, name="maxangle_sides")
+    maxangles.values = fresults[5, :]
+
+    collapsed = xtgeo.GridProperty(self, name="collapsed", discrete=True)
+    collapsed.values = fresults[6, :].astype(np.int32)
+
+    faulted = xtgeo.GridProperty(self, name="faulted", discrete=True)
+    faulted.values = fresults[7, :].astype(np.int32)
+
+    negthickness = xtgeo.GridProperty(self, name="negative_thickness", discrete=True)
+    negthickness.values = fresults[8, :].astype(np.int32)
+
+    grdprops = xtgeo.GridProperties()
+    grdprops.props = [
+        minangle,
+        maxangle,
+        minanglep,
+        maxanglep,
+        minangles,
+        maxangles,
+        collapsed,
+        faulted,
+        negthickness,
+    ]
+
+    return grdprops

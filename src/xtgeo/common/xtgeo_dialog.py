@@ -335,6 +335,25 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         return self._lformat
 
     @staticmethod
+    def get_xtgeo_info(variant="clibinfo"):
+        """Prints a banner for a XTGeo app to STDOUT.
+
+        Args:
+            variant (str): Variant of info
+
+        Returns:
+            info (str): A string with XTGeo system info
+
+        """
+
+        if variant == "clibinfo":
+            return "XTGeo version {} (Python {} on {})".format(
+                xtgeo.__version__, platform.python_version(), platform.system(),
+            )
+
+        return "Invalid"
+
+    @staticmethod
     def print_xtgeo_header(appname, appversion, info=None):
         """Prints a banner for a XTGeo app to STDOUT.
 

@@ -26,7 +26,7 @@
  *    corners          o     Array, 24 length allocated at client.
  *
  * RETURNS:
- *    corners
+ *    corners, _xtgformat=2
  *
  * TODO/ISSUES/BUGS:
  *    None known
@@ -42,12 +42,12 @@
 #include <math.h>
 
 void
-grdcp3d_corners(int ic,
-                int jc,
-                int kc,
-                int ncol,
-                int nrow,
-                int nlay,
+grdcp3d_corners(long ic,
+                long jc,
+                long kc,
+                long ncol,
+                long nrow,
+                long nlay,
                 double *coordsv,
                 long ncoordin,
                 float *zcornsv,
@@ -59,12 +59,12 @@ grdcp3d_corners(int ic,
     double zc[8];
 
     // number of nodes
-    int nnrow = nrow + 1;
-    int nnlay = nlay + 1;
+    long nnrow = nrow + 1;
+    long nnlay = nlay + 1;
     /* each cell is defined by 4 pillars */
 
     long nn = 0;
-    int i, j, k;
+    long i, j, k;
     for (j = 0; j < 2; j++) {
         for (i = 0; i < 2; i++) {
             for (k = 0; k < 6; k++) {
@@ -86,9 +86,9 @@ grdcp3d_corners(int ic,
 
     double p0[3], p1[3];
 
-    int l, c;
-    int ncn = 0;
-    int cz = 0;
+    long l, c;
+    long ncn = 0;
+    long cz = 0;
     for (l = 0; l < 2; l++) {
         for (c = 0; c < 4; c++) {
             p0[0] = coor[c][0];

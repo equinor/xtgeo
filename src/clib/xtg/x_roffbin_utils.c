@@ -249,7 +249,7 @@ x_roffgetchararray(char *array, int num, FILE *fc)
                 /* to replace missing string with a code */
                 m = i + 1;
                 sprintf(xstr, "%d", m);
-                n = strlen(xstr);
+                n = strnlen(xstr, 8);
                 for (nc = 0; nc < n; nc++) {
                     array[ic] = xstr[nc];
                     ic++;

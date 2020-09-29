@@ -10,7 +10,7 @@ modelling, in relation with RMS. XTGeo is developed in Equinor.
 Feature summary
 ---------------
 
--  Python 2.7+, 3.4+ (Linux) and 3.6+ (Linux, Windows and MacOS).
+-  Python 3.6+ (Linux, Windows and MacOS).
 -  Focus on high speed, using numpy and pandas with C backend
 -  Regular surfaces, i.e. 2D maps with regular sampling and rotation
 -  3D grids (corner-point), supporting several formats such as RMS and

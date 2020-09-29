@@ -4,12 +4,12 @@
 from __future__ import print_function, absolute_import
 
 import os
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d import _grid_import_roff
 from xtgeo.grid3d import _grid_import_ecl
+from xtgeo.grid3d import _grid_import_xtgeo
 
 
 xtg = XTGeoDialog()
@@ -18,13 +18,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self,
-    gfile,
-    fformat=None,
-    initprops=None,
-    restartprops=None,
-    restartdates=None,
-    _xtgformat=1,
+    self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
 ):
     """Import grid geometry from file, and makes an instance of this class."""
 
@@ -39,7 +33,7 @@ def from_file(
         fformat = "guess"
 
     # note .grid is currently disabled; need to work at C backend
-    fflist = set(["egrid", "grdecl", "bgrdecl", "roff", "eclipserun", "guess"])
+    fflist = set(["egrid", "grdecl", "bgrdecl", "roff", "eclipserun", "guess", "xtgeo"])
     if fformat not in fflist:
         raise ValueError(
             "Invalid fformat: <{}>, options are {}".format(fformat, fflist)
@@ -68,9 +62,7 @@ def from_file(
         raise OSError("No such file: {}".format(test_gfile))
 
     if fformat == "roff":
-        _grid_import_roff.import_roff(
-            self, gfile, xtgformat=_xtgformat
-        )  # xtgformat is a developer switch
+        _grid_import_roff.import_roff(self, gfile)
 
     elif fformat == "egrid":
         _grid_import_ecl.import_ecl_egrid(self, gfile)
@@ -87,6 +79,9 @@ def from_file(
         _grid_import_ecl.import_ecl_grdecl(self, gfile)
     elif fformat == "bgrdecl":
         _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
+    elif fformat == "xtgeo":
+        # experimental
+        _grid_import_xtgeo.import_xtgeo(self, gfile)
     else:
         raise SystemExit("Invalid file format")
 
