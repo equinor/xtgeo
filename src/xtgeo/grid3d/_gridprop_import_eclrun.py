@@ -17,7 +17,7 @@ logger = xtg.functionlogger(__name__)
 
 # cf metadata["IPHS"]:
 PHASES = {
-    0: "e300_unknown",
+    0: "e300_ix_unknown",
     1: "oil",
     2: "water",
     3: "oil/water",
@@ -37,6 +37,21 @@ SIMULATOR = {100: "E100", 300: "E300", 700: "IX"}
 # are written for some time steps, while other time steps only have SGAS/SWAT
 # (in same UNRST file!). Try to combat this here as good as possible, but this
 # is not easy or optimal...
+
+
+def _get_phase_key(inkey):
+    """Trying for valid fluid phases kodes, return key and name"""
+
+    outkey = inkey
+    phasename = "unset"
+    try:
+        phasename = PHASES[inkey]
+    except KeyError as keyerr:
+        logger.warning("Phase is nonstandard: %s", keyerr)
+        phasename = "unknown"
+        outkey = 0
+
+    return outkey, phasename
 
 
 def import_eclbinary(
@@ -243,7 +258,7 @@ def _import_soil(self, pfile, kwlist, metadata, grid, date, fracture):
     s_exists = _chk_kw_date(kwlist, "SOIL", date)
     logger.info("SOIL: S_EXISTS %s for date %s", s_exists, date)
 
-    phases = metadata["IPHS"]
+    phases, _name = _get_phase_key(metadata["IPHS"])
 
     if not s_exists:
         logger.info("SOIL does not exist for date %s, need to estimate...", date)
@@ -382,10 +397,14 @@ def _import_eclbinary_meta(self, pfile, kwlist, etype, date, grid):
             raise xtgeo.DateNotFoundError(msg)
 
     kwxlist = list(kwlist.itertuples(index=False, name=None))
+    kwname = "unset"
+    kwlen = 0
+    kwtype = "unset"
+    kwbyte = 0
     # INTEHEAD is needed to verify grid dimensions:
     for kwitem in kwxlist:
         if kwitem[0] == "INTEHEAD":
-            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
+            kwname, kwtype, kwlen, kwbyte, _ = kwitem
             break
 
     # read INTEHEAD record:
@@ -396,8 +415,12 @@ def _import_eclbinary_meta(self, pfile, kwlist, etype, date, grid):
     metadata["SIMULATOR"] = SIMULATOR[intehead[94]]
     logger.info("Simulator is %s", metadata["SIMULATOR"])
 
-    metadata["IPHS"] = intehead[14]  # phase indicator 1:o 2:w 3:ow 4:g 5:og 6:gw 7:owg
-    logger.info("Phase system is %s", PHASES[metadata["IPHS"]])
+    # E100: phase indicator 1:o 2:w 3:ow 4:g 5:og 6:gw 7:owg
+    metadata["IPHS"] = intehead[14]
+    logger.info("Phase number is %s", metadata["IPHS"])
+
+    phasenum, phasename = _get_phase_key(metadata["IPHS"])
+    logger.info("Phase system is %s %s", phasenum, phasename)
 
     # LOGIHEAD item [14] in restart should be True, if dualporo model...
     # LOGIHEAD item [15] in restart should be True, if dualperm (+ dualporo) model.
@@ -494,6 +517,11 @@ def _import_eclbinary_checks2(kwlist, name, etype, date):
     usedate = "0"
     restart = False
 
+    kwname = "unset"
+    kwlen = 0
+    kwtype = "unset"
+    kwbyte = 0
+
     if etype == 5:
         usedate = str(date)
         restart = True
@@ -565,7 +593,7 @@ def _import_eclbinary_prop(
         np.zeros((self._ncol * self._nrow * self._nlay), dtype=values.dtype) + use_undef
     )
 
-    msg = "\n"
+    msg = "...\n"
     msg = msg + "grid.actnum_indices.shape[0] = {}\n".format(
         grid.actnum_indices.shape[0]
     )

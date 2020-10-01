@@ -51,6 +51,7 @@ import six
 
 import xtgeo
 
+DEBUG = 0
 MLS = 10000000.0
 
 
@@ -63,6 +64,13 @@ CRITICAL = "\033[1;91m"
 ENDC = "\033[0m"
 BOLD = "\033[1m"
 UNDERLINE = "\033[4m"
+
+
+def _printdebug(*args):
+    """local unction to print debugging while initializing logging"""
+
+    if DEBUG:
+        print("XTG DEBUG:", *args)
 
 
 class XTGShowProgress(object):
@@ -154,6 +162,8 @@ class XTGDescription(object):
             fmt = "{:40s} {:>2s} {}  {}  {}  {}  {}".format(*atxt)
         elif alen == 7:
             fmt = "{:40s} {:>2s} {}  {}  {}  {}  {}  {}".format(*atxt)
+        else:
+            fmt = "{:40s} {:>2s} {}  {}  {}  {}  {}  {}  {}".format(*atxt)
         return fmt
 
 
@@ -187,6 +197,8 @@ class _Formatter(logging.Formatter):
     # https://stackoverflow.com/questions/14429724/
     # python-logging-how-do-i-truncate-the-pathname-to-just-the-last-few-characters
     def format(self, record):
+
+        filename = "unset_filename"
 
         if six.PY3:
             if "pathname" in record.__dict__.keys():
@@ -233,6 +245,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         # a number, for format, 1 is simple, 2 is more info etc
         loggingformat = os.environ.get("XTG_LOGGING_FORMAT")
+
+        _printdebug("Logging format is", loggingformat)
 
         if self._logginglevel_fromenv:
             self.logginglevel = self._logginglevel_fromenv
@@ -309,6 +323,8 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     def loggingformat(self):
         """Returns the format string to be used in logging"""
 
+        _printdebug("Logging format is", self._lformatlevel)
+
         if self._lformatlevel <= 1:
             fmt = logging.Formatter(fmt="%(levelname)8s: (%(relative)ss) \t%(message)s")
 
@@ -327,9 +343,12 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
                 "\t%(message)s"
             )
 
-        # log = self._rootlogger
-        # _tmp1 = [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
-        # _tmp2 = [hndl.setFormatter(fmt) for hndl in log.handlers]
+        log = self._rootlogger
+        _tmp1 = [hndl.addFilter(_TimeFilter()) for hndl in log.handlers]
+        _tmp2 = [hndl.setFormatter(fmt) for hndl in log.handlers]
+
+        _printdebug("TMP1:", _tmp1)
+        _printdebug("TMP2:", _tmp2)
 
         self._lformat = fmt._fmt  # private attribute in Formatter()
         return self._lformat
