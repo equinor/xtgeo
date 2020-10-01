@@ -13,6 +13,7 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
+from xtgeo.surface.regular_surface import RegularSurface
 
 if six.PY3:
     from pathlib import Path
@@ -329,8 +330,55 @@ def test_irapasc_import1():
     xsurf = xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
-    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
     tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+
+def test_irapasc_import1_engine_python():
+    """Import Reek Irap ascii using python read engine"""
+    logger.info("Import and export...")
+
+    xsurf = xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
+    tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+
+def test_irapasc_io_engine_python():
+    """Test IO using pure python read/write"""
+    xsurf1 = xtgeo.RegularSurface()
+
+    usefile1 = os.path.join(TMPD, "surf3a.fgr")
+    usefile2 = os.path.join(TMPD, "surf3b.fgr")
+
+    print(xsurf1[1, 1])
+
+    xsurf1.to_file(usefile1, fformat="irap_ascii", engine="cxtgeo")
+    xsurf1.to_file(usefile2, fformat="irap_ascii", engine="python")
+
+    xsurf2 = xtgeo.RegularSurface(usefile2, fformat="irap_ascii", engine="python")
+    xsurf3 = xtgeo.RegularSurface(usefile2, fformat="irap_ascii", engine="cxtgeo")
+
+    assert xsurf1.ncol == xsurf3.ncol == xsurf3.ncol
+
+    assert xsurf1.values[1, 1] == xsurf2.values[1, 1] == xsurf3.values[1, 1]
+
+
+@tsetup.bigtest
+def test_irapasc_import1_engine_compare():
+    """Import Reek Irap ascii using python read engine"""
+    logger.info("Import and export...")
+
+    tt0 = xtg.timer()
+    for _ in range(10):
+        xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="cxtgeo")
+    print("CXTGeo engine for read:", xtg.timer(tt0))
+
+    tt0 = xtg.timer()
+    for _ in range(10):
+        xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
+    print("Python engine for read:", xtg.timer(tt0))
 
 
 def test_irapasc_export():

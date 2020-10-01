@@ -32,6 +32,7 @@ if "XTG_SHOW" in os.environ:
 # =============================================================================
 
 TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
+TESTSET2 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.fgr"
 
 
 @tsetup.skipifmac
@@ -45,6 +46,18 @@ def test_irapbin_bytesio_threading():
         stream = io.BytesIO()
         surface = xtgeo.RegularSurface()
         surface.to_file(stream)
+        print("XTGeo succeeded")
+
+    threading.Timer(1.0, test_xtgeo).start()
+
+
+def test_irapasc_bytesio_threading():
+    """Test threading for segfaults, Irap ASCII"""
+
+    def test_xtgeo():
+        stream = io.BytesIO()
+        surface = xtgeo.RegularSurface()
+        surface.to_file(stream, fformat="irap_ascii")
         print("XTGeo succeeded")
 
     threading.Timer(1.0, test_xtgeo).start()
@@ -99,6 +112,34 @@ def test_irapbin_export_bytesio():
 
     xsurf1 = xtgeo.RegularSurface(join(TMPD, "bytesio1.gri"), fformat="irap_binary")
     xsurf2 = xtgeo.RegularSurface(join(TMPD, "bytesio2.gri"), fformat="irap_binary")
+    assert abs(xsurf1.values.mean() - xsurf2.values.mean() - 200) < 0.001
+
+    stream.close()
+
+
+def test_irapascii_export_bytesio():
+    """Export Irap ascii to bytesIO, then read again"""
+    logger.info("Import and export to bytesio")
+
+    xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_ascii")
+    assert xsurf.ncol == 554
+    assert xsurf.nrow == 451
+    assert abs(xsurf.values.mean() - 1698.648) < 0.01
+    xsurf.to_file(join(TMPD, "bytesio1.fgr"), fformat="irap_ascii")
+
+    xsurf.values -= 200
+
+    stream = io.BytesIO()
+
+    xsurf.to_file(stream, fformat="irap_ascii")
+
+    xsurfx = xtgeo.RegularSurface(stream, fformat="irap_ascii")
+
+    with open(join(TMPD, "bytesio2.fgr"), "wb") as myfile:
+        myfile.write(stream.getvalue())
+
+    xsurf1 = xtgeo.RegularSurface(join(TMPD, "bytesio1.fgr"), fformat="irap_ascii")
+    xsurf2 = xtgeo.RegularSurface(join(TMPD, "bytesio2.fgr"), fformat="irap_ascii")
     assert abs(xsurf1.values.mean() - xsurf2.values.mean() - 200) < 0.001
 
     stream.close()

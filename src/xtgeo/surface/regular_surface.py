@@ -228,6 +228,7 @@ class RegularSurface(object):
         self._yflip = 1
 
         self._values = None
+        self._fformat = None  # current fileformat, useful for load()
         self._isloaded = True  # assume True unless explicitly set
 
         if args:
@@ -236,7 +237,10 @@ class RegularSurface(object):
             fformat = kwargs.get("fformat", None)
             template = kwargs.get("template", None)
             values = kwargs.get("values", True)
-            self.from_file(mfile, fformat=fformat, template=template, values=values)
+            engine = kwargs.get("engine", "cxtgeo")
+            self.from_file(
+                mfile, fformat=fformat, template=template, values=values, engine=engine
+            )
 
         else:
             # make instance by kw spesification
@@ -737,7 +741,7 @@ class RegularSurface(object):
         return dsc.astext()
 
     def from_file(
-        self, mfile, fformat=None, template=None, values=True
+        self, mfile, fformat=None, template=None, values=True, engine="cxtgeo"
     ):  # pylint: disable=too-many-branches
         """Import surface (regular map) from file.
 
@@ -760,6 +764,9 @@ class RegularSurface(object):
             values (bool): If True (default), then full array is read, if False
                 only metadata will be read. Valid for Irap binary only. This allows
                 lazy loading in e.g. ensembles.
+            engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
+                python "python" reader will be used, which in general is slower
+                but may be safer when reading memory streams and/or threading.
 
         Returns:
             Object instance.
@@ -785,21 +792,17 @@ class RegularSurface(object):
         bytestream = False
         if mfile.memstream is True:
             bytestream = True
-            fformat = "irap_binary"
         else:
             mfile.check_file(raiseerror=OSError)
             froot, fext = mfile.splitext(lower=True)
 
             if fformat == "guess":
                 if not fext:
-                    msg = (
-                        'Stop: fformat is "guess" but file '
-                        "extension is missing for {}".format(froot)
-                    )
-                    raise ValueError(msg)
-
+                    # just assume irap binary, e.g. for memory streams
+                    fformat = "irap_binary"
                 fformat = fext
 
+        self._fformat = fformat
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
             logger.debug("Irap binary format to read")
             _regsurf_import.import_irap_binary(self, mfile, values=values)
@@ -807,7 +810,7 @@ class RegularSurface(object):
                 self._isloaded = False
 
         elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
-            _regsurf_import.import_irap_ascii(self, mfile)
+            _regsurf_import.import_irap_ascii(self, mfile, engine=engine)
 
         elif fformat in ("pmd", "petromod"):
             _regsurf_import.import_petromod_binary(self, mfile)
@@ -850,7 +853,7 @@ class RegularSurface(object):
         """
 
         if not self._isloaded:
-            self.from_file(self._filesrc)
+            self.from_file(self._filesrc, fformat=self._fformat)
             self._isloaded = True
 
     def to_file(self, mfile, fformat="irap_binary", pmd_dataunits=(15, 10), **kwargs):
@@ -901,7 +904,7 @@ class RegularSurface(object):
         logger.info("Export to file...")
 
         if fformat == "irap_ascii":
-            _regsurf_export.export_irap_ascii(self, mfile)
+            _regsurf_export.export_irap_ascii(self, mfile, engine=engine)
 
         elif fformat == "irap_binary":
             _regsurf_export.export_irap_binary(

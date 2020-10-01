@@ -8,7 +8,7 @@ from struct import pack
 import numpy as np
 
 import xtgeo
-from xtgeo.common.constants import UNDEF_MAP_IRAPB
+from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
@@ -39,8 +39,55 @@ PMD_DATAUNITZ = {
 }
 
 
-def export_irap_ascii(self, mfile):
+def export_irap_ascii(self, mfile, engine="cxtgeo"):
     """Export to Irap RMS ascii format."""
+
+    if mfile.memstream is True or engine == "python":
+        _export_irap_ascii_purepy(self, mfile)
+    else:
+        _export_irap_ascii(self, mfile)
+
+
+def _export_irap_ascii_purepy(self, mfile):
+    """Export to Irap RMS ascii using pure python, slower? but safer for memstreams."""
+
+    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPA, order="F")
+
+    xmax = self.xori + (self.ncol - 1) * self.xinc
+    ymax = self.yori + (self.nrow - 1) * self.yinc
+
+    buf = "-996 {} {} {}\n".format(self.nrow, self.xinc, self.yinc)
+    buf += "{} {} {} {}\n".format(self.xori, xmax, self.yori, ymax)
+    buf += "{} {} {} {}\n".format(self.ncol, self.rotation, self.xori, self.yori)
+    buf += "0  0  0  0  0  0  0\n"
+    vals = vals.astype("str").tolist()
+    nrow = 0
+    for val in vals:
+        buf += val
+        nrow += 1
+        if nrow == 6:
+            buf += "\n"
+            nrow = 0
+        else:
+            buf += " "
+
+    if nrow != 0:
+        buf += "\n"
+
+    # convert buffer to ascii
+    buf = buf.encode("latin1")
+
+    if mfile.memstream:
+        mfile.file.write(buf)
+    else:
+        with open(mfile.name, "wb") as fout:
+            fout.write(buf)
+
+    del vals
+
+
+def _export_irap_ascii(self, mfile):
+    """Export to Irap RMS ascii format using cxtgeo."""
 
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
 
