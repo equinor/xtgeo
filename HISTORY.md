@@ -6,6 +6,7 @@
 * Skip support for Python 2.7 and 3.5. Now only Python 3.6+ is supported
 * New features:
   * Grid quality indicators for Grid(): ``get_gridquality_properties()``
+  * Support for BytesIO i/o for ``RegularSurface()`` formats irap ascii and zmap ascii
 
 * Improvements and bug fixes
   * Reorganizing internal storage of 3D corner point grids

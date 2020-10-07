@@ -73,14 +73,16 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def surface_from_file(mfile, fformat=None, template=None, values=True):
+def surface_from_file(mfile, fformat=None, template=None, values=True, engine="cxtgeo"):
     """Make an instance of a RegularSurface directly from file import.
 
     Args:
         mfile (str): Name of file
         fformat (str): See :meth:`RegularSurface.from_file`
         template (Cube or RegularSurface): See :meth:`RegularSurface.from_file`
-        values: If True (default), surface values will be read (Irap binary only)
+        values (bool): If True (default), surface values will be read (Irap binary only)
+        engine (str): Some import methods are implemnted in both C and Python.
+            The C method ``cxtgeo`` is default. Alternative use ``python``
 
     Example::
 
@@ -89,11 +91,16 @@ def surface_from_file(mfile, fformat=None, template=None, values=True):
 
     ..versionchanged:: 2.1.0
       Key "values" for Irap binary maps added
+
+    ..versionchanged:: 2.13.0
+      Key "engine" added
     """
 
     obj = RegularSurface()
 
-    obj.from_file(mfile, fformat=fformat, template=template, values=values)
+    obj.from_file(
+        mfile, fformat=fformat, template=template, values=values, engine=engine
+    )
 
     return obj
 
@@ -209,14 +216,14 @@ class RegularSurface(object):
     def __init__(self, *args, **kwargs):  # pylint: disable=too-many-statements
         """Initiate a RegularSurface instance."""
 
-        logger.debug("Start __init__ method for RegularSurface object %s", id(self))
+        logger.info("Start __init__ method for RegularSurface object %s", id(self))
 
         self._undef = xtgeo.UNDEF
         self._undef_limit = xtgeo.UNDEF_LIMIT
 
         self._masked = False
-        self._filesrc = None  # Name of original input file, if any
-        self._name = "unknown"
+        self._filesrc = None  # Name of original input file or stream, if any
+        self._name = "unknown"  # informal name for use in plots etc
 
         # These are useful when import/export of surfaces with seismic origin
         self._ilines = None
@@ -278,7 +285,6 @@ class RegularSurface(object):
             self._isloaded = True
 
         if self._values is not None:
-            logger.debug("Shape of values %s", self._values.shape)
 
             self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
             self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
@@ -288,7 +294,7 @@ class RegularSurface(object):
                     self._values, mask=ma.getmaskarray(self._values)
                 )
 
-        logger.debug("Ran __init__ method for RegularSurface object %s", id(self))
+        logger.info("Ran __init__ method for RegularSurface object %s", id(self))
 
     # ==================================================================================
 
@@ -636,13 +642,8 @@ class RegularSurface(object):
 
     @values.setter
     def values(self, values):
-        logger.debug("Enter method...")
 
         self._ensure_correct_values(values)
-
-        if values is not None:
-            logger.debug("Values shape: %s", self._values.shape)
-            logger.debug("Flags: %s", self._values.flags)
 
     @property
     def values1d(self):
@@ -745,14 +746,16 @@ class RegularSurface(object):
     ):  # pylint: disable=too-many-branches
         """Import surface (regular map) from file.
 
-        Note that the fformat=None option will guess bye looking at the file
+        Note that the ``fformat=None`` option will guess bye looking at the file
         extension, where e.g. "gri" will assume irap_binary and "fgr"
-        assume Irap Ascii.
+        assume Irap Ascii. If file extension is missing, Irap binary is assumed.
 
         The ijxyz format is the typical seismic format, on the form
         (ILINE, XLINE, X, Y, VALUE) as a table of points. Map values are
         estimated from the given values, or by using an existing map or
         cube as template, and match by ILINE/XLINE numbering.
+
+        BytesIO input is supported for Irap binary, Irap Ascii, ZMAP ascii.
 
         Args:
             mfile (str): Name of file or a io:BytesIO instance
@@ -766,7 +769,8 @@ class RegularSurface(object):
                 lazy loading in e.g. ensembles.
             engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
                 python "python" reader will be used, which in general is slower
-                but may be safer when reading memory streams and/or threading.
+                but may be safer when reading memory streams and/or threading. Engine
+                is relevant for Irap binary, Irap ascii and zmap.
 
         Returns:
             Object instance.
@@ -782,30 +786,37 @@ class RegularSurface(object):
 
         ..versionchanged:: 2.2.0
           Input io.BytesIO instance instead of file is now possible
+
+        ..versionchanged:: 2.13.0
+          ZMAP + import is added, and io.BytesIO input is extended to more formats
         """
+        logger.info("Import RegularSurface from file or memstream...")
 
         mfile = xtgeosys._XTGeoFile(mfile)
 
         if fformat is None:
             fformat = "guess"  # default
 
-        bytestream = False
-        if mfile.memstream is True:
-            bytestream = True
-        else:
+        froot = "unset"
+        if mfile.memstream is False:
             mfile.check_file(raiseerror=OSError)
             froot, fext = mfile.splitext(lower=True)
+        else:
+            fext = None
 
-            if fformat == "guess":
-                if not fext:
-                    # just assume irap binary, e.g. for memory streams
-                    fformat = "irap_binary"
+        if fformat == "guess":
+            if not fext:
+                # just assume irap binary, e.g. for memory streams
+                fformat = "irap_binary"
+            else:
                 fformat = fext
 
         self._fformat = fformat
+
         if fformat in ("irap_binary", "gri", "bin", "irapbin"):
-            logger.debug("Irap binary format to read")
-            _regsurf_import.import_irap_binary(self, mfile, values=values)
+            _regsurf_import.import_irap_binary(
+                self, mfile, values=values, engine=engine
+            )
             if not values:
                 self._isloaded = False
 
@@ -814,6 +825,9 @@ class RegularSurface(object):
 
         elif fformat in ("pmd", "petromod"):
             _regsurf_import.import_petromod_binary(self, mfile)
+
+        elif "zmap" in fformat:
+            _regsurf_import.import_zmap_ascii(self, mfile)
 
         elif fformat == "ijxyz":
             if template:
@@ -824,11 +838,14 @@ class RegularSurface(object):
         else:
             raise ValueError("Invalid file format: {}".format(fformat))
 
-        if bytestream:
-            self._name = os.path.basename("<binarystream>")
+        if mfile.memstream:
+            self._name = "<binarystream>"
         else:
             self._name = os.path.basename(froot)
 
+        self._filesrc = mfile.file
+
+        logger.info("Import RegularSurface from file or memstream... done")
         return self
 
     def load_values(self):
@@ -856,7 +873,9 @@ class RegularSurface(object):
             self.from_file(self._filesrc, fformat=self._fformat)
             self._isloaded = True
 
-    def to_file(self, mfile, fformat="irap_binary", pmd_dataunits=(15, 10), **kwargs):
+    def to_file(
+        self, mfile, fformat="irap_binary", pmd_dataunits=(15, 10), engine="cxtgeo",
+    ):
         """Export a surface (map) to file.
 
         Note, for zmap_ascii and storm_binary an unrotation will be done
@@ -869,7 +888,10 @@ class RegularSurface(object):
                 storm_binary/ijxyz/petromod. Default is irap_binary.
             pmd_dataunits (tuple of int): A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ)
-            **kwargs: Special settings (for developers)
+            engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
+                python "python" reader will be used, which in general is slower
+                but may be safer when reading memory streams and/or threading. Engine
+                is relevant for Irap binary, Irap ascii and zmap.
 
         Examples::
 
@@ -887,31 +909,25 @@ class RegularSurface(object):
             newsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
 
         .. versionchanged:: 2.5.0 Added support for BytesIO
+        .. versionchanged:: 2.13.0 Improved support for BytesIO
         """
 
-        engine = kwargs.get("engine", "cxtgeo")
-        bstream = False
-
+        logger.info("Export RegularSurface to file or memstream...")
         mfile = xtgeosys._XTGeoFile(mfile, mode="wb")
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)
         else:
             engine = "python"
-            bstream = True  # write to byte stream, not file
 
-        logger.debug("Enter method...")
-        logger.info("Export to file...")
-
-        if fformat == "irap_ascii":
+        if fformat in ("irap_ascii", "irapascii", "irap_txt", "irapasc"):
             _regsurf_export.export_irap_ascii(self, mfile, engine=engine)
 
-        elif fformat == "irap_binary":
-            _regsurf_export.export_irap_binary(
-                self, mfile, engine=engine, bstream=bstream
-            )
-        elif fformat == "zmap_ascii":
-            _regsurf_export.export_zmap_ascii(self, mfile)
+        elif fformat in ("irap_binary", "irapbinary", "irapbin", "irap", "gri"):
+            _regsurf_export.export_irap_binary(self, mfile, engine=engine)
+
+        elif "zmap" in fformat:
+            _regsurf_export.export_zmap_ascii(self, mfile, engine=engine)
 
         elif fformat == "storm_binary":
             _regsurf_export.export_storm_binary(self, mfile)
@@ -924,6 +940,8 @@ class RegularSurface(object):
 
         else:
             logger.critical("Invalid file format")
+
+        logger.info("Export RegularSurface to file or memstream... done")
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0
@@ -1132,10 +1150,6 @@ class RegularSurface(object):
 
         """
         # pylint: disable=protected-access
-        logger.debug("Copy object instance...")
-        logger.debug(self._values)
-        logger.debug(self._values.flags)
-        logger.debug(id(self._values))
 
         xsurf = RegularSurface(
             ncol=self.ncol,
@@ -1154,7 +1168,6 @@ class RegularSurface(object):
         xsurf.xlines = self._xlines.copy()
         xsurf.filesrc = self._filesrc
 
-        logger.debug("New array + flags + ID")
         return xsurf
 
     def get_values1d(
@@ -1535,7 +1548,6 @@ class RegularSurface(object):
         entry.update([("X_UTME", xcoord), ("Y_UTMN", ycoord), ("VALUES", values)])
 
         dataframe = pd.DataFrame(entry)
-        logger.debug(dataframe)
         return dataframe
 
     dataframe = get_dataframe  # for compatibility backwards
@@ -1962,7 +1974,7 @@ class RegularSurface(object):
         self.resample(proxy)
 
         del proxy
-        logger.info("Do refining... DONE")
+        logger.info("Do refining... done")
 
     def coarsen(self, factor):
         """Coarsen a surface with a factor, e.g. 2 meaning half the number of
@@ -2014,7 +2026,7 @@ class RegularSurface(object):
         self.resample(proxy)
 
         del proxy
-        logger.info("Do coarsening... DONE")
+        logger.info("Do coarsening... done")
 
     # ==================================================================================
     # Interacion with a grid3d
@@ -2528,14 +2540,10 @@ class RegularSurface(object):
         minvalue = minmax[0]
         maxvalue = minmax[1]
 
-        logger.debug("Colormap is %s and colortable %s", colormap, colortable)
-
         if colortable is not None:
             colormap = colortable
 
         mymap.colormap = colormap
-
-        logger.debug("Colormap in use %s", mymap.colormap.name)
 
         mymap.plot_surface(
             self,

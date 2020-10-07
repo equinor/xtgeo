@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import os.path
+from os.path import join
 
 import six
 
@@ -290,6 +291,28 @@ def test_petromodbin_import_export():
         petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(-2, 999))
 
 
+def test_zmap_import_export():
+    """Import and export ZMAP ascii example."""
+    logger.info("Import and export...")
+
+    zmap = RegularSurface()
+    zmap.to_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
+    zmap2 = RegularSurface()
+    zmap2.from_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
+
+    assert zmap.values[0, 1] == zmap2.values[0, 1] == 6.0
+
+    one1 = zmap.values.ravel()
+    one2 = zmap2.values.ravel()
+    assert one1.all() == one2.all()
+
+    zmap.to_file(join(TMPD, "zmap2.zmap"), fformat="zmap_ascii", engine="python")
+    zmap3 = RegularSurface()
+    zmap3.from_file(join(TMPD, "zmap2.zmap"), fformat="zmap_ascii")
+    one3 = zmap3.values.ravel()
+    assert one1.all() == one3.all()
+
+
 def test_swapaxes():
     """Import Reek Irap binary and swap axes."""
 
@@ -343,6 +366,20 @@ def test_irapasc_import1_engine_python():
     assert xsurf.nrow == 2010
     tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
     tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+
+def test_irapbin_import1_engine_python():
+    """Import Reek Irap binary using python read engine"""
+    logger.info("Import and export...")
+
+    xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_binary", engine="python")
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
+    tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+    xsurf2 = xtgeo.RegularSurface(TESTSET2, fformat="irap_binary", engine="cxtgeo")
+    assert xsurf.values.mean() == xsurf2.values.mean()
 
 
 def test_irapasc_io_engine_python():

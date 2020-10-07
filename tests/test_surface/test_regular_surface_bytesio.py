@@ -35,10 +35,6 @@ TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 TESTSET2 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.fgr"
 
 
-@tsetup.skipifmac
-@tsetup.skipifwindows
-@tsetup.skipifpython2
-@tsetup.skipiftravis
 def test_irapbin_bytesio_threading():
     """Test threading for segfaults"""
 
@@ -63,10 +59,18 @@ def test_irapasc_bytesio_threading():
     threading.Timer(1.0, test_xtgeo).start()
 
 
-@tsetup.skipifmac
-@tsetup.skipifwindows
-@tsetup.skipiftravis
-@tsetup.skipifpython2
+def test_zmap_bytesio_threading():
+    """Test threading for segfaults, Irap ASCII"""
+
+    def test_xtgeo():
+        stream = io.BytesIO()
+        surface = xtgeo.RegularSurface()
+        surface.to_file(stream, fformat="zmap_ascii")
+        print("XTGeo succeeded")
+
+    threading.Timer(1.0, test_xtgeo).start()
+
+
 def test_irapbin_import_bytesio():
     """Import Irap binary via bytesIO"""
     logger.info("Import file as BytesIO")
@@ -83,10 +87,6 @@ def test_irapbin_import_bytesio():
     xsurf.describe()
 
 
-@tsetup.skipifmac
-@tsetup.skipifwindows
-@tsetup.skipiftravis
-@tsetup.skipifpython2
 def test_irapbin_export_bytesio():
     """Export Irap binary to bytesIO, then read again"""
     logger.info("Import and export to bytesio")
@@ -117,7 +117,7 @@ def test_irapbin_export_bytesio():
     stream.close()
 
 
-def test_irapascii_export_bytesio():
+def test_irapascii_export_import_bytesio():
     """Export Irap ascii to bytesIO, then read again"""
     logger.info("Import and export to bytesio")
 
@@ -134,6 +134,7 @@ def test_irapascii_export_bytesio():
     xsurf.to_file(stream, fformat="irap_ascii")
 
     xsurfx = xtgeo.RegularSurface(stream, fformat="irap_ascii")
+    assert xsurf.values.mean() == xsurfx.values.mean()
 
     with open(join(TMPD, "bytesio2.fgr"), "wb") as myfile:
         myfile.write(stream.getvalue())
@@ -145,10 +146,6 @@ def test_irapascii_export_bytesio():
     stream.close()
 
 
-@tsetup.skipifmac
-@tsetup.skipiftravis
-@tsetup.skipifwindows
-@tsetup.skipifpython2
 def test_get_regsurfi():
 
     sfile = TESTSET1
@@ -162,10 +159,6 @@ def test_get_regsurfi():
         print(_itmp)
 
 
-@tsetup.skipifwindows
-@tsetup.skipifmac
-@tsetup.skipiftravis
-@tsetup.skipifpython2
 def test_get_regsurff():
 
     sfile = TESTSET1
@@ -176,10 +169,6 @@ def test_get_regsurff():
         print(_itmp)
 
 
-@tsetup.skipifmac
-@tsetup.skipifwindows
-@tsetup.skipiftravis
-@tsetup.skipifpython2
 def test_irapbin_load_meta_first_bytesio():
     """Import Irap binary via bytesIO, by just loading metadata first"""
     logger.info("Import and export...")
@@ -202,7 +191,6 @@ def test_irapbin_load_meta_first_bytesio():
     assert "I/O operation on closed file" in str(verr.value)
 
 
-@tsetup.skipifpython2
 def test_bytesio_string_encoded():
     """Test a case where the string is encoded, then decoded"""
     with open(TESTSET1, "rb") as fin:
