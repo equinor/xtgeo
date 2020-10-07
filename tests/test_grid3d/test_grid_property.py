@@ -367,7 +367,12 @@ def test_eclinit_simple_importexport():
     gg = Grid(TESTFILE13A, fformat="egrid")
     po = GridProperty(TESTFILE13B, name="PORO", grid=gg)
 
-    po.to_file(os.path.join(TMPDIR, "simple.grdecl"), fformat="grdecl", name="PORO2")
+    po.to_file(
+        os.path.join(TMPDIR, "simple.grdecl"),
+        fformat="grdecl",
+        name="PORO2",
+        fmt="%12.5f",
+    )
 
     p2 = GridProperty(os.path.join(TMPDIR, "simple.grdecl"), grid=gg, name="PORO2")
     assert p2.name == "PORO2"

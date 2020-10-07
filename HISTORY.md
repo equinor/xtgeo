@@ -7,6 +7,8 @@
 * New features:
   * Grid quality indicators for Grid(): ``get_gridquality_properties()``
   * Support for BytesIO i/o for ``RegularSurface()`` formats irap ascii and zmap ascii
+  * A `fmt` key is now available in `GridProperty().to_file()` for Eclipse grdecl format,
+    and default format is now scientific %e for Floats
 
 * Improvements and bug fixes
   * Reorganizing internal storage of 3D corner point grids
