@@ -111,7 +111,37 @@ def test_values():
         srf.values = "text"
 
 
-# @tsetup.skipifwindows
+def test_set_values1d():
+    """Test behaviour of set_values1d method"""
+    srf = xtgeo.RegularSurface()
+    new = srf.copy()
+    assert np.ma.count_masked(new.values) == 1
+
+    # values is a new np array; hence old mask shall not be reused
+    vals = np.zeros((new.dimensions)) + 100
+    vals[1, 1] = srf.undef
+
+    new.set_values1d(vals.ravel())
+    assert not np.array_equal(srf.values.mask, new.values.mask)
+    assert np.ma.count_masked(new.values) == 1
+
+    # values are modified from existing, hence mask will be additive
+    new = srf.copy()
+    vals = new.values.copy()
+    vals[vals < 2] = new.undef
+    new.values = vals
+    assert np.ma.count_masked(new.values) == 2
+
+    # values are modified from existing and set via set_values1d
+    new = srf.copy()
+    vals = new.values.copy()
+    vals = vals.flatten()
+    vals[vals < 2] = new.undef
+    assert np.ma.count_masked(vals) == 1
+    new.set_values1d(vals)
+    assert np.ma.count_masked(new.values) == 2
+
+
 def test_ijxyz_import1():
     """Import some IJ XYZ format, typical seismic."""
     logger.info("Import and export...")
