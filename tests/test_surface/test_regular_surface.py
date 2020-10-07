@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import os.path
+from os.path import join
 
 import six
 
@@ -13,6 +14,7 @@ import numpy as np
 import xtgeo
 from xtgeo.common import XTGeoDialog
 import test_common.test_xtg as tsetup
+from xtgeo.surface.regular_surface import RegularSurface
 
 if six.PY3:
     from pathlib import Path
@@ -109,7 +111,37 @@ def test_values():
         srf.values = "text"
 
 
-# @tsetup.skipifwindows
+def test_set_values1d():
+    """Test behaviour of set_values1d method"""
+    srf = xtgeo.RegularSurface()
+    new = srf.copy()
+    assert np.ma.count_masked(new.values) == 1
+
+    # values is a new np array; hence old mask shall not be reused
+    vals = np.zeros((new.dimensions)) + 100
+    vals[1, 1] = srf.undef
+
+    new.set_values1d(vals.ravel())
+    assert not np.array_equal(srf.values.mask, new.values.mask)
+    assert np.ma.count_masked(new.values) == 1
+
+    # values are modified from existing, hence mask will be additive
+    new = srf.copy()
+    vals = new.values.copy()
+    vals[vals < 2] = new.undef
+    new.values = vals
+    assert np.ma.count_masked(new.values) == 2
+
+    # values are modified from existing and set via set_values1d
+    new = srf.copy()
+    vals = new.values.copy()
+    vals = vals.flatten()
+    vals[vals < 2] = new.undef
+    assert np.ma.count_masked(vals) == 1
+    new.set_values1d(vals)
+    assert np.ma.count_masked(new.values) == 2
+
+
 def test_ijxyz_import1():
     """Import some IJ XYZ format, typical seismic."""
     logger.info("Import and export...")
@@ -289,6 +321,28 @@ def test_petromodbin_import_export():
         petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(-2, 999))
 
 
+def test_zmap_import_export():
+    """Import and export ZMAP ascii example."""
+    logger.info("Import and export...")
+
+    zmap = RegularSurface()
+    zmap.to_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
+    zmap2 = RegularSurface()
+    zmap2.from_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
+
+    assert zmap.values[0, 1] == zmap2.values[0, 1] == 6.0
+
+    one1 = zmap.values.ravel()
+    one2 = zmap2.values.ravel()
+    assert one1.all() == one2.all()
+
+    zmap.to_file(join(TMPD, "zmap2.zmap"), fformat="zmap_ascii", engine="python")
+    zmap3 = RegularSurface()
+    zmap3.from_file(join(TMPD, "zmap2.zmap"), fformat="zmap_ascii")
+    one3 = zmap3.values.ravel()
+    assert one1.all() == one3.all()
+
+
 def test_swapaxes():
     """Import Reek Irap binary and swap axes."""
 
@@ -329,8 +383,69 @@ def test_irapasc_import1():
     xsurf = xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
-    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
     tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+
+def test_irapasc_import1_engine_python():
+    """Import Reek Irap ascii using python read engine"""
+    logger.info("Import and export...")
+
+    xsurf = xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
+    tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+
+def test_irapbin_import1_engine_python():
+    """Import Reek Irap binary using python read engine"""
+    logger.info("Import and export...")
+
+    xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_binary", engine="python")
+    assert xsurf.ncol == 1264
+    assert xsurf.nrow == 2010
+    tsetup.assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
+    tsetup.assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+
+    xsurf2 = xtgeo.RegularSurface(TESTSET2, fformat="irap_binary", engine="cxtgeo")
+    assert xsurf.values.mean() == xsurf2.values.mean()
+
+
+def test_irapasc_io_engine_python():
+    """Test IO using pure python read/write"""
+    xsurf1 = xtgeo.RegularSurface()
+
+    usefile1 = os.path.join(TMPD, "surf3a.fgr")
+    usefile2 = os.path.join(TMPD, "surf3b.fgr")
+
+    print(xsurf1[1, 1])
+
+    xsurf1.to_file(usefile1, fformat="irap_ascii", engine="cxtgeo")
+    xsurf1.to_file(usefile2, fformat="irap_ascii", engine="python")
+
+    xsurf2 = xtgeo.RegularSurface(usefile2, fformat="irap_ascii", engine="python")
+    xsurf3 = xtgeo.RegularSurface(usefile2, fformat="irap_ascii", engine="cxtgeo")
+
+    assert xsurf1.ncol == xsurf3.ncol == xsurf3.ncol
+
+    assert xsurf1.values[1, 1] == xsurf2.values[1, 1] == xsurf3.values[1, 1]
+
+
+@tsetup.bigtest
+def test_irapasc_import1_engine_compare():
+    """Import Reek Irap ascii using python read engine"""
+    logger.info("Import and export...")
+
+    tt0 = xtg.timer()
+    for _ in range(10):
+        xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="cxtgeo")
+    print("CXTGeo engine for read:", xtg.timer(tt0))
+
+    tt0 = xtg.timer()
+    for _ in range(10):
+        xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
+    print("Python engine for read:", xtg.timer(tt0))
 
 
 def test_irapasc_export():

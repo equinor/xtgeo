@@ -4,7 +4,6 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 from os.path import join
-from filecmp import cmp
 
 import pytest
 
@@ -265,7 +264,12 @@ def test_copy_grid():
 
     grd.to_file(join("TMP", "gcp1.roff"))
     grd2.to_file(join("TMP", "gcp2.roff"))
-    assert cmp(join("TMP", "gcp1.roff"), join("TMP", "gcp2.roff")) is True
+
+    xx1 = Grid(join("TMP", "gcp1.roff"))
+    xx2 = Grid(join("TMP", "gcp2.roff"))
+
+    assert xx1._zcornsv.mean() == xx2._zcornsv.mean()
+    assert xx1._actnumsv.mean() == xx2._actnumsv.mean()
 
 
 def test_crop_grid():

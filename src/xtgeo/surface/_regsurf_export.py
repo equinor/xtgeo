@@ -8,7 +8,7 @@ from struct import pack
 import numpy as np
 
 import xtgeo
-from xtgeo.common.constants import UNDEF_MAP_IRAPB
+from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=import-error
 from xtgeo.common import XTGeoDialog
 
@@ -39,8 +39,55 @@ PMD_DATAUNITZ = {
 }
 
 
-def export_irap_ascii(self, mfile):
+def export_irap_ascii(self, mfile, engine="cxtgeo"):
     """Export to Irap RMS ascii format."""
+
+    if mfile.memstream is True or engine == "python":
+        _export_irap_ascii_purepy(self, mfile)
+    else:
+        _export_irap_ascii(self, mfile)
+
+
+def _export_irap_ascii_purepy(self, mfile):
+    """Export to Irap RMS ascii using pure python, slower? but safer for memstreams."""
+
+    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPA, order="F")
+
+    xmax = self.xori + (self.ncol - 1) * self.xinc
+    ymax = self.yori + (self.nrow - 1) * self.yinc
+
+    buf = "-996 {} {} {}\n".format(self.nrow, self.xinc, self.yinc)
+    buf += "{} {} {} {}\n".format(self.xori, xmax, self.yori, ymax)
+    buf += "{} {} {} {}\n".format(self.ncol, self.rotation, self.xori, self.yori)
+    buf += "0  0  0  0  0  0  0\n"
+    vals = vals.astype("str").tolist()
+    nrow = 0
+    for val in vals:
+        buf += val
+        nrow += 1
+        if nrow == 6:
+            buf += "\n"
+            nrow = 0
+        else:
+            buf += " "
+
+    if nrow != 0:
+        buf += "\n"
+
+    # convert buffer to ascii
+    buf = buf.encode("latin1")
+
+    if mfile.memstream:
+        mfile.file.write(buf)
+    else:
+        with open(mfile.name, "wb") as fout:
+            fout.write(buf)
+
+    del vals
+
+
+def _export_irap_ascii(self, mfile):
+    """Export to Irap RMS ascii format using cxtgeo."""
 
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
 
@@ -57,25 +104,83 @@ def export_irap_ascii(self, mfile):
         0,
     )
     if ier != 0:
-        raise RuntimeError("Export to Irap Ascii went wrong, " "code is {}".format(ier))
+        raise RuntimeError("Export to Irap Ascii went wrong, code is {}".format(ier))
 
     del vals
 
     mfile.cfclose()
 
 
-def export_irap_binary(self, mfile, engine="cxtgeo", bstream=False):
+def export_irap_binary(self, mfile, engine="cxtgeo"):
     """Export to Irap RMS binary format.
 
     Note that mfile can also a be a BytesIO instance
     """
 
-    if engine == "cxtgeo":
-        _export_irap_binary_cxtgeo(self, mfile)
+    if mfile.memstream or engine == "python":
+        _export_irap_binary_python(self, mfile)
     elif engine == "cxtgeotest":
         _export_irap_binary_cxtgeotest(self, mfile)
     else:
-        _export_irap_binary_python(self, mfile, bstream=bstream)
+        _export_irap_binary_cxtgeo(self, mfile)
+
+
+def _export_irap_binary_python(self, mfile):
+    """Export to Irap RMS binary format but use python only.
+
+    This is approx 2-5 times slower than the C method, but may a be more robust in cases
+    with BytesIO.
+    """
+
+    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
+
+    ap = pack(
+        ">3i6f3i3f10i",  # > means big endian storage
+        32,
+        -996,
+        self.nrow,
+        self.xori,
+        self.xori + self.xinc * (self.ncol - 1),
+        self.yori,
+        self.yori + self.yinc * (self.nrow - 1),
+        self.xinc,
+        self.yinc,
+        32,
+        16,
+        self.ncol,
+        self.rotation,
+        self.xori,
+        self.yori,
+        16,
+        28,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        28,
+    )
+    inum = self.nrow * self.ncol
+
+    # export to Irap binary in ncol chunks (the only chunk size accepted by RMS)
+    nchunk = self.ncol
+    chunks = [nchunk] * (inum // nchunk)
+    if (inum % nchunk) > 0:
+        chunks.append(inum % nchunk)
+    start = 0
+    for chunk in chunks:
+        ap += pack(">i", chunk * 4)
+        ap += pack(">{:d}f".format(chunk), *vals[start : start + chunk])
+        ap += pack(">i", chunk * 4)
+        start += chunk
+
+    if mfile.memstream:
+        mfile.file.write(ap)
+    else:
+        with open(mfile.name, "wb") as fout:
+            fout.write(ap)
 
 
 def _export_irap_binary_cxtgeo(self, mfile):
@@ -133,64 +238,6 @@ def _export_irap_binary_cxtgeotest(self, mfile):
     mfile.cfclose()
 
 
-def _export_irap_binary_python(self, mfile, bstream=False):
-    """Export to Irap RMS binary format but use python only.
-
-    This is approx 2-5 times slower than the C method, but may a be more robust in cases
-    with BytesIO.
-    """
-
-    vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
-
-    ap = pack(
-        ">3i6f3i3f10i",  # > means big endian storage
-        32,
-        -996,
-        self.nrow,
-        self.xori,
-        self.xori + self.xinc * (self.ncol - 1),
-        self.yori,
-        self.yori + self.yinc * (self.nrow - 1),
-        self.xinc,
-        self.yinc,
-        32,
-        16,
-        self.ncol,
-        self.rotation,
-        self.xori,
-        self.yori,
-        16,
-        28,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        28,
-    )
-    inum = self.nrow * self.ncol
-
-    # export to Irap binary in ncol chunks (only chunk size accepted by RMS)
-    nchunk = self.ncol
-    chunks = [nchunk] * (inum // nchunk)
-    if (inum % nchunk) > 0:
-        chunks.append(inum % nchunk)
-    start = 0
-    for chunk in chunks:
-        ap += pack(">i", chunk * 4)
-        ap += pack(">{:d}f".format(chunk), *vals[start : start + chunk])
-        ap += pack(">i", chunk * 4)
-        start += chunk
-
-    if bstream:
-        mfile.file.write(ap)
-    else:
-        with open(mfile.name, "wb") as fout:
-            fout.write(ap)
-
-
 def export_ijxyz_ascii(self, mfile):
     """Export to DSG IJXYZ ascii format."""
 
@@ -219,12 +266,71 @@ def export_ijxyz_ascii(self, mfile):
     mfile.cfclose()
 
 
-def export_zmap_ascii(self, mfile):
+def export_zmap_ascii(self, mfile, engine="cxtgeo"):
     """Export to ZMAP ascii format (non-rotated)."""
 
     # zmap can only deal with non-rotated formats; hence make a copy
     # of the instance and derotate that prior to export, so that the
     # original instance is unchanged
+
+    if mfile.memstream or engine == "python":
+        _export_zmap_ascii_purepy(self, mfile)
+    else:
+        _export_zmap_ascii(self, mfile)
+
+
+def _export_zmap_ascii_purepy(self, mfile):
+    """Export to ZMAP ascii format (non-rotated), pure python for memstreams"""
+
+    scopy = self.copy()
+
+    undef = -99999.0
+    if abs(scopy.rotation) > 1.0e-20:
+        scopy.unrotate()
+
+    yinc = scopy._yinc * scopy._yflip
+
+    vals = scopy._values.copy()
+    vals = scopy.get_values1d(order="C", asmasked=False, fill_value=undef)
+
+    xmax = scopy.xori + (scopy.ncol - 1) * scopy.xinc
+    ymax = scopy.yori + (scopy.nrow - 1) * yinc
+
+    buf = "! Export from XTGeo (python engine)\n"
+    buf += "@ GRIDFILE, GRID, 5\n"
+    buf += "20, {}, , 8, 1\n".format(undef)
+    buf += "{}, {}, {}, {}, {}, {}\n".format(
+        scopy.nrow, scopy.ncol, scopy.xori, xmax, scopy.yori, ymax
+    )
+    buf += "0.0, 0.0, 0.0\n"
+    buf += "@\n"
+
+    vals = vals.tolist()
+    ic = 0
+    ncol = 0
+    for icol in range(scopy.ncol):
+        for jrow in range(scopy.nrow - 1, -1, -1):
+            ic = icol * scopy.nrow + jrow
+            buf += " {0:20.8f}".format(vals[ic])
+            ncol += 1
+            if ncol == 5 or jrow == 0:
+                buf += "\n"
+                ncol = 0
+
+    # convert buffer to ascii
+    buf = buf.encode("latin1")
+
+    if mfile.memstream:
+        mfile.file.write(buf)
+    else:
+        with open(mfile.name, "wb") as fout:
+            fout.write(buf)
+
+    del vals
+
+
+def _export_zmap_ascii(self, mfile):
+    """Export to ZMAP ascii format (non-rotated)."""
 
     scopy = self.copy()
 
@@ -236,7 +342,7 @@ def export_zmap_ascii(self, mfile):
 
     yinc = scopy._yinc * scopy._yflip
 
-    vals = scopy.get_values1d(order="F", asmasked=False, fill_value=xtgeo.UNDEF)
+    vals = scopy.get_values1d(order="C", asmasked=False, fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_export_zmap_ascii(
         mfile.get_cfhandle(),
@@ -301,6 +407,8 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     """Export to petromod binary format."""
 
     validunits = False
+    unitd = 15
+    unitz = 10
     if isinstance(pmd_dataunits, tuple) and len(pmd_dataunits) == 2:
         unitd, unitz = pmd_dataunits
         if isinstance(unitd, int) and isinstance(unitz, int):
