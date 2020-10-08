@@ -1369,6 +1369,31 @@ class Grid(Grid3D):
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
 
+    def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
+        """Return the bulk volume for a given cell.
+
+        Args:
+            ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
+                unless zerobased is True).
+            activeonly (bool): Skip undef cells if True; return None for inactive.
+
+        Returns:
+            Cell total bulk volume
+
+        Example::
+
+            >>> grid = Grid()
+            >>> grid.from_file("gullfaks2.roff")
+            >>> vol = grid.get_cell_volume(ijk=(45,13,2))
+
+        """
+
+        vol = _grid_etc1.get_cell_volume(
+            self, ijk=ijk, activeonly=activeonly, zerobased=zerobased
+        )
+
+        return vol
+
     def get_layer_slice(self, layer, top=True, activeonly=True):
         """Get numpy arrays for cell coordinates e.g. for plotting.
 

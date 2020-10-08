@@ -232,6 +232,9 @@ x_minmax_cellangles_sides(double *swig_np_dbl_in_v1,
                           double *swig_dbl_out_p2,
                           int degrees);
 
+double
+x_hexahedron_volume(double *corners, long ndim);
+
 /*
  * =====================================================================================
  * surf_* for regular maps/surfaces

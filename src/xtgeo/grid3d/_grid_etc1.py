@@ -522,6 +522,55 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     return tuple(grid_props)
 
 
+def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
+    """Get bulk cell volume for one cell."""
+
+    self._xtgformat1()
+    i, j, k = ijk
+
+    shift = 0
+    if zerobased:
+        shift = 1
+
+    if activeonly:
+        actnum = self.get_actnum()
+        iact = actnum.values3d[i - 1 + shift, j - 1 + shift, k - 1 + shift]
+        if iact == 0:
+            return None
+
+    pcorners = _cxtgeo.new_doublearray(24)
+
+    if self._xtgformat == 1:
+        logger.info("Use xtgformat 1...")
+        _cxtgeo.grd3d_corners(
+            i + shift,
+            j + shift,
+            k + shift,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            self._coordsv,
+            self._zcornsv,
+            pcorners,
+        )
+    else:
+        logger.info("Use xtgformat 2...")
+        _cxtgeo.grdcp3d_corners(
+            i + shift - 1,
+            j + shift - 1,
+            k + shift - 1,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            self._coordsv,
+            self._zcornsv,
+            pcorners,
+        )
+
+    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24)
+    return cellvol
+
+
 def get_layer_slice(self, layer, top=True, activeonly=True):
     """Get X Y cell corners (XY per cell; 5 per cell) as array"""
     self._xtgformat1()
