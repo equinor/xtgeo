@@ -12,7 +12,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
+def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None):
     """Export the grid property to file."""
     logger.debug("Export property to file %s", pfile)
 
@@ -35,7 +35,9 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
         export_roff(self, fobj.name, name, append=append, last=last, binary=binary)
 
     elif fformat == "grdecl":
-        export_grdecl(self, fobj.name, name, append=append, binary=False, dtype=dtype)
+        export_grdecl(
+            self, fobj.name, name, append=append, binary=False, dtype=dtype, fmt=fmt
+        )
 
     elif fformat == "bgrdecl":
         export_grdecl(self, fobj.name, name, append=append, binary=True, dtype=dtype)
@@ -161,7 +163,7 @@ def _export_roff_continuous(self, pfile, name, append=False, last=True, binary=T
 # Export ascii or binary GRDECL
 
 
-def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None):
+def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt=None):
 
     logger.info("Exporting %s to file %s, GRDECL format", name, pfile)
 
@@ -173,6 +175,10 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None):
 
     carray = _gridprop_lowlevel.update_carray(self, dtype=dtype)
 
+    usefmt = " %13.4f"
+    if fmt is not None:
+        usefmt = " {}".format(fmt)
+
     iarr = _cxtgeo.new_intpointer()
     farr = _cxtgeo.new_floatpointer()
     darr = _cxtgeo.new_doublepointer()
@@ -180,14 +186,20 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None):
     if "double" in str(carray):
         ptype = 3
         darr = carray
+        if fmt is None:
+            usefmt = " %e"
 
     elif "float" in str(carray):
         ptype = 2
         farr = carray
+        if fmt is None:
+            usefmt = " %e"
 
     else:
         ptype = 1
         iarr = carray
+        if fmt is None:
+            usefmt = " %d"
 
     mode = 0
     if not binary:
@@ -206,6 +218,7 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None):
         farr,
         darr,
         name,
+        usefmt,
         pfile,
         mode,
         appendmode,

@@ -653,7 +653,9 @@ class GridProperty(Grid3D):
 
         return obj
 
-    def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None):
+    def to_file(
+        self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None
+    ):
         """Export the grid property to file.
 
         Args:
@@ -668,6 +670,8 @@ class GridProperty(Grid3D):
                 floating point number and 'int32' for discrete properties.
                 Other choices are 'float64' which are 'DOUB' entries in
                 Eclipse formats.
+            fmt (str): Format for ascii grdecl format, default is None. If spesified,
+                the user is responsible for a valid format specifier, e.g. "%8.4f"
 
         Example::
 
@@ -679,10 +683,19 @@ class GridProperty(Grid3D):
 
             poro.to_file('reek_export_poro.bgrdecl', format='bgrdecl')
 
+        .. versionadded:: 2.13  Key `fmt` was added and default format for float output
+            to grdecl is now "%e" if `fmt=None`
+
         """
 
         _gridprop_export.to_file(
-            self, pfile, fformat=fformat, name=name, append=append, dtype=dtype
+            self,
+            pfile,
+            fformat=fformat,
+            name=name,
+            append=append,
+            dtype=dtype,
+            fmt=fmt,
         )
 
     def from_roxar(
