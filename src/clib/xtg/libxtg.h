@@ -1484,6 +1484,7 @@ grd3d_export_grdeclprop2(int nx,
                          float *p_fprop_v,
                          double *p_dprop_v,
                          char *pname,
+                         char *fmt,
                          char *filename,
                          int mode,
                          int flag);

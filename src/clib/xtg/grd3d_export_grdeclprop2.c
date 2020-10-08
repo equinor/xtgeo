@@ -38,6 +38,7 @@ grd3d_export_grdeclprop2(int nx,
                          float *p_fprop_v,
                          double *p_dprop_v,
                          char *pname,
+                         char *fmt,
                          char *filename,
                          int mode,
                          int flag)
@@ -71,11 +72,7 @@ grd3d_export_grdeclprop2(int nx,
         grd3d_write_eclrecord(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen);
     } else {
         /* todo: smart analysis of values to decide formatting */
-        char fmt[10] = " %8d";
         int ncol = 6;
-        if (ptype > 1) {
-            strcpy(fmt, " %13.4f");
-        }
 
         grd3d_write_eclinput(fc, pname, ptype, p_iprop_v, p_fprop_v, p_dprop_v, nlen,
                              fmt, ncol);
