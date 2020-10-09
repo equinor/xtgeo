@@ -129,7 +129,7 @@ x_hexahedron_volume(double *corners, long ndim)
     }
 
     double **crn = x_allocate_2d_double(8, 3);
-    int **cset = x_allocate_2d_int(4, 5);
+    int **cset = x_allocate_2d_int(4, 6);
 
     int i, j;
     int ic = 0;
@@ -139,38 +139,43 @@ x_hexahedron_volume(double *corners, long ndim)
         }
     }
 
-    // the hexahedron consists of 5 tetrahedrons
+    // the hexahedron consists of 6 tetrahedrons
 
     cset[0][0] = 0;
-    cset[1][0] = 2;
-    cset[2][0] = 3;
-    cset[3][0] = 6;
+    cset[1][0] = 4;
+    cset[2][0] = 5;
+    cset[3][0] = 7;
 
     cset[0][1] = 0;
     cset[1][1] = 1;
-    cset[2][1] = 3;
-    cset[3][1] = 5;
+    cset[2][1] = 5;
+    cset[3][1] = 7;
 
     cset[0][2] = 0;
-    cset[1][2] = 4;
-    cset[2][2] = 5;
-    cset[3][2] = 6;
+    cset[1][2] = 1;
+    cset[2][2] = 3;
+    cset[3][2] = 7;
 
-    cset[0][3] = 3;
-    cset[1][3] = 6;
-    cset[2][3] = 7;
-    cset[3][3] = 5;
+    cset[0][3] = 2;
+    cset[1][3] = 4;
+    cset[2][3] = 6;
+    cset[3][3] = 7;
 
     cset[0][4] = 0;
-    cset[1][4] = 3;
-    cset[2][4] = 5;
-    cset[3][4] = 6;
+    cset[1][4] = 2;
+    cset[2][4] = 4;
+    cset[3][4] = 7;
+
+    cset[0][5] = 0;
+    cset[1][5] = 2;
+    cset[2][5] = 3;
+    cset[3][5] = 7;
 
     double thd[12];
 
     double vol1 = 0;
     int icset;
-    for (icset = 0; icset < 5; icset++) {
+    for (icset = 0; icset < 6; icset++) {
         ic = 0;
         for (i = 0; i < 4; i++) {
             thd[ic + 0] = crn[cset[i][icset]][0];
@@ -178,39 +183,44 @@ x_hexahedron_volume(double *corners, long ndim)
             thd[ic + 2] = crn[cset[i][icset]][2];
             ic += 3;
         }
-        printf("ICSET1: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
+        // printf("ICSET1: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
         vol1 += x_tetrahedron_volume(thd, 12);
     }
 
     // alternative arrangment of tetrahedrons
-
     cset[0][0] = 0;
-    cset[1][0] = 1;
-    cset[2][0] = 2;
-    cset[3][0] = 4;
+    cset[1][0] = 4;
+    cset[2][0] = 5;
+    cset[3][0] = 6;
 
-    cset[0][1] = 1;
-    cset[1][1] = 2;
-    cset[2][1] = 3;
-    cset[3][1] = 7;
+    cset[0][1] = 0;
+    cset[1][1] = 1;
+    cset[2][1] = 5;
+    cset[3][1] = 6;
 
-    cset[0][2] = 4;
-    cset[1][2] = 5;
-    cset[2][2] = 7;
-    cset[3][2] = 1;
+    cset[0][2] = 0;
+    cset[1][2] = 1;
+    cset[2][2] = 2;
+    cset[3][2] = 6;
 
-    cset[0][3] = 6;
-    cset[1][3] = 4;
-    cset[2][3] = 7;
-    cset[3][3] = 2;
+    cset[0][3] = 2;
+    cset[1][3] = 6;
+    cset[2][3] = 5;
+    cset[3][3] = 7;
 
-    cset[0][4] = 1;
-    cset[1][4] = 2;
-    cset[2][4] = 4;
+    cset[0][4] = 6;
+    cset[1][4] = 1;
+    cset[2][4] = 5;
     cset[3][4] = 7;
 
+    cset[0][5] = 1;
+    cset[1][5] = 2;
+    cset[2][5] = 3;
+    cset[3][5] = 7;
+
     double vol2 = 0;
-    for (icset = 0; icset < 5; icset++) {
+
+    for (icset = 0; icset < 6; icset++) {
         ic = 0;
         for (i = 0; i < 4; i++) {
             thd[ic + 0] = crn[cset[i][icset]][0];
@@ -218,14 +228,15 @@ x_hexahedron_volume(double *corners, long ndim)
             thd[ic + 2] = crn[cset[i][icset]][2];
             ic += 3;
         }
-        printf("ICSET2: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
+        // printf("ICSET2: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
         vol2 += x_tetrahedron_volume(thd, 12);
     }
+
 
     x_free_2d_double(crn);
     x_free_2d_int(cset);
 
-    // printf("Vol1 and vol2: %lf %lf\n", vol1, vol2);
+    printf("Vol1 and vol2: %lf %lf\n", vol1, vol2);
 
     return 0.5 * (vol1 + vol2);
 }

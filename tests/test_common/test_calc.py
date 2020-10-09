@@ -304,6 +304,12 @@ def test_x_cellangles():
 def test_x_hexahedron_volume():
     """Test hexahedron (cell) bulk volume valculation"""
 
+    # box
+    grd = xtgeo.Grid(TESTGRID3)
+
+    vol1 = grd.get_cell_volume((1, 1, 1))
+    assert vol1 == pytest.approx(3821600, rel=0.01)
+
     # banal6
     grd = xtgeo.Grid(TESTGRID2)
 
@@ -323,6 +329,7 @@ def test_x_hexahedron_volume():
 
     ntot = 0
     nfail = 0
+    ratioarr = []
     for icol in range(grd.ncol):
         for jrow in range(grd.nrow):
             for klay in range(grd.nlay):
@@ -330,11 +337,23 @@ def test_x_hexahedron_volume():
                 if vol1a is not None:
                     vol1b = tbulk_rms.values[icol, jrow, klay]
                     ratio = vol1a / vol1b
+                    ratioarr.append(ratio)
                     ntot += 1
-                    if ratio < 0.9 or ratio > 1.1:
+                    if ratio < 0.6 or ratio > 1.4:
                         nfail += 1
                         print("{} {} {}:  {}".format(icol, jrow, klay, ratio))
                         print("XTGeo vs RMS {} {}".format(vol1a, vol1b))
                     # assert vol1a == pytest.approx(vol1b)
 
-    print("Fails of total", nfail, "vs", ntot)
+    ratioarr = np.array(ratioarr)
+    print(
+        "Fails of total",
+        nfail,
+        "vs",
+        ntot,
+        "mean ratio:",
+        ratioarr.mean(),
+        ratioarr.min(),
+        ratioarr.max(),
+    )
+
