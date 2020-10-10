@@ -232,7 +232,6 @@ x_hexahedron_volume(double *corners, long ndim)
         vol2 += x_tetrahedron_volume(thd, 12);
     }
 
-
     x_free_2d_double(crn);
     x_free_2d_int(cset);
 
@@ -355,7 +354,7 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
     }
 
     double **crn = x_allocate_2d_double(8, 3);
-    int **cset = x_allocate_2d_int(4, 5);
+    int **cset = x_allocate_2d_int(4, 6);
 
     int i, j;
     int ic = 0;
@@ -365,39 +364,43 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
         }
     }
 
-    // the hexahedron consists of 5 tetrahedrons
-
+    // the hexahedron consists of 6 tetrahedrons
     cset[0][0] = 0;
-    cset[1][0] = 2;
-    cset[2][0] = 3;
-    cset[3][0] = 6;
+    cset[1][0] = 4;
+    cset[2][0] = 5;
+    cset[3][0] = 7;
 
     cset[0][1] = 0;
     cset[1][1] = 1;
-    cset[2][1] = 3;
-    cset[3][1] = 5;
+    cset[2][1] = 5;
+    cset[3][1] = 7;
 
     cset[0][2] = 0;
-    cset[1][2] = 4;
-    cset[2][2] = 5;
-    cset[3][2] = 6;
+    cset[1][2] = 1;
+    cset[2][2] = 3;
+    cset[3][2] = 7;
 
-    cset[0][3] = 3;
-    cset[1][3] = 6;
-    cset[2][3] = 7;
-    cset[3][3] = 5;
+    cset[0][3] = 2;
+    cset[1][3] = 4;
+    cset[2][3] = 6;
+    cset[3][3] = 7;
 
     cset[0][4] = 0;
-    cset[1][4] = 3;
-    cset[2][4] = 5;
-    cset[3][4] = 6;
+    cset[1][4] = 2;
+    cset[2][4] = 4;
+    cset[3][4] = 7;
+
+    cset[0][5] = 0;
+    cset[1][5] = 2;
+    cset[2][5] = 3;
+    cset[3][5] = 7;
 
     int icset;
     double thd[12];
 
     int status1 = 0;
     int set1score = 0;
-    for (icset = 0; icset < 5; icset++) {
+    for (icset = 0; icset < 6; icset++) {
         ic = 0;
         for (i = 0; i < 4; i++) {
             thd[ic + 0] = crn[cset[i][icset]][0];
@@ -423,33 +426,38 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
     // alternative arrangment of tetrahedrons
 
     cset[0][0] = 0;
-    cset[1][0] = 1;
-    cset[2][0] = 2;
-    cset[3][0] = 4;
+    cset[1][0] = 4;
+    cset[2][0] = 5;
+    cset[3][0] = 6;
 
-    cset[0][1] = 1;
-    cset[1][1] = 2;
-    cset[2][1] = 3;
-    cset[3][1] = 7;
+    cset[0][1] = 0;
+    cset[1][1] = 1;
+    cset[2][1] = 5;
+    cset[3][1] = 6;
 
-    cset[0][2] = 4;
-    cset[1][2] = 5;
-    cset[2][2] = 7;
-    cset[3][2] = 1;
+    cset[0][2] = 0;
+    cset[1][2] = 1;
+    cset[2][2] = 2;
+    cset[3][2] = 6;
 
-    cset[0][3] = 6;
-    cset[1][3] = 4;
-    cset[2][3] = 7;
-    cset[3][3] = 2;
+    cset[0][3] = 2;
+    cset[1][3] = 6;
+    cset[2][3] = 5;
+    cset[3][3] = 7;
 
-    cset[0][4] = 1;
-    cset[1][4] = 2;
-    cset[2][4] = 4;
+    cset[0][4] = 6;
+    cset[1][4] = 1;
+    cset[2][4] = 5;
     cset[3][4] = 7;
+
+    cset[0][5] = 1;
+    cset[1][5] = 2;
+    cset[2][5] = 3;
+    cset[3][5] = 7;
 
     int status2 = 0;
     int set2score = 0;
-    for (icset = 0; icset < 5; icset++) {
+    for (icset = 0; icset < 6; icset++) {
         ic = 0;
         for (i = 0; i < 4; i++) {
             thd[ic + 0] = crn[cset[i][icset]][0];
