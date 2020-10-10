@@ -175,6 +175,40 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     return dx, dy
 
 
+def get_bulkvol(self, name="bulkvol", asmasked=True):
+    """Get cell bulk volume as a property"""
+
+    self._xtgformat2()
+
+    bulk = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        name=name,
+        discrete=False,
+    )
+
+    bval = np.zeros((bulk.dimensions))
+
+    _cxtgeo.grdcp3d_cellvol(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        bval,
+        0 if asmasked else 1,
+    )
+
+    if asmasked:
+        bval = np.ma.masked_greater(bval, xtgeo.UNDEF_LIMIT)
+
+    bulk.values = bval
+
+    return bulk
+
+
 def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     """Get I J K as properties"""
 

@@ -19,21 +19,6 @@ _x_hexahedron_dz(double *corners)
     return dzsum / 4.0;
 }
 
-static int
-_x_hexahedron_collapse(double *corners)
-{
-    // Detect if cell has collapse corners
-
-    int ico;
-    for (ico = 0; ico < 4; ico++) {
-        double dzdiff = -1 * (corners[3 * ico + 2] - corners[3 * ico + 2 + 12]);
-        if (dzdiff < 0.00001)
-            return 1;
-    }
-
-    return 0;
-}
-
 /*
  ***************************************************************************************
  *
@@ -123,9 +108,6 @@ x_hexahedron_volume(double *corners, long ndim)
     // first avoid cells that collapsed in some way
     if (_x_hexahedron_dz(corners) < FLOATEPS) {
         return 0.0;
-    }
-    if (_x_hexahedron_collapse(corners) == 1) {
-        printf("Collapse corners are present\n");
     }
 
     double **crn = x_allocate_2d_double(8, 3);
@@ -234,8 +216,6 @@ x_hexahedron_volume(double *corners, long ndim)
 
     x_free_2d_double(crn);
     x_free_2d_int(cset);
-
-    printf("Vol1 and vol2: %lf %lf\n", vol1, vol2);
 
     return 0.5 * (vol1 + vol2);
 }

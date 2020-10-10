@@ -8,6 +8,8 @@ import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
+xtg = xtgeo.XTGeoDialog()
+logger = xtg.basiclogger(__name__)
 
 # =============================================================================
 # Do tests of simple calc routines
@@ -339,21 +341,20 @@ def test_x_hexahedron_volume():
                     ratio = vol1a / vol1b
                     ratioarr.append(ratio)
                     ntot += 1
-                    if ratio < 0.6 or ratio > 1.4:
+                    if ratio < 0.98 or ratio > 1.02:
                         nfail += 1
-                        print("{} {} {}:  {}".format(icol, jrow, klay, ratio))
-                        print("XTGeo vs RMS {} {}".format(vol1a, vol1b))
-                    # assert vol1a == pytest.approx(vol1b)
+                        logger.info("%s %s %s %s:  %s", icol, jrow, klay, ratio)
+                        logger.info("XTGeo vs RMS %s %s", vol1a, vol1b)
+                    assert vol1a == pytest.approx(vol1b, 0.0001)
 
-    ratioarr = np.array(ratioarr)
-    print(
-        "Fails of total",
+    rarr = np.array(ratioarr)
+    logger.info(
+        "Fails of total %s vs %s, mean/min/max: %s %s %s",
         nfail,
-        "vs",
         ntot,
-        "mean ratio:",
-        ratioarr.mean(),
-        ratioarr.min(),
-        ratioarr.max(),
+        rarr.mean(),
+        rarr.min(),
+        rarr.max(),
     )
-
+    assert rarr == pytest.approx(1.0, 0.0001)
+    assert nfail == 0

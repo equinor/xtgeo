@@ -1141,7 +1141,7 @@ class Grid(Grid3D):
             mask (bool): Deprecated, use asmasked instead!
 
         Returns:
-            A XTGeo GridProperty object for flip
+            A XTGeo GridProperty object dZ
         """
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
@@ -1169,6 +1169,25 @@ class Grid(Grid3D):
 
         # return the property objects
         return deltax, deltay
+
+    def get_bulkvol(self, name="bulkvol", asmasked=True):
+        """
+        Return geometric cell volume as a GridProperty object.
+
+        The bulk is computed to split each cell in six 3D tetrahedrons, done in
+        two different ways, and find the average of those.
+
+        Args:
+            name (str): names of property
+            asmasked (bool). If True, make a np.ma array where inactive cells
+                are masked. Otherwise a numpy array will all bulk for all cells is
+                returned
+
+        Returns:
+            XTGeo GridProperty object
+        """
+
+        return _grid_etc1.get_bulkvol(self, name=name, asmasked=asmasked)
 
     def get_indices(self, names=("I", "J", "K")):
         """Return 3 GridProperty objects for column, row, and layer index,
