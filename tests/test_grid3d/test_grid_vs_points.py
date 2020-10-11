@@ -146,8 +146,8 @@ def test_get_ijk_from_points():
     assert ijk["KZ"][2] == 14
 
     assert ijk["KZ"][3] == -1
-    assert ijk["KZ"][4] == 13
-    assert ijk["KZ"][5] == 10
+    assert ijk["KZ"][4] == 14
+    assert ijk["KZ"][5] == 11
 
     if g1.ijk_handedness == "right":
         g1.ijk_handedness = "left"
