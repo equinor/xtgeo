@@ -8,11 +8,17 @@ import xtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
+xtg = xtgeo.XTGeoDialog()
+logger = xtg.basiclogger(__name__)
 
 # =============================================================================
 # Do tests of simple calc routines
 # =============================================================================
 TESTGRID = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
+TESTGRID_TBULK = "../xtgeo-testdata/3dgrids/etc/gridqc1_totbulk.roff"
+TESTGRID2 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
+TESTGRID3 = "../xtgeo-testdata/3dgrids/etc/box.roff"
+TESTGRID4 = "../xtgeo-testdata/3dgrids/etc/twocell.roff"
 
 
 def test_vectorinfo2():
@@ -295,3 +301,60 @@ def test_x_cellangles():
 
     assert amin == pytest.approx(75.05, abs=0.01)
     assert amax == pytest.approx(104.95, abs=0.01)
+
+
+def test_x_hexahedron_volume():
+    """Test hexahedron (cell) bulk volume valculation"""
+
+    # box
+    grd = xtgeo.Grid(TESTGRID3)
+
+    vol1 = grd.get_cell_volume((1, 1, 1))
+    assert vol1 == pytest.approx(3821600, rel=0.01)
+
+    # banal6
+    grd = xtgeo.Grid(TESTGRID2)
+
+    vol1 = grd.get_cell_volume((1, 1, 1))
+    vol2 = grd.get_cell_volume((4, 1, 1))
+    vol3 = grd.get_cell_volume((1, 2, 1))
+    vol4 = grd.get_cell_volume((3, 1, 2))
+
+    assert vol1 == pytest.approx(1679.7, rel=0.01)
+    assert vol2 == pytest.approx(2070.3, rel=0.01)
+    assert vol3 == pytest.approx(1289.1, rel=0.01)
+    assert vol4 == pytest.approx(593.75, rel=0.01)
+
+    # gridqc1
+    grd = xtgeo.Grid(TESTGRID)
+    tbulk_rms = xtgeo.gridproperty_from_file(TESTGRID_TBULK)
+
+    ntot = 0
+    nfail = 0
+    ratioarr = []
+    for icol in range(grd.ncol):
+        for jrow in range(grd.nrow):
+            for klay in range(grd.nlay):
+                vol1a = grd.get_cell_volume((icol, jrow, klay), zerobased=True)
+                if vol1a is not None:
+                    vol1b = tbulk_rms.values[icol, jrow, klay]
+                    ratio = vol1a / vol1b
+                    ratioarr.append(ratio)
+                    ntot += 1
+                    if ratio < 0.98 or ratio > 1.02:
+                        nfail += 1
+                        logger.info("%s %s %s %s:  %s", icol, jrow, klay, ratio)
+                        logger.info("XTGeo vs RMS %s %s", vol1a, vol1b)
+                    assert vol1a == pytest.approx(vol1b, 0.0001)
+
+    rarr = np.array(ratioarr)
+    logger.info(
+        "Fails of total %s vs %s, mean/min/max: %s %s %s",
+        nfail,
+        ntot,
+        rarr.mean(),
+        rarr.min(),
+        rarr.max(),
+    )
+    assert rarr == pytest.approx(1.0, 0.0001)
+    assert nfail == 0

@@ -3,6 +3,22 @@
 #include "logger.h"
 #include <math.h>
 
+static double
+_x_hexahedron_dz(double *corners)
+{
+    // TODO: This does not account for overall zflip ala Petrel or cells that
+    // are malformed
+
+    int ico;
+    double dzsum = 0.0;
+    for (ico = 0; ico < 4; ico++) {
+        double zcsum = fabs(corners[3 * ico + 2] - corners[3 * ico + 2 + 12]);
+        dzsum += zcsum;
+    }
+
+    return dzsum / 4.0;
+}
+
 /*
  ***************************************************************************************
  *
@@ -59,6 +75,149 @@ x_tetrahedron_volume(double *pv, long ndim)
     vol = sqrt(vol) / 12.0;
 
     return vol;
+}
+
+/*
+ ***************************************************************************************
+ *
+ * NAME:
+ *    x_hexahedron_volume.c
+ *
+ *
+ * DESCRIPTION:
+ *    Estimate the volume of a hexahedron i.e. a cornerpoint cell. This is a nonunique
+ *    entity, but it is approximated by computing two different ways of top/base
+ *    splitting and average those.
+ *
+ * ARGUMENTS:
+ *   corners       i     a [24] array with X Y Z of 8 vertices, x1, y1, z1, x2, y2, ...
+ *                        arranged as usual for corner point cells
+ *
+ * RETURNS:
+ *    Volume
+ *
+ * LICENCE:
+ *    cf. XTGeo LICENSE
+ ***************************************************************************************
+ */
+
+double
+x_hexahedron_volume(double *corners, long ndim)
+{
+
+    // first avoid cells that collapsed in some way
+    if (_x_hexahedron_dz(corners) < FLOATEPS) {
+        return 0.0;
+    }
+
+    double **crn = x_allocate_2d_double(8, 3);
+    int **cset = x_allocate_2d_int(4, 6);
+
+    int i, j;
+    int ic = 0;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 3; j++) {
+            crn[i][j] = corners[ic++];
+        }
+    }
+
+    // the hexahedron consists of 6 tetrahedrons
+
+    cset[0][0] = 0;
+    cset[1][0] = 4;
+    cset[2][0] = 5;
+    cset[3][0] = 7;
+
+    cset[0][1] = 0;
+    cset[1][1] = 1;
+    cset[2][1] = 5;
+    cset[3][1] = 7;
+
+    cset[0][2] = 0;
+    cset[1][2] = 1;
+    cset[2][2] = 3;
+    cset[3][2] = 7;
+
+    cset[0][3] = 2;
+    cset[1][3] = 4;
+    cset[2][3] = 6;
+    cset[3][3] = 7;
+
+    cset[0][4] = 0;
+    cset[1][4] = 2;
+    cset[2][4] = 4;
+    cset[3][4] = 7;
+
+    cset[0][5] = 0;
+    cset[1][5] = 2;
+    cset[2][5] = 3;
+    cset[3][5] = 7;
+
+    double thd[12];
+
+    double vol1 = 0;
+    int icset;
+    for (icset = 0; icset < 6; icset++) {
+        ic = 0;
+        for (i = 0; i < 4; i++) {
+            thd[ic + 0] = crn[cset[i][icset]][0];
+            thd[ic + 1] = crn[cset[i][icset]][1];
+            thd[ic + 2] = crn[cset[i][icset]][2];
+            ic += 3;
+        }
+        // printf("ICSET1: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
+        vol1 += x_tetrahedron_volume(thd, 12);
+    }
+
+    // alternative arrangment of tetrahedrons
+    cset[0][0] = 0;
+    cset[1][0] = 4;
+    cset[2][0] = 5;
+    cset[3][0] = 6;
+
+    cset[0][1] = 0;
+    cset[1][1] = 1;
+    cset[2][1] = 5;
+    cset[3][1] = 6;
+
+    cset[0][2] = 0;
+    cset[1][2] = 1;
+    cset[2][2] = 2;
+    cset[3][2] = 6;
+
+    cset[0][3] = 2;
+    cset[1][3] = 6;
+    cset[2][3] = 5;
+    cset[3][3] = 7;
+
+    cset[0][4] = 6;
+    cset[1][4] = 1;
+    cset[2][4] = 5;
+    cset[3][4] = 7;
+
+    cset[0][5] = 1;
+    cset[1][5] = 2;
+    cset[2][5] = 3;
+    cset[3][5] = 7;
+
+    double vol2 = 0;
+
+    for (icset = 0; icset < 6; icset++) {
+        ic = 0;
+        for (i = 0; i < 4; i++) {
+            thd[ic + 0] = crn[cset[i][icset]][0];
+            thd[ic + 1] = crn[cset[i][icset]][1];
+            thd[ic + 2] = crn[cset[i][icset]][2];
+            ic += 3;
+        }
+        // printf("ICSET2: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
+        vol2 += x_tetrahedron_volume(thd, 12);
+    }
+
+    x_free_2d_double(crn);
+    x_free_2d_int(cset);
+
+    return 0.5 * (vol1 + vol2);
 }
 
 /*
@@ -164,22 +323,6 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
  *    cf. XTGeo LICENSE
  ***************************************************************************************
  */
-
-static double
-_x_hexahedron_dz(double *corners)
-{
-    // TODO: This does not account for overall zflip ala Petrel or cells that
-    // are malformed
-
-    int ico;
-    double dzsum = 0.0;
-    for (ico = 0; ico < 4; ico++) {
-        double zcsum = fabs(corners[3 * ico + 2] - corners[3 * ico + 2 + 12]);
-        dzsum += zcsum;
-    }
-
-    return dzsum / 4.0;
-}
 
 int
 x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndim)

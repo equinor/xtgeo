@@ -419,6 +419,9 @@ def _export_grid_cornerpoint_roxapi_v2(
 
     geom = CPG.create(self.dimensions)
 
+    scopy = self.copy()
+    scopy.make_zconsistent()
+
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * (self.nlay + 1) * 4
 
@@ -427,7 +430,7 @@ def _export_grid_cornerpoint_roxapi_v2(
         self.nrow,
         self.nlay,
         self._coordsv,
-        self._zcornsv,
+        scopy._zcornsv,
         npill,
         npill,
         nzcrn,
@@ -459,6 +462,7 @@ def _export_grid_cornerpoint_roxapi_v2(
 
     geom.set_defined_cells(self._actnumsv.astype(np.bool))
     grid.set_geometry(geom)
+    del scopy
 
 
 def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover

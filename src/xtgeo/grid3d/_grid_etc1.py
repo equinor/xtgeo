@@ -175,6 +175,40 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     return dx, dy
 
 
+def get_bulkvol(self, name="bulkvol", asmasked=True):
+    """Get cell bulk volume as a property"""
+
+    self._xtgformat2()
+
+    bulk = GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        name=name,
+        discrete=False,
+    )
+
+    bval = np.zeros((bulk.dimensions))
+
+    _cxtgeo.grdcp3d_cellvol(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        bval,
+        0 if asmasked else 1,
+    )
+
+    if asmasked:
+        bval = np.ma.masked_greater(bval, xtgeo.UNDEF_LIMIT)
+
+    bulk.values = bval
+
+    return bulk
+
+
 def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
     """Get I J K as properties"""
 
@@ -520,6 +554,55 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
     # return the 24 objects (x1, y1, z1, ... x8, y8, z8)
     return tuple(grid_props)
+
+
+def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
+    """Get bulk cell volume for one cell."""
+
+    self._xtgformat1()
+    i, j, k = ijk
+
+    shift = 0
+    if zerobased:
+        shift = 1
+
+    if activeonly:
+        actnum = self.get_actnum()
+        iact = actnum.values3d[i - 1 + shift, j - 1 + shift, k - 1 + shift]
+        if iact == 0:
+            return None
+
+    pcorners = _cxtgeo.new_doublearray(24)
+
+    if self._xtgformat == 1:
+        logger.info("Use xtgformat 1...")
+        _cxtgeo.grd3d_corners(
+            i + shift,
+            j + shift,
+            k + shift,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            self._coordsv,
+            self._zcornsv,
+            pcorners,
+        )
+    else:
+        logger.info("Use xtgformat 2...")
+        _cxtgeo.grdcp3d_corners(
+            i + shift - 1,
+            j + shift - 1,
+            k + shift - 1,
+            self.ncol,
+            self.nrow,
+            self.nlay,
+            self._coordsv,
+            self._zcornsv,
+            pcorners,
+        )
+
+    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24)
+    return cellvol
 
 
 def get_layer_slice(self, layer, top=True, activeonly=True):

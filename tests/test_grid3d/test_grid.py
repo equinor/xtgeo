@@ -41,6 +41,7 @@ REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
 BRILGRDECL = "../xtgeo-testdata/3dgrids/bri/b.grdecl"
 BANAL6 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
 GRIDQC1 = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
+GRIDQC1_CELLVOL = "../xtgeo-testdata/3dgrids/etc/gridqc1_totbulk.roff"
 GRIDQC2 = "../xtgeo-testdata/3dgrids/etc/gridqc_negthick_twisted.roff"
 
 DUALFIL1 = "../xtgeo-testdata/3dgrids/etc/dual_grid.roff"
@@ -777,3 +778,32 @@ def test_gridquality_properties():
     neg = props2.get_prop_by_name("negative_thickness")
     assert neg.values[0, 0, 0] == 0
     assert neg.values[2, 1, 0] == 1
+
+
+def test_bulkvol():
+    """Test cell bulk volume calculation"""
+
+    grd = Grid(GRIDQC1)
+    cellvol_rms = GridProperty(GRIDQC1_CELLVOL)
+
+    bulk = grd.get_bulkvol()
+    logger.info("Sum this: %s", bulk.values.sum())
+    logger.info("Sum RMS: %s", cellvol_rms.values.sum())
+
+    assert bulk.values.sum() == pytest.approx(cellvol_rms.values.sum(), rel=0.001)
+
+
+@tsetup.bigtest
+def test_bulkvol_speed():
+    """Test cell bulk volume calculation speed"""
+
+    dimens = (100, 500, 50)
+    grd = Grid()
+    grd.create_box(dimension=dimens)
+    grd._xtgformat2()
+
+    t0 = xtg.timer()
+    bulk = grd.get_bulkvol()
+    ncells = np.prod(dimens)
+    print(xtg.timer(t0), ncells)
+
