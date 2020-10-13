@@ -106,7 +106,6 @@ grd3d_export_grdecl(int nx,
         }
     }
 
-
     if (mode == 0) {
         grd3d_write_eclrecord(fc, "COORD", 2, &idum, farr, &ddum, ncoord);
     } else {

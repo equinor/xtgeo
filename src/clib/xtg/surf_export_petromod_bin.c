@@ -38,7 +38,6 @@ surf_export_petromod_bin(FILE *fc, char *dsc, double *surfzv, long nsurf)
     if (fc == NULL)
         logger_critical(LI, FI, FU, "Cannot open file in %s", FU);
 
-
     int someid = 587405668;
     if (swap == 1)
         SWAP_INT(someid);
@@ -47,7 +46,7 @@ surf_export_petromod_bin(FILE *fc, char *dsc, double *surfzv, long nsurf)
 
     fprintf(fc, "%s", dsc);
 
-    char mynull[1] = {'\0'};
+    char mynull[1] = { '\0' };
     fwrite(&mynull, 1, 1, fc);
 
     float myvalue;

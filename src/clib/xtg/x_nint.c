@@ -11,7 +11,9 @@
 #include "libxtg_.h"
 #include <math.h>
 
-int x_nint(double value) {
+int
+x_nint(double value)
+{
 
     double near;
 

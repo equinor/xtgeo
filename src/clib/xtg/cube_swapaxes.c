@@ -1,51 +1,49 @@
 /*
 ****************************************************************************************
- *
- * NAME:
- *    cube_swapaxes.c
- *
- * DESCRIPTION:
- *    Do swapping of cube axes; will switch from a left handed system
- *    to a right handed system (depth pos. down in both cases). Swapping axes).
- *    Origo will be the same,  but xinc, yinc, nx, ny will be swapped,
- *    and rotation updated.
- *
- * ARGUMENTS:
- *    nx...nz       i/o    Cube dimensions
- *    yflip         i/o    Cube YFLIP index (pointer, will be updated)
- *    xinc..        i/o    Cube increments
- *    rotation      i/o    Cube rotation
- *    p_val_v        i     1D Array of cube values of ncx*ncy*ncz size
- *    p_traceid_v    i     1D Array of trace id values of ncx*ncy size
- *
- * RETURNS:
- *    Function: 0: upon success. If problems <> 0:
- *
- * TODO/ISSUES/BUGS:
- *    - Robust?
- *
- * LICENCE:
- *    cf. XTGeo LICENSE
- ***************************************************************************************
- */
+*
+* NAME:
+*    cube_swapaxes.c
+*
+* DESCRIPTION:
+*    Do swapping of cube axes; will switch from a left handed system
+*    to a right handed system (depth pos. down in both cases). Swapping axes).
+*    Origo will be the same,  but xinc, yinc, nx, ny will be swapped,
+*    and rotation updated.
+*
+* ARGUMENTS:
+*    nx...nz       i/o    Cube dimensions
+*    yflip         i/o    Cube YFLIP index (pointer, will be updated)
+*    xinc..        i/o    Cube increments
+*    rotation      i/o    Cube rotation
+*    p_val_v        i     1D Array of cube values of ncx*ncy*ncz size
+*    p_traceid_v    i     1D Array of trace id values of ncx*ncy size
+*
+* RETURNS:
+*    Function: 0: upon success. If problems <> 0:
+*
+* TODO/ISSUES/BUGS:
+*    - Robust?
+*
+* LICENCE:
+*    cf. XTGeo LICENSE
+***************************************************************************************
+*/
 
 #include "libxtg.h"
 #include "libxtg_.h"
 
-
-int cube_swapaxes (
-                   int *nx,
-                   int *ny,
-                   int nz,
-                   int *yflip,
-                   double *xinc,
-                   double *yinc,
-                   double *rotation,
-                   float *p_val_v,
-                   long nval,
-                   int *p_traceid_v,
-                   long nval_traceid
-                   )
+int
+cube_swapaxes(int *nx,
+              int *ny,
+              int nz,
+              int *yflip,
+              double *xinc,
+              double *yinc,
+              double *rotation,
+              float *p_val_v,
+              long nval,
+              int *p_traceid_v,
+              long nval_traceid)
 {
 
     /* locals */
@@ -94,7 +92,6 @@ int cube_swapaxes (
         p_traceid_v[i] = tmp2[i];
     }
 
-
     nnx = *ny;
     nny = *nx;
     xxinc = *yinc;
@@ -106,10 +103,12 @@ int cube_swapaxes (
     *yinc = yyinc;
 
     rot = *rotation;
-    rot = rot + flip*90;
+    rot = rot + flip * 90;
 
-    if (rot >= 360.0) rot = rot - 360;
-    if (rot < 0.0) rot = rot + 360;
+    if (rot >= 360.0)
+        rot = rot - 360;
+    if (rot < 0.0)
+        rot = rot + 360;
 
     *yflip = flip * -1;
     *rotation = rot;
