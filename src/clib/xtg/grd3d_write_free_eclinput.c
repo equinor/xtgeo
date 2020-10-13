@@ -29,7 +29,7 @@
  * RETURNS:
  *    Void
  *
-*/
+ */
 
 void
 grd3d_write_free_eclinput(FILE *fc, char *recname, char *freetext)
@@ -37,5 +37,4 @@ grd3d_write_free_eclinput(FILE *fc, char *recname, char *freetext)
 
     fprintf(fc, "%-8s\n", recname);
     fprintf(fc, "%s\n", freetext);
-
 }

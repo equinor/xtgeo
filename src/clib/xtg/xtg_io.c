@@ -4,12 +4,13 @@
  * Wrappers for file IO
  * ############################################################################
  */
-#include "logger.h"
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 #define _GNU_SOURCE 1
 
-FILE *xtg_fopen(const char *filename, const char *mode)
+FILE *
+xtg_fopen(const char *filename, const char *mode)
 {
     FILE *fhandle = NULL;
 
@@ -23,10 +24,10 @@ FILE *xtg_fopen(const char *filename, const char *mode)
 }
 
 #ifdef __linux__
-FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
+FILE *
+xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
-
 
     if (strncmp(mode, "w", 1) == 0) {
         size_t len;
@@ -37,12 +38,11 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
         if (fhandle == NULL) {
             perror("Cannot open file memory stream for write");
         }
-    }
-    else{
+    } else {
         void *buff;
         logger_info(LI, FI, FU, "Read from memory buffer");
 
-        buff = (void*)stream;
+        buff = (void *)stream;
 
         fhandle = fmemopen(buff, nstream, mode);
 
@@ -53,7 +53,8 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
     return fhandle;
 }
 #else
-FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
+FILE *
+xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 {
     FILE *fhandle = NULL;
     logger_critical(LI, FI, FU, "Bytestream open is not implemented on this platform!");
@@ -61,29 +62,32 @@ FILE *xtg_fopen_bytestream(char *stream, long nstream, const char *mode)
 }
 #endif
 
-
-int xtg_fseek_start(FILE *fhandle)
+int
+xtg_fseek_start(FILE *fhandle)
 {
     return fseek(fhandle, 0, SEEK_SET);
 }
 
-int xtg_fflush(FILE *fhandle)
+int
+xtg_fflush(FILE *fhandle)
 {
     return fflush(fhandle);
 }
 
-long xtg_ftell(FILE *fhandle)
+long
+xtg_ftell(FILE *fhandle)
 {
     return ftell(fhandle);
 }
 
-int xtg_fclose(FILE *fhandle)
+int
+xtg_fclose(FILE *fhandle)
 {
     return fclose(fhandle);
 }
 
-
-int xtg_get_fbuffer(FILE *fhandle, char *stream, long nstream)
+int
+xtg_get_fbuffer(FILE *fhandle, char *stream, long nstream)
 {
     /* return the current buffer from filehandle*/
     long npos, nn;
@@ -98,7 +102,8 @@ int xtg_get_fbuffer(FILE *fhandle, char *stream, long nstream)
 
     for (nn = 0; nn < npos; nn++) {
         char ch = fgetc(fhandle);
-        if (feof(fhandle)) break;
+        if (feof(fhandle))
+            break;
         stream[nn] = ch;
     }
     return EXIT_SUCCESS;

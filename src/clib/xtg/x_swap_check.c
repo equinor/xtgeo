@@ -1,8 +1,8 @@
 
 /* "To determine what your machine is, you can do (in the C programming
-   language):If you get 1 as a result in B, your machine is 
-   little endian, if you get 0 it's big endian. The PC is little 
-   endian, the SGI machines and Macs are big endian." 
+   language):If you get 1 as a result in B, your machine is
+   little endian, if you get 0 it's big endian. The PC is little
+   endian, the SGI machines and Macs are big endian."
 
    Picked up from Internet by JCR
    22-APR-2003
@@ -10,17 +10,18 @@
 
 #include "libxtg_.h"
 
-int x_swap_check ()
+int
+x_swap_check()
 {
 
-  long L=1; 
-  void *Ptr=&L; 
-  char B=*(char*)Ptr;
-  int  i;
+    long L = 1;
+    void *Ptr = &L;
+    char B = *(char *)Ptr;
+    int i;
 
-  i=B;
+    i = B;
 
-  return i;
+    return i;
 }
 
 /* used in ROFF files. Values:
@@ -33,13 +34,13 @@ int x_swap_check ()
  *
  */
 
-int x_byteorder (int i)
+int
+x_byteorder(int i)
 {
     static int byteorder;
 
-    if (i>-1) {
-	byteorder=i;
+    if (i > -1) {
+        byteorder = i;
     }
     return byteorder;
 }
-

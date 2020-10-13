@@ -70,8 +70,8 @@ surf_slice_cube_v3(int ncol,
         for (jrow = 1; jrow <= nrow; jrow++) {
 
             long icmap = x_ijk2ic(icol, jrow, 1, ncol, nrow, 1, 0);
-            if (icmap < 0) printf("Error\n");
-
+            if (icmap < 0)
+                printf("Error\n");
 
             if (maskv[icmap] != 0)
                 continue;
@@ -110,7 +110,6 @@ surf_slice_cube_v3(int ncol,
         }
     }
     logger_info(LI, FI, FU, "Exit from %s", FU);
-
 
     return EXIT_SUCCESS;
 }

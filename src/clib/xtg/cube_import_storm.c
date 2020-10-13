@@ -40,15 +40,17 @@ typedef SSIZE_T ssize_t;
 /* Modifications, public domain as well, by Antti Haapala, 11/10/17
    - Switched to getc on 5/23/19 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 // if typedef doesn't exist (msvc, blah)
 typedef intptr_t ssize_t;
 
-ssize_t _getline(char **lineptr, size_t *n, FILE *stream) {
+ssize_t
+_getline(char **lineptr, size_t *n, FILE *stream)
+{
     size_t pos;
     int c;
 
@@ -70,7 +72,7 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream) {
         *n = 128;
     }
     pos = 0;
-    while(c != EOF) {
+    while (c != EOF) {
         if (pos + 1 >= *n) {
             size_t new_size = *n + (*n >> 2);
             if (new_size < 128) {
@@ -84,7 +86,7 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream) {
             *lineptr = new_ptr;
         }
 
-        ((unsigned char *)(*lineptr))[pos ++] = c;
+        ((unsigned char *)(*lineptr))[pos++] = c;
         if (c == '\n') {
             break;
         }
@@ -95,26 +97,24 @@ ssize_t _getline(char **lineptr, size_t *n, FILE *stream) {
     return pos;
 }
 
-int cube_import_storm (
-                       int nx,
-                       int ny,
-                       int nz,
-                       char *file,
-                       int nlines,
-                       float *p_cube_v,
-                       long nxyz,
-                       int option
-                       )
+int
+cube_import_storm(int nx,
+                  int ny,
+                  int nz,
+                  char *file,
+                  int nlines,
+                  float *p_cube_v,
+                  long nxyz,
+                  int option)
 {
 
-    FILE  *fc;
+    FILE *fc;
     int i, j, k, iok_close, swap;
     long ic;
     float fval;
 
     char *line = NULL;
     size_t len = 0;
-
 
     swap = x_swap_check();
 
@@ -124,12 +124,10 @@ int cube_import_storm (
     /* skip header as this is parsed in Python/Perl */
 
     for (i = 1; i < nlines; i++) {
-        if (_getline(&line, &len, fc) >= 0){  /* original a posix/gnu function */
+        if (_getline(&line, &len, fc) >= 0) { /* original a posix/gnu function */
             line[strcspn(line, "\n")] = 0;
         }
     }
-
-
 
     for (k = 1; k <= nz; k++) {
         for (j = 1; j <= ny; j++) {
@@ -137,12 +135,13 @@ int cube_import_storm (
 
                 /* read a single value at the time */
 
-                if (fread (&fval, 4, 1, fc) != 1) {
+                if (fread(&fval, 4, 1, fc) != 1) {
                     fclose(fc);
                     return -4;
                 }
 
-                if (swap==1) SWAP_FLOAT(fval);
+                if (swap == 1)
+                    SWAP_FLOAT(fval);
 
                 ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
 
@@ -151,11 +150,11 @@ int cube_import_storm (
         }
     }
 
-    iok_close=fclose(fc);
+    iok_close = fclose(fc);
 
     if (iok_close != 0) {
-        return(iok_close);
+        return (iok_close);
     }
 
-    return(EXIT_SUCCESS);
+    return (EXIT_SUCCESS);
 }

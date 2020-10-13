@@ -1,8 +1,8 @@
 
-#include "logger.h"
-#include <math.h>
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
+#include <math.h>
 
 /*
  * *************************************************************************************
@@ -13,29 +13,28 @@
  * -------------------------------------------------------------------------------------
  */
 
-void x_mapaxes (
-		int   mode,
-		double *x,
-		double *y,
-		const double x1,
-		const double y1,
-		const double x2,
-		const double y2,
-		const double x3,
-		const double y3,
-		int   option
-		)
+void
+x_mapaxes(int mode,
+          double *x,
+          double *y,
+          const double x1,
+          const double y1,
+          const double x2,
+          const double y2,
+          const double x3,
+          const double y3,
+          int option)
 {
-    double  xval, yval, xnew, ynew;
-    double  normx, normy;
-    double  xx1, xx3, yy1, yy3;
-    double  div1, div2;
+    double xval, yval, xnew, ynew;
+    double normx, normy;
+    double xx1, xx3, yy1, yy3;
+    double div1, div2;
 
     static int report_mapaxes = 0;
 
     /* mode < 0 means no mapaxes transform */
     if (mode < 0) {
-	return;
+        return;
     }
 
     xval = *x;
@@ -45,7 +44,8 @@ void x_mapaxes (
      * Sometimes all values in MAPAXES are zero, then skip
      */
 
-    if (report_mapaxes == 1) return;
+    if (report_mapaxes == 1)
+        return;
 
     if ((fabs(x1) < FLOATEPS) && (fabs(x2) < FLOATEPS) && (fabs(x3) < FLOATEPS) &&
         (fabs(y1) < FLOATEPS) && (fabs(y2) < FLOATEPS) && (fabs(y3) < FLOATEPS)) {

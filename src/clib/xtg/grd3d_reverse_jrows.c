@@ -36,8 +36,7 @@ grd3d_reverse_jrows(int nx,
                     double *zcornsv,
                     long nzcorn,
                     int *actnumsv,
-                    long nact
-    )
+                    long nact)
 
 {
 
