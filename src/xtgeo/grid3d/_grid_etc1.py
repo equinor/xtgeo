@@ -181,11 +181,7 @@ def get_bulkvol(self, name="bulkvol", asmasked=True):
     self._xtgformat2()
 
     bulk = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        name=name,
-        discrete=False,
+        ncol=self._ncol, nrow=self._nrow, nlay=self._nlay, name=name, discrete=False,
     )
 
     bval = np.zeros((bulk.dimensions))

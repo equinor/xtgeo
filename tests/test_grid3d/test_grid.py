@@ -806,4 +806,3 @@ def test_bulkvol_speed():
     bulk = grd.get_bulkvol()
     ncells = np.prod(dimens)
     print(xtg.timer(t0), ncells)
-
