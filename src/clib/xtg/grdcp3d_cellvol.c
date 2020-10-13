@@ -69,6 +69,7 @@ grdcp3d_cellvol(long ncol,
             }
         }
     }
+
     free(corners);
     logger_info(LI, FI, FU, "Cell bulk volume... done");
 }
