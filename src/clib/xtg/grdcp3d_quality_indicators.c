@@ -171,6 +171,60 @@ _negativethickness()
 
     data.fresults[data.ncount * 8 + data.icount] = isnegative;
 }
+
+static void
+_concave_projected()
+{
+    // Detect if a cell is concave seen from above. A cell is concave if one corner
+    // is within the triangle formed by the other corners at top and/or base. The
+    // result is number; if 0 then cell is convex, if 1 then first corner is concave,
+    // ... up to 4. Only X, Y coordinates are checked
+
+    double xp[4][2];
+    double yp[4][2];
+
+    int n;
+    for (n = 0; n < 4; n++) {
+        xp[n][0] = data.corners[n * 3 + 0];
+        yp[n][0] = data.corners[n * 3 + 1];
+        xp[n][1] = data.corners[n * 3 + 0 + 12];
+        yp[n][1] = data.corners[n * 3 + 1 + 12];
+    }
+
+    double xtri[4], ytri[4];
+
+    int nchk, ntop;
+    float collapse = 0.0;
+
+    for (ntop = 0; ntop < 2; ntop++) {
+        for (nchk = 0; nchk < 4; nchk++) {
+
+            int inside;
+
+            double xuse = xp[nchk][ntop];
+            double yuse = yp[nchk][ntop];
+            int nc = 0;
+            for (n = 0; n < 4; n++) {
+                if (n != nchk) {
+                    xtri[nc] = xp[n][ntop];
+                    ytri[nc] = yp[n][ntop];
+                    nc++;
+                }
+            }
+            xtri[3] = xtri[0];
+            ytri[3] = ytri[0];
+            inside = pol_chk_point_inside(xuse, yuse, xtri, ytri, 4);
+            if (inside >= 2) {
+                collapse = nchk + 1.0;
+                goto RESULT;
+            }
+        }
+    }
+
+RESULT:
+    data.fresults[data.ncount * 9 + data.icount] = collapse;
+}
+
 /*
  * -------------------------------------------------------------------------------------
  * public function
@@ -229,6 +283,7 @@ grdcp3d_quality_indicators(long ncol,
                 _collapsed();
                 _faulted();
                 _negativethickness();
+                _concave_projected();
             }
         }
         logger_info(LI, FI, FU, "Grid quality measures... done");
