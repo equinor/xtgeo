@@ -1170,24 +1170,74 @@ class Grid(Grid3D):
         # return the property objects
         return deltax, deltay
 
-    def get_bulkvol(self, name="bulkvol", asmasked=True):
-        """
-        Return geometric cell volume as a GridProperty object.
+    def get_cell_volume(
+        self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2
+    ):
+        """Return the bulk volume for a given cell.
 
-        The bulk is computed to split each cell in six 3D tetrahedrons, done in
-        two different ways, and find the average of those.
+        A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
+        entity. The volume is approximated by dividing the cell (hexahedron) into
+        6 tetrehedrons; there is however a large number of ways to do this division.
+
+        As default (precision=2) an average of two different ways to divide the cell
+        into tetrahedrons is averaged.
 
         Args:
-            name (str): names of property
+            ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
+                unless zerobased is True).
+            activeonly (bool): Skip undef cells if True; return None for inactive.
+            precision (int): An even number indication precision level,where
+                a higher number means increased precision but also increased computing
+                time. Currently 1, 2, 4 are supported.
+
+        Returns:
+            Cell total bulk volume
+
+        Example::
+
+            >>> grid = Grid()
+            >>> grid.from_file("gullfaks2.roff")
+            >>> vol = grid.get_cell_volume(ijk=(45,13,2))
+
+        """
+
+        vol = _grid_etc1.get_cell_volume(
+            self,
+            ijk=ijk,
+            activeonly=activeonly,
+            zerobased=zerobased,
+            precision=precision,
+        )
+
+        return vol
+
+    def get_bulkvol(self, name="bulkvol", asmasked=True, precision=2):
+        """
+        Return the geometric cell volume for all cells as a GridProperty object.
+
+        A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
+        entity. The volume is approximated by dividing the cell (hexahedron) into
+        6 tetrehedrons; there is however a large number of ways to do this division.
+
+        As default (precision=2) an average of two different ways to divide the cell
+        into tetrahedrons is averaged.
+
+        Args:
+            name (str): name of property, default to "bulkvol"
             asmasked (bool). If True, make a np.ma array where inactive cells
                 are masked. Otherwise a numpy array will all bulk for all cells is
                 returned
+            precision (int): An number indication precision level, where
+                a higher number means increased precision but also increased computing
+                time. Currently 1, 2 (default), 4 are supported.
 
         Returns:
             XTGeo GridProperty object
         """
 
-        return _grid_etc1.get_bulkvol(self, name=name, asmasked=asmasked)
+        return _grid_etc1.get_bulkvol(
+            self, name=name, asmasked=asmasked, precision=precision
+        )
 
     def get_indices(self, names=("I", "J", "K")):
         """Return 3 GridProperty objects for column, row, and layer index,
@@ -1387,31 +1437,6 @@ class Grid(Grid3D):
 
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
-
-    def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
-        """Return the bulk volume for a given cell.
-
-        Args:
-            ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
-                unless zerobased is True).
-            activeonly (bool): Skip undef cells if True; return None for inactive.
-
-        Returns:
-            Cell total bulk volume
-
-        Example::
-
-            >>> grid = Grid()
-            >>> grid.from_file("gullfaks2.roff")
-            >>> vol = grid.get_cell_volume(ijk=(45,13,2))
-
-        """
-
-        vol = _grid_etc1.get_cell_volume(
-            self, ijk=ijk, activeonly=activeonly, zerobased=zerobased
-        )
-
-        return vol
 
     def get_layer_slice(self, layer, top=True, activeonly=True):
         """Get numpy arrays for cell coordinates e.g. for plotting.

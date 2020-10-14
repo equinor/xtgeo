@@ -303,7 +303,7 @@ def test_x_cellangles():
     assert amax == pytest.approx(104.95, abs=0.01)
 
 
-def test_x_hexahedron_volume():
+def test_get_cell_volume():
     """Test hexahedron (cell) bulk volume valculation"""
 
     # box
@@ -329,32 +329,45 @@ def test_x_hexahedron_volume():
     grd = xtgeo.Grid(TESTGRID)
     tbulk_rms = xtgeo.gridproperty_from_file(TESTGRID_TBULK)
 
-    ntot = 0
-    nfail = 0
-    ratioarr = []
-    for icol in range(grd.ncol):
-        for jrow in range(grd.nrow):
-            for klay in range(grd.nlay):
-                vol1a = grd.get_cell_volume((icol, jrow, klay), zerobased=True)
-                if vol1a is not None:
-                    vol1b = tbulk_rms.values[icol, jrow, klay]
-                    ratio = vol1a / vol1b
-                    ratioarr.append(ratio)
-                    ntot += 1
-                    if ratio < 0.98 or ratio > 1.02:
-                        nfail += 1
-                        logger.info("%s %s %s %s:  %s", icol, jrow, klay, ratio)
-                        logger.info("XTGeo vs RMS %s %s", vol1a, vol1b)
-                    assert vol1a == pytest.approx(vol1b, 0.0001)
+    rmean = []
+    for prec in [1, 2, 4]:
+        ntot = 0
+        nfail = 0
+        ratioarr = []
+        for icol in range(grd.ncol):
+            for jrow in range(grd.nrow):
+                for klay in range(grd.nlay):
+                    vol1a = grd.get_cell_volume(
+                        (icol, jrow, klay), zerobased=True, precision=prec
+                    )
+                    if vol1a is not None:
+                        vol1b = tbulk_rms.values[icol, jrow, klay]
+                        ratio = vol1a / vol1b
+                        ratioarr.append(ratio)
+                        ntot += 1
+                        if ratio < 0.98 or ratio > 1.02:
+                            nfail += 1
+                            logger.info("%s %s %s:  %s", icol, jrow, klay, ratio)
+                            logger.info("XTGeo vs RMS %s %s", vol1a, vol1b)
+                        if prec > 1:
+                            assert vol1a == pytest.approx(vol1b, 0.0001)
 
-    rarr = np.array(ratioarr)
-    logger.info(
-        "Fails of total %s vs %s, mean/min/max: %s %s %s",
-        nfail,
-        ntot,
-        rarr.mean(),
-        rarr.min(),
-        rarr.max(),
-    )
-    assert rarr == pytest.approx(1.0, 0.0001)
-    assert nfail == 0
+        rarr = np.array(ratioarr)
+        rmean.append(rarr.mean())
+        logger.info(
+            "Prec: %s, Fails of total %s vs %s, mean/min/max: %s %s %s",
+            prec,
+            nfail,
+            ntot,
+            rarr.mean(),
+            rarr.min(),
+            rarr.max(),
+        )
+        if prec > 1:
+            assert rarr == pytest.approx(1.0, 0.0001)
+            assert nfail == 0
+
+    # ensure that mean difference get closer to 1 with increasing precision?
+    for ravg in rmean:
+        diff = abs(1.0 - ravg)
+        logger.info("Diff from 1: %s", diff)

@@ -43,6 +43,7 @@ grdcp3d_cellvol(long ncol,
                 long nact,
                 double *cellvolsv,
                 long ncell,
+                int presision,
                 int option)
 
 {
@@ -65,7 +66,7 @@ grdcp3d_cellvol(long ncol,
                 grdcp3d_corners(i, j, k, ncol, nrow, nlay, coordsv, ncoord, zcornsv,
                                 nzcorn, corners);
 
-                cellvolsv[ic] = x_hexahedron_volume(corners, 24);
+                cellvolsv[ic] = x_hexahedron_volume(corners, 24, presision);
             }
         }
     }

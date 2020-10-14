@@ -175,7 +175,7 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     return dx, dy
 
 
-def get_bulkvol(self, name="bulkvol", asmasked=True):
+def get_bulkvol(self, name="bulkvol", asmasked=True, precision=2):
     """Get cell bulk volume as a property"""
 
     self._xtgformat2()
@@ -186,6 +186,9 @@ def get_bulkvol(self, name="bulkvol", asmasked=True):
 
     bval = np.zeros((bulk.dimensions))
 
+    if precision not in (1, 2, 4):
+        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
+
     _cxtgeo.grdcp3d_cellvol(
         self._ncol,
         self._nrow,
@@ -194,6 +197,7 @@ def get_bulkvol(self, name="bulkvol", asmasked=True):
         self._zcornsv,
         self._actnumsv,
         bval,
+        precision,
         0 if asmasked else 1,
     )
 
@@ -552,11 +556,14 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     return tuple(grid_props)
 
 
-def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
+def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2):
     """Get bulk cell volume for one cell."""
 
     self._xtgformat1()
     i, j, k = ijk
+
+    if precision not in (1, 2, 4):
+        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
 
     shift = 0
     if zerobased:
@@ -597,7 +604,7 @@ def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
             pcorners,
         )
 
-    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24)
+    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24, precision)
     return cellvol
 
 
@@ -1452,7 +1459,7 @@ def _convert_xtgformat1to2(self):
 def get_gridquality_properties(self):
     """Get the grid quality properties"""
 
-    numqual = 9
+    numqual = 10
 
     self._xtgformat2()
 
@@ -1495,6 +1502,9 @@ def get_gridquality_properties(self):
     negthickness = xtgeo.GridProperty(self, name="negative_thickness", discrete=True)
     negthickness.values = fresults[8, :].astype(np.int32)
 
+    concavep = xtgeo.GridProperty(self, name="concave_proj", discrete=True)
+    concavep.values = fresults[9, :].astype(np.int32)
+
     grdprops = xtgeo.GridProperties()
     grdprops.props = [
         minangle,
@@ -1506,6 +1516,7 @@ def get_gridquality_properties(self):
         collapsed,
         faulted,
         negthickness,
+        concavep,
     ]
 
     return grdprops

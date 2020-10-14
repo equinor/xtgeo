@@ -3,6 +3,56 @@
 #include "logger.h"
 #include <math.h>
 
+int TETRACOMBS[4][6][4] = {
+    // cell top/base hinge is splittet 0 - 3 / 4 - 7
+    {
+      // lower right common vertex 5
+      { 3, 7, 4, 5 },
+      { 0, 4, 7, 5 },
+      { 0, 3, 1, 5 },
+      // upper left common vertex 6
+      { 0, 4, 7, 6 },
+      { 3, 7, 4, 6 },
+      { 0, 3, 2, 6 },
+    },
+
+    // cell top/base hinge is splittet 1 -2 / 5- 6
+    {
+      // upper right common vertex 7
+      { 1, 5, 6, 7 },
+      { 2, 6, 5, 7 },
+      { 1, 2, 3, 7 },
+      // lower left common vertex 4
+      { 1, 5, 6, 4 },
+      { 2, 6, 5, 4 },
+      { 1, 2, 0, 4 },
+    },
+
+    // Another combination...
+    // cell top/base hinge is splittet 0 - 3 / 4 - 7
+    {
+      // lower right common vertex 1
+      { 3, 7, 0, 1 },
+      { 0, 4, 3, 1 },
+      { 4, 7, 5, 1 },
+      // upper left common vertex 2
+      { 0, 4, 3, 2 },
+      { 3, 7, 0, 2 },
+      { 4, 7, 6, 2 },
+    },
+
+    // cell top/base hinge is splittet 1 -2 / 5- 6
+    { // upper right common vertex 3
+      { 1, 5, 2, 3 },
+      { 2, 6, 1, 3 },
+      { 5, 6, 7, 3 },
+      // lower left common vertex 0
+      { 1, 5, 2, 0 },
+      { 2, 6, 1, 0 },
+      { 5, 6, 4, 0 } }
+
+};
+
 static double
 _x_hexahedron_dz(double *corners)
 {
@@ -89,10 +139,26 @@ x_tetrahedron_volume(double *pv, long ndim)
  *    entity, but it is approximated by computing two different ways of top/base
  *    splitting and average those.
  *
+ *    6          7
+ *     2        3
+ *      |------|   Example of split along
+ *      |    / |   0 - 3 at top and 4 - 7
+ *      |   /  |   at base. Alternative is
+ *      |  /   |   1 - 2 at top and 5 - 6
+ *      | /    |   at base
+ *      |------|
+ *     0       1
+ *    4         5
+ *
+ *    Note however... this fails if the cell is concave and convace cells needs special
+ *    attention
+ *
+ *
  * ARGUMENTS:
  *   corners       i     a [24] array with X Y Z of 8 vertices, x1, y1, z1, x2, y2, ...
  *                        arranged as usual for corner point cells
- *
+ *   precision     i     Use 2, 4, .... numbers of ways to compute tetrahedrons, and a
+ *                       higher number will increate CPU time
  * RETURNS:
  *    Volume
  *
@@ -102,7 +168,7 @@ x_tetrahedron_volume(double *pv, long ndim)
  */
 
 double
-x_hexahedron_volume(double *corners, long ndim)
+x_hexahedron_volume(double *corners, long ndim, int precision)
 {
 
     // first avoid cells that collapsed in some way
@@ -111,7 +177,6 @@ x_hexahedron_volume(double *corners, long ndim)
     }
 
     double **crn = x_allocate_2d_double(8, 3);
-    int **cset = x_allocate_2d_int(4, 6);
 
     int i, j;
     int ic = 0;
@@ -121,103 +186,30 @@ x_hexahedron_volume(double *corners, long ndim)
         }
     }
 
-    // the hexahedron consists of 6 tetrahedrons
-
-    cset[0][0] = 0;
-    cset[1][0] = 4;
-    cset[2][0] = 5;
-    cset[3][0] = 7;
-
-    cset[0][1] = 0;
-    cset[1][1] = 1;
-    cset[2][1] = 5;
-    cset[3][1] = 7;
-
-    cset[0][2] = 0;
-    cset[1][2] = 1;
-    cset[2][2] = 3;
-    cset[3][2] = 7;
-
-    cset[0][3] = 2;
-    cset[1][3] = 4;
-    cset[2][3] = 6;
-    cset[3][3] = 7;
-
-    cset[0][4] = 0;
-    cset[1][4] = 2;
-    cset[2][4] = 4;
-    cset[3][4] = 7;
-
-    cset[0][5] = 0;
-    cset[1][5] = 2;
-    cset[2][5] = 3;
-    cset[3][5] = 7;
-
     double thd[12];
 
-    double vol1 = 0;
+    double vol = 0.0;
     int icset;
-    for (icset = 0; icset < 6; icset++) {
-        ic = 0;
-        for (i = 0; i < 4; i++) {
-            thd[ic + 0] = crn[cset[i][icset]][0];
-            thd[ic + 1] = crn[cset[i][icset]][1];
-            thd[ic + 2] = crn[cset[i][icset]][2];
-            ic += 3;
+    int nalt = precision;
+    int ialt;
+    for (ialt = 1; ialt <= nalt; ialt++) {
+        double altvol = 0.0;
+        for (icset = 0; icset < 6; icset++) {
+            ic = 0;
+            for (i = 0; i < 4; i++) {
+                thd[ic + 0] = crn[TETRACOMBS[ialt - 1][icset][i]][0];
+                thd[ic + 1] = crn[TETRACOMBS[ialt - 1][icset][i]][1];
+                thd[ic + 2] = crn[TETRACOMBS[ialt - 1][icset][i]][2];
+                ic += 3;
+            }
+            altvol += x_tetrahedron_volume(thd, 12);
         }
-        // printf("ICSET1: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
-        vol1 += x_tetrahedron_volume(thd, 12);
+        vol = (vol * (ialt - 1) + altvol) / ialt;
     }
 
-    // alternative arrangment of tetrahedrons
-    cset[0][0] = 0;
-    cset[1][0] = 4;
-    cset[2][0] = 5;
-    cset[3][0] = 6;
+    free(crn);
 
-    cset[0][1] = 0;
-    cset[1][1] = 1;
-    cset[2][1] = 5;
-    cset[3][1] = 6;
-
-    cset[0][2] = 0;
-    cset[1][2] = 1;
-    cset[2][2] = 2;
-    cset[3][2] = 6;
-
-    cset[0][3] = 2;
-    cset[1][3] = 6;
-    cset[2][3] = 5;
-    cset[3][3] = 7;
-
-    cset[0][4] = 6;
-    cset[1][4] = 1;
-    cset[2][4] = 5;
-    cset[3][4] = 7;
-
-    cset[0][5] = 1;
-    cset[1][5] = 2;
-    cset[2][5] = 3;
-    cset[3][5] = 7;
-
-    double vol2 = 0;
-
-    for (icset = 0; icset < 6; icset++) {
-        ic = 0;
-        for (i = 0; i < 4; i++) {
-            thd[ic + 0] = crn[cset[i][icset]][0];
-            thd[ic + 1] = crn[cset[i][icset]][1];
-            thd[ic + 2] = crn[cset[i][icset]][2];
-            ic += 3;
-        }
-        // printf("ICSET2: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
-        vol2 += x_tetrahedron_volume(thd, 12);
-    }
-
-    x_free_2d_double(crn);
-    x_free_2d_int(cset);
-
-    return 0.5 * (vol1 + vol2);
+    return vol;
 }
 
 /*
