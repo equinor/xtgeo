@@ -779,6 +779,9 @@ def test_gridquality_properties():
     assert neg.values[0, 0, 0] == 0
     assert neg.values[2, 1, 0] == 1
 
+    concp = props2.get_prop_by_name("concave_proj")
+    print(concp.values.mean())
+
 
 def test_bulkvol():
     """Test cell bulk volume calculation"""
