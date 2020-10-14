@@ -12,7 +12,7 @@
  * ARGUMENTS:
  *    xpoi,          i     X coord array
  *    nxpoi          i     Dimension of points (for SWIG)
- *    ypoi,          i     X coord array
+ *    ypoi,          i     Y coord array
  *    nypoi          i     Dimension of points (for SWIG)
  *    zpoi,         i/o    Z coord array
  *    nzpoi          i     Dimension of points (for SWIG)

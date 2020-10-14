@@ -2,18 +2,18 @@
  ***************************************************************************************
  *
  * NAME:
- *    some.c
+ *    pol_check_point_inside.c
  *
  * DESCRIPTION:
- *    Some
+ *    Check if a point is inside a polygon
  *
  * ARGUMENTS:
  *    x, y             i     Point
- *    p_xp_v, ..yp_v  i/o     arrays
- *    np               i     Coordinate vector (with numpy dimensions)
+ *    p_xp_v, ..yp_v  i/o    arrays
+ *    np               i     Number of points for polygon
  *
  * RETURNS:
- *    Status, EXIT_FAILURE or EXIT_SUCCESS
+ *    If 2, point is inside, if 0 on the border, if -1 outside
  *
  * TODO/ISSUES/BUGS:
  *
@@ -64,6 +64,10 @@ pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np)
         p_yp_v[np - 1] = p_yp_v[0];
     } else {
         logger_warn(LI, FI, FU, "Not a closed polygon, return -9");
+        int n;
+        for (n = 0; n < np; n++) {
+            logger_warn(LI, FI, FU, "Point no %d: %lf %lf", n, p_xp_v[n], p_yp_v[n]);
+        }
         return -9;
     }
 

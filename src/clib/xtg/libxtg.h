@@ -233,7 +233,7 @@ x_minmax_cellangles_sides(double *swig_np_dbl_in_v1,
                           int degrees);
 
 double
-x_hexahedron_volume(double *corners, long ndim);
+x_hexahedron_volume(double *corners, long ndim, int presision);
 
 /*
  * =====================================================================================
@@ -2216,6 +2216,7 @@ grdcp3d_cellvol(long ncol,
                 long n_swig_np_int_inplaceflat_v1,   // nactnum
                 double *swig_np_dbl_inplaceflat_v2,  // cellvolsv
                 long n_swig_np_dbl_inplaceflat_v2,   // ncell
+                int precision,
                 int option);
 
 /*
