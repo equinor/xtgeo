@@ -214,7 +214,7 @@ _concave_projected()
             xtri[3] = xtri[0];
             ytri[3] = ytri[0];
             inside = pol_chk_point_inside(xuse, yuse, xtri, ytri, 4);
-            if (inside >= 2) {
+            if (inside >= 1) {
                 collapse = nchk + 1.0;
                 goto RESULT;
             }

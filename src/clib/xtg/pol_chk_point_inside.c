@@ -13,7 +13,7 @@
  *    np                 i     Number of points for polygon
  *
  * RETURNS:
- *    If 2, point is inside, if 0 on the border, if -1 outside
+ *    If >= 1, point is inside, if 0 outside, if -1 outside
  *
  * TODO/ISSUES/BUGS:
  *
@@ -44,8 +44,8 @@ pol_chk_point_inside(double x, double y, double *xvertices, double *yvertices, i
     CEN = 1.0;
     PIH = asin(CEN);
     TOPI = 4.0 * PIH;
-    DTMP = np;
-    XEPS = sqrt(DTMP) * 1.0e-3; /*works better than e-09 in pp */
+    DTMP = (double)np;
+    XEPS = sqrt(DTMP) * 1.0e-5; /* 1e-3? works better than e-09 in pp */
 
     /*
      *----------------------------------------------------------------------------------
