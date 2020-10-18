@@ -779,8 +779,11 @@ def test_gridquality_properties():
     assert neg.values[0, 0, 0] == 0
     assert neg.values[2, 1, 0] == 1
 
-    concp = props2.get_prop_by_name("concave_proj")
-    print(concp.values.mean())
+    grd3 = Grid(EMEGFILE)
+    props3 = grd3.get_gridquality_properties()
+
+    concp = props3.get_prop_by_name("concave_proj")
+    assert concp.values.sum() == 7949
 
 
 def test_bulkvol():
