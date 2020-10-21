@@ -326,9 +326,21 @@ def test_slice_attr_window_max(load_cube_rsgy1):
     logger.info("Loading cube")
     kube = load_cube_rsgy1
 
-    xs1.slice_cube_window(kube, attribute="max", sampling="trilinear", algorithm=2)
+    ret = xs1.slice_cube_window(
+        kube, attribute="max", sampling="trilinear", algorithm=2
+    )
     logger.info(xs1.values.mean())
-    tsetup.assert_almostequal(xs1.values.mean(), 0.08494559, 0.01)
+    assert ret is None
+    tsetup.assert_almostequal(xs1.values.mean(), 0.08619, 0.001)
+
+    # one attribute but in a list context shall return a dict
+    xs1 = RegularSurface(RTOP1)
+    ret = xs1.slice_cube_window(
+        kube, attribute=["max"], sampling="trilinear", algorithm=2
+    )
+    assert isinstance(ret, dict)
+
+    tsetup.assert_almostequal(ret["max"].values.mean(), 0.08619, 0.001)
 
 
 @tsetup.bigtest

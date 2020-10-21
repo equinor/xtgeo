@@ -83,14 +83,11 @@ def slice_cube_window(
             deadtraces,
         )
 
-    if isinstance(attrs, dict) and len(attrs) == 1:
+    # if attribute is str, self shall be updated and None returned, otherwise a dict
+    # of attributes objects shall be returned
+    if isinstance(attrs, dict) and len(attrs) == 1 and isinstance(attribute, str):
 
-        if isinstance(attribute, list):
-            myattr = attribute[0]
-        else:
-            myattr = attribute
-
-        self.values = attrs[myattr].values
+        self.values = attrs[attribute].values
         return None
 
     return attrs
@@ -120,6 +117,7 @@ def _slice_cube_window(
 
     logger.info("Slice cube window method v2")
 
+    olddead = None
     if deadtraces:
         olddead = cube.values_dead_traces(xtgeo.UNDEF)
 
