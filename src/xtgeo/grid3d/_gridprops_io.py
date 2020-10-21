@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Import/export of grid properties (cf GridProperties class)"""
 
+from copy import deepcopy
 import xtgeo
 
 from xtgeo.grid3d import _gridprop_import_eclrun
@@ -12,146 +13,191 @@ xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
+# self is the GridProperties() instance
+
 
 def import_ecl_output(
-    props, pfile, names=None, dates=None, grid=None, namestyle=0
-):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    self, pfile, names=None, dates=None, grid=None, namestyle=0, strict=(True, False)
+):
 
-    logger.debug("'namestyle' is %s (not in use)", namestyle)
+    strictname, strictdate = strict  # strict is a tuple e.g. (True, False)
 
     if not isinstance(pfile, xtgeo._XTGeoFile):
-        raise RuntimeError("BUG kode 84728")
+        raise RuntimeError("BUG kode 84728, pfile is not a _XTGeoFile instance")
 
     if not grid:
         raise ValueError("Grid Geometry object is missing")
 
     if not names:
-        raise ValueError("Name list is empty (None)")
+        raise ValueError("Name list cannot be empty (None)")
 
-    pfile.get_cfhandle()  # increase filehandle count
+    if dates is None:
+        _import_ecl_output_v2_init(self, pfile, names, grid, strictname)
+
+    else:
+        _import_ecl_output_v2_rsta(
+            self, pfile, names, dates, grid, strictname, strictdate, namestyle
+        )
+
+
+def _import_ecl_output_v2_init(self, pfile, names, grid, strictname):
+    """Import INIT parameters"""
 
     # scan valid keywords
     kwlist = utils.scan_keywords(
         pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
     )
 
-    kwxlist = list(kwlist.itertuples(index=False, name=None))
+    validnames = list()
 
-    usenames = list()
+    nact = grid.nactive
+    ntot = grid.ntotal
+
+    if grid.dualporo:
+        nact *= 2
+        ntot *= 2
+
+    # get a list of valid property names
+    for kw in list(kwlist.itertuples(index=False, name=None)):
+        kwname, _, nlen, _, _ = kw
+        if nlen in (nact, ntot) and kwname not in validnames:
+            validnames.append(kwname)
 
     if names == "all":
-        nact = grid.nactive
-        ntot = grid.ntotal
-
-        for kw in kwxlist:
-            kwname, _tmp1, nlen, _bs, _date = kw
-            if nlen in (nact, ntot):
-                usenames.append(kwname)
+        usenames = deepcopy(validnames)
     else:
         usenames = list(names)
 
-    logger.info("NAMES are %s", usenames)
-
-    lookfornames = list(set(usenames))
-
-    possiblekw = []
-    for name in lookfornames:
-        namefound = False
-        for kwitem in kwxlist:
-            possiblekw.append(kwitem[0])
-            if name == kwitem[0]:
-                namefound = True
-        if not namefound:
-            if name in ("SOIL", "SGAS", "SWAT"):
-                pass  # check for sat's later; may be derived based on fluid system
+    for name in usenames:
+        if name not in validnames:
+            if strictname:
+                msg = f"Requested keyword {name} is not in INIT file,"
+                msg += f"valid entries are {validnames}"
+                raise ValueError(msg)
             else:
-                raise ValueError(
-                    "Keyword {} not found. Possible list: {}".format(name, possiblekw)
-                )
+                msg = f"Requested keyword {name} is not in INIT file."
+                msg += "Will continue due to keyword <strict> settings."
+                xtg.warnuser(msg)
+                continue
 
-    # check valid dates, and remove invalid entries (allowing that user
-    # can be a bit sloppy on DATES)
+        prop = GridProperty()
+        # use a private GridProperty function, since filehandle
+        _gridprop_import_eclrun.import_eclbinary(
+            prop, pfile, name=name, grid=grid, etype=1, _kwlist=kwlist,
+        )
 
-    validdates = [None]
-    if dates:
-        dlist = utils.scan_dates(pfile)
+        self._names.append(name)
+        self._props.append(prop)
 
-        usedates = [str(thedate).replace("-", "") for thedate in dates]
+    self._ncol = grid.ncol
+    self._nrow = grid.nrow
+    self._nlay = grid.nlay
 
-        validdates = []
-        alldates = []
-        for date in usedates:
-            for ditem in dlist:
-                alldates.append(str(ditem[1]))
-                if str(date) == str(ditem[1]):
-                    validdates.append(date)
 
-        if not validdates:
-            msg = "No valid dates given (dates: {} vs {})".format(usedates, alldates)
-            xtg.error(msg)
-            raise ValueError(msg)
+def _import_ecl_output_v2_rsta(
+    self, pfile, names, dates, grid, strictname, strictdate, namestyle
+):
+    """Import RESTART parameters"""
 
-        if len(usedates) > len(validdates):
-            invalidddates = list(set(usedates).difference(validdates))
-            msg = (
-                "In file {}: Some dates not found: {}, but will continue "
-                "with dates: {}".format(pfile, invalidddates, validdates)
-            )
-            xtg.warn(msg)
-            # raise DateNotFoundError(msg)
+    # scan valid keywords with dates
+    kwlist = utils.scan_keywords(
+        pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
+    )
 
-    use2names = list(usenames)  # to make copy
+    validnamedatepairs = list()
+    validnames = list()
+    validdates = list()
 
-    logger.info("Use names: %s", use2names)
-    logger.info("Valid dates: %s", validdates)
+    nact = grid.nactive
+    ntot = grid.ntotal
 
-    # now import each property
-    firstproperty = True
+    if grid.dualporo:
+        nact *= 2
+        ntot *= 2
 
-    for date in validdates:
-        # xprop = dict()
-        # soil_ok = False
+    for kw in list(kwlist.itertuples(index=False, name=None)):
+        kwname, _, nlen, _, date = kw
+        if nlen in (nact, ntot) and (kwname, date) not in validnamedatepairs:
+            validnamedatepairs.append((kwname, date))
+        if nlen in (nact, ntot) and kwname not in validnames:
+            validnames.append(kwname)
+        if nlen in (nact, ntot) and date not in validdates:
+            validdates.append(date)
 
-        for name in use2names:
+    usenamedatepairs = list()
+    if names == "all" and dates != all:
+        usenamedatepairs = deepcopy(validnamedatepairs)
 
-            logger.info("Get %s", name)
+    else:
+        if names == "all" and dates != all:
+            usenames = [namedate[0] for namedate in validnamedatepairs]
+            usedates = dates
+        elif names != "all" and dates == all:
+            usedates = [namedate[1] for namedate in validnamedatepairs]
+            usenames = names
+        else:
+            usedates = dates
+            usenames = names
 
-            if date is None:
-                date = None
-                propname = name
-                etype = 1
+        for name in usenames:
+            for date in usedates:
+                usenamedatepairs.append((name, date))
+
+    for namedate in usenamedatepairs:
+        name, date = namedate
+        skipentry = False
+
+        if name not in ("SGAS", "SOIL", "SWAT") and namedate not in validnamedatepairs:
+            # saturation keywords are a mess in Eclipse and friends; check later
+            if strictname and strictdate:
+                msg = f"Keyword data combo {name} {date} is not in RESTART file."
+                msg += f"Possible entries are: {validnamedatepairs}"
+                raise ValueError(msg)
             else:
-                propname = name + "_" + str(date)
-                etype = 5
+                msg = f"Keyword data combo {name} {date} is not in RESTART file."
+                xtg.warnuser(msg)
+                skipentry = True
 
-            prop = GridProperty()
+            if strictname and not strictdate and name not in validnames:
+                msg = f"Keyword name {name} is not in RESTART file."
+                msg += f"Possible entries are: {validnames}"
+                raise ValueError(msg)
+            elif not strictname and strictdate and date not in validdates:
+                msg = f"Keyword date {date} is not in RESTART file."
+                msg += f"Possible entries are: {validdates}"
+                raise ValueError(msg)
+            elif not strictname and name not in validnames:
+                msg = f"Keyword name {name} is not in RESTART file."
+                xtg.warnuser(msg)
+                skipentry = True
+            elif not strictdate and date not in validdates:
+                msg = f"Keyword date {date} is not in RESTART file."
+                xtg.warnuser(msg)
+                skipentry = True
+            else:
+                msg = "Keyword skipped for unknown reasons."
+                xtg.warnuser(msg)
+                skipentry = True
 
-            # use a private GridProperty function here, for convinience
-            # (since filehandle)
-            _gridprop_import_eclrun.import_eclbinary(
-                prop,
-                pfile,
-                name=name,
-                date=date,
-                grid=grid,
-                etype=etype,
-                _kwlist=kwlist,
-            )
-            if firstproperty:
-                ncol = prop.ncol
-                nrow = prop.nrow
-                nlay = prop.nlay
-                firstproperty = False
+        if skipentry:
+            xtg.warnuser("Will continue due to keyword <strict> settings.")
+            continue
 
-            logger.info("Appended property %s", propname)
-            props._names.append(propname)
-            props._props.append(prop)
+        prop = GridProperty()
 
-    props._ncol = ncol
-    props._nrow = nrow
-    props._nlay = nlay
+        usename = name + "_" + str(date)
+        if namestyle == 1:
+            sdate = str(date)
+            usename = name + "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
 
-    if validdates[0] != 0:
-        props._dates = validdates
+        # use a private GridProperty function, since filehandle
+        _gridprop_import_eclrun.import_eclbinary(
+            prop, pfile, name=name, date=date, grid=grid, etype=5, _kwlist=kwlist,
+        )
 
-    pfile.cfclose()
+        self._names.append(usename)
+        self._props.append(prop)
+
+    self._ncol = grid.ncol
+    self._nrow = grid.nrow
+    self._nlay = grid.nlay

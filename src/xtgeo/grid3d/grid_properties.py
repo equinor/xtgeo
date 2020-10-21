@@ -54,6 +54,7 @@ class GridProperties(Grid3D):
         self._props = []  # list of GridProperty objects
         self._names = []  # list of GridProperty names
         self._dates = []  # list of dates (_after_ import) YYYYDDMM
+        self._counter = 0  # Internal counter in __iter__ methods
 
     def __repr__(self):
         myrp = (
@@ -67,6 +68,22 @@ class GridProperties(Grid3D):
         # user friendly print
         return self.describe(flush=False)
 
+    def __contains__(self, name):
+        """Emulate 'if "PORO" in props'"""
+        prop = self.get_prop_by_name(name, raiseserror=False)
+        if prop:
+            return True
+
+        return False
+
+    def __getitem__(self, name):
+        prop = self.get_prop_by_name(name, raiseserror=False)
+        if prop is None:
+            raise KeyError(f"Key {name} does not exist")
+
+        return prop
+
+    # ----------------------------------------------------------------------------------
     # Properties:
 
     @property
@@ -114,6 +131,10 @@ class GridProperties(Grid3D):
         """Returns a list of valid (found) dates after import.
 
         Returns None if no dates present
+
+        Note:
+            See also :meth:`GridProperties.scan_dates` for scanning available dates
+            in advance
 
         Example::
 
@@ -189,8 +210,15 @@ class GridProperties(Grid3D):
         mhash.update(hashinput.encode())
         return mhash.hexdigest()
 
-    def get_prop_by_name(self, name):
-        """Find and return a property object (GridProperty) by name."""
+    def get_prop_by_name(self, name, raiseserror=True):
+        """Find and return a property object (GridProperty) by name.
+
+        Args:
+            name (str): Name of property to look for
+            raiseserror (bool): If True, raises a ValueError if not found, otherwise
+                return None
+
+        """
 
         for prop in self._props:
             logger.debug("Look for %s, actual is %s", name, prop.name)
@@ -198,7 +226,10 @@ class GridProperties(Grid3D):
                 logger.debug(repr(prop))
                 return prop
 
-        raise ValueError("Cannot find property with name <{}>".format(name))
+        if raiseserror:
+            raise ValueError("Cannot find property with name <{}>".format(name))
+        else:
+            return None
 
     def append_props(self, proplist):
         """Adds a list of GridProperty objects to the current
@@ -273,7 +304,14 @@ class GridProperties(Grid3D):
     # for some file types such as Eclipse INIT and UNRST, and Roff
 
     def from_file(
-        self, pfile, fformat="roff", names=None, dates=None, grid=None, namestyle=0
+        self,
+        pfile,
+        fformat="roff",
+        names=None,
+        dates=None,
+        grid=None,
+        namestyle=0,
+        strict=(True, False),
     ):
         """Import grid properties from file in one go.
 
@@ -286,21 +324,25 @@ class GridProperties(Grid3D):
             pfile (str or Path): Name of file with properties
             fformat (str): roff/init/unrst
             names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
-            dates: list of dates on YYYYMMDD format, for restart files
+            dates: list of dates on YYYYMMDD format, for restart files, or 'all'
             grid (obj): The grid geometry object (optional if ROFF)
             namestyle (int): 0 (default) for style SWAT_20110223,
                 1 for SWAT--2011_02_23 (applies to restart only)
+            strict (tuple of bool): First is strictness on name, the second is
+                strictness on date. If True, will raise a ValueError if input name
+                 or date is not found; otherwise will continue with a user warning
 
         Example::
             >>> props = GridProperties()
-            >>> props.from_file('ECL.UNRST', fformat='unrst',
-                dates=[20110101, 20141212], names=['PORO', 'DZ']
+            >>> props.from_file("ECL.UNRST", fformat="unrst",
+                dates=[20110101, 20141212], names=["PORO", "DZ"]
 
         Raises:
             FileNotFoundError: if input file is not found
-            ValueError: if a property is not found
+            ValueError: if a property or a date is not found
             RuntimeWarning: if some dates are not found
 
+        .. versionadded:: 2.13.0 Added strict key
         """
 
         pfile = xtgeo._XTGeoFile(pfile, mode="rb")
@@ -333,7 +375,13 @@ class GridProperties(Grid3D):
 
         elif fformat.lower() in ("init", "unrst"):
             _gridprops_io.import_ecl_output(
-                self, pfile, dates=dates, grid=grid, names=names, namestyle=namestyle
+                self,
+                pfile,
+                dates=dates,
+                grid=grid,
+                names=names,
+                namestyle=namestyle,
+                strict=strict,
             )
         else:
             raise OSError("Invalid file format")
@@ -444,7 +492,9 @@ class GridProperties(Grid3D):
         return dlist
 
     @staticmethod
-    def scan_dates(pfile, fformat="unrst", maxdates=1000, dataframe=False):
+    def scan_dates(
+        pfile, fformat="unrst", maxdates=1000, dataframe=False, datesonly=False
+    ):
         """Quick scan dates in a simulation restart file.
 
         Args:
@@ -452,20 +502,33 @@ class GridProperties(Grid3D):
             fformat (str): unrst (so far)
             maxdates (int): Maximum number of dates to collect
             dataframe (bool): If True, return a Pandas dataframe instead
+            datesonly (bool): If True, SEQNUM is skipped,
 
         Return:
             A list of tuples or a dataframe with (seqno, date),
-            date is on YYYYMMDD form.
+            date is on YYYYMMDD form. If datesonly is True and dataframe is False,
+            the returning list will be a simple list of dates.
 
         Example::
             >>> props = GridProperties()
             >>> dlist = props.scan_dates('ECL.UNRST')
 
+            or getting all dates a simple list:
+            >>> from xtgeo import GridProperties as GPS
+            >>> dlist = GPS().scan_dates("ECL.UNRST", datesonly=True)
+
+        .. versionchanged:: 2.13.0 Added datesonly keyword
         """
         pfile = xtgeo._XTGeoFile(pfile)
 
         logger.info("Format supported as default is %s", fformat)
 
         dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
+
+        if datesonly and dataframe:
+            dlist.drop("SEQNUM", axis=1, inplace=True)
+
+        if datesonly and not dataframe:
+            dlist = [date for (_, date) in dlist]
 
         return dlist
