@@ -2,18 +2,22 @@
 
 ## Version 2
 
-## Version 2.13.0 (in prep)
+### Version 2.13.0 (in prep)
 * Skip support for Python 2.7 and 3.5. Now only Python 3.6+ is supported
 * New features:
   * Grid quality indicators for Grid(): ``get_gridquality_properties()``
   * Support for BytesIO i/o for ``RegularSurface()`` formats irap ascii and zmap ascii
   * A `fmt` key is now available in `GridProperty().to_file()` for Eclipse grdecl format,
     and default format is now scientific %e for Floats
+  * Added a key `datesonly` for GridProperties().``scan_dates`` for getting a
+    simple list of dates existing in a given restart file
 
 * Improvements and bug fixes
   * Reorganizing internal storage of 3D corner point grids
   * Faster read and write to ROFF binary for Grid() (read almost 4 times faster)
   * Faster read/write to Roxar API
+  * Import from Eclipse is improved, in particular using "all" alias for
+    ``initprops``, ``restartprops`` and ``restartdates``
 
 ### 2.12.1
 * Fix of ``get_dataframe()`` for ``RegularSurface`` which fails in some case, cf issue #415
