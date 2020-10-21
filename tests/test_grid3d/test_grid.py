@@ -628,6 +628,21 @@ def test_ecl_run():
     pres1.to_file(os.path.join(TMPDIR, "pressurediff.roff"), name="PRESSUREDIFF")
 
 
+def test_ecl_run_all():
+    """Test import an eclrun with all dates and props"""
+
+    gg = Grid()
+    gg.from_file(
+        REEKROOT,
+        fformat="eclipserun",
+        initprops="all",
+        restartdates="all",
+        restartprops="all",
+    )
+
+    assert len(gg.gridprops.names) == 287
+
+
 def test_npvalues1d():
     """Different ways of getting np arrays"""
 
@@ -809,6 +824,6 @@ def test_bulkvol_speed():
     grd._xtgformat2()
 
     t0 = xtg.timer()
-    bulk = grd.get_bulkvol()
+    _ = grd.get_bulkvol()
     ncells = np.prod(dimens)
     print(xtg.timer(t0), ncells)

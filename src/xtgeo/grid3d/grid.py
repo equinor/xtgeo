@@ -47,12 +47,12 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def grid_from_file(gfile, fformat=None):
+def grid_from_file(
+    gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+):
     """Read a grid (cornerpoint) from file and an returns a Grid() instance.
 
-    Args:
-        gfile(str): Name of file to read grid from
-        fformat (str): File format, default is None which means "guess"
+    See :meth:`Grid.from_file` method for details on keywords.
 
     Example::
 
@@ -422,6 +422,8 @@ class Grid(Grid3D):
         """Return or set a XTGeo GridProperties objects attached to the Grid."""
         # Note, internally, the _props is a GridProperties instance, which is
         # a class that holds a list of properties.
+        # Note that the `props` methods below will deal with properties in a
+        # list context
 
         return self._props
 
@@ -443,7 +445,7 @@ class Grid(Grid3D):
 
         When setting props, the current property list is replaced.
 
-        See also append_prop() method to add a property to the current list.
+        See also :meth:`append_prop()` method to add a property to the current list.
 
         """
         # Note, internally, the _props is a GridProperties instance, which is
@@ -569,11 +571,13 @@ class Grid(Grid3D):
         will try to input INIT and UNRST file in addition the grid in "one go".
 
         Arguments:
-            gfile (str or Path): File name to be imported
+            gfile (str or Path): File name to be imported. If fformat="eclipse_run"
+                then a fileroot name shall be input here, see example below.
             fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
                 (None is default and means "guess")
-            initprops (str list): Optional, if given, and file format
-                is "eclipserun", then list the names of the properties here.
+            initprops (str list): Optional, and only applicable for file format
+                "eclipserun". Provide a list the names of the properties here. A
+                special value "all" can be get all properties found in the INIT file
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
 
@@ -584,6 +588,12 @@ class Grid(Grid3D):
             >>> xg.from_file(myfile, fformat="roff")
             >>> # or shorter:
             >>> xg = Grid(myfile)  # will guess the file format
+
+        Example using "eclipserun"::
+
+            >>> mycase = "ECL"  # meaning ECL.EGRID, ECL.INIT, ECL.UNRST
+            >>> xg = Grid()
+            >>> xg.from_file(mycase, fformat="eclipserun", initprops="all")
 
         Raises:
             OSError: if file is not found etc
