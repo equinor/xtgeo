@@ -529,6 +529,6 @@ class GridProperties(Grid3D):
             dlist.drop("SEQNUM", axis=1, inplace=True)
 
         if datesonly and not dataframe:
-            dlist = [date for (seqnum, date) in dlist]
+            dlist = [date for (_, date) in dlist]
 
         return dlist
