@@ -15,12 +15,17 @@ logger = xtg.functionlogger(__name__)
 
 # self is the GridProperties() instance
 
+# On "strict" keyword: Default is True
+# A strict False simply means that if keyname and/or date is not found is will
+# just warn and continue to next! If True it will warn but TRY to import, which
+# in turn may raise a KeywordNotError or DateNotFoundError, etc
+#
+# Note that there are keyword and data checks also in _gridprop_import_eclrun
+
 
 def import_ecl_output(
-    self, pfile, names=None, dates=None, grid=None, namestyle=0, strict=(True, False)
+    self, pfile, names=None, dates=None, grid=None, namestyle=0, strict=True
 ):
-
-    strictname, strictdate = strict  # strict is a tuple e.g. (True, False)
 
     if not isinstance(pfile, xtgeo._XTGeoFile):
         raise RuntimeError("BUG kode 84728, pfile is not a _XTGeoFile instance")
@@ -32,15 +37,13 @@ def import_ecl_output(
         raise ValueError("Name list cannot be empty (None)")
 
     if dates is None:
-        _import_ecl_output_v2_init(self, pfile, names, grid, strictname)
+        _import_ecl_output_v2_init(self, pfile, names, grid, strict)
 
     else:
-        _import_ecl_output_v2_rsta(
-            self, pfile, names, dates, grid, strictname, strictdate, namestyle
-        )
+        _import_ecl_output_v2_rsta(self, pfile, names, dates, grid, strict, namestyle)
 
 
-def _import_ecl_output_v2_init(self, pfile, names, grid, strictname):
+def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
     """Import INIT parameters"""
 
     # scan valid keywords
@@ -70,14 +73,14 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strictname):
 
     for name in usenames:
         if name not in validnames:
-            if strictname:
-                msg = f"Requested keyword {name} is not in INIT file,"
+            if strict:
+                msg = f"Requested keyword {name} is not in INIT file, but will try,"
                 msg += f"valid entries are {validnames}"
-                raise ValueError(msg)
+                logger.warning(msg)
             else:
                 msg = f"Requested keyword {name} is not in INIT file."
-                msg += "Will continue due to keyword <strict> settings."
-                xtg.warnuser(msg)
+                msg += "Will skip trying to read due to keyword <strict> settings."
+                logger.warning(msg)
                 continue
 
         prop = GridProperty()
@@ -94,9 +97,7 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strictname):
     self._nlay = grid.nlay
 
 
-def _import_ecl_output_v2_rsta(
-    self, pfile, names, dates, grid, strictname, strictdate, namestyle
-):
+def _import_ecl_output_v2_rsta(self, pfile, names, dates, grid, strict, namestyle):
     """Import RESTART parameters"""
 
     # scan valid keywords with dates
@@ -149,38 +150,19 @@ def _import_ecl_output_v2_rsta(
 
         if name not in ("SGAS", "SOIL", "SWAT") and namedate not in validnamedatepairs:
             # saturation keywords are a mess in Eclipse and friends; check later
-            if strictname and strictdate:
+            if strict:
                 msg = f"Keyword data combo {name} {date} is not in RESTART file."
                 msg += f"Possible entries are: {validnamedatepairs}"
-                raise ValueError(msg)
+                msg += "Will still try to import..."
+                logger.warning(msg)
             else:
                 msg = f"Keyword data combo {name} {date} is not in RESTART file."
-                xtg.warnuser(msg)
-                skipentry = True
-
-            if strictname and not strictdate and name not in validnames:
-                msg = f"Keyword name {name} is not in RESTART file."
-                msg += f"Possible entries are: {validnames}"
-                raise ValueError(msg)
-            elif not strictname and strictdate and date not in validdates:
-                msg = f"Keyword date {date} is not in RESTART file."
-                msg += f"Possible entries are: {validdates}"
-                raise ValueError(msg)
-            elif not strictname and name not in validnames:
-                msg = f"Keyword name {name} is not in RESTART file."
-                xtg.warnuser(msg)
-                skipentry = True
-            elif not strictdate and date not in validdates:
-                msg = f"Keyword date {date} is not in RESTART file."
-                xtg.warnuser(msg)
-                skipentry = True
-            else:
-                msg = "Keyword skipped for unknown reasons."
-                xtg.warnuser(msg)
+                msg += f"Possible entries are: {validnamedatepairs}"
+                msg += "Will skip attempt to import and just continue..."
+                logger.warning(msg)
                 skipentry = True
 
         if skipentry:
-            xtg.warnuser("Will continue due to keyword <strict> settings.")
             continue
 
         prop = GridProperty()

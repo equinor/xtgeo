@@ -71,11 +71,13 @@ def test_import_should_fail():
     names = ["PRESSURE"]
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
+    rx.from_file(
+        RFILE1, fformat="unrst", names=names, dates=dates, grid=g, strict=False
+    )
 
 
-def test_import_should_warn():
-    """Import INIT and UNRST Reek but ask for wrong name or date"""
+def test_import_should_warn_with_logger():
+    """Import INIT and UNRST Reek but ask for wrong name or date, using strict=False"""
     g = Grid()
     g.from_file(GFILE1, fformat="egrid")
 
@@ -83,7 +85,9 @@ def test_import_should_warn():
     names = ["PRESSURE"]
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
+    rx.from_file(
+        RFILE1, fformat="unrst", names=names, dates=dates, grid=g, strict=False
+    )
 
 
 def test_import_restart():
