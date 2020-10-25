@@ -1157,7 +1157,7 @@ class RegularSurface(object):
     def get_values1d(
         self, order="C", asmasked=False, fill_value=xtgeo.UNDEF, activeonly=False
     ):
-        """Get an an 1D, numpy or masked array of the map values.
+        """Get a 1D, numpy or masked array of the map values.
 
         Args:
             order (str): Flatteting is in C (default) or F order
@@ -2595,8 +2595,6 @@ class RegularSurface(object):
     ):  # pylint: disable=too-many-branches, too-many-statements
         """Ensures that values is a 2D masked numpy (ncol, nrow), C order.
 
-        This is an improved but private version over ensure_correct_values
-
         Args:
             values (array-like or scalar): Values to process.
 
@@ -2620,7 +2618,7 @@ class RegularSurface(object):
 
             if (
                 currentmask is not None
-                and currentmask.all() == newmask.all()
+                and np.array_equal(currentmask, newmask)
                 and self._values.shape == values.shape
                 and values.flags.c_contiguous is True
             ):
@@ -2631,7 +2629,7 @@ class RegularSurface(object):
                 self._values += vals
 
             else:
-                # replace any undef or nan with mask, return a view (copy=False)
+                # replace any undef or nan with mask
                 vals = values.astype(np.float64)
                 vals = ma.masked_greater(vals, self.undef_limit, copy=True)
                 vals = ma.masked_invalid(vals, copy=True)
