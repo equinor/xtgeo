@@ -328,9 +328,14 @@ class GridProperties(Grid3D):
             grid (obj): The grid geometry object (optional if ROFF)
             namestyle (int): 0 (default) for style SWAT_20110223,
                 1 for SWAT--2011_02_23 (applies to restart only)
-            strict (tuple of bool): First is strictness on name, the second is
-                strictness on date. If True, will raise a ValueError if input name
-                 or date is not found; otherwise will continue with a user warning
+            strict (tuple of (bool, bool)): If (True, False) (default) then an
+                Error is raised if keyword name is not found, or a key-date combination
+                is not found. However, the dates will processed so that non-valid dates
+                are skipped (still, invalid key-date combinations may occur!).
+                If (True, True) all keywords and dates are tried, while (False, False)
+                means that that only valid entries are imported, more or less silently.
+                Saturations keywords SWAT/SOIL/SGAS are not evaluated as they may be
+                derived.
 
         Example::
             >>> props = GridProperties()
@@ -339,8 +344,9 @@ class GridProperties(Grid3D):
 
         Raises:
             FileNotFoundError: if input file is not found
-            ValueError: if a property or a date is not found
-            RuntimeWarning: if some dates are not found
+            DateNotFoundError: The date is not found
+            KeywordNotFoundError: The keyword is not found
+            KeywordFoundDateNotFoundError: The keyword but not date found
 
         .. versionadded:: 2.13.0 Added strict key
         """
