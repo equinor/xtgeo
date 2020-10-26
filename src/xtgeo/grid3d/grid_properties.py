@@ -311,7 +311,7 @@ class GridProperties(Grid3D):
         dates=None,
         grid=None,
         namestyle=0,
-        strict=True,
+        strict=(True, False),
     ):
         """Import grid properties from file in one go.
 
@@ -328,10 +328,14 @@ class GridProperties(Grid3D):
             grid (obj): The grid geometry object (optional if ROFF)
             namestyle (int): 0 (default) for style SWAT_20110223,
                 1 for SWAT--2011_02_23 (applies to restart only)
-            strict (bool): If True (default), will raise an Error if input name
-                or date is not found; otherwise will continue with a user warning. This
-                allows for "sloppy input". Saturations keywords SWAT/SOIL/SGAS are
-                not evaluated as they may be derived.
+            strict (tuple of (bool, bool)): If (True, False) (default) then an
+                Error is raised if keyword name is not found, or a key-date combination
+                is not found. However, the dates will processed so that non-valid dates
+                are skipped (still, invalid key-date combinations may occur!).
+                If (True, True) all keywords and dates are tried, while (False, False)
+                means that that only valid entries are imported, more or less silently.
+                Saturations keywords SWAT/SOIL/SGAS are not evaluated as they may be
+                derived.
 
         Example::
             >>> props = GridProperties()
