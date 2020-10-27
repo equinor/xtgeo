@@ -160,7 +160,7 @@ def _slice_cube_window(
             ndiv = 1
             logger.warning("NDIV < 1; reset to 1")
 
-    # force/overrule a coarse sampling for sampling "cube"
+    # force/overrule a coarse sampling for sampling option "cube"
     ndivdisc = int((zdiameter) * 1.0001 / cube.zinc)
     if sampling == "cube":
         ndiv = ndivdisc
@@ -269,7 +269,7 @@ def _slice_cube_window_resample(
     showprogress,
     deadtraces,
 ):
-    """Makes a resample from origonal surfaces first to fit cube topology"""
+    """Makes a resample from original surfaces first to fit cube topology"""
 
     logger.info("Attributes between surfaces, resampling version")
 

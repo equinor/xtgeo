@@ -15,7 +15,10 @@ TMD = xtg.tmpdir
 TPATH = xtg.testpath
 
 SFILE1 = join(TPATH, "cubes/etc/ib_synth_iainb.segy")
+SFILE2 = join(TPATH, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
 
+TOP2A = join(TPATH, "surfaces/reek/2/01_topreek_rota.gri")
+TOP2B = join(TPATH, "surfaces/reek/2/04_basereek_rota.gri")
 
 # ======================================================================================
 # This is a a set of tests towards a synthetic small cube made by I Bush in order to
@@ -28,6 +31,13 @@ def fixture_loadsfile1():
     """Fixture for loading a SFILE1"""
     logger.info("Load seismic file 1")
     return xtgeo.Cube(SFILE1)
+
+
+@pytest.fixture(name="loadsfile2")
+def fixture_loadsfile2():
+    """Fixture for loading a SFILE2"""
+    logger.info("Load seismic file 2")
+    return xtgeo.Cube(SFILE2)
 
 
 def test_single_slice_yflip_snapxy_both(loadsfile1):
@@ -271,3 +281,30 @@ def test_avg_surface_large_cube():
     print("Algorithm 1: ", xtg.timer(t1))
 
     logger.info("Testing done")
+
+
+def test_attrs_reek(loadsfile2):
+
+    logger.info("Make cube...")
+    cube2 = loadsfile2
+
+    t2a = xtgeo.RegularSurface(TOP2A)
+    t2b = xtgeo.RegularSurface(TOP2B)
+
+    attlist = ["maxpos", "maxneg"]
+
+    attrs1 = t2a.slice_cube_window(
+        cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=1
+    )
+    attrs2 = t2a.slice_cube_window(
+        cube2, other=t2b, sampling="trilinear", attribute=attlist, algorithm=2
+    )
+
+    for att in attrs1.keys():
+        srf1 = attrs1[att]
+        srf2 = attrs2[att]
+
+        srf1.to_file(join(TMD, "attr1_" + att + ".gri"))
+        srf2.to_file(join(TMD, "attr2_" + att + ".gri"))
+
+        assert srf1.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)

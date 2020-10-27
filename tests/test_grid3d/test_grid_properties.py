@@ -71,19 +71,37 @@ def test_import_should_fail():
     names = ["PRESSURE"]
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
+    rx.from_file(
+        RFILE1, fformat="unrst", names=names, dates=dates, grid=g, strict=(True, False)
+    )
+
+    with pytest.raises(ValueError) as e_info:
+        rx.from_file(
+            RFILE1,
+            fformat="unrst",
+            names=names,
+            dates=dates,
+            grid=g,
+            strict=(True, True),
+        )
 
 
-def test_import_should_warn():
-    """Import INIT and UNRST Reek but ask for wrong name or date"""
+def test_import_should_pass():
+    """Import INIT and UNRST but ask for wrong name or date , using strict=False"""
     g = Grid()
     g.from_file(GFILE1, fformat="egrid")
 
     rx = GridProperties()
-    names = ["PRESSURE"]
+    names = ["PRESSURE", "DUMMY"]  # dummy should exist
     dates = [19991201, 19991212]  # last date does not exist
 
-    rx.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
+    rx.from_file(
+        RFILE1, fformat="unrst", names=names, dates=dates, grid=g, strict=(False, False)
+    )
+
+    assert "PRESSURE_19991201" in rx
+    assert "PRESSURE_19991212" not in rx
+    assert "DUMMY_19991201" not in rx
 
 
 def test_import_restart():
