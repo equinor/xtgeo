@@ -2,6 +2,9 @@
 
 ## Version 2
 
+### 2.12.3
+* Bugfix wt #439 RegularSurface().slice_cube_window()
+
 ### 2.12.2
 * Bugfix wrt #436 for RegularSurface().
 
