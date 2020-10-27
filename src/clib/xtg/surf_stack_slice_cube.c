@@ -5,7 +5,7 @@
  *    surf_stack_slice_cube.c
  *
  * DESCRIPTION:
- *    Slicing a stack of surfaces and reurn cube values
+ *    Slicing a stack of surfaces and return cube values
  *
  *    In this version, the surface and cube share geometry, which makes calculations
  *    way much simpler and probably also much faster
@@ -14,10 +14,8 @@
  *    ncol, nrow...  i     Cube dimensions and relevant increments
  *    czori, czinc   i     Cube settings
  *    cubevalsv      i     Cube values
- *    stack          i     map array stack with Z values
- *    rmask          i     Length of slice array
- *    surfsv        i/o    map to update
- *    maskv         i/o    mask array for map, may be updated!
+ *    stack         i/o    stacked map array stack with Z values
+ *    rmask          i     stacked map array stack with masks
  *    optnearest     i     If 1 use nerest node, else do interpolation aka trilinear
  *    optmask        i     If 1 then masked cells (undef) are made if cube is UNDEF
  *                         (surface outside cube will not occur in this case)
@@ -68,6 +66,8 @@ surf_stack_slice_cube(int ncol,
                     continue;
 
                 double zval = stack[icmap][nd];
+                if (zval > UNDEF_LIMIT)
+                    continue;
 
                 // find vertical index of node right above
                 int k1 = (int)((zval - czori) / czinc);

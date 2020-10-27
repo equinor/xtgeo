@@ -349,6 +349,9 @@ def _export_grid_cornerpoint_roxapi_v1(
     geom = CPG.create(self.dimensions)
 
     logger.info(geom)
+    scopy = self.copy()
+    scopy.make_zconsistent()
+    scopy._xtgformat1()
 
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * 4 * (self.nlay + 1)
@@ -358,7 +361,7 @@ def _export_grid_cornerpoint_roxapi_v1(
         self.nrow,
         self.nlay,
         self._coordsv,
-        self._zcornsv,
+        scopy._zcornsv,
         self._actnumsv,
         npill,
         npill,
@@ -421,6 +424,7 @@ def _export_grid_cornerpoint_roxapi_v2(
 
     scopy = self.copy()
     scopy.make_zconsistent()
+    scopy._xtgformat2()
 
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * (self.nlay + 1) * 4
