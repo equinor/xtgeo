@@ -43,7 +43,7 @@ from copy import deepcopy
 import math
 from types import FunctionType
 import warnings
-
+import numbers
 from collections import OrderedDict
 
 import numpy as np
@@ -480,6 +480,11 @@ class RegularSurface(object):
         """The NY (or N-Jdir) number, as property (deprecated, use nrow)."""
         warnings.warn("Deprecated; use nrow instead", DeprecationWarning)
         return self._nrow
+
+    @property
+    def dimensions(self):
+        """2-tuple: The surface dimensions as a tuple of 2 integers (read only)"""
+        return (self._ncol, self._nrow)
 
     @property
     def nactive(self):
@@ -2552,13 +2557,13 @@ class RegularSurface(object):
     # Private
     # ==================================================================================
 
-    def _ensure_correct_values(self, values):
+    def _ensure_correct_values(
+        self, values
+    ):  # pylint: disable=too-many-branches, too-many-statements
         """Ensures that values is a 2D masked numpy (ncol, nrow), C order.
 
-        This is an improved but private version over ensure_correct_values
-
         Args:
-            values (array or scalar): Values to process.
+            values (array-like or scalar): Values to process.
 
         Return:
             Nothing, self._values will be updated inplace
@@ -2567,7 +2572,7 @@ class RegularSurface(object):
         if not self._isloaded:
             return
 
-        if values is None:
+        if values is None or values is False:
             self._values = None
             return
 
@@ -2580,7 +2585,7 @@ class RegularSurface(object):
 
             if (
                 currentmask is not None
-                and currentmask.all() == newmask.all()
+                and np.array_equal(currentmask, newmask)
                 and self._values.shape == values.shape
                 and values.flags.c_contiguous is True
             ):
@@ -2591,7 +2596,7 @@ class RegularSurface(object):
                 self._values += vals
 
             else:
-                # replace any undef or nan with mask, return a view (copy=False)
+                # replace any undef or nan with mask
                 vals = values.astype(np.float64)
                 vals = ma.masked_greater(vals, self.undef_limit, copy=True)
                 vals = ma.masked_invalid(vals, copy=True)
@@ -2603,13 +2608,20 @@ class RegularSurface(object):
                     vals = np.asanyarray(vals, order="C")
                     vals = ma.array(vals, mask=mask, order="C")
                 self._values = vals
-                return
 
-        elif np.isscalar(values):
+        elif isinstance(values, numbers.Number):
             if currentmask is not None:
                 self._values *= 0
-                self._values += values
-                return
+                vals = np.ones(self.dimensions, dtype=np.float64) * values
+                vals = np.ma.array(vals, mask=currentmask)
+
+                # there maybe cases where values scalar input is some kind of UNDEF
+                # which will change the mask
+                vals = ma.masked_greater(vals, self.undef_limit, copy=False)
+                vals = ma.masked_invalid(vals, copy=False)
+
+                self._values += vals
+
             else:
                 vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=np.float64)
                 self._values = vals + float(values)
@@ -2623,7 +2635,35 @@ class RegularSurface(object):
                 try:
                     vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
                 except ValueError as emsg:
-                    xtg.error("Cannot reshape array: {}".format(emsg))
+                    logger.critical("Cannot reshape array: %s", emsg)
                     raise
 
             self._values = vals
+
+        elif isinstance(values, (list, tuple)):  # ie values ~ list-like
+            vals = ma.array(values, order="C", dtype=np.float64)
+            vals = ma.masked_greater(vals, self.undef_limit, copy=True)
+            vals = ma.masked_invalid(vals, copy=True)
+
+            if vals.shape != (self.ncol, self.nrow):
+                try:
+                    vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
+                except ValueError as emsg:
+                    logger.critical("Cannot reshape array: %s", emsg)
+                    raise
+
+            self._values = vals
+
+        else:
+            raise ValueError("Input values are in invalid format: {}".format(values))
+
+        if self._values is not None:
+
+            if self._ilines is None:
+                self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+                self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+
+            if self._values.mask is ma.nomask:
+                self._values = ma.array(
+                    self._values, mask=ma.getmaskarray(self._values)
+                )

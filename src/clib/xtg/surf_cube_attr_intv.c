@@ -276,8 +276,9 @@ surf_cube_attr_intv(int ncol,
     int i, ic;
     for (i = 0; i < nsurf1; i++) {
         for (ic = 0; ic <= ndiv; ic++) {
-            if (maskv1[i] == 0 && maskv2[i] == 0) {
-                stack[i][ic] = surfsv1[i] + ic * slicezinc;
+            double vadd = surfsv1[i] + ic * slicezinc;
+            if (maskv1[i] == 0 && maskv2[i] == 0 && vadd <= surfsv2[i]) {
+                stack[i][ic] = vadd;
                 rmask[i][ic] = 0;
             } else {
                 stack[i][ic] = UNDEF;
