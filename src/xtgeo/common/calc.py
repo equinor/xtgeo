@@ -203,7 +203,7 @@ def point_in_tetrahedron(x0, y0, z0, vertices):
     return False
 
 
-def point_in_hexahedron(x0, y0, z0, vertices):
+def point_in_hexahedron(x0, y0, z0, vertices, _algorithm=1):
     """Check if point P0 is inside a tetrahedron.
 
     Vertices my be in order of what 3D cells normally have
@@ -221,6 +221,7 @@ def point_in_hexahedron(x0, y0, z0, vertices):
         y0 (double): Y xoord of point P0
         z0 (double): Z xoord of point P0
         vertices (list-like): Vertices as e.g. numpy array [[x1, y1, z1], [x2, y2, ...]
+        _algorithm (int): Method for calculation (experimental, default may change)
 
     Returns:
         True of inside or on edge, False else
@@ -228,7 +229,7 @@ def point_in_hexahedron(x0, y0, z0, vertices):
 
     vertices = np.array(vertices, dtype=np.float64)
 
-    status = _cxtgeo.x_point_in_hexahedron(x0, y0, z0, vertices)
+    status = _cxtgeo.x_point_in_hexahedron(x0, y0, z0, vertices, _algorithm)
 
     if status >= 1:
         return True

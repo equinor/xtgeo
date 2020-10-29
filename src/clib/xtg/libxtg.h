@@ -205,7 +205,8 @@ x_point_in_hexahedron(double x0,
                       double y0,
                       double z0,
                       double *swig_np_dbl_inplaceflat_v1,
-                      long n_swig_np_dbl_inplaceflat_v1);
+                      long n_swig_np_dbl_inplaceflat_v1,
+                      int method);
 
 double
 x_vectorpair_angle3d(double *swig_np_dbl_in_v1,
