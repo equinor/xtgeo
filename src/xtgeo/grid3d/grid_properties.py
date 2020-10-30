@@ -101,7 +101,7 @@ class GridProperties(Grid3D):
 
     @property
     def names(self):
-        """Returns a list of property names
+        """Returns or sets a list of property names
 
         Example::
 
@@ -109,9 +109,31 @@ class GridProperties(Grid3D):
             for prop in namelist:
                 print ('Property name is {}'.format(name))
 
+            # when setting names, an empty string 'trick' will make the namelist to be
+            # defaulted as each individual property name
+
+            props.names = ""
+
         """
 
         return self._names
+
+    @names.setter
+    def names(self, nameslist):
+        if not nameslist and self._props:
+            # try the get the names from each individual property automatic
+            for prop in self._props:
+                self._names.append(prop.name)
+                return
+
+        if len(nameslist) != len(self._props):
+            raise ValueError("Number of names does not match number of properties")
+
+        # look for duplicates
+        if len(nameslist) > len(set(nameslist)):
+            raise ValueError("List of names contains duplicates; names must be unique")
+
+        self._names = nameslist
 
     @property
     def props(self):
@@ -256,6 +278,9 @@ class GridProperties(Grid3D):
                     self._props.append(prop)
                     self._names.append(prop.name)
                     self._dates.append(prop.date)
+                    self._ncol = prop.ncol
+                    self._nrow = prop.nrow
+                    self._nlay = prop.nlay
                 else:
                     logger.info("Not added. GridProperty instance already present")
             else:
