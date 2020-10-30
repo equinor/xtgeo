@@ -299,4 +299,3 @@ def test_point_in_cell_compare_rms():
 
         succesrate = suc / nall
         print(cname, succesrate, suc, nall)
-
