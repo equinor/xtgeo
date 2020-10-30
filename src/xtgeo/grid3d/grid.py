@@ -1185,6 +1185,8 @@ class Grid(Grid3D):
     ):
         """Return the bulk volume for a given cell.
 
+        This method is currently *experimental*.
+
         A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
         entity. The volume is approximated by dividing the cell (hexahedron) into
         6 tetrehedrons; there is however a large number of ways to do this division.
@@ -1209,6 +1211,7 @@ class Grid(Grid3D):
             >>> grid.from_file("gullfaks2.roff")
             >>> vol = grid.get_cell_volume(ijk=(45,13,2))
 
+        .. versionadded:: 2.13.0 (as experimental)
         """
 
         vol = _grid_etc1.get_cell_volume(
@@ -1221,9 +1224,11 @@ class Grid(Grid3D):
 
         return vol
 
-    def get_bulkvol(self, name="bulkvol", asmasked=True, precision=2):
+    def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
         """
         Return the geometric cell volume for all cells as a GridProperty object.
+
+        This method is currently *experimental*.
 
         A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
         entity. The volume is approximated by dividing the cell (hexahedron) into
