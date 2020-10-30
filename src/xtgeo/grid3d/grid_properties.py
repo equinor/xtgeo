@@ -83,6 +83,19 @@ class GridProperties(Grid3D):
 
         return prop
 
+    def __iter__(self):
+        self._counter = 0
+        return self
+
+    def __next__(self):
+        maxcounter = len(self._props)
+        if self._counter < maxcounter:
+            result = self._props[self._counter]
+            self._counter += 1
+            return result
+        else:
+            raise StopIteration
+
     # ----------------------------------------------------------------------------------
     # Properties:
 
