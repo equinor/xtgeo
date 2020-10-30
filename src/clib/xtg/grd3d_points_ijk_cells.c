@@ -189,7 +189,7 @@ _grd3d_point_in_cell(int ic,
     double corners[24];
     grd3d_corners(ic, jc, kc, nx, ny, nz, coordsv, 0, zcornsv, 0, corners);
 
-    *score = x_point_in_hexahedron(xc, yc, zc, corners, 24);
+    *score = x_point_in_hexahedron(xc, yc, zc, corners, 24, 1);
 
     if (*score > 0) {
         return ib;

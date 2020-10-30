@@ -2,6 +2,10 @@
 import os
 from os.path import join
 import numpy as np
+import pandas as pd
+
+import pytest
+
 from xtgeo.xyz import XYZ
 from xtgeo.xyz import Points
 from xtgeo.xyz import Polygons
@@ -36,6 +40,7 @@ POLSET4 = join(TSTPATH, "polygons/etc/well16.pol")
 POINTSET2 = join(TSTPATH, "points/reek/1/pointset2.poi")
 POINTSET3 = join(TSTPATH, "points/battle/1/many.rmsattr")
 POINTSET4 = join(TSTPATH, "points/reek/1/poi_attr.rmsattr")
+CSV1 = join(TSTPATH, "3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
 def test_xyz():
@@ -73,6 +78,22 @@ def test_import():
 
     x0 = mypoints.dataframe["X_UTME"].values[0]
     tsetup.assert_almostequal(x0, 460842.434326, 0.001)
+
+
+def test_import_from_dataframe():
+    """Import Points via Pandas dataframe"""
+
+    mypoints = Points()
+    dfr = pd.read_csv(CSV1, skiprows=3)
+    attr = {"IX": "I", "JY": "J", "KZ": "K"}
+    mypoints.from_dataframe(dfr, east="X", north="Y", tvdmsl="Z", attributes=attr)
+
+    assert mypoints.dataframe.X_UTME.mean() == dfr.X.mean()
+
+    with pytest.raises(ValueError):
+        mypoints.from_dataframe(
+            dfr, east="NOTTHERE", north="Y", tvdmsl="Z", attributes=attr
+        )
 
 
 def test_export_points():

@@ -206,18 +206,11 @@ class Grid(Grid3D):
                 restartprops=restartprops,
                 restartdates=restartdates,
             )
+        else:
+            # make a simple empty box grid (from version 2.13)
+            self.create_box((self._ncol, self._nrow, self._nlay))
+
         logger.info("Ran __init__ for %s", repr(self))
-
-    # def __del__(self):
-
-    #     self._coordsv = None
-    #     self._zcornsv = None
-    #     self._actnumsv = None
-
-    #     if self.props is not None:
-    #         for prop in self.props:
-    #             logger.info("Deleting property instance %s", prop.name)
-    #             prop.__del__()
 
     def __repr__(self):
         logger.info("Invoke __repr__ for grid")
@@ -1180,24 +1173,82 @@ class Grid(Grid3D):
         # return the property objects
         return deltax, deltay
 
-    def get_bulkvol(self, name="bulkvol", asmasked=True):
-        """
-        Return geometric cell volume as a GridProperty object.
+    def get_cell_volume(
+        self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2
+    ):
+        """Return the bulk volume for a given cell.
 
-        The bulk is computed to split each cell in six 3D tetrahedrons, done in
-        two different ways, and find the average of those.
+        This method is currently *experimental*.
+
+        A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
+        entity. The volume is approximated by dividing the cell (hexahedron) into
+        6 tetrehedrons; there is however a large number of ways to do this division.
+
+        As default (precision=2) an average of two different ways to divide the cell
+        into tetrahedrons is averaged.
 
         Args:
-            name (str): names of property
+            ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
+                unless zerobased is True).
+            activeonly (bool): Skip undef cells if True; return None for inactive.
+            precision (int): An even number indication precision level,where
+                a higher number means increased precision but also increased computing
+                time. Currently 1, 2, 4 are supported.
+
+        Returns:
+            Cell total bulk volume
+
+        Example::
+
+            >>> grid = Grid()
+            >>> grid.from_file("gullfaks2.roff")
+            >>> vol = grid.get_cell_volume(ijk=(45,13,2))
+
+        .. versionadded:: 2.13.0 (as experimental)
+        """
+
+        vol = _grid_etc1.get_cell_volume(
+            self,
+            ijk=ijk,
+            activeonly=activeonly,
+            zerobased=zerobased,
+            precision=precision,
+        )
+
+        return vol
+
+    def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
+        """
+        Return the geometric cell volume for all cells as a GridProperty object.
+
+        This method is currently *experimental*.
+
+        A bulk volume of a cornerpoint cell is actually a non-trivial and a non-unique
+        entity. The volume is approximated by dividing the cell (hexahedron) into
+        6 tetrehedrons; there is however a large number of ways to do this division.
+
+        As default (precision=2) an average of two different ways to divide the cell
+        into tetrahedrons is averaged.
+
+        Args:
+            name (str): name of property, default to "bulkvol"
             asmasked (bool). If True, make a np.ma array where inactive cells
                 are masked. Otherwise a numpy array will all bulk for all cells is
                 returned
+            precision (int): An number indication precision level, where
+                a higher number means increased precision but also increased computing
+                time. Currently 1, 2 (default), 4 are supported.
 
         Returns:
             XTGeo GridProperty object
+
+        .. versionadded:: 2.13.0 (as experimental)
+
         """
 
-        return _grid_etc1.get_bulkvol(self, name=name, asmasked=asmasked)
+        return _grid_etc1.get_bulk_volume(
+            self, name=name, asmasked=asmasked, precision=precision
+        )
 
     def get_indices(self, names=("I", "J", "K")):
         """Return 3 GridProperty objects for column, row, and layer index,
@@ -1398,31 +1449,6 @@ class Grid(Grid3D):
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
         return grid_props
 
-    def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
-        """Return the bulk volume for a given cell.
-
-        Args:
-            ijk (tuple): A tuple of I J K (NB! cell counting starts from 1
-                unless zerobased is True).
-            activeonly (bool): Skip undef cells if True; return None for inactive.
-
-        Returns:
-            Cell total bulk volume
-
-        Example::
-
-            >>> grid = Grid()
-            >>> grid.from_file("gullfaks2.roff")
-            >>> vol = grid.get_cell_volume(ijk=(45,13,2))
-
-        """
-
-        vol = _grid_etc1.get_cell_volume(
-            self, ijk=ijk, activeonly=activeonly, zerobased=zerobased
-        )
-
-        return vol
-
     def get_layer_slice(self, layer, top=True, activeonly=True):
         """Get numpy arrays for cell coordinates e.g. for plotting.
 
@@ -1525,12 +1551,25 @@ class Grid(Grid3D):
     def get_gridquality_properties(self):
         """Return a GridProperties() instance with grid quality measures.
 
-        These measures are:
+        These measures are currently:
 
         * minangle_topbase (degrees) - minimum angle of top and base
         * maxangle_topbase (degrees) - maximum angle of top and base
         * minangle_topbase_proj (degrees) min angle projected (bird view)
         * maxangle_topbase_proj (degrees) max angle projected (bird view)
+        * minangle_sides (degress) minimum angle, all side surfaces
+        * maxangle_sides (degress) maximum angle, all side surfaces
+        * collapsed (int) Integer, 1 of one or more corners are collpased in Z
+        * faulted (int) Integer, 1 if cell is faulted (one or more neighbours offset)
+        * negative_thickness (int) Integer, 1 if cell has negative thickness
+        * concave_proj (int) 1 if cell is concave seen from projected bird view
+
+        Example::
+
+            # store grid quality measures in RMS
+            gprops = grd.gridquality()
+            for gprop in gprops:
+                gprop.to_roxar(project, "MyGrid", gprop.name)
 
 
         """

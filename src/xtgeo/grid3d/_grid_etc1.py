@@ -175,8 +175,8 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     return dx, dy
 
 
-def get_bulkvol(self, name="bulkvol", asmasked=True):
-    """Get cell bulk volume as a property"""
+def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
+    """Get cell bulk volume as a GridProperty() instance"""
 
     self._xtgformat2()
 
@@ -186,6 +186,9 @@ def get_bulkvol(self, name="bulkvol", asmasked=True):
 
     bval = np.zeros((bulk.dimensions))
 
+    if precision not in (1, 2, 4):
+        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
+
     _cxtgeo.grdcp3d_cellvol(
         self._ncol,
         self._nrow,
@@ -194,6 +197,7 @@ def get_bulkvol(self, name="bulkvol", asmasked=True):
         self._zcornsv,
         self._actnumsv,
         bval,
+        precision,
         0 if asmasked else 1,
     )
 
@@ -552,11 +556,14 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
     return tuple(grid_props)
 
 
-def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
+def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2):
     """Get bulk cell volume for one cell."""
 
     self._xtgformat1()
     i, j, k = ijk
+
+    if precision not in (1, 2, 4):
+        raise ValueError("The precision key has an invalid entry, use 1, 2, or 4")
 
     shift = 0
     if zerobased:
@@ -597,7 +604,7 @@ def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
             pcorners,
         )
 
-    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24)
+    cellvol = _cxtgeo.x_hexahedron_volume(pcorners, 24, precision)
     return cellvol
 
 
@@ -1452,7 +1459,7 @@ def _convert_xtgformat1to2(self):
 def get_gridquality_properties(self):
     """Get the grid quality properties"""
 
-    numqual = 9
+    numqual = 10
 
     self._xtgformat2()
 
@@ -1467,45 +1474,32 @@ def get_gridquality_properties(self):
         self._actnumsv,
         fresults,
     )
+    qcnames = {
+        0: "minangle_topbase",
+        1: "maxangle_topbase",
+        2: "minangle_topbase_proj",
+        3: "maxangle_topbase_proj",
+        4: "minangle_sides",
+        5: "maxangle_sides",
+        6: "collapsed",
+        7: "faulted",
+        8: "negative_thickness",
+        9: "concave_proj",
+    }
 
-    minangle = xtgeo.GridProperty(self, name="minangle_topbase")
-    minangle.values = fresults[0, :]
-
-    maxangle = xtgeo.GridProperty(self, name="maxangle_topbase")
-    maxangle.values = fresults[1, :]
-
-    minanglep = xtgeo.GridProperty(self, name="minangle_topbase_proj")
-    minanglep.values = fresults[2, :]
-
-    maxanglep = xtgeo.GridProperty(self, name="maxangle_topbase_proj")
-    maxanglep.values = fresults[3, :]
-
-    minangles = xtgeo.GridProperty(self, name="minangle_sides")
-    minangles.values = fresults[4, :]
-
-    maxangles = xtgeo.GridProperty(self, name="maxangle_sides")
-    maxangles.values = fresults[5, :]
-
-    collapsed = xtgeo.GridProperty(self, name="collapsed", discrete=True)
-    collapsed.values = fresults[6, :].astype(np.int32)
-
-    faulted = xtgeo.GridProperty(self, name="faulted", discrete=True)
-    faulted.values = fresults[7, :].astype(np.int32)
-
-    negthickness = xtgeo.GridProperty(self, name="negative_thickness", discrete=True)
-    negthickness.values = fresults[8, :].astype(np.int32)
+    # some of the properties shall be discrete:
+    qcdiscrete = [6, 7, 8, 9]
 
     grdprops = xtgeo.GridProperties()
-    grdprops.props = [
-        minangle,
-        maxangle,
-        minanglep,
-        maxanglep,
-        minangles,
-        maxangles,
-        collapsed,
-        faulted,
-        negthickness,
-    ]
+
+    for num, name in qcnames.items():
+        prop = xtgeo.GridProperty(self, name=name)
+        dtype = np.float32
+        if num in qcdiscrete:
+            dtype = np.int32
+            prop.isdiscrete = True
+            prop.codes = {0: "None", 1: name}
+        prop.values = fresults[num, :].astype(dtype)
+        grdprops.append_props([prop])
 
     return grdprops

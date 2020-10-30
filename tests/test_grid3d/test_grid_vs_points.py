@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
 
+import pandas as pd
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -22,6 +21,10 @@ DROGON = "../xtgeo-testdata/3dgrids/drogon/1/geogrid.roff"
 BANALCASE1 = "../xtgeo-testdata/3dgrids/etc/banal1.grdecl"
 BANALCASE2 = "../xtgeo-testdata/3dgrids/etc/banal2.grdecl"
 BANALCASE3 = "../xtgeo-testdata/3dgrids/etc/banal3.grdecl"
+QCGRID = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
+
+QCFIL1 = "../xtgeo-testdata/3dgrids/etc/gridqc1_rms_cellcenter.csv"
+QCFIL2 = "../xtgeo-testdata/3dgrids/etc/gridqc1_rms_anypoint.csv"
 
 
 def test_get_ijk_from_points_banalcase2():
@@ -269,3 +272,30 @@ def test_get_ijk_from_points_small():
     g1 = xtgeo.grid3d.Grid(SMALL2)
     ijk = g1.get_ijk_from_points(po, activeonly=False)
     assert ijk["JY"][1] == 3
+
+
+def test_point_in_cell_compare_rms():
+    """Test IJK in cells, compare with a list made in RMS IPL"""
+
+    # from RMS
+    pointset = pd.read_csv(QCFIL1, skiprows=3)
+
+    p1 = xtgeo.Points()
+    attrs = {"IX": "I", "JY": "J", "KZ": "K"}
+    p1.from_dataframe(pointset, east="X", north="Y", tvdmsl="Z", attributes=attrs)
+
+    grd = xtgeo.Grid(QCGRID)
+    dfr = grd.get_ijk_from_points(p1)
+
+    for cname in ("IX", "JY", "KZ"):
+        list1 = p1.dataframe[cname].tolist()
+        list2 = dfr[cname].tolist()
+
+        nall = len(list1)
+        suc = 0
+        for ino, item in enumerate(list1):
+            if item == list2[ino]:
+                suc += 1
+
+        succesrate = suc / nall
+        print(cname, succesrate, suc, nall)

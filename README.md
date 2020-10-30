@@ -20,7 +20,7 @@ Detailed documentation for [XTGeo at Read *the* Docs](https://xtgeo.readthedocs.
 
 ## Feature summary ##
 
-   * Python 2.7+ and 3.5+ support
+   * Python 3.6+ support (earlier versions with 2.7+ and 3.5+ support)
    * Focus on high speed, using numpy and pandas with C backend
    * Regular surfaces, i.e. 2D maps with regular sampling and rotation
    * 3D grids (corner-point), supporting several formats such as
@@ -33,7 +33,7 @@ Detailed documentation for [XTGeo at Read *the* Docs](https://xtgeo.readthedocs.
    * Optional integration with ROXAR API python for several data types
      (see note later)
    * Linux is main development platform, but Windows and MacOS (64 bit) are supported
-     and PYPI wheels are provided.
+     and PYPI wheels for all three platforms are provided.
 
 ## Installation ##
 

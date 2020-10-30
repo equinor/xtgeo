@@ -794,6 +794,12 @@ def test_gridquality_properties():
     assert neg.values[0, 0, 0] == 0
     assert neg.values[2, 1, 0] == 1
 
+    grd3 = Grid(EMEGFILE)
+    props3 = grd3.get_gridquality_properties()
+
+    concp = props3.get_prop_by_name("concave_proj")
+    assert concp.values.sum() == 7949
+
 
 def test_bulkvol():
     """Test cell bulk volume calculation"""
@@ -801,7 +807,7 @@ def test_bulkvol():
     grd = Grid(GRIDQC1)
     cellvol_rms = GridProperty(GRIDQC1_CELLVOL)
 
-    bulk = grd.get_bulkvol()
+    bulk = grd.get_bulk_volume()
     logger.info("Sum this: %s", bulk.values.sum())
     logger.info("Sum RMS: %s", cellvol_rms.values.sum())
 
@@ -818,6 +824,6 @@ def test_bulkvol_speed():
     grd._xtgformat2()
 
     t0 = xtg.timer()
-    _ = grd.get_bulkvol()
+    _ = grd.get_bulk_volume()
     ncells = np.prod(dimens)
     print(xtg.timer(t0), ncells)

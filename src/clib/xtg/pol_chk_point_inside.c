@@ -2,18 +2,18 @@
  ***************************************************************************************
  *
  * NAME:
- *    some.c
+ *    pol_check_point_inside.c
  *
  * DESCRIPTION:
- *    Some
+ *    Check if a point is inside a polygon
  *
  * ARGUMENTS:
- *    x, y             i     Point
- *    p_xp_v, ..yp_v  i/o     arrays
- *    np               i     Coordinate vector (with numpy dimensions)
+ *    x, y               i     Point
+ *    xvertices, yv..   i/o    arrays
+ *    np                 i     Number of points for polygon
  *
  * RETURNS:
- *    Status, EXIT_FAILURE or EXIT_SUCCESS
+ *    If >= 1, point is inside, if 0 outside, if -1 outside
  *
  * TODO/ISSUES/BUGS:
  *
@@ -28,42 +28,45 @@
 #include <math.h>
 
 int
-pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np)
+pol_chk_point_inside(double x, double y, double *xvertices, double *yvertices, int np)
 
 {
-    double cnull, cen, pih, topi, eps;
-    double x1, x2, y1, y2, vin, vinsum, an, an1, an2, xp, pp;
-    double cosv, dtmp, xdiff, ydiff;
+    double CNULL, CEN, PIH, TOPI, XEPS, DTMP;
     int i;
 
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * Constants
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      */
 
-    cnull = 0.0;
-    cen = 1.0;
-    pih = asin(cen);
-    topi = 4.0 * pih;
-    dtmp = np;
-    eps = sqrt(dtmp) * 1.0e-3; /*works better than e-09 in pp */
+    CNULL = 0.0;
+    CEN = 1.0;
+    PIH = asin(CEN);
+    TOPI = 4.0 * PIH;
+    DTMP = (double)np;
+    XEPS = sqrt(DTMP) * 1.0e-5; /* 1e-3? works better than e-09 in pp */
 
     /*
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      * Check
-     *-------------------------------------------------------------------------
+     *----------------------------------------------------------------------------------
      */
 
     /* check first vs last point, and force close if small */
-    xdiff = fabs(p_xp_v[0] - p_xp_v[np - 1]);
-    ydiff = fabs(p_yp_v[0] - p_yp_v[np - 1]);
+    double xdiff = fabs(xvertices[0] - xvertices[np - 1]);
+    double ydiff = fabs(yvertices[0] - yvertices[np - 1]);
 
     if (xdiff < FLOATEPS && ydiff < FLOATEPS) {
-        p_xp_v[np - 1] = p_xp_v[0];
-        p_yp_v[np - 1] = p_yp_v[0];
+        xvertices[np - 1] = xvertices[0];
+        yvertices[np - 1] = yvertices[0];
     } else {
         logger_warn(LI, FI, FU, "Not a closed polygon, return -9");
+        int n;
+        for (n = 0; n < np; n++) {
+            logger_warn(LI, FI, FU, "Point no %d: %lf %lf", n, xvertices[n],
+                        yvertices[n]);
+        }
         return -9;
     }
 
@@ -72,42 +75,42 @@ pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np)
      * Loop over all corners (edges)
      *-------------------------------------------------------------------------
      */
-    vinsum = cnull;
-    x2 = p_xp_v[np - 1] - x;
-    y2 = p_yp_v[np - 1] - y;
+    double vinsum = CNULL;
+    double x2 = xvertices[np - 1] - x;
+    double y2 = yvertices[np - 1] - y;
 
     for (i = 0; i < np; i++) {
         /* differences and norms */
-        x1 = x2;
-        y1 = y2;
-        x2 = p_xp_v[i] - x;
-        y2 = p_yp_v[i] - y;
-        an1 = sqrt(x1 * x1 + y1 * y1);
-        an2 = sqrt(x2 * x2 + y2 * y2);
-        an = an1 * an2;
+        double x1 = x2;
+        double y1 = y2;
+        x2 = xvertices[i] - x;
+        y2 = yvertices[i] - y;
+        double an1 = sqrt(x1 * x1 + y1 * y1);
+        double an2 = sqrt(x2 * x2 + y2 * y2);
+        double an = an1 * an2;
 
-        if (an == cnull) {
+        if (an == CNULL) {
             /* points is on a corner */
             return (1);
         }
         /* cross-product and dot-product */
-        xp = x1 * y2 - x2 * y1;
-        pp = x1 * x2 + y2 * y1;
+        double xp = x1 * y2 - x2 * y1;
+        double pp = x1 * x2 + y2 * y1;
 
         /* compute scalar value of angle: 0 <= vin <= pi */
-        cosv = pp / an;
-        if (cosv > cen)
-            cosv = cen;
-        if (cosv < -1 * cen)
-            cosv = -1 * cen;
-        vin = acos(cosv);
+        double cosv = pp / an;
+        if (cosv > CEN)
+            cosv = CEN;
+        if (cosv < -1 * CEN)
+            cosv = -1 * CEN;
+        double vin = acos(cosv);
 
-        if (xp == cnull) {
-            if (vin >= pih) {
+        if (xp == CNULL) {
+            if (vin >= PIH) {
                 /* vin==pi -> point on edge */
                 return (1);
             } else {
-                vin = cnull;
+                vin = CNULL;
             }
         } else {
             /* angle use same +- sign as cross-product (implement Fortran SIGN)*/
@@ -122,11 +125,11 @@ pol_chk_point_inside(double x, double y, double *p_xp_v, double *p_yp_v, int np)
     vinsum = fabs(vinsum);
 
     /* determine inside or... */
-    if (fabs(vinsum - topi) <= eps) {
-        return (2);
-    } else if (vinsum <= eps) {
-        return (0);
+    if (fabs(vinsum - TOPI) <= XEPS) {
+        return 2;
+    } else if (vinsum <= XEPS) {
+        return 0;
     } else {
-        return (-1);
+        return -1;
     }
 }

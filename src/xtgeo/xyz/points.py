@@ -273,6 +273,40 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         self._df.dropna(inplace=True)
 
+    def from_dataframe(self, dfr, east="X", north="Y", tvdmsl="Z", attributes=None):
+        """Import points/polygons from existing Pandas dataframe.
+
+        Args:
+            dfr (dataframe): Pandas dataframe.
+            east (str): Name of easting column in input dataframe.
+            north (str): Name of northing column in input dataframe.
+            tvdmsl (str): Name of depth column in input dataframe.
+            attributes (dict): Additional metadata columns, on form {"IX": "I", ...};
+                "IX" here is the name of the target column, and "I" is the name in the
+                input dataframe.
+
+        ..versionadded:: 2.13.0
+        """
+        if not all(item in dfr.columns for item in (east, north, tvdmsl)):
+            raise ValueError("One or more column names are not correct")
+
+        if attributes and not all(item in dfr.columns for item in attributes.values()):
+            raise ValueError("One or more attribute column names are not correct")
+
+        input = OrderedDict()
+        input["X_UTME"] = dfr[east]
+        input["Y_UTMN"] = dfr[north]
+        input["Z_TVDSS"] = dfr[tvdmsl]
+
+        if attributes:
+            for target, source in attributes.items():
+                input[target] = dfr[source]
+
+        self._df = pd.DataFrame(input)
+        self._filesrc = "DataFrame input"
+
+        self._df.dropna(inplace=True)
+
     def from_list(self, plist):
         """Import points from list.
 

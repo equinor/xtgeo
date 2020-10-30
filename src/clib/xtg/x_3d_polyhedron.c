@@ -3,6 +3,56 @@
 #include "logger.h"
 #include <math.h>
 
+int TETRACOMBS[4][6][4] = {
+    // cell top/base hinge is splittet 0 - 3 / 4 - 7
+    {
+      // lower right common vertex 5
+      { 3, 7, 4, 5 },
+      { 0, 4, 7, 5 },
+      { 0, 3, 1, 5 },
+      // upper left common vertex 6
+      { 0, 4, 7, 6 },
+      { 3, 7, 4, 6 },
+      { 0, 3, 2, 6 },
+    },
+
+    // cell top/base hinge is splittet 1 -2 / 5- 6
+    {
+      // upper right common vertex 7
+      { 1, 5, 6, 7 },
+      { 2, 6, 5, 7 },
+      { 1, 2, 3, 7 },
+      // lower left common vertex 4
+      { 1, 5, 6, 4 },
+      { 2, 6, 5, 4 },
+      { 1, 2, 0, 4 },
+    },
+
+    // Another combination...
+    // cell top/base hinge is splittet 0 - 3 / 4 - 7
+    {
+      // lower right common vertex 1
+      { 3, 7, 0, 1 },
+      { 0, 4, 3, 1 },
+      { 4, 7, 5, 1 },
+      // upper left common vertex 2
+      { 0, 4, 3, 2 },
+      { 3, 7, 0, 2 },
+      { 4, 7, 6, 2 },
+    },
+
+    // cell top/base hinge is splittet 1 -2 / 5- 6
+    { // upper right common vertex 3
+      { 1, 5, 2, 3 },
+      { 2, 6, 1, 3 },
+      { 5, 6, 7, 3 },
+      // lower left common vertex 0
+      { 1, 5, 2, 0 },
+      { 2, 6, 1, 0 },
+      { 5, 6, 4, 0 } }
+
+};
+
 static double
 _x_hexahedron_dz(double *corners)
 {
@@ -17,6 +67,49 @@ _x_hexahedron_dz(double *corners)
     }
 
     return dzsum / 4.0;
+}
+
+static int
+_x_point_outside_hexahedron_simple(double px, double py, double pz, double *corners)
+{
+    // return 1 if point is definitively outside cell; otherwise _maybe_ inside
+
+    double xmin = VERYLARGEPOSITIVE;
+    double ymin = VERYLARGEPOSITIVE;
+    double zmin = VERYLARGEPOSITIVE;
+    double xmax = VERYLARGENEGATIVE;
+    double ymax = VERYLARGENEGATIVE;
+    double zmax = VERYLARGENEGATIVE;
+
+    int nc;
+    double xarr[8];
+    double yarr[8];
+    double zarr[8];
+    for (nc = 0; nc < 8; nc++) {
+        xarr[nc] = corners[0 + nc * 3];
+        yarr[nc] = corners[1 + nc * 3];
+        zarr[nc] = corners[2 + nc * 3];
+        if (xarr[nc] < xmin)
+            xmin = xarr[nc];
+        if (xarr[nc] > xmax)
+            xmax = xarr[nc];
+        if (yarr[nc] < ymin)
+            ymin = yarr[nc];
+        if (yarr[nc] > ymax)
+            ymax = yarr[nc];
+        if (zarr[nc] < zmin)
+            zmin = zarr[nc];
+        if (zarr[nc] > zmax)
+            zmax = zarr[nc];
+    }
+    if (px < xmin || px > xmax)
+        return 1;
+    if (py < ymin || py > ymax)
+        return 1;
+    if (pz < zmin || pz > zmax)
+        return 1;
+
+    return 0;
 }
 
 /*
@@ -89,10 +182,26 @@ x_tetrahedron_volume(double *pv, long ndim)
  *    entity, but it is approximated by computing two different ways of top/base
  *    splitting and average those.
  *
+ *    6          7
+ *     2        3
+ *      |------|   Example of split along
+ *      |    / |   0 - 3 at top and 4 - 7
+ *      |   /  |   at base. Alternative is
+ *      |  /   |   1 - 2 at top and 5 - 6
+ *      | /    |   at base
+ *      |------|
+ *     0       1
+ *    4         5
+ *
+ *    Note however... this fails if the cell is concave and convace cells needs special
+ *    attention
+ *
+ *
  * ARGUMENTS:
  *   corners       i     a [24] array with X Y Z of 8 vertices, x1, y1, z1, x2, y2, ...
  *                        arranged as usual for corner point cells
- *
+ *   precision     i     Use 2, 4, .... numbers of ways to compute tetrahedrons, and a
+ *                       higher number will increate CPU time
  * RETURNS:
  *    Volume
  *
@@ -102,7 +211,7 @@ x_tetrahedron_volume(double *pv, long ndim)
  */
 
 double
-x_hexahedron_volume(double *corners, long ndim)
+x_hexahedron_volume(double *corners, long ndim, int precision)
 {
 
     // first avoid cells that collapsed in some way
@@ -111,7 +220,6 @@ x_hexahedron_volume(double *corners, long ndim)
     }
 
     double **crn = x_allocate_2d_double(8, 3);
-    int **cset = x_allocate_2d_int(4, 6);
 
     int i, j;
     int ic = 0;
@@ -121,103 +229,30 @@ x_hexahedron_volume(double *corners, long ndim)
         }
     }
 
-    // the hexahedron consists of 6 tetrahedrons
-
-    cset[0][0] = 0;
-    cset[1][0] = 4;
-    cset[2][0] = 5;
-    cset[3][0] = 7;
-
-    cset[0][1] = 0;
-    cset[1][1] = 1;
-    cset[2][1] = 5;
-    cset[3][1] = 7;
-
-    cset[0][2] = 0;
-    cset[1][2] = 1;
-    cset[2][2] = 3;
-    cset[3][2] = 7;
-
-    cset[0][3] = 2;
-    cset[1][3] = 4;
-    cset[2][3] = 6;
-    cset[3][3] = 7;
-
-    cset[0][4] = 0;
-    cset[1][4] = 2;
-    cset[2][4] = 4;
-    cset[3][4] = 7;
-
-    cset[0][5] = 0;
-    cset[1][5] = 2;
-    cset[2][5] = 3;
-    cset[3][5] = 7;
-
     double thd[12];
 
-    double vol1 = 0;
+    double vol = 0.0;
     int icset;
-    for (icset = 0; icset < 6; icset++) {
-        ic = 0;
-        for (i = 0; i < 4; i++) {
-            thd[ic + 0] = crn[cset[i][icset]][0];
-            thd[ic + 1] = crn[cset[i][icset]][1];
-            thd[ic + 2] = crn[cset[i][icset]][2];
-            ic += 3;
+    int nalt = precision;
+    int ialt;
+    for (ialt = 1; ialt <= nalt; ialt++) {
+        double altvol = 0.0;
+        for (icset = 0; icset < 6; icset++) {
+            ic = 0;
+            for (i = 0; i < 4; i++) {
+                thd[ic + 0] = crn[TETRACOMBS[ialt - 1][icset][i]][0];
+                thd[ic + 1] = crn[TETRACOMBS[ialt - 1][icset][i]][1];
+                thd[ic + 2] = crn[TETRACOMBS[ialt - 1][icset][i]][2];
+                ic += 3;
+            }
+            altvol += x_tetrahedron_volume(thd, 12);
         }
-        // printf("ICSET1: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
-        vol1 += x_tetrahedron_volume(thd, 12);
+        vol = (vol * (ialt - 1) + altvol) / ialt;
     }
 
-    // alternative arrangment of tetrahedrons
-    cset[0][0] = 0;
-    cset[1][0] = 4;
-    cset[2][0] = 5;
-    cset[3][0] = 6;
+    free(crn);
 
-    cset[0][1] = 0;
-    cset[1][1] = 1;
-    cset[2][1] = 5;
-    cset[3][1] = 6;
-
-    cset[0][2] = 0;
-    cset[1][2] = 1;
-    cset[2][2] = 2;
-    cset[3][2] = 6;
-
-    cset[0][3] = 2;
-    cset[1][3] = 6;
-    cset[2][3] = 5;
-    cset[3][3] = 7;
-
-    cset[0][4] = 6;
-    cset[1][4] = 1;
-    cset[2][4] = 5;
-    cset[3][4] = 7;
-
-    cset[0][5] = 1;
-    cset[1][5] = 2;
-    cset[2][5] = 3;
-    cset[3][5] = 7;
-
-    double vol2 = 0;
-
-    for (icset = 0; icset < 6; icset++) {
-        ic = 0;
-        for (i = 0; i < 4; i++) {
-            thd[ic + 0] = crn[cset[i][icset]][0];
-            thd[ic + 1] = crn[cset[i][icset]][1];
-            thd[ic + 2] = crn[cset[i][icset]][2];
-            ic += 3;
-        }
-        // printf("ICSET2: %d .. %lf\n", icset, x_tetrahedron_volume(thd, 12));
-        vol2 += x_tetrahedron_volume(thd, 12);
-    }
-
-    x_free_2d_double(crn);
-    x_free_2d_int(cset);
-
-    return 0.5 * (vol1 + vol2);
+    return vol;
 }
 
 /*
@@ -300,6 +335,43 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
     }
 }
 
+static int
+x_point_in_tetrahedron_v2(double x0, double y0, double z0, double *pv, long ndim)
+{
+    // Simpler version, return 0 if outside and 1 if 0 if inside
+
+    double truevol = x_tetrahedron_volume(pv, 12);
+
+    if (truevol < FLOATEPS)
+        return 0;
+
+    int i, nv;
+    double newpv[12];
+    double sumvol;
+
+    sumvol = 0.0;
+    for (nv = 0; nv < 4; nv++) {
+        for (i = 0; i < ndim; i++) {
+            newpv[i] = pv[i];
+        }
+        newpv[0 + 3 * nv] = x0;
+        newpv[1 + 3 * nv] = y0;
+        newpv[2 + 3 * nv] = z0;
+
+        double vol = x_tetrahedron_volume(newpv, ndim);
+
+        sumvol += vol;
+    }
+
+    double relerror = truevol * 0.001;
+    double diff = sumvol - truevol;
+
+    if (diff > relerror)
+        return 0;
+
+    return 1;
+}
+
 /*
  ***************************************************************************************
  *
@@ -315,6 +387,7 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
  *    x0, y0, z0    i     Point coords
  *    corners       i     a [24] array with X Y Z of 8 vertices, x1, y1, z1, x2, y2, ...
  *                        arranged as usual for corner point cells
+ *    method        i     Different algorithms, 1 or 2
  *
  * RETURNS:
  *    100 if inside, 50 if possibly inside, 0 else (aka percent)
@@ -324,12 +397,18 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
  ***************************************************************************************
  */
 
-int
-x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndim)
+/* private, method 1 */
+static int
+_x_point_in_hexahedron_v1(double x0, double y0, double z0, double *corners, long ndim)
 {
 
     // first avoid cells that collapsed in some way
     if (_x_hexahedron_dz(corners) < FLOATEPS) {
+        return 0;
+    }
+
+    // avoid cells that are definitively outside
+    if (_x_point_outside_hexahedron_simple(x0, y0, z0, corners) == 1) {
         return 0;
     }
 
@@ -459,4 +538,73 @@ x_point_in_hexahedron(double x0, double y0, double z0, double *corners, long ndi
     x_free_2d_int(cset);
 
     return status;
+}
+
+/* private, method 2 */
+static int
+_x_point_in_hexahedron_v2(double x0, double y0, double z0, double *corners, long ndim)
+{
+
+    // first avoid cells that collapsed in some way
+    if (_x_hexahedron_dz(corners) < FLOATEPS) {
+        return 0;
+    }
+
+    // first avoid cells that are definitive outside
+    if (_x_point_outside_hexahedron_simple(x0, y0, z0, corners) == 1) {
+        return 0;
+    }
+
+    double **crn = x_allocate_2d_double(8, 3);
+    int **cset = x_allocate_2d_int(4, 5);
+
+    int i, j;
+    int ic = 0;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 3; j++) {
+            crn[i][j] = corners[ic++];
+        }
+    }
+
+    double thd[12];
+
+    int status = 0;
+    int icset, ialt;
+    for (ialt = 1; ialt <= 2; ialt++) {
+        for (icset = 0; icset < 6; icset++) {
+            ic = 0;
+            for (i = 0; i < 4; i++) {
+                thd[ic + 0] = crn[TETRACOMBS[ialt - 1][icset][i]][0];
+                thd[ic + 1] = crn[TETRACOMBS[ialt - 1][icset][i]][1];
+                thd[ic + 2] = crn[TETRACOMBS[ialt - 1][icset][i]][2];
+                ic += 3;
+            }
+            int score = x_point_in_tetrahedron_v2(x0, y0, z0, thd, 12);
+            if (score == 1) {
+                status += 1;
+                break;
+            }
+        }
+    }
+
+    free(crn);
+
+    return status * 50;
+}
+
+/* PUBLIC METHOD */
+
+int
+x_point_in_hexahedron(double x0,
+                      double y0,
+                      double z0,
+                      double *corners,
+                      long ndim,
+                      int method)
+{
+    if (method == 1) {
+        return _x_point_in_hexahedron_v1(x0, y0, z0, corners, ndim);
+    } else {
+        return _x_point_in_hexahedron_v2(x0, y0, z0, corners, ndim);
+    }
 }
