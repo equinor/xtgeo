@@ -2,7 +2,7 @@
 
 ## Version 2
 
-### Version 2.13.0 (in prep)
+### Version 2.13.0
 * Skip support for Python 2.7 and 3.5. Now only Python 3.6+ is supported
 * New features:
   * Grid quality indicators for Grid(): ``get_gridquality_properties()``
@@ -11,6 +11,9 @@
     and default format is now scientific %e for Floats
   * Added a key `datesonly` for GridProperties().``scan_dates`` for getting a
     simple list of dates existing in a given restart file
+  * Added ``Points().from_dataframe()`` method
+  * Added bulk volumetrics ``Grid()``: ``get_cell_volume()`` and ``get_bulk_volume()``
+    as experimental methods
 
 * Improvements and bug fixes
   * Reorganizing internal storage of 3D corner point grids
@@ -18,6 +21,13 @@
   * Faster read/write to Roxar API
   * Import from Eclipse is improved, in particular using "all" alias for
     ``initprops``, ``restartprops`` and ``restartdates``
+  * Fix issues  #414, #415, #418, #421, #423, #426, #436, #439
+
+### 2.12.3
+* Postfix release backport, adress #439
+
+### 2.12.2
+* Postfix release backport, adress #436
 
 ### 2.12.1
 * Fix of ``get_dataframe()`` for ``RegularSurface`` which fails in some case, cf issue #415
@@ -44,6 +54,9 @@
   * Improvements in Roxar API interface, e.g. behaviour on when projects are saved or not
   * Fix on surface values, which data that can be accepted, issue #405
   * Some other minor fixes in code and documentation
+
+### 2.9.2
+* Postfix release backport, adress #436 and #439
 
 ### 2.9.0 and 2.9.1
 * Full rewrite of surface slice cube methods, they will now be much faster #354
