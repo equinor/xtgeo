@@ -807,7 +807,7 @@ def test_bulkvol():
     grd = Grid(GRIDQC1)
     cellvol_rms = GridProperty(GRIDQC1_CELLVOL)
 
-    bulk = grd.get_bulkvol()
+    bulk = grd.get_bulk_volume()
     logger.info("Sum this: %s", bulk.values.sum())
     logger.info("Sum RMS: %s", cellvol_rms.values.sum())
 
@@ -824,6 +824,6 @@ def test_bulkvol_speed():
     grd._xtgformat2()
 
     t0 = xtg.timer()
-    _ = grd.get_bulkvol()
+    _ = grd.get_bulk_volume()
     ncells = np.prod(dimens)
     print(xtg.timer(t0), ncells)

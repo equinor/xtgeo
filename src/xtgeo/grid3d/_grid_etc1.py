@@ -175,8 +175,8 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
     return dx, dy
 
 
-def get_bulkvol(self, name="bulkvol", asmasked=True, precision=2):
-    """Get cell bulk volume as a property"""
+def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
+    """Get cell bulk volume as a GridProperty() instance"""
 
     self._xtgformat2()
 
