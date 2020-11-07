@@ -13,8 +13,6 @@ api >= 1.4 clockwise "orientation"
 Seems like self._rotation == roxar.orientation * -1 anyway @ reverse engineering/testing
 
 """
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 import numpy as np
 
@@ -111,7 +109,7 @@ def _roxapi_cube_to_xtgeo(self, rox, rcube):  # pragma: no cover
     if rcube.is_empty:
         xtg.warn("Cube has no data; assume 0")
     else:
-        self._values = rcube.get_values()
+        self.values = rcube.get_values()
 
 
 def export_cube_roxapi(

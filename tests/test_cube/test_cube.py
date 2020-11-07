@@ -3,12 +3,12 @@ import os
 from os.path import join
 
 import pytest
+import numpy as np
 
 import xtgeo
 from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
 
-import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -81,7 +81,7 @@ def test_storm_import():
 
     vals = acube.values
 
-    tsetup.assert_almostequal(vals[180, 185, 4], 0.117074, 0.0001)
+    assert vals[180, 185, 4] == pytest.approx(0.117074, 0.0001)
 
     acube.to_file(join(TMD, "cube.rmsreg"), fformat="rms_regular")
 
@@ -103,10 +103,9 @@ def test_segy_import(loadsfile1):
     assert dim == (408, 280, 70), "Dimensions 3D"
 
     print(xcu.values.max())
-    tsetup.assert_almostequal(xcu.values.max(), 7.42017, 0.001)
+    assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-@tsetup.skipsegyio
 def test_segyio_import(loadsfile1):
     """Import SEGY (case 1 Reek) via SegIO library."""
 
@@ -119,10 +118,9 @@ def test_segyio_import(loadsfile1):
     dim = xcu.values.shape
 
     assert dim == (408, 280, 70), "Dimensions 3D"
-    tsetup.assert_almostequal(xcu.values.max(), 7.42017, 0.001)
+    assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-@tsetup.skipsegyio
 def test_segyio_import_export(loadsfile1):
     """Import and export SEGY (case 1 Reek) via SegIO library."""
 
@@ -135,7 +133,7 @@ def test_segyio_import_export(loadsfile1):
 
     logger.info("Dimension is %s", dim)
     assert dim == (408, 280, 70), "Dimensions 3D"
-    tsetup.assert_almostequal(xcu.values.max(), 7.42017, 0.001)
+    assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
     input_mean = xcu.values.mean()
 
@@ -163,7 +161,7 @@ def test_segyio_import_export_pristine(loadsfile1):
 
     logger.info("Dimension is %s", dim)
     assert dim == (408, 280, 70), "Dimensions 3D"
-    tsetup.assert_almostequal(xcu.values.max(), 7.42017, 0.001)
+    assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
     input_mean = xcu.values.mean()
 
@@ -228,8 +226,8 @@ def test_cube_resampling(loadsfile1):
 
     newcube.resample(incube, sampling="trilinear", outside_value=10.0)
 
-    tsetup.assert_almostequal(newcube.values.mean(), 5.3107, 0.0001)
-    tsetup.assert_almostequal(newcube.values[20, 20, 20], 10.0, 0.0001)
+    assert newcube.values.mean() == pytest.approx(5.3107, 0.0001)
+    assert newcube.values[20, 20, 20] == pytest.approx(10.0, 0.0001)
 
     # newcube.to_file(join(TMD, "cube_resmaple1.segy"))
 
@@ -287,8 +285,8 @@ def test_cube_get_xy_from_ij(loadsfile1):
 
     xpos, ypos = incube.get_xy_value_from_ij(200, 200, zerobased=True)
 
-    tsetup.assert_almostequal(xpos, 463327.8811957213, 0.01)
-    tsetup.assert_almostequal(ypos, 5933633.598034564, 0.01)
+    assert xpos == pytest.approx(463327.8811957213, 0.01)
+    assert ypos == pytest.approx(5933633.598034564, 0.01)
 
 
 def test_cube_swapaxes():
@@ -307,18 +305,11 @@ def test_cube_swapaxes():
     val2 = incube.values.copy()
     logger.info(incube)
 
-    diff = val1 - val2
-
-    tsetup.assert_almostequal(diff.mean(), 0.0, 0.000001)
-    tsetup.assert_almostequal(diff.std(), 0.0, 0.000001)
-    assert incube.ilines.size == incube.ncol
+    np.testing.assert_array_equal(val1, val2)
 
 
 def test_cube_randomline():
     """Import a cube, and compute a randomline given a simple Polygon"""
-
-    if XTGSHOW:
-        import matplotlib.pyplot as plt
 
     incube = Cube(SFILE4)
 
@@ -328,10 +319,12 @@ def test_cube_randomline():
     logger.info("Generate random line...")
     hmin, hmax, vmin, vmax, random = incube.get_randomline(poly)
 
-    tsetup.assert_almostequal(hmin, -15.7, 0.1)
-    tsetup.assert_almostequal(random.mean(), -12.5, 0.1)
+    assert hmin == pytest.approx(-15.7, 0.1)
+    assert random.mean() == pytest.approx(-12.5, 0.1)
 
     if XTGSHOW:
+        import matplotlib.pyplot as plt
+
         plt.figure()
         plt.imshow(
             random,

@@ -10,15 +10,21 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-#
-
 
 logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 
-def swapaxes(self):
-    """Swap the axes inline vs xline, keep origin."""
+def swapaxes(self, _algorithm=1):
+
+    if _algorithm == 1:
+        _swapaxes_v1(self)
+    else:
+        _swapaxes_v2(self)
+
+
+def _swapaxes_v1(self):
+    """Swap the axes inline vs xline, keep origin. TODO remove this"""
 
     ncol = _cxtgeo.new_intpointer()
     nrow = _cxtgeo.new_intpointer()
@@ -37,6 +43,7 @@ def swapaxes(self):
 
     values1d = self.values.reshape(-1)
     traceid1d = self._traceidcodes.reshape(-1)
+    print("XXXX", self._traceidcodes.shape)
 
     ier = _cxtgeo.cube_swapaxes(
         ncol, nrow, self.nlay, yflip, xinc, yinc, rota, values1d, traceid1d,
@@ -59,6 +66,34 @@ def swapaxes(self):
 
     self._traceidcodes = traceid1d.reshape((self._ncol, self._nrow))
     self._values = values1d.reshape((self._ncol, self._nrow, self.nlay))
+
+
+def _swapaxes_v2(self):
+    """Pure numpy/python version"""
+    newncol = self.nrow
+    newnrow = self.ncol
+
+    yflip = self.yflip * -1
+
+    rotation = self.rotation + self.yflip * 90
+    if rotation < 0:
+        rotation += 360
+    if rotation >= 360:
+        rotation -= 360
+
+    ilines = self._xlines.copy()
+    xlines = self._ilines.copy()
+
+    self._ncol = newncol
+    self._nrow = newnrow
+    self.values = self._values.transpose(1, 0, 2)
+    self._yflip = yflip
+    self._rotation = rotation
+    self._ilines = ilines
+    self._xlines = xlines
+    self._traceidcodes = np.array(self._traceidcodes.flatten(order="K")).reshape(
+        (self._ncol, self._nrow)
+    )
 
 
 def thinning(self, icol, jrow, klay):
@@ -152,17 +187,7 @@ def resample(self, other, sampling="nearest", outside_value=None):
     values1a = self.values.reshape(-1)
     values2a = other.values.reshape(-1)
 
-    opt1 = 0
-    if sampling == "trilinear":
-        opt1 = 1
-
-    logger.info("Resampling...")
-
-    opt2 = 0
-    opt2value = 0
-    if outside_value is not None:
-        opt2 = 1
-        opt2value = outside_value
+    logger.info("Resampling, using %s...", sampling)
 
     ier = _cxtgeo.cube_resample_cube(
         self.ncol,
@@ -189,9 +214,9 @@ def resample(self, other, sampling="nearest", outside_value=None):
         other.rotation,
         other.yflip,
         values2a,
-        opt1,
-        opt2,
-        opt2value,
+        1 if sampling == "trilinear" else 0,
+        0 if outside_value is None else 1,
+        0 if outside_value is None else outside_value,
     )
 
     if ier == -4:
@@ -326,6 +351,8 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
     if hincrement is None:
         avgdxdy = 0.5 * (self.xinc + self.yinc)
         distance = 0.5 * avgdxdy
+    else:
+        distance = hincrement
 
     logger.info("Getting fence from a Polygons instance...")
     fspec = fencespec.get_fence(
@@ -361,36 +388,3 @@ def update_values(cube):
     _cxtgeo.delete_floatarray(cube._cvalues)
 
     return xvv, None
-
-
-# # copy (update) values from numpy to SWIG, 1D array
-# # TO BE DEPRECATED
-# def update_cvalues(cube):
-#     logger.debug('Enter update cvalues method...')
-#     nval = cube._ncol * cube._nrow * cube._nlay
-
-#     if cube._values is None and cube._cvalues is not None:
-#         logger.debug('CVALUES unchanged')
-#         return None, cube._cvalues
-
-#     elif cube._cvalues is None and cube._values is None:
-#         logger.critical('_cvalues and _values is None in '
-#                         '_update_cvalues. STOP')
-#         sys.exit(9)
-
-#     elif cube._cvalues is not None and cube._values is None:
-#         logger.critical('_cvalues and _values are both present in '
-#                         '_update_cvalues. STOP')
-#         sys.exit(9)
-
-#     # make a 1D F order numpy array, and update C array
-#     xvv = cube._values.copy()
-#     xvv = np.reshape(xvv, -1, order='F')
-
-#     xcv = _cxtgeo.new_floatarray(nval)
-
-#     # convert...
-#     _cxtgeo.swig_numpy_to_carr_f1d(xvv, xcv)
-#     logger.debug('Enter method... DONE')
-
-#     return None, xcv

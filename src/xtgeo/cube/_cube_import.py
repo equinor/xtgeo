@@ -70,6 +70,11 @@ def _import_segy_io(self, sfile):
 
         clist = [c1v, c2v, c3v, c4v]
 
+        xori = yori = zori = 0.999
+        xvv = rotation = 0.999
+        xinc = yinc = zinc = 0.999
+        yflip = 1
+
         for inum, cox in enumerate(clist):
             logger.debug(inum)
             origin = segyfile.header[cox][
@@ -99,14 +104,14 @@ def _import_segy_io(self, sfile):
                 zinc = origin[segyio.su.dt] / 1000.0
 
             if inum == 1:
-                slen, _rotrad1, rot1 = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
+                slen, _, rot1 = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
                 xinc = slen / (ncol - 1)
 
                 rotation = rot1
                 xvv = (cdpx - xori, cdpy - yori, 0)
 
             if inum == 2:
-                slen, _rotrad2, rot2 = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
+                slen, _, rot2 = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
                 yinc = slen / (nrow - 1)
 
                 # find YFLIP by cross products
@@ -131,7 +136,7 @@ def _import_segy_io(self, sfile):
     self._zori = zori
     self._zinc = zinc
     self._rotation = rotation
-    self._values = values
+    self.values = values
     self._yflip = yflip
     self._segyfile = sfile
     self._traceidcodes = traceidcodes
@@ -332,8 +337,6 @@ def import_rmsregular(self, sfile):
 def import_stormcube(self, sfile):
     """Import on StormCube format."""
 
-    # pylint: disable=too-many-statements, too-many-locals, too-many-branches
-
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------
     # storm_petro_binary       // always
@@ -351,33 +354,34 @@ def import_stormcube(self, sfile):
     # a total of ncol * nrow * nlay
 
     # Scan the header with Python; then use CLIB for the binary data
-    try:
-        stf = open(sfile, encoding="ISO-8859-1")  # python 3
-    except TypeError:
-        stf = open(sfile)
+    with open(sfile, "rb") as stf:
 
-    iline = 0
-    for line in range(10):
-        xline = stf.readline()
-        if not xline.strip():
-            continue
+        iline = 0
 
-        iline += 1
-        if iline == 1:
-            pass
-        elif iline == 2:
-            _nn, _modname, _undef_val = xline.strip().split()
-        elif iline == 3:
-            pass
-        elif iline == 4:
-            (xori, xlen, yori, ylen, zori, _zmax, _e1, _e2) = xline.strip().split()
-        elif iline == 5:
-            zlen, rot = xline.strip().split()
-        elif iline == 6:
-            ncol, nrow, nlay = xline.strip().split()
-            nlines = line + 2
-            break
-    stf.close()
+        ncol = nrow = nlay = nlines = 1
+        xori = yori = zori = xinc = yinc = rotation = rot = 0.999
+        xlen = ylen = zlen = 0.999
+
+        for line in range(10):
+            xline = stf.readline()
+            if not xline.strip():
+                continue
+
+            iline += 1
+            if iline == 1:
+                pass
+            elif iline == 2:
+                _, _, _ = xline.strip().split()
+            elif iline == 3:
+                pass
+            elif iline == 4:
+                (xori, xlen, yori, ylen, zori, _, _, _) = xline.strip().split()
+            elif iline == 5:
+                zlen, rot = xline.strip().split()
+            elif iline == 6:
+                ncol, nrow, nlay = xline.strip().split()
+                nlines = line + 2
+                break
 
     ncol = int(ncol)
     nrow = int(nrow)
