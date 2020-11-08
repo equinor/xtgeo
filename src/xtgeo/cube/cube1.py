@@ -397,7 +397,7 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         return xcube
 
-    def swapaxes(self, _algorithm=2):
+    def swapaxes(self, _algorithm=1):
         """Swap the axes inline vs xline, keep origin."""
 
         _cube_utils.swapaxes(self, _algorithm=_algorithm)
