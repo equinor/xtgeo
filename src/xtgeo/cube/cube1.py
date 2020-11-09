@@ -1,10 +1,10 @@
 # coding: utf-8
 """Module for a seismic (or whatever) cube."""
-from __future__ import print_function, division
 
 import os.path
 import tempfile
-import sys
+
+import numbers
 
 import numpy as np
 
@@ -22,9 +22,26 @@ from xtgeo.cube import _cube_roxapi
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-
-# =============================================================================
-# METHODS as wrappers to class init + import
+# Attributes and datamodel:
+# _xori         : Origin in Easting coordinate
+# _yori         : Origin in Northing coordinate
+# _zori         : Origin in Depth coordinate, where depth is positive down
+# _ncol         : Number of columns
+# _nrow         : Number of columns
+# _nlay         : Number of layers, starting from top
+# _rotation     : Cube rotation, X axis is applied and "school-wise" rotation,
+#                 anti-clock in degrees
+# _values       : Numpy array with shape (ncol, nrow, nlay), C order, np.float32
+# _filesrc      : String: Source file if any
+# _yflip        : Normally 1; if -1 Y axis is flipped --> from left-handed (1) to
+#                 right handed (-1). Right handed cubes are common.
+# _ilines       : 1D numpy array with ncol elements, aka INLINES array
+# _xlines       : 1D numpy array with nrow elements, aka XLINES array
+# _traceidcodes : 2D array with trace ID codes
+# _segyfile     : Name of SEGY file (not sure what the point of this is, TODO check)
+#
+# See also Cube section in documentation: docs/datamodel.rst
+# ======================================================================================
 
 
 def cube_from_file(mfile, fformat="guess"):
@@ -50,12 +67,12 @@ def cube_from_file(mfile, fformat="guess"):
 def cube_from_roxar(project, name, folder=None):
     """This makes an instance of a Cube directly from roxar input.
 
-    The folder is a string on form 'a' or 'a/b' if subfolders are present
+    The folder is a string on form "a" or "a/b" if subfolders are present
 
     Example::
 
         import xtgeo
-        mycube = xtgeo.cube_from_roxar(project, 'DepthCube')
+        mycube = xtgeo.cube_from_roxar(project, "DepthCube")
 
     """
 
@@ -66,83 +83,69 @@ def cube_from_roxar(project, name, folder=None):
     return obj
 
 
-class Cube(object):  # pylint: disable=too-many-public-methods
+class Cube:  # pylint: disable=too-many-public-methods
     """Class for a (seismic) cube in the XTGeo framework.
 
-    The values are a numpy array, 3D Float (4 bytes; float32). The
-    array is (ncol, nrow, nlay) regular 3D numpy,
+    The values are stored as a 3D numpy array (4 bytes; float32 is default),
     with internal C ordering (nlay fastest).
 
-    The cube object instance can be initialized by either a
-    spesification, or via a file import. The import is most
-    common, and usually SEGY, but also other formats are
-    available (or will be).
+    The cube object instance can be initialized by either a spesification, or via
+    a file import. The import is most common, and usually SEGY, but also other
+    formats are available (or will be).
 
     Examples::
 
-        from xtgeo.cube import Cube
+        import xtgeo
 
         # a user defined cube:
-        vals = np.zeros((40, 30, 10), dtype=np.float32)
-
-        mycube = Cube(xori=100.0, yori=200.0, ncol=40, nrow=30,
-                      nlay=10, rotation=30, values=vals)
+        mycube = xtgeo.Cube(xori=100.0, yori=200.0, zori=150.0, ncol=40, nrow=30,
+                            nlay=10, rotation=30, values=0)
 
         # or from a file
-        mycube = Cube('somefile.segy')
+        mycube = xtgeo.Cube("somefile.segy", fformat="segy")
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        xori=0.0,
+        yori=0.0,
+        zori=0.0,
+        ncol=5,
+        nrow=3,
+        nlay=2,
+        xinc=25.0,
+        yinc=25.0,
+        zinc=2.0,
+        yflip=1,
+        values=0.0,
+        rotation=0.0,
+        **kwargs,
+    ):
         """Initiate a Cube instance."""
 
         self._filesrc = None
+        self._xori = xori
+        self._yori = yori
+        self._zori = zori
+        self._ncol = ncol
+        self._nrow = nrow
+        self._nlay = nlay
+        self._xinc = xinc
+        self._yinc = yinc
+        self._zinc = zinc
+        self._yflip = yflip
+        self._rotation = rotation
+        self.values = values  # "values" is intentional over "_values"; cf. values()
+        self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+        self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+        self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
         self._segyfile = None
-        self._ilines = None
-        self._xlines = None
-        self._xori = 0.0
-        self._yori = 0.0
-        self._zori = 0.0
-        self._ncol = 5
-        self._nrow = 3
-        self._nlay = 4
-        self._xinc = 25.0
-        self._yinc = 25.0
-        self._zinc = 2.0
-        self._yflip = 1
-        self._values = np.zeros((5, 3, 4), dtype=np.float32)
-        self._ilines = np.array(range(1, 5 + 1), dtype=np.int32)
-        self._xlines = np.array(range(1, 3 + 1), dtype=np.int32)
-        self._rotation = 0.0
-        self._traceidcodes = np.ones((5, 3), dtype=np.int32)
-        self._undef = xtgeo.UNDEF
-        self._undef_limit = xtgeo.UNDEF_LIMIT
 
         if len(args) >= 1:
             fformat = kwargs.get("fformat", "guess")
             self.from_file(args[0], fformat=fformat)
-        else:
-            self._filesrc = None
-            self._xori = kwargs.get("xori", 0.0)
-            self._yori = kwargs.get("yori", 0.0)
-            self._zori = kwargs.get("zori", 0.0)
-            self._ncol = kwargs.get("ncol", 5)
-            self._nrow = kwargs.get("nrow", 3)
-            self._nlay = kwargs.get("nlay", 2)
-            self._xinc = kwargs.get("xinc", 25.0)
-            self._yinc = kwargs.get("yinc", 25.0)
-            self._zinc = kwargs.get("zinc", 2.0)
-            self._yflip = kwargs.get("yflip", 1)
-            self._values = kwargs.get("values", None)
-            self._rotation = kwargs.get("rotation", 0.0)
-            if self._values is None:
-                vals = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.float32)
-                self._values = vals
-                self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-                self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-                self._traceidcodes = np.ones((self._nrow, self._nrow), dtype=np.int32)
-
-            self._segyfile = kwargs.get("segyfile", None)
 
     def __repr__(self):
         avg = self.values.mean()
@@ -157,10 +160,10 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     def __str__(self):
         return self.describe(flush=False)
 
-    # =========================================================================
+    # ==================================================================================
     # Get and Set properties (tend to pythonic properties rather than
     # javaic get & set syntax)
-    # =========================================================================
+    # ==================================================================================
 
     @property
     def ncol(self):
@@ -176,6 +179,11 @@ class Cube(object):  # pylint: disable=too-many-public-methods
     def nlay(self):
         """The NLAY (or NZ or K dir) number (read-only)."""
         return self._nlay
+
+    @property
+    def dimensions(self):
+        """3-tuple: The cube dimensions as a tuple of 3 integers (read only)"""
+        return (self._ncol, self._nrow, self._nlay)
 
     @property
     def xori(self):
@@ -315,18 +323,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
     @values.setter
     def values(self, values):
-
-        if not isinstance(values, np.ndarray):
-            raise ValueError("Input is not a numpy array")
-
-        vshape = values.shape
-
-        if vshape != (self._ncol, self._nrow, self._nlay):
-            raise ValueError("Wrong dimensions of input numpy")
-
-        values = np.ascontiguousarray(values, dtype=np.float32)
-
-        self._values = values
+        self._ensure_correct_values(values)
 
     # =========================================================================
     # Describe
@@ -400,10 +397,10 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         return xcube
 
-    def swapaxes(self):
+    def swapaxes(self, _algorithm=1):
         """Swap the axes inline vs xline, keep origin."""
 
-        _cube_utils.swapaxes(self)
+        _cube_utils.swapaxes(self, _algorithm=_algorithm)
 
     def resample(self, incube, sampling="nearest", outside_value=None):
         """Resample a Cube object into this instance.
@@ -661,7 +658,8 @@ class Cube(object):  # pylint: disable=too-many-public-methods
                 only). Default is UNDEF value (a very large number)
 
         Raises:
-            OSError if the file cannot be read (e.g. not found)
+            OSError: if the file cannot be read (e.g. not found)
+            ValueError: Input is invalid
 
         Example::
 
@@ -677,8 +675,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
 
         if fformat == "guess":
             if not fext:
-                logger.critical("File extension missing. STOP")
-                sys.exit(9)
+                raise ValueError("File extension for Cube missing while fformat==guess")
             else:
                 fformat = fext.lower()
 
@@ -689,7 +686,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         elif fformat == "storm":
             _cube_import.import_stormcube(self, fobj.name)
         else:
-            logger.error("Invalid or unknown file format")
+            raise ValueError(f"File format fformat={fformat} is not supported")
 
         self._filesrc = fobj.name
 
@@ -716,7 +713,7 @@ class Cube(object):  # pylint: disable=too-many-public-methods
         elif fformat == "rms_regular":
             _cube_export.export_rmsreg(self, fobj.name)
         else:
-            logger.error("Invalid file format")
+            raise ValueError(f"File format fformat={fformat} is not supported")
 
     def from_roxar(self, project, name, folder=None):  # pragma: no cover
         """Import (transfer) a cube from a Roxar seismic object to XTGeo.
@@ -835,3 +832,33 @@ class Cube(object):  # pylint: disable=too-many-public-methods
                 for line in out:
                     print(line.rstrip("\r\n"))
             os.remove(outfile)
+
+    def _ensure_correct_values(self, values):
+        """Ensures that values is a 3D numpy (ncol, nrow, nlay), C order.
+
+        Args:
+            values (array-like or scalar): Values to process.
+
+        Return:
+            Nothing, self._values will be updated inplace
+
+        """
+
+        if values is None or values is False:
+            self._ensure_correct_values(0.0)
+            return
+
+        if isinstance(values, numbers.Number):
+            self._values = np.zeros(self.dimensions, dtype=np.float32) + values
+            return
+
+        if isinstance(values, np.ndarray):
+            values = values.reshape(self.dimensions)
+
+            if not values.data.c_contiguous:
+                values = np.ascontiguousarray(values)
+
+        if isinstance(values, (list, tuple)):
+            values = np.array(values, dtype=np.float32).reshape(self.dimensions)
+
+        self._values = values
