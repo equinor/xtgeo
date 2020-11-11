@@ -344,12 +344,13 @@ def test_fence_as_polygons_drogon():
     """Return a resampled fence as Polygons for a 100% vertical."""
 
     mywell = Well(WELL4)
-    pline = mywell.get_fence_polyline(nextend=3, tvdmin=1000, asnumpy=False)
+    pline = mywell.get_fence_polyline(
+        nextend=3, tvdmin=1000, sampling=20, asnumpy=False
+    )
 
-    # assert isinstance(pline, Polygons)
-    # dfr = pline.dataframe
-    # print(dfr)
-    # tsetup.assert_almostequal(dfr["X_UTME"][5], 462569.00, 2.0)
+    assert isinstance(pline, Polygons)
+    dfr = pline.dataframe
+    assert dfr.H_CUMLEN.max() == pytest.approx(60, 0.01)
 
 
 def test_get_zonation_points():

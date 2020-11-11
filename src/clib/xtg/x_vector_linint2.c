@@ -22,8 +22,10 @@
  *    xr             o     X Returned forecast of a point
  *    yr             o     Y Returned forecast of a point
  *    zr             o     Z Returned forecast of a point
- *    option         i     Options: 1 means extend in X+ if P0 and P1 are equal
- *                                  2 means extend in X- if P0 and P1 are equal
+ *    option         i     Options: 1 Extend in X+ with 1 unit if P0 and P1 are equal
+ *                                  2 Extend in X- with 1 unit if P0 and P1 are equal
+ *                                 11 Extend X+ with dist if P0 and P1 are equal
+ *                                 12 Extend X- with dist if P0 and P1 are equal
  *
  * RETURNS:
  *    Function:  0: Upon success. If problems:
@@ -68,6 +70,16 @@ x_vector_linint2(double x0,
             x1 = x1 + 1;
         } else if (option == 2) {
             x1 = x1 - 1;
+        } else if (option == 11) {
+            *xr = x1 + dist;
+            *yr = y1;
+            *zr = z1;
+            return 0;
+        } else if (option == 12) {
+            *xr = x1 - dist;
+            *yr = y1;
+            *zr = z1;
+            return 0;
         } else {
             return -99;
         }
