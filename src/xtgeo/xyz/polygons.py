@@ -715,8 +715,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         The instance is updated in-place.
 
         If the distance is larger than the total input poly-line length,
-        nothing is done. Note that the result distance may differ from then
-        requested distance to rounding to fit original length.
+        nothing is done. Note that the result distance may differ from the
+        requested distance caused to rounding to fit original length.
+
+        Hence actual distance is input distance +- 50%.
 
         Args:
             distance (float): New distance between points
@@ -741,9 +743,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Args:
             distance (float): New horizontal distance between points
-            atleast (int): Minimum number of point. If the true length/atleast is
+            atleast (int): Minimum number of points. If the true length/atleast is
                 less than distance, than distance will be be reset to
-                length/atleast.
+                length/atleast. Values below 3 are not permitted
             nextend (int): Number of samples to extend at each end. Note that
                 in case of internal resetting of distance (due to 'atleast'), then
                 nextend internally will be modified in order to fulfill the
