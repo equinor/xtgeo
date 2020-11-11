@@ -32,9 +32,12 @@ WFILE = join(TESTPATH, "wells/reek/1/OP_1.w")
 WFILE_HOLES = join(TESTPATH, "wells/reek/1/OP_1_zholes.w")
 WFILES = join(TESTPATH, "wells/reek/1/*")
 
+
 WELL1 = join(TESTPATH, "wells/battle/1/WELL09.rmswell")
 WELL2 = join(TESTPATH, "wells/battle/1/WELL36.rmswell")
 WELL3 = join(TESTPATH, "wells/battle/1/WELL10.rmswell")
+
+WELL4 = join(TESTPATH, "wells/drogon/1/55_33-1.rmswell")
 
 
 @pytest.fixture(name="loadwell1")
@@ -335,6 +338,19 @@ def test_fence_as_polygons():
     dfr = pline.dataframe
     print(dfr)
     tsetup.assert_almostequal(dfr["X_UTME"][5], 462569.00, 2.0)
+
+
+def test_fence_as_polygons_drogon():
+    """Return a resampled fence as Polygons for a 100% vertical."""
+
+    mywell = Well(WELL4)
+    pline = mywell.get_fence_polyline(
+        nextend=3, tvdmin=1000, sampling=20, asnumpy=False
+    )
+
+    assert isinstance(pline, Polygons)
+    dfr = pline.dataframe
+    assert dfr.H_CUMLEN.max() == pytest.approx(60, 0.01)
 
 
 def test_get_zonation_points():

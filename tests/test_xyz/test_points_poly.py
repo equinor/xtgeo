@@ -257,6 +257,7 @@ def test_rescale_polygon():
 
     oldpol = pol.copy()
     oldpol.name = "ORIG"
+    oldpol.hlen()
     pol.rescale(100)
     pol.hlen()
 
@@ -282,7 +283,9 @@ def test_rescale_polygon():
     if XTGSHOW:
         pol.quickplot(others=[oldpol, pol2])
 
-    # assert abs(pol.dataframe.at[1, 'X_UTME'] - 22.5) < 0.1
+    assert oldpol.dataframe.H_CUMLEN.max() == pytest.approx(5335, rel=0.02)
+    assert pol.dataframe.H_CUMLEN.max() == pytest.approx(5335, rel=0.02)
+    assert pol2.dataframe.H_CUMLEN.max() == pytest.approx(5335, rel=0.02)
 
 
 def test_fence_from_polygon():
@@ -310,8 +313,104 @@ def test_fence_from_polygon():
         distance=100, nextend=4, name="SOMENAME", asnumpy=False, atleast=10
     )
     logger.info(fence.dataframe)
+    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(19.98, abs=0.01)
+    assert fence.dataframe.H_DELTALEN.std() <= 0.05
 
-    tsetup.assert_almostequal(fence.dataframe.at[13, "X_UTME"], -202.3, 0.01)
+
+def test_fence_from_vertical_polygon():
+    """Test fence from polygon which only has vertical samples, e.g. a vertical well"""
+
+    pol = Polygons()
+
+    mypoly = {
+        pol.xname: [0.0, 0.0, 0.0],
+        pol.yname: [100.0, 100.0, 100.0],
+        pol.zname: [0, 50, 60],
+        pol.pname: [1, 1, 1],
+    }
+    pol.dataframe = pd.DataFrame(mypoly)
+
+    fence = pol.get_fence(
+        distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
+    )
+    logger.info(fence.dataframe.to_string())
+
+    assert len(fence.dataframe) == 161
+    assert fence.dataframe.H_DELTALEN.mean() == 0.125
+    assert fence.dataframe.H_DELTALEN.std() <= 0.001
+    assert fence.dataframe.H_CUMLEN.max() == 10
+    assert fence.dataframe.H_CUMLEN.min() == -10.0
+
+
+def test_fence_from_almost_vertical_polygon():
+    """Test fence from polygon which only has close to vertical samples"""
+
+    pol = Polygons()
+
+    mypoly = {
+        pol.xname: [0.1, 0.2, 0.3],
+        pol.yname: [100.1, 100.2, 100.3],
+        pol.zname: [0, 50, 60],
+        pol.pname: [1, 1, 1],
+    }
+    pol.dataframe = pd.DataFrame(mypoly)
+
+    fence = pol.get_fence(
+        distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
+    )
+    logger.info(fence.dataframe.to_string())
+
+    assert len(fence.dataframe) == 145
+    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(0.1414, abs=0.01)
+    assert fence.dataframe.H_DELTALEN.std() <= 0.001
+    assert fence.dataframe.H_CUMLEN.max() == pytest.approx(10.0, abs=0.5)
+    assert fence.dataframe.H_CUMLEN.min() == pytest.approx(-10.0, abs=0.5)
+
+
+def test_fence_from_slanted_polygon():
+    """Test fence from polygon which is slanted; but total HLEN is less than distance"""
+
+    pol = Polygons()
+
+    mypoly = {
+        pol.xname: [0.0, 3.0, 6.0],
+        pol.yname: [100.0, 102.0, 104.0],
+        pol.zname: [0, 50, 60],
+        pol.pname: [1, 1, 1],
+    }
+    pol.dataframe = pd.DataFrame(mypoly)
+
+    fence = pol.get_fence(
+        distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
+    )
+    logger.info(fence.dataframe.to_string())
+
+    assert len(fence.dataframe) == 9
+    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(3.6, abs=0.02)
+    assert fence.dataframe.H_DELTALEN.std() <= 0.001
+
+
+def test_fence_from_more_slanted_polygon():
+    """Test fence from poly which is slanted; and total HLEN is > than distance"""
+
+    pol = Polygons()
+
+    mypoly = {
+        pol.xname: [0.0, 7.0, 15.0],
+        pol.yname: [100.0, 110.0, 120.0],
+        pol.zname: [0, 50, 60],
+        pol.pname: [1, 1, 1],
+    }
+    pol.dataframe = pd.DataFrame(mypoly)
+
+    fence = pol.get_fence(
+        distance=10, nextend=1, name="SOMENAME", asnumpy=False, atleast=3
+    )
+    logger.info(fence.dataframe.to_string())
+
+    assert len(fence.dataframe) == 5
+    assert fence.dataframe.H_DELTALEN.mean() == pytest.approx(12.49, abs=0.02)
+    assert fence.dataframe.H_DELTALEN.std() <= 0.001
 
 
 def test_rename_columns():

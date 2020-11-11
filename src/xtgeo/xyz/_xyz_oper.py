@@ -229,52 +229,81 @@ def get_fence(
     In such cases, nextend will be modified automatically also to fulfill the original
     intention of nextend*distance (approx).
 
+    The routine is still not perfect for "close to very vertical polygon"
+    but assumed to be sufficient for all practical cases
+
     """
+    if atleast < 3:
+        raise ValueError("The atleast key must be 3 or greater")
 
-    new = self.copy()
-    new.hlen()
+    orig_extend = nextend * distance
+    orig_distance = distance
 
-    if len(new.dataframe) < 2:
+    fence = self.copy()
+
+    fence.hlen()
+
+    if len(fence.dataframe) < 2:
         xtg.warn(
             "Too few points in polygons for fence, return False (name: {})".format(name)
         )
         return False
 
-    new.filter_byid(polyid)
+    fence.filter_byid(polyid)
 
-    hxlen = new.get_shapely_objects()[0].length
+    hxlen = fence.get_shapely_objects()[0].length
 
-    # perhaps a way to treat very vertical polys from wells:
-    if hxlen < 0.1 * distance:
-        hxlen = 0.1 * distance
+    # perhaps a way to treat very vertical polys from e.g. wells:
+    if hxlen < 0.1 * orig_distance:
+        hxlen = 0.1 * orig_distance
 
-    if hxlen / float(atleast) < distance:
-        orig_extend = nextend * distance
-        distance = hxlen / float(atleast)
-        nextend = int(round(orig_extend / distance))
+    if hxlen / (atleast + 1) < orig_distance:
+        distance = hxlen / (atleast + 1)
 
-    new.rescale(distance, kind="slinear", mode2d=True)
-    new.hlen()
-    updated_distance = new.dataframe[new.dhname].median()
-    new.extend(updated_distance, nsamples=nextend)
+    fence_keep = fence.copy()
+    fence.rescale(distance, kind="slinear", mode2d=True)
+
+    if len(fence.dataframe) < 2:
+        fence = fence_keep
+
+    fence.hlen()
+    updated_distance = fence.dataframe[fence.dhname].median()
+
+    if updated_distance < 0.5 * distance:
+        updated_distance = 0.5 * distance
+
+    newnextend = int(round(orig_extend / updated_distance))
+    fence.extend(updated_distance, nsamples=newnextend)
+
+    df = fence.dataframe
+    df0 = df.drop(df.index[1:])  # keep always first which has per def H_DELTALEN=0
+    df2 = df[df.H_DELTALEN > updated_distance * 0.01]  # skip very close points
+    fence.dataframe = pd.concat([df0, df2], axis=0, ignore_index=True)
+
+    # duplicates may still exist; skip those
+    fence.dataframe.drop_duplicates(
+        subset=[fence.xname, fence.yname], keep="first", inplace=True
+    )
+
+    fence.dataframe.reset_index(inplace=True)
 
     if name:
-        new.name = name
+        fence.name = name
 
     if asnumpy is True:
         rval = np.concatenate(
             (
-                new.dataframe[new.xname].values,
-                new.dataframe[new.yname].values,
-                new.dataframe[new.zname].values,
-                new.dataframe[new.hname].values,
-                new.dataframe[new.dhname].values,
+                fence.dataframe[fence.xname].values,
+                fence.dataframe[fence.yname].values,
+                fence.dataframe[fence.zname].values,
+                fence.dataframe[fence.hname].values,
+                fence.dataframe[fence.dhname].values,
             ),
             axis=0,
         )
-        return np.reshape(rval, (new.nrow, 5), order="F")
+        return np.reshape(rval, (fence.nrow, 5), order="F")
 
-    return new
+    return fence
 
 
 def snap_surface(self, surf, activeonly=True):
@@ -354,9 +383,9 @@ def _generic_length(
     dgdist = np.array([])
     for _id, grp in idgroups:
         ier, tlenv, dtlenv, hlenv, dhlenv = _cxtgeo.pol_geometrics(
-            grp[self.xname].values,
-            grp[self.yname].values,
-            grp[self.zname].values,
+            grp[self.xname].values.astype(np.float64),
+            grp[self.yname].values.astype(np.float64),
+            grp[self.zname].values.astype(np.float64),
             len(grp),
             len(grp),
             len(grp),
@@ -405,7 +434,7 @@ def extend(self, distance, nsamples, addhlen=True):
     if not isinstance(self, xtgeo.Polygons):
         raise ValueError("Input object of wrong data type, must be Polygons")
 
-    for _nsam in range(nsamples):
+    for _ in range(nsamples):
 
         # beginning of poly
         row0 = self._df.iloc[0]
@@ -414,8 +443,8 @@ def extend(self, distance, nsamples, addhlen=True):
         rown = row0.copy()
 
         # setting row0[2] as row1[2] is intentional, as this shall be a 2D lenght!
-        ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
-            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 2
+        ier, newx, newy, _ = _cxtgeo.x_vector_linint2(
+            row1[0], row1[1], row1[2], row0[0], row0[1], row1[2], distance, 12
         )
 
         if ier != 0:
@@ -437,8 +466,8 @@ def extend(self, distance, nsamples, addhlen=True):
         rown = row1.copy()
 
         # setting row1[2] as row0[2] is intentional, as this shall be a 2D lenght!
-        ier, newx, newy, _newz = _cxtgeo.x_vector_linint2(
-            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 1
+        ier, newx, newy, _ = _cxtgeo.x_vector_linint2(
+            row0[0], row0[1], row0[2], row1[0], row1[1], row0[2], distance, 11
         )
 
         rown[self.xname] = newx

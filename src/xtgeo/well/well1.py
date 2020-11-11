@@ -1065,10 +1065,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """
         _well_oper.rescale(self, delta=delta, tvdrange=tvdrange)
 
-    def get_polygons(self):
+    def get_polygons(self, skipname=False):
         """Return a Polygons object from the well trajectory.
 
+        Args:
+            skipname (bool): If True then name column is omitted
+
         .. versionadded:: 2.1.0
+        .. versionchanged:: 2.13.0 Added `skipname` key
         """
 
         dfr = self._df.copy()
@@ -1078,7 +1082,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             if col not in keep:
                 dfr.drop(labels=col, axis=1, inplace=True)
         dfr["POLY_ID"] = 1
-        dfr["NAME"] = self.xwellname
+
+        if not skipname:
+            dfr["NAME"] = self.xwellname
         poly = xtgeo.Polygons()
         poly.dataframe = dfr
         poly.name = self.xwellname
