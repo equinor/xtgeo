@@ -13,7 +13,7 @@ jobs:
           use-pylint: false
           use-pycodestyle: false
           use-flake8: false
-          use-black: true
+          use-black: false
           use-mypy: false
           use-isort: false
           extra-pylint-options: ""
