@@ -3,8 +3,6 @@
 Compute statistics within one realisation, using ROFF or RMS internal.
 By JRIV
 """
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 from os.path import join as ojn
 import xtgeo
