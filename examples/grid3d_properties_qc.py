@@ -65,7 +65,7 @@ def show_stats_inside_rms():
     is quite similar.
     """
 
-    prj = project  # pylint: disable=undefined-variable
+    prj = project  # noqa # pylint: disable=undefined-variable
     # names of icons...
     gridmodel = "Reek"
     faciesname = "Facies"

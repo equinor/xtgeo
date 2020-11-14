@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
+import os
 from os.path import join
 import pytest
 import xtgeo
-
-import test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -239,7 +238,7 @@ def test_avg_surface2(loadsfile1):
         assert attributes[name] == pytest.approx(attrs[name].values.mean(), abs=0.001)
 
 
-@tsetup.bigtest
+@pytest.mark.skipif("XTG_BIGTEST" not in os.environ, reason="Run time demanding test")
 def test_avg_surface_large_cube():
 
     logger.info("Make cube...")
@@ -253,7 +252,7 @@ def test_avg_surface_large_cube():
 
     t1 = xtg.timer()
 
-    attrs = surf1.slice_cube_window(
+    _ = surf1.slice_cube_window(
         cube1,
         other=surf2,
         other_position="below",
@@ -267,7 +266,7 @@ def test_avg_surface_large_cube():
     print("Algorithm 2: ", xtg.timer(t1))
 
     t1 = xtg.timer()
-    attrs = surf1.slice_cube_window(
+    _ = surf1.slice_cube_window(
         cube1,
         other=surf2,
         other_position="below",

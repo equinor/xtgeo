@@ -12,7 +12,6 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
