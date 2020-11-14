@@ -874,7 +874,11 @@ class RegularSurface(object):
             self._isloaded = True
 
     def to_file(
-        self, mfile, fformat="irap_binary", pmd_dataunits=(15, 10), engine="cxtgeo",
+        self,
+        mfile,
+        fformat="irap_binary",
+        pmd_dataunits=(15, 10),
+        engine="cxtgeo",
     ):
         """Export a surface (map) to file.
 

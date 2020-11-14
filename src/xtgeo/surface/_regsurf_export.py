@@ -445,7 +445,9 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     values = np.ma.filled(self.values1d, fill_value=undef)
 
     _cxtgeo.surf_export_petromod_bin(
-        mfile.get_cfhandle(), dsc, values,
+        mfile.get_cfhandle(),
+        dsc,
+        values,
     )
 
     mfile.cfclose()

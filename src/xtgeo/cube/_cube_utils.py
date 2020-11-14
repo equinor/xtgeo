@@ -46,7 +46,15 @@ def _swapaxes_v1(self):
     print("XXXX", self._traceidcodes.shape)
 
     ier = _cxtgeo.cube_swapaxes(
-        ncol, nrow, self.nlay, yflip, xinc, yinc, rota, values1d, traceid1d,
+        ncol,
+        nrow,
+        self.nlay,
+        yflip,
+        xinc,
+        yinc,
+        rota,
+        values1d,
+        traceid1d,
     )
     if ier != 0:
         raise Exception

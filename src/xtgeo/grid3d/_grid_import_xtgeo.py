@@ -47,7 +47,11 @@ def import_xtgeo(self, gfile):
 
     # read data
     ier, ncol, nrow, nlay, _metadata = _cxtgeo.grdcp3d_import_xtgeo_grid(
-        1, self._coordsv, self._zcornsv, self._actnumsv, fhandle,
+        1,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        fhandle,
     )
 
     if ier != 0:

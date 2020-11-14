@@ -95,7 +95,12 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
         prop = GridProperty()
         # use a private GridProperty function, since filehandle
         _gridprop_import_eclrun.import_eclbinary(
-            prop, pfile, name=name, grid=grid, etype=1, _kwlist=kwlist,
+            prop,
+            pfile,
+            name=name,
+            grid=grid,
+            etype=1,
+            _kwlist=kwlist,
         )
 
         self._names.append(name)
@@ -176,7 +181,13 @@ def _import_ecl_output_v2_rsta(
 
         # use a private GridProperty function, since filehandle
         _gridprop_import_eclrun.import_eclbinary(
-            prop, pfile, name=name, date=date, grid=grid, etype=5, _kwlist=kwlist,
+            prop,
+            pfile,
+            name=name,
+            date=date,
+            grid=grid,
+            etype=5,
+            _kwlist=kwlist,
         )
 
         self._names.append(usename)

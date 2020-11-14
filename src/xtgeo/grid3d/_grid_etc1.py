@@ -181,7 +181,11 @@ def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
     self._xtgformat2()
 
     bulk = GridProperty(
-        ncol=self._ncol, nrow=self._nrow, nlay=self._nlay, name=name, discrete=False,
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        name=name,
+        discrete=False,
     )
 
     bval = np.zeros((bulk.dimensions))
@@ -535,7 +539,7 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
         self._coordsv,
         self._zcornsv,
         self._actnumsv,
-        *(ptr_coord + [option])
+        *(ptr_coord + [option]),
     )
 
     for i in range(0, 24, 3):
@@ -829,7 +833,11 @@ def make_zconsistent(self, zsep):
         raise ValueError('The "zsep" is not a float or int')
 
     _cxtgeo.grd3d_make_z_consistent(
-        self.ncol, self.nrow, self.nlay, self._zcornsv, zsep,
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._zcornsv,
+        zsep,
     )
 
 
