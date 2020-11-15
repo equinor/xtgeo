@@ -526,7 +526,7 @@ class XSection(BasePlot):
                 previous_color = color
                 segments_i += 1
 
-        colorlist = np.asarray(colorlist)
+        colorlist = np.asarray(colorlist, dtype=object)
 
         return segments, colorlist
 

@@ -127,4 +127,4 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
         )
 
     self.values = values.reshape(self.dimensions)
-    self.values = ma.masked_equal(self.values, actnumv == 0)
+    self.values = ma.masked_where(actnumv == 0, self.values)

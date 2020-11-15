@@ -500,10 +500,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         fformat="xyz",
         attributes=False,
         pfilter=None,
-        filter=None,  # deprecated
         wcolumn=None,
         hcolumn=None,
         mdcolumn=None,
+        **kwargs,
     ):  # pylint: disable=redefined-builtin
         """Export Polygons to file.
 
@@ -530,31 +530,19 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         """
 
-        if filter is not None and pfilter is None:
-            xtg.warndeprecated(
-                "Keyword 'filter' is deprecated, use 'pfilter' instead (will continue)"
-            )
-            pfilter = filter
-
-        elif filter is not None and pfilter is not None:
-            xtg.warndeprecated(
-                "Keyword 'filter' is deprecated, using 'pfilter' instead"
-            )
-
         super(Polygons, self).to_file(
             pfile,
             fformat=fformat,
             attributes=attributes,
             pfilter=pfilter,
-            filter=None,
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
+            **kwargs,
         )
 
     def from_wells(self, wells, zone, resample=1):
-
-        """Get line segments from a list of wells and a zone number
+        """Get line segments from a list of wells and a zone number.
 
         Args:
             wells (list): List of XTGeo well objects
@@ -570,7 +558,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         Raises:
             Todo
         """
-
         if not wells:
             return None
 
@@ -593,11 +580,11 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return len(dflist)
 
     def get_xyz_dataframe(self):
-        """Convert from POLY_ID based to XYZ, where a new polygon is marked
-        with a 999.0 value as flag"""
+        """Get a dataframe copy from the XYZ points with no ID column.
 
-        logger.debug("Data frame: \n%s", self.dataframe)
-
+        Convert from POLY_ID based to XYZ, where a new polygon is marked with a 999
+        value as flag.
+        """
         return _convert_idbased_xyz(self, self.dataframe)
 
     def get_shapely_objects(self):

@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Compute statistics within one realisation, using ROFF or RMS internal.
-By JRIV
-"""
+"""Compute statistics within one realisation, using ROFF or RMS internal."""
 
 from os.path import join as ojn
 import xtgeo
@@ -24,7 +21,6 @@ def show_stats():
 
     But note that values here are unweighted as total volume is not present.
     """
-
     # read grid
     grd = xtgeo.grid_from_file(GRIDFILE)
 
@@ -62,8 +58,8 @@ def show_stats_inside_rms():
     but not tested. Focus on syntax for getting properties, otherwise code
     is quite similar.
     """
+    prj = project  # type: ignore # noqa # pylint: disable=undefined-variable
 
-    prj = project  # noqa # pylint: disable=undefined-variable
     # names of icons...
     gridmodel = "Reek"
     faciesname = "Facies"

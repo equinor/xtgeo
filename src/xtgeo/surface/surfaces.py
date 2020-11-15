@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""The surfaces module, which has the Surfaces class (collection of surface objects)"""
+"""The surfaces module, which has the Surfaces class (collection of surface objects)."""
 
-from __future__ import division, absolute_import
-from __future__ import print_function
-
+import warnings
 import numpy as np
 
 import xtgeo
@@ -127,7 +125,7 @@ class Surfaces(object):
         E.g. surfs.apply(np.nanmean, axis=0) will return the mean surface.
 
         Args:
-            func: Function to apply
+            func: Function to apply, e.g. np.nanmean
             args: The function arguments
             kwargs: The function keyword arguments
 
@@ -135,7 +133,6 @@ class Surfaces(object):
             ValueError: If surfaces differ in topology.
 
         """
-
         template = self.surfaces[0].copy()
         slist = []
         for surf in self.surfaces:
@@ -146,18 +143,26 @@ class Surfaces(object):
 
         xlist = np.array(slist)
 
-        template.values = func(xlist, *args, **kwargs)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
+            template.values = func(xlist, *args, **kwargs)
+
         return template
 
-    def statistics(self):
+    def statistics(self, percentiles=None):
         """Return statistical measures from the surfaces.
 
         The statistics returned is:
         * mean: the arithmetic mean surface
         * std: the standard deviation surface (where ddof = 1)
+        * percentiles: on demand (such operations may be slow)
 
         Currently this function expects that the surfaces all have the same
         shape/topology.
+
+        Args:
+            percentiles (list of float): If defined, a list of perecentiles to evaluate
+                e.g. [10, 50, 90] for p10, p50, p90
 
         Returns:
             dict: A dictionary of statistical measures, see list above
@@ -171,6 +176,8 @@ class Surfaces(object):
             stats = surfs.statistics()
             # export the mean surface
             stats["mean"].to_file("mymean.gri")
+
+        .. versionchanged:: 2.13 Added `percentile`
         """
         result = {}
 
@@ -181,29 +188,26 @@ class Surfaces(object):
             status = template.compare_topology(surf, strict=False)
             if not status:
                 raise ValueError("Cannot do statistics, surfaces differ in topology")
-            slist.append(np.ma.filled(surf.values, fill_value=np.nan))
+            slist.append(np.ma.filled(surf.values, fill_value=np.nan).ravel())
 
         xlist = np.array(slist)
 
-        # mean
-        template.values = np.nanmean(xlist, axis=0)
+        template.values = np.ma.masked_invalid(xlist).mean(axis=0)
         result["mean"] = template.copy()
-
-        # std, run with degree of freedom ddof=1, similar to RMS
-        template.values = np.nanstd(xlist, axis=0, ddof=1)
+        template.values = np.ma.masked_invalid(xlist).std(axis=0, ddof=1)
         result["std"] = template.copy()
 
-        # # median P50 (SLOW!)
-        # template.values = np.nanpercentile(xlist, 50, axis=0)
-        # result["median"] = template.copy()
-        # result["p50"] = result["median"]
+        if percentiles is not None:
 
-        # # P10
-        # template.values = np.nanpercentile(xlist, 10, axis=0)
-        # result["p10"] = template.copy()
+            # nan on a axis tends to give warnings that are not a worry; suppress:
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
+                res = np.nanpercentile(xlist, percentiles, axis=0)
 
-        # # P90
-        # template.values = np.nanpercentile(xlist, 90, axis=0)
-        # result["p90"] = template.copy()
+            for slice, prc in enumerate(percentiles):
+                template.values = res[slice, :]
+                result["p" + str(prc)] = template.copy()
+                if prc == 50:
+                    result["median"] = result["p50"]
 
         return result

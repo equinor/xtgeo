@@ -30,8 +30,7 @@ TESTSETG1 = "../xtgeo-testdata/3dgrids/reek/reek_geo_grid.roff"
 
 
 def test_create():
-    """Create simple Surfaces instance"""
-
+    """Create simple Surfaces instance."""
     logger.info("Simple case...")
 
     top = xtgeo.RegularSurface(TESTSET1A)
@@ -45,8 +44,7 @@ def test_create():
 
 
 def test_create_init_objectlist():
-    """Create simple Surfaces instance, initiate with a list of objects"""
-
+    """Create simple Surfaces instance, initiate with a list of objects."""
     top = xtgeo.RegularSurface(TESTSET1A)
     base = xtgeo.RegularSurface(TESTSET1B)
     surfs = xtgeo.Surfaces([top, base])
@@ -56,8 +54,7 @@ def test_create_init_objectlist():
 
 
 def test_create_init_filelist():
-    """Create simple Surfaces instance, initiate with a list of files"""
-
+    """Create simple Surfaces instance, initiate with a list of files."""
     flist = [TESTSET1A, TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
 
@@ -66,8 +63,7 @@ def test_create_init_filelist():
 
 
 def test_create_init_mixlist():
-    """Create simple Surfaces instance, initiate with a list of files"""
-
+    """Create simple Surfaces instance, initiate with a list of files."""
     top = xtgeo.RegularSurface(TESTSET1A)
     flist = [top, TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
@@ -77,8 +73,7 @@ def test_create_init_mixlist():
 
 
 def test_statistics():
-    """Find the mean etc measures of the surfaces"""
-
+    """Find the mean etc measures of the surfaces."""
     flist = [TESTSET1A, TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
     res = surfs.statistics()
@@ -90,8 +85,7 @@ def test_statistics():
 
 
 def test_more_statistics():
-    """Find the mean etc measures of the surfaces"""
-
+    """Find the mean etc measures of the surfaces."""
     base = xtgeo.RegularSurface(TESTSET1A)
     base.values *= 0.0
     bmean = base.values.mean()
@@ -116,8 +110,11 @@ def test_more_statistics():
     tsetup.assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
     tsetup.assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
 
+    _ = so.statistics(percentiles=[10, 50])
+
 
 def test_surfaces_apply():
+    """Test apply function."""
     base = xtgeo.RegularSurface(TESTSET1A)
     base.describe()
     base.values *= 0.0
@@ -138,8 +135,7 @@ def test_surfaces_apply():
 
 
 def test_get_surfaces_from_3dgrid():
-    """Create surfaces from a 3D grid"""
-
+    """Create surfaces from a 3D grid."""
     mygrid = xtgeo.Grid(TESTSETG1)
     surfs = xtgeo.Surfaces()
     surfs.from_grid3d(mygrid, rfactor=2)
