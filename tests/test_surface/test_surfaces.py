@@ -123,7 +123,6 @@ def test_more_statistics():
 def test_surfaces_apply():
     """Test apply function."""
     base = xtgeo.RegularSurface(TESTSET1A)
-    base.coarsen(3)
     base.describe()
     base.values *= 0.0
     bmean = base.values.mean()
