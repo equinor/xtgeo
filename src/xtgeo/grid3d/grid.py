@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
 
-from __future__ import print_function, absolute_import
-
 import sys
 import json
 import warnings
@@ -82,6 +80,7 @@ def grid_from_roxar(
             read. The actual grid geometry will remain empty (None). This will
             be much faster of only grid size info is needed, e.g.
             for initalising a grid property.
+        info (bool): If true, only grid info
 
     Example::
 
@@ -90,7 +89,6 @@ def grid_from_roxar(
         mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
 
     """
-
     obj = Grid()
 
     obj.from_roxar(
@@ -209,6 +207,7 @@ class Grid(Grid3D):
         else:
             # make a simple empty box grid (from version 2.13)
             self.create_box((self._ncol, self._nrow, self._nlay))
+            self._xtgformat = 2
 
         logger.info("Ran __init__ for %s", repr(self))
 
@@ -669,7 +668,7 @@ class Grid(Grid3D):
     def to_roxar(
         self, project, gname, realisation=0, info=False, method="cpg"
     ):  # pragma: no cover
-        """Export a grid to RMS via Roxar API
+        """Export (upload) a grid from XTGeo to RMS via Roxar API.
 
         Note:
             When project is file path (direct access, outside RMS) then
@@ -685,7 +684,6 @@ class Grid(Grid3D):
             method (str): Save approach
 
         """
-
         _grid_roxapi.export_grid_roxapi(
             self, project, gname, realisation, info=info, method=method
         )
@@ -711,14 +709,12 @@ class Grid(Grid3D):
 
             newgrd = grd.copy()
         """
-
         logger.info("Copy a Grid instance")
         other = _grid_etc1.copy(self)
         return other
 
     def describe(self, details=False, flush=True):
-        """Describe an instance by printing to stdout"""
-
+        """Describe an instance by printing to stdout."""
         logger.info("Print a description...")
 
         if details:
