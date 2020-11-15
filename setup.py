@@ -186,7 +186,8 @@ if not swigok():
     elif "Linux" in platform.system():
         print("Installing swig from source (tmp) ...")
         subprocess.check_call(  # nosec
-            ["bash", "swig_install.sh"], cwd="scripts",
+            ["bash", "swig_install.sh"],
+            cwd="scripts",
         )
     else:
         raise SystemExit("Cannot find valid swig install")

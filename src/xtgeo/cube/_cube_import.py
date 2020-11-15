@@ -49,9 +49,6 @@ def _import_segy_io(self, sfile):
         if np.isnan(np.sum(values)):
             raise ValueError("The input contains NaN values which is trouble!")
 
-        logger.debug(segyfile.fast)
-        logger.debug(segyfile.ilines)
-        logger.debug(len(segyfile.ilines))
         ilines = segyfile.ilines
         xlines = segyfile.xlines
 
@@ -119,8 +116,6 @@ def _import_segy_io(self, sfile):
 
                 yflip = xcalc.find_flip(xvv, yvv)
 
-        rot2 = segyio.tools.rotation(segyfile)[0]
-        logger.debug("SEGYIO rotation is %s", rot2 * 180 / 3.1415)
         logger.debug("XTGeo rotation is %s", rotation)
 
     # attributes to update

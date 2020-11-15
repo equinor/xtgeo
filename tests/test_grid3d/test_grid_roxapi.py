@@ -2,7 +2,7 @@
 
 import xtgeo
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -50,7 +50,9 @@ def test_rox_get_grid_import_reek():
     logger.info("Project is {}".format(RPROJECT[ver]))
 
     grd = xtgeo.grid3d.Grid()
-    grd.from_roxar(RPROJECT[ver], "Reek_sim", dimensions_only=False, info=True)
+
+    proj = RPROJECT[ver]
+    grd.from_roxar(proj, "Reek_sim", dimensions_only=False, info=True)
 
     assert grd.dimensions == (40, 64, 14)
 

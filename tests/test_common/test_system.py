@@ -5,7 +5,7 @@ import os
 import pytest
 import xtgeo
 from xtgeo import pathlib
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:

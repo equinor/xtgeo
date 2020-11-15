@@ -5,7 +5,7 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 roxv = None
 try:

@@ -6,7 +6,7 @@ from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 # set default level
 xtg = XTGeoDialog()

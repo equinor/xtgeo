@@ -5,7 +5,7 @@ import logging
 from xtgeo.xyz import Polygons
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 path = "TMP"
 try:

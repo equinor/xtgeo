@@ -5,7 +5,7 @@ import numpy as np
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Points
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -35,13 +35,34 @@ def test_resample_small():
     """Do resampling with minimal dataset to test for various yflip etc"""
 
     xs1 = RegularSurface(
-        xori=0, yori=0, ncol=3, nrow=3, xinc=100, yinc=100, values=-888.0, yflip=1,
+        xori=0,
+        yori=0,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=-888.0,
+        yflip=1,
     )
     xs2 = RegularSurface(
-        xori=0, yori=0, ncol=3, nrow=3, xinc=100, yinc=100, values=888.0, yflip=1,
+        xori=0,
+        yori=0,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=888.0,
+        yflip=1,
     )
     xs3 = RegularSurface(
-        xori=0, yori=200, ncol=3, nrow=3, xinc=100, yinc=100, values=2888.0, yflip=-1,
+        xori=0,
+        yori=200,
+        ncol=3,
+        nrow=3,
+        xinc=100,
+        yinc=100,
+        values=2888.0,
+        yflip=-1,
     )
 
     xsx = xs1.copy()

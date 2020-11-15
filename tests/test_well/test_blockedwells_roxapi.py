@@ -10,7 +10,7 @@ import os
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name

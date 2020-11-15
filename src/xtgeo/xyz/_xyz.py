@@ -233,10 +233,10 @@ class XYZ(object):
         fformat="xyz",
         attributes=False,
         pfilter=None,
-        filter=None,  # deprecated, not in use (only signature)
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",
+        **kwargs,
     ):  # pylint: disable=redefined-builtin
         """Export XYZ (Points/Polygons) to file.
 
@@ -263,6 +263,9 @@ class XYZ(object):
             KeyError if pfilter is set and key(s) are invalid
 
         """
+        filter_deprecated = kwargs.get("filter", None)
+        if filter_deprecated is not None and pfilter is None:
+            pfilter = filter_deprecated
 
         pfile = xtgeo._XTGeoFile(pfile)
         pfile.check_folder(raiseerror=OSError)

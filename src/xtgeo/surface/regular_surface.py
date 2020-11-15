@@ -89,11 +89,10 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
         import xtgeo
         mysurf = xtgeo.surface_from_file('some_name.gri')
 
-    ..versionchanged:: 2.1.0
+    .. versionchanged:: 2.1
       Key "values" for Irap binary maps added
 
-    ..versionchanged:: 2.13.0
-      Key "engine" added
+    .. versionchanged:: 2.13 Key "engine" added
     """
 
     obj = RegularSurface()
@@ -154,7 +153,7 @@ def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=
 
     For usage, see :meth:`RegularSurface.from_grid3d`.
 
-    ..versionadded:: 2.1.0
+    .. versionadded:: 2.1
     """
 
     obj = RegularSurface()
@@ -781,14 +780,14 @@ class RegularSurface(object):
 
             >>> mymapobject = RegularSurface().from_file('myfile.x')
 
-        ..versionchanged:: 2.1.0
+        .. versionchanged:: 2.1
           Key "values" for Irap binary maps added
 
-        ..versionchanged:: 2.2.0
+        .. versionchanged:: 2.2
           Input io.BytesIO instance instead of file is now possible
 
-        ..versionchanged:: 2.13.0
-          ZMAP + import is added, and io.BytesIO input is extended to more formats
+        .. versionchanged:: 2.13
+            ZMAP + import is added, and io.BytesIO input is extended to more formats
         """
         logger.info("Import RegularSurface from file or memstream...")
 
@@ -866,7 +865,7 @@ class RegularSurface(object):
             # load values in number 88:
             surfs[88].load_values()
 
-        ..versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
 
         if not self._isloaded:
@@ -874,7 +873,11 @@ class RegularSurface(object):
             self._isloaded = True
 
     def to_file(
-        self, mfile, fformat="irap_binary", pmd_dataunits=(15, 10), engine="cxtgeo",
+        self,
+        mfile,
+        fformat="irap_binary",
+        pmd_dataunits=(15, 10),
+        engine="cxtgeo",
     ):
         """Export a surface (map) to file.
 
@@ -908,8 +911,8 @@ class RegularSurface(object):
             # read from memory stream:
             newsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
 
-        .. versionchanged:: 2.5.0 Added support for BytesIO
-        .. versionchanged:: 2.13.0 Improved support for BytesIO
+        .. versionchanged:: 2.5 Added support for BytesIO
+        .. versionchanged:: 2.13 Improved support for BytesIO
         """
 
         logger.info("Export RegularSurface to file or memstream...")
@@ -986,7 +989,7 @@ class RegularSurface(object):
             >>> mymap = RegularSurface()
             >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
 
-        .. versionadded:: 2.1.0 clipboard support
+        .. versionadded:: 2.1 clipboard support
 
         """
 
@@ -1045,7 +1048,7 @@ class RegularSurface(object):
               # store in project
               topupperreek.to_roxar(project, 'TopUpperReek', 'DS_something')
 
-        .. versionadded:: 2.1.0 clipboard support
+        .. versionadded:: 2.1 clipboard support
 
         """
 
@@ -1135,7 +1138,7 @@ class RegularSurface(object):
             # return two additonal maps
             ic, jr = mymap.from_grid3d(mygrid)
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         """
 
@@ -1624,7 +1627,7 @@ class RegularSurface(object):
         Returns:
             RegularSurface instance is updated in-place
 
-        .. versionadded:: 2.12.0
+        .. versionadded:: 2.12
         """
 
         _regsurf_utils.autocrop(self)
@@ -1644,8 +1647,8 @@ class RegularSurface(object):
         Returns:
             RegularSurface instance is updated in-place
 
-        .. versionadded:: 2.1.0
-        .. versionchanged:: 2.6.0 Added option key `fill_value`
+        .. versionadded:: 2.1
+        .. versionchanged:: 2.6 Added option key `fill_value`
         """
 
         _regsurf_gridding.surf_fill(self, fill_value=fill_value)
@@ -1658,7 +1661,7 @@ class RegularSurface(object):
             iterations: Number of iterations
             width: Range of influence (in nodes)
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
 
         if method == "median":
@@ -1855,7 +1858,7 @@ class RegularSurface(object):
             Instance's surface values will be updated in-place.
 
 
-        .. versionchanged:: 2.9.0
+        .. versionchanged:: 2.9
            Added ``mask`` keyword, default is True for backward compatibility.
 
         """
@@ -2116,7 +2119,7 @@ class RegularSurface(object):
             Exception if maps have different definitions (topology)
             RuntimeWarning if number of sampled nodes is less than 10%
 
-        .. versionchanged:: 2.9.0 Added ``algorithm`` keyword, default is 2
+        .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is 2
         """
 
         ier = _regsurf_cube.slice_cube(
@@ -2252,7 +2255,7 @@ class RegularSurface(object):
             None is returned. If `attribute` is a list, then a dictionary
             of surface objects is returned.
 
-        .. versionchanged:: 2.9.0 Added ``algorithm`` keyword, default is now 2,
+        .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is now 2,
                             while 1 is the legacy version
         """
 
@@ -2344,7 +2347,7 @@ class RegularSurface(object):
             # matplotlib...
             plt.plot(distance, zval)
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         .. seealso::
            Class :class:`~xtgeo.xyz.polygons.Polygons`

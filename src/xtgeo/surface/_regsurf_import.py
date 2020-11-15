@@ -276,7 +276,21 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
 
     xlist = _cxtgeo.surf_import_ijxyz(cfhandle, 0, 1, 1, 1, 0)
 
-    (ier, ncol, nrow, _, xori, yori, xinc, yinc, rot, iln, xln, val, yflip,) = xlist
+    (
+        ier,
+        ncol,
+        nrow,
+        _,
+        xori,
+        yori,
+        xinc,
+        yinc,
+        rot,
+        iln,
+        xln,
+        val,
+        yflip,
+    ) = xlist
 
     if ier != 0:
         mfile.cfclose()

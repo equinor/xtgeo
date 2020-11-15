@@ -13,7 +13,7 @@ import numpy as np
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 from xtgeo.surface.regular_surface import RegularSurface
 
 if six.PY3:

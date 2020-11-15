@@ -367,7 +367,9 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         if variant == "clibinfo":
             return "XTGeo version {} (Python {} on {})".format(
-                xtgeo.__version__, platform.python_version(), platform.system(),
+                xtgeo.__version__,
+                platform.python_version(),
+                platform.system(),
             )
 
         return "Invalid"

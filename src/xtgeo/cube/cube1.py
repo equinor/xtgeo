@@ -609,7 +609,7 @@ class Cube:  # pylint: disable=too-many-public-methods
         Raises:
             ValueError: Input fence is not according to spec.
 
-        .. versionchanged:: 2.1.0 support for Polygons() as fencespec, and keywords
+        .. versionchanged:: 2.1 support for Polygons() as fencespec, and keywords
            hincrement, atleast and sampling
 
         .. seealso::

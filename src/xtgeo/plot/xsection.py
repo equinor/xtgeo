@@ -526,7 +526,7 @@ class XSection(BasePlot):
                 previous_color = color
                 segments_i += 1
 
-        colorlist = np.asarray(colorlist)
+        colorlist = np.asarray(colorlist, dtype=object)
 
         return segments, colorlist
 
@@ -1114,7 +1114,7 @@ class XSection(BasePlot):
         linestyle="",
         label=False,
         zorder=350,
-        **kwargs
+        **kwargs,
     ):
         """
         Plot MD vs TVD data as lines and/or markers
@@ -1146,7 +1146,7 @@ class XSection(BasePlot):
             color=color,
             label=label,
             zorder=zorder,
-            **kwargs
+            **kwargs,
         )
 
     def plot_wellmap(self, otherwells=None, expand=1):

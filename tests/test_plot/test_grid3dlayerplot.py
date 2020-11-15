@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # from xtgeo.grid3d import Grid
 # from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 
 xtg = XTGeoDialog()

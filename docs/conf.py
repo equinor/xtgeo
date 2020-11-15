@@ -39,8 +39,8 @@ source_suffix = [".rst", ".md"]
 master_doc = "index"
 
 # General information about the project.
-project = u"xtgeo"
-copyright = u"Equinor"
+project = "xtgeo"
+copyright = "Equinor"
 
 
 # Sort members by input order in classes
@@ -128,7 +128,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ("index", "xtgeo.tex", u"xtgeo Documentation", u"Jan C. Rivenaes", "manual")
+    ("index", "xtgeo.tex", "xtgeo Documentation", "Jan C. Rivenaes", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -156,7 +156,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "xtgeo", u"XTGeo Documentation", [u"Equinor"], 1)]
+man_pages = [("index", "xtgeo", "XTGeo Documentation", ["Equinor"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -171,8 +171,8 @@ texinfo_documents = [
     (
         "index",
         "xtgeo",
-        u"XTGeo Documentation",
-        u"Equinor",
+        "XTGeo Documentation",
+        "Equinor",
         "xtgeo",
         "Library for subsurface reservoir modelling",
         "Miscellaneous",

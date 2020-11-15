@@ -41,6 +41,8 @@ def test_wellzone_to_isopoints():
     mywell = Well(WFILE, zonelogname="Zone_model2", mdlogname="M_MDEPTH")
     # get the zpoints which is a Pandas
     zpoints = mywell.get_zonation_points(use_undef=False, tops=True)
+    assert zpoints["Zone"].min() == 3
+    assert zpoints["Zone"].max() == 9
 
     zisos = mywell.get_zonation_points(use_undef=False, tops=False)
     assert zisos.iat[10, 8] == 4

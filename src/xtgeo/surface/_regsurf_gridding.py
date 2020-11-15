@@ -309,8 +309,8 @@ def surf_fill(self, fill_value=None):
     This is a quite fast method to fill undefined areas of the map.
     The surface values are updated 'in-place'
 
-    .. versionadded:: 2.1.0
-    .. versionchanged:: 2.6.0 Added fill_value
+    .. versionadded:: 2.1
+    .. versionchanged:: 2.6 Added fill_value
     """
     logger.info("Do fill...")
 
@@ -333,7 +333,7 @@ def surf_fill(self, fill_value=None):
 def smooth_median(self, iterations=1, width=1):
     """Smooth a surface using a median filter.
 
-    .. versionadded:: 2.1.0
+    .. versionadded:: 2.1
     """
 
     mask = ma.getmaskarray(self.values)

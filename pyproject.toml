@@ -1,3 +1,28 @@
+# NOTE: you have to use single-quoted strings in TOML for regular expressions.
+
+[tool.black]
+line-length = 88
+target-version = ['py36', 'py37', 'py38']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  # The following are specific to Black, you probably don't want those.
+  | blib2to3
+  | tests/data
+  | profiling
+)/
+'''
+
 # numpy version scheme to fulfill Roxar API compatibility
 # For cmake, cmake >= 3.6 is tested to be OK actually but versions are linked to pip versions and
 # manylinyx1 vs manylinux2010 issues (for Equinor Komodo installs)

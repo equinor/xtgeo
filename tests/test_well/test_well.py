@@ -13,7 +13,7 @@ from xtgeo.well import Well
 from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)

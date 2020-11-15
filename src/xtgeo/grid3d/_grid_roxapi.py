@@ -31,6 +31,8 @@ def import_grid_roxapi(
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
 
+    self._xtgformat(2)
+
     if self._xtgformat == 1 or dimonly:
         _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
     else:
@@ -75,7 +77,7 @@ def _import_grid_roxapi_v1(
 
 def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
     # in prep!
-    """Push info to screen (mostly for debugging)"""
+    """Push info to screen (mostly for debugging)."""
     cpgeom = False
     if rox.version_required("1.3"):
         cpgeom = True
@@ -100,8 +102,7 @@ def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
 
 
 def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no cover
-    """Convert from RMS API to XTGeo API"""
-
+    """Convert from RMS API to XTGeo API."""
     # pylint: disable=too-many-statements
 
     logger.info("Converting to XTGeo internals...")
@@ -197,7 +198,6 @@ def _import_grid_roxapi_v2(
     self, projectname, gname, realisation, info
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
-
     rox = RoxUtils(projectname, readonly=True)
 
     proj = rox.project
@@ -227,7 +227,6 @@ def _import_grid_roxapi_v2(
 
 def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
     """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2"""
-
     indexer = roxgrid.grid_indexer
 
     ncol, nrow, nlay = indexer.dimensions

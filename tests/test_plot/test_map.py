@@ -7,7 +7,7 @@ from xtgeo.xyz import Polygons
 from xtgeo.xyz import Points
 from xtgeo.common import XTGeoDialog
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -87,7 +87,7 @@ def test_more_features_plot():
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
     myplot.canvas(title="Label rotation")
-    myplot.colormap = "gist_rainbow_r"
+    myplot.colormap = "rainbow"
     myplot.plot_surface(mysurf, minvalue=1250, maxvalue=2200, xlabelrotation=45)
 
     myplot.plot_faults(myfaults)
@@ -103,7 +103,7 @@ def test_perm_logarithmic_map():
 
     myplot = Map()
     myplot.canvas(title="PERMX normal scale")
-    myplot.colormap = "gist_rainbow_r"
+    myplot.colormap = "rainbow"
     myplot.plot_surface(
         mysurf, minvalue=0, maxvalue=6000, xlabelrotation=45, logarithmic=True
     )

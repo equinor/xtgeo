@@ -386,7 +386,7 @@ class GridProperties(Grid3D):
             KeywordNotFoundError: The keyword is not found
             KeywordFoundDateNotFoundError: The keyword but not date found
 
-        .. versionadded:: 2.13.0 Added strict key
+        .. versionadded:: 2.13 Added strict key
         """
 
         pfile = xtgeo._XTGeoFile(pfile, mode="rb")
@@ -561,7 +561,7 @@ class GridProperties(Grid3D):
             >>> from xtgeo import GridProperties as GPS
             >>> dlist = GPS().scan_dates("ECL.UNRST", datesonly=True)
 
-        .. versionchanged:: 2.13.0 Added datesonly keyword
+        .. versionchanged:: 2.13 Added datesonly keyword
         """
         pfile = xtgeo._XTGeoFile(pfile)
 

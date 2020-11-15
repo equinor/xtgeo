@@ -65,7 +65,7 @@ bigtest = pytest.mark.skipif(nobigtests, reason="Run time demanding test")
 # SEGYIO ----------------------------------------------------------------------
 no_segyio = False
 try:
-    import segyio  # pylint: disable=unused-import
+    import segyio  # noqa # pylint: disable=unused-import
 except ImportError:
     no_segyio = True
 

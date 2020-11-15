@@ -18,7 +18,12 @@ logger = xtg.functionlogger(__name__)
 
 
 def from_file(
-    self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None,
+    self,
+    gfile,
+    fformat=None,
+    initprops=None,
+    restartprops=None,
+    restartdates=None,
 ):
     """Import grid geometry from file, and makes an instance of this class."""
 

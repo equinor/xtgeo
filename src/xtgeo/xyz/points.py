@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""The XTGeo xyz.points module, which contains the Points class"""
-
-from __future__ import print_function, absolute_import
-
+"""The XTGeo xyz.points module, which contains the Points class."""
 from collections import OrderedDict
 
 import numpy as np
@@ -19,8 +16,7 @@ from . import _xyz_oper
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-
-# =============================================================================
+# ======================================================================================
 # METHODS as wrappers to class init + import
 
 
@@ -36,7 +32,6 @@ def points_from_file(wfile, fformat="xyz"):
         import xtgeo
         mypoints = xtgeo.points_from_file('somefile.xyz')
     """
-
     obj = Points()
 
     obj.from_file(wfile, fformat=fformat)
@@ -58,7 +53,6 @@ def points_from_roxar(
         mypoints = xtgeo.points_from_roxar(project, 'TopEtive', 'DP_seismic')
 
     """
-
     obj = Points()
 
     obj.from_roxar(
@@ -106,7 +100,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     """
 
     def __init__(self, *args, **kwargs):
-
+        """__init__ for Points()."""
         # instance variables listed
         self._df = None
         self._ispolygons = False
@@ -131,13 +125,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         return myrp
 
     def __str__(self):
-        # user friendly print
+        """User friendly print."""
         return self.describe(flush=False)
 
-    def __del__(self):
-        logger.info("Points object %s deleted", id(self))
-
     def __eq__(self, value):
+        """Magic method for ==."""
         return self.dataframe[self.zname] == value
 
     def __gt__(self, value):
@@ -158,7 +150,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def nrow(self):
-        """ Returns the Pandas dataframe object number of rows"""
+        """Returns the Pandas dataframe object number of rows."""
         if self._df is None:
             return 0
 
@@ -166,7 +158,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def dataframe(self):
-        """ Returns or set the Pandas dataframe object"""
+        """Returns or set the Pandas dataframe object."""
         return self._df
 
     @dataframe.setter
@@ -219,7 +211,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Args:
             nrandom (int): Number of random points (default 10)
 
-        .. versionadded:: 2.3.0
+        .. versionadded:: 2.3
         """
 
         # currently a non-published method
@@ -236,7 +228,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             myp = xtgeo.points_from_file("somepoints.poi")
             mypcopy = myp.copy()
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
 
         stype = "points"
@@ -285,7 +277,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
                 "IX" here is the name of the target column, and "I" is the name in the
                 input dataframe.
 
-        ..versionadded:: 2.13.0
+        .. versionadded:: 2.13
         """
         if not all(item in dfr.columns for item in (east, north, tvdmsl)):
             raise ValueError("One or more column names are not correct")
@@ -334,10 +326,10 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         fformat="xyz",
         attributes=True,
         pfilter=None,
-        filter=None,  # deprecated use (for backwards compatibility)
         wcolumn=None,
         hcolumn=None,
         mdcolumn="M_MDEPTH",
+        **kwargs,
     ):  # pylint: disable=redefined-builtin
         """Export XYZ (Points/Polygons) to file.
 
@@ -345,9 +337,10 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             pfile (str): Name of file
             fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
             attributes (bool or list): List of extra columns to export (some formats)
-            pfilter (dict): (or filter) Filter on e.g. top name(s) with
-                keys TopName
-                or ZoneName as {'TopName': ['Top1', 'Top2']}
+            pfilter (dict): Filter on e.g. top name(s) with
+                keys TopName or ZoneName as {'TopName': ['Top1', 'Top2']}. Note that
+                "filter" as key will be silency accepted as "pfilter" for backward
+                compatibility. However, please use "pfilter" in client scripts.
             wcolumn (str): Name of well column (rms_wellpicks format only)
             hcolumn (str): Name of horizons column (rms_wellpicks format only)
             mdcolumn (str): Name of MD column (rms_wellpicks format only)
@@ -364,19 +357,8 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             KeyError if pfilter is set and key(s) are invalid
 
         """
-        if filter is not None and pfilter is None:
-            xtg.warndeprecated(
-                "Keyword 'filter' is deprecated, use 'pfilter' instead (will continue)"
-            )
-            pfilter = filter
-            filter = None
-
-        elif filter is not None and pfilter is not None:
-            xtg.warndeprecated(
-                "Keyword 'filter' is deprecated, using 'pfilter' instead"
-            )
-            filter = None
-
+        # note that "filter" as key will be silency accepted as "pfilter" for backward
+        # compatibility
         return super(Points, self).to_file(
             pfile,
             fformat=fformat,
@@ -385,7 +367,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             wcolumn=wcolumn,
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
-            filter=None,
+            **kwargs,
         )
 
     def from_roxar(
@@ -488,7 +470,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Raises:
             ValueError: Various types of invalid inputs.
 
-        .. versionchanged:: 2.1.0 added pfilter option
+        .. versionchanged:: 2.1 added pfilter option
         """
 
         super(Points, self).to_roxar(
@@ -690,7 +672,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             ValueError: Input object of wrong data type, must be RegularSurface
             RuntimeError: Error code from C routine surf_get_zv_from_xyv is ...
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         """
         _xyz_oper.snap_surface(self, surf, activeonly=activeonly)

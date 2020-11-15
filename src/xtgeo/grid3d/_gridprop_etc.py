@@ -35,7 +35,7 @@ def gridproperty_fromgrid(self, grid, linkgeometry=False):
         myfacies = xtgeo.GridProperty(grd, name="Facies", linkgeometry=True)
         myfacies.geometry = grd  # alternative way to link geometry
 
-    .. versionadded:: 2.6.0
+    .. versionadded:: 2.6
 
     """
     self._ncol = grid.ncol

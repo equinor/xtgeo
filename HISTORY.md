@@ -1,27 +1,41 @@
-# History
+# History for XTGeo
 
-## Version 2
+## Version 2.13
 
-### Version 2.13.0
-* Skip support for Python 2.7 and 3.5. Now only Python 3.6+ is supported
+From this version support for Python 2.7 and 3.5 is dropped. Now only Python
+3.6+ is supported
+
 * New features:
-  * Grid quality indicators for Grid(): ``get_gridquality_properties()``
-  * Support for BytesIO i/o for ``RegularSurface()`` formats irap ascii and zmap ascii
-  * A `fmt` key is now available in `GridProperty().to_file()` for Eclipse grdecl format,
-    and default format is now scientific %e for Floats
+  * Grid quality indicators for Grid(): ``get_gridquality_properties()``.
+  * Support for BytesIO i/o for ``RegularSurface()`` formats irap ascii and zmap ascii.
+  * A `fmt` key is now available in `GridProperty().to_file()` for Eclipse grdecl
+    format, and default format is now scientific %e for Floats.
   * Added a key `datesonly` for GridProperties().``scan_dates`` for getting a
-    simple list of dates existing in a given restart file
-  * Added ``Points().from_dataframe()`` method
+    simple list of dates existing in a given restart file.
+  * Added a ``strict`` key to ``GridProperties().from_file()`` method.
+  * Added ``Points().from_dataframe()`` method.
   * Added bulk volumetrics ``Grid()``: ``get_cell_volume()`` and ``get_bulk_volume()``
-    as experimental methods
+    as experimental methods.
+  * Added ``percentiles`` option for ``Surfaces().statistics()``.
 
 * Improvements and bug fixes
-  * Reorganizing internal storage of 3D corner point grids
-  * Faster read and write to ROFF binary for Grid() (read almost 4 times faster)
-  * Faster read/write to Roxar API
+  * Reorganizing internal storage of 3D corner point grids.
+  * Faster read and write to ROFF binary for Grid() (read almost 4 times faster).
+  * Faster read/write to Roxar API for grid geometries.
   * Import from Eclipse is improved, in particular using "all" alias for
-    ``initprops``, ``restartprops`` and ``restartdates``
-  * Fix issues  #414, #415, #418, #421, #423, #426, #436, #439
+    ``initprops``, ``restartprops`` and ``restartdates``.
+  * Fix issues  #414, #415, #418, #421, #423, #426, #436, #439.
+
+
+## Version 2.12
+
+* New features:
+  * Added method ``rename_subgrids`` for Grid() class.
+  * Added key ``casting`` to method ``to_roxar()`` for GridProperty() class
+  * Added key ``faciescodes`` to method ``from_roxar`` and
+    ``gridproperty_from_roxar()`` for GridProperty() class
+  * It is now possible to write blocked wells and ordinary wells to Roxar API
+  * Added a ``autocrop()`` function for RegularSurface()
 
 ### 2.12.3
 * Postfix release backport, adress #439
@@ -32,22 +46,15 @@
 ### 2.12.1
 * Fix of ``get_dataframe()`` for ``RegularSurface`` which fails in some case, cf issue #415
 
-### 2.12.0
-* New features:
-  * Added method ``rename_subgrids`` for Grid() class.
-  * Added key ``casting`` to method ``to_roxar()`` for GridProperty() class
-  * Added key ``faciescodes`` to method ``from_roxar`` and
-    ``gridproperty_from_roxar()`` for GridProperty() class
-  * It is now possible to write blocked wells and ordinary wells to Roxar API
-  * Added a ``autocrop()`` function for RegularSurface()
 
-### 2.11.0
+## Version 2.11
 * New features:
   * Added keys ``perflogrange`` and ``filterlogrange`` in Grid()
     ``report_zone_mismatch()``
 
 
-### 2.10.0
+
+## Version 2.10
 * New features:
   * Added interpolation option in xsection when plotting 3D grids #401
 * Fixes:
@@ -55,10 +62,7 @@
   * Fix on surface values, which data that can be accepted, issue #405
   * Some other minor fixes in code and documentation
 
-### 2.9.2
-* Postfix release backport, adress #436 and #439
-
-### 2.9.0 and 2.9.1
+## Version 2.9
 * Full rewrite of surface slice cube methods, they will now be much faster #354
 * Added `activeonly` key in `make_ijk_from_grid` for Well()
 * Improving points in cell detection algorithm (full rewrite)
@@ -68,18 +72,13 @@
 * Improvements in various plot routines, in particular xsections
 * Changed CI and deploy from travis/appveyor to Github actions using `cibuildwheel`
 
+### 2.9.2
+* Postfix release backport, adress #436 and #439
 
-### 2.8.3
-* Fix a bug for renaming points and polygons coordinate columns, ref #349
-* Added and "F" in SPECGRID when exporting 3D grid to GRDECL format
+### 2.9.0 and 2.9.1
+* Initial release, 2.9.1 replaced 2.9.0. for technical reasons
 
-### 2.8.2
-* Fix a bug wrt writing bytestream instances on non-Linux, #342
-
-### 2.8.1
-* Fix a clib related issue that made XTGeo import feil on RHEL6 in Python2, #346
-
-### 2.8.0
+## Version 2.8
 * New features:
   * Added gridlink option in GridProperty import, #329
   * More keyword options in Grid get_ijk_from_points() #327
@@ -95,11 +94,17 @@
   * Replace logging methods in the C part, and relocated clib folder
   * Added code coverage in travis CI
 
-### 2.7.1
-* Bugfig:
-  * Issue with pathlib solved, #332
+### 2.8.3
+* Fix a bug for renaming points and polygons coordinate columns, ref #349
+* Added and "F" in SPECGRID when exporting 3D grid to GRDECL format
 
-### 2.7.0
+### 2.8.2
+* Fix a bug wrt writing bytestream instances on non-Linux, #342
+
+### 2.8.1
+* Fix a clib related issue that made XTGeo import feil on RHEL6 in Python2, #346
+
+## Version 2.7
 * New features:
   * Support for petromod binary format for RegularSurface()
   * Added name attribute for Grid()
@@ -112,7 +117,12 @@
 * Fixes for developers:
   * General refactorizion of C code, to improve speed and stability. Also change logger method in C (still ongoing)
 
-### 2.6.0
+### 2.7.1
+* Bugfig:
+  * Issue with pathlib solved, #332
+
+
+## Version 2.6
 * New features:
   * A Grid() instance can now be "numpified" so that pickling can be done, method `numpify_carrays()`
   * An existing GridProperty() instance should now accept scalar input which will be broadcasted to
@@ -129,7 +139,7 @@
   * For surfaces, operator overload on instances with same topology will not unintentionally trigger resampling
 
 
-### 2.5.0
+## Version 2.5
 * New features:
   * Be able to write surfaces to BytesIO (memory streams), Linux only
   * Add the ability for 3D grids to detect and swap handedness of a 3D grid.
@@ -137,6 +147,16 @@
 * Fixes for developers
   * Now backward compatible to cmake 2.8.12
   * Many internal build fixes and improves, including requirements.txt
+
+## Version 2.4
+
+* New features:
+  * Added a general kwargs to `savefig()` in plot module, so e.g. dpi keyword can be passed to matplotlib
+* Bug fixes:
+  * More robust on reading saturations from UNRST files from Eclipse 300 and IX, where "IPHS" metadata
+    (describing phases present) is unreliable.
+* Fixes for developers:
+  * Setup can now be ran in "develop mode"
 
 ### 2.4.3
 * Fix of bugs when exporting points/polygons to Roxar API
@@ -148,15 +168,13 @@
 ### 2.4.1
 * Push to trigger travis build and deploy
 
-### 2.4.0
 
-* New features:
-  * Added a general kwargs to `savefig()` in plot module, so e.g. dpi keyword can be passed to matplotlib
-* Bug fixes:
-  * More robust on reading saturations from UNRST files from Eclipse 300 and IX, where "IPHS" metadata
-    (describing phases present) is unreliable.
-* Fixes for developers:
-  * Setup can now be ran in "develop mode"
+## Version 2.3
+
+* Added support for MacOS on PYPI (Python 3.6, 3.7)
+* Added functionality on grid slices as method ()
+* More flexible reading on phases present in Eclipse/IX UNRST files
+* Several minor bugfixes and improvements
 
 ### 2.3.1
 
@@ -168,24 +186,8 @@
   * Name in GridProperty `to_file(name=...)` is fixed
   * If `fformat` in GridProperty import is mispelled, an exception will be raised
 
-### 2.3.0
 
-* Added support for MacOS on PYPI (Python 3.6, 3.7)
-* Added functionality on grid slices as method ()
-* More flexible reading on phases present in Eclipse/IX UNRST files
-* Several minor bugfixes and improvements
-
-### 2.2.2
-
-* Several smaller bug fixes
-* Use of realisation in gridproperty_from_roxar() was not working
-
-### 2.2.1
-
-* Full C code and compile restructuring, now using scikit-build!
-* Use of realisation in gridproperty_from_roxar() was not working
-
-### 2.2.0
+## Version 2.2
 
 Several fixes and new features, most important:
 
@@ -201,7 +203,18 @@ Several fixes and new features, most important:
     * Improvements and fixes for dual porosity and/or dual permeability models from Eclipse
 
 
-### 2.1.0
+### 2.2.2
+
+* Several smaller bug fixes
+* Use of realisation in gridproperty_from_roxar() was not working
+
+### 2.2.1
+
+* Full C code and compile restructuring, now using scikit-build!
+* Use of realisation in gridproperty_from_roxar() was not working
+
+
+## Version 2.1
 
 Several fixes and new features, most important:
 
@@ -229,6 +242,11 @@ Several fixes and new features, most important:
   * Well() class
     * Get polygon and and improved fence from well trajectory
     * Look up IJK indices in 3D grid from well path
+
+
+## Version 2.0
+
+* First version after Open Sourcing to LGPL v3+
 
 ### 2.0.8
 
@@ -267,9 +285,6 @@ Several fixes and new features, most important:
 * Minor improvements in setup and documentation
 * Travis automatic deploy works now
 
-### 2.0.0
-
-* First version after Open Sourcing to LGPL v3+
 
 ## Version 0 and 1
 

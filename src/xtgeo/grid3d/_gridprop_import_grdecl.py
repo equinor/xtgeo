@@ -110,7 +110,13 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     # now read the property
     nlen = self._ncol * self._nrow * self._nlay
     ier, values = _cxtgeo.grd3d_import_grdecl_prop(
-        tmpfile, self._ncol, self._nrow, self._nlay, name, nlen, 0,
+        tmpfile,
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        name,
+        nlen,
+        0,
     )
 
     os.remove(tmpfile)
@@ -121,4 +127,4 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
         )
 
     self.values = values.reshape(self.dimensions)
-    self.values = ma.masked_equal(self.values, actnumv == 0)
+    self.values = ma.masked_where(actnumv == 0, self.values)

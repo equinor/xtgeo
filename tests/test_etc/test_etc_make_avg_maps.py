@@ -7,7 +7,7 @@ from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 # set default level
 xtg = XTGeoDialog()

@@ -17,7 +17,7 @@ from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name
