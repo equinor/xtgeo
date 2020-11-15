@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """XTGeo xyz.polygons module, which contains the Polygons class."""
 
 # For polygons, the order of the points sequence is important. In
 # addition, a Polygons dataframe _must_ have a columns called 'POLY_ID'
 # which identifies each polygon piece.
-
-from __future__ import print_function, absolute_import
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
@@ -19,15 +16,15 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-# =============================================================================
+# ======================================================================================
 # METHODS as wrappers to class init + import
 
 
-def polygons_from_file(wfile, fformat="xyz"):
+def polygons_from_file(pfile, fformat="xyz"):
     """Make an instance of a Polygons object directly from file import.
 
     Args:
-        mfile (str): Name of file
+        pfile (str): Name of file
         fformat (str): See :meth:`Polygons.from_file`
 
     Example::
@@ -35,10 +32,9 @@ def polygons_from_file(wfile, fformat="xyz"):
         import xtgeo
         mypoly = xtgeo.polygons_from_file('somefile.xyz')
     """
-
     obj = Polygons()
 
-    obj.from_file(wfile, fformat=fformat)
+    obj.from_file(pfile, fformat=fformat)
 
     return obj
 
@@ -56,7 +52,6 @@ def polygons_from_roxar(
         import xtgeo
         mypolys = xtgeo.polygons_from_roxar(project, 'TopEtive', 'DL_polys')
     """
-
     obj = Polygons()
 
     obj.from_roxar(
@@ -71,7 +66,7 @@ def polygons_from_roxar(
     return obj
 
 
-# =============================================================================
+# ======================================================================================
 # CLASS
 class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     """Class for a polygons object (connected points) in the XTGeo framework.
@@ -98,6 +93,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     """
 
     def __init__(self, *args, **kwargs):
+        """Polygons() initialisation."""
         self._df = None
         self._xname = "X_UTME"
         self._yname = "Y_UTMN"
@@ -114,11 +110,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._ispolygons = True
 
     def __str__(self):
-        # user friendly print
+        """User friendly print."""
         return self.describe(flush=False)
-
-    def __del__(self):
-        logger.info("Polygons object %s deleted", id(self))
 
     # ----------------------------------------------------------------------------------
     # Properties
@@ -126,7 +119,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def nrow(self):
-        """ Returns the Pandas dataframe object number of rows (read only)."""
+        """Returns the Pandas dataframe object number of rows (read only)."""
         if self._df is None:
             return 0
 
@@ -134,7 +127,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def name(self):
-        """ Returns or sets the name of the instance."""
+        """Returns or sets the name of the instance."""
         return self._name
 
     @name.setter
@@ -143,6 +136,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def xname(self):
+        """Return or set name of X (Easting) column; default is X_UTME."""
         return super(Polygons, self).xname
 
     @xname.setter
@@ -151,6 +145,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def yname(self):
+        """Return or set name of Y (Northing) column; default is Y_UTMN."""
         return super(Polygons, self).yname
 
     @yname.setter
@@ -159,6 +154,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def zname(self):
+        """Return or set name of Z (Depth) column; default is Z_TVDSS."""
         return super(Polygons, self).zname
 
     @zname.setter
@@ -167,7 +163,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def pname(self):
-        """ Returns or set the name of the POLY_ID column"""
+        """Returns or set the name of the POLY_ID column."""
         return self._pname
 
     @pname.setter
@@ -179,8 +175,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def hname(self):
-        """Returns or set the name of the cumulative horizontal length column,
-        if it exists.
+        """Returns or set the name of the cumulative horizontal length.
+
+        If the column does not exist, None is returned. Default name is H_CUMLEN.
 
         .. versionadded:: 2.1.0
         """
@@ -199,8 +196,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def dhname(self):
-        """Returns or set the name of the delta horizontal length column if
-        it exists.
+        """Returns or set the name of the delta horizontal length column if it exists.
+
+        If the column does not exist, None is returned. Default name is H_DELTALEN.
 
         .. versionadded:: 2.1.0
         """
@@ -219,8 +217,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def tname(self):
-        """Returns or set the name of the cumulative total length column,
-        if it exists.
+        """Returns or set the name of the cumulative total length column if it exists.
 
         .. versionadded:: 2.1.0
         """
@@ -239,8 +236,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def dtname(self):
-        """Returns or set the name of the delta total length column if
-        it exists.
+        """Returns or set the name of the delta total length column if it exists.
 
         .. versionadded:: 2.1.0
         """
@@ -259,7 +255,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @property
     def dataframe(self):
-        """ Returns or set the Pandas dataframe object"""
+        """Returns or set the Pandas dataframe object."""
         return self._df
 
     @dataframe.setter
@@ -278,7 +274,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return super(Polygons, self).copy(stype)
 
     def describe(self, flush=True):
-        """Describe a Polygons instance"""
+        """Describe a Polygons instance."""
         return super(Polygons, self).describe(flush=flush)
 
     def delete_columns(self, clist, strict=False):
@@ -302,7 +298,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         .. versionadded:: 2.1.0
 
         """
-
         for cname in clist:
             if cname in (self.xname, self.yname, self.zname, self.pname):
                 xtg.warnuser(
@@ -341,7 +336,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             OSError: if file is not present or wrong permissions.
 
         """
-
         super(Polygons, self).from_file(pfile, fformat=fformat)
 
         # for polygons, a seperate column with POLY_ID is required;
@@ -433,7 +427,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             ValueError: Various types of invalid inputs.
 
         """
-
         super(Polygons, self).from_roxar(
             project,
             name,
@@ -483,7 +476,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
            for examples.
 
         """
-
         super(Polygons, self).to_roxar(
             project,
             name,
@@ -529,7 +521,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             KeyError if pfilter is set and key(s) are invalid
 
         """
-
         super(Polygons, self).to_file(
             pfile,
             fformat=fformat,
@@ -611,7 +602,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         Returns:
             (xmin, xmax, ymin, ymax, zmin, zmax)
         """
-
         xmin = np.nanmin(self.dataframe[self.xname].values)
         xmax = np.nanmax(self.dataframe[self.xname].values)
         ymin = np.nanmin(self.dataframe[self.yname].values)
@@ -659,12 +649,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1.0
         """
-
         _xyz_oper.tlen(self, tname=tname, dtname=dtname, atindex=atindex)
 
     def hlen(self, hname="H_CUMLEN", dhname="H_DELTALEN", atindex=0):
-        """Compute and add or replace columns for cum. horizontal length
-        and delta length.
+        """Compute and add/replace columns for cum. horizontal length and delta length.
 
         The instance is updated in-place.
 
@@ -675,7 +663,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1.0
         """
-
         _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
 
     def extend(self, distance, nsamples=1, mode2d=True):
@@ -690,7 +677,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1.0
         """
-
         _xyz_oper.extend(self, distance, nsamples, mode2d)
 
     def rescale(self, distance, addlen=False, kind="simple", mode2d=True):
@@ -709,7 +695,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Args:
             distance (float): New distance between points
-            addhlen (str): If True, total and horizontal cum. and delta length
+            addlen (str): If True, total and horizontal cum. and delta length
                 columns will be added.
             kind (str): What kind of rescaling: slinear/cubic/simple
             mode2d (bool): The distance may be a 2D (XY) ora 3D (XYZ) mode.
@@ -717,7 +703,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         .. versionchanged:: 2.1.0 a new algorithm
 
         """
-
         _xyz_oper.rescale_polygons(
             self, distance=distance, addlen=addlen, kind=kind, mode2d=mode2d
         )
@@ -725,8 +710,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def get_fence(
         self, distance=20, atleast=5, nextend=2, name=None, asnumpy=True, polyid=None
     ):
-        """Extracts a fence with constant horizontal sampling and
-        additonal H_CUMLEN and H_DELTALEN vectors, suitable for X sections.
+        """Extracts a fence with constant horizontal sampling.
+
+        Additonal H_CUMLEN and H_DELTALEN vectors will be added, suitable for
+        X sections.
 
         Args:
             distance (float): New horizontal distance between points
@@ -765,8 +752,8 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     def quickplot(
         self,
-        others=None,
         filename=None,
+        others=None,
         title="QuickPlot for Polygons",
         subtitle=None,
         infotext=None,
@@ -781,6 +768,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             title (str): Title of plot
             subtitle (str): Subtitle of plot
             infotext (str): Additonal info on plot.
+            linewidth (float): Width of line.
             color (str): Name of color (may use matplotib shortcuts, e.g. 'r' for 'red')
         """
         mymap = xtgeo.plot.Map()
@@ -805,10 +793,10 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     # ==================================================================================
 
     def operation_polygons(self, poly, value, opname="add", inside=True):
-        """A generic function for doing points operations restricted to inside
-        or outside polygon(s).
+        """A generic function for operations restricted to inside or outside polygon(s).
 
-        The points are parts of polygons.
+        The operations are done on the points that defines the polygon. Hence on a
+        coarse sampled polygon, results may appear inexact.
 
         Args:
             poly (Polygons): A XTGeo Polygons instance
@@ -816,55 +804,53 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             opname (str): Name of operation... 'add', 'sub', etc
             inside (bool): If True do operation inside polygons; else outside.
         """
-
         _xyz_oper.operation_polygons(self, poly, value, opname=opname, inside=inside)
 
     # shortforms
     def add_inside(self, poly, value):
-        """Add a value (scalar) inside polygons"""
+        """Add a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="add", inside=True)
 
     def add_outside(self, poly, value):
-        """Add a value (scalar) outside polygons"""
+        """Add a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="add", inside=False)
 
     def sub_inside(self, poly, value):
-        """Subtract a value (scalar) inside polygons"""
+        """Subtract a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="sub", inside=True)
 
     def sub_outside(self, poly, value):
-        """Subtract a value (scalar) outside polygons"""
+        """Subtract a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="sub", inside=False)
 
     def mul_inside(self, poly, value):
-        """Multiply a value (scalar) inside polygons"""
+        """Multiply a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="mul", inside=True)
 
     def mul_outside(self, poly, value):
-        """Multiply a value (scalar) outside polygons"""
+        """Multiply a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="mul", inside=False)
 
     def div_inside(self, poly, value):
-        """Divide a value (scalar) inside polygons"""
+        """Divide a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="div", inside=True)
 
     def div_outside(self, poly, value):
-        """Divide a value (scalar) outside polygons (value 0.0 will give
-        result 0)"""
+        """Divide a value (scalar) outside polygons (value 0.0 will give result 0)."""
         self.operation_polygons(poly, value, opname="div", inside=False)
 
     def set_inside(self, poly, value):
-        """Set a value (scalar) inside polygons"""
+        """Set a value (scalar) inside polygons."""
         self.operation_polygons(poly, value, opname="set", inside=True)
 
     def set_outside(self, poly, value):
-        """Set a value (scalar) outside polygons"""
+        """Set a value (scalar) outside polygons."""
         self.operation_polygons(poly, value, opname="set", inside=False)
 
     def eli_inside(self, poly):
-        """Eliminate current map values inside polygons"""
+        """Eliminate current map values inside polygons."""
         self.operation_polygons(poly, 0, opname="eli", inside=True)
 
     def eli_outside(self, poly):
-        """Eliminate current map values outside polygons"""
+        """Eliminate current map values outside polygons."""
         self.operation_polygons(poly, 0, opname="eli", inside=False)
