@@ -197,7 +197,7 @@ class RoxUtils(object):
             category (str or list): Name(s) of category to empty, either as
                  a simple string or a list of strings.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         _roxutils_etc.clear_whatever_category(self, category, stype="horizons")
 
@@ -208,6 +208,6 @@ class RoxUtils(object):
             category (str or list): Name(s) of category to empty, either as
                  a simple string or a list of strings.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         _roxutils_etc.clear_whatever_category(self, category, stype="zones")

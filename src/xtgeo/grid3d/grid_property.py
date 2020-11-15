@@ -632,7 +632,7 @@ class GridProperty(Grid3D):
         Returns:
            True if success, otherwise False
 
-        .. versionchanged:: 2.8.0 Added gridlink option, default is True
+        .. versionchanged:: 2.8 Added gridlink option, default is True
         """
 
         pfile = xtgeo._XTGeoFile(pfile, mode="rb")
@@ -889,8 +889,8 @@ class GridProperty(Grid3D):
             fill_value (float): Fill value for inactive cells
             order (str): Array internal order; default is "C", alternative is "F"
 
-        .. versionadded:: 2.3.0
-        .. versionchanged:: 2.8.0 Added `fill_value` and `order`
+        .. versionadded:: 2.3
+        .. versionchanged:: 2.8 Added `fill_value` and `order`
         """
         vact = self.values1d.copy()
 

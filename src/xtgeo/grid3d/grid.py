@@ -539,7 +539,7 @@ class Grid(Grid3D):
         Returns:
             Instance is updated (previous instance content will be erased)
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
 
         _grid_etc1.create_box(
@@ -1069,7 +1069,7 @@ class Grid(Grid3D):
             act = mygrid.get_actnum()
             print("{}% cells are active".format(act.values.mean() * 100))
 
-        .. versionchanged:: 2.6.0 Added ``dual`` keyword
+        .. versionchanged:: 2.6 Added ``dual`` keyword
         """
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
@@ -1200,7 +1200,7 @@ class Grid(Grid3D):
             >>> grid.from_file("gullfaks2.roff")
             >>> vol = grid.get_cell_volume(ijk=(45,13,2))
 
-        .. versionadded:: 2.13.0 (as experimental)
+        .. versionadded:: 2.13 (as experimental)
         """
 
         vol = _grid_etc1.get_cell_volume(
@@ -1238,7 +1238,7 @@ class Grid(Grid3D):
         Returns:
             XTGeo GridProperty object
 
-        .. versionadded:: 2.13.0 (as experimental)
+        .. versionadded:: 2.13 (as experimental)
 
         """
 
@@ -1316,8 +1316,8 @@ class Grid(Grid3D):
             fmt (str): Format of IJK arrays (int/float). Default is "int"
             undef (int or float): Value to assign to undefined (outside) entries.
 
-        .. versionadded:: 2.6.0
-        .. versionchanged:: 2.8.0 Added keywords `columnnames`, `fmt`, `undef`
+        .. versionadded:: 2.6
+        .. versionchanged:: 2.8 Added keywords `columnnames`, `fmt`, `undef`
         """
 
         ijklist = _grid_etc1.get_ijk_from_points(
@@ -1477,7 +1477,7 @@ class Grid(Grid3D):
 
                 parr, ibarr = grd.get_layer_slice(grd.nlay, top=False)
 
-        .. versionadded:: 2.3.0
+        .. versionadded:: 2.3
         """
 
         return _grid_etc1.get_layer_slice(self, layer, top=top, activeonly=activeonly)
@@ -1722,7 +1722,7 @@ class Grid(Grid3D):
             # secure that the grid geometry is IJK right-handed
             grd.reverse_row_axis(ijk_handedness="right")
 
-        .. versionadded:: 2.5.0
+        .. versionadded:: 2.5
 
         """
 
@@ -1918,8 +1918,8 @@ class Grid(Grid3D):
 
                 print(response)
 
-        .. versionchanged:: 2.8.0 Added several new keys and better precision in result
-        .. versionchanged:: 2.11.0 Added ``perflogrange`` and ``filterlogrange``
+        .. versionchanged:: 2.8 Added several new keys and better precision in result
+        .. versionchanged:: 2.11 Added ``perflogrange`` and ``filterlogrange``
         """
 
         reports = _grid_wellzone.report_zone_mismatch(
@@ -2004,7 +2004,7 @@ class Grid(Grid3D):
             # matplotlib ...
             plt.imshow(arr, cmap="rainbow", extent=(hmin1, hmax1, vmax1, vmin1))
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         .. seealso::
            Class :class:`~xtgeo.xyz.polygons.Polygons`

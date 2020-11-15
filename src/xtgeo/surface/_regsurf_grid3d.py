@@ -73,7 +73,7 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
 
     Note that rotated maps are currently not supported!
 
-    .. versionadded:: 2.1.0
+    .. versionadded:: 2.1
     """
 
     if where == "top":

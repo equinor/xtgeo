@@ -179,7 +179,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         If the column does not exist, None is returned. Default name is H_CUMLEN.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         if isinstance(self._hname, str):
             if self._hname not in self._df.columns:
@@ -200,7 +200,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         If the column does not exist, None is returned. Default name is H_DELTALEN.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         if isinstance(self._dhname, str):
             if self._dhname not in self._df.columns:
@@ -219,7 +219,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def tname(self):
         """Returns or set the name of the cumulative total length column if it exists.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         if isinstance(self._tname, str):
             if self._tname not in self._df.columns:
@@ -238,7 +238,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def dtname(self):
         """Returns or set the name of the delta total length column if it exists.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         if isinstance(self._dtname, str):
             if self._dtname not in self._df.columns:
@@ -269,7 +269,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def copy(self, stype="polygons"):
         """Deep copy of a Polygons instance.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         return super(Polygons, self).copy(stype)
 
@@ -295,7 +295,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
             mypoly.delete_columns(["WELL_ID", self.hname, self.dhname])
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         """
         for cname in clist:
@@ -581,7 +581,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def get_shapely_objects(self):
         """Returns a list of Shapely LineString objects, one per POLY_ID.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         """
         spolys = []
@@ -623,7 +623,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
             mypoly.filter_byid(polyid=[2, 4])  # keep POLY_ID 2 and 4
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         if polyid is None:
             polyid = int(self.dataframe[self.pname].iloc[0])
@@ -647,7 +647,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             dtname (str): Name of delta length column. Default is T_DELTALEN.
             atindex (int): Which index which shall be 0.0 for cumulative length.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         _xyz_oper.tlen(self, tname=tname, dtname=dtname, atindex=atindex)
 
@@ -661,7 +661,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             dhname (str): Name of delta length column. Default is H_DELTALEN.
             atindex (int): Which index which shall be 0.0 for cumulative length.
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         _xyz_oper.hlen(self, hname=hname, dhname=dhname, atindex=atindex)
 
@@ -675,7 +675,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             nsamples (int): Number of samples to extend.
             mode2d (bool): XY extension (only True is supported)
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         _xyz_oper.extend(self, distance, nsamples, mode2d)
 
@@ -700,7 +700,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             kind (str): What kind of rescaling: slinear/cubic/simple
             mode2d (bool): The distance may be a 2D (XY) ora 3D (XYZ) mode.
 
-        .. versionchanged:: 2.1.0 a new algorithm
+        .. versionchanged:: 2.1 a new algorithm
 
         """
         _xyz_oper.rescale_polygons(
@@ -733,7 +733,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         Returns:
             A numpy array (if asnumpy=True) or a new Polygons() object
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
         logger.info("Getting fence within a Polygons instance...")
         return _xyz_oper.get_fence(

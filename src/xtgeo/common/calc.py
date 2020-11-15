@@ -99,7 +99,7 @@ def find_flip(xv, yv):
     Return:
         Flip flag (1 of -1)
 
-    .. versionchanged:: 2.1.0 Reverse the number returned, skip zv
+    .. versionchanged:: 2.1 Reverse the number returned, skip zv
     """
     flip = 0
 

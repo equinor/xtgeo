@@ -54,8 +54,8 @@ def well_from_file(
         import xtgeo
         mywell = xtgeo.well_from_file('somewell.xxx')
 
-    .. versionchanged:: 2.1.0 Added ``lognames`` and ``lognames_strict``
-    .. versionchanged:: 2.1.0 ``strict`` now defaults to False
+    .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
+    .. versionchanged:: 2.1 ``strict`` now defaults to False
 
     """
 
@@ -97,7 +97,7 @@ def well_from_roxar(
         mywell = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
                                        logrun='log', lognames=mylogs)
 
-    .. versionchanged:: 2.1.0 lognames defaults to "all", not None
+    .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
 
     obj = Well()
@@ -445,8 +445,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
             >>> mywell = Well('31_2-6.w')
 
-        .. versionchanged:: 2.1.0 ``lognames`` and ``lognames_strict`` added
-        .. versionchanged:: 2.1.0 ``strict`` now defaults to False
+        .. versionchanged:: 2.1 ``lognames`` and ``lognames_strict`` added
+        .. versionchanged:: 2.1 ``strict`` now defaults to False
         """
 
         wfile = xtgeo._XTGeoFile(wfile)
@@ -573,7 +573,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             trajectory (str): Name of trajectory in RMS
             logrun (str): Name of logrun in RMS
 
-        .. versionadded:: 2.12.0
+        .. versionadded:: 2.12
 
         """
 
@@ -1061,7 +1061,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             delta (float): Step length
             tvdrange (tuple of floats): Resampling can be limited to TVD interval
 
-        .. versionchanged:: 2.2.0 Added tvdrange
+        .. versionchanged:: 2.2 Added tvdrange
         """
         _well_oper.rescale(self, delta=delta, tvdrange=tvdrange)
 
@@ -1071,8 +1071,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             skipname (bool): If True then name column is omitted
 
-        .. versionadded:: 2.1.0
-        .. versionchanged:: 2.13.0 Added `skipname` key
+        .. versionadded:: 2.1
+        .. versionchanged:: 2.13 Added `skipname` key
         """
 
         dfr = self._df.copy()
@@ -1110,7 +1110,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             Or a Polygons object with 5 columns
             If not possible, return False
 
-        .. versionchanged:: 2.1.0 improved algorithm
+        .. versionchanged:: 2.1 improved algorithm
         """
 
         poly = self.get_polygons()
@@ -1331,7 +1331,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Returns:
             A :class:`.Points` instance, or None if no crossing points
 
-        .. versionadded:: 2.8.0
+        .. versionadded:: 2.8
 
         """
 
@@ -1354,7 +1354,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Raises:
             RuntimeError: 'Error from C routine, code is ...'
 
-        .. versionchanged:: 2.9.0 Added keys for and `activeonly`
+        .. versionchanged:: 2.9 Added keys for and `activeonly`
         """
 
         _well_oper.make_ijk_from_grid(
@@ -1412,7 +1412,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Raises:
             None
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         """
 

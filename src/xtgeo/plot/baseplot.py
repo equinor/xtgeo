@@ -228,7 +228,7 @@ class BasePlot(object):
             myplot.savefig('TMP/layerslice.svg', fformat='svg', last=False)
             myplot.savefig('TMP/layerslice.png')
 
-        .. versionchanged:: 2.4.0 added kwargs option
+        .. versionchanged:: 2.4 added kwargs option
 
         """
         if self._tight:

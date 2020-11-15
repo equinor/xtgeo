@@ -211,7 +211,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Args:
             nrandom (int): Number of random points (default 10)
 
-        .. versionadded:: 2.3.0
+        .. versionadded:: 2.3
         """
 
         # currently a non-published method
@@ -228,7 +228,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             myp = xtgeo.points_from_file("somepoints.poi")
             mypcopy = myp.copy()
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
         """
 
         stype = "points"
@@ -277,7 +277,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
                 "IX" here is the name of the target column, and "I" is the name in the
                 input dataframe.
 
-        ..versionadded:: 2.13.0
+        .. versionadded:: 2.13
         """
         if not all(item in dfr.columns for item in (east, north, tvdmsl)):
             raise ValueError("One or more column names are not correct")
@@ -470,7 +470,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         Raises:
             ValueError: Various types of invalid inputs.
 
-        .. versionchanged:: 2.1.0 added pfilter option
+        .. versionchanged:: 2.1 added pfilter option
         """
 
         super(Points, self).to_roxar(
@@ -672,7 +672,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             ValueError: Input object of wrong data type, must be RegularSurface
             RuntimeError: Error code from C routine surf_get_zv_from_xyv is ...
 
-        .. versionadded:: 2.1.0
+        .. versionadded:: 2.1
 
         """
         _xyz_oper.snap_surface(self, surf, activeonly=activeonly)

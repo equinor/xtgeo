@@ -27,7 +27,7 @@ logger = xtg.functionlogger(__name__)
 def import_cube_roxapi(self, project, name, folder=None):  # pragma: no cover
     """Import (transfer) a Cube via ROXAR API container to XTGeo.
 
-    .. versionadded:: 2.1.0
+    .. versionadded:: 2.1
     """
     rox = RoxUtils(project, readonly=True)
 

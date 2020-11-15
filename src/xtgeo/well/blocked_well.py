@@ -206,7 +206,7 @@ class BlockedWell(Well):
             ijk (bool): If True, then also write special index logs if they exist,
                 such as I_INDEX, J_INDEX, K_INDEX, etc. Default is False
 
-        .. versionadded: 2.12.0
+        .. versionadded: 2.12
 
         """
         project = args[0]

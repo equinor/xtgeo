@@ -111,7 +111,7 @@ def clear_whatever_category(self, category, stype="horizons"):
         stype (str): 'Super type' in RMS (horizons or zones).
             Default is horizons
 
-    .. versionadded:: 2.1.0
+    .. versionadded:: 2.1
     """
 
     project = self.project
