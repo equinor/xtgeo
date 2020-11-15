@@ -1,4 +1,4 @@
-# History
+# History for XTGeo
 
 ## Version 2.13
 
