@@ -1,14 +1,12 @@
-# coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
-
+"""Test surfaces."""
 import math
 from os.path import join
 
 import numpy as np
-
-import test_common.test_xtg as tsetup
+import pytest
 import xtgeo
+
+from tests.conftest import assert_almostequal
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -80,8 +78,8 @@ def test_statistics():
     res["mean"].to_file(join(TMPD, "surf_mean.gri"))
     res["std"].to_file(join(TMPD, "surf_std.gri"))
 
-    tsetup.assert_almostequal(res["mean"].values.mean(), 1720.5029, 0.0001)
-    tsetup.assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
+    assert_almostequal(res["mean"].values.mean(), 1720.5029, 0.0001)
+    assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
 
 
 def test_more_statistics():
@@ -107,15 +105,25 @@ def test_more_statistics():
         sum2 += (float(inum) - 50.0) ** 2
     stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
 
-    tsetup.assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
-    tsetup.assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
+    assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
+    assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
 
-    _ = so.statistics(percentiles=[10, 50])
+    small = xtgeo.RegularSurface()
+    so2 = xtgeo.Surfaces()
+
+    for inum in range(10):
+        tmp = small.copy()
+        tmp.values += 8.76543
+        so2.append([tmp])
+
+    res2 = so2.statistics(percentiles=[10, 50])
+    assert res2["p10"].values.mean() == pytest.approx(16.408287142, 0.001)
 
 
 def test_surfaces_apply():
     """Test apply function."""
     base = xtgeo.RegularSurface(TESTSET1A)
+    base.coarsen(3)
     base.describe()
     base.values *= 0.0
     bmean = base.values.mean()
@@ -128,10 +136,10 @@ def test_surfaces_apply():
     so = xtgeo.Surfaces(surfs)
     res = so.apply(np.nanmean)
 
-    tsetup.assert_almostequal(res.values.mean(), bmean + 50.0, 0.0001)
+    assert_almostequal(res.values.mean(), bmean + 50.0, 0.0001)
 
     res = so.apply(np.nanpercentile, 10, axis=0, interpolation="nearest")
-    tsetup.assert_almostequal(res.values.mean(), bmean + 10.0, 0.0001)
+    assert_almostequal(res.values.mean(), bmean + 10.0, 0.0001)
 
 
 def test_get_surfaces_from_3dgrid():
@@ -141,10 +149,10 @@ def test_get_surfaces_from_3dgrid():
     surfs.from_grid3d(mygrid, rfactor=2)
     surfs.describe()
 
-    tsetup.assert_almostequal(surfs.surfaces[-1].values.mean(), 1742.28, 0.04)
-    tsetup.assert_almostequal(surfs.surfaces[-1].values.min(), 1589.58, 0.04)
-    tsetup.assert_almostequal(surfs.surfaces[-1].values.max(), 1977.29, 0.04)
-    tsetup.assert_almostequal(surfs.surfaces[0].values.mean(), 1697.02, 0.04)
+    assert_almostequal(surfs.surfaces[-1].values.mean(), 1742.28, 0.04)
+    assert_almostequal(surfs.surfaces[-1].values.min(), 1589.58, 0.04)
+    assert_almostequal(surfs.surfaces[-1].values.max(), 1977.29, 0.04)
+    assert_almostequal(surfs.surfaces[0].values.mean(), 1697.02, 0.04)
 
     for srf in surfs.surfaces:
         srf.to_file(join(TMPD, srf.name + ".gri"))

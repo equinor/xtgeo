@@ -5,7 +5,7 @@ from __future__ import print_function
 import os
 
 import xtgeo
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)

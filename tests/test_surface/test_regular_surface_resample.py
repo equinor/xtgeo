@@ -5,7 +5,7 @@ import numpy as np
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
 from xtgeo.xyz import Points
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)

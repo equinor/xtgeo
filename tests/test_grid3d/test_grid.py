@@ -13,7 +13,7 @@ import math
 import pytest
 import numpy as np
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 import xtgeo
 from xtgeo import pathlib

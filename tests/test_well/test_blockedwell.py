@@ -9,7 +9,7 @@ import pytest
 from xtgeo.well import BlockedWell
 from xtgeo.common import XTGeoDialog
 
-import test_common.test_xtg as tsetup
+import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
