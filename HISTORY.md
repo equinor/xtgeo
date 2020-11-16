@@ -26,6 +26,8 @@ From this version support for Python 2.7 and 3.5 is dropped. Now only Python
     ``initprops``, ``restartprops`` and ``restartdates``.
   * Fix issues  #414, #415, #418, #421, #423, #426, #436, #439.
 
+### 2.13.1
+* Fixed a manifest bug which occurs when importing a grid inside RMS, cf #448.
 
 ## Version 2.12
 
