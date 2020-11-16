@@ -31,8 +31,6 @@ def import_grid_roxapi(
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
 
-    self._xtgformat(2)
-
     if self._xtgformat == 1 or dimonly:
         _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
     else:
