@@ -4,11 +4,10 @@
 import sys
 import json
 import warnings
-import hashlib
 from collections import OrderedDict
 
 import numpy as np
-import numpy.ma as ma  # pylint: disable=useless-import-alias
+import numpy.ma as ma
 
 import xtgeo
 
@@ -58,7 +57,6 @@ def grid_from_file(
         mygrid = xtgeo.grid_from_file("reek.roff")
 
     """
-
     obj = Grid()
 
     obj.from_file(gfile, fformat=fformat)
@@ -158,7 +156,7 @@ class Grid(Grid3D):
     # pylint: disable=too-many-public-methods
 
     def __init__(self, *args, **kwargs):
-
+        """The __init__ method."""
         super(Grid, self).__init__(*args, **kwargs)
 
         self._coordsv = None  # numpy array to coords vector
@@ -169,6 +167,14 @@ class Grid(Grid3D):
         # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
         # are organized! The corresponding C routines for 1: grd3d_*, while 2: grdcp3d_*
         self._xtgformat = 2
+
+        # the following block is currently not in use, but required for metadata
+        self._xshift = 0.0
+        self._yshift = 0.0
+        self._zshift = 0.0
+        self._xscale = 1.0
+        self._yscale = 1.0
+        self._zscale = 1.0
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
@@ -182,6 +188,8 @@ class Grid(Grid3D):
         self._dualporo = False
         self._dualperm = False
         self._dualactnum = None  # will be a GridProperty()
+
+        self._metadata = xtgeo.MetaDataCPGeometry()
 
         # Roxar api spesific:
         self._roxgrid = None
@@ -209,9 +217,11 @@ class Grid(Grid3D):
             self.create_box((self._ncol, self._nrow, self._nlay))
             self._xtgformat = 2
 
+        self._metadata.required = self
         logger.info("Ran __init__ for %s", repr(self))
 
     def __repr__(self):
+        """The __repr__ method."""
         logger.info("Invoke __repr__ for grid")
         myrp = (
             "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
@@ -221,6 +231,7 @@ class Grid(Grid3D):
         return myrp
 
     def __str__(self):
+        """The __str__ method for user friendly print."""
         # user friendly print
         if sys.version_info[0] < 3:
             logger.debug("Invoke __str__ for grid")
@@ -234,13 +245,27 @@ class Grid(Grid3D):
     # ==================================================================================
 
     @property
+    def metadata(self):
+        """Return metadata object instance of type MetaDataRegularSurface."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, obj):
+        # The current metadata object can be replaced. A bit dangerous so further
+        # check must be done to validate. TODO.
+        if not isinstance(obj.xtgeo.MetaDataCPGeometry):
+            raise ValueError("Input obj not an instance of MetaDataCPGeometry")
+
+        self._metadata = obj  # checking is currently missing! TODO
+
+    @property
     def filesrc(self):
-        """str: Source for grid (filepath or name in RMS)"""
+        """str: Source for grid (filepath or name in RMS)."""
         return self._filesrc
 
     @property
     def name(self):
-        """str: Name attribute of grid"""
+        """str: Name attribute of grid."""
         return self._name
 
     @name.setter
@@ -252,28 +277,29 @@ class Grid(Grid3D):
 
     @property
     def ncol(self):
-        """int: Number of columns (read only)"""
+        """int: Number of columns (read only)."""
         return super(Grid, self).ncol
 
     @property
     def nrow(self):
-        """int: Number of rows (read only)"""
+        """int: Number of rows (read only)."""
         return super(Grid, self).nrow
 
     @property
     def nlay(self):
-        """int: Number of layers (read only)"""
+        """int: Number of layers (read only)."""
         return super(Grid, self).nlay
 
     @property
     def dimensions(self):
-        """3-tuple: The grid dimensions as a tuple of 3 integers (read only)"""
+        """3-tuple: The grid dimensions as a tuple of 3 integers (read only)."""
         return (self._ncol, self._nrow, self._nlay)
 
     @property
     def vectordimensions(self):
-        """3-tuple: The storage grid array dimensions tuple of 3 integers (read only) as
-        (ncoord, nzcorn, nactnum)
+        """3-tuple: The storage grid array dimensions tuple of 3 integers (read only).
+
+        The tuple is (ncoord, nzcorn, nactnum).
         """
         ncoord = (self._ncol + 1) * (self._nrow + 1) * 2 * 3
         nzcorn = self._ncol * self._nrow * (self._nlay + 1) * 4
@@ -283,7 +309,7 @@ class Grid(Grid3D):
 
     @property
     def ijk_handedness(self):
-        """IJK handedness for grids, "right" or "left"
+        """IJK handedness for grids, "right" or "left".
 
         For a non-rotated grid with K increasing with depth, 'left' is corner in
         lower-left, while 'right' is origin in upper-left corner.
@@ -309,8 +335,7 @@ class Grid(Grid3D):
 
     @property
     def subgrids(self):
-        """:obj:`list` of :obj:`int`: A dictionary with subgrid name and
-        an array as value, or None of not present.
+        """:obj:`list` of :obj:`int`: A dict with subgrid name and an array as value.
 
         I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2:" [5, 6, 7],
         "name3": [8, 9, 10]}``, here meaning 3 subgrids where upper is 4
@@ -371,8 +396,9 @@ class Grid(Grid3D):
 
     @property
     def actnum_array(self):
-        """Returns the 3D ndarray which for active cells, 1 for active, 0
-        for inactive, in C order (read only).
+        """Returns the 3D ndarray which for active cells.
+
+        Values are 1 for active, 0 for inactive, in C order (read only).
 
         """
         actnumv = self.get_actnum().values
@@ -382,8 +408,7 @@ class Grid(Grid3D):
 
     @property
     def actnum_indices(self):
-        """Returns the 1D ndarray which holds the indices for active cells
-        given in 1D, C order (read only).
+        """The 1D ndarray which holds indices for active cells C order (read only).
 
         In dual poro/perm systems, this will be the active indices for the
         matrix cells and/or fracture cells (i.e. actnum >= 1).
@@ -429,8 +454,7 @@ class Grid(Grid3D):
 
     @property
     def props(self):
-        """:obj:`list` of :obj:`.GridProperty`: Return or set a
-        list of XTGeo GridProperty objects.
+        """Return or set a list of XTGeo GridProperty objects.
 
         When setting, the dimension of the property object is checked,
         and will raise an IndexError if it does not match the grid.
@@ -472,7 +496,6 @@ class Grid(Grid3D):
     @property
     def propnames(self):
         """Returns a list of property names that are hooked to a grid."""
-
         plist = None
         if self._props is not None:
             plist = self._props.names
@@ -481,36 +504,35 @@ class Grid(Grid3D):
 
     @property
     def roxgrid(self):
-        """Get the Roxar native proj.grid_models[gname].get_grid() object"""
+        """Get the Roxar native proj.grid_models[gname].get_grid() object."""
         return self._roxgrid
 
     @property
     def roxindexer(self):
-        """Get the Roxar native proj.grid_models[gname].get_grid().grid_indexer
-        object"""
-
+        """The Roxar native proj.grid_models[gname].get_grid().grid_indexer object."""
         return self._roxindexer
 
-    def generate_hash(self):
-        """str: Return a unique hash ID for current grid; can e.g. be used to compare
-        two grid instances with same source.
+    def generate_hash(self, hashmethod="md5"):
+        """Return a unique hash ID for current instance.
 
-        .. versionadded:: 2.10
+        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+
+        .. versionadded:: 2.14
         """
-
-        mhash = hashlib.sha256()
-        gid = "{}{}{}{}{}{}{}".format(
-            self._filesrc,
-            self._ncol,
-            self._nrow,
-            self._nlay,
-            self._coordsv.mean(),
-            self._zcornsv.mean(),
-            self._actnumsv.mean(),
+        required = (
+            "ncol",
+            "nrow",
+            "nlay",
+            "coordsv",
+            "zcornsv",
+            "actnumsv",
         )
 
-        mhash.update(gid.encode())
-        return mhash.hexdigest()
+        gid = ""
+        for req in required:
+            gid += f"{getattr(self, '_' + req)}"
+
+        return xtgeo.common.sys.generic_hash(gid, hashmethod=hashmethod)
 
     # ==================================================================================
     # Create/import/export
@@ -541,7 +563,6 @@ class Grid(Grid3D):
 
         .. versionadded:: 2.1
         """
-
         _grid_etc1.create_box(
             self,
             dimension=dimension,
@@ -565,7 +586,7 @@ class Grid(Grid3D):
         Arguments:
             gfile (str or Path): File name to be imported. If fformat="eclipse_run"
                 then a fileroot name shall be input here, see example below.
-            fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun
+            fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
                 (None is default and means "guess")
             initprops (str list): Optional, and only applicable for file format
                 "eclipserun". Provide a list the names of the properties here. A
@@ -590,7 +611,6 @@ class Grid(Grid3D):
         Raises:
             OSError: if file is not found etc
         """
-
         gfile = xtgeo._XTGeoFile(gfile, mode="rb")
 
         obj = _grid_import.from_file(
@@ -602,7 +622,7 @@ class Grid(Grid3D):
             restartdates=restartdates,
         )
         self._tmp = {}
-
+        self._metadata.required = self
         return obj
 
     def to_file(self, gfile, fformat="roff"):
@@ -634,9 +654,9 @@ class Grid(Grid3D):
             _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat == "egrid":
             _grid_export.export_egrid(self, gfile.name)
-        elif fformat == "xtgeo":
+        elif fformat == "xtgcpgeom":
             # experimental
-            _grid_export.export_xtgeo(self, gfile.name)
+            _grid_export.export_xtgcpgeom(self, gfile.name)
         else:
             raise SystemExit("Invalid file format")
 
@@ -659,11 +679,11 @@ class Grid(Grid3D):
 
 
         """
-
         _grid_roxapi.import_grid_roxapi(
             self, projectname, gname, realisation, dimensions_only, info
         )
         self._tmp = {}
+        self._metadata.required = self
 
     def to_roxar(
         self, project, gname, realisation=0, info=False, method="cpg"
@@ -770,8 +790,7 @@ class Grid(Grid3D):
         return dsc.astext()
 
     def get_dataframe(self, activeonly=True, ijk=True, xyz=True, doubleformat=False):
-        """Returns a Pandas dataframe table for the grid and
-        any attached grid properties.
+        """Returns a Pandas dataframe for the grid and any attached grid properties.
 
         Note that this dataframe method is rather similar to GridProperties
         dataframe function, but have other defaults.
@@ -802,7 +821,6 @@ class Grid(Grid3D):
             # save as CSV file
             df.to_csv("mygrid.csv")
         """
-
         if self.gridprops is None:
             self.gridprops = xtgeo.grid3d.GridProperties(
                 ncol=self.ncol, nrow=self.nrow, nlay=self.nlay
@@ -819,8 +837,7 @@ class Grid(Grid3D):
     dataframe = get_dataframe  # backward compatibility...
 
     def append_prop(self, prop):
-        """Append a single property to the grid"""
-
+        """Append a single property to the grid."""
         if prop.dimensions == self.dimensions:
             if self._props is None:
                 self._props = xtgeo.grid3d.GridProperties()
@@ -838,6 +855,8 @@ class Grid(Grid3D):
         Note that the input must be an OrderedDict!
 
         """
+        if sdict is None:
+            return
 
         if not isinstance(sdict, OrderedDict):
             raise ValueError("Input sdict is not an OrderedDict")
@@ -857,7 +876,6 @@ class Grid(Grid3D):
 
         The simplified dictionary is on the form {"name1": 3, "name2": 5}
         """
-
         if not self.subgrids:
             return None
 
@@ -901,14 +919,13 @@ class Grid(Grid3D):
         self.set_subgrids(subs)
 
     def estimate_design(self, nsub=None):
-        """Get by clever guessing the design and simbox thickness of the
-        grid or a subgrid.
+        """Estimate design and simbox thickness of the grid or a subgrid.
 
         If the grid consists of several subgrids, and nsub is not specified, then
-        a failure should be raised
+        a failure should be raised.
 
         Args:
-            nsub (int or str): Subgrid index to check, either as anumber (starting
+            nsub (int or str): Subgrid index to check, either as a number (starting
                 with 1) or as subgrid name. If set to None, the whole grid will
                 examined.
 
@@ -955,17 +972,18 @@ class Grid(Grid3D):
         return res
 
     def estimate_flip(self):
-        """Determine flip (handedness) of grid returns; 1 for left-handed,
-        -1 for right-handed.
+        """Estimate flip (handedness) of grid returns as 1 or -1.
+
+        The flip numbers are 1 for left-handed and -1 for right-handed.
 
         .. seealso:: :py:attr:`~ijk_handedness`
         """
-
         return _grid_etc1.estimate_flip(self)
 
     def subgrids_from_zoneprop(self, zoneprop):
-        """Make subgrids from a zone property, which will replace the
-        current if any.
+        """Estimate subgrid index from a zone property.
+
+        The new will esimate which will replace the current if any.
 
         Args:
             zoneprop(GridProperty): a XTGeo GridProperty instance.
@@ -974,7 +992,6 @@ class Grid(Grid3D):
             Will also return simplified dictionary is on the form
                 {"name1": 3, "name2": 5}
         """
-
         newd = OrderedDict()
         _i_index, _j_index, k_index = self.get_ijk()
         kval = k_index.values
@@ -992,23 +1009,25 @@ class Grid(Grid3D):
         return self.get_subgrids()
 
     def get_zoneprop_from_subgrids(self):
-        """Make a XTGeo GridProperty instance for a Zone property from
-        the Grid subgrids information"""
-
+        """Make a XTGeo GridProperty instance for a Zone property subgrid index."""
         raise NotImplementedError("Not yet; todo")
 
     def get_actnum_indices(self, order="C"):
-        """Returns the 1D ndarray which holds the indices for active cells
-        given in 1D, C or F order.
-        """
+        """Returns the 1D ndarray which holds the indices for active cells.
 
+        Args:
+            order (str): "Either 'C' (default) or 'F' order).
+        """
         actnumv = self.get_actnum().values.copy(order=order)
         actnumv = np.ravel(actnumv, order="K")
         return np.flatnonzero(actnumv)
 
     def get_dualactnum_indices(self, order="C", fracture=False):
-        """Note in case of dual poro/perm; different indices are used for matrix
-        and fracture properties.
+        """Returns the 1D ndarray which holds the indices for matrix/fracture cases.
+
+        Args:
+            order (str): "Either 'C' (default) or 'F' order).
+            fracture (bool): If True use Fracture properties.
         """
         if not self._dualporo:
             return None
@@ -1034,7 +1053,6 @@ class Grid(Grid3D):
 
         See also the :meth:`gridprops` property
         """
-
         return self._props
 
     def get_prop_by_name(self, name):
@@ -1126,8 +1144,7 @@ class Grid(Grid3D):
             self._actnumsv = np.ma.filled(actnum.values, fill_value=0).astype(np.int32)
 
     def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
-        """
-        Return the dZ as GridProperty object.
+        """Return the dZ as GridProperty object.
 
         The dZ is computed as an average height of the vertical pillars in
         each cell, projected to vertical dimension.
@@ -1150,10 +1167,9 @@ class Grid(Grid3D):
         return deltaz
 
     def get_dxdy(self, names=("dX", "dY"), asmasked=False):
-        """
-        Return the dX and dY as GridProperty object.
+        """Return the dX and dY as GridProperty object.
 
-        The values lengths are projected to a constant Z
+        The values lengths are projected to a constant Z.
 
         Args:
             name (tuple): names of properties
@@ -1161,9 +1177,8 @@ class Grid(Grid3D):
                 are masked.
 
         Returns:
-            Two XTGeo GridProperty objects (dx, dy)
+            Two XTGeo GridProperty objects (dx, dy).
         """
-
         deltax, deltay = _grid_etc1.get_dxdy(self, names=names, asmasked=asmasked)
 
         # return the property objects
@@ -1202,7 +1217,6 @@ class Grid(Grid3D):
 
         .. versionadded:: 2.13 (as experimental)
         """
-
         vol = _grid_etc1.get_cell_volume(
             self,
             ijk=ijk,
@@ -1214,8 +1228,7 @@ class Grid(Grid3D):
         return vol
 
     def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
-        """
-        Return the geometric cell volume for all cells as a GridProperty object.
+        """Return the geometric cell volume for all cells as a GridProperty object.
 
         This method is currently *experimental*.
 
@@ -1241,13 +1254,12 @@ class Grid(Grid3D):
         .. versionadded:: 2.13 (as experimental)
 
         """
-
         return _grid_etc1.get_bulk_volume(
             self, name=name, asmasked=asmasked, precision=precision
         )
 
     def get_indices(self, names=("I", "J", "K")):
-        """Return 3 GridProperty objects for column, row, and layer index,
+        """Return 3 GridProperty objects for column, row, and layer index.
 
         Note that the indexes starts with 1, not zero (i.e. upper
         cell layer is K=1)
@@ -1262,15 +1274,13 @@ class Grid(Grid3D):
             i_index, j_index, k_index = grd.get_indices()
 
         """
-
         warnings.warn("Use method get_ijk() instead", DeprecationWarning, stacklevel=2)
         return self.get_ijk(names=names, asmasked=False)
 
     def get_ijk(
         self, names=("IX", "JY", "KZ"), asmasked=True, mask=None, zerobased=False
     ):
-        """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
-        J counter, K counter.
+        """Returns 3 xtgeo.grid3d.GridProperty objects: I counter, J counter, K counter.
 
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
@@ -1278,7 +1288,6 @@ class Grid(Grid3D):
             mask (bool): Deprecated, use asmasked instead!
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
-
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
@@ -1300,8 +1309,7 @@ class Grid(Grid3D):
         fmt="int",
         undef=-1,
     ):
-        """Returns a list/dataframe of cell indices based on a Points()
-        instance
+        """Returns a list/dataframe of cell indices based on a Points() instance.
 
         If a point is outside the grid, -1 values are returned
 
@@ -1319,7 +1327,6 @@ class Grid(Grid3D):
         .. versionadded:: 2.6
         .. versionchanged:: 2.8 Added keywords `columnnames`, `fmt`, `undef`
         """
-
         ijklist = _grid_etc1.get_ijk_from_points(
             self,
             points,
@@ -1336,8 +1343,7 @@ class Grid(Grid3D):
         return ijklist
 
     def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True, mask=None):
-        """Returns 3 xtgeo.grid3d.GridProperty objects: x coordinate,
-        ycoordinate, zcoordinate.
+        """Returns 3 xtgeo.grid3d.GridProperty objects for x, y, z coordinates.
 
         The values are mid cell values. Note that ACTNUM is
         ignored, so these is also extracted for UNDEF cells (which may have
@@ -1350,7 +1356,6 @@ class Grid(Grid3D):
             asmasked: If True, then inactive cells is masked (numpy.ma).
             mask (bool): Deprecated, use asmasked instead!
         """
-
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
@@ -1396,7 +1401,6 @@ class Grid(Grid3D):
         Raises:
             RuntimeWarning if spesification is invalid.
         """
-
         clist = _grid_etc1.get_xyz_cell_corners(
             self, ijk=ijk, activeonly=activeonly, zerobased=zerobased
         )
@@ -1404,8 +1408,7 @@ class Grid(Grid3D):
         return clist
 
     def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
-        """Returns 8*3 (24) xtgeo.grid3d.GridProperty objects, x, y, z for
-        each corner.
+        """Returns 8*3 (24) xtgeo.grid3d.GridProperty objects, x, y, z for each corner.
 
         The values are cell corner values. Note that ACTNUM is
         ignored, so these is also extracted for UNDEF cells (which may have
@@ -1439,7 +1442,6 @@ class Grid(Grid3D):
         Raises:
             RunetimeError if corners has wrong spesification
         """
-
         grid_props = _grid_etc1.get_xyz_corners(self, names=names)
 
         # return the 24 objects in a long tuple (x1, y1, z1, ... x8, y8, z8)
@@ -1479,7 +1481,6 @@ class Grid(Grid3D):
 
         .. versionadded:: 2.3
         """
-
         return _grid_etc1.get_layer_slice(self, layer, top=top, activeonly=activeonly)
 
     def get_geometrics(
@@ -1509,7 +1510,6 @@ class Grid(Grid3D):
             print("X min/max is {} {}".format(gstuff["xmin", gstuff["xmax"]))
 
         """
-
         gresult = _grid_etc1.get_geometrics(
             self,
             allcells=allcells,
@@ -1521,8 +1521,7 @@ class Grid(Grid3D):
         return gresult
 
     def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
-        """Go through the grid for a discrete property and reports val1
-        properties that are neighbouring val2.
+        """Get a discrete property which reports val1 properties vs neighbouring val2.
 
         The result will be a new gridproperty, which in general has value 0
         but 1 if criteria is met, and 2 if criteria is met but cells are
@@ -1537,7 +1536,6 @@ class Grid(Grid3D):
         Raises: Nothing
 
         """
-
         presult = _grid_etc1.get_adjacent_cells(
             self, prop, val1, val2, activeonly=activeonly
         )
@@ -1569,7 +1567,6 @@ class Grid(Grid3D):
 
 
         """
-
         gprops = _grid_etc1.get_gridquality_properties(self)
 
         return gprops
@@ -1578,8 +1575,7 @@ class Grid(Grid3D):
     # Some more special operations that changes the grid or actnum
     # =========================================================================
     def activate_all(self):
-        """Activate all cells in the grid, by manipulating ACTNUM"""
-
+        """Activate all cells in the grid, by manipulating ACTNUM."""
         self._actnumsv = np.ones(self.dimensions, dtype=np.int32)
 
         if self._xtgformat == 1:
@@ -1589,7 +1585,6 @@ class Grid(Grid3D):
 
     def inactivate_by_dz(self, threshold):
         """Inactivate cells thinner than a given threshold."""
-
         _grid_etc1.inactivate_by_dz(self, threshold)
         self._tmp = {}
 
@@ -1611,31 +1606,30 @@ class Grid(Grid3D):
             RuntimeError: If a problems with one or more polygons.
             ValueError: If Polygon is not a XTGeo object
         """
-
         _grid_etc1.inactivate_inside(
             self, poly, layer_range=layer_range, inside=inside, force_close=force_close
         )
         self._tmp = {}
 
     def inactivate_outside(self, poly, layer_range=None, force_close=False):
-        """Inacativate grid outside a polygon. (cf inactivate_inside)"""
-
+        """Inacativate grid outside a polygon."""
         self.inactivate_inside(
             poly, layer_range=layer_range, inside=False, force_close=force_close
         )
         self._tmp = {}
 
     def collapse_inactive_cells(self):
-        """ Collapse inactive layers where, for I J with other active cells."""
-
+        """Collapse inactive layers where, for I J with other active cells."""
         _grid_etc1.collapse_inactive_cells(self)
         self._tmp = {}
 
     def crop(self, colcrop, rowcrop, laycrop, props=None):
-        """Reduce the grid size by cropping, the grid will have new dimensions.
+        """Reduce the grid size by cropping.
 
-            If props is "all" then all properties assosiated (linked) to then
-            grid are also cropped, and the instances are updated.
+        The new grid will get new dimensions.
+
+        If props is "all" then all properties assosiated (linked) to then
+        grid are also cropped, and the instances are updated.
 
         Args:
             colcrop (tuple): A tuple on the form (i1, i2)
@@ -1658,7 +1652,6 @@ class Grid(Grid3D):
                 >>> gf.to_file("gf_reduced.roff")
 
         """
-
         _grid_etc1.crop(self, (colcrop, rowcrop, laycrop), props=props)
         self._tmp = {}
 
@@ -1676,7 +1669,6 @@ class Grid(Grid3D):
             1
 
         """
-
         _grid_etc1.reduce_to_one_layer(self)
         self._tmp = {}
 
@@ -1693,7 +1685,6 @@ class Grid(Grid3D):
         Raises:
             RuntimeError: If translation goes wrong for unknown reasons
         """
-
         _grid_etc1.translate_coordinates(self, translate=translate, flip=flip)
         self._tmp = {}
 
@@ -1725,7 +1716,6 @@ class Grid(Grid3D):
         .. versionadded:: 2.5
 
         """
-
         _grid_etc1.reverse_row_axis(self, ijk_handedness=ijk_handedness)
         self._tmp = {}
 
@@ -1735,7 +1725,6 @@ class Grid(Grid3D):
         Args:
             zsep (float): Minimum gap
         """
-
         _grid_etc1.make_zconsistent(self, zsep)
         self._tmp = {}
 
@@ -1761,7 +1750,6 @@ class Grid(Grid3D):
             region_number (int): Which region to apply hybrid grid in if region.
 
         Example:
-
             Create a hybridgrid from file, based on a GRDECL file (no region)::
 
                import xtgeo
@@ -1771,7 +1759,6 @@ class Grid(Grid3D):
                grd.to_file("simgrid_hybrid.bgrdecl", fformat="bgrdecl")
 
         """
-
         _grid_hybrid.make_hybridgrid(
             self,
             nhdiv=nhdiv,
@@ -1783,7 +1770,7 @@ class Grid(Grid3D):
         self._tmp = {}
 
     def refine_vertically(self, rfactor, zoneprop=None):
-        """Refine vertically, proportionally
+        """Refine vertically, proportionally.
 
         The rfactor can be a scalar or a dictionary.
 
@@ -1829,7 +1816,6 @@ class Grid(Grid3D):
             grd.refine_vertically({1: 3, 2: 4, 4: 0}, zoneprop=myzone)
 
         """
-
         _grid_refine.refine_vertically(self, rfactor, zoneprop=zoneprop)
         self._tmp = {}
 
@@ -1921,7 +1907,6 @@ class Grid(Grid3D):
         .. versionchanged:: 2.8 Added several new keys and better precision in result
         .. versionchanged:: 2.11 Added ``perflogrange`` and ``filterlogrange``
         """
-
         reports = _grid_wellzone.report_zone_mismatch(
             self,
             well=well,
@@ -2035,19 +2020,17 @@ class Grid(Grid3D):
     # ----------------------------------------------------------------------------------
 
     def _convert_xtgformat2to1(self):
-        """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
-
+        """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1."""
         _grid_etc1._convert_xtgformat2to1(self)
 
     def _convert_xtgformat1to2(self):
-        """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
-
+        """Convert arrays from old structure xtgformat=1 to new xtgformat=2."""
         _grid_etc1._convert_xtgformat1to2(self)
 
     def _xtgformat1(self):
-        """Shortform... arrays from new structure xtgformat=2 to legacy xtgformat=1 """
+        """Shortform... arrays from new structure xtgformat=2 to legacy xtgformat=1."""
         self._convert_xtgformat2to1()
 
     def _xtgformat2(self):
-        """Shortform... arrays from old structure xtgformat=1 to new xtgformat=2"""
+        """Shortform... arrays from old structure xtgformat=1 to new xtgformat=2."""
         self._convert_xtgformat1to2()

@@ -1,7 +1,8 @@
-"""GridProperty (not GridProperies) export functions"""
+"""GridProperty (not GridProperies) export functions."""
+import struct
+import json
 
-from __future__ import print_function, absolute_import
-
+import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -14,7 +15,7 @@ logger = xtg.functionlogger(__name__)
 
 def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None):
     """Export the grid property to file."""
-    logger.debug("Export property to file %s", pfile)
+    logger.info("Export property to file %s as %s", pfile, fformat)
 
     fobj = xtgeo._XTGeoFile(pfile, mode="rb")
     fobj.check_folder(raiseerror=OSError)
@@ -41,6 +42,9 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
 
     elif fformat == "bgrdecl":
         export_grdecl(self, fobj.name, name, append=append, binary=True, dtype=dtype)
+
+    elif fformat == "xtgcpprop":
+        export_xtgcpprop(self, fobj.name)
 
     else:
         raise ValueError("Cannot export, invalid fformat: {}".format(fformat))
@@ -225,3 +229,33 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt
     )
 
     _gridprop_lowlevel.delete_carray(self, carray)
+
+
+def export_xtgcpprop(self, mfile):
+    """Export to experimental xtgcpproperty format, python version."""
+    logger.info("Export as xtgcpprop...")
+
+    magic = 1351
+    if self.isdiscrete:
+        magic = 1352
+
+    prevalues = (1, magic, 4, self.ncol, self.nrow, self.nlay)
+    mystruct = struct.Struct("= i i i q q q")
+    pre = mystruct.pack(*prevalues)
+
+    meta = self.metadata.get_metadata()
+
+    with open(mfile, "wb") as fout:
+        fout.write(pre)
+
+    with open(mfile, "ab") as fout:
+        vv = self.get_npvalues1d(fill_value=self.undef)
+        vv.astype(np.float32).tofile(fout)
+
+    with open(mfile, "ab") as fout:
+        fout.write("\nXTGMETA.v01\n".encode())
+
+    with open(mfile, "ab") as fout:
+        fout.write(json.dumps(meta).encode())
+
+    logger.info("Export as xtgcpprop... done")

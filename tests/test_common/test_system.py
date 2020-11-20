@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
+import pathlib
+import hashlib
 
 
 import pytest
 import xtgeo
-from xtgeo import pathlib
+import xtgeo.common.sys as xsys
 import tests.test_common.test_xtg as tsetup
 
 TRAVIS = False
@@ -16,13 +18,52 @@ TESTFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
 TESTFOLDER = "../xtgeo-testdata/3dgrids/reek"
 TESTNOEXISTFILE = "../xtgeo-testdata/3dgrids/reek/NOSUCH.EGRID"
 TESTNOEXISTFOLDER = "../xtgeo-testdata/3dgrids/noreek/NOSUCH.EGRID"
+TESTSURF = "../xtgeo-testdata/surfaces/reek/1/topupperreek.gri"
+
+
+def test_generic_hash():
+    """Testing generic hashlib function."""
+    ahash = xsys.generic_hash("ABCDEF")
+    assert ahash == "8827a41122a5028b9808c7bf84b9fcf6"
+
+    ahash = xsys.generic_hash("ABCDEF", hashmethod="sha256")
+    assert ahash == "e9c0f8b575cbfcb42ab3b78ecc87efa3b011d9a5d10b09fa4e96f240bf6a82f5"
+
+    ahash = xsys.generic_hash("ABCDEF", hashmethod="blake2b")
+    assert ahash[0:12] == "0bb3eb1511cb"
+
+    with pytest.raises(KeyError):
+        ahash = xsys.generic_hash("ABCDEF", hashmethod="invalid")
+
+    # pass a hashlib function
+    ahash = xsys.generic_hash("ABCDEF", hashmethod=hashlib.sha224)
+    assert ahash == "fd6639af1cc457b72148d78e90df45df4d344ca3b66fa44598148ce4"
+
+
+def test_resolve_alias():
+    """Testing resolving file alias function."""
+    surf = xtgeo.RegularSurface(TESTSURF)
+    mname = xtgeo._XTGeoFile("whatever/$md5sum.gri", obj=surf)
+    assert str(mname.file) == "whatever/df7e74965672a965afd758c1f62d32a0.gri"
+
+    mname = xtgeo._XTGeoFile(pathlib.Path("whatever/$md5sum.gri"), obj=surf)
+    assert str(mname.file) == "whatever/df7e74965672a965afd758c1f62d32a0.gri"
+
+    mname = xtgeo._XTGeoFile("whatever/$random.gri", obj=surf)
+    assert len(str(mname.file)) == 45
+
+    # use $fmu.v1 schema
+    surf.metadata.opt.shortname = "topValysar"
+    surf.metadata.opt.description = "Depth surface"
+
+    mname = xtgeo._XTGeoFile(pathlib.Path("whatever/$fmu-v1.gri"), obj=surf)
+    assert str(mname.file) == "whatever/topvalysar--depth_surface.gri"
 
 
 @tsetup.skipifmac
 @tsetup.skipifwindows
 def test_xtgeocfile():
     """Test basic system file io etc functions"""
-
     gfile = xtgeo._XTGeoFile(TESTFILE)
     xfile = xtgeo._XTGeoFile(TESTNOEXISTFILE)
     yfile = xtgeo._XTGeoFile(TESTNOEXISTFOLDER)

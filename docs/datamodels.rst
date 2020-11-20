@@ -328,58 +328,194 @@ In prep.
 XTGeo binary formats
 --------------------
 
-(in prep)
+.. warning:: The following is experimental and under construction!
 
-XTGeo is developing it own binary data storage due to limitations in existing systems.
+XTGeo is developing its own binary data storage due to limitations in existing systems.
 Examples of such limitions are:
+
+* Most important, a **general lack of support for metadata**, where metadata shall
+  both have mandatory and optional members
+
+* Surface format such as Irap binary are based on Fortran schemes and need byte
+  swapping for each number on little endian CPU's.
 
 * Cube data: SEGY format is a complex, old and difficult format, for the purpose
   of Cube data in XTGeo
 
 * 3D grid data: There is no existing format that handles named subgrids
 
-* General lack of support for metadata, where metadata shall both have mandatory
-  and optional members
-
 * Efficient data structures for read and write
+
+* Lack of open sourcing
 
 XTGeo general binary layout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In prep.
+As first principle xtgeo formats shall be open-source and well documented.
+The general the xtgeo binary formats will using this design:
 
-XTGeo 3D grid format
-^^^^^^^^^^^^^^^^^^^^
+* First a 4 byte INT which shall be equal to 1. If 1 is not read, try byte swapping
+  and re-read. If still not the value 1, then file is invalid.
 
-.. rst-class:: dl-parameters
+* Next a "magic" 4 byte describing the format version:
+  * Series starting with 1100 are surface formats
+  * Series starting with 1200 are cube formats
+  * etc...
+
+* Next a set of numbers that shall describe the following arrays as cheap as possible
+  This will vary somewhat across data types.
+
+* Then the arrays are stored, in general using C-order layout for multidimensional
+  data.
+
+* Then the 13 letter word ``\nXTGMETA.v01\n`` will present, where ``\n`` is newline.
+
+* Finanally a JSON text dump will be present, to define the metadata. This JSON
+  will have a set of first level keys, where the key ``_required_`` shall always be
+  present, and the key ``_optional_`` will usually be present. Both
+  ``_required_`` and ``_optional_`` will a have a strict set of valid subkeys.
+  Then a set of ``_freeform_`` keys may be added.
+
+* It should be possible to change/edit the metadata for ``_optional_`` and the
+  freeform keys.
+
+Note that this structure allows reading the first initial numbers and then use
+``seek`` functions in e.g. C or Python to jump directly to the JSON metadata.
+
+
+
+RegularSurface format version 1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: images/fformat_xtgregsurf.svg
+
+
+A RegularSurface is a regular mesh in 2D usually describing a horizon or a property.
+
+The file extension shall be: ``.xtgregsurf``
+
+The format specification is:
 
 Record 1:
   An 4 byte integer. This integer is an "endian" indicator and will read as 1
   if no bytewap is required.
 
 Record 2:
-  A 16 (15 char + null) byte magic word, which serves as a type and version
-  information. For 3D grids, this word is ">XTGGRIDCP3D_V1"
+  An 4 byte integer which shall read 1101, indicating RegularSurface format v.1.
 
-Records 3 to 5:
-  Three 8 byte (C type long) integer numbers for `ncol`, `nrow`, `nlay`
+Record 3:
+  An 4 byte integer which shall read 4 or 8, hinting of the data array is
+  4 byte Float, and 8 byte Float.
+
+Record 4:
+  A 8 byte INT (LONG) which is the number of columns (NCOL) in the map.
+
+Record 5:
+  A 8 byte INT (LONG) which is the number of rows (NROW) in the map.
 
 Record 6:
-  Coordinates with shape (ncol + 1) * (nrow + 1) * 6, C order.
+  An array with length and byte-size given in records 3, 4 and 5. Ordering shall be C
+  order.
 
 Record 7:
-  Zcorners, with shape (ncol + 1) * (nrow + 1) * (nlay + 1) * 4.
+  The 13 letter word ``\nXTGMETA.v01\n`` will present, where ``\n`` is newline.
 
 Record 8:
-  A 16 byte magic word. THis is used to verify that data structures are
-  read correctly. For 3D grids, this word is "<XTGGRIDCP3D_V1"
+  The JSON dump describing the data. Example:
 
-Record 9:
-  A JSON text structure of free length (until 100,000 bytes) that represents
-  metadata
+.. code-block:: JSON
+
+    {
+      "_required_": {
+        "ncol": 123,
+        "nrow": 323,
+        "xori": 445566.0,
+        "yori": 5777662.0,
+        "xinc": 20.0,
+        "yinc": 40.0,
+        "yflip": 1,
+        "rotation": 30.0,
+        "undef": 1e+32,
+      },
+      "_optional_": {
+        "domain": "depth",
+        "units": "metric",
+        "name": "Top Whatever"
+      },
+      "_freeform_": {
+          "smda": {
+          "freekey1": "freevalue"
+          }
+      }
+    }
+
+
+.. https://onlineyamltools.com/convert-yaml-to-json
+
+Regular Cube format version 1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: images/fformat_xtgregcube.svg
+
+
+
+XTGeo 3D grid geometry format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: images/fformat_xtgcpggeom.svg
+
+
+XTGeo 3D grid property format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: images/fformat_xtgcpgprop.svg
+
+
+XTGeo XYZ points with attributes format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: images/fformat_xtgpoints.svg
 
 
 XTGeo layout for other data types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In prep.
+
+Speed and file size comparison of xtg vs other formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. list-table:: Speed and size comparisons
+   :widths: 10 10 6 6 6 20
+   :header-rows: 1
+
+   * - XTGformat
+     - Other
+     - Imp gain
+     - Exp gain
+     - Fsize ratio
+     - Comment
+   * - xtgregsurf
+     - Irap binary
+     - 2.5
+     - 2.9
+     - 99%
+     - XTG faster, same size
+   * - xtgregcube
+     - Seg-Y
+     - 3.0
+     - 28.0
+     - 54%
+     - XTG much faster and less size.
+   * - xtgcpgeom
+     - Roff binary
+     - 12.6
+     - 7.0
+     - 210%
+     - XTG much faster but bigger size.
+   * - xtgcpprop
+     - Roff binary
+     - 8.5
+     - 7.5
+     - 100%
+     - XTG much faster, same size.

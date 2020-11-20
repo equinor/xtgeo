@@ -114,6 +114,24 @@ def test_resample(reek_map):
     tsetup.assert_almostequal(xs.values.std(), xs_copy.values.std(), 1e-4)
 
 
+# def test_resample_coarsen(reek_map):
+#     """Do resampling from one surface to another with coarsening."""
+#     sml = reek_map
+
+#     snew = RegularSurface(
+#         ncol=round(sml.ncol * 0.6),
+#         nrow=round(sml.nrow * 0.6),
+#         xori=sml.xori,
+#         yori=sml.yori,
+#         xinc=sml.xinc * 0.6,
+#         yinc=sml.xinc * 0.6,
+#         rotation=sml.rotation,
+#         yflip=sml.yflip,
+#     )
+
+#     # snew.resample(sml)
+
+
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_refine(reek_map):
     """Do refining of a surface"""

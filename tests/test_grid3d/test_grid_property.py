@@ -4,13 +4,14 @@ from __future__ import division, absolute_import
 from __future__ import print_function
 
 import os
+import pathlib
+
 import pytest
 
 import numpy as np
 import numpy.ma as npma
 
 import xtgeo
-from xtgeo import pathlib
 from xtgeo.xyz import Polygons
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty

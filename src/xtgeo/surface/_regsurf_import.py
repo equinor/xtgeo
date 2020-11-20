@@ -1,12 +1,14 @@
 """Import RegularSurface data."""
 # pylint: disable=protected-access
 
+import json
 import numpy as np
 import numpy.ma as ma
 from struct import unpack
 
 from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
 import xtgeo
+import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
 from xtgeo.common import XTGeoDialog
 
@@ -31,6 +33,8 @@ def import_irap_binary(self, mfile, values=True, engine="cxtgeo"):
         _import_irap_binary_purepy(self, mfile)
     else:
         _import_irap_binary(self, mfile, values=values)
+
+    self._metadata.required = self
 
 
 def _import_irap_binary_purepy(self, mfile, values=True):
@@ -176,6 +180,8 @@ def import_irap_ascii(self, mfile, engine="cxtgeo"):
         _import_irap_ascii_purepy(self, mfile)
     else:
         _import_irap_ascii(self, mfile)
+
+    self._metadata.required = self
 
 
 def _import_irap_ascii_purepy(self, mfile):
@@ -323,6 +329,7 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     self._xlines = xln
 
     mfile.cfclose()
+    self._metadata.required = self
 
 
 def import_ijxyz_ascii_tmpl(self, mfile, template):
@@ -357,6 +364,7 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     self._xlines = template._xlines.copy()
 
     mfile.cfclose()
+    self._metadata.required = self
 
 
 def import_petromod_binary(self, mfile, values=True):
@@ -417,13 +425,14 @@ def import_petromod_binary(self, mfile, values=True):
     self._xlines = np.array(range(1, self.nrow + 1), dtype=np.int32)
 
     mfile.cfclose()
+    self._metadata.required = self
 
 
 def import_zmap_ascii(self, mfile, values=True):
-    """
-    Importing ZMAP + ascii files, in pure python only
+    """Importing ZMAP + ascii files, in pure python only.
 
-    See also:
+    Some sources
+
     https://mycarta.wordpress.com/2019/03/23/working-with-zmap-grid-files-in-python/
     https://blog.nitorinfotech.com/what-is-zmap-plus-file-format/
 
@@ -515,3 +524,49 @@ def import_zmap_ascii(self, mfile, values=True):
     self._xlines = np.array(range(1, self.nrow + 1), dtype=np.int32)
 
     logger.info("Reading zmap+... done")
+    self._metadata.required = self
+
+
+def import_xtgregsurf(self, mfile, values=True):
+    """Using pure python for experimental import."""
+    #
+    offset = 28
+    with open(mfile.file, "rb") as fhandle:
+        buf = fhandle.read(offset)
+
+    # unpack header
+    swap, magic, nfloat, ncol, nrow = unpack("= i i i q q", buf)
+
+    if swap != 1 or magic != 1101:
+        raise ValueError("Invalid file format (wrong swap id or magic number).")
+
+    dtype = np.float32 if nfloat == 4 else np.float64
+
+    vals = None
+    narr = ncol * nrow
+    if values:
+        vals = xsys.npfromfile(mfile.file, dtype=dtype, count=narr, offset=offset)
+
+    # read metadata which will be at position offet + nfloat*narr +13
+    pos = offset + nfloat * narr + 13
+
+    with open(mfile.file, "rb") as fhandle:
+        fhandle.seek(pos)
+        jmeta = fhandle.read().decode()
+
+    meta = json.loads(jmeta)
+    req = meta["_required_"]
+
+    reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
+
+    for myattr in reqattrs:
+        setattr(self, "_" + myattr, req[myattr])
+
+    if values:
+        self.values = np.ma.masked_equal(
+            vals.reshape(self.ncol, self.nrow), self._undef
+        )
+    else:
+        self._values = None
+
+    self._metadata.required = self

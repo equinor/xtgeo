@@ -140,6 +140,9 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
     jsurf = self.copy()
     isurf.set_values1d(ivalues)
     jsurf.set_values1d(jvalues)
+
+    self.metadata.required = self
+
     return isurf, jsurf  # needed in special cases
 
 

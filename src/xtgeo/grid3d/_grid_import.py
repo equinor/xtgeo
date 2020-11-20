@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Grid import functions for various formats"""
-
-from __future__ import print_function, absolute_import
+"""Grid import functions for various formats."""
 
 import os
 import xtgeo
@@ -9,7 +7,7 @@ from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d import _grid_import_roff
 from xtgeo.grid3d import _grid_import_ecl
-from xtgeo.grid3d import _grid_import_xtgeo
+from xtgeo.grid3d import _grid_import_xtgcpgeom
 
 
 xtg = XTGeoDialog()
@@ -26,9 +24,6 @@ def from_file(
     restartdates=None,
 ):
     """Import grid geometry from file, and makes an instance of this class."""
-
-    # pylint: disable=too-many-branches
-
     if not isinstance(gfile, xtgeo._XTGeoFile):
         raise RuntimeError("Error gfile must be a _XTGeoFile instance")
 
@@ -38,7 +33,17 @@ def from_file(
         fformat = "guess"
 
     # note .grid is currently disabled; need to work at C backend
-    fflist = set(["egrid", "grdecl", "bgrdecl", "roff", "eclipserun", "guess", "xtgeo"])
+    fflist = set(
+        [
+            "egrid",
+            "grdecl",
+            "bgrdecl",
+            "roff",
+            "eclipserun",
+            "guess",
+            "xtgcpgeom",
+        ]
+    )
     if fformat not in fflist:
         raise ValueError(
             "Invalid fformat: <{}>, options are {}".format(fformat, fflist)
@@ -49,7 +54,6 @@ def from_file(
 
     if fformat == "guess":
         logger.info("Format is <guess>")
-        fflist = ["egrid", "grdecl", "bgrdecl", "roff", "eclipserun"]
         if fext and fext in fflist:
             fformat = fext
         elif fext and fext not in fflist:
@@ -84,11 +88,11 @@ def from_file(
         _grid_import_ecl.import_ecl_grdecl(self, gfile)
     elif fformat == "bgrdecl":
         _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
-    elif fformat == "xtgeo":
+    elif fformat == "xtgcpgeom":
         # experimental
-        _grid_import_xtgeo.import_xtgeo(self, gfile)
+        _grid_import_xtgcpgeom.import_xtgcpgeom(self, gfile)
     else:
-        raise SystemExit("Invalid file format")
+        raise ValueError("Invalid file format")
 
     self.name = gfile.file.stem
 

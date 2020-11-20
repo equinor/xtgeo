@@ -213,6 +213,7 @@ class GridProperty(Grid3D):
         self._roxar_dtype = kwargs.get("roxar_dtype", np.float32)
 
         self._values = kwargs.get("values", None)
+        self._undef = xtgeo.UNDEF
 
         if len(args) == 1:
             # make instance through grid/gridprop instance or file import
@@ -228,6 +229,8 @@ class GridProperty(Grid3D):
         else:
             # make instance purely from kwargs spec
             _gridprop_etc.gridproperty_fromspec(self, **kwargs)
+
+        self._metadata = xtgeo.MetaDataCPProperty()
 
     def __del__(self):
         logger.debug("DELETING property instance %s", self.name)
@@ -248,6 +251,20 @@ class GridProperty(Grid3D):
     # Properties
     # Some proprerties such as ncol, nrow, nlay are from the Super class
     # ==================================================================================
+
+    @property
+    def metadata(self):
+        """Return metadata object instance of type MetaDataRegularSurface."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, obj):
+        # The current metadata object can be replaced. A bit dangerous so further
+        # check must be done to validate. TODO.
+        if not isinstance(obj.xtgeo.MetaDataCPProperty):
+            raise ValueError("Input obj not an instance of MetaDataCPProperty")
+
+        self._metadata = obj  # checking is currently missing! TODO
 
     @property
     def name(self):

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
 # pylint: skip-file
+# type: ignore
+
 """The XTGeo Python library."""
 
 from __future__ import division, absolute_import
@@ -8,11 +10,6 @@ from __future__ import print_function
 import os
 import timeit
 
-# this will for modules be `from xtgeo import pathlib`:
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
 
 try:
     from ._theversion import version
@@ -145,6 +142,11 @@ from xtgeo.xyz import polygons
 
 from xtgeo.xyz.points import Points
 from xtgeo.xyz.polygons import Polygons
+
+from xtgeo.metadata.metadata import MetaDataRegularSurface
+from xtgeo.metadata.metadata import MetaDataRegularCube
+from xtgeo.metadata.metadata import MetaDataCPGeometry
+from xtgeo.metadata.metadata import MetaDataCPProperty
 
 _xprint("Import various XTGeo modules... xyz...")
 

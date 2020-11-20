@@ -1,8 +1,7 @@
-# coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
+"""Tests for 3D grid."""
 
 import os
+import pathlib
 from os.path import join
 from collections import OrderedDict
 
@@ -16,7 +15,6 @@ import numpy as np
 import tests.test_common.test_xtg as tsetup
 
 import xtgeo
-from xtgeo import pathlib
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
@@ -57,12 +55,12 @@ DUALFIL3 = "../xtgeo-testdata/3dgrids/etc/TEST_DPDK.EGRID"
 
 @pytest.fixture()
 def load_gfile1():
-    """Fixture for loading EMEGFILE grid"""
+    """Fixture for loading EMEGFILE grid."""
     return xtgeo.grid3d.Grid(EMEGFILE)
 
 
 def test_import_wrong():
-    """Importing wrong fformat, etc"""
+    """Importing wrong fformat, etc."""
     with pytest.raises(ValueError):
         grd = Grid()
         grd.from_file(EMEGFILE, fformat="stupid_wrong_name")
@@ -70,8 +68,7 @@ def test_import_wrong():
 
 
 def test_import_guess(load_gfile1):
-    """Import with guessing fformat, and also test name attribute"""
-
+    """Import with guessing fformat, and also test name attribute."""
     grd = load_gfile1
 
     tsetup.assert_equal(grd.ncol, 70)
@@ -82,8 +79,7 @@ def test_import_guess(load_gfile1):
 
 
 def test_create_shoebox():
-    """Make a shoebox grid from scratch"""
-
+    """Make a shoebox grid from scratch."""
     grd = xtgeo.Grid()
     grd.create_box()
     grd.to_file(join(TMPDIR, "shoebox_default.roff"))
@@ -128,8 +124,7 @@ def test_create_shoebox():
 
 
 def test_shoebox_egrid():
-    """Test the egrid format for different grid sizes"""
-
+    """Test the egrid format for different grid sizes."""
     dimens = [(1000, 1, 1), (1000, 1, 200), (300, 200, 30)]
 
     for dim in dimens:
@@ -141,15 +136,14 @@ def test_shoebox_egrid():
 
 
 def test_shoebox_xtgeo_vs_roff():
-    """Test the egrid format for different grid sizes"""
-
+    """Test timing for xtgeo xtgcpgeom format vs roff vs egrid."""
     dimens = (20, 30, 50)
 
     grd = xtgeo.Grid()
     grd.create_box(dimension=dimens)
     grd._xtgformat2()
     t0 = xtg.timer()
-    grd.to_file(join(TMPDIR, "show.xtgeogrid"), fformat="xtgeo")
+    grd.to_file(join(TMPDIR, "show.xtgcpgeom"), fformat="xtgcpgeom")
     t1 = xtg.timer(t0)
     logger.info("TIME XTGEO %s", t1)
     t0 = xtg.timer()
@@ -163,7 +157,7 @@ def test_shoebox_xtgeo_vs_roff():
 
     t0 = xtg.timer()
     grd2 = xtgeo.Grid()
-    grd2.from_file(join(TMPDIR, "show.xtgeogrid"), fformat="xtgeo")
+    grd2.from_file(join(TMPDIR, "show.xtgcpgeom"), fformat="xtgcpgeom")
     t1 = xtg.timer(t0)
     logger.info("TIME READ xtgeo %s", t1)
 
@@ -175,8 +169,7 @@ def test_shoebox_xtgeo_vs_roff():
 
 
 def test_roffbin_get_dataframe_for_grid(load_gfile1):
-    """Import ROFF grid and return a grid dataframe (no props)"""
-
+    """Import ROFF grid and return a grid dataframe (no props)."""
     grd = load_gfile1
 
     assert isinstance(grd, Grid)
@@ -201,7 +194,6 @@ def test_roffbin_get_dataframe_for_grid(load_gfile1):
 
 def test_subgrids(load_gfile1):
     """Import ROFF and test different subgrid functions."""
-
     grd = load_gfile1
 
     assert isinstance(grd, Grid)
@@ -238,8 +230,7 @@ def test_subgrids(load_gfile1):
 
 
 def test_roffbin_import1(load_gfile1):
-    """Test roff binary import case 1"""
-
+    """Test roff binary import case 1."""
     grd = load_gfile1
 
     tsetup.assert_equal(grd.ncol, 70, txt="Grid NCOL Emerald")
@@ -297,8 +288,7 @@ def test_roffbin_import1(load_gfile1):
 
 
 def test_roffbin_import_v2_banal():
-    """Test roff binary import ROFF using new API, banal case"""
-
+    """Test roff binary import ROFF using new API, banal case."""
     t0 = xtg.timer()
     grd1 = Grid()
     grd1._xtgformat = 1
@@ -343,8 +333,7 @@ def test_roffbin_import_v2_banal():
 
 @tsetup.bigtest
 def test_roffbin_import_v2stress():
-    """Test roff binary import ROFF using new API, comapre timing etc"""
-
+    """Test roff binary import ROFF using new API, comapre timing etc."""
     t0 = xtg.timer()
     for _ino in range(100):
         grd1 = Grid()
@@ -354,8 +343,7 @@ def test_roffbin_import_v2stress():
 
 
 def test_roffbin_banal6():
-    """Test roff binary for banal no. 6 case"""
-
+    """Test roff binary for banal no. 6 case."""
     grd1 = Grid()
     grd1.from_file(BANAL6)
 
@@ -377,7 +365,7 @@ def test_roffbin_banal6():
 
 
 def test_roffbin_export_v2_banal6():
-    """Test roff binary export v2 for banal no. 6 case"""
+    """Test roff binary export v2 for banal no. 6 case."""
     # export
     grd1 = Grid()
     grd1._xtgformat = 2
@@ -401,8 +389,7 @@ def test_roffbin_export_v2_banal6():
 
 @tsetup.bigtest
 def test_roffbin_bigbox(tmpdir):
-    """Test roff binary for bigbox, to monitor performance"""
-
+    """Test roff binary for bigbox, to monitor performance."""
     bigbox = os.path.join(tmpdir, "bigbox.roff")
     if not os.path.exists(bigbox):
         logger.info("Create tmp big roff grid file...")
@@ -442,15 +429,14 @@ def test_roffbin_bigbox(tmpdir):
 
 
 def test_roffbin_import_v2_wsubgrids():
-    """Test roff binary import ROFF using new API, now with subgrids"""
-
+    """Test roff binary import ROFF using new API, now with subgrids."""
     grd1 = Grid()
     grd1.from_file(REEKFIL5)
     print(grd1.subgrids)
 
 
 def test_import_grdecl_and_bgrdecl():
-    """Eclipse import of GRDECL and binary GRDECL"""
+    """Eclipse import of GRDECL and binary GRDECL."""
     grd1 = Grid(REEKFIL2, fformat="grdecl")
 
     grd1.describe()
@@ -496,8 +482,7 @@ def test_eclgrid_import2():
 
 
 def test_eclgrid_import3():
-    """Eclipse GRDECL import and translate"""
-
+    """Eclipse GRDECL import and translate."""
     grd = Grid(BRILGRDECL, fformat="grdecl")
 
     mylist = grd.get_geometrics()
@@ -520,8 +505,7 @@ def test_eclgrid_import3():
 
 
 def test_geometrics_reek():
-    """Import Reek and test geometrics"""
-
+    """Import Reek and test geometrics."""
     grd = Grid(REEKFILE, fformat="egrid")
 
     geom = grd.get_geometrics(return_dict=True, cellcenter=False)
@@ -539,8 +523,7 @@ def test_geometrics_reek():
 
 
 def test_activate_all_cells():
-    """Make the grid active for all cells"""
-
+    """Make the grid active for all cells."""
     grid = Grid(EMEGFILE)
     logger.info("Number of active cells %s before", grid.nactive)
     grid.activate_all()
@@ -551,8 +534,7 @@ def test_activate_all_cells():
 
 
 def test_get_adjacent_cells():
-    """Get the cell indices for discrete value X vs Y, if connected"""
-
+    """Get the cell indices for discrete value X vs Y, if connected."""
     grid = Grid(EMEGFILE)
     actnum = grid.get_actnum()
     actnum.to_file(join(TMPDIR, "emerald_actnum.roff"))
@@ -561,8 +543,7 @@ def test_get_adjacent_cells():
 
 
 def test_simple_io():
-    """Test various import and export formats, incl egrid and bgrdecl"""
-
+    """Test various import and export formats, incl egrid and bgrdecl."""
     gg = Grid(REEKFILE, fformat="egrid")
 
     assert gg.ncol == 40
@@ -597,8 +578,7 @@ def test_simple_io():
 
 
 def test_ecl_run():
-    """Test import an eclrun with dates and export to roff after a diff"""
-
+    """Test import an eclrun with dates and export to roff after a diff."""
     dates = [19991201, 20030101]
     rprops = ["PRESSURE", "SWAT"]
 
@@ -629,8 +609,7 @@ def test_ecl_run():
 
 
 def test_ecl_run_all():
-    """Test import an eclrun with all dates and props"""
-
+    """Test import an eclrun with all dates and props."""
     gg = Grid()
     gg.from_file(
         REEKROOT,
@@ -644,8 +623,7 @@ def test_ecl_run_all():
 
 
 def test_npvalues1d():
-    """Different ways of getting np arrays"""
-
+    """Different ways of getting np arrays."""
     grd = Grid(DUALFIL3)
     dz = grd.get_dz()
 
@@ -667,8 +645,7 @@ def test_npvalues1d():
 
 
 def test_pathlib():
-    """Import and export via pathlib"""
-
+    """Import and export via pathlib."""
     pfile = pathlib.Path(DUALFIL1)
     grd = Grid()
     grd.from_file(pfile)
@@ -684,13 +661,12 @@ def test_pathlib():
 
 
 def test_grid_design(load_gfile1):
-    """Determine if a subgrid is topconform (T), baseconform (B), proportional (P)
+    """Determine if a subgrid is topconform (T), baseconform (B), proportional (P).
 
     "design" refers to type of conformity
     "dzsimbox" is avg or representative simbox thickness per cell
 
     """
-
     grd = load_gfile1
 
     print(grd.subgrids)
@@ -717,8 +693,7 @@ def test_grid_design(load_gfile1):
 
 
 def test_flip(load_gfile1):
-    """Determine if grid is flipped (lefthanded vs righthanded)"""
-
+    """Determine if grid is flipped (lefthanded vs righthanded)."""
     grd = load_gfile1
 
     assert grd.estimate_flip() == 1
@@ -734,8 +709,7 @@ def test_flip(load_gfile1):
 
 
 def test_xyz_cell_corners():
-    """Test xyz variations"""
-
+    """Test xyz variations."""
     grd = Grid(DUALFIL1)
 
     allcorners = grd.get_xyz_corners()
@@ -745,8 +719,7 @@ def test_xyz_cell_corners():
 
 
 def test_grid_layer_slice():
-    """Test grid slice coordinates"""
-
+    """Test grid slice coordinates."""
     grd = Grid()
     grd.from_file(REEKFILE)
 
@@ -768,8 +741,7 @@ def test_grid_layer_slice():
 
 
 def test_generate_hash():
-    """Generate hash for two grid instances with same input and compare"""
-
+    """Generate hash for two grid instances with same input and compare."""
     grd1 = Grid(REEKFILE)
     grd2 = Grid(REEKFILE)
 
@@ -779,8 +751,7 @@ def test_generate_hash():
 
 
 def test_gridquality_properties():
-    """Get grid quality props"""
-
+    """Get grid quality props."""
     grd1 = Grid(GRIDQC1)
 
     props1 = grd1.get_gridquality_properties()
@@ -802,8 +773,7 @@ def test_gridquality_properties():
 
 
 def test_bulkvol():
-    """Test cell bulk volume calculation"""
-
+    """Test cell bulk volume calculation."""
     grd = Grid(GRIDQC1)
     cellvol_rms = GridProperty(GRIDQC1_CELLVOL)
 
@@ -816,8 +786,7 @@ def test_bulkvol():
 
 @tsetup.bigtest
 def test_bulkvol_speed():
-    """Test cell bulk volume calculation speed"""
-
+    """Test cell bulk volume calculation speed."""
     dimens = (100, 500, 50)
     grd = Grid()
     grd.create_box(dimension=dimens)
