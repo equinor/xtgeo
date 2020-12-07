@@ -1,5 +1,7 @@
+"""Testing regular surface vs resampling."""
 import os
 import pytest
+from pathlib import Path
 import numpy as np
 
 from xtgeo.surface import RegularSurface
@@ -18,6 +20,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
+TMPP = Path(xtg.tmpdir)
 
 # =============================================================================
 # Do tests
@@ -27,13 +30,13 @@ FTOP1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
 
 @pytest.fixture(name="reek_map")
 def fixture_reek_map():
+    """Fixture for map input."""
     logger.info("Loading surface")
     return RegularSurface(FTOP1)
 
 
 def test_resample_small():
-    """Do resampling with minimal dataset to test for various yflip etc"""
-
+    """Do resampling with minimal dataset to test for various yflip etc."""
     xs1 = RegularSurface(
         xori=0,
         yori=0,
@@ -79,8 +82,7 @@ def test_resample_small():
 
 
 def test_resample(reek_map):
-    """Do resampling from one surface to another"""
-
+    """Do resampling from one surface to another."""
     xs = reek_map
     assert xs.ncol == 554
 
@@ -114,28 +116,34 @@ def test_resample(reek_map):
     tsetup.assert_almostequal(xs.values.std(), xs_copy.values.std(), 1e-4)
 
 
-# def test_resample_coarsen(reek_map):
-#     """Do resampling from one surface to another with coarsening."""
-#     sml = reek_map
+def test_resample_coarsen(reek_map):
+    """Do resampling from one surface to another with coarsening."""
+    sml = reek_map
 
-#     snew = RegularSurface(
-#         ncol=round(sml.ncol * 0.6),
-#         nrow=round(sml.nrow * 0.6),
-#         xori=sml.xori,
-#         yori=sml.yori,
-#         xinc=sml.xinc * 0.6,
-#         yinc=sml.xinc * 0.6,
-#         rotation=sml.rotation,
-#         yflip=sml.yflip,
-#     )
+    # note: values is missing by purpose:
+    snew = RegularSurface(
+        ncol=round(sml.ncol * 0.6),
+        nrow=round(sml.nrow * 0.6),
+        xori=sml.xori,
+        yori=sml.yori,
+        xinc=sml.xinc * 0.6,
+        yinc=sml.xinc * 0.6,
+        rotation=sml.rotation,
+        yflip=sml.yflip,
+    )
 
-#     # snew.resample(sml)
+    logger.info(snew.values)
+
+    snew.resample(sml, mask=True)
+    sml.quickplot(TMPP / "resampled_coarsen_input.png")
+    snew.quickplot(TMPP / "resampled_coarsed_output.png")
+    sml.to_file(TMPP / "resampled_coarsen_input.gri")
+    snew.to_file(TMPP / "resampled_coarsed_output.gri")
 
 
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_refine(reek_map):
-    """Do refining of a surface"""
-
+    """Do refining of a surface."""
     xs = reek_map
     assert xs.ncol == 554
 
@@ -155,8 +163,7 @@ def test_refine(reek_map):
 
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_coarsen(reek_map):
-    """Do a coarsening of a surface"""
-
+    """Do a coarsening of a surface."""
     xs = reek_map
     assert xs.ncol == 554
 
@@ -177,7 +184,6 @@ def test_coarsen(reek_map):
 @tsetup.bigtest
 def test_points_gridding(reek_map):
     """Make points of surface; then grid back to surface."""
-
     xs = reek_map
     assert xs.ncol == 554
 
