@@ -116,29 +116,45 @@ def test_resample(reek_map):
     tsetup.assert_almostequal(xs.values.std(), xs_copy.values.std(), 1e-4)
 
 
-def test_resample_coarsen(reek_map):
-    """Do resampling from one surface to another with coarsening."""
+def test_resample_partial_sample(reek_map):
+    """Do resampling from one surface to another with partial sampling."""
     sml = reek_map
 
     # note: values is missing by purpose:
     snew = RegularSurface(
         ncol=round(sml.ncol * 0.6),
         nrow=round(sml.nrow * 0.6),
-        xori=sml.xori,
-        yori=sml.yori,
+        xori=sml.xori - 2000,
+        yori=sml.yori + 3000,
         xinc=sml.xinc * 0.6,
         yinc=sml.xinc * 0.6,
         rotation=sml.rotation,
         yflip=sml.yflip,
     )
 
+    print(sml.yflip)
+
     logger.info(snew.values)
 
     snew.resample(sml, mask=True)
-    sml.quickplot(TMPP / "resampled_coarsen_input.png")
-    snew.quickplot(TMPP / "resampled_coarsed_output.png")
-    sml.to_file(TMPP / "resampled_coarsen_input.gri")
-    snew.to_file(TMPP / "resampled_coarsed_output.gri")
+
+    assert snew.values.mean() == pytest.approx(1726.65)
+
+    if XTGSHOW:
+        sml.quickplot(TMPP / "resampled_input.png")
+        snew.quickplot(TMPP / "resampled_output.png")
+        sml.to_file(TMPP / "resampled_input.gri")
+        snew.to_file(TMPP / "resampled_output.gri")
+
+    snew2 = snew.copy()
+    snew2._yflip = -1
+    snew2._xori -= 4000
+    snew2._yori -= 2000
+    snew2.resample(sml, mask=True)
+
+    if XTGSHOW:
+        snew2.to_file(TMPP / "resampled_output2.gri")
+    assert snew2.values.mean() == pytest.approx(1747.20, abs=0.2)
 
 
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
