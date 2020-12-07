@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Module/class for regular surfaces with XTGeo. Regular surfaces have a
-constant distance between nodes (xinc, yinc), and this simplifies
-computations a lot. A regular surface is defined by an origin (xori, yori)
+"""Module/class for regular surfaces with XTGeo.
+
+Regular surfaces have a constant distance between nodes (xinc, yinc),
+and this simplifies computations a lot. A regular surface is
+defined by an origin (xori, yori)
 in UTM, a number of columns (along X axis, if no rotation), a number of
 rows (along Y axis if no rotation), and increment (distance between nodes).
 
@@ -33,9 +34,7 @@ or::
 
 # pylint: disable=too-many-public-methods
 
-from __future__ import print_function, absolute_import
-from __future__ import division
-
+import sys
 import os
 import os.path
 
@@ -94,7 +93,6 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
 
     .. versionchanged:: 2.13 Key "engine" added
     """
-
     obj = RegularSurface()
 
     obj.from_file(
@@ -116,7 +114,6 @@ def surface_from_roxar(project, name, category, stype="horizons", realisation=0)
         mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
 
     """
-
     obj = RegularSurface()
 
     obj.from_roxar(project, name, category, stype=stype, realisation=realisation)
@@ -125,8 +122,7 @@ def surface_from_roxar(project, name, category, stype="horizons", realisation=0)
 
 
 def surface_from_cube(cube, value):
-    """This makes an instance of a RegularSurface directly from a cube instance
-    with a constant value.
+    """Make RegularSurface directly from a cube instance with a constant value.
 
     The surface geometry will be exactly the same as for the Cube.
 
@@ -140,11 +136,9 @@ def surface_from_cube(cube, value):
         mysurf = xtgeo.surface_from_cube(mycube, 1200)
 
     """
-
     obj = RegularSurface()
 
     obj.from_cube(cube, value)
-
     return obj
 
 
@@ -155,7 +149,6 @@ def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=
 
     .. versionadded:: 2.1
     """
-
     obj = RegularSurface()
 
     obj.from_grid3d(grid, template=template, where=where, mode=mode, rfactor=rfactor)
@@ -191,7 +184,6 @@ class RegularSurface(object):
             'unkown' if constructed from scratch.
 
     Examples:
-
         The instance can be made either from file or by a spesification::
 
             >>> x1 = RegularSurface('somefilename')  # assume Irap binary
@@ -214,7 +206,7 @@ class RegularSurface(object):
 
     def __init__(self, *args, **kwargs):  # pylint: disable=too-many-statements
         """Initiate a RegularSurface instance."""
-
+        #
         logger.info("Start __init__ method for RegularSurface object %s", id(self))
 
         self._undef = xtgeo.UNDEF
@@ -236,6 +228,7 @@ class RegularSurface(object):
         self._values = None
         self._fformat = None  # current fileformat, useful for load()
         self._isloaded = True  # assume True unless explicitly set
+        self._metadata = xtgeo.MetaDataRegularSurface()
 
         if args:
             # make instance from file import
@@ -293,12 +286,13 @@ class RegularSurface(object):
                     self._values, mask=ma.getmaskarray(self._values)
                 )
 
+        self._metadata.required = self
         logger.info("Ran __init__ method for RegularSurface object %s", id(self))
 
     # ==================================================================================
 
     def __repr__(self):
-        # should be able to newobject = eval(repr(thisobject))
+        """Magic method __repr__."""
         myrp = (
             "{0.__class__.__name__} (xori={0._xori!r}, yori={0._yori!r}, "
             "xinc={0._xinc!r}, yinc={0._yinc!r}, ncol={0._ncol!r}, "
@@ -311,79 +305,86 @@ class RegularSurface(object):
         return myrp
 
     def __str__(self):
-        # user friendly print
+        """Magic method __str__ for user friendly print."""
         return self.describe(flush=False)
 
     def __getitem__(self, index):
+        """Magic method."""
         col, row = index
         return self._values[col, row]
 
     def __add__(self, other):
-
+        """Magic method."""
         news = self.copy()
         _regsurf_oper.operations_two(news, other, oper="add")
 
         return news
 
     def __iadd__(self, other):
-
+        """Magic method."""
         _regsurf_oper.operations_two(self, other, oper="iadd")
         return self
 
     def __sub__(self, other):
-
+        """Magic method."""
         news = self.copy()
         _regsurf_oper.operations_two(news, other, oper="sub")
 
         return news
 
     def __isub__(self, other):
-
+        """Magic method."""
         _regsurf_oper.operations_two(self, other, oper="isub")
         return self
 
     def __mul__(self, other):
-
+        """Magic method."""
         news = self.copy()
         _regsurf_oper.operations_two(news, other, oper="mul")
 
         return news
 
     def __imul__(self, other):
-
+        """Magic method."""
         _regsurf_oper.operations_two(self, other, oper="imul")
         return self
 
     def __truediv__(self, other):
-
+        """Magic method."""
         news = self.copy()
         _regsurf_oper.operations_two(news, other, oper="div")
 
         return news
 
     def __idiv__(self, other):
-
+        """Magic method."""
         _regsurf_oper.operations_two(self, other, oper="idiv")
         return self
 
     # comparison operators, return boolean arrays
 
     def __lt__(self, other):
+        """Magic method."""
         return _regsurf_oper.operations_two(self, other, oper="lt")
 
     def __gt__(self, other):
+        """Magic method."""
         return _regsurf_oper.operations_two(self, other, oper="gt")
 
     def __le__(self, other):
+        """Magic method."""
         return _regsurf_oper.operations_two(self, other, oper="le")
 
     def __ge__(self, other):
+        """Magic method."""
         return _regsurf_oper.operations_two(self, other, oper="ge")
 
     def __eq__(self, other):
+        """Magic method."""
         return _regsurf_oper.operations_two(self, other, oper="eq")
 
     def __ne__(self, other):
+        """Magic method."""
         return _regsurf_oper.operations_two(self, other, oper="ne")
 
     # ==================================================================================
@@ -424,7 +425,6 @@ class RegularSurface(object):
             # secure that the values are masked, in correct format and shape:
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
-
         warnings.warn(
             "This function 'ensure_correct_values' is obsolute and will removed soon",
             FutureWarning,
@@ -470,6 +470,20 @@ class RegularSurface(object):
     # ==================================================================================
 
     @property
+    def metadata(self):
+        """Return metadata object instance of type MetaDataRegularSurface."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, obj):
+        # The current metadata object can be replaced. A bit dangerous so further
+        # check must be done to validate. TODO.
+        if not isinstance(obj.xtgeo.MetaDataRegularSurface):
+            raise ValueError("Input obj not an instance of MetaDataRegularSurface")
+
+        self._metadata = obj  # checking is currently missing! TODO
+
+    @property
     def ncol(self):
         """The NCOL (NX or N-Idir) number, as property (read only)."""
         return self._ncol
@@ -481,7 +495,7 @@ class RegularSurface(object):
 
     @property
     def dimensions(self):
-        """2-tuple: The surface dimensions as a tuple of 2 integers (read only)"""
+        """2-tuple: The surface dimensions as a tuple of 2 integers (read only)."""
         return (self._ncol, self._nrow)
 
     @property
@@ -636,7 +650,6 @@ class RegularSurface(object):
             newvalues[2] = srf.undef
             srf.values = newvalues  # here, entry 2 will be undefined
         """
-
         return self._values
 
     @values.setter
@@ -646,8 +659,7 @@ class RegularSurface(object):
 
     @property
     def values1d(self):
-        """(Read only) Map values, as 1D numpy masked, normally a numpy
-        view(?).
+        """(Read only) Map values, as 1D numpy masked, normally a numpy view(?).
 
         Example::
 
@@ -673,7 +685,7 @@ class RegularSurface(object):
 
     @property
     def name(self):
-        """A free form name (str) e.g. for display, for the surface."""
+        """A free form name for the surface, to be used in display etc."""
         return self._name
 
     @name.setter
@@ -693,7 +705,7 @@ class RegularSurface(object):
 
     @property
     def filesrc(self):
-        """Gives the name of the file source (if any)"""
+        """Gives the name of the file source (if any)."""
         return self._filesrc
 
     @filesrc.setter
@@ -703,9 +715,38 @@ class RegularSurface(object):
     # ==================================================================================
     # Describe, import and export
     # ==================================================================================
-    def describe(self, flush=True):
-        """Describe an instance by printing to stdout"""
 
+    def generate_hash(self, hashmethod="md5"):
+        """Return a unique hash ID for current instance.
+
+        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+
+        .. versionadded:: 2.14
+        """
+        required = (
+            "ncol",
+            "nrow",
+            "xori",
+            "yori",
+            "xinc",
+            "yinc",
+            "yflip",
+            "rotation",
+            "values",
+        )
+        opt = np.get_printoptions()
+        np.set_printoptions(threshold=sys.maxsize)
+        gid = ""
+        for req in required:
+            gid += f"{getattr(self, '_' + req)}"
+
+        np.set_printoptions(**opt)
+        hash = xtgeosys.generic_hash(gid, hashmethod=hashmethod)
+        return hash
+
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout."""
+        #
         dsc = xtgeo.common.XTGDescription()
         dsc.title("Description of RegularSurface instance")
         dsc.txt("Object ID", id(self))
@@ -834,6 +875,10 @@ class RegularSurface(object):
             else:
                 _regsurf_import.import_ijxyz_ascii(self, mfile)
 
+        # experimental!
+        elif "xtg" in fformat:
+            _regsurf_import.import_xtgregsurf(self, mfile)
+
         else:
             raise ValueError("Invalid file format: {}".format(fformat))
 
@@ -867,7 +912,6 @@ class RegularSurface(object):
 
         .. versionadded:: 2.1
         """
-
         if not self._isloaded:
             self.from_file(self._filesrc, fformat=self._fformat)
             self._isloaded = True
@@ -886,15 +930,20 @@ class RegularSurface(object):
         original map in order to prevent aliasing. See :func:`unrotate`.
 
         Args:
-            mfile (str): Name of file, Path instance or IOBytestream instance
+            mfile (Union[str, pathlib.Path, io.Bytestream]): Name of file,
+                Path instance or IOBytestream instance. An alias can be e.g.
+                "%md5sum%" or "%fmu-v1%" with string or Path() input.
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz/petromod. Default is irap_binary.
             pmd_dataunits (tuple of int): A tuple of length 2 for petromod format,
-                spesifying metadata for units (DataUnitDistance, DataUnitZ)
+                spesifying metadata for units (DataUnitDistance, DataUnitZ).
             engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
                 python "python" reader will be used, which in general is slower
                 but may be safer when reading memory streams and/or threading. Engine
                 is relevant for Irap binary, Irap ascii and zmap.
+
+        Returns:
+            ofile (pathlib.Path): The actual file instance, or None if io.Bytestream
 
         Examples::
 
@@ -913,10 +962,11 @@ class RegularSurface(object):
 
         .. versionchanged:: 2.5 Added support for BytesIO
         .. versionchanged:: 2.13 Improved support for BytesIO
+        .. versionchanged:: 2.14 Support for alias file name and return value
         """
-
         logger.info("Export RegularSurface to file or memstream...")
-        mfile = xtgeosys._XTGeoFile(mfile, mode="wb")
+        mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
+        print(mfile.file)
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)
@@ -941,10 +991,18 @@ class RegularSurface(object):
         elif fformat == "ijxyz":
             _regsurf_export.export_ijxyz_ascii(self, mfile)
 
+        # developing, in prep and experimental!
+        elif fformat == "xtgregsurf":
+            _regsurf_export.export_xtgregsurf(self, mfile)
+
         else:
             logger.critical("Invalid file format")
 
         logger.info("Export RegularSurface to file or memstream... done")
+
+        if mfile.memstream:
+            return None
+        return mfile.file
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0
@@ -992,7 +1050,6 @@ class RegularSurface(object):
         .. versionadded:: 2.1 clipboard support
 
         """
-
         stype = stype.lower()
         valid_stypes = ["horizons", "zones", "clipboard"]
 
@@ -1004,6 +1061,8 @@ class RegularSurface(object):
         _regsurf_roxapi.import_horizon_roxapi(
             self, project, name, category, stype, realisation
         )
+
+        self.metadata.required = self
 
     def to_roxar(
         self, project, name, category, stype="horizons", realisation=0
@@ -1051,7 +1110,6 @@ class RegularSurface(object):
         .. versionadded:: 2.1 clipboard support
 
         """
-
         stype = stype.lower()
         valid_stypes = ["horizons", "zones", "clipboard"]
 
@@ -1086,7 +1144,6 @@ class RegularSurface(object):
             >>> mymap.from_cube(mycube, 2700)
 
         """
-
         props = [
             "_ncol",
             "_nrow",
@@ -1108,6 +1165,7 @@ class RegularSurface(object):
         )
 
         self._filesrc = None
+        self._metadata.required = self
 
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
@@ -1141,15 +1199,16 @@ class RegularSurface(object):
         .. versionadded:: 2.1
 
         """
-
         return _regsurf_grid3d.from_grid3d(
             self, grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
 
     def copy(self):
-        """Copy a xtgeo.surface.RegularSurface object to another instance::
+        """Deep copy of a RegularSurface object to another instance.
 
-        >>> mymapcopy = mymap.copy()
+        Example::
+
+            >>> mymapcopy = mymap.copy()
 
         """
         # pylint: disable=protected-access
@@ -1170,6 +1229,7 @@ class RegularSurface(object):
         xsurf.ilines = self._ilines.copy()
         xsurf.xlines = self._xlines.copy()
         xsurf.filesrc = self._filesrc
+        xsurf.metadata.required = xsurf
 
         return xsurf
 
@@ -1191,7 +1251,6 @@ class RegularSurface(object):
             A numpy 1D array or MaskedArray
 
         """
-
         val = self.values.copy()
 
         if order == "F":
@@ -1216,9 +1275,9 @@ class RegularSurface(object):
         masked.
 
         Args:
+            val (list-like): Set values as a 1D array
             order (str): Input is C (default) or F order
         """
-
         if order == "F":
             val = np.copy(val, order="C")
 
@@ -1243,7 +1302,6 @@ class RegularSurface(object):
         property 'values', or alternatively get_values1d()
         instead (with order='F').
         """
-
         xtg.warndeprecated(
             "The get_zval() method is deprecated, use values.ravel() "
             "or get_values1d() instead"
@@ -1273,27 +1331,27 @@ class RegularSurface(object):
         return self._rotation
 
     def get_nx(self):
-        """ Same as ncol (nx) (for backward compatibility) """
+        """Same as ncol (nx) (for backward compatibility)."""
         return self._ncol
 
     def get_ny(self):
-        """ Same as nrow (ny) (for backward compatibility) """
+        """Same as nrow (ny) (for backward compatibility)."""
         return self._nrow
 
     def get_xori(self):
-        """ Same as xori (for backward compatibility) """
+        """Same as property xori (for backward compatibility)."""
         return self._xori
 
     def get_yori(self):
-        """ Same as yori (for backward compatibility) """
+        """Same as property yori (for backward compatibility)."""
         return self._yori
 
     def get_xinc(self):
-        """ Same as xinc (for backward compatibility) """
+        """Same as property xinc (for backward compatibility)."""
         return self._xinc
 
     def get_yinc(self):
-        """ Same as yinc (for backward compatibility) """
+        """Same as property yinc (for backward compatibility)."""
         return self._yinc
 
     def similarity_index(self, other):
@@ -1332,7 +1390,6 @@ class RegularSurface(object):
         Returns:
             True of same topology, False if not
         """
-
         tstatus = True
 
         # consider refactor to getattr() instead!
@@ -1364,7 +1421,6 @@ class RegularSurface(object):
 
     def swapaxes(self):
         """Swap (flip) the axes columns vs rows, keep origin but reverse yflip."""
-
         _regsurf_utils.swapaxes(self)
 
     def get_map_xycorners(self):
@@ -1375,7 +1431,6 @@ class RegularSurface(object):
         (if unrotated and normal flip) 0 is the lower left
         corner, 1 is the right, 2 is the upper left, 3 is the upper right.
         """
-
         rot1 = self._rotation * math.pi / 180
         rot2 = rot1 + (math.pi / 2.0)
 
@@ -1422,7 +1477,6 @@ class RegularSurface(object):
         Returns:
             The x, y, z values at location iloc, jloc
         """
-
         xval, yval, value = _regsurf_oper.get_xy_value_from_ij(
             self, iloc, jloc, zvalues=zvalues
         )
@@ -1433,24 +1487,22 @@ class RegularSurface(object):
         """Return I J numpy 2D arrays, optionally as masked arrays.
 
         Args:
-            zero_base (bool): If False, first number is 1, not 0
+            zero_based (bool): If False, first number is 1, not 0
             asmasked (bool): If True, UNDEF map nodes are skipped
             order (str): 'C' (default) or 'F' order (row vs column major)
         """
-
         return _regsurf_oper.get_ij_values(
             self, zero_based=zero_based, asmasked=asmasked, order=order
         )
 
     def get_ij_values1d(self, zero_based=False, activeonly=True, order="C"):
-        """Return I J numpy as 1D arrays
+        """Return I J numpy as 1D arrays.
 
         Args:
-            zero_base (bool): If False, first number is 1, not 0
+            zero_based (bool): If False, first number is 1, not 0
             activeonly (bool): If True, UNDEF map nodes are skipped
             order (str): 'C' (default) or 'F' order (row vs column major)
         """
-
         return _regsurf_oper.get_ij_values1d(
             self, zero_based=zero_based, activeonly=activeonly, order=order
         )
@@ -1462,7 +1514,6 @@ class RegularSurface(object):
             order (str): 'C' (default) or 'F' order (row major vs column major)
             asmasked (bool): If True , inactive nodes are masked.
         """
-
         xvals, yvals = _regsurf_oper.get_xy_values(self, order=order, asmasked=asmasked)
 
         return xvals, yvals
@@ -1474,7 +1525,6 @@ class RegularSurface(object):
             order (str): 'C' (default) or 'F' order (row major vs column major)
             activeonly (bool): Only active cells are returned.
         """
-
         xvals, yvals = _regsurf_oper.get_xy_values1d(
             self, order=order, activeonly=activeonly
         )
@@ -1482,11 +1532,7 @@ class RegularSurface(object):
         return xvals, yvals
 
     def get_xyz_values(self):
-        """Return coordinates for X Y and Z (values) as numpy (masked)
-        2D arrays.
-
-        """
-
+        """Return coordinates for X Y and Z (values) as numpy (masked) 2D arrays."""
         xcoord, ycoord = self.get_xy_values(asmasked=True)
 
         values = self.values.copy()
@@ -1501,7 +1547,6 @@ class RegularSurface(object):
             activeonly (bool): Only active cells are returned.
             fill_value (float): If activeonly is False, value of inactive nodes
         """
-
         xcoord, ycoord = self.get_xy_values1d(order=order, activeonly=activeonly)
 
         values = self.get_values1d(
@@ -1513,8 +1558,7 @@ class RegularSurface(object):
     def get_dataframe(
         self, ijcolumns=False, ij=False, order="C", activeonly=True, fill_value=np.nan
     ):
-        """Return a Pandas dataframe object, with columns X_UTME,
-        Y_UTMN, VALUES.
+        """Return a Pandas dataframe object, with columns X_UTME, Y_UTMN, VALUES.
 
         Args:
             ijcolumns (bool): If True, and IX and JY indices will be
@@ -1587,7 +1631,6 @@ class RegularSurface(object):
             >>> mymap = RegularSurface('somefile.gri')
             >>> xylist, valuelist = mymap.get_xy_value_lists(valuefmt='6.2f')
         """
-
         xylist = []
         valuelist = []
 
@@ -1629,7 +1672,6 @@ class RegularSurface(object):
 
         .. versionadded:: 2.12
         """
-
         _regsurf_utils.autocrop(self)
 
     def fill(self, fill_value=None):
@@ -1650,7 +1692,6 @@ class RegularSurface(object):
         .. versionadded:: 2.1
         .. versionchanged:: 2.6 Added option key `fill_value`
         """
-
         _regsurf_gridding.surf_fill(self, fill_value=fill_value)
 
     def smooth(self, method="median", iterations=1, width=1):
@@ -1663,7 +1704,6 @@ class RegularSurface(object):
 
         .. versionadded:: 2.1
         """
-
         if method == "median":
             _regsurf_gridding.smooth_median(self, iterations=iterations, width=width)
         else:
@@ -1684,14 +1724,13 @@ class RegularSurface(object):
 
         Args:
             opname (str): Name of operation. See list above.
-            values (*): A scalar number (float) or a tuple of two floats,
+            value (*): A scalar number (float) or a tuple of two floats,
                 dependent on operation opname.
 
         Examples::
 
             surf.operation('elilt', 200)  # set all values < 200 as undef
         """
-
         if opname in ("elilt", "eliminatelessthan"):
             self._values = ma.masked_less(self._values, value)
         elif opname in ("elile", "eliminatelessequal"):
@@ -1704,8 +1743,7 @@ class RegularSurface(object):
     # ==================================================================================
 
     def operation_polygons(self, poly, value, opname="add", inside=True):
-        """A generic function for doing map operations restricted to inside
-        or outside polygon(s).
+        """A generic function for map operations inside or outside polygon(s).
 
         Args:
             poly (Polygons): A XTGeo Polygons instance
@@ -1713,58 +1751,57 @@ class RegularSurface(object):
             opname (str): Name of operation... 'add', 'sub', etc
             inside (bool): If True do operation inside polygons; else outside.
         """
-
         _regsurf_oper.operation_polygons(
             self, poly, value, opname=opname, inside=inside
         )
 
     # shortforms
     def add_inside(self, poly, value):
-        """Add a value (scalar or other map) inside polygons"""
+        """Add a value (scalar or other map) inside polygons."""
         self.operation_polygons(poly, value, opname="add", inside=True)
 
     def add_outside(self, poly, value):
-        """Add a value (scalar or other map) outside polygons"""
+        """Add a value (scalar or other map) outside polygons."""
         self.operation_polygons(poly, value, opname="add", inside=False)
 
     def sub_inside(self, poly, value):
-        """Subtract a value (scalar or other map) inside polygons"""
+        """Subtract a value (scalar or other map) inside polygons."""
         self.operation_polygons(poly, value, opname="sub", inside=True)
 
     def sub_outside(self, poly, value):
-        """Subtract a value (scalar or other map) outside polygons"""
+        """Subtract a value (scalar or other map) outside polygons."""
         self.operation_polygons(poly, value, opname="sub", inside=False)
 
     def mul_inside(self, poly, value):
-        """Multiply a value (scalar or other map) inside polygons"""
+        """Multiply a value (scalar or other map) inside polygons."""
         self.operation_polygons(poly, value, opname="mul", inside=True)
 
     def mul_outside(self, poly, value):
-        """Multiply a value (scalar or other map) outside polygons"""
+        """Multiply a value (scalar or other map) outside polygons."""
         self.operation_polygons(poly, value, opname="mul", inside=False)
 
     def div_inside(self, poly, value):
-        """Divide a value (scalar or other map) inside polygons"""
+        """Divide a value (scalar or other map) inside polygons."""
         self.operation_polygons(poly, value, opname="div", inside=True)
 
     def div_outside(self, poly, value):
-        """Divide a value (scalar or other map) outside polygons"""
+        """Divide a value (scalar or other map) outside polygons."""
         self.operation_polygons(poly, value, opname="div", inside=False)
 
     def set_inside(self, poly, value):
-        """Set a value (scalar or other map) inside polygons"""
+        """Set a value (scalar or other map) inside polygons."""
         self.operation_polygons(poly, value, opname="set", inside=True)
 
     def set_outside(self, poly, value):
-        """Set a value (scalar or other map) outside polygons"""
+        """Set a value (scalar or other map) outside polygons."""
         self.operation_polygons(poly, value, opname="set", inside=False)
 
     def eli_inside(self, poly):
-        """Eliminate current map values inside polygons"""
+        """Eliminate current map values inside polygons."""
         self.operation_polygons(poly, 0, opname="eli", inside=True)
 
     def eli_outside(self, poly):
-        """Eliminate current map values outside polygons"""
+        """Eliminate current map values outside polygons."""
         self.operation_polygons(poly, 0, opname="eli", inside=False)
 
     # ==================================================================================
@@ -1772,23 +1809,19 @@ class RegularSurface(object):
     # ==================================================================================
 
     def add(self, other):
-        """Add another map to current map"""
-
+        """Add another map to current map."""
         _regsurf_oper.operations_two(self, other, oper="add")
 
     def subtract(self, other):
-        """Subtract another map from current map"""
-
+        """Subtract another map from current map."""
         _regsurf_oper.operations_two(self, other, oper="sub")
 
     def multiply(self, other):
-        """Multiply another map and current map"""
-
+        """Multiply another map and current map."""
         _regsurf_oper.operations_two(self, other, oper="mul")
 
     def divide(self, other):
-        """Divide current map with another map"""
-
+        """Divide current map with another map."""
         _regsurf_oper.operations_two(self, other, oper="div")
 
     # ==================================================================================
@@ -1817,7 +1850,6 @@ class RegularSurface(object):
             ValueError: If invalid input
 
         """
-
         if not isinstance(points, xtgeo.xyz.Points):
             raise ValueError("Argument not a Points instance")
 
@@ -1862,7 +1894,6 @@ class RegularSurface(object):
            Added ``mask`` keyword, default is True for backward compatibility.
 
         """
-
         if not isinstance(other, RegularSurface):
             raise ValueError("Argument not a RegularSurface " "instance")
 
@@ -1875,8 +1906,7 @@ class RegularSurface(object):
     # ==================================================================================
 
     def unrotate(self, factor=2):
-        """Unrotete a map instance, and this will also change nrow, ncol,
-        xinc, etc.
+        r"""Unrotete a map instance, and this will also change nrow, ncol, xinc, etc.
 
         The default sampling (factor=2) makes a finer grid in order to
         avoid artifacts, and this default can be used in most cases.
@@ -1940,7 +1970,7 @@ class RegularSurface(object):
         self._xlines = nonrot.xlines
 
     def refine(self, factor):
-        """Refine a surface with a factor, e.g. 2 for double.
+        """Refine a surface with a factor.
 
         Range for factor is 2 to 10.
 
@@ -1951,7 +1981,6 @@ class RegularSurface(object):
         Args:
             factor (int): Refinement factor
         """
-
         logger.info("Do refining...")
 
         if not isinstance(factor, int):
@@ -1980,10 +2009,10 @@ class RegularSurface(object):
         logger.info("Do refining... done")
 
     def coarsen(self, factor):
-        """Coarsen a surface with a factor, e.g. 2 meaning half the number of
-        columns and rows.
+        """Coarsen a surface with a factor.
 
-        Range for coarsening is 2 to 10.
+        Range for coarsening is 2 to 10, where e.g. 2 meaning half the number of
+        columns and rows.
 
         Note that there may be some 'loss' of nodes at the edges of the
         updated map, as only the 'inside' nodes in the updated map
@@ -1995,7 +2024,6 @@ class RegularSurface(object):
         Raises:
             ValueError: Coarsen is too large, giving too few nodes in result
         """
-
         logger.info("Do coarsening...")
         if not isinstance(factor, int):
             raise ValueError("Argument not a, Integer")
@@ -2036,8 +2064,7 @@ class RegularSurface(object):
     # ==================================================================================
 
     def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
-        """Slice the grid property and update the instance surface to sampled
-        values.
+        """Slice the grid property and update the instance surface to sampled values.
 
         Args:
             grid (Grid): Instance of a Grid.
@@ -2085,8 +2112,7 @@ class RegularSurface(object):
         deadtraces=True,
         algorithm=2,
     ):
-        """Slice the cube and update the instance surface to sampled cube
-        values.
+        """Slice the cube and update the instance surface to sampled cube values.
 
         Args:
             cube (object): Instance of a Cube()
@@ -2121,7 +2147,6 @@ class RegularSurface(object):
 
         .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is 2
         """
-
         ier = _regsurf_cube.slice_cube(
             self,
             cube,
@@ -2158,8 +2183,7 @@ class RegularSurface(object):
         deadtraces=True,
         algorithm=2,
     ):
-        """Slice the cube within a vertical window and get the statistical
-        attrubutes.
+        """Slice the cube within a vertical window and get the statistical attrubutes.
 
         The statistical attributes can be min, max etc. Attributes are:
 
@@ -2258,7 +2282,6 @@ class RegularSurface(object):
         .. versionchanged:: 2.9 Added ``algorithm`` keyword, default is now 2,
                             while 1 is the legacy version
         """
-
         if other is None and zrange is None:
             zrange = 10
 
@@ -2287,26 +2310,25 @@ class RegularSurface(object):
     # ==================================================================================
 
     def get_fence(self, xyfence):
-        """
-        Sample the surface along X and Y positions (numpy arrays) and get Z.
+        """Sample the surface along X and Y positions (numpy arrays) and get Z.
 
-        Note the result is a masked numpy (2D) with rows masked
+        Note the result is a masked numpy (2D) with rows masked.
 
         Args:
             xyfence (np): A 2D numpy array with shape (N, 3) where columns
-            are (X, Y, Z). The Z will be updated to the map.
+                are (X, Y, Z). The Z will be updated to the map.
 
         Returns:
             ndarray: A numpy 2D array similar as input, but with updated
         """
-
         xyfence = _regsurf_oper.get_fence(self, xyfence)
 
         return xyfence
 
     def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
-        """Extract a line along a fencespec, where horizontal axis is "length"
-        and vertical axis is sampled depth.
+        """Extract a line along a fencespec.
+
+        Here, horizontal axis is "length" and vertical axis is sampled depth.
 
         This is used for fence plots.
 
@@ -2354,7 +2376,6 @@ class RegularSurface(object):
               The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
               used to pregenerate `fencespec`
         """
-
         xyfence = _regsurf_oper.get_randomline(
             self, fencespec, hincrement=hincrement, atleast=atleast, nextend=nextend
         )
@@ -2402,10 +2423,10 @@ class RegularSurface(object):
                 speed up process, but less precise result. Default=1
             mask_outside (bool): Will mask the result map undef where sum of DZ
                 is zero. Default is False as it costs some extra CPU.
+
         Returns:
             True if operation went OK (but check result!), False if not
         """
-
         for inum, myprop in enumerate([xprop, yprop, hcpfzprop, zoneprop]):
             if isinstance(myprop, ma.MaskedArray):
                 raise ValueError(
@@ -2444,9 +2465,7 @@ class RegularSurface(object):
         coarsen=1,
         zone_avg=False,
     ):
-        """
-        Make an average map (DZ weighted) based on numpy arrays of
-        properties from a 3D grid.
+        """Average map (DZ weighted) based on numpy arrays of properties from a 3D grid.
 
         The 3D arrays mush be ordinary numpies of size (nx,ny,nz). Undef
         entries must be given weights 0 by using DZ=0
@@ -2466,7 +2485,6 @@ class RegularSurface(object):
         Returns:
             Nothing explicit, but updates the surface object.
         """
-
         for inum, myprop in enumerate([xprop, yprop, mprop, dzprop, zoneprop]):
             if isinstance(myprop, ma.MaskedArray):
                 raise ValueError(
@@ -2523,7 +2541,6 @@ class RegularSurface(object):
                 will be used.
 
         """
-
         # This is using the more versatile Map class in XTGeo. Most kwargs
         # is just passed as is. Prefer using Map() directly in apps?
 
@@ -2564,15 +2581,13 @@ class RegularSurface(object):
             mymap.savefig(filename)
 
     def distance_from_point(self, point=(0, 0), azimuth=0.0):
-        """Make map values as horizontal distance from a point with azimuth
-        direction.
+        """Make map values as horizontal distance from a point with azimuth direction.
 
         Args:
             point (tuple): Point to measure from
             azimuth (float): Angle from North (clockwise) in degrees
 
         """
-
         _regsurf_oper.distance_from_point(self, point=point, azimuth=azimuth)
 
     def translate_coordinates(self, translate=(0, 0, 0)):
@@ -2589,7 +2604,6 @@ class RegularSurface(object):
             map.to_file('some_file')
 
         """
-
         xshift, yshift, zshift = translate
 
         # just shift the xori and yori

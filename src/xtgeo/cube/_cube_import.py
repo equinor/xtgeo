@@ -1,9 +1,14 @@
 """Import Cube data via SegyIO library or XTGeo CLIB."""
+from struct import unpack
+import json
+
 import numpy as np
 
 import segyio
+import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.calc as xcalc
+import xtgeo.common.sys as xsys
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -331,7 +336,6 @@ def import_rmsregular(self, sfile):
 
 def import_stormcube(self, sfile):
     """Import on StormCube format."""
-
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------
     # storm_petro_binary       // always
@@ -423,3 +427,51 @@ def import_stormcube(self, sfile):
     self._values = values.reshape((ncol, nrow, nlay))
     self._yflip = yflip
     self._traceidcodes = np.ones((ncol, nrow), dtype=np.int32)
+
+
+def import_xtgregcube(self, mfile, values=True):
+    """Using pure python for experimental cube import, xtgregsurf format."""
+    logger.info("Importing cube on xtgregcube format...")
+
+    offset = 36
+    with open(mfile.file, "rb") as fhandle:
+        buf = fhandle.read(offset)
+
+    # unpack header
+    swap, magic, nfloat, ncol, nrow, nlay = unpack("= i i i q q q", buf)
+
+    if swap != 1 or magic != 1201:
+        raise ValueError("Invalid file format (wrong swap id or magic number).")
+
+    dtype = np.float32 if nfloat == 4 else np.float64
+
+    vals = None
+    narr = ncol * nrow * nlay
+
+    if values:
+        vals = xsys.npfromfile(mfile.file, dtype=dtype, count=narr, offset=offset)
+
+    # read metadata which will be at position offet + nfloat*narr +13
+    pos = offset + nfloat * narr + 13
+
+    with open(mfile.file, "rb") as fhandle:
+        fhandle.seek(pos)
+        jmeta = fhandle.read().decode()
+
+    meta = json.loads(jmeta)
+    req = meta["_required_"]
+
+    reqattrs = xtgeo.MetaDataRegularCube.REQUIRED
+
+    for myattr in reqattrs:
+        setattr(self, "_" + myattr, req[myattr])
+
+    # TODO: dead traces and traceidcodes
+    if values:
+        self.values = vals.reshape(self.ncol, self.nrow, self.nlay)
+
+    else:
+        self._values = None
+
+    self._metadata.required = self
+    logger.info("Importing cube on xtgregcube format... done.")

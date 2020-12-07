@@ -39,6 +39,7 @@ logger = xtg.functionlogger(__name__)
 # _xlines       : 1D numpy array with nrow elements, aka XLINES array
 # _traceidcodes : 2D array with trace ID codes
 # _segyfile     : Name of SEGY file (not sure what the point of this is, TODO check)
+# _undef        : Undef value, defaulted to xtgeo.UNDEF
 #
 # See also Cube section in documentation: docs/datamodel.rst
 # ======================================================================================
@@ -56,7 +57,6 @@ def cube_from_file(mfile, fformat="guess"):
         import xtgeo
         mycube = xtgeo.cube_from_file('some_cube.segy')
     """
-
     obj = Cube()
 
     obj.from_file(mfile, fformat=fformat)
@@ -75,7 +75,6 @@ def cube_from_roxar(project, name, folder=None):
         mycube = xtgeo.cube_from_roxar(project, "DepthCube")
 
     """
-
     obj = Cube()
 
     obj.from_roxar(project, name, folder=folder)
@@ -124,7 +123,6 @@ class Cube:  # pylint: disable=too-many-public-methods
         **kwargs,
     ):
         """Initiate a Cube instance."""
-
         self._filesrc = None
         self._xori = xori
         self._yori = yori
@@ -136,18 +134,23 @@ class Cube:  # pylint: disable=too-many-public-methods
         self._yinc = yinc
         self._zinc = zinc
         self._yflip = yflip
+        self._zflip = 1  # currently not in use
         self._rotation = rotation
         self.values = values  # "values" is intentional over "_values"; cf. values()
         self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
         self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
         self._traceidcodes = np.ones((self._ncol, self._nrow), dtype=np.int32)
         self._segyfile = None
+        self._metadata = xtgeo.MetaDataRegularCube()
+        self._undef = xtgeo.UNDEF
+        self.undef = xtgeo.UNDEF
 
         if len(args) >= 1:
             fformat = kwargs.get("fformat", "guess")
             self.from_file(args[0], fformat=fformat)
 
     def __repr__(self):
+        """The __repr__ method."""
         avg = self.values.mean()
         dsc = (
             "{0.__class__} (ncol={0.ncol!r}, "
@@ -158,12 +161,22 @@ class Cube:  # pylint: disable=too-many-public-methods
         return dsc
 
     def __str__(self):
+        """The __str__ method for pretty print."""
         return self.describe(flush=False)
 
-    # ==================================================================================
-    # Get and Set properties (tend to pythonic properties rather than
-    # javaic get & set syntax)
-    # ==================================================================================
+    @property
+    def metadata(self):
+        """Return metadata object instance of type MetaDataRegularSurface."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, obj):
+        # The current metadata object can be replaced. This is a bit dangerous so
+        # further check must be done to validate. TODO.
+        if not isinstance(obj.xtgeo.MetaDataRegularCube):
+            raise ValueError("Input obj not an instance of MetaDataRegularCube")
+
+        self._metadata = obj  # checking is currently missing! TODO
 
     @property
     def ncol(self):
@@ -182,7 +195,7 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @property
     def dimensions(self):
-        """3-tuple: The cube dimensions as a tuple of 3 integers (read only)"""
+        """3-tuple: The cube dimensions as a tuple of 3 integers (read only)."""
         return (self._ncol, self._nrow, self._nlay)
 
     @property
@@ -192,7 +205,7 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @xori.setter
     def xori(self, val):
-        logger.warning("Changing xori is risky")
+        logger.warning("Changing xori is risky!")
         self._xori = val
 
     @property
@@ -202,7 +215,7 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @yori.setter
     def yori(self, val):
-        logger.warning("Changing yori is risky")
+        logger.warning("Changing yori is risky!")
         self._yori = val
 
     @property
@@ -212,7 +225,7 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @zori.setter
     def zori(self, val):
-        logger.warning("Changing zori is risky")
+        logger.warning("Changing zori is risky!")
         self._zori = val
 
     @property
@@ -222,7 +235,7 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @xinc.setter
     def xinc(self, val):
-        logger.warning("Changing xinc is risky")
+        logger.warning("Changing xinc is risky!")
         self._xinc = val
 
     @property
@@ -232,27 +245,27 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @yinc.setter
     def yinc(self, val):
-        logger.warning("Changing yinc is risky")
+        logger.warning("Changing yinc is risky!")
         self._yinc = val
 
     @property
     def zinc(self):
-        """ The ZINC (increment Z)."""
+        """The ZINC (increment Z)."""
         return self._zinc
 
     @zinc.setter
     def zinc(self, val):
-        logger.warning("Changing zinc is risky")
+        logger.warning("Changing zinc is risky!")
         self._zinc = val
 
     @property
     def rotation(self):
-        """The rotation (columns vector, anticlock from X axis in degrees)."""
+        """The rotation, anticlock from X axis in degrees."""
         return self._rotation
 
     @rotation.setter
     def rotation(self, val):
-        logger.warning("Changing rotation is risky")
+        logger.warning("Changing rotation is risky!")
         self._rotation = val
 
     @property
@@ -303,6 +316,16 @@ class Cube:  # pylint: disable=too-many-public-methods
         return self._yflip
 
     @property
+    def zflip(self):
+        """The ZFLIP indicator, 1 is normal, -1 means Z flipped.
+
+        ZFLIP = 1 and YFLIP = 1 means a LEFT HANDED coordinate system with Z axis
+        positive down, while inline (col) follow East (X) and xline (rows)
+        follows North (Y), when rotation is zero.
+        """
+        return self._zflip
+
+    @property
     def segyfile(self):
         """The input segy file name (str), if any (or None) (read-only)."""
         return self._segyfile
@@ -328,9 +351,45 @@ class Cube:  # pylint: disable=too-many-public-methods
     # =========================================================================
     # Describe
     # =========================================================================
-    def describe(self, flush=True):
-        """Describe an instance by printing to stdout or return"""
 
+    def generate_hash(self, hashmethod="md5"):
+        """Return a unique hash ID for current instance.
+
+        See :meth:`~xtgeo.common.sys.generic_hash()` for documentation.
+
+        .. versionadded:: 2.14
+        """
+        required = (
+            "ncol",
+            "nrow",
+            "nlay",
+            "xori",
+            "yori",
+            "zori",
+            "xinc",
+            "yinc",
+            "zinc",
+            "yflip",
+            "zflip",
+            "rotation",
+            "values",
+            "ilines",
+            "xlines",
+            "traceidcodes",
+        )
+
+        gid = ""
+        for req in required:
+            gid += f"{getattr(self, '_' + req)}"
+
+        return xtgeosys.generic_hash(gid, hashmethod=hashmethod)
+
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout or return.
+
+        Args:
+            flush (bool): If True, description is printed to stdout.
+        """
         dsc = XTGDescription()
         dsc.title("Description of Cube instance")
         dsc.txt("Object ID", id(self))
@@ -363,12 +422,12 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         return dsc.astext()
 
-    # =========================================================================
+    # ==================================================================================
     # Copy, swapping, cropping, thinning...
-    # =========================================================================
+    # ==================================================================================
 
     def copy(self):
-        """Copy a xtgeo.cube.Cube object to another instance::
+        """Deep copy of a Cube() object to another instance.
 
         >>> mycube2 = mycube.copy()
 
@@ -394,12 +453,12 @@ class Cube:  # pylint: disable=too-many-public-methods
         xcube.ilines = self._ilines.copy()
         xcube.xlines = self._xlines.copy()
         xcube.traceidcodes = self._traceidcodes.copy()
+        xcube.metadata.required = xcube
 
         return xcube
 
     def swapaxes(self, _algorithm=1):
         """Swap the axes inline vs xline, keep origin."""
-
         _cube_utils.swapaxes(self, _algorithm=_algorithm)
 
     def resample(self, incube, sampling="nearest", outside_value=None):
@@ -425,7 +484,6 @@ class Cube:  # pylint: disable=too-many-public-methods
             >>> mycube2.resample(mycube1)
 
         """
-
         _cube_utils.resample(
             self, incube, sampling=sampling, outside_value=outside_value
         )
@@ -486,7 +544,6 @@ class Cube:  # pylint: disable=too-many-public-methods
             >>> mycube2.do_cropping((112, 327), (1120, 1140), (1500, 2000))
 
         """
-
         useicols = icols
         usejrows = jrows
         useklays = klays
@@ -511,33 +568,28 @@ class Cube:  # pylint: disable=too-many-public-methods
         _cube_utils.cropping(self, useicols, usejrows, useklays)
 
     def values_dead_traces(self, newvalue):
-        """Set values for traces flagged as dead, i.e. have traceidcodes 2,
-        and return the (average of) old values.
+        """Set values for traces flagged as dead.
+
+        Dead traces have traceidcodes 2 and corresponding values in the cube
+        will here receive a constant value to mimic "undefined".
 
         Args:
-            newvalue (float):
-        Return:
-            oldvalue (float): The estimated simple average of old value will
-                be returned. If no dead traces, then None will be returned.
-        """
+            newvalue (float): Set cube values to newvalues where traceid is 2.
 
-        try:
-            logger.info(self._values.shape)
-            logger.info("%s %s", self._traceidcodes.shape, self._traceidcodes.dtype)
+        Return:
+            oldvalue (float): The estimated simple 'average' of old value will
+                be returned as (max + min)/2. If no dead traces, return None.
+        """
+        logger.info("Set values for dead traces, if any")
+
+        if 2 in self._traceidcodes:
             minval = self._values[self._traceidcodes == 2].min()
             maxval = self._values[self._traceidcodes == 2].max()
-            logger.info("MIN MAX %s %s", minval, maxval)
-            avgold = 0.5 * (minval + maxval)
+            # a bit weird calculation of mean but kept for backward compatibility
             self._values[self._traceidcodes == 2] = newvalue
-            # self._values = np.where(
-            #     self._traceidcodes == 2, newvalue, self._values
-            # )
-            logger.info("Setting dead traces done")
-        except ValueError:
-            avgold = None
-            logger.info("No dead traces")
+            return 0.5 * (minval + maxval)
 
-        return avgold
+        return None
 
     def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
         """Returns x, y from a single i j location.
@@ -548,14 +600,13 @@ class Cube:  # pylint: disable=too-many-public-methods
             ixline (bool): If True, then input locations are inline and xline position
             zerobased (bool): If True, first index is 0, else it is 1. This does not
                 apply when ixline is set to True.
+
         Returns:
             The z value at location iloc, jloc, None if undefined cell.
         """
-
         xval, yval = _cube_utils.get_xy_value_from_ij(
             self, iloc, jloc, ixline=ixline, zerobased=zerobased
         )
-
         return xval, yval
 
     # =========================================================================
@@ -649,13 +700,13 @@ class Cube:  # pylint: disable=too-many-public-methods
         on file extension (e.g. segy og sgy for SEGY format)
 
         Args:
-            sfile (str): Filename (as string or pathlib.Path)
-            fformat (str): file format guess/segy/rms_regular
-                where 'guess' is default
+            sfile (str): Filename (as string or pathlib.Path instance).
+            fformat (str): file format guess/segy/rms_regular/xtgregcube
+                where 'guess' is default. Regard 'xtgrecube' format as experimental.
             engine (str): For the SEGY reader, 'xtgeo' is builtin
-                while 'segyio' uses the SEGYIO library (default)
+                while 'segyio' uses the SEGYIO library (default).
             deadtraces (float): Set 'dead' trace values to this value (SEGY
-                only). Default is UNDEF value (a very large number)
+                only). Default is UNDEF value (a very large number).
 
         Raises:
             OSError: if the file cannot be read (e.g. not found)
@@ -671,7 +722,7 @@ class Cube:  # pylint: disable=too-many-public-methods
         fobj = xtgeosys._XTGeoFile(sfile)
         fobj.check_file(raiseerror=OSError)
 
-        _froot, fext = fobj.splitext(lower=True)
+        _, fext = fobj.splitext(lower=True)
 
         if fformat == "guess":
             if not fext:
@@ -685,10 +736,14 @@ class Cube:  # pylint: disable=too-many-public-methods
             _cube_import.import_segy(self, fobj.name, engine=engine)
         elif fformat == "storm":
             _cube_import.import_stormcube(self, fobj.name)
+        elif fformat == "xtgregcube":
+            # experimental format
+            _cube_import.import_xtgregcube(self, fobj)
         else:
             raise ValueError(f"File format fformat={fformat} is not supported")
 
         self._filesrc = fobj.name
+        self._metadata.required = self
 
     def to_file(self, sfile, fformat="segy", pristine=False, engine="xtgeo"):
         """Export cube data to file.
@@ -712,6 +767,8 @@ class Cube:  # pylint: disable=too-many-public-methods
             _cube_export.export_segy(self, fobj.name, pristine=pristine, engine=engine)
         elif fformat == "rms_regular":
             _cube_export.export_rmsreg(self, fobj.name)
+        elif fformat == "xtgregcube":
+            _cube_export.export_xtgregcube(self, fobj.name)
         else:
             raise ValueError(f"File format fformat={fformat} is not supported")
 
@@ -735,6 +792,8 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         """
         _cube_roxapi.import_cube_roxapi(self, project, name, folder=folder)
+
+        self._metadata.required = self
 
     def to_roxar(
         self, project, name, folder=None, domain="time", compression=("wavelet", 5)
@@ -781,7 +840,6 @@ class Cube:  # pylint: disable=too-many-public-methods
             outfile: File where store scanned trace info, if empty or None
                 output goes to STDOUT.
         """
-
         oflag = False
         # if outfile is none, it means that you want to plot on STDOUT
         if outfile is None:
@@ -812,7 +870,6 @@ class Cube:  # pylint: disable=too-many-public-methods
             outfile (str): File where store header info, if empty or None
                 output goes to screen (STDOUT).
         """
-
         flag = False
         # if outfile is none, it means that you want to print on STDOUT
         if outfile is None:
@@ -843,7 +900,6 @@ class Cube:  # pylint: disable=too-many-public-methods
             Nothing, self._values will be updated inplace
 
         """
-
         if values is None or values is False:
             self._ensure_correct_values(0.0)
             return

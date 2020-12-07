@@ -2,9 +2,9 @@
 """Export RegularSurface data."""
 
 # pylint: disable=protected-access
-from __future__ import division, absolute_import
-from __future__ import print_function
-from struct import pack
+# import hashlib
+import struct
+import json
 import numpy as np
 
 import xtgeo
@@ -41,7 +41,6 @@ PMD_DATAUNITZ = {
 
 def export_irap_ascii(self, mfile, engine="cxtgeo"):
     """Export to Irap RMS ascii format."""
-
     if mfile.memstream is True or engine == "python":
         _export_irap_ascii_purepy(self, mfile)
     else:
@@ -50,7 +49,6 @@ def export_irap_ascii(self, mfile, engine="cxtgeo"):
 
 def _export_irap_ascii_purepy(self, mfile):
     """Export to Irap RMS ascii using pure python, slower? but safer for memstreams."""
-
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPA, order="F")
 
     xmax = self.xori + (self.ncol - 1) * self.xinc
@@ -88,7 +86,6 @@ def _export_irap_ascii_purepy(self, mfile):
 
 def _export_irap_ascii(self, mfile):
     """Export to Irap RMS ascii format using cxtgeo."""
-
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_export_irap_ascii(
@@ -134,7 +131,7 @@ def _export_irap_binary_python(self, mfile):
 
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
 
-    ap = pack(
+    ap = struct.pack(
         ">3i6f3i3f10i",  # > means big endian storage
         32,
         -996,
@@ -171,9 +168,9 @@ def _export_irap_binary_python(self, mfile):
         chunks.append(inum % nchunk)
     start = 0
     for chunk in chunks:
-        ap += pack(">i", chunk * 4)
-        ap += pack(">{:d}f".format(chunk), *vals[start : start + chunk])
-        ap += pack(">i", chunk * 4)
+        ap += struct.pack(">i", chunk * 4)
+        ap += struct.pack(">{:d}f".format(chunk), *vals[start : start + chunk])
+        ap += struct.pack(">i", chunk * 4)
         start += chunk
 
     if mfile.memstream:
@@ -240,7 +237,6 @@ def _export_irap_binary_cxtgeotest(self, mfile):
 
 def export_ijxyz_ascii(self, mfile):
     """Export to DSG IJXYZ ascii format."""
-
     vals = self.get_values1d(fill_value=xtgeo.UNDEF)
     ier = _cxtgeo.surf_export_ijxyz(
         mfile.get_cfhandle(),
@@ -451,3 +447,34 @@ def export_petromod_binary(self, mfile, pmd_dataunits):
     )
 
     mfile.cfclose()
+
+
+def export_xtgregsurf(self, mfile):
+    """Export to experimental xtgregsurf format, python version."""
+    logger.info("Export to xtgregsurf format...")
+
+    self.metadata.required = self
+
+    vals = self.get_values1d(fill_value=self._undef, order="C").astype(np.float32)
+
+    prevalues = (1, 1101, 4, self.ncol, self.nrow)
+    mystruct = struct.Struct("= i i i q q")
+    hdr = mystruct.pack(*prevalues)
+
+    meta = self.metadata.get_metadata()
+
+    jmeta = json.dumps(meta).encode()
+
+    with open(mfile.name, "wb") as fout:
+        fout.write(hdr)
+
+    with open(mfile.name, "ab") as fout:
+        vals.tofile(fout)
+
+    with open(mfile.name, "ab") as fout:
+        fout.write("\nXTGMETA.v01\n".encode())
+
+    with open(mfile.name, "ab") as fout:
+        fout.write(jmeta)
+
+    logger.info("Export to xtgregsurf format... done!")

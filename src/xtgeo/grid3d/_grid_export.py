@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
 
+import struct
 import json
 import numpy as np
 import xtgeo
@@ -155,34 +156,47 @@ def export_egrid(self, gfile):
     )
 
 
-def export_xtgeo(self, gfile):
-    """Export grid to binary XTGeo format (in prep).
-
-    Args:
-        gfile(str): Name of output file
-    """
-
+def export_xtgcpgeom(self, gfile, subformat=844):
+    """Export grid to binary XTGeo xtgcpgeom format, in prep. and experimental"""
     self._xtgformat2()
+    self.metadata.required = self
 
     gfile = xtgeo._XTGeoFile(gfile, mode="wb")
 
-    logger.debug("Export to binary XTGEO...")
+    # subformat processing, indicating number of bytes per datatype
+    # here, 844 is native XTGeo (float64, float32, int32)
+    if int(subformat) not in (444, 844, 841, 881, 884):
+        raise ValueError("The subformat value ins not valid")
 
-    # TODO: Improve metadata
-    meta = {"subgrids": self.get_subgrids()}
-    jmeta = json.dumps(meta)
+    coordfmt, zcornfmt, actnumfmt = [int(nbyte) for nbyte in str(subformat)]
 
-    _cxtgeo.grdcp3d_export_xtgeo_grid(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        jmeta,
-        gfile.get_cfhandle(),
-    )
+    coordsv = self._coordsv
+    zcornsv = self._zcornsv
+    actnumv = self._actnumsv
 
-    gfile.cfclose()
+    if coordfmt != 8:
+        coordsv = self._coordsv.astype("float" + str(coordfmt * 8))
+    if zcornfmt != 4:
+        zcornsv = self._zcornsv.astype("float" + str(zcornfmt * 8))
+    if actnumfmt != 4:
+        actnumv = self._actnumsv.astype("int" + str(actnumfmt * 8))
 
-    logger.debug("Export to binary XTGEO... done")
+    prevalues = (1, 1301, int(subformat), self.ncol, self.nrow, self.nlay)
+    mystruct = struct.Struct("= i i i q q q")
+    hdr = mystruct.pack(*prevalues)
+
+    meta = self.metadata.get_metadata()
+
+    with open(gfile.name, "wb") as fout:
+        fout.write(hdr)
+
+    with open(gfile.name, "ab") as fout:
+        coordsv.tofile(fout)
+        zcornsv.tofile(fout)
+        actnumv.tofile(fout)
+
+    with open(gfile.name, "ab") as fout:
+        fout.write("\nXTGMETA.v01\n".encode())
+
+    with open(gfile.name, "ab") as fout:
+        fout.write(json.dumps(meta).encode())

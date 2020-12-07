@@ -1,5 +1,7 @@
 """Export Cube data via SegyIO library or XTGeo CLIB."""
 import shutil
+import struct
+import json
 import numpy as np
 
 import segyio
@@ -190,3 +192,32 @@ def export_rmsreg(self, sfile):
 
     if status != 0:
         raise RuntimeError("Error when exporting to RMS regular")
+
+
+def export_xtgregcube(self, mfile):
+    """Export to experimental xtgregcube format, python version."""
+    logger.info("Export as xtgregcube...")
+    self.metadata.required = self
+
+    prevalues = (1, 1201, 4, self.ncol, self.nrow, self.nlay)
+    mystruct = struct.Struct("= i i i q q q")
+    pre = mystruct.pack(*prevalues)
+
+    meta = self.metadata.get_metadata()
+
+    jmeta = json.dumps(meta).encode()
+
+    with open(mfile, "wb") as fout:
+        fout.write(pre)
+
+    with open(mfile, "ab") as fout:
+        # TODO. Treat dead traces as undef
+        self.values.tofile(fout)
+
+    with open(mfile, "ab") as fout:
+        fout.write("\nXTGMETA.v01\n".encode())
+
+    with open(mfile, "ab") as fout:
+        fout.write(jmeta)
+
+    logger.info("Export as xtgregcube... done")
