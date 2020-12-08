@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Grid import functions for Eclipse, new approach (i.e. version 2)"""
-
-from __future__ import print_function, absolute_import
+"""Grid import functions for Eclipse, new approach (i.e. version 2)."""
 
 import re
 import os
@@ -27,7 +25,6 @@ logger = xtg.functionlogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_egrid(self, gfile):
     """Import, private to this routine."""
-
     # scan file for property
     logger.info("Make kwlist by scanning")
     kwlist = utils.scan_keywords(
@@ -54,18 +51,15 @@ def import_ecl_egrid(self, gfile):
         elif kwname == "GRIDHEAD":
             # read GRIDHEAD record:
             gridhead = eclbin_record(gfile, "GRIDHEAD", kwlen, kwtype, kwbyte)
-            ncol, nrow, nlay = gridhead[1:4].tolist()
-            logger.info("%s %s %s", ncol, nrow, nlay)
+            self._ncol, self._nrow, self._nlay = gridhead[1:4].tolist()
         elif kwname in ("COORD", "ZCORN", "ACTNUM"):
             bpos[kwname] = kwbyte
         elif kwname == "MAPAXES":  # not always present
             bpos[kwname] = kwbyte
 
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
-
-    logger.info("Grid dimensions in EGRID file: %s %s %s", ncol, nrow, nlay)
+    logger.info(
+        "Grid dimensions in EGRID file: %s %s %s", self._ncol, self._nrow, self._nlay
+    )
 
     # allocate dimensions:
     ncoord, nzcorn, ntot = self.vectordimensions
@@ -120,7 +114,7 @@ def import_ecl_egrid(self, gfile):
 # For the INIT and UNRST, props dates shall be selected
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=None):
-
+    """Import combo ECL runs."""
     ecl_grid = groot + ".EGRID"
     ecl_init = groot + ".INIT"
     ecl_rsta = groot + ".UNRST"
@@ -158,7 +152,7 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
 # Uses a tmp file so not very efficient
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_grdecl(self, gfile):
-
+    """Import grdecl format."""
     # make a temporary file
     fds, tmpfile = mkstemp(prefix="tmpxtgeo")
     os.close(fds)
@@ -230,8 +224,7 @@ def import_ecl_grdecl(self, gfile):
 # Import Eclipse binary GRDECL format
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_bgrdecl(self, gfile):
-    """Import binary files with GRDECL layout"""
-
+    """Import binary files with GRDECL layout."""
     cfhandle = gfile.get_cfhandle()
 
     # scan file for properties; these have similar binary format as e.g. EGRID
@@ -251,18 +244,11 @@ def import_ecl_bgrdecl(self, gfile):
         if kwname == "SPECGRID":
             # read grid geometry record:
             specgrid = eclbin_record(gfile, "SPECGRID", kwlen, kwtype, kwbyte)
-            ncol, nrow, nlay = specgrid[0:3].tolist()
-            logger.info("%s %s %s", ncol, nrow, nlay)
+            self._ncol, self._nrow, self._nlay = specgrid[0:3].tolist()
         elif kwname in needkwlist:
             bpos[kwname] = kwbyte
         elif kwname == "MAPAXES":  # not always present
             bpos[kwname] = kwbyte
-
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
-
-    logger.info("Grid dimensions in binary GRDECL file: %s %s %s", ncol, nrow, nlay)
 
     # allocate dimensions:
     ncoord, nzcorn, ntot = self.vectordimensions

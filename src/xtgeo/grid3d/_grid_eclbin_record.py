@@ -1,8 +1,4 @@
-"""Generic function to import ECL binary records for EGRID, INIT etc"""
-
-from __future__ import print_function, absolute_import
-
-
+"""Generic function to import ECL binary records for EGRID, INIT etc."""
 import numpy as np
 
 import xtgeo
@@ -14,8 +10,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def eclbin_record(gfile, kwname, kwlen, kwtype, kwbyte):
-    # generic: read a single binary Eclipse record via cxtgeo
-
+    """Read ecl binary record."""
     ilen = flen = dlen = 1
 
     if kwtype == "INTE":
@@ -33,7 +28,7 @@ def eclbin_record(gfile, kwname, kwlen, kwtype, kwbyte):
     else:
         raise ValueError(
             "Wrong type of kwtype {} for {}, must be INTE, REAL "
-            "or DOUB".format(kwtype, kwname)
+            "DOUB or LOGI".format(kwtype, kwname)
         )
 
     npint = np.zeros((ilen), dtype=np.int32)
@@ -56,17 +51,20 @@ def eclbin_record(gfile, kwname, kwlen, kwtype, kwbyte):
         npuse = npint
         del npflt
         del npdbl
-    if kwtype == "REAL":
+    elif kwtype == "REAL":
         npuse = npflt
         del npint
         del npdbl
-    if kwtype == "DOUB":
+    elif kwtype == "DOUB":
         npuse = npdbl
         del npint
         del npflt
-    if kwtype == "LOGI":
+    elif kwtype == "LOGI":
         npuse = npint
         del npdbl
         del npflt
+    else:
+        # should never be reached:
+        logger.warning("Unknown kwtype %s, return None", kwtype)
 
     return npuse

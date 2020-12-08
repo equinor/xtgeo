@@ -14,7 +14,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def export_roff(self, gfile, option):
-    """Export grid to ROFF format (binary)"""
+    """Export grid to ROFF format (binary)."""
     if self._xtgformat == 1:
         _export_roff_v1(self, gfile, option)
     else:
@@ -22,9 +22,9 @@ def export_roff(self, gfile, option):
 
 
 def _export_roff_v1(self, gfile, option):
-    """Export grid to ROFF format (binary)"""
-
+    """Export grid to ROFF format (binary)."""
     self._xtgformat1()
+
     gfile = xtgeo._XTGeoFile(gfile, mode="wb")
     gfile.check_folder(raiseerror=OSError)
 
@@ -66,8 +66,7 @@ def _export_roff_v1(self, gfile, option):
 
 
 def _export_roff_v2(self, gfile, ascii_fmt):
-    """Export grid to ROFF format (binary/ascii) _xtgformat=2"""
-
+    """Export grid to ROFF format (binary/ascii) _xtgformat=2."""
     self._xtgformat2()
 
     gfile = xtgeo._XTGeoFile(gfile, mode="wb")
@@ -120,7 +119,6 @@ def _export_roff_v2(self, gfile, ascii_fmt):
 
 def export_grdecl(self, gfile, mode):
     """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary (mode=0)."""
-
     self._xtgformat1()
 
     logger.debug("Export to ascii or binary GRDECL...")
@@ -139,7 +137,6 @@ def export_grdecl(self, gfile, mode):
 
 def export_egrid(self, gfile):
     """Export grid to Eclipse EGRID format, binary."""
-
     self._xtgformat1()
 
     logger.debug("Export to binary EGRID...")
@@ -157,7 +154,7 @@ def export_egrid(self, gfile):
 
 
 def export_xtgcpgeom(self, gfile, subformat=844):
-    """Export grid to binary XTGeo xtgcpgeom format, in prep. and experimental"""
+    """Export grid to binary XTGeo xtgcpgeom format, in prep. and experimental."""
     self._xtgformat2()
     self.metadata.required = self
 

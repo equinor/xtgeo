@@ -1,6 +1,4 @@
-"""Importing or export grid or grid props from ROFF, binary"""
-
-from __future__ import print_function, absolute_import
+"""Importing or export grid or grid props from ROFF, binary."""
 
 import numpy as np
 import numpy.ma as ma
@@ -14,7 +12,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def _rkwquery(gfile, kws, name, swap):
-    """Local function for _import_roff_v2, single data"""
+    """Local function for _import_roff_v2, single data."""
 
     kwtypedict = {"int": 1, "float": 2}
     iresult = _cxtgeo.new_intpointer()
@@ -59,8 +57,7 @@ def _rkwquery(gfile, kws, name, swap):
 
 
 def _rarraykwquery(gfile, kws, name, swap, ncol, nrow, nlay):
-    """
-    Local function for _import_roff_v2, 3D parameter arrays.
+    """Local function for _import_roff_v2, 3D parameter arrays.
 
     This parameters are translated to numpy data for the values
     attribute usage.
@@ -71,9 +68,7 @@ def _rarraykwquery(gfile, kws, name, swap, ncol, nrow, nlay):
 
     Hence it is the parameter!data which comes after parameter!name!PORO which
     is relevant here, given that name = PORO.
-
     """
-
     kwtypedict = {"int": 1, "float": 2, "double": 3, "byte": 5}
 
     dtype = 0
@@ -134,7 +129,6 @@ def _rkwxlist(gfile, kws, name, swap, strict=True):
       array int nLayers 3
            20           20           16
     """
-
     kwtypedict = {"int": 1}  # only int lists are supported
 
     dtype = 0
@@ -169,7 +163,6 @@ def _rkwxvec(gfile, kws, name, swap, strict=True):
     If strict is True, a ValueError will be raised if keyword is not
     found. If strict is False, None will be returned
     """
-
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
 
     dtype = 0
@@ -225,7 +218,6 @@ def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
     If strict is True, a ValueError will be raised if keyword is not
     found. If strict is False, None will be returned
     """
-
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
 
     dtype = 0
@@ -284,10 +276,7 @@ def _rkwxvec_coordsv(
     yscale,
     zscale,
 ):
-    """
-    Special for importing ROFF binary for COORD type data when _xtgversion=2
-    """
-
+    """Special for importing ROFF binary for COORD type data when _xtgversion=2."""
     name = "cornerLines!data"
 
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}
@@ -343,10 +332,7 @@ def _rkwxvec_zcornsv(
     zscale,
     p_splitenz_v,
 ):
-    """
-    Special for importing ROFF binary for ZCORNS type data when _xtgversion=2
-    """
-
+    """Special for importing ROFF binary for ZCORNS type data when _xtgversion=2."""
     name = "zvalues!data"
 
     kwtypedict = {"int": 1, "float": 2, "double": 3, "char": 4, "bool": 5, "byte": 6}

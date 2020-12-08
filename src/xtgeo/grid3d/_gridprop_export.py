@@ -234,6 +234,7 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt
 def export_xtgcpprop(self, mfile):
     """Export to experimental xtgcpproperty format, python version."""
     logger.info("Export as xtgcpprop...")
+    self._metadata.required = self
 
     magic = 1351
     if self.isdiscrete:

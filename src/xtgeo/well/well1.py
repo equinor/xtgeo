@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""XTGeo well module, working with one single well"""
-
-from __future__ import print_function, absolute_import
+"""XTGeo well module, working with one single well."""
 
 import sys
 from copy import deepcopy
@@ -58,7 +56,6 @@ def well_from_file(
     .. versionchanged:: 2.1 ``strict`` now defaults to False
 
     """
-
     obj = Well()
 
     obj.from_file(
@@ -84,7 +81,6 @@ def well_from_roxar(
     inclmd=False,
     inclsurvey=False,
 ):
-
     """This makes an instance of a Well directly from Roxar RMS.
 
     For arguments, see :meth:`Well.from_roxar`.
@@ -99,7 +95,6 @@ def well_from_roxar(
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
-
     obj = Well()
 
     obj.from_roxar(
@@ -158,7 +153,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     VALID_LOGTYPES = {"DISC", "CONT"}
 
     def __init__(self, *args, **kwargs):
-
+        """The __init__ method."""
         # instance attributes for whole well
         self._rkb = None  # well RKB height
         self._xpos = None  # well head X pos
@@ -204,6 +199,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         logger.info("Ran __init__for Well() %s", id(self))
 
     def __repr__(self):
+        """Magic method."""
         # should be able to newobject = eval(repr(thisobject))
         myrp = (
             "{0.__class__.__name__} (filesrc={0._filesrc!r}, "
@@ -212,17 +208,18 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return myrp
 
     def __str__(self):
+        """Magic method."""
         # user friendly print
         return self.describe(flush=False)
 
     def __del__(self):
+        """Magic method."""
         logger.info("Deleting %s instance %s", self.__class__.__name__, id(self))
 
     # Consistency checking. As well log names are columns in the Pandas DF,
     # there are additional attributes per log that have to be "in sync"
     def _ensure_consistency(self):  # pragma: no coverage
-        """Ensure consistency within an object (private function)"""
-
+        """Ensure consistency within an object (private function)."""
         if self._df is None:
             return
 
@@ -259,27 +256,27 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def rkb(self):
-        """ Returns RKB height for the well (read only)."""
+        """Returns RKB height for the well (read only)."""
         return self._rkb
 
     @property
     def xpos(self):
-        """ Returns well header X position (read only)."""
+        """Returns well header X position (read only)."""
         return self._xpos
 
     @property
     def ypos(self):
-        """ Returns well header Y position (read only)."""
+        """Returns well header Y position (read only)."""
         return self._ypos
 
     @property
     def wellname(self):
-        """ Returns well name (read only) (see also name attribute)."""
+        """Returns well name (read only) (see also name attribute)."""
         return self._wname
 
     @property
     def name(self):
-        """ Returns or set (rename) a well name."""
+        """Returns or set (rename) a well name."""
         return self._wname
 
     @name.setter
@@ -287,14 +284,17 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._wname = newname
 
     @property
-    def xwellname(self):
-        """Returns well name on a file syntax safe form (/ and space replaced
-        with _).
-        """
+    def safewellname(self):
+        """Get well name on syntax safe form; '/' and spaces replaced with '_'."""
         xname = self._wname
         xname = xname.replace("/", "_")
         xname = xname.replace(" ", "_")
         return xname
+
+    @property
+    def xwellname(self):
+        """See safewellname."""
+        return self.safewellname
 
     @property
     def shortwellname(self):

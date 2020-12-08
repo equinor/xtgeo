@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Private module for refinement of a grid"""
-from __future__ import print_function, absolute_import
-
+"""Private module for refinement of a grid."""
 from collections import OrderedDict
 import numpy as np
 
@@ -17,7 +15,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def refine_vertically(self, rfactor, zoneprop=None):
-    """Refine vertically, proportionally
+    """Refine vertically, proportionally.
 
     See details in caller.
     """
@@ -82,8 +80,8 @@ def refine_vertically(self, rfactor, zoneprop=None):
 
     totvector = []
 
-    for (_tmp1, rfi), (_tmp2, arr) in zip(rfactord.items(), self.subgrids.items()):
-        for _elem in range(len(arr)):
+    for (_, rfi), (_, arr) in zip(rfactord.items(), self.subgrids.items()):
+        for _ in range(len(arr)):
             totvector.append(rfi)
 
     for inn, rfi in enumerate(totvector):

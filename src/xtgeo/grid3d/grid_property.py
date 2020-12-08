@@ -610,6 +610,8 @@ class GridProperty(Grid3D):
         date=None,
         fracture=False,
         _roffapiv=1,
+        ijrange=None,
+        zerobased=False,
     ):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
@@ -635,6 +637,10 @@ class GridProperty(Grid3D):
             fracture (bool): Only applicable for DUAL POROSITY systems, if True
                 then the fracture property is read; if False then the matrix
                 property is read. Names will be appended with "M" or "F"
+            ijrange (list-like): A list of 4 number: (i1, i2, j1, j2) for subrange
+                of cells to read. Only applicable for xtgcpprop format.
+            zerobased (bool): Input if cells counts are zero- or one-based in
+                ijrange. Only applicable for xtgcpprop format.
 
         Examples::
 
@@ -651,7 +657,6 @@ class GridProperty(Grid3D):
 
         .. versionchanged:: 2.8 Added gridlink option, default is True
         """
-
         pfile = xtgeo._XTGeoFile(pfile, mode="rb")
 
         obj = _gridprop_import.from_file(
@@ -663,6 +668,8 @@ class GridProperty(Grid3D):
             date=date,
             fracture=fracture,
             _roffapiv=_roffapiv,
+            ijrange=ijrange,
+            zerobased=zerobased,
         )
 
         if grid and gridlink:

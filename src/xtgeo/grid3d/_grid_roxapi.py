@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Roxar API functions for XTGeo Grid Geometry"""
+"""Roxar API functions for XTGeo Grid Geometry."""
 import os
 import tempfile
 from collections import OrderedDict
@@ -30,7 +30,6 @@ def import_grid_roxapi(
     self, projectname, gname, realisation, dimonly, info
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
-
     if self._xtgformat == 1 or dimonly:
         _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
     else:
@@ -41,7 +40,6 @@ def _import_grid_roxapi_v1(
     self, projectname, gname, realisation, dimonly, info
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
-
     rox = RoxUtils(projectname, readonly=True)
 
     proj = rox.project
@@ -74,14 +72,13 @@ def _import_grid_roxapi_v1(
 
 
 def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
-    # in prep!
-    """Push info to screen (mostly for debugging)."""
+    """Push info to screen (mostly for debugging), expermental."""
     cpgeom = False
     if rox.version_required("1.3"):
         cpgeom = True
 
     indexer = roxgrid.grid_indexer
-    ncol, nrow, _nlay = indexer.dimensions
+    ncol, nrow, _ = indexer.dimensions
 
     if cpgeom:
         xtg.say("ROXAPI with support for CornerPointGeometry")
@@ -224,7 +221,7 @@ def _import_grid_roxapi_v2(
 
 
 def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
-    """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2"""
+    """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2."""
     indexer = roxgrid.grid_indexer
 
     ncol, nrow, nlay = indexer.dimensions
@@ -330,8 +327,7 @@ def export_grid_roxapi(
 def _export_grid_cornerpoint_roxapi_v1(
     self, rox, gname, realisation, info
 ):  # pragma: no cover
-    """Convert xtgeo geometry to pillar spec in ROXAPI and store"""
-
+    """Convert xtgeo geometry to pillar spec in ROXAPI and store."""
     try:
         from roxar.grids import CornerPointGridGeometry as CPG
     except ImportError:
@@ -406,8 +402,7 @@ def _export_grid_cornerpoint_roxapi_v1(
 def _export_grid_cornerpoint_roxapi_v2(
     self, rox, gname, realisation, info
 ):  # pragma: no cover
-    """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2"""
-
+    """Convert xtgeo geometry to pillar spec in ROXAPI and store _xtgformat=2."""
     try:
         from roxar.grids import CornerPointGridGeometry as CPG
     except ImportError:
@@ -467,8 +462,7 @@ def _export_grid_cornerpoint_roxapi_v2(
 
 
 def _export_grid_viaroff_roxapi(self, rox, gname, realisation):  # pragma: no cover
-    """Convert xtgeo geometry to internal RMS via i/o ROFF tricks"""
-
+    """Convert xtgeo geometry to internal RMS via i/o ROFF tricks."""
     logger.info("Realisation is %s", realisation)
 
     # make a temporary folder and work within the with.. block

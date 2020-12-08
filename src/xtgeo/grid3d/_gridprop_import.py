@@ -1,27 +1,12 @@
 """GridProperty (not GridProperies) import functions"""
-
-# from ._gridprop_import_eclrun import import_eclbinary
-#  --> INIT, UNRST
-#
-# from ._gridprop_import_grdecl import import_grdecl_prop, import_bgrdecl_prop
-#  --> ASCII and BINARY GRDECL format
-# from ._gridprop_import_roff import import_roff
-#  --> BINARY ROFF format
-
-from __future__ import print_function, absolute_import
-
 import os
-from struct import unpack
-import json
-
-import numpy as np
 
 import xtgeo
-import xtgeo.common.sys as xsys
 
 from ._gridprop_import_eclrun import import_eclbinary as impeclbin
 from ._gridprop_import_grdecl import import_grdecl_prop, import_bgrdecl_prop
 from ._gridprop_import_roff import import_roff
+from ._gridprop_import_xtgcpprop import import_xtgcpprop
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -37,6 +22,8 @@ def from_file(
     date=None,
     fracture=False,
     _roffapiv=1,
+    ijrange=None,
+    zerobased=False,
 ):  # _roffapiv for devel.
     """Import grid property from file, and makes an instance of this."""
     # it may be that pfile already is an open file; hence a filehandle
@@ -83,7 +70,7 @@ def from_file(
         import_bgrdecl_prop(self, pfile, name=name, grid=grid)
 
     elif fformat.lower() == "xtgcpprop":
-        import_xtgcpprop(self, pfile)
+        import_xtgcpprop(self, pfile, ijrange=ijrange, zerobased=zerobased)
 
     else:
         logger.warning("Invalid file format")
@@ -119,48 +106,3 @@ def _chk_file(self, pfile, fformat):
     logger.debug("File format is %s", fformat)
 
     return fformat
-
-
-def import_xtgcpprop(self, mfile):
-    """Using pure python for experimental import."""
-    #
-    offset = 36
-    with open(mfile.file, "rb") as fhandle:
-        buf = fhandle.read(offset)
-
-    # unpack header
-    swap, magic, nbyte, ncol, nrow, nlay = unpack("= i i i q q q", buf)
-
-    if swap != 1 or magic not in (1351, 1352):
-        raise ValueError("Invalid file format (wrong swap id or magic number).")
-
-    if magic == 1351:
-        dtype = np.float32 if nbyte == 4 else np.float64
-    else:
-        dtype = "int" + str(nbyte * 8)
-
-    vals = None
-    narr = ncol * nrow * nlay
-    vals = xsys.npfromfile(mfile.file, dtype=dtype, count=narr, offset=offset)
-
-    # read metadata which will be at position offet + nfloat*narr +13
-    pos = offset + nbyte * narr + 13
-
-    with open(mfile.file, "rb") as fhandle:
-        fhandle.seek(pos)
-        jmeta = fhandle.read().decode()
-
-    meta = json.loads(jmeta)
-    req = meta["_required_"]
-
-    reqattrs = xtgeo.MetaDataCPProperty.REQUIRED
-
-    for myattr in reqattrs:
-        if "discrete" in myattr:
-            self._isdiscrete = req[myattr]
-        else:
-            setattr(self, "_" + myattr, req[myattr])
-
-    self._values = np.ma.masked_equal(vals.reshape(ncol, nrow, nlay), self._undef)
-
-    self._metadata.required = self
