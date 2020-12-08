@@ -551,8 +551,8 @@ surf_resample(int nx1,
               double yinc1,
               int yflip1,
               double rota1,
-              double *swig_np_dbl_in_v1,  //*mapv1, IN only
-              long n_swig_np_dbl_in_v1,
+              double *swig_np_dbl_inplaceflat_v1,
+              long n_swig_np_dbl_inplaceflat_v1,
               int nx2,
               int ny2,
               double xori2,
@@ -561,8 +561,8 @@ surf_resample(int nx1,
               double yinc2,
               int yflip2,
               double rota2,
-              double *swig_np_dbl_inplace_v1,  // *mapv2 INPLACE
-              long n_swig_np_dbl_inplace_v1,
+              double *swig_np_dbl_inplaceflat_v2,
+              long n_swig_np_dbl_inplaceflat_v2,
               int option);
 
 int

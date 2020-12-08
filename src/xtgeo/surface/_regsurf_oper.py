@@ -83,7 +83,7 @@ def _check_other(self, other):
 
 
 def resample(self, other, mask=True):
-    """Resample from other surface object to this surf"""
+    """Resample from other surface object to this surf."""
 
     logger.info("Resampling...")
 
@@ -93,11 +93,8 @@ def resample(self, other, mask=True):
         self.values = other.values.copy()
         return
 
-    svalues = self.get_values1d()
-
-    optmask = 1
-    if not mask:
-        optmask = 0
+    svalues = np.ma.filled(self.values, fill_value=xtgeo.UNDEF)
+    ovalues = np.ma.filled(other.values, fill_value=xtgeo.UNDEF)
 
     ier = _cxtgeo.surf_resample(
         other._ncol,
@@ -108,7 +105,7 @@ def resample(self, other, mask=True):
         other._yinc,
         other._yflip,
         other._rotation,
-        other.get_values1d(),
+        ovalues,
         self._ncol,
         self._nrow,
         self._xori,
@@ -118,8 +115,9 @@ def resample(self, other, mask=True):
         self._yflip,
         self._rotation,
         svalues,
-        optmask,
+        0 if not mask else 1,
     )
+    self.values = np.ma.masked_greater(svalues, xtgeo.UNDEF_LIMIT)
 
     if ier != 0:
         raise RuntimeError("Resampling went wrong, " "code is {}".format(ier))

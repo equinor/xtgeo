@@ -33,6 +33,7 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 int
 surf_resample(int nx1,
@@ -62,6 +63,8 @@ surf_resample(int nx1,
     int i2, j2, ier2, ib2;
     double xc2, yc2, zc2, zc;
 
+    logger_info(LI, FI, FU, "Resampling surface...");
+
     for (i2 = 1; i2 <= nx2; i2++) {
         for (j2 = 1; j2 <= ny2; j2++) {
 
@@ -74,17 +77,18 @@ surf_resample(int nx1,
             ier2 = surf_xyz_from_ij(i2, j2, &xc2, &yc2, &zc2, xori2, xinc2, yori2,
                                     yinc2, nx2, ny2, yflip2, rota2, mapv2, nn2, 1);
 
-            /* based on this X Y, need to find Z value from origin: */
+            /* based on this X Y, need to find Z value from original: */
             if (ier2 == 0) {
                 zc = surf_get_z_from_xy(xc2, yc2, nx1, ny1, xori1, yori1, xinc1, yinc1,
                                         yflip1, rota1, mapv1, nn1);
                 mapv2[ib2] = zc;
 
             } else {
+                logger_info(LI, FI, FU, "Something went wrong: ier2 = %d", ier2);
                 return ier2;
             }
         }
     }
-
+    logger_info(LI, FI, FU, "Resampling surface... done!");
     return 0;
 }

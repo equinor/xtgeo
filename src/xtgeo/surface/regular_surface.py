@@ -257,7 +257,7 @@ class RegularSurface(object):
 
             values = kwargs.get("values", None)
 
-            if values is None:
+            if values is None and not kwargs:
                 values = np.array(
                     [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
                     dtype=np.float64,
@@ -267,6 +267,9 @@ class RegularSurface(object):
                 values = ma.masked_greater(values, self.undef_limit)
                 self._masked = True
                 self._values = values
+            elif values is None and kwargs:
+                self._values = np.ma.zeros((self._ncol, self._nrow))
+
             else:
                 self._ensure_correct_values(values)
 
