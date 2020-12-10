@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+import hashlib
 import os
 import pathlib
-import hashlib
-
 
 import pytest
+
+import tests.test_common.test_xtg as tsetup
 import xtgeo
 import xtgeo.common.sys as xsys
-import tests.test_common.test_xtg as tsetup
 
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
@@ -43,11 +43,13 @@ def test_generic_hash():
 def test_resolve_alias():
     """Testing resolving file alias function."""
     surf = xtgeo.RegularSurface(TESTSURF)
+    md5hash = surf.generate_hash("md5")
+
     mname = xtgeo._XTGeoFile("whatever/$md5sum.gri", obj=surf)
-    assert str(mname.file) == "whatever/df7e74965672a965afd758c1f62d32a0.gri"
+    assert str(mname.file) == f"whatever/{md5hash}.gri"
 
     mname = xtgeo._XTGeoFile(pathlib.Path("whatever/$md5sum.gri"), obj=surf)
-    assert str(mname.file) == "whatever/df7e74965672a965afd758c1f62d32a0.gri"
+    assert str(mname.file) == f"whatever/{md5hash}.gri"
 
     mname = xtgeo._XTGeoFile("whatever/$random.gri", obj=surf)
     assert len(str(mname.file)) == 45
