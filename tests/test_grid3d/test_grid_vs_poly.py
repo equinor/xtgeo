@@ -11,7 +11,7 @@ if not xtg.testsetup():
     sys.exit(-9)
 
 td = xtg.tmpdir
-testpath = xtg.testpath
+TPATH = xtg.testpathobj
 
 if "XTG_SHOW" in os.environ:
     xtgshow = True
@@ -23,8 +23,8 @@ else:
 # Do tests
 # =============================================================================
 
-reekgrid = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-reekpoly = "../xtgeo-testdata/polygons/reek/1/mypoly.pol"
+reekgrid = TPATH / "3dgrids/reek/REEK.EGRID"
+reekpoly = TPATH / "polygons/reek/1/mypoly.pol"
 
 
 def test_grid_inactivate_inside():

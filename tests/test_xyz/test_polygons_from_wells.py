@@ -1,7 +1,5 @@
 import os
-import sys
 import glob
-import logging
 from xtgeo.xyz import Polygons
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
@@ -15,16 +13,13 @@ except OSError:
         raise
 
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
 
-format = xtg.loggingformat
 
-logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+TPATH = xtg.testpathobj
 
-logger = logging.getLogger(__name__)
-
-wfiles1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5].w"
+wfiles1 = TPATH / "wells/reek/1/OP_1.w"
+wfiles2 = TPATH / "wells/reek/1/OP_[1-5].w"
 
 
 @tsetup.skipifroxar

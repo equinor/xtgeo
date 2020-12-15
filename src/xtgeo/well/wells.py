@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Wells module, which has the Wells class (collection of Well objects)"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 from distutils.version import StrictVersion
 

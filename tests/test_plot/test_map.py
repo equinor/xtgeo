@@ -16,16 +16,16 @@ if not xtg.testsetup():
     sys.exit(-9)
 
 TD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
 
-SFILE1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
-PFILE1 = "../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.pol"
-SFILE2 = "../xtgeo-testdata/surfaces/reek/1/reek_perm_lay1.gri"
+SFILE1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+PFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.pol"
+SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
 
 
 @tsetup.skipifroxar

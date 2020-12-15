@@ -14,9 +14,9 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
-TESTSET1 = "../xtgeo-testdata/cubes/reek/syntseis_20030101_seismic_depth_stack.segy"
+TESTSET1 = TPATH / "cubes/reek/syntseis_20030101_seismic_depth_stack.segy"
 
 
 def test_cube_export_import_many():

@@ -15,16 +15,16 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
-TESTSET1A = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
-TESTSET1B = "../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
-TESTSETG1 = "../xtgeo-testdata/3dgrids/reek/reek_geo_grid.roff"
+TESTSET1A = TPATH / "surfaces/reek/1/topreek_rota.gri"
+TESTSET1B = TPATH / "surfaces/reek/1/basereek_rota.gri"
+TESTSETG1 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
 
 
 def test_create():

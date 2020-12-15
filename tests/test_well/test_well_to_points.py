@@ -6,10 +6,11 @@ from xtgeo.common import XTGeoDialog
 xtg = XTGeoDialog()
 
 TMPD = xtg.tmpdir
+TPATH = xtg.testpathobj
 
 logger = xtg.basiclogger(__name__)
 
-WFILE = "../xtgeo-testdata/wells/etc/otest.rmswell"
+WFILE = TPATH / "wells/etc/otest.rmswell"
 
 
 def test_wellzone_to_points():

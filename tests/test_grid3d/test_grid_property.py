@@ -1,7 +1,6 @@
 # coding: utf-8
 """Testing: test_grid_property"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import os
 import pathlib
@@ -32,29 +31,29 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
-TESTFILE1 = "../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff"
-TESTFILE2 = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff"
+TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
+TESTFILE2 = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 # TESTFILE3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
 # TESTFILE4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
-TESTFILE5 = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-TESTFILE6 = "../xtgeo-testdata/3dgrids/reek/REEK.INIT"
-TESTFILE7 = "../xtgeo-testdata/3dgrids/reek/REEK.UNRST"
-TESTFILE8 = "../xtgeo-testdata/3dgrids/reek/reek_sim_zone.roff"
-TESTFILE8A = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
+TESTFILE5 = TPATH / "3dgrids/reek/REEK.EGRID"
+TESTFILE6 = TPATH / "3dgrids/reek/REEK.INIT"
+TESTFILE7 = TPATH / "3dgrids/reek/REEK.UNRST"
+TESTFILE8 = TPATH / "3dgrids/reek/reek_sim_zone.roff"
+TESTFILE8A = TPATH / "3dgrids/reek/reek_sim_grid.roff"
 TESTFILE9 = TESTFILE1
-TESTFILE10 = "../xtgeo-testdata/3dgrids/bri/b_grid.roff"
-TESTFILE11 = "../xtgeo-testdata/3dgrids/bri/b_poro.roff"
-POLYFILE = "../xtgeo-testdata/polygons/reek/1/polset2.pol"
+TESTFILE10 = TPATH / "3dgrids/bri/b_grid.roff"
+TESTFILE11 = TPATH / "3dgrids/bri/b_poro.roff"
+POLYFILE = TPATH / "polygons/reek/1/polset2.pol"
 
-TESTFILE12A = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.grdecl"
-TESTFILE12B = "../xtgeo-testdata/3dgrids/reek/reek_sim_poro.grdecl"
+TESTFILE12A = TPATH / "3dgrids/reek/reek_sim_grid.grdecl"
+TESTFILE12B = TPATH / "3dgrids/reek/reek_sim_poro.grdecl"
 
-TESTFILE13A = "../xtgeo-testdata/3dgrids/etc/TEST_SP.EGRID"
-TESTFILE13B = "../xtgeo-testdata/3dgrids/etc/TEST_SP.INIT"
+TESTFILE13A = TPATH / "3dgrids/etc/TEST_SP.EGRID"
+TESTFILE13B = TPATH / "3dgrids/etc/TEST_SP.INIT"
 
-DUALROFF = "../xtgeo-testdata/3dgrids/etc/dual_grid_w_props.roff"
+DUALROFF = TPATH / "3dgrids/etc/dual_grid_w_props.roff"
 
 
 def test_create():

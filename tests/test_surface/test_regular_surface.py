@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 import os
 import os.path
@@ -27,7 +25,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 XTGSHOW = False
 if "XTG_SHOW" in os.environ:
@@ -37,20 +35,20 @@ if "XTG_SHOW" in os.environ:
 # Do tests
 # =============================================================================
 
-TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
-TESTSET1A = "../xtgeo-testdata/surfaces/reek/1/basereek_rota.gri"
-TESTSET2 = "../xtgeo-testdata/surfaces/reek/1/topupperreek.gri"
-TESTSET3 = "../xtgeo-testdata/surfaces/reek/1/topupperreek.fgr"
-TESTSET4A = "../xtgeo-testdata/surfaces/etc/ib_test-horizon.map"  # IJXYZ table
-TESTSET4B = "../xtgeo-testdata/surfaces/etc/ijxyz1.map"  # IJXYZ table
-TESTSET4D = "../xtgeo-testdata/surfaces/etc/ijxyz1.dat"  # IJXYZ table OW
-TESTSET4C = "../xtgeo-testdata/surfaces/etc/testx_1500_edit1.map"
-TESTSET5 = "../xtgeo-testdata/surfaces/reek/2/02_midreek_rota.gri"
-TESTSET6A = "../xtgeo-testdata/surfaces/etc/seabed_p.pmd"
-TESTSET6B = "../xtgeo-testdata/surfaces/etc/seabed_p.gri"
-TESTSET6C = "../xtgeo-testdata/surfaces/etc/seabed_p_v2.pmd"
+TESTSET1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+TESTSET1A = TPATH / "surfaces/reek/1/basereek_rota.gri"
+TESTSET2 = TPATH / "surfaces/reek/1/topupperreek.gri"
+TESTSET3 = TPATH / "surfaces/reek/1/topupperreek.fgr"
+TESTSET4A = TPATH / "surfaces/etc/ib_test-horizon.map"  # IJXYZ table
+TESTSET4B = TPATH / "surfaces/etc/ijxyz1.map"  # IJXYZ table
+TESTSET4D = TPATH / "surfaces/etc/ijxyz1.dat"  # IJXYZ table OW
+TESTSET4C = TPATH / "surfaces/etc/testx_1500_edit1.map"
+TESTSET5 = TPATH / "surfaces/reek/2/02_midreek_rota.gri"
+TESTSET6A = TPATH / "surfaces/etc/seabed_p.pmd"
+TESTSET6B = TPATH / "surfaces/etc/seabed_p.gri"
+TESTSET6C = TPATH / "surfaces/etc/seabed_p_v2.pmd"
 
-FENCE1 = "../xtgeo-testdata/polygons/reek/1/fence.pol"
+FENCE1 = TPATH / "polygons/reek/1/fence.pol"
 
 
 def test_create():
@@ -281,10 +279,6 @@ def test_irapbin_export_test():
     t2a = xtg.timer(t1)
     logger.info("Saving %s surfaces xtgeo %s secs.", nsurf, t2a)
 
-    t1 = xtg.timer()
-    for _ix in range(nsurf):
-        surf.to_file("TMP/tull2", engine="cxtgeotest")
-
     t2b = xtg.timer(t1)
     logger.info("TEST Saving %s surfaces xtgeo %s secs.", nsurf, t2b)
 
@@ -345,7 +339,6 @@ def test_zmap_import_export():
 
 def test_swapaxes():
     """Import Reek Irap binary and swap axes."""
-
     xsurf = xtgeo.RegularSurface(TESTSET5)
     xsurf.describe()
     logger.info(xsurf.yflip)
@@ -365,7 +358,6 @@ def test_swapaxes():
 
 def test_autocrop():
     """Import Reek Irap binary and autocrop surface"""
-
     xsurf = xtgeo.RegularSurface(TESTSET5)
     xcopy = xsurf.copy()
 

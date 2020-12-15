@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Private low level routines (SWIG vs C)"""
 
-from __future__ import print_function, absolute_import
 
 import numpy as np
 from xtgeo.common import XTGeoDialog

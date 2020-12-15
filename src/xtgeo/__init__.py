@@ -5,8 +5,7 @@
 
 """The XTGeo Python library."""
 
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 import os
 import timeit
 

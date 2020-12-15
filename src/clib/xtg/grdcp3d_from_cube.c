@@ -2,11 +2,11 @@
 ****************************************************************************************
 *
 * NAME:
-*    grd3d_create_box.c
+*    grdcp3d_from_cube.c
 *
 * DESCRIPTION:
 *    Create a simple shoebox grid, based on DX, DY rotation etc. I.e.
-*    similar to a Cube spec.
+*    similar to a Cube spec. Using xtgformat=2.
 *
 * ARGUMENTS:
 *    ncol..nlay     i     Dimensions
@@ -34,29 +34,28 @@
 #include "logger.h"
 
 void
-grd3d_from_cube(int ncol,
-                int nrow,
-                int nlay,
-                double *coordsv,
-                long ncoord,
-                double *zcornsv,
-                long nzcorn,
-                int *actnumsv,
-                long nactnum,
-                double xori,
-                double yori,
-                double zori,
-                double xinc,
-                double yinc,
-                double zinc,
-                double rotation,
-                int yflip,
-                int option)
+grdcp3d_from_cube(int ncol,
+                  int nrow,
+                  int nlay,
+                  double *coordsv,
+                  long ncoord,
+                  float *zcornsv,
+                  long nzcorn,
+                  int *actnumsv,
+                  long nactnum,
+                  double xori,
+                  double yori,
+                  double zori,
+                  double xinc,
+                  double yinc,
+                  double zinc,
+                  double rotation,
+                  int yflip,
+                  int option)
 
 {
     /* locals */
     int nn, iok, i, j, k;
-    long ibc = 0, ibz = 0, iba = 0;
     double xcoord = 0.0, ycoord = 0.0;
 
     logger_info(LI, FI, FU, "Making Grid3D from cube or shoebox spec");
@@ -75,8 +74,9 @@ grd3d_from_cube(int ncol,
 
     /* make coord... */
 
-    for (j = 1; j <= nrow + 1; j++) {
-        for (i = 1; i <= ncol + 1; i++) {
+    long ibc = 0;
+    for (i = 1; i <= ncol + 1; i++) {
+        for (j = 1; j <= nrow + 1; j++) {
 
             iok = cube_xy_from_ij(i, j, &xcoord, &ycoord, xori, xinc, yori, yinc,
                                   ncol + 1, nrow + 1, yflip, rotation, 0);
@@ -95,20 +95,21 @@ grd3d_from_cube(int ncol,
     }
 
     /* make zcorn and actnum... */
-
-    double zlevel = zori;
-
-    for (k = 1; k <= nlay + 1; k++) {
-        for (j = 1; j <= nrow; j++) {
-            for (i = 1; i <= ncol; i++) {
+    long ibz = 0;
+    long iba = 0;
+    for (i = 1; i <= ncol + 1; i++) {
+        for (j = 1; j <= nrow + 1; j++) {
+            double zlevel = zori;
+            for (k = 1; k <= nlay + 1; k++) {
 
                 for (nn = 0; nn < 4; nn++)
                     zcornsv[ibz++] = zlevel;
 
-                if (k <= nlay)
+                if (i <= ncol && j <= nrow && k <= nlay)
                     actnumsv[iba++] = 1;
+
+                zlevel += zinc;
             }
         }
-        zlevel += zinc;
     }
 }

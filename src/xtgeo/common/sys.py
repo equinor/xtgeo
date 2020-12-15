@@ -23,10 +23,15 @@ logger = xtg.functionlogger(__name__)
 VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
 
 
-def npfromfile(fname, dtype=np.float32, count=1, offset=0):
+def npfromfile(fname, dtype=np.float32, count=1, offset=0, mmap=False):
     """Wrapper round np.fromfile to be compatible with older np versions."""
     try:
-        vals = np.fromfile(fname, dtype=dtype, count=count, offset=offset)
+        if mmap:
+            vals = np.memmap(
+                fname, dtype=dtype, shape=(count,), mode="r", offset=offset
+            )
+        else:
+            vals = np.fromfile(fname, dtype=dtype, count=count, offset=offset)
     except TypeError as err:
         # offset keyword requires numpy >= 1.17, need this for backward compat.:
         if "'offset' is an invalid" in str(err):

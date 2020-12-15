@@ -1,6 +1,5 @@
 """Importing grid props from ROFF, binary"""
 
-from __future__ import print_function, absolute_import
 
 import numpy as np
 

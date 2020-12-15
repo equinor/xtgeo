@@ -1,6 +1,5 @@
 # coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import os
 from os.path import join
@@ -20,7 +19,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 XTGSHOW = False
 if "XTG_SHOW" in os.environ:
@@ -30,8 +29,8 @@ if "XTG_SHOW" in os.environ:
 # Do tests
 # =============================================================================
 
-TESTSET1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
-TESTSET2 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.fgr"
+TESTSET1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+TESTSET2 = TPATH / "surfaces/reek/1/topreek_rota.fgr"
 
 
 def test_irapbin_bytesio_threading():

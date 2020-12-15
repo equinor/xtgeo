@@ -12,13 +12,13 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-WFILE = os.path.join(TESTPATH, "wells/reek/1/OP_1.w")
+WFILE = os.path.join(TPATH, "wells/reek/1/OP_1.w")
 
 
 def test_well_to_polygons():

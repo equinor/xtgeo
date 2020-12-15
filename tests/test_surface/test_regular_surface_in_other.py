@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 
 import xtgeo
@@ -17,8 +15,10 @@ if not xtg.testsetup():
 # Do tests
 # =============================================================================
 
-SURF1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
-POLY1 = "../xtgeo-testdata/polygons/reek/1/closedpoly1.pol"
+TPATH = xtg.testpathobj
+
+SURF1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+POLY1 = TPATH / "polygons/reek/1/closedpoly1.pol"
 
 
 def test_operations_inside_outside_polygon_generic():

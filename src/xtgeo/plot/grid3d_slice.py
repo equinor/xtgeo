@@ -1,6 +1,5 @@
 """Module for 3D Grid slice plots, using matplotlib."""
 
-from __future__ import print_function, division, absolute_import
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon

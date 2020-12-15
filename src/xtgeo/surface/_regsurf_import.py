@@ -5,6 +5,7 @@ import json
 import numpy as np
 import numpy.ma as ma
 from struct import unpack
+import h5py
 
 from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
 import xtgeo
@@ -565,6 +566,32 @@ def import_xtgregsurf(self, mfile, values=True):
     if values:
         self.values = np.ma.masked_equal(
             vals.reshape(self.ncol, self.nrow), self._undef
+        )
+    else:
+        self._values = None
+
+    self._metadata.required = self
+
+
+def import_hdf5_regsurf(self, mfile, values=True):
+    """Importing h5/hdf5 storage."""
+    reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
+
+    with h5py.File(mfile.name, "r") as h5h:
+        val = h5h["RegularSurface/values"]
+        invalues = val[:]
+
+        jmeta = h5h["RegularSurface/metadata"][()]
+        meta = json.loads(jmeta)
+
+        req = meta["_required_"]
+
+    for myattr in reqattrs:
+        setattr(self, "_" + myattr, req[myattr])
+
+    if values:
+        self.values = np.ma.masked_equal(
+            invalues.reshape(self.ncol, self.nrow), self._undef
         )
     else:
         self._values = None

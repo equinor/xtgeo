@@ -16,6 +16,7 @@ from ._grid3d import Grid3D
 
 from . import _grid_hybrid
 from . import _grid_import
+from . import _grid_import_xtgcpgeom
 from . import _grid_export
 from . import _grid_refine
 from . import _grid_etc1
@@ -215,7 +216,6 @@ class Grid(Grid3D):
         else:
             # make a simple empty box grid (from version 2.13)
             self.create_box((self._ncol, self._nrow, self._nlay))
-            self._xtgformat = 2
 
         self._metadata.required = self
         logger.info("Ran __init__ for %s", repr(self))
@@ -574,6 +574,116 @@ class Grid(Grid3D):
         )
         self._tmp = {}
 
+    def to_file(self, gfile, fformat="roff"):
+        """Export grid geometry to file, various vendor formats.
+
+        Args:
+            gfile (str): Name of output file
+            fformat (str): File format; roff/roff_binary/roff_ascii/
+                grdecl/bgrdecl/egrid.
+
+        Raises:
+            OSError: Directory does not exist
+
+        Example::
+
+            xg.to_file("myfile.roff")
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+
+        gfile.check_folder(raiseerror=OSError)
+
+        if fformat in ("roff", "roff_binary", "roff_bin", "roffbin"):
+            _grid_export.export_roff(self, gfile.name, 0)
+        elif fformat in ("roff_ascii", "roff_asc", "roffasc"):
+            _grid_export.export_roff(self, gfile.name, 1)
+        elif fformat == "grdecl":
+            _grid_export.export_grdecl(self, gfile.name, 1)
+        elif fformat == "bgrdecl":
+            _grid_export.export_grdecl(self, gfile.name, 0)
+        elif fformat == "egrid":
+            _grid_export.export_egrid(self, gfile.name)
+        else:
+            raise SystemExit("Invalid file format")
+
+    def to_h5(self, gfile, compression=None, chunks=False, subformat=841):
+        """Export grid geometry to HDF5 storage format (experimental!).
+
+        Args:
+            gfile (str): Name of output file
+            compression (str): Compression method. None/'lzf'/'blosc'
+            chunks (bool or..): chunks settings
+            subformat (int): Format of output arryas in terms of bytes. E.g. 844 means
+                8 byte for COORD, 4 byte for ZCORNS, 4 byte for ACTNUM.
+
+        Raises:
+            OSError: Directory does not exist
+
+        Returns:
+            gfile (pathlib.Path): Used file object, or None if memory stream
+
+        Example::
+
+            xg.to_h5("myfile_grid.h5")
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        gfile.check_folder(raiseerror=OSError)
+
+        _grid_export.export_hdf5_cpgeom(
+            self, gfile, compression=compression, chunks=chunks, subformat=subformat
+        )
+
+        return gfile.file
+
+    def to_xtgf(self, gfile, subformat=841):
+        """Export grid geometry to xtgeo native binary file format (experimental!).
+
+        Args:
+            gfile (str): Name of output file
+            subformat (int): Format of output arryas in terms of bytes. E.g. 844 means
+                8 byte for COORD, 4 byte for ZCORNS, 4 byte for ACTNUM.
+
+        Raises:
+            OSError: Directory does not exist
+
+        Returns:
+            gfile (pathlib.Path): Used pathlib.Path file object, or None if
+                memory stream
+
+        Example::
+
+            xg.to_xtg("myfile_grid.xtgf")
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        gfile.check_folder(raiseerror=OSError)
+
+        _grid_export.export_xtgcpgeom(self, gfile, subformat=subformat)
+
+        return gfile.file
+
+    def to_roxar(
+        self, project, gname, realisation=0, info=False, method="cpg"
+    ):  # pragma: no cover
+        """Export (upload) a grid from XTGeo to RMS via Roxar API.
+
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
+
+        Args:
+            project (str or roxar._project): Inside RMS use the magic 'project',
+                else use path to RMS project, or a project reference
+            gname (str): Name of grid in RMS
+            realisation (int): Realisation umber, default 0
+            info (bool): TBD
+            method (str): Save approach
+
+        """
+        _grid_roxapi.export_grid_roxapi(
+            self, project, gname, realisation, info=info, method=method
+        )
+
     def from_file(
         self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
     ):
@@ -625,40 +735,47 @@ class Grid(Grid3D):
         self._metadata.required = self
         return obj
 
-    def to_file(self, gfile, fformat="roff"):
-        """Export grid geometry to file.
+    def from_h5(self, gfile, ijkrange=None, zerobased=False):
+        """Import grid geometry from HDF5 file (experimental!).
 
         Args:
             gfile (str): Name of output file
-            fformat (str): File format; roff/roff_binary/roff_ascii/
-                grdecl/bgrdecl/egrid.
+            ijkrange (list-like): Partial read, e.g. (1, 20, 1, 30, 1, 3) as
+                (i1, i2, j1, j2, k1, k2). Numbering scheme depends on `zerobased`,
+                where default is `eclipse-like` i.e. first cell is 1. Numbering
+                is inclusive for both ends. If ijkrange exceeds original range,
+                an Exception is raised. Using existing boundaries can be defaulted
+                by "min" and "max", e.g. (1, 20, 5, 10, "min", "max")
+            zerobased (bool): If True index in ijkrange is zero based.
 
         Raises:
-            OSError: Directory does not exist
+            ValueError: The ijkrange spesification exceeds boundaries.
+            ValueError: The ijkrange list must have 6 elements
 
         Example::
 
-            xg.to_file("myfile.roff")
+            xg.from_h5("myfile_grid.h5", ijkrange=(1, 10, 10, 15, 1, 4))
         """
-        gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
-        gfile.check_folder(raiseerror=OSError)
+        _grid_import_xtgcpgeom.import_hdf5_cpgeom(
+            self, gfile, ijkrange=ijkrange, zerobased=zerobased
+        )
 
-        if fformat in ("roff", "roff_binary", "roff_bin", "roffbin"):
-            _grid_export.export_roff(self, gfile.name, 0)
-        elif fformat in ("roff_ascii", "roff_asc", "roffasc"):
-            _grid_export.export_roff(self, gfile.name, 1)
-        elif fformat == "grdecl":
-            _grid_export.export_grdecl(self, gfile.name, 1)
-        elif fformat == "bgrdecl":
-            _grid_export.export_grdecl(self, gfile.name, 0)
-        elif fformat == "egrid":
-            _grid_export.export_egrid(self, gfile.name)
-        elif fformat == "xtgcpgeom":
-            # experimental
-            _grid_export.export_xtgcpgeom(self, gfile.name)
-        else:
-            raise SystemExit("Invalid file format")
+    def from_xtgf(self, gfile, mmap=False):
+        """Import grid geometry from native xtgeo file format (experimental!).
+
+        Args:
+            gfile (str): Name of output file
+            mmap (bool): If true, reading with memory mapping is active
+
+        Example::
+
+            xg.from_xtgf("myfile_grid.xtg")
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+
+        _grid_import_xtgcpgeom.import_xtgcpgeom(self, gfile, mmap)
 
     def from_roxar(
         self, projectname, gname, realisation=0, dimensions_only=False, info=False
@@ -684,29 +801,6 @@ class Grid(Grid3D):
         )
         self._tmp = {}
         self._metadata.required = self
-
-    def to_roxar(
-        self, project, gname, realisation=0, info=False, method="cpg"
-    ):  # pragma: no cover
-        """Export (upload) a grid from XTGeo to RMS via Roxar API.
-
-        Note:
-            When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
-            will not be saved until the user do an explicit project save action.
-
-        Args:
-            project (str or roxar._project): Inside RMS use the magic 'project',
-                else use path to RMS project, or a project reference        Arguments:
-            gname (str): Name of grid in RMS
-            realisation (int): Realisation umber, default 0
-            info (bool): TBD
-            method (str): Save approach
-
-        """
-        _grid_roxapi.export_grid_roxapi(
-            self, project, gname, realisation, info=info, method=method
-        )
 
     # ==================================================================================
     # Various public methods
@@ -737,6 +831,13 @@ class Grid(Grid3D):
         """Describe an instance by printing to stdout."""
         logger.info("Print a description...")
 
+        dsc = XTGDescription()
+        dsc.title("Description of Grid instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
+        dsc.txt("Number of active cells", self.nactive)
+
         if details:
             geom = self.get_geometrics(cellcenter=True, return_dict=True)
 
@@ -759,20 +860,15 @@ class Grid(Grid3D):
             for prp in ("avg_dx", "avg_dy", "avg_dz", "avg_rotation"):
                 prp4.append("{:7.4f}".format(geox[prp]))
 
-        dsc = XTGDescription()
-        dsc.title("Description of Grid instance")
-        dsc.txt("Object ID", id(self))
-        dsc.txt("File source", self._filesrc)
-        dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
-        dsc.txt("Number of active cells", self.nactive)
-        if details:
             dsc.txt("For active cells, using cell centers:")
             dsc.txt("Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:", *prp1)
             dsc.txt("Avg DX, Avg DY, Avg DZ, Avg rotation:", *prp2)
             dsc.txt("For all cells, using cell corners:")
             dsc.txt("Xmin, Xmax, Ymin, Ymax, Zmin, Zmax:", *prp3)
             dsc.txt("Avg DX, Avg DY, Avg DZ, Avg rotation:", *prp4)
+
         dsc.txt("Attached grid props objects (names)", self.propnames)
+
         if details:
             dsc.txt("Attached grid props objects (id)", self.props)
         if self.subgrids:

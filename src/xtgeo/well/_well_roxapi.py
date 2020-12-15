@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI"""
 
-from __future__ import print_function, absolute_import
+
 from collections import OrderedDict
 
 import numpy as np

@@ -13,19 +13,20 @@ if not xtg.testsetup():
     raise SystemExit
 
 td = xtg.tmpdir
+TPATH = xtg.testpathobj
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
-rpath1 = "../xtgeo-testdata/surfaces/reek"
-rpath2 = "../xtgeo-testdata/3dgrids/reek"
+RPATH1 = TPATH / "surfaces/reek"
+RPATH2 = TPATH / "3dgrids/reek"
 
-rtop1 = ojn(rpath1, "1/topreek_rota.gri")
-rgrd1 = ojn(rpath2, "REEK.EGRID")
-rprop1 = ojn(rpath2, "REEK.INIT")
-rgrd2 = ojn(rpath2, "reek_sim_grid.roff")
-rprop2 = ojn(rpath2, "reek_sim_zone.roff")
+RTOP1 = RPATH1 / "1/topreek_rota.gri"
+RGRD1 = RPATH2, "REEK.EGRID"
+RPROP1 = RPATH2, "REEK.INIT"
+RGRD2 = RPATH2, "reek_sim_grid.roff"
+RPROP2 = RPATH2, "reek_sim_zone.roff"
 
 
 @tsetup.plotskipifroxar
@@ -33,14 +34,14 @@ rprop2 = ojn(rpath2, "reek_sim_zone.roff")
 def test_get_surface_from_grd3d_porosity():
     """Sample a surface from a 3D grid"""
 
-    surf = xtgeo.surface.RegularSurface(rtop1)
+    surf = xtgeo.surface.RegularSurface(RTOP1)
     print(surf.values.min(), surf.values.max())
-    grd = xtgeo.grid3d.Grid(rgrd1, fformat="egrid")
+    grd = xtgeo.grid3d.Grid(RGRD1, fformat="egrid")
     surf.values = 1700
     zsurf = surf.copy()
     surfr = surf.copy()
     surf2 = surf.copy()
-    phi = xtgeo.grid3d.GridProperty(rprop1, fformat="init", name="PORO", grid=grd)
+    phi = xtgeo.grid3d.GridProperty(RPROP1, fformat="init", name="PORO", grid=grd)
 
     # slice grd3d
     surf.slice_grid3d(grd, phi)
@@ -71,10 +72,10 @@ def test_get_surface_from_grd3d_porosity():
 def test_get_surface_from_grd3d_zones():
     """Sample a surface from a 3D grid, using zones"""
 
-    surf = xtgeo.surface.RegularSurface(rtop1)
-    grd = xtgeo.grid3d.Grid(rgrd2, fformat="roff")
+    surf = xtgeo.surface.RegularSurface(RTOP1)
+    grd = xtgeo.grid3d.Grid(RGRD2, fformat="roff")
     surf.values = 1700
-    zone = xtgeo.grid3d.GridProperty(rprop2, fformat="roff", name="Zone", grid=grd)
+    zone = xtgeo.grid3d.GridProperty(RPROP2, fformat="roff", name="Zone", grid=grd)
 
     # slice grd3d
     surf.slice_grid3d(grd, zone, sbuffer=1)
@@ -88,7 +89,7 @@ def test_surface_from_grd3d_layer():
     """Create a surface from a 3D grid layer"""
 
     surf = xtgeo.surface.RegularSurface()
-    grd = xtgeo.grid3d.Grid(rgrd2, fformat="roff")
+    grd = xtgeo.grid3d.Grid(RGRD2, fformat="roff")
     # grd = xtgeo.Grid("../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg.roff")
     surf.from_grid3d(grd)
 

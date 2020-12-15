@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Operations along a well, private module"""
 
-from __future__ import print_function, absolute_import
+
 import copy
 from distutils.version import StrictVersion
 

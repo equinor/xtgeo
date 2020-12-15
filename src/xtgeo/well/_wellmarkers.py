@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Well marker data; private module"""
 
-from __future__ import print_function, absolute_import
 
 from collections import OrderedDict
 import numpy as np

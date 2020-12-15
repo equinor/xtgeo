@@ -1,6 +1,5 @@
 """Module for map plots of surfaces, using matplotlib."""
 
-from __future__ import print_function, division, absolute_import
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplp

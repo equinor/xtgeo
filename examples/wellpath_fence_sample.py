@@ -1,7 +1,10 @@
+from pathlib import Path
 import xtgeo
 import matplotlib.pyplot as plt
 
-x = xtgeo.Polygons("../xtgeo-testdata/polygons/etc/well16.pol")
+TPATH = Path("../xtgeo-testdata")
+
+x = xtgeo.Polygons(TPATH / "polygons/etc/well16.pol")
 y = x.copy()
 
 y.rescale(10)

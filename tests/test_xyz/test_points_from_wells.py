@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import glob
 from xtgeo.xyz import Points
@@ -14,11 +13,11 @@ if not xtg.testsetup():
     raise SystemExit
 
 td = xtg.tmpdir
-testpath = xtg.testpath
+TPATH = xtg.testpathobj
 
-wfiles1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5]*.w"
-wfiles3 = "../xtgeo-testdata/wells/reek/1/XP_*.w"
+wfiles1 = TPATH / "wells/reek/1/OP_1.w"
+wfiles2 = TPATH / "wells/reek/1/OP_[1-5]*.w"
+wfiles3 = TPATH / "wells/reek/1/XP_*.w"
 
 
 def test_get_zone_tops_one_well():

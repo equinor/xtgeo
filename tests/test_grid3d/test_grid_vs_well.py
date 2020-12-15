@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 from os.path import join
 
@@ -18,22 +17,23 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
+TPATH = xtg.testpathobj
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
-GRIDFILE = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
-ZONEFILE = "../xtgeo-testdata/3dgrids/reek/reek_sim_zone.roff"
-WELL1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-WELL2 = "../xtgeo-testdata/wells/reek/1/OP_2.w"
-WELL3 = "../xtgeo-testdata/wells/reek/1/OP_3.w"
-WELL4 = "../xtgeo-testdata/wells/reek/1/OP_4.w"
-WELL5 = "../xtgeo-testdata/wells/reek/1/OP_5.w"
-WELL6 = "../xtgeo-testdata/wells/reek/1/WI_1.w"
-WELL7 = "../xtgeo-testdata/wells/reek/1/WI_3.w"
+GRIDFILE = TPATH / "3dgrids/reek/reek_sim_grid.roff"
+ZONEFILE = TPATH / "3dgrids/reek/reek_sim_zone.roff"
+WELL1 = TPATH / "wells/reek/1/OP_1.w"
+WELL2 = TPATH / "wells/reek/1/OP_2.w"
+WELL3 = TPATH / "wells/reek/1/OP_3.w"
+WELL4 = TPATH / "wells/reek/1/OP_4.w"
+WELL5 = TPATH / "wells/reek/1/OP_5.w"
+WELL6 = TPATH / "wells/reek/1/WI_1.w"
+WELL7 = TPATH / "wells/reek/1/WI_3.w"
 
-PWELL1 = "../xtgeo-testdata/wells/reek/1/OP1_perf.w"
+PWELL1 = TPATH / "wells/reek/1/OP1_perf.w"
 
 MATCHD1 = {
     "WI_1": 75,

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """Module for a 3D grid property."""
 
-from __future__ import print_function, absolute_import
 
 import copy
 import numbers
 import hashlib
+import pathlib
 from types import FunctionType
 
 import numpy as np
@@ -223,7 +223,7 @@ class GridProperty(Grid3D):
                     self, args[0], linkgeometry=linkgeometry
                 )
 
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 _gridprop_etc.gridproperty_fromfile(self, args[0], **kwargs)
 
         else:

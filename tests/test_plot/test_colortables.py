@@ -10,7 +10,7 @@ if not xtg.testsetup():
     sys.exit(-9)
 
 td = xtg.tmpdir
-testpath = xtg.testpath
+TPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests
@@ -20,7 +20,7 @@ testpath = xtg.testpath
 def test_readfromfile():
     """Read color table from RMS file."""
 
-    cfile = "../xtgeo-testdata/etc/colortables/colfacies.txt"
+    cfile = TPATH / "etc/colortables/colfacies.txt"
 
     ctable = ct.colorsfromfile(cfile)
 

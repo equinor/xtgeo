@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Regular surface vs Grid3D"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import numpy as np
 

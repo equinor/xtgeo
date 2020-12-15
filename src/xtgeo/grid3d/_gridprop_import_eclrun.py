@@ -1,6 +1,5 @@
 """Importing grid props from ECL runs, e,g, INIT, UNRST"""
 
-from __future__ import print_function, absolute_import
 
 import numpy as np
 import numpy.ma as ma

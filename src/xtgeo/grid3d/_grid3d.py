@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Abstract baseclass for Grid and GridProperties, not to be used by itself"""
 
-from __future__ import print_function, absolute_import
 
 import abc
 import six

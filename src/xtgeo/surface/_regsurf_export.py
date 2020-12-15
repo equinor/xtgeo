@@ -6,6 +6,8 @@
 import struct
 import json
 import numpy as np
+import h5py
+import hdf5plugin
 
 import xtgeo
 from xtgeo.common.constants import UNDEF_MAP_IRAPB, UNDEF_MAP_IRAPA
@@ -113,11 +115,8 @@ def export_irap_binary(self, mfile, engine="cxtgeo"):
 
     Note that mfile can also a be a BytesIO instance
     """
-
     if mfile.memstream or engine == "python":
         _export_irap_binary_python(self, mfile)
-    elif engine == "cxtgeotest":
-        _export_irap_binary_cxtgeotest(self, mfile)
     else:
         _export_irap_binary_cxtgeo(self, mfile)
 
@@ -128,7 +127,6 @@ def _export_irap_binary_python(self, mfile):
     This is approx 2-5 times slower than the C method, but may a be more robust in cases
     with BytesIO.
     """
-
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
 
     ap = struct.pack(
@@ -181,7 +179,7 @@ def _export_irap_binary_python(self, mfile):
 
 
 def _export_irap_binary_cxtgeo(self, mfile):
-    """Export to Irap binary using C backend
+    """Export to Irap binary using C backend.
 
     Args:
         mfile (_XTGeoFile): xtgeo file instance
@@ -189,7 +187,6 @@ def _export_irap_binary_cxtgeo(self, mfile):
     Raises:
         RuntimeError: Export to Irap Binary went wrong...
     """
-
     vals = self.get_values1d(fill_value=UNDEF_MAP_IRAPB, order="F")
     ier = _cxtgeo.surf_export_irap_bin(
         mfile.get_cfhandle(),
@@ -206,30 +203,6 @@ def _export_irap_binary_cxtgeo(self, mfile):
 
     if ier != 0:
         mfile.cfclose(strict=False)  # strict False as C routine may have closed
-        raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
-
-    mfile.cfclose()
-
-
-def _export_irap_binary_cxtgeotest(self, mfile):
-    """Export to Irap RMS binary format. TEST SWIG FLAT"""
-
-    print(self.values.mask.astype(np.uint8).mean())
-
-    ier = _cxtgeo.surf_export_irap_bin_test(
-        mfile.get_cfhandle(),
-        self._ncol,
-        self._nrow,
-        self._xori,
-        self._yori,
-        self._xinc,
-        self._yflip * self._yinc,
-        self._rotation,
-        self.values.data,
-        self.values.mask,
-    )
-
-    if ier != 0:
         raise RuntimeError("Export to Irap Binary went wrong, code is {}".format(ier))
 
     mfile.cfclose()
@@ -478,3 +451,35 @@ def export_xtgregsurf(self, mfile):
         fout.write(jmeta)
 
     logger.info("Export to xtgregsurf format... done!")
+
+
+def export_hdf5_regsurf(self, mfile, compression="lzf", dtype="float32"):
+    """Export to experimental hdf5 format."""
+    logger.info("Export to hdf5 format...")
+
+    self.metadata.required = self
+
+    meta = self.metadata.get_metadata()
+    jmeta = json.dumps(meta).encode()
+
+    if compression and compression == "blosc":
+        compression = hdf5plugin.Blosc(
+            cname="blosclz", clevel=9, shuffle=hdf5plugin.Blosc.SHUFFLE
+        )
+
+    if dtype not in ("float32", "float64", np.float32, np.float64):
+        raise ValueError("Wrong dtype input, must be 'float32' or 'float64'")
+
+    with h5py.File(mfile.name, "w") as fh5:
+        fh5.create_dataset("provider", data="xtgeo")
+        fh5.create_dataset("format-idcode", data=1101)
+        grp = fh5.create_group("RegularSurface")
+        grp.create_dataset(
+            "values",
+            data=np.ma.filled(self.values, fill_value=self.undef).astype(dtype),
+            compression=compression,
+            chunks=True,
+        )
+        grp.create_dataset("metadata", data=jmeta)
+
+    logger.info("Export to hdf5 format... done!")

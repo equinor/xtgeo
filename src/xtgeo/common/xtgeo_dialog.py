@@ -33,8 +33,6 @@ In addition there are other classes:
 
 """
 
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 import os
 import sys
@@ -46,6 +44,7 @@ import inspect
 import logging
 import warnings
 import timeit
+import pathlib
 
 import six
 
@@ -225,7 +224,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     """
 
     def __init__(self):
-
+        """Initializing XTGeoDialog."""
         self._callclass = None
         self._caller = None
         self._rootlogger = logging.getLogger()
@@ -236,7 +235,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         self._loggingname = ""
         self._test_env = True
         self._tmpdir = "TMP"
-        self._testpath = None
+        self._testpath = "../xtgeo-testdata"
         self._bigtests = None
         self._showrtwarnings = True
 
@@ -254,24 +253,37 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         if loggingformat is not None:
             self._lformatlevel = int(loggingformat)
 
+        if "XTG_TESTPATH" in os.environ:
+            self._testpath = os.environ.get("XTG_TESTPATH")
+
     @property
     def bigtests(self):
-        """Return bigtests status"""
+        """Return bigtests status."""
         return self._bigtests
 
     @property
     def bigtest(self):
-        """Return bigtest(s) status (alt)"""
+        """Return bigtest status."""
         return self._bigtests
 
     @property
     def tmpdir(self):
-        """Return tmpdir value"""
+        """Return tmpdir value."""
         return self._tmpdir
 
     @property
+    def tmpdirobj(self):
+        """Return tmpdir value as pathlib.Path object."""
+        return pathlib.Path(self._tmpdir)
+
+    @property
+    def testpathobj(self):
+        """Return testpath as pathlib.Path object."""
+        return pathlib.Path(self._testpath)
+
+    @property
     def testpath(self):
-        """Return or setting up testpath"""
+        """Return or setting up testpath."""
         return self._testpath
 
     @testpath.setter

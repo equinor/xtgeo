@@ -11,14 +11,16 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 xtg = xtgeo.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
+TPATH = xtg.testpathobj
+
 # =============================================================================
 # Do tests of simple calc routines
 # =============================================================================
-TESTGRID = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
-TESTGRID_TBULK = "../xtgeo-testdata/3dgrids/etc/gridqc1_totbulk.roff"
-TESTGRID2 = "../xtgeo-testdata/3dgrids/etc/banal6.roff"
-TESTGRID3 = "../xtgeo-testdata/3dgrids/etc/box.roff"
-TESTGRID4 = "../xtgeo-testdata/3dgrids/etc/twocell.roff"
+TESTGRID = TPATH / "3dgrids/etc/gridqc1.roff"
+TESTGRID_TBULK = TPATH / "3dgrids/etc/gridqc1_totbulk.roff"
+TESTGRID2 = TPATH / "3dgrids/etc/banal6.roff"
+TESTGRID3 = TPATH / "3dgrids/etc/box.roff"
+TESTGRID4 = TPATH / "3dgrids/etc/twocell.roff"
 
 
 def test_vectorinfo2():

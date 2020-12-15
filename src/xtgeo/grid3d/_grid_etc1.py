@@ -39,6 +39,26 @@ def create_box(
     flip=1,
 ):
     """Create a shoebox grid from cubi'sh spec."""
+    arglist = locals()
+    del arglist["self"]
+
+    if self._xtgformat == 1:
+        _create_box_v1(self, **arglist)
+
+    else:
+        _create_box_v2(self, **arglist)
+
+
+def _create_box_v1(
+    self,
+    dimension=(10, 12, 6),
+    origin=(10.0, 20.0, 1000.0),
+    oricenter=False,
+    increment=(100, 150, 5),
+    rotation=30.0,
+    flip=1,
+):
+    """Create a shoebox grid from cubi'sh spec, legacy xtgformat=1."""
     self._ncol, self._nrow, self._nlay = dimension
     ncoord, nzcorn, ntot = self.vectordimensions
 
@@ -76,6 +96,59 @@ def create_box(
     self._roxindexer = None
     self._tmp = {}
     self._xtgformat = 1
+
+
+def _create_box_v2(
+    self,
+    dimension=(10, 12, 6),
+    origin=(10.0, 20.0, 1000.0),
+    oricenter=False,
+    increment=(100, 150, 5),
+    rotation=30.0,
+    flip=1,
+):
+    """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
+    self._ncol, self._nrow, self._nlay = dimension
+
+    ncol, nrow, nlay = dimension
+    nncol = ncol + 1
+    nnrow = nrow + 1
+    nnlay = nlay + 1
+
+    self._coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
+    self._zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
+    self._actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+
+    option = 0
+    if oricenter:
+        option = 1
+
+    _cxtgeo.grdcp3d_from_cube(
+        ncol,
+        nrow,
+        nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        origin[0],
+        origin[1],
+        origin[2],
+        increment[0],
+        increment[1],
+        increment[2],
+        rotation,
+        flip,
+        option,
+    )
+
+    self._actnum_indices = None
+    self._filesrc = None
+    self._props = None
+    self._subgrids = None
+    self._roxgrid = None
+    self._roxindexer = None
+    self._tmp = {}
+    self._xtgformat = 2
 
 
 def get_dz(self, name="dZ", flip=True, asmasked=True):
@@ -1381,7 +1454,7 @@ def estimate_flip(self):
 
 def _convert_xtgformat2to1(self):
     """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1."""
-    if self._xtgformat == 1 or self._coordsv is None:
+    if self._xtgformat == 1:
         logger.info("No conversion, format is already xtgformat == 1 or unset")
         return
 

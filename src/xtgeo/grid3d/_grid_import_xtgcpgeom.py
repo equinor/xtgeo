@@ -1,10 +1,11 @@
 # coding: utf-8
-"""Private module, Grid Import private functions for ROFF format."""
+"""Private module, Grid Import private functions for xtgeo based formats."""
 
 from collections import OrderedDict
 from struct import unpack
 import json
 
+import h5py
 import numpy as np
 
 import xtgeo.common.sys as xsys
@@ -15,7 +16,7 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_xtgcpgeom(self, mfile):
+def import_xtgcpgeom(self, mfile, mmap):
     """Using pure python for experimental grid geometry import."""
     #
     offset = 36
@@ -48,15 +49,15 @@ def import_xtgcpgeom(self, mfile):
 
     # read numpy arrays from file
     coordsv = xsys.npfromfile(
-        mfile.file, dtype=dtype_coordsv, count=ncoord, offset=offset
+        mfile.file, dtype=dtype_coordsv, count=ncoord, offset=offset, mmap=mmap
     )
     newoffset = offset + ncoord * coordfmt
     zcornsv = xsys.npfromfile(
-        mfile.file, dtype=dtype_zcornsv, count=nzcorn, offset=newoffset
+        mfile.file, dtype=dtype_zcornsv, count=nzcorn, offset=newoffset, mmap=mmap
     )
     newoffset += nzcorn * zcornfmt
     actnumsv = xsys.npfromfile(
-        mfile.file, dtype=dtype_actnumv, count=nactnum, offset=newoffset
+        mfile.file, dtype=dtype_actnumv, count=nactnum, offset=newoffset, mmap=mmap
     )
     newoffset += nactnum * actnumfmt
 
@@ -104,3 +105,114 @@ def import_xtgcpgeom(self, mfile):
             setattr(self, "_" + myattr, req[myattr])
 
     self._metadata.required = self
+
+
+def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
+    """Experimental grid geometry import using hdf5."""
+    #
+    reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
+    ncol2 = nrow2 = nlay2 = 1
+    with h5py.File(mfile.name, "r") as h5h:
+
+        jmeta = h5h["CornerPointGeometry/metadata"][()].decode()
+        meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+
+        req = meta["_required_"]
+
+        if ijkrange is not None:
+            incoord, inzcorn, inactnum, ncol2, nrow2, nlay2 = _partial_read(
+                h5h, req, ijkrange, zerobased
+            )
+        else:
+            incoord = h5h["CornerPointGeometry/coord"][:, :, :]
+            inzcorn = h5h["CornerPointGeometry/zcorn"][:, :, :, :]
+            inactnum = h5h["CornerPointGeometry/actnum"][:, :, :]
+
+    for myattr in reqattrs:
+        if "subgrid" in myattr:
+            self.set_subgrids(reqattrs["subgrids"])
+        else:
+            setattr(self, "_" + myattr, req[myattr])
+
+    if ijkrange:
+        self._ncol = ncol2
+        self._nrow = nrow2
+        self._nlay = nlay2
+
+    self._coordsv = incoord.astype("float64")
+    self._zcornsv = inzcorn.astype("float32")
+    self._actnumsv = inactnum.astype("float32")
+
+    if self._xshift != 0.0 or self._yshift != 0.0 or self._zshift != 0.0:
+        self._coordsv[:, :, 0::3] += self._xshift
+        self._coordsv[:, :, 1::3] += self._yshift
+        self._coordsv[:, :, 2::3] += self._zshift
+        self._zcornsv += self._zshift
+        self._xshift = 0.0
+        self._yshift = 0.0
+        self._zshift = 0.0
+
+    self._metadata.required = self
+
+
+def _partial_read(h5h, req, ijkrange, zerobased):
+    """Read a partial IJ range."""
+    ncol = req["ncol"]
+    nrow = req["nrow"]
+    nlay = req["nlay"]
+
+    if len(ijkrange) != 6:
+        raise ValueError("The ijkrange list must have 6 elements")
+
+    i1, i2, j1, j2, k1, k2 = ijkrange
+
+    if i1 == "min":
+        i1 = 0 if zerobased else 1
+    if j1 == "min":
+        j1 = 0 if zerobased else 1
+    if k1 == "min":
+        k1 = 0 if zerobased else 1
+
+    if i2 == "max":
+        i2 = ncol - 1 if zerobased else ncol
+    if j2 == "max":
+        j2 = nrow - 1 if zerobased else nrow
+    if k2 == "max":
+        k2 = nlay - 1 if zerobased else nlay
+
+    if not zerobased:
+        i1 -= 1
+        i2 -= 1
+        j1 -= 1
+        j2 -= 1
+        k1 -= 1
+        k2 -= 1
+
+    ncol2 = i2 - i1 + 1
+    nrow2 = j2 - j1 + 1
+    nlay2 = k2 - k1 + 1
+
+    if (
+        ncol2 < 1
+        or ncol2 > ncol
+        or nrow2 < 1
+        or nrow2 > nrow
+        or nlay2 < 1
+        or nlay2 > nlay
+    ):
+        raise ValueError("The ijkrange spesification exceeds boundaries.")
+
+    nncol2 = ncol2 + 1
+    nnrow2 = nrow2 + 1
+    nnlay2 = nrow2 + 1
+
+    dset = h5h["CornerPointGeometry/coord"]
+    cv = dset[i1 : i1 + nncol2, j1 : j1 + nnrow2, :]
+
+    dset = h5h["CornerPointGeometry/zcorn"]
+    zv = dset[i1 : i1 + nncol2, j1 : j1 + nnrow2, k1 : k1 + nnlay2, :]
+
+    dset = h5h["CornerPointGeometry/actnum"]
+    av = dset[i1 : i1 + ncol2, j1 : j1 + nrow2, k1 : k1 + nlay2]
+
+    return cv, zv, av, ncol2, nrow2, nlay2

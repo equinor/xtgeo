@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import pytest
 from os.path import join as ojn
@@ -20,20 +19,20 @@ if not xtg.testsetup():
     raise SystemExit
 
 td = xtg.tmpdir
+TPATH = xtg.testpathobj
 
+RPATH1 = TPATH / "surfaces/reek"
+RPATH3 = TPATH / "surfaces/etc"
+RPATH2 = TPATH / "cubes/reek"
+RPATH4 = TPATH / "cubes/etc"
+RTOP1 = RPATH1 / "1/topreek_rota.gri"
+RBAS1 = RPATH1 / "1/basereek_rota.gri"
+RBAS2 = RPATH1 / "1/basereek_rota_v2.gri"
+RSGY1 = RPATH2 / "syntseis_20000101_seismic_depth_stack.segy"
 
-RPATH1 = "../xtgeo-testdata/surfaces/reek"
-RPATH3 = "../xtgeo-testdata/surfaces/etc"
-RPATH2 = "../xtgeo-testdata/cubes/reek"
-RPATH4 = "../xtgeo-testdata/cubes/etc"
-RTOP1 = ojn(RPATH1, "1/topreek_rota.gri")
-RBAS1 = ojn(RPATH1, "1/basereek_rota.gri")
-RBAS2 = ojn(RPATH1, "1/basereek_rota_v2.gri")
-RSGY1 = ojn(RPATH2, "syntseis_20000101_seismic_depth_stack.segy")
-
-XTOP1 = ojn(RPATH3, "ib_test_horizon2.gri")
-XCUB1 = ojn(RPATH4, "ib_test_cube2.segy")
-XCUB2 = ojn(RPATH4, "cube_w_deadtraces.segy")
+XTOP1 = RPATH3 / "ib_test_horizon2.gri"
+XCUB1 = RPATH4 / "ib_test_cube2.segy"
+XCUB2 = RPATH4 / "cube_w_deadtraces.segy"
 
 
 @pytest.fixture()

@@ -937,7 +937,7 @@ class RegularSurface(object):
                 Path instance or IOBytestream instance. An alias can be e.g.
                 "%md5sum%" or "%fmu-v1%" with string or Path() input.
             fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
-                storm_binary/ijxyz/petromod. Default is irap_binary.
+                storm_binary/ijxyz/petromod/xtg*/hdf5. Default is irap_binary.
             pmd_dataunits (tuple of int): A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ).
             engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
@@ -969,7 +969,6 @@ class RegularSurface(object):
         """
         logger.info("Export RegularSurface to file or memstream...")
         mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
-        print(mfile.file)
 
         if not mfile.memstream:
             mfile.check_folder(raiseerror=OSError)
@@ -1006,6 +1005,48 @@ class RegularSurface(object):
         if mfile.memstream:
             return None
         return mfile.file
+
+    def to_h5(self, mfile, compression="lzf"):
+        """Experimental! export a surface (map) with metadata to to a HDF5 file.
+
+        This implementation is currently experimental and only recommended for testing.
+        The file extension shall be '.h5'. TODO: check routine
+
+        Args:
+            mfile (Union[str, pathlib.Path, io.Bytestream]): Name of file,
+                Path instance or IOBytestream instance. An alias can be e.g.
+                "%md5sum%" or "%fmu-v1%" with string or Path() input.
+            compression (str): ...
+
+        Returns:
+            ofile (pathlib.Path): The actual file instance, or None if io.Bytestream
+        """
+        # developing, in prep and experimental!
+        mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
+
+        if not mfile.memstream:
+            mfile.check_folder(raiseerror=OSError)
+
+        _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
+        return mfile.file
+
+    def from_h5(self, mfile):
+        """Experimental! import a surface (map) with metadata from a HDF5 file.
+
+        This implementation is currently experimental and only recommended for testing.
+        The file extension shall be '.h5'.
+
+        Args:
+            mfile (Union[str, pathlib.Path, io.Bytestream]): Name of file,
+                Path instance or IOBytestream instance.
+
+        Returns:
+            None
+        """
+        # developing, in prep and experimental!
+        mfile = xtgeosys._XTGeoFile(mfile, mode="rb", obj=self)
+
+        _regsurf_import.import_hdf5_regsurf(self, mfile)
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0

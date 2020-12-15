@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 from os.path import join
 
@@ -18,7 +17,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 td = xtg.tmpdir
-testpath = xtg.testpath
+testpath = xtg.testpathobj
 
 # =========================================================================
 # Do tests

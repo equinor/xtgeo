@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import glob
 from os.path import join
@@ -22,22 +21,22 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-WFILE = join(TESTPATH, "wells/reek/1/OP_1.w")
-WFILE_HOLES = join(TESTPATH, "wells/reek/1/OP_1_zholes.w")
-WFILES = join(TESTPATH, "wells/reek/1/*")
+WFILE = join(TPATH, "wells/reek/1/OP_1.w")
+WFILE_HOLES = join(TPATH, "wells/reek/1/OP_1_zholes.w")
+WFILES = join(TPATH, "wells/reek/1/*")
 
 
-WELL1 = join(TESTPATH, "wells/battle/1/WELL09.rmswell")
-WELL2 = join(TESTPATH, "wells/battle/1/WELL36.rmswell")
-WELL3 = join(TESTPATH, "wells/battle/1/WELL10.rmswell")
+WELL1 = join(TPATH, "wells/battle/1/WELL09.rmswell")
+WELL2 = join(TPATH, "wells/battle/1/WELL36.rmswell")
+WELL3 = join(TPATH, "wells/battle/1/WELL10.rmswell")
 
-WELL4 = join(TESTPATH, "wells/drogon/1/55_33-1.rmswell")
+WELL4 = join(TPATH, "wells/drogon/1/55_33-1.rmswell")
 
 
 @pytest.fixture(name="loadwell1")

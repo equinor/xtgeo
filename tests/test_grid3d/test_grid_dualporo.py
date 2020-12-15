@@ -1,6 +1,5 @@
 # coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import os
 import numpy as np
@@ -16,11 +15,11 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
-DUALFILE1 = "../xtgeo-testdata/3dgrids/etc/TEST_DP"
-DUALFILE2 = "../xtgeo-testdata/3dgrids/etc/TEST_DPDK"  # dual poro + dual perm oil/water
-DUALFILE3 = "../xtgeo-testdata/3dgrids/etc/TEST2_DPDK_WG"  # aa but gas/water
+DUALFILE1 = TPATH / "3dgrids/etc/TEST_DP"
+DUALFILE2 = TPATH / "3dgrids/etc/TEST_DPDK"  # dual poro + dual perm oil/water
+DUALFILE3 = TPATH / "3dgrids/etc/TEST2_DPDK_WG"  # aa but gas/water
 
 # =============================================================================
 # Do tests

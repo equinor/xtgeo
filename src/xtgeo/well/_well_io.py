@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Well input and ouput, private module"""
 
-from __future__ import print_function, absolute_import
 
 import numpy as np
 import pandas as pd

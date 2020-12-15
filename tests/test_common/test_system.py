@@ -9,16 +9,19 @@ import tests.test_common.test_xtg as tsetup
 import xtgeo
 import xtgeo.common.sys as xsys
 
+xtg = xtgeo.XTGeoDialog()
+
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
     TRAVIS = True
 
+TPATH = xtg.testpathobj
 
-TESTFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-TESTFOLDER = "../xtgeo-testdata/3dgrids/reek"
-TESTNOEXISTFILE = "../xtgeo-testdata/3dgrids/reek/NOSUCH.EGRID"
-TESTNOEXISTFOLDER = "../xtgeo-testdata/3dgrids/noreek/NOSUCH.EGRID"
-TESTSURF = "../xtgeo-testdata/surfaces/reek/1/topupperreek.gri"
+TESTFILE = TPATH / "3dgrids/reek/REEK.EGRID"
+TESTFOLDER = TPATH / "3dgrids/reek"
+TESTNOEXISTFILE = TPATH / "3dgrids/reek/NOSUCH.EGRID"
+TESTNOEXISTFOLDER = TPATH / "3dgrids/noreek/NOSUCH.EGRID"
+TESTSURF = TPATH / "surfaces/reek/1/topupperreek.gri"
 
 
 def test_generic_hash():

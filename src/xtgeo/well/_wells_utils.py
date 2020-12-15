@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utilities for Wells class"""
 
-from __future__ import print_function, absolute_import, division
 
 import logging
 import numpy as np

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Private import and export routines for XYZ stuff."""
 
-from __future__ import print_function, absolute_import
 
 import numpy as np
 import pandas as pd

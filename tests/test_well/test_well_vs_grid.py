@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 from os.path import join
 
@@ -20,7 +19,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 EQGULLTESTPATH = "../xtgeo-testdata-equinor/data"
 
 # =========================================================================
@@ -28,9 +27,9 @@ EQGULLTESTPATH = "../xtgeo-testdata-equinor/data"
 # pylint: disable=redefined-outer-name
 # =========================================================================
 
-WFILE = join(TESTPATH, "wells/reek/1/OP_1.w")
-GFILE = join(TESTPATH, "3dgrids/reek/REEK.EGRID")
-PFILE = join(TESTPATH, "3dgrids/reek/REEK.INIT")
+WFILE = join(TPATH, "wells/reek/1/OP_1.w")
+GFILE = join(TPATH, "3dgrids/reek/REEK.EGRID")
+PFILE = join(TPATH, "3dgrids/reek/REEK.INIT")
 
 GGULLFILE = join(EQGULLTESTPATH, "3dgrids/gfb/gullfaks_gg.roff")
 WGULLFILE = join(EQGULLTESTPATH, "wells/gfb/1/34_10-A-42.w")
