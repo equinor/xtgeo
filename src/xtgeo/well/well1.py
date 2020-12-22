@@ -208,13 +208,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return myrp
 
     def __str__(self):
-        """Magic method."""
         # user friendly print
         return self.describe(flush=False)
 
-    def __del__(self):
-        """Magic method."""
-        logger.info("Deleting %s instance %s", self.__class__.__name__, id(self))
+    # def __del__(self):
+    #     """Magic method."""
+    #     logger.info("Deleting %s instance %s", self.__class__.__name__, id(self))
 
     # Consistency checking. As well log names are columns in the Pandas DF,
     # there are additional attributes per log that have to be "in sync"
@@ -265,7 +264,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return self._xpos
 
     @property
-    def ypos(self):
+    def ypos(self) -> float:
         """Returns well header Y position (read only)."""
         return self._ypos
 

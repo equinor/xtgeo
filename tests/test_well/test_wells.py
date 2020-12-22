@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-import glob
 from os.path import join as ojoin
-
+import glob
 import pytest
 
 from xtgeo.well import Well
@@ -25,7 +24,7 @@ TPATH = xtg.testpathobj
 # Do tests
 # =========================================================================
 
-WFILES = TPATH / "wells/battle/1/*.rmswell"
+WFILES = str(TPATH) + "/wells/battle/1/*.rmswell"
 
 
 @pytest.fixture(name="loadwells1")
@@ -34,6 +33,7 @@ def fixture_loadwells1():
     wlist = []
     for wfile in glob.glob(WFILES):
         wlist.append(Well(wfile))
+
     return wlist
 
 

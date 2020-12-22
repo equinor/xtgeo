@@ -18,16 +18,15 @@ logger = xtg.basiclogger(__name__)
 
 TPATH = xtg.testpathobj
 
-wfiles1 = TPATH / "wells/reek/1/OP_1.w"
-wfiles2 = TPATH / "wells/reek/1/OP_[1-5].w"
+WFILES1 = TPATH / "wells/reek/1/OP_1.w"
+WFILES2 = TPATH / "wells/reek/1/OP_[1-5].w"
 
 
 @tsetup.skipifroxar
 def test_get_polygons_one_well():
-    """Import a well and get the polygon segments"""
-
+    """Import a well and get the polygon segments."""
     wlist = []
-    for w in glob.glob(wfiles1):
+    for w in glob.glob(str(WFILES1)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -43,10 +42,9 @@ def test_get_polygons_one_well():
 
 @tsetup.skipifroxar
 def test_get_polygons_many_wells():
-    """Import some wells and get the polygon segments"""
-
+    """Import some wells and get the polygon segments."""
     wlist = []
-    for w in glob.glob(wfiles2):
+    for w in glob.glob(str(WFILES2)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         print("Imported well {}".format(w))
 

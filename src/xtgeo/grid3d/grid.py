@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
 
-import sys
+import pathlib
 import json
 import warnings
+from pathlib import Path
 from collections import OrderedDict
+from typing import Union, Optional, List, Tuple
 
 import numpy as np
 import numpy.ma as ma
@@ -12,7 +14,7 @@ import numpy.ma as ma
 import xtgeo
 
 from xtgeo.common import XTGDescription
-from ._grid3d import Grid3D
+from ._grid3d import _Grid3D
 
 from . import _grid_hybrid
 from . import _grid_import
@@ -126,39 +128,62 @@ def grid_from_roxar(
 # PORO -->  POROM and POROF
 # --------------------------------------------------------------------------------------
 
+IJKRange = Tuple[int, int, int, int, int, int]
 
-class Grid(Grid3D):
-    """Class for a 3D grid geometry (corner point geometry).
+
+class Grid(_Grid3D):
+    """Class for a 3D Grid Geometry.
 
     I.e. the geometric grid cells and the active cell indicator.
 
     The grid geometry class instances are normally created when
-    importing a grid from file, as it is (currently) too complex to create from
+    importing a grid from file, as it is normally too complex to create from
     scratch.
 
-    See also the :class:`.GridProperty` and the
-    :class:`.GridProperties` classes.
-
-    Example::
-
-        import xtgeo
-
-        geo = xtgeo.Grid()
-        geo.from_file("myfile.roff")
-
-        # alternative (make instance directly from file):
-        geo = xtgeo.Grid("myfile.roff")
-
-        # or use
-        geo = xtgeo.grid_from_file("myfile.roff")
+    See Also:
+        The :class:`.GridProperty` and the :class:`.GridProperties` classes.
 
     """
 
     # pylint: disable=too-many-public-methods
+    def __init__(
+        self,
+        gfile: Optional[Union[str, Path]] = None,
+        fformat: Optional[str] = "guess",
+        initprops: Optional[List[str]] = None,
+        restartprops: Optional[List[str]] = None,
+        restartdates: Optional[List[Union[int, str]]] = None,
+        ijkrange: Optional[IJKRange] = None,
+        zerobased: Optional[bool] = False,
+    ):
+        """Instantating.
 
-    def __init__(self, *args, **kwargs):
-        """The __init__ method."""
-        super(Grid, self).__init__(*args, **kwargs)
+        Args:
+            gfile: Input file, or leave blank.
+            fformat: File format input, default is ``guess`` based on file extension.
+                Other options are ...
+            initprops: List of initial properties (Eclipse based ``eclrun`` import).
+            restartprops: List of restart properties (Eclipse based ``eclrun`` import).
+            restartdates: List of restart dates as YYYYMMDD (Eclipse based ``eclrun``
+                import).
+            ijkrange: Tuple of 6 integers defining (imin, imax, jmin, jmax, kmin, kmax)
+                when import from ``hdf`` files. Ranges are implicit at both ends.
+            zerobased: Whether `ijkrange` uses 1 (default) or 0 as base.
+
+        Example::
+
+            import xtgeo
+
+            geo = xtgeo.Grid()
+            geo.from_file("myfile.roff")
+
+            # alternative (make instance directly from file):
+            geo = xtgeo.Grid("myfile.roff")
+
+            # or use
+            geo = xtgeo.grid_from_file("myfile.roff")
+        """
+        super(Grid, self).__init__()
 
         self._coordsv = None  # numpy array to coords vector
         self._zcornsv = None  # numpy array to zcorns vector
@@ -200,14 +225,12 @@ class Grid(Grid3D):
         # See _grid3d_fence for instance; note! reset this if any kind of grid change!
         self._tmp = {}
 
-        if len(args) == 1:
-            # make an instance directly through import of a file
-            fformat = kwargs.get("fformat", "guess")
-            initprops = kwargs.get("initprops", None)
-            restartprops = kwargs.get("restartprops", None)
-            restartdates = kwargs.get("restartdates", None)
+        if gfile is not None:
+            gfile = pathlib.Path(gfile)
+            if gfile.suffix == "hdf":
+                self.from_hdf(gfile, ijkrange, zerobased)
             self.from_file(
-                args[0],
+                gfile,
                 fformat=fformat,
                 initprops=initprops,
                 restartprops=restartprops,
@@ -232,11 +255,7 @@ class Grid(Grid3D):
 
     def __str__(self):
         """The __str__ method for user friendly print."""
-        # user friendly print
-        if sys.version_info[0] < 3:
-            logger.debug("Invoke __str__ for grid")
-        else:
-            logger.debug("Invoke __str__ for grid", stack_info=True)
+        logger.debug("Invoke __str__ for grid", stack_info=True)
 
         return self.describe(flush=False)
 
@@ -246,7 +265,7 @@ class Grid(Grid3D):
 
     @property
     def metadata(self):
-        """Return metadata object instance of type MetaDataRegularSurface."""
+        """obj: Return or set metadata instance of type MetaDataCPGeometry."""
         return self._metadata
 
     @metadata.setter
@@ -309,7 +328,7 @@ class Grid(Grid3D):
 
     @property
     def ijk_handedness(self):
-        """IJK handedness for grids, "right" or "left".
+        """str: IJK handedness for grids, "right" or "left".
 
         For a non-rotated grid with K increasing with depth, 'left' is corner in
         lower-left, while 'right' is origin in upper-left corner.
@@ -408,7 +427,7 @@ class Grid(Grid3D):
 
     @property
     def actnum_indices(self):
-        """The 1D ndarray which holds indices for active cells C order (read only).
+        """:obj:np.ndrarray: Indices (1D array) for active cells (read only).
 
         In dual poro/perm systems, this will be the active indices for the
         matrix cells and/or fracture cells (i.e. actnum >= 1).
@@ -606,25 +625,31 @@ class Grid(Grid3D):
         else:
             raise SystemExit("Invalid file format")
 
-    def to_h5(self, gfile, compression=None, chunks=False, subformat=841):
+    def to_hdf(
+        self,
+        gfile: Union[str, Path],
+        compression: Optional[str] = None,
+        chunks: Optional[bool] = False,
+        subformat: Optional[int] = 844,
+    ) -> Path:
         """Export grid geometry to HDF5 storage format (experimental!).
 
         Args:
-            gfile (str): Name of output file
-            compression (str): Compression method. None/'lzf'/'blosc'
-            chunks (bool or..): chunks settings
-            subformat (int): Format of output arryas in terms of bytes. E.g. 844 means
+            gfile: Name of output file
+            compression: Compression method, such as "blosc" or "lzf"
+            chunks: chunks settings
+            subformat: Format of output arrays in terms of bytes. E.g. 844 means
                 8 byte for COORD, 4 byte for ZCORNS, 4 byte for ACTNUM.
 
         Raises:
             OSError: Directory does not exist
 
         Returns:
-            gfile (pathlib.Path): Used file object, or None if memory stream
+            Used file object, or None if memory stream
 
-        Example::
+        Example:
 
-            xg.to_h5("myfile_grid.h5")
+            >>> xg.to_hdf("myfile_grid.h5")
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
         gfile.check_folder(raiseerror=OSError)
@@ -635,12 +660,16 @@ class Grid(Grid3D):
 
         return gfile.file
 
-    def to_xtgf(self, gfile, subformat=841):
+    def to_xtgf(
+        self,
+        gfile: Union[str, Path],
+        subformat: Optional[int] = 844,
+    ) -> Path:
         """Export grid geometry to xtgeo native binary file format (experimental!).
 
         Args:
-            gfile (str): Name of output file
-            subformat (int): Format of output arryas in terms of bytes. E.g. 844 means
+            gfile: Name of output file
+            subformat: Format of output arryas in terms of bytes. E.g. 844 means
                 8 byte for COORD, 4 byte for ZCORNS, 4 byte for ACTNUM.
 
         Raises:
@@ -735,7 +764,7 @@ class Grid(Grid3D):
         self._metadata.required = self
         return obj
 
-    def from_h5(self, gfile, ijkrange=None, zerobased=False):
+    def from_hdf(self, gfile, ijkrange=None, zerobased=False):
         """Import grid geometry from HDF5 file (experimental!).
 
         Args:
@@ -754,7 +783,7 @@ class Grid(Grid3D):
 
         Example::
 
-            xg.from_h5("myfile_grid.h5", ijkrange=(1, 10, 10, 15, 1, 4))
+            xg.from_hdf("myfile_grid.h5", ijkrange=(1, 10, 10, 15, 1, 4))
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 

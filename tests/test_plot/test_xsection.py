@@ -91,7 +91,7 @@ def test_simple_plot():
 
     assert 222 in clist
     assert "xtgeo" in cfil1
-    assert "colfacies" in cfil2
+    assert "colfacies" in str(cfil2)
 
     myplot.set_colortable(cfil1, colorlist=None)
 
@@ -144,7 +144,7 @@ def test_simple_plot_with_seismics():
 
     assert 222 in clist
     assert "xtgeo" in cfil1
-    assert "colfacies" in cfil2
+    assert "colfacies" in str(cfil2)
 
     myplot.set_colortable(cfil1, colorlist=None)
 
@@ -232,7 +232,7 @@ def test_reek1():
     myfield.from_file(USEFILE3, fformat="xyz")
 
     mywells = []
-    wnames = glob.glob(USEFILE4)
+    wnames = glob.glob(str(USEFILE4))
     wnames.sort()
     for wname in wnames:
         mywell = xtgeo.Well(wname)
@@ -241,7 +241,7 @@ def test_reek1():
     logger.info("Wells are read...")
 
     mysurfaces = []
-    surfnames = glob.glob(USEFILE5)
+    surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
         mysurf = xtgeo.RegularSurface()
@@ -250,7 +250,7 @@ def test_reek1():
 
     # Troll lobes
     mylobes = []
-    surfnames = glob.glob(USEFILE5)
+    surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
         mysurf = xtgeo.RegularSurface()

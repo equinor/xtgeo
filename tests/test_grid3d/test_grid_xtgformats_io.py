@@ -77,7 +77,7 @@ def test_grid_hdf5_export_import_many():
         fname = "$md5sum.h5"
         fname = TMPD / fname
         grd1._zcornsv += 1.0
-        fna = grd1.to_h5(fname, compression=None)
+        fna = grd1.to_hdf(fname, compression=None)
         fnames.append(fna)
 
     logger.info("Timing export %s gridgeom with h5: %s", nrange, xtg.timer(t1))
@@ -88,7 +88,7 @@ def test_grid_hdf5_export_import_many():
     grd2 = None
     for fname in fnames:
         grd2 = xtgeo.Grid()
-        grd2.from_h5(fname, ijkrange=(1, 20, 1, 20, "min", "max"))
+        grd2.from_hdf(fname, ijkrange=(1, 20, 1, 20, "min", "max"))
 
     print(f"Import {nrange} grids using hdf5 ikjrange: ", xtg.timer(t1))
     assert grd2.ncol == 20
@@ -98,7 +98,7 @@ def test_grid_hdf5_export_import_many():
     grd2 = None
     for fname in fnames:
         grd2 = xtgeo.Grid()
-        grd2.from_h5(fname)
+        grd2.from_hdf(fname)
 
     print(f"Import {nrange} grids using hdf5 full: ", xtg.timer(t1))
 
@@ -120,7 +120,7 @@ def test_grid_hdf5_export_import_many_blosc_compression():
         fname = "$md5sum.compressed_h5"
         fname = TMPD / fname
         grd1._zcornsv += 1.0
-        fna = grd1.to_h5(fname, compression="blosc")
+        fna = grd1.to_hdf(fname, compression="blosc")
         fnames.append(fna)
 
     logger.info("Timing export %s gridgeom with h5: %s", nrange, xtg.timer(t1))
@@ -131,7 +131,7 @@ def test_grid_hdf5_export_import_many_blosc_compression():
     grd2 = None
     for fname in fnames:
         grd2 = xtgeo.Grid()
-        grd2.from_h5(fname, ijkrange=(1, 20, 1, 20, "min", "max"))
+        grd2.from_hdf(fname, ijkrange=(1, 20, 1, 20, "min", "max"))
 
     print(f"Import {nrange} grids using hdf5 ikjrange: ", xtg.timer(t1))
     assert grd2.ncol == 20
@@ -141,7 +141,7 @@ def test_grid_hdf5_export_import_many_blosc_compression():
     grd2 = None
     for fname in fnames:
         grd2 = xtgeo.Grid()
-        grd2.from_h5(fname)
+        grd2.from_hdf(fname)
 
     print(f"Import {nrange} grids using hdf5 full: ", xtg.timer(t1))
 
@@ -180,22 +180,22 @@ def test_grid_export_import_bigcase():
 
     t1 = xtg.timer()
     fname = TMPD / "bigbox.h5"
-    grid1.to_h5(fname)
+    grid1.to_hdf(fname)
     print("Export bigcase using hdf5: ", xtg.timer(t1))
 
     t1 = xtg.timer()
     fname = TMPD / "bigbox.h5"
-    grid2.from_h5(fname)
+    grid2.from_hdf(fname)
     print("Import bigcase using h5: ", xtg.timer(t1))
 
     t1 = xtg.timer()
     fname = TMPD / "bigboxc.h5"
-    grid1.to_h5(fname, compression="blosc")
+    grid1.to_hdf(fname, compression="blosc")
     print("Export bigcase using hdf5 with compression: ", xtg.timer(t1))
 
     t1 = xtg.timer()
     fname = TMPD / "bigboxc.h5"
-    grid2.from_h5(fname)
+    grid2.from_hdf(fname)
     print("Import bigcase using h5 with compression: ", xtg.timer(t1))
 
 

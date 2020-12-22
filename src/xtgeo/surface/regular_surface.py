@@ -1006,7 +1006,7 @@ class RegularSurface(object):
             return None
         return mfile.file
 
-    def to_h5(self, mfile, compression="lzf"):
+    def to_hdf(self, mfile, compression="lzf"):
         """Experimental! export a surface (map) with metadata to to a HDF5 file.
 
         This implementation is currently experimental and only recommended for testing.
@@ -1030,7 +1030,7 @@ class RegularSurface(object):
         _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
         return mfile.file
 
-    def from_h5(self, mfile):
+    def from_hdf(self, mfile):
         """Experimental! import a surface (map) with metadata from a HDF5 file.
 
         This implementation is currently experimental and only recommended for testing.

@@ -7,7 +7,7 @@ import numpy as np
 
 from xtgeo.common import XTGeoDialog
 
-from ._grid3d import Grid3D
+from ._grid3d import _Grid3D
 
 xtg = XTGeoDialog()
 
@@ -26,7 +26,7 @@ def dataframe(
 
     proplist = OrderedDict()
 
-    if grid is not None and isinstance(grid, Grid3D):
+    if grid is not None and isinstance(grid, _Grid3D):
         master = grid
         logger.info("Grid is present")
     else:

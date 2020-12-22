@@ -29,13 +29,15 @@ DUALFILE3 = TPATH / "3dgrids/etc/TEST2_DPDK_WG"  # aa but gas/water
 def test_import_dualporo_grid():
     """Test grid with flag for dual porosity setup, oil water"""
 
-    grd = xtgeo.grid_from_file(DUALFILE1 + ".EGRID")
+    grd = xtgeo.grid_from_file(DUALFILE1.with_suffix(".EGRID"))
 
     assert grd.dualporo is True
     assert grd.dualperm is False
     assert grd.dimensions == (5, 3, 1)
 
-    poro = xtgeo.gridproperty_from_file(DUALFILE1 + ".INIT", grid=grd, name="PORO")
+    poro = xtgeo.gridproperty_from_file(
+        DUALFILE1.with_suffix(".INIT"), grid=grd, name="PORO"
+    )
 
     tsetup.assert_almostequal(poro.values[0, 0, 0], 0.1, 0.001)
     tsetup.assert_almostequal(poro.values[1, 1, 0], 0.16, 0.001)
@@ -44,7 +46,7 @@ def test_import_dualporo_grid():
     poro.describe()
 
     poro = xtgeo.gridproperty_from_file(
-        DUALFILE1 + ".INIT", grid=grd, name="PORO", fracture=True
+        DUALFILE1.with_suffix(".INIT"), grid=grd, name="PORO", fracture=True
     )
 
     tsetup.assert_almostequal(poro.values[0, 0, 0], 0.25, 0.001)
@@ -53,13 +55,21 @@ def test_import_dualporo_grid():
     poro.describe()
 
     swat = xtgeo.gridproperty_from_file(
-        DUALFILE1 + ".UNRST", grid=grd, name="SWAT", date=20170121, fracture=False
+        DUALFILE1.with_suffix(".UNRST"),
+        grid=grd,
+        name="SWAT",
+        date=20170121,
+        fracture=False,
     )
     swat.describe()
     tsetup.assert_almostequal(swat.values[0, 0, 0], 0.60924, 0.001)
 
     swat = xtgeo.gridproperty_from_file(
-        DUALFILE1 + ".UNRST", grid=grd, name="SWAT", date=20170121, fracture=True
+        DUALFILE1.with_suffix(".UNRST"),
+        grid=grd,
+        name="SWAT",
+        date=20170121,
+        fracture=True,
     )
     swat.describe()
     tsetup.assert_almostequal(swat.values[0, 0, 0], 0.989687, 0.001)
@@ -69,14 +79,16 @@ def test_import_dualporo_grid():
 def test_import_dualperm_grid():
     """Test grid with flag for dual perm setup (hence dual poro also) water/oil"""
 
-    grd = xtgeo.grid_from_file(DUALFILE2 + ".EGRID")
+    grd = xtgeo.grid_from_file(DUALFILE2.with_suffix(".EGRID"))
 
     assert grd.dualporo is True
     assert grd.dualperm is True
     assert grd.dimensions == (5, 3, 1)
     grd.to_file(os.path.join(TMPDIR, "dual2.roff"))
 
-    poro = xtgeo.gridproperty_from_file(DUALFILE2 + ".INIT", grid=grd, name="PORO")
+    poro = xtgeo.gridproperty_from_file(
+        DUALFILE2.with_suffix(".INIT"), grid=grd, name="PORO"
+    )
     print(poro.values)
 
     tsetup.assert_almostequal(poro.values[0, 0, 0], 0.1, 0.001)
@@ -86,7 +98,7 @@ def test_import_dualperm_grid():
     poro.describe()
 
     poro = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".INIT", grid=grd, name="PORO", fracture=True
+        DUALFILE2.with_suffix(".INIT"), grid=grd, name="PORO", fracture=True
     )
 
     tsetup.assert_almostequal(poro.values[0, 0, 0], 0.25, 0.001)
@@ -95,7 +107,9 @@ def test_import_dualperm_grid():
     assert poro.name == "POROF"
     poro.describe()
 
-    perm = xtgeo.gridproperty_from_file(DUALFILE2 + ".INIT", grid=grd, name="PERMX")
+    perm = xtgeo.gridproperty_from_file(
+        DUALFILE2.with_suffix(".INIT"), grid=grd, name="PERMX"
+    )
 
     tsetup.assert_almostequal(perm.values[0, 0, 0], 100.0, 0.001)
     tsetup.assert_almostequal(perm.values[3, 0, 0], 100.0, 0.001)
@@ -105,7 +119,7 @@ def test_import_dualperm_grid():
     perm.to_file(os.path.join(TMPDIR, "dual2_permxm.roff"))
 
     perm = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".INIT", grid=grd, name="PERMX", fracture=True
+        DUALFILE2.with_suffix(".INIT"), grid=grd, name="PERMX", fracture=True
     )
 
     tsetup.assert_almostequal(perm.values[0, 0, 0], 100.0, 0.001)
@@ -116,12 +130,20 @@ def test_import_dualperm_grid():
     perm.to_file(os.path.join(TMPDIR, "dual2_permxf.roff"))
 
     swat = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SWAT", date=20170121, fracture=False
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SWAT",
+        date=20170121,
+        fracture=False,
     )
     tsetup.assert_almostequal(swat.values[3, 0, 0], 0.55475, 0.001)
 
     soil = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SOIL", date=20170121, fracture=False
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SOIL",
+        date=20170121,
+        fracture=False,
     )
     print(soil.values)
     tsetup.assert_almostequal(soil.values[3, 0, 0], 0.44525, 0.001)
@@ -131,7 +153,11 @@ def test_import_dualperm_grid():
     tsetup.assert_almostequal(soil.values[4, 2, 0], 0.41271, 0.001)
 
     swat = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SWAT", date=20170121, fracture=True
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SWAT",
+        date=20170121,
+        fracture=True,
     )
     swat.describe()
     assert "SWATF" in swat.name
@@ -143,18 +169,26 @@ def test_import_dualperm_grid():
 def test_import_dualperm_grid_soil():
     """Test grid with flag for dual perm setup (will also mean dual poro also)"""
 
-    grd = xtgeo.grid_from_file(DUALFILE2 + ".EGRID")
+    grd = xtgeo.grid_from_file(DUALFILE2.with_suffix(".EGRID"))
     grd._dualactnum.to_file("TMP/dualact.roff")
 
     sgas = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SGAS", date=20170121, fracture=False
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SGAS",
+        date=20170121,
+        fracture=False,
     )
     sgas.describe()
     tsetup.assert_almostequal(sgas.values[3, 0, 0], 0.0, 0.001)
     tsetup.assert_almostequal(sgas.values[0, 1, 0], 0.0, 0.001)
 
     soil = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SOIL", date=20170121, fracture=False
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SOIL",
+        date=20170121,
+        fracture=False,
     )
     soil.describe()
     tsetup.assert_almostequal(soil.values[3, 0, 0], 0.44525, 0.001)
@@ -164,13 +198,21 @@ def test_import_dualperm_grid_soil():
     # fractures
 
     sgas = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SGAS", date=20170121, fracture=True
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SGAS",
+        date=20170121,
+        fracture=True,
     )
     tsetup.assert_almostequal(sgas.values[3, 0, 0], 0.0, 0.001)
     tsetup.assert_almostequal(sgas.values[0, 1, 0], 0.0, 0.0001)
 
     soil = xtgeo.gridproperty_from_file(
-        DUALFILE2 + ".UNRST", grid=grd, name="SOIL", date=20170121, fracture=True
+        DUALFILE2.with_suffix(".UNRST"),
+        grid=grd,
+        name="SOIL",
+        date=20170121,
+        fracture=True,
     )
     tsetup.assert_almostequal(soil.values[3, 0, 0], 0.0, 0.001)
     tsetup.assert_almostequal(soil.values[0, 1, 0], 0.011741, 0.0001)
@@ -180,10 +222,14 @@ def test_import_dualperm_grid_soil():
 def test_import_dualperm_grid_sgas():
     """Test grid with flag for dual perm/poro setup gas/water"""
 
-    grd = xtgeo.grid_from_file(DUALFILE3 + ".EGRID")
+    grd = xtgeo.grid_from_file(DUALFILE3.with_suffix(".EGRID"))
 
     sgas = xtgeo.gridproperty_from_file(
-        DUALFILE3 + ".UNRST", grid=grd, name="SGAS", date=20170121, fracture=False
+        DUALFILE3.with_suffix(".UNRST"),
+        grid=grd,
+        name="SGAS",
+        date=20170121,
+        fracture=False,
     )
     sgas.describe()
     tsetup.assert_almostequal(sgas.values[3, 0, 0], 0.06639, 0.001)
@@ -192,7 +238,11 @@ def test_import_dualperm_grid_sgas():
     assert "SGASM in sgas.name"
 
     swat = xtgeo.gridproperty_from_file(
-        DUALFILE3 + ".UNRST", grid=grd, name="SWAT", date=20170121, fracture=False
+        DUALFILE3.with_suffix(".UNRST"),
+        grid=grd,
+        name="SWAT",
+        date=20170121,
+        fracture=False,
     )
     swat.describe()
     tsetup.assert_almostequal(swat.values[3, 0, 0], 0.93361, 0.001)
@@ -202,7 +252,11 @@ def test_import_dualperm_grid_sgas():
 
     # shall be not soil actually
     soil = xtgeo.gridproperty_from_file(
-        DUALFILE3 + ".UNRST", grid=grd, name="SOIL", date=20170121, fracture=False
+        DUALFILE3.with_suffix(".UNRST"),
+        grid=grd,
+        name="SOIL",
+        date=20170121,
+        fracture=False,
     )
     soil.describe()
     tsetup.assert_almostequal(soil.values[3, 0, 0], 0.0, 0.001)
@@ -212,7 +266,11 @@ def test_import_dualperm_grid_sgas():
     # fractures
 
     sgas = xtgeo.gridproperty_from_file(
-        DUALFILE3 + ".UNRST", grid=grd, name="SGAS", date=20170121, fracture=True
+        DUALFILE3.with_suffix(".UNRST"),
+        grid=grd,
+        name="SGAS",
+        date=20170121,
+        fracture=True,
     )
     sgas.describe()
     tsetup.assert_almostequal(sgas.values[3, 0, 0], 0.0, 0.001)
@@ -221,7 +279,11 @@ def test_import_dualperm_grid_sgas():
     assert "SGASF" in sgas.name
 
     swat = xtgeo.gridproperty_from_file(
-        DUALFILE3 + ".UNRST", grid=grd, name="SWAT", date=20170121, fracture=True
+        DUALFILE3.with_suffix(".UNRST"),
+        grid=grd,
+        name="SWAT",
+        date=20170121,
+        fracture=True,
     )
     swat.describe()
     tsetup.assert_almostequal(swat.values[3, 0, 0], 0.0, 0.001)
@@ -231,7 +293,11 @@ def test_import_dualperm_grid_sgas():
 
     # shall be not soil actually
     soil = xtgeo.gridproperty_from_file(
-        DUALFILE3 + ".UNRST", grid=grd, name="SOIL", date=20170121, fracture=True
+        DUALFILE3.with_suffix(".UNRST"),
+        grid=grd,
+        name="SOIL",
+        date=20170121,
+        fracture=True,
     )
     soil.describe()
     tsetup.assert_almostequal(soil.values[3, 0, 0], 0.0, 0.001)

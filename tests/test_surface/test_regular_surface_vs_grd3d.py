@@ -23,10 +23,10 @@ RPATH1 = TPATH / "surfaces/reek"
 RPATH2 = TPATH / "3dgrids/reek"
 
 RTOP1 = RPATH1 / "1/topreek_rota.gri"
-RGRD1 = RPATH2, "REEK.EGRID"
-RPROP1 = RPATH2, "REEK.INIT"
-RGRD2 = RPATH2, "reek_sim_grid.roff"
-RPROP2 = RPATH2, "reek_sim_zone.roff"
+RGRD1 = RPATH2 / "REEK.EGRID"
+RPROP1 = RPATH2 / "REEK.INIT"
+RGRD2 = RPATH2 / "reek_sim_grid.roff"
+RPROP2 = RPATH2 / "reek_sim_zone.roff"
 
 
 @tsetup.plotskipifroxar

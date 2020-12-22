@@ -62,7 +62,7 @@ def test_hdf5_export_import_many():
         fname = "$md5sum" + ".h5"
         fname = pathlib.Path(TMPD) / fname
         surf1.values += num
-        newname = surf1.to_h5(fname, compression="blosc")
+        newname = surf1.to_hdf(fname, compression="blosc")
         fnames.append(newname)
 
     print(f"Timing export {nrange} surfs with hdf5: ", xtg.timer(t1))
@@ -71,7 +71,7 @@ def test_hdf5_export_import_many():
     surf2 = xtgeo.RegularSurface()
     t1 = xtg.timer()
     for fname in fnames:
-        surf2.from_h5(fname)
+        surf2.from_hdf(fname)
 
     print(f"Timing import {nrange} surfs with hdf5: ", xtg.timer(t1))
 

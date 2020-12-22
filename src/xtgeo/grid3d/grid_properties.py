@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
-"""GridProperties class"""
+"""Module for Grid Properties."""
 
 
 import warnings
 import hashlib
+from typing import Optional
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common import XTGDescription
 
-from ._grid3d import Grid3D
+from ._grid3d import _Grid3D
 from .grid_property import GridProperty
 
 from . import _gridprops_io
@@ -37,25 +38,39 @@ logger = xtg.functionlogger(__name__)
 # --------------------------------------------------------------------------------------
 
 
-class GridProperties(Grid3D):
-    """Class for a collection of 3D grid props, belonging to the same grid.
+class GridProperties(_Grid3D):
+    """Class for a collection of 3D grid props, belonging to the same grid topology.
 
-    See also the :class:`GridProperty` class.
+    See Also:
+        The :class:`GridProperty` class.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(GridProperties, self).__init__(*args, **kwargs)
+    def __init__(
+        self,
+        ncol: Optional[int] = 4,
+        nrow: Optional[int] = 3,
+        nlay: Optional[int] = 5,
+    ):
+        """Instantiating.
 
-        self._ncol = kwargs.get("ncol", 5)
-        self._nrow = kwargs.get("nrow", 12)
-        self._nlay = kwargs.get("nlay", 2)
+        Args:
+            ncol: Number of columns
+            nrow: Number of rows
+            nlay: Number of layers
+
+        """
+        super(GridProperties, self).__init__()
+
+        self._ncol = ncol
+        self._nrow = nrow
+        self._nlay = nlay
 
         self._props = []  # list of GridProperty objects
         self._names = []  # list of GridProperty names
         self._dates = []  # list of dates (_after_ import) YYYYDDMM
         self._counter = 0  # Internal counter in __iter__ methods
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         myrp = (
             "{0.__class__.__name__} (id={1}) ncol={0._ncol!r}, "
             "nrow={0._nrow!r}, nlay={0._nlay!r}, "
@@ -64,29 +79,29 @@ class GridProperties(Grid3D):
         return myrp
 
     def __str__(self):
-        # user friendly print
+        """str: User friendly print."""
         return self.describe(flush=False)
 
     def __contains__(self, name):
-        """Emulate 'if "PORO" in props'"""
+        """bool: Emulate 'if "PORO" in props'."""
         prop = self.get_prop_by_name(name, raiseserror=False)
         if prop:
             return True
 
         return False
 
-    def __getitem__(self, name):
+    def __getitem__(self, name):  # noqa: D105
         prop = self.get_prop_by_name(name, raiseserror=False)
         if prop is None:
             raise KeyError(f"Key {name} does not exist")
 
         return prop
 
-    def __iter__(self):
+    def __iter__(self):  # noqa: D105
         self._counter = 0
         return self
 
-    def __next__(self):
+    def __next__(self):  # noqa: D105
         maxcounter = len(self._props)
         if self._counter < maxcounter:
             result = self._props[self._counter]
@@ -100,7 +115,7 @@ class GridProperties(Grid3D):
 
     @property
     def names(self):
-        """Returns or sets a list of property names
+        """Returns or sets a list of property names.
 
         Example::
 
@@ -114,7 +129,6 @@ class GridProperties(Grid3D):
             props.names = ""
 
         """
-
         return self._names
 
     @names.setter
@@ -189,8 +203,8 @@ class GridProperties(Grid3D):
 
         Note that the GridProperty instances will also be unique.
         """
-
         new = GridProperties()
+
         new._ncol = self._ncol
         new._nrow = self._nrow
         new._nlay = self._nlay
@@ -208,9 +222,9 @@ class GridProperties(Grid3D):
         return new
 
     def describe(self, flush=True):
-        """Describe an instance by printing to stdout"""
-
+        """Describe an instance by printing to stdout."""
         dsc = XTGDescription()
+
         dsc.title("Description of GridProperties instance")
         dsc.txt("Object ID", id(self))
         dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
@@ -226,7 +240,6 @@ class GridProperties(Grid3D):
 
         .. versionadded:: 2.10
         """
-
         mhash = hashlib.sha256()
 
         hashinput = ""
@@ -253,7 +266,6 @@ class GridProperties(Grid3D):
                 return None
 
         """
-
         for prop in self._props:
             logger.debug("Look for %s, actual is %s", name, prop.name)
             if prop.name == name:
@@ -266,9 +278,7 @@ class GridProperties(Grid3D):
             return None
 
     def append_props(self, proplist):
-        """Adds a list of GridProperty objects to the current
-        GridProperties instance."""
-
+        """Add a list of GridProperty objects to current GridProperties instance."""
         for prop in proplist:
             if isinstance(prop, GridProperty):
                 # an prop instance can only occur once
@@ -288,15 +298,14 @@ class GridProperties(Grid3D):
     def get_ijk(
         self, names=("IX", "JY", "KZ"), zerobased=False, asmasked=False, mask=None
     ):
-        """Returns 3 xtgeo.grid3d.GridProperty objects: I counter,
-        J counter, K counter.
+        """Returns 3 xtgeo.grid3d.GridProperty objects: I counter, J counter, K counter.
 
         Args:
             names: a 3 x tuple of names per property (default IX, JY, KZ).
-            mask: If True, then active cells only.
+            asmasked: If True, then active cells only.
+            mask: If True, then active cells only (deprecated).
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
-
         if mask is not None:
             asmasked = super(GridProperties, self)._evaluate_mask(mask)
 
@@ -325,7 +334,6 @@ class GridProperties(Grid3D):
         Returns:
             A GridProperty instance of ACTNUM, or None if no props present.
         """
-
         if mask is not None:
             asmasked = super(GridProperties, self)._evaluate_mask(mask)
 
@@ -387,7 +395,6 @@ class GridProperties(Grid3D):
 
         .. versionadded:: 2.13 Added strict key
         """
-
         pfile = xtgeo._XTGeoFile(pfile, mode="rb")
 
         # work on file extension
@@ -442,7 +449,7 @@ class GridProperties(Grid3D):
     def get_dataframe(
         self, activeonly=False, ijk=False, xyz=False, doubleformat=False, grid=None
     ):
-        """Returns a Pandas dataframe table for the properties
+        """Returns a Pandas dataframe table for the properties.
 
         Args:
             activeonly (bool): If True, return only active cells, NB!
@@ -469,7 +476,6 @@ class GridProperties(Grid3D):
             df = x.dataframe(activeonly=False, ijk=True, xyz=True, grid=grd)
 
         """
-
         dfr = _gridprops_etc.dataframe(
             self,
             activeonly=activeonly,
@@ -492,8 +498,7 @@ class GridProperties(Grid3D):
     def scan_keywords(
         pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False
     ):
-        """Quick scan of keywords in Eclipse binary restart/init/... file,
-        or ROFF binary files.
+        """Quick scan of keywords in Eclipse binary files, or ROFF binary files.
 
         For Eclipse files:
         Returns a list of tuples (or dataframe), e.g. ('PRESSURE',
@@ -525,7 +530,6 @@ class GridProperties(Grid3D):
             >>> dlist = props.scan_keywords('ECL.UNRST')
 
         """
-
         pfile = xtgeo._XTGeoFile(pfile)
 
         dlist = utils.scan_keywords(

@@ -12,7 +12,7 @@ import numpy as np
 
 import xtgeo
 
-from ._grid3d import Grid3D
+from ._grid3d import _Grid3D
 from . import _gridprop_etc
 from . import _gridprop_op1
 from . import _gridprop_import
@@ -108,7 +108,7 @@ def gridproperty_from_roxar(
 # ======================================================================================
 
 
-class GridProperty(Grid3D):
+class GridProperty(_Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
 
     An GridProperty instance may or may not 'belong' to a grid (geometry) object.
@@ -191,7 +191,7 @@ class GridProperty(Grid3D):
 
     def __init__(self, *args, **kwargs):
 
-        super(GridProperty, self).__init__(*args, **kwargs)
+        super(GridProperty, self).__init__()
 
         # instance attributes defaults:
         self._ncol = kwargs.get("ncol", 5)

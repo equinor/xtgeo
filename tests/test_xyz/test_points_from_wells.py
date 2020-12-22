@@ -15,16 +15,16 @@ if not xtg.testsetup():
 td = xtg.tmpdir
 TPATH = xtg.testpathobj
 
-wfiles1 = TPATH / "wells/reek/1/OP_1.w"
-wfiles2 = TPATH / "wells/reek/1/OP_[1-5]*.w"
-wfiles3 = TPATH / "wells/reek/1/XP_*.w"
+WFILES1 = TPATH / "wells/reek/1/OP_1.w"
+WFILES2 = TPATH / "wells/reek/1/OP_[1-5]*.w"
+WFILES3 = TPATH / "wells/reek/1/XP_*.w"
 
 
 def test_get_zone_tops_one_well():
     """Import a well and get the zone tops"""
 
     wlist = []
-    for w in glob.glob(wfiles1):
+    for w in glob.glob(str(WFILES1)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -51,7 +51,7 @@ def test_get_zone_tops_one_well_w_undef():
     """Import a well and get the zone tops, include undef transition"""
 
     wlist = []
-    for w in glob.glob(wfiles1):
+    for w in glob.glob(str(WFILES1)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -80,7 +80,7 @@ def test_get_zone_tops_some_wells():
     """Import some well and get the zone tops"""
 
     wlist = []
-    for w in glob.glob(wfiles2):
+    for w in glob.glob(str(WFILES2)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -109,7 +109,7 @@ def test_get_zone_thickness_one_well():
     """Import a well and get the zone thicknesses"""
 
     wlist = []
-    for w in glob.glob(wfiles1):
+    for w in glob.glob(str(WFILES1)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -125,7 +125,7 @@ def test_get_zone_thickness_some_wells():
     """Import some wells and get the zone thicknesses"""
 
     wlist = []
-    for w in glob.glob(wfiles2):
+    for w in glob.glob(str(WFILES2)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -158,7 +158,7 @@ def test_get_faciesfraction_some_wells():
     """
 
     wlist = []
-    for w in sorted(glob.glob(wfiles2)):
+    for w in sorted(glob.glob(str(WFILES2))):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
