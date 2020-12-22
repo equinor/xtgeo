@@ -43,5 +43,6 @@ requires = [
          'Sphinx',
          'sphinx-rtd-theme',
          'sphinxcontrib-apidoc',
-         'm2r',
+         'sphinx-autodoc-typehints',
+         'recommonmark',
          ]

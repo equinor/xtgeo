@@ -12,4 +12,5 @@ requires = [
          'Sphinx',
          'sphinx-rtd-theme',
          'sphinxcontrib-apidoc',
+         'sphinx-autodoc-typehints',
          ]
