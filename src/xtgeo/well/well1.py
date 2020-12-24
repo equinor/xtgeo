@@ -4,6 +4,8 @@
 import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
+from typing import Union
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -490,12 +492,43 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             _well_io.export_rms_ascii(self, wfile.name)
 
         elif fformat == "hdf5":
-            with pd.HDFStore(wfile, "a", complevel=9, complib="zlib") as store:
-                logger.info("export to HDF5 %s", wfile.name)
-                store[self._wname] = self._df
-                meta = dict()
-                meta["name"] = self._wname
-                store.get_storer(self._wname).attrs["metadata"] = meta
+            self.to_hdf(wfile)
+
+    def to_hdf(
+        self,
+        wfile: Union[str, Path],
+    ) -> Path:
+        """Export well to HDF based file.
+
+        Args:
+            wfile: HDF File name to write to export to.
+
+        """
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+
+        wfile.check_folder(raiseerror=OSError)
+
+        self._ensure_consistency()
+
+        with pd.HDFStore(wfile.file, "w", complevel=9, complib="zlib") as store:
+            logger.info("export to HDF5 %s", wfile.name)
+            store["Well"] = self._df
+            meta = dict()
+            meta["name"] = self._wname
+            store.get_storer("Well").attrs["metadata"] = meta
+
+        return wfile.file
+
+    def from_hdf(
+        self,
+        wfile: Union[str, Path],
+    ):
+        """Read well data from HDF."""
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+        with pd.HDFStore(wfile.file, "r") as store:
+            data = store["Well"]
+            meta = store.get_storer("Well").attrs.metadata
+        print(data, meta)
 
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) well from roxar project.

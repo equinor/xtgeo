@@ -21,6 +21,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
+TMPDX = xtg.tmpdirobj
 TPATH = xtg.testpathobj
 
 # =========================================================================
@@ -29,7 +30,7 @@ TPATH = xtg.testpathobj
 
 WFILE = join(TPATH, "wells/reek/1/OP_1.w")
 WFILE_HOLES = join(TPATH, "wells/reek/1/OP_1_zholes.w")
-WFILES = join(TPATH, "wells/reek/1/*")
+WFILES = str(TPATH / "wells/reek/1/*")
 
 
 WELL1 = join(TPATH, "wells/battle/1/WELL09.rmswell")
@@ -150,8 +151,7 @@ def test_change_a_lot_of_stuff(loadwell1):
 
 
 def test_import_export_many():
-    """ Import and export many wells (test speed)"""
-
+    """ Import and export many wells (test speed)."""
     logger.debug(WFILES)
 
     for filename in sorted(glob.glob(WFILES)):
@@ -165,8 +165,7 @@ def test_import_export_many():
 
 
 def test_shortwellname():
-    """Test that shortwellname gives wanted result"""
-
+    """Test that shortwellname gives wanted result."""
     mywell = Well()
 
     mywell._wname = "31/2-A-14 2H"
@@ -180,22 +179,21 @@ def test_shortwellname():
     assert short == "A-142H"
 
 
-# def test_import_as_rms_export_as_hdf5_many():
-#     """ Import RMS and export as HDF5, many"""
+def test_import_as_rms_export_as_hdf_many():
+    """ Import RMS and export as HDF5, many"""
+    mywell = Well(WELL1)
+    nmax = 100
 
-#     logger.debug(WFILES)
+    wlist = []
+    for _ in range(nmax):
+        wname = (TMPDX / "$random").with_suffix(".hdf")
+        wuse = mywell.to_hdf(wname)
+        wlist.append(wuse)
 
-#     wfile = TMPD + "/mytest.h5"
-#     for filename in glob.glob(WFILES):
-#         logger.info("Importing " + filename)
-#         mywell = Well(filename)
-#         logger.info(mywell.nrow)
-#         logger.info(mywell.ncol)
-#         logger.info(mywell.lognames)
-
-#         wname = TMPD + "/" + mywell.xwellname + ".h5"
-#         logger.info("Exporting " + wname)
-#         mywell.to_file(wfile, fformat='hdf5')
+    for _ in range(nmax):
+        wname = (TMPDX / "$random").with_suffix(".hdf")
+        wuse = mywell.to_hdf(wname)
+        wlist.append(wuse)
 
 
 def test_get_carr(loadwell1):
