@@ -577,11 +577,20 @@ def import_hdf5_regsurf(self, mfile, values=True):
     """Importing h5/hdf5 storage."""
     reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
 
+    invalues = None
     with h5py.File(mfile.name, "r") as h5h:
-        val = h5h["RegularSurface/values"]
-        invalues = val[:]
 
-        jmeta = h5h["RegularSurface/metadata"][()]
+        grp = h5h["RegularSurface"]
+        idcode = grp.attrs["format-idcode"]
+        provider = grp.attrs["provider"]
+        if idcode != 1101:
+            raise ValueError(f"Wrong id code: {idcode}")
+        logger.info("Provider is %s", provider)
+
+        if values:
+            invalues = grp["values"][:]
+
+        jmeta = grp.attrs["metadata"]
         meta = json.loads(jmeta)
 
         req = meta["_required_"]

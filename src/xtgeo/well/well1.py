@@ -4,15 +4,16 @@
 import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
-from typing import Union
+from typing import Union, Optional
 from pathlib import Path
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.constants as const
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from . import _wellmarkers
 from . import _well_io
@@ -114,18 +115,14 @@ def well_from_roxar(
     return obj
 
 
-# ======================================================================================
-# CLASS
-
-
-class Well(object):  # pylint: disable=useless-object-inheritance
+class Well:  # pylint: disable=useless-object-inheritance
     """Class for a well in the XTGeo framework.
 
-    The well logs are stored as Pandas dataframe, which make manipulation
+    The well logs are stored in a Pandas dataframe, which make manipulation
     easy and fast.
 
     The well trajectory are here represented as logs, and XYZ have magic names:
-    X_UTME, Y_UTMN, Z_TVDSS, which are the three first Pandas columns.
+    ``X_UTME``, ``Y_UTMN``, ``Z_TVDSS``, which are the three first Pandas columns.
 
     Other geometry logs has also 'semi-magic' names:
 
@@ -135,10 +132,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
 
-    All Pandas values (yes, discrete also!) are stored as float64
+    All Pandas values (yes, discrete also!) are currently stored as float64
     format, and undefined values are Nan. Integers are stored as Float due
-    to the lacking support for 'Integer Nan' (currently lacking in Pandas,
-    but may come in later Pandas versions).
+    to the (historic) lacking support for 'Integer Nan'. In coming versions,
+    use of ``pandas.NA`` (available from Pandas version 1.0) may be implemented.
 
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
@@ -149,38 +146,54 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         >>> well2 = Well('somefilename', fformat='rms_ascii')
         >>> well3 = xtgeo.well_from_file('somefilename')
 
-    For arguments, see method under :meth:`from_file`.
-
     """
 
     VALID_LOGTYPES = {"DISC", "CONT"}
 
-    def __init__(self, *args, **kwargs):
-        """The __init__ method."""
+    def __init__(
+        self,
+        wfile: Optional[Union[str, Path]] = None,
+        fformat: Optional[str] = "rms_ascii",
+        mdlogname: Optional[str] = None,
+        zonelogname: Optional[str] = None,
+        strict: Optional[bool] = False,
+        lognames: Optional[Union[str, list]] = "all",
+    ):
+        """Instantating a Well object.
+
+        Args:
+            wfile: Input file, or leave blank
+            fformat: File format input, default is ``rms_ascii`` unless file extension
+                tells us something else (e.g. hdf).
+            mdlogname: Name of MD log column, e.g. 'MDepth'
+            zonelogname: Name of zonelog column, .e.g. 'ZONELOG'
+            strict: Applies to lognames, if True, then all names in ``lognames`` will
+                be forced.
+            lognames: A list of lognames to load, which makes it possible to load a
+                subset of logs. A string "all" will load all current logs.
+
+        """
         # instance attributes for whole well
         self._rkb = None  # well RKB height
         self._xpos = None  # well head X pos
         self._ypos = None  # well head Y pos
         self._wname = None  # well name
         self._filesrc = None  # source file if any
-
-        # instance attributes well log names
-        self._wlognames = list()  # A list of log names
-        self._wlogtype = dict()  # dictionary of log types, 'DISC' or 'CONT'
-        self._wlogrecord = dict()  # code record for 'DISC' logs
         self._mdlogname = None
         self._zonelogname = None
 
+        # instance attributes well log names
+        self._wlognames = list()  # A list of log names
+        self._wlogtypes = dict()  # dictionary of log types, 'DISC' or 'CONT'
+        self._wlogrecords = dict()  # code record for 'DISC' logs
+
         self._df = None  # pandas dataframe with all log values
 
-        if args:
+        self._metadata = xtgeo.MetaDataWell()
+
+        if wfile is not None:
             # make instance from file import
-            wfile = args[0]
-            fformat = kwargs.get("fformat", "rms_ascii")
-            mdlogname = kwargs.get("mdlogname", None)
-            zonelogname = kwargs.get("zonelogname", None)
-            strict = kwargs.get("strict", False)
-            lognames = kwargs.get("lognames", "all")
+            wfile = Path(wfile)
             self.from_file(
                 wfile,
                 fformat=fformat,
@@ -191,14 +204,11 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             )
 
         else:
-            # dummy
-            self._xx = kwargs.get("xx", 0.0)
-
-            # # make instance by kw spesification ... todo
-            # raise RuntimeWarning('Cannot initialize a Well object without '
-            #                      'import at the current stage.')
+            logger.info("Instantate Well() object without file")
 
         self._ensure_consistency()
+        self._metadata.required = self
+
         logger.info("Ran __init__for Well() %s", id(self))
 
     def __repr__(self):
@@ -214,30 +224,28 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # user friendly print
         return self.describe(flush=False)
 
-    # def __del__(self):
-    #     """Magic method."""
-    #     logger.info("Deleting %s instance %s", self.__class__.__name__, id(self))
-
-    # Consistency checking. As well log names are columns in the Pandas DF,
-    # there are additional attributes per log that have to be "in sync"
     def _ensure_consistency(self):  # pragma: no coverage
-        """Ensure consistency within an object (private function)."""
+        """Ensure consistency within an object (private function).
+
+        Consistency checking. As well log names are columns in the Pandas DF,
+        there are additional attributes per log that have to be "in sync".
+        """
         if self._df is None:
             return
 
         self._wlognames = list(self._df.columns)
 
         for logname in self._wlognames:
-            if logname not in self._wlogtype:
-                self._wlogtype[logname] = "CONT"  # continuous as default
-                self._wlogrecord[logname] = None  # None as default
+            if logname not in self._wlogtypes:
+                self._wlogtypes[logname] = "CONT"  # continuous as default
+                self._wlogrecords[logname] = None  # None as default
             else:
-                if self._wlogtype[logname] not in self.VALID_LOGTYPES:
-                    self._wlogtype[logname] = "CONT"
-                    self._wlogrecord[logname] = None  # None as default
+                if self._wlogtypes[logname] not in self.VALID_LOGTYPES:
+                    self._wlogtypes[logname] = "CONT"
+                    self._wlogrecords[logname] = None  # None as default
 
-            if logname not in self._wlogrecord:
-                if self._wlogtype[logname] == "DISC":
+            if logname not in self._wlogrecords:
+                if self._wlogtypes[logname] == "DISC":
                     # it is a discrete log with missing record; try to find
                     # a default one based on current values...
                     lvalues = self._df[logname].values.round(decimals=0)
@@ -250,11 +258,25 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                         if lval in lvalues:
                             codes[lval] = str(lval)
 
-                    self._wlogrecord = codes
+                    self._wlogrecords = codes
 
     # ==================================================================================
     # Properties
     # ==================================================================================
+
+    @property
+    def metadata(self):
+        """Return metadata object instance of type MetaDataRegularSurface."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, obj):
+        # The current metadata object can be replaced. This is a bit dangerous so
+        # further check must be done to validate. TODO.
+        if not isinstance(obj, xtgeo.MetaDataWell):
+            raise ValueError("Input obj not an instance of MetaDataRegularCube")
+
+        self._metadata = obj
 
     @property
     def rkb(self):
@@ -284,6 +306,9 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     @name.setter
     def name(self, newname):
         self._wname = newname
+
+    # alias
+    wname = name
 
     @property
     def safewellname(self):
@@ -408,6 +433,67 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         xname = xname.replace(" ", "")
         return xname
 
+    def get_wlogs(self) -> OrderedDict:
+        """Get a compound dictionary with well log metadata.
+
+        The result will be an Ordered dict on the form:
+
+        ``{"X_UTME": ["CONT", None], ... "Facies": ["DISC", {1: "BG", 2: "SAND"}]}``
+        """
+        res = OrderedDict()
+
+        for key in self._wlognames:
+            wtype = "CONT"
+            wrecord = None
+            if key in self._wlogtypes:
+                wtype = self._wlogtypes[key]
+            if key in self._wlogrecords:
+                wrecord = self._wlogrecords[key]
+
+            res[key] = [wtype, wrecord]
+
+        return res
+
+    def set_wlogs(self, wlogs: OrderedDict):
+        """Set a compound dictionary with well log metadata.
+
+        This operation is somewhat risky as it may lead to inconsistency, so use with
+        care! Typically, one will use :meth:`get_wlogs` first and then modify some
+        attributes.
+
+        Args:
+            wlogs: Input data dictionary
+
+        Raises:
+            ValueError: Invalid log type found in input:
+            ValueError: Invalid log record found in input:
+            ValueError: Invalid input key found:
+            ValueError: Invalid log record found in input:
+
+        """
+        for key in self._wlognames:
+            if key in wlogs.keys():
+                typ, rec = wlogs[key]
+
+                if typ in Well.VALID_LOGTYPES:
+                    self._wlogtypes[key] = deepcopy(typ)
+                else:
+                    raise ValueError(f"Invalid log type found in input: {typ}")
+
+                if rec is None or isinstance(rec, dict):
+                    self._wlogrecords[key] = deepcopy(rec)
+                else:
+                    raise ValueError(f"Invalid log record found in input: {rec}")
+
+            else:
+                raise ValueError(f"Key for column not found in input: {key}")
+
+        for key in wlogs.keys():
+            if key not in self._wlognames:
+                raise ValueError(f"Invalid input key found: {key}")
+
+        self._ensure_consistency()
+
     def from_file(
         self,
         wfile,
@@ -503,19 +589,15 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             wfile: HDF File name to write to export to.
 
+        Returns:
+            A Path instance to actual file applied.
+
         """
         wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
 
         wfile.check_folder(raiseerror=OSError)
 
-        self._ensure_consistency()
-
-        with pd.HDFStore(wfile.file, "w", complevel=9, complib="zlib") as store:
-            logger.info("export to HDF5 %s", wfile.name)
-            store["Well"] = self._df
-            meta = dict()
-            meta["name"] = self._wname
-            store.get_storer("Well").attrs["metadata"] = meta
+        _well_io.export_hdf5_well(self, wfile)
 
         return wfile.file
 
@@ -525,10 +607,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     ):
         """Read well data from HDF."""
         wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
-        with pd.HDFStore(wfile.file, "r") as store:
-            data = store["Well"]
-            meta = store.get_storer("Well").attrs.metadata
-        print(data, meta)
+
+        _well_io.export_well_hdf(wfile)
 
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) well from roxar project.
@@ -674,8 +754,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # pylint: disable=protected-access
 
         new = Well()
-        new._wlogtype = deepcopy(self._wlogtype)
-        new._wlogrecord = deepcopy(self._wlogrecord)
+        new._wlogtypes = deepcopy(self._wlogtypes)
+        new._wlogrecords = deepcopy(self._wlogrecords)
         new._rkb = self._rkb
         new._xpos = self._xpos = None
         new._ypos = self._ypos
@@ -700,8 +780,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if newname in self.lognames:
             raise ValueError("New log name exists already")
 
-        self._wlogtype[newname] = self._wlogtype.pop(lname)
-        self._wlogrecord[newname] = self._wlogrecord.pop(lname)
+        self._wlogtypes[newname] = self._wlogtypes.pop(lname)
+        self._wlogrecords[newname] = self._wlogrecords.pop(lname)
 
         # rename in dataframe
         self._df.rename(index=str, columns={lname: newname}, inplace=True)
@@ -735,8 +815,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if lname in self.lognames and force is False:
             return False
 
-        self._wlogtype[lname] = logtype
-        self._wlogrecord[lname] = logrecord
+        self._wlogtypes[lname] = logtype
+        self._wlogrecords[lname] = logrecord
 
         # make a new column
         self._df[lname] = float(value)
@@ -762,8 +842,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         """Returns the type of a give log (e.g. DISC or CONT)."""
         self._ensure_consistency()
 
-        if lname in self._wlogtype:
-            return self._wlogtype[lname]
+        if lname in self._wlogtypes:
+            return self._wlogtypes[lname]
         return None
 
     def set_logtype(self, lname, ltype):
@@ -773,14 +853,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         valid = {"DISC", "CONT"}
 
         if ltype in valid:
-            self._wlogtype[lname] = ltype
+            self._wlogtypes[lname] = ltype
         else:
             raise ValueError("Try to set invalid log type: {}".format(ltype))
 
     def get_logrecord(self, lname):
         """Returns the record (dict) of a given log name, None if not exists."""
-        if lname in self._wlogtype:
-            return self._wlogrecord[lname]
+        if lname in self._wlogtypes:
+            return self._wlogrecords[lname]
 
         return None
 
@@ -790,13 +870,13 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if lname not in self.lognames:
             raise ValueError("No such logname: {}".format(lname))
 
-        if self._wlogtype[lname] == "CONT":
+        if self._wlogtypes[lname] == "CONT":
             raise ValueError("Cannot set a log record for a continuous log")
 
         if not isinstance(newdict, dict):
             raise ValueError("Input is not a dictionary")
 
-        self._wlogrecord[lname] = newdict
+        self._wlogrecords[lname] = newdict
 
     def get_logrecord_codename(self, lname, key):
         """Returns the name entry of a log record, for a given key.

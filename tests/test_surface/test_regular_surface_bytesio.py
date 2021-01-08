@@ -1,6 +1,4 @@
-# coding: utf-8
-
-
+"""Testing BytesIO stuff for RegularSurfaces."""
 import os
 from os.path import join
 import io
@@ -19,6 +17,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
+TMPDO = xtg.tmpdirobj
 TPATH = xtg.testpathobj
 
 XTGSHOW = False
@@ -34,7 +33,7 @@ TESTSET2 = TPATH / "surfaces/reek/1/topreek_rota.fgr"
 
 
 def test_irapbin_bytesio_threading():
-    """Test threading for segfaults"""
+    """Test threading for segfaults."""
 
     def test_xtgeo():
         stream = io.BytesIO()
@@ -46,7 +45,7 @@ def test_irapbin_bytesio_threading():
 
 
 def test_irapasc_bytesio_threading():
-    """Test threading for segfaults, Irap ASCII"""
+    """Test threading for segfaults, Irap ASCII."""
 
     def test_xtgeo():
         stream = io.BytesIO()
@@ -58,7 +57,7 @@ def test_irapasc_bytesio_threading():
 
 
 def test_zmap_bytesio_threading():
-    """Test threading for segfaults, Irap ASCII"""
+    """Test threading for segfaults, Irap ASCII."""
 
     def test_xtgeo():
         stream = io.BytesIO()
@@ -70,7 +69,7 @@ def test_zmap_bytesio_threading():
 
 
 def test_irapbin_import_bytesio():
-    """Import Irap binary via bytesIO"""
+    """Import Irap binary via bytesIO."""
     logger.info("Import file as BytesIO")
 
     with open(TESTSET1, "rb") as fin:
@@ -86,7 +85,7 @@ def test_irapbin_import_bytesio():
 
 
 def test_irapbin_export_bytesio():
-    """Export Irap binary to bytesIO, then read again"""
+    """Export Irap binary to bytesIO, then read again."""
     logger.info("Import and export to bytesio")
 
     xsurf = xtgeo.RegularSurface(TESTSET1, fformat="irap_binary")
@@ -116,7 +115,7 @@ def test_irapbin_export_bytesio():
 
 
 def test_irapascii_export_import_bytesio():
-    """Export Irap ascii to bytesIO, then read again"""
+    """Export Irap ascii to bytesIO, then read again."""
     logger.info("Import and export to bytesio")
 
     xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_ascii")
@@ -145,7 +144,7 @@ def test_irapascii_export_import_bytesio():
 
 
 def test_get_regsurfi():
-
+    """Get regular surface from stream."""
     sfile = TESTSET1
     with open(sfile, "rb") as fin:
         stream = io.BytesIO(fin.read())
@@ -158,7 +157,7 @@ def test_get_regsurfi():
 
 
 def test_get_regsurff():
-
+    """Get regular surface from file."""
     sfile = TESTSET1
     logger.info("File is %s", sfile)
     for _itmp in range(20):
@@ -168,7 +167,7 @@ def test_get_regsurff():
 
 
 def test_irapbin_load_meta_first_bytesio():
-    """Import Irap binary via bytesIO, by just loading metadata first"""
+    """Import Irap binary via bytesIO, by just loading metadata first."""
     logger.info("Import and export...")
 
     with open(TESTSET1, "rb") as fin:
@@ -190,7 +189,7 @@ def test_irapbin_load_meta_first_bytesio():
 
 
 def test_bytesio_string_encoded():
-    """Test a case where the string is encoded, then decoded"""
+    """Test a case where the string is encoded, then decoded."""
     with open(TESTSET1, "rb") as fin:
         stream = io.BytesIO(fin.read())
 
@@ -208,3 +207,27 @@ def test_bytesio_string_encoded():
     xsurf = xtgeo.surface_from_file(content_string, fformat="irap_binary")
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
+
+
+def test_export_import_hdf5_bytesio():
+    """Test hdf5 format via memory streams."""
+    # just the input, and save as hdf5
+    xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_ascii")
+    assert xsurf.ncol == 554
+    assert xsurf.nrow == 451
+    xsurf.to_hdf(TMPDO / "surf.hdf")
+
+    xsurf2 = xtgeo.RegularSurface()
+    xsurf2.from_hdf(TMPDO / "surf.hdf")
+    assert xsurf2.ncol == 554
+
+    stream = io.BytesIO()
+    xsurf.to_hdf(stream)
+
+    xsurf3 = xtgeo.RegularSurface()
+    xsurf3.from_hdf(stream)
+    assert xsurf3.ncol == 554
+    assert xsurf3.values.mean() == xsurf.values.mean()
+
+    xsurf4 = xtgeo.RegularSurface().from_hdf(stream)
+    assert xsurf4.values.mean() == xsurf.values.mean()

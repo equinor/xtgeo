@@ -228,8 +228,6 @@ def export_hdf5_cpgeom(self, gfile, compression=None, chunks=False, subformat=84
     jmeta = json.dumps(meta).encode()
 
     with h5py.File(gfile.name, "w") as fh5:
-        fh5.create_dataset("provider", data="xtgeo")
-        fh5.create_dataset("format-idcode", data=1301)
 
         grp = fh5.create_group("CornerPointGeometry")
         grp.create_dataset(
@@ -251,7 +249,9 @@ def export_hdf5_cpgeom(self, gfile, compression=None, chunks=False, subformat=84
             chunks=chunks,
         )
 
-        grp.create_dataset("metadata", data=jmeta)
+        grp.attrs["metadata"] = jmeta
+        grp.attrs["provider"] = "xtgeo"
+        grp.attrs["format-idcode"] = 1301
 
     logger.info("Export to hdf5 xtgeo layout... done!")
 

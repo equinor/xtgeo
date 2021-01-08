@@ -261,7 +261,7 @@ class GridProperty(_Grid3D):
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj.xtgeo.MetaDataCPProperty):
+        if not isinstance(obj, xtgeo.MetaDataCPProperty):
             raise ValueError("Input obj not an instance of MetaDataCPProperty")
 
         self._metadata = obj  # checking is currently missing! TODO

@@ -3,6 +3,7 @@
 
 import glob
 from os.path import join
+from typing import OrderedDict
 
 import pytest
 import numpy as np
@@ -151,7 +152,7 @@ def test_change_a_lot_of_stuff(loadwell1):
 
 
 def test_import_export_many():
-    """ Import and export many wells (test speed)."""
+    """Import and export many wells (test speed)."""
     logger.debug(WFILES)
 
     for filename in sorted(glob.glob(WFILES)):
@@ -180,7 +181,7 @@ def test_shortwellname():
 
 
 def test_import_as_rms_export_as_hdf_many():
-    """ Import RMS and export as HDF5, many"""
+    """Import RMS and export as HDF5, many"""
     mywell = Well(WELL1)
     nmax = 100
 
@@ -225,7 +226,7 @@ def test_get_carr(loadwell1):
 
 
 def test_create_and_delete_logs(loadwell3):
-
+    """Test create adn delete logs."""
     mywell = loadwell3
 
     status = mywell.create_log("NEWLOG")
@@ -245,6 +246,32 @@ def test_create_and_delete_logs(loadwell3):
 
     ndeleted = mywell.delete_log(["NEWLOG", "GR"])
     assert ndeleted == 2
+
+
+def test_get_set_wlogs(loadwell3):
+    """Test on getting ans setting a dictionary with some log attributes."""
+    mywell = loadwell3
+
+    mydict = mywell.get_wlogs()
+    print(mydict)
+
+    assert isinstance(mydict, OrderedDict)
+
+    assert mydict["X_UTME"][0] == "CONT"
+    assert mydict["ZONELOG"][0] == "DISC"
+    assert mydict["ZONELOG"][1][24] == "ZONE_24"
+
+    mydict["ZONELOG"][1][24] = "ZONE_24_EDITED"
+    mywell.set_wlogs(mydict)
+
+    mydict2 = mywell.get_wlogs()
+    assert mydict2["X_UTME"][0] == "CONT"
+    assert mydict2["ZONELOG"][0] == "DISC"
+    assert mydict2["ZONELOG"][1][24] == "ZONE_24_EDITED"
+
+    mydict2["EXTRA"] = None
+    with pytest.raises(ValueError):
+        mywell.set_wlogs(mydict2)
 
 
 def test_make_hlen(loadwell1):

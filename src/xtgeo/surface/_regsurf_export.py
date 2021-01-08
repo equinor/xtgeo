@@ -374,7 +374,6 @@ def export_storm_binary(self, mfile):
 
 def export_petromod_binary(self, mfile, pmd_dataunits):
     """Export to petromod binary format."""
-
     validunits = False
     unitd = 15
     unitz = 10
@@ -471,8 +470,6 @@ def export_hdf5_regsurf(self, mfile, compression="lzf", dtype="float32"):
         raise ValueError("Wrong dtype input, must be 'float32' or 'float64'")
 
     with h5py.File(mfile.name, "w") as fh5:
-        fh5.create_dataset("provider", data="xtgeo")
-        fh5.create_dataset("format-idcode", data=1101)
         grp = fh5.create_group("RegularSurface")
         grp.create_dataset(
             "values",
@@ -480,6 +477,8 @@ def export_hdf5_regsurf(self, mfile, compression="lzf", dtype="float32"):
             compression=compression,
             chunks=True,
         )
-        grp.create_dataset("metadata", data=jmeta)
+        grp.attrs["metadata"] = jmeta
+        grp.attrs["provider"] = "xtgeo"
+        grp.attrs["format-idcode"] = 1101
 
     logger.info("Export to hdf5 format... done!")

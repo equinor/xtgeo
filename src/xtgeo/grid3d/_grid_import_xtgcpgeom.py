@@ -114,7 +114,15 @@ def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
     ncol2 = nrow2 = nlay2 = 1
     with h5py.File(mfile.name, "r") as h5h:
 
-        jmeta = h5h["CornerPointGeometry/metadata"][()].decode()
+        grp = h5h["CornerPointGeometry"]
+
+        idcode = grp.attrs["format-idcode"]
+        provider = grp.attrs["provider"]
+        if idcode != 1301:
+            raise ValueError(f"Wrong id code: {idcode}")
+        logger.info("Provider is %s", provider)
+
+        jmeta = grp.attrs["metadata"]
         meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
 
         req = meta["_required_"]
@@ -124,9 +132,9 @@ def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
                 h5h, req, ijkrange, zerobased
             )
         else:
-            incoord = h5h["CornerPointGeometry/coord"][:, :, :]
-            inzcorn = h5h["CornerPointGeometry/zcorn"][:, :, :, :]
-            inactnum = h5h["CornerPointGeometry/actnum"][:, :, :]
+            incoord = grp["coord"][:, :, :]
+            inzcorn = grp["zcorn"][:, :, :, :]
+            inactnum = grp["actnum"][:, :, :]
 
     for myattr in reqattrs:
         if "subgrid" in myattr:

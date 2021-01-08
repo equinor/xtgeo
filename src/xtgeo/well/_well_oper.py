@@ -33,8 +33,8 @@ def delete_log(self, lname):
 
         logger.info("Log exist and will be deleted: %s", logn)
         lcount += 1
-        del self._wlogtype[logn]
-        del self._wlogrecord[logn]
+        del self._wlogtypes[logn]
+        del self._wlogrecords[logn]
 
         self._df.drop(logn, axis=1, inplace=True)
         self._ensure_consistency()
@@ -107,8 +107,8 @@ def rescale(self, delta=0.15, tvdrange=None):
     dfr.reset_index(inplace=True, drop=True)
 
     for lname in dfr.columns:
-        if lname in self._wlogtype:
-            ltype = self._wlogtype[lname]
+        if lname in self._wlogtypes:
+            ltype = self._wlogtypes[lname]
             if ltype == "DISC":
                 dfr = dfr.round({lname: 0})
 
@@ -257,11 +257,11 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
     self._df[kcellname] = kndarray
 
     for cellname in [icellname, jcellname, kcellname]:
-        self._wlogtype[cellname] = "DISC"
+        self._wlogtypes[cellname] = "DISC"
 
-    self._wlogrecord[icellname] = {ncel: str(ncel) for ncel in range(1, grid.ncol + 1)}
-    self._wlogrecord[jcellname] = {ncel: str(ncel) for ncel in range(1, grid.nrow + 1)}
-    self._wlogrecord[kcellname] = {ncel: str(ncel) for ncel in range(1, grid.nlay + 1)}
+    self._wlogrecords[icellname] = {ncel: str(ncel) for ncel in range(1, grid.ncol + 1)}
+    self._wlogrecords[jcellname] = {ncel: str(ncel) for ncel in range(1, grid.nrow + 1)}
+    self._wlogrecords[kcellname] = {ncel: str(ncel) for ncel in range(1, grid.nlay + 1)}
 
     _cxtgeo.delete_intarray(wivec)
     _cxtgeo.delete_intarray(wjvec)
@@ -355,8 +355,8 @@ def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_i
         self.dataframe[pname] = arr
         self._wlognames.append(pname)
         if prop.isdiscrete:
-            self._wlogtype[pname] = "DISC"
-            self._wlogrecord[pname] = copy.deepcopy(prop.codes)
+            self._wlogtypes[pname] = "DISC"
+            self._wlogrecords[pname] = copy.deepcopy(prop.codes)
     self._ensure_consistency()
     self.delete_logs(["ICELL_tmp", "JCELL_tmp", "KCELL_tmp"])
 

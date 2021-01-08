@@ -37,6 +37,9 @@ or::
 import sys
 import os
 import os.path
+import pathlib
+import io
+from typing import Union, Optional, List
 
 import numbers
 from copy import deepcopy
@@ -160,7 +163,7 @@ def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=
 # RegularSurface class:
 
 
-class RegularSurface(object):
+class RegularSurface:
     """Class for a regular surface in the XTGeo framework.
 
     The regular surface instance is usually initiated by
@@ -169,43 +172,82 @@ class RegularSurface(object):
     (ncol, nrow) float64 array, but also other representations or views are
     possible (e.g. as 1D ordinary numpy).
 
-    For construction:
-
-    Args:
-        ncol: Integer for number of X direction columns
-        nrow: Integer for number of Y direction rows
-        xori: X (East) origon coordinate
-        yori: Y (North) origin coordinate
-        xinc: X increment
-        yinc: Y increment
-        rotation: rotation in degrees, anticlock from X axis between 0, 360
-        values: 2D (masked) numpy array of shape (ncol, nrow), C order
-        name: A given name for the surface, default is file name root or
-            'unkown' if constructed from scratch.
-
-    Examples:
-        The instance can be made either from file or by a spesification::
-
-            >>> x1 = RegularSurface('somefilename')  # assume Irap binary
-            >>> x2 = RegularSurface('somefilename', fformat='irap_ascii')
-            >>> x3 = RegularSurface().from_file('somefilename',
-                                                 fformat='irap_binary')
-            >>> x4 = RegularSurface()
-            >>> x4.from_file('somefilename', fformat='irap_binary')
-            >>> x5 = RegularSurface(ncol=20, nrow=10, xori=2000.0, yori=2000.0,
-                                    rotation=0.0, xinc=25.0, yinc=25.0,
-                                    values=np.zeros((20,10)))
-
-        Initiate a class and import::
-
-          from xtgeo.surface import RegularSurface
-          x = RegularSurface()
-          x.from_file('some.irap', fformat='irap_binary')
-
     """
 
-    def __init__(self, *args, **kwargs):  # pylint: disable=too-many-statements
-        """Initiate a RegularSurface instance."""
+    def __init__(
+        self,
+        sfile: Optional[Union[str, pathlib.Path, io.BytesIO]] = None,
+        fformat: Optional[str] = None,
+        engine: Optional[str] = "cxtgeo",
+        template: Optional[str] = None,
+        ncol: Optional[int] = 5,
+        nrow: Optional[int] = 3,
+        xori: Optional[float] = 0.0,
+        yori: Optional[float] = 0.0,
+        xinc: Optional[float] = 25.0,
+        yinc: Optional[float] = 25.0,
+        yflip: Optional[int] = 1,
+        rotation: Optional[float] = 0.0,
+        values: Optional[Union[float, List[float], np.ndarray, bool]] = None,
+        masked: Optional[bool] = True,
+        name: Optional[str] = "unknown",
+        **kwargs,
+    ):
+        """Instantating a RegularSurface.
+
+        There are two ways to instantate a RegularSurface, either as from a file,
+        using keyword ``sfile``, and optional ``fformat``, ``loadvalues``, ``engine``,
+        ``template``, for example::
+
+            surf = xtgeo.RegularSurface("example.gri", fformat="irap_binary")
+
+        Or to spesify from scratch::
+
+            vals = np.zeros(30 * 50)
+            surf = xtgeo.RegularSurface(
+                ncol=30, nrow=50, xori=1234.5, yori=4321.0, xinc=30.0, yinc=50.0,
+                rotation=30.0, values=vals, yflip=1,
+            )
+
+        Args:
+            sfile: File-like or memory stream input.
+            fformat: Format spesification for input.
+            loadvalues: For some formats, loading metdata only and skipping values
+                is possible.
+            engine: Use "cxtgeo" or "python" for some methods (this a developer option).
+            template: Only applicable for format `ijxyz`. See :meth:`from_file`.
+            ncol: Integer for number of X direction columns.
+            nrow: Integer for number of Y direction rows.
+            xori: X (East) origon coordinate.
+            yori: Y (North) origin coordinate.
+            xinc: X increment.
+            yinc: Y increment.
+            yflip: If 1, the map grid is left-handed (assuming depth downwards),
+                otherwise -1 menas that Y axsis is flipped (right-handed).
+            rotation: rotation in degrees, anticlock from X axis between 0, 360.
+            values: A scalar (for constant values) or a "array-like" input that has
+                ncol * nrow elements. As result, a 2D (masked) numpy array of shape
+                (ncol, nrow), C order will be made. When used with a file-like input,
+                values can be a bool, where False will indicate that values shall
+                not be loaded, only metadata.
+            masked: Indicating if numpy array shall be masked or not. Default is True.
+            name: A given name for the surface, default is file name root or
+                'unkown' if constructed from scratch.
+
+        Examples:
+            The instance can be made either from file or by a spesification::
+
+                >>> x1 = RegularSurface('somefilename')  # assume Irap binary
+                >>> x2 = RegularSurface('somefilename', fformat='irap_ascii')
+                >>> x3 = RegularSurface().from_file('somefilename',
+                                                    fformat='irap_binary')
+                >>> x4 = RegularSurface()
+                >>> x4.from_file('somefilename', fformat='irap_binary')
+                >>> x5 = RegularSurface(ncol=20, nrow=10, xori=2000.0, yori=2000.0,
+                                        rotation=0.0, xinc=25.0, yinc=25.0,
+                                        values=np.zeros((20,10)))
+
+        """
         #
         logger.info("Start __init__ method for RegularSurface object %s", id(self))
 
@@ -220,9 +262,6 @@ class RegularSurface(object):
         self._ilines = None
         self._xlines = None
 
-        # assume so far (1: meaning columns along X, to East, rows along Y,
-        # North. If -1: rows along negative Y
-
         self._yflip = 1
 
         self._values = None
@@ -230,67 +269,94 @@ class RegularSurface(object):
         self._isloaded = True  # assume True unless explicitly set
         self._metadata = xtgeo.MetaDataRegularSurface()
 
-        if args:
-            # make instance from file import
-            mfile = args[0]
-            fformat = kwargs.get("fformat", None)
-            template = kwargs.get("template", None)
-            values = kwargs.get("values", True)
-            engine = kwargs.get("engine", "cxtgeo")
-            self.from_file(
-                mfile, fformat=fformat, template=template, values=values, engine=engine
-            )
+        if sfile is not None:
+            self._instance_from_filelike(sfile, template, fformat, engine, values)
 
         else:
-            # make instance by kw spesification
-            self._xori = kwargs.get("xori", 0.0)
-            self._yori = kwargs.get("yori", 0.0)
-            if "nx" in kwargs:
-                self._ncol = kwargs.get("nx", 5)  # backward compatibility
-                self._nrow = kwargs.get("ny", 3)  # backward compatibility
-            else:
-                self._ncol = kwargs.get("ncol", 5)
-                self._nrow = kwargs.get("nrow", 3)
-            self._xinc = kwargs.get("xinc", 25.0)
-            self._yinc = kwargs.get("yinc", 25.0)
-            self._rotation = kwargs.get("rotation", 0.0)
+            self._instance_from_spec(
+                ncol, nrow, xori, yori, xinc, yinc, yflip, rotation, values, **kwargs
+            )
 
-            values = kwargs.get("values", None)
-
-            if values is None and not kwargs:
-                values = np.array(
-                    [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
-                    dtype=np.float64,
-                    order="C",
-                )
-                # make it masked
-                values = ma.masked_greater(values, self.undef_limit)
-                self._masked = True
-                self._values = values
-            elif values is None and kwargs:
-                self._values = np.ma.zeros((self._ncol, self._nrow))
-
-            else:
-                self._ensure_correct_values(values)
-
-            self._yflip = kwargs.get("yflip", 1)
-            self._masked = kwargs.get("masked", True)
-            self._filesrc = kwargs.get("filesrc", None)
-            self._name = kwargs.get("name", "unknown")
-            self._isloaded = True
-
-        if self._values is not None:
-
+        if self._ilines is None:
             self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
             self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
 
-            if self._values.mask is ma.nomask:
-                self._values = ma.array(
-                    self._values, mask=ma.getmaskarray(self._values)
-                )
+        if self._values is not None and self._values.mask is ma.nomask:
+            self._values = ma.array(self._values, mask=ma.getmaskarray(self._values))
 
+        self._name = name
+        self._masked = masked  # TODO: check usecase
         self._metadata.required = self
         logger.info("Ran __init__ method for RegularSurface object %s", id(self))
+
+    def _instance_from_filelike(self, sfile, template, fformat, engine, values):
+        """Detect input automatically if possible and load to make the instance."""
+        sobj = xtgeo._XTGeoFile(sfile)
+
+        loadvalues = True
+        if isinstance(values, bool) and values is False:
+            loadvalues = False
+
+        if not sobj.memstream:
+            if sobj.file.suffix == "hdf":
+                self.from_hdf(sfile, values=loadvalues)
+            else:
+                self.from_file(
+                    sfile,
+                    fformat=fformat,
+                    engine=engine,
+                    template=template,
+                    values=loadvalues,
+                )
+        else:
+            if fformat == "hdf":
+                self.from_hdf(sfile, values=loadvalues)
+            else:
+                self.from_file(sfile, fformat=fformat, values=loadvalues)
+
+    def _instance_from_spec(
+        self, ncol, nrow, xori, yori, xinc, yinc, yflip, rotation, values, **kwargs
+    ):
+        # make instance by kw spesification
+        self._xori = xori
+        self._yori = yori
+
+        # backward compatibility
+        if "nx" in kwargs:
+            self._ncol = kwargs.get("nx", 5)
+            self._nrow = kwargs.get("ny", 3)
+        else:
+            self._ncol = ncol
+            self._nrow = nrow
+
+        self._xinc = xinc
+        self._yinc = yinc
+        self._rotation = rotation
+
+        default = ncol == 5 and nrow == 3 and xori == yori == 0.0 and xinc == yinc == 25
+
+        if values is None and default:
+
+            # make default surface (mostly for unit testing)
+            values = np.array(
+                [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
+                dtype=np.float64,
+                order="C",
+            )
+            # make it masked
+            values = ma.masked_greater(values, self.undef_limit)
+            self._masked = True
+            self._values = values
+
+        elif values is None and not default:
+            self._values = np.ma.zeros((self._ncol, self._nrow))
+
+        else:
+            self._ensure_correct_values(values)
+
+        self._yflip = yflip
+        self._filesrc = None
+        self._isloaded = True
 
     # ==================================================================================
 
@@ -481,7 +547,7 @@ class RegularSurface(object):
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj.xtgeo.MetaDataRegularSurface):
+        if not isinstance(obj, xtgeo.MetaDataRegularSurface):
             raise ValueError("Input obj not an instance of MetaDataRegularSurface")
 
         self._metadata = obj  # checking is currently missing! TODO
@@ -1006,20 +1072,35 @@ class RegularSurface(object):
             return None
         return mfile.file
 
-    def to_hdf(self, mfile, compression="lzf"):
-        """Experimental! export a surface (map) with metadata to to a HDF5 file.
+    def to_hdf(
+        self,
+        mfile: Union[str, pathlib.Path, io.BytesIO],
+        compression: Optional[str] = "lzf",
+    ) -> pathlib.Path:
+        """Export a surface (map) with metadata to a HDF5 file.
 
-        This implementation is currently experimental and only recommended for testing.
-        The file extension shall be '.h5'. TODO: check routine
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        The file extension shall be '.hdf'
 
         Args:
-            mfile (Union[str, pathlib.Path, io.Bytestream]): Name of file,
-                Path instance or IOBytestream instance. An alias can be e.g.
-                "%md5sum%" or "%fmu-v1%" with string or Path() input.
-            compression (str): ...
+            mfile: Name of file, Path instance or BytesIO instance. An alias can
+                be e.g. ``$md5sum.hdf``,  ``$fmu-v1.hdf`` with string or Path() input.
+            compression: Compression method, None, lzf (default), blosc
 
         Returns:
-            ofile (pathlib.Path): The actual file instance, or None if io.Bytestream
+            pathlib.Path: The actual file instance, or None if io.Bytestream
+
+        Example:
+            >>> import xtgeo
+            >>> surf = xtgeo.RegularSurface("some_file.gri")  # file input
+            >>> # possibly edit metadata...
+            >>> surf.to_hdf("somefile.hdf")
+
+        .. versionadded:: 2.14
+
         """
         # developing, in prep and experimental!
         mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
@@ -1030,23 +1111,39 @@ class RegularSurface(object):
         _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
         return mfile.file
 
-    def from_hdf(self, mfile):
-        """Experimental! import a surface (map) with metadata from a HDF5 file.
+    def from_hdf(
+        self,
+        mfile: Union[str, pathlib.Path, io.BytesIO],
+        values: Optional[bool] = True,
+    ):
+        """Import/load a surface (map) with metadata from a HDF5 file.
 
-        This implementation is currently experimental and only recommended for testing.
-        The file extension shall be '.h5'.
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        The file extension shall be '.hdf'.
 
         Args:
-            mfile (Union[str, pathlib.Path, io.Bytestream]): Name of file,
-                Path instance or IOBytestream instance.
+            mfile: File name or Path object or memory stream
+            values: If False, only metadatadata are read
 
         Returns:
-            None
+            RegularSurface() instance
+
+        Example:
+            >>> import xtgeo
+            >>> mysurf = xtgeo.RegularSurface().from_hdf("surf1.hdf")
+
+        .. versionadded:: 2.14
         """
         # developing, in prep and experimental!
         mfile = xtgeosys._XTGeoFile(mfile, mode="rb", obj=self)
 
-        _regsurf_import.import_hdf5_regsurf(self, mfile)
+        _regsurf_import.import_hdf5_regsurf(self, mfile, values=values)
+
+        _self: self.__class__ = self
+        return _self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0

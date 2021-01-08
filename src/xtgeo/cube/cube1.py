@@ -173,7 +173,7 @@ class Cube:  # pylint: disable=too-many-public-methods
     def metadata(self, obj):
         # The current metadata object can be replaced. This is a bit dangerous so
         # further check must be done to validate. TODO.
-        if not isinstance(obj.xtgeo.MetaDataRegularCube):
+        if not isinstance(obj, xtgeo.MetaDataRegularCube):
             raise ValueError("Input obj not an instance of MetaDataRegularCube")
 
         self._metadata = obj  # checking is currently missing! TODO

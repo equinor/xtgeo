@@ -52,8 +52,7 @@ FENCE1 = TPATH / "polygons/reek/1/fence.pol"
 
 
 def test_create():
-    """Create default surface"""
-
+    """Create default surface."""
     logger.info("Simple case...")
 
     x = xtgeo.RegularSurface()
@@ -66,7 +65,7 @@ def test_create():
 
 
 def test_values():
-    """Test behaviour of values attribute"""
+    """Test behaviour of values attribute."""
     srf = xtgeo.RegularSurface()
     id1 = id(srf.values)
 
@@ -110,7 +109,7 @@ def test_values():
 
 
 def test_set_values1d():
-    """Test behaviour of set_values1d method"""
+    """Test behaviour of set_values1d method."""
     srf = xtgeo.RegularSurface()
     new = srf.copy()
     assert np.ma.count_masked(new.values) == 1
@@ -156,7 +155,7 @@ def test_ijxyz_import1():
 
 # @tsetup.skipifwindows
 def test_ijxyz_import2():
-    """Import some IJ XYZ small set with YFLIP-1"""
+    """Import some IJ XYZ small set with YFLIP -1."""
     logger.info("Import and export...")
 
     xsurf = xtgeo.RegularSurface()
@@ -186,7 +185,7 @@ def test_ijxyz_import4_ow_messy_dat():
 
 # @tsetup.skipifwindows
 def test_ijxyz_import3():
-    """Import some IJ XYZ small set yet again"""
+    """Import some IJ XYZ small set yet again."""
     logger.info("Import and export...")
 
     xsurf = xtgeo.RegularSurface()

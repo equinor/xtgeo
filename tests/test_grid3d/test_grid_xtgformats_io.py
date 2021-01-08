@@ -74,7 +74,7 @@ def test_grid_hdf5_export_import_many():
     # timing of writer
     t1 = xtg.timer()
     for _ in range(nrange):
-        fname = "$md5sum.h5"
+        fname = "$md5sum.hdf"
         fname = TMPD / fname
         grd1._zcornsv += 1.0
         fna = grd1.to_hdf(fname, compression=None)

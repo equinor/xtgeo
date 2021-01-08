@@ -73,7 +73,7 @@ def grid_from_roxar(
     """Read a grid inside a RMS project and return a Grid() instance.
 
     Args:
-        project (str or special): The RMS project og the project variable
+        project (str or special): The RMS project or the project variable
             from inside RMS.
         gname (str): Name of Grid Model in RMS.
         realisation (int): Realisation number.
@@ -132,7 +132,7 @@ IJKRange = Tuple[int, int, int, int, int, int]
 
 
 class Grid(_Grid3D):
-    """Class for a 3D Grid Geometry.
+    """Class for a 3D grid corner point geometry in XTGeo.
 
     I.e. the geometric grid cells and the active cell indicator.
 
@@ -272,7 +272,7 @@ class Grid(_Grid3D):
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj.xtgeo.MetaDataCPGeometry):
+        if not isinstance(obj, xtgeo.MetaDataCPGeometry):
             raise ValueError("Input obj not an instance of MetaDataCPGeometry")
 
         self._metadata = obj  # checking is currently missing! TODO
