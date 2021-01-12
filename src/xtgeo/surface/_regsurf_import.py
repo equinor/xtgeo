@@ -2,6 +2,8 @@
 # pylint: disable=protected-access
 
 import json
+from collections import OrderedDict
+
 import numpy as np
 import numpy.ma as ma
 from struct import unpack
@@ -18,7 +20,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_irap_binary(self, mfile, values=True, engine="cxtgeo"):
+def import_irap_binary(self, mfile, values=True, engine="cxtgeo", **kwargs):
     """Import Irap binary format.
 
     Args:
@@ -29,18 +31,18 @@ def import_irap_binary(self, mfile, values=True, engine="cxtgeo"):
         RuntimeError: Error in reading Irap binary file
         RuntimeError: Problem....
     """
-
+    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
     if mfile.memstream is True or engine == "python":
         _import_irap_binary_purepy(self, mfile)
     else:
         _import_irap_binary(self, mfile, values=values)
 
     self._metadata.required = self
+    self._isloaded = values
 
 
 def _import_irap_binary_purepy(self, mfile, values=True):
-    """Using pure python, better for memorymapping/threading"""
-
+    """Using pure python, better for memorymapping/threading."""
     # Borrowed some code from https://github.com/equinor/grequi/../fmt_irapbin.py
 
     logger.info("Enter function %s", __name__)
@@ -164,9 +166,8 @@ def _import_irap_binary(self, mfile, values=True):
     mfile.cfclose()
 
 
-def import_irap_ascii(self, mfile, engine="cxtgeo"):
-    """Import Irap ascii format, where mfile is a _XTGeoFile instance"""
-
+def import_irap_ascii(self, mfile, engine="cxtgeo", **kwargs):
+    """Import Irap ascii format, where mfile is a _XTGeoFile instance."""
     #   -996  2010      5.000000      5.000000
     #    461587.553724   467902.553724  5927061.430176  5937106.430176
     #   1264       30.000011   461587.553724  5927061.430176
@@ -176,6 +177,7 @@ def import_irap_ascii(self, mfile, engine="cxtgeo"):
     #     1679.1086    1679.3274    1679.5524    1679.7831    1680.0186    1680.2583
     #     1680.5016    1680.7480    1680.9969    1681.2479    1681.5004    1681.7538
     #
+    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
     if mfile.memstream is True or engine == "python":
         _import_irap_ascii_purepy(self, mfile)
@@ -186,8 +188,7 @@ def import_irap_ascii(self, mfile, engine="cxtgeo"):
 
 
 def _import_irap_ascii_purepy(self, mfile):
-    """Import Irap in pure python code, suitable for memstreams, but less efficient"""
-
+    """Import Irap in pure python code, suitable for memstreams, but less efficient."""
     # timer tests suggest approx double load time compared with cxtgeo method
 
     if mfile.memstream:
@@ -223,9 +224,9 @@ def _import_irap_ascii_purepy(self, mfile):
 
 
 def _import_irap_ascii(self, mfile):
-    """Import Irap ascii format via C routines (fast, but less suited for bytesio)"""
-
+    """Import Irap ascii format via C routines (fast, but less suited for bytesio)."""
     logger.debug("Enter function...")
+
     cfhandle = mfile.get_cfhandle()
 
     # read with mode 0, scan to get mx my
@@ -270,13 +271,21 @@ def _import_irap_ascii(self, mfile):
     mfile.cfclose()
 
 
-def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
+def import_ijxyz(self, mfile, template=None, **kwargs):
     """Import OW/DSG IJXYZ ascii format."""
+    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
+    if not template:
+        _import_ijxyz(self, mfile)
+    else:
+        _import_ijxyz_tmpl(self, mfile, template)
+
+
+def _import_ijxyz(self, mfile):  # pylint: disable=too-many-locals
+    """Import OW/DSG IJXYZ ascii format."""
     # import of seismic column system on the form:
     # 2588	1179	476782.2897888889	6564025.6954	1000.0
     # 2588	1180	476776.7181777778	6564014.5058	1000.0
-
     logger.debug("Read data from file... (scan for dimensions)")
 
     cfhandle = mfile.get_cfhandle()
@@ -333,10 +342,8 @@ def import_ijxyz_ascii(self, mfile):  # pylint: disable=too-many-locals
     self._metadata.required = self
 
 
-def import_ijxyz_ascii_tmpl(self, mfile, template):
-    """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface
-    instance as template."""
-
+def _import_ijxyz_tmpl(self, mfile, template):
+    """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface as template."""
     cfhandle = mfile.get_cfhandle()
 
     if isinstance(template, (xtgeo.cube.Cube, xtgeo.surface.RegularSurface)):
@@ -368,8 +375,9 @@ def import_ijxyz_ascii_tmpl(self, mfile, template):
     self._metadata.required = self
 
 
-def import_petromod_binary(self, mfile, values=True):
+def import_petromod(self, mfile, values=True, **kwargs):
     """Import Petromod binary format."""
+    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
     cfhandle = mfile.get_cfhandle()
 
@@ -429,7 +437,7 @@ def import_petromod_binary(self, mfile, values=True):
     self._metadata.required = self
 
 
-def import_zmap_ascii(self, mfile, values=True):
+def import_zmap_ascii(self, mfile, values=True, **kwargs):
     """Importing ZMAP + ascii files, in pure python only.
 
     Some sources
@@ -438,6 +446,8 @@ def import_zmap_ascii(self, mfile, values=True):
     https://blog.nitorinfotech.com/what-is-zmap-plus-file-format/
 
     """
+    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
+
     if not mfile.memstream:
         logger.info("Reading zmap+ from %s", mfile.file)
     else:
@@ -528,9 +538,10 @@ def import_zmap_ascii(self, mfile, values=True):
     self._metadata.required = self
 
 
-def import_xtgregsurf(self, mfile, values=True):
-    """Using pure python for experimental import."""
-    #
+def import_xtg(self, mfile, values=True, **kwargs):
+    """Using pure python for experimental XTGEO import."""
+    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
+
     offset = 28
     with open(mfile.file, "rb") as fhandle:
         buf = fhandle.read(offset)
@@ -555,7 +566,7 @@ def import_xtgregsurf(self, mfile, values=True):
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta)
+    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
     req = meta["_required_"]
 
     reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
@@ -591,7 +602,7 @@ def import_hdf5_regsurf(self, mfile, values=True):
             invalues = grp["values"][:]
 
         jmeta = grp.attrs["metadata"]
-        meta = json.loads(jmeta)
+        meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
 
         req = meta["_required_"]
 

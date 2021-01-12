@@ -180,21 +180,47 @@ def test_shortwellname():
     assert short == "A-142H"
 
 
-def test_import_as_rms_export_as_hdf_many():
-    """Import RMS and export as HDF5, many"""
+def test_hdf_io_single():
+    """Test HDF io, single well."""
     mywell = Well(WELL1)
-    nmax = 100
 
+    wname = (TMPDX / "hdfwell").with_suffix(".hdf")
+    mywell.to_hdf(wname)
+    mywell2 = Well()
+    mywell2.from_hdf(wname)
+
+
+def test_import_as_rms_export_as_hdf_many():
+    """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
+    mywell = Well(WELL1)
+    nmax = 50
+
+    t0 = xtg.timer()
     wlist = []
     for _ in range(nmax):
         wname = (TMPDX / "$random").with_suffix(".hdf")
-        wuse = mywell.to_hdf(wname)
+        wuse = mywell.to_hdf(wname, compression=None)
         wlist.append(wuse)
+    print("Time for save HDF: ", xtg.timer(t0))
 
-    for _ in range(nmax):
+    t0 = xtg.timer()
+    for wll in wlist:
         wname = (TMPDX / "$random").with_suffix(".hdf")
-        wuse = mywell.to_hdf(wname)
+        wuse = mywell.from_hdf(wll)
+    print("Time for load HDF: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    wlist = []
+    for _ in range(nmax):
+        wname = (TMPDX / "$random").with_suffix(".rmsasc")
+        wuse = mywell.to_file(wname)
         wlist.append(wuse)
+    print("Time for save RMSASC: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    for wll in wlist:
+        wuse = mywell.from_file(wll)
+    print("Time for load RMSASC: ", xtg.timer(t0))
 
 
 def test_get_carr(loadwell1):

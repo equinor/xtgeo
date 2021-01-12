@@ -6,6 +6,7 @@ from copy import deepcopy
 from distutils.version import StrictVersion
 from typing import Union, Optional
 from pathlib import Path
+import io
 from collections import OrderedDict
 
 import numpy as np
@@ -211,8 +212,7 @@ class Well:  # pylint: disable=useless-object-inheritance
 
         logger.info("Ran __init__for Well() %s", id(self))
 
-    def __repr__(self):
-        """Magic method."""
+    def __repr__(self):  # noqa: D105
         # should be able to newobject = eval(repr(thisobject))
         myrp = (
             "{0.__class__.__name__} (filesrc={0._filesrc!r}, "
@@ -433,66 +433,37 @@ class Well:  # pylint: disable=useless-object-inheritance
         xname = xname.replace(" ", "")
         return xname
 
-    def get_wlogs(self) -> OrderedDict:
-        """Get a compound dictionary with well log metadata.
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout."""
+        dsc = xtgeo.common.XTGDescription()
 
-        The result will be an Ordered dict on the form:
-
-        ``{"X_UTME": ["CONT", None], ... "Facies": ["DISC", {1: "BG", 2: "SAND"}]}``
-        """
-        res = OrderedDict()
-
-        for key in self._wlognames:
-            wtype = "CONT"
-            wrecord = None
-            if key in self._wlogtypes:
-                wtype = self._wlogtypes[key]
-            if key in self._wlogrecords:
-                wrecord = self._wlogrecords[key]
-
-            res[key] = [wtype, wrecord]
-
-        return res
-
-    def set_wlogs(self, wlogs: OrderedDict):
-        """Set a compound dictionary with well log metadata.
-
-        This operation is somewhat risky as it may lead to inconsistency, so use with
-        care! Typically, one will use :meth:`get_wlogs` first and then modify some
-        attributes.
-
-        Args:
-            wlogs: Input data dictionary
-
-        Raises:
-            ValueError: Invalid log type found in input:
-            ValueError: Invalid log record found in input:
-            ValueError: Invalid input key found:
-            ValueError: Invalid log record found in input:
-
-        """
-        for key in self._wlognames:
-            if key in wlogs.keys():
-                typ, rec = wlogs[key]
-
-                if typ in Well.VALID_LOGTYPES:
-                    self._wlogtypes[key] = deepcopy(typ)
-                else:
-                    raise ValueError(f"Invalid log type found in input: {typ}")
-
-                if rec is None or isinstance(rec, dict):
-                    self._wlogrecords[key] = deepcopy(rec)
-                else:
-                    raise ValueError(f"Invalid log record found in input: {rec}")
-
+        dsc.title("Description of Well instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Well name", self._wname)
+        dsc.txt("RKB", self._rkb)
+        dsc.txt("Well head", self._xpos, self._ypos)
+        dsc.txt("Name of all columns", self.lognames_all)
+        dsc.txt("Name of log columns", self.lognames)
+        for wlog in self.lognames:
+            rec = self.get_logrecord(wlog)
+            if rec is not None and len(rec) > 3:
+                string = "("
+                nlen = len(rec)
+                for idx, (code, val) in enumerate(rec.items()):
+                    if idx < 2:
+                        string += "{}: {} ".format(code, val)
+                    elif idx == nlen - 1:
+                        string += "...  {}: {})".format(code, val)
             else:
-                raise ValueError(f"Key for column not found in input: {key}")
+                string = "{}".format(rec)
+            dsc.txt("Logname", wlog, self.get_logtype(wlog), string)
 
-        for key in wlogs.keys():
-            if key not in self._wlognames:
-                raise ValueError(f"Invalid input key found: {key}")
+        if flush:
+            dsc.flush()
+            return None
 
-        self._ensure_consistency()
+        return dsc.astext()
 
     def from_file(
         self,
@@ -554,12 +525,16 @@ class Well:  # pylint: disable=useless-object-inheritance
         self._filesrc = wfile.name
         return self
 
-    def to_file(self, wfile, fformat="rms_ascii"):
-        """Export well to file.
+    def to_file(
+        self,
+        wfile: Union[str, Path, io.BytesIO],
+        fformat: Optional[str] = "rms_ascii",
+    ):
+        """Export well to file or memory stream.
 
         Args:
-            wfile (str): Name of file or pathlib.Path instance
-            fformat (str): File format ('rms_ascii'/'rmswell', 'hdf5')
+            wfile: File name or stream.
+            fformat: File format ('rms_ascii'/'rmswell', 'hdf/hdf5/h5').
 
         Example::
 
@@ -568,36 +543,17 @@ class Well:  # pylint: disable=useless-object-inheritance
             xwell.to_file("somefile_copy.rmswell")
 
         """
-        wfile = xtgeo._XTGeoFile(wfile, mode="wb")
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
 
         wfile.check_folder(raiseerror=OSError)
 
         self._ensure_consistency()
 
-        if fformat in (None, "rms_ascii", "rmswell"):
+        if fformat in (None, "rms_ascii", "rms_asc", "rmsasc", "rmswell"):
             _well_io.export_rms_ascii(self, wfile.name)
 
-        elif fformat == "hdf5":
+        elif fformat in ("hdf", "hdf5", "h5"):
             self.to_hdf(wfile)
-
-    def to_hdf(
-        self,
-        wfile: Union[str, Path],
-    ) -> Path:
-        """Export well to HDF based file.
-
-        Args:
-            wfile: HDF File name to write to export to.
-
-        Returns:
-            A Path instance to actual file applied.
-
-        """
-        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
-
-        wfile.check_folder(raiseerror=OSError)
-
-        _well_io.export_hdf5_well(self, wfile)
 
         return wfile.file
 
@@ -605,10 +561,58 @@ class Well:  # pylint: disable=useless-object-inheritance
         self,
         wfile: Union[str, Path],
     ):
-        """Read well data from HDF."""
+        """Read well data from HDF.
+
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        Read well from as HDF5 formatted file, with xtgeo spesific layout.
+
+        Args:
+            wfile: Well file or stream
+
+        Returns:
+            Well() instance.
+
+
+        .. versionadded:: 2.14
+        """
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+        if wfile.detect_fformat() != "hdf":
+            raise ValueError("Wrong file format detected")
+
+        _well_io.import_hdf5_well(self, wfile)
+
+        _self: self.__class__ = self
+        return _self  # to make obj = xtgeo.Well().from_hdf(stream) work
+
+    def to_hdf(
+        self,
+        wfile: Union[str, Path],
+        compression: Optional[str] = "lzf",
+    ) -> Path:
+        """Export well to HDF based file.
+
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        Args:
+            wfile: HDF File name to write to export to.
+
+        Returns:
+            A Path instance to actual file applied.
+
+        .. versionadded:: 2.14
+        """
         wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
 
-        _well_io.export_well_hdf(wfile)
+        wfile.check_folder(raiseerror=OSError)
+
+        _well_io.export_hdf5_well(self, wfile, compression=compression)
+
+        return wfile.file
 
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) well from roxar project.
@@ -705,37 +709,66 @@ class Well:  # pylint: disable=useless-object-inheritance
             realisation=realisation,
         )
 
-    def describe(self, flush=True):
-        """Describe an instance by printing to stdout."""
-        dsc = xtgeo.common.XTGDescription()
+    def get_wlogs(self) -> OrderedDict:
+        """Get a compound dictionary with well log metadata.
 
-        dsc.title("Description of Well instance")
-        dsc.txt("Object ID", id(self))
-        dsc.txt("File source", self._filesrc)
-        dsc.txt("Well name", self._wname)
-        dsc.txt("RKB", self._rkb)
-        dsc.txt("Well head", self._xpos, self._ypos)
-        dsc.txt("Name of all columns", self.lognames_all)
-        dsc.txt("Name of log columns", self.lognames)
-        for wlog in self.lognames:
-            rec = self.get_logrecord(wlog)
-            if rec is not None and len(rec) > 3:
-                string = "("
-                nlen = len(rec)
-                for idx, (code, val) in enumerate(rec.items()):
-                    if idx < 2:
-                        string += "{}: {} ".format(code, val)
-                    elif idx == nlen - 1:
-                        string += "...  {}: {})".format(code, val)
+        The result will be an Ordered dict on the form:
+
+        ``{"X_UTME": ["CONT", None], ... "Facies": ["DISC", {1: "BG", 2: "SAND"}]}``
+        """
+        res = OrderedDict()
+
+        for key in self._wlognames:
+            wtype = "CONT"
+            wrecord = None
+            if key in self._wlogtypes:
+                wtype = self._wlogtypes[key]
+            if key in self._wlogrecords:
+                wrecord = self._wlogrecords[key]
+
+            res[key] = [wtype, wrecord]
+
+        return res
+
+    def set_wlogs(self, wlogs: OrderedDict):
+        """Set a compound dictionary with well log metadata.
+
+        This operation is somewhat risky as it may lead to inconsistency, so use with
+        care! Typically, one will use :meth:`get_wlogs` first and then modify some
+        attributes.
+
+        Args:
+            wlogs: Input data dictionary
+
+        Raises:
+            ValueError: Invalid log type found in input:
+            ValueError: Invalid log record found in input:
+            ValueError: Invalid input key found:
+            ValueError: Invalid log record found in input:
+
+        """
+        for key in self._wlognames:
+            if key in wlogs.keys():
+                typ, rec = wlogs[key]
+
+                if typ in Well.VALID_LOGTYPES:
+                    self._wlogtypes[key] = deepcopy(typ)
+                else:
+                    raise ValueError(f"Invalid log type found in input: {typ}")
+
+                if rec is None or isinstance(rec, dict):
+                    self._wlogrecords[key] = deepcopy(rec)
+                else:
+                    raise ValueError(f"Invalid log record found in input: {rec}")
+
             else:
-                string = "{}".format(rec)
-            dsc.txt("Logname", wlog, self.get_logtype(wlog), string)
+                raise ValueError(f"Key for column not found in input: {key}")
 
-        if flush:
-            dsc.flush()
-            return None
+        for key in wlogs.keys():
+            if key not in self._wlognames:
+                raise ValueError(f"Invalid input key found: {key}")
 
-        return dsc.astext()
+        self._ensure_consistency()
 
     def isdiscrete(self, logname):
         """Return True of log is discrete, otherwise False.

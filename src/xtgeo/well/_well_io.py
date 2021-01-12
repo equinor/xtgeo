@@ -2,10 +2,12 @@
 """Well input and ouput, private module"""
 
 import json
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -247,7 +249,7 @@ def export_hdf5_well(self, wfile, compression="lzf"):
     self.metadata.required = self
 
     meta = self.metadata.get_metadata()
-    jmeta = json.dumps(meta).encode()
+    jmeta = json.dumps(meta)
 
     complib = "zlib"  # same as default lzf
     complevel = 5
@@ -261,14 +263,35 @@ def export_hdf5_well(self, wfile, compression="lzf"):
         store.put("Well", self._df)
         store.get_storer("Well").attrs["metadata"] = jmeta
         store.get_storer("Well").attrs["provider"] = "xtgeo"
-        store.get_storer("Well").attrs["format_idcode"] = "1401"
+        store.get_storer("Well").attrs["format_idcode"] = 1401
 
     logger.info("Export to hdf5 format... done!")
 
 
-def import_well_hdf(self, wfile):
+def import_hdf5_well(self, wfile):
     """Load from HDF5 format."""
-    # with pd.HDFStore(wfile.file, "r") as store:
-    #     data = store["Well"]
-    #     meta = store.get_storer("Well").attrs.metadata
-    pass
+    reqattrs = xtgeo.MetaDataWell.REQUIRED
+
+    with pd.HDFStore(wfile.file, "r") as store:
+        data = store.get("Well")
+        wstore = store.get_storer("Well")
+        jmeta = wstore.attrs["metadata"]
+        # provider = wstore.attrs["provider"]
+        # format_idcode = wstore.attrs["format_idcode"]
+
+    if isinstance(jmeta, bytes):
+        jmeta = jmeta.decode()
+
+    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    req = meta["_required_"]
+    for myattr in reqattrs:
+        if myattr == "wlogs":
+            self._wlognames = req[myattr].keys()
+            self.set_wlogs(req[myattr])
+        elif myattr == "name":
+            self._wname = req[myattr]
+        else:
+            setattr(self, "_" + myattr, req[myattr])
+
+    self.metadata.required = self
+    self._df = data

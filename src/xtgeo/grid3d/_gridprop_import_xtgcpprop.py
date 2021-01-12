@@ -2,6 +2,8 @@
 
 from struct import unpack
 import json
+from collections import OrderedDict
+
 import numpy as np
 
 import xtgeo
@@ -59,7 +61,7 @@ def import_xtgcpprop(self, mfile, ijrange=None, zerobased=False):
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta)
+    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
     req = meta["_required_"]
 
     reqattrs = xtgeo.MetaDataCPProperty.REQUIRED

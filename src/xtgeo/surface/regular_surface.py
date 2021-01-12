@@ -35,11 +35,9 @@ or::
 # pylint: disable=too-many-public-methods
 
 import sys
-import os
-import os.path
 import pathlib
 import io
-from typing import Union, Optional, List
+from typing import Tuple, Union, Optional, List, Any
 
 import numbers
 from copy import deepcopy
@@ -723,7 +721,6 @@ class RegularSurface:
 
     @values.setter
     def values(self, values):
-
         self._ensure_correct_values(values)
 
     @property
@@ -851,15 +848,23 @@ class RegularSurface:
         return dsc.astext()
 
     def from_file(
-        self, mfile, fformat=None, template=None, values=True, engine="cxtgeo"
-    ):  # pylint: disable=too-many-branches
+        self,
+        mfile: Union[str, pathlib.Path, io.BytesIO],
+        fformat: Optional[str] = None,
+        template: Optional[Any] = None,
+        values: Optional[bool] = True,
+        engine: Optional[str] = "cxtgeo",
+    ):
         """Import surface (regular map) from file.
 
-        Note that the ``fformat=None`` option will guess bye looking at the file
-        extension, where e.g. "gri" will assume irap_binary and "fgr"
+        Note that the ``fformat=None`` or ``guess`` option will guess format by
+        looking at the file or stream signature or file extension.
+        For the signature, the first bytes are scanned for 'patterns'. If that
+        does not work (and input is not a memory stream), it will try to use
+        file extension where e.g. "gri" will assume irap_binary and "fgr"
         assume Irap Ascii. If file extension is missing, Irap binary is assumed.
 
-        The ijxyz format is the typical seismic format, on the form
+        The ``ijxyz`` format is the typical seismic format, on the form
         (ILINE, XLINE, X, Y, VALUE) as a table of points. Map values are
         estimated from the given values, or by using an existing map or
         cube as template, and match by ILINE/XLINE numbering.
@@ -867,16 +872,17 @@ class RegularSurface:
         BytesIO input is supported for Irap binary, Irap Ascii, ZMAP ascii.
 
         Args:
-            mfile (str): Name of file or a io:BytesIO instance
-            fformat (str): File format, None/guess/irap_binary/irap_ascii/ijxyz
-                is currently supported.
-            template (object): Only valid if ``ijxyz`` format, where an
+            mfile: File-like or memory stream instance.
+            fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz
+                is currently supported. If None or guess, the file 'signature' is
+                used to guess format first, then file extension.
+            template: Only valid if ``ijxyz`` format, where an
                 existing Cube or RegularSurface instance is applied to
                 get correct topology.
-            values (bool): If True (default), then full array is read, if False
+            values: If True (default), then full array is read, if False
                 only metadata will be read. Valid for Irap binary only. This allows
                 lazy loading in e.g. ensembles.
-            engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
+            engine: Default is "cxtgeo" which use a C backend. Optionally a pure
                 python "python" reader will be used, which in general is slower
                 but may be safer when reading memory streams and/or threading. Engine
                 is relevant for Irap binary, Irap ascii and zmap.
@@ -903,60 +909,31 @@ class RegularSurface:
 
         mfile = xtgeosys._XTGeoFile(mfile)
 
-        if fformat is None:
-            fformat = "guess"  # default
-
-        froot = "unset"
-        if mfile.memstream is False:
-            mfile.check_file(raiseerror=OSError)
-            froot, fext = mfile.splitext(lower=True)
+        if fformat is None or fformat == "guess":
+            fformat = mfile.detect_fformat()
         else:
-            fext = None
+            fformat = mfile.generic_format_by_proposal(fformat)  # default
 
-        if fformat == "guess":
-            if not fext:
-                # just assume irap binary, e.g. for memory streams
-                fformat = "irap_binary"
-            else:
-                fformat = fext
+        mfile.check_file(raiseerror=OSError)
 
-        self._fformat = fformat
-
-        if fformat in ("irap_binary", "gri", "bin", "irapbin"):
-            _regsurf_import.import_irap_binary(
-                self, mfile, values=values, engine=engine
-            )
-            if not values:
-                self._isloaded = False
-
-        elif fformat in ("irap_ascii", "fgr", "asc", "irapasc"):
-            _regsurf_import.import_irap_ascii(self, mfile, engine=engine)
-
-        elif fformat in ("pmd", "petromod"):
-            _regsurf_import.import_petromod_binary(self, mfile)
-
-        elif "zmap" in fformat:
-            _regsurf_import.import_zmap_ascii(self, mfile)
-
-        elif fformat == "ijxyz":
-            if template:
-                _regsurf_import.import_ijxyz_ascii_tmpl(self, mfile, template)
-            else:
-                _regsurf_import.import_ijxyz_ascii(self, mfile)
-
-        # experimental!
-        elif "xtg" in fformat:
-            _regsurf_import.import_xtgregsurf(self, mfile)
-
+        # call function by fformat name; e.g. fformat="foo" -> import_foo(...)
+        if fformat == "hdf":
+            self.from_hdf(mfile, values=values)
         else:
-            raise ValueError("Invalid file format: {}".format(fformat))
+            try:
+                generic_import = getattr(_regsurf_import, "import_" + fformat)
+            except AttributeError:
+                raise ValueError(f"File format {fformat} is not supported")
+
+            generic_import(self, mfile, values=values, engine=engine, template=template)
 
         if mfile.memstream:
             self._name = "<binarystream>"
         else:
-            self._name = os.path.basename(froot)
+            self._name = mfile.file.stem
 
         self._filesrc = mfile.file
+        self._fformat = fformat
 
         logger.info("Import RegularSurface from file or memstream... done")
         return self
@@ -964,10 +941,9 @@ class RegularSurface:
     def load_values(self):
         """Import surface values in cases where metadata only is loaded.
 
-        See :meth:`RegularSurface.from_file` in cases where values key is set to False.
+        Currently, only Irap binary format is supported.
 
-        Returns:
-            Updated object instance.
+        See :meth:`from_file` in cases where values key is set to False.
 
         Example::
 
@@ -987,10 +963,10 @@ class RegularSurface:
 
     def to_file(
         self,
-        mfile,
-        fformat="irap_binary",
-        pmd_dataunits=(15, 10),
-        engine="cxtgeo",
+        mfile: Union[str, pathlib.Path, io.BytesIO],
+        fformat: Optional[str] = "irap_binary",
+        pmd_dataunits: Optional[Tuple[int, int]] = (15, 10),
+        engine: Optional[str] = "cxtgeo",
     ):
         """Export a surface (map) to file.
 
@@ -999,17 +975,18 @@ class RegularSurface:
         original map in order to prevent aliasing. See :func:`unrotate`.
 
         Args:
-            mfile (Union[str, pathlib.Path, io.Bytestream]): Name of file,
+            mfile: Name of file,
                 Path instance or IOBytestream instance. An alias can be e.g.
                 "%md5sum%" or "%fmu-v1%" with string or Path() input.
-            fformat (str): File format, irap_binary/irap_ascii/zmap_ascii/
+            fformat: File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz/petromod/xtg*/hdf5. Default is irap_binary.
-            pmd_dataunits (tuple of int): A tuple of length 2 for petromod format,
+            pmd_dataunits: A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ).
-            engine (str): Default is "cxtgeo" which use a C backend. Optionally a pure
+            engine: Default is "cxtgeo" which use a C backend. Optionally a pure
                 python "python" reader will be used, which in general is slower
                 but may be safer when reading memory streams and/or threading. Engine
-                is relevant for Irap binary, Irap ascii and zmap.
+                is relevant for Irap binary, Irap ascii and zmap. This is mainly a
+                developer setting.
 
         Returns:
             ofile (pathlib.Path): The actual file instance, or None if io.Bytestream
@@ -1072,6 +1049,40 @@ class RegularSurface:
             return None
         return mfile.file
 
+    def from_hdf(
+        self,
+        mfile: Union[str, pathlib.Path, io.BytesIO],
+        values: Optional[bool] = True,
+    ):
+        """Import/load a surface (map) with metadata from a HDF5 file.
+
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        The file extension shall be '.hdf'.
+
+        Args:
+            mfile: File name or Path object or memory stream
+            values: If False, only metadatadata are read
+
+        Returns:
+            RegularSurface() instance
+
+        Example:
+            >>> import xtgeo
+            >>> mysurf = xtgeo.RegularSurface().from_hdf("surf1.hdf")
+
+        .. versionadded:: 2.14
+        """
+        # developing, in prep and experimental!
+        mfile = xtgeosys._XTGeoFile(mfile, mode="rb", obj=self)
+
+        _regsurf_import.import_hdf5_regsurf(self, mfile, values=values)
+
+        _self: self.__class__ = self
+        return _self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
+
     def to_hdf(
         self,
         mfile: Union[str, pathlib.Path, io.BytesIO],
@@ -1110,40 +1121,6 @@ class RegularSurface:
 
         _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
         return mfile.file
-
-    def from_hdf(
-        self,
-        mfile: Union[str, pathlib.Path, io.BytesIO],
-        values: Optional[bool] = True,
-    ):
-        """Import/load a surface (map) with metadata from a HDF5 file.
-
-        Warning:
-            This implementation is currently experimental and only recommended
-            for testing.
-
-        The file extension shall be '.hdf'.
-
-        Args:
-            mfile: File name or Path object or memory stream
-            values: If False, only metadatadata are read
-
-        Returns:
-            RegularSurface() instance
-
-        Example:
-            >>> import xtgeo
-            >>> mysurf = xtgeo.RegularSurface().from_hdf("surf1.hdf")
-
-        .. versionadded:: 2.14
-        """
-        # developing, in prep and experimental!
-        mfile = xtgeosys._XTGeoFile(mfile, mode="rb", obj=self)
-
-        _regsurf_import.import_hdf5_regsurf(self, mfile, values=values)
-
-        _self: self.__class__ = self
-        return _self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
 
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0
