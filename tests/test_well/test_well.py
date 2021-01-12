@@ -3,7 +3,7 @@
 
 import glob
 from os.path import join
-from typing import OrderedDict
+from collections import OrderedDict
 
 import pytest
 import numpy as np
