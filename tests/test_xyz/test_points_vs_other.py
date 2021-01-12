@@ -12,7 +12,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TSTPATH = xtg.testpath
+TSTPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests

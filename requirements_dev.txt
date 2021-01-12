@@ -16,7 +16,8 @@ coverage>=4.1
 Sphinx
 sphinx-rtd-theme
 sphinxcontrib-apidoc
-m2r
+sphinx-autodoc-typehints
+recommonmark
 bandit
 numpy==1.10.4; python_version == "3.4"
 numpy==1.13.3; python_version >= "3.5" and python_version < "3.7"
@@ -34,3 +35,6 @@ autopep8
 pylint
 pytest>=2.9.2
 pytest-cov
+h5py>=3
+hdf5plugin>=2.3
+tables>=3.5.1

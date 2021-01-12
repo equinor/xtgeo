@@ -1,7 +1,5 @@
 import os
-import sys
 import glob
-import logging
 from xtgeo.xyz import Polygons
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
@@ -15,24 +13,20 @@ except OSError:
         raise
 
 xtg = XTGeoDialog()
+logger = xtg.basiclogger(__name__)
 
-format = xtg.loggingformat
 
-logging.basicConfig(format=xtg.loggingformat, stream=sys.stdout)
-logging.getLogger().setLevel(xtg.logginglevel)  # root logger!
+TPATH = xtg.testpathobj
 
-logger = logging.getLogger(__name__)
-
-wfiles1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-wfiles2 = "../xtgeo-testdata/wells/reek/1/OP_[1-5].w"
+WFILES1 = TPATH / "wells/reek/1/OP_1.w"
+WFILES2 = TPATH / "wells/reek/1/OP_[1-5].w"
 
 
 @tsetup.skipifroxar
 def test_get_polygons_one_well():
-    """Import a well and get the polygon segments"""
-
+    """Import a well and get the polygon segments."""
     wlist = []
-    for w in glob.glob(wfiles1):
+    for w in glob.glob(str(WFILES1)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         logger.info("Imported well {}".format(w))
 
@@ -48,10 +42,9 @@ def test_get_polygons_one_well():
 
 @tsetup.skipifroxar
 def test_get_polygons_many_wells():
-    """Import some wells and get the polygon segments"""
-
+    """Import some wells and get the polygon segments."""
     wlist = []
-    for w in glob.glob(wfiles2):
+    for w in glob.glob(str(WFILES2)):
         wlist.append(Well(w, zonelogname="Zonelog"))
         print("Imported well {}".format(w))
 

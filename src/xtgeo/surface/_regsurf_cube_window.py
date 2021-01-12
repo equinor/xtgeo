@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Regular surface vs Cube, slice a window interval"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import numpy as np
 import numpy.ma as ma

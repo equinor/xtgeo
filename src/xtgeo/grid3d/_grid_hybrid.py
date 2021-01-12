@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 import numpy as np
 
 
@@ -18,9 +16,7 @@ def make_hybridgrid(
     region=None,
     region_number=None,
 ):
-
     """Make hybrid grid."""
-
     self._xtgformat1()
 
     newnlay = self.nlay * 2 + nhdiv

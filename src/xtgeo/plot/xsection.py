@@ -1,6 +1,5 @@
 """Module for fast XSection plots of wells/surfaces etc, using matplotlib."""
 
-from __future__ import print_function
 
 from collections import OrderedDict
 

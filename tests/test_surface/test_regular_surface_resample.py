@@ -21,11 +21,12 @@ if not xtg.testsetup():
 
 TMPD = xtg.tmpdir
 TMPP = Path(xtg.tmpdir)
+TPATH = xtg.testpathobj
 
 # =============================================================================
 # Do tests
 # =============================================================================
-FTOP1 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
+FTOP1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 
 
 @pytest.fixture(name="reek_map")

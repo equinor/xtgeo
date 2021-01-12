@@ -3,8 +3,7 @@
 
 # ======================================================================================
 
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 import os
 
 import xtgeo
@@ -21,13 +20,13 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TESTPATH = "../xtgeo-testdata-equinor/data/rmsprojects"
+TPATH = "../xtgeo-testdata-equinor/data/rmsprojects"
 
 PROJ = dict()
-PROJ["1.1"] = os.path.join(TESTPATH, "reek.rms10.1.1")
-PROJ["1.1.1"] = os.path.join(TESTPATH, "reek.rms10.1.1")
-PROJ["1.2.1"] = os.path.join(TESTPATH, "reek.rms11.0.1")
-PROJ["1.3"] = os.path.join(TESTPATH, "reek.rms11.1.0")
+PROJ["1.1"] = os.path.join(TPATH, "reek.rms10.1.1")
+PROJ["1.1.1"] = os.path.join(TPATH, "reek.rms10.1.1")
+PROJ["1.2.1"] = os.path.join(TPATH, "reek.rms11.0.1")
+PROJ["1.3"] = os.path.join(TPATH, "reek.rms11.1.0")
 
 
 @tsetup.equinor

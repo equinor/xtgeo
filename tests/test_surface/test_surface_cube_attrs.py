@@ -11,7 +11,7 @@ if not xtg.testsetup():
     raise SystemExit("Cannot find test setup")
 
 TMD = xtg.tmpdir
-TPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 SFILE1 = join(TPATH, "cubes/etc/ib_synth_iainb.segy")
 SFILE2 = join(TPATH, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")

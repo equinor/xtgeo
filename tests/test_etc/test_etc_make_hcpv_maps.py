@@ -13,8 +13,9 @@ xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
 
-ROFF1_GRID = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff"
-ROFF1_PROPS = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero.roff"
+TPATH = xtg.testpathobj
+ROFF1_GRID = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
+ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 
 
 @tsetup.skipifroxar

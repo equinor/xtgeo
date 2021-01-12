@@ -1,6 +1,7 @@
 """Import Cube data via SegyIO library or XTGeo CLIB."""
 from struct import unpack
 import json
+from collections import OrderedDict
 
 import numpy as np
 
@@ -458,7 +459,7 @@ def import_xtgregcube(self, mfile, values=True):
         fhandle.seek(pos)
         jmeta = fhandle.read().decode()
 
-    meta = json.loads(jmeta)
+    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
     req = meta["_required_"]
 
     reqattrs = xtgeo.MetaDataRegularCube.REQUIRED

@@ -20,7 +20,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TSTPATH = xtg.testpath
+TSTPATH = xtg.testpathobj
 
 XTGSHOW = False
 if "XTG_SHOW" in os.environ:

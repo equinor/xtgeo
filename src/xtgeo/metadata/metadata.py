@@ -140,7 +140,7 @@ class _OptionalMetaData:
 
 
 class MetaData:
-    """Generic metadata class, not be used directly."""
+    """Generic metadata class, not intended to be used directly."""
 
     def __init__(self):
         """Generic metadata class __init__, not be used directly."""
@@ -400,3 +400,43 @@ class MetaDataCPProperty(MetaData):
         self._required["nlay"] = obj.nlay
         self._required["codes"] = obj.codes
         self._required["discrete"] = obj.isdiscrete
+
+
+class MetaDataWell(MetaData):
+    """Metadata for single Well() objects."""
+
+    REQUIRED = OrderedDict(
+        [
+            ("rkb", 0.0),
+            ("xpos", 0.0),
+            ("ypos", 0.0),
+            ("name", "noname"),
+            ("wlogs", dict()),
+            ("mdlogname", None),
+            ("zonelogname", None),
+        ]
+    )
+
+    def __init__(self):
+        """Initialisation for Well metadata."""
+        super(MetaDataWell, self).__init__()
+        self._required = __class__.REQUIRED
+        self._optional._datatype = "Well"
+
+    @property
+    def required(self):
+        """Get of set required metadata."""
+        return self._required
+
+    @required.setter
+    def required(self, obj):
+        if not isinstance(obj, xtgeo.Well):
+            raise ValueError("Input object is not a Well() instance!")
+
+        self._required["rkb"] = obj.rkb
+        self._required["xpos"] = obj.xpos
+        self._required["ypos"] = obj.ypos
+        self._required["name"] = obj.wname
+        self._required["wlogs"] = obj.get_wlogs()
+        self._required["mdlogname"] = obj.mdlogname
+        self._required["zonelogname"] = obj.zonelogname

@@ -4,15 +4,18 @@
 import os
 import hashlib
 import uuid
+import struct
 import pathlib
 from os.path import join
 import io
+import re
 from platform import system as plfsys
 from tempfile import mkstemp
 from types import BuiltinFunctionType
+from typing import Optional
 
 import numpy as np
-
+import h5py
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from .xtgeo_dialog import XTGeoDialog
@@ -20,13 +23,37 @@ from .xtgeo_dialog import XTGeoDialog
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
+
+SUPPORTED_FORMATS = {
+    "rmswell": ["rmswell", "rmsw", "w"],
+    "roff_binary": ["roff_binary", "roff", "roff_bin", "roff-bin", "roffbin", "roff.*"],
+    "roff_ascii": ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"],
+    "egrid": ["egrid"],
+    "init": ["init"],
+    "unrst": ["unrst"],
+    "grdecl": ["grdecl"],
+    "irap_binary": ["irap_binary", "irap_bin", "rms_binary", "irapbin", "gri"],
+    "irap_ascii": ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"],
+    "hdf": ["hdf", "hdf5", "h5"],
+    "segy": ["segy", "sgy", "segy.*"],
+    "zmap_ascii": ["zmap", "zmap+", "zmap_ascii", "zmap-ascii", "zmap-asc", "zmap.*"],
+    "ijxyz": ["ijxyz"],
+    "petromod": ["pmd", "petromod"],
+    "xtg": ["xtg", "xtgeo", "xtgf", "xtg.*"],
+}
+
 VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
 
 
-def npfromfile(fname, dtype=np.float32, count=1, offset=0):
+def npfromfile(fname, dtype=np.float32, count=1, offset=0, mmap=False):
     """Wrapper round np.fromfile to be compatible with older np versions."""
     try:
-        vals = np.fromfile(fname, dtype=dtype, count=count, offset=offset)
+        if mmap:
+            vals = np.memmap(
+                fname, dtype=dtype, shape=(count,), mode="r", offset=offset
+            )
+        else:
+            vals = np.fromfile(fname, dtype=dtype, count=count, offset=offset)
     except TypeError as err:
         # offset keyword requires numpy >= 1.17, need this for backward compat.:
         if "'offset' is an invalid" in str(err):
@@ -81,7 +108,7 @@ def generic_hash(gid, hashmethod="md5"):
 
 
 class _XTGeoFile(object):
-    """A private class for file handling of files in/out of XTGeo and CXTGeo.
+    """A private class for file/stream handling in/out of XTGeo and CXTGeo.
 
     Interesting attributes:
 
@@ -103,7 +130,7 @@ class _XTGeoFile(object):
 
     def __init__(self, fobj, mode="rb", obj=None):
 
-        self._file = None  # Path instance
+        self._file = None  # Path instance or BytesIO memory stream
         self._tmpfile = None
         self._delete_after = False  # delete file (e.g. tmp) afterwards
         self._mode = mode
@@ -221,10 +248,10 @@ class _XTGeoFile(object):
     def exists(self):  # was: file_exists
         """Check if 'r' file, memory stream or folder exists, and returns True of OK."""
         if "r" in self._mode:
-            if self._file.exists():
+            if isinstance(self._file, io.BytesIO):
                 return True
 
-            if isinstance(self._file, io.BytesIO):
+            if self._file.exists():
                 return True
 
             return False
@@ -247,6 +274,9 @@ class _XTGeoFile(object):
         """
         logger.info("Checking file...")
 
+        if self.memstream:
+            return True
+
         if raisetext is None:
             raisetext = "File {} does not exist or cannot be accessed".format(self.name)
 
@@ -267,6 +297,7 @@ class _XTGeoFile(object):
         Args:
             raiseerror (exception): If none, then return True or False, else raise the
                 given Exception if False
+            raisetext (str): Text to raise.
 
         Return:
             status: True, if folder exists and is writable, False if not.
@@ -317,8 +348,7 @@ class _XTGeoFile(object):
         # return status
 
     def splitext(self, lower=False):
-        """Return file stem and suffix, always lowercase if lower is True"""
-
+        """Return file stem and suffix, always lowercase if lower is True."""
         logger.info("Run splitext to get stem and suffix...")
 
         stem = self._file.stem
@@ -332,17 +362,16 @@ class _XTGeoFile(object):
         return stem, suffix
 
     def get_cfhandle(self):  # was get_handle
-        """
-        Get SWIG C file handle for CXTgeo
+        """Get SWIG C file handle for CXTgeo.
 
         This is tied to cfclose() which closes the file.
 
         if _cfhandle already exists, then _cfhandlecount is increased with 1
 
         """
-
         # differ on Linux and other OS as Linux can use fmemopen() in C
         islinux = True
+        fobj = None
         if plfsys() != "Linux":
             islinux = False
 
@@ -387,6 +416,7 @@ class _XTGeoFile(object):
                 cfhandle = _cxtgeo.xtg_fopen(fobj, self._mode)
             except TypeError as err:
                 logger.critical("Cannot open file: %s", err)
+                raise
 
         self._cfhandle = cfhandle
         self._cfhandlecount = 1
@@ -395,12 +425,10 @@ class _XTGeoFile(object):
         return self._cfhandle
 
     def cfclose(self, strict=True):
-        """
-        Close SWIG C file handle by keeping track of _cfhandlecount
+        """Close SWIG C file handle by keeping track of _cfhandlecount.
 
         Return True if cfhandle is really closed.
         """
-
         logger.info("Request for closing SWIG fhandle no: %s", self._cfhandlecount)
 
         if self._cfhandle is None or self._cfhandlecount == 0:
@@ -446,3 +474,194 @@ class _XTGeoFile(object):
         logger.info("Remaining SWIG cfhandles: %s, return is True", self._cfhandlecount)
 
         return True
+
+    def detect_fformat(
+        self, details: Optional[bool] = False, suffixonly: Optional[bool] = False
+    ):
+        """Try to deduce format from looking at file signature.
+
+        The file signature may be the initial part of the binary file/stream but if
+        that fails, the file extension is used.
+
+        Args:
+            details: If True, more info is added to the return string (useful for some
+                formats) e.g. "hdf RegularSurface xtgeo"
+            suffixonly: If True, look at file suffix only.
+
+        Returns:
+            A string with format spesification, e.g. "hdf".
+        """
+        if not self.exists():
+            raise ValueError(f"File {self.name} does not exist")
+
+        if suffixonly:
+            return self._detect_format_by_extension()
+
+        # Try the read the N first bytes
+        maxbuf = 100
+
+        if self.memstream:
+            self.file.seek(0)
+            buf = self.file.read(maxbuf)
+            self.file.seek(0)
+        else:
+            with open(self.file, "rb") as fhandle:
+                buf = fhandle.read(maxbuf)
+
+        # ------------------------------------------------------------------------------
+        # HDF format, different variants
+
+        _, hdf = struct.unpack("b 3s", buf[:4])
+        if hdf == b"HDF":
+            logger.info("Signature is hdf")
+
+            main = self._validate_format("hdf")
+            fmt = ""
+            provider = ""
+            if details:
+                with h5py.File(self.file, "r") as hstream:
+                    for xtgtype in ["RegularSurface", "Well", "CornerPointGrid"]:
+                        if xtgtype in hstream.keys():
+                            fmt = xtgtype
+                            grp = hstream.require_group(xtgtype)
+                            try:
+                                provider = grp.attrs["provider"]
+                            except KeyError:
+                                provider = "unknown"
+                            break
+
+                return f"{main} {fmt} {provider}"
+            else:
+                return main
+
+        # ------------------------------------------------------------------------------
+        # Irap binary regular surface format
+
+        fortranblock, gricode = struct.unpack(">ii", buf[:8])
+        if fortranblock == 32 and gricode == -996:
+            logger.info("Signature is irap binary")
+            return self._validate_format("irap_binary")
+
+        # ------------------------------------------------------------------------------
+        # Petromod binary regular surface
+
+        if b"Content=Map" in buf and b"DataUnitDistance" in buf:
+            logger.info("Signature is petromod")
+            return self._validate_format("petromod")
+
+        # ------------------------------------------------------------------------------
+        # Eclipse binary 3D EGRID, look at FILEHEAD:
+        #  'FILEHEAD'         100 'INTE'
+        #   3        2016           0           0           0           0
+        #  (ver)    (release)      (reserved)   (backw)    (gtype)      (dualporo)
+
+        fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
+        if fort1 == 16 and name == b"FILEHEAD" and num == 100 and fort2 == 16:
+            # Eclipse corner point EGRID
+            logger.info("Signature is egrid")
+            return self._validate_format("egrid")
+
+        # ------------------------------------------------------------------------------
+        # Eclipse binary 3D UNRST, look for SEQNUM:
+        #  'SEQNUM'         1 'INTE'
+
+        fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
+        if fort1 == 16 and name == b"SEQNUM  " and num == 1 and fort2 == 16:
+            # Eclipse UNRST
+            logger.info("Signature is unrst")
+            return self._validate_format("unrst")
+
+        # ------------------------------------------------------------------------------
+        # Eclipse binary 3D INIT, look for INTEHEAD:
+        #  'INTEHEAD'         411 'INTE'
+
+        fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
+        if fort1 == 16 and name == b"INTEHEAD" and num > 400 and fort2 == 16:
+            # Eclipse INIT
+            logger.info("Signature is init")
+
+            return self._validate_format("init")
+
+        # ------------------------------------------------------------------------------
+        # ROFF binary 3D
+
+        name, _ = struct.unpack("8s b", buf[:9])
+        if name == b"roff-bin":
+            logger.info("Signature is roff_binary")
+            return self._validate_format("roff_binary")
+
+        # ------------------------------------------------------------------------------
+        # ROFF ascii 3D
+
+        name, _ = struct.unpack("8s b", buf[:9])
+        if name == b"roff-asc":
+            logger.info("Signature is roff_ascii")
+            return self._validate_format("roff_ascii")
+
+        # ------------------------------------------------------------------------------
+        # RMS well format (ascii)
+        # 1.0
+        # Unknown
+        # WELL12 90941.63200000004 5506367.711 23.0
+        # ...
+        # The signature here is one float in first line with values 1.0; one string
+        # in second line; and 3 or 4 items in the next (sometimes RKB is missing)
+
+        xbuf = buf.decode().split("\n")
+        if xbuf[0] == "1.0" and len(xbuf[1]) >= 1 and len(xbuf[2]) >= 10:
+            logger.info("Signature is rmswell")
+            return self._validate_format("rmswell")
+
+        # if all this fails, tryr to detect format by extension
+        fmt = self._detect_format_by_extension()
+
+        return self._validate_format(fmt)
+
+    def _detect_format_by_extension(self):
+        """Detect format by extension."""
+        if self.memstream:
+            return "unknown"
+
+        suffix = self.file.suffix[1:].lower()
+
+        for fmt, variants in SUPPORTED_FORMATS.items():
+            if suffix in variants:
+                logger.info(f"Extension hints {fmt}")
+                return fmt
+
+        # if none of these above are accepted, check regular expression
+        # (intentional to complete all variant in loop above first before trying re())
+        for fmt, variants in SUPPORTED_FORMATS.items():
+            for var in variants:
+                if "*" in var:
+                    pattern = re.compile(var)
+                    if pattern.match(suffix):
+                        logger.info(f"Extension by regexp hints {fmt}")
+                        return fmt
+
+        return "unknown"
+
+    @staticmethod
+    def _validate_format(fmt):
+        """Validate format."""
+        if fmt in SUPPORTED_FORMATS.keys():
+            return fmt
+        else:
+            raise RuntimeError(f"Invalid format: {fmt}")
+
+    @staticmethod
+    def generic_format_by_proposal(propose):
+        """Get generic format by proposal."""
+        for fmt, variants in SUPPORTED_FORMATS.items():
+            if propose in variants:
+                return fmt
+
+        # if none of these above are accepted, check regular expression
+        for fmt, variants in SUPPORTED_FORMATS.items():
+            for var in variants:
+                if "*" in var:
+                    pattern = re.compile(var)
+                    if pattern.match(propose):
+                        return fmt
+
+        raise ValueError(f"Non-supportred file extension: {propose}")

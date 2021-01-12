@@ -1,6 +1,4 @@
-"""Private module for grid vs well zonelog checks"""
-
-from __future__ import print_function, absolute_import, division
+"""Private module for grid vs well zonelog checks."""
 
 import numpy as np
 import xtgeo
@@ -25,8 +23,7 @@ def report_zone_mismatch(
     filterlogrange=(1e-32, 9999.0),
     resultformat=1,
 ):  # pylint: disable=too-many-locals
-    """
-    Reports well to zone mismatch; this works together with a Well object.
+    """Reports well to zone mismatch; this works together with a Well object.
 
     The idea is to sample the current zone property for the well in the grid as fast as
     possible.
@@ -39,7 +36,6 @@ def report_zone_mismatch(
 
     This method was completely redesigned in version 2.8
     """
-
     self._xtgformat1()
 
     if onelayergrid is not None:

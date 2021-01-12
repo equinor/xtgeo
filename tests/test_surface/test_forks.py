@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import division, absolute_import
+
 import subprocess
 import xtgeo
 
@@ -10,7 +10,9 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTFILE = "../xtgeo-testdata/surfaces/reek/1/basereek_rota_v2.gri"
+TPATH = xtg.testpathobj
+
+TESTFILE = TPATH / "surfaces/reek/1/basereek_rota_v2.gri"
 
 
 def test_surface_forks():

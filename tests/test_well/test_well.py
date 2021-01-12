@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import glob
 from os.path import join
+from collections import OrderedDict
 
 import pytest
 import numpy as np
@@ -22,22 +22,23 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TMPDX = xtg.tmpdirobj
+TPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-WFILE = join(TESTPATH, "wells/reek/1/OP_1.w")
-WFILE_HOLES = join(TESTPATH, "wells/reek/1/OP_1_zholes.w")
-WFILES = join(TESTPATH, "wells/reek/1/*")
+WFILE = join(TPATH, "wells/reek/1/OP_1.w")
+WFILE_HOLES = join(TPATH, "wells/reek/1/OP_1_zholes.w")
+WFILES = str(TPATH / "wells/reek/1/*")
 
 
-WELL1 = join(TESTPATH, "wells/battle/1/WELL09.rmswell")
-WELL2 = join(TESTPATH, "wells/battle/1/WELL36.rmswell")
-WELL3 = join(TESTPATH, "wells/battle/1/WELL10.rmswell")
+WELL1 = join(TPATH, "wells/battle/1/WELL09.rmswell")
+WELL2 = join(TPATH, "wells/battle/1/WELL36.rmswell")
+WELL3 = join(TPATH, "wells/battle/1/WELL10.rmswell")
 
-WELL4 = join(TESTPATH, "wells/drogon/1/55_33-1.rmswell")
+WELL4 = join(TPATH, "wells/drogon/1/55_33-1.rmswell")
 
 
 @pytest.fixture(name="loadwell1")
@@ -151,8 +152,7 @@ def test_change_a_lot_of_stuff(loadwell1):
 
 
 def test_import_export_many():
-    """ Import and export many wells (test speed)"""
-
+    """Import and export many wells (test speed)."""
     logger.debug(WFILES)
 
     for filename in sorted(glob.glob(WFILES)):
@@ -166,8 +166,7 @@ def test_import_export_many():
 
 
 def test_shortwellname():
-    """Test that shortwellname gives wanted result"""
-
+    """Test that shortwellname gives wanted result."""
     mywell = Well()
 
     mywell._wname = "31/2-A-14 2H"
@@ -181,22 +180,47 @@ def test_shortwellname():
     assert short == "A-142H"
 
 
-# def test_import_as_rms_export_as_hdf5_many():
-#     """ Import RMS and export as HDF5, many"""
+def test_hdf_io_single():
+    """Test HDF io, single well."""
+    mywell = Well(WELL1)
 
-#     logger.debug(WFILES)
+    wname = (TMPDX / "hdfwell").with_suffix(".hdf")
+    mywell.to_hdf(wname)
+    mywell2 = Well()
+    mywell2.from_hdf(wname)
 
-#     wfile = TMPD + "/mytest.h5"
-#     for filename in glob.glob(WFILES):
-#         logger.info("Importing " + filename)
-#         mywell = Well(filename)
-#         logger.info(mywell.nrow)
-#         logger.info(mywell.ncol)
-#         logger.info(mywell.lognames)
 
-#         wname = TMPD + "/" + mywell.xwellname + ".h5"
-#         logger.info("Exporting " + wname)
-#         mywell.to_file(wfile, fformat='hdf5')
+def test_import_as_rms_export_as_hdf_many():
+    """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
+    mywell = Well(WELL1)
+    nmax = 50
+
+    t0 = xtg.timer()
+    wlist = []
+    for _ in range(nmax):
+        wname = (TMPDX / "$random").with_suffix(".hdf")
+        wuse = mywell.to_hdf(wname, compression=None)
+        wlist.append(wuse)
+    print("Time for save HDF: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    for wll in wlist:
+        wname = (TMPDX / "$random").with_suffix(".hdf")
+        wuse = mywell.from_hdf(wll)
+    print("Time for load HDF: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    wlist = []
+    for _ in range(nmax):
+        wname = (TMPDX / "$random").with_suffix(".rmsasc")
+        wuse = mywell.to_file(wname)
+        wlist.append(wuse)
+    print("Time for save RMSASC: ", xtg.timer(t0))
+
+    t0 = xtg.timer()
+    for wll in wlist:
+        wuse = mywell.from_file(wll)
+    print("Time for load RMSASC: ", xtg.timer(t0))
 
 
 def test_get_carr(loadwell1):
@@ -228,7 +252,7 @@ def test_get_carr(loadwell1):
 
 
 def test_create_and_delete_logs(loadwell3):
-
+    """Test create adn delete logs."""
     mywell = loadwell3
 
     status = mywell.create_log("NEWLOG")
@@ -248,6 +272,32 @@ def test_create_and_delete_logs(loadwell3):
 
     ndeleted = mywell.delete_log(["NEWLOG", "GR"])
     assert ndeleted == 2
+
+
+def test_get_set_wlogs(loadwell3):
+    """Test on getting ans setting a dictionary with some log attributes."""
+    mywell = loadwell3
+
+    mydict = mywell.get_wlogs()
+    print(mydict)
+
+    assert isinstance(mydict, OrderedDict)
+
+    assert mydict["X_UTME"][0] == "CONT"
+    assert mydict["ZONELOG"][0] == "DISC"
+    assert mydict["ZONELOG"][1][24] == "ZONE_24"
+
+    mydict["ZONELOG"][1][24] = "ZONE_24_EDITED"
+    mywell.set_wlogs(mydict)
+
+    mydict2 = mywell.get_wlogs()
+    assert mydict2["X_UTME"][0] == "CONT"
+    assert mydict2["ZONELOG"][0] == "DISC"
+    assert mydict2["ZONELOG"][1][24] == "ZONE_24_EDITED"
+
+    mydict2["EXTRA"] = None
+    with pytest.raises(ValueError):
+        mywell.set_wlogs(mydict2)
 
 
 def test_make_hlen(loadwell1):

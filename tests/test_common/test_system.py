@@ -2,6 +2,7 @@
 import hashlib
 import os
 import pathlib
+import io
 
 import pytest
 
@@ -9,16 +10,26 @@ import tests.test_common.test_xtg as tsetup
 import xtgeo
 import xtgeo.common.sys as xsys
 
+xtg = xtgeo.XTGeoDialog()
+
 TRAVIS = False
 if "TRAVISRUN" in os.environ:
     TRAVIS = True
 
+TPATH = xtg.testpathobj
+TMPD = xtg.tmpdirobj
 
-TESTFILE = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-TESTFOLDER = "../xtgeo-testdata/3dgrids/reek"
-TESTNOEXISTFILE = "../xtgeo-testdata/3dgrids/reek/NOSUCH.EGRID"
-TESTNOEXISTFOLDER = "../xtgeo-testdata/3dgrids/noreek/NOSUCH.EGRID"
-TESTSURF = "../xtgeo-testdata/surfaces/reek/1/topupperreek.gri"
+TEST_ECL_ROOT = TPATH / "3dgrids/reek/REEK"
+TESTFILE = TPATH / "3dgrids/reek/REEK.EGRID"
+TESTFOLDER = TPATH / "3dgrids/reek"
+TESTNOEXISTFILE = TPATH / "3dgrids/reek/NOSUCH.EGRID"
+TESTNOEXISTFOLDER = TPATH / "3dgrids/noreek/NOSUCH.EGRID"
+TESTSURF = TPATH / "surfaces/reek/1/topupperreek.gri"
+TESTSURF2 = TPATH / "surfaces/reek/1/reek_stooip_map.gri"
+TESTSURF3 = TPATH / "surfaces/etc/seabed_p.pmd"
+TESTROFFGRIDB = TPATH / "3dgrids/reek/reek_geo_grid.roff"
+TESTROFFGRIDA = TPATH / "3dgrids/reek/reek_geogrid.roffasc"
+TESTWELL1 = TPATH / "wells/battle/1/WELL12.rmswell"
 
 
 def test_generic_hash():
@@ -65,7 +76,7 @@ def test_resolve_alias():
 @tsetup.skipifmac
 @tsetup.skipifwindows
 def test_xtgeocfile():
-    """Test basic system file io etc functions"""
+    """Test basic system file io etc functions."""
     gfile = xtgeo._XTGeoFile(TESTFILE)
     xfile = xtgeo._XTGeoFile(TESTNOEXISTFILE)
     yfile = xtgeo._XTGeoFile(TESTNOEXISTFOLDER)
@@ -111,10 +122,9 @@ def test_xtgeocfile():
 @tsetup.skipifmac
 @tsetup.skipifwindows
 def test_xtgeocfile_fhandle():
-    """Test in particular C handle SWIG system"""
+    """Test in particular C handle SWIG system."""
 
     gfile = xtgeo._XTGeoFile(TESTFILE)
-
     chandle1 = gfile.get_cfhandle()
     chandle2 = gfile.get_cfhandle()
     assert gfile._cfhandlecount == 2
@@ -125,6 +135,72 @@ def test_xtgeocfile_fhandle():
     # try to close a cfhandle that does not exist
     with pytest.raises(RuntimeError):
         gfile.cfclose()
+
+
+def test_detect_fformat():
+    """Test to guess/detect file formats based on various criteria."""
+    # irap binary as file
+    gfile = xtgeo._XTGeoFile(TESTSURF2)
+    assert gfile.detect_fformat() == "irap_binary"
+
+    # irap binary as memory stream
+    stream = io.BytesIO()
+    surf = xtgeo.RegularSurface(TESTSURF2)
+    surf.to_file(stream)
+    sfile = xtgeo._XTGeoFile(stream)
+    assert sfile.memstream is True
+    assert sfile.detect_fformat() == "irap_binary"
+
+    # petromod binary as file
+    gfile = xtgeo._XTGeoFile(TESTSURF3)
+    assert gfile.detect_fformat() == "petromod"
+
+    # HDF xtgeo surface file
+    newfile = TMPD / "hdf_surf.hdf"
+    surf.to_hdf(newfile)
+    gfile = xtgeo._XTGeoFile(newfile)
+    assert gfile.detect_fformat() == "hdf"
+    assert gfile.detect_fformat(details=True) == "hdf RegularSurface xtgeo"
+
+    # HDF xtgeo surface as stream
+    stream = io.BytesIO()
+    surf = xtgeo.RegularSurface(TESTSURF2)
+    surf.to_hdf(stream)
+    sfile = xtgeo._XTGeoFile(stream)
+    assert sfile.memstream is True
+    assert sfile.detect_fformat() == "hdf"
+
+    # Eclipse egrid as file
+    gfile = xtgeo._XTGeoFile(TEST_ECL_ROOT.with_suffix(".EGRID"))
+    assert gfile.detect_fformat() == "egrid"
+    # Eclipse restart (unified) as file
+    gfile = xtgeo._XTGeoFile(TEST_ECL_ROOT.with_suffix(".UNRST"))
+    assert gfile.detect_fformat() == "unrst"
+    # Eclipse init as file
+    gfile = xtgeo._XTGeoFile(TEST_ECL_ROOT.with_suffix(".INIT"))
+    assert gfile.detect_fformat() == "init"
+    # Eclipse init as file, extension only
+    gfile = xtgeo._XTGeoFile(TEST_ECL_ROOT.with_suffix(".INIT"))
+    assert gfile.detect_fformat(suffixonly=True) == "init"
+
+    # ROFF bin as file
+    gfile = xtgeo._XTGeoFile(TESTROFFGRIDB)
+    assert gfile.detect_fformat() == "roff_binary"
+    # ROFF asc as file
+    gfile = xtgeo._XTGeoFile(TESTROFFGRIDA)
+    assert gfile.detect_fformat() == "roff_ascii"
+
+    # RMS ascii well file
+    wfile = xtgeo._XTGeoFile(TESTWELL1)
+    assert wfile.detect_fformat() == "rmswell"
+
+    # RMS ascii well file by suffix only
+    wfile = xtgeo._XTGeoFile(TESTWELL1)
+    assert wfile.detect_fformat(suffixonly=True) == "rmswell"
+
+    # Some invalid case
+    wfile = xtgeo._XTGeoFile("setup.py")
+    assert wfile.detect_fformat(suffixonly=True) == "unknown"
 
 
 # @tsetup.skipifwindows

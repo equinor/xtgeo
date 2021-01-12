@@ -144,8 +144,8 @@ Also, another small cube with another rotation is made:
 
 .. code-block:: python
 
-   from __future__ import division, absolute_import
-   from __future__ import print_function
+
+
 
    import xtgeo
 

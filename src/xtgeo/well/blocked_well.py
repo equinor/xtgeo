@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """XTGeo blockedwell module"""
 
-from __future__ import print_function, absolute_import
 
 import xtgeo
 from .well1 import Well

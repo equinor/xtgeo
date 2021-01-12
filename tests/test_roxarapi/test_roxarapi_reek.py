@@ -29,30 +29,30 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 PROJNAME = "tmp_project.rmsxxx"
 PRJ = join(TMPD, PROJNAME)
 
-CUBEDATA1 = "../xtgeo-testdata/cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
+CUBEDATA1 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
 CUBENAME1 = "synth1"
 
 SURFTOPS1 = [
-    "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri",
-    "../xtgeo-testdata/surfaces/reek/1/midreek_rota.gri",
-    "../xtgeo-testdata/surfaces/reek/1/lowreek_rota.gri",
+    TPATH / "surfaces/reek/1/topreek_rota.gri",
+    TPATH / "surfaces/reek/1/midreek_rota.gri",
+    TPATH / "surfaces/reek/1/lowreek_rota.gri",
 ]
 
 
 SURFCAT1 = "DS_whatever"
 SURFNAMES1 = ["TopReek", "MidReek", "BaseReek"]
 
-GRIDDATA1 = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
-PORODATA1 = "../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff"
+GRIDDATA1 = TPATH / "3dgrids/reek/reek_sim_grid.roff"
+PORODATA1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
 GRIDNAME1 = "Simgrid"
 PORONAME1 = "PORO"
 
-WELLSFOLDER1 = "../xtgeo-testdata/wells/reek/1"
+WELLSFOLDER1 = TPATH / "wells/reek/1"
 WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
 
 # ======================================================================================

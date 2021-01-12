@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module for simplifying various operation in the Roxar python interface."""
 
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 from distutils.version import StrictVersion
 

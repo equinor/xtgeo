@@ -7,7 +7,6 @@ from xtgeo.common import XTGeoDialog
 
 from xtgeo.grid3d import _grid_import_roff
 from xtgeo.grid3d import _grid_import_ecl
-from xtgeo.grid3d import _grid_import_xtgcpgeom
 
 
 xtg = XTGeoDialog()
@@ -41,7 +40,7 @@ def from_file(
             "roff",
             "eclipserun",
             "guess",
-            "xtgcpgeom",
+            "xtgf",
         ]
     )
     if fformat not in fflist:
@@ -50,7 +49,7 @@ def from_file(
         )
 
     # work on file extension
-    _froot, fext = gfile.splitext(lower=True)
+    _, fext = gfile.splitext(lower=True)
 
     if fformat == "guess":
         logger.info("Format is <guess>")
@@ -88,9 +87,8 @@ def from_file(
         _grid_import_ecl.import_ecl_grdecl(self, gfile)
     elif fformat == "bgrdecl":
         _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
-    elif fformat == "xtgcpgeom":
-        # experimental
-        _grid_import_xtgcpgeom.import_xtgcpgeom(self, gfile)
+    elif fformat == "xtgf":
+        self.from_xtgf(gfile)
     else:
         raise ValueError("Invalid file format")
 

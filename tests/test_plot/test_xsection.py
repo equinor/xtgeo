@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, absolute_import
+
 
 import os
 from os.path import join
@@ -18,7 +18,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPD = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 XTGSHOW = False
 if "XTG_SHOW" in os.environ:
@@ -30,16 +30,14 @@ logger.info("Use env variable XTG_SHOW to show interactive plots to screen")
 # Do tests
 # =========================================================================
 
-USEFILE1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-USEFILE2 = "../xtgeo-testdata/surfaces/reek/1/topreek_rota.gri"
-USEFILE3 = "../xtgeo-testdata/polygons/reek/1/mypoly.pol"
-USEFILE4 = "../xtgeo-testdata/wells/reek/1/OP_5.w"
-USEFILE5 = "../xtgeo-testdata/surfaces/reek/2/*.gri"
-USEFILE6 = (
-    "../xtgeo-testdata/cubes/reek/" + "syntseis_20000101_seismic_depth_stack.segy"
-)
+USEFILE1 = TPATH / "wells/reek/1/OP_1.w"
+USEFILE2 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+USEFILE3 = TPATH / "polygons/reek/1/mypoly.pol"
+USEFILE4 = TPATH / "wells/reek/1/OP_5.w"
+USEFILE5 = TPATH / "surfaces/reek/2/*.gri"
+USEFILE6 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
 
-USEFILE7 = "../xtgeo-testdata/wells/reek/1/OP_2.w"
+USEFILE7 = TPATH / "wells/reek/1/OP_2.w"
 
 BIGRGRID1 = "../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg.roff"
 BIGPROP1 = "../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg_phix.roff"
@@ -89,11 +87,11 @@ def test_simple_plot():
     # set the color table, from file
     clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
     cfil1 = "xtgeo"
-    cfil2 = "../xtgeo-testdata/etc/colortables/colfacies.txt"
+    cfil2 = TPATH / "etc/colortables/colfacies.txt"
 
     assert 222 in clist
     assert "xtgeo" in cfil1
-    assert "colfacies" in cfil2
+    assert "colfacies" in str(cfil2)
 
     myplot.set_colortable(cfil1, colorlist=None)
 
@@ -142,11 +140,11 @@ def test_simple_plot_with_seismics():
     # set the color table, from file
     clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
     cfil1 = "xtgeo"
-    cfil2 = "../xtgeo-testdata/etc/colortables/colfacies.txt"
+    cfil2 = TPATH / "etc/colortables/colfacies.txt"
 
     assert 222 in clist
     assert "xtgeo" in cfil1
-    assert "colfacies" in cfil2
+    assert "colfacies" in str(cfil2)
 
     myplot.set_colortable(cfil1, colorlist=None)
 
@@ -203,7 +201,7 @@ def test_xsect_larger_geogrid():
     # # set the color table, from file
     # clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
     # cfil1 = "xtgeo"
-    # cfil2 = "../xtgeo-testdata/etc/colortables/colfacies.txt"
+    # cfil2 = TPATH / "etc/colortables/colfacies.txt"
 
     # assert 222 in clist
     # assert "xtgeo" in cfil1
@@ -234,7 +232,7 @@ def test_reek1():
     myfield.from_file(USEFILE3, fformat="xyz")
 
     mywells = []
-    wnames = glob.glob(USEFILE4)
+    wnames = glob.glob(str(USEFILE4))
     wnames.sort()
     for wname in wnames:
         mywell = xtgeo.Well(wname)
@@ -243,7 +241,7 @@ def test_reek1():
     logger.info("Wells are read...")
 
     mysurfaces = []
-    surfnames = glob.glob(USEFILE5)
+    surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
         mysurf = xtgeo.RegularSurface()
@@ -252,7 +250,7 @@ def test_reek1():
 
     # Troll lobes
     mylobes = []
-    surfnames = glob.glob(USEFILE5)
+    surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
         mysurf = xtgeo.RegularSurface()

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI"""
 
-from __future__ import print_function, absolute_import
 
 from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils

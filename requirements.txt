@@ -5,3 +5,6 @@ scipy>=0.17
 segyio>1.8.0
 pandas>=0.18
 six>=1.11
+h5py>=3
+hdf5plugin>=2.3
+tables>=3.5.1

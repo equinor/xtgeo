@@ -43,7 +43,6 @@ def _swapaxes_v1(self):
 
     values1d = self.values.reshape(-1)
     traceid1d = self._traceidcodes.reshape(-1)
-    print("XXXX", self._traceidcodes.shape)
 
     ier = _cxtgeo.cube_swapaxes(
         ncol,

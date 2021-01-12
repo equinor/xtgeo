@@ -1,6 +1,5 @@
 # coding: utf-8
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import os
 
@@ -14,16 +13,16 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 XTGSHOW = False
 if "XTG_SHOW" in os.environ:
     XTGSHOW = True
 
-REEKROOT = "../xtgeo-testdata/3dgrids/reek/REEK"
-WELL1 = "../xtgeo-testdata/wells/reek/1/OP_1.w"
-FENCE1 = "../xtgeo-testdata/polygons/reek/1/fence.pol"
-FENCE2 = "../xtgeo-testdata/polygons/reek/1/minifence.pol"
+REEKROOT = TPATH / "3dgrids/reek/REEK"
+WELL1 = TPATH / "wells/reek/1/OP_1.w"
+FENCE1 = TPATH / "polygons/reek/1/fence.pol"
+FENCE2 = TPATH / "polygons/reek/1/minifence.pol"
 
 # =============================================================================
 # Do tests

@@ -5,4 +5,6 @@ scikit-build
 ninja
 setuptools_scm
 sphinxcontrib-apidoc
-m2r
+sphinx-rtd-theme
+sphinx-autodoc-typehints
+recommonmark

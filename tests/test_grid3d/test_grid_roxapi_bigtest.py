@@ -11,7 +11,7 @@ if not xtg.testsetup():
     raise SystemExit
 
 td = xtg.tmpdir
-testpath = xtg.testpath
+testpath = xtg.testpathobj
 
 BPROJECT = dict()
 BPROJECT["1.1.1"] = "../xtgeo-testdata-equinor/data/rmsprojects/gfb.rms10.1.3"

@@ -14,7 +14,7 @@ xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
 TMPD = xtg.tmpdir
-
+TPATH = xtg.testpathobj
 
 # ======================================================================================
 # This tests a combination of methods, in order to produce maps of HC thickness
@@ -22,11 +22,11 @@ TMPD = xtg.tmpdir
 # gfile1 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
 # ifile1 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 
-GFILE2 = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-IFILE2 = "../xtgeo-testdata/3dgrids/reek/REEK.INIT"
-RFILE2 = "../xtgeo-testdata/3dgrids/reek/REEK.UNRST"
+GFILE2 = TPATH / "3dgrids/reek/REEK.EGRID"
+IFILE2 = TPATH / "3dgrids/reek/REEK.INIT"
+RFILE2 = TPATH / "3dgrids/reek/REEK.UNRST"
 
-FFILE1 = "../xtgeo-testdata/polygons/reek/1/top_upper_reek_faultpoly.zmap"
+FFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.zmap"
 
 
 @tsetup.skipifroxar

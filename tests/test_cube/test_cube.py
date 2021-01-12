@@ -17,7 +17,7 @@ if not xtg.testsetup():
     raise SystemExit("Cannot find test setup")
 
 TMD = xtg.tmpdir
-TPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 XTGSHOW = False
 if "XTGSHOW" in os.environ:

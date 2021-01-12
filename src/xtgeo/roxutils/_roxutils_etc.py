@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Private module for etc functions"""
 
-from __future__ import division, absolute_import
-from __future__ import print_function
 
 try:
     import roxar

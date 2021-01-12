@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI"""
 
-from __future__ import print_function, absolute_import
+
 from collections import OrderedDict
 
 import numpy as np
@@ -113,8 +113,8 @@ def _roxapi_traj(self, roxtraj, roxlrun, inclmd, inclsurvey):  # pragma: no cove
             logger.warning("MD is %s, surveyinterpolation fails, " "CHECK RESULT!", mdv)
             geo_array[ino] = geo_array[ino - 1]
 
-    self._wlogtype = dict()
-    self._wlogrecord = dict()
+    self._wlogtypes = dict()
+    self._wlogrecords = dict()
     logs = OrderedDict()
 
     logs["X_UTME"] = geo_array[:, 3]
@@ -136,11 +136,11 @@ def _get_roxlog(self, roxlrun, lname):  # pragma: no cover
     tmplog = npma.filled(tmplog, fill_value=np.nan)
     tmplog[tmplog == -999] = np.nan
     if roxcurve.is_discrete:
-        self._wlogtype[lname] = "DISC"
-        self._wlogrecord[lname] = roxcurve.get_code_names()
+        self._wlogtypes[lname] = "DISC"
+        self._wlogrecords[lname] = roxcurve.get_code_names()
     else:
-        self._wlogtype[lname] = "CONT"
-        self._wlogrecord[lname] = None
+        self._wlogtypes[lname] = "CONT"
+        self._wlogrecords[lname] = None
 
     return tmplog
 
@@ -199,7 +199,7 @@ def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisat
 
         isdiscrete = False
         xtglimit = xtgeo.UNDEF_LIMIT
-        if self._wlogtype[lname] == "DISC":
+        if self._wlogtypes[lname] == "DISC":
             isdiscrete = True
             xtglimit = xtgeo.UNDEF_INT_LIMIT
 
@@ -223,7 +223,7 @@ def _roxapi_update_well(self, rox, wname, lognames, logrun, trajectory, realisat
         if isdiscrete:
             # roxarapi requires keys to int, while xtgeo can accept any, e.g. strings
             codedict = {
-                int(key): str(value) for key, value in self._wlogrecord[lname].items()
+                int(key): str(value) for key, value in self._wlogrecords[lname].items()
             }
             thelog.set_code_names(codedict)
 

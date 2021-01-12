@@ -18,10 +18,11 @@ release = xtgeo.__version__
 
 extensions = [
     "sphinxcontrib.apidoc",
-    "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
+    "sphinx.ext.autodoc",
+    "sphinx_autodoc_typehints",
     "recommonmark",
 ]
 
@@ -31,6 +32,10 @@ apidoc_excluded_paths = ["tests"]
 apidoc_separate_modules = True
 apidoc_module_first = True
 apidoc_extra_args = ["-H", "XTGeo API description"]
+
+autoclass_content = "both"
+
+napoleon_include_special_with_doc = False
 
 # The suffix of source filenames.
 source_suffix = [".rst", ".md"]

@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Some grid utilities, file scanning etc (methods with no class)"""
-from __future__ import division, absolute_import
-from __future__ import print_function
-
+"""Some grid utilities, file scanning etc."""
 import numpy as np
 
 import xtgeo
@@ -13,9 +10,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
-
-
-#
 
 
 def get_randomline(
@@ -29,7 +23,10 @@ def get_randomline(
     atleast=5,
     nextend=2,
 ):
+    """Extract a randomline from a 3D grid.
 
+    This is a difficult task, in particular in terms of acceptable speed.
+    """
     self._xtgformat1()
 
     logger.info("Enter get_randomline from Grid...")
@@ -102,7 +99,6 @@ def _update_tmpvars(self, force=False):
 
     If they are already created, the no need to recreate
     """
-
     if "onegrid" not in self._tmp or force:
         logger.info("Make a tmp onegrid instance...")
         self._tmp["onegrid"] = self.copy()
@@ -136,14 +132,15 @@ def _update_tmpvars(self, force=False):
 
 
 def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
-    """Compute a resampled fence from a Polygons instance"""
-
+    """Compute a resampled fence from a Polygons instance."""
     if hincrement is None:
 
         geom = self.get_geometrics()
 
         avgdxdy = 0.5 * (geom[10] + geom[11])
         distance = 0.5 * avgdxdy
+    else:
+        distance = hincrement
 
     logger.info("Getting fence from a Polygons instance...")
     fspec = fencespec.get_fence(

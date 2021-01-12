@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, absolute_import
+
 
 import os
 import matplotlib.pyplot as plt
@@ -27,15 +27,15 @@ else:
 logger.info("Use env variable XTG_SHOW to show interactive plots to screen")
 
 TMPDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 # =========================================================================
 # Do tests
 # =========================================================================
 
-USEFILE1 = "../xtgeo-testdata/3dgrids/reek/reek_sim_grid.roff"
-USEFILE2 = "../xtgeo-testdata/3dgrids/reek/reek_sim_poro.roff"
-USEFILE3 = "../xtgeo-testdata/etc/colortables/rainbow_reverse.rmscolor"
+USEFILE1 = TPATH / "3dgrids/reek/reek_sim_grid.roff"
+USEFILE2 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
+USEFILE3 = TPATH / "etc/colortables/rainbow_reverse.rmscolor"
 
 
 @tsetup.skipifroxar

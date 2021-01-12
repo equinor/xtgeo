@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz module (abstract class)"""
 
-from __future__ import print_function, absolute_import
 
 import inspect
 import abc
 from collections import OrderedDict
 from copy import deepcopy
+import pathlib
 
 import six
 import pandas as pd
@@ -49,7 +49,7 @@ class XYZ(object):
         self._attrs = OrderedDict()
 
         if len(args) == 1:
-            if isinstance(args[0], str):
+            if isinstance(args[0], (str, pathlib.Path)):
                 # make instance from file import
                 pfile = args[0]
                 logger.info("Instance from file")

@@ -1,6 +1,4 @@
-"""Private module, Grid ETC 1 methods, info/modify/report ...."""
-
-from __future__ import print_function, absolute_import, division
+"""Private module, Grid ETC 1 methods, info/modify/report."""
 
 import inspect
 import warnings
@@ -40,8 +38,27 @@ def create_box(
     rotation=30.0,
     flip=1,
 ):
-    """Create a shoebox grid from cubi'sh spec"""
+    """Create a shoebox grid from cubi'sh spec."""
+    arglist = locals()
+    del arglist["self"]
 
+    if self._xtgformat == 1:
+        _create_box_v1(self, **arglist)
+
+    else:
+        _create_box_v2(self, **arglist)
+
+
+def _create_box_v1(
+    self,
+    dimension=(10, 12, 6),
+    origin=(10.0, 20.0, 1000.0),
+    oricenter=False,
+    increment=(100, 150, 5),
+    rotation=30.0,
+    flip=1,
+):
+    """Create a shoebox grid from cubi'sh spec, legacy xtgformat=1."""
     self._ncol, self._nrow, self._nlay = dimension
     ncoord, nzcorn, ntot = self.vectordimensions
 
@@ -81,9 +98,61 @@ def create_box(
     self._xtgformat = 1
 
 
-def get_dz(self, name="dZ", flip=True, asmasked=True):
-    """Get dZ as property"""
+def _create_box_v2(
+    self,
+    dimension=(10, 12, 6),
+    origin=(10.0, 20.0, 1000.0),
+    oricenter=False,
+    increment=(100, 150, 5),
+    rotation=30.0,
+    flip=1,
+):
+    """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
+    self._ncol, self._nrow, self._nlay = dimension
 
+    ncol, nrow, nlay = dimension
+    nncol = ncol + 1
+    nnrow = nrow + 1
+    nnlay = nlay + 1
+
+    self._coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
+    self._zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
+    self._actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+
+    option = 0
+    if oricenter:
+        option = 1
+
+    _cxtgeo.grdcp3d_from_cube(
+        ncol,
+        nrow,
+        nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        origin[0],
+        origin[1],
+        origin[2],
+        increment[0],
+        increment[1],
+        increment[2],
+        rotation,
+        flip,
+        option,
+    )
+
+    self._actnum_indices = None
+    self._filesrc = None
+    self._props = None
+    self._subgrids = None
+    self._roxgrid = None
+    self._roxindexer = None
+    self._tmp = {}
+    self._xtgformat = 2
+
+
+def get_dz(self, name="dZ", flip=True, asmasked=True):
+    """Get dZ as property."""
     self._xtgformat1()
 
     ntot = (self._ncol, self._nrow, self._nlay)
@@ -126,9 +195,9 @@ def get_dz(self, name="dZ", flip=True, asmasked=True):
 
 
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
-    """Get dX, dY as properties"""
-
+    """Get dX, dY as properties."""
     self._xtgformat1()
+
     ntot = self._ncol * self._nrow * self._nlay
 
     dxval = np.zeros(ntot, dtype=np.float64)
@@ -176,8 +245,7 @@ def get_dxdy(self, names=("dX", "dY"), asmasked=False):
 
 
 def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
-    """Get cell bulk volume as a GridProperty() instance"""
-
+    """Get cell bulk volume as a GridProperty() instance."""
     self._xtgformat2()
 
     bulk = GridProperty(
@@ -214,8 +282,7 @@ def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
 
 
 def get_ijk(self, names=("IX", "JY", "KZ"), asmasked=True, zerobased=False):
-    """Get I J K as properties"""
-
+    """Get I J K as properties."""
     ashape = (self._ncol, self._nrow, self._nlay)
 
     ix, jy, kz = np.indices(ashape)
@@ -276,7 +343,7 @@ def get_ijk_from_points(
     fmt="int",
     undef=-1,
 ):
-    """Get I J K indices as a list of tuples or a dataframe
+    """Get I J K indices as a list of tuples or a dataframe.
 
     It is here tried to get fast execution. This requires a preprosessing
     of the grid to store a onlayer version, and maps with IJ positions
@@ -299,7 +366,7 @@ def get_ijk_from_points(
     logger.info("Grid FLIP for C code is %s", useflip)
 
     logger.info("Running C routine...")
-    _ier, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
+    _, iarr, jarr, karr = _cxtgeo.grd3d_points_ijk_cells(
         points.dataframe[points.xname].values,
         points.dataframe[points.yname].values,
         points.dataframe[points.zname].values,
@@ -366,7 +433,8 @@ def get_ijk_from_points(
 
 
 def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
-    """Get X Y Z as properties... May be issues with asmasked vs activeonly here"""
+    """Get X Y Z as properties."""
+    # TODO: May be issues with asmasked vs activeonly here?
 
     self._xtgformat1()
 
@@ -427,8 +495,8 @@ def get_xyz(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS"), asmasked=True):
 
 def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
     """Get X Y Z cell corners for one cell."""
-
     self._xtgformat1()
+
     i, j, k = ijk
 
     shift = 0
@@ -479,9 +547,9 @@ def get_xyz_cell_corners(self, ijk=(1, 1, 1), activeonly=True, zerobased=False):
 
 
 def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
-    """Get X Y Z cell corners for all cells (as 24 GridProperty objects)"""
-
+    """Get X Y Z cell corners for all cells (as 24 GridProperty objects)."""
     self._xtgformat1()
+
     ntot = (self._ncol, self._nrow, self._nlay)
 
     grid_props = []
@@ -562,8 +630,8 @@ def get_xyz_corners(self, names=("X_UTME", "Y_UTMN", "Z_TVDSS")):
 
 def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2):
     """Get bulk cell volume for one cell."""
-
     self._xtgformat1()
+
     i, j, k = ijk
 
     if precision not in (1, 2, 4):
@@ -613,7 +681,7 @@ def get_cell_volume(self, ijk=(1, 1, 1), activeonly=True, zerobased=False, preci
 
 
 def get_layer_slice(self, layer, top=True, activeonly=True):
-    """Get X Y cell corners (XY per cell; 5 per cell) as array"""
+    """Get X Y cell corners (XY per cell; 5 per cell) as array."""
     self._xtgformat1()
     ntot = self._ncol * self._nrow * self._nlay
 
@@ -648,7 +716,7 @@ def get_layer_slice(self, layer, top=True, activeonly=True):
 
 
 def get_geometrics(self, allcells=False, cellcenter=True, return_dict=False, _ver=1):
-
+    """Getting cell geometrics."""
     self._xtgformat1()
 
     if _ver == 1:
@@ -736,10 +804,8 @@ def _get_geometrics_v1(self, allcells=False, cellcenter=True, return_dict=False)
 
 
 def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False):
-    """Currently a workaround as there seems to be bugs in v1
-
-    Will only work with allcells False and cellcenter True
-    """
+    # Currently a workaround as there seems to be bugs in v1
+    # Will only work with allcells False and cellcenter True
 
     glist = []
     if cellcenter and allcells:
@@ -798,8 +864,7 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
 
 
 def inactivate_by_dz(self, threshold):
-    """Inactivate by DZ"""
-
+    """Inactivate by DZ thickness."""
     self._xtgformat1()
 
     if isinstance(threshold, int):
@@ -823,9 +888,9 @@ def inactivate_by_dz(self, threshold):
 
 
 def make_zconsistent(self, zsep):
-    """Make consistent in z"""
-
+    """Make consistent in z."""
     self._xtgformat1()
+
     if isinstance(zsep, int):
         zsep = float(zsep)
 
@@ -842,9 +907,9 @@ def make_zconsistent(self, zsep):
 
 
 def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=False):
-    """Inactivate inside a polygon (or outside)"""
-
+    """Inactivate inside a polygon (or outside)."""
     self._xtgformat1()
+
     if not isinstance(poly, Polygons):
         raise ValueError("Input polygon not a XTGeo Polygons instance")
 
@@ -888,8 +953,9 @@ def inactivate_inside(self, poly, layer_range=None, inside=True, force_close=Fal
 
 
 def collapse_inactive_cells(self):
-    """Collapse inactive cells"""
+    """Collapse inactive cells."""
     self._xtgformat1()
+
     _cxtgeo.grd3d_collapse_inact(
         self.ncol, self.nrow, self.nlay, self._zcornsv, self._actnumsv
     )
@@ -901,7 +967,6 @@ def copy(self):
     Returns:
         A new instance (attached grid properties will also be unique)
     """
-
     other = self.__class__()
 
     other._coordsv = self._coordsv.copy()
@@ -947,7 +1012,6 @@ def crop(self, spec, props=None):  # pylint: disable=too-many-locals
     Returns:
         The instance is updated (cropped)
     """
-
     self._xtgformat1()
 
     (ic1, ic2), (jc1, jc2), (kc1, kc2) = spec
@@ -1050,7 +1114,6 @@ def reduce_to_one_layer(self):
         1
 
     """
-
     # need new pointers in C (not for coord)
     # Note this could probably be done with pure numpy operations
     self._xtgformat1()
@@ -1082,8 +1145,7 @@ def reduce_to_one_layer(self):
 
 
 def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
-    """Translate grid coordinates"""
-
+    """Translate grid coordinates."""
     self._xtgformat1()
 
     tx, ty, tz = translate
@@ -1109,8 +1171,7 @@ def translate_coordinates(self, translate=(0, 0, 0), flip=(1, 1, 1)):
 
 
 def reverse_row_axis(self, ijk_handedness=None):
-    """Reverse rows (aka flip) for geometry and assosiated properties"""
-
+    """Reverse rows (aka flip) for geometry and assosiated properties."""
     self._xtgformat1()
 
     if ijk_handedness == self.ijk_handedness:
@@ -1152,7 +1213,6 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
     perflogname=None,
 ):
     """Reports well to zone mismatch; this works together with a Well object."""
-
     self._xtgformat1()
 
     this = inspect.currentframe().f_code.co_name
@@ -1270,8 +1330,7 @@ def report_zone_mismatch(  # pylint: disable=too-many-statements
 
 
 def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
-    """Get adjacents cells"""
-
+    """Get adjacents cells."""
     self._xtgformat1()
 
     if not isinstance(prop, GridProperty):
@@ -1321,7 +1380,7 @@ def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
 
 
 def estimate_design(self, nsubname):
-    """Estimate (guess) (sub)grid design by examing DZ in median thickness column"""
+    """Estimate (guess) (sub)grid design by examing DZ in median thickness column."""
     actv = self.get_actnum().values
 
     dzv = self.get_dz(asmasked=False).values
@@ -1382,8 +1441,7 @@ def estimate_design(self, nsubname):
 
 
 def estimate_flip(self):
-    """Estimate if grid is left or right handed"""
-
+    """Estimate if grid is left or right handed."""
     corners = self.get_xyz_cell_corners(activeonly=False)  # for cell 1, 1, 1
 
     v1 = (corners[3] - corners[0], corners[4] - corners[1], 0.0)
@@ -1395,9 +1453,8 @@ def estimate_flip(self):
 
 
 def _convert_xtgformat2to1(self):
-    """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1"""
-
-    if self._xtgformat == 1 or self._coordsv is None:
+    """Convert arrays from new structure xtgformat=2 to legacy xtgformat=1."""
+    if self._xtgformat == 1:
         logger.info("No conversion, format is already xtgformat == 1 or unset")
         return
 
@@ -1430,8 +1487,7 @@ def _convert_xtgformat2to1(self):
 
 
 def _convert_xtgformat1to2(self):
-    """Convert arrays from old structure xtgformat=1 to new xtgformat=2"""
-
+    """Convert arrays from old structure xtgformat=1 to new xtgformat=2."""
     if self._xtgformat == 2 or self._coordsv is None:
         logger.info("No conversion, format is already xtgformat == 2 or unset")
         return
@@ -1465,23 +1521,9 @@ def _convert_xtgformat1to2(self):
 
 
 def get_gridquality_properties(self):
-    """Get the grid quality properties"""
-
-    numqual = 10
-
+    """Get the grid quality properties."""
     self._xtgformat2()
 
-    fresults = np.ones((numqual, self.ncol * self.nrow * self.nlay), dtype=np.float32)
-
-    _cxtgeo.grdcp3d_quality_indicators(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        fresults,
-    )
     qcnames = {
         0: "minangle_topbase",
         1: "maxangle_topbase",
@@ -1497,6 +1539,20 @@ def get_gridquality_properties(self):
 
     # some of the properties shall be discrete:
     qcdiscrete = [6, 7, 8, 9]
+
+    fresults = np.ones(
+        (len(qcnames), self.ncol * self.nrow * self.nlay), dtype=np.float32
+    )
+
+    _cxtgeo.grdcp3d_quality_indicators(
+        self.ncol,
+        self.nrow,
+        self.nlay,
+        self._coordsv,
+        self._zcornsv,
+        self._actnumsv,
+        fresults,
+    )
 
     grdprops = xtgeo.GridProperties()
 

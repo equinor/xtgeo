@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Some grid utilities, file scanning etc (methods with no class)"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import pandas as pd
 

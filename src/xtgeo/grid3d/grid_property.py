@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """Module for a 3D grid property."""
 
-from __future__ import print_function, absolute_import
 
 import copy
 import numbers
 import hashlib
+import pathlib
 from types import FunctionType
 
 import numpy as np
 
 import xtgeo
 
-from ._grid3d import Grid3D
+from ._grid3d import _Grid3D
 from . import _gridprop_etc
 from . import _gridprop_op1
 from . import _gridprop_import
@@ -108,7 +108,7 @@ def gridproperty_from_roxar(
 # ======================================================================================
 
 
-class GridProperty(Grid3D):
+class GridProperty(_Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
 
     An GridProperty instance may or may not 'belong' to a grid (geometry) object.
@@ -191,7 +191,7 @@ class GridProperty(Grid3D):
 
     def __init__(self, *args, **kwargs):
 
-        super(GridProperty, self).__init__(*args, **kwargs)
+        super(GridProperty, self).__init__()
 
         # instance attributes defaults:
         self._ncol = kwargs.get("ncol", 5)
@@ -223,7 +223,7 @@ class GridProperty(Grid3D):
                     self, args[0], linkgeometry=linkgeometry
                 )
 
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 _gridprop_etc.gridproperty_fromfile(self, args[0], **kwargs)
 
         else:
@@ -261,7 +261,7 @@ class GridProperty(Grid3D):
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj.xtgeo.MetaDataCPProperty):
+        if not isinstance(obj, xtgeo.MetaDataCPProperty):
             raise ValueError("Input obj not an instance of MetaDataCPProperty")
 
         self._metadata = obj  # checking is currently missing! TODO
@@ -610,6 +610,8 @@ class GridProperty(Grid3D):
         date=None,
         fracture=False,
         _roffapiv=1,
+        ijrange=None,
+        zerobased=False,
     ):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
@@ -635,6 +637,10 @@ class GridProperty(Grid3D):
             fracture (bool): Only applicable for DUAL POROSITY systems, if True
                 then the fracture property is read; if False then the matrix
                 property is read. Names will be appended with "M" or "F"
+            ijrange (list-like): A list of 4 number: (i1, i2, j1, j2) for subrange
+                of cells to read. Only applicable for xtgcpprop format.
+            zerobased (bool): Input if cells counts are zero- or one-based in
+                ijrange. Only applicable for xtgcpprop format.
 
         Examples::
 
@@ -651,7 +657,6 @@ class GridProperty(Grid3D):
 
         .. versionchanged:: 2.8 Added gridlink option, default is True
         """
-
         pfile = xtgeo._XTGeoFile(pfile, mode="rb")
 
         obj = _gridprop_import.from_file(
@@ -663,6 +668,8 @@ class GridProperty(Grid3D):
             date=date,
             fracture=fracture,
             _roffapiv=_roffapiv,
+            ijrange=ijrange,
+            zerobased=zerobased,
         )
 
         if grid and gridlink:

@@ -5,8 +5,7 @@
 
 """The XTGeo Python library."""
 
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 import os
 import timeit
 
@@ -147,6 +146,8 @@ from xtgeo.metadata.metadata import MetaDataRegularSurface
 from xtgeo.metadata.metadata import MetaDataRegularCube
 from xtgeo.metadata.metadata import MetaDataCPGeometry
 from xtgeo.metadata.metadata import MetaDataCPProperty
+from xtgeo.metadata.metadata import MetaDataWell
+
 
 _xprint("Import various XTGeo modules... xyz...")
 

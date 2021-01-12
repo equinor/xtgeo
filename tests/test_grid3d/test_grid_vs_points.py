@@ -7,24 +7,24 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
 TDMP = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 # =============================================================================
 # Do tests
 # =============================================================================
 
-REEKGRID = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-SMALL1 = "../xtgeo-testdata/3dgrids/etc/TEST_SP.EGRID"
-SMALL2 = "../xtgeo-testdata/3dgrids/etc/TEST_DP.EGRID"
-SMALL3 = "../xtgeo-testdata/3dgrids/etc/small.roff"
-DROGON = "../xtgeo-testdata/3dgrids/drogon/1/geogrid.roff"
-BANALCASE1 = "../xtgeo-testdata/3dgrids/etc/banal1.grdecl"
-BANALCASE2 = "../xtgeo-testdata/3dgrids/etc/banal2.grdecl"
-BANALCASE3 = "../xtgeo-testdata/3dgrids/etc/banal3.grdecl"
-QCGRID = "../xtgeo-testdata/3dgrids/etc/gridqc1.roff"
+REEKGRID = TPATH / "3dgrids/reek/REEK.EGRID"
+SMALL1 = TPATH / "3dgrids/etc/TEST_SP.EGRID"
+SMALL2 = TPATH / "3dgrids/etc/TEST_DP.EGRID"
+SMALL3 = TPATH / "3dgrids/etc/small.roff"
+DROGON = TPATH / "3dgrids/drogon/1/geogrid.roff"
+BANALCASE1 = TPATH / "3dgrids/etc/banal1.grdecl"
+BANALCASE2 = TPATH / "3dgrids/etc/banal2.grdecl"
+BANALCASE3 = TPATH / "3dgrids/etc/banal3.grdecl"
+QCGRID = TPATH / "3dgrids/etc/gridqc1.roff"
 
-QCFIL1 = "../xtgeo-testdata/3dgrids/etc/gridqc1_rms_cellcenter.csv"
-QCFIL2 = "../xtgeo-testdata/3dgrids/etc/gridqc1_rms_anypoint.csv"
+QCFIL1 = TPATH / "3dgrids/etc/gridqc1_rms_cellcenter.csv"
+QCFIL2 = TPATH / "3dgrids/etc/gridqc1_rms_anypoint.csv"
 
 
 def test_get_ijk_from_points_banalcase2():

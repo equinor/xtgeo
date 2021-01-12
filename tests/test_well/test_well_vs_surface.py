@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 from os.path import join
 import pytest
@@ -14,10 +13,10 @@ if not xtg.testsetup():
     raise SystemExit
 
 TMPDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
-WFILE = join(TESTPATH, "wells/battle/1/WELLX.rmswell")
-SFILE = join(TESTPATH, "surfaces/etc/battle_1330.gri")
+WFILE = join(TPATH, "wells/battle/1/WELLX.rmswell")
+SFILE = join(TPATH, "surfaces/etc/battle_1330.gri")
 
 
 def test_get_well_x_surf():

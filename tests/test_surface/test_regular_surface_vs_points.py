@@ -13,11 +13,12 @@ if not xtg.testsetup():
     raise SystemExit
 
 td = xtg.tmpdir
+TPATH = xtg.testpathobj
 
 # =============================================================================
 # Do tests
 # =============================================================================
-ftop1 = "../xtgeo-testdata/surfaces/reek/1/reek_stooip_map.gri"
+ftop1 = TPATH / "surfaces/reek/1/reek_stooip_map.gri"
 
 
 @pytest.fixture()

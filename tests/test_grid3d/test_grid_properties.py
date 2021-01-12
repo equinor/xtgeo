@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Testing: test_grid_operations"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 import sys
 import warnings
@@ -20,15 +19,15 @@ if not xtg.testsetup():
     sys.exit(-9)
 
 TDIR = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 logger = xtg.basiclogger(__name__)
 
-GFILE1 = "../xtgeo-testdata/3dgrids/reek/REEK.EGRID"
-IFILE1 = "../xtgeo-testdata/3dgrids/reek/REEK.INIT"
-RFILE1 = "../xtgeo-testdata/3dgrids/reek/REEK.UNRST"
+GFILE1 = TPATH / "3dgrids/reek/REEK.EGRID"
+IFILE1 = TPATH / "3dgrids/reek/REEK.INIT"
+RFILE1 = TPATH / "3dgrids/reek/REEK.UNRST"
 
-XFILE2 = "../xtgeo-testdata/3dgrids/reek/reek_grd_w_props.roff"
+XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name

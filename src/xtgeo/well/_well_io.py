@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """Well input and ouput, private module"""
 
-from __future__ import print_function, absolute_import
+import json
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -25,7 +27,7 @@ def import_rms_ascii(
     """Import RMS ascii table well"""
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     wlogtype = dict()
-    wlogrecord = dict()
+    wlogrecords = dict()
 
     xlognames_all = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
     xlognames = []
@@ -92,9 +94,9 @@ def import_rms_ascii(
 
                 if ltype == "DISC":
                     xdict = {int(rxv[i]): rxv[i + 1] for i in range(0, len(rxv), 2)}
-                    wlogrecord[lname] = xdict
+                    wlogrecords[lname] = xdict
                 else:
-                    wlogrecord[lname] = rxv
+                    wlogrecords[lname] = rxv
 
                 nlogread += 1
 
@@ -123,8 +125,8 @@ def import_rms_ascii(
         dfr, mdlogname, zonelogname, strict, wname
     )
 
-    self._wlogtype = wlogtype
-    self._wlogrecord = wlogrecord
+    self._wlogtypes = wlogtype
+    self._wlogrecords = wlogrecords
     self._rkb = rkb
     self._xpos = xpos
     self._ypos = ypos
@@ -209,21 +211,21 @@ def export_rms_ascii(self, wfile, precision=4):
         for lname in self.lognames:
             usewrec = "linear"
             wrec = []
-            if isinstance(self._wlogrecord[lname], dict):
-                for key in self._wlogrecord[lname]:
+            if isinstance(self._wlogrecords[lname], dict):
+                for key in self._wlogrecords[lname]:
                     wrec.append(key)
-                    wrec.append(self._wlogrecord[lname][key])
+                    wrec.append(self._wlogrecords[lname][key])
                 usewrec = " ".join(str(x) for x in wrec)
 
-            print("{} {} {}".format(lname, self._wlogtype[lname], usewrec), file=fwell)
+            print("{} {} {}".format(lname, self._wlogtypes[lname], usewrec), file=fwell)
 
     # now export all logs as pandas framework
     tmpdf = self._df.copy()
     tmpdf.fillna(value=-999, inplace=True)
 
     # make the disc as is np.int
-    for lname in self._wlogtype:
-        if self._wlogtype[lname] == "DISC":
+    for lname in self._wlogtypes:
+        if self._wlogtypes[lname] == "DISC":
             tmpdf[[lname]] = tmpdf[[lname]].astype(int)
 
     cformat = "%-." + str(precision) + "f"
@@ -236,3 +238,60 @@ def export_rms_ascii(self, wfile, precision=4):
         escapechar=" ",
         mode="a",
     )
+
+
+def export_hdf5_well(self, wfile, compression="lzf"):
+    """Save to HDF5 format."""
+    logger.info("Export to hdf5 format...")
+
+    self._ensure_consistency()
+
+    self.metadata.required = self
+
+    meta = self.metadata.get_metadata()
+    jmeta = json.dumps(meta)
+
+    complib = "zlib"  # same as default lzf
+    complevel = 5
+    if compression and compression == "blosc":
+        complib = "blosc"
+    else:
+        complevel = 0
+
+    with pd.HDFStore(wfile.file, "w", complevel=complevel, complib=complib) as store:
+        logger.info("export to HDF5 %s", wfile.name)
+        store.put("Well", self._df)
+        store.get_storer("Well").attrs["metadata"] = jmeta
+        store.get_storer("Well").attrs["provider"] = "xtgeo"
+        store.get_storer("Well").attrs["format_idcode"] = 1401
+
+    logger.info("Export to hdf5 format... done!")
+
+
+def import_hdf5_well(self, wfile):
+    """Load from HDF5 format."""
+    reqattrs = xtgeo.MetaDataWell.REQUIRED
+
+    with pd.HDFStore(wfile.file, "r") as store:
+        data = store.get("Well")
+        wstore = store.get_storer("Well")
+        jmeta = wstore.attrs["metadata"]
+        # provider = wstore.attrs["provider"]
+        # format_idcode = wstore.attrs["format_idcode"]
+
+    if isinstance(jmeta, bytes):
+        jmeta = jmeta.decode()
+
+    meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
+    req = meta["_required_"]
+    for myattr in reqattrs:
+        if myattr == "wlogs":
+            self._wlognames = req[myattr].keys()
+            self.set_wlogs(req[myattr])
+        elif myattr == "name":
+            self._wname = req[myattr]
+        else:
+            setattr(self, "_" + myattr, req[myattr])
+
+    self.metadata.required = self
+    self._df = data

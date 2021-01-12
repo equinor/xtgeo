@@ -8,7 +8,7 @@
 # from ._gridprop_import_roff import import_roff
 #  --> BINARY ROFF format
 
-from __future__ import print_function, absolute_import
+
 import numpy as np
 
 import xtgeo

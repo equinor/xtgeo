@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Testing: test_grid_operations"""
-from __future__ import division, absolute_import
-from __future__ import print_function
+
 
 from os.path import join
 
@@ -19,21 +18,21 @@ if not xtg.testsetup():
     raise SystemExit
 
 TDP = xtg.tmpdir
-TESTPATH = xtg.testpath
+TPATH = xtg.testpathobj
 
 # pylint: disable=logging-format-interpolation
 
 # =============================================================================
 # Do tests
 # =============================================================================
-EMEGFILE = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_grid.roff"
-EMERFILE = "../xtgeo-testdata/3dgrids/eme/1/emerald_hetero_region.roff"
+EMEGFILE = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
+EMERFILE = TPATH / "3dgrids/eme/1/emerald_hetero_region.roff"
 
-EMEGFILE2 = "../xtgeo-testdata/3dgrids/eme/2/emerald_hetero_grid.roff"
-EMEZFILE2 = "../xtgeo-testdata/3dgrids/eme/2/emerald_hetero.roff"
+EMEGFILE2 = TPATH / "3dgrids/eme/2/emerald_hetero_grid.roff"
+EMEZFILE2 = TPATH / "3dgrids/eme/2/emerald_hetero.roff"
 
-DUAL = "../xtgeo-testdata/3dgrids/etc/dual_distorted2.grdecl"
-DUALPROPS = "../xtgeo-testdata/3dgrids/etc/DUAL"
+DUAL = TPATH / "3dgrids/etc/dual_distorted2.grdecl"
+DUALPROPS = TPATH / "3dgrids/etc/DUAL"
 
 
 def test_hybridgrid1():

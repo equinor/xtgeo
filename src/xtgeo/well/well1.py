@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
-"""XTGeo well module, working with one single well"""
-
-from __future__ import print_function, absolute_import
+"""XTGeo well module, working with one single well."""
 
 import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
+from typing import Union, Optional
+from pathlib import Path
+import io
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.constants as const
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from . import _wellmarkers
 from . import _well_io
@@ -42,11 +44,12 @@ def well_from_file(
     """Make an instance of a Well directly from file import.
 
     Args:
-        mfile (str): File path, either a string or a pathlib.Path instance
+        wfile (str): File path, either a string or a pathlib.Path instance
         fformat (str): See :meth:`Well.from_file`
         mdlogname (str): See :meth:`Well.from_file`
         zonelogname (str): See :meth:`Well.from_file`
         lognames (str or list): Name or list of lognames to import, default is "all"
+        lognames_strict (bool): If True, all lognames must be present.
         strict (bool): See :meth:`Well.from_file`
 
     Example::
@@ -58,7 +61,6 @@ def well_from_file(
     .. versionchanged:: 2.1 ``strict`` now defaults to False
 
     """
-
     obj = Well()
 
     obj.from_file(
@@ -84,7 +86,6 @@ def well_from_roxar(
     inclmd=False,
     inclsurvey=False,
 ):
-
     """This makes an instance of a Well directly from Roxar RMS.
 
     For arguments, see :meth:`Well.from_roxar`.
@@ -99,7 +100,6 @@ def well_from_roxar(
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
-
     obj = Well()
 
     obj.from_roxar(
@@ -116,18 +116,14 @@ def well_from_roxar(
     return obj
 
 
-# ======================================================================================
-# CLASS
-
-
-class Well(object):  # pylint: disable=useless-object-inheritance
+class Well:  # pylint: disable=useless-object-inheritance
     """Class for a well in the XTGeo framework.
 
-    The well logs are stored as Pandas dataframe, which make manipulation
+    The well logs are stored in a Pandas dataframe, which make manipulation
     easy and fast.
 
     The well trajectory are here represented as logs, and XYZ have magic names:
-    X_UTME, Y_UTMN, Z_TVDSS, which are the three first Pandas columns.
+    ``X_UTME``, ``Y_UTMN``, ``Z_TVDSS``, which are the three first Pandas columns.
 
     Other geometry logs has also 'semi-magic' names:
 
@@ -137,10 +133,10 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     Similar for M_INCL, Q_INCL, M_AZI, Q_ASI.
 
-    All Pandas values (yes, discrete also!) are stored as float64
+    All Pandas values (yes, discrete also!) are currently stored as float64
     format, and undefined values are Nan. Integers are stored as Float due
-    to the lacking support for 'Integer Nan' (currently lacking in Pandas,
-    but may come in later Pandas versions).
+    to the (historic) lacking support for 'Integer Nan'. In coming versions,
+    use of ``pandas.NA`` (available from Pandas version 1.0) may be implemented.
 
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
@@ -151,38 +147,54 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         >>> well2 = Well('somefilename', fformat='rms_ascii')
         >>> well3 = xtgeo.well_from_file('somefilename')
 
-    For arguments, see method under :meth:`from_file`.
-
     """
 
     VALID_LOGTYPES = {"DISC", "CONT"}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        wfile: Optional[Union[str, Path]] = None,
+        fformat: Optional[str] = "rms_ascii",
+        mdlogname: Optional[str] = None,
+        zonelogname: Optional[str] = None,
+        strict: Optional[bool] = False,
+        lognames: Optional[Union[str, list]] = "all",
+    ):
+        """Instantating a Well object.
 
+        Args:
+            wfile: Input file, or leave blank
+            fformat: File format input, default is ``rms_ascii`` unless file extension
+                tells us something else (e.g. hdf).
+            mdlogname: Name of MD log column, e.g. 'MDepth'
+            zonelogname: Name of zonelog column, .e.g. 'ZONELOG'
+            strict: Applies to lognames, if True, then all names in ``lognames`` will
+                be forced.
+            lognames: A list of lognames to load, which makes it possible to load a
+                subset of logs. A string "all" will load all current logs.
+
+        """
         # instance attributes for whole well
         self._rkb = None  # well RKB height
         self._xpos = None  # well head X pos
         self._ypos = None  # well head Y pos
         self._wname = None  # well name
         self._filesrc = None  # source file if any
-
-        # instance attributes well log names
-        self._wlognames = list()  # A list of log names
-        self._wlogtype = dict()  # dictionary of log types, 'DISC' or 'CONT'
-        self._wlogrecord = dict()  # code record for 'DISC' logs
         self._mdlogname = None
         self._zonelogname = None
 
+        # instance attributes well log names
+        self._wlognames = list()  # A list of log names
+        self._wlogtypes = dict()  # dictionary of log types, 'DISC' or 'CONT'
+        self._wlogrecords = dict()  # code record for 'DISC' logs
+
         self._df = None  # pandas dataframe with all log values
 
-        if args:
+        self._metadata = xtgeo.MetaDataWell()
+
+        if wfile is not None:
             # make instance from file import
-            wfile = args[0]
-            fformat = kwargs.get("fformat", "rms_ascii")
-            mdlogname = kwargs.get("mdlogname", None)
-            zonelogname = kwargs.get("zonelogname", None)
-            strict = kwargs.get("strict", False)
-            lognames = kwargs.get("lognames", "all")
+            wfile = Path(wfile)
             self.from_file(
                 wfile,
                 fformat=fformat,
@@ -193,17 +205,14 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             )
 
         else:
-            # dummy
-            self._xx = kwargs.get("xx", 0.0)
-
-            # # make instance by kw spesification ... todo
-            # raise RuntimeWarning('Cannot initialize a Well object without '
-            #                      'import at the current stage.')
+            logger.info("Instantate Well() object without file")
 
         self._ensure_consistency()
+        self._metadata.required = self
+
         logger.info("Ran __init__for Well() %s", id(self))
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         # should be able to newobject = eval(repr(thisobject))
         myrp = (
             "{0.__class__.__name__} (filesrc={0._filesrc!r}, "
@@ -211,34 +220,32 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         )
         return myrp
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         # user friendly print
         return self.describe(flush=False)
 
-    def __del__(self):
-        logger.info("Deleting %s instance %s", self.__class__.__name__, id(self))
-
-    # Consistency checking. As well log names are columns in the Pandas DF,
-    # there are additional attributes per log that have to be "in sync"
     def _ensure_consistency(self):  # pragma: no coverage
-        """Ensure consistency within an object (private function)"""
+        """Ensure consistency within an object (private function).
 
+        Consistency checking. As well log names are columns in the Pandas DF,
+        there are additional attributes per log that have to be "in sync".
+        """
         if self._df is None:
             return
 
         self._wlognames = list(self._df.columns)
 
         for logname in self._wlognames:
-            if logname not in self._wlogtype:
-                self._wlogtype[logname] = "CONT"  # continuous as default
-                self._wlogrecord[logname] = None  # None as default
+            if logname not in self._wlogtypes:
+                self._wlogtypes[logname] = "CONT"  # continuous as default
+                self._wlogrecords[logname] = None  # None as default
             else:
-                if self._wlogtype[logname] not in self.VALID_LOGTYPES:
-                    self._wlogtype[logname] = "CONT"
-                    self._wlogrecord[logname] = None  # None as default
+                if self._wlogtypes[logname] not in self.VALID_LOGTYPES:
+                    self._wlogtypes[logname] = "CONT"
+                    self._wlogrecords[logname] = None  # None as default
 
-            if logname not in self._wlogrecord:
-                if self._wlogtype[logname] == "DISC":
+            if logname not in self._wlogrecords:
+                if self._wlogtypes[logname] == "DISC":
                     # it is a discrete log with missing record; try to find
                     # a default one based on current values...
                     lvalues = self._df[logname].values.round(decimals=0)
@@ -251,55 +258,74 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                         if lval in lvalues:
                             codes[lval] = str(lval)
 
-                    self._wlogrecord = codes
+                    self._wlogrecords = codes
 
     # ==================================================================================
     # Properties
     # ==================================================================================
 
     @property
+    def metadata(self):
+        """Return metadata object instance of type MetaDataRegularSurface."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, obj):
+        # The current metadata object can be replaced. This is a bit dangerous so
+        # further check must be done to validate. TODO.
+        if not isinstance(obj, xtgeo.MetaDataWell):
+            raise ValueError("Input obj not an instance of MetaDataRegularCube")
+
+        self._metadata = obj
+
+    @property
     def rkb(self):
-        """ Returns RKB height for the well (read only)."""
+        """Returns RKB height for the well (read only)."""
         return self._rkb
 
     @property
     def xpos(self):
-        """ Returns well header X position (read only)."""
+        """Returns well header X position (read only)."""
         return self._xpos
 
     @property
-    def ypos(self):
-        """ Returns well header Y position (read only)."""
+    def ypos(self) -> float:
+        """Returns well header Y position (read only)."""
         return self._ypos
 
     @property
     def wellname(self):
-        """ Returns well name (read only) (see also name attribute)."""
+        """str: Returns well name, read only."""
         return self._wname
 
     @property
     def name(self):
-        """ Returns or set (rename) a well name."""
+        """Returns or set (rename) a well name."""
         return self._wname
 
     @name.setter
     def name(self, newname):
         self._wname = newname
 
+    # alias
+    wname = name
+
     @property
-    def xwellname(self):
-        """Returns well name on a file syntax safe form (/ and space replaced
-        with _).
-        """
+    def safewellname(self):
+        """Get well name on syntax safe form; '/' and spaces replaced with '_'."""
         xname = self._wname
         xname = xname.replace("/", "_")
         xname = xname.replace(" ", "_")
         return xname
 
     @property
+    def xwellname(self):
+        """See safewellname."""
+        return self.safewellname
+
+    @property
     def shortwellname(self):
-        """Returns well name on a short name form where blockname and spaces
-        are removed (read only).
+        """str: Well name on a short form where blockname/spaces removed (read only).
 
         This should cope with both North Sea style and Haltenbanken style.
 
@@ -319,7 +345,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def mdlogname(self):
-        """ Returns name of MD log, if any (None if missing)."""
+        """str: Returns name of MD log, if any (None if missing)."""
         return self._mdlogname
 
     @mdlogname.setter
@@ -331,7 +357,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def zonelogname(self):
-        """ Returns or sets name of zone log, return None if missing."""
+        """str: Returns or sets name of zone log, return None if missing."""
         return self._zonelogname
 
     @zonelogname.setter
@@ -353,30 +379,28 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @property
     def nrow(self):
-        """Returns the Pandas dataframe object number of rows"""
+        """int: Returns the Pandas dataframe object number of rows."""
         return len(self._df.index)
 
     @property
     def ncol(self):
-        """Returns the Pandas dataframe object number of columns"""
+        """int: Returns the Pandas dataframe object number of columns."""
         return len(self._df.columns)
 
     @property
     def nlogs(self):
-        """Returns the Pandas dataframe object number of columns"""
+        """int: Returns the Pandas dataframe object number of columns."""
         return len(self._df.columns) - 3
 
     @property
     def lognames_all(self):
-        """Returns the Pandas dataframe column names as list (including
-        mandatory X_UTME Y_UTMN Z_TVDSS)."""
+        """list: Returns dataframe column names as list, including mandatory coords."""
         self._ensure_consistency()
         return self._wlognames
 
     @property
     def lognames(self):
-        """Returns the Pandas dataframe column as list (excluding
-        mandatory X_UTME Y_UTMN Z_TVDSS)"""
+        """list: Returns the Pandas dataframe column as list excluding coords."""
         return list(self._df)[3:]
 
     # ==================================================================================
@@ -385,8 +409,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
     @staticmethod
     def get_short_wellname(wellname):
-        """Returns well name on a short name form where blockname and spaces
-        are removed (read only).
+        """Well name on a short name form where blockname and spaces are removed.
+
         This should cope with both North Sea style and Haltenbanken style.
         E.g.: '31/2-G-5 AH' -> 'G-5AH', '6472_11-F-23_AH_T2' -> 'F-23AHT2'
         """
@@ -408,6 +432,38 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         xname = xname.replace("_", "")
         xname = xname.replace(" ", "")
         return xname
+
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout."""
+        dsc = xtgeo.common.XTGDescription()
+
+        dsc.title("Description of Well instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("File source", self._filesrc)
+        dsc.txt("Well name", self._wname)
+        dsc.txt("RKB", self._rkb)
+        dsc.txt("Well head", self._xpos, self._ypos)
+        dsc.txt("Name of all columns", self.lognames_all)
+        dsc.txt("Name of log columns", self.lognames)
+        for wlog in self.lognames:
+            rec = self.get_logrecord(wlog)
+            if rec is not None and len(rec) > 3:
+                string = "("
+                nlen = len(rec)
+                for idx, (code, val) in enumerate(rec.items()):
+                    if idx < 2:
+                        string += "{}: {} ".format(code, val)
+                    elif idx == nlen - 1:
+                        string += "...  {}: {})".format(code, val)
+            else:
+                string = "{}".format(rec)
+            dsc.txt("Logname", wlog, self.get_logtype(wlog), string)
+
+        if flush:
+            dsc.flush()
+            return None
+
+        return dsc.astext()
 
     def from_file(
         self,
@@ -448,7 +504,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionchanged:: 2.1 ``lognames`` and ``lognames_strict`` added
         .. versionchanged:: 2.1 ``strict`` now defaults to False
         """
-
         wfile = xtgeo._XTGeoFile(wfile)
 
         wfile.check_file(raiseerror=OSError)
@@ -470,13 +525,16 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._filesrc = wfile.name
         return self
 
-    def to_file(self, wfile, fformat="rms_ascii"):
-        """
-        Export well to file
+    def to_file(
+        self,
+        wfile: Union[str, Path, io.BytesIO],
+        fformat: Optional[str] = "rms_ascii",
+    ):
+        """Export well to file or memory stream.
 
         Args:
-            wfile (str): Name of file or pathlib.Path instance
-            fformat (str): File format ('rms_ascii'/'rmswell', 'hdf5')
+            wfile: File name or stream.
+            fformat: File format ('rms_ascii'/'rmswell', 'hdf/hdf5/h5').
 
         Example::
 
@@ -485,22 +543,76 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             xwell.to_file("somefile_copy.rmswell")
 
         """
-        wfile = xtgeo._XTGeoFile(wfile, mode="wb")
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
 
         wfile.check_folder(raiseerror=OSError)
 
         self._ensure_consistency()
 
-        if fformat in (None, "rms_ascii", "rmswell"):
+        if fformat in (None, "rms_ascii", "rms_asc", "rmsasc", "rmswell"):
             _well_io.export_rms_ascii(self, wfile.name)
 
-        elif fformat == "hdf5":
-            with pd.HDFStore(wfile, "a", complevel=9, complib="zlib") as store:
-                logger.info("export to HDF5 %s", wfile.name)
-                store[self._wname] = self._df
-                meta = dict()
-                meta["name"] = self._wname
-                store.get_storer(self._wname).attrs["metadata"] = meta
+        elif fformat in ("hdf", "hdf5", "h5"):
+            self.to_hdf(wfile)
+
+        return wfile.file
+
+    def from_hdf(
+        self,
+        wfile: Union[str, Path],
+    ):
+        """Read well data from HDF.
+
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        Read well from as HDF5 formatted file, with xtgeo spesific layout.
+
+        Args:
+            wfile: Well file or stream
+
+        Returns:
+            Well() instance.
+
+
+        .. versionadded:: 2.14
+        """
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+        if wfile.detect_fformat() != "hdf":
+            raise ValueError("Wrong file format detected")
+
+        _well_io.import_hdf5_well(self, wfile)
+
+        _self: self.__class__ = self
+        return _self  # to make obj = xtgeo.Well().from_hdf(stream) work
+
+    def to_hdf(
+        self,
+        wfile: Union[str, Path],
+        compression: Optional[str] = "lzf",
+    ) -> Path:
+        """Export well to HDF based file.
+
+        Warning:
+            This implementation is currently experimental and only recommended
+            for testing.
+
+        Args:
+            wfile: HDF File name to write to export to.
+
+        Returns:
+            A Path instance to actual file applied.
+
+        .. versionadded:: 2.14
+        """
+        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
+
+        wfile.check_folder(raiseerror=OSError)
+
+        _well_io.export_hdf5_well(self, wfile, compression=compression)
+
+        return wfile.file
 
     def from_roxar(self, *args, **kwargs):
         """Import (retrieve) well from roxar project.
@@ -521,7 +633,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
             inclsurvey (bool): Include M_AZI and M_INCL from RMS
         """
-
         # use *args, **kwargs since this method is overrided in blocked_well, and
         # signature should be the same
 
@@ -576,7 +687,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionadded:: 2.12
 
         """
-
         # use *args, **kwargs since this method is overrided in blocked_well, and
         # signature should be the same
 
@@ -599,37 +709,66 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             realisation=realisation,
         )
 
-    def describe(self, flush=True):
-        """Describe an instance by printing to stdout"""
+    def get_wlogs(self) -> OrderedDict:
+        """Get a compound dictionary with well log metadata.
 
-        dsc = xtgeo.common.XTGDescription()
-        dsc.title("Description of Well instance")
-        dsc.txt("Object ID", id(self))
-        dsc.txt("File source", self._filesrc)
-        dsc.txt("Well name", self._wname)
-        dsc.txt("RKB", self._rkb)
-        dsc.txt("Well head", self._xpos, self._ypos)
-        dsc.txt("Name of all columns", self.lognames_all)
-        dsc.txt("Name of log columns", self.lognames)
-        for wlog in self.lognames:
-            rec = self.get_logrecord(wlog)
-            if rec is not None and len(rec) > 3:
-                string = "("
-                nlen = len(rec)
-                for idx, (code, val) in enumerate(rec.items()):
-                    if idx < 2:
-                        string += "{}: {} ".format(code, val)
-                    elif idx == nlen - 1:
-                        string += "...  {}: {})".format(code, val)
+        The result will be an Ordered dict on the form:
+
+        ``{"X_UTME": ["CONT", None], ... "Facies": ["DISC", {1: "BG", 2: "SAND"}]}``
+        """
+        res = OrderedDict()
+
+        for key in self._wlognames:
+            wtype = "CONT"
+            wrecord = None
+            if key in self._wlogtypes:
+                wtype = self._wlogtypes[key]
+            if key in self._wlogrecords:
+                wrecord = self._wlogrecords[key]
+
+            res[key] = [wtype, wrecord]
+
+        return res
+
+    def set_wlogs(self, wlogs: OrderedDict):
+        """Set a compound dictionary with well log metadata.
+
+        This operation is somewhat risky as it may lead to inconsistency, so use with
+        care! Typically, one will use :meth:`get_wlogs` first and then modify some
+        attributes.
+
+        Args:
+            wlogs: Input data dictionary
+
+        Raises:
+            ValueError: Invalid log type found in input:
+            ValueError: Invalid log record found in input:
+            ValueError: Invalid input key found:
+            ValueError: Invalid log record found in input:
+
+        """
+        for key in self._wlognames:
+            if key in wlogs.keys():
+                typ, rec = wlogs[key]
+
+                if typ in Well.VALID_LOGTYPES:
+                    self._wlogtypes[key] = deepcopy(typ)
+                else:
+                    raise ValueError(f"Invalid log type found in input: {typ}")
+
+                if rec is None or isinstance(rec, dict):
+                    self._wlogrecords[key] = deepcopy(rec)
+                else:
+                    raise ValueError(f"Invalid log record found in input: {rec}")
+
             else:
-                string = "{}".format(rec)
-            dsc.txt("Logname", wlog, self.get_logtype(wlog), string)
+                raise ValueError(f"Key for column not found in input: {key}")
 
-        if flush:
-            dsc.flush()
-            return None
+        for key in wlogs.keys():
+            if key not in self._wlognames:
+                raise ValueError(f"Invalid input key found: {key}")
 
-        return dsc.astext()
+        self._ensure_consistency()
 
     def isdiscrete(self, logname):
         """Return True of log is discrete, otherwise False.
@@ -639,19 +778,17 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         .. versionadded:: 2.2.0
         """
-
         if logname in self._wlognames and self.get_logtype(logname) == "DISC":
             return True
         return False
 
     def copy(self):
         """Copy a Well instance to a new unique Well instance."""
-
         # pylint: disable=protected-access
 
         new = Well()
-        new._wlogtype = deepcopy(self._wlogtype)
-        new._wlogrecord = deepcopy(self._wlogrecord)
+        new._wlogtypes = deepcopy(self._wlogtypes)
+        new._wlogrecords = deepcopy(self._wlogrecords)
         new._rkb = self._rkb
         new._xpos = self._xpos = None
         new._ypos = self._ypos
@@ -667,7 +804,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return new
 
     def rename_log(self, lname, newname):
-        """Rename a log, e.g. Poro to PORO"""
+        """Rename a log, e.g. Poro to PORO."""
         self._ensure_consistency()
 
         if lname not in self.lognames:
@@ -676,8 +813,8 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         if newname in self.lognames:
             raise ValueError("New log name exists already")
 
-        self._wlogtype[newname] = self._wlogtype.pop(lname)
-        self._wlogrecord[newname] = self._wlogrecord.pop(lname)
+        self._wlogtypes[newname] = self._wlogtypes.pop(lname)
+        self._wlogrecords[newname] = self._wlogrecords.pop(lname)
 
         # rename in dataframe
         self._df.rename(index=str, columns={lname: newname}, inplace=True)
@@ -708,12 +845,11 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             and ``force=False``.
 
         """
-
         if lname in self.lognames and force is False:
             return False
 
-        self._wlogtype[lname] = logtype
-        self._wlogrecord[lname] = logrecord
+        self._wlogtypes[lname] = logtype
+        self._wlogrecords[lname] = logrecord
 
         # make a new column
         self._df[lname] = float(value)
@@ -731,63 +867,58 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Returns:
             Number of logs deleted
         """
-
         return _well_oper.delete_log(self, lname)
 
     delete_logs = delete_log  # alias function
 
     def get_logtype(self, lname):
-        """Returns the type of a give log (e.g. DISC or CONT)"""
+        """Returns the type of a give log (e.g. DISC or CONT)."""
         self._ensure_consistency()
 
-        if lname in self._wlogtype:
-            return self._wlogtype[lname]
+        if lname in self._wlogtypes:
+            return self._wlogtypes[lname]
         return None
 
     def set_logtype(self, lname, ltype):
-        """Sets the type of a give log (e.g. DISC or CONT)"""
-
+        """Sets the type of a give log (e.g. DISC or CONT)."""
         self._ensure_consistency()
 
         valid = {"DISC", "CONT"}
 
         if ltype in valid:
-            self._wlogtype[lname] = ltype
+            self._wlogtypes[lname] = ltype
         else:
             raise ValueError("Try to set invalid log type: {}".format(ltype))
 
     def get_logrecord(self, lname):
-        """Returns the record (dict) of a give log. None if not exists"""
-
-        if lname in self._wlogtype:
-            return self._wlogrecord[lname]
+        """Returns the record (dict) of a given log name, None if not exists."""
+        if lname in self._wlogtypes:
+            return self._wlogrecords[lname]
 
         return None
 
     def set_logrecord(self, lname, newdict):
-        """Sets the record (dict) of a given discrete log"""
-
+        """Sets the record (dict) of a given discrete log."""
         self._ensure_consistency()
         if lname not in self.lognames:
             raise ValueError("No such logname: {}".format(lname))
 
-        if self._wlogtype[lname] == "CONT":
+        if self._wlogtypes[lname] == "CONT":
             raise ValueError("Cannot set a log record for a continuous log")
 
         if not isinstance(newdict, dict):
             raise ValueError("Input is not a dictionary")
 
-        self._wlogrecord[lname] = newdict
+        self._wlogrecords[lname] = newdict
 
     def get_logrecord_codename(self, lname, key):
-        """Returns the name entry of a log record, for a given key
+        """Returns the name entry of a log record, for a given key.
 
         Example::
 
             # get the name for zonelog entry no 4:
             zname = well.get_logrecord_codename('ZONELOG', 4)
         """
-
         zlogdict = self.get_logrecord(lname)
         if key in zlogdict:
             return zlogdict[key]
@@ -828,7 +959,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
                 high XTGeo UNDEF values, or user defined values.
 
         """
-
         lnames = self.lognames
 
         newdf = self._df.copy()
@@ -864,7 +994,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         The first well og entry defines zero, then the horizontal length
         is computed relative to that by simple geometric methods.
         """
-
         # extract numpies from XYZ trajectory logs
         xv = self._df["X_UTME"].values
         yv = self._df["Y_UTMN"].values
@@ -873,9 +1002,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         # get number of rows in pandas
         nlen = self.nrow
 
-        ier, _tlenv, _dtlenv, hlenv, _dhlenv = _cxtgeo.pol_geometrics(
-            xv, yv, zv, nlen, nlen, nlen, nlen
-        )
+        ier, _, _, hlenv, _ = _cxtgeo.pol_geometrics(xv, yv, zv, nlen, nlen, nlen, nlen)
 
         if ier != 0:
             raise RuntimeError(
@@ -948,8 +1075,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     def truncate_parallel_path(
         self, other, xtol=None, ytol=None, ztol=None, itol=None, atol=None
     ):
-        """Truncate (remove) the part of the well trajectory that is
-        ~parallel with other.
+        """Truncate the part of the well trajectory that is ~parallel with other.
 
         Args:
             other (Well): Other well to compare with
@@ -959,7 +1085,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             itol (float): Tolerance in inclination (degrees)
             atol (float): Tolerance in azimuth (degrees)
         """
-
         if xtol is None:
             xtol = 0.0
         if ytol is None:
@@ -995,10 +1120,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._df.reset_index(drop=True, inplace=True)
 
     def may_overlap(self, other):
-        """Consider if well may overlap in X Y coordinates with other well,
-        True/False
-        """
-
+        """Consider if well overlap in X Y coordinates with other well, True/False."""
         if self._df.size < 2 or other._df.size < 2:
             return False
 
@@ -1042,7 +1164,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             keeplast (bool): If True, the last element from the original
                 dataframe is kept, to avoid that the well is shortened.
         """
-
         if self._df.size < 2 * interval:
             return
 
@@ -1054,8 +1175,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         self._df = dfr.reset_index(drop=True)
 
     def rescale(self, delta=0.15, tvdrange=None):
-        """Rescale (refine or coarse) a well by sampling a delta along the
-        trajectory, in MD.
+        """Rescale (refine or coarse) by sampling a delta along the trajectory, in MD.
 
         Args:
             delta (float): Step length
@@ -1074,7 +1194,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionadded:: 2.1
         .. versionchanged:: 2.13 Added `skipname` key
         """
-
         dfr = self._df.copy()
 
         keep = ("X_UTME", "Y_UTMN", "Z_TVDSS")
@@ -1112,7 +1231,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         .. versionchanged:: 2.1 improved algorithm
         """
-
         poly = self.get_polygons()
 
         if tvdmin is not None:
@@ -1143,7 +1261,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Raises:
             RuntimeError if zonelog is not present
         """
-
         dfr = _well_oper.report_zonation_holes(self, threshold=threshold)
 
         return dfr
@@ -1151,7 +1268,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
     def get_zonation_points(
         self, tops=True, incl_limit=80, top_prefix="Top", zonelist=None, use_undef=False
     ):
-
         """Extract zonation points from Zonelog and make a marker list.
 
         Currently it is either 'Tops' or 'Zone' (thicknesses); default
@@ -1184,7 +1300,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             A pandas dataframe (ready for the xyz/Points class), None
             if a zonelog is missing
         """
-
         # make a copy of the well instance as some tmp well logs are made
         scopy = self.copy()
 
@@ -1197,9 +1312,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return dfr
 
     def get_zone_interval(self, zonevalue, resample=1, extralogs=None):
-
-        """Extract the X Y Z ID line (polyline) segment for a given
-        zonevalue.
+        """Extract the X Y Z ID line (polyline) segment for a given zonevalue.
 
         Args:
             zonevalue (int): The zone value to extract
@@ -1214,7 +1327,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             None if a zonelog is missing or actual zone does dot
             exist in the well.
         """
-
         if resample < 1 or not isinstance(resample, int):
             raise KeyError("Key resample of wrong type (must be int >= 1)")
 
@@ -1281,7 +1393,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         count_limit=3,
         zonelogname=None,
     ):
-
         """Get fraction of a discrete parameter, e.g. a facies, per zone.
 
         It can be constrained by an inclination.
@@ -1304,7 +1415,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             if a zonelog is missing or or dlogname is missing,
             list is zero length for any reason.
         """
-
         dfr = _wellmarkers.get_fraction_per_zone(
             self,
             dlogname,
@@ -1318,8 +1428,7 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         return dfr
 
     def get_surface_picks(self, surf):
-        """Get a :class:`.Points` instance where well crosses the surface (horizon
-        picks).
+        """Return :class:`.Points` obj where well crosses the surface (horizon picks).
 
         There may be several points in the Points() dataframe attribute.
         Also a ``DIRECTION`` column will show 1 if surface is penetrated from
@@ -1334,7 +1443,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionadded:: 2.8
 
         """
-
         return _wellmarkers.get_surface_picks(self, surf)
 
     def make_ijk_from_grid(self, grid, grid_id="", algorithm=2, activeonly=True):
@@ -1351,12 +1459,12 @@ class Well(object):  # pylint: disable=useless-object-inheritance
             algorithm (int): Which interbal algorithm to use, default is 2 (expert
                 setting)
             activeonly (bool): If True, only active cells are applied (algorithm 2 only)
+
         Raises:
             RuntimeError: 'Error from C routine, code is ...'
 
         .. versionchanged:: 2.9 Added keys for and `activeonly`
         """
-
         _well_oper.make_ijk_from_grid(
             self, grid, grid_id=grid_id, algorithm=algorithm, activeonly=activeonly
         )
@@ -1387,7 +1495,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         Args:
             zqname (str): Name of quality log
         """
-
         _well_oper.make_zone_qual_log(self, zqname)
 
     def get_gridproperties(
@@ -1415,7 +1522,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
         .. versionadded:: 2.1
 
         """
-
         _well_oper.get_gridproperties(self, gridprops, grid=grid, prop_id=prop_id)
 
     # ==================================================================================
@@ -1436,7 +1542,6 @@ class Well(object):  # pylint: disable=useless-object-inheritance
 
         The numpy is always a double (float64), so need to convert first
         """
-
         carr = _cxtgeo.new_intarray(self.nrow)
 
         np_array = np_array.astype(np.int32)

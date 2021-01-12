@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Well input and output, private module for ROXAPI"""
 
-from __future__ import print_function, absolute_import
+
 from collections import OrderedDict
 
 import numpy as np
@@ -110,11 +110,11 @@ def _roxapi_import_bwell(
         tmplog = npma.filled(tmplog, fill_value=np.nan)
         tmplog[tmplog == -999] = np.nan
         if "discrete" in str(bwprop.type):
-            self._wlogtype[lname] = "DISC"
-            self._wlogrecord[lname] = bwprop.code_names
+            self._wlogtypes[lname] = "DISC"
+            self._wlogrecords[lname] = bwprop.code_names
         else:
-            self._wlogtype[lname] = "CONT"
-            self._wlogrecord[lname] = None
+            self._wlogtypes[lname] = "CONT"
+            self._wlogrecords[lname] = None
 
         logs[lname] = tmplog
 
@@ -170,7 +170,7 @@ def _roxapi_export_bwell(
             continue
 
         if lname not in bwnames:
-            if self._wlogtype[lname] == "CONT":
+            if self._wlogtypes[lname] == "CONT":
                 print("Create CONT", lname, "for", wname)
                 bwlog = bwset.properties.create(
                     lname, roxar.GridPropertyType.continuous, np.float32

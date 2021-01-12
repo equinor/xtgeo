@@ -1,7 +1,5 @@
 # coding: utf-8
-"""Private module, Grid Import private functions for ROFF format"""
-
-from __future__ import print_function, absolute_import
+"""Private module, Grid Import private functions for ROFF format."""
 
 from collections import OrderedDict
 
@@ -20,7 +18,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_roff(self, gfile):
-
+    """Import binary ROFF format."""
     gfile.get_cfhandle()
 
     if self._xtgformat == 1:
@@ -32,8 +30,7 @@ def import_roff(self, gfile):
 
 
 def _import_roff_xtgformat1(self, gfile):
-    """Import ROFF grids using xtgformat=1 storage"""
-
+    """Import ROFF grids using xtgformat=1 storage."""
     # pylint: disable=too-many-statements
 
     # This routine do first a scan for all keywords. Then it grabs
@@ -140,9 +137,9 @@ def _import_roff_xtgformat1(self, gfile):
 
 
 def _import_roff_xtgformat2(self, gfile):
-    """Import ROFF grids using xtgformat=2 storage"""
-
+    """Import ROFF grids using xtgformat=2 storage."""
     logger.info("Importing using xtgformat 2")
+
     self._xtgformat = 2
 
     kwords = utils.scan_keywords(gfile, fformat="roff")
