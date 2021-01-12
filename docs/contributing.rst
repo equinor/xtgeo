@@ -151,6 +151,7 @@ Standard acronyms to start the commit message with are:
     PERF: performance or bench-marking
     BLD: change related to building xtgeo
     BUG: bug fix
+    FIX: fixes wrt to technical issues, e.g. wrong requirements.txt
     DEP: deprecate something, or remove a deprecated object
     DOC: documentation, addition, updates
     ENH: enhancement, new functionality
