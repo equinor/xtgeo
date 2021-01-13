@@ -4,7 +4,7 @@
 import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
-from typing import Union, Optional
+from typing import Union, Optional, List
 from pathlib import Path
 import io
 from collections import OrderedDict
@@ -1426,6 +1426,46 @@ class Well:  # pylint: disable=useless-object-inheritance
         )
 
         return dfr
+
+    def mask_shoulderbeds(
+        self,
+        inputlogs: List[str],
+        targetlogs: List[str],
+        nsamples: Optional[int] = 2,
+        strict: Optional[bool] = False,
+    ) -> bool:
+        """Mask data around zone boundaries or other discrete log boundaries.
+
+        This operates on number of samples, hence the actual distance which is masked
+        depends on the sampling interval. In future versions, operating on distances
+        (e.g. in TVD (true vertical depth) or MD (measured depth) will be available.
+
+        Args:
+            inputlogs: List of input logs, must be of discrete type.
+            targetlogs: List of logs where mask is applied.
+            nsample: Number of samples around boundaries to filter, per side, i.e.
+                value 2 means 2 above and 2 below, in total 4 samples.
+            strict: If True, will raise Exception of any of the input or target log
+                names are missing.
+
+        Returns:
+            True if any operation has been done. False in case nothing has been done,
+                 e.g. no targetlogs for this particular well and ``strict`` is False.
+
+        Raises:
+            ValueError: Input log {inlog} is missing and strict=True.
+            ValueError: Input log {inlog} is not of type DISC.
+            ValueError: Target log {target} is missing and strict=True.
+            ValueError: Keyword nsamples must be an int > 1 and < {maxlen} (where
+                maxlen is half of number of log samples).
+
+        Example:
+            >>> mywell.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])
+
+        """
+        return _well_oper.mask_shoulderbeds(
+            self, inputlogs, targetlogs, nsamples, strict
+        )
 
     def get_surface_picks(self, surf):
         """Return :class:`.Points` obj where well crosses the surface (horizon picks).
