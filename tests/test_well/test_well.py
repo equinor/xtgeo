@@ -43,13 +43,13 @@ WELL4 = join(TPATH, "wells/drogon/1/55_33-1.rmswell")
 
 @pytest.fixture(name="loadwell1")
 def fixture_loadwell1():
-    """Fixture for loading a well (pytest setup)"""
+    """Fixture for loading a well (pytest setup)."""
     return Well(WFILE)
 
 
 @pytest.fixture(name="loadwell3")
 def fixture_loadwell3():
-    """Fixture for loading a well (pytest setup)"""
+    """Fixture for loading a well (pytest setup)."""
     return Well(WELL3)
 
 
@@ -310,8 +310,7 @@ def test_make_hlen(loadwell1):
 
 
 def test_make_zqual_log(loadwell3):
-    """Make a zonelog FLAG quality log"""
-
+    """Make a zonelog FLAG quality log."""
     mywell = loadwell3
     mywell.zonelogname = "ZONELOG"
 
@@ -321,6 +320,68 @@ def test_make_zqual_log(loadwell3):
 
     with pd.option_context("display.max_rows", 1000):
         print(mywell.dataframe)
+
+
+@pytest.mark.parametrize(
+    "logseries, nsamples, expected",
+    [
+        ([], 0, []),
+        ([1], 0, [False]),
+        ([1], 1, [False]),  # intentional
+        ([1, 2], 0, [False, False]),
+        ([0, 0], 1, [False, False]),
+        ([1, 2], 1, [True, True]),
+        ([1, 1, 1, 2, 2, 2], 1, [False, False, True, True, False, False]),
+        ([1, 1, 1, 2, 2, 2], 2, [False, True, True, True, True, False]),
+        ([10, 10, 10, 2, 2, 2], 1, [False, False, True, True, False, False]),
+        ([1, 1, 1, 2, 2, 2], 10, [True, True, True, True, True, True]),
+        ([np.nan, 1, 1, np.nan, 2, 2], 1, [False, False, False, False, False, False]),
+        ([np.nan, 1, 1, 2, np.nan, 2], 1, [False, False, True, True, False, False]),
+    ],
+)
+def test_mask_shoulderbeds_get_bseries(logseries, nsamples, expected):
+    """Test for corner cases in _mask_shoulderbeds_logs."""
+    from xtgeo.well._well_oper import _get_bseries
+
+    logseries = pd.Series(logseries, dtype="float64")
+    expected = pd.Series(expected, dtype="bool")
+
+    results = _get_bseries(logseries, nsamples)
+    if logseries.empty:
+        assert expected.empty is True
+    else:
+        assert results.equals(expected)
+
+
+def test_mask_shoulderbeds(loadwell3, loadwell1):
+    """Test masking shoulderbeds effects."""
+    mywell = loadwell3
+
+    usewell = mywell.copy()
+    usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples=3)
+
+    assert not np.isnan(mywell.dataframe.at[1595, "GR"])
+    assert np.isnan(usewell.dataframe.at[1595, "GR"])
+
+    # another well set with more discrete logs and several logs to modify
+    mywell = loadwell1
+    usewell = mywell.copy()
+    usewell.mask_shoulderbeds(["Zonelog", "Facies"], ["Perm", "Poro"], nsamples=2)
+    assert np.isnan(usewell.dataframe.at[4763, "Perm"])
+    assert np.isnan(usewell.dataframe.at[4763, "Poro"])
+
+    # corner cases
+    with pytest.raises(ValueError):
+        usewell.mask_shoulderbeds(
+            ["Zonelog", "Facies"], ["NOPerm", "Poro"], nsamples=2, strict=True
+        )
+
+    with pytest.raises(ValueError):
+        usewell.mask_shoulderbeds(["Perm", "Facies"], ["NOPerm", "Poro"], nsamples=2)
+
+    assert usewell.mask_shoulderbeds(["Zonelog"], ["Perm", "Poro"]) is True
+    assert usewell.mask_shoulderbeds(["Zonelog"], ["Dummy"]) is False
+    assert usewell.mask_shoulderbeds(["Dummy"], ["Perm", "Poro"]) is False
 
 
 def test_rescale_well(loadwell1):

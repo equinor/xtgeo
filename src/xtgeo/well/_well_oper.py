@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Operations along a well, private module"""
-
+"""Operations along a well, private module."""
 
 import copy
 from distutils.version import StrictVersion
@@ -20,8 +18,8 @@ logger = xtg.functionlogger(__name__)
 
 def delete_log(self, lname):
     """Delete/remove an existing log, or list of logs."""
-
     self._ensure_consistency()
+
     if not isinstance(lname, list):
         lname = [lname]
 
@@ -49,11 +47,10 @@ def delete_log(self, lname):
 
 
 def rescale(self, delta=0.15, tvdrange=None):
-    """Rescale by using a new MD increment
+    """Rescale by using a new MD increment.
 
     The rescaling is technically done by interpolation in the Pandas dataframe
     """
-
     pdrows = pd.options.display.max_rows
     pd.options.display.max_rows = 999
 
@@ -122,8 +119,7 @@ def rescale(self, delta=0.15, tvdrange=None):
 
 
 def make_zone_qual_log(self, zqname):
-    """Make a flag log based on stratigraphic relations"""
-
+    """Make a flag log based on stratigraphic relations."""
     if zqname in self.dataframe:
         logger.warning("Quality log %s exists, will be overwritten", zqname)
 
@@ -186,7 +182,7 @@ def make_zone_qual_log(self, zqname):
 
 
 def make_ijk_from_grid(self, grid, grid_id="", algorithm=1, activeonly=True):
-
+    """Make an IJK log from grid indices."""
     logger.info("Using algorithm %s in %s", algorithm, __name__)
 
     if algorithm == 1:
@@ -198,11 +194,9 @@ def make_ijk_from_grid(self, grid, grid_id="", algorithm=1, activeonly=True):
 
 
 def _make_ijk_from_grid_v1(self, grid, grid_id=""):
-    """
-    Getting IJK from a grid and make as well logs.
+    """Getting IJK from a grid and make as well logs.
 
     This is the first version, using _cxtgeo.grd3d_well_ijk from C
-
     """
     logger.info("Using algorithm 1 in %s", __name__)
 
@@ -274,14 +268,12 @@ def _make_ijk_from_grid_v1(self, grid, grid_id=""):
 
 
 def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
-    """
-    Getting IJK from a grid and make as well logs.
+    """Getting IJK from a grid and make as well logs.
 
     This is a newer version, using grid.get_ijk_from_points which in turn
     use the from C method x_chk_point_in_hexahedron, while v1 use the
     x_chk_point_in_cell. This one is believed to be more precise!
     """
-
     # establish a Points instance and make points dataframe from well trajectory X Y Z
     wpoints = xtgeo.Points()
     wpdf = self.dataframe.loc[:, ["X_UTME", "Y_UTMN", "Z_TVDSS"]].copy()
@@ -314,8 +306,7 @@ def _make_ijk_from_grid_v2(self, grid, grid_id="", activeonly=True):
 
 
 def get_gridproperties(self, gridprops, grid=("ICELL", "JCELL", "KCELL"), prop_id=""):
-    """Getting gridproperties as logs"""
-
+    """Getting gridproperties as logs."""
     if not isinstance(gridprops, (xtgeo.GridProperty, xtgeo.GridProperties)):
         raise ValueError('"gridprops" not a GridProperties or GridProperty instance')
 
@@ -438,3 +429,67 @@ def report_zonation_holes(self, threshold=5):
         clm = ["INDEX", "X_UTME", "Y_UTMN", "Z_TVDSS", "Zone", "Well"]
 
     return pd.DataFrame(wellreport, columns=clm)
+
+
+def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
+    """Mask targetlogs around discrete boundaries."""
+    logger.info("Mask shoulderbeds for some logs...")
+
+    # check that inputlogs exists and that they are discrete, and targetlogs
+    useinputs = []
+    for inlog in inputlogs:
+        if inlog not in self._wlogtypes.keys() and strict is True:
+            raise ValueError(f"Input log {inlog} is missing and strict=True")
+        if inlog in self._wlogtypes.keys() and self._wlogtypes[inlog] != "DISC":
+            raise ValueError(f"Input log {inlog} is not of type DISC")
+        if inlog in self._wlogtypes.keys():
+            useinputs.append(inlog)
+
+    usetargets = []
+    for target in targetlogs:
+        if target not in self._wlogtypes.keys() and strict is True:
+            raise ValueError(f"Target log {target} is missing and strict=True")
+        if target in self._wlogtypes.keys():
+            usetargets.append(target)
+
+    maxlen = len(self._df) // 2
+    if not isinstance(nsamples, int) or nsamples < 1 or nsamples > maxlen:
+        raise ValueError(f"Keyword nsamples must be an int > 1 and < {maxlen}")
+
+    if not useinputs or not usetargets:
+        logger.info("Mask shoulderbeds for some logs... nothing done")
+        return False
+
+    for inlog in useinputs:
+        inseries = self._df[inlog]
+        bseries = _get_bseries(inseries, nsamples)
+        for target in usetargets:
+            self._df.loc[bseries, target] = np.nan
+
+    logger.info("Mask shoulderbeds for some logs... done")
+    return True
+
+
+def _get_bseries(inseries, nsamples):
+    """Private function for creating a bool filter, returning a bool series."""
+    if not isinstance(inseries, pd.Series):
+        raise RuntimeError("Bug, input must be a pandas Series() instance.")
+
+    if len(inseries) == 0:
+        return pd.Series([], dtype=bool)
+
+    # nsmaples < 1 or input series with <= 1 element will not be prosessed
+    if nsamples < 1 or len(inseries) <= 1:
+        return pd.Series(inseries, dtype=bool).replace(True, False)
+
+    def _growfilter(bseries, nleft):
+        if not nleft:
+            return bseries
+
+        return _growfilter(bseries | bseries.shift(-1) | bseries.shift(1), nleft - 1)
+
+    # make a tmp mask log (series) based input logs and use that for mask filterings
+    transitions = inseries.diff().abs() > 0
+    bseries = transitions | transitions.shift(-1)
+
+    return _growfilter(bseries, nsamples - 1)
