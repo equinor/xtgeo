@@ -30,6 +30,7 @@ TESTSURF3 = TPATH / "surfaces/etc/seabed_p.pmd"
 TESTROFFGRIDB = TPATH / "3dgrids/reek/reek_geo_grid.roff"
 TESTROFFGRIDA = TPATH / "3dgrids/reek/reek_geogrid.roffasc"
 TESTWELL1 = TPATH / "wells/battle/1/WELL12.rmswell"
+MDFILE = TPATH / "README.md"  # to test a file not relevant for fformat
 
 
 def test_generic_hash():
@@ -199,7 +200,7 @@ def test_detect_fformat():
     assert wfile.detect_fformat(suffixonly=True) == "rmswell"
 
     # Some invalid case
-    wfile = xtgeo._XTGeoFile("setup.py")
+    wfile = xtgeo._XTGeoFile(MDFILE)
     assert wfile.detect_fformat(suffixonly=True) == "unknown"
 
 
