@@ -18,7 +18,7 @@ max-line-length=88
 max-module-lines=3000
 
 [DESIGN]
-max-attributes=25
+max-attributes=30
 max-args=20
 max-locals=30
 max-branches=15
@@ -39,4 +39,5 @@ disable=
     useless-object-inheritance,
     import-outside-toplevel,
     import-error,
-    no-name-in-module
+    no-name-in-module,
+    raise-missing-from

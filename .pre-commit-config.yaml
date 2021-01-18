@@ -1,3 +1,4 @@
+# to disable hooks: SKIP=pylint git commit ...
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
@@ -14,3 +15,14 @@ repos:
     rev: 3.8.3
     hooks:
       - id: flake8
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 5.1.1
+    hooks:
+      - id: pydocstyle
+        files: ^src/xtgeo/plot
+        exclude: _.*\.py
+  - repo: https://github.com/pycqa/pylint
+    rev: pylint-2.6.0
+    hooks:
+    -   id: pylint
+        files: ^src/xtgeo/plot
