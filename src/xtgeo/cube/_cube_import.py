@@ -17,6 +17,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_segy(self, sfile, engine="segyio"):
+    """Import SEGY."""
     if engine == "segyio":
         _import_segy_io(self, sfile)
     else:
@@ -33,7 +34,6 @@ def _import_segy_io(self, sfile):
         undef (float): If None, dead traces (undef) are read as is, but
             if a a value, than dead traces get this value.
     """
-
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-locals
 
@@ -114,7 +114,7 @@ def _import_segy_io(self, sfile):
                 xvv = (cdpx - xori, cdpy - yori, 0)
 
             if inum == 2:
-                slen, _, rot2 = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
+                slen, _, _ = xcalc.vectorinfo2(xori, cdpx, yori, cdpy)
                 yinc = slen / (nrow - 1)
 
                 # find YFLIP by cross products
@@ -335,7 +335,7 @@ def import_rmsregular(self, sfile):
     raise NotImplementedError("Sorry, not implemented yet")
 
 
-def import_stormcube(self, sfile):
+def import_stormcube(self, sfile):  # pylint: disable=too-many-statements
     """Import on StormCube format."""
     # The ASCII header has all the metadata on the form:
     # ---------------------------------------------------------------------

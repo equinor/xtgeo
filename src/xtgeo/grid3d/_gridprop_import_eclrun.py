@@ -360,7 +360,9 @@ def _import_soil(self, pfile, kwlist, metadata, grid, date, fracture):
     return 2
 
 
-def _import_eclbinary_meta(self, pfile, kwlist, etype, date, grid):
+def _import_eclbinary_meta(
+    self, pfile, kwlist, etype, date, grid
+):  # pylint: disable=too-many-statements
     """Find settings and metadata, private to this module.
 
     Returns:

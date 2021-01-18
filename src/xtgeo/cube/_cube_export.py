@@ -47,7 +47,6 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
             existing SEGY file.
         engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
-
     logger.debug("Export segy format using segyio...")
 
     if template is None and self._segyfile is None:

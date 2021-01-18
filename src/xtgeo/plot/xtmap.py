@@ -19,9 +19,8 @@ class Map(BasePlot):
     """Class for plotting a map, using matplotlib."""
 
     def __init__(self):
-        """The __init__ (constructor) method for a Map object."""
-
-        super(Map, self).__init__()
+        """The constructor method for a Map object."""
+        super().__init__()
 
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
         logger.info(clsname)
@@ -39,7 +38,7 @@ class Map(BasePlot):
     # =========================================================================
     @property
     def pagesize(self):
-        """ Returns page size."""
+        """Returns page size."""
         return self._pagesize
 
     # =========================================================================
@@ -56,9 +55,7 @@ class Map(BasePlot):
         colormap=None,
         logarithmic=False,
     ):  # pylint: disable=too-many-statements
-
         """Input a surface and plot it."""
-
         # need a deep copy to avoid changes in the original surf
 
         logger.info("The key contourlevels %s is not in use", contourlevels)
@@ -168,7 +165,7 @@ class Map(BasePlot):
         alpha=0.7,
         linewidth=0.8,
     ):
-        """Plot the faults
+        """Plot the faults.
 
         Args:
             fpoly (object): A XTGeo Polygons object
@@ -180,7 +177,6 @@ class Map(BasePlot):
 
         .. _Matplotlib: http://matplotlib.org/api/colors_api.html
         """
-
         aff = fpoly.dataframe.groupby(idname)
 
         for name, _group in aff:
@@ -204,7 +200,7 @@ class Map(BasePlot):
                 xtg.critical("A polygon is not closed...")
 
     def plot_polygons(self, fpoly, idname="POLY_ID", color="k", linewidth=0.8):
-        """Plot a polygons instance
+        """Plot a polygons instance.
 
         Args:
             fpoly (object): A XTGeo Polygons object
@@ -214,7 +210,6 @@ class Map(BasePlot):
 
         .. _Matplotlib: http://matplotlib.org/api/colors_api.html
         """
-
         aff = fpoly.dataframe.groupby(idname)
 
         for _name, group in aff:
@@ -238,7 +233,6 @@ class Map(BasePlot):
             points (Points): A XTGeo Points object X Y VALUE
 
         """
-
         # This function is "in prep"
 
         dataframe = points.dataframe
@@ -255,7 +249,6 @@ class Map(BasePlot):
                 instances).
 
         """
-
         for well in wells.wells:
             dataframe = well.dataframe
 

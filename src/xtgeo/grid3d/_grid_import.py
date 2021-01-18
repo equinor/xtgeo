@@ -21,7 +21,7 @@ def from_file(
     initprops=None,
     restartprops=None,
     restartdates=None,
-):
+):  # pylint: disable=too-many-branches
     """Import grid geometry from file, and makes an instance of this class."""
     if not isinstance(gfile, xtgeo._XTGeoFile):
         raise RuntimeError("Error gfile must be a _XTGeoFile instance")

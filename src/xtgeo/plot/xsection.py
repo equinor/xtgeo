@@ -57,8 +57,8 @@ class XSection(BasePlot):
         gridproperty=None,
         outline=None,
     ):
-
-        super(XSection, self).__init__()
+        """Init method."""
+        super().__init__()
 
         self._zmin = zmin
         self._zmax = zmax
@@ -119,22 +119,20 @@ class XSection(BasePlot):
 
     @property
     def legendsize(self):
-        """Returns or set the legend size"""
+        """Returns or set the legend size."""
         return self._legendsize
 
     @legendsize.setter
     def legendsize(self, lsize):
-        """Returns or set the legend size"""
         self._legendsize = lsize
 
     @property
     def has_legend(self):
-        """Returns or set the legends"""
+        """Returns or set the legends."""
         return self._has_legend
 
     @has_legend.setter
     def has_legend(self, value):
-        """Returns or set the legends"""
         if not isinstance(value, bool):
             raise ValueError("Input is not a bool")
 
@@ -142,12 +140,11 @@ class XSection(BasePlot):
 
     @property
     def has_axes(self):
-        """Returns or set the axes status"""
+        """Returns or set the axes status."""
         return self._has_axes
 
     @has_axes.setter
     def has_axes(self, value):
-        """Returns or set the axes status"""
         if not isinstance(value, bool):
             raise ValueError("Input is not a bool")
 
@@ -155,7 +152,7 @@ class XSection(BasePlot):
 
     @property
     def colormap_facies(self):
-        """Set or get the facies colormap"""
+        """Set or get the facies colormap."""
         return self._colormap_facies
 
     @colormap_facies.setter
@@ -164,7 +161,7 @@ class XSection(BasePlot):
 
     @property
     def colormap_zonelog(self):
-        """Set or get the zonelog colormap"""
+        """Set or get the zonelog colormap."""
         return self._colormap_zonelog
 
     @colormap_zonelog.setter
@@ -173,7 +170,7 @@ class XSection(BasePlot):
 
     @property
     def colormap_perf(self):
-        """Set or get the perforations colormap"""
+        """Set or get the perforations colormap."""
         return self._colormap_perf
 
     @colormap_perf.setter
@@ -182,7 +179,7 @@ class XSection(BasePlot):
 
     @property
     def colormap_facies_dict(self):
-        """Set or get the facies colormap actual dict table"""
+        """Set or get the facies colormap actual dict table."""
         return self._colormap_facies_dict
 
     @colormap_facies_dict.setter
@@ -198,7 +195,7 @@ class XSection(BasePlot):
 
     @property
     def colormap_perf_dict(self):
-        """Set or get the perf colormap actual dict table"""
+        """Set or get the perf colormap actual dict table."""
         return self._colormap_perf_dict
 
     @colormap_perf_dict.setter
@@ -214,7 +211,7 @@ class XSection(BasePlot):
 
     @property
     def colormap_zonelog_dict(self):
-        """Set or get the zonelog colormap actual dict table"""
+        """Set or get the zonelog colormap actual dict table."""
         return self._colormap_zonelog_dict
 
     @colormap_zonelog_dict.setter
@@ -230,7 +227,7 @@ class XSection(BasePlot):
 
     @property
     def fence(self):
-        """Set or get the fence spesification"""
+        """Set or get the fence spesification."""
         if self._fence is None:
             if self._well is not None:
                 wfence = self._well.get_fence_polyline(
@@ -264,7 +261,6 @@ class XSection(BasePlot):
 
 
         """
-
         # overriding the base class canvas
 
         plt.rcParams["axes.xmargin"] = 0  # fill the plot margins
@@ -278,7 +274,7 @@ class XSection(BasePlot):
             plt.rcParams["ytick.color"] = (0, 0, 0, 0)
 
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
-        self._fig, __ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
+        self._fig, _ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
         ax1 = OrderedDict()
 
         ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
@@ -389,7 +385,6 @@ class XSection(BasePlot):
         welltrajwidth=6,
     ):
         """Input an XTGeo Well object and plot it."""
-
         if self.fence is None:
             return
 
@@ -440,7 +435,6 @@ class XSection(BasePlot):
 
     def set_xaxis_md(self, gridlines=False):
         """Set x-axis labels to measured depth."""
-
         md_start = self._well.dataframe["MDEPTH"].iloc[0]
         md_start_round = int(math.floor(md_start / 100.0)) * 100
         md_start_delta = md_start - md_start_round
@@ -448,7 +442,7 @@ class XSection(BasePlot):
         auto_ticks = plt.xticks()
         auto_ticks_delta = auto_ticks[0][1] - auto_ticks[0][0]
 
-        ax, bba = self._currentax(axisname="main")
+        ax, _ = self._currentax(axisname="main")
         lim = ax.get_xlim()
 
         new_ticks = []
@@ -474,8 +468,7 @@ class XSection(BasePlot):
         ax.set_xlabel("Measured Depth [m]", fontsize=12)
 
     def _plot_well_traj(self, ax, zv, hv, welltrajcolor, linewidth):
-        """Plot the trajectory as a black line"""
-
+        """Plot the trajectory as a black line."""
         zv_copy = ma.masked_where(zv < self._zmin, zv)
         hv_copy = ma.masked_where(zv < self._zmin, hv)
 
@@ -483,8 +476,7 @@ class XSection(BasePlot):
 
     @staticmethod
     def _line_segments_colors(df, idx, ctable, logname, fillnavalue):
-        """Get segment and color array for plotting matplotlib lineCollection"""
-
+        """Get segment and color array for plotting matplotlib lineCollection."""
         df_idx = pd.DataFrame(
             {"idx_log": list(idx.keys()), "idx_color": list(idx.values())}
         )
@@ -531,7 +523,6 @@ class XSection(BasePlot):
 
     def _plot_well_zlog(self, df, ax, bba, zonelogname, logwidth=4, legend=False):
         """Plot the zone log as colored segments."""
-
         if zonelogname not in df.columns:
             return
 
@@ -596,11 +587,11 @@ class XSection(BasePlot):
         Args:
             df (dataframe): The Well dataframe.
             ax (axes): The ax plot object.
+            bba: Bounding box
             facieslogname (str): name of the facies log.
             logwidth (int): Log linewidth.
             legend (bool): Plot log legend?
         """
-
         if facieslogname not in df.columns:
             return
 
@@ -641,12 +632,12 @@ class XSection(BasePlot):
             df (dataframe): The Well dataframe.
             ax (axes): The ax plot object.
             zv (ndarray): The numpy Z TVD array.
+            bba: Boundinng box
             hv (ndarray): The numpy Length  array.
             perflogname (str): name of the perforation log.
             logwidth (int): Log linewidth.
             legend (bool): Plot log legend?
         """
-
         if perflogname not in df.columns:
             return
 
@@ -682,7 +673,7 @@ class XSection(BasePlot):
 
     @staticmethod
     def _plot_well_crossings(dfr, ax, wcross, names=True, years=False):
-        """Plot well crossing based on dataframe (wcross)
+        """Plot well crossing based on dataframe (wcross).
 
         The well crossing coordinates are identified for this well,
         and then it is looking for the closest coordinate. Given this
@@ -705,7 +696,6 @@ class XSection(BasePlot):
             names: Display the names of the crossed wells
             years: Display the drilled year of the crossed wells
         """
-
         placings = {
             0: (40, 40),
             1: (40, -20),
@@ -746,6 +736,7 @@ class XSection(BasePlot):
 
             modulo = index % 5
 
+            text = ""
             if names:
                 text = Well.get_short_wellname(row.CWELL)
 
@@ -801,9 +792,7 @@ class XSection(BasePlot):
             myleg.set_linewidth(5)
 
     def _currentax(self, axisname="main"):
-        """Keep track of current axis; is needed as one new legend need one
-        new axis.
-        """
+        """Keep track of current axis; is needed as one new legend need one new axis."""
         # for multiple legends, bba is dynamic
         bbapos = {
             "main": (1.22, 1.12, 1, 0),
@@ -855,14 +844,13 @@ class XSection(BasePlot):
             ValueError: No cube is loaded
 
         """
-
         if self.fence is None:
             return
 
         if self._cube is None:
             raise ValueError("Ask for plot cube, but noe cube is loaded")
 
-        ax, _bba = self._currentax(axisname="main")
+        ax, _ = self._currentax(axisname="main")
 
         zinc = self._cube.zinc / 2.0
 
@@ -934,7 +922,6 @@ class XSection(BasePlot):
             ValueError: No grid or gridproperty is loaded
 
         """
-
         if self.fence is None:
             return
 
@@ -998,9 +985,7 @@ class XSection(BasePlot):
         axisname="main",
         gridlines=False,
     ):  # pylint: disable=too-many-branches, too-many-statements
-
         """Input a surface list (ordered from top to base) , and plot them."""
-
         if self.fence is None:
             return
 
@@ -1055,8 +1040,8 @@ class XSection(BasePlot):
                 usecolor = onecolor
             if not fill:
                 hfence = surfaces[i].get_randomline(self.fence)
+                xcol = "white"
                 if fancyline:
-                    xcol = "white"
                     cxx = usecolor
                     if cxx[0] + cxx[1] + cxx[2] > 1.5:
                         xcol = "black"
@@ -1115,16 +1100,14 @@ class XSection(BasePlot):
         zorder=350,
         **kwargs,
     ):
-        """
-        Plot MD vs TVD data as lines and/or markers
+        """Plot MD vs TVD data as lines and/or markers.
 
         The input pandas dataframe points shall have the following columns:
         * Name of well(s) named WELL
         * Coordinate X named MDEPTH
         * Coordinate Y named Z_TVDSS
         """
-
-        ax, bba = self._currentax(axisname="main")
+        ax, _ = self._currentax(axisname="main")
 
         well = self._well
         data_well = data.copy()
@@ -1197,7 +1180,6 @@ class XSection(BasePlot):
 
     def plot_map(self):
         """Plot well location map as an overall view (with field outline)."""
-
         if self.fence is None:
             return
 

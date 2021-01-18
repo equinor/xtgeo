@@ -16,7 +16,9 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_xtgcpgeom(self, mfile, mmap):
+def import_xtgcpgeom(
+    self, mfile, mmap
+):  # pylint: disable=too-many-locals, too-many-statements
     """Using pure python for experimental grid geometry import."""
     #
     offset = 36

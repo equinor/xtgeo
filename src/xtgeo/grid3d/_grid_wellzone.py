@@ -22,7 +22,7 @@ def report_zone_mismatch(
     filterlogname=None,
     filterlogrange=(1e-32, 9999.0),
     resultformat=1,
-):  # pylint: disable=too-many-locals
+):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     """Reports well to zone mismatch; this works together with a Well object.
 
     The idea is to sample the current zone property for the well in the grid as fast as

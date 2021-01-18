@@ -16,9 +16,8 @@ class Grid3DSlice(BasePlot):
     """Class for plotting a row, a column, or a layer, using matplotlib."""
 
     def __init__(self):
-        """The __init__ (constructor) method for a Grid3DSlice object."""
-
-        super(Grid3DSlice, self).__init__()
+        """Construct an instance for a Grid3DSlice object."""
+        super().__init__()
 
         self._wells = None
         self._surface = None
@@ -58,7 +57,6 @@ class Grid3DSlice(BasePlot):
         window=None,
         activeonly=True,
     ):
-
         """Plot a row slice, column slice or layer slice of a grid.
 
         Args:
@@ -71,9 +69,10 @@ class Grid3DSlice(BasePlot):
             colormap: Color map to use for cells, e.g. 'rainbow' or an rmscol file
             linecolor (str or tuple): Color of grid lines (black/white/grey
                 or a tuple with 4 numbers on valid matplotlib format)
+            activeonly (bool): If only use active cells
+            window (str): Some window
 
         """
-
         self._index = index
         if colormap is not None:
             self._colormap = colormap

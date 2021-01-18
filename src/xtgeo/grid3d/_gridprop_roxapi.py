@@ -8,7 +8,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog
 
 try:
-    import roxar
+    import roxar  # type: ignore
 except ImportError:
     pass
 
