@@ -13,8 +13,6 @@ For a selection of platforms (Linux/Windows/MacOS; all 64bit) and Python version
 
    $ pip install xtgeo
 
-For Windows, a `manual install of Shapely`_ is currently required as a first step.
-
 
 Stable release in Equinor
 -------------------------
@@ -30,7 +28,8 @@ to do is:
 From github
 ------------
 
-You will need `swig` (version 3 or later) installed, in addition to a C compiler (see below).
+You will need ``swig`` (version 3 or later) installed, in addition to a C
+compiler (see below).
 
 .. code-block:: console
 
