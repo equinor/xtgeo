@@ -62,7 +62,13 @@ def grid_from_file(
     """
     obj = Grid()
 
-    obj.from_file(gfile, fformat=fformat)
+    obj.from_file(
+        gfile,
+        initprops=initprops,
+        restartprops=restartprops,
+        restartdates=restartdates,
+        fformat=fformat,
+    )
 
     return obj
 
@@ -183,7 +189,7 @@ class Grid(_Grid3D):
             # or use
             geo = xtgeo.grid_from_file("myfile.roff")
         """
-        super(Grid, self).__init__()
+        super().__init__()
 
         self._coordsv = None  # numpy array to coords vector
         self._zcornsv = None  # numpy array to zcorns vector
@@ -297,17 +303,17 @@ class Grid(_Grid3D):
     @property
     def ncol(self):
         """int: Number of columns (read only)."""
-        return super(Grid, self).ncol
+        return super().ncol
 
     @property
     def nrow(self):
         """int: Number of rows (read only)."""
-        return super(Grid, self).nrow
+        return super().nrow
 
     @property
     def nlay(self):
         """int: Number of layers (read only)."""
-        return super(Grid, self).nlay
+        return super().nlay
 
     @property
     def dimensions(self):
@@ -1118,7 +1124,7 @@ class Grid(_Grid3D):
                 {"name1": 3, "name2": 5}
         """
         newd = OrderedDict()
-        _i_index, _j_index, k_index = self.get_ijk()
+        _, _, k_index = self.get_ijk()
         kval = k_index.values
         zprval = zoneprop.values
         minzone = int(zprval.min())

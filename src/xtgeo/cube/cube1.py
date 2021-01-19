@@ -123,6 +123,8 @@ class Cube:  # pylint: disable=too-many-public-methods
         **kwargs,
     ):
         """Initiate a Cube instance."""
+        self._values = None
+
         self._filesrc = None
         self._xori = xori
         self._yori = yori
@@ -727,8 +729,8 @@ class Cube:  # pylint: disable=too-many-public-methods
         if fformat == "guess":
             if not fext:
                 raise ValueError("File extension for Cube missing while fformat==guess")
-            else:
-                fformat = fext.lower()
+
+            fformat = fext.lower()
 
         if "rms" in fformat:
             _cube_import.import_rmsregular(self, fobj.name)

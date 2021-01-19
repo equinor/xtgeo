@@ -59,7 +59,7 @@ class GridProperties(_Grid3D):
             nlay: Number of layers
 
         """
-        super(GridProperties, self).__init__()
+        super().__init__()
 
         self._ncol = ncol
         self._nrow = nrow
@@ -107,8 +107,8 @@ class GridProperties(_Grid3D):
             result = self._props[self._counter]
             self._counter += 1
             return result
-        else:
-            raise StopIteration
+
+        raise StopIteration
 
     # ----------------------------------------------------------------------------------
     # Properties:
@@ -274,8 +274,8 @@ class GridProperties(_Grid3D):
 
         if raiseserror:
             raise ValueError("Cannot find property with name <{}>".format(name))
-        else:
-            return None
+
+        return None
 
     def append_props(self, proplist):
         """Add a list of GridProperty objects to current GridProperties instance."""
@@ -307,7 +307,7 @@ class GridProperties(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
-            asmasked = super(GridProperties, self)._evaluate_mask(mask)
+            asmasked = super()._evaluate_mask(mask)
 
         # resuse method from grid
         ixc, jyc, kzc = _grid_etc1.get_ijk(
@@ -335,7 +335,7 @@ class GridProperties(_Grid3D):
             A GridProperty instance of ACTNUM, or None if no props present.
         """
         if mask is not None:
-            asmasked = super(GridProperties, self)._evaluate_mask(mask)
+            asmasked = super()._evaluate_mask(mask)
 
         # borrow function from GridProperty class:
         if self._props:
@@ -436,15 +436,15 @@ class GridProperties(_Grid3D):
         else:
             raise OSError("Invalid file format")
 
-    def to_file(self, pfile, fformat="roff"):
-        """Export grid property to file. NB not working!
+    # def to_file(self, pfile, fformat="roff"):
+    #     """Export grid properties to file. NB not working!
 
-        Args:
-            pfile (str): file name
-            fformat (str): file format to be used (roff is the only supported)
-            mode (int): 0 for binary ROFF, 1 for ASCII
-        """
-        raise NotImplementedError("Not implented yet!")
+    #     Args:
+    #         pfile (str): file name
+    #         fformat (str): file format to be used (roff is the only supported)
+    #         mode (int): 0 for binary ROFF, 1 for ASCII
+    #     """
+    #     raise NotImplementedError("Not implented yet!")
 
     def get_dataframe(
         self, activeonly=False, ijk=False, xyz=False, doubleformat=False, grid=None

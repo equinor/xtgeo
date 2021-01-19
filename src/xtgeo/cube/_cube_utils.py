@@ -24,8 +24,8 @@ def swapaxes(self, _algorithm=1):
 
 
 def _swapaxes_v1(self):
-    """Swap the axes inline vs xline, keep origin. TODO remove this when algo 2 works"""
-
+    """Swap the axes inline vs xline, keep origin."""
+    # TODO remove this when algo 2 works."""
     ncol = _cxtgeo.new_intpointer()
     nrow = _cxtgeo.new_intpointer()
     yflip = _cxtgeo.new_intpointer()

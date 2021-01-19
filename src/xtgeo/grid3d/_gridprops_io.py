@@ -86,11 +86,11 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
                 msg += f"valid entries are {validnames}"
                 logger.warning(msg)
                 raise ValueError(msg)
-            else:
-                msg = f"Requested keyword {name} is not in INIT file."
-                msg += "Will skip trying to read due to keyword <strict> settings."
-                logger.warning(msg)
-                continue
+
+            msg = f"Requested keyword {name} is not in INIT file."
+            msg += "Will skip trying to read due to keyword <strict> settings."
+            logger.warning(msg)
+            continue
 
         prop = GridProperty()
         # use a private GridProperty function, since filehandle

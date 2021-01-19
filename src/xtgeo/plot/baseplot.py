@@ -1,3 +1,4 @@
+"""The baseplot module."""
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -9,10 +10,10 @@ logger = xtg.functionlogger(__name__)
 
 
 class BasePlot(object):
-    """Base class for plots, providing some functions to share"""
+    """Base class for plots, providing some functions to share."""
 
     def __init__(self):
-
+        """Init method."""
         clsname = "{}.{}".format(type(self).__module__, type(self).__name__)
         logger.info(clsname)
 
@@ -29,7 +30,7 @@ class BasePlot(object):
 
     @property
     def contourlevels(self):
-        """Get or set the number of contour levels"""
+        """Get or set the number of contour levels."""
         return self._contourlevels
 
     @contourlevels.setter
@@ -56,7 +57,7 @@ class BasePlot(object):
 
     @property
     def pagesize(self):
-        """ Returns page size."""
+        """Returns page size."""
         return self._pagesize
 
     @staticmethod
@@ -189,7 +190,7 @@ class BasePlot(object):
             self._fig.text(0.01, 0.02, infotext, ha="left", va="center", fontsize=8)
 
     def show(self):
-        """Call to matplotlib.pyplot show().
+        """Call to matplotlib.pyplot show method.
 
         Returns:
             True of plotting is done; otherwise False
@@ -206,7 +207,7 @@ class BasePlot(object):
         return False
 
     def savefig(self, filename, fformat="png", last=True, **kwargs):
-        """Call to matplotlib.pyplot savefig().
+        """Call to matplotlib.pyplot savefig method.
 
         Args:
             filename (str): File to plot to

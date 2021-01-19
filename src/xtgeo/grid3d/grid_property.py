@@ -191,7 +191,7 @@ class GridProperty(_Grid3D):
 
     def __init__(self, *args, **kwargs):
 
-        super(GridProperty, self).__init__()
+        super().__init__()
 
         # instance attributes defaults:
         self._ncol = kwargs.get("ncol", 5)
@@ -360,6 +360,7 @@ class GridProperty(_Grid3D):
         allowedint = [np.uint8, np.uint16, np.int16, np.int32, np.int64]
 
         okv = True
+        msg = ""
         if self.isdiscrete:
             if dtype in allowedint:
                 self.values = self.values.astype(dtype)
@@ -878,7 +879,7 @@ class GridProperty(_Grid3D):
         """
 
         if mask is not None:
-            asmasked = super(GridProperty, self)._evaluate_mask(mask)
+            asmasked = super()._evaluate_mask(mask)
 
         act = GridProperty(
             ncol=self._ncol, nrow=self._nrow, nlay=self._nlay, name=name, discrete=True

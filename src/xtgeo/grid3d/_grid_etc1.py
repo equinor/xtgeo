@@ -1,7 +1,5 @@
 """Private module, Grid ETC 1 methods, info/modify/report."""
 
-import inspect
-import warnings
 from copy import deepcopy
 from math import atan2, degrees
 from collections import OrderedDict
@@ -15,7 +13,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
-from xtgeo.well import Well
 from . import _gridprop_lowlevel
 from .grid_property import GridProperty
 from ._grid3d_fence import _update_tmpvars
@@ -37,16 +34,32 @@ def create_box(
     increment=(100, 150, 5),
     rotation=30.0,
     flip=1,
-):
+):  # pylint: disable=unused-argument # type ignore
     """Create a shoebox grid from cubi'sh spec."""
     arglist = locals()
     del arglist["self"]
 
     if self._xtgformat == 1:
-        _create_box_v1(self, **arglist)
+        _create_box_v1(
+            self,
+            dimension=dimension,
+            origin=origin,
+            oricenter=oricenter,
+            increment=increment,
+            rotation=rotation,
+            flip=flip,
+        )
 
     else:
-        _create_box_v2(self, **arglist)
+        _create_box_v2(
+            self,
+            dimension=dimension,
+            origin=origin,
+            oricenter=oricenter,
+            increment=increment,
+            rotation=rotation,
+            flip=flip,
+        )
 
 
 def _create_box_v1(
@@ -1198,135 +1211,6 @@ def reverse_row_axis(self, ijk_handedness=None):
             prp.values = prp.values[:, ::-1, :]
 
     logger.info("Reversing of rows done")
-
-
-def report_zone_mismatch(  # pylint: disable=too-many-statements
-    self,
-    well=None,
-    zonelogname="ZONELOG",
-    zoneprop=None,
-    onelayergrid=None,
-    zonelogrange=(0, 9999),
-    zonelogshift=0,
-    depthrange=None,
-    option=0,
-    perflogname=None,
-):
-    """Reports well to zone mismatch; this works together with a Well object."""
-    self._xtgformat1()
-
-    this = inspect.currentframe().f_code.co_name
-
-    # first do some trimming of the well dataframe
-    if not well or not isinstance(well, Well):
-        msg = "No well object in <{}> or invalid object; " "returns no result".format(
-            this
-        )
-        xtg.warn(msg)
-        return None
-
-    if not well.zonelogname:
-        msg = (
-            "Asked for zone log <{}> but no such in <{}> for well {}; "
-            "return None".format(zonelogname, this, well.wellname)
-        )
-        xtg.warn(msg)
-        # warnings.warn(UserWarning(msg))
-        return None
-
-        # qperf = True
-    if perflogname == "None" or perflogname is None:
-        # qperf = False
-        pass
-    else:
-        if perflogname not in well.lognames:
-            msg = (
-                "Asked for perf log <{}> but no such in <{}> for well {}; "
-                "return None".format(perflogname, this, well.wellname)
-            )
-            xtg.warn(msg)
-            # warnings.warn(UserWarning(msg))
-            return None
-
-    logger.info("Process well object for %s...", well.wellname)
-    df = well.dataframe.copy()
-
-    if depthrange:
-        logger.info("Filter depth...")
-        df = df[df.Z_TVDSS > depthrange[0]]
-        df = df[df.Z_TVDSS < depthrange[1]]
-        df = df.copy()
-
-    logger.info("Adding zoneshift %s", zonelogshift)
-    if zonelogshift != 0:
-        df[zonelogname] += zonelogshift
-
-    logger.info("Filter ZONELOG...")
-    df = df[df[zonelogname] > zonelogrange[0]]
-    df = df[df[zonelogname] < zonelogrange[1]]
-    df = df.copy()
-
-    if perflogname:
-        logger.info("Filter PERF...")
-        df[perflogname].fillna(-999, inplace=True)
-        df = df[df[perflogname] > 0]
-        df = df.copy()
-
-    df.reset_index(drop=True, inplace=True)
-    well.dataframe = df
-
-    # get the relevant well log C arrays...
-    ptr_xc = well.get_carray("X_UTME")
-    ptr_yc = well.get_carray("Y_UTMN")
-    ptr_zc = well.get_carray("Z_TVDSS")
-    ptr_zo = well.get_carray(zonelogname)
-
-    nval = well.nrow
-
-    ptr_results = _cxtgeo.new_doublearray(10)
-
-    ptr_zprop = _gridprop_lowlevel.update_carray(zoneprop)
-
-    cstatus = _cxtgeo.grd3d_rpt_zlog_vs_zon(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        ptr_zprop,
-        nval,
-        ptr_xc,
-        ptr_yc,
-        ptr_zc,
-        ptr_zo,
-        zonelogrange[0],
-        zonelogrange[1],
-        onelayergrid._zcornsv,
-        onelayergrid._actnumsv,
-        ptr_results,
-        option,
-    )
-
-    _gridprop_lowlevel.delete_carray(zoneprop, ptr_zprop)
-
-    if cstatus == 0:
-        logger.debug("OK well")
-    elif cstatus == 2:
-        msg = "Well {} have no zonation?".format(well.wellname)
-        warnings.warn(msg, UserWarning)
-    else:
-        msg = "Something is rotten with {}".format(well.wellname)
-        raise SystemExit(msg)
-
-    # extract the report
-    perc = _cxtgeo.doublearray_getitem(ptr_results, 0)
-    tpoi = _cxtgeo.doublearray_getitem(ptr_results, 1)
-    mpoi = _cxtgeo.doublearray_getitem(ptr_results, 2)
-
-    # returns percent match, then total numbers of well counts for zone,
-    # then match count. perc = mpoi/tpoi
-    return (perc, int(tpoi), int(mpoi))
 
 
 def get_adjacent_cells(self, prop, val1, val2, activeonly=True):
