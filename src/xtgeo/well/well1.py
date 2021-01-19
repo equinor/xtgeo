@@ -4,7 +4,7 @@
 import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Dict
 from pathlib import Path
 import io
 from collections import OrderedDict
@@ -1446,7 +1446,7 @@ class Well:
         self,
         inputlogs: List[str],
         targetlogs: List[str],
-        nsamples: Optional[int] = 2,
+        nsamples: Optional[Union[int, Dict[str, float]]] = 2,
         strict: Optional[bool] = False,
     ) -> bool:
         """Mask data around zone boundaries or other discrete log boundaries.
@@ -1460,6 +1460,8 @@ class Well:
             targetlogs: List of logs where mask is applied.
             nsample: Number of samples around boundaries to filter, per side, i.e.
                 value 2 means 2 above and 2 below, in total 4 samples.
+                As alternative spesify nsamples indirectly with a relative distance,
+                as a dictionary with one record, as {"tvd": 0.5} or {"md": 0.7}.
             strict: If True, will raise Exception of any of the input or target log
                 names are missing.
 
@@ -1475,7 +1477,8 @@ class Well:
                 maxlen is half of number of log samples).
 
         Example:
-            >>> mywell.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])
+            >>> mywell1.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])
+            >>> mywell2.mask_shoulderbeds(["ZONELOG"], ["PHIT"], nsamples={"tvd": 0.8})
 
         """
         return _well_oper.mask_shoulderbeds(

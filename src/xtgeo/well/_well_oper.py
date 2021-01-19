@@ -452,9 +452,16 @@ def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
         if target in self._wlogtypes.keys():
             usetargets.append(target)
 
+    use_numeric = True
     maxlen = len(self._df) // 2
-    if not isinstance(nsamples, int) or nsamples < 1 or nsamples > maxlen:
+    if isinstance(nsamples, int) and nsamples < 1 or nsamples > maxlen:
         raise ValueError(f"Keyword nsamples must be an int > 1 and < {maxlen}")
+
+    if isinstance(nsamples, dict):
+        use_numeric = False
+
+    if not isinstance(nsamples, (int, dict)):
+        raise ValueError("Keyword nsamples is not an int or a dictionary")
 
     if not useinputs or not usetargets:
         logger.info("Mask shoulderbeds for some logs... nothing done")
@@ -462,7 +469,12 @@ def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
 
     for inlog in useinputs:
         inseries = self._df[inlog]
-        bseries = _get_bseries(inseries, nsamples)
+        if use_numeric:
+            bseries = _get_bseries(inseries, nsamples)
+        else:
+            mode, value = nsamples.items()
+            bseries = _get_bseries_by_distance(self, inseries, mode, value)
+
         for target in usetargets:
             self._df.loc[bseries, target] = np.nan
 
@@ -493,3 +505,30 @@ def _get_bseries(inseries, nsamples):
     bseries = transitions | transitions.shift(-1)
 
     return _growfilter(bseries, nsamples - 1)
+
+
+def _get_bseries_by_distance(self, inseries, mode, distance):
+    """Return a bool filter defined by distance to log breaks."""
+    if not isinstance(inseries, pd.Series):
+        raise RuntimeError("Bug, input must be a pandas Series() instance.")
+
+    if len(inseries) == 0:
+        return pd.Series([], dtype=bool)
+
+    # nsmaples < 1 or input series with <= 1 element will not be prosessed
+    if len(inseries) <= 1:
+        return pd.Series(inseries, dtype=bool).replace(True, False)
+
+    bseries = pd.Series(np.zeros(inseries.values.size), dtype="int")
+
+    if mode == "tvd":
+        depth = self._df["Z_TVDSS"].values
+    else:
+        depth = self._df[self.mdlogname].values  # TODO: ensure this exists
+
+    res = _cxtgeo.well_mask_shoulder(depth, inseries, bseries, distance)
+
+    if res != 0:
+        raise RuntimeError("BUG: return from _cxtgeo.well_mask_shoulder not zero")
+
+    return bseries
