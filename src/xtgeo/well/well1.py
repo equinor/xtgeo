@@ -33,33 +33,33 @@ logger = xtg.functionlogger(__name__)
 
 
 def well_from_file(
-    wfile,
-    fformat="rms_ascii",
-    mdlogname=None,
-    zonelogname=None,
-    lognames="all",
-    lognames_strict=False,
-    strict=False,
-):
+    wfile: Union[str, Path],
+    fformat: Optional[str] = "rms_ascii",
+    mdlogname: Optional[str] = None,
+    zonelogname: Optional[str] = None,
+    lognames: Optional[Union[str, List[str]]] = "all",
+    lognames_strict: Optional[bool] = False,
+    strict: Optional[bool] = False,
+) -> "Well":
     """Make an instance of a Well directly from file import.
 
     Args:
-        wfile (str): File path, either a string or a pathlib.Path instance
-        fformat (str): See :meth:`Well.from_file`
-        mdlogname (str): See :meth:`Well.from_file`
-        zonelogname (str): See :meth:`Well.from_file`
-        lognames (str or list): Name or list of lognames to import, default is "all"
-        lognames_strict (bool): If True, all lognames must be present.
-        strict (bool): See :meth:`Well.from_file`
+        wfile: File path, either a string or a pathlib.Path instance
+        fformat: See :meth:`Well.from_file`
+        mdlogname: Name of Measured Depth log if any, see :meth:`Well.from_file`
+        zonelogname: Name of Zonelog, if any, see :meth:`Well.from_file`
+        lognames: Name or list of lognames to import, default is "all"
+        lognames_strict: If True, all lognames must be present.
+        strict: If True, then import will fail if zonelogname or mdlogname are asked
+            for but not present in wells. See :meth:`Well.from_file`
 
     Example::
 
         import xtgeo
-        mywell = xtgeo.well_from_file('somewell.xxx')
+        mywell = xtgeo.well_from_file("somewell.xxx")
 
     .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
     .. versionchanged:: 2.1 ``strict`` now defaults to False
-
     """
     obj = Well()
 
@@ -77,26 +77,41 @@ def well_from_file(
 
 
 def well_from_roxar(
-    project,
-    name,
-    trajectory="Drilled trajectory",
-    logrun="log",
-    lognames="all",
-    lognames_strict=False,
-    inclmd=False,
-    inclsurvey=False,
-):
+    project: Union[str, object],
+    name: str,
+    trajectory: Optional[str] = "Drilled trajectory",
+    logrun: Optional[str] = "log",
+    lognames: Optional[Union[str, List[str]]] = "all",
+    lognames_strict: Optional[bool] = False,
+    inclmd: Optional[bool] = False,
+    inclsurvey: Optional[bool] = False,
+) -> "Well":
     """This makes an instance of a Well directly from Roxar RMS.
 
-    For arguments, see :meth:`Well.from_roxar`.
+    For further details, see :meth:`Well.from_roxar`.
+
+    Args:
+        project: Path to project or magic ``project`` variable in RMS.
+        name: Name of Well
+        trajectory: Name of trajectory in RMS.
+        logrun: Name of logrun in RMS.
+        lognames: List of lognames to import or use 'all' for all present logs
+        lognames_strict: If True and log is not in lognames is a list, an Expeption will
+            be raised.
+        inclmd: If True, a Measured Dpeth log will be included.
+        inclsurvey: If True, logs for azimuth and deviation will be included.
+
+    Returns:
+        Well instance.
 
     Example::
 
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mywell = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
-                                       logrun='log', lognames=mylogs)
+        mywell = xtgeo.well_from_roxar(
+            project, "31_3-1", trajectory="Drilled", logrun="log", lognames=mylogs
+        )
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
@@ -116,7 +131,7 @@ def well_from_roxar(
     return obj
 
 
-class Well:  # pylint: disable=useless-object-inheritance
+class Well:
     """Class for a well in the XTGeo framework.
 
     The well logs are stored in a Pandas dataframe, which make manipulation
