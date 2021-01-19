@@ -1,8 +1,8 @@
 .. highlight:: python
 
-=====
-Usage
-=====
+========
+Examples
+========
 
 .. comments
    These examples are ran in Jupyter notebook...

@@ -27,14 +27,12 @@ Quick Installation
 
 PYPI installation is enabled for all supported platforms:
 
-::
+.. code:: bash
 
    pip install xtgeo
 
 For detailed installation instructions (implies C compiling), see
 :doc:`installation`.
-
-For Windows, a `manual install of Shapely`_ is currently required as a first step.
 
 
 Getting started

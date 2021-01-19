@@ -1,8 +1,8 @@
 .. highlight:: python
 
-===================
-Use of XTGeo in RMS
-===================
+===============================
+Examples on use of XTGeo in RMS
+===============================
 
 XTGeo can be incorporated within the RMS user interface and share
 data with RMS. The integration will be continuosly improved.
@@ -455,6 +455,3 @@ Line point data
 ---------------
 
 Examples to comes...
-
-
-
