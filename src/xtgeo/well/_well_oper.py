@@ -538,7 +538,13 @@ def _get_bseries_by_distance(depth, inseries, distance):
         return pd.Series(inseries, dtype=bool).replace(True, False)
 
     bseries = pd.Series(np.zeros(inseries.values.size), dtype="int32").values
-    inseries = np.nan_to_num(inseries.values, nan=xtgeo.UNDEF_INT).astype("int32")
+    try:
+        inseries = np.nan_to_num(inseries.values, nan=xtgeo.UNDEF_INT).astype("int32")
+    except TypeError:
+        # for older numpy version
+        inseries = inseries.values
+        inseries[np.isnan(inseries)] = xtgeo.UNDEF_INT
+        inseries = inseries.astype("int32")
 
     res = _cxtgeo.well_mask_shoulder(
         depth.values.astype("float64"), inseries, bseries, distance

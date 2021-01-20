@@ -62,7 +62,13 @@ def test_well_mask_shoulder(depth, logseries, distance, expected):
     depth = np.array(depth, dtype="float64")
 
     logseries = np.array(logseries, dtype="float64")
-    logseries = np.nan_to_num(logseries, nan=xtgeo.UNDEF_INT).astype("int32")
+    try:
+        logseries = np.nan_to_num(logseries, nan=xtgeo.UNDEF_INT).astype("int32")
+    except TypeError:
+        # for older numpy version
+        logseries[np.isnan(logseries)] = xtgeo.UNDEF_INT
+        logseries = logseries.astype("int32")
+
     print(logseries)
 
     expected = np.array(expected)
