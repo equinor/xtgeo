@@ -1,0 +1,31 @@
+# requirements when used in RMS python venv's
+pip>=20.3.3
+setuptools>=30.3.0
+setuptools_scm>=3.2.0
+scikit-build
+ninja>=1.9.0.post1
+cmake==3.15.3
+wheel>=0.29.0
+flake8
+pydocstyle
+coverage>=4.1
+pre-commit
+coverage>=4.1
+Sphinx
+sphinx-rtd-theme
+sphinxcontrib-apidoc
+sphinx-autodoc-typehints
+recommonmark
+bandit
+segyio>=1.8.6
+shapely>=1.6.2; python_version < "3.8"
+shapely==1.7a2; python_version == "3.8"
+black
+autopep8
+pylint
+pytest>=2.9.2
+pytest-cov
+pytest-runner>=2.11.1
+h5py>=3
+hdf5plugin>=2.3
+tables>=3.5.1
