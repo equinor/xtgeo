@@ -394,6 +394,46 @@ Get average properties per zone
     if __name__ == "__main__":
         main()
 
+Filter logs on facies/zone boundaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Petrophysical property modelling can be more precise if so-called shoulder effects
+are filtered. Here is a small example on how to do this:
+
+.. code-block:: python
+
+    import xtgeo
+
+    PRJ = project  # noqa
+    TRAJNAME = "Drilled trajectory"
+    LRUNNAME = "log"
+    ZONELOGNAME = "ZONELOG"
+    FACIESLOGNAME = "FACIES"
+    INLOGS = [ZONELOGNAME, FACIESLOGNAME]
+    PETROLOGS = {"KLOGH": "KLOGH_edit", "PHIT": "PHIT_edit"}
+    FILTER: {"tvd": 1.5}  # filter 1.5m below and above boundary in TVD
+
+    def filter_shoulder():
+        """Filter should bed data"""
+
+        for well in PRJ.wells:
+            wll = xtgeo.well_from_roxar(
+                PRJ, well.name, trajectory=TRAJNAME, logrun=LRUNNAME
+            )
+
+            # skip well without facies
+            if not FACIESLOGNAME in wll.dataframe:
+                continue
+
+            # keep the original logs and work on copy:
+            for orig, edit in PETROLOGS.items():
+                if orig in wll.dataframe.columns:
+                    etc...
+
+            wll.mask_shoulderbeds(inputlogs=
+
+        return wll
+
 
 Blocked well data
 -----------------
