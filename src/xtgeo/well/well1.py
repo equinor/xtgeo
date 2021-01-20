@@ -1455,6 +1455,10 @@ class Well:
         depends on the sampling interval. In future versions, operating on distances
         (e.g. in TVD (true vertical depth) or MD (measured depth) will be available.
 
+        .. image:: ../../docs/images/wells-mask-shoulderbeds.png
+           :width: 300
+           :align: center
+
         Args:
             inputlogs: List of input logs, must be of discrete type.
             targetlogs: List of logs where mask is applied.
