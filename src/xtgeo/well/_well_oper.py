@@ -432,7 +432,10 @@ def report_zonation_holes(self, threshold=5):
 
 
 def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
-    """Mask targetlogs around discrete boundaries."""
+    """Mask targetlogs around discrete boundaries.
+
+    Returns True if inputlog(s) and targetlog(s) are present; otherwise False.
+    """
     logger.info("Mask shoulderbeds for some logs...")
 
     useinputs, usetargets, use_numeric = _mask_shoulderbeds_checks(
@@ -497,6 +500,8 @@ def _mask_shoulderbeds_checks(self, inputlogs, targetlogs, nsamples, strict):
     else:
         raise ValueError("Keyword nsamples is not an int or a dictionary")
 
+    # return a list of input logs to be used (useinputs), a list of target logs to
+    # be used (usetargets) and a use_numeric bool (True if nsamples is an int)
     return useinputs, usetargets, use_numeric
 
 
@@ -528,7 +533,7 @@ def _get_bseries(inseries, nsamples):
 def _get_bseries_by_distance(depth, inseries, distance):
     """Return a bool filter defined by distance to log breaks."""
     if not isinstance(inseries, pd.Series):
-        raise RuntimeError("Bug, input must be a pandas Series() instance.")
+        raise RuntimeError("BUG: input must be a pandas Series() instance.")
 
     if len(inseries) == 0:
         return pd.Series([], dtype=bool)

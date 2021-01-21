@@ -59,7 +59,7 @@ well_mask_shoulder(double *lvec,
             int ic = i - 1;
             while (ic >= 0) {
                 double dist = fabs(mid - lvec[ic]);
-                if (dist < distance && inlog[ic] < UNDEF_INT_LIMIT) {
+                if (dist <= distance && inlog[ic] < UNDEF_INT_LIMIT) {
                     mask[ic] = 1;
                 } else {
                     break;
@@ -71,7 +71,7 @@ well_mask_shoulder(double *lvec,
             ic = i;
             while (ic < nmask) {
                 double dist = fabs(lvec[ic] - mid);
-                if (dist < distance && inlog[ic] < UNDEF_INT_LIMIT) {
+                if (dist <= distance && inlog[ic] < UNDEF_INT_LIMIT) {
                     mask[ic] = 1;
                 } else {
                     break;

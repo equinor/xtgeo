@@ -376,6 +376,18 @@ def test_mask_shoulderbeds_get_bseries(logseries, nsamples, expected):
         ),
         (
             [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, 3, 2],
+            0.49999,
+            [False, False, False, False, False, False],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, 3, 2],
+            0.50,
+            [False, False, True, True, True, True],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
             [1, 1, 1, 2, np.nan, np.nan],
             1.2,
             [False, False, True, True, False, False],

@@ -96,9 +96,9 @@ def well_from_roxar(
         trajectory: Name of trajectory in RMS.
         logrun: Name of logrun in RMS.
         lognames: List of lognames to import or use 'all' for all present logs
-        lognames_strict: If True and log is not in lognames is a list, an Expeption will
+        lognames_strict: If True and log is not in lognames is a list, an Exception will
             be raised.
-        inclmd: If True, a Measured Dpeth log will be included.
+        inclmd: If True, a Measured Depth log will be included.
         inclsurvey: If True, logs for azimuth and deviation will be included.
 
     Returns:
@@ -156,7 +156,7 @@ class Well:
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
 
-    The instance can be made either from file or (todo!) by spesification::
+    The instance can be made either from file or (todo!) by specification::
 
         >>> well1 = Well('somefilename')  # assume RMS ascii well
         >>> well2 = Well('somefilename', fformat='rms_ascii')
@@ -582,7 +582,7 @@ class Well:
             This implementation is currently experimental and only recommended
             for testing.
 
-        Read well from as HDF5 formatted file, with xtgeo spesific layout.
+        Read well from as HDF5 formatted file, with xtgeo specific layout.
 
         Args:
             wfile: Well file or stream
@@ -1452,8 +1452,8 @@ class Well:
         """Mask data around zone boundaries or other discrete log boundaries.
 
         This operates on number of samples, hence the actual distance which is masked
-        depends on the sampling interval. In future versions, operating on distances
-        (e.g. in TVD (true vertical depth) or MD (measured depth) will be available.
+        depends on the sampling interval (ie. count) or on distance measures.
+        Distance measures are TVD (true vertical depth) or MD (measured depth).
 
         .. image:: ../../docs/images/wells-mask-shoulderbeds.png
            :width: 300
@@ -1462,9 +1462,9 @@ class Well:
         Args:
             inputlogs: List of input logs, must be of discrete type.
             targetlogs: List of logs where mask is applied.
-            nsample: Number of samples around boundaries to filter, per side, i.e.
+            nsamples: Number of samples around boundaries to filter, per side, i.e.
                 value 2 means 2 above and 2 below, in total 4 samples.
-                As alternative spesify nsamples indirectly with a relative distance,
+                As alternative specify nsamples indirectly with a relative distance,
                 as a dictionary with one record, as {"tvd": 0.5} or {"md": 0.7}.
             strict: If True, will raise Exception of any of the input or target log
                 names are missing.
@@ -1474,11 +1474,7 @@ class Well:
                  e.g. no targetlogs for this particular well and ``strict`` is False.
 
         Raises:
-            ValueError: Input log {inlog} is missing and strict=True.
-            ValueError: Input log {inlog} is not of type DISC.
-            ValueError: Target log {target} is missing and strict=True.
-            ValueError: Keyword nsamples must be an int > 1 and < {maxlen} (where
-                maxlen is half of number of log samples).
+            ValueError: Various messages when wrong or inconsistent input.
 
         Example:
             >>> mywell1.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])

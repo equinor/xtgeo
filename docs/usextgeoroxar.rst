@@ -321,6 +321,7 @@ a certain depth interval has horizontal layers.
 
 
 .. figure:: images/hybridgrid.png
+    :alt: Hybrid grid
 
 Cube data
 ---------
@@ -417,16 +418,16 @@ are filtered. Here is a small example on how to do this:
 
     def filter_shoulder():
         """Filter should bed data."""
-        for well in PRJ.wells:
+        for rms_well in PRJ.wells:
             wll = xtgeo.well_from_roxar(
-                PRJ, well.name, trajectory=TRAJNAME, logrun=LRUNNAME
-            )
+                PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME
+            )  # wll is a xtgeo Well() object
 
-            # skip well without facies
-            if FACIESLOGNAME not in wll.dataframe or not well.name.startswith("55"):
+            # skip wells without facies
+            if FACIESLOGNAME not in wll.dataframe or not rms_well.name.startswith("55"):
                 continue
 
-            print("Use: ", well.name)
+            print("Use: ", rms_well.name)
 
             # keep the original logs and work on copy:
             for target, orig in PETROLOGS.items():
@@ -442,7 +443,7 @@ are filtered. Here is a small example on how to do this:
             uselogs = list(PETROLOGS.keys())
 
             wll.mask_shoulderbeds(inputlogs=INLOGS, targetlogs=uselogs, nsamples=2)
-            wll.to_roxar(PRJ, well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
+            wll.to_roxar(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
 
 
 if __name__ == "__main__":
@@ -508,4 +509,4 @@ be input to Equinor's APS module.
 Line point data
 ---------------
 
-Examples to comes...
+Examples to come...
