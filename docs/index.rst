@@ -8,13 +8,13 @@ Contents:
 
    readme
    installation
+   contributing
    datamodels
+   apiref/modules
    usage
    usextgeoroxar
-   contributing
    authors
    history
-   apiref/modules
 
 Indices and tables
 ==================

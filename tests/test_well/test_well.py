@@ -353,6 +353,60 @@ def test_mask_shoulderbeds_get_bseries(logseries, nsamples, expected):
         assert results.equals(expected)
 
 
+@pytest.mark.parametrize(
+    "dep, lseries, distance, expected",
+    [
+        (
+            [1.0],
+            [1],
+            1.2,
+            [False],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, 2, 2],
+            0.7,
+            [False, False, True, True, False, False],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, 3, 2],
+            1.2,
+            [False, False, True, True, True, True],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, 3, 2],
+            0.49999,
+            [False, False, False, False, False, False],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, 3, 2],
+            0.50,
+            [False, False, True, True, True, True],
+        ),
+        (
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [1, 1, 1, 2, np.nan, np.nan],
+            1.2,
+            [False, False, True, True, False, False],
+        ),
+    ],
+)
+def test_well_mask_shoulder_get_bseries_by_distance(dep, lseries, distance, expected):
+    """Test for corner cases in get bseries by distance."""
+    # note the cxtgeo function is also tested in test_cxtgeo_lowlevel!
+    from xtgeo.well._well_oper import _get_bseries_by_distance
+
+    dep = pd.Series(dep, dtype="float64")
+    lseries = pd.Series(lseries, dtype="float64")
+    expected = np.array(expected, dtype="bool")
+
+    result = _get_bseries_by_distance(dep, lseries, distance)
+    assert (result == expected).all()
+
+
 def test_mask_shoulderbeds(loadwell3, loadwell1):
     """Test masking shoulderbeds effects."""
     mywell = loadwell3
@@ -382,6 +436,31 @@ def test_mask_shoulderbeds(loadwell3, loadwell1):
     assert usewell.mask_shoulderbeds(["Zonelog"], ["Perm", "Poro"]) is True
     assert usewell.mask_shoulderbeds(["Zonelog"], ["Dummy"]) is False
     assert usewell.mask_shoulderbeds(["Dummy"], ["Perm", "Poro"]) is False
+
+
+def test_mask_shoulderbeds_use_tvd_md(loadwell3):
+    """Test masking shoulderbeds effects using tvd or md distance."""
+    mywell = loadwell3
+
+    usewell = mywell.copy()
+    # small distance for this test since almost horizontal well
+    usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"tvd": 0.01})
+
+    assert not np.isnan(mywell.dataframe.at[1595, "GR"])
+    assert np.isnan(usewell.dataframe.at[1595, "GR"])
+
+    usewell = mywell.copy()
+
+    with pytest.raises(ValueError) as verr:
+        # since mdlogname does not exist
+        usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"md": 1.6})
+    assert "no mdlogname attribute present" in str(verr)
+
+    usewell.geometrics()  # to create Q_MDEPTH as mdlogname
+
+    usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"md": 1.6})
+    assert not np.isnan(mywell.dataframe.at[1595, "GR"])
+    assert np.isnan(usewell.dataframe.at[1595, "GR"])
 
 
 def test_rescale_well(loadwell1):

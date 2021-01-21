@@ -2307,3 +2307,12 @@ well_surf_picks(double *swig_np_dbl_in_v1,  //*xv
                 long n_swig_np_dbl_aout_v4,
                 int *swig_np_int_aout_v1,  //*zoutv,
                 long n_swig_np_int_aout_v1);
+
+int
+well_mask_shoulder(double *swig_np_dbl_inplaceflat_v1,  // lvec
+                   long n_swig_np_dbl_inplaceflat_v1,   // nvec
+                   int *swig_np_int_inplaceflat_v1,     // inlog
+                   long n_swig_np_int_inplaceflat_v1,   // ninlog
+                   int *swig_np_int_inplaceflat_v2,     // mask
+                   long n_swig_np_int_inplaceflat_v2,   // nmask
+                   double distance);

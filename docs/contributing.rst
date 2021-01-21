@@ -38,7 +38,7 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xtgeo could always use more documentation, whether as part of the
+Yes, xtgeo could always use more documentation, whether as part of the
 official xtgeo docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
@@ -52,8 +52,6 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions
-  are welcome :)
 
 Get Started!
 ------------
@@ -85,6 +83,7 @@ up your fork for local development (first time):
     $ source bin/activate
     $ cd /your_path_to_git_clone/xtgeo/
     $ pip install -r requirements_dev.txt
+    $ python setup.py clean
     $ python setup.py develop
 
 4. Create a branch for local development:
@@ -101,7 +100,7 @@ Now you can make your changes locally.
 
     $ flake8 <your edited code>
     $ pylint <your edited code>
-    $ Use make test, python setup.py test or pytest
+    $ Use `pytest` for running tests
     $ Run `black` on your python code, then there is no discussions on formatting
 
 To get `flake8`, `pylint` and `black` and just pip install them into your virtualenv.
@@ -140,7 +139,7 @@ Read `Chris Beams hints on commit messages <https://chris.beams.io/posts/git-com
 Describing the motivation for a change, the nature of a bug for bug fixes or
 some details on what an enhancement does are also good to include in a commit message.
 Messages should be understandable without looking at the code changes.
-A commit message like MAINT: fix another one is an example of what not to do;
+A commit message like FIX: fix another one is an example of what not to do;
 the reader has to go look for context elsewhere.
 
 Standard acronyms to start the commit message with are:
@@ -213,10 +212,8 @@ Before you submit a pull request, check that it meets these guidelines:
 Tips
 ----
 
-To run a subset of tests, e.g. only surface tests::
+To run a subset of tests, e.g. only surface tests:
+
+.. code:: bash
 
     $ pytest test/test_surfaces
-
-Or use the Makefile to speed up things::
-
-    $ make test

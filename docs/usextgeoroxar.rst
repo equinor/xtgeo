@@ -1,8 +1,8 @@
 .. highlight:: python
 
-===================
-Use of XTGeo in RMS
-===================
+===============================
+Examples on use of XTGeo in RMS
+===============================
 
 XTGeo can be incorporated within the RMS user interface and share
 data with RMS. The integration will be continuosly improved.
@@ -321,6 +321,7 @@ a certain depth interval has horizontal layers.
 
 
 .. figure:: images/hybridgrid.png
+    :alt: Hybrid grid
 
 Cube data
 ---------
@@ -394,6 +395,60 @@ Get average properties per zone
     if __name__ == "__main__":
         main()
 
+Filter logs on facies/zone boundaries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Petrophysical property modelling can be more precise if so-called shoulder effects
+are filtered. Here is a small example on how to do this:
+
+.. code-block:: python
+
+    import xtgeo
+
+    PRJ = project
+
+    TRAJNAME = "Drilled trajectory"
+    LRUNNAME = "log"
+    ZONELOGNAME = "Zone"
+    FACIESLOGNAME = "Facies"
+    INLOGS = [ZONELOGNAME, FACIESLOGNAME]
+    PETROLOGS = {"KLOGH": "KLOGH_orig", "PHIT": "PHIT_orig", "Sw": "Sw_orig"}
+    FILTER: {"tvd": 1.5}  # filter 1.5m below and above boundary in TVD
+
+
+    def filter_shoulder():
+        """Filter should bed data."""
+        for rms_well in PRJ.wells:
+            wll = xtgeo.well_from_roxar(
+                PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME
+            )  # wll is a xtgeo Well() object
+
+            # skip wells without facies
+            if FACIESLOGNAME not in wll.dataframe or not rms_well.name.startswith("55"):
+                continue
+
+            print("Use: ", rms_well.name)
+
+            # keep the original logs and work on copy:
+            for target, orig in PETROLOGS.items():
+                if target in wll.dataframe.columns:
+                    if orig not in wll.dataframe.columns:
+                        # first time; create an "_orig" column
+                        print("Create", orig)
+                        wll.create_log(orig)
+                        wll.dataframe[orig] = wll.dataframe[target].copy()
+
+                    wll.dataframe[target] = wll.dataframe[orig].copy()
+
+            uselogs = list(PETROLOGS.keys())
+
+            wll.mask_shoulderbeds(inputlogs=INLOGS, targetlogs=uselogs, nsamples=2)
+            wll.to_roxar(PRJ, rms_well.name, trajectory=TRAJNAME, logrun=LRUNNAME)
+
+
+if __name__ == "__main__":
+    filter_shoulder()
+
 
 Blocked well data
 -----------------
@@ -454,7 +509,4 @@ be input to Equinor's APS module.
 Line point data
 ---------------
 
-Examples to comes...
-
-
-
+Examples to come...

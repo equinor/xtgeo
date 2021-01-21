@@ -4,7 +4,7 @@
 import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Dict
 from pathlib import Path
 import io
 from collections import OrderedDict
@@ -33,33 +33,33 @@ logger = xtg.functionlogger(__name__)
 
 
 def well_from_file(
-    wfile,
-    fformat="rms_ascii",
-    mdlogname=None,
-    zonelogname=None,
-    lognames="all",
-    lognames_strict=False,
-    strict=False,
-):
+    wfile: Union[str, Path],
+    fformat: Optional[str] = "rms_ascii",
+    mdlogname: Optional[str] = None,
+    zonelogname: Optional[str] = None,
+    lognames: Optional[Union[str, List[str]]] = "all",
+    lognames_strict: Optional[bool] = False,
+    strict: Optional[bool] = False,
+) -> "Well":
     """Make an instance of a Well directly from file import.
 
     Args:
-        wfile (str): File path, either a string or a pathlib.Path instance
-        fformat (str): See :meth:`Well.from_file`
-        mdlogname (str): See :meth:`Well.from_file`
-        zonelogname (str): See :meth:`Well.from_file`
-        lognames (str or list): Name or list of lognames to import, default is "all"
-        lognames_strict (bool): If True, all lognames must be present.
-        strict (bool): See :meth:`Well.from_file`
+        wfile: File path, either a string or a pathlib.Path instance
+        fformat: See :meth:`Well.from_file`
+        mdlogname: Name of Measured Depth log if any, see :meth:`Well.from_file`
+        zonelogname: Name of Zonelog, if any, see :meth:`Well.from_file`
+        lognames: Name or list of lognames to import, default is "all"
+        lognames_strict: If True, all lognames must be present.
+        strict: If True, then import will fail if zonelogname or mdlogname are asked
+            for but not present in wells. See :meth:`Well.from_file`
 
     Example::
 
         import xtgeo
-        mywell = xtgeo.well_from_file('somewell.xxx')
+        mywell = xtgeo.well_from_file("somewell.xxx")
 
     .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
     .. versionchanged:: 2.1 ``strict`` now defaults to False
-
     """
     obj = Well()
 
@@ -77,26 +77,41 @@ def well_from_file(
 
 
 def well_from_roxar(
-    project,
-    name,
-    trajectory="Drilled trajectory",
-    logrun="log",
-    lognames="all",
-    lognames_strict=False,
-    inclmd=False,
-    inclsurvey=False,
-):
+    project: Union[str, object],
+    name: str,
+    trajectory: Optional[str] = "Drilled trajectory",
+    logrun: Optional[str] = "log",
+    lognames: Optional[Union[str, List[str]]] = "all",
+    lognames_strict: Optional[bool] = False,
+    inclmd: Optional[bool] = False,
+    inclsurvey: Optional[bool] = False,
+) -> "Well":
     """This makes an instance of a Well directly from Roxar RMS.
 
-    For arguments, see :meth:`Well.from_roxar`.
+    For further details, see :meth:`Well.from_roxar`.
+
+    Args:
+        project: Path to project or magic ``project`` variable in RMS.
+        name: Name of Well
+        trajectory: Name of trajectory in RMS.
+        logrun: Name of logrun in RMS.
+        lognames: List of lognames to import or use 'all' for all present logs
+        lognames_strict: If True and log is not in lognames is a list, an Exception will
+            be raised.
+        inclmd: If True, a Measured Depth log will be included.
+        inclsurvey: If True, logs for azimuth and deviation will be included.
+
+    Returns:
+        Well instance.
 
     Example::
 
         # inside RMS:
         import xtgeo
         mylogs = ['ZONELOG', 'GR', 'Facies']
-        mywell = xtgeo.well_from_roxar(project, '31_3-1', trajectory='Drilled',
-                                       logrun='log', lognames=mylogs)
+        mywell = xtgeo.well_from_roxar(
+            project, "31_3-1", trajectory="Drilled", logrun="log", lognames=mylogs
+        )
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
@@ -116,7 +131,7 @@ def well_from_roxar(
     return obj
 
 
-class Well:  # pylint: disable=useless-object-inheritance
+class Well:
     """Class for a well in the XTGeo framework.
 
     The well logs are stored in a Pandas dataframe, which make manipulation
@@ -141,7 +156,7 @@ class Well:  # pylint: disable=useless-object-inheritance
     Note there is a method that can return a dataframe (copy) with Integer
     and Float columns, see :meth:`get_filled_dataframe`.
 
-    The instance can be made either from file or (todo!) by spesification::
+    The instance can be made either from file or (todo!) by specification::
 
         >>> well1 = Well('somefilename')  # assume RMS ascii well
         >>> well2 = Well('somefilename', fformat='rms_ascii')
@@ -567,7 +582,7 @@ class Well:  # pylint: disable=useless-object-inheritance
             This implementation is currently experimental and only recommended
             for testing.
 
-        Read well from as HDF5 formatted file, with xtgeo spesific layout.
+        Read well from as HDF5 formatted file, with xtgeo specific layout.
 
         Args:
             wfile: Well file or stream
@@ -1431,20 +1446,26 @@ class Well:  # pylint: disable=useless-object-inheritance
         self,
         inputlogs: List[str],
         targetlogs: List[str],
-        nsamples: Optional[int] = 2,
+        nsamples: Optional[Union[int, Dict[str, float]]] = 2,
         strict: Optional[bool] = False,
     ) -> bool:
         """Mask data around zone boundaries or other discrete log boundaries.
 
         This operates on number of samples, hence the actual distance which is masked
-        depends on the sampling interval. In future versions, operating on distances
-        (e.g. in TVD (true vertical depth) or MD (measured depth) will be available.
+        depends on the sampling interval (ie. count) or on distance measures.
+        Distance measures are TVD (true vertical depth) or MD (measured depth).
+
+        .. image:: ../../docs/images/wells-mask-shoulderbeds.png
+           :width: 300
+           :align: center
 
         Args:
             inputlogs: List of input logs, must be of discrete type.
             targetlogs: List of logs where mask is applied.
-            nsample: Number of samples around boundaries to filter, per side, i.e.
+            nsamples: Number of samples around boundaries to filter, per side, i.e.
                 value 2 means 2 above and 2 below, in total 4 samples.
+                As alternative specify nsamples indirectly with a relative distance,
+                as a dictionary with one record, as {"tvd": 0.5} or {"md": 0.7}.
             strict: If True, will raise Exception of any of the input or target log
                 names are missing.
 
@@ -1453,14 +1474,11 @@ class Well:  # pylint: disable=useless-object-inheritance
                  e.g. no targetlogs for this particular well and ``strict`` is False.
 
         Raises:
-            ValueError: Input log {inlog} is missing and strict=True.
-            ValueError: Input log {inlog} is not of type DISC.
-            ValueError: Target log {target} is missing and strict=True.
-            ValueError: Keyword nsamples must be an int > 1 and < {maxlen} (where
-                maxlen is half of number of log samples).
+            ValueError: Various messages when wrong or inconsistent input.
 
         Example:
-            >>> mywell.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])
+            >>> mywell1.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])
+            >>> mywell2.mask_shoulderbeds(["ZONELOG"], ["PHIT"], nsamples={"tvd": 0.8})
 
         """
         return _well_oper.mask_shoulderbeds(

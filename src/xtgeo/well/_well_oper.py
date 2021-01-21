@@ -432,9 +432,44 @@ def report_zonation_holes(self, threshold=5):
 
 
 def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
-    """Mask targetlogs around discrete boundaries."""
+    """Mask targetlogs around discrete boundaries.
+
+    Returns True if inputlog(s) and targetlog(s) are present; otherwise False.
+    """
     logger.info("Mask shoulderbeds for some logs...")
 
+    useinputs, usetargets, use_numeric = _mask_shoulderbeds_checks(
+        self, inputlogs, targetlogs, nsamples, strict
+    )
+
+    if not useinputs or not usetargets:
+        logger.info("Mask shoulderbeds for some logs... nothing done")
+        return False
+
+    for inlog in useinputs:
+        inseries = self._df[inlog]
+        if use_numeric:
+            bseries = _get_bseries(inseries, nsamples)
+        else:
+            mode, value = list(nsamples.items())[0]
+
+            depth = self._df["Z_TVDSS"]
+            if mode == "md" and self.mdlogname is not None:
+                depth = self._df[self.mdlogname]
+            elif mode == "md" and self.mdlogname is None:
+                raise ValueError("There is no mdlogname attribute present.")
+
+            bseries = _get_bseries_by_distance(depth, inseries, value)
+
+        for target in usetargets:
+            self._df.loc[bseries, target] = np.nan
+
+    logger.info("Mask shoulderbeds for some logs... done")
+    return True
+
+
+def _mask_shoulderbeds_checks(self, inputlogs, targetlogs, nsamples, strict):
+    """Checks/validates input for mask targetlogs around discrete boundaries."""
     # check that inputlogs exists and that they are discrete, and targetlogs
     useinputs = []
     for inlog in inputlogs:
@@ -452,26 +487,26 @@ def mask_shoulderbeds(self, inputlogs, targetlogs, nsamples, strict):
         if target in self._wlogtypes.keys():
             usetargets.append(target)
 
-    maxlen = len(self._df) // 2
-    if not isinstance(nsamples, int) or nsamples < 1 or nsamples > maxlen:
-        raise ValueError(f"Keyword nsamples must be an int > 1 and < {maxlen}")
+    use_numeric = True
+    if isinstance(nsamples, int):
+        maxlen = len(self._df) // 2
+        if nsamples < 1 or nsamples > maxlen:
+            raise ValueError(f"Keyword nsamples must be an int > 1 and < {maxlen}")
+    elif isinstance(nsamples, dict):
+        if len(nsamples) == 1 and any(key in nsamples.keys() for key in ["md", "tvd"]):
+            use_numeric = False
+        else:
+            raise ValueError(f"Keyword nsamples is incorrect in some way: {nsamples}")
+    else:
+        raise ValueError("Keyword nsamples is not an int or a dictionary")
 
-    if not useinputs or not usetargets:
-        logger.info("Mask shoulderbeds for some logs... nothing done")
-        return False
-
-    for inlog in useinputs:
-        inseries = self._df[inlog]
-        bseries = _get_bseries(inseries, nsamples)
-        for target in usetargets:
-            self._df.loc[bseries, target] = np.nan
-
-    logger.info("Mask shoulderbeds for some logs... done")
-    return True
+    # return a list of input logs to be used (useinputs), a list of target logs to
+    # be used (usetargets) and a use_numeric bool (True if nsamples is an int)
+    return useinputs, usetargets, use_numeric
 
 
 def _get_bseries(inseries, nsamples):
-    """Private function for creating a bool filter, returning a bool series."""
+    """Return a bool filter based on number of samples."""
     if not isinstance(inseries, pd.Series):
         raise RuntimeError("Bug, input must be a pandas Series() instance.")
 
@@ -493,3 +528,35 @@ def _get_bseries(inseries, nsamples):
     bseries = transitions | transitions.shift(-1)
 
     return _growfilter(bseries, nsamples - 1)
+
+
+def _get_bseries_by_distance(depth, inseries, distance):
+    """Return a bool filter defined by distance to log breaks."""
+    if not isinstance(inseries, pd.Series):
+        raise RuntimeError("BUG: input must be a pandas Series() instance.")
+
+    if len(inseries) == 0:
+        return pd.Series([], dtype=bool)
+
+    # Input series with <= 1 element will not be prosessed
+    if len(inseries) <= 1:
+        return pd.Series(inseries, dtype=bool).replace(True, False)
+
+    bseries = pd.Series(np.zeros(inseries.values.size), dtype="int32").values
+    try:
+        inseries = np.nan_to_num(inseries.values, nan=xtgeo.UNDEF_INT).astype("int32")
+    except TypeError:
+        # for older numpy version
+        inseries = inseries.values
+        inseries[np.isnan(inseries)] = xtgeo.UNDEF_INT
+        inseries = inseries.astype("int32")
+
+    res = _cxtgeo.well_mask_shoulder(
+        depth.values.astype("float64"), inseries, bseries, distance
+    )
+
+    if res != 0:
+        raise RuntimeError("BUG: return from _cxtgeo.well_mask_shoulder not zero")
+
+    res = np.array(bseries, dtype=bool)
+    return res
