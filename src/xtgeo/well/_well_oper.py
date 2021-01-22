@@ -560,3 +560,23 @@ def _get_bseries_by_distance(depth, inseries, distance):
 
     res = np.array(bseries, dtype=bool)
     return res
+
+
+def create_surf_distance_log(self, surf, name):
+    """Create a log which is vertical distance from a RegularSurface."""
+    logger.info("Create a log which is distance to surface")
+
+    if not isinstance(surf, xtgeo.RegularSurface):
+        raise ValueError("Input surface is not a RegularSurface instance.")
+
+    # make a Points instance since points has the snap
+    zvalues = self.dataframe["Z_TVDSS"]
+    points = xtgeo.Points()
+    points.dataframe = self.dataframe.iloc[:, 0:3]
+    points.snap_surface(surf)
+    snapped = points.dataframe["Z_TVDSS"]
+    diff = snapped - zvalues
+
+    # create log (default is force overwrite if it exists)
+    self.create_log(name)
+    self.dataframe[name] = diff
