@@ -6,7 +6,6 @@ from xtgeo.grid3d import Grid
 from xtgeo.grid3d import GridProperty
 from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
-import tests.test_common.test_xtg as tsetup
 
 # set default level
 xtg = XTGeoDialog()
@@ -18,7 +17,7 @@ ROFF1_GRID = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
 ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_hcpvfz1():
     """HCPV thickness map."""
 

@@ -17,7 +17,7 @@ def pytest_runtest_setup(item):
         if "XTG_BIGTEST" not in os.environ:
             pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
-    # @pytest.mark.skipifroxar:
+    # @@pytest.mark.skipifroxar:
     if "skipifroxar" in markers:
         if "ROXENV" in os.environ:
             pytest.skip("Skip test in ROXENV (env variable ROXENV is present)")
