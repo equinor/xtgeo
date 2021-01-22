@@ -5,6 +5,7 @@ import os
 from os.path import join
 import glob
 
+import pytest
 import matplotlib.pyplot as plt
 
 import xtgeo
@@ -45,7 +46,7 @@ BIGWELL1 = "../xtgeo-testdata-equinor/data/wells/gfb/1/34_10-A-42.w"
 BIGWELL2 = "../xtgeo-testdata-equinor/data/wells/gfb/1/34_10-A-41.w"
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_very_basic():
     """Just test that matplotlib works."""
     assert "matplotlib" in str(plt)
@@ -59,14 +60,14 @@ def test_very_basic():
     plt.close()
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_xsection_init():
     """Trigger XSection class, basically."""
     xsect = XSection()
     assert xsect.pagesize == "A4"
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_simple_plot():
     """Test as simple XSECT plot."""
 
@@ -110,7 +111,7 @@ def test_simple_plot():
         myplot.show()
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_simple_plot_with_seismics():
     """Test as simple XSECT plot with seismic backdrop."""
 
@@ -163,7 +164,7 @@ def test_simple_plot_with_seismics():
         myplot.show()
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 @tsetup.equinor
 @tsetup.bigtest
 def test_xsect_larger_geogrid():
@@ -224,7 +225,7 @@ def test_xsect_larger_geogrid():
     #     myplot.show()
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_reek1():
     """Test XSect for a Reek well."""
 

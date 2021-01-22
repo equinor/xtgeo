@@ -43,7 +43,7 @@ def load_cube_rsgy1():
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_get_surface_from_cube(load_cube_rsgy1):
     """Construct a constant surface from cube."""
 
@@ -58,7 +58,7 @@ def test_get_surface_from_cube(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_nearest_snapxy(load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, snapxy, algorithm 1 + 2"""
 
@@ -96,7 +96,7 @@ def test_slice_nearest_snapxy(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_trilinear_snapxy(load_cube_rsgy1):
     """Slice a cube with a surface, trilinear, snapxy, algorithm 1 + 2"""
 
@@ -134,7 +134,7 @@ def test_slice_trilinear_snapxy(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_nearest_nosnapxy(load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 1 + 2, other map layout"""
 
@@ -176,7 +176,7 @@ def test_slice_nearest_nosnapxy(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_trilinear_nosnapxy(load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 1 + 2, other map layout"""
 
@@ -218,7 +218,7 @@ def test_slice_trilinear_nosnapxy(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_nearest(load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 1"""
 
@@ -243,7 +243,7 @@ def test_slice_nearest(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_nearest_v2(load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 2."""
 
@@ -268,7 +268,7 @@ def test_slice_nearest_v2(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_various_reek(load_cube_rsgy1):
     """Slice a cube with a surface, both nearest node and interpol, Reek."""
 
@@ -315,7 +315,7 @@ def test_slice_various_reek(load_cube_rsgy1):
 
 
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_attr_window_max(load_cube_rsgy1):
     """Slice a cube within a window, get max, using trilinear interpol."""
 
@@ -344,7 +344,7 @@ def test_slice_attr_window_max(load_cube_rsgy1):
 
 @tsetup.bigtest
 @tsetup.skipsegyio
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
     """Slice a cube within a window, get max/min etc, using trilinear
     interpol and plotting."""
@@ -393,7 +393,7 @@ def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
     )
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_attr_mean_two_surfaces(load_cube_rsgy1):
     """Get cube attribute (mean) between two surfaces."""
 
@@ -422,7 +422,7 @@ def test_cube_attr_mean_two_surfaces(load_cube_rsgy1):
     logger.info("Mean is {}".format(xss.values.mean()))
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1):
     """Get cube attribute (rms) between two surfaces, and compare with
     window."""
@@ -446,7 +446,7 @@ def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1):
 
 
 @tsetup.bigtest
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
     """Get cube attribute (rms) between two surfaces, and compare with
     window, and show plots."""
@@ -489,7 +489,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
     assert xss1.values.mean() == xss2.values.mean()
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
     """Get cube attribute between two surfaces with partly zero isochore."""
 
@@ -518,7 +518,7 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
     logger.info("Mean is {}".format(xss.values.mean()))
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 @tsetup.skipifwindows
 def test_cube_slice_auto4d_data():
     """Get cube slice aka Auto4D input, with synthetic/scrambled data"""
@@ -558,7 +558,7 @@ def test_cube_slice_auto4d_data():
     )
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_slice_w_ignore_dead_traces_nearest():
     """Get cube slice nearest aka Auto4D input, with scrambled data with
     dead traces, various YFLIP cases, ignore dead traces."""
@@ -612,7 +612,7 @@ def test_cube_slice_w_ignore_dead_traces_nearest():
     assert surf2.values.mean() == pytest.approx(surf1.values.mean(), rel=0.001)
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_slice_w_dead_traces_nearest():
     """Get cube slice nearest aka Auto4D input, with scrambled data with
     dead traces, various YFLIP cases, undef at dead traces."""
@@ -666,7 +666,7 @@ def test_cube_slice_w_dead_traces_nearest():
     # assert surf2.values.mean() == surf1.values.mean()
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_slice_w_ignore_dead_traces_trilinear():
     """Get cube slice trilinear aka Auto4D input, with scrambled data with
     dead traces to be ignored, various YFLIP cases."""
@@ -691,7 +691,7 @@ def test_cube_slice_w_ignore_dead_traces_trilinear():
     assert ma.count_masked(surf1.values) == 0  # shall be no masked cells
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_slice_w_dead_traces_trilinear():
     """Get cube slice trilinear aka Auto4D input, with scrambled data with
     dead traces to be ignored, various YFLIP cases."""
@@ -730,7 +730,7 @@ def test_cube_slice_w_dead_traces_trilinear():
 
 
 @tsetup.bigtest
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_cube_attr_mean_two_surfaces_multiattr(load_cube_rsgy1):
     """Get cube attribute (mean) between two surfaces, many attr at the same
     time.

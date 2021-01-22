@@ -9,6 +9,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
+from xtgeo.surface import RegularSurface
 from xtgeo.well import Well
 from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
@@ -39,6 +40,9 @@ WELL2 = join(TPATH, "wells/battle/1/WELL36.rmswell")
 WELL3 = join(TPATH, "wells/battle/1/WELL10.rmswell")
 
 WELL4 = join(TPATH, "wells/drogon/1/55_33-1.rmswell")
+
+SURF1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+SURF2 = TPATH / "surfaces/reek/1/basereek_rota.gri"
 
 
 @pytest.fixture(name="loadwell1")
@@ -601,3 +605,138 @@ def test_get_filled_dataframe():
 
     assert np.isnan(df1.iat[4860, 6])
     assert df2.iat[4860, 6] == -888
+
+
+def test_create_surf_distance_log(loadwell1):
+    """Test making a log which is distance to a surface."""
+
+    well = loadwell1
+
+    surf1 = RegularSurface(SURF1)
+    surf2 = RegularSurface(SURF2)
+
+    well.create_surf_distance_log(surf1, name="DIST_TOP")
+    well.create_surf_distance_log(surf2, name="DIST_BASE")
+
+    assert well.dataframe.loc[0, "DIST_TOP"] == pytest.approx(1653.303263)
+    assert well.dataframe.loc[0, "DIST_BASE"] == pytest.approx(1696.573171)
+
+    # moving the surface so it is outside the well
+    surf1.translate_coordinates((10000, 10000, 0))
+    well.create_surf_distance_log(surf1, name="DIST_BASE_NEW")
+    assert np.isnan(well.dataframe.loc[0, "DIST_BASE_NEW"])
+
+
+@pytest.mark.bigtest
+def test_create_surf_distance_log_more(loadwell1):
+    """Test making a log which is distance to a surface and do some operations.
+
+    This is a prototype (need BIG_TEST env variable to run) exploring the possibility
+    to run a check if zonelog is some % of being within surfaces. I.e. a surface
+    version of:
+
+    Grid().report_zone_mismatch() method
+
+    When/if the prototype is incorporated this test should be removed.
+    """
+
+    well = loadwell1
+
+    surf1 = RegularSurface(SURF1)
+    surf2 = RegularSurface(SURF2)
+
+    well.create_surf_distance_log(surf1, name="DIST_TOP")
+    well.create_surf_distance_log(surf2, name="DIST_BASE")
+
+    # for simplicity create one zone log
+    lrec = {0: "ABOVE", 1: "IN", 2: "BELOW"}
+    well.create_log("MEGAZONE1", logtype="DISC", logrecord=lrec)
+    well.create_log("MEGAZONE2", logtype="DISC", logrecord=lrec)
+
+    zl = well.dataframe["Zonelog"]
+    well.dataframe["MEGAZONE1"][(zl > 0) & (zl < 4)] = 1
+    well.dataframe["MEGAZONE1"][zl > 3] = 2
+    well.dataframe["MEGAZONE1"][np.isnan(zl)] = np.nan
+
+    # derive from distance log:
+    d1 = well.dataframe["DIST_TOP"]
+    d2 = well.dataframe["DIST_BASE"]
+    well.dataframe["MEGAZONE2"][(d1 <= 0.0) & (d2 > 0)] = 1
+
+    # now use logics from Grid() report_zone_mismatch()...
+    # much coding pasting vvvvvv =======================================================
+
+    zname = "MEGAZONE1"
+    zmodel = "MEGAZONE2"
+    zonelogname = "MEGAZONE1"
+    depthrange = [1200, 3000]
+    zonelogrange = [1, 1]
+
+    well.to_file(TMPDX / "well_surf_dist.w")
+
+    # get the IJK along the well as logs; use a copy of the well instance
+    wll = well.copy()
+
+    if depthrange:
+        d1, d2 = depthrange
+        wll._df = wll._df[(d1 < wll._df.Z_TVDSS) & (wll._df.Z_TVDSS < d2)]
+
+    # from here, work with the dataframe only
+    df = wll._df
+
+    # zonelogrange
+    z1, z2 = zonelogrange
+    zmin = int(df[zonelogname].min())
+    zmax = int(df[zonelogname].max())
+    skiprange = list(range(zmin, z1)) + list(range(z2 + 1, zmax + 1))
+
+    for zname in (zonelogname, zmodel):
+        if skiprange:  # needed check; du to a bug in pandas version 0.21 .. 0.23
+            df[zname].replace(skiprange, -888, inplace=True)
+        df[zname].fillna(-999, inplace=True)
+    # now there are various variotions on how to count mismatch:
+    # dfuse 1: count matches when zonelogname is valid (exclude -888)
+    # dfuse 2: count matches when zonelogname OR zmodel are valid (exclude < -888
+    # or -999)
+    # The first one is the original approach
+
+    dfuse1 = df.copy(deep=True)
+    dfuse1 = dfuse1.loc[dfuse1[zonelogname] > -888]
+
+    dfuse1["zmatch1"] = np.where(dfuse1[zmodel] == dfuse1[zonelogname], 1, 0)
+    mcount1 = dfuse1["zmatch1"].sum()
+    tcount1 = dfuse1["zmatch1"].count()
+    if not np.isnan(mcount1):
+        mcount1 = int(mcount1)
+    if not np.isnan(tcount1):
+        tcount1 = int(tcount1)
+
+    res1 = dfuse1["zmatch1"].mean() * 100
+
+    dfuse2 = df.copy(deep=True)
+    dfuse2 = dfuse2.loc[(df[zmodel] > -888) | (df[zonelogname] > -888)]
+    dfuse2["zmatch2"] = np.where(dfuse2[zmodel] == dfuse2[zonelogname], 1, 0)
+    mcount2 = dfuse2["zmatch2"].sum()
+    tcount2 = dfuse2["zmatch2"].count()
+    if not np.isnan(mcount2):
+        mcount2 = int(mcount2)
+    if not np.isnan(tcount2):
+        tcount2 = int(tcount2)
+
+    res2 = dfuse2["zmatch2"].mean() * 100
+
+    # update Well() copy (segment only)
+    wll.dataframe = dfuse2
+
+    res = {
+        "MATCH1": res1,
+        "MCOUNT1": mcount1,
+        "TCOUNT1": tcount1,
+        "MATCH2": res2,
+        "MCOUNT2": mcount2,
+        "TCOUNT2": tcount2,
+        "WELLINTV": wll,
+    }
+    print(res)
+
+    assert res["MATCH2"] == pytest.approx(93.67, abs=0.03)

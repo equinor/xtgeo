@@ -7,8 +7,6 @@ from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
 from xtgeo.common import XTGeoDialog
 
-import tests.test_common.test_xtg as tsetup
-
 # set default level
 xtg = XTGeoDialog()
 
@@ -29,7 +27,7 @@ RFILE2 = TPATH / "3dgrids/reek/REEK.UNRST"
 FFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.zmap"
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_avg02():
     """Make average map from Reek Eclipse."""
     grd = Grid()
@@ -90,7 +88,7 @@ def test_avg02():
     assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_avg03():
     """Make average map from Reek Eclipse, speed up by zone_avgrd."""
     grd = Grid()

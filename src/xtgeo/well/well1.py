@@ -1254,6 +1254,30 @@ class Well:
 
         return poly.get_fence(distance=sampling, nextend=nextend, asnumpy=asnumpy)
 
+    def create_surf_distance_log(
+        self,
+        surf: object,
+        name: Optional[str] = "DIST_SURF",
+    ):
+        """Make a log that is vertical distance to a regular surface.
+
+        If the trajectory is above the surface (i.e. more shallow), then the
+        distance sign is positive.
+
+        Args:
+            surf: The RegularSurface instance.
+            name: The name of the new log. If it exists it will be overwritten.
+
+        Example::
+
+            mywell.rescale()  # optional
+            thesurf = xtgeo.RegularSurface("some.gri")
+            mywell.create_surf_distance_log(thesurf, name="sdiff")
+
+        """
+
+        _well_oper.create_surf_distance_log(self, surf, name)
+
     def report_zonation_holes(self, threshold=5):
         """Reports if well has holes in zonation, less or equal to N samples.
 

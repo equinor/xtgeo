@@ -1,9 +1,10 @@
 import os
 import glob
+import pytest
+
 from xtgeo.xyz import Polygons
 from xtgeo.well import Well
 from xtgeo.common import XTGeoDialog
-import tests.test_common.test_xtg as tsetup
 
 path = "TMP"
 try:
@@ -22,7 +23,7 @@ WFILES1 = TPATH / "wells/reek/1/OP_1.w"
 WFILES2 = TPATH / "wells/reek/1/OP_[1-5].w"
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_get_polygons_one_well():
     """Import a well and get the polygon segments."""
     wlist = []
@@ -40,7 +41,7 @@ def test_get_polygons_one_well():
     mypoly.to_file("TMP/poly_w1.irapasc")
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_get_polygons_many_wells():
     """Import some wells and get the polygon segments."""
     wlist = []

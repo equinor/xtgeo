@@ -1,13 +1,12 @@
 import sys
 import matplotlib.pyplot as plt
-
+import pytest
 from xtgeo.plot import Map
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
 from xtgeo.xyz import Points
 from xtgeo.common import XTGeoDialog
 
-import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -28,14 +27,14 @@ PFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.pol"
 SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_very_basic_to_file():
     """Just test that matplotlib works, to a file."""
     plt.title("Hello world")
     plt.savefig("TMP/verysimple.png")
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_simple_plot():
     """Test as simple map plot only making an instance++ and plot."""
 
@@ -51,7 +50,7 @@ def test_simple_plot():
     myplot.savefig("TMP/map_simple.png")
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_map_plot_with_points():
     """Test as simple map plot with underlying points."""
 
@@ -75,7 +74,7 @@ def test_map_plot_with_points():
     myplot.savefig("TMP/map_with_points.png")
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_more_features_plot():
     """Map with some more features added, such as label rotation."""
 
@@ -95,7 +94,7 @@ def test_more_features_plot():
     myplot.savefig(TD + "/map_more1.png")
 
 
-@tsetup.skipifroxar
+@pytest.mark.skipifroxar
 def test_perm_logarithmic_map():
     """Map with PERM, log scale."""
 
