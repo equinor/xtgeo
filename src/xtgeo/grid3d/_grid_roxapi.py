@@ -50,7 +50,7 @@ def _import_grid_roxapi_v1(
             raise KeyError("No such gridmodel: {}".format(gname))
 
         logger.info("Get roxgrid...")
-        roxgrid = proj.grid_models[gname].get_grid()
+        roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
 
         if dimonly:
             corners = None
@@ -206,7 +206,7 @@ def _import_grid_roxapi_v2(
             raise KeyError("No such gridmodel: {}".format(gname))
 
         logger.info("Get roxgrid...")
-        roxgrid = proj.grid_models[gname].get_grid()
+        roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
 
         if info:
             _display_roxapi_grid_info(rox, roxgrid)

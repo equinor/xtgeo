@@ -83,14 +83,16 @@ def _roxapi_import_bwell(
     dind = bwset.get_data_indices([wname])
 
     cind = bw_cellindices[dind]
-    xyz = np.transpose(gmodel.get_grid().get_cell_centers(cind))
+    xyz = np.transpose(gmodel.get_grid(realisation=realisation).get_cell_centers(cind))
 
     logs = OrderedDict()
     logs["X_UTME"] = xyz[0].astype(np.float64)
     logs["Y_UTMN"] = xyz[1].astype(np.float64)
     logs["Z_TVDSS"] = xyz[2].astype(np.float64)
     if ijk:
-        ijk = np.transpose(gmodel.get_grid().grid_indexer.get_indices(cind))
+        ijk = np.transpose(
+            gmodel.get_grid(realisation=realisation).grid_indexer.get_indices(cind)
+        )
         logs["I_INDEX"] = ijk[0].astype(np.float64)
         logs["J_INDEX"] = ijk[1].astype(np.float64)
         logs["K_INDEX"] = ijk[2].astype(np.float64)

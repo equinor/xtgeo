@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Roxar API functions for XTGeo Grid Property"""
+"""Roxar API functions for XTGeo Grid Property."""
 
 import numpy as np
 import numpy.ma as ma
@@ -24,8 +24,8 @@ def import_prop_roxapi(
     self, project, gname, pname, realisation, faciescodes
 ):  # pragma: no cover
     """Import a Property via ROXAR API spec."""
-
     logger.info("Opening RMS project ...")
+
     rox = xtgeo.RoxUtils(project, readonly=True)
 
     _get_gridprop_data(self, rox, gname, pname, realisation, faciescodes)
@@ -37,8 +37,6 @@ def _get_gridprop_data(
     self, rox, gname, pname, realisation, faciescodes
 ):  # pragma: no cover
     # inside a RMS project
-
-    logger.info("Realisation key not applied yet: %s", realisation)
 
     if gname not in rox.project.grid_models:
         raise ValueError("No gridmodel with name {}".format(gname))
@@ -64,8 +62,8 @@ def _get_gridprop_data(
 def _convert_to_xtgeo_prop(
     self, rox, pname, roxgrid, roxprop, realisation, faciescodes
 ):  # pragma: no cover
-    """Collect numpy array and convert to XTGeo fmt"""
-    indexer = roxgrid.get_grid().grid_indexer
+    """Collect numpy array and convert to XTGeo internal format."""
+    indexer = roxgrid.get_grid(realisation=realisation).grid_indexer
     self._ncol, self._nrow, self._nlay = indexer.dimensions
 
     if rox.version_required("1.3"):
@@ -113,10 +111,7 @@ def export_prop_roxapi(
     self, project, gname, pname, realisation=0, casting="unsafe"
 ):  # pragma: no cover
     """Export (i.e. store or save) to a Property icon in RMS via ROXAR API spec."""
-
     rox = xtgeo.RoxUtils(project, readonly=False)
-
-    logger.info("Realisation key not applied yet: %s", realisation)
 
     try:
         roxgrid = rox.project.grid_models[gname]
@@ -132,8 +127,8 @@ def export_prop_roxapi(
 
 
 def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no cover
-
-    indexer = roxgrid.get_grid().grid_indexer
+    """Store property in RMS."""
+    indexer = roxgrid.get_grid(realisation=realisation).grid_indexer
 
     logger.info("Store in RMS...")
 
@@ -151,11 +146,15 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
     logger.info("DTYPE is %s for %s", dtype, pname)
 
     if self.isdiscrete:
-        pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
+        pvalues = roxgrid.get_grid(realisation=realisation).generate_values(
+            data_type=dtype
+        )
         roxar_property_type = roxar.GridPropertyType.discrete
 
     else:
-        pvalues = roxgrid.get_grid().generate_values(data_type=dtype)
+        pvalues = roxgrid.get_grid(realisation=realisation).generate_values(
+            data_type=dtype
+        )
         roxar_property_type = roxar.GridPropertyType.continuous
 
     pvalues[cellno] = val3d[iind, jind, kind]
@@ -178,16 +177,15 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
 
 
 def _fix_codes(codes):  # pragma: no cover
-    """Roxar can provide a code list with empty strings; fix this issue here"""
-
+    """Roxar may provide a code list with empty strings; fix this issue here."""
     newcodes = {}
     for code, name in codes.items():
         if not isinstance(code, int):
             code = int(code)
 
         if not name:
-            continue
+            name = str(code)
 
-        newcodes[code] = str(name)
+        newcodes[code] = name
 
     return newcodes
