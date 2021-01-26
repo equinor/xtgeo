@@ -80,7 +80,7 @@ surf_resample(int nx1,
             /* based on this X Y, need to find Z value from original: */
             if (ier2 == 0) {
                 zc = surf_get_z_from_xy(xc2, yc2, nx1, ny1, xori1, yori1, xinc1, yinc1,
-                                        yflip1, rota1, mapv1, nn1);
+                                        yflip1, rota1, mapv1, nn1, 0);
                 mapv2[ib2] = zc;
 
             } else {

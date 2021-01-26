@@ -71,7 +71,7 @@ well_surf_picks(double *xv,
     zd = calloc(nzv, sizeof(double));
 
     surf_get_zv_from_xyv(xv, nxv, yv, nyv, zd, nzv, ncol, nrow, xori, yori, xinc, yinc,
-                         yflip, rot, surfv, nsurf);
+                         yflip, rot, surfv, nsurf, 0);
 
     /* compute diff */
     int i;

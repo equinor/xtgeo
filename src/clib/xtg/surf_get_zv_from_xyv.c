@@ -18,7 +18,10 @@
 *    yflip         i      YFLIP 1 or -1
 *    rot_deg       i      Rotation
 *    p_map_v       i      Pointer to map values to update
-*    flag          i      Flag for options
+*    option        i      0: interpolation using relative coordinates (rotation is ok!)
+*                         1: interpolation using rotated map directly
+*                         2: Nearest node sampling
+*
 *
 * RETURNS:
 *    Z value at point
@@ -27,7 +30,7 @@
 *    - checking the handling of undef nodes; shall return UNDEF
 * LICENCE:
 *    cf. XTGeo LICENSE
-***************************************************************************************
+****************************************************************************************
 */
 
 #include "libxtg.h"
@@ -49,7 +52,8 @@ surf_get_zv_from_xyv(double *xv,
                      int yflip,
                      double rot_deg,
                      double *p_map_v,
-                     long nn)
+                     long nn,
+                     int option)
 {
     int i;
 
@@ -57,7 +61,7 @@ surf_get_zv_from_xyv(double *xv,
 
     for (i = 0; i < nxv; i++) {
         zv[i] = surf_get_z_from_xy(xv[i], yv[i], nx, ny, xori, yori, xinc, yinc, yflip,
-                                   rot_deg, p_map_v, nn);
+                                   rot_deg, p_map_v, nn, option);
     }
 
     return (0);

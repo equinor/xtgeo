@@ -8,7 +8,9 @@
  * DESCRIPTION:
  *    Given lower left IJ point and P(x,y), the map Z value is returned.
  *    This should work for rotated maps and cubes if the RELATIVE coords
- *    are provided
+ *    are provided.
+ *
+ *    Since relative coords are required, rotation is not relevant.
  *
  *   |-------|
  *   | *P    |
@@ -29,9 +31,7 @@
  *    xori, yori    i      Map origins (real or relative)
  *    xinc, yinc    i      Map increments
  *    p_map_v       i      Pointer to map values to update
- *    flag          i      Flag for options
- *    debug         i      Debug flag
- *
+ *    option        i      0: interpolate, 1: nearest node
  * RETURNS:
  *    Z value at point
  *
@@ -57,10 +57,11 @@ surf_get_z_from_ij(int ic,
                    double yinc,
                    double xori,
                    double yori,
-                   double *p_map_v)
+                   double *p_map_v,
+                   int option)
 {
 
-    int ibc = -9;
+    int ibc;
     double x_v[4], y_v[4], z_v[4];
     double z;
 
@@ -88,9 +89,14 @@ surf_get_z_from_ij(int ic,
     ibc = x_ijk2ic(ic + 1, jc + 1, 1, nx, ny, 1, 0);
     z_v[3] = p_map_v[ibc];
 
-    // now find the Z value, using interpolation method 2 (bilinear)
+    // now find the Z value, using interpolation method 2 (bilinear) which assumes
+    // no rotation, or opt_interp 4 for nearest sampling
 
-    z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 2);
+    int opt_interp = 2;
+    if (option == 1)
+        opt_interp = 4;
+
+    z = x_interp_map_nodes(x_v, y_v, z_v, x, y, opt_interp);
 
     return z;
 }

@@ -87,14 +87,15 @@ _get_ij_range(int *i1,
     nmap = mcol * mrow;
 
     /* get map value for I J from x y */
+    int opt = 2; /* nearest sampling */
     itop = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc, yflip,
-                              rotation, maptopi, nmap);
+                              rotation, maptopi, nmap, opt);
     jtop = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc, yflip,
-                              rotation, maptopj, nmap);
+                              rotation, maptopj, nmap, opt);
     ibas = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc, yflip,
-                              rotation, mapbasi, nmap);
+                              rotation, mapbasi, nmap, opt);
     jbas = surf_get_z_from_xy(xc, yc, mcol, mrow, xori, yori, xinc, yinc, yflip,
-                              rotation, mapbasj, nmap);
+                              rotation, mapbasj, nmap, opt);
 
     if (itop >= UNDEF_LIMIT || jtop >= UNDEF_LIMIT || ibas >= UNDEF_LIMIT ||
         jbas >= UNDEF_LIMIT) {

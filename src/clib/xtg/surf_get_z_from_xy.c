@@ -26,18 +26,20 @@
  *    nx, ny        i      Dimensions
  *    xori, yori    i      Map origins
  *    xinc, yinc    i      Map increments
+ *    yflip         i      1 or -1 for map Y axis flip
  *    rot_deg       i      Rotation
  *    p_map_v       i      Pointer to map values to update
- *    flag          i      Flag for options
+ *    option        i      0: interpolation using relative coordinates (rotation is ok!)
+ *                         1: interpolation using rotated map directly
+ *                         2: Nearest node sampling
  *
  * RETURNS:
  *    Z value at point
  *
  * TODO/ISSUES/BUGS:
- *    - checking the handling of undef nodes; shall return UNDEF
- *    - Propert handling of YFLIP = -1!
+
  * LICENCE:
- *    cf. XTGeo LICENSE
+ *    LGPLv3 (cf. XTGeo license)
  ******************************************************************************
  */
 
@@ -57,17 +59,15 @@ surf_get_z_from_xy(double x,
                    int yflip,
                    double rot_deg,
                    double *p_map_v,
-                   long nn)
+                   long nn,
+                   int option)
 {
-    int ib = -9, ier, iex[4], i = 0, j = 0;
+    int ier, iex[4], i = 0, j = 0;
     double x_v[4], y_v[4], z_v[4];
     double xx, yy, zz, z, rx, ry;
-    int userelative = 1;
 
     if (nx * ny != nn)
         logger_error(LI, FI, FU, "Fatal error in %s", FU);
-
-    ib = -1;
 
     /* get i and j for lower left corner, given a point X Y*/
 
@@ -79,13 +79,15 @@ surf_get_z_from_xy(double x,
         return UNDEF;
     }
 
-    /* two approaches here; the 'userelative' is more clean and safe? */
+    /* two approaches here; the 'userelative' option = 1 is more clean and safe? */
 
-    if (userelative == 1) {
-        /* map origin rleative is 0.0 */
+    if (option == 0) {
+        /* map origin relative is 0.0 */
         z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc * yflip, 0.0, 0.0,
-                               p_map_v);
-    } else {
+                               p_map_v, 0);
+
+    } else if (option == 1) {
+        /* this is kept for legacy reference */
 
         /* find the x,y,z values of the four nodes */
         iex[0] = surf_xyz_from_ij(i, j, &xx, &yy, &zz, xori, xinc, yori, yinc, nx, ny,
@@ -121,6 +123,11 @@ surf_get_z_from_xy(double x,
         // now find the Z value, using interpolation method 3 (bilinear w/rot.)
 
         z = x_interp_map_nodes(x_v, y_v, z_v, x, y, 3);
+
+    } else if (option == 2) {
+        /* map in relative coordinates but use nearest sampling*/
+        z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc * yflip, 0.0, 0.0,
+                               p_map_v, 1);
     }
 
     return z;
