@@ -5,7 +5,9 @@
  *    x_interp_map_nodes.c
  *
  * DESCRIPTION:
- *    Find the interpolated or nearest Z value within a set of 4 map nodes
+ *    Find the Z value by bilinear interpolation or nearest XY (i.e. snapping)
+ *    within a set of 4 map nodes.
+ *
  *    The routine assumes that the point is inside the nodes given by x_v,
  *    y_v, and z_v. This must be checked by the calling routine, but a
  *    test here is also provided.
