@@ -2485,7 +2485,7 @@ class RegularSurface:
         map resolution. If a Polygons() instance, this is automated if hincrement is
         None, and ignored if hincrement is False.
 
-        Returns a ndarray with shape (:, 2)
+        Returns a ndarray with shape (:, 2).
 
         Args:
             fencespec:

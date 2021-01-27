@@ -130,6 +130,15 @@ def test_well_mask_shoulder(depth, logseries, distance, expected):
             4,  # nearest node
             3.0,
         ),
+        (
+            [0.0, 1.0, 0.0, 1.0],
+            [0.0, 0.0, 1.0, 1.0],
+            [1.0, 2.0, 3.0, 4.0],
+            0.50000,
+            0.50000,
+            4,  # nearest node
+            [1.0, 2.0, 3.0, 4.0],  # singularity, can be any
+        ),
     ],
 )
 def test_x_interp_map_nodes(xcoords, ycoords, zcoords, xval, yval, method, zexpected):
@@ -146,4 +155,8 @@ def test_x_interp_map_nodes(xcoords, ycoords, zcoords, xval, yval, method, zexpe
         _cxtgeo.doublearray_setitem(zv, num, zvalue)
 
     zresult = _cxtgeo.x_interp_map_nodes(xv, yv, zv, xval, yval, method)
-    assert zresult == zexpected
+
+    if isinstance(zexpected, list):
+        assert zresult in zexpected
+    else:
+        assert zresult == zexpected

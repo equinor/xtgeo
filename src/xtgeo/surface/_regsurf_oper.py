@@ -362,7 +362,7 @@ def get_fence(self, xyfence, sampling="bilinear"):
     cyarr = xyfence[:, 1]
     czarr = xyfence[:, 2].copy()
 
-    option = 2 if sampling == "nearest" else 0
+    sampleoptions = {"bilinear": 0, "nearest": 2}
 
     # czarr will be updated "inplace":
     istat = _cxtgeo.surf_get_zv_from_xyv(
@@ -378,7 +378,7 @@ def get_fence(self, xyfence, sampling="bilinear"):
         self.yflip,
         self.rotation,
         self.get_values1d(),
-        option,
+        sampleoptions.get(sampling, 0),
     )
 
     if istat != 0:
@@ -404,7 +404,7 @@ def get_randomline(
     if fencespec is None or fencespec is False:
         return None
 
-    option = 2 if sampling == "nearest" else 0
+    sampleoptions = {"bilinear": 0, "nearest": 2}
 
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]
@@ -425,7 +425,7 @@ def get_randomline(
         self.yflip,
         self.rotation,
         self.get_values1d(),
-        option,
+        sampleoptions.get(sampling, 0),
     )
 
     if istat != 0:

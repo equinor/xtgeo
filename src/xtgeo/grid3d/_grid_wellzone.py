@@ -73,13 +73,13 @@ def report_zone_mismatch(
         zmin = int(df[zonelogname].min())
     except ValueError as verr:
         if "cannot convert" in str(verr):
-            msg = f"TDV Range {depthrange} is possibly to narrow? ({str(verr)})"
+            msg = f"TVD range {depthrange} is possibly to narrow? ({str(verr)})"
             raise ValueError(msg)
     try:
         zmax = int(df[zonelogname].max())
     except ValueError as verr:
         if "cannot convert" in str(verr):
-            msg = f"TDV Range {depthrange} is possibly to narrow? ({str(verr)})"
+            msg = f"TVD range {depthrange} is possibly to narrow? ({str(verr)})"
             raise ValueError(msg)
 
     skiprange = list(range(zmin, z1)) + list(range(z2 + 1, zmax + 1))

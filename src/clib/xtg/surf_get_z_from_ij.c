@@ -31,7 +31,9 @@
  *    xori, yori    i      Map origins (real or relative)
  *    xinc, yinc    i      Map increments
  *    p_map_v       i      Pointer to map values to update
- *    option        i      0: interpolate, 1: nearest node
+ *    option        i      0: sampling by bilinear interpolation,
+ *                         1: sampling by nearest node
+ *
  * RETURNS:
  *    Z value at point
  *
