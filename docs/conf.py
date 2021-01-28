@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# noqa # pylint: skip-file
+
 import sys
-import os
+from datetime import date
 
 import xtgeo
 
@@ -17,13 +19,13 @@ version = xtgeo.__version__
 release = xtgeo.__version__
 
 extensions = [
+    "recommonmark",
     "sphinxcontrib.apidoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
-    "recommonmark",
 ]
 
 apidoc_module_dir = "../src/xtgeo"
@@ -38,14 +40,15 @@ autoclass_content = "both"
 napoleon_include_special_with_doc = False
 
 # The suffix of source filenames.
-source_suffix = [".rst", ".md"]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 # The master toctree document.
 master_doc = "index"
 
 # General information about the project.
 project = "xtgeo"
-copyright = "Equinor"
+current_year = date.today().year
+copyright = "Equinor 2019 - " + str(current_year)
 
 
 # Sort members by input order in classes

@@ -4,8 +4,9 @@ Welcome to XTGeo's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   history
    readme
    installation
    contributing
@@ -14,7 +15,6 @@ Contents:
    usage
    usextgeoroxar
    authors
-   history
 
 Indices and tables
 ==================
