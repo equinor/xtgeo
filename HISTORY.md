@@ -1,5 +1,36 @@
 # History for XTGeo
 
+
+## Version 2.14 (in prep)
+
+* New features:
+  * For some methods in RegularSurface(), a ``sampling`` key is added which in
+    addition to default `bilinear` interpolation also can use `nearest node` sampling.
+    The latter can be useful e.g. for discrete maps such as facies. Closes #462.
+  * For Wells(), add a method ``create_surf_distance_log`` that makes a well log
+    that is distance to a surface, #461.
+  * For Wells(), add a method that can remove (mask) data based on discrete logs, i.e.
+    remove shoulder-bed effects, #457.
+  * A pre-release (i.e. experimental!) support for free-form metadata and new formats:
+    * A separate MetaData class for each major data-type.
+    * Native XTGeo formats. Should be very fast and support metadata.
+    * Support for HDF-5 formats, should be quite/very fast, support metadata and
+      compression.
+    * In relation to this, more automatic format detection is initiated. This means
+      in practice that the key ``fformat`` and/or file extension rules will not be
+      needed in many cases, as xtgeo will detect the file format by inspection the file
+      itself. This is in particular useful for binary memory streams.
+    * As a side note, the HDF support change the external requirements for xtgeo as e.g.
+      the `h5py` package and more are now needed.
+
+* Improvements and bug fixes:
+  * Improvements on missing or wrong ``values`` key when dealing with RegularSurface(),
+    relates to bug report #450.
+  * When reading a discrete 3D property from Roxar API the codes may in
+      some cases return an empty dictionary. This is now fixed, #465.
+  * Fix use realisations from Roxar API (3D grids), #443.
+  * General improvements in documentation, e.g. clearer guidelines for contributions.
+
 ## Version 2.13
 
 From this version support for Python 2.7 and 3.5 is dropped. Now only Python
@@ -28,6 +59,12 @@ From this version support for Python 2.7 and 3.5 is dropped. Now only Python
 
 ### 2.13.1
 * Fixed a manifest bug which occurs when importing a grid inside RMS, cf #448.
+
+### 2.13.2
+* Fix CI testing for Komodo (not affecting end user)
+
+### 2.13.2
+* Adjust SWIG install in github actions (not affecting end user)
 
 ## Version 2.12
 
