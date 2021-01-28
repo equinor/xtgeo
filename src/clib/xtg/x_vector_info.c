@@ -13,11 +13,14 @@
  *    vlen             o     Length (2D, XY space)
  *    xangle_radian    o     Angle, radians
  *    xangle_degrees   o     Angle, degrees
- *    option           i     0: azimuth returned, 1: angle (aka school) is returned
+ *    option           i     -1: No angle computation (increase speed)
+ *                            0: azimuth returned,
+ *                            1: angle (aka school) is returned
  *
- * RETURNS:
- *    Option 0, AZIMUTH is returned (clockwise, releative to North)
- *    Option 1, ANGLE is returned (counter clockwise, relative to East)
+ * RETURNS by pointers:
+ *    Option -1, Lengths only
+ *    Option  0, Lengths + AZIMUTH is returned (clockwise, releative to North)
+ *    Option  1, Lengths + ANGLE is returned (counter clockwise, relative to East)
  *
  * TODO/ISSUES/BUGS:
  *
@@ -64,6 +67,9 @@ x_vector_info2(double x1,
      */
 
     *vlen = sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+
+    if (option == -1)
+        return;
 
     if ((x2 - x1) > 0.00001 || (x2 - x1) < -0.00001) {
 

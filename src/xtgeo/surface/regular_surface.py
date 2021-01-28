@@ -248,6 +248,13 @@ class RegularSurface:
         """
         #
         logger.info("Start __init__ method for RegularSurface object %s", id(self))
+        self._ncol = 5
+        self._nrow = 3
+        self._xori = 0.0
+        self._yori = 0.0
+        self._xinc = 25.0
+        self._yinc = 25.0
+        self._rotation = 0.0
 
         self._undef = xtgeo.UNDEF
         self._undef_limit = xtgeo.UNDEF_LIMIT
@@ -807,8 +814,8 @@ class RegularSurface:
             gid += f"{getattr(self, '_' + req)}"
 
         np.set_printoptions(**opt)
-        hash = xtgeosys.generic_hash(gid, hashmethod=hashmethod)
-        return hash
+        hash_ = xtgeosys.generic_hash(gid, hashmethod=hashmethod)
+        return hash_
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
@@ -1566,19 +1573,24 @@ class RegularSurface:
 
         return ((xc0, yc0), (xc1, yc1), (xc2, yc2), (xc3, yc3))
 
-    def get_value_from_xy(self, point=(0.0, 0.0)):
+    def get_value_from_xy(self, point=(0.0, 0.0), sampling="bilinear"):
         """Return the map value given a X Y point.
 
         Args:
             point (float tuple): Position of X and Y coordinate
+            sampling (str): Sampling method, either "bilinear" for bilinear
+                interpolation, or "nearest" for nearest node sampling (e.g. facies maps)
+
         Returns:
             The map value (interpolated). None if XY is outside defined map
 
         Example::
             mvalue = map.get_value_from_xy(point=(539291.12, 6788228.2))
 
+
+        .. versionchanged:: 2.14 Added keyword option `sampling`
         """
-        zcoord = _regsurf_oper.get_value_from_xy(self, point=point)
+        zcoord = _regsurf_oper.get_value_from_xy(self, point=point, sampling=sampling)
 
         return zcoord
 
@@ -2427,28 +2439,42 @@ class RegularSurface:
     # Special methods
     # ==================================================================================
 
-    def get_fence(self, xyfence):
+    def get_fence(
+        self, xyfence: np.ndarray, sampling: Optional[str] = "bilinear"
+    ) -> np.ma.MaskedArray:
         """Sample the surface along X and Y positions (numpy arrays) and get Z.
 
-        Note the result is a masked numpy (2D) with rows masked.
+        .. versionchanged:: 2.14 Added keyword option `sampling`
+
+        Returns a masked numpy 2D array similar as input, but with updated
+        Z values, which are masked if undefined.
 
         Args:
-            xyfence (np): A 2D numpy array with shape (N, 3) where columns
+            xyfence: A 2D numpy array with shape (N, 3) where columns
                 are (X, Y, Z). The Z will be updated to the map.
+            sampling: Use "bilinear" (default) for interpolation or "nearest" for
+                snapping to nearest node.
 
-        Returns:
-            ndarray: A numpy 2D array similar as input, but with updated
         """
-        xyfence = _regsurf_oper.get_fence(self, xyfence)
+        xyfence = _regsurf_oper.get_fence(self, xyfence, sampling=sampling)
 
         return xyfence
 
-    def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
+    def get_randomline(
+        self,
+        fencespec: Union[np.ndarray, object],
+        hincrement: Optional[Union[bool, float]] = None,
+        atleast: Optional[int] = 5,
+        nextend: Optional[int] = 2,
+        sampling: Optional[str] = "bilinear",
+    ) -> np.ndarray:
         """Extract a line along a fencespec.
 
-        Here, horizontal axis is "length" and vertical axis is sampled depth.
+        .. versionadded:: 2.1
+        .. versionchanged:: 2.14 Added keyword option `sampling`
 
-        This is used for fence plots.
+        Here, horizontal axis is "length" and vertical axis is sampled depth, and
+        this is used for fence plots.
 
         The input fencespec is either a 2D numpy where each row is X, Y, Z, HLEN,
         where X, Y are UTM coordinates, Z is depth/time, and HLEN is a
@@ -2459,20 +2485,22 @@ class RegularSurface:
         map resolution. If a Polygons() instance, this is automated if hincrement is
         None, and ignored if hincrement is False.
 
+        Returns a ndarray with shape (:, 2).
+
         Args:
-            fencespec (:obj:`~numpy.ndarray` or :class:`~xtgeo.xyz.polygons.Polygons`):
+            fencespec:
                 2D numpy with X, Y, Z, HLEN as rows or a xtgeo Polygons() object.
-            hincrement (float or bool): Resampling horizontally. This applies only
+            hincrement: Resampling horizontally. This applies only
                 if the fencespec is a Polygons() instance. If None (default),
                 the distance will be deduced automatically. If False, then it assumes
                 the Polygons can be used as-is.
-            atleast (int): Minimum number of horizontal samples (only if
+            atleast: Minimum number of horizontal samples (only if
                 fencespec is a Polygons instance and hincrement != False)
-            nextend (int): Extend with nextend * hincrement in both ends (only if
+            nextend: Extend with nextend * hincrement in both ends (only if
                 fencespec is a Polygons instance and hincrement != False)
+            sampling: Use "bilinear" (default) for interpolation or "nearest" for
+                snapping to nearest node.
 
-        Returns:
-            An array: ndarray2d (:, 2)
 
         Example::
 
@@ -2487,15 +2515,18 @@ class RegularSurface:
             # matplotlib...
             plt.plot(distance, zval)
 
-        .. versionadded:: 2.1
-
         .. seealso::
            Class :class:`~xtgeo.xyz.polygons.Polygons`
               The method :meth:`~xtgeo.xyz.polygons.Polygons.get_fence()` which can be
               used to pregenerate `fencespec`
         """
         xyfence = _regsurf_oper.get_randomline(
-            self, fencespec, hincrement=hincrement, atleast=atleast, nextend=nextend
+            self,
+            fencespec,
+            hincrement=hincrement,
+            atleast=atleast,
+            nextend=nextend,
+            sampling=sampling,
         )
 
         return xyfence

@@ -2,10 +2,12 @@
  ***************************************************************************************
  *
  * NAME:
- *    x_interp_map_node.c
+ *    x_interp_map_nodes.c
  *
  * DESCRIPTION:
- *    This routine finds the interpolation within a set of 4 map nodes
+ *    Find the Z value by bilinear interpolation or nearest XY (i.e. snapping)
+ *    within a set of 4 map nodes.
+ *
  *    The routine assumes that the point is inside the nodes given by x_v,
  *    y_v, and z_v. This must be checked by the calling routine, but a
  *    test here is also provided.
@@ -17,11 +19,12 @@
  *     0       1          |___E
  *
  * ARGUMENTS:
- *    x_v, y_v, z_v  i     Coordiantes for XYZ, 4 corners
+ *    x_v, y_v, z_v  i     Coordinates for XYZ, 4 corners
  *    x, y           i     Defining point inside map cell
- *    method         i     1: my own (not that good?)
+ *    method         i     1: my own (not that good? kept for reference)
  *                         2: bilinear interpolation nonrotated mesh
  *                         3: bilinear interpolation general/rotated mesh
+ *                         4: Nearest node sampling, suitable for discrete maps
  *
  * RETURNS:
  *    Z value upon success, but UNDEF_MAP if problems
@@ -46,7 +49,7 @@ x_interp_map_nodes(double *x_v,
                    int method)
 {
     int i, ier;
-    double w[4], summ, z;
+    double w[4], z;
     double a, b, xmin, xmax, ymin, ymax, dx, dy, dxx, dyy;
 
     xmin = UNDEF_MAP;
@@ -68,9 +71,8 @@ x_interp_map_nodes(double *x_v,
     }
 
     /*
-     * ########################################################################
      * Some checks
-     * ########################################################################
+     * ---------------------------------------------------------------------------------
      */
     if (x < xmin || x > xmax || y < ymin || y > ymax) {
         return UNDEF_MAP;
@@ -84,9 +86,8 @@ x_interp_map_nodes(double *x_v,
     }
 
     /*
-     * ########################################################################
-     * Method 1 use JCR home made interpolation
-     * ########################################################################
+     * Method 1 use JCR home made interpolation (legacy)
+     * ---------------------------------------------------------------------------------
      */
     if (method == 1) {
 
@@ -102,7 +103,7 @@ x_interp_map_nodes(double *x_v,
         for (i = 0; i < 4; i++) {
             w[i] = sqrt(pow((x - x_v[i]), 2) + pow((y - y_v[i]), 2));
         }
-        summ = 0.0;
+        double summ = 0.0;
         for (i = 0; i < 4; i++) {
             if (w[i] > 0.00001) {
                 w[i] = 1.0 / w[i];
@@ -129,9 +130,8 @@ x_interp_map_nodes(double *x_v,
         }
     }
     /*
-     * ########################################################################
-     * Method 2 bilinear formula (elegant...)
-     * ########################################################################
+     * Method 2 bilinear formula (elegant...) for nonrotated (derotated!) maps
+     * ---------------------------------------------------------------------------------
      */
     else if (method == 2) {
 
@@ -149,6 +149,10 @@ x_interp_map_nodes(double *x_v,
             a * b * (z_v[3] + z_v[0] - z_v[2] - z_v[1]);
     }
 
+    /*
+     * Method 2 bilinear formula with rotation
+     * ---------------------------------------------------------------------------------
+     */
     else if (method == 3) {
 
         /*
@@ -195,7 +199,33 @@ x_interp_map_nodes(double *x_v,
 
         z = z_v[0] + a * (z_v[1] - z_v[0]) + b * (z_v[2] - z_v[0]) +
             a * b * (z_v[3] + z_v[0] - z_v[2] - z_v[1]);
-    }
 
+        /*
+         * Nearest node sampling
+         * ---------------------------------------------------------------------------------
+         */
+    } else if (method == 4) {
+
+        /*
+         * Use nearest sampling, measing the distance to each corner and then choose
+         * the nearest without any averaging (suitable for discrete maps)
+         *
+         * 2               3
+         * |---------------|
+         * |   *           |
+         * |---------------|
+         * 0               1
+         */
+        double len, dummy1, dummy2;
+        double previous = VERYLARGEFLOAT;
+        z = UNDEF;
+        for (i = 0; i < 4; i++) {
+            x_vector_info2(x, x_v[i], y, y_v[i], &len, &dummy1, &dummy2, -1);
+            if (len < previous) {
+                z = z_v[i];
+                previous = len;
+            }
+        }
+    }
     return z;
 }

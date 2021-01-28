@@ -1,25 +1,46 @@
 # coding: utf-8
 """Various operations"""
 
-
 import numbers
 import numpy as np
 import numpy.ma as ma
 
 import xtgeo
 from xtgeo.xyz import Polygons
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
-#
-# pylint: disable=protected-access
+VALID_OPER = (
+    "add",
+    "iadd",
+    "sub",
+    "isub",
+    "mul",
+    "imul",
+    "div",
+    "idiv",
+    "lt",
+    "gt",
+    "le",
+    "eq",
+    "ne",
+)
+
+VALID_OPER_POLYS = (
+    "add",
+    "sub",
+    "mul",
+    "div",
+    "set",
+    "eli",
+)
 
 
-def operations_two(self, other, oper="add"):
+def operations_two(self, other, oper="add"):  # pylint: disable=too-many-branches
     """General operations between two maps"""
 
     other = _check_other(self, other)
@@ -31,6 +52,11 @@ def operations_two(self, other, oper="add"):
         # to avoid that the "other" instance is changed
         useother = self.copy()
         useother.resample(other)
+
+    if oper not in VALID_OPER:
+        raise ValueError(f"Operation key oper has invalid value: {oper}")
+
+    retvalue = None
 
     if oper == "add":
         self.values = self.values + useother.values
@@ -51,22 +77,25 @@ def operations_two(self, other, oper="add"):
 
     # comparisons:
     elif oper == "lt":
-        return self.values < other.values
+        retvalue = self.values < other.values
     elif oper == "gt":
-        return self.values > other.values
+        retvalue = self.values > other.values
     elif oper == "le":
-        return self.values <= other.values
+        retvalue = self.values <= other.values
     elif oper == "ge":
-        return self.values >= other.values
+        retvalue = self.values >= other.values
     elif oper == "eq":
-        return self.values == other.values
+        retvalue = self.values == other.values
     elif oper == "ne":
-        return self.values != other.values
+        retvalue = self.values != other.values
 
     if useother is not other:
         del useother
 
     self._filesrc = "Calculated"
+
+    # return None or a boolean array
+    return retvalue
 
 
 def _check_other(self, other):
@@ -155,10 +184,12 @@ def distance_from_point(self, point=(0, 0), azimuth=0.0):
     self.set_values1d(svalues)
 
 
-def get_value_from_xy(self, point=(0.0, 0.0)):
+def get_value_from_xy(self, point=(0.0, 0.0), sampling="bilinear"):
     """Find surface value for point X Y."""
 
     xcoord, ycoord = point
+
+    option = 0 if sampling == "bilinear" else 2
 
     zcoord = _cxtgeo.surf_get_z_from_xy(
         float(xcoord),
@@ -172,6 +203,7 @@ def get_value_from_xy(self, point=(0.0, 0.0)):
         self.yflip,
         self.rotation,
         self.get_values1d(),
+        option,
     )
 
     if zcoord > xtgeo.UNDEF_LIMIT:
@@ -323,12 +355,14 @@ def get_xy_values1d(self, order="C", activeonly=True):
     return xvals, yvals
 
 
-def get_fence(self, xyfence):
+def get_fence(self, xyfence, sampling="bilinear"):
     """Get surface values along fence."""
 
     cxarr = xyfence[:, 0]
     cyarr = xyfence[:, 1]
     czarr = xyfence[:, 2].copy()
+
+    sampleoptions = {"bilinear": 0, "nearest": 2}
 
     # czarr will be updated "inplace":
     istat = _cxtgeo.surf_get_zv_from_xyv(
@@ -344,6 +378,7 @@ def get_fence(self, xyfence):
         self.yflip,
         self.rotation,
         self.get_values1d(),
+        sampleoptions.get(sampling, 0),
     )
 
     if istat != 0:
@@ -356,7 +391,9 @@ def get_fence(self, xyfence):
     return xyfence
 
 
-def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
+def get_randomline(
+    self, fencespec, hincrement=None, atleast=5, nextend=2, sampling="bilinear"
+):
     """Get surface values along fence."""
 
     if hincrement is None and isinstance(fencespec, xtgeo.Polygons):
@@ -366,6 +403,8 @@ def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
 
     if fencespec is None or fencespec is False:
         return None
+
+    sampleoptions = {"bilinear": 0, "nearest": 2}
 
     xcoords = fencespec[:, 0]
     ycoords = fencespec[:, 1]
@@ -386,6 +425,7 @@ def get_randomline(self, fencespec, hincrement=None, atleast=5, nextend=2):
         self.yflip,
         self.rotation,
         self.get_values1d(),
+        sampleoptions.get(sampling, 0),
     )
 
     if istat != 0:
@@ -404,6 +444,8 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
 
         avgdxdy = 0.5 * (self.xinc + self.yinc)
         distance = 0.5 * avgdxdy
+    else:
+        distance = hincrement
 
     logger.info("Getting fence from a Polygons instance...")
     fspec = fencespec.get_fence(
@@ -418,6 +460,8 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     if not isinstance(poly, Polygons):
         raise ValueError("The poly input is not a Polygons instance")
+    if opname not in VALID_OPER_POLYS:
+        raise ValueError(f"Operation key opname has invalid value: {opname}")
 
     # make a copy of the RegularSurface which is used a "filter" or "proxy"
     # value will be 1 inside polygons, 0 outside. Undef cells are kept as is
@@ -439,7 +483,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
 
     idgroups = poly.dataframe.groupby(poly.pname)
 
-    for _id, grp in idgroups:
+    for _, grp in idgroups:
         xcor = grp[poly.xname].values
         ycor = grp[poly.yname].values
 
@@ -468,6 +512,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True):
     if not inside:
         proxytarget = 0
 
+    tmp = None
     if opname == "add":
         tmp = self.values.copy() + value
     elif opname == "sub":

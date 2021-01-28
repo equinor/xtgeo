@@ -331,6 +331,7 @@ def snap_surface(self, surf, activeonly=True):
         surf.yflip,
         surf.rotation,
         surf.get_values1d(),
+        0,
     )
 
     if ier != 0:

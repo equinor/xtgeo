@@ -12,17 +12,22 @@ def pytest_runtest_setup(item):
 
     markers = [value.name for value in item.iter_markers()]
 
+    # pytest.mark.xtgshow (showing plots):
+    if "xtgshow" in markers:
+        if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
+            pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
+
     # pytest.mark.bigtest
     if "bigtest" in markers:
         if "XTG_BIGTEST" not in os.environ:
             pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
-    # @@pytest.mark.skipifroxar:
+    # pytest.mark.skipifroxar:
     if "skipifroxar" in markers:
         if "ROXENV" in os.environ:
             pytest.skip("Skip test in ROXENV (env variable ROXENV is present)")
 
-    # @pytest.mark.skipunlessroxar:
+    # pytest.mark.skipunlessroxar:
     if "skipunlessroxar" in markers:
         if "ROXENV" not in os.environ:
             pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
@@ -48,6 +53,14 @@ def assert_equal(this, that, txt=""):
 def assert_almostequal(this, that, tol, txt=""):
     """Assert almost equal wrapper function."""
     assert this == pytest.approx(that, abs=tol), txt
+
+
+@pytest.fixture(name="xtgshow")
+def fixture_xtgshow():
+    """For eventual plotting, to be uses in an if sence inside a test."""
+    if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
+        return True
+    return False
 
 
 @pytest.fixture(name="demo")

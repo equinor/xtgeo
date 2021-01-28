@@ -466,7 +466,8 @@ surf_get_z_from_ij(int ic,
                    double yinc,
                    double xori,
                    double yori,
-                   double *p_map_v);
+                   double *p_map_v,
+                   int option);
 
 double
 surf_get_z_from_xy(double x,
@@ -480,8 +481,8 @@ surf_get_z_from_xy(double x,
                    int yflip,
                    double rot_deg,
                    double *swig_np_dbl_in_v1,  // *p_map_v
-                   long n_swig_np_dbl_in_v1    // nn
-);
+                   long n_swig_np_dbl_in_v1,   // nn
+                   int option);
 
 int
 surf_get_zv_from_xyv(double *swig_np_dbl_in_v1,  // *xv
@@ -499,7 +500,8 @@ surf_get_zv_from_xyv(double *swig_np_dbl_in_v1,  // *xv
                      int yflip,
                      double rot_deg,
                      double *swig_np_dbl_in_v3,  // *p_map_v,
-                     long n_swig_np_dbl_in_v3);
+                     long n_swig_np_dbl_in_v3,
+                     int option);
 
 int
 surf_xy_as_values(double xori,
