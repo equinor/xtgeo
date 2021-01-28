@@ -5,9 +5,10 @@ Credits
 Development Lead
 ----------------
 
-* Jan C. Rivenaes, Equinor R&T
+* Dr. Jan C. Rivenæs, Equinor R&T
 
-Contributors
-------------
+Other contacts
+--------------
 
-None yet. Why not be the first?
+* Equinor SIB, Bergen
+* Equinor R&T, Bergen

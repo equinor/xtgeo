@@ -1,5 +1,4 @@
-# History for XTGeo
-
+# Release notes
 
 ## Version 2.14 (in prep)
 
