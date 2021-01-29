@@ -33,7 +33,7 @@ apidoc_output_dir = "apiref"
 apidoc_excluded_paths = ["tests"]
 apidoc_separate_modules = True
 apidoc_module_first = True
-apidoc_extra_args = ["-H", "XTGeo API description"]
+apidoc_extra_args = ["-H", "XTGeo API reference"]
 
 autoclass_content = "both"
 
@@ -48,7 +48,7 @@ master_doc = "index"
 # General information about the project.
 project = "xtgeo"
 current_year = date.today().year
-copyright = "Equinor 2019 - " + str(current_year)
+copyright = "Equinor 2019 - " + str(current_year) + f" (XTGeo release {release})"
 
 
 # Sort members by input order in classes
