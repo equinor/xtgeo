@@ -8,7 +8,7 @@ Examples on use inside RMS
 
 RMS_ is a licensed proprietary modeling software developed by Emerson.
 From version 10 it has its own python engine integrated, and XTGeo is designed
-to work inside this environment. The integration will be continuosly improved.
+to work inside this environment. The integration will be continuously improved.
 
 Hence XTGeo can read most datatypes that are exposed in RMS' API (called ROXAPI),
 and then all native methods in XTGeo can be applied on those data. For example,
