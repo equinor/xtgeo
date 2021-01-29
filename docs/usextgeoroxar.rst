@@ -1,11 +1,21 @@
 .. highlight:: python
 
-===============================
-Examples on use of XTGeo in RMS
-===============================
+==========================
+Examples on use inside RMS
+==========================
 
-XTGeo can be incorporated within the RMS user interface and share
-data with RMS. The integration will be continuosly improved.
+.. _RMS: https://www.emerson.com/no-no/automation/operations-business-management/reservoir-management-software
+
+RMS_ is a licensed proprietary modeling software developed by Emerson.
+From version 10 it has its own python engine integrated, and XTGeo is designed
+to work inside this environment. The integration will be continuosly improved.
+
+Hence XTGeo can read most datatypes that are exposed in RMS' API (called ROXAPI),
+and then all native methods in XTGeo can be applied on those data. For example,
+if you want to write a surface from RMS to a format that ROXAPI does not
+support, but XTGeo supports, then it is quite easy. XTGeo can also read data from
+external files and store the data in the RMS data tree.
+
 Note that all these script examples are assumed to be ran inside
 a python job within RMS.
 

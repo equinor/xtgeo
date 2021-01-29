@@ -33,7 +33,7 @@ apidoc_output_dir = "apiref"
 apidoc_excluded_paths = ["tests"]
 apidoc_separate_modules = True
 apidoc_module_first = True
-apidoc_extra_args = ["-H", "XTGeo API description"]
+apidoc_extra_args = ["-H", "XTGeo API reference"]
 
 autoclass_content = "both"
 

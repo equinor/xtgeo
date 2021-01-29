@@ -1,14 +1,15 @@
 .. highlight:: python
 
-========
-Examples
-========
+==============================
+Examples in standalone scripts
+==============================
 
 .. comments
    These examples are ran in Jupyter notebook...
 
 XTGeo is Python library to work with surfaces, grids, cubes, wells, etc,
-possibly in combinations.
+possibly in combinations. It is easy to make small user scripts that runs from
+the command line in Linux, Mac and Windows.
 
 ------------------
 Surface operations
