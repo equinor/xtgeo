@@ -7,7 +7,7 @@ import numbers
 import hashlib
 import pathlib
 from types import FunctionType
-
+from typing import Optional, Union, Any
 import numpy as np
 
 import xtgeo
@@ -129,106 +129,140 @@ class GridProperty(_Grid3D):
 
        poronumpy = poro.values1d
 
-    Args:
-        *args: If a value exists, it should either be a file name, a Grid()
-            or a GridProperty() instance. See examples below
-        ncol (int): Number of columns.
-        nrow (int): Number of rows.
-        nlay (int): Number of layers.
-        values (numpy): A 3D masked numpy of shape (ncol, nrow, nlay).
-        name (str): Name of property.
-        discrete (bool): True if discrete property
-            (default is false).
-        fracture (bool): Indicates a fracture setup (for flow simulator)
-        codes (dict): A code to name dictionary (for discrete)
-
-    Alternatively, the same arguments as the from_file() method
-    can be used.
-
-    Returns:
-        A GridProperty object instance.
-
-    Raises:
-        RuntimeError: if something goes wrong (e.g. file not found)
-
-    Examples::
-
-        from xtgeo.grid3d import GridProperty
-        myprop = GridProperty()
-        myprop.from_file('emerald.roff', name='PORO')
-
-        # or
-
-        values = np.ma.ones((12, 17, 10), dtype=np.float64),
-        myprop = GridProperty(ncol=12, nrow=17, nlay=10,
-                              values=values, discrete=False,
-                              name='MyValue')
-
-        # or
-
-        myprop = GridProperty('emerald.roff', name='PORO')
-
-        # or create properties from a Grid() instance
-
-        mygrid = Grid("grid.roff")
-        myprop1 = GridProperty(mygrid, name='PORO')
-        myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1,
-                               linkgeometry=True)  # alternative 1
-        myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
-
-        # from Grid instance:
-        grd = Grid("somefile_grid_file")
-        myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
-
-        # or from existing GridProperty instance:
-        myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
-
-
     .. versionchanged:: 2.6 Possible to make GridProperty instance directly from Grid()
     .. versionchanged:: 2.8 Possible to base it on existing GridProperty() instance
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        pfile: Optional[Union[str, pathlib.Path, Any]] = None,
+        fformat: Optional[str] = "guess",
+        ncol: Optional[int] = 4,
+        nrow: Optional[int] = 3,
+        nlay: Optional[int] = 5,
+        name: Optional[str] = "unknown",
+        discrete: Optional[bool] = False,
+        date: Optional[str] = None,
+        grid: Optional[Any] = None,
+        linkgeometry: Optional[bool] = True,
+        fracture: Optional[bool] = False,
+        codes: Optional[dict] = None,
+        dualporo: Optional[bool] = False,
+        dualperm: Optional[bool] = False,
+        roxar_dtype: Optional[Any] = np.float32,
+        values: Optional[Union[np.ndarray, float, int]] = None,
+    ):
+        """Instantating.
+
+            Args:
+                pfile: Input file-like or a Grid/GridProperty instance or leave blank.
+                fformat: File format input, default is ``guess``.
+                ncol: Number of columns (nx).
+                nrow: Number of rows (ny).
+                ncol: Number of layers (nz).
+                name: Name of property.
+                discrete: True or False.
+                date: Date on YYYYMMDD form.
+                grid: Attached grid object
+                linkgeometry: If True, establish a link between GridProperty and Grid
+                fracture: True if fracture option (relevant for flow simulator data)
+                codes: Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}
+                dualporo: True if dual porosity system.
+                dualperm: True if dual porosity and dual permeability system.
+                roxar_dtype: Spesify roxar datatype e.g. np.uint8
+                values: Values to apply (will not be applied if a file-like is input)
+
+        Returns:
+            A GridProperty object instance.
+
+        Raises:
+            RuntimeError: if something goes wrong (e.g. file not found)
+
+        Examples::
+
+            from xtgeo.grid3d import GridProperty
+            myprop = GridProperty()
+            myprop.from_file('emerald.roff', name='PORO')
+
+            # or
+
+            values = np.ma.ones((12, 17, 10), dtype=np.float64),
+            myprop = GridProperty(ncol=12, nrow=17, nlay=10,
+                                  values=values, discrete=False,
+                                  name='MyValue')
+
+            # or
+
+            myprop = GridProperty('emerald.roff', name='PORO')
+
+            # or create properties from a Grid() instance
+
+            mygrid = Grid("grid.roff")
+            myprop1 = GridProperty(mygrid, name='PORO')
+            myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1,
+                                   linkgeometry=True)  # alternative 1
+            myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
+
+            # from Grid instance:
+            grd = Grid("somefile_grid_file")
+            myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
+
+            # or from existing GridProperty instance:
+            myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
+
+        """
 
         super().__init__()
 
+        self._ncol = ncol
+        self._nrow = nrow
+        self._nlay = nlay
+
         # instance attributes defaults:
-        self._ncol = kwargs.get("ncol", 5)
-        self._nrow = kwargs.get("nrow", 12)
-        self._nlay = kwargs.get("nlay", 2)
-        self._name = kwargs.get("name", "unknown")
-        self._date = kwargs.get("date", None)
-        self._isdiscrete = kwargs.get("discrete", False)
-        self._geometry = kwargs.get("grid", None)
-        self._fracture = kwargs.get("fracture", False)
-        self._codes = kwargs.get("codes", dict())  # code dictionary (for discrete)
+        self._name = name
+        self._date = date
+        self._isdiscrete = discrete
+        self._geometry = grid
+        self._fracture = fracture
+        self._codes = dict() if codes is None else codes
 
         # not primary input:
-        self._dualporo = kwargs.get("dualporo", False)
-        self._dualperm = kwargs.get("dualperm", False)
+        self._dualporo = dualporo
+        self._dualperm = dualperm
+
         self._filesrc = None
         self._actnum_indices = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
-        self._roxar_dtype = kwargs.get("roxar_dtype", np.float32)
+        self._roxar_dtype = roxar_dtype
+        self._values = values
 
-        self._values = kwargs.get("values", None)
-        self._undef = xtgeo.UNDEF
+        self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
 
-        if len(args) == 1:
+        if pfile is not None:
             # make instance through grid/gridprop instance or file import
-            if isinstance(args[0], (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
-                linkgeometry = kwargs.get("linkgeometry", False)
+            if isinstance(pfile, (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
                 _gridprop_etc.gridproperty_fromgrid(
-                    self, args[0], linkgeometry=linkgeometry
+                    self,
+                    pfile,
+                    linkgeometry=linkgeometry,
+                    values=values,
                 )
 
-            elif isinstance(args[0], (str, pathlib.Path)):
-                _gridprop_etc.gridproperty_fromfile(self, args[0], **kwargs)
+            elif isinstance(pfile, (str, pathlib.Path)):
+                self.from_file(
+                    pfile,
+                    fformat=fformat,
+                    name=name,
+                    grid=grid,
+                    gridlink=linkgeometry,
+                    date=date,
+                    fracture=fracture,
+                )
 
         else:
-            # make instance purely from kwargs spec
-            _gridprop_etc.gridproperty_fromspec(self, **kwargs)
+            # make values
+            _gridprop_etc.gridvalues_fromspec(self, values)
 
         self._metadata = xtgeo.MetaDataCPProperty()
 
@@ -863,7 +897,7 @@ class GridProperty(_Grid3D):
         """Return an ACTNUM GridProperty object.
 
         Note that this method is similar to, but not identical to,
-        the job with sam name in Grid(). Here, the maskedarray of the values
+        the job with same name in Grid(). Here, the maskedarray of the values
         is applied to deduce the ACTNUM array.
 
         Args:
@@ -893,6 +927,7 @@ class GridProperty(_Grid3D):
             vact = np.ma.masked_equal(vact, 0)
 
         act.values = vact.astype(np.int32)
+        act.isdiscrete = True
         act.codes = {0: "0", 1: "1"}
 
         # return the object

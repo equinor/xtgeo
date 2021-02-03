@@ -748,13 +748,27 @@ def test_generate_hash():
     assert grd1.generate_hash() == grd2.generate_hash()
 
 
-def test_gridquality_properties():
+def test_gridquality_properties(xtgshow):
     """Get grid quality props."""
     grd1 = Grid(GRIDQC1)
 
     props1 = grd1.get_gridquality_properties()
     minang = props1.get_prop_by_name("minangle_topbase")
     assert minang.values[5, 2, 1] == pytest.approx(71.05561, abs=0.001)
+    if xtgshow:
+        lay = 1
+        layslice = xtgeo.plot.Grid3DSlice()
+        layslice.canvas(title=f"Layer {lay}")
+        layslice.plot_gridslice(
+            grd1,
+            prop=minang,
+            mode="layer",
+            index=lay + 1,
+            window=None,
+            linecolor="black",
+        )
+
+        layslice.show()
 
     grd2 = Grid(GRIDQC2)
     props2 = grd2.get_gridquality_properties()
@@ -767,7 +781,22 @@ def test_gridquality_properties():
     props3 = grd3.get_gridquality_properties()
 
     concp = props3.get_prop_by_name("concave_proj")
-    assert concp.values.sum() == 7949
+    if xtgshow:
+        lay = 23
+        layslice = xtgeo.plot.Grid3DSlice()
+        layslice.canvas(title=f"Layer {lay}")
+        layslice.plot_gridslice(
+            grd3,
+            prop=concp,
+            mode="layer",
+            index=lay + 1,
+            window=None,
+            linecolor="black",
+        )
+
+        layslice.show()
+
+    # assert concp.values.sum() == 7949
 
 
 def test_bulkvol():
