@@ -76,11 +76,11 @@ def test_banal7(xtgshow):
     assert grd.dimensions == (4, 2, 3)
     disc = GridProperty(BANAL7, name="DISC")
     assert disc.dimensions == (4, 2, 3)
-    print(disc.values)
+    assert disc.values.mean() == pytest.approx(0.59091, abs=0.001)
 
     gprops = grd.get_gridquality_properties()
     mix = gprops.get_prop_by_name("minangle_sides")
-    print(mix.values)
+    assert mix.values.mean() == pytest.approx(81.31036, abs=0.001)
 
     if xtgshow:
         lay = 2

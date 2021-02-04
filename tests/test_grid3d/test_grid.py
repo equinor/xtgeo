@@ -386,7 +386,7 @@ def test_roffbin_export_v2_banal6():
 
 
 @tsetup.bigtest
-def test_roffbin_bigbox(tmpdir):
+def test_roffbin_bigbox():
     """Test roff binary for bigbox, to monitor performance."""
     bigbox = TMPDIR / "bigbox.roff"
     if not bigbox.is_file():
