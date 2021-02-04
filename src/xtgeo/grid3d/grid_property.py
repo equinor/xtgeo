@@ -112,9 +112,9 @@ class GridProperty(_Grid3D):
     """Class for a single 3D grid property, e.g porosity or facies.
 
     An GridProperty instance may or may not 'belong' to a grid (geometry) object.
-     E.g. for ROFF input, ncol, nrow, nlay are given in the import file and the grid
-     geometry file is not needed. For many Eclipse files, the grid geometry is needed
-     as this holds the active number indices (ACTNUM).
+    E.g. for ROFF input, ncol, nrow, nlay are given in the import file and the grid
+    geometry file is not needed. For many Eclipse files, the grid geometry is needed
+    as this holds the active number indices (ACTNUM).
 
     Normally the instance is created when importing a grid
     property from file, but it can also be created directly, as e.g.::
