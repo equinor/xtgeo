@@ -18,15 +18,14 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def gridproperty_fromgrid(self, grid, linkgeometry=False):
-
-    """Make an simple GridProperty instance directly based on an existing grid or
-    gridproperty.
+def gridproperty_fromgrid(self, gridlike, linkgeometry=False, values=None):
+    """Make GridProperty instance directly based on an existing grid or gridproperty.
 
     Args:
-        grid (Grid or GridProperty): The grid(property) geometry instance
-        linkgeometry (bool): If True, connect the property.geometry to the input grid
-            which is only applicable if Grid is input
+        gridlike (Grid or GridProperty): The grid(property) geometry instance.
+        linkgeometry (bool): If True, connect the property.geometry to the input grid,
+            this is only applicable if Grid is input.
+        values: Input values (various data types)
     Example::
 
         import xtgeo
@@ -38,106 +37,69 @@ def gridproperty_fromgrid(self, grid, linkgeometry=False):
     .. versionadded:: 2.6
 
     """
-    self._ncol = grid.ncol
-    self._nrow = grid.nrow
-    self._nlay = grid.nlay
+    self._ncol = gridlike.ncol
+    self._nrow = gridlike.nrow
+    self._nlay = gridlike.nlay
 
-    vals = self._values
-    if vals is None:
-        vals = 0
+    gridvalues_fromspec(self, values)
 
-    if isinstance(vals, (int, float)):
-        dtype = np.float64
-        if self._isdiscrete:
-            dtype = np.int32
-            self._roxar_dtype = np.uint8
+    if isinstance(gridlike, xtgeo.grid3d.Grid):
 
-        if isinstance(vals, int):
-            vals = int(vals)
-        else:
-            vals = float(vals)
+        act = gridlike.get_actnum(asmasked=True)
 
-        vals = np.zeros(grid.dimensions, dtype=dtype) + vals
-    else:
-        vals = vals.copy()  # do copy do avoid potensial reference issues
-
-    if isinstance(grid, xtgeo.grid3d.Grid):
-
-        act = grid.get_actnum(asmasked=True)
-
-        self._values = np.ma.array(vals, mask=np.ma.getmaskarray(act.values))
+        self._values = np.ma.array(self._values, mask=np.ma.getmaskarray(act.values))
 
         del act
 
         if linkgeometry:
             # assosiate this grid property with grid instance. This is not default
             # since sunch links may affect garbish collection
-            self.geometry = grid
+            self.geometry = gridlike
 
-        grid.append_prop(self)
+        gridlike.append_prop(self)
 
     else:
-        self._values = np.ma.array(vals, mask=np.ma.getmaskarray(grid.values))
+        self._values = np.ma.array(
+            self._values, mask=np.ma.getmaskarray(gridlike.values)
+        )
 
 
-def gridproperty_fromfile(self, pfile, **kwargs):
-
-    """Make an GridProperty from file.
-
-    Args:
-        pfile (str): Name of file
-        **kwargs: Various settings
-
-    """
-    logger.debug("Import from file...")
-    fformat = kwargs.get("fformat", "guess")
-
-    self.from_file(
-        pfile,
-        fformat=fformat,
-        name=self._name,
-        grid=self._geometry,
-        gridlink=kwargs.get("gridlink"),
-        date=self._date,
-        fracture=self._fracture,
-    )
-
-
-def gridproperty_fromspec(self, **kwargs):
-
-    """Make an GridProperty from kwargs spec.
+def gridvalues_fromspec(self, values):
+    """Update or set values.
 
     Args:
-        pfile (str): Name of file
-        **kwargs: Various settings
-
+        values: Values will be None, and array or a scalar
     """
-
-    # self._geometry: this is a link to the Grid instance, _only if needed_. It may
-    # potentially make trouble for garbage collection
-
-    values = kwargs.get("values", None)
-
-    testmask = False
+    defaultvalues = False
     if values is None:
         values = np.ma.zeros(self.dimensions)
-        values += 99
-        testmask = True
 
-    if values.shape != self.dimensions:
-        values = values.reshape(self.dimensions, order="C")
+        if self.dimensions == (4, 3, 5):
+            # looks like default input values
+            values += 99
+            defaultvalues = True
+            self._isdiscrete = False
 
-    if not isinstance(values, np.ma.MaskedArray):
-        values = np.ma.array(values)
+    elif np.isscalar(values):
+        if isinstance(values, (float, int)):
+            dtype = np.float64
+            if self._isdiscrete:
+                dtype = np.int32
+                self._roxar_dtype = np.uint8
+            values = np.ma.zeros(self.dimensions, dtype=dtype) + values
+        else:
+            raise ValueError("Scalar input values of invalid type")
+
+    elif isinstance(values, np.ndarray):
+        values = np.ma.zeros(self.dimensions) + values.reshape(self.dimensions)
+
+    else:
+        raise ValueError("Input values of invalid type")
 
     self._values = values  # numpy version of properties (as 3D array)
 
-    if self._isdiscrete:
-        self._values = self._values.astype(np.int32)
-        self._roxar_dtype = np.uint8
-
-    if testmask:
-        # make some undef cells (for test)
+    if defaultvalues:
+        # make some undef cells (when in default values mode)
         self._values[0:4, 0, 0:2] = xtgeo.UNDEF
         # make it masked
         self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)

@@ -55,16 +55,47 @@ TESTFILE13B = TPATH / "3dgrids/etc/TEST_SP.INIT"
 
 DUALROFF = TPATH / "3dgrids/etc/dual_grid_w_props.roff"
 
+BANAL7 = TPATH / "3dgrids/etc/banal7_grid_params.roff"
+
 
 def test_create():
     """Create a simple property"""
 
     x = GridProperty()
-    assert x.ncol == 5, "NCOL"
-    assert x.nrow == 12, "NROW"
+    assert x.ncol == 4, "NCOL"
+    assert x.nrow == 3, "NROW"
 
     m = GridProperty(discrete=True)
     (repr(m.values))
+
+
+def test_banal7(xtgshow):
+    """Create a simple property in a small grid box"""
+
+    grd = Grid(BANAL7)
+    assert grd.dimensions == (4, 2, 3)
+    disc = GridProperty(BANAL7, name="DISC")
+    assert disc.dimensions == (4, 2, 3)
+    assert disc.values.mean() == pytest.approx(0.59091, abs=0.001)
+
+    gprops = grd.get_gridquality_properties()
+    mix = gprops.get_prop_by_name("minangle_sides")
+    assert mix.values.mean() == pytest.approx(81.31036, abs=0.001)
+
+    if xtgshow:
+        lay = 2
+        layslice = xtgeo.plot.Grid3DSlice()
+        layslice.canvas(title=f"Layer {lay}")
+        layslice.plot_gridslice(
+            grd,
+            prop=mix,
+            mode="layer",
+            index=lay,
+            window=None,
+            linecolor="black",
+        )
+
+        layslice.show()
 
 
 def test_assign():
@@ -130,7 +161,7 @@ def test_npvalues3d():
     xx = GridProperty()
     mynp = xx.get_npvalues3d()
 
-    assert mynp.shape == (5, 12, 2)
+    assert mynp.shape == (4, 3, 5)
     assert mynp[0, 0, 0] == xtgeo.UNDEF
 
     xx.isdiscrete = True
