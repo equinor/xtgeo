@@ -70,14 +70,14 @@ def gridvalues_fromspec(self, values):
     Args:
         values: Values will be None, and array or a scalar
     """
-    testmask = False
+    defaultvalues = False
     if values is None:
         values = np.ma.zeros(self.dimensions)
 
         if self.dimensions == (4, 3, 5):
-            # looks like default test
+            # looks like default input values
             values += 99
-            testmask = True
+            defaultvalues = True
             self._isdiscrete = False
 
     elif np.isscalar(values):
@@ -98,8 +98,8 @@ def gridvalues_fromspec(self, values):
 
     self._values = values  # numpy version of properties (as 3D array)
 
-    if testmask:
-        # make some undef cells (for test)
+    if defaultvalues:
+        # make some undef cells (when in default values mode)
         self._values[0:4, 0, 0:2] = xtgeo.UNDEF
         # make it masked
         self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
