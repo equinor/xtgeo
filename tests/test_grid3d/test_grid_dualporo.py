@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import absolute_import, division, print_function
 
 import itertools
 import os
@@ -7,6 +6,7 @@ from os.path import basename, join
 
 import numpy as np
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
