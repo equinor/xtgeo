@@ -71,6 +71,7 @@ src/xtgeo/_theversion.py
 src/xtgeo/cxtgeo/cxtgeo*
 
 # other
+.venv*
 .idea/
 .projectile
 .dir-locals.el
@@ -79,3 +80,4 @@ tmp_buildswig
 _skbuild/
 pip-wheel-metadata/
 .vscode/
+.venv*/

@@ -5,7 +5,6 @@ on:
     branches: [master]
 
 jobs:
-
   build_pywheels:
     name: PY ${{ matrix.python-version }} on linux
 
@@ -31,5 +30,5 @@ jobs:
       - name: Test with pytest
         run: |
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-          pip install pytest
+          pip install -r requirements/requirements_test.txt
           pytest --disable-warnings

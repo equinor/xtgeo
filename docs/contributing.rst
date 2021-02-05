@@ -82,9 +82,11 @@ up your fork for local development (first time):
     $ python -m venv .
     $ source bin/activate
     $ cd /your_path_to_git_clone/xtgeo/
-    $ pip install -r requirements_dev.txt
+    $ pip install pip -U
+    $ pip install -r requirements/requirements_dev.txt
     $ python setup.py clean
     $ python setup.py develop
+    $ pytest  # to check that stuff works
 
 4. Create a branch for local development:
 
@@ -103,7 +105,8 @@ Now you can make your changes locally.
     $ Use `pytest` for running tests
     $ Run `black` on your python code, then there is no discussions on formatting
 
-To get `flake8`, `pylint` and `black` and just pip install them into your virtualenv.
+To get ``flake8``, ``pylint`` and ``black`` and just pip install them into
+your virtualenv.
 
 6. If you want to edit C code, take contact with the author for detailed instructions.
 
@@ -116,7 +119,7 @@ To get `flake8`, `pylint` and `black` and just pip install them into your virtua
     $ git commit -m "AAA: Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-8. Submit a pull request through the Git website.
+8. Submit a pull request through the Github website.
 
 Writing commit messages
 -----------------------
