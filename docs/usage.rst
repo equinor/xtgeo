@@ -31,7 +31,7 @@ Initialising a Surface object (instance)
    surf = xtgeo.RegularSurface(ncol=33, nrow=50,
                                xori=34522.22, yori=6433231.21,
                                xinc=40.0, yinc=40.0, rotation=30,
-                               values=np.zeros((33,55))
+                               values=np.zeros((33,50)))
 
    # a more common method is to make an instance from file
    # there are some variant on how to to this:
