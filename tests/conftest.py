@@ -73,3 +73,24 @@ def fixture_demo():
         demo
     """
     print("THIS IS A DEMO")
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--testdatapath",
+        help="path to xtgeo-testdata, defaults to ../xtgeo-testdata"
+        "and is overriden by the XTG_TESTPATH environment variable."
+        "Experimental feature, not all tests obey this option.",
+        action="store",
+        default="../xtgeo-testdata",
+    )
+
+
+@pytest.fixture()
+def testpath(request):
+    testdatapath = request.config.getoption("--testdatapath")
+    environ_path = os.environ.get("XTG_TESTPATH", None)
+    if environ_path:
+        testdatapath = environ_path
+
+    return testdatapath
