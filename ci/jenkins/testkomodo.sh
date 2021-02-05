@@ -14,7 +14,7 @@ install_package () {
 }
 
 install_test_dependencies () {
-    pip install -r requirements_test.txt
+    pip install -r requirements/requirements_test.txt
 }
 
 start_tests () {

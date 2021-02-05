@@ -1,0 +1,11 @@
+# requirements for setup on localhost
+# see also ...setup_ci.txt and pyproject.toml
+pip>=20
+setuptools>=43
+wheel
+numpy
+cmake
+setuptools_scm
+scikit-build
+ninja
+pytest-runner

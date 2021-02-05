@@ -8,7 +8,7 @@ env:
   CIBW_BEFORE_ALL_LINUX: "sh scripts/swig_manylinux.sh"
   CIBW_BEFORE_ALL_WINDOWS: "choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
   CIBW_BEFORE_ALL_MACOS: "brew install swig"
-  # CIBW_TEST_COMMAND: "python -c \"import xtgeo; print(xtgeo.__version__)\""
+  CIBW_TEST_COMMAND: 'python -c "import xtgeo; print(xtgeo.__version__)"'
   CIBW_BUILD: |
     cp36-manylinux_x86_64
     cp37-manylinux_x86_64

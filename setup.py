@@ -1,246 +1,79 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""XTGeo: Subsurface reservoir tool for maps, 3D grids etc."""
-
-# Remember to run "python setup.py clean" before every install command
-
+#!/usr/bin/env python3
+"""Setup for XTGeo - subsurface reservoir tool for maps, 3D grids etc."""
 import os
 import sys
-import re
-from os.path import exists, dirname
-from glob import glob
-from shutil import rmtree
-import platform
-from distutils.command.clean import clean as _clean
-import fnmatch
-from distutils.spawn import find_executable
-from distutils.version import LooseVersion
-import subprocess  # nosec
+import pip
 
-from setuptools import find_packages
-from setuptools import setup as setuptools_setup
+MINIMUMPIP = 20
+if int(pip.__version__.split(".")[0]) < MINIMUMPIP:
+    print("Too old pip: ", pip.__version__)
+    print("Need at least version ", MINIMUMPIP)
 
-import skbuild
+try:
+    import setuptools
+    from setuptools import setup as setuptools_setup
+except ImportError:
+    print("\n*** Some requirements are missing, please run:")
+    print("\n*** pip install -r requirements/requirements_setup.txt\n\n")
+    raise
 
-from skbuild.command import set_build_base_mixin
-from skbuild.utils import new_style
-from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
+try:
+    import skbuild
+except ImportError:
+    print("\n*** Some requirements are missing, please run:")
+    print("\n*** pip install -r requirements/requirements_setup.txt\n")
+    raise
 
-from setuptools_scm import get_version
+from scripts import setup_utilities as setuputils
+
 
 CMD = sys.argv[1]
 
+README = setuputils.readmestuff("README.md")
+HISTORY = setuputils.readmestuff("HISTORY.md")
 
-# ======================================================================================
-# Overriding and extending setup commands
-# ======================================================================================
+setuputils.check_swig()  # Detect if swig is present and if case not, try a tmp install
 
+REQUIREMENTS = setuputils.parse_requirements("requirements/requirements.txt")
 
-class CleanUp(set_build_base_mixin, new_style(_clean)):
-    """Custom implementation of ``clean`` setuptools command.
+TEST_REQUIREMENTS = setuputils.parse_requirements("requirements/requirements_test.txt")
+SETUP_REQUIREMENTS = setuputils.parse_requirements(
+    "requirements/requirements_setup.txt"
+)
+DOCS_REQUIREMENTS = setuputils.parse_requirements("requirements/requirements_docs.txt")
+EXTRAS_REQUIRE = {"tests": TEST_REQUIREMENTS, "docs": DOCS_REQUIREMENTS}
 
-    Overriding clean in order to get rid if "dist" folder and etc
-    """
-
-    skroot = dirname(SKBUILD_DIR())
-
-    CLEANFOLDERS = (
-        CMAKE_INSTALL_DIR(),
-        CMAKE_BUILD_DIR(),
-        SKBUILD_DIR(),
-        skroot,
-        "TMP",
-        "__pycache__",
-        "pip-wheel-metadata",
-        ".eggs",
-        "dist",
-        "sdist",
-        "wheel",
-        ".pytest_cache",
-        "docs/apiref",
-        "docs/_build",
-        "docs/_static",
-        "docs/_templates",
-        "htmlcov",
-    )
-
-    CLEANFOLDERSRECURSIVE = ["__pycache__", "_tmp_*", "xtgeo.egg-info"]
-    CLEANFILESRECURSIVE = ["*.pyc", "*.pyo", ".coverage", "coverage.xml"]
-
-    CLEANFILES = glob("src/xtgeo/cxtgeo/cxtgeo*")
-    CLEANFILES.extend(glob("src/xtgeo/cxtgeo/_cxtgeo*"))
-
-    @staticmethod
-    def ffind(pattern, path):
-        result = []
-        for root, dirs, files in os.walk(path):
-            for name in files:
-                if fnmatch.fnmatch(name, pattern):
-                    result.append(os.path.join(root, name))
-        return result
-
-    @staticmethod
-    def dfind(pattern, path):
-        result = []
-        for root, dirs, files in os.walk(path):
-            for name in dirs:
-                if fnmatch.fnmatch(name, pattern):
-                    result.append(os.path.join(root, name))
-        return result
-
-    def run(self):
-        """After calling the super class implementation, this function removes
-        the directories specific to scikit-build ++."""
-        super(CleanUp, self).run()
-
-        for dir_ in CleanUp.CLEANFOLDERS:
-            if exists(dir_):
-                print("Removing: {}".format(dir_))
-            if not self.dry_run and exists(dir_):
-                rmtree(dir_)
-
-        for dir_ in CleanUp.CLEANFOLDERSRECURSIVE:
-            for pd in self.dfind(dir_, "."):
-                print("Remove folder {}".format(pd))
-                rmtree(pd)
-
-        for fil_ in CleanUp.CLEANFILESRECURSIVE:
-            for pf in self.ffind(fil_, "."):
-                print("Remove file {}".format(pf))
-                os.unlink(pf)
-
-        for fil_ in CleanUp.CLEANFILES:
-            if exists(fil_):
-                print("Removing: {}".format(fil_))
-            if not self.dry_run and exists(fil_):
-                os.remove(fil_)
+CMDCLASS = {"clean": setuputils.CleanUp}
 
 
-# ======================================================================================
-# Sphinx
-# ======================================================================================
-
-CMDSPHINX = {
-    "build_sphinx": {
-        "project": ("setup.py", "xtgeo"),
-        "version": ("setup.py", get_version()),
-        "release": ("setup.py", ""),
-        "source_dir": ("setup.py", "docs"),
-    }
-}
-
-
-# ======================================================================================
-# README stuff and Sphinx
-# ======================================================================================
-
-try:
-    with open("README.md") as readme_file:
-        README = readme_file.read()
-except OSError:
-    README = "See README.md"
-
-
-try:
-    with open("HISTORY.md") as history_file:
-        HISTORY = history_file.read()
-except OSError:
-    HISTORY = "See HISTORY.md"
-
-
-# ======================================================================================
-# Detect if swig is present (and if case not, do a tmp install on some platforms)
-# ======================================================================================
-
-SWIGMINIMUM = "3.0.1"
-
-
-def swigok():
-    """Check swig version"""
-    if CMD == "clean":
-        return True
-    swigexe = find_executable("swig")
-    if not swigexe:
-        print("Cannot find swig in system")
-        return False
-    sout = subprocess.check_output([swigexe, "-version"]).decode("utf-8")  # nosec
-    swigver = re.findall(r"SWIG Version ([0-9.]+)", sout)[0]
-    if LooseVersion(swigver) >= LooseVersion(SWIGMINIMUM):
-        print(
-            "OK, found swig in system, version is >= {} ({})".format(
-                SWIGMINIMUM, swigexe
-            )
-        )
-        return True
-
-    print("Found swig in system but version is < {} ({})".format(SWIGMINIMUM, swigexe))
-    return False
-
-
-if not swigok():
-    if "SWIG_INSTALL_KOMODO" in os.environ:
-        print("Hmm KOMODO setup but still cannot find swig... workaround required!")
-        with open(".swigtmp", "w") as tmpfile:
-            tmpfile.write("SWIG")
-
-    elif "Linux" in platform.system():
-        print("Installing swig from source (tmp) ...")
-        subprocess.check_call(  # nosec
-            ["bash", "swig_install.sh"],
-            cwd="scripts",
-        )
-    else:
-        raise SystemExit("Cannot find valid swig install")
-
-# ======================================================================================
-# Requirements:
-# ======================================================================================
-
-
-def parse_requirements(filename):
-    """Load requirements from a pip requirements file"""
-    try:
-        lineiter = (line.strip() for line in open(filename))
-        return [line for line in lineiter if line and not line.startswith("#")]
-    except OSError:
-        return []
-
-
-REQUIREMENTS = parse_requirements("requirements.txt")
-
-TEST_REQUIREMENTS = ["pytest", "pytest-cov"]
-
-
-# ======================================================================================
-# Special:
-# ======================================================================================
-
-
-def src(x):
+def src(anypath):
     root = os.path.dirname(__file__)
-    return os.path.abspath(os.path.join(root, x))
+    return os.path.abspath(os.path.join(root, anypath))
 
-
-# ======================================================================================
-# Setup:
-# ======================================================================================
 
 skbuild.setup(
     name="xtgeo",
     description="XTGeo is a Python library for 3D grids, surfaces, wells, etc",
-    use_scm_version={"root": src(""), "write_to": src("src/xtgeo/_theversion.py")},
+    use_scm_version={
+        "root": src(""),
+        "write_to": src("src/xtgeo/_theversion.py"),
+    },
     long_description=README + "\n\n" + HISTORY,
     long_description_content_type="text/markdown",
     author="Equinor R&T",
     url="https://github.com/equinor/xtgeo",
+    project_urls={
+        "Documentation": "https://xtgeo.readthedocs.io/",
+        "Issue Tracker": "https://github.com/equinor/xtgeo/issues",
+    },
     license="LGPL-3.0",
     cmake_args=["-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"],
-    packages=find_packages(where="src"),
+    packages=setuptools.find_packages(where="src"),
     package_dir={"": "src"},
-    cmdclass={"clean": CleanUp},
+    cmdclass=CMDCLASS,
     zip_safe=False,
     keywords="xtgeo",
-    command_options=CMDSPHINX,
+    command_options=setuputils.CMDSPHINX,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -260,7 +93,9 @@ skbuild.setup(
     ],
     test_suite="tests",
     install_requires=REQUIREMENTS,
+    setup_requires=SETUP_REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
+    extras_require=EXTRAS_REQUIRE,
 )
 
 # Below is a hack to make "python setup.py develop" or "pip install -e ." to work.
@@ -279,11 +114,16 @@ if CMD == "develop":
     print("Run in DEVELOP mode")
     setuptools_setup(  # use setuptools version of setup
         name="xtgeo",
-        use_scm_version={"root": src(""), "write_to": src("src/xtgeo/_theversion.py")},
-        packages=find_packages(where="src"),
+        use_scm_version={
+            "root": src(""),
+            "write_to": src("src/xtgeo/_theversion.py"),
+        },
+        packages=setuptools.find_packages(where="src"),
         package_dir={"": "src"},
         zip_safe=False,
         test_suite="tests",
         install_requires=REQUIREMENTS,
+        setup_requires=SETUP_REQUIREMENTS,
         tests_require=TEST_REQUIREMENTS,
+        extras_require=EXTRAS_REQUIRE,
     )

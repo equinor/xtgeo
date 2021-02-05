@@ -10,8 +10,8 @@ env:
   CIBW_BEFORE_ALL_MACOS: "brew install swig"
   CIBW_BEFORE_TEST: |
     cd {project}
-    pip install -r requirements.txt
-    pip install -r requirements_test.txt
+    pip install -r requirements/requirements.txt
+    pip install -r requirements/requirements_test.txt
 
   CIBW_TEST_COMMAND: |
     cd {project}
@@ -74,5 +74,5 @@ jobs:
       - name: Test with pytest
         run: |
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-          pip install pytest
+          pip install -r requirements/requirements_test.txt
           pytest --disable-warnings
