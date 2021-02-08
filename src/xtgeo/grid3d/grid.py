@@ -76,7 +76,7 @@ def grid_from_file(
 def grid_from_roxar(
     project, gname, realisation=0, dimensions_only=False, info=False
 ):  # pragma: no cover
-    """Read a grid inside a RMS project and return a Grid() instance.
+    """Read a 3D grid inside a RMS project and return a Grid() instance.
 
     Args:
         project (str or special): The RMS project or the project variable
