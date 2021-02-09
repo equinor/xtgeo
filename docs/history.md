@@ -1,6 +1,6 @@
 # Release notes
 
-## Version 2.14 (in prep)
+## Version 2.14
 
 * New features:
   * For some methods in RegularSurface(), a ``sampling`` key is added which in
@@ -12,7 +12,7 @@
     remove shoulder-bed effects, #457.
   * A pre-release (i.e. experimental!) support for free-form metadata and new formats:
     * A separate MetaData class for each major data-type.
-    * Native XTGeo formats. Should be very fast and support metadata.
+    * Native XTGeo formats for some data types. Should be very fast and support metadata.
     * Support for HDF-5 formats, should be quite/very fast, support metadata and
       compression.
     * In relation to this, more automatic format detection is initiated. This means
@@ -27,7 +27,7 @@
     relates to bug report #450.
   * When reading a discrete 3D property from Roxar API the codes may in
       some cases return an empty dictionary. This is now fixed, #465.
-  * Fix use realisations from Roxar API (3D grids), #443.
+  * Fix use of realisations key from Roxar API (3D grids), #443.
   * General improvements in documentation, e.g. clearer guidelines for contributions.
 
 ## Version 2.13
@@ -62,8 +62,11 @@ From this version support for Python 2.7 and 3.5 is dropped. Now only Python
 ### 2.13.2
 * Fix CI testing for Komodo (not affecting end user)
 
-### 2.13.2
+### 2.13.3
 * Adjust SWIG install in github actions (not affecting end user)
+
+### 2.13.4
+* Adjust CI install in github actions (not affecting end user)
 
 ## Version 2.12
 
