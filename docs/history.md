@@ -30,6 +30,10 @@
   * Fix use of realisations key from Roxar API (3D grids), #443.
   * General improvements in documentation, e.g. clearer guidelines for contributions.
 
+### 2.14.1
+* Technical build and docs (logo on RTD) issues, not affecting end users.
+
+
 ## Version 2.13
 
 From this version support for Python 2.7 and 3.5 is dropped. Now only Python
