@@ -1,7 +1,7 @@
 Welcome to XTGeo's documentation!
 ===========================================
 
-.. figure:: images/xtgeo-logo3.svg
+.. figure:: images/xtgeo-logo.png
      :alt: Logo
      :width: 300
      :align: center
