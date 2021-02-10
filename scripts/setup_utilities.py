@@ -179,10 +179,11 @@ def check_swig():
                 tmpfile.write("SWIG")
 
         elif "Linux" in platform.system():
-            print("Installing swig from source (tmp) ...")
+            print("Installing swig from source (tmp workaround) ...")
+            print("It is strongly recommended that SWIG>=3 is installed permanent!")
             subprocess.check_call(  # nosec
                 ["bash", "swig_install.sh"],
-                cwd="requirements",
+                cwd="scripts",
             )
         else:
             raise SystemExit("Cannot find valid swig install")
