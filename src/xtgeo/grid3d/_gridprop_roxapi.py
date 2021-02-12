@@ -98,13 +98,15 @@ def _convert_to_xtgeo_prop(
 
     if self._isdiscrete:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_INT_LIMIT)
-        self.codes = _fix_codes(roxprop.code_names)
-        logger.info("Fixed codes: %s", self.codes)
     else:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_LIMIT)
 
     self._values = mybuffer
     self._name = pname
+
+    if self._isdiscrete:
+        self.codes = _fix_codes(self, roxprop.code_names)
+        logger.info("Fixed codes: %s", self.codes)
 
 
 def export_prop_roxapi(
@@ -176,15 +178,24 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
         rprop.code_names = self.codes.copy()
 
 
-def _fix_codes(codes):  # pragma: no cover
-    """Roxar may provide a code list with empty strings; fix this issue here."""
+def _fix_codes(self, codes):  # pragma: no cover
+    """Roxar may provide a code list with empty strings values, fix this issue here.
+
+    Roxar may also interpolate code values which are actually not present in the
+    property. Here, the presence of actual codes is also checked.
+    """
     newcodes = {}
+    codes_data = {val: str(val) for val in np.unique(self.get_active_npvalues1d())}
+
     for code, name in codes.items():
         if not isinstance(code, int):
             code = int(code)
 
         if not name:
             name = str(code)
+
+        if code not in codes_data.keys():
+            continue
 
         newcodes[code] = name
 
