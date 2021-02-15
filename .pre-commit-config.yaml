@@ -3,8 +3,8 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
-    - id: trailing-whitespace
-    - id: mixed-line-ending
+      - id: trailing-whitespace
+      - id: mixed-line-ending
 
   - repo: https://github.com/psf/black
     rev: 20.8b1
@@ -26,9 +26,9 @@ repos:
     hooks:
       - id: pylint
         files: ^src/xtgeo/plot
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.0
-    hooks:
-    - id: bandit
-      args: [--skip, "B311", --recursive, --quiet]
-      files: src/xtgeo
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.7.0
+  #   hooks:
+  #   - id: bandit
+  #     args: [--skip, "B311", --recursive, --quiet]
+  #     files: src/xtgeo
