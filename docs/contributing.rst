@@ -121,6 +121,54 @@ your virtualenv.
 
 8. Submit a pull request through the Github website.
 
+
+Working with RMS python
+-----------------------
+The following is a special recipe when working with RMS' python version,
+and it is targeted to Equinor usage using bash shell in Linux:
+
+.. code-block:: bash
+
+    $ unset PYTHONPATH  # to avoid potential issues
+    # activate RMS python, e.g. RMS version 12.0.2
+    $ source /project/res/roxapi/aux/roxenvbash 12.0.2
+    # make a virtual env (once):
+    $ python -m venv ~/venv/py36_rms12.0.2
+    $ source ~/venv/py36_rms12.0.2/bin/activate
+    $ cd path_to_xtgeo/
+    $ python -m pip install pip -U
+    $ pip install requirements/requirements_dev.txt
+    $ python setup.py clean
+    $ python setup.py develop
+    $ pytest
+
+Now you have an editable install in your virtual environment that can be ran
+in RMS while testing. Hence open rms with ``rms`` command (not ``runrms``).
+
+Inside RMS you can open a Python dialog and run your version of xtgeo. Theoretically,
+you could now do changes in your editable install and RMS should see them.
+However, RMS will not load libraries updates once loaded, and ``importlib.reload``
+will not help help very much. One safe alternative is of course to close and
+reopen RMS, but that is unpractical and time consuming.
+The better alternative is a brute force hack in order to make it work,
+see the five lines of code in top of this example:
+
+.. code-block:: python
+
+    import sys
+    sysm = sys.modules.copy()
+    for k, _ in sysm.items():
+        if "xtgeo" in k:
+            del sys.modules[k]
+
+    import xtgeo
+
+    grd = xgeo.grid_from_roxar(project, "Geogrid")
+
+This will work if you change python code in xtgeo. If you change C code in xtgeo, then
+this hack will not work. The only solution is to close and re-open RMS everytime the
+C code is compiled.
+
 Writing commit messages
 -----------------------
 The following takes effect from year 2021.
