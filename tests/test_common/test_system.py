@@ -2,7 +2,6 @@
 import hashlib
 import io
 import pathlib
-from os.path import abspath, join
 
 import pytest
 
@@ -32,16 +31,16 @@ def test_generic_hash():
 
 
 surface_files_formats = {
-    join("surfaces", "reek", "1", "topupperreek.gri"): "irap_binary",
-    join("surfaces", "reek", "1", "reek_stooip_map.gri"): "irap_binary",
-    join("surfaces", "etc", "seabed_p.pmd"): "petromod",
+    pathlib.Path("surfaces/reek/1/topupperreek.gri"): "irap_binary",
+    pathlib.Path("surfaces/reek/1/reek_stooip_map.gri"): "irap_binary",
+    pathlib.Path("surfaces/etc/seabed_p.pmd"): "petromod",
 }
 
 
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_resolve_alias(testpath, filename):
     """Testing resolving file alias function."""
-    surf = xtgeo.RegularSurface(join(testpath, filename))
+    surf = xtgeo.RegularSurface(testpath / filename)
     md5hash = surf.generate_hash("md5")
 
     mname = xtgeo._XTGeoFile("whatever/$md5sum.gri", obj=surf)
@@ -63,7 +62,7 @@ def test_resolve_alias(testpath, filename):
 
 @pytest.fixture
 def reek_grid_path(testpath):
-    return join(testpath, "3dgrids", "reek")
+    return pathlib.Path(testpath) / "3dgrids/reek"
 
 
 @pytest.mark.parametrize(
@@ -72,11 +71,11 @@ def reek_grid_path(testpath):
         ("REEK.EGRID", True),
         ("", True),
         ("NOSUCH.EGRID", False),
-        (join("NOSUCH", "NOSUCH.EGRID"), False),
+        ("NOSUCH/NOSUCH.EGRID", False),
     ],
 )
 def test_file_exist(reek_grid_path, filename, does_exist):
-    xtgeo_file = xtgeo._XTGeoFile(join(reek_grid_path, filename))
+    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
     assert xtgeo_file.exists() is does_exist
 
 
@@ -85,11 +84,11 @@ def test_file_exist(reek_grid_path, filename, does_exist):
     [
         ("REEK.EGRID", True),
         ("NOSUCH.EGRID", False),
-        (join("NOSUCH", "NOSUCH.EGRID"), False),
+        ("NOSUCH/NOSUCH.EGRID", False),
     ],
 )
 def test_check_file(reek_grid_path, filename, check_ok):
-    xtgeo_file = xtgeo._XTGeoFile(join(reek_grid_path, filename))
+    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
     assert xtgeo_file.check_file() is check_ok
 
     if not check_ok:
@@ -102,11 +101,11 @@ def test_check_file(reek_grid_path, filename, check_ok):
     [
         ("REEK.EGRID", True),
         ("NOSUCH.EGRID", True),
-        (join("NOSUCH", "NOSUCH.EGRID"), False),
+        ("NOSUCH/NOSUCH.EGRID", False),
     ],
 )
 def test_check_folder(reek_grid_path, filename, check_ok):
-    xtgeo_file = xtgeo._XTGeoFile(join(reek_grid_path, filename))
+    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
     assert xtgeo_file.check_folder() is check_ok
 
     if not check_ok:
@@ -117,9 +116,9 @@ def test_check_folder(reek_grid_path, filename, check_ok):
 @pytest.mark.parametrize(
     "filename, stem, extension",
     [
-        (join("3dgrids", "reek", "REEK.EGRID"), "REEK", "EGRID"),
-        (join("/tmp", "text.txt"), "text", "txt"),
-        (join("/tmp", "null"), "null", ""),
+        (pathlib.Path("3dgrids/reek/REEK.EGRID"), "REEK", "EGRID"),
+        (pathlib.Path("/tmp/text.txt"), "text", "txt"),
+        (pathlib.Path("/tmp/null"), "null", ""),
     ],
 )
 def test_file_splitext(filename, stem, extension):
@@ -127,22 +126,22 @@ def test_file_splitext(filename, stem, extension):
     assert (stem, extension) == xtgeo_file.splitext(lower=False)
 
 
-files_formats = dict(
-    surface_files_formats,
+files_formats = {
+    **surface_files_formats,
     **{
-        join("3dgrids", "reek", "REEK.EGRID"): "egrid",
-        join("3dgrids", "reek", "REEK.UNRST"): "unrst",
-        join("3dgrids", "reek", "REEK.INIT"): "init",
-        join("3dgrids", "reek", "reek_geo_grid.roff"): "roff_binary",
-        join("3dgrids", "reek", "reek_geogrid.roffasc"): "roff_ascii",
-        join("wells", "battle", "1", "WELL12.rmswell"): "rmswell",
+        pathlib.Path("3dgrids/reek/REEK.EGRID"): "egrid",
+        pathlib.Path("3dgrids/reek/REEK.UNRST"): "unrst",
+        pathlib.Path("3dgrids/reek/REEK.INIT"): "init",
+        pathlib.Path("3dgrids/reek/reek_geo_grid.roff"): "roff_binary",
+        pathlib.Path("3dgrids/reek/reek_geogrid.roffasc"): "roff_ascii",
+        pathlib.Path("wells/battle/1/WELL12.rmswell"): "rmswell",
     },
-)
+}
 
 
 @pytest.mark.parametrize("filename", files_formats.keys())
 def xtgeo_file_properties(testpath, filename):
-    gfile = xtgeo._XTGeoFile(join(testpath, filename))
+    gfile = xtgeo._XTGeoFile(testpath / filename)
 
     assert isinstance(gfile, xtgeo._XTGeoFile)
     assert isinstance(gfile._file, pathlib.Path)
@@ -150,7 +149,7 @@ def xtgeo_file_properties(testpath, filename):
     assert gfile._memstream is False
     assert gfile._mode == "rb"
     assert gfile._delete_after is False
-    assert gfile.name == abspath(join(testpath, filename))
+    assert gfile.name == (testpath / filename).absolute()
 
     assert "Swig" in str(gfile.get_cfhandle())
     assert gfile.cfclose() is True
@@ -158,7 +157,7 @@ def xtgeo_file_properties(testpath, filename):
 
 @pytest.mark.parametrize("filename", files_formats.keys())
 def test_file_c_handle(testpath, filename):
-    any_xtgeo_file = xtgeo._XTGeoFile(join(testpath, filename))
+    any_xtgeo_file = xtgeo._XTGeoFile(testpath / filename)
 
     handle_count = any_xtgeo_file._cfhandlecount
 
@@ -181,7 +180,7 @@ def test_file_c_handle(testpath, filename):
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_surface_file_roundtrip_stream(testpath, filename):
     stream = io.BytesIO()
-    surf = xtgeo.RegularSurface(join(testpath, filename))
+    surf = xtgeo.RegularSurface(testpath / filename)
     surf.to_file(stream)
     stream_file = xtgeo._XTGeoFile(stream)
 
@@ -191,14 +190,14 @@ def test_surface_file_roundtrip_stream(testpath, filename):
 
 @pytest.mark.parametrize("filename, expected_format", files_formats.items())
 def test_detect_fformat(testpath, filename, expected_format):
-    xtgeo_file = xtgeo._XTGeoFile(join(testpath, filename))
+    xtgeo_file = xtgeo._XTGeoFile(testpath / filename)
     assert xtgeo_file.detect_fformat() == expected_format
 
 
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_detect_fformat_hdf_stream(testpath, filename):
     stream = io.BytesIO()
-    surf = xtgeo.RegularSurface(join(testpath, filename))
+    surf = xtgeo.RegularSurface(testpath / filename)
     surf.to_hdf(stream)
     sfile = xtgeo._XTGeoFile(stream)
     assert sfile.memstream is True
@@ -206,9 +205,9 @@ def test_detect_fformat_hdf_stream(testpath, filename):
 
 
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
-def test_detect_fformat_hdf_to_file(tmpdir, testpath, filename):
-    newfile = join(tmpdir, "hdf_surf.hdf")
-    surf = xtgeo.RegularSurface(join(testpath, filename))
+def test_detect_fformat_hdf_to_file(tmp_path, testpath, filename):
+    newfile = tmp_path / "hdf_surf.hdf"
+    surf = xtgeo.RegularSurface(testpath / filename)
     surf.to_hdf(newfile)
     gfile = xtgeo._XTGeoFile(newfile)
     assert gfile.detect_fformat() == "hdf"
@@ -217,8 +216,8 @@ def test_detect_fformat_hdf_to_file(tmpdir, testpath, filename):
 
 @pytest.mark.parametrize(
     "filename, expected_format",
-    list(files_formats.items()) + [("README.md", "unknown")],
+    list(files_formats.items()) + [(pathlib.Path("README.md"), "unknown")],
 )
 def test_detect_fformat_suffix_only(testpath, filename, expected_format):
-    xtgeo_file = xtgeo._XTGeoFile(join(testpath, filename))
+    xtgeo_file = xtgeo._XTGeoFile(testpath / filename)
     assert xtgeo_file.detect_fformat(suffixonly=True) == expected_format
