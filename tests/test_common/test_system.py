@@ -60,8 +60,8 @@ def test_resolve_alias(testpath, filename):
     assert str(mname.file) == "whatever/topvalysar--depth_surface.gri"
 
 
-@pytest.fixture
-def reek_grid_path(testpath):
+@pytest.fixture(name="reek_grid_path")
+def fixture_reek_grid_path(testpath):
     return pathlib.Path(testpath) / "3dgrids/reek"
 
 
