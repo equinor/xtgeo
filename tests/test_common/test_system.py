@@ -65,52 +65,31 @@ def fixture_reek_grid_path(testpath):
     return pathlib.Path(testpath) / "3dgrids/reek"
 
 
-@pytest.mark.parametrize(
-    "filename, does_exist",
-    [
-        ("REEK.EGRID", True),
-        ("", True),
-        ("NOSUCH.EGRID", False),
-        ("NOSUCH/NOSUCH.EGRID", False),
-    ],
-)
-def test_file_exist(reek_grid_path, filename, does_exist):
+@pytest.mark.parametrize("filename", ["REEK.EGRID", "."])
+def test_file_does_exist(reek_grid_path, filename):
     xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
-    assert xtgeo_file.exists() is does_exist
+    assert xtgeo_file.exists() is True
 
 
-@pytest.mark.parametrize(
-    "filename, check_ok",
-    [
-        ("REEK.EGRID", True),
-        ("NOSUCH.EGRID", False),
-        ("NOSUCH/NOSUCH.EGRID", False),
-    ],
-)
-def test_check_file(reek_grid_path, filename, check_ok):
+@pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
+def test_file_does_not_exist(reek_grid_path, filename):
     xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
-    assert xtgeo_file.check_file() is check_ok
-
-    if not check_ok:
-        with pytest.raises(OSError):
-            xtgeo_file.check_file(raiseerror=OSError)
+    assert xtgeo_file.exists() is False
 
 
-@pytest.mark.parametrize(
-    "filename, check_ok",
-    [
-        ("REEK.EGRID", True),
-        ("NOSUCH.EGRID", True),
-        ("NOSUCH/NOSUCH.EGRID", False),
-    ],
-)
-def test_check_folder(reek_grid_path, filename, check_ok):
+@pytest.mark.parametrize("filename", ["REEK.EGRID", "REEK.INIT"])
+def test_check_file_is_ok(reek_grid_path, filename):
     xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
-    assert xtgeo_file.check_folder() is check_ok
+    assert xtgeo_file.check_file() is True
 
-    if not check_ok:
-        with pytest.raises(OSError):
-            xtgeo_file.check_folder(raiseerror=OSError)
+
+@pytest.mark.parametrize("filename", ["NOSUCH.EGRID", "NOSUCH/NOSUCH.EGRID"])
+def test_check_file(reek_grid_path, filename):
+    xtgeo_file = xtgeo._XTGeoFile(reek_grid_path / filename)
+    assert xtgeo_file.check_file() is False
+
+    with pytest.raises(OSError):
+        xtgeo_file.check_file(raiseerror=OSError)
 
 
 @pytest.mark.parametrize(
