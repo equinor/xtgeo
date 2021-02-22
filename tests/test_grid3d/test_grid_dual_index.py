@@ -81,7 +81,7 @@ class MockGeometry:
         return top_of_pillar, base_of_pillar, hight_of_corners
 
 
-def rgs_grid_mock():
+def rsg_grid_mock():
     mock_grid = MagicMock(spec=["grid_indexer", "get_geometry", "simbox_indexer"])
     mock_grid.grid_indexer.dimensions = (2, 1, 4)
     mock_grid.get_geometry.return_value = MockGeometry()
@@ -107,7 +107,7 @@ def test_simbox_index():
     with patch("xtgeo.grid3d._grid_roxapi.RoxUtils") as mock_rox_utils:
 
         mock_grid_getter = MagicMock()
-        mock_grid_getter.get_grid.return_value = rgs_grid_mock()
+        mock_grid_getter.get_grid.return_value = rsg_grid_mock()
         mock_rox_utils.return_value.project.grid_models = {
             "repeat_sections_grid": mock_grid_getter
         }
