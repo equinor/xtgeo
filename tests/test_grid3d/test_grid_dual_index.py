@@ -104,7 +104,6 @@ def rsg_grid_mock():
     return mock_grid
 
 
-@pytest.mark.xfail(reason="xtgeo does not implement dual index system.", strict=True)
 def test_simbox_index():
     with patch("xtgeo.grid3d._grid_roxapi.RoxUtils") as mock_rox_utils:
 

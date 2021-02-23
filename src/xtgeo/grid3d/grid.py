@@ -403,7 +403,7 @@ class Grid(_Grid3D):
         if lengths != self._nlay:
             raise ValueError("Subgrids lengths not equal NLAY")
 
-        if zarr != list(range(1, self._nlay + 1)):
+        if set(zarr) != set(range(1, self._nlay + 1)):
             raise ValueError(
                 "Arrays are not valid as the do not sum to "
                 "vertical range, {}".format(zarr)
