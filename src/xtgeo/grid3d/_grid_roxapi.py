@@ -208,6 +208,13 @@ def _import_grid_roxapi_v2(
         logger.info("Get roxgrid...")
         roxgrid = proj.grid_models[gname].get_grid(realisation=realisation)
 
+        if roxgrid.has_dual_index_system:
+            xtg.warnuser(
+                f"The roxar grid {gname} has dual index system.\n"
+                "XTGeo does not implement extraction of simbox grid\n"
+                "and only considers physical index."
+            )
+
         if info:
             _display_roxapi_grid_info(rox, roxgrid)
 
