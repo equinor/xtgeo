@@ -62,23 +62,32 @@
 #define TAGRECORDMAX 100
 #define TAGDATAMAX 100
 
-int
-_roffbinstring(FILE *fc, char *mystring)
+/**
+ * Reads from file handle until a zero character is read, and places to the buffer
+ * @param FILE *fc file handle
+ * @param char *buffer buffer to read to. Will place up till ROFFSTRLEN characters into
+ *        the buffer. Caller must ensure that the buffer is large enough for the
+ *        incoming string or at least ROFFSTRLEN number of characters
 
+ * @return If the buffer is large enough, returns the number of characters
+ *         read, otherwise a negative number is returned.
+ */
+int
+_roffbinstring(FILE *fc, char *buffer)
 {
-    /* read a string; return the number of bytes (including 0 termination) */
     int i;
     char mybyte;
 
-    strcpy(mystring, "");
+    buffer[0] = '\0';
 
     for (i = 0; i < ROFFSTRLEN; i++) {
         if (fread(&mybyte, 1, 1, fc) == 1) {
-            mystring[i] = mybyte;
+            buffer[i] = mybyte;
             if (mybyte == '\0')
                 return i + 1;
         } else {
             logger_critical(LI, FI, FU, "Did not reach end of ROFF string");
+            buffer[i] = '\0';
             return -99;
         }
     }
