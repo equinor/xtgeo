@@ -121,6 +121,7 @@ _scan_roff_bin_record(FILE *fc,
     /* int swap = 0; */
     int ndat, nrec, i, n, ic;
     int bsize = 0;
+    int num_read = 0;
     const int FAIL = -88;
     char tmpname[ROFFSTRLEN] = "";
     long ncum = 0;
@@ -142,7 +143,11 @@ _scan_roff_bin_record(FILE *fc,
 
     for (i = 0; i < TAGRECORDMAX; i++) {
 
-        ncum += _roffbinstring(fc, tmpname);
+        num_read = _roffbinstring(fc, tmpname);
+        if (num_read < 0)
+            return FAIL;
+
+        ncum += num_read;
 
         if (npos1 == 0 && i == 0 && strncmp(tmpname, "roff-bin", 8) != 0) {
             /* not a ROFF binary file! */
@@ -151,7 +156,11 @@ _scan_roff_bin_record(FILE *fc,
         }
 
         if (strncmp(tmpname, "tag", 3) == 0) {
-            ncum += _roffbinstring(fc, tagname);
+            num_read = _roffbinstring(fc, tagname);
+            if (num_read < 0)
+                return FAIL;
+
+            ncum += num_read;
 
             logger_debug(LI, FI, FU, "Tag name %s", tagname);
 
@@ -165,7 +174,11 @@ _scan_roff_bin_record(FILE *fc,
             /* ... until */
             /* endtag */
             for (n = 0; n < TAGDATAMAX; n++) {
-                ncum += _roffbinstring(fc, tmpname);
+                num_read = _roffbinstring(fc, tmpname);
+                if (num_read < 0)
+                    return FAIL;
+
+                ncum += num_read;
 
                 if (strncmp(tmpname, "endtag", 6) == 0) {
                     *npos2 = ncum;
@@ -176,7 +189,12 @@ _scan_roff_bin_record(FILE *fc,
                 strcpy(pname[nrec], "NAxxx");
 
                 if (strncmp(tmpname, "int", 3) == 0) {
-                    ncum += _roffbinstring(fc, cname[nrec]);
+                    num_read += _roffbinstring(fc, cname[nrec]);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
+
                     bytepos[nrec] = ncum;
                     ncum += fread(&idum, sizeof(int), 1, fc) * sizeof(int);
 
@@ -192,7 +210,11 @@ _scan_roff_bin_record(FILE *fc,
                     cntype[nrec] = 1;
                     nrec++;
                 } else if (strncmp(tmpname, "float", 5) == 0) {
-                    ncum += _roffbinstring(fc, cname[nrec]);
+                    num_read += _roffbinstring(fc, cname[nrec]);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
                     bytepos[nrec] = ncum;
                     ncum += fread(&fdum, sizeof(float), 1, fc) * sizeof(float);
                     cntype[nrec] = 2;
@@ -201,14 +223,22 @@ _scan_roff_bin_record(FILE *fc,
 
                 } else if (strncmp(tmpname, "double", 6) == 0) {
                     /* never in use? */
-                    ncum += _roffbinstring(fc, cname[nrec]);
+                    num_read += _roffbinstring(fc, cname[nrec]);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
                     bytepos[nrec] = ncum;
                     ncum += fread(&ddum, sizeof(double), 1, fc) * sizeof(double);
                     cntype[nrec] = 3;
                     reclen[nrec] = 1;
                     nrec++;
                 } else if (strncmp(tmpname, "char", 4) == 0) {
-                    ncum += _roffbinstring(fc, cname[nrec]);
+                    num_read += _roffbinstring(fc, cname[nrec]);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
                     bytepos[nrec] = ncum;
                     /* char in ROFF is actually a string: */
                     ncum += _roffbinstring(fc, cdum);
@@ -223,7 +253,11 @@ _scan_roff_bin_record(FILE *fc,
                     }
                     nrec++;
                 } else if (strncmp(tmpname, "bool", 4) == 0) {
-                    ncum += _roffbinstring(fc, cname[nrec]);
+                    num_read += _roffbinstring(fc, cname[nrec]);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
                     bytepos[nrec] = ncum;
                     ncum += fread(&bdum, sizeof(unsigned char), 1, fc) *
                             sizeof(unsigned char);
@@ -231,7 +265,11 @@ _scan_roff_bin_record(FILE *fc,
                     reclen[nrec] = 1;
                     nrec++;
                 } else if (strncmp(tmpname, "byte", 4) == 0) {
-                    ncum += _roffbinstring(fc, cname[nrec]);
+                    num_read += _roffbinstring(fc, cname[nrec]);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
                     bytepos[nrec] = ncum;
                     ncum += fread(&bdum, sizeof(unsigned char), 1, fc) *
                             sizeof(unsigned char);
@@ -239,11 +277,19 @@ _scan_roff_bin_record(FILE *fc,
                     reclen[nrec] = 1;
                     nrec++;
                 } else if (strncmp(tmpname, "array", 5) == 0) {
-                    ncum += _roffbinstring(fc, tmpname);
+                    num_read = _roffbinstring(fc, tmpname);
+                    if (num_read < 0)
+                        return FAIL;
+
+                    ncum += num_read;
 
                     if (strncmp(tmpname, "int", 3) == 0) {
                         bsize = 4;
-                        ncum += _roffbinstring(fc, cname[nrec]);
+                        num_read += _roffbinstring(fc, cname[nrec]);
+                        if (num_read < 0)
+                            return FAIL;
+
+                        ncum += num_read;
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
                         if (*swap)
                             SWAP_INT(ndat);
@@ -253,7 +299,11 @@ _scan_roff_bin_record(FILE *fc,
                         nrec++;
                     } else if (strncmp(tmpname, "float", 5) == 0) {
                         bsize = 4;
-                        ncum += _roffbinstring(fc, cname[nrec]);
+                        num_read += _roffbinstring(fc, cname[nrec]);
+                        if (num_read < 0)
+                            return FAIL;
+
+                        ncum += num_read;
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
                         if (*swap)
                             SWAP_INT(ndat);
@@ -270,7 +320,11 @@ _scan_roff_bin_record(FILE *fc,
                         /* Note: arrays of type char (ie strings) have UNKNOWN */
                         /* lenghts; hence need special processing! -> bsize 0 */
                         bsize = 0;
-                        ncum += _roffbinstring(fc, cname[nrec]);
+                        num_read += _roffbinstring(fc, cname[nrec]);
+                        if (num_read < 0)
+                            return FAIL;
+
+                        ncum += num_read;
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
                         if (*swap)
                             SWAP_INT(ndat);
@@ -280,7 +334,11 @@ _scan_roff_bin_record(FILE *fc,
                         nrec++;
                     } else if (strncmp(tmpname, "bool", 4) == 0) {
                         bsize = 1;
-                        ncum += _roffbinstring(fc, cname[nrec]);
+                        num_read += _roffbinstring(fc, cname[nrec]);
+                        if (num_read < 0)
+                            return FAIL;
+
+                        ncum += num_read;
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
                         if (*swap)
                             SWAP_INT(ndat);
@@ -290,7 +348,11 @@ _scan_roff_bin_record(FILE *fc,
                         nrec++;
                     } else if (strncmp(tmpname, "byte", 4) == 0) {
                         bsize = 1;
-                        ncum += _roffbinstring(fc, cname[nrec]);
+                        num_read += _roffbinstring(fc, cname[nrec]);
+                        if (num_read < 0)
+                            return FAIL;
+
+                        ncum += num_read;
                         ncum += fread(&ndat, sizeof(int), 1, fc) * sizeof(int);
                         if (*swap)
                             SWAP_INT(ndat);
@@ -302,7 +364,11 @@ _scan_roff_bin_record(FILE *fc,
 
                     if (bsize == 0) {
                         for (ic = 0; ic < ndat; ic++) {
-                            ncum += _roffbinstring(fc, cname[nrec]);
+                            num_read += _roffbinstring(fc, cname[nrec]);
+                            if (num_read < 0)
+                                return FAIL;
+
+                            ncum += num_read;
                         }
                     } else {
                         ncum += bsize * ndat;
