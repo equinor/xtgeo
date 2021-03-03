@@ -33,7 +33,7 @@ grd3d_export_grdeclprop(int nx,
     int i, j;
     double min, max, avg;
     FILE *fc;
-    char uformat[33];
+    const char * uformat;
 
     /*
      *-------------------------------------------------------------------------
@@ -66,14 +66,14 @@ grd3d_export_grdeclprop(int nx,
         x_basicstats(nx * ny * nz, UNDEF, p_fprop_v, &min, &max, &avg);
 
         if (max < 1) {
-            strcpy(uformat, "%7.6f  ");
+            uformat = "%7.6f  ";
         } else if (max > 10000) {
-            strcpy(uformat, "%12.3f  ");
+            uformat = "%12.3f  ";
         } else {
-            strcpy(uformat, "%10.4f  ");
+            uformat = "%10.4f  ";
         }
     } else {
-        strcpy(uformat, "%8d  ");
+        uformat = "%8d  ";
     }
 
     /*
