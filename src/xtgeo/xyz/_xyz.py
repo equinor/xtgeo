@@ -8,7 +8,6 @@ from collections import OrderedDict
 from copy import deepcopy
 import pathlib
 
-import six
 import pandas as pd
 
 import xtgeo
@@ -20,15 +19,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def _abstractproperty(func):
-    if six.PY3:
-        return property(abc.abstractmethod(func))
-
-    return abc.abstractproperty(func)
-
-
-@six.add_metaclass(abc.ABCMeta)
-class XYZ(object):
+class XYZ(abc.ABC):
     """Abstract Base class for Points and Polygons in XTGeo, but with
     concrete methods."""
 
