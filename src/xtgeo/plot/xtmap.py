@@ -6,7 +6,6 @@ import matplotlib.patches as mplp
 from matplotlib import ticker
 import numpy as np
 import numpy.ma as ma
-import six
 
 from xtgeo.common import XTGeoDialog
 from .baseplot import BasePlot
@@ -184,13 +183,8 @@ class Map(BasePlot):
             # make a dataframe sorted on faults (groupname)
             myfault = aff.get_group(name)
 
-            # make a list [(X,Y) ...]; note PY3 need the
-            # list before the zip!
-            if six.PY3:
-                af = list(zip(myfault["X_UTME"].values, myfault["Y_UTMN"].values))
-            else:
-                # make a numpy (X,Y) list from pandas series
-                af = myfault[["X_UTME", "Y_UTMN"]].values
+            # make a list [(X,Y) ...];
+            af = list(zip(myfault["X_UTME"].values, myfault["Y_UTMN"].values))
 
             px = mplp.Polygon(af, alpha=alpha, color=color, ec=edgecolor, lw=linewidth)
 

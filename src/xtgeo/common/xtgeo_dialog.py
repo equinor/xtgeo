@@ -46,8 +46,6 @@ import warnings
 import timeit
 import pathlib
 
-import six
-
 import xtgeo
 
 DEBUG = 0
@@ -199,19 +197,12 @@ class _Formatter(logging.Formatter):
 
         filename = "unset_filename"
 
-        if six.PY3:
-            if "pathname" in record.__dict__.keys():
-                # truncate the pathname
-                filename = record.pathname
-                if len(filename) > 40:
-                    filename = re.sub(r".*src/", "", filename)
-                record.pathname = filename
-        else:
-            if isinstance(record.args, dict) and "pathname" in record.args:
-                filename = record.pathname
-                if len(filename) > 40:
-                    filename = re.sub(r".*src/", "", filename)
-            record.args["pathname"] = filename
+        if "pathname" in record.__dict__.keys():
+            # truncate the pathname
+            filename = record.pathname
+            if len(filename) > 40:
+                filename = re.sub(r".*src/", "", filename)
+            record.pathname = filename
 
         return super(_Formatter, self).format(record)
 
