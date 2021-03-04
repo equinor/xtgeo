@@ -413,10 +413,6 @@ class XYZ(abc.ABC):
     # Get and Set properties
     # ==================================================================================
 
-    # @abc.abstractproperty
-    # def nrow(self):
-    #     """NROW"""
-
     @property
     @abc.abstractmethod
     def dataframe(self):
@@ -426,22 +422,3 @@ class XYZ(abc.ABC):
     @abc.abstractmethod
     def dataframe(self, df):
         """Dataframe setter"""
-
-    # @abc.abstractmethod
-    # def get_carray(self, lname):
-    #     """Returns the C array pointer (via SWIG) for a given log.
-
-    #     Type conversion is double if float64, int32 if DISC log.
-    #     Returns None of log does not exist.
-    #     """
-    #     try:
-    #         np_array = self._df[lname].values
-    #     except Exception:
-    #         return None
-
-    #     if self.get_logtype(lname) == 'DISC':
-    #         carr = _xyz_lowlevel.convert_np_carr_int(self, np_array)
-    #     else:
-    #         carr = _xyz_lowlevel.convert_np_carr_double(self, np_array)
-
-    #     return carr
