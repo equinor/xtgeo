@@ -10,6 +10,8 @@ import xtgeo
 
 # from xtgeo.common import XTGeoDialog
 # from xtgeo.surface import RegularSurface
+from xtgeo.common import inherit_docstring
+
 from ._xyz import XYZ
 from . import _xyz_oper
 
@@ -149,23 +151,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # ----------------------------------------------------------------------------------
 
     @property
-    def nrow(self):
-        """Returns the Pandas dataframe object number of rows."""
-        if self._df is None:
-            return 0
-
-        return len(self._df.index)
-
-    @property
-    def dataframe(self):
-        """Returns or set the Pandas dataframe object."""
-        return self._df
-
-    @dataframe.setter
-    def dataframe(self, df):
-        self._df = df.copy()
-
-    @property
     def pname(self):
         """ Return or set the name of the POLY_ID column"""
         return self._pname
@@ -196,48 +181,9 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             np.random.rand(nrandom, 3), columns=[self._xname, self._yname, self._zname]
         )
 
-    def copy(self, stype="points"):
-        """Deep copy of a Points instance.
-
-        Example::
-
-            myp = xtgeo.points_from_file("somepoints.poi")
-            mypcopy = myp.copy()
-
-        .. versionadded:: 2.1
-        """
-
-        stype = "points"
-        return super(Points, self).copy(stype)
-
-    def describe(self, flush=True):
-        """Describe a Points instance"""
-        return super(Points, self).describe(flush=flush)
-
+    @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz"):
-        """Import points.
-
-        Supported import formats (fformat):
-
-        * 'xyz' or 'poi' or 'pol': Simple XYZ format
-
-        * 'rms_attr' or 'rmsattr': RMS points formats with attributes (extra columns)
-
-        * 'guess': Try to choose file format based on extension
-
-        Args:
-            pfile (str): Name of file
-            fformat (str): File format, see list above
-
-        Returns:
-            Object instance (needed optionally)
-
-        Raises:
-            OSError: if file is not present or wrong permissions.
-
-
-        """
-        super(Points, self).from_file(pfile, fformat=fformat)
+        super().from_file(pfile, fformat=fformat)
 
         self._df.dropna(inplace=True)
 
@@ -275,27 +221,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         self._df.dropna(inplace=True)
 
-    def from_list(self, plist):
-        """Import points from list.
-
-        [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...]
-
-        It is currently not much error checking that lists/tuples are consistent, e.g.
-        if there always is either 3 or 4 elements per tuple, or that 4 number is
-        an integer.
-
-        Args:
-            plist (str): List of tuples, each tuple is length 3 or 4
-
-        Raises:
-            ValueError: If something is wrong with input
-
-        .. versionadded: 2.6
-
-        """
-        super(Points, self).from_list(plist)
-        self._df.dropna(inplace=True)
-
     def to_file(
         self,
         pfile,
@@ -307,35 +232,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         mdcolumn="M_MDEPTH",
         **kwargs,
     ):  # pylint: disable=redefined-builtin
-        """Export XYZ (Points/Polygons) to file.
-
-        Args:
-            pfile (str): Name of file
-            fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-            attributes (bool or list): List of extra columns to export (some formats)
-            pfilter (dict): Filter on e.g. top name(s) with
-                keys TopName or ZoneName as {'TopName': ['Top1', 'Top2']}. Note that
-                "filter" as key will be silency accepted as "pfilter" for backward
-                compatibility. However, please use "pfilter" in client scripts.
-            wcolumn (str): Name of well column (rms_wellpicks format only)
-            hcolumn (str): Name of horizons column (rms_wellpicks format only)
-            mdcolumn (str): Name of MD column (rms_wellpicks format only)
-
-        Returns:
-            Number of points exported
-
-        Note that the rms_wellpicks will try to output to:
-
-        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
-        * HorizonName, WellName, X, Y, Z  otherwise
-
-        Raises:
-            KeyError if pfilter is set and key(s) are invalid
-
-        """
-        # note that "filter" as key will be silency accepted as "pfilter" for backward
-        # compatibility
-        return super(Points, self).to_file(
+        return super().to_file(
             pfile,
             fformat=fformat,
             attributes=attributes,
@@ -344,119 +241,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             hcolumn=hcolumn,
             mdcolumn=mdcolumn,
             **kwargs,
-        )
-
-    def from_roxar(
-        self, project, name, category, stype="horizons", realisation=0, attributes=False
-    ):
-        """Load a points item from a Roxar RMS project.
-
-        The import from the RMS project can be done either within the project
-        or outside the project.
-
-        Note that a shortform to::
-
-          import xtgeo
-          mypoly = xtgeo.xyz.Points()
-          mypoints.from_roxar(project, 'TopAare', 'DepthPoints')
-
-        is::
-
-          import xtgeo
-          mypoints = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPoints')
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of Points item
-            category (str): For horizons/zones only: for example 'DL_depth'
-            stype (str): RMS 'super type' i.e. 'horizons' (default), 'zones', ...
-            realisation (int): Realisation number, default is 0
-            attributes (bool or list): If attributes should be included (requires
-                a workaround in the library code)
-
-        Returns:
-            Object instance updated
-
-        Raises:
-            ValueError: Various types of invalid inputs.
-
-        """
-        super(Points, self).from_roxar(
-            project,
-            name,
-            category,
-            stype=stype,
-            realisation=realisation,
-            attributes=attributes,
-        )
-
-    def to_roxar(
-        self,
-        project,
-        name,
-        category,
-        stype="horizons",
-        pfilter=None,
-        realisation=0,
-        attributes=False,
-    ):
-        """Export/save/store a points item to a Roxar RMS project.
-
-        Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
-
-        For stype=clipboard, category will be created automatically if not existing.
-
-        Note:
-            When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
-            will not be saved until the user do an explicit project save action.
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of horizons/zone item or well picks set
-            category (str): For horizons/zones only: for example 'DL_depth', for
-                clipboard, see examples.
-            stype (str): RMS "super type": 'horizons', 'zones', 'clipboard'
-            pfilter (dict): Filter on e.g. top name(s) with
-                keys TopName or ZoneName as e.g. {'TopName': ['Top1', 'Top2']}
-            realisation (int): Realisation number, default is 0 (partly implemented)
-            attributes (bool or list): If attributes should be included (requires
-                a workaround in the library code)
-
-        Examples::
-
-            # store in Horizons:
-            wpoints.to_roxar(project, "MyTop", "MyCategory", stype="horizons")
-
-        For Clipboard, the category can have a nested structure. The following forms are
-        all legal::
-
-            p.to_roxar(project, "thename", None, stype="clipboard")  # no subfolder
-            p.to_roxar(project, "thename", "", stype="clipboard")  # no subfolder
-            p.to_roxar(project, "thename", "dir1", stype="clipboard")  # one level
-            # two levels examples, all forms possible:
-            p.to_roxar(project, "thename", "dir1/dir2", stype="clipboard")
-            p.to_roxar(project, "thename", "dir1|dir2", stype="clipboard")
-            p.to_roxar(project, "thename", ["dir1", "dir2"], stype="clipboard")
-
-
-        Raises:
-            ValueError: Various types of invalid inputs.
-
-        .. versionchanged:: 2.1 added pfilter option
-        """
-
-        super(Points, self).to_roxar(
-            project,
-            name,
-            category,
-            stype=stype,
-            pfilter=pfilter,
-            realisation=realisation,
-            attributes=attributes,
         )
 
     def from_wells(

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""XTGeo xyz module (abstract class)"""
-
-
+"""XTGeo xyz module (base class)"""
 import inspect
 import abc
 from collections import OrderedDict
@@ -96,14 +94,10 @@ class XYZ(abc.ABC):
         else:
             raise ValueError("Wrong type of input to {}; must be string".format(caller))
 
-    @abc.abstractmethod
-    def copy(self, stype):
+    def copy(self):
         """Returns a a deep copy of an instance"""
 
-        if stype == "polygons":
-            mycopy = xtgeo.Polygons()
-        else:
-            mycopy = xtgeo.Points()
+        mycopy = self.__class__()
         mycopy._df = self._df.copy()
         mycopy._ispolygons = self._ispolygons
         mycopy._xname = self._xname
@@ -116,7 +110,6 @@ class XYZ(abc.ABC):
 
         return mycopy
 
-    @abc.abstractmethod
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
 
@@ -223,6 +216,7 @@ class XYZ(abc.ABC):
             raise ValueError(
                 "Wrong length detected of first tuple: {}".format(len(first))
             )
+        self._df.dropna(inplace=True)
 
     def to_file(
         self,
@@ -418,11 +412,17 @@ class XYZ(abc.ABC):
     # ==================================================================================
 
     @property
-    @abc.abstractmethod
     def dataframe(self):
-        """Dataframe"""
+        """Returns or set the Pandas dataframe object."""
+        return self._df
 
     @dataframe.setter
-    @abc.abstractmethod
     def dataframe(self, df):
-        """Dataframe setter"""
+        self._df = df.copy()
+
+    @property
+    def nrow(self):
+        """Returns the Pandas dataframe object number of rows."""
+        if self.dataframe is None:
+            return 0
+        return len(self.dataframe.index)

@@ -665,3 +665,12 @@ class _XTGeoFile(object):
                         return fmt
 
         raise ValueError(f"Non-supportred file extension: {propose}")
+
+
+def inherit_docstring(inherit_from):
+    def decorator_set_docstring(func):
+        if func.__doc__ is None and inherit_from.__doc__ is not None:
+            func.__doc__ = inherit_from.__doc__
+        return func
+
+    return decorator_set_docstring
