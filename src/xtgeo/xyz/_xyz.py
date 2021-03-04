@@ -23,7 +23,6 @@ class XYZ(abc.ABC):
     """Abstract Base class for Points and Polygons in XTGeo, but with
     concrete methods."""
 
-    @abc.abstractmethod
     def __init__(self, *args, **kwargs):
         """Initiate instance"""
 
@@ -56,19 +55,16 @@ class XYZ(abc.ABC):
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
 
     @property
-    @abc.abstractmethod
     def xname(self):
         """ Returns or set the name of the X column."""
         return self._xname
 
     @property
-    @abc.abstractmethod
     def yname(self):
         """ Returns or set the name of the Y column."""
         return self._yname
 
     @property
-    @abc.abstractmethod
     def zname(self):
         """ Returns or set the name of the Z column."""
         return self._zname
@@ -183,7 +179,6 @@ class XYZ(abc.ABC):
 
         return self
 
-    @abc.abstractmethod
     def from_list(self, plist):
         """Import Points or Polygons from a list.
 
@@ -217,7 +212,6 @@ class XYZ(abc.ABC):
                 "Wrong length detected of first tuple: {}".format(len(first))
             )
 
-    @abc.abstractmethod
     def to_file(
         self,
         pfile,
@@ -290,7 +284,6 @@ class XYZ(abc.ABC):
 
         return ncount
 
-    @abc.abstractmethod
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False
     ):
@@ -345,7 +338,6 @@ class XYZ(abc.ABC):
 
         self._filesrc = "RMS: {} ({})".format(name, category)
 
-    @abc.abstractmethod
     def to_roxar(
         self,
         project,
