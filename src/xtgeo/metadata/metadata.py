@@ -243,7 +243,7 @@ class MetaDataRegularSurface(MetaData):
 
     def __init__(self):
         """Docstring."""
-        super(MetaDataRegularSurface, self).__init__()
+        super().__init__()
         self._required = __class__.REQUIRED
         self._optional._datatype = "Regular Surface"
 
@@ -292,7 +292,7 @@ class MetaDataRegularCube(MetaData):
 
     def __init__(self):
         """Docstring."""
-        super(MetaDataRegularCube, self).__init__()
+        super().__init__()
         self._required = __class__.REQUIRED
         self._optional._datatype = "Regular Cube"
 
@@ -340,7 +340,7 @@ class MetaDataCPGeometry(MetaData):
 
     def __init__(self):
         """Docstring."""
-        super(MetaDataCPGeometry, self).__init__()
+        super().__init__()
         self._required = __class__.REQUIRED
         self._optional._datatype = "CornerPoint GridGeometry"
 
@@ -381,7 +381,7 @@ class MetaDataCPProperty(MetaData):
 
     def __init__(self):
         """Docstring."""
-        super(MetaDataCPProperty, self).__init__()
+        super().__init__()
         self._required = __class__.REQUIRED
         self._optional._datatype = "CornerPoint GridProperty"
 
@@ -419,7 +419,7 @@ class MetaDataWell(MetaData):
 
     def __init__(self):
         """Initialisation for Well metadata."""
-        super(MetaDataWell, self).__init__()
+        super().__init__()
         self._required = __class__.REQUIRED
         self._optional._datatype = "Well"
 

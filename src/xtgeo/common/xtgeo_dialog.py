@@ -204,7 +204,7 @@ class _Formatter(logging.Formatter):
                 filename = re.sub(r".*src/", "", filename)
             record.pathname = filename
 
-        return super(_Formatter, self).format(record)
+        return super().format(record)
 
 
 class XTGeoDialog(object):  # pylint: disable=too-many-public-methods

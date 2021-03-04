@@ -104,7 +104,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     def __init__(self, *args, **kwargs):
         """__init__ for Points()."""
         # instance variables listed
-        super(Points, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], xtgeo.surface.RegularSurface):
