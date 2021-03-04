@@ -59,15 +59,27 @@ class XYZ(abc.ABC):
         """ Returns or set the name of the X column."""
         return self._xname
 
+    @xname.setter
+    def xname(self, newname):
+        self._name_setter(newname)
+
     @property
     def yname(self):
         """ Returns or set the name of the Y column."""
         return self._yname
 
+    @yname.setter
+    def yname(self, newname):
+        self._name_setter(newname)
+
     @property
     def zname(self):
         """ Returns or set the name of the Z column."""
         return self._zname
+
+    @zname.setter
+    def zname(self, newname):
+        self._name_setter(newname)
 
     def _name_setter(self, newname):
         """Generic setter for xname yname zname"""

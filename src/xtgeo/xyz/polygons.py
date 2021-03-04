@@ -135,33 +135,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._name = newname
 
     @property
-    def xname(self):
-        """Return or set name of X (Easting) column; default is X_UTME."""
-        return super(Polygons, self).xname
-
-    @xname.setter
-    def xname(self, newname):
-        super(Polygons, self)._name_setter(newname)
-
-    @property
-    def yname(self):
-        """Return or set name of Y (Northing) column; default is Y_UTMN."""
-        return super(Polygons, self).yname
-
-    @yname.setter
-    def yname(self, newname):
-        super(Polygons, self)._name_setter(newname)
-
-    @property
-    def zname(self):
-        """Return or set name of Z (Depth) column; default is Z_TVDSS."""
-        return super(Polygons, self).zname
-
-    @zname.setter
-    def zname(self, newname):
-        super(Polygons, self)._name_setter(newname)
-
-    @property
     def pname(self):
         """Returns or set the name of the POLY_ID column."""
         return self._pname
