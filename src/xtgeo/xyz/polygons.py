@@ -102,7 +102,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         self._tname = "T_CUMLEN"
         self._dtname = "T_DELTALEN"
         self._name = "poly"  # the name of the Polygons() instance
-        super(Polygons, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._ispolygons = True
 

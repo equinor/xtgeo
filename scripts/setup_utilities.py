@@ -84,7 +84,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         After calling the super class implementation, this function removes
         the directories specific to scikit-build ++.
         """
-        super(CleanUp, self).run()
+        super().run()
 
         for dir_ in CleanUp.CLEANFOLDERS:
             if exists(dir_):

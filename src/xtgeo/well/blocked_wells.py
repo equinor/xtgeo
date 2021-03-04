@@ -48,7 +48,7 @@ class BlockedWells(Wells):
 
     def __init__(self):
 
-        super(BlockedWells, self).__init__()
+        super().__init__()
         self._wells = []  # list of Well objects
 
     def copy(self):
@@ -65,7 +65,7 @@ class BlockedWells(Wells):
     def get_blocked_well(self, name):
         """Get a BlockedWell() instance by name, or None"""
         logger.info("Calling super...")
-        return super(BlockedWells, self).get_well(name)
+        return super().get_well(name)
 
     def from_files(
         self,

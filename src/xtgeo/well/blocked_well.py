@@ -122,7 +122,7 @@ class BlockedWell(Well):
 
     def __init__(self, *args, **kwargs):
 
-        super(BlockedWell, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._gridname = None
 
@@ -138,7 +138,7 @@ class BlockedWell(Well):
 
     def copy(self):
 
-        newbw = super(BlockedWell, self).copy()
+        newbw = super().copy()
 
         newbw._gridname = self._gridname
 
