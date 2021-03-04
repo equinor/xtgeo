@@ -97,12 +97,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     def __init__(self, *args, **kwargs):
         """Polygons() initialisation."""
-        self._df = None
-        self._xname = "X_UTME"
-        self._yname = "Y_UTMN"
-        self._zname = "Z_TVDSS"
-        self._pname = "POLY_ID"
-        self._mname = "M_MDEPTH"
         self._hname = "H_CUMLEN"
         self._dhname = "H_DELTALEN"
         self._tname = "T_CUMLEN"

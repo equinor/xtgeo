@@ -104,14 +104,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     def __init__(self, *args, **kwargs):
         """__init__ for Points()."""
         # instance variables listed
-        self._df = None
-        self._ispolygons = False
-        self._xname = "X_UTME"
-        self._yname = "Y_UTMN"
-        self._zname = "Z_TVDSS"
-        self._pname = "POLY_ID"
-        self._mname = "M_MDEPTH"
-
         super(Points, self).__init__(*args, **kwargs)
 
         if len(args) == 1:
