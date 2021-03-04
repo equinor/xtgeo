@@ -166,30 +166,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         self._df = df.copy()
 
     @property
-    def xname(self):
-        return super(Points, self).xname
-
-    @xname.setter
-    def xname(self, newname):
-        super(Points, self)._name_setter(newname)
-
-    @property
-    def yname(self):
-        return super(Points, self).yname
-
-    @yname.setter
-    def yname(self, newname):
-        super(Points, self)._name_setter(newname)
-
-    @property
-    def zname(self):
-        return super(Points, self).zname
-
-    @zname.setter
-    def zname(self, newname):
-        super(Points, self)._name_setter(newname)
-
-    @property
     def pname(self):
         """ Return or set the name of the POLY_ID column"""
         return self._pname
