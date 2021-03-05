@@ -80,12 +80,47 @@ class XYZ:
         self._df_column_rename(newname, self._zname)
         self._zname = newname
 
+    @property
+    def pname(self):
+        """Returns or set the name of the POLY_ID column."""
+        return self._pname
+
+    @pname.setter
+    def pname(self, value):
+        self._check_name(value)
+        self._pname = value
+
+    @property
+    def dataframe(self):
+        """Returns or set the Pandas dataframe object."""
+        return self._df
+
+    @dataframe.setter
+    def dataframe(self, df):
+        self._df = df.copy()
+
+    @property
+    def nrow(self):
+        """Returns the Pandas dataframe object number of rows."""
+        if self.dataframe is None:
+            return 0
+        return len(self.dataframe.index)
+
     def _df_column_rename(self, newname, oldname):
         if isinstance(newname, str):
             if oldname and self._df is not None:
                 self._df.rename(columns={oldname: newname}, inplace=True)
         else:
-            raise ValueError("Wrong type of input to {}; must be string".format(newname))
+            raise ValueError(f"Wrong type of input to {newname}; must be string")
+
+    def _check_name(self, value):
+        if not isinstance(value, str):
+            raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
+
+        if value not in self._df.columns:
+            raise ValueError(
+                f"{value} does not exist as a column name, must be one of: {self._df.columns}"
+            )
 
     def copy(self):
         """Returns a a deep copy of an instance"""
@@ -399,22 +434,3 @@ class XYZ:
             attributes,
         )
 
-    # ==================================================================================
-    # Get and Set properties
-    # ==================================================================================
-
-    @property
-    def dataframe(self):
-        """Returns or set the Pandas dataframe object."""
-        return self._df
-
-    @dataframe.setter
-    def dataframe(self, df):
-        self._df = df.copy()
-
-    @property
-    def nrow(self):
-        """Returns the Pandas dataframe object number of rows."""
-        if self.dataframe is None:
-            return 0
-        return len(self.dataframe.index)

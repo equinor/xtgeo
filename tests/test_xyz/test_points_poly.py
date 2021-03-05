@@ -414,3 +414,50 @@ def test_rename_columns():
     assert pol.xname != "NEWY"
 
     assert "NEWY" in pol.dataframe
+
+
+def test_empty_polygon_has_default_name():
+    pol = Polygons()
+    assert pol.dtname == "T_DELTALEN"
+
+
+def test_check_column_names():
+    pol = Polygons()
+    data = pd.DataFrame({"T_DELTALEN": [1, 2]})
+    pol.dataframe = data
+    assert pol.dtname == "T_DELTALEN"
+    assert pol.dhname is None
+
+
+def test_delete_from_empty_polygon_does_not_fail(recwarn):
+    pol = Polygons()
+    pol.delete_columns(pol.dtname)
+    assert len(recwarn) == 1
+    assert "Trying to delete" in str(recwarn.list[0].message)
+
+
+@pytest.mark.parametrize("test_name", [(1), ({}), ([]), (2.3)])
+@pytest.mark.parametrize(
+    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname"), ("pname")]
+)
+def test_raise_incorrect_name_type(test_name, name_attribute):
+    pol = Polygons()
+    data = pd.DataFrame({"ANYTHING": [1, 2]})
+    pol.dataframe = data
+
+    with pytest.raises(ValueError) as execinfo:
+        setattr(pol, name_attribute, test_name)
+    assert "Wrong type of input" in str(execinfo.value)
+
+
+@pytest.mark.parametrize(
+    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname"), ("pname")]
+)
+def test_raise_non_existing_name(name_attribute):
+    pol = Polygons()
+    data = pd.DataFrame({"ANYTHING": [1, 2]})
+    pol.dataframe = data
+
+    with pytest.raises(ValueError) as execinfo:
+        setattr(pol, name_attribute, "NON_EXISTING")
+    assert "does not exist" in str(execinfo.value)
