@@ -385,7 +385,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         # check if surf is instance from RegularSurface
         if not isinstance(surf, xtgeo.surface.RegularSurface):
-            raise ValueError("Given surf is not a RegularSurface object")
+            raise TypeError("Given surf is not a RegularSurface object")
 
         val = surf.values
         xc, yc = surf.get_xy_values()
