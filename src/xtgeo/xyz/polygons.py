@@ -123,17 +123,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def name(self, newname):
         self._name = newname
 
-    @property
-    def pname(self):
-        """Returns or set the name of the POLY_ID column."""
-        return self._pname
-
-    @pname.setter
-    def pname(self, newname):
-        if isinstance(newname, str):
-            self._pname = newname
-        else:
-            raise ValueError("Wrong type of input to pname; must be string")
 
     @property
     def hname(self):
@@ -143,18 +132,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1
         """
-        if isinstance(self._hname, str):
-            if self._hname not in self._df.columns:
-                self._hname = None
-
         return self._hname
 
     @hname.setter
-    def hname(self, myhname):
-        if isinstance(myhname, str):
-            self._hname = myhname
-        else:
-            raise ValueError("Wrong type of input to hname; must be string")
+    def hname(self, value):
+        super()._check_name(value)
+        self._hname = value
 
     @property
     def dhname(self):
@@ -164,18 +147,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1
         """
-        if isinstance(self._dhname, str):
-            if self._dhname not in self._df.columns:
-                self._dhname = None
-
         return self._dhname
 
     @dhname.setter
-    def dhname(self, mydhname):
-        if isinstance(mydhname, str):
-            self._dhname = mydhname
-        else:
-            raise ValueError("Wrong type of input to dhname; must be string")
+    def dhname(self, value):
+        super()._check_name(value)
+        self._dhname = value
 
     @property
     def tname(self):
@@ -183,18 +160,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1
         """
-        if isinstance(self._tname, str):
-            if self._tname not in self._df.columns:
-                self._tname = None
-
         return self._tname
 
     @tname.setter
-    def tname(self, mytname):
-        if isinstance(mytname, str):
-            self._tname = mytname
-        else:
-            raise ValueError("Wrong type of input to tname; must be string")
+    def tname(self, value):
+        super()._check_name(value)
+        self._tname = value
 
     @property
     def dtname(self):
@@ -202,18 +173,29 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         .. versionadded:: 2.1
         """
-        if isinstance(self._dtname, str):
-            if self._dtname not in self._df.columns:
-                self._dtname = None
-
         return self._dtname
 
     @dtname.setter
-    def dtname(self, mydtname):
-        if isinstance(mydtname, str):
-            self._dtname = mydtname
-        else:
-            raise ValueError("Wrong type of input to dhname; must be string")
+    def dtname(self, value):
+        super()._check_name(value)
+        self._dtname = value
+
+    @XYZ.dataframe.setter
+    def dataframe(self, df):
+        # pylint: disable=maybe-no-member
+        XYZ.dataframe.fset(self, df)
+        self._name_to_none_if_missing()
+
+    def _name_to_none_if_missing(self):
+        if self._dtname not in self._df.columns:
+            self._dtname = None
+        if self._dhname not in self._df.columns:
+            self._dhname = None
+        if self._tname not in self._df.columns:
+            self._tname = None
+        if self._hname not in self._df.columns:
+            self._hname = None
+
 
     # ----------------------------------------------------------------------------------
     # Methods
@@ -235,11 +217,17 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         Example::
 
-            mypoly.delete_columns(["WELL_ID", self.hname, self.dhname])
+            mypoly.delete_columns(["WELL_ID", mypoly.hname, mypoly.dhname])
 
         .. versionadded:: 2.1
 
         """
+        if self._df is None:
+            xtg.warnuser(
+                "Trying to delete a column before a dataframe has been set - ignored"
+            )
+            return
+
         for cname in clist:
             if cname in (self.xname, self.yname, self.zname, self.pname):
                 xtg.warnuser(
