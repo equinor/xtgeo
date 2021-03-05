@@ -1,18 +1,15 @@
 """Importing grid props from GRDECL, ascii or binary"""
 
 
-import re
-import os
-from tempfile import mkstemp
+from contextlib import contextmanager
 
 import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
-from . import _grid_eclbin_record as _eclbin
 from . import _grid3d_utils as utils
+from . import _grid_eclbin_record as _eclbin
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -83,6 +80,108 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     pfile.cfclose()
 
 
+@contextmanager
+def open_grdecl(grdecl_file, keywords):
+    """
+    Opens the grdecl_file for reading. Is a generator for tuples of keyword /
+    values in records of that file. The format of the file must be that of the
+    GRID section of a eclipse input DATA file.
+
+    The records looked for must be "simple" ie.  start with the keyword, be
+    followed by single word values and ended by a slash ('/').
+
+    .. code-block:: none
+
+        KEYWORD
+        value value value /
+
+    reading the above file with :code:`open_grdecl("filename.grdecl",
+    keywords="KEYWORD")` will generate :code:`[("KEYWORD", ["value", "value",
+    "value"])]`
+
+    open_grdecl does not follow includes, obey skips, parse MESSAGE commands or
+    make exception for groups and subrecords.
+
+    Raises:
+        ValueError: when end of file is reached without terminating a keyword.
+
+    Args:
+        keywords (List[str]): Which keywords to look for, these are expected to
+        be at the start of a line in the file  and the respective values
+        following on subsequent lines separated by whitespace. Reading of a
+        keyword is completed by a final '\'. See example above.
+
+    """
+
+    def read_grdecl(grdecl_stream):
+        words = []
+        keyword = None
+
+        line_no = 1
+        line = grdecl_stream.readline()
+        while line:
+            if keyword is None:
+                splitted = line.split()
+                if splitted:
+                    first_word = splitted[0]
+                    if first_word in keywords:
+                        keyword = first_word
+                        logger.debug("Keyword %s found on line %d", keyword, line_no)
+
+            else:
+                for word in line.split():
+                    if word == "--":
+                        break
+
+                    if word == "/":
+                        yield (keyword, words)
+                        words = []
+                        keyword = None
+                        break
+                    words.append(word)
+            line = grdecl_stream.readline()
+            line_no += 1
+
+        if keyword is not None:
+            raise ValueError(f"Reached end of stream while reading {keyword}")
+
+    with open(grdecl_file, "r") as stream:
+        yield read_grdecl(stream)
+
+
+def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
+    """
+    Read a 3d grid property from a grdecl file, see open_grdecl for description
+    of format.
+
+    Args:
+        filename (pathlib.Path or str): File in grdecl format.
+        keyword (str): The keyword of the property in the file
+        dimensions ((int,int,int)): Triple of the size of grid.
+        dtype (function): The datatype to be read, ie., float.
+
+    Raises:
+        xtgeo.KeywordNotFoundError: If keyword is not found in the file.
+
+    Returns:
+        numpy array with given dimensions and data type read
+        from the grdecl file.
+    """
+    result = None
+
+    with open_grdecl(filename, keywords=(keyword,)) as kw_generator:
+        try:
+            _, result = next(kw_generator)
+        except StopIteration as si:
+            raise xtgeo.KeywordNotFoundError(
+                f"Cannot import {keyword}, not present in file {filename}?"
+            ) from si
+
+    # The values are stored in F order in the grdecl file
+    f_order_values = np.array([dtype(v) for v in result])
+    return np.ascontiguousarray(f_order_values.reshape(dimensions, order="F"))
+
+
 def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     """Read a GRDECL ASCII property record"""
 
@@ -96,34 +195,6 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
     self._filesrc = pfile
     actnumv = grid.get_actnum().values
 
-    # This requires that the Python part clean up comments
-    # etc, and make a tmp file.
-    fds, tmpfile = mkstemp(prefix="tmpxtgeo")
-    os.close(fds)
-
-    with open(pfile.name, "r") as oldfile, open(tmpfile, "w") as newfile:
-        for line in oldfile:
-            if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
-                newfile.write(line)
-
-    # now read the property
-    nlen = self._ncol * self._nrow * self._nlay
-    ier, values = _cxtgeo.grd3d_import_grdecl_prop(
-        tmpfile,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        name,
-        nlen,
-        0,
+    self.values = ma.masked_where(
+        actnumv == 0, read_grdecl_3d_property(pfile.file, name, self.dimensions, float)
     )
-
-    os.remove(tmpfile)
-
-    if ier != 0:
-        raise xtgeo.KeywordNotFoundError(
-            "Cannot import {}, not present in file {}?".format(name, pfile)
-        )
-
-    reshaped_values = values.reshape(self.dimensions)
-    self.values = ma.masked_where(actnumv == 0, reshaped_values)

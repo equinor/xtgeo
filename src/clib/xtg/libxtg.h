@@ -1432,16 +1432,6 @@ grd3d_import_grdecl(FILE *fc,
                     long n_swig_np_int_inplace_v1,   // nactnum or ntot
                     int *nact);
 
-int
-grd3d_import_grdecl_prop(char *filename,
-                         int nx,
-                         int ny,
-                         int nz,
-                         char *pname,
-                         double *swig_np_dbl_aout_v1,  // p_prop_v
-                         long n_swig_np_dbl_aout_v1,   // nlen
-                         int option);
-
 void
 grd3d_export_grdecl(int nx,
                     int ny,
