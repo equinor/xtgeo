@@ -43,21 +43,6 @@ POINTSET4 = join(TSTPATH, "points/reek/1/poi_attr.rmsattr")
 CSV1 = join(TSTPATH, "3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
-def test_xyz():
-    """Import XYZ module from file, should not be possible as it is abc."""
-
-    ok = False
-    try:
-        myxyz = XYZ()  # pylint: disable=abstract-class-instantiated
-    except TypeError as tt:
-        ok = True
-        assert "abstract" in str(tt)
-    else:
-        logger.info(myxyz)
-
-    assert ok is True
-
-
 def test_custom_points():
     """Make points from list of tuples."""
 

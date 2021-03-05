@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz module (base class)"""
 import inspect
-import abc
 from collections import OrderedDict
 from copy import deepcopy
 import pathlib
@@ -17,9 +16,8 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-class XYZ(abc.ABC):
-    """Abstract Base class for Points and Polygons in XTGeo, but with
-    concrete methods."""
+class XYZ:
+    """Base class for Points and Polygons in XTGeo."""
 
     def __init__(self, *args, **kwargs):
         """Initiate instance"""
@@ -128,8 +126,7 @@ class XYZ(abc.ABC):
     # Import and export
     # ==================================================================================
 
-    @abc.abstractmethod
-    def from_file(self, pfile, fformat="guess"):
+    def from_file(self, pfile, fformat="xyz"):
         """Import Points or Polygons from a file.
 
         Supported import formats (fformat):
