@@ -57,7 +57,8 @@ class XYZ:
 
     @xname.setter
     def xname(self, newname):
-        self._name_setter(newname)
+        self._df_column_rename(newname, self._xname)
+        self._xname = newname
 
     @property
     def yname(self):
@@ -66,7 +67,8 @@ class XYZ:
 
     @yname.setter
     def yname(self, newname):
-        self._name_setter(newname)
+        self._df_column_rename(newname, self._yname)
+        self._yname = newname
 
     @property
     def zname(self):
@@ -75,22 +77,15 @@ class XYZ:
 
     @zname.setter
     def zname(self, newname):
-        self._name_setter(newname)
+        self._df_column_rename(newname, self._zname)
+        self._zname = newname
 
-    def _name_setter(self, newname):
-        """Generic setter for xname yname zname"""
-        caller = str(inspect.stack()[1][3])
-
-        attr = "_" + caller  # e.g. _xname
-
+    def _df_column_rename(self, newname, oldname):
         if isinstance(newname, str):
-            oldname = getattr(self, attr)
-            setattr(self, attr, newname)
             if oldname and self._df is not None:
                 self._df.rename(columns={oldname: newname}, inplace=True)
-
         else:
-            raise ValueError("Wrong type of input to {}; must be string".format(caller))
+            raise ValueError("Wrong type of input to {}; must be string".format(newname))
 
     def copy(self):
         """Returns a a deep copy of an instance"""
