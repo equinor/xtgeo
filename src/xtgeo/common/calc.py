@@ -208,6 +208,8 @@ def point_in_hexahedron(x0, y0, z0, vertices, _algorithm=1):
 
     Vertices my be in order of what 3D cells normally have
 
+    ::
+
        3        4     7        8      Note in C code, cell corners may be starting
        |--------|     |--------|      with 0 index, not 1 as shown here
        |  top   |     |        |
@@ -239,6 +241,8 @@ def point_in_hexahedron(x0, y0, z0, vertices, _algorithm=1):
 
 def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
     """Find angle in 3D for two vectors
+
+    ::
 
              / p1
             /
