@@ -76,3 +76,8 @@ jobs:
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
           pip install -r requirements/requirements_test.txt
           pytest --disable-warnings
+
+      - name: Build docs
+        run: |
+          pip install -r requirements/requirements_docs.txt
+          sphinx-build -W docs tmp/docs
