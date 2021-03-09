@@ -20,6 +20,7 @@ try:
 except ImportError:
     pass
 
+
 import tests.test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()

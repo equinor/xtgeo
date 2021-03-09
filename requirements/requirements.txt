@@ -8,3 +8,4 @@ six>=1.11
 h5py>=3
 hdf5plugin>=2.3
 tables>=3.5.1
+PyYAML>=5.3.1
