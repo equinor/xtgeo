@@ -15,6 +15,7 @@ import xtgeo
 
 from xtgeo.common import XTGDescription
 from ._grid3d import _Grid3D
+from xtgeo.metadata import export_metadata_file
 
 from . import _grid_hybrid
 from . import _grid_import
@@ -580,7 +581,7 @@ class Grid(_Grid3D):
             oricenter (bool): If False, startpoint is node, if True, use cell center
             increment (tuple of float): Grid increments (xinc, yinc, zinc)
             rotation (float): Roations in degrees, anticlock from X axis.
-            flip (int): If +1, grid origin is lower left and left-handed; 
+            flip (int): If +1, grid origin is lower left and left-handed;
                         if -1, origin is upper left and right-handed (row flip).
 
         Returns:
@@ -599,13 +600,16 @@ class Grid(_Grid3D):
         )
         self._tmp = {}
 
-    def to_file(self, gfile, fformat="roff"):
+    def to_file(self, gfile, fformat="roff", metadata=False):
         """Export grid geometry to file, various vendor formats.
 
         Args:
             gfile (str): Name of output file
             fformat (str): File format; roff/roff_binary/roff_ascii/
                 grdecl/bgrdecl/egrid.
+            metadata: If True, and freeform metadata exists, a complimentary file YAML
+                file with the freeform metadata will exported. This file name will
+                be prepended with a dot, and suffix will be ".yml".
 
         Raises:
             OSError: Directory does not exist
@@ -613,6 +617,8 @@ class Grid(_Grid3D):
         Example::
 
             xg.to_file("myfile.roff")
+
+        .. versionchanged:: 2.15 Added ``metadata`` key
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb")
 
@@ -630,6 +636,9 @@ class Grid(_Grid3D):
             _grid_export.export_egrid(self, gfile.name)
         else:
             raise SystemExit("Invalid file format")
+
+        if metadata:
+            export_metadata_file(gfile, self.metadata.freeform)
 
     def to_hdf(
         self,

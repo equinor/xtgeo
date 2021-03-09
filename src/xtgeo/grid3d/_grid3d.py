@@ -8,13 +8,15 @@ logger = xtg.functionlogger(__name__)
 
 
 class _Grid3D(object):
-    """Abstract base class for Grid3D."""
+    """Base class for Grid3D."""
 
     def __init__(self):
 
         self._ncol = 4
         self._nrow = 3
         self._nlay = 5
+
+        self._roxmeta = None
 
     @property
     def ncol(self) -> int:

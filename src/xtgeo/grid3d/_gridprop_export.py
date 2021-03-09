@@ -7,13 +7,23 @@ import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel
+from xtgeo.metadata import export_metadata_file
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 
-def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None):
+def to_file(
+    self,
+    pfile,
+    fformat="roff",
+    name=None,
+    append=False,
+    dtype=None,
+    fmt=None,
+    metadata=False,
+):
     """Export the grid property to file."""
     logger.info("Export property to file %s as %s", pfile, fformat)
 
@@ -48,6 +58,9 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
 
     else:
         raise ValueError("Cannot export, invalid fformat: {}".format(fformat))
+
+    if metadata:
+        export_metadata_file(fobj, self.metadata.freeform)
 
 
 # Export ascii or binary ROFF format
