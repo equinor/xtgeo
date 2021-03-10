@@ -9,6 +9,7 @@ import pytest
 
 import numpy as np
 import numpy.ma as npma
+from numpy.testing import assert_allclose
 
 import xtgeo
 from xtgeo.xyz import Polygons
@@ -686,6 +687,19 @@ def test_values_in_polygon():
     print(xp3.values.mean())
 
     tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
+
+
+def test_grdecl_read_write_x_property(tmp_path):
+    g = Grid()
+    g.create_box()
+    filepath = tmp_path / "gridprop.grdecl"
+
+    prop = g.get_xyz_corners()[0]  # X_UTME property
+
+    prop.to_file(filepath, fformat="grdecl")
+    prop2 = GridProperty()
+    prop2.from_file(filepath, name=prop.name, fformat="grdecl", grid=g)
+    assert_allclose(prop.get_npvalues1d(), prop2.get_npvalues1d(), atol=1e-3)
 
 
 # def test_get_xy_values_for_webportal_bri():

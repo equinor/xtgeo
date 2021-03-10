@@ -125,5 +125,5 @@ def import_grdecl_prop(self, pfile, name="unknown", grid=None):
             "Cannot import {}, not present in file {}?".format(name, pfile)
         )
 
-    self.values = values.reshape(self.dimensions)
-    self.values = ma.masked_where(actnumv == 0, self.values)
+    reshaped_values = values.reshape(self.dimensions)
+    self.values = ma.masked_where(actnumv == 0, reshaped_values)
