@@ -85,7 +85,9 @@ class XYZ:
             if oldname and self._df is not None:
                 self._df.rename(columns={oldname: newname}, inplace=True)
         else:
-            raise ValueError("Wrong type of input to {}; must be string".format(newname))
+            raise ValueError(
+                "Wrong type of input to {}; must be string".format(newname)
+            )
 
     def copy(self):
         """Returns a a deep copy of an instance"""
