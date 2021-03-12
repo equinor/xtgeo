@@ -7,7 +7,6 @@ class SuperClass:
 
 
 def test_docstring():
-
     class SubClass(SuperClass):
         @inherit_docstring(inherit_from=SuperClass.my_function)
         def my_function(self):
@@ -17,7 +16,6 @@ def test_docstring():
 
 
 def test_new_docstring():
-
     class SubClass(SuperClass):
         @inherit_docstring(inherit_from=SuperClass.my_function)
         def my_function(self):

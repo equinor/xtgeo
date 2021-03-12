@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz module (base class)"""
-import inspect
 from collections import OrderedDict
 from copy import deepcopy
 import pathlib
@@ -119,7 +118,8 @@ class XYZ:
 
         if value not in self._df.columns:
             raise ValueError(
-                f"{value} does not exist as a column name, must be one of: {self._df.columns}"
+                f"{value} does not exist as a column name, must be "
+                f"one of: f{self._df.columns}"
             )
 
     def copy(self):
@@ -433,4 +433,3 @@ class XYZ:
             realisation,
             attributes,
         )
-
