@@ -47,6 +47,7 @@ CMDCLASS = {"clean": setuputils.CleanUp}
 
 
 def src(anypath):
+    """Source of repo."""
     root = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(root, anypath))
 
