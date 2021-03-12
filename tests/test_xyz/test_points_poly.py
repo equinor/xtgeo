@@ -6,7 +6,6 @@ import pandas as pd
 
 import pytest
 
-from xtgeo.xyz import XYZ
 from xtgeo.xyz import Points
 from xtgeo.xyz import Polygons
 

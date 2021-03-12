@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz module (base class)"""
-import inspect
 from collections import OrderedDict
 from copy import deepcopy
 import pathlib
