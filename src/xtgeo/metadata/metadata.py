@@ -11,12 +11,52 @@ The metadata works through the various datatypes in XTGeo. For example::
 """
 # import datetime
 from collections import OrderedDict
+from pathlib import Path
+from io import StringIO
+import yaml
+
 
 # from datetime import date
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+def oyamlify(metadatadict) -> str:
+    """Process yaml output for ordered dictionaries."""
+    #
+    def represent_dictionary_order(self, dict_data):
+        return self.represent_mapping("tag:yaml.org,2002:map", dict_data.items())
+
+    def setup_yaml():
+        yaml.add_representer(OrderedDict, represent_dictionary_order)
+
+    setup_yaml()
+
+    stream = StringIO()
+    yaml.dump(metadatadict, stream)
+    yamlblock = stream.getvalue()
+    stream.close()
+
+    return yamlblock
+
+
+def export_metadata_file(mfile, metadata) -> None:
+    """Export genericly the complementary metadata file."""
+    # mfile is the _XTGeoFile instance for exporting e.g. a surface
+
+    yamlbase = mfile.file.stem  # the Path object
+    yamlparent = mfile.file.parent
+    yamlbase = Path("." + yamlbase).with_suffix(".yml")
+    yamlfile = yamlparent / yamlbase
+
+    if metadata:
+        oyaml = oyamlify(metadata)
+        with open(yamlfile, "w") as stream:
+            stream.write(oyaml)
+    else:
+        xtg.warnuser("Export of metadata was requested, but no metadata are present.")
 
 
 class _OptionalMetaData:
@@ -257,15 +297,15 @@ class MetaDataRegularSurface(MetaData):
         if not isinstance(obj, xtgeo.RegularSurface):
             raise ValueError("Input object is not a RegularSurface()")
 
-        self._required["ncol"] = obj.ncol
-        self._required["nrow"] = obj.nrow
-        self._required["xori"] = obj.xori
-        self._required["yori"] = obj.yori
-        self._required["xinc"] = obj.xinc
-        self._required["yinc"] = obj.yinc
-        self._required["yflip"] = obj.yflip
-        self._required["rotation"] = obj.rotation
-        self._required["undef"] = obj.undef
+        self._required["ncol"] = int(obj.ncol)
+        self._required["nrow"] = int(obj.nrow)
+        self._required["xori"] = float(obj.xori)
+        self._required["yori"] = float(obj.yori)
+        self._required["xinc"] = float(obj.xinc)
+        self._required["yinc"] = float(obj.yinc)
+        self._required["yflip"] = int(obj.yflip)
+        self._required["rotation"] = float(obj.rotation)
+        self._required["undef"] = float(obj.undef)
 
 
 class MetaDataRegularCube(MetaData):

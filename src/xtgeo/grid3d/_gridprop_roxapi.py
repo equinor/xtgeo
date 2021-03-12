@@ -6,6 +6,7 @@ import numpy.ma as ma
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.roxutils import RoxMeta
 
 try:
     import roxar  # type: ignore
@@ -25,6 +26,10 @@ def import_prop_roxapi(
 ):  # pragma: no cover
     """Import a Property via ROXAR API spec."""
     logger.info("Opening RMS project ...")
+
+    self._roxmeta = RoxMeta()
+    self._roxmeta.gridname = gname
+    self._roxmeta.propname = pname
 
     rox = xtgeo.RoxUtils(project, readonly=True)
 

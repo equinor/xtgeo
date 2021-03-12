@@ -19,15 +19,30 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
+class RoxMeta:
+    """Class to hold various metadata taken from RoxarAPI in RMS.
+
+    This will be used to store useful metadata (e.g. which surface category) for
+    the basic datatypes, if read from RMS.
+    """
+
+    def __init__(self):
+        """Initialise class instance."""
+        self.datatype = None
+        self.folder = None  # horizon/zone category or clipboard folder
+        self.gridname = None  # name of grid for grid and gridprop
+        self.propname = None
+
+
 class RoxUtils(object):
+    """Class RoxUtils, for accessing project level methods.
 
-    """Class RoxUtils, for accessing project level methods::
+    For example::
 
-     import xtgeo
-
-     xr = xtgeo.RoxUtils(project)
-     xr.create_horizon_category('DS_extracted_run3')
-     xr.delete_horizon_category('DS_extracted_run2')
+        import xtgeo
+        xr = xtgeo.RoxUtils(project)
+        xr.create_horizon_category('DS_extracted_run3')
+        xr.delete_horizon_category('DS_extracted_run2')
 
     The project itself can be a reference to an existing project, typically
     the magic ``project`` wording inside RMS python,
@@ -51,6 +66,7 @@ class RoxUtils(object):
     """
 
     def __init__(self, project, readonly=False):
+        """Initialise class instance."""
         self._project = None
 
         self._version = roxar.__version__
@@ -89,17 +105,16 @@ class RoxUtils(object):
 
     @property
     def roxversion(self):
-        """Roxar API version (read only)"""
+        """Roxar API version (read only)."""
         return self._version
 
     @property
     def project(self):
-        """The Roxar project instance (read only)"""
+        """The Roxar project instance (read only)."""
         return self._project
 
     def safe_close(self):
-        """Close the project but only if roxarapps (external) mode, i.e.
-        not current RMS project
+        """Close the project but only if roxarapps (external) mode.
 
         In case roxar.Project.open() is done explicitly, safe_close() will do nothing.
 
@@ -148,7 +163,6 @@ class RoxUtils(object):
             print('The supported RMS version are {}'.format(rmsver))
 
         """
-
         return self._versions.get(apiversion, None)
 
     def create_horizons_category(self, category, domain="depth", htype="surface"):
@@ -160,7 +174,6 @@ class RoxUtils(object):
             domain (str): 'depth' (default) or 'time'
             htype (str): Horizon type: surface/lines/points
         """
-
         _roxutils_etc.create_whatever_category(
             self, category, stype="horizons", domain=domain, htype=htype
         )
@@ -174,19 +187,16 @@ class RoxUtils(object):
             domain (str): 'thickness' (default) or ...?
             htype (str): Horizon type: surface/lines/points
         """
-
         _roxutils_etc.create_whatever_category(
             self, category, stype="zones", domain=domain, htype=htype
         )
 
     def delete_horizons_category(self, category):
-        """Delete on or more horizons or zones categories"""
-
+        """Delete one or more horizons or zones categories."""
         _roxutils_etc.delete_whatever_category(self, category, stype="horizons")
 
     def delete_zones_category(self, category):
-        """Delete on or more horizons or zones categories. See previous"""
-
+        """Delete one or more horizons or zones categories."""
         _roxutils_etc.delete_whatever_category(self, category, stype="zones")
 
     def clear_horizon_category(self, category):

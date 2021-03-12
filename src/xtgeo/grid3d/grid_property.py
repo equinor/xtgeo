@@ -713,7 +713,14 @@ class GridProperty(_Grid3D):
         return obj
 
     def to_file(
-        self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None
+        self,
+        pfile,
+        fformat="roff",
+        name=None,
+        append=False,
+        dtype=None,
+        fmt=None,
+        metadata=False,
     ):
         """Export the grid property to file.
 
@@ -731,6 +738,9 @@ class GridProperty(_Grid3D):
                 Eclipse formats.
             fmt (str): Format for ascii grdecl format, default is None. If spesified,
                 the user is responsible for a valid format specifier, e.g. "%8.4f"
+            metadata: If True, and freeform metadata exists, a complimentary file YAML
+                file with the freeform metadata will exported. This file name will
+                be prepended with a dot, and suffix will be ".yml".
 
         Example::
 
@@ -742,11 +752,13 @@ class GridProperty(_Grid3D):
 
             poro.to_file('reek_export_poro.bgrdecl', format='bgrdecl')
 
-        .. versionadded:: 2.13  Key `fmt` was added and default format for float output
-            to grdecl is now "%e" if `fmt=None`
+        .. versionchanged:: 2.13
+            Key `fmt` was added and default format for float output to grdecl is
+            now "%e" if `fmt=None`
+        .. versionchanged:: 2.15
+            Key ``metadata`` added.
 
         """
-
         _gridprop_export.to_file(
             self,
             pfile,
@@ -755,6 +767,7 @@ class GridProperty(_Grid3D):
             append=append,
             dtype=dtype,
             fmt=fmt,
+            metadata=metadata,
         )
 
     def from_roxar(
@@ -777,7 +790,6 @@ class GridProperty(_Grid3D):
         .. versionadded:: 2.12  Key `faciescodes` was added
 
         """
-
         self._filesrc = None
 
         _gridprop_roxapi.import_prop_roxapi(

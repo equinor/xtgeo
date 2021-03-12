@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 # flake8: noqa
-"""XTGeo roxutils package"""
-
-
+"""XTGeo roxutils package."""
 from xtgeo.roxutils.roxutils import RoxUtils
+from xtgeo.roxutils.roxutils import RoxMeta

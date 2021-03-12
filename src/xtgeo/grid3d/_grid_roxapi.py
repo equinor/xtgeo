@@ -8,6 +8,7 @@ import numpy as np
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo.roxutils import RoxMeta
 
 from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
@@ -30,6 +31,10 @@ def import_grid_roxapi(
     self, projectname, gname, realisation, dimonly, info
 ):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
+
+    self._roxmeta = RoxMeta()
+    self._roxmeta.gridname = gname  # grids have no folder or category in RMS
+
     if self._xtgformat == 1 or dimonly:
         _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
     else:
