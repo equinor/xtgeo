@@ -580,7 +580,7 @@ class Grid(_Grid3D):
             oricenter (bool): If False, startpoint is node, if True, use cell center
             increment (tuple of float): Grid increments (xinc, yinc, zinc)
             rotation (float): Roations in degrees, anticlock from X axis.
-            flip (int): If +1, grid origin is lower left and left-handed; 
+            flip (int): If +1, grid origin is lower left and left-handed;
                         if -1, origin is upper left and right-handed (row flip).
 
         Returns:

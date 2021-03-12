@@ -123,7 +123,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def name(self, newname):
         self._name = newname
 
-
     @property
     def hname(self):
         """Returns or set the name of the cumulative horizontal length.
@@ -195,7 +194,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             self._tname = None
         if self._hname not in self._df.columns:
             self._hname = None
-
 
     # ----------------------------------------------------------------------------------
     # Methods
