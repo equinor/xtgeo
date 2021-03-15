@@ -16,6 +16,7 @@ import xtgeo
 import xtgeo.common.constants as const
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
+from xtgeo.metadata import export_metadata_file
 from . import _wellmarkers
 from . import _well_io
 from . import _well_roxapi
@@ -544,12 +545,16 @@ class Well:
         self,
         wfile: Union[str, Path, io.BytesIO],
         fformat: Optional[str] = "rms_ascii",
+        metadata: Optional[bool] = False,
     ):
         """Export well to file or memory stream.
 
         Args:
             wfile: File name or stream.
             fformat: File format ('rms_ascii'/'rmswell', 'hdf/hdf5/h5').
+            metadata: If True, and freeform metadata exists, a complimentary file YAML
+                file with the freeform metadata will exported. This file name will
+                be prepended with a dot, and suffix will be ".yml".
 
         Example::
 
@@ -566,6 +571,8 @@ class Well:
 
         if fformat in (None, "rms_ascii", "rms_asc", "rmsasc", "rmswell"):
             _well_io.export_rms_ascii(self, wfile.name)
+            export_metadata_file(wfile, self.metadata.freeform)
+
 
         elif fformat in ("hdf", "hdf5", "h5"):
             self.to_hdf(wfile)

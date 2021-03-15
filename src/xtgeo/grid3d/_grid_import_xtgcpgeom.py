@@ -98,7 +98,7 @@ def import_xtgcpgeom(
     self._zcornsv = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
     self._actnumsv = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
 
-    reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
+    reqattrs = xtgeo.MetaDataCPGridGeometry.REQUIRED
 
     for myattr in reqattrs:
         if "subgrid" in myattr:
@@ -112,7 +112,7 @@ def import_xtgcpgeom(
 def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
     """Experimental grid geometry import using hdf5."""
     #
-    reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
+    reqattrs = xtgeo.MetaDataCPGridGeometry.REQUIRED
     ncol2 = nrow2 = nlay2 = 1
     with h5py.File(mfile.name, "r") as h5h:
 

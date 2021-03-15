@@ -361,7 +361,7 @@ class MetaDataRegularCube(MetaData):
         self._required["undef"] = obj.undef
 
 
-class MetaDataCPGeometry(MetaData):
+class MetaDataCPGridGeometry(MetaData):
     """Metadata for Grid() objects of type simplified CornerPoint Geometry."""
 
     REQUIRED = OrderedDict(
@@ -406,8 +406,8 @@ class MetaDataCPGeometry(MetaData):
         self._required["subgrids"] = obj.get_subgrids()
 
 
-class MetaDataCPProperty(MetaData):
-    """Metadata for GridProperty() objects belonging to CPGeometry."""
+class MetaDataCPGridProperty(MetaData):
+    """Metadata for GridProperty() objects belonging to CPGridGeometry."""
 
     REQUIRED = OrderedDict(
         [
@@ -416,6 +416,7 @@ class MetaDataCPProperty(MetaData):
             ("nlay", 1),
             ("codes", None),
             ("discrete", False),
+            ("name", "unknown"),
         ]
     )
 
@@ -440,6 +441,7 @@ class MetaDataCPProperty(MetaData):
         self._required["nlay"] = obj.nlay
         self._required["codes"] = obj.codes
         self._required["discrete"] = obj.isdiscrete
+        self._required["name"] = obj.name
 
 
 class MetaDataWell(MetaData):

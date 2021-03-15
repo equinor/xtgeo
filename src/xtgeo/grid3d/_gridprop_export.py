@@ -3,6 +3,9 @@ import struct
 import json
 
 import numpy as np
+import h5py
+import hdf5plugin
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -245,7 +248,7 @@ def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt
 
 
 def export_xtgcpprop(self, mfile):
-    """Export to experimental xtgcpproperty format, python version."""
+    """Export to experimental xtgCPGridProperty format, python version."""
     logger.info("Export as xtgcpprop...")
     self._metadata.required = self
 

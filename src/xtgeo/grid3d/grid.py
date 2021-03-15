@@ -222,7 +222,7 @@ class Grid(_Grid3D):
         self._dualperm = False
         self._dualactnum = None  # will be a GridProperty()
 
-        self._metadata = xtgeo.MetaDataCPGeometry()
+        self._metadata = xtgeo.MetaDataCPGridGeometry()
 
         # Roxar api spesific:
         self._roxgrid = None
@@ -272,15 +272,15 @@ class Grid(_Grid3D):
 
     @property
     def metadata(self):
-        """obj: Return or set metadata instance of type MetaDataCPGeometry."""
+        """obj: Return or set metadata instance of type MetaDataCPGridGeometry."""
         return self._metadata
 
     @metadata.setter
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataCPGeometry):
-            raise ValueError("Input obj not an instance of MetaDataCPGeometry")
+        if not isinstance(obj, xtgeo.MetaDataCPGridGeometry):
+            raise ValueError("Input obj not an instance of MetaDataCPGridGeometry")
 
         self._metadata = obj  # checking is currently missing! TODO
 
