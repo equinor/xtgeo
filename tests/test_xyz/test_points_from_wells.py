@@ -1,141 +1,104 @@
-# -*- coding: utf-8 -*-
-
+import pathlib
 
 import glob
 from xtgeo.xyz import Points
 from xtgeo.well import Well
-from xtgeo.common import XTGeoDialog
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-td = xtg.tmpdir
-TPATH = xtg.testpathobj
-
-WFILES1 = TPATH / "wells/reek/1/OP_1.w"
-WFILES2 = TPATH / "wells/reek/1/OP_[1-5]*.w"
-WFILES3 = TPATH / "wells/reek/1/XP_*.w"
+WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
+WFILES2 = pathlib.Path("wells/reek/1/OP_[1-5]*.w")
 
 
-def test_get_zone_tops_one_well():
+def test_get_zone_tops_one_well(testpath, tmp_path):
     """Import a well and get the zone tops"""
 
-    wlist = []
-    for w in glob.glob(str(WFILES1)):
-        wlist.append(Well(w, zonelogname="Zonelog"))
-        logger.info("Imported well {}".format(w))
+    wlist = [Well((testpath / WFILES1), zonelogname="Zonelog")]
 
     mypoints = Points()
-    nwell = mypoints.from_wells(wlist)
-
-    print(mypoints.dataframe)
-
-    logger.info("Number of well made to tops: {}".format(nwell))
+    mypoints.from_wells(wlist)
 
     mypoints.to_file(
-        "TMP/points_w1.rmsasc", fformat="rms_attr", attributes=["WellName", "TopName"]
+        tmp_path / "points_w1.rmsasc",
+        fformat="rms_attr",
+        attributes=["WellName", "TopName"],
     )
 
     mypoints.to_file(
-        "TMP/points_w1.rmswpicks",
+        tmp_path / "points_w1.rmswpicks",
         fformat="rms_wellpicks",
         wcolumn="WellName",
         hcolumn="TopName",
     )
 
 
-def test_get_zone_tops_one_well_w_undef():
+def test_get_zone_tops_one_well_w_undef(testpath, tmp_path):
     """Import a well and get the zone tops, include undef transition"""
 
-    wlist = []
-    for w in glob.glob(str(WFILES1)):
-        wlist.append(Well(w, zonelogname="Zonelog"))
-        logger.info("Imported well {}".format(w))
+    wlist = [Well((testpath / WFILES1), zonelogname="Zonelog")]
 
     mypoints = Points()
-    nwell = mypoints.from_wells(wlist, use_undef=True)
-
-    print(mypoints.dataframe)
-
-    logger.info("Number of well made to tops: {}".format(nwell))
+    mypoints.from_wells(wlist, use_undef=True)
 
     mypoints.to_file(
-        "TMP/points_w1_w_undef.rmsasc",
+        tmp_path / "points_w1_w_undef.rmsasc",
         fformat="rms_attr",
         attributes=["WellName", "TopName"],
     )
 
     mypoints.to_file(
-        "TMP/points_w1_w_undef.rmswpicks",
+        tmp_path / "points_w1_w_undef.rmswpicks",
         fformat="rms_wellpicks",
         wcolumn="WellName",
         hcolumn="TopName",
     )
 
 
-def test_get_zone_tops_some_wells():
+def test_get_zone_tops_some_wells(testpath, tmp_path):
     """Import some well and get the zone tops"""
 
-    wlist = []
-    for w in glob.glob(str(WFILES2)):
-        wlist.append(Well(w, zonelogname="Zonelog"))
-        logger.info("Imported well {}".format(w))
+    wlist = [
+        Well(wpath, zonelogname="Zonelog")
+        for wpath in glob.glob(str(testpath / WFILES2))
+    ]
 
     mypoints = Points()
-    nwell = mypoints.from_wells(wlist)
-
-    print(mypoints.dataframe)
-
-    logger.info("Number of well made to tops: {}".format(nwell))
+    mypoints.from_wells(wlist)
 
     mypoints.to_file(
-        "TMP/points_w1_many.rmsasc",
+        tmp_path / "points_w1_many.rmsasc",
         fformat="rms_attr",
         attributes=["WellName", "TopName"],
     )
 
     mypoints.to_file(
-        "TMP/points_w1_many.rmswpicks",
+        tmp_path / "points_w1_many.rmswpicks",
         fformat="rms_wellpicks",
         wcolumn="WellName",
         hcolumn="TopName",
     )
 
 
-def test_get_zone_thickness_one_well():
+def test_get_zone_thickness_one_well(testpath):
     """Import a well and get the zone thicknesses"""
 
-    wlist = []
-    for w in glob.glob(str(WFILES1)):
-        wlist.append(Well(w, zonelogname="Zonelog"))
-        logger.info("Imported well {}".format(w))
+    wlist = [Well((testpath / WFILES1), zonelogname="Zonelog")]
 
     mypoints = Points()
-    nwell = mypoints.from_wells(wlist, tops=False, zonelist=[12, 13, 14])
-
-    print(mypoints.dataframe)
-
-    logger.info("Number of well made to tops: {}".format(nwell))
+    mypoints.from_wells(wlist, tops=False, zonelist=[12, 13, 14])
 
 
-def test_get_zone_thickness_some_wells():
+def test_get_zone_thickness_some_wells(testpath, tmp_path):
     """Import some wells and get the zone thicknesses"""
 
-    wlist = []
-    for w in glob.glob(str(WFILES2)):
-        wlist.append(Well(w, zonelogname="Zonelog"))
-        logger.info("Imported well {}".format(w))
+    wlist = [
+        Well(wpath, zonelogname="Zonelog")
+        for wpath in glob.glob(str(testpath / WFILES2))
+    ]
 
     mypoints = Points()
-    nwell = mypoints.from_wells(wlist, tops=False, zonelist=(1, 22))
-
-    print(nwell, "\n", mypoints.dataframe)
+    mypoints.from_wells(wlist, tops=False, zonelist=(1, 22))
 
     mypoints.to_file(
-        "TMP/zpoints_w_so622.rmsasc",
+        tmp_path / "zpoints_w_so622.rmsasc",
         fformat="rms_attr",
         attributes=["WellName", "ZoneName"],
         pfilter={"ZoneName": ["SO622"]},
@@ -143,37 +106,31 @@ def test_get_zone_thickness_some_wells():
 
     # filter, for backwards compatibility
     mypoints.to_file(
-        "TMP/zpoints_w_so622_again.rmsasc",
+        tmp_path / "zpoints_w_so622_again.rmsasc",
         fformat="rms_attr",
         attributes=["WellName", "ZoneName"],
         filter={"ZoneName": ["SO622"]},
     )
 
-    logger.info("Number of well made to tops: {}".format(nwell))
 
-
-def test_get_faciesfraction_some_wells():
+def test_get_faciesfraction_some_wells(testpath, tmp_path):
     """Import some wells and get the facies fractions per zone, for
     wells < 70 degrees inclination.
     """
 
-    wlist = []
-    for w in sorted(glob.glob(str(WFILES2))):
-        wlist.append(Well(w, zonelogname="Zonelog"))
-        logger.info("Imported well {}".format(w))
+    wlist = [
+        Well(wpath, zonelogname="Zonelog")
+        for wpath in glob.glob(str(testpath / WFILES2))
+    ]
 
     mypoints = Points()
     facname = "Facies"
     fcode = [1]
 
-    nwell = mypoints.dfrac_from_wells(
-        wlist, facname, fcode, zonelist=None, incl_limit=70
-    )
+    mypoints.dfrac_from_wells(wlist, facname, fcode, zonelist=None, incl_limit=70)
 
     # rename column
     mypoints.zname = "FACFRAC"
-
-    logger.info("Number of wells is %s, DATAFRAME:\n, %s", nwell, mypoints.dataframe)
 
     myquery = 'WELLNAME == "OP_1" and ZONE == 1'
     usedf = mypoints.dataframe.query(myquery)
@@ -181,7 +138,7 @@ def test_get_faciesfraction_some_wells():
     assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001
 
     mypoints.to_file(
-        "TMP/ffrac_per_zone.rmsasc",
+        tmp_path / "ffrac_per_zone.rmsasc",
         fformat="rms_attr",
         attributes=["WELLNAME", "ZONE"],
         pfilter={"ZONE": [1]},

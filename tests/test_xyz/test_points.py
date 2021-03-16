@@ -1,36 +1,17 @@
-import os
-from os.path import join
-import pandas as pd
+import itertools
+import pathlib
 
+import pandas as pd
 import pytest
 
 from xtgeo.xyz import Points
-
-from xtgeo.common import XTGeoDialog
 import tests.test_common.test_xtg as tsetup
 
-xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
-
-if not xtg.testsetup():
-    raise SystemExit
-
-TMPD = xtg.tmpdir
-TSTPATH = xtg.testpathobj
-
-XTGSHOW = False
-if "XTG_SHOW" in os.environ:
-    XTGSHOW = True
-
-# =========================================================================
-# Do tests
-# =========================================================================
-
-PFILE = join(TSTPATH, "points/eme/1/emerald_10_random.poi")
-POINTSET2 = join(TSTPATH, "points/reek/1/pointset2.poi")
-POINTSET3 = join(TSTPATH, "points/battle/1/many.rmsattr")
-POINTSET4 = join(TSTPATH, "points/reek/1/poi_attr.rmsattr")
-CSV1 = join(TSTPATH, "3dgrids/etc/gridqc1_rms_cellcenter.csv")
+PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")
+POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
+POINTSET3 = pathlib.Path("points/battle/1/many.rmsattr")
+POINTSET4 = pathlib.Path("points/reek/1/poi_attr.rmsattr")
+CSV1 = pathlib.Path("3dgrids/etc/gridqc1_rms_cellcenter.csv")
 
 
 def test_custom_points():
@@ -46,20 +27,20 @@ def test_custom_points():
     assert z2 == 12
 
 
-def test_import():
+def test_import(testpath):
     """Import XYZ points from file."""
 
-    mypoints = Points(PFILE)  # should guess based on extesion
+    mypoints = Points(testpath / PFILE)  # should guess based on extesion
 
     x0 = mypoints.dataframe["X_UTME"].values[0]
     tsetup.assert_almostequal(x0, 460842.434326, 0.001)
 
 
-def test_import_from_dataframe():
+def test_import_from_dataframe(testpath):
     """Import Points via Pandas dataframe."""
 
     mypoints = Points()
-    dfr = pd.read_csv(CSV1, skiprows=3)
+    dfr = pd.read_csv(testpath / CSV1, skiprows=3)
     attr = {"IX": "I", "JY": "J", "KZ": "K"}
     mypoints.from_dataframe(dfr, east="X", north="Y", tvdmsl="Z", attributes=attr)
 
@@ -71,33 +52,60 @@ def test_import_from_dataframe():
         )
 
 
-def test_export_points():
+def test_export_and_load_points(tmp_path):
+    """Export XYZ points to file."""
+    plist = [(1.0, 1.0, 1.0), (2.0, 3.0, 4.0), (5.0, 6.0, 7.0)]
+    test_points = Points(plist)
+
+    export_path = tmp_path / "test_points.xyz"
+    test_points.to_file(export_path)
+
+    exported_points = Points(export_path)
+
+    pd.testing.assert_frame_equal(test_points.dataframe, exported_points.dataframe)
+    assert list(itertools.chain.from_iterable(plist)) == list(
+        test_points.dataframe.values.flatten()
+    )
+
+
+def test_export_load_rmsformatted_points(testpath, tmp_path):
     """Export XYZ points to file, various formats."""
 
-    mypoints = Points(POINTSET4)  # should guess based on extesion
+    test_points_path = testpath / POINTSET4
+    orig_points = Points(test_points_path)  # should guess based on extesion
 
-    print(mypoints.dataframe)
-    mypoints.to_file(join(TMPD, "poi_export1.rmsattr"), fformat="rms_attr")
+    export_path = tmp_path / "attrs.rmsattr"
+    orig_points.to_file(export_path, fformat="rms_attr")
+
+    reloaded_points = Points(export_path)
+
+    pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
 
 
-def test_import_rmsattr_format():
+def test_import_rmsattr_format(testpath, tmp_path):
     """Import points with attributes from RMS attr format."""
 
-    mypoi = Points()
+    orig_points = Points()
 
-    mypoi.from_file(POINTSET3, fformat="rms_attr")
+    test_points_path = testpath / POINTSET3
+    orig_points.from_file(test_points_path, fformat="rms_attr")
 
-    print(mypoi.dataframe["VerticalSep"].dtype)
-    mypoi.to_file("TMP/attrs.rmsattr", fformat="rms_attr")
+    export_path = tmp_path / "attrs.rmsattr"
+    orig_points.to_file(export_path, fformat="rms_attr")
+
+    reloaded_points = Points()
+    reloaded_points.from_file(export_path, fformat="rms_attr")
+    pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
 
 
-def test_export_points_rmsattr():
+def test_export_points_rmsattr(testpath, tmp_path):
     """Export XYZ points to file, as rmsattr."""
 
-    mypoints = Points(POINTSET4)  # should guess based on extesion
-    logger.info(mypoints.dataframe)
-    mypoints.to_file(join(TMPD, "poi_export1.rmsattr"), fformat="rms_attr")
-    mypoints2 = Points(join(TMPD, "poi_export1.rmsattr"))
+    mypoints = Points(testpath / POINTSET4)  # should guess based on extesion
+    output_path = tmp_path / "poi_export.rmsattr"
+
+    mypoints.to_file(output_path, fformat="rms_attr")
+    mypoints2 = Points(output_path)
 
     assert mypoints.dataframe["Seg"].equals(mypoints2.dataframe["Seg"])
     assert mypoints.dataframe["MyNum"].equals(mypoints2.dataframe["MyNum"])
