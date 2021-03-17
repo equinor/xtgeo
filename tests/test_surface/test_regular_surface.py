@@ -228,10 +228,11 @@ def test_irapbin_import_quickplot():
 
 def test_irapbin_import_metadatafirst_simple():
     srf = xtgeo.RegularSurface(TESTSET2, values=False)
-    assert srf.values is None
+    assert set(srf.values.data.flatten().tolist()) == {0.0}
     assert srf.ncol == 1264
 
     srf.load_values()
+    assert srf.values.mean() == pytest.approx(1672.8242448561361)
 
 
 def test_irapbin_import_metadatafirst():

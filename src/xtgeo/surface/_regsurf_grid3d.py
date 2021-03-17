@@ -74,7 +74,6 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
 
     .. versionadded:: 2.1
     """
-
     if where == "top":
         klayer = 1
         option = 0
@@ -93,8 +92,8 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
     if rfactor < 0.5:
         raise KeyError("Refinefactor rfactor is too small, should be >= 0.5")
 
-    _update_regsurf(self, template, grid, rfactor=float(rfactor))
-
+    args = _update_regsurf(template, grid, rfactor=float(rfactor))
+    self._reset(**args)
     # call C function to make a map
     svalues = self.get_values1d() * 0.0 + xtgeo.UNDEF
     ivalues = svalues.copy()
@@ -145,8 +144,8 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
     return isurf, jsurf  # needed in special cases
 
 
-def _update_regsurf(self, template, grid, rfactor=1.0):
-
+def _update_regsurf(template, grid, rfactor=1.0):
+    args = {}
     if template is None:
         # need to estimate map settings from the existing grid. this
         # may a bit time consuming for large grids.
@@ -164,18 +163,19 @@ def _update_regsurf(self, template, grid, rfactor=1.0):
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)
 
-        self._xori = xori
-        self._yori = yori
-        self._xinc = xinc
-        self._yinc = yinc
-        self._ncol = ncol
-        self._nrow = nrow
-        self._values = np.ma.zeros((ncol, nrow), dtype=np.float64)
+        args["xori"] = xori
+        args["yori"] = yori
+        args["xinc"] = xinc
+        args["yinc"] = yinc
+        args["ncol"] = ncol
+        args["nrow"] = nrow
+        args["values"] = np.ma.zeros((ncol, nrow), dtype=np.float64)
     else:
-        self._xori = template.xori
-        self._yori = template.yori
-        self._xinc = template.xinc
-        self._yinc = template.yinc
-        self._ncol = template.ncol
-        self._nrow = template.nrow
-        self._values = template.values.copy()
+        args["xori"] = template.xori
+        args["yori"] = template.yori
+        args["xinc"] = template.xinc
+        args["yinc"] = template.yinc
+        args["ncol"] = template.ncol
+        args["nrow"] = template.nrow
+        args["values"] = template.values.copy()
+    return args
