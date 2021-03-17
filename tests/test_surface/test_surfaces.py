@@ -82,7 +82,7 @@ def test_statistics():
     assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
 
 
-def test_more_statistics():
+def test_more_statistics(default_surface):
     """Find the mean etc measures of the surfaces."""
     base = xtgeo.RegularSurface(TESTSET1A)
     base.values *= 0.0
@@ -108,7 +108,7 @@ def test_more_statistics():
     assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
     assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
 
-    small = xtgeo.RegularSurface()
+    small = xtgeo.RegularSurface(**default_surface)
     so2 = xtgeo.Surfaces()
 
     for inum in range(10):

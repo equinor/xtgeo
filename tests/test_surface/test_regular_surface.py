@@ -59,31 +59,27 @@ def test_create():
     x.describe()
 
 
-def test_values():
+def test_values(default_surface):
     """Test behaviour of values attribute."""
-    srf = xtgeo.RegularSurface()
-    id1 = id(srf.values)
+    srf = xtgeo.RegularSurface(**default_surface)
 
     newvalues = srf.values.copy()
     srf.values = newvalues
-    assert id(srf.values) == id1
+    assert (srf.values.data == default_surface["values"]).all()
 
     srf.values = 44
-    assert id(srf.values) == id1
+    assert set(srf.values.data.flatten()) == {1e33, 44.0}
 
-    srf.values = None
-    assert srf.values is None
-
-    srf = xtgeo.RegularSurface()
-    id1 = id(srf.values)
+    srf = xtgeo.RegularSurface(**default_surface)
     newvalues = np.ones((srf.ncol, srf.nrow))
     srf.values = newvalues
     assert isinstance(srf.values, np.ma.MaskedArray)
+    assert set(srf.values.data.flatten()) == {1.0}
 
     newvalues = np.arange(15).reshape(srf.ncol, srf.nrow)
     newvalues = np.ma.masked_where(newvalues < 3, newvalues)
     srf.values = newvalues
-    assert id(srf.values) != id1
+    assert (srf.values.data == newvalues.data).all()
 
     # list like input with undefined value
     newvalues = list(range(15))
@@ -103,9 +99,9 @@ def test_values():
         srf.values = "text"
 
 
-def test_set_values1d():
+def test_set_values1d(default_surface):
     """Test behaviour of set_values1d method."""
-    srf = xtgeo.RegularSurface()
+    srf = xtgeo.RegularSurface(**default_surface)
     new = srf.copy()
     assert np.ma.count_masked(new.values) == 1
 
@@ -309,11 +305,11 @@ def test_petromodbin_import_export():
         petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(-2, 999))
 
 
-def test_zmap_import_export():
+def test_zmap_import_export(default_surface):
     """Import and export ZMAP ascii example."""
     logger.info("Import and export...")
 
-    zmap = RegularSurface()
+    zmap = RegularSurface(**default_surface)
     zmap.to_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
     zmap2 = RegularSurface()
     zmap2.from_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
@@ -509,7 +505,7 @@ def test_minmax_rotated_map():
     assert_almostequal(x.ymax, 5939998.7, 0.1)
 
 
-def test_operator_overload():
+def test_operator_overload(**default_surface):
     """Test operations between two surface in different ways"""
 
     surf1 = xtgeo.RegularSurface(ncol=100, nrow=50, rotation=10, values=100)
@@ -600,9 +596,9 @@ def test_surface_comparisons():
     assert id(surf1) == id1
 
 
-def test_surface_subtract_etc():
+def test_surface_subtract_etc(default_surface):
     """Test the simple surf.subtract etc methods"""
-    surf1 = xtgeo.RegularSurface()
+    surf1 = xtgeo.RegularSurface(**default_surface)
     id1 = id(surf1)
     mean1 = surf1.values.mean()
 
@@ -667,10 +663,10 @@ def test_irapbin_io():
     assert_equal(cc.ncol, 554)
 
 
-def test_get_values1d():
+def test_get_values1d(default_surface):
     """Get the 1D array, different variants as masked, notmasked, order, etc"""
 
-    xmap = xtgeo.RegularSurface()
+    xmap = xtgeo.RegularSurface(**default_surface)
     print(xmap.values)
 
     v1d = xmap.get_values1d(order="C", asmasked=False, fill_value=-999)
@@ -755,10 +751,10 @@ def test_get_values1d():
     ]
 
 
-def test_ij_map_indices():
+def test_ij_map_indices(default_surface):
     """Get the IJ MAP indices"""
 
-    xmap = xtgeo.RegularSurface()
+    xmap = xtgeo.RegularSurface(**default_surface)
     print(xmap.values)
 
     ixc, jyc = xmap.get_ij_values1d(activeonly=True, order="C")
@@ -871,10 +867,10 @@ def test_dataframe_more():
     dfrcy.to_csv(os.path.join(TMPD, "regsurf_df_noij_c_all.csv"))
 
 
-def test_get_xy_value_lists_small():
+def test_get_xy_value_lists_small(default_surface):
     """Get the xy list and value list from small test case"""
 
-    x = xtgeo.RegularSurface()  # default instance
+    x = xtgeo.RegularSurface(**default_surface)  # default instance
 
     xylist, valuelist = x.get_xy_value_lists(valuefmt="8.3f", xyfmt="12.2f")
 
@@ -1105,9 +1101,9 @@ def test_fence():
         ),
     ],
 )
-def test_fence_sampling(infence, sampling, expected):
+def test_fence_sampling(infence, sampling, expected, default_surface):
     """Test a very simple fence with different sampling methods."""
-    surf = xtgeo.RegularSurface()
+    surf = xtgeo.RegularSurface(**default_surface)
 
     myfence = np.array(infence)
     myfence[myfence == -999] = np.nan
