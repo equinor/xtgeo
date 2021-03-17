@@ -1,6 +1,5 @@
 # coding: utf-8
 """Roxar API functions for XTGeo RegularSurface."""
-import numpy as np
 from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
 
@@ -10,23 +9,24 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_horizon_roxapi(
-    self, project, name, category, stype, realisation
+    project, name, category, stype, realisation
 ):  # pragma: no cover
     """Import a Horizon surface via ROXAR API spec."""
     rox = RoxUtils(project, readonly=True)
 
     proj = rox.project
 
-    _roxapi_import_surface(self, proj, name, category, stype, realisation)
+    args = _roxapi_import_surface(proj, name, category, stype, realisation)
 
     rox.safe_close()
+    return args
 
 
 def _roxapi_import_surface(
-    self, proj, name, category, stype, realisation
+    proj, name, category, stype, realisation
 ):  # pragma: no cover
-
-    self._name = name
+    args = {}
+    args["name"] = name
 
     if stype == "horizons":
         if name not in proj.horizons:
@@ -37,7 +37,7 @@ def _roxapi_import_surface(
             )
         try:
             rox = proj.horizons[name][category].get_grid(realisation)
-            _roxapi_horizon_to_xtgeo(self, rox)
+            args.update(_roxapi_horizon_to_xtgeo(rox))
         except KeyError as kwe:
             logger.error(kwe)
 
@@ -50,7 +50,7 @@ def _roxapi_import_surface(
             )
         try:
             rox = proj.zones[name][category].get_grid(realisation)
-            _roxapi_horizon_to_xtgeo(self, rox)
+            args.update(_roxapi_horizon_to_xtgeo(rox))
         except KeyError as kwe:
             logger.error(kwe)
 
@@ -64,25 +64,26 @@ def _roxapi_import_surface(
         else:
             rox = proj.clipboard
         roxsurf = rox[name].get_grid(realisation)
-        _roxapi_horizon_to_xtgeo(self, roxsurf)
+        args.update(_roxapi_horizon_to_xtgeo(roxsurf))
 
     else:
         raise ValueError("Invalid stype")
+    return args
 
 
-def _roxapi_horizon_to_xtgeo(self, rox):  # pragma: no cover
+def _roxapi_horizon_to_xtgeo(rox):  # pragma: no cover
     """Tranforming surfaces from ROXAPI to XTGeo object."""
     # local function
+    args = {}
     logger.info("Surface from roxapi to xtgeo...")
-    self._xori, self._yori = rox.origin
-    self._ncol, self._nrow = rox.dimensions
-    self._xinc, self._yinc = rox.increment
-    self._rotation = rox.rotation
-    self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+    args["xori"], args["yori"] = rox.origin
+    args["ncol"], args["nrow"] = rox.dimensions
+    args["xinc"], args["yinc"] = rox.increment
+    args["rotation"] = rox.rotation
 
-    self._values = rox.get_values()
+    args["values"] = rox.get_values()
     logger.info("Surface from roxapi to xtgeo... DONE")
+    return args
 
 
 def export_horizon_roxapi(
