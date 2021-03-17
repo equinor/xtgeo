@@ -256,20 +256,6 @@ def allow_deprecated_default_init(func):
             if "yinc" not in kwargs:
                 warnings.warn(_deprecation_msg.format("yinc"), DeprecationWarning)
                 kwargs["yinc"] = 25.0
-            default = (
-                kwargs["ncol"] == 5
-                and kwargs["nrow"] == 3
-                and kwargs["xori"] == kwargs["yori"] == 0.0
-                and kwargs["xinc"] == kwargs["yinc"] == 25
-            )
-            values = kwargs.get("values", None)
-            if values is None and default:
-                # make default surface (mostly for unit testing)
-                kwargs["values"] = np.array(
-                    [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
-                    dtype=np.float64,
-                    order="C",
-                )
 
         return func(cls, *args, **kwargs)
 
