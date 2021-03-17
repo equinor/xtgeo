@@ -1,7 +1,9 @@
 import itertools
 import pathlib
+from hypothesis import given, strategies as st
 
 import pandas as pd
+import numpy as np
 import pytest
 
 from xtgeo.xyz import Points
@@ -25,6 +27,30 @@ def test_custom_points():
     z2 = mypoints.dataframe["Z_TVDSS"].values[2]
     assert x0 == 234
     assert z2 == 12
+
+
+@st.composite
+def list_of_equal_length_lists(draw):
+    list_len = draw(st.integers(min_value=3, max_value=4))
+    fixed_len_list = st.lists(
+        st.floats(allow_nan=False, allow_infinity=False),
+        min_size=list_len,
+        max_size=list_len,
+    )
+    return draw(st.lists(fixed_len_list, min_size=1))
+
+
+@given(list_of_equal_length_lists())
+def test_create_pointset(points):
+    """Create randomly generated points and verify content."""
+    pointset = Points(points)
+    points = np.array(points)
+
+    assert len(points) == pointset.nrow
+
+    np.testing.assert_array_almost_equal(pointset.dataframe["X_UTME"], points[:, 0])
+    np.testing.assert_array_almost_equal(pointset.dataframe["Y_UTMN"], points[:, 1])
+    np.testing.assert_array_almost_equal(pointset.dataframe["Z_TVDSS"], points[:, 2])
 
 
 def test_import(testpath):
