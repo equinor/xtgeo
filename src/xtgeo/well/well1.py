@@ -682,8 +682,8 @@ class Well:
         Note this method works only when inside RMS, or when RMS license is
         activated.
 
-        The current implementation will only update existing well names, and
-        the well log array size must not change.
+        The current implementation will either update existing well names
+        (then well log array size must not change), or it will make a new well in RMS.
 
         Note:
            When project is file path (direct access, outside RMS) then
@@ -700,6 +700,8 @@ class Well:
             logrun (str): Name of logrun in RMS
 
         .. versionadded:: 2.12
+        .. versionchanged:: 2.15
+            Saving to new wells enabled (earlier only modifying existing)
 
         """
         # use *args, **kwargs since this method is overrided in blocked_well, and
@@ -1275,7 +1277,6 @@ class Well:
             mywell.create_surf_distance_log(thesurf, name="sdiff")
 
         """
-
         _well_oper.create_surf_distance_log(self, surf, name)
 
     def report_zonation_holes(self, threshold=5):

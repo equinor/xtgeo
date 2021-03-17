@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-""""
+"""Integration tests towards Roxar API, requires RoxarAPI license.
+
 Creates a tmp RMS project in given version which is used as fixture for all other Roxar
 API dependent tests.
 
-Then run tests in Roxar API which focus on IO
+Then run tests in Roxar API which focus on IO.
 
-This requires a ROXAPI license, and to be ran in a "roxenvbash" environment; hence
-the decorator "roxapilicense"
-
+This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
 from os.path import join, isdir
 import shutil
@@ -59,14 +58,14 @@ WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
 # Initial tmp project
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 @pytest.fixture(name="create_project", scope="module", autouse=True)
-def test_create_project():
-    """Create a tmp RMS project for testing, populate with basic data"""
-
+def fixture_create_project():
+    """Create a tmp RMS project for testing, populate with basic data."""
     prj1 = PRJ
     prj2 = PRJ + "_initial"
 
+    print("\n******** Setup RMS project!\n")
     if isdir(prj1):
         print("Remove existing project! (1)")
         shutil.rmtree(prj1)
@@ -81,6 +80,13 @@ def test_create_project():
     print("Roxar version is", rox.roxversion)
     print("RMS version is", rox.rmsversion(rox.roxversion))
     assert "1." in rox.roxversion
+
+    for wfile in WELLS1:
+        wobj = xtgeo.well_from_file(WELLSFOLDER1 / wfile)
+        if "XP_with" in wfile:
+            wobj.name = "OP2_w_repeat"
+
+        wobj.to_roxar(project, wobj.name, logrun="log", trajectory="My trajectory")
 
     # populate with cube data
     cube = xtgeo.cube_from_file(CUBEDATA1)
@@ -99,22 +105,30 @@ def test_create_project():
     por = xtgeo.gridproperty_from_file(PORODATA1, name=PORONAME1)
     por.to_roxar(project, GRIDNAME1, PORONAME1)
 
-    # populate with well data (postponed)
-
     # save project (both an initla version and a work version) and exit
     project.save_as(prj1)
     project.save_as(prj2)
     project.close()
+
+    yield project
+
+    print("\n******* Teardown RMS project!\n")
+    if isdir(prj1):
+        print("Remove existing project! (1)")
+        shutil.rmtree(prj1)
+
+    if isdir(prj2):
+        print("Remove existing project! (2)")
+        shutil.rmtree(prj2)
 
 
 # ======================================================================================
 # Cube data
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 def test_rox_getset_cube():
     """Get a cube from a RMS project, do some stuff and store/save."""
-
     cube = xtgeo.cube_from_roxar(PRJ, CUBENAME1)
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
     cube.values += 100
@@ -127,9 +141,9 @@ def test_rox_getset_cube():
 # Surface data
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 def test_rox_surfaces():
-    """Various get set on surfaces in RMS"""
+    """Various get set on surfaces in RMS."""
     srf = xtgeo.surface_from_roxar(PRJ, "TopReek", SURFCAT1)
     srf2 = xtgeo.surface_from_roxar(PRJ, "MidReek", SURFCAT1)
     assert srf.ncol == 554
@@ -156,19 +170,22 @@ def test_rox_surfaces():
 # Well data
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 def test_rox_wells():
-    """Various tests on Roxar wells"""
+    """Various tests on Roxar wells."""
+    well = xtgeo.well_from_roxar(PRJ, "OP_2", trajectory="My trajectory", logrun="log")
+    assert "Zonelog" in well.lognames
+
+    assert well.dataframe["Poro"].mean() == pytest.approx(0.1637623936)
 
 
 # ======================================================================================
 # 3D grids and props
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 def test_rox_get_gridproperty():
     """Get a grid property from a RMS project."""
-
     print("Project is {}".format(PRJ))
 
     poro = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, PORONAME1)
@@ -177,10 +194,9 @@ def test_rox_get_gridproperty():
     assert poro.dimensions == (40, 64, 14)
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 def test_rox_get_modify_set_gridproperty():
     """Get and set a grid property from a RMS project."""
-
     poro = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, PORONAME1)
 
     adder = 0.9
@@ -192,10 +208,9 @@ def test_rox_get_modify_set_gridproperty():
     tsetup.assert_almostequal(poro.values[1, 0, 0], 0.14942 + adder, 0.0001)
 
 
-@tsetup.roxapilicenseneeded
+@pytest.mark.skipunlessroxar
 def test_rox_get_modify_set_grid():
     """Get, modify and set a grid from a RMS project."""
-
     grd = xtgeo.grid_from_roxar(PRJ, GRIDNAME1)
 
     grd.translate_coordinates(translate=(200, 3000, 300))
