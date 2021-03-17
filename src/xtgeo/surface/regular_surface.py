@@ -37,7 +37,8 @@ or::
 import sys
 import pathlib
 import io
-from typing import Tuple, Union, Optional, List, Any
+from typing import Tuple, Union, Optional, List
+import functools
 
 import numbers
 from copy import deepcopy
@@ -47,6 +48,7 @@ import warnings
 
 from collections import OrderedDict
 
+import deprecation
 import numpy as np
 import numpy.ma as ma
 
@@ -68,6 +70,7 @@ from . import _regsurf_utils
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
 
 # ======================================================================================
 # METHODS as wrappers to class init + import
@@ -94,13 +97,10 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
 
     .. versionchanged:: 2.13 Key "engine" added
     """
-    obj = RegularSurface()
 
-    obj.from_file(
-        mfile, fformat=fformat, template=template, values=values, engine=engine
+    return RegularSurface._read_file(
+        mfile, fformat=fformat, load_values=values, engine=engine, template=template
     )
-
-    return obj
 
 
 def surface_from_roxar(project, name, category, stype="horizons", realisation=0):
@@ -115,11 +115,10 @@ def surface_from_roxar(project, name, category, stype="horizons", realisation=0)
         mysurf = xtgeo.surface_from_roxar(project, 'TopEtive', 'DepthSurface')
 
     """
-    obj = RegularSurface()
 
-    obj.from_roxar(project, name, category, stype=stype, realisation=realisation)
-
-    return obj
+    return RegularSurface.from_roxar(
+        project, name, category, stype=stype, realisation=realisation
+    )
 
 
 def surface_from_cube(cube, value):
@@ -137,10 +136,7 @@ def surface_from_cube(cube, value):
         mysurf = xtgeo.surface_from_cube(mycube, 1200)
 
     """
-    obj = RegularSurface()
-
-    obj.from_cube(cube, value)
-    return obj
+    return RegularSurface._read_cube(cube, value)
 
 
 def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
@@ -150,56 +146,167 @@ def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=
 
     .. versionadded:: 2.1
     """
-    obj = RegularSurface()
-
+    obj = RegularSurface(1, 1, 0.0, 0.0)  # <- unimportant as it gets reset
     obj.from_grid3d(grid, template=template, where=where, mode=mode, rfactor=rfactor)
 
     return obj
 
 
-# ======================================================================================
-# RegularSurface class:
+def _data_reader_factory(file_format):
+    if file_format == "irap_binary":
+        return _regsurf_import.import_irap_binary
+    if file_format == "irap_ascii":
+        return _regsurf_import.import_irap_ascii
+    if file_format == "ijxyz":
+        return _regsurf_import.import_ijxyz
+    if file_format == "petromod":
+        return _regsurf_import.import_petromod
+    if file_format == "zmap_ascii":
+        return _regsurf_import.import_zmap_ascii
+    if file_format == "xtg":
+        return _regsurf_import.import_xtg
+    if file_format == "hdf":
+        return _regsurf_import.import_hdf5_regsurf
+    raise ValueError(f"Unknown file format {file_format}")
+
+
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of RegularSurface and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization
+        # from file and raise a deprecation warning if
+        # we are.
+        if "sfile" in kwargs or len(args) == 1:
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "mysurf = xtgeo.surface_from_file('some_name.gri') instead",
+                DeprecationWarning,
+            )
+            sfile = kwargs.get("sfile", args[0])
+            fformat = kwargs.get("fformat", None)
+            values = kwargs.get("values", None)
+            if isinstance(values, bool) and values is False:
+                load_values = False
+            else:
+                load_values = True
+            mfile = xtgeosys._XTGeoFile(sfile)
+            if fformat is None or fformat == "guess":
+                fformat = mfile.detect_fformat()
+            else:
+                fformat = mfile.generic_format_by_proposal(fformat)  # default
+            kwargs = _data_reader_factory(fformat)(mfile, values=load_values)
+            kwargs["filesrc"] = mfile.file
+            kwargs["fformat"] = fformat
+            return func(cls, **kwargs)
+
+        if "nx" in kwargs:
+            warnings.warn(
+                (
+                    "nx is deprecated and will be removed "
+                    "in xtgeo version 3.0. Use ncol instead"
+                ),
+                DeprecationWarning,
+            )
+            kwargs["ncol"] = kwargs["nx"]
+            kwargs.pop("nx")
+        if "ny" in kwargs:
+            warnings.warn(
+                (
+                    "ny is deprecated and will be removed "
+                    "in xtgeo version 3.0. Use nrow instead"
+                ),
+                DeprecationWarning,
+            )
+            kwargs["nrow"] = kwargs["ny"]
+            kwargs.pop("ny")
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
+def allow_deprecated_default_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of RegularSurface and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # This is (mostly) for cases where we are doing an empty
+        # initialization, so we need to inject default values
+        # for the required args. The excessive checking is in
+        # corner cases where we provide some positional arguments
+        # as keyword arguments.
+        _deprecation_msg = (
+            "{} is a required argument, will no "
+            "longer be defaulted in xtgeo version 4.0"
+        )
+        if len(args) != 4:
+            if "ncol" not in kwargs and len(args) != 1:
+                warnings.warn(_deprecation_msg.format("ncol"), DeprecationWarning)
+                kwargs["ncol"] = 5
+            if "nrow" not in kwargs and len(args) != 2:
+                warnings.warn(_deprecation_msg.format("nrow"), DeprecationWarning)
+                kwargs["nrow"] = 3
+            if "xinc" not in kwargs and len(args) != 3:
+                warnings.warn(_deprecation_msg.format("xinc"), DeprecationWarning)
+                kwargs["xinc"] = 25.0
+            if "yinc" not in kwargs:
+                warnings.warn(_deprecation_msg.format("yinc"), DeprecationWarning)
+                kwargs["yinc"] = 25.0
+            default = (
+                kwargs["ncol"] == 5
+                and kwargs["nrow"] == 3
+                and kwargs["xori"] == kwargs["yori"] == 0.0
+                and kwargs["xinc"] == kwargs["yinc"] == 25
+            )
+            values = kwargs.get("values", None)
+            if values is None and default:
+                # make default surface (mostly for unit testing)
+                kwargs["values"] = np.array(
+                    [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
+                    dtype=np.float64,
+                    order="C",
+                )
+
+        return func(cls, *args, **kwargs)
+
+    return wrapper
 
 
 class RegularSurface:
     """Class for a regular surface in the XTGeo framework.
 
-    The regular surface instance is usually initiated by
-    import from file, but can also be made from scratch.
     The values can as default be accessed by the user as a 2D masked numpy
     (ncol, nrow) float64 array, but also other representations or views are
     possible (e.g. as 1D ordinary numpy).
 
     """
 
+    @allow_deprecated_default_init
+    @allow_deprecated_init
     def __init__(
         self,
-        sfile: Optional[Union[str, pathlib.Path, io.BytesIO]] = None,
-        fformat: Optional[str] = None,
-        engine: Optional[str] = "cxtgeo",
-        template: Optional[str] = None,
-        ncol: Optional[int] = 5,
-        nrow: Optional[int] = 3,
+        ncol: int,
+        nrow: int,
+        xinc: float,
+        yinc: float,
         xori: Optional[float] = 0.0,
         yori: Optional[float] = 0.0,
-        xinc: Optional[float] = 25.0,
-        yinc: Optional[float] = 25.0,
         yflip: Optional[int] = 1,
         rotation: Optional[float] = 0.0,
-        values: Optional[Union[float, List[float], np.ndarray, bool]] = None,
+        values: Optional[Union[List[float], float]] = None,
+        ilines: Optional[List[float]] = None,
+        xlines: Optional[List[float]] = None,
         masked: Optional[bool] = True,
         name: Optional[str] = "unknown",
-        **kwargs,
+        filesrc: Optional[str] = None,
+        fformat: Optional[str] = None,
+        undef: Optional[float] = xtgeo.UNDEF,
     ):
-        """Instantating a RegularSurface.
-
-        There are two ways to instantate a RegularSurface, either as from a file,
-        using keyword ``sfile``, and optional ``fformat``, ``loadvalues``, ``engine``,
-        ``template``, for example::
-
-            surf = xtgeo.RegularSurface("example.gri", fformat="irap_binary")
-
-        Or to spesify from scratch::
+        """Instantiating a RegularSurface::
 
             vals = np.zeros(30 * 50)
             surf = xtgeo.RegularSurface(
@@ -208,12 +315,6 @@ class RegularSurface:
             )
 
         Args:
-            sfile: File-like or memory stream input.
-            fformat: Format spesification for input.
-            loadvalues: For some formats, loading metdata only and skipping values
-                is possible.
-            engine: Use "cxtgeo" or "python" for some methods (this a developer option).
-            template: Only applicable for format `ijxyz`. See :meth:`from_file`.
             ncol: Integer for number of X direction columns.
             nrow: Integer for number of Y direction rows.
             xori: X (East) origon coordinate.
@@ -225,145 +326,69 @@ class RegularSurface:
             rotation: rotation in degrees, anticlock from X axis between 0, 360.
             values: A scalar (for constant values) or a "array-like" input that has
                 ncol * nrow elements. As result, a 2D (masked) numpy array of shape
-                (ncol, nrow), C order will be made. When used with a file-like input,
-                values can be a bool, where False will indicate that values shall
-                not be loaded, only metadata.
+                (ncol, nrow), C order will be made.
             masked: Indicating if numpy array shall be masked or not. Default is True.
             name: A given name for the surface, default is file name root or
-                'unkown' if constructed from scratch.
+                'unknown' if constructed from scratch.
 
         Examples:
-            The instance can be made either from file or by a spesification::
+            The instance can be made by specification::
 
-                >>> x1 = RegularSurface('somefilename')  # assume Irap binary
-                >>> x2 = RegularSurface('somefilename', fformat='irap_ascii')
-                >>> x3 = RegularSurface().from_file('somefilename',
-                                                    fformat='irap_binary')
-                >>> x4 = RegularSurface()
-                >>> x4.from_file('somefilename', fformat='irap_binary')
-                >>> x5 = RegularSurface(ncol=20, nrow=10, xori=2000.0, yori=2000.0,
-                                        rotation=0.0, xinc=25.0, yinc=25.0,
-                                        values=np.zeros((20,10)))
+                >>> surface = RegularSurface(
+                    ncol=20,
+                    nrow=10,
+                    xori=2000.0,
+                    yori=2000.0,
+                    rotation=0.0,
+                    xinc=25.0,
+                    yinc=25.0,
+                    values=np.zeros((20,10))
+                    )
+
 
         """
-        #
         logger.info("Start __init__ method for RegularSurface object %s", id(self))
-        self._ncol = 5
-        self._nrow = 3
-        self._xori = 0.0
-        self._yori = 0.0
-        self._xinc = 25.0
-        self._yinc = 25.0
-        self._rotation = 0.0
-
-        self._undef = xtgeo.UNDEF
-        self._undef_limit = xtgeo.UNDEF_LIMIT
-
-        self._masked = False
-        self._filesrc = None  # Name of original input file or stream, if any
-        self._name = "unknown"  # informal name for use in plots etc
-
-        # These are useful when import/export of surfaces with seismic origin
-        self._ilines = None
-        self._xlines = None
-
-        self._yflip = 1
-
-        self._values = None
-        self._fformat = None  # current fileformat, useful for load()
-        self._isloaded = True  # assume True unless explicitly set
-        self._metadata = xtgeo.MetaDataRegularSurface()
-
-        if sfile is not None:
-            self._instance_from_filelike(sfile, template, fformat, engine, values)
-
-        else:
-            self._instance_from_spec(
-                ncol, nrow, xori, yori, xinc, yinc, yflip, rotation, values, **kwargs
-            )
-
-        if self._ilines is None:
-            self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-            self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-        if self._values is not None and self._values.mask is ma.nomask:
-            self._values = ma.array(self._values, mask=ma.getmaskarray(self._values))
-
-        self._name = name
-        self._masked = masked  # TODO: check usecase
-        self._metadata.required = self
-        logger.info("Ran __init__ method for RegularSurface object %s", id(self))
-
-    def _instance_from_filelike(self, sfile, template, fformat, engine, values):
-        """Detect input automatically if possible and load to make the instance."""
-        sobj = xtgeo._XTGeoFile(sfile)
-
-        loadvalues = True
-        if isinstance(values, bool) and values is False:
-            loadvalues = False
-
-        if not sobj.memstream:
-            if sobj.file.suffix == "hdf":
-                self.from_hdf(sfile, values=loadvalues)
-            else:
-                self.from_file(
-                    sfile,
-                    fformat=fformat,
-                    engine=engine,
-                    template=template,
-                    values=loadvalues,
-                )
-        else:
-            if fformat == "hdf":
-                self.from_hdf(sfile, values=loadvalues)
-            else:
-                self.from_file(sfile, fformat=fformat, values=loadvalues)
-
-    def _instance_from_spec(
-        self, ncol, nrow, xori, yori, xinc, yinc, yflip, rotation, values, **kwargs
-    ):
-        # make instance by kw spesification
+        self._ncol = ncol
+        self._nrow = nrow
         self._xori = xori
         self._yori = yori
-
-        # backward compatibility
-        if "nx" in kwargs:
-            self._ncol = kwargs.get("nx", 5)
-            self._nrow = kwargs.get("ny", 3)
-        else:
-            self._ncol = ncol
-            self._nrow = nrow
-
         self._xinc = xinc
         self._yinc = yinc
         self._rotation = rotation
-
-        default = ncol == 5 and nrow == 3 and xori == yori == 0.0 and xinc == yinc == 25
-
-        if values is None and default:
-
-            # make default surface (mostly for unit testing)
-            values = np.array(
-                [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
-                dtype=np.float64,
-                order="C",
-            )
-            # make it masked
-            values = ma.masked_greater(values, self.undef_limit)
-            self._masked = True
-            self._values = values
-
-        elif values is None and not default:
-            self._values = np.ma.zeros((self._ncol, self._nrow))
-
-        else:
-            self._ensure_correct_values(values)
-
         self._yflip = yflip
-        self._filesrc = None
-        self._isloaded = True
+        self._name = name
 
-    # ==================================================================================
+        self._undef = undef
+        self._undef_limit = xtgeo.UNDEF_LIMIT
+
+        self._filesrc = filesrc  # Name of original input file or stream, if any
+
+        self._fformat = fformat  # current fileformat, useful for load()
+        self._metadata = xtgeo.MetaDataRegularSurface()
+
+        self._values = None
+        if values is None:
+            values = np.ma.zeros((self._ncol, self._nrow))
+            self._isloaded = False
+        else:
+            self._isloaded = True
+        self.values = values
+
+        if ilines is None:
+            self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
+            self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+        else:
+            self._ilines = ilines
+            self._xlines = xlines
+
+        self._masked = masked  # TODO: check usecase
+        self._metadata.required = self
+
+    @classmethod
+    def _read_zmap_ascii(cls, mfile, values):
+        mfile = xtgeosys._XTGeoFile(mfile)
+        args = _data_reader_factory("zmap_ascii")(mfile, values=values)
+        return cls(**args)
 
     def __repr__(self):
         """Magic method __repr__."""
@@ -854,13 +879,18 @@ class RegularSurface:
 
         return dsc.astext()
 
+    @deprecation.deprecated(
+        deprecated_in="2.15",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.surface.surface_from_file() instead",
+    )
     def from_file(
         self,
         mfile: Union[str, pathlib.Path, io.BytesIO],
         fformat: Optional[str] = None,
-        template: Optional[Any] = None,
         values: Optional[bool] = True,
-        engine: Optional[str] = "cxtgeo",
+        **kwargs,
     ):
         """Import surface (regular map) from file.
 
@@ -883,16 +913,17 @@ class RegularSurface:
             fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz
                 is currently supported. If None or guess, the file 'signature' is
                 used to guess format first, then file extension.
-            template: Only valid if ``ijxyz`` format, where an
-                existing Cube or RegularSurface instance is applied to
-                get correct topology.
             values: If True (default), then full array is read, if False
                 only metadata will be read. Valid for Irap binary only. This allows
                 lazy loading in e.g. ensembles.
+            kwargs: some readers allow additonal options:
+            template: Only valid if ``ijxyz`` format, where an
+                existing Cube or RegularSurface instance is applied to
+                get correct topology.
             engine: Default is "cxtgeo" which use a C backend. Optionally a pure
                 python "python" reader will be used, which in general is slower
-                but may be safer when reading memory streams and/or threading. Engine
-                is relevant for Irap binary, Irap ascii and zmap.
+                but may be safer when reading memory streams and/or threading.
+                Engine is relevant for Irap binary, Irap ascii and zmap.
 
         Returns:
             Object instance.
@@ -921,29 +952,85 @@ class RegularSurface:
         else:
             fformat = mfile.generic_format_by_proposal(fformat)  # default
 
-        mfile.check_file(raiseerror=OSError)
+        kwargs = _data_reader_factory(fformat)(mfile, values=values, **kwargs)
+        if values:
+            self._isloaded = True
+        self._reset(**kwargs)
 
-        # call function by fformat name; e.g. fformat="foo" -> import_foo(...)
-        if fformat == "hdf":
-            self.from_hdf(mfile, values=values)
+    def _reset(self, **kwargs):
+        self._ncol = kwargs["ncol"]
+        self._nrow = kwargs["nrow"]
+        self._xinc = kwargs["xinc"]
+        self._yinc = kwargs["yinc"]
+        self._xori = kwargs.get("xori", self._xori)
+        self._yori = kwargs.get("yori", self._yori)
+        self._yflip = kwargs.get("yflip", self._yflip)
+        self._rotation = kwargs.get("rotation", self._rotation)
+        self._ilines = kwargs.get("ilines", self._ilines)
+        self._xlines = kwargs.get("xlines", self._xlines)
+        self.values = kwargs.get("values", self._values)
+
+    @classmethod
+    def _read_file(
+        cls,
+        mfile: Union[str, pathlib.Path, io.BytesIO],
+        fformat: Optional[str] = None,
+        load_values: Optional[bool] = True,
+        **kwargs,
+    ):
+        """Import surface (regular map) from file.
+
+        Note that the ``fformat=None`` or ``guess`` option will guess format by
+        looking at the file or stream signature or file extension.
+        For the signature, the first bytes are scanned for 'patterns'. If that
+        does not work (and input is not a memory stream), it will try to use
+        file extension where e.g. "gri" will assume irap_binary and "fgr"
+        assume Irap Ascii. If file extension is missing, Irap binary is assumed.
+
+        The ``ijxyz`` format is the typical seismic format, on the form
+        (ILINE, XLINE, X, Y, VALUE) as a table of points. Map values are
+        estimated from the given values, or by using an existing map or
+        cube as template, and match by ILINE/XLINE numbering.
+
+        BytesIO input is supported for Irap binary, Irap Ascii, ZMAP ascii.
+
+        Args:
+            mfile: File-like or memory stream instance.
+            fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz
+                is currently supported. If None or guess, the file 'signature' is
+                used to guess format first, then file extension.
+            load_values: If True (default), then full array is read, if False
+                only metadata will be read. Valid for Irap binary only. This allows
+                lazy loading in e.g. ensembles.
+            kwargs: some readers allow additonal options
+
+        Keyword Args:
+            template: Only valid if ``ijxyz`` format, where an
+                existing Cube or RegularSurface instance is applied to
+                get correct topology.
+            engine: Default is "cxtgeo" which use a C backend. Optionally a pure
+                python "python" reader will be used, which in general is slower
+                but may be safer when reading memory streams and/or threading.
+                Engine is relevant for Irap binary, Irap ascii and zmap.
+
+        Returns:
+            Object instance.
+
+        Example::
+
+            >>> mymapobject = RegularSurface._read_file('myfile.x')
+
+        .. versionadded:: 2.14
+
+        """
+        mfile = xtgeosys._XTGeoFile(mfile)
+        if fformat is None or fformat == "guess":
+            fformat = mfile.detect_fformat()
         else:
-            try:
-                generic_import = getattr(_regsurf_import, "import_" + fformat)
-            except AttributeError:
-                raise ValueError(f"File format {fformat} is not supported")
-
-            generic_import(self, mfile, values=values, engine=engine, template=template)
-
-        if mfile.memstream:
-            self._name = "<binarystream>"
-        else:
-            self._name = mfile.file.stem
-
-        self._filesrc = mfile.file
-        self._fformat = fformat
-
-        logger.info("Import RegularSurface from file or memstream... done")
-        return self
+            fformat = mfile.generic_format_by_proposal(fformat)  # default
+        kwargs = _data_reader_factory(fformat)(mfile, values=load_values, **kwargs)
+        kwargs["filesrc"] = mfile.file
+        return cls(**kwargs)
 
     def load_values(self):
         """Import surface values in cases where metadata only is loaded.
@@ -986,7 +1073,7 @@ class RegularSurface:
                 Path instance or IOBytestream instance. An alias can be e.g.
                 "%md5sum%" or "%fmu-v1%" with string or Path() input.
             fformat: File format, irap_binary/irap_ascii/zmap_ascii/
-                storm_binary/ijxyz/petromod/xtg*/hdf5. Default is irap_binary.
+                storm_binary/ijxyz/petromod/xtg*. Default is irap_binary.
             pmd_dataunits: A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ).
             engine: Default is "cxtgeo" which use a C backend. Optionally a pure
@@ -1056,6 +1143,12 @@ class RegularSurface:
             return None
         return mfile.file
 
+    @deprecation.deprecated(
+        deprecated_in="2.15",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.surface.surface_from_hdf() instead",
+    )
     def from_hdf(
         self,
         mfile: Union[str, pathlib.Path, io.BytesIO],
@@ -1085,7 +1178,9 @@ class RegularSurface:
         # developing, in prep and experimental!
         mfile = xtgeosys._XTGeoFile(mfile, mode="rb", obj=self)
 
-        _regsurf_import.import_hdf5_regsurf(self, mfile, values=values)
+        kwargs = _regsurf_import.import_hdf5_regsurf(mfile, values=values)
+
+        self._reset(**kwargs)
 
         _self: self.__class__ = self
         return _self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
@@ -1129,6 +1224,52 @@ class RegularSurface:
         _regsurf_export.export_hdf5_regsurf(self, mfile, compression=compression)
         return mfile.file
 
+    @classmethod
+    def _read_roxar(
+        cls, project, name, category, stype="horizons", realisation=0
+    ):  # pragma: no cover
+        """Load a surface from a Roxar RMS project.
+
+        The import from the RMS project can be done either within the project
+        or outside the project.
+
+        Note that a shortform to::
+
+          import xtgeo
+          mysurf = xtgeo.RegularSurface._read_roxar(project, 'name', 'category')
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of surface/map
+            category (str): For horizons/zones or clipboard: for example 'DS_extracted'
+            stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
+            realisation (int): Realisation number, default is 0
+
+        """
+        stype = stype.lower()
+        valid_stypes = ["horizons", "zones", "clipboard"]
+
+        if stype not in valid_stypes:
+            raise ValueError(
+                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
+            )
+
+        kwargs = _regsurf_roxapi.import_horizon_roxapi(
+            project, name, category, stype, realisation
+        )
+
+        return cls(**kwargs)
+
+    @deprecation.deprecated(
+        deprecated_in="2.15",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.surface.surface_from_roxar() instead",
+    )
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0
     ):  # pragma: no cover
@@ -1172,22 +1313,21 @@ class RegularSurface:
             >>> mymap = RegularSurface()
             >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
 
-        .. versionadded:: 2.1 clipboard support
 
         """
-        stype = stype.lower()
         valid_stypes = ["horizons", "zones", "clipboard"]
 
-        if stype not in valid_stypes:
+        if stype.lower() not in valid_stypes:
             raise ValueError(
                 "Invalid stype, only {} stypes is supported.".format(valid_stypes)
             )
 
-        _regsurf_roxapi.import_horizon_roxapi(
-            self, project, name, category, stype, realisation
+        kwargs = _regsurf_roxapi.import_horizon_roxapi(
+            project, name, category, stype, realisation
         )
 
         self.metadata.required = self
+        self._reset(**kwargs)
 
     def to_roxar(
         self, project, name, category, stype="horizons", realisation=0
@@ -1247,6 +1387,12 @@ class RegularSurface:
             self, project, name, category, stype, realisation
         )
 
+    @deprecation.deprecated(
+        deprecated_in="2.15",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.surface.surface_from_cube() instead",
+    )
     def from_cube(self, cube, zlevel):
         """Make a constant surface from a Cube, at a given time/depth level.
 
@@ -1270,28 +1416,105 @@ class RegularSurface:
 
         """
         props = [
-            "_ncol",
-            "_nrow",
-            "_xori",
-            "_yori",
-            "_xinc",
-            "_yinc",
-            "_rotation",
-            "_ilines",
-            "_xlines",
-            "_yflip",
+            "ncol",
+            "nrow",
+            "xori",
+            "yori",
+            "xinc",
+            "yinc",
+            "rotation",
+            "ilines",
+            "xlines",
+            "yflip",
         ]
 
-        for prop in props:
-            setattr(self, prop, deepcopy(getattr(cube, prop)))
+        input_dict = {key: deepcopy(getattr(cube, key)) for key in props}
 
-        self.values = ma.array(
-            np.full((self._ncol, self._nrow), zlevel, dtype=np.float64)
+        input_dict["values"] = ma.array(
+            np.full((input_dict["ncol"], input_dict["nrow"]), zlevel, dtype=np.float64)
         )
+        self._reset(**input_dict)
 
-        self._filesrc = None
-        self._metadata.required = self
+    @classmethod
+    def _read_cube(cls, cube, zlevel):
+        """Make a constant surface from a Cube, at a given time/depth level.
 
+        The surface instance will have exactly the same origins and increments
+        as the cube.
+
+        Args:
+            cube (Cube): XTGeo Cube instance
+            zlevel (float): Depth or Time (or whatever) value of the surface
+
+        Returns:
+            Object instance updated
+
+        Example:
+            Here the from_roxar method is used to initiate the object
+            directly::
+
+            >>> mycube = Cube("reek.segy")
+            >>> mymap._read_cube(mycube, 2700)
+
+        """
+        props = [
+            "ncol",
+            "nrow",
+            "xori",
+            "yori",
+            "xinc",
+            "yinc",
+            "rotation",
+            "ilines",
+            "xlines",
+            "yflip",
+        ]
+
+        input_dict = {key: deepcopy(getattr(cube, key)) for key in props}
+
+        input_dict["values"] = ma.array(
+            np.full((input_dict["ncol"], input_dict["nrow"]), zlevel, dtype=np.float64)
+        )
+        return cls(**input_dict)
+
+    @classmethod
+    def _read_grid3d(cls, grid, where="top", mode="depth", rfactor=1):
+        """Extract a surface from a 3D grid.
+
+        Args:
+            grid (Grid): XTGeo Grid instance
+            where (str): "top", "base" or use the syntax "2_top" where 2
+                is layer no. 2 and _top indicates top of cell, while "_base"
+                indicates base of cell
+            mode (str): "depth", "i" or "j"
+            rfactor (float): Determines how fine the extracted map is; higher values
+                for finer map (but computing time will increase). Will only apply if
+                template is None.
+
+        Returns:
+            Object instance
+
+        Example::
+
+
+            mygrid = Grid("REEK.EGRID")
+            # make surface from top (default)
+            mymap = RegularSurface._read_grid3d(mygrid)
+
+        .. versionadded:: 2.14
+
+        """
+        args, _, _ = _regsurf_grid3d.from_grid3d(
+            grid, template=None, where=where, mode=mode, rfactor=rfactor
+        )
+        return cls(**args)
+
+    @deprecation.deprecated(
+        deprecated_in="2.15",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.surface.surface_from_grid3d() instead",
+    )
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
         """Extract a surface from a 3D grid.
@@ -1324,9 +1547,20 @@ class RegularSurface:
         .. versionadded:: 2.1
 
         """
-        return _regsurf_grid3d.from_grid3d(
-            self, grid, template=template, where=where, mode=mode, rfactor=rfactor
+        args, ivalues, jvalues = _regsurf_grid3d.from_grid3d(
+            grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
+        self._reset(**args)
+        if ivalues is not None and jvalues is not None:
+            ivals = self.copy()
+            args["values"] = ivalues
+            ivals._reset(**args)
+            jvals = self.copy()
+            args["values"] = jvalues
+            jvals._reset(**args)
+            return ivals, jvals
+        else:
+            return None
 
     def copy(self):
         """Deep copy of a RegularSurface object to another instance.
@@ -2781,39 +3015,25 @@ class RegularSurface:
             Nothing, self._values will be updated inplace
 
         """
-        if not self._isloaded:
-            return
-
-        if values is None or values is False:
-            self._values = None
-            return
-
         currentmask = None
-        if isinstance(self._values, ma.MaskedArray):
-            currentmask = ma.getmaskarray(self._values)
+        if isinstance(self.values, ma.MaskedArray):
+            currentmask = ma.getmaskarray(self.values)
 
         if isinstance(values, ma.MaskedArray):
             newmask = ma.getmaskarray(values)
-
+            vals = values.astype(np.float64)
+            vals = ma.masked_greater(vals, self.undef_limit)
+            vals = ma.masked_invalid(vals)
             if (
                 currentmask is not None
                 and np.array_equal(currentmask, newmask)
-                and self._values.shape == values.shape
+                and self.values.shape == values.shape
                 and values.flags.c_contiguous is True
             ):
-                vals = values.astype(np.float64)
-                vals = ma.masked_greater(vals, self.undef_limit)
-                vals = ma.masked_invalid(vals)
                 self._values *= 0
                 self._values += vals
-
             else:
-                # replace any undef or nan with mask
-                vals = values.astype(np.float64)
-                vals = ma.masked_greater(vals, self.undef_limit, copy=True)
-                vals = ma.masked_invalid(vals, copy=True)
                 vals = vals.reshape((self._ncol, self._nrow))
-
                 if not vals.flags.c_contiguous:
                     mask = ma.getmaskarray(values)
                     mask = np.asanyarray(mask, order="C")
@@ -2823,7 +3043,6 @@ class RegularSurface:
 
         elif isinstance(values, numbers.Number):
             if currentmask is not None:
-                self._values *= 0
                 vals = np.ones(self.dimensions, dtype=np.float64) * values
                 vals = np.ma.array(vals, mask=currentmask)
 
@@ -2831,14 +3050,13 @@ class RegularSurface:
                 # which will change the mask
                 vals = ma.masked_greater(vals, self.undef_limit, copy=False)
                 vals = ma.masked_invalid(vals, copy=False)
-
+                self._values *= 0
                 self._values += vals
-
             else:
                 vals = ma.zeros((self.ncol, self.nrow), order="C", dtype=np.float64)
                 self._values = vals + float(values)
 
-        elif isinstance(values, np.ndarray):  # ie values ~ a numpy array
+        elif isinstance(values, (list, tuple, np.ndarray)):  # ie values ~ list-like
             vals = ma.array(values, order="C", dtype=np.float64)
             vals = ma.masked_greater(vals, self.undef_limit, copy=True)
             vals = ma.masked_invalid(vals, copy=True)
@@ -2867,13 +3085,5 @@ class RegularSurface:
         else:
             raise ValueError("Input values are in invalid format: {}".format(values))
 
-        if self._values is not None:
-
-            if self._ilines is None:
-                self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-                self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
-
-            if self._values.mask is ma.nomask:
-                self._values = ma.array(
-                    self._values, mask=ma.getmaskarray(self._values)
-                )
+        if self._values.mask is ma.nomask:
+            self._values = ma.array(self._values, mask=ma.getmaskarray(self._values))

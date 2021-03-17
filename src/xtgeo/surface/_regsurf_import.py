@@ -20,7 +20,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_irap_binary(self, mfile, values=True, engine="cxtgeo", **kwargs):
+def import_irap_binary(mfile, values=True, engine="cxtgeo", **_):
     """Import Irap binary format.
 
     Args:
@@ -31,17 +31,13 @@ def import_irap_binary(self, mfile, values=True, engine="cxtgeo", **kwargs):
         RuntimeError: Error in reading Irap binary file
         RuntimeError: Problem....
     """
-    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
     if mfile.memstream is True or engine == "python":
-        _import_irap_binary_purepy(self, mfile)
+        return _import_irap_binary_purepy(mfile)
     else:
-        _import_irap_binary(self, mfile, values=values)
-
-    self._metadata.required = self
-    self._isloaded = values
+        return _import_irap_binary(mfile, values=values)
 
 
-def _import_irap_binary_purepy(self, mfile, values=True):
+def _import_irap_binary_purepy(mfile, values=True):
     """Using pure python, better for memorymapping/threading."""
     # Borrowed some code from https://github.com/equinor/grequi/../fmt_irapbin.py
 
@@ -57,23 +53,22 @@ def _import_irap_binary_purepy(self, mfile, values=True):
     # unpack header with big-endian format string
     hed = unpack(">3i6f3i3f10i", buf[:100])
 
-    self._nrow = hed[2]
-    self._xori = hed[3]
-    self._yori = hed[5]
-    self._xinc = hed[7]
-    self._yinc = hed[8]
-    self._ncol = hed[11]
-    self._rotation = hed[12]
+    args = {}
+    args["nrow"] = hed[2]
+    args["xori"] = hed[3]
+    args["yori"] = hed[5]
+    args["xinc"] = hed[7]
+    args["yinc"] = hed[8]
+    args["ncol"] = hed[11]
+    args["rotation"] = hed[12]
 
-    self._yflip = 1
-    if self._yinc < 0.0:
-        self._yinc *= -1
-        self._yflip = -1
+    args["yflip"] = 1
+    if args["yinc"] < 0.0:
+        args["yinc"] *= -1
+        args["yflip"] = -1
 
     if not values:
-        self._isloaded = False
-        self._values = None
-        return
+        return args
 
     # Values: traverse through data blocks
     stv = 100  # Starting byte
@@ -95,34 +90,32 @@ def _import_irap_binary_purepy(self, mfile, values=True):
             break
 
     values = np.hstack(datav)
-    values = np.reshape(values, (self._ncol, self._nrow), order="F")
+    values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
     values = np.array(values, order="C")
     values = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPB)
-    self._values = np.ma.masked_invalid(values)
-
-    self._ilines = np.array(range(1, self.ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, self.nrow + 1), dtype=np.int32)
+    args["values"] = np.ma.masked_invalid(values)
 
     del buf
+    return args
 
 
-def _import_irap_binary(self, mfile, values=True):
+def _import_irap_binary(mfile, values=True):
 
     logger.info("Enter function %s", __name__)
 
     cfhandle = mfile.get_cfhandle()
-
+    args = {}
     # read with mode 0, to get mx my and other metadata
     (
         ier,
-        self._ncol,
-        self._nrow,
+        args["ncol"],
+        args["nrow"],
         _,
-        self._xori,
-        self._yori,
-        self._xinc,
-        self._yinc,
-        self._rotation,
+        args["xori"],
+        args["yori"],
+        args["xinc"],
+        args["yinc"],
+        args["rotation"],
         val,
     ) = _cxtgeo.surf_import_irap_bin(cfhandle, 0, 1, 0)
 
@@ -130,43 +123,36 @@ def _import_irap_binary(self, mfile, values=True):
         mfile.cfclose()
         raise RuntimeError("Error in reading Irap binary file")
 
-    self._yflip = 1
-    if self._yinc < 0.0:
-        self._yinc *= -1
-        self._yflip = -1
+    args["yflip"] = 1
+    if args["yinc"] < 0.0:
+        args["yinc"] *= -1
+        args["yflip"] = -1
 
     # lazy loading, not reading the arrays
-    if not values:
-        self._values = None
-        mfile.cfclose()
-        return
+    if values:
+        nval = args["ncol"] * args["nrow"]
+        xlist = _cxtgeo.surf_import_irap_bin(cfhandle, 1, nval, 0)
+        if xlist[0] != 0:
+            mfile.cfclose()
+            raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
 
-    nval = self._ncol * self._nrow
-    xlist = _cxtgeo.surf_import_irap_bin(cfhandle, 1, nval, 0)
-    if xlist[0] != 0:
-        mfile.cfclose()
-        raise RuntimeError("Problem in {}, code {}".format(__name__, ier))
+        val = xlist[-1]
 
-    val = xlist[-1]
+        val = np.reshape(val, (args["ncol"], args["nrow"]), order="C")
 
-    val = np.reshape(val, (self._ncol, self._nrow), order="C")
+        val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
-    val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
+        if np.isnan(val).any():
+            logger.info("NaN values are found, will mask...")
+            val = ma.masked_invalid(val)
 
-    if np.isnan(val).any():
-        logger.info("NaN values are found, will mask...")
-        val = ma.masked_invalid(val)
-
-    self._isloaded = True
-    self.values = val
-
-    self._ilines = np.array(range(1, self._ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, self._nrow + 1), dtype=np.int32)
+        args["values"] = val
 
     mfile.cfclose()
+    return args
 
 
-def import_irap_ascii(self, mfile, engine="cxtgeo", **kwargs):
+def import_irap_ascii(mfile, engine="cxtgeo", **_):
     """Import Irap ascii format, where mfile is a _XTGeoFile instance."""
     #   -996  2010      5.000000      5.000000
     #    461587.553724   467902.553724  5927061.430176  5937106.430176
@@ -177,17 +163,14 @@ def import_irap_ascii(self, mfile, engine="cxtgeo", **kwargs):
     #     1679.1086    1679.3274    1679.5524    1679.7831    1680.0186    1680.2583
     #     1680.5016    1680.7480    1680.9969    1681.2479    1681.5004    1681.7538
     #
-    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
     if mfile.memstream is True or engine == "python":
-        _import_irap_ascii_purepy(self, mfile)
+        return _import_irap_ascii_purepy(mfile)
     else:
-        _import_irap_ascii(self, mfile)
-
-    self._metadata.required = self
+        return _import_irap_ascii(mfile)
 
 
-def _import_irap_ascii_purepy(self, mfile):
+def _import_irap_ascii_purepy(mfile):
     """Import Irap in pure python code, suitable for memstreams, but less efficient."""
     # timer tests suggest approx double load time compared with cxtgeo method
 
@@ -198,32 +181,30 @@ def _import_irap_ascii_purepy(self, mfile):
     else:
         with open(mfile.file) as fhandle:
             buf = fhandle.read().split()
-
-    self._nrow = int(buf[1])
-    self._xinc = float(buf[2])
-    self._yinc = float(buf[3])
-    self._xori = float(buf[4])
-    self._yori = float(buf[6])
-    self._ncol = int(buf[8])
-    self._rotation = float(buf[9])
+    args = {}
+    args["nrow"] = int(buf[1])
+    args["xinc"] = float(buf[2])
+    args["yinc"] = float(buf[3])
+    args["xori"] = float(buf[4])
+    args["yori"] = float(buf[6])
+    args["ncol"] = int(buf[8])
+    args["rotation"] = float(buf[9])
 
     values = np.array(buf[19:]).astype(np.float64)
-    values = np.reshape(values, (self._ncol, self._nrow), order="F")
+    values = np.reshape(values, (args["ncol"], args["nrow"]), order="F")
     values = np.array(values, order="C")
-    self.values = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPA)
+    args["values"] = np.ma.masked_greater_equal(values, UNDEF_MAP_IRAPA)
 
-    self._yflip = 1
-    if self._yinc < 0.0:
-        self._yinc *= -1
-        self._yflip = -1
-
-    self._ilines = np.array(range(1, self.ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, self.nrow + 1), dtype=np.int32)
+    args["yflip"] = 1
+    if args["yinc"] < 0.0:
+        args["yinc"] *= -1
+        args["yflip"] = -1
 
     del buf
+    return args
 
 
-def _import_irap_ascii(self, mfile):
+def _import_irap_ascii(mfile):
     """Import Irap ascii format via C routines (fast, but less suited for bytesio)."""
     logger.debug("Enter function...")
 
@@ -253,35 +234,32 @@ def _import_irap_ascii(self, mfile):
     if yinc < 0.0:
         yinc = yinc * -1
         yflip = -1
+    args = {}
+    args["ncol"] = ncol
+    args["nrow"] = nrow
+    args["xori"] = xori
+    args["yori"] = yori
+    args["xinc"] = xinc
+    args["yinc"] = yinc
+    args["yflip"] = yflip
+    args["rotation"] = rot
 
-    self._ncol = ncol
-    self._nrow = nrow
-    self._xori = xori
-    self._yori = yori
-    self._xinc = xinc
-    self._yinc = yinc
-    self._yflip = yflip
-    self._rotation = rot
-
-    self.values = val
-
-    self._ilines = np.array(range(1, ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, nrow + 1), dtype=np.int32)
+    args["values"] = val
 
     mfile.cfclose()
+    return args
 
 
-def import_ijxyz(self, mfile, template=None, **kwargs):
+def import_ijxyz(mfile, template=None, **_):
     """Import OW/DSG IJXYZ ascii format."""
-    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
     if not template:
-        _import_ijxyz(self, mfile)
+        return _import_ijxyz(mfile)
     else:
-        _import_ijxyz_tmpl(self, mfile, template)
+        return _import_ijxyz_tmpl(mfile, template)
 
 
-def _import_ijxyz(self, mfile):  # pylint: disable=too-many-locals
+def _import_ijxyz(mfile):  # pylint: disable=too-many-locals
     """Import OW/DSG IJXYZ ascii format."""
     # import of seismic column system on the form:
     # 2588	1179	476782.2897888889	6564025.6954	1000.0
@@ -323,26 +301,26 @@ def _import_ijxyz(self, mfile):  # pylint: disable=too-many-locals
     logger.info(xlist)
 
     val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
+    args = {}
+    args["xori"] = xori
+    args["xinc"] = xinc
+    args["yori"] = yori
+    args["yinc"] = yinc
+    args["ncol"] = ncol
+    args["nrow"] = nrow
+    args["rotation"] = rot
+    args["yflip"] = yflip
 
-    self._xori = xori
-    self._xinc = xinc
-    self._yori = yori
-    self._yinc = yinc
-    self._ncol = ncol
-    self._nrow = nrow
-    self._rotation = rot
-    self._yflip = yflip
+    args["values"] = val.reshape((args["ncol"], args["nrow"]))
 
-    self.values = val.reshape((self._ncol, self._nrow))
-
-    self._ilines = iln
-    self._xlines = xln
+    args["ilines"] = iln
+    args["xlines"] = xln
 
     mfile.cfclose()
-    self._metadata.required = self
+    return args
 
 
-def _import_ijxyz_tmpl(self, mfile, template):
+def _import_ijxyz_tmpl(mfile, template):
     """Import OW/DSG IJXYZ ascii format, with a Cube or RegularSurface as template."""
     cfhandle = mfile.get_cfhandle()
 
@@ -358,26 +336,26 @@ def _import_ijxyz_tmpl(self, mfile, template):
 
     val = ma.masked_greater(val, xtgeo.UNDEF_LIMIT)
 
-    self._xori = template.xori
-    self._xinc = template.xinc
-    self._yori = template.yori
-    self._yinc = template.yinc
-    self._ncol = template.ncol
-    self._nrow = template.nrow
-    self._rotation = template.rotation
-    self._yflip = template.yflip
-    self.values = val.reshape((self._ncol, self._nrow))
+    args = {}
+    args["xori"] = template.xori
+    args["xinc"] = template.xinc
+    args["yori"] = template.yori
+    args["yinc"] = template.yinc
+    args["ncol"] = template.ncol
+    args["nrow"] = template.nrow
+    args["rotation"] = template.rotation
+    args["yflip"] = template.yflip
+    args["values"] = val.reshape((args["ncol"], args["nrow"]))
 
-    self._ilines = template._ilines.copy()
-    self._xlines = template._xlines.copy()
+    args["ilines"] = template._ilines.copy()
+    args["xlines"] = template._xlines.copy()
 
     mfile.cfclose()
-    self._metadata.required = self
+    return args
 
 
-def import_petromod(self, mfile, values=True, **kwargs):
+def import_petromod(mfile, **_):
     """Import Petromod binary format."""
-    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
     cfhandle = mfile.get_cfhandle()
 
@@ -391,53 +369,50 @@ def import_petromod(self, mfile, values=True, **kwargs):
     rota_xori = 0
     rota_yori = 0
     undef = 999999.0
-
+    args = {}
     for field in fields:
         key, value = field.split("=")
         if key == "GridNoX":
-            self._ncol = int(value)
+            args["ncol"] = int(value)
         if key == "GridNoY":
-            self._nrow = int(value)
+            args["nrow"] = int(value)
         if key == "OriginX":
-            self._xori = float(value)
+            args["xori"] = float(value)
         if key == "OriginY":
-            self._yori = float(value)
+            args["yori"] = float(value)
         if key == "RotationOriginX":
             rota_xori = float(value)
         if key == "RotationOriginY":
             rota_yori = float(value)
         if key == "GridStepX":
-            self._xinc = float(value)
+            args["xinc"] = float(value)
         if key == "GridStepY":
-            self._yinc = float(value)
+            args["yinc"] = float(value)
         if key == "RotationAngle":
-            self._rotation = float(value)
+            args["rotation"] = float(value)
         if key == "Undefined":
             undef = float(value)
 
-    if self._rotation != 0.0 and (rota_xori != self._xori or rota_yori != self._yori):
+    if args["rotation"] != 0.0 and (
+        rota_xori != args["xori"] or rota_yori != args["yori"]
+    ):
         xtg.warnuser("Rotation origin and data origin do match")
 
     # reread file for map values
 
     dsc, values = _cxtgeo.surf_import_petromod_bin(
-        cfhandle, 1, undef, self._ncol, self._nrow, self._ncol * self._nrow
+        cfhandle, 1, undef, args["ncol"], args["nrow"], args["ncol"] * args["nrow"]
     )
 
     values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
 
-    values = values.reshape(self._ncol, self._nrow)
-
-    self.values = values
-
-    self._ilines = np.array(range(1, self.ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, self.nrow + 1), dtype=np.int32)
+    args["values"] = values.reshape(args["ncol"], args["nrow"])
 
     mfile.cfclose()
-    self._metadata.required = self
+    return args
 
 
-def import_zmap_ascii(self, mfile, values=True, **kwargs):
+def import_zmap_ascii(mfile, values=True, **_):
     """Importing ZMAP + ascii files, in pure python only.
 
     Some sources
@@ -446,7 +421,6 @@ def import_zmap_ascii(self, mfile, values=True, **kwargs):
     https://blog.nitorinfotech.com/what-is-zmap-plus-file-format/
 
     """
-    logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
     if not mfile.memstream:
         logger.info("Reading zmap+ from %s", mfile.file)
@@ -455,7 +429,6 @@ def import_zmap_ascii(self, mfile, values=True, **kwargs):
 
     count = 0
     buffer = ""
-    self._values = None
 
     if mfile.memstream:
         mfile.file.seek(0)
@@ -490,55 +463,48 @@ def import_zmap_ascii(self, mfile, values=True, **kwargs):
             header.extend(hdr)
 
     if not correctformat:
-        raise ValueError("Input file does not seem to be a correct zmap file")
-    print(header)
+        raise ValueError("Input file does not seem be a correct zmap file")
 
-    self._ncol = int(header[6])
-    self._nrow = int(header[5])
-    self._xori = float(header[7])
-    self._yori = float(header[9])
-    self._xinc = float(header[8]) - float(header[7]) / (self._ncol + 1)
-    self._yinc = float(header[10]) - float(header[9]) / (self._nrow + 1)
+    xmax = float(header[8])
+    ymax = float(header[10])
+
+    args = {}
+    args["ncol"] = int(header[6])
+    args["nrow"] = int(header[5])
+    args["xori"] = float(header[7])
+    args["yori"] = float(header[9])
+    args["xinc"] = (xmax - args["xori"]) / (args["ncol"] + 1)
+    args["yinc"] = (ymax - args["yori"]) / (args["nrow"] + 1)
 
     if header[2]:
         undef = float(header[2])  # user defined undef
     else:
         undef = float(header[1])
 
-    logger.info("UNDEF value is %s", undef)
-    print(self._xinc)
-
-    if values is False:
-        self.isloaded = False
-        return
-
-    if mfile.memstream:
-        mfile.file.seek(0)
-        buf = mfile.file.read()
-        buf = buf.decode().split()
-        indexes = [i for i, x in enumerate(buf) if x == "@"]
-        buf = buf[indexes[-1] + 1 :]
-    else:
-        with open(mfile.file, "r", encoding="utf-8") as fhx:
-            buf = fhx.read()
-
-            buf = buf.split()
+    if values is not False:
+        if mfile.memstream:
+            mfile.file.seek(0)
+            buf = mfile.file.read()
+            buf = buf.decode().split()
             indexes = [i for i, x in enumerate(buf) if x == "@"]
             buf = buf[indexes[-1] + 1 :]
+        else:
+            with open(mfile.file, "r", encoding="utf-8") as fhx:
+                buf = fhx.read()
 
-    values = np.array(buf, dtype=np.float64)
-    values = np.reshape(values, (self._ncol, self._nrow), order="C")
-    values = np.flip(values, axis=1)
-    self._values = np.ma.masked_equal(values, undef)
+                buf = buf.split()
+                indexes = [i for i, x in enumerate(buf) if x == "@"]
+                buf = buf[indexes[-1] + 1 :]
 
-    self._ilines = np.array(range(1, self.ncol + 1), dtype=np.int32)
-    self._xlines = np.array(range(1, self.nrow + 1), dtype=np.int32)
+        values = np.array(buf, dtype=np.float64)
+        values = np.reshape(values, (args["ncol"], args["nrow"]), order="C")
+        values = np.flip(values, axis=1)
+        args["values"] = np.ma.masked_equal(values, undef)
 
-    logger.info("Reading zmap+... done")
-    self._metadata.required = self
+    return args
 
 
-def import_xtg(self, mfile, values=True, **kwargs):
+def import_xtg(mfile, values=True, **kwargs):
     """Using pure python for experimental XTGEO import."""
     logger.debug("Additional, probably unused kwargs: %s", **kwargs)
 
@@ -571,20 +537,19 @@ def import_xtg(self, mfile, values=True, **kwargs):
 
     reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
 
+    args = {}
     for myattr in reqattrs:
-        setattr(self, "_" + myattr, req[myattr])
+        args[myattr] = req[myattr]
 
     if values:
-        self.values = np.ma.masked_equal(
-            vals.reshape(self.ncol, self.nrow), self._undef
+        args["values"] = np.ma.masked_equal(
+            vals.reshape(args["ncol"], args["nrow"]), xtgeo.UNDEF
         )
-    else:
-        self._values = None
 
-    self._metadata.required = self
+    return args
 
 
-def import_hdf5_regsurf(self, mfile, values=True):
+def import_hdf5_regsurf(mfile, values=True, **_):
     """Importing h5/hdf5 storage."""
     reqattrs = xtgeo.MetaDataRegularSurface.REQUIRED
 
@@ -606,14 +571,13 @@ def import_hdf5_regsurf(self, mfile, values=True):
 
         req = meta["_required_"]
 
+    args = {}
     for myattr in reqattrs:
-        setattr(self, "_" + myattr, req[myattr])
+        args[myattr] = req[myattr]
 
     if values:
-        self.values = np.ma.masked_equal(
-            invalues.reshape(self.ncol, self.nrow), self._undef
+        args["values"] = np.ma.masked_equal(
+            invalues.reshape(args["ncol"], args["nrow"]), xtgeo.UNDEF
         )
-    else:
-        self._values = None
 
-    self._metadata.required = self
+    return args
