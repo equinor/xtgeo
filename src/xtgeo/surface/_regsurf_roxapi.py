@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Roxar API functions for XTGeo RegularSurface"""
+"""Roxar API functions for XTGeo RegularSurface."""
 import numpy as np
 from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
@@ -13,7 +13,6 @@ def import_horizon_roxapi(
     self, project, name, category, stype, realisation
 ):  # pragma: no cover
     """Import a Horizon surface via ROXAR API spec."""
-
     rox = RoxUtils(project, readonly=True)
 
     proj = rox.project
