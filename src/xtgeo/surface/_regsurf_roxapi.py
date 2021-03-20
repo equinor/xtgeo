@@ -3,6 +3,7 @@
 import numpy as np
 from xtgeo.common import XTGeoDialog
 from xtgeo import RoxUtils
+from xtgeo.roxutils import RoxMeta
 
 xtg = XTGeoDialog()
 
@@ -27,6 +28,7 @@ def _roxapi_import_surface(
 ):  # pragma: no cover
 
     self._name = name
+    self._roxmeta = RoxMeta()
 
     if stype == "horizons":
         if name not in proj.horizons:
@@ -68,6 +70,8 @@ def _roxapi_import_surface(
 
     else:
         raise ValueError("Invalid stype")
+
+    self._roxmeta.folder = category
 
 
 def _roxapi_horizon_to_xtgeo(self, rox):  # pragma: no cover

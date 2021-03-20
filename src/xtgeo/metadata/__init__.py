@@ -4,3 +4,5 @@
 
 from xtgeo.metadata.metadata import MetaDataRegularSurface
 from xtgeo.metadata.metadata import MetaDataRegularCube
+
+from xtgeo.metadata.metadata import export_metadata_file

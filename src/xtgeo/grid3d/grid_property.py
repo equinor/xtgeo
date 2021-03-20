@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Module for a 3D grid property."""
 
-
+import os
 import copy
 import numbers
 import hashlib
 import pathlib
 from types import FunctionType
-from typing import Optional, Union, Any
+from typing import Optional, Union, Any, List
 import numpy as np
 
 import xtgeo
@@ -18,6 +18,7 @@ from . import _gridprop_op1
 from . import _gridprop_import
 from . import _gridprop_roxapi
 from . import _gridprop_export
+from . import _gridprop_io_hdf
 from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -264,7 +265,7 @@ class GridProperty(_Grid3D):
             # make values
             _gridprop_etc.gridvalues_fromspec(self, values)
 
-        self._metadata = xtgeo.MetaDataCPProperty()
+        self._metadata = xtgeo.MetaDataCPGridProperty()
 
     def __del__(self):
         logger.debug("DELETING property instance %s", self.name)
@@ -295,8 +296,8 @@ class GridProperty(_Grid3D):
     def metadata(self, obj):
         # The current metadata object can be replaced. A bit dangerous so further
         # check must be done to validate. TODO.
-        if not isinstance(obj, xtgeo.MetaDataCPProperty):
-            raise ValueError("Input obj not an instance of MetaDataCPProperty")
+        if not isinstance(obj, xtgeo.MetaDataCPGridProperty):
+            raise ValueError("Input obj not an instance of MetaDataCPGridProperty")
 
         self._metadata = obj  # checking is currently missing! TODO
 
@@ -371,6 +372,9 @@ class GridProperty(_Grid3D):
                 self.continuous_to_discrete()
             else:
                 self.discrete_to_continuous()
+
+    # alias
+    discrete = isdiscrete
 
     @property
     def dtype(self):
@@ -713,7 +717,14 @@ class GridProperty(_Grid3D):
         return obj
 
     def to_file(
-        self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None
+        self,
+        pfile,
+        fformat="roff",
+        name=None,
+        append=False,
+        dtype=None,
+        fmt=None,
+        metadata=False,
     ):
         """Export the grid property to file.
 
@@ -731,6 +742,9 @@ class GridProperty(_Grid3D):
                 Eclipse formats.
             fmt (str): Format for ascii grdecl format, default is None. If spesified,
                 the user is responsible for a valid format specifier, e.g. "%8.4f"
+            metadata: If True, and freeform metadata exists, a complimentary file YAML
+                file with the freeform metadata will exported. This file name will
+                be prepended with a dot, and suffix will be ".yml".
 
         Example::
 
@@ -742,11 +756,13 @@ class GridProperty(_Grid3D):
 
             poro.to_file('reek_export_poro.bgrdecl', format='bgrdecl')
 
-        .. versionadded:: 2.13  Key `fmt` was added and default format for float output
-            to grdecl is now "%e" if `fmt=None`
+        .. versionchanged:: 2.13
+            Key `fmt` was added and default format for float output to grdecl is
+            now "%e" if `fmt=None`
+        .. versionchanged:: 2.15
+            Key ``metadata`` added.
 
         """
-
         _gridprop_export.to_file(
             self,
             pfile,
@@ -755,7 +771,76 @@ class GridProperty(_Grid3D):
             append=append,
             dtype=dtype,
             fmt=fmt,
+            metadata=metadata,
         )
+
+    def from_hdf(
+        self,
+        gfile: Union[str, bytes, os.PathLike],
+        ijkrange: Optional[List[int]] = None,
+        zerobased: Optional[bool] = False,
+        name: Optional[str] = None,
+    ):
+        """Import a grid property from HDF5 file (experimental!).
+
+        Args:
+            gfile: The input file.
+            ijkrange: Partial read, e.g. (1, 20, 1, 30, 1, 3) as
+                (i1, i2, j1, j2, k1, k2). Numbering scheme depends on `zerobased`,
+                where default is `eclipse-like` i.e. first cell is 1. Numbering
+                is inclusive for both ends. If ijkrange exceeds original range,
+                an Exception is raised. Using existing boundaries can be defaulted
+                by "min" and "max", e.g. (1, 20, 5, 10, "min", "max")
+            zerobased: If True the index in ijkrange is zero based.
+            name: If not None, request that name of property match the HDF metadata,
+                or raise an Exception if names are not matching.
+
+        Raises:
+            ValueError: The ijkrange spesification exceeds boundaries.
+            ValueError: The ijkrange list must have 6 elements
+            ValueError: Requested name ... != name from metadata: ...
+
+        Example::
+
+            gprop.from_hdf("myfile_gridprop.h5", ijkrange=(1, 10, 10, 15, 1, 4))
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+
+        _gridprop_io_hdf.import_hdf5(
+            self, gfile, ijkrange=ijkrange, zerobased=zerobased, name=name
+        )
+
+    def to_hdf(
+        self,
+        gfile: Union[str, bytes, os.PathLike],
+        compression: Optional[str] = None,
+        chunks: Optional[bool] = False,
+    ) -> pathlib.Path:
+        """Export gridproperty to HDF5 storage format (experimental!).
+
+        Args:
+            gfile: Output file or stream.
+            compression: Compression method, such as "blosc" or "lzf".
+            chunks: chunks settings (cf. HDF documention).
+
+        Raises:
+            OSError: Directory does not exist
+
+        Returns:
+            Actual pathlib.Path object, or None if memory stream
+
+        Example:
+
+            >>> xg.to_hdf("myfile_grid.h5")
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
+        gfile.check_folder(raiseerror=OSError)
+
+        _gridprop_io_hdf.export_hdf5(
+            self, gfile, compression=compression, chunks=chunks
+        )
+
+        return gfile.file
 
     def from_roxar(
         self, projectname, gname, pname, realisation=0, faciescodes=False
@@ -777,7 +862,6 @@ class GridProperty(_Grid3D):
         .. versionadded:: 2.12  Key `faciescodes` was added
 
         """
-
         self._filesrc = None
 
         _gridprop_roxapi.import_prop_roxapi(

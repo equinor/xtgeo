@@ -64,7 +64,7 @@ def import_xtgcpprop(self, mfile, ijrange=None, zerobased=False):
     meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
     req = meta["_required_"]
 
-    reqattrs = xtgeo.MetaDataCPProperty.REQUIRED
+    reqattrs = xtgeo.MetaDataCPGridProperty.REQUIRED
 
     for myattr in reqattrs:
         if "discrete" in myattr:

@@ -54,7 +54,9 @@ import pandas as pd
 
 import xtgeo
 from xtgeo.common.constants import VERYLARGENEGATIVE, VERYLARGEPOSITIVE
+from xtgeo.metadata import export_metadata_file
 import xtgeo.common.sys as xtgeosys
+
 
 from . import _regsurf_import
 from . import _regsurf_export
@@ -273,6 +275,7 @@ class RegularSurface:
         self._fformat = None  # current fileformat, useful for load()
         self._isloaded = True  # assume True unless explicitly set
         self._metadata = xtgeo.MetaDataRegularSurface()
+        self._roxmeta = None  # to hold RMS spesific metadata
 
         if sfile is not None:
             self._instance_from_filelike(sfile, template, fformat, engine, values)
@@ -972,6 +975,7 @@ class RegularSurface:
         self,
         mfile: Union[str, pathlib.Path, io.BytesIO],
         fformat: Optional[str] = "irap_binary",
+        metadata: Optional[bool] = False,
         pmd_dataunits: Optional[Tuple[int, int]] = (15, 10),
         engine: Optional[str] = "cxtgeo",
     ):
@@ -987,6 +991,9 @@ class RegularSurface:
                 "%md5sum%" or "%fmu-v1%" with string or Path() input.
             fformat: File format, irap_binary/irap_ascii/zmap_ascii/
                 storm_binary/ijxyz/petromod/xtg*/hdf5. Default is irap_binary.
+            metadata: If True, and freeform metadata exists, a complimentary file YAML
+                file with the freeform metadata will exported. This file name will
+                be prepended with a dot, and suffix will be ".yml".
             pmd_dataunits: A tuple of length 2 for petromod format,
                 spesifying metadata for units (DataUnitDistance, DataUnitZ).
             engine: Default is "cxtgeo" which use a C backend. Optionally a pure
@@ -1016,6 +1023,7 @@ class RegularSurface:
         .. versionchanged:: 2.5 Added support for BytesIO
         .. versionchanged:: 2.13 Improved support for BytesIO
         .. versionchanged:: 2.14 Support for alias file name and return value
+        .. versionchanged:: 2.15 Added key ``metadata`` for optional metadata output
         """
         logger.info("Export RegularSurface to file or memstream...")
         mfile = xtgeosys._XTGeoFile(mfile, mode="wb", obj=self)
@@ -1049,6 +1057,9 @@ class RegularSurface:
 
         else:
             logger.critical("Invalid file format")
+
+        if metadata and not mfile.memstream:
+            export_metadata_file(mfile, self.metadata.freeform)
 
         logger.info("Export RegularSurface to file or memstream... done")
 
@@ -2670,7 +2681,7 @@ class RegularSurface:
         faults=None,
         logarithmic=False,
     ):
-        """Fast surface plot of maps using matplotlib.
+        """Fast surface plot of maps using matplotlib test.
 
         Args:
             filename (str): Name of plot file; None will plot to screen.

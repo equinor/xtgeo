@@ -144,8 +144,8 @@ from xtgeo.xyz.polygons import Polygons
 
 from xtgeo.metadata.metadata import MetaDataRegularSurface
 from xtgeo.metadata.metadata import MetaDataRegularCube
-from xtgeo.metadata.metadata import MetaDataCPGeometry
-from xtgeo.metadata.metadata import MetaDataCPProperty
+from xtgeo.metadata.metadata import MetaDataCPGridGeometry
+from xtgeo.metadata.metadata import MetaDataCPGridProperty
 from xtgeo.metadata.metadata import MetaDataWell
 
 
