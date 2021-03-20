@@ -84,8 +84,16 @@ class XYZ:
             if oldname and self._df is not None:
                 self._df.rename(columns={oldname: newname}, inplace=True)
         else:
+            raise ValueError(f"Wrong type of input to {newname}; must be string")
+
+    def _check_name(self, value):
+        if not isinstance(value, str):
+            raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
+
+        if value not in self._df.columns:
             raise ValueError(
-                "Wrong type of input to {}; must be string".format(newname)
+                f"{value} does not exist as a column name, must be "
+                f"one of: f{self._df.columns}"
             )
 
     def copy(self):
