@@ -3,8 +3,6 @@ import struct
 import json
 
 import numpy as np
-import h5py
-import hdf5plugin
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
