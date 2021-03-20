@@ -573,7 +573,6 @@ class Well:
             _well_io.export_rms_ascii(self, wfile.name)
             export_metadata_file(wfile, self.metadata.freeform)
 
-
         elif fformat in ("hdf", "hdf5", "h5"):
             self.to_hdf(wfile)
 
