@@ -19,7 +19,7 @@ recommonmark
 bandit
 segyio>=1.8.6
 shapely>=1.6.2; python_version < "3.8"
-shapely==1.7a2; python_version == "3.8"
+shapely==1.7a2; python_version >= "3.8"
 black
 autopep8
 pylint

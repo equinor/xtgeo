@@ -23,9 +23,11 @@ exclude = '''
 )/
 '''
 
-# numpy version scheme to fulfill Roxar API compatibility
+# numpy version scheme to fulfill Roxar API compatibility:
+# RMS 11.* 12.0.*  --> numpy == 1.13.3 with python 3.6
+# RMS 12.1.*  -->  numpy == 1.19.2 with python 3.8
+#
 # For cmake, cmake >= 3.6 is tested to be OK actually but versions are linked to pip versions and
-# manylinyx1 vs manylinux2010 issues (for Equinor Komodo installs)
 [build-system]
 requires = [
   "pip>=19.1.1",
@@ -37,9 +39,10 @@ requires = [
   'cmake==3.18.0; platform_system != "Linux"',
   "ninja",
   "setuptools_scm>=3.2.0",
-  'numpy==1.10.4; python_version == "3.4"',
-  'numpy==1.13.3; python_version >= "3.5" and python_version < "3.7" and platform_system == "Linux"',
-  'numpy==1.16.0; python_version >= "3.7" or platform_system != "Linux"',
+  'numpy==1.13.3; python_version == "3.6"',
+  'numpy==1.19.2; python_version == "3.8"',
+  'numpy>=1.19; python_version == "3.7"',
+  'numpy>=1.19; python_version >= "3.9"',
   'Sphinx',
   'sphinx-rtd-theme',
   'sphinxcontrib-apidoc',

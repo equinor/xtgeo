@@ -1,5 +1,10 @@
 # Release notes
 
+## Version 2.15 (in prep)
+
+* New features:
+  * Python 3.9 support, with PYPI wheel.
+
 ## Version 2.14
 
 * New features:
