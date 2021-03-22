@@ -137,6 +137,7 @@ def _import_roff_v1(self, pfile, name):
             ccodes.append(_cxtgeo.intarray_getitem(ptr_ccodes_v, ino))
 
         self._codes = dict(zip(ccodes, cname_list))
+        self._roxar_dtype = np.uint16
 
     self._name = name
 

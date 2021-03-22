@@ -19,6 +19,8 @@ logger = xtg.functionlogger(__name__)
 # self is the XTGeo GridProperty instance
 # pragma: no cover
 
+VALID_ROXAR_DTYPES = [np.uint8, np.uint16, np.float32]
+
 
 def import_prop_roxapi(
     self, project, gname, pname, realisation, faciescodes
@@ -147,6 +149,12 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
     dtype = self._roxar_dtype
     logger.info("DTYPE is %s for %s", dtype, pname)
 
+    # casting will secure correct types
+    if dtype not in VALID_ROXAR_DTYPES:
+        raise TypeError(
+            f"Roxar dtype is not valid: {dtype} must be in {VALID_ROXAR_DTYPES}"
+        )
+
     if self.isdiscrete:
         pvalues = roxgrid.get_grid(realisation=realisation).generate_values(
             data_type=dtype
@@ -171,7 +179,6 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
         rprop = properties[pname]
         dtype = rprop.data_type
 
-    # casting will
     rprop.set_values(pvalues.astype(dtype, casting=casting), realisation=realisation)
 
     if self.isdiscrete:

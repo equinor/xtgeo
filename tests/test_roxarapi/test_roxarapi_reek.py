@@ -11,15 +11,13 @@ This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if E
 from os.path import join, isdir
 import shutil
 import pytest
-
+import numpy as np
 import xtgeo
 
 try:
     import roxar
 except ImportError:
     pass
-
-import tests.test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -48,8 +46,11 @@ SURFNAMES1 = ["TopReek", "MidReek", "BaseReek"]
 
 GRIDDATA1 = TPATH / "3dgrids/reek/reek_sim_grid.roff"
 PORODATA1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
+ZONEDATA1 = TPATH / "3dgrids/reek/reek_sim_zone.roff"
+
 GRIDNAME1 = "Simgrid"
 PORONAME1 = "PORO"
+ZONENAME1 = "Zone"
 
 WELLSFOLDER1 = TPATH / "wells/reek/1"
 WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
@@ -104,6 +105,8 @@ def fixture_create_project():
     grd.to_roxar(project, GRIDNAME1)
     por = xtgeo.gridproperty_from_file(PORODATA1, name=PORONAME1)
     por.to_roxar(project, GRIDNAME1, PORONAME1)
+    zon = xtgeo.gridproperty_from_file(ZONEDATA1, name=ZONENAME1)
+    zon.to_roxar(project, GRIDNAME1, ZONENAME1)
 
     # save project (both an initla version and a work version) and exit
     project.save_as(prj1)
@@ -111,6 +114,8 @@ def fixture_create_project():
     project.close()
 
     yield project
+
+    project.close()
 
     print("\n******* Teardown RMS project!\n")
     if isdir(prj1):
@@ -190,8 +195,15 @@ def test_rox_get_gridproperty():
 
     poro = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, PORONAME1)
 
-    tsetup.assert_almostequal(poro.values.mean(), 0.16774, 0.001)
+    assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
     assert poro.dimensions == (40, 64, 14)
+
+    zone = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, ZONENAME1)
+    assert "int" in str(zone.values.dtype)
+
+    zone._roxar_dtype = np.int32
+    with pytest.raises(TypeError):
+        zone.to_roxar(PRJ, GRIDNAME1, ZONENAME1)
 
 
 @pytest.mark.skipunlessroxar
@@ -205,7 +217,7 @@ def test_rox_get_modify_set_gridproperty():
     poro.to_roxar(PRJ, GRIDNAME1, PORONAME1 + "_NEW")
 
     poro.from_roxar(PRJ, GRIDNAME1, PORONAME1 + "_NEW")
-    tsetup.assert_almostequal(poro.values[1, 0, 0], 0.14942 + adder, 0.0001)
+    assert poro.values[1, 0, 0] == pytest.approx(0.14942 + adder, abs=0.0001)
 
 
 @pytest.mark.skipunlessroxar
