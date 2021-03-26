@@ -11,7 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Check code style
+      - name: Set up python
+        uses: actions/setup-python@v2
+      - name: Check black style and linting
         run: |
           pip install black
           black --check *.py src tests
