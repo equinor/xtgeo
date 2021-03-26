@@ -31,7 +31,7 @@ jobs:
     - name: Generate coverage report
       run: |
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-        pip install pytest
+        pip install -r requirements/requirements_test
         pip install pytest-cov
         pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
 
