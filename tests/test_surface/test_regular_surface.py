@@ -1,4 +1,5 @@
 """Testing RegularSurface class with methods."""
+import sys
 import os
 import os.path
 from os.path import join
@@ -147,7 +148,7 @@ def test_ijxyz_import1():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4a.gri"))
 
 
-# @tsetup.skipifwindows
+@pytest.mark.skipif(sys.platform == "win32", reason="divide by zero issue")
 def test_ijxyz_import2():
     """Import some IJ XYZ small set with YFLIP -1."""
     logger.info("Import and export...")
@@ -162,7 +163,7 @@ def test_ijxyz_import2():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4b.gri"))
 
 
-# @tsetup.skipifwindows
+@pytest.mark.skipif(sys.platform == "win32", reason="Unknown issue")
 def test_ijxyz_import4_ow_messy_dat():
     """Import some IJ XYZ small set with YFLIP -1 from OW messy dat format."""
     logger.info("Import and export...")
@@ -177,7 +178,7 @@ def test_ijxyz_import4_ow_messy_dat():
     xsurf.to_file(os.path.join(TMPD, "ijxyz_set4d.gri"))
 
 
-# @tsetup.skipifwindows
+@pytest.mark.skipif(sys.platform == "win32", reason="Unknown issue")
 def test_ijxyz_import3():
     """Import some IJ XYZ small set yet again."""
     logger.info("Import and export...")

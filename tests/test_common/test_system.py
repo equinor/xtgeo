@@ -2,6 +2,7 @@
 import hashlib
 import io
 import pathlib
+import sys
 
 import pytest
 
@@ -37,6 +38,7 @@ surface_files_formats = {
 }
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Path delimiter issue")
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_resolve_alias(testpath, filename):
     """Testing resolving file alias function."""
