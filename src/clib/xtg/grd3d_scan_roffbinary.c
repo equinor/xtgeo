@@ -110,7 +110,8 @@ _scan_roff_bin_record(FILE *fc,
      */
 
     /* int swap = 0; */
-    int ndat, nrec, i, n, ic;
+    int nrec, ndat;
+    int i, n, ic;
     int bsize = 0;
     const int FAIL = -88;
     char tmpname[ROFFSTRLEN] = "";
@@ -296,7 +297,7 @@ _scan_roff_bin_record(FILE *fc,
                             ncum += _roffbinstring(fc, cname[nrec]);
                         }
                     } else {
-                        ncum += bsize * ndat;
+                        ncum += (long)bsize * (long)ndat;
                         if (fseek(fc, ncum, SEEK_SET) != 0)
                             return FAIL;
                     }
