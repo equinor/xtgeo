@@ -31,4 +31,6 @@ pytest>=6
 pytest-cov
 h5py>=3
 hdf5plugin>=2.3
-tables>=3.5
+# await pytables on pypi for PY3.9 macos, win
+tables>=3.5; python_version < "3.9" and platform_system != "Linux"
+tables>=3.5; platform_system == "Linux"
