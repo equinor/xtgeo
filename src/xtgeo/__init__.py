@@ -8,6 +8,7 @@
 
 import os
 import timeit
+import warnings
 
 
 try:
@@ -192,5 +193,6 @@ from xtgeo.xyz.polygons import polygons_from_roxar
 from xtgeo.xyz.points import points_from_file
 from xtgeo.xyz.points import points_from_roxar
 
+warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 
 _xprint("XTGEO __init__ done")
