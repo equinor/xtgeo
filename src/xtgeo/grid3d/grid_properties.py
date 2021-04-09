@@ -59,7 +59,7 @@ class GridProperties(_Grid3D):
             nlay: Number of layers
 
         """
-        super().__init__()
+        super().__init__(ncol, nrow, nlay)
 
         self._ncol = ncol
         self._nrow = nrow

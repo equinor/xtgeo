@@ -56,7 +56,7 @@ def refine_vertically(self, rfactor, zoneprop=None):
         elif zoneprop is None and not self.subgrids:
             raise ValueError(
                 "You gave in a dict, but no zoneprops and "
-                "subgrids are not preesent in the grid"
+                "subgrids are not present in the grid"
             )
         else:
             raise ValueError("Some major unexpected issue in routine...")

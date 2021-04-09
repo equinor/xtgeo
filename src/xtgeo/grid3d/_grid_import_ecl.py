@@ -19,11 +19,19 @@ xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
+def vectordimensions(ncol, nrow, nlay):
+    ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
+    nzcorn = ncol * nrow * (nlay + 1) * 4
+    ntot = ncol * nrow * nlay
+
+    return (ncoord, nzcorn, ntot)
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse result .EGRID
 # See notes in grid.py on dual porosity / dual perm scheme.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_ecl_egrid(self, gfile):
+def import_ecl_egrid(gfile):
     """Import, private to this routine."""
     # scan file for property
     logger.info("Make kwlist by scanning")
@@ -34,7 +42,8 @@ def import_ecl_egrid(self, gfile):
     for name in ("COORD", "ZCORN", "ACTNUM", "MAPAXES"):
         bpos[name] = -1  # initially
 
-    self._dualporo = False
+    dualporo = False
+    dualperm = False
     for kwitem in kwlist:
         kwname, kwtype, kwlen, kwbyte = kwitem
         if kwname == "FILEHEAD":
@@ -43,49 +52,48 @@ def import_ecl_egrid(self, gfile):
             dualp = filehead[5].tolist()
             logger.info("Dual porosity flag is %s", dualp)
             if dualp == 1:
-                self._dualporo = True
-                self._dualperm = False
+                dualporo = True
+                dualperm = False
             elif dualp == 2:
-                self._dualporo = True
-                self._dualperm = True
+                dualporo = True
+                dualperm = True
         elif kwname == "GRIDHEAD":
             # read GRIDHEAD record:
             gridhead = eclbin_record(gfile, "GRIDHEAD", kwlen, kwtype, kwbyte)
-            self._ncol, self._nrow, self._nlay = gridhead[1:4].tolist()
+            ncol, nrow, nlay = gridhead[1:4].tolist()
         elif kwname in ("COORD", "ZCORN", "ACTNUM"):
             bpos[kwname] = kwbyte
         elif kwname == "MAPAXES":  # not always present
             bpos[kwname] = kwbyte
 
-    logger.info(
-        "Grid dimensions in EGRID file: %s %s %s", self._ncol, self._nrow, self._nlay
-    )
+    logger.info("Grid dimensions in EGRID file: %s %s %s", ncol, nrow, nlay)
 
     # allocate dimensions:
-    ncoord, nzcorn, ntot = self.vectordimensions
+    ncoord, nzcorn, ntot = vectordimensions(ncol, nrow, nlay)
 
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
+    coordsv = np.zeros(ncoord, dtype=np.float64)
+    zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    actnumsv = np.zeros(ntot, dtype=np.int32)
+
     p_nact = _cxtgeo.new_longpointer()
 
     option = 0
-    if self._dualporo:
+    if dualporo:
         option = 1
 
     cfhandle = gfile.get_cfhandle()
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
         cfhandle,
-        self._ncol,
-        self._nrow,
-        self._nlay,
+        ncol,
+        nrow,
+        nlay,
         bpos["MAPAXES"],
         bpos["COORD"],
         bpos["ZCORN"],
         bpos["ACTNUM"],
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        coordsv,
+        zcornsv,
+        actnumsv,
         p_nact,
         option,
     )
@@ -95,25 +103,54 @@ def import_ecl_egrid(self, gfile):
     logger.info("Reading ECL EGRID (C code) done")
     if ier == -1:
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
-
-    self._nactive = _cxtgeo.longpointer_value(p_nact)
-    self._xtgformat = 1
+    args = {
+        "xtgformat": 1,
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "dualporo": dualporo,
+        "dualperm": dualperm,
+    }
 
     # in case of DUAL PORO/PERM ACTNUM will be 0..3; need to convert
-    if self._dualporo:
-        self._dualactnum = self.get_actnum(name="DUALACTNUM")
-        acttmp = self._dualactnum.copy()
-        acttmp.values[acttmp.values >= 1] = 1
-        self.set_actnum(acttmp)
+    if dualporo:
+        act = xtgeo.grid3d.GridProperty(
+            ncol=ncol,
+            nrow=nrow,
+            nlay=nlay,
+            values=np.zeros((ncol, nrow, nlay), dtype=np.int32),
+            name=name,
+            discrete=True,
+        )
+        val = np.reshape(actnumsv, (ncol, nrow, nlay), order="F")
+        val = np.asanyarray(val, order="C")
+        val = val.ravel(order="K")
 
+        act.values = val
+        act.mask_undef()
+        act.codes = {0: "0", 1: "1"}
+        args["dualactnum"] = act
+
+        acttmp = act.copy()
+        acttmp.values[acttmp.values >= 1] = 1
+        val1d = acttmp.values.ravel(order="K")
+
+        val = np.reshape(val1d, (ncol, nrow, nlay), order="C")
+        val = np.asanyarray(val, order="F")
+        val = val.ravel(order="K")
+        args["actnumsv"] = val
     logger.info("File is closed")
+    return args
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import eclipse run suite: EGRID + properties from INIT and UNRST
 # For the INIT and UNRST, props dates shall be selected
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=None):
+def import_ecl_run(groot, initprops=None, restartprops=None, restartdates=None):
     """Import combo ECL runs."""
     ecl_grid = groot + ".EGRID"
     ecl_init = groot + ".INIT"
@@ -122,16 +159,16 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     ecl_grid = xtgeo._XTGeoFile(ecl_grid)
     ecl_init = xtgeo._XTGeoFile(ecl_init)
     ecl_rsta = xtgeo._XTGeoFile(ecl_rsta)
-
     # import the grid
-    import_ecl_egrid(self, ecl_grid)
+    args = import_ecl_egrid(ecl_grid)
 
     grdprops = xtgeo.grid3d.GridProperties()
 
     # import the init properties unless list is empty
+    grid = xtgeo.Grid(**args)
     if initprops:
         grdprops.from_file(
-            ecl_init.name, names=initprops, fformat="init", dates=None, grid=self
+            ecl_init.name, names=initprops, fformat="init", dates=None, grid=grid
         )
 
     # import the restart properties for dates unless lists are empty
@@ -141,17 +178,17 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
             names=restartprops,
             fformat="unrst",
             dates=restartdates,
-            grid=self,
+            grid=grid,
         )
-
-    self.gridprops = grdprops
+    args["props"] = grdprops
+    return args
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import eclipse input .GRDECL
 # Uses a tmp file so not very efficient
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_ecl_grdecl(self, gfile):
+def import_ecl_grdecl(gfile):
     """Import grdecl format."""
     # make a temporary file
     fds, tmpfile = mkstemp(prefix="tmpxtgeo")
@@ -161,9 +198,6 @@ def import_ecl_grdecl(self, gfile):
         for line in oldfile:
             if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
                 newfile.write(line)
-
-    newfile.close()
-    oldfile.close()
 
     # find ncol nrow nz
     mylist = []
@@ -180,52 +214,49 @@ def import_ecl_grdecl(self, gfile):
     if not found:
         logger.error("SPECGRID not found. Nothing imported!")
         return
-    xfile.close()
+    ncol, nrow, nlay = int(mylist[0]), int(mylist[1]), int(mylist[2])
 
-    self._ncol, self._nrow, self._nlay = int(mylist[0]), int(mylist[1]), int(mylist[2])
+    logger.info("NX NY NZ in grdecl file: %s %s %s", ncol, nrow, nlay)
 
-    logger.info("NX NY NZ in grdecl file: %s %s %s", self._ncol, self._nrow, self._nlay)
+    ncoord, nzcorn, ntot = vectordimensions(ncol, nrow, nlay)
 
-    ncoord, nzcorn, ntot = self.vectordimensions
-
-    logger.info("Reading...")
-
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    ptr_num_act = _cxtgeo.new_intpointer()
-
-    cfhandle = gfile.get_cfhandle()
+    coordsv = np.zeros(ncoord, dtype=np.float64)
+    zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    actnumsv = np.zeros(ntot, dtype=np.int32)
 
     _cxtgeo.grd3d_import_grdecl(
-        cfhandle,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        ptr_num_act,
+        gfile.get_cfhandle(),
+        ncol,
+        nrow,
+        nlay,
+        coordsv,
+        zcornsv,
+        actnumsv,
+        _cxtgeo.new_intpointer(),
     )
 
     # close and remove tmpfile
     gfile.cfclose()
     os.remove(tmpfile)
 
-    nact = _cxtgeo.intpointer_value(ptr_num_act)
+    args = {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "xtgformat": 1,
+    }
 
-    logger.info("Number of active cells: %s", nact)
-    self._subgrids = None
-    self._xtgformat = 1
+    return args
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import Eclipse binary GRDECL format
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_ecl_bgrdecl(self, gfile):
+def import_ecl_bgrdecl(gfile):
     """Import binary files with GRDECL layout."""
-    cfhandle = gfile.get_cfhandle()
 
     # scan file for properties; these have similar binary format as e.g. EGRID
     logger.info("Make kwlist by scanning")
@@ -244,44 +275,49 @@ def import_ecl_bgrdecl(self, gfile):
         if kwname == "SPECGRID":
             # read grid geometry record:
             specgrid = eclbin_record(gfile, "SPECGRID", kwlen, kwtype, kwbyte)
-            self._ncol, self._nrow, self._nlay = specgrid[0:3].tolist()
+            ncol, nrow, nlay = specgrid[0:3].tolist()
         elif kwname in needkwlist:
             bpos[kwname] = kwbyte
         elif kwname == "MAPAXES":  # not always present
             bpos[kwname] = kwbyte
 
     # allocate dimensions:
-    ncoord, nzcorn, ntot = self.vectordimensions
+    ncoord, nzcorn, ntot = vectordimensions(ncol, nrow, nlay)
 
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    p_nact = _cxtgeo.new_longpointer()
+    coordsv = np.zeros(ncoord, dtype=np.float64)
+    zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    actnumsv = np.zeros(ntot, dtype=np.int32)
 
     ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        cfhandle,
-        self._ncol,
-        self._nrow,
-        self._nlay,
+        gfile.get_cfhandle(),
+        ncol,
+        nrow,
+        nlay,
         bpos["MAPAXES"],
         bpos["COORD"],
         bpos["ZCORN"],
         bpos["ACTNUM"],
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        p_nact,
+        coordsv,
+        zcornsv,
+        actnumsv,
+        _cxtgeo.new_longpointer(),
         0,
     )
 
     if ier == -1:
         raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
 
-    self._nactive = _cxtgeo.longpointer_value(p_nact)
-    self._xtgformat = 1
-
-    # if local_fhandle:
-    #     gfile.close(cond=local_fhandle)
     if gfile.cfclose():
         logger.info("Closed SWIG C file")
+
+    args = {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "xtgformat": 1,
+    }
+
+    return args

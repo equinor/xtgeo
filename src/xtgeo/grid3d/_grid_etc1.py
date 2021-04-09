@@ -14,6 +14,7 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
 from . import _gridprop_lowlevel
+from ._grid_import_ecl import vectordimensions
 from .grid_property import GridProperty
 from ._grid3d_fence import _update_tmpvars
 
@@ -27,21 +28,18 @@ logger = xtg.functionlogger(__name__)
 
 
 def create_box(
-    self,
     dimension=(10, 12, 6),
     origin=(10.0, 20.0, 1000.0),
     oricenter=False,
     increment=(100, 150, 5),
     rotation=30.0,
     flip=1,
+    xtgformat=2,
 ):  # pylint: disable=unused-argument # type ignore
     """Create a shoebox grid from cubi'sh spec."""
-    arglist = locals()
-    del arglist["self"]
 
-    if self._xtgformat == 1:
-        _create_box_v1(
-            self,
+    if xtgformat == 1:
+        return _create_box_v1(
             dimension=dimension,
             origin=origin,
             oricenter=oricenter,
@@ -51,8 +49,7 @@ def create_box(
         )
 
     else:
-        _create_box_v2(
-            self,
+        return _create_box_v2(
             dimension=dimension,
             origin=origin,
             oricenter=oricenter,
@@ -63,7 +60,6 @@ def create_box(
 
 
 def _create_box_v1(
-    self,
     dimension=(10, 12, 6),
     origin=(10.0, 20.0, 1000.0),
     oricenter=False,
@@ -72,24 +68,24 @@ def _create_box_v1(
     flip=1,
 ):
     """Create a shoebox grid from cubi'sh spec, legacy xtgformat=1."""
-    self._ncol, self._nrow, self._nlay = dimension
-    ncoord, nzcorn, ntot = self.vectordimensions
+    ncol, nrow, nlay = dimension
+    ncoord, nzcorn, ntot = vectordimensions(ncol, nrow, nlay)
 
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
+    coordsv = np.zeros(ncoord, dtype=np.float64)
+    zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    actnumsv = np.zeros(ntot, dtype=np.int32)
 
     option = 0
     if oricenter:
         option = 1
 
     _cxtgeo.grd3d_from_cube(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        ncol,
+        nrow,
+        nlay,
+        coordsv,
+        zcornsv,
+        actnumsv,
         origin[0],
         origin[1],
         origin[2],
@@ -100,19 +96,20 @@ def _create_box_v1(
         flip,
         option,
     )
+    args = {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "xtgformat": 1,
+    }
 
-    self._actnum_indices = None
-    self._filesrc = None
-    self._props = None
-    self._subgrids = None
-    self._roxgrid = None
-    self._roxindexer = None
-    self._tmp = {}
-    self._xtgformat = 1
+    return args
 
 
 def _create_box_v2(
-    self,
     dimension=(10, 12, 6),
     origin=(10.0, 20.0, 1000.0),
     oricenter=False,
@@ -121,16 +118,14 @@ def _create_box_v2(
     flip=1,
 ):
     """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
-    self._ncol, self._nrow, self._nlay = dimension
-
     ncol, nrow, nlay = dimension
     nncol = ncol + 1
     nnrow = nrow + 1
     nnlay = nlay + 1
 
-    self._coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
-    self._zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
-    self._actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+    coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
+    zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
+    actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
     option = 0
     if oricenter:
@@ -140,9 +135,9 @@ def _create_box_v2(
         ncol,
         nrow,
         nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        coordsv,
+        zcornsv,
+        actnumsv,
         origin[0],
         origin[1],
         origin[2],
@@ -153,15 +148,17 @@ def _create_box_v2(
         flip,
         option,
     )
+    args = {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "xtgformat": 2,
+    }
 
-    self._actnum_indices = None
-    self._filesrc = None
-    self._props = None
-    self._subgrids = None
-    self._roxgrid = None
-    self._roxindexer = None
-    self._tmp = {}
-    self._xtgformat = 2
+    return args
 
 
 def get_dz(self, name="dZ", flip=True, asmasked=True):

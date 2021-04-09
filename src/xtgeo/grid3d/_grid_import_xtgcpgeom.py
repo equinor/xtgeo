@@ -17,7 +17,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_xtgcpgeom(
-    self, mfile, mmap
+    mfile, mmap
 ):  # pylint: disable=too-many-locals, too-many-statements
     """Using pure python for experimental grid geometry import."""
     #
@@ -94,19 +94,26 @@ def import_xtgcpgeom(
             coordsv[2::3] = np.where(sca != 1, coordsv[2::3] * sca, coordsv[2::3])
             zcornsv = (zcornsv + shi) * sca
 
-    self._coordsv = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
-    self._zcornsv = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
-    self._actnumsv = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
+    coordsv = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
+    zcornsv = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
+    actnumsv = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
 
-    reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
+    args = {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "xshift": req.get("xshift", 0.0),
+        "yshift": req.get("yshift", 0.0),
+        "zshift": req.get("zshift", 0.0),
+        "xscale": req.get("xscale", 1.0),
+        "yscale": req.get("yscale", 1.0),
+        "zscale": req.get("zscale", 1.0),
+    }
 
-    for myattr in reqattrs:
-        if "subgrid" in myattr:
-            self.set_subgrids(reqattrs["subgrids"])
-        else:
-            setattr(self, "_" + myattr, req[myattr])
-
-    self._metadata.required = self
+    return args
 
 
 def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):

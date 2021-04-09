@@ -210,7 +210,7 @@ def _rkwxvec(gfile, kws, name, swap, strict=True):
     return xvec
 
 
-def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
+def _rkwxvec_prop(gfile, kws, name, swap, ncol, nrow, nlay, strict=True):
     """Local function for making numpy array directly for a prop while reading roff.
 
     This is made for xtgversion=2
@@ -245,14 +245,14 @@ def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
 
     proparr = None
     if dtype == 1:
-        proparr = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+        proparr = np.zeros((ncol, nrow, nlay), dtype=np.int32)
         _cxtgeo.grdcp3d_imp_roffbin_prop_ivec(
-            cfhandle, swap, bytepos, self._ncol, self._nrow, self._nlay, proparr
+            cfhandle, swap, bytepos, ncol, nrow, nlay, proparr
         )
     elif dtype in (4, 5):
-        proparr = np.zeros((self._ncol, self._nrow, self._nlay), dtype=np.int32)
+        proparr = np.zeros((ncol, nrow, nlay), dtype=np.int32)
         _cxtgeo.grdcp3d_imp_roffbin_prop_bvec(
-            cfhandle, swap, bytepos, self._ncol, self._nrow, self._nlay, proparr
+            cfhandle, swap, bytepos, ncol, nrow, nlay, proparr
         )
     else:
         gfile.cfclose()
@@ -265,7 +265,6 @@ def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
 
 
 def _rkwxvec_coordsv(
-    self,
     gfile,
     kws,
     swap,
@@ -275,6 +274,9 @@ def _rkwxvec_coordsv(
     xscale,
     yscale,
     zscale,
+    ncol,
+    nrow,
+    coordsv,
 ):
     """Special for importing ROFF binary for COORD type data when _xtgversion=2."""
     name = "cornerLines!data"
@@ -299,15 +301,15 @@ def _rkwxvec_coordsv(
         cfhandle,
         swap,
         bytepos,
-        self._ncol + 1,
-        self._nrow + 1,
+        ncol + 1,
+        nrow + 1,
         xoffset,
         yoffset,
         zoffset,
         xscale,
         yscale,
         zscale,
-        self._coordsv,
+        coordsv,
     )
 
     if status != 0:
@@ -320,7 +322,6 @@ def _rkwxvec_coordsv(
 
 
 def _rkwxvec_zcornsv(
-    self,
     gfile,
     kws,
     swap,
@@ -331,6 +332,10 @@ def _rkwxvec_zcornsv(
     yscale,
     zscale,
     p_splitenz_v,
+    ncol,
+    nrow,
+    nlay,
+    zcornsv,
 ):
     """Special for importing ROFF binary for ZCORNS type data when _xtgversion=2."""
     name = "zvalues!data"
@@ -355,9 +360,9 @@ def _rkwxvec_zcornsv(
         cfhandle,
         swap,
         bytepos,
-        self._ncol + 1,
-        self._nrow + 1,
-        self._nlay + 1,
+        ncol + 1,
+        nrow + 1,
+        nlay + 1,
         xoffset,
         yoffset,
         zoffset,
@@ -365,8 +370,8 @@ def _rkwxvec_zcornsv(
         yscale,
         zscale,
         p_splitenz_v,
-        (self._ncol + 1) * (self._nrow + 1) * (self._nlay + 1),
-        self._zcornsv,
+        (ncol + 1) * (nrow + 1) * (nlay + 1),
+        zcornsv,
     )
 
     if status != 0:

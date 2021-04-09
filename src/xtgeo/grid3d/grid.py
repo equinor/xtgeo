@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
-
-import pathlib
+import functools
 import json
 import warnings
 from pathlib import Path
 from collections import OrderedDict
-from typing import Union, Optional, List, Tuple
+from typing import Union, Optional, Tuple
 
 import numpy as np
 import numpy.ma as ma
@@ -137,6 +136,85 @@ def grid_from_roxar(
 IJKRange = Tuple[int, int, int, int, int, int]
 
 
+def _get_args_from_file(
+    gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+):
+    obj = _grid_import.from_file(
+        gfile,
+        fformat=fformat,
+        initprops=initprops,
+        restartprops=restartprops,
+        restartdates=restartdates,
+    )
+    return obj
+
+
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Grid and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization
+        # from file and raise a deprecation warning if
+        # we are.
+        if "gfile" in kwargs or len(args) == 1:
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use the corresponding class method for "
+                'the file type instead, or Grid.read_file("file_name")',
+                DeprecationWarning,
+            )
+            gfile = kwargs.get("gfile", args[0])
+            fformat = kwargs.get("fformat", None)
+            initprops = kwargs.get("initprops", None)
+            restartprops = kwargs.get("restartprops", None)
+            restartdates = kwargs.get("restartdates", None)
+            mfile = xtgeo._XTGeoFile(gfile)
+            kwargs = _get_args_from_file(
+                mfile,
+                fformat=fformat,
+                initprops=initprops,
+                restartprops=restartprops,
+                restartdates=restartdates,
+            )
+            return func(cls, **kwargs)
+
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
+def allow_deprecated_default_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of RegularSurface and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # This is (mostly) for cases where we are doing an empty
+        # initialization, so we need to inject default values
+        # for the required args. The excessive checking is in
+        # corner cases where we provide some positional arguments
+        # as keyword arguments.
+        _deprecation_msg = (
+            "{} is a required argument, will no "
+            "longer be defaulted in xtgeo version 3.0"
+        )
+        if len(args) != 3:
+            if "ncol" not in kwargs and len(args) != 1:
+                warnings.warn(_deprecation_msg.format("ncol"), DeprecationWarning)
+                kwargs["ncol"] = 4
+            if "nrow" not in kwargs and len(args) != 2:
+                warnings.warn(_deprecation_msg.format("nrow"), DeprecationWarning)
+                kwargs["nrow"] = 3
+            if "nlay" not in kwargs and len(args) != 3:
+                warnings.warn(_deprecation_msg.format("nlay"), DeprecationWarning)
+                kwargs["nlay"] = 5
+        return func(cls, *args, **kwargs)
+
+    return wrapper
+
+
 class Grid(_Grid3D):
     """Class for a 3D grid corner point geometry in XTGeo.
 
@@ -152,26 +230,36 @@ class Grid(_Grid3D):
     """
 
     # pylint: disable=too-many-public-methods
+    @allow_deprecated_init
+    @allow_deprecated_default_init
     def __init__(
         self,
-        gfile: Optional[Union[str, Path]] = None,
-        fformat: Optional[str] = "guess",
-        initprops: Optional[List[str]] = None,
-        restartprops: Optional[List[str]] = None,
-        restartdates: Optional[List[Union[int, str]]] = None,
+        ncol,
+        nrow,
+        nlay,
+        coordsv=None,
+        zcornsv=None,
+        actnumsv=None,
+        xtgformat=2,
+        xshift=0.0,
+        yshift=0.0,
+        zshift=0.0,
+        xscale=1.0,
+        yscale=1.0,
+        zscale=1.0,
+        subgrids=None,
+        dualperm=False,
+        dualporo=False,
+        dualactnum=None,
+        props=None,
+        name="noname",
         ijkrange: Optional[IJKRange] = None,
         zerobased: Optional[bool] = False,
+        **kwargs,
     ):
         """Instantating.
 
         Args:
-            gfile: Input file, or leave blank.
-            fformat: File format input, default is ``guess`` based on file extension.
-                Other options are ...
-            initprops: List of initial properties (Eclipse based ``eclrun`` import).
-            restartprops: List of restart properties (Eclipse based ``eclrun`` import).
-            restartdates: List of restart dates as YYYYMMDD (Eclipse based ``eclrun``
-                import).
             ijkrange: Tuple of 6 integers defining (imin, imax, jmin, jmax, kmin, kmax)
                 when import from ``hdf`` files. Ranges are implicit at both ends.
             zerobased: Whether `ijkrange` uses 1 (default) or 0 as base.
@@ -189,37 +277,37 @@ class Grid(_Grid3D):
             # or use
             geo = xtgeo.grid_from_file("myfile.roff")
         """
-        super().__init__()
+        super().__init__(ncol, nrow, nlay)
 
-        self._coordsv = None  # numpy array to coords vector
-        self._zcornsv = None  # numpy array to zcorns vector
-        self._actnumsv = None  # numpy array to actnum vector
+        self._coordsv = coordsv  # numpy array to coords vector
+        self._zcornsv = zcornsv  # numpy array to zcorns vector
+        self._actnumsv = actnumsv  # numpy array to actnum vector
 
         # _xtgformat: internal flag for storage structure. 1 is the "current" while 2
         # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
         # are organized! The corresponding C routines for 1: grd3d_*, while 2: grdcp3d_*
-        self._xtgformat = 2
+        self._xtgformat = xtgformat
 
         # the following block is currently not in use, but required for metadata
-        self._xshift = 0.0
-        self._yshift = 0.0
-        self._zshift = 0.0
-        self._xscale = 1.0
-        self._yscale = 1.0
-        self._zscale = 1.0
+        self._xshift = xshift
+        self._yshift = yshift
+        self._zshift = zshift
+        self._xscale = xscale
+        self._yscale = yscale
+        self._zscale = zscale
 
         self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
-        self._props = None  # None or a GridProperties instance
-        self._name = "noname"
-        self._subgrids = None  # A python dict if subgrids are given
+        self._props = props  # None or a GridProperties instance
+        self._name = name
+        self._subgrids = subgrids  # A python dict if subgrids are given
         self._ijk_handedness = None
 
         # Simulators like Eclipse may have a dual poro/perm model
-        self._dualporo = False
-        self._dualperm = False
-        self._dualactnum = None  # will be a GridProperty()
+        self._dualporo = dualporo
+        self._dualperm = dualperm
+        self._dualactnum = dualactnum  # will be a GridProperty()
 
         self._metadata = xtgeo.MetaDataCPGeometry()
 
@@ -230,21 +318,6 @@ class Grid(_Grid3D):
         # For storage of more private stuff in order to speed up certain functions
         # See _grid3d_fence for instance; note! reset this if any kind of grid change!
         self._tmp = {}
-
-        if gfile is not None:
-            gfile = pathlib.Path(gfile)
-            if gfile.suffix == "hdf":
-                self.from_hdf(gfile, ijkrange, zerobased)
-            self.from_file(
-                gfile,
-                fformat=fformat,
-                initprops=initprops,
-                restartprops=restartprops,
-                restartdates=restartdates,
-            )
-        else:
-            # make a simple empty box grid (from version 2.13)
-            self.create_box((self._ncol, self._nrow, self._nlay))
 
         self._metadata.required = self
         logger.info("Ran __init__ for %s", repr(self))
@@ -571,6 +644,7 @@ class Grid(_Grid3D):
         increment=(100, 150, 5),
         rotation=30.0,
         flip=1,
+        xtgformat=2,
     ):
         """Create a rectangular 'shoebox' grid from spec.
 
@@ -588,16 +662,17 @@ class Grid(_Grid3D):
 
         .. versionadded:: 2.1
         """
-        _grid_etc1.create_box(
-            self,
+        kwargs = _grid_etc1.create_box(
             dimension=dimension,
             origin=origin,
             oricenter=oricenter,
             increment=increment,
             rotation=rotation,
             flip=flip,
+            xtgformat=xtgformat,
         )
         self._tmp = {}
+        self._reset(**kwargs)
 
     def to_file(self, gfile, fformat="roff"):
         """Export grid geometry to file, various vendor formats.
@@ -759,7 +834,6 @@ class Grid(_Grid3D):
         gfile = xtgeo._XTGeoFile(gfile, mode="rb")
 
         obj = _grid_import.from_file(
-            self,
             gfile,
             fformat=fformat,
             initprops=initprops,
@@ -767,8 +841,52 @@ class Grid(_Grid3D):
             restartdates=restartdates,
         )
         self._tmp = {}
-        self._metadata.required = self
-        return obj
+        self._reset(**obj)
+        return self
+
+    @classmethod
+    def read_file(
+        cls, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+    ):
+        """Import grid geometry from file, and makes an instance of this class.
+
+        If file extension is missing, then the extension will guess the fformat
+        key, e.g. fformat egrid will be guessed if ".EGRID". The "eclipserun"
+        will try to input INIT and UNRST file in addition the grid in "one go".
+
+        Arguments:
+            gfile (str or Path): File name to be imported. If fformat="eclipse_run"
+                then a fileroot name shall be input here, see example below.
+            fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
+                (None is default and means "guess")
+            initprops (str list): Optional, and only applicable for file format
+                "eclipserun". Provide a list the names of the properties here. A
+                special value "all" can be get all properties found in the INIT file
+            restartprops (str list): Optional, see initprops
+            restartdates (int list): Optional, required if restartprops
+
+        Example::
+
+            >>> xg = Grid.read_file(myfile, fformat="roff")
+
+        Example using "eclipserun"::
+
+            >>> mycase = "ECL"  # meaning ECL.EGRID, ECL.INIT, ECL.UNRST
+            >>> xg = Grid.read_file(mycase, fformat="eclipserun", initprops="all")
+
+        Raises:
+            OSError: if file is not found etc
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="rb")
+
+        obj = _grid_import.from_file(
+            gfile,
+            fformat=fformat,
+            initprops=initprops,
+            restartprops=restartprops,
+            restartdates=restartdates,
+        )
+        return cls(**obj)
 
     def from_hdf(self, gfile, ijkrange=None, zerobased=False):
         """Import grid geometry from HDF5 file (experimental!).
@@ -810,7 +928,15 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
-        _grid_import_xtgcpgeom.import_xtgcpgeom(self, gfile, mmap)
+        args = _grid_import_xtgcpgeom.import_xtgcpgeom(gfile, mmap)
+        self._reset(**args)
+
+    def _reset(self, **kwargs):
+        for arg, value in kwargs.items():
+            if arg == "subgrid":
+                self.set_subgrids(value)
+            else:
+                setattr(self, "_" + arg, value)
 
     def from_roxar(
         self, projectname, gname, realisation=0, dimensions_only=False, info=False
