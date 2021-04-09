@@ -23,29 +23,38 @@ jobs:
             python-version: 3.6
           - os: windows-latest
             python-version: 3.8
+
     steps:
       - uses: actions/checkout@v1
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install swig (osx)
         if: matrix.os == 'macos-latest'
         run: brew install swig
+
       - name: Install swig (win)
         if: matrix.os == 'windows-latest'
         run: "choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
+
       - name: Install xtgeo
-        run: |
-          pip install pip -U
+        run: >
+          pip install pip -U &&
           pip install .
-      - name: Test with pytest
-        run: |
-          git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-          pip install -r requirements/requirements.txt
-          pip install -r requirements/requirements_test.txt
+
+      - name: Small version test
+        run: python -c "import xtgeo; print(xtgeo.__version__)"
+
+      - name: Full test
+        run: >
+          pip install -r requirements/requirements_test.txt &&
+          git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata &&
           pytest --disable-warnings -x
+
       - name: Build docs
-        run: |
-          pip install -r requirements/requirements_docs.txt
+        run: >
+          pip install -r requirements/requirements_docs.txt &&
           sphinx-build -W docs tmp/docs

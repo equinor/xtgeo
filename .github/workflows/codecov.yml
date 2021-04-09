@@ -13,28 +13,28 @@ jobs:
         os: [ubuntu-latest]
     env:
       OS: ${{ matrix.os }}
-      PYTHON: '3.7'
+      PYTHON: "3.7"
 
     steps:
-    - uses: actions/checkout@master
+      - uses: actions/checkout@master
 
-    - name: Setup Python
-      uses: actions/setup-python@master
-      with:
-        python-version: 3.7
+      - name: Setup Python
+        uses: actions/setup-python@master
+        with:
+          python-version: 3.7
 
-    - name: Install xtgeo
-      run: |
-        pip install pip -U
-        pip install .
+      - name: Install xtgeo
+        run: |
+          pip install pip -U
+          pip install .
 
-    - name: Generate coverage report
-      run: |
-        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-        pip install -r requirements/requirements_test.txt
-        pip install pytest-cov
-        pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
+      - name: Generate coverage report
+        run: |
+          git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+          pip install -r requirements/requirements_test.txt
+          pip install pytest-cov
+          pytest tests --disable-warnings --cov=xtgeo --cov-report=xml:xtgeocoverage.xml;
 
-    - name: Upload coverage to Codecov
-      run: |
-        bash <(curl -s https://codecov.io/bash) -Z -c -f xtgeocoverage.xml
+      - name: Upload coverage to Codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash) -Z -c -f xtgeocoverage.xml
