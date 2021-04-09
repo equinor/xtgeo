@@ -4,83 +4,164 @@ on:
   release:
     types: [created]
 
-env:
-  CIBW_BEFORE_ALL_LINUX: "sh scripts/swig_manylinux.sh"
-  CIBW_BEFORE_ALL_WINDOWS: "choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
-  CIBW_BEFORE_ALL_MACOS: "brew install swig"
-  CIBW_BEFORE_TEST: |
-    pushd {project}
-    pip install -r requirements/requirements.txt
-    pip install -r requirements/requirements_test.txt
-
-  # 3.9 have trouble with install pytables on Mac and Win, due to missing wheel
-  # so full testing on those platforms are postponed.
-  CIBW_TEST_COMMAND_MACOS: |
-    pushd {project}
-    rm -rf ../xtgeo-testdata
-    git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-    pytest tests/test_surface --disable-warnings
-  CIBW_TEST_COMMAND_WINDOWS: |
-    pushd {project}
-    rm -rf ../xtgeo-testdata
-    git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-    pytest tests/test_surface --disable-warnings
-  CIBW_TEST_COMMAND_LINUX: |
-    pushd {project}
-    rm -rf ../xtgeo-testdata
-    git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-    pytest tests --disable-warnings
-
-  CIBW_BUILD: |
-    cp36-manylinux_x86_64
-    cp37-manylinux_x86_64
-    cp38-manylinux_x86_64
-    cp39-manylinux_x86_64
-    cp36-macosx_x86_64
-    cp37-macosx_x86_64
-    cp38-macosx_x86_64
-    cp39-macosx_x86_64
-    cp36-win_amd64
-    cp37-win_amd64
-    cp38-win_amd64
-    cp38-win_amd64
-    cp39-win_amd64
-
+# Verify that wheel build jobs succeed
 jobs:
-  build_wheels:
-    name: Deploy wheels to PYPI for ${{ matrix.os }}
-
+  deploy_linux_cibuildwheel:
+    name: CIBW deploy ${{ matrix.cibw_python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+
+    env:
+      CIBW_BEFORE_ALL: "sh scripts/swig_manylinux.sh"
+      CIBW_BEFORE_TEST: >
+        pushd {project} &&
+        pip install -r requirements/requirements.txt &&
+        pip install -r requirements/requirements_test.txt &&
+        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+      CIBW_TEST_COMMAND: >
+        pushd {project} &&
+        pytest tests --disable-warnings
+      CIBW_BUILD: ${{ matrix.cibw_python }}-manylinux_x86_64
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.8]
-
+        os: [ubuntu-latest]
+        cibw_python: [cp36, cp37, cp38, cp39]
     steps:
-      - uses: actions/checkout@v1
-
-      - name: Set up Python ${{ matrix.python-version }}
+      - uses: actions/checkout@v2
+      - name: Set up Python
         uses: actions/setup-python@v2
 
       - name: Install cibuildwheel
-        run: |
+        run: >
+          python -m pip install pip -U &&
+          python -m pip install wheel &&
           python -m pip install cibuildwheel
 
       - name: Build wheels and test
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
-      - name: Check wheels and paths (ubuntu only)
-        run: |
-          ls -l wheelhouse
-          ls -latr
-        if: matrix.os == 'ubuntu-latest'
-
-      - name: Publish to PYPI
+      - name: Publish to PYPI Linux
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: >
+          pip install twine &&
+          twine upload wheelhouse/*
+
+  deploy_macos_cibuildwheel:
+    name: CIBW deploy ${{ matrix.cibw_python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      CIBW_BEFORE_ALL: "brew install swig"
+      CIBW_BEFORE_TEST: >
+        pushd {project} &&
+        pip install -r requirements/requirements.txt &&
+        pip install -r requirements/requirements_test.txt &&
+        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+      CIBW_TEST_COMMAND: >
+        pushd {project} &&
+        pytest tests --disable-warnings &&
+      CIBW_BUILD: ${{ matrix.cibw_python }}-macosx_x86_64
+
+    strategy:
+      matrix:
+        os: [macos-latest]
+        python-version: [3.8] # PY version for "Install cibuildwheel", default is 2.7!
+        cibw_python: [cp36, cp37, cp38, cp39]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: >
+          python -m pip install pip -U &&
+          python -m pip install wheel &&
+          python -m pip install cibuildwheel
+
+      - name: Build wheels and test python < 3.9
+        if: matrix.cibw_python != 'cp39'
         run: |
-          pip install twine
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Build wheels and test python 3.9
+        if: matrix.cibw_python == 'cp39'
+        # note tests are a bit restricted due to missing pytables wheel
+        env:
+          CIBW_TEST_COMMAND: >
+            pushd {project} &&
+            pytest tests --disable-warnings --ignore tests/test_well
+
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Publish to PYPI MacOS
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: >
+          pip install twine &&
+          twine upload wheelhouse/*
+
+  deploy_windows_cibuildwheel:
+    name: CIBW deploy ${{ matrix.cibw_python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      CIBW_BEFORE_ALL: choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
+      CIBW_BEFORE_TEST: >
+        pushd {project} &&
+        pip install -r requirements/requirements.txt &&
+        pip install -r requirements/requirements_test.txt &&
+        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+
+      # a test with forks is skipped as this calls python in a subprocess, where
+      # the cibuildwheel on windows cannot find the xtgeo module
+      CIBW_TEST_COMMAND: >
+        pushd {project} &&
+        pytest tests --disable-warnings --ignore-glob="*forks.py"
+      CIBW_BUILD: ${{ matrix.cibw_python }}-win_amd64
+
+    strategy:
+      matrix:
+        os: [windows-latest]
+        cibw_python: [cp36, cp37, cp38, cp39]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: >
+          python -m pip install pip -U &&
+          python -m pip install wheel &&
+          python -m pip install cibuildwheel
+
+      - name: Build wheels and test python < 3.9
+        if: matrix.cibw_python != 'cp39'
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Build wheels and test python 3.9
+        if: matrix.cibw_python == 'cp39'
+        # note tests are a bit restricted due to missing pytables wheel
+        env:
+          CIBW_TEST_COMMAND: >
+            pushd {project} &&
+            pytest tests --disable-warnings --ignore tests/test_well
+            --ignore-glob="*forks.py" -x
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Publish to PYPI Windows
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: >
+          pip install twine &&
           twine upload wheelhouse/*
