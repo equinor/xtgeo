@@ -63,7 +63,7 @@ jobs:
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
       CIBW_TEST_COMMAND: >
         pushd {project} &&
-        pytest tests --disable-warnings &&
+        pytest tests --disable-warnings
       CIBW_BUILD: ${{ matrix.cibw_python }}-macosx_x86_64
 
     strategy:
@@ -90,7 +90,8 @@ jobs:
 
       - name: Build wheels and test python 3.9
         if: matrix.cibw_python == 'cp39'
-        # note tests are a bit restricted due to missing pytables wheel
+        # note tests are a bit restricted due to missing pytables wheel; that is
+        # --ignore tests/test_well
         env:
           CIBW_TEST_COMMAND: >
             pushd {project} &&
@@ -106,6 +107,16 @@ jobs:
         run: >
           pip install twine &&
           twine upload wheelhouse/*
+
+  # pitfall for Windows, while this works for linux and macos:
+  # run: |
+  #    command1
+  #    command2
+  # it will not work for windows! Only command1 is executed; hence this syntax is
+  # replaced with:
+  # run: >
+  #     command1 &&
+  #     command2
 
   deploy_windows_cibuildwheel:
     name: CIBW deploy ${{ matrix.cibw_python }} on ${{ matrix.os }}
