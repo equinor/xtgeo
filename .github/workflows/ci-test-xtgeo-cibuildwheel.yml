@@ -1,5 +1,3 @@
-# Test building some cibuildwheel on pull requests (simplified testing)
-
 name: cibuildwheel
 
 on:
@@ -35,9 +33,9 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Install cibuildwheel
-        run: |
-          python -m pip install pip -U
-          python -m pip install wheel
+        run: >
+          python -m pip install pip -U &&
+          python -m pip install wheel &&
           python -m pip install cibuildwheel
 
       - name: Build wheels and test
@@ -92,6 +90,16 @@ jobs:
 
         run: |
           python -m cibuildwheel --output-dir wheelhouse
+
+  # pitfall for Windows, while this works for linux and macos:
+  # run: |
+  #    command1
+  #    command2
+  # it will not work for windows! Only command1 is executed; hence this syntax is
+  # replaced with:
+  # run: >
+  #     command1 &&
+  #     command2
 
   build_windows_cibuildwheel:
     name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os }}
