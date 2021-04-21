@@ -31,11 +31,11 @@ def generate_data(draw):
                 max_value=xtgeo.UNDEF_LIMIT,
             ),
             "xinc": st.floats(
-                min_value=1e-6,
+                min_value=1e-5,
                 max_value=xtgeo.UNDEF_LIMIT,
             ),
             "yinc": st.floats(
-                min_value=1e-6,
+                min_value=1e-5,
                 max_value=xtgeo.UNDEF_LIMIT,
             ),
         }
