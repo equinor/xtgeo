@@ -76,8 +76,8 @@ surf_export_zmap_ascii(FILE *fc,
         fcode = 8;
     }
 
-    xmax = xori + (mx - 1) * xinc;
-    ymax = yori + (my - 1) * yinc;
+    xmax = xori + mx * xinc;
+    ymax = yori + my * yinc;
 
     if (fc == NULL)
         return -1;

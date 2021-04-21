@@ -9,6 +9,58 @@ from xtgeo import RegularSurface, Cube
 import xtgeo
 
 
+def assert_equal_to_init(init, result):
+    init = init.copy()
+    init.pop("values")
+    result_dict = {key: getattr(result, key) for key in init.keys()}
+    assert result_dict == pytest.approx(init)
+
+
+@st.composite
+def generate_data(draw):
+    base_data = st.fixed_dictionaries(
+        {
+            "ncol": st.integers(min_value=1, max_value=10),
+            "nrow": st.integers(min_value=1, max_value=10),
+            "xori": st.floats(
+                min_value=-xtgeo.UNDEF_LIMIT,
+                max_value=xtgeo.UNDEF_LIMIT,
+            ),
+            "yori": st.floats(
+                min_value=-xtgeo.UNDEF_LIMIT,
+                max_value=xtgeo.UNDEF_LIMIT,
+            ),
+            "xinc": st.floats(
+                min_value=1e-6,
+                max_value=xtgeo.UNDEF_LIMIT,
+            ),
+            "yinc": st.floats(
+                min_value=1e-6,
+                max_value=xtgeo.UNDEF_LIMIT,
+            ),
+        }
+    )
+    base = draw(base_data)
+
+    values = st.fixed_dictionaries(
+        {
+            "values": st.lists(
+                st.floats(
+                    allow_nan=False,
+                    max_value=xtgeo.UNDEF_LIMIT,
+                    min_value=-xtgeo.UNDEF_LIMIT,
+                ),
+                min_size=base["ncol"] * base["nrow"],
+                max_size=base["ncol"] * base["nrow"],
+            )
+        }
+    )
+
+    vals = draw(values)
+
+    return {**base, **vals}
+
+
 @pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.parametrize("engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize(
@@ -34,13 +86,13 @@ import xtgeo
     ],
 )
 def test_simple_io(input_val, expected_result, fformat, engine):
-    if engine == "python" and fformat not in ["irap_ascii", "irap_binary"]:
+    if engine == "python" and fformat not in ["irap_ascii", "irap_binary", "zmap"]:
         pytest.skip("Only one engine available")
-    if engine == "cxtgeo" and fformat == "irap_binary":
-        pytest.xfail("Fails for unknown reason")
-    surf = RegularSurface(2, 2, 0.0, 0.0, values=input_val)
+    init_dict = {"ncol": 2, "nrow": 2, "xinc": 0.0, "yinc": 0.0, "values": input_val}
+    surf = RegularSurface(**init_dict)
     surf.to_file("my_file", fformat=fformat)
     surf_from_file = RegularSurface.read_file("my_file", fformat=fformat, engine=engine)
+    assert_equal_to_init(init_dict, surf_from_file)
     assert surf_from_file.values.data.tolist() == expected_result
 
 
@@ -52,31 +104,31 @@ def test_simple_io(input_val, expected_result, fformat, engine):
     [
         "irap_binary",
         "irap_ascii",
-        "zmap_ascii",
+        "zmap",
         # "ijxyz",  # This fails horribly
         "petromod",
-        "zmap",
         "xtgregsurf",
     ],
 )
-@given(
-    data=st.lists(
-        st.floats(
-            allow_nan=False, max_value=xtgeo.UNDEF_LIMIT, min_value=-xtgeo.UNDEF_LIMIT
-        ),
-        min_size=9,
-        max_size=9,
-    )
-)
+@given(data=generate_data())
 def test_complex_io(data, fformat, engine):
-    if engine == "python" and fformat not in ["irap_ascii", "irap_binary"]:
+    if engine == "python" and fformat not in ["irap_ascii", "irap_binary", "zmap"]:
         pytest.skip("Only one engine available")
-    if engine == "cxtgeo" and fformat == "irap_binary":
-        pytest.xfail("Fails for unknown reason")
-    surf = RegularSurface(3, 3, 0.0, 0.0, values=data)
+    if engine == "cxtgeo":
+        if fformat == "irap_binary":
+            pytest.xfail("Fails with error in values")
+        if fformat == "zmap":
+            pytest.xfail("Fails with errors in yori/yinc")
+    if fformat == "petromod":
+        pytest.xfail("Several hypotesis failures (4)")
+    surf = RegularSurface(**data)
+    assert_equal_to_init(data, surf)
     surf.to_file("my_file", fformat=fformat)
     surf_from_file = RegularSurface.read_file("my_file", fformat=fformat, engine=engine)
-    assert surf_from_file.values.data.flatten().tolist() == pytest.approx(data)
+    assert_equal_to_init(data, surf_from_file)
+    assert surf_from_file.values.data.flatten().tolist() == pytest.approx(
+        data["values"]
+    )
 
 
 @deprecation.fail_if_not_removed

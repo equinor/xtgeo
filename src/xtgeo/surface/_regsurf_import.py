@@ -465,13 +465,16 @@ def import_zmap_ascii(mfile, values=True, **_):
     if not correctformat:
         raise ValueError("Input file does not seem be a correct zmap file")
 
+    xmax = float(header[8])
+    ymax = float(header[10])
+
     args = {}
     args["ncol"] = int(header[6])
     args["nrow"] = int(header[5])
     args["xori"] = float(header[7])
     args["yori"] = float(header[9])
-    args["xinc"] = float(header[8]) - float(header[7]) / (args["ncol"] + 1)
-    args["yinc"] = float(header[10]) - float(header[9]) / (args["nrow"] + 1)
+    args["xinc"] = (xmax - args["xori"]) / args["ncol"]
+    args["yinc"] = (ymax - args["yori"]) / args["nrow"]
 
     if header[2]:
         undef = float(header[2])  # user defined undef
