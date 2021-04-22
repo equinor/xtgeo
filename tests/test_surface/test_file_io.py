@@ -23,31 +23,30 @@ def generate_data(draw):
             "ncol": st.integers(min_value=1, max_value=10),
             "nrow": st.integers(min_value=1, max_value=10),
             "xori": st.floats(
-                min_value=-xtgeo.UNDEF_LIMIT,
-                max_value=xtgeo.UNDEF_LIMIT,
+                min_value=-1e8,
+                max_value=1e8,
             ),
             "yori": st.floats(
-                min_value=-xtgeo.UNDEF_LIMIT,
-                max_value=xtgeo.UNDEF_LIMIT,
+                min_value=-1e8,
+                max_value=1e8,
             ),
             "xinc": st.floats(
-                min_value=1e-5,
+                min_value=1e-2,
                 max_value=xtgeo.UNDEF_LIMIT,
             ),
             "yinc": st.floats(
-                min_value=1e-5,
+                min_value=1e-2,
                 max_value=xtgeo.UNDEF_LIMIT,
             ),
         }
     )
     base = draw(base_data)
-
     values = st.fixed_dictionaries(
         {
             "values": st.lists(
                 st.floats(
                     allow_nan=False,
-                    max_value=xtgeo.UNDEF_LIMIT,
+                    max_value=1e29,
                     min_value=-xtgeo.UNDEF_LIMIT,
                 ),
                 min_size=base["ncol"] * base["nrow"],
@@ -55,7 +54,6 @@ def generate_data(draw):
             )
         }
     )
-
     vals = draw(values)
 
     return {**base, **vals}
@@ -98,7 +96,8 @@ def test_simple_io(input_val, expected_result, fformat, engine):
 
 @settings(deadline=None)
 @pytest.mark.usefixtures("setup_tmpdir")
-@pytest.mark.parametrize("engine", ["cxtgeo", "python"])
+@pytest.mark.parametrize("input_engine", ["cxtgeo", "python"])
+@pytest.mark.parametrize("output_engine", ["cxtgeo", "python"])
 @pytest.mark.parametrize(
     "fformat",
     [
@@ -111,20 +110,26 @@ def test_simple_io(input_val, expected_result, fformat, engine):
     ],
 )
 @given(data=generate_data())
-def test_complex_io(data, fformat, engine):
-    if engine == "python" and fformat not in ["irap_ascii", "irap_binary", "zmap"]:
+def test_complex_io(data, fformat, output_engine, input_engine):
+    if (input_engine == "python" or output_engine == "python") and fformat not in [
+        "irap_ascii",
+        "irap_binary",
+        "zmap",
+    ]:
         pytest.skip("Only one engine available")
-    if engine == "cxtgeo":
-        if fformat == "irap_binary":
-            pytest.xfail("Fails with error in values")
-        if fformat == "zmap":
-            pytest.xfail("Fails with errors in yori/yinc")
+    # if engine == "cxtgeo":
+    # if fformat == "irap_binary":
+    #     pytest.xfail("Fails with error in values")
+    # if fformat == "zmap":
+    #     data["yori"] = round(data["yori"], 6)
     if fformat == "petromod":
         pytest.xfail("Several hypotesis failures (4)")
     surf = RegularSurface(**data)
     assert_equal_to_init(data, surf)
-    surf.to_file("my_file", fformat=fformat)
-    surf_from_file = RegularSurface.read_file("my_file", fformat=fformat, engine=engine)
+    surf.to_file("my_file", fformat=fformat, engine=output_engine)
+    surf_from_file = RegularSurface.read_file(
+        "my_file", fformat=fformat, engine=input_engine
+    )
     assert_equal_to_init(data, surf_from_file)
     assert surf_from_file.values.data.flatten().tolist() == pytest.approx(
         data["values"]

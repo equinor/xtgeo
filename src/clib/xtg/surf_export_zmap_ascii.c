@@ -60,7 +60,7 @@ surf_export_zmap_ascii(FILE *fc,
 
     /* local declarations */
     int i, j, nn, fcode;
-    float myfloat, xmax, ymax;
+    double myfloat, xmax, ymax;
 
     logger_info(LI, FI, FU, "Write ZMAP plus ascii map file ... (%s)", FU);
 
@@ -81,7 +81,6 @@ surf_export_zmap_ascii(FILE *fc,
 
     if (fc == NULL)
         return -1;
-
     /* header */
     fprintf(fc, "! Export from XTGeo (cxtgeo engine)\n");
     fprintf(fc, "@ GRIDFILE, GRID, 5\n");
