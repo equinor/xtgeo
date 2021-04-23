@@ -25,6 +25,7 @@ jobs:
 
       - name: Install xtgeo
         run: |
+          env
           pip install pip -U
           pip install .
 
