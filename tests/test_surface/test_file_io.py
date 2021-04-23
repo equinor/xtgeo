@@ -117,11 +117,6 @@ def test_complex_io(data, fformat, output_engine, input_engine):
         "zmap",
     ]:
         pytest.skip("Only one engine available")
-    # if engine == "cxtgeo":
-    # if fformat == "irap_binary":
-    #     pytest.xfail("Fails with error in values")
-    # if fformat == "zmap":
-    #     data["yori"] = round(data["yori"], 6)
     if fformat == "petromod":
         pytest.xfail("Several hypotesis failures (4)")
     surf = RegularSurface(**data)
