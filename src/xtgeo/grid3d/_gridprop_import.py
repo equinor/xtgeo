@@ -21,10 +21,9 @@ def from_file(
     grid=None,
     date=None,
     fracture=False,
-    _roffapiv=1,
     ijrange=None,
     zerobased=False,
-):  # _roffapiv for devel.
+):
     """Import grid property from file, and makes an instance of this."""
     # it may be that pfile already is an open file; hence a filehandle
     # instead. Check for this, and skip actions if so
@@ -35,7 +34,7 @@ def from_file(
 
     if fformat == "roff":
         logger.info("Importing ROFF...")
-        import_roff(self, pfile, name, grid=grid, _roffapiv=_roffapiv)
+        import_roff(self, pfile, name)
 
     elif fformat.lower() == "init":
         impeclbin(

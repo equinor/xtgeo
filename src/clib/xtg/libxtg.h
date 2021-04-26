@@ -1189,7 +1189,6 @@ grd3d_calc_xyz(int nx,
                long n_swig_np_dbl_inplace_v3,   // npz,
                int option);
 
-/* last generation import roff binary from here --> */
 long
 grd3d_scan_roffbinary(FILE *fc,
                       int *swig_int_out_p1,    // *swap,
@@ -1218,100 +1217,6 @@ grd3d_conv_roxapi_grid(int nx,
                        long n_swig_np_int_inplace_v1    // nactnum
 );
 
-int
-grd3d_imp_roffbin_arr(FILE *fc,
-                      int swap,
-                      int nx,
-                      int ny,
-                      int nz,
-                      long bytepos,
-                      int dtype,
-                      float *swig_np_flt_inplace_v1,   // *farray
-                      long n_swig_np_flt_inplace_v1,   // *nfarray
-                      int *swig_np_int_inplace_v1,     // *iarray
-                      long n_swig_np_int_inplace_v1);  // *niarray
-
-int
-grd3d_imp_roffbin_ilist(FILE *fc,
-                        int swap,
-                        long bytepos,
-                        int *swig_np_int_inplace_v1,     // *iarray
-                        long n_swig_np_int_inplace_v1);  // *niarray
-
-int
-grd3d_imp_roffbin_fvec(FILE *fc, int swp, long bpos, float *fvc, long nv);
-int
-grd3d_imp_roffbin_ivec(FILE *fc, int swp, long bpos, int *ivc, long nv);
-int
-grd3d_imp_roffbin_bvec(FILE *fc, int swp, long bpos, int *bvc, long nv);
-
-int
-grd3d_imp_roffbin_data(FILE *fc,
-                       int swap,
-                       int dtype,
-                       long bytepos,
-                       int *pidata,
-                       float *pfdata);
-
-int
-grd3d_imp_prop_roffbin(char *filename,
-                       int scanmode,
-                       int *p_type,
-                       int *p_nx,
-                       int *p_ny,
-                       int *p_nz,
-                       int *p_ncodes,
-                       char *prop_name,
-                       int *p_int_v,
-                       double *p_double_v,
-                       char *swig_bnd_char_10k,  // p_codenames_v,
-                       int *p_codevalues_v,
-                       int option);
-
-void
-grd3d_export_roff_grid(int mode,
-                       int nx,
-                       int ny,
-                       int nz,
-                       int num_subgrds,
-                       int isubgrd_to_export,
-                       double xoffset,
-                       double yoffset,
-                       double zoffset,
-
-                       double *swig_np_dbl_in_v1,  // *coordsv
-                       long n_swig_np_dbl_in_v1,   // ncoord
-                       double *swig_np_dbl_in_v2,  // *zcornsv
-                       long n_swig_np_dbl_in_v2,   // nzcorn
-                       int *swig_np_int_in_v1,     // *actnumsv
-                       long n_swig_np_int_in_v1,   // nact
-
-                       int *p_subgrd_v,
-                       char *filename);
-
-void
-grd3d_export_roff_end(int mode, char *filename);
-
-void
-grd3d_export_roff_pstart(int mode, int nx, int ny, int nz, char *filename);
-
-void
-grd3d_export_roff_prop(int mode,
-                       int nx,
-                       int ny,
-                       int nz,
-                       int num_subgrds,
-                       int isubgrd_to_export,
-                       int *p_subgrd_v,
-                       char *pname,
-                       char *ptype,
-                       int *p_int_v,
-                       double *p_double_v,
-                       int ncodes,
-                       char *codenames,
-                       int *codevalues,
-                       char *filename);
-
 long
 grd3d_scan_eclbinary(FILE *fc,
                      char *swig_bnd_char_1m,  // *keywords,
@@ -1332,44 +1237,17 @@ grd3d_read_eclrecord(FILE *fc,
                      long n_swig_np_dbl_inplace_v1);
 
 int
-grd3d_roff2xtgeo_coord(int nx,
-                       int ny,
+grd3d_roff2xtgeo_splitenz(
                        int nz,
-                       float xoffset,
-                       float yoffset,
                        float zoffset,
-                       float xscale,
-                       float yscale,
                        float zscale,
-                       float *p_cornerlines_v,
-                       double *swig_np_dbl_inplace_v1,  // *coordsv,
-                       long n_swig_np_dbl_inplace_v1    // ncoord
-);
-
-int
-grd3d_roff2xtgeo_zcorn(int nx,
-                       int ny,
-                       int nz,
-                       float xoffset,
-                       float yoffset,
-                       float zoffset,
-                       float xscale,
-                       float yscale,
-                       float zscale,
-                       int *p_splitenz_v,
-                       float *p_zdata_v,
-                       double *swig_np_dbl_inplace_v1,  // *zcornsv,
-                       long n_swig_np_dbl_inplace_v1    // nzcorn
-);
-
-int
-grd3d_roff2xtgeo_actnum(int nx,
-                        int ny,
-                        int nz,
-                        int *p_act_v,
-                        int *swig_np_int_inplace_v1,    // *actnumsv,
-                        long n_swig_np_int_inplace_v1,  // nactnum
-                        int option);
+                       char *swig_bytes, // *splitenz
+                       long swig_bytes_len, // nsplitenz
+                       float *swig_np_flt_inplace_v1,    // *zdata
+                       long n_swig_np_flt_inplace_v1,    // nzdata
+                       float *swig_np_flt_inplace_v2,  // *zcornsv
+                       long n_swig_np_flt_inplace_v2    // nzcorn
+                       );
 
 int
 grd3d_write_eclrecord(FILE *fc,
@@ -2053,66 +1931,7 @@ grdcp3d_import_xtgeo_grid(int mode,
                           char *swig_bnd_char_100k,            // metadata
                           FILE *fc);
 
-void
-grdcp3d_export_roff_bin_start_end(int option,
-                                  const char *info,
-                                  int mode,
-                                  char *type,
-                                  long ncol,
-                                  long nrow,
-                                  long nlay,
-                                  FILE *fc);
 
-void
-grdcp3d_export_roff_grid(int mode,
-                         int ncol,
-                         int nrow,
-                         int nlay,
-                         double xoffset,
-                         double yoffset,
-                         double zoffset,
-                         int *swig_np_int_inplaceflat_v2,
-                         long n_swig_np_int_inplaceflat_v2,
-                         double *swig_np_dbl_inplaceflat_v1,  // coordsv1
-                         long n_swig_np_dbl_inplaceflat_v1,
-                         float *swig_np_flt_inplaceflat_v1,  // zcornsv2 (float)
-                         long n_swig_np_flt_inplaceflat_v1,
-                         int *swig_np_int_inplaceflat_v1,  // actnumsv1
-                         long n_swig_np_int_inplaceflat_v1,
-                         FILE *fc);
-
-int
-grdcp3d_imp_roffbin_coordsv(FILE *fc,
-                            int swap,
-                            long bytepos,
-                            long nncol,
-                            long nnrow,
-                            float xoffset,
-                            float yoffset,
-                            float zoffset,
-                            float xscale,
-                            float yscale,
-                            float zscale,
-                            double *swig_np_dbl_inplaceflat_v1,
-                            long n_swig_np_dbl_inplaceflat_v1);
-
-int
-grdcp3d_imp_roffbin_zcornsv(FILE *fc,
-                            int swap,
-                            long bytepos,
-                            long nncol,
-                            long nnrow,
-                            long nnlay,
-                            float xoffset,
-                            float yoffset,
-                            float zoffset,
-                            float xscale,
-                            float yscale,
-                            float zscale,
-                            int *splitenz,
-                            long nsplitenz,
-                            float *swig_np_flt_inplaceflat_v1,
-                            long n_swig_np_flt_inplaceflat_v1);
 
 int
 grd3cp3d_xtgformat1to2_geom(long ncol,
@@ -2154,26 +1973,6 @@ grdcp3d_process_edges(long ncol,
                       long nlay,
                       float *swig_np_flt_inplaceflat_v1,
                       long n_swig_np_flt_inplaceflat_v1);
-
-int
-grdcp3d_imp_roffbin_prop_ivec(FILE *fc,
-                              int swap,
-                              long bytepos,
-                              long ncol,
-                              long nrow,
-                              long nlay,
-                              int *swig_np_int_inplaceflat_v1,  // actnumsv1
-                              long n_swig_np_int_inplaceflat_v1);
-
-int
-grdcp3d_imp_roffbin_prop_bvec(FILE *fc,
-                              int swap,
-                              long bytepos,
-                              long ncol,
-                              long nrow,
-                              long nlay,
-                              int *swig_np_int_inplaceflat_v1,  // actnumsv1
-                              long n_swig_np_int_inplaceflat_v1);
 
 void
 grdcp3d_corners(long ic,
