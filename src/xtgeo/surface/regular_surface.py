@@ -1405,6 +1405,12 @@ class RegularSurface:
             self, project, name, category, stype, realisation
         )
 
+    @deprecation.deprecated(
+        deprecated_in="2.14",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use the read_cube classmethod instead",
+    )
     def from_cube(self, cube, zlevel):
         """Make a constant surface from a Cube, at a given time/depth level.
 
@@ -1489,6 +1495,44 @@ class RegularSurface:
         )
         return cls(**input_dict)
 
+    @classmethod
+    def read_grid3d(cls, grid, where="top", mode="depth", rfactor=1):
+        """Extract a surface from a 3D grid.
+
+        Args:
+            grid (Grid): XTGeo Grid instance
+            where (str): "top", "base" or use the syntax "2_top" where 2
+                is layer no. 2 and _top indicates top of cell, while "_base"
+                indicates base of cell
+            mode (str): "depth", "i" or "j"
+            rfactor (float): Determines how fine the extracted map is; higher values
+                for finer map (but computing time will increase). Will only apply if
+                template is None.
+
+        Returns:
+            Object instance
+
+        Example::
+
+
+            mygrid = Grid("REEK.EGRID")
+            # make surface from top (default)
+            mymap = RegularSurface.read_grid3d(mygrid)
+
+        .. versionadded:: 2.14
+
+        """
+        args, _, _ = _regsurf_grid3d.from_grid3d(
+            grid, template=None, where=where, mode=mode, rfactor=rfactor
+        )
+        return cls(**args)
+
+    @deprecation.deprecated(
+        deprecated_in="2.14",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use the read_grid3d classmethod instead",
+    )
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
         """Extract a surface from a 3D grid.
@@ -1521,9 +1565,20 @@ class RegularSurface:
         .. versionadded:: 2.1
 
         """
-        return _regsurf_grid3d.from_grid3d(
-            self, grid, template=template, where=where, mode=mode, rfactor=rfactor
+        args, ivalues, jvalues = _regsurf_grid3d.from_grid3d(
+            grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
+        self._reset(**args)
+        if ivalues is not None and jvalues is not None:
+            ivals = self.copy()
+            args["values"] = ivalues
+            ivals._reset(**args)
+            jvals = self.copy()
+            args["values"] = jvalues
+            jvals._reset(**args)
+            return ivals, jvals
+        else:
+            return None
 
     def copy(self):
         """Deep copy of a RegularSurface object to another instance.

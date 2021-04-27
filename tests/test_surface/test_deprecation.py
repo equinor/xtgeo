@@ -50,6 +50,13 @@ def test_from_file_deprecation(default_surface):
     surface.from_file("my_file")
 
 
+@deprecation.fail_if_not_removed
+def test_from_grid3d_deprecation(default_surface):
+    mygrid = xtgeo.Grid()
+    surface = xtgeo.RegularSurface(**default_surface)
+    surface.from_grid3d(mygrid)
+
+
 @fail_if_not_removed(
     version_limit="4",
     msg="Creating directly from file has passed deprecation period and must be removed",
