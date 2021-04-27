@@ -42,19 +42,19 @@ jobs:
 
       - name: Install xtgeo
         run: >
-          pip install pip -U &&
-          pip install .
+          python -m pip install pip -U &&
+          python -m pip install .
 
       - name: Small version test
         run: python -c "import xtgeo; print(xtgeo.__version__)"
 
       - name: Full test
         run: >
-          pip install -r requirements/requirements_test.txt &&
+          python -m pip install -r requirements/requirements_test.txt &&
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata &&
-          pytest --disable-warnings -x
+          python -m pytest --disable-warnings -x
 
       - name: Build docs
         run: >
-          pip install -r requirements/requirements_docs.txt &&
+          python -m pip install -r requirements/requirements_docs.txt &&
           sphinx-build -W docs tmp/docs

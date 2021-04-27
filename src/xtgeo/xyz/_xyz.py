@@ -51,7 +51,7 @@ class XYZ:
 
     @property
     def xname(self):
-        """ Returns or set the name of the X column."""
+        """Returns or set the name of the X column."""
         return self._xname
 
     @xname.setter
@@ -61,7 +61,7 @@ class XYZ:
 
     @property
     def yname(self):
-        """ Returns or set the name of the Y column."""
+        """Returns or set the name of the Y column."""
         return self._yname
 
     @yname.setter
@@ -71,7 +71,7 @@ class XYZ:
 
     @property
     def zname(self):
-        """ Returns or set the name of the Z column."""
+        """Returns or set the name of the Z column."""
         return self._zname
 
     @zname.setter

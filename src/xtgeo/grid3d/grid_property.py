@@ -466,7 +466,7 @@ class GridProperty(_Grid3D):
 
     @property
     def values(self):
-        """ Return or set the grid property as a masked 3D numpy array"""
+        """Return or set the grid property as a masked 3D numpy array"""
         return self._values
 
     @values.setter
