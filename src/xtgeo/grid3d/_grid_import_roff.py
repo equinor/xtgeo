@@ -62,14 +62,9 @@ def _import_roff_xtgformat1(gfile):
 
     subs = _rkwxlist(gfile, kwords, "subgrids!nLayers", byteswap, strict=False)
     if subs is not None and subs.size > 1:
-        subs = subs.tolist()  # from numpy array to list
-        nsubs = len(subs)
         subgrids = OrderedDict()
-        prev = 1
-        for irange in range(nsubs):
-            val = subs[irange]
-            subgrids["subgrid_" + str(irange)] = range(prev, val + prev)
-            prev = val + prev
+        for irange, subgrid in enumerate(subs.tolist()):
+            subgrids["subgrid_" + str(irange)] = subgrid
     else:
         subgrids = None
     ntot = ncol * nrow * nlay

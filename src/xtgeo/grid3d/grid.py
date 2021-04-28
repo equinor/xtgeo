@@ -3,6 +3,7 @@
 import functools
 import json
 import warnings
+import deprecation
 from pathlib import Path
 from collections import OrderedDict
 from typing import Union, Optional, Tuple
@@ -301,7 +302,8 @@ class Grid(_Grid3D):
 
         self._props = props  # None or a GridProperties instance
         self._name = name
-        self._subgrids = subgrids  # A python dict if subgrids are given
+        self._subgrids = None
+        self.set_subgrids(subgrids)
         self._ijk_handedness = None
 
         # Simulators like Eclipse may have a dual poro/perm model
@@ -636,6 +638,12 @@ class Grid(_Grid3D):
     # Create/import/export
     # ==================================================================================
 
+    @deprecation.deprecated(
+        deprecated_in="2.14",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use the RegularGrid class instead",
+    )
     def create_box(
         self,
         dimension=(10, 12, 6),
@@ -794,6 +802,12 @@ class Grid(_Grid3D):
             self, project, gname, realisation, info=info, method=method
         )
 
+    @deprecation.deprecated(
+        deprecated_in="2.14",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use the read_file classmethod instead",
+    )
     def from_file(
         self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
     ):
@@ -911,10 +925,17 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
-        _grid_import_xtgcpgeom.import_hdf5_cpgeom(
-            self, gfile, ijkrange=ijkrange, zerobased=zerobased
+        kwargs = _grid_import_xtgcpgeom.import_hdf5_cpgeom(
+            gfile, ijkrange=ijkrange, zerobased=zerobased
         )
+        self._reset(**kwargs)
 
+    @deprecation.deprecated(
+        deprecated_in="2.14",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use the read_xtgf classmethod instead",
+    )
     def from_xtgf(self, gfile, mmap=False):
         """Import grid geometry from native xtgeo file format (experimental!).
 
@@ -931,9 +952,26 @@ class Grid(_Grid3D):
         args = _grid_import_xtgcpgeom.import_xtgcpgeom(gfile, mmap)
         self._reset(**args)
 
+    @classmethod
+    def read_xtgf(cls, gfile, mmap=False):
+        """Import grid geometry from native xtgeo file format (experimental!).
+
+        Args:
+            gfile (str): Name of output file
+            mmap (bool): If true, reading with memory mapping is active
+
+        Example::
+
+            Grid.read_xtgf("myfile_grid.xtg")
+        """
+        gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+
+        args = _grid_import_xtgcpgeom.import_xtgcpgeom(gfile, mmap)
+        cls(**args)
+
     def _reset(self, **kwargs):
         for arg, value in kwargs.items():
-            if arg == "subgrid":
+            if arg == "subgrids":
                 self.set_subgrids(value)
             else:
                 setattr(self, "_" + arg, value)
