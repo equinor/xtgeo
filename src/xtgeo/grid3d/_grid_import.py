@@ -5,7 +5,7 @@ import os
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
-from xtgeo.grid3d import _grid_import_roff
+from xtgeo.grid3d import _grid_import_roff, _grid_import_xtgcpgeom
 from xtgeo.grid3d import _grid_import_ecl
 
 
@@ -78,7 +78,7 @@ def from_file(
     elif fformat == "bgrdecl":
         args.update(_grid_import_ecl.import_ecl_bgrdecl(gfile))
     elif fformat == "xtgf":
-        args.update(from_xtgf(gfile))
+        args.update(_grid_import_xtgcpgeom.import_xtgcpgeom(gfile))
     else:
         raise ValueError("Invalid file format")
 
