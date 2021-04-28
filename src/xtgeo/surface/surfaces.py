@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """The surfaces module, which has the Surfaces class (collection of surface objects)."""
-
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+from typing import Optional, List
 import warnings
+import deprecation
 import numpy as np
 
 import xtgeo
@@ -33,16 +38,18 @@ class Surfaces(object):
     .. versionadded:: 2.1
     """
 
-    def __init__(self, *args, **kwargs):
-
-        self._surfaces = []  # list of RegularSurface objects
-        self._subtype = None  # could be "tops", "isochores" or None
-        self._order = None  # could be "same", "stratigraphic" or None
-
-        if args:
-            self.append(args[0])
-            self._subtype = kwargs.get("subtype", None)
-            self._order = kwargs.get("order", None)
+    def __init__(
+        self,
+        surfaces: Optional[List] = None,
+        subtype: Optional[Literal["tops", "isochores"]] = None,
+        order: Optional[Literal["same", "stratigraphic"]] = None,
+    ):
+        if surfaces is None:
+            surfaces = []
+        self._surfaces = []
+        self.append(surfaces)
+        self._subtype = subtype
+        self._order = order
 
     @property
     def surfaces(self):
@@ -65,11 +72,11 @@ class Surfaces(object):
         a list of files, or a mix."""
         for item in slist:
             if isinstance(item, xtgeo.RegularSurface):
-                self._surfaces.append(item)
+                self.surfaces.append(item)
             else:
                 try:
                     sobj = xtgeo.surface_from_file(item, fformat="guess")
-                    self._surfaces.append(sobj)
+                    self.surfaces.append(sobj)
                 except OSError:
                     xtg.warnuser("Cannot read as file, skip: {}".format(item))
 
@@ -112,9 +119,21 @@ class Surfaces(object):
                 return surf
         return None
 
+    @deprecation.deprecated(deprecated_in="2.14", removed_in="3.0",
+                            current_version=xtgeo.version,
+                            details="Use the class method from_grid_3d instead")
     def from_grid3d(self, grid, subgrids=True, rfactor=1):
         """Derive surfaces from a 3D grid"""
-        _surfs_import.from_grid3d(self, grid, subgrids, rfactor)
+        surf, subtype, order = _surfs_import.from_grid3d(grid, subgrids, rfactor)
+        self.surfaces = surf
+        self._subtype = subtype
+        self._order = order
+
+    @classmethod
+    def from_grid_3d(cls, grid, subgrids=True, rfactor=1):
+        """Derive surfaces from a 3D grid"""
+        surf, subtype, order = _surfs_import.from_grid3d(grid, subgrids, rfactor)
+        return cls(surf, subtype=subtype, order=order)
 
     def apply(self, func, *args, **kwargs):
         """Apply a function to the Surfaces array.

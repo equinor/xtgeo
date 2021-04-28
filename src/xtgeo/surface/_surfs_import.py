@@ -9,7 +9,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def from_grid3d(self, grid, subgrids, rfactor):
+def from_grid3d(grid, subgrids, rfactor):
     """Get surfaces from 3D grid, including subgrids"""
 
     logger.info("Extracting surface from 3D grid...")
@@ -41,8 +41,6 @@ def from_grid3d(self, grid, subgrids, rfactor):
         layer.name = names[inum]
         layerstack.append(layer)
 
-    self._surfaces = layerstack
-    self._subtype = "tops"
-    self._order = "stratigraphic"
-
     logger.info("Extracting surface from 3D grid... DONE")
+
+    return layerstack, "tops", "stratigraphic"

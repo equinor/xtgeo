@@ -1087,8 +1087,7 @@ class RegularSurface:
 
         _regsurf_import.import_hdf5_regsurf(self, mfile, values=values)
 
-        _self: self.__class__ = self
-        return _self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
+        return self  # to make obj = xtgeo.RegularSurface().from_hdf(stream) work
 
     def to_hdf(
         self,
