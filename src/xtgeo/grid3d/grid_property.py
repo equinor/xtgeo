@@ -213,7 +213,7 @@ class GridProperty(_Grid3D):
 
         """
 
-        super().__init__()
+        super().__init__(ncol, nrow, nlay)
 
         self._ncol = ncol
         self._nrow = nrow

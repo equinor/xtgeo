@@ -17,7 +17,7 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_xtgcpgeom(
-    self, mfile, mmap
+    mfile, mmap
 ):  # pylint: disable=too-many-locals, too-many-statements
     """Using pure python for experimental grid geometry import."""
     #
@@ -94,22 +94,29 @@ def import_xtgcpgeom(
             coordsv[2::3] = np.where(sca != 1, coordsv[2::3] * sca, coordsv[2::3])
             zcornsv = (zcornsv + shi) * sca
 
-    self._coordsv = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
-    self._zcornsv = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
-    self._actnumsv = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
+    coordsv = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
+    zcornsv = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
+    actnumsv = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
 
-    reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
+    args = {
+        "ncol": ncol,
+        "nrow": nrow,
+        "nlay": nlay,
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+        "xshift": req.get("xshift", 0.0),
+        "yshift": req.get("yshift", 0.0),
+        "zshift": req.get("zshift", 0.0),
+        "xscale": req.get("xscale", 1.0),
+        "yscale": req.get("yscale", 1.0),
+        "zscale": req.get("zscale", 1.0),
+    }
 
-    for myattr in reqattrs:
-        if "subgrid" in myattr:
-            self.set_subgrids(reqattrs["subgrids"])
-        else:
-            setattr(self, "_" + myattr, req[myattr])
-
-    self._metadata.required = self
+    return args
 
 
-def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
+def import_hdf5_cpgeom(mfile, ijkrange=None, zerobased=False):
     """Experimental grid geometry import using hdf5."""
     #
     reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
@@ -137,32 +144,32 @@ def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
             incoord = grp["coord"][:, :, :]
             inzcorn = grp["zcorn"][:, :, :, :]
             inactnum = grp["actnum"][:, :, :]
-
+    args = {}
     for myattr in reqattrs:
         if "subgrid" in myattr:
-            self.set_subgrids(reqattrs["subgrids"])
+            args["subgrids"] = reqattrs["subgrids"]
         else:
-            setattr(self, "_" + myattr, req[myattr])
+            args[myattr] = req[myattr]
 
     if ijkrange:
-        self._ncol = ncol2
-        self._nrow = nrow2
-        self._nlay = nlay2
+        args["ncol"] = ncol2
+        args["nrow"] = nrow2
+        args["nlay"] = nlay2
 
-    self._coordsv = incoord.astype("float64")
-    self._zcornsv = inzcorn.astype("float32")
-    self._actnumsv = inactnum.astype("float32")
+    args["coordsv"] = incoord.astype("float64")
+    args["zcornsv"] = inzcorn.astype("float32")
+    args["actnumsv"] = inactnum.astype("float32")
 
-    if self._xshift != 0.0 or self._yshift != 0.0 or self._zshift != 0.0:
-        self._coordsv[:, :, 0::3] += self._xshift
-        self._coordsv[:, :, 1::3] += self._yshift
-        self._coordsv[:, :, 2::3] += self._zshift
-        self._zcornsv += self._zshift
-        self._xshift = 0.0
-        self._yshift = 0.0
-        self._zshift = 0.0
+    if args["xshift"] != 0.0 or args["yshift"] != 0.0 or args["zshift"] != 0.0:
+        args["coordsv"][:, :, 0::3] += args["xshift"]
+        args["coordsv"][:, :, 1::3] += args["yshift"]
+        args["coordsv"][:, :, 2::3] += args["zshift"]
+        args["zcornsv"] += args["zshift"]
+        args["xshift"] = 0.0
+        args["yshift"] = 0.0
+        args["zshift"] = 0.0
 
-    self._metadata.required = self
+    return args
 
 
 def _partial_read(h5h, req, ijkrange, zerobased):
