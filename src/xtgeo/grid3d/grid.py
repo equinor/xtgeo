@@ -629,7 +629,7 @@ class Grid(_Grid3D):
         elif fformat == "egrid":
             _grid_export.export_egrid(self, gfile.name)
         else:
-            raise SystemExit("Invalid file format")
+            raise ValueError(f"Invalid file format: {fformat}")
 
     def to_hdf(
         self,

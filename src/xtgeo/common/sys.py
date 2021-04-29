@@ -415,8 +415,7 @@ class _XTGeoFile(object):
             try:
                 cfhandle = _cxtgeo.xtg_fopen(fobj, self._mode)
             except TypeError as err:
-                logger.critical("Cannot open file: %s", err)
-                raise
+                raise IOError(f"Cannot open file: {fobj}") from err
 
         self._cfhandle = cfhandle
         self._cfhandlecount = 1

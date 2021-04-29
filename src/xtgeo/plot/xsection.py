@@ -1023,14 +1023,15 @@ class XSection(BasePlot):
                     "Number of names is {} while number of files "
                     "is {}".format(len(surfacenames), nlen)
                 )
-                logger.critical(msg)
-                raise SystemExit(msg)
+                raise ValueError(msg)
 
             slegend = surfacenames
 
         if self._colormap.N < nlen:
-            msg = "Too few colors in color table vs number of surfaces"
-            raise SystemExit(msg)
+            raise ValueError(
+                f"Too few colors in color table ({self._colormap.N}) "
+                f"vs number of surfaces ({nlen})"
+            )
 
         # sample the horizon to the fence:
         colortable = self.get_colormap_as_table()

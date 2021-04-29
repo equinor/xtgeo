@@ -577,7 +577,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         self._output(idx, level, string)
 
-    def critical(self, string, sysexit=True):
+    def critical(self, string, sysexit=False):
         level = -9
         idx = 9
 

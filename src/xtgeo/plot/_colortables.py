@@ -2,7 +2,6 @@
 """Module for color tables."""
 
 import os
-import sys
 import random
 
 from xtgeo.common import XTGeoDialog
@@ -345,8 +344,7 @@ def colorsfromfile(fname, fformat="rms"):
     ctable = []
 
     if not os.path.isfile(fname):
-        xtg.critical("No such color file! STOP")
-        sys.exit(-1)
+        raise IOError(f"Color file not found: {fname}")
 
     with open(fname) as fc:
         for line in fc:

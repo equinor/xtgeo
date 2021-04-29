@@ -610,12 +610,9 @@ def _import_eclbinary_prop(
     elif values.shape[0] == self._ncol * self._nrow * self._nlay:  # often case for PORV
         allvalues = values.copy()
     else:
-
-        msg = (
-            "BUG somehow... Is the file corrupt? If not contact "
-            "the library developer(s)!\n" + msg
+        raise ValueError(
+            f"Failed to read {kwname}, {pfile} could be corrupt. Extra info:\n" + msg
         )
-        raise SystemExit(msg)
 
     allvalues = allvalues.reshape((self._ncol, self._nrow, self._nlay), order="F")
     allvalues = np.asanyarray(allvalues, order="C")
@@ -684,12 +681,7 @@ def _import_eclbinary_dualporo(
     elif values.shape[0] == self._ncol * self._nrow * self._nlay:  # often case for PORV
         allvalues = values.copy()
     else:
-
-        msg = (
-            "BUG somehow reading binary Eclipse! Is the file corrupt? If not contact "
-            "the library developer(s)!\n"
-        )
-        raise SystemExit(msg)
+        raise ValueError(f"Failed to read {kwname}, {pfile} could be corrupt")
 
     allvalues = allvalues.reshape((self._ncol, self._nrow, self.nlay), order="F")
     allvalues = np.asanyarray(allvalues, order="C")

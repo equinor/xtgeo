@@ -34,7 +34,7 @@ def _rkwquery(gfile, kws, name, swap):
         raise ValueError("Cannot find property <{}> in file".format(name))
 
     if reclen != 1:
-        raise SystemError("Stuff is rotten here...")
+        raise ValueError(f"Expected reclen == 1 in {items}, got {reclen}")
 
     _cxtgeo.grd3d_imp_roffbin_data(
         gfile.get_cfhandle(), swap, dtype, bytepos, iresult, presult
@@ -91,7 +91,7 @@ def _rarraykwquery(gfile, kws, name, swap, ncol, nrow, nlay):
         raise ValueError("Cannot find property <{}> in file".format(name))
 
     if reclen <= 1:
-        raise SystemError("Stuff is rotten here...")
+        raise ValueError(f"Expected reclen > 1 in {items}, got {reclen}")
 
     inumpy = np.zeros(ncol * nrow * nlay, dtype=np.int32)
     fnumpy = np.zeros(ncol * nrow * nlay, dtype=np.float32)
@@ -182,7 +182,7 @@ def _rkwxvec(gfile, kws, name, swap, strict=True):
         return None
 
     if reclen <= 1:
-        raise SystemError("Stuff is rotten here...")
+        raise ValueError(f"Expected reclen > 1 in {items}, got {reclen}")
 
     xvec = None
     cfhandle = gfile.get_cfhandle()
@@ -237,7 +237,7 @@ def _rkwxvec_prop(self, gfile, kws, name, swap, strict=True):
         return None
 
     if reclen <= 1:
-        raise SystemError("Stuff is rotten here...")
+        raise ValueError(f"Expected reclen > 1 in {items}, got {reclen}")
 
     proparr = None
     cfhandle = gfile.get_cfhandle()
