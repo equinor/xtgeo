@@ -9,7 +9,7 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from . import _grid3d_utils as utils
 from . import _gridprop_lowlevel
 from . import _grid_roff_lowlevel as grl
-from ..common.exceptions import XTGeoCLibError
+from xtgeo.common.exceptions import XTGeoCLibError
 
 xtg = xtgeo.common.XTGeoDialog()
 
