@@ -200,6 +200,7 @@ def allow_deprecated_init(func):
                 fformat = mfile.generic_format_by_proposal(fformat)  # default
             kwargs = _data_reader_factory(fformat)(mfile, values=load_values)
             kwargs["filesrc"] = mfile.file
+            kwargs["fformat"] = fformat
             return func(cls, **kwargs)
 
         if "nx" in kwargs:
@@ -288,6 +289,7 @@ class RegularSurface:
         masked: Optional[bool] = True,
         name: Optional[str] = "unknown",
         filesrc: Optional[str] = None,
+        fformat: Optional[str] = None,
         undef: Optional[float] = xtgeo.UNDEF,
     ):
         """Instantiating a RegularSurface::
@@ -347,7 +349,7 @@ class RegularSurface:
 
         self._filesrc = filesrc  # Name of original input file or stream, if any
 
-        self._fformat = None  # current fileformat, useful for load()
+        self._fformat = fformat  # current fileformat, useful for load()
         self._metadata = xtgeo.MetaDataRegularSurface()
 
         self._values = None
