@@ -2,6 +2,7 @@
 %{
 #define SWIG_FILE_WITH_INIT
 #include <libxtg.h>
+static PyObject* PY_XTGeoCLibError;
 %}
 
 typedef uint8_t mbool;
@@ -42,6 +43,7 @@ typedef uint8_t mbool;
 
 %init %{
 import_array();
+PY_XTGeoCLibError = PyErr_NewException("xtgeo.common.exceptions.XTGeoCLibError", NULL, NULL);
 %}
 
 //======================================================================================
@@ -305,5 +307,16 @@ import_array();
 	}
     }
     %}
+
+
+%exception {
+    char *err;
+    clear_exception();
+    $action
+    if ((err = check_exception())) {
+        PyErr_SetString(PY_XTGeoCLibError, err);
+        return NULL;
+    }
+}
 
 %include <libxtg.h>

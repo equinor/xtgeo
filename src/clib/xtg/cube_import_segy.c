@@ -234,6 +234,7 @@ cube_import_segy(char *file,
     } else if (gn_formatcode == 8) {
         nzbytes = 1; /* 1 byte signed integer */
     } else {
+        throw_exception("Unknown gn_formatcode");
         return EXIT_FAILURE;
     }
 
@@ -398,6 +399,7 @@ cube_import_segy(char *file,
         if (n2set2[1] < 0) {
             xyscalar = -1.0 / (double)n2set2[1];
         } else if (n2set2[1] == 0) {
+            throw_exception("n2set2[1]: is 0");
             return EXIT_FAILURE;
         }
 
@@ -484,6 +486,7 @@ cube_import_segy(char *file,
             /* allocate space for traces */
             ctracebuffer = calloc(4 * ntsamples, sizeof(char));
             if (ctracebuffer == 0) {
+                throw_exception("Memory allocation failure of traces");
                 return EXIT_FAILURE; /* Memory allocation failure of traces. STOP" */
             }
             ctracedata = ctracebuffer; /* why + 240?? */
@@ -504,6 +507,7 @@ cube_import_segy(char *file,
             /* read the trace */
             ier = fread(ctracebuffer, nzbytes * ntsamples, 1, fc);
             if (ier != 1) {
+                throw_exception("ier != 1");
                 return EXIT_FAILURE;
             }
 
@@ -574,6 +578,7 @@ cube_import_segy(char *file,
             }
 
             else {
+                throw_exception("Invalid gn_formatcode");
                 return EXIT_FAILURE;
             }
             if (ntracecount == ntraces) {

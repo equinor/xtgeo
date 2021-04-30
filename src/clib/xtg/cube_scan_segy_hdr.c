@@ -134,6 +134,7 @@ cube_scan_segy_hdr(char *file,
     fc = fopen(file, "rb");
 
     if (fc == NULL) {
+        throw_exception("Could not open file");
         return 2; /* Could not open file */
     }
     /*

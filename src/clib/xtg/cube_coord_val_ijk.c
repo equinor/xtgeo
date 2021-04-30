@@ -72,9 +72,10 @@ cube_coord_val_ijk(int i,
     *xcor = xcoord;
     *ycor = ycoord;
 
-    if (ier1 != 0)
+    if (ier1 != 0) {
+        throw_exception("File pointer is NULL");
         return EXIT_FAILURE;
-
+    }
     *zcor = zori + (k - 1) * zinc;
 
     /* and now update the value: */

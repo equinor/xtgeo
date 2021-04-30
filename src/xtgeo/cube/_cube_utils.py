@@ -225,15 +225,10 @@ def resample(self, other, sampling="nearest", outside_value=None):
         0 if outside_value is None else 1,
         0 if outside_value is None else outside_value,
     )
-    if ier == 1:
-        raise XTGeoCLibError("Invalid option1 in cube_resample_cube")
     if ier == -4:
         warnings.warn("Less than 10% of origonal cube sampled", RuntimeWarning)
-
-    if ier == -5:
-        raise ValueError("No cube overlap in sampling")
-
-    logger.info("Resampling done!")
+    elif ier != 0:
+        raise XTGeoCLibError("cube_resample_cube failed to complete")
 
 
 def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):

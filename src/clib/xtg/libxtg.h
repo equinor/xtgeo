@@ -2308,3 +2308,13 @@ well_mask_shoulder(double *swig_np_dbl_inplaceflat_v1,  // lvec
                    int *swig_np_int_inplaceflat_v2,     // mask
                    long n_swig_np_int_inplaceflat_v2,   // nmask
                    double distance);
+
+
+void
+throw_exception(char *msg);
+
+void
+clear_exception();
+
+char
+*check_exception();
