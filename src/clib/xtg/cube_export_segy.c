@@ -204,7 +204,7 @@ cube_export_segy(char *sfile,
                             yv, nxy, 1);
 
     if (ier != 0)
-        exit(-132);
+        EXIT_FAILURE;
 
     for (i = 1; i <= nx; i++) {  // inline
         for (j = 1; j <= ny; j++) {

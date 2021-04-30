@@ -45,7 +45,7 @@
 #include "libxtg_.h"
 #include <limits.h>
 
-void
+int
 cube_import_segy(char *file,
                  int gn_hbitoffset,
                  int gn_formatcode,
@@ -234,7 +234,7 @@ cube_import_segy(char *file,
     } else if (gn_formatcode == 8) {
         nzbytes = 1; /* 1 byte signed integer */
     } else {
-        exit(-1);
+        return EXIT_FAILURE;
     }
 
     /* The caller should do a check if file exist! */
@@ -398,7 +398,7 @@ cube_import_segy(char *file,
         if (n2set2[1] < 0) {
             xyscalar = -1.0 / (double)n2set2[1];
         } else if (n2set2[1] == 0) {
-            exit(-1);
+            return EXIT_FAILURE;
         }
 
         ntsamples = n2set3[13];
@@ -484,7 +484,7 @@ cube_import_segy(char *file,
             /* allocate space for traces */
             ctracebuffer = calloc(4 * ntsamples, sizeof(char));
             if (ctracebuffer == 0) {
-                exit(-1); /* Memory allocation failure of traces. STOP" */
+                return EXIT_FAILURE; /* Memory allocation failure of traces. STOP" */
             }
             ctracedata = ctracebuffer; /* why + 240?? */
             itracedata = (int *)ctracedata;
@@ -504,7 +504,7 @@ cube_import_segy(char *file,
             /* read the trace */
             ier = fread(ctracebuffer, nzbytes * ntsamples, 1, fc);
             if (ier != 1) {
-                exit(-1);
+                return EXIT_FAILURE;
             }
 
             ii = mi - ninline[0] + 1;
@@ -540,7 +540,7 @@ cube_import_segy(char *file,
                     ib = x_ijk2ib(ii, jj, kk, ninlines, nxlines, ntsamples, 0);
 
                     if (ib < 0) {
-                        exit(9);
+                        return EXIT_FAILURE;
                     }
 
                     p_val_v[ib] = ftracedata[k];
@@ -574,7 +574,7 @@ cube_import_segy(char *file,
             }
 
             else {
-                exit(-1);
+                return EXIT_FAILURE;
             }
             if (ntracecount == ntraces) {
                 break;
@@ -639,6 +639,7 @@ cube_import_segy(char *file,
     if (option == 1 && optscan == 1) {
         fclose(fout);
     }
+    return EXIT_SUCCESS;
 }
 
 /*

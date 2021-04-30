@@ -30,6 +30,7 @@
 *
 * RETURNS:
 *    Function: 0: upon success. If problems <> 0:
+           - 1 invalid option
 *          - 4 less than 10% sampled
 *          - 5 No cells sampled
 *
@@ -111,7 +112,7 @@ cube_resample_cube(int ncx1,
 
                 } else {
                     logger_error(LI, FI, FU, "Invalid option1 (%d) to %s", option1, FU);
-                    exit(-1);
+                    EXIT_FAILURE;
                 }
 
                 if (ier == EXIT_SUCCESS) {

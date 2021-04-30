@@ -225,7 +225,8 @@ def resample(self, other, sampling="nearest", outside_value=None):
         0 if outside_value is None else 1,
         0 if outside_value is None else outside_value,
     )
-
+    if ier == 1:
+        raise XTGeoCLibError("Invalid option1 in cube_resample_cube")
     if ier == -4:
         warnings.warn("Less than 10% of origonal cube sampled", RuntimeWarning)
 

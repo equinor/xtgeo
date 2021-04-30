@@ -4,6 +4,7 @@ import numpy as np
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import XTGeoCLibError
 
 xtg = XTGeoDialog()
 
@@ -196,7 +197,8 @@ def point_in_tetrahedron(x0, y0, z0, vertices):
     vertices = np.array(vertices, dtype=np.float64)
 
     status = _cxtgeo.x_point_in_tetrahedron(x0, y0, z0, vertices)
-
+    if status == 1:
+        raise XTGeoCLibError("Error in x_point_in_tetrahedron")
     if status == 100:
         return True
 

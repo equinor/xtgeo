@@ -834,7 +834,7 @@ sucu_ij_from_xy(int *i,
                 double rot_azi_deg,
                 int flag);
 
-void
+int
 cube_scan_segy_hdr(char *file,
                    int *gn_bitsheader,
                    int *gn_formatcode,
@@ -854,7 +854,7 @@ cube_import_storm(int nx,
                   long n_swig_np_flt_aout_v1,  // nxyz
                   int option);
 
-void
+int
 cube_import_segy(char *file,
                  int hbitoffset,
                  int formatcode,

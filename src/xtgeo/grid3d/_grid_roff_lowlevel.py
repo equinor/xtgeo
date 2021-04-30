@@ -6,6 +6,8 @@ import numpy.ma as ma
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
+from xtgeo.common.exceptions import XTGeoCLibError
+
 xtg = xtgeo.common.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
@@ -149,7 +151,11 @@ def _rkwxlist(gfile, kws, name, swap, strict=True):
 
     if dtype == 1:
         inumpy = np.zeros(reclen, dtype=np.int32)
-        _cxtgeo.grd3d_imp_roffbin_ilist(gfile.get_cfhandle(), swap, bytepos, inumpy)
+        exit_code = _cxtgeo.grd3d_imp_roffbin_ilist(
+            gfile.get_cfhandle(), swap, bytepos, inumpy
+        )
+        if exit_code != 0:
+            raise XTGeoCLibError("Error in grd3d_imp_roffbin_ilist")
         gfile.cfclose()
     else:
         raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
@@ -190,15 +196,27 @@ def _rkwxvec(gfile, kws, name, swap, strict=True):
 
     if dtype == 1:
         xvec = _cxtgeo.new_intarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_ivec(cfhandle, swap, bytepos, xvec, reclen)
+        exit_code = _cxtgeo.grd3d_imp_roffbin_ivec(
+            cfhandle, swap, bytepos, xvec, reclen
+        )
+        if exit_code != 0:
+            raise XTGeoCLibError("Error in grd3d_imp_roffbin_ivec")
 
     elif dtype == 2:
         xvec = _cxtgeo.new_floatarray(reclen)
-        _cxtgeo.grd3d_imp_roffbin_fvec(cfhandle, swap, bytepos, xvec, reclen)
+        exit_code = _cxtgeo.grd3d_imp_roffbin_fvec(
+            cfhandle, swap, bytepos, xvec, reclen
+        )
+        if exit_code != 0:
+            raise XTGeoCLibError("Error in grd3d_imp_roffbin_fvec")
 
     elif dtype >= 4:
         xvec = _cxtgeo.new_intarray(reclen)  # convert char/byte/bool to int
-        _cxtgeo.grd3d_imp_roffbin_bvec(cfhandle, swap, bytepos, xvec, reclen)
+        exit_code = _cxtgeo.grd3d_imp_roffbin_bvec(
+            cfhandle, swap, bytepos, xvec, reclen
+        )
+        if exit_code != 0:
+            raise XTGeoCLibError("Error in grd3d_imp_roffbin_fvec")
 
     else:
         gfile.cfclose()
@@ -371,7 +389,7 @@ def _rkwxvec_zcornsv(
 
     if status != 0:
         gfile.cfclose()
-        raise RuntimeError("Error running _rkwxvec_coordsv")
+        raise XTGeoCLibError("Error running _rkwxvec_coordsv")
 
     logger.info("Reading %s from file done", name)
 

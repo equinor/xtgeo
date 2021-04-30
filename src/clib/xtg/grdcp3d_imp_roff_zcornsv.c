@@ -91,7 +91,7 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                         logger_critical(
                           LI, FI, FU, "Probably a bug in %s, nsplit is %d for %d %d %d",
                           FU, nsplit, i, j, k);
-                        exit(-989);
+                        return EXIT_FAILURE;
                     }
                 }
                 for (k = (nnlay - 1); k >= 0; k--) {
@@ -131,7 +131,7 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                         }
                     } else {
                         logger_critical(LI, FI, FU, "Probably a bug in %s", FU);
-                        exit(-989);
+                        return EXIT_FAILURE;
                     }
                 }
                 for (k = (nnlay - 1); k >= 0; k--) {
