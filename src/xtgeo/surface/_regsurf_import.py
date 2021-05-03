@@ -473,8 +473,8 @@ def import_zmap_ascii(mfile, values=True, **_):
     args["nrow"] = int(header[5])
     args["xori"] = float(header[7])
     args["yori"] = float(header[9])
-    args["xinc"] = (xmax - args["xori"]) / args["ncol"]
-    args["yinc"] = (ymax - args["yori"]) / args["nrow"]
+    args["xinc"] = (xmax - args["xori"]) / (args["ncol"] + 1)
+    args["yinc"] = (ymax - args["yori"]) / (args["nrow"] + 1)
 
     if header[2]:
         undef = float(header[2])  # user defined undef

@@ -86,7 +86,7 @@ def generate_data(draw):
 def test_simple_io(input_val, expected_result, fformat, engine):
     if engine == "python" and fformat not in ["irap_ascii", "irap_binary", "zmap"]:
         pytest.skip("Only one engine available")
-    init_dict = {"ncol": 2, "nrow": 2, "xinc": 0.0, "yinc": 0.0, "values": input_val}
+    init_dict = {"ncol": 2, "nrow": 2, "xinc": 2.0, "yinc": 2.0, "values": input_val}
     surf = RegularSurface(**init_dict)
     surf.to_file("my_file", fformat=fformat)
     surf_from_file = RegularSurface.read_file("my_file", fformat=fformat, engine=engine)

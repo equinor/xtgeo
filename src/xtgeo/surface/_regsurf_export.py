@@ -261,8 +261,8 @@ def _export_zmap_ascii_purepy(self, mfile):
 
     vals = scopy.get_values1d(order="C", asmasked=False, fill_value=undef)
 
-    xmax = scopy.xori + scopy.ncol * scopy.xinc
-    ymax = scopy.yori + scopy.nrow * yinc
+    xmax = scopy.xori + (scopy.ncol - 1) * scopy.xinc
+    ymax = scopy.yori + (scopy.nrow - 1) * yinc
 
     buf = "! Export from XTGeo (python engine)\n"
     buf += "@ GRIDFILE, GRID, 5\n"

@@ -85,8 +85,8 @@ surf_export_irap_ascii(FILE *fc,
         fcode = 2;
     }
 
-    xmax = xori + mx * xinc;
-    ymax = yori + my * yinc;
+    xmax = xori + (mx - 1) * xinc;
+    ymax = yori + (my - 1) * yinc;
 
     /*
      * WRITE HEADER
