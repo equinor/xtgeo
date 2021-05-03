@@ -259,7 +259,6 @@ def _export_zmap_ascii_purepy(self, mfile):
 
     yinc = scopy._yinc * scopy._yflip
 
-    vals = scopy._values.copy()
     vals = scopy.get_values1d(order="C", asmasked=False, fill_value=undef)
 
     xmax = scopy.xori + (scopy.ncol - 1) * scopy.xinc
@@ -275,7 +274,6 @@ def _export_zmap_ascii_purepy(self, mfile):
     buf += "@\n"
 
     vals = vals.tolist()
-    ic = 0
     ncol = 0
     for icol in range(scopy.ncol):
         for jrow in range(scopy.nrow - 1, -1, -1):

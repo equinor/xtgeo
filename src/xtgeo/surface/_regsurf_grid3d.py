@@ -3,6 +3,7 @@
 
 
 import numpy as np
+import numpy.ma as ma
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -67,14 +68,13 @@ def slice_grid3d(self, grid, prop, zsurf=None, sbuffer=1):
     return istat
 
 
-def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
+def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
     """Private function for deriving a surface from a 3D grid.
 
     Note that rotated maps are currently not supported!
 
     .. versionadded:: 2.1
     """
-
     if where == "top":
         klayer = 1
         option = 0
@@ -93,10 +93,14 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
     if rfactor < 0.5:
         raise KeyError("Refinefactor rfactor is too small, should be >= 0.5")
 
-    _update_regsurf(self, template, grid, rfactor=float(rfactor))
-
+    args = _update_regsurf(template, grid, rfactor=float(rfactor))
+    args["rotation"] = 0.0
     # call C function to make a map
-    svalues = self.get_values1d() * 0.0 + xtgeo.UNDEF
+    val = args["values"]
+    val = val.ravel(order="K")
+    val = ma.filled(val, fill_value=xtgeo.UNDEF)
+
+    svalues = val * 0.0 + xtgeo.UNDEF
     ivalues = svalues.copy()
     jvalues = svalues.copy()
 
@@ -108,13 +112,13 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
         grid._zcornsv,
         grid._actnumsv,
         klayer,
-        self.ncol,
-        self.nrow,
-        self.xori,
-        self.xinc,
-        self.yori,
-        self.yinc,
-        self.rotation,
+        args["ncol"],
+        args["nrow"],
+        args["xori"],
+        args["xinc"],
+        args["yori"],
+        args["yinc"],
+        args["rotation"],
         svalues,
         ivalues,
         jvalues,
@@ -127,26 +131,26 @@ def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1)
     jvalues = np.ma.masked_greater(jvalues, xtgeo.UNDEF_LIMIT)
 
     if mode == "i":
-        self.set_values1d(ivalues)
-        return None
+        ivalues = ivalues.reshape((args["ncol"], args["nrow"]))
+        ivalues = ma.masked_invalid(ivalues)
+        args["values"] = ivalues
+        return args, None, None
 
     if mode == "j":
-        self.set_values1d(jvalues)
-        return None
+        jvalues = jvalues.reshape((args["ncol"], args["nrow"]))
+        jvalues = ma.masked_invalid(jvalues)
+        args["values"] = jvalues
+        return args, None, None
 
-    self.set_values1d(svalues)
-    isurf = self.copy()
-    jsurf = self.copy()
-    isurf.set_values1d(ivalues)
-    jsurf.set_values1d(jvalues)
+    svalues = svalues.reshape((args["ncol"], args["nrow"]))
+    svalues = ma.masked_invalid(svalues)
+    args["values"] = svalues
 
-    self.metadata.required = self
-
-    return isurf, jsurf  # needed in special cases
+    return args, ivalues, jvalues
 
 
-def _update_regsurf(self, template, grid, rfactor=1.0):
-
+def _update_regsurf(template, grid, rfactor=1.0):
+    args = {}
     if template is None:
         # need to estimate map settings from the existing grid. this
         # may a bit time consuming for large grids.
@@ -164,18 +168,19 @@ def _update_regsurf(self, template, grid, rfactor=1.0):
         ncol = int(xlen / xinc)
         nrow = int(ylen / yinc)
 
-        self._xori = xori
-        self._yori = yori
-        self._xinc = xinc
-        self._yinc = yinc
-        self._ncol = ncol
-        self._nrow = nrow
-        self._values = np.ma.zeros((ncol, nrow), dtype=np.float64)
+        args["xori"] = xori
+        args["yori"] = yori
+        args["xinc"] = xinc
+        args["yinc"] = yinc
+        args["ncol"] = ncol
+        args["nrow"] = nrow
+        args["values"] = np.ma.zeros((ncol, nrow), dtype=np.float64)
     else:
-        self._xori = template.xori
-        self._yori = template.yori
-        self._xinc = template.xinc
-        self._yinc = template.yinc
-        self._ncol = template.ncol
-        self._nrow = template.nrow
-        self._values = template.values.copy()
+        args["xori"] = template.xori
+        args["yori"] = template.yori
+        args["xinc"] = template.xinc
+        args["yinc"] = template.yinc
+        args["ncol"] = template.ncol
+        args["nrow"] = template.nrow
+        args["values"] = template.values.copy()
+    return args

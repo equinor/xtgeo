@@ -59,7 +59,7 @@ surf_export_irap_ascii(FILE *fc,
 
     /* local declarations */
     int i, j, ic, nn, fcode;
-    float myfloat, xmax, ymax;
+    double myfloat, xmax, ymax;
 
     logger_info(LI, FI, FU, "Write IRAP ascii map file ... (%s)", __FUNCTION__);
 
@@ -100,7 +100,7 @@ surf_export_irap_ascii(FILE *fc,
      */
 
     fprintf(fc, "%d %d %lf %lf\n", -996, my, xinc, yinc);
-    fprintf(fc, "%lf %f %lf %f\n", xori, xmax, yori, ymax);
+    fprintf(fc, "%lf %lf %lf %lf\n", xori, xmax, yori, ymax);
     fprintf(fc, "%d %lf %lf %lf\n", mx, rot, xori, yori);
     fprintf(fc, "0 0 0 0 0 0 0\n");
 
