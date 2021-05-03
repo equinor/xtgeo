@@ -177,7 +177,7 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
     if scanheadermode:
         option = 1
 
-    exit_code = _cxtgeo.cube_scan_segy_hdr(
+    _cxtgeo.cube_scan_segy_hdr(
         sfile,
         ptr_gn_bitsheader,
         ptr_gn_formatcode,
@@ -187,14 +187,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         option,
         outfile,
     )
-    if exit_code == 2:
-        raise XTGeoCLibError(f"Failed to open file {sfile} in cube_scan_segy_hdr")
-    elif exit_code == 3:
-        raise XTGeoCLibError("Error in reading SEGY EBCDIC header")
-    elif exit_code == 4:
-        raise XTGeoCLibError("Error in converting to asciiheader")
-    elif exit_code != 0:
-        raise XTGeoCLibError("Error in cube_scan_segy_hdr")
 
     # get values
     gn_bitsheader = _cxtgeo.intpointer_value(ptr_gn_bitsheader)

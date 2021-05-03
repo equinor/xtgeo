@@ -35,7 +35,7 @@
 #include "libxtg.h"
 #include "libxtg_.h"
 
-int
+void
 cube_scan_segy_hdr(char *file,
                    /* return stuff: */
                    int *gn_bitsheader,
@@ -135,7 +135,7 @@ cube_scan_segy_hdr(char *file,
 
     if (fc == NULL) {
         throw_exception("Could not open file");
-        return 2; /* Could not open file */
+        return; /* Could not open file */
     }
     /*
      *-------------------------------------------------------------------------
@@ -146,7 +146,8 @@ cube_scan_segy_hdr(char *file,
 
     n = fread(ebcdicheader, 3200, 1, fc);
     if (n != 1) {
-        return 3; /* Error reading SEGY EBCDIC header */
+        throw_exception("Error reading SEGY EBCDIC header");
+        return; /* Error reading SEGY EBCDIC header */
     }
 
     /*
@@ -159,7 +160,8 @@ cube_scan_segy_hdr(char *file,
     for (i = 0; i < 40; i++) {
         asciiheader[i] = calloc(81, sizeof(char));
         if (asciiheader[i] == 0) {
-            return 4; /* Error in converting to asciiheader */
+            throw_exception("Error in converting to asciiheader");
+            return; /* Error in converting to asciiheader */
         }
     }
 
@@ -278,7 +280,6 @@ cube_scan_segy_hdr(char *file,
     if (option == 1)
         fclose(fout);
 
-    return EXIT_SUCCESS;
 }
 
 /* a function to simplify reading the binary items in the primary

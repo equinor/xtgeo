@@ -67,6 +67,14 @@ def test_segy_scantraces():
     Cube().scan_segy_traces(SFILE1, outfile="TMP/cube_scantraces")
 
 
+def test_segy_no_file_exception():
+    try:
+        Cube().scan_segy_traces("not_a_file", outfile="not_relevant")
+    except Exception as err:
+        print(2)
+        assert "str" in err
+
+
 def test_storm_import():
     """Import Cube using Storm format (case Reek)."""
 

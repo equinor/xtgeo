@@ -834,7 +834,7 @@ sucu_ij_from_xy(int *i,
                 double rot_azi_deg,
                 int flag);
 
-int
+void
 cube_scan_segy_hdr(char *file,
                    int *gn_bitsheader,
                    int *gn_formatcode,
