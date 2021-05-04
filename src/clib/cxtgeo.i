@@ -43,7 +43,9 @@ typedef uint8_t mbool;
 
 %init %{
 import_array();
-PY_XTGeoCLibError = PyErr_NewException("xtgeo.common.exceptions.XTGeoCLibError", NULL, NULL);
+PY_XTGeoCLibError = PyErr_NewException("_cxtgeo.XTGeoCLibError", NULL, NULL);
+Py_INCREF(PY_XTGeoCLibError);
+PyDict_SetItemString(d, "XTGeoCLibError", PY_XTGeoCLibError);
 %}
 
 //======================================================================================
@@ -318,5 +320,9 @@ PY_XTGeoCLibError = PyErr_NewException("xtgeo.common.exceptions.XTGeoCLibError",
         return NULL;
     }
 }
+
+%pythoncode %{
+    XTGeoCLibError = _cxtgeo.XTGeoCLibError
+%}
 
 %include <libxtg.h>

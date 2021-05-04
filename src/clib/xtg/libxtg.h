@@ -854,7 +854,7 @@ cube_import_storm(int nx,
                   long n_swig_np_flt_aout_v1,  // nxyz
                   int option);
 
-int
+void
 cube_import_segy(char *file,
                  int hbitoffset,
                  int formatcode,
@@ -2311,7 +2311,7 @@ well_mask_shoulder(double *swig_np_dbl_inplaceflat_v1,  // lvec
 
 
 void
-throw_exception(char *msg);
+throw_exception( const char *fmt, ...);
 
 void
 clear_exception();

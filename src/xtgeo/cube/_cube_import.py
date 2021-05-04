@@ -11,7 +11,6 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 import xtgeo.common.calc as xcalc
 import xtgeo.common.sys as xsys
 from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import XTGeoCLibError
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -223,7 +222,7 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         option = 1
 
     logger.debug("Scan via C wrapper...")
-    exit_code = _cxtgeo.cube_import_segy(
+    _cxtgeo.cube_import_segy(
         sfile,
         # input
         gn_bitsheader,
@@ -251,8 +250,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         option,
         outfile,
     )
-    if exit_code != 0:
-        raise XTGeoCLibError("Failed to import from cube_import_segy")
     logger.debug("Scan via C wrapper... done")
 
     ncol = _cxtgeo.intpointer_value(ptr_ncol)
@@ -270,7 +267,7 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
     optscan = 0
 
     logger.debug("Import via C wrapper...")
-    exit_code = _cxtgeo.cube_import_segy(
+    _cxtgeo.cube_import_segy(
         sfile,
         # input
         gn_bitsheader,
@@ -298,8 +295,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         option,
         outfile,
     )
-    if exit_code != 0:
-        raise XTGeoCLibError("Failed to import from cube_import_segy")
 
     logger.debug("Import via C wrapper...")
 

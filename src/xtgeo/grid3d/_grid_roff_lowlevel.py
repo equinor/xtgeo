@@ -6,7 +6,7 @@ import numpy.ma as ma
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
-from xtgeo.common.exceptions import XTGeoCLibError
+from xtgeo import XTGeoCLibError
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -151,12 +151,7 @@ def _rkwxlist(gfile, kws, name, swap, strict=True):
 
     if dtype == 1:
         inumpy = np.zeros(reclen, dtype=np.int32)
-        exit_code = _cxtgeo.grd3d_imp_roffbin_ilist(
-            gfile.get_cfhandle(), swap, bytepos, inumpy
-        )
-        if exit_code != 0:
-            raise XTGeoCLibError("Error in grd3d_imp_roffbin_ilist")
-        gfile.cfclose()
+        _cxtgeo.grd3d_imp_roffbin_ilist(gfile.get_cfhandle(), swap, bytepos, inumpy)
     else:
         raise ValueError("Unsupported data type for lists: {} in file".format(dtype))
 

@@ -9,7 +9,7 @@ import segyio
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import XTGeoCLibError
+from xtgeo import XTGeoCLibError
 
 xtg = XTGeoDialog()
 

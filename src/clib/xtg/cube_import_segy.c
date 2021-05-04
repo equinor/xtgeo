@@ -45,7 +45,7 @@
 #include "libxtg_.h"
 #include <limits.h>
 
-int
+void
 cube_import_segy(char *file,
                  int gn_hbitoffset,
                  int gn_formatcode,
@@ -235,7 +235,7 @@ cube_import_segy(char *file,
         nzbytes = 1; /* 1 byte signed integer */
     } else {
         throw_exception("Unknown gn_formatcode");
-        return EXIT_FAILURE;
+        return;
     }
 
     /* The caller should do a check if file exist! */
@@ -400,7 +400,7 @@ cube_import_segy(char *file,
             xyscalar = -1.0 / (double)n2set2[1];
         } else if (n2set2[1] == 0) {
             throw_exception("n2set2[1]: is 0");
-            return EXIT_FAILURE;
+            return;
         }
 
         ntsamples = n2set3[13];
@@ -487,7 +487,7 @@ cube_import_segy(char *file,
             ctracebuffer = calloc(4 * ntsamples, sizeof(char));
             if (ctracebuffer == 0) {
                 throw_exception("Memory allocation failure of traces");
-                return EXIT_FAILURE; /* Memory allocation failure of traces. STOP" */
+                return; /* Memory allocation failure of traces. STOP" */
             }
             ctracedata = ctracebuffer; /* why + 240?? */
             itracedata = (int *)ctracedata;
@@ -508,7 +508,7 @@ cube_import_segy(char *file,
             ier = fread(ctracebuffer, nzbytes * ntsamples, 1, fc);
             if (ier != 1) {
                 throw_exception("ier != 1");
-                return EXIT_FAILURE;
+                return;
             }
 
             ii = mi - ninline[0] + 1;
@@ -544,7 +544,8 @@ cube_import_segy(char *file,
                     ib = x_ijk2ib(ii, jj, kk, ninlines, nxlines, ntsamples, 0);
 
                     if (ib < 0) {
-                        return EXIT_FAILURE;
+                        throw_exception("ib < 0");
+                        return;
                     }
 
                     p_val_v[ib] = ftracedata[k];
@@ -579,7 +580,7 @@ cube_import_segy(char *file,
 
             else {
                 throw_exception("Invalid gn_formatcode");
-                return EXIT_FAILURE;
+                return;
             }
             if (ntracecount == ntraces) {
                 break;
@@ -644,7 +645,6 @@ cube_import_segy(char *file,
     if (option == 1 && optscan == 1) {
         fclose(fout);
     }
-    return EXIT_SUCCESS;
 }
 
 /*

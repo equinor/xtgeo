@@ -19,7 +19,7 @@ from . import _wellmarkers
 from . import _well_io
 from . import _well_roxapi
 from . import _well_oper
-from xtgeo.common.exceptions import XTGeoCLibError
+from xtgeo import XTGeoCLibError
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)

@@ -51,7 +51,7 @@ grd3d_imp_roffbin_ilist(FILE *fc, int swap, long bytepos, int *iarray, long niar
     for (ipos = 0; ipos < niarray; ipos++) {
         iok = fread(&anint, 4, 1, fc);
         if (iok != 1) {
-            throw_exception("iok !=1");
+            throw_exception("Error reading file");
             return EXIT_FAILURE;
             }
         if (swap == 1)

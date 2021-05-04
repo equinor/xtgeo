@@ -6,7 +6,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
-from xtgeo.common.exceptions import XTGeoCLibError
+from xtgeo import XTGeoCLibError
 from xtgeo.xyz import Polygons
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo.common import XTGeoDialog
