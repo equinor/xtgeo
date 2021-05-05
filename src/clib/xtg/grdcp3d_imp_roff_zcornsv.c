@@ -77,21 +77,22 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                     long n;
                     if (nsplit == 4) {
                         for (n = 0; n < 4; n++) {
-                            if (fread(&afloat, 4, 1, fc) != 1)
+                            if (fread(&afloat, 4, 1, fc) != 1) {
                                 throw_exception("Failed to read file, swap: %d, for nsplit: %d, n: %d", swap, nsplit, n);
                                 return EXIT_FAILURE;
+                            }
                             pillar[k][n] = (afloat + zoffset) * zscale;
                         }
                     } else if (nsplit == 1) {
-                        if (fread(&afloat, 4, 1, fc) != 1)
-                            throw_exception("Failed to read file, swap: %d, for nsplit: %d, n: %d", swap, nsplit, n);
+                        if (fread(&afloat, 4, 1, fc) != 1) {
+                            throw_exception("Failed to read file, swap: %d, for nsplit: %d", swap, nsplit);
                             return EXIT_FAILURE;
+                            }
                         for (n = 0; n < 4; n++) {
                             pillar[k][n] = (afloat + zoffset) * zscale;
                         }
                     } else {
-                        throw_exception("Probably a bug in %s, nsplit is %d for %d %d %d",
-                          FU, nsplit, i, j, k);
+                        throw_exception("Probably a bug in %s, nsplit is %d for %d %d %d", FU, nsplit, i, j, k);
                         return EXIT_FAILURE;
                     }
                 }
@@ -118,16 +119,18 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                     long n;
                     if (nsplit == 4) {
                         for (n = 0; n < 4; n++) {
-                            if (fread(&afloat, 4, 1, fc) != 1)
+                            if (fread(&afloat, 4, 1, fc) != 1) {
                                 throw_exception("Failed to read file, swap: %d, for nsplit: %d, n: %d", swap, nsplit, n);
                                 return EXIT_FAILURE;
+                                }
                             SWAP_FLOAT(afloat);
                             pillar[k][n] = (afloat + zoffset) * zscale;
                         }
                     } else if (nsplit == 1) {
-                        if (fread(&afloat, 4, 1, fc) != 1)
-                            throw_exception("Failed to read file, swap: %d, for nsplit: %d, n: %d", swap, nsplit, n);
+                        if (fread(&afloat, 4, 1, fc) != 1) {
+                            throw_exception("Failed to read file, swap: %d, for nsplit: %d", swap, nsplit);
                             return EXIT_FAILURE;
+                            }
                         SWAP_FLOAT(afloat);
                         for (n = 0; n < 4; n++) {
                             pillar[k][n] = (afloat + zoffset) * zscale;

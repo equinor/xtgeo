@@ -37,6 +37,7 @@ x_ib2ijk(long ib, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start)
         iy = -99;
         iz = -99;
         throw_exception("Critical error from %s", FU);
+        return;
     }
 
     /* values to return */
@@ -72,6 +73,7 @@ x_ic2ijk(long ic, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start)
         iy = -99;
         iz = -99;
         throw_exception("Critical error from %s", FU);
+        return;
     }
 
     /* values to return */

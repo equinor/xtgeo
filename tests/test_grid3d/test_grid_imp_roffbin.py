@@ -174,7 +174,7 @@ def test_grdcp3d_imp_roffbin_zcornsv_swap_0(nsplit, swap):
     _cxtgeo.intarray_setitem(int_array, 0, nsplit)
     with pytest.raises(
         xtgeo.XTGeoCLibError,
-        match=f"Failed to read file, swap: {swap}, for nsplit: {nsplit}, n: 0",
+        match=f"Failed to read file, swap: {swap}, for nsplit: {nsplit}",
     ):
         _cxtgeo.grdcp3d_imp_roffbin_zcornsv(
             gfile.get_cfhandle(),

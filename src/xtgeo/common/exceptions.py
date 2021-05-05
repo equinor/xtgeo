@@ -37,7 +37,3 @@ class GridNotFoundError(ValueError):
 
 class BlockedWellsNotFoundError(ValueError):
     """Blocked Wells icon is not found in the request (ValueError)"""
-
-
-class XTGeoCLibError(Exception):
-    pass
