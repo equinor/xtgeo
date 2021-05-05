@@ -53,6 +53,7 @@ grd3d_imp_roffbin_fvec(FILE *fc, int swap, long bytepos, float *fvec, long nfvec
 
     for (i = 0; i < nfvec; i++) {
         if (fread(&afloat, 4, 1, fc) != 1)
+            throw_exception("Failed to read from file");
             return EXIT_FAILURE;
         if (swap == 1)
             SWAP_FLOAT(afloat);
@@ -76,6 +77,7 @@ grd3d_imp_roffbin_ivec(FILE *fc, int swap, long bytepos, int *ivec, long nivec)
 
     for (i = 0; i < nivec; i++) {
         if (fread(&anint, 4, 1, fc) != 1)
+            throw_exception("Failed to read from file");
             return EXIT_FAILURE;
         if (swap == 1)
             SWAP_FLOAT(anint);
@@ -100,6 +102,7 @@ grd3d_imp_roffbin_bvec(FILE *fc, int swap, long bytepos, int *bvec, long nbvec)
 
     for (i = 0; i < nbvec; i++) {
         if (fread(&achar, 1, 1, fc) != 1)
+            throw_exception("Failed to read from file");
             return EXIT_FAILURE;
         anint = (int)achar;
         if (anint == 255)
