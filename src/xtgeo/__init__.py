@@ -92,6 +92,7 @@ from xtgeo.common.exceptions import KeywordFoundNoDateError
 from xtgeo.common.exceptions import WellNotFoundError
 from xtgeo.common.exceptions import GridNotFoundError
 from xtgeo.common.exceptions import BlockedWellsNotFoundError
+from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError
 
 from xtgeo.common.xtgeo_dialog import XTGeoDialog
 from xtgeo.common.sys import _XTGeoFile

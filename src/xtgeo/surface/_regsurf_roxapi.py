@@ -154,7 +154,12 @@ def _roxapi_export_surface(
 
 def _xtgeo_to_roxapi_grid(self):  # pragma: no cover
     # Create a 2D grid
-    import roxar  # pylint: disable=import-error, import-outside-toplevel
+    try:
+        import roxar  # pylint: disable=import-error, import-outside-toplevel
+    except ImportError as err:
+        raise ImportError(
+            "roxar not available, this functionality is not available"
+        ) from err
 
     grid2d = roxar.RegularGrid2D.create(
         x_origin=self.xori,

@@ -9,6 +9,7 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from . import _grid3d_utils as utils
 from . import _gridprop_lowlevel
 from . import _grid_roff_lowlevel as grl
+from xtgeo import XTGeoCLibError
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -63,9 +64,10 @@ def _import_roff_v1(self, pfile, name):
     )
 
     if ier == -1:
-        msg = "Cannot find property name {}".format(name)
-        logger.warning(msg)
-        raise SystemExit("Error from ROFF import")
+        raise XTGeoCLibError(
+            f"Error in grd3d_imp_prop_roffbin, error code: {ier}, "
+            f"cannot find property name: {name}"
+        )
 
     self._ncol = _cxtgeo.intpointer_value(ptr_ncol)
     self._nrow = _cxtgeo.intpointer_value(ptr_nrow)

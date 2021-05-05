@@ -250,7 +250,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         option,
         outfile,
     )
-
     logger.debug("Scan via C wrapper... done")
 
     ncol = _cxtgeo.intpointer_value(ptr_ncol)

@@ -320,7 +320,7 @@ x_point_in_tetrahedron(double x0, double y0, double z0, double *pv, long ndim)
 
     if (diff < -1 * relerror) {
         logger_critical(LI, FI, FU, "Something is wrong in %s!", FU);
-        exit(323);
+        return EXIT_FAILURE;
     } else if (diff > relerror) {
         // LATER: make algorithm more smart to tell "closeness" of point
         // if (sumvol / truevol < 5 && sumvol > 0.0) {

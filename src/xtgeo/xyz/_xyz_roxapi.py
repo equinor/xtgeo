@@ -46,9 +46,10 @@ def _roxapi_import_xyz_viafile(
 
     try:
         import roxar  # pylint: disable=import-outside-toplevel
-    except ImportError:
-        logger.critical("Cannot import module roxar")
-        raise
+    except ImportError as err:
+        raise ImportError(
+            "roxar not available, this functionality is not available"
+        ) from err
 
     self._name = name
     proj = rox.project
@@ -174,9 +175,10 @@ def _roxapi_export_xyz_viafile(
 
     try:
         import roxar  # pylint: disable=import-outside-toplevel
-    except ImportError:
-        logger.critical("Cannot import roxar")
-        raise
+    except ImportError as err:
+        raise ImportError(
+            "roxar not available, this functionality is not available"
+        ) from err
 
     proj = rox.project
 

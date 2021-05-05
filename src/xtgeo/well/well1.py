@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """XTGeo well module, working with one single well."""
 
-import sys
 from copy import deepcopy
 from distutils.version import StrictVersion
 from typing import Union, Optional, List, Dict
@@ -20,6 +19,7 @@ from . import _wellmarkers
 from . import _well_io
 from . import _well_roxapi
 from . import _well_oper
+from xtgeo import XTGeoCLibError
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -1065,7 +1065,7 @@ class Well:
         )
 
         if ier != 0:
-            sys.exit(-9)
+            raise XTGeoCLibError(f"well_geometrics failed with error code: {ier}")
 
         dnumpy = self._convert_carr_double_np(ptr_md)
         self._df["Q_MDEPTH"] = pd.Series(dnumpy, index=self._df.index)

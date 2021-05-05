@@ -1,5 +1,4 @@
 """Cube utilities (basic low level)"""
-import sys
 import warnings
 
 import numpy as np
@@ -7,6 +6,7 @@ import numpy as np
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo import XTGeoCLibError
 
 xtg = XTGeoDialog()
 
@@ -225,14 +225,10 @@ def resample(self, other, sampling="nearest", outside_value=None):
         0 if outside_value is None else 1,
         0 if outside_value is None else outside_value,
     )
-
     if ier == -4:
         warnings.warn("Less than 10% of origonal cube sampled", RuntimeWarning)
-
-    if ier == -5:
-        raise ValueError("No cube overlap in sampling")
-
-    logger.info("Resampling done!")
+    elif ier != 0:
+        raise XTGeoCLibError("cube_resample_cube failed to complete")
 
 
 def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
@@ -268,8 +264,7 @@ def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
             0,
         )
         if ier != 0:
-            logger.critical("Error code %s, contact the author", ier)
-            raise SystemExit("Error code {}".format(ier))
+            raise XTGeoCLibError(f"cube_xy_from_ij failed with error code: {ier}")
 
     else:
         raise ValueError("Index i and/or j out of bounds")
@@ -374,8 +369,7 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
 def update_values(cube):
 
     if cube._cvalues is None and cube._values is None:
-        logger.critical("Something is wrong. STOP!")
-        sys.exit(9)
+        raise ValueError("Cube values and cvalues are both None")
 
     elif cube._cvalues is None:
         return cube._values, None

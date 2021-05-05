@@ -20,7 +20,10 @@
 *    option              o     Options. 1=print to stdout
 *
 * RETURNS:
-*    Result pointers are updated
+*    0 if successful
+*    2 if failed to open file
+*    3 error reading SEGY EBCDIC header
+*    4 error in converting to asciiheader
 *
 * TODO/ISSUES/BUGS/NOTES:
 *
@@ -131,7 +134,8 @@ cube_scan_segy_hdr(char *file,
     fc = fopen(file, "rb");
 
     if (fc == NULL) {
-        exit(-1); /* Could not open file */
+        throw_exception("Could not open file");
+        return; /* Could not open file */
     }
     /*
      *-------------------------------------------------------------------------
@@ -142,7 +146,8 @@ cube_scan_segy_hdr(char *file,
 
     n = fread(ebcdicheader, 3200, 1, fc);
     if (n != 1) {
-        exit(-1); /* Error reading SEGY EBCDIC header */
+        throw_exception("Error reading SEGY EBCDIC header");
+        return; /* Error reading SEGY EBCDIC header */
     }
 
     /*
@@ -155,7 +160,8 @@ cube_scan_segy_hdr(char *file,
     for (i = 0; i < 40; i++) {
         asciiheader[i] = calloc(81, sizeof(char));
         if (asciiheader[i] == 0) {
-            exit(-1);
+            throw_exception("Error in converting to asciiheader");
+            return; /* Error in converting to asciiheader */
         }
     }
 
@@ -273,6 +279,7 @@ cube_scan_segy_hdr(char *file,
 
     if (option == 1)
         fclose(fout);
+
 }
 
 /* a function to simplify reading the binary items in the primary

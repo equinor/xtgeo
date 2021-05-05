@@ -577,7 +577,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         self._output(idx, level, string)
 
-    def critical(self, string, sysexit=True):
+    def critical(self, string, sysexit=False):
         level = -9
         idx = 9
 
@@ -586,8 +586,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         self.get_callerinfo(caller, frame)
 
         self._output(idx, level, string)
-        if sysexit:
-            raise SystemExit("STOP!")
 
     def get_callerinfo(self, caller, frame):
         the_class = self._get_class_from_frame(frame)

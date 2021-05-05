@@ -6,6 +6,7 @@ import numpy as np
 import numpy.ma as ma
 
 import xtgeo
+from xtgeo import XTGeoCLibError
 from xtgeo.xyz import Polygons
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # type: ignore
 from xtgeo.common import XTGeoDialog
@@ -235,8 +236,7 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
             0,
         )
         if ier != 0:
-            logger.critical("Error code %s, contact the author", ier)
-            raise SystemExit("Error code {}".format(ier))
+            raise XTGeoCLibError(f"Error in surf_xyz_from_ij, error code: {ier}")
 
     else:
         raise ValueError("Index i and/or j out of bounds")
@@ -315,7 +315,7 @@ def get_xy_values(self, order="C", asmasked=False):
         0,
     )
     if ier != 0:
-        logger.critical("Error code %s, contact the author", ier)
+        raise XTGeoCLibError(f"Error in surf_xy_as_values, error code: {ier}")
 
     # reshape
     xvals = xvals.reshape((self.ncol, self.nrow))

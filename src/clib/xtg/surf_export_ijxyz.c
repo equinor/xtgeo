@@ -88,7 +88,7 @@ surf_export_ijxyz(FILE *fc,
 
             if (iok != 0) {
                 logger_error(LI, FI, FU, "Error from %s", __FUNCTION__);
-                exit(313);
+                return EXIT_FAILURE;
             }
 
             if (zv < UNDEF_MAP_LIMIT) {

@@ -9,6 +9,7 @@ import segyio
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo import XTGeoCLibError
 
 xtg = XTGeoDialog()
 
@@ -161,7 +162,7 @@ def _export_segy_xtgeo(self, sfile):
     )
 
     if status != 0:
-        raise RuntimeError("Error when exporting to SEGY (xtgeo engine)")
+        raise XTGeoCLibError("Error when exporting to SEGY (xtgeo engine)")
 
     _cxtgeo.delete_intarray(ilinesp)
     _cxtgeo.delete_intarray(xlinesp)
