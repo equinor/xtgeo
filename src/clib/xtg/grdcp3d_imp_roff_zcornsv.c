@@ -73,7 +73,7 @@ grdcp3d_imp_roffbin_zcornsv(FILE *fc,
                 for (k = 0; k < nnlay; k++) {
 
                     long nsplit = splitenz[i * nnrow * nnlay + j * nnlay + k];
-                    printf("nsplit: %d, index: %d\n", nsplit, i * nnrow * nnlay + j * nnlay + k);
+
                     long n;
                     if (nsplit == 4) {
                         for (n = 0; n < 4; n++) {
