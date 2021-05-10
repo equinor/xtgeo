@@ -50,7 +50,7 @@ grd3d_translate(int nx,
 
 {
     /* locals */
-    int i, j, ic, ib, nzcorn, iok = 0;
+    int i, j, ic, ib, iok = 0;
 
     logger_info(LI, FI, FU, "Do translation or pure flipping");
 
@@ -80,8 +80,7 @@ grd3d_translate(int nx,
     }
 
     /* zcorn section     */
-    nzcorn = 4 * nx * ny * (nz + 1);
-    for (ic = 0; ic <= nzcorn; ic++) {
+    for (ic = 0; ic < nzcornin; ic++) {
         zcornsv[ic] = zflip * (zcornsv[ic] + zshift);
     }
 
