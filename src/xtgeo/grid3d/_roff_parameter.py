@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Union
 
 import numpy as np
+
 import roffio
 
 
@@ -207,6 +208,9 @@ class RoffParameter:
             list,
             {"parameter": ["codeValues", "codeNames"]},
         )
+        # The found dictionary contains all tags/tagkeys which we are
+        # interested in with None as the initial value. We go through the
+        # tag/tagkeys in the file and replace as they are found.
         found = {
             tag_name: {key_name: None for key_name in tag_keys.keys()}
             for tag_name, tag_keys in translate_kws.items()
