@@ -8,7 +8,7 @@
  *    Convert from ROFF arrays to XTGeo arrays: ZCORN
  *
  * ARGUMENTS:
- *    nx, ny, nz       i     NLAY dimens
+ *    nx, ny, nz       i     Dimension (nx=ncol, ny=nrow, nz=nlay)
  *    zoffset          i     Offsets in XYZ spesified in ROFF
  *    zscale           i     Scaling in XYZ spesified in ROFF
  *    splitenz         i     Split node vector
