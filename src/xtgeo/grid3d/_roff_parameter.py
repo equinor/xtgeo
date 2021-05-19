@@ -230,7 +230,7 @@ class RoffParameter:
                             if found[tag][key[0]] is not None:
                                 raise ValueError(
                                     f"Multiple tag, tagkey pair {tag}, {key[0]}"
-                                    " in {filelike}"
+                                    f" in {filelike}"
                                 )
                             found[tag][key[0]] = key[1]
 
