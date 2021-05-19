@@ -103,10 +103,7 @@ def roff_grids(draw, dim=dimensions):
     )
     num_nodes = (dims[0] + 1) * (dims[1] + 1) * (dims[2] + 1)
     split_enz = draw(
-        # st.one_of(
-        #    st.just(None),
-        arrays(shape=num_nodes, dtype=np.int8, elements=st.sampled_from([1, 4])),
-        # )
+        arrays(shape=num_nodes, dtype=np.int8, elements=st.sampled_from([1, 4]))
     ).tobytes()
     if split_enz is not None:
         numz = sum(split_enz)
