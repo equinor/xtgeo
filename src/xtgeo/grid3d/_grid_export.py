@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import h5py
 import hdf5plugin
+import roffio
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -21,9 +22,17 @@ logger = xtg.functionlogger(__name__)
 VALIDXTGFMT = (221, 421, 441, 444, 841, 844, 881, 884)
 
 
-def export_roff(self, gfile, option):
-    """Export grid to ROFF format (binary)."""
-    RoffGrid.from_xtgeo_grid(self).to_file(gfile)
+def export_roff(self, gfile, roff_format="binary"):
+    """Export grid to ROFF format."""
+    if roff_format == "binary":
+        RoffGrid.from_xtgeo_grid(self).to_file(gfile, roff_format=roffio.Format.BINARY)
+    elif roff_format == "ascii":
+        RoffGrid.from_xtgeo_grid(self).to_file(gfile, roff_format=roffio.Format.ASCII)
+    else:
+        raise ValueError(
+            "Incorrect format specifier in export_roff,"
+            f" expected 'binary' or 'ascii, got {roff_format}"
+        )
 
 
 def export_grdecl(self, gfile, mode):

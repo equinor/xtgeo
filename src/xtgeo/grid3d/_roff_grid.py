@@ -340,7 +340,7 @@ class RoffGrid:
 
         return RoffGrid(nx, ny, nz, corner_lines, zvals, split_enz, active, subgrids)
 
-    def to_file(self, filelike):
+    def to_file(self, filelike, roff_format=roffio.Format.BINARY):
         """
         Writes the RoffGrid to a roff file
         Args:
@@ -367,7 +367,7 @@ class RoffGrid:
             data["subgrids"] = {"nLayers": self.subgrids}
         if self.split_enz is not None:
             data["zvalues"]["splitEnz"] = self.split_enz
-        roffio.write(filelike, data)
+        roffio.write(filelike, data, roff_format=roff_format)
 
     @staticmethod
     def from_file(filelike):
