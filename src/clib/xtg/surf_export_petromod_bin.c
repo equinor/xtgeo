@@ -35,9 +35,10 @@ surf_export_petromod_bin(FILE *fc, char *dsc, double *surfzv, long nsurf)
 
     int swap = x_swap_check();
 
-    if (fc == NULL)
-        logger_critical(LI, FI, FU, "Cannot open file in %s", FU);
-
+    if (fc == NULL) {
+        throw_exception("Cannot open file in: surf_export_petromod_bin");
+        return;
+    }
     int someid = 587405668;
     if (swap == 1)
         SWAP_INT(someid);
@@ -58,7 +59,9 @@ surf_export_petromod_bin(FILE *fc, char *dsc, double *surfzv, long nsurf)
             SWAP_FLOAT(myvalue);
 
         if (fwrite(&myvalue, 4, 1, fc) != 1) {
-            logger_critical(LI, FI, FU, "Error writing to Storm format. Bug in %s", FU);
+            throw_exception(
+              "Error writing to Storm format. Bug in: surf_export_petromod_bin");
+            return;
         }
     }
     logger_info(LI, FI, FU, "Write Petromod binary map file... done");

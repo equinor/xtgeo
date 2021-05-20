@@ -30,8 +30,8 @@
 *
 * RETURNS:
 *    Function: 0: upon success. If problems <> 0:
-*          - 4 less than 10% sampled
-*          - 5 No cells sampled
+               1 on failure
+*             -4 less than 10% sampled
 *
 * TODO/ISSUES/BUGS:
 *
@@ -111,7 +111,8 @@ cube_resample_cube(int ncx1,
 
                 } else {
                     logger_error(LI, FI, FU, "Invalid option1 (%d) to %s", option1, FU);
-                    exit(-1);
+                    throw_exception("Invalid option1 in cube_resample_cube");
+                    return EXIT_FAILURE;
                 }
 
                 if (ier == EXIT_SUCCESS) {
@@ -133,7 +134,8 @@ cube_resample_cube(int ncx1,
 
     /* no nodes sampled */
     if (nm == 0) {
-        return -5;
+        throw_exception("No cube overlap in sampling, in: cube_resample_cube");
+        return EXIT_FAILURE;
     }
 
     logger_info(LI, FI, FU, "Resampling cube ... done");

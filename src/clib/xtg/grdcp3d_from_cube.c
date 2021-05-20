@@ -81,9 +81,10 @@ grdcp3d_from_cube(int ncol,
             iok = cube_xy_from_ij(i, j, &xcoord, &ycoord, xori, xinc, yori, yinc,
                                   ncol + 1, nrow + 1, yflip, rotation, 0);
 
-            if (iok != 0)
-                logger_critical(LI, FI, FU, "Bug in %s", FU);
-
+            if (iok != 0) {
+                throw_exception("Bug in: grdcp3d_from_cube");
+                return;
+            }
             coordsv[ibc++] = xcoord;
             coordsv[ibc++] = ycoord;
             coordsv[ibc++] = zori;

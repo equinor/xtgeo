@@ -36,7 +36,8 @@ x_ib2ijk(long ib, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start)
         ix = -99;
         iy = -99;
         iz = -99;
-        logger_critical(LI, FI, FU, "Critical error (bug) from %s", FU);
+        throw_exception("Critical error in: x_ib2ijk");
+        return;
     }
 
     /* values to return */
@@ -71,7 +72,8 @@ x_ic2ijk(long ic, int *i, int *j, int *k, int nx, int ny, int nz, int ia_start)
         ix = -99;
         iy = -99;
         iz = -99;
-        logger_critical(LI, FI, FU, "Critical error (bug) from %s", FU);
+        throw_exception("Critical error in: x_ic2ijk");
+        return;
     }
 
     /* values to return */

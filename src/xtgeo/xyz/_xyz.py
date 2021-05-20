@@ -190,8 +190,7 @@ class XYZ:
         froot, fext = pfile.splitext(lower=True)
         if fformat == "guess":
             if not fext:
-                logger.critical("File extension missing. STOP")
-                raise SystemExit
+                raise ValueError(f"File extension missing for file: {pfile}")
 
             fformat = fext
 

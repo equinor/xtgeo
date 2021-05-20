@@ -328,20 +328,6 @@ surf_export_irap_bin(FILE *fc,
                      int option);
 
 int
-surf_export_irap_bin_test(FILE *fc,
-                          int mx,
-                          int my,
-                          double xori,
-                          double yori,
-                          double xinc,
-                          double yinc,
-                          double rot,
-                          double *swig_np_dbl_inplaceflat_v1,  // *rsurfv,
-                          long n_swig_np_dbl_inplaceflat_v1,   // nsurf
-                          mbool *swig_np_boo_inplaceflat_v1,   // *maskv,
-                          long n_swig_np_boo_inplaceflat_v1);  // nmask
-
-int
 surf_export_irap_ascii(FILE *fc,
                        int mx,
                        int my,
@@ -1337,16 +1323,6 @@ grd3d_export_egrid(int nx,
                    int mode);
 
 void
-grd3d_export_grdeclprop(int nx,
-                        int ny,
-                        int nz,
-                        int formatspec,
-                        char *propname,
-                        double *p_fprop_v,
-                        char *filename,
-                        int filemode);
-
-void
 grd3d_export_grdeclprop2(int nx,
                          int ny,
                          int nz,
@@ -2107,3 +2083,13 @@ well_mask_shoulder(double *swig_np_dbl_inplaceflat_v1,  // lvec
                    int *swig_np_int_inplaceflat_v2,     // mask
                    long n_swig_np_int_inplaceflat_v2,   // nmask
                    double distance);
+
+
+void
+throw_exception(char *msg);
+
+void
+clear_exception();
+
+char
+*check_exception();

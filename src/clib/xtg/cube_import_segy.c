@@ -234,7 +234,8 @@ cube_import_segy(char *file,
     } else if (gn_formatcode == 8) {
         nzbytes = 1; /* 1 byte signed integer */
     } else {
-        exit(-1);
+        throw_exception("Unknown gn_formatcode, must be in: [1, 2, 3, 4, 5, 8]");
+        return;
     }
 
     /* The caller should do a check if file exist! */
@@ -398,7 +399,8 @@ cube_import_segy(char *file,
         if (n2set2[1] < 0) {
             xyscalar = -1.0 / (double)n2set2[1];
         } else if (n2set2[1] == 0) {
-            exit(-1);
+            throw_exception("n2set2[1]: is 0 in cube_import_segy");
+            return;
         }
 
         ntsamples = n2set3[13];
@@ -484,7 +486,10 @@ cube_import_segy(char *file,
             /* allocate space for traces */
             ctracebuffer = calloc(4 * ntsamples, sizeof(char));
             if (ctracebuffer == 0) {
-                exit(-1); /* Memory allocation failure of traces. STOP" */
+                free(ctracebuffer);
+                throw_exception(
+                  "Memory allocation failure of traces in cube_import_segy");
+                return; /* Memory allocation failure of traces. STOP" */
             }
             ctracedata = ctracebuffer; /* why + 240?? */
             itracedata = (int *)ctracedata;
@@ -504,7 +509,8 @@ cube_import_segy(char *file,
             /* read the trace */
             ier = fread(ctracebuffer, nzbytes * ntsamples, 1, fc);
             if (ier != 1) {
-                exit(-1);
+                throw_exception("ier != 1 in cube_import_segy");
+                return;
             }
 
             ii = mi - ninline[0] + 1;
@@ -540,7 +546,8 @@ cube_import_segy(char *file,
                     ib = x_ijk2ib(ii, jj, kk, ninlines, nxlines, ntsamples, 0);
 
                     if (ib < 0) {
-                        exit(9);
+                        throw_exception("ib < 0 in cube_import_segy");
+                        return;
                     }
 
                     p_val_v[ib] = ftracedata[k];
@@ -574,7 +581,8 @@ cube_import_segy(char *file,
             }
 
             else {
-                exit(-1);
+                throw_exception("Invalid gn_formatcode in cube_import_segy");
+                return;
             }
             if (ntracecount == ntraces) {
                 break;

@@ -82,7 +82,8 @@ grd3d_reduce_onelayer(int nx,
             ncc++;
         }
     } else {
-        logger_critical(LI, FI, FU, "IFLAG other than 0 not implemented for <%s>", FU);
+        throw_exception("IFLAG other than 0 not implemented in: grd3d_reduce_onelayer");
+        return EXIT_FAILURE;
     }
 
     *nactive = ncc;

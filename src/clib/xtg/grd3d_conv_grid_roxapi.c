@@ -51,9 +51,13 @@ grd3d_conv_grid_roxapi(int ncol,
 {
 
     long ntotv[1] = { nactin };
-    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 1) != 0)
-        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
-
+    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 1) != 0) {
+        memset(tpillars, 0, sizeof(double) * ntpillars);
+        memset(bpillars, 0, sizeof(double) * nbpillars);
+        memset(zcorners, 0, sizeof(double) * nzcorners);
+        throw_exception("Errors in array lengths checks in grd3d_conv_grid_roxapi");
+        return EXIT_FAILURE;
+    }
     long ic, ib, ib0, ib1, ib2, ib3;
     int icn, jcn, nn, i = 0, j = 0, k = 0;
     double z0, z1, z2, z3;

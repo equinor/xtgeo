@@ -203,9 +203,10 @@ cube_export_segy(char *sfile,
     ier = surf_xy_as_values(xori, xinc, yori, yinc * yflip, nx, ny, rotation, xv, nxy,
                             yv, nxy, 1);
 
-    if (ier != 0)
-        exit(-132);
-
+    if (ier != 0) {
+        throw_exception("surf_xy_as_values did not complete successfully");
+        return EXIT_FAILURE;
+    }
     for (i = 1; i <= nx; i++) {  // inline
         for (j = 1; j <= ny; j++) {
             nc = 0;

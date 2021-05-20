@@ -59,9 +59,10 @@ grd3d_calc_dxdy(int nx,
 
     long ntot[3] = { nactnum, ndx, ndy };
 
-    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 3) != 0)
-        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
-
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 3) != 0) {
+        throw_exception("Errors in array lengths checks in grd3d_calc_dxdy");
+        return EXIT_FAILURE;
+    }
     if (option2 == 0)
         logger_debug(LI, FI, FU, "Option2 not in use");
 

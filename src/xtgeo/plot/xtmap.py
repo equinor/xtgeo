@@ -191,7 +191,7 @@ class Map(BasePlot):
             if px.get_closed():
                 self._ax.add_artist(px)
             else:
-                xtg.critical("A polygon is not closed...")
+                IOError(f"A polygon is not closed: {px}")
 
     def plot_polygons(self, fpoly, idname="POLY_ID", color="k", linewidth=0.8):
         """Plot a polygons instance.

@@ -79,9 +79,10 @@ surf_sample_grd3d_lay(int nx,
 
     long ntot[1] = { nact };
 
-    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 1) != 0)
-        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
-
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntot, 1) != 0) {
+        throw_exception("Errors in array lengths checks in: surf_sample_grd3d_lay");
+        return;
+    }
     if (rotation != 0.0) {
         logger_error(LI, FI, FU, "Map rotation not supported so far...");
     }

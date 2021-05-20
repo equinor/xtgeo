@@ -43,13 +43,11 @@ x_verify_vectorlengths(int nx,
     long ntottrue = nx * ny * nz;
 
     if (ncoord > 0 && (ncoord != ncoordtrue)) {
-        logger_error(LI, FI, FU, "Error in ncoord check: %ld vs %ld (true)", ncoord,
-                     ncoordtrue);
+        throw_exception("Error in ncoord check: ncoord > 0 and ncoord != ncoordtrue");
         return EXIT_FAILURE;
     }
     if (nzcorn > 0 && (nzcorn != nzcorntrue)) {
-        logger_error(LI, FI, FU, "Error in nzcorn check: %ld vs %ld (true)", nzcorn,
-                     nzcorntrue);
+        throw_exception("Error in ncoord check: nzcorn > 0 and nzcorn != nzcoordtrue");
         return EXIT_FAILURE;
     }
     int i;

@@ -57,9 +57,10 @@ grd3d_adj_cells(int ncol,
 {
 
     long ntotv[3] = { nactin, nprop1, nprop2 };
-    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 3) != 0)
-        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
-
+    if (x_verify_vectorlengths(ncol, nrow, nlay, ncoordin, nzcornin, ntotv, 3) != 0) {
+        throw_exception("Errors in array lengths checks in grd3d_adj_cells");
+        return EXIT_FAILURE;
+    }
     long ib, nnc[6];
     int icn, jcn, kcn, nni, faulted;
     int *useactnum;

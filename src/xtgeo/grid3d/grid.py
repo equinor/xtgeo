@@ -618,18 +618,28 @@ class Grid(_Grid3D):
 
         gfile.check_folder(raiseerror=OSError)
 
-        if fformat in ("roff", "roff_binary", "roff_bin", "roffbin"):
+        valid_formats = {
+            "roff": ["roff", "roff_binary", "roff_bin", "roffbin"],
+            "roff_ascii": ["roff_ascii", "roff_asc", "roffasc"],
+            "grdecl": ["grdecl"],
+            "bgrdecl": ["bgrdecl"],
+            "egrid": ["egrid"],
+        }
+
+        if fformat in valid_formats["roff"]:
             _grid_export.export_roff(self, gfile.name, "binary")
-        elif fformat in ("roff_ascii", "roff_asc", "roffasc"):
+        elif fformat in valid_formats["roff_ascii"]:
             _grid_export.export_roff(self, gfile.name, "ascii")
-        elif fformat == "grdecl":
+        elif fformat in valid_formats["grdecl"]:
             _grid_export.export_grdecl(self, gfile.name, 1)
-        elif fformat == "bgrdecl":
+        elif fformat in valid_formats["bgrdecl"]:
             _grid_export.export_grdecl(self, gfile.name, 0)
-        elif fformat == "egrid":
+        elif fformat in valid_formats["egrid"]:
             _grid_export.export_egrid(self, gfile.name)
         else:
-            raise SystemExit("Invalid file format")
+            raise ValueError(
+                f"Invalid file format: {fformat}, valid options are: {valid_formats}"
+            )
 
     def to_hdf(
         self,

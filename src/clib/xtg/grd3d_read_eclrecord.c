@@ -68,9 +68,10 @@ grd3d_read_eclrecord(FILE *fc,
     if (x_swap_check() == 1)
         swap = 1;
 
-    if (fc == NULL)
-        logger_critical(LI, FI, FU, "Cannot use file (NULL pointer)");
-
+    if (fc == NULL) {
+        throw_exception("Cannot use file (NULL pointer in grd3d_read_eclrecord)");
+        return EXIT_FAILURE;
+    }
     if (rectype == 1)
         reclength = nint;
     if (rectype == 2)

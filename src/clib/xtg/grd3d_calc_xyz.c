@@ -52,9 +52,10 @@ grd3d_calc_xyz(int nx,
 {
 
     long ntotv[4] = { nact, npx, npy, npz };
-    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntotv, 4) != 0)
-        logger_critical(LI, FI, FU, "Bug: Errors in array lengths checks in %s", FU);
-
+    if (x_verify_vectorlengths(nx, ny, nz, ncoord, nzcorn, ntotv, 4) != 0) {
+        throw_exception("Errors in array lengths checks in grd3d_calc_xyz");
+        return;
+    }
     int i, j, k;
     double xv, yv, zv;
 
