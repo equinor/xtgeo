@@ -63,9 +63,10 @@ grd3d_export_grdeclprop2(int nx,
     if (flag == 1)
         fc = fopen(filename, "ab");
 
-    if (fc == NULL)
-        logger_critical(LI, FI, FU, "Cannot open file: %s ", filename);
-
+    if (fc == NULL) {
+        throw_exception("Could not open file: grd3d_export_grdeclprop2");
+        return;
+    }
     nlen = nx * ny * nz;
 
     if (mode == 0) {

@@ -60,9 +60,10 @@ grd3d_export_egrid(int nx,
 
     fc = fopen(filename, "wb");
 
-    if (fc == NULL)
-        logger_critical(LI, FI, FU, "Cannot open file %s", filename);
-
+    if (fc == NULL) {
+        throw_exception("Could not open file in: grd3d_export_egrid");
+        return;
+    }
     /*
      *-------------------------------------------------------------------------
      * FILEHEAD

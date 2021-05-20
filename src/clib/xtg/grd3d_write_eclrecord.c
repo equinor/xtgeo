@@ -64,9 +64,10 @@ grd3d_write_eclrecord(FILE *fc,
     if (x_swap_check() == 1)
         swap = 1;
 
-    if (fc == NULL)
+    if (fc == NULL) {
+        throw_exception("Could not open file in: grd3d_write_eclrecord");
         return EXIT_FAILURE;
-
+    }
     if (rectype == 1) {
         nbyte = 4;
         strncpy(mytype, "INTE", 4);

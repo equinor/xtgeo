@@ -71,9 +71,10 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
     /* do scan */
     nkeys = grd3d_scan_eclbinary(fc, keywords, rectypes, reclengths, recstarts, maxkw);
 
-    if (nkeys <= 0)
-        logger_error(LI, FI, FU, "No keys received");
-
+    if (nkeys <= 0) {
+        throw_exception("No keys received");
+        return EXIT_FAILURE;
+    }
     /* now look for SEQNUM and INTEHEADs */
     tofree = keywords;
     ic = 0;
@@ -111,7 +112,13 @@ grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax
             nc++;
 
             if (nc >= nmax) {
-                logger_critical(LI, FI, FU, "Fail in dimensions in %s", FU);
+                free(tofree);
+                free(keywords);
+                free(rectypes);
+                free(reclengths);
+                free(recstarts);
+                throw_exception("Fail in dimensions in: grd3d_ecl_tsteps, nc >= nmax");
+                return EXIT_FAILURE;
             }
         }
 

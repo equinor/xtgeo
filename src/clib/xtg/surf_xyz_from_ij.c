@@ -119,7 +119,10 @@ surf_xyz_from_ij(int i,
     /* if (xdist<0 && ydist<0)  beta=2*PI - beta; */
     /* if (xdist>=0 && ydist<0) beta=PI + beta; */
 
-    if (beta < 0 || beta > PI / 2.0) {
+    if (beta < 0 || beta > PI / 2.0 || isnan(beta)) {
+        *x = 0.0;
+        *y = 0.0;
+        throw_exception("Unvalid value for beta in: surf_xyz_from_ij");
         return (-9);
     }
 

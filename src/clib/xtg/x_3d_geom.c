@@ -142,6 +142,7 @@ x_isect_line_plane(double *nvector, double *line_v, double *point_v, int option)
 
     if (option == 2 && (u < 0.0 || u > 1.0)) {
         /* return 2 if the line does not cross the plane */
+        throw_exception("Line does not cross the plane in: x_isect_line_plane");
         return (2);
     }
 

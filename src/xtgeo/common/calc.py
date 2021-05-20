@@ -4,6 +4,7 @@ import numpy as np
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
 from xtgeo.common import XTGeoDialog
+from xtgeo import XTGeoCLibError
 
 xtg = XTGeoDialog()
 
@@ -41,7 +42,8 @@ def ijk_to_ib(i, j, k, nx, ny, nz, ibbase=0, forder=True):
     else:
         # c order
         ib = _cxtgeo.x_ijk2ic(i, j, k, nx, ny, nz, ibbase)
-
+    if ib < 0:
+        raise IndexError(f"Negative index: {ib}")
     if ibbase == 0 and ib > nx * ny * nz - 1:
         xtg.warn("Something is wrong with IJK conversion")
         xtg.warn(
@@ -196,7 +198,8 @@ def point_in_tetrahedron(x0, y0, z0, vertices):
     vertices = np.array(vertices, dtype=np.float64)
 
     status = _cxtgeo.x_point_in_tetrahedron(x0, y0, z0, vertices)
-
+    if status == 1:
+        raise XTGeoCLibError("Error in x_point_in_tetrahedron")
     if status == 100:
         return True
 

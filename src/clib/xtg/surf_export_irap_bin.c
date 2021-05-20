@@ -115,9 +115,10 @@ surf_export_irap_bin(FILE *fc,
      * ---------------------------------------------------------------------------------
      */
 
-    if (fc == NULL)
+    if (fc == NULL) {
+        throw_exception("Could not open file in: surf_export_irap_bin");
         return EXIT_FAILURE;
-
+    }
     /* first line in header */
     _writeint(fc, 32, swap);
     _writeint(fc, -996, swap);

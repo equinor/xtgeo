@@ -91,8 +91,7 @@ grd3cp3d_xtgformat2to1_geom(long ncol,
     }
 
     if (ib != nzcorn1) {
-        logger_critical(LI, FI, FU, "Something went wrong in %s  IB %ld vs NZCORN1 %ld",
-                        FU, ib, nzcorn1);
+        throw_exception("Error in grd3cp3d_xtgformat2to1_geom, ib != nzcorn1");
         return EXIT_FAILURE;
     }
 

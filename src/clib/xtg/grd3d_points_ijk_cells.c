@@ -388,11 +388,20 @@ grd3d_points_ijk_cells(double *xvec,
 
     logger_info(LI, FI, FU, "Entering routine %s", FU);
 
-    if (nxvec != nyvec || nyvec != nzvec)
-        logger_critical(LI, FI, FU, "Input bug");
-    if (nivec != njvec || nivec != nkvec)
-        logger_critical(LI, FI, FU, "Input bug");
-
+    if (nxvec != nyvec || nyvec != nzvec) {
+        memset(ivec, 0, sizeof(int) * nivec);
+        memset(jvec, 0, sizeof(int) * njvec);
+        memset(kvec, 0, sizeof(int) * nkvec);
+        throw_exception("nxvec != nyvec or nyvec != nzvec in: grd3d_points_ijk_cells");
+        return EXIT_FAILURE;
+    }
+    if (nivec != njvec || nivec != nkvec) {
+        memset(ivec, 0, sizeof(int) * nivec);
+        memset(jvec, 0, sizeof(int) * njvec);
+        memset(kvec, 0, sizeof(int) * nkvec);
+        throw_exception("nivec != njvec or nivec != nkvec in: grd3d_points_ijk_cells");
+        return EXIT_FAILURE;
+    }
     int ic;
     for (ic = 0; ic < nxvec; ic++) {
         double xc = xvec[ic];

@@ -21,7 +21,7 @@
  *
  * RETURNS:
  *    Function:  0: upon success. If problems:
- *              -1: Some problems...
+ *               1: failure
  *    Result x y z value is updated
  *
  * TODO/ISSUES/BUGS:
@@ -72,9 +72,10 @@ cube_coord_val_ijk(int i,
     *xcor = xcoord;
     *ycor = ycoord;
 
-    if (ier1 != 0)
-        exit(-1);
-
+    if (ier1 != 0) {
+        throw_exception("ier1 != 0 in: cube_coord_val_ijk");
+        return EXIT_FAILURE;
+    }
     *zcor = zori + (k - 1) * zinc;
 
     /* and now update the value: */

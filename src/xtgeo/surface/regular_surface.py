@@ -1048,7 +1048,7 @@ class RegularSurface:
             _regsurf_export.export_xtgregsurf(self, mfile)
 
         else:
-            logger.critical("Invalid file format")
+            raise ValueError(f"Invalid file format: {fformat}")
 
         logger.info("Export RegularSurface to file or memstream... done")
 
@@ -2847,8 +2847,7 @@ class RegularSurface:
                 try:
                     vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
                 except ValueError as emsg:
-                    logger.critical("Cannot reshape array: %s", emsg)
-                    raise
+                    raise ValueError(f"Cannot reshape array: {values}") from emsg
 
             self._values = vals
 
@@ -2861,8 +2860,7 @@ class RegularSurface:
                 try:
                     vals = ma.reshape(vals, (self.ncol, self.nrow), order="C")
                 except ValueError as emsg:
-                    logger.critical("Cannot reshape array: %s", emsg)
-                    raise
+                    raise ValueError(f"Cannot reshape array: {values}") from emsg
 
             self._values = vals
 

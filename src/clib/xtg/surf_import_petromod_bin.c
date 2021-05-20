@@ -46,9 +46,12 @@ surf_import_petromod_bin(FILE *fc,
 
     logger_info(LI, FI, FU, "Read PETROMOD binary map file: %s", FU);
 
-    if (mx * my != nsurf)
-        logger_critical(LI, FI, FU, "mx * my != nsurf, bug in %s", FU);
-
+    if (mx * my != nsurf) {
+        memset(surfzv, 0, nsurf * sizeof(double));
+        dsc[0] = '\0';
+        throw_exception("mx * my != nsurf, bug in surf_import_petromod_bin");
+        return;
+    }
     if (mode == 0)
         logger_info(LI, FI, FU, "Scan mode!");
     if (mode == 1)
@@ -62,9 +65,12 @@ surf_import_petromod_bin(FILE *fc,
         swap = 1;
 
     float myfloat;
-    if (fread(&myfloat, 4, 1, fc) != 1)
-        logger_critical(LI, FI, FU, "Error in fread() in %s", FU);
-
+    if (fread(&myfloat, 4, 1, fc) != 1) {
+        memset(surfzv, 0, nsurf * sizeof(double));
+        dsc[0] = '\0';
+        throw_exception("Failed to read file in: surf_import_petromod_bin");
+        return;
+    }
     if (swap)
         SWAP_FLOAT(myfloat);
     logger_info(LI, FI, FU, "TAG %f", myfloat);
@@ -86,8 +92,10 @@ surf_import_petromod_bin(FILE *fc,
     long ic = 0;
     for (in = 0; in < mx; in++) {
         for (jn = 0; jn < my; jn++) {
-            if (fread(&myfloat, 4, 1, fc) != 1)
-                logger_critical(LI, FI, FU, "Error in fread() in %s", FU);
+            if (fread(&myfloat, 4, 1, fc) != 1) {
+                throw_exception("Error when reading file in: surf_import_petromod_bin");
+                return;
+            }
             if (swap)
                 SWAP_FLOAT(myfloat);
             if (fabs(myfloat - undef) < FLOATEPS)

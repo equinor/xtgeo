@@ -34,7 +34,6 @@ SFILE4 = join(TPATH, "cubes/etc/ib_test_cube2.segy")
 @pytest.fixture()
 def loadsfile1():
     """Fixture for loading a SFILE1"""
-    logger.info("Load seismic file 1")
     return Cube(SFILE1)
 
 
@@ -50,21 +49,17 @@ def test_create():
 
 def test_segy_scanheader():
     """Scan SEGY and report header, using XTGeo internal reader."""
-    logger.info("Scan header...")
-
-    if not os.path.isfile(SFILE1):
-        raise Exception("No such file")
-
     Cube().scan_segy_header(SFILE1, outfile=join(TMD, "cube_scanheader"))
 
 
 def test_segy_scantraces():
     """Scan and report SEGY first and last trace (internal reader)."""
-
-    print("HELLO")
-    logger.info("Scan traces...")
-
     Cube().scan_segy_traces(SFILE1, outfile="TMP/cube_scantraces")
+
+
+def test_segy_no_file_exception():
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
+        Cube().scan_segy_traces("not_a_file", outfile="not_relevant")
 
 
 def test_storm_import():
