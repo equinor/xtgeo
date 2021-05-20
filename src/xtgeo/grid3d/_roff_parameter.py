@@ -188,9 +188,9 @@ class RoffParameter:
             The RoffGrid in the roff file.
         """
 
-        def should_skip_parameter(tag, tagkey, keyvalue):
-            if tag == "parameter" and tagkey == "name":
-                if name is None or keyvalue == name:
+        def should_skip_parameter(tag, key):
+            if tag == "parameter" and key[0] == "name":
+                if name is None or key[1] == name:
                     return False
                 return True
             return False
@@ -223,8 +223,11 @@ class RoffParameter:
                         # We have already found the right parameter so skip
                         # reading and potentially overwriting
                         continue
+                    # We do not destruct keys yet as this fetches the value too early.
+                    # key is not a tuple but an object that fetches the value when
+                    # __getitem__ is called.
                     for key in keys:
-                        if should_skip_parameter(tag, key[0], key[1]):
+                        if should_skip_parameter(tag, key):
                             # Found a parameter, but not the one we are looking for
                             # reset and look on
                             for key_name in found["parameter"].keys():

@@ -415,6 +415,9 @@ class RoffGrid:
         with roffio.lazy_read(filelike) as tag_generator:
             for tag, keys in tag_generator:
                 if tag in found:
+                    # We do not destruct keys yet as this fetches the value too early.
+                    # key is not a tuple but an object that fetches the value when
+                    # __getitem__ is called.
                     for key in keys:
                         if key[0] in found[tag]:
                             if found[tag][key[0]] is not None:
