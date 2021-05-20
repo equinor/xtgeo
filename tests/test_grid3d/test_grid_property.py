@@ -267,22 +267,6 @@ def test_roffbin_import1():
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
-def test_roffbin_import1_roffapiv2():
-    """Test of import of ROFF binary using new API"""
-
-    logger.info("Name is {}".format(__name__))
-
-    x = GridProperty()
-    logger.info("Import roff...")
-    x.from_file(TESTFILE1, fformat="roff", name="PORO", _roffapiv=2)
-
-    logger.info(repr(x.values))
-    logger.info(x.values.dtype)
-    logger.info("Porosity is {}".format(x.values))
-    logger.info("Mean porosity is {}".format(x.values.mean()))
-    assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
-
-
 def test_roffbin_import1_new():
     """Test ROFF import, new code May 2018"""
     logger.info("Name is {}".format(__name__))
@@ -292,6 +276,7 @@ def test_roffbin_import1_new():
     x.from_file(TESTFILE1, fformat="roff", name="PORO")
     logger.info("Porosity is {}".format(x.values))
     logger.info("Mean porosity is {}".format(x.values.mean()))
+    assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
 
 
 def test_roffbin_import2():
@@ -319,59 +304,6 @@ def test_roffbin_import2():
 
     logger.info("Mean HCPV is {}".format(hc.values.mean()))
     tsetup.assert_almostequal(hc.values.mean(), 1446.4611912446985, 0.0001)
-
-
-def test_roffbin_import2_roffapiv2():
-    """Import roffbin, with several props in one file. API version 2"""
-
-    logger.info("Name is {}".format(__name__))
-    dz = GridProperty()
-    logger.info("Import roff...")
-    dz.from_file(TESTFILE2, fformat="roff", name="Z_increment", _roffapiv=2)
-
-    logger.info(repr(dz.values))
-    logger.info(dz.values.dtype)
-    logger.info("Mean DZ is {}".format(dz.values.mean()))
-
-    hc = GridProperty()
-    logger.info("Import roff...")
-    hc.from_file(TESTFILE2, fformat="roff", name="Oil_HCPV", _roffapiv=2)
-
-    logger.info(repr(hc.values))
-    logger.info(hc.values.dtype)
-    logger.info(hc.values3d.shape)
-    _ncol, nrow, _nlay = hc.values3d.shape
-
-    assert nrow == 100, "NROW from shape (Emerald)"
-
-    logger.info("Mean HCPV is {}".format(hc.values.mean()))
-    tsetup.assert_almostequal(hc.values.mean(), 1446.4611912446985, 0.0001)
-
-
-# def test_eclinit_import():
-#     """Property import from Eclipse, a grid object first. Eclipse GRID"""
-
-#     logger.info('Name is {}'.format(__name__))
-#     gg = Grid(TESTFILE3, fformat="grid")
-
-#     actval = gg.get_actnum().values
-
-#     print(actval[10, 0: 14, 3])
-
-#     po = GridProperty()
-#     logger.info("Import INIT...")
-#     po.from_file(TESTFILE4, fformat="init", name='PORO', grid=gg)
-#     logger.debug(po.values[10, 0: 14, 3])
-#     assert po.ncol == 20, 'NX from B.INIT'
-
-#     logger.debug(po.values[0:400])
-#     assert float(po.values3d[1:2, 13:14, 0:1]) == \
-#         pytest.approx(0.17146, abs=0.001), 'PORO in cell 2 14 1'
-
-#     # discrete prop
-#     eq = GridProperty(TESTFILE4, fformat="init", name='EQLNUM', grid=gg)
-#     logger.info(eq.values[0:400])
-#     assert eq.values3d[12:13, 13:14, 0:1] == 3, 'EQLNUM in cell 13 14 1'
 
 
 def test_eclinit_import_reek():

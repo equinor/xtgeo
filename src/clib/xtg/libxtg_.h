@@ -209,22 +209,6 @@ x_byteorder(int);
 extern void *
 SwapEndian(void *Addr, const int Nb);
 
-/* new from sep 2016 */
-int
-x_roffbinstring(char *bla, FILE *fc);
-float
-x_roffgetfloatvalue(char *name, FILE *fc);
-int
-x_roffgetintvalue(char *name, FILE *fc);
-void
-x_roffgetfloatarray(float *array, int num, FILE *fc);
-void
-x_roffgetbytearray(unsigned char *array, int num, FILE *fc);
-void
-x_roffgetintarray(int *array, int num, FILE *fc);
-void
-x_roffgetchararray(char *array, int num, FILE *fc);
-
 /*
  *--------------------------------------------------------------------------------------
  * No-public grd3d routines for other issues

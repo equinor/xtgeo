@@ -644,7 +644,6 @@ class GridProperty(_Grid3D):
         gridlink=True,
         date=None,
         fracture=False,
-        _roffapiv=1,
         ijrange=None,
         zerobased=False,
     ):  # _roffapiv for devel.
@@ -702,7 +701,6 @@ class GridProperty(_Grid3D):
             grid=grid,
             date=date,
             fracture=fracture,
-            _roffapiv=_roffapiv,
             ijrange=ijrange,
             zerobased=zerobased,
         )

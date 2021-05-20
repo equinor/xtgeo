@@ -1,12 +1,16 @@
 """GridProperty (not GridProperies) export functions."""
-import struct
 import json
+import struct
 
 import numpy as np
+import roffio
+
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import _gridprop_lowlevel
+
+from ._roff_parameter import RoffParameter
 
 xtg = XTGeoDialog()
 
@@ -29,11 +33,12 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
         if "asc" in fformat:
             binary = False
 
-        # for later usage
-        append = False
-        last = True
+        if append:
+            logger.warning(
+                "Append is not implemented for roff format, defaulting to write."
+            )
 
-        export_roff(self, fobj.name, name, append=append, last=last, binary=binary)
+        export_roff(self, fobj.name, name, binary=binary)
 
     elif fformat == "grdecl":
         export_grdecl(
@@ -53,115 +58,16 @@ def to_file(self, pfile, fformat="roff", name=None, append=False, dtype=None, fm
 # Export ascii or binary ROFF format
 
 
-def export_roff(self, pfile, name, append=False, last=True, binary=True):
+def export_roff(self, pfile, name, binary=True):
 
     logger.info("Export roff to %s", pfile)
-    if self._isdiscrete:
-        _export_roff_discrete(
-            self, pfile, name, append=append, last=last, binary=binary
-        )
-    else:
-        _export_roff_continuous(
-            self, pfile, name, append=append, last=last, binary=binary
-        )
+    roff_param = RoffParameter.from_xtgeo_grid_property(self)
+    roff_param.name = name
+    roff_format = roffio.Format.ASCII
+    if binary:
+        roff_format = roffio.Format.BINARY
 
-
-def _export_roff_discrete(self, pfile, name, append=False, last=True, binary=True):
-
-    carray = _gridprop_lowlevel.update_carray(self, undef=-999)
-
-    ptr_idum = _cxtgeo.new_intpointer()
-    ptr_ddum = _cxtgeo.new_doublepointer()
-
-    # codes:
-    ptr_codes = _cxtgeo.new_intarray(256)
-    ncodes = self.ncodes
-    codenames = ""
-    logger.info("Keys: %s", self.codes.keys())
-    for inum, ckey in enumerate(sorted(self.codes.keys())):
-        if ckey is not None:
-            codenames += str(self.codes[ckey])
-            codenames += "|"
-            _cxtgeo.intarray_setitem(ptr_codes, inum, int(ckey))
-        else:
-            logger.warning("For some odd reason, None is a key. Check!")
-
-    mode = 0
-    if not binary:
-        mode = 1
-
-    if not append:
-        _cxtgeo.grd3d_export_roff_pstart(
-            mode, self._ncol, self._nrow, self._nlay, pfile
-        )
-
-    nsub = 0
-    isub_to_export = 0
-    _cxtgeo.grd3d_export_roff_prop(
-        mode,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        nsub,
-        isub_to_export,
-        ptr_idum,
-        name,
-        "int",
-        carray,
-        ptr_ddum,
-        ncodes,
-        codenames,
-        ptr_codes,
-        pfile,
-    )
-
-    if last:
-        _cxtgeo.grd3d_export_roff_end(mode, pfile)
-
-    _gridprop_lowlevel.delete_carray(self, carray)
-
-
-def _export_roff_continuous(self, pfile, name, append=False, last=True, binary=True):
-
-    carray = _gridprop_lowlevel.update_carray(self, undef=-999.0)
-
-    ptr_idum = _cxtgeo.new_intpointer()
-
-    mode = 0
-    if not binary:
-        mode = 1
-
-    if not append:
-        _cxtgeo.grd3d_export_roff_pstart(
-            mode, self._ncol, self._nrow, self._nlay, pfile
-        )
-
-    # now the actual data
-    nsub = 0
-    isub_to_export = 0
-
-    _cxtgeo.grd3d_export_roff_prop(
-        mode,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        nsub,
-        isub_to_export,
-        ptr_idum,
-        name,
-        "double",
-        ptr_idum,
-        carray,
-        0,
-        "",
-        ptr_idum,
-        pfile,
-    )
-
-    if last:
-        _cxtgeo.grd3d_export_roff_end(mode, pfile)
-
-    _gridprop_lowlevel.delete_carray(self, carray)
+    roff_param.to_file(pfile, roff_format)
 
 
 # Export ascii or binary GRDECL

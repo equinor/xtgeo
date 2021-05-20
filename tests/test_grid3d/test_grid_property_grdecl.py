@@ -12,26 +12,8 @@ import xtgeo
 from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.grid3d._gridprop_import_grdecl import open_grdecl, read_grdecl_3d_property
 
-
-def create_grid(*args, **kwargs):
-    grid = Grid()
-    grid.create_box(*args, **kwargs)
-    return grid
-
-
-indecies = st.integers(min_value=4, max_value=12)
-coordinates = st.floats(min_value=-100.0, max_value=100.0)
-increments = st.floats(min_value=1.0, max_value=100.0)
-dimensions = st.tuples(indecies, indecies, indecies)
-
-
-grids = st.builds(
-    create_grid,
-    dimension=dimensions,
-    origin=st.tuples(coordinates, coordinates, coordinates),
-    increment=st.tuples(increments, increments, increments),
-    rotation=st.floats(min_value=0.0, max_value=90),
-)
+from .grid_generator import indecies
+from .grid_generator import xtgeo_grids as grids
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
