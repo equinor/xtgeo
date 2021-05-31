@@ -51,23 +51,48 @@ def fixture_loadwell3():
     return Well(WELL3)
 
 
-def test_import(loadwell1):
+def test_import(loadwell1, snapshot):
     """Import well from file."""
 
     mywell = loadwell1
 
-    logger.debug("True well name: %s", mywell.truewellname)
-    tsetup.assert_equal(mywell.xpos, 461809.59, "XPOS")
-    tsetup.assert_equal(mywell.ypos, 5932990.36, "YPOS")
-    tsetup.assert_equal(mywell.wellname, "OP_1", "WNAME")
+    expected_result = {
+        "well_name": "OP_1",
+        "xpos": 461809.59,
+        "wpos": 5932990.36,
+        "wname": "OP_1",
+        "rkb": 0.0,
+        "nrow": 4866,
+        "ncol": 7,
+        "nlogs": 4,
+        "lognames": ["Zonelog", "Perm", "Poro", "Facies"],
+        "lognames_all": [
+            "X_UTME",
+            "Y_UTMN",
+            "Z_TVDSS",
+            "Zonelog",
+            "Perm",
+            "Poro",
+            "Facies",
+        ],
+    }
 
-    logger.info(mywell.get_logtype("Zonelog"))
-    logger.info(mywell.get_logrecord("Zonelog"))
-    logger.info(mywell.lognames_all)
-    logger.info(mywell.dataframe)
+    snapshot.assert_match(
+        mywell.dataframe.head(10).round().to_csv(line_terminator="\n"), "loadwell1.csv"
+    )
 
-    # logger.info the numpy string of Poro...
-    logger.info(type(mywell.dataframe["Poro"].values))
+    assert {
+        "well_name": mywell.wellname,
+        "xpos": mywell.xpos,
+        "wpos": mywell.ypos,
+        "wname": mywell.wname,
+        "rkb": mywell.rkb,
+        "nrow": mywell.nrow,
+        "ncol": mywell.ncol,
+        "nlogs": mywell.nlogs,
+        "lognames": mywell.lognames,
+        "lognames_all": mywell.lognames_all,
+    } == expected_result
 
 
 def test_import_long_well(loadwell3):
@@ -115,7 +140,62 @@ def test_import_well_selected_logs():
     assert mywell.mdlogname is None
 
 
-def test_change_a_lot_of_stuff(loadwell1):
+@pytest.mark.parametrize(
+    "log_name, newdict, expected",
+    [
+        ("Poro", {0: "null"}, "Cannot set a log record for a continuous log"),
+        ("not_in_lognames", {}, "No such logname: not_in_lognames"),
+        ("Facies", list(), "Input is not a dictionary"),
+    ],
+)
+def test_set_logrecord_invalid(loadwell1, log_name, newdict, expected):
+    mywell = loadwell1
+
+    with pytest.raises(ValueError, match=expected):
+        mywell.set_logrecord(log_name, newdict)
+
+
+def test_set_logrecord(loadwell1):
+    mywell = loadwell1
+
+    mywell.set_logrecord("Facies", {"some_key": "some_val"})
+    assert mywell.get_logrecord("Facies") == {"some_key": "some_val"}
+
+
+@pytest.mark.parametrize(
+    "old_name, new_name, expected",
+    [
+        ("Poro", "Perm", "New log name exists already"),
+        ("not_in_log", "irrelevant", "Input log does not exist"),
+    ],
+)
+def test_rename_log_invalid(loadwell1, old_name, new_name, expected):
+    mywell = loadwell1
+
+    with pytest.raises(ValueError, match=expected):
+        mywell.rename_log(old_name, new_name)
+
+
+def test_rename_log(loadwell1):
+    mywell = loadwell1
+    old_log = mywell.get_logrecord("Poro")
+    mywell.rename_log("Poro", "new_name")
+    assert "new_name" in mywell.lognames
+    assert mywell.get_logrecord("new_name") == old_log
+
+
+@pytest.mark.parametrize(
+    "log_name,change_from, change_to",
+    [("Poro", "CONT", "DISC"), ("Poro", "CONT", "CONT"), ("Facies", "DISC", "CONT")],
+)
+def test_set_log_type(loadwell1, log_name, change_from, change_to):
+    mywell = loadwell1
+    assert mywell.get_logtype(log_name) == change_from
+    mywell.set_logtype(log_name, change_to)
+    assert mywell.get_logtype(log_name) == change_to
+
+
+def test_loadwell1_properties(loadwell1):
     """Import well from file and try to change lognames etc."""
 
     mywell = loadwell1
@@ -123,30 +203,20 @@ def test_change_a_lot_of_stuff(loadwell1):
     assert mywell.get_logtype("Poro") == "CONT"
     assert mywell.get_logrecord("Poro") is None
 
-    with pytest.raises(ValueError) as vinfo:
-        mywell.set_logrecord("Poro", {0: "null"})
-    assert "Cannot set a log record for a continuous log" in str(vinfo.value)
-
     assert mywell.name == "OP_1"
     mywell.name = "OP_1_EDITED"
     assert mywell.name == "OP_1_EDITED"
-
-    mywell.rename_log("Poro", "PORO")
-    assert "PORO" in mywell.lognames
-
-    with pytest.raises(ValueError) as vinfo:
-        mywell.rename_log("PoroXX", "Perm")
-    assert "Input log does not exist" in str(vinfo.value)
-
-    with pytest.raises(ValueError) as vinfo:
-        mywell.rename_log("PORO", "Perm")
-    assert "New log name exists already" in str(vinfo.value)
-
-    frec1 = mywell.get_logrecord("Facies")
-    mywell.rename_log("Facies", "FACIES")
-    frec2 = mywell.get_logrecord("FACIES")
-
-    assert sorted(frec1) == sorted(frec2)
+    assert mywell.safewellname == "OP_1_EDITED"
+    assert mywell.xwellname == "OP_1_EDITED"
+    assert mywell.truewellname == "OP/1 EDITED"
+    assert mywell.isdiscrete("Facies")
+    assert not mywell.isdiscrete("Poro")
+    assert not mywell.isdiscrete("Perm")
+    assert mywell.get_logrecord("Facies") == {
+        0: "Background",
+        1: "Channel",
+        2: "Crevasse",
+    }
 
 
 def test_import_export_many(tmpdir):
@@ -455,10 +525,72 @@ def test_mask_shoulderbeds_use_tvd_md(loadwell3):
     assert "no mdlogname attribute present" in str(verr)
 
     usewell.geometrics()  # to create Q_MDEPTH as mdlogname
-
     usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"md": 1.6})
     assert not np.isnan(mywell.dataframe.at[1595, "GR"])
     assert np.isnan(usewell.dataframe.at[1595, "GR"])
+
+
+def test_geometrics_simple(string_to_well):
+    well = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+1 1 1 nan
+2 1 1 1
+3 1 1 1
+4 1 1 1"""
+    )
+    expected_result = {
+        "Q_MDEPTH": [0, 1, 2, 3],
+        "Q_INCL": [90, 90, 90, 90],
+        "Q_AZI": [90, 90, 90, 90],
+    }
+    well.geometrics()
+    result = {
+        "Q_MDEPTH": well.dataframe["Q_MDEPTH"].values.tolist(),
+        "Q_INCL": well.dataframe["Q_INCL"].values.tolist(),
+        "Q_AZI": well.dataframe["Q_AZI"].values.tolist(),
+    }
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "well_input, expected",
+    [
+        (
+            """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+0 0 1 nan
+3 4 1 1
+6 8 1 1
+11 20 1 1
+18 44 1 1""",
+            [0, 5, 10, 23, 48],
+        ),
+        (
+            """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+0 1 0 nan
+3 1 4 1
+6 1 8 1
+11 1 20 1
+18 1 44 1""",
+            [0, 5, 10, 23, 48],
+        ),
+    ],
+)
+def test_geometrics(string_to_well, well_input, expected):
+    well = string_to_well(well_input)
+    well.geometrics()
+    assert well.dataframe["Q_MDEPTH"].values.tolist() == expected
 
 
 def test_rescale_well(loadwell1):
@@ -731,6 +863,299 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
         "TCOUNT2": tcount2,
         "WELLINTV": wll,
     }
-    print(res)
 
     assert res["MATCH2"] == pytest.approx(93.67, abs=0.03)
+
+
+def test_copy(string_to_well):
+    wellstring = """1.01
+    Unknown
+    name 0 0 0
+    1
+    Zonelog DISC 1 zone1 2 zone2 3 zone3
+    0 0 0 nan
+    1 2 3 1
+    4 5 6 1
+    7 8 9 2
+    10 11 12 2
+    13 14 15 3"""
+    well = string_to_well(wellstring)
+    well_copy = well.copy()
+    assert well.dataframe.equals(well_copy.dataframe)
+    assert well.lognames == well_copy.lognames
+    assert well.name == well_copy.name
+    assert well.wname == well_copy.wname
+    assert well.rkb == well_copy.rkb
+    assert (well.xpos, well.ypos) == (well_copy.xpos, well_copy.ypos)
+    assert well.lognames_all == well_copy.lognames_all
+    assert well.lognames == well_copy.lognames
+
+
+@pytest.mark.parametrize(
+    "well_definition, expected_hlen",
+    [
+        (
+            """1.01
+    Unknown
+    name 0 0 0
+    1
+    Zonelog DISC 1 zone1 2 zone2 3 zone3
+    1 1 1 nan
+    1 2 1 1
+    1 3 1 1
+    1 4 1 2
+    1 5 1 2
+    1 6 1 3""",
+            [0, 1, 2, 3, 4, 5],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 1 1 1
+        3 1 1 1
+        4 1 1 2
+        5 1 1 2
+        6 1 1 3""",
+            [0, 1, 2, 3, 4, 5],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 1 2 1
+        3 1 4 1
+        4 1 4 2
+        5 1 5 2
+        6 1 6 3""",
+            [0, 1, 2, 3, 4, 5],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 2 1 1
+        3 3 1 1
+        4 4 1 2
+        5 5 1 2
+        6 6 1 3""",
+            [
+                0.0,
+                1.4142135623730951,
+                2.8284271247461903,
+                4.242640687119286,
+                5.656854249492381,
+                7.0710678118654755,
+            ],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 3 1 1
+        3 5 1 1
+        4 9 1 2
+        5 50 1 2
+        50 180 1 3""",
+            [
+                0.0,
+                2.23606797749979,
+                4.47213595499958,
+                8.595241580617241,
+                49.607434889436995,
+                187.17559981141304,
+            ],
+        ),
+    ],
+)
+def test_create_relative_hlen(string_to_well, well_definition, expected_hlen):
+    well = string_to_well(well_definition)
+    well.create_relative_hlen()
+    assert well.dataframe["R_HLEN"].to_list() == expected_hlen
+
+
+def test_speed_new(string_to_well):
+    well_definition = """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in range(1, 10000):
+        well_definition += f"\n        {i} {i} 1 1"
+
+    well = string_to_well(well_definition)
+    t0 = xtg.timer()
+    well.create_relative_hlen()
+    print(f"Run time: {xtg.timer(t0)}")
+
+
+def test_truncate_parallel_path():
+    pass
+
+
+@pytest.mark.parametrize(
+    "x1, x2, y1, y2",
+    [
+        pytest.param(2, 1, 1, 1, id="xmin1 > xmax2"),
+        pytest.param(1, 1, 2, 1, id="ymin1 > ymax2"),
+        pytest.param(1, 2, 1, 1, id="xmin2 > xmax1"),
+        pytest.param(1, 1, 1, 2, id="ymin2 > ymax1"),
+    ],
+)
+def test_may_overlap_no_overlap(string_to_well, x1, x2, y1, y2):
+    well_1 = string_to_well(
+        f"""1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+{x1} {y1} 1 nan"""
+    )
+    well_2 = string_to_well(
+        f"""1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+{x2} {y2} 1 nan"""
+    )
+    assert not well_1.may_overlap(well_2)
+
+
+def test_may_overlap(string_to_well):
+    well_1 = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+1 1 1 nan
+2 2 1 1
+3 3 1 1"""
+    )
+    well_2 = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+1 1 1 nan
+2 2 1 1
+3 3 1 1"""
+    )
+    assert well_1.may_overlap(well_2)
+
+
+@pytest.mark.parametrize(
+    "lower_limit, upper_limit, expected_result",
+    [
+        (0, 1000, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (0, 9, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (1, 8, [1, 2, 3, 4, 5, 6, 7, 8]),
+        (2, 5, [2, 3, 4, 5]),
+        (10, 0, []),
+    ],
+)
+def test_limit_tvd(string_to_well, upper_limit, lower_limit, expected_result):
+    well_definition = """1.01
+            Unknown
+            custom_name 0 0 0
+            1
+            Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in range(10):
+        well_definition += f"\n        {i} {i} {i} 1"
+
+    well = string_to_well(well_definition)
+    well.limit_tvd(lower_limit, upper_limit)
+    assert well.dataframe["Z_TVDSS"].to_list() == expected_result
+
+
+def test_downsample():
+    pass
+
+
+@pytest.mark.parametrize(
+    "input_points, expected_points",
+    [(range(10), [0, 4, 8]), ([1, 10, 11, 12, 13, 14, 100, 10000], [1, 13])],
+)
+def test_downsample_not_keeplast(string_to_well, input_points, expected_points):
+    well_definition = """1.01
+            Unknown
+            custom_name 0 0 0
+            1
+            Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in input_points:
+        well_definition += f"\n        {i} {i} {i} 1"
+
+    well = string_to_well(well_definition)
+    well.downsample(keeplast=False)
+    assert {
+        "X_UTME": well.dataframe["X_UTME"].to_list(),
+        "Y_UTMN": well.dataframe["Y_UTMN"].to_list(),
+        "Z_TVDSS": well.dataframe["Z_TVDSS"].to_list(),
+    } == {
+        "X_UTME": expected_points,
+        "Y_UTMN": expected_points,
+        "Z_TVDSS": expected_points,
+    }
+
+
+def test_get_polygons(string_to_well):
+    well_definition = """1.01
+        Unknown
+        custom_name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for (x, y, z) in zip(
+        np.random.random(10), np.random.random(10), np.random.random(10)
+    ):
+        well_definition += f"\n        {x} {y} {z} 1"
+
+    well = string_to_well(well_definition)
+    polygons = well.get_polygons()
+    assert well.dataframe["X_UTME"].to_list() == pytest.approx(
+        polygons.dataframe["X_UTME"].to_list()
+    )
+    assert well.dataframe["Y_UTMN"].to_list() == pytest.approx(
+        polygons.dataframe["Y_UTMN"].to_list()
+    )
+    assert well.dataframe["X_UTME"].to_list() == pytest.approx(
+        polygons.dataframe["X_UTME"].to_list()
+    )
+    assert "Zonelog" not in polygons.dataframe.columns
+    assert "NAME" in polygons.dataframe.columns
+    assert polygons.name == "custom_name"
+
+
+def test_get_polygons_skipname(string_to_well):
+    well_definition = """1.01
+        Unknown
+        custom_name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+                1 1 1 1"""
+
+    well = string_to_well(well_definition)
+    polygons = well.get_polygons(skipname=True)
+    assert "NAME" not in polygons.dataframe.columns
+    assert polygons.name == "custom_name"
+
+
+def test_get_fence_poly(string_to_well):
+    pass
