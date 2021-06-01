@@ -388,6 +388,7 @@ class Grid(_Grid3D):
 
         if sgrids is None:
             self._subgrids = None
+            return
 
         if not isinstance(sgrids, OrderedDict):
             raise ValueError("Input to subgrids must be an ordered dictionary")
