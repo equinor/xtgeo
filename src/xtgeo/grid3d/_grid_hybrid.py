@@ -1,6 +1,5 @@
 import numpy as np
 
-
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 
@@ -52,6 +51,10 @@ def make_hybridgrid(
     )
 
     del rvalues
+
+    # when a hybridgrid is made, the current subrid settings lose relevance, hence
+    # it is forced set to None
+    self.subgrids = None
 
     self._nlay = newnlay
     self._zcornsv = hyb_zcornsv
