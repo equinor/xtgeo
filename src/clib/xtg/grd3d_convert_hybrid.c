@@ -7,6 +7,9 @@
  * DESCRIPTION:
  *    Convert a 3D grid to a hybrid grid; i.e. horisontal layers between two levels
  *
+ *    There are two algorithns here for historical reasons, where no 2 can work
+ *    inside a region.
+ *
  * ARGUMENTS:
  *    nx, ny, nz     i     Dimensions
  *    p_*_v          i     Geometry arrays (w numpy dimensions)
@@ -22,10 +25,12 @@
  *    Void, update array pointer
  *
  * TODO/ISSUES/BUGS:
- *    Code rewriting needed at some point
+ *    - Code rewriting needed at some point, collect all in one common routine
+ *    - Rewrite to xtgformat=2
+ *    - Allow different settings for different regions
  *
  * LICENCE:
- *    CF XTGeo's LICENSE
+ *    LGPL v3. Copyright Equinor ASA.
  ***************************************************************************************
  */
 
@@ -34,7 +39,7 @@
 #include "logger.h"
 
 /* local */
-void
+static void
 _grd3d_convert_hybrid1(int nx,
                        int ny,
                        int nz,
@@ -181,7 +186,7 @@ _grd3d_convert_hybrid1(int nx,
 }
 
 /* local */
-void
+static void
 _grd3d_convert_hybrid2(int nx,
                        int ny,
                        int nz,
