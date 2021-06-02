@@ -278,6 +278,8 @@ Edit a 3D grid porosity inside polygons
    # Save in RMS as a new icon
    myprop.to_roxar(project, "Reek_sim", "NEWPORO_setinside")
 
+.. _hybrid:
+
 Make a hybrid grid
 ^^^^^^^^^^^^^^^^^^
 
