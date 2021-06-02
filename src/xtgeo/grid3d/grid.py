@@ -1880,9 +1880,18 @@ class Grid(_Grid3D):
     ):
         """Convert to hybrid grid, either globally or in a selected region.
 
-        Note that the resulting hybrid will have a increased number of layers.
-        In the initial grid has N layers, and the number of horizontal layers
+        This function will convert the internal structure in the corner point grid,
+        so that the cells between two levels ``toplevel`` and ``bottomlevel`` become
+        horizontal, which can be useful in flow simulators when e.g. liquid
+        contact movements are dominating. See example on `usage in the Troll field`_.
+
+        Note that the resulting hybrid will have an increased number of layers.
+        If the initial grid has N layers, and the number of horizontal layers
         is NHDIV, then the result grid will have N * 2 + NHDIV layers.
+
+        .. image:: ../../docs/images/hybridgrid2.jpg
+           :width: 600
+           :align: center
 
         Args:
             nhdiv (int): Number of hybrid layers.
@@ -1899,6 +1908,11 @@ class Grid(_Grid3D):
                grd.convert_to_hybrid(nhdiv=12, toplevel=2200, bottomlevel=2250)
                # save in binary GRDECL fmt:
                grd.to_file("simgrid_hybrid.bgrdecl", fformat="bgrdecl")
+
+        See Also:
+               :ref:`hybrid` example.
+
+        .. _usage in the Troll field: https://doi.org/10.2118/148023-MS
 
         """
         _grid_hybrid.make_hybridgrid(
