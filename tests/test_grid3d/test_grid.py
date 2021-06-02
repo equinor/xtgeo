@@ -226,6 +226,10 @@ def test_subgrids(load_gfile1):
     grd.rename_subgrids(["AAAA", "BBBB"])
     assert "AAAA" in grd.subgrids.keys()
 
+    # set to None
+    grd.subgrids = None
+    assert grd._subgrids is None
+
 
 def test_roffbin_import1(load_gfile1):
     """Test roff binary import case 1."""
