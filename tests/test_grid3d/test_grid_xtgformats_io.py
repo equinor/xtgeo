@@ -39,7 +39,7 @@ def create_box(testpath):
         lambda tp: xtgeo.Grid(join(tp, "3dgrids/reek/reek_geo_grid.roff")),
         create_box,
     ],
-    ids=["reek_grid", "big box"],
+    ids=["reek_grid", "big_box"],
 )
 def benchmark_grid_fixture(request, testpath):
     return request.param(testpath)

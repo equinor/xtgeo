@@ -2,14 +2,11 @@
 
 """Grid import functions for Eclipse, new approach (i.e. version 2)."""
 
-import re
-import os
-from tempfile import mkstemp
 import numpy as np
 
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-
+from xtgeo.grid3d._grdecl_grid import GrdeclGrid
 from xtgeo.grid3d._grid_eclbin_record import eclbin_record
 
 from . import _grid3d_utils as utils
@@ -147,77 +144,18 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     self.gridprops = grdprops
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import eclipse input .GRDECL
-# Uses a tmp file so not very efficient
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_grdecl(self, gfile):
     """Import grdecl format."""
-    # make a temporary file
-    fds, tmpfile = mkstemp(prefix="tmpxtgeo")
-    os.close(fds)
 
-    with open(gfile.name) as oldfile, open(tmpfile, "w") as newfile:
-        for line in oldfile:
-            if not (re.search(r"^--", line) or re.search(r"^\s+$", line)):
-                newfile.write(line)
+    grdecl_grid = GrdeclGrid.from_file(gfile._file)
 
-    newfile.close()
-    oldfile.close()
+    self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
 
-    # find ncol nrow nz
-    mylist = []
-    found = False
-    with open(tmpfile) as xfile:
-        for line in xfile:
-            if found:
-                logger.info(line)
-                mylist = line.split()
-                break
-            if re.search(r"^SPECGRID", line):
-                found = True
-
-    if not found:
-        logger.error("SPECGRID not found. Nothing imported!")
-        return
-    xfile.close()
-
-    self._ncol, self._nrow, self._nlay = int(mylist[0]), int(mylist[1]), int(mylist[2])
-
-    logger.info("NX NY NZ in grdecl file: %s %s %s", self._ncol, self._nrow, self._nlay)
-
-    ncoord, nzcorn, ntot = self.vectordimensions
-
-    logger.info("Reading...")
-
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    ptr_num_act = _cxtgeo.new_intpointer()
-
-    cfhandle = gfile.get_cfhandle()
-
-    _cxtgeo.grd3d_import_grdecl(
-        cfhandle,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        ptr_num_act,
-    )
-
-    # close and remove tmpfile
-    gfile.cfclose()
-    os.remove(tmpfile)
-
-    nact = _cxtgeo.intpointer_value(ptr_num_act)
-
-    logger.info("Number of active cells: %s", nact)
+    self._coordsv = grdecl_grid.xtgeo_coord()
+    self._zcornsv = grdecl_grid.xtgeo_zcorn()
+    self._actnumsv = grdecl_grid.xtgeo_actnum()
     self._subgrids = None
-    self._xtgformat = 1
+    self._xtgformat = 2
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
