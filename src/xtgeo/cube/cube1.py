@@ -464,9 +464,9 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         return xcube
 
-    def swapaxes(self, _algorithm=1):
+    def swapaxes(self):
         """Swap the axes inline vs xline, keep origin."""
-        _cube_utils.swapaxes(self, _algorithm=_algorithm)
+        _cube_utils.swapaxes(self)
 
     def resample(self, incube, sampling="nearest", outside_value=None):
         """Resample a Cube object into this instance.

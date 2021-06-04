@@ -914,19 +914,6 @@ cube_export_rmsregular(int nx,
                        float *swig_np_flt_in_v1,  // *cubevalsv
                        long n_swig_np_flt_in_v1,  // n total nx*ny*nz
                        char *file);
-int
-cube_swapaxes(int *nx,
-              int *ny,
-              int nz,
-              int *yflip,
-              double *xinc,
-              double *yinc,
-              double *rotation,
-              float *swig_np_flt_inplace_v1,  // *p_val_v
-              long n_swig_np_flt_inplace_v1,  // nval, total nx*ny*nz
-              int *swig_np_int_inplace_v1,    // *p_traceid_v
-              long n_swig_np_int_inplace_v1   // nval for traceid, nx*ny
-);
 
 int
 cube_coord_val_ijk(int i,

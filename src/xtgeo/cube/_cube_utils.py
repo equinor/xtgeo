@@ -15,68 +15,8 @@ logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 
-def swapaxes(self, _algorithm=1):
-
-    if _algorithm == 1:
-        _swapaxes_v1(self)
-    else:
-        _swapaxes_v2(self)
-
-
-def _swapaxes_v1(self):
-    """Swap the axes inline vs xline, keep origin."""
-    # TODO remove this when algo 2 works."""
-    ncol = _cxtgeo.new_intpointer()
-    nrow = _cxtgeo.new_intpointer()
-    yflip = _cxtgeo.new_intpointer()
-    xinc = _cxtgeo.new_doublepointer()
-    yinc = _cxtgeo.new_doublepointer()
-    rota = _cxtgeo.new_doublepointer()
-
-    _cxtgeo.intpointer_assign(ncol, self._ncol)
-    _cxtgeo.intpointer_assign(nrow, self._nrow)
-    _cxtgeo.intpointer_assign(yflip, self._yflip)
-
-    _cxtgeo.doublepointer_assign(xinc, self._xinc)
-    _cxtgeo.doublepointer_assign(yinc, self._yinc)
-    _cxtgeo.doublepointer_assign(rota, self._rotation)
-
-    values1d = self.values.reshape(-1)
-    traceid1d = self._traceidcodes.reshape(-1)
-
-    ier = _cxtgeo.cube_swapaxes(
-        ncol,
-        nrow,
-        self.nlay,
-        yflip,
-        xinc,
-        yinc,
-        rota,
-        values1d,
-        traceid1d,
-    )
-    if ier != 0:
-        raise Exception
-
-    self._ncol = _cxtgeo.intpointer_value(ncol)
-    self._nrow = _cxtgeo.intpointer_value(nrow)
-    self._yflip = _cxtgeo.intpointer_value(yflip)
-
-    self._xinc = _cxtgeo.doublepointer_value(xinc)
-    self._yinc = _cxtgeo.doublepointer_value(yinc)
-    self._rotation = _cxtgeo.doublepointer_value(rota)
-
-    ilines = self._xlines.copy()
-    xlines = self._ilines.copy()
-    self._xlines = xlines
-    self._ilines = ilines
-
-    self._traceidcodes = traceid1d.reshape((self._ncol, self._nrow))
-    self._values = values1d.reshape((self._ncol, self._nrow, self.nlay))
-
-
-def _swapaxes_v2(self):
-    """Pure numpy/python version, still issues"""
+def swapaxes(self):
+    """Pure numpy/python version"""
     newncol = self.nrow
     newnrow = self.ncol
     new_xinc = self._yinc

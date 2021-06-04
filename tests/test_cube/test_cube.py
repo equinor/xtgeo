@@ -332,8 +332,7 @@ def test_cube_randomline():
         plt.show()
 
 
-@pytest.mark.parametrize("algorithm", [1, 2])
-def test_swapaxis(algorithm):
+def test_swapaxis():
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -350,13 +349,12 @@ def test_swapaxis(algorithm):
 
     assert cube.values.flatten().tolist() == [1, 2, 3, 4, 5, 6, 7, 8]
 
-    cube.swapaxes(_algorithm=algorithm)
+    cube.swapaxes()
 
     assert cube.values.flatten().tolist() == [1.0, 2.0, 5.0, 6.0, 3.0, 4.0, 7.0, 8.0]
 
 
-@pytest.mark.parametrize("algorithm", [1, 2])
-def test_swapaxis_traceidcodes(algorithm):
+def test_swapaxis_traceidcodes():
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -373,7 +371,7 @@ def test_swapaxis_traceidcodes(algorithm):
     assert cube.traceidcodes.flatten().tolist() == [1, 1, 1, 1]
     cube.traceidcodes = [1, 2, 3, 4]
 
-    cube.swapaxes(_algorithm=algorithm)
+    cube.swapaxes()
 
     assert cube.traceidcodes.flatten().tolist() == [1, 3, 2, 4]
 
@@ -390,8 +388,7 @@ def test_swapaxis_traceidcodes(algorithm):
         (361, 91),
     ],
 )
-@pytest.mark.parametrize("algorithm", [1, 2])
-def test_swapaxis_rotation(algorithm, rotation, expected_rotation):
+def test_swapaxis_rotation(rotation, expected_rotation):
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -407,13 +404,12 @@ def test_swapaxis_rotation(algorithm, rotation, expected_rotation):
         values=[1, 2, 3, 4, 5, 6, 7, 8],
     )
 
-    cube.swapaxes(_algorithm=algorithm)
+    cube.swapaxes()
 
     assert cube.rotation == expected_rotation
 
 
-@pytest.mark.parametrize("algorithm", [1, 2])
-def test_swapaxis_ilines(algorithm):
+def test_swapaxis_ilines():
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -429,13 +425,12 @@ def test_swapaxis_ilines(algorithm):
     )
     assert cube.ilines.tolist() == [1, 2]
 
-    cube.swapaxes(_algorithm=algorithm)
+    cube.swapaxes()
 
     assert cube.ilines.tolist() == [1, 2]
 
 
-@pytest.mark.parametrize("algorithm", [1, 2])
-def test_swapaxis_ncol_nrow(algorithm):
+def test_swapaxis_ncol_nrow():
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -449,13 +444,12 @@ def test_swapaxis_ncol_nrow(algorithm):
         yflip=1,
     )
 
-    cube.swapaxes(_algorithm=algorithm)
+    cube.swapaxes()
 
     assert (cube.nrow, cube.ncol) == (2, 3)
 
 
-@pytest.mark.parametrize("algorithm", [1, 2])
-def test_swapaxis_xinc_yinc(algorithm):
+def test_swapaxis_xinc_yinc():
     cube = Cube(
         xori=0.0,
         yori=0.0,
@@ -469,6 +463,6 @@ def test_swapaxis_xinc_yinc(algorithm):
         yflip=1,
     )
 
-    cube.swapaxes(_algorithm=algorithm)
+    cube.swapaxes()
 
     assert (cube.xinc, cube.yinc) == (2, 1)
