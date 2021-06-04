@@ -305,7 +305,12 @@ class Cube:  # pylint: disable=too-many-public-methods
 
     @traceidcodes.setter
     def traceidcodes(self, values):
-        self._traceidcodes = values.reshape(self.ncol, self.nrow)
+        if isinstance(values, (int, str)):
+            self._traceidcodes = np.full((self.ncol, self.nrow), values, dtype=np.int32)
+        else:
+            if isinstance(values, list):
+                values = np.array(values, np.int32)
+            self._traceidcodes = values.reshape(self.ncol, self.nrow)
 
     @property
     def yflip(self):

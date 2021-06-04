@@ -79,8 +79,8 @@ def _swapaxes_v2(self):
     """Pure numpy/python version, still issues"""
     newncol = self.nrow
     newnrow = self.ncol
-
-    yflip = self.yflip * -1
+    new_xinc = self._yinc
+    new_yinc = self._xinc
 
     rotation = self.rotation + self.yflip * 90
     if rotation < 0:
@@ -88,19 +88,14 @@ def _swapaxes_v2(self):
     if rotation >= 360:
         rotation -= 360
 
-    ilines = self._xlines.copy()
-    xlines = self._ilines.copy()
-
     self._ncol = newncol
     self._nrow = newnrow
-    self.values = self._values.transpose(1, 0, 2)
-    self._yflip = yflip
+    self._xinc = new_xinc
+    self._yinc = new_yinc
+    self.values = np.ascontiguousarray(np.swapaxes(self._values, 0, 1))
+    self._yflip *= -1
     self._rotation = rotation
-    self._ilines = ilines
-    self._xlines = xlines
-    self._traceidcodes = np.array(self._traceidcodes.flatten(order="K")).reshape(
-        (self._ncol, self._nrow)
-    )
+    self._traceidcodes = np.ascontiguousarray(np.swapaxes(self._traceidcodes, 0, 1))
 
 
 def thinning(self, icol, jrow, klay):
