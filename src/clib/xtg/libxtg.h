@@ -393,19 +393,6 @@ surf_export_ijxyz(FILE *fc,
                   int option);
 
 int
-surf_swapaxes(int *nx,
-              int *ny,
-              int *yflip,
-              double xori,
-              double *xinc,
-              double yori,
-              double *yinc,
-              double *rotation,
-              double *swig_np_dbl_inplace_v1,  // *p_map_v
-              long n_swig_np_dbl_inplace_v1,   // nval, total nx*ny*nz
-              int option);
-
-int
 surf_zminmax(int nx, int ny, double *p_map_v, double *zmin, double *zmax);
 
 int
