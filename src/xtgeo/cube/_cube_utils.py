@@ -7,6 +7,7 @@ import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo import XTGeoCLibError
+from xtgeo.common.calc import _swap_axes
 
 xtg = XTGeoDialog()
 
@@ -17,25 +18,16 @@ logger = xtg.functionlogger(__name__)
 
 def swapaxes(self):
     """Pure numpy/python version"""
-    newncol = self.nrow
-    newnrow = self.ncol
-    new_xinc = self._yinc
-    new_yinc = self._xinc
-
-    rotation = self.rotation + self.yflip * 90
-    if rotation < 0:
-        rotation += 360
-    if rotation >= 360:
-        rotation -= 360
-
-    self._ncol = newncol
-    self._nrow = newnrow
-    self._xinc = new_xinc
-    self._yinc = new_yinc
-    self.values = np.ascontiguousarray(np.swapaxes(self._values, 0, 1))
-    self._yflip *= -1
-    self._rotation = rotation
-    self._traceidcodes = np.ascontiguousarray(np.swapaxes(self._traceidcodes, 0, 1))
+    self._rotation, self._yflip, swapped_values = _swap_axes(
+        self._rotation,
+        self._yflip,
+        values=self._values,
+        traceidcodes=self._traceidcodes,
+    )
+    self._ncol, self._nrow = self._nrow, self._ncol
+    self._xinc, self._yinc = self._yinc, self._xinc
+    self.values = swapped_values["values"]
+    self._traceidcodes = swapped_values["traceidcodes"]
 
 
 def thinning(self, icol, jrow, klay):

@@ -1,4 +1,5 @@
 """Some common XTGEO calculation routines."""
+from typing import List
 
 import numpy as np
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -288,3 +289,21 @@ def vectorpair_angle3d(p0, p1, p2, degrees=True, birdview=False):
         return None
 
     return angle
+
+
+def _swap_axes(
+    rotation: float,
+    yflip: int,
+    **values: List[List],
+):
+    swapped_values = {}
+    for name, val in values.items():
+        swapped_values[name] = np.ascontiguousarray(np.swapaxes(val, 0, 1))
+
+    rotation = rotation + yflip * 90
+    if rotation < 0:
+        rotation += 360
+    if rotation >= 360:
+        rotation -= 360
+
+    return rotation, yflip * -1, swapped_values
