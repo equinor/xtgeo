@@ -70,12 +70,12 @@ grd3cp3d_xtgformat1to2_geom(long ncol,
         long j;
         for (j = 0; j < nnrow; j++) {
             long k;
-            for (k = 0; k < nnlay; k++) {
+            for (k = 1; k <= nnlay; k++) {
 
-                long ib1 = x_ijk2ib(i + 0, j + 0, k + 1, ncol, nrow, nnlay, 0);
-                long ib2 = x_ijk2ib(i + 1, j + 0, k + 1, ncol, nrow, nnlay, 0);
-                long ib3 = x_ijk2ib(i + 0, j + 1, k + 1, ncol, nrow, nnlay, 0);
-                long ib4 = x_ijk2ib(i + 1, j + 1, k + 1, ncol, nrow, nnlay, 0);
+                long ib1 = x_ijk2ib(i + 0, j + 0, k, ncol, nrow, nnlay, 0);
+                long ib2 = x_ijk2ib(i + 1, j + 0, k, ncol, nrow, nnlay, 0);
+                long ib3 = x_ijk2ib(i + 0, j + 1, k, ncol, nrow, nnlay, 0);
+                long ib4 = x_ijk2ib(i + 1, j + 1, k, ncol, nrow, nnlay, 0);
 
                 long sw = 4 * ib1 + 1 * 4 - 1;  // SW node is 4'th corner i, j
                 long se = 4 * ib2 + 1 * 3 - 1;  // SE node is 3'rd corner i+1, j
