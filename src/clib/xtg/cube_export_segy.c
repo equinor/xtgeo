@@ -113,6 +113,7 @@ cube_export_segy(char *sfile,
     long ilc;
     unsigned char ubyte;
     float aval;
+    float value;
 
     double *xv, *yv;
 
@@ -212,6 +213,11 @@ cube_export_segy(char *sfile,
             nc = 0;
 
             ilc = x_ijk2ic(i, j, 1, nx, ny, 1, 0);
+            if (ilc < 0) {
+                value = UNDEF;
+            } else {
+                value = tracidp[ilc];
+            }
             /*
              * ----------------------------------------------------------------
              * Binary trace header 240 byte, a total of 84 entries
@@ -222,7 +228,7 @@ cube_export_segy(char *sfile,
                 nc += _write_int_as_4bytes(fc, 0);
             }
 
-            nc += _write_int_as_2bytes(fc, tracidp[ilc]);  // 29 trace id code
+            nc += _write_int_as_2bytes(fc, value);  // 29 trace id code
 
             for (nn = 9; nn <= 11; nn++) {
                 nc += _write_int_as_2bytes(fc, 0);
@@ -281,8 +287,11 @@ cube_export_segy(char *sfile,
 
             for (k = 1; k <= nz; k++) {
                 ilc = x_ijk2ic(i, j, k, nx, ny, nz, 0);
-                aval = p_cube_v[ilc];
-
+                if (ilc < 0) {
+                    aval = UNDEF;
+                } else {
+                    aval = p_cube_v[ilc];
+                }
                 if (swap == 1)
                     SWAP_FLOAT(aval);
                 if (fwrite(&aval, 4, 1, fc) != 1) {
