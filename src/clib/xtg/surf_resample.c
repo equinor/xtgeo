@@ -69,6 +69,11 @@ surf_resample(int nx1,
         for (j2 = 1; j2 <= ny2; j2++) {
 
             ib2 = x_ijk2ic(i2, j2, 1, nx2, ny2, 1, 0); /* C order */
+            if (ib2 < 0) {
+                throw_exception(
+                  "Loop through surface gave index outside boundary in surf_resample");
+                return EXIT_FAILURE;
+            }
 
             if (optmask == 1)
                 mapv2[ib2] = UNDEF;
@@ -85,7 +90,8 @@ surf_resample(int nx1,
 
             } else {
                 logger_info(LI, FI, FU, "Something went wrong: ier2 = %d", ier2);
-                return ier2;
+                throw_exception("Something went wrong: ier2 != 0");
+                return EXIT_FAILURE;
             }
         }
     }

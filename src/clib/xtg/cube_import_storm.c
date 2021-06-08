@@ -144,7 +144,12 @@ cube_import_storm(int nx,
                     SWAP_FLOAT(fval);
 
                 ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
-
+                if (ic < 0) {
+                    fclose(fc);
+                    throw_exception(
+                      "Loop resulted in index outside boundary in cube_import_storm");
+                    return EXIT_FAILURE;
+                }
                 p_cube_v[ic] = fval;
             }
         }

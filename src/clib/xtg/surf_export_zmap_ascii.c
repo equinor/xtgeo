@@ -105,6 +105,11 @@ surf_export_zmap_ascii(FILE *fc,
         for (j = my; j >= 1; j--) {
 
             long ic = x_ijk2ic(i, j, 1, mx, my, 1, 0);
+            if (ic < 0) {
+                throw_exception("Index outside boundary in surf_export_zmap_ascii");
+                return EXIT_FAILURE;
+            }
+
             myfloat = p_map_v[ic];
 
             if (myfloat > UNDEF_MAP_LIMIT)

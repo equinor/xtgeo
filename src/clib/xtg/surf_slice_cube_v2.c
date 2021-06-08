@@ -79,6 +79,13 @@ surf_slice_cube_v2(int ncol,
         for (jcol = 1; jcol <= nrow; jcol++) {
 
             long icmap = x_ijk2ic(icol, jcol, 1, ncol, nrow, 1, 0);
+            if (icmap < 0) {
+                free(zd);
+                free(czvals);
+                throw_exception("Loop through surface gave index outside boundary in "
+                                "surf_slice_cube_v2");
+                return EXIT_FAILURE;
+            }
 
             double zval = zslicev[icmap];
 
@@ -87,6 +94,13 @@ surf_slice_cube_v2(int ncol,
 
             for (kcol = 1; kcol <= nlay; kcol++) {
                 long iccube = x_ijk2ic(icol, jcol, kcol, ncol, nrow, nlay, 0);
+                if (iccube < 0) {
+                    free(zd);
+                    free(czvals);
+                    throw_exception(
+                      "Loop gave index outside boundary in surf_slice_cube_v2");
+                    return EXIT_FAILURE;
+                }
                 czvals[kcol] = cubevalsv[iccube];
             }
             czvals[0] = czvals[1];

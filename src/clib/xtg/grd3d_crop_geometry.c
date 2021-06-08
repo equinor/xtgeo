@@ -134,9 +134,15 @@ grd3d_crop_geometry(int nx,
                 }
 
                 ibt = x_ijk2ib(icn, jcn, kcn, nx, ny, nz + 1, 0);
-
                 ibb = x_ijk2ib(icn - ic1 + 1, jcn - jc1 + 1, kcn - kc1 + 1, newnx,
                                newny, newnz + 1, 0);
+                if (ibt < 0 || ibb < 0) {
+                    *nactive = 0;
+                    memset(p_actnum2_v, 0, sizeof(double) * nact2);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_crop_geometry");
+                    return EXIT_FAILURE;
+                }
 
                 for (ic = 1; ic <= 4; ic++) {
                     p_zcorn2_v[4 * ibb + 1 * ic - 1] = p_zcorn1_v[4 * ibt + 1 * ic - 1];
@@ -144,9 +150,15 @@ grd3d_crop_geometry(int nx,
 
                 if (kcn <= kc2) {
                     ibt = x_ijk2ib(icn, jcn, kcn, nx, ny, nz, 0);
-
                     ibb = x_ijk2ib(icn - ic1 + 1, jcn - jc1 + 1, kcn - kc1 + 1, newnx,
                                    newny, newnz, 0);
+                    if (ibt < 0 || ibb < 0) {
+                        *nactive = 0;
+                        memset(p_actnum2_v, 0, sizeof(double) * nact2);
+                        throw_exception("Loop through grid resulted in index outside "
+                                        "boundary in grd3d_crop_geometry");
+                        return EXIT_FAILURE;
+                    }
 
                     p_actnum2_v[ibb] = p_actnum1_v[ibt];
 

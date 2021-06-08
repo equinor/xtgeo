@@ -113,7 +113,8 @@ surf_slice_cube(int ncx,
     int nm = 0, option1a = 0;
 
     if (nmap != nslice) {
-        logger_error(LI, FI, FU, "Something is plain wrong in %s (nmap vs nslice)", FU);
+        throw_exception("Something is plain wrong in surf_slice_cube (nmap vs nslice)");
+        return EXIT_FAILURE;
     }
 
     /* work with every map node */
@@ -128,6 +129,11 @@ surf_slice_cube(int ncx,
             ier = 99;
 
             ibm = x_ijk2ic(im, jm, 1, mx, my, 1, 0);
+            if (ibm < 0) {
+                throw_exception("Loop through surface gave index outside boundary in "
+                                "surf_slice_cube");
+                return EXIT_FAILURE;
+            }
 
             if (z < UNDEF_MAP_LIMIT) {
 

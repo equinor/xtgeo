@@ -123,6 +123,11 @@ surf_import_ijxyz_tmpl(FILE *fd,
             for (xli = 0; xli < nnrow; xli++) {
                 if (iline == ilines[ili] && xline == xlines[xli]) {
                     ic = x_ijk2ic(ili + 1, xli + 1, 1, nncol, nnrow, 1, 0);
+                    if (ic < 0) {
+                        throw_exception("Loop through surface gave index outside "
+                                        "boundary in surf_import_ijxyz_tmpl");
+                        return EXIT_FAILURE;
+                    }
                     p_map_v[ic] = zval;
                     found = 1;
                     break;

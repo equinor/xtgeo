@@ -72,6 +72,11 @@ _grd3d_convert_hybrid1(int nx,
             for (k = 1; k <= nz + 1; k++) {
                 ibp = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
+                if (ibp < 0 || ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside grid "
+                                    "in _grd3d_convert_hybrid1");
+                    return;
+                }
                 /* do for all corners */
                 zsum = 0.0;
                 for (ic = 1; ic <= 4; ic++) {
@@ -99,12 +104,21 @@ _grd3d_convert_hybrid1(int nx,
             for (k = nz + 1; k >= 1; k--) {
                 ibp = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
                 ibh = x_ijk2ib(i, j, khyb, nx, ny, nzhyb + 1, 0);
-
+                if (ibp < 0 || ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in _grd3d_convert_hybrid1");
+                    return;
+                }
                 /* in terms of active cells index, layer k _bottom_ shall refer to cell
                  * k-1 */
                 if (k > 1) {
                     inp = x_ijk2ib(i, j, k - 1, nx, ny, nz + 1, 0);
                     inh = x_ijk2ib(i, j, khyb - 1, nx, ny, nzhyb + 1, 0);
+                    if (inp < 0 || inh < 0) {
+                        throw_exception("Loop through grid resulted in index outside "
+                                        "boundary in grd3d_convert_hybrid");
+                        return;
+                    }
                 }
 
                 /* do for all corners */
@@ -134,6 +148,11 @@ _grd3d_convert_hybrid1(int nx,
             n = 0;
             for (k = nz + 1; k <= nz + 1 + ndiv - 1; k++) {
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
+                if (ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid");
+                    return;
+                }
                 /* do for all corners */
                 if (k > nz + 1) {
                     n++;
@@ -149,6 +168,11 @@ _grd3d_convert_hybrid1(int nx,
                 zsumh = 0.0;
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
                 inh = x_ijk2ib(i, j, k + 1, nx, ny, nzhyb + 1, 0);
+                if (ibh < 0 || inh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid");
+                    return;
+                }
                 /* do for all corners */
                 for (ic = 1; ic <= 4; ic++) {
                     zsumh = zsumh + p_zcornhyb_v[4 * ibh + 1 * ic - 1];
@@ -168,6 +192,11 @@ _grd3d_convert_hybrid1(int nx,
                 zsumh = 0.0;
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
                 inh = x_ijk2ib(i, j, k - 1, nx, ny, nzhyb + 1, 0);
+                if (ibh < 0 || inh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid");
+                    return;
+                }
                 /* do for all corners */
                 for (ic = 1; ic <= 4; ic++) {
                     zsumh = zsumh + p_zcornhyb_v[4 * ibh + 1 * ic - 1];
@@ -238,9 +267,18 @@ _grd3d_convert_hybrid2(int nx,
             for (k = 1; k <= nz + 1; k++) {
 
                 ibp = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
-
+                if (ibp < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid2");
+                    return;
+                }
                 if (k <= nz) {
                     long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
+                    if (ic < 0) {
+                        throw_exception("Loop through grid resulted in index outside "
+                                        "boundary in grd3d_convert_hybrid2");
+                        return;
+                    }
                     actual_region = p_region_v[ic]; /* region is C order! */
                 }
 
@@ -268,8 +306,12 @@ _grd3d_convert_hybrid2(int nx,
 
             for (k = 1; k <= nz + 1; k++) {
                 ibp = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
-
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
+                if (ibp < 0 || ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid2");
+                    return;
+                }
                 /* do for all corners */
                 zsum = 0.0;
 
@@ -348,14 +390,22 @@ _grd3d_convert_hybrid2(int nx,
                 }
 
                 ibp = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
-
                 ibh = x_ijk2ib(i, j, khyb, nx, ny, nzhyb + 1, 0);
-
+                if (ibp < 0 || ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid2");
+                    return;
+                }
                 /* in terms of active cells index, layer k _bottom_ shall refer to cell
                  * k-1 */
                 if (k > 1) {
                     inp = x_ijk2ib(i, j, k - 1, nx, ny, nz + 1, 0);
                     inh = x_ijk2ib(i, j, khyb - 1, nx, ny, nzhyb + 1, 0);
+                    if (inp < 0 || inh < 0) {
+                        throw_exception("Loop through grid resulted in index outside "
+                                        "boundary in grd3d_convert_hybrid2");
+                        return;
+                    }
                 }
 
                 /* CORNER 1 */
@@ -417,6 +467,11 @@ _grd3d_convert_hybrid2(int nx,
 
             for (k = nz + 1; k <= nz + 1 + ndiv - 1; k++) {
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
+                if (ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid2");
+                    return;
+                }
                 /* do for all corners */
                 if (k > nz + 1) {
                     n++;
@@ -434,6 +489,11 @@ _grd3d_convert_hybrid2(int nx,
                 zsumh = 0.0;
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
                 inh = x_ijk2ib(i, j, k + 1, nx, ny, nzhyb + 1, 0);
+                if (inh < 0 || ibh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid2");
+                    return;
+                }
                 /* do for all corners */
                 for (ic = 1; ic <= 4; ic++) {
                     zsumh = zsumh + p_zcornhyb_v[4 * ibh + 1 * ic - 1];
@@ -453,6 +513,11 @@ _grd3d_convert_hybrid2(int nx,
                 zsumh = 0.0;
                 ibh = x_ijk2ib(i, j, k, nx, ny, nzhyb + 1, 0);
                 inh = x_ijk2ib(i, j, k - 1, nx, ny, nzhyb + 1, 0);
+                if (ibh < 0 || inh < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_convert_hybrid2");
+                    return;
+                }
                 /* do for all corners */
                 for (ic = 1; ic <= 4; ic++) {
                     zsumh = zsumh + p_zcornhyb_v[4 * ibh + 1 * ic - 1];

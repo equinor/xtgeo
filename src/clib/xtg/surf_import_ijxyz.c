@@ -300,6 +300,10 @@ _compute_map_vectors(int ilinemin,
 
         /* get the C order index */
         ic = x_ijk2ic(itrue, jtrue, 1, ncol, nrow, 1, 0);
+        if (ic < 0) {
+            throw_exception("Index outside boundary in surf_import_ijxyz");
+            return EXIT_FAILURE;
+        }
 
         p_map_v[ic] = zbuffer[ixnum];
         xcoord[ic] = xbuffer[ixnum];
@@ -344,6 +348,11 @@ _compute_map_props(int ncol,
             icn0 = x_ijk2ic(icol, jrow, 1, ncol, nrow, 1, 0);
             icn1 = x_ijk2ic(icol + 1, jrow, 1, ncol, nrow, 1, 0);
             icn2 = x_ijk2ic(icol, jrow + 1, 1, ncol, nrow, 1, 0);
+            if (icn0 < 0 || icn1 < 0 || icn2 < 0) {
+                throw_exception("Loop through surface gave index outside boundary in "
+                                "surf_import_ijxyz");
+                return EXIT_FAILURE;
+            }
 
             if (p_map_v[icn0] < UNDEF_LIMIT && p_map_v[icn1] < UNDEF_LIMIT &&
                 p_map_v[icn2] < UNDEF_LIMIT) {

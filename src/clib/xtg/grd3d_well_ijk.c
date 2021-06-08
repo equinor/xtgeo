@@ -90,6 +90,10 @@ grd3d_well_ijk(int nx,
 
     /* find a smart global startcell; middle of IJ and K=1 */
     long ibstart0 = x_ijk2ib(nx / 2, ny / 2, 1, nx, ny, nz, 0);
+    if (ibstart0 < 0) {
+        throw_exception("Start cell outside boundary in grd3d_well_ijk");
+        return EXIT_FAILURE;
+    }
     long ibstart = ibstart0;
     long ibstart2 = ibstart0;
 

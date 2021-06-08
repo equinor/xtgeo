@@ -43,8 +43,9 @@ cube_vertical_val_list(int i,
 
     for (k = 1; k <= nz; k++) {
         ib = x_ijk2ic(i, j, k, nx, ny, nz, 0);
-
         if (ib < 0) {
+            throw_exception("Loop through layers gave index outside boundary in "
+                            "cube_vertical_val_list");
             return -1;
         } else {
             p_vertical_v[k - 1] = p_val_v[ib];

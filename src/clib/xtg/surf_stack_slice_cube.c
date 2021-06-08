@@ -61,6 +61,11 @@ surf_stack_slice_cube(int ncol,
             for (nd = 0; nd < nstack; nd++) {
 
                 long icmap = x_ijk2ic(icol, jcol, 1, ncol, nrow, 1, 0);
+                if (icmap < 0) {
+                    throw_exception("Loop through surface gave index outside boundary "
+                                    "in surf_stack_slice_cube");
+                    return EXIT_FAILURE;
+                }
 
                 if (rmask[icmap][nd] != 0)
                     continue;
@@ -89,6 +94,11 @@ surf_stack_slice_cube(int ncol,
                 long icc1, icc2;
                 icc1 = x_ijk2ic(icol, jcol, k1 + 1, ncol, nrow, nlay, 0);  // yes k+1
                 icc2 = x_ijk2ic(icol, jcol, k2 + 1, ncol, nrow, nlay, 0);
+                if (icc1 < 0 || icc2 < 0) {
+                    throw_exception(
+                      "Index outside boundary in surf_stack_slice_cube, no k+1");
+                    return EXIT_FAILURE;
+                }
                 czvals[0] = cubevalsv[icc1];
                 czvals[1] = cubevalsv[icc2];
                 zd[0] = czori + k1 * czinc;

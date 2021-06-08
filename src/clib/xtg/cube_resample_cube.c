@@ -97,7 +97,11 @@ cube_resample_cube(int ncx1,
                 zc = czori1 + czinc1 * (kc1 - 1);
 
                 icn1 = x_ijk2ic(ic1, jc1, kc1, ncx1, ncy1, ncz1, 0);
-
+                if (icn1 < 0) {
+                    throw_exception("Loop through cube resulted in index outside "
+                                    "boundary in cube_resample_cube");
+                    return EXIT_FAILURE;
+                }
                 if (option1 == 0) {
 
                     ier = cube_value_xyz_cell(

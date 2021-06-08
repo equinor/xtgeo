@@ -26,6 +26,7 @@
 *
 * RETURNS:
 *     The routine returns an int number stating the quality
+*    -1: Error
 *     1: The grid is fairly regular, given by:
 *        - changes is dx, dy, dz is within 5%
 *        - changes in rotation is within 5%
@@ -136,6 +137,14 @@ grd3d_geometrics(int nx,
             for (i = 1; i <= nx; i++) {
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                if (ib < 0) {
+                    free(tmp_x);
+                    free(tmp_y);
+                    free(tmp_z);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_geometrics");
+                    return -1;
+                }
 
                 grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, ncoordin, zcornsv,
                                nzcornin, &xv, &yv, &zv);
@@ -150,6 +159,14 @@ grd3d_geometrics(int nx,
                     /* get the cell geometry for each cell */
 
                     ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                    if (ib < 0) {
+                        free(tmp_x);
+                        free(tmp_y);
+                        free(tmp_z);
+                        throw_exception("Loop through grid resulted in index outside "
+                                        "boundary in grd3d_geometrics");
+                        return -1;
+                    }
 
                     grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, c);
 
@@ -241,9 +258,25 @@ grd3d_geometrics(int nx,
             for (i = 1; i < nxuse; i++) {
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                if (ib < 0) {
+                    free(tmp_x);
+                    free(tmp_y);
+                    free(tmp_z);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_geometrics");
+                    return -1;
+                }
 
                 /* ========================================= along X axis: */
                 ibn = x_ijk2ib(i + 1, j, k, nx, ny, nz, 0);
+                if (ibn < 0) {
+                    free(tmp_x);
+                    free(tmp_y);
+                    free(tmp_z);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_geometrics");
+                    return -1;
+                }
 
                 lx = fabs(tmp_x[ibn] - tmp_x[ib]);
                 ly = fabs(tmp_y[ibn] - tmp_y[ib]);
@@ -281,6 +314,14 @@ grd3d_geometrics(int nx,
                 /* ========================================= along Y axis: */
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 ibn = x_ijk2ib(i, j + 1, k, nx, ny, nz, 0);
+                if (ib < 0 || ibn < 0) {
+                    free(tmp_x);
+                    free(tmp_y);
+                    free(tmp_z);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_geometrics");
+                    return -1;
+                }
 
                 lx = fabs(tmp_x[ibn] - tmp_x[ib]);
                 ly = fabs(tmp_y[ibn] - tmp_y[ib]);
@@ -297,6 +338,14 @@ grd3d_geometrics(int nx,
                 /* ========================================= along Z axis: */
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 ibn = x_ijk2ib(i, j, k + 1, nx, ny, nz, 0);
+                if (ib < 0 || ibn < 0) {
+                    free(tmp_x);
+                    free(tmp_y);
+                    free(tmp_z);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_geometrics");
+                    return -1;
+                }
 
                 if (actnumsv[ib] == 1 && actnumsv[ibn] == 1) {
                     vdz_ic = fabs(tmp_z[ibn] - tmp_z[ib]);

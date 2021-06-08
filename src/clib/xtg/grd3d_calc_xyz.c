@@ -65,7 +65,11 @@ grd3d_calc_xyz(int nx,
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
-
+                if (ib < 0 || ic < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_calc_xyz");
+                    return;
+                }
                 grd3d_midpoint(i, j, k, nx, ny, nz, coordsv, ncoord, zcornsv, nzcorn,
                                &xv, &yv, &zv);
 

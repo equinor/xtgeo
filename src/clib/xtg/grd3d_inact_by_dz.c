@@ -60,6 +60,12 @@ grd3d_inact_by_dz(int nx,
                 /* parameter counting */
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
+                if (ib < 0 || ic < 0) {
+                    free(p_dztmp_v);
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3d_inact_by_dz");
+                    return;
+                }
 
                 if (p_dztmp_v[ic] < threshold && actnumsv[ic] > 0) {
                     actnumsv[ib] = 0;

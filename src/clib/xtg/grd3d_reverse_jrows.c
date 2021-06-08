@@ -87,6 +87,12 @@ grd3d_reverse_jrows(int nx,
         for (j = ny; j >= 1; j--) {
             for (i = 1; i <= nx; i++) {
                 ib1 = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+                if (ib1 < 0) {
+                    free(tmpcv);
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3d_reverse_jrows");
+                    return EXIT_FAILURE;
+                }
                 tmpcv[4 * ib2 + 0] = zcornsv[4 * ib1 + 2];
                 tmpcv[4 * ib2 + 1] = zcornsv[4 * ib1 + 3];
                 tmpcv[4 * ib2 + 2] = zcornsv[4 * ib1 + 0];
@@ -110,6 +116,12 @@ grd3d_reverse_jrows(int nx,
             for (i = 1; i <= nx; i++) {
                 ib1 = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 ib2 = x_ijk2ib(i, ny - j + 1, k, nx, ny, nz, 0);
+                if (ib1 < 0 || ib2 < 0) {
+                    free(itmp);
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3d_reverse_jrows");
+                    return EXIT_FAILURE;
+                }
                 itmp[ib1] = actnumsv[ib2];
             }
         }

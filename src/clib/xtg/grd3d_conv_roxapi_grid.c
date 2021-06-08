@@ -72,7 +72,15 @@ grd3d_conv_roxapi_grid(int nx,
             for (kz = 1; kz <= nz; kz++) {
 
                 id = x_ijk2ib(ix, jy, kz, nx, ny, nz, 0);
-
+                if (id < 0) {
+                    for (ia = 0; ia < nxyz; ia++) {
+                        free(cellcorners[ia]);
+                    }
+                    free(cellcorners);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_conv_roxapi_grid");
+                    return;
+                }
                 for (ic = 0; ic < 24; ic++) {
                     cellcorners[id][ic] = crds[nc++];
                 }
@@ -88,7 +96,15 @@ grd3d_conv_roxapi_grid(int nx,
             /* top: */
             k = 1;
             ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
-
+            if (ib < 0) {
+                for (ia = 0; ia < nxyz; ia++) {
+                    free(cellcorners[ia]);
+                }
+                free(cellcorners);
+                throw_exception("Loop through grid resulted in index outside boundary "
+                                "in grd3d_conv_roxapi_grid");
+                return;
+            }
             coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 0] = cellcorners[ib][0];
             coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 1] = cellcorners[ib][1];
             coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 2] = cellcorners[ib][2];
@@ -113,6 +129,15 @@ grd3d_conv_roxapi_grid(int nx,
             /* base: */
             k = nz;
             ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+            if (ib < 0) {
+                for (ia = 0; ia < nxyz; ia++) {
+                    free(cellcorners[ia]);
+                }
+                free(cellcorners);
+                throw_exception("Loop through grid resulted in index outside boundary "
+                                "in grd3d_conv_roxapi_grid");
+                return;
+            }
 
             coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 3] = cellcorners[ib][12];
             coordsv[6 * ((j - 1) * (nx + 1) + i - 1) + 4] = cellcorners[ib][13];
@@ -147,6 +172,15 @@ grd3d_conv_roxapi_grid(int nx,
                 ibt = x_ijk2ib(ix, jy, kz, nx, ny, nz + 1, 0);
                 ibb = x_ijk2ib(ix, jy, kz + 1, nx, ny, nz + 1, 0);
                 ib = x_ijk2ib(ix, jy, kz, nx, ny, nz, 0);
+                if (ibt < 0 || ibb < 0 || ib < 0) {
+                    for (ia = 0; ia < nxyz; ia++) {
+                        free(cellcorners[ia]);
+                    }
+                    free(cellcorners);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_conv_roxapi_grid");
+                    return;
+                }
 
                 zcornsv[4 * ibt + 1 * 1 - 1] = cellcorners[ib][2];
                 zcornsv[4 * ibt + 1 * 2 - 1] = cellcorners[ib][5];

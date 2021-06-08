@@ -80,6 +80,11 @@ grd3d_corners(int i,
     /* cell and cell below*/
     long ibt = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
     long ibb = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
+    if (ibt < 0 || ibb < 0) {
+        throw_exception(
+          "Loop through grid resulted in index outside boundary in grd3d_corners");
+        return;
+    }
 
     corners[2] = zcornsv[4 * ibt + 1 * 1 - 1];
     corners[5] = zcornsv[4 * ibt + 1 * 2 - 1];

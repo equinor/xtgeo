@@ -109,7 +109,12 @@ grd3d_conv_grid_roxapi(int ncol,
                 ib1 = x_ijk2ib(i, j - 1, k, ncol, nrow, nlay + 1, 0);
                 ib2 = x_ijk2ib(i - 1, j, k, ncol, nrow, nlay + 1, 0);
                 ib3 = x_ijk2ib(i, j, k, ncol, nrow, nlay + 1, 0);
-
+                if (ib0 < 0 || ib1 < 0 || ib2 < 0 || ib3 < 0) {
+                    memset(zcorners, 0, sizeof(double) * nzcorners);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_conv_grid_roxapi");
+                    return EXIT_FAILURE;
+                }
                 z0 = UNDEF;
                 z1 = UNDEF;
                 z2 = UNDEF;

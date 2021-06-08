@@ -80,6 +80,12 @@ grd3d_adj_cells(int ncol,
             for (icn = 1; icn <= ncol; icn++) {
 
                 ib = x_ijk2ib(icn, jcn, kcn, ncol, nrow, nlay, 0);
+                if (ib < 0) {
+                    free(useactnum);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_adj_cells");
+                    return EXIT_FAILURE;
+                }
                 if (useactnum[ib] != 1)
                     continue;
                 if (p_prop1[ib] != val1)

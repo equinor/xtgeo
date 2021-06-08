@@ -101,6 +101,11 @@ surf_slice_grd3d(int mcol,
             for (k = 1; k <= nlay; k++) {
 
                 ib = x_ijk2ib(i, j, k, ncol, nrow, nlay, 0);
+                if (ib < 0) {
+                    throw_exception("Loop through layers gave index outside boundary "
+                                    "in surf_slice_grd3d");
+                    return EXIT_FAILURE;
+                }
                 if (actnumsv[ib] == 1)
                     nactive++;
 
@@ -180,6 +185,11 @@ surf_slice_grd3d(int mcol,
                               corners);
 
                 ib = x_ijk2ib(i, j, k, ncol, nrow, nlay, 0);
+                if (ib < 0) {
+                    throw_exception("Loop through layers gave index outside boundary "
+                                    "in surf_slice_grd3d");
+                    return EXIT_FAILURE;
+                }
                 if (actnumsv[ib] == 1) {
                     cellvalue = p_prop_v[ib];
                 } else {
@@ -198,6 +208,11 @@ surf_slice_grd3d(int mcol,
 
                             if (ios > 0) {
                                 imm = x_ijk2ic(im, jm, 1, mcol, mrow, 1, 0);
+                                if (imm < 0) {
+                                    throw_exception("Loop gave index outside boundary "
+                                                    "in surf_slice_grd3d");
+                                    return EXIT_FAILURE;
+                                }
                                 p_map_v[imm] = cellvalue;
                             }
                         }

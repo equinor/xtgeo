@@ -68,6 +68,11 @@ surf_setval_poly(double xori,
         for (jno = 1; jno <= nrow; jno++) {
 
             ic = x_ijk2ic(ino, jno, 1, ncol, nrow, 1, 0);
+            if (ic < 0) {
+                throw_exception("Loop through surface gave index outside boundary in "
+                                "surf_setval_poly");
+                return EXIT_FAILURE;
+            }
 
             ier = surf_xyz_from_ij(ino, jno, &xcor, &ycor, &zval, xori, xinc, yori,
                                    yinc, ncol, nrow, yflip, rot_deg, p_map_v, nmap, 0);

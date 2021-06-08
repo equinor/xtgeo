@@ -38,9 +38,9 @@ grd3d_zminmax(int i, int j, int k, int nx, int ny, int nz, double *zcornsv, int 
     /* cell and cell below*/
     ibt = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
     ibb = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
-
-    if (ibb < 0 || ibt < 0) {
-        logger_error(LI, FI, FU, "Error in routine %s", FU);
+    if (ibt < 0 || ibb < 0) {
+        throw_exception("Index outside boundary in grd3d_zminmax");
+        return -1;
     }
 
     if (option == 0) {

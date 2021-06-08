@@ -70,8 +70,10 @@ surf_slice_cube_v3(int ncol,
         for (jrow = 1; jrow <= nrow; jrow++) {
 
             long icmap = x_ijk2ic(icol, jrow, 1, ncol, nrow, 1, 0);
-            if (icmap < 0)
-                printf("Error\n");
+            if (icmap < 0) {
+                throw_exception("Error in surf_slice_cube_v3");
+                return EXIT_FAILURE;
+            }
 
             if (maskv[icmap] != 0)
                 continue;
@@ -96,7 +98,10 @@ surf_slice_cube_v3(int ncol,
             long icc1, icc2;
             icc1 = x_ijk2ic(icol, jrow, k1 + 1, ncol, nrow, nlay, 0);
             icc2 = x_ijk2ic(icol, jrow, k2 + 1, ncol, nrow, nlay, 0);
-
+            if (icc1 < 0 || icc2 < 0) {
+                throw_exception("Index outside boundary in surf_slice_cube_v3");
+                return EXIT_FAILURE;
+            }
             czvals[0] = cubevalsv[icc1];
             czvals[1] = cubevalsv[icc2];
             zd[0] = czori + k1 * czinc;

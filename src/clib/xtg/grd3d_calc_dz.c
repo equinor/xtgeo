@@ -57,11 +57,19 @@ grd3d_calc_dz(int nx,
                 /* parameter counting */
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0); /* C order */
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0); /* F order */
-
+                if (ic < 0 || ib < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_calc_dz");
+                    return;
+                }
                 /* grid */
                 long ip = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
                 long iq = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
-
+                if (ic < 0 || ib < 0) {
+                    throw_exception("Index outside boundary in grd3d_calc_dz, trying "
+                                    "to access non-existing layer");
+                    return;
+                }
                 /* each cell */
                 top_z_avg = 0.25 * (zcornsv[4 * ip + 1 - 1] + zcornsv[4 * ip + 2 - 1] +
                                     zcornsv[4 * ip + 3 - 1] + zcornsv[4 * ip + 4 - 1]);

@@ -108,6 +108,11 @@ surf_import_irap_ascii(FILE *fd,
         /* convert to C order */
         x_ib2ijk(ib, &i, &j, &k, *nx, *ny, 1, 0);
         ic = x_ijk2ic(i, j, 1, *nx, *ny, 1, 0);
+        if (ic < 0) {
+            throw_exception("Convert to c order resulted in index outside boundary in "
+                            "surf_import_irap_ascii");
+            return EXIT_FAILURE;
+        }
 
         p_map_v[ic] = dval;
     }

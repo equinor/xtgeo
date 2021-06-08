@@ -69,6 +69,10 @@ grd3d_refine_vert(int nx,
 
                 long ibt = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
                 long ibb = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
+                if (ibt < 0 || ibb < 0) {
+                    throw_exception("Index outside boundary in grd3d_refine_vert");
+                    return EXIT_FAILURE;
+                }
 
                 /* look at each pillar in each cell, find top */
                 /* and bottom, and divide */
@@ -76,6 +80,10 @@ grd3d_refine_vert(int nx,
                 rfactor = rfac[k - 1]; /* as array is 0 base */
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                if (ib < 0) {
+                    throw_exception("Index outside boundary in grd3d_refine_vert");
+                    return EXIT_FAILURE;
+                }
                 iact = actnumsv[ib];
 
                 for (ic = 1; ic <= 4; ic++) {
@@ -95,10 +103,20 @@ grd3d_refine_vert(int nx,
                     /* now assign corners for the refined grid: */
                     for (kr = 0; kr < rfactor; kr++) {
                         long ibrt = x_ijk2ib(i, j, kk + kr, nx, ny, nzref + 1, 0);
-
                         long ibrb = x_ijk2ib(i, j, kk + kr + 1, nx, ny, nzref + 1, 0);
+                        if (ibrt < 0 || ibrb < 0) {
+                            throw_exception(
+                              "Index outside boundary in grd3d_refine_vert");
+                            return EXIT_FAILURE;
+                        }
 
                         ib = x_ijk2ib(i, j, kk + kr, nx, ny, nzref, 0);
+                        if (ib < 0) {
+                            throw_exception(
+                              "Index outside boundary in grd3d_refine_vert");
+                            return EXIT_FAILURE;
+                        }
+
                         p_actnumref_v[ib] = iact;
 
                         p_zcornref_v[4 * ibrt + 1 * ic - 1] = ztop + kr * rdz;

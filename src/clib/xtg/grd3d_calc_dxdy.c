@@ -72,7 +72,11 @@ grd3d_calc_dxdy(int nx,
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
                 long ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
-
+                if (ib < 0 || ic < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_calc_dxdy");
+                    return EXIT_FAILURE;
+                }
                 if (option1 == 1 && actnumsv[ib] == 0) {
                     dx[ic] = UNDEF;
                     dy[ic] = UNDEF;

@@ -82,6 +82,14 @@ grd3d_get_lay_slice(int nx,
         for (j = 1; j <= ny; j++) {
             ib = x_ijk2ib(i, j, kslice, nx, ny, nz, 0);
             ic = x_ijk2ic(i, j, kslice, nx, ny, nz, 0);
+            if (ic < 0 || ib < 0) {
+                memset(slicev, 0, sizeof(double) * nslicev);
+                memset(icv, 0, sizeof(double) * nicv);
+                throw_exception("Loop resulted in index outside "
+                                "boundary in grd3d_get_lay_slice");
+                return -1;
+            }
+
             grd3d_corners(i, j, kslice, nx, ny, nz, coordsv, 0, zcornsv, 0, crs);
 
             if (actonly == 1 && actnumsv[ib] == 0)
