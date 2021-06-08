@@ -85,6 +85,9 @@ surf_get_z_from_xy(double x,
         /* map origin relative is 0.0 */
         z = surf_get_z_from_ij(i, j, rx, ry, nx, ny, xinc, yinc * yflip, 0.0, 0.0,
                                p_map_v, 0);
+        if (z == -2) {
+            return UNDEF;
+        }
 
     } else if (option == 1) {
         /* this is kept for legacy reference */
