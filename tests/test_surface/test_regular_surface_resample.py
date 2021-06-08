@@ -71,15 +71,45 @@ def test_resample_small():
 
     xsx = xs1.copy()
     xsx.resample(xs2)
-    assert xsx.values.mean() == 888.0
+    assert list(xsx.values.data.flatten()) == [
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+    ]
 
     xsx = xs3.copy()
     xsx.resample(xs2)
-    assert xsx.values.mean() == 888.0
+    assert list(xsx.values.data.flatten()) == [
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+        888.0,
+    ]
 
     xsx = xs1.copy()
     xsx.resample(xs3)
-    assert xsx.values.mean() == 2888.0
+    assert list(xsx.values.data.flatten()) == [
+        2888.0,
+        2888.0,
+        2888.0,
+        2888.0,
+        2888.0,
+        2888.0,
+        2888.0,
+        2888.0,
+        2888.0,
+    ]
 
 
 def test_resample(reek_map):

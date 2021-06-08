@@ -91,7 +91,11 @@ surf_xyz_from_ij(int i,
 
     if (flag == 0) {
         ic = x_ijk2ic(i, j, 1, nx, ny, 1, 0); /* C order */
-        *z = p_map_v[ic];
+        if (ic < 0) {
+            *z = UNDEF;
+        } else {
+            *z = p_map_v[ic];
+        }
     } else {
         *z = 999.00;
     }
