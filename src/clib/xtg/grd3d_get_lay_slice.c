@@ -68,6 +68,8 @@ grd3d_get_lay_slice(int nx,
     logger_info(LI, FI, FU, "Dimens for arrays %ld %ld", nslicev, nicv);
 
     if (kslice > nz || kslice < 1) {
+        memset(slicev, 0, sizeof(double) * nslicev);
+        memset(icv, 0, sizeof(double) * nicv);
         logger_warn(LI, FI, FU, "Slice is outside range, return");
         return -1;
     }
