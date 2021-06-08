@@ -142,6 +142,12 @@ surf_sample_grd3d_lay(int nx,
             for (jj = mymin; jj <= mymax; jj++) {
                 for (ii = mxmin; ii <= mxmax; ii++) {
                     ibm = x_ijk2ic(ii, jj, 1, mx, my, 1, 0);
+                    if (ibm < 0) {
+                        throw_exception(
+                          "Loop through surface resulted in index outside "
+                          "boundary in surf_sample_grd3d_lay");
+                        return;
+                    }
                     xpos = xori + xinc * (ii - 1);
                     ypos = yori + yinc * (jj - 1);
 

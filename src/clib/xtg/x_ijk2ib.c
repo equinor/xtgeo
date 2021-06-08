@@ -2,14 +2,18 @@
 
 #include "libxtg.h"
 #include "libxtg_.h"
+#include "logger.h"
 
 long
 x_ijk2ib(long i, long j, long k, long nx, long ny, long nz, int ia_start)
 {
 
     if (i > nx || j > ny || k > nz) {
+        logger_error(LI, FI, FU, "i: %ld, nx: %ld, j: %ld, ny: %ld, k: %ld, nz: %ld\n",
+                     i, nx, j, ny, k, nz);
         return -2;
     } else if (i < 1 || j < 1 || k < 1) {
+        logger_error(LI, FI, FU, "i: %ld, j: %ld, k: %ld\n", i, j, k);
         return -2;
     }
 
@@ -29,8 +33,11 @@ x_ijk2ic(long i, long j, long k, long nx, long ny, long nz, int ia_start)
 {
 
     if (i > nx || j > ny || k > nz) {
+        logger_error(LI, FI, FU, "i: %ld, nx: %ld, j: %ld, ny: %ld, k: %ld, nz: %ld\n",
+                     i, nx, j, ny, k, nz);
         return -2;
     } else if (i < 1 || j < 1 || k < 1) {
+        logger_error(LI, FI, FU, "i: %ld, j: %ld, k: %ld\n", i, j, k);
         return -2;
     }
 

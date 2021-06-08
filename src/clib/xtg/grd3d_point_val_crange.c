@@ -23,7 +23,7 @@
  *     option          i      If negative, do not compute value (p_prop_v can be dummy)
 
  * RETURNS:
- *     int: -1, then outside grid
+ *     int: < 0, then outside grid
  * TODO/ISSUES/BUGS:
  *
  * LICENCE:
@@ -67,6 +67,11 @@ _find_ib(double x,
 
                 double corners[24];
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                if (ib < 0) {
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3d_point_val_crange");
+                    return -8;
+                }
                 /* get the corner for the cell */
                 grd3d_corners(i, j, k, nx, ny, nz, coordsv, 0, zcornsv, 0, corners);
                 inside = x_chk_point_in_cell(x, y, z, corners, 1);
@@ -117,6 +122,10 @@ grd3d_point_val_crange(double x,
 
     if (ibstart < 0) {
         ibstart = x_ijk2ib(imin, jmin, kmin, nx, ny, nz, 0);
+        if (ibstart < 0) {
+            throw_exception("Start index outside boundary in grd3d_point_val_crange");
+            return -1;
+        }
     }
 
     x_ib2ijk(ibstart, &istart, &jstart, &kstart, nx, ny, nz, 0);

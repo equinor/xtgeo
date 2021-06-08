@@ -89,7 +89,12 @@ cube_export_rmsregular(int nx,
             for (i = 1; i <= nx; i++) {
 
                 ic = x_ijk2ic(i, j, k, nx, ny, nz, 0);
-
+                if (ic < 0) {
+                    fclose(fc);
+                    throw_exception("Loop through cube resulted in index outside "
+                                    "boundary in cube_export_rmsregular");
+                    return -1;
+                }
                 value = cubevalsv[ic];
                 if (value > UNDEF_LIMIT) {
                     value = UNDEF_CUBE_RMS;

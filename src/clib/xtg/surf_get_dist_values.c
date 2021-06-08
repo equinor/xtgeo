@@ -95,6 +95,13 @@ surf_get_dist_values(double xori,
         for (j = 1; j <= ny; j++) {
 
             ib = x_ijk2ic(i, j, 1, nx, ny, 1, 0);
+            if (ib < 0) {
+                free(xv);
+                free(yv);
+                throw_exception("Loop resulted in index outside "
+                                "boundary in surf_get_dist_values");
+                return EXIT_FAILURE;
+            }
 
             x3 = xv[ib];
             y3 = yv[ib];

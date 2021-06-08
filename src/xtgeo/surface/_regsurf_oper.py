@@ -126,7 +126,7 @@ def resample(self, other, mask=True):
     svalues = np.ma.filled(self.values, fill_value=xtgeo.UNDEF)
     ovalues = np.ma.filled(other.values, fill_value=xtgeo.UNDEF)
 
-    ier = _cxtgeo.surf_resample(
+    _cxtgeo.surf_resample(
         other._ncol,
         other._nrow,
         other._xori,
@@ -147,10 +147,8 @@ def resample(self, other, mask=True):
         svalues,
         0 if not mask else 1,
     )
-    self.values = np.ma.masked_greater(svalues, xtgeo.UNDEF_LIMIT)
 
-    if ier != 0:
-        raise RuntimeError("Resampling went wrong, " "code is {}".format(ier))
+    self.values = np.ma.masked_greater(svalues, xtgeo.UNDEF_LIMIT)
 
     self.set_values1d(svalues)
     self._filesrc = "Resampled"
@@ -206,7 +204,6 @@ def get_value_from_xy(self, point=(0.0, 0.0), sampling="bilinear"):
         self.get_values1d(),
         option,
     )
-
     if zcoord > xtgeo.UNDEF_LIMIT:
         return None
 

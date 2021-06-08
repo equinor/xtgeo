@@ -68,7 +68,12 @@ surf_swapaxes(int *nx,
         for (i = 1; i <= nnx; i++) {
             ib1 = x_ijk2ic(i, j, 1, nnx, nny, 1, 0);
             ib2 = x_ijk2ic(j, i, 1, nny, nnx, 1, 0);
-
+            if (ib1 < 0 || ib2 < 0) {
+                free(tmp);
+                throw_exception(
+                  "Loop through surface gave index outside boundary in surf_swapaxes");
+                return EXIT_FAILURE;
+            }
             tmp[ib2] = p_map_v[ib1];
         }
     }

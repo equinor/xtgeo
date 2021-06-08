@@ -73,6 +73,11 @@ surf_xy_as_values(double xori,
         for (j = 1; j <= ny; j++) {
 
             ib = x_ijk2ic(i, j, 1, nx, ny, 1, 0); /* C order */
+            if (ib < 0) {
+                throw_exception("Loop through surface gave index outside boundary in "
+                                "surf_xy_as_values");
+                return EXIT_FAILURE;
+            }
 
             if (i == 1 && j == 1) {
 

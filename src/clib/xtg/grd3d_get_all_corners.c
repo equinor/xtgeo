@@ -75,6 +75,11 @@ grd3d_get_all_corners(int nx,
             for (i = 1; i <= nx; i++) {
 
                 long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                if (ib < 0) {
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3d_get_all_corners");
+                    return;
+                }
 
                 if (option == 1 && actnumsv[ib] == 0) {
                     x1[ib] = UNDEF;

@@ -121,9 +121,6 @@ def _slice_cube_v1(
         opt2,
     )
 
-    if istat != 0:
-        logger.warning("Problem, ISTAT = %s", istat)
-
     self.set_values1d(v1d)
 
     if deadtraces:

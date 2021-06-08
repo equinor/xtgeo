@@ -133,6 +133,12 @@ grd3d_export_grdecl(int nx,
         for (j = 1; j <= ny; j++) {
             for (i = 1; i <= nx; i++) {
                 ib = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+                if (ib < 0) {
+                    free(farr);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_export_grdecl");
+                    return;
+                }
 
                 farr[ic++] = zcornsv[4 * ib + 1 * 1 - 1];
                 farr[ic++] = zcornsv[4 * ib + 1 * 2 - 1];
@@ -140,6 +146,12 @@ grd3d_export_grdecl(int nx,
 
             for (i = 1; i <= nx; i++) {
                 ib = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+                if (ib < 0) {
+                    free(farr);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_export_grdecl");
+                    return;
+                }
 
                 farr[ic++] = zcornsv[4 * ib + 1 * 3 - 1];
                 farr[ic++] = zcornsv[4 * ib + 1 * 4 - 1];
@@ -150,12 +162,26 @@ grd3d_export_grdecl(int nx,
         for (j = 1; j <= ny; j++) {
             for (i = 1; i <= nx; i++) {
                 ib = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
+                if (ib < 0) {
+                    fclose(fc);
+                    free(farr);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_export_grdecl");
+                    return;
+                }
 
                 farr[ic++] = zcornsv[4 * ib + 1 * 1 - 1];
                 farr[ic++] = zcornsv[4 * ib + 1 * 2 - 1];
             }
             for (i = 1; i <= nx; i++) {
                 ib = x_ijk2ib(i, j, k + 1, nx, ny, nz + 1, 0);
+                if (ib < 0) {
+                    fclose(fc);
+                    free(farr);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_export_grdecl");
+                    return;
+                }
 
                 farr[ic++] = zcornsv[4 * ib + 1 * 3 - 1];
                 farr[ic++] = zcornsv[4 * ib + 1 * 4 - 1];

@@ -48,6 +48,11 @@ grd3d_make_z_consistent(int nx,
 
                 long ibp = x_ijk2ib(i, j, k - 1, nx, ny, nz + 1, 0);
                 long ibx = x_ijk2ib(i, j, k, nx, ny, nz + 1, 0);
+                if (ibp < 0 || ibx < 0) {
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3d_make_z_consistent");
+                    return;
+                }
 
                 int ic;
                 for (ic = 1; ic <= 4; ic++) {

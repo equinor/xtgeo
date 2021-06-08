@@ -101,6 +101,11 @@ grd3d_copy(int ncol,
                 }
 
                 ibt = x_ijk2ib(icn, jcn, kcn, ncol, nrow, nlay + 1, 0);
+                if (ibt < 0) {
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_copy");
+                    return EXIT_FAILURE;
+                }
 
                 for (ic = 1; ic <= 4; ic++) {
                     p_zcorn2_v[4 * ibt + 1 * ic - 1] = p_zcorn1_v[4 * ibt + 1 * ic - 1];
@@ -108,6 +113,11 @@ grd3d_copy(int ncol,
 
                 if (kcn <= nlay) {
                     ibt = x_ijk2ib(icn, jcn, kcn, ncol, nrow, nlay, 0);
+                    if (ibt < 0) {
+                        throw_exception("Loop through grid resulted in index outside "
+                                        "boundary in grd3d_copy");
+                        return EXIT_FAILURE;
+                    }
 
                     p_actnum2_v[ibt] = p_actnum1_v[ibt];
                 }

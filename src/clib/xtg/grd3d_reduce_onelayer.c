@@ -58,7 +58,11 @@ grd3d_reduce_onelayer(int nx,
             /* top */
             ibt = x_ijk2ib(i, j, 1, nx, ny, nz + 1, 0);
             ibb = x_ijk2ib(i, j, 1, nx, ny, 2, 0);
-
+            if (ibt < 0 || ibb < 0) {
+                throw_exception("Loop resulted in index outside "
+                                "boundary in grd3d_reduce_onelayer");
+                return EXIT_FAILURE;
+            }
             for (ic = 1; ic <= 4; ic++) {
                 p_zcorn2_v[4 * ibb + 1 * ic - 1] = p_zcorn1_v[4 * ibt + 1 * ic - 1];
             }
@@ -66,7 +70,10 @@ grd3d_reduce_onelayer(int nx,
             /* base */
             ibt = x_ijk2ib(i, j, nz + 1, nx, ny, nz + 1, 0);
             ibb = x_ijk2ib(i, j, 2, nx, ny, 2, 0);
-
+            if (ibt < 0 || ibb < 0) {
+                throw_exception("Outside boundary in grd3d_reduce_onelayer");
+                return EXIT_FAILURE;
+            }
             for (ic = 1; ic <= 4; ic++) {
                 p_zcorn2_v[4 * ibb + 1 * ic - 1] = p_zcorn1_v[4 * ibt + 1 * ic - 1];
             }

@@ -199,6 +199,13 @@ surf_slice_cube_window(int ncx,
                 /* update attribute for that particular Z vector */
                 for (iat = 0; iat < nattr; iat++) {
                     ic = x_ijk2ib(im, jm, iat + 1, mx, my, nattr, 0);
+                    if (ic < 0) {
+                        free(tmpzval);
+                        free(zattr);
+                        throw_exception("Outside boundary in surf_slice_cube_window");
+                        return EXIT_FAILURE;
+                    }
+
                     p_attrs_v[ic] = zattr[iat];
                 }
                 /* } */

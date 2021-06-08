@@ -71,6 +71,11 @@ grd3d_setval_poly(double *p_xp_v,
                                nzcornin, &xg, &yg, &zg);
 
                 ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                if (ib < 0) {
+                    throw_exception("Loop resulted in index outside "
+                                    "boundary in grd3_setval_poly");
+                    return EXIT_FAILURE;
+                }
 
                 /* check polygon */
                 istat = pol_chk_point_inside(xg, yg, p_xp_v, p_yp_v, npx);

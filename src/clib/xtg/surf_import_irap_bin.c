@@ -253,6 +253,12 @@ surf_import_irap_bin(FILE *fc,
                 /* convert to C order */
                 x_ib2ijk(nn, &i, &j, &k, mx, my, 1, 0);
                 ic = x_ijk2ic(i, j, 1, mx, my, 1, 0);
+                if (ic < 0) {
+                    *p_ndef = 0;
+                    throw_exception("Convert to c order resulted in index outside "
+                                    "boundary in surf_import_irap_bin");
+                    return EXIT_FAILURE;
+                }
 
                 p_map_v[ic] = dval;
 

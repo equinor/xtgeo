@@ -72,6 +72,10 @@ grd3d_point_in_cell(long ibstart,
 
     if (kzonly > 0 && ibstart == 0) {
         ibstart = x_ijk2ib(1, 1, kzonly, nx, ny, nz, 0);
+        if (ibstart < 0) {
+            throw_exception("Outside cell in grd3d_point_in_cell");
+            return -1;
+        }
     }
 
     int istart, jstart, kstart;
@@ -137,6 +141,11 @@ grd3d_point_in_cell(long ibstart,
                 for (i = i1; i <= i2; i++) {
 
                     long ib = x_ijk2ib(i, j, k, nx, ny, nz, 0);
+                    if (ib < 0) {
+                        throw_exception("Loop resulted in index outside "
+                                        "boundary in grd3d_point_in_cell");
+                        return -1;
+                    }
                     double corners[24];
                     double polx[5], poly[5];
 

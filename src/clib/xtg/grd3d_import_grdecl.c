@@ -163,6 +163,11 @@ grd3d_import_grdecl(FILE *fc,
                             logger_error(LI, FI, FU, "Error in reading ZCORN");
 
                         ib = x_ijk2ib(i, j, kk, nx, ny, nz + 1, 0);
+                        if (ib < 0) {
+                            throw_exception("Loop resulted in index outside "
+                                            "boundary in grd3d_import_grdecl");
+                            return;
+                        }
                         if (kzread == 1) {
                             zcornsv[4 * ib + 1 * 1 - 1] = fvalue1;
                             zcornsv[4 * ib + 1 * 2 - 1] = fvalue2;
@@ -175,6 +180,13 @@ grd3d_import_grdecl(FILE *fc,
                         if (fscanf(fc, "%lf", &fvalue2) != 1)
                             logger_error(LI, FI, FU, "Error in reading ZCORN");
                         ib = x_ijk2ib(i, j, kk, nx, ny, nz + 1, 0);
+                        if (ib < 0) {
+                            throw_exception("Loop resulted in index outside "
+                                            "boundary in grd3d_import_grd_ecl");
+
+                            return;
+                        }
+
                         if (kzread == 1) {
                             zcornsv[4 * ib + 1 * 3 - 1] = fvalue1;
                             zcornsv[4 * ib + 1 * 4 - 1] = fvalue2;

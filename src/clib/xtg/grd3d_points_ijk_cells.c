@@ -185,6 +185,10 @@ _grd3d_point_in_cell(int ic,
     long ib;
 
     ib = x_ijk2ib(ic, jc, kc, nx, ny, nz, 0);
+    if (ib < 0) {
+        throw_exception("Index outside boundary in grd3d_points_ijk_cell");
+        return -2;
+    }
 
     /* get the corner for the cell */
     double corners[24];

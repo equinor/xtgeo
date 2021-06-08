@@ -111,6 +111,12 @@ surf_export_irap_ascii(FILE *fc,
 
             /* C order input */
             ic = x_ijk2ic(i, j, 1, mx, my, 1, 0);
+            if (ic < 0) {
+                throw_exception("Loop through surface gave index outside boundary in "
+                                "surf_export_irap_ascii");
+                return EXIT_FAILURE;
+            }
+
             myfloat = p_map_v[ic];
 
             if (myfloat > UNDEF_MAP_LIMIT)
