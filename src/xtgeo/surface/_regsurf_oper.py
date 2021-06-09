@@ -216,8 +216,7 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
     if zvalues is None:
         zvalues = self.get_values1d()
 
-    if 1 <= iloc <= self.ncol and 1 <= jloc <= self.nrow:
-
+    try:
         ier, xval, yval, value = _cxtgeo.surf_xyz_from_ij(
             iloc,
             jloc,
@@ -232,11 +231,8 @@ def get_xy_value_from_ij(self, iloc, jloc, zvalues=None):
             zvalues,
             0,
         )
-        if ier != 0:
-            raise XTGeoCLibError(f"Error in surf_xyz_from_ij, error code: {ier}")
-
-    else:
-        raise ValueError("Index i and/or j out of bounds")
+    except XTGeoCLibError:
+        raise ValueError(f"Index i {iloc} and/or j {jloc} out of bounds")
 
     if value > xtgeo.UNDEF_LIMIT:
         value = None

@@ -85,6 +85,10 @@ surf_xyz_from_ij(int i,
 
         /* retest if more severe and return -1 if case*/
         if (i < 1 || i > nx || j < 1 || j > ny) {
+            *x = 0.0;
+            *y = 0.0;
+            *z = UNDEF;
+            throw_exception("Accessing value outside surface");
             return -1;
         }
     }
