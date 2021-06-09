@@ -598,23 +598,6 @@ surf_slice_cube(int ncx,
                 int option2);
 
 int
-surf_slice_cube_v2(int ncol,
-                   int nrow,
-                   int nlay,
-                   double czori,
-                   double czinc,
-                   float *swig_np_flt_inplaceflat_v1,
-                   long n_swig_np_flt_inplaceflat_v1,
-                   double *swig_np_dbl_inplaceflat_v1,
-                   long n_swig_np_dbl_inplaceflat_v1,
-                   double *swig_np_dbl_inplaceflat_v2,
-                   long n_swig_np_dbl_inplaceflat_v2,
-                   mbool *swig_np_boo_inplaceflat_v1,  // *maskv,
-                   long n_swig_np_boo_inplaceflat_v1,
-                   int optnearest,
-                   int optmask);
-
-int
 surf_slice_cube_v3(int ncol,
                    int nrow,
                    int nlay,
