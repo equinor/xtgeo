@@ -152,6 +152,9 @@ class _XTGeoFile(object):
         elif isinstance(fobj, io.BytesIO):
             self._file = fobj
             self._memstream = True
+        elif isinstance(fobj, io.StringIO):
+            self._file = fobj
+            self._memstream = True
         elif isinstance(fobj, _XTGeoFile):
             raise RuntimeError("Reinstancing object, not allowed", self.__class__)
         else:
