@@ -60,7 +60,7 @@ surf_export_zmap_ascii(FILE *fc,
 
     /* local declarations */
     int i, j, nn, fcode;
-    float myfloat, xmax, ymax;
+    double node_value, xmax, ymax;
 
     logger_info(LI, FI, FU, "Write ZMAP plus ascii map file ... (%s)", FU);
 
@@ -81,7 +81,6 @@ surf_export_zmap_ascii(FILE *fc,
 
     if (fc == NULL)
         return -1;
-
     /* header */
     fprintf(fc, "! Export from XTGeo (cxtgeo engine)\n");
     fprintf(fc, "@ GRIDFILE, GRID, 5\n");
@@ -110,15 +109,15 @@ surf_export_zmap_ascii(FILE *fc,
                 return EXIT_FAILURE;
             }
 
-            myfloat = p_map_v[ic];
+            node_value = p_map_v[ic];
 
-            if (myfloat > UNDEF_MAP_LIMIT)
-                myfloat = UNDEF_MAP_ZMAP;
+            if (node_value > UNDEF_MAP_LIMIT)
+                node_value = UNDEF_MAP_ZMAP;
 
             if (fcode == 4) {
-                fprintf(fc, " %20.4f", myfloat);
+                fprintf(fc, " %20.4f", node_value);
             } else {
-                fprintf(fc, " %20.8f", myfloat);
+                fprintf(fc, " %20.8f", node_value);
             }
             nn++;
 

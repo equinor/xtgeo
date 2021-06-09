@@ -14,6 +14,7 @@ import xtgeo
 import xtgeo.common.sys as xsys
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo  # pylint: disable=no-name-in-module
 from xtgeo.common import XTGeoDialog
+from xtgeo.surface._zmap_parser import parse_zmap
 
 xtg = XTGeoDialog()
 
@@ -421,85 +422,27 @@ def import_zmap_ascii(mfile, values=True, **_):
     https://blog.nitorinfotech.com/what-is-zmap-plus-file-format/
 
     """
-
-    if not mfile.memstream:
-        logger.info("Reading zmap+ from %s", mfile.file)
-    else:
-        logger.info("Reading zmap+ from memory stream")
-
-    count = 0
-    buffer = ""
-
-    if mfile.memstream:
-        mfile.file.seek(0)
-        buf = mfile.file.read()
-        buf = buf.decode().split("\n")
-        for line in buf:
-            buffer += line
-            count += 1
-            if line.startswith("@\n"):
-                break
-    else:
-        with open(mfile.file, "r", encoding="utf-8") as fhandle:
-            for line in fhandle:
-                buffer += line
-                count += 1
-                if line.startswith("@\n"):
-                    break
-
-    # interpret header
-    correctformat = False
-    header = []
-    lines = buffer.split("\n")
-    for line in lines:
-        if line.startswith("!"):
-            continue
-        elif line.startswith("@ GRIDFILE, GRID"):
-            correctformat = True
-        elif line.startswith("@\n"):
-            break
-        else:
-            hdr = [xxx.strip() for xxx in line.split(",")]
-            header.extend(hdr)
-
-    if not correctformat:
-        raise ValueError("Input file does not seem be a correct zmap file")
-
-    xmax = float(header[8])
-    ymax = float(header[10])
-
-    args = {}
-    args["ncol"] = int(header[6])
-    args["nrow"] = int(header[5])
-    args["xori"] = float(header[7])
-    args["yori"] = float(header[9])
-    args["xinc"] = (xmax - args["xori"]) / (args["ncol"] + 1)
-    args["yinc"] = (ymax - args["yori"]) / (args["nrow"] + 1)
-
-    if header[2]:
-        undef = float(header[2])  # user defined undef
-    else:
-        undef = float(header[1])
-
-    if values is not False:
-        if mfile.memstream:
-            mfile.file.seek(0)
-            buf = mfile.file.read()
-            buf = buf.decode().split()
-            indexes = [i for i, x in enumerate(buf) if x == "@"]
-            buf = buf[indexes[-1] + 1 :]
-        else:
-            with open(mfile.file, "r", encoding="utf-8") as fhx:
-                buf = fhx.read()
-
-                buf = buf.split()
-                indexes = [i for i, x in enumerate(buf) if x == "@"]
-                buf = buf[indexes[-1] + 1 :]
-
-        values = np.array(buf, dtype=np.float64)
-        values = np.reshape(values, (args["ncol"], args["nrow"]), order="C")
-        values = np.flip(values, axis=1)
-        args["values"] = np.ma.masked_equal(values, undef)
+    zmap_data = parse_zmap(mfile.file, load_values=values)
+    try:
+        args = {
+            "ncol": zmap_data.ncol,
+            "nrow": zmap_data.nrow,
+            "xori": zmap_data.xmin,
+            "yori": zmap_data.ymin,
+            "xinc": (zmap_data.xmax - zmap_data.xmin) / (zmap_data.ncol - 1),
+            "yinc": (zmap_data.ymax - zmap_data.ymin) / (zmap_data.nrow - 1),
+        }
+    except ZeroDivisionError as err:
+        raise ValueError(
+            f"A zmap surface must have ncol ({zmap_data.ncol}) "
+            f"and nrow ({zmap_data.ncol}) > 1"
+        ) from err
+    if values:
+        loaded_values = np.reshape(
+            zmap_data.values, (zmap_data.ncol, zmap_data.nrow), order="C"
+        )
+        loaded_values = np.flip(loaded_values, axis=1)
+        args["values"] = loaded_values
 
     return args
 
