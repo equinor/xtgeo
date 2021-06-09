@@ -308,7 +308,7 @@ class RegularSurface:
             xinc: X increment.
             yinc: Y increment.
             yflip: If 1, the map grid is left-handed (assuming depth downwards),
-                otherwise -1 menas that Y axsis is flipped (right-handed).
+                otherwise -1 means that Y axis is flipped (right-handed).
             rotation: rotation in degrees, anticlock from X axis between 0, 360.
             values: A scalar (for constant values) or a "array-like" input that has
                 ncol * nrow elements. As result, a 2D (masked) numpy array of shape
