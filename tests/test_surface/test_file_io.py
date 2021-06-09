@@ -20,8 +20,8 @@ def assert_equal_to_init(init, result):
 def generate_data(draw):
     base_data = st.fixed_dictionaries(
         {
-            "ncol": st.integers(min_value=1, max_value=10),
-            "nrow": st.integers(min_value=1, max_value=10),
+            "ncol": st.integers(min_value=2, max_value=10),
+            "nrow": st.integers(min_value=2, max_value=10),
             "xori": st.floats(
                 min_value=-1e8,
                 max_value=1e8,
@@ -66,8 +66,11 @@ def generate_data(draw):
     [
         "irap_binary",
         "irap_ascii",
+        "zmap_ascii",
         # "ijxyz",  # This fails horribly
         "petromod",
+        "zmap",
+        "zmap_ascii",
         "xtgregsurf",
     ],
 )
@@ -82,7 +85,11 @@ def generate_data(draw):
     ],
 )
 def test_simple_io(input_val, expected_result, fformat, engine):
-    if engine == "python" and fformat not in ["irap_ascii", "irap_binary"]:
+    if engine == "python" and fformat not in [
+        "irap_ascii",
+        "irap_binary",
+        "zmap_ascii",
+    ]:
         pytest.skip("Only one engine available")
     init_dict = {"ncol": 2, "nrow": 2, "xinc": 2.0, "yinc": 2.0, "values": input_val}
     surf = RegularSurface(**init_dict)
@@ -103,6 +110,8 @@ def test_simple_io(input_val, expected_result, fformat, engine):
     [
         "irap_binary",
         "irap_ascii",
+        "zmap",
+        "zmap_ascii",
         # "ijxyz",  # This fails horribly
         "petromod",
         "xtgregsurf",
@@ -113,6 +122,7 @@ def test_complex_io(data, fformat, output_engine, input_engine):
     if (input_engine == "python" or output_engine == "python") and fformat not in [
         "irap_ascii",
         "irap_binary",
+        "zmap_ascii",
     ]:
         pytest.skip("Only one engine available")
     if fformat == "petromod":
