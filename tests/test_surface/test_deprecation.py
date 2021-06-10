@@ -25,7 +25,11 @@ def fail_if_not_removed(version_limit, msg=None):
 
 @fail_if_not_removed(version_limit="4")
 def test_default_init_deprecation():
-    xtgeo.RegularSurface()
+    with pytest.warns(
+        DeprecationWarning, match="ncol is a required argument"
+    ) as record:
+        xtgeo.RegularSurface()
+        assert len(record) == 4
 
 
 @fail_if_not_removed(version_limit="3", msg="nx as input has passed deprecation period")
@@ -65,4 +69,8 @@ def test_from_grid3d_deprecation(default_surface):
 def test_init_from_file_deprecation(default_surface):
     surface = xtgeo.RegularSurface(**default_surface)
     surface.to_file("my_file")
-    xtgeo.RegularSurface("my_file")
+    with pytest.warns(
+        DeprecationWarning, match="Initializing directly from file name is deprecated"
+    ) as record:
+        xtgeo.RegularSurface("my_file")
+        assert len(record) == 1
