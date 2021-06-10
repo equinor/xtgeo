@@ -24,12 +24,30 @@ def fail_if_not_removed(version_limit, msg=None):
 
 
 @fail_if_not_removed(version_limit="4")
-def test_default_init_deprecation():
+@pytest.mark.parametrize(
+    "missing_arg, expected_warning",
+    [
+        ("ncol", "ncol is a required argument"),
+        ("nrow", "nrow is a required argument"),
+        ("xinc", "xinc is a required argument"),
+        ("yinc", "yinc is a required argument"),
+    ],
+)
+def test_default_init_deprecation(missing_arg, expected_warning):
+    input_args = {"ncol": 10, "nrow": 10, "xinc": 10.0, "yinc": 10.0}
+    input_args.pop(missing_arg)
+    with pytest.warns(DeprecationWarning, match=expected_warning) as record:
+        xtgeo.RegularSurface(**input_args)
+        assert len(record) == 1
+
+
+@fail_if_not_removed(version_limit="3")
+def test_default_values_deprecation():
     with pytest.warns(
-        DeprecationWarning, match="ncol is a required argument"
+        DeprecationWarning, match="as default values for RegularSurface is deprecated"
     ) as record:
-        xtgeo.RegularSurface()
-        assert len(record) == 4
+        xtgeo.RegularSurface(**{"ncol": 5, "nrow": 3, "xinc": 25.0, "yinc": 25.0})
+        assert len(record) == 1
 
 
 @fail_if_not_removed(version_limit="3", msg="nx as input has passed deprecation period")
