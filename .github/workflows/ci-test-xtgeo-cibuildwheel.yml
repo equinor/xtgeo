@@ -11,7 +11,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CIBW_BEFORE_ALL: "sh scripts/swig_manylinux.sh"
       CIBW_BEFORE_TEST: >
         pushd {project} &&
         pip install -r requirements/requirements.txt &&
@@ -47,7 +46,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CIBW_BEFORE_ALL: "brew install swig"
       CIBW_BEFORE_TEST: >
         pushd {project} &&
         pip install -r requirements/requirements.txt &&
@@ -106,7 +104,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      CIBW_BEFORE_ALL: choco install -y --no-progress --allow-empty-checksums -r swig --version=4.0.1"
       CIBW_BEFORE_TEST: >
         pushd {project} &&
         pip install -r requirements/requirements.txt &&
