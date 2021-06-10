@@ -271,8 +271,8 @@ class RegularSurface:
 
     """
 
-    @allow_deprecated_default_init
     @allow_deprecated_init
+    @allow_deprecated_default_init
     def __init__(
         self,
         ncol: int,
