@@ -48,7 +48,7 @@ def slice_a_grid():
 
             fname = "{}_{}.png".format(prp.name, myslice)
 
-            if "SKIP_PLOT" in os.environ:
+            if "SKIP_PLOT" not in os.environ:
                 sconst.quickplot(filename=fname)
 
 
