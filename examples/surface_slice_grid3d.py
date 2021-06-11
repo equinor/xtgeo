@@ -7,7 +7,7 @@ quickplots (png)
 
 JRIV
 """
-
+import os
 from os.path import join, basename
 
 import xtgeo
@@ -24,8 +24,7 @@ def slice_a_grid():
 
     initprops = ["PORO", "PERMX"]
 
-    grd = xtgeo.grid.Grid()
-    grd.from_file(gridfileroot, fformat="eclipserun", initprops=initprops)
+    grd = xtgeo.grid_from_file(gridfileroot, fformat="eclipserun", initprops=initprops)
 
     # read a surface, which is used for "template"
     surf = xtgeo.surface_from_file(surfacefile)
@@ -45,10 +44,12 @@ def slice_a_grid():
             sconst.slice_grid3d(grd, prp)
 
             fname = "{}_{}.gri".format(prp.name, myslice)
-            sconst.to_file(fname)
+            sconst.to_file(join("/tmp", fname))
 
             fname = "{}_{}.png".format(prp.name, myslice)
-            sconst.quickplot(filename=fname)
+
+            if "SKIP_PLOT" in os.environ:
+                sconst.quickplot(filename=fname)
 
 
 if __name__ == "__main__":

@@ -20,8 +20,7 @@ def all_init_as_csv():
     """Get dataframes, print as CSV."""
 
     print("Loading Eclipse data {}".format(GRIDFILEROOT))
-    grd = xtgeo.grid3d.Grid()
-    grd.from_file(GRIDFILEROOT, fformat="eclipserun", initprops=INITPROPS)
+    grd = xtgeo.grid_from_file(GRIDFILEROOT, fformat="eclipserun", initprops=INITPROPS)
     print("Get dataframes...")
     dfr = grd.dataframe(activeonly=True)
 
@@ -30,7 +29,7 @@ def all_init_as_csv():
     dfr = dfr.iloc[:, ~np.isclose(0, dfr.var())]
     print(dfr.head())
     print("Write to file...")
-    dfr.to_csv("mycsvdump.csv", index=False)
+    dfr.to_csv(ojn("/tmp", "mycsvdump.csv"), index=False)
 
 
 if __name__ == "__main__":

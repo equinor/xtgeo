@@ -1,10 +1,11 @@
+import os
 from pathlib import Path
-import xtgeo
 import matplotlib.pyplot as plt
+import xtgeo
 
 TPATH = Path("../xtgeo-testdata")
 
-x = xtgeo.Polygons(TPATH / "polygons/etc/well16.pol")
+x = xtgeo.polygons_from_file(TPATH / "polygons/etc/well16.pol")
 y = x.copy()
 
 y.rescale(10)
@@ -18,7 +19,11 @@ for idx, grp in IDGROUPSX:
 
 for idx, grp in IDGROUPSY:
     plt.plot(grp[y.xname].values, grp[y.yname].values, label=str(idx))
-plt.show()
 
-print(grp[y.dhname].min(), grp[y.dhname].max())
+if "SKIP_PLOT" in os.environ:
+    print("Plotting skipped")
+else:
+    plt.show()
+
+
 print(y.dataframe)

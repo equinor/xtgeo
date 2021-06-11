@@ -34,7 +34,7 @@ def slice_a_cube_with_surface():
     mysurf.slice_cube(mycube, sampling="trilinear")
 
     # export result
-    mysurf.to_file("slice.dat", fformat="ijxyz")
+    mysurf.to_file(join("/tmp", "slice.dat"), fformat="ijxyz")
 
 
 def attribute_around_surface_symmetric():
@@ -53,7 +53,9 @@ def attribute_around_surface_symmetric():
         mycube, attribute=attrs, sampling="trilinear", zrange=10.0
     )
     for attr in myattrs.keys():
-        myattrs[attr].to_file("myfile_symmetric_" + attr + ".dat", fformat="ijxyz")
+        myattrs[attr].to_file(
+            join("/tmp", "myfile_symmetric_" + attr + ".dat"), fformat="ijxyz"
+        )
 
 
 def attribute_around_surface_asymmetric():
@@ -89,7 +91,9 @@ def attribute_around_surface_asymmetric():
         if DEBUG:
             myattrs[attr].describe()
 
-        myattrs[attr].to_file("myfile_asymmetric_" + attr + ".dat", fformat="ijxyz")
+        myattrs[attr].to_file(
+            join("/tmp", "myfile_asymmetric_" + attr + ".dat"), fformat="ijxyz"
+        )
 
 
 def attribute_around_constant_cube_slices():
@@ -120,7 +124,9 @@ def attribute_around_constant_cube_slices():
         if DEBUG:
             myattrs[attr].describe()
 
-        myattrs[attr].to_file("myfile_constlevels_" + attr + ".dat", fformat="ijxyz")
+        myattrs[attr].to_file(
+            join("/tmp", "myfile_constlevels_" + attr + ".dat"), fformat="ijxyz"
+        )
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 Make a regularmap from a property at a given K layer
 By JRIV
 """
-
+import os
 import xtgeo
 
 GNAMEROOT = "../../xtgeo-testdata/3dgrids/reek/REEK"
@@ -21,8 +21,7 @@ def make_map():
 
     # make a map from the grid geometry to be used as a template
 
-    surf = xtgeo.RegularSurface()
-    surf.from_grid3d(grd)
+    surf = xtgeo.surface_from_grid3d(grd)
 
     # get only bottom layer:
     lastlayer = df["KZ"].max()
@@ -39,7 +38,8 @@ def make_map():
     surf.gridding(points)
 
     # optional plot
-    surf.quickplot()
+    if "SKIP_PLOT" not in os.environ:
+        surf.quickplot()
 
 
 if __name__ == "__main__":

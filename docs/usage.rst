@@ -33,18 +33,9 @@ Initialising a Surface object (instance)
                                xinc=40.0, yinc=40.0, rotation=30,
                                values=np.zeros((33,50)))
 
-   # a more common method is to make an instance from file
-   # there are some variant on how to to this:
+   # a more common method is to make an instance from file:
 
-   # 1)
-   surf1 = xtgeo.RegularSurface()  # or xtgeo.surface.RegularSurface()
-   surf1.from_file('reek.gri', fformat='irap_binary')
-
-   # 2)
-   surf2 = xtgeo.RegularSurface('reek.gri')  # irap binary is default
-
-   # 3)  problably simplest
-   surf3 =xtgeo.surface_from_file('reek.gri')
+   surf = xtgeo.surface_from_file("somename.gri")
 
 
 Surface object properties
@@ -150,18 +141,18 @@ Also, another small cube with another rotation is made:
 
    import xtgeo
 
-   big = xtgeo.cube.Cube('troll.segy')
+   big = xtgeo.Cube('troll.segy')
 
    # make a cube of every second iline and xline
-   newcube = xtgeo.cube.Cube(xori=big.xori, yori=big.yori, zori=big.zori,
-                             xinc=big.xinc * 2,
-                             yinc=big.yinc * 2,
-                             zinc=big.zinc,
-                             ncol=int(big.ncol / 2),
-                             nrow=int(big.nrow / 2),
-                             nlay=big.nlay,
-                             rotation=big.rotation,
-                             yflip=big.yflip)
+   newcube = xtgeo.Cube(xori=big.xori, yori=big.yori, zori=big.zori,
+                        xinc=big.xinc * 2,
+                        yinc=big.yinc * 2,
+                        zinc=big.zinc,
+                        ncol=int(big.ncol / 2),
+                        nrow=int(big.nrow / 2),
+                        nlay=big.nlay,
+                        rotation=big.rotation,
+                        yflip=big.yflip)
 
    newcube.resample(big)
 
@@ -169,15 +160,15 @@ Also, another small cube with another rotation is made:
 
    # you can also make whatever cube you want with e.g. another rotation
 
-   smallcube = xtgeo.cube.Cube(xori=523380, yori=6735680, zori=big.zori,
-                               xinc=50,
-                               yinc=50,
-                               zinc=12,
-                               ncol=100,
-                               nrow=200,
-                               nlay=100,
-                               rotation=0.0,
-                               yflip=big.yflip)
+   smallcube = xtgeo.Cube(xori=523380, yori=6735680, zori=big.zori,
+                           xinc=50,
+                           yinc=50,
+                           zinc=12,
+                           ncol=100,
+                           nrow=200,
+                           nlay=100,
+                           rotation=0.0,
+                           yflip=big.yflip)
 
    smallcube.resample(big)
 
