@@ -30,7 +30,7 @@ def sum_running_stats():
 
         print("Loading realization no {}".format(irel))
 
-        srf = xtgeo.RegularSurface(EXPATH1)
+        srf = xtgeo.surface_from_file(EXPATH1)
 
         nnum = float(irel + 1)
         srf.values += irel * 1  # just to mimic variability
@@ -63,7 +63,7 @@ def sum_running_stats_bytestream():
         with open(EXPATH1, "rb") as myfile:
             stream = io.BytesIO(myfile.read())
 
-        srf = xtgeo.RegularSurface(stream, fformat="irap_binary")
+        srf = xtgeo.surface_from_file(stream, fformat="irap_binary")
 
         nnum = float(irel + 1)
         srf.values += irel * 1  # just to mimic variability

@@ -17,8 +17,7 @@ def cropper():
     """Do a cropping of a 3D grid"""
 
     # pylint: disable=too-many-locals
-    grd = xtgeo.grid.Grid()
-    grd.from_file(GRIDFILEROOT, fformat="eclipserun", initprops=INITPROPS)
+    grd = xtgeo.grid_from_file(GRIDFILEROOT, fformat="eclipserun", initprops=INITPROPS)
 
     print(grd.props)
 
@@ -49,12 +48,12 @@ def cropper():
             tmpgrd = grd.copy()
             tmpgrd.crop(ncr, nrr, (1, nlay), props="all")
             # save to disk as ROFF files
-            tmpgrd.to_file("grid" + fname + ".roff")
+            tmpgrd.to_file("/tmp/grid" + fname + ".roff")
             for prop in tmpgrd.props:
                 print("{} for {} .. {}".format(prop.name, ncr, nrr))
                 fname2 = prop.name + fname + ".roff"
                 fname2 = fname2.lower()
-                prop.to_file(fname2)
+                prop.to_file(ojn("/tmp/", fname2))
 
 
 if __name__ == "__main__":

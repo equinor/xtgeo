@@ -62,7 +62,7 @@ def _get_regsurff(i):
     sfile = TESTFILE
 
     logger.info("File is %s", sfile)
-    rf = xtgeo.RegularSurface(sfile)
+    rf = xtgeo.surface_from_file(sfile)
     logger.info("End %s", i)
     return rf
 
@@ -75,7 +75,7 @@ def _get_regsurfi(i):
         stream = io.BytesIO(fin.read())
 
     logger.info("File is %s", sfile)
-    rf = xtgeo.RegularSurface(stream, fformat="irap_binary")
+    rf = xtgeo.surface_from_file(stream, fformat="irap_binary")
     logger.info("End %s", i)
 
     return rf

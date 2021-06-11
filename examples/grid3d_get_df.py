@@ -31,13 +31,12 @@ def extractdf():
     """Extract dataframe from Eclipse case"""
 
     # gete dataframe from the grid only
-    grd = xtgeo.grid3d.Grid(GRIDFILEROOT + ".EGRID")
+    grd = xtgeo.grid_from_file(GRIDFILEROOT + ".EGRID")
     dataframe = grd.dataframe()  # will not have any grid props
     print(dataframe)
 
     # load as Eclipse run; this will automatically look for EGRID, INIT, UNRST
-    grd = xtgeo.grid3d.Grid()
-    grd.from_file(
+    grd = xtgeo.grid_from_file(
         GRIDFILEROOT,
         fformat="eclipserun",
         initprops=INITS,
@@ -61,7 +60,7 @@ def extractdf():
 
     print(dataframe)
 
-    dataframe.to_csv("reek_sim.csv")
+    dataframe.to_csv(ojn("/tmp", "reek_sim.csv"))
 
 
 if __name__ == "__main__":

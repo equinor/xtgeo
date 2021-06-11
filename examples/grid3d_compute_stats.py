@@ -34,8 +34,7 @@ def sum_stats():
         # load as Eclipse run; this will look for EGRID, INIT, UNRST
 
         print("Loading realization no {}".format(irel))
-        grd = xtgeo.grid3d.Grid()
-        grd.from_file(
+        grd = xtgeo.grid_from_file(
             GRIDFILEROOT,
             fformat="eclipserun",
             initprops=INITPROPS,
@@ -75,8 +74,7 @@ def sum_running_stats():
 
         print("Loading realization no {}".format(irel))
 
-        grd = xtgeo.grid3d.Grid()
-        grd.from_file(
+        grd = xtgeo.grid_from_file(
             GRIDFILEROOT,
             fformat="eclipserun",
             restartprops=RESTARTPROPS,
