@@ -81,8 +81,11 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
 
     Args:
         mfile (str): Name of file
-        fformat (str): See :meth:`RegularSurface.from_file`
-        template (Cube or RegularSurface): See :meth:`RegularSurface.from_file`
+        fformat: File format, None/guess/irap_binary/irap_ascii/ijxyz is currently
+            supported. If None or guess, the file 'signature' is used to guess format
+            first, then file extension.
+        template: Only valid if ``ijxyz`` format, where an existing Cube or
+            RegularSurface instance is applied to get correct topology.
         values (bool): If True (default), surface values will be read (Irap binary only)
         engine (str): Some import methods are implemnted in both C and Python.
             The C method ``cxtgeo`` is default. Alternative use ``python``
@@ -106,7 +109,13 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
 def surface_from_roxar(project, name, category, stype="horizons", realisation=0):
     """This makes an instance of a RegularSurface directly from roxar input.
 
-    For arguments, see :meth:`RegularSurface.from_roxar`.
+    Args:
+        project (str or special): Name of project (as folder) if
+            outside RMS, og just use the magic project word if within RMS.
+        name (str): Name of surface/map
+        category (str): For horizons/zones or clipboard: for example 'DS_extracted'
+        stype (str): RMS folder type, 'horizons' (default), 'zones' or 'clipboard'
+        realisation (int): Realisation number, default is 0
 
     Example::
 
@@ -142,14 +151,23 @@ def surface_from_cube(cube, value):
 def surface_from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
     """This makes 3 instances of a RegularSurface directly from a Grid() instance.
 
-    For usage, see :meth:`RegularSurface.from_grid3d`.
+    Args:
+        grid (Grid): XTGeo Grid instance
+        template(RegularSurface): Optional to use an existing surface as
+            template for geometry
+        where (str): "top", "base" or use the syntax "2_top" where 2
+            is layer no. 2 and _top indicates top of cell, while "_base"
+            indicates base of cell
+        mode (str): "depth", "i" or "j"
+        rfactor (float): Determines how fine the extracted map is; higher values
+            for finer map (but computing time will increase). Will only apply if
+            template is None.
 
     .. versionadded:: 2.1
     """
-    obj = RegularSurface(1, 1, 0.0, 0.0)  # <- unimportant as it gets reset
-    obj.from_grid3d(grid, template=template, where=where, mode=mode, rfactor=rfactor)
-
-    return obj
+    return RegularSurface._read_grid3d(
+        grid, template=template, where=where, mode=mode, rfactor=rfactor
+    )
 
 
 def _data_reader_factory(file_format):
@@ -773,7 +791,7 @@ class RegularSurface:
 
         Example::
 
-            map = RegularSurface('myfile.gri')
+            map = xtgeo.surface_from_file('myfile.gri')
             values = map.values1d
         """
         return self.get_values1d(asmasked=True)
@@ -786,7 +804,7 @@ class RegularSurface:
 
         Example::
 
-            map = RegularSurface('myfile.gri')
+            map = xtgeo.surface_from_file('myfile.gri')
             values = map.npvalues1d
             mean = np.nanmean(values)
             values[values <= 0] = np.nan
@@ -1055,8 +1073,7 @@ class RegularSurface:
 
             surfs = []
             for i in range(1000):
-                surfs.append(RegularSurface())
-                surfs[i].from_file("myfile" + str(i) + ".gri", values=False)
+                surfs.append(xtgeo.surface_from_file(f"myfile{i}.gri", values=False))
 
             # load values in number 88:
             surfs[88].load_values()
@@ -1100,8 +1117,7 @@ class RegularSurface:
         Examples::
 
             # read and write to ordinary file
-            surf = RegularSurface()
-            surf.from_file('myfile.x', fformat = 'irap_ascii')
+            surf = xtgeo.surface_from_file('myfile.x', fformat = 'irap_ascii')
             surf.values = surf.values + 300
             surf.to_file('myfile2.x', fformat = 'irap_ascii')
 
@@ -1110,7 +1126,7 @@ class RegularSurface:
             surf.to_file(stream, fformat="irap_binary")
 
             # read from memory stream:
-            newsurf = xtgeo.RegularSurface(stream, fformat="irap_binary")
+            newsurf = xtgeo.surface_from_file(stream, fformat = 'irap_binary')
 
         .. versionchanged:: 2.5 Added support for BytesIO
         .. versionchanged:: 2.13 Improved support for BytesIO
@@ -1220,7 +1236,7 @@ class RegularSurface:
 
         Example:
             >>> import xtgeo
-            >>> surf = xtgeo.RegularSurface("some_file.gri")  # file input
+            >>> surf = xtgeo.surface_from_file('some_file.gri')  # file input
             >>> # possibly edit metadata...
             >>> surf.to_hdf("somefile.hdf")
 
@@ -1248,7 +1264,7 @@ class RegularSurface:
         Note that a shortform to::
 
           import xtgeo
-          mysurf = xtgeo.RegularSurface._read_roxar(project, 'name', 'category')
+          mysurf = xtgeo.surface_from_roxar(project, 'name', 'category')
 
         Note also that horizon/zone name and category must exists in advance,
         otherwise an Exception will be raised.
@@ -1422,9 +1438,8 @@ class RegularSurface:
             Here the from_roxar method is used to initiate the object
             directly::
 
-            >>> mymap = RegularSurface()
             >>> mycube = Cube("reek.segy")
-            >>> mymap.from_cube(mycube, 2700)
+            >>> mymap = xtgeo.surface_from_cube(mycube, 2700)
 
         """
         props = [
