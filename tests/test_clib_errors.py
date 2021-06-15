@@ -13,12 +13,22 @@ def setup_tmpdir(tmpdir):
         yield
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
-def test_eclgrid_no_file_access():
+@pytest.fixture()
+def unreadable_file(setup_tmpdir):
     fname = "random_file_name"
     with open(fname, "w"):
         pass
     os.chmod(fname, stat.S_IREAD)
+    # On some systems the chmod fails, meaning we are able to write to the
+    # file. In those cases we skip the test:
+    if os.access(fname, os.W_OK):
+        pytest.skip("Have write access to file")
+    yield fname
+    os.chmod(fname, stat.S_IWRITE)
+    os.remove(fname)
+
+
+def test_eclgrid_no_file_access(unreadable_file):
     with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file in"):
         # The input here is not very important, what is important
         # is that "existing_file" can not be opened.
@@ -29,11 +39,9 @@ def test_eclgrid_no_file_access():
             [1],
             [1],
             np.array([1], dtype=np.int32),
-            fname,
+            unreadable_file,
             0,
         )
-    os.chmod(fname, stat.S_IWRITE)
-    os.remove(fname)
 
 
 def test_grd3d_calc_dxdy():
@@ -209,12 +217,7 @@ def test_surf_import_petromod_bin(bytestring, mx, expected_msg):
         _cxtgeo.surf_import_petromod_bin(gfile.get_cfhandle(), 1, 0.0, mx, 2, 4)
 
 
-@pytest.mark.usefixtures("setup_tmpdir")
-def test_grd3d_export_grdeclprop_no_file():
-    fname = "random_file_name"
-    with open(fname, "w"):
-        pass
-    os.chmod(fname, stat.S_IREAD)
+def test_grd3d_export_grdeclprop_no_file(unreadable_file):
     with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
         # The input here is not very important, what is important
         # is that "existing_file" can not be opened.
@@ -228,13 +231,10 @@ def test_grd3d_export_grdeclprop_no_file():
             _cxtgeo.new_doublepointer(),
             "name",
             " %d",
-            fname,
+            unreadable_file,
             1,
             0,
         )
-
-    os.chmod(fname, stat.S_IWRITE)
-    os.remove(fname)
 
 
 def test_surf_sample_grd3d_lay():
