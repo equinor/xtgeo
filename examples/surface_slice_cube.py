@@ -8,21 +8,24 @@ quickplots (png)
 JRIV
 """
 
-from os.path import join, basename
+import pathlib
+import tempfile
 
 import xtgeo
 
 DEBUG = False
 
-EXPATH1 = "../../xtgeo-testdata/cubes/etc/"
-EXPATH2 = "../../xtgeo-testdata/surfaces/etc"
+EXPATH1 = pathlib.Path("../../xtgeo-testdata/cubes/etc/")
+EXPATH2 = pathlib.Path("../../xtgeo-testdata/surfaces/etc")
+
+TMPDIR = pathlib.Path(tempfile.gettempdir())
 
 
 def slice_a_cube_with_surface():
     """Slice a seismic cube with a surface on OW dat/map format"""
 
-    cubefile = join(EXPATH1, "ib_test_cube2.segy")
-    surfacefile = join(EXPATH2, "h1.dat")
+    cubefile = EXPATH1 / "ib_test_cube2.segy"
+    surfacefile = EXPATH2 / "h1.dat"
 
     mycube = xtgeo.cube_from_file(cubefile)
 
@@ -34,14 +37,14 @@ def slice_a_cube_with_surface():
     mysurf.slice_cube(mycube, sampling="trilinear")
 
     # export result
-    mysurf.to_file(join("/tmp", "slice.dat"), fformat="ijxyz")
+    mysurf.to_file(TMPDIR / "slice.dat", fformat="ijxyz")
 
 
 def attribute_around_surface_symmetric():
     """Get atttribute around a surface (symmetric)"""
 
-    cubefile = join(EXPATH1, "ib_test_cube2.segy")
-    surfacefile = join(EXPATH2, "h1.dat")
+    cubefile = EXPATH1 / "ib_test_cube2.segy"
+    surfacefile = EXPATH2 / "h1.dat"
 
     mycube = xtgeo.cube_from_file(cubefile)
 
@@ -54,15 +57,15 @@ def attribute_around_surface_symmetric():
     )
     for attr in myattrs.keys():
         myattrs[attr].to_file(
-            join("/tmp", "myfile_symmetric_" + attr + ".dat"), fformat="ijxyz"
+            TMPDIR / ("myfile_symmetric_" + attr + ".dat"), fformat="ijxyz"
         )
 
 
 def attribute_around_surface_asymmetric():
     """Get attribute around a surface (asymmetric)"""
 
-    cubefile = join(EXPATH1, "ib_test_cube2.segy")
-    surfacefile = join(EXPATH2, "h1.dat")
+    cubefile = EXPATH1 / "ib_test_cube2.segy"
+    surfacefile = EXPATH2 / "h1.dat"
 
     above = 10
     below = 20
@@ -92,14 +95,14 @@ def attribute_around_surface_asymmetric():
             myattrs[attr].describe()
 
         myattrs[attr].to_file(
-            join("/tmp", "myfile_asymmetric_" + attr + ".dat"), fformat="ijxyz"
+            TMPDIR / ("myfile_asymmetric_" + attr + ".dat"), fformat="ijxyz"
         )
 
 
 def attribute_around_constant_cube_slices():
     """Get attribute around a constant cube slices"""
 
-    cubefile = join(EXPATH1, "ib_test_cube2.segy")
+    cubefile = EXPATH1 / "ib_test_cube2.segy"
 
     level1 = 1010
     level2 = 1100
@@ -125,7 +128,7 @@ def attribute_around_constant_cube_slices():
             myattrs[attr].describe()
 
         myattrs[attr].to_file(
-            join("/tmp", "myfile_constlevels_" + attr + ".dat"), fformat="ijxyz"
+            TMPDIR / ("myfile_constlevels_" + attr + ".dat"), fformat="ijxyz"
         )
 
 
@@ -136,4 +139,4 @@ if __name__ == "__main__":
     attribute_around_surface_asymmetric()
     attribute_around_constant_cube_slices()
 
-    print("Running example OK: {}".format(basename(__file__)))
+    print(f"Running example OK: {pathlib.Path(__file__).name}")
