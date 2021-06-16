@@ -8,19 +8,22 @@ quickplots (png)
 JRIV
 """
 import os
-from os.path import join, basename
+import pathlib
+import tempfile
 
 import xtgeo
+
+TMPDIR = pathlib.Path(tempfile.gettempdir())
 
 
 def slice_a_grid():
     """Slice a 3D grid property with maps (looping)"""
 
-    expath1 = "../../xtgeo-testdata/3dgrids/reek"
-    expath2 = "../../xtgeo-testdata/surfaces/reek/1"
+    expath1 = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")
+    expath2 = pathlib.Path("../../xtgeo-testdata/surfaces/reek/1")
 
-    gridfileroot = join(expath1, "REEK")
-    surfacefile = join(expath2, "midreek_rota.gri")
+    gridfileroot = expath1 / "REEK"
+    surfacefile = expath2 / "midreek_rota.gri"
 
     initprops = ["PORO", "PERMX"]
 
@@ -44,9 +47,9 @@ def slice_a_grid():
             sconst.slice_grid3d(grd, prp)
 
             fname = "{}_{}.gri".format(prp.name, myslice)
-            sconst.to_file(join("/tmp", fname))
+            sconst.to_file(TMPDIR / fname)
 
-            fname = "{}_{}.png".format(prp.name, myslice)
+            fname = TMPDIR / ("{}_{}.png".format(prp.name, myslice))
 
             if "SKIP_PLOT" not in os.environ:
                 sconst.quickplot(filename=fname)
@@ -55,4 +58,4 @@ def slice_a_grid():
 if __name__ == "__main__":
     slice_a_grid()
 
-    print("Running example OK: {}".format(basename(__file__)))
+    print(f"Running example OK: {pathlib.Path(__file__).name}")

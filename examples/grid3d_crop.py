@@ -2,15 +2,18 @@
 Crop a 3D grid.
 """
 
-from os.path import join as ojn
+import tempfile
+import pathlib
 
 import xtgeo
 
-EXPATH1 = "../../xtgeo-testdata/3dgrids/reek"
+EXPATH1 = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")
 
-GRIDFILEROOT = ojn(EXPATH1, "REEK")
+GRIDFILEROOT = EXPATH1 / "REEK"
 
 INITPROPS = ["PORO", "PERMX"]
+
+TMPDIR = pathlib.Path(tempfile.gettempdir())
 
 
 def cropper():
@@ -48,12 +51,12 @@ def cropper():
             tmpgrd = grd.copy()
             tmpgrd.crop(ncr, nrr, (1, nlay), props="all")
             # save to disk as ROFF files
-            tmpgrd.to_file("/tmp/grid" + fname + ".roff")
+            tmpgrd.to_file(TMPDIR / ("grid" + fname + ".roff"))
             for prop in tmpgrd.props:
                 print("{} for {} .. {}".format(prop.name, ncr, nrr))
                 fname2 = prop.name + fname + ".roff"
                 fname2 = fname2.lower()
-                prop.to_file(ojn("/tmp/", fname2))
+                prop.to_file(TMPDIR / fname2)
 
 
 if __name__ == "__main__":

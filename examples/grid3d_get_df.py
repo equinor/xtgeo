@@ -15,12 +15,14 @@ be shown.
 
 """
 
-from os.path import join as ojn
+import pathlib
+import tempfile
 import xtgeo
 
-EXPATH = "../../xtgeo-testdata/3dgrids/reek"
+EXPATH = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")
 
-GRIDFILEROOT = ojn(EXPATH, "REEK")
+GRIDFILEROOT = EXPATH / "REEK"
+TMPDIR = pathlib.Path(tempfile.gettempdir())
 
 INITS = ["PORO", "PERMX"]
 RESTARTS = ["PRESSURE", "SWAT", "SOIL"]
@@ -31,7 +33,7 @@ def extractdf():
     """Extract dataframe from Eclipse case"""
 
     # gete dataframe from the grid only
-    grd = xtgeo.grid_from_file(GRIDFILEROOT + ".EGRID")
+    grd = xtgeo.grid_from_file(GRIDFILEROOT.with_suffix(".EGRID"))
     dataframe = grd.dataframe()  # will not have any grid props
     print(dataframe)
 
@@ -60,7 +62,7 @@ def extractdf():
 
     print(dataframe)
 
-    dataframe.to_csv(ojn("/tmp", "reek_sim.csv"))
+    dataframe.to_csv(TMPDIR / "reek_sim.csv")
 
 
 if __name__ == "__main__":

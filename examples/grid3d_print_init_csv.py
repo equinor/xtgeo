@@ -2,16 +2,15 @@
 Print a CSV from all INIT vectors
 """
 
-from os.path import join as ojn
+import pathlib
+import tempfile
 import numpy as np
 import xtgeo
 
-EXPATH1 = "../../xtgeo-testdata/3dgrids/reek"
-GRIDFILEROOT = ojn(EXPATH1, "REEK")
+EXPATH = pathlib.Path("../../xtgeo-testdata/3dgrids/reek")
 
-# EXPATH1 = '/scratch/troll_fmu/rnyb/10_troll_r003/realization-0/iter' +\
-#           '-0/eclipse/model'
-# GRIDFILEROOT = ojn(EXPATH1, 'ECLIPSE')
+GRIDFILEROOT = EXPATH / "REEK"
+TMPDIR = pathlib.Path(tempfile.gettempdir())
 
 INITPROPS = "all"  # will look for all vectors that looks "gridvalid"
 
@@ -29,7 +28,7 @@ def all_init_as_csv():
     dfr = dfr.iloc[:, ~np.isclose(0, dfr.var())]
     print(dfr.head())
     print("Write to file...")
-    dfr.to_csv(ojn("/tmp", "mycsvdump.csv"), index=False)
+    dfr.to_csv(TMPDIR / "mycsvdump.csv", index=False)
 
 
 if __name__ == "__main__":
