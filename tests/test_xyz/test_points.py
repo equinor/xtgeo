@@ -1,6 +1,6 @@
 import itertools
 import pathlib
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 
 import pandas as pd
 import numpy as np
@@ -40,6 +40,7 @@ def list_of_equal_length_lists(draw):
     return draw(st.lists(fixed_len_list, min_size=1))
 
 
+@settings(deadline=400)
 @given(list_of_equal_length_lists())
 def test_create_pointset(points):
     """Create randomly generated points and verify content."""
