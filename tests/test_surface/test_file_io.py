@@ -141,6 +141,7 @@ def test_complex_io(data, fformat, output_engine, input_engine):
 
 @deprecation.fail_if_not_removed
 @pytest.mark.usefixtures("setup_tmpdir")
+@settings(deadline=400)
 @given(
     data=st.lists(
         st.floats(
