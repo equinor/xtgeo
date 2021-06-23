@@ -125,7 +125,7 @@ def surface_from_roxar(project, name, category, stype="horizons", realisation=0)
 
     """
 
-    return RegularSurface.from_roxar(
+    return RegularSurface._read_roxar(
         project, name, category, stype=stype, realisation=realisation
     )
 
@@ -913,7 +913,7 @@ class RegularSurface:
         deprecated_in="2.15",
         removed_in="4.0",
         current_version=xtgeo.version,
-        details="Use xtgeo.surface.surface_from_file() instead",
+        details="Use xtgeo.surface_from_file() instead",
     )
     def from_file(
         self,
@@ -1175,7 +1175,7 @@ class RegularSurface:
         deprecated_in="2.15",
         removed_in="4.0",
         current_version=xtgeo.version,
-        details="Use xtgeo.surface.surface_from_hdf() instead",
+        details="Use xtgeo.surface_from_hdf() instead",
     )
     def from_hdf(
         self,
@@ -1296,7 +1296,7 @@ class RegularSurface:
         deprecated_in="2.15",
         removed_in="4.0",
         current_version=xtgeo.version,
-        details="Use xtgeo.surface.surface_from_roxar() instead",
+        details="Use xtgeo.surface_from_roxar() instead",
     )
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0
@@ -1505,11 +1505,12 @@ class RegularSurface:
         return cls(**input_dict)
 
     @classmethod
-    def _read_grid3d(cls, grid, where="top", mode="depth", rfactor=1):
+    def _read_grid3d(cls, grid, template=None, where="top", mode="depth", rfactor=1):
         """Extract a surface from a 3D grid.
 
         Args:
             grid (Grid): XTGeo Grid instance
+            template (RegularSurface): Using an existing surface as template
             where (str): "top", "base" or use the syntax "2_top" where 2
                 is layer no. 2 and _top indicates top of cell, while "_base"
                 indicates base of cell
@@ -1532,7 +1533,7 @@ class RegularSurface:
 
         """
         args, _, _ = _regsurf_grid3d.from_grid3d(
-            grid, template=None, where=where, mode=mode, rfactor=rfactor
+            grid, template=template, where=where, mode=mode, rfactor=rfactor
         )
         return cls(**args)
 
@@ -1540,7 +1541,7 @@ class RegularSurface:
         deprecated_in="2.15",
         removed_in="4.0",
         current_version=xtgeo.version,
-        details="Use xtgeo.surface.surface_from_grid3d() instead",
+        details="Use xtgeo.surface_from_grid3d() instead",
     )
     def from_grid3d(self, grid, template=None, where="top", mode="depth", rfactor=1):
         # It would perhaps to be natural to have this as a Grid() method also?
