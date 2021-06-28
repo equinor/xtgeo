@@ -105,46 +105,67 @@ grd3d_conv_grid_roxapi(int ncol,
         for (j = 1; j <= nrow + 1; j++) {
             for (k = 1; k <= nlay + 1; k++) {
 
-                ib0 = x_ijk2ib(i - 1, j - 1, k, ncol, nrow, nlay + 1, 0);
-                ib1 = x_ijk2ib(i, j - 1, k, ncol, nrow, nlay + 1, 0);
-                ib2 = x_ijk2ib(i - 1, j, k, ncol, nrow, nlay + 1, 0);
-                ib3 = x_ijk2ib(i, j, k, ncol, nrow, nlay + 1, 0);
-                if (ib0 < 0 || ib1 < 0 || ib2 < 0 || ib3 < 0) {
-                    memset(zcorners, 0, sizeof(double) * nzcorners);
-                    throw_exception("Loop through grid resulted in index outside "
-                                    "boundary in grd3d_conv_grid_roxapi");
-                    return EXIT_FAILURE;
-                }
                 z0 = UNDEF;
                 z1 = UNDEF;
                 z2 = UNDEF;
                 z3 = UNDEF;
 
                 if (i == 1 && j == 1) {
+                    ib0 = ib1 = ib2 = 0;
+                    ib3 = x_ijk2ib(i, j, k, ncol, nrow, nlay + 1, 0);
                     z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 } else if (i == 1 && j == nrow + 1) {
+                    ib0 = ib2 = ib3 = 0;
+                    ib1 = x_ijk2ib(i, j - 1, k, ncol, nrow, nlay + 1, 0);
                     z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
                 } else if (i == ncol + 1 && j == 1) {
+                    ib0 = ib1 = ib3 = 0;
+                    ib2 = x_ijk2ib(i - 1, j, k, ncol, nrow, nlay + 1, 0);
                     z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
                 } else if (i == ncol + 1 && j == nrow + 1) {
+                    ib1 = ib2 = ib3 = 0;
+                    ib0 = x_ijk2ib(i - 1, j - 1, k, ncol, nrow, nlay + 1, 0);
                     z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
                 } else if (i == 1) {
+                    ib0 = ib2 = 0;
+                    ib1 = x_ijk2ib(i, j - 1, k, ncol, nrow, nlay + 1, 0);
+                    ib3 = x_ijk2ib(i, j, k, ncol, nrow, nlay + 1, 0);
                     z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
                     z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 } else if (i == ncol + 1) {
+                    ib1 = ib3 = 0;
+                    ib0 = x_ijk2ib(i - 1, j - 1, k, ncol, nrow, nlay + 1, 0);
+                    ib2 = x_ijk2ib(i - 1, j, k, ncol, nrow, nlay + 1, 0);
                     z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
                     z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
                 } else if (j == 1) {
+                    ib0 = ib1 = 0;
+                    ib2 = x_ijk2ib(i - 1, j, k, ncol, nrow, nlay + 1, 0);
+                    ib3 = x_ijk2ib(i, j, k, ncol, nrow, nlay + 1, 0);
                     z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
                     z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
                 } else if (j == nrow + 1) {
+                    ib2 = ib3 = 0;
+                    ib0 = x_ijk2ib(i - 1, j - 1, k, ncol, nrow, nlay + 1, 0);
+                    ib1 = x_ijk2ib(i, j - 1, k, ncol, nrow, nlay + 1, 0);
                     z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
                     z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
                 } else {
+                    ib0 = x_ijk2ib(i - 1, j - 1, k, ncol, nrow, nlay + 1, 0);
+                    ib1 = x_ijk2ib(i, j - 1, k, ncol, nrow, nlay + 1, 0);
+                    ib2 = x_ijk2ib(i - 1, j, k, ncol, nrow, nlay + 1, 0);
+                    ib3 = x_ijk2ib(i, j, k, ncol, nrow, nlay + 1, 0);
                     z0 = zcornsv[4 * ib0 + 1 * 4 - 1];
                     z1 = zcornsv[4 * ib1 + 1 * 3 - 1];
                     z2 = zcornsv[4 * ib2 + 1 * 2 - 1];
                     z3 = zcornsv[4 * ib3 + 1 * 1 - 1];
+                }
+
+                if (ib0 < 0 || ib1 < 0 || ib2 < 0 || ib3 < 0) {
+                    memset(zcorners, 0, sizeof(double) * nzcorners);
+                    throw_exception("Loop through grid resulted in index outside "
+                                    "boundary in grd3d_conv_grid_roxapi");
+                    return EXIT_FAILURE;
                 }
 
                 zcorners[ic++] = z0;

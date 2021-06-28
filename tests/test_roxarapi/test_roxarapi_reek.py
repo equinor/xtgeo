@@ -224,7 +224,12 @@ def test_rox_get_modify_set_gridproperty():
 def test_rox_get_modify_set_grid():
     """Get, modify and set a grid from a RMS project."""
     grd = xtgeo.grid_from_roxar(PRJ, GRIDNAME1)
+    grd1 = grd.copy()
 
     grd.translate_coordinates(translate=(200, 3000, 300))
 
     grd.to_roxar(PRJ, GRIDNAME1 + "_edit1")
+
+    grd2 = xtgeo.grid_from_roxar(PRJ, GRIDNAME1 + "_edit1")
+
+    assert grd2.dimensions == grd1.dimensions
