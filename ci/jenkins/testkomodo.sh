@@ -23,6 +23,11 @@ start_tests () {
     popd
 }
 
+cleanup () {
+    rm -rf $CI_TEST_ROOT/testpath/../xtgeo-testdata
+    rm -rf $CI_TEST_ROOT/testpath/TMP
+}
+
 run_tests() {
     copy_test_files
 
@@ -35,4 +40,5 @@ run_tests() {
 
     pushd $CI_TEST_ROOT
     start_tests
+    cleanup
 }
