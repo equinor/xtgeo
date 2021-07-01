@@ -1084,8 +1084,31 @@ def test_limit_tvd(string_to_well, upper_limit, lower_limit, expected_result):
     assert well.dataframe["Z_TVDSS"].to_list() == expected_result
 
 
-def test_downsample():
-    pass
+@pytest.mark.parametrize(
+    "input_points, expected_points",
+    [(range(10), [0, 4, 8, 9]), ([1, 10, 11, 12, 13, 14, 100, 10000], [1, 13, 10000])],
+)
+def test_downsample(string_to_well, input_points, expected_points):
+    well_definition = """1.01
+            Unknown
+            custom_name 0 0 0
+            1
+            Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in input_points:
+        well_definition += f"\n        {i} {i} {i} 1"
+
+    well = string_to_well(well_definition)
+    well.downsample()
+    assert {
+        "X_UTME": well.dataframe["X_UTME"].to_list(),
+        "Y_UTMN": well.dataframe["Y_UTMN"].to_list(),
+        "Z_TVDSS": well.dataframe["Z_TVDSS"].to_list(),
+    } == {
+        "X_UTME": expected_points,
+        "Y_UTMN": expected_points,
+        "Z_TVDSS": expected_points,
+    }
 
 
 @pytest.mark.parametrize(

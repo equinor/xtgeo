@@ -1183,7 +1183,7 @@ class Well:
         dfr = self._df[::interval]
 
         if keeplast:
-            dfr.append(self._df.iloc[-1])
+            dfr = dfr.append(self._df.iloc[-1])
 
         self._df = dfr.reset_index(drop=True)
 
