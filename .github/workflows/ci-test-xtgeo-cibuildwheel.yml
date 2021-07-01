@@ -53,7 +53,7 @@ jobs:
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
       CIBW_TEST_COMMAND: >
         pushd {project} &&
-        pytest tests --disable-warnings -x
+        pytest tests --disable-warnings -x --hypothesis-profile ci
       CIBW_BUILD: ${{ matrix.cibw_python }}-macosx_x86_64
 
     strategy:
@@ -84,7 +84,7 @@ jobs:
         env:
           CIBW_TEST_COMMAND: >
             pushd {project} &&
-            pytest tests --disable-warnings --ignore tests/test_well -x
+            pytest tests --disable-warnings --ignore tests/test_well -x --hypothesis-profile ci
 
         run: |
           python -m cibuildwheel --output-dir wheelhouse
