@@ -7,6 +7,7 @@ from typing import Union, Optional, List, Dict
 from pathlib import Path
 import io
 from collections import OrderedDict
+import math
 
 import numpy as np
 import pandas as pd
@@ -1014,19 +1015,14 @@ class Well:
         # extract numpies from XYZ trajectory logs
         xv = self._df["X_UTME"].values
         yv = self._df["Y_UTMN"].values
-        zv = self._df["Z_TVDSS"].values
 
-        # get number of rows in pandas
-        nlen = self.nrow
+        distance = []
+        previous_x, previous_y = xv[0], yv[0]
+        for i, (x, y) in enumerate(zip(xv, yv)):
+            distance.append(math.hypot((previous_x - x), (y - previous_y)))
+            previous_x, previous_y = x, y
 
-        ier, _, _, hlenv, _ = _cxtgeo.pol_geometrics(xv, yv, zv, nlen, nlen, nlen, nlen)
-
-        if ier != 0:
-            raise RuntimeError(
-                "Error code from _cxtgeo.pol_geometrics is {}".format(ier)
-            )
-
-        self._df["R_HLEN"] = pd.Series(hlenv, index=self._df.index)
+        self._df["R_HLEN"] = pd.Series(np.cumsum(distance), index=self._df.index)
 
     def geometrics(self):
         """Compute some well geometrical arrays MD, INCL, AZI, as logs.
