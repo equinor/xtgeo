@@ -19,7 +19,7 @@ install_test_dependencies () {
 
 start_tests () {
     pushd $CI_TEST_ROOT/testpath
-    pytest -vv
+    pytest -vv --hypothesis-profile ci
     popd
 }
 

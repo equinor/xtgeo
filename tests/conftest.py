@@ -1,7 +1,11 @@
 """Setup common stuff for pytests."""
 import os
 import platform
+
 import pytest
+from hypothesis import settings
+
+settings.register_profile("ci", max_examples=1000, deadline=None)
 
 ALLPLATF = set("darwin linux windows".split())
 SKIPPED = set("skipdarwin skiplinux skipwindows".split())
