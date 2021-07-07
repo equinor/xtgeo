@@ -1,10 +1,10 @@
-from os.path import join as ojn
+from os.path import join
 
 import numpy as np
 
+import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
-import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -12,7 +12,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =============================================================================
@@ -31,7 +30,7 @@ RPROP2 = RPATH2 / "reek_sim_zone.roff"
 
 @tsetup.plotskipifroxar
 @tsetup.skipifmac  # segm fault; need to be investigated
-def test_get_surface_from_grd3d_porosity():
+def test_get_surface_from_grd3d_porosity(tmpdir):
     """Sample a surface from a 3D grid"""
 
     surf = xtgeo.surface.RegularSurface(RTOP1)
@@ -46,21 +45,21 @@ def test_get_surface_from_grd3d_porosity():
     # slice grd3d
     surf.slice_grid3d(grd, phi)
 
-    surf.to_file(ojn(td, "surf_slice_grd3d_reek.gri"))
-    surf.quickplot(filename=ojn(td, "surf_slice_grd3d_reek.png"))
+    surf.to_file(join(tmpdir, "surf_slice_grd3d_reek.gri"))
+    surf.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek.png"))
 
     # refined version:
     surfr.refine(2)
     surfr.slice_grid3d(grd, phi)
 
-    surfr.to_file(ojn(td, "surf_slice_grd3d_reek_refined.gri"))
-    surfr.quickplot(filename=ojn(td, "surf_slice_grd3d_reek_refined.png"))
+    surfr.to_file(join(tmpdir, "surf_slice_grd3d_reek_refined.gri"))
+    surfr.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_refined.png"))
 
     # use zsurf:
     surf2.slice_grid3d(grd, phi, zsurf=zsurf)
 
-    surf2.to_file(ojn(td, "surf_slice_grd3d_reek_zslice.gri"))
-    surf2.quickplot(filename=ojn(td, "surf_slice_grd3d_reek_zslice.png"))
+    surf2.to_file(join(tmpdir, "surf_slice_grd3d_reek_zslice.gri"))
+    surf2.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_zslice.png"))
 
     assert np.allclose(surf.values, surf2.values)
 
@@ -69,7 +68,7 @@ def test_get_surface_from_grd3d_porosity():
 
 
 @tsetup.plotskipifroxar
-def test_get_surface_from_grd3d_zones():
+def test_get_surface_from_grd3d_zones(tmpdir):
     """Sample a surface from a 3D grid, using zones"""
 
     surf = xtgeo.surface.RegularSurface(RTOP1)
@@ -80,12 +79,12 @@ def test_get_surface_from_grd3d_zones():
     # slice grd3d
     surf.slice_grid3d(grd, zone, sbuffer=1)
 
-    surf.to_file(ojn(td, "surf_slice_grd3d_reek_zone.gri"))
-    surf.quickplot(filename=ojn(td, "surf_slice_grd3d_reek_zone.png"))
+    surf.to_file(join(tmpdir, "surf_slice_grd3d_reek_zone.gri"))
+    surf.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_zone.png"))
 
 
 @tsetup.plotskipifroxar
-def test_surface_from_grd3d_layer():
+def test_surface_from_grd3d_layer(tmpdir):
     """Create a surface from a 3D grid layer"""
 
     surf = xtgeo.surface.RegularSurface()
@@ -94,20 +93,20 @@ def test_surface_from_grd3d_layer():
     surf.from_grid3d(grd)
 
     surf.fill()
-    surf.to_file(ojn(td, "surf_from_grid3d_top.gri"))
+    surf.to_file(join(tmpdir, "surf_from_grid3d_top.gri"))
     tmp = surf.copy()
-    surf.quickplot(filename=ojn(td, "surf_from_grid3d_top.png"))
+    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top.png"))
 
     surf.from_grid3d(grd, template=tmp, mode="i")
 
-    surf.to_file(ojn(td, "surf_from_grid3d_top_icell.gri"))
-    surf.quickplot(filename=ojn(td, "surf_from_grid3d_top_icell.png"))
+    surf.to_file(join(tmpdir, "surf_from_grid3d_top_icell.gri"))
+    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top_icell.png"))
 
     surf.from_grid3d(grd, template=tmp, mode="j")
     surf.fill()
-    surf.to_file(ojn(td, "surf_from_grid3d_top_jcell.gri"))
-    surf.quickplot(filename=ojn(td, "surf_from_grid3d_top_jcell.png"))
+    surf.to_file(join(tmpdir, "surf_from_grid3d_top_jcell.gri"))
+    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top_jcell.png"))
 
     surf.from_grid3d(grd, template=tmp, mode="depth", where="3_base")
-    surf.to_file(ojn(td, "surf_from_grid3d_3base.gri"))
-    surf.quickplot(filename=ojn(td, "surf_from_grid3d_3base.png"))
+    surf.to_file(join(tmpdir, "surf_from_grid3d_3base.gri"))
+    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_3base.png"))

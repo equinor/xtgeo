@@ -19,7 +19,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 XTGSHOW = False
@@ -130,7 +129,7 @@ def test_set_values1d(default_surface):
     assert np.ma.count_masked(new.values) == 2
 
 
-def test_ijxyz_import1():
+def test_ijxyz_import1(tmpdir):
     """Import some IJ XYZ format, typical seismic."""
     logger.info("Import and export...")
 
@@ -141,11 +140,11 @@ def test_ijxyz_import1():
     assert_almostequal(xsurf.xinc, 25.0, 0.0001)
     assert xsurf.ncol == 280
     assert xsurf.nrow == 1341
-    xsurf.to_file(os.path.join(TMPD, "ijxyz_set4a.gri"))
+    xsurf.to_file(join(tmpdir, "ijxyz_set4a.gri"))
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="divide by zero issue")
-def test_ijxyz_import2():
+def test_ijxyz_import2(tmpdir):
     """Import some IJ XYZ small set with YFLIP -1."""
     logger.info("Import and export...")
 
@@ -156,11 +155,11 @@ def test_ijxyz_import2():
     assert xsurf.ncol == 51
     assert xsurf.yflip == -1
     assert xsurf.nactive == 2578
-    xsurf.to_file(os.path.join(TMPD, "ijxyz_set4b.gri"))
+    xsurf.to_file(join(tmpdir, "ijxyz_set4b.gri"))
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unknown issue")
-def test_ijxyz_import4_ow_messy_dat():
+def test_ijxyz_import4_ow_messy_dat(tmpdir):
     """Import some IJ XYZ small set with YFLIP -1 from OW messy dat format."""
     logger.info("Import and export...")
 
@@ -171,18 +170,18 @@ def test_ijxyz_import4_ow_messy_dat():
     assert xsurf.ncol == 51
     assert xsurf.yflip == -1
     assert xsurf.nactive == 2578
-    xsurf.to_file(os.path.join(TMPD, "ijxyz_set4d.gri"))
+    xsurf.to_file(join(tmpdir, "ijxyz_set4d.gri"))
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unknown issue")
-def test_ijxyz_import3():
+def test_ijxyz_import3(tmpdir):
     """Import some IJ XYZ small set yet again."""
     logger.info("Import and export...")
 
     xsurf = xtgeo.RegularSurface()
     xsurf.from_file(TESTSET4C, fformat="ijxyz")
     xsurf.describe()
-    xsurf.to_file(os.path.join(TMPD, "ijxyz_set4c.gri"))
+    xsurf.to_file(join(tmpdir, "ijxyz_set4c.gri"))
 
 
 def test_irapbin_import1():
@@ -209,7 +208,7 @@ def test_irapbin_import_use_pathib():
 
 
 @pytest.mark.skipifroxar
-def test_irapbin_import_quickplot():
+def test_irapbin_import_quickplot(tmpdir):
     """Import Reek Irap binary and do quickplot."""
     logger.info("Import and export...")
 
@@ -219,7 +218,7 @@ def test_irapbin_import_quickplot():
     if XTGSHOW:
         xsurf.quickplot(colormap=cmap)
     else:
-        xsurf.quickplot(os.path.join(TMPD, "qplot.jpg"), colormap=cmap)
+        xsurf.quickplot(join(tmpdir, "qplot.jpg"), colormap=cmap)
 
 
 def test_irapbin_import_metadatafirst_simple():
@@ -255,7 +254,7 @@ def test_irapbin_import_metadatafirst():
     assert_almostequal(sur[nsurf - 1].values[11, 0], 1678.89733887, 0.00001)
 
 
-def test_irapbin_export_test():
+def test_irapbin_export_test(tmpdir):
     """Import Reek Irap binary using different numpy details, test timing"""
     logger.info("Import and export...")
 
@@ -264,7 +263,7 @@ def test_irapbin_export_test():
 
     t1 = xtg.timer()
     for _ix in range(nsurf):
-        surf.to_file("TMP/tull1", engine="cxtgeo")
+        surf.to_file(join(tmpdir, "tull1"), engine="cxtgeo")
 
     t2a = xtg.timer(t1)
     logger.info("Saving %s surfaces xtgeo %s secs.", nsurf, t2a)
@@ -276,7 +275,7 @@ def test_irapbin_export_test():
     logger.info("Speed gain %s percent", gain * 100)
 
 
-def test_petromodbin_import_export():
+def test_petromodbin_import_export(tmpdir):
     """Import Petromod PDM binary example."""
     logger.info("Import and export...")
 
@@ -286,7 +285,7 @@ def test_petromodbin_import_export():
     assert petromod.nrow == irapbin.nrow
     assert petromod.values1d[200000] == irapbin.values1d[200000]
 
-    testfile = os.path.join(TMPD, "petromod.pmd")
+    testfile = join(tmpdir, "petromod.pmd")
     petromod.to_file(testfile, fformat="petromod")
     petromod_again = xtgeo.RegularSurface(testfile)
     assert petromod_again.values1d[200000] == irapbin.values1d[200000]
@@ -297,22 +296,24 @@ def test_petromodbin_import_export():
     assert petromod.nrow == irapbin.nrow
     assert petromod.values1d[200000] == irapbin.values1d[200000]
 
-    testfile = os.path.join(TMPD, "petromod_other_units.pmd")
+    testfile = join(tmpdir, "petromod_other_units.pmd")
     petromod.to_file(testfile, fformat="petromod", pmd_dataunits=(16, 300))
     petromod.from_file(testfile, fformat="petromod")
 
     with pytest.raises(ValueError):
-        petromod.to_file("TMP/null", fformat="petromod", pmd_dataunits=(-2, 999))
+        petromod.to_file(
+            join(tmpdir, "null"), fformat="petromod", pmd_dataunits=(-2, 999)
+        )
 
 
-def test_zmap_import_export(default_surface):
+def test_zmap_import_export(tmpdir, default_surface):
     """Import and export ZMAP ascii example."""
     logger.info("Import and export...")
 
     zmap = RegularSurface(**default_surface)
-    zmap.to_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
+    zmap.to_file(join(tmpdir, "zmap1.zmap"), fformat="zmap_ascii")
     zmap2 = RegularSurface()
-    zmap2.from_file(join(TMPD, "zmap1.zmap"), fformat="zmap_ascii")
+    zmap2.from_file(join(tmpdir, "zmap1.zmap"), fformat="zmap_ascii")
 
     assert zmap.values[0, 1] == zmap2.values[0, 1] == 6.0
 
@@ -320,27 +321,27 @@ def test_zmap_import_export(default_surface):
     one2 = zmap2.values.ravel()
     assert one1.all() == one2.all()
 
-    zmap.to_file(join(TMPD, "zmap2.zmap"), fformat="zmap_ascii", engine="python")
+    zmap.to_file(join(tmpdir, "zmap2.zmap"), fformat="zmap_ascii", engine="python")
     zmap3 = RegularSurface()
-    zmap3.from_file(join(TMPD, "zmap2.zmap"), fformat="zmap_ascii")
+    zmap3.from_file(join(tmpdir, "zmap2.zmap"), fformat="zmap_ascii")
     one3 = zmap3.values.ravel()
     assert one1.all() == one3.all()
 
 
-def test_swapaxes():
+def test_swapaxes(tmpdir):
     """Import Reek Irap binary and swap axes."""
     xsurf = xtgeo.RegularSurface(TESTSET5)
     xsurf.describe()
     logger.info(xsurf.yflip)
-    xsurf.to_file("TMP/notswapped.gri")
+    xsurf.to_file(join(tmpdir, "notswapped.gri"))
     val1 = xsurf.values.copy()
     xsurf.swapaxes()
     xsurf.describe()
     logger.info(xsurf.yflip)
-    xsurf.to_file("TMP/swapped.gri")
+    xsurf.to_file(join(tmpdir, "swapped.gri"))
     xsurf.swapaxes()
     val2 = xsurf.values.copy()
-    xsurf.to_file("TMP/swapped_reswapped.gri")
+    xsurf.to_file(join(tmpdir, "swapped_reswapped.gri"))
     valdiff = val2 - val1
     assert_almostequal(valdiff.mean(), 0.0, 0.00001)
     assert_almostequal(valdiff.std(), 0.0, 0.00001)
@@ -394,12 +395,12 @@ def test_irapbin_import1_engine_python():
     assert xsurf.values.mean() == xsurf2.values.mean()
 
 
-def test_irapasc_io_engine_python():
+def test_irapasc_io_engine_python(tmpdir):
     """Test IO using pure python read/write"""
     xsurf1 = xtgeo.RegularSurface()
 
-    usefile1 = os.path.join(TMPD, "surf3a.fgr")
-    usefile2 = os.path.join(TMPD, "surf3b.fgr")
+    usefile1 = join(tmpdir, "surf3a.fgr")
+    usefile2 = join(tmpdir, "surf3b.fgr")
 
     print(xsurf1[1, 1])
 
@@ -430,35 +431,35 @@ def test_irapasc_import1_engine_compare():
     print("Python engine for read:", xtg.timer(tt0))
 
 
-def test_irapasc_export():
+def test_irapasc_export(tmpdir):
     """Export Irap ASCII (1)."""
 
     logger.info("Export to Irap Classic")
     x = xtgeo.RegularSurface()
-    x.to_file("TMP/irap.fgr", fformat="irap_ascii")
+    x.to_file(join(tmpdir, "irap.fgr"), fformat="irap_ascii")
 
     fstatus = False
-    if os.path.isfile("TMP/irap.fgr") is True:
+    if os.path.isfile(join(tmpdir, "irap.fgr")) is True:
         fstatus = True
 
     assert fstatus is True
 
 
-def test_zmapasc_irapasc_export():
+def test_zmapasc_irapasc_export(tmpdir):
     """Export Irap ASCII and then ZMAP ASCII format, last w auto derotation."""
 
     x = xtgeo.RegularSurface(TESTSET1)
-    x.to_file("TMP/reek.fgr", fformat="irap_ascii")
-    x.to_file("TMP/reek.zmap", fformat="zmap_ascii")
+    x.to_file(join(tmpdir, "reek.fgr"), fformat="irap_ascii")
+    x.to_file(join(tmpdir, "reek.zmap"), fformat="zmap_ascii")
 
     fstatus = False
-    if os.path.isfile("TMP/reek.zmap") is True:
+    if os.path.isfile(join(tmpdir, "reek.zmap")) is True:
         fstatus = True
 
     assert fstatus is True
 
 
-def test_irapasc_export_and_import():
+def test_irapasc_export_and_import(tmpdir):
     """Export Irap ASCII and binary and import again."""
 
     logger.info("Export to Irap Classic and Binary")
@@ -476,16 +477,16 @@ def test_irapasc_export_and_import():
 
     mean1 = x.values.mean()
 
-    x.to_file("TMP/irap2_a.fgr", fformat="irap_ascii")
-    x.to_file("TMP/irap2_b.gri", fformat="irap_binary")
+    x.to_file(join(tmpdir, "irap2_a.fgr"), fformat="irap_ascii")
+    x.to_file(join(tmpdir, "irap2_b.gri"), fformat="irap_binary")
 
-    fsize = os.path.getsize("TMP/irap2_b.gri")
+    fsize = os.path.getsize(join(tmpdir, "irap2_b.gri"))
     logger.info(fsize)
     assert_equal(fsize, 48900)
 
     # import irap ascii
     y = xtgeo.RegularSurface()
-    y.from_file("TMP/irap2_a.fgr", fformat="irap_ascii")
+    y.from_file(join(tmpdir, "irap2_a.fgr"), fformat="irap_ascii")
 
     mean2 = y.values.mean()
 
@@ -622,14 +623,14 @@ def test_surface_subtract_etc(default_surface):
 
 
 @pytest.mark.bigtest
-def test_irapbin_io():
+def test_irapbin_io(tmpdir):
     """Import and export Irap binary."""
     logger.info("Import and export...")
 
     x = xtgeo.RegularSurface()
     x.from_file(TESTSET1, fformat="irap_binary")
 
-    x.to_file("TMP/reek1_test.fgr", fformat="irap_ascii")
+    x.to_file(join(tmpdir, "reek1_test.fgr"), fformat="irap_ascii")
 
     logger.debug("NX is %s", x.ncol)
 
@@ -649,8 +650,8 @@ def test_irapbin_io():
 
     assert_almostequal(x.values.mean(), 1998.648, 0.01)
 
-    x.to_file("TMP/reek1_plus_300_a.fgr", fformat="irap_ascii")
-    x.to_file("TMP/reek1_plus_300_b.gri", fformat="irap_binary")
+    x.to_file(join(tmpdir, "reek1_plus_300_a.fgr"), fformat="irap_ascii")
+    x.to_file(join(tmpdir, "reek1_plus_300_b.gri"), fformat="irap_binary")
 
     mfile = TESTSET1
 
@@ -842,7 +843,7 @@ def test_dataframe_simple():
 
 
 @pytest.mark.bigtest
-def test_dataframe_more():
+def test_dataframe_more(tmpdir):
     """Get a pandas Dataframe object, more detailed testing"""
 
     xmap = xtgeo.RegularSurface(TESTSET1)
@@ -852,19 +853,19 @@ def test_dataframe_more():
     dfrc = xmap.dataframe(ijcolumns=True, order="C", activeonly=True)
     dfrf = xmap.dataframe(ijcolumns=True, order="F", activeonly=True)
 
-    dfrc.to_csv(os.path.join(TMPD, "regsurf_df_c.csv"))
-    dfrf.to_csv(os.path.join(TMPD, "regsurf_df_f.csv"))
-    xmap.to_file(os.path.join(TMPD, "regsurf_df.ijxyz"), fformat="ijxyz")
+    dfrc.to_csv(join(tmpdir, "regsurf_df_c.csv"))
+    dfrf.to_csv(join(tmpdir, "regsurf_df_f.csv"))
+    xmap.to_file(join(tmpdir, "regsurf_df.ijxyz"), fformat="ijxyz")
 
     assert_almostequal(dfrc["X_UTME"][2], 465956.274, 0.01)
     assert_almostequal(dfrf["X_UTME"][2], 462679.773, 0.01)
 
     dfrcx = xmap.dataframe(ijcolumns=False, order="C", activeonly=True)
-    dfrcx.to_csv(os.path.join(TMPD, "regsurf_df_noij_c.csv"))
+    dfrcx.to_csv(join(tmpdir, "regsurf_df_noij_c.csv"))
     dfrcy = xmap.dataframe(
         ijcolumns=False, order="C", activeonly=False, fill_value=None
     )
-    dfrcy.to_csv(os.path.join(TMPD, "regsurf_df_noij_c_all.csv"))
+    dfrcy.to_csv(join(tmpdir, "regsurf_df_noij_c_all.csv"))
 
 
 def test_get_xy_value_lists_small(default_surface):
@@ -935,7 +936,7 @@ def test_similarity():
     assert_equal(si, 1.0)
 
 
-def test_irapbin_io_loop():
+def test_irapbin_io_loop(tmpdir):
     """Do a loop over big Troll data set."""
 
     num = 10
@@ -950,12 +951,12 @@ def test_irapbin_io_loop():
         zval = zval + 300
         x.values = zval
         m2 = x.values.mean()
-        x.to_file("TMP/troll.gri", fformat="irap_binary")
+        x.to_file(join(tmpdir, "troll.gri"), fformat="irap_binary")
 
         assert m1 == pytest.approx(m2 - 300)
 
 
-def test_irapbin_export_py():
+def test_irapbin_export_py(tmpdir):
     """Export Irapbin with pure python"""
 
     x = xtgeo.RegularSurface()
@@ -963,26 +964,26 @@ def test_irapbin_export_py():
 
     t0 = xtg.timer()
     for _ in range(10):
-        x.to_file("TMP/purecx.gri", fformat="irap_binary", engine="cxtgeo")
+        x.to_file(join(tmpdir, "purecx.gri"), fformat="irap_binary", engine="cxtgeo")
     t1 = xtg.timer(t0)
     print("CXTGeo based write: {:3.4f}".format(t1))
 
     t0 = xtg.timer()
     for _ in range(10):
-        x.to_file("TMP/purepy.gri", fformat="irap_binary", engine="python")
+        x.to_file(join(tmpdir, "purepy.gri"), fformat="irap_binary", engine="python")
     t2 = xtg.timer(t0)
     print("Python based write: {:3.4f}".format(t2))
     print("Ratio python based / cxtgeo based {:3.4f}".format(t2 / t1))
 
-    s1 = xtgeo.RegularSurface("TMP/purecx.gri")
-    s2 = xtgeo.RegularSurface("TMP/purepy.gri")
+    s1 = xtgeo.RegularSurface(join(tmpdir, "purecx.gri"))
+    s2 = xtgeo.RegularSurface(join(tmpdir, "purepy.gri"))
 
     assert s1.values.mean() == s2.values.mean()
 
     assert s1.values[100, 100] == s2.values[100, 100]
 
 
-def test_distance_from_point():
+def test_distance_from_point(tmpdir):
     """Distance from point."""
 
     x = xtgeo.RegularSurface()
@@ -990,7 +991,7 @@ def test_distance_from_point():
 
     x.distance_from_point(point=(464960, 7336900), azimuth=30)
 
-    x.to_file("TMP/reek1_dist_point.gri", fformat="irap_binary")
+    x.to_file(join(tmpdir, "reek1_dist_point.gri"), fformat="irap_binary")
 
 
 def test_value_from_xy():

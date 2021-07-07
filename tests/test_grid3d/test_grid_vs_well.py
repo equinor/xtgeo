@@ -16,7 +16,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =============================================================================
@@ -107,7 +106,7 @@ def test_report_zlog_mismatch():
         # assert match == MATCHD2[wll.name]
 
 
-def test_report_zlog_mismatch_resultformat3():
+def test_report_zlog_mismatch_resultformat3(tmpdir):
     """Report zone log mismatch grid and well, export updated wellsegment"""
     g1 = Grid()
     g1.from_file(GRIDFILE)
@@ -127,10 +126,10 @@ def test_report_zlog_mismatch_resultformat3():
     )
     mywell = res["WELLINTV"]
     logger.info("\n%s", mywell.dataframe.to_string())
-    mywell.to_file(join(TMPD, "w1_zlog_report.rmswell"))
+    mywell.to_file(join(tmpdir, "w1_zlog_report.rmswell"))
 
 
-def test_report_zlog_mismatch_perflog():
+def test_report_zlog_mismatch_perflog(tmpdir):
     """Report zone log mismatch grid and well filter on PERF"""
     g1 = Grid()
     g1.from_file(GRIDFILE)
@@ -140,7 +139,7 @@ def test_report_zlog_mismatch_perflog():
 
     w1 = Well(PWELL1)
 
-    w1.dataframe.to_csv("TMP/testw1.csv")
+    w1.dataframe.to_csv(join(tmpdir, "testw1.csv"))
 
     res = g1.report_zone_mismatch(
         well=w1,
@@ -153,7 +152,7 @@ def test_report_zlog_mismatch_perflog():
     )
     mywell = res["WELLINTV"]
     logger.info("\n%s", mywell.dataframe.to_string())
-    mywell.to_file(join(TMPD, "w1_perf_report.rmswell"))
+    mywell.to_file(join(tmpdir, "w1_perf_report.rmswell"))
 
     assert res["MATCH2"] == pytest.approx(81, 1.5)
     assert res["TCOUNT2"] == 57

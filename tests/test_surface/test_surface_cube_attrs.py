@@ -10,7 +10,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit("Cannot find test setup")
 
-TMD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 SFILE1 = join(TPATH, "cubes/etc/ib_synth_iainb.segy")
@@ -282,7 +281,7 @@ def test_avg_surface_large_cube():
     logger.info("Testing done")
 
 
-def test_attrs_reek(loadsfile2):
+def test_attrs_reek(tmpdir, loadsfile2):
 
     logger.info("Make cube...")
     cube2 = loadsfile2
@@ -303,7 +302,7 @@ def test_attrs_reek(loadsfile2):
         srf1 = attrs1[att]
         srf2 = attrs2[att]
 
-        srf1.to_file(join(TMD, "attr1_" + att + ".gri"))
-        srf2.to_file(join(TMD, "attr2_" + att + ".gri"))
+        srf1.to_file(join(tmpdir, "attr1_" + att + ".gri"))
+        srf2.to_file(join(tmpdir, "attr2_" + att + ".gri"))
 
         assert srf1.values.mean() == pytest.approx(srf2.values.mean(), abs=0.005)

@@ -24,7 +24,6 @@ else:
 
 logger.info("Use env variable XTG_SHOW to show interactive plots to screen")
 
-TMPDIR = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =========================================================================
@@ -37,13 +36,13 @@ USEFILE3 = TPATH / "etc/colortables/rainbow_reverse.rmscolor"
 
 
 @pytest.mark.skipifroxar
-def test_very_basic():
+def test_very_basic(tmpdir):
     """Just test that matplotlib works."""
     assert "matplotlib" in str(plt)
 
     plt.title("Hello world")
-    plt.savefig(os.path.join(TMPDIR, "helloworld1.png"))
-    plt.savefig(os.path.join(TMPDIR, "helloworld1.svg"))
+    plt.savefig(os.path.join(tmpdir, "helloworld1.png"))
+    plt.savefig(os.path.join(tmpdir, "helloworld1.svg"))
     if XTGSHOW:
         plt.show()
     logger.info("Very basic plotting")
@@ -51,7 +50,7 @@ def test_very_basic():
 
 
 @pytest.mark.skipifroxar
-def test_slice_simple_layer():
+def test_slice_simple_layer(tmpdir):
     """Trigger XSection class, and do some simple things basically."""
     layslice = Grid3DSlice()
 
@@ -79,53 +78,4 @@ def test_slice_simple_layer():
                 "Output to screen disabled (will plot to screen); "
                 "use XTG_SHOW env variable"
             )
-            layslice.savefig(os.path.join(TMPDIR, "layerslice_" + str(lay) + ".png"))
-
-
-# @pytest.mark.skipifroxar
-# def test_slice_simple_row():
-#     """Trigger XSection class, and do some simple things basically."""
-#     layslice = Grid3DSlice()
-
-#     mygrid = Grid(USEFILE1)
-#     myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
-
-#     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
-
-#     wd = [457000, 464000, 1650, 1800]
-#     layslice.canvas(title="My Grid Row plot")
-#     layslice.plot_gridslice(mygrid, prop=None, mode="row", index=5, window=wd)
-
-#     if XTGSHOW:
-#         layslice.show()
-#     else:
-#         print(
-#             "Output to screen disabled (will plotto screen); "
-#             "use XTG_SHOW env variable"
-#         )
-#         layslice.savefig(os.path.join(TMPDIR, "rowslice.png"))
-
-
-# @pytest.mark.skipifroxar
-# def test_slice_plot_many_grid_layers():
-#     """Loop over layers and produce both SVG and PNG files to file"""
-
-#     mygrid = Grid(USEFILE1)
-#     myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
-
-#     nlayers = mygrid.nlay + 1
-
-#     layslice2 = Grid3DSlice()
-
-#     for k in range(1, nlayers, 4):
-#         print("Layer {} ...".format(k))
-#         layslice2.canvas(title="Porosity for layer " + str(k))
-#         layslice2.plot_gridslice(
-#             mygrid, myprop, colormap=USEFILE3, index=k, minvalue=0.18, maxvalue=0.36
-#         )
-#         layslice2.savefig(
-#             os.path.join(TMPDIR, "layerslice2_" + str(k) + ".svg"),
-#             fformat="svg",
-#             last=False,
-#         )
-#         layslice2.savefig(os.path.join(TMPDIR, "layerslice2_" + str(k) + ".png"))
+            layslice.savefig(os.path.join(tmpdir, "layerslice_" + str(lay) + ".png"))

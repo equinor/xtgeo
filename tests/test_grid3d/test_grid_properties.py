@@ -18,7 +18,6 @@ xtg = XTGeoDialog()
 if not xtg.testsetup():
     sys.exit(-9)
 
-TDIR = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 logger = xtg.basiclogger(__name__)

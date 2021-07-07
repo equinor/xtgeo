@@ -37,7 +37,6 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         CMAKE_BUILD_DIR(),
         SKBUILD_DIR(),
         skroot,
-        "TMP",
         "__pycache__",
         "pip-wheel-metadata",
         ".eggs",

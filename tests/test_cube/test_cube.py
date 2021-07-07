@@ -16,7 +16,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit("Cannot find test setup")
 
-TMD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 XTGSHOW = False
@@ -47,14 +46,14 @@ def test_create():
     assert xdim == 5, "NX from numpy shape "
 
 
-def test_segy_scanheader():
+def test_segy_scanheader(tmpdir):
     """Scan SEGY and report header, using XTGeo internal reader."""
-    Cube().scan_segy_header(SFILE1, outfile=join(TMD, "cube_scanheader"))
+    Cube().scan_segy_header(SFILE1, outfile=join(tmpdir, "cube_scanheader"))
 
 
-def test_segy_scantraces():
+def test_segy_scantraces(tmpdir):
     """Scan and report SEGY first and last trace (internal reader)."""
-    Cube().scan_segy_traces(SFILE1, outfile="TMP/cube_scantraces")
+    Cube().scan_segy_traces(SFILE1, outfile=join(tmpdir, "cube_scantraces"))
 
 
 def test_segy_no_file_exception():
@@ -62,7 +61,7 @@ def test_segy_no_file_exception():
         Cube().scan_segy_traces("not_a_file", outfile="not_relevant")
 
 
-def test_storm_import():
+def test_storm_import(tmpdir):
     """Import Cube using Storm format (case Reek)."""
 
     acube = Cube()
@@ -78,7 +77,7 @@ def test_storm_import():
 
     assert vals[180, 185, 4] == pytest.approx(0.117074, 0.0001)
 
-    acube.to_file(join(TMD, "cube.rmsreg"), fformat="rms_regular")
+    acube.to_file(join(tmpdir, "cube.rmsreg"), fformat="rms_regular")
 
 
 # @skipsegyio
@@ -116,7 +115,7 @@ def test_segyio_import(loadsfile1):
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-def test_segyio_import_export(loadsfile1):
+def test_segyio_import_export(tmpdir, loadsfile1):
     """Import and export SEGY (case 1 Reek) via SegIO library."""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -136,15 +135,15 @@ def test_segyio_import_export(loadsfile1):
 
     xcu.values += 200
 
-    xcu.to_file(join(TMD, "reek_cube.segy"))
+    xcu.to_file(join(tmpdir, "reek_cube.segy"))
 
     # reread that file
-    y = Cube(join(TMD, "reek_cube.segy"))
+    y = Cube(join(tmpdir, "reek_cube.segy"))
 
     logger.info(y.values.mean())
 
 
-def test_segyio_import_export_pristine(loadsfile1):
+def test_segyio_import_export_pristine(tmpdir, loadsfile1):
     """Import and export as pristine SEGY (case 1 Reek) via SegIO library."""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -164,15 +163,10 @@ def test_segyio_import_export_pristine(loadsfile1):
 
     xcu.values += 200
 
-    xcu.to_file(join(TMD, "reek_cube_pristine.segy"), pristine=True)
-
-    # # reread that file
-    # y = Cube('TMP/reek_cube_pristine.segy')
-
-    # logger.info(y.values.mean())
+    xcu.to_file(join(tmpdir, "reek_cube_pristine.segy"), pristine=True)
 
 
-def test_segyio_export_xtgeo(loadsfile1):
+def test_segyio_export_xtgeo(tmpdir, loadsfile1):
     """Import via SEGYIO and and export SEGY (case 1 Reek) via XTGeo."""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -181,21 +175,16 @@ def test_segyio_export_xtgeo(loadsfile1):
 
     xcu.values += 200
 
-    xcu.to_file(join(TMD, "reek_cube_xtgeo.segy"), engine="xtgeo")
+    xcu.to_file(join(tmpdir, "reek_cube_xtgeo.segy"), engine="xtgeo")
 
     xxcu = Cube()
     xxcu.scan_segy_header(
-        join(TMD, "reek_cube_xtgeo.segy"), outfile=join(TMD, "cube_scanheader2")
+        join(tmpdir, "reek_cube_xtgeo.segy"), outfile=join(tmpdir, "cube_scanheader2")
     )
 
     xxcu.scan_segy_traces(
-        join(TMD, "reek_cube_xtgeo.segy"), outfile=join(TMD, "cube_scantraces2")
+        join(tmpdir, "reek_cube_xtgeo.segy"), outfile=join(tmpdir, "cube_scantraces2")
     )
-
-    # # reread that file, scan header
-    # y = Cube('TMP/reek_cube_pristine.segy')
-
-    # logger.info(y.values.mean())
 
 
 def test_cube_resampling(loadsfile1):
@@ -224,10 +213,8 @@ def test_cube_resampling(loadsfile1):
     assert newcube.values.mean() == pytest.approx(5.3107, 0.0001)
     assert newcube.values[20, 20, 20] == pytest.approx(10.0, 0.0001)
 
-    # newcube.to_file(join(TMD, "cube_resmaple1.segy"))
 
-
-def test_cube_thinning(loadsfile1):
+def test_cube_thinning(tmpdir, loadsfile1):
     """Import a cube, then make a smaller by thinning every N line"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -239,13 +226,13 @@ def test_cube_thinning(loadsfile1):
     incube.do_thinning(2, 2, 1)
     logger.info(incube)
 
-    incube.to_file(join(TMD, "cube_thinned.segy"))
+    incube.to_file(join(tmpdir, "cube_thinned.segy"))
 
-    incube2 = Cube(join(TMD, "cube_thinned.segy"))
+    incube2 = Cube(join(tmpdir, "cube_thinned.segy"))
     logger.info(incube2)
 
 
-def test_cube_cropping(loadsfile1):
+def test_cube_cropping(tmpdir, loadsfile1):
     """Import a cube, then make a smaller by cropping"""
 
     logger.info("Import SEGY format via SEGYIO")
@@ -255,7 +242,7 @@ def test_cube_cropping(loadsfile1):
     # thinning to evey second column and row, but not vertically
     incube.do_cropping((2, 13), (10, 22), (30, 0))
 
-    incube.to_file(join(TMD, "cube_cropped.segy"))
+    incube.to_file(join(tmpdir, "cube_cropped.segy"))
 
 
 def test_cube_get_xy_from_ij(loadsfile1):

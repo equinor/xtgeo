@@ -5,7 +5,6 @@ from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 logger = xtg.basiclogger(__name__)

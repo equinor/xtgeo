@@ -223,8 +223,8 @@ class BasePlot(object):
 
         Example::
 
-            myplot.savefig('TMP/layerslice.svg', fformat='svg', last=False)
-            myplot.savefig('TMP/layerslice.png')
+            myplot.savefig('layerslice.svg', fformat='svg', last=False)
+            myplot.savefig('layerslice.png')
 
         .. versionchanged:: 2.4 added kwargs option
 

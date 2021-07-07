@@ -1,11 +1,12 @@
-import pytest
+from os.path import join
+
 import numpy as np
 import numpy.ma as ma
+import pytest
 
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
-from xtgeo.surface import RegularSurface
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.surface import RegularSurface
 
 # set default level
 xtg = XTGeoDialog()
@@ -18,7 +19,7 @@ ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 
 
 @pytest.mark.skipifroxar
-def test_hcpvfz1():
+def test_hcpvfz1(tmpdir):
     """HCPV thickness map."""
 
     # It is important that input are pure numpies, not masked
@@ -122,6 +123,6 @@ def test_hcpvfz1():
 
     logger.info("Speed zoneavg coarsen 2 is %s", t2)
 
-    hcmap.quickplot(filename="TMP/quickplot_hcpv.png")
-    hcmap2.quickplot(filename="TMP/quickplot_hcpv_zavg_coarsen.png")
+    hcmap.quickplot(filename=join(tmpdir, "quickplot_hcpv.png"))
+    hcmap2.quickplot(filename=join(tmpdir, "quickplot_hcpv_zavg_coarsen.png"))
     logger.debug(hcmap.values.mean())

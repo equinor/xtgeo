@@ -225,7 +225,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         self._logginglevel_fromenv = None
         self._loggingname = ""
         self._test_env = True
-        self._tmpdir = "TMP"
         self._testpath = "../xtgeo-testdata"
         self._bigtests = None
         self._showrtwarnings = True
@@ -256,16 +255,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     def bigtest(self):
         """Return bigtest status."""
         return self._bigtests
-
-    @property
-    def tmpdir(self):
-        """Return tmpdir value."""
-        return self._tmpdir
-
-    @property
-    def tmpdirobj(self):
-        """Return tmpdir value as pathlib.Path object."""
-        return pathlib.Path(self._tmpdir)
 
     @property
     def testpathobj(self):
@@ -448,13 +437,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
     def testsetup(self):
         """Basic setup for XTGeo testing (private; only relevant for tests)"""
 
-        tmppath = "TMP"
-        try:
-            os.makedirs(tmppath)
-        except OSError:
-            if not os.path.isdir(tmppath):
-                raise
-
         tstpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
         if not os.path.isdir(tstpath):
             raise RuntimeError("Test path is not valid: {}".format(tstpath))
@@ -466,7 +448,6 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             self._bigtests = True
 
         self._test_env = True
-        self._tmpdir = tmppath
         self._testpath = tstpath
 
         return True

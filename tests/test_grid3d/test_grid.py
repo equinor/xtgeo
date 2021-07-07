@@ -23,7 +23,6 @@ logger = xtg.basiclogger(__name__, info=True)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPDIR = xtg.tmpdirobj
 TPATH = xtg.testpathobj
 
 EMEGFILE = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
@@ -76,14 +75,14 @@ def test_import_guess(load_gfile1):
     tsetup.assert_equal(grd.name, "xxx")
 
 
-def test_create_shoebox():
+def test_create_shoebox(tmp_path):
     """Make a shoebox grid from scratch."""
     grd = xtgeo.Grid()
     grd.create_box()
-    grd.to_file(TMPDIR / "shoebox_default.roff")
+    grd.to_file(tmp_path / "shoebox_default.roff")
 
     grd.create_box(flip=-1)
-    grd.to_file(TMPDIR / "shoebox_default_flipped.roff")
+    grd.to_file(tmp_path / "shoebox_default_flipped.roff")
 
     timer1 = xtg.timer()
     grd.create_box(
@@ -121,19 +120,19 @@ def test_create_shoebox():
     tsetup.assert_almostequal(z.values1d[0], 1000.0, 0.001)
 
 
-def test_shoebox_egrid():
+def test_shoebox_egrid(tmp_path):
     """Test the egrid format for different grid sizes."""
     dimens = [(1000, 1, 1), (1000, 1, 200), (300, 200, 30)]
 
     for dim in dimens:
         grd = xtgeo.Grid()
         grd.create_box(dimension=dim)
-        grd.to_file(TMPDIR / "E1.EGRID", fformat="egrid")
-        grd1 = xtgeo.Grid(TMPDIR / "E1.EGRID")
+        grd.to_file(tmp_path / "E1.EGRID", fformat="egrid")
+        grd1 = xtgeo.Grid(tmp_path / "E1.EGRID")
         assert grd1.dimensions == dim
 
 
-def test_shoebox_xtgeo_vs_roff():
+def test_shoebox_xtgeo_vs_roff(tmp_path):
     """Test timing for xtgeo xtgcpgeom format vs roff vs egrid."""
     dimens = (20, 30, 50)
 
@@ -141,27 +140,27 @@ def test_shoebox_xtgeo_vs_roff():
     grd.create_box(dimension=dimens)
     grd._xtgformat2()
     t0 = xtg.timer()
-    grd.to_xtgf(TMPDIR / "show.xtgf")
+    grd.to_xtgf(tmp_path / "show.xtgf")
     t1 = xtg.timer(t0)
     logger.info("TIME XTGEO %s", t1)
     t0 = xtg.timer()
-    grd.to_file(TMPDIR / "show.roff", fformat="roff")
+    grd.to_file(tmp_path / "show.roff", fformat="roff")
     t1 = xtg.timer(t0)
     logger.info("TIME ROFF %s", t1)
     t0 = xtg.timer()
-    grd.to_file(TMPDIR / "show.egrid", fformat="egrid")
+    grd.to_file(tmp_path / "show.egrid", fformat="egrid")
     t1 = xtg.timer(t0)
     logger.info("TIME EGRID (incl conv) %s", t1)
 
     t0 = xtg.timer()
     grd2 = xtgeo.Grid()
-    grd2.from_xtgf(TMPDIR / "show.xtgf")
+    grd2.from_xtgf(tmp_path / "show.xtgf")
     t1 = xtg.timer(t0)
     logger.info("TIME READ xtgeo %s", t1)
 
     t0 = xtg.timer()
     grd2 = xtgeo.Grid()
-    grd2.from_file(TMPDIR / "show.roff", fformat="roff")
+    grd2.from_file(tmp_path / "show.roff", fformat="roff")
     t1 = xtg.timer(t0)
     logger.info("TIME READ roff %s", t1)
 
@@ -366,7 +365,7 @@ def test_roffbin_banal6():
     assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
 
 
-def test_roffbin_export_v2_banal6():
+def test_roffbin_export_v2_banal6(tmp_path):
     """Test roff binary export v2 for banal no. 6 case."""
     # export
     grd1 = Grid()
@@ -374,10 +373,10 @@ def test_roffbin_export_v2_banal6():
     grd1.from_file(BANAL6)
 
     logger.info("EXPORT")
-    grd1.to_file(TMPDIR / "b6_export.roffasc", fformat="roff_asc")
-    grd1.to_file(TMPDIR / "b6_export.roffbin", fformat="roff_bin")
+    grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")
+    grd1.to_file(tmp_path / "b6_export.roffbin", fformat="roff_bin")
 
-    grd2 = Grid(TMPDIR / "b6_export.roffbin")
+    grd2 = Grid(tmp_path / "b6_export.roffbin")
     cell1 = grd1.get_xyz_cell_corners((2, 2, 2))
     cell2 = grd2.get_xyz_cell_corners((2, 2, 2))
 
@@ -386,13 +385,13 @@ def test_roffbin_export_v2_banal6():
     reek = Grid()
     reek._xtgformat = 2
     reek.from_file(REEKFIL4)
-    reek.to_file("TMP/reek_xtgformat2", fformat="roff_ascii")
+    reek.to_file(tmp_path / "reek_xtgformat2", fformat="roff_ascii")
 
 
 @tsetup.bigtest
-def test_roffbin_bigbox():
+def test_roffbin_bigbox(tmp_path):
     """Test roff binary for bigbox, to monitor performance."""
-    bigbox = TMPDIR / "bigbox.roff"
+    bigbox = tmp_path / "bigbox.roff"
     if not bigbox.is_file():
         logger.info("Create tmp big roff grid file...")
         grd0 = Grid()
@@ -460,7 +459,7 @@ def test_import_grdecl_and_bgrdecl():
     tsetup.assert_almostequal(dzv1.values.mean(), dzv2.values.mean(), 0.001)
 
 
-def test_eclgrid_import2():
+def test_eclgrid_import2(tmp_path):
     """Eclipse EGRID import, also change ACTNUM."""
     grd = Grid()
     logger.info("Import Eclipse GRID...")
@@ -480,10 +479,10 @@ def test_eclgrid_import2():
     grd.set_actnum(actnum)
     newactive = grd.ncol * grd.nrow * grd.nlay - 2 * (grd.ncol * grd.nrow)
     tsetup.assert_equal(grd.nactive, newactive, txt="Changed ACTNUM")
-    grd.to_file(TMPDIR / "reek_new_actnum.roff")
+    grd.to_file(tmp_path / "reek_new_actnum.roff")
 
 
-def test_eclgrid_import3():
+def test_eclgrid_import3(tmp_path):
     """Eclipse GRDECL import and translate."""
     grd = Grid(BRILGRDECL, fformat="grdecl")
 
@@ -501,9 +500,9 @@ def test_eclgrid_import3():
     # check if origin is translated 100m in X
     tsetup.assert_equal(xori1 + 100, xori2, txt="Translate X distance")
 
-    grd.to_file(TMPDIR / "g1_translate.roff", fformat="roff_binary")
+    grd.to_file(tmp_path / "g1_translate.roff", fformat="roff_binary")
 
-    grd.to_file(TMPDIR / "g1_translate.bgrdecl", fformat="bgrdecl")
+    grd.to_file(tmp_path / "g1_translate.bgrdecl", fformat="bgrdecl")
 
 
 def test_geometrics_reek():
@@ -524,7 +523,7 @@ def test_geometrics_reek():
     tsetup.assert_almostequal(geom["xmin"], 456620, 1, "Xmin cell center")
 
 
-def test_activate_all_cells():
+def test_activate_all_cells(tmp_path):
     """Make the grid active for all cells."""
     grid = Grid(EMEGFILE)
     logger.info("Number of active cells %s before", grid.nactive)
@@ -532,25 +531,25 @@ def test_activate_all_cells():
     logger.info("Number of active cells %s after", grid.nactive)
 
     assert grid.nactive == grid.ntotal
-    grid.to_file(TMPDIR / "emerald_all_active.roff")
+    grid.to_file(tmp_path / "emerald_all_active.roff")
 
 
-def test_get_adjacent_cells():
+def test_get_adjacent_cells(tmp_path):
     """Get the cell indices for discrete value X vs Y, if connected."""
     grid = Grid(EMEGFILE)
     actnum = grid.get_actnum()
-    actnum.to_file(TMPDIR / "emerald_actnum.roff")
+    actnum.to_file(tmp_path / "emerald_actnum.roff")
     result = grid.get_adjacent_cells(actnum, 0, 1, activeonly=False)
-    result.to_file(TMPDIR / "emerald_adj_cells.roff")
+    result.to_file(tmp_path / "emerald_adj_cells.roff")
 
 
-def test_simple_io():
+def test_simple_io(tmp_path):
     """Test various import and export formats, incl egrid and bgrdecl."""
     gg = Grid(REEKFILE, fformat="egrid")
 
     assert gg.ncol == 40
 
-    filex = TMPDIR / "grid_test_simple_io.roff"
+    filex = tmp_path / "grid_test_simple_io.roff"
 
     gg.to_file(filex)
 
@@ -558,8 +557,8 @@ def test_simple_io():
 
     assert gg2.ncol == 40
 
-    filex = TMPDIR / "grid_test_simple_io.EGRID"
-    filey = TMPDIR / "grid_test_simple_io.bgrdecl"
+    filex = tmp_path / "grid_test_simple_io.EGRID"
+    filey = tmp_path / "grid_test_simple_io.bgrdecl"
 
     gg.to_file(filex, fformat="egrid")
     gg.to_file(filey, fformat="bgrdecl")
@@ -579,7 +578,7 @@ def test_simple_io():
     tsetup.assert_almostequal(dz1.values.std(), dz3.values.std(), 0.001)
 
 
-def test_ecl_run():
+def test_ecl_run(tmp_path):
     """Test import an eclrun with dates and export to roff after a diff."""
     dates = [19991201, 20030101]
     rprops = ["PRESSURE", "SWAT"]
@@ -590,7 +589,7 @@ def test_ecl_run():
     pres1 = gg.get_prop_by_name("PRESSURE_20030101")
     tsetup.assert_almostequal(pres1.values.mean(), 308.45, 0.001)
 
-    pres1.to_file(TMPDIR / "pres1.roff")
+    pres1.to_file(tmp_path / "pres1.roff")
 
     pres2 = gg.get_prop_by_name("PRESSURE_19991201")
 
@@ -607,7 +606,7 @@ def test_ecl_run():
     # ok checked in RMS:
     tsetup.assert_almostequal(avg, -26.073, 0.001)
 
-    pres1.to_file(TMPDIR / "pressurediff.roff", name="PRESSUREDIFF")
+    pres1.to_file(tmp_path / "pressurediff.roff", name="PRESSUREDIFF")
 
 
 def test_ecl_run_all():
@@ -646,7 +645,7 @@ def test_npvalues1d():
     assert dz1.all() == dz2.all()
 
 
-def test_pathlib():
+def test_pathlib(tmp_path):
     """Import and export via pathlib."""
     pfile = pathlib.Path(DUALFIL1)
     grd = Grid()
@@ -654,7 +653,7 @@ def test_pathlib():
 
     assert grd.dimensions == (5, 3, 1)
 
-    out = pathlib.Path() / TMPDIR / "grdpathtest.roff"
+    out = tmp_path / "grdpathtest.roff"
     grd.to_file(out, fformat="roff")
 
     with pytest.raises(OSError):

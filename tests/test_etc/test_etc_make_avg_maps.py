@@ -1,17 +1,17 @@
-import pytest
-import numpy as np
+from os.path import join
 
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
+import numpy as np
+import pytest
+
+from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
-from xtgeo.common import XTGeoDialog
 
 # set default level
 xtg = XTGeoDialog()
 
 logger = xtg.basiclogger(__name__)
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # ======================================================================================
@@ -28,7 +28,7 @@ FFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.zmap"
 
 
 @pytest.mark.skipifroxar
-def test_avg02():
+def test_avg02(tmpdir):
     """Make average map from Reek Eclipse."""
     grd = Grid()
     grd.from_file(GFILE2, fformat="egrid")
@@ -81,15 +81,17 @@ def test_avg02():
     fau = Polygons(FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
-    avgmap.quickplot(filename="TMP/tmp_poro2.png", xlabelrotation=30, faults=fspec)
-    avgmap.to_file("TMP/tmp.poro.gri", fformat="irap_ascii")
+    avgmap.quickplot(
+        filename=join(tmpdir, "tmp_poro2.png"), xlabelrotation=30, faults=fspec
+    )
+    avgmap.to_file(join(tmpdir, "tmp.poro.gri"), fformat="irap_ascii")
 
     logger.info(avgmap.values.mean())
     assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
 
 
 @pytest.mark.skipifroxar
-def test_avg03():
+def test_avg03(tmpdir):
     """Make average map from Reek Eclipse, speed up by zone_avgrd."""
     grd = Grid()
     grd.from_file(GFILE2, fformat="egrid")
@@ -144,8 +146,10 @@ def test_avg03():
     fau = Polygons(FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
-    avgmap.quickplot(filename="TMP/tmp_poro3.png", xlabelrotation=30, faults=fspec)
-    avgmap.to_file("TMP/tmp.poro3.gri", fformat="irap_ascii")
+    avgmap.quickplot(
+        filename=join(tmpdir, "tmp_poro3.png"), xlabelrotation=30, faults=fspec
+    )
+    avgmap.to_file(join(tmpdir, "tmp.poro3.gri"), fformat="irap_ascii")
 
     logger.info(avgmap.values.mean())
     assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)

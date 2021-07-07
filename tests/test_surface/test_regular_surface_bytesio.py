@@ -16,8 +16,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
-TMPDO = xtg.tmpdirobj
 TPATH = xtg.testpathobj
 
 XTGSHOW = False
@@ -84,7 +82,7 @@ def test_irapbin_import_bytesio():
     xsurf.describe()
 
 
-def test_irapbin_export_bytesio():
+def test_irapbin_export_bytesio(tmpdir):
     """Export Irap binary to bytesIO, then read again."""
     logger.info("Import and export to bytesio")
 
@@ -93,7 +91,7 @@ def test_irapbin_export_bytesio():
     assert xsurf.nrow == 451
     assert abs(xsurf.values.mean() - 1698.648) < 0.01
     xsurf.describe()
-    xsurf.to_file(join(TMPD, "bytesio1.gri"), fformat="irap_binary")
+    xsurf.to_file(join(tmpdir, "bytesio1.gri"), fformat="irap_binary")
 
     xsurf.values -= 200
 
@@ -104,17 +102,17 @@ def test_irapbin_export_bytesio():
     xsurfx = xtgeo.RegularSurface(stream, fformat="irap_binary")
     logger.info("XSURFX mean %s", xsurfx.values.mean())
 
-    with open(join(TMPD, "bytesio2.gri"), "wb") as myfile:
+    with open(join(tmpdir, "bytesio2.gri"), "wb") as myfile:
         myfile.write(stream.getvalue())
 
-    xsurf1 = xtgeo.RegularSurface(join(TMPD, "bytesio1.gri"), fformat="irap_binary")
-    xsurf2 = xtgeo.RegularSurface(join(TMPD, "bytesio2.gri"), fformat="irap_binary")
+    xsurf1 = xtgeo.RegularSurface(join(tmpdir, "bytesio1.gri"), fformat="irap_binary")
+    xsurf2 = xtgeo.RegularSurface(join(tmpdir, "bytesio2.gri"), fformat="irap_binary")
     assert abs(xsurf1.values.mean() - xsurf2.values.mean() - 200) < 0.001
 
     stream.close()
 
 
-def test_irapascii_export_import_bytesio():
+def test_irapascii_export_import_bytesio(tmpdir):
     """Export Irap ascii to bytesIO, then read again."""
     logger.info("Import and export to bytesio")
 
@@ -122,7 +120,7 @@ def test_irapascii_export_import_bytesio():
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
     assert abs(xsurf.values.mean() - 1698.648) < 0.01
-    xsurf.to_file(join(TMPD, "bytesio1.fgr"), fformat="irap_ascii")
+    xsurf.to_file(join(tmpdir, "bytesio1.fgr"), fformat="irap_ascii")
 
     xsurf.values -= 200
 
@@ -133,11 +131,11 @@ def test_irapascii_export_import_bytesio():
     xsurfx = xtgeo.RegularSurface(stream, fformat="irap_ascii")
     assert xsurf.values.mean() == xsurfx.values.mean()
 
-    with open(join(TMPD, "bytesio2.fgr"), "wb") as myfile:
+    with open(join(tmpdir, "bytesio2.fgr"), "wb") as myfile:
         myfile.write(stream.getvalue())
 
-    xsurf1 = xtgeo.RegularSurface(join(TMPD, "bytesio1.fgr"), fformat="irap_ascii")
-    xsurf2 = xtgeo.RegularSurface(join(TMPD, "bytesio2.fgr"), fformat="irap_ascii")
+    xsurf1 = xtgeo.RegularSurface(join(tmpdir, "bytesio1.fgr"), fformat="irap_ascii")
+    xsurf2 = xtgeo.RegularSurface(join(tmpdir, "bytesio2.fgr"), fformat="irap_ascii")
     assert abs(xsurf1.values.mean() - xsurf2.values.mean() - 200) < 0.001
 
     stream.close()
@@ -209,16 +207,16 @@ def test_bytesio_string_encoded():
     assert xsurf.nrow == 451
 
 
-def test_export_import_hdf5_bytesio():
+def test_export_import_hdf5_bytesio(tmp_path):
     """Test hdf5 format via memory streams."""
     # just the input, and save as hdf5
     xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_ascii")
     assert xsurf.ncol == 554
     assert xsurf.nrow == 451
-    xsurf.to_hdf(TMPDO / "surf.hdf")
+    xsurf.to_hdf(tmp_path / "surf.hdf")
 
     xsurf2 = xtgeo.RegularSurface()
-    xsurf2.from_hdf(TMPDO / "surf.hdf")
+    xsurf2.from_hdf(tmp_path / "surf.hdf")
     assert xsurf2.ncol == 554
 
     stream = io.BytesIO()

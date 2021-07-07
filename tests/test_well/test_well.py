@@ -22,13 +22,7 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
-TMPDX = xtg.tmpdirobj
 TPATH = xtg.testpathobj
-
-# =========================================================================
-# Do tests
-# =========================================================================
 
 WFILE = join(TPATH, "wells/reek/1/OP_1.w")
 WFILE_HOLES = join(TPATH, "wells/reek/1/OP_1_zholes.w")
@@ -155,7 +149,7 @@ def test_change_a_lot_of_stuff(loadwell1):
     assert sorted(frec1) == sorted(frec2)
 
 
-def test_import_export_many():
+def test_import_export_many(tmpdir):
     """Import and export many wells (test speed)."""
     logger.debug(WFILES)
 
@@ -165,7 +159,7 @@ def test_import_export_many():
         logger.info(mywell.ncol)
         logger.info(mywell.lognames)
 
-        wname = join(TMPD, mywell.xwellname + ".w")
+        wname = join(tmpdir, mywell.xwellname + ".w")
         mywell.to_file(wname)
 
 
@@ -184,17 +178,17 @@ def test_shortwellname():
     assert short == "A-142H"
 
 
-def test_hdf_io_single():
+def test_hdf_io_single(tmp_path):
     """Test HDF io, single well."""
     mywell = Well(WELL1)
 
-    wname = (TMPDX / "hdfwell").with_suffix(".hdf")
+    wname = (tmp_path / "hdfwell").with_suffix(".hdf")
     mywell.to_hdf(wname)
     mywell2 = Well()
     mywell2.from_hdf(wname)
 
 
-def test_import_as_rms_export_as_hdf_many():
+def test_import_as_rms_export_as_hdf_many(tmp_path):
     """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
     mywell = Well(WELL1)
     nmax = 50
@@ -202,21 +196,21 @@ def test_import_as_rms_export_as_hdf_many():
     t0 = xtg.timer()
     wlist = []
     for _ in range(nmax):
-        wname = (TMPDX / "$random").with_suffix(".hdf")
+        wname = (tmp_path / "$random").with_suffix(".hdf")
         wuse = mywell.to_hdf(wname, compression=None)
         wlist.append(wuse)
     print("Time for save HDF: ", xtg.timer(t0))
 
     t0 = xtg.timer()
     for wll in wlist:
-        wname = (TMPDX / "$random").with_suffix(".hdf")
+        wname = (tmp_path / "$random").with_suffix(".hdf")
         wuse = mywell.from_hdf(wll)
     print("Time for load HDF: ", xtg.timer(t0))
 
     t0 = xtg.timer()
     wlist = []
     for _ in range(nmax):
-        wname = (TMPDX / "$random").with_suffix(".rmsasc")
+        wname = (tmp_path / "$random").with_suffix(".rmsasc")
         wuse = mywell.to_file(wname)
         wlist.append(wuse)
     print("Time for save RMSASC: ", xtg.timer(t0))
@@ -484,14 +478,14 @@ def test_rescale_well(loadwell1):
     tsetup.assert_almostequal(df1["Poro"].mean(), df2["Poro"].mean(), 0.001)
 
 
-def test_rescale_well_tvdrange():
+def test_rescale_well_tvdrange(tmpdir):
     """Rescale (resample) a well to a finer increment within a TVD range"""
 
     mywell = Well(WELL1)
-    mywell.to_file(join(TMPD, "wll1_pre_rescale.w"))
+    mywell.to_file(join(tmpdir, "wll1_pre_rescale.w"))
     gr_avg1 = mywell.dataframe["GR"].mean()
     mywell.rescale(delta=2, tvdrange=(1286, 1333))
-    mywell.to_file(join(TMPD, "wll1_post_rescale.w"))
+    mywell.to_file(join(tmpdir, "wll1_post_rescale.w"))
     gr_avg2 = mywell.dataframe["GR"].mean()
     tsetup.assert_almostequal(gr_avg1, gr_avg2, 0.9)
 
@@ -504,12 +498,12 @@ def test_rescale_well_tvdrange():
     assert mywell1.dataframe["GR"].all() == mywell2.dataframe["GR"].all()
 
 
-def test_rescale_well_tvdrange_coarsen_upper():
+def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
     """Rescale (resample) a well to a coarser increment in top part"""
 
     mywell = Well(WELL1)
     mywell.rescale(delta=20, tvdrange=(0, 1200))
-    mywell.to_file(join(TMPD, "wll1_rescale_coarsen.w"))
+    mywell.to_file(join(tmpdir, "wll1_rescale_coarsen.w"))
     tsetup.assert_almostequal(mywell.dataframe.iat[10, 3], 365.8254, 0.1)
 
 
@@ -628,7 +622,7 @@ def test_create_surf_distance_log(loadwell1):
 
 
 @pytest.mark.bigtest
-def test_create_surf_distance_log_more(loadwell1):
+def test_create_surf_distance_log_more(tmp_path, loadwell1):
     """Test making a log which is distance to a surface and do some operations.
 
     This is a prototype (need BIG_TEST env variable to run) exploring the possibility
@@ -672,7 +666,7 @@ def test_create_surf_distance_log_more(loadwell1):
     depthrange = [1200, 3000]
     zonelogrange = [1, 1]
 
-    well.to_file(TMPDX / "well_surf_dist.w")
+    well.to_file(tmp_path / "well_surf_dist.w")
 
     # get the IJK along the well as logs; use a copy of the well instance
     wll = well.copy()
