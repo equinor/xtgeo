@@ -30,7 +30,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPDIR = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
@@ -234,7 +233,7 @@ def test_create_from_gridproperty():
     assert some.isdiscrete is False
 
 
-def test_pathlib():
+def test_pathlib(tmp_path):
     """Import and export via pathlib"""
 
     pfile = pathlib.Path(DUALROFF)
@@ -243,7 +242,7 @@ def test_pathlib():
 
     assert grdp.dimensions == (5, 3, 1)
 
-    out = pathlib.Path() / TMPDIR / "grdpathtest.roff"
+    out = tmp_path / "grdpathtest.roff"
     grdp.to_file(out, fformat="roff")
 
     with pytest.raises(OSError):
@@ -323,7 +322,7 @@ def test_eclinit_import_reek():
     logger.info(pv.values.mean())
 
 
-def test_eclinit_simple_importexport():
+def test_eclinit_simple_importexport(tmpdir):
     """Property import and export with anoother name"""
 
     # let me guess the format (shall be egrid)
@@ -331,13 +330,13 @@ def test_eclinit_simple_importexport():
     po = GridProperty(TESTFILE13B, name="PORO", grid=gg)
 
     po.to_file(
-        os.path.join(TMPDIR, "simple.grdecl"),
+        os.path.join(tmpdir, "simple.grdecl"),
         fformat="grdecl",
         name="PORO2",
         fmt="%12.5f",
     )
 
-    p2 = GridProperty(os.path.join(TMPDIR, "simple.grdecl"), grid=gg, name="PORO2")
+    p2 = GridProperty(os.path.join(tmpdir, "simple.grdecl"), grid=gg, name="PORO2")
     assert p2.name == "PORO2"
 
 
@@ -373,7 +372,7 @@ def test_eclunrst_import_soil_reek():
     tsetup.assert_almostequal(soil.values.mean(), 1.0 - 0.8780, 0.001)
 
 
-def test_grdecl_import_reek():
+def test_grdecl_import_reek(tmpdir):
     """Property GRDECL import from Eclipse. Reek"""
 
     rgrid = Grid(TESTFILE12A, fformat="grdecl")
@@ -392,43 +391,19 @@ def test_grdecl_import_reek():
         logger.debug("Keyword failed as expected for instance %s", poro3)
 
     # Export to ascii grdecl and import that again...
-    exportfile = os.path.join(TMPDIR, "reekporo.grdecl")
+    exportfile = os.path.join(tmpdir, "reekporo.grdecl")
     poro.to_file(exportfile, fformat="grdecl")
     porox = GridProperty(exportfile, name="PORO", fformat="grdecl", grid=rgrid)
     tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
 
     # Export to binary grdecl and import that again...
-    exportfile = os.path.join(TMPDIR, "reekporo.bgrdecl")
+    exportfile = os.path.join(tmpdir, "reekporo.bgrdecl")
     poro.to_file(exportfile, fformat="bgrdecl")
     porox = GridProperty(exportfile, name="PORO", fformat="bgrdecl", grid=rgrid)
     tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
 
 
-# def test_export_roff():
-#     """Property import from Eclipse. Then export to roff."""
-
-#     gg = Grid()
-#     gg.from_file(TESTFILE3, fformat="grid")
-#     po = GridProperty()
-#     logger.info("Import INIT...")
-#     po.from_file(TESTFILE4, fformat="init", name='PORO', grid=gg)
-
-#     po.to_file(os.path.join(TMPDIR, 'bdata.roff'), name='PORO')
-
-#     po.to_file(os.path.join(TMPDIR, 'bdata.roffasc'), name='PORO',
-#                fformat='roffasc')
-
-#     pox = GridProperty(os.path.join(TMPDIR, 'bdata.roff'), name='PORO')
-
-#     pox.to_file(os.path.join(TMPDIR, 'bdata2.roffasc'), name='POROAGAIN',
-#                 fformat='roffasc')
-
-#     print(po.values.mean())
-
-#     assert po.values.mean() == pytest.approx(pox.values.mean(), abs=0.0001)
-
-
-def test_io_roff_discrete():
+def test_io_roff_discrete(tmpdir):
     """Import ROFF discrete property; then export to ROFF int."""
 
     logger.info("Name is {}".format(__name__))
@@ -444,7 +419,7 @@ def test_io_roff_discrete():
 
     # export discrete to ROFF ...TODO
     po.to_file(
-        os.path.join(TMPDIR, "reek_zone_export.roff"), name="Zone", fformat="roff"
+        os.path.join(tmpdir, "reek_zone_export.roff"), name="Zone", fformat="roff"
     )
 
     # fix some zero values (will not be fixed properly as grid ACTNUM differs?)
@@ -455,11 +430,11 @@ def test_io_roff_discrete():
     print(po.values.min(), po.values.max())
     po.values[:, :, 13] = 1  # just for fun test
     po.to_file(
-        os.path.join(TMPDIR, "reek_zonefix_export.roff"), name="ZoneFix", fformat="roff"
+        os.path.join(tmpdir, "reek_zonefix_export.roff"), name="ZoneFix", fformat="roff"
     )
 
 
-def test_io_ecl2roff_discrete():
+def test_io_ecl2roff_discrete(tmpdir):
     """Import Eclipse discrete property; then export to ROFF int."""
 
     logger.info("Name is {}".format(__name__))
@@ -472,7 +447,7 @@ def test_io_ecl2roff_discrete():
     assert isinstance(po.codes[1], str)
 
     po.to_file(
-        os.path.join(TMPDIR, "ecl2roff_disc.roff"), name="SATNUM", fformat="roff"
+        os.path.join(tmpdir, "ecl2roff_disc.roff"), name="SATNUM", fformat="roff"
     )
 
 

@@ -14,7 +14,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 
@@ -70,13 +69,13 @@ def test_create_init_mixlist():
     assert isinstance(surfs, xtgeo.Surfaces)
 
 
-def test_statistics():
+def test_statistics(tmpdir):
     """Find the mean etc measures of the surfaces."""
     flist = [TESTSET1A, TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
     res = surfs.statistics()
-    res["mean"].to_file(join(TMPD, "surf_mean.gri"))
-    res["std"].to_file(join(TMPD, "surf_std.gri"))
+    res["mean"].to_file(join(tmpdir, "surf_mean.gri"))
+    res["std"].to_file(join(tmpdir, "surf_std.gri"))
 
     assert_almostequal(res["mean"].values.mean(), 1720.5029, 0.0001)
     assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
@@ -141,7 +140,7 @@ def test_surfaces_apply():
     assert_almostequal(res.values.mean(), bmean + 10.0, 0.0001)
 
 
-def test_get_surfaces_from_3dgrid():
+def test_get_surfaces_from_3dgrid(tmpdir):
     """Create surfaces from a 3D grid."""
     mygrid = xtgeo.Grid(TESTSETG1)
     surfs = xtgeo.Surfaces()
@@ -154,4 +153,4 @@ def test_get_surfaces_from_3dgrid():
     assert_almostequal(surfs.surfaces[0].values.mean(), 1697.02, 0.04)
 
     for srf in surfs.surfaces:
-        srf.to_file(join(TMPD, srf.name + ".gri"))
+        srf.to_file(join(tmpdir, srf.name + ".gri"))

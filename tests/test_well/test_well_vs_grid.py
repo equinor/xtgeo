@@ -18,7 +18,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPDIR = xtg.tmpdir
 TPATH = xtg.testpathobj
 EQGULLTESTPATH = "../xtgeo-testdata-equinor/data"
 
@@ -97,7 +96,7 @@ def test_make_ijk_gf_geogrid():
     assert int(df.iloc[16120]["KCELL"]) == 15
 
 
-def test_well_get_gridprops(loadwell1, loadgrid1, loadporo1):
+def test_well_get_gridprops(tmpdir, loadwell1, loadgrid1, loadporo1):
     """Import well from and grid and make I J K logs"""
 
     mywell = loadwell1
@@ -111,7 +110,7 @@ def test_well_get_gridprops(loadwell1, loadgrid1, loadporo1):
     myactnum.describe()
 
     mywell.get_gridproperties(myactnum, mygrid)
-    mywell.to_file(join(TMPDIR, "w_from_gprops.w"))
+    mywell.to_file(join(tmpdir, "w_from_gprops.w"))
     tsetup.assert_almostequal(mywell.dataframe.iloc[4775]["PORO_model"], 0.2741, 0.001)
     assert mywell.dataframe.iloc[4775]["ACTNUM_model"] == 1
     assert mywell.isdiscrete("ACTNUM_model") is True

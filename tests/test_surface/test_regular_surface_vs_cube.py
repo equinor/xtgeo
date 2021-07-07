@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
 
-import pytest
-from os.path import join as ojn
+from os.path import join
 
 import numpy.ma as ma
+import pytest
 
-import xtgeo
-from xtgeo.surface import RegularSurface
-from xtgeo.cube import Cube
-from xtgeo.common import XTGeoDialog
 import tests.test_common.test_xtg as tsetup
+import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.cube import Cube
+from xtgeo.surface import RegularSurface
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -18,7 +18,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 RPATH1 = TPATH / "surfaces/reek"
@@ -59,7 +58,7 @@ def test_get_surface_from_cube(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_nearest_snapxy(load_cube_rsgy1):
+def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, snapxy, algorithm 1 + 2"""
 
     kube = load_cube_rsgy1
@@ -76,7 +75,7 @@ def test_slice_nearest_snapxy(load_cube_rsgy1):
     logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
 
     xs1.quickplot(
-        filename=td + "/surf_slice_cube_near_snapxy_v1.png",
+        filename=join(tmpdir, "surf_slice_cube_near_snapxy_v1.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -84,7 +83,7 @@ def test_slice_nearest_snapxy(load_cube_rsgy1):
     )
 
     xs2.quickplot(
-        filename=td + "/surf_slice_cube_near_snapxy_v2.png",
+        filename=join(tmpdir, "surf_slice_cube_near_snapxy_v2.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -97,7 +96,7 @@ def test_slice_nearest_snapxy(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_trilinear_snapxy(load_cube_rsgy1):
+def test_slice_trilinear_snapxy(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, trilinear, snapxy, algorithm 1 + 2"""
 
     kube = load_cube_rsgy1
@@ -114,7 +113,7 @@ def test_slice_trilinear_snapxy(load_cube_rsgy1):
     logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
 
     xs1.quickplot(
-        filename=td + "/surf_slice_cube_tri_snapxy_v1.png",
+        filename=join(tmpdir, "surf_slice_cube_tri_snapxy_v1.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -122,7 +121,7 @@ def test_slice_trilinear_snapxy(load_cube_rsgy1):
     )
 
     xs2.quickplot(
-        filename=td + "/surf_slice_cube_tri_snapxy_v2.png",
+        filename=join(tmpdir, "surf_slice_cube_tri_snapxy_v2.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -135,7 +134,7 @@ def test_slice_trilinear_snapxy(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_nearest_nosnapxy(load_cube_rsgy1):
+def test_slice_nearest_nosnapxy(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 1 + 2, other map layout"""
 
     kube = load_cube_rsgy1
@@ -156,7 +155,7 @@ def test_slice_nearest_nosnapxy(load_cube_rsgy1):
     logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
 
     xs1.quickplot(
-        filename=td + "/surf_slice_cube_near_nosnapxy_v1.png",
+        filename=join(tmpdir, "surf_slice_cube_near_nosnapxy_v1.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -164,7 +163,7 @@ def test_slice_nearest_nosnapxy(load_cube_rsgy1):
     )
 
     xs2.quickplot(
-        filename=td + "/surf_slice_cube_near_nosnapxy_v2.png",
+        filename=join(tmpdir, "surf_slice_cube_near_nosnapxy_v2.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -177,7 +176,7 @@ def test_slice_nearest_nosnapxy(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_trilinear_nosnapxy(load_cube_rsgy1):
+def test_slice_trilinear_nosnapxy(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 1 + 2, other map layout"""
 
     kube = load_cube_rsgy1
@@ -198,7 +197,7 @@ def test_slice_trilinear_nosnapxy(load_cube_rsgy1):
     logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
 
     xs1.quickplot(
-        filename=td + "/surf_slice_cube_tri_nosnapxy_v1.png",
+        filename=join(tmpdir, "surf_slice_cube_tri_nosnapxy_v1.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -206,7 +205,7 @@ def test_slice_trilinear_nosnapxy(load_cube_rsgy1):
     )
 
     xs2.quickplot(
-        filename=td + "/surf_slice_cube_tri_nosnapxy_v2.png",
+        filename=join(tmpdir, "surf_slice_cube_tri_nosnapxy_v2.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -219,11 +218,11 @@ def test_slice_trilinear_nosnapxy(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_nearest(load_cube_rsgy1):
+def test_slice_nearest(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 1"""
 
     xs = RegularSurface(RTOP1)
-    xs.to_file(td + "/surf_slice_cube_initial.gri")
+    xs.to_file(join(tmpdir, "surf_slice_cube_initial.gri"))
 
     kube = load_cube_rsgy1
 
@@ -231,10 +230,10 @@ def test_slice_nearest(load_cube_rsgy1):
     xs.slice_cube(kube, algorithm=1)
     logger.info("Slicing...done in {} seconds".format(xtg.timer(t1)))
 
-    xs.to_file(td + "/surf_slice_cube_v1.gri", fformat="irap_binary")
+    xs.to_file(join(tmpdir, "surf_slice_cube_v1.gri"), fformat="irap_binary")
 
     xs.quickplot(
-        filename=td + "/surf_slice_cube_near_v1.png",
+        filename=join(tmpdir, "surf_slice_cube_near_v1.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -244,7 +243,7 @@ def test_slice_nearest(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_nearest_v2(load_cube_rsgy1):
+def test_slice_nearest_v2(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, nearest node, algorithm 2."""
 
     xs = RegularSurface(RTOP1)
@@ -256,10 +255,10 @@ def test_slice_nearest_v2(load_cube_rsgy1):
     xs.slice_cube(kube, algorithm=2)
     logger.info("Slicing...done in {} seconds".format(xtg.timer(t1)))
 
-    xs.to_file(td + "/surf_slice_cube_alg2.gri", fformat="irap_binary")
+    xs.to_file(join(tmpdir, "surf_slice_cube_alg2.gri"), fformat="irap_binary")
 
     xs.quickplot(
-        filename=td + "/surf_slice_cube_alg2.png",
+        filename=join(tmpdir, "surf_slice_cube_alg2.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -269,7 +268,7 @@ def test_slice_nearest_v2(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_various_reek(load_cube_rsgy1):
+def test_slice_various_reek(tmpdir, load_cube_rsgy1):
     """Slice a cube with a surface, both nearest node and interpol, Reek."""
 
     logger.info("Loading surface")
@@ -283,10 +282,10 @@ def test_slice_various_reek(load_cube_rsgy1):
     t2 = xtg.timer(t1)
     logger.info("Slicing... nearest, done in {} seconds".format(t2))
 
-    xs.to_file(td + "/surf_slice_cube_reek_interp.gri")
+    xs.to_file(join(tmpdir, "surf_slice_cube_reek_interp.gri"))
 
     xs.quickplot(
-        filename=td + "/surf_slice_cube_reek_interp.png",
+        filename=join(tmpdir, "surf_slice_cube_reek_interp.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -303,10 +302,10 @@ def test_slice_various_reek(load_cube_rsgy1):
     t2 = xtg.timer(t1)
     logger.info("Slicing... trilinear, done in {} seconds".format(t2))
 
-    xs.to_file(td + "/surf_slice_cube_reek_trilinear.gri")
+    xs.to_file(join(tmpdir, "surf_slice_cube_reek_trilinear.gri"))
 
     xs.quickplot(
-        filename=td + "/surf_slice_cube_reek_trilinear.png",
+        filename=join(tmpdir, "surf_slice_cube_reek_trilinear.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek",
@@ -345,7 +344,7 @@ def test_slice_attr_window_max(load_cube_rsgy1):
 @tsetup.bigtest
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
+def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1):
     """Slice a cube within a window, get max/min etc, using trilinear
     interpol and plotting."""
 
@@ -363,7 +362,7 @@ def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
     logger.info("Window slicing... {} secs".format(t2))
 
     xs1.quickplot(
-        filename=td + "/surf_slice_cube_window_min.png",
+        filename=join(tmpdir, "surf_slice_cube_window_min.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek Minimum",
@@ -375,7 +374,7 @@ def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
     )
 
     xs2.quickplot(
-        filename=td + "/surf_slice_cube_window_max.png",
+        filename=join(tmpdir, "surf_slice_cube_window_max.png"),
         colortable="seismic",
         minmax=(-1, 1),
         title="Reek Maximum",
@@ -385,7 +384,7 @@ def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
     xs3.slice_cube_window(kube, attribute="rms", sampling="trilinear")
 
     xs3.quickplot(
-        filename=td + "/surf_slice_cube_window_rms.png",
+        filename=join(tmpdir, "surf_slice_cube_window_rms.png"),
         colortable="jet",
         minmax=(0, 1),
         title="Reek rms (root mean square)",
@@ -394,7 +393,7 @@ def test_slice_attr_window_max_w_plotting(load_cube_rsgy1):
 
 
 @pytest.mark.skipifroxar
-def test_cube_attr_mean_two_surfaces(load_cube_rsgy1):
+def test_cube_attr_mean_two_surfaces(tmpdir, load_cube_rsgy1):
     """Get cube attribute (mean) between two surfaces."""
 
     logger.info("Loading surfaces {} {}".format(RTOP1, RBAS1))
@@ -409,10 +408,10 @@ def test_cube_attr_mean_two_surfaces(load_cube_rsgy1):
         kube, other=xs2, other_position="below", attribute="mean", sampling="trilinear"
     )
 
-    xss.to_file(td + "/surf_slice_cube_2surf_meantri.gri")
+    xss.to_file(join(tmpdir, "surf_slice_cube_2surf_meantri.gri"))
 
     xss.quickplot(
-        filename=td + "/surf_slice_cube_2surf_mean.png",
+        filename=join(tmpdir, "surf_slice_cube_2surf_mean.png"),
         colortable="jet",
         title="Reek two surfs mean",
         minmax=(-0.1, 0.1),
@@ -447,7 +446,7 @@ def test_cube_attr_rms_two_surfaces_compare_window(load_cube_rsgy1):
 
 @tsetup.bigtest
 @pytest.mark.skipifroxar
-def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
+def test_cube_attr_rms_two_surfaces_compare_window_show(tmpdir, load_cube_rsgy1):
     """Get cube attribute (rms) between two surfaces, and compare with
     window, and show plots."""
 
@@ -465,7 +464,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
     )
 
     xss1.quickplot(
-        filename=td + "/surf_slice_cube_2surf_rms1.png",
+        filename=join(tmpdir, "surf_slice_cube_2surf_rms1.png"),
         colortable="jet",
         minmax=[0, 0.5],
         # TODO: itle='Reek two surfs mean', minmax=(-0.1, 0.1),
@@ -479,7 +478,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
     xss2.slice_cube_window(kube, zrange=15, attribute="rms", sampling="trilinear")
 
     xss2.quickplot(
-        filename=td + "/surf_slice_cube_2surf_rms2.png",
+        filename=join(tmpdir, "surf_slice_cube_2surf_rms2.png"),
         colortable="jet",
         minmax=[0, 0.5],
         # TODO: itle='Reek two surfs mean', minmax=(-0.1, 0.1),
@@ -490,7 +489,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(load_cube_rsgy1):
 
 
 @pytest.mark.skipifroxar
-def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
+def test_cube_attr_mean_two_surfaces_with_zeroiso(tmpdir, load_cube_rsgy1):
     """Get cube attribute between two surfaces with partly zero isochore."""
 
     logger.info("Loading surfaces {} {}".format(RTOP1, RBAS1))
@@ -505,10 +504,10 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
         kube, other=xs2, other_position="below", attribute="mean", sampling="trilinear"
     )
 
-    xss.to_file(td + "/surf_slice_cube_2surf_meantri.gri")
+    xss.to_file(join(tmpdir, "surf_slice_cube_2surf_meantri.gri"))
 
     xss.quickplot(
-        filename=td + "/surf_slice_cube_2surf_mean_v2.png",
+        filename=join(tmpdir, "surf_slice_cube_2surf_mean_v2.png"),
         colortable="jet",
         title="Reek two surfs mean",
         minmax=(-0.1, 0.1),
@@ -520,13 +519,13 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(load_cube_rsgy1):
 
 @pytest.mark.skipifroxar
 @tsetup.skipifwindows
-def test_cube_slice_auto4d_data():
+def test_cube_slice_auto4d_data(tmpdir):
     """Get cube slice aka Auto4D input, with synthetic/scrambled data"""
 
     xs1 = RegularSurface(XTOP1, fformat="gri")
     xs1.describe()
 
-    xs1out = ojn(td, "XTOP1.ijxyz")
+    xs1out = join(tmpdir, "XTOP1.ijxyz")
     xs1.to_file(xs1out, fformat="ijxyz")
 
     xs2 = RegularSurface(xs1out, fformat="ijxyz")
@@ -540,9 +539,9 @@ def test_cube_slice_auto4d_data():
 
     xs2.slice_cube_window(kube1, sampling="trilinear", mask=True, attribute="max")
 
-    xs2out1 = ojn(td, "XTOP2_sampled_from_cube.ijxyz")
-    xs2out2 = ojn(td, "XTOP2_sampled_from_cube.gri")
-    xs2out3 = ojn(td, "XTOP2_sampled_from_cube.png")
+    xs2out1 = join(tmpdir, "XTOP2_sampled_from_cube.ijxyz")
+    xs2out2 = join(tmpdir, "XTOP2_sampled_from_cube.gri")
+    xs2out3 = join(tmpdir, "XTOP2_sampled_from_cube.png")
 
     xs2.to_file(xs2out1, fformat="ijxyz")
     xs2.to_file(xs2out2)
@@ -559,7 +558,7 @@ def test_cube_slice_auto4d_data():
 
 
 @pytest.mark.skipifroxar
-def test_cube_slice_w_ignore_dead_traces_nearest():
+def test_cube_slice_w_ignore_dead_traces_nearest(tmpdir):
     """Get cube slice nearest aka Auto4D input, with scrambled data with
     dead traces, various YFLIP cases, ignore dead traces."""
 
@@ -571,7 +570,7 @@ def test_cube_slice_w_ignore_dead_traces_nearest():
     cells = ((18, 12), (20, 2), (0, 4))
 
     surf1.slice_cube(cube1, deadtraces=False)
-    plotfile = ojn(td, "slice_nea1.png")
+    plotfile = join(tmpdir, "slice_nea1.png")
     title = "Cube with dead traces; nearest; use just values as is"
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -613,7 +612,7 @@ def test_cube_slice_w_ignore_dead_traces_nearest():
 
 
 @pytest.mark.skipifroxar
-def test_cube_slice_w_dead_traces_nearest():
+def test_cube_slice_w_dead_traces_nearest(tmpdir):
     """Get cube slice nearest aka Auto4D input, with scrambled data with
     dead traces, various YFLIP cases, undef at dead traces."""
 
@@ -625,7 +624,7 @@ def test_cube_slice_w_dead_traces_nearest():
     cells = ((18, 12),)
 
     surf1.slice_cube(cube1, deadtraces=True, algorithm=1)
-    plotfile = ojn(td, "slice_nea1_dead1.png")
+    plotfile = join(tmpdir, "slice_nea1_dead1.png")
     title = "Cube with dead traces; nearest; UNDEF at dead traces"
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -641,7 +640,7 @@ def test_cube_slice_w_dead_traces_nearest():
     surf2.from_cube(cube1, 1000.1)
 
     surf2.slice_cube(cube1, deadtraces=True, algorithm=2)
-    plotfile = ojn(td, "slice_nea1_dead2.png")
+    plotfile = join(tmpdir, "slice_nea1_dead2.png")
     title = "Cube with dead traces; nearest; UNDEF at dead traces algo 2"
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -653,21 +652,9 @@ def test_cube_slice_w_dead_traces_nearest():
 
     assert ma.count_masked(surf1.values) == ndead
 
-    # # swap cube only
-    # surf2 = surf1.copy()
-    # surf2.values = 1000.1
-
-    # cube2 = cube1.copy()
-    # cube2.swapaxes()
-    # surf2.slice_cube(cube2, deadtraces=True, algorithm=1)
-    # plotfile = ojn(td, "slice_nea1_dead_cubeswap.png")
-    # surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
-    # assert ma.count_masked(surf2.values) == ndead
-    # assert surf2.values.mean() == surf1.values.mean()
-
 
 @pytest.mark.skipifroxar
-def test_cube_slice_w_ignore_dead_traces_trilinear():
+def test_cube_slice_w_ignore_dead_traces_trilinear(tmpdir):
     """Get cube slice trilinear aka Auto4D input, with scrambled data with
     dead traces to be ignored, various YFLIP cases."""
 
@@ -679,7 +666,7 @@ def test_cube_slice_w_ignore_dead_traces_trilinear():
     cells = [(18, 12), (20, 2), (0, 4)]
 
     surf1.slice_cube(cube1, sampling="trilinear", snapxy=True, deadtraces=False)
-    plotfile = ojn(td, "slice_tri1.png")
+    plotfile = join(tmpdir, "slice_tri1.png")
     title = "Cube with dead traces; trilinear; keep as is at dead traces"
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -692,7 +679,7 @@ def test_cube_slice_w_ignore_dead_traces_trilinear():
 
 
 @pytest.mark.skipifroxar
-def test_cube_slice_w_dead_traces_trilinear():
+def test_cube_slice_w_dead_traces_trilinear(tmpdir):
     """Get cube slice trilinear aka Auto4D input, with scrambled data with
     dead traces to be ignored, various YFLIP cases."""
 
@@ -703,7 +690,7 @@ def test_cube_slice_w_dead_traces_trilinear():
     cells = [(18, 12)]
 
     surf1.slice_cube(cube1, sampling="trilinear", snapxy=True, deadtraces=True)
-    plotfile = ojn(td, "slice_tri1_dead.png")
+    plotfile = join(tmpdir, "slice_tri1_dead.png")
     title = "Cube with dead traces; trilinear; UNDEF at dead traces"
     surf1.quickplot(filename=plotfile, minmax=(-10000, 10000), title=title)
 
@@ -723,7 +710,7 @@ def test_cube_slice_w_dead_traces_trilinear():
     cube2.swapaxes()
     surf2.swapaxes()
     surf2.slice_cube(cube2, sampling="trilinear", deadtraces=True)
-    plotfile = ojn(td, "slice_tri1__dead_cubeswap.png")
+    plotfile = join(tmpdir, "slice_tri1__dead_cubeswap.png")
     surf2.quickplot(filename=plotfile, minmax=(-10000, 10000))
     assert ma.count_masked(surf2.values) == ndead
     tsetup.assert_almostequal(surf2.values.mean(), surf1.values.mean(), 0.01)
@@ -731,7 +718,7 @@ def test_cube_slice_w_dead_traces_trilinear():
 
 @tsetup.bigtest
 @pytest.mark.skipifroxar
-def test_cube_attr_mean_two_surfaces_multiattr(load_cube_rsgy1):
+def test_cube_attr_mean_two_surfaces_multiattr(tmpdir, load_cube_rsgy1):
     """Get cube attribute (mean) between two surfaces, many attr at the same
     time.
     """
@@ -773,14 +760,14 @@ def test_cube_attr_mean_two_surfaces_multiattr(load_cube_rsgy1):
         logger.info("Working with %s", attr)
 
         xxx = attrs[attr]
-        xxx.to_file(ojn(td, "surf_slice_cube_2surf_" + attr + "multi.gri"))
+        xxx.to_file(join(tmpdir, "surf_slice_cube_2surf_" + attr + "multi.gri"))
 
         minmax = (None, None)
         if attr == "mean":
             minmax = (-0.1, 0.1)
 
         xxx.quickplot(
-            filename=ojn(td, "surf_slice_cube_2surf_" + attr + "multi.png"),
+            filename=join(tmpdir, "surf_slice_cube_2surf_" + attr + "multi.png"),
             colortable="jet",
             minmax=minmax,
             title="Reek two surfs mean multiattr: " + attr,

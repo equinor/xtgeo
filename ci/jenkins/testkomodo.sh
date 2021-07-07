@@ -25,7 +25,6 @@ start_tests () {
 
 cleanup () {
     rm -rf $CI_TEST_ROOT/testpath/../xtgeo-testdata
-    rm -rf $CI_TEST_ROOT/testpath/TMP
 }
 
 run_tests() {

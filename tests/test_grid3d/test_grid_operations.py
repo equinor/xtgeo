@@ -17,7 +17,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TDP = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # pylint: disable=logging-format-interpolation
@@ -35,7 +34,7 @@ DUAL = TPATH / "3dgrids/etc/dual_distorted2.grdecl"
 DUALPROPS = TPATH / "3dgrids/etc/DUAL"
 
 
-def test_hybridgrid1():
+def test_hybridgrid1(tmpdir):
     """Making a hybridgrid for Emerald case (ROFF and GRDECL)"""
 
     logger.info("Read grid...")
@@ -43,7 +42,7 @@ def test_hybridgrid1():
     assert grd.subgrids is not None  # initially, prior to subgrids
 
     logger.info("Read grid... done, NZ is %s", grd.nlay)
-    grd.to_file(join(TDP, "test_hybridgrid1_asis.grdecl"), fformat="grdecl")
+    grd.to_file(join(tmpdir, "test_hybridgrid1_asis.grdecl"), fformat="grdecl")
 
     logger.info("Convert...")
     nhdiv = 40
@@ -61,10 +60,10 @@ def test_hybridgrid1():
     assert dzv.values3d.mean() == pytest.approx(1.395, abs=0.01)
 
     logger.info("Export...")
-    grd.to_file("TMP/test_hybridgrid1.roff")
+    grd.to_file(join(tmpdir, "test_hybridgrid1.roff"))
 
     logger.info("Read grid 2...")
-    grd2 = Grid("TMP/test_hybridgrid1_asis.grdecl")
+    grd2 = Grid(join(tmpdir, "test_hybridgrid1_asis.grdecl"))
     logger.info("Read grid... done, NLAY is %s", grd2.nlay)
 
     logger.info("Convert...")
@@ -82,7 +81,7 @@ def test_hybridgrid1():
     assert dzv.values3d.mean() == pytest.approx(1.395, abs=0.01)
 
 
-def test_hybridgrid2():
+def test_hybridgrid2(tmpdir):
     """Making a hybridgrid for Emerald case in region"""
 
     logger.info("Read grid...")
@@ -98,10 +97,10 @@ def test_hybridgrid2():
         nhdiv=nhdiv, toplevel=1650, bottomlevel=1690, region=reg, region_number=1
     )
 
-    grd.to_file("TMP/test_hybridgrid2.roff")
+    grd.to_file(join(tmpdir, "test_hybridgrid2.roff"))
 
 
-def test_inactivate_thin_cells():
+def test_inactivate_thin_cells(tmpdir):
     """Make hybridgrid for Emerald case in region, and inactive thin cells"""
 
     logger.info("Read grid...")
@@ -119,10 +118,10 @@ def test_inactivate_thin_cells():
 
     grd.inactivate_by_dz(0.001)
 
-    grd.to_file("TMP/test_hybridgrid2_inact_thin.roff")
+    grd.to_file(join(tmpdir, "test_hybridgrid2_inact_thin.roff"))
 
 
-def test_refine_vertically():
+def test_refine_vertically(tmpdir):
     """Do a grid refinement vertically."""
 
     logger.info("Read grid...")
@@ -143,10 +142,10 @@ def test_refine_vertically():
     logger.info("Subgrids after: %s", grd.get_subgrids())
     grd.inactivate_by_dz(0.001)
 
-    grd.to_file("TMP/test_refined_by_3.roff")
+    grd.to_file(join(tmpdir, "test_refined_by_3.roff"))
 
 
-def test_refine_vertically_per_zone():
+def test_refine_vertically_per_zone(tmpdir):
     """Do a grid refinement vertically, via a dict per zone."""
 
     logger.info("Read grid...")
@@ -155,7 +154,7 @@ def test_refine_vertically_per_zone():
     grd = grd_orig.copy()
 
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
-    grd.to_file("TMP/test_refined_by_dict_initial.roff")
+    grd.to_file(join(tmpdir, "test_refined_by_dict_initial.roff"))
 
     logger.info("Subgrids before: %s", grd.get_subgrids())
 
@@ -170,7 +169,7 @@ def test_refine_vertically_per_zone():
     grd1s = grd.get_subgrids()
     logger.info("Subgrids after: %s", grd1s)
 
-    grd.to_file("TMP/test_refined_by_dict.roff")
+    grd.to_file(join(tmpdir, "test_refined_by_dict.roff"))
 
     grd = grd_orig.copy()
     grd.refine_vertically(refinement)  # no zoneprop
@@ -183,7 +182,7 @@ def test_refine_vertically_per_zone():
     #     grd.refine_vertically({1: 200}, zoneprop=zone)
 
 
-def test_reverse_row_axis_box():
+def test_reverse_row_axis_box(tmpdir):
     """Crop a grid."""
 
     grd = Grid()
@@ -195,23 +194,23 @@ def test_reverse_row_axis_box():
     )
 
     assert grd.ijk_handedness == "left"
-    grd.to_file(join(TDP, "reverse_left.grdecl"), fformat="grdecl")
+    grd.to_file(join(tmpdir, "reverse_left.grdecl"), fformat="grdecl")
     grd.reverse_row_axis()
     assert grd.ijk_handedness == "right"
-    grd.to_file(join(TDP, "reverse_right.grdecl"), fformat="grdecl")
+    grd.to_file(join(tmpdir, "reverse_right.grdecl"), fformat="grdecl")
 
 
-def test_reverse_row_axis_dual():
+def test_reverse_row_axis_dual(tmpdir):
     """Reverse axis for distorted but small grid"""
 
     grd = Grid(DUAL)
 
     assert grd.ijk_handedness == "left"
-    grd.to_file(join(TDP, "dual_left.grdecl"), fformat="grdecl")
+    grd.to_file(join(tmpdir, "dual_left.grdecl"), fformat="grdecl")
     cellcorners1 = grd.get_xyz_cell_corners((5, 1, 1))
     grd.reverse_row_axis()
     assert grd.ijk_handedness == "right"
-    grd.to_file(join(TDP, "dual_right.grdecl"), fformat="grdecl")
+    grd.to_file(join(tmpdir, "dual_right.grdecl"), fformat="grdecl")
     cellcorners2 = grd.get_xyz_cell_corners((5, 3, 1))
 
     assert cellcorners1[7] == cellcorners2[1]
@@ -241,40 +240,40 @@ def test_reverse_row_axis_dualprops():
     assert grd.ijk_handedness == "left"
 
 
-def test_reverse_row_axis_eme():
+def test_reverse_row_axis_eme(tmpdir):
     """Reverse axis for emerald grid"""
 
     grd1 = Grid(EMEGFILE)
 
     assert grd1.ijk_handedness == "left"
-    grd1.to_file(join(TDP, "eme_left.roff"), fformat="roff")
+    grd1.to_file(join(tmpdir, "eme_left.roff"), fformat="roff")
     grd2 = grd1.copy()
     geom1 = grd1.get_geometrics(return_dict=True)
     grd2.reverse_row_axis()
     assert grd2.ijk_handedness == "right"
-    grd2.to_file(join(TDP, "eme_right.roff"), fformat="roff")
+    grd2.to_file(join(tmpdir, "eme_right.roff"), fformat="roff")
     geom2 = grd2.get_geometrics(return_dict=True)
 
     tsetup.assert_almostequal(geom1["avg_rotation"], geom2["avg_rotation"], 0.01)
 
 
-def test_copy_grid():
+def test_copy_grid(tmpdir):
     """Copy a grid."""
 
     grd = Grid(EMEGFILE2)
     grd2 = grd.copy()
 
-    grd.to_file(join("TMP", "gcp1.roff"))
-    grd2.to_file(join("TMP", "gcp2.roff"))
+    grd.to_file(join(tmpdir, "gcp1.roff"))
+    grd2.to_file(join(tmpdir, "gcp2.roff"))
 
-    xx1 = Grid(join("TMP", "gcp1.roff"))
-    xx2 = Grid(join("TMP", "gcp2.roff"))
+    xx1 = Grid(join(tmpdir, "gcp1.roff"))
+    xx2 = Grid(join(tmpdir, "gcp2.roff"))
 
     assert xx1._zcornsv.mean() == xx2._zcornsv.mean()
     assert xx1._actnumsv.mean() == xx2._actnumsv.mean()
 
 
-def test_crop_grid():
+def test_crop_grid(tmpdir):
     """Crop a grid."""
 
     logger.info("Read grid...")
@@ -289,9 +288,9 @@ def test_crop_grid():
 
     grd.crop((30, 60), (20, 40), (1, 46), props=[zprop])
 
-    grd.to_file(join("TMP", "grid_cropped.roff"))
+    grd.to_file(join(tmpdir, "grid_cropped.roff"))
 
-    grd2 = Grid(join("TMP", "grid_cropped.roff"))
+    grd2 = Grid(join(tmpdir, "grid_cropped.roff"))
 
     assert grd2.ncol == 31
 

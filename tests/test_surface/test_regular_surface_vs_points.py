@@ -1,10 +1,11 @@
-import os
+from os.path import join
+
 import pytest
 
-from xtgeo.surface import RegularSurface
-from xtgeo.common import XTGeoDialog
-from xtgeo.xyz import Points
 import tests.test_common.test_xtg as tsetup
+from xtgeo.common import XTGeoDialog
+from xtgeo.surface import RegularSurface
+from xtgeo.xyz import Points
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -12,7 +13,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =============================================================================
@@ -41,7 +41,7 @@ def test_list_xy_points_as_numpies(reek_map):
     assert xc[55, 55] == 462219.75
 
 
-def test_map_to_points(reek_map):
+def test_map_to_points(tmpdir, reek_map):
     """Get the list of the coordinates"""
 
     px = Points()
@@ -59,7 +59,7 @@ def test_map_to_points(reek_map):
     # or
     # px.from_surface(...)
 
-    outf = os.path.join(td, "points_from_surf_reek.poi")
+    outf = join(tmpdir, "points_from_surf_reek.poi")
     px.to_file(outf)
 
     assert px.dataframe["X_UTME"].min() == 456719.75

@@ -1,13 +1,14 @@
 """Testing regular surface vs resampling."""
 import os
-import pytest
-from pathlib import Path
-import numpy as np
+from os.path import join
 
-from xtgeo.surface import RegularSurface
-from xtgeo.common import XTGeoDialog
-from xtgeo.xyz import Points
+import numpy as np
+import pytest
+
 import tests.test_common.test_xtg as tsetup
+from xtgeo.common import XTGeoDialog
+from xtgeo.surface import RegularSurface
+from xtgeo.xyz import Points
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -19,8 +20,6 @@ if "XTG_SHOW" in os.environ:
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
-TMPP = Path(xtg.tmpdir)
 TPATH = xtg.testpathobj
 
 # =============================================================================
@@ -112,7 +111,7 @@ def test_resample_small():
     ]
 
 
-def test_resample(reek_map):
+def test_resample(tmpdir, reek_map):
     """Do resampling from one surface to another."""
     xs = reek_map
     assert xs.ncol == 554
@@ -135,7 +134,7 @@ def test_resample(reek_map):
 
     snew.resample(xs)
 
-    fout = os.path.join(TMPD, "reek_resampled.gri")
+    fout = join(tmpdir, "reek_resampled.gri")
     snew.to_file(fout, fformat="irap_binary")
 
     tsetup.assert_almostequal(snew.values.mean(), 1698.458, 2)
@@ -147,7 +146,7 @@ def test_resample(reek_map):
     tsetup.assert_almostequal(xs.values.std(), xs_copy.values.std(), 1e-4)
 
 
-def test_resample_partial_sample(reek_map):
+def test_resample_partial_sample(tmp_path, reek_map):
     """Do resampling from one surface to another with partial sampling."""
     sml = reek_map
 
@@ -172,10 +171,10 @@ def test_resample_partial_sample(reek_map):
     assert snew.values.mean() == pytest.approx(1726.65)
 
     if XTGSHOW:
-        sml.quickplot(TMPP / "resampled_input.png")
-        snew.quickplot(TMPP / "resampled_output.png")
-        sml.to_file(TMPP / "resampled_input.gri")
-        snew.to_file(TMPP / "resampled_output.gri")
+        sml.quickplot(tmp_path / "resampled_input.png")
+        snew.quickplot(tmp_path / "resampled_output.png")
+        sml.to_file(tmp_path / "resampled_input.gri")
+        snew.to_file(tmp_path / "resampled_output.gri")
 
     snew2 = snew.copy()
     snew2._yflip = -1
@@ -184,12 +183,12 @@ def test_resample_partial_sample(reek_map):
     snew2.resample(sml, mask=True)
 
     if XTGSHOW:
-        snew2.to_file(TMPP / "resampled_output2.gri")
+        snew2.to_file(tmp_path / "resampled_output2.gri")
     assert snew2.values.mean() == pytest.approx(1747.20, abs=0.2)
 
 
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
-def test_refine(reek_map):
+def test_refine(tmpdir, reek_map):
     """Do refining of a surface."""
     xs = reek_map
     assert xs.ncol == 554
@@ -197,19 +196,19 @@ def test_refine(reek_map):
     xs_orig = xs.copy()
     xs.refine(4)
 
-    fout = os.path.join(TMPD, "reek_refined.gri")
+    fout = join(tmpdir, "reek_refined.gri")
     xs.to_file(fout, fformat="irap_binary")
 
     tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
 
     if XTGSHOW:
         logger.info("Output plots to file (may be time consuming)")
-        xs_orig.quickplot(filename=os.path.join(TMPD, "reek_orig.png"))
-        xs.quickplot(filename=os.path.join(TMPD, "reek_refined4.png"))
+        xs_orig.quickplot(filename=join(tmpdir, "reek_orig.png"))
+        xs.quickplot(filename=join(tmpdir, "reek_refined4.png"))
 
 
 @tsetup.skipifmac  # as this often fails on travis. TODO find out why
-def test_coarsen(reek_map):
+def test_coarsen(tmpdir, reek_map):
     """Do a coarsening of a surface."""
     xs = reek_map
     assert xs.ncol == 554
@@ -217,19 +216,19 @@ def test_coarsen(reek_map):
     xs_orig = xs.copy()
     xs.coarsen(3)
 
-    fout = os.path.join(TMPD, "reek_coarsened.gri")
+    fout = join(tmpdir, "reek_coarsened.gri")
     xs.to_file(fout, fformat="irap_binary")
 
     tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
 
     if XTGSHOW:
         logger.info("Output plots to file (may be time consuming)")
-        xs_orig.quickplot(filename=os.path.join(TMPD, "reek_orig.png"))
-        xs.quickplot(filename=os.path.join(TMPD, "reek_coarsen3.png"))
+        xs_orig.quickplot(filename=join(tmpdir, "reek_orig.png"))
+        xs.quickplot(filename=join(tmpdir, "reek_coarsen3.png"))
 
 
 @tsetup.bigtest
-def test_points_gridding(reek_map):
+def test_points_gridding(tmpdir, reek_map):
     """Make points of surface; then grid back to surface."""
     xs = reek_map
     assert xs.ncol == 554
@@ -250,9 +249,9 @@ def test_points_gridding(reek_map):
 
     if XTGSHOW:
         logger.info("Output plots to file (may be time consuming)")
-        xs.quickplot(filename=os.path.join(TMPD, "s1.png"))
-        xscopy.quickplot(filename=os.path.join(TMPD, "s2.png"))
+        xs.quickplot(filename=join(tmpdir, "s1.png"))
+        xscopy.quickplot(filename=join(tmpdir, "s2.png"))
 
     tsetup.assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
 
-    xscopy.to_file(os.path.join(TMPD, "reek_points_to_map.gri"), fformat="irap_binary")
+    xscopy.to_file(join(tmpdir, "reek_points_to_map.gri"), fformat="irap_binary")

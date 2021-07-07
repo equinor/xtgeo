@@ -15,7 +15,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdirobj
 TPATH = xtg.testpathobj
 
 REEKGRID1 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
@@ -30,7 +29,7 @@ if "XTG_BIGTEST" in os.environ:
 # Grid geometries:
 
 
-def test_grid_export_import_many():
+def test_grid_export_import_many(tmp_path):
     """Test exporting etc to xtgcpgeom format."""
     grid1 = xtgeo.Grid(REEKGRID1)
 
@@ -44,7 +43,7 @@ def test_grid_export_import_many():
     t1 = xtg.timer()
     for _ in range(nrange):
         fname = uuid.uuid4().hex + "." + fformat
-        fname = TMPD / fname
+        fname = tmp_path / fname
         fnames.append(fname)
         grid1.to_xtgf(fname)
 
@@ -64,7 +63,7 @@ def test_grid_export_import_many():
     assert grid1._actnumsv.mean() == pytest.approx(grid2._actnumsv.mean())
 
 
-def test_grid_hdf5_export_import_many():
+def test_grid_hdf5_export_import_many(tmp_path):
     """Test io to hdf5 format, including partial read."""
     grd1 = xtgeo.Grid(REEKGRID1)
 
@@ -75,7 +74,7 @@ def test_grid_hdf5_export_import_many():
     t1 = xtg.timer()
     for _ in range(nrange):
         fname = "$md5sum.hdf"
-        fname = TMPD / fname
+        fname = tmp_path / fname
         grd1._zcornsv += 1.0
         fna = grd1.to_hdf(fname, compression=None)
         fnames.append(fna)
@@ -107,7 +106,7 @@ def test_grid_hdf5_export_import_many():
     assert grd1._actnumsv.mean() == pytest.approx(grd2._actnumsv.mean())
 
 
-def test_grid_hdf5_export_import_many_blosc_compression():
+def test_grid_hdf5_export_import_many_blosc_compression(tmp_path):
     """Test io to hdf5 format, including partial read."""
     grd1 = xtgeo.Grid(REEKGRID1)
 
@@ -118,7 +117,7 @@ def test_grid_hdf5_export_import_many_blosc_compression():
     t1 = xtg.timer()
     for _ in range(nrange):
         fname = "$md5sum.compressed_h5"
-        fname = TMPD / fname
+        fname = tmp_path / fname
         grd1._zcornsv += 1.0
         fna = grd1.to_hdf(fname, compression="blosc")
         fnames.append(fna)
@@ -150,7 +149,7 @@ def test_grid_hdf5_export_import_many_blosc_compression():
     assert grd1._actnumsv.mean() == pytest.approx(grd2._actnumsv.mean())
 
 
-def test_grid_export_import_bigcase():
+def test_grid_export_import_bigcase(tmp_path):
     """Test io for big case if BIGBOX, and compare xtgf and h5 performance."""
     grid1 = xtgeo.Grid()
 
@@ -163,38 +162,38 @@ def test_grid_export_import_bigcase():
     grid2 = xtgeo.Grid()
 
     t1 = xtg.timer()
-    fname = TMPD / "bigbox.xtgf"
+    fname = tmp_path / "bigbox.xtgf"
     grid1.to_xtgf(fname)
     print("Export bigcase using xtgf: ", xtg.timer(t1))
 
     t1 = xtg.timer()
-    fname = TMPD / "bigbox.xtgf"
+    fname = tmp_path / "bigbox.xtgf"
     grid2.from_xtgf(fname, mmap=True)
     print("Import bigcase using xtgf and memory mapping: ", xtg.timer(t1))
     assert grid1._zcornsv.mean() == pytest.approx(grid2._zcornsv.mean())
 
     t1 = xtg.timer()
-    fname = TMPD / "bigbox.xtgf"
+    fname = tmp_path / "bigbox.xtgf"
     grid2.from_xtgf(fname)
     print("Import bigcase using xtgf: ", xtg.timer(t1))
 
     t1 = xtg.timer()
-    fname = TMPD / "bigbox.h5"
+    fname = tmp_path / "bigbox.h5"
     grid1.to_hdf(fname)
     print("Export bigcase using hdf5: ", xtg.timer(t1))
 
     t1 = xtg.timer()
-    fname = TMPD / "bigbox.h5"
+    fname = tmp_path / "bigbox.h5"
     grid2.from_hdf(fname)
     print("Import bigcase using h5: ", xtg.timer(t1))
 
     t1 = xtg.timer()
-    fname = TMPD / "bigboxc.h5"
+    fname = tmp_path / "bigboxc.h5"
     grid1.to_hdf(fname, compression="blosc")
     print("Export bigcase using hdf5 with compression: ", xtg.timer(t1))
 
     t1 = xtg.timer()
-    fname = TMPD / "bigboxc.h5"
+    fname = tmp_path / "bigboxc.h5"
     grid2.from_hdf(fname)
     print("Import bigcase using h5 with compression: ", xtg.timer(t1))
 
@@ -203,7 +202,7 @@ def test_grid_export_import_bigcase():
 # Grid properties:
 
 
-def test_gridprop_export_import_many():
+def test_gridprop_export_import_many(tmp_path):
     """Test exporting etc to xtgcpprop format."""
     prop1 = xtgeo.GridProperty(REEKPROP1)
 
@@ -219,7 +218,7 @@ def test_gridprop_export_import_many():
     t1 = xtg.timer()
     for num in range(nrange):
         fname = uuid.uuid4().hex + "." + fformat
-        fname = TMPD / fname
+        fname = tmp_path / fname
         fnames.append(fname)
         prop1.to_file(fname, fformat=fformat)
 
@@ -239,7 +238,7 @@ def test_gridprop_export_import_many():
     # assert grid1._actnumsv.mean() == pytest.approx(grid2._actnumsv.mean())
 
 
-def test_gridprop_partial_read_smallcase():
+def test_gridprop_partial_read_smallcase(tmp_path):
     """Read a partial property based on ijrange from file."""
     vals = np.zeros((5, 7, 3), dtype=np.float32)
     prp = xtgeo.GridProperty(ncol=5, nrow=7, nlay=3, values=vals)
@@ -247,7 +246,7 @@ def test_gridprop_partial_read_smallcase():
     prp.values[1, 0, 0:3] = 66
     prp.values[1, 1, 0:3] = 44
     print(prp.values)
-    fname = TMPD / "grdprop.xtgcpprop"
+    fname = tmp_path / "grdprop.xtgcpprop"
     prp.to_file(fname, fformat="xtgcpprop")
 
     # import partial
@@ -256,14 +255,14 @@ def test_gridprop_partial_read_smallcase():
     assert prp3.values.all() == prp.values[0:2, 0:2, :].all()
 
 
-def test_gridprop_partial_read_bigcase():
+def test_gridprop_partial_read_bigcase(tmp_path):
     """Read a partial property based on ijrange from file, big case measure speed."""
     vals = np.zeros((400, 500, 300), dtype=np.float32)
     prp = xtgeo.GridProperty(ncol=400, nrow=500, nlay=300, values=vals)
     prp.values[0, 0, 0:3] = 33
     prp.values[1, 0, 0:3] = 66
     prp.values[1, 1, 0:3] = 44
-    fname = TMPD / "grdprop2.xtgcpprop"
+    fname = tmp_path / "grdprop2.xtgcpprop"
     prp.to_file(fname, fformat="xtgcpprop")
 
     t0 = xtg.timer()

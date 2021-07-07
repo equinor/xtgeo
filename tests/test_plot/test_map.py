@@ -1,12 +1,13 @@
 import sys
+from os.path import join
+
 import matplotlib.pyplot as plt
 import pytest
+
+from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
 from xtgeo.surface import RegularSurface
-from xtgeo.xyz import Polygons
-from xtgeo.xyz import Points
-from xtgeo.common import XTGeoDialog
-
+from xtgeo.xyz import Points, Polygons
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -14,7 +15,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     sys.exit(-9)
 
-TD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =========================================================================
@@ -28,14 +28,14 @@ SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
 
 
 @pytest.mark.skipifroxar
-def test_very_basic_to_file():
+def test_very_basic_to_file(tmpdir):
     """Just test that matplotlib works, to a file."""
     plt.title("Hello world")
-    plt.savefig("TMP/verysimple.png")
+    plt.savefig(join(tmpdir, "verysimple.png"))
 
 
 @pytest.mark.skipifroxar
-def test_simple_plot():
+def test_simple_plot(tmpdir):
     """Test as simple map plot only making an instance++ and plot."""
 
     mysurf = RegularSurface()
@@ -47,11 +47,11 @@ def test_simple_plot():
     myplot.colormap = "gist_ncar"
     myplot.plot_surface(mysurf)
 
-    myplot.savefig("TMP/map_simple.png")
+    myplot.savefig(join(tmpdir, "map_simple.png"))
 
 
 @pytest.mark.skipifroxar
-def test_map_plot_with_points():
+def test_map_plot_with_points(tmpdir):
     """Test as simple map plot with underlying points."""
 
     mysurf = RegularSurface()
@@ -71,11 +71,11 @@ def test_map_plot_with_points():
     myplot.plot_surface(mysurf)
     myplot.plot_points(mypoints)
 
-    myplot.savefig("TMP/map_with_points.png")
+    myplot.savefig(join(tmpdir, "map_with_points.png"))
 
 
 @pytest.mark.skipifroxar
-def test_more_features_plot():
+def test_more_features_plot(tmpdir):
     """Map with some more features added, such as label rotation."""
 
     mysurf = RegularSurface()
@@ -91,11 +91,11 @@ def test_more_features_plot():
 
     myplot.plot_faults(myfaults)
 
-    myplot.savefig(TD + "/map_more1.png")
+    myplot.savefig(join(tmpdir, "map_more1.png"))
 
 
 @pytest.mark.skipifroxar
-def test_perm_logarithmic_map():
+def test_perm_logarithmic_map(tmpdir):
     """Map with PERM, log scale."""
 
     mysurf = RegularSurface(SFILE2)
@@ -107,4 +107,4 @@ def test_perm_logarithmic_map():
         mysurf, minvalue=0, maxvalue=6000, xlabelrotation=45, logarithmic=True
     )
 
-    myplot.savefig(TD + "/permx_normal.png")
+    myplot.savefig(join(tmpdir, "permx_normal.png"))

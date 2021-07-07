@@ -25,11 +25,9 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 PROJNAME = "tmp_project.rmsxxx"
-PRJ = join(TMPD, PROJNAME)
 
 CUBEDATA1 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
 CUBENAME1 = "synth1"
@@ -59,12 +57,17 @@ WELLS1 = ["OP1_perf.w", "OP_2.w", "OP_6.w", "XP_with_repeat.w"]
 # Initial tmp project
 
 
+@pytest.fixture(name="tmp_project_path")
+def fixture_tmp_project_path(tmpdir):
+    return join(tmpdir, PROJNAME)
+
+
 @pytest.mark.skipunlessroxar
-@pytest.fixture(name="create_project", scope="module", autouse=True)
-def fixture_create_project():
+@pytest.fixture(name="roxar_project")
+def fixture_create_project(tmp_project_path):
     """Create a tmp RMS project for testing, populate with basic data."""
-    prj1 = PRJ
-    prj2 = PRJ + "_initial"
+    prj1 = tmp_project_path
+    prj2 = tmp_project_path + "_initial"
 
     print("\n******** Setup RMS project!\n")
     if isdir(prj1):
@@ -113,7 +116,7 @@ def fixture_create_project():
     project.save_as(prj2)
     project.close()
 
-    yield project
+    yield tmp_project_path
 
     project.close()
 
@@ -132,14 +135,14 @@ def fixture_create_project():
 
 
 @pytest.mark.skipunlessroxar
-def test_rox_getset_cube():
+def test_rox_getset_cube(roxar_project):
     """Get a cube from a RMS project, do some stuff and store/save."""
-    cube = xtgeo.cube_from_roxar(PRJ, CUBENAME1)
+    cube = xtgeo.cube_from_roxar(roxar_project, CUBENAME1)
     assert cube.values.mean() == pytest.approx(0.000718, abs=0.001)
     cube.values += 100
     assert cube.values.mean() == pytest.approx(100.000718, abs=0.001)
-    cube.to_roxar(PRJ, CUBENAME1 + "_copy1")
-    cube.to_roxar(PRJ, CUBENAME1 + "_copy2", folder="somefolder")
+    cube.to_roxar(roxar_project, CUBENAME1 + "_copy1")
+    cube.to_roxar(roxar_project, CUBENAME1 + "_copy2", folder="somefolder")
 
 
 # ======================================================================================
@@ -147,17 +150,17 @@ def test_rox_getset_cube():
 
 
 @pytest.mark.skipunlessroxar
-def test_rox_surfaces():
+def test_rox_surfaces(roxar_project):
     """Various get set on surfaces in RMS."""
-    srf = xtgeo.surface_from_roxar(PRJ, "TopReek", SURFCAT1)
-    srf2 = xtgeo.surface_from_roxar(PRJ, "MidReek", SURFCAT1)
+    srf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
+    srf2 = xtgeo.surface_from_roxar(roxar_project, "MidReek", SURFCAT1)
     assert srf.ncol == 554
     assert srf.values.mean() == pytest.approx(1698.648, abs=0.01)
 
-    srf.to_roxar(PRJ, "TopReek_copy", "SomeFolder", stype="clipboard")
+    srf.to_roxar(roxar_project, "TopReek_copy", "SomeFolder", stype="clipboard")
 
     # open project and do save explicit
-    rox = xtgeo.RoxUtils(PRJ)
+    rox = xtgeo.RoxUtils(roxar_project)
     prj = rox.project
     iso = srf2 - srf
     rox.create_zones_category("IS_isochore")
@@ -176,9 +179,11 @@ def test_rox_surfaces():
 
 
 @pytest.mark.skipunlessroxar
-def test_rox_wells():
+def test_rox_wells(roxar_project):
     """Various tests on Roxar wells."""
-    well = xtgeo.well_from_roxar(PRJ, "OP_2", trajectory="My trajectory", logrun="log")
+    well = xtgeo.well_from_roxar(
+        roxar_project, "OP_2", trajectory="My trajectory", logrun="log"
+    )
     assert "Zonelog" in well.lognames
 
     assert well.dataframe["Poro"].mean() == pytest.approx(0.1637623936)
@@ -189,47 +194,47 @@ def test_rox_wells():
 
 
 @pytest.mark.skipunlessroxar
-def test_rox_get_gridproperty():
+def test_rox_get_gridproperty(roxar_project):
     """Get a grid property from a RMS project."""
-    print("Project is {}".format(PRJ))
+    print("Project is {}".format(roxar_project))
 
-    poro = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, PORONAME1)
+    poro = xtgeo.gridproperty_from_roxar(roxar_project, GRIDNAME1, PORONAME1)
 
     assert poro.values.mean() == pytest.approx(0.16774, abs=0.001)
     assert poro.dimensions == (40, 64, 14)
 
-    zone = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, ZONENAME1)
+    zone = xtgeo.gridproperty_from_roxar(roxar_project, GRIDNAME1, ZONENAME1)
     assert "int" in str(zone.values.dtype)
 
     zone._roxar_dtype = np.int32
     with pytest.raises(TypeError):
-        zone.to_roxar(PRJ, GRIDNAME1, ZONENAME1)
+        zone.to_roxar(roxar_project, GRIDNAME1, ZONENAME1)
 
 
 @pytest.mark.skipunlessroxar
-def test_rox_get_modify_set_gridproperty():
+def test_rox_get_modify_set_gridproperty(roxar_project):
     """Get and set a grid property from a RMS project."""
-    poro = xtgeo.gridproperty_from_roxar(PRJ, GRIDNAME1, PORONAME1)
+    poro = xtgeo.gridproperty_from_roxar(roxar_project, GRIDNAME1, PORONAME1)
 
     adder = 0.9
     poro.values = poro.values + adder
 
-    poro.to_roxar(PRJ, GRIDNAME1, PORONAME1 + "_NEW")
+    poro.to_roxar(roxar_project, GRIDNAME1, PORONAME1 + "_NEW")
 
-    poro.from_roxar(PRJ, GRIDNAME1, PORONAME1 + "_NEW")
+    poro.from_roxar(roxar_project, GRIDNAME1, PORONAME1 + "_NEW")
     assert poro.values[1, 0, 0] == pytest.approx(0.14942 + adder, abs=0.0001)
 
 
 @pytest.mark.skipunlessroxar
-def test_rox_get_modify_set_grid():
+def test_rox_get_modify_set_grid(roxar_project):
     """Get, modify and set a grid from a RMS project."""
-    grd = xtgeo.grid_from_roxar(PRJ, GRIDNAME1)
+    grd = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1)
     grd1 = grd.copy()
 
     grd.translate_coordinates(translate=(200, 3000, 300))
 
-    grd.to_roxar(PRJ, GRIDNAME1 + "_edit1")
+    grd.to_roxar(roxar_project, GRIDNAME1 + "_edit1")
 
-    grd2 = xtgeo.grid_from_roxar(PRJ, GRIDNAME1 + "_edit1")
+    grd2 = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1 + "_edit1")
 
     assert grd2.dimensions == grd1.dimensions

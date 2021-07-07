@@ -16,7 +16,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
 testpath = xtg.testpathobj
 
 

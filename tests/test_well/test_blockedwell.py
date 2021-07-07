@@ -16,12 +16,7 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
 testpath = xtg.testpathobj
-
-# =========================================================================
-# Do tests
-# =========================================================================
 
 wfile = join(testpath, "wells/reek/1/OP_1.bw")
 

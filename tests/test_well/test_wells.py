@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
 
-from os.path import join as ojoin
 import glob
+from os.path import join
+
 import pytest
 
-from xtgeo.well import Well
-from xtgeo.well import Wells
-from xtgeo.common import XTGeoDialog
-
 import tests.test_common.test_xtg as tsetup
+from xtgeo.common import XTGeoDialog
+from xtgeo.well import Well, Wells
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -17,7 +16,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-td = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =========================================================================
@@ -64,17 +62,17 @@ def test_get_dataframe_allwells(loadwells1):
 
 
 @tsetup.plotskipifroxar
-def test_quickplot_wells(loadwells1):
+def test_quickplot_wells(tmpdir, loadwells1):
     """Import wells from file to Wells and quick plot."""
 
     mywell_list = loadwells1
 
     mywells = Wells()
     mywells.wells = mywell_list
-    mywells.quickplot(filename=ojoin(td, "quickwells.png"))
+    mywells.quickplot(filename=join(tmpdir, "quickwells.png"))
 
 
-def test_wellintersections(loadwells1):
+def test_wellintersections(tmpdir, loadwells1):
     """Find well crossing"""
 
     mywell_list = loadwells1
@@ -83,7 +81,7 @@ def test_wellintersections(loadwells1):
     mywells.wells = mywell_list
     dfr = mywells.wellintersections()
     logger.info(dfr)
-    dfr.to_csv(ojoin(td, "wells_crossings.csv"))
+    dfr.to_csv(join(tmpdir, "wells_crossings.csv"))
 
 
 def test_wellintersections_tvdrange_nowfilter(loadwells1):
@@ -120,7 +118,7 @@ def test_wellintersections_tvdrange_no_wfilter(loadwells1):
     print(dfr)
 
 
-def test_wellintersections_tvdrange_wfilter(loadwells1):
+def test_wellintersections_tvdrange_wfilter(tmpdir, loadwells1):
     """Find well crossing using coarser sampling to Fence, with
     wfilter settings.
     """
@@ -139,5 +137,5 @@ def test_wellintersections_tvdrange_wfilter(loadwells1):
     print("Limit TVD and downsample...DONE")
 
     dfr = mywells.wellintersections(wfilter=wfilter)
-    dfr.to_csv(ojoin(td, "wells_crossings_filter.csv"))
+    dfr.to_csv(join(tmpdir, "wells_crossings_filter.csv"))
     print(dfr)

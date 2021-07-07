@@ -1,9 +1,10 @@
 # coding: utf-8
 
+from os.path import join
 
+import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
-import tests.test_common.test_xtg as tsetup
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -34,7 +35,7 @@ def test_operations_inside_outside_polygon_generic():
     tsetup.assert_almostequal(surf.values.mean(), 1728.85, 0.01)
 
 
-def test_operations_inside_outside_polygon_shortforms():
+def test_operations_inside_outside_polygon_shortforms(tmpdir):
     """Various shortforms for operations in polygons"""
 
     # assert values are checked in RMS
@@ -59,8 +60,8 @@ def test_operations_inside_outside_polygon_shortforms():
     # divide on zero
     surf = zurf.copy()
     surf.div_inside(poly, 0.0)
-    surf.to_file("TMP/div2.gri")
-    surf.to_file("TMP/div2.fgr", fformat="irap_ascii")
+    surf.to_file(join(tmpdir, "div2.gri"))
+    surf.to_file(join(tmpdir, "div2.fgr"), fformat="irap_ascii")
 
     # set inside
     surf = zurf.copy()

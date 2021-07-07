@@ -12,7 +12,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPDIR = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 WFILE = join(TPATH, "wells/battle/1/WELLX.rmswell")

@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
 
-TDMP = xtg.tmpdir
 TPATH = xtg.testpathobj
-
-# =============================================================================
-# Do tests
-# =============================================================================
 
 REEKGRID = TPATH / "3dgrids/reek/REEK.EGRID"
 SMALL1 = TPATH / "3dgrids/etc/TEST_SP.EGRID"

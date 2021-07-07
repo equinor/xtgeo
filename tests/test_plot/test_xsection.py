@@ -18,7 +18,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 XTGSHOW = False
@@ -47,13 +46,13 @@ BIGWELL2 = "../xtgeo-testdata-equinor/data/wells/gfb/1/34_10-A-41.w"
 
 
 @pytest.mark.skipifroxar
-def test_very_basic():
+def test_very_basic(tmpdir):
     """Just test that matplotlib works."""
     assert "matplotlib" in str(plt)
 
     plt.title("Hello world")
-    plt.savefig(join(TMPD, "helloworld1.png"))
-    plt.savefig(join(TMPD, "helloworld1.svg"))
+    plt.savefig(join(tmpdir, "helloworld1.png"))
+    plt.savefig(join(tmpdir, "helloworld1.svg"))
     if XTGSHOW:
         plt.show()
     logger.info("Very basic plotting")
@@ -68,7 +67,7 @@ def test_xsection_init():
 
 
 @pytest.mark.skipifroxar
-def test_simple_plot():
+def test_simple_plot(tmpdir):
     """Test as simple XSECT plot."""
 
     mywell = xtgeo.Well(USEFILE4)
@@ -104,7 +103,7 @@ def test_simple_plot():
 
     # myplot.plot_map()
 
-    myplot.savefig(join(TMPD, "xsect_gbf1.png"))
+    myplot.savefig(join(tmpdir, "xsect_gbf1.png"))
 
     if XTGSHOW:
         print("Show plot")
@@ -112,7 +111,7 @@ def test_simple_plot():
 
 
 @pytest.mark.skipifroxar
-def test_simple_plot_with_seismics():
+def test_simple_plot_with_seismics(tmpdir):
     """Test as simple XSECT plot with seismic backdrop."""
 
     mywell = xtgeo.Well(USEFILE7)
@@ -158,7 +157,7 @@ def test_simple_plot_with_seismics():
 
     myplot.plot_map()
 
-    myplot.savefig(join(TMPD, "xsect_wcube.png"), last=False)
+    myplot.savefig(join(tmpdir, "xsect_wcube.png"), last=False)
 
     if XTGSHOW:
         myplot.show()
@@ -195,38 +194,10 @@ def test_xsect_larger_geogrid():
         plt.imshow(arr2, cmap="rainbow", extent=(hmin2, hmax2, vmax2, vmin2))
         plt.axis("tight")
         plt.show()
-    # myplot = XSection(
-    #     zmin=1000, zmax=1900, well=mywell, surfaces=mysurfaces, cube=mycube
-    # )
-
-    # # set the color table, from file
-    # clist = [0, 1, 222, 3, 5, 7, 3, 12, 11, 10, 9, 8]
-    # cfil1 = "xtgeo"
-    # cfil2 = TPATH / "etc/colortables/colfacies.txt"
-
-    # assert 222 in clist
-    # assert "xtgeo" in cfil1
-    # assert "colfacies" in cfil2
-
-    # myplot.set_colortable(cfil1, colorlist=None)
-
-    # myplot.canvas(title="Manamana", subtitle="My Dear Well")
-
-    # myplot.plot_cube()
-    # myplot.plot_surfaces(fill=False)
-
-    # myplot.plot_well()
-
-    # myplot.plot_map()
-
-    # myplot.savefig(join(TMPD, "xsect_wcube.png"), last=False)
-
-    # if XTGSHOW:
-    #     myplot.show()
 
 
 @pytest.mark.skipifroxar
-def test_reek1():
+def test_reek1(tmpdir):
     """Test XSect for a Reek well."""
 
     myfield = xtgeo.Polygons()
@@ -293,5 +264,5 @@ def test_reek1():
 
         myplot.plot_map()
 
-        myplot.savefig(join(TMPD, "xsect2a.svg"), fformat="svg", last=False)
-        myplot.savefig(join(TMPD, "xsect2a.png"), fformat="png")
+        myplot.savefig(join(tmpdir, "xsect2a.svg"), fformat="svg", last=False)
+        myplot.savefig(join(tmpdir, "xsect2a.png"), fformat="png")

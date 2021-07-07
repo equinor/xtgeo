@@ -21,7 +21,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 testpath = xtg.testpathobj
 
 # =============================================================================
@@ -38,7 +37,7 @@ BPROJ["1.3"] = "../xtgeo-testdata-equinor/data/rmsprojects/gfb2.rms11.1.0"
 
 
 @tsetup.skipunlessroxar
-def test_getwell():
+def test_getwell(tmpdir):
     """Get a well from a RMS project."""
 
     print(roxv)
@@ -68,7 +67,7 @@ def test_getwell():
 
     tsetup.assert_almostequal(df.Poro.mean(), 0.191911, 0.001)
 
-    xwell.to_file(join(TMPD, "roxwell_export.rmswell"))
+    xwell.to_file(join(tmpdir, "roxwell_export.rmswell"))
 
 
 @tsetup.skipunlessroxar
@@ -100,7 +99,7 @@ def test_getwell_strict_logs_raise_error():
 
 
 @tsetup.skipunlessroxar
-def test_getwell_all_logs():
+def test_getwell_all_logs(tmpdir):
     """Get a well from a RMS project, reading all logs present."""
 
     print(roxv)
@@ -128,12 +127,12 @@ def test_getwell_all_logs():
     tsetup.assert_equal(xwell.nrow, 10081, "NROW of well")
     tsetup.assert_equal(xwell.rkb, -10, "RKB of well")
 
-    xwell.to_file(join(TMPD, "roxwell_export.rmswell"))
+    xwell.to_file(join(tmpdir, "roxwell_export.rmswell"))
 
 
 @tsetup.bigtest
 @tsetup.skipunlessroxar
-def test_getwell_and_find_ijk_gfb2():
+def test_getwell_and_find_ijk_gfb2(tmpdir):
     """Get well from a RMS project, and find IJK from grid."""
 
     if not os.path.isdir(BPROJ[roxv]):
@@ -159,6 +158,4 @@ def test_getwell_and_find_ijk_gfb2():
     xwell.make_ijk_from_grid(grd)
 
     print(xwell.dataframe.head())
-    xwell.to_file(join(TMPD, "gfb2_well_ijk.rmswell"))
-
-    # tsetup.assert_almostequal(x.values.mean(), 1696.255599, 0.001)
+    xwell.to_file(join(tmpdir, "gfb2_well_ijk.rmswell"))

@@ -9,7 +9,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     sys.exit(-9)
 
-td = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 # =========================================================================

@@ -1,6 +1,6 @@
 # coding: utf-8
 """Testing new xtg formats both natiev ans hdf5 based."""
-import pathlib
+
 import pytest
 
 import xtgeo
@@ -12,13 +12,12 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TMPD = xtg.tmpdir
 TPATH = xtg.testpathobj
 
 TESTSET1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 
 
-def test_xtgregsurf_export_import_many():
+def test_xtgregsurf_export_import_many(tmp_path):
     """Test exporting to xtgregsurf format."""
     surf1 = xtgeo.RegularSurface(TESTSET1)
     nrange = 500
@@ -30,7 +29,7 @@ def test_xtgregsurf_export_import_many():
     t1 = xtg.timer()
     for num in range(nrange):
         fname = "$md5sum" + "." + fformat
-        fname = pathlib.Path(TMPD) / fname
+        fname = tmp_path / fname
         surf1.values += num
         newname = surf1.to_file(fname, fformat=fformat)
         fnames.append(newname)
@@ -49,7 +48,7 @@ def test_xtgregsurf_export_import_many():
     assert surf1.values.mean() == pytest.approx(surf2.values.mean())
 
 
-def test_hdf5_export_import_many():
+def test_hdf5_export_import_many(tmp_path):
     """Test exporting to hdf5 format."""
     surf1 = xtgeo.RegularSurface(TESTSET1)
     nrange = 1
@@ -60,7 +59,7 @@ def test_hdf5_export_import_many():
     t1 = xtg.timer()
     for num in range(nrange):
         fname = "$md5sum" + ".h5"
-        fname = pathlib.Path(TMPD) / fname
+        fname = tmp_path / fname
         surf1.values += num
         newname = surf1.to_hdf(fname, compression="blosc")
         fnames.append(newname)
