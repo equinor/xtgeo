@@ -13,7 +13,7 @@ def assert_equal_to_init(init, result):
     init = init.copy()
     init.pop("values")
     result_dict = {key: getattr(result, key) for key in init.keys()}
-    assert result_dict == pytest.approx(init)
+    assert result_dict == pytest.approx(init, abs=1e-3, rel=1e-3)
 
 
 @st.composite
