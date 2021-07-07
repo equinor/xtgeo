@@ -1,62 +1,59 @@
-import pytest
 import deprecation
-
+import numpy as np
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
-import numpy as np
 
-from xtgeo import RegularSurface, Cube
 import xtgeo
+from xtgeo import Cube, RegularSurface
 
 
-def assert_equal_to_init(init, result):
-    init = init.copy()
-    init.pop("values")
-    result_dict = {key: getattr(result, key) for key in init.keys()}
-    assert result_dict == pytest.approx(init, abs=1e-3, rel=1e-3)
+def assert_similar_surfaces(surf1, surf2):
+    for attr in ["ncol", "nrow", "xori", "yori", "xinc", "yinc"]:
+        assert getattr(surf1, attr) == pytest.approx(
+            getattr(surf2, attr), abs=1e-3, rel=1e-3
+        )
+    assert surf1.values.data.flatten().tolist() == pytest.approx(
+        surf2.values.data.flatten().tolist(), abs=1e-3, rel=1e-3
+    )
 
 
 @st.composite
-def generate_data(draw):
-    base_data = st.fixed_dictionaries(
-        {
-            "ncol": st.integers(min_value=2, max_value=10),
-            "nrow": st.integers(min_value=2, max_value=10),
-            "xori": st.floats(
-                min_value=-1e8,
-                max_value=1e8,
-            ),
-            "yori": st.floats(
-                min_value=-1e8,
-                max_value=1e8,
-            ),
-            "xinc": st.floats(
-                min_value=1e-2,
-                max_value=xtgeo.UNDEF_LIMIT,
-            ),
-            "yinc": st.floats(
-                min_value=1e-2,
-                max_value=xtgeo.UNDEF_LIMIT,
-            ),
-        }
-    )
-    base = draw(base_data)
-    values = st.fixed_dictionaries(
-        {
-            "values": st.lists(
+def surfaces(draw):
+    ncol = draw(st.integers(min_value=2, max_value=10))
+    nrow = draw(st.integers(min_value=2, max_value=10))
+    return draw(
+        st.builds(
+            RegularSurface,
+            ncol=st.just(ncol),
+            nrow=st.just(nrow),
+            values=st.lists(
                 st.floats(
                     allow_nan=False,
                     max_value=1e29,
                     min_value=-xtgeo.UNDEF_LIMIT,
                 ),
-                min_size=base["ncol"] * base["nrow"],
-                max_size=base["ncol"] * base["nrow"],
-            )
-        }
+                min_size=ncol * nrow,
+                max_size=ncol * nrow,
+            ),
+            xori=st.floats(
+                min_value=-1e8,
+                max_value=1e8,
+            ),
+            yori=st.floats(
+                min_value=-1e8,
+                max_value=1e8,
+            ),
+            xinc=st.floats(
+                min_value=1e-2,
+                max_value=xtgeo.UNDEF_LIMIT,
+            ),
+            yinc=st.floats(
+                min_value=1e-2,
+                max_value=xtgeo.UNDEF_LIMIT,
+            ),
+        )
     )
-    vals = draw(values)
-
-    return {**base, **vals}
 
 
 @pytest.mark.usefixtures("setup_tmpdir")
@@ -91,13 +88,12 @@ def test_simple_io(input_val, expected_result, fformat, engine):
         "zmap_ascii",
     ]:
         pytest.skip("Only one engine available")
-    init_dict = {"ncol": 2, "nrow": 2, "xinc": 2.0, "yinc": 2.0, "values": input_val}
-    surf = RegularSurface(**init_dict)
+    surf = RegularSurface(ncol=2, nrow=2, xinc=2.0, yinc=2.0, values=input_val)
     surf.to_file("my_file", fformat=fformat)
     surf_from_file = RegularSurface._read_file(
         "my_file", fformat=fformat, engine=engine
     )
-    assert_equal_to_init(init_dict, surf_from_file)
+    assert_similar_surfaces(surf, surf_from_file)
     assert surf_from_file.values.data.tolist() == expected_result
 
 
@@ -117,8 +113,8 @@ def test_simple_io(input_val, expected_result, fformat, engine):
         "xtgregsurf",
     ],
 )
-@given(data=generate_data())
-def test_complex_io(data, fformat, output_engine, input_engine):
+@given(surf=surfaces())
+def test_complex_io(surf, fformat, output_engine, input_engine):
     if (input_engine == "python" or output_engine == "python") and fformat not in [
         "irap_ascii",
         "irap_binary",
@@ -127,53 +123,30 @@ def test_complex_io(data, fformat, output_engine, input_engine):
         pytest.skip("Only one engine available")
     if fformat == "petromod":
         pytest.xfail("Several hypotesis failures (4)")
-    surf = RegularSurface(**data)
-    assert_equal_to_init(data, surf)
     surf.to_file("my_file", fformat=fformat, engine=output_engine)
     surf_from_file = RegularSurface._read_file(
         "my_file", fformat=fformat, engine=input_engine
     )
-    assert_equal_to_init(data, surf_from_file)
-    assert surf_from_file.values.data.flatten().tolist() == pytest.approx(
-        data["values"]
-    )
+    assert_similar_surfaces(surf, surf_from_file)
 
 
 @deprecation.fail_if_not_removed
 @pytest.mark.usefixtures("setup_tmpdir")
 @settings(deadline=400)
-@given(
-    data=st.lists(
-        st.floats(
-            allow_nan=False, max_value=xtgeo.UNDEF_LIMIT, min_value=-xtgeo.UNDEF_LIMIT
-        ),
-        min_size=9,
-        max_size=9,
-    )
-)
-def test_complex_io_hdf(data):
-    surf = RegularSurface(3, 3, 0.0, 0.0, values=data)
+@given(surfaces())
+def test_complex_io_hdf(surf):
     surf.to_hdf("my_file")
     surf_from_file = RegularSurface(1, 1, 0.0, 0.0)  # <- unimportant as it gets reset
     surf_from_file.from_hdf("my_file")
-    assert surf_from_file.values.data.flatten().tolist() == pytest.approx(data)
+    assert_similar_surfaces(surf, surf_from_file)
 
 
 @pytest.mark.usefixtures("setup_tmpdir")
-@given(
-    data=st.lists(
-        st.floats(
-            allow_nan=False, max_value=xtgeo.UNDEF_LIMIT, min_value=-xtgeo.UNDEF_LIMIT
-        ),
-        min_size=9,
-        max_size=9,
-    )
-)
-def test_complex_io_hdf_classmethod(data):
-    surf = RegularSurface(3, 3, 0.0, 0.0, values=data)
+@given(surfaces())
+def test_complex_io_hdf_classmethod(surf):
     surf.to_hdf("my_file")
     surf_from_file = xtgeo.surface_from_file("my_file", fformat="hdf5")
-    assert surf_from_file.values.data.flatten().tolist() == pytest.approx(data)
+    assert_similar_surfaces(surf, surf_from_file)
 
 
 @given(
