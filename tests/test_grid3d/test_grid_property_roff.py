@@ -155,6 +155,11 @@ def test_eq_transitivity(roff_param1, roff_param2, roff_param3):
         assert roff_param1 == roff_param3
 
 
+@given(roff_parameters())
+def test_eq_typing(roff_param):
+    assert roff_param != ""
+
+
 @pytest.mark.parametrize(
     "param, expected_undef",
     [
@@ -281,4 +286,34 @@ def test_from_file_no_filedata(simple_roff_parameter_contents):
     buff.seek(0)
 
     with pytest.raises(ValueError, match="issing non-optional keyword"):
+        RoffParameter.from_file(buff, "b")
+
+
+def test_from_file_double_dimensions(simple_roff_parameter_contents):
+    buff = io.BytesIO()
+    simple_roff_parameter_contents.append(("dimensions", {"nX": 2, "nY": 2, "nZ": 2}))
+    roffio.write(buff, simple_roff_parameter_contents)
+    buff.seek(0)
+
+    with pytest.raises(ValueError, match="Multiple tag"):
+        RoffParameter.from_file(buff, "b")
+
+
+def test_from_file_missing_parameter(simple_roff_parameter_contents):
+    buff = io.BytesIO()
+    simple_roff_parameter_contents[0][1]
+    roffio.write(buff, simple_roff_parameter_contents)
+    buff.seek(0)
+
+    with pytest.raises(ValueError, match="Did not find parameter"):
+        RoffParameter.from_file(buff, "c")
+
+
+def test_from_file_wrong_filetype(simple_roff_parameter_contents):
+    buff = io.BytesIO()
+    simple_roff_parameter_contents[0][1]["filetype"] = "unknown"
+    roffio.write(buff, simple_roff_parameter_contents)
+    buff.seek(0)
+
+    with pytest.raises(ValueError, match="did not have filetype"):
         RoffParameter.from_file(buff, "b")
