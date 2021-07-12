@@ -120,6 +120,28 @@ files_formats = {
 }
 
 
+def test_xtgeo_file_reinstance(tmp_path):
+    gfile = xtgeo._XTGeoFile(tmp_path / "test.txt")
+
+    with pytest.raises(RuntimeError, match="Reinstancing"):
+        xtgeo._XTGeoFile(gfile)
+
+
+def test_xtgeo_file_bad_input():
+    with pytest.raises(RuntimeError, match="input"):
+        xtgeo._XTGeoFile(1.0)
+
+
+def test_xtgeo_file_bad_alias(tmp_path):
+    grd = xtgeo.Grid()
+    with pytest.raises(ValueError, match="not a valid alias"):
+        xtgeo._XTGeoFile(tmp_path / "$NO_ALIAS").resolve_alias(grd)
+
+
+def test_xtgeo_file_memstream_check_ok():
+    assert xtgeo._XTGeoFile(io.StringIO()).check_file()
+
+
 @pytest.mark.parametrize("filename", files_formats.keys())
 def test_xtgeo_file_properties(testpath, filename):
     gfile = xtgeo._XTGeoFile(testpath / filename)
