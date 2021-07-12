@@ -1,50 +1,44 @@
 # coding: utf-8
-"""Testing new xtg formats."""
-import uuid
+from os.path import join
 
 import pytest
+from numpy.testing import assert_allclose
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
     raise SystemExit
 
-TPATH = xtg.testpathobj
 
-TESTSET1 = TPATH / "cubes/reek/syntseis_20030101_seismic_depth_stack.segy"
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_cube_export(benchmark, tmp_path, testpath):
+    cube1 = xtgeo.Cube(
+        join(testpath, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
+    )
+
+    fname = join(tmp_path, "syntseis_20030101_seismic_depth_stack.xtgrecube")
+
+    @benchmark
+    def write():
+        cube1.to_file(fname, fformat="xtgregcube")
 
 
-def test_cube_export_import_many(tmp_path):
-    """Test exporting etc to xtgregcube format."""
-    cube1 = xtgeo.Cube(TESTSET1)
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_cube_import(benchmark, testpath, tmp_path):
+    cube1 = xtgeo.Cube(
+        join(testpath, "cubes/reek/syntseis_20030101_seismic_depth_stack.segy")
+    )
 
-    nrange = 50
+    fname = join(tmp_path, "syntseis_20030101_seismic_depth_stack.xtgrecube")
+    cube1.to_file(fname, fformat="xtgregcube")
 
-    fformat = "xtgregcube"
+    cube2 = xtgeo.Cube()
 
-    fnames = []
+    @benchmark
+    def read():
+        cube2.from_file(fname, fformat="xtgregcube")
 
-    # timing of writer
-    t1 = xtg.timer()
-    for num in range(nrange):
-        fname = uuid.uuid4().hex + "." + fformat
-
-        fname = tmp_path / fname
-        fnames.append(fname)
-        cube1.to_file(fname, fformat=fformat)
-
-    logger.info("Timing export %s cubes with %s: %s", nrange, fformat, xtg.timer(t1))
-
-    # timing of reader
-    t1 = xtg.timer()
-    for fname in fnames:
-        cube2 = xtgeo.Cube()
-        cube2.from_file(fname, fformat=fformat)
-
-    logger.info("Timing import %s cubes with %s: %s", nrange, fformat, xtg.timer(t1))
-
-    assert cube1.values.mean() == pytest.approx(cube2.values.mean())
+    assert_allclose(cube1.values, cube2.values)

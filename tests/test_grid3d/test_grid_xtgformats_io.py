@@ -1,10 +1,11 @@
 # coding: utf-8
 """Testing new xtgf and hdf5/h5 formats."""
 import os
-import uuid
+from os.path import join
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -17,269 +18,233 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-REEKGRID1 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
-REEKPROP1 = TPATH / "3dgrids/reek2/geogrid--poro.roff"
-REEKPROP3 = TPATH / "3dgrids/reek2/geogrid--facies.roff"
 
-BIGBOX = False
+BIGBOX_DIMENSIONS = (100, 100, 20)
 if "XTG_BIGTEST" in os.environ:
-    BIGBOX = True
+    BIGBOX_DIMENSIONS = (1000, 1000, 20)
 
 # ======================================================================================
 # Grid geometries:
 
 
-def test_grid_export_import_many(tmp_path):
-    """Test exporting etc to xtgcpgeom format."""
-    grid1 = xtgeo.Grid(REEKGRID1)
-
-    nrange = 50
-
-    fformat = "xtgf"
-
-    fnames = []
-
-    # timing of writer
-    t1 = xtg.timer()
-    for _ in range(nrange):
-        fname = uuid.uuid4().hex + "." + fformat
-        fname = tmp_path / fname
-        fnames.append(fname)
-        grid1.to_xtgf(fname)
-
-    print(f"Export {nrange} grids using xtgf: ", xtg.timer(t1))
-
-    # timing of reader
-    t1 = xtg.timer()
-    grid2 = None
-    for fname in fnames:
-        grid2 = xtgeo.Grid()
-        grid2.from_xtgf(fname)
-
-    print(f"Import {nrange} grids using xtgf: ", xtg.timer(t1))
-
-    assert grid1._zcornsv.mean() == pytest.approx(grid2._zcornsv.mean())
-    assert grid1._coordsv.mean() == pytest.approx(grid2._coordsv.mean())
-    assert grid1._actnumsv.mean() == pytest.approx(grid2._actnumsv.mean())
+def create_box(testpath):
+    grid = xtgeo.Grid()
+    grid.create_box(BIGBOX_DIMENSIONS)
+    return grid
 
 
-def test_grid_hdf5_export_import_many(tmp_path):
-    """Test io to hdf5 format, including partial read."""
-    grd1 = xtgeo.Grid(REEKGRID1)
-
-    nrange = 50
-    fnames = []
-
-    # timing of writer
-    t1 = xtg.timer()
-    for _ in range(nrange):
-        fname = "$md5sum.hdf"
-        fname = tmp_path / fname
-        grd1._zcornsv += 1.0
-        fna = grd1.to_hdf(fname, compression=None)
-        fnames.append(fna)
-
-    logger.info("Timing export %s gridgeom with h5: %s", nrange, xtg.timer(t1))
-    print(f"Export {nrange} grids using hdf5: ", xtg.timer(t1))
-
-    # timing of reader
-    t1 = xtg.timer()
-    grd2 = None
-    for fname in fnames:
-        grd2 = xtgeo.Grid()
-        grd2.from_hdf(fname, ijkrange=(1, 20, 1, 20, "min", "max"))
-
-    print(f"Import {nrange} grids using hdf5 ikjrange: ", xtg.timer(t1))
-    assert grd2.ncol == 20
-    assert grd2.nlay == grd1.nlay
-
-    t1 = xtg.timer()
-    grd2 = None
-    for fname in fnames:
-        grd2 = xtgeo.Grid()
-        grd2.from_hdf(fname)
-
-    print(f"Import {nrange} grids using hdf5 full: ", xtg.timer(t1))
-
-    assert grd1._zcornsv.mean() == pytest.approx(grd2._zcornsv.mean())
-    assert grd1._coordsv.mean() == pytest.approx(grd2._coordsv.mean())
-    assert grd1._actnumsv.mean() == pytest.approx(grd2._actnumsv.mean())
+@pytest.fixture(
+    name="benchmark_grid",
+    params=[
+        lambda tp: xtgeo.Grid(join(tp, "3dgrids/reek/reek_geo_grid.roff")),
+        create_box,
+    ],
+    ids=["reek_grid", "big box"],
+)
+def benchmark_grid_fixture(request, testpath):
+    return request.param(testpath)
 
 
-def test_grid_hdf5_export_import_many_blosc_compression(tmp_path):
-    """Test io to hdf5 format, including partial read."""
-    grd1 = xtgeo.Grid(REEKGRID1)
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.xtgf")
 
-    nrange = 50
-    fnames = []
-
-    # timing of writer
-    t1 = xtg.timer()
-    for _ in range(nrange):
-        fname = "$md5sum.compressed_h5"
-        fname = tmp_path / fname
-        grd1._zcornsv += 1.0
-        fna = grd1.to_hdf(fname, compression="blosc")
-        fnames.append(fna)
-
-    logger.info("Timing export %s gridgeom with h5: %s", nrange, xtg.timer(t1))
-    print(f"Export {nrange} grids using hdf5: ", xtg.timer(t1))
-
-    # timing of reader
-    t1 = xtg.timer()
-    grd2 = None
-    for fname in fnames:
-        grd2 = xtgeo.Grid()
-        grd2.from_hdf(fname, ijkrange=(1, 20, 1, 20, "min", "max"))
-
-    print(f"Import {nrange} grids using hdf5 ikjrange: ", xtg.timer(t1))
-    assert grd2.ncol == 20
-    assert grd2.nlay == grd1.nlay
-
-    t1 = xtg.timer()
-    grd2 = None
-    for fname in fnames:
-        grd2 = xtgeo.Grid()
-        grd2.from_hdf(fname)
-
-    print(f"Import {nrange} grids using hdf5 full: ", xtg.timer(t1))
-
-    assert grd1._zcornsv.mean() == pytest.approx(grd2._zcornsv.mean())
-    assert grd1._coordsv.mean() == pytest.approx(grd2._coordsv.mean())
-    assert grd1._actnumsv.mean() == pytest.approx(grd2._actnumsv.mean())
+    @benchmark
+    def write():
+        benchmark_grid.to_xtgf(fname)
 
 
-def test_grid_export_import_bigcase(tmp_path):
-    """Test io for big case if BIGBOX, and compare xtgf and h5 performance."""
-    grid1 = xtgeo.Grid()
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.xtgf")
 
-    dimens = (100, 100, 20)
-    if BIGBOX:
-        dimens = (1000, 1000, 100)
-
-    grid1.create_box(dimens)
+    benchmark_grid.to_xtgf(fname)
 
     grid2 = xtgeo.Grid()
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigbox.xtgf"
-    grid1.to_xtgf(fname)
-    print("Export bigcase using xtgf: ", xtg.timer(t1))
+    @benchmark
+    def read():
+        grid2.from_xtgf(fname)
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigbox.xtgf"
-    grid2.from_xtgf(fname, mmap=True)
-    print("Import bigcase using xtgf and memory mapping: ", xtg.timer(t1))
-    assert grid1._zcornsv.mean() == pytest.approx(grid2._zcornsv.mean())
+    assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv)
+    assert_allclose(benchmark_grid._coordsv, grid2._coordsv)
+    assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv)
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigbox.xtgf"
-    grid2.from_xtgf(fname)
-    print("Import bigcase using xtgf: ", xtg.timer(t1))
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigbox.h5"
-    grid1.to_hdf(fname)
-    print("Export bigcase using hdf5: ", xtg.timer(t1))
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.hdf")
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigbox.h5"
-    grid2.from_hdf(fname)
-    print("Import bigcase using h5: ", xtg.timer(t1))
+    @benchmark
+    def write():
+        benchmark_grid._zcornsv += 1.0
+        benchmark_grid.to_hdf(fname, compression=None)
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigboxc.h5"
-    grid1.to_hdf(fname, compression="blosc")
-    print("Export bigcase using hdf5 with compression: ", xtg.timer(t1))
 
-    t1 = xtg.timer()
-    fname = tmp_path / "bigboxc.h5"
-    grid2.from_hdf(fname)
-    print("Import bigcase using h5 with compression: ", xtg.timer(t1))
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.hdf")
+
+    benchmark_grid._zcornsv += 1.0
+    fna = benchmark_grid.to_hdf(fname, compression=None)
+
+    grd2 = xtgeo.Grid()
+
+    @benchmark
+    def partial_read():
+        grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+
+    assert grd2.ncol == 20
+    assert grd2.nlay == benchmark_grid.nlay
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.hdf")
+
+    benchmark_grid._zcornsv += 1.0
+    fna = benchmark_grid.to_hdf(fname, compression=None)
+
+    grd2 = xtgeo.Grid()
+
+    @benchmark
+    def read():
+        grd2.from_hdf(fna)
+
+    assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
+    assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
+    assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_hdf5_export_blosc_compression(
+    benchmark, tmp_path, benchmark_grid
+):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    benchmark_grid._zcornsv += 1.0
+
+    @benchmark
+    def write():
+        benchmark_grid.to_hdf(fname, compression="blosc")
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_hdf5_import_partial_blosc_compression(
+    benchmark, tmp_path, benchmark_grid
+):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    benchmark_grid._zcornsv += 1.0
+
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    @benchmark
+    def partial_read():
+        grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+
+    assert grd2.ncol == 20
+    assert grd2.nlay == benchmark_grid.nlay
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_hdf5_import_blosc_compression(
+    benchmark, tmp_path, benchmark_grid
+):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    benchmark_grid._zcornsv += 1.0
+
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    @benchmark
+    def read():
+        grd2.from_hdf(fna)
+
+    assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
+    assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
+    assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
 
 
 # ======================================================================================
 # Grid properties:
 
 
-def test_gridprop_export_import_many(tmp_path):
-    """Test exporting etc to xtgcpprop format."""
-    prop1 = xtgeo.GridProperty(REEKPROP1)
-
-    print(prop1.values1d)
-
-    nrange = 50
-
-    fformat = "xtgcpprop"
-
-    fnames = []
-
-    # timing of writer
-    t1 = xtg.timer()
-    for num in range(nrange):
-        fname = uuid.uuid4().hex + "." + fformat
-        fname = tmp_path / fname
-        fnames.append(fname)
-        prop1.to_file(fname, fformat=fformat)
-
-    logger.info("Timing export %s gridgeom with %s: %s", nrange, fformat, xtg.timer(t1))
-
-    # timing of reader
-    t1 = xtg.timer()
-    grid2 = None
-    for fname in fnames:
-        grid2 = xtgeo.GridProperty()
-        grid2.from_file(fname, fformat=fformat)
-
-    logger.info("Timing import %s gridgeom with %s: %s", nrange, fformat, xtg.timer(t1))
-
-    # assert grid1._zcornsv.mean() == pytest.approx(grid2._zcornsv.mean())
-    # assert grid1._coordsv.mean() == pytest.approx(grid2._coordsv.mean())
-    # assert grid1._actnumsv.mean() == pytest.approx(grid2._actnumsv.mean())
+def create_big_prop(testpath):
+    vals = np.zeros(BIGBOX_DIMENSIONS, dtype=np.float32)
+    ncol, nrow, nlay = BIGBOX_DIMENSIONS
+    prp = xtgeo.GridProperty(ncol=ncol, nrow=nrow, nlay=nlay, values=vals)
+    prp.values[0, 0, 0:3] = 33
+    prp.values[1, 0, 0:3] = 66
+    prp.values[1, 1, 0:3] = 44
+    return prp
 
 
-def test_gridprop_partial_read_smallcase(tmp_path):
-    """Read a partial property based on ijrange from file."""
+def create_small_prop(testpath):
     vals = np.zeros((5, 7, 3), dtype=np.float32)
     prp = xtgeo.GridProperty(ncol=5, nrow=7, nlay=3, values=vals)
     prp.values[0, 0, 0:3] = 33
     prp.values[1, 0, 0:3] = 66
     prp.values[1, 1, 0:3] = 44
-    print(prp.values)
-    fname = tmp_path / "grdprop.xtgcpprop"
-    prp.to_file(fname, fformat="xtgcpprop")
-
-    # import partial
-    prp3 = xtgeo.GridProperty()
-    prp3.from_file(fname, fformat="xtgcpprop", ijrange=(1, 2, 1, 2))
-    assert prp3.values.all() == prp.values[0:2, 0:2, :].all()
+    return prp
 
 
-def test_gridprop_partial_read_bigcase(tmp_path):
-    """Read a partial property based on ijrange from file, big case measure speed."""
-    vals = np.zeros((400, 500, 300), dtype=np.float32)
-    prp = xtgeo.GridProperty(ncol=400, nrow=500, nlay=300, values=vals)
-    prp.values[0, 0, 0:3] = 33
-    prp.values[1, 0, 0:3] = 66
-    prp.values[1, 1, 0:3] = 44
-    fname = tmp_path / "grdprop2.xtgcpprop"
-    prp.to_file(fname, fformat="xtgcpprop")
+@pytest.fixture(
+    name="benchmark_gridprop",
+    params=[
+        lambda tp: xtgeo.GridProperty(join(tp, "3dgrids/reek2/geogrid--poro.roff")),
+        create_big_prop,
+        create_small_prop,
+    ],
+    ids=["reek poro", "small prop", "big prop"],
+)
+def benchmark_gridprop_fixture(request, testpath):
+    return request.param(testpath)
 
-    t0 = xtg.timer()
-    for _ in range(10):
-        prp.from_file(fname, fformat="xtgcpprop")
-    t1 = xtg.timer(t0)
-    logger.info("Timing from whole grid IJ 400 x 500: %s", t1)
-    grdsize1 = prp.values.size
-    # read a subpart and measure time
-    t0 = xtg.timer()
-    for _ in range(10):
-        prp.from_file(fname, fformat="xtgcpprop", ijrange=(350, 400, 1, 50))
-    t2 = xtg.timer(t0)
-    logger.info("Timing from subrange IJ 50 x 50 : %s", t2)
-    grdsize2 = prp.values.size
-    gridratio = grdsize2 / grdsize1
-    readratio = t2 / t1
 
-    logger.info("Timing: speedratio vs gridsizeratio %s %s", readratio, gridratio)
-    assert readratio < 0.5
+@pytest.mark.benchmark()
+def test_benchmark_gridprop_export(benchmark, tmp_path, benchmark_gridprop):
+
+    fname = tmp_path / "benchmark.xtgcpprop"
+
+    @benchmark
+    def write():
+        benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
+
+
+@pytest.mark.benchmark()
+def test_benchmark_gridprop_import(benchmark, tmp_path, benchmark_gridprop):
+    """Test exporting etc to xtgcpprop format."""
+
+    fname = tmp_path / "benchmark.xtgcpprop"
+
+    benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
+
+    prop2 = xtgeo.GridProperty()
+
+    @benchmark
+    def read():
+        prop2.from_file(fname, fformat="xtgcpprop")
+
+    assert benchmark_gridprop.values.all() == prop2.values.all()
+
+
+@pytest.mark.benchmark()
+def test_benchmark_gridprop_import_partial(benchmark, tmp_path, benchmark_gridprop):
+    """Test exporting etc to xtgcpprop format."""
+
+    fname = tmp_path / "benchmark.xtgcpprop"
+
+    benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
+
+    prop2 = xtgeo.GridProperty()
+
+    @benchmark
+    def read():
+        prop2.from_file(fname, fformat="xtgcpprop", ijrange=(1, 2, 1, 2))
+
+    assert benchmark_gridprop.values[0:2, 0:2, :].all() == prop2.values.all()
