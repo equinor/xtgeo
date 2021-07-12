@@ -1,77 +1,72 @@
 # coding: utf-8
 """Testing new xtg formats both natiev ans hdf5 based."""
 
+from os.path import join
+
 import pytest
+from numpy.testing import assert_allclose
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
-logger = xtg.basiclogger(__name__)
 
 if not xtg.testsetup():
     raise SystemExit
 
-TPATH = xtg.testpathobj
 
-TESTSET1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
+@pytest.fixture(name="benchmark_surface")
+def benchmark_surface_fixture(testpath):
+    return xtgeo.RegularSurface(join(testpath, "surfaces/reek/1/topreek_rota.gri"))
 
 
-def test_xtgregsurf_export_import_many(tmp_path):
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_xtgregsurf_export(benchmark, tmp_path, benchmark_surface):
     """Test exporting to xtgregsurf format."""
-    surf1 = xtgeo.RegularSurface(TESTSET1)
-    nrange = 500
 
-    fformat = "xtgregsurf"
-    fnames = []
+    fname = tmp_path / "benchmark_surface.xtgregsurf"
 
-    # timing of writer
-    t1 = xtg.timer()
-    for num in range(nrange):
-        fname = "$md5sum" + "." + fformat
-        fname = tmp_path / fname
-        surf1.values += num
-        newname = surf1.to_file(fname, fformat=fformat)
-        fnames.append(newname)
-
-    logger.info("Timing export %s surfs with %s: %s", nrange, fformat, xtg.timer(t1))
-    print("Timing export 500 surfs with xtg: ", xtg.timer(t1))
-
-    # timing of reader
-    t1 = xtg.timer()
-    for fname in fnames:
-        surf2 = xtgeo.RegularSurface()
-        surf2.from_file(fname, fformat=fformat)
-
-    logger.info("Timing import %s surfs with %s: %s", nrange, fformat, xtg.timer(t1))
-
-    assert surf1.values.mean() == pytest.approx(surf2.values.mean())
+    @benchmark
+    def write():
+        benchmark_surface.to_file(fname, fformat="xtgregsurf")
 
 
-def test_hdf5_export_import_many(tmp_path):
-    """Test exporting to hdf5 format."""
-    surf1 = xtgeo.RegularSurface(TESTSET1)
-    nrange = 1
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_xtgregsurf_import(benchmark, tmp_path, benchmark_surface):
+    """Test exporting to xtgregsurf format."""
 
-    fnames = []
+    fname = tmp_path / "benchmark_surface.xtgregsurf"
 
-    # timing of writer
-    t1 = xtg.timer()
-    for num in range(nrange):
-        fname = "$md5sum" + ".h5"
-        fname = tmp_path / fname
-        surf1.values += num
-        newname = surf1.to_hdf(fname, compression="blosc")
-        fnames.append(newname)
+    fn = benchmark_surface.to_file(fname, fformat="xtgregsurf")
 
-    print(f"Timing export {nrange} surfs with hdf5: ", xtg.timer(t1))
-
-    # timing of reader
     surf2 = xtgeo.RegularSurface()
-    t1 = xtg.timer()
-    for fname in fnames:
-        surf2.from_hdf(fname)
 
-    print(f"Timing import {nrange} surfs with hdf5: ", xtg.timer(t1))
+    @benchmark
+    def read():
+        surf2.from_file(fn, fformat="xtgregsurf")
 
-    assert surf1.values.mean() == pytest.approx(surf2.values.mean())
+    assert_allclose(benchmark_surface.values, surf2.values)
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_surface_hdf5_export_blosc(benchmark, tmp_path, benchmark_surface):
+    fname = tmp_path / "benchmark_surface.h5"
+
+    @benchmark
+    def write():
+        benchmark_surface.to_hdf(fname, compression="blosc")
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_surface_hdf5_import_blosc(benchmark, tmp_path, benchmark_surface):
+    fname = tmp_path / "benchmark_surface.h5"
+
+    fn = benchmark_surface.to_hdf(fname, compression="blosc")
+
+    surf2 = xtgeo.RegularSurface()
+
+    @benchmark
+    def read():
+        surf2.from_hdf(fn)
+
+    assert_allclose(benchmark_surface.values, surf2.values)
