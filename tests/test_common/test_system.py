@@ -121,7 +121,7 @@ files_formats = {
 
 
 @pytest.mark.parametrize("filename", files_formats.keys())
-def xtgeo_file_properties(testpath, filename):
+def test_xtgeo_file_properties(testpath, filename):
     gfile = xtgeo._XTGeoFile(testpath / filename)
 
     assert isinstance(gfile, xtgeo._XTGeoFile)
@@ -130,7 +130,7 @@ def xtgeo_file_properties(testpath, filename):
     assert gfile._memstream is False
     assert gfile._mode == "rb"
     assert gfile._delete_after is False
-    assert gfile.name == (testpath / filename).absolute()
+    assert pathlib.Path(gfile.name) == (testpath / filename).absolute().resolve()
 
     assert "Swig" in str(gfile.get_cfhandle())
     assert gfile.cfclose() is True
