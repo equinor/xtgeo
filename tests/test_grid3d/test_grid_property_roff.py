@@ -110,6 +110,7 @@ def grid_properties(draw):
             name,
             discrete=is_discrete,
             codes=dict(zip(code_values, code_names)),
+            values=values,
         )
     else:
         values = draw(arrays(shape=dims, dtype=np.float32, elements=finites))
