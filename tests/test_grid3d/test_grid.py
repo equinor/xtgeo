@@ -120,16 +120,20 @@ def test_create_shoebox(tmp_path):
     tsetup.assert_almostequal(z.values1d[0], 1000.0, 0.001)
 
 
-def test_shoebox_egrid(tmp_path):
-    """Test the egrid format for different grid sizes."""
-    dimens = [(1000, 1, 1), (1000, 1, 200), (300, 200, 30)]
-
-    for dim in dimens:
-        grd = xtgeo.Grid()
-        grd.create_box(dimension=dim)
-        grd.to_file(tmp_path / "E1.EGRID", fformat="egrid")
-        grd1 = xtgeo.Grid(tmp_path / "E1.EGRID")
-        assert grd1.dimensions == dim
+@pytest.mark.parametrize(
+    "dimensions",
+    [
+        (100, 1, 1),
+        (100, 1, 20),
+        (300, 20, 30),
+    ],
+)
+def test_shoebox_egrid(tmp_path, dimensions):
+    grd = xtgeo.Grid()
+    grd.create_box(dimension=dimensions)
+    grd.to_file(tmp_path / "E1.EGRID", fformat="egrid")
+    grd1 = xtgeo.Grid(tmp_path / "E1.EGRID")
+    assert grd1.dimensions == dimensions
 
 
 def test_shoebox_xtgeo_vs_roff(tmp_path):
