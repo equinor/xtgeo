@@ -25,6 +25,7 @@ from enum import Enum, auto, unique
 from typing import Optional, Tuple
 
 import numpy as np
+from ecl_data_io import Format, lazy_read, write
 
 from ._grdecl_format import match_keyword, open_grdecl
 
@@ -47,12 +48,21 @@ class GridRelative(Enum):
         else:
             return ""
 
+    def to_bgrdecl(self):
+        return self.to_grdecl().ljust(8)
+
     @classmethod
     def from_grdecl(cls, unit_string):
         if match_keyword(unit_string, "MAP"):
             return cls.MAP
         else:
             return cls.ORIGIN
+
+    @classmethod
+    def from_bgrdecl(cls, unit_string):
+        if isinstance(unit_string, bytes):
+            return cls.from_grdecl(unit_string.decode("ascii"))
+        return cls.from_grdecl(unit_string)
 
 
 @unique
@@ -69,12 +79,21 @@ class Order(Enum):
     def to_grdecl(self):
         return str(self.name)[0:3]
 
+    def to_bgrdecl(self):
+        return self.to_grdecl().ljust(8)
+
     @classmethod
     def from_grdecl(cls, order_string):
         if match_keyword(order_string, "INC"):
             return cls.INCREASING
         if match_keyword(order_string, "DEC"):
             return cls.DECREASING
+
+    @classmethod
+    def from_bgrdecl(cls, unit_string):
+        if isinstance(unit_string, bytes):
+            return cls.from_grdecl(unit_string.decode("ascii"))
+        return cls.from_grdecl(unit_string)
 
 
 @unique
@@ -87,12 +106,22 @@ class Orientation(Enum):
     def to_grdecl(self):
         return self.name
 
+    def to_bgrdecl(self):
+        return self.to_grdecl().ljust(8)
+
     @classmethod
     def from_grdecl(cls, orientation_string):
         if match_keyword(orientation_string, "UP"):
             return cls.UP
         if match_keyword(orientation_string, "DOWN"):
             return cls.DOWN
+        raise ValueError(f"Unknown orientation string {orientation_string}")
+
+    @classmethod
+    def from_bgrdecl(cls, unit_string):
+        if isinstance(unit_string, bytes):
+            return cls.from_grdecl(unit_string.decode("ascii"))
+        return cls.from_grdecl(unit_string)
 
 
 @unique
@@ -109,12 +138,22 @@ class Handedness(Enum):
     def to_grdecl(self):
         return self.name
 
+    def to_bgrdecl(self):
+        return self.to_grdecl().ljust(8)
+
     @classmethod
     def from_grdecl(cls, orientation_string):
         if match_keyword(orientation_string, "LEFT"):
             return cls.LEFT
         if match_keyword(orientation_string, "RIGHT"):
             return cls.RIGHT
+        raise ValueError(f"Unknown handedness string {orientation_string}")
+
+    @classmethod
+    def from_bgrdecl(cls, unit_string):
+        if isinstance(unit_string, bytes):
+            return cls.from_grdecl(unit_string.decode("ascii"))
+        return cls.from_grdecl(unit_string)
 
 
 @unique
@@ -134,12 +173,26 @@ class CoordinateType(Enum):
         else:
             return "T"
 
+    def to_bgrdecl(self):
+        if self == CoordinateType.CARTESIAN:
+            return 0
+        else:
+            return 1
+
+    @classmethod
+    def from_bgrdecl(cls, coord_value):
+        if coord_value == 0:
+            return cls.CARTESIAN
+        else:
+            return cls.CYLINDRICAL
+
     @classmethod
     def from_grdecl(cls, coord_string):
         if match_keyword(coord_string, "F"):
             return cls.CARTESIAN
         if match_keyword(coord_string, "T"):
             return cls.CYLINDRICAL
+        raise ValueError(f"Unknown coordinate type {coord_string}")
 
 
 @dataclass
@@ -158,6 +211,14 @@ class GrdeclKeyword:
             [1,1,1,CoordinateType.CYLINDRICAL]
         """
         return [value.to_grdecl() for value in astuple(self)]
+
+    def to_bgrdecl(self):
+        return [value.to_bgrdecl() for value in astuple(self)]
+
+    @classmethod
+    def from_bgrdecl(cls, values):
+        object_types = [f.type for f in fields(cls)]
+        return cls(*[typ.from_bgrdecl(val) for val, typ in zip(values, object_types)])
 
     @classmethod
     def from_grdecl(cls, values):
@@ -189,6 +250,13 @@ class MapAxes(GrdeclKeyword):
 
     def to_grdecl(self):
         return list(self.y_line) + list(self.origin) + list(self.x_line)
+
+    def to_bgrdecl(self):
+        return self.to_grdecl()
+
+    @classmethod
+    def from_bgrdecl(cls, values):
+        return cls.from_grdecl(values)
 
     @classmethod
     def from_grdecl(cls, values):
@@ -248,6 +316,23 @@ class SpecGrid(GrdeclKeyword):
             self.coordinate_type.to_grdecl(),
         ]
 
+    def to_bgrdecl(self):
+        return [
+            self.ndivix,
+            self.ndiviy,
+            self.ndiviz,
+            self.numres,
+            self.coordinate_type.to_bgrdecl(),
+        ]
+
+    @classmethod
+    def from_bgrdecl(cls, values):
+        if len(values) < 5:
+            return cls(*values)
+        if len(values) == 5:
+            return cls(*values[0:-1], CoordinateType.from_bgrdecl(values[-1]))
+        raise ValueError("SPECGRID should have at most 5 values")
+
     @classmethod
     def from_grdecl(cls, values):
         ivalues = [int(v) for v in values[:4]]
@@ -277,10 +362,22 @@ class GridUnit(GrdeclKeyword):
             self.grid_relative.to_grdecl(),
         ]
 
+    def to_bgrdecl(self):
+        return [
+            self.unit.ljust(8),
+            self.grid_relative.to_bgrdecl(),
+        ]
+
+    @classmethod
+    def from_bgrdecl(cls, values):
+        if isinstance(values[0], bytes):
+            return cls.from_grdecl([v.decode("ascii") for v in values])
+        return cls.from_grdecl(values)
+
     @classmethod
     def from_grdecl(cls, values):
         if len(values) == 1:
-            return cls(values[0])
+            return cls(values[0].rstrip())
         if len(values) == 2:
             return cls(
                 values[0].rstrip(),
@@ -352,8 +449,48 @@ class GrdeclGrid:
             and np.array_equal(self.zcorn, other.zcorn)
         )
 
-    @staticmethod
-    def from_file(filename):
+    @classmethod
+    def from_file(cls, filename, fileformat="grdecl"):
+        """
+        write the grdeclgrid to a file.
+        :param filename: path to file to write.
+        :param fileformat: Either "grdecl" or "bgrdecl" to
+            indicate binary or ascii format.
+        """
+        if fileformat == "grdecl":
+            return cls._from_grdecl_file(filename)
+        if fileformat == "bgrdecl":
+            return cls._from_bgrdecl_file(filename)
+        raise ValueError(b"Unknown grdecl file format {fileformat}")
+
+    @classmethod
+    def _from_bgrdecl_file(cls, filename, fileformat=None):
+        keyword_factories = {
+            "COORD": lambda x: np.array(x, dtype=np.float32),
+            "ZCORN": lambda x: np.array(x, dtype=np.float32),
+            "ACTNUM": lambda x: np.array(x, dtype=np.int32),
+            "MAPAXES": MapAxes.from_bgrdecl,
+            "MAPUNITS": lambda x: x,
+            "GRIDUNIT": GridUnit.from_bgrdecl,
+            "SPECGRID": SpecGrid.from_bgrdecl,
+            "GDORIENT": GdOrient.from_bgrdecl,
+        }
+        results = {}
+        for entry in lazy_read(filename, fileformat=fileformat):
+            if len(results) == len(keyword_factories):
+                break
+            kw = entry.read_keyword().rstrip()
+            if kw in results:
+                raise ValueError(f"Duplicate keyword {kw} in {filename}")
+            try:
+                factory = keyword_factories[kw]
+            except KeyError as e:
+                raise ValueError(f"Unknown grdecl keyword {kw}") from e
+            results[kw.lower()] = factory(entry.read_array())
+        return cls(**results)
+
+    @classmethod
+    def _from_grdecl_file(cls, filename):
         keyword_factories = {
             "COORD": lambda x: np.array(x, dtype=np.float32),
             "ZCORN": lambda x: np.array(x, dtype=np.float32),
@@ -377,9 +514,12 @@ class GrdeclGrid:
                     break
                 if kw in results:
                     raise ValueError(f"Duplicate keyword {kw} in {filename}")
-                factory = keyword_factories[kw]
+                try:
+                    factory = keyword_factories[kw]
+                except KeyError as e:
+                    raise ValueError(f"Unknown grdecl keyword {kw}") from e
                 results[kw.lower()] = factory(values)
-        return GrdeclGrid(**results)
+        return cls(**results)
 
     @staticmethod
     def valid_mapaxes(mapaxes):
@@ -391,7 +531,20 @@ class GrdeclGrid:
 
         return np.linalg.norm(x_axis) > 1e-5 and np.linalg.norm(y_axis) > 1e-5
 
-    def to_file(self, filename):
+    def to_file(self, filename, fileformat="grdecl"):
+        """
+        write the grdeclgrid to a file.
+        :param filename: path to file to write.
+        :param fileformat: Either "grdecl" or "bgrdecl" to
+            indicate binary or ascii format.
+        """
+        if fileformat == "grdecl":
+            return self._to_grdecl_file(filename)
+        if fileformat == "bgrdecl":
+            return self._to_bgrdecl_file(filename)
+        raise ValueError(b"Unknown grdecl file format {fileformat}")
+
+    def _to_grdecl_file(self, filename):
         with open(filename, "w") as filestream:
             keywords = [
                 ("SPECGRID", self.specgrid.to_grdecl()),
@@ -413,6 +566,25 @@ class GrdeclGrid:
                         filestream.write(" ")
                         filestream.write(str(value))
                 filestream.write("\n /\n")
+
+    def _to_bgrdecl_file(self, filename, fileformat=Format.UNFORMATTED):
+        contents = filter(
+            lambda x: x[1] is not None,
+            [
+                ("SPECGRID", self.specgrid.to_bgrdecl()),
+                ("MAPAXES ", self.mapaxes.to_bgrdecl() if self.mapaxes else None),
+                ("MAPUNITS", [self.mapunits] if self.mapunits else None),
+                ("GRIDUNIT", self.gridunit.to_bgrdecl() if self.gridunit else None),
+                ("GDORIENT", self.gdorient.to_bgrdecl() if self.gdorient else None),
+                ("COORD   ", self.coord),
+                ("ZCORN   ", self.zcorn),
+                ("ACTNUM  ", self.actnum),
+            ],
+        )
+        write(
+            filename,
+            contents,
+        )
 
     @property
     def dimensions(self):

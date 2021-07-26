@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import mock_open, patch
 
 import hypothesis.strategies as st
@@ -217,11 +218,12 @@ def test_gridunit(inp_str, expected_unit, expected_relative):
 
 
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(grdecl_grids())
-def test_grdecl_grid_read_write(tmp_path, grgrid):
-    tmp_file = tmp_path / "grid.grdecl"
-    grgrid.to_file(tmp_file)
-    assert ggrid.GrdeclGrid.from_file(tmp_file) == grgrid
+@given(grdecl_grids(), st.sampled_from(["grdecl", "bgrdecl"]))
+def test_grdecl_grid_read_write(tmp_path, grgrid, fileformat):
+    assume(grgrid.mapaxes is None or fileformat != "bgrdecl")
+    tmp_file = tmp_path / ("grid." + fileformat)
+    grgrid.to_file(tmp_file, fileformat)
+    assert ggrid.GrdeclGrid.from_file(tmp_file, fileformat) == grgrid
 
 
 @given(grdecl_grids())
@@ -300,8 +302,9 @@ def test_to_from_grdeclgrid(grdecl_grid):
 
 
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(xtgeo_compatible_grdecl_grids)
-def test_to_from_xtggrid_write(tmp_path, grdecl_grid):
+@given(xtgeo_compatible_grdecl_grids, st.sampled_from(["grdecl", "bgrdecl"]))
+def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
+    assume(grdecl_grid.mapaxes is None or fileformat != "bgrdecl")
     xtggrid = Grid()
     xtggrid._actnumsv = grdecl_grid.xtgeo_actnum()
     xtggrid._coordsv = grdecl_grid.xtgeo_coord()
@@ -312,8 +315,10 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid):
     xtggrid._nlay = nz
     xtggrid._xtgformat = 2
 
-    xtggrid.to_file(tmp_path / "xtggrid.grdecl", fformat="grdecl")
-    grdecl_grid2 = ggrid.GrdeclGrid.from_file(tmp_path / "xtggrid.grdecl")
+    xtggrid.to_file(tmp_path / ("xtggrid." + fileformat), fformat=fileformat)
+    grdecl_grid2 = ggrid.GrdeclGrid.from_file(
+        tmp_path / ("xtggrid." + fileformat), fileformat=fileformat
+    )
 
     assert grdecl_grid.zcorn == pytest.approx(grdecl_grid2.zcorn, abs=0.02)
     assert grdecl_grid.xtgeo_coord() == pytest.approx(
@@ -327,14 +332,17 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid):
 
 @settings(
     deadline=None,
+    print_blob=True,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-@given(xtgeo_compatible_grdecl_grids)
-def test_from_to_grdeclgrid_write(tmp_path, grdecl_grid):
+@given(xtgeo_compatible_grdecl_grids, st.sampled_from(["grdecl", "bgrdecl"]))
+def test_from_to_grdeclgrid_write(tmp_path, caplog, grdecl_grid, fileformat):
+    caplog.set_level(logging.CRITICAL)
+    assume(grdecl_grid.mapaxes is None or fileformat != "bgrdecl")
     xtggrid = Grid()
 
-    grdecl_grid.to_file(tmp_path / "xtggrid.grdecl")
-    xtggrid = Grid(tmp_path / "xtggrid.grdecl", fformat="grdecl")
+    grdecl_grid.to_file(tmp_path / ("xtggrid." + fileformat), fileformat)
+    xtggrid = Grid(tmp_path / ("xtggrid." + fileformat), fformat=fileformat)
 
     xtggrid._xtgformat2()
     if grdecl_grid.actnum is None:
@@ -343,6 +351,7 @@ def test_from_to_grdeclgrid_write(tmp_path, grdecl_grid):
         assert grdecl_grid.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
     assert grdecl_grid.xtgeo_coord() == pytest.approx(xtggrid._coordsv, abs=0.02)
     assert grdecl_grid.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
+    assert grdecl_grid.dimensions == xtggrid.dimensions
 
 
 @given(xtgeo_compatible_grdecl_grids)

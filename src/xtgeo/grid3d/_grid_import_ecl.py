@@ -158,9 +158,6 @@ def import_ecl_grdecl(self, gfile):
     self._xtgformat = 2
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import Eclipse binary GRDECL format
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout."""
     cfhandle = gfile.get_cfhandle()
