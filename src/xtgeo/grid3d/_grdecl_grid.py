@@ -327,10 +327,11 @@ class SpecGrid(GrdeclKeyword):
 
     @classmethod
     def from_bgrdecl(cls, values):
+        ivalues = [int(v) for v in values[:4]]
         if len(values) < 5:
-            return cls(*values)
+            return cls(*ivalues)
         if len(values) == 5:
-            return cls(*values[0:-1], CoordinateType.from_bgrdecl(values[-1]))
+            return cls(*ivalues, CoordinateType.from_bgrdecl(values[-1]))
         raise ValueError("SPECGRID should have at most 5 values")
 
     @classmethod
