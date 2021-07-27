@@ -147,7 +147,7 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
 def import_ecl_grdecl(self, gfile):
     """Import grdecl format."""
 
-    grdecl_grid = GrdeclGrid.from_file(gfile._file)
+    grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="grdecl")
 
     self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
 
@@ -160,63 +160,13 @@ def import_ecl_grdecl(self, gfile):
 
 def import_ecl_bgrdecl(self, gfile):
     """Import binary files with GRDECL layout."""
-    cfhandle = gfile.get_cfhandle()
 
-    # scan file for properties; these have similar binary format as e.g. EGRID
-    logger.info("Make kwlist by scanning")
-    kwlist = utils.scan_keywords(
-        gfile, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
-    )
+    grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="bgrdecl")
 
-    bpos = {}
-    needkwlist = ["SPECGRID", "COORD", "ZCORN", "ACTNUM"]
-    optkwlist = ["MAPAXES"]
-    for name in needkwlist + optkwlist:
-        bpos[name] = -1  # initially
+    self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
 
-    for kwitem in kwlist:
-        kwname, kwtype, kwlen, kwbyte = kwitem
-        if kwname == "SPECGRID":
-            # read grid geometry record:
-            specgrid = eclbin_record(gfile, "SPECGRID", kwlen, kwtype, kwbyte)
-            self._ncol, self._nrow, self._nlay = specgrid[0:3].tolist()
-        elif kwname in needkwlist:
-            bpos[kwname] = kwbyte
-        elif kwname == "MAPAXES":  # not always present
-            bpos[kwname] = kwbyte
-
-    # allocate dimensions:
-    ncoord, nzcorn, ntot = self.vectordimensions
-
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    p_nact = _cxtgeo.new_longpointer()
-
-    ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        cfhandle,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        bpos["MAPAXES"],
-        bpos["COORD"],
-        bpos["ZCORN"],
-        bpos["ACTNUM"],
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        p_nact,
-        0,
-    )
-
-    if ier == -1:
-        raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
-
-    self._nactive = _cxtgeo.longpointer_value(p_nact)
-    self._xtgformat = 1
-
-    # if local_fhandle:
-    #     gfile.close(cond=local_fhandle)
-    if gfile.cfclose():
-        logger.info("Closed SWIG C file")
+    self._coordsv = grdecl_grid.xtgeo_coord()
+    self._zcornsv = grdecl_grid.xtgeo_zcorn()
+    self._actnumsv = grdecl_grid.xtgeo_actnum()
+    self._subgrids = None
+    self._xtgformat = 2

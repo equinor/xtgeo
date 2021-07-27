@@ -324,7 +324,8 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
     assert grdecl_grid.xtgeo_coord() == pytest.approx(
         grdecl_grid2.xtgeo_coord(), abs=0.02
     )
-    if grdecl_grid.actnum is None:
+    if grdecl_grid.actnum is None or grdecl_grid2.actnum is None:
+        assert grdecl_grid.actnum is None or np.all(grdecl_grid.actnum)
         assert grdecl_grid2.actnum is None or np.all(grdecl_grid2.actnum)
     else:
         assert grdecl_grid.actnum.tolist() == grdecl_grid2.actnum.tolist()
