@@ -72,6 +72,32 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 
 
 @pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.grdecl")
+
+    @benchmark
+    def write():
+        benchmark_grid.to_file(fname, fformat="grdecl")
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.grdecl")
+
+    benchmark_grid.to_file(fname, fformat="grdecl")
+
+    grid2 = xtgeo.Grid()
+
+    @benchmark
+    def read():
+        grid2.from_file(fname, fformat="grdecl")
+
+    assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv, atol=0.02)
+    assert_allclose(benchmark_grid._coordsv, grid2._coordsv, atol=0.02)
+    assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv, atol=0.02)
+
+
+@pytest.mark.benchmark(group="import/export")
 def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.bgrdecl")
 
