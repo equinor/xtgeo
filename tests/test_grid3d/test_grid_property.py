@@ -68,7 +68,7 @@ def test_create():
     (repr(m.values))
 
 
-def test_banal7(xtgshow):
+def test_banal7(show_plot):
     """Create a simple property in a small grid box"""
 
     grd = Grid(BANAL7)
@@ -81,7 +81,7 @@ def test_banal7(xtgshow):
     mix = gprops.get_prop_by_name("minangle_sides")
     assert mix.values.mean() == pytest.approx(81.31036, abs=0.001)
 
-    if xtgshow:
+    if show_plot:
         lay = 2
         layslice = xtgeo.plot.Grid3DSlice()
         layslice.canvas(title=f"Layer {lay}")

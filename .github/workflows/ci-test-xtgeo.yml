@@ -44,7 +44,7 @@ jobs:
         run: >
           python -m pip install -r requirements/requirements_test.txt &&
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata &&
-          python -m pytest --disable-warnings -x --hypothesis-profile ci
+          python -m pytest --disable-warnings -x --hypothesis-profile ci --generate-plots
 
       - name: Build docs
         run: >

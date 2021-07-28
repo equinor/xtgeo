@@ -30,7 +30,7 @@ RPROP2 = RPATH2 / "reek_sim_zone.roff"
 
 @tsetup.plotskipifroxar
 @tsetup.skipifmac  # segm fault; need to be investigated
-def test_get_surface_from_grd3d_porosity(tmpdir):
+def test_get_surface_from_grd3d_porosity(tmpdir, generate_plot):
     """Sample a surface from a 3D grid"""
 
     surf = xtgeo.surface.RegularSurface(RTOP1)
@@ -46,20 +46,23 @@ def test_get_surface_from_grd3d_porosity(tmpdir):
     surf.slice_grid3d(grd, phi)
 
     surf.to_file(join(tmpdir, "surf_slice_grd3d_reek.gri"))
-    surf.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek.png"))
+    if generate_plot:
+        surf.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek.png"))
 
     # refined version:
     surfr.refine(2)
     surfr.slice_grid3d(grd, phi)
 
     surfr.to_file(join(tmpdir, "surf_slice_grd3d_reek_refined.gri"))
-    surfr.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_refined.png"))
+    if generate_plot:
+        surfr.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_refined.png"))
 
     # use zsurf:
     surf2.slice_grid3d(grd, phi, zsurf=zsurf)
 
     surf2.to_file(join(tmpdir, "surf_slice_grd3d_reek_zslice.gri"))
-    surf2.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_zslice.png"))
+    if generate_plot:
+        surf2.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_zslice.png"))
 
     assert np.allclose(surf.values, surf2.values)
 
@@ -68,7 +71,7 @@ def test_get_surface_from_grd3d_porosity(tmpdir):
 
 
 @tsetup.plotskipifroxar
-def test_get_surface_from_grd3d_zones(tmpdir):
+def test_get_surface_from_grd3d_zones(tmpdir, generate_plot):
     """Sample a surface from a 3D grid, using zones"""
 
     surf = xtgeo.surface.RegularSurface(RTOP1)
@@ -80,11 +83,12 @@ def test_get_surface_from_grd3d_zones(tmpdir):
     surf.slice_grid3d(grd, zone, sbuffer=1)
 
     surf.to_file(join(tmpdir, "surf_slice_grd3d_reek_zone.gri"))
-    surf.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_zone.png"))
+    if generate_plot:
+        surf.quickplot(filename=join(tmpdir, "surf_slice_grd3d_reek_zone.png"))
 
 
 @tsetup.plotskipifroxar
-def test_surface_from_grd3d_layer(tmpdir):
+def test_surface_from_grd3d_layer(tmpdir, generate_plot):
     """Create a surface from a 3D grid layer"""
 
     surf = xtgeo.surface.RegularSurface()
@@ -95,18 +99,22 @@ def test_surface_from_grd3d_layer(tmpdir):
     surf.fill()
     surf.to_file(join(tmpdir, "surf_from_grid3d_top.gri"))
     tmp = surf.copy()
-    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top.png"))
+    if generate_plot:
+        surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top.png"))
 
     surf.from_grid3d(grd, template=tmp, mode="i")
 
     surf.to_file(join(tmpdir, "surf_from_grid3d_top_icell.gri"))
-    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top_icell.png"))
+    if generate_plot:
+        surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top_icell.png"))
 
     surf.from_grid3d(grd, template=tmp, mode="j")
     surf.fill()
     surf.to_file(join(tmpdir, "surf_from_grid3d_top_jcell.gri"))
-    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top_jcell.png"))
+    if generate_plot:
+        surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_top_jcell.png"))
 
     surf.from_grid3d(grd, template=tmp, mode="depth", where="3_base")
     surf.to_file(join(tmpdir, "surf_from_grid3d_3base.gri"))
-    surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_3base.png"))
+    if generate_plot:
+        surf.quickplot(filename=join(tmpdir, "surf_from_grid3d_3base.png"))

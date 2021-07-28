@@ -13,11 +13,6 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-if "XTG_SHOW" in os.environ:
-    xtgshow = True
-else:
-    xtgshow = False
-
 reekgrid = TPATH / "3dgrids/reek/REEK.EGRID"
 reekpoly = TPATH / "polygons/reek/1/mypoly.pol"
 

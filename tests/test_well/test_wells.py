@@ -62,8 +62,10 @@ def test_get_dataframe_allwells(loadwells1):
 
 
 @tsetup.plotskipifroxar
-def test_quickplot_wells(tmpdir, loadwells1):
+def test_quickplot_wells(tmpdir, loadwells1, generate_plot):
     """Import wells from file to Wells and quick plot."""
+    if not generate_plot:
+        pytest.skip()
 
     mywell_list = loadwells1
 

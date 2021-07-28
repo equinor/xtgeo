@@ -1,9 +1,8 @@
 """Testing BytesIO stuff for RegularSurfaces."""
-import os
-from os.path import join
+import base64
 import io
 import threading
-import base64
+from os.path import join
 
 import pytest
 
@@ -17,10 +16,6 @@ if not xtg.testsetup():
     raise SystemExit
 
 TPATH = xtg.testpathobj
-
-XTGSHOW = False
-if "XTG_SHOW" in os.environ:
-    XTGSHOW = True
 
 # =============================================================================
 # Do tests

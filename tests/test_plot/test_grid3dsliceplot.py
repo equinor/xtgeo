@@ -15,13 +15,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-if "XTG_SHOW" in os.environ:
-    XTGSHOW = True
-else:
-    XTGSHOW = False
-
-logger.info("Use env variable XTG_SHOW to show interactive plots to screen")
-
 TPATH = xtg.testpathobj
 
 # =========================================================================
@@ -34,7 +27,7 @@ USEFILE3 = TPATH / "etc/colortables/rainbow_reverse.rmscolor"
 
 
 @pytest.mark.skipifroxar
-def test_slice_simple_layer(tmpdir):
+def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
     """Trigger XSection class, and do some simple things basically."""
     layslice = Grid3DSlice()
 
@@ -55,11 +48,7 @@ def test_slice_simple_layer(tmpdir):
             linecolor="black",
         )
 
-        if XTGSHOW:
+        if show_plot:
             layslice.show()
-        else:
-            print(
-                "Output to screen disabled (will plot to screen); "
-                "use XTG_SHOW env variable"
-            )
+        if generate_plot:
             layslice.savefig(os.path.join(tmpdir, "layerslice_" + str(lay) + ".png"))

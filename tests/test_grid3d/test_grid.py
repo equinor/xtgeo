@@ -755,14 +755,14 @@ def test_generate_hash():
     assert grd1.generate_hash() == grd2.generate_hash()
 
 
-def test_gridquality_properties(xtgshow):
+def test_gridquality_properties(show_plot):
     """Get grid quality props."""
     grd1 = Grid(GRIDQC1)
 
     props1 = grd1.get_gridquality_properties()
     minang = props1.get_prop_by_name("minangle_topbase")
     assert minang.values[5, 2, 1] == pytest.approx(71.05561, abs=0.001)
-    if xtgshow:
+    if show_plot:
         lay = 1
         layslice = xtgeo.plot.Grid3DSlice()
         layslice.canvas(title=f"Layer {lay}")
@@ -788,7 +788,7 @@ def test_gridquality_properties(xtgshow):
     props3 = grd3.get_gridquality_properties()
 
     concp = props3.get_prop_by_name("concave_proj")
-    if xtgshow:
+    if show_plot:
         lay = 23
         layslice = xtgeo.plot.Grid3DSlice()
         layslice.canvas(title=f"Layer {lay}")

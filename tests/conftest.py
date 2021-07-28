@@ -17,11 +17,6 @@ def pytest_runtest_setup(item):
 
     markers = [value.name for value in item.iter_markers()]
 
-    # pytest.mark.xtgshow (showing plots):
-    if "xtgshow" in markers:
-        if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
-            pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
-
     # pytest.mark.bigtest
     if "bigtest" in markers:
         if "XTG_BIGTEST" not in os.environ:
@@ -60,7 +55,7 @@ def assert_almostequal(this, that, tol, txt=""):
     assert this == pytest.approx(that, abs=tol), txt
 
 
-@pytest.fixture(name="xtgshow")
+@pytest.fixture(name="show_plot")
 def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
     if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
@@ -89,6 +84,19 @@ def pytest_addoption(parser):
         action="store",
         default="../xtgeo-testdata",
     )
+    parser.addoption(
+        "--generate-plots",
+        help="whether to generate plot files. The files are written to the"
+        "pytest tmpfolder. In order to inspect whether plots are correctly"
+        "generated, the files must be manually inspected.",
+        action="store_true",
+        default=False,
+    )
+
+
+@pytest.fixture(name="generate_plot")
+def fixture_generate_plot(request):
+    return request.config.getoption("--generate-plots")
 
 
 @pytest.fixture()
