@@ -98,10 +98,7 @@ class Wells(object):
         """Copy a Wells instance to a new unique instance (a deep copy)."""
 
         new = Wells()
-
-        for well in self._wells:
-            newwell = well.copy()
-            new._props.append(newwell)
+        new.wells = [w.copy() for w in self._wells]
 
         return new
 
