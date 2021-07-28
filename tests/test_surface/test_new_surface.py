@@ -70,9 +70,9 @@ def test_values_mask_setter(input_val, expected_data, expected_mask):
     assert list(surf.values.data.flatten()) == expected_data
 
 
-@given(data=st.lists(st.floats(allow_nan=False), min_size=100, max_size=100))
+@given(data=st.lists(st.floats(allow_nan=False), min_size=25, max_size=25))
 def test_input_lists(data):
-    surf = RegularSurface(10, 10, 0.0, 0.0, values=data)
+    surf = RegularSurface(5, 5, 0.0, 0.0, values=data)
     assert surf.values.data.flatten().tolist() == pytest.approx(data)
 
 
