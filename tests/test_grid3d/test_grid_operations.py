@@ -35,14 +35,14 @@ DUALPROPS = TPATH / "3dgrids/etc/DUAL"
 
 
 def test_hybridgrid1(tmpdir):
-    """Making a hybridgrid for Emerald case (ROFF and GRDECL)"""
+    """Making a hybridgrid for Emerald case"""
 
     logger.info("Read grid...")
     grd = Grid(EMEGFILE)
     assert grd.subgrids is not None  # initially, prior to subgrids
 
     logger.info("Read grid... done, NZ is %s", grd.nlay)
-    grd.to_file(join(tmpdir, "test_hybridgrid1_asis.grdecl"), fformat="grdecl")
+    grd.to_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"), fformat="bgrdecl")
 
     logger.info("Convert...")
     nhdiv = 40
@@ -63,7 +63,7 @@ def test_hybridgrid1(tmpdir):
     grd.to_file(join(tmpdir, "test_hybridgrid1.roff"))
 
     logger.info("Read grid 2...")
-    grd2 = Grid(join(tmpdir, "test_hybridgrid1_asis.grdecl"))
+    grd2 = Grid(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
     logger.info("Read grid... done, NLAY is %s", grd2.nlay)
 
     logger.info("Convert...")
