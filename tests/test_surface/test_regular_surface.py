@@ -21,10 +21,6 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-XTGSHOW = False
-if "XTG_SHOW" in os.environ:
-    XTGSHOW = True
-
 # =============================================================================
 # Do tests
 # =============================================================================
@@ -208,16 +204,17 @@ def test_irapbin_import_use_pathib():
 
 
 @pytest.mark.skipifroxar
-def test_irapbin_import_quickplot(tmpdir):
+def test_irapbin_import_quickplot(tmpdir, show_plot, generate_plot):
     """Import Reek Irap binary and do quickplot."""
-    logger.info("Import and export...")
+    if not show_plot or generate_plot:
+        pytest.skip()
 
     xsurf = xtgeo.RegularSurface(TESTSET2)
     cmap = "gist_earth"
 
-    if XTGSHOW:
+    if show_plot:
         xsurf.quickplot(colormap=cmap)
-    else:
+    if generate_plot:
         xsurf.quickplot(join(tmpdir, "qplot.jpg"), colormap=cmap)
 
 
@@ -1112,7 +1109,7 @@ def test_fence_sampling(infence, sampling, expected, default_surface):
     assert np.allclose(newfence[:, 2], expected, equal_nan=True)
 
 
-def test_get_randomline_frompolygon(xtgshow):
+def test_get_randomline_frompolygon(show_plot):
     """Test randomline with both bilinear and nearest sampling for surfaces."""
     fence = xtgeo.Polygons(FENCE1)
     xs = xtgeo.RegularSurface(TESTSET1)
@@ -1133,7 +1130,7 @@ def test_get_randomline_frompolygon(xtgshow):
     assert y1.mean() == pytest.approx(1706.7514, abs=0.001)
     assert y2.mean() == pytest.approx(1706.6995, abs=0.001)
 
-    if xtgshow:
+    if show_plot:
         import matplotlib.pyplot as plt
 
         plt.figure()

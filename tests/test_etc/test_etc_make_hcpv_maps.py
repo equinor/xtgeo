@@ -19,7 +19,7 @@ ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 
 
 @pytest.mark.skipifroxar
-def test_hcpvfz1(tmpdir):
+def test_hcpvfz1(tmpdir, generate_plot):
     """HCPV thickness map."""
 
     # It is important that input are pure numpies, not masked
@@ -123,6 +123,6 @@ def test_hcpvfz1(tmpdir):
 
     logger.info("Speed zoneavg coarsen 2 is %s", t2)
 
-    hcmap.quickplot(filename=join(tmpdir, "quickplot_hcpv.png"))
-    hcmap2.quickplot(filename=join(tmpdir, "quickplot_hcpv_zavg_coarsen.png"))
-    logger.debug(hcmap.values.mean())
+    if generate_plot:
+        hcmap.quickplot(filename=join(tmpdir, "quickplot_hcpv.png"))
+        hcmap2.quickplot(filename=join(tmpdir, "quickplot_hcpv_zavg_coarsen.png"))

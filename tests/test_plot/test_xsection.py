@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
 
-import os
-from os.path import join
 import glob
+from os.path import join
 
-import pytest
 import matplotlib.pyplot as plt
+import pytest
 
+import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.plot import XSection
-import tests.test_common.test_xtg as tsetup
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -19,12 +18,6 @@ if not xtg.testsetup():
     raise SystemExit
 
 TPATH = xtg.testpathobj
-
-XTGSHOW = False
-if "XTG_SHOW" in os.environ:
-    XTGSHOW = True
-
-logger.info("Use env variable XTG_SHOW to show interactive plots to screen")
 
 # =========================================================================
 # Do tests
@@ -53,7 +46,7 @@ def test_xsection_init():
 
 
 @pytest.mark.skipifroxar
-def test_simple_plot(tmpdir):
+def test_simple_plot(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot."""
 
     mywell = xtgeo.Well(USEFILE4)
@@ -87,17 +80,15 @@ def test_simple_plot(tmpdir):
 
     myplot.plot_well(zonelogname="Zonelog")
 
-    # myplot.plot_map()
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "xsect_gbf1.png"))
 
-    myplot.savefig(join(tmpdir, "xsect_gbf1.png"))
-
-    if XTGSHOW:
-        print("Show plot")
+    if show_plot:
         myplot.show()
 
 
 @pytest.mark.skipifroxar
-def test_simple_plot_with_seismics(tmpdir):
+def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot with seismic backdrop."""
 
     mywell = xtgeo.Well(USEFILE7)
@@ -143,16 +134,17 @@ def test_simple_plot_with_seismics(tmpdir):
 
     myplot.plot_map()
 
-    myplot.savefig(join(tmpdir, "xsect_wcube.png"), last=False)
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "xsect_wcube.png"), last=False)
 
-    if XTGSHOW:
+    if show_plot:
         myplot.show()
 
 
 @pytest.mark.skipifroxar
 @tsetup.equinor
 @tsetup.bigtest
-def test_xsect_larger_geogrid():
+def test_xsect_larger_geogrid(show_plot):
     """Test a larger xsection"""
 
     mygrid = xtgeo.Grid(BIGRGRID1)
@@ -172,7 +164,7 @@ def test_xsect_larger_geogrid():
         fence2, poro, zmin=1500, zmax=1850, zincrement=0.2
     )
 
-    if XTGSHOW:
+    if show_plot:
         plt.figure()
         plt.imshow(arr1, cmap="rainbow", extent=(hmin1, hmax1, vmax1, vmin1))
         plt.axis("tight")
@@ -183,7 +175,7 @@ def test_xsect_larger_geogrid():
 
 
 @pytest.mark.skipifroxar
-def test_reek1(tmpdir):
+def test_reek1(tmpdir, generate_plot):
     """Test XSect for a Reek well."""
 
     myfield = xtgeo.Polygons()
@@ -250,5 +242,6 @@ def test_reek1(tmpdir):
 
         myplot.plot_map()
 
-        myplot.savefig(join(tmpdir, "xsect2a.svg"), fformat="svg", last=False)
-        myplot.savefig(join(tmpdir, "xsect2a.png"), fformat="png")
+        if generate_plot:
+            myplot.savefig(join(tmpdir, "xsect2a.svg"), fformat="svg", last=False)
+            myplot.savefig(join(tmpdir, "xsect2a.png"), fformat="png")

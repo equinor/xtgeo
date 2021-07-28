@@ -18,7 +18,7 @@ jobs:
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
       CIBW_TEST_COMMAND: >
         pushd {project} &&
-        pytest tests/test_common --disable-warnings -x
+        pytest tests/test_common --disable-warnings -x --generate-plots
       CIBW_BUILD: ${{ matrix.cibw_python }}-manylinux_x86_64
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
 

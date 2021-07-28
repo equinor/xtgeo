@@ -1,10 +1,8 @@
 # coding: utf-8
 
 
-import os
-
-import xtgeo
 import tests.test_common.test_xtg as tsetup
+import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -13,10 +11,6 @@ if not xtg.testsetup():
     raise SystemExit
 
 TPATH = xtg.testpathobj
-
-XTGSHOW = False
-if "XTG_SHOW" in os.environ:
-    XTGSHOW = True
 
 REEKROOT = TPATH / "3dgrids/reek/REEK"
 WELL1 = TPATH / "wells/reek/1/OP_1.w"
@@ -28,7 +22,7 @@ FENCE2 = TPATH / "polygons/reek/1/minifence.pol"
 # =============================================================================
 
 
-def test_randomline_fence_from_well():
+def test_randomline_fence_from_well(show_plot):
     """Import ROFF grid with props and make fences"""
 
     grd = xtgeo.Grid(REEKROOT, fformat="eclipserun", initprops=["PORO"])
@@ -50,7 +44,7 @@ def test_randomline_fence_from_well():
         fspec, "PORO", zmin=1600, zmax=1700, zincrement=1.0
     )
 
-    if XTGSHOW:
+    if show_plot:
         import matplotlib.pyplot as plt
 
         plt.figure()
@@ -60,7 +54,7 @@ def test_randomline_fence_from_well():
         plt.show()
 
 
-def test_randomline_fence_from_polygon():
+def test_randomline_fence_from_polygon(show_plot):
     """Import ROFF grid with props and make fence from polygons"""
 
     grd = xtgeo.Grid(REEKROOT, fformat="eclipserun", initprops=["PORO", "PERMX"])
@@ -88,7 +82,7 @@ def test_randomline_fence_from_polygon():
         "Getting randomline (2 time)... took {0:5.3f} secs".format(xtg.timer(timer1))
     )
 
-    if XTGSHOW:
+    if show_plot:
         import matplotlib.pyplot as plt
 
         plt.figure()

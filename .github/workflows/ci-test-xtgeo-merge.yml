@@ -31,4 +31,4 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
           pip install -r requirements/requirements_test.txt
-          pytest --disable-warnings -x
+          pytest --disable-warnings -x --generate-plots

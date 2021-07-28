@@ -58,7 +58,7 @@ def test_get_surface_from_cube(load_cube_rsgy1):
 
 @tsetup.skipsegyio
 @pytest.mark.skipifroxar
-def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1):
+def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
     """Slice a cube with a surface, nearest node, snapxy, algorithm 1 + 2"""
 
     kube = load_cube_rsgy1
@@ -74,21 +74,22 @@ def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1):
     xs2.slice_cube(kube, algorithm=2, snapxy=True)
     logger.info("Slicing alg 2...done in {} seconds".format(xtg.timer(t1)))
 
-    xs1.quickplot(
-        filename=join(tmpdir, "surf_slice_cube_near_snapxy_v1.png"),
-        colortable="seismic",
-        minmax=(-1, 1),
-        title="Reek",
-        infotext="Method: nearest, snapxy, algorithm 1",
-    )
+    if generate_plot:
+        xs1.quickplot(
+            filename=join(tmpdir, "surf_slice_cube_near_snapxy_v1.png"),
+            colortable="seismic",
+            minmax=(-1, 1),
+            title="Reek",
+            infotext="Method: nearest, snapxy, algorithm 1",
+        )
 
-    xs2.quickplot(
-        filename=join(tmpdir, "surf_slice_cube_near_snapxy_v2.png"),
-        colortable="seismic",
-        minmax=(-1, 1),
-        title="Reek",
-        infotext="Method: nearest, snapxy, algorithm 2",
-    )
+        xs2.quickplot(
+            filename=join(tmpdir, "surf_slice_cube_near_snapxy_v2.png"),
+            colortable="seismic",
+            minmax=(-1, 1),
+            title="Reek",
+            infotext="Method: nearest, snapxy, algorithm 2",
+        )
 
     logger.info("%s vs %s", xs1.values.mean(), xs2.values.mean())
     tsetup.assert_almostequal(xs1.values.mean(), xs2.values.mean(), 0.0001)

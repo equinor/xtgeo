@@ -27,7 +27,7 @@ SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
 
 
 @pytest.mark.skipifroxar
-def test_simple_plot(tmpdir):
+def test_simple_plot(tmpdir, generate_plot):
     """Test as simple map plot only making an instance++ and plot."""
 
     mysurf = RegularSurface()
@@ -39,11 +39,12 @@ def test_simple_plot(tmpdir):
     myplot.colormap = "gist_ncar"
     myplot.plot_surface(mysurf)
 
-    myplot.savefig(join(tmpdir, "map_simple.png"))
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "map_simple.png"))
 
 
 @pytest.mark.skipifroxar
-def test_map_plot_with_points(tmpdir):
+def test_map_plot_with_points(tmpdir, generate_plot):
     """Test as simple map plot with underlying points."""
 
     mysurf = RegularSurface()
@@ -63,11 +64,12 @@ def test_map_plot_with_points(tmpdir):
     myplot.plot_surface(mysurf)
     myplot.plot_points(mypoints)
 
-    myplot.savefig(join(tmpdir, "map_with_points.png"))
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "map_with_points.png"))
 
 
 @pytest.mark.skipifroxar
-def test_more_features_plot(tmpdir):
+def test_more_features_plot(tmpdir, generate_plot):
     """Map with some more features added, such as label rotation."""
 
     mysurf = RegularSurface()
@@ -83,11 +85,12 @@ def test_more_features_plot(tmpdir):
 
     myplot.plot_faults(myfaults)
 
-    myplot.savefig(join(tmpdir, "map_more1.png"))
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "map_more1.png"))
 
 
 @pytest.mark.skipifroxar
-def test_perm_logarithmic_map(tmpdir):
+def test_perm_logarithmic_map(tmpdir, generate_plot):
     """Map with PERM, log scale."""
 
     mysurf = RegularSurface(SFILE2)
@@ -99,4 +102,5 @@ def test_perm_logarithmic_map(tmpdir):
         mysurf, minvalue=0, maxvalue=6000, xlabelrotation=45, logarithmic=True
     )
 
-    myplot.savefig(join(tmpdir, "permx_normal.png"))
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "permx_normal.png"))

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-import os
 from os.path import join
 
-import pytest
 import numpy as np
+import pytest
 
 import xtgeo
-from xtgeo.cube import Cube
 from xtgeo.common import XTGeoDialog
-
+from xtgeo.cube import Cube
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -17,11 +15,6 @@ if not xtg.testsetup():
     raise SystemExit("Cannot find test setup")
 
 TPATH = xtg.testpathobj
-
-XTGSHOW = False
-if "XTGSHOW" in os.environ:
-    XTGSHOW = True
-
 
 SFILE1 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.segy")
 SFILE3 = join(TPATH, "cubes/reek/syntseis_20000101_seismic_depth_stack.storm")
@@ -290,7 +283,7 @@ def test_cube_swapaxes():
     np.testing.assert_array_equal(val1, val2)
 
 
-def test_cube_randomline():
+def test_cube_randomline(show_plot):
     """Import a cube, and compute a randomline given a simple Polygon"""
 
     incube = Cube(SFILE4)
@@ -304,7 +297,7 @@ def test_cube_randomline():
     assert hmin == pytest.approx(-15.7, 0.1)
     assert random.mean() == pytest.approx(-12.5, 0.1)
 
-    if XTGSHOW:
+    if show_plot:
         import matplotlib.pyplot as plt
 
         plt.figure()
