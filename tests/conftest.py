@@ -6,6 +6,7 @@ import pytest
 from hypothesis import settings
 
 settings.register_profile("ci", max_examples=1000, deadline=None)
+settings.register_profile("ci-fast", max_examples=10, deadline=None)
 
 ALLPLATF = set("darwin linux windows".split())
 SKIPPED = set("skipdarwin skiplinux skipwindows".split())
