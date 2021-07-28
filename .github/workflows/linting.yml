@@ -16,6 +16,6 @@ jobs:
       - name: Check black style and linting
         run: |
           pip install black
-          black --check *.py src tests
+          black --check *.py src tests --exclude tests/**/snapshots
           pip install flake8
           flake8 src tests
