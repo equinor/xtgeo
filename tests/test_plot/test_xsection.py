@@ -46,20 +46,6 @@ BIGWELL2 = "../xtgeo-testdata-equinor/data/wells/gfb/1/34_10-A-41.w"
 
 
 @pytest.mark.skipifroxar
-def test_very_basic(tmpdir):
-    """Just test that matplotlib works."""
-    assert "matplotlib" in str(plt)
-
-    plt.title("Hello world")
-    plt.savefig(join(tmpdir, "helloworld1.png"))
-    plt.savefig(join(tmpdir, "helloworld1.svg"))
-    if XTGSHOW:
-        plt.show()
-    logger.info("Very basic plotting")
-    plt.close()
-
-
-@pytest.mark.skipifroxar
 def test_xsection_init():
     """Trigger XSection class, basically."""
     xsect = XSection()

@@ -1,7 +1,6 @@
 import sys
 from os.path import join
 
-import matplotlib.pyplot as plt
 import pytest
 
 from xtgeo.common import XTGeoDialog
@@ -25,13 +24,6 @@ TPATH = xtg.testpathobj
 SFILE1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 PFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.pol"
 SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
-
-
-@pytest.mark.skipifroxar
-def test_very_basic_to_file(tmpdir):
-    """Just test that matplotlib works, to a file."""
-    plt.title("Hello world")
-    plt.savefig(join(tmpdir, "verysimple.png"))
 
 
 @pytest.mark.skipifroxar
