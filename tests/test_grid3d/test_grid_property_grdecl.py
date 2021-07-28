@@ -35,19 +35,17 @@ def test_grid_to_from_grdecl_file_is_identity(tmp_path, grid):
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
-@given(grids)
-def test_gridprop_to_from_file_is_identity(tmp_path, grid):
+@given(grids, st.data())
+def test_gridprop_to_from_file_is_identity(tmp_path, grid, data):
     filepath = tmp_path / "gridprop.grdecl"
 
-    for prop in grid.get_xyz_corners():
-        prop.to_file(filepath, fformat="grdecl")
-        prop_from_file = GridProperty().from_file(
-            filepath, name=prop.name, fformat="grdecl", grid=grid
-        )
+    prop = data.draw(st.sampled_from(grid.get_xyz_corners()))
+    prop.to_file(filepath, fformat="grdecl")
+    prop_from_file = GridProperty().from_file(
+        filepath, name=prop.name, fformat="grdecl", grid=grid
+    )
 
-        assert_allclose(
-            prop.get_npvalues1d(), prop_from_file.get_npvalues1d(), atol=1e-3
-        )
+    assert_allclose(prop.get_npvalues1d(), prop_from_file.get_npvalues1d(), atol=1e-3)
 
 
 @pytest.mark.parametrize(
