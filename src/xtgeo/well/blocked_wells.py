@@ -55,10 +55,7 @@ class BlockedWells(Wells):
         """Copy a BlockedWells instance to a new unique instance."""
 
         new = BlockedWells()
-
-        for well in self._wells:
-            newwell = well.copy()
-            new._props.append(newwell)
+        new.wells = [w.copy() for w in self._wells]
 
         return new
 
