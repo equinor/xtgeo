@@ -51,6 +51,26 @@ def fixture_loadwell3():
     return Well(WELL3)
 
 
+@pytest.fixture()
+def simple_well(string_to_well):
+    wellstring = """1.01
+Unknown
+OP_1 0 0 0
+4
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+Poro UNK lin
+Perm UNK lin
+Facies DISC 0 Background 1 Channel 2 Crevasse
+0 0 0 nan -999 -999 -999 -999
+1 1 1 1 0.1 0.01 1
+2 2 2 1 0.2 0.02 1
+3 3 3 2 0.3 0.03 1
+4 4 4 2 0.4 0.04 2
+5 5 5 3 0.5 0.05 2"""
+    well = string_to_well(wellstring)
+    yield well
+
+
 def test_import(loadwell1, snapshot):
     """Import well from file."""
 
@@ -148,15 +168,15 @@ def test_import_well_selected_logs():
         ("Facies", list(), "Input is not a dictionary"),
     ],
 )
-def test_set_logrecord_invalid(loadwell1, log_name, newdict, expected):
-    mywell = loadwell1
+def test_set_logrecord_invalid(simple_well, log_name, newdict, expected):
+    mywell = simple_well
 
     with pytest.raises(ValueError, match=expected):
         mywell.set_logrecord(log_name, newdict)
 
 
-def test_set_logrecord(loadwell1):
-    mywell = loadwell1
+def test_set_logrecord(simple_well):
+    mywell = simple_well
 
     mywell.set_logrecord("Facies", {"some_key": "some_val"})
     assert mywell.get_logrecord("Facies") == {"some_key": "some_val"}
@@ -169,15 +189,15 @@ def test_set_logrecord(loadwell1):
         ("not_in_log", "irrelevant", "Input log does not exist"),
     ],
 )
-def test_rename_log_invalid(loadwell1, old_name, new_name, expected):
-    mywell = loadwell1
+def test_rename_log_invalid(simple_well, old_name, new_name, expected):
+    mywell = simple_well
 
     with pytest.raises(ValueError, match=expected):
         mywell.rename_log(old_name, new_name)
 
 
-def test_rename_log(loadwell1):
-    mywell = loadwell1
+def test_rename_log(simple_well):
+    mywell = simple_well
     old_log = mywell.get_logrecord("Poro")
     mywell.rename_log("Poro", "new_name")
     assert "new_name" in mywell.lognames
@@ -188,17 +208,17 @@ def test_rename_log(loadwell1):
     "log_name,change_from, change_to",
     [("Poro", "CONT", "DISC"), ("Poro", "CONT", "CONT"), ("Facies", "DISC", "CONT")],
 )
-def test_set_log_type(loadwell1, log_name, change_from, change_to):
-    mywell = loadwell1
+def test_set_log_type(simple_well, log_name, change_from, change_to):
+    mywell = simple_well
     assert mywell.get_logtype(log_name) == change_from
     mywell.set_logtype(log_name, change_to)
     assert mywell.get_logtype(log_name) == change_to
 
 
-def test_loadwell1_properties(loadwell1):
+def test_loadwell1_properties(simple_well):
     """Import well from file and try to change lognames etc."""
 
-    mywell = loadwell1
+    mywell = simple_well
 
     assert mywell.get_logtype("Poro") == "CONT"
     assert mywell.get_logrecord("Poro") is None
@@ -291,10 +311,10 @@ def test_import_as_rms_export_as_hdf_many(tmp_path):
     print("Time for load RMSASC: ", xtg.timer(t0))
 
 
-def test_get_carr(loadwell1):
+def test_get_carr(simple_well):
     """Get a C array pointer"""
 
-    mywell = loadwell1
+    mywell = simple_well
 
     dummy = mywell.get_carray("NOSUCH")
 
