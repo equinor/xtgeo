@@ -1002,8 +1002,64 @@ def test_speed_new(string_to_well):
     print(f"Run time: {xtg.timer(t0)}")
 
 
-def test_truncate_parallel_path():
-    pass
+def test_truncate_parallel_path_too_short(string_to_well):
+    well_1 = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+1 1 1 nan
+2 2 1 1
+3 3 1 1
+4 4 1 1"""
+    )
+    well_2 = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+3 3 1 1
+4 4 1 1"""
+    )
+    with pytest.raises(ValueError, match="Too few points to truncate parallel path"):
+        well_1.truncate_parallel_path(well_2)
+
+    with pytest.raises(ValueError, match="Too few points to truncate parallel path"):
+        well_2.truncate_parallel_path(well_1)
+
+
+def test_truncate_parallel_path(string_to_well):
+    well_1 = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+1 1 1 1
+2 2 1 1
+3 3 1 1
+4 4 1 1
+5 5 1 1"""
+    )
+    well_2 = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+2 2 1 1
+3 3 1 1
+4 4 1 1"""
+    )
+    well_1.truncate_parallel_path(well_2)
+    assert well_1.dataframe.to_dict() == {
+        "X_UTME": {0: 1.0, 1: 5.0},
+        "Y_UTMN": {0: 1.0, 1: 5.0},
+        "Z_TVDSS": {0: 1.0, 1: 1.0},
+        "Zonelog": {0: 1.0, 1: 1.0},
+    }
 
 
 @pytest.mark.parametrize(
