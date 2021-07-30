@@ -1109,9 +1109,11 @@ class Well:
         if atol is None:
             atol = 0.0
 
-        if self._df.size < 3 or other._df.size < 3:
-            # xtg.warn('Too few points to truncate parallel path')
-            return
+        if self.dataframe.shape[0] < 3 or other.dataframe.shape[0] < 3:
+            raise ValueError(
+                f"Too few points to truncate parallel path, was {self._df.size} and "
+                f"{other._df.size}, must be >3"
+            )
 
         # extract numpies from XYZ trajectory logs
         xv1 = self._df["X_UTME"].values
