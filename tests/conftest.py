@@ -32,6 +32,11 @@ def pytest_runtest_setup(item):
         if "ROXENV" not in os.environ:
             pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
 
+    # pytest.mark.requires_opm:
+    if "requires_opm" in markers:
+        if "HAS_OPM" not in os.environ:
+            pytest.skip("Skip as requires OPM")
+
     # pytest.mark.linux ...
     supported = ALLPLATF.intersection(mark.name for mark in item.iter_markers())
     plat = platform.system().lower()
