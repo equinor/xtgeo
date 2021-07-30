@@ -535,7 +535,7 @@ class Well:
                 lognames_strict=lognames_strict,
             )
         else:
-            logger.error("Invalid file format")
+            raise IOError(f"Invalid file format {fformat}")
 
         self._ensure_consistency()
         self._filesrc = wfile.name
