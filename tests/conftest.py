@@ -12,6 +12,12 @@ ALLPLATF = set("darwin linux windows".split())
 SKIPPED = set("skipdarwin skiplinux skipwindows".split())
 
 
+@pytest.fixture
+def setup_tmpdir(tmpdir):
+    with tmpdir.as_cwd():
+        yield
+
+
 def pytest_runtest_setup(item):
     """Called for each test."""
 

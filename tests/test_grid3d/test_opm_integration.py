@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
@@ -59,33 +59,32 @@ END
 """
 
 
-def convert_to_egrid(tmpdir, dimensions, grdecl):
-    deck = tmpdir / "test.DATA"
+def convert_to_egrid(dimensions, grdecl):
+    deck = "test.DATA"
     load_statement = f"INCLUDE\n '{grdecl}' /"
-    with tmpdir.as_cwd():
-        with open(deck, "w") as fh:
-            fh.write(deck_contents(dimensions, load_statement))
-        os.system(f"flow {deck}")
-    return tmpdir / "TEST.EGRID"
+    with open(deck, "w") as fh:
+        fh.write(deck_contents(dimensions, load_statement))
+    os.system(f"flow {deck}")
+    return "TEST.EGRID"
 
 
-def read_write_egrid(tmpdir, dimensions, egrid):
-    deck = tmpdir / "test.DATA"
+def read_write_egrid(dimensions, egrid):
+    deck = "test.DATA"
     load_statement = f"GDFILE\n '{egrid}' /"
-    with tmpdir.as_cwd():
-        with open(deck, "w") as fh:
-            fh.write(deck_contents(dimensions, load_statement))
-        os.system(f"flow {deck}")
-    return tmpdir / "TEST.EGRID"
+    with open(deck, "w") as fh:
+        fh.write(deck_contents(dimensions, load_statement))
+    os.system(f"flow {deck}")
+    return "TEST.EGRID"
 
 
 @pytest.mark.requires_opm
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@pytest.mark.usefixtures("setup_tmpdir")
+@settings(deadline=None, max_examples=5)
 @given(xtgeo_grids)
-def test_grdecl_roundtrip(tmpdir, xtgeo_grid):
-    grdecl_file = tmpdir / "xtg_grid.grdecl"
+def test_grdecl_roundtrip(xtgeo_grid):
+    grdecl_file = "xtg_grid.grdecl"
     xtgeo_grid.to_file(str(grdecl_file), fformat="grdecl")
-    egrid_file = convert_to_egrid(tmpdir, xtgeo_grid.dimensions, grdecl_file)
+    egrid_file = convert_to_egrid(xtgeo_grid.dimensions, grdecl_file)
     opm_grid = xtgeo.Grid(str(egrid_file), fformat="egrid")
 
     opm_grid._xtgformat2()
@@ -96,16 +95,17 @@ def test_grdecl_roundtrip(tmpdir, xtgeo_grid):
     assert_allclose(opm_grid._zcornsv, xtgeo_grid._zcornsv, atol=0.02)
 
 
-@pytest.mark.skip(
+@pytest.mark.xfail(
     reason="Currently fails as xtgeo egrid generation is not compatible with opm"
 )
+@pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.requires_opm
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@settings(deadline=None, max_examples=5)
 @given(xtgeo_grids)
-def test_egrid_roundtrip(tmpdir, xtgeo_grid):
-    egrid_file = tmpdir / "xtg_grid.egrid"
+def test_egrid_roundtrip(xtgeo_grid):
+    egrid_file = "xtg_grid.egrid"
     xtgeo_grid.to_file(str(egrid_file), fformat="egrid")
-    opm_egrid_file = read_write_egrid(tmpdir, xtgeo_grid.dimensions, egrid_file)
+    opm_egrid_file = read_write_egrid(xtgeo_grid.dimensions, egrid_file)
     opm_grid = xtgeo.Grid(str(opm_egrid_file), fformat="egrid")
 
     opm_grid._xtgformat2()

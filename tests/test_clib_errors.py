@@ -1,16 +1,12 @@
-import pytest
 import io
-import numpy as np
-import stat
 import os
+import stat
+
+import numpy as np
+import pytest
+
 import xtgeo
 from xtgeo.cxtgeo import _cxtgeo
-
-
-@pytest.fixture
-def setup_tmpdir(tmpdir):
-    with tmpdir.as_cwd():
-        yield
 
 
 @pytest.fixture()
