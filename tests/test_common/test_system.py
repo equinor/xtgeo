@@ -95,15 +95,19 @@ def test_check_file(reek_grid_path, filename):
 
 
 @pytest.mark.parametrize(
-    "filename, stem, extension",
+    "filename, stem, extension, obj",
     [
-        (pathlib.Path("3dgrids/reek/REEK.EGRID"), "REEK", "EGRID"),
-        (pathlib.Path("/tmp/text.txt"), "text", "txt"),
-        (pathlib.Path("/tmp/null"), "null", ""),
+        (pathlib.Path("3dgrids/reek/REEK.EGRID"), "REEK", "EGRID", False),
+        (pathlib.Path("/tmp/text.txt"), "text", "txt", False),
+        (pathlib.Path("/tmp/null"), "null", "", False),
+        (pathlib.Path("/tmp/null.with.dots.any"), "null.with.dots", "any", False),
+        (pathlib.Path("/tmp/null.with.dots.any"), "null.with.dots", "any", True),
+        ("null.with.dots.any", "null.with.dots", "any", False),
+        ("null.with.dots.any", "null.with.dots", "any", True),
     ],
 )
-def test_file_splitext(filename, stem, extension):
-    xtgeo_file = xtgeo._XTGeoFile(filename)
+def test_file_splitext(filename, stem, extension, obj):
+    xtgeo_file = xtgeo._XTGeoFile(filename, obj=obj)
     assert (stem, extension) == xtgeo_file.splitext(lower=False)
 
 

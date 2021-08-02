@@ -245,6 +245,10 @@ class _XTGeoFile(object):
             newname = short + "--" + desc
             if date:
                 newname += "--" + date
+        else:
+            # return without modifications of self._file to avoid with_suffix() issues
+            # if the file name stem itself contains multiple '.'
+            return
 
         self._file = (parent / newname).with_suffix(suffix)
 
