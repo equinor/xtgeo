@@ -1037,12 +1037,11 @@ class Well:
             False if geometrics cannot be computed
 
         """
-        if self._df.size < 3:
-            logger.warning(
-                "Cannot compute geometrics for %s. Too few  " "trajectory points",
-                self.name,
+        if self._df.shape[0] < 3:
+            raise ValueError(
+                f"Cannot compute geometrics for {self.name}. Not enough "
+                f"trajectory points (need >3, have: {self.dataframe.shape[0]})"
             )
-            return False
 
         # extract numpies from XYZ trajetory logs
         ptr_xv = self.get_carray("X_UTME")

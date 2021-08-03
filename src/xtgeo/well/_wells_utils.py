@@ -41,10 +41,10 @@ def wellintersections(
 
         progress.flush(iwell)
 
-        gstatus = well.geometrics()
-
         logger.info("Work with %s", well.name)
-        if not gstatus:
+        try:
+            well.geometrics()
+        except ValueError:
             logger.info("Skip %s (cannot compute geometrics)", well.name)
             continue
 

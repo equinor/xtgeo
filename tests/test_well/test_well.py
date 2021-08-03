@@ -550,6 +550,21 @@ def test_mask_shoulderbeds_use_tvd_md(loadwell3):
     assert np.isnan(usewell.dataframe.at[1595, "GR"])
 
 
+def test_geometrics_exception(string_to_well):
+    well = string_to_well(
+        """1.01
+Unknown
+name 0 0 0
+1
+Zonelog DISC 1 zone1 2 zone2 3 zone3
+1 1 1 nan
+2 1 1 1
+"""
+    )
+    with pytest.raises(ValueError, match="Not enough trajectory points"):
+        well.geometrics()
+
+
 def test_geometrics_simple(string_to_well):
     well = string_to_well(
         """1.01
