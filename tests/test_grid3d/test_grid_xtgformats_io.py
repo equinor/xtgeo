@@ -236,6 +236,34 @@ def test_benchmark_grid_hdf5_import_blosc_compression(
     assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
 
 
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_egrid_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.egrid")
+
+    @benchmark
+    def write():
+        benchmark_grid._zcornsv += 1.0
+        benchmark_grid.to_file(fname, fformat="egrid")
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_egrid_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.egrid")
+
+    benchmark_grid._zcornsv += 1.0
+    benchmark_grid.to_file(fname, fformat="egrid")
+
+    grd2 = xtgeo.Grid()
+
+    @benchmark
+    def read():
+        grd2.from_file(fname, fformat="egrid")
+
+    assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
+    assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
+    assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
+
+
 # ======================================================================================
 # Grid properties:
 
