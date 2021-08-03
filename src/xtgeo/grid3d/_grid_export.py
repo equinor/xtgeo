@@ -7,8 +7,8 @@ import h5py
 import hdf5plugin
 import roffio
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d._egrid import EGrid
 
 from ._grdecl_grid import GrdeclGrid
 from ._roff_grid import RoffGrid
@@ -44,20 +44,7 @@ def export_grdecl(self, gfile, mode):
 
 def export_egrid(self, gfile):
     """Export grid to Eclipse EGRID format, binary."""
-    self._xtgformat1()
-
-    logger.debug("Export to binary EGRID...")
-
-    _cxtgeo.grd3d_export_egrid(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        gfile,
-        0,
-    )
+    EGrid.from_xtgeo_grid(self).to_file(gfile)
 
 
 def export_xtgcpgeom(self, gfile, subformat=844):

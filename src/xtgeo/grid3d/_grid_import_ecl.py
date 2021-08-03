@@ -2,108 +2,39 @@
 
 """Grid import functions for Eclipse, new approach (i.e. version 2)."""
 
-import numpy as np
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from xtgeo.grid3d._egrid import EGrid, RockModel
 from xtgeo.grid3d._grdecl_grid import GrdeclGrid
-from xtgeo.grid3d._grid_eclbin_record import eclbin_record
-
-from . import _grid3d_utils as utils
 
 xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Import Eclipse result .EGRID
-# See notes in grid.py on dual porosity / dual perm scheme.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def import_ecl_egrid(self, gfile):
-    """Import, private to this routine."""
-    # scan file for property
-    logger.info("Make kwlist by scanning")
-    kwlist = utils.scan_keywords(
-        gfile, fformat="xecl", maxkeys=1000, dataframe=False, dates=False
-    )
-    bpos = {}
-    for name in ("COORD", "ZCORN", "ACTNUM", "MAPAXES"):
-        bpos[name] = -1  # initially
+    egrid = EGrid.from_file(gfile._file)
 
-    self._dualporo = False
-    for kwitem in kwlist:
-        kwname, kwtype, kwlen, kwbyte = kwitem
-        if kwname == "FILEHEAD":
-            # read FILEHEAD record:
-            filehead = eclbin_record(gfile, "FILEHEAD", kwlen, kwtype, kwbyte)
-            dualp = filehead[5].tolist()
-            logger.info("Dual porosity flag is %s", dualp)
-            if dualp == 1:
-                self._dualporo = True
-                self._dualperm = False
-            elif dualp == 2:
-                self._dualporo = True
-                self._dualperm = True
-        elif kwname == "GRIDHEAD":
-            # read GRIDHEAD record:
-            gridhead = eclbin_record(gfile, "GRIDHEAD", kwlen, kwtype, kwbyte)
-            self._ncol, self._nrow, self._nlay = gridhead[1:4].tolist()
-        elif kwname in ("COORD", "ZCORN", "ACTNUM"):
-            bpos[kwname] = kwbyte
-        elif kwname == "MAPAXES":  # not always present
-            bpos[kwname] = kwbyte
+    self._ncol, self._nrow, self._nlay = egrid.dimensions
 
-    logger.info(
-        "Grid dimensions in EGRID file: %s %s %s", self._ncol, self._nrow, self._nlay
-    )
+    self._coordsv = egrid.xtgeo_coord()
+    self._zcornsv = egrid.xtgeo_zcorn()
+    self._actnumsv = egrid.xtgeo_actnum()
+    self._subgrids = None
+    self._xtgformat = 2
 
-    # allocate dimensions:
-    ncoord, nzcorn, ntot = self.vectordimensions
+    if egrid.egrid_head.file_head.rock_model == RockModel.DUAL_POROSITY:
+        self._dualporo = True
+        self._dualperm = False
+    elif egrid.egrid_head.file_head.rock_model == RockModel.DUAL_PERMEABILITY:
+        self._dualporo = True
+        self._dualperm = True
 
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-    p_nact = _cxtgeo.new_longpointer()
-
-    option = 0
-    if self._dualporo:
-        option = 1
-
-    cfhandle = gfile.get_cfhandle()
-    ier = _cxtgeo.grd3d_imp_ecl_egrid(
-        cfhandle,
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        bpos["MAPAXES"],
-        bpos["COORD"],
-        bpos["ZCORN"],
-        bpos["ACTNUM"],
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        p_nact,
-        option,
-    )
-
-    gfile.cfclose()
-
-    logger.info("Reading ECL EGRID (C code) done")
-    if ier == -1:
-        raise RuntimeError("Error code -1 from _cxtgeo.grd3d_imp_ecl_egrid")
-
-    self._nactive = _cxtgeo.longpointer_value(p_nact)
-    self._xtgformat = 1
-
-    # in case of DUAL PORO/PERM ACTNUM will be 0..3; need to convert
     if self._dualporo:
         self._dualactnum = self.get_actnum(name="DUALACTNUM")
         acttmp = self._dualactnum.copy()
         acttmp.values[acttmp.values >= 1] = 1
         self.set_actnum(acttmp)
-
-    logger.info("File is closed")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
