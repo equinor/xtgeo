@@ -23,7 +23,6 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
     """
     # get the relevant logs:
 
-    zlist = []
     self.geometrics()  # note the caller has made a copy of the true self
 
     # as zlog is float64; need to convert to int array with high
