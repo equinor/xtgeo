@@ -52,7 +52,6 @@ def wellintersections(
 
         xcor = welldfr["X_UTME"].values
         ycor = welldfr["Y_UTMN"].values
-        zcor = welldfr["Z_TVDSS"].values
         mcor = welldfr[well.mdlogname].values
         logger.info("The mdlogname property is: %s", well.mdlogname)
 
