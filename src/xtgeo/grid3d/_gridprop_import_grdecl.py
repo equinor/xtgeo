@@ -1,8 +1,6 @@
 """Importing grid props from GRDECL, ascii or binary"""
 
 
-from contextlib import contextmanager
-
 import numpy as np
 import numpy.ma as ma
 
@@ -10,6 +8,7 @@ import xtgeo
 
 from . import _grid3d_utils as utils
 from . import _grid_eclbin_record as _eclbin
+from ._grdecl_format import open_grdecl
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -80,75 +79,6 @@ def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
     pfile.cfclose()
 
 
-@contextmanager
-def open_grdecl(grdecl_file, keywords):
-    """
-    Opens the grdecl_file for reading. Is a generator for tuples of keyword /
-    values in records of that file. The format of the file must be that of the
-    GRID section of a eclipse input DATA file.
-
-    The records looked for must be "simple" ie.  start with the keyword, be
-    followed by single word values and ended by a slash ('/').
-
-    .. code-block:: none
-
-        KEYWORD
-        value value value /
-
-    reading the above file with :code:`open_grdecl("filename.grdecl",
-    keywords="KEYWORD")` will generate :code:`[("KEYWORD", ["value", "value",
-    "value"])]`
-
-    open_grdecl does not follow includes, obey skips, parse MESSAGE commands or
-    make exception for groups and subrecords.
-
-    Raises:
-        ValueError: when end of file is reached without terminating a keyword.
-
-    Args:
-        keywords (List[str]): Which keywords to look for, these are expected to
-        be at the start of a line in the file  and the respective values
-        following on subsequent lines separated by whitespace. Reading of a
-        keyword is completed by a final '\'. See example above.
-
-    """
-
-    def read_grdecl(grdecl_stream):
-        words = []
-        keyword = None
-
-        line_no = 1
-        line = grdecl_stream.readline()
-        while line:
-            if keyword is None:
-                splitted = line.split()
-                if splitted:
-                    first_word = splitted[0]
-                    if first_word in keywords:
-                        keyword = first_word
-                        logger.debug("Keyword %s found on line %d", keyword, line_no)
-
-            else:
-                for word in line.split():
-                    if word == "--":
-                        break
-
-                    if word == "/":
-                        yield (keyword, words)
-                        words = []
-                        keyword = None
-                        break
-                    words.append(word)
-            line = grdecl_stream.readline()
-            line_no += 1
-
-        if keyword is not None:
-            raise ValueError(f"Reached end of stream while reading {keyword}")
-
-    with open(grdecl_file, "r") as stream:
-        yield read_grdecl(stream)
-
-
 def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
     """
     Read a 3d grid property from a grdecl file, see open_grdecl for description
@@ -169,7 +99,7 @@ def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
     """
     result = None
 
-    with open_grdecl(filename, keywords=(keyword,)) as kw_generator:
+    with open_grdecl(filename, keywords=[], simple_keywords=(keyword,)) as kw_generator:
         try:
             _, result = next(kw_generator)
         except StopIteration as si:
