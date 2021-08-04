@@ -397,3 +397,38 @@ def test_xtgeo_zcorn():
         # ne of (1,1) corner line is sw of cell at (1,1)
         zcorn[west, 1, south, 1, 1, 0],
     ]
+
+
+def test_duplicate_insignificant_values():
+    zcorn = np.zeros((2, 1, 2, 1, 2, 1))
+    zcorn_xtgeo = np.zeros((2, 2, 2, 4))
+    grdecl_grid = ggrid.GrdeclGrid(
+        specgrid=ggrid.SpecGrid(1, 1, 1),
+        zcorn=zcorn.ravel(),
+        coord=np.ones((2, 2, 6)).ravel(),
+    )
+
+    # set significant values to one
+    zcorn_xtgeo[1:, 1:, :, 0] = 1
+    zcorn_xtgeo[:2, 1:, :, 1] = 2
+    zcorn_xtgeo[1:, :2, :, 2] = 3
+    zcorn_xtgeo[:2, :2, :, 3] = 4
+
+    grdecl_grid.duplicate_insignificant_xtgeo_zcorn(zcorn_xtgeo)
+
+    print(zcorn_xtgeo.tolist())
+    assert zcorn_xtgeo.tolist() == [
+        [[[4] * 4] * 2, [[2] * 4] * 2],
+        [[[3] * 4] * 2, [[1] * 4] * 2],
+    ]
+
+
+@given(xtgeo_compatible_grdecl_grids)
+def test_duplicate_insignificant_values_property(grid):
+    nx, ny, nz = grid.dimensions
+    xtgeo_zcorn = grid.xtgeo_zcorn()
+
+    assert np.all(xtgeo_zcorn[nx, ny, :, :] == xtgeo_zcorn[nx, ny, :, 0, np.newaxis])
+    assert np.all(xtgeo_zcorn[0, ny, :, :] == xtgeo_zcorn[0, ny, :, 1, np.newaxis])
+    assert np.all(xtgeo_zcorn[nx, 0, :, :] == xtgeo_zcorn[nx, 0, :, 2, np.newaxis])
+    assert np.all(xtgeo_zcorn[0, 0, :, :] == xtgeo_zcorn[0, 0, :, 3, np.newaxis])
