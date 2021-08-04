@@ -367,3 +367,33 @@ def test_eq_symmetry(grdecl_grid1, grdecl_grid2):
 def test_eq_transitivity(grdecl_grid1, grdecl_grid2, grdecl_grid3):
     if grdecl_grid1 == grdecl_grid2 and grdecl_grid2 == grdecl_grid3:
         assert grdecl_grid1 == grdecl_grid3
+
+
+def test_xtgeo_zcorn():
+    zcorn = np.arange(32).reshape((2, 2, 2, 2, 2, 1), order="F")
+    grdecl_grid = ggrid.GrdeclGrid(
+        specgrid=ggrid.SpecGrid(2, 2, 1),
+        zcorn=zcorn.ravel(order="F"),
+        coord=np.arange(54),
+    )
+    xtgeo_zcorn = grdecl_grid.xtgeo_zcorn()
+    assert xtgeo_zcorn[0, 0, 0].tolist() == [0, 0, 0, 0]
+    assert xtgeo_zcorn[2, 2, 1].tolist() == [31, 31, 31, 31]
+
+    # 1,1,1 means the upper corner of the middle line,
+    # and xtgeo values are in the order sw, se, nw, ne
+    # These are all upper values in the original zcorn
+    west = 0
+    east = 1
+    south = 0
+    north = 1
+    assert xtgeo_zcorn[1, 1, 1].tolist() == [
+        # sw of (1,1) corner line ne of cell at (0,0)
+        zcorn[east, 0, north, 0, 1, 0],
+        # se of (1,1) corner line is nw of cell at (1,0)
+        zcorn[west, 1, north, 0, 1, 0],
+        # nw of (1,1) corner line is se of cell at (0,1)
+        zcorn[east, 0, south, 1, 1, 0],
+        # ne of (1,1) corner line is sw of cell at (1,1)
+        zcorn[west, 1, south, 1, 1, 0],
+    ]

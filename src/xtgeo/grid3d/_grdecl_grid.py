@@ -302,7 +302,7 @@ class GrdeclGrid:
     The number of cells in each direction is described in the SPECGRID keyword.
 
     The values in COORD, ZCORN and ACTNUM are stored flattened in F-order and
-    have dimensions (nx+1,ny+1,6), (nx,2,ny,2,nz), and (nx,ny,nz) respectively.
+    have dimensions (nx+1,ny+1,6), (nx,2,ny,2,nz,2), and (nx,ny,nz) respectively.
 
     COORD and ZCORN descibe a corner point geometry for the grid. There is a
     straight line from the bottom to the top of the grid on which the corners
