@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays
-from numpy.testing import assert_allclose
 
 import xtgeo.grid3d._grdecl_grid as ggrid
 from xtgeo.grid3d import Grid
@@ -266,9 +265,9 @@ def test_to_from_xtgeogrid_format2(xtggrid):
     xtggrid._xtgformat2()
     grdecl_grid = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
 
-    assert_allclose(grdecl_grid.xtgeo_actnum(), xtggrid._actnumsv, atol=0.02)
-    assert_allclose(grdecl_grid.xtgeo_coord(), xtggrid._coordsv, atol=0.02)
-    assert_allclose(grdecl_grid.xtgeo_zcorn(), xtggrid._zcornsv, atol=0.02)
+    assert grdecl_grid.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
+    assert grdecl_grid.xtgeo_coord() == pytest.approx(xtggrid._coordsv, abs=0.02)
+    assert grdecl_grid.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
 
 
 @given(xtgeo_grids)
@@ -277,10 +276,9 @@ def test_to_from_xtgeogrid_format1(xtggrid):
     grdecl_grid = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
 
     xtggrid._xtgformat2()
-    assert_allclose(grdecl_grid.xtgeo_actnum(), xtggrid._actnumsv, atol=0.02)
-    assert_allclose(grdecl_grid.xtgeo_coord(), xtggrid._coordsv, atol=0.02)
-    nx, ny, nz = grdecl_grid.dimensions
-    assert_allclose(grdecl_grid.xtgeo_zcorn(), xtggrid._zcornsv, atol=0.02)
+    assert grdecl_grid.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
+    assert grdecl_grid.xtgeo_coord() == pytest.approx(xtggrid._coordsv, abs=0.02)
+    assert grdecl_grid.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
 
 
 @given(xtgeo_compatible_grdecl_grids)
@@ -296,9 +294,9 @@ def test_to_from_grdeclgrid(grdecl_grid):
     xtggrid._xtgformat = 2
 
     grdecl_grid2 = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
-    assert_allclose(grdecl_grid2.xtgeo_actnum(), xtggrid._actnumsv, atol=0.02)
-    assert_allclose(grdecl_grid2.xtgeo_coord(), xtggrid._coordsv, atol=0.02)
-    assert_allclose(grdecl_grid2.xtgeo_zcorn(), xtggrid._zcornsv, atol=0.02)
+    assert grdecl_grid2.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
+    assert grdecl_grid2.xtgeo_coord() == pytest.approx(xtggrid._coordsv, abs=0.02)
+    assert grdecl_grid2.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
 
 
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
@@ -317,12 +315,14 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid):
     xtggrid.to_file(tmp_path / "xtggrid.grdecl", fformat="grdecl")
     grdecl_grid2 = ggrid.GrdeclGrid.from_file(tmp_path / "xtggrid.grdecl")
 
-    assert_allclose(grdecl_grid.zcorn, grdecl_grid2.zcorn, atol=0.1)
-    assert_allclose(grdecl_grid.xtgeo_coord(), grdecl_grid2.xtgeo_coord(), atol=0.1)
+    assert grdecl_grid.zcorn == pytest.approx(grdecl_grid2.zcorn, abs=0.02)
+    assert grdecl_grid.xtgeo_coord() == pytest.approx(
+        grdecl_grid2.xtgeo_coord(), abs=0.02
+    )
     if grdecl_grid.actnum is None:
         assert grdecl_grid2.actnum is None or np.all(grdecl_grid2.actnum)
     else:
-        assert np.array_equal(grdecl_grid.actnum, grdecl_grid2.actnum)
+        assert grdecl_grid.actnum.tolist() == grdecl_grid2.actnum.tolist()
 
 
 @settings(
@@ -337,9 +337,12 @@ def test_from_to_grdeclgrid_write(tmp_path, grdecl_grid):
     xtggrid = Grid(tmp_path / "xtggrid.grdecl", fformat="grdecl")
 
     xtggrid._xtgformat2()
-    assert_allclose(grdecl_grid.xtgeo_zcorn(), xtggrid._zcornsv, atol=0.1)
-    assert_allclose(grdecl_grid.xtgeo_coord(), xtggrid._coordsv, atol=0.02)
-    assert_allclose(grdecl_grid.xtgeo_zcorn(), xtggrid._zcornsv, atol=0.02)
+    if grdecl_grid.actnum is None:
+        assert np.all(xtggrid._actnumsv)
+    else:
+        assert grdecl_grid.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
+    assert grdecl_grid.xtgeo_coord() == pytest.approx(xtggrid._coordsv, abs=0.02)
+    assert grdecl_grid.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
 
 
 @given(xtgeo_compatible_grdecl_grids)
