@@ -830,3 +830,11 @@ def test_bulkvol_speed():
     _ = grd.get_bulk_volume()
     ncells = np.prod(dimens)
     print(xtg.timer(t0), ncells)
+
+
+def test_bad_egrid_ends_before_kw(tmp_path):
+    egrid_file = tmp_path / "test.egrid"
+    with open(egrid_file, "wb") as fh:
+        fh.write(b"\x00\x00\x00\x10")
+    with pytest.raises(ValueError, match="scanning ecl keywords"):
+        xtgeo.grid_from_file(egrid_file, fformat="egrid")
