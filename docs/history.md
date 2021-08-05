@@ -1,9 +1,75 @@
 # Release notes
 
-## Version 2.15 (in prep)
+## Version 2.15
+
+* Pending API changes:
+  * The initialisation of different objects in xtgeo currently manipulates an
+    instance of itself.  We want to deprecate said behaviour and instead return a
+    new instance on each creation. This work have now started, but currently it will
+    only produce a warning. In the next major we will deprecate relevant behaviour.
+  * The following classes will undergo changes: `Grid`, `GridProperty`,
+    `RegularSurface`, `Points`, `Polygons`, `Well` and `Cube`, but at this stage only
+    `RegularSurface` is affected.
+  * For example:
+
+    There are currently multiple ways of creating e.g. a `RegularSurface` in `XTGeo`:
+
+    1) Creating an instance and then populating it by reading a file:
+
+      >> `surf = RegularSurface()`
+      >> `surf.from_file('myfile.gri')`
+
+    2) Providing a file (any supported file format can be given):
+
+      >> `surf = RegularSurface('myfile.gri')`
+
+    3) Using one of the wrapper functions (similarly with cube, roxar, grid):
+      >> `surf = xtgeo.surface_from_file('myfile.gri')`
+
+    These methods are consistent for all classes in `XTGeo`.
+
+    Methods 1 and 2 will be deprecated, while using the wrapper function (3) will
+    be the preferred approach.
+
+  * Until version 2.14, creating an empty `RegularSurface` provided a default
+    surface with `ncol=5`, `nrow=3`, `xinc=25`, `yinc=25` and the following values:
+    `[[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]]`.
+    Creating an empty `RegularSurface` in this version will still provide the default
+    structure, but in version 3 values will be set to `0` instead.
+    Creating an empty `RegularSurface` will however display a deprecation warning, and
+    warns that `xinc`, `yinc`, `ncol` and `nrow` should be set explicitly.
+
 
 * New features:
   * Python 3.9 support, with PYPI wheel.
+  * Add the possibility to write Well to Roxar API #528
+  * Read and write ROFF on ASCII now supported #549
+  * Add warning for roxar grid with dual index #495 #491 #306
+
+* Improvements and bug fixes:
+  * GRDECL file format reading now handles repeat counts. #435
+  * Read and write of ROFF files have been refactored and moved to separate
+    package (roffio). Speed is improved, and ASCII roff is now supported.
+    This solved several bugs and issues related to roff reading, such as handling
+    large file sizes and long keywords. #549 #548 #537 #536
+  * Fix: Reading a discrete property from file and save in Roxar API is
+    now corrected #531.
+  * Fix: handling of file extensions with multiple "." in name #592
+  * Fix: MAPAXES being ignored when last in file in Eclipse formats #581
+  * Fix: handling of subgrids in hybrid grids #553
+  * Several cases of non-recoverable exit have now been replaced by an
+    Exception #552 #545
+  * Fix: a memory access violation issue in translate_coordinates for 3D grids #550
+  * Fix: invalid read in surf_get_z_from_ij (C backend) #551
+  * Fix: Segfaulting when using get_value_from_xy (C backend) #496
+  * Fix: Checks on indices in set_grid in roxar api #578
+  * Change datatype for counters, related to #537
+  * Fix: Check validity on colnames when setting dataframe for Polygons #506
+  * Fix: GridProperty accepts arbitrary line and keyword length when reading GRDECL #504
+  * Fix: GridProperty would not accept cases with inactive cells when
+    reading GRDECL (introduced in XTGeo 2.6-2.10) #507
+  * Fix: Write to roxapi discrete prop #531
+
 
 ## Version 2.14
 
