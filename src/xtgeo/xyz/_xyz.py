@@ -27,7 +27,6 @@ class XYZ:
         self._yname = "Y_UTMN"
         self._zname = "Z_TVDSS"
         self._pname = "POLY_ID"
-        self._mname = "M_MDEPTH"
         self._filesrc = None
         # other attributes name: type, where type is
         # ~ ('str', 'int', 'float', 'bool')
@@ -132,7 +131,6 @@ class XYZ:
         mycopy._yname = self._yname
         mycopy._zname = self._zname
         mycopy._pname = self._pname
-        mycopy._mname = self._mname
         mycopy._filescr = self._filesrc = None
         mycopy._attrs = deepcopy(self._attrs)
 
