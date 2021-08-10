@@ -597,3 +597,11 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def eli_outside(self, poly):
         """Eliminate current map values outside polygons."""
         self.operation_polygons(poly, 0, opname="eli", inside=False)
+
+    # ==================================================================================
+    # Operations involving other Polygons object(s)
+    # ==================================================================================
+
+    @inherit_docstring(inherit_from=XYZ.append)
+    def append(self, other, attributes=None):  # pylint: disable=redefined-builtin
+        return super().append(other, attributes=attributes)

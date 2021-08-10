@@ -335,3 +335,36 @@ def test_raise_non_existing_name(name_attribute):
     with pytest.raises(ValueError) as execinfo:
         setattr(pol, name_attribute, "NON_EXISTING")
     assert "does not exist" in str(execinfo.value)
+
+
+def test_append_polygons():
+    """Test implicitly the _xyz.append() method."""
+
+    pol1 = Polygons()
+    pol2 = Polygons()
+
+    mypoly1 = {
+        pol1.xname: [0.0, 1.0, 2.0],
+        pol1.yname: [100.0, 100.0, 100.0],
+        pol1.zname: [0, 50, 60],
+        pol1.pname: [1, 1, 1],
+    }
+    pol1.dataframe = pd.DataFrame(mypoly1)
+
+    mypoly2 = {
+        pol2.xname: [10.0, 15.0, 20.0],
+        pol2.yname: [200.0, 200.0, 200.0],
+        pol2.zname: [10, 150, 160],
+        pol2.pname: [0, 0, 0],
+    }
+    pol2.dataframe = pd.DataFrame(mypoly2)
+
+    pol1.hlen()
+    pol2.hlen()
+
+    print("XXX", pol2.attributes)
+
+    pol1.append(pol2)
+
+    assert pol1.dataframe[pol1.pname].all() == pd.Series([1, 1, 1, 2, 2, 2]).all()
+    print(pol1.dataframe)

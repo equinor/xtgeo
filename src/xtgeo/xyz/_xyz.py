@@ -601,3 +601,56 @@ class XYZ:
             realisation,
             attributes,
         )
+
+    def append(self, other, attributes=None):
+        """Append objects by adding dataframes together.
+
+        Args:
+            other: Points or Polygons object
+            attributes: List of attribute names one wants to append in addition.
+                Note that the two polygons must share attribute name if this should
+                have any meaning. As default, attributes are None which means that
+                any additional columns are not applied, and the resulting Polygons()
+                instance will only keep the basic columns. This is intentional
+                behaviour.
+
+        Example::
+
+            p1 = xtgeo.polygons_from_file("some1.pol")
+            p2 = xtgeo.polygons_from_file("some2.pol")
+
+            p1.append(p2)
+
+        """
+        df1 = self.dataframe
+        df2 = other.dataframe
+
+        other.xname = self.xname
+        other.yname = self.yname
+        other.zname = self.zname
+
+        for key in self.attributes.copy().keys():
+            if attributes is not None and key in attributes:
+                continue
+            else:
+                self.delete_columns([key])
+
+        for key in other.attributes.copy().keys():
+            if attributes is not None and key in attributes:
+                continue
+            else:
+                other.delete_columns([key])
+
+        if self._ispolygons is True:
+            # the polygon ID shall not be repeatable; need to deduce the polygons ID
+            # from both objects and than ensure that counting in the second (df2)
+            # is altered to avoid overlap
+            id1 = df1[self.pname]
+            id2 = df2[other.pname]
+            diff = id1.max() - id2.min()
+            id2 += diff + 1
+            other.pname = self.pname
+
+        # just append the two dataframes
+        newdf = df1.append(df2, ignore_index=True)
+        self.dataframe = newdf
