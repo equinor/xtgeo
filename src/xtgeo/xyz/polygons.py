@@ -198,46 +198,9 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     # Methods
     # ----------------------------------------------------------------------------------
 
+    @inherit_docstring(inherit_from=XYZ.delete_columns)
     def delete_columns(self, clist, strict=False):
-        """Delete one or more columns by name in a safe way.
-
-        Note that the coordinate columns will be protected, as well as then
-        POLY_ID column (pname atribute).
-
-        Args:
-            clist (list): Name of columns
-            strict (bool): I False, will not trigger exception if a column is not
-                found. Otherways a ValueError will be raised.
-
-        Raises:
-            ValueError: If strict is True and columnname not present
-
-        Example::
-
-            mypoly.delete_columns(["WELL_ID", mypoly.hname, mypoly.dhname])
-
-        .. versionadded:: 2.1
-
-        """
-        if self._df is None:
-            xtg.warnuser(
-                "Trying to delete a column before a dataframe has been set - ignored"
-            )
-            return
-
-        for cname in clist:
-            if cname in (self.xname, self.yname, self.zname, self.pname):
-                xtg.warnuser(
-                    "The column {} is protected and will not be deleted".format(cname)
-                )
-                continue
-
-            if cname not in self._df:
-                if strict is True:
-                    raise ValueError("The column {} is not present".format(cname))
-
-            if cname in self._df:
-                self._df.drop(cname, axis=1, inplace=True)
+        super().delete_columns(clist, strict=strict)
 
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz"):
