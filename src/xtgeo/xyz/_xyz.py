@@ -200,7 +200,7 @@ class XYZ:
             _xyz_io.import_rms_attr(self, pfile.name)
         else:
             logger.error("Invalid file format (not supported): %s", fformat)
-            raise ValueError("Invalid file format (not supported): %s", fformat)
+            raise ValueError(f"Invalid file format (not supported): {fformat}")
 
         logger.info("Reading from file %s... done", pfile.name)
         logger.debug("Dataframe head:\n%s", self._df.head())

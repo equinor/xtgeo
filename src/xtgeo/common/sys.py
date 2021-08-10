@@ -40,6 +40,7 @@ SUPPORTED_FORMATS = {
     "ijxyz": ["ijxyz"],
     "petromod": ["pmd", "petromod"],
     "xtg": ["xtg", "xtgeo", "xtgf", "xtg.*"],
+    "xyz": ["xyz", "poi", "pol"],
 }
 
 VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]
@@ -632,7 +633,7 @@ class _XTGeoFile(object):
 
         for fmt, variants in SUPPORTED_FORMATS.items():
             if suffix in variants:
-                logger.info(f"Extension hints {fmt}")
+                logger.info("Extension hints: %s", fmt)
                 return fmt
 
         # if none of these above are accepted, check regular expression
@@ -642,7 +643,7 @@ class _XTGeoFile(object):
                 if "*" in var:
                     pattern = re.compile(var)
                     if pattern.match(suffix):
-                        logger.info(f"Extension by regexp hints {fmt}")
+                        logger.info("Extension by regexp hints: %s", fmt)
                         return fmt
 
         return "unknown"
@@ -670,7 +671,7 @@ class _XTGeoFile(object):
                     if pattern.match(propose):
                         return fmt
 
-        raise ValueError(f"Non-supportred file extension: {propose}")
+        raise ValueError(f"Non-supported file extension: {propose}")
 
 
 def inherit_docstring(inherit_from):
