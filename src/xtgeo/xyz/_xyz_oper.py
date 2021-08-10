@@ -417,6 +417,8 @@ def _generic_length(
 
     self._df[gname] = gdist
     self._df[dgname] = dgdist
+    self._attrs[gname] = "float"
+    self._attrs[dgname] = "float"
 
     if mode2d:
         self.hname = gname

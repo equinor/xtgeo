@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """The XTGeo xyz.points module, which contains the Points class."""
 from collections import OrderedDict
+from typing import Optional, Any
 
 import numpy as np
 import numpy.ma as ma
@@ -69,6 +70,28 @@ def points_from_roxar(
     return obj
 
 
+def points_from_surface(regsurf, active_only=True, indices=False):
+    """This makes an instance of a Points directly from a RegularSurface object.
+
+    Each surface node will be stored as a X Y Z point.
+
+    Args:
+        regsurf: XTGeo RegularSurface() instance
+        active_only: If True (default), inactive nodes are not applied. If False,
+            then the X Y location will have values, while the Z will be NaN.
+        indices: If True, then the I J K will be added as attribute columns. Default
+            is False
+
+    .. versionadded:: 2.16
+
+    """
+    obj = Points()
+
+    obj.from_surface(regsurf, active_only=active_only, indices=indices)
+
+    return obj
+
+
 class Points(XYZ):  # pylint: disable=too-many-public-methods
     """Points: Class for a points set in the XTGeo framework.
 
@@ -76,24 +99,26 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     and the point set itself is a `pandas <http://pandas.pydata.org>`_
     dataframe object.
 
-    The instance can be made either from file or by a spesification,
-    e.g. from file::
+    For pints, 3 float columns (X Y Z) ara mandatory. In addition it is possible to
+    points attribute columns, and such attributes may be integer, strings or floats
 
-        xp = Points().from_file('somefilename', fformat='xyz')
-        # or perhaps better
+    The instance can be made either from file, from another object or by a
+    spesification, e.g. from file::
+
         xp = xtgeo.points_from_file('somefilename', fformat='xyz')
-        # show the Pandas dataframe
-        print(xp.dataframe)
 
-    You can also make points from list of tuples in Python::
+    You can also make points from list of tuples in Python, where each tuple is
+    a (X, Y, Z) coordinate::
 
         plist = [(234, 556, 12), (235, 559, 14), (255, 577, 12)]
         mypoints = Points(plist)
 
+    TODO: More list like input!
+
     Default column names in the dataframe:
 
-    * X_UTME: UTM X coordinate  as self._xname
-    * Y_UTMN: UTM Y coordinate  as self._yname
+    * X_UTME: UTM X coordinate as self._xname
+    * Y_UTMN: UTM Y coordinate as self._yname
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
       something else! Use zname attribute
     * M_MDEPTH: measured depth, (if present)
@@ -101,14 +126,14 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, spec: Optional[Any] = None):
         """__init__ for Points()."""
         # instance variables listed
-        super().__init__(*args, **kwargs)
+        super().__init__(spec, is_polygons=False)
 
-        if len(args) == 1:
-            if isinstance(args[0], xtgeo.surface.RegularSurface):
-                self.from_surface(args[0])
+        # if len(args) == 1:
+        #     if isinstance(args[0], xtgeo.surface.RegularSurface):
+        #         self.from_surface(args[0])
         logger.info("Initiated Points")
 
     def __repr__(self):
@@ -156,6 +181,10 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         self._df = pd.DataFrame(
             np.random.rand(nrandom, 3), columns=[self._xname, self._yname, self._zname]
         )
+
+    @inherit_docstring(inherit_from=XYZ.delete_columns)
+    def delete_columns(self, clist, strict=False):
+        super().delete_columns(clist, strict=strict)
 
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz"):
@@ -346,7 +375,7 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
 
         return len(dflist)
 
-    def from_surface(self, surf, zname="Z_TVDSS"):
+    def from_surface(self, surf, zname="Z_TVDSS", active_only=True, indices=False):
         """Get points as X Y Value from a surface object nodes.
 
         Note that undefined surface nodes will not be included.
@@ -496,3 +525,11 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     def eli_outside(self, poly, where=True):
         """Eliminate current map values outside Points"""
         self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)
+
+    # ==================================================================================
+    # Operations involving other Polygons object(s)
+    # ==================================================================================
+
+    @inherit_docstring(inherit_from=XYZ.append)
+    def append(self, other, attributes=None):  # pylint: disable=redefined-builtin
+        return super().append(other, attributes=attributes)

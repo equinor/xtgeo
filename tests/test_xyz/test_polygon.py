@@ -19,6 +19,20 @@ POLSET4 = pathlib.Path("polygons/etc/well16.pol")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 
 
+def test_custom_polygons():
+    """Make polygons from list of tuples."""
+
+    plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
+
+    mypol = Polygons(plist)
+    assert mypol._ispolygons is True
+
+    assert mypol.dataframe["X_UTME"].values[0] == 234
+    assert mypol.dataframe["Z_TVDSS"].values[2] == 12
+
+    print(mypol._df)
+
+
 def test_import_zmap_and_xyz(testpath):
     """Import XYZ polygons on ZMAP and XYZ format from file"""
 

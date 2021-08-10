@@ -3,6 +3,11 @@
 from collections import OrderedDict
 from copy import deepcopy
 import pathlib
+import functools
+import warnings
+import deprecation
+import io
+from typing import Union, Optional, Any
 
 import pandas as pd
 
@@ -10,41 +15,103 @@ import xtgeo
 from xtgeo.common import XTGeoDialog, XTGDescription
 from xtgeo.xyz import _xyz_io
 from xtgeo.xyz import _xyz_roxapi
+import xtgeo.common.sys as xtgeosys
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-class XYZ:
-    """Base class for Points and Polygons in XTGeo."""
+def _data_reader_factory(file_format):
+    if file_format in ("xyz", "poi", "pol"):
+        return _xyz_io.import_xyz
+    if file_format == "zmap":
+        return _xyz_io.import_zmap
+    if file_format in ("rms_attr", "rmsattr"):
+        return _xyz_io.import_rms_attr
+    raise ValueError(f"Unknown file format {file_format}")
 
-    def __init__(self, *args, **kwargs):
+
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Points/Polygons and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(cls, spec, fformat="xyz", zname="Z_TVDSS", is_polygons=False):
+        # Checking if we are doing an initialization from file and raise a
+        # deprecation warning if we are.
+        derived_importname = "points_from_file"
+        if is_polygons:
+            derived_importname = "polygons_from_file"
+
+        if isinstance(spec, (str, pathlib.Path)):
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                f"some = xtgeo.{derived_importname}('some_file.xx') instead",
+                DeprecationWarning,
+            )
+            pfile = xtgeosys._XTGeoFile(spec)
+            print("XXX", pfile)
+            if fformat is None or fformat == "guess":
+                fformat = pfile.detect_fformat()
+            else:
+                fformat = pfile.generic_format_by_proposal(fformat)  # default
+            _data_reader_factory(fformat)(pfile, zname=zname)
+            return func(
+                cls, spec, fformat=fformat, zname=zname, is_polygons=is_polygons
+            )
+
+        return func(cls, spec, zname=zname, is_polygons=is_polygons)
+
+    return wrapper
+
+
+class XYZ:
+    """Base class for Points and Polygons in XTGeo.
+
+    The XYZ base class have common methods and properties for Points and Polygons.
+    The underlying datatype is a Pandas dataframe with minimal 3 (Points) or 4
+    (Polygons) columns, where the two first represent X and Y coordinates.
+
+    The third column is a number, which may represent the depth, thickness,
+    or other property. For Polygons, there is a 4'th column which is an integer
+    representing poly-line ID.
+
+    Additional columns are possible but certainly not required. These are free
+    attributes with user-defined names. These names (with data-type) are
+    stored in ordered dict: self._attrs as {"somename": "type", ...}
+    """
+
+    @allow_deprecated_init
+    def __init__(
+        self,
+        spesification: Optional[Any] = None,
+        xname: Optional[str] = "X_UTME",
+        yname: Optional[str] = "X_UTME",
+        zname: Optional[str] = "X_UTME",
+        pname: Optional[str] = "POLY_ID",
+        dfr: Optional[pd.DataFrame] = None,
+        is_polygons: Optional[bool] = False,
+    ):
         """Initiate instance"""
 
-        self._df = None
-        self._ispolygons = False
-        self._xname = "X_UTME"
-        self._yname = "Y_UTMN"
-        self._zname = "Z_TVDSS"
+        self._df = dfr
+        self._ispolygons = is_polygons
+        self._xname = xname
+        self._yname = yname
+        self._zname = zname
         self._pname = "POLY_ID"
         self._filesrc = None
-        # other attributes name: type, where type is
+        # other attributes as (name: type), where type is
         # ~ ('str', 'int', 'float', 'bool')
         self._attrs = OrderedDict()
 
-        if len(args) == 1:
-            if isinstance(args[0], (str, pathlib.Path)):
-                # make instance from file import
-                pfile = args[0]
-                logger.info("Instance from file")
-                fformat = kwargs.get("fformat", "guess")
-                self.from_file(pfile, fformat=fformat)
+        if spesification is not None:
 
-            if isinstance(args[0], list):
+            if isinstance(spesification, list):
                 # make instance from a list of 3 or 4 tuples
-                plist = args[0]
                 logger.info("Instance from list")
-                self.from_list(plist)
+                self.from_list(spesification)
 
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
 
@@ -89,6 +156,11 @@ class XYZ:
         self._pname = value
 
     @property
+    def attributes(self):
+        """Returns a dictionary with attribute names and type, or None."""
+        return self._attrs
+
+    @property
     def dataframe(self):
         """Returns or set the Pandas dataframe object."""
         return self._df
@@ -131,7 +203,7 @@ class XYZ:
         mycopy._yname = self._yname
         mycopy._zname = self._zname
         mycopy._pname = self._pname
-        mycopy._filescr = self._filesrc = None
+        mycopy._filesrc = self._filesrc = None
         mycopy._attrs = deepcopy(self._attrs)
 
         return mycopy
@@ -150,10 +222,61 @@ class XYZ:
 
         return dsc.astext()
 
+    def delete_columns(self, clist, strict=False):
+        """Delete one or more columns by name in a safe way.
+
+        Note that the coordinate columns will be protected, as well as then
+        POLY_ID column (pname atribute) if Polygons.
+
+        Args:
+            clist (list): Name of columns
+            strict (bool): I False, will not trigger exception if a column is not
+                found. Otherways a ValueError will be raised.
+
+        Raises:
+            ValueError: If strict is True and columnname not present
+
+        Example::
+
+            mypoly.delete_columns(["WELL_ID", mypoly.hname, mypoly.dhname])
+
+        .. versionadded:: 2.1
+
+        """
+        if self._df is None:
+            xtg.warnuser(
+                "Trying to delete a column before a dataframe has been set - ignored"
+            )
+            return
+
+        for cname in clist:
+            if (
+                self._ispolygons
+                and cname in (self.xname, self.yname, self.zname, self.pname)
+                or cname in (self.xname, self.yname, self.zname)
+            ):
+                xtg.warnuser(
+                    "The column {} is protected and will not be deleted".format(cname)
+                )
+                continue
+
+            if cname not in self._df:
+                if strict is True:
+                    raise ValueError("The column {} is not present".format(cname))
+
+            if cname in self._df:
+                self._df.drop(cname, axis=1, inplace=True)
+                del self._attrs[cname]
+
     # ==================================================================================
     # Import and export
     # ==================================================================================
-
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead",
+    )
     def from_file(self, pfile, fformat="xyz"):
         """Import Points or Polygons from a file.
 
@@ -185,7 +308,7 @@ class XYZ:
 
         pfile.check_file(raiseerror=OSError)
 
-        froot, fext = pfile.splitext(lower=True)
+        _, fext = pfile.splitext(lower=True)
         if fformat == "guess":
             if not fext:
                 raise ValueError(f"File extension missing for file: {pfile}")
@@ -208,6 +331,46 @@ class XYZ:
 
         return self
 
+    @classmethod
+    def _read_file(
+        cls, pfile: Union[str, pathlib.Path, io.BytesIO], fformat: Optional[str] = None
+    ):
+        """Import Points or Polygons from a file.
+
+        Supported import formats (fformat):
+
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+
+        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+
+        * 'rms_attr': RMS points formats with attributes (extra columns)
+
+        * 'guess': Try to choose file format based on extension
+
+        Args:
+            pfile: File-like or memory stream instance.
+            fformat (str): File format, None/guess/xyz/pol/poi...
+
+        Returns:
+            Object instance.
+
+        Example::
+
+            >>> myxyz = _XYZ._read_file('myfile.x')
+
+        Raises:
+            OSError: if file is not present or wrong permissions.
+
+        """
+
+        pfile = xtgeo._XTGeoFile(pfile)
+        if fformat is None or fformat == "guess":
+            fformat = pfile.detect_fformat()
+        else:
+            fformat = pfile.generic_format_by_proposal(fformat)  # default
+        _data_reader_factory(fformat)(pfile)
+        return cls()
+
     def from_list(self, plist):
         """Import Points or Polygons from a list.
 
@@ -216,6 +379,8 @@ class XYZ:
         It is currently not much error checking that lists/tuples are consistent, e.g.
         if there always is either 3 or 4 elements per tuple, or that 4 number is
         an integer.
+
+
 
         Args:
             plist (str): List of tuples, each tuple is length 3 or 4
@@ -231,6 +396,12 @@ class XYZ:
             self._df = pd.DataFrame(
                 plist, columns=[self._xname, self._yname, self._zname]
             )
+            print("XXX DONG")
+
+            # add ID 0 for Polygons if input is missing
+            if self._ispolygons:
+                print("XXX DING")
+                self._df[self.pname] = 0
 
         elif len(first) == 4:
             self._df = pd.DataFrame(

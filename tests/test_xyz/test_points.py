@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import pytest
 
+import xtgeo
 from xtgeo.xyz import Points
 import tests.test_common.test_xtg as tsetup
 
@@ -123,6 +124,8 @@ def test_import_rmsattr_format(testpath, tmp_path):
     reloaded_points = Points()
     reloaded_points.from_file(export_path, fformat="rms_attr")
     pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
+
+    assert list(orig_points.attributes) == ["FaultBlock", "FaultTag", "VerticalSep"]
 
 
 def test_export_points_rmsattr(testpath, tmp_path):

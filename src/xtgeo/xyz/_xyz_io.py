@@ -17,22 +17,26 @@ logger = xtg.functionlogger(__name__)
 # -------------------------------------------------------------------------
 
 
-def import_xyz(self, pfile, zname="Z_TVDSS"):
+def import_xyz(pfile, zname="Z_TVDSS"):
     """Simple X Y Z file. All points as Pandas framework."""
 
-    self.zname = zname
+    args = {}
+    _xn = args["xname"] = "X_UTME"
+    _yn = args["yname"] = "Y_UTMN"
+    _zn = args["zname"] = zname
 
-    self._df = pd.read_csv(
+    dfr = pd.read_csv(
         pfile,
         delim_whitespace=True,
         skiprows=0,
         header=None,
-        names=[self._xname, self._yname, zname],
+        names=[_xn, _yn, _zn],
         dtype=np.float64,
         na_values=999.00,
     )
+    args["dataframe"] = dfr
 
-    logger.debug(self._df.head())
+    return args
 
 
 def import_zmap(self, pfile, zname="Z_TVDSS"):
