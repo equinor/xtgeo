@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """The XTGeo xyz.points module, which contains the Points class."""
 from collections import OrderedDict
-from typing import Optional, Any
 
 import numpy as np
-import numpy.ma as ma
 import pandas as pd
 
 import xtgeo
@@ -23,11 +21,11 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def points_from_file(wfile, fformat="xyz"):
+def points_from_file(pfile, fformat="guess"):
     """Make an instance of a Points object directly from file import.
 
     Args:
-        mfile (str): Name of file
+        pfile (str): Name of file
         fformat (str): See :meth:`Points.from_file`
 
     Example::
@@ -35,11 +33,7 @@ def points_from_file(wfile, fformat="xyz"):
         import xtgeo
         mypoints = xtgeo.points_from_file('somefile.xyz')
     """
-    obj = Points()
-
-    obj.from_file(wfile, fformat=fformat)
-
-    return obj
+    return Points._read_file(pfile, fformat=fformat)
 
 
 def points_from_roxar(
@@ -70,26 +64,21 @@ def points_from_roxar(
     return obj
 
 
-def points_from_surface(regsurf, active_only=True, indices=False):
+def points_from_surface(regsurf, zname="Z_TVDSS", name="unknown"):
     """This makes an instance of a Points directly from a RegularSurface object.
 
     Each surface node will be stored as a X Y Z point.
 
     Args:
         regsurf: XTGeo RegularSurface() instance
-        active_only: If True (default), inactive nodes are not applied. If False,
-            then the X Y location will have values, while the Z will be NaN.
-        indices: If True, then the I J K will be added as attribute columns. Default
-            is False
+        zname: Name of third column
+        name: Name of instance
 
     .. versionadded:: 2.16
-
+       Replaces the from_surface() method.
     """
-    obj = Points()
 
-    obj.from_surface(regsurf, active_only=active_only, indices=indices)
-
-    return obj
+    return Points._read_surface(regsurf, zname=zname, name=name)
 
 
 class Points(XYZ):  # pylint: disable=too-many-public-methods
@@ -103,17 +92,27 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     points attribute columns, and such attributes may be integer, strings or floats
 
     The instance can be made either from file, from another object or by a
-    spesification, e.g. from file::
+    spesification, e.g. from file or a surface::
 
-        xp = xtgeo.points_from_file('somefilename', fformat='xyz')
+        xp1 = xtgeo.points_from_file('somefilename', fformat='xyz')
+        # or
+        regsurf = xtgeo.surface_from_file("somefile.gri")
+        xp2 = xtgeo.points_from_surface(regsurf)
 
-    You can also make points from list of tuples in Python, where each tuple is
-    a (X, Y, Z) coordinate::
+    You can also initialise points from list of tuples/lists in Python, where
+    each tuple is a (X, Y, Z) coordinate::
 
         plist = [(234, 556, 12), (235, 559, 14), (255, 577, 12)]
-        mypoints = Points(plist)
+        mypoints = Points(values=plist)
 
-    TODO: More list like input!
+    And points can be initialised from a 2D numpy array or an existing dataframe::
+
+        np2d = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]).reshape(4, 3)
+        mypoints = Points(values=np2d)
+
+        mydf = pd.DataFrame([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        mypoints = Points(values=mydf)
+
 
     Default column names in the dataframe:
 
@@ -121,15 +120,13 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     * Y_UTMN: UTM Y coordinate as self._yname
     * Z_TVDSS: Z coordinate, often depth below TVD SS, but may also be
       something else! Use zname attribute
-    * M_MDEPTH: measured depth, (if present)
-    * Q_*: Quasi geometrical measures, such as Q_MDEPTH, Q_AZI, Q_INCL
-
     """
 
-    def __init__(self, spec: Optional[Any] = None):
+    # TODO? Inherit docs from XYZ?
+    def __init__(self, *args, **kwargs):
         """__init__ for Points()."""
-        # instance variables listed
-        super().__init__(spec, is_polygons=False)
+        kwargs["is_polygons"] = False  # force is_polygons to be false
+        super().__init__(*args, **kwargs)
 
         # if len(args) == 1:
         #     if isinstance(args[0], xtgeo.surface.RegularSurface):
@@ -186,11 +183,13 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     def delete_columns(self, clist, strict=False):
         super().delete_columns(clist, strict=strict)
 
+    # @inherit_docstring(inherit_from=XYZ.from_surface)
+    # def from_surface(self, surf, zname="Z_TVDSS"):
+    #     super().from_surface(surf, zname=zname)
+
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz"):
         super().from_file(pfile, fformat=fformat)
-
-        self._df.dropna(inplace=True)
 
     def from_dataframe(self, dfr, east="X", north="Y", tvdmsl="Z", attributes=None):
         """Import points/polygons from existing Pandas dataframe.
@@ -374,49 +373,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
                 self._attrs[col] = "float"
 
         return len(dflist)
-
-    def from_surface(self, surf, zname="Z_TVDSS", active_only=True, indices=False):
-        """Get points as X Y Value from a surface object nodes.
-
-        Note that undefined surface nodes will not be included.
-
-        Args:
-            surf (RegularSurface): A XTGeo RegularSurface object instance.
-            zname (str): Name of value column (3'rd column)
-
-        Example::
-
-            topx = RegularSurface('topx.gri')
-            topx_aspoints = Points()
-            topx_aspoints.from_surface(topx)
-
-            # alternative shortform:
-            topx_aspoints = Points(topx)  # get an instance directly
-
-            topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
-        """
-
-        # check if surf is instance from RegularSurface
-        if not isinstance(surf, xtgeo.surface.RegularSurface):
-            raise TypeError("Given surf is not a RegularSurface object")
-
-        val = surf.values
-        xc, yc = surf.get_xy_values()
-
-        coor = []
-        for vv in [xc, yc, val]:
-            vv = ma.filled(vv.flatten(order="C"), fill_value=np.nan)
-            vv = vv[~np.isnan(vv)]
-            coor.append(vv)
-
-        # now populate the dataframe:
-        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
-        ddatas = OrderedDict()
-        ddatas[self._xname] = xc
-        ddatas[self._yname] = yc
-        ddatas[self._zname] = val
-        self._df = pd.DataFrame(ddatas)
-        self.zname = zname
 
     # ==================================================================================
     # Operations vs surfaces and possibly other

@@ -325,7 +325,7 @@ def test_raise_incorrect_name_type(test_name, name_attribute):
 
 
 @pytest.mark.parametrize(
-    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname"), ("pname")]
+    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname")]
 )
 def test_raise_non_existing_name(name_attribute):
     pol = Polygons()

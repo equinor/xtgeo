@@ -35,11 +35,7 @@ def polygons_from_file(pfile, fformat="xyz"):
         import xtgeo
         mypoly = xtgeo.polygons_from_file('somefile.xyz')
     """
-    obj = Polygons()
-
-    obj.from_file(pfile, fformat=fformat)
-
-    return obj
+    return Polygons._read_file(pfile, fformat=fformat, is_polygons=True)
 
 
 def polygons_from_roxar(
@@ -97,13 +93,16 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     def __init__(self, *args, **kwargs):
         """Polygons() initialisation."""
+        # additonal properties for Polygons
         self._hname = "H_CUMLEN"
         self._dhname = "H_DELTALEN"
         self._tname = "T_CUMLEN"
         self._dtname = "T_DELTALEN"
         self._name = "poly"  # the name of the Polygons() instance
 
-        super().__init__(*args, is_polygons=True, **kwargs)
+        kwargs["is_polygons"] = True  # force is_polygons to be true
+        super().__init__(*args, **kwargs)
+        logger.info("Initiated Polygons")
 
     def __str__(self):
         """User friendly print."""
@@ -204,16 +203,7 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz"):
-        super().from_file(pfile, fformat=fformat)
-
-        # for polygons, a seperate column with POLY_ID is required;
-        # however this may lack if the input is on XYZ format
-
-        if self._pname not in self._df.columns:
-            pxn = self._pname
-            self._df[pxn] = self._df.isnull().all(axis=1).cumsum().dropna()
-            self._df.dropna(axis=0, inplace=True)
-            self._df.reset_index(inplace=True, drop=True)
+        super().from_file(pfile, fformat=fformat, is_polygons=True)
 
     @inherit_docstring(inherit_from=XYZ.to_file)
     def to_file(

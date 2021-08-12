@@ -1,32 +1,32 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz module (base class)"""
+import functools
+import io
+import pathlib
+import warnings
 from collections import OrderedDict
 from copy import deepcopy
-import pathlib
-import functools
-import warnings
-import deprecation
-import io
-from typing import Union, Optional, Any
+from typing import Any, Optional, Union
 
+import deprecation
+import numpy as np
 import pandas as pd
 
 import xtgeo
-from xtgeo.common import XTGeoDialog, XTGDescription
-from xtgeo.xyz import _xyz_io
-from xtgeo.xyz import _xyz_roxapi
 import xtgeo.common.sys as xtgeosys
+from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
 def _data_reader_factory(file_format):
-    if file_format in ("xyz", "poi", "pol"):
+    if file_format == "xyz":
         return _xyz_io.import_xyz
-    if file_format == "zmap":
+    if file_format == "zmap_ascii":
         return _xyz_io.import_zmap
-    if file_format in ("rms_attr", "rmsattr"):
+    if file_format == "rms_attr":
         return _xyz_io.import_rms_attr
     raise ValueError(f"Unknown file format {file_format}")
 
@@ -35,33 +35,51 @@ def allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Points/Polygons and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
+    # Changed post xtgeo version 2.15
     @functools.wraps(func)
-    def wrapper(cls, spec, fformat="xyz", zname="Z_TVDSS", is_polygons=False):
+    def wrapper(cls, *args, **kwargs):
         # Checking if we are doing an initialization from file and raise a
         # deprecation warning if we are.
-        derived_importname = "points_from_file"
-        if is_polygons:
-            derived_importname = "polygons_from_file"
+        if len(args) == 1:
 
-        if isinstance(spec, (str, pathlib.Path)):
-            warnings.warn(
-                "Initializing directly from file name is deprecated and will be "
-                "removed in xtgeo version 4.0. Use: "
-                f"some = xtgeo.{derived_importname}('some_file.xx') instead",
-                DeprecationWarning,
-            )
-            pfile = xtgeosys._XTGeoFile(spec)
-            print("XXX", pfile)
-            if fformat is None or fformat == "guess":
-                fformat = pfile.detect_fformat()
+            if isinstance(args[0], (str, pathlib.Path)):
+                warnings.warn(
+                    "Initializing directly from file name is deprecated and will be "
+                    "removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_file('some_file.xx') instead (Points) or "
+                    "pol = xtgeo.polygons_from_file('some_file.xx') instead (Polygons)",
+                    DeprecationWarning,
+                )
+                pfile = args[0]
+                fformat = kwargs.get("fformat", "guess")
+                ispoly = kwargs.get("is_polygons", False)
+                pfile = xtgeosys._XTGeoFile(pfile)
+                if fformat is None or fformat == "guess":
+                    fformat = pfile.detect_fformat()
+                else:
+                    fformat = pfile.generic_format_by_proposal(fformat)  # default
+                kwargs = _data_reader_factory(fformat)(pfile, is_polygons=ispoly)
+
+            elif isinstance(args[0], xtgeo.RegularSurface):
+                warnings.warn(
+                    "Initializing directly from RegularSurface is deprecated "
+                    "and will be removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_surface(regsurf) instead",
+                    DeprecationWarning,
+                )
+                zname = kwargs.get("zname", "Z_TVDSS")
+                kwargs = XYZ._read_surface(args[0], zname=zname, return_cls=False)
+
+            elif isinstance(args[0], (list, np.ndarray, pd.DataFrame)):
+                # initialisation from an list-like object without 'values' keyword
+                # should be possible, i.e. Points(some_list) is same as
+                # Points(values=some_list)
+                kwargs["values"] = args[0]
+
             else:
-                fformat = pfile.generic_format_by_proposal(fformat)  # default
-            _data_reader_factory(fformat)(pfile, zname=zname)
-            return func(
-                cls, spec, fformat=fformat, zname=zname, is_polygons=is_polygons
-            )
+                raise TypeError("Input argument of unknown type: ", type(args[0]))
 
-        return func(cls, spec, zname=zname, is_polygons=is_polygons)
+        return func(cls, **kwargs)
 
     return wrapper
 
@@ -79,39 +97,68 @@ class XYZ:
 
     Additional columns are possible but certainly not required. These are free
     attributes with user-defined names. These names (with data-type) are
-    stored in ordered dict: self._attrs as {"somename": "type", ...}
+    stored in ordered dict: self._attrs as {"somename": "type", ...}.
     """
 
     @allow_deprecated_init
     def __init__(
         self,
-        spesification: Optional[Any] = None,
+        values: Optional[Union[list, np.ndarray, pd.DataFrame]] = None,
         xname: Optional[str] = "X_UTME",
-        yname: Optional[str] = "X_UTME",
-        zname: Optional[str] = "X_UTME",
+        yname: Optional[str] = "Y_UTMN",
+        zname: Optional[str] = "Z_TVDSS",
         pname: Optional[str] = "POLY_ID",
-        dfr: Optional[pd.DataFrame] = None,
+        name: Optional[str] = "unknown",
         is_polygons: Optional[bool] = False,
+        attributes: Optional[dict] = None,
+        **kwargs,
     ):
-        """Initiate instance"""
+        """Instating a Points or Polygons object.
 
-        self._df = dfr
-        self._ispolygons = is_polygons
+        Args:
+            values: Provide input values on various forms (list-like or dataframe).
+            xname: Name of first (X) mandatory column, default is X_UTME.
+            yname: Name of second (Y) mandatory column, default is Y_UTMN.
+            zname: Name of third (Z) mandatory column, default is Z_TVDSS.
+            pname: Name of fourth columns (mandatory for Polygons), default is POLY_ID.
+            name: A given name for the Points/Polygons object.
+            is_polygons: Shall be True for Polygons(), False for Points()
+            attributes: An ordered dict for addional columns (attributes) on the
+                form {"WellName": "str", "SomeCode": "int"}
+            kwargs: Additonal keys, mostly for internal usage
+        """
+        dataframe = kwargs.get("dataframe", None)
+        self._filesrc = kwargs.get("filesrc", None)
+
+        if values is not None and dataframe is not None:
+            raise ValueError("Conflicting 'values' and 'dataframe' input!")
+
         self._xname = xname
         self._yname = yname
         self._zname = zname
-        self._pname = "POLY_ID"
-        self._filesrc = None
+        self._pname = pname
+        self._ispolygons = is_polygons
+        self._name = name
+        self._df = dataframe
+
+        # additional input, given through **kwargs. For the import from file routines
+        # (class methods), the 'dataframe' key may be populated to avoid a second
+        # round of processing. In such cases, 'values' shall be None to avoid
+        # conflicts.
+
         # other attributes as (name: type), where type is
         # ~ ('str', 'int', 'float', 'bool')
-        self._attrs = OrderedDict()
+        if attributes is None:
+            self._attrs = OrderedDict()
+        else:
+            self._attrs = OrderedDict(attributes)
 
-        if spesification is not None:
+        if values is not None:
 
-            if isinstance(spesification, list):
-                # make instance from a list of 3 or 4 tuples
+            if isinstance(values, (list, np.ndarray, pd.DataFrame)):
+                # make instance from a list(-like) of 3 or 4 tuples or similar
                 logger.info("Instance from list")
-                self.from_list(spesification)
+                self._from_list_like(values)
 
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
 
@@ -152,7 +199,12 @@ class XYZ:
 
     @pname.setter
     def pname(self, value):
-        self._check_name(value)
+        try:
+            self._check_name(value)
+        except ValueError as verr:
+            if "does not exist" in str(verr):
+                return
+        self._df_column_rename(value, self._pname)
         self._pname = value
 
     @property
@@ -277,7 +329,7 @@ class XYZ:
         current_version=xtgeo.version,
         details="Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead",
     )
-    def from_file(self, pfile, fformat="xyz"):
+    def from_file(self, pfile, fformat="xyz", is_polygons=False):
         """Import Points or Polygons from a file.
 
         Supported import formats (fformat):
@@ -300,40 +352,38 @@ class XYZ:
         Raises:
             OSError: if file is not present or wrong permissions.
 
+        .. deprecated:: 2.16
+           Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead.
         """
 
         pfile = xtgeo._XTGeoFile(pfile)
+        pfile.check_file(raiseerror=OSError)
 
         logger.info("Reading from file %s...", pfile.name)
 
-        pfile.check_file(raiseerror=OSError)
-
-        _, fext = pfile.splitext(lower=True)
-        if fformat == "guess":
-            if not fext:
-                raise ValueError(f"File extension missing for file: {pfile}")
-
-            fformat = fext
-
-        if fformat in ["xyz", "poi", "pol"]:
-            _xyz_io.import_xyz(self, pfile.name)
-        elif fformat == "zmap":
-            _xyz_io.import_zmap(self, pfile.name)
-        elif fformat in ("rms_attr", "rmsattr"):
-            _xyz_io.import_rms_attr(self, pfile.name)
+        if fformat is None or fformat == "guess":
+            fformat = pfile.detect_fformat()
         else:
-            logger.error("Invalid file format (not supported): %s", fformat)
-            raise ValueError(f"Invalid file format (not supported): {fformat}")
+            fformat = pfile.generic_format_by_proposal(fformat)  # default
 
-        logger.info("Reading from file %s... done", pfile.name)
-        logger.debug("Dataframe head:\n%s", self._df.head())
-        self._filesrc = pfile.name
+        kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
+        self._reset(**kwargs)
 
-        return self
+    def _reset(self, **kwargs):
+        self._df = kwargs.get("dataframe", self._df)
+        self._ispolygons = kwargs.get(False, self._ispolygons)
+        self._attrs = kwargs.get("attributes", self._attrs)
+        self.xname = kwargs.get("xname", self._xname)
+        self.yname = kwargs.get("yname", self._yname)
+        self.zname = kwargs.get("zname", self._zname)
+        self.pname = kwargs.get("pname", self._pname)
 
     @classmethod
     def _read_file(
-        cls, pfile: Union[str, pathlib.Path, io.BytesIO], fformat: Optional[str] = None
+        cls,
+        pfile: Union[str, pathlib.Path, io.BytesIO],
+        fformat: Optional[str] = None,
+        is_polygons: Optional[bool] = False,
     ):
         """Import Points or Polygons from a file.
 
@@ -362,25 +412,125 @@ class XYZ:
             OSError: if file is not present or wrong permissions.
 
         """
-
         pfile = xtgeo._XTGeoFile(pfile)
         if fformat is None or fformat == "guess":
             fformat = pfile.detect_fformat()
         else:
             fformat = pfile.generic_format_by_proposal(fformat)  # default
-        _data_reader_factory(fformat)(pfile)
-        return cls()
+        kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
+        return cls(**kwargs)
 
-    def from_list(self, plist):
-        """Import Points or Polygons from a list.
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_surface() instead",
+    )
+    def from_surface(self, surf, zname="Z_TVDSS"):
+        """Get points as X Y Value from a surface object nodes.
 
-        [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...]
+        Note that undefined surface nodes will not be included.
+
+        Args:
+            surf (RegularSurface): A XTGeo RegularSurface object instance.
+            zname (str): Name of value column (3'rd column)
+
+        Example::
+
+            topx = RegularSurface('topx.gri')
+            topx_aspoints = Points()
+            topx_aspoints.from_surface(topx)
+
+            # alternative shortform:
+            topx_aspoints = Points(topx)  # get an instance directly
+
+            topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
+
+        .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead
+        """
+
+        # check if surf is instance from RegularSurface
+        if not isinstance(surf, xtgeo.surface.RegularSurface):
+            raise TypeError("Given surf is not a RegularSurface object")
+
+        val = surf.values
+        xc, yc = surf.get_xy_values()
+
+        coor = []
+        for vv in [xc, yc, val]:
+            vv = np.ma.filled(vv.flatten(order="C"), fill_value=np.nan)
+            vv = vv[~np.isnan(vv)]
+            coor.append(vv)
+
+        # now populate the dataframe:
+        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
+        ddatas = OrderedDict()
+        ddatas[self._xname] = xc
+        ddatas[self._yname] = yc
+        ddatas[zname] = val
+        dfr = pd.DataFrame(ddatas)
+        kwargs = {}
+        kwargs["dataframe"] = dfr
+        kwargs["zname"] = zname
+        self._reset(**kwargs)
+
+    @classmethod
+    def _read_surface(cls, surf, zname="Z_TVDSS", name="unknown", **kwargs):
+        """Get points as (X, Y, Value) from a surface object nodes.
+
+        Note that undefined surface nodes will not be included. This method
+        is perhaps only meaningful for Points.
+
+        Args:
+            surf (RegularSurface): A XTGeo RegularSurface object instance.
+            zname (str): Name of value column (3'rd column)
+            name (str): Name of the instance
+
+        """
+        # subsitutes from_surface()
+        # check if surf is instance from RegularSurface
+        if not isinstance(surf, xtgeo.surface.RegularSurface):
+            raise TypeError("Given surf is not a RegularSurface object")
+
+        val = surf.values
+        xc, yc = surf.get_xy_values()
+
+        coor = []
+        for vv in [xc, yc, val]:
+            vv = np.ma.filled(vv.flatten(order="C"), fill_value=np.nan)
+            vv = vv[~np.isnan(vv)]
+            coor.append(vv)
+
+        # now populate the dataframe:
+        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
+        ddatas = OrderedDict()
+        ddatas["X_UTME"] = xc
+        ddatas["Y_UTMN"] = yc
+        ddatas[zname] = val
+
+        kwargs["dataframe"] = pd.DataFrame(ddatas)
+        kwargs["zname"] = zname
+        kwargs["name"] = name
+
+        if kwargs.get("return_cls", True) is False:
+            return kwargs
+
+        return cls(**kwargs)
+
+    def _from_list_like(self, plist):
+        """Import Points or Polygons from a list-like input.
+
+        The following 'list-like' inputs are possible:
+
+        * List of tuples [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...].
+        * List of lists  [[x1, y1, z1, <id1>], [x2, y2, z2, <id2>], ...].
+        * List of numpy arrays  [nparr1, nparr2, ...] where nparr1 is first row.
+        * A numpy array with shape [nrow, ncol], where ncol >= 3
+        * An existing pandas dataframe
 
         It is currently not much error checking that lists/tuples are consistent, e.g.
         if there always is either 3 or 4 elements per tuple, or that 4 number is
         an integer.
-
-
 
         Args:
             plist (str): List of tuples, each tuple is length 3 or 4
@@ -388,7 +538,105 @@ class XYZ:
         Raises:
             ValueError: If something is wrong with input
 
-        .. versionadded: 2.6
+        .. versionadded:: 2.6
+        .. versionupdated:: 2.16
+        """
+
+        if isinstance(plist, list):
+            first = plist[0]
+            if len(first) == 3:
+                self._df = pd.DataFrame(
+                    plist, columns=[self._xname, self._yname, self._zname]
+                )
+
+                # add ID 0 for Polygons if input is missing
+                if self._ispolygons:
+                    self._df[self.pname] = 0
+
+            elif len(first) == 4:
+                self._df = pd.DataFrame(
+                    plist, columns=[self._xname, self._yname, self._zname, self._pname]
+                )
+            else:
+                raise ValueError(
+                    "Wrong length detected of first tuple: {}".format(len(first))
+                )
+            self._df.dropna(inplace=True)
+
+        elif isinstance(plist, np.ndarray):
+            # assume a 2D numpy array with shape (NROW, 3) or (NROW, 4) or more
+            # if more, it means that attributes are used through self._attrs
+            if plist.ndim != 2:
+                raise ValueError("Input numpy array must two-dimensional")
+            ncol = plist.shape[1]
+            if self._ispolygons is False:
+                if ncol == 3:
+                    self._df = pd.DataFrame(
+                        plist, columns=[self._xname, self._yname, self._zname]
+                    )
+                elif ncol > 3:
+                    for ncol, name in enumerate(self._attrs.keys()):
+                        self._df[name] = plist[:, ncol + 3]
+
+            if self._ispolygons is True:
+                if ncol == 3:
+                    self._df = pd.DataFrame(
+                        plist, columns=[self._xname, self._yname, self._zname]
+                    )
+                    self._df[self._pname] = 0
+                elif ncol == 4:
+                    self._df = pd.DataFrame(
+                        plist,
+                        columns=[self._xname, self._yname, self._zname, self._pname],
+                    )
+                elif ncol > 4:
+                    for ncol, name in enumerate(self._attrs.keys()):
+                        self._df[name] = plist[:, ncol + 4]
+
+        elif isinstance(plist, pd.DataFrame):
+            # just assume that the dataframe is valid
+            ncol = plist.shape[1]
+            self._df = plist.copy()
+
+            if self._ispolygons is False:
+                cnames = [self._xname, self._yname, self._zname]
+                if ncol > 3:
+                    for name in self._attrs.keys():
+                        cnames.append(name)
+                self._df.columns = cnames
+            else:
+                cnames = [self._xname, self._yname, self._zname, self._pname]
+                if ncol > 4:
+                    for name in self._attrs.keys():
+                        cnames.append(name)
+                self._df.columns = cnames
+        else:
+            raise TypeError("Not possible to make XYZ from given input")
+
+    # TODO: Be deprecated and add a hidden function?
+    def from_list(self, plist):
+        """Import Points or Polygons from a list-like input.
+
+        The following inputs are possible:
+
+        * List of tuples [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...].
+        * List of lists  [[x1, y1, z1, <id1>], [x2, y2, z2, <id2>], ...].
+        * List of numpy arrays  [nparr1, nparr2, ...] where nparr1 is first row.
+        * A numpy array with shape [??1, ??2] ...
+        * An existing pandas dataframe
+
+        It is currently not much error checking that lists/tuples are consistent, e.g.
+        if there always is either 3 or 4 elements per tuple, or that 4 number is
+        an integer.
+
+        Args:
+            plist (str): List of tuples, each tuple is length 3 or 4
+
+        Raises:
+            ValueError: If something is wrong with input
+
+        .. versionadded:: 2.6
+        .. versionupdated:: 2.16
         """
 
         first = plist[0]
@@ -396,11 +644,9 @@ class XYZ:
             self._df = pd.DataFrame(
                 plist, columns=[self._xname, self._yname, self._zname]
             )
-            print("XXX DONG")
 
             # add ID 0 for Polygons if input is missing
             if self._ispolygons:
-                print("XXX DING")
                 self._df[self.pname] = 0
 
         elif len(first) == 4:

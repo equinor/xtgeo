@@ -2,6 +2,7 @@ import pathlib
 
 import pytest
 
+import xtgeo
 from xtgeo.xyz import Points
 from xtgeo.xyz import Polygons
 
@@ -52,8 +53,8 @@ LARGE_POLY_SHIFTED = [
 def test_points_in_polygon(testpath):
     """Import XYZ points and do operations if inside or outside"""
 
-    poi = Points(testpath / POINTSET2)
-    pol = Polygons(testpath / POLSET2)
+    poi = xtgeo.points_from_file(testpath / POINTSET2)
+    pol = xtgeo.polygons_from_file(testpath / POLSET2)
     assert poi.nrow == 30
 
     # remove points in polygon

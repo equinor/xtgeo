@@ -41,6 +41,7 @@ SUPPORTED_FORMATS = {
     "petromod": ["pmd", "petromod"],
     "xtg": ["xtg", "xtgeo", "xtgf", "xtg.*"],
     "xyz": ["xyz", "poi", "pol"],
+    "rms_attr": ["rms_attr", "rms_attrs", "rmsattr.*"],
 }
 
 VALID_FILE_ALIASES = ["$fmu-v1", "$md5sum", "$random"]

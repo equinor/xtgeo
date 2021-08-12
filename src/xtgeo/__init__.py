@@ -192,6 +192,7 @@ from xtgeo.xyz.polygons import polygons_from_roxar
 
 from xtgeo.xyz.points import points_from_file
 from xtgeo.xyz.points import points_from_roxar
+from xtgeo.xyz.points import points_from_surface
 
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 
