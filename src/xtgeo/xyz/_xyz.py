@@ -6,7 +6,7 @@ import pathlib
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import deprecation
 import numpy as np
@@ -35,10 +35,10 @@ def allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Points/Polygons and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
-    # Changed post xtgeo version 2.15
+    # Introduced post xtgeo version 2.15
     @functools.wraps(func)
     def wrapper(cls, *args, **kwargs):
-        # Checking if we are doing an initialization from file and raise a
+        # Checking if we are doing an initialization from file or surface and raise a
         # deprecation warning if we are.
         if len(args) == 1:
 
@@ -97,7 +97,7 @@ class XYZ:
 
     Additional columns are possible but certainly not required. These are free
     attributes with user-defined names. These names (with data-type) are
-    stored in ordered dict: self._attrs as {"somename": "type", ...}.
+    stored in an ordered dict: self._attrs as {"somename": "type", ...}.
     """
 
     @allow_deprecated_init
