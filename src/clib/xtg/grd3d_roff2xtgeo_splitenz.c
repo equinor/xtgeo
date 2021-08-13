@@ -55,13 +55,13 @@ grd3d_roff2xtgeo_splitenz(int nz,
     // pillars there are.
 
     long num_row = 4 * nz;
-    float pillar[num_row];
     if (nzcorn % num_row != 0) {
         return -4;
     }
     if (nsplitenz != nzcorn / 4) {
         return -2;
     }
+    float *pillar = malloc(sizeof(float) * num_row);
     size_t it_zdata = 0, it_splitenz = 0, it_zcorn = 0;
     while (it_zcorn < nzcorn) {
         for (size_t it_pillar = 0; it_pillar < num_row;) {
@@ -70,6 +70,7 @@ grd3d_roff2xtgeo_splitenz(int nz,
                 // There is one value for this corner which
                 // we must duplicate 4 times in zcornsv
                 if (it_zdata >= nzdata) {
+                    free(pillar);
                     return -3;
                 }
                 float val = (zdata[it_zdata++] + zoffset) * zscale;
@@ -80,6 +81,7 @@ grd3d_roff2xtgeo_splitenz(int nz,
                 // There are four value for this corner which
                 // we must duplicate 4 times in zcornsv
                 if (it_zdata + 3 >= nzdata) {
+                    free(pillar);
                     return -3;
                 }
                 // As we place the pillar in reverse order into zcornsv,
@@ -91,6 +93,7 @@ grd3d_roff2xtgeo_splitenz(int nz,
                 pillar[it_pillar] = (zdata[it_zdata++] + zoffset) * zscale;
                 it_pillar += 4;
             } else {
+                free(pillar);
                 return -1;
             }
         }
@@ -101,14 +104,17 @@ grd3d_roff2xtgeo_splitenz(int nz,
     }
 
     if (it_splitenz != nsplitenz) {
+        free(pillar);
         return -2;
     }
     if (it_zdata != nzdata) {
+        free(pillar);
         return -3;
     }
     if (it_zcorn != nzcorn) {
+        free(pillar);
         return -4;
     }
-
+    free(pillar);
     return EXIT_SUCCESS;
 }
