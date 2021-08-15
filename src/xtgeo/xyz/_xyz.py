@@ -20,6 +20,9 @@ from xtgeo.xyz import _xyz_io, _xyz_roxapi
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
+# default column names
+DEFAULTNAME = {"x": "X_UTME", "y": "Y_UTMN", "z": "Z_TVDSS", "p": "POLY_ID"}
+
 
 def _data_reader_factory(file_format):
     if file_format == "xyz":
@@ -67,7 +70,7 @@ def allow_deprecated_init(func):
                     "poi = xtgeo.points_from_surface(regsurf) instead",
                     DeprecationWarning,
                 )
-                zname = kwargs.get("zname", "Z_TVDSS")
+                zname = kwargs.get("zname", DEFAULTNAME["z"])
                 kwargs = XYZ._read_surface(args[0], zname=zname, return_cls=False)
 
             elif isinstance(args[0], (list, np.ndarray, pd.DataFrame)):
@@ -104,10 +107,10 @@ class XYZ:
     def __init__(
         self,
         values: Optional[Union[list, np.ndarray, pd.DataFrame]] = None,
-        xname: Optional[str] = "X_UTME",
-        yname: Optional[str] = "Y_UTMN",
-        zname: Optional[str] = "Z_TVDSS",
-        pname: Optional[str] = "POLY_ID",
+        xname: Optional[str] = DEFAULTNAME["x"],
+        yname: Optional[str] = DEFAULTNAME["y"],
+        zname: Optional[str] = DEFAULTNAME["z"],
+        pname: Optional[str] = DEFAULTNAME["p"],
         name: Optional[str] = "unknown",
         is_polygons: Optional[bool] = False,
         attributes: Optional[dict] = None,
@@ -384,6 +387,7 @@ class XYZ:
         pfile: Union[str, pathlib.Path, io.BytesIO],
         fformat: Optional[str] = None,
         is_polygons: Optional[bool] = False,
+        **kwargs,
     ):
         """Import Points or Polygons from a file.
 
@@ -400,9 +404,9 @@ class XYZ:
         Args:
             pfile: File-like or memory stream instance.
             fformat (str): File format, None/guess/xyz/pol/poi...
+            is_polygons: True if Polygons
+            **kwargs: For special kw args
 
-        Returns:
-            Object instance.
 
         Example::
 
@@ -418,6 +422,10 @@ class XYZ:
         else:
             fformat = pfile.generic_format_by_proposal(fformat)  # default
         kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
+
+        if kwargs.get("return_cls", True) is False:
+            return kwargs
+
         return cls(**kwargs)
 
     @deprecation.deprecated(
@@ -504,8 +512,8 @@ class XYZ:
         # now populate the dataframe:
         xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
         ddatas = OrderedDict()
-        ddatas["X_UTME"] = xc
-        ddatas["Y_UTMN"] = yc
+        ddatas[DEFAULTNAME["x"]] = xc
+        ddatas[DEFAULTNAME["y"]] = yc
         ddatas[zname] = val
 
         kwargs["dataframe"] = pd.DataFrame(ddatas)
@@ -731,6 +739,69 @@ class XYZ:
 
         return ncount
 
+    @classmethod
+    def _read_roxar(
+        cls,
+        project,
+        name,
+        category,
+        stype="horizons",
+        realisation=0,
+        attributes=False,
+        is_polygons=False,
+    ):
+        """Load a points/polygons item from a Roxar RMS project.
+
+        The import from the RMS project can be done either within the project
+        or outside the project.
+
+        Use::
+
+          import xtgeo
+          mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+
+        Note also that horizon/zone/faults name and category must exists
+        in advance, otherwise an Exception will be raised.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones/faults: for example 'DL_depth'
+                or use a folder notation on clipboard.
+
+            stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
+            realisation (int): Realisation number, default is 0
+            attributes (bool): If True, attributes will be preserved (from RMS 11)
+            is_polygons (bool): True if Polygons
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+
+        """
+        stype = stype.lower()
+        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+
+        if stype not in valid_stypes:
+            raise ValueError(
+                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
+            )
+
+        kwargs = _xyz_roxapi.import_xyz_roxapi(
+            project, name, category, stype, realisation, attributes, is_polygons
+        )
+
+        return cls(**kwargs)
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.surface_from_roxar() instead",
+    )
     def from_roxar(
         self, project, name, category, stype="horizons", realisation=0, attributes=False
     ):
@@ -794,6 +865,7 @@ class XYZ:
         pfilter=None,
         realisation=0,
         attributes=False,
+        is_polygons=False,
     ):
         """Export (store) a points/polygons item to a Roxar RMS project.
 
@@ -846,6 +918,7 @@ class XYZ:
             pfilter,
             realisation,
             attributes,
+            is_polygons
         )
 
     def append(self, other, attributes=None):

@@ -1,7 +1,7 @@
 """XTGeo xyz.polygons module, which contains the Polygons class."""
 
 # For polygons, the order of the points sequence is important. In
-# addition, a Polygons dataframe _must_ have a columns called 'POLY_ID'
+# addition, a Polygons dataframe _must_ have a INT column called 'POLY_ID'
 # which identifies each polygon piece.
 
 import numpy as np
