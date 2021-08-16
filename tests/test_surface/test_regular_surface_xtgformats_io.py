@@ -26,9 +26,10 @@ def test_benchmark_xtgregsurf_export(benchmark, tmp_path, benchmark_surface):
 
     fname = tmp_path / "benchmark_surface.xtgregsurf"
 
-    @benchmark
     def write():
         benchmark_surface.to_file(fname, fformat="xtgregsurf")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -41,9 +42,10 @@ def test_benchmark_xtgregsurf_import(benchmark, tmp_path, benchmark_surface):
 
     surf2 = xtgeo.RegularSurface()
 
-    @benchmark
     def read():
         surf2.from_file(fn, fformat="xtgregsurf")
+
+    benchmark(read)
 
     assert_allclose(benchmark_surface.values, surf2.values)
 
@@ -52,9 +54,10 @@ def test_benchmark_xtgregsurf_import(benchmark, tmp_path, benchmark_surface):
 def test_surface_hdf5_export_blosc(benchmark, tmp_path, benchmark_surface):
     fname = tmp_path / "benchmark_surface.h5"
 
-    @benchmark
     def write():
         benchmark_surface.to_hdf(fname, compression="blosc")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -65,8 +68,9 @@ def test_surface_hdf5_import_blosc(benchmark, tmp_path, benchmark_surface):
 
     surf2 = xtgeo.RegularSurface()
 
-    @benchmark
     def read():
         surf2.from_hdf(fn)
+
+    benchmark(read)
 
     assert_allclose(benchmark_surface.values, surf2.values)
