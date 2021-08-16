@@ -21,9 +21,10 @@ def test_benchmark_cube_export(benchmark, tmp_path, testpath):
 
     fname = join(tmp_path, "syntseis_20030101_seismic_depth_stack.xtgrecube")
 
-    @benchmark
     def write():
         cube1.to_file(fname, fformat="xtgregcube")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -37,8 +38,9 @@ def test_benchmark_cube_import(benchmark, testpath, tmp_path):
 
     cube2 = xtgeo.Cube()
 
-    @benchmark
     def read():
         cube2.from_file(fname, fformat="xtgregcube")
+
+    benchmark(read)
 
     assert_allclose(cube1.values, cube2.values)

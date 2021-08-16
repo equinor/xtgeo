@@ -49,9 +49,10 @@ def benchmark_grid_fixture(request, testpath):
 def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.xtgf")
 
-    @benchmark
     def write():
         benchmark_grid.to_xtgf(fname)
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -62,9 +63,10 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 
     grid2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grid2.from_xtgf(fname)
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grid2._coordsv)
@@ -75,9 +77,10 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.grdecl")
 
-    @benchmark
     def write():
         benchmark_grid.to_file(fname, fformat="grdecl")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -88,9 +91,10 @@ def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
 
     grid2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grid2.from_file(fname, fformat="grdecl")
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv, atol=0.02)
     assert_allclose(benchmark_grid._coordsv, grid2._coordsv, atol=0.02)
@@ -101,9 +105,10 @@ def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
 def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.bgrdecl")
 
-    @benchmark
     def write():
         benchmark_grid.to_file(fname, fformat="bgrdecl")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -114,9 +119,10 @@ def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
 
     grid2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grid2.from_file(fname, fformat="bgrdecl")
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grid2._coordsv)
@@ -127,10 +133,11 @@ def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
 def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.hdf")
 
-    @benchmark
     def write():
         benchmark_grid._zcornsv += 1.0
         benchmark_grid.to_hdf(fname, compression=None)
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -142,9 +149,10 @@ def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid)
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def partial_read():
         grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+
+    benchmark(partial_read)
 
     assert grd2.ncol == 20
     assert grd2.nlay == benchmark_grid.nlay
@@ -159,9 +167,10 @@ def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grd2.from_hdf(fna)
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
@@ -176,9 +185,10 @@ def test_benchmark_grid_hdf5_export_blosc_compression(
 
     benchmark_grid._zcornsv += 1.0
 
-    @benchmark
     def write():
         benchmark_grid.to_hdf(fname, compression="blosc")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -193,9 +203,10 @@ def test_benchmark_grid_hdf5_import_partial_blosc_compression(
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def partial_read():
         grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+
+    benchmark(partial_read)
 
     assert grd2.ncol == 20
     assert grd2.nlay == benchmark_grid.nlay
@@ -213,9 +224,10 @@ def test_benchmark_grid_hdf5_import_blosc_compression(
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grd2.from_hdf(fna)
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
@@ -263,9 +275,10 @@ def test_benchmark_gridprop_export(benchmark, tmp_path, benchmark_gridprop):
 
     fname = tmp_path / "benchmark.xtgcpprop"
 
-    @benchmark
     def write():
         benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark()
@@ -278,9 +291,10 @@ def test_benchmark_gridprop_import(benchmark, tmp_path, benchmark_gridprop):
 
     prop2 = xtgeo.GridProperty()
 
-    @benchmark
     def read():
         prop2.from_file(fname, fformat="xtgcpprop")
+
+    benchmark(read)
 
     assert benchmark_gridprop.values.all() == prop2.values.all()
 
@@ -295,8 +309,9 @@ def test_benchmark_gridprop_import_partial(benchmark, tmp_path, benchmark_gridpr
 
     prop2 = xtgeo.GridProperty()
 
-    @benchmark
     def read():
         prop2.from_file(fname, fformat="xtgcpprop", ijrange=(1, 2, 1, 2))
+
+    benchmark(read)
 
     assert benchmark_gridprop.values[0:2, 0:2, :].all() == prop2.values.all()
