@@ -159,17 +159,24 @@ grd3d_imp_ecl_egrid(FILE *fc,
     /*==================================================================================
      * Read ACTNUM directly
      */
-    grd3d_read_eclrecord(fc, bpos_actnum, 1, actnumsv, nxyz, fdum, 0, ddum, 0);
+    if(bpos_actnum >= 0){
+        grd3d_read_eclrecord(fc, bpos_actnum, 1, actnumsv, nxyz, fdum, 0, ddum, 0);
 
-    logger_info(LI, FI, FU, "Read ACTNUM ...");
+        logger_info(LI, FI, FU, "Read ACTNUM ...");
 
-    long nnact = 0;
-    for (ib = 0; ib < nxyz; ib++) {
-        if (actnumsv[ib] == 1)
-            nnact++;
+        long nnact = 0;
+        for (ib = 0; ib < nxyz; ib++) {
+            if (actnumsv[ib] == 1)
+                nnact++;
+        }
+
+        *nact = nnact;
+    } else {
+        *nact = nxyz;
+        for (ib = 0; ib < nxyz; ib++) {
+            actnumsv[ib] = 1;
+        }
     }
-
-    *nact = nnact;
 
     free(tmp_mapaxes);
     free(tmp_coord);
