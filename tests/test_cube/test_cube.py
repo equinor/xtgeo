@@ -92,8 +92,6 @@ def test_storm_import(tmpdir):
 
     assert vals[180, 185, 4] == pytest.approx(0.117074, 0.0001)
 
-    acube.to_file(join(tmpdir, "cube.rmsreg"), fformat="rms_regular")
-
 
 # @skipsegyio
 # @skiplargetest
@@ -130,63 +128,23 @@ def test_segyio_import(loadsfile1):
     assert xcu.values.max() == pytest.approx(7.42017, 0.001)
 
 
-def test_segyio_import_export(tmpdir, loadsfile1):
+@pytest.mark.parametrize("pristine", [True, False])
+def test_segyio_import_export(tmpdir, pristine):
     """Import and export SEGY (case 1 Reek) via SegIO library."""
-
-    logger.info("Import SEGY format via SEGYIO")
-
-    xcu = loadsfile1
-
-    assert xcu.ncol == 408, "NCOL"
-    dim = xcu.values.shape
-
-    logger.info("Dimension is %s", dim)
-    assert dim == (408, 280, 70), "Dimensions 3D"
-    assert xcu.values.max() == pytest.approx(7.42017, 0.001)
-
-    input_mean = xcu.values.mean()
-
-    logger.info(input_mean)
-
-    xcu.values += 200
-
-    xcu.to_file(join(tmpdir, "reek_cube.segy"))
+    input_cube = Cube()
+    input_cube.values = list(range(30))
+    input_cube.to_file(join(tmpdir, "reek_cube.segy"), pristine=pristine)
 
     # reread that file
-    y = Cube(join(tmpdir, "reek_cube.segy"))
-
-    logger.info(y.values.mean())
-
-
-def test_segyio_import_export_pristine(tmpdir, loadsfile1):
-    """Import and export as pristine SEGY (case 1 Reek) via SegIO library."""
-
-    logger.info("Import SEGY format via SEGYIO")
-
-    xcu = loadsfile1
-
-    assert xcu.ncol == 408, "NCOL"
-    dim = xcu.values.shape
-
-    logger.info("Dimension is %s", dim)
-    assert dim == (408, 280, 70), "Dimensions 3D"
-    assert xcu.values.max() == pytest.approx(7.42017, 0.001)
-
-    input_mean = xcu.values.mean()
-
-    logger.info(input_mean)
-
-    xcu.values += 200
-
-    xcu.to_file(join(tmpdir, "reek_cube_pristine.segy"), pristine=True)
+    read_cube = Cube(join(tmpdir, "reek_cube.segy"))
+    assert input_cube.dimensions == read_cube.dimensions
+    assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
 
 
-def test_segyio_export_xtgeo(tmpdir, loadsfile1):
+def test_segyio_export_xtgeo(tmpdir):
     """Import via SEGYIO and and export SEGY (case 1 Reek) via XTGeo."""
 
-    logger.info("Import SEGY format via SEGYIO")
-
-    xcu = loadsfile1
+    xcu = Cube()
 
     xcu.values += 200
 
@@ -253,11 +211,11 @@ def test_cube_cropping(tmpdir, loadsfile1):
     logger.info("Import SEGY format via SEGYIO")
 
     incube = loadsfile1
-
+    assert incube.dimensions == (408, 280, 70)
     # thinning to evey second column and row, but not vertically
     incube.do_cropping((2, 13), (10, 22), (30, 0))
-
-    incube.to_file(join(tmpdir, "cube_cropped.segy"))
+    assert incube.dimensions == (393, 248, 40)
+    assert incube.values.mean() == pytest.approx(0.0003633049)
 
 
 def test_cube_get_xy_from_ij(loadsfile1):

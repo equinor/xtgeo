@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Testing: test_grid_operations"""
-
-
+from collections import OrderedDict
 from os.path import join
 
 import pytest
@@ -34,11 +33,9 @@ DUAL = TPATH / "3dgrids/etc/dual_distorted2.grdecl"
 DUALPROPS = TPATH / "3dgrids/etc/DUAL"
 
 
-def test_hybridgrid1(tmpdir):
-    """Making a hybridgrid for Emerald case"""
-
-    logger.info("Read grid...")
-    grd = Grid(EMEGFILE)
+def test_hybridgrid1(tmpdir, snapshot):
+    grd = Grid()
+    grd.subgrids = OrderedDict({"name1": [1], "name2": [2, 3], "name3": [4, 5]})
     assert grd.subgrids is not None  # initially, prior to subgrids
 
     logger.info("Read grid... done, NZ is %s", grd.nlay)
@@ -47,45 +44,35 @@ def test_hybridgrid1(tmpdir):
     logger.info("Convert...")
     nhdiv = 40
     newnlay = grd.nlay * 2 + nhdiv
-
+    snapshot.assert_match(
+        grd.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
+        "grid_pre_hybrid.csv",
+    )
     grd.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
-
-    logger.info("Hybrid grid... done, NLAY is now %s", grd.nlay)
+    snapshot.assert_match(
+        grd.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
+        "grid_post_hybrid.csv",
+    )
 
     assert grd.nlay == newnlay, "New NLAY number"
     assert grd.subgrids is None
 
     dzv = grd.get_dz()
 
-    assert dzv.values3d.mean() == pytest.approx(1.395, abs=0.01)
+    assert dzv.values3d.mean() == 5.0
 
-    logger.info("Export...")
-    grd.to_file(join(tmpdir, "test_hybridgrid1.roff"))
-
-    logger.info("Read grid 2...")
     grd2 = Grid(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
-    logger.info("Read grid... done, NLAY is %s", grd2.nlay)
-
-    logger.info("Convert...")
-    nhdiv = 40
-    newnz = grd2.nlay * 2 + nhdiv
-
-    grd2.convert_to_hybrid(nhdiv=nhdiv, toplevel=1700, bottomlevel=1740)
-
-    logger.info("Hybrid grid... done, NZ is now %s", grd2.nlay)
-
-    assert grd2.nlay == newnz, "New NLAY number"
-
-    dzv = grd2.get_dz()
-
-    assert dzv.values3d.mean() == pytest.approx(1.395, abs=0.01)
+    snapshot.assert_match(
+        grd2.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
+        "grid_pre_hybrid.csv",
+    )
 
 
 def test_hybridgrid2(tmpdir):
     """Making a hybridgrid for Emerald case in region"""
 
     logger.info("Read grid...")
-    grd = Grid(EMEGFILE)
+    grd = Grid()
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
 
     reg = GridProperty()
