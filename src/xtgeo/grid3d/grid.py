@@ -352,7 +352,7 @@ class Grid(_Grid3D):
     def subgrids(self):
         """:obj:`list` of :obj:`int`: A dict with subgrid name and an array as value.
 
-        I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2:" [5, 6, 7],
+        I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2": [5, 6, 7],
         "name3": [8, 9, 10]}``, here meaning 3 subgrids where upper is 4
         cells vertically, then 3, then 3. The numbers must sum to NLAY.
 
