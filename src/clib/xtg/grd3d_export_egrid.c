@@ -91,7 +91,8 @@ grd3d_export_egrid(int nx,
     itmp[1] = nx;
     itmp[2] = ny;
     itmp[3] = nz;
-    // itmp[24] = 1; itmp[25] = 1;
+    itmp[24] = 1;
+    itmp[25] = 1;
 
     grd3d_write_eclrecord(fc, "GRIDHEAD", 1, itmp, &fdum, &ddum, 100);
 
