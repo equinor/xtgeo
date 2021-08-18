@@ -374,7 +374,6 @@ def test_roffbin_export_v2_banal6(tmp_path):
     # export
     grd1 = Grid()
     grd1._xtgformat = 2
-    grd1.from_file(BANAL6)
 
     logger.info("EXPORT")
     grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")
@@ -384,12 +383,7 @@ def test_roffbin_export_v2_banal6(tmp_path):
     cell1 = grd1.get_xyz_cell_corners((2, 2, 2))
     cell2 = grd2.get_xyz_cell_corners((2, 2, 2))
 
-    assert cell1 == cell2
-
-    reek = Grid()
-    reek._xtgformat = 2
-    reek.from_file(REEKFIL4)
-    reek.to_file(tmp_path / "reek_xtgformat2", fformat="roff_ascii")
+    assert cell1 == pytest.approx(cell2)
 
 
 @tsetup.bigtest
