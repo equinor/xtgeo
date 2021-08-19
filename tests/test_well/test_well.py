@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-import glob
 from os.path import join
 from collections import OrderedDict
 
@@ -237,20 +236,6 @@ def test_loadwell1_properties(simple_well):
         1: "Channel",
         2: "Crevasse",
     }
-
-
-def test_import_export_many(tmpdir):
-    """Import and export many wells (test speed)."""
-    logger.debug(WFILES)
-
-    for filename in sorted(glob.glob(WFILES)):
-        mywell = Well(filename)
-        logger.info(mywell.nrow)
-        logger.info(mywell.ncol)
-        logger.info(mywell.lognames)
-
-        wname = join(tmpdir, mywell.xwellname + ".w")
-        mywell.to_file(wname)
 
 
 def test_shortwellname():
