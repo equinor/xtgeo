@@ -1,7 +1,5 @@
 """Testing RegularSurface class with methods."""
 import sys
-import os
-import os.path
 from os.path import join
 from pathlib import Path
 
@@ -426,68 +424,6 @@ def test_irapasc_import1_engine_compare():
     for _ in range(10):
         xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
     print("Python engine for read:", xtg.timer(tt0))
-
-
-def test_irapasc_export(tmpdir):
-    """Export Irap ASCII (1)."""
-
-    logger.info("Export to Irap Classic")
-    x = xtgeo.RegularSurface()
-    x.to_file(join(tmpdir, "irap.fgr"), fformat="irap_ascii")
-
-    fstatus = False
-    if os.path.isfile(join(tmpdir, "irap.fgr")) is True:
-        fstatus = True
-
-    assert fstatus is True
-
-
-def test_zmapasc_irapasc_export(tmpdir):
-    """Export Irap ASCII and then ZMAP ASCII format, last w auto derotation."""
-
-    x = xtgeo.RegularSurface(TESTSET1)
-    x.to_file(join(tmpdir, "reek.fgr"), fformat="irap_ascii")
-    x.to_file(join(tmpdir, "reek.zmap"), fformat="zmap_ascii")
-
-    fstatus = False
-    if os.path.isfile(join(tmpdir, "reek.zmap")) is True:
-        fstatus = True
-
-    assert fstatus is True
-
-
-def test_irapasc_export_and_import(tmpdir):
-    """Export Irap ASCII and binary and import again."""
-
-    logger.info("Export to Irap Classic and Binary")
-
-    x = xtgeo.RegularSurface(
-        ncol=120,
-        nrow=100,
-        xori=1000,
-        yori=5000,
-        xinc=40,
-        yinc=20,
-        values=np.random.rand(120, 100),
-    )
-    assert_equal(x.ncol, 120)
-
-    mean1 = x.values.mean()
-
-    x.to_file(join(tmpdir, "irap2_a.fgr"), fformat="irap_ascii")
-    x.to_file(join(tmpdir, "irap2_b.gri"), fformat="irap_binary")
-
-    fsize = os.path.getsize(join(tmpdir, "irap2_b.gri"))
-    logger.info(fsize)
-    assert_equal(fsize, 48900)
-
-    # import irap ascii
-    y = xtgeo.RegularSurface()
-    y.from_file(join(tmpdir, "irap2_a.fgr"), fformat="irap_ascii")
-
-    mean2 = y.values.mean()
-
-    assert_almostequal(mean1, mean2, 0.0001)
 
 
 def test_minmax_rotated_map():
