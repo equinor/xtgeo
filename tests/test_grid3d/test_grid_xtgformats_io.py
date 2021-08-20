@@ -73,6 +73,7 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
     assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv)
 
 
+@pytest.mark.bigtest
 @pytest.mark.benchmark(group="import/export")
 def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.grdecl")
@@ -83,6 +84,7 @@ def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
     benchmark(write)
 
 
+@pytest.mark.bigtest
 @pytest.mark.benchmark(group="import/export")
 def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.grdecl")
