@@ -1,12 +1,13 @@
 import itertools
 import pathlib
-from hypothesis import given, settings, strategies as st
+from collections import OrderedDict
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
-
 import xtgeo
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from xtgeo.xyz import Points
 
 PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")
@@ -82,7 +83,7 @@ def test_initialise_from_file(testpath):
 
 @st.composite
 def list_of_equal_length_lists(draw):
-    list_len = draw(st.integers(min_value=3, max_value=4))
+    list_len = draw(st.integers(min_value=3, max_value=3))
     fixed_len_list = st.lists(
         st.floats(allow_nan=False, allow_infinity=False),
         min_size=list_len,
@@ -95,8 +96,8 @@ def list_of_equal_length_lists(draw):
 @given(list_of_equal_length_lists())
 def test_create_pointset(points):
     """Create randomly generated points and verify content."""
-    pointset = Points(points)
     points = np.array(points)
+    pointset = Points(points)
 
     assert len(points) == pointset.nrow
 
@@ -105,7 +106,7 @@ def test_create_pointset(points):
     np.testing.assert_array_almost_equal(pointset.dataframe["Z_TVDSS"], points[:, 2])
 
 
-def test_import_from_dataframe(testpath):
+def test_import_from_dataframe_old(testpath):
     """Import Points via Pandas dataframe."""
 
     mypoints = Points()
@@ -117,6 +118,22 @@ def test_import_from_dataframe(testpath):
 
     with pytest.raises(ValueError):
         mypoints.from_dataframe(
+            dfr, east="NOTTHERE", north="Y", tvdmsl="Z", attributes=attr
+        )
+
+
+def test_import_from_dataframe_classmethod(testpath):
+    """Import Points via Pandas dataframe using classmethod from v 2.16."""
+
+    dfr = pd.read_csv(testpath / CSV1, skiprows=3)
+    attr = {"IX": "I", "JY": "J", "KZ": "K"}
+    mypoints = xtgeo.points_from_dataframe(
+        dfr, east="X", north="Y", tvdmsl="Z", zname="SomeZ", attributes=attr
+    )
+    assert mypoints.dataframe.X_UTME.mean() == dfr.X.mean()
+
+    with pytest.raises(KeyError):
+        mypoints = xtgeo.points_from_dataframe(
             dfr, east="NOTTHERE", north="Y", tvdmsl="Z", attributes=attr
         )
 
@@ -181,6 +198,37 @@ def test_export_points_rmsattr(testpath, tmp_path):
 
     assert mypoints.dataframe["Seg"].equals(mypoints2.dataframe["Seg"])
     assert mypoints.dataframe["MyNum"].equals(mypoints2.dataframe["MyNum"])
+
+
+def test_get_points_set2(tmp_path):
+    """Points with values and an attribute."""
+    values = [
+        (1.0, 2.0, 44.0, "some"),
+        (1.1, 2.1, 45.0, "attr"),
+        (1.2, 2.2, 46.0, "here"),
+        (1.3, 2.3, 47.0, "my"),
+        (1.4, 2.4, 48.0, "friend"),
+    ]
+    attrs = OrderedDict()
+    attrs["some"] = "str"
+    poi = xtgeo.Points(values=values, attributes=attrs)
+    assert poi.dataframe["some"][3] == "my"
+
+    mynumpy = np.array(values)
+    poi = xtgeo.Points(values=mynumpy, attributes=attrs)
+    assert poi.dataframe["some"][3] == "my"
+
+    poi.to_file(tmp_path / "poifile.rms_attr", fformat="rms_attr")
+    poi2 = xtgeo.points_from_file(tmp_path / "poifile.rms_attr", fformat="rms_attr")
+
+    assert poi.dataframe["some"][3] == "my"
+    assert poi.dataframe.equals(poi2.dataframe)
+
+    dataframe = poi.dataframe.copy()
+    dataframe.rename(columns={dataframe.columns[0]: "myx"}, inplace=True)
+    dataframe.astype({"myx": np.float32})
+    poi3 = xtgeo.Points(values=dataframe, attributes=attrs)
+    assert poi.dataframe.equals(poi3.dataframe)
 
 
 def test_append(testpath):

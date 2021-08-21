@@ -6,12 +6,11 @@ import pathlib
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import deprecation
 import numpy as np
 import pandas as pd
-
 import xtgeo
 import xtgeo.common.sys as xtgeosys
 from xtgeo.common import XTGDescription, XTGeoDialog
@@ -34,7 +33,7 @@ def _data_reader_factory(file_format):
     raise ValueError(f"Unknown file format {file_format}")
 
 
-def allow_deprecated_init(func):
+def _allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Points/Polygons and should be deleted once the deprecation period has expired,
     # the construction will then follow the new pattern.
@@ -103,7 +102,7 @@ class XYZ:
     stored in an ordered dict: self._attrs as {"somename": "type", ...}.
     """
 
-    @allow_deprecated_init
+    @_allow_deprecated_init
     def __init__(
         self,
         values: Optional[Union[list, np.ndarray, pd.DataFrame]] = None,
@@ -143,6 +142,10 @@ class XYZ:
         self._ispolygons = is_polygons
         self._name = name
         self._df = dataframe
+
+        # The _nwells is introduced for methods that count the number of wells used
+        # actually in input. From 2.16
+        self._nwells = None
 
         # additional input, given through **kwargs. For the import from file routines
         # (class methods), the 'dataframe' key may be populated to avoid a second
@@ -230,6 +233,16 @@ class XYZ:
         if self.dataframe is None:
             return 0
         return len(self.dataframe.index)
+
+    @property
+    def nwells(self):
+        """Returns the number of wells associated with the XYZ set (read-only).
+
+        If zero or not relevant, None is returned
+
+        .. versionadded:: 2.16
+        """
+        return self._nwells
 
     def _df_column_rename(self, newname, oldname):
         if isinstance(newname, str):
@@ -423,6 +436,7 @@ class XYZ:
             fformat = pfile.generic_format_by_proposal(fformat)  # default
         kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
 
+        kwargs["filesrc"] = pfile.name
         if kwargs.get("return_cls", True) is False:
             return kwargs
 
@@ -536,6 +550,16 @@ class XYZ:
         * A numpy array with shape [nrow, ncol], where ncol >= 3
         * An existing pandas dataframe
 
+        Points scenaria:
+        * 3 columns, X Y Z
+        * 4 or more columns: rest columns are attributes and must match len(self._attrs)
+
+        Polygons scenaria:
+        * 3 columns, X Y Z. Here P column is assigned 0 afterwards
+        * 4 or more columns:
+           - if totnum = lenattrs + 3 then POLY_ID is missing and will be made
+           - if totnum = lenattrs + 4 then assume that 4'th column is POLY_ID
+
         It is currently not much error checking that lists/tuples are consistent, e.g.
         if there always is either 3 or 4 elements per tuple, or that 4 number is
         an integer.
@@ -548,80 +572,67 @@ class XYZ:
 
         .. versionadded:: 2.6
         .. versionupdated:: 2.16
+
         """
-
         if isinstance(plist, list):
-            first = plist[0]
-            if len(first) == 3:
-                self._df = pd.DataFrame(
-                    plist, columns=[self._xname, self._yname, self._zname]
-                )
+            # convert list/tuples to a 2D numpy and process the numpy below
+            logger.info("Input list-like is a list, convert to a numpy...")
+            try:
+                plist = np.array(plist)
+            except Exception as exc:
+                warnings.warn(f"Cannot convert list to numpy array: {str(exc)}")
+                raise
 
-                # add ID 0 for Polygons if input is missing
-                if self._ispolygons:
-                    self._df[self.pname] = 0
+        if isinstance(plist, pd.DataFrame):
+            # convert input dataframe to a 2D numpy and process the numpy below
+            plist = plist.to_numpy(copy=True)
 
-            elif len(first) == 4:
-                self._df = pd.DataFrame(
-                    plist, columns=[self._xname, self._yname, self._zname, self._pname]
-                )
-            else:
-                raise ValueError(
-                    "Wrong length detected of first tuple: {}".format(len(first))
-                )
-            self._df.dropna(inplace=True)
-
-        elif isinstance(plist, np.ndarray):
-            # assume a 2D numpy array with shape (NROW, 3) or (NROW, 4) or more
-            # if more, it means that attributes are used through self._attrs
+        if isinstance(plist, np.ndarray):
+            logger.info("Process numpy to points")
             if plist.ndim != 2:
                 raise ValueError("Input numpy array must two-dimensional")
-            ncol = plist.shape[1]
-            if self._ispolygons is False:
-                if ncol == 3:
-                    self._df = pd.DataFrame(
-                        plist, columns=[self._xname, self._yname, self._zname]
-                    )
-                elif ncol > 3:
-                    for ncol, name in enumerate(self._attrs.keys()):
-                        self._df[name] = plist[:, ncol + 3]
-
-            if self._ispolygons is True:
-                if ncol == 3:
-                    self._df = pd.DataFrame(
-                        plist, columns=[self._xname, self._yname, self._zname]
-                    )
+            totnum = plist.shape[1]
+            lenattrs = len(self._attrs) if self._attrs is not None else 0
+            attr_first_col = 3
+            if totnum == 3 + lenattrs:
+                self._df = pd.DataFrame(
+                    plist[:, :3], columns=[self._xname, self._yname, self._zname]
+                )
+                self._df = self._df.astype(float)
+                if self._ispolygons:
+                    # pname column is missing but assign 0 as ID
                     self._df[self._pname] = 0
-                elif ncol == 4:
-                    self._df = pd.DataFrame(
-                        plist,
-                        columns=[self._xname, self._yname, self._zname, self._pname],
-                    )
-                elif ncol > 4:
-                    for ncol, name in enumerate(self._attrs.keys()):
-                        self._df[name] = plist[:, ncol + 4]
 
-        elif isinstance(plist, pd.DataFrame):
-            # just assume that the dataframe is valid
-            ncol = plist.shape[1]
-            self._df = plist.copy()
-
-            if self._ispolygons is False:
-                cnames = [self._xname, self._yname, self._zname]
-                if ncol > 3:
-                    for name in self._attrs.keys():
-                        cnames.append(name)
-                self._df.columns = cnames
+            elif totnum == 4 + lenattrs and self._ispolygons:
+                self._df = pd.DataFrame(
+                    plist[:, :4],
+                    columns=[self._xname, self._yname, self._zname, self._pname],
+                )
+                attr_first_col = 4
             else:
-                cnames = [self._xname, self._yname, self._zname, self._pname]
-                if ncol > 4:
-                    for name in self._attrs.keys():
-                        cnames.append(name)
-                self._df.columns = cnames
+                raise ValueError(
+                    f"Wrong length detected of row: {totnum}. "
+                    "Are attributes set correct?"
+                )
+            self._df.dropna()
+            self._df = self._df.astype(np.float64)
+            if self._ispolygons:
+                self._df[self._pname] = self._df[self._pname].astype(np.int32)
+
+            if lenattrs > 0:
+                for enum, (key, dtype) in enumerate(self._attrs.items()):
+                    self._df[key] = plist[:, attr_first_col + enum]
+                    self._df = self._df.astype({key: dtype})
+
         else:
             raise TypeError("Not possible to make XYZ from given input")
 
-    # TODO: Be deprecated and add a hidden function?
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use Points() or Polygons() initialisation instead",
+    )
     def from_list(self, plist):
         """Import Points or Polygons from a list-like input.
 
@@ -645,6 +656,8 @@ class XYZ:
 
         .. versionadded:: 2.6
         .. versionupdated:: 2.16
+        .. deprecated:: 2.16
+           Use xtgeo.Points() or xtgeo.Polygons() directly.
         """
 
         first = plist[0]
@@ -686,7 +699,7 @@ class XYZ:
             attributes (bool or list): List of extra columns to export (some formats)
                 or True for all attributes present
             pfilter (dict): Filter on e.g. top name(s) with keys TopName
-                or ZoneName as {'TopName': ['Top1', 'Top2']}
+                or ZoneName as {'TopName': ['Top1', 'Top2']}.
             wcolumn (str): Name of well column (rms_wellpicks format only)
             hcolumn (str): Name of horizons column (rms_wellpicks format only)
             mdcolumn (str): Name of MD column (rms_wellpicks format only)
@@ -698,6 +711,10 @@ class XYZ:
 
         * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
         * HorizonName, WellName, X, Y, Z  otherwise
+
+        Note:
+            For backward compatibility, the key ``filter`` can be applied instead of
+            ``pfilter``.
 
         Raises:
             KeyError if pfilter is set and key(s) are invalid
@@ -794,29 +811,36 @@ class XYZ:
             project, name, category, stype, realisation, attributes, is_polygons
         )
 
+        kwargs["filesrc"] = f"RMS: {name} ({category})"
         return cls(**kwargs)
 
     @deprecation.deprecated(
         deprecated_in="2.16",
         removed_in="4.0",
         current_version=xtgeo.version,
-        details="Use xtgeo.surface_from_roxar() instead",
+        details="Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar() instead",
     )
     def from_roxar(
-        self, project, name, category, stype="horizons", realisation=0, attributes=False
+        self,
+        project: Union[str, Any],
+        name: str,
+        category: str,
+        stype: Optional[str] = "horizons",
+        realisation: Optional[int] = 0,
+        attributes: Optional[bool] = False,
     ):
-        """Load a points/polygons item from a Roxar RMS project.
+        """Load a points/polygons item from a Roxar RMS project (deprecated).
 
         The import from the RMS project can be done either within the project
         or outside the project.
 
-        Note that a shortform (for polygons) to::
+        Note that the preferred shortform for (use polygons as example)::
 
           import xtgeo
           mypoly = xtgeo.xyz.Polygons()
           mypoly.from_roxar(project, 'TopAare', 'DepthPolys')
 
-        is::
+        is now::
 
           import xtgeo
           mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
@@ -841,6 +865,8 @@ class XYZ:
         Raises:
             ValueError: Various types of invalid inputs.
 
+        .. deprecated:: 2.16
+           Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar()
         """
         stype = stype.lower()
         valid_stypes = ["horizons", "zones", "faults", "clipboard"]
@@ -918,7 +944,7 @@ class XYZ:
             pfilter,
             realisation,
             attributes,
-            is_polygons
+            is_polygons,
         )
 
     def append(self, other, attributes=None):

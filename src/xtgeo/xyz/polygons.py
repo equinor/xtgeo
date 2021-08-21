@@ -51,18 +51,15 @@ def polygons_from_roxar(
         import xtgeo
         mypolys = xtgeo.polygons_from_roxar(project, 'TopEtive', 'DL_polys')
     """
-    obj = Polygons()
-
-    obj.from_roxar(
+    return Polygons._read_roxar(
         project,
         name,
         category,
         stype=stype,
         realisation=realisation,
         attributes=attributes,
+        is_polygons=True,
     )
-
-    return obj
 
 
 # ======================================================================================

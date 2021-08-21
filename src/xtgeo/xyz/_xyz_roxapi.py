@@ -54,12 +54,14 @@ def import_xyz_roxapi(
         raise NotImplementedError(msg)
 
     if attributes:
+        logger.info("XYZ with attributes")
         kwargs = _roxapi_import_xyz_viafile(
             rox, name, category, stype, realisation, is_polygons
         )
     else:
+        logger.info("XYZ without attributes")
         kwargs = _roxapi_import_xyz(
-            rox.project, name, category, stype, realisation, is_polygons
+            rox, name, category, stype, realisation, is_polygons
         )
 
     rox.safe_close()
@@ -71,6 +73,16 @@ def import_xyz_roxapi(
     return kwargs
 
 
+def _get_roxar():
+    try:
+        import roxar  # pylint: disable=import-outside-toplevel
+    except ImportError as err:
+        raise ImportError(
+            "roxar not available, this functionality is not available"
+        ) from err
+    return roxar
+
+
 def _roxapi_import_xyz_viafile(
     rox, name, category, stype, realisation, is_polygons
 ):  # pragma: no cover
@@ -79,14 +91,8 @@ def _roxapi_import_xyz_viafile(
     However, attributes will be present in Roxar API from RMS version 12, and this
     routine should be replaced!
     """
-    try:
-        import roxar  # pylint: disable=import-outside-toplevel
-    except ImportError as err:
-        raise ImportError(
-            "roxar not available, this functionality is not available"
-        ) from err
 
-    proj = rox.project
+    roxar = _get_roxar()
 
     if not _check_category_etc(rox.project, name, category, stype, realisation):
         raise RuntimeError(
@@ -94,8 +100,13 @@ def _roxapi_import_xyz_viafile(
             "name={}, category/folder={}, stype={}".format(name, category, stype)
         )
 
-    rox_xyz = _get_roxitem(
-        proj, name, category, stype, mode="get", is_polygons=is_polygons
+    rox_xyz = _get_roxxyz(
+        rox,
+        name,
+        category,
+        stype,
+        mode="get",
+        is_polygons=is_polygons,
     )
 
     args = None
@@ -103,12 +114,9 @@ def _roxapi_import_xyz_viafile(
         # make a temporary folder
         with tempfile.TemporaryDirectory() as tmpdir:
             logger.info("Made a tmp folder: %s", tmpdir)
-            rox_xyz.save(
-                os.path.join(tmpdir, "generic.rmsattr"), roxar.FileFormat.RMS_POINTS
-            )
-            args = _xyz_io.import_rms_attr(
-                os.path.join(tmpdir, "generic.rmsattr"), is_polygons=is_polygons
-            )
+            tfile = os.path.join(tmpdir, "generic.rmsattr")
+            rox_xyz.save(tfile, roxar.FileFormat.RMS_POINTS)
+            args = _xyz_io.import_rms_attr(tfile, is_polygons=is_polygons)
 
     except KeyError as kwe:
         logger.error(kwe)
@@ -117,12 +125,12 @@ def _roxapi_import_xyz_viafile(
 
 
 def _roxapi_import_xyz(
-    proj, name, category, stype, realisation, is_polygons
+    rox, name, category, stype, realisation, is_polygons
 ):  # pragma: no cover
     """From RMS Roxar API to XTGeo, will be a class method."""
     args = {}
 
-    if not _check_category_etc(proj, name, category, stype, realisation):
+    if not _check_category_etc(rox, name, category, stype, realisation):
         raise RuntimeError(
             "It appears that name and or category is not present: "
             "name={}, category/folder={}, stype={}".format(name, category, stype)
@@ -132,23 +140,24 @@ def _roxapi_import_xyz(
     args["yname"] = DEFAULTNAME["y"]
     args["zname"] = DEFAULTNAME["z"]
     if is_polygons:
-        args["zname"] = DEFAULTNAME["p"]
+        args["pname"] = DEFAULTNAME["p"]
 
-    rox_xyz = _get_roxitem(
-        proj, name, category, stype, mode="get", is_polygons=is_polygons
+    roxitem = _get_roxxyz(
+        rox,
+        name,
+        category,
+        stype,
+        mode="get",
+        is_polygons=is_polygons,
     )
 
-    try:
-        roxitem = rox_xyz.get_values(realisation)
-        args["dataframe"] = _roxapi_xyz_to_dataframe(roxitem)
-
-    except KeyError as kwe:
-        logger.error(kwe)
+    values = _get_roxvalues(roxitem, realisation=realisation)
+    args["dataframe"] = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
 
     return args
 
 
-def _roxapi_xyz_to_dataframe(rox_xyz, is_polygons=False):  # pragma: no cover
+def _roxapi_xyz_to_dataframe(roxitem, is_polygons=False):  # pragma: no cover
     """Tranforming some XYZ from ROXAPI to a Pandas dataframe."""
 
     # In ROXAPI, polygons/polylines are a list of numpies, while
@@ -158,34 +167,35 @@ def _roxapi_xyz_to_dataframe(rox_xyz, is_polygons=False):  # pragma: no cover
     logger.info("Points/polygons/polylines from roxapi to xtgeo...")
     cnames = [DEFAULTNAME["x"], DEFAULTNAME["y"], DEFAULTNAME["z"]]
 
-    if is_polygons and isinstance(rox_xyz, list):
+    if is_polygons and isinstance(roxitem, list):
         # polylines/-gons
         dfs = []
-        for idx, poly in enumerate(rox_xyz):
+        for idx, poly in enumerate(roxitem):
             dataset = pd.DataFrame.from_records(poly, columns=cnames)
             dataset[DEFAULTNAME["p"]] = idx
             dfs.append(dataset)
 
         dfr = pd.concat(dfs)
 
-    elif not is_polygons and isinstance(rox_xyz, np.ndarray):
+    elif not is_polygons and isinstance(roxitem, np.ndarray):
         # points
-        dfr = pd.DataFrame.from_records(rox_xyz, columns=cnames)
+        dfr = pd.DataFrame.from_records(roxitem, columns=cnames)
 
     else:
-        raise RuntimeError("Unknown error in getting data from Roxar")
+        raise RuntimeError(f"Unknown error in getting data from Roxar: {type(roxitem)}")
 
+    dfr.reset_index(inplace=True)
     return dfr
 
 
 # ======================================================================================
 # xtgeo -> roxapi
-# The .to_roxar is an instance method, and xxyz refers to the instance: self
+# The .to_roxar is an instance method, and xyzpp refers to the instance: self
 # ======================================================================================
 
 
 def export_xyz_roxapi(
-    xxyz, project, name, category, stype, pfilter, realisation, attributes, is_polygons
+    xyzpp, project, name, category, stype, pfilter, realisation, attributes, is_polygons
 ):  # pragma: no cover
     """Export (store) a XYZ item from XTGeo to RMS via ROXAR API spec."""
 
@@ -201,12 +211,12 @@ def export_xyz_roxapi(
 
     if stype == "horizon_picks":
         _roxapi_export_xyz_hpicks(
-            xxyz, rox, name, category, stype, realisation, attributes
+            xyzpp, rox, name, category, stype, realisation, attributes
         )
 
     if attributes:
         _roxapi_export_xyz_viafile(
-            xxyz,
+            xyzpp,
             rox,
             name,
             category,
@@ -218,12 +228,12 @@ def export_xyz_roxapi(
         )
     else:
         _roxapi_export_xyz(
-            xxyz, rox, name, category, stype, pfilter, realisation, is_polygons
+            xyzpp, rox, name, category, stype, pfilter, realisation, is_polygons
         )
 
 
 def _roxapi_export_xyz_hpicks(
-    xxyz, rox, name, category, stype, realisation, attributes
+    xyzpp, rox, name, category, stype, realisation, attributes
 ):  # pragma: no cover
     """
     Export/store as RMS horizon picks; this is only valid if points belong to wells
@@ -233,7 +243,7 @@ def _roxapi_export_xyz_hpicks(
 
 
 def _roxapi_export_xyz_viafile(
-    xxyz, rox, name, category, stype, pfilter, realisation, attributes, is_polygons
+    xyzpp, rox, name, category, stype, pfilter, realisation, attributes, is_polygons
 ):  # pragma: no cover
     """Set points/polys within RMS with attributes, using file workaround"""
 
@@ -251,14 +261,14 @@ def _roxapi_export_xyz_viafile(
     if not _check_category_etc(proj, name, category, stype, realisation, mode="set"):
         raise RuntimeError("Cannot access correct category or name in RMS")
 
-    rox_xyz = _get_roxitem(
+    rox_xyz = _get_roxxyz(
         proj, name, category, stype, mode="set", is_polygons=is_polygons
     )
 
     # make a temporary folder and work within the with.. block
     with tempfile.TemporaryDirectory() as tmpdir:
         logger.info("Made a tmp folder: %s", tmpdir)
-        ncount = xxyz.to_file(
+        ncount = xyzpp.to_file(
             os.path.join(tmpdir, "generic.rmsattr"),
             fformat="rms_attr",
             pfilter=pfilter,
@@ -281,7 +291,7 @@ def _roxapi_export_xyz(
     if not _check_category_etc(proj, name, category, stype, realisation, mode="set"):
         raise RuntimeError("Cannot access correct category or name in RMS")
 
-    rox_xyz = _get_roxitem(
+    rox_xyz = _get_roxxyz(
         proj, name, category, stype, mode="set", is_polygons=is_polygons
     )
 
@@ -318,14 +328,18 @@ def _roxapi_export_xyz(
 
 
 def _check_category_etc(
-    proj, name, category, stype, realisation, mode="get"
+    rox, name, category, stype, realisation, mode="get"
 ):  # pylint: disable=too-many-branches  # pragma: no cover
 
     """Helper to check if valid placeholder' whithin RMS."""
 
     logger.warning("Realisation %s not in use", realisation)
 
-    stypedict = {"horizons": proj.horizons, "zones": proj.zones, "faults": proj.faults}
+    stypedict = {
+        "horizons": rox.project.horizons,
+        "zones": rox.project.zones,
+        "faults": rox.project.faults,
+    }
 
     if stype in stypedict.keys():
         if name not in stypedict[stype]:
@@ -352,14 +366,14 @@ def _check_category_etc(
                     "Cannot parse category: {}, see documentation!".format(category)
                 )
             try:
-                rox_xyz = proj.clipboard.folders[folders]
+                rox_xyz = rox.project.clipboard.folders[folders]
             except KeyError as keyerr:
                 logger.error(
                     "Cannot access clipboards folder (not existing?): %s", keyerr
                 )
                 return False
         else:
-            rox_xyz = proj.clipboard
+            rox_xyz = rox.project.clipboard
 
         if name not in rox_xyz.keys():
             raise ValueError("Name {} is not within Clipboard...".format(name))
@@ -372,19 +386,20 @@ def _check_category_etc(
     return True
 
 
-def _get_roxitem(
-    proj, name, category, stype, mode="set", is_polygons=False
+def _get_roxxyz(
+    rox, name, category, stype, mode="set", is_polygons=False
 ):  # pragma: no cover
     # pylint: disable=too-many-branches
+    """Get the correct rox_xyz which is some pointer to a RoxarAPI structure."""
     if stype == "horizons":
-        rox_xyz = proj.horizons[name][category]
+        rox_xyz = rox.project.horizons[name][category]
     elif stype == "zones":
-        rox_xyz = proj.zones[name][category]
+        rox_xyz = rox.project.zones[name][category]
     elif stype == "faults":
-        rox_xyz = proj.faults[name][category]
+        rox_xyz = rox.project.faults[name][category]
     elif stype == "clipboard":
         folders = None
-        rox_xyz = proj.clipboard
+        rox_xyz = rox.project.clipboard
         if category:
             if isinstance(category, list):
                 folders = category
@@ -401,21 +416,37 @@ def _get_roxitem(
                 )
 
             if mode == "get":
-                rox_xyz = proj.clipboard.folders[folders]
+                rox_xyz = rox.project.clipboard.folders[folders]
 
         if mode == "get":
             rox_xyz = rox_xyz[name]
 
         elif mode == "set":
-
             # clipboard folders will be created if not present, and overwritten else
             if is_polygons:
-                rox_xyz = proj.clipboard.create_polylines(name, folders)
+                rox_xyz = rox.project.clipboard.create_polylines(name, folders)
             else:
-                rox_xyz = proj.clipboard.create_points(name, folders)
+                rox_xyz = rox.project.clipboard.create_points(name, folders)
 
     else:
-        rox_xyz = None
-        raise ValueError("Unsupported stype: {}".format(stype))
+        raise TypeError("Unsupported stype: {}".format(stype))
 
     return rox_xyz
+
+
+def _get_roxvalues(rox_xyz, realisation=0):  # pragma: no cover
+    """Return the values from the Roxar API, either numpy (Points) or list(Polygons)."""
+    try:
+        roxitem = rox_xyz.get_values(realisation)
+        logger.info(roxitem)
+    except KeyError as kwe:
+        logger.error(kwe)
+
+    return roxitem
+
+
+def _set_roxvalues(
+    rox_xyz, values, is_polygons=False, realisation=0
+):  # pragma: no cover
+    """Set the values to Roxar API, either numpy (Points) or list(Polygons)."""
+    pass

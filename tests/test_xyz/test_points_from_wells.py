@@ -1,17 +1,19 @@
+import glob
 import pathlib
 
-import glob
-from xtgeo.xyz import Points
+import pytest
+import xtgeo
 from xtgeo.well import Well
+from xtgeo.xyz import Points
 
 WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
 WFILES2 = pathlib.Path("wells/reek/1/OP_[1-5]*.w")
 
 
-def test_get_zone_tops_one_well(testpath, tmp_path):
-    """Import a well and get the zone tops"""
+def test_get_zone_tops_one_well_old(testpath, tmp_path):
+    """Import a well and get the zone tops, old method to be depr."""
 
-    wlist = [Well((testpath / WFILES1), zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
 
     mypoints = Points()
     mypoints.from_wells(wlist)
@@ -30,72 +32,95 @@ def test_get_zone_tops_one_well(testpath, tmp_path):
     )
 
 
-def test_get_zone_tops_one_well_w_undef(testpath, tmp_path):
-    """Import a well and get the zone tops, include undef transition"""
+def test_get_zone_tops_one_well_glassmethod(testpath, tmp_path):
+    """Import a well and get the zone tops"""
 
-    wlist = [Well((testpath / WFILES1), zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
 
-    mypoints = Points()
-    mypoints.from_wells(wlist, use_undef=True)
+    mypoints = xtgeo.points_from_wells(wlist)
+
+    assert mypoints.dataframe["TopName"][2] == "TopBelow_TopLowerReek"
+    assert mypoints.dataframe["X_UTME"][2] == pytest.approx(462698.333)
 
     mypoints.to_file(
-        tmp_path / "points_w1_w_undef.rmsasc",
+        tmp_path / "points_w1_classmethod.rmsasc",
         fformat="rms_attr",
         attributes=["WellName", "TopName"],
     )
 
     mypoints.to_file(
-        tmp_path / "points_w1_w_undef.rmswpicks",
+        tmp_path / "points_w1_classmethod.rmswpicks",
         fformat="rms_wellpicks",
         wcolumn="WellName",
         hcolumn="TopName",
     )
+
+
+def test_get_zone_tops_one_well_w_undef(testpath):
+    """Import a well and get the zone tops, include undef transition"""
+
+    single = xtgeo.well_from_file((testpath / WFILES1), zonelogname="Zonelog")
+    wlist = [single]
+
+    # legacy
+    p1 = Points()
+    p1.from_wells(wlist, use_undef=True)
+
+    # classmethod
+    p2 = xtgeo.points_from_wells(single, use_undef=True)
+    p3 = xtgeo.points_from_wells(wlist, use_undef=False)  # intentional to use wlist
+
+    assert p1.dataframe.equals(p2.dataframe)
+    assert not p2.dataframe.equals(p3.dataframe)
+
+    assert p2.dataframe["Zone"][0] == 0
+    assert p3.dataframe["Zone"][0] == 1
 
 
 def test_get_zone_tops_some_wells(testpath, tmp_path):
     """Import some well and get the zone tops"""
 
     wlist = [
-        Well(wpath, zonelogname="Zonelog")
+        xtgeo.well_from_file(wpath, zonelogname="Zonelog")
         for wpath in glob.glob(str(testpath / WFILES2))
     ]
 
-    mypoints = Points()
-    mypoints.from_wells(wlist)
+    # legacy
+    p1 = Points()
+    p1.from_wells(wlist)
 
-    mypoints.to_file(
-        tmp_path / "points_w1_many.rmsasc",
-        fformat="rms_attr",
-        attributes=["WellName", "TopName"],
-    )
-
-    mypoints.to_file(
-        tmp_path / "points_w1_many.rmswpicks",
-        fformat="rms_wellpicks",
-        wcolumn="WellName",
-        hcolumn="TopName",
-    )
+    # classmethod
+    p2 = xtgeo.points_from_wells(wlist)
+    assert p1.dataframe.equals(p2.dataframe)
 
 
 def test_get_zone_thickness_one_well(testpath):
     """Import a well and get the zone thicknesses"""
 
-    wlist = [Well((testpath / WFILES1), zonelogname="Zonelog")]
+    wlist = [xtgeo.well_from_file(testpath / WFILES1, zonelogname="Zonelog")]
 
     mypoints = Points()
-    mypoints.from_wells(wlist, tops=False, zonelist=[12, 13, 14])
+    mypoints = xtgeo.points_from_wells(wlist, tops=False, zonelist=[1, 2, 3])
+    mypoints.zname = "THICKNESS"
+    assert mypoints.dataframe["THICKNESS"][0] == pytest.approx(16.8397)
 
 
 def test_get_zone_thickness_some_wells(testpath, tmp_path):
     """Import some wells and get the zone thicknesses"""
 
     wlist = [
-        Well(wpath, zonelogname="Zonelog")
+        xtgeo.well_from_file(wpath, zonelogname="Zonelog")
         for wpath in glob.glob(str(testpath / WFILES2))
     ]
+    mypoints = xtgeo.points_from_wells(wlist, tops=False, zonelist=(1, 22))
 
-    mypoints = Points()
-    mypoints.from_wells(wlist, tops=False, zonelist=(1, 22))
+    # alternative import well files and set zonelogname
+    wlist2 = glob.glob(str(testpath / WFILES2))
+    mypoints2 = xtgeo.points_from_wells(
+        wlist2, tops=False, zonelogname="Zonelog", zonelist=(1, 22)
+    )
+
+    assert mypoints.dataframe.equals(mypoints2.dataframe)
 
     mypoints.to_file(
         tmp_path / "zpoints_w_so622.rmsasc",
@@ -104,13 +129,18 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path):
         pfilter={"ZoneName": ["SO622"]},
     )
 
-    # filter, for backwards compatibility
+    # filter instead of pfilter, for backwards compatibility
     mypoints.to_file(
         tmp_path / "zpoints_w_so622_again.rmsasc",
         fformat="rms_attr",
         attributes=["WellName", "ZoneName"],
         filter={"ZoneName": ["SO622"]},
     )
+
+    assert mypoints.dataframe["X_UTME"][0] == pytest.approx(462698.2375)
+    assert mypoints.dataframe["WellName"][0] == "OP_1_RKB"
+    assert mypoints.dataframe["X_UTME"][20] == pytest.approx(462749.4820)
+    assert mypoints.dataframe["WellName"][20] == "OP_5"
 
 
 def test_get_faciesfraction_some_wells(testpath, tmp_path):

@@ -1,13 +1,12 @@
 import pathlib
-import pandas as pd
-import numpy as np
+from collections import OrderedDict
 
+import numpy as np
+import pandas as pd
 import pytest
 
-from xtgeo.xyz import Polygons
-
 import tests.test_common.test_xtg as tsetup
-
+from xtgeo.xyz import Polygons
 
 PFILE1A = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 PFILE1B = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.xyz")
@@ -20,7 +19,7 @@ POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
 
 
 def test_custom_polygons():
-    """Make polygons from list of tuples."""
+    """Make polygons from list of tuples ndarray or dataframe."""
 
     plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
 
@@ -30,7 +29,62 @@ def test_custom_polygons():
     assert mypol.dataframe["X_UTME"].values[0] == 234
     assert mypol.dataframe["Z_TVDSS"].values[2] == 12
 
+    plist = [
+        (234, 556, 11, 0),
+        (235, 559, 14, 1),
+        (255, 577, 12, 1),
+    ]
+
+    mypol = Polygons(plist)
+    assert mypol.dataframe["POLY_ID"].values[2] == 1
+
+    somedf = mypol.dataframe.copy()
+    mypol2 = Polygons(somedf)
+    assert mypol.dataframe.equals(mypol2.dataframe)
+
+
+def test_custom_polygons_with_attrs():
+    """Make polygons with attrs from list of tuples ndarray or dataframe."""
+
+    plist = [
+        (234, 556, 11, 0, "some", 1.0),
+        (235, 559, 14, 1, "attr", 1.1),
+        (255, 577, 12, 1, "here", 1.2),
+    ]
+    attrs = OrderedDict()
+    attrs["sometxt"] = "str"
+    attrs["somefloat"] = "float"
+
+    mypol = Polygons(plist, attributes=attrs)
+    assert mypol.dataframe["POLY_ID"].values[2] == 1
     print(mypol._df)
+    print(mypol._df.dtypes)
+
+    somedf = mypol.dataframe.copy()
+    mypol2 = Polygons(somedf, attributes=attrs)
+    assert mypol.dataframe.equals(mypol2.dataframe)
+
+
+def test_custom_polygons_with_attrs_not_ordereddict():
+    """Make polygons with attrs from list of tuples ndarray or dataframe.
+
+    It seems that python 3.6 dicts are actually ordered "but cannot be trusted"?
+    In python 3.7+ it is a feature.
+    """
+
+    plist = [
+        (234, 556, 11, 0, "some", 1.0),
+        (235, 559, 14, 1, "attr", 1.1),
+        (255, 577, 12, 1, "here", 1.2),
+    ]
+    attrs = {}
+    attrs["sometxt"] = "str"
+    attrs["somefloat"] = "float"
+
+    mypol = Polygons(plist, attributes=attrs)
+    assert mypol.dataframe["POLY_ID"].values[2] == 1
+    print(mypol._df)
+    print(mypol._df.dtypes)
 
 
 def test_import_zmap_and_xyz(testpath):

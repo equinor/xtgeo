@@ -10,7 +10,6 @@ import os
 import timeit
 import warnings
 
-
 try:
     from ._theversion import version
 
@@ -82,21 +81,18 @@ if not ROXAR:
 #
 _xprint("Import matplotlib etc...DONE")
 
-from xtgeo.common.constants import UNDEF
-from xtgeo.common.constants import UNDEF_LIMIT
-from xtgeo.common.constants import UNDEF_INT
-from xtgeo.common.constants import UNDEF_INT_LIMIT
-
-from xtgeo.common.exceptions import DateNotFoundError
-from xtgeo.common.exceptions import KeywordNotFoundError
-from xtgeo.common.exceptions import KeywordFoundNoDateError
-from xtgeo.common.exceptions import WellNotFoundError
-from xtgeo.common.exceptions import GridNotFoundError
-from xtgeo.common.exceptions import BlockedWellsNotFoundError
-from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError
-
-from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.common.constants import UNDEF, UNDEF_INT, UNDEF_INT_LIMIT, UNDEF_LIMIT
+from xtgeo.common.exceptions import (
+    BlockedWellsNotFoundError,
+    DateNotFoundError,
+    GridNotFoundError,
+    KeywordFoundNoDateError,
+    KeywordNotFoundError,
+    WellNotFoundError,
+)
 from xtgeo.common.sys import _XTGeoFile
+from xtgeo.common.xtgeo_dialog import XTGeoDialog
+from xtgeo.cxtgeo._cxtgeo import XTGeoCLibError
 
 _xprint("Import common... done")
 
@@ -104,16 +100,11 @@ _xprint("Import various XTGeo modules...")
 
 from xtgeo.roxutils import roxutils
 from xtgeo.roxutils.roxutils import RoxUtils
-
-from xtgeo.well import well1
-from xtgeo.well import wells
-from xtgeo.well import blocked_well
-from xtgeo.well import blocked_wells
-
-from xtgeo.well.well1 import Well
-from xtgeo.well.wells import Wells
+from xtgeo.well import blocked_well, blocked_wells, well1, wells
 from xtgeo.well.blocked_well import BlockedWell
 from xtgeo.well.blocked_wells import BlockedWells
+from xtgeo.well.well1 import Well
+from xtgeo.well.wells import Wells
 
 _xprint("Import various XTGeo modules... wells...")
 
@@ -128,36 +119,28 @@ from xtgeo.cube.cube1 import Cube
 
 _xprint("Import various XTGeo modules... cube...")
 
-from xtgeo.grid3d import grid
-from xtgeo.grid3d import grid_property
-from xtgeo.grid3d import grid_properties
-
+from xtgeo.grid3d import grid, grid_properties, grid_property
 from xtgeo.grid3d.grid import Grid
-from xtgeo.grid3d.grid_property import GridProperty
 from xtgeo.grid3d.grid_properties import GridProperties
+from xtgeo.grid3d.grid_property import GridProperty
 
 _xprint("Import various XTGeo modules... 3D grids...")
 
-from xtgeo.xyz import points
-from xtgeo.xyz import polygons
-
+from xtgeo.metadata.metadata import (
+    MetaDataCPGeometry,
+    MetaDataCPProperty,
+    MetaDataRegularCube,
+    MetaDataRegularSurface,
+    MetaDataWell,
+)
+from xtgeo.xyz import points, polygons
 from xtgeo.xyz.points import Points
 from xtgeo.xyz.polygons import Polygons
-
-from xtgeo.metadata.metadata import MetaDataRegularSurface
-from xtgeo.metadata.metadata import MetaDataRegularCube
-from xtgeo.metadata.metadata import MetaDataCPGeometry
-from xtgeo.metadata.metadata import MetaDataCPProperty
-from xtgeo.metadata.metadata import MetaDataWell
-
 
 _xprint("Import various XTGeo modules... xyz...")
 
 if not ROXAR:
-    from xtgeo.plot import baseplot
-    from xtgeo.plot import xsection
-    from xtgeo.plot import xtmap
-    from xtgeo.plot import grid3d_slice
+    from xtgeo.plot import baseplot, grid3d_slice, xsection, xtmap
 
 _xprint("Import various XTGeo modules... plots...")
 
@@ -165,34 +148,26 @@ _xprint("Import various XTGeo modules...DONE")
 
 # some function wrappers to initiate objects from imports
 _xprint("Import various XTGeo wrappers...")
-from xtgeo.surface.regular_surface import surface_from_file
-from xtgeo.surface.regular_surface import surface_from_roxar
-from xtgeo.surface.regular_surface import surface_from_cube
-from xtgeo.surface.regular_surface import surface_from_grid3d
-
-from xtgeo.grid3d.grid import grid_from_file
-from xtgeo.grid3d.grid import grid_from_roxar
-
-from xtgeo.grid3d.grid_property import gridproperty_from_file
-from xtgeo.grid3d.grid_property import gridproperty_from_roxar
-
-from xtgeo.cube.cube1 import cube_from_file
-from xtgeo.cube.cube1 import cube_from_roxar
-
-from xtgeo.well.well1 import well_from_file
-from xtgeo.well.well1 import well_from_roxar
-
-from xtgeo.well.blocked_well import blockedwell_from_file
-from xtgeo.well.blocked_well import blockedwell_from_roxar
-
+from xtgeo.cube.cube1 import cube_from_file, cube_from_roxar
+from xtgeo.grid3d.grid import grid_from_file, grid_from_roxar
+from xtgeo.grid3d.grid_property import gridproperty_from_file, gridproperty_from_roxar
+from xtgeo.surface.regular_surface import (
+    surface_from_cube,
+    surface_from_file,
+    surface_from_grid3d,
+    surface_from_roxar,
+)
+from xtgeo.well.blocked_well import blockedwell_from_file, blockedwell_from_roxar
 from xtgeo.well.blocked_wells import blockedwells_from_roxar
-
-from xtgeo.xyz.polygons import polygons_from_file
-from xtgeo.xyz.polygons import polygons_from_roxar
-
-from xtgeo.xyz.points import points_from_file
-from xtgeo.xyz.points import points_from_roxar
-from xtgeo.xyz.points import points_from_surface
+from xtgeo.well.well1 import well_from_file, well_from_roxar
+from xtgeo.xyz.points import (
+    points_from_dataframe,
+    points_from_file,
+    points_from_roxar,
+    points_from_surface,
+    points_from_wells,
+)
+from xtgeo.xyz.polygons import polygons_from_file, polygons_from_roxar
 
 warnings.filterwarnings("default", category=DeprecationWarning, module="xtgeo")
 
