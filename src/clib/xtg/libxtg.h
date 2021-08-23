@@ -1221,38 +1221,6 @@ grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int o
 int
 grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
 
-/* new version */
-int
-grd3d_imp_ecl_egrid(FILE *fc,
-                    int nx,
-                    int ny,
-                    int nz,
-                    long bpos_mapaxes,
-                    long bpos_coord,
-                    long bpos_zcorn,
-                    long bpos_actnum,
-                    double *swig_np_dbl_inplace_v1,  // *coordsv,
-                    long n_swig_np_dbl_inplace_v1,   // ncoord
-                    double *swig_np_dbl_inplace_v2,  // *zcornsv,
-                    long n_swig_np_dbl_inplace_v2,   // nzcorn
-                    int *swig_np_int_inplace_v1,     // *p_actnumv_v,
-                    long n_swig_np_int_inplace_v1,   // nactnum or ntot
-                    long *nact,
-                    int option);
-
-void
-grd3d_export_egrid(int nx,
-                   int ny,
-                   int nz,
-                   double *swig_np_dbl_in_v1,  // *coordsv
-                   long n_swig_np_dbl_in_v1,   // ncoord
-                   double *swig_np_dbl_in_v2,  // *zcornsv
-                   long n_swig_np_dbl_in_v2,   // nzcorn
-                   int *swig_np_int_in_v1,     // *actnumsv
-                   long n_swig_np_int_in_v1,   // nact
-                   char *filename,
-                   int mode);
-
 void
 grd3d_export_grdeclprop2(int nx,
                          int ny,
