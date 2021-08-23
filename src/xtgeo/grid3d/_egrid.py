@@ -414,6 +414,13 @@ class GlobalGrid(EGridSubGrid):
                 " by xtgeo. Instead grid is imported without coarsening."
             )
 
+        if self.coord_sys is not None:
+            warnings.warn(
+                "egrid file given with coordinate definition for global"
+                "grid, this is not directly supported by xtgeo. Instead"
+                "grid is imported without converting by local coordsys."
+            )
+
     def __eq__(self, other):
         if not isinstance(other, GlobalGrid):
             return False
