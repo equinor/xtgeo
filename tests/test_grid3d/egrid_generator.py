@@ -169,8 +169,9 @@ xtgeo_compatible_global_grids = global_grids(
     zcorn=xtgeo_compatible_zcorns,
 )
 
-xtgeo_compatible_egrids = egrids(
-    st.just(
+
+def xtgeo_compatible_egrids(
+    head=st.just(
         xtge.EGridHead(
             xtge.Filehead(
                 3,
@@ -182,7 +183,8 @@ xtgeo_compatible_egrids = egrids(
             )
         )
     ),
-    xtgeo_compatible_global_grids,
-    st.just([]),
-    st.just([]),
-)
+    global_grid=xtgeo_compatible_global_grids,
+    lgrs=st.just([]),
+    nncs=st.just([]),
+):
+    return egrids(head, global_grid, lgrs, nncs)
