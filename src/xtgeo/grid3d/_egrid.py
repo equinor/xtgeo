@@ -588,6 +588,14 @@ class EGrid:
             contents += nnc.to_egrid()
         write(filelike, contents, file_format)
 
+    def _check_xtgeo_compatible(self):
+        if self.lgr_sections:
+            warnings.warn(
+                "egrid file given with local grid refinements."
+                "LGR's are not directly supported,"
+                "Instead unrefined grid is imported."
+            )
+
     @property
     def dimensions(self):
         return self.global_grid.dimensions
@@ -620,6 +628,7 @@ class EGrid:
         )
 
     def xtgeo_coord(self) -> np.ndarray:
+        self._check_xtgeo_compatible()
         previous_mapaxes = self.global_grid.mapaxes
         self.global_grid.mapaxes = self.egrid_head.mapaxes
         result = self.global_grid.xtgeo_coord()
@@ -627,6 +636,7 @@ class EGrid:
         return result
 
     def xtgeo_actnum(self) -> np.ndarray:
+        self._check_xtgeo_compatible()
         previous_mapaxes = self.global_grid.mapaxes
         self.global_grid.mapaxes = self.egrid_head.mapaxes
         result = self.global_grid.xtgeo_actnum()
@@ -634,6 +644,7 @@ class EGrid:
         return result
 
     def xtgeo_zcorn(self) -> np.ndarray:
+        self._check_xtgeo_compatible()
         previous_mapaxes = self.global_grid.mapaxes
         self.global_grid.mapaxes = self.egrid_head.mapaxes
         result = self.global_grid.xtgeo_zcorn()
