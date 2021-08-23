@@ -4,7 +4,7 @@ import logging
 import ecl_data_io as eclio
 import hypothesis.strategies as st
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck, assume, given, settings
 
 import xtgeo as xtg
 import xtgeo.grid3d._egrid as xtge
@@ -365,3 +365,11 @@ def test_read_unexpected_section():
         xtge.EGridFileFormatError, match="subsection started with unexpected"
     ):
         reader.read()
+
+
+@given(xtgeo_compatible_egrids)
+def test_coarsening_warning(egrid):
+    assume(egrid.global_grid.corsnum is not None)
+
+    with pytest.warns(UserWarning, match="coarsen"):
+        egrid.xtgeo_coord()

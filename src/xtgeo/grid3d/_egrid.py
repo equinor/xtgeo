@@ -45,6 +45,7 @@ GridHead(type_of_grid=<TypeOfGrid.COMPOSITE...
 >>> head.to_egrid().tolist() == grid_head_contents
 True
 """
+import warnings
 from dataclasses import InitVar, dataclass
 from enum import Enum, unique
 from itertools import chain
@@ -404,6 +405,14 @@ class GlobalGrid(EGridSubGrid):
     coord_sys: Optional[MapAxes] = None
     boxorig: Optional[Tuple[int, int, int]] = None
     corsnum: Optional[np.ndarray] = None
+
+    def _check_xtgeo_compatible(self):
+        super()._check_xtgeo_compatible()
+        if self.corsnum is not None:
+            warnings.warn(
+                "egrid file given with coarsening, this is not directly supported"
+                " by xtgeo. Instead grid is imported without coarsening."
+            )
 
     def __eq__(self, other):
         if not isinstance(other, GlobalGrid):
