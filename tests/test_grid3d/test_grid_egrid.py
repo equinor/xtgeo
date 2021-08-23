@@ -10,7 +10,7 @@ from hypothesis import HealthCheck, assume, given, settings
 import xtgeo as xtg
 import xtgeo.grid3d._egrid as xtge
 
-from .egrid_generator import egrids, xtgeo_compatible_egrids
+from .egrid_generator import egrids, lgr_sections, xtgeo_compatible_egrids
 from .grid_generator import xtgeo_grids
 
 
@@ -212,7 +212,7 @@ def test_egrid_read_write(tmp_path, egrid):
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-@given(xtgeo_compatible_egrids)
+@given(xtgeo_compatible_egrids())
 def test_egrid_from_xtgeo(tmp_path, caplog, egrid):
     caplog.set_level(logging.CRITICAL)
     tmp_file = tmp_path / "grid.EGRID"
@@ -368,9 +368,29 @@ def test_read_unexpected_section():
         reader.read()
 
 
-@given(xtgeo_compatible_egrids)
+@given(xtgeo_compatible_egrids())
 def test_coarsening_warning(egrid):
     assume(egrid.global_grid.corsnum is not None)
 
     with pytest.warns(UserWarning, match="coarsen"):
+        egrid.xtgeo_coord()
+
+
+@given(xtgeo_compatible_egrids())
+def test_local_coordsys_warning(egrid):
+    assume(egrid.global_grid.coord_sys is not None)
+
+    with pytest.warns(UserWarning, match="coordinate definition"):
+        egrid.xtgeo_coord()
+
+
+@given(
+    xtgeo_compatible_egrids(
+        lgrs=st.lists(lgr_sections(), min_size=1),
+    )
+)
+def test_lgr_warning(egrid):
+    assume(len(egrid.lgr_sections) > 0)
+
+    with pytest.warns(UserWarning, match="LGR"):
         egrid.xtgeo_coord()
