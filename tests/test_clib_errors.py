@@ -24,22 +24,6 @@ def unreadable_file(setup_tmpdir):
     os.remove(fname)
 
 
-def test_eclgrid_no_file_access(unreadable_file):
-    with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file in"):
-        # The input here is not very important, what is important
-        # is that "existing_file" can not be opened.
-        _cxtgeo.grd3d_export_egrid(
-            1,
-            1,
-            1,
-            [1],
-            [1],
-            np.array([1], dtype=np.int32),
-            unreadable_file,
-            0,
-        )
-
-
 def test_grd3d_calc_dxdy():
     with pytest.raises(
         xtgeo.XTGeoCLibError,
@@ -310,28 +294,6 @@ def test_grd3d_reduce_onelayer():
             np.array([1], dtype=np.int32),
             np.array([1], dtype=np.int32),
             _cxtgeo.new_intarray(1),
-            1,
-        )
-
-
-def test_grd3d_imp_ecl_egrid():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Errors in array lengths checks in",
-    ):
-        _cxtgeo.grd3d_imp_ecl_egrid(
-            xtgeo._XTGeoFile(io.BytesIO(b"")).get_cfhandle(),
-            1,
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-            np.array([0.0], dtype=np.float64),
-            np.array([1.0], dtype=np.float64),
-            np.array([1], dtype=np.int32),
-            _cxtgeo.new_longarray(1),
             1,
         )
 
