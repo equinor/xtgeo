@@ -375,6 +375,11 @@ class EclGrid(ABC):
 
     @property
     @abstractmethod
+    def is_map_relative(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
     def mapaxes(self) -> Optional[MapAxes]:
         pass
 
@@ -439,7 +444,7 @@ class EclGrid(ABC):
         xtgeo_coord = np.swapaxes(self.coord.reshape((ny + 1, nx + 1, 6)), 0, 1).astype(
             np.float64
         )
-        if self.mapaxes:
+        if not self.is_map_relative and self.mapaxes is not None:
             self.transform_xtgeo_coord_by_mapaxes(xtgeo_coord)
         return np.ascontiguousarray(xtgeo_coord)
 

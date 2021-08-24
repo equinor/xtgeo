@@ -54,7 +54,14 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 import numpy as np
 from ecl_data_io import Format, lazy_read, write
 
-from ._ecl_grid import CoordinateType, EclGrid, GdOrient, GridUnit, MapAxes
+from ._ecl_grid import (
+    CoordinateType,
+    EclGrid,
+    GdOrient,
+    GridRelative,
+    GridUnit,
+    MapAxes,
+)
 
 
 class EGridFileFormatError(ValueError):
@@ -244,6 +251,7 @@ class EGridSubGrid(EclGrid):
     grid_head: Optional[GridHead] = None
     size: InitVar[Tuple[int, int, int]] = None
     mapaxes: Optional[MapAxes] = None
+    is_map_relative: bool = False
 
     def __eq__(self, other):
         return super().__eq__(other) and self.grid_head == other.grid_head
@@ -637,9 +645,15 @@ class EGrid:
     def xtgeo_coord(self) -> np.ndarray:
         self._check_xtgeo_compatible()
         previous_mapaxes = self.global_grid.mapaxes
+        previous_relative = self.global_grid.is_map_relative
         self.global_grid.mapaxes = self.egrid_head.mapaxes
+        self.global_grid.is_map_relative = (
+            self.egrid_head.gridunit is not None
+            and self.egrid_head.gridunit.grid_relative == GridRelative.MAP
+        )
         result = self.global_grid.xtgeo_coord()
         self.global_grid.mapaxes = previous_mapaxes
+        self.global_grid.is_map_relative = previous_relative
         return result
 
     def xtgeo_actnum(self) -> np.ndarray:
