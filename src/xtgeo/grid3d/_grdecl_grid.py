@@ -160,6 +160,13 @@ class GrdeclGrid(EclGrid):
     def dimensions(self):
         return (self.specgrid.ndivix, self.specgrid.ndiviy, self.specgrid.ndiviz)
 
+    @property
+    def is_map_relative(self) -> bool:
+        return (
+            self.gridunit is not None
+            and self.gridunit.grid_relative == GridRelative.MAP
+        )
+
     @classmethod
     def from_file(cls, filename, fileformat="grdecl"):
         """
