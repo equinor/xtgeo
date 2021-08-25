@@ -3,7 +3,6 @@ import pathlib
 
 import pytest
 import xtgeo
-from xtgeo.well import Well
 from xtgeo.xyz import Points
 
 WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
