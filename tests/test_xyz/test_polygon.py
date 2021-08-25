@@ -4,7 +4,6 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import pytest
-
 import tests.test_common.test_xtg as tsetup
 from xtgeo.xyz import Polygons
 
@@ -415,8 +414,6 @@ def test_append_polygons():
 
     pol1.hlen()
     pol2.hlen()
-
-    print("XXX", pol2.attributes)
 
     pol1.append(pol2)
 

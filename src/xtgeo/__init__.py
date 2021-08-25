@@ -166,6 +166,7 @@ from xtgeo.xyz.points import (
     points_from_roxar,
     points_from_surface,
     points_from_wells,
+    points_from_wells_dfrac,
 )
 from xtgeo.xyz.polygons import polygons_from_file, polygons_from_roxar
 

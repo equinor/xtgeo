@@ -176,15 +176,14 @@ def test_import_rmsattr_format(testpath, tmp_path):
     test_points_path = testpath / POINTSET3
     orig_points.from_file(test_points_path, fformat="rms_attr")
 
-    # export_path = tmp_path / "attrs.rmsattr"
-    export_path = "attrs.rmsattr"
+    export_path = tmp_path / "attrs.rmsattr"
     orig_points.to_file(export_path, fformat="rms_attr")
 
-    # reloaded_points = Points()
-    # reloaded_points.from_file(export_path, fformat="rms_attr")
-    # pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
+    reloaded_points = Points()
+    reloaded_points.from_file(export_path, fformat="rms_attr")
+    pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
 
-    # assert list(orig_points.attributes) == ["FaultBlock", "FaultTag", "VerticalSep"]
+    assert list(orig_points.attributes) == ["FaultBlock", "FaultTag", "VerticalSep"]
 
 
 def test_export_points_rmsattr(testpath, tmp_path):

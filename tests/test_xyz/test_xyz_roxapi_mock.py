@@ -3,6 +3,7 @@ Tests for roxar RoxarAPI interface as mocks.
 
 """
 from collections import OrderedDict
+
 import numpy as np
 import xtgeo
 
@@ -29,11 +30,12 @@ def get_points_set2(tmp_path):
         (1.4, 2.4, 48.0, "friend"),
     ]
     attrs = OrderedDict()
-    attrs["some"] = "TextColumn"
+    attrs["TextColumn"] = "str"
     poi = xtgeo.Points(values=values, attributes=attrs)
     tfile = tmp_path / "generic_pset2.rsm_attr"
     poi.to_file(tfile, fformat="rms_attr")
-    args = xtgeo.xyz._xyz_io.import_rms_attr(tfile, is_polygons=False)
+    tfile2 = xtgeo._XTGeoFile(tmp_path / "generic_pset2.rsm_attr")
+    args = xtgeo.xyz._xyz_io.import_rms_attr(tfile2, is_polygons=False)
     return args
 
 
@@ -76,6 +78,7 @@ def test_load_points_with_attrs_from_roxar(mocker, tmp_path):
         return_value=get_points_set2(tmp_path),
     )
     poi = xtgeo.points_from_roxar("project", "Name", "Category", attributes=True)
+    print(poi.dataframe)
     assert poi.dataframe["X_UTME"][3] == 1.3
 
 

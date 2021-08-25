@@ -143,13 +143,10 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path):
     assert mypoints.dataframe["WellName"][20] == "OP_5"
 
 
-def test_get_faciesfraction_some_wells(testpath, tmp_path):
-    """Import some wells and get the facies fractions per zone, for
-    wells < 70 degrees inclination.
-    """
-
+def test_get_faciesfraction_some_wells_old(testpath, tmp_path):
+    """Import some wells and get the facies fractions per zone."""
     wlist = [
-        Well(wpath, zonelogname="Zonelog")
+        xtgeo.well_from_file(wpath, zonelogname="Zonelog")
         for wpath in glob.glob(str(testpath / WFILES2))
     ]
 
@@ -157,7 +154,39 @@ def test_get_faciesfraction_some_wells(testpath, tmp_path):
     facname = "Facies"
     fcode = [1]
 
+    # In this example for wells < 70 degrees inclination.
     mypoints.dfrac_from_wells(wlist, facname, fcode, zonelist=None, incl_limit=70)
+
+    # rename column
+    mypoints.zname = "FACFRAC"
+
+    myquery = 'WELLNAME == "OP_1" and ZONE == 1'
+    usedf = mypoints.dataframe.query(myquery)
+
+    assert abs(usedf[mypoints.zname].values[0] - 0.86957) < 0.001
+
+    mypoints.to_file(
+        tmp_path / "ffrac_per_zone_old.rmsasc",
+        fformat="rms_attr",
+        attributes=["WELLNAME", "ZONE"],
+        pfilter={"ZONE": [1]},
+    )
+
+
+def test_get_faciesfraction_some_wells(testpath, tmp_path):
+    """Import some wells and get the facies fractions per zone."""
+    wlist = [
+        xtgeo.well_from_file(wpath, zonelogname="Zonelog")
+        for wpath in glob.glob(str(testpath / WFILES2))
+    ]
+
+    facname = "Facies"
+    fcode = [1]
+
+    # In this example for wells < 70 degrees inclination.
+    mypoints = xtgeo.points_from_wells_dfrac(
+        wlist, facname, fcode, zonelist=None, incl_limit=70
+    )
 
     # rename column
     mypoints.zname = "FACFRAC"

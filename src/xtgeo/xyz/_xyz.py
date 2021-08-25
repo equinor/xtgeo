@@ -6,7 +6,7 @@ import pathlib
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 import deprecation
 import numpy as np
@@ -100,6 +100,22 @@ class XYZ:
     Additional columns are possible but certainly not required. These are free
     attributes with user-defined names. These names (with data-type) are
     stored in an ordered dict: self._attrs as {"somename": "type", ...}.
+
+    Args:
+        values: Provide input values on various forms (list-like or dataframe).
+        xname: Name of first (X) mandatory column, default is X_UTME.
+        yname: Name of second (Y) mandatory column, default is Y_UTMN.
+        zname: Name of third (Z) mandatory column, default is Z_TVDSS.
+        pname: Name of fourth columns (mandatory for Polygons), default is POLY_ID.
+        name: A given name for the Points/Polygons object.
+        is_polygons: Shall be True for Polygons(), False for Points()
+        attributes: An ordered dict for addional columns (attributes) on the
+            form {"WellName": "str", "SomeCode": "int"}
+        kwargs: Additonal keys, mostly for internal usage
+
+    Note:
+        Do not use the XYZ class directly. Use the :class:`Points` or :class:`Polygons`
+        classes!
     """
 
     @_allow_deprecated_init
@@ -115,20 +131,6 @@ class XYZ:
         attributes: Optional[dict] = None,
         **kwargs,
     ):
-        """Instating a Points or Polygons object.
-
-        Args:
-            values: Provide input values on various forms (list-like or dataframe).
-            xname: Name of first (X) mandatory column, default is X_UTME.
-            yname: Name of second (Y) mandatory column, default is Y_UTMN.
-            zname: Name of third (Z) mandatory column, default is Z_TVDSS.
-            pname: Name of fourth columns (mandatory for Polygons), default is POLY_ID.
-            name: A given name for the Points/Polygons object.
-            is_polygons: Shall be True for Polygons(), False for Points()
-            attributes: An ordered dict for addional columns (attributes) on the
-                form {"WellName": "str", "SomeCode": "int"}
-            kwargs: Additonal keys, mostly for internal usage
-        """
         dataframe = kwargs.get("dataframe", None)
         self._filesrc = kwargs.get("filesrc", None)
 
@@ -169,7 +171,7 @@ class XYZ:
         logger.info("XYZ Instance initiated (base class) ID %s", id(self))
 
     @property
-    def xname(self):
+    def xname(self) -> str:
         """Returns or set the name of the X column."""
         return self._xname
 
@@ -179,7 +181,7 @@ class XYZ:
         self._xname = newname
 
     @property
-    def yname(self):
+    def yname(self) -> str:
         """Returns or set the name of the Y column."""
         return self._yname
 
@@ -189,7 +191,7 @@ class XYZ:
         self._yname = newname
 
     @property
-    def zname(self):
+    def zname(self) -> str:
         """Returns or set the name of the Z column."""
         return self._zname
 
@@ -199,7 +201,7 @@ class XYZ:
         self._zname = newname
 
     @property
-    def pname(self):
+    def pname(self) -> str:
         """Returns or set the name of the POLY_ID column."""
         return self._pname
 
@@ -214,12 +216,12 @@ class XYZ:
         self._pname = value
 
     @property
-    def attributes(self):
+    def attributes(self) -> dict:
         """Returns a dictionary with attribute names and type, or None."""
         return self._attrs
 
     @property
-    def dataframe(self):
+    def dataframe(self) -> pd.DataFrame:
         """Returns or set the Pandas dataframe object."""
         return self._df
 
@@ -228,17 +230,25 @@ class XYZ:
         self._df = df.copy()
 
     @property
-    def nrow(self):
+    def filesrc(self) -> str:
+        """Returns the filesrc attribute, file name or description (read-only).
+
+        Unless it is a valid file name, a `Derived from:` prefix is applied, e.g.
+        `Derived from: list-like`
+        """
+
+    @property
+    def nrow(self) -> int:
         """Returns the Pandas dataframe object number of rows."""
         if self.dataframe is None:
             return 0
         return len(self.dataframe.index)
 
     @property
-    def nwells(self):
+    def nwells(self) -> int:
         """Returns the number of wells associated with the XYZ set (read-only).
 
-        If zero or not relevant, None is returned
+        If zero or not relevant, None is returned.
 
         .. versionadded:: 2.16
         """
@@ -345,8 +355,8 @@ class XYZ:
         current_version=xtgeo.version,
         details="Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead",
     )
-    def from_file(self, pfile, fformat="xyz", is_polygons=False):
-        """Import Points or Polygons from a file.
+    def from_file(self, pfile, fformat="xyz", **kwargs):
+        """Import Points or Polygons from a file (deprecated).
 
         Supported import formats (fformat):
 
@@ -371,6 +381,7 @@ class XYZ:
         .. deprecated:: 2.16
            Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead.
         """
+        is_polygons = kwargs.get("is_polygons", False)
 
         pfile = xtgeo._XTGeoFile(pfile)
         pfile.check_file(raiseerror=OSError)
@@ -382,8 +393,8 @@ class XYZ:
         else:
             fformat = pfile.generic_format_by_proposal(fformat)  # default
 
-        kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
-        self._reset(**kwargs)
+        newkwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
+        self._reset(**newkwargs)
 
     def _reset(self, **kwargs):
         self._df = kwargs.get("dataframe", self._df)
@@ -449,13 +460,13 @@ class XYZ:
         details="Use xtgeo.points_from_surface() instead",
     )
     def from_surface(self, surf, zname="Z_TVDSS"):
-        """Get points as X Y Value from a surface object nodes.
+        """Get points as X Y Value from a surface object nodes (deprecated).
 
         Note that undefined surface nodes will not be included.
 
         Args:
             surf (RegularSurface): A XTGeo RegularSurface object instance.
-            zname (str): Name of value column (3'rd column)
+            zname (str): Name of value column (3'rd column).
 
         Example::
 
@@ -468,7 +479,7 @@ class XYZ:
 
             topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
 
-        .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead
+        .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead.
         """
 
         # check if surf is instance from RegularSurface
@@ -533,6 +544,7 @@ class XYZ:
         kwargs["dataframe"] = pd.DataFrame(ddatas)
         kwargs["zname"] = zname
         kwargs["name"] = name
+        kwargs["filesrc"] = "Derived from: RegularSurface"
 
         if kwargs.get("return_cls", True) is False:
             return kwargs
@@ -574,6 +586,7 @@ class XYZ:
         .. versionupdated:: 2.16
 
         """
+        self._filesrc = "Derived from: numpy array"
         if isinstance(plist, list):
             # convert list/tuples to a 2D numpy and process the numpy below
             logger.info("Input list-like is a list, convert to a numpy...")
@@ -582,10 +595,12 @@ class XYZ:
             except Exception as exc:
                 warnings.warn(f"Cannot convert list to numpy array: {str(exc)}")
                 raise
+            self._filesrc = "Derived from: list input"
 
         if isinstance(plist, pd.DataFrame):
             # convert input dataframe to a 2D numpy and process the numpy below
             plist = plist.to_numpy(copy=True)
+            self._filesrc = "Derived from: dataframe input"
 
         if isinstance(plist, np.ndarray):
             logger.info("Process numpy to points")
@@ -634,7 +649,7 @@ class XYZ:
         details="Use Points() or Polygons() initialisation instead",
     )
     def from_list(self, plist):
-        """Import Points or Polygons from a list-like input.
+        """Import Points or Polygons from a list-like input (deprecated).
 
         The following inputs are possible:
 
@@ -649,7 +664,7 @@ class XYZ:
         an integer.
 
         Args:
-            plist (str): List of tuples, each tuple is length 3 or 4
+            plist (str): List of tuples, each tuple is length 3 or 4.
 
         Raises:
             ValueError: If something is wrong with input
@@ -679,6 +694,7 @@ class XYZ:
                 "Wrong length detected of first tuple: {}".format(len(first))
             )
         self._df.dropna(inplace=True)
+        self._filesrc = "Derived from: list-like input"
 
     def to_file(
         self,
@@ -947,13 +963,13 @@ class XYZ:
             is_polygons,
         )
 
-    def append(self, other, attributes=None):
-        """Append objects by adding dataframes together.
+    def append(self, other, attributes: Optional[List[str]] = None):
+        """Joining data by appending Points/Polygons objects.
 
         Args:
             other: Points or Polygons object
             attributes: List of attribute names one wants to append in addition.
-                Note that the two polygons must share attribute name if this should
+                Note that the two polygons must share attribute names if this should
                 have any meaning. As default, attributes are None which means that
                 any additional columns are not applied, and the resulting Polygons()
                 instance will only keep the basic columns. This is intentional
@@ -999,3 +1015,4 @@ class XYZ:
         # just append the two dataframes
         newdf = df1.append(df2, ignore_index=True)
         self.dataframe = newdf
+        self._filesrc = "Combined data"
