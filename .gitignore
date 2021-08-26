@@ -60,7 +60,7 @@ _tmp_*
 
 # Sphinx documentation
 docs/_build
-docs/apiref
+docs/_apiref
 
 # PyBuilder
 target/

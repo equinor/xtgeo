@@ -13,9 +13,9 @@ pre-commit
 coverage>=4.1
 Sphinx
 sphinx-rtd-theme
-sphinxcontrib-apidoc
-sphinx-autodoc-typehints
-recommonmark
+sphinx-toolbox
+autoclasstoc
+myst-parser
 bandit
 segyio>=1.8.6
 shapely>=1.6.2; python_version < "3.8"

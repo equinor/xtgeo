@@ -1,22 +1,21 @@
 """Functions/classes for use in setup.py in order to make the latter clean and lean."""
-import os
-import sys
-import re
-from os.path import exists, dirname
-from glob import glob
-from shutil import rmtree
 import fnmatch
+import os
 import platform
+import re
+import subprocess  # nosec
+import sys
 from distutils.command.clean import clean as _clean
 from distutils.spawn import find_executable
 from distutils.version import LooseVersion
-import subprocess  # nosec
-
-from skbuild.command import set_build_base_mixin
-from skbuild.utils import new_style
-from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
+from glob import glob
+from os.path import dirname, exists
+from shutil import rmtree
 
 from setuptools_scm import get_version
+from skbuild.command import set_build_base_mixin
+from skbuild.constants import CMAKE_BUILD_DIR, CMAKE_INSTALL_DIR, SKBUILD_DIR
+from skbuild.utils import new_style
 
 CMD = sys.argv[1]
 
@@ -44,10 +43,8 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         "sdist",
         "wheel",
         ".pytest_cache",
-        "docs/apiref",
+        "docs/_apiref",
         "docs/_build",
-        "docs/_static",
-        "docs/_templates",
         "htmlcov",
     )
 
@@ -83,12 +80,12 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         After calling the super class implementation, this function removes
         the directories specific to scikit-build ++.
         """
-        super().run()
+        # super().run()
 
         for dir_ in CleanUp.CLEANFOLDERS:
             if exists(dir_):
                 print("Removing: {}".format(dir_))
-            if not self.dry_run and exists(dir_):
+            if exists(dir_):
                 rmtree(dir_)
 
         for dir_ in CleanUp.CLEANFOLDERSRECURSIVE:
@@ -104,7 +101,7 @@ class CleanUp(set_build_base_mixin, new_style(_clean)):
         for fil_ in CleanUp.CLEANFILES:
             if exists(fil_):
                 print("Removing: {}".format(fil_))
-            if not self.dry_run and exists(fil_):
+            if exists(fil_):
                 os.remove(fil_)
 
 

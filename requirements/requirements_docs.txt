@@ -7,6 +7,6 @@ setuptools_scm
 pydocstyle
 Sphinx
 sphinx-rtd-theme
-sphinxcontrib-apidoc
-sphinx-autodoc-typehints
-recommonmark
+sphinx-toolbox
+autoclasstoc
+myst-parser
