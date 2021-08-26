@@ -6,10 +6,11 @@ import pathlib
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import numpy.ma as ma
+
 import xtgeo
 from xtgeo.common import XTGDescription
 
@@ -25,10 +26,12 @@ from . import (
     _grid_wellzone,
     _gridprop_lowlevel,
 )
+from ._ecl_grid import Units
 from ._grid3d import _Grid3D
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
 
 # --------------------------------------------------------------------------------------
 # Comment on "asmasked" vs "activeonly:
@@ -148,6 +151,7 @@ class Grid(_Grid3D):
         self,
         gfile: Optional[Union[str, Path]] = None,
         fformat: Optional[str] = "guess",
+        units: Optional[Units] = None,
         **kwargs,
     ):
         """Instantating.
@@ -156,6 +160,9 @@ class Grid(_Grid3D):
             gfile: Input file, or leave blank.
             fformat: File format input, default is ``guess`` based on file extension.
                 Other options are ...
+            units: The length units the coordinates are in,
+                (either GridUnit.CM, GridUnit.METRES, GridUnit.FEET for cm,
+                metres and feet respectively).  Default (None) is unitless.
             kwargs: remaining keyword arguments are sent to the corresponding file
                 reader, see :meth:`Grid.from_file`.
 
@@ -214,9 +221,17 @@ class Grid(_Grid3D):
         # See _grid3d_fence for instance; note! reset this if any kind of grid change!
         self._tmp = {}
 
+        self.units = units
+
         if gfile is not None:
             gfile = pathlib.Path(gfile)
-            self.from_file(gfile, fformat=fformat, **kwargs)
+            if fformat in ["egrid", "grdecl", "bgrdecl"]:
+                kwargs["units"] = units
+            self.from_file(
+                gfile,
+                fformat=fformat,
+                **kwargs,
+            )
         else:
             # make a simple empty box grid (from version 2.13)
             self.create_box((self._ncol, self._nrow, self._nlay))
@@ -705,7 +720,12 @@ class Grid(_Grid3D):
             self, project, gname, realisation, info=info, method=method
         )
 
-    def from_file(self, gfile, fformat=None, **kwargs):
+    def from_file(
+        self,
+        gfile,
+        fformat=None,
+        **kwargs,
+    ):
         """Import grid geometry from file, and makes an instance of this class.
 
         If file extension is missing, then the extension will guess the fformat
@@ -717,6 +737,12 @@ class Grid(_Grid3D):
                 then a fileroot name shall be input here, see example below.
             fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
                 (None is default and means "guess")
+            units: The length units used for the resulting grid , (either GridUnit.CM,
+                GridUnit.METRES, GridUnit.FEET for cm, metres and feet
+                respectively).May convert if file has unit information.
+                Defaults to importing the units stored in the file, if present.
+                If no information about units is present in the file, imports
+                values as is and the resulting grid is unitless.
             initprops (str list): Optional, and only applicable for file format
                 "eclipserun". Provide a list the names of the properties here. A
                 special value "all" can be get all properties found in the INIT file

@@ -84,9 +84,13 @@ def test_specgrid():
 @pytest.mark.parametrize(
     "inp_str, expected_unit, expected_relative",
     [
-        ("GRIDUNIT\n 'METRES  ' '        ' /", "METRES", ggrid.GridRelative.ORIGIN),
-        ("GRIDUNIT\n METRES /", "METRES", ggrid.GridRelative.ORIGIN),
-        ("GRIDUNIT\n FEET MAP /", "FEET", ggrid.GridRelative.MAP),
+        (
+            "GRIDUNIT\n 'METRES  ' '        ' /",
+            ecl_grid.Units.METRES,
+            ggrid.GridRelative.ORIGIN,
+        ),
+        ("GRIDUNIT\n METRES /", ecl_grid.Units.METRES, ggrid.GridRelative.ORIGIN),
+        ("GRIDUNIT\n FEET MAP /", ecl_grid.Units.FEET, ggrid.GridRelative.MAP),
     ],
 )
 def test_gridunit(inp_str, expected_unit, expected_relative):
@@ -309,7 +313,6 @@ def test_duplicate_insignificant_values():
 
     grdecl_grid.duplicate_insignificant_xtgeo_zcorn(zcorn_xtgeo)
 
-    print(zcorn_xtgeo.tolist())
     assert zcorn_xtgeo.tolist() == [
         [[[4] * 4] * 2, [[2] * 4] * 2],
         [[[3] * 4] * 2, [[1] * 4] * 2],

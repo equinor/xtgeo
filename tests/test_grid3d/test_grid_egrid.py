@@ -34,13 +34,6 @@ from .grid_generator import xtgeo_grids
         (
             {
                 "FILEHEAD": [0] * 100,
-                "GRIDUNIT": [],
-            },
-            "GRIDUNIT",
-        ),
-        (
-            {
-                "FILEHEAD": [0] * 100,
                 "GRIDUNIT": ["METRES  "],
                 "GRIDHEAD": [],
             },
@@ -385,7 +378,7 @@ def test_local_coordsys_warning(egrid):
 
 @given(
     xtgeo_compatible_egrids(
-        lgrs=st.lists(lgr_sections(), min_size=1),
+        lgrs=st.lists(lgr_sections(), min_size=1, max_size=3),
     )
 )
 def test_lgr_warning(egrid):

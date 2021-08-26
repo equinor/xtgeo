@@ -10,6 +10,7 @@ from .grdecl_grid_generator import (
     gdorients,
     gridunits,
     map_axes,
+    units,
     xtgeo_compatible_zcorns,
     zcorns,
 )
@@ -143,20 +144,22 @@ nnc_sections = st.builds(
     arrays(elements=indecies, dtype="int32", shape=indecies),
 )
 
-egrid_heads = st.builds(
-    xtge.EGridHead,
-    file_heads,
-    st.just("METRES  "),
-    map_axes,
-    gridunits(),
-    gdorients,
-)
+
+@st.composite
+def egrid_heads(draw, mpaxes=map_axes):
+    return xtge.EGridHead(
+        draw(file_heads),
+        draw(units),
+        draw(mpaxes),
+        draw(gridunits()),
+        draw(gdorients),
+    )
 
 
 @st.composite
 def egrids(
     draw,
-    head=egrid_heads,
+    head=egrid_heads(),
     global_grid=global_grids(),
     lgrs=st.lists(lgr_sections(), max_size=3),
     nncs=st.lists(nnc_sections, max_size=3),

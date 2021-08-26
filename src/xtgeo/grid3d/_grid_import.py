@@ -74,12 +74,18 @@ def from_file(self, gfile, fformat=None, **kwargs):  # pylint: disable=too-many-
     elif fformat == "bgrdecl":
         _grid_import_ecl.import_ecl_bgrdecl(self, gfile, **kwargs)
     elif fformat == "xtgf":
+        if "units" in kwargs:
+            del kwargs["units"]
         self.from_xtgf(gfile, **kwargs)
     elif fformat == "hdf":
+        if "units" in kwargs:
+            del kwargs["units"]
         self.from_hdf(gfile, **kwargs)
     else:
         raise ValueError("Invalid file format")
 
     self.name = gfile.file.stem
+    if "units" in kwargs:
+        self.units = kwargs["units"]
 
     return self

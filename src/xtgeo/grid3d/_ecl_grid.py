@@ -4,8 +4,53 @@ from enum import Enum, auto, unique
 from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
+from scipy.constants import foot
 
 from ._grdecl_format import match_keyword
+
+
+@unique
+class Units(Enum):
+    METRES = auto()
+    CM = auto()
+    FEET = auto()
+
+    def conversion_factor(self, other):
+        "Conversion factor from one unit to another"
+        result = 1.0
+        if self == other:
+            return result
+        if other == Units.FEET:
+            result *= 1 / foot
+        if other == Units.CM:
+            result *= 1e2
+        if self == Units.FEET:
+            result *= foot
+        if self == Units.CM:
+            result *= 1e-2
+        return result
+
+    def to_grdecl(self):
+        return self.name
+
+    def to_bgrdecl(self):
+        return self.to_grdecl().ljust(8)
+
+    @classmethod
+    def from_grdecl(cls, unit_string):
+        if match_keyword(unit_string, "METRES"):
+            return cls.METRES
+        if match_keyword(unit_string, "FEET"):
+            return cls.FEET
+        if match_keyword(unit_string, "CM"):
+            return cls.CM
+        raise ValueError(f"Unknown unit string {unit_string}")
+
+    @classmethod
+    def from_bgrdecl(cls, unit_string):
+        if isinstance(unit_string, bytes):
+            return cls.from_grdecl(unit_string.decode("ascii"))
+        return cls.from_grdecl(unit_string)
 
 
 @unique
@@ -214,39 +259,8 @@ class GridUnit(GrdeclKeyword):
     MAPAXES.
     """
 
-    unit: str = "METRES"
+    unit: Units = Units.METRES
     grid_relative: GridRelative = GridRelative.ORIGIN
-
-    def to_grdecl(self) -> List[str]:
-        return [
-            self.unit,
-            self.grid_relative.to_grdecl(),
-        ]
-
-    def to_bgrdecl(self) -> List[str]:
-        return [
-            self.unit.ljust(8),
-            self.grid_relative.to_bgrdecl(),
-        ]
-
-    @classmethod
-    def from_bgrdecl(cls, values: Union[bytes, str]):
-        if isinstance(values[0], bytes):
-            return cls.from_grdecl([v.decode("ascii") for v in values])
-        return cls.from_grdecl(values)
-
-    @classmethod
-    def from_grdecl(cls, values: List[str]):
-        if len(values) == 1:
-            return cls(values[0].rstrip())
-        if len(values) == 2:
-            return cls(
-                values[0].rstrip(),
-                GridRelative.MAP
-                if match_keyword(values[1], "MAP")
-                else GridRelative.ORIGIN,
-            )
-        raise ValueError("GridUnit record must contain either 1 or 2 values")
 
 
 @dataclass
@@ -269,6 +283,12 @@ class MapAxes(GrdeclKeyword):
 
     def to_bgrdecl(self) -> List[float]:
         return self.to_grdecl()
+
+    def convert_units(self, old_units, new_units):
+        factor = old_units.conversion_factor(new_units)
+        self.y_line = (self.y_line[0] * factor, self.y_line[1] * factor)
+        self.x_line = (self.x_line[0] * factor, self.x_line[1] * factor)
+        self.origin = (self.origin[0] * factor, self.origin[1] * factor)
 
     @classmethod
     def from_bgrdecl(cls, values: List[Union[float, str]]):
@@ -388,9 +408,34 @@ class EclGrid(ABC):
     def dimensions(self) -> Tuple[int, int, int]:
         pass
 
+    @property
+    @abstractmethod
+    def map_axis_units(self) -> Units:
+        pass
+
+    @property
+    @abstractmethod
+    def grid_units(self) -> Units:
+        pass
+
     @abstractmethod
     def _check_xtgeo_compatible(self):
         pass
+
+    def convert_units(self, units):
+        if self.mapaxes is None:
+            self.mapaxes = MapAxes()
+        old_axis_units = self.map_axis_units
+        if old_axis_units is None:
+            old_axis_units = Units.METRES
+        self.mapaxes.convert_units(old_axis_units, units)
+        self.map_axis_units = units
+
+        old_grid_units = self.grid_units
+        factor = old_grid_units.conversion_factor(units)
+        self.coord *= factor
+        self.zcorn *= factor
+        self.grid_units = units
 
     @staticmethod
     def valid_mapaxes(mapaxes: MapAxes) -> bool:
@@ -433,7 +478,46 @@ class EclGrid(ABC):
 
         return coord
 
-    def xtgeo_coord(self):
+    def inverse_transform_xtgeo_coord_by_mapaxes(self, coord: np.ndarray):
+        """Inversely transforms xtgeo coord values by mapaxes.
+
+        The inverse operation of transform_xtgeo_coord_by_mapaxes.
+        """
+        x_point = self.mapaxes.x_line
+        y_point = self.mapaxes.y_line
+        origin = self.mapaxes.origin
+
+        x_axis = np.array(x_point) - origin
+        y_axis = np.array(y_point) - origin
+
+        x_unit = x_axis / np.linalg.norm(x_axis)
+        y_unit = y_axis / np.linalg.norm(y_axis)
+
+        coord[:, :, (0, 1)] -= np.array(origin)
+        coord[:, :, (3, 4)] -= np.array(origin)
+
+        inv_transform = np.linalg.inv(np.transpose([x_unit, y_unit]))
+
+        # The following index manipulation is
+        # an optimized version of
+
+        # nx, ny, _ = coord.shape
+        # for i in range(nx):
+        #    for j in range(ny):
+        #        coord[i, j, (0, 1)] = inv_transform @ coord[i, j, (0, 1)]
+        #        coord[i, j, (3, 4)] = inv_transform @ coord[i, j, (3, 4)]
+        coord[:, :, (0, 1)] = (
+            inv_transform[np.newaxis, np.newaxis, :, :]
+            @ coord[:, :, (0, 1), np.newaxis]
+        )[:, :, :, 0]
+        coord[:, :, (3, 4)] = (
+            inv_transform[np.newaxis, np.newaxis, :, :]
+            @ coord[:, :, (3, 4), np.newaxis]
+        )[:, :, :, 0]
+
+        return coord
+
+    def xtgeo_coord(self, coordinates=GridRelative.MAP):
         """
         Returns:
             coord in xtgeo format.
@@ -444,8 +528,12 @@ class EclGrid(ABC):
         xtgeo_coord = np.swapaxes(self.coord.reshape((ny + 1, nx + 1, 6)), 0, 1).astype(
             np.float64
         )
-        if not self.is_map_relative and self.mapaxes is not None:
-            self.transform_xtgeo_coord_by_mapaxes(xtgeo_coord)
+        if coordinates == GridRelative.MAP:
+            if not self.is_map_relative and self.mapaxes is not None:
+                self.transform_xtgeo_coord_by_mapaxes(xtgeo_coord)
+        elif coordinates == GridRelative.ORIGIN:
+            if self.is_map_relative and self.mapaxes is not None:
+                self.inverse_transform_xtgeo_coord_by_mapaxes(xtgeo_coord)
         return np.ascontiguousarray(xtgeo_coord)
 
     def xtgeo_actnum(self):
@@ -606,9 +694,15 @@ class EclGrid(ABC):
 
         zcorn = zcorn.ravel(order="F")
 
-        return cls(
+        result = cls(
             coord=coord,
             zcorn=zcorn,
             actnum=actnum,
             size=(nx, ny, nz),
         )
+
+        if xtgeo_grid.units is not None:
+            result.grid_units = xtgeo_grid.units
+            result.map_axis_units = xtgeo_grid.units
+
+        return result

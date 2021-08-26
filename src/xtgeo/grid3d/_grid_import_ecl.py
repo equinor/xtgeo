@@ -5,19 +5,21 @@
 
 import xtgeo
 from xtgeo.grid3d._egrid import EGrid, RockModel
-from xtgeo.grid3d._grdecl_grid import GrdeclGrid
+from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 
 xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 
-def import_ecl_egrid(self, gfile):
+def import_ecl_egrid(self, gfile, units=None, coordinates=GridRelative.MAP):
     egrid = EGrid.from_file(gfile._file)
+    if units is not None:
+        egrid.convert_units(units)
 
     self._ncol, self._nrow, self._nlay = egrid.dimensions
 
-    self._coordsv = egrid.xtgeo_coord()
+    self._coordsv = egrid.xtgeo_coord(coordinates=GridRelative.MAP)
     self._zcornsv = egrid.xtgeo_zcorn()
     self._actnumsv = egrid.xtgeo_actnum()
     self._subgrids = None
@@ -75,28 +77,32 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     self.gridprops = grdprops
 
 
-def import_ecl_grdecl(self, gfile):
+def import_ecl_grdecl(self, gfile, units=None, coordinates=GridRelative.MAP):
     """Import grdecl format."""
 
     grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="grdecl")
+    if units is not None:
+        grdecl_grid.convert_units(units)
 
     self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
 
-    self._coordsv = grdecl_grid.xtgeo_coord()
+    self._coordsv = grdecl_grid.xtgeo_coord(coordinates=coordinates)
     self._zcornsv = grdecl_grid.xtgeo_zcorn()
     self._actnumsv = grdecl_grid.xtgeo_actnum()
     self._subgrids = None
     self._xtgformat = 2
 
 
-def import_ecl_bgrdecl(self, gfile):
+def import_ecl_bgrdecl(self, gfile, units=None, coordinates=GridRelative.MAP):
     """Import binary files with GRDECL layout."""
 
     grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="bgrdecl")
+    if units is not None:
+        grdecl_grid.convert_units(units)
 
     self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
 
-    self._coordsv = grdecl_grid.xtgeo_coord()
+    self._coordsv = grdecl_grid.xtgeo_coord(coordinates=coordinates)
     self._zcornsv = grdecl_grid.xtgeo_zcorn()
     self._actnumsv = grdecl_grid.xtgeo_actnum()
     self._subgrids = None

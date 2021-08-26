@@ -46,7 +46,7 @@ GridHead(type_of_grid=<TypeOfGrid.COMPOSITE...
 True
 """
 import warnings
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from enum import Enum, unique
 from itertools import chain
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
@@ -61,6 +61,7 @@ from ._ecl_grid import (
     GridRelative,
     GridUnit,
     MapAxes,
+    Units,
 )
 
 
@@ -252,6 +253,8 @@ class EGridSubGrid(EclGrid):
     size: InitVar[Tuple[int, int, int]] = None
     mapaxes: Optional[MapAxes] = None
     is_map_relative: bool = False
+    grid_units: Optional[Units] = None
+    map_axis_units: Optional[Units] = None
 
     def __eq__(self, other):
         return super().__eq__(other) and self.grid_head == other.grid_head
@@ -543,7 +546,7 @@ class EGridHead:
     """
 
     file_head: Filehead
-    mapunits: Optional[str] = None
+    mapunits: Optional[Units] = None
     mapaxes: Optional[MapAxes] = None
     gridunit: Optional[GridUnit] = None
     gdorient: Optional[GdOrient] = None
@@ -553,7 +556,7 @@ class EGridHead:
             ("FILEHEAD", self.file_head.to_egrid()),
         ]
         if self.mapunits is not None:
-            result.append(("MAPUNITS", [self.mapunits]))
+            result.append(("MAPUNITS", [self.mapunits.to_bgrdecl()]))
         if self.mapaxes is not None:
             result.append(("MAPAXES ", self.mapaxes.to_bgrdecl()))
         if self.gridunit is not None:
@@ -626,6 +629,13 @@ class EGrid:
             rock_model = RockModel.DUAL_POROSITY
         if xtgeo_grid._dualperm:
             rock_model = RockModel.DUAL_PERMEABILITY
+        gridunits = GridUnit()
+        if xtgeo_grid.units is not None:
+            gridunits.units = xtgeo_grid.units
+        else:
+            warnings.warn(
+                "Unitless xtgeo grid converted to egrid. Assuming meters as unit."
+            )
         return EGrid(
             EGridHead(
                 Filehead(
@@ -635,14 +645,35 @@ class EGrid:
                     TypeOfGrid.CORNER_POINT,
                     rock_model,
                     GridFormat.IRREGULAR_CORNER_POINT,
-                )
+                ),
+                gridunit=gridunits,
             ),
             global_grid,
             [],
             [],
         )
 
-    def xtgeo_coord(self) -> np.ndarray:
+    def convert_units(self, units: Units):
+        old_axis_units = self.egrid_head.mapunits
+        if old_axis_units is None:
+            old_axis_units = Units.METRES
+
+        self.egrid_head.mapaxes.convert_units(old_axis_units, units)
+        self.egrid_head.mapunits = units
+
+        old_grid_units = self.egrid_head.gridunit.units
+        self.global_grid.grid_units = old_grid_units
+        self.global_grid.convert_units(units)
+        self.global_grid.grid_units = None
+        self.global_grid.map_units = None
+        for lgr in self.lgr_sections:
+            lgr.grid_units = old_grid_units
+            lgr.convert_units(units)
+            lgr.grid_units = None
+            lgr.map_units = None
+        self.egrid_head.gridunit.units = units
+
+    def xtgeo_coord(self, coordinates=GridRelative.MAP) -> np.ndarray:
         self._check_xtgeo_compatible()
         previous_mapaxes = self.global_grid.mapaxes
         previous_relative = self.global_grid.is_map_relative
@@ -651,7 +682,7 @@ class EGrid:
             self.egrid_head.gridunit is not None
             and self.egrid_head.gridunit.grid_relative == GridRelative.MAP
         )
-        result = self.global_grid.xtgeo_coord()
+        result = self.global_grid.xtgeo_coord(coordinates)
         self.global_grid.mapaxes = previous_mapaxes
         self.global_grid.is_map_relative = previous_relative
         return result
@@ -791,7 +822,7 @@ class EGridReader:
         params = self.read_section(
             keyword_factories={
                 "FILEHEAD": Filehead.from_egrid,
-                "MAPUNITS": lambda x: x[0].decode("ascii"),
+                "MAPUNITS": lambda x: Units.from_bgrdecl(x[0]),
                 "MAPAXES ": MapAxes.from_bgrdecl,
                 "GRIDUNIT": GridUnit.from_bgrdecl,
                 "GDORIENT": GdOrient.from_bgrdecl,
