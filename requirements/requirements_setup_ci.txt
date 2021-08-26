@@ -14,10 +14,9 @@ pytest>=2.9.2
 pytest-runner>=2.11.1
 Sphinx
 sphinx-rtd-theme
-sphinxcontrib-apidoc
-sphinx-rtd
-sphinx-autodoc-typehints
-recommonmark
+sphinx-toolbox
+autoclasstoc
+myst-parser
 shapely==1.6.2; python_version <= "3.5"
 shapely>=1.6.2; python_version > "3.5"
 matplotlib>=1.5
