@@ -2,6 +2,7 @@ import hypothesis.strategies as st
 import numpy as np
 from hypothesis.extra.numpy import arrays
 
+import xtgeo.grid3d._ecl_grid as eclgrid
 import xtgeo.grid3d._grdecl_grid as ggrid
 
 from .grid_generator import indecies
@@ -11,11 +12,11 @@ finites = st.floats(
 )
 
 units = st.just("METRES")
-grid_relatives = st.sampled_from(ggrid.GridRelative)
-orders = st.sampled_from(ggrid.Order)
-orientations = st.sampled_from(ggrid.Orientation)
-handedness = st.sampled_from(ggrid.Handedness)
-coordinate_types = st.sampled_from(ggrid.CoordinateType)
+grid_relatives = st.sampled_from(eclgrid.GridRelative)
+orders = st.sampled_from(eclgrid.Order)
+orientations = st.sampled_from(eclgrid.Orientation)
+handedness = st.sampled_from(eclgrid.Handedness)
+coordinate_types = st.sampled_from(eclgrid.CoordinateType)
 
 map_axes = st.builds(
     ggrid.MapAxes,
