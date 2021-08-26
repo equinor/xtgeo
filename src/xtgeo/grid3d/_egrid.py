@@ -53,8 +53,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from ecl_data_io import Format, lazy_read, write
 
-from ._ecl_grid import EclGrid
-from ._grdecl_grid import CoordinateType, GdOrient, GridUnit, MapAxes
+from ._ecl_grid import CoordinateType, EclGrid, GdOrient, GridUnit, MapAxes
 
 
 class EGridFileFormatError(ValueError):

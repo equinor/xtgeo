@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 
+import xtgeo.grid3d._ecl_grid as ecl_grid
 import xtgeo.grid3d._grdecl_grid as ggrid
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grdecl_format import open_grdecl
@@ -53,13 +54,13 @@ def test_gdorient():
         with open_grdecl(mock_file, keywords=["GDORIENT"]) as kw:
             keyword, values = next(kw)
             assert keyword == "GDORIENT"
-            gdorient = ggrid.GdOrient.from_grdecl(values)
+            gdorient = ecl_grid.GdOrient.from_grdecl(values)
 
-            assert gdorient.i_order == ggrid.Order.INCREASING
-            assert gdorient.k_order == ggrid.Order.INCREASING
-            assert gdorient.k_order == ggrid.Order.INCREASING
-            assert gdorient.z_direction == ggrid.Orientation.DOWN
-            assert gdorient.handedness == ggrid.Handedness.LEFT
+            assert gdorient.i_order == ecl_grid.Order.INCREASING
+            assert gdorient.k_order == ecl_grid.Order.INCREASING
+            assert gdorient.k_order == ecl_grid.Order.INCREASING
+            assert gdorient.z_direction == ecl_grid.Orientation.DOWN
+            assert gdorient.handedness == ecl_grid.Handedness.LEFT
 
             assert gdorient.to_grdecl() == values
 
