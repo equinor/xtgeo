@@ -156,17 +156,11 @@ def test_refine_vertically_per_zone(tmpdir):
     grd1s = grd.get_subgrids()
     logger.info("Subgrids after: %s", grd1s)
 
-    grd.to_file(join(tmpdir, "test_refined_by_dict.roff"))
-
     grd = grd_orig.copy()
     grd.refine_vertically(refinement)  # no zoneprop
     grd2s = grd.get_subgrids()
     logger.info("Subgrids after: %s", grd2s)
     assert list(grd1s.values()) == list(grd2s.values())
-
-    # grd = grd_orig.copy()
-    # with pytest.raises(RuntimeError):
-    #     grd.refine_vertically({1: 200}, zoneprop=zone)
 
 
 def test_reverse_row_axis_box(tmpdir):
