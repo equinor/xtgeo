@@ -392,7 +392,9 @@ class Grid(_Grid3D):
             zarr.extend(val)
 
         if lengths != self._nlay:
-            raise ValueError("Subgrids lengths not equal NLAY")
+            raise ValueError(
+                f"Subgrids lengths <{lengths}> not equal NLAY <{self.nlay}>"
+            )
 
         if set(zarr) != set(range(1, self._nlay + 1)):
             raise ValueError(
