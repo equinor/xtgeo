@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import astuple, dataclass, fields
 from enum import Enum, auto, unique
-from typing import Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -20,17 +20,17 @@ class GridRelative(Enum):
     MAP = auto()
     ORIGIN = auto()
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> str:
         if self == GridRelative.MAP:
             return "MAP"
         else:
             return ""
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, unit_string):
+    def from_grdecl(cls, unit_string: str):
         if match_keyword(unit_string, "MAP"):
             return cls.MAP
         else:
@@ -51,7 +51,7 @@ class GrdeclKeyword:
     fields.
     """
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> List[Any]:
         """Convert the keyword to list of grdecl keyword values.
         Returns:
             list of values of the given keyword. ie. The
@@ -60,7 +60,7 @@ class GrdeclKeyword:
         """
         return [value.to_grdecl() for value in astuple(self)]
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> List[Any]:
         return [value.to_bgrdecl() for value in astuple(self)]
 
     @classmethod
@@ -92,10 +92,10 @@ class Order(Enum):
     INCREASING = auto()
     DECREASING = auto()
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> str:
         return str(self.name)[0:3]
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
@@ -106,7 +106,7 @@ class Order(Enum):
             return cls.DECREASING
 
     @classmethod
-    def from_bgrdecl(cls, unit_string):
+    def from_bgrdecl(cls, unit_string: Union[bytes, str]):
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -123,14 +123,14 @@ class Handedness(Enum):
     LEFT = auto()
     RIGHT = auto()
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> str:
         return self.name
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, orientation_string):
+    def from_grdecl(cls, orientation_string: str):
         if match_keyword(orientation_string, "LEFT"):
             return cls.LEFT
         if match_keyword(orientation_string, "RIGHT"):
@@ -138,7 +138,7 @@ class Handedness(Enum):
         raise ValueError(f"Unknown handedness string {orientation_string}")
 
     @classmethod
-    def from_bgrdecl(cls, unit_string):
+    def from_bgrdecl(cls, unit_string: Union[bytes, str]):
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -151,14 +151,14 @@ class Orientation(Enum):
     UP = auto()
     DOWN = auto()
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> str:
         return self.name
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> str:
         return self.to_grdecl().ljust(8)
 
     @classmethod
-    def from_grdecl(cls, orientation_string):
+    def from_grdecl(cls, orientation_string: str):
         if match_keyword(orientation_string, "UP"):
             return cls.UP
         if match_keyword(orientation_string, "DOWN"):
@@ -166,7 +166,7 @@ class Orientation(Enum):
         raise ValueError(f"Unknown orientation string {orientation_string}")
 
     @classmethod
-    def from_bgrdecl(cls, unit_string):
+    def from_bgrdecl(cls, unit_string: Union[bytes, str]):
         if isinstance(unit_string, bytes):
             return cls.from_grdecl(unit_string.decode("ascii"))
         return cls.from_grdecl(unit_string)
@@ -203,26 +203,26 @@ class GridUnit(GrdeclKeyword):
     unit: str = "METRES"
     grid_relative: GridRelative = GridRelative.ORIGIN
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> List[str]:
         return [
             self.unit,
             self.grid_relative.to_grdecl(),
         ]
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> List[str]:
         return [
             self.unit.ljust(8),
             self.grid_relative.to_bgrdecl(),
         ]
 
     @classmethod
-    def from_bgrdecl(cls, values):
+    def from_bgrdecl(cls, values: Union[bytes, str]):
         if isinstance(values[0], bytes):
             return cls.from_grdecl([v.decode("ascii") for v in values])
         return cls.from_grdecl(values)
 
     @classmethod
-    def from_grdecl(cls, values):
+    def from_grdecl(cls, values: List[str]):
         if len(values) == 1:
             return cls(values[0].rstrip())
         if len(values) == 2:
@@ -250,18 +250,18 @@ class MapAxes(GrdeclKeyword):
     origin: Tuple[float, float] = (0.0, 0.0)
     x_line: Tuple[float, float] = (1.0, 0.0)
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> List[float]:
         return list(self.y_line) + list(self.origin) + list(self.x_line)
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> List[float]:
         return self.to_grdecl()
 
     @classmethod
-    def from_bgrdecl(cls, values):
+    def from_bgrdecl(cls, values: List[Union[float, str]]):
         return cls.from_grdecl(values)
 
     @classmethod
-    def from_grdecl(cls, values):
+    def from_grdecl(cls, values: List[Union[float, str]]):
         if len(values) != 6:
             raise ValueError("MAPAXES must contain 6 values")
         return cls(
@@ -282,27 +282,27 @@ class CoordinateType(Enum):
     CARTESIAN = auto()
     CYLINDRICAL = auto()
 
-    def to_grdecl(self):
+    def to_grdecl(self) -> str:
         if self == CoordinateType.CARTESIAN:
             return "F"
         else:
             return "T"
 
-    def to_bgrdecl(self):
+    def to_bgrdecl(self) -> int:
         if self == CoordinateType.CARTESIAN:
             return 0
         else:
             return 1
 
     @classmethod
-    def from_bgrdecl(cls, coord_value):
+    def from_bgrdecl(cls, coord_value: int):
         if coord_value == 0:
             return cls.CARTESIAN
         else:
             return cls.CYLINDRICAL
 
     @classmethod
-    def from_grdecl(cls, coord_string):
+    def from_grdecl(cls, coord_string: str):
         if match_keyword(coord_string, "F"):
             return cls.CARTESIAN
         if match_keyword(coord_string, "T"):
@@ -347,7 +347,7 @@ class EclGrid(ABC):
     zcorn: np.ndarray
     actnum: Optional[np.ndarray] = None
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, EclGrid):
             return False
         return (
@@ -361,12 +361,12 @@ class EclGrid(ABC):
 
     @property
     @abstractmethod
-    def mapaxes(self):
+    def mapaxes(self) -> Optional[MapAxes]:
         pass
 
     @property
     @abstractmethod
-    def dimensions(self):
+    def dimensions(self) -> Tuple[int, int, int]:
         pass
 
     @abstractmethod
@@ -374,7 +374,7 @@ class EclGrid(ABC):
         pass
 
     @staticmethod
-    def valid_mapaxes(mapaxes):
+    def valid_mapaxes(mapaxes: MapAxes) -> bool:
         y_line = mapaxes.y_line
         x_line = mapaxes.x_line
         origin = mapaxes.origin
@@ -383,7 +383,7 @@ class EclGrid(ABC):
 
         return np.linalg.norm(x_axis) > 1e-5 and np.linalg.norm(y_axis) > 1e-5
 
-    def transform_xtgeo_coord_by_mapaxes(self, coord):
+    def transform_xtgeo_coord_by_mapaxes(self, coord: np.ndarray):
         """Transforms xtgeo coord values by mapaxes.
 
         The mapaxes keyword in a grdecl file defines a new coordinate system by
@@ -491,7 +491,7 @@ class EclGrid(ABC):
 
         return np.ascontiguousarray(result)
 
-    def duplicate_insignificant_xtgeo_zcorn(self, zcorn):
+    def duplicate_insignificant_xtgeo_zcorn(self, zcorn: np.ndarray):
         """Duplicates values on the faces and corners of the grid.
 
         The xtgeo format has 4 z values for all cornerlines, refering
