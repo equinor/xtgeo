@@ -48,7 +48,7 @@ True
 from dataclasses import InitVar, dataclass
 from enum import Enum, unique
 from itertools import chain
-from typing import List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import numpy as np
 from ecl_data_io import Format, lazy_read, write
@@ -117,7 +117,7 @@ class Filehead:
     grid_format: GridFormat
 
     @classmethod
-    def from_egrid(cls, values):
+    def from_egrid(cls, values: List[int]):
         """
         Construct a Filehead given the list of values following
         the FILEHEAD keyword.
@@ -151,7 +151,7 @@ class Filehead:
             grid_format=GridFormat(values[6]),
         )
 
-    def to_egrid(self):
+    def to_egrid(self) -> np.ndarray:
         """
         Returns:
             List of values, as layed out after the FILEHEAD keyword for
@@ -198,7 +198,7 @@ class GridHead:
     lgr_end: Tuple[int, int, int]
 
     @classmethod
-    def from_egrid(cls, values):
+    def from_egrid(cls, values: Sequence[int]):
         if len(values) < 33:
             raise ValueError(
                 f"Too few arguments to GridHead.from_egrid {len(values)} < 33"
@@ -216,7 +216,7 @@ class GridHead:
             lgr_end=(values[30], values[31], values[32]),
         )
 
-    def to_egrid(self):
+    def to_egrid(self) -> np.ndarray:
         # The data is expected to consist of
         # 100 integers, but only a subset is used.
         result = np.zeros((100,), dtype=np.int32)
@@ -259,7 +259,7 @@ class EGridSubGrid(EclGrid):
                 "Xtgeo does not currently support multiple reservoirs"
             )
 
-    def __post_init__(self, size):
+    def __post_init__(self, size: Tuple[int, int, int]):
         if not size and not self.grid_head:
             raise ValueError(
                 "Either size or grid_head has to be given when"
@@ -298,14 +298,14 @@ class EGridSubGrid(EclGrid):
             )
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> Tuple[int, int, int]:
         return (
             int(self.grid_head.num_x),
             int(self.grid_head.num_y),
             int(self.grid_head.num_z),
         )
 
-    def to_egrid(self):
+    def to_egrid(self) -> List[Tuple[str, Any]]:
         result = [
             ("GRIDHEAD", self.grid_head.to_egrid()),
             ("COORD   ", self.coord),
@@ -316,7 +316,7 @@ class EGridSubGrid(EclGrid):
         return result
 
 
-def maybe_array_equal(arr1, arr2):
+def maybe_array_equal(arr1: np.ndarray, arr2: np.ndarray) -> bool:
     """
     Returns:
      True if the two given Optional[np.ndarray]'s are equal (either both None
@@ -352,12 +352,12 @@ class LGRSection(EGridSubGrid):
             and self.coord_sys == other.coord_sys
         )
 
-    def __post_init__(self, size):
+    def __post_init__(self, size: Tuple[int, int, int]):
         super().__post_init__(size)
         if self.name is None:
             raise TypeError("Missing parameter to LGRSection: name")
 
-    def to_egrid(self):
+    def to_egrid(self) -> List[Tuple[str, Any]]:
         result_dict = dict(super().to_egrid())
         result_dict["LGR     "] = [self.name]
         if self.parent is not None:
@@ -415,7 +415,7 @@ class GlobalGrid(EGridSubGrid):
             and maybe_array_equal(self.corsnum, other.corsnum)
         )
 
-    def to_egrid(self):
+    def to_egrid(self) -> List[Tuple[str, Any]]:
         result_dict = dict(super().to_egrid())
         if self.coord_sys is not None:
             result_dict["COORDSYS"] = self.coord_sys.to_bgrdecl()
@@ -453,10 +453,10 @@ class NNCHead:
     grid_identifier: int
 
     @classmethod
-    def from_egrid(cls, values):
+    def from_egrid(cls, values: List[int]):
         return cls(*values[0:2])
 
-    def to_egrid(self):
+    def to_egrid(self) -> np.ndarray:
         result = np.zeros((10,), dtype=np.int32)
         result[0] = self.num_nnc
         result[1] = self.grid_identifier
@@ -493,7 +493,7 @@ class NNCSection:
             and maybe_array_equal(self.nna2, other.nna2)
         )
 
-    def to_egrid(self):
+    def to_egrid(self) -> List[Tuple[str, Any]]:
         result = [
             ("NNCHEAD ", self.nnchead.to_egrid()),
             ("NNC1    ", self.upstream_nnc),
@@ -524,7 +524,7 @@ class EGridHead:
     gridunit: Optional[GridUnit] = None
     gdorient: Optional[GdOrient] = None
 
-    def to_egrid(self):
+    def to_egrid(self) -> List[Tuple[str, Any]]:
         result = [
             ("FILEHEAD", self.file_head.to_egrid()),
         ]
@@ -551,7 +551,7 @@ class EGrid:
     nnc_sections: List[NNCSection]
 
     @classmethod
-    def from_file(self, filelike, file_format=None):
+    def from_file(self, filelike, file_format: Format = None):
         """
         Read an egrid file
         Args:
@@ -563,7 +563,7 @@ class EGrid:
         """
         return EGridReader(filelike, file_format=file_format).read()
 
-    def to_file(self, filelike, file_format=Format.UNFORMATTED):
+    def to_file(self, filelike, file_format: Format = Format.UNFORMATTED):
         """
         write the EGrid to file.
         Args:
@@ -610,21 +610,21 @@ class EGrid:
             [],
         )
 
-    def xtgeo_coord(self):
+    def xtgeo_coord(self) -> np.ndarray:
         previous_mapaxes = self.global_grid.mapaxes
         self.global_grid.mapaxes = self.egrid_head.mapaxes
         result = self.global_grid.xtgeo_coord()
         self.global_grid.mapaxes = previous_mapaxes
         return result
 
-    def xtgeo_actnum(self):
+    def xtgeo_actnum(self) -> np.ndarray:
         previous_mapaxes = self.global_grid.mapaxes
         self.global_grid.mapaxes = self.egrid_head.mapaxes
         result = self.global_grid.xtgeo_actnum()
         self.global_grid.mapaxes = previous_mapaxes
         return result
 
-    def xtgeo_zcorn(self):
+    def xtgeo_zcorn(self) -> np.ndarray:
         previous_mapaxes = self.global_grid.mapaxes
         self.global_grid.mapaxes = self.egrid_head.mapaxes
         result = self.global_grid.xtgeo_zcorn()
@@ -671,17 +671,17 @@ class EGridReader:
 
     """
 
-    def __init__(self, filelike, file_format=None):
+    def __init__(self, filelike, file_format: Format = None):
         self.filelike = filelike
         self.keyword_generator = lazy_read(filelike, file_format)
 
     def read_section(
         self,
-        keyword_factories,
-        required_keywords,
-        stop_keywords,
-        skip_keywords=[],
-        keyword_visitors=[],
+        keyword_factories: Dict[str, Callable],
+        required_keywords: Set[str],
+        stop_keywords: Iterable[str],
+        skip_keywords: Iterable[str] = [],
+        keyword_visitors: Iterable[Callable] = [],
     ):
         """
         Read a general egrid file section.
@@ -741,7 +741,7 @@ class EGridReader:
             raise EGridFileFormatError(f"Missing required keywords {missing_keywords}")
         return params
 
-    def read_header(self):
+    def read_header(self) -> EGridHead:
         """
         Reads the EGrid header from the start of the stream. Ensures
         that the keyword_generator is at the first GRIDHEAD keyword
@@ -760,14 +760,14 @@ class EGridReader:
         )
         return EGridHead(**params)
 
-    def read_global_grid(self):
+    def read_global_grid(self) -> GlobalGrid:
         """
         Reads the global grid section from the start of the keyword_generator,
         ensures the keyword_generator is at the keyword after the first ENDGRID
         keyword encountered.
         """
 
-        def check_gridhead(kw, value):
+        def check_gridhead(kw: str, value):
             if kw == "GRIDHEAD" and value.type_of_grid != TypeOfGrid.CORNER_POINT:
                 raise NotImplementedError(
                     "XTGeo does not support unstructured or mixed grids."
@@ -797,7 +797,7 @@ class EGridReader:
             raise EGridFileFormatError("Did not read ENDGRID after global grid")
         return GlobalGrid(**params)
 
-    def read_subsections(self):
+    def read_subsections(self) -> Tuple[List[LGRSection], List[NNCSection]]:
         """
         Reads lgr and nnc subsections from the start of the keyword_generator.
         """
@@ -820,7 +820,7 @@ class EGridReader:
                 )
         return lgr_sections, nnc_sections
 
-    def read_lgr_subsection(self):
+    def read_lgr_subsection(self) -> LGRSection:
         """
         Reads one lgr subsection from the start of the keyword generator.
         After read_lgr_subsection is called, The keyword_generator is at the
@@ -857,7 +857,7 @@ class EGridReader:
             raise EGridFileFormatError("Did not read ENDLGR after lgr section")
         return LGRSection(**params)
 
-    def read_nnc_subsection(self):
+    def read_nnc_subsection(self) -> NNCSection:
         """
         Reads one lgr subsection from the start of the keyword generator.
         After read_lgr_subsection is called, The keyword_generator is
@@ -879,7 +879,7 @@ class EGridReader:
         )
         return NNCSection(**params)
 
-    def read(self):
+    def read(self) -> EGrid:
         header = self.read_header()
         if header.file_head.type_of_grid != TypeOfGrid.CORNER_POINT:
             raise NotImplementedError(
