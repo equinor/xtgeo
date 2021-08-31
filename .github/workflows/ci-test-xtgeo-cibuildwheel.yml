@@ -18,7 +18,7 @@ jobs:
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
       CIBW_TEST_COMMAND: >
         pushd {project} &&
-        pytest tests/test_common --disable-warnings -x --generate-plots
+        pytest tests/test_common --disable-warnings -x --hypothesis-profile ci --generate-plots
       CIBW_BUILD: ${{ matrix.cibw_python }}-manylinux_x86_64
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
 
@@ -114,7 +114,7 @@ jobs:
       # the cibuildwheel on windows cannot find the xtgeo module
       CIBW_TEST_COMMAND: >
         pushd {project} && dir &&
-        pytest tests -x --ignore-glob="*forks.py"
+        pytest tests -x --hypothesis-profile ci --ignore-glob="*forks.py"
 
       CIBW_BUILD: ${{ matrix.cibw_python }}-win_amd64
 
@@ -145,7 +145,7 @@ jobs:
         env:
           CIBW_TEST_COMMAND: >
             pushd {project} &&
-            pytest tests --disable-warnings --ignore tests/test_well
+            pytest tests --disable-warnings --hypothesis-profile ci --ignore tests/test_well
             --ignore-glob="*forks.py" -x
 
         run: |
