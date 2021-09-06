@@ -692,7 +692,7 @@ class Cube:  # pylint: disable=too-many-public-methods
     # Import and export
     # =========================================================================
 
-    def from_file(self, sfile, fformat="guess", engine="segyio"):
+    def from_file(self, sfile, fformat="guess", engine=None):
         """Import cube data from file.
 
         If fformat is not provided, the file type will be guessed based
@@ -702,8 +702,7 @@ class Cube:  # pylint: disable=too-many-public-methods
             sfile (str): Filename (as string or pathlib.Path instance).
             fformat (str): file format guess/segy/rms_regular/xtgregcube
                 where 'guess' is default. Regard 'xtgrecube' format as experimental.
-            engine (str): For the SEGY reader, 'xtgeo' is builtin
-                while 'segyio' uses the SEGYIO library (default).
+            engine (str): Deprecated option, only engine='segyio' is supported.
             deadtraces (float): Set 'dead' trace values to this value (SEGY
                 only). Default is UNDEF value (a very large number).
 
@@ -721,6 +720,11 @@ class Cube:  # pylint: disable=too-many-public-methods
         fobj = xtgeosys._XTGeoFile(sfile)
         fobj.check_file(raiseerror=OSError)
 
+        if engine is not None:
+            xtg.warndeprecated("'engine' is a depracated option.")
+            if engine != "segyio":
+                raise ValueError("Only engine='segyio' is supported.")
+
         _, fext = fobj.splitext(lower=True)
 
         if fformat == "guess":
@@ -732,7 +736,8 @@ class Cube:  # pylint: disable=too-many-public-methods
         if "rms" in fformat:
             _cube_import.import_rmsregular(self, fobj.name)
         elif fformat in ("segy", "sgy"):
-            _cube_import.import_segy(self, fobj.name, engine=engine)
+            _cube_import.import_segy(self, fobj.name)
+
         elif fformat == "storm":
             _cube_import.import_stormcube(self, fobj.name)
         elif fformat == "xtgregcube":
@@ -848,9 +853,7 @@ class Cube:  # pylint: disable=too-many-public-methods
             logger.info("TMP file name is %s", outfile)
             oflag = True
 
-        _cube_import._import_segy_xtgeo(
-            sfile, scanheadermode=False, scantracemode=True, outfile=outfile
-        )
+        _cube_import._scan_segy_trace(sfile, outfile=outfile)
 
         if oflag:
             # pass
@@ -878,9 +881,7 @@ class Cube:  # pylint: disable=too-many-public-methods
             logger.info("TMP file name is %s", outfile)
             flag = True
 
-        _cube_import._import_segy_xtgeo(
-            sfile, scanheadermode=True, scantracemode=False, outfile=outfile
-        )
+        _cube_import._scan_segy_header(sfile, outfile=outfile)
 
         if flag:
             logger.info("OUTPUT to screen...")
