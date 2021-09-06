@@ -225,7 +225,7 @@ class Grid(_Grid3D):
 
         if gfile is not None:
             gfile = pathlib.Path(gfile)
-            if fformat in ["egrid", "grdecl", "bgrdecl"]:
+            if fformat in ["egrid", "fegrid", "grdecl", "bgrdecl"]:
                 kwargs["units"] = units
             self.from_file(
                 gfile,
@@ -615,6 +615,7 @@ class Grid(_Grid3D):
             "grdecl": ["grdecl"],
             "bgrdecl": ["bgrdecl"],
             "egrid": ["egrid"],
+            "fegrid": ["fegrid"],
         }
 
         if fformat in valid_formats["roff"]:
@@ -627,6 +628,8 @@ class Grid(_Grid3D):
             _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat in valid_formats["egrid"]:
             _grid_export.export_egrid(self, gfile.name)
+        elif fformat in valid_formats["fegrid"]:
+            _grid_export.export_fegrid(self, gfile.name)
         else:
             raise ValueError(
                 f"Invalid file format: {fformat}, valid options are: {valid_formats}"

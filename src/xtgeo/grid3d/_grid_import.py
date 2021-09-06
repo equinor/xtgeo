@@ -26,6 +26,7 @@ def from_file(self, gfile, fformat=None, **kwargs):  # pylint: disable=too-many-
     fflist = set(
         [
             "egrid",
+            "fegrid",
             "grdecl",
             "bgrdecl",
             "roff",
@@ -62,11 +63,13 @@ def from_file(self, gfile, fformat=None, **kwargs):  # pylint: disable=too-many-
         raise OSError("No such file: {}".format(test_gfile))
 
     if fformat == "roff":
+        if "units" in kwargs:
+            del kwargs["units"]
         _grid_import_roff.import_roff(self, gfile, **kwargs)
-
     elif fformat == "egrid":
-        _grid_import_ecl.import_ecl_egrid(self, gfile, **kwargs)
-
+        _grid_import_ecl.import_ecl_egrid(self, gfile, fileformat="egrid", **kwargs)
+    elif fformat == "fegrid":
+        _grid_import_ecl.import_ecl_egrid(self, gfile, fileformat="fegrid", **kwargs)
     elif fformat == "eclipserun":
         _grid_import_ecl.import_ecl_run(self, gfile.name, **kwargs)
     elif fformat == "grdecl":

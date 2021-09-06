@@ -578,25 +578,39 @@ class EGrid:
     nnc_sections: List[NNCSection]
 
     @classmethod
-    def from_file(self, filelike, file_format: Format = None):
+    def from_file(cls, filelike, fileformat: str = None):
         """
         Read an egrid file
         Args:
             filelike (str,Path,stream): The egrid file to be read.
-            file_format (None or ecl_data_io.Format): The format of the file,
-                None means guess.
+            file_format (None or str): The format of the file (either "egrid"
+                or "fegrid") None means guess.
         Returns:
             EGrid with the contents of the file.
         """
+        file_format = None
+        if fileformat == "egrid":
+            file_format = Format.UNFORMATTED
+        elif fileformat == "fegrid":
+            file_format = Format.FORMATTED
+        elif fileformat is not None:
+            raise ValueError(f"Unrecognized egrid file format {fileformat}")
         return EGridReader(filelike, file_format=file_format).read()
 
-    def to_file(self, filelike, file_format: Format = Format.UNFORMATTED):
+    def to_file(self, filelike, fileformat: str = "egrid"):
         """
         write the EGrid to file.
         Args:
             filelike (str,Path,stream): The egrid file to write to.
             file_format (ecl_data_io.Format): The format of the file.
         """
+        file_format = None
+        if fileformat == "egrid":
+            file_format = Format.UNFORMATTED
+        elif fileformat == "fegrid":
+            file_format = Format.FORMATTED
+        elif fileformat is not None:
+            raise ValueError(f"Unrecognized egrid file format {fileformat}")
         contents = []
         contents += self.egrid_head.to_egrid()
         contents += self.global_grid.to_egrid()

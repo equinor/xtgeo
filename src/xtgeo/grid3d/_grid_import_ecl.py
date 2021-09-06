@@ -12,8 +12,14 @@ xtg = xtgeo.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_ecl_egrid(self, gfile, units=None, coordinates=GridRelative.MAP):
-    egrid = EGrid.from_file(gfile._file)
+def import_ecl_egrid(
+    self,
+    gfile,
+    units=None,
+    coordinates=GridRelative.MAP,
+    fileformat="egrid",
+):
+    egrid = EGrid.from_file(gfile._file, fileformat=fileformat)
     if units is not None:
         egrid.convert_units(units)
 
