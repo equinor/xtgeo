@@ -16,16 +16,7 @@ xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_segy(self, sfile, engine="segyio"):
-    """Import SEGY."""
-    if engine == "segyio":
-        _import_segy_io(self, sfile)
-    else:
-        pass
-        # _import_segy_xtgeo()
-
-
-def _import_segy_io(self, sfile):
+def import_segy(self, sfile):
     """Import SEGY via Statoils FOSS SegyIO library.
 
     Args:
@@ -143,38 +134,13 @@ def _import_segy_io(self, sfile):
     self._traceidcodes = traceidcodes
 
 
-def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile=None):
-    """Import SEGY via XTGeo's C library. OLD NOT UPDATED!!
-
-    Args:
-        sfile (str): File name of SEGY file
-        scanheadermode (bool, optional): If true, will scan header
-        scantracemode (bool, optional): If true, will scan trace headers
-        outfile (str, optional): Output file for scan dump (default None)
-
-    Returns:
-        A dictionary with relevant data.
-    """
-    # pylint: disable=too-many-statements, too-many-locals
-
-    sdata = dict()
-
-    logger.info("Import SEGY via XTGeo CLIB")
-
-    if outfile is None:
-        outfile = "/dev/null"
+def _scan_segy_header(sfile, outfile):
 
     ptr_gn_bitsheader = _cxtgeo.new_intpointer()
     ptr_gn_formatcode = _cxtgeo.new_intpointer()
     ptr_gf_segyformat = _cxtgeo.new_floatpointer()
     ptr_gn_samplespertrace = _cxtgeo.new_intpointer()
     ptr_gn_measuresystem = _cxtgeo.new_intpointer()
-
-    option = 0
-    if scantracemode:
-        option = 0
-    if scanheadermode:
-        option = 1
 
     _cxtgeo.cube_scan_segy_hdr(
         sfile,
@@ -183,23 +149,38 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         ptr_gf_segyformat,
         ptr_gn_samplespertrace,
         ptr_gn_measuresystem,
-        option,
+        1,
+        outfile,
+    )
+    gn_bitsheader = _cxtgeo.intpointer_value(ptr_gn_bitsheader)
+    logger.info("Scan SEGY header ... %s bytes ... DONE", gn_bitsheader)
+
+
+def _scan_segy_trace(sfile, outfile):
+
+    ptr_gn_bitsheader = _cxtgeo.new_intpointer()
+    ptr_gn_formatcode = _cxtgeo.new_intpointer()
+    ptr_gf_segyformat = _cxtgeo.new_floatpointer()
+    ptr_gn_samplespertrace = _cxtgeo.new_intpointer()
+    ptr_gn_measuresystem = _cxtgeo.new_intpointer()
+
+    _cxtgeo.cube_scan_segy_hdr(
+        sfile,
+        ptr_gn_bitsheader,
+        ptr_gn_formatcode,
+        ptr_gf_segyformat,
+        ptr_gn_samplespertrace,
+        ptr_gn_measuresystem,
+        0,
         outfile,
     )
 
-    # get values
     gn_bitsheader = _cxtgeo.intpointer_value(ptr_gn_bitsheader)
     gn_formatcode = _cxtgeo.intpointer_value(ptr_gn_formatcode)
     gf_segyformat = _cxtgeo.floatpointer_value(ptr_gf_segyformat)
     gn_samplespertrace = _cxtgeo.intpointer_value(ptr_gn_samplespertrace)
 
-    if scanheadermode:
-        logger.info("Scan SEGY header ... %s bytes ... DONE", gn_bitsheader)
-        return None
-
-    # next is to scan first and last trace, in order to allocate
-    # cube size
-
+    logger.info("Scan SEGY header ... %s bytes ... DONE", gn_bitsheader)
     ptr_ncol = _cxtgeo.new_intpointer()
     ptr_nrow = _cxtgeo.new_intpointer()
     ptr_nlay = _cxtgeo.new_intpointer()
@@ -215,11 +196,6 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
     ptr_dummy = _cxtgeo.new_floatpointer()
     ptr_yflip = _cxtgeo.new_intpointer()
     ptr_zflip = _cxtgeo.new_intpointer()
-
-    optscan = 1
-
-    if scantracemode:
-        option = 1
 
     logger.debug("Scan via C wrapper...")
     _cxtgeo.cube_import_segy(
@@ -246,87 +222,12 @@ def _import_segy_xtgeo(sfile, scanheadermode=False, scantracemode=False, outfile
         ptr_minval,
         ptr_maxval,
         # options
-        optscan,
-        option,
+        1,
+        1,
         outfile,
     )
 
     logger.debug("Scan via C wrapper... done")
-
-    ncol = _cxtgeo.intpointer_value(ptr_ncol)
-    nrow = _cxtgeo.intpointer_value(ptr_nrow)
-    nlay = _cxtgeo.intpointer_value(ptr_nlay)
-
-    if scantracemode:
-        return None
-
-    nrcl = ncol * nrow * nlay
-
-    ptr_cval_v = _cxtgeo.new_floatarray(nrcl)
-
-    # next is to do the actual import of the cube
-    optscan = 0
-
-    logger.debug("Import via C wrapper...")
-    _cxtgeo.cube_import_segy(
-        sfile,
-        # input
-        gn_bitsheader,
-        gn_formatcode,
-        gf_segyformat,
-        gn_samplespertrace,
-        # result (as pointers)
-        ptr_ncol,
-        ptr_nrow,
-        ptr_nlay,
-        ptr_cval_v,
-        ptr_xori,
-        ptr_xinc,
-        ptr_yori,
-        ptr_yinc,
-        ptr_zori,
-        ptr_zinc,
-        ptr_rotation,
-        ptr_yflip,
-        ptr_zflip,
-        ptr_minval,
-        ptr_maxval,
-        # options
-        optscan,
-        option,
-        outfile,
-    )
-
-    logger.debug("Import via C wrapper...")
-
-    sdata["ncol"] = ncol
-    sdata["nrow"] = nrow
-    sdata["nlay"] = nlay
-
-    sdata["xori"] = _cxtgeo.doublepointer_value(ptr_xori)
-    sdata["yori"] = _cxtgeo.doublepointer_value(ptr_yori)
-    sdata["zori"] = _cxtgeo.doublepointer_value(ptr_zori)
-
-    sdata["xinc"] = _cxtgeo.doublepointer_value(ptr_xinc)
-    sdata["yinc"] = _cxtgeo.doublepointer_value(ptr_yinc)
-    sdata["zinc"] = _cxtgeo.doublepointer_value(ptr_zinc)
-
-    sdata["yflip"] = _cxtgeo.intpointer_value(ptr_yflip)
-    sdata["zflip"] = _cxtgeo.intpointer_value(ptr_zflip)
-
-    sdata["rotation"] = _cxtgeo.doublepointer_value(ptr_rotation)
-
-    sdata["minval"] = _cxtgeo.doublepointer_value(ptr_minval)
-    sdata["maxval"] = _cxtgeo.doublepointer_value(ptr_maxval)
-
-    sdata["zmin"] = sdata["zori"]
-    sdata["zmax"] = sdata["zori"] + sdata["zflip"] * sdata["zinc"] * (nlay - 1)
-
-    # the pointer to 1D C array
-    sdata["cvalues"] = ptr_cval_v
-    sdata["values"] = None
-
-    return sdata
 
 
 def import_rmsregular(self, sfile):
