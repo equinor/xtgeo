@@ -344,7 +344,6 @@ class CoordinateType(Enum):
         raise ValueError(f"Unknown coordinate type {coord_string}")
 
 
-@dataclass
 class EclGrid(ABC):
     """
     The main keywords that describe a grdecl grid is COORD, ZCORN and ACTNUM.
@@ -377,20 +376,31 @@ class EclGrid(ABC):
     means active, 2 means rock volume only, 3 means pore volume only.
     """
 
-    coord: np.ndarray
-    zcorn: np.ndarray
-    actnum: Optional[np.ndarray] = None
+    @property
+    @abstractmethod
+    def coordinates(self) -> np.ndarray:
+        pass
+
+    @property
+    @abstractmethod
+    def corner_height(self) -> np.ndarray:
+        pass
+
+    @property
+    @abstractmethod
+    def activity_number(self) -> np.ndarray:
+        pass
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, EclGrid):
             return False
         return (
             (
-                (self.actnum is None and other.actnum is None)
-                or np.array_equal(self.actnum, other.actnum)
+                (self.activity_number is None and other.activity_number is None)
+                or np.array_equal(self.activity_number, other.activity_number)
             )
-            and np.array_equal(self.coord, other.coord)
-            and np.array_equal(self.zcorn, other.zcorn)
+            and np.array_equal(self.coordinates, other.coordinates)
+            and np.array_equal(self.corner_height, other.corner_height)
         )
 
     @property
@@ -433,8 +443,8 @@ class EclGrid(ABC):
 
         old_grid_units = self.grid_units
         factor = old_grid_units.conversion_factor(units)
-        self.coord *= factor
-        self.zcorn *= factor
+        self.coordinates *= factor
+        self.corner_height *= factor
         self.grid_units = units
 
     @staticmethod
@@ -525,9 +535,9 @@ class EclGrid(ABC):
         self._check_xtgeo_compatible()
         nx, ny, _ = self.dimensions
 
-        xtgeo_coord = np.swapaxes(self.coord.reshape((ny + 1, nx + 1, 6)), 0, 1).astype(
-            np.float64
-        )
+        xtgeo_coord = np.swapaxes(
+            self.coordinates.reshape((ny + 1, nx + 1, 6)), 0, 1
+        ).astype(np.float64)
         if coordinates == GridRelative.MAP:
             if not self.is_map_relative and self.mapaxes is not None:
                 self.transform_xtgeo_coord_by_mapaxes(xtgeo_coord)
@@ -543,10 +553,10 @@ class EclGrid(ABC):
         """
         self._check_xtgeo_compatible()
         nx, ny, nz = self.dimensions
-        if self.actnum is None:
+        if self.activity_number is None:
             return np.ones(shape=(nx, ny, nz), dtype=np.int32)
-        actnum = self.actnum.reshape((nx, ny, nz), order="F")
-        return np.ascontiguousarray(actnum)
+        activity_number = self.activity_number.reshape((nx, ny, nz), order="F")
+        return np.ascontiguousarray(activity_number)
 
     def xtgeo_zcorn(self):
         """
@@ -555,7 +565,7 @@ class EclGrid(ABC):
         """
         self._check_xtgeo_compatible()
         nx, ny, nz = self.dimensions
-        zcorn = self.zcorn.reshape((2, nx, 2, ny, 2, nz), order="F")
+        zcorn = self.corner_height.reshape((2, nx, 2, ny, 2, nz), order="F")
 
         if not np.allclose(
             zcorn[:, :, :, :, 1, : nz - 1], zcorn[:, :, :, :, 0, 1:], atol=1e-2
@@ -657,6 +667,17 @@ class EclGrid(ABC):
         zcorn[nx, ny, :, 3] = zcorn[nx, ny, :, 0]
 
     @classmethod
+    @abstractmethod
+    def default_settings_grid(
+        cls,
+        coord: np.ndarray,
+        zcorn: np.ndarray,
+        actnum: Optional[np.ndarray],
+        size: Tuple[int, int, int],
+    ):
+        pass
+
+    @classmethod
     def from_xtgeo_grid(cls, xtgeo_grid):
         xtgeo_grid._xtgformat2()
 
@@ -694,7 +715,7 @@ class EclGrid(ABC):
 
         zcorn = zcorn.ravel(order="F")
 
-        result = cls(
+        result = cls.default_settings_grid(
             coord=coord,
             zcorn=zcorn,
             actnum=actnum,

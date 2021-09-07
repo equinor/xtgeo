@@ -84,11 +84,10 @@ def global_grids(draw, header=grid_heads(), zcorn=zcorns):
         ),
     )
     return xtge.GlobalGrid(
-        draw(coord),
-        draw(zcorn(dims)),
-        draw(actnum),
-        grid_head,
-        size=None,
+        coord=draw(coord),
+        zcorn=draw(zcorn(dims)),
+        actnum=draw(actnum),
+        grid_head=grid_head,
         coord_sys=draw(map_axes),
         boxorig=draw(st.tuples(indecies, indecies, indecies)),
         corsnum=draw(
@@ -116,11 +115,10 @@ def lgr_sections(draw, zcorn=zcorns):
         ),
     )
     return xtge.LGRSection(
-        draw(coord),
-        draw(zcorn(dims)),
-        draw(actnum),
-        grid_head,
-        size=None,
+        coord=draw(coord),
+        zcorn=draw(zcorn(dims)),
+        actnum=draw(actnum),
+        grid_head=grid_head,
         name=draw(ascii_string(min_size=1)),
         parent=draw(st.one_of(st.just(None), ascii_string(min_size=1))),
         grid_parent=draw(st.one_of(st.just(None), ascii_string(min_size=1))),

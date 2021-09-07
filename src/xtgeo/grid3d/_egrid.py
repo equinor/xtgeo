@@ -242,22 +242,35 @@ class GridHead:
         return result
 
 
+def maybe_array_equal(arr1: np.ndarray, arr2: np.ndarray) -> bool:
+    """
+    Returns:
+     True if the two given Optional[np.ndarray]'s are equal (either both None
+     or np.array_equal).
+    """
+    return (arr1 is None and arr2 is None) or np.array_equal(arr1, arr2)
+
+
 @dataclass
-class EGridSubGrid(EclGrid):
+class EGridSubGrid:
     """
     Both the LGR sections and the global grid contain a grid which is in the
     general format of a eclipse grid. EGridSubGrid contain the common implementation.
     """
 
-    grid_head: Optional[GridHead] = None
-    size: InitVar[Tuple[int, int, int]] = None
-    mapaxes: Optional[MapAxes] = None
-    is_map_relative: bool = False
-    grid_units: Optional[Units] = None
-    map_axis_units: Optional[Units] = None
+    grid_head: Optional[GridHead]
+    coord: np.ndarray
+    zcorn: np.ndarray
+    actnum: Optional[np.ndarray] = None
 
     def __eq__(self, other):
         return super().__eq__(other) and self.grid_head == other.grid_head
+        return (
+            self.grid_head == other.grid_head
+            and maybe_array_equal(self.actnum, other.actnum)
+            and np.array_equal(self.coord, other.coord)
+            and np.array_equal(self.zcorn, other.zcorn)
+        )
 
     def _check_xtgeo_compatible(self):
         if self.grid_head.coordinate_type == CoordinateType.CYLINDRICAL:
@@ -269,44 +282,6 @@ class EGridSubGrid(EclGrid):
         if self.grid_head.numres != 1:
             raise NotImplementedError(
                 "Xtgeo does not currently support multiple reservoirs"
-            )
-
-    def __post_init__(self, size: Tuple[int, int, int]):
-        if not size and not self.grid_head:
-            raise ValueError(
-                "Either size or grid_head has to be given when"
-                " constructing an ecl grid"
-            )
-
-        if size and not self.grid_head:
-            self.grid_head = GridHead(
-                TypeOfGrid.CORNER_POINT,
-                *size,
-                0,
-                1,
-                1,
-                CoordinateType.CARTESIAN,
-                (0, 0, 0),
-                (0, 0, 0),
-            )
-        if self.grid_head and not size:
-            size = (
-                self.grid_head.num_x,
-                self.grid_head.num_y,
-                self.grid_head.num_z,
-            )
-        if (
-            self.grid_head
-            and size
-            and size
-            != (
-                self.grid_head.num_x,
-                self.grid_head.num_y,
-                self.grid_head.num_z,
-            )
-        ):
-            raise ValueError(
-                "EGridSubGrid given both grid_head and size with conflicting values"
             )
 
     @property
@@ -326,15 +301,6 @@ class EGridSubGrid(EclGrid):
         if self.actnum is not None:
             result.append(("ACTNUM  ", self.actnum))
         return result
-
-
-def maybe_array_equal(arr1: np.ndarray, arr2: np.ndarray) -> bool:
-    """
-    Returns:
-     True if the two given Optional[np.ndarray]'s are equal (either both None
-     or np.array_equal).
-    """
-    return (arr1 is None and arr2 is None) or np.array_equal(arr1, arr2)
 
 
 @dataclass
@@ -364,8 +330,7 @@ class LGRSection(EGridSubGrid):
             and self.coord_sys == other.coord_sys
         )
 
-    def __post_init__(self, size: Tuple[int, int, int]):
-        super().__post_init__(size)
+    def __post_init__(self):
         if self.name is None:
             raise TypeError("Missing parameter to LGRSection: name")
 
@@ -567,7 +532,7 @@ class EGridHead:
 
 
 @dataclass
-class EGrid:
+class EGrid(EclGrid):
     """
     Contains the complete contents of an EGridFile.
     """
@@ -576,6 +541,67 @@ class EGrid:
     global_grid: GlobalGrid
     lgr_sections: List[LGRSection]
     nnc_sections: List[NNCSection]
+
+    @classmethod
+    def default_settings_grid(
+        cls,
+        coord: np.ndarray,
+        zcorn: np.ndarray,
+        actnum: Optional[np.ndarray],
+        size: Tuple[int, int, int],
+    ):
+        grid_head = GridHead(
+            TypeOfGrid.CORNER_POINT,
+            *size,
+            1,
+            1,
+            1,
+            CoordinateType.CARTESIAN,
+            (0, 0, 0),
+            (0, 0, 0),
+        )
+        global_grid = GlobalGrid(
+            grid_head,
+            coord,
+            zcorn,
+            actnum,
+        )
+        return EGrid(
+            EGridHead(
+                Filehead(
+                    3,
+                    2007,
+                    3,
+                    TypeOfGrid.CORNER_POINT,
+                    RockModel.SINGLE_PERMEABILITY_POROSITY,
+                    GridFormat.IRREGULAR_CORNER_POINT,
+                ),
+                gridunit=GridUnit(),
+            ),
+            global_grid,
+            [],
+            [],
+        )
+
+    @property
+    def coordinates(self) -> np.ndarray:
+        return self.global_grid.coord
+
+    @coordinates.setter
+    def coordinates(self, value: np.ndarray):
+        self.global_grid.coord = value
+
+    @property
+    def corner_height(self) -> np.ndarray:
+        return self.global_grid.zcorn
+
+    @corner_height.setter
+    def corner_height(self, value: np.ndarray):
+        self.global_grid.zcorn = value
+
+    @property
+    def activity_number(self) -> Optional[np.ndarray]:
+        return self.global_grid.actnum
 
     @classmethod
     def from_file(cls, filelike, fileformat: str = None):
@@ -621,6 +647,7 @@ class EGrid:
         write(filelike, contents, file_format)
 
     def _check_xtgeo_compatible(self):
+        self.global_grid._check_xtgeo_compatible()
         if self.lgr_sections:
             warnings.warn(
                 "egrid file given with local grid refinements."
@@ -629,93 +656,58 @@ class EGrid:
             )
 
     @property
-    def dimensions(self):
+    def is_map_relative(self) -> bool:
+        if self.egrid_head.gridunit is None:
+            return False
+        return self.egrid_head.gridunit.grid_relative == GridRelative.MAP
+
+    @property
+    def mapaxes(self) -> Optional[MapAxes]:
+        return self.egrid_head.mapaxes
+
+    @mapaxes.setter
+    def mapaxes(self, value):
+        self.egrid_head.mapaxes = value
+
+    @property
+    def dimensions(self) -> Tuple[int, int, int]:
         return self.global_grid.dimensions
+
+    @property
+    def map_axis_units(self) -> Units:
+        return self.egrid_head.mapunits
+
+    @map_axis_units.setter
+    def map_axis_units(self, value):
+        self.egrid_head.mapunits = value
+
+    @property
+    def grid_units(self) -> Units:
+        return self.egrid_head.gridunit.unit
+
+    @grid_units.setter
+    def grid_units(self, value):
+        self.egrid_head.gridunit.unit = value
 
     @classmethod
     def from_xtgeo_grid(cls, xtgeo_grid):
-        xtgeo_grid._xtgformat2()
-        global_grid = GlobalGrid.from_xtgeo_grid(xtgeo_grid)
-        global_grid.coord = global_grid.coord.astype(np.float32)
-        global_grid.zcorn = global_grid.zcorn.astype(np.float32)
-        rock_model = RockModel.SINGLE_PERMEABILITY_POROSITY
+        default_grid = super().from_xtgeo_grid(xtgeo_grid)
+
+        default_grid.global_grid.coord = default_grid.global_grid.coord.astype(
+            np.float32
+        )
+        default_grid.global_grid.zcorn = default_grid.global_grid.zcorn.astype(
+            np.float32
+        )
         if xtgeo_grid._dualporo:
-            rock_model = RockModel.DUAL_POROSITY
+            default_grid.rock_model = RockModel.DUAL_POROSITY
         if xtgeo_grid._dualperm:
-            rock_model = RockModel.DUAL_PERMEABILITY
-        gridunits = GridUnit()
-        if xtgeo_grid.units is not None:
-            gridunits.units = xtgeo_grid.units
+            default_grid.rock_model = RockModel.DUAL_PERMEABILITY
         else:
             warnings.warn(
                 "Unitless xtgeo grid converted to egrid. Assuming meters as unit."
             )
-        return EGrid(
-            EGridHead(
-                Filehead(
-                    3,
-                    2007,
-                    3,
-                    TypeOfGrid.CORNER_POINT,
-                    rock_model,
-                    GridFormat.IRREGULAR_CORNER_POINT,
-                ),
-                gridunit=gridunits,
-            ),
-            global_grid,
-            [],
-            [],
-        )
-
-    def convert_units(self, units: Units):
-        old_axis_units = self.egrid_head.mapunits
-        if old_axis_units is None:
-            old_axis_units = Units.METRES
-
-        self.egrid_head.mapaxes.convert_units(old_axis_units, units)
-        self.egrid_head.mapunits = units
-
-        old_grid_units = self.egrid_head.gridunit.units
-        self.global_grid.grid_units = old_grid_units
-        self.global_grid.convert_units(units)
-        self.global_grid.grid_units = None
-        self.global_grid.map_units = None
-        for lgr in self.lgr_sections:
-            lgr.grid_units = old_grid_units
-            lgr.convert_units(units)
-            lgr.grid_units = None
-            lgr.map_units = None
-        self.egrid_head.gridunit.units = units
-
-    def xtgeo_coord(self, coordinates=GridRelative.MAP) -> np.ndarray:
-        self._check_xtgeo_compatible()
-        previous_mapaxes = self.global_grid.mapaxes
-        previous_relative = self.global_grid.is_map_relative
-        self.global_grid.mapaxes = self.egrid_head.mapaxes
-        self.global_grid.is_map_relative = (
-            self.egrid_head.gridunit is not None
-            and self.egrid_head.gridunit.grid_relative == GridRelative.MAP
-        )
-        result = self.global_grid.xtgeo_coord(coordinates)
-        self.global_grid.mapaxes = previous_mapaxes
-        self.global_grid.is_map_relative = previous_relative
-        return result
-
-    def xtgeo_actnum(self) -> np.ndarray:
-        self._check_xtgeo_compatible()
-        previous_mapaxes = self.global_grid.mapaxes
-        self.global_grid.mapaxes = self.egrid_head.mapaxes
-        result = self.global_grid.xtgeo_actnum()
-        self.global_grid.mapaxes = previous_mapaxes
-        return result
-
-    def xtgeo_zcorn(self) -> np.ndarray:
-        self._check_xtgeo_compatible()
-        previous_mapaxes = self.global_grid.mapaxes
-        self.global_grid.mapaxes = self.egrid_head.mapaxes
-        result = self.global_grid.xtgeo_zcorn()
-        self.global_grid.mapaxes = previous_mapaxes
-        return result
+        return default_grid
 
 
 keyword_translation = {

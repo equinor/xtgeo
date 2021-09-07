@@ -114,31 +114,36 @@ class GrdeclGrid(EclGrid):
     mapunits: Optional[Units] = None
     gridunit: Optional[GridUnit] = None
     gdorient: Optional[GdOrient] = None
-    size: InitVar[Tuple[int, int, int]] = None
 
-    def __post_init__(self, size):
-        if not size and not self.specgrid:
-            raise ValueError(
-                "Either size or specgrid has to be given when constructing GrdeclGrid"
-            )
+    @property
+    def coordinates(self) -> np.ndarray:
+        return self.coord
 
-        if size and not self.specgrid:
-            self.specgrid = SpecGrid(*size)
-        if (
-            self.specgrid
-            and size
-            and not (
-                size
-                == (
-                    self.specgrid.ndivix,
-                    self.specgrid.ndiviy,
-                    self.specgrid.ndiviz,
-                )
-            )
-        ):
-            raise ValueError(
-                "GrdeclGrid given both specgrid and size with conflicting values"
-            )
+    @coordinates.setter
+    def coordinates(self, value):
+        self.coord = value
+
+    @property
+    def corner_height(self) -> np.ndarray:
+        return self.zcorn
+
+    @corner_height.setter
+    def corner_height(self, value):
+        self.zcorn = value
+
+    @property
+    def activity_number(self) -> np.ndarray:
+        return self.actnum
+
+    @classmethod
+    def default_settings_grid(
+        cls,
+        coord: np.ndarray,
+        zcorn: np.ndarray,
+        actnum: Optional[np.ndarray],
+        size: Tuple[int, int, int],
+    ):
+        return cls(coord, zcorn, SpecGrid(*size), actnum)
 
     def __eq__(self, other):
         if not isinstance(other, GrdeclGrid):

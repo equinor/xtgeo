@@ -1,5 +1,4 @@
 import io
-import logging
 
 import ecl_data_io as eclio
 import hypothesis.strategies as st
@@ -205,21 +204,21 @@ def test_egrid_read_write(tmp_path, egrid):
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 @given(xtgeo_compatible_egrids())
-def test_egrid_from_xtgeo(tmp_path, caplog, egrid):
-    caplog.set_level(logging.CRITICAL)
+def test_egrid_from_xtgeo(tmp_path, egrid):
     tmp_file = tmp_path / "grid.EGRID"
     egrid.to_file(tmp_file)
     xtgeo_grid = xtg.grid_from_file(tmp_file)
-    roundtrip_grid = xtge.GlobalGrid.from_xtgeo_grid(xtgeo_grid)
-    original_grid = egrid.global_grid
-    assert roundtrip_grid.zcorn.tolist() == original_grid.zcorn.tolist()
-    assert roundtrip_grid.coord.tolist() == original_grid.coord.tolist()
-    if roundtrip_grid.actnum is None:
-        assert original_grid.actnum is None or all(original_grid.actnum == 1)
-    elif original_grid.actnum is None:
-        assert roundtrip_grid.actnum is None or all(roundtrip_grid.actnum == 1)
+    roundtrip_grid = xtge.EGrid.from_xtgeo_grid(xtgeo_grid)
+    assert roundtrip_grid.corner_height.tolist() == egrid.corner_height.tolist()
+    assert roundtrip_grid.coordinates.tolist() == egrid.coordinates.tolist()
+    if roundtrip_grid.activity_number is None:
+        assert egrid.activity_number is None or all(egrid.activity_number == 1)
+    elif egrid.activity_number is None:
+        assert roundtrip_grid.activity_number is None or all(
+            roundtrip_grid.activity_number == 1
+        )
     else:
-        assert roundtrip_grid.actnum.tolist() == original_grid.actnum.tolist()
+        assert roundtrip_grid.activity_number.tolist() == egrid.activity_number.tolist()
 
 
 @settings(
@@ -230,16 +229,27 @@ def test_egrid_from_xtgeo(tmp_path, caplog, egrid):
 def test_egrid_to_xtgeo(tmp_path, xtg_grid):
     tmp_file = tmp_path / "grid.EGRID"
     xtg_grid.to_file(tmp_file, fformat="egrid")
-    roundtrip_grid = xtge.EGrid.from_file(tmp_file).global_grid
-    original_grid = xtge.GlobalGrid.from_xtgeo_grid(xtg_grid)
-    assert roundtrip_grid.zcorn.tolist() == pytest.approx(original_grid.zcorn.tolist())
-    assert roundtrip_grid.coord.tolist() == pytest.approx(original_grid.coord.tolist())
-    if roundtrip_grid.actnum is None:
-        assert original_grid.actnum is None or all(original_grid.actnum == 1)
-    elif original_grid.actnum is None:
-        assert roundtrip_grid.actnum is None or all(roundtrip_grid.actnum == 1)
+    roundtrip_grid = xtge.EGrid.from_file(tmp_file)
+    original_grid = xtge.EGrid.from_xtgeo_grid(xtg_grid)
+    assert roundtrip_grid.corner_height.tolist() == pytest.approx(
+        original_grid.corner_height.tolist()
+    )
+    assert roundtrip_grid.coordinates.tolist() == pytest.approx(
+        original_grid.coordinates.tolist()
+    )
+    if roundtrip_grid.activity_number is None:
+        assert original_grid.activity_number is None or all(
+            original_grid.activity_number == 1
+        )
+    elif original_grid.activity_number is None:
+        assert roundtrip_grid.activity_number is None or all(
+            roundtrip_grid.activity_number == 1
+        )
     else:
-        assert roundtrip_grid.actnum.tolist() == original_grid.actnum.tolist()
+        assert (
+            roundtrip_grid.activity_number.tolist()
+            == original_grid.activity_number.tolist()
+        )
 
 
 @pytest.mark.parametrize("egrid_type_value", [0, 1, 2])
