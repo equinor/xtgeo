@@ -3,7 +3,6 @@ from os.path import join
 
 import numpy as np
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
@@ -52,6 +51,29 @@ def test_segy_scantraces(tmpdir):
 def test_segy_no_file_exception():
     with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
         Cube().scan_segy_traces("not_a_file", outfile="not_relevant")
+
+
+def test_segy_export_import(tmpdir):
+    cube = xtgeo.cube_from_file(SFILE4)
+    assert cube.zinc == 4
+
+    # change to study rounding effect
+    cube.zinc = 3.99
+    fname = join(tmpdir, "small1.segy")
+    cube.to_file(fname, fformat="segy")
+    cube2 = xtgeo.cube_from_file(fname)
+
+    np.testing.assert_equal(cube.values, cube2.values)
+    assert cube.zinc == pytest.approx(cube2.zinc)
+    assert cube.xinc == pytest.approx(cube2.xinc, abs=0.01)
+    assert cube.yinc == pytest.approx(cube2.yinc, abs=0.01)
+    assert cube.ncol == cube2.ncol
+    assert cube.nrow == cube2.nrow
+    assert cube.nlay == cube2.nlay
+    assert cube.xori == cube2.xori
+    assert cube.yori == cube2.yori
+    assert cube.zori == cube2.zori
+    assert cube.ilines.all() == cube2.ilines.all()
 
 
 def test_storm_import(tmpdir):
