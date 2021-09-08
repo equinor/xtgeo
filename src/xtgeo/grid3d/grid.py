@@ -47,9 +47,7 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def grid_from_file(
-    gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
-):
+def grid_from_file(gfile, fformat=None, **kwargs):
     """Read a grid (cornerpoint) from file and an returns a Grid() instance.
 
     See :meth:`Grid.from_file` method for details on keywords.
@@ -62,13 +60,7 @@ def grid_from_file(
     """
     obj = Grid()
 
-    obj.from_file(
-        gfile,
-        initprops=initprops,
-        restartprops=restartprops,
-        restartdates=restartdates,
-        fformat=fformat,
-    )
+    obj.from_file(gfile, fformat=fformat, **kwargs)
 
     return obj
 
@@ -156,11 +148,7 @@ class Grid(_Grid3D):
         self,
         gfile: Optional[Union[str, Path]] = None,
         fformat: Optional[str] = "guess",
-        initprops: Optional[List[str]] = None,
-        restartprops: Optional[List[str]] = None,
-        restartdates: Optional[List[Union[int, str]]] = None,
-        ijkrange: Optional[IJKRange] = None,
-        zerobased: Optional[bool] = False,
+        **kwargs,
     ):
         """Instantating.
 
@@ -168,13 +156,8 @@ class Grid(_Grid3D):
             gfile: Input file, or leave blank.
             fformat: File format input, default is ``guess`` based on file extension.
                 Other options are ...
-            initprops: List of initial properties (Eclipse based ``eclrun`` import).
-            restartprops: List of restart properties (Eclipse based ``eclrun`` import).
-            restartdates: List of restart dates as YYYYMMDD (Eclipse based ``eclrun``
-                import).
-            ijkrange: Tuple of 6 integers defining (imin, imax, jmin, jmax, kmin, kmax)
-                when import from ``hdf`` files. Ranges are implicit at both ends.
-            zerobased: Whether `ijkrange` uses 1 (default) or 0 as base.
+            kwargs: remaining keyword arguments are sent to the corresponding file
+                reader, see :meth:`Grid.from_file`.
 
         Example::
 
@@ -233,15 +216,7 @@ class Grid(_Grid3D):
 
         if gfile is not None:
             gfile = pathlib.Path(gfile)
-            if gfile.suffix == "hdf":
-                self.from_hdf(gfile, ijkrange, zerobased)
-            self.from_file(
-                gfile,
-                fformat=fformat,
-                initprops=initprops,
-                restartprops=restartprops,
-                restartdates=restartdates,
-            )
+            self.from_file(gfile, fformat=fformat, **kwargs)
         else:
             # make a simple empty box grid (from version 2.13)
             self.create_box((self._ncol, self._nrow, self._nlay))
@@ -730,9 +705,7 @@ class Grid(_Grid3D):
             self, project, gname, realisation, info=info, method=method
         )
 
-    def from_file(
-        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
-    ):
+    def from_file(self, gfile, fformat=None, **kwargs):
         """Import grid geometry from file, and makes an instance of this class.
 
         If file extension is missing, then the extension will guess the fformat
@@ -749,6 +722,12 @@ class Grid(_Grid3D):
                 special value "all" can be get all properties found in the INIT file
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
+            ijkrange (list-like): Optional, only applicable for hdf files, see
+                :meth:`Grid.from_hdf`.
+            zerobased (bool): Optional, only applicable for hdf files, see
+                :meth:`Grid.from_hdf`.
+            mmap (bool): Optional, only applicable for xtgf files, see
+                :meth:`Grid.from_xtgf`.
 
         Example::
 
@@ -769,14 +748,7 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="rb")
 
-        obj = _grid_import.from_file(
-            self,
-            gfile,
-            fformat=fformat,
-            initprops=initprops,
-            restartprops=restartprops,
-            restartdates=restartdates,
-        )
+        obj = _grid_import.from_file(self, gfile, fformat=fformat, **kwargs)
         self._tmp = {}
         self._metadata.required = self
         return obj
