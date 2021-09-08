@@ -44,7 +44,12 @@ def export_grdecl(self, gfile, mode):
 
 def export_egrid(self, gfile):
     """Export grid to Eclipse EGRID format, binary."""
-    EGrid.from_xtgeo_grid(self).to_file(gfile)
+    EGrid.from_xtgeo_grid(self).to_file(gfile, fileformat="egrid")
+
+
+def export_fegrid(self, gfile):
+    """Export grid to Eclipse FEGRID format, ascii."""
+    EGrid.from_xtgeo_grid(self).to_file(gfile, fileformat="fegrid")
 
 
 def export_xtgcpgeom(self, gfile, subformat=844):

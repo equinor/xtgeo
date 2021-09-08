@@ -46,7 +46,7 @@ GridHead(type_of_grid=<TypeOfGrid.COMPOSITE...
 True
 """
 import warnings
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from enum import Enum, unique
 from itertools import chain
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
@@ -61,6 +61,7 @@ from ._ecl_grid import (
     GridRelative,
     GridUnit,
     MapAxes,
+    Units,
 )
 
 
@@ -241,20 +242,34 @@ class GridHead:
         return result
 
 
+def maybe_array_equal(arr1: np.ndarray, arr2: np.ndarray) -> bool:
+    """
+    Returns:
+     True if the two given Optional[np.ndarray]'s are equal (either both None
+     or np.array_equal).
+    """
+    return (arr1 is None and arr2 is None) or np.array_equal(arr1, arr2)
+
+
 @dataclass
-class EGridSubGrid(EclGrid):
+class EGridSubGrid:
     """
     Both the LGR sections and the global grid contain a grid which is in the
     general format of a eclipse grid. EGridSubGrid contain the common implementation.
     """
 
-    grid_head: Optional[GridHead] = None
-    size: InitVar[Tuple[int, int, int]] = None
-    mapaxes: Optional[MapAxes] = None
-    is_map_relative: bool = False
+    grid_head: Optional[GridHead]
+    coord: np.ndarray
+    zcorn: np.ndarray
+    actnum: Optional[np.ndarray] = None
 
     def __eq__(self, other):
-        return super().__eq__(other) and self.grid_head == other.grid_head
+        return (
+            self.grid_head == other.grid_head
+            and maybe_array_equal(self.actnum, other.actnum)
+            and np.array_equal(self.coord, other.coord)
+            and np.array_equal(self.zcorn, other.zcorn)
+        )
 
     def _check_xtgeo_compatible(self):
         if self.grid_head.coordinate_type == CoordinateType.CYLINDRICAL:
@@ -266,44 +281,6 @@ class EGridSubGrid(EclGrid):
         if self.grid_head.numres != 1:
             raise NotImplementedError(
                 "Xtgeo does not currently support multiple reservoirs"
-            )
-
-    def __post_init__(self, size: Tuple[int, int, int]):
-        if not size and not self.grid_head:
-            raise ValueError(
-                "Either size or grid_head has to be given when"
-                " constructing an ecl grid"
-            )
-
-        if size and not self.grid_head:
-            self.grid_head = GridHead(
-                TypeOfGrid.CORNER_POINT,
-                *size,
-                0,
-                1,
-                1,
-                CoordinateType.CARTESIAN,
-                (0, 0, 0),
-                (0, 0, 0),
-            )
-        if self.grid_head and not size:
-            size = (
-                self.grid_head.num_x,
-                self.grid_head.num_y,
-                self.grid_head.num_z,
-            )
-        if (
-            self.grid_head
-            and size
-            and size
-            != (
-                self.grid_head.num_x,
-                self.grid_head.num_y,
-                self.grid_head.num_z,
-            )
-        ):
-            raise ValueError(
-                "EGridSubGrid given both grid_head and size with conflicting values"
             )
 
     @property
@@ -323,15 +300,6 @@ class EGridSubGrid(EclGrid):
         if self.actnum is not None:
             result.append(("ACTNUM  ", self.actnum.astype(np.int32)))
         return result
-
-
-def maybe_array_equal(arr1: np.ndarray, arr2: np.ndarray) -> bool:
-    """
-    Returns:
-     True if the two given Optional[np.ndarray]'s are equal (either both None
-     or np.array_equal).
-    """
-    return (arr1 is None and arr2 is None) or np.array_equal(arr1, arr2)
 
 
 @dataclass
@@ -361,8 +329,7 @@ class LGRSection(EGridSubGrid):
             and self.coord_sys == other.coord_sys
         )
 
-    def __post_init__(self, size: Tuple[int, int, int]):
-        super().__post_init__(size)
+    def __post_init__(self):
         if self.name is None:
             raise TypeError("Missing parameter to LGRSection: name")
 
@@ -418,14 +385,14 @@ class GlobalGrid(EGridSubGrid):
         super()._check_xtgeo_compatible()
         if self.corsnum is not None:
             warnings.warn(
-                "egrid file given with coarsening, this is not directly supported"
+                "egrid file given with coarsening, this is not directly supported "
                 " by xtgeo. Instead grid is imported without coarsening."
             )
 
         if self.coord_sys is not None:
             warnings.warn(
-                "egrid file given with coordinate definition for global"
-                "grid, this is not directly supported by xtgeo. Instead"
+                "egrid file given with coordinate definition for global "
+                "grid, this is not directly supported by xtgeo. Instead "
                 "grid is imported without converting by local coordsys."
             )
 
@@ -543,7 +510,7 @@ class EGridHead:
     """
 
     file_head: Filehead
-    mapunits: Optional[str] = None
+    mapunits: Optional[Units] = None
     mapaxes: Optional[MapAxes] = None
     gridunit: Optional[GridUnit] = None
     gdorient: Optional[GdOrient] = None
@@ -553,7 +520,7 @@ class EGridHead:
             ("FILEHEAD", self.file_head.to_egrid()),
         ]
         if self.mapunits is not None:
-            result.append(("MAPUNITS", [self.mapunits]))
+            result.append(("MAPUNITS", [self.mapunits.to_bgrdecl()]))
         if self.mapaxes is not None:
             result.append(("MAPAXES ", self.mapaxes.to_bgrdecl()))
         if self.gridunit is not None:
@@ -564,7 +531,7 @@ class EGridHead:
 
 
 @dataclass
-class EGrid:
+class EGrid(EclGrid):
     """
     Contains the complete contents of an EGridFile.
     """
@@ -575,25 +542,100 @@ class EGrid:
     nnc_sections: List[NNCSection]
 
     @classmethod
-    def from_file(self, filelike, file_format: Format = None):
+    def default_settings_grid(
+        cls,
+        coord: np.ndarray,
+        zcorn: np.ndarray,
+        actnum: Optional[np.ndarray],
+        size: Tuple[int, int, int],
+    ):
+        grid_head = GridHead(
+            TypeOfGrid.CORNER_POINT,
+            *size,
+            1,
+            1,
+            1,
+            CoordinateType.CARTESIAN,
+            (0, 0, 0),
+            (0, 0, 0),
+        )
+        global_grid = GlobalGrid(
+            grid_head,
+            coord,
+            zcorn,
+            actnum,
+        )
+        return EGrid(
+            EGridHead(
+                Filehead(
+                    3,
+                    2007,
+                    3,
+                    TypeOfGrid.CORNER_POINT,
+                    RockModel.SINGLE_PERMEABILITY_POROSITY,
+                    GridFormat.IRREGULAR_CORNER_POINT,
+                ),
+                gridunit=GridUnit(),
+            ),
+            global_grid,
+            [],
+            [],
+        )
+
+    @property
+    def coord(self) -> np.ndarray:
+        return self.global_grid.coord
+
+    @coord.setter
+    def coord(self, value: np.ndarray):
+        self.global_grid.coord = value
+
+    @property
+    def zcorn(self) -> np.ndarray:
+        return self.global_grid.zcorn
+
+    @zcorn.setter
+    def zcorn(self, value: np.ndarray):
+        self.global_grid.zcorn = value
+
+    @property
+    def actnum(self) -> Optional[np.ndarray]:
+        return self.global_grid.actnum
+
+    @classmethod
+    def from_file(cls, filelike, fileformat: str = None):
         """
         Read an egrid file
         Args:
             filelike (str,Path,stream): The egrid file to be read.
-            file_format (None or ecl_data_io.Format): The format of the file,
-                None means guess.
+            file_format (None or str): The format of the file (either "egrid"
+                or "fegrid") None means guess.
         Returns:
             EGrid with the contents of the file.
         """
+        file_format = None
+        if fileformat == "egrid":
+            file_format = Format.UNFORMATTED
+        elif fileformat == "fegrid":
+            file_format = Format.FORMATTED
+        elif fileformat is not None:
+            raise ValueError(f"Unrecognized egrid file format {fileformat}")
         return EGridReader(filelike, file_format=file_format).read()
 
-    def to_file(self, filelike, file_format: Format = Format.UNFORMATTED):
+    def to_file(self, filelike, fileformat: str = "egrid"):
         """
         write the EGrid to file.
         Args:
             filelike (str,Path,stream): The egrid file to write to.
             file_format (ecl_data_io.Format): The format of the file.
         """
+        file_format = None
+        if fileformat == "egrid":
+            file_format = Format.UNFORMATTED
+        elif fileformat == "fegrid":
+            file_format = Format.FORMATTED
+        elif fileformat is not None:
+            raise ValueError(f"Unrecognized egrid file format {fileformat}")
         contents = []
         contents += self.egrid_head.to_egrid()
         contents += self.global_grid.to_egrid()
@@ -604,6 +646,7 @@ class EGrid:
         write(filelike, contents, file_format)
 
     def _check_xtgeo_compatible(self):
+        self.global_grid._check_xtgeo_compatible()
         if self.lgr_sections:
             warnings.warn(
                 "egrid file given with local grid refinements."
@@ -612,65 +655,60 @@ class EGrid:
             )
 
     @property
-    def dimensions(self):
+    def is_map_relative(self) -> bool:
+        if self.egrid_head.gridunit is None:
+            return False
+        return self.egrid_head.gridunit.grid_relative == GridRelative.MAP
+
+    @property
+    def mapaxes(self) -> Optional[MapAxes]:
+        return self.egrid_head.mapaxes
+
+    @mapaxes.setter
+    def mapaxes(self, value):
+        self.egrid_head.mapaxes = value
+
+    @property
+    def dimensions(self) -> Tuple[int, int, int]:
         return self.global_grid.dimensions
+
+    @property
+    def map_axis_units(self) -> Units:
+        return self.egrid_head.mapunits
+
+    @map_axis_units.setter
+    def map_axis_units(self, value):
+        self.egrid_head.mapunits = value
+
+    @property
+    def grid_units(self) -> Units:
+        return self.egrid_head.gridunit.unit
+
+    @grid_units.setter
+    def grid_units(self, value):
+        self.egrid_head.gridunit.unit = value
 
     @classmethod
     def from_xtgeo_grid(cls, xtgeo_grid):
-        xtgeo_grid._xtgformat2()
-        global_grid = GlobalGrid.from_xtgeo_grid(xtgeo_grid)
-        global_grid.coord = global_grid.coord.astype(np.float32)
-        global_grid.zcorn = global_grid.zcorn.astype(np.float32)
-        rock_model = RockModel.SINGLE_PERMEABILITY_POROSITY
+        default_grid = super().from_xtgeo_grid(xtgeo_grid)
+
+        default_grid.global_grid.coord = default_grid.global_grid.coord.astype(
+            np.float32
+        )
+        default_grid.global_grid.zcorn = default_grid.global_grid.zcorn.astype(
+            np.float32
+        )
         if xtgeo_grid._dualporo:
-            rock_model = RockModel.DUAL_POROSITY
+            default_grid.rock_model = RockModel.DUAL_POROSITY
         if xtgeo_grid._dualperm:
-            rock_model = RockModel.DUAL_PERMEABILITY
-        return EGrid(
-            EGridHead(
-                Filehead(
-                    3,
-                    2007,
-                    3,
-                    TypeOfGrid.CORNER_POINT,
-                    rock_model,
-                    GridFormat.IRREGULAR_CORNER_POINT,
-                )
-            ),
-            global_grid,
-            [],
-            [],
-        )
+            default_grid.rock_model = RockModel.DUAL_PERMEABILITY
 
-    def xtgeo_coord(self) -> np.ndarray:
-        self._check_xtgeo_compatible()
-        previous_mapaxes = self.global_grid.mapaxes
-        previous_relative = self.global_grid.is_map_relative
-        self.global_grid.mapaxes = self.egrid_head.mapaxes
-        self.global_grid.is_map_relative = (
-            self.egrid_head.gridunit is not None
-            and self.egrid_head.gridunit.grid_relative == GridRelative.MAP
-        )
-        result = self.global_grid.xtgeo_coord()
-        self.global_grid.mapaxes = previous_mapaxes
-        self.global_grid.is_map_relative = previous_relative
-        return result
-
-    def xtgeo_actnum(self) -> np.ndarray:
-        self._check_xtgeo_compatible()
-        previous_mapaxes = self.global_grid.mapaxes
-        self.global_grid.mapaxes = self.egrid_head.mapaxes
-        result = self.global_grid.xtgeo_actnum()
-        self.global_grid.mapaxes = previous_mapaxes
-        return result
-
-    def xtgeo_zcorn(self) -> np.ndarray:
-        self._check_xtgeo_compatible()
-        previous_mapaxes = self.global_grid.mapaxes
-        self.global_grid.mapaxes = self.egrid_head.mapaxes
-        result = self.global_grid.xtgeo_zcorn()
-        self.global_grid.mapaxes = previous_mapaxes
-        return result
+        if default_grid.egrid_head.gridunit is None:
+            warnings.warn(
+                "Unitless xtgeo grid converted to egrid. Assuming meters as unit."
+            )
+            default_grid.egrid_head.gridunit = GridUnit()
+        return default_grid
 
 
 keyword_translation = {
@@ -791,7 +829,7 @@ class EGridReader:
         params = self.read_section(
             keyword_factories={
                 "FILEHEAD": Filehead.from_egrid,
-                "MAPUNITS": lambda x: x[0].decode("ascii"),
+                "MAPUNITS": lambda x: Units.from_bgrdecl(x[0]),
                 "MAPAXES ": MapAxes.from_bgrdecl,
                 "GRIDUNIT": GridUnit.from_bgrdecl,
                 "GDORIENT": GdOrient.from_bgrdecl,

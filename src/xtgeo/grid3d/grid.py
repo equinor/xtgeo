@@ -5,7 +5,7 @@ import json
 import pathlib
 from collections import OrderedDict
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import deprecation
 import numpy as np
@@ -26,10 +26,12 @@ from . import (
     _grid_wellzone,
     _gridprop_lowlevel,
 )
+from ._ecl_grid import Units
 from ._grid3d import _Grid3D
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
 
 # --------------------------------------------------------------------------------------
 # Comment on "asmasked" vs "activeonly:
@@ -48,9 +50,7 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
-def grid_from_file(
-    gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
-):
+def grid_from_file(gfile, fformat=None, **kwargs):
     """Read a grid (cornerpoint) from file and an returns a Grid() instance.
 
     See :meth:`Grid.from_file` method for details on keywords.
@@ -63,13 +63,7 @@ def grid_from_file(
     """
     obj = Grid()
 
-    obj.from_file(
-        gfile,
-        initprops=initprops,
-        restartprops=restartprops,
-        restartdates=restartdates,
-        fformat=fformat,
-    )
+    obj.from_file(gfile, fformat=fformat, **kwargs)
 
     return obj
 
@@ -157,11 +151,8 @@ class Grid(_Grid3D):
         self,
         gfile: Optional[Union[str, Path]] = None,
         fformat: Optional[str] = "guess",
-        initprops: Optional[List[str]] = None,
-        restartprops: Optional[List[str]] = None,
-        restartdates: Optional[List[Union[int, str]]] = None,
-        ijkrange: Optional[IJKRange] = None,
-        zerobased: Optional[bool] = False,
+        units: Optional[Units] = None,
+        **kwargs,
     ):
         """Instantating.
 
@@ -169,13 +160,11 @@ class Grid(_Grid3D):
             gfile: Input file, or leave blank.
             fformat: File format input, default is ``guess`` based on file extension.
                 Other options are ...
-            initprops: List of initial properties (Eclipse based ``eclrun`` import).
-            restartprops: List of restart properties (Eclipse based ``eclrun`` import).
-            restartdates: List of restart dates as YYYYMMDD (Eclipse based ``eclrun``
-                import).
-            ijkrange: Tuple of 6 integers defining (imin, imax, jmin, jmax, kmin, kmax)
-                when import from ``hdf`` files. Ranges are implicit at both ends.
-            zerobased: Whether `ijkrange` uses 1 (default) or 0 as base.
+            units: The length units the coordinates are in,
+                (either Units.CM, Units.METRES, Units.FEET for cm, metres and
+                feet respectively).  Default (None) is unitless.
+            kwargs: remaining keyword arguments are sent to the corresponding file
+                reader, see :meth:`Grid.from_file`.
 
         Example::
 
@@ -231,16 +220,14 @@ class Grid(_Grid3D):
         # See _grid3d_fence for instance; note! reset this if any kind of grid change!
         self._tmp = {}
 
+        self.units = units
+
         if gfile is not None:
             gfile = pathlib.Path(gfile)
-            if gfile.suffix == "hdf":
-                self.from_hdf(gfile, ijkrange, zerobased)
             self.from_file(
                 gfile,
                 fformat=fformat,
-                initprops=initprops,
-                restartprops=restartprops,
-                restartdates=restartdates,
+                **kwargs,
             )
         else:
             # make a simple empty box grid (from version 2.13)
@@ -625,6 +612,7 @@ class Grid(_Grid3D):
             "grdecl": ["grdecl"],
             "bgrdecl": ["bgrdecl"],
             "egrid": ["egrid"],
+            "fegrid": ["fegrid"],
         }
 
         if fformat in valid_formats["roff"]:
@@ -637,6 +625,8 @@ class Grid(_Grid3D):
             _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat in valid_formats["egrid"]:
             _grid_export.export_egrid(self, gfile.name)
+        elif fformat in valid_formats["fegrid"]:
+            _grid_export.export_fegrid(self, gfile.name)
         else:
             raise ValueError(
                 f"Invalid file format: {fformat}, valid options are: {valid_formats}"
@@ -731,7 +721,10 @@ class Grid(_Grid3D):
         )
 
     def from_file(
-        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+        self,
+        gfile,
+        fformat=None,
+        **kwargs,
     ):
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -744,11 +737,21 @@ class Grid(_Grid3D):
                 then a fileroot name shall be input here, see example below.
             fformat (str): File format egrid/roff/grdecl/bgrdecl/eclipserun/xtgcpgeom
                 (None is default and means "guess")
+            relative_to: Either GridRelative.MAP or GridRelative.ORIGIN, meaning
+                coordinates realtive to the map or to the origin of the grid system.
+                This parameter is only applicable for ECL type files (egrid, grdecl,
+                bgrdecl and fegrid).
             initprops (str list): Optional, and only applicable for file format
                 "eclipserun". Provide a list the names of the properties here. A
                 special value "all" can be get all properties found in the INIT file
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
+            ijkrange (list-like): Optional, only applicable for hdf files, see
+                :meth:`Grid.from_hdf`.
+            zerobased (bool): Optional, only applicable for hdf files, see
+                :meth:`Grid.from_hdf`.
+            mmap (bool): Optional, only applicable for xtgf files, see
+                :meth:`Grid.from_xtgf`.
 
         Example::
 
@@ -769,14 +772,7 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="rb")
 
-        obj = _grid_import.from_file(
-            self,
-            gfile,
-            fformat=fformat,
-            initprops=initprops,
-            restartprops=restartprops,
-            restartdates=restartdates,
-        )
+        obj = _grid_import.from_file(self, gfile, fformat=fformat, **kwargs)
         self._tmp = {}
         self._metadata.required = self
         return obj
@@ -847,6 +843,26 @@ class Grid(_Grid3D):
         )
         self._tmp = {}
         self._metadata.required = self
+
+    def convert_units(self, units):
+        """
+        Convert the units of the grid.
+        Args:
+            units: The unit to convert to.
+
+        Raises:
+            ValueError: When the grid is unitless (no initial
+                unit information available).
+        """
+        old_grid_units = self.units
+        if old_grid_units is None:
+            raise ValueError("convert_units called on unitless grid.")
+        if old_grid_units == units:
+            return
+        factor = old_grid_units.conversion_factor(units)
+        self._coordsv *= factor
+        self._zcornsv *= factor
+        self.units = units
 
     # ==================================================================================
     # Various public methods

@@ -132,6 +132,8 @@ from xtgeo.grid3d import grid
 from xtgeo.grid3d import grid_property
 from xtgeo.grid3d import grid_properties
 
+from xtgeo.grid3d import Units
+from xtgeo.grid3d import GridRelative
 from xtgeo.grid3d.grid import Grid
 from xtgeo.grid3d.grid_property import GridProperty
 from xtgeo.grid3d.grid_properties import GridProperties

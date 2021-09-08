@@ -11,7 +11,7 @@ finites = st.floats(
     min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False, width=32
 )
 
-units = st.just("METRES")
+units = st.sampled_from(eclgrid.Units)
 grid_relatives = st.sampled_from(eclgrid.GridRelative)
 orders = st.sampled_from(eclgrid.Order)
 orientations = st.sampled_from(eclgrid.Orientation)

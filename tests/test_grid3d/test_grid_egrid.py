@@ -1,5 +1,4 @@
 import io
-import logging
 
 import ecl_data_io as eclio
 import hypothesis.strategies as st
@@ -10,7 +9,12 @@ from hypothesis import HealthCheck, assume, given, settings
 import xtgeo as xtg
 import xtgeo.grid3d._egrid as xtge
 
-from .egrid_generator import egrids, lgr_sections, xtgeo_compatible_egrids
+from .egrid_generator import (
+    egrids,
+    lgr_sections,
+    xtgeo_compatible_egridheads,
+    xtgeo_compatible_egrids,
+)
 from .grid_generator import xtgeo_grids
 
 
@@ -31,13 +35,6 @@ from .grid_generator import xtgeo_grids
                 "MAPAXES ": [],
             },
             "MAPAXES",
-        ),
-        (
-            {
-                "FILEHEAD": np.zeros((100,), dtype=np.int32),
-                "GRIDUNIT": [],
-            },
-            "GRIDUNIT",
         ),
         (
             {
@@ -212,22 +209,20 @@ def test_egrid_read_write(tmp_path, egrid):
     deadline=None,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-@given(xtgeo_compatible_egrids())
-def test_egrid_from_xtgeo(tmp_path, caplog, egrid):
-    caplog.set_level(logging.CRITICAL)
+@given(xtgeo_compatible_egrids(head=xtgeo_compatible_egridheads(mpaxes=st.just(None))))
+def test_egrid_from_xtgeo(tmp_path, egrid):
     tmp_file = tmp_path / "grid.EGRID"
     egrid.to_file(tmp_file)
-    xtgeo_grid = xtg.grid_from_file(tmp_file)
-    roundtrip_grid = xtge.GlobalGrid.from_xtgeo_grid(xtgeo_grid)
-    original_grid = egrid.global_grid
-    assert roundtrip_grid.zcorn.tolist() == original_grid.zcorn.tolist()
-    assert roundtrip_grid.coord.tolist() == original_grid.coord.tolist()
+    xtgeo_grid = xtg.grid_from_file(tmp_file, relative_to=xtge.GridRelative.ORIGIN)
+    roundtrip_grid = xtge.EGrid.from_xtgeo_grid(xtgeo_grid)
+    assert roundtrip_grid.zcorn.tolist() == egrid.zcorn.tolist()
+    assert roundtrip_grid.coord.tolist() == egrid.coord.tolist()
     if roundtrip_grid.actnum is None:
-        assert original_grid.actnum is None or all(original_grid.actnum == 1)
-    elif original_grid.actnum is None:
+        assert egrid.actnum is None or all(egrid.actnum == 1)
+    elif egrid.actnum is None:
         assert roundtrip_grid.actnum is None or all(roundtrip_grid.actnum == 1)
     else:
-        assert roundtrip_grid.actnum.tolist() == original_grid.actnum.tolist()
+        assert roundtrip_grid.actnum.tolist() == egrid.actnum.tolist()
 
 
 @settings(
@@ -238,8 +233,8 @@ def test_egrid_from_xtgeo(tmp_path, caplog, egrid):
 def test_egrid_to_xtgeo(tmp_path, xtg_grid):
     tmp_file = tmp_path / "grid.EGRID"
     xtg_grid.to_file(tmp_file, fformat="egrid")
-    roundtrip_grid = xtge.EGrid.from_file(tmp_file).global_grid
-    original_grid = xtge.GlobalGrid.from_xtgeo_grid(xtg_grid)
+    roundtrip_grid = xtge.EGrid.from_file(tmp_file)
+    original_grid = xtge.EGrid.from_xtgeo_grid(xtg_grid)
     assert roundtrip_grid.zcorn.tolist() == pytest.approx(original_grid.zcorn.tolist())
     assert roundtrip_grid.coord.tolist() == pytest.approx(original_grid.coord.tolist())
     if roundtrip_grid.actnum is None:
@@ -386,7 +381,7 @@ def test_local_coordsys_warning(egrid):
 
 @given(
     xtgeo_compatible_egrids(
-        lgrs=st.lists(lgr_sections(), min_size=1),
+        lgrs=st.lists(lgr_sections(), min_size=1, max_size=3),
     )
 )
 def test_lgr_warning(egrid):

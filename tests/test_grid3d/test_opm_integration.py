@@ -95,15 +95,16 @@ def test_grdecl_roundtrip(xtgeo_grid):
     assert_allclose(opm_grid._zcornsv, xtgeo_grid._zcornsv, atol=0.02)
 
 
-@pytest.mark.xfail(
-    reason="Currently fails as xtgeo egrid generation is not compatible with opm"
-)
 @pytest.mark.usefixtures("setup_tmpdir")
 @pytest.mark.requires_opm
 @settings(deadline=None, max_examples=5)
 @given(xtgeo_grids)
 def test_egrid_roundtrip(xtgeo_grid):
-    egrid_file = "xtg_grid.egrid"
+    egrid_file = "xtg_grid.EGRID"
+    # OPM 2021-04 will crash when given egrid files without actnum
+    # missing actnum means all actnum[i]=1, so we trick xtgeo
+    # to always output actnum here
+    xtgeo_grid._actnumsv[0] = 0
     xtgeo_grid.to_file(str(egrid_file), fformat="egrid")
     opm_egrid_file = read_write_egrid(xtgeo_grid.dimensions, egrid_file)
     opm_grid = xtgeo.Grid(str(opm_egrid_file), fformat="egrid")

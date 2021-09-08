@@ -10,6 +10,7 @@ import xtgeo.grid3d._ecl_grid as ecl_grid
 import xtgeo.grid3d._grdecl_grid as ggrid
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grdecl_format import open_grdecl
+from xtgeo.grid3d._grid_import_ecl import grid_from_grdecl
 
 from .grdecl_grid_generator import (
     grdecl_grids,
@@ -84,9 +85,13 @@ def test_specgrid():
 @pytest.mark.parametrize(
     "inp_str, expected_unit, expected_relative",
     [
-        ("GRIDUNIT\n 'METRES  ' '        ' /", "METRES", ggrid.GridRelative.ORIGIN),
-        ("GRIDUNIT\n METRES /", "METRES", ggrid.GridRelative.ORIGIN),
-        ("GRIDUNIT\n FEET MAP /", "FEET", ggrid.GridRelative.MAP),
+        (
+            "GRIDUNIT\n 'METRES  ' '        ' /",
+            ecl_grid.Units.METRES,
+            ggrid.GridRelative.ORIGIN,
+        ),
+        ("GRIDUNIT\n METRES /", ecl_grid.Units.METRES, ggrid.GridRelative.ORIGIN),
+        ("GRIDUNIT\n FEET MAP /", ecl_grid.Units.FEET, ggrid.GridRelative.MAP),
     ],
 )
 def test_gridunit(inp_str, expected_unit, expected_relative):
@@ -169,14 +174,7 @@ def test_to_from_xtgeogrid_format1(xtggrid):
 @given(xtgeo_compatible_grdecl_grids)
 def test_to_from_grdeclgrid(grdecl_grid):
     xtggrid = Grid()
-    xtggrid._actnumsv = grdecl_grid.xtgeo_actnum()
-    xtggrid._coordsv = grdecl_grid.xtgeo_coord()
-    xtggrid._zcornsv = grdecl_grid.xtgeo_zcorn()
-    nx, ny, nz = grdecl_grid.dimensions
-    xtggrid._ncol = nx
-    xtggrid._nrow = ny
-    xtggrid._nlay = nz
-    xtggrid._xtgformat = 2
+    grid_from_grdecl(xtggrid, grdecl_grid)
 
     grdecl_grid2 = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
     assert grdecl_grid2.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
@@ -184,29 +182,24 @@ def test_to_from_grdeclgrid(grdecl_grid):
     assert grdecl_grid2.xtgeo_zcorn() == pytest.approx(xtggrid._zcornsv, abs=0.02)
 
 
-@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    deadline=None,
+    print_blob=True,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 @given(xtgeo_compatible_grdecl_grids, st.sampled_from(["grdecl", "bgrdecl"]))
 def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
     assume(grdecl_grid.mapaxes is None or fileformat != "bgrdecl")
+    filepath = tmp_path / ("xtggrid." + fileformat)
     xtggrid = Grid()
-    xtggrid._actnumsv = grdecl_grid.xtgeo_actnum()
-    xtggrid._coordsv = grdecl_grid.xtgeo_coord()
-    xtggrid._zcornsv = grdecl_grid.xtgeo_zcorn()
-    nx, ny, nz = grdecl_grid.dimensions
-    xtggrid._ncol = nx
-    xtggrid._nrow = ny
-    xtggrid._nlay = nz
-    xtggrid._xtgformat = 2
+    grid_from_grdecl(xtggrid, grdecl_grid, relative_to=ggrid.GridRelative.ORIGIN)
 
-    xtggrid.to_file(tmp_path / ("xtggrid." + fileformat), fformat=fileformat)
-    grdecl_grid2 = ggrid.GrdeclGrid.from_file(
-        tmp_path / ("xtggrid." + fileformat), fileformat=fileformat
-    )
+    xtggrid.to_file(filepath, fformat=fileformat)
+    grdecl_grid2 = ggrid.GrdeclGrid.from_file(filepath, fileformat=fileformat)
 
+    grdecl_grid2.convert_grid_units(grdecl_grid.grid_units)
     assert grdecl_grid.zcorn == pytest.approx(grdecl_grid2.zcorn, abs=0.02)
-    assert grdecl_grid.xtgeo_coord() == pytest.approx(
-        grdecl_grid2.xtgeo_coord(), abs=0.02
-    )
+    assert grdecl_grid.coord == pytest.approx(grdecl_grid2.coord, abs=0.02)
     if grdecl_grid.actnum is None or grdecl_grid2.actnum is None:
         assert grdecl_grid.actnum is None or np.all(grdecl_grid.actnum)
         assert grdecl_grid2.actnum is None or np.all(grdecl_grid2.actnum)
@@ -309,7 +302,6 @@ def test_duplicate_insignificant_values():
 
     grdecl_grid.duplicate_insignificant_xtgeo_zcorn(zcorn_xtgeo)
 
-    print(zcorn_xtgeo.tolist())
     assert zcorn_xtgeo.tolist() == [
         [[[4] * 4] * 2, [[2] * 4] * 2],
         [[[3] * 4] * 2, [[1] * 4] * 2],
