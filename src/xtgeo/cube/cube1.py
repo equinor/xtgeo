@@ -1,23 +1,15 @@
 # coding: utf-8
 """Module for a seismic (or whatever) cube."""
 
+import numbers
 import os.path
 import tempfile
 
-import numbers
-
 import numpy as np
-
 import xtgeo
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGDescription
 import xtgeo.common.sys as xtgeosys
-
-from xtgeo.cube import _cube_import
-from xtgeo.cube import _cube_export
-from xtgeo.cube import _cube_utils
-from xtgeo.cube import _cube_roxapi
-
+from xtgeo.common import XTGDescription, XTGeoDialog
+from xtgeo.cube import _cube_export, _cube_import, _cube_roxapi, _cube_utils
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -599,7 +591,7 @@ class Cube:  # pylint: disable=too-many-public-methods
         return None
 
     def get_xy_value_from_ij(self, iloc, jloc, ixline=False, zerobased=False):
-        """Returns x, y from a single i j location.
+        """Returns x, y coordinate from a single i j location.
 
         Args:
             iloc (int): I (col) location (base is 1)
@@ -609,7 +601,7 @@ class Cube:  # pylint: disable=too-many-public-methods
                 apply when ixline is set to True.
 
         Returns:
-            The z value at location iloc, jloc, None if undefined cell.
+            The X, Y coordinate pair.
         """
         xval, yval = _cube_utils.get_xy_value_from_ij(
             self, iloc, jloc, ixline=ixline, zerobased=zerobased
