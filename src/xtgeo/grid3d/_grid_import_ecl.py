@@ -5,23 +5,32 @@
 
 import xtgeo
 from xtgeo.grid3d._egrid import EGrid, RockModel
-from xtgeo.grid3d._grdecl_grid import GrdeclGrid
+from xtgeo.grid3d._grdecl_grid import GrdeclGrid, GridRelative
 
 xtg = xtgeo.XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 
-def import_ecl_egrid(self, gfile):
-    egrid = EGrid.from_file(gfile._file)
+def import_ecl_egrid(
+    self,
+    gfile,
+    relative_to=GridRelative.MAP,
+    fileformat="egrid",
+):
+    egrid = EGrid.from_file(gfile._file, fileformat=fileformat)
 
     self._ncol, self._nrow, self._nlay = egrid.dimensions
 
-    self._coordsv = egrid.xtgeo_coord()
-    self._zcornsv = egrid.xtgeo_zcorn()
+    self._coordsv = egrid.xtgeo_coord(relative_to=relative_to)
+    self._zcornsv = egrid.xtgeo_zcorn(relative_to=relative_to)
     self._actnumsv = egrid.xtgeo_actnum()
     self._subgrids = None
     self._xtgformat = 2
+    if relative_to == GridRelative.MAP and egrid.map_axis_units is not None:
+        self.units = egrid.map_axis_units
+    else:
+        self.units = egrid.grid_units
 
     if egrid.egrid_head.file_head.rock_model == RockModel.DUAL_POROSITY:
         self._dualporo = True
@@ -75,29 +84,30 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
     self.gridprops = grdprops
 
 
-def import_ecl_grdecl(self, gfile):
+def import_ecl_grdecl(self, gfile, relative_to=GridRelative.MAP):
     """Import grdecl format."""
 
     grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="grdecl")
-
-    self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
-
-    self._coordsv = grdecl_grid.xtgeo_coord()
-    self._zcornsv = grdecl_grid.xtgeo_zcorn()
-    self._actnumsv = grdecl_grid.xtgeo_actnum()
-    self._subgrids = None
-    self._xtgformat = 2
+    grid_from_grdecl(self, grdecl_grid, relative_to=relative_to)
 
 
-def import_ecl_bgrdecl(self, gfile):
+def import_ecl_bgrdecl(self, gfile, relative_to=GridRelative.MAP):
     """Import binary files with GRDECL layout."""
 
     grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="bgrdecl")
+    grid_from_grdecl(self, grdecl_grid, relative_to=relative_to)
+
+
+def grid_from_grdecl(self, grdecl_grid, relative_to=GridRelative.MAP):
 
     self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
 
-    self._coordsv = grdecl_grid.xtgeo_coord()
-    self._zcornsv = grdecl_grid.xtgeo_zcorn()
+    self._coordsv = grdecl_grid.xtgeo_coord(relative_to=relative_to)
+    self._zcornsv = grdecl_grid.xtgeo_zcorn(relative_to=relative_to)
     self._actnumsv = grdecl_grid.xtgeo_actnum()
     self._subgrids = None
     self._xtgformat = 2
+    if relative_to == GridRelative.MAP and grdecl_grid.map_axis_units is not None:
+        self.units = grdecl_grid.map_axis_units
+    else:
+        self.units = grdecl_grid.grid_units

@@ -20,7 +20,7 @@ And ignore ECHO and NOECHO keywords. see _grid_format for the details
 of how these keywords are layed out in a text file, and see GrdeclGrid
 for how the grid geometry is interpreted from these keywords.
 """
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import numpy as np
@@ -34,6 +34,7 @@ from ._ecl_grid import (
     GridRelative,
     GridUnit,
     MapAxes,
+    Units,
 )
 from ._grdecl_format import open_grdecl
 
@@ -98,7 +99,6 @@ class SpecGrid(GrdeclKeyword):
         raise ValueError("SPECGRID should have at most 5 values")
 
 
-@dataclass
 class GrdeclGrid(EclGrid):
     """
     The main keywords that describe a grdecl grid is COORD, ZCORN and ACTNUM
@@ -108,39 +108,79 @@ class GrdeclGrid(EclGrid):
     The number of cells in each direction is described in the SPECGRID keyword.
     """
 
-    coord: np.ndarray
-    zcorn: np.ndarray
-    specgrid: SpecGrid = None
-    actnum: Optional[np.ndarray] = None
-    mapaxes: Optional[MapAxes] = None
-    mapunits: Optional[str] = None
-    gridunit: Optional[GridUnit] = None
-    gdorient: Optional[GdOrient] = None
-    size: InitVar[Tuple[int, int, int]] = None
+    def __init__(
+        self,
+        coord: np.ndarray,
+        zcorn: np.ndarray,
+        specgrid: SpecGrid,
+        actnum: Optional[np.ndarray] = None,
+        mapaxes: Optional[MapAxes] = None,
+        mapunits: Optional[Units] = None,
+        gridunit: Optional[GridUnit] = None,
+        gdorient: Optional[GdOrient] = None,
+    ):
+        self._coord = coord
+        self._zcorn = zcorn
+        self.specgrid = specgrid
+        self._actnum = actnum
+        self._mapaxes = mapaxes
+        self.mapunits = mapunits
+        self.gridunit = gridunit
+        self.gdorient = gdorient
 
-    def __post_init__(self, size):
-        if not size and not self.specgrid:
-            raise ValueError(
-                "Either size or specgrid has to be given when constructing GrdeclGrid"
-            )
+    def __str__(self):
+        return (
+            "GrdeclGrid("
+            f"coord={self._coord}, "
+            f"zcorn={self._zcorn}, "
+            f"specgrid={self.specgrid}, "
+            f"actnum={self._actnum}, "
+            f"mapaxes={self._mapaxes}, "
+            f"mapunits={self.mapunits}, "
+            f"gridunit={self.gridunit}, "
+            f"gdorient={self.gdorient})"
+        )
 
-        if size and not self.specgrid:
-            self.specgrid = SpecGrid(*size)
-        if (
-            self.specgrid
-            and size
-            and not (
-                size
-                == (
-                    self.specgrid.ndivix,
-                    self.specgrid.ndiviy,
-                    self.specgrid.ndiviz,
-                )
-            )
-        ):
-            raise ValueError(
-                "GrdeclGrid given both specgrid and size with conflicting values"
-            )
+    def __repr__(self):
+        return str(self)
+
+    @property
+    def mapaxes(self) -> Optional[MapAxes]:
+        return self._mapaxes
+
+    @mapaxes.setter
+    def mapaxes(self, value):
+        self._mapaxes = value
+
+    @property
+    def coord(self) -> np.ndarray:
+        return self._coord
+
+    @coord.setter
+    def coord(self, value):
+        self._coord = value
+
+    @property
+    def zcorn(self) -> np.ndarray:
+        return self._zcorn
+
+    @zcorn.setter
+    def zcorn(self, value):
+        self._zcorn = value
+
+    @property
+    def actnum(self) -> Optional[np.ndarray]:
+        return self._actnum
+
+    @classmethod
+    def default_settings_grid(
+        cls,
+        coord: np.ndarray,
+        zcorn: np.ndarray,
+        actnum: Optional[np.ndarray],
+        size: Tuple[int, int, int],
+    ):
+        return cls(coord, zcorn, SpecGrid(*size), actnum)
 
     def __eq__(self, other):
         if not isinstance(other, GrdeclGrid):
@@ -170,6 +210,29 @@ class GrdeclGrid(EclGrid):
             and self.gridunit.grid_relative == GridRelative.MAP
         )
 
+    @property
+    def map_axis_units(self):
+        if self.mapunits is None:
+            return Units.METRES
+        return self.mapunits
+
+    @map_axis_units.setter
+    def map_axis_units(self, value):
+        self.mapunits = value
+
+    @property
+    def grid_units(self):
+        if self.gridunit is None:
+            return Units.METRES
+        return self.gridunit.unit
+
+    @grid_units.setter
+    def grid_units(self, value):
+        if self.gridunit is None and value != Units.METRES:
+            self.gridunit = GridUnit(unit=value)
+        elif self.gridunit is not None:
+            self.gridunit.unit = value
+
     @classmethod
     def from_file(cls, filename, fileformat="grdecl"):
         """
@@ -191,7 +254,7 @@ class GrdeclGrid(EclGrid):
             "ZCORN": lambda x: np.array(x, dtype=np.float32),
             "ACTNUM": lambda x: np.array(x, dtype=np.int32),
             "MAPAXES": MapAxes.from_bgrdecl,
-            "MAPUNITS": lambda x: x,
+            "MAPUNITS": lambda x: Units.from_bgrdecl(x[0]),
             "GRIDUNIT": GridUnit.from_bgrdecl,
             "SPECGRID": SpecGrid.from_bgrdecl,
             "GDORIENT": GdOrient.from_bgrdecl,
@@ -217,7 +280,7 @@ class GrdeclGrid(EclGrid):
             "ZCORN": lambda x: np.array(x, dtype=np.float32),
             "ACTNUM": lambda x: np.array(x, dtype=np.int32),
             "MAPAXES": MapAxes.from_grdecl,
-            "MAPUNITS": lambda x: x,
+            "MAPUNITS": lambda x: Units.from_grdecl(x[0]),
             "GRIDUNIT": GridUnit.from_grdecl,
             "SPECGRID": SpecGrid.from_grdecl,
             "GDORIENT": GdOrient.from_grdecl,
@@ -260,7 +323,7 @@ class GrdeclGrid(EclGrid):
             keywords = [
                 ("SPECGRID", self.specgrid.to_grdecl()),
                 ("MAPAXES", self.mapaxes.to_grdecl() if self.mapaxes else None),
-                ("MAPUNITS", [self.mapunits] if self.mapunits else None),
+                ("MAPUNITS", [self.mapunits.to_grdecl()] if self.mapunits else None),
                 ("GRIDUNIT", self.gridunit.to_grdecl() if self.gridunit else None),
                 ("GDORIENT", self.gdorient.to_grdecl() if self.gdorient else None),
                 ("COORD", self.coord),
@@ -284,7 +347,7 @@ class GrdeclGrid(EclGrid):
             [
                 ("SPECGRID", self.specgrid.to_bgrdecl()),
                 ("MAPAXES ", self.mapaxes.to_bgrdecl() if self.mapaxes else None),
-                ("MAPUNITS", [self.mapunits] if self.mapunits else None),
+                ("MAPUNITS", [self.mapunits.to_bgrdecl()] if self.mapunits else None),
                 ("GRIDUNIT", self.gridunit.to_bgrdecl() if self.gridunit else None),
                 ("GDORIENT", self.gdorient.to_bgrdecl() if self.gdorient else None),
                 ("COORD   ", self.coord.astype(np.float32)),

@@ -10,6 +10,7 @@ from .grdecl_grid_generator import (
     gdorients,
     gridunits,
     map_axes,
+    units,
     xtgeo_compatible_zcorns,
     zcorns,
 )
@@ -83,11 +84,10 @@ def global_grids(draw, header=grid_heads(), zcorn=zcorns):
         ),
     )
     return xtge.GlobalGrid(
-        draw(coord),
-        draw(zcorn(dims)),
-        draw(actnum),
-        grid_head,
-        size=None,
+        coord=draw(coord),
+        zcorn=draw(zcorn(dims)),
+        actnum=draw(actnum),
+        grid_head=grid_head,
         coord_sys=draw(map_axes),
         boxorig=draw(st.tuples(indecies, indecies, indecies)),
         corsnum=draw(
@@ -115,11 +115,10 @@ def lgr_sections(draw, zcorn=zcorns):
         ),
     )
     return xtge.LGRSection(
-        draw(coord),
-        draw(zcorn(dims)),
-        draw(actnum),
-        grid_head,
-        size=None,
+        coord=draw(coord),
+        zcorn=draw(zcorn(dims)),
+        actnum=draw(actnum),
+        grid_head=grid_head,
         name=draw(ascii_string(min_size=1)),
         parent=draw(st.one_of(st.just(None), ascii_string(min_size=1))),
         grid_parent=draw(st.one_of(st.just(None), ascii_string(min_size=1))),
@@ -143,20 +142,22 @@ nnc_sections = st.builds(
     arrays(elements=indecies, dtype="int32", shape=indecies),
 )
 
-egrid_heads = st.builds(
-    xtge.EGridHead,
-    file_heads,
-    st.just("METRES  "),
-    map_axes,
-    gridunits(),
-    gdorients,
-)
+
+@st.composite
+def egrid_heads(draw, mpaxes=map_axes):
+    return xtge.EGridHead(
+        draw(file_heads),
+        draw(units),
+        draw(mpaxes),
+        draw(gridunits()),
+        draw(gdorients),
+    )
 
 
 @st.composite
 def egrids(
     draw,
-    head=egrid_heads,
+    head=egrid_heads(),
     global_grid=global_grids(),
     lgrs=st.lists(lgr_sections(), max_size=3),
     nncs=st.lists(nnc_sections, max_size=3),
@@ -170,19 +171,24 @@ xtgeo_compatible_global_grids = global_grids(
 )
 
 
+@st.composite
+def xtgeo_compatible_egridheads(draw, grdunit=gridunits(), mpaxes=map_axes):
+    return xtge.EGridHead(
+        xtge.Filehead(
+            3,
+            2007,
+            3,
+            xtge.TypeOfGrid.CORNER_POINT,
+            xtge.RockModel.SINGLE_PERMEABILITY_POROSITY,
+            xtge.GridFormat.IRREGULAR_CORNER_POINT,
+        ),
+        gridunit=draw(grdunit),
+        mapaxes=draw(mpaxes),
+    )
+
+
 def xtgeo_compatible_egrids(
-    head=st.just(
-        xtge.EGridHead(
-            xtge.Filehead(
-                3,
-                2007,
-                3,
-                xtge.TypeOfGrid.CORNER_POINT,
-                xtge.RockModel.SINGLE_PERMEABILITY_POROSITY,
-                xtge.GridFormat.IRREGULAR_CORNER_POINT,
-            )
-        )
-    ),
+    head=xtgeo_compatible_egridheads(),
     global_grid=xtgeo_compatible_global_grids,
     lgrs=st.just([]),
     nncs=st.just([]),
