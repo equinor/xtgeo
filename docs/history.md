@@ -70,6 +70,12 @@
     reading GRDECL (introduced in XTGeo 2.6-2.10) #507
   * Fix: Write to roxapi discrete prop #531
 
+### Version 2.15.1
+
+* Bugfixes:
+  * General improvements when i/o with binary GRDECL and EGRID formats
+  * Fixing that egrid sometimes omitted ACTNUM #599
+  * Fix rounding error in ZINC when exporting cubes to SEGY #616
 
 ## Version 2.14
 
