@@ -12,6 +12,15 @@ import xtgeo.common.sys as xsys
 xtg = xtgeo.XTGeoDialog()
 
 
+def test_xtgeo_file_memstream_string_fformat_unknown():
+    assert xtgeo._XTGeoFile(io.StringIO()).detect_fformat() == "unknown"
+
+
+@pytest.mark.parametrize("length", [0, 4, 8, 24, 9])
+def test_xtgeo_file_memstream_bytes_fformat_unknown(length):
+    assert xtgeo._XTGeoFile(io.BytesIO(b"\00" * length)).detect_fformat() == "unknown"
+
+
 def test_generic_hash():
     """Testing generic hashlib function."""
     ahash = xsys.generic_hash("ABCDEF")
