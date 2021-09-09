@@ -7,9 +7,8 @@ import warnings
 
 import pytest
 
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperties
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import Grid, GridProperties
 
 warnings.filterwarnings("ignore")
 
@@ -50,6 +49,21 @@ def test_import_init():
     porv = x.get_prop_by_name("PORV")
     logger.info("PORV avg {}".format(porv.values.mean()))
     assert poro.values.mean() == pytest.approx(0.1677402, abs=0.00001)
+
+
+def test_gridproperties_iter():
+    g = Grid()
+    g.from_file(GFILE1, fformat="egrid")
+
+    gps = GridProperties()
+    gps.from_file(IFILE1, fformat="init", names=["PORO", "PORV"], grid=g)
+
+    count = 0
+    for _ in gps:
+        for _ in gps:
+            count += 1
+
+    assert count == 4
 
 
 def test_import_should_fail():

@@ -68,7 +68,6 @@ class GridProperties(_Grid3D):
         self._props = []  # list of GridProperty objects
         self._names = []  # list of GridProperty names
         self._dates = []  # list of dates (_after_ import) YYYYDDMM
-        self._counter = 0  # Internal counter in __iter__ methods
 
     def __repr__(self):  # noqa: D105
         myrp = (
@@ -98,17 +97,7 @@ class GridProperties(_Grid3D):
         return prop
 
     def __iter__(self):  # noqa: D105
-        self._counter = 0
-        return self
-
-    def __next__(self):  # noqa: D105
-        maxcounter = len(self._props)
-        if self._counter < maxcounter:
-            result = self._props[self._counter]
-            self._counter += 1
-            return result
-
-        raise StopIteration
+        return iter(self._props)
 
     # ----------------------------------------------------------------------------------
     # Properties:
