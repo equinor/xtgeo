@@ -164,47 +164,51 @@ def _create_box_v2(
     self._xtgformat = 2
 
 
-def get_dz(self, name="dZ", flip=True, asmasked=True):
-    """Get dZ as property."""
-    self._xtgformat1()
+def get_dz(
+    self, name: str = "dZ", flip: bool = True, asmasked: bool = True
+) -> GridProperty:
+    """Get average cell height (dz) as property.
 
-    ntot = (self._ncol, self._nrow, self._nlay)
+    Args:
+        flip (bool): whether to flip the z direction, ie. increasing z is
+            increasing depth (defaults to True)
+        asmasked (bool): Whether to mask property by whether
+        name (str): Name of resulting grid property, defaults to "dZ".
+    """
+    self._xtgformat2()
 
-    dzv = GridProperty(
+    nx, ny, nz = self.dimensions
+    dz = 0.25 * (
+        (
+            self._zcornsv[1:, 1:, 1:, 0]
+            + self._zcornsv[:nx, 1:, 1:, 1]
+            + self._zcornsv[1:, :ny, 1:, 2]
+            + self._zcornsv[:nx, :ny, 1:, 3]
+        )
+        - (
+            self._zcornsv[1:, 1:, :nz, 0]
+            + self._zcornsv[:nx, 1:, :nz, 1]
+            + self._zcornsv[1:, :ny, :nz, 2]
+            + self._zcornsv[:nx, :ny, :nz, 3]
+        )
+    )
+
+    if not flip:
+        dz *= -1
+
+    if asmasked:
+        dz = np.ma.masked_array(dz, self._actnumsv == 0)
+    else:
+        dz = np.ma.masked_array(dz, False)
+
+    return GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
+        values=dz.ravel(),
         name=name,
         discrete=False,
     )
-
-    dz = np.zeros(self.ntotal, dtype=np.float64)
-
-    nflip = 1
-    if not flip:
-        nflip = -1
-
-    option = 0
-    if asmasked:
-        option = 1
-
-    _cxtgeo.grd3d_calc_dz(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._zcornsv,
-        self._actnumsv,
-        dz,
-        nflip,
-        option,
-    )
-
-    dzv.values = np.ma.masked_greater(dz, xtgeo.UNDEF_LIMIT)
-    # return the property object
-    logger.info("DZ mean value: %s", dzv.values.mean())
-
-    return dzv
 
 
 def get_dxdy(self, names=("dX", "dY"), asmasked=False):
@@ -876,28 +880,19 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
     return tuple(glist)
 
 
-def inactivate_by_dz(self, threshold):
-    """Inactivate by DZ thickness."""
-    self._xtgformat1()
+def inactivate_by_dz(self, threshold: float, flip: bool = True):
+    """Set cell to inactive if dz does not exceed threshold.
+    Args:
+        threshold (float): The threshold for which the absolute value
+            of dz should exceed.
+        flip (bool): Whether the z-direction should be flipped.
 
-    if isinstance(threshold, int):
-        threshold = float(threshold)
-
-    if not isinstance(threshold, float):
-        raise ValueError("The threshold is not a float or int")
-
-    # assumption (unless somebody finds a Petrel made grid):
-    nflip = 1
-
-    _cxtgeo.grd3d_inact_by_dz(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._zcornsv,
-        self._actnumsv,
-        threshold,
-        nflip,
-    )
+    """
+    self._xtgformat2()
+    self._actnumsv[
+        self.get_dz(asmasked=False, flip=flip).values.reshape(self._actnumsv.shape)
+        < threshold
+    ] = 0
 
 
 def make_zconsistent(self, zsep):

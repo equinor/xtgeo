@@ -1102,19 +1102,6 @@ grd3d_calc_dxdy(int nx,
                 int option2);
 
 void
-grd3d_calc_dz(int nx,
-              int ny,
-              int nz,
-              double *swig_np_dbl_in_v1,       // *zcornsv,
-              long n_swig_np_dbl_in_v1,        // nzcorn,
-              int *swig_np_int_in_v1,          // *actnumsv,
-              long n_swig_np_int_in_v1,        // nactnum,
-              double *swig_np_dbl_inplace_v1,  // *p_dz_v,
-              long n_swig_np_dbl_inplace_v1,   // ntot,
-              int flip,
-              int option);
-
-void
 grd3d_calc_xyz(int nx,
                int ny,
                int nz,
@@ -1628,19 +1615,6 @@ grd3d_geometrics(int nx,
                  double *dz,
                  int option1,
                  int option2);
-
-void
-grd3d_inact_by_dz(int nx,
-                  int ny,
-                  int nz,
-
-                  double *swig_np_dbl_inplace_v1,  // *zcornsv
-                  long n_swig_np_dbl_inplace_v1,   // nzcorn
-                  int *swig_np_int_inplace_v1,     // *actnumsv
-                  long n_swig_np_int_inplace_v1,   // nact
-
-                  double threshold,
-                  int flip);
 
 int
 grd3d_check_cell_splits(int ncol,

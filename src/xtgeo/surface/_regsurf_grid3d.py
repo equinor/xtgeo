@@ -104,6 +104,7 @@ def from_grid3d(grid, template=None, where="top", mode="depth", rfactor=1):
     ivalues = svalues.copy()
     jvalues = svalues.copy()
 
+    grid._xtgformat1()
     _cxtgeo.surf_sample_grd3d_lay(
         grid.ncol,
         grid.nrow,

@@ -1,21 +1,19 @@
 """Tests for 3D grid."""
 
+import math
 import pathlib
 from collections import OrderedDict
 
-
-import math
-
-
-import pytest
 import numpy as np
+import pytest
+from hypothesis import given
 
 import tests.test_common.test_xtg as tsetup
-
 import xtgeo
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import Grid, GridProperty
+
+from .grid_generator import dimensions, increments
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__, info=True)
@@ -832,3 +830,16 @@ def test_bad_egrid_ends_before_kw(tmp_path):
         fh.write(b"\x00\x00\x00\x10")
     with pytest.raises(Exception, match="end-of-file while reading keyword"):
         xtgeo.grid_from_file(egrid_file, fformat="egrid")
+
+
+@given(dimensions, increments, increments, increments)
+def test_grid_get_dz(dimension, dx, dy, dz):
+    grd = Grid()
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
+    np.testing.assert_allclose(grd.get_dz().values, dz, rtol=0.01)
+    np.testing.assert_allclose(grd.get_dz(flip=False).values, -dz, rtol=0.01)
+
+    grd._actnumsv[0, 0, 0] = 0
+
+    assert grd.get_dz().values[0, 0, 0] is np.ma.masked
+    assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, rtol=0.01)
