@@ -46,7 +46,6 @@ def _export_segy_segyio(self, sfile, template=None, pristine=False):
         template (str): Use an existing file a template.
         pristine (bool): Make SEGY from scrtach if True; otherwise use an
             existing SEGY file.
-        engine (str): Use 'xtgeo' or (later?) 'segyio'
     """
     logger.debug("Export segy format using segyio...")
 
