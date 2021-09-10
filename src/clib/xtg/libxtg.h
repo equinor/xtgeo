@@ -1083,23 +1083,28 @@ grd3d_from_cube(int ncol,
                 double rotation,
                 int yflip,
                 int option);
-
 int
-grd3d_calc_dxdy(int nx,
+grdcp3d_calc_dx(int nx,
                 int ny,
                 int nz,
                 double *swig_np_dbl_in_v1,       // *coordsv,
                 long n_swig_np_dbl_in_v1,        // ncoord,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
-                int *swig_np_int_in_v1,          // *actnumsv,
-                long n_swig_np_int_in_v1,        // nactnum,
                 double *swig_np_dbl_inplace_v1,  // *dx,
-                long n_swig_np_dbl_inplace_v1,   // ntot,
-                double *swig_np_dbl_inplace_v2,  // *dy,
-                long n_swig_np_dbl_inplace_v2,   // ntot,
-                int option1,
-                int option2);
+                long n_swig_np_dbl_inplace_v1    // ntot,
+                );
+int
+grdcp3d_calc_dy(int nx,
+                int ny,
+                int nz,
+                double *swig_np_dbl_in_v1,       // *coordsv,
+                long n_swig_np_dbl_in_v1,        // ncoord,
+                double *swig_np_dbl_in_v2,       // *zcornsv,
+                long n_swig_np_dbl_in_v2,        // nzcorn,
+                double *swig_np_dbl_inplace_v1,  // *dy,
+                long n_swig_np_dbl_inplace_v1    // ntot,
+                );
 
 void
 grd3d_calc_xyz(int nx,

@@ -1,8 +1,8 @@
 """Private module, Grid ETC 1 methods, info/modify/report."""
 
+from collections import OrderedDict
 from copy import deepcopy
 from math import atan2, degrees
-from collections import OrderedDict
 
 import numpy as np
 import numpy.ma as ma
@@ -13,9 +13,10 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
+
 from . import _gridprop_lowlevel
-from .grid_property import GridProperty
 from ._grid3d_fence import _update_tmpvars
+from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 
@@ -211,54 +212,58 @@ def get_dz(
     )
 
 
-def get_dxdy(self, names=("dX", "dY"), asmasked=False):
-    """Get dX, dY as properties."""
-    self._xtgformat1()
-
-    ntot = self._ncol * self._nrow * self._nlay
-
-    dxval = np.zeros(ntot, dtype=np.float64)
-    dyval = np.zeros(ntot, dtype=np.float64)
-
-    dx = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        name=names[0],
-        discrete=False,
-    )
-    dy = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        name=names[1],
-        discrete=False,
-    )
-
-    option1 = 0
-    option2 = 0
-
-    if asmasked:
-        option1 = 1
-
-    _cxtgeo.grd3d_calc_dxdy(
+def get_dx(self, name="dX", asmasked=False):
+    self._xtgformat2()
+    nx, ny, nz = self.dimensions
+    result = np.zeros((nx * ny * nz))
+    _cxtgeo.grdcp3d_calc_dx(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        dxval,
-        dyval,
-        option1,
-        option2,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        result,
     )
 
-    dx.values = np.ma.masked_greater(dxval, xtgeo.UNDEF_LIMIT)
-    dy.values = np.ma.masked_greater(dyval, xtgeo.UNDEF_LIMIT)
+    if asmasked:
+        result = np.ma.masked_array(result, self._actnumsv == 0)
+    else:
+        result = np.ma.masked_array(result, False)
+    return GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=result.reshape((nx, ny, nz)),
+        name=name,
+        discrete=False,
+    )
 
-    # return the property objects
-    return dx, dy
+
+def get_dy(self, name="dX", asmasked=False):
+    self._xtgformat2()
+    nx, ny, nz = self.dimensions
+    result = np.zeros((nx * ny * nz))
+    _cxtgeo.grdcp3d_calc_dy(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        result,
+    )
+
+    if asmasked:
+        result = np.ma.masked_array(result, self._actnumsv == 0)
+    else:
+        result = np.ma.masked_array(result, False)
+    return GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=result.reshape((nx, ny, nz)),
+        name=name,
+        discrete=False,
+    )
 
 
 def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):

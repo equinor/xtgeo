@@ -24,25 +24,6 @@ def unreadable_file(setup_tmpdir):
     os.remove(fname)
 
 
-def test_grd3d_calc_dxdy():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Errors in array lengths checks in grd3d_calc_dxdy",
-    ):
-        _cxtgeo.grd3d_calc_dxdy(
-            1,
-            1,
-            1,
-            np.array([0.0]),
-            np.array([1.0]),
-            np.array([1], dtype=np.int32),
-            np.array([0.0]),
-            np.array([0.0]),
-            0,
-            0,
-        )
-
-
 def test_grd3d_get_xyz():
     with pytest.raises(
         xtgeo.XTGeoCLibError,

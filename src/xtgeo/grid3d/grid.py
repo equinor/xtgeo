@@ -8,8 +8,10 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
+import deprecation
 import numpy as np
 import numpy.ma as ma
+
 import xtgeo
 from xtgeo.common import XTGDescription
 
@@ -1310,6 +1312,41 @@ class Grid(_Grid3D):
 
         return deltaz
 
+    def get_dx(self, name="dX", asmasked=True):
+        """Return the dX as GridProperty object.
+
+        The values lengths are projected to a constant Z.
+
+        Args:
+            name (str): names of properties
+            asmasked (bool). If True, make a np.ma array where inactive cells
+                are masked.
+
+        Returns:
+            XTGeo GridProperty objects containing dx.
+        """
+        return _grid_etc1.get_dx(self, name=name, asmasked=asmasked)
+
+    def get_dy(self, name="dY", asmasked=True):
+        """Return the dY as GridProperty object.
+
+        The values lengths are projected to a constant Z.
+
+        Args:
+            name (str): names of properties
+            asmasked (bool). If True, make a np.ma array where inactive cells
+                are masked.
+        Returns:
+            Two XTGeo GridProperty objects (dx, dy).
+        """
+        return _grid_etc1.get_dy(self, name=name, asmasked=asmasked)
+
+    @deprecation.deprecated(
+        deprecated_in="3.0",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.Grid.get_dx() and/or xtgeo.Grid.get_dy() instead.",
+    )
     def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         """Return the dX and dY as GridProperty object.
 
@@ -1322,11 +1359,12 @@ class Grid(_Grid3D):
 
         Returns:
             Two XTGeo GridProperty objects (dx, dy).
+            XTGeo GridProperty objects containing dy.
         """
-        deltax, deltay = _grid_etc1.get_dxdy(self, names=names, asmasked=asmasked)
-
         # return the property objects
-        return deltax, deltay
+        return self.get_dx(name=names[0], asmasked=asmasked), self.get_dy(
+            name=names[1], asmasked=asmasked
+        )
 
     def get_cell_volume(
         self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2
