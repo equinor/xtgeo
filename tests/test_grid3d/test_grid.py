@@ -1,5 +1,4 @@
 """Tests for 3D grid."""
-
 import math
 import pathlib
 from collections import OrderedDict
@@ -833,6 +832,30 @@ def test_bad_egrid_ends_before_kw(tmp_path):
 
 
 @given(dimensions, increments, increments, increments)
+def test_grid_get_dx(dimension, dx, dy, dz):
+    grd = Grid()
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
+    np.testing.assert_allclose(grd.get_dx().values, dx, rtol=0.01)
+
+    grd._actnumsv[0, 0, 0] = 0
+
+    assert grd.get_dx(asmasked=True).values[0, 0, 0] is np.ma.masked
+    assert np.isclose(grd.get_dx(asmasked=False).values[0, 0, 0], dx, rtol=0.01)
+
+
+@given(dimensions, increments, increments, increments)
+def test_grid_get_dy(dimension, dx, dy, dz):
+    grd = Grid()
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
+    np.testing.assert_allclose(grd.get_dy().values, dy, rtol=0.01)
+
+    grd._actnumsv[0, 0, 0] = 0
+
+    assert grd.get_dy(asmasked=True).values[0, 0, 0] is np.ma.masked
+    assert np.isclose(grd.get_dy(asmasked=False).values[0, 0, 0], dy, rtol=0.01)
+
+
+@given(dimensions, increments, increments, increments)
 def test_grid_get_dz(dimension, dx, dy, dz):
     grd = Grid()
     grd.create_box(dimension=dimension, increment=(dx, dy, dz))
@@ -841,5 +864,70 @@ def test_grid_get_dz(dimension, dx, dy, dz):
 
     grd._actnumsv[0, 0, 0] = 0
 
-    assert grd.get_dz().values[0, 0, 0] is np.ma.masked
+    assert grd.get_dz(asmasked=True).values[0, 0, 0] is np.ma.masked
     assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, rtol=0.01)
+
+
+def test_benchmark_grid_get_dz(benchmark):
+    grd = Grid()
+    grd.create_box(dimension=(100, 100, 100))
+
+    def run():
+        grd.get_dz()
+
+    benchmark(run)
+
+
+def test_benchmark_grid_get_dxdy(benchmark):
+    grd = Grid()
+    grd.create_box(dimension=(100, 100, 100))
+
+    def run():
+        grd.get_dxdy()
+
+    benchmark(run)
+
+
+def test_grid_get_dxdydz_zero_size():
+    grd = Grid()
+    grd.create_box(dimension=(0, 0, 0))
+
+    assert grd.get_dx().values.shape == (0, 0, 0)
+    assert grd.get_dy().values.shape == (0, 0, 0)
+    assert grd.get_dz().values.shape == (0, 0, 0)
+
+
+def test_grid_get_dxdydz_bad_coordsv_size():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+    grd._coordsv = np.zeros(shape=(0, 0, 0))
+
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
+        grd.get_dx()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
+        grd.get_dy()
+
+
+def test_grid_get_dxdydz_bad_zcorn_size():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+    grd._zcornsv = np.zeros(shape=(0, 0, 0, 0))
+
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
+        grd.get_dx()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
+        grd.get_dy()
+
+
+def test_grid_get_dxdydz_bad_grid_top():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+
+    grd._coordsv[:, :, 2] = 0.0
+    grd._coordsv[:, :, 5] = 0.0
+    grd._coordsv[:, :, 0] += 1.0
+
+    with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
+        grd.get_dx()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
+        grd.get_dy()
