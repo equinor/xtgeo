@@ -7,6 +7,7 @@ import warnings
 
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid, GridProperties
 
@@ -34,8 +35,7 @@ XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
 def test_import_init():
     """Import INIT Reek"""
 
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
@@ -52,8 +52,7 @@ def test_import_init():
 
 
 def test_gridproperties_iter():
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     gps = GridProperties()
     gps.from_file(IFILE1, fformat="init", names=["PORO", "PORV"], grid=g)
@@ -69,8 +68,7 @@ def test_gridproperties_iter():
 def test_import_should_fail():
     """Import INIT and UNRST Reek but ask for wrong name or date"""
 
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
@@ -100,8 +98,7 @@ def test_import_should_fail():
 
 def test_import_should_pass():
     """Import INIT and UNRST but ask for wrong name or date , using strict=False"""
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     rx = GridProperties()
     names = ["PRESSURE", "DUMMY"]  # dummy should exist
@@ -119,8 +116,7 @@ def test_import_should_pass():
 def test_import_restart():
     """Import Restart"""
 
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
@@ -153,8 +149,7 @@ def test_import_restart():
 def test_import_restart_gull():
     """Import Restart Reek"""
 
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
@@ -186,8 +181,7 @@ def test_import_restart_gull():
 def test_import_soil():
     """SOIL need to be computed in code from SWAT and SGAS"""
 
-    g = Grid()
-    g.from_file(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 
