@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from typing import List, Optional, Union
 
 import numpy as np
-
 import roffio
+
+from xtgeo.common.constants import UNDEF_INT_LIMIT, UNDEF_LIMIT
 
 
 @dataclass
@@ -109,7 +110,7 @@ class RoffParameter:
         else:
             return dict()
 
-    def xtgeo_values(self, undef=None):
+    def xtgeo_values(self):
         """
         Args:
             The value to use for undefined. Defaults to that defined by
@@ -128,9 +129,7 @@ class RoffParameter:
         else:
             vals = vals.astype(np.float64)
 
-        if undef is not None:
-            vals[vals == self.undefined_value] = undef
-        return vals
+        return np.ma.masked_values(vals, self.undefined_value)
 
     @staticmethod
     def from_xtgeo_grid_property(xtgeo_grid_property):
@@ -147,12 +146,29 @@ class RoffParameter:
             code_values = np.array(
                 list(xtgeo_grid_property.codes.keys()), dtype=np.int32
             )
+
+        values = xtgeo_grid_property.values.astype(xtgeo_grid_property.roxar_dtype)
+        if not np.ma.isMaskedArray(values):
+            if xtgeo_grid_property.isdiscrete:
+                values = np.ma.masked_greater(values, UNDEF_INT_LIMIT)
+            else:
+                values = np.ma.masked_greater(values, UNDEF_LIMIT)
+
+        if values.dtype == np.uint8:
+            values = values.filled(255)
+        elif values.dtype == np.uint16:
+            values = values.filled(-999)
+        elif values.dtype == np.float32:
+            values = values.filled(-999.0)
+        else:
+            raise ValueError(f"Unexpected roxar_dtype in parameter {values.dtype}")
+
         return RoffParameter(
             *xtgeo_grid_property.dimensions,
             name=xtgeo_grid_property.name,
             values=np.asarray(
                 np.flip(
-                    xtgeo_grid_property.values.astype(xtgeo_grid_property.roxar_dtype),
+                    values.astype(xtgeo_grid_property.roxar_dtype),
                     -1,
                 ).ravel()
             ),
