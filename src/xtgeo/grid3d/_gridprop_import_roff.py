@@ -24,10 +24,15 @@ def import_roff(self, pfile, name):
     self._nlay = int(roff_param.nz)
     self._isdiscrete = roff_param.is_discrete
     self._undef = xtgeo.UNDEF_INT if self._isdiscrete else xtgeo.UNDEF
-    self._values = roff_param.xtgeo_values(self._undef)
-    self.mask_undef()
-    if self._isdiscrete:
-        self._dtype = "int32"
+    self._values = roff_param.xtgeo_values()
+    self.dtype = self._values.dtype
+
+    roff_val = roff_param.values
+    if isinstance(roff_val, bytes) or np.issubdtype(roff_val.dtype, np.uint8):
+        self._roxar_dtype = np.uint8
+    elif np.issubdtype(roff_val.dtype, np.integer):
         self._roxar_dtype = np.uint16
+    elif np.issubdtype(roff_val.dtype, np.floating):
+        self._roxar_dtype = np.float32
     else:
-        self._dtype = "float64"
+        raise ValueError(f"Could not deduce roxar type of {roff_val.dtype}")
