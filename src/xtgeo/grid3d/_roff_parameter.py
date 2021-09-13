@@ -150,7 +150,12 @@ class RoffParameter:
         return RoffParameter(
             *xtgeo_grid_property.dimensions,
             name=xtgeo_grid_property.name,
-            values=np.asarray(np.flip(xtgeo_grid_property.values, -1).ravel()),
+            values=np.asarray(
+                np.flip(
+                    xtgeo_grid_property.values.astype(xtgeo_grid_property.roxar_dtype),
+                    -1,
+                ).ravel()
+            ),
             code_names=code_names,
             code_values=code_values,
         )
