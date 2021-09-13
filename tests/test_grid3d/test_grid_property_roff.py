@@ -318,3 +318,28 @@ def test_from_file_wrong_filetype(simple_roff_parameter_contents):
 
     with pytest.raises(ValueError, match="did not have filetype"):
         RoffParameter.from_file(buff, "b")
+
+
+@pytest.mark.parametrize(
+    "xtgeotype, roxtype, rofftype",
+    [
+        (np.float64, np.float32, "float"),
+        (np.int32, np.uint16, "int"),
+        (np.int8, np.uint8, "byte"),
+    ],
+)
+def test_from_xtgeo_dtype_cast(xtgeotype, roxtype, rofftype):
+    gp = GridProperty(
+        ncol=1,
+        nrow=1,
+        nlay=1,
+        roxar_dtype=roxtype,
+        values=np.zeros((1, 1, 1), dtype=xtgeotype),
+    )
+    rp = RoffParameter.from_xtgeo_grid_property(gp)
+    assert rp.values.dtype == roxtype
+
+    buf = io.StringIO()
+    rp.to_file(buf, roff_format=roffio.Format.ASCII)
+
+    assert f"{rofftype} data" in buf.getvalue()
