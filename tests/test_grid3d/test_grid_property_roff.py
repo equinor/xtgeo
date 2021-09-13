@@ -202,25 +202,6 @@ def test_xtgeo_codes(param, expected_codes):
     assert param.xtgeo_codes() == expected_codes
 
 
-def test_xtgeo_values():
-    assert np.array_equal(
-        RoffParameter(1, 1, 2, "", b"\x01\xFF").xtgeo_values(undef=200),
-        np.array([[[200, 1]]], dtype=np.int32),
-    )
-    assert np.array_equal(
-        RoffParameter(1, 1, 2, "", np.array([1, -999], dtype=np.int32)).xtgeo_values(
-            undef=200
-        ),
-        np.array([[[200, 1]]], dtype=np.int32),
-    )
-    assert np.array_equal(
-        RoffParameter(
-            1, 1, 2, "", np.array([1, -999.0], dtype=np.float32)
-        ).xtgeo_values(undef=200),
-        np.array([[[200, 1]]], dtype=np.float64),
-    )
-
-
 def test_to_file(tmp_path):
     roff_param = RoffParameter(1, 1, 2, "", b"\x01\xFF")
     roff_param.to_file(tmp_path / "param.roff")
@@ -343,3 +324,16 @@ def test_from_xtgeo_dtype_cast(xtgeotype, roxtype, rofftype):
     rp.to_file(buf, roff_format=roffio.Format.ASCII)
 
     assert f"{rofftype} data" in buf.getvalue()
+
+
+def test_from_xtgeo_mask():
+    values = np.ma.zeros((2, 2, 2))
+    values[0, 0, 0] = np.ma.masked
+    gp = GridProperty(
+        ncol=2,
+        nrow=2,
+        nlay=2,
+        values=values,
+    )
+    rp = RoffParameter.from_xtgeo_grid_property(gp)
+    assert rp.values[1] == -999.0
