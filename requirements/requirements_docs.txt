@@ -5,7 +5,7 @@ scikit-build
 ninja
 setuptools_scm
 pydocstyle
-Sphinx
+Sphinx<4.0 # Due to sphinx-toolbox
 sphinx-rtd-theme
 sphinx-toolbox
 autoclasstoc
