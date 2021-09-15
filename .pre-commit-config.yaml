@@ -4,7 +4,9 @@ repos:
     rev: v3.2.0
     hooks:
       - id: trailing-whitespace
+        exclude: "snapshots/"
       - id: mixed-line-ending
+        exclude: "snapshots/"
 
   - repo: https://github.com/psf/black
     rev: 20.8b1
