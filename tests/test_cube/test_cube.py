@@ -3,6 +3,7 @@ from os.path import join
 
 import numpy as np
 import pytest
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.cube import Cube
@@ -141,23 +142,20 @@ def test_segyio_import_export(tmpdir, pristine):
     assert input_cube.values.flatten().tolist() == read_cube.values.flatten().tolist()
 
 
-def test_segyio_export_xtgeo(tmpdir):
-    """Import via SEGYIO and and export SEGY (case 1 Reek) via XTGeo."""
-
+def test_segy_cube_scan(tmpdir, loadsfile1, capsys, snapshot):
     xcu = Cube()
 
     xcu.values += 200
 
-    xcu.to_file(join(tmpdir, "reek_cube_xtgeo.segy"), engine="xtgeo")
+    xcu.to_file(join(tmpdir, "reek_cube.segy"), engine="xtgeo")
 
-    xxcu = Cube()
-    xxcu.scan_segy_header(
-        join(tmpdir, "reek_cube_xtgeo.segy"), outfile=join(tmpdir, "cube_scanheader2")
-    )
+    Cube.scan_segy_header(join(tmpdir, "reek_cube.segy"))
+    out, _ = capsys.readouterr()
+    snapshot.assert_match(out, "reek_cube_scan_header.txt")
 
-    xxcu.scan_segy_traces(
-        join(tmpdir, "reek_cube_xtgeo.segy"), outfile=join(tmpdir, "cube_scantraces2")
-    )
+    Cube.scan_segy_traces(join(tmpdir, "reek_cube.segy"))
+    out, _ = capsys.readouterr()
+    snapshot.assert_match(out, "reek_cube_scan_traces.txt")
 
 
 def test_cube_resampling(loadsfile1):

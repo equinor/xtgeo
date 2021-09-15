@@ -1,0 +1,188 @@
+TRACE HEADER FIRST >>>>>>>>>>
+         Description                         Byte range local + total       Value
+------------------------------------------------------------------------------------
+01 ( 0) -> Trace seq. number within line      [  1 -   4] <  4 Bytes>:  0  
+02 ( 1) -> Trace seq. number                  [  5 -   8] <  4 Bytes>:  0  
+03 ( 2) -> Orig field record number           [  9 -  12] <  4 Bytes>:  0  
+04 ( 3) -> Trace number (in orig. field)      [ 13 -  16] <  4 Bytes>:  0  
+05 ( 4) -> Energy source point number         [ 17 -  20] <  4 Bytes>:  0  
+06 ( 5) -> Ensemble number                    [ 21 -  24] <  4 Bytes>:  0  
+07 ( 6) -> Trace number within ensemble       [ 25 -  28] <  4 Bytes>:  0  
+08 ( 0) -> Trace identification code          [ 29 -  30] <  2 Bytes>:  1  
+09 ( 1) -> Num. vert. summed traces yielding  [ 31 -  32] <  2 Bytes>:  0  
+10 ( 2) -> Num. hori. stack traces yielding   [ 33 -  34] <  2 Bytes>:  0  
+11 ( 3) -> Data use                           [ 35 -  36] <  2 Bytes>:  0  
+12 ( 0) -> Distance from center               [ 37 -  40] <  4 Bytes>:  0  
+13 ( 1) -> Receiver group elevation           [ 41 -  44] <  4 Bytes>:  0  
+14 ( 2) -> Surface elevation at source        [ 45 -  48] <  4 Bytes>:  0  
+15 ( 3) -> Source depth below surface         [ 49 -  52] <  4 Bytes>:  0  
+16 ( 4) -> Datum elevation at receiver group  [ 53 -  56] <  4 Bytes>:  0  
+17 ( 5) -> Datum elevation at source          [ 57 -  60] <  4 Bytes>:  0  
+18 ( 6) -> Water depth at source              [ 61 -  64] <  4 Bytes>:  0  
+19 ( 7) -> Water depth at group               [ 65 -  68] <  4 Bytes>:  0  
+20 ( 0) -> Scalar to be appl. to all elev.    [ 69 -  70] <  2 Bytes>:  0  
+21 ( 1) -> Scalar to be appl. to all coord.   [ 71 -  72] <  2 Bytes>:  -100  
+22 ( 0) -> Source coordinate - X              [ 73 -  76] <  4 Bytes>:  0  
+23 ( 1) -> Source coordinate - Y              [ 77 -  80] <  4 Bytes>:  0  
+24 ( 2) -> Group coordinate - X               [ 81 -  84] <  4 Bytes>:  0  
+25 ( 3) -> Group coordinate - Y               [ 85 -  88] <  4 Bytes>:  0  
+26 ( 0) -> Coordinate units                   [ 89 -  90] <  2 Bytes>:  0  
+27 ( 1) -> Weathering velocity                [ 91 -  92] <  2 Bytes>:  0  
+28 ( 2) -> Subweathering velocity             [ 93 -  94] <  2 Bytes>:  0  
+29 ( 3) -> Uphole time at source (ms)         [ 95 -  96] <  2 Bytes>:  0  
+30 ( 4) -> Uphole time at group (ms)          [ 97 -  98] <  2 Bytes>:  0  
+31 ( 5) -> Source static correction (ms)      [ 99 - 100] <  2 Bytes>:  0  
+32 ( 6) -> Group static correction (ms)       [101 - 102] <  2 Bytes>:  0  
+33 ( 7) -> Total static applied (ms)          [103 - 104] <  2 Bytes>:  0  
+34 ( 8) -> Lag time A                         [105 - 106] <  2 Bytes>:  0  
+35 ( 9) -> Lag time B                         [107 - 108] <  2 Bytes>:  0  
+36 (10) -> Delay recording time               [109 - 110] <  2 Bytes>:  0  
+37 (11) -> Mute time - start time (ms)        [111 - 112] <  2 Bytes>:  0  
+38 (12) -> Mute time - end time (ms)          [113 - 114] <  2 Bytes>:  0  
+39 (13) -> Number of samples in this trace    [115 - 116] <  2 Bytes>:  2  
+40 (14) -> Sample interval in microsecs (us)  [117 - 118] <  2 Bytes>:  2000  
+41 (15) -> Gain type of field instruments     [119 - 120] <  2 Bytes>:  0  
+42 (16) -> Instrument gain constant (dB)      [121 - 122] <  2 Bytes>:  0  
+43 (17) -> Instrument early/initial gain (dB) [123 - 124] <  2 Bytes>:  0  
+44 (18) -> Correlated                         [125 - 126] <  2 Bytes>:  0  
+45 (19) -> Sweep frequency at start (Hz)      [127 - 128] <  2 Bytes>:  0  
+46 (20) -> Sweep frequency at end (Hz)        [129 - 130] <  2 Bytes>:  0  
+47 (21) -> Sweep length in millisecs (ms)     [131 - 132] <  2 Bytes>:  0  
+48 (22) -> Sweep type                         [133 - 134] <  2 Bytes>:  0  
+49 (23) -> Sweep trace taper len @start (ms)  [135 - 136] <  2 Bytes>:  0  
+50 (24) -> Sweep trace taper len @end (ms)    [137 - 138] <  2 Bytes>:  0  
+51 (25) -> Taper type                         [139 - 140] <  2 Bytes>:  0  
+52 (26) -> Alias filter frequency (Hz)        [141 - 142] <  2 Bytes>:  0  
+53 (27) -> Alias filter slope (dB/octave)     [143 - 144] <  2 Bytes>:  0  
+54 (28) -> Notch filter frequency (Hz)        [145 - 146] <  2 Bytes>:  0  
+55 (29) -> Notch filter slope (dB/octave)     [147 - 148] <  2 Bytes>:  0  
+56 (30) -> Low-cut frequency (Hz)             [149 - 150] <  2 Bytes>:  0  
+57 (31) -> High-cut frequency (Hz)            [151 - 152] <  2 Bytes>:  0  
+58 (32) -> Low-cut slope (dB/octave)          [153 - 154] <  2 Bytes>:  0  
+59 (33) -> High-cut slope (dB/octave)         [155 - 156] <  2 Bytes>:  0  
+60 (34) -> Year data recorded                 [157 - 158] <  2 Bytes>:  0  
+61 (35) -> Day of year                        [159 - 160] <  2 Bytes>:  0  
+62 (36) -> Hour of day                        [161 - 162] <  2 Bytes>:  0  
+63 (37) -> Minute of hour                     [163 - 164] <  2 Bytes>:  0  
+64 (38) -> Second of minute                   [165 - 166] <  2 Bytes>:  0  
+65 (39) -> Time basis code                    [167 - 168] <  2 Bytes>:  0  
+66 (40) -> Time weighting factor              [169 - 170] <  2 Bytes>:  0  
+67 (41) -> Geophone group                     [171 - 172] <  2 Bytes>:  0  
+68 (42) -> Geophone group                     [173 - 174] <  2 Bytes>:  0  
+69 (43) -> Geophone group                     [175 - 176] <  2 Bytes>:  0  
+70 (44) -> Gap size                           [177 - 178] <  2 Bytes>:  0  
+71 (45) -> Over travel                        [179 - 180] <  2 Bytes>:  0  
+72 ( 0) -> X coordinate of ensemble (CDP)     [181 - 184] <  4 Bytes>:  0  
+73 ( 1) -> Y coordinate of ensemble (CDP)     [185 - 188] <  4 Bytes>:  0  
+74 ( 2) -> Inline number                      [189 - 192] <  4 Bytes>:  1  
+75 ( 3) -> Crossline number                   [193 - 196] <  4 Bytes>:  1  
+76 ( 4) -> Shotpoint number                   [197 - 200] <  4 Bytes>:  0  
+77 ( 0) -> Scalar                             [201 - 202] <  2 Bytes>:  0  
+78 ( 1) -> Trace value measurement unit       [203 - 204] <  2 Bytes>:  0  
+79 ( 0) -> Transduction Constant Mantissa     [205 - 208] <  4 Bytes>:  0  
+80 ( 0) -> Transduction Constant Pow. of 10   [209 - 210] <  2 Bytes>:  0  
+81 ( 1) -> Transduction units                 [211 - 212] <  2 Bytes>:  0  
+82 ( 2) -> Device/Trace Identifier            [213 - 214] <  2 Bytes>:  0  
+83 ( 3) -> Scalar to be applied               [215 - 216] <  2 Bytes>:  0  
+84 ( 0) -> Source xxx unassigned stuff...     [217 - 240] < 24 Bytes>:  0  
+-----------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
+TRACE HEADER LAST >>>>>>>>>>
+        Description                         Byte range local + total        Value
+------------------------------------------------------------------------------------
+01 ( 0) -> Trace seq. number within line      [  1 -   4] <  4 Bytes>:  0  
+02 ( 1) -> Trace seq. number                  [  5 -   8] <  4 Bytes>:  0  
+03 ( 2) -> Orig field record number           [  9 -  12] <  4 Bytes>:  0  
+04 ( 3) -> Trace number (in orig. field)      [ 13 -  16] <  4 Bytes>:  0  
+05 ( 4) -> Energy source point number         [ 17 -  20] <  4 Bytes>:  0  
+06 ( 5) -> Ensemble number                    [ 21 -  24] <  4 Bytes>:  0  
+07 ( 6) -> Trace number within ensemble       [ 25 -  28] <  4 Bytes>:  0  
+08 ( 0) -> Trace identification code          [ 29 -  30] <  2 Bytes>:  1  
+09 ( 1) -> Num. vert. summed traces yielding  [ 31 -  32] <  2 Bytes>:  0  
+10 ( 2) -> Num. hori. stack traces yielding   [ 33 -  34] <  2 Bytes>:  0  
+11 ( 3) -> Data use                           [ 35 -  36] <  2 Bytes>:  0  
+12 ( 0) -> Distance from center               [ 37 -  40] <  4 Bytes>:  0  
+13 ( 1) -> Receiver group elevation           [ 41 -  44] <  4 Bytes>:  0  
+14 ( 2) -> Surface elevation at source        [ 45 -  48] <  4 Bytes>:  0  
+15 ( 3) -> Source depth below surface         [ 49 -  52] <  4 Bytes>:  0  
+16 ( 4) -> Datum elevation at receiver group  [ 53 -  56] <  4 Bytes>:  0  
+17 ( 5) -> Datum elevation at source          [ 57 -  60] <  4 Bytes>:  0  
+18 ( 6) -> Water depth at source              [ 61 -  64] <  4 Bytes>:  0  
+19 ( 7) -> Water depth at group               [ 65 -  68] <  4 Bytes>:  0  
+20 ( 0) -> Scalar to be appl. to all elev.    [ 69 -  70] <  2 Bytes>:  0  
+21 ( 1) -> Scalar to be appl. to all coord.   [ 71 -  72] <  2 Bytes>:  -100  
+22 ( 0) -> Source coordinate - X              [ 73 -  76] <  4 Bytes>:  0  
+23 ( 1) -> Source coordinate - Y              [ 77 -  80] <  4 Bytes>:  0  
+24 ( 2) -> Group coordinate - X               [ 81 -  84] <  4 Bytes>:  0  
+25 ( 3) -> Group coordinate - Y               [ 85 -  88] <  4 Bytes>:  0  
+26 ( 0) -> Coordinate units                   [ 89 -  90] <  2 Bytes>:  0  
+27 ( 1) -> Weathering velocity                [ 91 -  92] <  2 Bytes>:  0  
+28 ( 2) -> Subweathering velocity             [ 93 -  94] <  2 Bytes>:  0  
+29 ( 3) -> Uphole time at source (ms)         [ 95 -  96] <  2 Bytes>:  0  
+30 ( 4) -> Uphole time at group (ms)          [ 97 -  98] <  2 Bytes>:  0  
+31 ( 5) -> Source static correction (ms)      [ 99 - 100] <  2 Bytes>:  0  
+32 ( 6) -> Group static correction (ms)       [101 - 102] <  2 Bytes>:  0  
+33 ( 7) -> Total static applied (ms)          [103 - 104] <  2 Bytes>:  0  
+34 ( 8) -> Lag time A                         [105 - 106] <  2 Bytes>:  0  
+35 ( 9) -> Lag time B                         [107 - 108] <  2 Bytes>:  0  
+36 (10) -> Delay recording time               [109 - 110] <  2 Bytes>:  0  
+37 (11) -> Mute time - start time (ms)        [111 - 112] <  2 Bytes>:  0  
+38 (12) -> Mute time - end time (ms)          [113 - 114] <  2 Bytes>:  0  
+39 (13) -> Number of samples in this trace    [115 - 116] <  2 Bytes>:  2  
+40 (14) -> Sample interval in microsecs (us)  [117 - 118] <  2 Bytes>:  2000  
+41 (15) -> Gain type of field instruments     [119 - 120] <  2 Bytes>:  0  
+42 (16) -> Instrument gain constant (dB)      [121 - 122] <  2 Bytes>:  0  
+43 (17) -> Instrument early/initial gain (dB) [123 - 124] <  2 Bytes>:  0  
+44 (18) -> Correlated                         [125 - 126] <  2 Bytes>:  0  
+45 (19) -> Sweep frequency at start (Hz)      [127 - 128] <  2 Bytes>:  0  
+46 (20) -> Sweep frequency at end (Hz)        [129 - 130] <  2 Bytes>:  0  
+47 (21) -> Sweep length in millisecs (ms)     [131 - 132] <  2 Bytes>:  0  
+48 (22) -> Sweep type                         [133 - 134] <  2 Bytes>:  0  
+49 (23) -> Sweep trace taper len @start (ms)  [135 - 136] <  2 Bytes>:  0  
+50 (24) -> Sweep trace taper len @end (ms)    [137 - 138] <  2 Bytes>:  0  
+51 (25) -> Taper type                         [139 - 140] <  2 Bytes>:  0  
+52 (26) -> Alias filter frequency (Hz)        [141 - 142] <  2 Bytes>:  0  
+53 (27) -> Alias filter slope (dB/octave)     [143 - 144] <  2 Bytes>:  0  
+54 (28) -> Notch filter frequency (Hz)        [145 - 146] <  2 Bytes>:  0  
+55 (29) -> Notch filter slope (dB/octave)     [147 - 148] <  2 Bytes>:  0  
+56 (30) -> Low-cut frequency (Hz)             [149 - 150] <  2 Bytes>:  0  
+57 (31) -> High-cut frequency (Hz)            [151 - 152] <  2 Bytes>:  0  
+58 (32) -> Low-cut slope (dB/octave)          [153 - 154] <  2 Bytes>:  0  
+59 (33) -> High-cut slope (dB/octave)         [155 - 156] <  2 Bytes>:  0  
+60 (34) -> Year data recorded                 [157 - 158] <  2 Bytes>:  0  
+61 (35) -> Day of year                        [159 - 160] <  2 Bytes>:  0  
+62 (36) -> Hour of day                        [161 - 162] <  2 Bytes>:  0  
+63 (37) -> Minute of hour                     [163 - 164] <  2 Bytes>:  0  
+64 (38) -> Second of minute                   [165 - 166] <  2 Bytes>:  0  
+65 (39) -> Time basis code                    [167 - 168] <  2 Bytes>:  0  
+66 (40) -> Time weighting factor              [169 - 170] <  2 Bytes>:  0  
+67 (41) -> Geophone group                     [171 - 172] <  2 Bytes>:  0  
+68 (42) -> Geophone group                     [173 - 174] <  2 Bytes>:  0  
+69 (43) -> Geophone group                     [175 - 176] <  2 Bytes>:  0  
+70 (44) -> Gap size                           [177 - 178] <  2 Bytes>:  0  
+71 (45) -> Over travel                        [179 - 180] <  2 Bytes>:  0  
+72 ( 0) -> X coordinate of ensemble (CDP)     [181 - 184] <  4 Bytes>:  10000  
+73 ( 1) -> Y coordinate of ensemble (CDP)     [185 - 188] <  4 Bytes>:  5000  
+74 ( 2) -> Inline number                      [189 - 192] <  4 Bytes>:  5  
+75 ( 3) -> Crossline number                   [193 - 196] <  4 Bytes>:  3  
+76 ( 4) -> Shotpoint number                   [197 - 200] <  4 Bytes>:  0  
+77 ( 0) -> Scalar                             [201 - 202] <  2 Bytes>:  0  
+78 ( 1) -> Trace value measurement unit       [203 - 204] <  2 Bytes>:  0  
+79 ( 0) -> Transduction Constant Mantissa     [205 - 208] <  4 Bytes>:  0  
+80 ( 0) -> Transduction Constant Pow. of 10   [209 - 210] <  2 Bytes>:  0  
+81 ( 1) -> Transduction units                 [211 - 212] <  2 Bytes>:  0  
+82 ( 2) -> Device/Trace Identifier            [213 - 214] <  2 Bytes>:  0  
+83 ( 3) -> Scalar to be applied               [215 - 216] <  2 Bytes>:  0  
+84 ( 0) -> Source xxx unassigned stuff...     [217 - 240] < 24 Bytes>:  0  
+-----------------------------------------------------------------------------------
+
+Summary >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+First inline:      1    Last inline:      5 (N inlines =      5)
+First xline :      1    Last xline :      3 (N xlines  =      3)
+Total number of traces is:        15
+
+First X position:        0.00    Last X position:      100.00
+First Y position:        0.00    Last Y position:       50.00
+Number of samples per trace: 2
+Number of cells total is: 30 (5 3 2)
+-----------------------------------------------------------------------------------
