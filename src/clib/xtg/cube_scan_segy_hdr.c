@@ -146,6 +146,7 @@ cube_scan_segy_hdr(char *file,
 
     n = fread(ebcdicheader, 3200, 1, fc);
     if (n != 1) {
+        fclose(fc);
         throw_exception("Error reading SEGY EBCDIC header in: cube_scan_segy_hdr");
         return; /* Error reading SEGY EBCDIC header */
     }
@@ -160,6 +161,7 @@ cube_scan_segy_hdr(char *file,
     for (i = 0; i < 40; i++) {
         asciiheader[i] = calloc(81, sizeof(char));
         if (asciiheader[i] == 0) {
+            fclose(fc);
             throw_exception(
               "Error in converting to asciiheader in: cube_scan_segy_hdr");
             return; /* Error in converting to asciiheader */
