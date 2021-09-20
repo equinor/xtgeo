@@ -84,6 +84,7 @@ class XSection(BasePlot):
         self._ax1 = None
         self._ax2 = None
         self._ax3 = None
+        self._allfigs = []
 
         self._colormap_cube = None
         self._colorlegend_cube = False
@@ -275,6 +276,7 @@ class XSection(BasePlot):
 
         # self._fig, (ax1, ax2) = plt.subplots(2, figsize=(11.69, 8.27))
         self._fig, _ = plt.subplots(figsize=(11.69 * figscaling, 8.27 * figscaling))
+        self._allfigs.append(self._fig)
         ax1 = OrderedDict()
 
         ax1["main"] = plt.subplot2grid((20, 28), (0, 0), rowspan=20, colspan=23)
