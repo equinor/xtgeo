@@ -534,6 +534,12 @@ class RegularSurface:
 
         return txt
 
+    @deprecation.deprecated(
+        deprecated_in="1.16",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="method 'ensure_correct_values' is obsolete and will removed soon",
+    )
     def ensure_correct_values(self, ncol, nrow, values):
         """Ensures that values is a 2D masked numpy (ncol, nrol), C order.
 
@@ -554,10 +560,6 @@ class RegularSurface:
             # secure that the values are masked, in correct format and shape:
             mymap.values = mymap.ensure_correct_values(nc, nr, vals)
         """
-        warnings.warn(
-            "This function 'ensure_correct_values' is obsolute and will removed soon",
-            FutureWarning,
-        )
 
         if not self._isloaded:
             return None
@@ -628,15 +630,25 @@ class RegularSurface:
         return (self._ncol, self._nrow)
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="1.6",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="nx is deprecated; use ncol instead,",
+    )
     def nx(self):  # pylint: disable=C0103
         """The NX (or N-Idir) number, as property (deprecated, use ncol)."""
-        warnings.warn("Deprecated; use ncol instead", DeprecationWarning)
         return self._ncol
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="1.6",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="ny is deprecated; use ncol instead,",
+    )
     def ny(self):  # pylint: disable=C0103
         """The NY (or N-Jdir) number, as property (deprecated, use nrow)."""
-        warnings.warn("Deprecated; use nrow instead", DeprecationWarning)
         return self._nrow
 
     @property
@@ -1678,6 +1690,15 @@ class RegularSurface:
 
         self.values = val
 
+    @deprecation.deprecated(
+        deprecated_in="2.0",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details=(
+            "The get_zval() method is deprecated, use values.ravel() "
+            "or get_values1d() instead"
+        ),
+    )
     def get_zval(self):
         """Get an an 1D, numpy array, F order of the map values (not masked).
 
@@ -1689,15 +1710,17 @@ class RegularSurface:
         property 'values', or alternatively get_values1d()
         instead (with order='F').
         """
-        xtg.warndeprecated(
-            "The get_zval() method is deprecated, use values.ravel() "
-            "or get_values1d() instead"
-        )
+        return self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
 
-        zval = self.get_values1d(order="F", asmasked=False, fill_value=self.undef)
-
-        return zval
-
+    @deprecation.deprecated(
+        deprecated_in="2.0",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details=(
+            "The set_zval() method is deprecated, use values "
+            "or set_values1d() instead"
+        ),
+    )
     def set_zval(self, vals):
         """Set a 1D (unmasked) numpy array (kept for historical reasons).
 
@@ -1706,11 +1729,6 @@ class RegularSurface:
         This routine exists for historical reasons and prefer 'values or
         set_values1d instead (with option order='F').
         """
-        xtg.warndeprecated(
-            "The set_zval() method is deprecated, use values "
-            "or set_values1d() instead"
-        )
-
         self.set_values1d(vals, order="F")
 
     def get_rotation(self):
@@ -2972,6 +2990,10 @@ class RegularSurface:
         maxvalue = minmax[1]
 
         if colortable is not None:
+            xtg.warndeprecated(
+                "The colortable parameter is deprecated,"
+                "and will be removed in version 4.0. Use colormap instead."
+            )
             colormap = colortable
 
         mymap.colormap = colormap

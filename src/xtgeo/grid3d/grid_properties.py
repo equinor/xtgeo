@@ -296,6 +296,10 @@ class GridProperties(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = super()._evaluate_mask(mask)
 
         # resuse method from grid
@@ -324,6 +328,10 @@ class GridProperties(_Grid3D):
             A GridProperty instance of ACTNUM, or None if no props present.
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = super()._evaluate_mask(mask)
 
         # borrow function from GridProperty class:

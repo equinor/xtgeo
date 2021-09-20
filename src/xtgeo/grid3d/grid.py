@@ -3,13 +3,14 @@
 
 import json
 import pathlib
-import warnings
 from collections import OrderedDict
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
+import deprecation
 import numpy as np
 import numpy.ma as ma
+
 import xtgeo
 from xtgeo.common import XTGDescription
 
@@ -854,13 +855,14 @@ class Grid(_Grid3D):
     # Various public methods
     # ==================================================================================
 
+    @deprecation.deprecated(
+        deprecated_in="2.7",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Method numpify_carrays is deprecated and can be removed",
+    )
     def numpify_carrays(self):
         """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
-        warnings.warn(
-            "Method numpify_carrays is deprecated and can be removed ({})".format(self),
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
@@ -1207,13 +1209,14 @@ class Grid(_Grid3D):
 
         return None
 
+    @deprecation.deprecated(
+        deprecated_in="2.7",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Method get_cactnum is deprecated and can be removed",
+    )
     def get_cactnum(self):
         """Returns the C pointer object reference to the ACTNUM array (deprecated)."""
-        warnings.warn(
-            "Method get_cactnum is deprecated and will be removed. ({})".format(self),
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.
@@ -1234,6 +1237,10 @@ class Grid(_Grid3D):
         .. versionchanged:: 2.6 Added ``dual`` keyword
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         if dual and self._dualactnum:
@@ -1304,6 +1311,10 @@ class Grid(_Grid3D):
             A XTGeo GridProperty object dZ
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, asmasked=asmasked)
@@ -1402,6 +1413,12 @@ class Grid(_Grid3D):
             self, name=name, asmasked=asmasked, precision=precision
         )
 
+    @deprecation.deprecated(
+        deprecated_in="1.16",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use method get_ijk() instead",
+    )
     def get_indices(self, names=("I", "J", "K")):
         """Return 3 GridProperty objects for column, row, and layer index.
 
@@ -1418,7 +1435,6 @@ class Grid(_Grid3D):
             i_index, j_index, k_index = grd.get_indices()
 
         """
-        warnings.warn("Use method get_ijk() instead", DeprecationWarning, stacklevel=2)
         return self.get_ijk(names=names, asmasked=False)
 
     def get_ijk(
@@ -1433,6 +1449,10 @@ class Grid(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         ixc, jyc, kzc = _grid_etc1.get_ijk(
@@ -1501,6 +1521,10 @@ class Grid(_Grid3D):
             mask (bool): Deprecated, use asmasked instead!
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         xcoord, ycoord, zcoord = _grid_etc1.get_xyz(
