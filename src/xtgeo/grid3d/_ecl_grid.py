@@ -268,7 +268,7 @@ class MapAxes(GrdeclKeyword):
         return list(self.y_line) + list(self.origin) + list(self.x_line)
 
     def to_bgrdecl(self) -> List[float]:
-        return self.to_grdecl()
+        return np.array(self.to_grdecl(), dtype=np.float32)
 
     @classmethod
     def from_bgrdecl(cls, values: List[Union[float, str]]):

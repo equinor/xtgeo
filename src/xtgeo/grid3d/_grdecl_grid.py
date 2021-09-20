@@ -68,13 +68,16 @@ class SpecGrid(GrdeclKeyword):
         ]
 
     def to_bgrdecl(self):
-        return [
-            self.ndivix,
-            self.ndiviy,
-            self.ndiviz,
-            self.numres,
-            self.coordinate_type.to_bgrdecl(),
-        ]
+        return np.array(
+            [
+                self.ndivix,
+                self.ndiviy,
+                self.ndiviz,
+                self.numres,
+                self.coordinate_type.to_bgrdecl(),
+            ],
+            dtype=np.int32,
+        )
 
     @classmethod
     def from_bgrdecl(cls, values):
@@ -277,9 +280,12 @@ class GrdeclGrid(EclGrid):
                 ("MAPUNITS", [self.mapunits] if self.mapunits else None),
                 ("GRIDUNIT", self.gridunit.to_bgrdecl() if self.gridunit else None),
                 ("GDORIENT", self.gdorient.to_bgrdecl() if self.gdorient else None),
-                ("COORD   ", self.coord),
-                ("ZCORN   ", self.zcorn),
-                ("ACTNUM  ", self.actnum),
+                ("COORD   ", self.coord.astype(np.float32)),
+                ("ZCORN   ", self.zcorn.astype(np.float32)),
+                (
+                    "ACTNUM  ",
+                    self.actnum.astype(np.int32) if self.actnum is not None else None,
+                ),
             ],
         )
         write(
