@@ -228,8 +228,8 @@ class GridHead:
         result[24] = self.numres
         result[25] = self.nseg
         result[26] = self.coordinate_type.to_bgrdecl()
-        result[[27, 28, 29]] = np.array(list(self.lgr_start))
-        result[[30, 31, 32]] = np.array(list(self.lgr_end))
+        result[[27, 28, 29]] = np.array(self.lgr_start)
+        result[[30, 31, 32]] = np.array(self.lgr_end)
         return result
 
 
@@ -308,11 +308,11 @@ class EGridSubGrid(EclGrid):
     def to_egrid(self) -> List[Tuple[str, Any]]:
         result = [
             ("GRIDHEAD", self.grid_head.to_egrid()),
-            ("COORD   ", self.coord),
-            ("ZCORN   ", self.zcorn),
+            ("COORD   ", self.coord.astype(np.float32)),
+            ("ZCORN   ", self.zcorn.astype(np.float32)),
         ]
         if self.actnum is not None:
-            result.append(("ACTNUM  ", self.actnum))
+            result.append(("ACTNUM  ", self.actnum.astype(np.int32)))
         return result
 
 
@@ -367,7 +367,7 @@ class LGRSection(EGridSubGrid):
         if self.hostnum is not None:
             result_dict["HOSTNUM "] = self.hostnum
         if self.boxorig is not None:
-            result_dict["BOXORIG "] = list(self.boxorig)
+            result_dict["BOXORIG "] = np.array(self.boxorig, dtype=np.int32)
         if self.coord_sys is not None:
             result_dict["COORDSYS"] = self.coord_sys.to_bgrdecl()
         result_dict["ENDGRID "] = np.array([], dtype=np.int32)
@@ -420,7 +420,7 @@ class GlobalGrid(EGridSubGrid):
         if self.coord_sys is not None:
             result_dict["COORDSYS"] = self.coord_sys.to_bgrdecl()
         if self.boxorig is not None:
-            result_dict["BOXORIG "] = list(self.boxorig)
+            result_dict["BOXORIG "] = np.array(self.boxorig, dtype=np.int32)
         if self.corsnum is not None:
             result_dict["CORSNUM "] = self.corsnum
         result_dict["ENDGRID "] = np.array([], dtype=np.int32)
@@ -504,7 +504,7 @@ class NNCSection:
         if self.nncg is not None:
             result.append(("NNCG    ", self.nncg))
         if self.amalgamation_idxs is not None:
-            result.append(("NNCHEADA", list(self.amalgamation_idxs)))
+            result.append(("NNCHEADA", np.array(self.amalgamation_idxs, np.int32)))
         if self.nna1 is not None:
             result.append(("NNA1    ", self.nna1))
         if self.nna2 is not None:

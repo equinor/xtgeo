@@ -3,6 +3,7 @@ import logging
 
 import ecl_data_io as eclio
 import hypothesis.strategies as st
+import numpy as np
 import pytest
 from hypothesis import HealthCheck, given, settings
 
@@ -19,28 +20,28 @@ from .grid_generator import xtgeo_grids
         ({"FILEHEAD": []}, "FILEHEAD"),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "MAPUNITS": [],
             },
             "MAPUNITS",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "MAPAXES ": [],
             },
             "MAPAXES",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": [],
             },
             "GRIDUNIT",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
                 "GRIDHEAD": [],
             },
@@ -48,26 +49,26 @@ from .grid_generator import xtgeo_grids
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
             },
             "COORD",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
             },
             "ZCORN",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
                 "ZCORN   ": [],
                 "ACTNUM  ": [],
@@ -76,9 +77,9 @@ from .grid_generator import xtgeo_grids
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
                 "ZCORN   ": [],
                 "ACTNUM  ": [],
@@ -89,36 +90,36 @@ from .grid_generator import xtgeo_grids
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
                 "ZCORN   ": [],
                 "ACTNUM  ": [],
                 "ENDGRID ": [],
-                "NNCHEAD ": [1, 0],
+                "NNCHEAD ": np.array([1, 0], dtype=np.int32),
             },
             "NNC1",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
                 "ZCORN   ": [],
                 "ACTNUM  ": [],
                 "ENDGRID ": [],
-                "NNCHEAD ": [1, 0],
+                "NNCHEAD ": np.array([1, 0], dtype=np.int32),
                 "NNC1    ": [],
             },
             "NNC2",
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
                 "ZCORN   ": [],
                 "ACTNUM  ": [],
@@ -129,9 +130,9 @@ from .grid_generator import xtgeo_grids
         ),
         (
             {
-                "FILEHEAD": [0] * 100,
+                "FILEHEAD": np.zeros((100,), dtype=np.int32),
                 "GRIDUNIT": ["METRES  "],
-                "GRIDHEAD": [1] * 100,
+                "GRIDHEAD": np.ones((100,), dtype=np.int32),
                 "COORD   ": [],
                 "ZCORN   ": [],
                 "ACTNUM  ": [],
@@ -142,44 +143,44 @@ from .grid_generator import xtgeo_grids
         ),
         (
             [
-                ("FILEHEAD", [0] * 100),
+                ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
                 ("GRIDUNIT", ["METRES  "]),
-                ("GRIDHEAD", [1] * 100),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
                 ("COORD   ", []),
                 ("ZCORN   ", []),
                 ("ACTNUM  ", []),
                 ("ENDGRID ", []),
                 ("LGR     ", ["name"]),
-                ("GRIDHEAD", [1] * 100),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
             ],
             "COORD",
         ),
         (
             [
-                ("FILEHEAD", [0] * 100),
+                ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
                 ("GRIDUNIT", ["METRES  "]),
-                ("GRIDHEAD", [1] * 100),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
                 ("COORD   ", []),
                 ("ZCORN   ", []),
                 ("ACTNUM  ", []),
                 ("ENDGRID ", []),
                 ("LGR     ", ["name"]),
-                ("GRIDHEAD", [1] * 100),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
                 ("COORD   ", []),
             ],
             "ZCORN",
         ),
         (
             [
-                ("FILEHEAD", [0] * 100),
+                ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
                 ("GRIDUNIT", ["METRES  "]),
-                ("GRIDHEAD", [1] * 100),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
                 ("COORD   ", []),
                 ("ZCORN   ", []),
                 ("ACTNUM  ", []),
                 ("ENDGRID ", []),
                 ("LGR     ", ["name"]),
-                ("GRIDHEAD", [1] * 100),
+                ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
                 ("COORD   ", []),
                 ("ZCORN   ", []),
                 ("HOSTNUM ", []),
@@ -251,7 +252,7 @@ def test_egrid_to_xtgeo(tmp_path, xtg_grid):
 
 @pytest.mark.parametrize("egrid_type_value", [0, 1, 2])
 def test_to_from_filehead_type(egrid_type_value):
-    values = [0] * 100
+    values = np.zeros((100,), dtype=np.int32)
     values[4] = egrid_type_value
     assert xtge.Filehead.from_egrid(values).to_egrid()[4] == egrid_type_value
 
@@ -290,7 +291,7 @@ def test_grid_head_error():
 
 def test_read_duplicate_keyword_error():
     buf = io.BytesIO()
-    eclio.write(buf, [("FILEHEAD", [0] * 100)] * 2)
+    eclio.write(buf, [("FILEHEAD", np.zeros((100,), dtype=np.int32))] * 2)
     buf.seek(0)
     reader = xtge.EGridReader(buf)
 
@@ -300,7 +301,7 @@ def test_read_duplicate_keyword_error():
 
 def test_read_bad_keyword_error():
     buf = io.BytesIO()
-    eclio.write(buf, [("NTKEYWRD", [0] * 100)] * 2)
+    eclio.write(buf, [("NTKEYWRD", np.zeros((100,), dtype=np.int32))] * 2)
     buf.seek(0)
     reader = xtge.EGridReader(buf)
 
@@ -313,9 +314,9 @@ def test_read_mixed_gridhead():
     eclio.write(
         buf,
         [
-            ("FILEHEAD", [0] * 100),
+            ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
             ("GRIDUNIT", ["METRES  ", "MAP     "]),
-            ("GRIDHEAD", [2] * 100),
+            ("GRIDHEAD", 2 * np.ones((100,), dtype=np.int32)),
         ],
     )
     buf.seek(0)
@@ -330,11 +331,11 @@ def test_read_no_endgrid():
     eclio.write(
         buf,
         [
-            ("FILEHEAD", [0] * 100),
+            ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
             ("GRIDUNIT", ["METRES  ", "MAP     "]),
-            ("GRIDHEAD", [1] * 100),
-            ("ZCORN   ", [1] * 8),
-            ("COORD   ", [1] * 4),
+            ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
+            ("ZCORN   ", np.ones((8,), dtype=np.int32)),
+            ("COORD   ", np.ones((4,), dtype=np.int32)),
         ],
     )
     buf.seek(0)
@@ -349,11 +350,11 @@ def test_read_unexpected_section():
     eclio.write(
         buf,
         [
-            ("FILEHEAD", [0] * 100),
+            ("FILEHEAD", np.zeros((100,), dtype=np.int32)),
             ("GRIDUNIT", ["METRES  ", "MAP     "]),
-            ("GRIDHEAD", [1] * 100),
-            ("ZCORN   ", [1] * 8),
-            ("COORD   ", [1] * 4),
+            ("GRIDHEAD", np.ones((100,), dtype=np.int32)),
+            ("ZCORN   ", np.ones((8,), dtype=np.int32)),
+            ("COORD   ", np.ones((4,), dtype=np.int32)),
             ("ENDGRID ", []),
             ("SECTION ", []),
         ],
