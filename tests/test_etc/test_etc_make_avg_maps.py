@@ -38,8 +38,8 @@ def test_avg02(tmpdir, generate_plot):
     po.from_file(IFILE2, fformat="init", name="PORO", grid=grd)
 
     # get the dz and the coordinates
-    dz = grd.get_dz(mask=False)
-    xc, yc, _zc = grd.get_xyz(mask=False)
+    dz = grd.get_dz(asmasked=False)
+    xc, yc, _zc = grd.get_xyz(asmasked=False)
 
     # get actnum
     actnum = grd.get_actnum()
@@ -102,8 +102,8 @@ def test_avg03(tmpdir):
     po.from_file(IFILE2, fformat="init", name="PORO", grid=grd)
 
     # get the dz and the coordinates
-    dz = grd.get_dz(mask=False)
-    xc, yc, _zc = grd.get_xyz(mask=False)
+    dz = grd.get_dz(asmasked=False)
+    xc, yc, _zc = grd.get_xyz(asmasked=False)
 
     # get actnum
     actnum = grd.get_actnum()
