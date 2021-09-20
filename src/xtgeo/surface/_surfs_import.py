@@ -36,8 +36,9 @@ def from_grid3d(grid, subgrids, rfactor):
     # next extract these layers
     layerstack = []
     for inum, lay in enumerate(layers):
-        layer = xtgeo.RegularSurface()
-        layer.from_grid3d(grid, template=None, where=lay, rfactor=rfactor)
+        layer = xtgeo.surface_from_grid3d(
+            grid, template=None, where=lay, rfactor=rfactor
+        )
         layer.name = names[inum]
         layerstack.append(layer)
 

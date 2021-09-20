@@ -39,19 +39,7 @@ TESTSET6C = TPATH / "surfaces/etc/seabed_p_v2.pmd"
 FENCE1 = TPATH / "polygons/reek/1/fence.pol"
 
 
-def test_create():
-    """Create default surface."""
-    logger.info("Simple case...")
-
-    x = xtgeo.RegularSurface()
-    assert_equal(x.ncol, 5, "NX")
-    assert_equal(x.nrow, 3, "NY")
-    val = x.values
-    xdim, _ydim = val.shape
-    assert_equal(xdim, 5, "NX from DIM")
-    x.describe()
-
-
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_values(default_surface):
     """Test behaviour of values attribute."""
     srf = xtgeo.RegularSurface(**default_surface)
@@ -92,6 +80,7 @@ def test_values(default_surface):
         srf.values = "text"
 
 
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_set_values1d(default_surface):
     """Test behaviour of set_values1d method."""
     srf = xtgeo.RegularSurface(**default_surface)
@@ -127,8 +116,7 @@ def test_ijxyz_import1(tmpdir):
     """Import some IJ XYZ format, typical seismic."""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4A, fformat="ijxyz")
+    xsurf = xtgeo.surface_from_file(TESTSET4A, fformat="ijxyz")
     xsurf.describe()
     assert_almostequal(xsurf.xori, 600413.048444, 0.0001)
     assert_almostequal(xsurf.xinc, 25.0, 0.0001)
@@ -142,8 +130,7 @@ def test_ijxyz_import2(tmpdir):
     """Import some IJ XYZ small set with YFLIP -1."""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4B, fformat="ijxyz")
+    xsurf = xtgeo.surface_from_file(TESTSET4B, fformat="ijxyz")
     xsurf.describe()
     assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
     assert xsurf.ncol == 51
@@ -157,8 +144,7 @@ def test_ijxyz_import4_ow_messy_dat(tmpdir):
     """Import some IJ XYZ small set with YFLIP -1 from OW messy dat format."""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4D, fformat="ijxyz")
+    xsurf = xtgeo.surface_from_file(TESTSET4D, fformat="ijxyz")
     xsurf.describe()
     assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
     assert xsurf.ncol == 51
@@ -172,8 +158,7 @@ def test_ijxyz_import3(tmpdir):
     """Import some IJ XYZ small set yet again."""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface()
-    xsurf.from_file(TESTSET4C, fformat="ijxyz")
+    xsurf = xtgeo.surface_from_file(TESTSET4C, fformat="ijxyz")
     xsurf.describe()
     xsurf.to_file(join(tmpdir, "ijxyz_set4c.gri"))
 
@@ -182,7 +167,7 @@ def test_irapbin_import1():
     """Import Reek Irap binary."""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface(TESTSET2)
+    xsurf = xtgeo.surface_from_file(TESTSET2)
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
     assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
@@ -196,7 +181,7 @@ def test_irapbin_import_use_pathib():
 
     pobj = Path(TESTSET2)
 
-    xsurf = xtgeo.RegularSurface(pobj)
+    xsurf = xtgeo.surface_from_file(pobj)
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
 
@@ -207,7 +192,7 @@ def test_irapbin_import_quickplot(tmpdir, show_plot, generate_plot):
     if not show_plot or generate_plot:
         pytest.skip()
 
-    xsurf = xtgeo.RegularSurface(TESTSET2)
+    xsurf = xtgeo.surface_from_file(TESTSET2)
     cmap = "gist_earth"
 
     if show_plot:
@@ -217,7 +202,7 @@ def test_irapbin_import_quickplot(tmpdir, show_plot, generate_plot):
 
 
 def test_irapbin_import_metadatafirst_simple():
-    srf = xtgeo.RegularSurface(TESTSET2, values=False)
+    srf = xtgeo.surface_from_file(TESTSET2, values=False)
     assert set(srf.values.data.flatten().tolist()) == {0.0}
     assert srf.ncol == 1264
 
@@ -233,7 +218,7 @@ def test_irapbin_import_metadatafirst():
     sur = []
     t1 = xtg.timer()
     for ix in range(nsurf):
-        sur.append(xtgeo.RegularSurface(TESTSET2, values=False))
+        sur.append(xtgeo.surface_from_file(TESTSET2, values=False))
     t2 = xtg.timer(t1)
     logger.info("Loading %s surfaces lazy took %s secs.", nsurf, t2)
     assert sur[nsurf - 1].ncol == 1264
@@ -254,7 +239,7 @@ def test_irapbin_export_test(tmpdir):
     logger.info("Import and export...")
 
     nsurf = 10
-    surf = xtgeo.RegularSurface(TESTSET5)
+    surf = xtgeo.surface_from_file(TESTSET5)
 
     t1 = xtg.timer()
     for _ix in range(nsurf):
@@ -274,26 +259,26 @@ def test_petromodbin_import_export(tmpdir):
     """Import Petromod PDM binary example."""
     logger.info("Import and export...")
 
-    petromod = xtgeo.RegularSurface(TESTSET6A)
-    irapbin = xtgeo.RegularSurface(TESTSET6B)
+    petromod = xtgeo.surface_from_file(TESTSET6A)
+    irapbin = xtgeo.surface_from_file(TESTSET6B)
     assert petromod.ncol == irapbin.ncol
     assert petromod.nrow == irapbin.nrow
     assert petromod.values1d[200000] == irapbin.values1d[200000]
 
     testfile = join(tmpdir, "petromod.pmd")
     petromod.to_file(testfile, fformat="petromod")
-    petromod_again = xtgeo.RegularSurface(testfile)
+    petromod_again = xtgeo.surface_from_file(testfile)
     assert petromod_again.values1d[200000] == irapbin.values1d[200000]
 
     # test with roation 0 and rotation origins 0
-    petromod = xtgeo.RegularSurface(TESTSET6C)
+    petromod = xtgeo.surface_from_file(TESTSET6C)
     assert petromod.ncol == irapbin.ncol
     assert petromod.nrow == irapbin.nrow
     assert petromod.values1d[200000] == irapbin.values1d[200000]
 
     testfile = join(tmpdir, "petromod_other_units.pmd")
     petromod.to_file(testfile, fformat="petromod", pmd_dataunits=(16, 300))
-    petromod.from_file(testfile, fformat="petromod")
+    petromod = xtgeo.surface_from_file(testfile, fformat="petromod")
 
     with pytest.raises(ValueError):
         petromod.to_file(
@@ -301,14 +286,14 @@ def test_petromodbin_import_export(tmpdir):
         )
 
 
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_zmap_import_export(tmpdir, default_surface):
     """Import and export ZMAP ascii example."""
     logger.info("Import and export...")
 
     zmap = RegularSurface(**default_surface)
     zmap.to_file(join(tmpdir, "zmap1.zmap"), fformat="zmap_ascii")
-    zmap2 = RegularSurface()
-    zmap2.from_file(join(tmpdir, "zmap1.zmap"), fformat="zmap_ascii")
+    zmap2 = xtgeo.surface_from_file(join(tmpdir, "zmap1.zmap"), fformat="zmap_ascii")
 
     assert zmap.values[0, 1] == zmap2.values[0, 1] == 6.0
 
@@ -317,15 +302,14 @@ def test_zmap_import_export(tmpdir, default_surface):
     assert one1.all() == one2.all()
 
     zmap.to_file(join(tmpdir, "zmap2.zmap"), fformat="zmap_ascii", engine="python")
-    zmap3 = RegularSurface()
-    zmap3.from_file(join(tmpdir, "zmap2.zmap"), fformat="zmap_ascii")
+    zmap3 = xtgeo.surface_from_file(join(tmpdir, "zmap2.zmap"), fformat="zmap_ascii")
     one3 = zmap3.values.ravel()
     assert one1.all() == one3.all()
 
 
 def test_swapaxes(tmpdir):
     """Import Reek Irap binary and swap axes."""
-    xsurf = xtgeo.RegularSurface(TESTSET5)
+    xsurf = xtgeo.surface_from_file(TESTSET5)
     xsurf.describe()
     logger.info(xsurf.yflip)
     xsurf.to_file(join(tmpdir, "notswapped.gri"))
@@ -344,7 +328,7 @@ def test_swapaxes(tmpdir):
 
 def test_autocrop():
     """Import Reek Irap binary and autocrop surface"""
-    xsurf = xtgeo.RegularSurface(TESTSET5)
+    xsurf = xtgeo.surface_from_file(TESTSET5)
     xcopy = xsurf.copy()
 
     xcopy.autocrop()
@@ -358,7 +342,7 @@ def test_irapasc_import1():
     """Import Reek Irap ascii."""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii")
+    xsurf = xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
     assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
@@ -369,7 +353,7 @@ def test_irapasc_import1_engine_python():
     """Import Reek Irap ascii using python read engine"""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
+    xsurf = xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine="python")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
     assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
@@ -380,19 +364,20 @@ def test_irapbin_import1_engine_python():
     """Import Reek Irap binary using python read engine"""
     logger.info("Import and export...")
 
-    xsurf = xtgeo.RegularSurface(TESTSET2, fformat="irap_binary", engine="python")
+    xsurf = xtgeo.surface_from_file(TESTSET2, fformat="irap_binary", engine="python")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
     assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
     assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
 
-    xsurf2 = xtgeo.RegularSurface(TESTSET2, fformat="irap_binary", engine="cxtgeo")
+    xsurf2 = xtgeo.surface_from_file(TESTSET2, fformat="irap_binary", engine="cxtgeo")
     assert xsurf.values.mean() == xsurf2.values.mean()
 
 
-def test_irapasc_io_engine_python(tmpdir):
+@pytest.mark.filterwarnings("ignore:Default values*")
+def test_irapasc_io_engine_python(tmpdir, default_surface):
     """Test IO using pure python read/write"""
-    xsurf1 = xtgeo.RegularSurface()
+    xsurf1 = xtgeo.RegularSurface(**default_surface)
 
     usefile1 = join(tmpdir, "surf3a.fgr")
     usefile2 = join(tmpdir, "surf3b.fgr")
@@ -402,8 +387,8 @@ def test_irapasc_io_engine_python(tmpdir):
     xsurf1.to_file(usefile1, fformat="irap_ascii", engine="cxtgeo")
     xsurf1.to_file(usefile2, fformat="irap_ascii", engine="python")
 
-    xsurf2 = xtgeo.RegularSurface(usefile2, fformat="irap_ascii", engine="python")
-    xsurf3 = xtgeo.RegularSurface(usefile2, fformat="irap_ascii", engine="cxtgeo")
+    xsurf2 = xtgeo.surface_from_file(usefile2, fformat="irap_ascii", engine="python")
+    xsurf3 = xtgeo.surface_from_file(usefile2, fformat="irap_ascii", engine="cxtgeo")
 
     assert xsurf1.ncol == xsurf3.ncol == xsurf3.ncol
 
@@ -417,12 +402,12 @@ def test_irapasc_import1_engine_compare():
 
     tt0 = xtg.timer()
     for _ in range(10):
-        xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="cxtgeo")
+        xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine="cxtgeo")
     print("CXTGeo engine for read:", xtg.timer(tt0))
 
     tt0 = xtg.timer()
     for _ in range(10):
-        xtgeo.RegularSurface(TESTSET3, fformat="irap_ascii", engine="python")
+        xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine="python")
     print("Python engine for read:", xtg.timer(tt0))
 
 
@@ -430,8 +415,7 @@ def test_minmax_rotated_map():
     """Min and max of rotated map"""
     logger.info("Import and export...")
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     assert_almostequal(x.xmin, 454637.6, 0.1)
     assert_almostequal(x.xmax, 468895.1, 0.1)
@@ -439,15 +423,19 @@ def test_minmax_rotated_map():
     assert_almostequal(x.ymax, 5939998.7, 0.1)
 
 
-def test_operator_overload(**default_surface):
+def test_operator_overload():
     """Test operations between two surface in different ways"""
 
-    surf1 = xtgeo.RegularSurface(ncol=100, nrow=50, rotation=10, values=100)
+    surf1 = xtgeo.RegularSurface(
+        ncol=100, nrow=50, yinc=25.0, xinc=25.0, rotation=10, values=100
+    )
     assert surf1.values.mean() == 100.0
     id1 = id(surf1)
     id1v = id(surf1.values)
 
-    surf2 = xtgeo.RegularSurface(ncol=100, nrow=50, rotation=0, values=100)
+    surf2 = xtgeo.RegularSurface(
+        ncol=100, nrow=50, yinc=25.0, xinc=25.0, rotation=0, values=100
+    )
     diff = surf1 - surf2
     assert id(diff) != id1
     assert diff.values.mean() == 0.0
@@ -464,8 +452,8 @@ def test_operator_overload(**default_surface):
 def test_twosurfaces_oper():
     """Test operations between two surface in more different ways"""
 
-    surf1 = xtgeo.RegularSurface(TESTSET1)
-    surf2 = xtgeo.RegularSurface(TESTSET1A)
+    surf1 = xtgeo.surface_from_file(TESTSET1)
+    surf2 = xtgeo.surface_from_file(TESTSET1A)
 
     iso1 = surf2.copy()
     iso1.values -= surf1.values
@@ -501,9 +489,10 @@ def test_twosurfaces_oper():
     assert newzrf1.values.mean() == pytest.approx(1.0257, abs=0.01)
 
 
-def test_surface_comparisons():
+@pytest.mark.filterwarnings("ignore:Default values*")
+def test_surface_comparisons(default_surface):
     """Test the surface comparison overload"""
-    surf1 = xtgeo.RegularSurface()
+    surf1 = xtgeo.RegularSurface(**default_surface)
     id1 = id(surf1)
 
     surf2 = surf1.copy()
@@ -530,6 +519,7 @@ def test_surface_comparisons():
     assert id(surf1) == id1
 
 
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_surface_subtract_etc(default_surface):
     """Test the simple surf.subtract etc methods"""
     surf1 = xtgeo.RegularSurface(**default_surface)
@@ -560,8 +550,7 @@ def test_irapbin_io(tmpdir):
     """Import and export Irap binary."""
     logger.info("Import and export...")
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     x.to_file(join(tmpdir, "reek1_test.fgr"), fformat="irap_ascii")
 
@@ -588,15 +577,11 @@ def test_irapbin_io(tmpdir):
 
     mfile = TESTSET1
 
-    # direct import
-    y = xtgeo.RegularSurface(mfile)
+    y = xtgeo.surface_from_file(mfile)
     assert_equal(y.ncol, 554)
 
-    # semidirect import
-    cc = xtgeo.RegularSurface().from_file(mfile)
-    assert_equal(cc.ncol, 554)
 
-
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_get_values1d(default_surface):
     """Get the 1D array, different variants as masked, notmasked, order, etc"""
 
@@ -685,6 +670,7 @@ def test_get_values1d(default_surface):
     ]
 
 
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_ij_map_indices(default_surface):
     """Get the IJ MAP indices"""
 
@@ -707,10 +693,11 @@ def test_ij_map_indices(default_surface):
     assert jyc.tolist() == [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]
 
 
-def test_get_xy_values():
+@pytest.mark.filterwarnings("ignore:Default values*")
+def test_get_xy_values(default_surface):
     """Get the XY coordinate values as 2D arrays"""
 
-    xmap = xtgeo.RegularSurface()
+    xmap = xtgeo.RegularSurface(**default_surface)
 
     xcv, _ycv = xmap.get_xy_values(order="C")
 
@@ -732,10 +719,11 @@ def test_get_xy_values():
     assert_almostequal(xxv[1], 25.0, 0.001)
 
 
-def test_get_xy_values1d():
+@pytest.mark.filterwarnings("ignore:Default values*")
+def test_get_xy_values1d(default_surface):
     """Get the XY coordinate values"""
 
-    xmap = xtgeo.RegularSurface()
+    xmap = xtgeo.RegularSurface(**default_surface)
 
     xcv, _ycv = xmap.get_xy_values1d(activeonly=False, order="C")
 
@@ -757,7 +745,7 @@ def test_get_xy_values1d():
 def test_dataframe_simple():
     """Get a pandas Dataframe object"""
 
-    xmap = xtgeo.RegularSurface(TESTSET1)
+    xmap = xtgeo.surface_from_file(TESTSET1)
 
     dfrc = xmap.dataframe(ijcolumns=True, order="C", activeonly=True)
 
@@ -779,7 +767,7 @@ def test_dataframe_simple():
 def test_dataframe_more(tmpdir):
     """Get a pandas Dataframe object, more detailed testing"""
 
-    xmap = xtgeo.RegularSurface(TESTSET1)
+    xmap = xtgeo.surface_from_file(TESTSET1)
 
     xmap.describe()
 
@@ -801,6 +789,7 @@ def test_dataframe_more(tmpdir):
     dfrcy.to_csv(join(tmpdir, "regsurf_df_noij_c_all.csv"))
 
 
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_get_xy_value_lists_small(default_surface):
     """Get the xy list and value list from small test case"""
 
@@ -818,8 +807,7 @@ def test_get_xy_value_lists_small(default_surface):
 def test_get_xy_value_lists_reek():
     """Get the xy list and value list"""
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     xylist, valuelist = x.get_xy_value_lists(valuefmt="8.3f", xyfmt="12.2f")
 
@@ -836,8 +824,8 @@ def test_topology():
 
     mfile = TESTSET1
 
-    x = xtgeo.RegularSurface(mfile)
-    y = xtgeo.RegularSurface(mfile)
+    x = xtgeo.surface_from_file(mfile)
+    y = xtgeo.surface_from_file(mfile)
 
     status = x.compare_topology(y)
     assert status is True
@@ -857,8 +845,8 @@ def test_similarity():
 
     mfile = TESTSET1
 
-    x = xtgeo.RegularSurface(mfile)
-    y = xtgeo.RegularSurface(mfile)
+    x = xtgeo.surface_from_file(mfile)
+    y = xtgeo.surface_from_file(mfile)
 
     si = x.similarity_index(y)
     assert_equal(si, 0.0)
@@ -876,8 +864,7 @@ def test_irapbin_io_loop(tmpdir):
 
     for _i in range(0, num):
         # print(i)
-        x = xtgeo.RegularSurface()
-        x.from_file(TESTSET1, fformat="irap_binary")
+        x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
         m1 = x.values.mean()
         zval = x.values
@@ -892,8 +879,7 @@ def test_irapbin_io_loop(tmpdir):
 def test_irapbin_export_py(tmpdir):
     """Export Irapbin with pure python"""
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     t0 = xtg.timer()
     for _ in range(10):
@@ -908,8 +894,8 @@ def test_irapbin_export_py(tmpdir):
     print("Python based write: {:3.4f}".format(t2))
     print("Ratio python based / cxtgeo based {:3.4f}".format(t2 / t1))
 
-    s1 = xtgeo.RegularSurface(join(tmpdir, "purecx.gri"))
-    s2 = xtgeo.RegularSurface(join(tmpdir, "purepy.gri"))
+    s1 = xtgeo.surface_from_file(join(tmpdir, "purecx.gri"))
+    s2 = xtgeo.surface_from_file(join(tmpdir, "purepy.gri"))
 
     assert s1.values.mean() == s2.values.mean()
 
@@ -919,8 +905,7 @@ def test_irapbin_export_py(tmpdir):
 def test_distance_from_point(tmpdir):
     """Distance from point."""
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     x.distance_from_point(point=(464960, 7336900), azimuth=30)
 
@@ -932,8 +917,7 @@ def test_value_from_xy():
     get Z value from XY point
     """
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     z = x.get_value_from_xy(point=(460181.036, 5933948.386))
 
@@ -967,7 +951,7 @@ def test_fence():
     logger.debug(myfence)
     print(myfence)
 
-    x = xtgeo.RegularSurface(TESTSET1)
+    x = xtgeo.surface_from_file(TESTSET1)
 
     newfence = x.get_fence(myfence)
 
@@ -1035,6 +1019,7 @@ def test_fence():
         ),
     ],
 )
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_fence_sampling(infence, sampling, expected, default_surface):
     """Test a very simple fence with different sampling methods."""
     surf = xtgeo.RegularSurface(**default_surface)
@@ -1048,7 +1033,7 @@ def test_fence_sampling(infence, sampling, expected, default_surface):
 def test_get_randomline_frompolygon(show_plot):
     """Test randomline with both bilinear and nearest sampling for surfaces."""
     fence = xtgeo.Polygons(FENCE1)
-    xs = xtgeo.RegularSurface(TESTSET1)
+    xs = xtgeo.surface_from_file(TESTSET1)
 
     # get the polygon
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
@@ -1079,8 +1064,7 @@ def test_get_randomline_frompolygon(show_plot):
 def test_unrotate():
     """Change a rotated map to an unrotated instance"""
 
-    x = xtgeo.RegularSurface()
-    x.from_file(TESTSET1, fformat="irap_binary")
+    x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     logger.info(x)
     x.unrotate()
@@ -1090,8 +1074,7 @@ def test_unrotate():
 def test_fill():
     """Fill the undefined values for the surface"""
 
-    srf = xtgeo.RegularSurface()
-    srf.from_file(TESTSET1, fformat="irap_binary")
+    srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     minv1 = srf.values.min()
     assert_almostequal(srf.values.mean(), 1698.648, 0.001)
@@ -1101,8 +1084,7 @@ def test_fill():
     assert_almostequal(srf.values.mean(), 1705.201, 0.001)
     assert_almostequal(minv1, minv2, 0.000001)
 
-    srf = xtgeo.RegularSurface()
-    srf.from_file(TESTSET1, fformat="irap_binary")
+    srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
     srf.fill(444)
     assert_almostequal(srf.values.mean(), 1342.10498, 0.001)
 
@@ -1110,8 +1092,7 @@ def test_fill():
 def test_smoothing():
     """Smooth the the surface"""
 
-    srf = xtgeo.RegularSurface()
-    srf.from_file(TESTSET1, fformat="irap_binary")
+    srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     mean1 = srf.values.mean()
     assert_almostequal(mean1, 1698.65, 0.1)

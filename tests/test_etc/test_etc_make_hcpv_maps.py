@@ -69,8 +69,8 @@ def test_hcpvfz1(tmpdir, generate_plot):
     )
 
     hcmap = RegularSurface(
-        nx=50,
-        ny=50,
+        ncol=50,
+        nrow=50,
         xinc=xinc,
         yinc=yinc,
         xori=xmin,
@@ -79,8 +79,8 @@ def test_hcpvfz1(tmpdir, generate_plot):
     )
 
     hcmap2 = RegularSurface(
-        nx=50,
-        ny=50,
+        ncol=50,
+        nrow=50,
         xinc=xinc,
         yinc=yinc,
         xori=xmin,

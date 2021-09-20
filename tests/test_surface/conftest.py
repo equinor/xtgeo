@@ -15,8 +15,8 @@ def default_surface():
         "nrow": 3,
         "xori": 0.0,
         "yori": 0.0,
-        "xinc": 25,
-        "yinc": 25,
+        "xinc": 25.0,
+        "yinc": 25.0,
         "values": np.array(
             [[1, 6, 11], [2, 7, 12], [3, 8, 1e33], [4, 9, 14], [5, 10, 15]],
             dtype=np.float64,

@@ -17,7 +17,7 @@ if not xtg.testsetup():
 
 @pytest.fixture(name="benchmark_surface")
 def benchmark_surface_fixture(testpath):
-    return xtgeo.RegularSurface(join(testpath, "surfaces/reek/1/topreek_rota.gri"))
+    return xtgeo.surface_from_file(join(testpath, "surfaces/reek/1/topreek_rota.gri"))
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -40,10 +40,11 @@ def test_benchmark_xtgregsurf_import(benchmark, tmp_path, benchmark_surface):
 
     fn = benchmark_surface.to_file(fname, fformat="xtgregsurf")
 
-    surf2 = xtgeo.RegularSurface()
+    surf2 = None
 
     def read():
-        surf2.from_file(fn, fformat="xtgregsurf")
+        nonlocal surf2
+        surf2 = xtgeo.surface_from_file(fn, fformat="xtgregsurf")
 
     benchmark(read)
 
@@ -66,10 +67,11 @@ def test_surface_hdf5_import_blosc(benchmark, tmp_path, benchmark_surface):
 
     fn = benchmark_surface.to_hdf(fname, compression="blosc")
 
-    surf2 = xtgeo.RegularSurface()
+    surf2 = None
 
     def read():
-        surf2.from_hdf(fn)
+        nonlocal surf2
+        surf2 = xtgeo.surface_from_file(fn, fformat="hdf")
 
     benchmark(read)
 

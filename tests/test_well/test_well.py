@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 
 
-from os.path import join
 from collections import OrderedDict
+from os.path import join
 
-import pytest
 import numpy as np
 import pandas as pd
-
-from xtgeo.surface import RegularSurface
-from xtgeo.well import Well
-from xtgeo.xyz import Polygons
-from xtgeo.common import XTGeoDialog
+import pytest
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.well import Well
+from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -750,8 +749,8 @@ def test_create_surf_distance_log(loadwell1):
 
     well = loadwell1
 
-    surf1 = RegularSurface(SURF1)
-    surf2 = RegularSurface(SURF2)
+    surf1 = xtgeo.surface_from_file(SURF1)
+    surf2 = xtgeo.surface_from_file(SURF2)
 
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")
@@ -780,8 +779,8 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
 
     well = loadwell1
 
-    surf1 = RegularSurface(SURF1)
-    surf2 = RegularSurface(SURF2)
+    surf1 = xtgeo.surface_from_file(SURF1)
+    surf2 = xtgeo.surface_from_file(SURF2)
 
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")
