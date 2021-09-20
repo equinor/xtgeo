@@ -75,7 +75,7 @@ def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
     if generate_plot:
         xs1.quickplot(
             filename=join(tmpdir, "surf_slice_cube_near_snapxy_v1.png"),
-            colortable="seismic",
+            colormap="seismic",
             minmax=(-1, 1),
             title="Reek",
             infotext="Method: nearest, snapxy, algorithm 1",
@@ -83,7 +83,7 @@ def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
 
         xs2.quickplot(
             filename=join(tmpdir, "surf_slice_cube_near_snapxy_v2.png"),
-            colortable="seismic",
+            colormap="seismic",
             minmax=(-1, 1),
             title="Reek",
             infotext="Method: nearest, snapxy, algorithm 2",
@@ -113,7 +113,7 @@ def test_slice_trilinear_snapxy(tmpdir, load_cube_rsgy1):
 
     xs1.quickplot(
         filename=join(tmpdir, "surf_slice_cube_tri_snapxy_v1.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: trilinear, snapxy, algorithm 1",
@@ -121,7 +121,7 @@ def test_slice_trilinear_snapxy(tmpdir, load_cube_rsgy1):
 
     xs2.quickplot(
         filename=join(tmpdir, "surf_slice_cube_tri_snapxy_v2.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: trilinear, snapxy, algorithm 2",
@@ -155,7 +155,7 @@ def test_slice_nearest_nosnapxy(tmpdir, load_cube_rsgy1):
 
     xs1.quickplot(
         filename=join(tmpdir, "surf_slice_cube_near_nosnapxy_v1.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: nearest, nosnapxy, algorithm 1",
@@ -163,7 +163,7 @@ def test_slice_nearest_nosnapxy(tmpdir, load_cube_rsgy1):
 
     xs2.quickplot(
         filename=join(tmpdir, "surf_slice_cube_near_nosnapxy_v2.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: nearest, nosnapxy, algorithm 2",
@@ -197,7 +197,7 @@ def test_slice_trilinear_nosnapxy(tmpdir, load_cube_rsgy1):
 
     xs1.quickplot(
         filename=join(tmpdir, "surf_slice_cube_tri_nosnapxy_v1.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: trilinear, nosnapxy, algorithm 1",
@@ -205,7 +205,7 @@ def test_slice_trilinear_nosnapxy(tmpdir, load_cube_rsgy1):
 
     xs2.quickplot(
         filename=join(tmpdir, "surf_slice_cube_tri_nosnapxy_v2.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: trilinear, nosnapxy, algorithm 2",
@@ -233,7 +233,7 @@ def test_slice_nearest(tmpdir, load_cube_rsgy1):
 
     xs.quickplot(
         filename=join(tmpdir, "surf_slice_cube_near_v1.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: nearest, algorithm 1",
@@ -258,7 +258,7 @@ def test_slice_nearest_v2(tmpdir, load_cube_rsgy1):
 
     xs.quickplot(
         filename=join(tmpdir, "surf_slice_cube_alg2.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: nearest",
@@ -285,7 +285,7 @@ def test_slice_various_reek(tmpdir, load_cube_rsgy1):
 
     xs.quickplot(
         filename=join(tmpdir, "surf_slice_cube_reek_interp.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: nearest",
@@ -305,7 +305,7 @@ def test_slice_various_reek(tmpdir, load_cube_rsgy1):
 
     xs.quickplot(
         filename=join(tmpdir, "surf_slice_cube_reek_trilinear.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek",
         infotext="Method: trilinear",
@@ -362,7 +362,7 @@ def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1):
 
     xs1.quickplot(
         filename=join(tmpdir, "surf_slice_cube_window_min.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek Minimum",
         infotext="Method: trilinear, window",
@@ -374,7 +374,7 @@ def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1):
 
     xs2.quickplot(
         filename=join(tmpdir, "surf_slice_cube_window_max.png"),
-        colortable="seismic",
+        colormap="seismic",
         minmax=(-1, 1),
         title="Reek Maximum",
         infotext="Method: trilinear, window",
@@ -384,7 +384,7 @@ def test_slice_attr_window_max_w_plotting(tmpdir, load_cube_rsgy1):
 
     xs3.quickplot(
         filename=join(tmpdir, "surf_slice_cube_window_rms.png"),
-        colortable="jet",
+        colormap="jet",
         minmax=(0, 1),
         title="Reek rms (root mean square)",
         infotext="Method: trilinear, window",
@@ -411,7 +411,7 @@ def test_cube_attr_mean_two_surfaces(tmpdir, load_cube_rsgy1):
 
     xss.quickplot(
         filename=join(tmpdir, "surf_slice_cube_2surf_mean.png"),
-        colortable="jet",
+        colormap="jet",
         title="Reek two surfs mean",
         minmax=(-0.1, 0.1),
         infotext="Method: trilinear, 2 surfs",
@@ -464,7 +464,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(tmpdir, load_cube_rsgy1)
 
     xss1.quickplot(
         filename=join(tmpdir, "surf_slice_cube_2surf_rms1.png"),
-        colortable="jet",
+        colormap="jet",
         minmax=[0, 0.5],
         # TODO: itle='Reek two surfs mean', minmax=(-0.1, 0.1),
         infotext="Method: trilinear, 2 surfs, 30ms apart",
@@ -478,7 +478,7 @@ def test_cube_attr_rms_two_surfaces_compare_window_show(tmpdir, load_cube_rsgy1)
 
     xss2.quickplot(
         filename=join(tmpdir, "surf_slice_cube_2surf_rms2.png"),
-        colortable="jet",
+        colormap="jet",
         minmax=[0, 0.5],
         # TODO: itle='Reek two surfs mean', minmax=(-0.1, 0.1),
         infotext="Method: trilinear, 2 surfs, +- 15ms window",
@@ -507,7 +507,7 @@ def test_cube_attr_mean_two_surfaces_with_zeroiso(tmpdir, load_cube_rsgy1):
 
     xss.quickplot(
         filename=join(tmpdir, "surf_slice_cube_2surf_mean_v2.png"),
-        colortable="jet",
+        colormap="jet",
         title="Reek two surfs mean",
         minmax=(-0.1, 0.1),
         infotext="Method: trilinear, 2 surfs, partly zero isochore",
@@ -549,7 +549,7 @@ def test_cube_slice_auto4d_data(tmpdir):
 
     xs2.quickplot(
         filename=xs2out3,
-        colortable="seismic",
+        colormap="seismic",
         title="Auto4D Test",
         minmax=(0, 12000),
         infotext="Method: max",
@@ -763,7 +763,7 @@ def test_cube_attr_mean_two_surfaces_multiattr(tmpdir, load_cube_rsgy1):
 
         xxx.quickplot(
             filename=join(tmpdir, "surf_slice_cube_2surf_" + attr + "multi.png"),
-            colortable="jet",
+            colormap="jet",
             minmax=minmax,
             title="Reek two surfs mean multiattr: " + attr,
             infotext="Method: trilinear, 2 surfs multiattr " + attr,

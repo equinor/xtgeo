@@ -71,7 +71,7 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
     assert "xtgeo" in cfil1
     assert "colfacies" in str(cfil2)
 
-    myplot.set_colortable(cfil1, colorlist=None)
+    myplot.colormap = cfil1
 
     myplot.canvas(title="Manamana", subtitle="My Dear Well")
 
@@ -123,7 +123,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     assert "xtgeo" in cfil1
     assert "colfacies" in str(cfil2)
 
-    myplot.set_colortable(cfil1, colorlist=None)
+    myplot.colormap = cfil1
 
     myplot.canvas(title="Plot with seismics", subtitle="Some well")
 
