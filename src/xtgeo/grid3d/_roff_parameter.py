@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
 from typing import List, Optional, Union
@@ -195,7 +196,9 @@ class RoffParameter:
         if self.code_values is not None:
             data["parameter"]["codeValues"] = self.code_values
         data["parameter"]["data"] = self.values
-        roffio.write(filelike, data, roff_format=roff_format)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r"casting array")
+            roffio.write(filelike, data, roff_format=roff_format)
 
     @staticmethod
     def from_file(filelike, name=None):
