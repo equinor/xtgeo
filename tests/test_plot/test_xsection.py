@@ -52,8 +52,7 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
     mywell = xtgeo.Well(USEFILE4)
 
     mysurfaces = []
-    mysurf = xtgeo.RegularSurface()
-    mysurf.from_file(USEFILE2)
+    mysurf = xtgeo.surface_from_file(USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
@@ -95,8 +94,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     mycube = xtgeo.Cube(USEFILE6)
 
     mysurfaces = []
-    mysurf = xtgeo.RegularSurface()
-    mysurf.from_file(USEFILE2)
+    mysurf = xtgeo.surface_from_file(USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
@@ -194,8 +192,7 @@ def test_reek1(tmpdir, generate_plot):
     surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
-        mysurf = xtgeo.RegularSurface()
-        mysurf.from_file(fname)
+        mysurf = xtgeo.surface_from_file(fname)
         mysurfaces.append(mysurf)
 
     # Troll lobes
@@ -203,8 +200,7 @@ def test_reek1(tmpdir, generate_plot):
     surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
-        mysurf = xtgeo.RegularSurface()
-        mysurf.from_file(fname)
+        mysurf = xtgeo.surface_from_file(fname)
         mylobes.append(mysurf)
 
     for wo in mywells:

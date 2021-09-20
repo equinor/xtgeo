@@ -58,8 +58,8 @@ def test_avg02(tmpdir, generate_plot):
     zuse = np.ones((xcuse.shape))
 
     avgmap = RegularSurface(
-        nx=200,
-        ny=250,
+        ncol=200,
+        nrow=250,
         xinc=50,
         yinc=50,
         xori=457000,
@@ -123,8 +123,8 @@ def test_avg03(tmpdir):
     zuse = np.ones((xcuse.shape))
 
     avgmap = RegularSurface(
-        nx=200,
-        ny=250,
+        ncol=200,
+        nrow=250,
         xinc=50,
         yinc=50,
         xori=457000,

@@ -14,7 +14,7 @@ def test_snap_to_surface(testpath):
     mypoints = xtgeo.Points(testpath / PFILE3)
     assert mypoints.nrow == 20
 
-    surf1 = xtgeo.RegularSurface(testpath / SFILE1A)
+    surf1 = xtgeo.surface_from_file(testpath / SFILE1A)
 
     mypoints.snap_surface(surf1)
     assert mypoints.nrow == 11
@@ -24,7 +24,7 @@ def test_snap_to_surface(testpath):
     # repeat,using surface whithg rotaion and partial masks
 
     mypoints = xtgeo.Points(testpath / PFILE3)
-    surf2 = xtgeo.RegularSurface(testpath / SFILE2A)
+    surf2 = xtgeo.surface_from_file(testpath / SFILE2A)
 
     mypoints.snap_surface(surf2)
     assert mypoints.nrow == 12

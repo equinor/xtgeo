@@ -290,7 +290,7 @@ def allow_deprecated_default_init(func):
                     [5, 10, 15],
                 ]
                 warnings.warn(
-                    f"{default_values} as default values for RegularSurface is "
+                    f"Default values {default_values} for RegularSurface is "
                     f"deprecated and will be set to an array of zero if not explicitly "
                     f"given in version 3",
                     DeprecationWarning,
@@ -1093,7 +1093,9 @@ class RegularSurface:
         .. versionadded:: 2.1
         """
         if not self._isloaded:
-            self.from_file(self._filesrc, fformat=self._fformat)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                self.from_file(self._filesrc, fformat=self._fformat)
             self._isloaded = True
 
     def to_file(

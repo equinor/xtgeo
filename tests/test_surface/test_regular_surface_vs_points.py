@@ -3,6 +3,7 @@ from os.path import join
 import pytest
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Points
@@ -24,7 +25,7 @@ ftop1 = TPATH / "surfaces/reek/1/reek_stooip_map.gri"
 @pytest.fixture()
 def reek_map():
     logger.info("Loading surface")
-    return RegularSurface(ftop1)
+    return xtgeo.surface_from_file(ftop1)
 
 
 def test_list_xy_points_as_numpies(reek_map):
@@ -46,7 +47,7 @@ def test_map_to_points(tmpdir, reek_map):
 
     px = Points()
 
-    surf = RegularSurface(ftop1)
+    surf = xtgeo.surface_from_file(ftop1)
 
     assert isinstance(surf, RegularSurface)
 

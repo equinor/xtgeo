@@ -27,7 +27,7 @@ def test_operations_inside_outside_polygon_generic():
 
     logger.info("Simple case...")
 
-    surf = xtgeo.surface.RegularSurface(SURF1)
+    surf = xtgeo.surface_from_file(SURF1)
     tsetup.assert_almostequal(surf.values.mean(), 1698.65, 0.01)
     poly = xtgeo.xyz.Polygons(POLY1)
 
@@ -40,7 +40,7 @@ def test_operations_inside_outside_polygon_shortforms(tmpdir):
 
     # assert values are checked in RMS
 
-    zurf = xtgeo.surface.RegularSurface(SURF1)
+    zurf = xtgeo.surface_from_file(SURF1)
     poly = xtgeo.xyz.Polygons(POLY1)
 
     surf = zurf.copy()

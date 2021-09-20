@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Points
@@ -27,7 +28,7 @@ FTOP1 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 def fixture_reek_map():
     """Fixture for map input."""
     logger.info("Loading surface")
-    return RegularSurface(FTOP1)
+    return xtgeo.surface_from_file(FTOP1)
 
 
 def test_resample_small():
