@@ -3,15 +3,12 @@
 
 
 import sys
-import warnings
 
 import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid, GridProperties
-
-warnings.filterwarnings("ignore")
 
 xtg = XTGeoDialog()
 
