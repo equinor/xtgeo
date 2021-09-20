@@ -908,6 +908,10 @@ class GridProperty(_Grid3D):
         """
 
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = super()._evaluate_mask(mask)
 
         act = GridProperty(
