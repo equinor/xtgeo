@@ -38,8 +38,8 @@ def test_hcpvfz1(tmpdir, generate_plot):
     to.from_file(ROFF1_PROPS, name="Oil_bulk")
 
     # get the dz and the coordinates, with no mask (ie get value for outside)
-    dz = grd.get_dz(mask=False)
-    xc, yc, _zc = grd.get_xyz(mask=False)
+    dz = grd.get_dz(asmasked=False)
+    xc, yc, _zc = grd.get_xyz(asmasked=False)
 
     xcv = ma.filled(xc.values3d)
     ycv = ma.filled(yc.values3d)

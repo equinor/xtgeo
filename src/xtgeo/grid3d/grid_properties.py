@@ -336,7 +336,7 @@ class GridProperties(_Grid3D):
 
         # borrow function from GridProperty class:
         if self._props:
-            return self._props[0].get_actnum(name=name, mask=asmasked)
+            return self._props[0].get_actnum(name=name, asmasked=asmasked)
 
         warnings.warn("No gridproperty in list", UserWarning)
         return None
