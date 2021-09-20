@@ -52,3 +52,4 @@ def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
             layslice.show()
         if generate_plot:
             layslice.savefig(os.path.join(tmpdir, "layerslice_" + str(lay) + ".png"))
+        layslice.close()

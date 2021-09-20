@@ -79,11 +79,13 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
 
     myplot.plot_well(zonelogname="Zonelog")
 
-    if generate_plot:
-        myplot.savefig(join(tmpdir, "xsect_gbf1.png"))
-
     if show_plot:
         myplot.show()
+
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "xsect_gbf1.png"), last=True)
+    else:
+        myplot.close()
 
 
 @pytest.mark.skipifroxar
@@ -138,6 +140,8 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     if show_plot:
         myplot.show()
 
+    myplot.close()
+
 
 @pytest.mark.skipifroxar
 @tsetup.equinor
@@ -170,6 +174,21 @@ def test_xsect_larger_geogrid(show_plot):
         plt.imshow(arr2, cmap="rainbow", extent=(hmin2, hmax2, vmax2, vmin2))
         plt.axis("tight")
         plt.show()
+
+
+@pytest.mark.skipifroxar
+def test_multiple_subplots(tmpdir, show_plot, generate_plot):
+    """Test as simple XSECT plot."""
+
+    mywell = xtgeo.Well(USEFILE4)
+    mysurf = xtgeo.surface_from_file(USEFILE2)
+
+    myplot = XSection(zmin=1500, zmax=1800, well=mywell, surfaces=[mysurf])
+
+    for i in range(4):
+        myplot.canvas(title=str(i), subtitle="My Dear Well")
+
+    myplot.close()
 
 
 @pytest.mark.skipifroxar
@@ -241,3 +260,5 @@ def test_reek1(tmpdir, generate_plot):
         if generate_plot:
             myplot.savefig(join(tmpdir, "xsect2a.svg"), fformat="svg", last=False)
             myplot.savefig(join(tmpdir, "xsect2a.png"), fformat="png")
+        else:
+            myplot.close()

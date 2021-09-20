@@ -106,4 +106,6 @@ def test_perm_logarithmic_map(tmpdir, generate_plot):
     )
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "permx_normal.png"))
+        myplot.savefig(join(tmpdir, "permx_normal.png"), last=True)
+    else:
+        myplot.close()
