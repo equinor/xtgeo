@@ -17,7 +17,8 @@
  *    nx, ny, nz     i     Dimensions
  *    coordsv        i     Coordinates (with size)
  *    zcornsv        i     Z corners (with size)
- *    dx/dy          i/o    Array to be updated
+ *    dx/dy/dz       i/o   Array to be updated
+ *    m              i     Metric to use for distance (function pointer of type metric)
  *
  * RETURNS:
  *    Success (0) or failure. Pointers to arrays are updated
@@ -89,6 +90,83 @@ pm_evaluate(const PlanarMap *const pm, const double z, double *x, double *y)
     return EXIT_SUCCESS;
 }
 
+double
+euclid_length(const double x1,
+              const double y1,
+              const double z1,
+              const double x2,
+              const double y2,
+              const double z2)
+{
+    return sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2) + powf(z2 - z1, 2));
+}
+
+double
+horizontal_length(const double x1,
+                  const double y1,
+                  const double z1,
+                  const double x2,
+                  const double y2,
+                  const double z2)
+{
+    return sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+}
+
+double
+east_west_vertical_length(const double x1,
+                          const double y1,
+                          const double z1,
+                          const double x2,
+                          const double y2,
+                          const double z2)
+{
+    return sqrt(powf(x2 - x1, 2) + powf(z2 - z1, 2));
+}
+
+double
+north_south_vertical_length(const double x1,
+                            const double y1,
+                            const double z1,
+                            const double x2,
+                            const double y2,
+                            const double z2)
+{
+    return sqrt(powf(y2 - y1, 2) + powf(z2 - z1, 2));
+}
+
+double
+x_projection(const double x1,
+             const double y1,
+             const double z1,
+             const double x2,
+             const double y2,
+             const double z2)
+{
+    return x2 - x1;
+}
+
+double
+y_projection(const double x1,
+             const double y1,
+             const double z1,
+             const double x2,
+             const double y2,
+             const double z2)
+{
+    return y2 - y1;
+}
+
+double
+z_projection(const double x1,
+             const double y1,
+             const double z1,
+             const double x2,
+             const double y2,
+             const double z2)
+{
+    return z2 - z1;
+}
+
 int
 grdcp3d_calc_dy(int nx,
                 int ny,
@@ -98,7 +176,8 @@ grdcp3d_calc_dy(int nx,
                 double *zcornsv,
                 long nzcorn,
                 double *dy,
-                long ndy)
+                long ndy,
+                metric m)
 
 {
     if (ncoord != (nx + 1) * (ny + 1) * 6) {
@@ -178,8 +257,7 @@ grdcp3d_calc_dy(int nx,
 
                     // The corresponding line contributes 1/4 of its length to the
                     // dx value of up to two surrounding cells it is an edge of
-                    double vector_len =
-                      0.25 * sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+                    double vector_len = 0.25 * m(x1, y1, z1, x2, y2, z2);
 
                     char at_top = j == (corner_line1_end - 1);
                     char at_bottom = j == corner_line1_start;
@@ -227,7 +305,8 @@ grdcp3d_calc_dx(int nx,
                 double *zcornsv,
                 long nzcorn,
                 double *dx,
-                long ndx)
+                long ndx,
+                metric m)
 
 {
     if (ncoord != (nx + 1) * (ny + 1) * 6) {
@@ -309,8 +388,7 @@ grdcp3d_calc_dx(int nx,
 
                 // The corresponding line contributes 1/4 of its length to the
                 // dx value of up to two surrounding cells it is an edge of
-                double vector_len =
-                      0.25 * sqrt(powf(x2 - x1, 2) + powf(y2 - y1, 2));
+                double vector_len = 0.25 * m(x1, y1, z1, x2, y2, z2);
 
                 char at_top = j == (corner_line1_end - 1);
                 char at_bottom = j == corner_line1_start;
@@ -335,6 +413,99 @@ grdcp3d_calc_dx(int nx,
                     if (!at_bottom) {
                         dx[jj - 1] += vector_len;
                     }
+                }
+            }
+        }
+    }
+    return EXIT_SUCCESS;
+}
+
+int
+grdcp3d_calc_dz(int nx,
+                int ny,
+                int nz,
+                double *coordsv,
+                long ncoord,
+                double *zcornsv,
+                long nzcorn,
+                double *dx,
+                long ndx,
+                metric m)
+
+{
+    if (ncoord != (nx + 1) * (ny + 1) * 6) {
+        throw_exception("Incorrect size of coordsv.");
+        return EXIT_FAILURE;
+    }
+    if (nzcorn != (nx + 1) * (ny + 1) * (nz + 1) * 4) {
+        throw_exception("Incorrect size of zcornsv.");
+        return EXIT_FAILURE;
+    }
+    if (ndx != nx * ny * nz) {
+        throw_exception("Incorrect size of dx.");
+        return EXIT_FAILURE;
+    }
+    if (ndx <= 0) {
+        return EXIT_SUCCESS;
+    }
+
+    // The following algorithm goes through all corner lines,
+    // calculates coordinates of subsequent pairs of corners in
+    // z direction, and adds the contribution of length average to
+    // corresponding cells.
+
+    size_t num_corner_lines = (nx + 1) * (ny + 1);
+
+    for (size_t pair_index = 0, cell_plane_index = 0; pair_index < num_corner_lines;
+         pair_index++) {
+        if (pair_index % (ny + 1) != 0) {
+            // There is one more line in the y direction then there
+            // are cells, so we have to keep two indecies.
+            cell_plane_index++;
+        }
+
+        PlanarMap pm;
+        if (pm_from_corner_line(coordsv, pair_index, &pm) == EXIT_FAILURE) {
+            return EXIT_FAILURE;
+        }
+
+        size_t north_east_pillar_start = nz * cell_plane_index;
+        size_t corner_line_start = (nz + 1) * pair_index;
+        size_t corner_line_end = corner_line_start + (nz + 1);
+
+        char north_in_bounds = pair_index % (ny + 1) != ny;
+        char south_in_bounds = pair_index % (ny + 1) != 0;
+        char west_in_bounds = pair_index >= ny + 1;
+        char east_in_bounds = pair_index < num_corner_lines - (ny + 1);
+
+        for (size_t j = corner_line_start, jj = north_east_pillar_start;
+             j < corner_line_end - 1; j += 1, jj += 1) {
+            for (size_t l = 0; l < 4; l++) {
+
+                double z1 = zcornsv[4 * j + l];
+                double x1, y1;
+                if (pm_evaluate(&pm, z1, &x1, &y1) == EXIT_FAILURE) {
+                    return EXIT_FAILURE;
+                }
+
+                double z2 = zcornsv[4 * (j + 1) + l];
+                double x2, y2;
+                if (pm_evaluate(&pm, z2, &x2, &y2) == EXIT_FAILURE) {
+                    return EXIT_FAILURE;
+                }
+
+                // The corresponding line contributes 1/4 of its length to the
+                // dx value of one edge depending on l.
+                double vector_len = 0.25 * m(x1, y1, z1, x2, y2, z2);
+
+                if (l == 0 && south_in_bounds && west_in_bounds) {
+                    dx[jj - nz * (ny + 1)] += vector_len;
+                } else if (l == 1 && south_in_bounds && east_in_bounds) {
+                    dx[jj - nz] += vector_len;
+                } else if (l == 2 && north_in_bounds && west_in_bounds) {
+                    dx[jj - nz * ny] += vector_len;
+                } else if (l == 3 && north_in_bounds && east_in_bounds) {
+                    dx[jj] += vector_len;
                 }
             }
         }
