@@ -5,6 +5,24 @@
 static PyObject* PY_XTGeoCLibError;
 %}
 
+%pythoncallback;
+double euclid_length(const double, const double, const double, const double, const double, const double);
+double horizontal_length(const double, const double, const double, const double, const double, const double);
+double east_west_vertical_length(const double, const double, const double, const double, const double, const double);
+double north_south_vertical_length(const double, const double, const double, const double, const double, const double);
+double x_projection(const double, const double, const double, const double, const double, const double);
+double y_projection(const double, const double, const double, const double, const double, const double);
+double z_projection(const double, const double, const double, const double, const double, const double);
+%nopythoncallback;
+
+%ignore euclid_length;
+%ignore horizontal_length;
+%ignore east_west_vertical_length;
+%ignore north_south_vertical_length;
+%ignore x_projection;
+%ignore y_projection;
+%ignore z_projection;
+
 typedef uint8_t mbool;
 
 %include typemaps.i

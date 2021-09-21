@@ -834,38 +834,68 @@ def test_bad_egrid_ends_before_kw(tmp_path):
 @given(dimensions, increments, increments, increments)
 def test_grid_get_dx(dimension, dx, dy, dz):
     grd = Grid()
-    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
-    np.testing.assert_allclose(grd.get_dx().values, dx, rtol=0.01)
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz), rotation=0.0)
+    np.testing.assert_allclose(grd.get_dx(metric="euclid").values, dx, atol=0.01)
+    np.testing.assert_allclose(
+        grd.get_dx(metric="north south vertical").values, 0.0, atol=0.01
+    )
+    np.testing.assert_allclose(
+        grd.get_dx(metric="east west vertical").values, dx, atol=0.01
+    )
+    np.testing.assert_allclose(grd.get_dx(metric="horizontal").values, dx, atol=0.01)
+    np.testing.assert_allclose(grd.get_dx(metric="x projection").values, dx, atol=0.01)
+    np.testing.assert_allclose(grd.get_dx(metric="y projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dx(metric="z projection").values, 0.0, atol=0.01)
 
     grd._actnumsv[0, 0, 0] = 0
 
     assert grd.get_dx(asmasked=True).values[0, 0, 0] is np.ma.masked
-    assert np.isclose(grd.get_dx(asmasked=False).values[0, 0, 0], dx, rtol=0.01)
+    assert np.isclose(grd.get_dx(asmasked=False).values[0, 0, 0], dx, atol=0.01)
 
 
 @given(dimensions, increments, increments, increments)
 def test_grid_get_dy(dimension, dx, dy, dz):
     grd = Grid()
-    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
-    np.testing.assert_allclose(grd.get_dy().values, dy, rtol=0.01)
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz), rotation=0.0)
+    np.testing.assert_allclose(grd.get_dy(metric="euclid").values, dy, atol=0.01)
+    np.testing.assert_allclose(
+        grd.get_dy(metric="north south vertical").values, dy, atol=0.01
+    )
+    np.testing.assert_allclose(
+        grd.get_dy(metric="east west vertical").values, 0.0, atol=0.01
+    )
+    np.testing.assert_allclose(grd.get_dy(metric="horizontal").values, dy, atol=0.01)
+    np.testing.assert_allclose(grd.get_dy(metric="x projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dy(metric="y projection").values, dy, atol=0.01)
+    np.testing.assert_allclose(grd.get_dy(metric="z projection").values, 0.0, atol=0.01)
 
     grd._actnumsv[0, 0, 0] = 0
 
     assert grd.get_dy(asmasked=True).values[0, 0, 0] is np.ma.masked
-    assert np.isclose(grd.get_dy(asmasked=False).values[0, 0, 0], dy, rtol=0.01)
+    assert np.isclose(grd.get_dy(asmasked=False).values[0, 0, 0], dy, atol=0.01)
 
 
 @given(dimensions, increments, increments, increments)
 def test_grid_get_dz(dimension, dx, dy, dz):
     grd = Grid()
     grd.create_box(dimension=dimension, increment=(dx, dy, dz))
-    np.testing.assert_allclose(grd.get_dz().values, dz, rtol=0.01)
-    np.testing.assert_allclose(grd.get_dz(flip=False).values, -dz, rtol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="euclid").values, dz, atol=0.01)
+    np.testing.assert_allclose(
+        grd.get_dz(metric="north south vertical").values, dz, atol=0.01
+    )
+    np.testing.assert_allclose(
+        grd.get_dz(metric="east west vertical").values, dz, atol=0.01
+    )
+    np.testing.assert_allclose(grd.get_dz(metric="horizontal").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="x projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="y projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="z projection").values, dz, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(flip=False).values, -dz, atol=0.01)
 
     grd._actnumsv[0, 0, 0] = 0
 
     assert grd.get_dz(asmasked=True).values[0, 0, 0] is np.ma.masked
-    assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, rtol=0.01)
+    assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, atol=0.01)
 
 
 def test_benchmark_grid_get_dz(benchmark):
@@ -906,6 +936,8 @@ def test_grid_get_dxdydz_bad_coordsv_size():
         grd.get_dx()
     with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
         grd.get_dy()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
+        grd.get_dz()
 
 
 def test_grid_get_dxdydz_bad_zcorn_size():
@@ -917,6 +949,8 @@ def test_grid_get_dxdydz_bad_zcorn_size():
         grd.get_dx()
     with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
         grd.get_dy()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
+        grd.get_dz()
 
 
 def test_grid_get_dxdydz_bad_grid_top():
@@ -931,3 +965,17 @@ def test_grid_get_dxdydz_bad_grid_top():
         grd.get_dx()
     with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
         grd.get_dy()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
+        grd.get_dz()
+
+
+def test_grid_get_dxdydz_bad_metric():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+
+    with pytest.raises(ValueError, match="Unknown metric"):
+        grd.get_dx(metric="foo")
+    with pytest.raises(ValueError, match="Unknown metric"):
+        grd.get_dy(metric="foo")
+    with pytest.raises(ValueError, match="Unknown metric"):
+        grd.get_dz(metric="foo")

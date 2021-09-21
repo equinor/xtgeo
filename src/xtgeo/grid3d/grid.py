@@ -1289,11 +1289,14 @@ class Grid(_Grid3D):
         else:
             self._actnumsv = np.ma.filled(actnum.values, fill_value=0).astype(np.int32)
 
-    def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
+    def get_dz(
+        self, name="dZ", flip=True, asmasked=True, mask=None, metric="z projection"
+    ):
         """Return the dZ as GridProperty object.
 
-        The dZ is computed as an average height of the vertical pillars in
-        each cell, projected to vertical dimension.
+        Returns the average length of z direction edges for each
+        cell as a GridProperty. The length is by default the
+        z delta, ie. projected onto the z dimension (see the metric parameter).
 
         Args:
             name (str): name of property
@@ -1301,6 +1304,14 @@ class Grid(_Grid3D):
                 (experimental)
             asmasked (bool): True if only for active cells, False for all cells
             mask (bool): Deprecated, use asmasked instead!
+            metric (str): One of the following metrics:
+                * "euclid": sqrt(dx^2 + dy^2 + dz^2)
+                * "horizontal": sqrt(dx^2 + dy^2)
+                * "east west vertical": sqrt(dy^2 + dz^2)
+                * "north south vertical": sqrt(dx^2 + dz^2)
+                * "x projection": dx
+                * "y projection": dy
+                * "z projection": dz
 
         Returns:
             A XTGeo GridProperty object dZ
@@ -1308,38 +1319,61 @@ class Grid(_Grid3D):
         if mask is not None:
             asmasked = self._evaluate_mask(mask)
 
-        deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, asmasked=asmasked)
+        deltaz = _grid_etc1.get_dz(
+            self, name=name, flip=flip, asmasked=asmasked, metric=metric
+        )
 
         return deltaz
 
-    def get_dx(self, name="dX", asmasked=True):
+    def get_dx(self, name="dX", asmasked=True, metric="horizontal"):
         """Return the dX as GridProperty object.
 
-        The values lengths are projected to a constant Z.
+        Returns the average length of x direction edges for each
+        cell as a GridProperty. The length is by default horizontal
+        vector length (see the metric parameter).
 
         Args:
             name (str): names of properties
             asmasked (bool). If True, make a np.ma array where inactive cells
                 are masked.
+            metric (str): One of the following metrics:
+                * "euclid": sqrt(dx^2 + dy^2 + dz^2)
+                * "horizontal": sqrt(dx^2 + dy^2)
+                * "east west vertical": sqrt(dy^2 + dz^2)
+                * "north south vertical": sqrt(dx^2 + dz^2)
+                * "x projection": dx
+                * "y projection": dy
+                * "z projection": dz
 
         Returns:
             XTGeo GridProperty objects containing dx.
         """
-        return _grid_etc1.get_dx(self, name=name, asmasked=asmasked)
+        return _grid_etc1.get_dx(self, name=name, asmasked=asmasked, metric=metric)
 
-    def get_dy(self, name="dY", asmasked=True):
+    def get_dy(self, name="dY", asmasked=True, metric="horizontal"):
         """Return the dY as GridProperty object.
 
-        The values lengths are projected to a constant Z.
+        Returns the average length of y direction edges for each
+        cell as a GridProperty. The length is by default horizontal
+        vector length (see the metric parameter).
 
         Args:
             name (str): names of properties
             asmasked (bool). If True, make a np.ma array where inactive cells
                 are masked.
+            metric (str): One of the following metrics:
+                * "euclid": sqrt(dx^2 + dy^2 + dz^2)
+                * "horizontal": sqrt(dx^2 + dy^2)
+                * "east west vertical": sqrt(dy^2 + dz^2)
+                * "north south vertical": sqrt(dx^2 + dz^2)
+                * "x projection": dx
+                * "y projection": dy
+                * "z projection": dz
+
         Returns:
             Two XTGeo GridProperty objects (dx, dy).
         """
-        return _grid_etc1.get_dy(self, name=name, asmasked=asmasked)
+        return _grid_etc1.get_dy(self, name=name, asmasked=asmasked, metric=metric)
 
     @deprecation.deprecated(
         deprecated_in="3.0",

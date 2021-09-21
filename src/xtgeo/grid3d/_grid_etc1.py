@@ -165,8 +165,23 @@ def _create_box_v2(
     self._xtgformat = 2
 
 
+method_factory = {
+    "euclid": _cxtgeo.euclid_length,
+    "horizontal": _cxtgeo.horizontal_length,
+    "east west vertical": _cxtgeo.east_west_vertical_length,
+    "north south vertical": _cxtgeo.north_south_vertical_length,
+    "x projection": _cxtgeo.x_projection,
+    "y projection": _cxtgeo.y_projection,
+    "z projection": _cxtgeo.z_projection,
+}
+
+
 def get_dz(
-    self, name: str = "dZ", flip: bool = True, asmasked: bool = True
+    self,
+    name: str = "dZ",
+    flip: bool = True,
+    asmasked: bool = True,
+    metric="z_projection",
 ) -> GridProperty:
     """Get average cell height (dz) as property.
 
@@ -177,42 +192,45 @@ def get_dz(
         name (str): Name of resulting grid property, defaults to "dZ".
     """
     self._xtgformat2()
-
     nx, ny, nz = self.dimensions
-    dz = 0.25 * (
-        (
-            self._zcornsv[1:, 1:, 1:, 0]
-            + self._zcornsv[:nx, 1:, 1:, 1]
-            + self._zcornsv[1:, :ny, 1:, 2]
-            + self._zcornsv[:nx, :ny, 1:, 3]
-        )
-        - (
-            self._zcornsv[1:, 1:, :nz, 0]
-            + self._zcornsv[:nx, 1:, :nz, 1]
-            + self._zcornsv[1:, :ny, :nz, 2]
-            + self._zcornsv[:nx, :ny, :nz, 3]
-        )
+    result = np.zeros((nx * ny * nz))
+    try:
+        metric_fun = method_factory[metric]
+    except KeyError as err:
+        raise ValueError(f"Unknown metric {metric}") from err
+    _cxtgeo.grdcp3d_calc_dz(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        result,
+        metric_fun,
     )
 
     if not flip:
-        dz *= -1
+        result *= -1
 
     if asmasked:
-        dz = np.ma.masked_array(dz, self._actnumsv == 0)
+        result = np.ma.masked_array(result, self._actnumsv == 0)
     else:
-        dz = np.ma.masked_array(dz, False)
+        result = np.ma.masked_array(result, False)
 
     return GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=dz.ravel(),
+        values=result.ravel(),
         name=name,
         discrete=False,
     )
 
 
-def get_dx(self, name="dX", asmasked=False):
+def get_dx(self, name="dX", asmasked=False, metric="horizontal_length"):
+    try:
+        metric_fun = method_factory[metric]
+    except KeyError as err:
+        raise ValueError(f"Unknown metric {metric}") from err
     self._xtgformat2()
     nx, ny, nz = self.dimensions
     result = np.zeros((nx * ny * nz))
@@ -223,6 +241,7 @@ def get_dx(self, name="dX", asmasked=False):
         self._coordsv.ravel(),
         self._zcornsv.ravel(),
         result,
+        metric_fun,
     )
 
     if asmasked:
@@ -239,7 +258,11 @@ def get_dx(self, name="dX", asmasked=False):
     )
 
 
-def get_dy(self, name="dX", asmasked=False):
+def get_dy(self, name="dX", asmasked=False, metric="horizontal_length"):
+    try:
+        metric_fun = method_factory[metric]
+    except KeyError as err:
+        raise ValueError(f"Unknown metric {metric}") from err
     self._xtgformat2()
     nx, ny, nz = self.dimensions
     result = np.zeros((nx * ny * nz))
@@ -250,6 +273,7 @@ def get_dy(self, name="dX", asmasked=False):
         self._coordsv.ravel(),
         self._zcornsv.ravel(),
         result,
+        metric_fun,
     )
 
     if asmasked:

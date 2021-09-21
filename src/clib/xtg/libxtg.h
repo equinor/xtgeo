@@ -1083,6 +1083,22 @@ grd3d_from_cube(int ncol,
                 double rotation,
                 int yflip,
                 int option);
+
+typedef double (*metric)(const double, const double, const double, const double, const double, const double);
+double euclid_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double horizontal_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double east_west_vertical_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double north_south_vertical_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double x_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double y_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double z_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
 int
 grdcp3d_calc_dx(int nx,
                 int ny,
@@ -1092,7 +1108,8 @@ grdcp3d_calc_dx(int nx,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
                 double *swig_np_dbl_inplace_v1,  // *dx,
-                long n_swig_np_dbl_inplace_v1    // ntot,
+                long n_swig_np_dbl_inplace_v1,    // ntot,
+                metric m
                 );
 int
 grdcp3d_calc_dy(int nx,
@@ -1103,7 +1120,21 @@ grdcp3d_calc_dy(int nx,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
                 double *swig_np_dbl_inplace_v1,  // *dy,
-                long n_swig_np_dbl_inplace_v1    // ntot,
+                long n_swig_np_dbl_inplace_v1,    // ntot,
+                metric m
+                );
+
+int
+grdcp3d_calc_dz(int nx,
+                int ny,
+                int nz,
+                double *swig_np_dbl_in_v1,       // *coordsv,
+                long n_swig_np_dbl_in_v1,        // ncoord,
+                double *swig_np_dbl_in_v2,       // *zcornsv,
+                long n_swig_np_dbl_in_v2,        // nzcorn,
+                double *swig_np_dbl_inplace_v1,  // *dz,
+                long n_swig_np_dbl_inplace_v1,    // ntot,
+                metric m
                 );
 
 void
