@@ -977,7 +977,14 @@ class Grid(_Grid3D):
             grid=self,
         )
 
-    dataframe = get_dataframe  # backward compatibility...
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method dataframe is deprecated, use get_dataframe instead.",
+    )
+    def dataframe(self, *args, **kwargs):
+        return self.get_dataframe(*args, **kwargs)
 
     def append_prop(self, prop):
         """Append a single property to the grid."""
