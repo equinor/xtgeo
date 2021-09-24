@@ -80,6 +80,8 @@ def test_grid_to_file_conversion(tmp_path, xtgeo_grid, unit1, unit2, fformat):
     xtgeo_grid2 = xtgeo.grid_from_file(filepath2, fformat="guess", units=unit1)
 
     assert xtgeo_grid2.units == unit1
+    xtgeo_grid._xtgformat2()
+    xtgeo_grid2._xtgformat2()
     assert_allclose(xtgeo_grid2._coordsv, xtgeo_grid._coordsv, atol=1e-4)
 
 

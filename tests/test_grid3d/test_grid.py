@@ -371,7 +371,6 @@ def test_roffbin_export_v2_banal6(tmp_path):
     """Test roff binary export v2 for banal no. 6 case."""
     # export
     grd1 = Grid()
-    grd1._xtgformat = 2
 
     logger.info("EXPORT")
     grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")

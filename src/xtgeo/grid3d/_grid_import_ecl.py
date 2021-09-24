@@ -13,7 +13,6 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_ecl_egrid(
-    self,
     gfile,
     units=None,
     coordinates=GridRelative.MAP,
@@ -23,51 +22,42 @@ def import_ecl_egrid(
     if units is not None:
         egrid.convert_units(units)
 
-    self._ncol, self._nrow, self._nlay = egrid.dimensions
+    result = dict()
 
-    self._coordsv = egrid.xtgeo_coord(coordinates=GridRelative.MAP)
-    self._zcornsv = egrid.xtgeo_zcorn()
-    self._actnumsv = egrid.xtgeo_actnum()
-    self._subgrids = None
-    self._xtgformat = 2
+    result["coordsv"] = egrid.xtgeo_coord(coordinates=coordinates)
+    result["zcornsv"] = egrid.xtgeo_zcorn()
+    result["actnumsv"] = egrid.xtgeo_actnum()
 
     if egrid.egrid_head.file_head.rock_model == RockModel.DUAL_POROSITY:
-        self._dualporo = True
-        self._dualperm = False
+        result["dualporo"] = True
+        result["dualperm"] = False
     elif egrid.egrid_head.file_head.rock_model == RockModel.DUAL_PERMEABILITY:
-        self._dualporo = True
-        self._dualperm = True
+        result["dualporo"] = True
+        result["dualperm"] = True
 
-    if self._dualporo:
-        self._dualactnum = self.get_actnum(name="DUALACTNUM")
-        acttmp = self._dualactnum.copy()
-        acttmp.values[acttmp.values >= 1] = 1
-        self.set_actnum(acttmp)
+    return result
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Import eclipse run suite: EGRID + properties from INIT and UNRST
 # For the INIT and UNRST, props dates shall be selected
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=None):
+def import_ecl_run(
+    groot, ecl_grid, initprops=None, restartprops=None, restartdates=None
+):
     """Import combo ECL runs."""
-    ecl_grid = groot + ".EGRID"
     ecl_init = groot + ".INIT"
     ecl_rsta = groot + ".UNRST"
 
-    ecl_grid = xtgeo._XTGeoFile(ecl_grid)
     ecl_init = xtgeo._XTGeoFile(ecl_init)
     ecl_rsta = xtgeo._XTGeoFile(ecl_rsta)
-
-    # import the grid
-    import_ecl_egrid(self, ecl_grid)
 
     grdprops = xtgeo.grid3d.GridProperties()
 
     # import the init properties unless list is empty
     if initprops:
         grdprops.from_file(
-            ecl_init.name, names=initprops, fformat="init", dates=None, grid=self
+            ecl_init.name, names=initprops, fformat="init", dates=None, grid=ecl_grid
         )
 
     # import the restart properties for dates unless lists are empty
@@ -77,39 +67,36 @@ def import_ecl_run(self, groot, initprops=None, restartprops=None, restartdates=
             names=restartprops,
             fformat="unrst",
             dates=restartdates,
-            grid=self,
+            grid=ecl_grid,
         )
+    ecl_grid.gridprops = grdprops
 
-    self.gridprops = grdprops
 
-
-def import_ecl_grdecl(self, gfile, units=None, coordinates=GridRelative.MAP):
+def import_ecl_grdecl(gfile, units=None, coordinates=GridRelative.MAP):
     """Import grdecl format."""
 
     grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="grdecl")
     if units is not None:
         grdecl_grid.convert_units(units)
 
-    self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
+    return {
+        "coordsv": grdecl_grid.xtgeo_coord(coordinates=coordinates),
+        "zcornsv": grdecl_grid.xtgeo_zcorn(),
+        "actnumsv": grdecl_grid.xtgeo_actnum(),
+        "subgrids": None,
+    }
 
-    self._coordsv = grdecl_grid.xtgeo_coord(coordinates=coordinates)
-    self._zcornsv = grdecl_grid.xtgeo_zcorn()
-    self._actnumsv = grdecl_grid.xtgeo_actnum()
-    self._subgrids = None
-    self._xtgformat = 2
 
-
-def import_ecl_bgrdecl(self, gfile, units=None, coordinates=GridRelative.MAP):
+def import_ecl_bgrdecl(gfile, units=None, coordinates=GridRelative.MAP):
     """Import binary files with GRDECL layout."""
 
     grdecl_grid = GrdeclGrid.from_file(gfile._file, fileformat="bgrdecl")
     if units is not None:
         grdecl_grid.convert_units(units)
 
-    self._ncol, self._nrow, self._nlay = grdecl_grid.dimensions
-
-    self._coordsv = grdecl_grid.xtgeo_coord(coordinates=coordinates)
-    self._zcornsv = grdecl_grid.xtgeo_zcorn()
-    self._actnumsv = grdecl_grid.xtgeo_actnum()
-    self._subgrids = None
-    self._xtgformat = 2
+    return {
+        "coordsv": grdecl_grid.xtgeo_coord(coordinates=coordinates),
+        "zcornsv": grdecl_grid.xtgeo_zcorn(),
+        "actnumsv": grdecl_grid.xtgeo_actnum(),
+        "subgrids": None,
+    }
