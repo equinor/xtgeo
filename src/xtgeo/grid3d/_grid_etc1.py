@@ -102,7 +102,6 @@ def _create_box_v1(
         option,
     )
 
-    self._actnum_indices = None
     self._filesrc = None
     self._props = None
     self._subgrids = None
@@ -155,7 +154,6 @@ def _create_box_v2(
         option,
     )
 
-    self._actnum_indices = None
     self._filesrc = None
     self._props = None
     self._subgrids = None
