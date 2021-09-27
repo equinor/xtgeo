@@ -27,20 +27,23 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_grid_roxapi(
-    self, projectname, gname, realisation, dimonly, info
+    projectname, gname, realisation, dimonly, info
 ):  # pragma: no cover
-    """Import a Grid via ROXAR API spec."""
-    if self._xtgformat == 1 or dimonly:
-        _import_grid_roxapi_v1(self, projectname, gname, realisation, dimonly, info)
-    else:
-        _import_grid_roxapi_v2(self, projectname, gname, realisation, info)
+    """Import a Grid via ROXAR API spec.
 
+    Returns:
+        dictionary of parameters to be used in the Grid constructor function.
 
-def _import_grid_roxapi_v1(
-    self, projectname, gname, realisation, dimonly, info
-):  # pragma: no cover
-    """Import a Grid via ROXAR API spec."""
+    """
     rox = RoxUtils(projectname, readonly=True)
+    if dimonly or not rox.version_required("1.3"):
+        return _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info)
+    else:
+        return _import_grid_roxapi_v2(rox, gname, realisation, info)
+
+
+def _import_grid_roxapi_v1(rox, gname, realisation, dimonly, info):  # pragma: no cover
+    """Import a Grid via ROXAR API spec."""
 
     proj = rox.project
 
@@ -62,13 +65,15 @@ def _import_grid_roxapi_v1(
         if info:
             _display_roxapi_grid_info(rox, roxgrid)
 
-        _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname)
+        result = _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
 
     if rox._roxexternal:
         rox.safe_close()
+
+    return result
 
 
 def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
@@ -96,7 +101,7 @@ def _display_roxapi_grid_info(rox, roxgrid):  # pragma: no cover
                 xtg.say("Depths\n{}".format(zco))
 
 
-def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no cover
+def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
     """Convert from RMS API to XTGeo API."""
     # pylint: disable=too-many-statements
 
@@ -107,12 +112,14 @@ def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no
     ncol, nrow, nlay = indexer.dimensions
     ntot = ncol * nrow * nlay
 
+    result = {}
     # update other attributes
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
+    result["xtgformat"] = 1
+    result["ncol"] = ncol
+    result["nrow"] = nrow
+    result["nlay"] = nlay
 
-    self.name = gname
+    result["name"] = gname
 
     if corners is None:
         logger.info("Asked for dimensions_only: No geometry read!")
@@ -151,9 +158,9 @@ def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no
     ncoord = (ncol + 1) * (nrow + 1) * 2 * 3
     nzcorn = ncol * nrow * (nlay + 1) * 4
 
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
+    coordsv = np.zeros(ncoord, dtype=np.float64)
+    zcornsv = np.zeros(nzcorn, dtype=np.float64)
+    actnumsv = np.zeros(ntot, dtype=np.int32)
 
     # next task is to convert geometry to cxtgeo internal format
     logger.info("Run XTGeo C code...")
@@ -164,10 +171,13 @@ def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no
         ntot,
         actnum,
         corners,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        coordsv,
+        zcornsv,
+        actnumsv,
     )
+    result["coordsv"] = coordsv
+    result["zcornsv"] = zcornsv
+    result["actnumsv"] = actnumsv
     logger.info("Run XTGeo C code... done")
     logger.info("Converting to XTGeo internals... done")
 
@@ -186,15 +196,16 @@ def _convert_to_xtgeo_grid_v1(self, rox, roxgrid, corners, gname):  # pragma: no
             zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
             subz[zname] = zra
 
-        self.subgrids = subz
+        result["subgrids"] = subz
+
+    result["roxgrid"] = roxgrid
+    result["roxindexer"] = indexer
+
+    return result
 
 
-def _import_grid_roxapi_v2(
-    self, projectname, gname, realisation, info
-):  # pragma: no cover
+def _import_grid_roxapi_v2(rox, gname, realisation, info):  # pragma: no cover
     """Import a Grid via ROXAR API spec."""
-    rox = RoxUtils(projectname, readonly=True)
-
     proj = rox.project
 
     if not rox.version_required("1.3"):
@@ -218,7 +229,7 @@ def _import_grid_roxapi_v2(
         if info:
             _display_roxapi_grid_info(rox, roxgrid)
 
-        _convert_to_xtgeo_grid_v2(self, roxgrid, gname)
+        result = _convert_to_xtgeo_grid_v2(roxgrid, gname)
 
     except KeyError as keyerror:
         raise RuntimeError(keyerror)
@@ -226,23 +237,23 @@ def _import_grid_roxapi_v2(
     if rox._roxexternal:
         rox.safe_close()
 
+    return result
 
-def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
+
+def _convert_to_xtgeo_grid_v2(roxgrid, gname):
     """Convert from roxar CornerPointGeometry to xtgeo, version 2 using _xtgformat=2."""
     indexer = roxgrid.grid_indexer
 
     ncol, nrow, nlay = indexer.dimensions
 
     # update other attributes
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
+    result = {}
 
     nncol = ncol + 1
     nnrow = nrow + 1
     nnlay = nlay + 1
 
-    self.name = gname
+    result["name"] = gname
 
     geom = roxgrid.get_geometry()
 
@@ -260,12 +271,12 @@ def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
 
             zcornsv[icol, jrow, :, :] = zcorn.T
 
-    self._coordsv = coordsv
-    self._zcornsv = zcornsv
-    _cxtgeo.grdcp3d_process_edges(self.ncol, self.nrow, self.nlay, self._zcornsv)
+    _cxtgeo.grdcp3d_process_edges(ncol, nrow, nlay, zcornsv)
+    result["coordsv"] = coordsv
+    result["zcornsv"] = zcornsv
 
     actnumsv[geom.get_defined_cells()] = 1
-    self._actnumsv = actnumsv
+    result["actnumsv"] = actnumsv
 
     # subgrids
     if len(indexer.zonation) > 1:
@@ -279,7 +290,12 @@ def _convert_to_xtgeo_grid_v2(self, roxgrid, gname):
             zra = [nn + 1 for ira in zrange for nn in ira]  # nested lists
             subz[zname] = zra
 
-        self.subgrids = subz
+        result["subgrids"] = subz
+
+    result["roxgrid"] = roxgrid
+    result["roxindexer"] = indexer
+
+    return result
 
 
 # ======================================================================================

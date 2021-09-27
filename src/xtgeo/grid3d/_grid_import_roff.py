@@ -101,14 +101,12 @@ def handle_deprecated_xtgeo_roff_file(filelike):
         yield filelike
 
 
-def import_roff(self, gfile):
+def import_roff(gfile):
     with handle_deprecated_xtgeo_roff_file(gfile._file) as converted_file:
         roff_grid = RoffGrid.from_file(converted_file)
-    self._ncol = int(roff_grid.nx)
-    self._nrow = int(roff_grid.ny)
-    self._nlay = int(roff_grid.nz)
-    self._actnumsv = roff_grid.xtgeo_actnum()
-    self._coordsv = roff_grid.xtgeo_coord()
-    self._zcornsv = roff_grid.xtgeo_zcorn()
-    self._subgrids = roff_grid.xtgeo_subgrids()
-    self._xtgformat = 2
+    return {
+        "actnumsv": roff_grid.xtgeo_actnum(),
+        "coordsv": roff_grid.xtgeo_coord(),
+        "zcornsv": roff_grid.xtgeo_zcorn(),
+        "subgrids": roff_grid.xtgeo_subgrids(),
+    }

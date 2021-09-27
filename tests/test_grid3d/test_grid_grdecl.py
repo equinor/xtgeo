@@ -10,7 +10,7 @@ import xtgeo.grid3d._ecl_grid as ecl_grid
 import xtgeo.grid3d._grdecl_grid as ggrid
 from xtgeo.grid3d import Grid
 from xtgeo.grid3d._grdecl_format import open_grdecl
-from xtgeo.grid3d._grid_import_ecl import grid_from_grdecl
+from xtgeo.grid3d._grid_import_ecl import grid_from_ecl_grid
 
 from .grdecl_grid_generator import (
     grdecl_grids,
@@ -173,8 +173,7 @@ def test_to_from_xtgeogrid_format1(xtggrid):
 
 @given(xtgeo_compatible_grdecl_grids)
 def test_to_from_grdeclgrid(grdecl_grid):
-    xtggrid = Grid()
-    grid_from_grdecl(xtggrid, grdecl_grid)
+    xtggrid = Grid(**grid_from_ecl_grid(grdecl_grid))
 
     grdecl_grid2 = ggrid.GrdeclGrid.from_xtgeo_grid(xtggrid)
     assert grdecl_grid2.xtgeo_actnum().tolist() == xtggrid._actnumsv.tolist()
@@ -191,8 +190,9 @@ def test_to_from_grdeclgrid(grdecl_grid):
 def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
     assume(grdecl_grid.mapaxes is None or fileformat != "bgrdecl")
     filepath = tmp_path / ("xtggrid." + fileformat)
-    xtggrid = Grid()
-    grid_from_grdecl(xtggrid, grdecl_grid, relative_to=ggrid.GridRelative.ORIGIN)
+    xtggrid = Grid(
+        **grid_from_ecl_grid(grdecl_grid, relative_to=ggrid.GridRelative.ORIGIN)
+    )
 
     xtggrid.to_file(filepath, fformat=fileformat)
     grdecl_grid2 = ggrid.GrdeclGrid.from_file(filepath, fileformat=fileformat)

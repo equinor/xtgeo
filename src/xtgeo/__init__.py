@@ -174,6 +174,7 @@ from xtgeo.surface.regular_surface import surface_from_grid3d
 
 from xtgeo.grid3d.grid import grid_from_file
 from xtgeo.grid3d.grid import grid_from_roxar
+from xtgeo.grid3d.grid import create_box_grid
 
 from xtgeo.grid3d.grid_property import gridproperty_from_file
 from xtgeo.grid3d.grid_property import gridproperty_from_roxar

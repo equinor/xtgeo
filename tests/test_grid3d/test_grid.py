@@ -1007,3 +1007,80 @@ def test_grid_roff_subgrids_import_regression(tmp_path):
             ("subgrid_2", range(53, 68)),
         ]
     )
+
+
+def test_grid_bad_dtype_construction():
+    with pytest.raises(TypeError, match="The dtype of the coordsv"):
+        Grid(
+            np.zeros((2, 2, 6), dtype=np.float32),
+            np.zeros((2, 2, 2, 4), dtype=np.float32),
+            np.zeros((1, 1, 1), dtype=np.int32),
+        )
+    with pytest.raises(TypeError, match="The dtype of the zcornsv"):
+        Grid(
+            np.zeros((2, 2, 6), dtype=np.float64),
+            np.zeros((2, 2, 2, 4), dtype=np.float64),
+            np.zeros((1, 1, 1), dtype=np.int32),
+        )
+    with pytest.raises(TypeError, match="The dtype of the actnumsv"):
+        Grid(
+            np.zeros((2, 2, 6), dtype=np.float64),
+            np.zeros((2, 2, 2, 4), dtype=np.float32),
+            np.zeros((1, 1, 1), dtype=np.uint8),
+        )
+
+
+def test_grid_bad_dimensions_construction():
+    with pytest.raises(ValueError, match="shape of coordsv"):
+        Grid(
+            np.zeros((2, 2, 2), dtype=np.float64),
+            np.zeros((2, 2, 2, 4), dtype=np.float32),
+            np.zeros((1, 1, 1), dtype=np.int32),
+        )
+    with pytest.raises(ValueError, match="shape of zcornsv"):
+        Grid(
+            np.zeros((2, 2, 6), dtype=np.float64),
+            np.zeros((2, 2, 2, 3), dtype=np.float32),
+            np.zeros((1, 1, 1), dtype=np.int32),
+        )
+    with pytest.raises(ValueError, match="Mismatch between zcornsv and coordsv"):
+        Grid(
+            np.zeros((2, 2, 6), dtype=np.float64),
+            np.zeros((2, 1, 2, 4), dtype=np.float32),
+            np.zeros((1, 1, 1), dtype=np.int32),
+        )
+    with pytest.raises(ValueError, match="Mismatch between zcornsv and actnumsv"):
+        Grid(
+            np.zeros((2, 2, 6), dtype=np.float64),
+            np.zeros((2, 2, 2, 4), dtype=np.float32),
+            np.zeros((1, 2, 1), dtype=np.int32),
+        )
+
+
+def test_grid_bad_xtgformat1_construction():
+    with pytest.raises(ValueError, match="Need to give dimensions when xtgformat=1"):
+        Grid(
+            np.zeros((1, 1, 6)),
+            np.zeros((1, 1, 1, 4)),
+            np.zeros((0, 0, 0)),
+            xtgformat=1,
+        )
+
+
+def test_xtgformat1_construction():
+    coordsv = np.zeros((3, 3, 6), dtype=np.float64)
+    zcornsv = np.zeros((3, 3, 3, 4), dtype=np.float32)
+    actnumsv = np.zeros((2, 2, 2), dtype=np.int32)
+    grd = Grid(
+        coordsv.copy().ravel(),
+        zcornsv.astype(np.float64).copy().ravel(),
+        actnumsv.copy().ravel(),
+        ncol=2,
+        nrow=2,
+        nlay=2,
+        xtgformat=1,
+    )
+    grd._xtgformat2()
+    np.testing.assert_allclose(coordsv, grd._coordsv)
+    np.testing.assert_allclose(zcornsv, grd._zcornsv)
+    np.testing.assert_allclose(actnumsv, grd._actnumsv)

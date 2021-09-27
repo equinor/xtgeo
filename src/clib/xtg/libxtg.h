@@ -1064,25 +1064,6 @@ cube_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,
  *======================================================================================
  */
 
-void
-grd3d_from_cube(int ncol,
-                int nrow,
-                int nlay,
-                double *swig_np_dbl_inplace_v1,  // *coordsv,
-                long n_swig_np_dbl_inplace_v1,   // ncoord,
-                double *swig_np_dbl_inplace_v2,  // *zcornsv,
-                long n_swig_np_dbl_inplace_v2,   // nzcorn,
-                int *swig_np_int_inplace_v1,     // *actnumsv,
-                long n_swig_np_int_inplace_v1,   // nactnum,
-                double xori,
-                double yori,
-                double zori,
-                double xinc,
-                double yinc,
-                double zinc,
-                double rotation,
-                int yflip,
-                int option);
 
 typedef double (*metric)(const double, const double, const double, const double, const double, const double);
 double euclid_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
