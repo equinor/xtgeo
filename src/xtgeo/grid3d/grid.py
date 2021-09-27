@@ -210,7 +210,6 @@ class Grid(_Grid3D):
         self._yscale = 1.0
         self._zscale = 1.0
 
-        self._actnum_indices = None  # Index numpy array for active cells
         self._filesrc = None
 
         self._props = None  # None or a GridProperties instance
@@ -445,9 +444,7 @@ class Grid(_Grid3D):
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
-        self._actnum_indices = np.flatnonzero(actnumv)
-
-        return self._actnum_indices
+        return np.flatnonzero(actnumv)
 
     @property
     def ntotal(self):

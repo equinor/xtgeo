@@ -232,7 +232,6 @@ class GridProperty(_Grid3D):
         self._dualperm = dualperm
 
         self._filesrc = None
-        self._actnum_indices = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
         self._roxar_dtype = roxar_dtype
         self._values = values
@@ -342,9 +341,7 @@ class GridProperty(_Grid3D):
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
-        self._actnum_indices = np.flatnonzero(actnumv)
-
-        return self._actnum_indices
+        return np.flatnonzero(actnumv)
 
     @property
     def isdiscrete(self):
