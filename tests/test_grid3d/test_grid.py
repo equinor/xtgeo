@@ -12,7 +12,7 @@ import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid, GridProperty
 
-from .grid_generator import dimensions, increments
+from .grid_generator import dimensions, increments, xtgeo_grids
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__, info=True)
@@ -896,6 +896,12 @@ def test_grid_get_dz(dimension, dx, dy, dz):
 
     assert grd.get_dz(asmasked=True).values[0, 0, 0] is np.ma.masked
     assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, atol=0.01)
+
+
+@given(xtgeo_grids)
+def test_get_dxdy_is_get_dx_and_dy(grid):
+    assert np.all(grid.get_dxdy(asmasked=True)[0].values == grid.get_dx().values)
+    assert np.all(grid.get_dxdy(asmasked=True)[1].values == grid.get_dy().values)
 
 
 def test_benchmark_grid_get_dz(benchmark):
