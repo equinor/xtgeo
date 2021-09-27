@@ -1,10 +1,13 @@
 # coding: utf-8
 """Testing new xtgf and hdf5/h5 formats."""
 import os
+from collections import OrderedDict
 from os.path import join
 
+import hypothesis.strategies as st
 import numpy as np
 import pytest
+from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
@@ -345,3 +348,107 @@ def test_benchmark_gridprop_import_partial(benchmark, tmp_path, benchmark_gridpr
     benchmark(read)
 
     assert benchmark_gridprop.values[0:2, 0:2, :].all() == prop2.values.all()
+
+
+def test_hdf5_partial_import_case(benchmark_grid, tmp_path):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    grd2.from_hdf(fna, ijkrange=(1, 3, 1, 5, 1, 4))
+
+    assert grd2.ncol == 3
+    assert grd2.nrow == 5
+    assert grd2.nlay == 4
+
+    assert grd2._xtgformat == 2
+    assert grd2._actnumsv.shape == (3, 5, 4)
+    assert grd2._coordsv.shape == (4, 6, 6)
+    assert grd2._zcornsv.shape == (4, 6, 5, 4)
+
+
+@st.composite
+def ijk_ranges(
+    draw,
+    i=st.integers(min_value=1, max_value=3),
+    j=st.integers(min_value=1, max_value=2),
+    k=st.integers(min_value=1, max_value=4),
+):
+    ijkrange = list(draw(st.tuples(i, i, j, j, k, k)))
+    if ijkrange[1] < ijkrange[0]:
+        ijkrange[1], ijkrange[0] = ijkrange[0], ijkrange[1]
+    if ijkrange[3] < ijkrange[2]:
+        ijkrange[3], ijkrange[2] = ijkrange[2], ijkrange[3]
+    if ijkrange[5] < ijkrange[4]:
+        ijkrange[5], ijkrange[4] = ijkrange[4], ijkrange[5]
+    ijkrange[1] += 1
+    ijkrange[3] += 1
+    ijkrange[5] += 1
+    return ijkrange
+
+
+@settings(
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(ijk_ranges())
+def test_hdf5_partial_import(benchmark_grid, tmp_path, ijkrange):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    grd2.from_hdf(fna, ijkrange=ijkrange)
+
+    assert grd2.ncol == 1 + ijkrange[1] - ijkrange[0]
+    assert grd2.nrow == 1 + ijkrange[3] - ijkrange[2]
+    assert grd2.nlay == 1 + ijkrange[5] - ijkrange[4]
+
+    assert grd2._xtgformat == 2
+    assert grd2._actnumsv.shape == (grd2.ncol, grd2.nrow, grd2.nlay)
+    assert grd2._coordsv.shape == (grd2.ncol + 1, grd2.nrow + 1, 6)
+    assert grd2._zcornsv.shape == (grd2.ncol + 1, grd2.nrow + 1, grd2.nlay + 1, 4)
+
+    assert (
+        benchmark_grid._actnumsv[
+            ijkrange[0] - 1 : ijkrange[1],
+            ijkrange[3] - 1 : ijkrange[2],
+            ijkrange[5] - 1 : ijkrange[4],
+        ].all()
+        == grd2._actnumsv.all()
+    )
+    assert (
+        benchmark_grid._zcornsv[
+            ijkrange[0] - 1 : ijkrange[1] + 1,
+            ijkrange[3] - 1 : ijkrange[2] + 1,
+            ijkrange[5] - 1 : ijkrange[4] + 1,
+        ].all()
+        == grd2._zcornsv.all()
+    )
+    assert (
+        benchmark_grid._coordsv[
+            ijkrange[0] - 1 : ijkrange[1] + 1,
+            ijkrange[3] - 1 : ijkrange[2] + 1,
+            ijkrange[5] - 1 : ijkrange[4] + 1,
+        ].all()
+        == grd2._coordsv.all()
+    )
+
+
+def test_hdf5_import(benchmark_grid, tmp_path):
+    fname = join(tmp_path, "reek_geo_grid2.compressed_h5")
+
+    benchmark_grid._zcornsv += 1.0
+
+    nlay = benchmark_grid.nlay
+    benchmark_grid._subgrids = OrderedDict({"1": range(1, nlay + 1)})
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    grd2.from_hdf(fna)
+
+    assert grd2._subgrids == OrderedDict({"1": range(1, nlay + 1)})
