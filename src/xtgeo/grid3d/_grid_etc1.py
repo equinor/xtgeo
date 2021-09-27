@@ -181,7 +181,7 @@ def get_dz(
     name: str = "dZ",
     flip: bool = True,
     asmasked: bool = True,
-    metric="z_projection",
+    metric="z projection",
 ) -> GridProperty:
     """Get average cell height (dz) as property.
 
@@ -226,7 +226,7 @@ def get_dz(
     )
 
 
-def get_dx(self, name="dX", asmasked=False, metric="horizontal_length"):
+def get_dx(self, name="dX", asmasked=False, metric="horizontal"):
     try:
         metric_fun = method_factory[metric]
     except KeyError as err:
@@ -258,7 +258,7 @@ def get_dx(self, name="dX", asmasked=False, metric="horizontal_length"):
     )
 
 
-def get_dy(self, name="dX", asmasked=False, metric="horizontal_length"):
+def get_dy(self, name="dX", asmasked=False, metric="horizontal"):
     try:
         metric_fun = method_factory[metric]
     except KeyError as err:
