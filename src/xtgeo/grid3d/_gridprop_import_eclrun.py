@@ -6,8 +6,8 @@ import numpy.ma as ma
 
 import xtgeo
 
-from . import _grid_eclbin_record as _eclbin
 from . import _grid3d_utils as utils
+from . import _grid_eclbin_record as _eclbin
 
 xtg = xtgeo.common.XTGeoDialog()
 
@@ -56,7 +56,7 @@ def _get_phase_key(inkey):
 def import_eclbinary(
     self, pfile, name=None, etype=1, date=None, grid=None, fracture=False, _kwlist=None
 ):
-
+    self._geometry = grid
     # if pfile is a file, then the file is opened/closed here; otherwise, the
     # "outer" routine must handle that
 

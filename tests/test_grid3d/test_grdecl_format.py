@@ -1,4 +1,5 @@
 # pylint: disable=no-member
+import logging
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -85,7 +86,8 @@ def test_read_long_keyword():
         "NOECHO\nPROP\n 1 2 3 4 -- a comment",
     ],
 )
-def test_read_prop_raises_error_when_no_forwardslash(undelimited_file_data):
+def test_read_prop_raises_error_when_no_forwardslash(undelimited_file_data, caplog):
+    caplog.set_level(logging.CRITICAL)
     with patch(
         "builtins.open", mock_open(read_data=undelimited_file_data)
     ) as mock_file:

@@ -41,6 +41,9 @@ def gridproperty_fromgrid(self, gridlike, linkgeometry=False, values=None):
     self._nrow = gridlike.nrow
     self._nlay = gridlike.nlay
 
+    if values is None:
+        values = np.ma.zeros(gridlike.dimensions)
+
     gridvalues_fromspec(self, values)
 
     if isinstance(gridlike, xtgeo.grid3d.Grid):
@@ -64,42 +67,28 @@ def gridproperty_fromgrid(self, gridlike, linkgeometry=False, values=None):
         )
 
 
+def defaultvalues(self, discrete):
+    if discrete:
+        values = np.ma.zeros(self.dimensions, dtype=np.int32)
+        values += 99
+        values[0:4, 0, 0:2] = xtgeo.UNDEF_INT
+    else:
+        values = np.ma.zeros(self.dimensions, dtype=np.float64)
+        values[0:4, 0, 0:2] = xtgeo.UNDEF
+    # make it masked
+    values = np.ma.masked_greater(values, xtgeo.UNDEF_LIMIT)
+    return values
+
+
 def gridvalues_fromspec(self, values):
     """Update or set values.
 
     Args:
         values: Values will be None, and array or a scalar
     """
-    defaultvalues = False
-    if values is None:
-        values = np.ma.zeros(self.dimensions)
-
-        if self.dimensions == (4, 3, 5):
-            # looks like default input values
-            values += 99
-            defaultvalues = True
-            self._isdiscrete = False
-
-    elif np.isscalar(values):
-        if isinstance(values, (float, int)):
-            dtype = np.float64
-            if self._isdiscrete:
-                dtype = np.int32
-                self._roxar_dtype = np.uint8
-            values = np.ma.zeros(self.dimensions, dtype=dtype) + values
-        else:
-            raise ValueError("Scalar input values of invalid type")
-
-    elif isinstance(values, np.ndarray):
-        values = np.ma.zeros(self.dimensions) + values.reshape(self.dimensions)
-
+    values = np.ma.array(values)
+    if np.issubdtype(values.dtype, np.integer):
+        values = values.astype(np.int32)
     else:
-        raise ValueError("Input values of invalid type")
-
-    self._values = values  # numpy version of properties (as 3D array)
-
-    if defaultvalues:
-        # make some undef cells (when in default values mode)
-        self._values[0:4, 0, 0:2] = xtgeo.UNDEF
-        # make it masked
-        self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
+        values = values.astype(np.float64)
+    self._values = values.reshape(self.dimensions)

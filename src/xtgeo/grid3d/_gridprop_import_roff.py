@@ -2,6 +2,7 @@
 
 
 import numpy as np
+
 import xtgeo
 
 from ._roff_parameter import RoffParameter
@@ -22,8 +23,7 @@ def import_roff(self, pfile, name):
     self._ncol = int(roff_param.nx)
     self._nrow = int(roff_param.ny)
     self._nlay = int(roff_param.nz)
-    self._isdiscrete = roff_param.is_discrete
-    self._undef = xtgeo.UNDEF_INT if self._isdiscrete else xtgeo.UNDEF
+    self._undef = xtgeo.UNDEF_INT if roff_param.is_discrete else xtgeo.UNDEF
     self._values = roff_param.xtgeo_values()
     self.dtype = self._values.dtype
 

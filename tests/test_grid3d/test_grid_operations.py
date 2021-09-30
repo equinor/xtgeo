@@ -5,10 +5,9 @@ from os.path import join
 
 import pytest
 
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
-from xtgeo.common import XTGeoDialog
 import tests.test_common.test_xtg as tsetup
+from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import Grid, GridProperty
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -44,6 +43,7 @@ def test_hybridgrid1(tmpdir, snapshot):
     logger.info("Convert...")
     nhdiv = 40
     newnlay = grd.nlay * 2 + nhdiv
+    print(grd.dataframe(activeonly=False))
     snapshot.assert_match(
         grd.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
         "grid_pre_hybrid.csv",

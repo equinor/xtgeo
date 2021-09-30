@@ -3,22 +3,25 @@
 
 
 import copy
-import numbers
 import hashlib
+import numbers
 import pathlib
 from types import FunctionType
-from typing import Optional, Union, Any
+from typing import Any, Optional, Union
+
 import numpy as np
 
 import xtgeo
 
+from . import (
+    _gridprop_etc,
+    _gridprop_export,
+    _gridprop_import,
+    _gridprop_lowlevel,
+    _gridprop_op1,
+    _gridprop_roxapi,
+)
 from ._grid3d import _Grid3D
-from . import _gridprop_etc
-from . import _gridprop_op1
-from . import _gridprop_import
-from . import _gridprop_roxapi
-from . import _gridprop_export
-from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -222,7 +225,6 @@ class GridProperty(_Grid3D):
         # instance attributes defaults:
         self._name = name
         self._date = date
-        self._isdiscrete = discrete
         self._geometry = grid
         self._fracture = fracture
         self._codes = dict() if codes is None else codes
@@ -258,15 +260,13 @@ class GridProperty(_Grid3D):
                     date=date,
                     fracture=fracture,
                 )
-
+        elif values is not None:
+            _gridprop_etc.gridvalues_fromspec(self, values)
         else:
             # make values
-            _gridprop_etc.gridvalues_fromspec(self, values)
+            self._values = _gridprop_etc.defaultvalues(self, discrete)
 
         self._metadata = xtgeo.MetaDataCPProperty()
-
-    def __del__(self):
-        logger.debug("DELETING property instance %s", self.name)
 
     def __repr__(self):
         myrp = (
@@ -353,21 +353,14 @@ class GridProperty(_Grid3D):
             myprop.isdiscrete = False
         """
 
-        return self._isdiscrete
+        return np.issubdtype(self.values.dtype, np.integer)
 
     @isdiscrete.setter
     def isdiscrete(self, flag):
-
-        if not isinstance(flag, bool):
-            raise ValueError("Input to {__name__} must be a bool")
-
-        if flag is self._isdiscrete:
-            pass
+        if flag:
+            self.continuous_to_discrete()
         else:
-            if flag is True and self._isdiscrete is False:
-                self.continuous_to_discrete()
-            else:
-                self.discrete_to_continuous()
+            self.discrete_to_continuous()
 
     @property
     def dtype(self):
@@ -394,7 +387,7 @@ class GridProperty(_Grid3D):
         msg = ""
         if self.isdiscrete:
             if dtype in allowedint:
-                self.values = self.values.astype(dtype)
+                self._values = self.values.astype(dtype)
             else:
                 okv = False
                 msg = "{}: Wrong input for dtype. Use one of {}!".format(
@@ -402,7 +395,7 @@ class GridProperty(_Grid3D):
                 )
         else:
             if dtype in allowedfloat:
-                self.values = self.values.astype(dtype)
+                self._values = self.values.astype(dtype)
             else:
                 okv = False
                 msg = "{}: Wrong input for dtype. Use one of {}!".format(
@@ -510,7 +503,7 @@ class GridProperty(_Grid3D):
         """Get the actual undef value for floats or ints
         numpy arrays (read only).
         """
-        if self._isdiscrete:
+        if self.isdiscrete:
             return xtgeo.UNDEF_INT
 
         return xtgeo.UNDEF
@@ -528,7 +521,7 @@ class GridProperty(_Grid3D):
         Undef limit values cannot be changed (read only).
 
         """
-        if self._isdiscrete:
+        if self.isdiscrete:
             return xtgeo.UNDEF_INT_LIMIT
 
         return xtgeo.UNDEF_LIMIT
@@ -586,10 +579,10 @@ class GridProperty(_Grid3D):
 
         """
 
-        currentmask = None
-        if self._values is not None:
-            if isinstance(self._values, np.ma.MaskedArray):
-                currentmask = np.ma.getmaskarray(self._values)
+        currentmask = False
+        if self._geometry is not None:
+            act = self._geometry.get_actnum(asmasked=True)
+            currentmask = np.ma.getmaskarray(act.values)
 
         if isinstance(invalues, numbers.Number):
             vals = np.ma.zeros((ncol, nrow, nlay), order="C", dtype=self.dtype)
@@ -619,12 +612,10 @@ class GridProperty(_Grid3D):
             values = np.asanyarray(values, order="C")
             values = np.ma.array(values, mask=mask, order="C")
 
-        # the self._isdiscrete property shall win over numpy dtype
-        if "int" in str(values.dtype) and not self._isdiscrete:
-            values = values.astype(np.float64)
-
-        if "float" in str(values.dtype) and self._isdiscrete:
+        if self.isdiscrete:
             values = values.astype(np.int32)
+        else:
+            values = values.astype(np.float64)
 
         return values
 
@@ -831,7 +822,7 @@ class GridProperty(_Grid3D):
         dsc.txt("Name", self.name)
         dsc.txt("Date", self.date)
         dsc.txt("File source", self._filesrc)
-        dsc.txt("Discrete status", self._isdiscrete)
+        dsc.txt("Discrete status", self.isdiscrete)
         dsc.txt("Codes", self._codes)
         dsc.txt("Shape: NCOL, NROW, NLAY", self.ncol, self.nrow, self.nlay)
         np.set_printoptions(threshold=16)
@@ -872,7 +863,7 @@ class GridProperty(_Grid3D):
         # this is a function, not a property by design
 
         if fill_value is None:
-            if self._isdiscrete:
+            if self.isdiscrete:
                 fvalue = xtgeo.UNDEF_INT
                 dtype = np.int32
             else:
@@ -922,7 +913,6 @@ class GridProperty(_Grid3D):
             vact = np.ma.masked_equal(vact, 0)
 
         act.values = vact.astype(np.int32)
-        act.isdiscrete = True
         act.codes = {0: "0", 1: "1"}
 
         # return the object
@@ -978,7 +968,6 @@ class GridProperty(_Grid3D):
 
         xprop.geometry = self._geometry
         xprop.codes = copy.deepcopy(self._codes)
-        xprop.isdiscrete = self._isdiscrete
         xprop.date = self._date
         xprop.roxorigin = self._roxorigin
         xprop.roxar_dtype = self._roxar_dtype
@@ -989,7 +978,7 @@ class GridProperty(_Grid3D):
 
     def mask_undef(self):
         """Make UNDEF values masked."""
-        if self._isdiscrete:
+        if self.isdiscrete:
             self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_INT_LIMIT)
         else:
             self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
@@ -1095,7 +1084,6 @@ class GridProperty(_Grid3D):
             val = self._values.copy()
             val = val.astype("float64")
             self._values = val
-            self._isdiscrete = False
             self._codes = {}
             self._roxar_dtype = np.float32
         else:
@@ -1109,7 +1097,6 @@ class GridProperty(_Grid3D):
             val = self._values.copy()
             val = val.astype(np.int32)
             self._values = val
-            self._isdiscrete = True
 
             # make the code list
             uniq = np.unique(val).tolist()

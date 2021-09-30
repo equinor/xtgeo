@@ -49,12 +49,16 @@ def _get_gridprop_data(
         roxgrid = rox.project.grid_models[gname]
         roxprop = roxgrid.properties[pname]
 
-        if str(roxprop.type) in ("discrete", "body_facies"):
-            self._isdiscrete = True
-
         self._roxorigin = True
         _convert_to_xtgeo_prop(
-            self, rox, pname, roxgrid, roxprop, realisation, faciescodes
+            self,
+            rox,
+            pname,
+            roxgrid,
+            roxprop,
+            realisation,
+            faciescodes,
+            str(roxprop.type) in ("discrete", "body_facies"),
         )
 
     except KeyError as keyerror:
@@ -62,7 +66,7 @@ def _get_gridprop_data(
 
 
 def _convert_to_xtgeo_prop(
-    self, rox, pname, roxgrid, roxprop, realisation, faciescodes
+    self, rox, pname, roxgrid, roxprop, realisation, faciescodes, isdiscrete
 ):  # pragma: no cover
     """Collect numpy array and convert to XTGeo internal format."""
     indexer = roxgrid.get_grid(realisation=realisation).grid_indexer
@@ -81,7 +85,7 @@ def _convert_to_xtgeo_prop(
 
     self._roxar_dtype = pvalues.dtype
 
-    if self._isdiscrete:
+    if isdiscrete:
         mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
         mybuffer.fill(xtgeo.UNDEF_INT)
     else:
@@ -98,7 +102,7 @@ def _convert_to_xtgeo_prop(
 
     mybuffer[iind, jind, kind] = pvalues[cellno]
 
-    if self._isdiscrete:
+    if isdiscrete:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_INT_LIMIT)
     else:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_LIMIT)
@@ -106,7 +110,7 @@ def _convert_to_xtgeo_prop(
     self._values = mybuffer
     self._name = pname
 
-    if self._isdiscrete:
+    if isdiscrete:
         self.codes = _fix_codes(self, roxprop.code_names)
         logger.info("Fixed codes: %s", self.codes)
 

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import math
-import pytest
+
 import numpy as np
+import pytest
 
 import xtgeo
 import xtgeo.common.calc as xcalc

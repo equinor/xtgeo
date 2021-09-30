@@ -1507,7 +1507,6 @@ class Grid(_Grid3D):
         ixc, jyc, kzc = _grid_etc1.get_ijk(
             self, names=names, asmasked=asmasked, zerobased=zerobased
         )
-
         # return the objects
         return ixc, jyc, kzc
 

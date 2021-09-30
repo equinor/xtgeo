@@ -5,19 +5,16 @@
 import os
 import pathlib
 
-import pytest
-
 import numpy as np
 import numpy.ma as npma
-
-import xtgeo
-from xtgeo.xyz import Polygons
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
-from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import KeywordNotFoundError
+import pytest
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import KeywordNotFoundError
+from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.xyz import Polygons
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name

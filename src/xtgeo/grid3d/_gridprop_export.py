@@ -2,6 +2,7 @@
 import json
 import struct
 
+import ecl_data_io as eclio
 import numpy as np
 import roffio
 
@@ -74,67 +75,29 @@ def export_roff(self, pfile, name, binary=True):
 
 
 def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt=None):
+    if binary:
+        mode = "wb"
+        if append:
+            mode += "a"
 
-    logger.info("Exporting %s to file %s, GRDECL format", name, pfile)
-
-    if dtype is None:
-        if self._isdiscrete:
-            dtype = "int32"
-        else:
-            dtype = "float32"
-
-    carray = _gridprop_lowlevel.update_carray(self, dtype=dtype)
-
-    usefmt = " %13.4f"
-    if fmt is not None:
-        usefmt = " {}".format(fmt)
-
-    iarr = _cxtgeo.new_intpointer()
-    farr = _cxtgeo.new_floatpointer()
-    darr = _cxtgeo.new_doublepointer()
-
-    if "double" in str(carray):
-        ptype = 3
-        darr = carray
-        if fmt is None:
-            usefmt = " %e"
-
-    elif "float" in str(carray):
-        ptype = 2
-        farr = carray
-        if fmt is None:
-            usefmt = " %e"
+        with open(pfile, mode) as fh:
+            if self.isdiscrete:
+                eclio.write(fh, [(self.name, self.values.asdtype(np.int32))])
+            else:
+                eclio.write(fh, [(self.name, self.values.asdtype(np.float32))])
 
     else:
-        ptype = 1
-        iarr = carray
-        if fmt is None:
-            usefmt = " %d"
-
-    mode = 0
-    if not binary:
-        mode = 1
-
-    appendmode = 0
-    if append:
-        appendmode = 1
-
-    _cxtgeo.grd3d_export_grdeclprop2(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        ptype,
-        iarr,
-        farr,
-        darr,
-        name,
-        usefmt,
-        pfile,
-        mode,
-        appendmode,
-    )
-
-    _gridprop_lowlevel.delete_carray(self, carray)
+        mode = "wt"
+        if append:
+            mode += "a"
+        with open(pfile, mode) as fh:
+            fh.write(self.name)
+            fh.write("\n")
+            for v, i in enumerate(self.values):
+                fh.write(" ")
+                fh.write(v)
+                if i % 6 == 5:
+                    fh.write("\n")
 
 
 def export_xtgcpprop(self, mfile):

@@ -40,15 +40,12 @@ def update_values_from_carray(self, carray, dtype, delete=False):
 
     nv = self.ntotal
 
-    self._isdiscrete = False
-
     if dtype == np.float64:
         logger.info("Entering conversion to numpy (float64) ...")
         values1d = _cxtgeo.swig_carr_to_numpy_1d(nv, carray)
     else:
         logger.info("Entering conversion to numpy (int32) ...")
         values1d = _cxtgeo.swig_carr_to_numpy_i1d(nv, carray)
-        self._isdiscrete = True
 
     values = np.reshape(values1d, (self._ncol, self._nrow, self._nlay), order="F")
 
@@ -73,7 +70,7 @@ def update_carray(self, undef=None, discrete=None, dtype=None, order="F"):
     carray will be in Fortran order, unless order is specified as 'C'
     """
 
-    dstatus = self._isdiscrete
+    dstatus = self.isdiscrete
     if discrete is not None:
         dstatus = bool(discrete)
 
