@@ -2,13 +2,12 @@
 import json
 import struct
 
+import ecl_data_io as eclio
 import numpy as np
 import roffio
 
 import xtgeo
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import _gridprop_lowlevel
 
 from ._roff_parameter import RoffParameter
 
@@ -70,71 +69,44 @@ def export_roff(self, pfile, name, binary=True):
     roff_param.to_file(pfile, roff_format)
 
 
-# Export ascii or binary GRDECL
-
-
 def export_grdecl(self, pfile, name, append=False, binary=False, dtype=None, fmt=None):
+    """Export ascii or binary GRDECL"""
+    vals = self.values.ravel(order="F")
+    if np.ma.isMaskedArray(vals):
+        vals = np.ma.filled(vals, self.undef)
 
-    logger.info("Exporting %s to file %s, GRDECL format", name, pfile)
+    if binary:
+        mode = "wb"
+        if append:
+            mode = "ab"
 
-    if dtype is None:
-        if self._isdiscrete:
-            dtype = "int32"
-        else:
-            dtype = "float32"
-
-    carray = _gridprop_lowlevel.update_carray(self, dtype=dtype)
-
-    usefmt = " %13.4f"
-    if fmt is not None:
-        usefmt = " {}".format(fmt)
-
-    iarr = _cxtgeo.new_intpointer()
-    farr = _cxtgeo.new_floatpointer()
-    darr = _cxtgeo.new_doublepointer()
-
-    if "double" in str(carray):
-        ptype = 3
-        darr = carray
-        if fmt is None:
-            usefmt = " %e"
-
-    elif "float" in str(carray):
-        ptype = 2
-        farr = carray
-        if fmt is None:
-            usefmt = " %e"
+        with open(pfile, mode) as fh:
+            if dtype is not None:
+                eclio.write(fh, [(name.ljust(8), vals.astype(dtype))])
+            elif self.isdiscrete:
+                eclio.write(fh, [(name.ljust(8), vals.astype(np.int32))])
+            else:
+                eclio.write(fh, [(name.ljust(8), vals.astype(np.float32))])
 
     else:
-        ptype = 1
-        iarr = carray
-        if fmt is None:
-            usefmt = " %d"
+        mode = "w"
+        if append:
+            mode = "a"
+        with open(pfile, mode) as fh:
+            fh.write(name)
+            fh.write("\n")
+            for i, v in enumerate(vals):
+                fh.write(" ")
+                if fmt:
+                    fh.write(fmt % v)
+                elif self.isdiscrete:
+                    fh.write(str(v))
+                else:
+                    fh.write("{:3e}".format(v))
+                if i % 6 == 5:
+                    fh.write("\n")
 
-    mode = 0
-    if not binary:
-        mode = 1
-
-    appendmode = 0
-    if append:
-        appendmode = 1
-
-    _cxtgeo.grd3d_export_grdeclprop2(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        ptype,
-        iarr,
-        farr,
-        darr,
-        name,
-        usefmt,
-        pfile,
-        mode,
-        appendmode,
-    )
-
-    _gridprop_lowlevel.delete_carray(self, carray)
+            fh.write(" /\n")
 
 
 def export_xtgcpprop(self, mfile):

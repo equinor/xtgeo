@@ -715,3 +715,54 @@ def test_gridprop_init_roxar_dtype():
     assert GridProperty(discrete=False).roxar_dtype == np.float32
     with pytest.raises(ValueError, match="roxar_dtype"):
         GridProperty(roxar_dtype=np.int64)
+
+
+@pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
+def test_gridprop_export_actnum(fformat, tmp_path):
+    grid = Grid(TESTFILE5)
+    actnum = grid.get_actnum(asmasked=True)
+
+    filepath = tmp_path / "actnum.DATA"
+    actnum.to_file(filepath, fformat=fformat)
+
+    actnum2 = xtgeo.gridproperty_from_file(
+        filepath, name="ACTNUM", fformat=fformat, grid=grid
+    )
+    if fformat == "grdecl":
+        actnum2.isdiscrete = True
+
+    assert actnum.values.tolist() == actnum2.values.tolist()
+
+
+@pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
+def test_gridprop_export_actnum_append(fformat, tmp_path):
+    grid = Grid(TESTFILE5)
+    actnum = grid.get_actnum(asmasked=True)
+
+    filepath = tmp_path / "actnum.DATA"
+    actnum.to_file(filepath, name="ACTNUM2", fformat=fformat)
+    actnum.to_file(filepath, name="ACTNUM3", append=True, fformat=fformat)
+
+    actnum2 = xtgeo.gridproperty_from_file(
+        filepath, name="ACTNUM2", fformat=fformat, grid=grid
+    )
+    actnum3 = xtgeo.gridproperty_from_file(
+        filepath, name="ACTNUM3", fformat=fformat, grid=grid
+    )
+
+    if fformat == "grdecl":
+        actnum2.isdiscrete = True
+        actnum3.isdiscrete = True
+
+    assert actnum.values.tolist() == actnum2.values.tolist()
+    assert actnum2.values.tolist() == actnum3.values.tolist()
+
+
+def test_gridprop_export_bgrdecl_double(tmp_path):
+    grid = Grid(TESTFILE5)
+    actnum = grid.get_actnum(asmasked=True)
+
+    actnum.to_file(tmp_path / "actnum.DATA", fformat="bgrdecl", dtype=np.float64)
+
+    with open(tmp_path / "actnum.DATA", "rb") as fh:
+        assert b"DOUB" in fh.read()
