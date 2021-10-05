@@ -178,26 +178,6 @@ def test_surf_import_petromod_bin(bytestring, mx, expected_msg):
         _cxtgeo.surf_import_petromod_bin(gfile.get_cfhandle(), 1, 0.0, mx, 2, 4)
 
 
-def test_grd3d_export_grdeclprop_no_file(unreadable_file):
-    with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
-        # The input here is not very important, what is important
-        # is that "existing_file" can not be opened.
-        _cxtgeo.grd3d_export_grdeclprop2(
-            1,
-            1,
-            1,
-            1,
-            _cxtgeo.new_intpointer(),
-            _cxtgeo.new_floatpointer(),
-            _cxtgeo.new_doublepointer(),
-            "name",
-            " %d",
-            unreadable_file,
-            1,
-            0,
-        )
-
-
 def test_surf_sample_grd3d_lay():
     with pytest.raises(
         xtgeo.XTGeoCLibError,

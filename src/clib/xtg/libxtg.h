@@ -1225,20 +1225,6 @@ grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int o
 int
 grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
 
-void
-grd3d_export_grdeclprop2(int nx,
-                         int ny,
-                         int nz,
-                         int ptype,
-                         int *p_iprop_v,
-                         float *p_fprop_v,
-                         double *p_dprop_v,
-                         char *pname,
-                         char *fmt,
-                         char *filename,
-                         int mode,
-                         int flag);
-
 int
 grd3d_conv_grid_roxapi(int ncol,
                        int nrow,
