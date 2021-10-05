@@ -35,8 +35,6 @@ TPATH = xtg.testpathobj
 
 TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
 TESTFILE2 = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
-# TESTFILE3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
-# TESTFILE4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 TESTFILE5 = TPATH / "3dgrids/reek/REEK.EGRID"
 TESTFILE6 = TPATH / "3dgrids/reek/REEK.INIT"
 TESTFILE7 = TPATH / "3dgrids/reek/REEK.UNRST"
@@ -717,19 +715,3 @@ def test_gridprop_init_roxar_dtype():
     assert GridProperty(discrete=False).roxar_dtype == np.float32
     with pytest.raises(ValueError, match="roxar_dtype"):
         GridProperty(roxar_dtype=np.int64)
-
-
-# def test_get_xy_values_for_webportal_bri():
-#     """Get lists on webportal format, small BRILLIG case"""
-
-#     # Upps, work with this case and UNDEf cells are non-existing
-#     # in GRID input!
-
-#     grid = Grid(TESTFILE3)
-#     prop = GridProperty(TESTFILE4, grid=grid, name='PORO')
-
-#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
-
-#     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
-#     # assert coord[0][0][0] == (454.875, 318.5)
-#     # assert valuelist[0][0] == -999.0
