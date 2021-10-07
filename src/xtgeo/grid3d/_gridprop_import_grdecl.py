@@ -14,13 +14,13 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_bgrdecl_prop(self, pfile, name="unknown", grid=None):
+def import_bgrdecl_prop(self, pfile, name, grid):
     """Import prop for binary files with GRDECL layout.
 
     Args:
         pfile (_XTgeoCFile): xtgeo file instance
-        name (str, optional): Name of parameter. Defaults to "unknown".
-        grid (Grid(), optional): XTGeo Grid instance. Defaults to None.
+        name (str): Name of parameter.
+        grid (Grid()): XTGeo Grid instance.
 
     Raises:
         xtgeo.KeywordNotFoundError: Cannot find property...
@@ -89,12 +89,8 @@ def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
     return np.ascontiguousarray(f_order_values.reshape(dimensions, order="F"))
 
 
-def import_grdecl_prop(self, pfile, name="unknown", grid=None):
+def import_grdecl_prop(self, pfile, name, grid):
     """Read a GRDECL ASCII property record"""
-
-    if grid is None:
-        raise ValueError("A grid instance is required as argument")
-
     self._ncol = grid.ncol
     self._nrow = grid.nrow
     self._nlay = grid.nlay
