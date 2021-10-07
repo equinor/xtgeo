@@ -293,24 +293,6 @@ def test_gridprop_ecl_run_empty_files():
         )
 
 
-def test_gridprop_ecl_run_missing_parameters():
-    with pytest.raises(ValueError, match="grid is required"):
-        xtgeo.gridproperty_from_file(
-            io.BytesIO(),
-            fformat="init",
-            name="PROP",
-        )
-    with pytest.raises(ValueError, match="grid is required"):
-        xtgeo.gridproperty_from_file(
-            io.BytesIO(),
-            fformat="unrst",
-            name="PROP",
-            date=19991231,
-        )
-    with pytest.raises(ValueError, match="no date is given"):
-        xtgeo.gridproperty_from_file(io.BytesIO(), fformat="unrst", grid=xtgeo.Grid())
-
-
 @dataclass
 class EclRun:
     grid: xtgeo.Grid

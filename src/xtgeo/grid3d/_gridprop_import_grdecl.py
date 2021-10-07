@@ -14,7 +14,7 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_bgrdecl_prop(self, pfile, name, grid):
+def import_bgrdecl_prop(pfile, name, grid):
     """Import prop for binary files with GRDECL layout.
 
     Args:
@@ -25,31 +25,32 @@ def import_bgrdecl_prop(self, pfile, name, grid):
     Raises:
         xtgeo.KeywordNotFoundError: Cannot find property...
     """
-    self._ncol = grid.ncol
-    self._nrow = grid.nrow
-    self._nlay = grid.nlay
-    self._name = name
-    self._filesrc = pfile
+    result = dict()
+    result["ncol"] = grid.ncol
+    result["nrow"] = grid.nrow
+    result["nlay"] = grid.nlay
+    result["name"] = name
+    result["filesrc"] = pfile
 
     for entry in eclio.lazy_read(pfile.file):
         if match_keyword(entry.read_keyword(), name):
             values = entry.read_array()
-            self._isdiscrete = np.issubdtype(values.dtype, np.integer)
-            if self._isdiscrete:
+            result["discrete"] = np.issubdtype(values.dtype, np.integer)
+            if result["discrete"]:
                 uniq = np.unique(values).tolist()
                 codes = dict(zip(uniq, uniq))
                 codes = {key: str(val) for key, val in codes.items()}  # val: strings
-                self.codes = codes
+                result["codes"] = codes
                 values = values.astype(np.int32)
-                self.roxar_dtype = np.uint16
+                result["roxar_dtype"] = np.uint16
             else:
                 values = values.astype(np.float64)
-                self.codes = {}
-                self.roxar_dtype = np.float32
-            self.values = ma.masked_where(
+                result["codes"] = {}
+                result["roxar_dtype"] = np.float32
+            result["values"] = ma.masked_where(
                 grid.get_actnum().values < 1, values.reshape(grid.dimensions, order="F")
             )
-            return
+            return result
 
     raise xtgeo.KeywordNotFoundError(
         "Cannot find property name {} in file {}".format(name, pfile.name)
@@ -89,15 +90,17 @@ def read_grdecl_3d_property(filename, keyword, dimensions, dtype=float):
     return np.ascontiguousarray(f_order_values.reshape(dimensions, order="F"))
 
 
-def import_grdecl_prop(self, pfile, name, grid):
+def import_grdecl_prop(pfile, name, grid):
     """Read a GRDECL ASCII property record"""
-    self._ncol = grid.ncol
-    self._nrow = grid.nrow
-    self._nlay = grid.nlay
-    self._name = name
-    self._filesrc = pfile
+    result = dict()
+    result["ncol"] = grid.ncol
+    result["nrow"] = grid.nrow
+    result["nlay"] = grid.nlay
+    result["name"] = name
+    result["filesrc"] = pfile
     actnumv = grid.get_actnum().values
 
-    self.values = ma.masked_where(
-        actnumv == 0, read_grdecl_3d_property(pfile.file, name, self.dimensions, float)
+    result["values"] = ma.masked_where(
+        actnumv == 0, read_grdecl_3d_property(pfile.file, name, grid.dimensions, float)
     )
+    return result

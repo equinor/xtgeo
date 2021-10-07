@@ -385,33 +385,30 @@ def gridprop_params(values, name, date, grid, fracture):
     result["ncol"], result["nrow"], result["nlay"] = grid.dimensions
     result["dualporo"] = grid.dualporo
     result["dualperm"] = grid.dualperm
-    result["roxorigin"] = False
 
     result["values"] = make_gridprop_values(values, grid, fracture)
 
     if np.issubdtype(result["values"].dtype, np.integer):
-        result["undef"] = xtgeo.UNDEF_INT
         uniq = np.unique(values).tolist()
         codes = dict(zip(uniq, uniq))
         codes = {key: str(val) for key, val in codes.items()}
         result["codes"] = codes
         result["values"] = result["values"].astype(np.int32)
-        result["isdiscrete"] = True
+        result["discrete"] = True
     else:
         result["codes"] = dict()
         result["values"] = result["values"].astype(np.float64)
-        result["undef"] = xtgeo.UNDEF
-        result["isdiscrete"] = False
+        result["discrete"] = False
     return result
 
 
-def import_gridprop_from_init_file(
+def find_gridprop_from_init_file(
     init_filelike,
     names: Union[List[str], Literal["all"]],
     grid,
     fracture: bool = False,
 ) -> List[Dict]:
-    """Imports list of parameters from an ecl init file.
+    """Finds all parameters in a init matching names.
 
     Note: Does not check that all names are found.
 
@@ -474,14 +471,14 @@ def section_generator(generator):
             return
 
 
-def import_gridprops_from_restart_file_sections(
+def find_gridprops_from_restart_file_sections(
     sections,
     names: Union[List[str], Literal["all"]],
     dates: Union[List[int], Literal["all", "last", "first"], List[str]],
     grid,
     fracture: bool = False,
 ) -> List[Dict]:
-    """Imports list of parameters from an sections generator.
+    """Finds list of parameters from an sections generator.
 
     See :meth:`section_generator` for suitable input generator.
 
@@ -536,15 +533,17 @@ def import_gridprops_from_restart_file_sections(
     return list(read_properties.values())
 
 
-def import_gridprops_from_restart_file(
+def find_gridprops_from_restart_file(
     restart_filelike,
     names: Union[List[str], Literal["all"]],
-    dates: Union[int, Literal["all", "first", "last"]],
+    dates: Union[List[int], Literal["all", "first", "last"], List[str]],
     grid,
     fracture: bool = False,
-    fformat="unrst",
+    fformat: eclio.Format = eclio.Format.UNFORMATTED,
 ) -> List[Dict]:
-    """Imports list of parameters from a restart file.
+    """Finds all parameters in a restart file matching the given names and dates.
+
+    Note: Does not check that all names are found.
 
     Args:
         restart_filelike: The restart file.
@@ -552,7 +551,7 @@ def import_gridprops_from_restart_file(
             be set to "all" to import all parameters.
         dates: List of xtgeo style dates (e.g. int(19990101)), can also
             be "all", "last" and "first".
-        grid: The grid used by the simulator to produce the init file.
+        grid: The grid used by the simulator to produce the restart file.
         fracture: If a dual porosity module, indicates that the fracture
             (as apposed to the matrix) grid property should be imported.
     Returns:
@@ -560,10 +559,10 @@ def import_gridprops_from_restart_file(
     """
     close = False
     try:
-        if fformat == "unrst":
+        if fformat == eclio.Format.UNFORMATTED:
             filehandle = open(restart_filelike, "rb")
             close = True
-        elif fformat == "funrst":
+        elif fformat == eclio.Format.FORMATTED:
             filehandle = open(restart_filelike, "rt")
             close = True
         else:
@@ -572,7 +571,7 @@ def import_gridprops_from_restart_file(
         filehandle = restart_filelike
         close = False
     generator = section_generator(filter_lgr(eclio.lazy_read(filehandle)))
-    read_properties = import_gridprops_from_restart_file_sections(
+    read_properties = find_gridprops_from_restart_file_sections(
         generator,
         names,
         dates,
@@ -583,3 +582,120 @@ def import_gridprops_from_restart_file(
     if close:
         filehandle.close()
     return read_properties
+
+
+def import_gridprop_from_init(pfile, name, grid, fracture=False):
+    """Import one parameter with the given name from an init file.
+
+    Args:
+        pfile: The init file.
+        name: The name of the parmaeter
+        grid: The grid used by the simulator to produce the init file.
+        fracture: If a dual porosity module, indicates that the fracture
+            (as apposed to the matrix) grid property should be imported.
+    Raises:
+        ValueError: If the parameter does not exist in the file.
+    Returns:
+        GridProperty parameter dictionary.
+    """
+    init_props = find_gridprop_from_init_file(pfile.file, [name], grid, fracture)
+    if len(init_props) != 1:
+        raise ValueError(f"Could not find property {name} in {pfile}")
+    init_props[0]["name"] = decorate_name(
+        init_props[0]["name"], grid.dualporo, fracture
+    )
+    return init_props[0]
+
+
+def sanitize_date(
+    date: Union[int, str, Literal["first", "last"]]
+) -> Union[List[int], Literal["first", "last"]]:
+    """
+    Converts dateformats of the form 'YYYY-MM-DD', 'YYYYMMDD' or YYYYMMDD to
+    list of integers of the form [YYYYMMDD] (ie. suitible for find_gridprops
+    functions), but lets the special literals 'first' and 'last' remain
+    unchanged.
+
+    >>> sanitize_date('first')
+    'first'
+    >>> sanitize_date('last')
+    'last'
+    >>> sanitize_date('2020-01-01')
+    [20200101]
+    >>> sanitize_date('20200101')
+    [20200101]
+    >>> sanitize_date(20200101)
+    [20200101]
+    """
+    if isinstance(date, int):
+        return [date]
+    if date not in ("first", "last"):
+        try:
+            if isinstance(date, str):
+                if len(date) == 10 and date[4] == "-" and date[7] == "-":
+                    date = date.replace("-", "")
+            return [int(date)]
+        except ValueError as err:
+            raise ValueError(
+                "valid dates are either of the "
+                "form 'YYYY-MM-DD', 'YYYYMMDD' or 'first'/'last' "
+                f"got {date}"
+            ) from err
+    return date
+
+
+def sanitize_fformat(fformat: Literal["unrst", "funrst"]) -> eclio.Format:
+    """Converts 'unrst' and 'funrst' to the corresponding eclio.Format.
+
+    >>> sanitize_fformat('unrst')
+    <Format.UNFORMATTED: 2>
+    >>> sanitize_fformat('funrst')
+    <Format.FORMATTED: 1>
+    """
+    if fformat == "unrst":
+        return eclio.Format.UNFORMATTED
+    if fformat == "funrst":
+        return eclio.Format.FORMATTED
+    raise ValueError(f"fformat must be either 'unrst' or 'funrst' got {fformat}")
+
+
+def import_gridprop_from_restart(
+    pfile,
+    name: str,
+    grid,
+    date: Union[int, str, Literal["first", "last"]],
+    fracture: bool = False,
+    fformat: Literal["unrst", "funrst"] = "unrst",
+):
+    """Import one parameter for the given name and date in a restart file.
+
+    Args:
+        pfile: The restart file.
+        name: The name of the parmaeter
+        dates: xtgeo style date (e.g. int(19990101), "YYYYMMDD"), also
+            accepts "YYYY-MM-DD".  "last" and "first" can be given for
+            last or first date in the file
+        grid: The grid used by the simulator to produce the restart file.
+        fracture: If a dual porosity module, indicates that the fracture
+            (as apposed to the matrix) grid property should be imported.
+    Raises:
+        ValueError: If the parameter does not exist in the file.
+    Returns:
+        GridProperty parameter dictionary.
+    """
+    restart_props = find_gridprops_from_restart_file(
+        pfile.file,
+        [name],
+        sanitize_date(date),
+        grid,
+        fracture,
+        sanitize_fformat(fformat),
+    )
+    if len(restart_props) == 0:
+        raise ValueError(f"Could not find property {name} for {date} in {pfile.file}")
+    if len(restart_props) > 1:
+        raise ValueError(f"Ambiguous property {name} for {date} in {pfile.file}")
+    restart_props[0]["name"] = decorate_name(
+        restart_props[0]["name"], grid.dualporo, fracture, restart_props[0]["date"]
+    )
+    return restart_props[0]
