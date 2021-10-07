@@ -3,9 +3,12 @@
 
 
 import copy
+import functools
 import hashlib
+import io
 import numbers
 import pathlib
+import warnings
 from types import FunctionType
 from typing import Any, Optional, Union
 
@@ -15,13 +18,19 @@ import xtgeo
 
 from . import (
     _gridprop_export,
-    _gridprop_import,
     _gridprop_lowlevel,
     _gridprop_op1,
     _gridprop_roxapi,
     _gridprop_value_init,
 )
 from ._grid3d import _Grid3D
+from ._gridprop_import_eclrun import (
+    import_gridprop_from_init,
+    import_gridprop_from_restart,
+)
+from ._gridprop_import_grdecl import import_bgrdecl_prop, import_grdecl_prop
+from ._gridprop_import_roff import import_roff
+from ._gridprop_import_xtgcpprop import import_xtgcpprop
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -48,23 +57,34 @@ logger = xtg.functionlogger(__name__)
 # ======================================================================================
 
 
-def gridproperty_from_file(
-    pfile,
-    fformat="guess",
-    name="unknown",
-    grid=None,
-    gridlink=True,
-    date=None,
-    fracture=False,
-    ijrange=None,
-    zerobased=False,
-):
+def _data_reader_factory(fformat):
+    if fformat in ["roff_binary", "roff_ascii"]:
+        return import_roff
+    elif fformat in ["finit", "init"]:
+        return import_gridprop_from_init
+
+    elif fformat in ["funrst", "unrst"]:
+        return functools.partial(import_gridprop_from_restart, fformat=fformat)
+    elif fformat == "grdecl":
+        return import_grdecl_prop
+
+    elif fformat == "bgrdecl":
+        return import_bgrdecl_prop
+
+    elif fformat in ["xtg"]:
+        return import_xtgcpprop
+    else:
+        raise ValueError(f"Invalid grid property file format {fformat}")
+
+
+def gridproperty_from_file(*args, **kwargs):
     """Make a GridProperty instance directly from file import.
 
     For arguments, see :func:`GridProperty.from_file()`
 
     Args:
         pfile (str): Property file
+        args: See :func:`GridProperty.from_file()`
         kwargs: See :func:`GridProperty.from_file()`.
 
     Example::
@@ -72,21 +92,7 @@ def gridproperty_from_file(
         import xtgeo
         myporo = xtgeo.gridproperty_from_file('myporofile.roff')
     """
-
-    obj = GridProperty()
-    obj.from_file(
-        pfile,
-        fformat=fformat,
-        name=name,
-        grid=grid,
-        gridlink=gridlink,
-        date=date,
-        fracture=fracture,
-        ijrange=ijrange,
-        zerobased=zerobased,
-    )
-
-    return obj
+    return GridProperty._read_file(*args, **kwargs)
 
 
 def gridproperty_from_roxar(
@@ -102,17 +108,75 @@ def gridproperty_from_roxar(
         myporo = xtgeo.gridproperty_from_roxar(project, 'Geogrid', 'Poro')
 
     """
-    obj = GridProperty()
-    obj.from_roxar(
+    return GridProperty._read_roxar(
         project, gname, pname, realisation=realisation, faciescodes=faciescodes
     )
 
-    return obj
 
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of GridProperty and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Check if dummy values are to be used
+        if (
+            all(param not in kwargs for param in ["values", "ncol", "nrow", "nlay"])
+            and len(args) == 0
+        ):
+            warnings.warn(
+                "Default initialization of GridProperty without values and dimension "
+                "is deprecated and will be removed in xtgeo version 4.0",
+                DeprecationWarning,
+            )
+            return func(
+                self,
+                *args,
+                ncol=4,
+                nrow=3,
+                nlay=5,
+                values=_gridprop_value_init.gridproperty_dummy_values(
+                    kwargs.get("discrete", False)
+                ),
+                **kwargs,
+            )
 
-# ======================================================================================
-# GridProperty class
-# ======================================================================================
+        # Checking if we are doing an initialization
+        # from file and raise a deprecation warning if
+        # we are.
+        if "pfile" in kwargs or (
+            len(args) >= 1
+            and isinstance(args[0], (str, pathlib.Path, xtgeo._XTGeoFile))
+        ):
+            pfile = kwargs.get("pfile", args[0])
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "myprop = xtgeo.gridproperty_from_file('some_name.roff') instead",
+                DeprecationWarning,
+            )
+            fformat = kwargs.get("fformat", None)
+            mfile = xtgeo._XTGeoFile(pfile)
+            if fformat is None or fformat == "guess":
+                fformat = mfile.detect_fformat()
+            else:
+                fformat = mfile.generic_format_by_proposal(fformat)  # default
+
+            if "pfile" in kwargs:
+                del kwargs["pfile"]
+            if "fformat" in kwargs:
+                del kwargs["fformat"]
+            if len(args) >= 1 and isinstance(
+                args[0], (str, pathlib.Path, xtgeo._XTGeoFile)
+            ):
+                args = args[min(len(args), 2) :]
+
+            kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
+            kwargs["filesrc"] = mfile.file
+            return func(self, **kwargs)
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class GridProperty(_Grid3D):
@@ -141,10 +205,10 @@ class GridProperty(_Grid3D):
 
     """
 
+    @allow_deprecated_init
     def __init__(
         self,
-        pfile: Optional[Union[str, pathlib.Path, Any]] = None,
-        fformat: Optional[str] = "guess",
+        gridlike=None,
         ncol: Optional[int] = None,
         nrow: Optional[int] = None,
         nlay: Optional[int] = None,
@@ -159,6 +223,110 @@ class GridProperty(_Grid3D):
         dualperm: Optional[bool] = False,
         roxar_dtype: Optional[Any] = None,
         values: Optional[Union[np.ndarray, float, int]] = None,
+        roxorigin: bool = False,
+        filesrc: Optional[str] = None,
+    ):
+        """Instantating.
+
+            Args:
+                pfile: Input file-like or a Grid/GridProperty instance or leave blank.
+                fformat: File format input, default is ``guess``.
+                ncol: Number of columns (nx) defaults to 4.
+                nrow: Number of rows (ny) defaults to 3.
+                ncol: Number of layers (nz) defaults to 5.
+                name: Name of property.
+                discrete: True or False.
+                date: Date on YYYYMMDD form.
+                grid: Attached grid object
+                linkgeometry: If True, establish a link between GridProperty and Grid
+                fracture: True if fracture option (relevant for flow simulator data)
+                codes: Codes in case a discrete property e.g. {1: "Sand", 4: "Shale"}
+                dualporo: True if dual porosity system.
+                dualperm: True if dual porosity and dual permeability system.
+                roxar_dtype: Spesify roxar datatype e.g. np.uint8
+                values: Values to apply (will not be applied if a file-like is input)
+
+        Returns:
+            A GridProperty object instance.
+
+        Raises:
+            RuntimeError: if something goes wrong (e.g. file not found)
+
+        Examples::
+
+            from xtgeo.grid3d import GridProperty
+            myprop = GridProperty()
+            myprop.from_file('emerald.roff', name='PORO')
+
+            # or
+
+            values = np.ma.ones((12, 17, 10), dtype=np.float64),
+            myprop = GridProperty(ncol=12, nrow=17, nlay=10,
+                                  values=values, discrete=False,
+                                  name='MyValue')
+
+            # or
+
+            myprop = GridProperty('emerald.roff', name='PORO')
+
+            # or create properties from a Grid() instance
+
+            mygrid = Grid("grid.roff")
+            myprop1 = GridProperty(mygrid, name='PORO')
+            myprop2 = GridProperty(mygrid, name='FACIES', discrete=True, values=1,
+                                   linkgeometry=True)  # alternative 1
+            myprop2.geometry = mygrid  # alternative 2 to link grid geometry to property
+
+            # from Grid instance:
+            grd = Grid("somefile_grid_file")
+            myprop = GridProperty(grd, values=99, discrete=True)  # based on grd
+
+            # or from existing GridProperty instance:
+            myprop2 = GridProperty(myprop, values=99, discrete=False)  # based on myprop
+
+        """
+
+        super().__init__(ncol, nrow, nlay)
+
+        self._reset(
+            gridlike,
+            ncol,
+            nrow,
+            nlay,
+            name,
+            discrete,
+            date,
+            grid,
+            linkgeometry,
+            fracture,
+            codes,
+            dualporo,
+            dualperm,
+            roxar_dtype,
+            values,
+            roxorigin,
+            filesrc,
+        )
+
+    def _reset(
+        self,
+        gridlike=None,
+        ncol: Optional[int] = None,
+        nrow: Optional[int] = None,
+        nlay: Optional[int] = None,
+        name: Optional[str] = "unknown",
+        discrete: Optional[bool] = False,
+        date: Optional[str] = None,
+        grid: Optional[Any] = None,
+        linkgeometry: Optional[bool] = True,
+        fracture: Optional[bool] = False,
+        codes: Optional[dict] = None,
+        dualporo: Optional[bool] = False,
+        dualperm: Optional[bool] = False,
+        roxar_dtype: Optional[Any] = None,
+        values: Optional[Union[np.ndarray, float, int]] = None,
+        roxorigin: bool = False,
+        filesrc: Optional[str] = None,
     ):
         """Instantating.
 
@@ -238,8 +406,8 @@ class GridProperty(_Grid3D):
         self._dualporo = dualporo
         self._dualperm = dualperm
 
-        self._filesrc = None
-        self._roxorigin = False  # true if the object comes from the ROXAPI
+        self._filesrc = filesrc
+        self._roxorigin = roxorigin  # true if the object comes from the ROXAPI
         if roxar_dtype is None:
             if discrete:
                 self._roxar_dtype = np.uint8
@@ -251,32 +419,18 @@ class GridProperty(_Grid3D):
 
         self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
 
-        if isinstance(pfile, (str, pathlib.Path)):
-            self.from_file(
-                pfile,
-                fformat=fformat,
-                name=name,
-                grid=grid,
-                gridlink=linkgeometry,
-                date=date,
-                fracture=fracture,
-            )
-            self._check_dimensions_match(ncol, nrow, nlay)
-        else:
-            self._set_initial_dimensions(pfile, (ncol, nrow, nlay))
-            if all(x is None for x in [pfile, values, ncol, nrow, nlay]):
-                self._values = _gridprop_value_init.gridproperty_dummy_values(discrete)
-            else:
-                self._values = _gridprop_value_init.gridproperty_non_dummy_values(
-                    pfile, self.dimensions, values, discrete
-                )
+        self._set_initial_dimensions(gridlike, (ncol, nrow, nlay))
 
-        if isinstance(pfile, xtgeo.grid3d.Grid):
+        self._values = _gridprop_value_init.gridproperty_non_dummy_values(
+            gridlike, self.dimensions, values, discrete
+        )
+
+        if isinstance(gridlike, xtgeo.grid3d.Grid):
             if linkgeometry:
                 # assosiate this grid property with grid instance. This is not default
                 # since sunch links may affect garbish collection
-                self.geometry = pfile
-            pfile.append_prop(self)
+                self.geometry = gridlike
+            gridlike.append_prop(self)
 
         self._metadata = xtgeo.MetaDataCPProperty()
 
@@ -692,18 +846,7 @@ class GridProperty(_Grid3D):
     # Import and export
     # ==================================================================================
 
-    def from_file(
-        self,
-        pfile,
-        fformat=None,
-        name="unknown",
-        grid=None,
-        gridlink=True,
-        date=None,
-        fracture=False,
-        ijrange=None,
-        zerobased=False,
-    ):  # _roffapiv for devel.
+    def from_file(self, pfile, fformat=None, **kwargs):  # _roffapiv for devel.
         """
         Import grid property from file, and makes an instance of this class.
 
@@ -748,24 +891,31 @@ class GridProperty(_Grid3D):
 
         .. versionchanged:: 2.8 Added gridlink option, default is True
         """
-        pfile = xtgeo._XTGeoFile(pfile, mode="rb")
+        pfile = xtgeo._XTGeoFile(pfile)
+        if fformat is None or fformat == "guess":
+            fformat = pfile.detect_fformat()
+        else:
+            fformat = pfile.generic_format_by_proposal(fformat)  # default
+        kwargs = _data_reader_factory(fformat)(pfile, **kwargs)
+        kwargs["filesrc"] = pfile.file
+        self._reset(**kwargs)
+        return self
 
-        obj = _gridprop_import.from_file(
-            self,
-            pfile,
-            fformat=fformat,
-            name=name,
-            grid=grid,
-            date=date,
-            fracture=fracture,
-            ijrange=ijrange,
-            zerobased=zerobased,
-        )
-
-        if grid and gridlink:
-            grid.append_prop(self)
-
-        return obj
+    @classmethod
+    def _read_file(
+        cls,
+        pfile: Union[str, pathlib.Path, io.BytesIO, io.StringIO],
+        fformat: Optional[str] = None,
+        **kwargs,
+    ):
+        pfile = xtgeo._XTGeoFile(pfile)
+        if fformat is None or fformat == "guess":
+            fformat = pfile.detect_fformat()
+        else:
+            fformat = pfile.generic_format_by_proposal(fformat)  # default
+        kwargs = _data_reader_factory(fformat)(pfile, **kwargs)
+        kwargs["filesrc"] = pfile.file
+        return cls(**kwargs)
 
     def to_file(
         self, pfile, fformat="roff", name=None, append=False, dtype=None, fmt=None
@@ -833,10 +983,20 @@ class GridProperty(_Grid3D):
 
         """
 
-        self._filesrc = None
+        self._reset(
+            **_gridprop_roxapi.import_prop_roxapi(
+                projectname, gname, pname, realisation, faciescodes
+            )
+        )
 
-        _gridprop_roxapi.import_prop_roxapi(
-            self, projectname, gname, pname, realisation, faciescodes
+    @classmethod
+    def _read_roxar(
+        cls, projectname, gname, pname, realisation=0, faciescodes=False
+    ):  # pragma: no cover
+        return cls(
+            **_gridprop_roxapi.import_prop_roxapi(
+                projectname, gname, pname, realisation, faciescodes
+            )
         )
 
     def to_roxar(

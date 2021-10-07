@@ -1,8 +1,8 @@
 """GridProperty import function of xtgcpprop format."""
 
-from struct import unpack
 import json
 from collections import OrderedDict
+from struct import unpack
 
 import numpy as np
 
@@ -14,18 +14,16 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def import_xtgcpprop(self, mfile, ijrange=None, zerobased=False):
+def import_xtgcpprop(mfile, ijrange=None, zerobased=False):
     """Using pure python for experimental xtgcpprop import.
 
     Args:
-        self (obj): instance
         mfile (_XTGeoFile): Input file reference
         ijrange (list-like): List or tuple with 4 members [i_from, i_to, j_from, j_to]
             where cell indices are zero based (starts with 0)
         zerobased (bool): If ijrange basis is zero or one.
 
     """
-    #
     offset = 36
     with open(mfile.file, "rb") as fhandle:
         buf = fhandle.read(offset)
@@ -66,21 +64,19 @@ def import_xtgcpprop(self, mfile, ijrange=None, zerobased=False):
 
     reqattrs = xtgeo.MetaDataCPProperty.REQUIRED
 
+    result = dict()
     for myattr in reqattrs:
-        if "discrete" in myattr:
-            self._isdiscrete = req[myattr]
-        else:
-            setattr(self, "_" + myattr, req[myattr])
+        result[myattr] = req[myattr]
 
     if ijrange:
-        self._ncol = ncolnew
-        self._nrow = nrownew
+        result["ncol"] = ncolnew
+        result["nrow"] = nrownew
 
-    self._values = np.ma.masked_equal(
-        vals.reshape(self._ncol, self._nrow, self._nlay), self._undef
+    result["values"] = np.ma.masked_equal(
+        vals.reshape((result["ncol"], result["nrow"], result["nlay"])),
+        xtgeo.UNDEF_INT if result["discrete"] else xtgeo.UNDEF,
     )
-
-    self._metadata.required = self
+    return result
 
 
 def _import_xtgcpprop_partial(

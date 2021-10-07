@@ -1,8 +1,10 @@
+import pathlib
+
 import pytest
 from packaging import version
 
 import xtgeo
-from xtgeo import GridProperties
+from xtgeo import GridProperties, GridProperty
 from xtgeo import version as xtgeo_version
 
 
@@ -98,3 +100,14 @@ def test_gridprops_mask_warns(any_gridproperties):
         pytest.fail(reason="mask option should be removed")
     with pytest.warns(DeprecationWarning, match="mask"):
         any_gridproperties.get_actnum(mask=True)
+
+
+def test_gridproperty_deprecated_init(testpath):
+    with pytest.warns(DeprecationWarning, match="Default initialization"):
+        gp = GridProperty()
+        assert gp.ncol == 4
+        assert gp.nrow == 3
+        assert gp.nlay == 5
+
+    with pytest.warns(DeprecationWarning, match="from file name"):
+        GridProperty(pathlib.Path(testpath) / "3dgrids/bri/b_poro.roff", fformat="roff")

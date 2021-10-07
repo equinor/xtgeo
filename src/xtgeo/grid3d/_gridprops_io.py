@@ -8,8 +8,8 @@ import xtgeo
 from . import _grid3d_utils as utils
 from ._gridprop_import_eclrun import (
     decorate_name,
-    import_gridprop_from_init_file,
-    import_gridprops_from_restart_file,
+    find_gridprop_from_init_file,
+    find_gridprops_from_restart_file,
     valid_gridprop_lengths,
 )
 from .grid_property import GridProperty
@@ -106,7 +106,7 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
                     name,
                 )
 
-    results = import_gridprop_from_init_file(
+    results = find_gridprop_from_init_file(
         pfile.file,
         names=names,
         grid=grid,
@@ -196,7 +196,7 @@ def _import_ecl_output_v2_rsta(
                     validnamedatepairs,
                 )
 
-    results = import_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
     for result in results:
         prop = GridProperty()
 

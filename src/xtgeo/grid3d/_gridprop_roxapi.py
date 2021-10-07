@@ -23,21 +23,20 @@ VALID_ROXAR_DTYPES = [np.uint8, np.uint16, np.float32]
 
 
 def import_prop_roxapi(
-    self, project, gname, pname, realisation, faciescodes
+    project, gname, pname, realisation, faciescodes
 ):  # pragma: no cover
     """Import a Property via ROXAR API spec."""
     logger.info("Opening RMS project ...")
 
     rox = xtgeo.RoxUtils(project, readonly=True)
 
-    _get_gridprop_data(self, rox, gname, pname, realisation, faciescodes)
+    result = _get_gridprop_data(rox, gname, pname, realisation, faciescodes)
 
     rox.safe_close()
+    return result
 
 
-def _get_gridprop_data(
-    self, rox, gname, pname, realisation, faciescodes
-):  # pragma: no cover
+def _get_gridprop_data(rox, gname, pname, realisation, faciescodes):  # pragma: no cover
     # inside a RMS project
 
     if gname not in rox.project.grid_models:
@@ -46,27 +45,26 @@ def _get_gridprop_data(
         raise ValueError("No property in {} with name {}".format(gname, pname))
 
     try:
-        roxgrid = rox.project.grid_models[gname]
-        roxprop = roxgrid.properties[pname]
-
-        if str(roxprop.type) in ("discrete", "body_facies"):
-            self._isdiscrete = True
-
-        self._roxorigin = True
-        _convert_to_xtgeo_prop(
-            self, rox, pname, roxgrid, roxprop, realisation, faciescodes
-        )
-
+        return _convert_to_xtgeo_prop(rox, gname, pname, realisation, faciescodes)
     except KeyError as keyerror:
-        raise RuntimeError(keyerror)
+        raise RuntimeError(keyerror) from keyerror
 
 
 def _convert_to_xtgeo_prop(
-    self, rox, pname, roxgrid, roxprop, realisation, faciescodes
+    rox, gname, pname, realisation, faciescodes
 ):  # pragma: no cover
-    """Collect numpy array and convert to XTGeo internal format."""
+    result = dict()
+    roxgrid = rox.project.grid_models[gname]
+    roxprop = roxgrid.properties[pname]
+
+    if str(roxprop.type) in ("discrete", "body_facies"):
+        result["discrete"] = True
+    else:
+        result["discrete"] = False
+
+    result["roxorigin"] = True
     indexer = roxgrid.get_grid(realisation=realisation).grid_indexer
-    self._ncol, self._nrow, self._nlay = indexer.dimensions
+    result["ncol"], result["nrow"], result["nlay"] = indexer.dimensions
 
     if rox.version_required("1.3"):
         logger.info(indexer.ijk_handedness)
@@ -79,9 +77,9 @@ def _convert_to_xtgeo_prop(
         fmap = roxprop.get_facies_map(realisation=realisation)
         pvalues = fmap[pvalues]  # numpy magics
 
-    self._roxar_dtype = pvalues.dtype
+    result["roxar_dtype"] = pvalues.dtype
 
-    if self._isdiscrete:
+    if result["discrete"]:
         mybuffer = np.ndarray(indexer.dimensions, dtype=np.int32)
         mybuffer.fill(xtgeo.UNDEF_INT)
     else:
@@ -98,17 +96,20 @@ def _convert_to_xtgeo_prop(
 
     mybuffer[iind, jind, kind] = pvalues[cellno]
 
-    if self._isdiscrete:
+    if result["discrete"]:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_INT_LIMIT)
     else:
         mybuffer = ma.masked_greater(mybuffer, xtgeo.UNDEF_LIMIT)
 
-    self._values = mybuffer
-    self._name = pname
+    result["values"] = mybuffer
+    result["name"] = pname
 
-    if self._isdiscrete:
-        self.codes = _fix_codes(self, roxprop.code_names)
-        logger.info("Fixed codes: %s", self.codes)
+    if result["discrete"]:
+        result["codes"] = _fix_codes(
+            result["values"].reshape(-1).compressed(), roxprop.code_names
+        )
+        logger.info("Fixed codes: %s", result["codes"])
+    return result
 
 
 def export_prop_roxapi(
@@ -185,14 +186,14 @@ def _store_in_roxar(self, pname, roxgrid, realisation, casting):  # pragma: no c
         rprop.code_names = self.codes.copy()
 
 
-def _fix_codes(self, codes):  # pragma: no cover
+def _fix_codes(active_values, codes):  # pragma: no cover
     """Roxar may provide a code list with empty strings values, fix this issue here.
 
     Roxar may also interpolate code values which are actually not present in the
     property. Here, the presence of actual codes is also checked.
     """
     newcodes = {}
-    codes_data = {val: str(val) for val in np.unique(self.get_active_npvalues1d())}
+    codes_data = {val: str(val) for val in np.unique(active_values)}
 
     for code, name in codes.items():
         if not isinstance(code, int):

@@ -39,8 +39,7 @@ def grid_properties(draw, name=keywords, grid=xtgeo_grids):
             )
         )
         gp = GridProperty(
-            None,
-            "guess",
+            grid,
             *dims,
             draw(name),
             discrete=is_discrete,
@@ -54,8 +53,7 @@ def grid_properties(draw, name=keywords, grid=xtgeo_grids):
     else:
         values = draw(arrays(shape=dims, dtype=np.float64, elements=finites))
         return GridProperty(
-            None,
-            "guess",
+            grid,
             *dims,
             draw(name),
             discrete=is_discrete,
