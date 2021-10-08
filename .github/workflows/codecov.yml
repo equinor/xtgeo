@@ -36,7 +36,7 @@ jobs:
           pip install -r requirements/requirements_test.txt
           pip install pytest-cov
           pytest tests --generate-plots --disable-warnings --cov=xtgeo --hypothesis-profile ci-fast --cov-report=xml:xtgeocoverage.xml;
-
       - name: Upload coverage to Codecov
-        run: |
-          bash <(curl -s https://codecov.io/bash) -Z -c -f xtgeocoverage.xml
+        uses: codecov/codecov-action@v2
+        with:
+          files: xtgeocoverage.xml
