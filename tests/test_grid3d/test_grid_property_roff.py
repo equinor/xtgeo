@@ -10,28 +10,21 @@ from hypothesis.extra.numpy import arrays
 from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._roff_parameter import RoffParameter
 
+from .grdecl_grid_generator import finites
 from .grid_generator import dimensions
-
-finites = st.floats(
-    min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False, width=32
-)
-
-names = st.text(
-    min_size=1, max_size=32, alphabet=st.characters(min_codepoint=60, max_codepoint=123)
-)
-codes = st.integers(min_value=0, max_value=100)
+from .gridprop_generator import codes, grid_properties, keywords
 
 
 @st.composite
 def roff_parameters(draw, dim=dimensions):
     dims = draw(dim)
 
-    name = draw(names)
+    name = draw(keywords)
     is_discrete = draw(st.booleans())
     if is_discrete:
         num_codes = draw(st.integers(min_value=2, max_value=10))
         code_names = draw(
-            st.lists(min_size=num_codes, max_size=num_codes, elements=names)
+            st.lists(min_size=num_codes, max_size=num_codes, elements=keywords)
         )
         code_values = np.array(
             draw(
@@ -76,56 +69,6 @@ def test_roff_property_read_write(rpara):
 
     buff.seek(0)
     assert RoffParameter.from_file(buff, rpara.name) == rpara
-
-
-@st.composite
-def grid_properties(draw):
-    dims = draw(dimensions)
-    name = draw(names)
-    is_discrete = draw(st.booleans())
-    if is_discrete:
-        num_codes = draw(st.integers(min_value=2, max_value=10))
-        code_names = draw(
-            st.lists(min_size=num_codes, max_size=num_codes, elements=names)
-        )
-        code_values = np.array(
-            draw(
-                st.lists(
-                    unique=True, elements=codes, min_size=num_codes, max_size=num_codes
-                )
-            ),
-            dtype=np.int32,
-        )
-        values = draw(
-            arrays(
-                shape=dims,
-                dtype=np.int32,
-                elements=st.sampled_from(code_values),
-            )
-        )
-        gp = GridProperty(
-            None,
-            "guess",
-            *dims,
-            name,
-            discrete=is_discrete,
-            codes=dict(zip(code_values, code_names)),
-            values=values,
-            roxar_dtype=np.uint16,
-        )
-        gp.dtype = np.int32
-        return gp
-    else:
-        values = draw(arrays(shape=dims, dtype=np.float64, elements=finites))
-        return GridProperty(
-            None,
-            "guess",
-            *dims,
-            name,
-            discrete=is_discrete,
-            values=values,
-            roxar_dtype=np.float32,
-        )
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])

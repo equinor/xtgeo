@@ -4,15 +4,15 @@ from unittest.mock import mock_open, patch
 import hypothesis.strategies as st
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, given, settings
-from hypothesis.extra.numpy import arrays
+from hypothesis import HealthCheck, assume, given, settings
 from numpy.testing import assert_allclose
 
+import xtgeo
 from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._gridprop_import_grdecl import read_grdecl_3d_property
 
-from .grid_generator import indecies
 from .grid_generator import xtgeo_grids as grids
+from .gridprop_generator import grid_properties, keywords
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
@@ -43,30 +43,53 @@ def test_read_grdecl_3d_property(file_data, shape, expected_value):
         )
 
 
-keywords = st.text(
-    alphabet=st.characters(whitelist_categories=("Nd", "Lu")), min_size=1
-)
-grid_properties = arrays(
-    elements=st.floats(), dtype="float", shape=st.tuples(indecies, indecies, indecies)
-)
-
-
-@given(keywords, grid_properties)
-def test_read_write_grid_property_is_identity(keyword, grid_property):
-    values = [str(v) for v in grid_property.flatten(order="F")]
-    file_data = f"{keyword}\n {' '.join(values)} /"
+@given(grid_properties())
+def test_read_write_grid_property_is_identity(grid_property):
+    values = [str(v) for v in grid_property.values.flatten(order="F")]
+    file_data = f"{grid_property.name}\n {' '.join(values)} /"
     with patch("builtins.open", mock_open(read_data=file_data)) as mock_file:
         assert_allclose(
-            read_grdecl_3d_property(mock_file, keyword, grid_property.shape),
-            grid_property,
+            read_grdecl_3d_property(
+                mock_file, grid_property.name, grid_property.values.shape
+            ),
+            grid_property.values,
         )
 
 
-@given(keywords, grid_properties)
-def test_read_grid_property_is_c_contiguous(keyword, grid_property):
-    values = [str(v) for v in grid_property.flatten(order="F")]
-    file_data = f"{keyword}\n {' '.join(values)} /"
+@given(grid_properties())
+def test_read_grid_property_is_c_contiguous(grid_property):
+    values = [str(v) for v in grid_property.values.flatten(order="F")]
+    file_data = f"{grid_property.name}\n {' '.join(values)} /"
     with patch("builtins.open", mock_open(read_data=file_data)) as mock_file:
-        assert read_grdecl_3d_property(mock_file, keyword, grid_property.shape).flags[
-            "C_CONTIGUOUS"
-        ]
+        assert read_grdecl_3d_property(
+            mock_file, grid_property.name, grid_property.values.shape
+        ).flags["C_CONTIGUOUS"]
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
+@given(grid_properties())
+def test_read_write_roundtrip(tmp_path, fformat, grid_property):
+    filename = tmp_path / f"gridprop.{fformat}"
+    grid_property.to_file(filename, fformat=fformat, name=grid_property.name)
+    prop2 = xtgeo.gridproperty_from_file(
+        filename, fformat=fformat, name=grid_property.name, grid=grid_property.geometry
+    )
+    if fformat == "grdecl":
+        prop2.isdiscrete = grid_property.isdiscrete
+
+    assert_allclose(grid_property.values, prop2.values, atol=0.01)
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
+@given(grid_properties(), keywords)
+def test_read_write_bad_name(tmp_path, fformat, grid_property, keyword):
+    assume(keyword != grid_property.name)
+    filename = tmp_path / f"gridprop.{fformat}"
+    grid_property.to_file(filename, fformat=fformat, name=grid_property.name)
+
+    with pytest.raises(xtgeo.KeywordNotFoundError):
+        xtgeo.gridproperty_from_file(
+            filename, fformat=fformat, name=keyword, grid=grid_property.geometry
+        )
