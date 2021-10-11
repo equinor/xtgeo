@@ -3,21 +3,17 @@
 """Module for Grid Properties."""
 
 
-import warnings
 import hashlib
+import warnings
 from typing import Optional
 
 import xtgeo
-from xtgeo.common import XTGeoDialog
-from xtgeo.common import XTGDescription
+from xtgeo.common import XTGDescription, XTGeoDialog
 
+from . import _grid3d_utils as utils
+from . import _grid_etc1, _gridprops_etc, _gridprops_io
 from ._grid3d import _Grid3D
 from .grid_property import GridProperty
-
-from . import _gridprops_io
-from . import _grid3d_utils as utils
-from . import _gridprops_etc
-from . import _grid_etc1
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)

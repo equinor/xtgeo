@@ -4,9 +4,14 @@
 from copy import deepcopy
 
 import xtgeo
-from xtgeo.grid3d import _gridprop_import_eclrun
 
 from . import _grid3d_utils as utils
+from ._gridprop_import_eclrun import (
+    decorate_name,
+    import_gridprop_from_init_file,
+    import_gridprops_from_restart_file,
+    valid_gridprop_lengths,
+)
 from .grid_property import GridProperty
 
 xtg = xtgeo.XTGeoDialog()
@@ -28,7 +33,13 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_ecl_output(
-    self, pfile, names=None, dates=None, grid=None, namestyle=0, strict=(True, False)
+    self,
+    pfile,
+    names=None,
+    dates=None,
+    grid=None,
+    namestyle=0,
+    strict=(True, False),
 ):
 
     strictkeys, strictdates = strict
@@ -47,7 +58,14 @@ def import_ecl_output(
 
     else:
         _import_ecl_output_v2_rsta(
-            self, pfile, names, dates, grid, strictkeys, strictdates, namestyle
+            self,
+            pfile,
+            names,
+            dates,
+            grid,
+            strictkeys,
+            strictdates,
+            namestyle,
         )
 
 
@@ -61,17 +79,12 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
 
     validnames = list()
 
-    nact = grid.nactive
-    ntot = grid.ntotal
-
-    if grid.dualporo:
-        nact *= 2
-        ntot *= 2
+    valid_lengths = valid_gridprop_lengths(grid)
 
     # get a list of valid property names
     for kw in list(kwlist.itertuples(index=False, name=None)):
-        kwname, kwtyp, nlen, _, _ = kw
-        if nlen in (nact, ntot) and kwtyp != "CHAR" and kwname not in validnames:
+        kwname, _, nlen, _, _ = kw
+        if nlen in valid_lengths and kwname not in validnames:
             validnames.append(kwname)
 
     if names == "all":
@@ -82,29 +95,31 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
     for name in usenames:
         if name not in validnames:
             if strict:
-                msg = f"Requested keyword {name} is not in INIT file, but will try,"
-                msg += f"valid entries are {validnames}"
-                logger.warning(msg)
-                raise ValueError(msg)
+                raise ValueError(
+                    f"Requested keyword {name} is not in INIT file,"
+                    f"valid entries are {validnames}, set strict=False to warn instead."
+                )
+            else:
+                logger.warning(
+                    "Requested keyword %s is not in INIT file."
+                    "Entry will not be read, set strict=True to raise Error instead.",
+                    name,
+                )
 
-            msg = f"Requested keyword {name} is not in INIT file."
-            msg += "Will skip trying to read due to keyword <strict> settings."
-            logger.warning(msg)
-            continue
-
+    results = import_gridprop_from_init_file(
+        pfile.file,
+        names=names,
+        grid=grid,
+    )
+    for result in results:
         prop = GridProperty()
-        # use a private GridProperty function, since filehandle
-        _gridprop_import_eclrun.import_eclbinary(
-            prop,
-            pfile,
-            name=name,
-            grid=grid,
-            etype=1,
-            _kwlist=kwlist,
-        )
+        self._names.append(result["name"])
+        result["name"] = decorate_name(result["name"], grid.dualporo, fracture=False)
+        for attr, value in result.items():
+            setattr(prop, "_" + attr, value)
 
-        self._names.append(name)
         self._props.append(prop)
+        self._dates.append(prop._date)
 
     self._ncol = grid.ncol
     self._nrow = grid.nrow
@@ -112,13 +127,23 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
 
 
 def _import_ecl_output_v2_rsta(
-    self, pfile, names, dates, grid, strictkeycomb, strictdate, namestyle
+    self,
+    pfile,
+    names,
+    dates,
+    grid,
+    strictkeycomb,
+    strictdate,
+    namestyle,
 ):
     """Import RESTART parameters"""
 
     if isinstance(dates, list):
         # dates may come on form 2020-12-22 or 20201222; process all to latter fmt
-        dates = [str(thedate).replace("-", "") for thedate in dates]
+        dates = [
+            int(str(thedate).replace("-", "")) if isinstance(thedate, str) else thedate
+            for thedate in dates
+        ]
 
     # scan valid keywords with dates
     kwlist = utils.scan_keywords(
@@ -153,45 +178,42 @@ def _import_ecl_output_v2_rsta(
     # Do the actual import
     for namedate in usenamedatepairs:
         name, date = namedate
-        skipentry = False
 
         if name not in ("SGAS", "SOIL", "SWAT") and namedate not in validnamedatepairs:
             # saturation keywords are a mess in Eclipse and friends; check later
             if strictkeycomb:
-                msg = f"Keyword data combo {name} {date} is not in RESTART file."
-                msg += f"Possible entries are: {validnamedatepairs}"
-                msg += "Will still try to import..."
-                logger.warning(msg)
+                raise ValueError(
+                    f"Keyword data combo {name} {date} is not in RESTART file."
+                    f"Possible entries are: {validnamedatepairs}"
+                )
             else:
-                msg = f"Keyword data combo {name} {date} is not in RESTART file."
-                msg += f"Possible entries are: {validnamedatepairs}"
-                msg += "Will skip attempt to import and just continue..."
-                logger.warning(msg)
-                skipentry = True
+                logger.warning(
+                    "Keyword data combo %s %s is not in RESTART file."
+                    "Possible entries are: %s"
+                    "Value will not be imported",
+                    name,
+                    date,
+                    validnamedatepairs,
+                )
 
-        if skipentry:
-            continue
-
+    results = import_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    for result in results:
         prop = GridProperty()
 
-        # use a private GridProperty function, since filehandle
-        _gridprop_import_eclrun.import_eclbinary(
-            prop,
-            pfile,
-            name=name,
-            date=date,
-            grid=grid,
-            etype=5,
-            _kwlist=kwlist,
-        )
         if namestyle == 1:
-            sdate = str(date)
-            prop._name = name + "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
+            sdate = str(result["date"])
+            result["name"] += "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
+        else:
+            result["name"] = decorate_name(
+                result["name"], grid.dualporo, fracture=False, date=result["date"]
+            )
 
-        self._names.append(prop.name)
+        for attr, value in result.items():
+            setattr(prop, "_" + attr, value)
+
         self._props.append(prop)
-
-        self._dates.append(date)
+        self._names.append(prop.name)
+        self._dates.append(prop.date)
 
     self._ncol = grid.ncol
     self._nrow = grid.nrow
@@ -202,24 +224,16 @@ def _process_valid_namesdates(kwlist, grid):
     """Return lists with valid pairs, dates scanned from RESTART"""
     validnamedatepairs = list()
     validdates = list()
-
-    nact = grid.nactive
-    ntot = grid.ntotal
-
-    if grid.dualporo:
-        nact *= 2
-        ntot *= 2
-
+    valid_lengths = valid_gridprop_lengths(grid)
     for kw in list(kwlist.itertuples(index=False, name=None)):
         kwname, kwtyp, nlen, _, date = kw
-        date = str(date)
         if (
             kwtyp != "CHAR"
-            and nlen in (nact, ntot)
+            and nlen in valid_lengths
             and (kwname, date) not in validnamedatepairs
         ):
             validnamedatepairs.append((kwname, date))
-        if kwtyp != "CHAR" and nlen in (nact, ntot) and date not in validdates:
+        if kwtyp != "CHAR" and nlen in valid_lengths and date not in validdates:
             validdates.append(date)
 
     return validnamedatepairs, validdates

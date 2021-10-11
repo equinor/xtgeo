@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 """Module for basic XTGeo interaction with OS/system files and folders."""
 
-import os
 import hashlib
-import uuid
-import struct
-import pathlib
-from os.path import join
 import io
+import os
+import pathlib
 import re
+import struct
+import uuid
+from os.path import join
 from platform import system as plfsys
 from tempfile import mkstemp
 from types import BuiltinFunctionType
 from typing import Optional
 
-import numpy as np
 import h5py
+import numpy as np
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+
 from .xtgeo_dialog import XTGeoDialog
 
 xtg = XTGeoDialog()
@@ -30,7 +31,9 @@ SUPPORTED_FORMATS = {
     "roff_ascii": ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"],
     "egrid": ["egrid"],
     "init": ["init"],
+    "finit": ["finit"],
     "unrst": ["unrst"],
+    "funrst": ["funrst"],
     "grdecl": ["grdecl"],
     "irap_binary": ["irap_binary", "irap_bin", "rms_binary", "irapbin", "gri"],
     "irap_ascii": ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"],

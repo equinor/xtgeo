@@ -1,10 +1,12 @@
 """GridProperty (not GridProperies) import functions"""
-import os
-
 import xtgeo
 
-from ._gridprop_import_eclrun import import_eclbinary as impeclbin
-from ._gridprop_import_grdecl import import_grdecl_prop, import_bgrdecl_prop
+from ._gridprop_import_eclrun import (
+    decorate_name,
+    import_gridprop_from_init_file,
+    import_gridprops_from_restart_file,
+)
+from ._gridprop_import_grdecl import import_bgrdecl_prop, import_grdecl_prop
 from ._gridprop_import_roff import import_roff
 from ._gridprop_import_xtgcpprop import import_xtgcpprop
 
@@ -30,78 +32,62 @@ def from_file(
     if not isinstance(pfile, xtgeo._XTGeoFile):
         raise RuntimeError("Internal error, pfile is not a _XTGeoFile instance")
 
-    fformat = _chk_file(self, pfile.name, fformat)
+    pfile.check_file(raiseerror=OSError)
 
-    if fformat == "roff":
+    if fformat is None or fformat == "guess":
+        fformat = pfile.detect_fformat(suffixonly=True)
+    fformat = fformat.lower()
+
+    if fformat in ["roff", "roff_binary", "roff_ascii"]:
         logger.info("Importing ROFF...")
         import_roff(self, pfile, name)
 
-    elif fformat.lower() == "init":
-        impeclbin(
-            self, pfile, name=name, etype=1, date=None, grid=grid, fracture=fracture
-        )
-
-    elif fformat.lower() == "unrst":
+    elif fformat in ["finit", "init"]:
+        if grid is None:
+            raise ValueError("A grid is required to import init file")
+        result = import_gridprop_from_init_file(pfile.file, [name], grid, fracture)
+        if len(result) != 1:
+            raise ValueError(f"Could not find property {name} in {pfile}")
+        result[0]["name"] = decorate_name(result[0]["name"], grid.dualporo, fracture)
+        for attr, value in result[0].items():
+            setattr(self, "_" + attr, value)
+    elif fformat in ["funrst", "unrst"]:
+        if grid is None:
+            raise ValueError("A grid is required to import restart file")
         if date is None:
             raise ValueError("Restart file, but no date is given")
 
         if isinstance(date, str):
             if "-" in date:
-                date = int(date.replace("-", ""))
-            elif date == "first":
-                date = 0
-            elif date == "last":
-                date = 9
-            else:
-                date = int(date)
+                date = date.replace("-", "")
+        if date not in ("all", "first", "last"):
+            dates = [int(date)]
+        else:
+            dates = date
 
-        if not isinstance(date, int):
-            raise RuntimeError("Date is not int format")
-
-        impeclbin(
-            self, pfile, name=name, etype=5, date=date, grid=grid, fracture=fracture
+        result = import_gridprops_from_restart_file(
+            pfile.file, [name], dates, grid, fracture, fformat=fformat.lower()
         )
+        if len(result) != 1:
+            raise ValueError(
+                f"Could not find property {name} for {date} in {pfile.file}"
+            )
+        result[0]["name"] = decorate_name(
+            result[0]["name"], grid.dualporo, fracture, result[0]["date"]
+        )
+        for attr, value in result[0].items():
+            setattr(self, "_" + attr, value)
 
-    elif fformat.lower() == "grdecl":
+    elif fformat == "grdecl":
         import_grdecl_prop(self, pfile, name=name, grid=grid)
 
-    elif fformat.lower() == "bgrdecl":
+    elif fformat == "bgrdecl":
         import_bgrdecl_prop(self, pfile, name=name, grid=grid)
 
-    elif fformat.lower() == "xtgcpprop":
+    elif fformat in ["xtgcpprop", "xtg"]:
         import_xtgcpprop(self, pfile, ijrange=ijrange, zerobased=zerobased)
 
     else:
         logger.warning("Invalid file format")
-        raise ValueError("Invalid file format")
-
-    # if grid, then append this gridprop to the current grid object
-
-    # ###################################TMP skipped""
-    # if grid:
-    #     grid.append_prop(self)
-
+        raise ValueError(f"Invalid grid property file format {fformat}")
     return self
-
-
-def _chk_file(self, pfile, fformat):
-
-    self._filesrc = pfile
-
-    if os.path.isfile(pfile):
-        logger.debug("File %s exists OK", pfile)
-    else:
-        raise OSError("No such file: {}".format(pfile))
-
-    # work on file extension
-    _froot, fext = os.path.splitext(pfile)
-    if fformat is None or fformat == "guess":
-        if not fext:
-            raise ValueError("File extension missing. STOP")
-
-        fformat = fext.lower().replace(".", "")
-
-    logger.debug("File name to be used is %s", pfile)
-    logger.debug("File format is %s", fformat)
-
-    return fformat
