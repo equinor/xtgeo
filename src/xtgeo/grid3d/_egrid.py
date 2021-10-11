@@ -63,6 +63,7 @@ from ._ecl_grid import (
     MapAxes,
     Units,
 )
+from ._ecl_output_file import TypeOfGrid
 
 
 class EGridFileFormatError(ValueError):
@@ -72,19 +73,6 @@ class EGridFileFormatError(ValueError):
     """
 
     pass
-
-
-@unique
-class TypeOfGrid(Enum):
-    """
-    A Grid has three possible data layout formats, UNSTRUCTURED, CORNER_POINT
-    and COMPOSITE (meaning combination of the two former). Only CORNER_POINT
-    layout is supported by XTGeo.
-    """
-
-    COMPOSITE = 0
-    CORNER_POINT = 1
-    UNSTRUCTURED = 2
 
 
 @unique
@@ -138,24 +126,11 @@ class Filehead:
         """
         if len(values) < 7:
             raise ValueError(f"Filehead given too few values, {len(values)} < 7")
-        # weirdly, filehead has a different
-        # code for grid type
-        corner_type_code = values[4]
-        type_of_grid = None
-        if corner_type_code == 0:
-            type_of_grid = TypeOfGrid.CORNER_POINT
-        elif corner_type_code == 1:
-            type_of_grid = TypeOfGrid.UNSTRUCTURED
-        elif corner_type_code == 2:
-            type_of_grid = TypeOfGrid.COMPOSITE
-        else:
-            raise ValueError(f"Unknown grid type {corner_type_code} in FILEHEAD")
-
         return cls(
             version_number=values[0],
             year=values[1],
             version_bound=values[3],
-            type_of_grid=type_of_grid,
+            type_of_grid=TypeOfGrid.alternate_code(values[4]),
             rock_model=RockModel(values[5]),
             grid_format=GridFormat(values[6]),
         )
@@ -166,22 +141,13 @@ class Filehead:
             List of values, as layed out after the FILEHEAD keyword for
             the given filehead.
         """
-        type_of_grid_code = None
-        if self.type_of_grid == TypeOfGrid.CORNER_POINT:
-            type_of_grid_code = 0
-        elif self.type_of_grid == TypeOfGrid.UNSTRUCTURED:
-            type_of_grid_code = 1
-        elif self.type_of_grid == TypeOfGrid.COMPOSITE:
-            type_of_grid_code = 2
-        else:
-            raise ValueError(f"Unknown grid type {self.type_of_grid}")
         # The data is expected to consist of
         # 100 integers, but only a subset is used.
         result = np.zeros((100,), dtype=np.int32)
         result[0] = self.version_number
         result[1] = self.year
         result[3] = self.version_bound
-        result[4] = type_of_grid_code
+        result[4] = self.type_of_grid.alternate_value
         result[5] = self.rock_model.value
         result[6] = self.grid_format.value
         return result

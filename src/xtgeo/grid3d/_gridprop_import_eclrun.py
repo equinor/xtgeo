@@ -1,709 +1,568 @@
 """Importing grid props from ECL runs, e,g, INIT, UNRST"""
+import functools
+import itertools
+import operator
+import warnings
+from typing import Dict, List, Union
 
-
+import ecl_data_io as eclio
 import numpy as np
-import numpy.ma as ma
-
 import xtgeo
 
-from . import _grid_eclbin_record as _eclbin
-from . import _grid3d_utils as utils
+from ._ecl_inte_head import InteHead
+from ._ecl_logi_head import LogiHead
+from ._ecl_output_file import Phases
+from ._grdecl_format import match_keyword
 
-xtg = xtgeo.common.XTGeoDialog()
-
-logger = xtg.functionlogger(__name__)
+sat_keys = ["SOIL", "SGAS", "SWAT"]
 
 
-# cf metadata["IPHS"]:
-PHASES = {
-    0: "e300_ix_unknown",
-    1: "oil",
-    2: "water",
-    3: "oil/water",
-    4: "gas",
-    5: "oil/gas",
-    6: "gas/water",
-    7: "oil/water/gas",
-    -2345: "ix_unknown",
+def filter_lgr(generator):
+    try:
+        while True:
+            entry = next(generator)
+            if entry.read_keyword() == "LGR":
+                warnings.warn(
+                    "Found LGR in ecl run file. "
+                    "LGR's are not directly supported, "
+                    "instead only global values are imported."
+                )
+                while entry.read_keyword() != "ENDLGR":
+                    entry = next(generator)
+            else:
+                yield entry
+    except StopIteration:
+        return
+
+
+# Based on which phases are present some saturation values are given default
+# values, e.g. if phases=Phases.OIL, the saturation of oil ("SOIL") is 1.0 and
+# all other phases are 0.0.
+DEFAULT_SATURATIONS = {
+    Phases.OIL: {
+        "SOIL": 1.0,
+        "SWAT": 0.0,
+        "SGAS": 0.0,
+    },
+    Phases.GAS: {
+        "SOIL": 0.0,
+        "SWAT": 0.0,
+        "SGAS": 1.0,
+    },
+    Phases.WATER: {
+        "SOIL": 0.0,
+        "SWAT": 1.0,
+        "SGAS": 0.0,
+    },
+    Phases.OIL_WATER: {
+        "SGAS": 0.0,
+    },
+    Phases.OIL_GAS: {
+        "SWAT": 0.0,
+    },
+    Phases.GAS_WATER: {
+        "SOIL": 0.0,
+    },
+    Phases.OIL_WATER_GAS: dict(),
 }
 
-# cf metadata["SIMULATOR"]:
-SIMULATOR = {100: "E100", 300: "E300", 700: "IX"}
 
-# The handling of saturations is special. E100 seems to have a system according to
-# phases set in metadata (metadata["IPHS"]). For E300 and IX it is difficult to
-# find any descent rules. E.g. there are cases with E300 where SGAS/SWAT/SOIL all
-# are written for some time steps, while other time steps only have SGAS/SWAT
-# (in same UNRST file!). Try to combat this here as good as possible, but this
-# is not easy or optimal...
+def remainder_saturations(saturations):
+    """Infers remainder saturations based on sum(saturations.values()) == 1.
 
+    >>> remainder_saturations({'SWAT': 0.5, 'SGAS': 0.5})
+    {'SOIL': 0.0}
 
-def _get_phase_key(inkey):
-    """Trying for valid fluid phases kodes, return key and name"""
-
-    outkey = inkey
-    phasename = "unset"
-    try:
-        phasename = PHASES[inkey]
-    except KeyError as keyerr:
-        logger.warning("Phase is nonstandard: %s", keyerr)
-        phasename = "unknown"
-        outkey = 0
-
-    return outkey, phasename
-
-
-def import_eclbinary(
-    self, pfile, name=None, etype=1, date=None, grid=None, fracture=False, _kwlist=None
-):
-
-    # if pfile is a file, then the file is opened/closed here; otherwise, the
-    # "outer" routine must handle that
-
-    pfile.get_cfhandle()
-
-    status = 0
-
-    logger.info("Import ECL binary, name requested is %s", name)
-
-    # scan file for properties byte positions etc
-    if _kwlist is None:
-        logger.info("Make kwlist, scan keywords")
-        kwlist = utils.scan_keywords(
-            pfile, fformat="xecl", maxkeys=100000, dataframe=True, dates=True
-        )
-    else:
-        kwlist = _kwlist
-
-    metadata = _import_eclbinary_meta(self, pfile, kwlist, etype, date, grid)
-    date = metadata["DATE"]
-
-    # Importing phases is a challenge. It depends on the fluid system and simulator; e.g
-    # typically in a 3 phase system, only SGAS and SWAT is given while SOIL must be
-    # computed, if E100. E300 and IX may behave different...
-
-    if name == "SGAS":
-        status = _import_sgas(self, pfile, kwlist, metadata, grid, date, fracture)
-
-    elif name == "SOIL":
-        status = _import_soil(self, pfile, kwlist, metadata, grid, date, fracture)
-
-    elif name == "SWAT":
-        status = _import_swat(self, pfile, kwlist, metadata, grid, date, fracture)
-
-    if status == 0:
-        name = name.replace("{__}", "")
-
-        logger.info("Importing %s", name)
-
-        _import_eclbinary_checks1(self, grid)
-
-        kwname, kwlen, kwtype, kwbyte = _import_eclbinary_checks2(
-            kwlist, name, etype, date
-        )
-
-        if grid._dualporo:  # _dualporo shall always be True if _dualperm is True
-            _import_eclbinary_dualporo(
-                self,
-                grid,
-                pfile,
-                kwname,
-                kwlen,
-                kwtype,
-                kwbyte,
-                name,
-                date,
-                etype,
-                fracture,
-            )
-        else:
-            _import_eclbinary_prop(
-                self, grid, pfile, kwname, kwlen, kwtype, kwbyte, name, date, etype
-            )
-
-    pfile.cfclose()
-
-
-def _chk_kw_date(df, keyword, date):
-    """Check if a keyword exists for a given date"""
-
-    for ir in range(len(df)):
-        if df.loc[ir, "KEYWORD"] == keyword and str(df.loc[ir, "DATE"]) == str(date):
-            return True
-    return False
-
-
-def _import_swat(self, pfile, kwlist, metadata, grid, date, fracture):
-    """Import SWAT; this may lack in very special cases"""
-
-    s_exists = _chk_kw_date(kwlist, "SWAT", date)
-    logger.info("SWAT: S_EXISTS %s for date %s", s_exists, date)
-
-    if s_exists or metadata["IPHS"] in (0, 3, 6, 7, -2345):
-        import_eclbinary(
-            self,
-            pfile,
-            name="SWAT{__}",
-            etype=5,
-            grid=grid,
-            date=date,
-            fracture=fracture,
-            _kwlist=kwlist,
-        )
-
-    else:
-
-        self.name = "SWAT" + "_" + str(date)
-        self._nrow = grid.nrow
-        self._ncol = grid.ncol
-        self._nlay = grid.nlay
-        self._date = date
-        if metadata["IPHS"] == 2:
-            self._values = np.ones(
-                (self._ncol, self._nrow, self.nlay), dtype=np.float64
-            )
-        else:
-            self._values = np.zeros(
-                (self._ncol, self._nrow, self.nlay), dtype=np.float64
-            )
-
-        if grid.dualporo:
-            if fracture:
-                self.name = "SWATF" + "_" + str(date)
-                self._values[grid._dualactnum.values == 1] = 0.0
-            else:
-                self.name = "SWATM" + "_" + str(date)
-                self._values[grid._dualactnum.values == 2] = 0.0
-
-    gactnum = grid.get_actnum().values
-    self._values = ma.masked_where(gactnum < 1, self._values)
-    return 3
-
-
-def _import_sgas(self, pfile, kwlist, metadata, grid, date, fracture):
-    """Import SGAS; this may be lack of oil/water (need to verify)"""
-
-    s_exists = _chk_kw_date(kwlist, "SGAS", date)
-    logger.info("SGAS: S_EXISTS %s for date %s", s_exists, date)
-
-    flag = 0
-    if s_exists or metadata["IPHS"] in (0, 5, 7, -2345):
-        import_eclbinary(
-            self,
-            pfile,
-            name="SGAS{__}",
-            etype=5,
-            grid=grid,
-            date=date,
-            fracture=fracture,
-            _kwlist=kwlist,
-        )
-
-    elif metadata["IPHS"] == 6:
-        flag = 1
-        logger.info("SGAS: ask for SWAT")
-        swat = self.__class__()
-        import_eclbinary(
-            swat,
-            pfile,
-            name="SWAT{__}",
-            etype=5,
-            grid=grid,
-            date=date,
-            fracture=fracture,
-            _kwlist=kwlist,
-        )
-
-        self.name = "SGAS" + "_" + str(date)
-        self._nrow = grid.nrow
-        self._ncol = grid.ncol
-        self._nlay = grid.nlay
-        self._date = date
-        self._values = swat._values * -1 + 1.0
-        del swat
-
-    elif metadata["IPHS"] in (1, 2, 3, 4):
-        flag = 1
-        logger.info("SGAS: asked for but 0% or 100%")
-        self.name = "SGAS" + "_" + str(date)
-        self._nrow = grid.nrow
-        self._ncol = grid.ncol
-        self._nlay = grid.nlay
-        self._date = date
-        if metadata["IPHS"] == 4:
-            self._values = np.ones(
-                (self._ncol, self._nrow, self.nlay), dtype=np.float64
-            )
-        else:
-            self._values = np.zeros(
-                (self._ncol, self._nrow, self.nlay), dtype=np.float64
-            )
-
-    if grid.dualporo and flag:
-        if fracture:
-            self.name = "SGASF" + "_" + str(date)
-            self._values[grid._dualactnum.values == 1] = 0.0
-        else:
-            self.name = "SGASM" + "_" + str(date)
-            self._values[grid._dualactnum.values == 2] = 0.0
-
-    gactnum = grid.get_actnum().values
-    self._values = ma.masked_where(gactnum < 1, self._values)
-    return 1
-
-
-def _import_soil(self, pfile, kwlist, metadata, grid, date, fracture):
-    # pylint: disable=too-many-branches, too-many-statements
-    s_exists = _chk_kw_date(kwlist, "SOIL", date)
-    logger.info("SOIL: S_EXISTS %s for date %s", s_exists, date)
-
-    phases, _name = _get_phase_key(metadata["IPHS"])
-
-    if not s_exists:
-        logger.info("SOIL does not exist for date %s, need to estimate...", date)
-        if metadata["SIMULATOR"] != "E100":
-            phases = 7  # just assume this; hope its works...
-    else:
-        logger.info("SOIL property exists for date %s", date)
-
-    flag = 0
-    if s_exists or phases in (0, -2345):
-        import_eclbinary(
-            self,
-            pfile,
-            name="SOIL{__}",
-            etype=5,
-            grid=grid,
-            date=date,
-            fracture=fracture,
-            _kwlist=kwlist,
-        )
-
-    elif phases in (3, 5, 7):
-        sgas = None
-        swat = None
-        flag = 1
-        logger.info("Making SOIL from SWAT and/or SGAS ...")
-        if phases in (3, 7):
-            swat = self.__class__()
-            import_eclbinary(
-                swat,
-                pfile,
-                name="SWAT{__}",
-                etype=5,
-                grid=grid,
-                date=date,
-                fracture=fracture,
-                _kwlist=kwlist,
-            )
-
-        if phases in (5, 7):
-            sgas = self.__class__()
-            import_eclbinary(
-                sgas,
-                pfile,
-                name="SGAS{__}",
-                etype=5,
-                grid=grid,
-                date=date,
-                fracture=fracture,
-                _kwlist=kwlist,
-            )
-
-        self.name = "SOIL" + "_" + str(date)
-        self._nrow = grid.nrow
-        self._ncol = grid.ncol
-        self._nlay = grid.nlay
-        self._date = date
-        if phases == 7:  # owg
-            self._values = swat._values * -1 - sgas._values + 1.0
-            self._values[self._values < 0.0] = 0.0
-            self._values[self._values > 1.0] = 1.0
-        elif phases == 5:  # og
-            self._values = sgas._values * -1 + 1.0
-        elif phases == 3:  # ow
-            self._values = swat._values * -1 + 1.0
-
-        if swat:
-            del swat
-        if sgas:
-            del sgas
-
-    elif phases in (1, 2, 4, 6):
-        flag = 1
-        logger.info("SOIL: asked for but 0% or 100%")
-        self.name = "SOIL" + "_" + str(date)
-        self._nrow = grid.nrow
-        self._ncol = grid.ncol
-        self._nlay = grid.nlay
-        self._date = date
-        if phases == 1:
-            self._values = np.ones(
-                (self._ncol, self._nrow, self.nlay), dtype=np.float64
-            )
-        else:
-            self._values = np.zeros(
-                (self._ncol, self._nrow, self.nlay), dtype=np.float64
-            )
-
-    if grid.dualporo and flag:
-        if fracture:
-            self.name = "SOILF" + "_" + str(date)
-            self._values[grid._dualactnum.values == 1] = 0.0
-        else:
-            self.name = "SOILM" + "_" + str(date)
-            self._values[grid._dualactnum.values == 2] = 0.0
-
-    gactnum = grid.get_actnum().values
-    self._values = ma.masked_where(gactnum < 1, self._values)
-
-    return 2
-
-
-def _import_eclbinary_meta(
-    self, pfile, kwlist, etype, date, grid
-):  # pylint: disable=too-many-statements
-    """Find settings and metadata, private to this module.
+    Args:
+        saturations: Dictionary of phases, such as returned by
+            :meth:`default_saturations()`.
 
     Returns:
-        A dictionary of metadata
+        dictionary of saturation values that can be inferred.
+    """
+    if all(k in saturations for k in sat_keys):
+        return dict()
+    if any(k not in sat_keys for k in saturations):
+        raise ValueError(f"Unknown saturation keys: {list(saturations.keys())}")
+    rest = sum(saturations.values())
+    if len(saturations) == 2 or np.allclose(rest, 1.0):
+        missing = set(sat_keys).difference(set(saturations.keys()))
+        return {m: 1.0 - rest for m in missing}
+    return dict()
+
+
+def peek_headers(generator):
+    """Reads header from a ecl_data_io keyword generator without consuming keywords.
+
+    Args:
+        generator: keyword generator such as returned by ecl_data_io.lazy_read
+
+    Returns:
+        Tuple of inthead, logihead, and a modified generator which contains all original
+        keywords.
+    """
+
+    def read_headers(generator):
+        intehead_array = None
+        logihead_array = None
+        while intehead_array is None or logihead_array is None:
+            entry = next(generator)
+            kw = entry.read_keyword()
+            if match_keyword(kw, "LOGIHEAD"):
+                logihead_array = entry.read_array()
+            if match_keyword(kw, "INTEHEAD"):
+                intehead_array = entry.read_array()
+
+        intehead = InteHead(intehead_array)
+        logihead = LogiHead.from_file_values(logihead_array, intehead.simulator)
+        return intehead, logihead
+
+    header_generator, generator = itertools.tee(generator)
+    try:
+        intehead, logihead = read_headers(header_generator)
+    except StopIteration as stopit:
+        raise ValueError("Reached end of file without reading headers") from stopit
+    return intehead, logihead, generator
+
+
+def get_fetch_names(name: str) -> List[str]:
+    """Given a gridproperty name, give list of supporting keyword names.
+
+    >>> get_fetch_names('PORO')
+    ['PORO']
+    >>> get_fetch_names('SWAT')
+    ['SOIL', 'SGAS', 'SWAT']
+
+    Args:
+        name: The name of a grid property
+    Returns:
+        List of grid properties that must be fetched from the file.
 
     """
-    nentry = 0
-    metadata = {}
+    if any(match_keyword(name, saturation_keyword) for saturation_keyword in sat_keys):
+        fetch_names = sat_keys
+    else:
+        fetch_names = [name]
+    return fetch_names
 
-    datefound = True
-    if etype == 5:
-        datefound = False
-        logger.info("Look for date %s", date)
 
-        # scan for date and find SEQNUM entry number; also potentially update date!
-        dtlist = kwlist["DATE"].values.tolist()
-        if date == 0:
-            date = dtlist[0]
-        elif date == 9:
-            date = dtlist[-1]
+def read_values(generator, intehead, names, lengths="all"):
+    """Read the given list of parameter values from the generator.
 
-        logger.info("Redefined date is %s", date)
+    Reads the given list of values from the generator. Some saturation
+    values may be inferred from the invariant sum(saturations.values()) == 1.0
+    (see  :meth:`remainder_saturations()`.
 
-        for ientry, dtentry in enumerate(dtlist):
-            if str(dtentry) == str(date):
-                datefound = True
-                nentry = ientry
-                break
+    """
 
-        if not datefound:
-            msg = "Date {} not found, nentry={}".format(date, nentry)
-            xtg.warn(msg)
-            raise xtgeo.DateNotFoundError(msg)
+    def flatten(lst):
+        return functools.reduce(operator.iconcat, lst, [])
 
-    kwxlist = list(kwlist.itertuples(index=False, name=None))
-    kwname = "unset"
-    kwlen = 0
-    kwtype = "unset"
-    kwbyte = 0
-    # INTEHEAD is needed to verify grid dimensions:
-    for kwitem in kwxlist:
-        if kwitem[0] == "INTEHEAD":
-            kwname, kwtype, kwlen, kwbyte, _ = kwitem
+    fetch_names = set(flatten(list(get_fetch_names(name) for name in names)))
+    defaulted = list()
+    if names == "all":
+        values = dict()
+    else:
+        values = DEFAULT_SATURATIONS[intehead.phases].copy()
+        defaulted = list(values.keys())
+
+    for entry in generator:
+        if all(name in values for name in fetch_names):
             break
-
-    # read INTEHEAD record:
-    intehead = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte).tolist()
-    ncol, nrow, nlay = intehead[8:11]
-    logger.info("Dimensions detected %s %s %s", ncol, nrow, nlay)
-
-    metadata["SIMULATOR"] = SIMULATOR[intehead[94]]
-    logger.info("Simulator is %s", metadata["SIMULATOR"])
-
-    # E100: phase indicator 1:o 2:w 3:ow 4:g 5:og 6:gw 7:owg
-    metadata["IPHS"] = intehead[14]
-    logger.info("Phase number is %s", metadata["IPHS"])
-
-    phasenum, phasename = _get_phase_key(metadata["IPHS"])
-    logger.info("Phase system is %s %s", phasenum, phasename)
-
-    # LOGIHEAD item [14] in restart should be True, if dualporo model...
-    # LOGIHEAD item [15] in restart should be True, if dualperm (+ dualporo) model.
-    for kwitem in kwxlist:
-        if kwitem[0] == "LOGIHEAD":
-            kwname, kwtype, kwlen, kwbyte, _kwdate = kwitem
-            break
-
-    # read INTEHEAD record:
-    logihead = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte).tolist()
-
-    # DUAL; which kind if doubles (not exact!) the layers when reading,
-    # and assign first half* to Matrix (M) and second half to Fractures (F).
-    # *half: The number of active cells per half may NOT be equal
-
-    if grid.dualporo:
-        logger.info("Dual poro system")
-        self._dualporo = True
-
-    if grid.dualperm:
-        logger.info("Dual poro + dual perm system")
-        self._dualporo = True
-        self._dualperm = True
-
-    if etype == 5 and (logihead[13] or logihead[14]) and not grid.dualporo:
-        raise RuntimeError("Some inconsistentcy wrt dual porosity model. Bug?")
-
-    self._ncol = ncol
-    self._nrow = nrow
-    self._nlay = nlay
-
-    metadata["DATE"] = date
-    return metadata
-
-
-def _import_eclbinary_checks1(self, grid):
-    """Do some validations/checks"""
-
-    if self._dualporo:
-        logger.info(
-            "Grid dimensions in INIT or RESTART file seems: %s %s %s",
-            self._ncol,
-            self._nrow,
-            self._nlay,
-        )
-        logger.info(
-            "Note! This is DUAL POROSITY grid, so actual size: %s %s %s",
-            self._ncol,
-            self._nrow,
-            grid.nlay,
-        )
-    else:
-        logger.info(
-            "Grid dimensions in INIT or RESTART file: %s %s %s",
-            self._ncol,
-            self._nrow,
-            self._nlay,
-        )
-
-    logger.info(
-        "Grid dimensions from GRID file: %s %s %s", grid.ncol, grid.nrow, grid.nlay
-    )
-
-    if not grid.dualporo and (
-        grid.ncol != self._ncol or grid.nrow != self._nrow or grid.nlay != self._nlay
-    ):
-        msg = "Errors in dimensions prop: {} {} {} vs grid: {} {} {} ".format(
-            self._ncol, self._nrow, self._nlay, grid.ncol, grid.ncol, grid.nlay
-        )
-        raise RuntimeError(msg)
-
-    if grid.dualporo and (
-        grid.ncol != self._ncol
-        or grid.nrow != self._nrow
-        or grid.nlay * 2 != self._nlay
-    ):
-        msg = "Errors in dimensions prop: {} {} {} vs grid: {} {} {} ".format(
-            self._ncol, self._nrow, self._nlay, grid.ncol, grid.ncol, 2 * grid.nlay
-        )
-        raise RuntimeError(msg)
-
-    # reset nlay for property when dualporo
-    if grid.dualporo:
-        self._nlay = grid.nlay
-
-
-def _import_eclbinary_checks2(kwlist, name, etype, date):
-    """More checks, and returns what's needed for actual import"""
-
-    datefound = True
-
-    kwfound = False
-    datefoundhere = False
-    usedate = "0"
-    restart = False
-
-    kwname = "unset"
-    kwlen = 0
-    kwtype = "unset"
-    kwbyte = 0
-
-    if etype == 5:
-        usedate = str(date)
-        restart = True
-
-    kwxlist = list(kwlist.itertuples(index=False, name=None))
-    for kwitem in kwxlist:
-        kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
-        logger.debug("Keyword %s -  date: %s usedate: %s", kwname, kwdate, usedate)
-        if name == kwname:
-            kwfound = True
-
-        if name == kwname and usedate == str(kwdate):
-            logger.info("Keyword %s ok at date %s", name, usedate)
-            kwname, kwtype, kwlen, kwbyte, kwdate = kwitem
-            datefoundhere = True
-            break
-
-    if restart:
-        if datefound and not kwfound:
-            msg = "Date <{}> is found, but not keyword <{}>".format(date, name)
-            xtg.warn(msg)
-            raise xtgeo.KeywordNotFoundError(msg)
-
-        if not datefoundhere and kwfound:
-            msg = "The keyword <{}> exists but not for " "date <{}>".format(name, date)
-            xtg.warn(msg)
-            raise xtgeo.KeywordFoundNoDateError(msg)
-    else:
-        if not kwfound:
-            msg = "The keyword <{}> is not found".format(name)
-            xtg.warn(msg)
-            raise xtgeo.KeywordNotFoundError(msg)
-
-    return kwname, kwlen, kwtype, kwbyte
-
-
-def _import_eclbinary_prop(
-    self, grid, pfile, kwname, kwlen, kwtype, kwbyte, name, date, etype
-):
-    """Import the actual record"""
-
-    values = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte)
-
-    self._isdiscrete = False
-    use_undef = xtgeo.UNDEF
-    self.codes = {}
-
-    if kwtype == "INTE":
-        self._isdiscrete = True
-        use_undef = xtgeo.UNDEF_INT
-
-        # make the code list
-        uniq = np.unique(values).tolist()
-        codes = dict(zip(uniq, uniq))
-        codes = {key: str(val) for key, val in codes.items()}  # val: strings
-        self.codes = codes
-
-    else:
-        values = values.astype(np.float64)  # cast REAL (float32) to float64
-
-    # arrays from Eclipse INIT or UNRST are usually for inactive values only.
-    # Use the ACTNUM index array for vectorized numpy remapping (need both C
-    # and F order)
-    gactnum = grid.get_actnum().values
-    gactindc = grid.actnum_indices
-    gactindf = grid.get_actnum_indices(order="F")
-
-    allvalues = (
-        np.zeros((self._ncol * self._nrow * self._nlay), dtype=values.dtype) + use_undef
-    )
-
-    msg = "...\n"
-    msg = msg + "grid.actnum_indices.shape[0] = {}\n".format(
-        grid.actnum_indices.shape[0]
-    )
-    msg = msg + "values.shape[0] = {}\n".format(values.shape[0])
-    msg = msg + "ncol nrow nlay {} {} {}, nrow*nrow*nlay = {}\n".format(
-        self._ncol, self._nrow, self._nlay, self._ncol * self._nrow * self._nlay
-    )
-
-    logger.info(msg)
-
-    if gactindc.shape[0] == values.shape[0]:
-        allvalues[gactindf] = values
-    elif values.shape[0] == self._ncol * self._nrow * self._nlay:  # often case for PORV
-        allvalues = values.copy()
-    else:
-        raise ValueError(
-            f"Failed to read {kwname}, {pfile} could be corrupt. Extra info:\n" + msg
-        )
-
-    allvalues = allvalues.reshape((self._ncol, self._nrow, self._nlay), order="F")
-    allvalues = np.asanyarray(allvalues, order="C")
-    allvalues = ma.masked_where(gactnum < 1, allvalues)
-
-    self._values = allvalues
-
-    if etype == 1:
-        self._name = name
-    else:
-        self._name = name + "_" + str(date)
-        self._date = date
-
-
-def _import_eclbinary_dualporo(
-    self, grid, pfile, kwname, kwlen, kwtype, kwbyte, name, date, etype, fracture
-):
-    """Import the actual record for dual poro scheme"""
-
-    #
-    # TODO, merge this with routine above!
-    # A lot of code duplication here, as this is under testing
-    #
-
-    values = _eclbin.eclbin_record(pfile, kwname, kwlen, kwtype, kwbyte)
-
-    # arrays from Eclipse INIT or UNRST are usually for inactive values only.
-    # Use the ACTNUM index array for vectorized numpy remapping (need both C
-    # and F order)
-
-    gactnum = grid.get_actnum().values
-    gactindc = grid.get_dualactnum_indices(order="C", fracture=fracture)
-    gactindf = grid.get_dualactnum_indices(order="F", fracture=fracture)
-
-    indsize = gactindc.size
-    if kwlen == 2 * grid.ntotal:
-        indsize = grid.ntotal  # in case of e.g. PORV which is for all cells
-
-    if not fracture:
-        values = values[:indsize]
-    else:
-        values = values[values.size - indsize :]
-
-    self._isdiscrete = False
-    self.codes = {}
-
-    if kwtype == "INTE":
-        self._isdiscrete = True
-
-        # make the code list
-        uniq = np.unique(values).tolist()
-        codes = dict(zip(uniq, uniq))
-        codes = {key: str(val) for key, val in codes.items()}  # val: strings
-        self.codes = codes
-
-    else:
-        values = values.astype(np.float64)  # cast REAL (float32) to float64
-
-    allvalues = (
-        np.zeros((self._ncol * self._nrow * self._nlay), dtype=values.dtype)
-        + self.undef
-    )
-
-    if gactindc.shape[0] == values.shape[0]:
-        allvalues[gactindf] = values
-    elif values.shape[0] == self._ncol * self._nrow * self._nlay:  # often case for PORV
-        allvalues = values.copy()
-    else:
-        raise ValueError(f"Failed to read {kwname}, {pfile} could be corrupt")
-
-    allvalues = allvalues.reshape((self._ncol, self._nrow, self.nlay), order="F")
-    allvalues = np.asanyarray(allvalues, order="C")
-
-    if self._dualporo:
-        if fracture:
-            allvalues[grid._dualactnum.values == 1] = 0.0
+        kw = entry.read_keyword()
+        if lengths != "all":
+            if entry.read_length() not in lengths:
+                continue
+        if names == "all":
+            key = kw.rstrip()
+            array = entry.read_array()
+            if np.issubdtype(array.dtype, np.number) or np.issubdtype(
+                array.dtype, bool
+            ):
+                values[key] = entry.read_array()
         else:
-            allvalues[grid._dualactnum.values == 2] = 0.0
+            matched = [name for name in fetch_names if match_keyword(kw, name)]
+            if len(matched) == 1:
+                if matched[0] in values and matched[0] not in defaulted:
+                    raise ValueError(f"Found duplicate keyword {matched[0]}")
+                values[matched[0]] = entry.read_array()
+            elif len(matched) > 1:
+                # This should not happen if get_fetch_names and
+                # match_keyword work as intended
+                raise ValueError(f"Ambiguous keywords {matched} matched vs {kw}")
 
-    allvalues = ma.masked_where(gactnum < 1, allvalues)
-    self._values = allvalues
-
-    append = ""
-    if self._dualporo:
-        append = "M"
-        if fracture:
-            append = "F"
-
-    logger.info("Dual status is %s, and append is %s", self._dualporo, append)
-    if etype == 1:
-        self._name = name + append
+    if names == "all":
+        # A more consistent behavior would be to include saturations calculated
+        # with remainder_saturations when names=="all" aswell, however, we do
+        # not include those to keep backwards compatability.
+        # TODO: deprecate this behavior
+        return values
     else:
-        self._name = name + append + "_" + str(date)
-        self._date = date
+        values.update(
+            **remainder_saturations({k: values[k] for k in sat_keys if k in values})
+        )
+        return {name: values[name] for name in names if name in values}
+
+
+def check_grid_match(intehead: InteHead, logihead: LogiHead, grid):
+    """Checks that the init/restart headers matches the grid
+
+    Checks that the values given in the headers are compatible with
+    the grid.
+    """
+    dimensions = intehead.num_x, intehead.num_y, intehead.num_z
+
+    if logihead.dual_porosity:
+        dimensions = intehead.num_x, intehead.num_y, intehead.num_z // 2
+
+    if logihead.dual_porosity != grid.dualporo:
+        raise ValueError("Grid dual poro status does not match output file")
+
+    if dimensions != grid.dimensions:
+        raise ValueError(
+            "Grid dimensions do not match dimensions given in output file,"
+            f" {dimensions} vs {grid.dimensions}"
+        )
+
+
+def expand_scalar_values(value, num_cells, dualporo: bool) -> np.ndarray:
+    """Convert from scalar value to filled array of expected size.
+    Args:
+        value: The potentially scalar value
+        num_cells: The number of cells in the grid
+        dualporo: Whether the model has dual porosity
+    Returns:
+        If value is an array, then returns that array, otherwise
+        calls np.full with the shape determined by dualporo status and
+        number of cells.
+
+    """
+    if dualporo:
+        return np.full(fill_value=value, shape=num_cells * 2)
+    return np.full(fill_value=value, shape=num_cells)
+
+
+def pick_dualporo_values(
+    values: np.ndarray, actind: np.ndarray, num_cells: int, fracture: bool
+) -> np.ndarray:
+    """From array of values in an ecl run file, give the fracture or matrix values.
+
+    Args:
+        values: Array of values from an ecl run file.
+        actind: Array of the indecies of active cells.
+        num_cells: Total number of cells.
+        fracture: Whether to give the fracture or matrix values.
+    Returns:
+        Array of either fracture or matrix values from the input values.
+    """
+    active_size = len(actind)
+    if len(values) == 2 * num_cells:
+        indsize = num_cells
+    else:
+        indsize = active_size
+    if fracture:
+        return values[-indsize:]
+    return values[:indsize]
+
+
+def valid_gridprop_lengths(grid):
+    num_cells = np.prod(grid.dimensions)
+    if grid.dualporo:
+        num_fracture = len(grid.get_dualactnum_indices(fracture=True))
+        num_matrix = len(grid.get_dualactnum_indices(fracture=False))
+        return [2 * num_cells, num_fracture + num_matrix]
+    else:
+        num_active = len(grid.get_actnum_indices())
+        return [num_cells, num_active]
+
+
+def match_values_to_active_cells(
+    values,
+    actind,
+    num_cells,
+) -> np.ndarray:
+    """Expands array of ecl run values to be one-to-one with cells.
+
+    In the ecl run file, the values might be only those for active cells.
+    This funtion expands those values to one for each cell with non-active
+    indecies given the xtgeo.UNDEF/xtgeo.UNDEF_INT value.
+
+    Args:
+        values: Array of values from an ecl run file.
+        actind: Array of the indecies of active cells.
+        num_cells: Total number of cells.
+    Returns:
+        Array of input values, but guaranteed num_cells length.
+
+    """
+
+    if len(values) != len(actind):
+        raise ValueError(
+            f"Unexpected shape of values in init file: {np.asarray(values).shape}, "
+            f"expected to match grid dimensions {num_cells} or "
+            f"number of active cells {len(actind)}"
+        )
+
+    if np.issubdtype(values.dtype, np.integer):
+        undef = xtgeo.UNDEF_INT
+    else:
+        undef = xtgeo.UNDEF
+    result = np.full(fill_value=undef, shape=num_cells, dtype=values.dtype)
+    result[actind] = values
+    return result
+
+
+def make_gridprop_values(values, grid, fracture):
+    """Converts values given in init or restart file to one suitable for GridProperty.
+
+    Args:
+    values: The array read from the file
+    grid: The grid from the ecl run
+    fracture: Whether to get the fracture or matrix values
+
+    Returns:
+        Masked array of values indexed by cell
+    """
+    num_cells = np.prod(grid.dimensions)
+    if np.isscalar(values):
+        values = expand_scalar_values(values, num_cells, grid.dualporo)
+
+    if grid.dualporo:
+        actind = grid.get_dualactnum_indices(fracture=fracture, order="F")
+        values = pick_dualporo_values(values, actind, num_cells, fracture)
+    else:
+        actind = grid.get_actnum_indices(order="F")
+
+    if len(values) != num_cells:
+        values = match_values_to_active_cells(values, actind, num_cells)
+
+    values = values.reshape(grid.dimensions, order="F")
+
+    if grid.dualporo:
+        if fracture:
+            values[grid._dualactnum.values == 1] = 0.0
+        else:
+            values[grid._dualactnum.values == 2] = 0.0
+
+    return np.ma.masked_where(grid.get_actnum().values < 1, values)
+
+
+def date_from_intehead(intehead):
+    """Returns date format for use in GridProperty name given intehead."""
+    if any(val is None for val in [intehead.day, intehead.month, intehead.year]):
+        return None
+    return intehead.day + intehead.month * 100 + intehead.year * 10000
+
+
+def decorate_name(name, dual_porosity, fracture, date=None):
+    """Decorate a property name with date and matrix/fracture.
+
+    >>> decorate_name('PORO', True, False, 19991231)
+    'POROM_19991231'
+
+    """
+    decorated_name = name
+    if dual_porosity:
+        if fracture:
+            decorated_name += "F"
+        else:
+            decorated_name += "M"
+
+    if date is not None:
+        decorated_name += "_" + str(date)
+    return decorated_name
+
+
+def gridprop_params(values, name, date, grid, fracture):
+    """Make dictionary of GridProperty parameters from imported values."""
+    result = dict()
+    result["name"] = name
+    result["date"] = date
+    result["fracture"] = fracture
+
+    result["ncol"], result["nrow"], result["nlay"] = grid.dimensions
+    result["dualporo"] = grid.dualporo
+    result["dualperm"] = grid.dualperm
+    result["roxorigin"] = False
+
+    result["values"] = make_gridprop_values(values, grid, fracture)
+
+    if np.issubdtype(result["values"].dtype, np.integer):
+        result["undef"] = xtgeo.UNDEF_INT
+        uniq = np.unique(values).tolist()
+        codes = dict(zip(uniq, uniq))
+        codes = {key: str(val) for key, val in codes.items()}
+        result["codes"] = codes
+        result["values"] = result["values"].astype(np.int32)
+        result["isdiscrete"] = True
+    else:
+        result["codes"] = dict()
+        result["values"] = result["values"].astype(np.float64)
+        result["undef"] = xtgeo.UNDEF
+        result["isdiscrete"] = False
+    return result
+
+
+def import_gridprop_from_init_file(
+    init_filelike,
+    names: Union[List[str], "str"],
+    grid,
+    fracture: bool = False,
+) -> List[Dict]:
+    """Imports list of parameters from an ecl init file.
+
+    Note: Does not check that all names are found.
+
+    Args:
+        init_filelike: The init file
+        names: List of property names to be imported. Can also,
+            be set to "all" to import all parameters.
+        grid: The grid used by the simulator to produce the init file.
+        fracture: If a dual porosity module, indicates that the fracture
+            (as apposed to the matrix) grid property should be imported.
+    Returns:
+        List of GridProperty parameters matching the names.
+
+    """
+    generator = filter_lgr(eclio.lazy_read(init_filelike))
+    intehead, logihead, generator = peek_headers(generator)
+
+    check_grid_match(intehead, logihead, grid)
+
+    date = date_from_intehead(intehead)
+    return [
+        gridprop_params(v, name, date, grid, fracture)
+        for name, v in read_values(
+            generator, intehead, names, lengths=valid_gridprop_lengths(grid)
+        ).items()
+    ]
+
+
+def section_generator(generator):
+    """Sections the generator as delimited by "SEQNUM" keyword.
+
+    Unified restart files will repeat properties in sections, one for each
+    date. The "SEQNUM" keyword indicates a new section. section_generator
+    takes a keyword generator and returns a generator over sections.
+
+    Note: It does so in a lighweight manner so that a section
+    is emptied once the next section is requested, and the original
+    generator is iterated as you progress in the sections.
+    """
+    try:
+        first_seq = next(generator)
+        if not match_keyword(first_seq.read_keyword(), "SEQNUM"):
+            raise ValueError("Restart file did not start with SEQNUM.")
+    except StopIteration:
+        return
+    while True:
+        this_section = itertools.takewhile(
+            lambda x: not match_keyword(x.read_keyword(), "SEQNUM"), generator
+        )
+        yield this_section
+        # empty the section iterator
+        for _ in this_section:
+            pass
+        # peek ahead to see if there are more elements
+        # and stop if there are not
+        try:
+            entry = next(generator)
+            generator = itertools.chain(iter([entry]), generator)
+        except StopIteration:
+            return
+
+
+def import_gridprops_from_restart_file_sections(
+    sections,
+    names: Union[List[str], "str"],
+    dates: Union[int, str],
+    grid,
+    fracture: bool = False,
+) -> List[Dict]:
+    """Imports list of parameters from an sections generator.
+
+    See :meth:`section_generator` for suitable input generator.
+
+    Args:
+        sections: Section generator such as returned by :meth:`section_generator`.
+        names: List of property names to be imported. Can also,
+            be set to "all" to import all parameters.
+        dates: List of xtgeo style dates (e.g. int(19990101)), can also
+            be "all", "last" and "first".
+        grid: The grid used by the simulator to produce the init file.
+        fracture: If a dual porosity module, indicates that the fracture
+            (as apposed to the matrix) grid property should be imported.
+    Returns:
+        List of GridProperty parameters matching the names.
+    """
+    read_properties = []
+    latest_date_properties = []
+    for section in sections:
+        intehead, logihead, section = peek_headers(section)
+        check_grid_match(intehead, logihead, grid)
+        date = date_from_intehead(intehead)
+        if dates not in ("all", "first", "last"):
+            if date not in dates:
+                continue
+        latest_date_properties = [
+            gridprop_params(v, name, date, grid, fracture)
+            for name, v in read_values(
+                section, intehead, names, lengths=valid_gridprop_lengths(grid)
+            ).items()
+        ]
+        if dates != "last":
+            read_properties += latest_date_properties
+        if dates == "first":
+            break
+    if dates == "last":
+        return latest_date_properties
+    return read_properties
+
+
+def import_gridprops_from_restart_file(
+    restart_filelike,
+    names: Union[List[str], "str"],
+    dates: Union[int, str],
+    grid,
+    fracture: bool = False,
+    fformat="unrst",
+) -> List[Dict]:
+    """Imports list of parameters from a restart file.
+
+    Args:
+        restart_filelike: The restart file.
+        names: List of property names to be imported. Can also,
+            be set to "all" to import all parameters.
+        dates: List of xtgeo style dates (e.g. int(19990101)), can also
+            be "all", "last" and "first".
+        grid: The grid used by the simulator to produce the init file.
+        fracture: If a dual porosity module, indicates that the fracture
+            (as apposed to the matrix) grid property should be imported.
+    Returns:
+        List of GridProperty parameters matching the names and dates.
+    """
+    close = False
+    try:
+        if fformat == "unrst":
+            filehandle = open(restart_filelike, "rb")
+            close = True
+        elif fformat == "funrst":
+            filehandle = open(restart_filelike, "rt")
+            close = True
+        else:
+            raise ValueError(f"Unsupported restart file format {fformat}")
+    except TypeError:
+        filehandle = restart_filelike
+        close = False
+    generator = section_generator(filter_lgr(eclio.lazy_read(filehandle)))
+    read_properties = import_gridprops_from_restart_file_sections(
+        generator,
+        names,
+        dates,
+        grid,
+        fracture,
+    )
+
+    if close:
+        filehandle.close()
+    return read_properties

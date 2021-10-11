@@ -1,7 +1,6 @@
 # coding: utf-8
 
 import itertools
-import os
 from os.path import basename, join
 
 import numpy as np
@@ -114,7 +113,8 @@ def test_dual_cases_restart_property_to_file(tmpdir, dual_cases, date, name, fra
     filename = join(tmpdir, basename(dual_cases.path) + str(date) + prop.name + ".roff")
     prop.to_file(filename)
 
-    assert os.path.exists(filename)
+    prop2 = xtgeo.gridproperty_from_file(filename)
+    np.testing.assert_allclose(prop.values, prop2.values)
 
 
 @pytest.mark.parametrize(
@@ -132,7 +132,9 @@ def test_dual_cases_init_property_to_file(tmpdir, dual_cases, name, fracture):
 
     filename = join(tmpdir, basename(dual_cases.path) + prop.name + ".roff")
     prop.to_file(filename)
-    assert os.path.exists(filename)
+
+    prop2 = xtgeo.gridproperty_from_file(filename)
+    np.testing.assert_allclose(prop.values, prop2.values)
 
 
 def test_dual_grid_poro_property(tmpdir, dual_cases):
