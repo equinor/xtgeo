@@ -1,4 +1,5 @@
 import io
+import re
 from collections import OrderedDict
 from itertools import product
 
@@ -12,6 +13,7 @@ from numpy.testing import assert_allclose
 
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.grid3d import Grid
+from xtgeo.grid3d._grid_import_roff import handle_deprecated_xtgeo_roff_file
 from xtgeo.grid3d._roff_grid import RoffGrid
 
 from .grid_generator import dimensions, xtgeo_grids
@@ -320,3 +322,34 @@ def test_from_xtgeo_subgrids():
             OrderedDict([("subgrid_0", range(1, 4)), ("subgrid_1", range(4, 5))])
         )
     ) == [3, 1]
+
+
+XTGEO_214_HEADER = (
+    b"roff-bin\0"
+    b"#ROFF file#\0"
+    b"#Creator: CXTGeo subsystem of XTGeo by JCR#\0"
+    b"tag\0filedata\0"
+    b"int\0byteswaptest\0"
+    + (1).to_bytes(4, byteorder="little")
+    + b"char\0filetype\0grid\0char\0creationDate\0UNKNOWN"
+)
+
+
+@given(roff_grids())
+def test_deprecated_fileread(roff_grid):
+    buff = io.BytesIO()
+    roff_grid.to_file(buff)
+
+    new_buff = io.BytesIO(
+        re.sub(
+            b".*creationDate\0[^\0]*\0char\0filetype\0grid\0",
+            XTGEO_214_HEADER,
+            buff.getvalue(),
+        )
+    )
+
+    with pytest.warns(UserWarning, match="nonstandard roff"):
+        with handle_deprecated_xtgeo_roff_file(new_buff) as converted_buff:
+            new_grid = RoffGrid.from_file(converted_buff)
+
+    assert new_grid == roff_grid
