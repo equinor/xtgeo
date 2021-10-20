@@ -103,7 +103,7 @@ def grid_properties(draw):
                 elements=st.sampled_from(code_values),
             )
         )
-        return GridProperty(
+        gp = GridProperty(
             None,
             "guess",
             *dims,
@@ -112,8 +112,10 @@ def grid_properties(draw):
             codes=dict(zip(code_values, code_names)),
             values=values,
         )
+        gp.dtype = np.int32
+        return gp
     else:
-        values = draw(arrays(shape=dims, dtype=np.float32, elements=finites))
+        values = draw(arrays(shape=dims, dtype=np.float64, elements=finites))
         return GridProperty(
             None, "guess", *dims, name, discrete=is_discrete, values=values
         )
@@ -302,23 +304,22 @@ def test_from_file_wrong_filetype(simple_roff_parameter_contents):
 
 
 @pytest.mark.parametrize(
-    "xtgeotype, roxtype, rofftype",
+    "xtgeotype, rofftype",
     [
-        (np.float64, np.float32, "float"),
-        (np.int32, np.uint16, "int"),
-        (np.int8, np.uint8, "byte"),
+        (np.float64, "double"),
+        (np.int32, "int"),
+        (np.uint8, "int"),
     ],
 )
-def test_from_xtgeo_dtype_cast(xtgeotype, roxtype, rofftype):
+def test_from_xtgeo_dtype_cast(xtgeotype, rofftype):
     gp = GridProperty(
         ncol=1,
         nrow=1,
         nlay=1,
-        roxar_dtype=roxtype,
+        discrete=np.issubdtype(xtgeotype, np.integer),
         values=np.zeros((1, 1, 1), dtype=xtgeotype),
     )
     rp = RoffParameter.from_xtgeo_grid_property(gp)
-    assert rp.values.dtype == roxtype
 
     buf = io.StringIO()
     rp.to_file(buf, roff_format=roffio.Format.ASCII)

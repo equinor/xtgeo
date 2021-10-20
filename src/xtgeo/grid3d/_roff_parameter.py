@@ -147,31 +147,22 @@ class RoffParameter:
                 list(xtgeo_grid_property.codes.keys()), dtype=np.int32
             )
 
-        values = xtgeo_grid_property.values.astype(xtgeo_grid_property.roxar_dtype)
+        values = xtgeo_grid_property.values
         if not np.ma.isMaskedArray(values):
             if xtgeo_grid_property.isdiscrete:
                 values = np.ma.masked_greater(values, UNDEF_INT_LIMIT)
             else:
                 values = np.ma.masked_greater(values, UNDEF_LIMIT)
 
-        if values.dtype == np.uint8:
-            values = values.filled(255)
-        elif values.dtype == np.uint16:
-            values = values.filled(-999)
-        elif values.dtype == np.float32:
-            values = values.filled(-999.0)
+        if xtgeo_grid_property.isdiscrete:
+            values = values.astype(np.int32).filled(-999)
         else:
-            raise ValueError(f"Unexpected roxar_dtype in parameter {values.dtype}")
+            values = values.astype(np.float64).filled(-999.0)
 
         return RoffParameter(
             *xtgeo_grid_property.dimensions,
             name=xtgeo_grid_property.name,
-            values=np.asarray(
-                np.flip(
-                    values.astype(xtgeo_grid_property.roxar_dtype),
-                    -1,
-                ).ravel()
-            ),
+            values=np.asarray(np.flip(values, -1).ravel()),
             code_names=code_names,
             code_values=code_values,
         )
