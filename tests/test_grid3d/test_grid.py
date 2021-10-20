@@ -985,3 +985,25 @@ def test_grid_get_dxdydz_bad_metric():
         grd.get_dy(metric="foo")
     with pytest.raises(ValueError, match="Unknown metric"):
         grd.get_dz(metric="foo")
+
+
+def test_grid_roff_subgrids_import_regression(tmp_path):
+    grid = Grid()
+    grid.create_box(dimension=(5, 5, 67))
+    grid.subgrids = OrderedDict(
+        [
+            ("subgrid_0", list(range(1, 21))),
+            ("subgrid_1", list(range(21, 53))),
+            ("subgrid_2", list(range(53, 68))),
+        ]
+    )
+    grid.to_file(tmp_path / "grid.roff")
+
+    grid2 = xtgeo.grid_from_file(tmp_path / "grid.roff")
+    assert grid2.subgrids == OrderedDict(
+        [
+            ("subgrid_0", range(1, 21)),
+            ("subgrid_1", range(21, 53)),
+            ("subgrid_2", range(53, 68)),
+        ]
+    )
