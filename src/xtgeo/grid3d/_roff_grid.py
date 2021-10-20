@@ -314,7 +314,7 @@ class RoffGrid:
                     "Cannot convert non-consecutive subgrids to roff format."
                 )
             else:
-                subgrids.append(value[-1] - value[0])
+                subgrids.append(value[-1] + 1 - value[0])
         return np.array(subgrids, dtype=np.int32)
 
     @staticmethod
