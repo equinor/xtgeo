@@ -19,6 +19,7 @@ autoclasstoc
 myst-parser
 shapely==1.6.2; python_version <= "3.5"
 shapely>=1.6.2; python_version > "3.5"
+pillow<8.4.0 # Fails to build with cibuildwheel
 matplotlib>=1.5
 scipy>=0.17
 segyio==1.8.6; python_version == "3.4"
