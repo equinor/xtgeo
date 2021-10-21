@@ -285,6 +285,7 @@ class EGridSubGrid:
                 " with an older version of XTGeo, please import with version 2.15"
                 " and re-export."
             )
+            self.grid_head.numres = 1
         if self.grid_head.numres > 1:
             raise NotImplementedError(
                 "Xtgeo does not currently support multiple reservoirs"
