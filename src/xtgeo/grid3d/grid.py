@@ -376,6 +376,9 @@ class Grid(_Grid3D):
         roxgrid=None,
         roxindexer=None,
     ):
+        """This function only serves to allow deprecated initialization."""
+        # TODO: Remove once implicit initialization such as Grid().from_file()
+        # is removed
         self._xtgformat = xtgformat
         if xtgformat == 1:
             if ncol is None or nrow is None or nlay is None:
