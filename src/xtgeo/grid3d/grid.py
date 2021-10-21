@@ -120,11 +120,11 @@ def grid_from_roxar(
 
 
 def create_box_grid(
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
+    dimension,
+    origin=(0.0, 0.0, 0.0),
     oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
+    increment=(1, 1, 1),
+    rotation=0.0,
     flip=1,
 ):
     """Create a rectangular 'shoebox' grid from spec.
@@ -218,7 +218,14 @@ def allow_deprecated_init(func):
                 "directly from file with mygrid = xtgeo.grid_from_file().",
                 DeprecationWarning,
             )
-            kwargs = _grid_etc1.create_box(dimension=(4, 3, 5))
+            kwargs = _grid_etc1.create_box(
+                dimension=(4, 3, 5),
+                origin=(10.0, 20.0, 1000.0),
+                oricenter=False,
+                increment=(100, 150, 5),
+                rotation=30.0,
+                flip=1,
+            )
             return func(self, **kwargs)
         return func(self, *args, **kwargs)
 

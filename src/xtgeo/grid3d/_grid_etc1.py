@@ -27,14 +27,7 @@ logger = xtg.functionlogger(__name__)
 # Note that "self" is the grid instance
 
 
-def create_box(
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):
+def create_box(dimension, origin, oricenter, increment, rotation, flip):
     """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
     ncol, nrow, nlay = dimension
     nncol = ncol + 1
