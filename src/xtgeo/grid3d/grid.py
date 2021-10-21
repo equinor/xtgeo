@@ -238,9 +238,6 @@ def allow_xtgformat1_init(func):
     # still does. This is only supported internally.
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        # Checking if we are doing an initialization
-        # from file and raise a deprecation warning if
-        # we are.
         if "xtgformat" in kwargs and kwargs["xtgformat"] == 1:
             func(
                 self,
@@ -270,14 +267,14 @@ class Grid(_Grid3D):
         coorsv: numpy array of dtype float32 and dimensions (nx + 1, ny + 1, nz + 1, 4)
             giving the sw, se, nw, ne corners along the i,jth corner line for
             the kth layer.
-        actnumsv: nujpy array of dtype int32 and dimensions (nx, ny, nz) giving
+        actnumsv: numpy array of dtype int32 and dimensions (nx, ny, nz) giving
             the activity number for each cell. 0 means inactive, 1 means
-            active. for dualporo=True/dualperm=True grids, value can also be 2
+            active. For dualporo=True/dualperm=True grids, value can also be 2
             or 3 meaning rock volume only and pore volume only respectively.
         dualporo (bool): True if dual porosity grid.
         dualperm (bool): True if dual permeability grid.
         subgrids: dictionary giving names to subset of layers. Has name as key and
-            list of layer indecies as values. defaults to no names given.
+            list of layer indices as values. Defaults to no names given.
         units: The length units the coordinates are in,
             (either Units.CM, Units.METRES, Units.FEET for cm, metres and
             feet respectively).  Default (None) is unitless.
