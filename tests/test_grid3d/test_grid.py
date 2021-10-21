@@ -1009,51 +1009,42 @@ def test_grid_roff_subgrids_import_regression(tmp_path):
     )
 
 
-def test_grid_bad_dtype_construction():
-    with pytest.raises(TypeError, match="The dtype of the coordsv"):
+@pytest.mark.parametrize(
+    "coordsv_dtype, zcornsv_dtype, actnumsv_dtype, match",
+    [
+        (np.float32, np.float32, np.int32, "The dtype of the coordsv"),
+        (np.float64, np.float64, np.int32, "The dtype of the zcornsv"),
+        (np.float64, np.float32, np.uint8, "The dtype of the actnumsv"),
+    ],
+)
+def test_grid_bad_dtype_construction(
+    coordsv_dtype, zcornsv_dtype, actnumsv_dtype, match
+):
+    with pytest.raises(TypeError, match=match):
         Grid(
-            np.zeros((2, 2, 6), dtype=np.float32),
-            np.zeros((2, 2, 2, 4), dtype=np.float32),
-            np.zeros((1, 1, 1), dtype=np.int32),
-        )
-    with pytest.raises(TypeError, match="The dtype of the zcornsv"):
-        Grid(
-            np.zeros((2, 2, 6), dtype=np.float64),
-            np.zeros((2, 2, 2, 4), dtype=np.float64),
-            np.zeros((1, 1, 1), dtype=np.int32),
-        )
-    with pytest.raises(TypeError, match="The dtype of the actnumsv"):
-        Grid(
-            np.zeros((2, 2, 6), dtype=np.float64),
-            np.zeros((2, 2, 2, 4), dtype=np.float32),
-            np.zeros((1, 1, 1), dtype=np.uint8),
+            np.zeros((2, 2, 6), dtype=coordsv_dtype),
+            np.zeros((2, 2, 2, 4), dtype=zcornsv_dtype),
+            np.zeros((1, 1, 1), dtype=actnumsv_dtype),
         )
 
 
-def test_grid_bad_dimensions_construction():
-    with pytest.raises(ValueError, match="shape of coordsv"):
+@pytest.mark.parametrize(
+    "coordsv_dimensions, zcornsv_dimensions, actnumsv_dimensions, match",
+    [
+        ((2, 2, 2), (2, 2, 2, 4), (1, 1, 1), "shape of coordsv"),
+        ((2, 2, 6), (2, 2, 2, 3), (1, 1, 1), "shape of zcornsv"),
+        ((2, 2, 6), (2, 1, 2, 4), (1, 1, 1), "Mismatch between zcornsv and coordsv"),
+        ((2, 2, 6), (2, 2, 2, 4), (1, 2, 1), "Mismatch between zcornsv and actnumsv"),
+    ],
+)
+def test_grid_bad_dimensions_construction(
+    coordsv_dimensions, zcornsv_dimensions, actnumsv_dimensions, match
+):
+    with pytest.raises(ValueError, match=match):
         Grid(
-            np.zeros((2, 2, 2), dtype=np.float64),
-            np.zeros((2, 2, 2, 4), dtype=np.float32),
-            np.zeros((1, 1, 1), dtype=np.int32),
-        )
-    with pytest.raises(ValueError, match="shape of zcornsv"):
-        Grid(
-            np.zeros((2, 2, 6), dtype=np.float64),
-            np.zeros((2, 2, 2, 3), dtype=np.float32),
-            np.zeros((1, 1, 1), dtype=np.int32),
-        )
-    with pytest.raises(ValueError, match="Mismatch between zcornsv and coordsv"):
-        Grid(
-            np.zeros((2, 2, 6), dtype=np.float64),
-            np.zeros((2, 1, 2, 4), dtype=np.float32),
-            np.zeros((1, 1, 1), dtype=np.int32),
-        )
-    with pytest.raises(ValueError, match="Mismatch between zcornsv and actnumsv"):
-        Grid(
-            np.zeros((2, 2, 6), dtype=np.float64),
-            np.zeros((2, 2, 2, 4), dtype=np.float32),
-            np.zeros((1, 2, 1), dtype=np.int32),
+            np.zeros(coordsv_dimensions, dtype=np.float64),
+            np.zeros(zcornsv_dimensions, dtype=np.float32),
+            np.zeros(actnumsv_dimensions, dtype=np.int32),
         )
 
 
