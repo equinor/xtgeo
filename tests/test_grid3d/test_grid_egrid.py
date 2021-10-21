@@ -365,3 +365,22 @@ def test_read_unexpected_section():
         xtge.EGridFileFormatError, match="subsection started with unexpected"
     ):
         reader.read()
+
+
+@settings(
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(xtgeo_compatible_egrids)
+def test_zero_numres_backwards_compatibility(tmp_path, egrid):
+    egrid.to_file(tmp_path / "grid1.egrid")
+    egrid.global_grid.grid_head.numres = 0
+    egrid.to_file(tmp_path / "grid2.egrid")
+
+    grid1 = xtg.grid_from_file(tmp_path / "grid1.egrid")
+    with pytest.warns(UserWarning, match="EGrid file given with numres < 1"):
+        grid2 = xtg.grid_from_file(tmp_path / "grid2.egrid")
+
+    assert grid1._coordsv.tolist() == grid2._coordsv.tolist()
+    assert grid1._zcornsv.tolist() == grid2._zcornsv.tolist()
+    assert grid1._actnumsv.tolist() == grid2._actnumsv.tolist()
