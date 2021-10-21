@@ -277,8 +277,15 @@ class EGridSubGrid:
                 "Xtgeo does not currently support cylindrical coordinate systems"
             )
         if self.grid_head.numres < 1:
-            raise ValueError("EGrid file given with numres < 1")
-        if self.grid_head.numres != 1:
+            warnings.warn(
+                " EGrid file given with numres < 1, this is invalid, "
+                " assuming that the file contains exactly one reservoir,"
+                " which might fail. XTGeo prior to version 2.14 would"
+                " output grids with numres == 0. If the file was created"
+                " with an older version of XTGeo, please import with version 2.15"
+                " and re-export."
+            )
+        if self.grid_head.numres > 1:
             raise NotImplementedError(
                 "Xtgeo does not currently support multiple reservoirs"
             )
