@@ -2,7 +2,7 @@ name: builds
 
 on:
   push:
-    branches: [master]
+    branches: [master, "*postfix"]
 
 jobs:
   build_pywheels:

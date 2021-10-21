@@ -2,7 +2,7 @@ name: cibuildwheel
 
 on:
   pull_request:
-    branches: [master]
+      branches: [master, "*postfix"]
 
 # Verify that wheel build jobs succeed
 jobs:
