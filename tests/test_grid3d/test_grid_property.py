@@ -5,19 +5,20 @@
 import os
 import pathlib
 
-import pytest
-
+import hypothesis.strategies as st
 import numpy as np
 import numpy.ma as npma
-
-import xtgeo
-from xtgeo.xyz import Polygons
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
-from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import KeywordNotFoundError
+import pytest
+from hypothesis import example, given
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import KeywordNotFoundError
+from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.xyz import Polygons
+
+from .grid_generator import dimensions, xtgeo_grids
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name
@@ -593,6 +594,20 @@ def test_values_in_polygon():
     print(xp3.values.mean())
 
     tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
+
+
+@given(
+    st.sampled_from([np.uint16, np.uint8, np.float32]),
+    st.booleans(),
+    st.one_of(st.integers(), st.floats()),
+)
+def test_gridprop_no_override_roxar_dtype(roxar_dtype, discrete, val):
+    prop = GridProperty(
+        values=val,
+        discrete=discrete,
+        roxar_dtype=roxar_dtype,
+    )
+    assert prop.roxar_dtype == roxar_dtype
 
 
 def test_gridprop_init_roxar_dtype():
