@@ -111,13 +111,20 @@ def grid_properties(draw):
             discrete=is_discrete,
             codes=dict(zip(code_values, code_names)),
             values=values,
+            roxar_dtype=np.uint16,
         )
         gp.dtype = np.int32
         return gp
     else:
         values = draw(arrays(shape=dims, dtype=np.float64, elements=finites))
         return GridProperty(
-            None, "guess", *dims, name, discrete=is_discrete, values=values
+            None,
+            "guess",
+            *dims,
+            name,
+            discrete=is_discrete,
+            values=values,
+            roxar_dtype=np.float32,
         )
 
 

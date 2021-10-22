@@ -150,7 +150,7 @@ class GridProperty(_Grid3D):
         codes: Optional[dict] = None,
         dualporo: Optional[bool] = False,
         dualperm: Optional[bool] = False,
-        roxar_dtype: Optional[Any] = np.float32,
+        roxar_dtype: Optional[Any] = None,
         values: Optional[Union[np.ndarray, float, int]] = None,
     ):
         """Instantating.
@@ -233,7 +233,13 @@ class GridProperty(_Grid3D):
 
         self._filesrc = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
-        self._roxar_dtype = roxar_dtype
+        if roxar_dtype is None:
+            if discrete:
+                self._roxar_dtype = np.uint8
+            else:
+                self._roxar_dtype = np.float32
+        else:
+            self.roxar_dtype = roxar_dtype
         self._values = values
 
         self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
