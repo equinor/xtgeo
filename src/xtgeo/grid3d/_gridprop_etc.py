@@ -64,21 +64,34 @@ def gridproperty_fromgrid(self, gridlike, linkgeometry=False, values=None):
         )
 
 
+def default_gridprop(self):
+    self._ncol = 4
+    self._nrow = 3
+    self._nlay = 5
+    if self._isdiscrete:
+        self._values = np.ma.MaskedArray(np.full((4, 3, 5), 99), dtype=np.int32)
+    else:
+        self._values = np.ma.MaskedArray(np.full((4, 3, 5), 99.0))
+    self._values[0:4, 0, 0:2] = np.ma.masked
+
+
 def gridvalues_fromspec(self, values):
     """Update or set values.
 
     Args:
         values: Values will be None, and array or a scalar
     """
-    defaultvalues = False
+    if self._ncol is None:
+        self._ncol = 4
+    if self._nrow is None:
+        self._nrow = 3
+    if self._nlay is None:
+        self._nlay = 5
     if values is None:
-        values = np.ma.zeros(self.dimensions)
-
-        if self.dimensions == (4, 3, 5):
-            # looks like default input values
-            values += 99
-            defaultvalues = True
-            self._isdiscrete = False
+        if self._isdiscrete:
+            values = np.ma.zeros(self.dimensions, dtype=np.int32)
+        else:
+            values = np.ma.zeros(self.dimensions)
 
     elif np.isscalar(values):
         if isinstance(values, (float, int)):
@@ -90,15 +103,13 @@ def gridvalues_fromspec(self, values):
             raise ValueError("Scalar input values of invalid type")
 
     elif isinstance(values, np.ndarray):
-        values = np.ma.zeros(self.dimensions) + values.reshape(self.dimensions)
+        values = np.ma.MaskedArray(values.reshape(self.dimensions))
+        if self._isdiscrete:
+            values = values.astype(np.int32)
+        else:
+            values = values.astype(np.float64)
 
     else:
         raise ValueError("Input values of invalid type")
 
     self._values = values  # numpy version of properties (as 3D array)
-
-    if defaultvalues:
-        # make some undef cells (when in default values mode)
-        self._values[0:4, 0, 0:2] = xtgeo.UNDEF
-        # make it masked
-        self._values = np.ma.masked_greater(self._values, xtgeo.UNDEF_LIMIT)
