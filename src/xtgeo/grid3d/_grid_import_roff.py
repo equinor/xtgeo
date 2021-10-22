@@ -80,9 +80,9 @@ def handle_deprecated_xtgeo_roff_file(filelike):
         if hasattr(filelike, "name"):
             name = filelike.name
         warnings.warn(
-            f"The roff file {name} contains nonstandard roff format written by"
-            " XTGeo version <=2.14 Reading of such files is deprecated, please"
-            " re-export the file with XTGeo version >2.15"
+            f"The roff file {name} contains nonstandard but harmless roff"
+            " format detail written by XTGeo version <=2.14. Reading of such files"
+            " is deprecated, consider re-exporting the file with XTGeo version >=2.15.3"
         )
         new_header = replace_xtgeo_214_header(header)
 
