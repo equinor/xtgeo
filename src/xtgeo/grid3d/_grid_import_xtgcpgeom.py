@@ -16,11 +16,40 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-def handle_metadata(self, meta, ncol, nrow, nlay):
+def convert_subgrids(sdict):
+    """Convert a simplified ordered dictionary to
+        subgrid required by Grid.
 
-    coordsv = self._coordsv
-    zcornsv = self._zcornsv
-    actnumsv = self._actnumsv
+    The simplified dictionary is on the form
+    {"name1": 3, "name2": 5}
+
+    Note that the input must be an OrderedDict!
+
+    """
+    if sdict is None:
+        return None
+
+    if not isinstance(sdict, OrderedDict):
+        raise ValueError("Input sdict is not an OrderedDict")
+
+    newsub = OrderedDict()
+
+    inn1 = 1
+    for name, nsub in sdict.items():
+        inn2 = inn1 + nsub
+        newsub[name] = range(inn1, inn2)
+        inn1 = inn2
+
+    return newsub
+
+
+def handle_metadata(result, meta, ncol, nrow, nlay):
+
+    # meta _optional_ *may* contain xshift, xscale etc which in case must be taken
+    # into account
+    coordsv = result["coordsv"]
+    zcornsv = result["zcornsv"]
+    actnumsv = result["actnumsv"]
     nncol = ncol + 1
     nnrow = nrow + 1
     nnlay = nlay + 1
@@ -38,24 +67,15 @@ def handle_metadata(self, meta, ncol, nrow, nlay):
     sca = req["zscale"]
     coordsv[2::3] = np.where(sca != 1, coordsv[2::3] * sca, coordsv[2::3])
 
-    self._coordsv = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
-    self._zcornsv = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
-    self._actnumsv = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
-    self._xtgformat = 2
-    self._ncol, self._nrow, self._nlay = ncol, nrow, nlay
-
-    reqattrs = xtgeo.MetaDataCPGeometry.REQUIRED
-    for myattr in reqattrs:
-        if myattr == "subgrids":
-            self.set_subgrids(req["subgrids"])
-        elif myattr not in ["ncol", "nrow", "nlay"]:
-            setattr(self, "_" + myattr, req[myattr])
-
-    self._metadata.required = self
+    result["coordsv"] = coordsv.reshape((nncol, nnrow, 6)).astype(np.float64)
+    result["zcornsv"] = zcornsv.reshape((nncol, nnrow, nnlay, 4)).astype(np.float32)
+    result["actnumsv"] = actnumsv.reshape((ncol, nrow, nlay)).astype(np.int32)
+    if "subgrids" in req:
+        result["subgrids"] = convert_subgrids(req["subgrids"])
 
 
 def import_xtgcpgeom(
-    self, mfile, mmap
+    mfile, mmap
 ):  # pylint: disable=too-many-locals, too-many-statements
     """Using pure python for experimental grid geometry import."""
     #
@@ -86,16 +106,17 @@ def import_xtgcpgeom(
     ncoord = nncol * nnrow * 6
     nzcorn = nncol * nnrow * nnlay * 4
     nactnum = ncol * nrow * nlay
+    result = dict()
     # read numpy arrays from file
-    self._coordsv = xsys.npfromfile(
+    result["coordsv"] = xsys.npfromfile(
         mfile.file, dtype=dtype_coordsv, count=ncoord, offset=offset, mmap=mmap
     )
     newoffset = offset + ncoord * coordfmt
-    self._zcornsv = xsys.npfromfile(
+    result["zcornsv"] = xsys.npfromfile(
         mfile.file, dtype=dtype_zcornsv, count=nzcorn, offset=newoffset, mmap=mmap
     )
     newoffset += nzcorn * zcornfmt
-    self._actnumsv = xsys.npfromfile(
+    result["actnumsv"] = xsys.npfromfile(
         mfile.file, dtype=dtype_actnumv, count=nactnum, offset=newoffset, mmap=mmap
     )
     newoffset += nactnum * actnumfmt
@@ -108,10 +129,11 @@ def import_xtgcpgeom(
 
     meta = json.loads(jmeta, object_pairs_hook=OrderedDict)
 
-    handle_metadata(self, meta, ncol, nrow, nlay)
+    handle_metadata(result, meta, ncol, nrow, nlay)
+    return result
 
 
-def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
+def import_hdf5_cpgeom(mfile, ijkrange=None, zerobased=False):
     """Experimental grid geometry import using hdf5."""
     #
     with h5py.File(mfile.name, "r") as h5h:
@@ -148,11 +170,13 @@ def import_hdf5_cpgeom(self, mfile, ijkrange=None, zerobased=False):
             inzcorn = grp["zcorn"][:, :, :, :]
             inactnum = grp["actnum"][:, :, :]
 
-    self._coordsv = incoord.astype("float64")
-    self._zcornsv = inzcorn.astype("float32")
-    self._actnumsv = inactnum.astype("float32")
+    result = {}
+    result["coordsv"] = incoord.astype("float64")
+    result["zcornsv"] = inzcorn.astype("float32")
+    result["actnumsv"] = inactnum.astype("float32")
 
-    handle_metadata(self, meta, ncol, nrow, nlay)
+    handle_metadata(result, meta, ncol, nrow, nlay)
+    return result
 
 
 def filter_subgrids_partial(subgrids, k1, k2, nlay, zerobased):

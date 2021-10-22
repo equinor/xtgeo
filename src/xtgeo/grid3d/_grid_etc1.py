@@ -27,110 +27,16 @@ logger = xtg.functionlogger(__name__)
 # Note that "self" is the grid instance
 
 
-def create_box(
-    self,
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):  # pylint: disable=unused-argument # type ignore
-    """Create a shoebox grid from cubi'sh spec."""
-    arglist = locals()
-    del arglist["self"]
-
-    if self._xtgformat == 1:
-        _create_box_v1(
-            self,
-            dimension=dimension,
-            origin=origin,
-            oricenter=oricenter,
-            increment=increment,
-            rotation=rotation,
-            flip=flip,
-        )
-
-    else:
-        _create_box_v2(
-            self,
-            dimension=dimension,
-            origin=origin,
-            oricenter=oricenter,
-            increment=increment,
-            rotation=rotation,
-            flip=flip,
-        )
-
-
-def _create_box_v1(
-    self,
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):
-    """Create a shoebox grid from cubi'sh spec, legacy xtgformat=1."""
-    self._ncol, self._nrow, self._nlay = dimension
-    ncoord, nzcorn, ntot = self.vectordimensions
-
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    option = 0
-    if oricenter:
-        option = 1
-
-    _cxtgeo.grd3d_from_cube(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        origin[0],
-        origin[1],
-        origin[2],
-        increment[0],
-        increment[1],
-        increment[2],
-        rotation,
-        flip,
-        option,
-    )
-
-    self._filesrc = None
-    self._props = None
-    self._subgrids = None
-    self._roxgrid = None
-    self._roxindexer = None
-    self._tmp = {}
-    self._xtgformat = 1
-
-
-def _create_box_v2(
-    self,
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):
+def create_box(dimension, origin, oricenter, increment, rotation, flip):
     """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
-    self._ncol, self._nrow, self._nlay = dimension
-
     ncol, nrow, nlay = dimension
     nncol = ncol + 1
     nnrow = nrow + 1
     nnlay = nlay + 1
 
-    self._coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
-    self._zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
-    self._actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+    coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
+    zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
+    actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
     option = 0
     if oricenter:
@@ -140,9 +46,9 @@ def _create_box_v2(
         ncol,
         nrow,
         nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        coordsv,
+        zcornsv,
+        actnumsv,
         origin[0],
         origin[1],
         origin[2],
@@ -154,13 +60,11 @@ def _create_box_v2(
         option,
     )
 
-    self._filesrc = None
-    self._props = None
-    self._subgrids = None
-    self._roxgrid = None
-    self._roxindexer = None
-    self._tmp = {}
-    self._xtgformat = 2
+    return {
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+    }
 
 
 method_factory = {

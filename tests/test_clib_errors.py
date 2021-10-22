@@ -237,30 +237,6 @@ def test_grd3d_read_eclrecord():
         )
 
 
-def test_grd3d_from_cube():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Bug in grd3d_from_cube",
-    ):
-        _cxtgeo.grd3d_from_cube(
-            2,
-            2,
-            1,
-            np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-            np.array([1.0, 1.0, 1.0, 1.0]),  # not relevant
-            np.array([1, 1, 1, 1], dtype=np.int32),  # not relevant
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1,
-            0,
-        )
-
-
 def test_grd3d_reduce_onelayer():
     with pytest.raises(
         xtgeo.XTGeoCLibError,
