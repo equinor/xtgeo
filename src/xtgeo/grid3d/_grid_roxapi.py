@@ -113,12 +113,6 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
     ntot = ncol * nrow * nlay
 
     result = {}
-    # update other attributes
-    result["xtgformat"] = 1
-    result["ncol"] = ncol
-    result["nrow"] = nrow
-    result["nlay"] = nlay
-
     result["name"] = gname
 
     if corners is None:
@@ -175,9 +169,27 @@ def _convert_to_xtgeo_grid_v1(rox, roxgrid, corners, gname):  # pragma: no cover
         zcornsv,
         actnumsv,
     )
-    result["coordsv"] = coordsv
-    result["zcornsv"] = zcornsv
-    result["actnumsv"] = actnumsv
+
+    # convert to xtgformat=2
+    newcoordsv = np.zeros((ncol + 1, nrow + 1, 6), dtype=np.float64)
+    newzcornsv = np.zeros((ncol + 1, nrow + 1, nlay + 1, 4), dtype=np.float32)
+    newactnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+
+    _cxtgeo.grd3cp3d_xtgformat1to2_geom(
+        ncol,
+        nrow,
+        nlay,
+        coordsv,
+        newcoordsv,
+        zcornsv,
+        newzcornsv,
+        actnumsv,
+        newactnumsv,
+    )
+
+    result["coordsv"] = newcoordsv
+    result["zcornsv"] = newzcornsv
+    result["actnumsv"] = newactnumsv
     logger.info("Run XTGeo C code... done")
     logger.info("Converting to XTGeo internals... done")
 

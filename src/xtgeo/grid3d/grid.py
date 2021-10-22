@@ -232,26 +232,6 @@ def allow_deprecated_init(func):
     return wrapper
 
 
-def allow_xtgformat1_init(func):
-    # This decorator is here to maintain backwards compatibility with
-    # initializing grid with xtgformat=1 which some internal functionality
-    # still does. This is only supported internally.
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if "xtgformat" in kwargs and kwargs["xtgformat"] == 1:
-            func(
-                self,
-                coordsv=np.zeros((1, 1, 6), dtype=np.float64),
-                zcornsv=np.zeros((1, 1, 1, 4), dtype=np.float32),
-                actnumsv=np.zeros((0, 0, 0), dtype=np.int32),
-            )
-            self._reset(*args, **kwargs)
-            return None
-        return func(self, *args, **kwargs)
-
-    return wrapper
-
-
 class Grid(_Grid3D):
     """Class for a 3D grid corner point geometry in XTGeo.
 
@@ -291,7 +271,6 @@ class Grid(_Grid3D):
     """
 
     # pylint: disable=too-many-public-methods
-    @allow_xtgformat1_init
     @allow_deprecated_init
     def __init__(
         self,
@@ -349,7 +328,6 @@ class Grid(_Grid3D):
             coordsv=coordsv,
             zcornsv=zcornsv,
             actnumsv=actnumsv,
-            xtgformat=2,
             dualporo=dualporo,
             dualperm=dualperm,
             subgrids=subgrids,
@@ -366,10 +344,6 @@ class Grid(_Grid3D):
         coordsv: np.ndarray,
         zcornsv: np.ndarray,
         actnumsv: np.ndarray,
-        ncol: Optional[int] = None,
-        nrow: Optional[int] = None,
-        nlay: Optional[int] = None,
-        xtgformat: int = 2,
         dualporo: bool = False,
         dualperm: bool = False,
         subgrids: OrderedDict = None,
@@ -383,17 +357,10 @@ class Grid(_Grid3D):
         """This function only serves to allow deprecated initialization."""
         # TODO: Remove once implicit initialization such as Grid().from_file()
         # is removed
-        self._xtgformat = xtgformat
-        if xtgformat == 1:
-            if ncol is None or nrow is None or nlay is None:
-                raise ValueError("Need to give dimensions when xtgformat=1")
-            self._ncol = ncol
-            self._nrow = nrow
-            self._nlay = nlay
-        else:
-            self._ncol = actnumsv.shape[0]
-            self._nrow = actnumsv.shape[1]
-            self._nlay = actnumsv.shape[2]
+        self._xtgformat = 2
+        self._ncol = actnumsv.shape[0]
+        self._nrow = actnumsv.shape[1]
+        self._nlay = actnumsv.shape[2]
 
         self._coordsv = coordsv
         self._zcornsv = zcornsv

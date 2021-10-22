@@ -1046,32 +1046,3 @@ def test_grid_bad_dimensions_construction(
             np.zeros(zcornsv_dimensions, dtype=np.float32),
             np.zeros(actnumsv_dimensions, dtype=np.int32),
         )
-
-
-def test_grid_bad_xtgformat1_construction():
-    with pytest.raises(ValueError, match="Need to give dimensions when xtgformat=1"):
-        Grid(
-            np.zeros((1, 1, 6)),
-            np.zeros((1, 1, 1, 4)),
-            np.zeros((0, 0, 0)),
-            xtgformat=1,
-        )
-
-
-def test_xtgformat1_construction():
-    coordsv = np.zeros((3, 3, 6), dtype=np.float64)
-    zcornsv = np.zeros((3, 3, 3, 4), dtype=np.float32)
-    actnumsv = np.zeros((2, 2, 2), dtype=np.int32)
-    grd = Grid(
-        coordsv.copy().ravel(),
-        zcornsv.astype(np.float64).copy().ravel(),
-        actnumsv.copy().ravel(),
-        ncol=2,
-        nrow=2,
-        nlay=2,
-        xtgformat=1,
-    )
-    grd._xtgformat2()
-    np.testing.assert_allclose(coordsv, grd._coordsv)
-    np.testing.assert_allclose(zcornsv, grd._zcornsv)
-    np.testing.assert_allclose(actnumsv, grd._actnumsv)
