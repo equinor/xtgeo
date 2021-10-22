@@ -255,12 +255,11 @@ class EGridSubGrid(EclGrid):
             )
         if self.grid_head.numres < 1:
             warnings.warn(
-                " EGrid file given with numres < 1, this is invalid, "
-                " assuming that the file contains exactly one reservoir,"
-                " which might fail. XTGeo prior to version 2.14 would"
-                " output grids with numres == 0. If the file was created"
-                " with an older version of XTGeo, please import with version 2.15"
-                " and re-export."
+                "EGrid file given with numres < 1, which is invalid, so assuming"
+                " instead that the file contains exactly one reservoir. XTGeo"
+                " prior to version 2.14 would output grids with numres == 0. If"
+                " the file was created with an older version of XTGeo, consider"
+                " importing the file with version 2.15 and re-exporting."
             )
             self.grid_head.numres = 1
         if self.grid_head.numres > 1:

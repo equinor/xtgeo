@@ -348,7 +348,7 @@ def test_deprecated_fileread(roff_grid):
         )
     )
 
-    with pytest.warns(UserWarning, match="nonstandard roff"):
+    with pytest.warns(UserWarning, match="nonstandard but harmless roff"):
         with handle_deprecated_xtgeo_roff_file(new_buff) as converted_buff:
             new_grid = RoffGrid.from_file(converted_buff)
 
