@@ -70,6 +70,21 @@
     reading GRDECL (introduced in XTGeo 2.6-2.10) #507
   * Fix: Write to roxapi discrete prop #531
 
+### Version 2.15.3
+* bugfixes:
+  * Fixed incompatable roff grid import with xtgeo 2.14 export (#667)
+  * Fixed incompatable egrid import with xtgeo 2.14 export
+  * Fixed non-backwards compatible type in roff grid property export
+  * Fixed roff subgrid import (#666)
+
+### Version 2.15.2
+* bugfixes:
+  * Fixed incorrect type in roff grid parameter export
+  * Fixed incorrect undefined value in roff grid property export
+  * Fixed detect_fformat crashing for several cases
+* enhancements
+  * Increased performance of get_dz and inactivate_by_dz.
+
 ### Version 2.15.1
 
 * Bugfixes:
