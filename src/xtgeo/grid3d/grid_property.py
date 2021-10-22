@@ -3,22 +3,24 @@
 
 
 import copy
-import numbers
 import hashlib
+import numbers
 import pathlib
 from types import FunctionType
-from typing import Optional, Union, Any
-import numpy as np
+from typing import Any, Optional, Union
 
+import numpy as np
 import xtgeo
 
+from . import (
+    _gridprop_etc,
+    _gridprop_export,
+    _gridprop_import,
+    _gridprop_lowlevel,
+    _gridprop_op1,
+    _gridprop_roxapi,
+)
 from ._grid3d import _Grid3D
-from . import _gridprop_etc
-from . import _gridprop_op1
-from . import _gridprop_import
-from . import _gridprop_roxapi
-from . import _gridprop_export
-from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -138,9 +140,9 @@ class GridProperty(_Grid3D):
         self,
         pfile: Optional[Union[str, pathlib.Path, Any]] = None,
         fformat: Optional[str] = "guess",
-        ncol: Optional[int] = 4,
-        nrow: Optional[int] = 3,
-        nlay: Optional[int] = 5,
+        ncol: Optional[int] = None,
+        nrow: Optional[int] = None,
+        nlay: Optional[int] = None,
         name: Optional[str] = "unknown",
         discrete: Optional[bool] = False,
         date: Optional[str] = None,
@@ -244,7 +246,15 @@ class GridProperty(_Grid3D):
 
         self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
 
-        if pfile is not None:
+        if (
+            values is None
+            and pfile is None
+            and ncol is None
+            and nrow is None
+            and nlay is None
+        ):
+            _gridprop_etc.default_gridprop(self)
+        elif pfile is not None:
             # make instance through grid/gridprop instance or file import
             if isinstance(pfile, (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
                 _gridprop_etc.gridproperty_fromgrid(
@@ -269,6 +279,16 @@ class GridProperty(_Grid3D):
             # make values
             _gridprop_etc.gridvalues_fromspec(self, values)
 
+        if ncol is not None and ncol != self._ncol:
+            raise ValueError(
+                f"mismatching column dimension given: {ncol} vs {self._ncol}"
+            )
+        if nrow is not None and nrow != self._nrow:
+            raise ValueError(f"mismatching row dimension given: {nrow} vs {self._nrow}")
+        if nlay is not None and nlay != self._nlay:
+            raise ValueError(
+                f"mismatching layer dimension given: {nlay} vs {self._nlay}"
+            )
         self._metadata = xtgeo.MetaDataCPProperty()
 
     def __del__(self):

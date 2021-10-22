@@ -596,6 +596,108 @@ def test_values_in_polygon():
     tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
 
 
+@given(dimensions, st.booleans())
+@example((4, 3, 5), True)
+def test_gridprop_non_default_size_init(dim, discrete):
+    ncol, nrow, nlay = dim
+    prop = GridProperty(
+        ncol=ncol,
+        nrow=nrow,
+        nlay=nlay,
+        discrete=discrete,
+    )
+
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+    np.testing.assert_allclose(prop.values, np.zeros(dim))
+
+
+@given(xtgeo_grids, st.booleans())
+@example(Grid(), True)
+def test_gridprop_grid_init(grid, discrete):
+    prop = GridProperty(
+        grid,
+        discrete=discrete,
+    )
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+    np.testing.assert_allclose(prop.values, np.zeros(grid.dimensions))
+
+
+@given(dimensions, xtgeo_grids, st.booleans())
+@example((4, 3, 5), Grid(), True)
+def test_gridprop_grid_and_dim_init(dim, grid, discrete):
+    ncol, nrow, nlay = dim
+    if dim != grid.dimensions:
+        with pytest.raises(ValueError, match="dimension"):
+            GridProperty(
+                grid,
+                ncol=ncol,
+                nrow=nrow,
+                nlay=nlay,
+                discrete=discrete,
+            )
+    else:
+        prop = GridProperty(
+            grid,
+            ncol=ncol,
+            nrow=nrow,
+            nlay=nlay,
+            discrete=discrete,
+        )
+        if discrete:
+            assert prop.dtype == np.int32
+            assert prop.values.dtype == np.int32
+        else:
+            assert prop.dtype == np.float64
+            assert prop.values.dtype == np.float64
+        np.testing.assert_allclose(prop.values, np.zeros(dim))
+
+
+@pytest.mark.parametrize("discrete", [True, False])
+def test_gridprop_default(discrete):
+    prop = GridProperty(discrete=discrete)
+
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+
+    default_values = np.ma.MaskedArray(np.full((4, 3, 5), 99), False)
+    default_values[0:4, 0, 0:2] = np.ma.masked
+
+    np.testing.assert_allclose(prop.values, default_values)
+
+
+@pytest.mark.parametrize("discrete", [True, False])
+def test_gridprop_values_and_discrete_init(discrete):
+    prop = GridProperty(discrete=discrete, values=np.zeros((4, 3, 5)))
+
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+
+    np.testing.assert_allclose(prop.values, np.ma.zeros((4, 3, 5)))
+
+
+def test_gridprop_init_default_with_value():
+    prop = GridProperty(discrete=True, values=1)
+    assert np.array_equal(prop.values, np.ma.ones(shape=(4, 3, 5), dtype=np.int32))
+
+
 @given(
     st.sampled_from([np.uint16, np.uint8, np.float32]),
     st.booleans(),
