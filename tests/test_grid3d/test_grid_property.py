@@ -595,6 +595,13 @@ def test_values_in_polygon():
     tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
 
 
+def test_gridprop_init_roxar_dtype():
+    assert GridProperty(discrete=True).roxar_dtype == np.uint8
+    assert GridProperty(discrete=False).roxar_dtype == np.float32
+    with pytest.raises(ValueError, match="roxar_dtype"):
+        GridProperty(roxar_dtype=np.int64)
+
+
 # def test_get_xy_values_for_webportal_bri():
 #     """Get lists on webportal format, small BRILLIG case"""
 
