@@ -85,7 +85,6 @@ def gridvalues_fromspec(self, values):
             dtype = np.float64
             if self._isdiscrete:
                 dtype = np.int32
-                self._roxar_dtype = np.uint8
             values = np.ma.zeros(self.dimensions, dtype=dtype) + values
         else:
             raise ValueError("Scalar input values of invalid type")
