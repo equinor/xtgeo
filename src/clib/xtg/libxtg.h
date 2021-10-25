@@ -1196,29 +1196,6 @@ grd3d_roff2xtgeo_splitenz(
                        long n_swig_np_flt_inplace_v2    // nzcorn
                        );
 
-int
-grd3d_write_eclrecord(FILE *fc,
-                      char *recname,
-                      int rectype,
-                      int *intv,
-                      float *floatv,
-                      double *doublev,
-                      long nrecs);
-
-int
-grd3d_write_eclinput(FILE *fc,
-                     char *recname,
-                     int rectype,
-                     int *intv,
-                     float *floatv,
-                     double *doublev,
-                     long nrecs,
-                     char *fmt,
-                     int ncolumns);
-
-void
-grd3d_write_free_eclinput(FILE *fc, char *recname, char *freetext);
-
 void
 grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
 
