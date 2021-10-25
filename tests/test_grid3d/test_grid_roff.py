@@ -335,7 +335,7 @@ XTGEO_214_HEADER = (
 )
 
 
-@given(roff_grids())
+@given(roff_grids(dim=st.tuples(*([st.integers(min_value=4, max_value=5)] * 3))))
 def test_deprecated_fileread(roff_grid):
     buff = io.BytesIO()
     roff_grid.to_file(buff)
