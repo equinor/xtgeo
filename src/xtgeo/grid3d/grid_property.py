@@ -10,15 +10,16 @@ from types import FunctionType
 from typing import Any, Optional, Union
 
 import numpy as np
+
 import xtgeo
 
 from . import (
-    _gridprop_etc,
     _gridprop_export,
     _gridprop_import,
     _gridprop_lowlevel,
     _gridprop_op1,
     _gridprop_roxapi,
+    _gridprop_value_init,
 )
 from ._grid3d import _Grid3D
 
@@ -160,9 +161,9 @@ class GridProperty(_Grid3D):
             Args:
                 pfile: Input file-like or a Grid/GridProperty instance or leave blank.
                 fformat: File format input, default is ``guess``.
-                ncol: Number of columns (nx).
-                nrow: Number of rows (ny).
-                ncol: Number of layers (nz).
+                ncol: Number of columns (nx) defaults to 4.
+                nrow: Number of rows (ny) defaults to 3.
+                ncol: Number of layers (nz) defaults to 5.
                 name: Name of property.
                 discrete: True or False.
                 date: Date on YYYYMMDD form.
@@ -246,50 +247,79 @@ class GridProperty(_Grid3D):
 
         self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
 
-        if (
-            values is None
-            and pfile is None
-            and ncol is None
-            and nrow is None
-            and nlay is None
-        ):
-            _gridprop_etc.default_gridprop(self)
-        elif pfile is not None:
-            # make instance through grid/gridprop instance or file import
-            if isinstance(pfile, (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
-                _gridprop_etc.gridproperty_fromgrid(
-                    self,
-                    pfile,
-                    linkgeometry=linkgeometry,
-                    values=values,
-                )
-
-            elif isinstance(pfile, (str, pathlib.Path)):
-                self.from_file(
-                    pfile,
-                    fformat=fformat,
-                    name=name,
-                    grid=grid,
-                    gridlink=linkgeometry,
-                    date=date,
-                    fracture=fracture,
-                )
-
+        if isinstance(pfile, (str, pathlib.Path)):
+            self.from_file(
+                pfile,
+                fformat=fformat,
+                name=name,
+                grid=grid,
+                gridlink=linkgeometry,
+                date=date,
+                fracture=fracture,
+            )
+            self._check_dimensions_match(ncol, nrow, nlay)
         else:
-            # make values
-            _gridprop_etc.gridvalues_fromspec(self, values)
+            self._set_initial_dimensions(pfile, (ncol, nrow, nlay))
+            if all(x is None for x in [pfile, values, ncol, nrow, nlay]):
+                self._values = _gridprop_value_init.gridproperty_dummy_values(discrete)
+            else:
+                self._values = _gridprop_value_init.gridproperty_non_dummy_values(
+                    pfile, self.dimensions, values, discrete
+                )
 
-        if ncol is not None and ncol != self._ncol:
+        if isinstance(pfile, xtgeo.grid3d.Grid):
+            if linkgeometry:
+                # assosiate this grid property with grid instance. This is not default
+                # since sunch links may affect garbish collection
+                self.geometry = pfile
+            pfile.append_prop(self)
+
+        self._metadata = xtgeo.MetaDataCPProperty()
+
+    def _set_initial_dimensions(self, gridlike, input_dimensions):
+        """Sets the initial dimensions either from input, grid or default.
+
+        If a gridlike is given, we use its dimensions, but make sure it matches
+        the input dimensions if given (not None). Otherwise, dimensions are either
+        set to the input dimensions or defaulted.
+
+        """
+        if gridlike is not None:
+            self._ncol = gridlike.ncol
+            self._nrow = gridlike.nrow
+            self._nlay = gridlike.nlay
+            self._check_dimensions_match(*input_dimensions)
+        else:
+            ncol, nrow, nlay = input_dimensions
+            if ncol is None:
+                self._ncol = 4
+            else:
+                self._ncol = ncol
+            if nrow is None:
+                self._nrow = 3
+            else:
+                self._nrow = nrow
+            if nlay is None:
+                self._nlay = 5
+            else:
+                self._nlay = nlay
+
+    def _check_dimensions_match(self, ncol, nrow, nlay):
+        """
+        Raises:
+            ValueError: if given dimensions are not None and do not
+                match dimensions of the GridProperty
+        """
+        if ncol is not None and self._ncol != ncol:
             raise ValueError(
                 f"mismatching column dimension given: {ncol} vs {self._ncol}"
             )
-        if nrow is not None and nrow != self._nrow:
+        if nrow is not None and self._nrow != nrow:
             raise ValueError(f"mismatching row dimension given: {nrow} vs {self._nrow}")
-        if nlay is not None and nlay != self._nlay:
+        if nlay is not None and self._nlay != nlay:
             raise ValueError(
                 f"mismatching layer dimension given: {nlay} vs {self._nlay}"
             )
-        self._metadata = xtgeo.MetaDataCPProperty()
 
     def __del__(self):
         logger.debug("DELETING property instance %s", self.name)
