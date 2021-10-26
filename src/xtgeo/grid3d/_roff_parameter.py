@@ -158,7 +158,10 @@ class RoffParameter:
         if xtgeo_grid_property.isdiscrete:
             values = values.astype(np.int32).filled(-999)
         else:
-            values = values.astype(np.float64).filled(-999.0)
+            # Although the roff format can contain double,
+            # double typed parameters are not read by RMS so we
+            # need to convert to float32 here
+            values = values.astype(np.float32).filled(-999.0)
 
         return RoffParameter(
             *xtgeo_grid_property.dimensions,
