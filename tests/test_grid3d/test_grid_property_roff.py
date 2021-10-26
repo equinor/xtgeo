@@ -313,7 +313,8 @@ def test_from_file_wrong_filetype(simple_roff_parameter_contents):
 @pytest.mark.parametrize(
     "xtgeotype, rofftype",
     [
-        (np.float64, "double"),
+        (np.float64, "float"),  # RMS does not accept double typed gridprops
+        (np.float32, "float"),
         (np.int32, "int"),
         (np.uint8, "int"),
     ],
