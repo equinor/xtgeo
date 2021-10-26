@@ -2,20 +2,16 @@
 """Roxar API functions for XTGeo Points/Polygons"""
 import os
 import tempfile
+
 import numpy as np
 import pandas as pd
-
 from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
-
 from xtgeo.xyz import _xyz_io
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
-
-# default column names
-DEFAULTNAME = {"x": "X_UTME", "y": "Y_UTMN", "z": "Z_TVDSS", "p": "POLY_ID"}
 
 # pylint: disable=protected-access
 
@@ -136,11 +132,11 @@ def _roxapi_import_xyz(
             "name={}, category/folder={}, stype={}".format(name, category, stype)
         )
 
-    args["xname"] = DEFAULTNAME["x"]
-    args["yname"] = DEFAULTNAME["y"]
-    args["zname"] = DEFAULTNAME["z"]
+    args["xname"] = "X_UTME"
+    args["yname"] = "Y_UTMN"
+    args["zname"] = "Z_TVDSS"
     if is_polygons:
-        args["pname"] = DEFAULTNAME["p"]
+        args["pname"] = "POLY_ID"
 
     roxitem = _get_roxxyz(
         rox,
@@ -165,14 +161,14 @@ def _roxapi_xyz_to_dataframe(roxitem, is_polygons=False):  # pragma: no cover
     # by being a list after import
 
     logger.info("Points/polygons/polylines from roxapi to xtgeo...")
-    cnames = [DEFAULTNAME["x"], DEFAULTNAME["y"], DEFAULTNAME["z"]]
+    cnames = ["X_UTME", "Y_UTMN", "Z_TVDSS"]
 
     if is_polygons and isinstance(roxitem, list):
         # polylines/-gons
         dfs = []
         for idx, poly in enumerate(roxitem):
             dataset = pd.DataFrame.from_records(poly, columns=cnames)
-            dataset[DEFAULTNAME["p"]] = idx
+            dataset["POLY_ID"] = idx
             dfs.append(dataset)
 
         dfr = pd.concat(dfs)
