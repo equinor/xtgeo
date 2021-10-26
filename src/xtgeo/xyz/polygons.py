@@ -28,7 +28,7 @@ RegularSurface = TypeVar("RegularSurface")
 
 def polygons_from_file(
     pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"
-) -> Polygons:
+) -> "Polygons":
     """Make an instance of a Polygons object directly from file import.
 
     Args:
@@ -50,7 +50,7 @@ def polygons_from_roxar(
     stype: Optional[str] = "horizons",
     realisation: Optional[int] = 0,
     attributes: Optional[bool] = False,
-) -> Polygons:
+) -> "Polygons":
     """Load a Polygons instance from Roxar RMS project.
 
     Note also that horizon/zone/faults name and category must exists
