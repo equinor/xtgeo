@@ -5,6 +5,9 @@ import pytest
 import xtgeo
 from xtgeo.xyz import Points
 
+xtg = xtgeo.XTGeoDialog()
+logger = xtg.basiclogger(__name__)
+
 WFILES1 = pathlib.Path("wells/reek/1/OP_1.w")
 WFILES2 = pathlib.Path("wells/reek/1/OP_[1-5]*.w")
 
@@ -136,6 +139,7 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path):
         filter={"ZoneName": ["SO622"]},
     )
 
+    logger.info(mypoints.dataframe)
     assert mypoints.dataframe["X_UTME"][0] == pytest.approx(462698.2375)
     assert mypoints.dataframe["WellName"][0] == "OP_1_RKB"
     assert mypoints.dataframe["X_UTME"][20] == pytest.approx(462749.4820)
