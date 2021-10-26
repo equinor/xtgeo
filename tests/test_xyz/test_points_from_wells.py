@@ -139,11 +139,15 @@ def test_get_zone_thickness_some_wells(testpath, tmp_path):
         filter={"ZoneName": ["SO622"]},
     )
 
-    logger.info(mypoints.dataframe)
-    assert mypoints.dataframe["X_UTME"][0] == pytest.approx(462698.2375)
-    assert mypoints.dataframe["WellName"][0] == "OP_1_RKB"
-    assert mypoints.dataframe["X_UTME"][20] == pytest.approx(462749.4820)
-    assert mypoints.dataframe["WellName"][20] == "OP_5"
+    # not the order in the dataframe may vary randomly so do a sort
+    dfr = mypoints.dataframe.sort_values(["WellName", "Zone", "Z_TVDSS"])
+    dfr.reset_index(inplace=True)
+    logger.info(dfr)
+
+    assert dfr["X_UTME"][0] == pytest.approx(462698.2375)
+    assert dfr["WellName"][0] == "OP_1"
+    assert dfr["X_UTME"][20] == pytest.approx(462749.4820)
+    assert dfr["WellName"][20] == "OP_5"
 
 
 def test_get_faciesfraction_some_wells_old(testpath, tmp_path):
