@@ -22,7 +22,7 @@ def test_get_well_x_surf():
     """Getting XYZ, MD for well where crossing a surface"""
 
     wll = xtgeo.Well(WFILE, mdlogname="Q_MDEPTH")
-    surf = xtgeo.RegularSurface(SFILE)
+    surf = xtgeo.surface_from_file(SFILE)
     top = wll.get_surface_picks(surf)
 
     assert top.dataframe.Q_MDEPTH[5] == pytest.approx(5209.636860, abs=0.001)

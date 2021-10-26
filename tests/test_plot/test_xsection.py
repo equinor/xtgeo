@@ -52,8 +52,7 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
     mywell = xtgeo.Well(USEFILE4)
 
     mysurfaces = []
-    mysurf = xtgeo.RegularSurface()
-    mysurf.from_file(USEFILE2)
+    mysurf = xtgeo.surface_from_file(USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
@@ -72,7 +71,7 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
     assert "xtgeo" in cfil1
     assert "colfacies" in str(cfil2)
 
-    myplot.set_colortable(cfil1, colorlist=None)
+    myplot.colormap = cfil1
 
     myplot.canvas(title="Manamana", subtitle="My Dear Well")
 
@@ -80,11 +79,13 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
 
     myplot.plot_well(zonelogname="Zonelog")
 
-    if generate_plot:
-        myplot.savefig(join(tmpdir, "xsect_gbf1.png"))
-
     if show_plot:
         myplot.show()
+
+    if generate_plot:
+        myplot.savefig(join(tmpdir, "xsect_gbf1.png"), last=True)
+    else:
+        myplot.close()
 
 
 @pytest.mark.skipifroxar
@@ -95,8 +96,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     mycube = xtgeo.Cube(USEFILE6)
 
     mysurfaces = []
-    mysurf = xtgeo.RegularSurface()
-    mysurf.from_file(USEFILE2)
+    mysurf = xtgeo.surface_from_file(USEFILE2)
 
     for i in range(10):
         xsurf = mysurf.copy()
@@ -123,7 +123,7 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     assert "xtgeo" in cfil1
     assert "colfacies" in str(cfil2)
 
-    myplot.set_colortable(cfil1, colorlist=None)
+    myplot.colormap = cfil1
 
     myplot.canvas(title="Plot with seismics", subtitle="Some well")
 
@@ -139,6 +139,8 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
 
     if show_plot:
         myplot.show()
+
+    myplot.close()
 
 
 @pytest.mark.skipifroxar
@@ -175,6 +177,21 @@ def test_xsect_larger_geogrid(show_plot):
 
 
 @pytest.mark.skipifroxar
+def test_multiple_subplots(tmpdir, show_plot, generate_plot):
+    """Test as simple XSECT plot."""
+
+    mywell = xtgeo.Well(USEFILE4)
+    mysurf = xtgeo.surface_from_file(USEFILE2)
+
+    myplot = XSection(zmin=1500, zmax=1800, well=mywell, surfaces=[mysurf])
+
+    for i in range(4):
+        myplot.canvas(title=str(i), subtitle="My Dear Well")
+
+    myplot.close()
+
+
+@pytest.mark.skipifroxar
 def test_reek1(tmpdir, generate_plot):
     """Test XSect for a Reek well."""
 
@@ -194,8 +211,7 @@ def test_reek1(tmpdir, generate_plot):
     surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
-        mysurf = xtgeo.RegularSurface()
-        mysurf.from_file(fname)
+        mysurf = xtgeo.surface_from_file(fname)
         mysurfaces.append(mysurf)
 
     # Troll lobes
@@ -203,8 +219,7 @@ def test_reek1(tmpdir, generate_plot):
     surfnames = glob.glob(str(USEFILE5))
     surfnames.sort()
     for fname in surfnames:
-        mysurf = xtgeo.RegularSurface()
-        mysurf.from_file(fname)
+        mysurf = xtgeo.surface_from_file(fname)
         mylobes.append(mysurf)
 
     for wo in mywells:
@@ -245,3 +260,5 @@ def test_reek1(tmpdir, generate_plot):
         if generate_plot:
             myplot.savefig(join(tmpdir, "xsect2a.svg"), fformat="svg", last=False)
             myplot.savefig(join(tmpdir, "xsect2a.png"), fformat="png")
+        else:
+            myplot.close()

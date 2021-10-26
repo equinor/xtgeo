@@ -43,9 +43,9 @@ requires = [
   'numpy==1.19.2; python_version == "3.8"',
   'numpy>=1.19; python_version == "3.7"',
   'numpy>=1.19; python_version >= "3.9"',
-  'Sphinx',
+  'Sphinx<4.0', # Due to sphinx-toolbox
   'sphinx-rtd-theme',
-  'sphinxcontrib-apidoc',
-  'sphinx-autodoc-typehints',
-  'recommonmark',
+  'sphinx-toolbox',
+  'autoclasstoc',
+  'myst-parser',
 ]

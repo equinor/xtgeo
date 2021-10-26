@@ -132,7 +132,6 @@ def test_complex_io(surf, fformat, output_engine, input_engine):
 
 @deprecation.fail_if_not_removed
 @pytest.mark.usefixtures("setup_tmpdir")
-@settings(deadline=400)
 @given(surfaces())
 def test_complex_io_hdf(surf):
     surf.to_hdf("my_file")

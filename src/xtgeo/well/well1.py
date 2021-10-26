@@ -1,26 +1,22 @@
 # -*- coding: utf-8 -*-
 """XTGeo well module, working with one single well."""
 
+import io
+import math
+from collections import OrderedDict
 from copy import deepcopy
 from distutils.version import StrictVersion
-from typing import Union, Optional, List, Dict
 from pathlib import Path
-import io
-from collections import OrderedDict
-import math
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-
 import xtgeo
 import xtgeo.common.constants as const
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
-
-from . import _wellmarkers
-from . import _well_io
-from . import _well_roxapi
-from . import _well_oper
 from xtgeo import XTGeoCLibError
+
+from . import _well_io, _well_oper, _well_roxapi, _wellmarkers
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -1477,7 +1473,7 @@ class Well:
         depends on the sampling interval (ie. count) or on distance measures.
         Distance measures are TVD (true vertical depth) or MD (measured depth).
 
-        .. image:: ../../docs/images/wells-mask-shoulderbeds.png
+        .. image:: images/wells-mask-shoulderbeds.png
            :width: 300
            :align: center
 

@@ -154,7 +154,7 @@ cube_export_segy(char *sfile,
 
     nc += _write_int_as_2bytes(fc, 1);
     nc += _write_int_as_2bytes(fc, 1);
-    nc += _write_int_as_2bytes(fc, (int)zinc * 1000);  // sample interval
+    nc += _write_int_as_2bytes(fc, (int)(zinc * 1000));  // sample interval
     nc += _write_int_as_2bytes(fc, 0);
     nc += _write_int_as_2bytes(fc, nz);  // N samples per trace
     nc += _write_int_as_2bytes(fc, 0);
@@ -248,11 +248,11 @@ cube_export_segy(char *sfile,
                 nc += _write_int_as_2bytes(fc, 0);
             }
 
-            nc += _write_int_as_2bytes(fc, (int)zori);         // 36
-            nc += _write_int_as_2bytes(fc, 0);                 // 37
-            nc += _write_int_as_2bytes(fc, 0);                 // 38
-            nc += _write_int_as_2bytes(fc, nz);                // 39
-            nc += _write_int_as_2bytes(fc, (int)zinc * 1000);  // 40 sample intv.
+            nc += _write_int_as_2bytes(fc, (int)zori);           // 36
+            nc += _write_int_as_2bytes(fc, 0);                   // 37
+            nc += _write_int_as_2bytes(fc, 0);                   // 38
+            nc += _write_int_as_2bytes(fc, nz);                  // 39
+            nc += _write_int_as_2bytes(fc, (int)(zinc * 1000));  // 40 sample intv.
 
             for (nn = 41; nn <= 71; nn++) {
                 nc += _write_int_as_2bytes(fc, 0);

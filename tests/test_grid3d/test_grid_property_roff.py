@@ -10,28 +10,21 @@ from hypothesis.extra.numpy import arrays
 from xtgeo.grid3d import GridProperty
 from xtgeo.grid3d._roff_parameter import RoffParameter
 
+from .grdecl_grid_generator import finites
 from .grid_generator import dimensions
-
-finites = st.floats(
-    min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False, width=32
-)
-
-names = st.text(
-    min_size=1, max_size=32, alphabet=st.characters(min_codepoint=60, max_codepoint=123)
-)
-codes = st.integers(min_value=0, max_value=100)
+from .gridprop_generator import codes, grid_properties, keywords
 
 
 @st.composite
 def roff_parameters(draw, dim=dimensions):
     dims = draw(dim)
 
-    name = draw(names)
+    name = draw(keywords)
     is_discrete = draw(st.booleans())
     if is_discrete:
         num_codes = draw(st.integers(min_value=2, max_value=10))
         code_names = draw(
-            st.lists(min_size=num_codes, max_size=num_codes, elements=names)
+            st.lists(min_size=num_codes, max_size=num_codes, elements=keywords)
         )
         code_values = np.array(
             draw(
@@ -76,47 +69,6 @@ def test_roff_property_read_write(rpara):
 
     buff.seek(0)
     assert RoffParameter.from_file(buff, rpara.name) == rpara
-
-
-@st.composite
-def grid_properties(draw):
-    dims = draw(dimensions)
-    name = draw(names)
-    is_discrete = draw(st.booleans())
-    if is_discrete:
-        num_codes = draw(st.integers(min_value=2, max_value=10))
-        code_names = draw(
-            st.lists(min_size=num_codes, max_size=num_codes, elements=names)
-        )
-        code_values = np.array(
-            draw(
-                st.lists(
-                    unique=True, elements=codes, min_size=num_codes, max_size=num_codes
-                )
-            ),
-            dtype=np.int32,
-        )
-        values = draw(
-            arrays(
-                shape=dims,
-                dtype=np.int32,
-                elements=st.sampled_from(code_values),
-            )
-        )
-        return GridProperty(
-            None,
-            "guess",
-            *dims,
-            name,
-            discrete=is_discrete,
-            codes=dict(zip(code_values, code_names)),
-            values=values,
-        )
-    else:
-        values = draw(arrays(shape=dims, dtype=np.float32, elements=finites))
-        return GridProperty(
-            None, "guess", *dims, name, discrete=is_discrete, values=values
-        )
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
@@ -200,25 +152,6 @@ def test_is_discrete():
 )
 def test_xtgeo_codes(param, expected_codes):
     assert param.xtgeo_codes() == expected_codes
-
-
-def test_xtgeo_values():
-    assert np.array_equal(
-        RoffParameter(1, 1, 2, "", b"\x01\xFF").xtgeo_values(undef=200),
-        np.array([[[200, 1]]], dtype=np.int32),
-    )
-    assert np.array_equal(
-        RoffParameter(1, 1, 2, "", np.array([1, -999], dtype=np.int32)).xtgeo_values(
-            undef=200
-        ),
-        np.array([[[200, 1]]], dtype=np.int32),
-    )
-    assert np.array_equal(
-        RoffParameter(
-            1, 1, 2, "", np.array([1, -999.0], dtype=np.float32)
-        ).xtgeo_values(undef=200),
-        np.array([[[200, 1]]], dtype=np.float64),
-    )
 
 
 def test_to_file(tmp_path):
@@ -318,3 +251,40 @@ def test_from_file_wrong_filetype(simple_roff_parameter_contents):
 
     with pytest.raises(ValueError, match="did not have filetype"):
         RoffParameter.from_file(buff, "b")
+
+
+@pytest.mark.parametrize(
+    "xtgeotype, rofftype",
+    [
+        (np.float64, "double"),
+        (np.int32, "int"),
+        (np.uint8, "int"),
+    ],
+)
+def test_from_xtgeo_dtype_cast(xtgeotype, rofftype):
+    gp = GridProperty(
+        ncol=1,
+        nrow=1,
+        nlay=1,
+        discrete=np.issubdtype(xtgeotype, np.integer),
+        values=np.zeros((1, 1, 1), dtype=xtgeotype),
+    )
+    rp = RoffParameter.from_xtgeo_grid_property(gp)
+
+    buf = io.StringIO()
+    rp.to_file(buf, roff_format=roffio.Format.ASCII)
+
+    assert f"{rofftype} data" in buf.getvalue()
+
+
+def test_from_xtgeo_mask():
+    values = np.ma.zeros((2, 2, 2))
+    values[0, 0, 0] = np.ma.masked
+    gp = GridProperty(
+        ncol=2,
+        nrow=2,
+        nlay=2,
+        values=values,
+    )
+    rp = RoffParameter.from_xtgeo_grid_property(gp)
+    assert rp.values[1] == -999.0

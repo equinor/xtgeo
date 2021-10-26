@@ -1,8 +1,8 @@
 """Private module, Grid ETC 1 methods, info/modify/report."""
 
+from collections import OrderedDict
 from copy import deepcopy
 from math import atan2, degrees
-from collections import OrderedDict
 
 import numpy as np
 import numpy.ma as ma
@@ -13,9 +13,10 @@ import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.calc import find_flip
 from xtgeo.xyz.polygons import Polygons
+
 from . import _gridprop_lowlevel
-from .grid_property import GridProperty
 from ._grid3d_fence import _update_tmpvars
+from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 
@@ -26,111 +27,16 @@ logger = xtg.functionlogger(__name__)
 # Note that "self" is the grid instance
 
 
-def create_box(
-    self,
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):  # pylint: disable=unused-argument # type ignore
-    """Create a shoebox grid from cubi'sh spec."""
-    arglist = locals()
-    del arglist["self"]
-
-    if self._xtgformat == 1:
-        _create_box_v1(
-            self,
-            dimension=dimension,
-            origin=origin,
-            oricenter=oricenter,
-            increment=increment,
-            rotation=rotation,
-            flip=flip,
-        )
-
-    else:
-        _create_box_v2(
-            self,
-            dimension=dimension,
-            origin=origin,
-            oricenter=oricenter,
-            increment=increment,
-            rotation=rotation,
-            flip=flip,
-        )
-
-
-def _create_box_v1(
-    self,
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):
-    """Create a shoebox grid from cubi'sh spec, legacy xtgformat=1."""
-    self._ncol, self._nrow, self._nlay = dimension
-    ncoord, nzcorn, ntot = self.vectordimensions
-
-    self._coordsv = np.zeros(ncoord, dtype=np.float64)
-    self._zcornsv = np.zeros(nzcorn, dtype=np.float64)
-    self._actnumsv = np.zeros(ntot, dtype=np.int32)
-
-    option = 0
-    if oricenter:
-        option = 1
-
-    _cxtgeo.grd3d_from_cube(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        origin[0],
-        origin[1],
-        origin[2],
-        increment[0],
-        increment[1],
-        increment[2],
-        rotation,
-        flip,
-        option,
-    )
-
-    self._actnum_indices = None
-    self._filesrc = None
-    self._props = None
-    self._subgrids = None
-    self._roxgrid = None
-    self._roxindexer = None
-    self._tmp = {}
-    self._xtgformat = 1
-
-
-def _create_box_v2(
-    self,
-    dimension=(10, 12, 6),
-    origin=(10.0, 20.0, 1000.0),
-    oricenter=False,
-    increment=(100, 150, 5),
-    rotation=30.0,
-    flip=1,
-):
+def create_box(dimension, origin, oricenter, increment, rotation, flip):
     """Create a shoebox grid from cubi'sh spec, xtgformat=2."""
-    self._ncol, self._nrow, self._nlay = dimension
-
     ncol, nrow, nlay = dimension
     nncol = ncol + 1
     nnrow = nrow + 1
     nnlay = nlay + 1
 
-    self._coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
-    self._zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
-    self._actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
+    coordsv = np.zeros((nncol, nnrow, 6), dtype=np.float64)
+    zcornsv = np.zeros((nncol, nnrow, nnlay, 4), dtype=np.float32)
+    actnumsv = np.zeros((ncol, nrow, nlay), dtype=np.int32)
 
     option = 0
     if oricenter:
@@ -140,9 +46,9 @@ def _create_box_v2(
         ncol,
         nrow,
         nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
+        coordsv,
+        zcornsv,
+        actnumsv,
         origin[0],
         origin[1],
         origin[2],
@@ -154,107 +60,136 @@ def _create_box_v2(
         option,
     )
 
-    self._actnum_indices = None
-    self._filesrc = None
-    self._props = None
-    self._subgrids = None
-    self._roxgrid = None
-    self._roxindexer = None
-    self._tmp = {}
-    self._xtgformat = 2
+    return {
+        "coordsv": coordsv,
+        "zcornsv": zcornsv,
+        "actnumsv": actnumsv,
+    }
 
 
-def get_dz(self, name="dZ", flip=True, asmasked=True):
-    """Get dZ as property."""
-    self._xtgformat1()
+method_factory = {
+    "euclid": _cxtgeo.euclid_length,
+    "horizontal": _cxtgeo.horizontal_length,
+    "east west vertical": _cxtgeo.east_west_vertical_length,
+    "north south vertical": _cxtgeo.north_south_vertical_length,
+    "x projection": _cxtgeo.x_projection,
+    "y projection": _cxtgeo.y_projection,
+    "z projection": _cxtgeo.z_projection,
+}
 
-    ntot = (self._ncol, self._nrow, self._nlay)
 
-    dzv = GridProperty(
+def get_dz(
+    self,
+    name: str = "dZ",
+    flip: bool = True,
+    asmasked: bool = True,
+    metric="z projection",
+) -> GridProperty:
+    """Get average cell height (dz) as property.
+
+    Args:
+        flip (bool): whether to flip the z direction, ie. increasing z is
+            increasing depth (defaults to True)
+        asmasked (bool): Whether to mask property by whether
+        name (str): Name of resulting grid property, defaults to "dZ".
+    """
+    self._xtgformat2()
+    nx, ny, nz = self.dimensions
+    result = np.zeros((nx * ny * nz))
+    try:
+        metric_fun = method_factory[metric]
+    except KeyError as err:
+        raise ValueError(f"Unknown metric {metric}") from err
+    _cxtgeo.grdcp3d_calc_dz(
+        self._ncol,
+        self._nrow,
+        self._nlay,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        result,
+        metric_fun,
+    )
+
+    if not flip:
+        result *= -1
+
+    if asmasked:
+        result = np.ma.masked_array(result, self._actnumsv == 0)
+    else:
+        result = np.ma.masked_array(result, False)
+
+    return GridProperty(
         ncol=self._ncol,
         nrow=self._nrow,
         nlay=self._nlay,
-        values=np.zeros(ntot, dtype=np.float64),
+        values=result.ravel(),
         name=name,
         discrete=False,
     )
 
-    dz = np.zeros(self.ntotal, dtype=np.float64)
 
-    nflip = 1
-    if not flip:
-        nflip = -1
-
-    option = 0
-    if asmasked:
-        option = 1
-
-    _cxtgeo.grd3d_calc_dz(
+def get_dx(self, name="dX", asmasked=False, metric="horizontal"):
+    try:
+        metric_fun = method_factory[metric]
+    except KeyError as err:
+        raise ValueError(f"Unknown metric {metric}") from err
+    self._xtgformat2()
+    nx, ny, nz = self.dimensions
+    result = np.zeros((nx * ny * nz))
+    _cxtgeo.grdcp3d_calc_dx(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._zcornsv,
-        self._actnumsv,
-        dz,
-        nflip,
-        option,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        result,
+        metric_fun,
     )
-
-    dzv.values = np.ma.masked_greater(dz, xtgeo.UNDEF_LIMIT)
-    # return the property object
-    logger.info("DZ mean value: %s", dzv.values.mean())
-
-    return dzv
-
-
-def get_dxdy(self, names=("dX", "dY"), asmasked=False):
-    """Get dX, dY as properties."""
-    self._xtgformat1()
-
-    ntot = self._ncol * self._nrow * self._nlay
-
-    dxval = np.zeros(ntot, dtype=np.float64)
-    dyval = np.zeros(ntot, dtype=np.float64)
-
-    dx = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        name=names[0],
-        discrete=False,
-    )
-    dy = GridProperty(
-        ncol=self._ncol,
-        nrow=self._nrow,
-        nlay=self._nlay,
-        name=names[1],
-        discrete=False,
-    )
-
-    option1 = 0
-    option2 = 0
 
     if asmasked:
-        option1 = 1
+        result = np.ma.masked_array(result, self._actnumsv == 0)
+    else:
+        result = np.ma.masked_array(result, False)
+    return GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=result.reshape((nx, ny, nz)),
+        name=name,
+        discrete=False,
+    )
 
-    _cxtgeo.grd3d_calc_dxdy(
+
+def get_dy(self, name="dX", asmasked=False, metric="horizontal"):
+    try:
+        metric_fun = method_factory[metric]
+    except KeyError as err:
+        raise ValueError(f"Unknown metric {metric}") from err
+    self._xtgformat2()
+    nx, ny, nz = self.dimensions
+    result = np.zeros((nx * ny * nz))
+    _cxtgeo.grdcp3d_calc_dy(
         self._ncol,
         self._nrow,
         self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        dxval,
-        dyval,
-        option1,
-        option2,
+        self._coordsv.ravel(),
+        self._zcornsv.ravel(),
+        result,
+        metric_fun,
     )
 
-    dx.values = np.ma.masked_greater(dxval, xtgeo.UNDEF_LIMIT)
-    dy.values = np.ma.masked_greater(dyval, xtgeo.UNDEF_LIMIT)
-
-    # return the property objects
-    return dx, dy
+    if asmasked:
+        result = np.ma.masked_array(result, self._actnumsv == 0)
+    else:
+        result = np.ma.masked_array(result, False)
+    return GridProperty(
+        ncol=self._ncol,
+        nrow=self._nrow,
+        nlay=self._nlay,
+        values=result.reshape((nx, ny, nz)),
+        name=name,
+        discrete=False,
+    )
 
 
 def get_bulk_volume(self, name="bulkvol", asmasked=True, precision=2):
@@ -876,28 +811,19 @@ def _get_geometrics_v2(self, allcells=False, cellcenter=True, return_dict=False)
     return tuple(glist)
 
 
-def inactivate_by_dz(self, threshold):
-    """Inactivate by DZ thickness."""
-    self._xtgformat1()
+def inactivate_by_dz(self, threshold: float, flip: bool = True):
+    """Set cell to inactive if dz does not exceed threshold.
+    Args:
+        threshold (float): The threshold for which the absolute value
+            of dz should exceed.
+        flip (bool): Whether the z-direction should be flipped.
 
-    if isinstance(threshold, int):
-        threshold = float(threshold)
-
-    if not isinstance(threshold, float):
-        raise ValueError("The threshold is not a float or int")
-
-    # assumption (unless somebody finds a Petrel made grid):
-    nflip = 1
-
-    _cxtgeo.grd3d_inact_by_dz(
-        self.ncol,
-        self.nrow,
-        self.nlay,
-        self._zcornsv,
-        self._actnumsv,
-        threshold,
-        nflip,
-    )
+    """
+    self._xtgformat2()
+    self._actnumsv[
+        self.get_dz(asmasked=False, flip=flip).values.reshape(self._actnumsv.shape)
+        < threshold
+    ] = 0
 
 
 def make_zconsistent(self, zsep):

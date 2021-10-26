@@ -1064,55 +1064,59 @@ cube_get_randomline(double *swig_np_dbl_in_v1,  // *xvec,
  *======================================================================================
  */
 
-void
-grd3d_from_cube(int ncol,
-                int nrow,
-                int nlay,
-                double *swig_np_dbl_inplace_v1,  // *coordsv,
-                long n_swig_np_dbl_inplace_v1,   // ncoord,
-                double *swig_np_dbl_inplace_v2,  // *zcornsv,
-                long n_swig_np_dbl_inplace_v2,   // nzcorn,
-                int *swig_np_int_inplace_v1,     // *actnumsv,
-                long n_swig_np_int_inplace_v1,   // nactnum,
-                double xori,
-                double yori,
-                double zori,
-                double xinc,
-                double yinc,
-                double zinc,
-                double rotation,
-                int yflip,
-                int option);
+
+typedef double (*metric)(const double, const double, const double, const double, const double, const double);
+double euclid_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double horizontal_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double east_west_vertical_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double north_south_vertical_length(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double x_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double y_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
+
+double z_projection(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2);
 
 int
-grd3d_calc_dxdy(int nx,
+grdcp3d_calc_dx(int nx,
                 int ny,
                 int nz,
                 double *swig_np_dbl_in_v1,       // *coordsv,
                 long n_swig_np_dbl_in_v1,        // ncoord,
                 double *swig_np_dbl_in_v2,       // *zcornsv,
                 long n_swig_np_dbl_in_v2,        // nzcorn,
-                int *swig_np_int_in_v1,          // *actnumsv,
-                long n_swig_np_int_in_v1,        // nactnum,
                 double *swig_np_dbl_inplace_v1,  // *dx,
-                long n_swig_np_dbl_inplace_v1,   // ntot,
-                double *swig_np_dbl_inplace_v2,  // *dy,
-                long n_swig_np_dbl_inplace_v2,   // ntot,
-                int option1,
-                int option2);
+                long n_swig_np_dbl_inplace_v1,    // ntot,
+                metric m
+                );
+int
+grdcp3d_calc_dy(int nx,
+                int ny,
+                int nz,
+                double *swig_np_dbl_in_v1,       // *coordsv,
+                long n_swig_np_dbl_in_v1,        // ncoord,
+                double *swig_np_dbl_in_v2,       // *zcornsv,
+                long n_swig_np_dbl_in_v2,        // nzcorn,
+                double *swig_np_dbl_inplace_v1,  // *dy,
+                long n_swig_np_dbl_inplace_v1,    // ntot,
+                metric m
+                );
 
-void
-grd3d_calc_dz(int nx,
-              int ny,
-              int nz,
-              double *swig_np_dbl_in_v1,       // *zcornsv,
-              long n_swig_np_dbl_in_v1,        // nzcorn,
-              int *swig_np_int_in_v1,          // *actnumsv,
-              long n_swig_np_int_in_v1,        // nactnum,
-              double *swig_np_dbl_inplace_v1,  // *p_dz_v,
-              long n_swig_np_dbl_inplace_v1,   // ntot,
-              int flip,
-              int option);
+int
+grdcp3d_calc_dz(int nx,
+                int ny,
+                int nz,
+                double *swig_np_dbl_in_v1,       // *coordsv,
+                long n_swig_np_dbl_in_v1,        // ncoord,
+                double *swig_np_dbl_in_v2,       // *zcornsv,
+                long n_swig_np_dbl_in_v2,        // nzcorn,
+                double *swig_np_dbl_inplace_v1,  // *dz,
+                long n_swig_np_dbl_inplace_v1,    // ntot,
+                metric m
+                );
 
 void
 grd3d_calc_xyz(int nx,
@@ -1192,106 +1196,11 @@ grd3d_roff2xtgeo_splitenz(
                        long n_swig_np_flt_inplace_v2    // nzcorn
                        );
 
-int
-grd3d_write_eclrecord(FILE *fc,
-                      char *recname,
-                      int rectype,
-                      int *intv,
-                      float *floatv,
-                      double *doublev,
-                      long nrecs);
-
-int
-grd3d_write_eclinput(FILE *fc,
-                     char *recname,
-                     int rectype,
-                     int *intv,
-                     float *floatv,
-                     double *doublev,
-                     long nrecs,
-                     char *fmt,
-                     int ncolumns);
-
-void
-grd3d_write_free_eclinput(FILE *fc, char *recname, char *freetext);
-
 void
 grd3d_zcorn_convert(int nx, int ny, int nz, float *zcorn, double *zcornsv, int option);
 
 int
 grd3d_ecl_tsteps(FILE *fc, int *seqnums, int *day, int *mon, int *year, int nmax);
-
-/* new version */
-int
-grd3d_imp_ecl_egrid(FILE *fc,
-                    int nx,
-                    int ny,
-                    int nz,
-                    long bpos_mapaxes,
-                    long bpos_coord,
-                    long bpos_zcorn,
-                    long bpos_actnum,
-                    double *swig_np_dbl_inplace_v1,  // *coordsv,
-                    long n_swig_np_dbl_inplace_v1,   // ncoord
-                    double *swig_np_dbl_inplace_v2,  // *zcornsv,
-                    long n_swig_np_dbl_inplace_v2,   // nzcorn
-                    int *swig_np_int_inplace_v1,     // *p_actnumv_v,
-                    long n_swig_np_int_inplace_v1,   // nactnum or ntot
-                    long *nact,
-                    int option);
-
-void
-grd3d_import_grdecl(FILE *fc,
-                    int nx,
-                    int ny,
-                    int nz,
-                    double *swig_np_dbl_inplace_v1,  // *coordsv,
-                    long n_swig_np_dbl_inplace_v1,   // ncoord
-                    double *swig_np_dbl_inplace_v2,  // *zcornsv,
-                    long n_swig_np_dbl_inplace_v2,   // nzcorn
-                    int *swig_np_int_inplace_v1,     // *p_actnumv_v,
-                    long n_swig_np_int_inplace_v1,   // nactnum or ntot
-                    int *nact);
-
-void
-grd3d_export_grdecl(int nx,
-                    int ny,
-                    int nz,
-                    double *swig_np_dbl_in_v1,  // *coordsv
-                    long n_swig_np_dbl_in_v1,   // ncoord
-                    double *swig_np_dbl_in_v2,  // *zcornsv
-                    long n_swig_np_dbl_in_v2,   // nzcorn
-                    int *swig_np_int_in_v1,     // *actnumsv
-                    long n_swig_np_int_in_v1,   // nact
-                    char *filename,
-                    int mode);
-
-void
-grd3d_export_egrid(int nx,
-                   int ny,
-                   int nz,
-                   double *swig_np_dbl_in_v1,  // *coordsv
-                   long n_swig_np_dbl_in_v1,   // ncoord
-                   double *swig_np_dbl_in_v2,  // *zcornsv
-                   long n_swig_np_dbl_in_v2,   // nzcorn
-                   int *swig_np_int_in_v1,     // *actnumsv
-                   long n_swig_np_int_in_v1,   // nact
-                   char *filename,
-                   int mode);
-
-void
-grd3d_export_grdeclprop2(int nx,
-                         int ny,
-                         int nz,
-                         int ptype,
-                         int *p_iprop_v,
-                         float *p_fprop_v,
-                         double *p_dprop_v,
-                         char *pname,
-                         char *fmt,
-                         char *filename,
-                         int mode,
-                         int flag);
 
 int
 grd3d_conv_grid_roxapi(int ncol,
@@ -1686,19 +1595,6 @@ grd3d_geometrics(int nx,
                  double *dz,
                  int option1,
                  int option2);
-
-void
-grd3d_inact_by_dz(int nx,
-                  int ny,
-                  int nz,
-
-                  double *swig_np_dbl_inplace_v1,  // *zcornsv
-                  long n_swig_np_dbl_inplace_v1,   // nzcorn
-                  int *swig_np_int_inplace_v1,     // *actnumsv
-                  long n_swig_np_int_inplace_v1,   // nact
-
-                  double threshold,
-                  int flip);
 
 int
 grd3d_check_cell_splits(int ncol,

@@ -12,6 +12,15 @@ import xtgeo.common.sys as xsys
 xtg = xtgeo.XTGeoDialog()
 
 
+def test_xtgeo_file_memstream_string_fformat_unknown():
+    assert xtgeo._XTGeoFile(io.StringIO()).detect_fformat() == "unknown"
+
+
+@pytest.mark.parametrize("length", [0, 4, 8, 24, 9])
+def test_xtgeo_file_memstream_bytes_fformat_unknown(length):
+    assert xtgeo._XTGeoFile(io.BytesIO(b"\00" * length)).detect_fformat() == "unknown"
+
+
 def test_generic_hash():
     """Testing generic hashlib function."""
     ahash = xsys.generic_hash("ABCDEF")
@@ -42,7 +51,7 @@ surface_files_formats = {
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_resolve_alias(testpath, filename):
     """Testing resolving file alias function."""
-    surf = xtgeo.RegularSurface(testpath / filename)
+    surf = xtgeo.surface_from_file(testpath / filename)
     md5hash = surf.generate_hash("md5")
 
     mname = xtgeo._XTGeoFile("whatever/$md5sum.gri", obj=surf)
@@ -187,7 +196,7 @@ def test_file_c_handle(testpath, filename):
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_surface_file_roundtrip_stream(testpath, filename):
     stream = io.BytesIO()
-    surf = xtgeo.RegularSurface(testpath / filename)
+    surf = xtgeo.surface_from_file(testpath / filename)
     surf.to_file(stream)
     stream_file = xtgeo._XTGeoFile(stream)
 
@@ -204,7 +213,7 @@ def test_detect_fformat(testpath, filename, expected_format):
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_detect_fformat_hdf_stream(testpath, filename):
     stream = io.BytesIO()
-    surf = xtgeo.RegularSurface(testpath / filename)
+    surf = xtgeo.surface_from_file(testpath / filename)
     surf.to_hdf(stream)
     sfile = xtgeo._XTGeoFile(stream)
     assert sfile.memstream is True
@@ -214,7 +223,7 @@ def test_detect_fformat_hdf_stream(testpath, filename):
 @pytest.mark.parametrize("filename", surface_files_formats.keys())
 def test_detect_fformat_hdf_to_file(tmp_path, testpath, filename):
     newfile = tmp_path / "hdf_surf.hdf"
-    surf = xtgeo.RegularSurface(testpath / filename)
+    surf = xtgeo.surface_from_file(testpath / filename)
     surf.to_hdf(newfile)
     gfile = xtgeo._XTGeoFile(newfile)
     assert gfile.detect_fformat() == "hdf"

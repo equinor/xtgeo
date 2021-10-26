@@ -1,8 +1,11 @@
 """The baseplot module."""
+import deprecation
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
+
 from . import _colortables as _ctable
 
 xtg = XTGeoDialog()
@@ -24,6 +27,7 @@ class BasePlot(object):
         self._tight = False
         self._showok = True
         self._fig = None
+        self._allfigs = []
         self._pagesize = "A4"
 
         logger.info("Ran __init__ ...")
@@ -138,8 +142,17 @@ class BasePlot(object):
         cmaplist = [cmap(i) for i in range(cmap.N)]
         return cmaplist
 
+    @deprecation.deprecated(
+        deprecated_in="1.16",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details=(
+            "set_colortable is deprecated, use the colormap"
+            " property or define_colormap instead"
+        ),
+    )
     def set_colortable(self, cname, colorlist=None):
-        """This is actually deprecated..."""
+        """Deprecated function, use define_colormap or the colormap property instead"""
         if colorlist is None:
             self.colormap = cname
         else:
@@ -182,6 +195,7 @@ class BasePlot(object):
         self._fig, self._ax = plt.subplots(
             figsize=(11.69 * figscaling, 8.27 * figscaling)
         )
+        self._allfigs.append(self._fig)
         if title is not None:
             self._fig.suptitle(title, fontsize=18)
         if subtitle is not None:
@@ -206,15 +220,24 @@ class BasePlot(object):
         logger.warning("Nothing to plot (well outside Z range?)")
         return False
 
+    def close(self):
+        """
+        Explicitly closes the plot, meaning that memory will be cleared.
+
+        After close is called, no more operations can be performed on the plot.
+
+        """
+        for fig in self._allfigs:
+            plt.close(fig)
+
     def savefig(self, filename, fformat="png", last=True, **kwargs):
         """Call to matplotlib.pyplot savefig method.
 
         Args:
             filename (str): File to plot to
             fformat (str): Plot format, e.g. png (default), jpg, svg
-            last (bool): Default is true, meaning that memory will be cleared;
-                however if several plot types for the same instance, let last
-                be False fora all except the last plots.
+            last (bool): Default is true, calls close on the plot, let last
+                be False for all except the last plots.
             kwargs: Additional keyword arguments that are passed
                 to matplotlib when saving the figure
 
@@ -235,7 +258,7 @@ class BasePlot(object):
         if self._showok:
             plt.savefig(filename, format=fformat, **kwargs)
             if last:
-                plt.close(self._fig)
+                self.close()
             return True
 
         logger.warning("Nothing to plot (well outside Z range?)")

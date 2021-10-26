@@ -1,13 +1,16 @@
 deprecation
 numpy>=1.13
 shapely>=1.6.2
+pillow<8.4.0 # Fails to build with cibuildwheel
 matplotlib>=1.5
 scipy>=0.17
 segyio>1.8.0
 pandas>=0.18
 h5py>=3
 hdf5plugin>=2.3
+typing-extensions; python_version < '3.8'
 # await pytables on pypi for PY3.9 macos, win
 tables>=3.5.1; python_version < "3.9" and platform_system != "Linux"
 tables>=3.5.1; platform_system == "Linux"
 roffio
+ecl-data-io

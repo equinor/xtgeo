@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
 
-import glob
-from os.path import join
 from collections import OrderedDict
+from os.path import join
 
-import pytest
 import numpy as np
 import pandas as pd
-
-from xtgeo.surface import RegularSurface
-from xtgeo.well import Well
-from xtgeo.xyz import Polygons
-from xtgeo.common import XTGeoDialog
+import pytest
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.well import Well
+from xtgeo.xyz import Polygons
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -239,20 +237,6 @@ def test_loadwell1_properties(simple_well):
     }
 
 
-def test_import_export_many(tmpdir):
-    """Import and export many wells (test speed)."""
-    logger.debug(WFILES)
-
-    for filename in sorted(glob.glob(WFILES)):
-        mywell = Well(filename)
-        logger.info(mywell.nrow)
-        logger.info(mywell.ncol)
-        logger.info(mywell.lognames)
-
-        wname = join(tmpdir, mywell.xwellname + ".w")
-        mywell.to_file(wname)
-
-
 def test_shortwellname():
     """Test that shortwellname gives wanted result."""
     mywell = Well()
@@ -278,36 +262,28 @@ def test_hdf_io_single(tmp_path):
     mywell2.from_hdf(wname)
 
 
-def test_import_as_rms_export_as_hdf_many(tmp_path):
+def test_import_as_rms_export_as_hdf_many(tmp_path, simple_well):
     """Import RMS and export as HDF5 and RMS asc, many, and compare timings."""
-    mywell = Well(WELL1)
-    nmax = 50
-
     t0 = xtg.timer()
-    wlist = []
-    for _ in range(nmax):
-        wname = (tmp_path / "$random").with_suffix(".hdf")
-        wuse = mywell.to_hdf(wname, compression=None)
-        wlist.append(wuse)
+    wname = (tmp_path / "$random").with_suffix(".hdf")
+    wuse = simple_well.to_hdf(wname, compression=None)
     print("Time for save HDF: ", xtg.timer(t0))
 
     t0 = xtg.timer()
-    for wll in wlist:
-        wname = (tmp_path / "$random").with_suffix(".hdf")
-        wuse = mywell.from_hdf(wll)
+    result = Well().from_hdf(wuse)
+    assert result.dataframe.equals(simple_well.dataframe)
     print("Time for load HDF: ", xtg.timer(t0))
 
+
+def test_import_export_rmsasc(tmp_path, simple_well):
     t0 = xtg.timer()
-    wlist = []
-    for _ in range(nmax):
-        wname = (tmp_path / "$random").with_suffix(".rmsasc")
-        wuse = mywell.to_file(wname)
-        wlist.append(wuse)
+    wname = (tmp_path / "$random").with_suffix(".rmsasc")
+    wuse = simple_well.to_file(wname)
     print("Time for save RMSASC: ", xtg.timer(t0))
 
     t0 = xtg.timer()
-    for wll in wlist:
-        wuse = mywell.from_file(wll)
+    result = Well().from_file(wuse)
+    assert result.dataframe.equals(result.dataframe)
     print("Time for load RMSASC: ", xtg.timer(t0))
 
 
@@ -773,8 +749,8 @@ def test_create_surf_distance_log(loadwell1):
 
     well = loadwell1
 
-    surf1 = RegularSurface(SURF1)
-    surf2 = RegularSurface(SURF2)
+    surf1 = xtgeo.surface_from_file(SURF1)
+    surf2 = xtgeo.surface_from_file(SURF2)
 
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")
@@ -803,8 +779,8 @@ def test_create_surf_distance_log_more(tmp_path, loadwell1):
 
     well = loadwell1
 
-    surf1 = RegularSurface(SURF1)
-    surf2 = RegularSurface(SURF2)
+    surf1 = xtgeo.surface_from_file(SURF1)
+    surf2 = xtgeo.surface_from_file(SURF2)
 
     well.create_surf_distance_log(surf1, name="DIST_TOP")
     well.create_surf_distance_log(surf2, name="DIST_BASE")

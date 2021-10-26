@@ -24,41 +24,6 @@ def unreadable_file(setup_tmpdir):
     os.remove(fname)
 
 
-def test_eclgrid_no_file_access(unreadable_file):
-    with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file in"):
-        # The input here is not very important, what is important
-        # is that "existing_file" can not be opened.
-        _cxtgeo.grd3d_export_egrid(
-            1,
-            1,
-            1,
-            [1],
-            [1],
-            np.array([1], dtype=np.int32),
-            unreadable_file,
-            0,
-        )
-
-
-def test_grd3d_calc_dxdy():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Errors in array lengths checks in grd3d_calc_dxdy",
-    ):
-        _cxtgeo.grd3d_calc_dxdy(
-            1,
-            1,
-            1,
-            np.array([0.0]),
-            np.array([1.0]),
-            np.array([1], dtype=np.int32),
-            np.array([0.0]),
-            np.array([0.0]),
-            0,
-            0,
-        )
-
-
 def test_grd3d_get_xyz():
     with pytest.raises(
         xtgeo.XTGeoCLibError,
@@ -213,26 +178,6 @@ def test_surf_import_petromod_bin(bytestring, mx, expected_msg):
         _cxtgeo.surf_import_petromod_bin(gfile.get_cfhandle(), 1, 0.0, mx, 2, 4)
 
 
-def test_grd3d_export_grdeclprop_no_file(unreadable_file):
-    with pytest.raises(xtgeo.XTGeoCLibError, match="Could not open file"):
-        # The input here is not very important, what is important
-        # is that "existing_file" can not be opened.
-        _cxtgeo.grd3d_export_grdeclprop2(
-            1,
-            1,
-            1,
-            1,
-            _cxtgeo.new_intpointer(),
-            _cxtgeo.new_floatpointer(),
-            _cxtgeo.new_doublepointer(),
-            "name",
-            " %d",
-            unreadable_file,
-            1,
-            0,
-        )
-
-
 def test_surf_sample_grd3d_lay():
     with pytest.raises(
         xtgeo.XTGeoCLibError,
@@ -272,30 +217,6 @@ def test_grd3d_read_eclrecord():
         )
 
 
-def test_grd3d_from_cube():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Bug in grd3d_from_cube",
-    ):
-        _cxtgeo.grd3d_from_cube(
-            2,
-            2,
-            1,
-            np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-            np.array([1.0, 1.0, 1.0, 1.0]),  # not relevant
-            np.array([1, 1, 1, 1], dtype=np.int32),  # not relevant
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1,
-            0,
-        )
-
-
 def test_grd3d_reduce_onelayer():
     with pytest.raises(
         xtgeo.XTGeoCLibError,
@@ -310,28 +231,6 @@ def test_grd3d_reduce_onelayer():
             np.array([1], dtype=np.int32),
             np.array([1], dtype=np.int32),
             _cxtgeo.new_intarray(1),
-            1,
-        )
-
-
-def test_grd3d_imp_ecl_egrid():
-    with pytest.raises(
-        xtgeo.XTGeoCLibError,
-        match="Errors in array lengths checks in",
-    ):
-        _cxtgeo.grd3d_imp_ecl_egrid(
-            xtgeo._XTGeoFile(io.BytesIO(b"")).get_cfhandle(),
-            1,
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-            np.array([0.0], dtype=np.float64),
-            np.array([1.0], dtype=np.float64),
-            np.array([1], dtype=np.int32),
-            _cxtgeo.new_longarray(1),
             1,
         )
 

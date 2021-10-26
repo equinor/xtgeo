@@ -106,14 +106,23 @@ def _update_tmpvars(self, force=False):
         one = self._tmp["onegrid"]
         logger.info("Make a tmp onegrid instance... DONE")
         logger.info("Make a set of tmp surfaces for I J locations + depth...")
-        self._tmp["topd"] = xtgeo.RegularSurface()
-        self._tmp["topi"], self._tmp["topj"] = self._tmp["topd"].from_grid3d(
-            one, where="top", rfactor=4
+        self._tmp["topd"] = xtgeo.surface_from_grid3d(
+            one, where="top", mode="depth", rfactor=4
         )
-
-        self._tmp["basd"] = xtgeo.RegularSurface()
-        self._tmp["basi"], self._tmp["basj"] = self._tmp["basd"].from_grid3d(
-            one, where="base", rfactor=4
+        self._tmp["topi"] = xtgeo.surface_from_grid3d(
+            one, where="top", mode="i", rfactor=4
+        )
+        self._tmp["topj"] = xtgeo.surface_from_grid3d(
+            one, where="top", mode="j", rfactor=4
+        )
+        self._tmp["basd"] = xtgeo.surface_from_grid3d(
+            one, where="base", mode="depth", rfactor=4
+        )
+        self._tmp["basi"] = xtgeo.surface_from_grid3d(
+            one, where="base", mode="i", rfactor=4
+        )
+        self._tmp["basj"] = xtgeo.surface_from_grid3d(
+            one, where="base", mode="j", rfactor=4
         )
 
         self._tmp["topi"].fill()

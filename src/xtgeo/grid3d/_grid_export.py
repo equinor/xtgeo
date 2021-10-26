@@ -7,9 +7,10 @@ import h5py
 import hdf5plugin
 import roffio
 
-import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d._egrid import EGrid
 
+from ._grdecl_grid import GrdeclGrid
 from ._roff_grid import RoffGrid
 
 xtg = XTGeoDialog()
@@ -37,38 +38,18 @@ def export_roff(self, gfile, roff_format="binary"):
 
 def export_grdecl(self, gfile, mode):
     """Export grid to Eclipse GRDECL format (ascii, mode=1) or binary (mode=0)."""
-    self._xtgformat1()
-
-    logger.debug("Export to ascii or binary GRDECL...")
-
-    _cxtgeo.grd3d_export_grdecl(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        gfile,
-        mode,
-    )
+    fileformat = "grdecl" if mode == 1 else "bgrdecl"
+    GrdeclGrid.from_xtgeo_grid(self).to_file(gfile, fileformat=fileformat)
 
 
 def export_egrid(self, gfile):
     """Export grid to Eclipse EGRID format, binary."""
-    self._xtgformat1()
+    EGrid.from_xtgeo_grid(self).to_file(gfile, fileformat="egrid")
 
-    logger.debug("Export to binary EGRID...")
 
-    _cxtgeo.grd3d_export_egrid(
-        self._ncol,
-        self._nrow,
-        self._nlay,
-        self._coordsv,
-        self._zcornsv,
-        self._actnumsv,
-        gfile,
-        0,
-    )
+def export_fegrid(self, gfile):
+    """Export grid to Eclipse FEGRID format, ascii."""
+    EGrid.from_xtgeo_grid(self).to_file(gfile, fileformat="fegrid")
 
 
 def export_xtgcpgeom(self, gfile, subformat=844):

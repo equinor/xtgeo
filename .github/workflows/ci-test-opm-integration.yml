@@ -43,8 +43,3 @@ jobs:
           python -m pip install -r requirements/requirements_test.txt &&
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata &&
           HAS_OPM=1 python -m pytest -m requires_opm --disable-warnings -x --hypothesis-profile ci
-
-      - name: Build docs
-        run: >
-          python -m pip install -r requirements/requirements_docs.txt &&
-          sphinx-build -W docs tmp/docs

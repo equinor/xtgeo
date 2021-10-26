@@ -289,30 +289,3 @@ def _get_randomline_fence(self, fencespec, hincrement, atleast, nextend):
     )
     logger.info("Getting fence from a Polygons instance... DONE")
     return fspec
-
-
-# copy (update) values from SWIG carray to numpy, 3D array, Fortran order
-# to be DEPRECATED
-def update_values(cube):
-
-    if cube._cvalues is None and cube._values is None:
-        raise ValueError("Cube values and cvalues are both None")
-
-    elif cube._cvalues is None:
-        return cube._values, None
-
-    logger.debug("Updating numpy values...")
-    ncrl = cube._ncol * cube._nrow * cube._nlay
-    xvv = _cxtgeo.swig_carr_to_numpy_f1d(ncrl, cube._cvalues)
-
-    xvv = np.reshape(xvv, (cube._ncol, cube._nrow, cube._nlay), order="F")
-
-    logger.debug("Updating numpy values... done")
-
-    xtype = xvv.dtype
-    logger.info("VALUES of type %s", xtype)
-
-    # free the C values (to save memory)
-    _cxtgeo.delete_floatarray(cube._cvalues)
-
-    return xvv, None

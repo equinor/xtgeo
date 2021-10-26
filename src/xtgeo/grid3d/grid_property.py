@@ -3,22 +3,25 @@
 
 
 import copy
-import numbers
 import hashlib
+import numbers
 import pathlib
 from types import FunctionType
-from typing import Optional, Union, Any
+from typing import Any, Optional, Union
+
 import numpy as np
 
 import xtgeo
 
+from . import (
+    _gridprop_export,
+    _gridprop_import,
+    _gridprop_lowlevel,
+    _gridprop_op1,
+    _gridprop_roxapi,
+    _gridprop_value_init,
+)
 from ._grid3d import _Grid3D
-from . import _gridprop_etc
-from . import _gridprop_op1
-from . import _gridprop_import
-from . import _gridprop_roxapi
-from . import _gridprop_export
-from . import _gridprop_lowlevel
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -138,9 +141,9 @@ class GridProperty(_Grid3D):
         self,
         pfile: Optional[Union[str, pathlib.Path, Any]] = None,
         fformat: Optional[str] = "guess",
-        ncol: Optional[int] = 4,
-        nrow: Optional[int] = 3,
-        nlay: Optional[int] = 5,
+        ncol: Optional[int] = None,
+        nrow: Optional[int] = None,
+        nlay: Optional[int] = None,
         name: Optional[str] = "unknown",
         discrete: Optional[bool] = False,
         date: Optional[str] = None,
@@ -150,7 +153,7 @@ class GridProperty(_Grid3D):
         codes: Optional[dict] = None,
         dualporo: Optional[bool] = False,
         dualperm: Optional[bool] = False,
-        roxar_dtype: Optional[Any] = np.float32,
+        roxar_dtype: Optional[Any] = None,
         values: Optional[Union[np.ndarray, float, int]] = None,
     ):
         """Instantating.
@@ -158,9 +161,9 @@ class GridProperty(_Grid3D):
             Args:
                 pfile: Input file-like or a Grid/GridProperty instance or leave blank.
                 fformat: File format input, default is ``guess``.
-                ncol: Number of columns (nx).
-                nrow: Number of rows (ny).
-                ncol: Number of layers (nz).
+                ncol: Number of columns (nx) defaults to 4.
+                nrow: Number of rows (ny) defaults to 3.
+                ncol: Number of layers (nz) defaults to 5.
                 name: Name of property.
                 discrete: True or False.
                 date: Date on YYYYMMDD form.
@@ -232,39 +235,91 @@ class GridProperty(_Grid3D):
         self._dualperm = dualperm
 
         self._filesrc = None
-        self._actnum_indices = None
         self._roxorigin = False  # true if the object comes from the ROXAPI
-        self._roxar_dtype = roxar_dtype
+        if roxar_dtype is None:
+            if discrete:
+                self._roxar_dtype = np.uint8
+            else:
+                self._roxar_dtype = np.float32
+        else:
+            self.roxar_dtype = roxar_dtype
         self._values = values
 
         self._undef = xtgeo.UNDEF_INT if discrete else xtgeo.UNDEF
 
-        if pfile is not None:
-            # make instance through grid/gridprop instance or file import
-            if isinstance(pfile, (xtgeo.grid3d.Grid, xtgeo.grid3d.GridProperty)):
-                _gridprop_etc.gridproperty_fromgrid(
-                    self,
-                    pfile,
-                    linkgeometry=linkgeometry,
-                    values=values,
-                )
-
-            elif isinstance(pfile, (str, pathlib.Path)):
-                self.from_file(
-                    pfile,
-                    fformat=fformat,
-                    name=name,
-                    grid=grid,
-                    gridlink=linkgeometry,
-                    date=date,
-                    fracture=fracture,
-                )
-
+        if isinstance(pfile, (str, pathlib.Path)):
+            self.from_file(
+                pfile,
+                fformat=fformat,
+                name=name,
+                grid=grid,
+                gridlink=linkgeometry,
+                date=date,
+                fracture=fracture,
+            )
+            self._check_dimensions_match(ncol, nrow, nlay)
         else:
-            # make values
-            _gridprop_etc.gridvalues_fromspec(self, values)
+            self._set_initial_dimensions(pfile, (ncol, nrow, nlay))
+            if all(x is None for x in [pfile, values, ncol, nrow, nlay]):
+                self._values = _gridprop_value_init.gridproperty_dummy_values(discrete)
+            else:
+                self._values = _gridprop_value_init.gridproperty_non_dummy_values(
+                    pfile, self.dimensions, values, discrete
+                )
+
+        if isinstance(pfile, xtgeo.grid3d.Grid):
+            if linkgeometry:
+                # assosiate this grid property with grid instance. This is not default
+                # since sunch links may affect garbish collection
+                self.geometry = pfile
+            pfile.append_prop(self)
 
         self._metadata = xtgeo.MetaDataCPProperty()
+
+    def _set_initial_dimensions(self, gridlike, input_dimensions):
+        """Sets the initial dimensions either from input, grid or default.
+
+        If a gridlike is given, we use its dimensions, but make sure it matches
+        the input dimensions if given (not None). Otherwise, dimensions are either
+        set to the input dimensions or defaulted.
+
+        """
+        if gridlike is not None:
+            self._ncol = gridlike.ncol
+            self._nrow = gridlike.nrow
+            self._nlay = gridlike.nlay
+            self._check_dimensions_match(*input_dimensions)
+        else:
+            ncol, nrow, nlay = input_dimensions
+            if ncol is None:
+                self._ncol = 4
+            else:
+                self._ncol = ncol
+            if nrow is None:
+                self._nrow = 3
+            else:
+                self._nrow = nrow
+            if nlay is None:
+                self._nlay = 5
+            else:
+                self._nlay = nlay
+
+    def _check_dimensions_match(self, ncol, nrow, nlay):
+        """
+        Raises:
+            ValueError: if given dimensions are not None and do not
+                match dimensions of the GridProperty
+        """
+        if ncol is not None and self._ncol != ncol:
+            raise ValueError(
+                f"mismatching column dimension given: {ncol} vs {self._ncol}"
+            )
+        if nrow is not None and self._nrow != nrow:
+            raise ValueError(f"mismatching row dimension given: {nrow} vs {self._nrow}")
+        if nlay is not None and self._nlay != nlay:
+            raise ValueError(
+                f"mismatching layer dimension given: {nlay} vs {self._nlay}"
+            )
 
     def __del__(self):
         logger.debug("DELETING property instance %s", self.name)
@@ -342,9 +397,7 @@ class GridProperty(_Grid3D):
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
-        self._actnum_indices = np.flatnonzero(actnumv)
-
-        return self._actnum_indices
+        return np.flatnonzero(actnumv)
 
     @property
     def isdiscrete(self):
@@ -911,6 +964,10 @@ class GridProperty(_Grid3D):
         """
 
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = super()._evaluate_mask(mask)
 
         act = GridProperty(

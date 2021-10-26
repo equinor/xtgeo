@@ -284,7 +284,6 @@ cube_import_segy(char *file,
          *---------------------------------------------------------------------
          */
         if (option == 1 && optscan == 1) {
-            fout = fopen(outfile, "w");
             fprintf(fout, "TRACE HEADER FIRST >>>>>>>>>>\n");
             fprintf(fout, "         Description                         Byte range "
                           "local + total       Value\n");
@@ -399,6 +398,12 @@ cube_import_segy(char *file,
         if (n2set2[1] < 0) {
             xyscalar = -1.0 / (double)n2set2[1];
         } else if (n2set2[1] == 0) {
+            if (fc != NULL) {
+                fclose(fc);
+            }
+            if (fout != NULL) {
+                fclose(fout);
+            }
             throw_exception("n2set2[1]: is 0 in cube_import_segy");
             return;
         }
@@ -486,7 +491,12 @@ cube_import_segy(char *file,
             /* allocate space for traces */
             ctracebuffer = calloc(4 * ntsamples, sizeof(char));
             if (ctracebuffer == 0) {
-                free(ctracebuffer);
+                if (fc != NULL) {
+                    fclose(fc);
+                }
+                if (fout != NULL) {
+                    fclose(fout);
+                }
                 throw_exception(
                   "Memory allocation failure of traces in cube_import_segy");
                 return; /* Memory allocation failure of traces. STOP" */
@@ -509,6 +519,12 @@ cube_import_segy(char *file,
             /* read the trace */
             ier = fread(ctracebuffer, nzbytes * ntsamples, 1, fc);
             if (ier != 1) {
+                if (fc != NULL) {
+                    fclose(fc);
+                }
+                if (fout != NULL) {
+                    fclose(fout);
+                }
                 throw_exception("ier != 1 in cube_import_segy");
                 return;
             }
@@ -546,6 +562,12 @@ cube_import_segy(char *file,
                     ib = x_ijk2ib(ii, jj, kk, ninlines, nxlines, ntsamples, 0);
 
                     if (ib < 0) {
+                        if (fc != NULL) {
+                            fclose(fc);
+                        }
+                        if (fout != NULL) {
+                            fclose(fout);
+                        }
                         throw_exception("ib < 0 in cube_import_segy");
                         return;
                     }
@@ -581,6 +603,12 @@ cube_import_segy(char *file,
             }
 
             else {
+                if (fc != NULL) {
+                    fclose(fc);
+                }
+                if (fout != NULL) {
+                    fclose(fout);
+                }
                 throw_exception("Invalid gn_formatcode in cube_import_segy");
                 return;
             }
@@ -597,9 +625,7 @@ cube_import_segy(char *file,
     *ny = nxlines;
     *nz = ntsamples;
 
-    if (optscan == 1 || optscan == 9) {
-        fclose(fc);
-    } else {
+    if (!(optscan == 1 || optscan == 9)) {
         *minval = trmin;
         *maxval = trmax;
 
@@ -640,11 +666,11 @@ cube_import_segy(char *file,
 
             *zflip = 1;
         }
-
+    }
+    if (fc != NULL) {
         fclose(fc);
     }
-
-    if (option == 1 && optscan == 1) {
+    if (fout != NULL) {
         fclose(fout);
     }
 }

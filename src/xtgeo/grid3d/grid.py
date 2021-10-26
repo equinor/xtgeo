@@ -1,34 +1,40 @@
 # -*- coding: utf-8 -*-
 """Module/class for 3D grids (corner point geometry) with XTGeo."""
 
-import pathlib
+import functools
 import json
 import warnings
-from pathlib import Path
 from collections import OrderedDict
-from typing import Union, Optional, List, Tuple
+from pathlib import Path
+from typing import Optional, Tuple, Union
 
+import deprecation
 import numpy as np
 import numpy.ma as ma
 
 import xtgeo
+from xtgeo.common import XTGDescription, _XTGeoFile
 
-from xtgeo.common import XTGDescription
+from . import (
+    _grid3d_fence,
+    _grid_etc1,
+    _grid_export,
+    _grid_hybrid,
+    _grid_import,
+    _grid_import_ecl,
+    _grid_import_xtgcpgeom,
+    _grid_refine,
+    _grid_roxapi,
+    _grid_wellzone,
+    _gridprop_lowlevel,
+)
+from ._ecl_grid import Units
 from ._grid3d import _Grid3D
-
-from . import _grid_hybrid
-from . import _grid_import
-from . import _grid_import_xtgcpgeom
-from . import _grid_export
-from . import _grid_refine
-from . import _grid_etc1
-from . import _grid_wellzone
-from . import _grid3d_fence
-from . import _grid_roxapi
-from . import _gridprop_lowlevel
+from .grid_properties import GridProperties
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
 
 # --------------------------------------------------------------------------------------
 # Comment on "asmasked" vs "activeonly:
@@ -45,11 +51,7 @@ logger = xtg.functionlogger(__name__)
 # --------------------------------------------------------------------------------------
 
 # METHODS as wrappers to class init + import
-
-
-def grid_from_file(
-    gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
-):
+def _handle_import(grid_constructor, gfile, fformat=None, **kwargs):
     """Read a grid (cornerpoint) from file and an returns a Grid() instance.
 
     See :meth:`Grid.from_file` method for details on keywords.
@@ -60,17 +62,31 @@ def grid_from_file(
         mygrid = xtgeo.grid_from_file("reek.roff")
 
     """
-    obj = Grid()
 
-    obj.from_file(
-        gfile,
-        initprops=initprops,
-        restartprops=restartprops,
-        restartdates=restartdates,
-        fformat=fformat,
-    )
+    gfile = xtgeo._XTGeoFile(gfile, mode="wb")
+    if fformat == "eclipserun":
+        ecl_grid = grid_constructor(
+            **_grid_import.from_file(
+                xtgeo._XTGeoFile(gfile.name + ".EGRID", mode="wb"), fformat="egrid"
+            )
+        )
+        _grid_import_ecl.import_ecl_run(gfile.name, ecl_grid=ecl_grid, **kwargs)
+        return ecl_grid
+    return grid_constructor(**_grid_import.from_file(gfile, fformat, **kwargs))
 
-    return obj
+
+def grid_from_file(gfile, fformat=None, **kwargs):
+    """Read a grid (cornerpoint) from file and an returns a Grid() instance.
+
+    See :meth:`Grid.from_file` method for details on keywords.
+
+    Example::
+
+        import xtgeo
+        mygrid = xtgeo.grid_from_file("reek.roff")
+
+    """
+    return _handle_import(Grid, gfile, fformat, **kwargs)
 
 
 def grid_from_roxar(
@@ -96,17 +112,47 @@ def grid_from_roxar(
         mygrid = xtgeo.grid_from_roxar(project, "REEK_SIM")
 
     """
-    obj = Grid()
-
-    obj.from_roxar(
-        project,
-        gname,
-        realisation=realisation,
-        dimensions_only=dimensions_only,
-        info=info,
+    return Grid(
+        **_grid_roxapi.import_grid_roxapi(
+            project, gname, realisation, dimensions_only, info
+        )
     )
 
-    return obj
+
+def create_box_grid(
+    dimension,
+    origin=(0.0, 0.0, 0.0),
+    oricenter=False,
+    increment=(1, 1, 1),
+    rotation=0.0,
+    flip=1,
+):
+    """Create a rectangular 'shoebox' grid from spec.
+
+    Args:
+        dimension (tuple of int): A tuple of (NCOL, NROW, NLAY)
+        origin (tuple of float): Startpoint of grid (x, y, z)
+        oricenter (bool): If False, startpoint is node, if True, use cell center
+        increment (tuple of float): Grid increments (xinc, yinc, zinc)
+        rotation (float): Roations in degrees, anticlock from X axis.
+        flip (int): If +1, grid origin is lower left and left-handed;
+                    if -1, origin is upper left and right-handed (row flip).
+
+    Returns:
+        Instance is updated (previous instance content will be erased)
+
+    .. versionadded:: 2.1
+    """
+    kwargs = _grid_etc1.create_box(
+        dimension=dimension,
+        origin=origin,
+        oricenter=oricenter,
+        increment=increment,
+        rotation=rotation,
+        flip=flip,
+    )
+
+    return Grid(**kwargs)
 
 
 # --------------------------------------------------------------------------------------
@@ -137,6 +183,55 @@ def grid_from_roxar(
 IJKRange = Tuple[int, int, int, int, int, int]
 
 
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of RegularSurface and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Checking if we are doing an initialization
+        # from file and raise a deprecation warning if
+        # we are.
+        if "gfile" in kwargs or (
+            len(args) >= 1 and isinstance(args[0], (str, Path, _XTGeoFile))
+        ):
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "mygrid = xtgeo.grid_from_file('some_name.roff') instead",
+                DeprecationWarning,
+            )
+
+            def constructor(**kwargs):
+                func(self, **kwargs)
+                return self
+
+            _handle_import(constructor, *args, **kwargs)
+            return None
+
+        # Check if we are doing default value init
+        if len(args) == 0 and len(kwargs) == 0:
+            warnings.warn(
+                "Initializing default box grid is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "mygrid = xtgeo.create_box_grid() or, alternatively,"
+                "directly from file with mygrid = xtgeo.grid_from_file().",
+                DeprecationWarning,
+            )
+            kwargs = _grid_etc1.create_box(
+                dimension=(4, 3, 5),
+                origin=(10.0, 20.0, 1000.0),
+                oricenter=False,
+                increment=(100, 150, 5),
+                rotation=30.0,
+                flip=1,
+            )
+            return func(self, **kwargs)
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 class Grid(_Grid3D):
     """Class for a 3D grid corner point geometry in XTGeo.
 
@@ -146,108 +241,160 @@ class Grid(_Grid3D):
     importing a grid from file, as it is normally too complex to create from
     scratch.
 
+    Args:
+        coordsv: numpy array of dtype float64 and dimensions (nx + 1, ny + 1, 6)
+            Giving the x,y,z values of the upper and lower corners in the grid.
+        coorsv: numpy array of dtype float32 and dimensions (nx + 1, ny + 1, nz + 1, 4)
+            giving the sw, se, nw, ne corners along the i,jth corner line for
+            the kth layer.
+        actnumsv: numpy array of dtype int32 and dimensions (nx, ny, nz) giving
+            the activity number for each cell. 0 means inactive, 1 means
+            active. For dualporo=True/dualperm=True grids, value can also be 2
+            or 3 meaning rock volume only and pore volume only respectively.
+        dualporo (bool): True if dual porosity grid.
+        dualperm (bool): True if dual permeability grid.
+        subgrids: dictionary giving names to subset of layers. Has name as key and
+            list of layer indices as values. Defaults to no names given.
+        units: The length units the coordinates are in,
+            (either Units.CM, Units.METRES, Units.FEET for cm, metres and
+            feet respectively).  Default (None) is unitless.
+        filesrc: Optional filename of grid.
+        props: GridProperties instance containing the properties of the grid, defaults
+            to empty instance.
+        name: Optional name of the grid.
+        roxgrid: Roxar Grid the Grid originates from if any, defaults to no such grid.
+        roxindexer: Roxar grid indexer for the roxgrid. Defaults to no such indexer.
+
     See Also:
         The :class:`.GridProperty` and the :class:`.GridProperties` classes.
 
     """
 
     # pylint: disable=too-many-public-methods
+    @allow_deprecated_init
     def __init__(
         self,
-        gfile: Optional[Union[str, Path]] = None,
-        fformat: Optional[str] = "guess",
-        initprops: Optional[List[str]] = None,
-        restartprops: Optional[List[str]] = None,
-        restartdates: Optional[List[Union[int, str]]] = None,
-        ijkrange: Optional[IJKRange] = None,
-        zerobased: Optional[bool] = False,
+        coordsv: np.ndarray,
+        zcornsv: np.ndarray,
+        actnumsv: np.ndarray,
+        dualporo: bool = False,
+        dualperm: bool = False,
+        subgrids: OrderedDict = None,
+        units: Optional[Units] = None,
+        filesrc: Optional[Union[Path, str]] = None,
+        props: Optional[GridProperties] = None,
+        name: Optional[str] = None,
+        roxgrid=None,
+        roxindexer=None,
     ):
-        """Instantating.
 
-        Args:
-            gfile: Input file, or leave blank.
-            fformat: File format input, default is ``guess`` based on file extension.
-                Other options are ...
-            initprops: List of initial properties (Eclipse based ``eclrun`` import).
-            restartprops: List of restart properties (Eclipse based ``eclrun`` import).
-            restartdates: List of restart dates as YYYYMMDD (Eclipse based ``eclrun``
-                import).
-            ijkrange: Tuple of 6 integers defining (imin, imax, jmin, jmax, kmin, kmax)
-                when import from ``hdf`` files. Ranges are implicit at both ends.
-            zerobased: Whether `ijkrange` uses 1 (default) or 0 as base.
+        coordsv = np.asarray(coordsv)
+        zcornsv = np.asarray(zcornsv)
+        actnumsv = np.asarray(actnumsv)
+        if coordsv.dtype != np.float64:
+            raise TypeError(
+                f"The dtype of the coordsv array must be float64, got {coordsv.dtype}"
+            )
+        if zcornsv.dtype != np.float32:
+            raise TypeError(
+                f"The dtype of the zcornsv array must be float32, got {zcornsv.dtype}"
+            )
+        if actnumsv.dtype != np.int32:
+            raise TypeError(
+                f"The dtype of the actnumsv array must be int32, got {actnumsv.dtype}"
+            )
+        if len(coordsv.shape) != 3 or coordsv.shape[2] != 6:
+            raise ValueError(
+                f"shape of coordsv should be (nx+1,ny+1,6), got {coordsv.shape}"
+            )
+        if len(zcornsv.shape) != 4 or zcornsv.shape[3] != 4:
+            raise ValueError(
+                f"shape of zcornsv should be (nx+1,ny+1,nz+1, 4), got {zcornsv.shape}"
+            )
+        if zcornsv.shape[0:2] != coordsv.shape[0:2]:
+            raise ValueError(
+                f"Mismatch between zcornsv and coordsv shape: {zcornsv.shape}"
+                f" vs {coordsv.shape}"
+            )
+        if np.any(np.asarray(zcornsv.shape[0:3]) != np.asarray(actnumsv.shape) + 1):
+            raise ValueError(
+                f"Mismatch between zcornsv and actnumsv shape: {zcornsv.shape}"
+                f" vs {actnumsv.shape}"
+            )
 
-        Example::
+        super().__init__(*actnumsv.shape)
 
-            import xtgeo
+        self._reset(
+            coordsv=coordsv,
+            zcornsv=zcornsv,
+            actnumsv=actnumsv,
+            dualporo=dualporo,
+            dualperm=dualperm,
+            subgrids=subgrids,
+            units=units,
+            filesrc=filesrc,
+            props=props,
+            name=name,
+            roxgrid=roxgrid,
+            roxindexer=roxindexer,
+        )
 
-            geo = xtgeo.Grid()
-            geo.from_file("myfile.roff")
-
-            # alternative (make instance directly from file):
-            geo = xtgeo.Grid("myfile.roff")
-
-            # or use
-            geo = xtgeo.grid_from_file("myfile.roff")
-        """
-        super().__init__()
-
-        self._coordsv = None  # numpy array to coords vector
-        self._zcornsv = None  # numpy array to zcorns vector
-        self._actnumsv = None  # numpy array to actnum vector
-
-        # _xtgformat: internal flag for storage structure. 1 is the "current" while 2
-        # will be the new one. This will affect how _coordsv _zcornsv and _actnumsv
-        # are organized! The corresponding C routines for 1: grd3d_*, while 2: grdcp3d_*
+    def _reset(
+        self,
+        coordsv: np.ndarray,
+        zcornsv: np.ndarray,
+        actnumsv: np.ndarray,
+        dualporo: bool = False,
+        dualperm: bool = False,
+        subgrids: OrderedDict = None,
+        units: Optional[Units] = None,
+        filesrc: Optional[Union[Path, str]] = None,
+        props: Optional[GridProperties] = None,
+        name: Optional[str] = None,
+        roxgrid=None,
+        roxindexer=None,
+    ):
+        """This function only serves to allow deprecated initialization."""
+        # TODO: Remove once implicit initialization such as Grid().from_file()
+        # is removed
         self._xtgformat = 2
+        self._ncol = actnumsv.shape[0]
+        self._nrow = actnumsv.shape[1]
+        self._nlay = actnumsv.shape[2]
 
-        # the following block is currently not in use, but required for metadata
-        self._xshift = 0.0
-        self._yshift = 0.0
-        self._zshift = 0.0
-        self._xscale = 1.0
-        self._yscale = 1.0
-        self._zscale = 1.0
+        self._coordsv = coordsv
+        self._zcornsv = zcornsv
+        self._actnumsv = actnumsv
+        self._dualporo = dualporo
+        self._dualperm = dualperm
 
-        self._actnum_indices = None  # Index numpy array for active cells
-        self._filesrc = None
+        self._filesrc = filesrc
 
-        self._props = None  # None or a GridProperties instance
-        self._name = "noname"
-        self._subgrids = None  # A python dict if subgrids are given
+        if props is None:
+            self._props = GridProperties(ncol=self.ncol, nrow=self.nrow, nlay=self.nlay)
+        else:
+            self._props = props
+        self._name = name
+        self._subgrids = subgrids
         self._ijk_handedness = None
 
-        # Simulators like Eclipse may have a dual poro/perm model
-        self._dualporo = False
-        self._dualperm = False
-        self._dualactnum = None  # will be a GridProperty()
+        self._dualactnum = None
+        if dualporo:
+            self._dualactnum = self.get_actnum(name="DUALACTNUM")
+            acttmp = self._dualactnum.copy()
+            acttmp.values[acttmp.values >= 1] = 1
+            self.set_actnum(acttmp)
 
         self._metadata = xtgeo.MetaDataCPGeometry()
+        self._metadata.required = self
 
         # Roxar api spesific:
-        self._roxgrid = None
-        self._roxindexer = None
+        self._roxgrid = roxgrid
+        self._roxindexer = roxindexer
 
-        # For storage of more private stuff in order to speed up certain functions
-        # See _grid3d_fence for instance; note! reset this if any kind of grid change!
+        self.units = units
+
         self._tmp = {}
-
-        if gfile is not None:
-            gfile = pathlib.Path(gfile)
-            if gfile.suffix == "hdf":
-                self.from_hdf(gfile, ijkrange, zerobased)
-            self.from_file(
-                gfile,
-                fformat=fformat,
-                initprops=initprops,
-                restartprops=restartprops,
-                restartdates=restartdates,
-            )
-        else:
-            # make a simple empty box grid (from version 2.13)
-            self.create_box((self._ncol, self._nrow, self._nlay))
-
-        self._metadata.required = self
-        logger.info("Ran __init__ for %s", repr(self))
 
     def __repr__(self):
         """The __repr__ method."""
@@ -362,7 +509,7 @@ class Grid(_Grid3D):
     def subgrids(self):
         """:obj:`list` of :obj:`int`: A dict with subgrid name and an array as value.
 
-        I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2:" [5, 6, 7],
+        I.e. a dict on the form ``{"name1": [1, 2, 3, 4], "name2": [5, 6, 7],
         "name3": [8, 9, 10]}``, here meaning 3 subgrids where upper is 4
         cells vertically, then 3, then 3. The numbers must sum to NLAY.
 
@@ -402,7 +549,9 @@ class Grid(_Grid3D):
             zarr.extend(val)
 
         if lengths != self._nlay:
-            raise ValueError("Subgrids lengths not equal NLAY")
+            raise ValueError(
+                f"Subgrids lengths <{lengths}> not equal NLAY <{self.nlay}>"
+            )
 
         if set(zarr) != set(range(1, self._nlay + 1)):
             raise ValueError(
@@ -441,9 +590,7 @@ class Grid(_Grid3D):
         """
         actnumv = self.get_actnum()
         actnumv = np.ravel(actnumv.values)
-        self._actnum_indices = np.flatnonzero(actnumv)
-
-        return self._actnum_indices
+        return np.flatnonzero(actnumv)
 
     @property
     def ntotal(self):
@@ -473,7 +620,7 @@ class Grid(_Grid3D):
     @gridprops.setter
     def gridprops(self, gprops):
 
-        if not isinstance(gprops, xtgeo.grid3d.GridProperties):
+        if not isinstance(gprops, GridProperties):
             raise ValueError("Input must be a GridProperties instance")
 
         self._props = gprops  # self._props is a GridProperties instance
@@ -494,7 +641,7 @@ class Grid(_Grid3D):
         # a class that holds a list of properties.
 
         prplist = None
-        if isinstance(self._props, xtgeo.grid3d.GridProperties):
+        if isinstance(self._props, GridProperties):
             prplist = self._props.props
         elif isinstance(self._props, list):
             raise RuntimeError(
@@ -507,9 +654,6 @@ class Grid(_Grid3D):
 
         if not isinstance(plist, list):
             raise ValueError("Input to props must be a list")
-
-        if self._props is None:
-            self._props = xtgeo.grid3d.GridProperties()
 
         for litem in plist:
             if litem.dimensions != self.dimensions:
@@ -564,6 +708,12 @@ class Grid(_Grid3D):
     # Create/import/export
     # ==================================================================================
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.create_box_grid() instead",
+    )
     def create_box(
         self,
         dimension=(10, 12, 6),
@@ -589,8 +739,7 @@ class Grid(_Grid3D):
 
         .. versionadded:: 2.1
         """
-        _grid_etc1.create_box(
-            self,
+        kwargs = _grid_etc1.create_box(
             dimension=dimension,
             origin=origin,
             oricenter=oricenter,
@@ -598,7 +747,8 @@ class Grid(_Grid3D):
             rotation=rotation,
             flip=flip,
         )
-        self._tmp = {}
+
+        self._reset(**kwargs)
 
     def to_file(self, gfile, fformat="roff"):
         """Export grid geometry to file, various vendor formats.
@@ -625,6 +775,7 @@ class Grid(_Grid3D):
             "grdecl": ["grdecl"],
             "bgrdecl": ["bgrdecl"],
             "egrid": ["egrid"],
+            "fegrid": ["fegrid"],
         }
 
         if fformat in valid_formats["roff"]:
@@ -637,6 +788,8 @@ class Grid(_Grid3D):
             _grid_export.export_grdecl(self, gfile.name, 0)
         elif fformat in valid_formats["egrid"]:
             _grid_export.export_egrid(self, gfile.name)
+        elif fformat in valid_formats["fegrid"]:
+            _grid_export.export_fegrid(self, gfile.name)
         else:
             raise ValueError(
                 f"Invalid file format: {fformat}, valid options are: {valid_formats}"
@@ -730,8 +883,17 @@ class Grid(_Grid3D):
             self, project, gname, realisation, info=info, method=method
         )
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.grid_from_file() instead",
+    )
     def from_file(
-        self, gfile, fformat=None, initprops=None, restartprops=None, restartdates=None
+        self,
+        gfile,
+        fformat=None,
+        **kwargs,
     ):
         """Import grid geometry from file, and makes an instance of this class.
 
@@ -749,6 +911,12 @@ class Grid(_Grid3D):
                 special value "all" can be get all properties found in the INIT file
             restartprops (str list): Optional, see initprops
             restartdates (int list): Optional, required if restartprops
+            ijkrange (list-like): Optional, only applicable for hdf files, see
+                :meth:`Grid.from_hdf`.
+            zerobased (bool): Optional, only applicable for hdf files, see
+                :meth:`Grid.from_hdf`.
+            mmap (bool): Optional, only applicable for xtgf files, see
+                :meth:`Grid.from_xtgf`.
 
         Example::
 
@@ -767,20 +935,20 @@ class Grid(_Grid3D):
         Raises:
             OSError: if file is not found etc
         """
-        gfile = xtgeo._XTGeoFile(gfile, mode="rb")
 
-        obj = _grid_import.from_file(
-            self,
-            gfile,
-            fformat=fformat,
-            initprops=initprops,
-            restartprops=restartprops,
-            restartdates=restartdates,
-        )
-        self._tmp = {}
-        self._metadata.required = self
-        return obj
+        def constructor(*args, **kwargs):
+            self._reset(*args, **kwargs)
+            return self
 
+        _handle_import(constructor, gfile, fformat, **kwargs)
+        return self
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.grid_from_file() instead",
+    )
     def from_hdf(self, gfile, ijkrange=None, zerobased=False):
         """Import grid geometry from HDF5 file (experimental!).
 
@@ -804,10 +972,17 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
-        _grid_import_xtgcpgeom.import_hdf5_cpgeom(
-            self, gfile, ijkrange=ijkrange, zerobased=zerobased
+        kwargs = _grid_import_xtgcpgeom.import_hdf5_cpgeom(
+            gfile, ijkrange=ijkrange, zerobased=zerobased
         )
+        self._reset(**kwargs)
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.grid_from_file() instead",
+    )
     def from_xtgf(self, gfile, mmap=False):
         """Import grid geometry from native xtgeo file format (experimental!).
 
@@ -821,8 +996,15 @@ class Grid(_Grid3D):
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
-        _grid_import_xtgcpgeom.import_xtgcpgeom(self, gfile, mmap)
+        kwargs = _grid_import_xtgcpgeom.import_xtgcpgeom(gfile, mmap)
+        self._reset(**kwargs)
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.grid_from_roxar() instead",
+    )
     def from_roxar(
         self, projectname, gname, realisation=0, dimensions_only=False, info=False
     ):  # pragma: no cover
@@ -842,23 +1024,42 @@ class Grid(_Grid3D):
 
 
         """
-        _grid_roxapi.import_grid_roxapi(
-            self, projectname, gname, realisation, dimensions_only, info
+        kwargs = _grid_roxapi.import_grid_roxapi(
+            projectname, gname, realisation, dimensions_only, info
         )
-        self._tmp = {}
-        self._metadata.required = self
+        self._reset(**kwargs)
+
+    def convert_units(self, units):
+        """
+        Convert the units of the grid.
+        Args:
+            units: The unit to convert to.
+        Raises:
+            ValueError: When the grid is unitless (no initial
+                unit information available).
+        """
+        old_grid_units = self.units
+        if old_grid_units is None:
+            raise ValueError("convert_units called on unitless grid.")
+        if old_grid_units == units:
+            return
+        factor = old_grid_units.conversion_factor(units)
+        self._coordsv *= factor
+        self._zcornsv *= factor
+        self.units = units
 
     # ==================================================================================
     # Various public methods
     # ==================================================================================
 
+    @deprecation.deprecated(
+        deprecated_in="2.7",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Method numpify_carrays is deprecated and can be removed",
+    )
     def numpify_carrays(self):
         """Numpify pointers from C (SWIG) arrays so instance is easier to pickle."""
-        warnings.warn(
-            "Method numpify_carrays is deprecated and can be removed ({})".format(self),
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     def copy(self):
         """Copy from one existing Grid instance to a new unique instance.
@@ -963,30 +1164,29 @@ class Grid(_Grid3D):
             # save as CSV file
             df.to_csv("mygrid.csv")
         """
-        if self.gridprops is None:
-            self.gridprops = xtgeo.grid3d.GridProperties(
-                ncol=self.ncol, nrow=self.nrow, nlay=self.nlay
-            )
-
         return self.gridprops.dataframe(
+            grid=self,
             activeonly=activeonly,
             ijk=ijk,
             xyz=xyz,
             doubleformat=doubleformat,
-            grid=self,
         )
 
-    dataframe = get_dataframe  # backward compatibility...
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method dataframe is deprecated, use get_dataframe instead.",
+    )
+    def dataframe(self, *args, **kwargs):
+        return self.get_dataframe(*args, **kwargs)
 
     def append_prop(self, prop):
         """Append a single property to the grid."""
-        if prop.dimensions == self.dimensions:
-            if self._props is None:
-                self._props = xtgeo.grid3d.GridProperties()
-
-            self._props.append_props([prop])
-        else:
+        if prop.dimensions != self.dimensions:
             raise ValueError("Dimensions does not match")
+
+        self._props.append_props([prop])
 
     def set_subgrids(self, sdict):
         """Set the subgrid from a simplified ordered dictionary.
@@ -1190,6 +1390,12 @@ class Grid(_Grid3D):
 
         return ind
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.Grid().gridprops instead",
+    )
     def get_gridproperties(self):
         """Return the :obj:`GridProperties` instance attached to the grid.
 
@@ -1205,13 +1411,14 @@ class Grid(_Grid3D):
 
         return None
 
+    @deprecation.deprecated(
+        deprecated_in="2.7",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Method get_cactnum is deprecated and can be removed",
+    )
     def get_cactnum(self):
         """Returns the C pointer object reference to the ACTNUM array (deprecated)."""
-        warnings.warn(
-            "Method get_cactnum is deprecated and will be removed. ({})".format(self),
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None, dual=False):
         """Return an ACTNUM GridProperty object.
@@ -1232,6 +1439,10 @@ class Grid(_Grid3D):
         .. versionchanged:: 2.6 Added ``dual`` keyword
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         if dual and self._dualactnum:
@@ -1285,11 +1496,14 @@ class Grid(_Grid3D):
         else:
             self._actnumsv = np.ma.filled(actnum.values, fill_value=0).astype(np.int32)
 
-    def get_dz(self, name="dZ", flip=True, asmasked=True, mask=None):
+    def get_dz(
+        self, name="dZ", flip=True, asmasked=True, mask=None, metric="z projection"
+    ):
         """Return the dZ as GridProperty object.
 
-        The dZ is computed as an average height of the vertical pillars in
-        each cell, projected to vertical dimension.
+        Returns the average length of z direction edges for each
+        cell as a GridProperty. The length is by default the
+        z delta, ie. projected onto the z dimension (see the metric parameter).
 
         Args:
             name (str): name of property
@@ -1297,17 +1511,87 @@ class Grid(_Grid3D):
                 (experimental)
             asmasked (bool): True if only for active cells, False for all cells
             mask (bool): Deprecated, use asmasked instead!
+            metric (str): One of the following metrics:
+                * "euclid": sqrt(dx^2 + dy^2 + dz^2)
+                * "horizontal": sqrt(dx^2 + dy^2)
+                * "east west vertical": sqrt(dy^2 + dz^2)
+                * "north south vertical": sqrt(dx^2 + dz^2)
+                * "x projection": dx
+                * "y projection": dy
+                * "z projection": dz
 
         Returns:
             A XTGeo GridProperty object dZ
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
-        deltaz = _grid_etc1.get_dz(self, name=name, flip=flip, asmasked=asmasked)
+        deltaz = _grid_etc1.get_dz(
+            self, name=name, flip=flip, asmasked=asmasked, metric=metric
+        )
 
         return deltaz
 
+    def get_dx(self, name="dX", asmasked=True, metric="horizontal"):
+        """Return the dX as GridProperty object.
+
+        Returns the average length of x direction edges for each
+        cell as a GridProperty. The length is by default horizontal
+        vector length (see the metric parameter).
+
+        Args:
+            name (str): names of properties
+            asmasked (bool). If True, make a np.ma array where inactive cells
+                are masked.
+            metric (str): One of the following metrics:
+                * "euclid": sqrt(dx^2 + dy^2 + dz^2)
+                * "horizontal": sqrt(dx^2 + dy^2)
+                * "east west vertical": sqrt(dy^2 + dz^2)
+                * "north south vertical": sqrt(dx^2 + dz^2)
+                * "x projection": dx
+                * "y projection": dy
+                * "z projection": dz
+
+        Returns:
+            XTGeo GridProperty objects containing dx.
+        """
+        return _grid_etc1.get_dx(self, name=name, asmasked=asmasked, metric=metric)
+
+    def get_dy(self, name="dY", asmasked=True, metric="horizontal"):
+        """Return the dY as GridProperty object.
+
+        Returns the average length of y direction edges for each
+        cell as a GridProperty. The length is by default horizontal
+        vector length (see the metric parameter).
+
+        Args:
+            name (str): names of properties
+            asmasked (bool). If True, make a np.ma array where inactive cells
+                are masked.
+            metric (str): One of the following metrics:
+                * "euclid": sqrt(dx^2 + dy^2 + dz^2)
+                * "horizontal": sqrt(dx^2 + dy^2)
+                * "east west vertical": sqrt(dy^2 + dz^2)
+                * "north south vertical": sqrt(dx^2 + dz^2)
+                * "x projection": dx
+                * "y projection": dy
+                * "z projection": dz
+
+        Returns:
+            Two XTGeo GridProperty objects (dx, dy).
+        """
+        return _grid_etc1.get_dy(self, name=name, asmasked=asmasked, metric=metric)
+
+    @deprecation.deprecated(
+        deprecated_in="3.0",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.Grid.get_dx() and/or xtgeo.Grid.get_dy() instead.",
+    )
     def get_dxdy(self, names=("dX", "dY"), asmasked=False):
         """Return the dX and dY as GridProperty object.
 
@@ -1320,11 +1604,12 @@ class Grid(_Grid3D):
 
         Returns:
             Two XTGeo GridProperty objects (dx, dy).
+            XTGeo GridProperty objects containing dy.
         """
-        deltax, deltay = _grid_etc1.get_dxdy(self, names=names, asmasked=asmasked)
-
         # return the property objects
-        return deltax, deltay
+        return self.get_dx(name=names[0], asmasked=asmasked), self.get_dy(
+            name=names[1], asmasked=asmasked
+        )
 
     def get_cell_volume(
         self, ijk=(1, 1, 1), activeonly=True, zerobased=False, precision=2
@@ -1400,6 +1685,12 @@ class Grid(_Grid3D):
             self, name=name, asmasked=asmasked, precision=precision
         )
 
+    @deprecation.deprecated(
+        deprecated_in="1.16",
+        removed_in="3.0",
+        current_version=xtgeo.version,
+        details="Use method get_ijk() instead",
+    )
     def get_indices(self, names=("I", "J", "K")):
         """Return 3 GridProperty objects for column, row, and layer index.
 
@@ -1416,7 +1707,6 @@ class Grid(_Grid3D):
             i_index, j_index, k_index = grd.get_indices()
 
         """
-        warnings.warn("Use method get_ijk() instead", DeprecationWarning, stacklevel=2)
         return self.get_ijk(names=names, asmasked=False)
 
     def get_ijk(
@@ -1431,6 +1721,10 @@ class Grid(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         ixc, jyc, kzc = _grid_etc1.get_ijk(
@@ -1499,6 +1793,10 @@ class Grid(_Grid3D):
             mask (bool): Deprecated, use asmasked instead!
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = self._evaluate_mask(mask)
 
         xcoord, ycoord, zcoord = _grid_etc1.get_xyz(
@@ -1889,7 +2187,7 @@ class Grid(_Grid3D):
         If the initial grid has N layers, and the number of horizontal layers
         is NHDIV, then the result grid will have N * 2 + NHDIV layers.
 
-        .. image:: ../../docs/images/hybridgrid2.jpg
+        .. image:: images/hybridgrid2.jpg
            :width: 600
            :align: center
 
@@ -2000,7 +2298,7 @@ class Grid(_Grid3D):
                range. This gives a wider comparison, and will capture cases
                where grid zonations is outside well zonation
 
-        .. image:: ../../docs/images/zone-well-mismatch-plain.svg
+        .. image:: images/zone-well-mismatch-plain.svg
            :width: 200
            :align: center
 

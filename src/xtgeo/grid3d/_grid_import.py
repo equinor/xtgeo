@@ -2,31 +2,30 @@
 """Grid import functions for various formats."""
 
 import os
+
 import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import _grid_import_ecl, _grid_import_roff
 
-from xtgeo.grid3d import _grid_import_roff
-from xtgeo.grid3d import _grid_import_ecl
-
+from . import _grid_import_xtgcpgeom
 
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 
-def from_file(
-    self,
-    gfile,
-    fformat=None,
-    initprops=None,
-    restartprops=None,
-    restartdates=None,
-):  # pylint: disable=too-many-branches
-    """Import grid geometry from file, and makes an instance of this class."""
+def from_file(gfile, fformat=None, **kwargs):  # pylint: disable=too-many-branches
+    """Import grid geometry from file, and makes an instance of this class.
+
+    Returns:
+    dictionary of keyword arguments to be used in Grid constructor.
+    """
     if not isinstance(gfile, xtgeo._XTGeoFile):
         raise RuntimeError("Error gfile must be a _XTGeoFile instance")
 
-    self._filesrc = gfile.name
+    result = {}
+
+    result["filesrc"] = gfile.name
 
     if fformat is None:
         fformat = "guess"
@@ -35,11 +34,13 @@ def from_file(
     fflist = set(
         [
             "egrid",
+            "fegrid",
             "grdecl",
             "bgrdecl",
             "roff",
             "eclipserun",
             "guess",
+            "hdf",
             "xtgf",
         ]
     )
@@ -70,28 +71,22 @@ def from_file(
         raise OSError("No such file: {}".format(test_gfile))
 
     if fformat == "roff":
-        _grid_import_roff.import_roff(self, gfile)
-
-    elif fformat == "egrid":
-        _grid_import_ecl.import_ecl_egrid(self, gfile)
-
-    elif fformat == "eclipserun":
-        _grid_import_ecl.import_ecl_run(
-            self,
-            gfile.name,
-            initprops=initprops,
-            restartprops=restartprops,
-            restartdates=restartdates,
+        result.update(_grid_import_roff.import_roff(gfile, **kwargs))
+    elif fformat in ["egrid", "fegrid"]:
+        result.update(
+            _grid_import_ecl.import_ecl_egrid(gfile, fileformat=fformat, **kwargs)
         )
     elif fformat == "grdecl":
-        _grid_import_ecl.import_ecl_grdecl(self, gfile)
+        result.update(_grid_import_ecl.import_ecl_grdecl(gfile, **kwargs))
     elif fformat == "bgrdecl":
-        _grid_import_ecl.import_ecl_bgrdecl(self, gfile)
+        result.update(_grid_import_ecl.import_ecl_bgrdecl(gfile, **kwargs))
     elif fformat == "xtgf":
-        self.from_xtgf(gfile)
+        result.update(_grid_import_xtgcpgeom.import_xtgcpgeom(gfile, **kwargs))
+    elif fformat == "hdf":
+        result.update(_grid_import_xtgcpgeom.import_hdf5_cpgeom(gfile, **kwargs))
     else:
         raise ValueError("Invalid file format")
 
-    self.name = gfile.file.stem
+    result["name"] = gfile.file.stem
 
-    return self
+    return result

@@ -93,6 +93,9 @@ def _scan_ecl_keywords(pfile, maxkeys=100000, dataframe=False):
         cfhandle, rectypes, reclens, recstarts, maxkeys
     )
 
+    if nkeys < 0:
+        raise ValueError(f"scanning ecl keywords exited with error code {nkeys}")
+
     pfile.cfclose()
 
     keywords = keywords.replace(" ", "")

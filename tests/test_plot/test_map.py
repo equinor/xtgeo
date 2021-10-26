@@ -3,9 +3,9 @@ from os.path import join
 
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
-from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Points, Polygons
 
 xtg = XTGeoDialog()
@@ -30,8 +30,7 @@ SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
 def test_simple_plot(tmpdir, generate_plot):
     """Test as simple map plot only making an instance++ and plot."""
 
-    mysurf = RegularSurface()
-    mysurf.from_file(SFILE1)
+    mysurf = xtgeo.surface_from_file(SFILE1)
 
     # just make the instance, with a lot of defaults behind the scene
     myplot = Map()
@@ -40,15 +39,16 @@ def test_simple_plot(tmpdir, generate_plot):
     myplot.plot_surface(mysurf)
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "map_simple.png"))
+        myplot.savefig(join(tmpdir, "map_simple.png"), last=True)
+    else:
+        myplot.close()
 
 
 @pytest.mark.skipifroxar
 def test_map_plot_with_points(tmpdir, generate_plot):
     """Test as simple map plot with underlying points."""
 
-    mysurf = RegularSurface()
-    mysurf.from_file(SFILE1)
+    mysurf = xtgeo.surface_from_file(SFILE1)
 
     mypoints = Points()
     mypoints.from_surface(mysurf)
@@ -65,15 +65,16 @@ def test_map_plot_with_points(tmpdir, generate_plot):
     myplot.plot_points(mypoints)
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "map_with_points.png"))
+        myplot.savefig(join(tmpdir, "map_with_points.png"), last=True)
+    else:
+        myplot.close()
 
 
 @pytest.mark.skipifroxar
 def test_more_features_plot(tmpdir, generate_plot):
     """Map with some more features added, such as label rotation."""
 
-    mysurf = RegularSurface()
-    mysurf.from_file(SFILE1)
+    mysurf = xtgeo.surface_from_file(SFILE1)
 
     myfaults = Polygons(PFILE1)
 
@@ -86,14 +87,16 @@ def test_more_features_plot(tmpdir, generate_plot):
     myplot.plot_faults(myfaults)
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "map_more1.png"))
+        myplot.savefig(join(tmpdir, "map_more1.png"), last=True)
+    else:
+        myplot.close()
 
 
 @pytest.mark.skipifroxar
 def test_perm_logarithmic_map(tmpdir, generate_plot):
     """Map with PERM, log scale."""
 
-    mysurf = RegularSurface(SFILE2)
+    mysurf = xtgeo.surface_from_file(SFILE2)
 
     myplot = Map()
     myplot.canvas(title="PERMX normal scale")
@@ -103,4 +106,6 @@ def test_perm_logarithmic_map(tmpdir, generate_plot):
     )
 
     if generate_plot:
-        myplot.savefig(join(tmpdir, "permx_normal.png"))
+        myplot.savefig(join(tmpdir, "permx_normal.png"), last=True)
+    else:
+        myplot.close()

@@ -1,21 +1,18 @@
 """Tests for 3D grid."""
-
+import math
 import pathlib
 from collections import OrderedDict
 
-
-import math
-
-
-import pytest
 import numpy as np
+import pytest
+from hypothesis import given
 
 import tests.test_common.test_xtg as tsetup
-
 import xtgeo
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import Grid, GridProperty
+
+from .grid_generator import dimensions, increments, xtgeo_grids
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__, info=True)
@@ -374,7 +371,6 @@ def test_roffbin_export_v2_banal6(tmp_path):
     # export
     grd1 = Grid()
     grd1._xtgformat = 2
-    grd1.from_file(BANAL6)
 
     logger.info("EXPORT")
     grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")
@@ -384,12 +380,7 @@ def test_roffbin_export_v2_banal6(tmp_path):
     cell1 = grd1.get_xyz_cell_corners((2, 2, 2))
     cell2 = grd2.get_xyz_cell_corners((2, 2, 2))
 
-    assert cell1 == cell2
-
-    reek = Grid()
-    reek._xtgformat = 2
-    reek.from_file(REEKFIL4)
-    reek.to_file(tmp_path / "reek_xtgformat2", fformat="roff_ascii")
+    assert cell1 == pytest.approx(cell2)
 
 
 @tsetup.bigtest
@@ -830,3 +821,228 @@ def test_bulkvol_speed():
     _ = grd.get_bulk_volume()
     ncells = np.prod(dimens)
     print(xtg.timer(t0), ncells)
+
+
+def test_bad_egrid_ends_before_kw(tmp_path):
+    egrid_file = tmp_path / "test.egrid"
+    with open(egrid_file, "wb") as fh:
+        fh.write(b"\x00\x00\x00\x10")
+    with pytest.raises(Exception, match="end-of-file while reading keyword"):
+        xtgeo.grid_from_file(egrid_file, fformat="egrid")
+
+
+@given(dimensions, increments, increments, increments)
+def test_grid_get_dx(dimension, dx, dy, dz):
+    grd = Grid()
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz), rotation=0.0)
+    np.testing.assert_allclose(grd.get_dx(metric="euclid").values, dx, atol=0.01)
+    np.testing.assert_allclose(
+        grd.get_dx(metric="north south vertical").values, 0.0, atol=0.01
+    )
+    np.testing.assert_allclose(
+        grd.get_dx(metric="east west vertical").values, dx, atol=0.01
+    )
+    np.testing.assert_allclose(grd.get_dx(metric="horizontal").values, dx, atol=0.01)
+    np.testing.assert_allclose(grd.get_dx(metric="x projection").values, dx, atol=0.01)
+    np.testing.assert_allclose(grd.get_dx(metric="y projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dx(metric="z projection").values, 0.0, atol=0.01)
+
+    grd._actnumsv[0, 0, 0] = 0
+
+    assert grd.get_dx(asmasked=True).values[0, 0, 0] is np.ma.masked
+    assert np.isclose(grd.get_dx(asmasked=False).values[0, 0, 0], dx, atol=0.01)
+
+
+@given(dimensions, increments, increments, increments)
+def test_grid_get_dy(dimension, dx, dy, dz):
+    grd = Grid()
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz), rotation=0.0)
+    np.testing.assert_allclose(grd.get_dy(metric="euclid").values, dy, atol=0.01)
+    np.testing.assert_allclose(
+        grd.get_dy(metric="north south vertical").values, dy, atol=0.01
+    )
+    np.testing.assert_allclose(
+        grd.get_dy(metric="east west vertical").values, 0.0, atol=0.01
+    )
+    np.testing.assert_allclose(grd.get_dy(metric="horizontal").values, dy, atol=0.01)
+    np.testing.assert_allclose(grd.get_dy(metric="x projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dy(metric="y projection").values, dy, atol=0.01)
+    np.testing.assert_allclose(grd.get_dy(metric="z projection").values, 0.0, atol=0.01)
+
+    grd._actnumsv[0, 0, 0] = 0
+
+    assert grd.get_dy(asmasked=True).values[0, 0, 0] is np.ma.masked
+    assert np.isclose(grd.get_dy(asmasked=False).values[0, 0, 0], dy, atol=0.01)
+
+
+@given(dimensions, increments, increments, increments)
+def test_grid_get_dz(dimension, dx, dy, dz):
+    grd = Grid()
+    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
+    np.testing.assert_allclose(grd.get_dz(metric="euclid").values, dz, atol=0.01)
+    np.testing.assert_allclose(
+        grd.get_dz(metric="north south vertical").values, dz, atol=0.01
+    )
+    np.testing.assert_allclose(
+        grd.get_dz(metric="east west vertical").values, dz, atol=0.01
+    )
+    np.testing.assert_allclose(grd.get_dz(metric="horizontal").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="x projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="y projection").values, 0.0, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(metric="z projection").values, dz, atol=0.01)
+    np.testing.assert_allclose(grd.get_dz(flip=False).values, -dz, atol=0.01)
+
+    grd._actnumsv[0, 0, 0] = 0
+
+    assert grd.get_dz(asmasked=True).values[0, 0, 0] is np.ma.masked
+    assert np.isclose(grd.get_dz(asmasked=False).values[0, 0, 0], dz, atol=0.01)
+
+
+@given(xtgeo_grids)
+def test_get_dxdy_is_get_dx_and_dy(grid):
+    assert np.all(grid.get_dxdy(asmasked=True)[0].values == grid.get_dx().values)
+    assert np.all(grid.get_dxdy(asmasked=True)[1].values == grid.get_dy().values)
+
+
+def test_benchmark_grid_get_dz(benchmark):
+    grd = Grid()
+    grd.create_box(dimension=(100, 100, 100))
+
+    def run():
+        grd.get_dz()
+
+    benchmark(run)
+
+
+def test_benchmark_grid_get_dxdy(benchmark):
+    grd = Grid()
+    grd.create_box(dimension=(100, 100, 100))
+
+    def run():
+        grd.get_dxdy()
+
+    benchmark(run)
+
+
+def test_grid_get_dxdydz_zero_size():
+    grd = Grid()
+    grd.create_box(dimension=(0, 0, 0))
+
+    assert grd.get_dx().values.shape == (0, 0, 0)
+    assert grd.get_dy().values.shape == (0, 0, 0)
+    assert grd.get_dz().values.shape == (0, 0, 0)
+
+
+def test_grid_get_dxdydz_bad_coordsv_size():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+    grd._coordsv = np.zeros(shape=(0, 0, 0))
+
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
+        grd.get_dx()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
+        grd.get_dy()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
+        grd.get_dz()
+
+
+def test_grid_get_dxdydz_bad_zcorn_size():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+    grd._zcornsv = np.zeros(shape=(0, 0, 0, 0))
+
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
+        grd.get_dx()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
+        grd.get_dy()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
+        grd.get_dz()
+
+
+def test_grid_get_dxdydz_bad_grid_top():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+
+    grd._coordsv[:, :, 2] = 0.0
+    grd._coordsv[:, :, 5] = 0.0
+    grd._coordsv[:, :, 0] += 1.0
+
+    with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
+        grd.get_dx()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
+        grd.get_dy()
+    with pytest.raises(xtgeo.XTGeoCLibError, match="has near zero height"):
+        grd.get_dz()
+
+
+def test_grid_get_dxdydz_bad_metric():
+    grd = Grid()
+    grd.create_box(dimension=(10, 10, 10))
+
+    with pytest.raises(ValueError, match="Unknown metric"):
+        grd.get_dx(metric="foo")
+    with pytest.raises(ValueError, match="Unknown metric"):
+        grd.get_dy(metric="foo")
+    with pytest.raises(ValueError, match="Unknown metric"):
+        grd.get_dz(metric="foo")
+
+
+def test_grid_roff_subgrids_import_regression(tmp_path):
+    grid = Grid()
+    grid.create_box(dimension=(5, 5, 67))
+    grid.subgrids = OrderedDict(
+        [
+            ("subgrid_0", list(range(1, 21))),
+            ("subgrid_1", list(range(21, 53))),
+            ("subgrid_2", list(range(53, 68))),
+        ]
+    )
+    grid.to_file(tmp_path / "grid.roff")
+
+    grid2 = xtgeo.grid_from_file(tmp_path / "grid.roff")
+    assert grid2.subgrids == OrderedDict(
+        [
+            ("subgrid_0", range(1, 21)),
+            ("subgrid_1", range(21, 53)),
+            ("subgrid_2", range(53, 68)),
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "coordsv_dtype, zcornsv_dtype, actnumsv_dtype, match",
+    [
+        (np.float32, np.float32, np.int32, "The dtype of the coordsv"),
+        (np.float64, np.float64, np.int32, "The dtype of the zcornsv"),
+        (np.float64, np.float32, np.uint8, "The dtype of the actnumsv"),
+    ],
+)
+def test_grid_bad_dtype_construction(
+    coordsv_dtype, zcornsv_dtype, actnumsv_dtype, match
+):
+    with pytest.raises(TypeError, match=match):
+        Grid(
+            np.zeros((2, 2, 6), dtype=coordsv_dtype),
+            np.zeros((2, 2, 2, 4), dtype=zcornsv_dtype),
+            np.zeros((1, 1, 1), dtype=actnumsv_dtype),
+        )
+
+
+@pytest.mark.parametrize(
+    "coordsv_dimensions, zcornsv_dimensions, actnumsv_dimensions, match",
+    [
+        ((2, 2, 2), (2, 2, 2, 4), (1, 1, 1), "shape of coordsv"),
+        ((2, 2, 6), (2, 2, 2, 3), (1, 1, 1), "shape of zcornsv"),
+        ((2, 2, 6), (2, 1, 2, 4), (1, 1, 1), "Mismatch between zcornsv and coordsv"),
+        ((2, 2, 6), (2, 2, 2, 4), (1, 2, 1), "Mismatch between zcornsv and actnumsv"),
+    ],
+)
+def test_grid_bad_dimensions_construction(
+    coordsv_dimensions, zcornsv_dimensions, actnumsv_dimensions, match
+):
+    with pytest.raises(ValueError, match=match):
+        Grid(
+            np.zeros(coordsv_dimensions, dtype=np.float64),
+            np.zeros(zcornsv_dimensions, dtype=np.float32),
+            np.zeros(actnumsv_dimensions, dtype=np.int32),
+        )

@@ -30,8 +30,8 @@ def test_create():
     """Create simple Surfaces instance."""
     logger.info("Simple case...")
 
-    top = xtgeo.RegularSurface(TESTSET1A)
-    base = xtgeo.RegularSurface(TESTSET1B)
+    top = xtgeo.surface_from_file(TESTSET1A)
+    base = xtgeo.surface_from_file(TESTSET1B)
     surfs = xtgeo.Surfaces()
     surfs.surfaces = [top, base]
     surfs.describe()
@@ -42,8 +42,8 @@ def test_create():
 
 def test_create_init_objectlist():
     """Create simple Surfaces instance, initiate with a list of objects."""
-    top = xtgeo.RegularSurface(TESTSET1A)
-    base = xtgeo.RegularSurface(TESTSET1B)
+    top = xtgeo.surface_from_file(TESTSET1A)
+    base = xtgeo.surface_from_file(TESTSET1B)
     surfs = xtgeo.Surfaces([top, base])
 
     assert isinstance(surfs.surfaces[0], xtgeo.RegularSurface)
@@ -61,7 +61,7 @@ def test_create_init_filelist():
 
 def test_create_init_mixlist():
     """Create simple Surfaces instance, initiate with a list of files."""
-    top = xtgeo.RegularSurface(TESTSET1A)
+    top = xtgeo.surface_from_file(TESTSET1A)
     flist = [top, TESTSET1B]
     surfs = xtgeo.Surfaces(flist)
 
@@ -81,9 +81,10 @@ def test_statistics(tmpdir):
     assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
 
 
+@pytest.mark.filterwarnings("ignore:Default values*")
 def test_more_statistics(default_surface):
     """Find the mean etc measures of the surfaces."""
-    base = xtgeo.RegularSurface(TESTSET1A)
+    base = xtgeo.surface_from_file(TESTSET1A)
     base.values *= 0.0
     bmean = base.values.mean()
     surfs = []
@@ -121,7 +122,7 @@ def test_more_statistics(default_surface):
 
 def test_surfaces_apply():
     """Test apply function."""
-    base = xtgeo.RegularSurface(TESTSET1A)
+    base = xtgeo.surface_from_file(TESTSET1A)
     base.describe()
     base.values *= 0.0
     bmean = base.values.mean()
@@ -143,8 +144,7 @@ def test_surfaces_apply():
 def test_get_surfaces_from_3dgrid(tmpdir):
     """Create surfaces from a 3D grid."""
     mygrid = xtgeo.Grid(TESTSETG1)
-    surfs = xtgeo.Surfaces()
-    surfs.from_grid3d(mygrid, rfactor=2)
+    surfs = xtgeo.surface.surfaces.surfaces_from_grid(mygrid, rfactor=2)
     surfs.describe()
 
     assert_almostequal(surfs.surfaces[-1].values.mean(), 1742.28, 0.04)

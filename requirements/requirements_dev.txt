@@ -11,15 +11,16 @@ coverage>=4.1
 pytest-runner>=2.11.1
 pre-commit
 coverage>=4.1
-Sphinx
+Sphinx<4.0 # Due to sphinx-toolbox
 sphinx-rtd-theme
-sphinxcontrib-apidoc
-sphinx-autodoc-typehints
-recommonmark
+sphinx-toolbox
+autoclasstoc
+myst-parser
 bandit
 numpy>1.13.1
 pandas>=0.21.0
 segyio>=1.8.6
+pillow<8.4.0 # Fails to build with cibuildwheel
 matplotlib>=1.5
 scipy>=0.17
 shapely>=1.6.2; python_version < "3.8"

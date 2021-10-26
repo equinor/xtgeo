@@ -499,12 +499,17 @@ class _XTGeoFile(object):
         Returns:
             A string with format spesification, e.g. "hdf".
         """
-        if not self.exists():
-            raise ValueError(f"File {self.name} does not exist")
 
-        if suffixonly:
-            return self._detect_format_by_extension()
+        if not suffixonly:
+            fformat = self._detect_fformat_by_contents(details)
+            if fformat is not None:
+                return fformat
 
+        # if looking at contents failed, look at extension
+        fmt = self._detect_format_by_extension()
+        return self._validate_format(fmt)
+
+    def _detect_fformat_by_contents(self, details: Optional[bool] = False):
         # Try the read the N first bytes
         maxbuf = 100
 
@@ -513,100 +518,87 @@ class _XTGeoFile(object):
             buf = self.file.read(maxbuf)
             self.file.seek(0)
         else:
+            if not self.exists():
+                raise ValueError(f"File {self.name} does not exist")
             with open(self.file, "rb") as fhandle:
                 buf = fhandle.read(maxbuf)
 
-        # ------------------------------------------------------------------------------
+        if not isinstance(buf, bytes):
+            return None
+
         # HDF format, different variants
+        if len(buf) >= 4:
+            _, hdf = struct.unpack("b 3s", buf[:4])
+            if hdf == b"HDF":
+                logger.info("Signature is hdf")
 
-        _, hdf = struct.unpack("b 3s", buf[:4])
-        if hdf == b"HDF":
-            logger.info("Signature is hdf")
+                main = self._validate_format("hdf")
+                fmt = ""
+                provider = ""
+                if details:
+                    with h5py.File(self.file, "r") as hstream:
+                        for xtgtype in ["RegularSurface", "Well", "CornerPointGrid"]:
+                            if xtgtype in hstream.keys():
+                                fmt = xtgtype
+                                grp = hstream.require_group(xtgtype)
+                                try:
+                                    provider = grp.attrs["provider"]
+                                except KeyError:
+                                    provider = "unknown"
+                                break
 
-            main = self._validate_format("hdf")
-            fmt = ""
-            provider = ""
-            if details:
-                with h5py.File(self.file, "r") as hstream:
-                    for xtgtype in ["RegularSurface", "Well", "CornerPointGrid"]:
-                        if xtgtype in hstream.keys():
-                            fmt = xtgtype
-                            grp = hstream.require_group(xtgtype)
-                            try:
-                                provider = grp.attrs["provider"]
-                            except KeyError:
-                                provider = "unknown"
-                            break
+                    return f"{main} {fmt} {provider}"
+                else:
+                    return main
 
-                return f"{main} {fmt} {provider}"
-            else:
-                return main
-
-        # ------------------------------------------------------------------------------
         # Irap binary regular surface format
+        if len(buf) >= 8:
+            fortranblock, gricode = struct.unpack(">ii", buf[:8])
+            if fortranblock == 32 and gricode == -996:
+                logger.info("Signature is irap binary")
+                return self._validate_format("irap_binary")
 
-        fortranblock, gricode = struct.unpack(">ii", buf[:8])
-        if fortranblock == 32 and gricode == -996:
-            logger.info("Signature is irap binary")
-            return self._validate_format("irap_binary")
-
-        # ------------------------------------------------------------------------------
         # Petromod binary regular surface
-
         if b"Content=Map" in buf and b"DataUnitDistance" in buf:
             logger.info("Signature is petromod")
             return self._validate_format("petromod")
 
-        # ------------------------------------------------------------------------------
         # Eclipse binary 3D EGRID, look at FILEHEAD:
         #  'FILEHEAD'         100 'INTE'
         #   3        2016           0           0           0           0
         #  (ver)    (release)      (reserved)   (backw)    (gtype)      (dualporo)
 
-        fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
-        if fort1 == 16 and name == b"FILEHEAD" and num == 100 and fort2 == 16:
-            # Eclipse corner point EGRID
-            logger.info("Signature is egrid")
-            return self._validate_format("egrid")
+        if len(buf) >= 24:
+            fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
+            if fort1 == 16 and name == b"FILEHEAD" and num == 100 and fort2 == 16:
+                # Eclipse corner point EGRID
+                logger.info("Signature is egrid")
+                return self._validate_format("egrid")
+            # Eclipse binary 3D UNRST, look for SEQNUM:
+            #  'SEQNUM'         1 'INTE'
+            if fort1 == 16 and name == b"SEQNUM  " and num == 1 and fort2 == 16:
+                # Eclipse UNRST
+                logger.info("Signature is unrst")
+                return self._validate_format("unrst")
+            # Eclipse binary 3D INIT, look for INTEHEAD:
+            #  'INTEHEAD'         411 'INTE'
+            if fort1 == 16 and name == b"INTEHEAD" and num > 400 and fort2 == 16:
+                # Eclipse INIT
+                logger.info("Signature is init")
 
-        # ------------------------------------------------------------------------------
-        # Eclipse binary 3D UNRST, look for SEQNUM:
-        #  'SEQNUM'         1 'INTE'
+                return self._validate_format("init")
 
-        fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
-        if fort1 == 16 and name == b"SEQNUM  " and num == 1 and fort2 == 16:
-            # Eclipse UNRST
-            logger.info("Signature is unrst")
-            return self._validate_format("unrst")
+        if len(buf) >= 9:
+            name, _ = struct.unpack("8s b", buf[:9])
+            # ROFF binary 3D
+            if name == b"roff-bin":
+                logger.info("Signature is roff_binary")
+                return self._validate_format("roff_binary")
+            # ROFF ascii 3D
+            if name == b"roff-asc":
+                logger.info("Signature is roff_ascii")
+                return self._validate_format("roff_ascii")
 
-        # ------------------------------------------------------------------------------
-        # Eclipse binary 3D INIT, look for INTEHEAD:
-        #  'INTEHEAD'         411 'INTE'
-
-        fort1, name, num, _, fort2 = struct.unpack("> i 8s i 4s i", buf[:24])
-        if fort1 == 16 and name == b"INTEHEAD" and num > 400 and fort2 == 16:
-            # Eclipse INIT
-            logger.info("Signature is init")
-
-            return self._validate_format("init")
-
-        # ------------------------------------------------------------------------------
-        # ROFF binary 3D
-
-        name, _ = struct.unpack("8s b", buf[:9])
-        if name == b"roff-bin":
-            logger.info("Signature is roff_binary")
-            return self._validate_format("roff_binary")
-
-        # ------------------------------------------------------------------------------
-        # ROFF ascii 3D
-
-        name, _ = struct.unpack("8s b", buf[:9])
-        if name == b"roff-asc":
-            logger.info("Signature is roff_ascii")
-            return self._validate_format("roff_ascii")
-
-        # ------------------------------------------------------------------------------
         # RMS well format (ascii)
         # 1.0
         # Unknown
@@ -614,16 +606,17 @@ class _XTGeoFile(object):
         # ...
         # The signature here is one float in first line with values 1.0; one string
         # in second line; and 3 or 4 items in the next (sometimes RKB is missing)
-
         xbuf = buf.decode().split("\n")
-        if xbuf[0] == "1.0" and len(xbuf[1]) >= 1 and len(xbuf[2]) >= 10:
+        if (
+            len(xbuf) >= 3
+            and xbuf[0] == "1.0"
+            and len(xbuf[1]) >= 1
+            and len(xbuf[2]) >= 10
+        ):
             logger.info("Signature is rmswell")
             return self._validate_format("rmswell")
 
-        # if all this fails, tryr to detect format by extension
-        fmt = self._detect_format_by_extension()
-
-        return self._validate_format(fmt)
+        return None
 
     def _detect_format_by_extension(self):
         """Detect format by extension."""
@@ -652,7 +645,7 @@ class _XTGeoFile(object):
     @staticmethod
     def _validate_format(fmt):
         """Validate format."""
-        if fmt in SUPPORTED_FORMATS.keys():
+        if fmt in SUPPORTED_FORMATS.keys() or fmt == "unknown":
             return fmt
         else:
             raise RuntimeError(f"Invalid format: {fmt}")

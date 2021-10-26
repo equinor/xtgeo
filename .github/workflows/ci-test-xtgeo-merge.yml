@@ -2,7 +2,7 @@ name: builds
 
 on:
   push:
-    branches: [master]
+    branches: [master, "*postfix"]
 
 jobs:
   build_pywheels:
@@ -31,4 +31,4 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
           pip install -r requirements/requirements_test.txt
-          pytest --disable-warnings -x --generate-plots
+          pytest --disable-warnings -x --hypothesis-profile ci --generate-plots

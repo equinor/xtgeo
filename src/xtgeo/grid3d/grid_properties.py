@@ -68,7 +68,6 @@ class GridProperties(_Grid3D):
         self._props = []  # list of GridProperty objects
         self._names = []  # list of GridProperty names
         self._dates = []  # list of dates (_after_ import) YYYYDDMM
-        self._counter = 0  # Internal counter in __iter__ methods
 
     def __repr__(self):  # noqa: D105
         myrp = (
@@ -98,17 +97,7 @@ class GridProperties(_Grid3D):
         return prop
 
     def __iter__(self):  # noqa: D105
-        self._counter = 0
-        return self
-
-    def __next__(self):  # noqa: D105
-        maxcounter = len(self._props)
-        if self._counter < maxcounter:
-            result = self._props[self._counter]
-            self._counter += 1
-            return result
-
-        raise StopIteration
+        return iter(self._props)
 
     # ----------------------------------------------------------------------------------
     # Properties:
@@ -307,6 +296,10 @@ class GridProperties(_Grid3D):
             zerobased: If True, counter start from 0, otherwise 1 (default=1).
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = super()._evaluate_mask(mask)
 
         # resuse method from grid
@@ -335,11 +328,15 @@ class GridProperties(_Grid3D):
             A GridProperty instance of ACTNUM, or None if no props present.
         """
         if mask is not None:
+            xtg.warndeprecated(
+                "The mask option is deprecated,"
+                "and will be removed in version 4.0. Use asmasked instead."
+            )
             asmasked = super()._evaluate_mask(mask)
 
         # borrow function from GridProperty class:
         if self._props:
-            return self._props[0].get_actnum(name=name, mask=asmasked)
+            return self._props[0].get_actnum(name=name, asmasked=asmasked)
 
         warnings.warn("No gridproperty in list", UserWarning)
         return None

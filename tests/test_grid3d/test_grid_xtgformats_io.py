@@ -1,10 +1,13 @@
 # coding: utf-8
 """Testing new xtgf and hdf5/h5 formats."""
 import os
+from collections import OrderedDict
 from os.path import join
 
+import hypothesis.strategies as st
 import numpy as np
 import pytest
+from hypothesis import HealthCheck, given, settings
 from numpy.testing import assert_allclose
 
 import xtgeo
@@ -49,9 +52,10 @@ def benchmark_grid_fixture(request, testpath):
 def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.xtgf")
 
-    @benchmark
     def write():
         benchmark_grid.to_xtgf(fname)
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -62,9 +66,68 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 
     grid2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grid2.from_xtgf(fname)
+
+    benchmark(read)
+
+    assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv)
+    assert_allclose(benchmark_grid._coordsv, grid2._coordsv)
+    assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv)
+
+
+@pytest.mark.bigtest
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.grdecl")
+
+    def write():
+        benchmark_grid.to_file(fname, fformat="grdecl")
+
+    benchmark(write)
+
+
+@pytest.mark.bigtest
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.grdecl")
+
+    benchmark_grid.to_file(fname, fformat="grdecl")
+
+    grid2 = xtgeo.Grid()
+
+    def read():
+        grid2.from_file(fname, fformat="grdecl")
+
+    benchmark(read)
+
+    assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv, atol=0.02)
+    assert_allclose(benchmark_grid._coordsv, grid2._coordsv, atol=0.02)
+    assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv, atol=0.02)
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.bgrdecl")
+
+    def write():
+        benchmark_grid.to_file(fname, fformat="bgrdecl")
+
+    benchmark(write)
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.bgrdecl")
+
+    benchmark_grid.to_file(fname, fformat="bgrdecl")
+
+    grid2 = xtgeo.Grid()
+
+    def read():
+        grid2.from_file(fname, fformat="bgrdecl")
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grid2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grid2._coordsv)
@@ -75,10 +138,11 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.hdf")
 
-    @benchmark
     def write():
         benchmark_grid._zcornsv += 1.0
         benchmark_grid.to_hdf(fname, compression=None)
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -90,9 +154,10 @@ def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid)
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def partial_read():
         grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+
+    benchmark(partial_read)
 
     assert grd2.ncol == 20
     assert grd2.nlay == benchmark_grid.nlay
@@ -107,9 +172,10 @@ def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grd2.from_hdf(fna)
+
+    benchmark(read)
 
     assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
@@ -124,9 +190,10 @@ def test_benchmark_grid_hdf5_export_blosc_compression(
 
     benchmark_grid._zcornsv += 1.0
 
-    @benchmark
     def write():
         benchmark_grid.to_hdf(fname, compression="blosc")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark(group="import/export")
@@ -141,9 +208,10 @@ def test_benchmark_grid_hdf5_import_partial_blosc_compression(
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def partial_read():
         grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+
+    benchmark(partial_read)
 
     assert grd2.ncol == 20
     assert grd2.nlay == benchmark_grid.nlay
@@ -161,9 +229,38 @@ def test_benchmark_grid_hdf5_import_blosc_compression(
 
     grd2 = xtgeo.Grid()
 
-    @benchmark
     def read():
         grd2.from_hdf(fna)
+
+    benchmark(read)
+
+    assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
+    assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
+    assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_egrid_export(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.egrid")
+
+    @benchmark
+    def write():
+        benchmark_grid._zcornsv += 1.0
+        benchmark_grid.to_file(fname, fformat="egrid")
+
+
+@pytest.mark.benchmark(group="import/export")
+def test_benchmark_grid_egrid_import(benchmark, tmp_path, benchmark_grid):
+    fname = join(tmp_path, "reek_geo_grid.egrid")
+
+    benchmark_grid._zcornsv += 1.0
+    benchmark_grid.to_file(fname, fformat="egrid")
+
+    grd2 = xtgeo.Grid()
+
+    @benchmark
+    def read():
+        grd2.from_file(fname, fformat="egrid")
 
     assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
@@ -211,9 +308,10 @@ def test_benchmark_gridprop_export(benchmark, tmp_path, benchmark_gridprop):
 
     fname = tmp_path / "benchmark.xtgcpprop"
 
-    @benchmark
     def write():
         benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
+
+    benchmark(write)
 
 
 @pytest.mark.benchmark()
@@ -226,9 +324,10 @@ def test_benchmark_gridprop_import(benchmark, tmp_path, benchmark_gridprop):
 
     prop2 = xtgeo.GridProperty()
 
-    @benchmark
     def read():
         prop2.from_file(fname, fformat="xtgcpprop")
+
+    benchmark(read)
 
     assert benchmark_gridprop.values.all() == prop2.values.all()
 
@@ -243,8 +342,113 @@ def test_benchmark_gridprop_import_partial(benchmark, tmp_path, benchmark_gridpr
 
     prop2 = xtgeo.GridProperty()
 
-    @benchmark
     def read():
         prop2.from_file(fname, fformat="xtgcpprop", ijrange=(1, 2, 1, 2))
 
+    benchmark(read)
+
     assert benchmark_gridprop.values[0:2, 0:2, :].all() == prop2.values.all()
+
+
+def test_hdf5_partial_import_case(benchmark_grid, tmp_path):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    grd2.from_hdf(fna, ijkrange=(1, 3, 1, 5, 1, 4))
+
+    assert grd2.ncol == 3
+    assert grd2.nrow == 5
+    assert grd2.nlay == 4
+
+    assert grd2._xtgformat == 2
+    assert grd2._actnumsv.shape == (3, 5, 4)
+    assert grd2._coordsv.shape == (4, 6, 6)
+    assert grd2._zcornsv.shape == (4, 6, 5, 4)
+
+
+@st.composite
+def ijk_ranges(
+    draw,
+    i=st.integers(min_value=1, max_value=3),
+    j=st.integers(min_value=1, max_value=2),
+    k=st.integers(min_value=1, max_value=4),
+):
+    ijkrange = list(draw(st.tuples(i, i, j, j, k, k)))
+    if ijkrange[1] < ijkrange[0]:
+        ijkrange[1], ijkrange[0] = ijkrange[0], ijkrange[1]
+    if ijkrange[3] < ijkrange[2]:
+        ijkrange[3], ijkrange[2] = ijkrange[2], ijkrange[3]
+    if ijkrange[5] < ijkrange[4]:
+        ijkrange[5], ijkrange[4] = ijkrange[4], ijkrange[5]
+    ijkrange[1] += 1
+    ijkrange[3] += 1
+    ijkrange[5] += 1
+    return ijkrange
+
+
+@settings(
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(ijk_ranges())
+def test_hdf5_partial_import(benchmark_grid, tmp_path, ijkrange):
+    fname = join(tmp_path, "reek_geo_grid.compressed_h5")
+
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    grd2.from_hdf(fna, ijkrange=ijkrange)
+
+    assert grd2.ncol == 1 + ijkrange[1] - ijkrange[0]
+    assert grd2.nrow == 1 + ijkrange[3] - ijkrange[2]
+    assert grd2.nlay == 1 + ijkrange[5] - ijkrange[4]
+
+    assert grd2._xtgformat == 2
+    assert grd2._actnumsv.shape == (grd2.ncol, grd2.nrow, grd2.nlay)
+    assert grd2._coordsv.shape == (grd2.ncol + 1, grd2.nrow + 1, 6)
+    assert grd2._zcornsv.shape == (grd2.ncol + 1, grd2.nrow + 1, grd2.nlay + 1, 4)
+
+    assert (
+        benchmark_grid._actnumsv[
+            ijkrange[0] - 1 : ijkrange[1],
+            ijkrange[3] - 1 : ijkrange[2],
+            ijkrange[5] - 1 : ijkrange[4],
+        ].all()
+        == grd2._actnumsv.all()
+    )
+    assert (
+        benchmark_grid._zcornsv[
+            ijkrange[0] - 1 : ijkrange[1] + 1,
+            ijkrange[3] - 1 : ijkrange[2] + 1,
+            ijkrange[5] - 1 : ijkrange[4] + 1,
+        ].all()
+        == grd2._zcornsv.all()
+    )
+    assert (
+        benchmark_grid._coordsv[
+            ijkrange[0] - 1 : ijkrange[1] + 1,
+            ijkrange[3] - 1 : ijkrange[2] + 1,
+            ijkrange[5] - 1 : ijkrange[4] + 1,
+        ].all()
+        == grd2._coordsv.all()
+    )
+
+
+def test_hdf5_import(benchmark_grid, tmp_path):
+    fname = join(tmp_path, "reek_geo_grid2.compressed_h5")
+
+    benchmark_grid._zcornsv += 1.0
+
+    nlay = benchmark_grid.nlay
+    benchmark_grid._subgrids = OrderedDict({"1": range(1, nlay + 1)})
+    fna = benchmark_grid.to_hdf(fname, compression="blosc")
+
+    grd2 = xtgeo.Grid()
+
+    grd2.from_hdf(fna)
+
+    assert grd2._subgrids == OrderedDict({"1": range(1, nlay + 1)})

@@ -5,19 +5,20 @@
 import os
 import pathlib
 
-import pytest
-
+import hypothesis.strategies as st
 import numpy as np
 import numpy.ma as npma
-
-import xtgeo
-from xtgeo.xyz import Polygons
-from xtgeo.grid3d import Grid
-from xtgeo.grid3d import GridProperty
-from xtgeo.common import XTGeoDialog
-from xtgeo.common.exceptions import KeywordNotFoundError
+import pytest
+from hypothesis import example, given
 
 import tests.test_common.test_xtg as tsetup
+import xtgeo
+from xtgeo.common import XTGeoDialog
+from xtgeo.common.exceptions import KeywordNotFoundError
+from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.xyz import Polygons
+
+from .grid_generator import dimensions, xtgeo_grids
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name
@@ -34,8 +35,6 @@ TPATH = xtg.testpathobj
 
 TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
 TESTFILE2 = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
-# TESTFILE3 = '../xtgeo-testdata/3dgrids/bri/B.GRID'
-# TESTFILE4 = '../xtgeo-testdata/3dgrids/bri/B.INIT'
 TESTFILE5 = TPATH / "3dgrids/reek/REEK.EGRID"
 TESTFILE6 = TPATH / "3dgrids/reek/REEK.INIT"
 TESTFILE7 = TPATH / "3dgrids/reek/REEK.UNRST"
@@ -595,17 +594,175 @@ def test_values_in_polygon():
     tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
 
 
-# def test_get_xy_values_for_webportal_bri():
-#     """Get lists on webportal format, small BRILLIG case"""
+@given(dimensions, st.booleans())
+@example((4, 3, 5), True)
+def test_gridprop_non_default_size_init(dim, discrete):
+    ncol, nrow, nlay = dim
+    prop = GridProperty(
+        ncol=ncol,
+        nrow=nrow,
+        nlay=nlay,
+        discrete=discrete,
+    )
 
-#     # Upps, work with this case and UNDEf cells are non-existing
-#     # in GRID input!
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+    np.testing.assert_allclose(prop.values, np.zeros(dim))
 
-#     grid = Grid(TESTFILE3)
-#     prop = GridProperty(TESTFILE4, grid=grid, name='PORO')
 
-#     coord, _valuelist = prop.get_xy_value_lists(grid=grid, activeonly=False)
+@given(xtgeo_grids, st.booleans())
+@example(Grid(), True)
+def test_gridprop_grid_init(grid, discrete):
+    prop = GridProperty(
+        grid,
+        discrete=discrete,
+    )
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+    np.testing.assert_allclose(prop.values, np.zeros(grid.dimensions))
 
-#     logger.info('First active cell coords\n{}.'.format(coord[0][0]))
-#     # assert coord[0][0][0] == (454.875, 318.5)
-#     # assert valuelist[0][0] == -999.0
+
+@given(dimensions, xtgeo_grids, st.booleans())
+@example((4, 3, 5), Grid(), True)
+def test_gridprop_grid_and_dim_init(dim, grid, discrete):
+    ncol, nrow, nlay = dim
+    if dim != grid.dimensions:
+        with pytest.raises(ValueError, match="dimension"):
+            GridProperty(
+                grid,
+                ncol=ncol,
+                nrow=nrow,
+                nlay=nlay,
+                discrete=discrete,
+            )
+    else:
+        prop = GridProperty(
+            grid,
+            ncol=ncol,
+            nrow=nrow,
+            nlay=nlay,
+            discrete=discrete,
+        )
+        if discrete:
+            assert prop.dtype == np.int32
+            assert prop.values.dtype == np.int32
+        else:
+            assert prop.dtype == np.float64
+            assert prop.values.dtype == np.float64
+        np.testing.assert_allclose(prop.values, np.zeros(dim))
+
+
+@pytest.mark.parametrize("discrete", [True, False])
+def test_gridprop_default(discrete):
+    prop = GridProperty(discrete=discrete)
+
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+
+    default_values = np.ma.MaskedArray(np.full((4, 3, 5), 99), False)
+    default_values[0:4, 0, 0:2] = np.ma.masked
+
+    np.testing.assert_allclose(prop.values, default_values)
+
+
+@pytest.mark.parametrize("discrete", [True, False])
+def test_gridprop_values_and_discrete_init(discrete):
+    prop = GridProperty(discrete=discrete, values=np.zeros((4, 3, 5)))
+
+    if discrete:
+        assert prop.dtype == np.int32
+        assert prop.values.dtype == np.int32
+    else:
+        assert prop.dtype == np.float64
+        assert prop.values.dtype == np.float64
+
+    np.testing.assert_allclose(prop.values, np.ma.zeros((4, 3, 5)))
+
+
+def test_gridprop_init_default_with_value():
+    prop = GridProperty(discrete=True, values=1)
+    assert np.array_equal(prop.values, np.ma.ones(shape=(4, 3, 5), dtype=np.int32))
+
+
+@given(
+    st.sampled_from([np.uint16, np.uint8, np.float32]),
+    st.booleans(),
+    st.one_of(st.integers(), st.floats()),
+)
+def test_gridprop_no_override_roxar_dtype(roxar_dtype, discrete, val):
+    prop = GridProperty(
+        values=val,
+        discrete=discrete,
+        roxar_dtype=roxar_dtype,
+    )
+    assert prop.roxar_dtype == roxar_dtype
+
+
+def test_gridprop_init_roxar_dtype():
+    assert GridProperty(discrete=True).roxar_dtype == np.uint8
+    assert GridProperty(discrete=False).roxar_dtype == np.float32
+    with pytest.raises(ValueError, match="roxar_dtype"):
+        GridProperty(roxar_dtype=np.int64)
+
+
+@pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
+def test_gridprop_export_actnum(fformat, tmp_path):
+    grid = Grid(TESTFILE5)
+    actnum = grid.get_actnum(asmasked=True)
+
+    filepath = tmp_path / "actnum.DATA"
+    actnum.to_file(filepath, fformat=fformat)
+
+    actnum2 = xtgeo.gridproperty_from_file(
+        filepath, name="ACTNUM", fformat=fformat, grid=grid
+    )
+    if fformat == "grdecl":
+        actnum2.isdiscrete = True
+
+    assert actnum.values.tolist() == actnum2.values.tolist()
+
+
+@pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
+def test_gridprop_export_actnum_append(fformat, tmp_path):
+    grid = Grid(TESTFILE5)
+    actnum = grid.get_actnum(asmasked=True)
+
+    filepath = tmp_path / "actnum.DATA"
+    actnum.to_file(filepath, name="ACTNUM2", fformat=fformat)
+    actnum.to_file(filepath, name="ACTNUM3", append=True, fformat=fformat)
+
+    actnum2 = xtgeo.gridproperty_from_file(
+        filepath, name="ACTNUM2", fformat=fformat, grid=grid
+    )
+    actnum3 = xtgeo.gridproperty_from_file(
+        filepath, name="ACTNUM3", fformat=fformat, grid=grid
+    )
+
+    if fformat == "grdecl":
+        actnum2.isdiscrete = True
+        actnum3.isdiscrete = True
+
+    assert actnum.values.tolist() == actnum2.values.tolist()
+    assert actnum2.values.tolist() == actnum3.values.tolist()
+
+
+def test_gridprop_export_bgrdecl_double(tmp_path):
+    grid = Grid(TESTFILE5)
+    actnum = grid.get_actnum(asmasked=True)
+
+    actnum.to_file(tmp_path / "actnum.DATA", fformat="bgrdecl", dtype=np.float64)
+
+    with open(tmp_path / "actnum.DATA", "rb") as fh:
+        assert b"DOUB" in fh.read()

@@ -286,8 +286,8 @@ def test_attrs_reek(tmpdir, loadsfile2):
     logger.info("Make cube...")
     cube2 = loadsfile2
 
-    t2a = xtgeo.RegularSurface(TOP2A)
-    t2b = xtgeo.RegularSurface(TOP2B)
+    t2a = xtgeo.surface_from_file(TOP2A)
+    t2b = xtgeo.surface_from_file(TOP2B)
 
     attlist = ["maxpos", "maxneg"]
 
