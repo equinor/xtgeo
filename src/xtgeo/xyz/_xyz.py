@@ -6,7 +6,7 @@ import pathlib
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 import deprecation
 import numpy as np
@@ -18,9 +18,6 @@ from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
-
-# default column names
-DEFAULTNAME = {"x": "X_UTME", "y": "Y_UTMN", "z": "Z_TVDSS", "p": "POLY_ID"}
 
 
 def _data_reader_factory(file_format):
@@ -69,7 +66,7 @@ def _allow_deprecated_init(func):
                     "poi = xtgeo.points_from_surface(regsurf) instead",
                     DeprecationWarning,
                 )
-                zname = kwargs.get("zname", DEFAULTNAME["z"])
+                zname = kwargs.get("zname", "Z_TVDSS")
                 kwargs = XYZ._read_surface(args[0], zname=zname, return_cls=False)
 
             elif isinstance(args[0], (list, np.ndarray, pd.DataFrame)):
@@ -122,10 +119,10 @@ class XYZ:
     def __init__(
         self,
         values: Optional[Union[list, np.ndarray, pd.DataFrame]] = None,
-        xname: Optional[str] = DEFAULTNAME["x"],
-        yname: Optional[str] = DEFAULTNAME["y"],
-        zname: Optional[str] = DEFAULTNAME["z"],
-        pname: Optional[str] = DEFAULTNAME["p"],
+        xname: Optional[str] = "X_UTME",
+        yname: Optional[str] = "Y_UTMN",
+        zname: Optional[str] = "Z_TVDSS",
+        pname: Optional[str] = "POLY_ID",
         name: Optional[str] = "unknown",
         is_polygons: Optional[bool] = False,
         attributes: Optional[dict] = None,
@@ -491,8 +488,8 @@ class XYZ:
         # now populate the dataframe:
         xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
         ddatas = OrderedDict()
-        ddatas[DEFAULTNAME["x"]] = xc
-        ddatas[DEFAULTNAME["y"]] = yc
+        ddatas["X_UTME"] = xc
+        ddatas["Y_UTMN"] = yc
         ddatas[zname] = val
 
         kwargs["dataframe"] = pd.DataFrame(ddatas)
