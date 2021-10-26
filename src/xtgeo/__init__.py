@@ -119,7 +119,7 @@ from xtgeo.cube.cube1 import Cube
 
 _xprint("Import various XTGeo modules... cube...")
 
-from xtgeo.grid3d import grid, grid_properties, grid_property
+from xtgeo.grid3d import GridRelative, Units, grid, grid_properties, grid_property
 from xtgeo.grid3d.grid import Grid
 from xtgeo.grid3d.grid_properties import GridProperties
 from xtgeo.grid3d.grid_property import GridProperty
@@ -149,7 +149,7 @@ _xprint("Import various XTGeo modules...DONE")
 # some function wrappers to initiate objects from imports
 _xprint("Import various XTGeo wrappers...")
 from xtgeo.cube.cube1 import cube_from_file, cube_from_roxar
-from xtgeo.grid3d.grid import grid_from_file, grid_from_roxar
+from xtgeo.grid3d.grid import create_box_grid, grid_from_file, grid_from_roxar
 from xtgeo.grid3d.grid_property import gridproperty_from_file, gridproperty_from_roxar
 from xtgeo.surface.regular_surface import (
     surface_from_cube,
