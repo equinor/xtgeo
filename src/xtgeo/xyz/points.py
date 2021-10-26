@@ -131,10 +131,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             np.random.rand(nrandom, 3), columns=[self._xname, self._yname, self._zname]
         )
 
-    @inherit_docstring(inherit_from=XYZ.delete_columns)
-    def delete_columns(self, clist, strict=False):
-        super().delete_columns(clist, strict=strict)
-
     @inherit_docstring(inherit_from=XYZ.from_surface)
     def from_surface(self, surf, zname="Z_TVDSS"):
         super().from_surface(surf, zname=zname)
