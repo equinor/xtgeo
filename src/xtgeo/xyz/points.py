@@ -8,9 +8,6 @@ import deprecation
 import numpy as np
 import pandas as pd
 import xtgeo
-
-# from xtgeo.common import XTGeoDialog
-# from xtgeo.surface import RegularSurface
 from xtgeo.common import inherit_docstring
 
 from . import _xyz_oper
@@ -20,6 +17,330 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 RegularSurface = TypeVar("RegularSurface")
+
+
+def points_from_roxar(
+    project: Union[str, Any],
+    name: str,
+    category: str,
+    stype: Optional[str] = "horizons",
+    realisation: Optional[int] = 0,
+    attributes: Optional[bool] = False,
+) -> "Points":
+    """Load a Points instance from Roxar RMS project.
+
+    The import from the RMS project can be done either within the project
+    or outside the project.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the
+            magic `project` word if within RMS.
+        name: Name of points item
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard.
+        stype: RMS folder type, 'horizons' (default), 'zones' etc!
+        realisation: Realisation number, default is 0
+        attributes: If True, attributes will be preserved (from RMS 11)
+
+    Example::
+
+        import xtgeo
+        mysurf = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPoints')
+    """
+    return Points._read_roxar(
+        project,
+        name,
+        category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
+        is_polygons=False,
+    )
+
+
+def points_from_surface(
+    regsurf: RegularSurface,
+    zname: Optional[str] = "Z_TVDSS",
+    name: Optional[str] = "unknown",
+) -> "Points":
+    """This makes an instance of a Points directly from a RegularSurface object.
+
+    Each surface node will be stored as a X Y Z point.
+
+    Args:
+        regsurf: XTGeo RegularSurface() instance
+        zname: Name of third column
+        name: Name of instance
+
+    .. versionadded:: 2.16
+       Replaces the from_surface() method.
+    """
+
+    return Points._read_surface(regsurf, zname=zname, name=name)
+
+
+def points_from_dataframe(
+    dfr: pd.DataFrame,
+    east: Optional[str] = "X",
+    north: Optional[str] = "Y",
+    zvalues: Optional[str] = "Z",
+    zname: Optional[str] = "Z_TVDSS",
+    attributes: Optional[dict] = None,
+    **kwargs,
+) -> "Points":
+    """This makes an instance of a Points directly from a DataFrame object.
+
+    Args:
+        dfr: Pandas dataframe.
+        east: Name of easting column in input dataframe.
+        north: Name of northing column in input dataframe.
+        zvalues: Name of depth or other values column in input dataframe.
+        zname: Name of column in resulting poinset.
+        attributes: Additional metadata columns, on form {"IX": "I", ...};
+            "IX" here is the name of the target column, and "I" is the name in the
+            input dataframe (source).
+
+    Note:
+        One can also use dataframe input directly to instance creating, e.g.::
+
+            points = xtgeo.Points(dfr)
+
+        In that case the order of columns is assumed to be correct in input as X Y Z. In
+        contrast, this method uses the explicit names of the columns as to establish
+        ordering. This means that a dataframe with 'unconventional ordering' may be
+        applied as input here!
+
+    Note:
+        For backward compatibility with the deprecated ``from_dataframe()``, using the
+        key ``tvdmsl`` instead of ``zvalues`` is possible.
+
+    .. versionadded:: 2.16
+       Replaces the :meth:`from_dataframe()` method.
+    """
+
+    zvalues = kwargs.get("tvdmsl", zvalues)
+
+    # some checks
+    for cname in (east, north, zvalues):
+        if cname not in dfr.columns:
+            raise KeyError(f"Column {cname} does not exist in input datadrame.")
+
+    if attributes is not None:
+        acnames = list(attributes.values())
+        for acname in acnames:
+            if acname not in dfr.columns:
+                raise KeyError(
+                    f"Attribute column {acname} does not exist in input datadrame."
+                )
+
+    newdfr = pd.DataFrame(
+        {"X_UTME": dfr[east], "Y_UTMN": dfr[north], zname: dfr[zvalues]}
+    )
+    newattrs = {}
+    if attributes:
+        for target, source in attributes.items():
+            newdfr[target] = dfr[source].copy()
+            newattrs[target] = pd.to_numeric(newdfr[target])  # try to get correct dtype
+            newattrs[target] = str(newattrs[target].dtype)
+
+    newdfr.dropna(inplace=True)
+
+    return Points(dataframe=newdfr, attributes=newattrs)
+
+
+def points_from_wells(
+    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
+    tops: Optional[bool] = True,
+    incl_limit: Optional[float] = None,
+    top_prefix: Optional[str] = "Top",
+    zonelogname: Optional[str] = None,
+    zonelist: Optional[list] = None,  # TODO: list like?
+    use_undef: Optional[bool] = False,
+) -> "Points":
+
+    """Get tops or zone points data from a list of wells.
+
+    Args:
+        wells: List of XTGeo well objects, a single XTGeo well or a list of well files.
+            If a list of well files, the routine will try to load well based on file
+            signature and/or extension, but only default settings are applied. Hence
+            this is less flexible and more fragile.
+        tops: Get the tops if True (default), otherwise zone.
+        incl_limit: Inclination limit for zones (thickness points)
+        top_prefix: Prefix used for Tops.
+        zonelogname: If None, the zonelogname in the well object will be applied. This
+            option is particualr useful if one uses wells directly from files.
+        zonelist: Which zone numbers to apply.
+        use_undef: If True, then transition from UNDEF is also used.
+
+    Returns:
+        None if empty data, otherwise a Points() instance.
+
+    Example::
+
+            wells = ["w1.w", "w2.w"]
+            points = xtgeo.points_from_wells(wells)
+
+    Note:
+        The deprecated method :py:meth:`~Points.from_wells` returns the number of
+        wells that contribute with points. This is now implemented through the
+        property `nwells`. Hence the following code::
+
+            nwells_applied = poi.from_wells(...)  # deprecated method
+            # vs
+            poi = xtgeo.points_from_wells(...)
+            nwells_applied = poi.nwells
+
+    .. versionadded: 2.16
+
+
+    """
+
+    if not wells:
+        raise ValueError("No valid input wells")
+
+    # wells in a scalar context is allowed if one well
+    if not isinstance(wells, list):
+        wells = [wells]
+
+    # wells are just files which need to be imported, which is a bit more fragile
+    if isinstance(wells[0], (str, pathlib.Path)):
+        wells = [xtgeo.well_from_file(wll) for wll in wells]
+
+    dflist = []
+    for well in wells:
+        if zonelogname is not None:
+            well.zonelogname = zonelogname
+
+        wp = well.get_zonation_points(
+            tops=tops,
+            incl_limit=incl_limit,
+            top_prefix=top_prefix,
+            zonelist=zonelist,
+            use_undef=use_undef,
+        )
+
+        if wp is not None:
+            dflist.append(wp)
+
+    if dflist:
+        dfr = pd.concat(dflist, ignore_index=True)
+    else:
+        return None
+
+    attrs = {}
+    for col in dfr.columns:
+        if col == "Zone":
+            attrs[col] = "int"
+        elif col == "ZoneName":
+            attrs[col] = "str"
+        elif col == "WellName":
+            attrs[col] = "str"
+        else:
+            attrs[col] = "float"
+
+    poi = Points(dataframe=dfr, attributes=attrs)
+    poi._nwells = len(dflist)
+    return poi
+
+
+def points_from_wells_dfrac(
+    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
+    dlogname: str,
+    dcodes: List[int],
+    incl_limit: Optional[float] = 90,
+    count_limit: Optional[int] = 3,
+    zonelist: Optional[list] = None,  # TODO: list like?
+    zonelogname: Optional[str] = None,
+) -> "Points":
+
+    """Get fraction of discrete code(s) e.g. facies per zone.
+
+    Args:
+        wells: List of XTGeo well objects, a single XTGeo well or a list of well files.
+            If a list of file names, the routine will try to load well based on file
+            signature and/or extension, but only default settings are applied. Hence
+            this is less flexible and more fragile.
+        dlogname: Name of discrete log (e.g. Facies)
+        dcodes: Code(s) to get fraction for, e.g. [3]
+        incl_limit: Inclination limit for zones (thickness points)
+        count_limit: Min. no of counts per segment for valid result
+        zonelist: Which zone numbers to apply, default None means all.
+        zonelogname: If None, the zonelogname property in the well object will be
+            applied. This option is particualr useful if one uses wells directly from
+            files.
+
+    Returns:
+        None if empty data, otherwise a Points() instance.
+
+    Example::
+
+            wells = ["w1.w", "w2.w"]
+            points = xtgeo.points_from_wells_dfrac(
+                    wells, dlogname="Facies", dcodes=[4], zonelogname="ZONELOG"
+                )
+
+    Note:
+        The deprecated method :py:meth:`~Points.dfrac_from_wells` returns the number of
+        wells that contribute with points. This is now implemented through the
+        property `nwells`. Hence the following code::
+
+            nwells_applied = poi.dfrac_from_wells(...)  # deprecated method
+            # vs
+            poi = xtgeo.points_from_wells_dfrac(...)
+            nwells_applied = poi.nwells
+
+    .. versionadded:: 2.16 Replaces :meth:`~Points.dfrac_from_wells`
+    """
+
+    if not wells:
+        raise ValueError("No valid input wells")
+
+    # wells in a scalar context is allowed if one well
+    if not isinstance(wells, list):
+        wells = [wells]
+
+    # wells are just files which need to be imported, which is a bit more fragile
+    if isinstance(wells[0], (str, pathlib.Path)):
+        wells = [xtgeo.well_from_file(wll) for wll in wells]
+
+    dflist = []
+    for well in wells:
+        wpf = well.get_fraction_per_zone(
+            dlogname,
+            dcodes,
+            zonelist=zonelist,
+            incl_limit=incl_limit,
+            count_limit=count_limit,
+            zonelogname=zonelogname,
+        )
+
+        if wpf is not None:
+            dflist.append(wpf)
+
+    if dflist:
+        dfr = pd.concat(dflist, ignore_index=True)
+    else:
+        return None
+
+    attrs = {}
+    for col in dfr.columns[3:]:
+        if col.lower() == "zone":
+            attrs[col] = "int"
+        elif col.lower() == "zonename":
+            attrs[col] = "str"
+        elif col.lower() == "wellname":
+            attrs[col] = "str"
+        else:
+            attrs[col] = "float"
+
+    poi = Points(dataframe=dfr, attributes=attrs)
+    poi.zname = "DFRAC"  # name of third column
+    poi._nwells = len(dflist)
+    return poi
 
 
 class Points(XYZ):  # pylint: disable=too-many-public-methods
@@ -478,14 +799,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
         """Eliminate current map values outside Points"""
         self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)
 
-    # ==================================================================================
-    # Operations involving other Polygons object(s)
-    # ==================================================================================
-
-    @inherit_docstring(inherit_from=XYZ.append)
-    def append(self, other, attributes=None):  # pylint: disable=redefined-builtin
-        return super().append(other, attributes=attributes)
-
 
 # ======================================================================================
 # FUNCTIONS as wrappers to class init + import
@@ -519,327 +832,3 @@ def points_from_file(
         mypoints = xtgeo.points_from_file('somefile.xyz')
     """
     return Points._read_file(pfile, fformat=fformat)
-
-
-def points_from_roxar(
-    project: Union[str, Any],
-    name: str,
-    category: str,
-    stype: Optional[str] = "horizons",
-    realisation: Optional[int] = 0,
-    attributes: Optional[bool] = False,
-) -> "Points":
-    """Load a Points instance from Roxar RMS project.
-
-    The import from the RMS project can be done either within the project
-    or outside the project.
-
-    Note also that horizon/zone/faults name and category must exists
-    in advance, otherwise an Exception will be raised.
-
-    Args:
-        project: Name of project (as folder) if outside RMS, or just use the
-            magic `project` word if within RMS.
-        name: Name of points item
-        category: For horizons/zones/faults: for example 'DL_depth'
-            or use a folder notation on clipboard.
-        stype: RMS folder type, 'horizons' (default), 'zones' etc!
-        realisation: Realisation number, default is 0
-        attributes: If True, attributes will be preserved (from RMS 11)
-
-    Example::
-
-        import xtgeo
-        mysurf = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPoints')
-    """
-    return Points._read_roxar(
-        project,
-        name,
-        category,
-        stype=stype,
-        realisation=realisation,
-        attributes=attributes,
-        is_polygons=False,
-    )
-
-
-def points_from_surface(
-    regsurf: RegularSurface,
-    zname: Optional[str] = "Z_TVDSS",
-    name: Optional[str] = "unknown",
-) -> "Points":
-    """This makes an instance of a Points directly from a RegularSurface object.
-
-    Each surface node will be stored as a X Y Z point.
-
-    Args:
-        regsurf: XTGeo RegularSurface() instance
-        zname: Name of third column
-        name: Name of instance
-
-    .. versionadded:: 2.16
-       Replaces the from_surface() method.
-    """
-
-    return Points._read_surface(regsurf, zname=zname, name=name)
-
-
-def points_from_dataframe(
-    dfr: pd.DataFrame,
-    east: Optional[str] = "X",
-    north: Optional[str] = "Y",
-    zvalues: Optional[str] = "Z",
-    zname: Optional[str] = "Z_TVDSS",
-    attributes: Optional[dict] = None,
-    **kwargs,
-) -> "Points":
-    """This makes an instance of a Points directly from a DataFrame object.
-
-    Args:
-        dfr: Pandas dataframe.
-        east: Name of easting column in input dataframe.
-        north: Name of northing column in input dataframe.
-        zvalues: Name of depth or other values column in input dataframe.
-        zname: Name of column in resulting poinset.
-        attributes: Additional metadata columns, on form {"IX": "I", ...};
-            "IX" here is the name of the target column, and "I" is the name in the
-            input dataframe (source).
-
-    Note:
-        One can also use dataframe input directly to instance creating, e.g.::
-
-            points = xtgeo.Points(dfr)
-
-        In that case the order of columns is assumed to be correct in input as X Y Z. In
-        contrast, this method uses the explicit names of the columns as to establish
-        ordering. This means that a dataframe with 'unconventional ordering' may be
-        applied as input here!
-
-    Note:
-        For backward compatibility with the deprecated ``from_dataframe()``, using the
-        key ``tvdmsl`` instead of ``zvalues`` is possible.
-
-    .. versionadded:: 2.16
-       Replaces the :meth:`from_dataframe()` method.
-    """
-
-    zvalues = kwargs.get("tvdmsl", zvalues)
-
-    # some checks
-    for cname in (east, north, zvalues):
-        if cname not in dfr.columns:
-            raise KeyError(f"Column {cname} does not exist in input datadrame.")
-
-    if attributes is not None:
-        acnames = list(attributes.values())
-        for acname in acnames:
-            if acname not in dfr.columns:
-                raise KeyError(
-                    f"Attribute column {acname} does not exist in input datadrame."
-                )
-
-    newdfr = pd.DataFrame(
-        {"X_UTME": dfr[east], "Y_UTMN": dfr[north], zname: dfr[zvalues]}
-    )
-    newattrs = {}
-    if attributes:
-        for target, source in attributes.items():
-            newdfr[target] = dfr[source].copy()
-            newattrs[target] = pd.to_numeric(newdfr[target])  # try to get correct dtype
-            newattrs[target] = str(newattrs[target].dtype)
-
-    newdfr.dropna(inplace=True)
-
-    return Points(dataframe=newdfr, attributes=newattrs)
-
-
-def points_from_wells(
-    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
-    tops: Optional[bool] = True,
-    incl_limit: Optional[float] = None,
-    top_prefix: Optional[str] = "Top",
-    zonelogname: Optional[str] = None,
-    zonelist: Optional[list] = None,  # TODO: list like?
-    use_undef: Optional[bool] = False,
-) -> "Points":
-
-    """Get tops or zone points data from a list of wells.
-
-    Args:
-        wells: List of XTGeo well objects, a single XTGeo well or a list of well files.
-            If a list of well files, the routine will try to load well based on file
-            signature and/or extension, but only default settings are applied. Hence
-            this is less flexible and more fragile.
-        tops: Get the tops if True (default), otherwise zone.
-        incl_limit: Inclination limit for zones (thickness points)
-        top_prefix: Prefix used for Tops.
-        zonelogname: If None, the zonelogname in the well object will be applied. This
-            option is particualr useful if one uses wells directly from files.
-        zonelist: Which zone numbers to apply.
-        use_undef: If True, then transition from UNDEF is also used.
-
-    Returns:
-        None if empty data, otherwise a Points() instance.
-
-    Example::
-
-            wells = ["w1.w", "w2.w"]
-            points = xtgeo.points_from_wells(wells)
-
-    Note:
-        The deprecated method :py:meth:`~Points.from_wells` returns the number of
-        wells that contribute with points. This is now implemented through the
-        property `nwells`. Hence the following code::
-
-            nwells_applied = poi.from_wells(...)  # deprecated method
-            # vs
-            poi = xtgeo.points_from_wells(...)
-            nwells_applied = poi.nwells
-
-    .. versionadded: 2.16
-
-
-    """
-
-    if not wells:
-        raise ValueError("No valid input wells")
-
-    # wells in a scalar context is allowed if one well
-    if not isinstance(wells, list):
-        wells = [wells]
-
-    # wells are just files which need to be imported, which is a bit more fragile
-    if isinstance(wells[0], (str, pathlib.Path)):
-        wells = [xtgeo.well_from_file(wll) for wll in wells]
-
-    dflist = []
-    for well in wells:
-        if zonelogname is not None:
-            well.zonelogname = zonelogname
-
-        wp = well.get_zonation_points(
-            tops=tops,
-            incl_limit=incl_limit,
-            top_prefix=top_prefix,
-            zonelist=zonelist,
-            use_undef=use_undef,
-        )
-
-        if wp is not None:
-            dflist.append(wp)
-
-    if dflist:
-        dfr = pd.concat(dflist, ignore_index=True)
-    else:
-        return None
-
-    attrs = {}
-    for col in dfr.columns:
-        if col == "Zone":
-            attrs[col] = "int"
-        elif col == "ZoneName":
-            attrs[col] = "str"
-        elif col == "WellName":
-            attrs[col] = "str"
-        else:
-            attrs[col] = "float"
-
-    poi = Points(dataframe=dfr, attributes=attrs)
-    poi._nwells = len(dflist)
-    return poi
-
-
-def points_from_wells_dfrac(
-    wells: Union[xtgeo.Well, List[xtgeo.Well], List[Union[str, pathlib.Path]]],
-    dlogname: str,
-    dcodes: List[int],
-    incl_limit: Optional[float] = 90,
-    count_limit: Optional[int] = 3,
-    zonelist: Optional[list] = None,  # TODO: list like?
-    zonelogname: Optional[str] = None,
-) -> "Points":
-
-    """Get fraction of discrete code(s) e.g. facies per zone.
-
-    Args:
-        wells: List of XTGeo well objects, a single XTGeo well or a list of well files.
-            If a list of file names, the routine will try to load well based on file
-            signature and/or extension, but only default settings are applied. Hence
-            this is less flexible and more fragile.
-        dlogname: Name of discrete log (e.g. Facies)
-        dcodes: Code(s) to get fraction for, e.g. [3]
-        incl_limit: Inclination limit for zones (thickness points)
-        count_limit: Min. no of counts per segment for valid result
-        zonelist: Which zone numbers to apply, default None means all.
-        zonelogname: If None, the zonelogname property in the well object will be
-            applied. This option is particualr useful if one uses wells directly from
-            files.
-
-    Returns:
-        None if empty data, otherwise a Points() instance.
-
-    Example::
-
-            wells = ["w1.w", "w2.w"]
-            points = xtgeo.points_from_wells_dfrac(
-                    wells, dlogname="Facies", dcodes=[4], zonelogname="ZONELOG"
-                )
-
-    Note:
-        The deprecated method :py:meth:`~Points.dfrac_from_wells` returns the number of
-        wells that contribute with points. This is now implemented through the
-        property `nwells`. Hence the following code::
-
-            nwells_applied = poi.dfrac_from_wells(...)  # deprecated method
-            # vs
-            poi = xtgeo.points_from_wells_dfrac(...)
-            nwells_applied = poi.nwells
-
-    .. versionadded:: 2.16 Replaces :meth:`~Points.dfrac_from_wells`
-    """
-
-    if not wells:
-        raise ValueError("No valid input wells")
-
-    # wells in a scalar context is allowed if one well
-    if not isinstance(wells, list):
-        wells = [wells]
-
-    # wells are just files which need to be imported, which is a bit more fragile
-    if isinstance(wells[0], (str, pathlib.Path)):
-        wells = [xtgeo.well_from_file(wll) for wll in wells]
-
-    dflist = []
-    for well in wells:
-        wpf = well.get_fraction_per_zone(
-            dlogname,
-            dcodes,
-            zonelist=zonelist,
-            incl_limit=incl_limit,
-            count_limit=count_limit,
-            zonelogname=zonelogname,
-        )
-
-        if wpf is not None:
-            dflist.append(wpf)
-
-    if dflist:
-        dfr = pd.concat(dflist, ignore_index=True)
-    else:
-        return None
-
-    attrs = {}
-    for col in dfr.columns[3:]:
-        if col.lower() == "zone":
-            attrs[col] = "int"
-        elif col.lower() == "zonename":
-            attrs[col] = "str"
-        elif col.lower() == "wellname":
-            attrs[col] = "str"
-        else:
-            attrs[col] = "float"
-
-    poi = Points(dataframe=dfr, attributes=attrs)
-    poi.zname = "DFRAC"  # name of third column
-    poi._nwells = len(dflist)
-    return poi
