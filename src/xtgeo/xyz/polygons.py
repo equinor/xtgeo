@@ -21,6 +21,68 @@ logger = xtg.functionlogger(__name__)
 
 RegularSurface = TypeVar("RegularSurface")
 
+# ======================================================================================
+# FUNCTIONS as wrappers to class init + import
+# ======================================================================================
+
+
+def polygons_from_file(
+    pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"
+) -> Polygons:
+    """Make an instance of a Polygons object directly from file import.
+
+    Args:
+        pfile (str): Name of file
+        fformat (str): See :meth:`Polygons.from_file`
+
+    Example::
+
+        import xtgeo
+        mypoly = xtgeo.polygons_from_file('somefile.xyz')
+    """
+    return Polygons._read_file(pfile, fformat=fformat, is_polygons=True)
+
+
+def polygons_from_roxar(
+    project: Union[str, Any],
+    name: str,
+    category: str,
+    stype: Optional[str] = "horizons",
+    realisation: Optional[int] = 0,
+    attributes: Optional[bool] = False,
+) -> Polygons:
+    """Load a Polygons instance from Roxar RMS project.
+
+    Note also that horizon/zone/faults name and category must exists
+    in advance, otherwise an Exception will be raised.
+
+    Args:
+        project: Name of project (as folder) if outside RMS, or just use the magic
+            `project` word if within RMS.
+        name: Name of polygons item
+        category: For horizons/zones/faults: for example 'DL_depth'
+            or use a folder notation on clipboard.
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
+            'faults', ...
+        realisation: Realisation number, default is 0
+        attributes: If True, additional attributes will be read and stored
+            (from RMS 11).
+
+    Example::
+
+        import xtgeo
+        mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+    """
+    return Polygons._read_roxar(
+        project,
+        name,
+        category,
+        stype=stype,
+        realisation=realisation,
+        attributes=attributes,
+        is_polygons=True,  # since XYZ is base class
+    )
+
 
 class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     """Class for a polygons object (connected points) in the XTGeo framework.
@@ -536,74 +598,3 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     def eli_outside(self, poly):
         """Eliminate current map values outside polygons."""
         self.operation_polygons(poly, 0, opname="eli", inside=False)
-
-    # ==================================================================================
-    # Operations involving other Polygons object(s)
-    # ==================================================================================
-
-    @inherit_docstring(inherit_from=XYZ.append)
-    def append(self, other, attributes=None):  # pylint: disable=redefined-builtin
-        return super().append(other, attributes=attributes)
-
-
-# ======================================================================================
-# FUNCTIONS as wrappers to class init + import
-# ======================================================================================
-
-
-def polygons_from_file(
-    pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"
-) -> Polygons:
-    """Make an instance of a Polygons object directly from file import.
-
-    Args:
-        pfile (str): Name of file
-        fformat (str): See :meth:`Polygons.from_file`
-
-    Example::
-
-        import xtgeo
-        mypoly = xtgeo.polygons_from_file('somefile.xyz')
-    """
-    return Polygons._read_file(pfile, fformat=fformat, is_polygons=True)
-
-
-def polygons_from_roxar(
-    project: Union[str, Any],
-    name: str,
-    category: str,
-    stype: Optional[str] = "horizons",
-    realisation: Optional[int] = 0,
-    attributes: Optional[bool] = False,
-) -> Polygons:
-    """Load a Polygons instance from Roxar RMS project.
-
-    Note also that horizon/zone/faults name and category must exists
-    in advance, otherwise an Exception will be raised.
-
-    Args:
-        project: Name of project (as folder) if outside RMS, or just use the magic
-            `project` word if within RMS.
-        name: Name of polygons item
-        category: For horizons/zones/faults: for example 'DL_depth'
-            or use a folder notation on clipboard.
-        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
-            'faults', ...
-        realisation: Realisation number, default is 0
-        attributes: If True, additional attributes will be read and stored
-            (from RMS 11).
-
-    Example::
-
-        import xtgeo
-        mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
-    """
-    return Polygons._read_roxar(
-        project,
-        name,
-        category,
-        stype=stype,
-        realisation=realisation,
-        attributes=attributes,
-        is_polygons=True,  # since XYZ is base class
-    )
