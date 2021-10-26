@@ -70,6 +70,10 @@
     reading GRDECL (introduced in XTGeo 2.6-2.10) #507
   * Fix: Write to roxapi discrete prop #531
 
+### Version 2.15.4
+* bugfixes:
+  * Fixed interoperability issue with roff export to RMS (#684)
+
 ### Version 2.15.3
 * bugfixes:
   * Fixed incompatable roff grid import with xtgeo 2.14 export (#667)
