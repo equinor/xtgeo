@@ -228,35 +228,3 @@ def test_get_points_set2(tmp_path):
     dataframe.astype({"myx": np.float32})
     poi3 = xtgeo.Points(values=dataframe, attributes=attrs)
     assert poi.dataframe.equals(poi3.dataframe)
-
-
-def test_append(testpath):
-    """Append two points sets."""
-
-    test_points_path = testpath / POINTSET3
-    psetx = xtgeo.points_from_file(test_points_path, fformat="rms_attr")
-    pset1 = psetx.copy()
-    pset2 = psetx.copy()
-
-    pset1.dataframe = psetx.dataframe.take([0, 1, 2, 3, 4, 5])
-    pset2.dataframe = psetx.dataframe.take([50, 51, 52, 53, 54, 55])
-
-    pset1.append(pset2)
-    assert pset1.dataframe.iat[10, 2] == 61.042
-    assert "FaultBlock" not in pset1.dataframe
-
-
-def test_append_with_attrs(testpath):
-    """Append two points sets."""
-
-    test_points_path = testpath / POINTSET3
-    psetx = xtgeo.points_from_file(test_points_path, fformat="rms_attr")
-    pset1 = psetx.copy()
-    pset2 = psetx.copy()
-
-    pset1.dataframe = psetx.dataframe.take([0, 1, 2, 3, 4, 5])
-    pset2.dataframe = psetx.dataframe.take([50, 51, 52, 53, 54, 55])
-
-    pset1.append(pset2, attributes=["FaultBlock", "FaultTag"])
-    assert pset1.dataframe.iat[10, 2] == 61.042
-    assert "FaultBlock" in pset1.dataframe
