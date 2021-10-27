@@ -534,7 +534,7 @@ class XYZ:
             ValueError: If something is wrong with input
 
         .. versionadded:: 2.6
-        .. versionupdated:: 2.16
+        .. versionchanged:: 2.16
 
         """
         self._filesrc = "Derived from: numpy array"
@@ -621,7 +621,7 @@ class XYZ:
             ValueError: If something is wrong with input
 
         .. versionadded:: 2.6
-        .. versionupdated:: 2.16
+        .. versionchanged:: 2.16
         .. deprecated:: 2.16
            Use xtgeo.Points() or xtgeo.Polygons() directly.
         """
