@@ -216,16 +216,21 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     def delete_columns(self, clist, strict=False):
         """Delete one or more columns by name in a safe way.
+
         Note that the coordinate columns will be protected, as well as then
         POLY_ID column (pname atribute).
+
         Args:
             clist (list): Name of columns
             strict (bool): I False, will not trigger exception if a column is not
                 found. Otherways a ValueError will be raised.
+
         Raises:
             ValueError: If strict is True and columnname not present
+
         Example::
             mypoly.delete_columns(["WELL_ID", mypoly.hname, mypoly.dhname])
+
         .. versionadded:: 2.1
         """
         if self._df is None:
