@@ -143,6 +143,23 @@ def test_import_restart():
     assert pr.values.mean() == pytest.approx(304.897, abs=0.01), txt
 
 
+def test_restart_name_style():
+    grid = xtgeo.grid_from_file(GFILE1, fformat="egrid")
+
+    names = ["PRESSURE", "SWAT"]
+    dates = [19991201, 20010101]
+
+    gps = GridProperties()
+    gps.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=grid)
+    assert gps.names == [p.name for p in gps]
+
+    gps2 = GridProperties()
+    gps2.from_file(
+        RFILE1, fformat="unrst", names=names, dates=dates, grid=grid, namestyle=1
+    )
+    assert gps2.names == [p.name for p in gps2]
+
+
 def test_import_restart_gull():
     """Import Restart Reek"""
 
