@@ -62,7 +62,6 @@ def sanitize_date_list(
 
 
 def import_ecl_init_gridproperties(
-    grid_properties,
     pfile,
     names: Union[List[str], Literal["all"]],
     grid,
@@ -136,19 +135,11 @@ def import_ecl_init_gridproperties(
         names=names,
         grid=grid,
     )
+    gridproperties_list = []
     for result in results:
-        prop = GridProperty()
-        grid_properties._names.append(result["name"])
         result["name"] = decorate_name(result["name"], grid.dualporo, fracture=False)
-        for attr, value in result.items():
-            setattr(prop, "_" + attr, value)
-
-        grid_properties._props.append(prop)
-        grid_properties._dates.append(prop._date)
-
-    grid_properties._ncol = grid.ncol
-    grid_properties._nrow = grid.nrow
-    grid_properties._nlay = grid.nlay
+        gridproperties_list.append(GridProperty(**result))
+    return gridproperties_list
 
 
 def import_ecl_restart_gridproperties(
@@ -248,8 +239,8 @@ def import_ecl_restart_gridproperties(
                 )
 
     results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    gridproperties_list = []
     for result in results:
-        prop = GridProperty()
 
         if namestyle == 1:
             sdate = str(result["date"])
@@ -259,16 +250,8 @@ def import_ecl_restart_gridproperties(
                 result["name"], grid.dualporo, fracture=False, date=result["date"]
             )
 
-        for attr, value in result.items():
-            setattr(prop, "_" + attr, value)
-
-        grid_properties._props.append(prop)
-        grid_properties._names.append(prop.name)
-        grid_properties._dates.append(prop.date)
-
-    grid_properties._ncol = grid.ncol
-    grid_properties._nrow = grid.nrow
-    grid_properties._nlay = grid.nlay
+        gridproperties_list.append(GridProperty(**results))
+    return gridproperties_list
 
 
 def _process_valid_namesdates(kwlist, grid):

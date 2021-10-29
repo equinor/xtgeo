@@ -6,7 +6,7 @@ import json
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import deprecation
 import numpy as np
@@ -30,7 +30,7 @@ from . import (
 )
 from ._ecl_grid import Units
 from ._grid3d import _Grid3D
-from .grid_properties import GridProperties
+from .grid_properties import GridProperties, GridProperty, gridproperties_dataframe
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
@@ -259,8 +259,7 @@ class Grid(_Grid3D):
             (either Units.CM, Units.METRES, Units.FEET for cm, metres and
             feet respectively).  Default (None) is unitless.
         filesrc: Optional filename of grid.
-        props: GridProperties instance containing the properties of the grid, defaults
-            to empty instance.
+        props: List of properties of the grid, defaults to empty list.
         name: Optional name of the grid.
         roxgrid: Roxar Grid the Grid originates from if any, defaults to no such grid.
         roxindexer: Roxar grid indexer for the roxgrid. Defaults to no such indexer.
@@ -282,7 +281,7 @@ class Grid(_Grid3D):
         subgrids: OrderedDict = None,
         units: Optional[Units] = None,
         filesrc: Optional[Union[Path, str]] = None,
-        props: Optional[GridProperties] = None,
+        props: Optional[List[GridProperty]] = None,
         name: Optional[str] = None,
         roxgrid=None,
         roxindexer=None,
@@ -370,10 +369,16 @@ class Grid(_Grid3D):
 
         self._filesrc = filesrc
 
+        if isinstance(props, GridProperties):
+            warnings.warn(
+                DeprecationWarning,
+                "GridProperties instance is deprecated, use a list instead."
+                "Simply calling, list(gridproperties) shoul",
+            )
         if props is None:
-            self._props = GridProperties(ncol=self.ncol, nrow=self.nrow, nlay=self.nlay)
+            self._props = []
         else:
-            self._props = props
+            self._props = list(props)
         self._name = name
         self._subgrids = subgrids
         self._ijk_handedness = None
@@ -608,6 +613,12 @@ class Grid(_Grid3D):
         return self._dualperm
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Grid property gridprops is deprecated, use props instead",
+    )
     def gridprops(self):
         """Return or set a XTGeo GridProperties objects attached to the Grid."""
         # Note, internally, the _props is a GridProperties instance, which is
@@ -615,15 +626,17 @@ class Grid(_Grid3D):
         # Note that the `props` methods below will deal with properties in a
         # list context
 
-        return self._props
+        return GridProperties.from_list(self._props)
 
     @gridprops.setter
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Grid property gridprops is deprecated, use props instead",
+    )
     def gridprops(self, gprops):
-
-        if not isinstance(gprops, GridProperties):
-            raise ValueError("Input must be a GridProperties instance")
-
-        self._props = gprops  # self._props is a GridProperties instance
+        self._props = list(gprops)
 
     @property
     def props(self):
@@ -637,21 +650,10 @@ class Grid(_Grid3D):
         See also :meth:`append_prop()` method to add a property to the current list.
 
         """
-        # Note, internally, the _props is a GridProperties instance, which is
-        # a class that holds a list of properties.
-
-        prplist = None
-        if isinstance(self._props, GridProperties):
-            prplist = self._props.props
-        elif isinstance(self._props, list):
-            raise RuntimeError(
-                "self._props is a list, not a GridProperties " "instance"
-            )
-        return prplist
+        return list(self._props)
 
     @props.setter
     def props(self, plist):
-
         if not isinstance(plist, list):
             raise ValueError("Input to props must be a list")
 
@@ -661,16 +663,12 @@ class Grid(_Grid3D):
                     "Property NX NY NZ <{}> does not match grid!".format(litem.name)
                 )
 
-        self._props.props = plist  # self._props is a GridProperties instance
+        self._props = list(plist)
 
     @property
     def propnames(self):
         """Returns a list of property names that are hooked to a grid."""
-        plist = None
-        if self._props is not None:
-            plist = self._props.names
-
-        return plist
+        return [p.name for p in self._props]
 
     @property
     def roxgrid(self):
@@ -1164,7 +1162,8 @@ class Grid(_Grid3D):
             # save as CSV file
             df.to_csv("mygrid.csv")
         """
-        return self.gridprops.dataframe(
+        return gridproperties_dataframe(
+            self.props,
             grid=self,
             activeonly=activeonly,
             ijk=ijk,
@@ -1186,7 +1185,7 @@ class Grid(_Grid3D):
         if prop.dimensions != self.dimensions:
             raise ValueError("Dimensions does not match")
 
-        self._props.append_props([prop])
+        self._props += [prop]
 
     def set_subgrids(self, sdict):
         """Set the subgrid from a simplified ordered dictionary.

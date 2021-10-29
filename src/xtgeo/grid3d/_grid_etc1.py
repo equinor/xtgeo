@@ -1074,7 +1074,7 @@ def reduce_to_one_layer(self):
     self._nlay = 1
     self._zcornsv = new_zcorn
     self._actnumsv = new_actnum
-    self._props = None
+    self._props = []
     self._subgrids = None
 
 
@@ -1123,13 +1123,8 @@ def reverse_row_axis(self, ijk_handedness=None):
     if ier != 0:
         raise RuntimeError("Something went wrong in jswapping, code: {}".format(ier))
 
-    if self._props is None:
-        return
-
-    # do it for properties
-    if self._props.props:
-        for prp in self._props.props:
-            prp.values = prp.values[:, ::-1, :]
+    for prp in self.props:
+        prp.values = prp.values[:, ::-1, :]
 
     logger.info("Reversing of rows done")
 

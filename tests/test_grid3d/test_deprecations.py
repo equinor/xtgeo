@@ -111,3 +111,68 @@ def test_gridproperty_deprecated_init(testpath):
 
     with pytest.warns(DeprecationWarning, match="from file name"):
         GridProperty(pathlib.Path(testpath) / "3dgrids/bri/b_poro.roff", fformat="roff")
+
+
+def test_gridproperties_deprecated_init(testpath):
+    with pytest.warns(
+        DeprecationWarning, match="The GridProperties class is deprecated"
+    ):
+        GridProperties()
+
+
+def test_gridprops_non_list_methods_warns(any_gridproperties, testpath):
+    if version.parse(xtgeo_version) < version.parse("2.16"):
+        pytest.skip()
+
+    testpath = pathlib.Path(testpath)
+    with pytest.warns(DeprecationWarning, match="__getitem__ is deprecated"):
+        any_gridproperties["dZ"]
+
+    with pytest.warns(DeprecationWarning, match="names is deprecated"):
+        any_gridproperties.names
+
+    with pytest.warns(DeprecationWarning, match="props is deprecated"):
+        any_gridproperties.props
+
+    with pytest.warns(DeprecationWarning, match="dates is deprecated"):
+        any_gridproperties.dates
+
+    with pytest.warns(DeprecationWarning, match="describe is deprecated"):
+        any_gridproperties.describe()
+
+    with pytest.warns(DeprecationWarning, match="generate_hash is deprecated"):
+        any_gridproperties.generate_hash()
+
+    with pytest.warns(DeprecationWarning, match="get_ijk is deprecated"):
+        any_gridproperties.get_ijk()
+
+    with pytest.warns(DeprecationWarning, match="get_actnum is deprecated"):
+        any_gridproperties.get_actnum()
+
+    with pytest.warns(DeprecationWarning, match="get_prop_by_name is deprecated"):
+        any_gridproperties.get_prop_by_name("dZ")
+
+    with pytest.warns(DeprecationWarning, match="get_dataframe is deprecated"):
+        any_gridproperties.get_dataframe()
+
+    with pytest.warns(DeprecationWarning, match="dataframe is deprecated"):
+        any_gridproperties.dataframe()
+
+    with pytest.warns(DeprecationWarning, match="scan_keywords is deprecated"):
+        any_gridproperties.scan_keywords(testpath / "3dgrids/reek/REEK.UNRST")
+
+    with pytest.warns(DeprecationWarning, match="scan_dates is deprecated"):
+        any_gridproperties.scan_dates(testpath / "3dgrids/reek/REEK.UNRST")
+
+    with pytest.warns(DeprecationWarning, match="scan_keywords is deprecated"):
+        any_gridproperties.scan_keywords(testpath / "3dgrids/reek/REEK.UNRST")
+
+    with pytest.warns(DeprecationWarning, match="from_file is deprecated"):
+        any_gridproperties.from_file(
+            testpath / "3dgrids/reek/REEK.UNRST",
+            names=["PRESSURE"],
+            dates="all",
+            grid=xtgeo.grid_from_file(testpath / "3dgrids/reek/REEK.EGRID"),
+        )
+    with pytest.warns(DeprecationWarning, match="append_props is deprecated"):
+        any_gridproperties.append_props(list(any_gridproperties))

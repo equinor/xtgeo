@@ -5,18 +5,102 @@
 
 import hashlib
 import warnings
+from collections import OrderedDict
 from typing import Optional
+
+import deprecation
+import numpy as np
+import pandas as pd
 
 import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
 
 from . import _grid3d_utils as utils
-from . import _grid_etc1, _gridprops_etc, _gridprops_import_eclrun
+from . import _grid_etc1, _gridprops_import_eclrun
 from ._grid3d import _Grid3D
 from .grid_property import GridProperty
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+
+def gridproperties_from_file(
+    pfile,
+    fformat=None,
+    names=None,
+    dates=None,
+    grid=None,
+    namestyle=0,
+    strict=(True, False),
+):
+    """Import grid properties from file in one go.
+
+    In case of names='all' then all vectors which have a valid length
+    (number of total or active cells in the grid) will be read
+
+    Args:
+        pfile (str or Path): Name of file with properties
+        fformat (str): roff/init/unrst
+        names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
+        dates: list of dates on YYYYMMDD format, for restart files, or 'all'
+        grid (obj): The grid geometry object (optional if ROFF)
+        namestyle (int): 0 (default) for style SWAT_20110223,
+            1 for SWAT--2011_02_23 (applies to restart only)
+        strict (tuple of (bool, bool)): If (True, False) (default) then an
+            Error is raised if keyword name is not found, or a key-date combination
+            is not found. However, the dates will processed so that non-valid dates
+            are skipped (still, invalid key-date combinations may occur!).
+            If (True, True) all keywords and dates are tried, while (False, False)
+            means that that only valid entries are imported, more or less silently.
+            Saturations keywords SWAT/SOIL/SGAS are not evaluated as they may be
+            derived.
+
+    Example::
+        >>> xtgeo.gridproperties_from_file(
+        ...     "ECL.UNRST",
+        ...     fformat="unrst",
+        ...     dates=[20110101, 20141212],
+        ...     names=["PORO", "DZ"]
+        ... )
+
+    Raises:
+        FileNotFoundError: if input file is not found
+        DateNotFoundError: The date is not found
+        KeywordNotFoundError: The keyword is not found
+        KeywordFoundDateNotFoundError: The keyword but not date found
+
+    .. versionadded:: 2.13 Added strict key
+    """
+    pfile = xtgeo._XTGeoFile(pfile, mode="rb")
+
+    pfile.check_file(raiseerror=OSError)
+
+    if fformat is None or fformat == "guess":
+        fformat = pfile.detect_fformat()
+    else:
+        fformat = pfile.generic_format_by_proposal(fformat)  # default
+
+    if fformat.lower() in ["roff_ascii", "roff_binary"]:
+        return [GridProperty(pfile, fformat="roff", name=name) for name in names]
+
+    elif fformat.lower() == "init":
+        return _gridprops_import_eclrun.import_ecl_init_gridproperties(
+            pfile,
+            grid=grid,
+            names=names,
+            strict=strict[0],
+        )
+    elif fformat.lower() == "unrst":
+        return _gridprops_import_eclrun.import_ecl_restart_gridproperties(
+            pfile,
+            dates=dates,
+            grid=grid,
+            names=names,
+            namestyle=namestyle,
+            strict=strict,
+        )
+    else:
+        raise OSError("Invalid file format {fformat}")
 
 
 # --------------------------------------------------------------------------------------
@@ -32,13 +116,222 @@ logger = xtg.functionlogger(__name__)
 #
 # For functions with mask=... ,they should be replaced with asmasked=...
 # --------------------------------------------------------------------------------------
+def gridproperties_dataframe(
+    gridproperties, grid=None, activeonly=True, ijk=False, xyz=False, doubleformat=False
+):  # pylint: disable=too-many-branches, too-many-statements
+    """Returns a Pandas dataframe table for the properties.
+
+    Args:
+        gridproperties: List (or iterable) of GridProperty to
+            create dataframe of.
+        activeonly (bool): If True, return only active cells, NB!
+            If True, will require a grid instance (see grid key)
+        ijk (bool): If True, show cell indices, IX JY KZ columns
+        xyz (bool): If True, show cell center coordinates (needs grid).
+        doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
+            Note that coordinates (if xyz=True) is always 64 bit floats.
+        grid (Grid): The grid geometry object. This is required for the
+            xyz option.
+
+    Returns:
+        Pandas dataframe object
+
+    Examples::
+
+        >>> grd = xtgeo.grid_from_file(gfile1, fformat='egrid')
+        >>> names = ['SOIL', 'SWAT', 'PRESSURE']
+        >>> dates = [19991201]
+        >>> gps = xtgeo.gridproperties_from_file(
+        ...     rfile1,
+        ...     fformat='unrst',
+        ...     names=names,
+        ...     dates=dates,
+        ...     grid=grd
+        ... )
+        >>> df = xtgeo.gridproperties_dataframe(gps, grid=grd)
+
+    """
+
+    proplist = OrderedDict()
+
+    if ijk:
+        logger.info("IJK is active")
+        if activeonly:
+            logger.info("Active cells only")
+            ix, jy, kz = grid.get_ijk(asmasked=True)
+            proplist["IX"] = ix.get_active_npvalues1d()
+            proplist["JY"] = jy.get_active_npvalues1d()
+            proplist["KZ"] = kz.get_active_npvalues1d()
+        else:
+            logger.info("All cells (1)")
+            act = grid.get_actnum(dual=True)
+            ix, jy, kz = grid.get_ijk(asmasked=False)
+            proplist["ACTNUM"] = act.values1d
+            proplist["IX"] = ix.values1d
+            proplist["JY"] = jy.values1d
+            proplist["KZ"] = kz.values1d
+
+    if xyz:
+        if isinstance(grid, GridProperties):
+            raise ValueError("You ask for xyz but no Grid is present. Use " "grid=...")
+
+        logger.info("XYZ is active")
+        option = False
+        if activeonly:
+            logger.info("Active cells only")
+            option = True
+
+        xc, yc, zc = grid.get_xyz(asmasked=option)
+        if activeonly:
+            proplist["X_UTME"] = xc.get_active_npvalues1d()
+            proplist["Y_UTMN"] = yc.get_active_npvalues1d()
+            proplist["Z_TVDSS"] = zc.get_active_npvalues1d()
+        else:
+            logger.info("All cells (2)")
+            proplist["X_UTME"] = xc.values1d
+            proplist["Y_UTMN"] = yc.values1d
+            proplist["Z_TVDSS"] = zc.values1d
+
+    logger.info("Proplist: %s", proplist)
+
+    for prop in gridproperties:
+        logger.info("Getting property %s", prop.name)
+        if activeonly:
+            vector = prop.get_active_npvalues1d()
+        else:
+            vector = prop.values1d.copy()
+            # mask values not supported in Pandas:
+            if prop.isdiscrete:
+                vector = vector.filled(fill_value=0)
+            else:
+                vector = vector.filled(fill_value=np.nan)
+
+        if doubleformat:
+            vector = vector.astype(np.float64)
+        else:
+            vector = vector.astype(np.float32)
+
+        proplist[prop.name] = vector
+
+    for key, prop in proplist.items():
+        logger.info("Property %s has length %s", key, prop.shape)
+    mydataframe = pd.DataFrame.from_dict(proplist)
+    logger.debug("Dataframe: \n%s", mydataframe)
+
+    return mydataframe
+
+
+def scan_restart_dates(
+    pfile, fformat="unrst", maxdates=1000, dataframe=False, datesonly=False
+):
+    """Quick scan dates in a simulation restart file.
+
+    Args:
+        pfile (str): Name of file or file handle with properties
+        fformat (str): unrst (so far)
+        maxdates (int): Maximum number of dates to collect
+        dataframe (bool): If True, return a Pandas dataframe instead
+        datesonly (bool): If True, SEQNUM is skipped,
+
+    Return:
+        A list of tuples or a dataframe with (seqno, date),
+        date is on YYYYMMDD form. If datesonly is True and dataframe is False,
+        the returning list will be a simple list of dates.
+
+    Example::
+        >>> from xtgeo import scan_restart_dates
+        >>> dlist = scan_restart_dates("ECL.UNRST", datesonly=True)
+
+    .. versionchanged:: 2.13 Added datesonly keyword
+    """
+    pfile = xtgeo._XTGeoFile(pfile)
+
+    logger.info("Format supported as default is %s", fformat)
+
+    dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
+
+    if datesonly and dataframe:
+        dlist.drop("SEQNUM", axis=1, inplace=True)
+
+    if datesonly and not dataframe:
+        dlist = [date for (_, date) in dlist]
+
+    return dlist
+
+
+def scan_ecl_keywords(
+    pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False
+):
+    """Quick scan of keywords in Eclipse binary files, or ROFF binary files.
+
+    For Eclipse files:
+    Returns a list of tuples (or dataframe), e.g. ('PRESSURE',
+    'REAL', 355299, 3582700), where (keyword, type, no_of_values,
+    byteposition_in_file)
+
+    For ROFF files
+    Returns a list of tuples (or dataframe), e.g.
+    ('translate!xoffset', 'float', 1, 3582700),
+    where (keyword, type, no_of_values, byteposition_in_file).
+
+    For Eclipse, the byteposition is to the KEYWORD, while for ROFF
+    the byte position is to the beginning of the actual data.
+
+    Args:
+        pfile (str): Name or a filehandle to file with properties
+        fformat (str): xecl (Eclipse INIT, RESTART, ...) or roff for
+            ROFF binary,
+        maxkeys (int): Maximum number of keys
+        dataframe (bool): If True, return a Pandas dataframe instead
+        dates (bool): if True, the date is the last column (only
+            menaingful for restart files). Default is False.
+
+    Return:
+        A list of tuples or dataframe with keyword info
+
+    Example::
+        >>> props = GridProperties()
+        >>> dlist = props.scan_keywords('ECL.UNRST')
+
+    """
+    pfile = xtgeo._XTGeoFile(pfile)
+
+    dlist = utils.scan_keywords(
+        pfile, fformat=fformat, maxkeys=maxkeys, dataframe=dataframe, dates=dates
+    )
+
+    return dlist
+
+
+def gridproperties_hash(props):
+    """Return a unique hash ID for a list of gridproperties.
+
+    .. versionadded:: 2.16
+    """
+    mhash = hashlib.sha256()
+
+    hashinput = ""
+    for prop in props:
+        gid = "{}{}{}{}{}{}".format(
+            prop.ncol,
+            prop.nrow,
+            prop.nlay,
+            prop.values.mean(),
+            prop.values.min(),
+            prop.values.max(),
+        )
+        hashinput += gid
+
+    mhash.update(hashinput.encode())
+    return mhash.hexdigest()
 
 
 class GridProperties(_Grid3D):
-    """Class for a collection of 3D grid props, belonging to the same grid topology.
+    """Deprecated: Collection for properties belonging to the same grid.
 
     See Also:
         The :class:`GridProperty` class.
+    .. deprecated:: 2.16
     """
 
     def __init__(
@@ -57,6 +350,12 @@ class GridProperties(_Grid3D):
         """
         super().__init__()
 
+        warnings.warn(
+            "The GridProperties class is deprecated,"
+            " use a list of GridProperty instead",
+            DeprecationWarning,
+        )
+
         self._ncol = ncol
         self._nrow = nrow
         self._nlay = nlay
@@ -64,6 +363,24 @@ class GridProperties(_Grid3D):
         self._props = []  # list of GridProperty objects
         self._names = []  # list of GridProperty names
         self._dates = []  # list of dates (_after_ import) YYYYDDMM
+
+    @classmethod
+    def from_list(cls, proplist):
+        gps = cls()
+        if len(proplist) == 0:
+            return gps
+        dimensions = proplist[0].dimensions
+
+        for litem in proplist:
+            if litem.dimensions != dimensions:
+                raise ValueError(
+                    f"Non-uniform dimensions of gridproperties in {proplist}"
+                )
+        gps._ncol, gps._nrow, gps._nlay = dimensions
+        gps._props = proplist
+        gps._names = [p.name for p in proplist]
+        gps._dates = [p.date for p in proplist]
+        return gps
 
     def __repr__(self):  # noqa: D105
         myrp = (
@@ -85,6 +402,15 @@ class GridProperties(_Grid3D):
 
         return False
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated"
+        " so instead of gridproperties['PORO_1991231'] use eg. a list comprehension"
+        " to get properties matching a name, like this: "
+        " [prop for prop in gridproperties if prop.name == 'PORO_1991231']",
+    )
     def __getitem__(self, name):  # noqa: D105
         prop = self.get_prop_by_name(name, raiseserror=False)
         if prop is None:
@@ -99,6 +425,13 @@ class GridProperties(_Grid3D):
     # Properties:
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated"
+        "use [p.name for p in gridproperties] instead",
+    )
     def names(self):
         """Returns or sets a list of property names.
 
@@ -117,6 +450,12 @@ class GridProperties(_Grid3D):
         return self._names
 
     @names.setter
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated",
+    )
     def names(self, nameslist):
         if not nameslist and self._props:
             # try the get the names from each individual property automatic
@@ -134,6 +473,13 @@ class GridProperties(_Grid3D):
         self._names = nameslist
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated,"
+        "use list(gridproperties) instead",
+    )
     def props(self):
         """Returns a list of XTGeo GridProperty objects, None if empty.
 
@@ -156,10 +502,25 @@ class GridProperties(_Grid3D):
         return self._props
 
     @props.setter
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated",
+    )
     def props(self, propslist):
         self._props = propslist
+        self._dates = [p.date for p in propslist]
+        self._names = [p.name for p in propslist]
 
     @property
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated,"
+        "use [p.date for p in gridproperties] instead",
+    )
     def dates(self):
         """Returns a list of valid (found) dates after import.
 
@@ -206,6 +567,12 @@ class GridProperties(_Grid3D):
 
         return new
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated.",
+    )
     def describe(self, flush=True):
         """Describe an instance by printing to stdout."""
         dsc = XTGDescription()
@@ -220,28 +587,28 @@ class GridProperties(_Grid3D):
             return None
         return dsc.astext()
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="generate_hash is deprecated, see :meth:`gridproperties_hash`",
+    )
     def generate_hash(self):
-        """str: Return a unique hash ID for current gridproperties instance.
-
+        """Deprecated, see gridproperties_hash
         .. versionadded:: 2.10
+        .. deprecated:: 2.16
         """
-        mhash = hashlib.sha256()
+        return gridproperties_hash(self)
 
-        hashinput = ""
-        for prop in self._props:
-            gid = "{}{}{}{}{}{}".format(
-                prop.ncol,
-                prop.nrow,
-                prop.nlay,
-                prop.values.mean(),
-                prop.values.min(),
-                prop.values.max(),
-            )
-            hashinput += gid
-
-        mhash.update(hashinput.encode())
-        return mhash.hexdigest()
-
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Only using gridproperties as an iterable is non-deprecated"
+        " so instead of calling get_prop_by_name, use eg. a list comprehension to get "
+        " properties matching a name, like this: "
+        " [prop for prop in gridproperties if prop.name == 'PORO_1991231']",
+    )
     def get_prop_by_name(self, name, raiseserror=True):
         """Find and return a property object (GridProperty) by name.
 
@@ -262,9 +629,15 @@ class GridProperties(_Grid3D):
 
         return None
 
-    def append_props(self, proplist):
+    def __add__(self, other):
+        """Concatenate two gridproperties instances."""
+        copy = self.copy()
+        copy += other
+        return copy
+
+    def __iadd__(self, other):
         """Add a list of GridProperty objects to current GridProperties instance."""
-        for prop in proplist:
+        for prop in other:
             if isinstance(prop, GridProperty):
                 # an prop instance can only occur once
                 if prop not in self._props:
@@ -280,6 +653,23 @@ class GridProperties(_Grid3D):
             else:
                 raise ValueError("Input property is not a valid GridProperty " "object")
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method append_props is deprecated,"
+        " use grid_properties += proplist instead",
+    )
+    def append_props(self, proplist):
+        """Deprecated, use the + operation instead."""
+        self += proplist
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method get_actnum is deprecated, use xtgeo.Grid.get_ijk instead",
+    )
     def get_ijk(
         self, names=("IX", "JY", "KZ"), zerobased=False, asmasked=False, mask=None
     ):
@@ -306,6 +696,12 @@ class GridProperties(_Grid3D):
         # return the objects
         return ixc, jyc, kzc
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method get_actnum is deprecated, use xtgeo.Grid.get_actnum instead",
+    )
     def get_actnum(self, name="ACTNUM", asmasked=False, mask=None):
         """Return an ACTNUM GridProperty object.
 
@@ -337,246 +733,87 @@ class GridProperties(_Grid3D):
         warnings.warn("No gridproperty in list", UserWarning)
         return None
 
-    # Import and export
-    # This class can importies several properties in one go, which is efficient
-    # for some file types such as Eclipse INIT and UNRST, and Roff
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="The GridProperties class is deprecated. To load"
+        "a list of properties, use xtgeo.gridproperties_from_file() instead.",
+    )
+    def from_file(self, *args, **kwargs):
+        """Deprecated, see :meth:`gridproperties_from_file`.
 
-    def from_file(
-        self,
-        pfile,
-        fformat="roff",
-        names=None,
-        dates=None,
-        grid=None,
-        namestyle=0,
-        strict=(True, False),
-    ):
-        """Import grid properties from file in one go.
-
-        This class is particulary useful for Eclipse INIT and RESTART files.
-
-        In case of names='all' then all vectors which have a valid length
-        (number of total or active cells in the grid) will be read
-
-        Args:
-            pfile (str or Path): Name of file with properties
-            fformat (str): roff/init/unrst
-            names: list of property names, e.g. ['PORO', 'PERMX'] or 'all'
-            dates: list of dates on YYYYMMDD format, for restart files, or 'all'
-            grid (obj): The grid geometry object (optional if ROFF)
-            namestyle (int): 0 (default) for style SWAT_20110223,
-                1 for SWAT--2011_02_23 (applies to restart only)
-            strict (tuple of (bool, bool)): If (True, False) (default) then an
-                Error is raised if keyword name is not found, or a key-date combination
-                is not found. However, the dates will processed so that non-valid dates
-                are skipped (still, invalid key-date combinations may occur!).
-                If (True, True) all keywords and dates are tried, while (False, False)
-                means that that only valid entries are imported, more or less silently.
-                Saturations keywords SWAT/SOIL/SGAS are not evaluated as they may be
-                derived.
-
-        Example::
-            >>> props = GridProperties()
-            >>> props.from_file("ECL.UNRST", fformat="unrst",
-                dates=[20110101, 20141212], names=["PORO", "DZ"]
-
-        Raises:
-            FileNotFoundError: if input file is not found
-            DateNotFoundError: The date is not found
-            KeywordNotFoundError: The keyword is not found
-            KeywordFoundDateNotFoundError: The keyword but not date found
-
-        .. versionadded:: 2.13 Added strict key
+        .. deprecated:: 2.16
         """
-        pfile = xtgeo._XTGeoFile(pfile, mode="rb")
+        self.props = gridproperties_from_file(*args, **kwargs)
+        if self.props:
+            self._ncol = self.props[0].ncol
+            self._nrow = self.props[0].nrow
+            self._nlay = self.props[0].nlay
+        return self
 
-        # work on file extension
-        froot, fext = pfile.splitext(lower=True)
-        if not fext:
-            # file extension is missing, guess from format
-            logger.info("File extension missing; guessing...")
-
-            useext = ""
-            if fformat == "init":
-                useext = ".INIT"
-            elif fformat == "unrst":
-                useext = ".UNRST"
-            elif fformat == "roff":
-                useext = ".roff"
-
-            pfile = froot + useext
-
-        logger.info("File name to be used is %s", pfile)
-
-        pfile.check_file(raiseerror=OSError)
-
-        if fformat.lower() == "roff":
-            lst = list()
-            for name in names:
-                lst.append(GridProperty(pfile, fformat="roff", name=name))
-            self.append_props(lst)
-
-        elif fformat.lower() == "init":
-            _gridprops_import_eclrun.import_ecl_init_gridproperties(
-                self,
-                pfile,
-                grid=grid,
-                names=names,
-                strict=strict[0],
-            )
-        elif fformat.lower() == "unrst":
-            _gridprops_import_eclrun.import_ecl_restart_gridproperties(
-                self,
-                pfile,
-                dates=dates,
-                grid=grid,
-                names=names,
-                namestyle=namestyle,
-                strict=strict,
-            )
-        else:
-            raise OSError("Invalid file format")
-
-    # def to_file(self, pfile, fformat="roff"):
-    #     """Export grid properties to file. NB not working!
-
-    #     Args:
-    #         pfile (str): file name
-    #         fformat (str): file format to be used (roff is the only supported)
-    #         mode (int): 0 for binary ROFF, 1 for ASCII
-    #     """
-    #     raise NotImplementedError("Not implented yet!")
-
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method get_dataframe is deprecated, use get_dataframe instead.",
+    )
     def get_dataframe(
         self, activeonly=False, ijk=False, xyz=False, doubleformat=False, grid=None
     ):
-        """Returns a Pandas dataframe table for the properties.
-
-        Args:
-            activeonly (bool): If True, return only active cells, NB!
-                If True, will require a grid instance (see grid key)
-            ijk (bool): If True, show cell indices, IX JY KZ columns
-            xyz (bool): If True, show cell center coordinates (needs grid).
-            doubleformat (bool): If True, floats are 64 bit, otherwise 32 bit.
-                Note that coordinates (if xyz=True) is always 64 bit floats.
-            grid (Grid): The grid geometry object. This is required for the
-                xyz option.
-
-        Returns:
-            Pandas dataframe object
-
-        Examples::
-
-            grd = Grid(gfile1, fformat='egrid')
-            xpr = GridProperties()
-
-            names = ['SOIL', 'SWAT', 'PRESSURE']
-            dates = [19991201]
-            xpr.from_file(rfile1, fformat='unrst', names=names, dates=dates,
-                        grid=grd)
-            df = x.dataframe(activeonly=False, ijk=True, xyz=True, grid=grd)
-
         """
-        dfr = _gridprops_etc.dataframe(
+        Deprecated, see :meth:`gridproperties_dataframe`.
+
+        .. deprecated:: 2.16
+        """
+        gridlike = self
+        if grid is not None:
+            gridlike = grid
+        return gridproperties_dataframe(
             self,
+            grid=gridlike,
             activeonly=activeonly,
             ijk=ijk,
             xyz=xyz,
             doubleformat=doubleformat,
-            grid=grid,
         )
 
-        return dfr
-
-    dataframe = get_dataframe  # for compatibility, but deprecated
-
-    # Static methods (scans etc)
-    # Don't make a GridProperties instance inside other XTGeo classes
-    # as it make cyclic imports. I.e. use only these functions in clients
-    # if needed...
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Method dataframe is deprecated, use"
+        " xtgeo.gridproperties_dataframe() instead.",
+    )
+    def dataframe(self, *args, **kwargs):
+        """
+        Deprecated, see :meth:`gridproperties_dataframe`.
+        .. versiondeprecated:: 2.16
+        """
+        return self.get_dataframe(*args, **kwargs)
 
     @staticmethod
-    def scan_keywords(
-        pfile, fformat="xecl", maxkeys=100000, dataframe=False, dates=False
-    ):
-        """Quick scan of keywords in Eclipse binary files, or ROFF binary files.
-
-        For Eclipse files:
-        Returns a list of tuples (or dataframe), e.g. ('PRESSURE',
-        'REAL', 355299, 3582700), where (keyword, type, no_of_values,
-        byteposition_in_file)
-
-        For ROFF files
-        Returns a list of tuples (or dataframe), e.g.
-        ('translate!xoffset', 'float', 1, 3582700),
-        where (keyword, type, no_of_values, byteposition_in_file).
-
-        For Eclipse, the byteposition is to the KEYWORD, while for ROFF
-        the byte position is to the beginning of the actual data.
-
-        Args:
-            pfile (str): Name or a filehandle to file with properties
-            fformat (str): xecl (Eclipse INIT, RESTART, ...) or roff for
-                ROFF binary,
-            maxkeys (int): Maximum number of keys
-            dataframe (bool): If True, return a Pandas dataframe instead
-            dates (bool): if True, the date is the last column (only
-                menaingful for restart files). Default is False.
-
-        Return:
-            A list of tuples or dataframe with keyword info
-
-        Example::
-            >>> props = GridProperties()
-            >>> dlist = props.scan_keywords('ECL.UNRST')
-
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.scan_ecl_keywords() instead.",
+    )
+    def scan_keywords(*args, **kwargs):
+        """Deprecated, see :meth:`scan_elc_keywords`.
+        .. versiondeprecated:: 2.16
         """
-        pfile = xtgeo._XTGeoFile(pfile)
-
-        dlist = utils.scan_keywords(
-            pfile, fformat=fformat, maxkeys=maxkeys, dataframe=dataframe, dates=dates
-        )
-
-        return dlist
+        return scan_ecl_keywords(*args, **kwargs)
 
     @staticmethod
-    def scan_dates(
-        pfile, fformat="unrst", maxdates=1000, dataframe=False, datesonly=False
-    ):
-        """Quick scan dates in a simulation restart file.
-
-        Args:
-            pfile (str): Name of file or file handle with properties
-            fformat (str): unrst (so far)
-            maxdates (int): Maximum number of dates to collect
-            dataframe (bool): If True, return a Pandas dataframe instead
-            datesonly (bool): If True, SEQNUM is skipped,
-
-        Return:
-            A list of tuples or a dataframe with (seqno, date),
-            date is on YYYYMMDD form. If datesonly is True and dataframe is False,
-            the returning list will be a simple list of dates.
-
-        Example::
-            >>> props = GridProperties()
-            >>> dlist = props.scan_dates('ECL.UNRST')
-
-            or getting all dates a simple list:
-            >>> from xtgeo import GridProperties as GPS
-            >>> dlist = GPS().scan_dates("ECL.UNRST", datesonly=True)
-
-        .. versionchanged:: 2.13 Added datesonly keyword
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.scan_restart_dates() instead.",
+    )
+    def scan_dates(*args, **kwargs):
+        """Deprecated, see :meth:`scan_restart_dates`.
+        .. versiondeprecated:: 2.16
         """
-        pfile = xtgeo._XTGeoFile(pfile)
-
-        logger.info("Format supported as default is %s", fformat)
-
-        dlist = utils.scan_dates(pfile, maxdates=maxdates, dataframe=dataframe)
-
-        if datesonly and dataframe:
-            dlist.drop("SEQNUM", axis=1, inplace=True)
-
-        if datesonly and not dataframe:
-            dlist = [date for (_, date) in dlist]
-
-        return dlist
+        return scan_restart_dates(*args, **kwargs)
