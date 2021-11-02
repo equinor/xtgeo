@@ -185,7 +185,6 @@ def test_irapbin_import_use_pathib():
     assert xsurf.nrow == 2010
 
 
-@pytest.mark.skipifroxar
 def test_irapbin_import_quickplot(tmpdir, show_plot, generate_plot):
     """Import Reek Irap binary and do quickplot."""
     if not show_plot or generate_plot:

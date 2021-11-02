@@ -5,12 +5,9 @@ from os.path import join
 
 import pytest
 
-
-from xtgeo.well import Well
-from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.common import XTGeoDialog
-
-import tests.test_common.test_xtg as tsetup
+from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.well import Well
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -74,26 +71,6 @@ def test_make_ijk_grid(loadwell1, loadgrid1):
     assert int(df.iloc[4775]["ICELL"]) == 29
     assert int(df.iloc[4775]["JCELL"]) == 28
     assert int(df.iloc[4775]["KCELL"]) == 1
-
-
-@tsetup.equinor
-@tsetup.bigtest
-def test_make_ijk_gf_geogrid():
-    """Import well from and a large geogrid and make I J K logs"""
-
-    logger.info("Running test... %s", __name__)
-    mywell = Well(WGULLFILE)
-    mygrid = Grid(GGULLFILE)
-
-    logger.info("Number of cells in grid is %s", mygrid.ntotal)
-
-    mywell.make_ijk_from_grid(mygrid)
-
-    df = mywell.dataframe
-
-    assert int(df.iloc[16120]["ICELL"]) == 68
-    assert int(df.iloc[16120]["JCELL"]) == 204
-    assert int(df.iloc[16120]["KCELL"]) == 15
 
 
 def test_well_get_gridprops(tmpdir, loadwell1, loadgrid1, loadporo1):

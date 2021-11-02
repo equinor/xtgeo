@@ -1,8 +1,6 @@
 import sys
 from os.path import join
 
-import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.plot import Map
@@ -26,7 +24,6 @@ PFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.pol"
 SFILE2 = TPATH / "surfaces/reek/1/reek_perm_lay1.gri"
 
 
-@pytest.mark.skipifroxar
 def test_simple_plot(tmpdir, generate_plot):
     """Test as simple map plot only making an instance++ and plot."""
 
@@ -44,7 +41,6 @@ def test_simple_plot(tmpdir, generate_plot):
         myplot.close()
 
 
-@pytest.mark.skipifroxar
 def test_map_plot_with_points(tmpdir, generate_plot):
     """Test as simple map plot with underlying points."""
 
@@ -70,7 +66,6 @@ def test_map_plot_with_points(tmpdir, generate_plot):
         myplot.close()
 
 
-@pytest.mark.skipifroxar
 def test_more_features_plot(tmpdir, generate_plot):
     """Map with some more features added, such as label rotation."""
 
@@ -92,7 +87,6 @@ def test_more_features_plot(tmpdir, generate_plot):
         myplot.close()
 
 
-@pytest.mark.skipifroxar
 def test_perm_logarithmic_map(tmpdir, generate_plot):
     """Map with PERM, log scale."""
 
