@@ -1,6 +1,7 @@
-import pytest
-import xtgeo
 import numpy as np
+import pytest
+
+import xtgeo
 
 
 class Surface:

@@ -4,7 +4,6 @@ from os.path import join
 import numpy as np
 import pytest
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
@@ -182,7 +181,6 @@ def test_resample_partial_sample(tmp_path, reek_map, generate_plot):
     assert snew2.values.mean() == pytest.approx(1747.20, abs=0.2)
 
 
-@tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_refine(tmpdir, reek_map, generate_plot):
     """Do refining of a surface."""
     xs = reek_map
@@ -202,7 +200,6 @@ def test_refine(tmpdir, reek_map, generate_plot):
         xs.quickplot(filename=join(tmpdir, "reek_refined4.png"))
 
 
-@tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_coarsen(tmpdir, reek_map, generate_plot):
     """Do a coarsening of a surface."""
     xs = reek_map
