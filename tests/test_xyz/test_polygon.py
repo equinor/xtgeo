@@ -302,9 +302,8 @@ def test_raise_incorrect_name_type(test_name, name_attribute):
     data = pd.DataFrame({"ANYTHING": [1, 2]})
     pol.dataframe = data
 
-    with pytest.raises(ValueError) as execinfo:
+    with pytest.raises(ValueError, match="Wrong type of input"):
         setattr(pol, name_attribute, test_name)
-    assert "Wrong type of input" in str(execinfo.value)
 
 
 @pytest.mark.parametrize(
@@ -315,6 +314,5 @@ def test_raise_non_existing_name(name_attribute):
     data = pd.DataFrame({"ANYTHING": [1, 2]})
     pol.dataframe = data
 
-    with pytest.raises(ValueError) as execinfo:
+    with pytest.raises(ValueError, match="does not exist"):
         setattr(pol, name_attribute, "NON_EXISTING")
-    assert "does not exist" in str(execinfo.value)
