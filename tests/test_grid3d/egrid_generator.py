@@ -97,8 +97,8 @@ def global_grids(draw, header=grid_heads(), zcorn=zcorns):
 
 
 @st.composite
-def lgr_sections(draw, zcorn=zcorns):
-    grid_head = draw(grid_heads())
+def lgr_sections(draw, nx=st.just(2), ny=st.just(2), nz=st.just(2), zcorn=zcorns):
+    grid_head = draw(grid_heads(nx=nx, ny=ny, nz=nz))
     dims = (grid_head.num_x, grid_head.num_y, grid_head.num_z)
     corner_size = (dims[0] + 1) * (dims[1] + 1) * 6
     coord = arrays(
@@ -133,13 +133,13 @@ nnc_heads = st.builds(xtge.NNCHead, indecies, indecies)
 nnc_sections = st.builds(
     xtge.NNCSection,
     nnc_heads,
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
+    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
+    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
+    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
+    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
     st.tuples(indecies, indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
-    arrays(elements=indecies, dtype="int32", shape=indecies),
+    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
+    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
 )
 
 
@@ -159,8 +159,8 @@ def egrids(
     draw,
     head=egrid_heads(),
     global_grid=global_grids(),
-    lgrs=st.lists(lgr_sections(), max_size=3),
-    nncs=st.lists(nnc_sections, max_size=3),
+    lgrs=st.lists(lgr_sections(), max_size=2),
+    nncs=st.lists(nnc_sections, max_size=2),
 ):
     return xtge.EGrid(draw(head), draw(global_grid), draw(lgrs), draw(nncs))
 
