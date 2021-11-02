@@ -363,6 +363,7 @@ def test_read_unexpected_section():
         reader.read()
 
 
+@settings(max_examples=5)
 @given(xtgeo_compatible_egrids())
 def test_coarsening_warning(egrid):
     assume(egrid.global_grid.corsnum is not None)
@@ -379,9 +380,10 @@ def test_local_coordsys_warning(egrid):
         egrid.xtgeo_coord()
 
 
+@settings(max_examples=5)
 @given(
     xtgeo_compatible_egrids(
-        lgrs=st.lists(lgr_sections(), min_size=1, max_size=3),
+        lgrs=st.lists(lgr_sections(), min_size=1, max_size=1),
     )
 )
 def test_lgr_warning(egrid):

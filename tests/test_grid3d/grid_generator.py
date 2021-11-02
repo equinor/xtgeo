@@ -2,7 +2,7 @@ import hypothesis.strategies as st
 
 import xtgeo
 
-indecies = st.integers(min_value=4, max_value=8)
+indecies = st.integers(min_value=4, max_value=6)
 coordinates = st.floats(min_value=-100.0, max_value=100.0)
 increments = st.floats(min_value=1.0, max_value=100.0)
 dimensions = st.tuples(indecies, indecies, indecies)
