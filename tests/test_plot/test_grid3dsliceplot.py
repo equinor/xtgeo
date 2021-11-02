@@ -26,7 +26,6 @@ USEFILE2 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
 USEFILE3 = TPATH / "etc/colortables/rainbow_reverse.rmscolor"
 
 
-@pytest.mark.skipifroxar
 def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
     """Trigger XSection class, and do some simple things basically."""
     layslice = Grid3DSlice()

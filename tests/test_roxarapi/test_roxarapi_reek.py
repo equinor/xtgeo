@@ -62,7 +62,7 @@ def fixture_tmp_project_path(tmpdir):
     return join(tmpdir, PROJNAME)
 
 
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 @pytest.fixture(name="roxar_project")
 def fixture_create_project(tmp_project_path):
     """Create a tmp RMS project for testing, populate with basic data."""
@@ -130,11 +130,7 @@ def fixture_create_project(tmp_project_path):
         shutil.rmtree(prj2)
 
 
-# ======================================================================================
-# Cube data
-
-
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 def test_rox_getset_cube(roxar_project):
     """Get a cube from a RMS project, do some stuff and store/save."""
     cube = xtgeo.cube_from_roxar(roxar_project, CUBENAME1)
@@ -145,11 +141,7 @@ def test_rox_getset_cube(roxar_project):
     cube.to_roxar(roxar_project, CUBENAME1 + "_copy2", folder="somefolder")
 
 
-# ======================================================================================
-# Surface data
-
-
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 def test_rox_surfaces(roxar_project):
     """Various get set on surfaces in RMS."""
     srf = xtgeo.surface_from_roxar(roxar_project, "TopReek", SURFCAT1)
@@ -174,11 +166,7 @@ def test_rox_surfaces(roxar_project):
     prj.close()
 
 
-# ======================================================================================
-# Well data
-
-
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 def test_rox_wells(roxar_project):
     """Various tests on Roxar wells."""
     well = xtgeo.well_from_roxar(
@@ -189,11 +177,7 @@ def test_rox_wells(roxar_project):
     assert well.dataframe["Poro"].mean() == pytest.approx(0.1637623936)
 
 
-# ======================================================================================
-# 3D grids and props
-
-
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 def test_rox_get_gridproperty(roxar_project):
     """Get a grid property from a RMS project."""
     print("Project is {}".format(roxar_project))
@@ -211,7 +195,7 @@ def test_rox_get_gridproperty(roxar_project):
         zone.to_roxar(roxar_project, GRIDNAME1, ZONENAME1)
 
 
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 def test_rox_get_modify_set_gridproperty(roxar_project):
     """Get and set a grid property from a RMS project."""
     poro = xtgeo.gridproperty_from_roxar(roxar_project, GRIDNAME1, PORONAME1)
@@ -225,7 +209,7 @@ def test_rox_get_modify_set_gridproperty(roxar_project):
     assert poro.values[1, 0, 0] == pytest.approx(0.14942 + adder, abs=0.0001)
 
 
-@pytest.mark.skipunlessroxar
+@pytest.mark.requires_roxar
 def test_rox_get_modify_set_grid(roxar_project):
     """Get, modify and set a grid from a RMS project."""
     grd = xtgeo.grid_from_roxar(roxar_project, GRIDNAME1)

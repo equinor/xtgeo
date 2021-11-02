@@ -35,13 +35,8 @@ def pytest_runtest_setup(item):
         if "XTG_BIGTEST" not in os.environ:
             pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
-    # pytest.mark.skipifroxar:
-    if "skipifroxar" in markers:
-        if "ROXENV" in os.environ:
-            pytest.skip("Skip test in ROXENV (env variable ROXENV is present)")
-
-    # pytest.mark.skipunlessroxar:
-    if "skipunlessroxar" in markers:
+    # pytest.mark.requires_roxar:
+    if "requires_roxar" in markers:
         if "ROXENV" not in os.environ:
             pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
 
@@ -76,6 +71,8 @@ def assert_almostequal(this, that, tol, txt=""):
 @pytest.fixture(name="show_plot")
 def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
+    if "ROXENV" in os.environ:
+        pytest.skip("Skip plotting tests in roxar environment")
     if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
         return True
     return False
@@ -114,6 +111,8 @@ def pytest_addoption(parser):
 
 @pytest.fixture(name="generate_plot")
 def fixture_generate_plot(request):
+    if "ROXENV" in os.environ:
+        pytest.skip("Skip plotting tests in roxar environment")
     return request.config.getoption("--generate-plots")
 
 

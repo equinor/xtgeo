@@ -27,7 +27,6 @@ RFILE2 = TPATH / "3dgrids/reek/REEK.UNRST"
 FFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.zmap"
 
 
-@pytest.mark.skipifroxar
 def test_avg02(tmpdir, generate_plot):
     """Make average map from Reek Eclipse."""
     grd = Grid()
@@ -91,8 +90,7 @@ def test_avg02(tmpdir, generate_plot):
     assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
 
 
-@pytest.mark.skipifroxar
-def test_avg03(tmpdir):
+def test_avg03(tmpdir, generate_plot):
     """Make average map from Reek Eclipse, speed up by zone_avgrd."""
     grd = Grid()
     grd.from_file(GFILE2, fformat="egrid")
@@ -147,9 +145,10 @@ def test_avg03(tmpdir):
     fau = Polygons(FFILE1, fformat="zmap")
     fspec = {"faults": fau}
 
-    avgmap.quickplot(
-        filename=join(tmpdir, "tmp_poro3.png"), xlabelrotation=30, faults=fspec
-    )
+    if generate_plot:
+        avgmap.quickplot(
+            filename=join(tmpdir, "tmp_poro3.png"), xlabelrotation=30, faults=fspec
+        )
     avgmap.to_file(join(tmpdir, "tmp.poro3.gri"), fformat="irap_ascii")
 
     logger.info(avgmap.values.mean())

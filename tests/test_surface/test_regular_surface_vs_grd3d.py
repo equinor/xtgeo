@@ -3,7 +3,6 @@ from os.path import join
 import numpy as np
 import pytest
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 
@@ -29,8 +28,6 @@ RGRD2 = RPATH2 / "reek_sim_grid.roff"
 RPROP2 = RPATH2 / "reek_sim_zone.roff"
 
 
-@tsetup.plotskipifroxar
-@tsetup.skipifmac  # segm fault; need to be investigated
 def test_get_surface_from_grd3d_porosity(tmpdir, generate_plot):
     """Sample a surface from a 3D grid"""
 
@@ -71,7 +68,6 @@ def test_get_surface_from_grd3d_porosity(tmpdir, generate_plot):
     assert surfr.values.mean() == pytest.approx(0.1667, abs=0.01)
 
 
-@tsetup.plotskipifroxar
 def test_get_surface_from_grd3d_zones(tmpdir, generate_plot):
     """Sample a surface from a 3D grid, using zones"""
 
@@ -89,13 +85,11 @@ def test_get_surface_from_grd3d_zones(tmpdir, generate_plot):
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
-@tsetup.plotskipifroxar
 def test_surface_from_grd3d_layer(tmpdir, generate_plot, default_surface):
     """Create a surface from a 3D grid layer"""
 
     surf = xtgeo.surface.RegularSurface(**default_surface)
     grd = xtgeo.grid3d.Grid(RGRD2, fformat="roff")
-    # grd = xtgeo.Grid("../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg.roff")
     surf = xtgeo.surface_from_grid3d(grd)
 
     surf.fill()
