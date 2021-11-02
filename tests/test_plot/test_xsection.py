@@ -15,10 +15,6 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-# =========================================================================
-# Do tests
-# =========================================================================
-
 USEFILE1 = TPATH / "wells/reek/1/OP_1.w"
 USEFILE2 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 USEFILE3 = TPATH / "polygons/reek/1/mypoly.pol"
