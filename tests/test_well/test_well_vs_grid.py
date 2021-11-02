@@ -16,8 +16,6 @@ if not xtg.testsetup():
     raise SystemExit
 
 TPATH = xtg.testpathobj
-EQGULLTESTPATH = "../xtgeo-testdata-equinor/data"
-
 # =========================================================================
 # Do tests
 # pylint: disable=redefined-outer-name
@@ -26,9 +24,6 @@ EQGULLTESTPATH = "../xtgeo-testdata-equinor/data"
 WFILE = join(TPATH, "wells/reek/1/OP_1.w")
 GFILE = join(TPATH, "3dgrids/reek/REEK.EGRID")
 PFILE = join(TPATH, "3dgrids/reek/REEK.INIT")
-
-GGULLFILE = join(EQGULLTESTPATH, "3dgrids/gfb/gullfaks_gg.roff")
-WGULLFILE = join(EQGULLTESTPATH, "wells/gfb/1/34_10-A-42.w")
 
 
 @pytest.fixture()

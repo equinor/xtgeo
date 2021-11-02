@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 from hypothesis import given
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid, GridProperty
@@ -333,7 +332,6 @@ def test_roffbin_import_v2_banal():
                 assert np.allclose(np.array(xx1), np.array(xx4)) is True
 
 
-@tsetup.bigtest
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc."""
     t0 = xtg.timer()
@@ -383,45 +381,23 @@ def test_roffbin_export_v2_banal6(tmp_path):
     assert cell1 == pytest.approx(cell2)
 
 
-@tsetup.bigtest
-def test_roffbin_bigbox(tmp_path):
-    """Test roff binary for bigbox, to monitor performance."""
-    bigbox = tmp_path / "bigbox.roff"
-    if not bigbox.is_file():
-        logger.info("Create tmp big roff grid file...")
-        grd0 = Grid()
-        grd0.create_box(dimension=(500, 500, 100))
-        grd0.to_file(bigbox)
+@pytest.mark.parametrize("xtgformat", [1, 2])
+@pytest.mark.benchmark()
+def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
+    grd = xtgeo.create_box_grid(dimension=(10, 10, 10))
+    if xtgformat == 1:
+        grd._xtgformat1()
+    else:
+        grd._xtgformat2()
 
-    grd1 = Grid()
-    t0 = xtg.timer()
-    grd1._xtgformat = 1
-    grd1.from_file(bigbox)
-    t_old = xtg.timer(t0)
-    logger.info("Reading bigbox xtgeformat=1 took %s seconds", t_old)
-    cell1 = grd1.get_xyz_cell_corners((13, 14, 15))
+    def run():
+        return grd.get_xyz_cell_corners((5, 6, 7))
 
-    grd2 = Grid()
-    t0 = xtg.timer()
-    t1 = xtg.timer()
-    grd2._xtgformat = 2
-    grd2.from_file(bigbox)
-    t_new = xtg.timer(t0)
-    logger.info("Reading bigbox xtgformat=2 took %s seconds", t_new)
-    cell2a = grd2.get_xyz_cell_corners((13, 14, 15))
+    corners = benchmark(run)
 
-    t0 = xtg.timer()
-    grd2._convert_xtgformat2to1()
-    cell2b = grd2.get_xyz_cell_corners((13, 14, 15))
-    logger.info("Conversion to xtgformat1 took %s seconds", xtg.timer(t0))
-    t_newtot = xtg.timer(t1)
-    logger.info("Total run time xtgformat=2 + conv took %s seconds", t_newtot)
-
-    logger.info("Speed gain new vs old: %s", t_old / t_new)
-    logger.info("Speed gain new incl conv vs old: %s", t_old / t_newtot)
-
-    assert cell1 == cell2a
-    assert cell1 == cell2b
+    assert corners == pytest.approx(
+        [4, 5, 6, 5, 5, 6, 4, 6, 6, 5, 6, 6, 4, 5, 7, 5, 5, 7, 4, 6, 7, 5, 6, 7]
+    )
 
 
 def test_roffbin_import_v2_wsubgrids():
@@ -809,7 +785,6 @@ def test_bulkvol():
     assert bulk.values.sum() == pytest.approx(cellvol_rms.values.sum(), rel=0.001)
 
 
-@tsetup.bigtest
 def test_bulkvol_speed():
     """Test cell bulk volume calculation speed."""
     dimens = (100, 500, 50)
