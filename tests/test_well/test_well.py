@@ -756,13 +756,11 @@ def test_create_surf_distance_log(loadwell1):
     assert np.isnan(well.dataframe.loc[0, "DIST_BASE_NEW"])
 
 
-@pytest.mark.bigtest
 def test_create_surf_distance_log_more(tmp_path, loadwell1):
     """Test making a log which is distance to a surface and do some operations.
 
-    This is a prototype (need BIG_TEST env variable to run) exploring the possibility
-    to run a check if zonelog is some % of being within surfaces. I.e. a surface
-    version of:
+    This is a prototype  exploring the possibility to run a check if zonelog is
+    some % of being within surfaces. I.e. a surface version of:
 
     Grid().report_zone_mismatch() method
 

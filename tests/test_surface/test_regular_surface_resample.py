@@ -222,7 +222,7 @@ def test_coarsen(tmpdir, reek_map, generate_plot):
         xs.quickplot(filename=join(tmpdir, "reek_coarsen3.png"))
 
 
-@tsetup.bigtest
+@pytest.mark.bigtest
 def test_points_gridding(tmpdir, reek_map, generate_plot):
     """Make points of surface; then grid back to surface."""
     xs = reek_map

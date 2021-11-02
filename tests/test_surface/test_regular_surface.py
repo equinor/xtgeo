@@ -394,19 +394,13 @@ def test_irapasc_io_engine_python(tmpdir, default_surface):
 
 
 @pytest.mark.bigtest
-def test_irapasc_import1_engine_compare():
-    """Import Reek Irap ascii using python read engine"""
-    logger.info("Import and export...")
+@pytest.mark.benchmark(group="import/export surface")
+@pytest.mark.parametrize("engine", ["cxtgeo", "python"])
+def test_irapasc_import1_engine_compare(benchmark, engine):
+    def read():
+        xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine=engine)
 
-    tt0 = xtg.timer()
-    for _ in range(10):
-        xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine="cxtgeo")
-    print("CXTGeo engine for read:", xtg.timer(tt0))
-
-    tt0 = xtg.timer()
-    for _ in range(10):
-        xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine="python")
-    print("Python engine for read:", xtg.timer(tt0))
+    benchmark(read)
 
 
 def test_minmax_rotated_map():
@@ -543,7 +537,6 @@ def test_surface_subtract_etc(default_surface):
     assert id(surf1) == id1
 
 
-@pytest.mark.bigtest
 def test_irapbin_io(tmpdir):
     """Import and export Irap binary."""
     logger.info("Import and export...")
@@ -761,7 +754,6 @@ def test_dataframe_simple():
     assert dfrc["X_UTME"][2] == pytest.approx(461577.5575, abs=0.01)
 
 
-@pytest.mark.bigtest
 def test_dataframe_more(tmpdir):
     """Get a pandas Dataframe object, more detailed testing"""
 
@@ -801,7 +793,6 @@ def test_get_xy_value_lists_small(default_surface):
     assert valuelist[2] == 3.0
 
 
-@pytest.mark.bigtest
 def test_get_xy_value_lists_reek():
     """Get the xy list and value list"""
 

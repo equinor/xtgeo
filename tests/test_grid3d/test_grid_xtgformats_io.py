@@ -1,6 +1,5 @@
 # coding: utf-8
 """Testing new xtgf and hdf5/h5 formats."""
-import os
 from collections import OrderedDict
 from os.path import join
 
@@ -23,11 +22,6 @@ TPATH = xtg.testpathobj
 
 
 BIGBOX_DIMENSIONS = (100, 100, 20)
-if "XTG_BIGTEST" in os.environ:
-    BIGBOX_DIMENSIONS = (1000, 1000, 20)
-
-# ======================================================================================
-# Grid geometries:
 
 
 def create_box(testpath):
@@ -48,7 +42,7 @@ def benchmark_grid_fixture(request, testpath):
     return request.param(testpath)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.xtgf")
 
@@ -58,7 +52,7 @@ def test_benchmark_grid_xtgf_export(benchmark, tmp_path, benchmark_grid):
     benchmark(write)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.xtgf")
 
@@ -77,7 +71,7 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 
 
 @pytest.mark.bigtest
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.grdecl")
 
@@ -88,7 +82,7 @@ def test_benchmark_grid_grdecl_export(benchmark, tmp_path, benchmark_grid):
 
 
 @pytest.mark.bigtest
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.grdecl")
 
@@ -106,7 +100,7 @@ def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
     assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv, atol=0.02)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.bgrdecl")
 
@@ -116,7 +110,7 @@ def test_benchmark_grid_bgrdecl_export(benchmark, tmp_path, benchmark_grid):
     benchmark(write)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.bgrdecl")
 
@@ -134,7 +128,7 @@ def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
     assert_allclose(benchmark_grid._actnumsv, grid2._actnumsv)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.hdf")
 
@@ -145,7 +139,7 @@ def test_benchmark_grid_hdf5_export(benchmark, tmp_path, benchmark_grid):
     benchmark(write)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.hdf")
 
@@ -163,7 +157,7 @@ def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid)
     assert grd2.nlay == benchmark_grid.nlay
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.hdf")
 
@@ -182,7 +176,7 @@ def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
     assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_export_blosc_compression(
     benchmark, tmp_path, benchmark_grid
 ):
@@ -196,7 +190,7 @@ def test_benchmark_grid_hdf5_export_blosc_compression(
     benchmark(write)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_import_partial_blosc_compression(
     benchmark, tmp_path, benchmark_grid
 ):
@@ -217,7 +211,7 @@ def test_benchmark_grid_hdf5_import_partial_blosc_compression(
     assert grd2.nlay == benchmark_grid.nlay
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_hdf5_import_blosc_compression(
     benchmark, tmp_path, benchmark_grid
 ):
@@ -239,7 +233,7 @@ def test_benchmark_grid_hdf5_import_blosc_compression(
     assert_allclose(benchmark_grid._actnumsv, grd2._actnumsv)
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_egrid_export(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.egrid")
 
@@ -249,7 +243,7 @@ def test_benchmark_grid_egrid_export(benchmark, tmp_path, benchmark_grid):
         benchmark_grid.to_file(fname, fformat="egrid")
 
 
-@pytest.mark.benchmark(group="import/export")
+@pytest.mark.benchmark(group="import/export grid")
 def test_benchmark_grid_egrid_import(benchmark, tmp_path, benchmark_grid):
     fname = join(tmp_path, "reek_geo_grid.egrid")
 
@@ -303,7 +297,7 @@ def benchmark_gridprop_fixture(request, testpath):
     return request.param(testpath)
 
 
-@pytest.mark.benchmark()
+@pytest.mark.benchmark(group="import/export grid property")
 def test_benchmark_gridprop_export(benchmark, tmp_path, benchmark_gridprop):
 
     fname = tmp_path / "benchmark.xtgcpprop"
@@ -314,7 +308,7 @@ def test_benchmark_gridprop_export(benchmark, tmp_path, benchmark_gridprop):
     benchmark(write)
 
 
-@pytest.mark.benchmark()
+@pytest.mark.benchmark(group="import/export grid property")
 def test_benchmark_gridprop_import(benchmark, tmp_path, benchmark_gridprop):
     """Test exporting etc to xtgcpprop format."""
 
@@ -332,7 +326,7 @@ def test_benchmark_gridprop_import(benchmark, tmp_path, benchmark_gridprop):
     assert benchmark_gridprop.values.all() == prop2.values.all()
 
 
-@pytest.mark.benchmark()
+@pytest.mark.benchmark(group="import/export grid property")
 def test_benchmark_gridprop_import_partial(benchmark, tmp_path, benchmark_gridprop):
     """Test exporting etc to xtgcpprop format."""
 

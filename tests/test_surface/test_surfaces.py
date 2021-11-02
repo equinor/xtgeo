@@ -80,37 +80,37 @@ def test_statistics(tmpdir):
     assert res["std"].values.min() == pytest.approx(3.7039, abs=0.0001)
 
 
-@pytest.mark.filterwarnings("ignore:Default values*")
-def test_more_statistics(default_surface):
-    """Find the mean etc measures of the surfaces."""
-    base = xtgeo.surface_from_file(TESTSET1A)
-    base.values *= 0.0
-    bmean = base.values.mean()
-    surfs = []
-    surfs.append(base)
-
+@pytest.fixture
+def constant_map_surfaces():
+    base = xtgeo.RegularSurface(ncol=10, nrow=15, xinc=1.0, yinc=1.0, values=0.0)
+    surfs = [base]
     # this will get 101 constant maps ranging from 0 til 100
     for inum in range(1, 101):
         tmp = base.copy()
         tmp.values += float(inum)
         surfs.append(tmp)
 
-    so = xtgeo.Surfaces(surfs)
-    res = so.statistics()
+    return xtgeo.Surfaces(surfs)
 
+
+def test_more_statistics(constant_map_surfaces):
+    res = constant_map_surfaces.statistics()
     # theoretical stdev:
     sum2 = 0.0
     for inum in range(0, 101):
         sum2 += (float(inum) - 50.0) ** 2
     stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
 
-    assert res["mean"].values.mean() == pytest.approx(bmean + 50.0, abs=0.0001)
+    assert res["mean"].values.mean() == pytest.approx(50.0, abs=0.0001)
     assert res["std"].values.mean() == pytest.approx(stdev, abs=0.0001)
 
+
+@pytest.mark.filterwarnings("ignore:Default values*")
+def test_default_surface_statistics(default_surface):
     small = xtgeo.RegularSurface(**default_surface)
     so2 = xtgeo.Surfaces()
 
-    for inum in range(10):
+    for _ in range(10):
         tmp = small.copy()
         tmp.values += 8.76543
         so2.append([tmp])
@@ -119,25 +119,10 @@ def test_more_statistics(default_surface):
     assert res2["p10"].values.mean() == pytest.approx(16.408287142, 0.001)
 
 
-def test_surfaces_apply():
-    """Test apply function."""
-    base = xtgeo.surface_from_file(TESTSET1A)
-    base.describe()
-    base.values *= 0.0
-    bmean = base.values.mean()
-    surfs = [base]
-    for inum in range(1, 101):
-        tmp = base.copy()
-        tmp.values += float(inum)
-        surfs.append(tmp)
-
-    so = xtgeo.Surfaces(surfs)
-    res = so.apply(np.nanmean)
-
-    assert res.values.mean() == pytest.approx(bmean + 50.0, abs=0.0001)
-
-    res = so.apply(np.nanpercentile, 10, axis=0, interpolation="nearest")
-    assert res.values.mean() == pytest.approx(bmean + 10.0, abs=0.0001)
+def test_surfaces_apply(constant_map_surfaces):
+    assert constant_map_surfaces.apply(np.nanmean).values.mean() == pytest.approx(
+        50.0, abs=0.0001
+    )
 
 
 def test_get_surfaces_from_3dgrid(tmpdir):
