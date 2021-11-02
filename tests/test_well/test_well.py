@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
@@ -123,7 +122,7 @@ def test_import_long_well(loadwell3):
     mywell.geometrics()
     dfr = mywell.dataframe
 
-    tsetup.assert_almostequal(dfr["Q_AZI"][27], 91.856158, 0.0001)
+    assert dfr["Q_AZI"][27] == pytest.approx(91.856158, abs=0.0001)
 
 
 def test_import_well_selected_logs():
@@ -294,25 +293,19 @@ def test_get_carr(simple_well):
 
     dummy = mywell.get_carray("NOSUCH")
 
-    tsetup.assert_equal(dummy, None, "Wrong log name")
+    assert dummy is None, "Wrong log name"
 
     cref = mywell.get_carray("X_UTME")
 
     xref = str(cref)
-    swig = False
-    if "Swig" in xref and "double" in xref:
-        swig = True
 
-    tsetup.assert_equal(swig, True, "carray from log name, double")
+    assert "Swig" in xref and "double" in xref, "carray from log name, double"
 
     cref = mywell.get_carray("Zonelog")
 
     xref = str(cref)
-    swig = False
-    if "Swig" in xref and "int" in xref:
-        swig = True
 
-    tsetup.assert_equal(swig, True, "carray from log name, int")
+    assert "Swig" in xref and "int" in xref, "carray from log name, int"
 
 
 def test_create_and_delete_logs(loadwell3):
@@ -617,8 +610,8 @@ def test_rescale_well(loadwell1):
     df2 = mywell.dataframe.copy()
     df2 = df2[(df2["Zonelog"] == 1)]
 
-    tsetup.assert_almostequal(df1["Perm"].mean(), df2["Perm"].mean(), 20.0)
-    tsetup.assert_almostequal(df1["Poro"].mean(), df2["Poro"].mean(), 0.001)
+    assert df1["Perm"].mean() == pytest.approx(df2["Perm"].mean(), abs=20.0)
+    assert df1["Poro"].mean() == pytest.approx(df2["Poro"].mean(), abs=0.001)
 
 
 def test_rescale_well_tvdrange(tmpdir):
@@ -630,7 +623,7 @@ def test_rescale_well_tvdrange(tmpdir):
     mywell.rescale(delta=2, tvdrange=(1286, 1333))
     mywell.to_file(join(tmpdir, "wll1_post_rescale.w"))
     gr_avg2 = mywell.dataframe["GR"].mean()
-    tsetup.assert_almostequal(gr_avg1, gr_avg2, 0.9)
+    assert gr_avg1 == pytest.approx(gr_avg2, abs=0.9)
 
     mywell1 = Well(WELL1)
     mywell1.rescale(delta=2)
@@ -647,7 +640,7 @@ def test_rescale_well_tvdrange_coarsen_upper(tmpdir):
     mywell = Well(WELL1)
     mywell.rescale(delta=20, tvdrange=(0, 1200))
     mywell.to_file(join(tmpdir, "wll1_rescale_coarsen.w"))
-    tsetup.assert_almostequal(mywell.dataframe.iat[10, 3], 365.8254, 0.1)
+    assert mywell.dataframe.iat[10, 3] == pytest.approx(365.8254, abs=0.1)
 
 
 def test_fence():
@@ -667,8 +660,7 @@ def test_fence_as_polygons():
 
     assert isinstance(pline, Polygons)
     dfr = pline.dataframe
-    print(dfr)
-    tsetup.assert_almostequal(dfr["X_UTME"][5], 462569.00, 2.0)
+    assert dfr["X_UTME"][5] == pytest.approx(462569.00, abs=2.0)
 
 
 def test_fence_as_polygons_drogon():
@@ -681,7 +673,7 @@ def test_fence_as_polygons_drogon():
 
     assert isinstance(pline, Polygons)
     dfr = pline.dataframe
-    assert dfr.H_CUMLEN.max() == pytest.approx(60, 0.01)
+    assert dfr.H_CUMLEN.max() == pytest.approx(60, abs=0.01)
 
 
 def test_get_zonation_points():
@@ -701,8 +693,8 @@ def test_get_zone_interval():
 
     logger.info(type(line))
 
-    tsetup.assert_almostequal(line.iat[0, 0], 462698.33299, 0.001)
-    tsetup.assert_almostequal(line.iat[-1, 2], 1643.1618, 0.001)
+    assert line.iat[0, 0] == pytest.approx(462698.33299, abs=0.001)
+    assert line.iat[-1, 2] == pytest.approx(1643.1618, abs=0.001)
 
 
 def test_remove_parallel_parts():
@@ -724,8 +716,8 @@ def test_get_zonation_holes():
 
     logger.info("\n%s", report)
 
-    tsetup.assert_equal(report.iat[0, 0], 4193)  # first value for INDEX
-    tsetup.assert_equal(report.iat[1, 3], 1609.5800)  # second value for Z
+    assert report.iat[0, 0] == 4193  # first value for INDEX
+    assert report.iat[1, 3] == 1609.5800  # second value for Z
 
 
 def test_get_filled_dataframe():

@@ -111,6 +111,6 @@ def test_well_get_gridprops(tmpdir, loadwell1, loadgrid1, loadporo1):
 
     mywell.get_gridproperties(myactnum, mygrid)
     mywell.to_file(join(tmpdir, "w_from_gprops.w"))
-    tsetup.assert_almostequal(mywell.dataframe.iloc[4775]["PORO_model"], 0.2741, 0.001)
+    assert mywell.dataframe.iloc[4775]["PORO_model"] == pytest.approx(0.2741, abs=0.001)
     assert mywell.dataframe.iloc[4775]["ACTNUM_model"] == 1
     assert mywell.isdiscrete("ACTNUM_model") is True

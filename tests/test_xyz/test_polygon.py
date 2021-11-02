@@ -1,13 +1,10 @@
 import pathlib
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from xtgeo.xyz import Polygons
-
-import tests.test_common.test_xtg as tsetup
-
 
 PFILE1A = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.zmap")
 PFILE1B = pathlib.Path("polygons/reek/1/top_upper_reek_faultpoly.xyz")
@@ -46,7 +43,7 @@ def test_import_export_polygons(testpath, tmp_path):
 
     z0 = mypoly.dataframe["Z_TVDSS"].values[0]
 
-    tsetup.assert_almostequal(z0, 2266.996338, 0.001)
+    assert z0 == pytest.approx(2266.996338, abs=0.001)
 
     mypoly.dataframe["Z_TVDSS"] += 100
 
@@ -55,7 +52,7 @@ def test_import_export_polygons(testpath, tmp_path):
     # reimport and check
     mypoly2 = Polygons(tmp_path / "polygon_export.xyz")
 
-    tsetup.assert_almostequal(z0 + 100, mypoly2.dataframe["Z_TVDSS"].values[0], 0.001)
+    assert z0 + 100 == pytest.approx(mypoly2.dataframe["Z_TVDSS"].values[0], 0.001)
 
 
 def test_polygon_boundary(testpath):
@@ -67,9 +64,9 @@ def test_polygon_boundary(testpath):
 
     boundary = mypoly.get_boundary()
 
-    tsetup.assert_almostequal(boundary[0], 460595.6036, 0.0001)
-    tsetup.assert_almostequal(boundary[4], 2025.952637, 0.0001)
-    tsetup.assert_almostequal(boundary[5], 2266.996338, 0.0001)
+    assert boundary[0] == pytest.approx(460595.6036, abs=0.0001)
+    assert boundary[4] == pytest.approx(2025.952637, abs=0.0001)
+    assert boundary[5] == pytest.approx(2266.996338, abs=0.0001)
 
 
 def test_polygon_filter_byid(testpath):

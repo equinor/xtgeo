@@ -4,9 +4,8 @@ from os.path import join
 
 import numpy as np
 import pytest
-import xtgeo
 
-from tests.conftest import assert_almostequal
+import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -77,8 +76,8 @@ def test_statistics(tmpdir):
     res["mean"].to_file(join(tmpdir, "surf_mean.gri"))
     res["std"].to_file(join(tmpdir, "surf_std.gri"))
 
-    assert_almostequal(res["mean"].values.mean(), 1720.5029, 0.0001)
-    assert_almostequal(res["std"].values.min(), 3.7039, 0.0001)
+    assert res["mean"].values.mean() == pytest.approx(1720.5029, abs=0.0001)
+    assert res["std"].values.min() == pytest.approx(3.7039, abs=0.0001)
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
@@ -105,8 +104,8 @@ def test_more_statistics(default_surface):
         sum2 += (float(inum) - 50.0) ** 2
     stdev = math.sqrt(sum2 / 100.0)  # total 101 samples, use N-1
 
-    assert_almostequal(res["mean"].values.mean(), bmean + 50.0, 0.0001)
-    assert_almostequal(res["std"].values.mean(), stdev, 0.0001)
+    assert res["mean"].values.mean() == pytest.approx(bmean + 50.0, abs=0.0001)
+    assert res["std"].values.mean() == pytest.approx(stdev, abs=0.0001)
 
     small = xtgeo.RegularSurface(**default_surface)
     so2 = xtgeo.Surfaces()
@@ -135,10 +134,10 @@ def test_surfaces_apply():
     so = xtgeo.Surfaces(surfs)
     res = so.apply(np.nanmean)
 
-    assert_almostequal(res.values.mean(), bmean + 50.0, 0.0001)
+    assert res.values.mean() == pytest.approx(bmean + 50.0, abs=0.0001)
 
     res = so.apply(np.nanpercentile, 10, axis=0, interpolation="nearest")
-    assert_almostequal(res.values.mean(), bmean + 10.0, 0.0001)
+    assert res.values.mean() == pytest.approx(bmean + 10.0, abs=0.0001)
 
 
 def test_get_surfaces_from_3dgrid(tmpdir):
@@ -147,10 +146,10 @@ def test_get_surfaces_from_3dgrid(tmpdir):
     surfs = xtgeo.surface.surfaces.surfaces_from_grid(mygrid, rfactor=2)
     surfs.describe()
 
-    assert_almostequal(surfs.surfaces[-1].values.mean(), 1742.28, 0.04)
-    assert_almostequal(surfs.surfaces[-1].values.min(), 1589.58, 0.04)
-    assert_almostequal(surfs.surfaces[-1].values.max(), 1977.29, 0.04)
-    assert_almostequal(surfs.surfaces[0].values.mean(), 1697.02, 0.04)
+    assert surfs.surfaces[-1].values.mean() == pytest.approx(1742.28, abs=0.04)
+    assert surfs.surfaces[-1].values.min() == pytest.approx(1589.58, abs=0.04)
+    assert surfs.surfaces[-1].values.max() == pytest.approx(1977.29, abs=0.04)
+    assert surfs.surfaces[0].values.mean() == pytest.approx(1697.02, abs=0.04)
 
     for srf in surfs.surfaces:
         srf.to_file(join(tmpdir, srf.name + ".gri"))

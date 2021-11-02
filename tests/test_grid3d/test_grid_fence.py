@@ -1,7 +1,8 @@
 # coding: utf-8
 
 
-import tests.test_common.test_xtg as tsetup
+import pytest
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -34,7 +35,7 @@ def test_randomline_fence_from_well(show_plot):
     fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=False, tvdmin=1200)
     print(fspec.dataframe)
 
-    tsetup.assert_almostequal(fspec.dataframe[fspec.dhname][4], 12.6335, 0.001)
+    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(12.6335, abs=0.001)
     logger.info(fspec.dataframe)
 
     fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=True, tvdmin=1200)
@@ -62,7 +63,7 @@ def test_randomline_fence_from_polygon(show_plot):
 
     # get the polygons
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
-    tsetup.assert_almostequal(fspec.dataframe[fspec.dhname][4], 10, 1)
+    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(10, abs=1)
 
     fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
 
@@ -107,4 +108,4 @@ def test_randomline_fence_calczminzmax():
     hmin, hmax, vmin, vmax, por = grd.get_randomline(
         fspec, "PORO", zmin=None, zmax=None
     )
-    tsetup.assert_almostequal(vmin, 1548.10098, 0.0001)
+    assert vmin == pytest.approx(1548.10098, abs=0.0001)

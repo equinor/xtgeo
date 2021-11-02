@@ -5,10 +5,8 @@ from os.path import join
 
 import pytest
 
-from xtgeo.well import BlockedWell
 from xtgeo.common import XTGeoDialog
-
-import tests.test_common.test_xtg as tsetup
+from xtgeo.well import BlockedWell
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -36,9 +34,9 @@ def test_import(loadwell1):
     print(mywell.dataframe)
 
     logger.debug("True well name:", mywell.truewellname)
-    tsetup.assert_equal(mywell.xpos, 461809.6, "XPOS")
-    tsetup.assert_equal(mywell.ypos, 5932990.4, "YPOS")
-    tsetup.assert_equal(mywell.wellname, "OP_1", "WNAME")
+    assert mywell.xpos == 461809.6, "XPOS"
+    assert mywell.ypos == 5932990.4, "YPOS"
+    assert mywell.wellname == "OP_1", "WNAME"
 
     logger.info(mywell.get_logtype("Facies"))
     logger.info(mywell.get_logrecord("Facies"))
@@ -47,4 +45,4 @@ def test_import(loadwell1):
     logger.info(type(mywell.dataframe["Poro"].values))
 
     dfr = mywell.dataframe
-    tsetup.assert_almostequal(dfr["Poro"][4], 0.224485, 0.0001)
+    assert dfr["Poro"][4] == pytest.approx(0.224485, abs=0.0001)

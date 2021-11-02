@@ -1,13 +1,13 @@
 import itertools
 import pathlib
-from hypothesis import given, settings, strategies as st
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from xtgeo.xyz import Points
-import tests.test_common.test_xtg as tsetup
 
 PFILE = pathlib.Path("points/eme/1/emerald_10_random.poi")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
@@ -60,7 +60,7 @@ def test_import(testpath):
     mypoints = Points(testpath / PFILE)  # should guess based on extesion
 
     x0 = mypoints.dataframe["X_UTME"].values[0]
-    tsetup.assert_almostequal(x0, 460842.434326, 0.001)
+    assert x0 == pytest.approx(460842.434326, 0.001)
 
 
 def test_import_from_dataframe(testpath):

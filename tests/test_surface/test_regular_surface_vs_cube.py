@@ -3,6 +3,7 @@
 
 from os.path import join
 
+import numpy as np
 import numpy.ma as ma
 import pytest
 
@@ -51,7 +52,7 @@ def test_get_surface_from_cube(load_cube_rsgy1):
 
     assert surf.xinc == cube.xinc
     assert surf.nrow == cube.nrow
-    tsetup.assert_almostequal(surf.values.mean(), 1999.0, 0.00001)
+    assert surf.values.mean() == pytest.approx(1999.0, abs=0.00001)
 
 
 @tsetup.skipsegyio
@@ -90,7 +91,7 @@ def test_slice_nearest_snapxy(tmpdir, load_cube_rsgy1, generate_plot):
         )
 
     logger.info("%s vs %s", xs1.values.mean(), xs2.values.mean())
-    tsetup.assert_almostequal(xs1.values.mean(), xs2.values.mean(), 0.0001)
+    assert xs1.values.mean() == pytest.approx(xs2.values.mean(), abs=0.0001)
 
 
 @tsetup.skipsegyio
@@ -128,7 +129,7 @@ def test_slice_trilinear_snapxy(tmpdir, load_cube_rsgy1):
     )
 
     logger.info("%s vs %s", xs1.values.mean(), xs2.values.mean())
-    tsetup.assert_almostequal(xs1.values.mean(), xs2.values.mean(), 0.0001)
+    assert xs1.values.mean() == pytest.approx(xs2.values.mean(), abs=0.0001)
 
 
 @tsetup.skipsegyio
@@ -328,7 +329,7 @@ def test_slice_attr_window_max(load_cube_rsgy1):
     )
     logger.info(xs1.values.mean())
     assert ret is None
-    tsetup.assert_almostequal(xs1.values.mean(), 0.08619, 0.001)
+    assert xs1.values.mean() == pytest.approx(0.08619, abs=0.001)
 
     # one attribute but in a list context shall return a dict
     xs1 = xtgeo.surface_from_file(RTOP1)
@@ -337,7 +338,7 @@ def test_slice_attr_window_max(load_cube_rsgy1):
     )
     assert isinstance(ret, dict)
 
-    tsetup.assert_almostequal(ret["max"].values.mean(), 0.08619, 0.001)
+    assert ret["max"].values.mean() == pytest.approx(0.08619, abs=0.001)
 
 
 @tsetup.bigtest
@@ -529,7 +530,7 @@ def test_cube_slice_auto4d_data(tmpdir):
 
     xs2 = xtgeo.surface_from_file(xs1out, fformat="ijxyz")
 
-    assert xs1.values.mean() == pytest.approx(xs2.values.mean(), abs=0.0001)
+    np.testing.assert_allclose(xs1.values, xs2.values, atol=0.0001)
 
     kube1 = Cube(XCUB1)
     kube1.describe()
