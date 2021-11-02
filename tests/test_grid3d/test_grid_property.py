@@ -11,7 +11,6 @@ import numpy.ma as npma
 import pytest
 from hypothesis import example, given
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
@@ -301,7 +300,7 @@ def test_roffbin_import2():
     assert nrow == 100, "NROW from shape (Emerald)"
 
     logger.info("Mean HCPV is {}".format(hc.values.mean()))
-    tsetup.assert_almostequal(hc.values.mean(), 1446.4611912446985, 0.0001)
+    assert hc.values.mean() == pytest.approx(1446.4611912446985, abs=0.0001)
 
 
 def test_eclinit_import_reek():
@@ -349,7 +348,7 @@ def test_eclunrst_import_reek():
         TESTFILE7, name="PRESSURE", fformat="unrst", date=19991201, grid=gg
     )
 
-    tsetup.assert_almostequal(press.values.mean(), 334.5232, 0.0001)
+    assert press.values.mean() == pytest.approx(334.5232, abs=0.0001)
 
 
 def test_eclunrst_import_soil_reek():
@@ -360,15 +359,15 @@ def test_eclunrst_import_soil_reek():
     logger.info("Import RESTART (UNIFIED) ...")
     swat = GridProperty(TESTFILE7, name="SWAT", fformat="unrst", date=19991201, grid=gg)
 
-    tsetup.assert_almostequal(swat.values.mean(), 0.8780, 0.001)
+    assert swat.values.mean() == pytest.approx(0.8780, abs=0.001)
 
     sgas = GridProperty(TESTFILE7, name="SGAS", fformat="unrst", date=19991201, grid=gg)
 
-    tsetup.assert_almostequal(sgas.values.mean(), 0.000, 0.001)
+    assert sgas.values.mean() == pytest.approx(0.000, abs=0.001)
 
     soil = GridProperty(TESTFILE7, name="SOIL", fformat="unrst", date=19991201, grid=gg)
 
-    tsetup.assert_almostequal(soil.values.mean(), 1.0 - 0.8780, 0.001)
+    assert soil.values.mean() == pytest.approx(1.0 - 0.8780, abs=0.001)
 
 
 def test_grdecl_import_reek(tmpdir):
@@ -382,8 +381,8 @@ def test_grdecl_import_reek(tmpdir):
 
     poro2 = GridProperty(TESTFILE1, name="PORO", fformat="roff", grid=rgrid)
 
-    tsetup.assert_almostequal(poro.values.mean(), poro2.values.mean(), 0.001)
-    tsetup.assert_almostequal(poro.values.std(), poro2.values.std(), 0.001)
+    assert poro.values.mean() == pytest.approx(poro2.values.mean(), abs=0.001)
+    assert poro.values.std() == pytest.approx(poro2.values.std(), abs=0.001)
 
     with pytest.raises(KeywordNotFoundError):
         poro3 = GridProperty(TESTFILE12B, name="XPORO", fformat="grdecl", grid=rgrid)
@@ -393,13 +392,13 @@ def test_grdecl_import_reek(tmpdir):
     exportfile = os.path.join(tmpdir, "reekporo.grdecl")
     poro.to_file(exportfile, fformat="grdecl")
     porox = GridProperty(exportfile, name="PORO", fformat="grdecl", grid=rgrid)
-    tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
+    assert poro.values.mean() == pytest.approx(porox.values.mean(), abs=0.001)
 
     # Export to binary grdecl and import that again...
     exportfile = os.path.join(tmpdir, "reekporo.bgrdecl")
     poro.to_file(exportfile, fformat="bgrdecl")
     porox = GridProperty(exportfile, name="PORO", fformat="bgrdecl", grid=rgrid)
-    tsetup.assert_almostequal(poro.values.mean(), porox.values.mean(), 0.001)
+    assert poro.values.mean() == pytest.approx(porox.values.mean(), abs=0.001)
 
 
 def test_io_roff_discrete(tmpdir):
@@ -503,7 +502,7 @@ def test_get_cell_corners():
     clist = grid.get_xyz_cell_corners(ijk=(4, 4, 1))
     logger.debug(clist)
 
-    tsetup.assert_almostequal(clist[0], 457168.358886, 0.1)
+    assert clist[0] == pytest.approx(457168.358886, abs=0.1)
 
 
 def test_get_xy_values_for_webportal():
@@ -536,7 +535,7 @@ def test_get_xy_values_for_webportal_ecl():
 
     coord, _valuelist = prop.get_xy_value_lists(grid=grid)
     logger.info("First active cell coords\n{}.".format(coord[0][0]))
-    tsetup.assert_almostequal(coord[0][0][0][1], 5935688.22412, 0.001)
+    assert coord[0][0][0][1] == pytest.approx(5935688.22412, abs=0.001)
 
 
 def test_get_values_by_ijk():
@@ -553,7 +552,7 @@ def test_get_values_by_ijk():
 
     res1 = x.get_values_by_ijk(iset1, jset1, kset1)
 
-    tsetup.assert_almostequal(res1[1], 0.08403542, 0.0001)
+    assert res1[1] == pytest.approx(0.08403542, abs=0.0001)
     assert np.isnan(res1[0])
 
 
@@ -569,7 +568,7 @@ def test_values_in_polygon():
     xorig = xprop.copy()
 
     xprop.operation_polygons(poly, 99, inside=True)
-    tsetup.assert_almostequal(xprop.values.mean(), 25.1788, 0.01)
+    assert xprop.values.mean() == pytest.approx(25.1788, abs=0.01)
 
     xp2 = xorig.copy()
     xp2.values *= 100
@@ -591,7 +590,7 @@ def test_values_in_polygon():
     xp3.set_inside(poly, 44)
     print(xp3.values.mean())
 
-    tsetup.assert_almostequal(xp3.values.mean(), 23.40642788381048, 0.001)
+    assert xp3.values.mean() == pytest.approx(23.40642788381048, abs=0.001)
 
 
 @given(dimensions, st.booleans())

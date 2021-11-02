@@ -67,8 +67,8 @@ def test_get_surface_from_grd3d_porosity(tmpdir, generate_plot):
 
     assert np.allclose(surf.values, surf2.values)
 
-    tsetup.assert_almostequal(surf.values.mean(), 0.1667, 0.01)
-    tsetup.assert_almostequal(surfr.values.mean(), 0.1667, 0.01)
+    assert surf.values.mean() == pytest.approx(0.1667, abs=0.01)
+    assert surfr.values.mean() == pytest.approx(0.1667, abs=0.01)
 
 
 @tsetup.plotskipifroxar

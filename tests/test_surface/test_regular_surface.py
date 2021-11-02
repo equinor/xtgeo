@@ -3,13 +3,12 @@ import sys
 from os.path import join
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
 import xtgeo
 from xtgeo import RegularSurface
 from xtgeo.common import XTGeoDialog
-from tests.conftest import assert_equal, assert_almostequal
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -118,8 +117,8 @@ def test_ijxyz_import1(tmpdir):
 
     xsurf = xtgeo.surface_from_file(TESTSET4A, fformat="ijxyz")
     xsurf.describe()
-    assert_almostequal(xsurf.xori, 600413.048444, 0.0001)
-    assert_almostequal(xsurf.xinc, 25.0, 0.0001)
+    assert xsurf.xori == pytest.approx(600413.048444, abs=0.0001)
+    assert xsurf.xinc == pytest.approx(25.0, abs=0.0001)
     assert xsurf.ncol == 280
     assert xsurf.nrow == 1341
     xsurf.to_file(join(tmpdir, "ijxyz_set4a.gri"))
@@ -132,7 +131,7 @@ def test_ijxyz_import2(tmpdir):
 
     xsurf = xtgeo.surface_from_file(TESTSET4B, fformat="ijxyz")
     xsurf.describe()
-    assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
+    assert xsurf.values.mean() == pytest.approx(5037.5840, abs=0.001)
     assert xsurf.ncol == 51
     assert xsurf.yflip == -1
     assert xsurf.nactive == 2578
@@ -146,7 +145,7 @@ def test_ijxyz_import4_ow_messy_dat(tmpdir):
 
     xsurf = xtgeo.surface_from_file(TESTSET4D, fformat="ijxyz")
     xsurf.describe()
-    assert_almostequal(xsurf.values.mean(), 5037.5840, 0.001)
+    assert xsurf.values.mean() == pytest.approx(5037.5840, 0.001)
     assert xsurf.ncol == 51
     assert xsurf.yflip == -1
     assert xsurf.nactive == 2578
@@ -170,8 +169,8 @@ def test_irapbin_import1():
     xsurf = xtgeo.surface_from_file(TESTSET2)
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
-    assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.00001)
-    assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+    assert xsurf.values[11, 0] == pytest.approx(1678.89733887, abs=0.00001)
+    assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
     xsurf.describe()
 
 
@@ -231,7 +230,7 @@ def test_irapbin_import_metadatafirst():
 
     assert sur[nsurf - 1].ncol == 1264
     assert sur[nsurf - 1].nrow == 2010
-    assert_almostequal(sur[nsurf - 1].values[11, 0], 1678.89733887, 0.00001)
+    assert sur[nsurf - 1].values[11, 0] == pytest.approx(1678.89733887, abs=0.00001)
 
 
 def test_irapbin_export_test(tmpdir):
@@ -322,8 +321,8 @@ def test_swapaxes(tmpdir):
     val2 = xsurf.values.copy()
     xsurf.to_file(join(tmpdir, "swapped_reswapped.gri"))
     valdiff = val2 - val1
-    assert_almostequal(valdiff.mean(), 0.0, 0.00001)
-    assert_almostequal(valdiff.std(), 0.0, 0.00001)
+    assert valdiff.mean() == pytest.approx(0.0, abs=0.00001)
+    assert valdiff.std() == pytest.approx(0.0, abs=0.00001)
 
 
 def test_autocrop():
@@ -345,8 +344,8 @@ def test_irapasc_import1():
     xsurf = xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
-    assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
-    assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+    assert xsurf.values[11, 0] == pytest.approx(1678.89733887, abs=0.001)
+    assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
 
 
 def test_irapasc_import1_engine_python():
@@ -356,8 +355,8 @@ def test_irapasc_import1_engine_python():
     xsurf = xtgeo.surface_from_file(TESTSET3, fformat="irap_ascii", engine="python")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
-    assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
-    assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+    assert xsurf.values[11, 0] == pytest.approx(1678.89733887, abs=0.001)
+    assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
 
 
 def test_irapbin_import1_engine_python():
@@ -367,8 +366,8 @@ def test_irapbin_import1_engine_python():
     xsurf = xtgeo.surface_from_file(TESTSET2, fformat="irap_binary", engine="python")
     assert xsurf.ncol == 1264
     assert xsurf.nrow == 2010
-    assert_almostequal(xsurf.values[11, 0], 1678.89733887, 0.001)
-    assert_almostequal(xsurf.values[1263, 2009], 1893.75, 0.01)
+    assert xsurf.values[11, 0] == pytest.approx(1678.89733887, abs=0.001)
+    assert xsurf.values[1263, 2009] == pytest.approx(1893.75, abs=0.01)
 
     xsurf2 = xtgeo.surface_from_file(TESTSET2, fformat="irap_binary", engine="cxtgeo")
     assert xsurf.values.mean() == xsurf2.values.mean()
@@ -417,10 +416,10 @@ def test_minmax_rotated_map():
 
     x = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
-    assert_almostequal(x.xmin, 454637.6, 0.1)
-    assert_almostequal(x.xmax, 468895.1, 0.1)
-    assert_almostequal(x.ymin, 5925995.0, 0.1)
-    assert_almostequal(x.ymax, 5939998.7, 0.1)
+    assert x.xmin == pytest.approx(454637.6, abs=0.1)
+    assert x.xmax == pytest.approx(468895.1, abs=0.1)
+    assert x.ymin == pytest.approx(5925995.0, abs=0.1)
+    assert x.ymax == pytest.approx(5939998.7, abs=0.1)
 
 
 def test_operator_overload():
@@ -458,12 +457,12 @@ def test_twosurfaces_oper():
     iso1 = surf2.copy()
     iso1.values -= surf1.values
     iso1mean = iso1.values.mean()
-    assert_almostequal(iso1mean, 43.71, 0.01)
+    assert iso1mean == pytest.approx(43.71, abs=0.01)
 
     iso2 = surf2.copy()
     iso2.subtract(surf1)
     iso2mean = iso2.values.mean()
-    assert_almostequal(iso2mean, 43.71, 0.01)
+    assert iso2mean == pytest.approx(43.71, abs=0.01)
     assert iso1.values.all() == iso2.values.all()
 
     iso3 = surf2 - surf1
@@ -472,7 +471,7 @@ def test_twosurfaces_oper():
 
     sum1 = surf2.copy()
     sum1.values += surf1.values
-    assert_almostequal(sum1.values.mean(), 3441.0, 0.01)
+    assert sum1.values.mean() == pytest.approx(3441.0, abs=0.01)
 
     sum2 = surf2.copy()
     sum2.add(surf1)
@@ -556,7 +555,7 @@ def test_irapbin_io(tmpdir):
 
     logger.debug("NX is %s", x.ncol)
 
-    assert_equal(x.ncol, 554)
+    assert x.ncol == 554
 
     # get the 1D numpy
     v1d = x.get_zval()
@@ -570,7 +569,7 @@ def test_irapbin_io(tmpdir):
     # update
     x.values = zval
 
-    assert_almostequal(x.values.mean(), 1998.648, 0.01)
+    assert x.values.mean() == pytest.approx(1998.648, abs=0.01)
 
     x.to_file(join(tmpdir, "reek1_plus_300_a.fgr"), fformat="irap_ascii")
     x.to_file(join(tmpdir, "reek1_plus_300_b.gri"), fformat="irap_binary")
@@ -578,7 +577,7 @@ def test_irapbin_io(tmpdir):
     mfile = TESTSET1
 
     y = xtgeo.surface_from_file(mfile)
-    assert_equal(y.ncol, 554)
+    assert y.ncol == 554
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
@@ -702,21 +701,21 @@ def test_get_xy_values(default_surface):
     xcv, _ycv = xmap.get_xy_values(order="C")
 
     xxv = xcv.ravel(order="K")
-    assert_almostequal(xxv[1], 0.0, 0.001)
+    assert xxv[1] == pytest.approx(0.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values(order="F")
     xxv = xcv.ravel(order="K")
-    assert_almostequal(xxv[1], 25.0, 0.001)
+    assert xxv[1] == pytest.approx(25.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values(order="C", asmasked=True)
 
     xxv = xcv.ravel(order="K")
-    assert_almostequal(xxv[1], 0.0, 0.001)
+    assert xxv[1] == pytest.approx(0.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values(order="F", asmasked=True)
 
     xxv = xcv.ravel(order="K")
-    assert_almostequal(xxv[1], 25.0, 0.001)
+    assert xxv[1] == pytest.approx(25.0, abs=0.001)
 
 
 @pytest.mark.filterwarnings("ignore:Default values*")
@@ -727,19 +726,19 @@ def test_get_xy_values1d(default_surface):
 
     xcv, _ycv = xmap.get_xy_values1d(activeonly=False, order="C")
 
-    assert_almostequal(xcv[1], 0.0, 0.001)
+    assert xcv[1] == pytest.approx(0.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values1d(activeonly=False, order="F")
 
-    assert_almostequal(xcv[1], 25.0, 0.001)
+    assert xcv[1] == pytest.approx(25.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values1d(activeonly=True, order="C")
 
-    assert_almostequal(xcv[1], 0.0, 0.001)
+    assert xcv[1] == pytest.approx(0.0, abs=0.001)
 
     xcv, _ycv = xmap.get_xy_values1d(activeonly=True, order="F")
 
-    assert_almostequal(xcv[1], 25.0, 0.001)
+    assert xcv[1] == pytest.approx(25.0, abs=0.001)
 
 
 def test_dataframe_simple():
@@ -749,18 +748,18 @@ def test_dataframe_simple():
 
     dfrc = xmap.dataframe(ijcolumns=True, order="C", activeonly=True)
 
-    assert_almostequal(dfrc["X_UTME"][2], 465956.274, 0.01)
+    assert dfrc["X_UTME"][2] == pytest.approx(465956.274, abs=0.01)
 
     xmap = xtgeo.surface_from_file(TESTSET2)
 
     dfrc = xmap.dataframe()
 
-    assert_almostequal(dfrc["X_UTME"][2], 461582.562498, 0.01)
+    assert dfrc["X_UTME"][2] == pytest.approx(461582.562498, abs=0.01)
 
     xmap.coarsen(2)
     dfrc = xmap.dataframe()
 
-    assert_almostequal(dfrc["X_UTME"][2], 461577.5575, 0.01)
+    assert dfrc["X_UTME"][2] == pytest.approx(461577.5575, abs=0.01)
 
 
 @pytest.mark.bigtest
@@ -778,8 +777,8 @@ def test_dataframe_more(tmpdir):
     dfrf.to_csv(join(tmpdir, "regsurf_df_f.csv"))
     xmap.to_file(join(tmpdir, "regsurf_df.ijxyz"), fformat="ijxyz")
 
-    assert_almostequal(dfrc["X_UTME"][2], 465956.274, 0.01)
-    assert_almostequal(dfrf["X_UTME"][2], 462679.773, 0.01)
+    assert dfrc["X_UTME"][2] == pytest.approx(465956.274, abs=0.01)
+    assert dfrf["X_UTME"][2] == pytest.approx(462679.773, abs=0.01)
 
     dfrcx = xmap.dataframe(ijcolumns=False, order="C", activeonly=True)
     dfrcx.to_csv(join(tmpdir, "regsurf_df_noij_c.csv"))
@@ -800,7 +799,7 @@ def test_get_xy_value_lists_small(default_surface):
     logger.info(xylist[2])
     logger.info(valuelist[2])
 
-    assert_equal(valuelist[2], 3.0)
+    assert valuelist[2] == 3.0
 
 
 @pytest.mark.bigtest
@@ -814,7 +813,7 @@ def test_get_xy_value_lists_reek():
     logger.info(xylist[2])
     logger.info(valuelist[2])
 
-    assert_equal(valuelist[2], 1910.445)
+    assert valuelist[2] == 1910.445
 
 
 def test_topology():
@@ -849,12 +848,12 @@ def test_similarity():
     y = xtgeo.surface_from_file(mfile)
 
     si = x.similarity_index(y)
-    assert_equal(si, 0.0)
+    assert si == 0.0
 
     y.values = y.values * 2
 
     si = x.similarity_index(y)
-    assert_equal(si, 1.0)
+    assert si == 1.0
 
 
 def test_irapbin_io_loop(tmpdir):
@@ -921,7 +920,7 @@ def test_value_from_xy():
 
     z = x.get_value_from_xy(point=(460181.036, 5933948.386))
 
-    assert_almostequal(z, 1625.11, 0.01)
+    assert z == pytest.approx(1625.11, abs=0.01)
 
     # outside value shall return None
     z = x.get_value_from_xy(point=(0.0, 7337128.076))
@@ -959,7 +958,7 @@ def test_fence():
     logger.debug(newfence)
     print(newfence)
 
-    assert_almostequal(newfence[1][2], 1720.9094, 0.01)
+    assert newfence[1][2] == pytest.approx(1720.9094, abs=0.01)
 
 
 @pytest.mark.parametrize(
@@ -1037,7 +1036,7 @@ def test_get_randomline_frompolygon(show_plot):
 
     # get the polygon
     fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
-    assert_almostequal(fspec.dataframe[fspec.dhname][4], 10, 1)
+    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(10, abs=1)
 
     fspec = fence.get_fence(distance=20, nextend=5, asnumpy=True)
 
@@ -1077,16 +1076,16 @@ def test_fill():
     srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     minv1 = srf.values.min()
-    assert_almostequal(srf.values.mean(), 1698.648, 0.001)
+    assert srf.values.mean() == pytest.approx(1698.648, abs=0.001)
 
     srf.fill()
     minv2 = srf.values.min()
-    assert_almostequal(srf.values.mean(), 1705.201, 0.001)
-    assert_almostequal(minv1, minv2, 0.000001)
+    assert srf.values.mean() == pytest.approx(1705.201, abs=0.001)
+    assert minv1 == pytest.approx(minv2, 0.000001)
 
     srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
     srf.fill(444)
-    assert_almostequal(srf.values.mean(), 1342.10498, 0.001)
+    assert srf.values.mean() == pytest.approx(1342.10498, abs=0.001)
 
 
 def test_smoothing():
@@ -1095,11 +1094,11 @@ def test_smoothing():
     srf = xtgeo.surface_from_file(TESTSET1, fformat="irap_binary")
 
     mean1 = srf.values.mean()
-    assert_almostequal(mean1, 1698.65, 0.1)
+    assert mean1 == pytest.approx(1698.65, abs=0.1)
 
     srf.smooth(iterations=1, width=5)
 
     mean2 = srf.values.mean()
-    assert_almostequal(mean2, 1698.65, 0.3)  # smoothed ~same mean
+    assert mean2 == pytest.approx(1698.65, abs=0.3)  # smoothed ~same mean
 
     assert mean1 != mean2  # but not exacly same
