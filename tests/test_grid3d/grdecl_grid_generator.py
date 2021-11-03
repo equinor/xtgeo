@@ -5,7 +5,7 @@ from hypothesis.extra.numpy import arrays
 import xtgeo.grid3d._ecl_grid as eclgrid
 import xtgeo.grid3d._grdecl_grid as ggrid
 
-from .grid_generator import indecies
+from .grid_generator import indices
 
 finites = st.floats(
     min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False, width=32
@@ -40,9 +40,9 @@ def specgrids(
     return draw(
         st.builds(
             ggrid.SpecGrid,
-            indecies,
-            indecies,
-            indecies,
+            indices,
+            indices,
+            indices,
             numres,
             coordinates,
         )
