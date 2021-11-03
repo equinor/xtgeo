@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 """XTGeo well module, working with one single well."""
 
+import functools
 import io
 import math
+import warnings
 from collections import OrderedDict
 from copy import deepcopy
 from distutils.version import StrictVersion
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+import deprecation
 import numpy as np
 import pandas as pd
+
 import xtgeo
 import xtgeo.common.constants as const
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
@@ -29,6 +33,17 @@ logger = xtg.functionlogger(__name__)
 # METHODS as wrappers to class init + import
 
 
+def _data_reader_factory(file_format):
+    if file_format in ["rmswell", "irap_ascii"]:
+        return _well_io.import_rms_ascii
+    if file_format == "hdf":
+        return _well_io.import_hdf5_well
+    raise ValueError(
+        f"Unknown file format {file_format}, supported formats are "
+        "'rmswell', 'irap_ascii' and 'hdf'"
+    )
+
+
 def well_from_file(
     wfile: Union[str, Path],
     fformat: Optional[str] = "rms_ascii",
@@ -40,15 +55,21 @@ def well_from_file(
 ) -> "Well":
     """Make an instance of a Well directly from file import.
 
+    Note:
+
+      rms_ascii is the only correct for wells from RMS. Irap did not have this
+      format. For maps and points, the formats from the old Irap tool is
+      applied in RMS, hence "irap_ascii" and "rms_ascii" are there the same.
+
     Args:
         wfile: File path, either a string or a pathlib.Path instance
         fformat: See :meth:`Well.from_file`
-        mdlogname: Name of Measured Depth log if any, see :meth:`Well.from_file`
-        zonelogname: Name of Zonelog, if any, see :meth:`Well.from_file`
+        mdlogname: Name of Measured Depth log if any
+        zonelogname: Name of Zonelog, if any
         lognames: Name or list of lognames to import, default is "all"
         lognames_strict: If True, all lognames must be present.
         strict: If True, then import will fail if zonelogname or mdlogname are asked
-            for but not present in wells. See :meth:`Well.from_file`
+            for but not present in wells.
 
     Example::
 
@@ -58,9 +79,7 @@ def well_from_file(
     .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
     .. versionchanged:: 2.1 ``strict`` now defaults to False
     """
-    obj = Well()
-
-    obj.from_file(
+    return Well._read_file(
         wfile,
         fformat=fformat,
         mdlogname=mdlogname,
@@ -69,8 +88,6 @@ def well_from_file(
         lognames=lognames,
         lognames_strict=lognames_strict,
     )
-
-    return obj
 
 
 def well_from_roxar(
@@ -85,11 +102,13 @@ def well_from_roxar(
 ) -> "Well":
     """This makes an instance of a Well directly from Roxar RMS.
 
-    For further details, see :meth:`Well.from_roxar`.
+
+    Note this method works only when inside RMS, or when RMS license is
+    activated.
 
     Args:
         project: Path to project or magic ``project`` variable in RMS.
-        name: Name of Well
+        name: Name of Well, as shown in RMS.
         trajectory: Name of trajectory in RMS.
         logrun: Name of logrun in RMS.
         lognames: List of lognames to import or use 'all' for all present logs
@@ -112,9 +131,7 @@ def well_from_roxar(
 
     .. versionchanged:: 2.1 lognames defaults to "all", not None
     """
-    obj = Well()
-
-    obj.from_roxar(
+    return Well._read_roxar(
         project,
         name,
         trajectory=trajectory,
@@ -125,7 +142,60 @@ def well_from_roxar(
         inclsurvey=inclsurvey,
     )
 
-    return obj
+
+def allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the
+    # construction of Well and should be deleted once the deprecation period
+    # has expired, the construction will then follow the new pattern.
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if not args and not kwargs:
+            warnings.warn(
+                "Initializing empty well is deprecated, please provide "
+                "non-defaulted values, or use mywell = "
+                "xtgeo.well_from_file('filename')",
+                DeprecationWarning,
+            )
+            return func(
+                self,
+                *([0.0] * 3),
+                "",
+                pd.DataFrame({"X_UTME": [], "Y_UTMN": [], "Z_TVDSS": []}),
+            )
+
+        # Checking if we are doing an initialization from file and raise a
+        # deprecation warning if we are.
+        if "wfile" in kwargs or (
+            len(args) >= 1 and isinstance(args[0], (str, Path, xtgeo._XTGeoFile))
+        ):
+            warnings.warn(
+                "Initializing directly from file name is deprecated and will be "
+                "removed in xtgeo version 4.0. Use: "
+                "mywell = xtgeo.well_from_file('filename') instead",
+                DeprecationWarning,
+            )
+            if len(args) >= 1:
+                wfile = args[0]
+                args = args[1:]
+            else:
+                wfile = kwargs.pop("wfile", None)
+            if len(args) >= 1:
+                fformat = args[0]
+                args = args[1:]
+            else:
+                fformat = kwargs.pop("fformat", None)
+
+            mfile = xtgeo._XTGeoFile(wfile)
+            if fformat is None or fformat == "guess":
+                fformat = mfile.detect_fformat()
+            else:
+                fformat = mfile.generic_format_by_proposal(fformat)
+            kwargs = _data_reader_factory(fformat)(mfile, *args, **kwargs)
+            kwargs["filesrc"] = mfile.file
+            return func(self, **kwargs)
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Well:
@@ -159,70 +229,96 @@ class Well:
         >>> well2 = Well(well_dir + '/OP_1.w', fformat='rms_ascii')
         >>> well3 = xtgeo.well_from_file(well_dir + '/OP_1.w')
 
+    Args:
+        rkb: well RKB height
+        xpos: well head X pos
+        ypos: well head Y pos
+        wname: well name
+        df: pandas dataframe with log values, expects columns to include
+          'X_UTME', 'Y_UTMN', 'Z_TVDSS' for x, y and z coordinates.
+          Other columns should be log values.
+        filesrc: source file if any
+        mdlogname: Name of Measured Depth log if any.
+        zonelogname: Name of Zonelog, if any
+        wlogtypes: dictionary of log types, 'DISC' or 'CONT', defaults to
+                to 'CONT'.
+        wlogrecords: dictionary of codes for 'DISC' logs, None for no codes given,
+            defaults to None.
     """
 
     VALID_LOGTYPES = {"DISC", "CONT"}
 
+    @allow_deprecated_init
     def __init__(
         self,
-        wfile: Optional[Union[str, Path]] = None,
-        fformat: Optional[str] = "rms_ascii",
-        mdlogname: Optional[str] = None,
-        zonelogname: Optional[str] = None,
-        strict: Optional[bool] = False,
-        lognames: Optional[Union[str, list]] = "all",
+        rkb: float,
+        xpos: float,
+        ypos: float,
+        wname: str,
+        df: pd.DataFrame,
+        mdlogname: str = None,
+        zonelogname: str = None,
+        wlogtypes: Dict[str, str] = None,
+        wlogrecords: Dict[str, str] = None,
+        filesrc: Optional[Union[str, Path]] = None,
     ):
-        """Instantating a Well object.
+        if not all(
+            coordinate in df.columns for coordinate in ("X_UTME", "Y_UTMN", "Z_TVDSS")
+        ):
+            raise ValueError(
+                "Well dataframe must include 'X_UTME',"
+                f" 'Y_UTMN' and 'Z_TVDSS', got {df.columns}"
+            )
+        self._reset(
+            rkb,
+            xpos,
+            ypos,
+            wname,
+            df,
+            filesrc,
+            mdlogname,
+            zonelogname,
+            wlogtypes,
+            wlogrecords,
+        )
 
-        Args:
-            wfile: Input file, or leave blank
-            fformat: File format input, default is ``rms_ascii`` unless file extension
-                tells us something else (e.g. hdf).
-            mdlogname: Name of MD log column, e.g. 'MDepth'
-            zonelogname: Name of zonelog column, .e.g. 'ZONELOG'
-            strict: Applies to lognames, if True, then all names in ``lognames`` will
-                be forced.
-            lognames: A list of lognames to load, which makes it possible to load a
-                subset of logs. A string "all" will load all current logs.
+    def _reset(
+        self,
+        rkb: float = None,
+        xpos: float = None,
+        ypos: float = None,
+        wname: str = None,
+        df: pd.DataFrame = None,
+        filesrc: Optional[Union[str, Path]] = None,
+        mdlogname: str = None,
+        zonelogname: str = None,
+        wlogtypes: Dict[str, str] = None,
+        wlogrecords: Dict[str, str] = None,
+    ):
+        if wlogtypes is None:
+            wlogtypes = dict()
+        if wlogrecords is None:
+            wlogrecords = dict()
 
-        """
-        # instance attributes for whole well
-        self._rkb = None  # well RKB height
-        self._xpos = None  # well head X pos
-        self._ypos = None  # well head Y pos
-        self._wname = None  # well name
-        self._filesrc = None  # source file if any
-        self._mdlogname = None
-        self._zonelogname = None
+        self._rkb = rkb
+        self._xpos = xpos
+        self._ypos = ypos
+        self._wname = wname
+        self._filesrc = filesrc
+        self._mdlogname = mdlogname
+        self._zonelogname = zonelogname
 
-        # instance attributes well log names
-        self._wlognames = list()  # A list of log names
-        self._wlogtypes = dict()  # dictionary of log types, 'DISC' or 'CONT'
-        self._wlogrecords = dict()  # code record for 'DISC' logs
+        self._wlogtypes = wlogtypes
+        self._wlogrecords = wlogrecords
 
-        self._df = None  # pandas dataframe with all log values
+        self._df = df
+
+        self._wlognames = list(self._df.columns)
 
         self._metadata = xtgeo.MetaDataWell()
-
-        if wfile is not None:
-            # make instance from file import
-            wfile = Path(wfile)
-            self.from_file(
-                wfile,
-                fformat=fformat,
-                mdlogname=mdlogname,
-                zonelogname=zonelogname,
-                lognames=lognames,
-                strict=strict,
-            )
-
-        else:
-            logger.info("Instantate Well() object without file")
-
-        self._ensure_consistency()
         self._metadata.required = self
 
-        logger.info("Ran __init__for Well() %s", id(self))
+        self._ensure_consistency()
 
     def __repr__(self):  # noqa: D105
         # should be able to newobject = eval(repr(thisobject))
@@ -477,15 +573,36 @@ class Well:
 
         return dsc.astext()
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.well_from_file() instead",
+    )
     def from_file(
         self,
         wfile,
         fformat="rms_ascii",
-        mdlogname=None,
-        zonelogname=None,
-        strict=False,
-        lognames="all",
-        lognames_strict=False,
+        **kwargs,
+    ):
+        """Deprecated, see :meth:`xtgeo.well_from_file`"""
+
+        wfile = xtgeo._XTGeoFile(wfile)
+        if fformat is None or fformat == "guess":
+            fformat = wfile.detect_fformat()
+        else:
+            fformat = wfile.generic_format_by_proposal(fformat)  # default
+
+        kwargs = _data_reader_factory(fformat)(wfile, **kwargs)
+        self._reset(**kwargs)
+        return self
+
+    @classmethod
+    def _read_file(
+        cls,
+        wfile,
+        fformat="rms_ascii",
+        **kwargs,
     ):
         """Import well from file.
 
@@ -516,26 +633,16 @@ class Well:
         .. versionchanged:: 2.1 ``lognames`` and ``lognames_strict`` added
         .. versionchanged:: 2.1 ``strict`` now defaults to False
         """
+
         wfile = xtgeo._XTGeoFile(wfile)
 
-        wfile.check_file(raiseerror=OSError)
-
-        if fformat is None or fformat == "rms_ascii":
-            _well_io.import_rms_ascii(
-                self,
-                wfile.name,
-                mdlogname=mdlogname,
-                zonelogname=zonelogname,
-                strict=strict,
-                lognames=lognames,
-                lognames_strict=lognames_strict,
-            )
+        if fformat is None or fformat == "guess":
+            fformat = wfile.detect_fformat()
         else:
-            raise IOError(f"Invalid file format {fformat}")
+            fformat = wfile.generic_format_by_proposal(fformat)  # default
 
-        self._ensure_consistency()
-        self._filesrc = wfile.name
-        return self
+        kwargs = _data_reader_factory(fformat)(wfile, **kwargs)
+        return cls(**kwargs)
 
     def to_file(
         self,
@@ -573,31 +680,8 @@ class Well:
         self,
         wfile: Union[str, Path],
     ):
-        """Read well data from HDF.
-
-        Warning:
-            This implementation is currently experimental and only recommended
-            for testing.
-
-        Read well from as HDF5 formatted file, with xtgeo specific layout.
-
-        Args:
-            wfile: Well file or stream
-
-        Returns:
-            Well() instance.
-
-
-        .. versionadded:: 2.14
-        """
-        wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
-        if wfile.detect_fformat() != "hdf":
-            raise ValueError("Wrong file format detected")
-
-        _well_io.import_hdf5_well(self, wfile)
-
-        _self: self.__class__ = self
-        return _self  # to make obj = xtgeo.Well().from_hdf(stream) work
+        """Deprecated, use :meth:`xtgeo.well_from_file()`"""
+        return self.from_file(wfile, fformat="hdf")
 
     def to_hdf(
         self,
@@ -626,44 +710,27 @@ class Well:
 
         return wfile.file
 
-    def from_roxar(self, *args, **kwargs):
-        """Import (retrieve) well from roxar project.
-
-        Note this method works only when inside RMS, or when RMS license is
-        activated.
-
-        Args:
-            project (str): Magic string 'project' or file path to project
-            wname (str): Name of well, as shown in RMS.
-            lognames (:obj:list or :obj:str): List of lognames to import, or
-                use simply 'all' for current logs for this well.
-            lognames_strict (bool); Flag to require all logs or to just provide
-                a subset that is present. Default is `False`.
-            realisation (int): Currently inactive
-            trajectory (str): Name of trajectory in RMS
-            logrun (str): Name of logrun in RMS
-            inclmd (bool): Include MDEPTH as log M_MEPTH from RMS
-            inclsurvey (bool): Include M_AZI and M_INCL from RMS
-        """
-        # use *args, **kwargs since this method is overrided in blocked_well, and
-        # signature should be the same
-
-        project = args[0]
-        wname = args[1]
-        lognames = kwargs.get("lognames", "all")
-        lognames_strict = kwargs.get("lognames_strict", False)
-        trajectory = kwargs.get("trajectory", "Drilled trajectory")
-        logrun = kwargs.get("logrun", "log")
-        inclmd = kwargs.get("inclmd", False)
-        inclsurvey = kwargs.get("inclsurvey", False)
-        realisation = kwargs.get("realisation", 0)
-
-        logger.debug("Not in use: realisation %s", realisation)
-
-        _well_roxapi.import_well_roxapi(
-            self,
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.well_from_roxar() instead",
+    )
+    def from_roxar(
+        self,
+        project: Union[str, object],
+        name: str,
+        trajectory: Optional[str] = "Drilled trajectory",
+        logrun: Optional[str] = "log",
+        lognames: Optional[Union[str, List[str]]] = "all",
+        lognames_strict: Optional[bool] = False,
+        inclmd: Optional[bool] = False,
+        inclsurvey: Optional[bool] = False,
+    ):
+        """Deprecated, use :meth:`xtgeo.well_from_roxar()`"""
+        kwargs = _well_roxapi.import_well_roxapi(
             project,
-            wname,
+            name,
             trajectory=trajectory,
             logrun=logrun,
             lognames=lognames,
@@ -671,7 +738,32 @@ class Well:
             inclmd=inclmd,
             inclsurvey=inclsurvey,
         )
-        self._ensure_consistency()
+        self._reset(**kwargs)
+        return self
+
+    @classmethod
+    def _read_roxar(
+        cls,
+        project: Union[str, object],
+        name: str,
+        trajectory: Optional[str] = "Drilled trajectory",
+        logrun: Optional[str] = "log",
+        lognames: Optional[Union[str, List[str]]] = "all",
+        lognames_strict: Optional[bool] = False,
+        inclmd: Optional[bool] = False,
+        inclsurvey: Optional[bool] = False,
+    ):
+        kwargs = _well_roxapi.import_well_roxapi(
+            project,
+            name,
+            trajectory=trajectory,
+            logrun=logrun,
+            lognames=lognames,
+            lognames_strict=lognames_strict,
+            inclmd=inclmd,
+            inclsurvey=inclsurvey,
+        )
+        return cls(**kwargs)
 
     def to_roxar(self, *args, **kwargs):
         """Export (save/store) a well to a roxar project.
@@ -798,24 +890,18 @@ class Well:
 
     def copy(self):
         """Copy a Well instance to a new unique Well instance."""
-        # pylint: disable=protected-access
-
-        new = Well()
-        new._wlogtypes = deepcopy(self._wlogtypes)
-        new._wlogrecords = deepcopy(self._wlogrecords)
-        new._rkb = self._rkb
-        new._xpos = self._xpos = None
-        new._ypos = self._ypos
-        new._wname = self._wname
-        if self._df is None:
-            new._df = None
-        else:
-            new._df = self._df.copy()
-        new._mdlogname = self._mdlogname
-        new._zonelogname = self._zonelogname
-
-        new._ensure_consistency()
-        return new
+        return Well(
+            self.rkb,
+            self.xpos,
+            self.ypos,
+            self.wname,
+            self._df.copy(),
+            self.mdlogname,
+            self.zonelogname,
+            deepcopy(self._wlogtypes),
+            deepcopy(self._wlogrecords),
+            self._filesrc,
+        )
 
     def rename_log(self, lname, newname):
         """Rename a log, e.g. Poro to PORO."""
