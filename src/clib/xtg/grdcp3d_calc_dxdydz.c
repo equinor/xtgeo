@@ -336,7 +336,7 @@ grdcp3d_calc_dx(int nx,
          pair_index++) {
         if (pair_index % (ny + 1) != 0) {
             // There is one more line in the y direction then there
-            // are cells, so we have to keep two indecies.
+            // are cells, so we have to keep two indices.
             cell_plane_index++;
         }
 

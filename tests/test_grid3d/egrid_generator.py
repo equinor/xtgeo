@@ -14,7 +14,7 @@ from .grdecl_grid_generator import (
     xtgeo_compatible_zcorns,
     zcorns,
 )
-from .grid_generator import indecies
+from .grid_generator import indices
 
 
 @st.composite
@@ -45,9 +45,9 @@ file_heads = st.builds(
 def grid_heads(
     draw,
     gridtype=types_of_grid,
-    nx=indecies,
-    ny=indecies,
-    nz=indecies,
+    nx=indices,
+    ny=indices,
+    nz=indices,
     index=st.integers(min_value=0, max_value=5),
     coordinatesystem=coordinate_types,
 ):
@@ -60,8 +60,8 @@ def grid_heads(
         1,
         1,
         draw(coordinatesystem),
-        draw(st.tuples(indecies, indecies, indecies)),
-        draw(st.tuples(indecies, indecies, indecies)),
+        draw(st.tuples(indices, indices, indices)),
+        draw(st.tuples(indices, indices, indices)),
     )
 
 
@@ -89,9 +89,9 @@ def global_grids(draw, header=grid_heads(), zcorn=zcorns):
         actnum=draw(actnum),
         grid_head=grid_head,
         coord_sys=draw(map_axes),
-        boxorig=draw(st.tuples(indecies, indecies, indecies)),
+        boxorig=draw(st.tuples(indices, indices, indices)),
         corsnum=draw(
-            arrays(elements=indecies, dtype="int32", shape=indecies),
+            arrays(elements=indices, dtype="int32", shape=indices),
         ),
     )
 
@@ -122,24 +122,24 @@ def lgr_sections(draw, nx=st.just(2), ny=st.just(2), nz=st.just(2), zcorn=zcorns
         name=draw(ascii_string(min_size=1)),
         parent=draw(st.one_of(st.just(None), ascii_string(min_size=1))),
         grid_parent=draw(st.one_of(st.just(None), ascii_string(min_size=1))),
-        hostnum=draw(arrays(elements=indecies, dtype="int32", shape=indecies)),
-        boxorig=draw(st.tuples(indecies, indecies, indecies)),
+        hostnum=draw(arrays(elements=indices, dtype="int32", shape=indices)),
+        boxorig=draw(st.tuples(indices, indices, indices)),
         coord_sys=draw(map_axes),
     )
 
 
-nnc_heads = st.builds(xtge.NNCHead, indecies, indecies)
+nnc_heads = st.builds(xtge.NNCHead, indices, indices)
 
 nnc_sections = st.builds(
     xtge.NNCSection,
     nnc_heads,
-    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
-    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
-    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
-    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
-    st.tuples(indecies, indecies),
-    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
-    arrays(elements=indecies, dtype="int32", shape=st.just(2)),
+    arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    st.tuples(indices, indices),
+    arrays(elements=indices, dtype="int32", shape=st.just(2)),
+    arrays(elements=indices, dtype="int32", shape=st.just(2)),
 )
 
 
