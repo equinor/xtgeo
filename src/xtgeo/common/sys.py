@@ -25,7 +25,7 @@ logger = xtg.functionlogger(__name__)
 
 
 SUPPORTED_FORMATS = {
-    "rmswell": ["rmswell", "rmsw", "w"],
+    "rmswell": ["rmswell", "rmsw", "w", "bw"],
     "roff_binary": ["roff_binary", "roff", "roff_bin", "roff-bin", "roffbin", "roff.*"],
     "roff_ascii": ["roff_ascii", "roff_asc", "roff-asc", "roffasc", "asc"],
     "egrid": ["egrid"],

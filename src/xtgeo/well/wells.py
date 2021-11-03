@@ -150,14 +150,15 @@ class Wells(object):
         # file checks are done within the Well() class
         for wfile in filelist:
             try:
-                wll = xtgeo.well.Well(
-                    wfile,
-                    fformat=fformat,
-                    mdlogname=mdlogname,
-                    zonelogname=zonelogname,
-                    strict=strict,
+                self._wells.append(
+                    xtgeo.well_from_file(
+                        wfile,
+                        fformat=fformat,
+                        mdlogname=mdlogname,
+                        zonelogname=zonelogname,
+                        strict=strict,
+                    )
                 )
-                self._wells.append(wll)
             except ValueError as err:
                 xtg.warn("SKIP this well: {}".format(err))
                 continue
