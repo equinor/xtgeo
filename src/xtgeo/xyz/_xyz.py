@@ -30,6 +30,27 @@ def _data_reader_factory(file_format):
     raise ValueError(f"Unknown file format {file_format}")
 
 
+def _read_file_worker(
+    pfile: Union[str, pathlib.Path, io.BytesIO],
+    fformat: Optional[str] = None,
+    is_polygons: Optional[bool] = False,
+):
+    """General function for classmethod _read_file and (deprecated) method from_file.
+
+    See _read_file in class for args.
+    """
+    pfile = xtgeo._XTGeoFile(pfile)
+    if fformat is None or fformat == "guess":
+        fformat = pfile.detect_fformat()
+    else:
+        fformat = pfile.generic_format_by_proposal(fformat)  # default
+    kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
+
+    kwargs["filesrc"] = pfile.name
+
+    return kwargs
+
+
 def _allow_deprecated_init(func):
     # This decorator is here to maintain backwards compatibility in the construction
     # of Points/Polygons and should be deleted once the deprecation period has expired,
@@ -126,10 +147,14 @@ class XYZ:
         name: Optional[str] = "unknown",
         is_polygons: Optional[bool] = False,
         attributes: Optional[dict] = None,
+        filesrc=None,
         **kwargs,
     ):
         dataframe = kwargs.get("dataframe", None)
-        self._filesrc = kwargs.get("filesrc", None)
+        # -> this is hidden in the public API and only used for internal class methods like
+        # xtgeo.points_from_surface, etc; the correct dataframe will be made in advance
+        # to avoid a second of round of processing. In such cases, 'values' shall be
+        # None to avoid conflicts.
 
         if values is not None and dataframe is not None:
             raise ValueError("Conflicting 'values' and 'dataframe' input!")
@@ -141,15 +166,11 @@ class XYZ:
         self._ispolygons = is_polygons
         self._name = name
         self._df = dataframe
+        self._filesrc = filesrc
 
         # The _nwells is introduced for methods that count the number of wells used
         # actually in input. From 2.16
         self._nwells = None
-
-        # additional input, given through **kwargs. For the import from file routines
-        # (class methods), the 'dataframe' key may be populated to avoid a second
-        # round of processing. In such cases, 'values' shall be None to avoid
-        # conflicts.
 
         # other attributes as (name: type), where type is
         # ~ ('str', 'int', 'float', 'bool')
@@ -333,18 +354,7 @@ class XYZ:
            Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead.
         """
         is_polygons = kwargs.get("is_polygons", False)
-
-        pfile = xtgeo._XTGeoFile(pfile)
-        pfile.check_file(raiseerror=OSError)
-
-        logger.info("Reading from file %s...", pfile.name)
-
-        if fformat is None or fformat == "guess":
-            fformat = pfile.detect_fformat()
-        else:
-            fformat = pfile.generic_format_by_proposal(fformat)  # default
-
-        newkwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
+        newkwargs = _read_file_worker(pfile, fformat, is_polygons)
         self._reset(**newkwargs)
 
     def _reset(self, **kwargs):
@@ -364,16 +374,12 @@ class XYZ:
         is_polygons: Optional[bool] = False,
         **kwargs,
     ):
-        """Import Points or Polygons from a file.
+        """Import Points or Polygons from a file, see _read_file_worker.
 
         Supported import formats (fformat):
-
         * 'xyz' or 'poi' or 'pol': Simple XYZ format
-
         * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
-
         * 'rms_attr': RMS points formats with attributes (extra columns)
-
         * 'guess': Try to choose file format based on extension
 
         Args:
@@ -382,26 +388,13 @@ class XYZ:
             is_polygons: True if Polygons
             **kwargs: For special kw args
 
-
         Example::
-
             >>> myxyz = _XYZ._read_file('myfile.x')
 
         Raises:
             OSError: if file is not present or wrong permissions.
-
         """
-        pfile = xtgeo._XTGeoFile(pfile)
-        if fformat is None or fformat == "guess":
-            fformat = pfile.detect_fformat()
-        else:
-            fformat = pfile.generic_format_by_proposal(fformat)  # default
-        kwargs = _data_reader_factory(fformat)(pfile, is_polygons=is_polygons)
-
-        kwargs["filesrc"] = pfile.name
-        if kwargs.get("return_cls", True) is False:
-            return kwargs
-
+        kwargs = _read_file_worker(pfile, fformat, is_polygons)
         return cls(**kwargs)
 
     @deprecation.deprecated(
