@@ -4,7 +4,6 @@ from os.path import join
 import numpy as np
 import pytest
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.surface import RegularSurface
@@ -133,13 +132,12 @@ def test_resample(tmpdir, reek_map):
     fout = join(tmpdir, "reek_resampled.gri")
     snew.to_file(fout, fformat="irap_binary")
 
-    tsetup.assert_almostequal(snew.values.mean(), 1698.458, 2)
-    tsetup.assert_almostequal(snew.values.mean(), xs.values.mean(), 2)
+    assert snew.values.mean() == pytest.approx(1698.458, abs=2)
+    assert snew.values.mean() == pytest.approx(xs.values.mean(), abs=2)
 
     # check that the "other" in snew.resample(other) is unchanged:
     assert xs.xinc == xs_copy.xinc
-    tsetup.assert_almostequal(xs.values.mean(), xs_copy.values.mean(), 1e-4)
-    tsetup.assert_almostequal(xs.values.std(), xs_copy.values.std(), 1e-4)
+    np.testing.assert_allclose(xs.values, xs_copy.values, atol=1e-4)
 
 
 def test_resample_partial_sample(tmp_path, reek_map, generate_plot):
@@ -183,7 +181,6 @@ def test_resample_partial_sample(tmp_path, reek_map, generate_plot):
     assert snew2.values.mean() == pytest.approx(1747.20, abs=0.2)
 
 
-@tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_refine(tmpdir, reek_map, generate_plot):
     """Do refining of a surface."""
     xs = reek_map
@@ -195,7 +192,7 @@ def test_refine(tmpdir, reek_map, generate_plot):
     fout = join(tmpdir, "reek_refined.gri")
     xs.to_file(fout, fformat="irap_binary")
 
-    tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
+    assert xs_orig.values.mean() == pytest.approx(xs.values.mean(), abs=0.8)
 
     if generate_plot:
         logger.info("Output plots to file (may be time consuming)")
@@ -203,7 +200,6 @@ def test_refine(tmpdir, reek_map, generate_plot):
         xs.quickplot(filename=join(tmpdir, "reek_refined4.png"))
 
 
-@tsetup.skipifmac  # as this often fails on travis. TODO find out why
 def test_coarsen(tmpdir, reek_map, generate_plot):
     """Do a coarsening of a surface."""
     xs = reek_map
@@ -215,7 +211,7 @@ def test_coarsen(tmpdir, reek_map, generate_plot):
     fout = join(tmpdir, "reek_coarsened.gri")
     xs.to_file(fout, fformat="irap_binary")
 
-    tsetup.assert_almostequal(xs_orig.values.mean(), xs.values.mean(), 0.8)
+    assert xs_orig.values.mean() == pytest.approx(xs.values.mean(), abs=0.8)
 
     if generate_plot:
         logger.info("Output plots to file (may be time consuming)")
@@ -223,7 +219,7 @@ def test_coarsen(tmpdir, reek_map, generate_plot):
         xs.quickplot(filename=join(tmpdir, "reek_coarsen3.png"))
 
 
-@tsetup.bigtest
+@pytest.mark.bigtest
 def test_points_gridding(tmpdir, reek_map, generate_plot):
     """Make points of surface; then grid back to surface."""
     xs = reek_map
@@ -248,6 +244,6 @@ def test_points_gridding(tmpdir, reek_map, generate_plot):
         xs.quickplot(filename=join(tmpdir, "s1.png"))
         xscopy.quickplot(filename=join(tmpdir, "s2.png"))
 
-    tsetup.assert_almostequal(xscopy.values.mean(), xs.values.mean() + 300, 2)
+    np.testing.assert_allclose(xscopy.values, xs.values + 300, atol=2)
 
     xscopy.to_file(join(tmpdir, "reek_points_to_map.gri"), fformat="irap_binary")

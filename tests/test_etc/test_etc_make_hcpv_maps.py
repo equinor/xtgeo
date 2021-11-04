@@ -18,7 +18,6 @@ ROFF1_GRID = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
 ROFF1_PROPS = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
 
 
-@pytest.mark.skipifroxar
 def test_hcpvfz1(tmpdir, generate_plot):
     """HCPV thickness map."""
 

@@ -5,7 +5,6 @@ from os.path import join
 
 import pytest
 
-import tests.test_common.test_xtg as tsetup
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import BlockedWells
 
@@ -60,7 +59,6 @@ def test_get_dataframe_allblockedwells(testblockedwells, snapshot):
     )
 
 
-@tsetup.plotskipifroxar
 def test_quickplot_blockedwells(tmpdir, testblockedwells, generate_plot):
     """Import blockedwells from file to BlockedWells and quick plot."""
     if not generate_plot:

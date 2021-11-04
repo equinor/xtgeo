@@ -4,10 +4,6 @@
 import glob
 from os.path import join
 
-import matplotlib.pyplot as plt
-import pytest
-
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.plot import XSection
 
@@ -19,10 +15,6 @@ if not xtg.testsetup():
 
 TPATH = xtg.testpathobj
 
-# =========================================================================
-# Do tests
-# =========================================================================
-
 USEFILE1 = TPATH / "wells/reek/1/OP_1.w"
 USEFILE2 = TPATH / "surfaces/reek/1/topreek_rota.gri"
 USEFILE3 = TPATH / "polygons/reek/1/mypoly.pol"
@@ -32,20 +24,13 @@ USEFILE6 = TPATH / "cubes/reek/syntseis_20000101_seismic_depth_stack.segy"
 
 USEFILE7 = TPATH / "wells/reek/1/OP_2.w"
 
-BIGRGRID1 = "../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg.roff"
-BIGPROP1 = "../xtgeo-testdata-equinor/data/3dgrids/gfb/gullfaks_gg_phix.roff"
-BIGWELL1 = "../xtgeo-testdata-equinor/data/wells/gfb/1/34_10-A-42.w"
-BIGWELL2 = "../xtgeo-testdata-equinor/data/wells/gfb/1/34_10-A-41.w"
 
-
-@pytest.mark.skipifroxar
 def test_xsection_init():
     """Trigger XSection class, basically."""
     xsect = XSection()
     assert xsect.pagesize == "A4"
 
 
-@pytest.mark.skipifroxar
 def test_simple_plot(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot."""
 
@@ -88,7 +73,6 @@ def test_simple_plot(tmpdir, show_plot, generate_plot):
         myplot.close()
 
 
-@pytest.mark.skipifroxar
 def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot with seismic backdrop."""
 
@@ -143,40 +127,6 @@ def test_simple_plot_with_seismics(tmpdir, show_plot, generate_plot):
     myplot.close()
 
 
-@pytest.mark.skipifroxar
-@tsetup.equinor
-@tsetup.bigtest
-def test_xsect_larger_geogrid(show_plot):
-    """Test a larger xsection"""
-
-    mygrid = xtgeo.Grid(BIGRGRID1)
-    poro = xtgeo.GridProperty(BIGPROP1)
-    mywell1 = xtgeo.Well(BIGWELL1)
-    mywell2 = xtgeo.Well(BIGWELL2)
-
-    fence1 = mywell1.get_fence_polyline(sampling=5, tvdmin=1750, asnumpy=True)
-
-    (hmin1, hmax1, vmin1, vmax1, arr1) = mygrid.get_randomline(
-        fence1, poro, zmin=1750, zmax=2100, zincrement=0.2
-    )
-
-    fence2 = mywell2.get_fence_polyline(sampling=5, tvdmin=1500, asnumpy=True)
-
-    (hmin2, hmax2, vmin2, vmax2, arr2) = mygrid.get_randomline(
-        fence2, poro, zmin=1500, zmax=1850, zincrement=0.2
-    )
-
-    if show_plot:
-        plt.figure()
-        plt.imshow(arr1, cmap="rainbow", extent=(hmin1, hmax1, vmax1, vmin1))
-        plt.axis("tight")
-        plt.figure()
-        plt.imshow(arr2, cmap="rainbow", extent=(hmin2, hmax2, vmax2, vmin2))
-        plt.axis("tight")
-        plt.show()
-
-
-@pytest.mark.skipifroxar
 def test_multiple_subplots(tmpdir, show_plot, generate_plot):
     """Test as simple XSECT plot."""
 
@@ -191,7 +141,6 @@ def test_multiple_subplots(tmpdir, show_plot, generate_plot):
     myplot.close()
 
 
-@pytest.mark.skipifroxar
 def test_reek1(tmpdir, generate_plot):
     """Test XSect for a Reek well."""
 

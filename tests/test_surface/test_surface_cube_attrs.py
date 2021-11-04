@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import os
 from os.path import join
+
 import pytest
+
 import xtgeo
 
 xtg = xtgeo.common.XTGeoDialog()
@@ -237,48 +238,30 @@ def test_avg_surface2(loadsfile1):
         assert attributes[name] == pytest.approx(attrs[name].values.mean(), abs=0.001)
 
 
-@pytest.mark.skipif("XTG_BIGTEST" not in os.environ, reason="Run time demanding test")
-def test_avg_surface_large_cube():
+@pytest.mark.benchmark(group="cube slicing")
+@pytest.mark.parametrize("algorithm", [pytest.param(1, marks=pytest.mark.bigtest), 2])
+def test_avg_surface_large_cube_algorithm1(benchmark, algorithm):
+    cube1 = xtgeo.Cube(ncol=120, nrow=120, nlay=100, zori=200, zinc=4)
 
-    logger.info("Make cube...")
-    cube1 = xtgeo.Cube(ncol=1200, nrow=1200, nlay=1000, zori=2000, zinc=4)
+    cube1.values[400:80, 400:80, :] = 12
 
-    cube1.values[400:800, 400:800, :] = 12
-
-    logger.info("Make cube... done")
     surf1 = xtgeo.surface_from_cube(cube1, 2040.0)
     surf2 = xtgeo.surface_from_cube(cube1, 2880.0)
 
-    t1 = xtg.timer()
+    def run():
+        _ = surf1.slice_cube_window(
+            cube1,
+            other=surf2,
+            other_position="below",
+            attribute="all",
+            sampling="cube",
+            snapxy=True,
+            ndiv=None,
+            algorithm=algorithm,
+            showprogress=False,
+        )
 
-    _ = surf1.slice_cube_window(
-        cube1,
-        other=surf2,
-        other_position="below",
-        attribute="all",
-        sampling="cube",
-        snapxy=True,
-        ndiv=None,
-        algorithm=2,
-        showprogress=True,
-    )
-    print("Algorithm 2: ", xtg.timer(t1))
-
-    t1 = xtg.timer()
-    _ = surf1.slice_cube_window(
-        cube1,
-        other=surf2,
-        other_position="below",
-        attribute="all",
-        sampling="discrete",
-        snapxy=True,
-        ndiv=None,
-        algorithm=1,
-        showprogress=True,
-    )
-    print("Algorithm 1: ", xtg.timer(t1))
-
-    logger.info("Testing done")
+    benchmark(run)
 
 
 def test_attrs_reek(tmpdir, loadsfile2):

@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 from hypothesis import given
 
-import tests.test_common.test_xtg as tsetup
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid, GridProperty
@@ -58,18 +57,18 @@ def test_import_wrong():
     with pytest.raises(ValueError):
         grd = Grid()
         grd.from_file(EMEGFILE, fformat="stupid_wrong_name")
-        tsetup.assert_equal(grd.ncol, 70)
+        assert grd.ncol == 70
 
 
 def test_import_guess(load_gfile1):
     """Import with guessing fformat, and also test name attribute."""
     grd = load_gfile1
 
-    tsetup.assert_equal(grd.ncol, 70)
-    tsetup.assert_equal(grd.name, "emerald_hetero_grid")
+    assert grd.ncol == 70
+    assert grd.name == "emerald_hetero_grid"
 
     grd.name = "xxx"
-    tsetup.assert_equal(grd.name, "xxx")
+    assert grd.name == "xxx"
 
 
 def test_create_shoebox(tmp_path):
@@ -89,8 +88,8 @@ def test_create_shoebox(tmp_path):
 
     dx, dy = grd.get_dxdy()
 
-    tsetup.assert_almostequal(dx.values.mean(), 20.0, 0.0001)
-    tsetup.assert_almostequal(dy.values.mean(), 20.0, 0.0001)
+    assert dx.values.mean() == pytest.approx(20.0, abs=0.0001)
+    assert dy.values.mean() == pytest.approx(20.0, abs=0.0001)
 
     grd.create_box(
         origin=(0, 0, 1000), dimension=(30, 30, 3), rotation=45, increment=(20, 20, 1)
@@ -98,9 +97,9 @@ def test_create_shoebox(tmp_path):
 
     x, y, z = grd.get_xyz()
 
-    tsetup.assert_almostequal(x.values1d[0], 0.0, 0.001)
-    tsetup.assert_almostequal(y.values1d[0], 20 * math.cos(45 * math.pi / 180), 0.001)
-    tsetup.assert_almostequal(z.values1d[0], 1000.5, 0.001)
+    assert x.values1d[0] == pytest.approx(0.0, abs=0.001)
+    assert y.values1d[0] == pytest.approx(20 * math.cos(45 * math.pi / 180), abs=0.001)
+    assert z.values1d[0] == pytest.approx(1000.5, abs=0.001)
 
     grd.create_box(
         origin=(0, 0, 1000),
@@ -112,9 +111,9 @@ def test_create_shoebox(tmp_path):
 
     x, y, z = grd.get_xyz()
 
-    tsetup.assert_almostequal(x.values1d[0], 0.0, 0.001)
-    tsetup.assert_almostequal(y.values1d[0], 0.0, 0.001)
-    tsetup.assert_almostequal(z.values1d[0], 1000.0, 0.001)
+    assert x.values1d[0] == pytest.approx(0.0, abs=0.001)
+    assert y.values1d[0] == pytest.approx(0.0, abs=0.001)
+    assert z.values1d[0] == pytest.approx(1000.0, abs=0.001)
 
 
 @pytest.mark.parametrize(
@@ -177,7 +176,7 @@ def test_roffbin_get_dataframe_for_grid(load_gfile1):
 
     assert len(df) == grd.nactive
 
-    tsetup.assert_almostequal(df["X_UTME"][0], 459176.7937727844, 0.1)
+    assert df["X_UTME"][0] == pytest.approx(459176.7937727844, abs=0.1)
 
     assert len(df.columns) == 6
 
@@ -235,8 +234,8 @@ def test_roffbin_import1(load_gfile1):
     """Test roff binary import case 1."""
     grd = load_gfile1
 
-    tsetup.assert_equal(grd.ncol, 70, txt="Grid NCOL Emerald")
-    tsetup.assert_equal(grd.nlay, 46, txt="Grid NLAY Emerald")
+    assert grd.ncol == 70, "Grid NCOL Emerald"
+    assert grd.nlay == 46, "Grid NLAY Emerald"
 
     # extract ACTNUM parameter as a property instance (a GridProperty)
     act = grd.get_actnum()
@@ -251,7 +250,7 @@ def test_roffbin_import1(load_gfile1):
     print("DZ mean and shape: ", dzval.mean(), dzval.shape)
     # get the value is cell 32 73 1 shall be 2.761
     mydz = float(dzval[31:32, 72:73, 0:1])
-    tsetup.assert_almostequal(mydz, 2.761, 0.001, txt="Grid DZ Emerald")
+    assert mydz == pytest.approx(2.761, abs=0.001), "Grid DZ Emerald"
 
     # get dX dY
     logger.info("Get dX dY")
@@ -260,14 +259,14 @@ def test_roffbin_import1(load_gfile1):
     mydx = float(dxv.values3d[31:32, 72:73, 0:1])
     mydy = float(dyv.values3d[31:32, 72:73, 0:1])
 
-    tsetup.assert_almostequal(mydx, 118.51, 0.01, txt="Grid DX Emerald")
-    tsetup.assert_almostequal(mydy, 141.26, 0.01, txt="Grid DY Emerald")
+    assert mydx == pytest.approx(118.51, abs=0.01), "Grid DX Emerald"
+    assert mydy == pytest.approx(141.26, abs=0.01), "Grid DY Emerald"
 
     # get X Y Z coordinates (as GridProperty objects) in one go
     logger.info("Get X Y Z...")
     xvv, yvv, zvv = grd.get_xyz(names=["xxx", "yyy", "zzz"])
 
-    tsetup.assert_equal(xvv.name, "xxx", txt="Name of X coord")
+    assert xvv.name == "xxx", "Name of X coord"
     xvv.name = "Xerxes"
 
     # attach some properties to grid
@@ -333,7 +332,6 @@ def test_roffbin_import_v2_banal():
                 assert np.allclose(np.array(xx1), np.array(xx4)) is True
 
 
-@tsetup.bigtest
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc."""
     t0 = xtg.timer()
@@ -383,45 +381,23 @@ def test_roffbin_export_v2_banal6(tmp_path):
     assert cell1 == pytest.approx(cell2)
 
 
-@tsetup.bigtest
-def test_roffbin_bigbox(tmp_path):
-    """Test roff binary for bigbox, to monitor performance."""
-    bigbox = tmp_path / "bigbox.roff"
-    if not bigbox.is_file():
-        logger.info("Create tmp big roff grid file...")
-        grd0 = Grid()
-        grd0.create_box(dimension=(500, 500, 100))
-        grd0.to_file(bigbox)
+@pytest.mark.parametrize("xtgformat", [1, 2])
+@pytest.mark.benchmark()
+def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
+    grd = xtgeo.create_box_grid(dimension=(10, 10, 10))
+    if xtgformat == 1:
+        grd._xtgformat1()
+    else:
+        grd._xtgformat2()
 
-    grd1 = Grid()
-    t0 = xtg.timer()
-    grd1._xtgformat = 1
-    grd1.from_file(bigbox)
-    t_old = xtg.timer(t0)
-    logger.info("Reading bigbox xtgeformat=1 took %s seconds", t_old)
-    cell1 = grd1.get_xyz_cell_corners((13, 14, 15))
+    def run():
+        return grd.get_xyz_cell_corners((5, 6, 7))
 
-    grd2 = Grid()
-    t0 = xtg.timer()
-    t1 = xtg.timer()
-    grd2._xtgformat = 2
-    grd2.from_file(bigbox)
-    t_new = xtg.timer(t0)
-    logger.info("Reading bigbox xtgformat=2 took %s seconds", t_new)
-    cell2a = grd2.get_xyz_cell_corners((13, 14, 15))
+    corners = benchmark(run)
 
-    t0 = xtg.timer()
-    grd2._convert_xtgformat2to1()
-    cell2b = grd2.get_xyz_cell_corners((13, 14, 15))
-    logger.info("Conversion to xtgformat1 took %s seconds", xtg.timer(t0))
-    t_newtot = xtg.timer(t1)
-    logger.info("Total run time xtgformat=2 + conv took %s seconds", t_newtot)
-
-    logger.info("Speed gain new vs old: %s", t_old / t_new)
-    logger.info("Speed gain new incl conv vs old: %s", t_old / t_newtot)
-
-    assert cell1 == cell2a
-    assert cell1 == cell2b
+    assert corners == pytest.approx(
+        [4, 5, 6, 5, 5, 6, 4, 6, 6, 5, 6, 6, 4, 5, 7, 5, 5, 7, 4, 6, 7, 5, 6, 7]
+    )
 
 
 def test_roffbin_import_v2_wsubgrids():
@@ -451,7 +427,7 @@ def test_import_grdecl_and_bgrdecl():
     # get dZ...
     dzv2 = grd2.get_dz()
 
-    tsetup.assert_almostequal(dzv1.values.mean(), dzv2.values.mean(), 0.001)
+    assert dzv1.values.mean() == pytest.approx(dzv2.values.mean(), abs=0.001)
 
 
 def test_eclgrid_import2(tmp_path):
@@ -460,20 +436,20 @@ def test_eclgrid_import2(tmp_path):
     logger.info("Import Eclipse GRID...")
     grd.from_file(REEKFILE, fformat="egrid")
 
-    tsetup.assert_equal(grd.ncol, 40, txt="EGrid NX from Eclipse")
-    tsetup.assert_equal(grd.nrow, 64, txt="EGrid NY from Eclipse")
-    tsetup.assert_equal(grd.nactive, 35838, txt="EGrid NTOTAL from Eclipse")
-    tsetup.assert_equal(grd.ntotal, 35840, txt="EGrid NACTIVE from Eclipse")
+    assert grd.ncol == 40, "EGrid NX from Eclipse"
+    assert grd.nrow == 64, "EGrid NY from Eclipse"
+    assert grd.nactive == 35838, "EGrid NTOTAL from Eclipse"
+    assert grd.ntotal == 35840, "EGrid NACTIVE from Eclipse"
 
     actnum = grd.get_actnum()
     print(actnum.values[12:13, 22:24, 5:6])
-    tsetup.assert_equal(actnum.values[12, 22, 5], 0, txt="ACTNUM 0")
+    assert actnum.values[12, 22, 5] == 0, "ACTNUM 0"
 
     actnum.values[:, :, :] = 1
     actnum.values[:, :, 4:6] = 0
     grd.set_actnum(actnum)
     newactive = grd.ncol * grd.nrow * grd.nlay - 2 * (grd.ncol * grd.nrow)
-    tsetup.assert_equal(grd.nactive, newactive, txt="Changed ACTNUM")
+    assert grd.nactive == newactive, "Changed ACTNUM"
     grd.to_file(tmp_path / "reek_new_actnum.roff")
 
 
@@ -493,7 +469,7 @@ def test_eclgrid_import3(tmp_path):
     xori2 = mylist[0]
 
     # check if origin is translated 100m in X
-    tsetup.assert_equal(xori1 + 100, xori2, txt="Translate X distance")
+    assert xori1 + 100 == xori2, "Translate X distance"
 
     grd.to_file(tmp_path / "g1_translate.roff", fformat="roff_binary")
 
@@ -510,12 +486,12 @@ def test_geometrics_reek():
         logger.info("%s is %s", key, val)
 
     # compared with RMS info:
-    tsetup.assert_almostequal(geom["xmin"], 456510.6, 0.1, "Xmin")
-    tsetup.assert_almostequal(geom["ymax"], 5938935.5, 0.1, "Ymax")
+    assert geom["xmin"] == pytest.approx(456510.6, abs=0.1), "Xmin"
+    assert geom["ymax"] == pytest.approx(5938935.5, abs=0.1), "Ymax"
 
     # cellcenter True:
     geom = grd.get_geometrics(return_dict=True, cellcenter=True)
-    tsetup.assert_almostequal(geom["xmin"], 456620, 1, "Xmin cell center")
+    assert geom["xmin"] == pytest.approx(456620, abs=1), "Xmin cell center"
 
 
 def test_activate_all_cells(tmp_path):
@@ -567,10 +543,10 @@ def test_simple_io(tmp_path):
     dz2 = gg2.get_dz()
     dz3 = gg3.get_dz()
 
-    tsetup.assert_almostequal(dz1.values.mean(), dz2.values.mean(), 0.001)
-    tsetup.assert_almostequal(dz1.values.std(), dz2.values.std(), 0.001)
-    tsetup.assert_almostequal(dz1.values.mean(), dz3.values.mean(), 0.001)
-    tsetup.assert_almostequal(dz1.values.std(), dz3.values.std(), 0.001)
+    assert dz1.values.mean() == pytest.approx(dz2.values.mean(), abs=0.001)
+    assert dz1.values.std() == pytest.approx(dz2.values.std(), abs=0.001)
+    assert dz1.values.mean() == pytest.approx(dz3.values.mean(), abs=0.001)
+    assert dz1.values.std() == pytest.approx(dz3.values.std(), abs=0.001)
 
 
 def test_ecl_run(tmp_path):
@@ -582,7 +558,7 @@ def test_ecl_run(tmp_path):
 
     # get the property object:
     pres1 = gg.get_prop_by_name("PRESSURE_20030101")
-    tsetup.assert_almostequal(pres1.values.mean(), 308.45, 0.001)
+    assert pres1.values.mean() == pytest.approx(308.45, abs=0.001)
 
     pres1.to_file(tmp_path / "pres1.roff")
 
@@ -599,7 +575,7 @@ def test_ecl_run(tmp_path):
     # logger.debug(pres1)
     avg = pres1.values.mean()
     # ok checked in RMS:
-    tsetup.assert_almostequal(avg, -26.073, 0.001)
+    assert avg == pytest.approx(-26.073, abs=0.001)
 
     pres1.to_file(tmp_path / "pressurediff.roff", name="PRESSUREDIFF")
 
@@ -669,11 +645,11 @@ def test_grid_design(load_gfile1):
 
     code = grd.estimate_design(1)
     assert code["design"] == "P"
-    tsetup.assert_almostequal(code["dzsimbox"], 2.5488, 0.001)
+    assert code["dzsimbox"] == pytest.approx(2.5488, abs=0.001)
 
     code = grd.estimate_design(2)
     assert code["design"] == "T"
-    tsetup.assert_almostequal(code["dzsimbox"], 3.0000, 0.001)
+    assert code["dzsimbox"] == pytest.approx(3.0000, abs=0.001)
 
     code = grd.estimate_design("subgrid_0")
     assert code["design"] == "P"
@@ -809,7 +785,6 @@ def test_bulkvol():
     assert bulk.values.sum() == pytest.approx(cellvol_rms.values.sum(), rel=0.001)
 
 
-@tsetup.bigtest
 def test_bulkvol_speed():
     """Test cell bulk volume calculation speed."""
     dimens = (100, 500, 50)

@@ -4,7 +4,6 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
-import tests.test_common.test_xtg as tsetup
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import Grid, GridProperty
 
@@ -203,11 +202,11 @@ def test_reverse_row_axis_dualprops():
     poro = grd.gridprops.props[0]
     logger.info(grd.gridprops.describe())
     porowas = poro.copy()
-    tsetup.assert_almostequal(poro.values[1, 0, 0], 0.17777, 0.01)
+    assert poro.values[1, 0, 0] == pytest.approx(0.17777, abs=0.01)
     assert grd.ijk_handedness == "left"
 
     grd.reverse_row_axis()
-    tsetup.assert_almostequal(poro.values[1, 2, 0], 0.17777, 0.01)
+    assert poro.values[1, 2, 0] == pytest.approx(0.17777, abs=0.01)
     assert poro.values[1, 2, 0] == porowas.values[1, 0, 0]
 
     grd.reverse_row_axis()
@@ -233,7 +232,7 @@ def test_reverse_row_axis_eme(tmpdir):
     grd2.to_file(join(tmpdir, "eme_right.roff"), fformat="roff")
     geom2 = grd2.get_geometrics(return_dict=True)
 
-    tsetup.assert_almostequal(geom1["avg_rotation"], geom2["avg_rotation"], 0.01)
+    assert geom1["avg_rotation"] == pytest.approx(geom2["avg_rotation"], abs=0.01)
 
 
 def test_copy_grid(tmpdir):

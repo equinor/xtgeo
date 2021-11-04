@@ -2,12 +2,12 @@
 """Import/export of grid properties (cf GridProperties class)"""
 
 from copy import deepcopy
-import xtgeo
 
+import xtgeo
 from xtgeo.grid3d import _gridprop_import_eclrun
 
-from .grid_property import GridProperty
 from . import _grid3d_utils as utils
+from .grid_property import GridProperty
 
 xtg = xtgeo.XTGeoDialog()
 
@@ -174,11 +174,6 @@ def _import_ecl_output_v2_rsta(
 
         prop = GridProperty()
 
-        usename = name + "_" + str(date)
-        if namestyle == 1:
-            sdate = str(date)
-            usename = name + "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
-
         # use a private GridProperty function, since filehandle
         _gridprop_import_eclrun.import_eclbinary(
             prop,
@@ -189,8 +184,11 @@ def _import_ecl_output_v2_rsta(
             etype=5,
             _kwlist=kwlist,
         )
+        if namestyle == 1:
+            sdate = str(date)
+            prop._name = name + "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
 
-        self._names.append(usename)
+        self._names.append(prop.name)
         self._props.append(prop)
 
         self._dates.append(date)

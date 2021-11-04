@@ -1,7 +1,8 @@
 import pathlib
 
+import pytest
+
 import xtgeo
-import tests.test_common.test_xtg as tsetup
 
 SFILE1A = pathlib.Path("surfaces/reek/1/topupperreek.gri")
 SFILE2A = pathlib.Path("surfaces/reek/2/01_topreek_rota.gri")
@@ -19,7 +20,7 @@ def test_snap_to_surface(testpath):
     mypoints.snap_surface(surf1)
     assert mypoints.nrow == 11
 
-    tsetup.assert_almostequal(mypoints.dataframe["Z_TVDSS"].mean(), 1661.45, 0.01)
+    assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1661.45, abs=0.01)
 
     # repeat,using surface whithg rotaion and partial masks
 
@@ -28,10 +29,10 @@ def test_snap_to_surface(testpath):
 
     mypoints.snap_surface(surf2)
     assert mypoints.nrow == 12
-    tsetup.assert_almostequal(mypoints.dataframe["Z_TVDSS"].mean(), 1687.45, 0.01)
+    assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1687.45, abs=0.01)
 
     # alternative; keep values as is using activeobnly=False
     mypoints = xtgeo.Points(testpath / PFILE3)
     mypoints.snap_surface(surf2, activeonly=False)
     assert mypoints.nrow == 20
-    tsetup.assert_almostequal(mypoints.dataframe["Z_TVDSS"].mean(), 1012.47, 0.01)
+    assert mypoints.dataframe["Z_TVDSS"].mean() == pytest.approx(1012.47, abs=0.01)

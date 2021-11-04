@@ -1,6 +1,5 @@
 """Setup common stuff for pytests."""
 import os
-import platform
 
 import pytest
 from hypothesis import HealthCheck, settings
@@ -14,9 +13,6 @@ settings.register_profile(
     deadline=None,
     suppress_health_check=[HealthCheck.too_slow],
 )
-
-ALLPLATF = set("darwin linux windows".split())
-SKIPPED = set("skipdarwin skiplinux skipwindows".split())
 
 
 @pytest.fixture
@@ -35,13 +31,8 @@ def pytest_runtest_setup(item):
         if "XTG_BIGTEST" not in os.environ:
             pytest.skip("Skip big test (no env variable XTG_BIGTEST)")
 
-    # pytest.mark.skipifroxar:
-    if "skipifroxar" in markers:
-        if "ROXENV" in os.environ:
-            pytest.skip("Skip test in ROXENV (env variable ROXENV is present)")
-
-    # pytest.mark.skipunlessroxar:
-    if "skipunlessroxar" in markers:
+    # pytest.mark.requires_roxar:
+    if "requires_roxar" in markers:
         if "ROXENV" not in os.environ:
             pytest.skip("Skip test if outside ROXENV (env variable ROXENV is present)")
 
@@ -50,47 +41,15 @@ def pytest_runtest_setup(item):
         if "HAS_OPM" not in os.environ:
             pytest.skip("Skip as requires OPM")
 
-    # pytest.mark.linux ...
-    supported = ALLPLATF.intersection(mark.name for mark in item.iter_markers())
-    plat = platform.system().lower()
-    if supported and plat not in supported:
-        pytest.skip("cannot run on platform {}".format(plat))
-
-    # pytest.mark.skiplinux ...
-    skipped = SKIPPED.intersection(mark.name for mark in item.iter_markers())
-    plat = "skip" + platform.system().lower()
-    if skipped and plat in skipped:
-        pytest.skip("cannot run on platform {}".format(plat))
-
-
-def assert_equal(this, that, txt=""):
-    """Assert equal wrapper function."""
-    assert this == that, txt
-
-
-def assert_almostequal(this, that, tol, txt=""):
-    """Assert almost equal wrapper function."""
-    assert this == pytest.approx(that, abs=tol), txt
-
 
 @pytest.fixture(name="show_plot")
 def fixture_xtgshow():
     """For eventual plotting, to be uses in an if sence inside a test."""
+    if "ROXENV" in os.environ:
+        pytest.skip("Skip plotting tests in roxar environment")
     if any(word in os.environ for word in ["XTGSHOW", "XTG_SHOW"]):
         return True
     return False
-
-
-@pytest.fixture(name="demo")
-def fixture_demo():
-    """Fixture demo for later usage.
-
-    In the test script run like:
-
-    def test_whatever(demo):
-        demo
-    """
-    print("THIS IS A DEMO")
 
 
 def pytest_addoption(parser):
@@ -114,6 +73,8 @@ def pytest_addoption(parser):
 
 @pytest.fixture(name="generate_plot")
 def fixture_generate_plot(request):
+    if "ROXENV" in os.environ:
+        pytest.skip("Skip plotting tests in roxar environment")
     return request.config.getoption("--generate-plots")
 
 
