@@ -5,23 +5,235 @@
 
 from distutils.version import StrictVersion
 
+import deprecation
+import numpy as np
 import pandas as pd
+import shapely.geometry as sg
 
 import xtgeo
-
-from . import _wells_utils
+from xtgeo.common import XTGShowProgress
 
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
-class Wells(object):
-    """Class for a collection of Well objects, for operations that involves
-    a number of wells.
+def wells_intersections(
+    well_list, wfilter=None, showprogress=False
+):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    """Get intersections between wells, return as dataframe table.
 
-    See also the :class:`xtgeo.well.Well` class.
+    Notes on wfilter: A wfilter is settings to improve result. In
+    particular to remove parts of trajectories that are parallel.
+
+    wfilter = {'parallel': {'xtol': 4.0, 'ytol': 4.0, 'ztol':2.0,
+                            'itol':10, 'atol':2}}
+
+    Here xtol is tolerance in X coordinate; further Y tolerance,
+    Z tolerance, (I)nclination tolerance, and (A)zimuth tolerance.
+
+    Args:
+        well_list (list of wells): The list of wells to find intersections of.
+        tvdrange (tuple of floats): Search interval. One is often just
+            interested in the reservoir section.
+        wfilter (dict): A dictionrary for filter options, in order to
+            improve result. See example above.
+        showprogress (bool): Will show progress to screen if enabled.
+
+    Returns:
+        A Pandas dataframe object, with columns WELL, CWELL and UTMX UTMY
+            TVD coordinates for CWELL where CWELL crosses WELL,
+            and also MDEPTH for the WELL.
     """
 
+    xpoints = []
+
+    # make a dict if nocrossings
+    nox = {}
+
+    progress = XTGShowProgress(
+        len(well_list), show=showprogress, leadtext="progress: ", skip=5
+    )
+
+    for iwell, well in enumerate(well_list):
+
+        progress.flush(iwell)
+
+        logger.info("Work with %s", well.name)
+        try:
+            well.geometrics()
+        except ValueError:
+            logger.info("Skip %s (cannot compute geometrics)", well.name)
+            continue
+
+        welldfr = well.dataframe.copy()
+
+        xcor = welldfr["X_UTME"].values
+        ycor = welldfr["Y_UTMN"].values
+        mcor = welldfr[well.mdlogname].values
+        logger.info("The mdlogname property is: %s", well.mdlogname)
+
+        if xcor.size < 2:
+            continue
+
+        thisline1 = sg.LineString(np.stack([xcor, ycor], axis=1))
+        thisline2 = sg.LineString(np.stack([xcor, ycor, mcor], axis=1))
+
+        nox[well.name] = list()
+        # loop over other wells
+        for other in well_list:
+
+            if other.name == well.name:
+                continue  # same well
+
+            if not well.may_overlap(other):
+                nox[well.name].append(other.name)
+                continue  # a quick check; no chance for overlap
+
+            logger.info("Consider crossing with %s ...", other.name)
+
+            # try to be smart to skip entries that earlier have beenn tested
+            # for crossing. If other does not cross well, then well does not
+            # cross other...
+            if other.name in nox.keys() and well.name in nox[other.name]:
+                continue
+
+            # truncate away the paralell part on a copy
+            owell = other.copy()
+
+            # wfilter = None
+            if wfilter is not None and "parallel" in wfilter:
+                xtol = wfilter["parallel"].get("xtol")
+                ytol = wfilter["parallel"].get("ytol")
+                ztol = wfilter["parallel"].get("ztol")
+                itol = wfilter["parallel"].get("itol")
+                atol = wfilter["parallel"].get("atol")
+                owell.truncate_parallel_path(
+                    well, xtol=xtol, ytol=ytol, ztol=ztol, itol=itol, atol=atol
+                )
+
+            xcorc = owell.dataframe["X_UTME"].values
+            ycorc = owell.dataframe["Y_UTMN"].values
+            zcorc = owell.dataframe["Z_TVDSS"].values
+
+            if xcorc.size < 2:
+                continue
+
+            otherline = sg.LineString(np.stack([xcorc, ycorc, zcorc], axis=1))
+
+            if not thisline1.crosses(otherline):
+                nox[well.name].append(other.name)
+                continue
+
+            ixx = thisline1.intersection(otherline)
+
+            if ixx.is_empty:
+                nox[well.name].append(other.name)
+                continue
+
+            # need this trick to get mdepth
+            other2 = sg.LineString(np.stack([xcorc, ycorc], axis=1))
+            ixx2 = thisline2.intersection(other2)
+
+            logger.debug("==> Intersects with %s", other.name)
+
+            if isinstance(ixx, sg.Point):
+                xcor, ycor, zcor = ixx.coords[0]
+                _x, _y, mcor = ixx2.coords[0]
+                xpoints.append([well.name, mcor, other.name, xcor, ycor, zcor])
+
+            elif isinstance(ixx, sg.MultiPoint):
+                pxx2 = list(ixx2)
+                for ino, pxx in enumerate(list(ixx)):
+                    xcor, ycor, zcor = pxx.coords[0]
+                    _x, _y, mcor = pxx2[ino].coords[0]
+                    xpoints.append([well.name, mcor, other.name, xcor, ycor, zcor])
+
+            elif isinstance(ixx, sg.GeometryCollection):
+                gxx2 = list(ixx2)
+                for ino, gxx in enumerate(list(ixx)):
+                    if isinstance(gxx, sg.Point):
+                        xcor, ycor, zcor = gxx.coords[0]
+                        _x, _y, mcor = gxx2[ino].coords[0]
+                        xpoints.append([well.name, mcor, other.name, xcor, ycor, zcor])
+
+    dfr = pd.DataFrame(
+        xpoints, columns=["WELL", "MDEPTH", "CWELL", "X_UTME", "Y_UTMN", "Z_TVDSS"]
+    )
+
+    progress.finished()
+
+    logger.info("All intersections found!")
+    return dfr
+
+
+def wells_dataframe(well_list, filled=False, fill_value1=-999, fill_value2=-9999):
+    """Get a big dataframe for all wells or blocked wells in well list,
+    with well name as first column
+
+    Args:
+        filled (bool): If True, then NaN's are replaces with values
+        fill_value1 (int): Only applied if filled=True, for logs that
+            have missing values
+        fill_value2 (int): Only applied if filled=True, when logs
+            are missing completely for that well.
+    """
+    logger.info("Ask for big dataframe for all wells")
+
+    bigdf = []
+    for well in well_list:
+        dfr = well.dataframe.copy()
+        dfr["WELLNAME"] = well.name
+        logger.info(well.name)
+        if filled:
+            dfr = dfr.fillna(fill_value1)
+        bigdf.append(dfr)
+
+    if StrictVersion(pd.__version__) > StrictVersion("0.23.0"):
+        # pylint: disable=unexpected-keyword-arg
+        dfr = pd.concat(bigdf, ignore_index=True, sort=True)
+    else:
+        dfr = pd.concat(bigdf, ignore_index=True)
+
+    # the concat itself may lead to NaN's:
+    if filled:
+        dfr = dfr.fillna(fill_value2)
+
+    spec_order = ["WELLNAME", "X_UTME", "Y_UTMN", "Z_TVDSS"]
+    dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
+
+    return dfr
+
+
+def plot_wells(well_list, filename=None, title="QuickPlot"):
+    """Fast plot of wells using matplotlib.
+
+    Args:
+        filename (str): Name of plot file; None will plot to screen.
+        title (str): Title of plot
+
+    """
+
+    mymap = xtgeo.plot.Map()
+
+    mymap.canvas(title=title)
+
+    mymap.plot_wells(well_list)
+
+    if filename is None:
+        mymap.show()
+    else:
+        mymap.savefig(filename)
+
+
+class Wells(object):
+    """Deprecated collection of wells, use a list of wells instead"""
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="The wells class is deprecated in favor of using a list",
+    )
     def __init__(self, *args, **kwargs):
 
         self._wells = []  # list of Well objects
@@ -55,12 +267,10 @@ class Wells(object):
                 print ('Well name is {}'.format(name))
 
         """
+        return [w.name for w in self._wells]
 
-        wlist = []
-        for wel in self._wells:
-            wlist.append(wel.name)
-
-        return wlist
+    def __iter__(self):
+        return iter(self._wells)
 
     @property
     def wells(self):
@@ -94,6 +304,12 @@ class Wells(object):
 
         return dsc.astext()
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use [w.copy() for w in wells] instead",
+    )
     def copy(self):
         """Copy a Wells instance to a new unique instance (a deep copy)."""
 
@@ -102,6 +318,12 @@ class Wells(object):
 
         return new
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use [w for w in wells if w.name == name] instead",
+    )
     def get_well(self, name):
         """Get a Well() instance by name, or None"""
 
@@ -111,6 +333,12 @@ class Wells(object):
                 return well
         return None
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use [xtgeo.well_from_file(f) for f in filelist] instead",
+    )
     def from_files(
         self,
         filelist,
@@ -163,130 +391,54 @@ class Wells(object):
             xtg.warn("No wells imported!")
 
     def from_roxar(self, *args, **kwargs):
-        """Import (retrieve) all wells (or based on a filter) from
-        roxar project.
+        raise NotImplementedError(
+            "Not implemented and the Wells class"
+            " is deprecated, use a list of wells instead."
+        )
 
-        Note this method works only when inside RMS, or when RMS license is
-        activated.
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.wells_dataframe() instead",
+    )
+    def get_dataframe(self, *args, **kwargs):
+        return wells_dataframe(self, *args, **kwargs)
 
-        All the wells present in the bwname icon will be imported.
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.plot_wells() instead",
+    )
+    def quickplot(self, *args, **kwargs):
+        return plot_wells(self, *args, **kwargs)
 
-        Args:
-            project (str): Magic string 'project' or file path to project
-            lognames (list): List of lognames to include, or use 'all' for
-                all current blocked logs for this well.
-            wfilter (str): This is a regular expression to tell which wells
-                that shall be included.
-            ijk (bool): If True, then logs with grid IJK as I_INDEX, etc
-            realisation (int): Realisation index (0 is default)
-
-        Example::
-
-            import xtgeo
-            mywells = xtgeo.Wells()
-            mywells.from_roxar(project, lognames='all', wfilter='31.*')
-
-        """
-        raise NotImplementedError("In prep...")
-
-    # not having this as property but a get_ .. is intended, for flexibility
-    def get_dataframe(self, filled=False, fill_value1=-999, fill_value2=-9999):
-        """Get a big dataframe for all wells or blocked wells in instance,
-        with well name as first column
-
-        Args:
-            filled (bool): If True, then NaN's are replaces with values
-            fill_value1 (int): Only applied if filled=True, for logs that
-                have missing values
-            fill_value2 (int): Only applied if filled=True, when logs
-                are missing completely for that well.
-        """
-        logger.info("Ask for big dataframe for all wells")
-
-        bigdf = []
-        for well in self._wells:
-            dfr = well.dataframe.copy()
-            dfr["WELLNAME"] = well.name
-            logger.info(well.name)
-            if filled:
-                dfr = dfr.fillna(fill_value1)
-            bigdf.append(dfr)
-
-        if StrictVersion(pd.__version__) > StrictVersion("0.23.0"):
-            # pylint: disable=unexpected-keyword-arg
-            dfr = pd.concat(bigdf, ignore_index=True, sort=True)
-        else:
-            dfr = pd.concat(bigdf, ignore_index=True)
-
-        # the concat itself may lead to NaN's:
-        if filled:
-            dfr = dfr.fillna(fill_value2)
-
-        spec_order = ["WELLNAME", "X_UTME", "Y_UTMN", "Z_TVDSS"]
-        dfr = dfr[spec_order + [col for col in dfr if col not in spec_order]]
-
-        return dfr
-
-    def quickplot(self, filename=None, title="QuickPlot"):
-        """Fast plot of wells using matplotlib.
-
-        Args:
-            filename (str): Name of plot file; None will plot to screen.
-            title (str): Title of plot
-
-        """
-
-        mymap = xtgeo.plot.Map()
-
-        mymap.canvas(title=title)
-
-        mymap.plot_wells(self)
-
-        if filename is None:
-            mymap.show()
-        else:
-            mymap.savefig(filename)
-
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use [w.limit_tvd() for w in wells] instead.",
+    )
     def limit_tvd(self, tvdmin, tvdmax):
-        """Limit TVD to be in range tvdmin, tvdmax for all wells"""
         for well in self.wells:
             well.limit_tvd(tvdmin, tvdmax)
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use [w.downsample() for w in wells] instead.",
+    )
     def downsample(self, interval=4, keeplast=True):
-        """Downsample by sampling every N'th element (coarsen only), all
-        wells.
-        """
-
         for well in self.wells:
             well.downsample(interval=interval, keeplast=keeplast)
 
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.wells_intersections() instead",
+    )
     def wellintersections(self, wfilter=None, showprogress=False):
-        """Get intersections between wells, return as dataframe table.
-
-        Notes on wfilter: A wfilter is settings to improve result. In
-        particular to remove parts of trajectories that are parallel.
-
-        wfilter = {'parallel': {'xtol': 4.0, 'ytol': 4.0, 'ztol':2.0,
-                                'itol':10, 'atol':2}}
-
-        Here xtol is tolerance in X coordinate; further Y tolerance,
-        Z tolerance, (I)nclination tolerance, and (A)zimuth tolerance.
-
-        Args:
-            tvdrange (tuple of floats): Search interval. One is often just
-                interested in the reservoir section.
-            wfilter (dict): A dictionrary for filter options, in order to
-                improve result. See example above.
-            showprogress (bool): Will show progress to screen if enabled.
-
-        Returns:
-            A Pandas dataframe object, with columns WELL, CWELL and UTMX UTMY
-                TVD coordinates for CWELL where CWELL crosses WELL,
-                and also MDEPTH for the WELL.
-        """
-
-        dfr = _wells_utils.wellintersections(
-            self, wfilter=wfilter, showprogress=showprogress
-        )
-
-        return dfr
+        return wells_intersections(self, wfilter=wfilter, showprogress=showprogress)

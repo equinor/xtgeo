@@ -110,6 +110,7 @@ from xtgeo.well import wells
 from xtgeo.well import blocked_well
 from xtgeo.well import blocked_wells
 
+from xtgeo.well import wells_intersections, plot_wells, wells_dataframe
 from xtgeo.well.well1 import Well
 from xtgeo.well.wells import Wells
 from xtgeo.well.blocked_well import BlockedWell
