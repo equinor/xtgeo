@@ -18,32 +18,33 @@ logger = xtg.functionlogger(__name__)
 
 
 def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
-    """Simple text X Y Z files on ROFF_ascii or just XYZ.
+    """Simple text X Y Z files on rms_ascii/irap_text or just XYZ.
 
-    The are some subtle differences between a Roff text file and XYZ file
+    The format names 'irap_ascii', 'irap_text', 'rms_ascii', 'rms_text' are all the
+    same format (the name has changed through history; the original was "irap_ascii")
+
+    The are some subtle differences between a RMS text file and XYZ file
     according to RMS documentation:
 
     Points:
 
-    roff_ascii and XYZ seems identical!
+    rms_ascii and XYZ seems identical!
 
     Polygons:
 
-    roff_ascii have 3 columns and will contain a line 999.0 999.0 999.0 to
+    rms_ascii have 3 columns and will contain a line 999.0 999.0 999.0 to
     seperate polygons.
 
     The XYZ files valid for Polygons will have an ID column. It may be 3 or 4 columns,
-    if only 3 then the Z values is assumed to be 0.0
-
-
+    if only 3 then the Z values is assumed to be 0.0. The last column is always the ID.
     """
-    assume_roff_txt = True  # assume that XYZ file is ROFF text based
+    assume_rms_text = True  # assume that XYZ file is irap text based
 
     ncolumns = 3
-    with open(pfile.file, "r") as stream:
+    with open(pfile.file, "r", encoding="utf8") as stream:
         fields = stream.readline().split()
         if len(fields) == 4:
-            assume_roff_txt = False
+            assume_rms_text = False
             ncolumns = 4
             if not is_polygons:
                 raise TypeError(
@@ -52,12 +53,12 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
                 )
         else:
             if not is_polygons:
-                assume_roff_txt = True
+                assume_rms_text = True
             else:
-                assume_roff_txt = False
+                assume_rms_text = False
 
             if "." in fields[2]:
-                assume_roff_txt = True
+                assume_rms_text = True
 
     args = {}
     _xn = args["xname"] = "X_UTME"
@@ -65,7 +66,7 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
     _zn = args["zname"] = zname
     _pn = args["pname"] = None
 
-    if assume_roff_txt:
+    if assume_rms_text:
         dfr = pd.read_csv(
             pfile.file,
             delim_whitespace=True,
@@ -78,14 +79,14 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
     if not is_polygons:
         dfr.dropna(inplace=True)
 
-    if is_polygons and assume_roff_txt:
+    if is_polygons and assume_rms_text:
         # make a new polygon for every input line which are undefined (999 in input)
         _pn = args["pname"] = "POLY_ID"
         dfr[_pn] = dfr.isnull().all(axis=1).cumsum().dropna()
         dfr.dropna(axis=0, inplace=True)
         dfr.reset_index(inplace=True, drop=True)
 
-    if is_polygons and not assume_roff_txt:
+    if is_polygons and not assume_rms_text:
         _pn = args["pname"] = "POLY_ID"
         dtypes = {_xn: np.float64, _yn: np.float64, _pn: np.int32}
         if ncolumns == 4:
