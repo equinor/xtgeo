@@ -533,9 +533,7 @@ class XYZ:
         Raises:
             ValueError: If something is wrong with input
 
-        .. versionadded:: 2.6
-        .. versionchanged:: 2.16
-
+        .. versionadded:: 2.16
         """
         self._filesrc = "Derived from: numpy array"
         if isinstance(plist, list):
