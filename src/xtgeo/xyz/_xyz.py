@@ -151,10 +151,10 @@ class XYZ:
         **kwargs,
     ):
         dataframe = kwargs.get("dataframe", None)
-        # -> this is hidden in the public API and only used for internal class methods like
-        # xtgeo.points_from_surface, etc; the correct dataframe will be made in advance
-        # to avoid a second of round of processing. In such cases, 'values' shall be
-        # None to avoid conflicts.
+        # -> this is hidden in the public API and only used for internal class methods
+        # like xtgeo.points_from_surface, etc; the correct dataframe will be made in
+        # advance to avoid a second of round of processing here. In such cases, 'values'
+        # shall be None to avoid conflicts.
 
         if values is not None and dataframe is not None:
             raise ValueError("Conflicting 'values' and 'dataframe' input!")
