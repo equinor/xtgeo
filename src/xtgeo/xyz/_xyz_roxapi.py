@@ -439,10 +439,3 @@ def _get_roxvalues(rox_xyz, realisation=0):  # pragma: no cover
         logger.error(kwe)
 
     return roxitem
-
-
-def _set_roxvalues(
-    rox_xyz, values, is_polygons=False, realisation=0
-):  # pragma: no cover
-    """Set the values to Roxar API, either numpy (Points) or list(Polygons)."""
-    pass
