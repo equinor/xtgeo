@@ -106,20 +106,7 @@ def test_create_pointset(points):
     np.testing.assert_array_almost_equal(pointset.dataframe["Z_TVDSS"], points[:, 2])
 
 
-<<<<<<< HEAD
 def test_import_from_dataframe_old(testpath):
-=======
-def test_import(testpath):
-    """Import XYZ points from file."""
-
-    mypoints = Points(testpath / PFILE)  # should guess based on extesion
-
-    x0 = mypoints.dataframe["X_UTME"].values[0]
-    assert x0 == pytest.approx(460842.434326, 0.001)
-
-
-def test_import_from_dataframe(testpath):
->>>>>>> 79e82ab8b8d6dcfbf3fccac50e95268c5eed6023
     """Import Points via Pandas dataframe."""
 
     mypoints = Points()
