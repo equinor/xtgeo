@@ -21,7 +21,8 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
     """Simple text X Y Z files on rms_ascii/irap_text or just XYZ.
 
     The format names 'irap_ascii', 'irap_text', 'rms_ascii', 'rms_text' are all the
-    same format (the name has changed through history; the original was "irap_ascii")
+    same format (the name has changed through history; the original was "irap_ascii"),
+    while XYZ differs somewhat.
 
     The are some subtle differences between a RMS text file and XYZ file
     according to RMS documentation:
