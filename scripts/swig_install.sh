@@ -11,14 +11,13 @@ mkdir -p _tmp_swig
 INST=$(pwd)
 SWIGURL="https://ftp.osuosl.org/pub/blfs/conglomeration/swig"
 SWIG="swig-3.0.12"
-PCRE="https://ftp.pcre.org/pub/pcre/pcre-8.38.tar.gz"
 
 pushd _tmp_swiginstall
 curl -O ${SWIGURL}/${SWIG}.tar.gz
 tar xf ${SWIG}.tar.gz
 pushd ${SWIG}
-curl -O $PCRE
-sh Tools/pcre-build.sh > swiginstall.log
+curl -L https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz > pcre-8.45.tar.gz
+sh Tools/pcre-build.sh
 echo "Running configure..."
 ./configure --prefix="$INST/_tmp_swig"  > swiginstall.log
 
