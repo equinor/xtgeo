@@ -4,11 +4,16 @@
 
 import sys
 
+import hypothesis.strategies as st
 import pytest
+from hypothesis import assume, given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import GridProperties
+
+from .ecl_run_fixtures import *  # noqa: F401, F403
+from .gridprop_generator import grid_properties as gridproperties_elements
 
 xtg = XTGeoDialog()
 
@@ -29,118 +34,40 @@ XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
 # pylint: disable=invalid-name
 
 
-def test_import_init():
-    """Import INIT Reek"""
-
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    x = GridProperties()
-
-    names = ["PORO", "PORV"]
-    x.from_file(IFILE1, fformat="init", names=names, grid=g)
-
-    # get the object
-    poro = x.get_prop_by_name("PORO")
-    logger.info("PORO avg {}".format(poro.values.mean()))
-
-    porv = x.get_prop_by_name("PORV")
-    logger.info("PORV avg {}".format(porv.values.mean()))
-    assert poro.values.mean() == pytest.approx(0.1677402, abs=0.00001)
-
-
-def test_gridproperties_iter():
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
+@st.composite
+def gridproperties(draw):
     gps = GridProperties()
-    gps.from_file(IFILE1, fformat="init", names=["PORO", "PORV"], grid=g)
+    gps._props = []
+    gps.append_props(draw(st.lists(elements=gridproperties_elements())))
+    return gps
 
+
+@given(gridproperties(), st.text())
+def test_gridproperties_get_prop_by_name_not_exists(gps, name):
+    assume(name not in gps.names)
+
+    assert gps.get_prop_by_name(name, raiseserror=False) is None
+
+    with pytest.raises(ValueError, match="Cannot find"):
+        gps.get_prop_by_name(name)
+
+    with pytest.raises(KeyError, match="does not exist"):
+        gps[name]
+
+
+@given(gridproperties())
+def test_gridproperties_iter(gps):
     count = 0
     for _ in gps:
         for _ in gps:
             count += 1
 
-    assert count == 4
+    if gps.props is None:
+        num_props = 0
+    else:
+        num_props = len(gps.props)
 
-
-def test_import_should_fail():
-    """Import INIT and UNRST Reek but ask for wrong name or date"""
-
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    x = GridProperties()
-
-    names = ["PORO", "NOSUCHNAME"]
-    with pytest.raises(ValueError) as e_info:
-        logger.warning(e_info)
-        x.from_file(IFILE1, fformat="init", names=names, grid=g)
-
-    rx = GridProperties()
-    names = ["PRESSURE"]
-    dates = [19991201, 19991212]  # last date does not exist
-
-    rx.from_file(
-        RFILE1, fformat="unrst", names=names, dates=dates, grid=g, strict=(True, False)
-    )
-
-    with pytest.raises(ValueError) as e_info:
-        rx.from_file(
-            RFILE1,
-            fformat="unrst",
-            names=names,
-            dates=dates,
-            grid=g,
-            strict=(True, True),
-        )
-
-
-def test_import_should_pass():
-    """Import INIT and UNRST but ask for wrong name or date , using strict=False"""
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    rx = GridProperties()
-    names = ["PRESSURE", "DUMMY"]  # dummy should exist
-    dates = [19991201, 19991212]  # last date does not exist
-
-    rx.from_file(
-        RFILE1, fformat="unrst", names=names, dates=dates, grid=g, strict=(False, False)
-    )
-
-    assert "PRESSURE_19991201" in rx
-    assert "PRESSURE_19991212" not in rx
-    assert "DUMMY_19991201" not in rx
-
-
-def test_import_restart():
-    """Import Restart"""
-
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    x = GridProperties()
-
-    names = ["PRESSURE", "SWAT"]
-    dates = [19991201, 20010101]
-    x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
-
-    # get the object
-    pr = x.get_prop_by_name("PRESSURE_19991201")
-
-    swat = x.get_prop_by_name("SWAT_19991201")
-
-    logger.info(x.names)
-
-    logger.info(swat.values3d.mean())
-    logger.info(pr.values3d.mean())
-
-    txt = "Average PRESSURE_19991201"
-    assert pr.values.mean() == pytest.approx(334.52327, abs=0.0001), txt
-
-    txt = "Average SWAT_19991201"
-    assert swat.values.mean() == pytest.approx(0.87, abs=0.01), txt
-
-    pr = x.get_prop_by_name("PRESSURE_20010101")
-    logger.info(pr.values3d.mean())
-    txt = "Average PRESSURE_20010101"
-    assert pr.values.mean() == pytest.approx(304.897, abs=0.01), txt
+    assert count == num_props ** 2
 
 
 def test_restart_name_style():
@@ -252,27 +179,3 @@ def test_scan_keywords_roff():
     t2 = xtg.timer(t1)
     logger.info("Dates scanned in {} seconds".format(t2))
     logger.info(df)
-
-
-#    assert df.loc[12, 'KEYWORD'] == 'SWAT'
-
-
-def test_get_dataframe():
-    """Get a Pandas dataframe from the gridproperties"""
-
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    x = GridProperties()
-
-    names = ["SOIL", "SWAT", "PRESSURE"]
-    dates = [19991201]
-    x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
-    df = x.dataframe(activeonly=True, ijk=True, xyz=False)
-
-    print(df.head())
-
-    assert df["SWAT_19991201"].mean() == pytest.approx(0.87802, abs=0.001)
-    assert df["PRESSURE_19991201"].mean() == pytest.approx(334.523, abs=0.005)
-
-
-#    df = x.dataframe(activeonly=True, ijk=True, xyz=True)

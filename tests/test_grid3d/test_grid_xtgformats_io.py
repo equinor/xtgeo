@@ -18,9 +18,6 @@ logger = xtg.basiclogger(__name__)
 if not xtg.testsetup():
     raise SystemExit
 
-TPATH = xtg.testpathobj
-
-
 BIGBOX_DIMENSIONS = (100, 100, 20)
 
 

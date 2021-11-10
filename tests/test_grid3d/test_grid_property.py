@@ -15,7 +15,6 @@ import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import Grid, GridProperty
-from xtgeo.xyz import Polygons
 
 from .grid_generator import dimensions, xtgeo_grids
 
@@ -33,10 +32,6 @@ if not xtg.testsetup():
 TPATH = xtg.testpathobj
 
 TESTFILE1 = TPATH / "3dgrids/reek/reek_sim_poro.roff"
-TESTFILE2 = TPATH / "3dgrids/eme/1/emerald_hetero.roff"
-TESTFILE5 = TPATH / "3dgrids/reek/REEK.EGRID"
-TESTFILE6 = TPATH / "3dgrids/reek/REEK.INIT"
-TESTFILE7 = TPATH / "3dgrids/reek/REEK.UNRST"
 TESTFILE8 = TPATH / "3dgrids/reek/reek_sim_zone.roff"
 TESTFILE8A = TPATH / "3dgrids/reek/reek_sim_grid.roff"
 TESTFILE9 = TESTFILE1
@@ -46,12 +41,7 @@ POLYFILE = TPATH / "polygons/reek/1/polset2.pol"
 
 TESTFILE12A = TPATH / "3dgrids/reek/reek_sim_grid.grdecl"
 TESTFILE12B = TPATH / "3dgrids/reek/reek_sim_poro.grdecl"
-
-TESTFILE13A = TPATH / "3dgrids/etc/TEST_SP.EGRID"
-TESTFILE13B = TPATH / "3dgrids/etc/TEST_SP.INIT"
-
 DUALROFF = TPATH / "3dgrids/etc/dual_grid_w_props.roff"
-
 BANAL7 = TPATH / "3dgrids/etc/banal7_grid_params.roff"
 
 
@@ -186,51 +176,6 @@ def test_dtype():
         act.dtype = np.float64
 
 
-def test_create_from_grid():
-    """Create a simple property from grid"""
-
-    gg = Grid(TESTFILE5, fformat="egrid")
-    poro = GridProperty(gg, name="poro", values=0.33)
-    assert poro.ncol == gg.ncol
-
-    assert poro.isdiscrete is False
-    assert poro.values.mean() == 0.33
-
-    assert poro.values.dtype.kind == "f"
-
-    faci = xtgeo.GridProperty(gg, name="FAC", values=1, discrete=True)
-    assert faci.nlay == gg.nlay
-    assert faci.values.mean() == 1
-
-    assert faci.values.dtype.kind == "i"
-
-    some = xtgeo.GridProperty(gg, name="SOME")
-    assert some.isdiscrete is False
-    some.values = np.where(some.values == 0, 0, 1)
-    assert some.isdiscrete is False
-
-
-def test_create_from_gridproperty():
-    """Create a simple property from grid"""
-
-    gg = Grid(TESTFILE5, fformat="egrid")
-    poro = GridProperty(gg, name="poro", values=0.33)
-    assert poro.ncol == gg.ncol
-
-    # create from gridproperty
-    faci = xtgeo.GridProperty(poro, name="FAC", values=1, discrete=True)
-    assert faci.nlay == gg.nlay
-    assert faci.values.mean() == 1
-
-    assert faci.values.dtype.kind == "i"
-
-    some = xtgeo.GridProperty(faci, name="SOME", values=22)
-    assert some.values.mean() == 22.0
-    assert some.isdiscrete is False
-    some.values = np.where(some.values == 0, 0, 1)
-    assert some.isdiscrete is False
-
-
 def test_pathlib(tmp_path):
     """Import and export via pathlib"""
 
@@ -274,100 +219,6 @@ def test_roffbin_import1_new():
     logger.info("Porosity is {}".format(x.values))
     logger.info("Mean porosity is {}".format(x.values.mean()))
     assert x.values.mean() == pytest.approx(0.1677, abs=0.001)
-
-
-def test_roffbin_import2():
-    """Import roffbin, with several props in one file."""
-
-    logger.info("Name is {}".format(__name__))
-    dz = GridProperty()
-    logger.info("Import roff...")
-    dz.from_file(TESTFILE2, fformat="roff", name="Z_increment")
-
-    logger.info(repr(dz.values))
-    logger.info(dz.values.dtype)
-    logger.info("Mean DZ is {}".format(dz.values.mean()))
-
-    hc = GridProperty()
-    logger.info("Import roff...")
-    hc.from_file(TESTFILE2, fformat="roff", name="Oil_HCPV")
-
-    logger.info(repr(hc.values))
-    logger.info(hc.values.dtype)
-    logger.info(hc.values3d.shape)
-    _ncol, nrow, _nlay = hc.values3d.shape
-
-    assert nrow == 100, "NROW from shape (Emerald)"
-
-    logger.info("Mean HCPV is {}".format(hc.values.mean()))
-    assert hc.values.mean() == pytest.approx(1446.4611912446985, abs=0.0001)
-
-
-def test_eclinit_import_reek():
-    """Property import from Eclipse. Reek"""
-
-    # let me guess the format (shall be egrid)
-    gg = Grid(TESTFILE5, fformat="egrid")
-    assert gg.ncol == 40, "Reek NX"
-
-    logger.info("Import INIT...")
-    po = GridProperty(TESTFILE6, name="PORO", grid=gg)
-
-    logger.info(po.values.mean())
-    assert po.values.mean() == pytest.approx(0.1677, abs=0.0001)
-
-    pv = GridProperty(TESTFILE6, name="PORV", grid=gg)
-    logger.info(pv.values.mean())
-
-
-def test_eclinit_simple_importexport(tmpdir):
-    """Property import and export with anoother name"""
-
-    # let me guess the format (shall be egrid)
-    gg = Grid(TESTFILE13A, fformat="egrid")
-    po = GridProperty(TESTFILE13B, name="PORO", grid=gg)
-
-    po.to_file(
-        os.path.join(tmpdir, "simple.grdecl"),
-        fformat="grdecl",
-        name="PORO2",
-        fmt="%12.5f",
-    )
-
-    p2 = GridProperty(os.path.join(tmpdir, "simple.grdecl"), grid=gg, name="PORO2")
-    assert p2.name == "PORO2"
-
-
-def test_eclunrst_import_reek():
-    """Property UNRST import from Eclipse. Reek"""
-
-    gg = Grid(TESTFILE5, fformat="egrid")
-
-    logger.info("Import RESTART (UNIFIED) ...")
-    press = GridProperty(
-        TESTFILE7, name="PRESSURE", fformat="unrst", date=19991201, grid=gg
-    )
-
-    assert press.values.mean() == pytest.approx(334.5232, abs=0.0001)
-
-
-def test_eclunrst_import_soil_reek():
-    """Property UNRST import from Eclipse, computing SOIL. Reek"""
-
-    gg = Grid(TESTFILE5, fformat="egrid")
-
-    logger.info("Import RESTART (UNIFIED) ...")
-    swat = GridProperty(TESTFILE7, name="SWAT", fformat="unrst", date=19991201, grid=gg)
-
-    assert swat.values.mean() == pytest.approx(0.8780, abs=0.001)
-
-    sgas = GridProperty(TESTFILE7, name="SGAS", fformat="unrst", date=19991201, grid=gg)
-
-    assert sgas.values.mean() == pytest.approx(0.000, abs=0.001)
-
-    soil = GridProperty(TESTFILE7, name="SOIL", fformat="unrst", date=19991201, grid=gg)
-
-    assert soil.values.mean() == pytest.approx(1.0 - 0.8780, abs=0.001)
 
 
 def test_grdecl_import_reek(tmpdir):
@@ -432,44 +283,10 @@ def test_io_roff_discrete(tmpdir):
     )
 
 
-def test_io_ecl2roff_discrete(tmpdir):
-    """Import Eclipse discrete property; then export to ROFF int."""
-
-    logger.info("Name is {}".format(__name__))
-    po = GridProperty()
-    mygrid = Grid(TESTFILE5)
-    po.from_file(TESTFILE6, fformat="init", name="SATNUM", grid=mygrid)
-
-    print(po.codes)
-    assert po.ncodes == 1
-    assert isinstance(po.codes[1], str)
-
-    po.to_file(
-        os.path.join(tmpdir, "ecl2roff_disc.roff"), name="SATNUM", fformat="roff"
-    )
-
-
-def test_io_ecl_dates():
-    """Import Eclipse with some more flexible dates settings"""
-
-    logger.info("Name is {}".format(__name__))
-    po = GridProperty()
-    px = GridProperty()
-    mygrid = Grid(TESTFILE5)
-    po.from_file(TESTFILE7, fformat="unrst", name="PRESSURE", grid=mygrid, date="first")
-    assert po.date == 19991201
-    px.from_file(TESTFILE7, fformat="unrst", name="PRESSURE", grid=mygrid, date="last")
-    assert px.date == 20030101
-
-
-def test_io_to_nonexisting_folder():
-    """Import a prop and try to save in a nonexisting folder"""
-
-    po = GridProperty()
-    mygrid = Grid(TESTFILE5)
-    po.from_file(TESTFILE7, fformat="unrst", name="PRESSURE", grid=mygrid, date="first")
+@given(grid_properties())
+def test_io_to_nonexisting_folder(grid_property):
     with pytest.raises(OSError):
-        po.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
+        grid_property.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
 
 
 def test_get_all_corners():
@@ -527,17 +344,6 @@ def test_get_xy_values_for_webportal():
     assert valuelist[0][0] == -999.0
 
 
-def test_get_xy_values_for_webportal_ecl():
-    """Get lists on webportal format (Eclipse input)"""
-
-    grid = Grid(TESTFILE5)
-    prop = GridProperty(TESTFILE6, grid=grid, name="PORO")
-
-    coord, _valuelist = prop.get_xy_value_lists(grid=grid)
-    logger.info("First active cell coords\n{}.".format(coord[0][0]))
-    assert coord[0][0][0][1] == pytest.approx(5935688.22412, abs=0.001)
-
-
 def test_get_values_by_ijk():
     """Test getting values for given input arrays for I J K"""
     logger.info("Name is {}".format(__name__))
@@ -554,43 +360,6 @@ def test_get_values_by_ijk():
 
     assert res1[1] == pytest.approx(0.08403542, abs=0.0001)
     assert np.isnan(res1[0])
-
-
-def test_values_in_polygon():
-    """Test replace values in polygons"""
-
-    xprop = GridProperty()
-    logger.info("Import roff...")
-    grid = Grid(TESTFILE5)
-    xprop.from_file(TESTFILE1, fformat="roff", name="PORO", grid=grid)
-    poly = Polygons(POLYFILE)
-    xprop.geometry = grid
-    xorig = xprop.copy()
-
-    xprop.operation_polygons(poly, 99, inside=True)
-    assert xprop.values.mean() == pytest.approx(25.1788, abs=0.01)
-
-    xp2 = xorig.copy()
-    xp2.values *= 100
-    xp2.continuous_to_discrete()
-    xp2.set_inside(poly, 44)
-
-    xp2.dtype = np.uint8
-    xp2.set_inside(poly, 44)
-    print(xp2.values)
-
-    xp2.dtype = np.uint16
-    xp2.set_inside(poly, 44)
-    print(xp2.values)
-
-    xp3 = xorig.copy()
-    xp3.values *= 100
-    print(xp3.values.mean())
-    xp3.dtype = np.float32
-    xp3.set_inside(poly, 44)
-    print(xp3.values.mean())
-
-    assert xp3.values.mean() == pytest.approx(23.40642788381048, abs=0.001)
 
 
 @given(dimensions, st.booleans())
