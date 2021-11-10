@@ -906,32 +906,27 @@ def copy(self):
     Returns:
         A new instance (attached grid properties will also be unique)
     """
-    other = self.__class__()
+    self._xtgformat2()
 
-    other._coordsv = self._coordsv.copy()
-    other._zcornsv = self._zcornsv.copy()
-    other._actnumsv = self._actnumsv.copy()
-
-    other._ncol = self.ncol
-    other._nrow = self.nrow
-    other._nlay = self.nlay
-
-    if isinstance(self.subgrids, dict):
-        other.subgrids = deepcopy(self.subgrids)
-
-    # copy attached properties
-    if self._props:
-        other._props = self._props.copy()
-        logger.info("Other vs self props %s vs %s", other._props, self._props)
-
+    filesrc = None
     if self._filesrc is not None and "(copy)" not in self._filesrc:
-        other._filesrc = self._filesrc + " (copy)"
+        filesrc = self._filesrc + " (copy)"
     elif self._filesrc is not None:
-        other._filesrc = self._filesrc
+        filesrc = self._filesrc
 
-    other._xtgformat = self._xtgformat
-
-    return other
+    return self.__class__(
+        coordsv=self._coordsv.copy(),
+        zcornsv=self._zcornsv.copy(),
+        actnumsv=self._actnumsv.copy(),
+        subgrids=deepcopy(self.subgrids),
+        dualporo=self.dualporo,
+        dualperm=self.dualperm,
+        name=self.name + " (copy)" if self.name else None,
+        roxgrid=self.roxgrid,
+        roxindexer=self.roxindexer,
+        props=self._props.copy() if self._props else None,
+        filesrc=filesrc,
+    )
 
 
 def crop(self, spec, props=None):  # pylint: disable=too-many-locals
