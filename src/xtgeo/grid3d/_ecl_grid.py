@@ -530,17 +530,23 @@ class EclGrid(ABC):
     def _relative_to_transform(self, xtgeo_coord, relative_to=GridRelative.MAP):
         """Handle relative transform of xtgeo_coord()."""
         mapaxes = self.mapaxes
+        has_mapaxes = True
         if self.mapaxes is None:
             mapaxes = MapAxes()
+            has_mapaxes = False
         axis_units = self.map_axis_units
 
+        has_axis_units = True
         if axis_units is None:
+            axis_units = self.grid_units
+            has_axis_units = False
+
+        if has_mapaxes and not has_axis_units:
             warnings.warn(
                 "Conversion between map and grid axes necessary,"
                 " but axis units is missing, assuming"
                 " no unit conversion necessary"
             )
-            axis_units = self.grid_units
 
         if relative_to == GridRelative.MAP and not self.is_map_relative:
             xtgeo_coord *= self.grid_units.conversion_factor(axis_units)
@@ -638,11 +644,6 @@ class EclGrid(ABC):
 
         axis_units = self.map_axis_units
         if axis_units is None:
-            warnings.warn(
-                "Conversion between map and grid axes necessary,"
-                " but axis units is missing, assuming"
-                " no unit conversion necessary"
-            )
             axis_units = self.grid_units
         if relative_to == GridRelative.MAP and not self.is_map_relative:
             result *= self.grid_units.conversion_factor(self.map_axis_units)
