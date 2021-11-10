@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 
+import xtgeo
 import xtgeo.grid3d._ecl_grid as ecl_grid
 import xtgeo.grid3d._grdecl_grid as ggrid
 from xtgeo.grid3d import Grid
@@ -216,10 +217,11 @@ def test_to_from_xtggrid_write(tmp_path, grdecl_grid, fileformat):
 def test_from_to_grdeclgrid_write(tmp_path, caplog, grdecl_grid, fileformat):
     caplog.set_level(logging.CRITICAL)
     assume(grdecl_grid.mapaxes is None or fileformat != "bgrdecl")
-    xtggrid = Grid()
 
     grdecl_grid.to_file(tmp_path / ("xtggrid." + fileformat), fileformat)
-    xtggrid = Grid(tmp_path / ("xtggrid." + fileformat), fformat=fileformat)
+    xtggrid = xtgeo.grid_from_file(
+        tmp_path / ("xtggrid." + fileformat), fformat=fileformat
+    )
 
     xtggrid._xtgformat2()
     if grdecl_grid.actnum is None:

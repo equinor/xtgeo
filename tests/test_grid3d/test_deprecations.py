@@ -1,14 +1,14 @@
 import pytest
 from packaging import version
 
-from xtgeo import Grid, GridProperties
+import xtgeo
+from xtgeo import GridProperties
 from xtgeo import version as xtgeo_version
 
 
 @pytest.fixture
 def any_grid():
-    grd = Grid()
-    grd.create_box(dimension=(5, 5, 5))
+    grd = xtgeo.create_box_grid((5, 5, 5))
     return grd
 
 

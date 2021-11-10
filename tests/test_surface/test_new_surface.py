@@ -1,8 +1,10 @@
-import pytest
-import numpy as np
 import hypothesis.strategies as st
-from hypothesis import given, assume
-from xtgeo import RegularSurface, Grid
+import numpy as np
+import pytest
+from hypothesis import assume, given
+
+import xtgeo
+from xtgeo import RegularSurface
 
 
 def test_default_values():
@@ -90,7 +92,9 @@ def test_input_numbers(data):
 
 
 def test_read_grid3d():
-    grid = Grid()  # this creates an example Grid (no other way to do it currently)
+    grid = xtgeo.create_box_grid(
+        (4, 3, 5), rotation=30.0
+    )  # this creates an example Grid (no other way to do it currently)
     surf = RegularSurface._read_grid3d(grid=grid)
     # There is some resolution changes between the grid and the surface, so we cant
     # expect identical sizes, even for regular grids.

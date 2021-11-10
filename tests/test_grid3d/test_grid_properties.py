@@ -8,7 +8,7 @@ import pytest
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperties
+from xtgeo.grid3d import GridProperties
 
 xtg = XTGeoDialog()
 
@@ -260,7 +260,7 @@ def test_scan_keywords_roff():
 def test_get_dataframe():
     """Get a Pandas dataframe from the gridproperties"""
 
-    g = Grid(GFILE1, fformat="egrid")
+    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
     x = GridProperties()
 

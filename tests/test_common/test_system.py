@@ -146,9 +146,10 @@ def test_xtgeo_file_bad_input():
 
 
 def test_xtgeo_file_bad_alias(tmp_path):
-    grd = xtgeo.Grid()
     with pytest.raises(ValueError, match="not a valid alias"):
-        xtgeo._XTGeoFile(tmp_path / "$NO_ALIAS").resolve_alias(grd)
+        xtgeo._XTGeoFile(tmp_path / "$NO_ALIAS").resolve_alias(
+            xtgeo.create_box_grid((1, 1, 1))
+        )
 
 
 def test_xtgeo_file_memstream_check_ok():

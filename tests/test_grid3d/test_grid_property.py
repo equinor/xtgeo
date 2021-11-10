@@ -9,7 +9,7 @@ import hypothesis.strategies as st
 import numpy as np
 import numpy.ma as npma
 import pytest
-from hypothesis import example, given
+from hypothesis import HealthCheck, example, given, settings
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
@@ -63,15 +63,15 @@ def test_create():
     assert x.nrow == 3, "NROW"
 
     m = GridProperty(discrete=True)
-    (repr(m.values))
+    assert m.isdiscrete
 
 
 def test_banal7(show_plot):
     """Create a simple property in a small grid box"""
 
-    grd = Grid(BANAL7)
+    grd = xtgeo.grid_from_file(BANAL7)
     assert grd.dimensions == (4, 2, 3)
-    disc = GridProperty(BANAL7, name="DISC")
+    disc = xtgeo.gridproperty_from_file(BANAL7, name="DISC")
     assert disc.dimensions == (4, 2, 3)
     assert disc.values.mean() == pytest.approx(0.59091, abs=0.001)
 
@@ -716,9 +716,10 @@ def test_gridprop_init_roxar_dtype():
         GridProperty(roxar_dtype=np.int64)
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
-def test_gridprop_export_actnum(fformat, tmp_path):
-    grid = Grid(TESTFILE5)
+@given(xtgeo_grids)
+def test_gridprop_export_actnum(fformat, tmp_path, grid):
     actnum = grid.get_actnum(asmasked=True)
 
     filepath = tmp_path / "actnum.DATA"
@@ -733,9 +734,10 @@ def test_gridprop_export_actnum(fformat, tmp_path):
     assert actnum.values.tolist() == actnum2.values.tolist()
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @pytest.mark.parametrize("fformat", ["grdecl", "bgrdecl"])
-def test_gridprop_export_actnum_append(fformat, tmp_path):
-    grid = Grid(TESTFILE5)
+@given(xtgeo_grids)
+def test_gridprop_export_actnum_append(fformat, tmp_path, grid):
     actnum = grid.get_actnum(asmasked=True)
 
     filepath = tmp_path / "actnum.DATA"
@@ -757,8 +759,9 @@ def test_gridprop_export_actnum_append(fformat, tmp_path):
     assert actnum2.values.tolist() == actnum3.values.tolist()
 
 
-def test_gridprop_export_bgrdecl_double(tmp_path):
-    grid = Grid(TESTFILE5)
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@given(xtgeo_grids)
+def test_gridprop_export_bgrdecl_double(tmp_path, grid):
     actnum = grid.get_actnum(asmasked=True)
 
     actnum.to_file(tmp_path / "actnum.DATA", fformat="bgrdecl", dtype=np.float64)

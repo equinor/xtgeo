@@ -25,7 +25,7 @@ QCFIL2 = TPATH / "3dgrids/etc/gridqc1_rms_anypoint.csv"
 
 def test_get_ijk_from_points_banalcase2():
     """Testing getting IJK coordinates from points on a perfect case case"""
-    g1 = xtgeo.grid3d.Grid(BANALCASE2)
+    g1 = xtgeo.grid_from_file(BANALCASE2)
 
     pointset = [
         (50, 50, -0.01),  # -1, -1, -1
@@ -81,7 +81,7 @@ def test_get_ijk_from_points_banalcase2():
 
 def test_get_ijk_from_points_banalcase3():
     """Testing getting IJK coordinates from points on a perfect case case"""
-    g1 = xtgeo.grid3d.Grid(BANALCASE3)
+    g1 = xtgeo.grid_from_file(BANALCASE3)
 
     pointset = [
         (50, 50, -0.01),  # outside
@@ -104,7 +104,7 @@ def test_get_ijk_from_points_banalcase3():
 
 def test_get_ijk_from_points_tricky():
     """Testing getting IJK coordinates from points on a tricky case"""
-    g1 = xtgeo.grid3d.Grid(DROGON)
+    g1 = xtgeo.grid_from_file(DROGON)
 
     pointset = [
         (465100.100000, 5931340.000000, 1681.28772),  # 1, 2, 1
@@ -164,7 +164,7 @@ def test_get_ijk_from_points():
 def test_get_ijk_from_points_smallcase():
     """Testing getting IJK coordinates from points, for all cells in small case"""
 
-    g1 = xtgeo.grid3d.Grid(SMALL3)
+    g1 = xtgeo.grid_from_file(SMALL3)
 
     # g1.crop((1, 1), (1, 1), (1, 2))
     df1 = g1.get_dataframe(ijk=True, xyz=False)
@@ -246,7 +246,7 @@ def test_get_ijk_from_points_full():
 def test_get_ijk_from_points_small():
     """Test IJK getting in small grid, test for active or not cells"""
 
-    g1 = xtgeo.grid3d.Grid(SMALL1)
+    g1 = xtgeo.grid_from_file(SMALL1)
 
     pointset = [
         (1.5, 1.5, 1000.5),  # 2, 2, 1  is active
@@ -265,7 +265,7 @@ def test_get_ijk_from_points_small():
     assert ijk["JY"][1] == 3
 
     # dualporo grid
-    g1 = xtgeo.grid3d.Grid(SMALL2)
+    g1 = xtgeo.grid_from_file(SMALL2)
     ijk = g1.get_ijk_from_points(po, activeonly=False)
     assert ijk["JY"][1] == 3
 
@@ -280,7 +280,7 @@ def test_point_in_cell_compare_rms():
     attrs = {"IX": "I", "JY": "J", "KZ": "K"}
     p1.from_dataframe(pointset, east="X", north="Y", tvdmsl="Z", attributes=attrs)
 
-    grd = xtgeo.Grid(QCGRID)
+    grd = xtgeo.grid_from_file(QCGRID)
     dfr = grd.get_ijk_from_points(p1)
 
     for cname in ("IX", "JY", "KZ"):

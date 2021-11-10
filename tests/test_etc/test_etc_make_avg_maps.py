@@ -3,8 +3,8 @@ from os.path import join
 import numpy as np
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.surface import RegularSurface
 from xtgeo.xyz import Polygons
 
@@ -29,12 +29,10 @@ FFILE1 = TPATH / "polygons/reek/1/top_upper_reek_faultpoly.zmap"
 
 def test_avg02(tmpdir, generate_plot):
     """Make average map from Reek Eclipse."""
-    grd = Grid()
-    grd.from_file(GFILE2, fformat="egrid")
+    grd = xtgeo.grid_from_file(GFILE2, fformat="egrid")
 
     # get the poro
-    po = GridProperty()
-    po.from_file(IFILE2, fformat="init", name="PORO", grid=grd)
+    po = xtgeo.gridproperty_from_file(IFILE2, fformat="init", name="PORO", grid=grd)
 
     # get the dz and the coordinates
     dz = grd.get_dz(asmasked=False)
@@ -92,12 +90,10 @@ def test_avg02(tmpdir, generate_plot):
 
 def test_avg03(tmpdir, generate_plot):
     """Make average map from Reek Eclipse, speed up by zone_avgrd."""
-    grd = Grid()
-    grd.from_file(GFILE2, fformat="egrid")
+    grd = xtgeo.grid_from_file(GFILE2, fformat="egrid")
 
     # get the poro
-    po = GridProperty()
-    po.from_file(IFILE2, fformat="init", name="PORO", grid=grd)
+    po = xtgeo.gridproperty_from_file(IFILE2, fformat="init", name="PORO", grid=grd)
 
     # get the dz and the coordinates
     dz = grd.get_dz(asmasked=False)
