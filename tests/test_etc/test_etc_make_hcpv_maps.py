@@ -4,8 +4,8 @@ import numpy as np
 import numpy.ma as ma
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.surface import RegularSurface
 
 # set default level
@@ -24,17 +24,11 @@ def test_hcpvfz1(tmpdir, generate_plot):
     # It is important that input are pure numpies, not masked
 
     logger.info("Name is %s", __name__)
-    grd = Grid()
     logger.info("Import roff...")
-    grd.from_file(ROFF1_GRID, fformat="roff")
+    grd = xtgeo.grid_from_file(ROFF1_GRID, fformat="roff")
 
-    # get the hcpv
-    st = GridProperty()
-    to = GridProperty()
-
-    st.from_file(ROFF1_PROPS, name="Oil_HCPV")
-
-    to.from_file(ROFF1_PROPS, name="Oil_bulk")
+    st = xtgeo.gridproperty_from_file(ROFF1_PROPS, name="Oil_HCPV")
+    to = xtgeo.gridproperty_from_file(ROFF1_PROPS, name="Oil_bulk")
 
     # get the dz and the coordinates, with no mask (ie get value for outside)
     dz = grd.get_dz(asmasked=False)

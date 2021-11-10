@@ -58,10 +58,11 @@ def test_benchmark_grid_xtgf_import(benchmark, tmp_path, benchmark_grid):
 
     benchmark_grid.to_xtgf(fname)
 
-    grid2 = xtgeo.Grid()
+    grid2 = None
 
     def read():
-        grid2.from_xtgf(fname)
+        nonlocal grid2
+        grid2 = xtgeo.grid_from_file(fname)
 
     benchmark(read)
 
@@ -88,10 +89,11 @@ def test_benchmark_grid_grdecl_import(benchmark, tmp_path, benchmark_grid):
 
     benchmark_grid.to_file(fname, fformat="grdecl")
 
-    grid2 = xtgeo.Grid()
+    grid2 = None
 
     def read():
-        grid2.from_file(fname, fformat="grdecl")
+        nonlocal grid2
+        grid2 = xtgeo.grid_from_file(fname, fformat="grdecl")
 
     benchmark(read)
 
@@ -116,10 +118,11 @@ def test_benchmark_grid_bgrdecl_import(benchmark, tmp_path, benchmark_grid):
 
     benchmark_grid.to_file(fname, fformat="bgrdecl")
 
-    grid2 = xtgeo.Grid()
+    grid2 = None
 
     def read():
-        grid2.from_file(fname, fformat="bgrdecl")
+        nonlocal grid2
+        grid2 = xtgeo.grid_from_file(fname, fformat="bgrdecl")
 
     benchmark(read)
 
@@ -146,10 +149,11 @@ def test_benchmark_grid_hdf5_import_partial(benchmark, tmp_path, benchmark_grid)
     benchmark_grid._zcornsv += 1.0
     fna = benchmark_grid.to_hdf(fname, compression=None)
 
-    grd2 = xtgeo.Grid()
+    grd2 = None
 
     def partial_read():
-        grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+        nonlocal grd2
+        grd2 = xtgeo.grid_from_file(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
 
     benchmark(partial_read)
 
@@ -164,10 +168,11 @@ def test_benchmark_grid_hdf5_import(benchmark, tmp_path, benchmark_grid):
     benchmark_grid._zcornsv += 1.0
     fna = benchmark_grid.to_hdf(fname, compression=None)
 
-    grd2 = xtgeo.Grid()
+    grd2 = None
 
     def read():
-        grd2.from_hdf(fna)
+        nonlocal grd2
+        grd2 = xtgeo.grid_from_file(fna)
 
     benchmark(read)
 
@@ -200,10 +205,13 @@ def test_benchmark_grid_hdf5_import_partial_blosc_compression(
 
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
-    grd2 = xtgeo.Grid()
+    grd2 = None
 
     def partial_read():
-        grd2.from_hdf(fna, ijkrange=(1, 20, 1, 20, "min", "max"))
+        nonlocal grd2
+        grd2 = xtgeo.grid_from_file(
+            fna, fformat="hdf", ijkrange=(1, 20, 1, 20, "min", "max")
+        )
 
     benchmark(partial_read)
 
@@ -221,10 +229,11 @@ def test_benchmark_grid_hdf5_import_blosc_compression(
 
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
-    grd2 = xtgeo.Grid()
+    grd2 = None
 
     def read():
-        grd2.from_hdf(fna)
+        nonlocal grd2
+        grd2 = xtgeo.grid_from_file(fna, fformat="hdf")
 
     benchmark(read)
 
@@ -250,11 +259,12 @@ def test_benchmark_grid_egrid_import(benchmark, tmp_path, benchmark_grid):
     benchmark_grid._zcornsv += 1.0
     benchmark_grid.to_file(fname, fformat="egrid")
 
-    grd2 = xtgeo.Grid()
+    grd2 = None
 
     @benchmark
     def read():
-        grd2.from_file(fname, fformat="egrid")
+        nonlocal grd2
+        grd2 = xtgeo.grid_from_file(fname, fformat="egrid")
 
     assert_allclose(benchmark_grid._zcornsv, grd2._zcornsv)
     assert_allclose(benchmark_grid._coordsv, grd2._coordsv)
@@ -316,10 +326,11 @@ def test_benchmark_gridprop_import(benchmark, tmp_path, benchmark_gridprop):
 
     benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
 
-    prop2 = xtgeo.GridProperty()
+    prop2 = None
 
     def read():
-        prop2.from_file(fname, fformat="xtgcpprop")
+        nonlocal prop2
+        prop2 = xtgeo.gridproperty_from_file(fname, fformat="xtgcpprop")
 
     benchmark(read)
 
@@ -334,10 +345,13 @@ def test_benchmark_gridprop_import_partial(benchmark, tmp_path, benchmark_gridpr
 
     benchmark_gridprop.to_file(fname, fformat="xtgcpprop")
 
-    prop2 = xtgeo.GridProperty()
+    prop2 = None
 
     def read():
-        prop2.from_file(fname, fformat="xtgcpprop", ijrange=(1, 2, 1, 2))
+        nonlocal prop2
+        prop2 = xtgeo.gridproperty_from_file(
+            fname, fformat="xtgcpprop", ijrange=(1, 2, 1, 2)
+        )
 
     benchmark(read)
 
@@ -349,9 +363,7 @@ def test_hdf5_partial_import_case(benchmark_grid, tmp_path):
 
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
-    grd2 = xtgeo.Grid()
-
-    grd2.from_hdf(fna, ijkrange=(1, 3, 1, 5, 1, 4))
+    grd2 = xtgeo.grid_from_file(fna, fformat="hdf", ijkrange=(1, 3, 1, 5, 1, 4))
 
     assert grd2.ncol == 3
     assert grd2.nrow == 5
@@ -393,9 +405,7 @@ def test_hdf5_partial_import(benchmark_grid, tmp_path, ijkrange):
 
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
-    grd2 = xtgeo.Grid()
-
-    grd2.from_hdf(fna, ijkrange=ijkrange)
+    grd2 = xtgeo.grid_from_file(fna, fformat="hdf", ijkrange=ijkrange)
 
     assert grd2.ncol == 1 + ijkrange[1] - ijkrange[0]
     assert grd2.nrow == 1 + ijkrange[3] - ijkrange[2]
@@ -441,8 +451,6 @@ def test_hdf5_import(benchmark_grid, tmp_path):
     benchmark_grid._subgrids = OrderedDict({"1": range(1, nlay + 1)})
     fna = benchmark_grid.to_hdf(fname, compression="blosc")
 
-    grd2 = xtgeo.Grid()
-
-    grd2.from_hdf(fna)
+    grd2 = xtgeo.grid_from_file(fna, fformat="hdf")
 
     assert grd2._subgrids == OrderedDict({"1": range(1, nlay + 1)})

@@ -5,8 +5,8 @@ import os
 
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.plot import Grid3DSlice
 
 xtg = XTGeoDialog()
@@ -30,8 +30,8 @@ def test_slice_simple_layer(tmpdir, show_plot, generate_plot):
     """Trigger XSection class, and do some simple things basically."""
     layslice = Grid3DSlice()
 
-    mygrid = Grid(USEFILE1)
-    myprop = GridProperty(USEFILE2, grid=mygrid, name="PORO")
+    mygrid = xtgeo.grid_from_file(USEFILE1)
+    myprop = xtgeo.gridproperty_from_file(USEFILE2, grid=mygrid, name="PORO")
 
     assert myprop.values.mean() == pytest.approx(0.1677, abs=0.001)
 

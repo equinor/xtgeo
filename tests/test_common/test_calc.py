@@ -275,7 +275,7 @@ def test_vectorpair_angle3d():
 def test_x_cellangles():
     """Test x_minmax_cellangles* functions (lowlevel call)"""
 
-    grd = xtgeo.Grid(TESTGRID)
+    grd = xtgeo.grid_from_file(TESTGRID)
     cell1 = grd.get_xyz_cell_corners((6, 4, 1))
     cell2 = grd.get_xyz_cell_corners((6, 3, 1))
     cell3 = grd.get_xyz_cell_corners((4, 7, 1))
@@ -309,13 +309,13 @@ def test_get_cell_volume():
     """Test hexahedron (cell) bulk volume valculation"""
 
     # box
-    grd = xtgeo.Grid(TESTGRID3)
+    grd = xtgeo.grid_from_file(TESTGRID3)
 
     vol1 = grd.get_cell_volume((1, 1, 1))
     assert vol1 == pytest.approx(3821600, rel=0.01)
 
     # banal6
-    grd = xtgeo.Grid(TESTGRID2)
+    grd = xtgeo.grid_from_file(TESTGRID2)
 
     vol1 = grd.get_cell_volume((1, 1, 1))
     vol2 = grd.get_cell_volume((4, 1, 1))
@@ -328,7 +328,7 @@ def test_get_cell_volume():
     assert vol4 == pytest.approx(593.75, rel=0.01)
 
     # gridqc1
-    grd = xtgeo.Grid(TESTGRID)
+    grd = xtgeo.grid_from_file(TESTGRID)
     tbulk_rms = xtgeo.gridproperty_from_file(TESTGRID_TBULK)
 
     rmean = []

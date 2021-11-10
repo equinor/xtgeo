@@ -5,8 +5,8 @@ from os.path import join
 
 import pytest
 
+import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperty
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -21,6 +21,8 @@ TPATH = xtg.testpathobj
 # =============================================================================
 # Do tests
 # =============================================================================
+
+
 EMEGFILE = TPATH / "3dgrids/eme/1/emerald_hetero_grid.roff"
 EMERFILE = TPATH / "3dgrids/eme/1/emerald_hetero_region.roff"
 
@@ -32,7 +34,14 @@ DUALPROPS = TPATH / "3dgrids/etc/DUAL"
 
 
 def test_hybridgrid1(tmpdir, snapshot):
-    grd = Grid()
+    grd = xtgeo.create_box_grid(
+        (4, 3, 5),
+        flip=1,
+        oricenter=False,
+        origin=(10.0, 20.0, 1000.0),
+        rotation=30.0,
+        increment=(100, 150, 5),
+    )
     grd.subgrids = OrderedDict({"name1": [1], "name2": [2, 3], "name3": [4, 5]})
     assert grd.subgrids is not None  # initially, prior to subgrids
 
@@ -59,7 +68,7 @@ def test_hybridgrid1(tmpdir, snapshot):
 
     assert dzv.values3d.mean() == 5.0
 
-    grd2 = Grid(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
+    grd2 = xtgeo.grid_from_file(join(tmpdir, "test_hybridgrid1_asis.bgrdecl"))
     snapshot.assert_match(
         grd2.dataframe(activeonly=False).tail(50).round().to_csv(line_terminator="\n"),
         "grid_pre_hybrid.csv",
@@ -70,11 +79,10 @@ def test_hybridgrid2(tmpdir):
     """Making a hybridgrid for Emerald case in region"""
 
     logger.info("Read grid...")
-    grd = Grid()
+    grd = xtgeo.create_box_grid((4, 3, 5))
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
 
-    reg = GridProperty()
-    reg.from_file(EMERFILE, name="REGION")
+    reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
 
     nhdiv = 40
 
@@ -89,11 +97,10 @@ def test_inactivate_thin_cells(tmpdir):
     """Make hybridgrid for Emerald case in region, and inactive thin cells"""
 
     logger.info("Read grid...")
-    grd = Grid(EMEGFILE)
+    grd = xtgeo.grid_from_file(EMEGFILE)
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
 
-    reg = GridProperty()
-    reg.from_file(EMERFILE, name="REGION")
+    reg = xtgeo.gridproperty_from_file(EMERFILE, name="REGION")
 
     nhdiv = 40
 
@@ -111,7 +118,7 @@ def test_refine_vertically(tmpdir):
 
     logger.info("Read grid...")
 
-    grd = Grid(EMEGFILE)
+    grd = xtgeo.grid_from_file(EMEGFILE)
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
     logger.info("Subgrids before: %s", grd.get_subgrids())
 
@@ -135,7 +142,7 @@ def test_refine_vertically_per_zone(tmpdir):
 
     logger.info("Read grid...")
 
-    grd_orig = Grid(EMEGFILE2)
+    grd_orig = xtgeo.grid_from_file(EMEGFILE2)
     grd = grd_orig.copy()
 
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
@@ -143,7 +150,7 @@ def test_refine_vertically_per_zone(tmpdir):
 
     logger.info("Subgrids before: %s", grd.get_subgrids())
 
-    zone = GridProperty(EMEZFILE2, grid=grd, name="Zone")
+    zone = xtgeo.gridproperty_from_file(EMEZFILE2, grid=grd, name="Zone")
     logger.info("Zone values min max: %s %s", zone.values.min(), zone.values.max())
 
     logger.info("Subgrids list: %s", grd.subgrids)
@@ -164,8 +171,7 @@ def test_refine_vertically_per_zone(tmpdir):
 def test_reverse_row_axis_box(tmpdir):
     """Crop a grid."""
 
-    grd = Grid()
-    grd.create_box(
+    grd = xtgeo.create_box_grid(
         origin=(1000, 4000, 300),
         increment=(100, 100, 2),
         dimension=(2, 3, 1),
@@ -182,7 +188,7 @@ def test_reverse_row_axis_box(tmpdir):
 def test_reverse_row_axis_dual(tmpdir):
     """Reverse axis for distorted but small grid"""
 
-    grd = Grid(DUAL)
+    grd = xtgeo.grid_from_file(DUAL)
 
     assert grd.ijk_handedness == "left"
     grd.to_file(join(tmpdir, "dual_left.grdecl"), fformat="grdecl")
@@ -198,7 +204,9 @@ def test_reverse_row_axis_dual(tmpdir):
 def test_reverse_row_axis_dualprops():
     """Reverse axis for distorted but small grid with props"""
 
-    grd = Grid(DUALPROPS, fformat="eclipserun", initprops=["PORO", "PORV"])
+    grd = xtgeo.grid_from_file(
+        DUALPROPS, fformat="eclipserun", initprops=["PORO", "PORV"]
+    )
 
     poro = grd.gridprops.props[0]
     logger.info(grd.gridprops.describe())
@@ -222,7 +230,7 @@ def test_reverse_row_axis_dualprops():
 def test_reverse_row_axis_eme(tmpdir):
     """Reverse axis for emerald grid"""
 
-    grd1 = Grid(EMEGFILE)
+    grd1 = xtgeo.grid_from_file(EMEGFILE)
 
     assert grd1.ijk_handedness == "left"
     grd1.to_file(join(tmpdir, "eme_left.roff"), fformat="roff")
@@ -239,14 +247,14 @@ def test_reverse_row_axis_eme(tmpdir):
 def test_copy_grid(tmpdir):
     """Copy a grid."""
 
-    grd = Grid(EMEGFILE2)
+    grd = xtgeo.grid_from_file(EMEGFILE2)
     grd2 = grd.copy()
 
     grd.to_file(join(tmpdir, "gcp1.roff"))
     grd2.to_file(join(tmpdir, "gcp2.roff"))
 
-    xx1 = Grid(join(tmpdir, "gcp1.roff"))
-    xx2 = Grid(join(tmpdir, "gcp2.roff"))
+    xx1 = xtgeo.grid_from_file(join(tmpdir, "gcp1.roff"))
+    xx2 = xtgeo.grid_from_file(join(tmpdir, "gcp2.roff"))
 
     assert xx1._zcornsv.mean() == xx2._zcornsv.mean()
     assert xx1._actnumsv.mean() == xx2._actnumsv.mean()
@@ -257,8 +265,8 @@ def test_crop_grid(tmpdir):
 
     logger.info("Read grid...")
 
-    grd = Grid(EMEGFILE2)
-    zprop = GridProperty(EMEZFILE2, name="Zone", grid=grd)
+    grd = xtgeo.grid_from_file(EMEGFILE2)
+    zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
 
     logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
     logger.info(
@@ -269,7 +277,7 @@ def test_crop_grid(tmpdir):
 
     grd.to_file(join(tmpdir, "grid_cropped.roff"))
 
-    grd2 = Grid(join(tmpdir, "grid_cropped.roff"))
+    grd2 = xtgeo.grid_from_file(join(tmpdir, "grid_cropped.roff"))
 
     assert grd2.ncol == 31
 
@@ -279,9 +287,9 @@ def test_crop_grid_after_copy():
 
     logger.info("Read grid...")
 
-    grd = Grid(EMEGFILE2)
+    grd = xtgeo.grid_from_file(EMEGFILE2)
     grd.describe()
-    zprop = GridProperty(EMEZFILE2, name="Zone", grid=grd)
+    zprop = xtgeo.gridproperty_from_file(EMEZFILE2, name="Zone", grid=grd)
     grd.describe(details=True)
 
     logger.info(grd.dimensions)
@@ -307,7 +315,7 @@ def test_reduce_to_one_layer():
 
     logger.info("Read grid...")
 
-    grd1 = Grid(EMEGFILE2)
+    grd1 = xtgeo.grid_from_file(EMEGFILE2)
     grd1.reduce_to_one_layer()
 
     assert grd1.nlay == 1
