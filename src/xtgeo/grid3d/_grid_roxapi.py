@@ -380,6 +380,7 @@ def _export_grid_cornerpoint_roxapi_v1(
     scopy = self.copy()
     scopy.make_zconsistent()
     scopy._xtgformat1()
+    self._xtgformat1()
 
     npill = (self.ncol + 1) * (self.nrow + 1) * 3
     nzcrn = (self.ncol + 1) * (self.nrow + 1) * 4 * (self.nlay + 1)
