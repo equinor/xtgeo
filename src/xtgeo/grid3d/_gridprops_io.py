@@ -70,8 +70,8 @@ def _import_ecl_output_v2_init(self, pfile, names, grid, strict):
 
     # get a list of valid property names
     for kw in list(kwlist.itertuples(index=False, name=None)):
-        kwname, _, nlen, _, _ = kw
-        if nlen in (nact, ntot) and kwname not in validnames:
+        kwname, kwtyp, nlen, _, _ = kw
+        if nlen in (nact, ntot) and kwtyp != "CHAR" and kwname not in validnames:
             validnames.append(kwname)
 
     if names == "all":
@@ -211,11 +211,15 @@ def _process_valid_namesdates(kwlist, grid):
         ntot *= 2
 
     for kw in list(kwlist.itertuples(index=False, name=None)):
-        kwname, _, nlen, _, date = kw
+        kwname, kwtyp, nlen, _, date = kw
         date = str(date)
-        if nlen in (nact, ntot) and (kwname, date) not in validnamedatepairs:
+        if (
+            kwtyp != "CHAR"
+            and nlen in (nact, ntot)
+            and (kwname, date) not in validnamedatepairs
+        ):
             validnamedatepairs.append((kwname, date))
-        if nlen in (nact, ntot) and date not in validdates:
+        if kwtyp != "CHAR" and nlen in (nact, ntot) and date not in validdates:
             validdates.append(date)
 
     return validnamedatepairs, validdates
