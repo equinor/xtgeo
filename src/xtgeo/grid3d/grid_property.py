@@ -56,6 +56,8 @@ def gridproperty_from_file(
     gridlink=True,
     date=None,
     fracture=False,
+    ijrange=None,
+    zerobased=False,
 ):
     """Make a GridProperty instance directly from file import.
 
@@ -80,6 +82,8 @@ def gridproperty_from_file(
         gridlink=gridlink,
         date=date,
         fracture=fracture,
+        ijrange=ijrange,
+        zerobased=zerobased,
     )
 
     return obj
