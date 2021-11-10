@@ -28,6 +28,7 @@ REEKFIL3 = TPATH / "3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
 REEKFIL4 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
 REEKFIL5 = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
 REEKROOT = TPATH / "3dgrids/reek/REEK"
+SPROOT = TPATH / "3dgrids/etc/TEST_SP"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = TPATH / "3dgrids/bri/b.grdecl"
 BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
@@ -592,6 +593,20 @@ def test_ecl_run_all():
     )
 
     assert len(gg.gridprops.names) == 287
+
+
+def test_ecl_run_all_sp(testpath):
+    """Test import an eclrun with all dates and props."""
+    gg = Grid()
+    gg.from_file(
+        SPROOT,
+        fformat="eclipserun",
+        initprops="all",
+        restartdates="all",
+        restartprops="all",
+    )
+
+    assert len(gg.gridprops.names) == 59
 
 
 def test_npvalues1d():
