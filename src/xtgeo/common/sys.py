@@ -35,6 +35,7 @@ SUPPORTED_FORMATS = {
     "unrst": ["unrst"],
     "funrst": ["funrst"],
     "grdecl": ["grdecl"],
+    "bgrdecl": ["bgrdecl"],
     "irap_binary": ["irap_binary", "irap_bin", "rms_binary", "irapbin", "gri"],
     "irap_ascii": ["irap_ascii", "irap_asc", "rms_ascii", "irapasc", "fgr"],
     "hdf": ["hdf", "hdf5", "h5"],

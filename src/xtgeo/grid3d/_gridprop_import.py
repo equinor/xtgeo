@@ -35,10 +35,11 @@ def from_file(
     pfile.check_file(raiseerror=OSError)
 
     if fformat is None or fformat == "guess":
-        fformat = pfile.detect_fformat(suffixonly=True)
-    fformat = fformat.lower()
+        fformat = pfile.detect_fformat()
+    else:
+        fformat = pfile.generic_format_by_proposal(fformat)  # default
 
-    if fformat in ["roff", "roff_binary", "roff_ascii"]:
+    if fformat in ["roff_binary", "roff_ascii"]:
         logger.info("Importing ROFF...")
         import_roff(self, pfile, name)
 
@@ -84,7 +85,7 @@ def from_file(
     elif fformat == "bgrdecl":
         import_bgrdecl_prop(self, pfile, name=name, grid=grid)
 
-    elif fformat in ["xtgcpprop", "xtg"]:
+    elif fformat == "xtg":
         import_xtgcpprop(self, pfile, ijrange=ijrange, zerobased=zerobased)
 
     else:
