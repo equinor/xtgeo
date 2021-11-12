@@ -1017,7 +1017,7 @@ class RegularSurface:
         cls,
         mfile: Union[str, pathlib.Path, io.BytesIO],
         fformat: Optional[str] = None,
-        load_values: Optional[bool] = True,
+        load_values: bool = True,
         **kwargs,
     ):
         """Import surface (regular map) from file.
@@ -1072,14 +1072,13 @@ class RegularSurface:
             fformat = mfile.generic_format_by_proposal(fformat)  # default
         kwargs = _data_reader_factory(fformat)(mfile, values=load_values, **kwargs)
         kwargs["filesrc"] = mfile.file
+        kwargs["fformat"] = fformat
         return cls(**kwargs)
 
     def load_values(self):
         """Import surface values in cases where metadata only is loaded.
 
         Currently, only Irap binary format is supported.
-
-        See :meth:`from_file` in cases where values key is set to False.
 
         Example::
 
@@ -1092,10 +1091,21 @@ class RegularSurface:
 
         .. versionadded:: 2.1
         """
+
         if not self._isloaded:
+
+            if self.filesrc is None:
+                raise ValueError(
+                    "Can only load values into object initialised from file"
+                )
+
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
-                self.from_file(self._filesrc, fformat=self._fformat)
+
+                mfile = xtgeosys._XTGeoFile(self.filesrc)
+                kwargs = _data_reader_factory(self._fformat)(mfile, values=True)
+                self.values = kwargs.get("values", self._values)
+
             self._isloaded = True
 
     def to_file(
