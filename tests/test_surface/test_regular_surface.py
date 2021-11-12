@@ -2,6 +2,7 @@
 import sys
 from os.path import join
 from pathlib import Path
+from packaging import version
 
 import numpy as np
 import pytest
@@ -1092,3 +1093,57 @@ def test_smoothing():
     assert mean2 == pytest.approx(1698.65, abs=0.3)  # smoothed ~same mean
 
     assert mean1 != mean2  # but not exacly same
+
+
+def test_loadvalues_before_remove(default_surface):
+    """Test that load_values() has the claimed effect before deprecating __init__"""
+    if version.parse(xtgeo.version) >= version.parse("4.0"):
+        pytest.skip("Not relevant after deprecated __init__ is removed")
+
+    correct = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
+
+    srf = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
+    srf.load_values()
+    assert (correct == srf).all(), "Surface should not have been modified"
+
+    # Remove any "values"-parameter and let deprecated __init__ add one
+    default_surface.pop("values", None)
+    srf = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
+    srf.load_values()
+    assert (correct == srf).all(), "Surface should not have been modified"
+
+    # Also specify the format - see test for after-remove where it behaves differently
+    srf = xtgeo.RegularSurface(
+        filesrc=TESTSET1, fformat="irap_binary", **default_surface
+    )
+    srf.load_values()
+    assert (correct == srf).all(), "Surface should not have been modified"
+
+    # Finally remove any "filesrc"-parameter
+    default_surface.pop("filesrc", None)
+    srf = xtgeo.RegularSurface(**default_surface)
+    srf.load_values()
+    assert (correct == srf).all(), "Surface should not have been modified"
+
+
+def test_loadvalues_after_remove(default_surface):
+    if version.parse(xtgeo.version) < version.parse("4.0"):
+        pytest.skip("Not relevant before deprecated __init__ is removed")
+
+    default_surface.pop("values", None)
+    with pytest.raises(ValueError, match=r"Unknown file format None"):
+        srf = xtgeo.RegularSurface(filesrc=TESTSET1, **default_surface)
+        srf.load_values()
+
+    with pytest.raises(ValueError, match=r"cannot reshape .*"):
+        srf = xtgeo.RegularSurface(
+            filesrc=TESTSET1, fformat="irap_binary", **default_surface
+        )
+        srf.load_values()
+
+    default_surface.pop("filesrc", None)
+    srf = xtgeo.RegularSurface(**default_surface)
+    with pytest.raises(
+        ValueError, match="Can only load values into object initialised from file"
+    ):
+        srf.load_values()
