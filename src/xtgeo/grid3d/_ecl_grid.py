@@ -443,8 +443,12 @@ class EclGrid(ABC):
     (i+1,j+1,k+1)th cell which is the lower far right corner of the (i,j,k)th
     cell.
 
-    ACTNUM describes the active status of each cell. 0 means inactive, 1
-    means active, 2 means rock volume only, 3 means pore volume only.
+    ACTNUM describes the active status of each cell. For simulations without
+    dual porosity or thermal, 0 means inactive, 1 means active and other values
+    are not used. For dual porosity, 0 means inactive, 1 means matrix only,
+    2 means fracture only, and 3 means both fracture and matrix. For thermal
+    simulations, 0 means inactive, 1 means active, 2 means rock volume only,
+    3 means pore volume only.
     """
 
     @property
