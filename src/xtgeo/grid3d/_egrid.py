@@ -208,15 +208,6 @@ class GridHead:
         return result
 
 
-def maybe_array_equal(arr1: np.ndarray, arr2: np.ndarray) -> bool:
-    """
-    Returns:
-     True if the two given Optional[np.ndarray]'s are equal (either both None
-     or np.array_equal).
-    """
-    return (arr1 is None and arr2 is None) or np.array_equal(arr1, arr2)
-
-
 @dataclass
 class EGridSubGrid:
     """
@@ -232,7 +223,7 @@ class EGridSubGrid:
     def __eq__(self, other):
         return (
             self.grid_head == other.grid_head
-            and maybe_array_equal(self.actnum, other.actnum)
+            and np.array_equal(self.actnum, other.actnum)
             and np.array_equal(self.coord, other.coord)
             and np.array_equal(self.zcorn, other.zcorn)
         )
@@ -297,7 +288,7 @@ class LGRSection(EGridSubGrid):
             and self.name == other.name
             and self.parent == other.parent
             and self.grid_parent == other.grid_parent
-            and maybe_array_equal(self.hostnum, other.hostnum)
+            and np.array_equal(self.hostnum, other.hostnum)
             and self.boxorig == other.boxorig
             and self.coord_sys == other.coord_sys
         )
@@ -376,7 +367,7 @@ class GlobalGrid(EGridSubGrid):
             super().__eq__(other)
             and self.coord_sys == other.coord_sys
             and self.boxorig == other.boxorig
-            and maybe_array_equal(self.corsnum, other.corsnum)
+            and np.array_equal(self.corsnum, other.corsnum)
         )
 
     def to_egrid(self) -> List[Tuple[str, Any]]:
@@ -450,11 +441,11 @@ class NNCSection:
             self.nnchead == other.nnchead
             and np.array_equal(self.upstream_nnc, other.upstream_nnc)
             and np.array_equal(self.downstream_nnc, other.downstream_nnc)
-            and maybe_array_equal(self.nncl, other.nncl)
-            and maybe_array_equal(self.nncg, other.nncg)
+            and np.array_equal(self.nncl, other.nncl)
+            and np.array_equal(self.nncg, other.nncg)
             and self.amalgamation_idxs == other.amalgamation_idxs
-            and maybe_array_equal(self.nna1, other.nna1)
-            and maybe_array_equal(self.nna2, other.nna2)
+            and np.array_equal(self.nna1, other.nna1)
+            and np.array_equal(self.nna2, other.nna2)
         )
 
     def to_egrid(self) -> List[Tuple[str, Any]]:
