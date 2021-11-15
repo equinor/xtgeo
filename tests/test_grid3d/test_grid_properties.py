@@ -8,7 +8,6 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import assume, given
 
-import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import GridProperties
 
@@ -24,8 +23,6 @@ TPATH = xtg.testpathobj
 
 logger = xtg.basiclogger(__name__)
 
-GFILE1 = TPATH / "3dgrids/reek/REEK.EGRID"
-IFILE1 = TPATH / "3dgrids/reek/REEK.INIT"
 RFILE1 = TPATH / "3dgrids/reek/REEK.UNRST"
 
 XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
@@ -76,28 +73,6 @@ def test_gridproperties_iter(gps):
         num_props = len(gps.props)
 
     assert count == num_props ** 2
-
-
-def test_import_restart_gull():
-    """Import Restart Reek"""
-
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    x = GridProperties()
-
-    names = ["PRESSURE", "SWAT"]
-    dates = [19991201]
-    x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
-
-    # get the object
-    pr = x.get_prop_by_name("PRESSURE_19991201")
-
-    swat = x.get_prop_by_name("SWAT_19991201")
-
-    logger.info(x.names)
-
-    logger.info(swat.values3d.mean())
-    logger.info(pr.values3d.mean())
 
 
 def test_scan_dates():

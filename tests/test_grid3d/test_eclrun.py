@@ -37,7 +37,7 @@ def test_ecl_run_all(ecl_runs):
     ) * len(ecl_runs.expected_dates)
 
 
-@pytest.mark.parametrize("fformat", ["grdecl", "roff", "roff-asc", "bgrdecl"])
+@pytest.mark.parametrize("fformat", ["grdecl", "roff", "bgrdecl"])
 def test_roundtrip_parameters(fformat, tmp_path, ecl_runs):
     prop = ecl_runs.get_property_from_restart("PRESSURE", date="last")
     prop.to_file(tmp_path / f"pressure.{fformat}", name="PRESSURE", fformat=fformat)

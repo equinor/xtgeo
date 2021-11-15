@@ -7,6 +7,8 @@ import pytest
 
 import xtgeo
 
+from .ecl_run_fixtures import *  # noqa: F401, F403
+
 
 # pylint: disable=redefined-outer-name
 @pytest.fixture()
@@ -15,8 +17,8 @@ def reek_path(testpath):
 
 
 @pytest.fixture()
-def reek_grid(reek_path):
-    return xtgeo.grid_from_file(reek_path / "REEK.EGRID")
+def reek_grid(reek_run):
+    return reek_run.grid
 
 
 def test_roffbin_import_v2_wsubgrids(reek_path):
@@ -83,37 +85,16 @@ def test_geometrics_reek(reek_grid):
     assert geom["xmin"] == pytest.approx(456620, abs=1), "Xmin cell center"
 
 
-def test_simple_io(tmp_path, reek_grid):
-    """Test various import and export formats, incl egrid and bgrdecl."""
-    assert reek_grid.ncol == 40
+@pytest.mark.parametrize("fformat", ["grdecl", "roff", "egrid"])
+def test_grid_roundtrip_reek(tmp_path, reek_grid, fformat):
+    reek_grid.to_file(tmp_path / f"grid.{fformat}", fformat=fformat)
+    reek_grid2 = xtgeo.grid_from_file(tmp_path / f"grid.{fformat}", fformat=fformat)
 
-    filex = tmp_path / "grid_test_simple_io.roff"
+    assert reek_grid2.dimensions == (40, 64, 14)
 
-    reek_grid.to_file(filex)
-
-    reek_grid2 = xtgeo.grid_from_file(filex, fformat="roff")
-
-    assert reek_grid2.ncol == 40
-
-    filex = tmp_path / "grid_test_simple_io.EGRID"
-    filey = tmp_path / "grid_test_simple_io.bgrdecl"
-
-    reek_grid.to_file(filex, fformat="egrid")
-    reek_grid.to_file(filey, fformat="bgrdecl")
-
-    reek_grid2 = xtgeo.grid_from_file(filex, fformat="egrid")
-    reek_grid3 = xtgeo.grid_from_file(filey, fformat="bgrdecl")
-
-    assert reek_grid2.ncol == 40
-
-    dz1 = reek_grid.get_dz()
-    dz2 = reek_grid2.get_dz()
-    dz3 = reek_grid3.get_dz()
-
-    assert dz1.values.mean() == pytest.approx(dz2.values.mean(), abs=0.001)
-    assert dz1.values.std() == pytest.approx(dz2.values.std(), abs=0.001)
-    assert dz1.values.mean() == pytest.approx(dz3.values.mean(), abs=0.001)
-    assert dz1.values.std() == pytest.approx(dz3.values.std(), abs=0.001)
+    np.testing.assert_allclose(reek_grid._coordsv, reek_grid2._coordsv)
+    assert np.array_equal(reek_grid._actnumsv, reek_grid2._actnumsv)
+    np.testing.assert_allclose(reek_grid._zcornsv, reek_grid2._zcornsv)
 
 
 def test_grid_layer_slice(reek_grid):
@@ -134,50 +115,6 @@ def test_grid_layer_slice(reek_grid):
 
     assert sarrn[-1, 0, 0] == celll[12]
     assert sarrn[-1, 0, 1] == celll[13]
-
-
-@pytest.fixture
-def reek_poly(testpath):
-    return xtgeo.xyz.Polygons(join(testpath, "polygons", "reek", "1", "mypoly.pol"))
-
-
-def test_grid_inactivate_inside(tmp_path, reek_grid, reek_poly):
-    """Inactivate a grid inside polygons"""
-
-    act1 = reek_grid.get_actnum().values3d
-    n1 = act1[7, 55, 1]
-    assert n1 == 1
-
-    try:
-        reek_grid.inactivate_inside(reek_poly, layer_range=(1, 4))
-    except RuntimeError as rw:
-        print(rw)
-
-    reek_grid.to_file(tmp_path / "reek_inact_ins_pol.roff")
-
-    act2 = reek_grid.get_actnum().values3d
-    n2 = act2[7, 55, 1]
-    assert n2 == 0
-
-
-def test_grid_inactivate_outside(tmp_path, reek_grid, reek_poly):
-    """Inactivate a grid outside polygons"""
-    act1 = reek_grid.get_actnum().values3d
-    n1 = act1[3, 56, 1]
-    assert n1 == 1
-
-    try:
-        reek_grid.inactivate_outside(reek_poly, layer_range=(1, 4))
-    except RuntimeError as rw:
-        print(rw)
-
-    reek_grid.to_file(tmp_path / "reek_inact_out_pol.roff")
-
-    act2 = reek_grid.get_actnum().values3d
-    n2 = act2[3, 56, 1]
-    assert n2 == 0
-
-    assert int(act1[20, 38, 4]) == int(act2[20, 38, 4])
 
 
 def test_get_ijk_from_points(reek_grid):
