@@ -475,7 +475,7 @@ def section_generator(generator):
 def import_gridprops_from_restart_file_sections(
     sections,
     names: Union[List[str], "str"],
-    dates: Union[int, str],
+    dates: Union[List[int], str, List[str]],
     grid,
     fracture: bool = False,
 ) -> List[Dict]:
@@ -487,7 +487,7 @@ def import_gridprops_from_restart_file_sections(
         sections: Section generator such as returned by :meth:`section_generator`.
         names: List of property names to be imported. Can also,
             be set to "all" to import all parameters.
-        dates: List of xtgeo style dates (e.g. int(19990101)), can also
+        dates: List of xtgeo style dates (e.g. int(19990101) or "19990101"), can also
             be "all", "last" and "first".
         grid: The grid used by the simulator to produce the init file.
         fracture: If a dual porosity module, indicates that the fracture
@@ -502,7 +502,7 @@ def import_gridprops_from_restart_file_sections(
         check_grid_match(intehead, logihead, grid)
         date = date_from_intehead(intehead)
         if dates not in ("all", "first", "last"):
-            if date not in dates:
+            if date not in dates and str(date) not in dates:
                 continue
         latest_date_properties = [
             gridprop_params(v, name, date, grid, fracture)
