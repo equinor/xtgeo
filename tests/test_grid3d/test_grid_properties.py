@@ -56,6 +56,14 @@ def test_gridproperties_get_prop_by_name_not_exists(gps, name):
 
 
 @given(gridproperties())
+def test_gridproperties_get_names(gps):
+    for n in gps.names:
+        assert gps[n].name == n
+    for gp in gps:
+        assert gps.get_prop_by_name(gp.name) is not None
+
+
+@given(gridproperties())
 def test_gridproperties_iter(gps):
     count = 0
     for _ in gps:
@@ -68,23 +76,6 @@ def test_gridproperties_iter(gps):
         num_props = len(gps.props)
 
     assert count == num_props ** 2
-
-
-def test_restart_name_style():
-    grid = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    names = ["PRESSURE", "SWAT"]
-    dates = [19991201, 20010101]
-
-    gps = GridProperties()
-    gps.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=grid)
-    assert gps.names == [p.name for p in gps]
-
-    gps2 = GridProperties()
-    gps2.from_file(
-        RFILE1, fformat="unrst", names=names, dates=dates, grid=grid, namestyle=1
-    )
-    assert gps2.names == [p.name for p in gps2]
 
 
 def test_import_restart_gull():
@@ -107,38 +98,6 @@ def test_import_restart_gull():
 
     logger.info(swat.values3d.mean())
     logger.info(pr.values3d.mean())
-
-    # .assertAlmostEqual(pr.values.mean(), 332.54578,
-    #                        places=4, msg='Average PRESSURE_19991201')
-    # .assertAlmostEqual(swat.values.mean(), 0.87,
-    #                        places=2, msg='Average SWAT_19991201')
-
-    # pr = x.get_prop_by_name('PRESSURE_20010101')
-    # logger.info(pr.values3d.mean())
-    # .assertAlmostEqual(pr.values.mean(), 331.62,
-    #                        places=2, msg='Average PRESSURE_20010101')
-
-
-def test_import_soil():
-    """SOIL need to be computed in code from SWAT and SGAS"""
-
-    g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
-
-    x = GridProperties()
-
-    names = ["SOIL", "SWAT", "PRESSURE"]
-    dates = [19991201]
-    x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
-
-    logger.info(x.names)
-
-    # get the object instance
-    soil = x.get_prop_by_name("SOIL_19991201")
-    logger.info(soil.values3d.mean())
-
-    logger.debug(x.names)
-    txt = "Average SOIL_19850101"
-    assert soil.values.mean() == pytest.approx(0.121977, abs=0.001), txt
 
 
 def test_scan_dates():

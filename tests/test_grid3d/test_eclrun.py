@@ -1,5 +1,5 @@
 import itertools
-from os.path import basename, exists, join
+from os.path import basename, join
 
 import numpy as np
 import pytest
@@ -40,7 +40,32 @@ def test_ecl_run_all(ecl_runs):
     )
 
     assert gg.dimensions == ecl_runs.expected_dimensions
-    assert len(gg.gridprops.names) == ecl_runs.expected_num_restart_properties
+
+    for name in ecl_runs.expected_init_props:
+        if gg.dualporo:
+            assert name + "M" in gg.gridprops
+        else:
+            assert name in gg.gridprops
+
+    for name, date in itertools.product(
+        ecl_runs.expected_restart_props, ecl_runs.expected_dates
+    ):
+        if gg.dualporo:
+            assert f"{name}M_{date}" in gg.gridprops
+        else:
+            assert f"{name}_{date}" in gg.gridprops
+
+    assert len(gg.gridprops.names) == len(ecl_runs.expected_init_props) + len(
+        ecl_runs.expected_restart_props
+    ) * len(ecl_runs.expected_dates)
+
+
+def test_first_and_last_dates(ecl_runs):
+    po = ecl_runs.get_property_from_restart("PRESSURE", date="first")
+    assert po.date == min(ecl_runs.expected_dates)
+
+    px = ecl_runs.get_property_from_restart("PRESSURE", date="last")
+    assert px.date == max(ecl_runs.expected_dates)
 
 
 def test_dual_runs_general_grid(tmpdir, dual_runs):
@@ -60,17 +85,11 @@ def test_dual_runs_general_grid(tmpdir, dual_runs):
 )
 def test_dual_runs_restart_property_to_file(tmpdir, dual_runs, date, name, fracture):
     prop = dual_runs.get_property_from_restart(name, date=date, fracture=fracture)
-    prop.describe()
 
     if fracture:
         assert prop.name == f"{name}F_{date}"
     else:
         assert prop.name == f"{name}M_{date}"
-
-    filename = join(tmpdir, basename(dual_runs.path) + str(date) + prop.name + ".roff")
-    prop.to_file(filename)
-
-    assert exists(filename)
 
 
 @pytest.mark.parametrize(
@@ -79,16 +98,84 @@ def test_dual_runs_restart_property_to_file(tmpdir, dual_runs, date, name, fract
 )
 def test_dual_runs_init_property_to_file(tmpdir, dual_runs, name, fracture):
     prop = dual_runs.get_property_from_init(name, fracture=fracture)
-    prop.describe()
 
     if fracture:
         assert prop.name == f"{name}F"
     else:
         assert prop.name == f"{name}M"
 
-    filename = join(tmpdir, basename(dual_runs.path) + prop.name + ".roff")
-    prop.to_file(filename)
-    assert exists(filename)
+
+def test_import_reek_init(reek_run):
+    gps = reek_run.get_init_properties(names=["PORO", "PORV"])
+
+    # get the object
+    poro = gps.get_prop_by_name("PORO")
+    porv = gps.get_prop_by_name("PORV")
+    assert poro.values.mean() == pytest.approx(0.1677402, abs=0.00001)
+    assert porv.values.mean() == pytest.approx(13536.2137, abs=0.0001)
+
+
+def test_import_should_fail(reek_run):
+    """Import INIT and UNRST Reek but ask for wrong name or date"""
+
+    with pytest.raises(ValueError, match="Requested keyword NOSUCHNAME"):
+        reek_run.get_init_properties(names=["PORO", "NOSUCHNAME"])
+
+    reek_run.get_restart_properties(
+        names=["PRESSURE"],
+        dates=[19991201, 19991212],
+        strict=(True, False),
+    )
+
+    with pytest.raises(ValueError, match="PRESSURE 19991212 is not in"):
+        reek_run.get_restart_properties(
+            names=["PRESSURE"],
+            dates=[19991201, 19991212],
+            strict=(True, True),
+        )
+
+
+@pytest.mark.parametrize(
+    "dates", [[19991201, 20010101], ["19991201", "20010101"], "all"]
+)
+def test_import_restart(dates, reek_run):
+    gps = reek_run.get_restart_properties(names=["PRESSURE", "SWAT"], dates=dates)
+
+    assert gps["PRESSURE_19991201"].values.mean() == pytest.approx(334.52327, abs=0.001)
+    assert gps["SWAT_19991201"].values.mean() == pytest.approx(0.87, abs=0.01)
+    assert gps["PRESSURE_20010101"].values.mean() == pytest.approx(304.897, abs=0.01)
+
+
+@pytest.mark.parametrize(
+    "dates", [[19991201, 20010101], ["19991201", "20010101"], "all"]
+)
+def test_import_restart_namestyle(dates, reek_run):
+    gps = reek_run.get_restart_properties(
+        names=["PRESSURE", "SWAT"], dates=dates, namestyle=1
+    )
+    assert gps["PRESSURE--1999_12_01"].values.mean() == pytest.approx(
+        334.52327, abs=0.001
+    )
+    assert gps["SWAT--1999_12_01"].values.mean() == pytest.approx(0.87, abs=0.01)
+    assert gps["PRESSURE--2001_01_01"].values.mean() == pytest.approx(304.897, abs=0.01)
+
+    assert "PRESSURE--1999_12_01" in gps
+    assert "PRESSURE--1999_12_12" not in gps
+    assert "SWAT--1999_12_01" in gps
+    assert gps.names == [p.name for p in gps]
+
+
+def test_import_saturations(ecl_runs):
+    gps = ecl_runs.get_restart_properties(names=["SGAS", "SWAT", "SOIL"], dates="all")
+
+    if not ecl_runs.grid.dualporo:
+        for d in gps.dates:
+            np.testing.assert_allclose(
+                gps["SGAS_" + str(d)].values
+                + gps["SWAT_" + str(d)].values
+                + gps["SOIL_" + str(d)].values,
+                1.0,
+            )
 
 
 def test_dual_grid_poro_property(tmpdir, dual_runs):
@@ -234,8 +321,6 @@ def test_dualperm_wg_fractured_sgas_property(dual_poro_dual_perm_wg_run):
 
 
 def test_randomline_fence_from_well(show_plot, testpath, reek_run):
-    """Import ROFF grid with props and make fences"""
-
     grd = reek_run.grid_with_props(initprops=["PORO"])
     wll = xtgeo.Well(
         join(testpath, "wells", "reek", "1", "OP_1.w"), zonelogname="Zonelog"
@@ -264,8 +349,6 @@ def test_randomline_fence_from_well(show_plot, testpath, reek_run):
 
 
 def test_randomline_fence_from_polygon(show_plot, testpath, reek_run):
-    """Import ROFF grid with props and make fence from polygons"""
-
     grd = reek_run.grid_with_props(initprops=["PORO", "PERMX"])
     fence = xtgeo.Polygons(join(testpath, "polygons", "reek", "1", "fence.pol"))
 
@@ -299,8 +382,6 @@ def test_randomline_fence_from_polygon(show_plot, testpath, reek_run):
 
 
 def test_randomline_fence_calczminzmax(testpath, reek_run):
-    """Import ROFF grid with props and make fence from polygons, zmin/zmax auto"""
-
     grd = reek_run.grid_with_props(initprops=["PORO", "PERMX"])
     fence = xtgeo.Polygons(join(testpath, "polygons/reek/1/fence.pol"))
 
@@ -529,67 +610,3 @@ def test_io_ecl2roff_discrete(tmpdir, reek_run):
     assert isinstance(po.codes[1], str)
 
     po.to_file(join(tmpdir, "ecl2roff_disc.roff"), name="SATNUM", fformat="roff")
-
-
-def test_io_ecl_dates(reek_run):
-    """Import Eclipse with some more flexible dates settings"""
-    po = reek_run.get_property_from_restart("PRESSURE", date="first")
-    assert po.date == 19991201
-    px = reek_run.get_property_from_restart("PRESSURE", date="last")
-    assert px.date == 20030101
-
-
-def test_import_reek_init(reek_run):
-    gps = reek_run.get_init_properties(names=["PORO", "PORV"])
-
-    # get the object
-    poro = gps.get_prop_by_name("PORO")
-    porv = gps.get_prop_by_name("PORV")
-    assert poro.values.mean() == pytest.approx(0.1677402, abs=0.00001)
-    assert porv.values.mean() == pytest.approx(13536.2137, abs=0.0001)
-
-
-def test_import_should_fail(reek_run):
-    """Import INIT and UNRST Reek but ask for wrong name or date"""
-
-    with pytest.raises(ValueError, match="Requested keyword NOSUCHNAME"):
-        reek_run.get_init_properties(names=["PORO", "NOSUCHNAME"])
-
-    reek_run.get_restart_properties(
-        names=["PRESSURE"],
-        dates=[19991201, 19991212],
-        strict=(True, False),
-    )
-
-    with pytest.raises(ValueError, match="PRESSURE 19991212 is not in"):
-        reek_run.get_restart_properties(
-            names=["PRESSURE"],
-            dates=[19991201, 19991212],
-            strict=(True, True),
-        )
-
-
-def test_import_should_pass(reek_run):
-    """Import INIT and UNRST but ask for wrong name or date , using strict=False"""
-
-    reek_gps = reek_run.get_restart_properties(
-        names=["PRESSURE", "DUMMY"],
-        dates=[19991201, 19991212],
-        strict=(False, False),
-    )
-
-    assert "PRESSURE_19991201" in reek_gps
-    assert "PRESSURE_19991212" not in reek_gps
-    assert "DUMMY_19991201" not in reek_gps
-
-
-def test_import_restart(reek_run):
-    """Import Restart"""
-
-    gps = reek_run.get_restart_properties(
-        names=["PRESSURE", "SWAT"], dates=[19991201, 20010101]
-    )
-
-    assert gps["PRESSURE_19991201"].values.mean() == pytest.approx(334.52327, abs=0.001)
-    assert gps["SWAT_19991201"].values.mean() == pytest.approx(0.87, abs=0.01)
-    assert gps["PRESSURE_20010101"].values.mean() == pytest.approx(304.897, abs=0.01)

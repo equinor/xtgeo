@@ -17,6 +17,7 @@ from xtgeo.common.exceptions import KeywordNotFoundError
 from xtgeo.grid3d import Grid, GridProperty
 
 from .grid_generator import dimensions, xtgeo_grids
+from .gridprop_generator import grid_properties
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name
