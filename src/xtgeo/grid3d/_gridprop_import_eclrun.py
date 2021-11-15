@@ -7,6 +7,8 @@ from typing import Dict, List, Union
 
 import ecl_data_io as eclio
 import numpy as np
+from typing_extensions import Literal
+
 import xtgeo
 
 from ._ecl_inte_head import InteHead
@@ -405,7 +407,7 @@ def gridprop_params(values, name, date, grid, fracture):
 
 def import_gridprop_from_init_file(
     init_filelike,
-    names: Union[List[str], "str"],
+    names: Union[List[str], Literal["all"]],
     grid,
     fracture: bool = False,
 ) -> List[Dict]:
@@ -474,8 +476,8 @@ def section_generator(generator):
 
 def import_gridprops_from_restart_file_sections(
     sections,
-    names: Union[List[str], "str"],
-    dates: Union[List[int], str, List[str]],
+    names: Union[List[str], Literal["all"]],
+    dates: Union[List[int], Literal["all", "last", "first"], List[str]],
     grid,
     fracture: bool = False,
 ) -> List[Dict]:
@@ -521,8 +523,8 @@ def import_gridprops_from_restart_file_sections(
 
 def import_gridprops_from_restart_file(
     restart_filelike,
-    names: Union[List[str], "str"],
-    dates: Union[int, str],
+    names: Union[List[str], Literal["all"]],
+    dates: Union[int, Literal["all", "first", "last"]],
     grid,
     fracture: bool = False,
     fformat="unrst",
