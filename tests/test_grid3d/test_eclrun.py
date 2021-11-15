@@ -9,30 +9,7 @@ import xtgeo
 from .ecl_run_fixtures import *  # noqa: F401, F403
 
 
-def test_ecl_run(tmp_path, reek_run):
-    """Test import an eclrun with dates and export to roff after a diff."""
-    dates = [19991201, 20030101]
-    rprops = ["PRESSURE", "SWAT"]
-
-    grid = reek_run.grid_with_props(restartdates=dates, restartprops=rprops)
-
-    # get the property object:
-    pres1 = grid.get_prop_by_name("PRESSURE_20030101")
-    assert pres1.values.mean() == pytest.approx(308.45, abs=0.001)
-
-    pres1.to_file(tmp_path / "pres1.roff")
-
-    pres2 = grid.get_prop_by_name("PRESSURE_19991201")
-
-    pres1.values = pres1.values - pres2.values
-    avg = pres1.values.mean()
-    assert avg == pytest.approx(-26.073, abs=0.001)
-
-    pres1.to_file(tmp_path / "pressurediff.roff", name="PRESSUREDIFF")
-
-
 def test_ecl_run_all(ecl_runs):
-    """Test import an eclrun with all dates and props."""
     gg = ecl_runs.grid_with_props(
         initprops="all",
         restartdates="all",
@@ -58,6 +35,21 @@ def test_ecl_run_all(ecl_runs):
     assert len(gg.gridprops.names) == len(ecl_runs.expected_init_props) + len(
         ecl_runs.expected_restart_props
     ) * len(ecl_runs.expected_dates)
+
+
+@pytest.mark.parametrize("fformat", ["grdecl", "roff", "roff-asc", "bgrdecl"])
+def test_roundtrip_parameters(fformat, tmp_path, ecl_runs):
+    prop = ecl_runs.get_property_from_restart("PRESSURE", date="last")
+    prop.to_file(tmp_path / f"pressure.{fformat}", name="PRESSURE", fformat=fformat)
+
+    prop2 = xtgeo.gridproperty_from_file(
+        tmp_path / f"pressure.{fformat}",
+        name="PRESSURE",
+        fformat=fformat,
+        grid=ecl_runs.grid,
+    )
+
+    np.testing.assert_allclose(prop.values, prop2.values, atol=1e-3)
 
 
 def test_first_and_last_dates(ecl_runs):
@@ -115,6 +107,19 @@ def test_import_reek_init(reek_run):
     assert porv.values.mean() == pytest.approx(13536.2137, abs=0.0001)
 
 
+@pytest.mark.parametrize(
+    "dates",
+    [[19991201, 20010101, 20030101], ["19991201", "20010101", "20030101"], "all"],
+)
+def test_import_reek_restart(dates, reek_run):
+    gps = reek_run.get_restart_properties(names=["PRESSURE", "SWAT"], dates=dates)
+
+    assert gps["PRESSURE_19991201"].values.mean() == pytest.approx(334.52327, abs=0.001)
+    assert gps["SWAT_19991201"].values.mean() == pytest.approx(0.87, abs=0.01)
+    assert gps["PRESSURE_20010101"].values.mean() == pytest.approx(304.897, abs=0.01)
+    assert gps["PRESSURE_20030101"].values.mean() == pytest.approx(308.45, abs=0.001)
+
+
 def test_import_should_fail(reek_run):
     """Import INIT and UNRST Reek but ask for wrong name or date"""
 
@@ -133,17 +138,6 @@ def test_import_should_fail(reek_run):
             dates=[19991201, 19991212],
             strict=(True, True),
         )
-
-
-@pytest.mark.parametrize(
-    "dates", [[19991201, 20010101], ["19991201", "20010101"], "all"]
-)
-def test_import_restart(dates, reek_run):
-    gps = reek_run.get_restart_properties(names=["PRESSURE", "SWAT"], dates=dates)
-
-    assert gps["PRESSURE_19991201"].values.mean() == pytest.approx(334.52327, abs=0.001)
-    assert gps["SWAT_19991201"].values.mean() == pytest.approx(0.87, abs=0.01)
-    assert gps["PRESSURE_20010101"].values.mean() == pytest.approx(304.897, abs=0.01)
 
 
 @pytest.mark.parametrize(
@@ -320,79 +314,6 @@ def test_dualperm_wg_fractured_sgas_property(dual_poro_dual_perm_wg_run):
     assert sgas.values[4, 2, 0] == pytest.approx(0.178411)
 
 
-def test_randomline_fence_from_well(show_plot, testpath, reek_run):
-    grd = reek_run.grid_with_props(initprops=["PORO"])
-    wll = xtgeo.Well(
-        join(testpath, "wells", "reek", "1", "OP_1.w"), zonelogname="Zonelog"
-    )
-
-    # get the polygon for the well, limit it to 1200
-    fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=False, tvdmin=1200)
-
-    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(12.6335, abs=0.001)
-
-    fspec = wll.get_fence_polyline(sampling=10, nextend=2, asnumpy=True, tvdmin=1200)
-
-    # get the "image", which is a 2D numpy that can be plotted with e.g. imgshow
-    hmin, hmax, vmin, vmax, por = grd.get_randomline(
-        fspec, "PORO", zmin=1600, zmax=1700, zincrement=1.0
-    )
-
-    if show_plot:
-        import matplotlib.pyplot as plt
-
-        plt.figure()
-        plt.imshow(por, cmap="rainbow", extent=(hmin, hmax, vmax, vmin))
-        plt.axis("tight")
-        plt.colorbar()
-        plt.show()
-
-
-def test_randomline_fence_from_polygon(show_plot, testpath, reek_run):
-    grd = reek_run.grid_with_props(initprops=["PORO", "PERMX"])
-    fence = xtgeo.Polygons(join(testpath, "polygons", "reek", "1", "fence.pol"))
-
-    # get the polygons
-    fspec = fence.get_fence(distance=10, nextend=2, asnumpy=False)
-    assert fspec.dataframe[fspec.dhname][4] == pytest.approx(10, abs=1)
-
-    fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
-
-    # get the "image", which is a 2D numpy that can be plotted with e.g. imgshow
-    hmin, hmax, vmin, vmax, por = grd.get_randomline(
-        fspec, "PORO", zmin=1680, zmax=1750, zincrement=0.5
-    )
-
-    hmin, hmax, vmin, vmax, perm = grd.get_randomline(
-        fspec, "PERMX", zmin=1680, zmax=1750, zincrement=0.5
-    )
-
-    if show_plot:
-        import matplotlib.pyplot as plt
-
-        plt.figure()
-        plt.imshow(por, cmap="rainbow", extent=(hmin, hmax, vmax, vmin))
-        plt.axis("tight")
-        plt.colorbar()
-        plt.figure()
-        plt.imshow(perm, cmap="rainbow", extent=(hmin, hmax, vmax, vmin))
-        plt.axis("tight")
-        plt.colorbar()
-        plt.show()
-
-
-def test_randomline_fence_calczminzmax(testpath, reek_run):
-    grd = reek_run.grid_with_props(initprops=["PORO", "PERMX"])
-    fence = xtgeo.Polygons(join(testpath, "polygons/reek/1/fence.pol"))
-
-    fspec = fence.get_fence(distance=5, nextend=2, asnumpy=True)
-
-    hmin, hmax, vmin, vmax, por = grd.get_randomline(
-        fspec, "PORO", zmin=None, zmax=None
-    )
-    assert vmin == pytest.approx(1548.10098, abs=0.0001)
-
-
 def test_reverse_row_axis_dualprops(dual_props_run):
     """Reverse axis for distorted but small grid with props"""
 
@@ -414,131 +335,6 @@ def test_reverse_row_axis_dualprops(dual_props_run):
     grd.reverse_row_axis(ijk_handedness="left")  # ie do nothing in this case
     assert poro.values[1, 0, 0] == porowas.values[1, 0, 0]
     assert grd.ijk_handedness == "left"
-
-
-def test_avg02(tmpdir, generate_plot, reek_run, testpath):
-    """Make average map from Reek Eclipse."""
-
-    # get the poro
-    po = reek_run.get_property_from_init(name="PORO")
-
-    # get the dz and the coordinates
-    dz = reek_run.grid.get_dz(asmasked=False)
-    xc, yc, _zc = reek_run.grid.get_xyz(asmasked=False)
-
-    # get actnum
-    actnum = reek_run.grid.get_actnum()
-
-    # convert from masked numpy to ordinary
-    xcuse = np.copy(xc.values3d)
-    ycuse = np.copy(yc.values3d)
-    dzuse = np.copy(dz.values3d)
-    pouse = np.copy(po.values3d)
-
-    # dz must be zero for undef cells
-    dzuse[actnum.values3d < 0.5] = 0.0
-    pouse[actnum.values3d < 0.5] = 0.0
-
-    # make a map... estimate from xc and yc
-    zuse = np.ones((xcuse.shape))
-
-    avgmap = xtgeo.RegularSurface(
-        ncol=200,
-        nrow=250,
-        xinc=50,
-        yinc=50,
-        xori=457000,
-        yori=5927000,
-        values=np.zeros((200, 250)),
-    )
-
-    avgmap.avg_from_3dprop(
-        xprop=xcuse,
-        yprop=ycuse,
-        zoneprop=zuse,
-        zone_minmax=(1, 1),
-        mprop=pouse,
-        dzprop=dzuse,
-        truncate_le=None,
-    )
-
-    # add the faults in plot
-    fau = xtgeo.Polygons(
-        join(testpath, "polygons/reek/1/top_upper_reek_faultpoly.zmap"),
-        fformat="zmap",
-    )
-    fspec = {"faults": fau}
-
-    if generate_plot:
-        avgmap.quickplot(
-            filename=join(tmpdir, "tmp_poro2.png"), xlabelrotation=30, faults=fspec
-        )
-        avgmap.to_file(join(tmpdir, "tmp.poro.gri"), fformat="irap_ascii")
-
-    assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
-
-
-def test_avg03(tmpdir, generate_plot, reek_run, testpath):
-    """Make average map from Reek Eclipse, speed up by zone_avgrd."""
-    # get the poro
-    po = reek_run.get_property_from_init(name="PORO")
-
-    # get the dz and the coordinates
-    dz = reek_run.grid.get_dz(asmasked=False)
-    xc, yc, _zc = reek_run.grid.get_xyz(asmasked=False)
-
-    # get actnum
-    actnum = reek_run.grid.get_actnum()
-    actnum = actnum.get_npvalues3d()
-
-    # convert from masked numpy to ordinary
-    xcuse = xc.get_npvalues3d()
-    ycuse = yc.get_npvalues3d()
-    dzuse = dz.get_npvalues3d(fill_value=0.0)
-    pouse = po.get_npvalues3d(fill_value=0.0)
-
-    # dz must be zero for undef cells
-    dzuse[actnum < 0.5] = 0.0
-    pouse[actnum < 0.5] = 0.0
-
-    # make a map... estimate from xc and yc
-    zuse = np.ones((xcuse.shape))
-
-    avgmap = xtgeo.RegularSurface(
-        ncol=200,
-        nrow=250,
-        xinc=50,
-        yinc=50,
-        xori=457000,
-        yori=5927000,
-        values=np.zeros((200, 250)),
-    )
-
-    avgmap.avg_from_3dprop(
-        xprop=xcuse,
-        yprop=ycuse,
-        zoneprop=zuse,
-        zone_minmax=(1, 1),
-        mprop=pouse,
-        dzprop=dzuse,
-        truncate_le=None,
-        zone_avg=True,
-    )
-
-    # add the faults in plot
-    fau = xtgeo.Polygons(
-        join(testpath, "polygons/reek/1/top_upper_reek_faultpoly.zmap"),
-        fformat="zmap",
-    )
-    fspec = {"faults": fau}
-
-    if generate_plot:
-        avgmap.quickplot(
-            filename=join(tmpdir, "tmp_poro3.png"), xlabelrotation=30, faults=fspec
-        )
-    avgmap.to_file(join(tmpdir, "tmp.poro3.gri"), fformat="irap_ascii")
-
-    assert avgmap.values.mean() == pytest.approx(0.1653, abs=0.01)
 
 
 def test_get_xy_values_for_webportal_ecl(reek_run):
@@ -565,25 +361,6 @@ def test_eclinit_import_reek(reek_run):
     assert pv.values.mean() == pytest.approx(13536.2137, abs=0.0001)
 
 
-def test_eclinit_simple_importexport(tmpdir, ecl_runs):
-    """Property import and export with anoother name"""
-
-    gg = ecl_runs.grid
-    po = ecl_runs.get_property_from_init(name="PORO")
-
-    po.to_file(
-        join(tmpdir, "simple.grdecl"),
-        fformat="grdecl",
-        name="PORO2",
-        fmt="%12.5f",
-    )
-
-    p2 = xtgeo.gridproperty_from_file(
-        join(tmpdir, "simple.grdecl"), grid=gg, name="PORO2"
-    )
-    assert p2.name == "PORO2"
-
-
 def test_eclunrst_import_reek(reek_run):
     """Property UNRST import from Eclipse. Reek"""
 
@@ -598,15 +375,3 @@ def test_eclunrst_import_reek(reek_run):
 
     soil = reek_run.get_property_from_restart(name="SOIL", date=19991201)
     np.testing.assert_allclose(soil.values, 1 - swat.values)
-
-
-def test_io_ecl2roff_discrete(tmpdir, reek_run):
-    """Import Eclipse discrete property; then export to ROFF int."""
-
-    po = reek_run.get_property_from_init("SATNUM")
-
-    assert po.codes == {1: "1"}
-    assert po.ncodes == 1
-    assert isinstance(po.codes[1], str)
-
-    po.to_file(join(tmpdir, "ecl2roff_disc.roff"), name="SATNUM", fformat="roff")
