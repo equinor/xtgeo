@@ -160,7 +160,8 @@ def test_restart_name_style():
     assert gps2.names == [p.name for p in gps2]
 
 
-def test_import_restart_gull():
+@pytest.mark.parametrize("dates", [[19991201], ["19991201"]])
+def test_import_restart_gull(dates):
     """Import Restart Reek"""
 
     g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
@@ -168,28 +169,10 @@ def test_import_restart_gull():
     x = GridProperties()
 
     names = ["PRESSURE", "SWAT"]
-    dates = [19991201]
     x.from_file(RFILE1, fformat="unrst", names=names, dates=dates, grid=g)
 
-    # get the object
-    pr = x.get_prop_by_name("PRESSURE_19991201")
-
-    swat = x.get_prop_by_name("SWAT_19991201")
-
-    logger.info(x.names)
-
-    logger.info(swat.values3d.mean())
-    logger.info(pr.values3d.mean())
-
-    # .assertAlmostEqual(pr.values.mean(), 332.54578,
-    #                        places=4, msg='Average PRESSURE_19991201')
-    # .assertAlmostEqual(swat.values.mean(), 0.87,
-    #                        places=2, msg='Average SWAT_19991201')
-
-    # pr = x.get_prop_by_name('PRESSURE_20010101')
-    # logger.info(pr.values3d.mean())
-    # .assertAlmostEqual(pr.values.mean(), 331.62,
-    #                        places=2, msg='Average PRESSURE_20010101')
+    assert x.get_prop_by_name("PRESSURE_19991201") is not None
+    assert x.get_prop_by_name("SWAT_19991201") is not None
 
 
 def test_import_soil():
