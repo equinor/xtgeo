@@ -13,4 +13,5 @@ typing-extensions; python_version < '3.8'
 tables>=3.5.1; python_version < "3.9" and platform_system != "Linux"
 tables>=3.5.1; platform_system == "Linux"
 roffio
-ecl-data-io
+ecl-data-io>=1.0
+typing-extensions

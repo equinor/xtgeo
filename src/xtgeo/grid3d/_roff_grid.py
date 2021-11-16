@@ -127,14 +127,8 @@ class RoffGrid:
             and self.xscale == other.xscale
             and self.yscale == other.yscale
             and self.zscale == other.zscale
-            and (
-                (self.subgrids is None and other.subgrids is None)
-                or (np.array_equal(self.subgrids, other.subgrids))
-            )
-            and (
-                (self.split_enz is None and other.split_enz is None)
-                or (np.array_equal(self.split_enz, other.split_enz))
-            )
+            and np.array_equal(self.subgrids, other.subgrids)
+            and np.array_equal(self.split_enz, other.split_enz)
             and np.array_equal(self.zvals, other.zvals)
             and np.array_equal(self.corner_lines, other.corner_lines)
             and np.array_equal(self.active, other.active)

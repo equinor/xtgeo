@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 
 import xtgeo
 
-from .grid_generator import xtgeo_grids
+from ..test_grid3d.grid_generator import xtgeo_grids
 
 
 def deck_contents(dimensions, load_statement):
@@ -44,14 +44,13 @@ DENSITY
 PVTW
  1000 1.0 0.0 0.0 0.0 /
 PVTO
-  0.0 500.0  1.0 0.1
-      5000.0 0.0 0.2  /
-  3.0 1500.0 2.0 0.1
-      5000.0 0.0 0.2  /
+  0.001 15.0  1.0 0.1 /
+  1.6 5000.0  1.8 0.5
+      9000.0  1.7 0.6 /
 /
 SOLUTION
 EQUIL
-       3*1000 0 1000 0 0 0 0 /
+ 3*1000 0 1000 0 0 0 0 /
 SUMMARY
 SCHEDULE
 NOSIM

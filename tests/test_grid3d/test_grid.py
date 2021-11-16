@@ -9,7 +9,7 @@ from hypothesis import given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
-from xtgeo.grid3d import Grid, GridProperty
+from xtgeo.grid3d import Grid
 
 from .grid_generator import dimensions, increments, xtgeo_grids
 
@@ -28,6 +28,7 @@ REEKFIL3 = TPATH / "3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
 REEKFIL4 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
 REEKFIL5 = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
 REEKROOT = TPATH / "3dgrids/reek/REEK"
+SPROOT = TPATH / "3dgrids/etc/TEST_SP"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = TPATH / "3dgrids/bri/b.grdecl"
 BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
@@ -52,12 +53,12 @@ def load_gfile1():
     return xtgeo.grid3d.Grid(EMEGFILE)
 
 
-def test_import_wrong():
+def test_import_wrong(tmp_path):
     """Importing wrong fformat, etc."""
+    grd = xtgeo.create_box_grid((2, 2, 2))
+    grd.to_file(tmp_path / "grd.roff")
     with pytest.raises(ValueError):
-        grd = Grid()
-        grd.from_file(EMEGFILE, fformat="stupid_wrong_name")
-        assert grd.ncol == 70
+        xtgeo.grid_from_file(tmp_path / "grd.roff", fformat="stupid_wrong_name")
 
 
 def test_import_guess(load_gfile1):
@@ -73,8 +74,7 @@ def test_import_guess(load_gfile1):
 
 def test_create_shoebox(tmp_path):
     """Make a shoebox grid from scratch."""
-    grd = xtgeo.Grid()
-    grd.create_box()
+    grd = xtgeo.create_box_grid((4, 3, 5))
     grd.to_file(tmp_path / "shoebox_default.roff")
 
     grd.create_box(flip=-1)
@@ -125,10 +125,9 @@ def test_create_shoebox(tmp_path):
     ],
 )
 def test_shoebox_egrid(tmp_path, dimensions):
-    grd = xtgeo.Grid()
-    grd.create_box(dimension=dimensions)
+    grd = xtgeo.create_box_grid(dimension=dimensions)
     grd.to_file(tmp_path / "E1.EGRID", fformat="egrid")
-    grd1 = xtgeo.Grid(tmp_path / "E1.EGRID")
+    grd1 = xtgeo.grid_from_file(tmp_path / "E1.EGRID")
     assert grd1.dimensions == dimensions
 
 
@@ -409,25 +408,16 @@ def test_roffbin_import_v2_wsubgrids():
 
 def test_import_grdecl_and_bgrdecl():
     """Eclipse import of GRDECL and binary GRDECL."""
-    grd1 = Grid(REEKFIL2, fformat="grdecl")
+    grd1 = xtgeo.grid_from_file(REEKFIL2, fformat="grdecl")
+    grd2 = xtgeo.grid_from_file(REEKFIL3, fformat="bgrdecl")
 
-    grd1.describe()
     assert grd1.dimensions == (40, 64, 14)
     assert grd1.nactive == 35812
 
-    # get dZ...
-    dzv1 = grd1.get_dz()
-
-    grd2 = Grid(REEKFIL3, fformat="bgrdecl")
-
-    grd2.describe()
     assert grd2.dimensions == (40, 64, 14)
     assert grd2.nactive == 35812
 
-    # get dZ...
-    dzv2 = grd2.get_dz()
-
-    assert dzv1.values.mean() == pytest.approx(dzv2.values.mean(), abs=0.001)
+    np.testing.assert_allclose(grd1.get_dz().values, grd2.get_dz().values, atol=0.001)
 
 
 def test_eclgrid_import2(tmp_path):
@@ -455,7 +445,7 @@ def test_eclgrid_import2(tmp_path):
 
 def test_eclgrid_import3(tmp_path):
     """Eclipse GRDECL import and translate."""
-    grd = Grid(BRILGRDECL, fformat="grdecl")
+    grd = xtgeo.grid_from_file(BRILGRDECL, fformat="grdecl")
 
     mylist = grd.get_geometrics()
 
@@ -516,32 +506,32 @@ def test_get_adjacent_cells(tmp_path):
 
 def test_simple_io(tmp_path):
     """Test various import and export formats, incl egrid and bgrdecl."""
-    gg = Grid(REEKFILE, fformat="egrid")
+    reek_grid = Grid(REEKFILE, fformat="egrid")
 
-    assert gg.ncol == 40
+    assert reek_grid.ncol == 40
 
     filex = tmp_path / "grid_test_simple_io.roff"
 
-    gg.to_file(filex)
+    reek_grid.to_file(filex)
 
-    gg2 = Grid(filex, fformat="roff")
+    reek_grid2 = xtgeo.grid_from_file(filex, fformat="roff")
 
-    assert gg2.ncol == 40
+    assert reek_grid2.ncol == 40
 
     filex = tmp_path / "grid_test_simple_io.EGRID"
     filey = tmp_path / "grid_test_simple_io.bgrdecl"
 
-    gg.to_file(filex, fformat="egrid")
-    gg.to_file(filey, fformat="bgrdecl")
+    reek_grid.to_file(filex, fformat="egrid")
+    reek_grid.to_file(filey, fformat="bgrdecl")
 
-    gg2 = Grid(filex, fformat="egrid")
-    gg3 = Grid(filey, fformat="bgrdecl")
+    reek_grid2 = xtgeo.grid_from_file(filex, fformat="egrid")
+    reek_grid3 = xtgeo.grid_from_file(filey, fformat="bgrdecl")
 
-    assert gg2.ncol == 40
+    assert reek_grid2.ncol == 40
 
-    dz1 = gg.get_dz()
-    dz2 = gg2.get_dz()
-    dz3 = gg3.get_dz()
+    dz1 = reek_grid.get_dz()
+    dz2 = reek_grid2.get_dz()
+    dz3 = reek_grid3.get_dz()
 
     assert dz1.values.mean() == pytest.approx(dz2.values.mean(), abs=0.001)
     assert dz1.values.std() == pytest.approx(dz2.values.std(), abs=0.001)
@@ -563,9 +553,6 @@ def test_ecl_run(tmp_path):
     pres1.to_file(tmp_path / "pres1.roff")
 
     pres2 = gg.get_prop_by_name("PRESSURE_19991201")
-
-    if isinstance(pres2, GridProperty):
-        pass
 
     logger.debug(pres1.values)
     logger.debug(pres2.values)
@@ -594,9 +581,23 @@ def test_ecl_run_all():
     assert len(gg.gridprops.names) == 287
 
 
+def test_ecl_run_all_sp(testpath):
+    """Test import an eclrun with all dates and props."""
+    gg = Grid()
+    gg.from_file(
+        SPROOT,
+        fformat="eclipserun",
+        initprops="all",
+        restartdates="all",
+        restartprops="all",
+    )
+
+    assert len(gg.gridprops.names) == 59
+
+
 def test_npvalues1d():
     """Different ways of getting np arrays."""
-    grd = Grid(DUALFIL3)
+    grd = xtgeo.grid_from_file(DUALFIL3)
     dz = grd.get_dz()
 
     dz1 = dz.get_npvalues1d(activeonly=False)  # [  1.   1.   1.   1.   1.  nan  ...]
@@ -607,7 +608,7 @@ def test_npvalues1d():
     assert dz1[0] == 1.0
     assert not np.isnan(dz2[5])
 
-    grd = Grid(DUALFIL1)  # all cells active
+    grd = xtgeo.grid_from_file(DUALFIL1)  # all cells active
     dz = grd.get_dz()
 
     dz1 = dz.get_npvalues1d(activeonly=False)
@@ -618,9 +619,7 @@ def test_npvalues1d():
 
 def test_pathlib(tmp_path):
     """Import and export via pathlib."""
-    pfile = pathlib.Path(DUALFIL1)
-    grd = Grid()
-    grd.from_file(pfile)
+    grd = xtgeo.grid_from_file(pathlib.Path(DUALFIL1))
 
     assert grd.dimensions == (5, 3, 1)
 
@@ -682,7 +681,7 @@ def test_flip(load_gfile1):
 
 def test_xyz_cell_corners():
     """Test xyz variations."""
-    grd = Grid(DUALFIL1)
+    grd = xtgeo.grid_from_file(DUALFIL1)
 
     allcorners = grd.get_xyz_corners()
     assert len(allcorners) == 24
@@ -712,19 +711,16 @@ def test_grid_layer_slice():
     assert sarrn[-1, 0, 1] == celll[13]
 
 
-def test_generate_hash():
-    """Generate hash for two grid instances with same input and compare."""
-    grd1 = Grid(REEKFILE)
-    grd2 = Grid(REEKFILE)
-
+@given(xtgeo_grids)
+def test_generate_hash(grd1):
+    grd2 = grd1.copy()
     assert id(grd1) != id(grd2)
-
     assert grd1.generate_hash() == grd2.generate_hash()
 
 
 def test_gridquality_properties(show_plot):
     """Get grid quality props."""
-    grd1 = Grid(GRIDQC1)
+    grd1 = xtgeo.grid_from_file(GRIDQC1)
 
     props1 = grd1.get_gridquality_properties()
     minang = props1.get_prop_by_name("minangle_topbase")
@@ -744,7 +740,7 @@ def test_gridquality_properties(show_plot):
 
         layslice.show()
 
-    grd2 = Grid(GRIDQC2)
+    grd2 = xtgeo.grid_from_file(GRIDQC2)
     props2 = grd2.get_gridquality_properties()
 
     neg = props2.get_prop_by_name("negative_thickness")
@@ -770,13 +766,11 @@ def test_gridquality_properties(show_plot):
 
         layslice.show()
 
-    # assert concp.values.sum() == 7949
-
 
 def test_bulkvol():
     """Test cell bulk volume calculation."""
-    grd = Grid(GRIDQC1)
-    cellvol_rms = GridProperty(GRIDQC1_CELLVOL)
+    grd = xtgeo.grid_from_file(GRIDQC1)
+    cellvol_rms = xtgeo.gridproperty_from_file(GRIDQC1_CELLVOL)
 
     bulk = grd.get_bulk_volume()
     logger.info("Sum this: %s", bulk.values.sum())
@@ -808,8 +802,9 @@ def test_bad_egrid_ends_before_kw(tmp_path):
 
 @given(dimensions, increments, increments, increments)
 def test_grid_get_dx(dimension, dx, dy, dz):
-    grd = Grid()
-    grd.create_box(dimension=dimension, increment=(dx, dy, dz), rotation=0.0)
+    grd = xtgeo.create_box_grid(
+        dimension=dimension, increment=(dx, dy, dz), rotation=0.0
+    )
     np.testing.assert_allclose(grd.get_dx(metric="euclid").values, dx, atol=0.01)
     np.testing.assert_allclose(
         grd.get_dx(metric="north south vertical").values, 0.0, atol=0.01
@@ -830,8 +825,9 @@ def test_grid_get_dx(dimension, dx, dy, dz):
 
 @given(dimensions, increments, increments, increments)
 def test_grid_get_dy(dimension, dx, dy, dz):
-    grd = Grid()
-    grd.create_box(dimension=dimension, increment=(dx, dy, dz), rotation=0.0)
+    grd = xtgeo.create_box_grid(
+        dimension=dimension, increment=(dx, dy, dz), rotation=0.0
+    )
     np.testing.assert_allclose(grd.get_dy(metric="euclid").values, dy, atol=0.01)
     np.testing.assert_allclose(
         grd.get_dy(metric="north south vertical").values, dy, atol=0.01
@@ -852,8 +848,7 @@ def test_grid_get_dy(dimension, dx, dy, dz):
 
 @given(dimensions, increments, increments, increments)
 def test_grid_get_dz(dimension, dx, dy, dz):
-    grd = Grid()
-    grd.create_box(dimension=dimension, increment=(dx, dy, dz))
+    grd = xtgeo.create_box_grid(dimension=dimension, increment=(dx, dy, dz))
     np.testing.assert_allclose(grd.get_dz(metric="euclid").values, dz, atol=0.01)
     np.testing.assert_allclose(
         grd.get_dz(metric="north south vertical").values, dz, atol=0.01
@@ -880,8 +875,7 @@ def test_get_dxdy_is_get_dx_and_dy(grid):
 
 
 def test_benchmark_grid_get_dz(benchmark):
-    grd = Grid()
-    grd.create_box(dimension=(100, 100, 100))
+    grd = xtgeo.create_box_grid(dimension=(100, 100, 100))
 
     def run():
         grd.get_dz()
@@ -890,8 +884,7 @@ def test_benchmark_grid_get_dz(benchmark):
 
 
 def test_benchmark_grid_get_dxdy(benchmark):
-    grd = Grid()
-    grd.create_box(dimension=(100, 100, 100))
+    grd = xtgeo.create_box_grid(dimension=(100, 100, 100))
 
     def run():
         grd.get_dxdy()
@@ -900,8 +893,7 @@ def test_benchmark_grid_get_dxdy(benchmark):
 
 
 def test_grid_get_dxdydz_zero_size():
-    grd = Grid()
-    grd.create_box(dimension=(0, 0, 0))
+    grd = xtgeo.create_box_grid(dimension=(0, 0, 0))
 
     assert grd.get_dx().values.shape == (0, 0, 0)
     assert grd.get_dy().values.shape == (0, 0, 0)
@@ -909,8 +901,7 @@ def test_grid_get_dxdydz_zero_size():
 
 
 def test_grid_get_dxdydz_bad_coordsv_size():
-    grd = Grid()
-    grd.create_box(dimension=(10, 10, 10))
+    grd = xtgeo.create_box_grid(dimension=(10, 10, 10))
     grd._coordsv = np.zeros(shape=(0, 0, 0))
 
     with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of coordsv"):
@@ -922,8 +913,7 @@ def test_grid_get_dxdydz_bad_coordsv_size():
 
 
 def test_grid_get_dxdydz_bad_zcorn_size():
-    grd = Grid()
-    grd.create_box(dimension=(10, 10, 10))
+    grd = xtgeo.create_box_grid(dimension=(10, 10, 10))
     grd._zcornsv = np.zeros(shape=(0, 0, 0, 0))
 
     with pytest.raises(xtgeo.XTGeoCLibError, match="Incorrect size of zcornsv"):
@@ -935,8 +925,7 @@ def test_grid_get_dxdydz_bad_zcorn_size():
 
 
 def test_grid_get_dxdydz_bad_grid_top():
-    grd = Grid()
-    grd.create_box(dimension=(10, 10, 10))
+    grd = xtgeo.create_box_grid(dimension=(10, 10, 10))
 
     grd._coordsv[:, :, 2] = 0.0
     grd._coordsv[:, :, 5] = 0.0
@@ -951,8 +940,7 @@ def test_grid_get_dxdydz_bad_grid_top():
 
 
 def test_grid_get_dxdydz_bad_metric():
-    grd = Grid()
-    grd.create_box(dimension=(10, 10, 10))
+    grd = xtgeo.create_box_grid(dimension=(10, 10, 10))
 
     with pytest.raises(ValueError, match="Unknown metric"):
         grd.get_dx(metric="foo")
@@ -963,8 +951,7 @@ def test_grid_get_dxdydz_bad_metric():
 
 
 def test_grid_roff_subgrids_import_regression(tmp_path):
-    grid = Grid()
-    grid.create_box(dimension=(5, 5, 67))
+    grid = xtgeo.create_box_grid(dimension=(5, 5, 67))
     grid.subgrids = OrderedDict(
         [
             ("subgrid_0", list(range(1, 21))),

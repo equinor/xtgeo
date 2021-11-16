@@ -144,3 +144,18 @@ def test_transform_map_relative_no_double(egrid):
     coord2 = egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.ORIGIN)
 
     assert_allclose(coord1, coord2)
+
+
+@given(xtgeo_compatible_egrids())
+def test_conversion_warning(egrid):
+    with pytest.warns(None) as warnlog:
+        egrid.xtgeo_coord(relative_to=xtgeo.GridRelative.MAP)
+
+    if egrid.mapaxes is not None and egrid.map_axis_units is None:
+        assert (
+            len([w for w in warnlog if "axis units is missing" in str(w.message)]) == 1
+        )
+    else:
+        assert (
+            len([w for w in warnlog if "axis units is missing" in str(w.message)]) == 0
+        )

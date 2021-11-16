@@ -75,7 +75,7 @@ def handle_metadata(result, meta, ncol, nrow, nlay):
 
 
 def import_xtgcpgeom(
-    mfile, mmap
+    mfile, mmap=False
 ):  # pylint: disable=too-many-locals, too-many-statements
     """Using pure python for experimental grid geometry import."""
     #

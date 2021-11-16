@@ -8,8 +8,7 @@ Then run tests in Roxar API which focus on IO.
 
 This requires a ROXAPI license, and to be ran in a "roxenvbash" environment if Equinor.
 """
-import shutil
-from os.path import isdir, join
+from os.path import join
 
 import numpy as np
 import pytest
@@ -71,15 +70,6 @@ def fixture_create_project(tmp_project_path):
     prj1 = tmp_project_path
     prj2 = tmp_project_path + "_initial"
 
-    print("\n******** Setup RMS project!\n")
-    if isdir(prj1):
-        print("Remove existing project! (1)")
-        shutil.rmtree(prj1)
-
-    if isdir(prj2):
-        print("Remove existing project! (2)")
-        shutil.rmtree(prj2)
-
     project = roxar.Project.create()
 
     rox = xtgeo.RoxUtils(project)
@@ -121,15 +111,6 @@ def fixture_create_project(tmp_project_path):
     yield tmp_project_path
 
     project.close()
-
-    print("\n******* Teardown RMS project!\n")
-    if isdir(prj1):
-        print("Remove existing project! (1)")
-        shutil.rmtree(prj1)
-
-    if isdir(prj2):
-        print("Remove existing project! (2)")
-        shutil.rmtree(prj2)
 
 
 @pytest.mark.requires_roxar

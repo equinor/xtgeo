@@ -27,7 +27,6 @@ def get_randomline(
 
     This is a difficult task, in particular in terms of acceptable speed.
     """
-    self._xtgformat1()
 
     logger.info("Enter get_randomline from Grid...")
 
@@ -55,6 +54,7 @@ def get_randomline(
     nsamples = xcoords.shape[0] * nzsam
 
     logger.info("Running C routine to get randomline...")
+    self._xtgformat1()
     _ier, values = _cxtgeo.grd3d_get_randomline(
         xcoords,
         ycoords,

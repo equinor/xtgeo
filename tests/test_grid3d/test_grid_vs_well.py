@@ -5,10 +5,10 @@ from os.path import join
 
 import pytest
 
-from xtgeo.grid3d import Grid
-from xtgeo.well import Well
-from xtgeo.grid3d import GridProperty
+import xtgeo
 from xtgeo.common import XTGeoDialog
+from xtgeo.grid3d import GridProperty
+from xtgeo.well import Well
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -62,11 +62,9 @@ MATCHD2 = {
 
 def test_report_zlog_mismatch():
     """Report zone log mismatch grid and well."""
-    g1 = Grid()
-    g1.from_file(GRIDFILE)
+    g1 = xtgeo.grid_from_file(GRIDFILE)
 
-    zo = GridProperty()
-    zo.from_file(ZONEFILE, name="Zone")
+    zo = xtgeo.gridproperty_from_file(ZONEFILE, name="Zone")
 
     w1 = Well(WELL1)
     w2 = Well(WELL2)
@@ -108,8 +106,7 @@ def test_report_zlog_mismatch():
 
 def test_report_zlog_mismatch_resultformat3(tmpdir):
     """Report zone log mismatch grid and well, export updated wellsegment"""
-    g1 = Grid()
-    g1.from_file(GRIDFILE)
+    g1 = xtgeo.grid_from_file(GRIDFILE)
 
     zo = GridProperty()
     zo.from_file(ZONEFILE, name="Zone")
@@ -131,11 +128,9 @@ def test_report_zlog_mismatch_resultformat3(tmpdir):
 
 def test_report_zlog_mismatch_perflog(tmpdir):
     """Report zone log mismatch grid and well filter on PERF"""
-    g1 = Grid()
-    g1.from_file(GRIDFILE)
+    g1 = xtgeo.grid_from_file(GRIDFILE)
 
-    zo = GridProperty()
-    zo.from_file(ZONEFILE, name="Zone")
+    zo = xtgeo.gridproperty_from_file(ZONEFILE, name="Zone")
 
     w1 = Well(PWELL1)
 

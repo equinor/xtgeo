@@ -191,10 +191,7 @@ class GrdeclGrid(EclGrid):
             and self.mapunits == other.mapunits
             and self.gridunit == other.gridunit
             and self.gdorient == other.gdorient
-            and (
-                (self.actnum is None and other.actnum is None)
-                or np.array_equal(self.actnum, other.actnum)
-            )
+            and np.array_equal(self.actnum, other.actnum)
             and np.array_equal(self.coord, other.coord)
             and np.array_equal(self.zcorn, other.zcorn)
         )
