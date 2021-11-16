@@ -24,6 +24,36 @@ def any_gridproperties(any_grid, any_gridprop):
     return gps
 
 
+def test_grid_from_file_warns(any_grid):
+    if version.parse(xtgeo_version) < version.parse("2.16"):
+        pytest.skip()
+
+    any_grid.to_file("grid.roff", fformat="roff")
+
+    with pytest.warns(DeprecationWarning, match="from_file is deprecated"):
+        any_grid.from_file("grid.roff", fformat="roff")
+
+
+def test_grid_from_hdf_warns(any_grid):
+    if version.parse(xtgeo_version) < version.parse("2.16"):
+        pytest.skip()
+
+    any_grid.to_hdf("grid.hdf")
+
+    with pytest.warns(DeprecationWarning, match="from_hdf is deprecated"):
+        any_grid.from_hdf("grid.hdf")
+
+
+def test_grid_from_xtgf_warns(any_grid):
+    if version.parse(xtgeo_version) < version.parse("2.16"):
+        pytest.skip()
+
+    any_grid.to_xtgf("grid.xtg")
+
+    with pytest.warns(DeprecationWarning, match="from_xtgf is deprecated"):
+        any_grid.from_xtgf("grid.xtg")
+
+
 def test_grid_numpify_warns(any_grid):
     if version.parse(xtgeo_version) < version.parse("2.7"):
         pytest.skip()
