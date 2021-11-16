@@ -56,13 +56,8 @@ def test_import_wrong(tmp_path):
         xtgeo.grid_from_file(tmp_path / "grd.roff", fformat="stupid_wrong_name")
 
 
-def test_import_guess(load_gfile1):
-    """Import with guessing fformat, and also test name attribute."""
-    grd = load_gfile1
-
-    assert grd.ncol == 70
-    assert grd.name == "emerald_hetero_grid"
-
+def test_get_set_name():
+    grd = xtgeo.create_box_grid((2, 2, 2))
     grd.name = "xxx"
     assert grd.name == "xxx"
 
@@ -394,11 +389,14 @@ def test_benchmark_get_xyz_cell_cornerns(benchmark, xtgformat):
     )
 
 
-def test_roffbin_import_v2_wsubgrids():
-    """Test roff binary import ROFF using new API, now with subgrids."""
-    grd1 = Grid()
-    grd1.from_file(REEKFIL5)
-    print(grd1.subgrids)
+def test_roffbin_import_wsubgrids():
+    assert xtgeo.grid_from_file(REEKFIL5).subgrids == OrderedDict(
+        [
+            ("subgrid_0", range(1, 21)),
+            ("subgrid_1", range(21, 41)),
+            ("subgrid_2", range(41, 57)),
+        ]
+    )
 
 
 def test_import_grdecl_and_bgrdecl():
@@ -666,20 +664,16 @@ def test_bulkvol():
     logger.info("Sum this: %s", bulk.values.sum())
     logger.info("Sum RMS: %s", cellvol_rms.values.sum())
 
-    assert bulk.values.sum() == pytest.approx(cellvol_rms.values.sum(), rel=0.001)
 
+@pytest.mark.benchmark(group="bulkvol")
+def test_benchmark_bulkvol(benchmark):
+    dimens = (10, 50, 5)
+    grd = xtgeo.create_box_grid(dimension=dimens)
 
-def test_bulkvol_speed():
-    """Test cell bulk volume calculation speed."""
-    dimens = (100, 500, 50)
-    grd = Grid()
-    grd.create_box(dimension=dimens)
-    grd._xtgformat2()
+    def run():
+        _ = grd.get_bulk_volume()
 
-    t0 = xtg.timer()
-    _ = grd.get_bulk_volume()
-    ncells = np.prod(dimens)
-    print(xtg.timer(t0), ncells)
+    benchmark(run)
 
 
 def test_bad_egrid_ends_before_kw(tmp_path):

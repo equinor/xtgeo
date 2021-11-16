@@ -18,6 +18,7 @@ from xtgeo.grid3d import Grid, GridProperty
 from xtgeo.xyz import Polygons
 
 from .grid_generator import dimensions, xtgeo_grids
+from .gridprop_generator import grid_properties
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name
@@ -383,14 +384,10 @@ def test_io_roff_discrete(tmpdir):
     )
 
 
-def test_io_to_nonexisting_folder():
-    """Import a prop and try to save in a nonexisting folder"""
-
-    po = GridProperty()
-    mygrid = Grid(TESTFILE5)
-    po.from_file(TESTFILE7, fformat="unrst", name="PRESSURE", grid=mygrid, date="first")
+@given(grid_properties())
+def test_io_to_nonexisting_folder(grid_property):
     with pytest.raises(OSError):
-        po.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
+        grid_property.to_file(os.path.join("TMP_NOT", "dummy.grdecl"), fformat="grdecl")
 
 
 def test_get_all_corners():

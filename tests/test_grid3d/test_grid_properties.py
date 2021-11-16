@@ -4,11 +4,15 @@
 
 import sys
 
+import hypothesis.strategies as st
 import pytest
+from hypothesis import assume, given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.grid3d import GridProperties
+
+from .gridprop_generator import grid_properties as gridproperties_elements
 
 xtg = XTGeoDialog()
 
@@ -27,6 +31,27 @@ XFILE2 = TPATH / "3dgrids/reek/reek_grd_w_props.roff"
 
 # pylint: disable=logging-format-interpolation
 # pylint: disable=invalid-name
+
+
+@st.composite
+def gridproperties(draw):
+    gps = GridProperties()
+    gps._props = []
+    gps.append_props(draw(st.lists(elements=gridproperties_elements())))
+    return gps
+
+
+@given(gridproperties(), st.text())
+def test_gridproperties_get_prop_by_name_not_exists(gps, name):
+    assume(name not in gps.names)
+
+    assert gps.get_prop_by_name(name, raiseserror=False) is None
+
+    with pytest.raises(ValueError, match="Cannot find"):
+        gps.get_prop_by_name(name)
+
+    with pytest.raises(KeyError, match="does not exist"):
+        gps[name]
 
 
 def test_gridproperties_iter():
