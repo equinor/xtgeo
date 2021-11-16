@@ -1,6 +1,5 @@
 """Tests for 3D grid."""
 import math
-import pathlib
 from collections import OrderedDict
 
 import numpy as np
@@ -27,8 +26,6 @@ REEKFIL2 = TPATH / "3dgrids/reek3/reek_sim.grdecl"  # ASCII GRDECL
 REEKFIL3 = TPATH / "3dgrids/reek3/reek_sim.bgrdecl"  # binary GRDECL
 REEKFIL4 = TPATH / "3dgrids/reek/reek_geo_grid.roff"
 REEKFIL5 = TPATH / "3dgrids/reek/reek_geo2_grid_3props.roff"
-REEKROOT = TPATH / "3dgrids/reek/REEK"
-SPROOT = TPATH / "3dgrids/etc/TEST_SP"
 # brilfile = '../xtgeo-testdata/3dgrids/bri/B.GRID' ...disabled
 BRILGRDECL = TPATH / "3dgrids/bri/b.grdecl"
 BANAL6 = TPATH / "3dgrids/etc/banal6.roff"
@@ -37,8 +34,6 @@ GRIDQC1_CELLVOL = TPATH / "3dgrids/etc/gridqc1_totbulk.roff"
 GRIDQC2 = TPATH / "3dgrids/etc/gridqc_negthick_twisted.roff"
 
 DUALFIL1 = TPATH / "3dgrids/etc/dual_grid.roff"
-DUALFIL2 = TPATH / "3dgrids/etc/dual_grid_noactivetag.roff"
-
 DUALFIL3 = TPATH / "3dgrids/etc/TEST_DPDK.EGRID"
 
 # =============================================================================
@@ -504,97 +499,6 @@ def test_get_adjacent_cells(tmp_path):
     result.to_file(tmp_path / "emerald_adj_cells.roff")
 
 
-def test_simple_io(tmp_path):
-    """Test various import and export formats, incl egrid and bgrdecl."""
-    reek_grid = Grid(REEKFILE, fformat="egrid")
-
-    assert reek_grid.ncol == 40
-
-    filex = tmp_path / "grid_test_simple_io.roff"
-
-    reek_grid.to_file(filex)
-
-    reek_grid2 = xtgeo.grid_from_file(filex, fformat="roff")
-
-    assert reek_grid2.ncol == 40
-
-    filex = tmp_path / "grid_test_simple_io.EGRID"
-    filey = tmp_path / "grid_test_simple_io.bgrdecl"
-
-    reek_grid.to_file(filex, fformat="egrid")
-    reek_grid.to_file(filey, fformat="bgrdecl")
-
-    reek_grid2 = xtgeo.grid_from_file(filex, fformat="egrid")
-    reek_grid3 = xtgeo.grid_from_file(filey, fformat="bgrdecl")
-
-    assert reek_grid2.ncol == 40
-
-    dz1 = reek_grid.get_dz()
-    dz2 = reek_grid2.get_dz()
-    dz3 = reek_grid3.get_dz()
-
-    assert dz1.values.mean() == pytest.approx(dz2.values.mean(), abs=0.001)
-    assert dz1.values.std() == pytest.approx(dz2.values.std(), abs=0.001)
-    assert dz1.values.mean() == pytest.approx(dz3.values.mean(), abs=0.001)
-    assert dz1.values.std() == pytest.approx(dz3.values.std(), abs=0.001)
-
-
-def test_ecl_run(tmp_path):
-    """Test import an eclrun with dates and export to roff after a diff."""
-    dates = [19991201, 20030101]
-    rprops = ["PRESSURE", "SWAT"]
-
-    gg = Grid(REEKROOT, fformat="eclipserun", restartdates=dates, restartprops=rprops)
-
-    # get the property object:
-    pres1 = gg.get_prop_by_name("PRESSURE_20030101")
-    assert pres1.values.mean() == pytest.approx(308.45, abs=0.001)
-
-    pres1.to_file(tmp_path / "pres1.roff")
-
-    pres2 = gg.get_prop_by_name("PRESSURE_19991201")
-
-    logger.debug(pres1.values)
-    logger.debug(pres2.values)
-
-    pres1.values = pres1.values - pres2.values
-    # logger.debug(pres1.values)
-    # logger.debug(pres1)
-    avg = pres1.values.mean()
-    # ok checked in RMS:
-    assert avg == pytest.approx(-26.073, abs=0.001)
-
-    pres1.to_file(tmp_path / "pressurediff.roff", name="PRESSUREDIFF")
-
-
-def test_ecl_run_all():
-    """Test import an eclrun with all dates and props."""
-    gg = Grid()
-    gg.from_file(
-        REEKROOT,
-        fformat="eclipserun",
-        initprops="all",
-        restartdates="all",
-        restartprops="all",
-    )
-
-    assert len(gg.gridprops.names) == 287
-
-
-def test_ecl_run_all_sp(testpath):
-    """Test import an eclrun with all dates and props."""
-    gg = Grid()
-    gg.from_file(
-        SPROOT,
-        fformat="eclipserun",
-        initprops="all",
-        restartdates="all",
-        restartprops="all",
-    )
-
-    assert len(gg.gridprops.names) == 59
-
-
 def test_npvalues1d():
     """Different ways of getting np arrays."""
     grd = xtgeo.grid_from_file(DUALFIL3)
@@ -615,20 +519,6 @@ def test_npvalues1d():
     dz2 = dz.get_npvalues1d(activeonly=True)
 
     assert dz1.all() == dz2.all()
-
-
-def test_pathlib(tmp_path):
-    """Import and export via pathlib."""
-    grd = xtgeo.grid_from_file(pathlib.Path(DUALFIL1))
-
-    assert grd.dimensions == (5, 3, 1)
-
-    out = tmp_path / "grdpathtest.roff"
-    grd.to_file(out, fformat="roff")
-
-    with pytest.raises(OSError):
-        out = pathlib.Path() / "nosuchdir" / "grdpathtest.roff"
-        grd.to_file(out, fformat="roff")
 
 
 def test_grid_design(load_gfile1):

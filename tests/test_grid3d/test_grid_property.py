@@ -303,23 +303,6 @@ def test_roffbin_import2():
     assert hc.values.mean() == pytest.approx(1446.4611912446985, abs=0.0001)
 
 
-def test_eclinit_import_reek():
-    """Property import from Eclipse. Reek"""
-
-    # let me guess the format (shall be egrid)
-    gg = Grid(TESTFILE5, fformat="egrid")
-    assert gg.ncol == 40, "Reek NX"
-
-    logger.info("Import INIT...")
-    po = GridProperty(TESTFILE6, name="PORO", grid=gg)
-
-    logger.info(po.values.mean())
-    assert po.values.mean() == pytest.approx(0.1677, abs=0.0001)
-
-    pv = GridProperty(TESTFILE6, name="PORV", grid=gg)
-    logger.info(pv.values.mean())
-
-
 def test_eclinit_simple_importexport(tmpdir):
     """Property import and export with anoother name"""
 
@@ -336,38 +319,6 @@ def test_eclinit_simple_importexport(tmpdir):
 
     p2 = GridProperty(os.path.join(tmpdir, "simple.grdecl"), grid=gg, name="PORO2")
     assert p2.name == "PORO2"
-
-
-def test_eclunrst_import_reek():
-    """Property UNRST import from Eclipse. Reek"""
-
-    gg = Grid(TESTFILE5, fformat="egrid")
-
-    logger.info("Import RESTART (UNIFIED) ...")
-    press = GridProperty(
-        TESTFILE7, name="PRESSURE", fformat="unrst", date=19991201, grid=gg
-    )
-
-    assert press.values.mean() == pytest.approx(334.5232, abs=0.0001)
-
-
-def test_eclunrst_import_soil_reek():
-    """Property UNRST import from Eclipse, computing SOIL. Reek"""
-
-    gg = Grid(TESTFILE5, fformat="egrid")
-
-    logger.info("Import RESTART (UNIFIED) ...")
-    swat = GridProperty(TESTFILE7, name="SWAT", fformat="unrst", date=19991201, grid=gg)
-
-    assert swat.values.mean() == pytest.approx(0.8780, abs=0.001)
-
-    sgas = GridProperty(TESTFILE7, name="SGAS", fformat="unrst", date=19991201, grid=gg)
-
-    assert sgas.values.mean() == pytest.approx(0.000, abs=0.001)
-
-    soil = GridProperty(TESTFILE7, name="SOIL", fformat="unrst", date=19991201, grid=gg)
-
-    assert soil.values.mean() == pytest.approx(1.0 - 0.8780, abs=0.001)
 
 
 def test_grdecl_import_reek(tmpdir):
@@ -430,36 +381,6 @@ def test_io_roff_discrete(tmpdir):
     po.to_file(
         os.path.join(tmpdir, "reek_zonefix_export.roff"), name="ZoneFix", fformat="roff"
     )
-
-
-def test_io_ecl2roff_discrete(tmpdir):
-    """Import Eclipse discrete property; then export to ROFF int."""
-
-    logger.info("Name is {}".format(__name__))
-    po = GridProperty()
-    mygrid = Grid(TESTFILE5)
-    po.from_file(TESTFILE6, fformat="init", name="SATNUM", grid=mygrid)
-
-    print(po.codes)
-    assert po.ncodes == 1
-    assert isinstance(po.codes[1], str)
-
-    po.to_file(
-        os.path.join(tmpdir, "ecl2roff_disc.roff"), name="SATNUM", fformat="roff"
-    )
-
-
-def test_io_ecl_dates():
-    """Import Eclipse with some more flexible dates settings"""
-
-    logger.info("Name is {}".format(__name__))
-    po = GridProperty()
-    px = GridProperty()
-    mygrid = Grid(TESTFILE5)
-    po.from_file(TESTFILE7, fformat="unrst", name="PRESSURE", grid=mygrid, date="first")
-    assert po.date == 19991201
-    px.from_file(TESTFILE7, fformat="unrst", name="PRESSURE", grid=mygrid, date="last")
-    assert px.date == 20030101
 
 
 def test_io_to_nonexisting_folder():
@@ -525,17 +446,6 @@ def test_get_xy_values_for_webportal():
     logger.info("Cell 1 1 1 coords\n{}.".format(coord[0][0]))
     assert coord[0][0][0] == (454.875, 318.5)
     assert valuelist[0][0] == -999.0
-
-
-def test_get_xy_values_for_webportal_ecl():
-    """Get lists on webportal format (Eclipse input)"""
-
-    grid = Grid(TESTFILE5)
-    prop = GridProperty(TESTFILE6, grid=grid, name="PORO")
-
-    coord, _valuelist = prop.get_xy_value_lists(grid=grid)
-    logger.info("First active cell coords\n{}.".format(coord[0][0]))
-    assert coord[0][0][0][1] == pytest.approx(5935688.22412, abs=0.001)
 
 
 def test_get_values_by_ijk():
