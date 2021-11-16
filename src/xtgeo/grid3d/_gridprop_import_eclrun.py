@@ -485,6 +485,9 @@ def import_gridprops_from_restart_file_sections(
 
     See :meth:`section_generator` for suitable input generator.
 
+    When there are multiple steps/properties matching the given
+    date, the first property matching the date is selected.
+
     Args:
         sections: Section generator such as returned by :meth:`section_generator`.
         names: List of property names to be imported. Can also,
@@ -497,28 +500,40 @@ def import_gridprops_from_restart_file_sections(
     Returns:
         List of GridProperty parameters matching the names.
     """
-    read_properties = []
-    latest_date_properties = []
+    first_date = None
+    last_date = None
+    read_properties = dict()
     for section in sections:
         intehead, logihead, section = peek_headers(section)
         check_grid_match(intehead, logihead, grid)
         date = date_from_intehead(intehead)
+
         if dates not in ("all", "first", "last"):
             if date not in dates and str(date) not in dates:
                 continue
-        latest_date_properties = [
-            gridprop_params(v, name, date, grid, fracture)
+
+        section_properties = {
+            (name, date): gridprop_params(v, name, date, grid, fracture)
             for name, v in read_values(
                 section, intehead, names, lengths=valid_gridprop_lengths(grid)
             ).items()
-        ]
-        if dates != "last":
-            read_properties += latest_date_properties
+        }
+
         if dates == "first":
-            break
-    if dates == "last":
-        return latest_date_properties
-    return read_properties
+            if first_date is None:
+                first_date = date
+            elif date != first_date:
+                break
+
+        elif dates == "last":
+            if date != last_date:
+                last_date = date
+                read_properties = dict()
+
+        for key in section_properties:
+            if key not in read_properties:
+                read_properties[key] = section_properties[key]
+    return list(read_properties.values())
 
 
 def import_gridprops_from_restart_file(

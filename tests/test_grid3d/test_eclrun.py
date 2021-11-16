@@ -47,18 +47,19 @@ def test_import_saturations(ecl_runs):
 
 
 @pytest.mark.parametrize("fformat", ["grdecl", "roff", "bgrdecl"])
-def test_roundtrip_pressure(fformat, tmp_path, ecl_runs):
-    prop = ecl_runs.get_property_from_restart("PRESSURE", date="last")
-    prop.to_file(tmp_path / f"pressure.{fformat}", name="PRESSURE", fformat=fformat)
+def test_roundtrip_properties(fformat, tmp_path, ecl_runs):
+    for p in ecl_runs.expected_restart_props:
+        prop = ecl_runs.get_property_from_restart(p, date="last")
+        prop.to_file(tmp_path / f"{p}.{fformat}", name=p, fformat=fformat)
 
-    prop2 = xtgeo.gridproperty_from_file(
-        tmp_path / f"pressure.{fformat}",
-        name="PRESSURE",
-        fformat=fformat,
-        grid=ecl_runs.grid,
-    )
+        prop2 = xtgeo.gridproperty_from_file(
+            tmp_path / f"{p}.{fformat}",
+            name=p,
+            fformat=fformat,
+            grid=ecl_runs.grid,
+        )
 
-    np.testing.assert_allclose(prop.values, prop2.values, atol=1e-3)
+        np.testing.assert_allclose(prop.values, prop2.values, atol=5e-3)
 
 
 @pytest.mark.parametrize("fformat", ["grdecl", "roff", "bgrdecl"])
