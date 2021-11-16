@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """The XTGeo xyz.points module, which contains the Points class."""
+import functools
+import io
 import pathlib
+import warnings
 from collections import OrderedDict
 from typing import Any, List, Optional, TypeVar, Union
 
@@ -8,7 +11,9 @@ import deprecation
 import numpy as np
 import pandas as pd
 import xtgeo
+import xtgeo.common.sys as xtgeosys
 from xtgeo.common import inherit_docstring
+from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _xyz_oper
 from ._xyz import XYZ
@@ -16,7 +21,121 @@ from ._xyz import XYZ
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-RegularSurface = TypeVar("RegularSurface")
+
+def _data_reader_factory(file_format):
+    if file_format == "xyz":
+        return _xyz_io.import_xyz
+    if file_format == "zmap_ascii":
+        return _xyz_io.import_zmap
+    if file_format == "rms_attr":
+        return _xyz_io.import_rms_attr
+    raise ValueError(f"Unknown file format {file_format}")
+
+
+def _read_file_worker(
+    pfile: Union[str, pathlib.Path, io.BytesIO],
+    fformat: Optional[str] = None,
+):
+    """General function for classmethod _read_file and (deprecated) method from_file.
+
+    See _read_file in class for args.
+    """
+    pfile = xtgeo._XTGeoFile(pfile)
+    if fformat is None or fformat == "guess":
+        fformat = pfile.detect_fformat()
+    else:
+        fformat = pfile.generic_format_by_proposal(fformat)  # default
+    kwargs = _data_reader_factory(fformat)(pfile, is_polygons=False)
+
+    kwargs["filesrc"] = pfile.name
+
+    return kwargs
+
+
+def _allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Points/Polygons and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    # Introduced post xtgeo version 2.15
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization from file or surface and raise a
+        # deprecation warning if we are.
+        if len(args) == 1:
+
+            if isinstance(args[0], (str, pathlib.Path)):
+                warnings.warn(
+                    "Initializing directly from file name is deprecated and will be "
+                    "removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_file('some_file.xx') instead!",
+                    DeprecationWarning,
+                )
+                pfile = args[0]
+                fformat = kwargs.get("fformat", "guess")
+                pfile = xtgeosys._XTGeoFile(pfile)
+                if fformat is None or fformat == "guess":
+                    fformat = pfile.detect_fformat()
+                else:
+                    fformat = pfile.generic_format_by_proposal(fformat)  # default
+                kwargs = _data_reader_factory(fformat)(pfile, is_polygons=False)
+
+            elif isinstance(args[0], xtgeo.RegularSurface):
+                warnings.warn(
+                    "Initializing directly from RegularSurface is deprecated "
+                    "and will be removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_surface(regsurf) instead",
+                    DeprecationWarning,
+                )
+                zname = kwargs.get("zname", "Z_TVDSS")
+                kwargs = XYZ._read_surface(args[0], zname=zname, return_cls=False)
+
+            elif isinstance(args[0], (list, np.ndarray, pd.DataFrame)):
+                # initialisation from an list-like object without 'values' keyword
+                # should be possible, i.e. Points(some_list) is same as
+                # Points(values=some_list)
+                kwargs["values"] = args[0]
+
+            else:
+                raise TypeError("Input argument of unknown type: ", type(args[0]))
+
+        return func(cls, **kwargs)
+
+    return wrapper
+
+
+# ======================================================================================
+# FUNCTIONS as wrappers to class init + import
+# ======================================================================================
+
+
+def points_from_file(
+    pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"
+) -> "Points":
+    """Make an instance of a Points object directly from file import.
+
+    Supported formats are:
+
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+
+        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+
+        * 'rms_attr': RMS points formats with attributes (extra columns)
+
+        * 'guess': Try to choose file format based on extension
+
+
+    Args:
+        pfile: Name of file or pathlib object.
+        fformat: File format, xyz/pol/... Default is `guess` where file
+            extension or file signature is parsed to guess the correct format.
+
+    Example::
+
+        import xtgeo
+        mypoints = xtgeo.points_from_file('somefile.xyz')
+    """
+    kwargs = Points._read_file(pfile, fformat=fformat)
+    return Points(**kwargs)
 
 
 def points_from_roxar(
@@ -41,7 +160,7 @@ def points_from_roxar(
         name: Name of points item
         category: For horizons/zones/faults: for example 'DL_depth'
             or use a folder notation on clipboard.
-        stype: RMS folder type, 'horizons' (default), 'zones' etc!
+        stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard', etc!
         realisation: Realisation number, default is 0
         attributes: If True, attributes will be preserved (from RMS 11)
 
@@ -50,15 +169,19 @@ def points_from_roxar(
         import xtgeo
         mysurf = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPoints')
     """
-    return Points._read_roxar(
+    args = Points._read_roxar(
         project,
         name,
         category,
-        stype=stype,
-        realisation=realisation,
-        attributes=attributes,
-        is_polygons=False,
+        stype,
+        realisation,
+        attributes,
     )
+
+    return Points(**args)
+
+
+RegularSurface = TypeVar("RegularSurface")
 
 
 def points_from_surface(
@@ -404,7 +527,6 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     @inherit_docstring(inherit_from=XYZ.__init__)
     def __init__(self, *args, **kwargs):
         """Initialisation for points for Points()."""
-        kwargs["is_polygons"] = False  # force is_polygons to be false
         super().__init__(*args, **kwargs)
 
         logger.info("Initiated Points")
@@ -439,6 +561,95 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     # ----------------------------------------------------------------------------------
     # Methods
     # ----------------------------------------------------------------------------------
+    @classmethod
+    def _read_file(
+        cls,
+        pfile: Union[str, pathlib.Path, io.BytesIO],
+        fformat: Optional[str] = None,
+    ):
+        """Import Points or Polygons from a file, see _read_file_worker.
+
+        Supported import formats (fformat):
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+        * 'rms_attr': RMS points formats with attributes (extra columns)
+        * 'guess': Try to choose file format based on extension
+
+        Args:
+            pfile: File-like or memory stream instance.
+            fformat (str): File format, None/guess/xyz/pol/poi...
+
+        Example::
+            >>> myxyz = _XYZ._read_file('myfile.x')
+
+        Raises:
+            OSError: if file is not present or wrong permissions.
+        """
+        kwargs = _read_file_worker(pfile, fformat)
+        return cls(**kwargs)
+
+    def _reset(self, **kwargs):
+        self._df = kwargs.get("_dataframe", self._df)
+        self._attrs = kwargs.get("attributes", self._attrs)
+        self.xname = kwargs.get("xname", self._xname)
+        self.yname = kwargs.get("yname", self._yname)
+        self.zname = kwargs.get("zname", self._zname)
+        self.pname = kwargs.get("pname", self._pname)
+
+    @classmethod
+    def _read_roxar(
+        cls,
+        project,
+        name,
+        category,
+        stype="horizons",
+        realisation=0,
+        attributes=False,
+    ):
+        """Classmethod to load a points item from a Roxar RMS project.
+
+        # The import from the RMS project can be done either within the project
+        # or outside the project.
+
+        # Use::
+
+        #   import xtgeo
+        #   mysurf = xtgeo.points_from_roxar(project, 'TopAare', 'DepthPolys')
+
+        # Note also that horizon/zone/faults name and category must exists
+        # in advance, otherwise an Exception will be raised.
+
+        # Args:
+        #     project (str or special): Name of project (as folder) if
+        #         outside RMS, og just use the magic project word if within RMS.
+        #     name (str): Name of polygons item
+        #     category (str): For horizons/zones/faults: for example 'DL_depth'
+        #         or use a folder notation on clipboard.
+
+        #     stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
+        #     realisation (int): Realisation number, default is 0
+        #     attributes (bool): If True, attributes will be preserved (from RMS 11)
+        #     is_polygons (bool): True if Polygons
+
+        # Returns:
+        #     Object instance updated
+
+        # Raises:
+        #     ValueError: Various types of invalid inputs.
+
+        """
+        stype = stype.lower()
+        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+
+        if stype not in valid_stypes:
+            raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
+
+        kwargs = _xyz_roxapi.import_xyz_roxapi(
+            project, name, category, stype, realisation, attributes, False
+        )
+
+        kwargs["filesrc"] = f"RMS: {name} ({category})"
+        return cls(**kwargs)
 
     def _random(self, nrandom=10):
         """Generate nrandom random points within the range 0..1.
@@ -452,13 +663,117 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
             np.random.rand(nrandom, 3), columns=[self._xname, self._yname, self._zname]
         )
 
-    @inherit_docstring(inherit_from=XYZ.from_surface)
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_surface() instead",
+    )
     def from_surface(self, surf, zname="Z_TVDSS"):
-        super().from_surface(surf, zname=zname)
+        """Get points as X Y Value from a surface object nodes (deprecated).
+
+        Note that undefined surface nodes will not be included.
+
+        Args:
+            surf (RegularSurface): A XTGeo RegularSurface object instance.
+            zname (str): Name of value column (3'rd column).
+
+        Example::
+
+            topx = RegularSurface('topx.gri')
+            topx_aspoints = Points()
+            topx_aspoints.from_surface(topx)
+
+            # alternative shortform:
+            topx_aspoints = Points(topx)  # get an instance directly
+
+            topx_aspoints.to_file('mypoints.poi')  # export as XYZ file
+
+        .. deprecated:: 2.16 Use xtgeo.points_from_surface() instead.
+        """
+
+        # check if surf is instance from RegularSurface
+        if not isinstance(surf, xtgeo.surface.RegularSurface):
+            raise TypeError("Given surf is not a RegularSurface object")
+
+        val = surf.values
+        xc, yc = surf.get_xy_values()
+
+        coor = []
+        for vv in [xc, yc, val]:
+            vv = np.ma.filled(vv.flatten(order="C"), fill_value=np.nan)
+            vv = vv[~np.isnan(vv)]
+            coor.append(vv)
+
+        # now populate the dataframe:
+        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
+        ddatas = OrderedDict()
+        ddatas[self._xname] = xc
+        ddatas[self._yname] = yc
+        ddatas[zname] = val
+        dfr = pd.DataFrame(ddatas)
+        kwargs = {}
+        kwargs["dataframe"] = dfr
+        kwargs["zname"] = zname
+        self._reset(**kwargs)
+
+    @classmethod
+    def _read_surface(cls, surf, zname="Z_TVDSS", name="unknown", **kwargs):
+        """Get points as (X, Y, Value) from a surface object nodes.
+
+        Note that undefined surface nodes will not be included. This method
+        is perhaps only meaningful for Points.
+
+        Args:
+            surf (RegularSurface): A XTGeo RegularSurface object instance.
+            zname (str): Name of value column (3'rd column)
+            name (str): Name of the instance
+
+        """
+        # subsitutes from_surface()
+        # check if surf is instance from RegularSurface
+        if not isinstance(surf, xtgeo.surface.RegularSurface):
+            raise TypeError("Given surf is not a RegularSurface object")
+
+        val = surf.values
+        xc, yc = surf.get_xy_values()
+
+        coor = []
+        for vv in [xc, yc, val]:
+            vv = np.ma.filled(vv.flatten(order="C"), fill_value=np.nan)
+            vv = vv[~np.isnan(vv)]
+            coor.append(vv)
+
+        # now populate the dataframe:
+        xc, yc, val = coor  # pylint: disable=unbalanced-tuple-unpacking
+        ddatas = OrderedDict()
+        ddatas["X_UTME"] = xc
+        ddatas["Y_UTMN"] = yc
+        ddatas[zname] = val
+
+        kwargs["dataframe"] = pd.DataFrame(ddatas)
+        kwargs["zname"] = zname
+        kwargs["name"] = name
+        kwargs["filesrc"] = "Derived from: RegularSurface"
+
+        if kwargs.get("return_cls", True) is False:
+            return kwargs
+
+        return cls(**kwargs)
 
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz", **kwargs):
         super().from_file(pfile, fformat=fformat, **kwargs)
+
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead",
+    )
+    def from_file(self, pfile, fformat="xyz"):
+        newkwargs = _read_file_worker(pfile, fformat, False)
+        self._reset(**newkwargs)
 
     @inherit_docstring(inherit_from=XYZ.from_roxar)
     @deprecation.deprecated(
@@ -798,37 +1113,3 @@ class Points(XYZ):  # pylint: disable=too-many-public-methods
     def eli_outside(self, poly, where=True):
         """Eliminate current map values outside Points"""
         self.operation_polygons(poly, 0, opname="eli", inside=False, where=where)
-
-
-# ======================================================================================
-# FUNCTIONS as wrappers to class init + import
-# ======================================================================================
-
-
-def points_from_file(
-    pfile: Union[str, pathlib.Path], fformat: Optional[str] = "guess"
-) -> "Points":
-    """Make an instance of a Points object directly from file import.
-
-    Supported formats are:
-
-        * 'xyz' or 'poi' or 'pol': Simple XYZ format
-
-        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
-
-        * 'rms_attr': RMS points formats with attributes (extra columns)
-
-        * 'guess': Try to choose file format based on extension
-
-
-    Args:
-        pfile: Name of file or pathlib object.
-        fformat: File format, xyz/pol/... Default is `guess` where file
-            extension or file signature is parsed to guess the correct format.
-
-    Example::
-
-        import xtgeo
-        mypoints = xtgeo.points_from_file('somefile.xyz')
-    """
-    return Points._read_file(pfile, fformat=fformat)

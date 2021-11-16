@@ -117,15 +117,14 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
 def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
     """The zmap ascii polygon format for Polygons.
 
-    This format is only supported for Polygons in RMS. The ZMAP formats
-    are, as always, difficult to get the grip of by googling as it seems that
-    detailed standard is hard to find. This version supports what RMS
-    does: 3 or 4 columns where last column is a line ID. If there
-    are 3 columns then the Z values shall be 0.0. Data starts
-    after the second @<blank> line as is.
+    This format is only supported for Polygons in RMS but XTGeo allow Points also. The
+    ZMAP formats are, as always, difficult to get the grip of by googling as it seems
+    that detailed standard is hard to find. This version supports what RMS does: 3 or 4
+    columns where last column is a line ID. If there are 3 columns then the Z values
+    shall be 0.0. Data starts after the second @<blank> line as is.
 
-    XTGeo will allow input as Points also if. Hence if is_polygons is False
-    then the POLY_ID column will removed.
+    XTGeo will allow input as Points also if 'is_polygons' is False. Then the
+    POLY_ID column will removed.
 
     Example::
 
@@ -133,18 +132,15 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
       !
       ! File exported from RMS.
       !
-      ! Project:
-      ! Date:          2017-11-07T17:22:30
+      ! Project: ! Date:          2017-11-07T17:22:30
       !
-      ! Polygons/points Z-MAP file generated for ''.
-      ! Coordinate system is ''.
+      ! Polygons/points Z-MAP file generated for ''. ! Coordinate system is ''.
       !
       !------------------------------------------------------------------
-      @FREE POINT        , DATA, 80, 1
-      X (EASTING)        , 1, 1,  1,      1, 20,,    1.0E+30,,,   4, 0
-      Y (NORTHING)       , 2, 2,  1,     21, 40,,    1.0E+30,,,   4, 0
-      Z VALUE            , 3, 3,  1,     41, 60,,    1.0E+30,,,   4, 0
-      SEG I.D.           , 4, 35, 1,     61, 70,,    1.0E+30,,,   0, 0
+      @FREE POINT        , DATA, 80, 1 X (EASTING)        , 1, 1,  1,      1, 20,,
+      1.0E+30,,,   4, 0 Y (NORTHING)       , 2, 2,  1,     21, 40,,    1.0E+30,,,   4, 0
+      Z VALUE            , 3, 3,  1,     41, 60,,    1.0E+30,,,   4, 0 SEG I.D. , 4, 35,
+      1,     61, 70,,    1.0E+30,,,   0, 0
       @
          457357.781250      6782685.500000      1744.463379         0
          457359.343750      6782676.000000      1744.482056         0
@@ -162,7 +158,7 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
     # scan header
     skiprows = 0
     zcolumn = True  # if four columns, the third is Z
-    with open(pfile.file, "r") as stream:
+    with open(pfile.file, "r", encoding="utf8") as stream:
         count_a = 0  # number of '@' in first column
         for _ in range(999):
             fields = stream.readline().split()
@@ -219,7 +215,9 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
 def import_rms_attr(pfile, zname="Z_TVDSS", is_polygons=False):
     """The RMS ascii file Points format with attributes.
 
-    It appears that the the RMS attributes format is supported for Points only.
+    It appears that the the RMS attributes format is supported for Points only,
+    hence Polygons is not admitted.
+
     Example::
 
        Discrete  FaultBlock
@@ -246,7 +244,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS", is_polygons=False):
 
     # parse header
     skiprows = 0
-    with open(pfile.file, "r") as rmsfile:
+    with open(pfile.file, "r", encoding="utf8") as rmsfile:
         for iline in range(999):
             fields = rmsfile.readline().split()
             if len(fields) != 2:
@@ -293,7 +291,6 @@ def import_rms_attr(pfile, zname="Z_TVDSS", is_polygons=False):
     args["dataframe"] = dfr
     args["values"] = None
     args["attributes"] = _attrs
-    args["is_polygons"] = False
 
     return args
 
@@ -443,3 +440,94 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
         df.to_csv(fc, sep=" ", header=None, columns=columns, index=False)
 
     return len(df.index)
+
+
+def _from_list_like(self, plist, is_polygons):
+    """Import Points or Polygons from a list-like input.
+
+    The following 'list-like' inputs are possible:
+
+    * List of tuples [(x1, y1, z1, <id1>), (x2, y2, z2, <id2>), ...].
+    * List of lists  [[x1, y1, z1, <id1>], [x2, y2, z2, <id2>], ...].
+    * List of numpy arrays  [nparr1, nparr2, ...] where nparr1 is first row.
+    * A numpy array with shape [nrow, ncol], where ncol >= 3
+    * An existing pandas dataframe
+
+    Points scenaria:
+    * 3 columns, X Y Z
+    * 4 or more columns: rest columns are attributes and must match len(self._attrs)
+
+    Polygons scenaria:
+    * 3 columns, X Y Z. Here P column is assigned 0 afterwards
+    * 4 or more columns:
+        - if totnum = lenattrs + 3 then POLY_ID is missing and will be made
+        - if totnum = lenattrs + 4 then assume that 4'th column is POLY_ID
+
+    It is currently not much error checking that lists/tuples are consistent, e.g.
+    if there always is either 3 or 4 elements per tuple, or that 4 number is
+    an integer.
+
+    Args:
+        plist (str): List of tuples, each tuple is length 3 or 4
+        is_polygons (bool): Flag for Points or Polygons
+
+    Raises:
+        ValueError: If something is wrong with input
+
+    .. versionadded:: 2.16
+    """
+    self._filesrc = "Derived from: numpy array"
+    if isinstance(plist, list):
+        # convert list/tuples to a 2D numpy and process the numpy below
+        logger.info("Input list-like is a list, convert to a numpy...")
+        try:
+            plist = np.array(plist)
+        except Exception as exc:
+            warnings.warn(f"Cannot convert list to numpy array: {str(exc)}")
+            raise
+        self._filesrc = "Derived from: list input"
+
+    if isinstance(plist, pd.DataFrame):
+        # convert input dataframe to a 2D numpy and process the numpy below
+        plist = plist.to_numpy(copy=True)
+        self._filesrc = "Derived from: dataframe input"
+
+    if isinstance(plist, np.ndarray):
+        logger.info("Process numpy to points")
+        if plist.ndim != 2:
+            raise ValueError("Input numpy array must two-dimensional")
+        totnum = plist.shape[1]
+        lenattrs = len(self._attrs) if self._attrs is not None else 0
+        attr_first_col = 3
+        if totnum == 3 + lenattrs:
+            self._df = pd.DataFrame(
+                plist[:, :3], columns=[self._xname, self._yname, self._zname]
+            )
+            self._df = self._df.astype(float)
+            if self._ispolygons:
+                # pname column is missing but assign 0 as ID
+                self._df[self._pname] = 0
+
+        elif totnum == 4 + lenattrs and self._ispolygons:
+            self._df = pd.DataFrame(
+                plist[:, :4],
+                columns=[self._xname, self._yname, self._zname, self._pname],
+            )
+            attr_first_col = 4
+        else:
+            raise ValueError(
+                f"Wrong length detected of row: {totnum}. "
+                "Are attributes set correct?"
+            )
+        self._df.dropna()
+        self._df = self._df.astype(np.float64)
+        if self._ispolygons:
+            self._df[self._pname] = self._df[self._pname].astype(np.int32)
+
+        if lenattrs > 0:
+            for enum, (key, dtype) in enumerate(self._attrs.items()):
+                self._df[key] = plist[:, attr_first_col + enum]
+                self._df = self._df.astype({key: dtype})
+
+    else:
+        raise TypeError("Not possible to make XYZ from given input")

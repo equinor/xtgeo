@@ -3,14 +3,19 @@
 # For polygons, the order of the points sequence is important. In
 # addition, a Polygons dataframe _must_ have a INT column called 'POLY_ID'
 # which identifies each polygon piece.
+import functools
+import io
 import pathlib
-from typing import Any, Optional, TypeVar, Union
+import warnings
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 import xtgeo
+import xtgeo.common.sys as xtgeosys
 from xtgeo.common import inherit_docstring
+from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
 from . import _xyz_oper
 from ._xyz import XYZ
@@ -19,7 +24,85 @@ from ._xyz_io import _convert_idbased_xyz
 xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
-RegularSurface = TypeVar("RegularSurface")
+
+def _data_reader_factory(file_format):
+    if file_format == "xyz":
+        return _xyz_io.import_xyz
+    if file_format == "zmap_ascii":
+        return _xyz_io.import_zmap
+    raise ValueError(f"Unknown file format {file_format}")
+
+
+def _read_file_worker(
+    pfile: Union[str, pathlib.Path, io.BytesIO],
+    fformat: Optional[str] = None,
+):
+    """General function for classmethod _read_file and (deprecated) method from_file.
+
+    See _read_file in class for args.
+    """
+    pfile = xtgeo._XTGeoFile(pfile)
+    if fformat is None or fformat == "guess":
+        fformat = pfile.detect_fformat()
+    else:
+        fformat = pfile.generic_format_by_proposal(fformat)  # default
+    kwargs = _data_reader_factory(fformat)(pfile, is_polygons=True)
+
+    kwargs["filesrc"] = pfile.name
+
+    return kwargs
+
+
+def _allow_deprecated_init(func):
+    # This decorator is here to maintain backwards compatibility in the construction
+    # of Polygons and should be deleted once the deprecation period has expired,
+    # the construction will then follow the new pattern.
+    # Introduced post xtgeo version 2.15
+    @functools.wraps(func)
+    def wrapper(cls, *args, **kwargs):
+        # Checking if we are doing an initialization from file or surface and raise a
+        # deprecation warning if we are.
+        if len(args) == 1:
+
+            if isinstance(args[0], (str, pathlib.Path)):
+                warnings.warn(
+                    "Initializing directly from file name is deprecated and will be "
+                    "removed in xtgeo version 4.0. Use: "
+                    "pol = xtgeo.polygons_from_file('some_file.xx') instead!",
+                    DeprecationWarning,
+                )
+                pfile = args[0]
+                fformat = kwargs.get("fformat", "guess")
+                pfile = xtgeosys._XTGeoFile(pfile)
+                if fformat is None or fformat == "guess":
+                    fformat = pfile.detect_fformat()
+                else:
+                    fformat = pfile.generic_format_by_proposal(fformat)  # default
+                kwargs = _data_reader_factory(fformat)(pfile, is_polygons=True)
+
+            elif isinstance(args[0], xtgeo.RegularSurface):
+                warnings.warn(
+                    "Initializing directly from RegularSurface is deprecated "
+                    "and will be removed in xtgeo version 4.0. Use: "
+                    "poi = xtgeo.points_from_surface(regsurf) instead",
+                    DeprecationWarning,
+                )
+                zname = kwargs.get("zname", "Z_TVDSS")
+                kwargs = XYZ._read_surface(args[0], zname=zname, return_cls=False)
+
+            elif isinstance(args[0], (list, np.ndarray, pd.DataFrame)):
+                # initialisation from an list-like object without 'values' keyword
+                # should be possible, i.e. Points(some_list) is same as
+                # Points(values=some_list)
+                kwargs["values"] = args[0]
+
+            else:
+                raise TypeError("Input argument of unknown type: ", type(args[0]))
+
+        return func(cls, **kwargs)
+
+    return wrapper
+
 
 # ======================================================================================
 # FUNCTIONS as wrappers to class init + import
@@ -40,7 +123,7 @@ def polygons_from_file(
         import xtgeo
         mypoly = xtgeo.polygons_from_file('somefile.xyz')
     """
-    return Polygons._read_file(pfile, fformat=fformat, is_polygons=True)
+    return Polygons._read_file(pfile, fformat=fformat)
 
 
 def polygons_from_roxar(
@@ -73,15 +156,17 @@ def polygons_from_roxar(
         import xtgeo
         mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
     """
-    return Polygons._read_roxar(
+
+    args = Polygons._read_roxar(
         project,
         name,
         category,
-        stype=stype,
-        realisation=realisation,
-        attributes=attributes,
-        is_polygons=True,  # since XYZ is base class
+        stype,
+        realisation,
+        attributes,
     )
+
+    return Polygons(**args)
 
 
 class Polygons(XYZ):  # pylint: disable=too-many-public-methods
