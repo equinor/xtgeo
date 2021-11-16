@@ -244,50 +244,6 @@ def test_roffbin_import1(load_gfile1):
         logger.info("Got nothing!")
 
 
-def test_roffbin_import_v2_banal():
-    """Test roff binary import ROFF using new API, banal case."""
-    t0 = xtg.timer()
-    grd1 = Grid()
-    grd1._xtgformat = 1
-    grd1.from_file(BANAL6)
-    print("V1: ", xtg.timer(t0))
-
-    t0 = xtg.timer()
-
-    grd2 = Grid()
-    grd2._xtgformat = 2
-    grd2.from_file(BANAL6)
-    print("V2: ", xtg.timer(t0))
-
-    t0 = xtg.timer()
-    grd3 = Grid()
-    grd3._xtgformat = 2
-    grd3.from_file(BANAL6)
-    grd3._convert_xtgformat2to1()
-    print("V3: ", xtg.timer(t0))
-
-    t0 = xtg.timer()
-    grd4 = Grid()
-    grd4._xtgformat = 1
-    grd4.from_file(BANAL6)
-    grd4._convert_xtgformat1to2()
-    print("V4: ", xtg.timer(t0))
-
-    for irange in range(grd1.ncol):
-        for jrange in range(grd1.nrow):
-            for krange in range(grd1.nlay):
-                cell = (irange + 1, jrange + 1, krange + 1)
-
-                xx1 = grd1.get_xyz_cell_corners(cell, activeonly=False)
-                xx2 = grd2.get_xyz_cell_corners(cell, activeonly=False)
-                xx3 = grd3.get_xyz_cell_corners(cell, activeonly=False)
-                xx4 = grd4.get_xyz_cell_corners(cell, activeonly=False)
-
-                assert np.allclose(np.array(xx1), np.array(xx2)) is True
-                assert np.allclose(np.array(xx1), np.array(xx3)) is True
-                assert np.allclose(np.array(xx1), np.array(xx4)) is True
-
-
 def test_roffbin_import_v2stress():
     """Test roff binary import ROFF using new API, comapre timing etc."""
     t0 = xtg.timer()
@@ -298,14 +254,9 @@ def test_roffbin_import_v2stress():
     print("100 loops with ROXAPIV 2 took: ", t1)
 
 
-def test_roffbin_banal6():
-    """Test roff binary for banal no. 6 case."""
-    grd1 = Grid()
-    grd1.from_file(BANAL6)
-
-    grd2 = Grid()
-    grd2._xtgformat = 2
-    grd2.from_file(BANAL6)
+def test_convert_vs_xyz_cell_corners():
+    grd1 = xtgeo.grid_from_file(BANAL6)
+    grd2 = grd1.copy()
 
     assert grd1.get_xyz_cell_corners() == grd2.get_xyz_cell_corners()
 
@@ -320,13 +271,9 @@ def test_roffbin_banal6():
     assert grd1.get_xyz_cell_corners((4, 2, 3)) == grd2.get_xyz_cell_corners((4, 2, 3))
 
 
-def test_roffbin_export_v2_banal6(tmp_path):
-    """Test roff binary export v2 for banal no. 6 case."""
-    # export
-    grd1 = Grid()
-    grd1._xtgformat = 2
+def test_roff_bin_vs_ascii_export(tmp_path):
+    grd1 = xtgeo.create_box_grid(dimension=(10, 10, 10))
 
-    logger.info("EXPORT")
     grd1.to_file(tmp_path / "b6_export.roffasc", fformat="roff_asc")
     grd1.to_file(tmp_path / "b6_export.roffbin", fformat="roff_bin")
 
