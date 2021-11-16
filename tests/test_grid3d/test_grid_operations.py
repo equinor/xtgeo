@@ -4,9 +4,12 @@ from collections import OrderedDict
 from os.path import join
 
 import pytest
+from hypothesis import given
 
 import xtgeo
 from xtgeo.common import XTGeoDialog
+
+from .grid_generator import xtgeo_grids
 
 xtg = XTGeoDialog()
 logger = xtg.basiclogger(__name__)
@@ -118,23 +121,24 @@ def test_refine_vertically(tmpdir):
 
     logger.info("Read grid...")
 
-    grd = xtgeo.grid_from_file(EMEGFILE)
-    logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
-    logger.info("Subgrids before: %s", grd.get_subgrids())
+    emerald_grid = xtgeo.grid_from_file(EMEGFILE)
+    assert emerald_grid.get_subgrids() == OrderedDict(
+        [("subgrid_0", 16), ("subgrid_1", 30)]
+    )
 
-    avg_dz1 = grd.get_dz().values3d.mean()
+    avg_dz1 = emerald_grid.get_dz().values3d.mean()
 
     # idea; either a scalar (all cells), or a dictionary for zone wise
-    grd.refine_vertically(3)
+    emerald_grid.refine_vertically(3)
 
-    avg_dz2 = grd.get_dz().values3d.mean()
+    avg_dz2 = emerald_grid.get_dz().values3d.mean()
 
     assert avg_dz1 == pytest.approx(3 * avg_dz2, abs=0.0001)
 
-    logger.info("Subgrids after: %s", grd.get_subgrids())
-    grd.inactivate_by_dz(0.001)
-
-    grd.to_file(join(tmpdir, "test_refined_by_3.roff"))
+    assert emerald_grid.get_subgrids() == OrderedDict(
+        [("subgrid_0", 48), ("subgrid_1", 90)]
+    )
+    emerald_grid.inactivate_by_dz(0.001)
 
 
 def test_refine_vertically_per_zone(tmpdir):
@@ -142,30 +146,26 @@ def test_refine_vertically_per_zone(tmpdir):
 
     logger.info("Read grid...")
 
-    grd_orig = xtgeo.grid_from_file(EMEGFILE2)
-    grd = grd_orig.copy()
+    emerald2_grid = xtgeo.grid_from_file(EMEGFILE2)
+    grd = emerald2_grid.copy()
+    emerald2_zone = xtgeo.gridproperty_from_file(EMEZFILE2, grid=grd, name="Zone")
 
-    logger.info("Read grid... done, NLAY is {}".format(grd.nlay))
-    grd.to_file(join(tmpdir, "test_refined_by_dict_initial.roff"))
+    assert emerald2_zone.values.min() == 1
+    assert emerald2_zone.values.max() == 2
 
-    logger.info("Subgrids before: %s", grd.get_subgrids())
-
-    zone = xtgeo.gridproperty_from_file(EMEZFILE2, grid=grd, name="Zone")
-    logger.info("Zone values min max: %s %s", zone.values.min(), zone.values.max())
-
-    logger.info("Subgrids list: %s", grd.subgrids)
+    assert grd.subgrids == OrderedDict(
+        [("subgrid_0", range(1, 17)), ("subgrid_1", range(17, 47))]
+    )
 
     refinement = {1: 4, 2: 2}
-    grd.refine_vertically(refinement, zoneprop=zone)
+    grd.refine_vertically(refinement, zoneprop=emerald2_zone)
 
-    grd1s = grd.get_subgrids()
-    logger.info("Subgrids after: %s", grd1s)
+    assert grd.get_subgrids() == OrderedDict([("zone1", 64), ("zone2", 60)])
 
-    grd = grd_orig.copy()
+    grd = emerald2_grid.copy()
     grd.refine_vertically(refinement)  # no zoneprop
-    grd2s = grd.get_subgrids()
-    logger.info("Subgrids after: %s", grd2s)
-    assert list(grd1s.values()) == list(grd2s.values())
+
+    assert grd.get_subgrids() == OrderedDict([("subgrid_0", 64), ("subgrid_1", 60)])
 
 
 def test_reverse_row_axis_box(tmpdir):
@@ -310,12 +310,8 @@ def test_crop_grid_after_copy():
     grd2.describe(details=True)
 
 
-def test_reduce_to_one_layer():
-    """Reduce grid to one layer"""
+@given(xtgeo_grids)
+def test_reduce_to_one_layer(grd):
+    grd.reduce_to_one_layer()
 
-    logger.info("Read grid...")
-
-    grd1 = xtgeo.grid_from_file(EMEGFILE2)
-    grd1.reduce_to_one_layer()
-
-    assert grd1.nlay == 1
+    assert grd.nlay == 1
