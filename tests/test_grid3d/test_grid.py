@@ -121,39 +121,6 @@ def test_shoebox_egrid(tmp_path, dimensions):
     assert grd1.dimensions == dimensions
 
 
-def test_shoebox_xtgeo_vs_roff(tmp_path):
-    """Test timing for xtgeo xtgcpgeom format vs roff vs egrid."""
-    dimens = (20, 30, 50)
-
-    grd = xtgeo.Grid()
-    grd.create_box(dimension=dimens)
-    grd._xtgformat2()
-    t0 = xtg.timer()
-    grd.to_xtgf(tmp_path / "show.xtgf")
-    t1 = xtg.timer(t0)
-    logger.info("TIME XTGEO %s", t1)
-    t0 = xtg.timer()
-    grd.to_file(tmp_path / "show.roff", fformat="roff")
-    t1 = xtg.timer(t0)
-    logger.info("TIME ROFF %s", t1)
-    t0 = xtg.timer()
-    grd.to_file(tmp_path / "show.egrid", fformat="egrid")
-    t1 = xtg.timer(t0)
-    logger.info("TIME EGRID (incl conv) %s", t1)
-
-    t0 = xtg.timer()
-    grd2 = xtgeo.Grid()
-    grd2.from_xtgf(tmp_path / "show.xtgf")
-    t1 = xtg.timer(t0)
-    logger.info("TIME READ xtgeo %s", t1)
-
-    t0 = xtg.timer()
-    grd2 = xtgeo.Grid()
-    grd2.from_file(tmp_path / "show.roff", fformat="roff")
-    t1 = xtg.timer(t0)
-    logger.info("TIME READ roff %s", t1)
-
-
 def test_roffbin_get_dataframe_for_grid(load_gfile1):
     """Import ROFF grid and return a grid dataframe (no props)."""
     grd = load_gfile1
