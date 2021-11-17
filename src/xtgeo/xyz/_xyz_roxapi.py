@@ -45,7 +45,7 @@ def import_xyz_roxapi(
         minimumrms = rox.rmsversion("1.2")
         msg = (
             "Not supported in this ROXAPI version. Points/polygons access "
-            "to clipboard requires RMS {}".format(minimumrms)
+            f"to clipboard requires RMS {minimumrms}"
         )
         raise NotImplementedError(msg)
 
@@ -61,10 +61,6 @@ def import_xyz_roxapi(
         )
 
     rox.safe_close()
-
-    kwargs["name"] = name
-    kwargs["filesrc"] = "RMS: {} ({})".format(name, category)
-    kwargs["values"] = None
 
     return kwargs
 
@@ -82,7 +78,7 @@ def _get_roxar():
 def _roxapi_import_xyz_viafile(
     rox, name, category, stype, realisation, is_polygons
 ):  # pragma: no cover
-    """Read XYZ from file due to amissing feature in Raoxar API wrt attributes.
+    """Read XYZ from file due to amissing feature in Roxar API wrt attributes.
 
     However, attributes will be present in Roxar API from RMS version 12, and this
     routine should be replaced!
@@ -93,7 +89,7 @@ def _roxapi_import_xyz_viafile(
     if not _check_category_etc(rox.project, name, category, stype, realisation):
         raise RuntimeError(
             "It appears that name and or category is not present: "
-            "name={}, category/folder={}, stype={}".format(name, category, stype)
+            f"name={name}, category/folder={category}, stype={stype}"
         )
 
     rox_xyz = _get_roxxyz(
@@ -105,38 +101,39 @@ def _roxapi_import_xyz_viafile(
         is_polygons=is_polygons,
     )
 
-    args = None
+    kwargs = {}
     try:
         # make a temporary folder
         with tempfile.TemporaryDirectory() as tmpdir:
             logger.info("Made a tmp folder: %s", tmpdir)
             tfile = os.path.join(tmpdir, "generic.rmsattr")
             rox_xyz.save(tfile, roxar.FileFormat.RMS_POINTS)
-            args = _xyz_io.import_rms_attr(tfile, is_polygons=is_polygons)
+            kwargs = _xyz_io.import_rms_attr(tfile)
 
     except KeyError as kwe:
         logger.error(kwe)
 
-    return args
+    return kwargs
 
 
 def _roxapi_import_xyz(
     rox, name, category, stype, realisation, is_polygons
 ):  # pragma: no cover
     """From RMS Roxar API to XTGeo, will be a class method."""
-    args = {}
+    kwargs = {}
 
     if not _check_category_etc(rox, name, category, stype, realisation):
         raise RuntimeError(
             "It appears that name and or category is not present: "
-            "name={}, category/folder={}, stype={}".format(name, category, stype)
+            f"name={name}, category/folder={category}, stype={stype}"
         )
 
-    args["xname"] = "X_UTME"
-    args["yname"] = "Y_UTMN"
-    args["zname"] = "Z_TVDSS"
+    kwargs["xname"] = "X_UTME"
+    kwargs["yname"] = "Y_UTMN"
+    kwargs["zname"] = "Z_TVDSS"
+
     if is_polygons:
-        args["pname"] = "POLY_ID"
+        kwargs["pname"] = "POLY_ID"
 
     roxitem = _get_roxxyz(
         rox,
@@ -148,9 +145,9 @@ def _roxapi_import_xyz(
     )
 
     values = _get_roxvalues(roxitem, realisation=realisation)
-    args["dataframe"] = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
+    kwargs["_dataframe"] = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
 
-    return args
+    return kwargs
 
 
 def _roxapi_xyz_to_dataframe(roxitem, is_polygons=False):  # pragma: no cover

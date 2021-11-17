@@ -2,14 +2,11 @@
 """XTGeo xyz module (base class)"""
 import io
 import pathlib
-import warnings
-from abc import ABC, abstractclassmethod, abstractmethod
-from collections import OrderedDict
+from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty
 from copy import deepcopy
 from typing import Any, Optional, Union
 
 import deprecation
-import numpy as np
 import pandas as pd
 import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
@@ -22,83 +19,39 @@ logger = xtg.functionlogger(__name__)
 class XYZ(ABC):
     """Abstract base class for XYZ objects, i.e. Points and Polygons in XTGeo.
 
-    The XYZ base class have common methods and properties for Points and Polygons.
-    The underlying datatype is a Pandas dataframe with minimal 3 (Points) or 4
+    The XYZ base class have common methods and properties for Points and Polygons. The
+    underlying data storage is a Pandas dataframe with minimal 3 (Points) or 4
     (Polygons) columns, where the two first represent X and Y coordinates.
 
-    The third column is a number, which may represent the depth, thickness,
-    or other property. For Polygons, there is a 4'th column which is an integer
-    representing poly-line ID.
-
-    Additional columns are possible but certainly not required. These are free
-    attributes with user-defined names. These names (with data-type) are
-    stored in an ordered dict: self._attrs as {"somename": "type", ...}.
-
-    Args:
-        values: Provide input values on various forms (list-like or dataframe).
-        xname: Name of first (X) mandatory column, default is X_UTME.
-        yname: Name of second (Y) mandatory column, default is Y_UTMN.
-        zname: Name of third (Z) mandatory column, default is Z_TVDSS.
-        pname: Name of fourth columns (mandatory for Polygons), default is POLY_ID.
-        name: A given name for the Points/Polygons object.
-        attributes: An ordered dict for addional columns (attributes) on the
-            form {"WellName": "str", "SomeCode": "int"}
-        kwargs: Additonal keys, mostly for internal usage
+    The third column is a number, which may represent the depth, thickness, or other
+    property. For Polygons, there is a 4'th column which is an integer representing
+    poly-line ID, which is handled in the Polygons class. Similarly, Points can have
+    additional columns called `attributes`.
 
     Note:
-        Do not use the XYZ class directly. Use the :class:`Points` or :class:`Polygons`
-        classes!
+        Do cannot use the XYZ class directly. Use the :class:`Points` or
+        :class:`Polygons` classes!
     """
 
     def __init__(
         self,
-        values: Optional[Union[list, np.ndarray, pd.DataFrame]] = None,
         xname: Optional[str] = "X_UTME",
         yname: Optional[str] = "Y_UTMN",
         zname: Optional[str] = "Z_TVDSS",
-        pname: Optional[str] = "POLY_ID",
         name: Optional[str] = "unknown",
-        attributes: Optional[dict] = None,
         filesrc=None,
-        **kwargs,
     ):
-        _dataframe = kwargs.get("_dataframe", None)
-        # -> this is hidden in the public API and only used for internal class methods
-        # like xtgeo.points_from_surface, etc; the correct dataframe will be made in
-        # advance to avoid a second of round of processing here. In such cases, 'values'
-        # shall be None to avoid conflicts.
-
-        if values is not None and _dataframe is not None:
-            # will only occur if error in implementation since _dataframe is private
-            raise RuntimeError("Conflicting 'values' and '_dataframe' input!")
-
+        """Concrete initialisation for base class _XYZ."""
+        # attributes in common with _XYZ:
         self._xname = xname
         self._yname = yname
         self._zname = zname
-        self._pname = pname
         self._name = name
-        self._df = _dataframe
         self._filesrc = filesrc
 
-        # The _nwells is introduced for methods that count the number of wells used
-        # actually in input. From 2.16
-        self._nwells = None
+        self._df = None
 
-        # other attributes as (name: type), where type is
-        # ~ ('str', 'int', 'float', 'bool')
-        if attributes is None:
-            self._attrs = OrderedDict()
-        else:
-            self._attrs = OrderedDict(attributes)
-
-        if values is not None:
-
-            if isinstance(values, (list, np.ndarray, pd.DataFrame)):
-                # make instance from a list(-like) of 3 or 4 tuples or similar
-                logger.info("Instance from list")
-                self._from_list_like(values)
-
-        logger.info("XYZ Instance initiated (base class) ID %s", id(self))
+        logger.info("Instantation of _XYZ")
 
     @property
     def xname(self) -> str:
@@ -130,25 +83,20 @@ class XYZ(ABC):
         self._df_column_rename(newname, self._zname)
         self._zname = newname
 
-    @property
-    def pname(self) -> str:
-        """Returns or set the name of the POLY_ID column."""
-        return self._pname
+    # @property
+    # def pname(self) -> str:
+    #     """Returns or set the name of the POLY_ID column."""
+    #     return self._pname
 
-    @pname.setter
-    def pname(self, value):
-        try:
-            self._check_name(value)
-        except ValueError as verr:
-            if "does not exist" in str(verr):
-                return
-        self._df_column_rename(value, self._pname)
-        self._pname = value
-
-    @property
-    def attributes(self) -> dict:
-        """Returns a dictionary with attribute names and type, or None."""
-        return self._attrs
+    # @pname.setter
+    # def pname(self, value):
+    #     try:
+    #         self._check_name(value)
+    #     except ValueError as verr:
+    #         if "does not exist" in str(verr):
+    #             return
+    #     self._df_column_rename(value, self._pname)
+    #     self._pname = value
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -158,6 +106,16 @@ class XYZ(ABC):
     @dataframe.setter
     def dataframe(self, df):
         self._df = df.copy()
+
+    # @property
+    # @abstractmethod
+    # def dataframe(self) -> pd.DataFrame:
+    #     """Returns or set the Pandas dataframe object."""
+    #     ...
+
+    # @dataframe.setter
+    # def dataframe(self, df):
+    #     ...
 
     @property
     def filesrc(self) -> str:
@@ -235,7 +193,7 @@ class XYZ(ABC):
     # ==================================================================================
 
     @abstractmethod
-    def from_file(self, pfile, fformat="xyz", **kwargs):
+    def from_file(self, pfile, fformat="xyz"):
         """Import Points or Polygons from a file (deprecated).
 
         Supported import formats (fformat):
@@ -261,16 +219,7 @@ class XYZ(ABC):
         .. deprecated:: 2.16
            Use xtgeo.points_from_file() or xtgeo.polygons_from_file() instead.
         """
-        pass
-
-    @abstractclassmethod
-    def _read_file(
-        cls,
-        pfile: Union[str, pathlib.Path, io.BytesIO],
-        fformat: Optional[str] = None,
-    ):
-        """Abstract class method for treading a file from disk or bytestream."""
-        pass
+        ...
 
     @deprecation.deprecated(
         deprecated_in="2.16",
@@ -402,63 +351,64 @@ class XYZ(ABC):
 
         return ncount
 
-    @abstractclassmethod
-    def _read_roxar(
-        cls,
-        project,
-        name,
-        category,
-        stype="horizons",
-        realisation=0,
-        attributes=False,
-        # is_polygons=False,
-    ):
-        """Load a points/polygons item from a Roxar RMS project.
+    # @classmethod
+    # @abstractmethod
+    # def _read_roxar(cls, ...):
+    #     cls,
+    #     project,
+    #     name,
+    #     category,
+    #     stype="horizons",
+    #     realisation=0,
+    #     attributes=False,
+    #     # is_polygons=False,
+    # ):
+    #     """Load a points/polygons item from a Roxar RMS project.
 
-        The import from the RMS project can be done either within the project
-        or outside the project.
+    #     The import from the RMS project can be done either within the project
+    #     or outside the project.
 
-        Use::
+    #     Use::
 
-          import xtgeo
-          mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
+    #       import xtgeo
+    #       mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
 
-        Note also that horizon/zone/faults name and category must exists
-        in advance, otherwise an Exception will be raised.
+    #     Note also that horizon/zone/faults name and category must exists
+    #     in advance, otherwise an Exception will be raised.
 
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
-            category (str): For horizons/zones/faults: for example 'DL_depth'
-                or use a folder notation on clipboard.
+    #     Args:
+    #         project (str or special): Name of project (as folder) if
+    #             outside RMS, og just use the magic project word if within RMS.
+    #         name (str): Name of polygons item
+    #         category (str): For horizons/zones/faults: for example 'DL_depth'
+    #             or use a folder notation on clipboard.
 
-            stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
-            realisation (int): Realisation number, default is 0
-            attributes (bool): If True, attributes will be preserved (from RMS 11)
-            is_polygons (bool): True if Polygons
+    #         stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
+    #         realisation (int): Realisation number, default is 0
+    #         attributes (bool): If True, attributes will be preserved (from RMS 11)
+    #         is_polygons (bool): True if Polygons
 
-        Returns:
-            Object instance updated
+    #     Returns:
+    #         Object instance updated
 
-        Raises:
-            ValueError: Various types of invalid inputs.
+    #     Raises:
+    #         ValueError: Various types of invalid inputs.
 
-        """
-        stype = stype.lower()
-        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+    #     """
+    #     stype = stype.lower()
+    #     valid_stypes = ["horizons", "zones", "faults", "clipboard"]
 
-        if stype not in valid_stypes:
-            raise ValueError(
-                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
-            )
+    #     if stype not in valid_stypes:
+    #         raise ValueError(
+    #             "Invalid stype, only {} stypes is supported.".format(valid_stypes)
+    #         )
 
-        kwargs = _xyz_roxapi.import_xyz_roxapi(
-            project, name, category, stype, realisation, attributes, is_polygons
-        )
+    #     kwargs = _xyz_roxapi.import_xyz_roxapi(
+    #         project, name, category, stype, realisation, attributes, is_polygons
+    #     )
 
-        kwargs["filesrc"] = f"RMS: {name} ({category})"
-        return cls(**kwargs)
+    #     kwargs["filesrc"] = f"RMS: {name} ({category})"
+    #     return cls(**kwargs)
 
     @deprecation.deprecated(
         deprecated_in="2.16",
@@ -514,19 +464,6 @@ class XYZ(ABC):
         .. deprecated:: 2.16
            Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar()
         """
-        stype = stype.lower()
-        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
-
-        if stype not in valid_stypes:
-            raise ValueError(
-                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
-            )
-
-        _xyz_roxapi.import_xyz_roxapi(
-            self, project, name, category, stype, realisation, attributes
-        )
-
-        self._filesrc = "RMS: {} ({})".format(name, category)
 
     def to_roxar(
         self,

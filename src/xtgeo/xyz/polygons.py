@@ -341,7 +341,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     @inherit_docstring(inherit_from=XYZ.from_file)
     def from_file(self, pfile, fformat="xyz", **kwargs):
         kwargs["is_polygons"] = True
-        super().from_file(pfile, fformat=fformat, **kwargs)
 
     @inherit_docstring(inherit_from=XYZ.to_file)
     def to_file(

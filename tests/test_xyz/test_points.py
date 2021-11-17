@@ -77,7 +77,6 @@ def test_initialise_from_file(testpath):
 
     # old style (shall give DeprecationWarning)
     mypoints = Points(testpath / PFILE)
-
     assert mypoints.dataframe["X_UTME"].values[0] == pytest.approx(460842.434326)
 
 
@@ -116,7 +115,7 @@ def test_import_from_dataframe_old(testpath):
 
     assert mypoints.dataframe.X_UTME.mean() == dfr.X.mean()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         mypoints.from_dataframe(
             dfr, east="NOTTHERE", north="Y", tvdmsl="Z", attributes=attr
         )

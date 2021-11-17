@@ -35,7 +35,7 @@ def get_points_set2(tmp_path):
     tfile = tmp_path / "generic_pset2.rsm_attr"
     poi.to_file(tfile, fformat="rms_attr")
     tfile2 = xtgeo._XTGeoFile(tmp_path / "generic_pset2.rsm_attr")
-    args = xtgeo.xyz._xyz_io.import_rms_attr(tfile2, is_polygons=False)
+    args = xtgeo.xyz._xyz_io.import_rms_attr(tfile2)
     return args
 
 
