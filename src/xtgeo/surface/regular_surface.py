@@ -13,8 +13,8 @@ Rotation is allowed and is measured in degrees, anticlock from X axis.
 
 Note that an instance of a regular surface can be made directly with::
 
- import xtgeo
- mysurf = xtgeo.surface_from_file('some_name.gri')
+ >>> import xtgeo
+ >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
 
 or::
 
@@ -92,8 +92,8 @@ def surface_from_file(mfile, fformat=None, template=None, values=True, engine="c
 
     Example::
 
-        import xtgeo
-        mysurf = xtgeo.surface_from_file('some_name.gri')
+        >>> import xtgeo
+        >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
 
     .. versionchanged:: 2.1
       Key "values" for Irap binary maps added
@@ -141,8 +141,9 @@ def surface_from_cube(cube, value):
 
     Example::
 
-        mycube = xtgeo.cube_from_file('somefile.segy')
-        mysurf = xtgeo.surface_from_cube(mycube, 1200)
+       >>> import xtgeo
+       >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
+       >>> mymap = xtgeo.surface_from_cube(mycube, 2700)
 
     """
     return RegularSurface._read_cube(cube, value)
@@ -365,15 +366,15 @@ class RegularSurface:
             The instance can be made by specification::
 
                 >>> surface = RegularSurface(
-                    ncol=20,
-                    nrow=10,
-                    xori=2000.0,
-                    yori=2000.0,
-                    rotation=0.0,
-                    xinc=25.0,
-                    yinc=25.0,
-                    values=np.zeros((20,10))
-                    )
+                ... ncol=20,
+                ... nrow=10,
+                ... xori=2000.0,
+                ... yori=2000.0,
+                ... rotation=0.0,
+                ... xinc=25.0,
+                ... yinc=25.0,
+                ... values=np.zeros((20,10))
+                ... )
 
 
         """
@@ -525,10 +526,16 @@ class RegularSurface:
         """Returns the names of the methods in the class.
 
         >>> print(RegularSurface.methods())
+        METHODS for RegularSurface():
+        ======================
+        __init__
+        __repr__
+        ...
+
         """
         mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
 
-        txt = "\nMETHODS for RegularSurface():\n======================\n"
+        txt = "METHODS for RegularSurface():\n======================\n"
         for met in mets:
             txt += str(met) + "\n"
 
@@ -555,10 +562,16 @@ class RegularSurface:
 
         Example::
 
-            vals = np.ones((nx*ny))  # a 1D numpy array in C order by default
+            >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> # a 1D numpy array in C order by default
+            >>> vals = np.ones((mysurf.ncol*mysurf.nrow))
 
-            # secure that the values are masked, in correct format and shape:
-            mymap.values = mymap.ensure_correct_values(nc, nr, vals)
+            >>> # secure that the values are masked, in correct format and shape:
+            >>> mysurf.values = mysurf.ensure_correct_values(
+            ...     mysurf.ncol,
+            ...     mysurf.nrow,
+            ...     vals
+            ... )
         """
 
         if not self._isloaded:
@@ -804,7 +817,7 @@ class RegularSurface:
         Example::
 
             map = xtgeo.surface_from_file('myfile.gri')
-            values = map.values1d
+            map.values1d
         """
         return self.get_values1d(asmasked=True)
 
@@ -816,10 +829,13 @@ class RegularSurface:
 
         Example::
 
-            map = xtgeo.surface_from_file('myfile.gri')
-            values = map.npvalues1d
-            mean = np.nanmean(values)
-            values[values <= 0] = np.nan
+            >>> import xtgeo
+            >>> map = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> values = map.npvalues1d
+            >>> mean = np.nanmean(values)
+            >>> values[values <= 0] = np.nan
+            >>> print(values)
+            [nan nan ... nan]
         """
         return self.get_values1d(asmasked=False, fill_value=np.nan)
 
@@ -974,7 +990,7 @@ class RegularSurface:
             Here the from_file method is used to initiate the object
             directly::
 
-            >>> mymapobject = RegularSurface().from_file('myfile.x')
+            >>> surf = RegularSurface().from_file(surface_dir + "/topreek_rota.gri")
 
         .. versionchanged:: 2.1
           Key "values" for Irap binary maps added
@@ -1060,7 +1076,7 @@ class RegularSurface:
 
         Example::
 
-            >>> mymapobject = RegularSurface._read_file('myfile.x')
+           >>> surf = RegularSurface._read_file(surface_dir + "/topreek_rota.gri")
 
         .. versionadded:: 2.14
 
@@ -1140,17 +1156,24 @@ class RegularSurface:
 
         Examples::
 
-            # read and write to ordinary file
-            surf = xtgeo.surface_from_file('myfile.x', fformat = 'irap_ascii')
-            surf.values = surf.values + 300
-            surf.to_file('myfile2.x', fformat = 'irap_ascii')
+            >>> # read and write to ordinary file
+            >>> surf = xtgeo.surface_from_file(
+            ...     surface_dir + '/topreek_rota.fgr',
+            ...     fformat = 'irap_ascii'
+            ... )
+            >>> surf.values = surf.values + 300
+            >>> filename = surf.to_file(
+            ...     outdir + '/topreek_rota300.fgr',
+            ...     fformat = 'irap_ascii'
+            ... )
 
-            # writing to io.BytesIO:
-            stream = io.BytesIO()
-            surf.to_file(stream, fformat="irap_binary")
+            >>> # writing to io.BytesIO:
+            >>> stream = io.BytesIO()
+            >>> surf.to_file(stream, fformat="irap_binary")
 
-            # read from memory stream:
-            newsurf = xtgeo.surface_from_file(stream, fformat = 'irap_binary')
+            >>> # read from memory stream:
+            >>> _ = stream.seek(0)
+            >>> newsurf = xtgeo.surface_from_file(stream, fformat = 'irap_binary')
 
         .. versionchanged:: 2.5 Added support for BytesIO
         .. versionchanged:: 2.13 Improved support for BytesIO
@@ -1223,7 +1246,9 @@ class RegularSurface:
 
         Example:
             >>> import xtgeo
-            >>> mysurf = xtgeo.RegularSurface().from_hdf("surf1.hdf")
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> filepath = surf.to_hdf(outdir + "/topreek_rota.hdf")
+            >>> mysurf = xtgeo.RegularSurface().from_hdf(filepath)
 
         .. versionadded:: 2.14
         """
@@ -1260,9 +1285,8 @@ class RegularSurface:
 
         Example:
             >>> import xtgeo
-            >>> surf = xtgeo.surface_from_file('some_file.gri')  # file input
-            >>> # possibly edit metadata...
-            >>> surf.to_hdf("somefile.hdf")
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> filepath = surf.to_hdf(outdir + "/topreek_rota.hdf")
 
         .. versionadded:: 2.14
 
@@ -1362,8 +1386,8 @@ class RegularSurface:
             Here the from_roxar method is used to initiate the object
             directly::
 
-            >>> mymap = RegularSurface()
-            >>> mymap.from_roxar(project, 'TopAare', 'DepthSurface')
+              mymap = RegularSurface()
+              mymap.from_roxar(project, 'TopAare', 'DepthSurface')
 
 
         """
@@ -1462,8 +1486,10 @@ class RegularSurface:
             Here the from_roxar method is used to initiate the object
             directly::
 
-            >>> mycube = Cube("reek.segy")
-            >>> mymap = xtgeo.surface_from_cube(mycube, 2700)
+            >>> import xtgeo
+            >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
+            >>> mymap = xtgeo.RegularSurface()
+            >>> mymap.from_cube(mycube, 2700)
 
         """
         props = [
@@ -1504,8 +1530,8 @@ class RegularSurface:
             Here the from_roxar method is used to initiate the object
             directly::
 
-            >>> mycube = Cube("reek.segy")
-            >>> mymap._read_cube(mycube, 2700)
+            >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
+            >>> mymap = RegularSurface._read_cube(mycube, 2700)
 
         """
         props = [
@@ -1549,9 +1575,10 @@ class RegularSurface:
         Example::
 
 
-            mygrid = Grid("REEK.EGRID")
-            # make surface from top (default)
-            mymap = RegularSurface._read_grid3d(mygrid)
+            >>> import xtgeo
+            >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> # make surface from top (default)
+            >>> mymap = RegularSurface._read_grid3d(mygrid)
 
         .. versionadded:: 2.14
 
@@ -1589,12 +1616,11 @@ class RegularSurface:
 
         Example::
 
-            mymap = RegularSurface()
-            mygrid = Grid("REEK.EGRID")
-            # make surface from top (default)
-            mymap.from_grid3d(mygrid)
-            # return two additonal maps
-            ic, jr = mymap.from_grid3d(mygrid)
+            >>> import xtgeo
+            >>> mymap = RegularSurface()
+            >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> # return two additonal maps
+            >>> ic, jr = mymap.from_grid3d(mygrid)
 
         .. versionadded:: 2.1
 
@@ -1619,6 +1645,7 @@ class RegularSurface:
 
         Example::
 
+            >>> mymap = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
             >>> mymapcopy = mymap.copy()
 
         """
@@ -1996,9 +2023,10 @@ class RegularSurface:
 
         Example::
 
-            surf = RegularSurface('myfile.gri')
-            dfr = surf.dataframe()
-            dfr.to_csv('somecsv.csv')
+            >>> import xtgeo
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> dfr = surf.dataframe()
+            >>> dfr.to_csv('somecsv.csv')
 
         Returns:
             A Pandas dataframe object.
@@ -2050,8 +2078,9 @@ class RegularSurface:
 
         Example:
 
-            >>> mymap = RegularSurface('somefile.gri')
-            >>> xylist, valuelist = mymap.get_xy_value_lists(valuefmt='6.2f')
+            >>> import xtgeo
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> xylist, valuelist = surf.get_xy_value_lists(valuefmt='6.2f')
         """
         xylist = []
         valuelist = []
@@ -2261,11 +2290,12 @@ class RegularSurface:
 
         Example::
 
-            mypoints = Points('pfile.poi')
-            mysurf = RegularSurface('top.gri')
+            >>> import xtgeo
+            >>> mypoints = xtgeo.Points(points_dir + '/pointset2.poi')
+            >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
 
-            # update the surface by gridding the points
-            mysurf.gridding(mypoints)
+            >>> # update the surface by gridding the points
+            >>> mysurf.gridding(mypoints)
 
         Raises:
             RuntimeError: If not possible to grid for some reason
@@ -2302,11 +2332,12 @@ class RegularSurface:
 
         Example::
 
-            from xtgeo import RegularSurface
-            surf1 = RegularSurface("some1.gri")  # map with 230x210 columns, rotation 20
-            surf2 = RegularSurface("some2.gri")  # map with 270x190 columns, rotation 0
-
-            surf1.resample(surf2)  # will sample (interpolate) surf2's values to surf1
+            # map with 230x210 columns, rotation 20
+            surf1 = xtgeo.surface_from_file("some1.gri")
+            # map with 270x190 columns, rotation 0
+            surf2 = xtgeo.surface_from_file("some2.gri")
+            # will sample (interpolate) surf2's values to surf1
+            surf1.resample(surf2)
 
         Returns:
             Instance's surface values will be updated in-place.
@@ -2499,11 +2530,17 @@ class RegularSurface:
                 extend this to e.g. 3
         Example::
 
-            grd = Grid('some.roff')
-            prop = GridProperty('someprop.roff', name='PHIT')
-            surf = RegularSurface('s.gri')
-            # update surf to sample the 3D grid property:
-            surf.slice_grid3d(grd, prop)
+            >>> import xtgeo
+            >>> grd = xtgeo.grid_from_file(reek_dir + '/REEK.EGRID')
+            >>> prop = xtgeo.gridproperty_from_file(
+            ...     reek_dir + '/REEK.UNRST',
+            ...     name='PRESSURE',
+            ...     date="first",
+            ...     grid=grd,
+            ... )
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> # update surf to sample the 3D grid property:
+            >>> surf.slice_grid3d(grd, prop)
 
         Raises:
             Exception if maps have different definitions (topology)
@@ -2558,10 +2595,11 @@ class RegularSurface:
 
         Example::
 
-            cube = Cube('some.segy')
-            surf = RegularSurface('s.gri')
-            # update surf to sample cube values:
-            surf.slice_cube(cube)
+            >>> import xtgeo
+            >>> cube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> # update surf to sample cube values:
+            >>> surf.slice_cube(cube)
 
         Raises:
             Exception if maps have different definitions (topology)
@@ -2680,17 +2718,20 @@ class RegularSurface:
 
         Example::
 
-            cube = Cube('some.segy')
-            surf = RegularSurface('s.gri')
-            # update surf to sample cube values in a total range of 30 m:
-            surf.slice_cube_window(cube, attribute='min', zrange=15.0)
+            >>> import xtgeo
+            >>> cube = xtgeo.Cube(cube_dir + "/ib_test_cube2.segy")
+            >>> surf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> # update surf to sample cube values in a total range of 30 m:
+            >>> surf.slice_cube_window(cube, attribute='min', zrange=15.0)
 
-            # Here a list is given instead:
-            alst = ['min', 'max', 'rms']
+            >>> # Here a list is given instead:
+            >>> alst = ['min', 'max', 'rms']
 
-            myattrs = surf.slice_cube_window(cube, attribute=alst, zrange=15.0)
-            for attr in myattrs.keys():
-                myattrs[attr].to_file('myfile_' + attr + '.gri')
+            >>> myattrs = surf.slice_cube_window(cube, attribute=alst, zrange=15.0)
+            >>> for attr in myattrs.keys():
+            ...     _ = myattrs[attr].to_file(
+            ...         outdir + '/myfile_' + attr + '.gri'
+            ...     )
 
         Raises:
             Exception if maps have different definitions (topology)
@@ -3043,10 +3084,13 @@ class RegularSurface:
 
         Example::
 
-            map = RegularSurface()
-            map.from_file('some_file')
-            map.translate((300,500,0))
-            map.to_file('some_file')
+            >>> import xtgeo
+            >>> mysurf = xtgeo.surface_from_file(surface_dir + '/topreek_rota.gri')
+            >>> print(mysurf.xori, mysurf.yori)
+            468895.125 5932889.5
+            >>> mysurf.translate_coordinates((300,500,0))
+            >>> print(mysurf.xori, mysurf.yori)
+            469195.125 5933389.5
 
         """
         xshift, yshift, zshift = translate

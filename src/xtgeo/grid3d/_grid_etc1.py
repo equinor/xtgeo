@@ -7,7 +7,6 @@ from math import atan2, degrees
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
-
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -1039,12 +1038,12 @@ def reduce_to_one_layer(self):
 
     Example::
 
-        >>> from xtgeo.grid3d import Grid
-        >>> gf = Grid('gullfaks2.roff')
-        >>> gf.nlay
-        47
-        >>> gf.reduce_to_one_layer()
-        >>> gf.nlay
+        >>> import xtgeo
+        >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+        >>> grid.nlay
+        14
+        >>> grid.reduce_to_one_layer()
+        >>> grid.nlay
         1
 
     """

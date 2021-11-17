@@ -92,7 +92,7 @@ class BlockedWells(Wells):
             Here the from_file method is used to initiate the object
             directly::
 
-            >>> mywells = BlockedWells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
+              mywells = BlockedWells(['31_2-6.w', '31_2-7.w', '31_2-8.w'])
         """
 
         if not append:

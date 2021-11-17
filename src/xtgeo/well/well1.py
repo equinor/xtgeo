@@ -52,8 +52,8 @@ def well_from_file(
 
     Example::
 
-        import xtgeo
-        mywell = xtgeo.well_from_file("somewell.xxx")
+        >>> import xtgeo
+        >>> mywell = xtgeo.well_from_file(well_dir + "/OP_1.w")
 
     .. versionchanged:: 2.1 Added ``lognames`` and ``lognames_strict``
     .. versionchanged:: 2.1 ``strict`` now defaults to False
@@ -155,9 +155,9 @@ class Well:
 
     The instance can be made either from file or (todo!) by specification::
 
-        >>> well1 = Well('somefilename')  # assume RMS ascii well
-        >>> well2 = Well('somefilename', fformat='rms_ascii')
-        >>> well3 = xtgeo.well_from_file('somefilename')
+        >>> well1 = Well(well_dir + '/OP_1.w')  # assume RMS ascii well
+        >>> well2 = Well(well_dir + '/OP_1.w', fformat='rms_ascii')
+        >>> well3 = xtgeo.well_from_file(well_dir + '/OP_1.w')
 
     """
 
@@ -511,7 +511,7 @@ class Well:
             Here the from_file method is used to initiate the object
             directly::
 
-            >>> mywell = Well('31_2-6.w')
+            >>> mywell = Well().from_file(well_dir + '/OP_1.w')
 
         .. versionchanged:: 2.1 ``lognames`` and ``lognames_strict`` added
         .. versionchanged:: 2.1 ``strict`` now defaults to False
@@ -550,9 +550,9 @@ class Well:
 
         Example::
 
-            xwell = Well("somefile.rmswell")
-            xwell.dataframe['PHIT'] += 0.1
-            xwell.to_file("somefile_copy.rmswell")
+            >>> xwell = Well(well_dir + '/OP_1.w')
+            >>> xwell.dataframe['Poro'] += 0.1
+            >>> filename = xwell.to_file(outdir + "/somefile_copy.rmswell")
 
         """
         wfile = xtgeo._XTGeoFile(wfile, mode="wb", obj=self)
@@ -1495,8 +1495,14 @@ class Well:
             ValueError: Various messages when wrong or inconsistent input.
 
         Example:
-            >>> mywell1.mask_shoulderbeds(["ZONELOG", "FACIES"], ["PHIT", "KLOGH"])
-            >>> mywell2.mask_shoulderbeds(["ZONELOG"], ["PHIT"], nsamples={"tvd": 0.8})
+            >>> mywell1 = Well(well_dir + '/OP_1.w')
+            >>> mywell2 = Well(well_dir + '/OP_2.w')
+            >>> did_succeed = mywell1.mask_shoulderbeds(["Zonelog", "Facies"], ["Perm"])
+            >>> did_succeed = mywell2.mask_shoulderbeds(
+            ...     ["Zonelog"],
+            ...     ["Perm"],
+            ...     nsamples={"tvd": 0.8}
+            ... )
 
         """
         return _well_oper.mask_shoulderbeds(

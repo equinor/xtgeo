@@ -46,8 +46,8 @@ def cube_from_file(mfile, fformat="guess"):
 
     Example::
 
-        import xtgeo
-        mycube = xtgeo.cube_from_file('some_cube.segy')
+        >>> import xtgeo
+        >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
     """
     obj = Cube()
 
@@ -428,6 +428,8 @@ class Cube:  # pylint: disable=too-many-public-methods
     def copy(self):
         """Deep copy of a Cube() object to another instance.
 
+
+        >>> mycube = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
         >>> mycube2 = mycube.copy()
 
         """
@@ -476,10 +478,21 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         Example:
 
-            >>> mycube1 = Cube('mysegyfile.segy')
-            >>> mycube2 = Cube(xori=461500, yori=5926800, zori=1550,
-                   xinc=40, yinc=40, zinc=5, ncol=200, nrow=100,
-                   nlay=100, rotation=mycube1.rotation)
+            >>> import xtgeo
+            >>> mycube1 = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
+            >>> mycube2 = xtgeo.Cube(
+            ...     xori=777574,
+            ...     yori=6736507,
+            ...     zori=1000,
+            ...     xinc=10,
+            ...     yinc=10,
+            ...     zinc=4,
+            ...     ncol=100,
+            ...     nrow=100,
+            ...     nlay=100,
+            ...     yflip=mycube1.yflip,
+            ...     rotation=mycube1.rotation
+            ... )
             >>> mycube2.resample(mycube1)
 
         """
@@ -500,9 +513,9 @@ class Cube:  # pylint: disable=too-many-public-methods
 
         Example:
 
-            >>> mycube1 = Cube('mysegyfile.segy')
+            >>> mycube1 = Cube(cube_dir + "/ib_test_cube2.segy")
             >>> mycube1.do_thinning(2, 2, 1)  # keep every second column, row
-            >>> mycube1.to_file('mysegy_smaller.segy')
+            >>> mycube1.to_file(outdir + '/mysegy_smaller.segy')
 
         """
         _cube_utils.thinning(self, icol, jrow, klay)
@@ -532,15 +545,16 @@ class Cube:  # pylint: disable=too-many-public-methods
             Crop 10 columns from front, 2 from back, then 20 rows in front,
             40 in back, then no cropping of layers::
 
-            >>> mycube1 = Cube('mysegyfile.segy')
+            >>> import xtgeo
+            >>> mycube1 = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
             >>> mycube2 = mycube1.copy()
             >>> mycube1.do_cropping((10, 2), (20, 40), (0, 0))
-            >>> mycube1.to_file('mysegy_smaller.segy')
+            >>> mycube1.to_file(outdir + '/mysegy_smaller.segy')
 
             In stead, do cropping as 'inclusive' where inlines, xlines, slices
             arrays are known::
 
-            >>> mycube2.do_cropping((112, 327), (1120, 1140), (1500, 2000))
+            >>> mycube2.do_cropping((11, 32), (112, 114), (150, 200))
 
         """
         useicols = icols
@@ -713,7 +727,7 @@ class Cube:  # pylint: disable=too-many-public-methods
         Example::
 
             >>> zz = Cube()
-            >>> zz.from_file('some.segy')
+            >>> zz.from_file(cube_dir + "/ib_test_cube2.segy")
 
 
         """
@@ -760,8 +774,9 @@ class Cube:  # pylint: disable=too-many-public-methods
             engine (str): Which "engine" to use.
 
         Example::
-            >>> zz = Cube('some.segy')
-            >>> zz.to_file('some.rmsreg')
+            >>> import xtgeo
+            >>> zz = xtgeo.cube_from_file(cube_dir + "/ib_test_cube2.segy")
+            >>> zz.to_file(outdir + '/some.rmsreg')
         """
         fobj = xtgeosys._XTGeoFile(sfile, mode="wb")
 

@@ -35,7 +35,7 @@ jobs:
           git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
           pip install -r requirements/requirements_test.txt
           pip install pytest-cov
-          pytest tests --generate-plots --disable-warnings --cov=xtgeo --hypothesis-profile ci-fast --cov-report=xml:xtgeocoverage.xml;
+          pytest tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --hypothesis-profile ci-fast --cov-report=xml:xtgeocoverage.xml;
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:

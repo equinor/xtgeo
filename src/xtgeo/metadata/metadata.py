@@ -3,9 +3,10 @@
 
 The metadata works through the various datatypes in XTGeo. For example::
 
-    >>> surf = xtgeo.RegularSurface("somefile")
+    >>> import xtgeo
+    >>> surf = xtgeo.surface_from_file(surface_dir + "/topreek_rota.gri")
     >>> surf.metadata.required
-    >>> ...
+    OrderedDict([('ncol', 554),...
     >>> surf.metadata.optional.mean = surf.values.mean()
 
 """
@@ -186,7 +187,8 @@ class MetaData:
         This makes access to the _OptionalMetaData instance.
 
         Example::
-            >>> surf = xtgeo.RegularSurface("somefile.gri")
+            >>> import xtgeo
+            >>> surf = xtgeo.surface_from_file(surface_dir + "/topreek_rota.gri")
             >>> surf.metadata.opt.shortname = "TopValysar"
 
         """

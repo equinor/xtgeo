@@ -104,14 +104,26 @@ class GridProperties(_Grid3D):
 
         Example::
 
-            namelist = props.names
-            for prop in namelist:
-                print ('Property name is {}'.format(name))
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> props = GridProperties()
+            >>> props.from_file(
+            ...     reek_dir + "/REEK.INIT",
+            ...     fformat="init",
+            ...     names=["PERMX"],
+            ...     grid=grid,
+            ... )
 
-            # when setting names, an empty string 'trick' will make the namelist to be
-            # defaulted as each individual property name
+            >>> namelist = props.names
+            >>> for name in namelist:
+            ...     print ('Property name is {}'.format(name))
+            Property name is PERMX
 
-            props.names = ""
+            >>> # when setting names, an empty string 'trick'
+            >>> # will make the namelist to be defaulted as
+            >>> # each individual property name
+
+            >>> props.names = ""
 
         """
         return self._names
@@ -139,16 +151,24 @@ class GridProperties(_Grid3D):
 
         Example::
 
-            gg = xtgeo.grid3d.Grid('TEST1.EGRID')
-            myprops = XTGeo.grid3d.GridProperties()
-            from_file('TEST1.INIT', fformat='init', names=['PORO']         )
-            proplist = myprops.props
-            for prop in proplist:
-                print ('Property object ID is {}'.format(prop))
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> myprops = GridProperties()
+            >>> myprops.from_file(
+            ...     reek_dir + "/REEK.INIT",
+            ...     fformat="init",
+            ...     names=["PERMX"],
+            ...     grid=grid,
+            ... )
 
-            # adding a property, e.g. get ACTNUM as a property from the grid
-            actn = gg.get_actnum()  # this will get actn as a GridProperty
-            myprops.add_props([actn])
+            >>> proplist = myprops.props
+            >>> for prop in proplist:
+            ...     print ('Property object name is {}'.format(prop.name))
+            Property object name is PERMX
+
+            >>> # adding a property, e.g. get ACTNUM as a property from the grid
+            >>> actn = grid.get_actnum()  # this will get actn as a GridProperty
+            >>> myprops.append_props([actn])
         """
         if not self._props:
             return None
@@ -171,9 +191,20 @@ class GridProperties(_Grid3D):
 
         Example::
 
-            datelist = props.dates
-            for date in datelist:
-                print ('Date applied is {}'.format(date))
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> props = GridProperties()
+            >>> props.from_file(
+            ...     reek_dir + "/REEK.INIT",
+            ...     fformat="init",
+            ...     names=["PERMX"],
+            ...     grid=grid,
+            ... )
+
+            >>> datelist = props.dates
+            >>> for date in datelist:
+            ...     print ('Date applied is {}'.format(date))
+            Date applied is 19991201
 
         """
         if not self._dates:
@@ -317,8 +348,18 @@ class GridProperties(_Grid3D):
 
         Example::
 
-            act = myprops.get_actnum()
-            print('{}% cells are active'.format(act.values.mean() * 100))
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> myprops = GridProperties()
+            >>> myprops.from_file(
+            ...     reek_dir + "/REEK.INIT",
+            ...     fformat="init",
+            ...     names=["PERMX"],
+            ...     grid=grid,
+            ... )
+            >>> act = myprops.get_actnum()
+            >>> print('{}% of cells are active'.format(act.values.mean() * 100))
+            99.99...% of cells are active
 
         Returns:
             A GridProperty instance of ACTNUM, or None if no props present.
@@ -376,9 +417,16 @@ class GridProperties(_Grid3D):
                 derived.
 
         Example::
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
             >>> props = GridProperties()
-            >>> props.from_file("ECL.UNRST", fformat="unrst",
-                dates=[20110101, 20141212], names=["PORO", "DZ"]
+            >>> props.from_file(
+            ...     reek_dir + "/REEK.INIT",
+            ...     fformat="init",
+            ...     names=["PERMX"],
+            ...     grid=grid,
+            ... )
+
 
         Raises:
             FileNotFoundError: if input file is not found
@@ -467,14 +515,25 @@ class GridProperties(_Grid3D):
 
         Examples::
 
-            grd = Grid(gfile1, fformat='egrid')
-            xpr = GridProperties()
-
-            names = ['SOIL', 'SWAT', 'PRESSURE']
-            dates = [19991201]
-            xpr.from_file(rfile1, fformat='unrst', names=names, dates=dates,
-                        grid=grd)
-            df = x.dataframe(activeonly=False, ijk=True, xyz=True, grid=grd)
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> props = GridProperties()
+            >>> props.from_file(
+            ...     reek_dir + "/REEK.UNRST",
+            ...     fformat="unrst",
+            ...     names=['SOIL', 'SWAT', 'PRESSURE'],
+            ...     dates=[19991201],
+            ...     grid=grid,
+            ... )
+            >>> df = props.dataframe(activeonly=False, ijk=True, xyz=True, grid=grid)
+            >>> print(df)
+                   ACTNUM  IX  JY  ...  SOIL_19991201  SWAT_19991201  PRESSURE_19991201
+            0           1   1   1  ...            0.0            1.0         341.694183
+            1           1   1   1  ...            0.0            1.0         342.097107
+            2           1   1   1  ...            0.0            1.0         342.500061
+            3           1   1   1  ...            0.0            1.0         342.902954
+            4           1   1   1  ...            0.0            1.0         343.305908
+            ...
 
         """
         dfr = _gridprops_etc.dataframe(
@@ -527,8 +586,7 @@ class GridProperties(_Grid3D):
             A list of tuples or dataframe with keyword info
 
         Example::
-            >>> props = GridProperties()
-            >>> dlist = props.scan_keywords('ECL.UNRST')
+            >>> dlist = GridProperties.scan_keywords(reek_dir + "/REEK.UNRST")
 
         """
         pfile = xtgeo._XTGeoFile(pfile)
@@ -558,12 +616,11 @@ class GridProperties(_Grid3D):
             the returning list will be a simple list of dates.
 
         Example::
-            >>> props = GridProperties()
-            >>> dlist = props.scan_dates('ECL.UNRST')
-
-            or getting all dates a simple list:
-            >>> from xtgeo import GridProperties as GPS
-            >>> dlist = GPS().scan_dates("ECL.UNRST", datesonly=True)
+            >>> dlist = GridProperties.scan_dates(reek_dir + "/REEK.UNRST")
+            >>> #or getting all dates a simple list:
+            >>> dlist = GridProperties.scan_dates(
+            ... reek_dir + "/REEK.UNRST",
+            ... datesonly=True)
 
         .. versionchanged:: 2.13 Added datesonly keyword
         """
