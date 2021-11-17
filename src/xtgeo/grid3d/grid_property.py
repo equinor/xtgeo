@@ -89,8 +89,11 @@ def gridproperty_from_file(*args, **kwargs):
 
     Example::
 
-        import xtgeo
-        myporo = xtgeo.gridproperty_from_file('myporofile.roff')
+        >>> import xtgeo
+        >>> myporo = xtgeo.gridproperty_from_file(
+        ...    reek_dir + '/reek_sim_poro.roff',
+        ...    name="PORO"
+        ... )
     """
     return GridProperty._read_file(*args, **kwargs)
 
@@ -776,11 +779,18 @@ class GridProperty(_Grid3D):
     def methods(cls):
         """Returns the names of the methods in the class.
 
-        >>> print(RegularSurface.methods())
+        >>> print(GridProperty.methods())
+        METHODS for GridProperty():
+        ======================
+        __init__
+        _reset
+        _set_initial_dimensions
+        _check_dimensions_match
+        ...
         """
         mets = [x for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
 
-        txt = "\nMETHODS for GridProperty():\n======================\n"
+        txt = "METHODS for GridProperty():\n======================\n"
         for met in mets:
             txt += str(met) + "\n"
 
@@ -1186,7 +1196,15 @@ class GridProperty(_Grid3D):
 
         ::
 
-            >>> mycopy = xx.copy(newname='XPROP')
+            >>> import xtgeo
+            >>> myporo = xtgeo.gridproperty_from_file(
+            ...    reek_dir + '/reek_sim_poro.roff',
+            ...    name="PORO"
+            ... )
+            >>> mycopy = myporo.copy(newname='XPROP')
+            >>> print(mycopy.name)
+            XPROP
+
         """
 
         if newname is None:

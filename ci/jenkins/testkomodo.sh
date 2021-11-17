@@ -3,6 +3,7 @@ copy_test_files () {
 
     pushd $CI_TEST_ROOT/testpath
     cp -r $CI_SOURCE_ROOT/tests tests
+    cp -r $CI_SOURCE_ROOT/conftest.py conftest.py
     ln -s $CI_SOURCE_ROOT/examples
     ln -s $CI_SOURCE_ROOT/xtgeo-testdata
     git clone --depth=1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata

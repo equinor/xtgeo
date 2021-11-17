@@ -11,7 +11,6 @@ from typing import Optional, Tuple, Union
 import deprecation
 import numpy as np
 import numpy.ma as ma
-
 import xtgeo
 from xtgeo.common import XTGDescription, _XTGeoFile
 
@@ -52,14 +51,15 @@ logger = xtg.functionlogger(__name__)
 
 # METHODS as wrappers to class init + import
 def _handle_import(grid_constructor, gfile, fformat=None, **kwargs):
-    """Read a grid (cornerpoint) from file and an returns a Grid() instance.
+    """Handles the import given a constructor.
 
-    See :meth:`Grid.from_file` method for details on keywords.
+    For backwards compatability we need to call different constructors
+    with grid __init__ parameters (As returned by _grid_import.from_file).
+    These are generally either the _reset method of an instance or Grid().
 
-    Example::
-
-        import xtgeo
-        mygrid = xtgeo.grid_from_file("reek.roff")
+    This function takes such a constructor, remaining arguments are interpreted
+    as they are in _grid_import.from_file and calls the constructor with the
+    resulting arguments.
 
     """
 
@@ -82,8 +82,8 @@ def grid_from_file(gfile, fformat=None, **kwargs):
 
     Example::
 
-        import xtgeo
-        mygrid = xtgeo.grid_from_file("reek.roff")
+        >>> import xtgeo
+        >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
 
     """
     return _handle_import(Grid, gfile, fformat, **kwargs)
@@ -762,8 +762,8 @@ class Grid(_Grid3D):
             OSError: Directory does not exist
 
         Example::
-
-            xg.to_file("myfile.roff")
+            >>> grid = create_box_grid((2,2,2))
+            >>> grid.to_file(outdir + "/myfile.roff")
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb")
 
@@ -819,7 +819,8 @@ class Grid(_Grid3D):
 
         Example:
 
-            >>> xg.to_hdf("myfile_grid.h5")
+            >>> grid = create_box_grid((2,2,2))
+            >>> filename = grid.to_hdf(outdir + "/myfile_grid.h5")
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
         gfile.check_folder(raiseerror=OSError)
@@ -850,8 +851,8 @@ class Grid(_Grid3D):
                 memory stream
 
         Example::
-
-            xg.to_xtg("myfile_grid.xtgf")
+            >>> grid = create_box_grid((2,2,2))
+            >>> filename = grid.to_xtgf(outdir + "/myfile.xtg")
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
         gfile.check_folder(raiseerror=OSError)
@@ -920,17 +921,20 @@ class Grid(_Grid3D):
 
         Example::
 
-            >>> myfile = "../../testdata/Zone/gullfaks.roff"
             >>> xg = Grid()
-            >>> xg.from_file(myfile, fformat="roff")
-            >>> # or shorter:
-            >>> xg = Grid(myfile)  # will guess the file format
+            >>> xg.from_file(reek_dir + "/REEK.EGRID", fformat="egrid")
+            Grid ... filesrc='.../REEK.EGRID'
 
         Example using "eclipserun"::
 
-            >>> mycase = "ECL"  # meaning ECL.EGRID, ECL.INIT, ECL.UNRST
+            >>> mycase = "REEK"  # meaning REEK.EGRID, REEK.INIT, REEK.UNRST
             >>> xg = Grid()
-            >>> xg.from_file(mycase, fformat="eclipserun", initprops="all")
+            >>> xg.from_file(
+            ...     reek_dir + "/" + mycase,
+            ...     fformat="eclipserun",
+            ...     initprops="all",
+            ... )
+            Grid ... filesrc='.../REEK.EGRID'
 
         Raises:
             OSError: if file is not found etc
@@ -968,7 +972,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            xg.from_hdf("myfile_grid.h5", ijkrange=(1, 10, 10, 15, 1, 4))
+            >>> xg = create_box_grid((20,20,5))
+            >>> filename = xg.to_hdf(outdir + "/myfile_grid.h5")
+            >>> xg.from_hdf(filename, ijkrange=(1, 10, 10, 15, 1, 4))
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
@@ -992,7 +998,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            xg.from_xtgf("myfile_grid.xtg")
+            >>> xg = create_box_grid((5,5,5))
+            >>> filename = xg.to_xtgf(outdir + "/myfile_grid.xtg")
+            >>> xg.from_xtgf(filename)
         """
         gfile = xtgeo._XTGeoFile(gfile, mode="wb", obj=self)
 
@@ -1068,7 +1076,8 @@ class Grid(_Grid3D):
 
         Example::
 
-            newgrd = grd.copy()
+            >>> grd = create_box_grid((5,5,5))
+            >>> newgrd = grd.copy()
         """
         logger.info("Copy a Grid instance")
         other = _grid_etc1.copy(self)
@@ -1150,19 +1159,25 @@ class Grid(_Grid3D):
 
         Example::
 
-            grd = Grid(gfile1, fformat="egrid")
-            xpr = GridProperties()
+            >>> import xtgeo
+            >>> grd = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID", fformat="egrid")
+            >>> xpr = xtgeo.GridProperties()
 
-            names = ["SOIL", "SWAT", "PRESSURE"]
-            dates = [19991201]
-            xpr.from_file(rfile1, fformat="unrst", names=names, dates=dates,
-                        grid=grd)
-            grd.gridprops = xpr  # attach properties to grid
+            >>> names = ["SOIL", "SWAT", "PRESSURE"]
+            >>> dates = [19991201]
+            >>> xpr.from_file(
+            ...     reek_dir + "/REEK.UNRST",
+            ...     fformat="unrst",
+            ...     names=names,
+            ...     dates=dates,
+            ...     grid=grd,
+            ... )
+            >>> grd.gridprops = xpr  # attach properties to grid
 
-            df = grd.dataframe()
+            >>> df = grd.dataframe()
 
-            # save as CSV file
-            df.to_csv("mygrid.csv")
+            >>> # save as CSV file
+            >>> df.to_csv(outdir + "/mygrid.csv")
         """
         return self.gridprops.dataframe(
             grid=self,
@@ -1237,10 +1252,12 @@ class Grid(_Grid3D):
 
         Example::
 
-            grd = xtgeo.Grid("somefile.roff")
-
-            if len(grd.subgrids) == 3:
-                grd.rename_subgrids(["Inky", "Tinky", "Pinky"])
+            >>> from collections import OrderedDict
+            >>> grd = create_box_grid((3, 3, 3))
+            >>> grd.subgrids = OrderedDict(
+            ...     [("1", range(1,2)), ("2", range(2,3)), ("3", range(3,4))]
+            ... )
+            >>> grd.rename_subgrids(["Inky", "Tinky", "Pinky"])
 
         Raises:
             ValueError: Input names not a list or a tuple
@@ -1280,10 +1297,17 @@ class Grid(_Grid3D):
 
         Example::
 
-            grd = xtgeo.Grid("emerald.roff")
-            res = grd.estimate_design(nsub="Etive")
-            print("Subgrid design is ", res["design"])
-            print("Subgrid simbox thickness is ", res["dzsimbox"])
+            >>> import xtgeo
+            >>> grd = xtgeo.grid_from_file(emerald_dir + "/emerald_hetero_grid.roff")
+            >>> print(grd.subgrids)
+            OrderedDict([('subgrid_0', range(1, 17)), ('subgrid_1', range(17, 47))])
+            >>> res = grd.estimate_design(nsub="subgrid_0")
+            >>> print("Subgrid design is", res["design"])
+            Subgrid design is P
+            >>> print("Subgrid simbox thickness is", res["dzsimbox"])
+            Subgrid simbox thickness is 2.548...
+
+
 
         """
         nsubname = None
@@ -1433,8 +1457,11 @@ class Grid(_Grid3D):
 
         Example::
 
-            act = mygrid.get_actnum()
-            print("{}% cells are active".format(act.values.mean() * 100))
+            >>> import xtgeo
+            >>> mygrid = xtgeo.create_box_grid((2,2,2))
+            >>> act = mygrid.get_actnum()
+            >>> print("{}% of cells are active".format(act.values.mean() * 100))
+            100.0% of cells are active
 
         .. versionchanged:: 2.6 Added ``dual`` keyword
         """
@@ -1483,11 +1510,11 @@ class Grid(_Grid3D):
                 cells, 0 for inactive cells
 
         Example::
-
-            act = mygrid.get_actnum()
-            act.values[:, :, :] = 1
-            act.values[:, :, 4] = 0
-            grid.set_actnum(act)
+            >>> mygrid = create_box_grid((5,5,5))
+            >>> act = mygrid.get_actnum()
+            >>> act.values[:, :, :] = 1
+            >>> act.values[:, :, 4] = 0
+            >>> mygrid.set_actnum(act)
         """
         val1d = actnum.values.ravel(order="K")
 
@@ -1638,9 +1665,10 @@ class Grid(_Grid3D):
 
         Example::
 
-            >>> grid = Grid()
-            >>> grid.from_file("gullfaks2.roff")
-            >>> vol = grid.get_cell_volume(ijk=(45,13,2))
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> print(grid.get_cell_volume(ijk=(10,13,2)))
+            107056...
 
         .. versionadded:: 2.13 (as experimental)
         """
@@ -1834,9 +1862,9 @@ class Grid(_Grid3D):
 
         Example::
 
-            >>> grid = Grid()
-            >>> grid.from_file("gullfaks2.roff")
-            >>> xyzlist = grid.get_xyz_corners_cell(ijk=(45,13,2))
+            >>> grid = grid_from_file(reek_dir + "REEK.EGRID")
+            >>> print(grid.get_xyz_cell_corners(ijk=(10,13,2)))
+            (458704.10..., 1716.969970703125)
 
         Raises:
             RuntimeWarning if spesification is invalid.
@@ -1874,9 +1902,13 @@ class Grid(_Grid3D):
 
         Example::
 
-            >>> grid = Grid()
-            >>> grid.from_file("gullfaks2.roff")
-            >>> clist = grid.get_xyz_corners()
+            >>> import xtgeo
+            >>> grid = xtgeo.create_box_grid((2,2,2))
+            >>> gps = grid.get_xyz_corners() # list of 24 grid properties
+            >>> len(gps)
+            24
+            >>> gps[0].values.tolist()
+            [[[0.0, 0.0], ... [[1.0, 1.0], [1.0, 1.0]]]
 
 
         Raises:
@@ -1945,9 +1977,10 @@ class Grid(_Grid3D):
 
         Example::
 
-            mygrid = Grid("gullfaks.roff")
-            gstuff = mygrid.get_geometrics(return_dict=True)
-            print("X min/max is {} {}".format(gstuff["xmin", gstuff["xmax"]))
+            >>> mygrid = grid_from_file(reek_dir + "REEK.EGRID")
+            >>> gstuff = mygrid.get_geometrics(return_dict=True)
+            >>> print(f"X min/max is {gstuff['xmin']:.2f} {gstuff['xmax']:.2f}")
+            X min/max is 456620.79 467106.33
 
         """
         gresult = _grid_etc1.get_geometrics(
@@ -2086,10 +2119,10 @@ class Grid(_Grid3D):
 
         Example::
 
-                >>> from xtgeo.grid3d import Grid
-                >>> gf = Grid("gullfaks2.roff")
-                >>> gf.crop((3, 6), (4, 20), (1, 10))
-                >>> gf.to_file("gf_reduced.roff")
+            >>> import xtgeo
+            >>> mygrid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> mygrid.crop((3, 6), (4, 20), (1, 10))
+            >>> mygrid.to_file(outdir + "/gf_reduced.roff")
 
         """
         _grid_etc1.crop(self, (colcrop, rowcrop, laycrop), props=props)
@@ -2100,12 +2133,12 @@ class Grid(_Grid3D):
 
         Example::
 
-            >>> from xtgeo.grid3d import Grid
-            >>> gf = Grid("gullfaks2.roff")
-            >>> gf.nlay
-            47
-            >>> gf.reduce_to_one_layer()
-            >>> gf.nlay
+            >>> import xtgeo
+            >>> grid = xtgeo.grid_from_file(reek_dir + "/REEK.EGRID")
+            >>> grid.nlay
+            14
+            >>> grid.reduce_to_one_layer()
+            >>> grid.nlay
             1
 
         """

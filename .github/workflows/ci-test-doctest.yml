@@ -1,0 +1,33 @@
+name: Run doctest
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  doctest:
+    name: ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install xtgeo
+        run: >
+          python -m pip install pip -U &&
+          python -m pip install -e .
+
+      - name: Run doctest-modules test
+        run: >
+          python -m pip install -r requirements/requirements_test.txt &&
+          git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata &&
+          python -m pytest --doctest-modules src/xtgeo/
