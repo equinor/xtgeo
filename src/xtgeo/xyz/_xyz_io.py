@@ -13,6 +13,11 @@ xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
+
+class _ValidDataFrame(pd.DataFrame):
+    ...
+
+
 # -------------------------------------------------------------------------
 # Import/Export methods for various formats; primarely class methods
 # -------------------------------------------------------------------------
@@ -66,7 +71,6 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
     _xn = kwargs["xname"] = "X_UTME"
     _yn = kwargs["yname"] = "Y_UTMN"
     _zn = kwargs["zname"] = zname
-    _pn = kwargs["pname"] = None
 
     if assume_rms_text:
         dfr = pd.read_csv(
@@ -81,6 +85,7 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
     if not is_polygons:
         dfr.dropna(inplace=True)
 
+    # pylint: disable=unsupported-assignment-operation
     if is_polygons and assume_rms_text:
         # make a new polygon for every input line which are undefined (999 in input)
         _pn = kwargs["pname"] = "POLY_ID"
@@ -107,8 +112,7 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
             dfr.insert(2, _pn, 0.0)
 
     kwargs["attributes"] = None
-    kwargs["_dataframe"] = dfr
-    kwargs["values"] = None
+    kwargs["values"] = _ValidDataFrame(dfr)
     kwargs["filesrc"] = pfile.name
 
     return kwargs
@@ -205,8 +209,7 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
 
     args["is_polygons"] = is_polygons
     args["attributes"] = None
-    args["dataframe"] = dfr
-    args["values"] = None
+    args["values"] = _ValidDataFrame(dfr)
     args["filesrc"] = pfile.name
 
     return args
@@ -285,6 +288,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
         dtype=dtypes,
     )
 
+    # pylint: disable=unsubscriptable-object, unsupported-assignment-operation
     # handle undefined:
     for col in dfr.columns[3:]:
         if col in _attrs:
@@ -294,8 +298,7 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
                 dfr[col].replace("UNDEF", xtgeo.UNDEF_INT, inplace=True)
         dfr[col] = dfr[col].astype(all_dtypes[col])
 
-    kwargs["_dataframe"] = dfr
-    kwargs["values"] = None
+    kwargs["values"] = _ValidDataFrame(dfr)
     kwargs["attributes"] = _attrs
 
     return kwargs
@@ -360,7 +363,7 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
     if isinstance(attributes, list):
         mode = "a"
         columns += attributes
-        with open(pfile, "w") as fout:
+        with open(pfile, "w", encoding="utf8") as fout:
             for col in attributes:
                 if col in df.columns:
                     fout.write(transl[self._attrs[col]] + " " + col + "\n")
@@ -443,13 +446,13 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
         logger.warning("Nothing to export")
         return 0
 
-    with open(pfile, "w") as fc:
+    with open(pfile, "w", encoding="utf8") as fc:
         df.to_csv(fc, sep=" ", header=None, columns=columns, index=False)
 
     return len(df.index)
 
 
-def _from_list_like(xyzpp, plist, is_polygons):
+def _from_list_like(plist, zname, attrs, is_polygons):
     """Import Points or Polygons from a list-like input.
 
     The following 'list-like' inputs are possible:
@@ -475,16 +478,22 @@ def _from_list_like(xyzpp, plist, is_polygons):
     an integer.
 
     Args:
-        xyzpp (obj): XYZ Points or Polygons instance
         plist (str): List of tuples, each tuple is length 3 or 4
+        zname (str): Name of third column
+        attrs (dict): Attributes, for Points
         is_polygons (bool): Flag for Points or Polygons
+
+    Returns:
+        A valid dataframe and filesrc
 
     Raises:
         ValueError: If something is wrong with input
 
     .. versionadded:: 2.16
     """
-    xyzpp._filesrc = "Derived from: numpy array"
+
+    filesrc = "Derived from: numpy array"
+    dfr = None
     if isinstance(plist, list):
         # convert list/tuples to a 2D numpy and process the numpy below
         logger.info("Input list-like is a list, convert to a numpy...")
@@ -493,33 +502,31 @@ def _from_list_like(xyzpp, plist, is_polygons):
         except Exception as exc:
             warnings.warn(f"Cannot convert list to numpy array: {str(exc)}")
             raise
-        xyzpp._filesrc = "Derived from: list input"
+        filesrc = "Derived from: list input"
 
     if isinstance(plist, pd.DataFrame):
         # convert input dataframe to a 2D numpy and process the numpy below
         plist = plist.to_numpy(copy=True)
-        xyzpp._filesrc = "Derived from: dataframe input"
+        filesrc = "Derived from: dataframe input"
 
     if isinstance(plist, np.ndarray):
         logger.info("Process numpy to points")
         if plist.ndim != 2:
             raise ValueError("Input numpy array must two-dimensional")
         totnum = plist.shape[1]
-        lenattrs = len(xyzpp._attrs) if xyzpp._attrs is not None else 0
+        lenattrs = len(attrs) if attrs is not None else 0
         attr_first_col = 3
         if totnum == 3 + lenattrs:
-            xyzpp._df = pd.DataFrame(
-                plist[:, :3], columns=[xyzpp._xname, xyzpp._yname, xyzpp._zname]
-            )
-            xyzpp._df = xyzpp._df.astype(float)
+            dfr = pd.DataFrame(plist[:, :3], columns=["X_UTME", "Y_UTMN", zname])
+            dfr = dfr.astype(float)
             if is_polygons:
                 # pname column is missing but assign 0 as ID
-                xyzpp._df[xyzpp._pname] = 0
+                dfr["POLY_ID"] = 0
 
-        elif totnum == 4 + lenattrs and xyzpp._ispolygons:
-            xyzpp._df = pd.DataFrame(
+        elif totnum == 4 + lenattrs and is_polygons:
+            dfr = pd.DataFrame(
                 plist[:, :4],
-                columns=[xyzpp._xname, xyzpp._yname, xyzpp._zname, xyzpp._pname],
+                columns=["X_UTME", "Y_UTMN", zname, "POLY_ID"],
             )
             attr_first_col = 4
         else:
@@ -527,15 +534,19 @@ def _from_list_like(xyzpp, plist, is_polygons):
                 f"Wrong length detected of row: {totnum}. "
                 "Are attributes set correct?"
             )
-        xyzpp._df.dropna()
-        xyzpp._df = xyzpp._df.astype(np.float64)
+        dfr.dropna()
+        dfr = dfr.astype(np.float64)
         if is_polygons:
-            xyzpp._df[xyzpp._pname] = xyzpp._df[xyzpp._pname].astype(np.int32)
+            dfr["POLY_ID"] = dfr["POLY_ID"].astype(np.int32)
 
         if lenattrs > 0:
-            for enum, (key, dtype) in enumerate(xyzpp._attrs.items()):
-                xyzpp._df[key] = plist[:, attr_first_col + enum]
-                xyzpp._df = xyzpp._df.astype({key: dtype})
+            for enum, (key, dtype) in enumerate(attrs.items()):
+                dfr[key] = plist[:, attr_first_col + enum]
+                dfr = dfr.astype({key: dtype})
 
     else:
         raise TypeError("Not possible to make XYZ from given input")
+
+    dfr = _ValidDataFrame(dfr)
+
+    return dfr, filesrc

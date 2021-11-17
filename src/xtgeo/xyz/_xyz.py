@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """XTGeo xyz module (base class)"""
-import io
-import pathlib
-from abc import ABC, abstractclassmethod, abstractmethod, abstractproperty
-from copy import deepcopy
+from abc import ABC, abstractmethod
 from typing import Any, Optional, Union
 
 import deprecation
@@ -107,16 +104,6 @@ class XYZ(ABC):
     def dataframe(self, df):
         self._df = df.copy()
 
-    # @property
-    # @abstractmethod
-    # def dataframe(self) -> pd.DataFrame:
-    #     """Returns or set the Pandas dataframe object."""
-    #     ...
-
-    # @dataframe.setter
-    # def dataframe(self, df):
-    #     ...
-
     @property
     def filesrc(self) -> str:
         """Returns the filesrc attribute, file name or description (read-only).
@@ -131,16 +118,6 @@ class XYZ(ABC):
         if self.dataframe is None:
             return 0
         return len(self.dataframe.index)
-
-    @property
-    def nwells(self) -> int:
-        """Returns the number of wells associated with the XYZ set (read-only).
-
-        If zero or not relevant, None is returned.
-
-        .. versionadded:: 2.16
-        """
-        return self._nwells
 
     def _df_column_rename(self, newname, oldname):
         if isinstance(newname, str):
@@ -159,20 +136,10 @@ class XYZ(ABC):
                 f"one of: f{self._df.columns}"
             )
 
+    @abstractmethod
     def copy(self):
         """Returns a a deep copy of an instance"""
-
-        mycopy = self.__class__()
-        mycopy._df = self._df.copy()
-        # mycopy._ispolygons = self._ispolygons
-        mycopy._xname = self._xname
-        mycopy._yname = self._yname
-        mycopy._zname = self._zname
-        mycopy._pname = self._pname
-        mycopy._filesrc = self._filesrc = None
-        mycopy._attrs = deepcopy(self._attrs)
-
-        return mycopy
+        ...
 
     def describe(self, flush=True):
         """Describe an instance by printing to stdout"""
@@ -221,14 +188,9 @@ class XYZ(ABC):
         """
         ...
 
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=xtgeo.version,
-        details="Use Points() or Polygons() initialisation instead",
-    )
+    @abstractmethod
     def from_list(self, plist):
-        """Import Points or Polygons from a list-like input (deprecated).
+        """Create Points or Polygons from a list-like input (deprecated).
 
         The following inputs are possible:
 
@@ -253,27 +215,28 @@ class XYZ(ABC):
         .. deprecated:: 2.16
            Use xtgeo.Points() or xtgeo.Polygons() directly.
         """
+        ...
 
-        first = plist[0]
-        if len(first) == 3:
-            self._df = pd.DataFrame(
-                plist, columns=[self._xname, self._yname, self._zname]
-            )
+        # first = plist[0]
+        # if len(first) == 3:
+        #     self._df = pd.DataFrame(
+        #         plist, columns=[self._xname, self._yname, self._zname]
+        #     )
 
-            # add ID 0 for Polygons if input is missing
-            if self._ispolygons:
-                self._df[self.pname] = 0
+        #     # add ID 0 for Polygons if input is missing
+        #     if self._ispolygons:
+        #         self._df[self.pname] = 0
 
-        elif len(first) == 4:
-            self._df = pd.DataFrame(
-                plist, columns=[self._xname, self._yname, self._zname, self._pname]
-            )
-        else:
-            raise ValueError(
-                "Wrong length detected of first tuple: {}".format(len(first))
-            )
-        self._df.dropna(inplace=True)
-        self._filesrc = "Derived from: list-like input"
+        # elif len(first) == 4:
+        #     self._df = pd.DataFrame(
+        #         plist, columns=[self._xname, self._yname, self._zname, self._pname]
+        #     )
+        # else:
+        #     raise ValueError(
+        #         "Wrong length detected of first tuple: {}".format(len(first))
+        #     )
+        # self._df.dropna(inplace=True)
+        # self._filesrc = "Derived from: list-like input"
 
     def to_file(
         self,

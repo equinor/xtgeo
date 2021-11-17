@@ -9,11 +9,14 @@ from xtgeo.common import XTGeoDialog
 from xtgeo.roxutils import RoxUtils
 from xtgeo.xyz import _xyz_io
 
+from ._xyz_io import _ValidDataFrame
+
 xtg = XTGeoDialog()
 
 logger = xtg.functionlogger(__name__)
 
 # pylint: disable=protected-access
+
 
 # ======================================================================================
 # roxapi -> xtgeo classmethod
@@ -145,7 +148,10 @@ def _roxapi_import_xyz(
     )
 
     values = _get_roxvalues(roxitem, realisation=realisation)
-    kwargs["_dataframe"] = _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
+
+    kwargs["values"] = _ValidDataFrame(
+        _roxapi_xyz_to_dataframe(values, is_polygons=is_polygons)
+    )
 
     return kwargs
 
