@@ -2,6 +2,7 @@
 import functools
 import itertools
 import operator
+import pathlib
 import warnings
 from typing import Dict, List, Union
 
@@ -558,7 +559,7 @@ def find_gridprops_from_restart_file(
         List of GridProperty parameters matching the names and dates.
     """
     close = False
-    try:
+    if isinstance(restart_filelike, (pathlib.Path, str)):
         if fformat == eclio.Format.UNFORMATTED:
             filehandle = open(restart_filelike, "rb")
             close = True
@@ -567,20 +568,23 @@ def find_gridprops_from_restart_file(
             close = True
         else:
             raise ValueError(f"Unsupported restart file format {fformat}")
-    except TypeError:
+    else:
+        # If restart_filelike is not a filename/path we assume
+        # its a stream
         filehandle = restart_filelike
         close = False
-    generator = section_generator(filter_lgr(eclio.lazy_read(filehandle)))
-    read_properties = find_gridprops_from_restart_file_sections(
-        generator,
-        names,
-        dates,
-        grid,
-        fracture,
-    )
-
-    if close:
-        filehandle.close()
+    try:
+        generator = section_generator(filter_lgr(eclio.lazy_read(filehandle)))
+        read_properties = find_gridprops_from_restart_file_sections(
+            generator,
+            names,
+            dates,
+            grid,
+            fracture,
+        )
+    finally:
+        if close:
+            filehandle.close()
     return read_properties
 
 
