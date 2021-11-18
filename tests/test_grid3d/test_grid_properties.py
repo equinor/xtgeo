@@ -54,6 +54,19 @@ def test_gridproperties_get_prop_by_name_not_exists(gps, name):
         gps[name]
 
 
+def test_gridproperties_import_date_does_not_exist(tmp_path):
+    tmpfile = tmp_path / "TEST.UNRST"
+    tmpfile.write_text("")
+    with pytest.raises(ValueError, match="dates are either"):
+        GridProperties().from_file(
+            tmpfile,
+            names="all",
+            dates=["12.12.1"],
+            fformat="unrst",
+            grid=xtgeo.create_box_grid((2, 2, 2)),
+        )
+
+
 def test_gridproperties_iter():
     g = xtgeo.grid_from_file(GFILE1, fformat="egrid")
 
