@@ -416,8 +416,16 @@ class GridProperties(_Grid3D):
                 lst.append(GridProperty(pfile, fformat="roff", name=name))
             self.append_props(lst)
 
-        elif fformat.lower() in ("init", "unrst"):
-            _gridprops_import_eclrun.import_ecl_output(
+        elif fformat.lower() == "init":
+            _gridprops_import_eclrun.import_ecl_init_gridproperties(
+                self,
+                pfile,
+                grid=grid,
+                names=names,
+                strict=strict[0],
+            )
+        elif fformat.lower() == "unrst":
+            _gridprops_import_eclrun.import_ecl_restart_gridproperties(
                 self,
                 pfile,
                 dates=dates,

@@ -14,7 +14,6 @@ def decorate_name(name, dual_porosity, fracture, date=None):
 
     >>> decorate_name('PORO', True, False, 19991231)
     'POROM_19991231'
-
     """
     decorated_name = name
     if dual_porosity:
@@ -116,7 +115,7 @@ def import_gridprop_from_restart(
     Args:
         pfile: The restart file.
         name: The name of the parmaeter
-        dates: xtgeo style date (e.g. int(19990101), "YYYYMMDD"), also
+        date: xtgeo style date (e.g. int(19990101) or "YYYYMMDD"), also
             accepts "YYYY-MM-DD".  "last" and "first" can be given for
             last or first date in the file
         grid: The grid used by the simulator to produce the restart file.

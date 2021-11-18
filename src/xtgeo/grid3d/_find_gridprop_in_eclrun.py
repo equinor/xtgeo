@@ -1,4 +1,3 @@
-"""Importing grid props from ECL runs, e,g, INIT, UNRST"""
 import functools
 import itertools
 import operator
@@ -456,7 +455,7 @@ def section_generator(generator):
 def find_gridprops_from_restart_file_sections(
     sections,
     names: Union[List[str], Literal["all"]],
-    dates: Union[List[int], Literal["all", "last", "first"], List[str]],
+    dates: Union[List[int], Literal["all", "last", "first"]],
     grid,
     fracture: bool = False,
 ) -> List[Dict]:
@@ -471,7 +470,7 @@ def find_gridprops_from_restart_file_sections(
         sections: Section generator such as returned by :meth:`section_generator`.
         names: List of property names to be imported. Can also,
             be set to "all" to import all parameters.
-        dates: List of xtgeo style dates (e.g. int(19990101) or "19990101"), can also
+        dates: List of xtgeo style dates (e.g. int(19990101)), can also
             be "all", "last" and "first".
         grid: The grid used by the simulator to produce the init file.
         fracture: If a dual porosity module, indicates that the fracture
@@ -488,7 +487,7 @@ def find_gridprops_from_restart_file_sections(
         date = date_from_intehead(intehead)
 
         if dates not in ("all", "first", "last"):
-            if date not in dates and str(date) not in dates:
+            if date not in dates:
                 continue
 
         section_properties = {
@@ -518,7 +517,7 @@ def find_gridprops_from_restart_file_sections(
 def find_gridprops_from_restart_file(
     restart_filelike,
     names: Union[List[str], Literal["all"]],
-    dates: Union[List[int], Literal["all", "first", "last"], List[str]],
+    dates: Union[List[int], Literal["all", "first", "last"]],
     grid,
     fracture: bool = False,
     fformat: eclio.Format = eclio.Format.UNFORMATTED,
