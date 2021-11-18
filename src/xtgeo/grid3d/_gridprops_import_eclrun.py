@@ -62,25 +62,24 @@ def sanitize_date_list(
 
 
 def import_ecl_init_gridproperties(
-    grid_properties,
     pfile,
     names: Union[List[str], Literal["all"]],
     grid,
     strict=True,
-):
-    """
-    Updates the GridProperties with the properties found in an init file.
+) -> List[GridProperty]:
+    """Imports list of properties from an init file.
 
     Note, the method does not determine whether a given keyword in the file
     is a grid property, only that it has the correct data type and length
     to be considered as a grid property.
 
     Args:
-        grid_properties: The grid_properties instance to update
         pfile: Path to the ecl restart file
         names: List of names to fetch, can also be "all" to fetch all properties.
         grid: The grid used by the simulator to produce the restart file.
         strict: If strict=True, will raise error if key is not found.
+    Returns:
+        List of GridProperty objects fetched from the init file.
     """
     if not isinstance(pfile, xtgeo._XTGeoFile):
         pfile = xtgeo._XTGeoFile(pfile)
@@ -130,37 +129,29 @@ def import_ecl_init_gridproperties(
         names=names,
         grid=grid,
     )
+    properties_list = []
     for result in results:
-        grid_properties._names.append(result["name"])
         result["name"] = decorate_name(result["name"], grid.dualporo, fracture=False)
-        prop = GridProperty(**result)
+        properties_list.append(GridProperty(**result))
 
-        grid_properties._props.append(prop)
-        grid_properties._dates.append(prop._date)
-
-    grid_properties._ncol = grid.ncol
-    grid_properties._nrow = grid.nrow
-    grid_properties._nlay = grid.nlay
+    return properties_list
 
 
 def import_ecl_restart_gridproperties(
-    grid_properties,
     pfile,
     names: Union[List[str], Literal["all"]],
     dates: Union[List[int], List[str], Literal["all", "last", "first"]],
     grid,
     strict: Tuple[bool, bool],
     namestyle: Literal[0, 1],
-):
-    """
-    Updates the GridProperties with the properties found in restart file.
+) -> List[GridProperty]:
+    """Imports list of gridproperties from a restart file.
 
     Note, the method does not determine whether a given keyword in the file
     is a grid property, only that it has the correct data type and length
     to be considered as a grid property.
 
     Args:
-        grid_properties: The grid_properties instance to update
         pfile: Path to the ecl restart file
         names: List of names to fetch, can also be "all" to fetch all properties.
         dates: List of xtgeo style dates (e.g. int(19990101) or "YYYYMMDD"),
@@ -177,6 +168,8 @@ def import_ecl_restart_gridproperties(
             are missing an exception will be raised
         namestyle : 0 (default) for style SWAT_20110223,
             1 for SWAT--2011_02_23 (applies to restart only)
+    Returns:
+        List of GridProperty objects fetched from the restart file.
     """
 
     strictkeycomb, strictdate = strict
@@ -240,8 +233,8 @@ def import_ecl_restart_gridproperties(
                 )
 
     results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
+    properties_list = []
     for result in results:
-
         if namestyle == 1:
             sdate = str(result["date"])
             result["name"] += "--" + sdate[0:4] + "_" + sdate[4:6] + "_" + sdate[6:8]
@@ -249,15 +242,10 @@ def import_ecl_restart_gridproperties(
             result["name"] = decorate_name(
                 result["name"], grid.dualporo, fracture=False, date=result["date"]
             )
-        prop = GridProperty(**result)
 
-        grid_properties._props.append(prop)
-        grid_properties._names.append(prop.name)
-        grid_properties._dates.append(prop.date)
+        properties_list.append(GridProperty(**result))
 
-    grid_properties._ncol = grid.ncol
-    grid_properties._nrow = grid.nrow
-    grid_properties._nlay = grid.nlay
+    return properties_list
 
 
 def _process_valid_namesdates(kwlist, grid):

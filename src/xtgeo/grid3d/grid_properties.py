@@ -411,22 +411,19 @@ class GridProperties(_Grid3D):
         pfile.check_file(raiseerror=OSError)
 
         if fformat.lower() == "roff":
-            lst = list()
-            for name in names:
-                lst.append(GridProperty(pfile, fformat="roff", name=name))
-            self.append_props(lst)
+            properties = [
+                GridProperty(pfile, fformat="roff", name=name) for name in names
+            ]
 
         elif fformat.lower() == "init":
-            _gridprops_import_eclrun.import_ecl_init_gridproperties(
-                self,
+            properties = _gridprops_import_eclrun.import_ecl_init_gridproperties(
                 pfile,
                 grid=grid,
                 names=names,
                 strict=strict[0],
             )
         elif fformat.lower() == "unrst":
-            _gridprops_import_eclrun.import_ecl_restart_gridproperties(
-                self,
+            properties = _gridprops_import_eclrun.import_ecl_restart_gridproperties(
                 pfile,
                 dates=dates,
                 grid=grid,
@@ -436,6 +433,8 @@ class GridProperties(_Grid3D):
             )
         else:
             raise OSError("Invalid file format")
+
+        self.append_props(properties)
 
     # def to_file(self, pfile, fformat="roff"):
     #     """Export grid properties to file. NB not working!
