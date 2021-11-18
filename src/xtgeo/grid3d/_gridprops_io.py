@@ -138,7 +138,7 @@ def _import_ecl_output_v2_rsta(
 ):
     """Import RESTART parameters"""
 
-    if isinstance(dates, list):
+    if dates not in ["all", "first", "last"]:
         # dates may come on form 2020-12-22 or 20201222; process all to latter fmt
         dates = [
             int(str(thedate).replace("-", "")) if isinstance(thedate, str) else thedate

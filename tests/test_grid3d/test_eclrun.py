@@ -333,7 +333,15 @@ def test_eclunrst_import_reek(reek_run, date):
 
 @pytest.mark.parametrize(
     "dates",
-    [[19991201, 20010101, 20030101], ["19991201", "20010101", "20030101"], "all"],
+    [
+        [19991201, 20010101, 20030101],
+        ["19991201", "20010101", "20030101"],
+        ["1999-12-01", "2001-01-01", "2003-01-01"],
+        {"1999-12-01", "2001-01-01", "2003-01-01"},
+        {"19991201", "20010101", "20030101"},
+        {19991201, 20010101, 20030101},
+        "all",
+    ],
 )
 def test_import_reek_restart(dates, reek_run):
     gps = reek_run.get_restart_properties(names=["PRESSURE", "SWAT"], dates=dates)
@@ -344,20 +352,24 @@ def test_import_reek_restart(dates, reek_run):
     assert gps["PRESSURE_20030101"].values.mean() == pytest.approx(308.45, abs=0.001)
 
 
-def test_import_should_fail(reek_run):
+@pytest.mark.parametrize(
+    "dates",
+    [[19991201, 19991212], ["19991201", "19991212"], ["1999-12-01", "1999-12-12"]],
+)
+def test_import_should_fail(reek_run, dates):
     with pytest.raises(ValueError, match="Requested keyword NOSUCHNAME"):
         reek_run.get_init_properties(names=["PORO", "NOSUCHNAME"])
 
     reek_run.get_restart_properties(
         names=["PRESSURE"],
-        dates=[19991201, 19991212],
+        dates=dates,
         strict=(True, False),
     )
 
     with pytest.raises(ValueError, match="PRESSURE 19991212 is not in"):
         reek_run.get_restart_properties(
             names=["PRESSURE"],
-            dates=[19991201, 19991212],
+            dates=dates,
             strict=(True, True),
         )
 
