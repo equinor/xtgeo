@@ -7,11 +7,11 @@ import xtgeo
 
 from . import _grid3d_utils as utils
 from ._find_gridprop_in_eclrun import (
-    decorate_name,
     find_gridprop_from_init_file,
     find_gridprops_from_restart_file,
     valid_gridprop_lengths,
 )
+from ._gridprop_import_eclrun import decorate_name
 from .grid_property import GridProperty
 
 xtg = xtgeo.XTGeoDialog()

@@ -23,11 +23,11 @@ from . import (
     _gridprop_roxapi,
     _gridprop_value_init,
 )
-from ._find_gridprop_in_eclrun import (
+from ._grid3d import _Grid3D
+from ._gridprop_import_eclrun import (
     import_gridprop_from_init,
     import_gridprop_from_restart,
 )
-from ._grid3d import _Grid3D
 from ._gridprop_import_grdecl import import_bgrdecl_prop, import_grdecl_prop
 from ._gridprop_import_roff import import_roff
 from ._gridprop_import_xtgcpprop import import_xtgcpprop
