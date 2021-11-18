@@ -6,7 +6,7 @@ from copy import deepcopy
 import xtgeo
 
 from . import _grid3d_utils as utils
-from ._gridprop_import_eclrun import (
+from ._find_gridprop_in_eclrun import (
     decorate_name,
     find_gridprop_from_init_file,
     find_gridprops_from_restart_file,
