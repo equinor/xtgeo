@@ -11,7 +11,7 @@ import pytest
 from hypothesis import HealthCheck, assume, given, settings
 
 import xtgeo
-import xtgeo.grid3d._gridprop_import_eclrun as xtg_im_ecl
+import xtgeo.grid3d._find_gridprop_in_eclrun as xtg_im_ecl
 from xtgeo.grid3d._ecl_inte_head import InteHead
 from xtgeo.grid3d._ecl_logi_head import LogiHead
 from xtgeo.grid3d._ecl_output_file import Phases
