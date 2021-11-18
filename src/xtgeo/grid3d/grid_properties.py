@@ -11,7 +11,7 @@ import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
 
 from . import _grid3d_utils as utils
-from . import _grid_etc1, _gridprops_etc, _gridprops_io
+from . import _grid_etc1, _gridprops_etc, _gridprops_import_eclrun
 from ._grid3d import _Grid3D
 from .grid_property import GridProperty
 
@@ -417,7 +417,7 @@ class GridProperties(_Grid3D):
             self.append_props(lst)
 
         elif fformat.lower() in ("init", "unrst"):
-            _gridprops_io.import_ecl_output(
+            _gridprops_import_eclrun.import_ecl_output(
                 self,
                 pfile,
                 dates=dates,
