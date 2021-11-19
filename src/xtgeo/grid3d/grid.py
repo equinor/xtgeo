@@ -11,6 +11,7 @@ from typing import Optional, Tuple, Union
 import deprecation
 import numpy as np
 import numpy.ma as ma
+
 import xtgeo
 from xtgeo.common import XTGDescription, _XTGeoFile
 

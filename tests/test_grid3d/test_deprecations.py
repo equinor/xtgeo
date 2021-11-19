@@ -26,6 +26,18 @@ def any_gridproperties(any_grid, any_gridprop):
     return gps
 
 
+def test_gridproperties_init_deprecations(any_gridprop):
+    with pytest.warns(DeprecationWarning):
+        GridProperties(ncol=10)
+    with pytest.warns(DeprecationWarning):
+        GridProperties(nrow=10)
+    with pytest.warns(DeprecationWarning):
+        GridProperties(nlay=10)
+
+    with pytest.raises(ValueError, match="Giving both ncol/nrow/nlay and props"):
+        GridProperties(nlay=10, props=[any_gridprop])
+
+
 def test_grid_from_file_warns(any_grid):
     if version.parse(xtgeo_version) < version.parse("2.16"):
         pytest.skip()

@@ -137,6 +137,7 @@ from xtgeo.grid3d import GridRelative
 from xtgeo.grid3d.grid import Grid
 from xtgeo.grid3d.grid_property import GridProperty
 from xtgeo.grid3d.grid_properties import GridProperties
+from xtgeo.grid3d.grid_properties import gridproperties_dataframe
 
 _xprint("Import various XTGeo modules... 3D grids...")
 
@@ -178,6 +179,8 @@ from xtgeo.grid3d.grid import create_box_grid
 
 from xtgeo.grid3d.grid_property import gridproperty_from_file
 from xtgeo.grid3d.grid_property import gridproperty_from_roxar
+
+from xtgeo.grid3d.grid_properties import gridproperties_from_file
 
 from xtgeo.cube.cube1 import cube_from_file
 from xtgeo.cube.cube1 import cube_from_roxar
