@@ -47,17 +47,22 @@ def sanitize_date_list(
     for date in dates:
         if isinstance(date, int):
             new_dates.append(date)
-        try:
-            if isinstance(date, str):
-                if len(date) == 10 and date[4] == "-" and date[7] == "-":
+        else:
+            try:
+                if (
+                    isinstance(date, str)
+                    and len(date) == 10
+                    and date[4] == "-"
+                    and date[7] == "-"
+                ):
                     date = date.replace("-", "")
-            new_dates.append(int(date))
-        except ValueError as err:
-            raise ValueError(
-                "valid dates are either 'first'/'all'/'last', "
-                "list ints of the form YYYYMMDD or list of strings of "
-                f"'YYYY-MM-DD'/'YYYYMMDD' got {dates}"
-            ) from err
+                new_dates.append(int(date))
+            except ValueError as err:
+                raise ValueError(
+                    "valid dates are either 'first'/'all'/'last', "
+                    "list ints of the form YYYYMMDD or list of strings of "
+                    f"'YYYY-MM-DD'/'YYYYMMDD' got {dates}"
+                ) from err
     return new_dates
 
 
