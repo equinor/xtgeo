@@ -79,14 +79,8 @@ def import_ecl_init_gridproperties(
         grid_properties: The grid_properties instance to update
         pfile: Path to the ecl restart file
         names: List of names to fetch, can also be "all" to fetch all properties.
-        dates: List of xtgeo style dates (e.g. int(19990101) or "YYYYMMDD"), also
-            accepts "YYYY-MM-DD".  "all", "last" and "first" can be given for
-            all, last or first date(s) in the file. Dates=None means look
-            for properties in the init file.
         grid: The grid used by the simulator to produce the restart file.
         strict: If strict=True, will raise error if key is not found.
-    Returns:
-        List of GridProperty parameter dictionaries.
     """
     if not isinstance(pfile, xtgeo._XTGeoFile):
         pfile = xtgeo._XTGeoFile(pfile)
