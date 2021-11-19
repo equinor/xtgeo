@@ -136,11 +136,9 @@ def import_ecl_init_gridproperties(
         grid=grid,
     )
     for result in results:
-        prop = GridProperty()
         grid_properties._names.append(result["name"])
         result["name"] = decorate_name(result["name"], grid.dualporo, fracture=False)
-        for attr, value in result.items():
-            setattr(prop, "_" + attr, value)
+        prop = GridProperty(**result)
 
         grid_properties._props.append(prop)
         grid_properties._dates.append(prop._date)
@@ -248,7 +246,6 @@ def import_ecl_restart_gridproperties(
 
     results = find_gridprops_from_restart_file(pfile.file, names, dates, grid=grid)
     for result in results:
-        prop = GridProperty()
 
         if namestyle == 1:
             sdate = str(result["date"])
@@ -257,9 +254,7 @@ def import_ecl_restart_gridproperties(
             result["name"] = decorate_name(
                 result["name"], grid.dualporo, fracture=False, date=result["date"]
             )
-
-        for attr, value in result.items():
-            setattr(prop, "_" + attr, value)
+        prop = GridProperty(**result)
 
         grid_properties._props.append(prop)
         grid_properties._names.append(prop.name)
