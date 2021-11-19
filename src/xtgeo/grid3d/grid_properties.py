@@ -484,16 +484,6 @@ class GridProperties(_Grid3D):
 
         self.append_props(properties)
 
-    # def to_file(self, pfile, fformat="roff"):
-    #     """Export grid properties to file. NB not working!
-
-    #     Args:
-    #         pfile (str): file name
-    #         fformat (str): file format to be used (roff is the only supported)
-    #         mode (int): 0 for binary ROFF, 1 for ASCII
-    #     """
-    #     raise NotImplementedError("Not implented yet!")
-
     def get_dataframe(
         self, activeonly=False, ijk=False, xyz=False, doubleformat=False, grid=None
     ):
