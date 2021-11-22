@@ -1,5 +1,4 @@
 import pandas as pd
-
 import xtgeo
 
 
@@ -15,6 +14,7 @@ def test_from_simple_surface():
     # old interface, to be deprecated from 2.16
     poi = xtgeo.Points()
     poi.from_surface(surf)
+    print(poi._df)
 
     poi.zname = "VALUES"
     pd.testing.assert_frame_equal(poi.dataframe, surf.dataframe())

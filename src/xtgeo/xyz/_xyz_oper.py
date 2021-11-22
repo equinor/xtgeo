@@ -4,13 +4,11 @@
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d, UnivariateSpline
-
 import shapely.geometry as sg
-
 import xtgeo
-from xtgeo.common import XTGeoDialog
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
+from scipy.interpolate import UnivariateSpline, interp1d
+from xtgeo.common import XTGeoDialog
 
 xtg = XTGeoDialog()
 
@@ -20,7 +18,7 @@ logger = xtg.functionlogger(__name__)
 # pylint: disable=protected-access
 
 
-def operation_polygons(self, poly, value, opname="add", inside=True, where=True):
+def operation_polygons(self, poly, value, opname="add", inside=True):
     """
     Operations re restricted to closed polygons, for points or polyline points.
 
@@ -29,12 +27,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
 
     'Inside' several polygons will become a union, while 'outside' polygons
     will be the intersection.
-
-    The "where" filter is reserved for future use.
     """
-
-    logger.warning("Where is not imeplented: %s", where)
-
     oper = {"set": 1, "add": 2, "sub": 3, "mul": 4, "div": 5, "eli": 11}
 
     insidevalue = 0
@@ -52,7 +45,7 @@ def operation_polygons(self, poly, value, opname="add", inside=True, where=True)
     zcor = self._df[self.zname].values
 
     usepoly = False
-    if isinstance(value, str) and value == "poly":
+    if isinstance(value, str) and value == "polygons":
         usepoly = True
 
     for id_, grp in idgroups:
@@ -100,9 +93,6 @@ def rescale_polygons(self, distance=10, addlen=False, kind="simple", mode2d=Fals
 
 def _rescale_v1(self, distance, addlen, mode2d):
     # version 1, simple approach, will rescale in 2D since Shapely use 2D lengths
-
-    if not self._ispolygons:
-        raise ValueError("Not a Polygons object")
 
     if not mode2d:
         raise KeyError("Cannot combine 'simple' with mode2d False")
@@ -417,15 +407,13 @@ def _generic_length(
 
     self._df[gname] = gdist
     self._df[dgname] = dgdist
-    self._attrs[gname] = "float"
-    self._attrs[dgname] = "float"
 
     if mode2d:
-        self.hname = gname
-        self.dhname = dgname
+        self._hname = gname
+        self._dhname = dgname
     else:
-        self.tname = gname
-        self.dtname = dgname
+        self._tname = gname
+        self._dtname = dgname
 
 
 def extend(self, distance, nsamples, addhlen=True):
@@ -451,9 +439,7 @@ def extend(self, distance, nsamples, addhlen=True):
         )
 
         if ier != 0:
-            raise RuntimeError(
-                "Error code from _cxtgeo.x_vector_linint2 is {}".format(ier)
-            )
+            raise RuntimeError(f"Error code from _cxtgeo.x_vector_linint2 is {ier}")
 
         rown[self.xname] = newx
         rown[self.yname] = newy
@@ -482,3 +468,28 @@ def extend(self, distance, nsamples, addhlen=True):
 
     if addhlen:
         self.hlen(atindex=nsamples)
+
+
+def delete_columns(self, clist, strict=False, _ispolygons=False):
+    """Concrete deletion of columns by name in a safe way for Points or Polygons."""
+    if self._df is None:
+        xtg.warnuser(
+            "Trying to delete a column before a dataframe has been set - ignored"
+        )
+        return
+
+    protected = [self.xname, self.yname, self.zname]
+    if _ispolygons:
+        protected.append(self.pname)
+
+    for cname in clist:
+        if cname in protected:
+            xtg.warnuser(f"The column {cname} is protected and will not be deleted.")
+            continue
+
+        if cname not in self._df:
+            if strict is True:
+                raise ValueError(f"The column {cname} is not present.")
+
+        if cname in self._df:
+            self._df.drop(cname, axis=1, inplace=True)

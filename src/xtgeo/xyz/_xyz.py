@@ -1,32 +1,56 @@
 # -*- coding: utf-8 -*-
-"""XTGeo xyz module (base class)"""
+"""XTGeo XYZ module (abstract base class)"""
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import Optional
 
-import deprecation
 import pandas as pd
-import xtgeo
 from xtgeo.common import XTGDescription, XTGeoDialog
-from xtgeo.xyz import _xyz_io, _xyz_roxapi
+from xtgeo.xyz import _xyz_oper
 
 xtg = XTGeoDialog()
 logger = xtg.functionlogger(__name__)
+
+# A surprising note on pandas and a really deep copy:
+# -------------------------------------
+# >>> s = pd.Series([[1, 2], [3, 4]])
+# >>> deep = s.copy(deep=True)
+# >>> deeper = deepcopy(s)
+# >>> ultradeep = s.apply(deepcopy)
+# >>> s[0][0] = 10
+# >>> s
+# 0    [10, 2]
+# 1     [3, 4]
+# dtype: object
+# >>> deep
+# 0    [10, 2]
+# 1     [3, 4]
+# dtype: object
+# >>> deeper
+# 0    [10, 2]
+# 1     [3, 4]
+# dtype: object
+# >>> ultradeep
+# 0    [1, 2]
+# 1    [3, 4]
+# dtype: object
+#
+# ==> only the ultradeep will do a True deep copy!
 
 
 class XYZ(ABC):
     """Abstract base class for XYZ objects, i.e. Points and Polygons in XTGeo.
 
-    The XYZ base class have common methods and properties for Points and Polygons. The
+    The XYZ base class has common methods and properties for Points and Polygons. The
     underlying data storage is a Pandas dataframe with minimal 3 (Points) or 4
     (Polygons) columns, where the two first represent X and Y coordinates.
 
     The third column is a number, which may represent the depth, thickness, or other
     property. For Polygons, there is a 4'th column which is an integer representing
-    poly-line ID, which is handled in the Polygons class. Similarly, Points can have
-    additional columns called `attributes`.
+    poly-line ID, which is handled in the Polygons class. Similarly, Points and Polygons
+    can have additional columns called `attributes`.
 
     Note:
-        Do cannot use the XYZ class directly. Use the :class:`Points` or
+        You cannot use the XYZ class directly. Use the :class:`Points` or
         :class:`Polygons` classes!
     """
 
@@ -35,11 +59,11 @@ class XYZ(ABC):
         xname: Optional[str] = "X_UTME",
         yname: Optional[str] = "Y_UTMN",
         zname: Optional[str] = "Z_TVDSS",
-        name: Optional[str] = "unknown",
+        name: Optional[str] = "_xyz",
         filesrc=None,
     ):
         """Concrete initialisation for base class _XYZ."""
-        # attributes in common with _XYZ:
+        # Common state variables (attributes):
         self._xname = xname
         self._yname = yname
         self._zname = zname
@@ -48,78 +72,22 @@ class XYZ(ABC):
 
         self._df = None
 
-        logger.info("Instantation of _XYZ")
+        logger.info("Instantation of XYZ abstract class")
 
-    @property
-    def xname(self) -> str:
-        """Returns or set the name of the X column."""
-        return self._xname
+    # common dunder magics -------------------------------------------------------------
 
-    @xname.setter
-    def xname(self, newname):
-        self._df_column_rename(newname, self._xname)
-        self._xname = newname
+    def __repr__(self):
+        """Object representation."""
+        myrp = f"{self.__class__.__name__} (filesrc={self._filesrc!r}, ID={id(self)})"
+        return myrp
 
-    @property
-    def yname(self) -> str:
-        """Returns or set the name of the Y column."""
-        return self._yname
+    def __str__(self):
+        """User friendly print."""
+        return self.describe(flush=False)
 
-    @yname.setter
-    def yname(self, newname):
-        self._df_column_rename(newname, self._yname)
-        self._yname = newname
+    # helpers --------------------------------------------------------------------------
 
-    @property
-    def zname(self) -> str:
-        """Returns or set the name of the Z column."""
-        return self._zname
-
-    @zname.setter
-    def zname(self, newname):
-        self._df_column_rename(newname, self._zname)
-        self._zname = newname
-
-    # @property
-    # def pname(self) -> str:
-    #     """Returns or set the name of the POLY_ID column."""
-    #     return self._pname
-
-    # @pname.setter
-    # def pname(self, value):
-    #     try:
-    #         self._check_name(value)
-    #     except ValueError as verr:
-    #         if "does not exist" in str(verr):
-    #             return
-    #     self._df_column_rename(value, self._pname)
-    #     self._pname = value
-
-    @property
-    def dataframe(self) -> pd.DataFrame:
-        """Returns or set the Pandas dataframe object."""
-        return self._df
-
-    @dataframe.setter
-    def dataframe(self, df):
-        self._df = df.copy()
-
-    @property
-    def filesrc(self) -> str:
-        """Returns the filesrc attribute, file name or description (read-only).
-
-        Unless it is a valid file name, a `Derived from:` prefix is applied, e.g.
-        `Derived from: list-like`
-        """
-
-    @property
-    def nrow(self) -> int:
-        """Returns the Pandas dataframe object number of rows."""
-        if self.dataframe is None:
-            return 0
-        return len(self.dataframe.index)
-
-    def _df_column_rename(self, newname, oldname):
+    def _df_column_rename(self, oldname, newname):
         if isinstance(newname, str):
             if oldname and self._df is not None:
                 self._df.rename(columns={oldname: newname}, inplace=True)
@@ -136,28 +104,88 @@ class XYZ(ABC):
                 f"one of: f{self._df.columns}"
             )
 
+    def _check_newname_is_unique(self, value):
+        if not isinstance(value, str):
+            raise ValueError(f"Wrong type of input; must be string, was {type(value)}")
+
+        if value in self._df.columns:
+            raise ValueError(
+                f"{value} already exist as a column name: f{self._df.columns}, must be "
+                f"unique!"
+            )
+
+    def _check_newname_oldname_is_different(self, oldname, newname):
+        if not isinstance(newname, str):
+            raise ValueError(
+                f"Wrong type of input; must be string, was {type(newname)}"
+            )
+        return False if newname == oldname else True
+
+    # properties common in Points and Polygons -----------------------------------------
+
+    @property
+    def name(self):
+        """Returns or sets the informal name of the instance."""
+        return self._name
+
+    @name.setter
+    def name(self, newname):
+        if isinstance(newname, str):
+            self._name = newname
+
+    @property
+    def xname(self) -> str:
+        """Returns or set the name of the X column (first column)."""
+        return self._xname
+
+    @xname.setter
+    def xname(self, newname):
+        if self.rename_column(self._xname, newname):
+            self._xname = newname
+
+    @property
+    def yname(self) -> str:
+        """Returns or set the name of the Y column (second column)."""
+        return self._yname
+
+    @yname.setter
+    def yname(self, newname):
+        if self.rename_column(self._yname, newname):
+            self._yname = newname
+
+    @property
+    def zname(self) -> str:
+        """Returns or set the name of the Z column (third column)."""
+        return self._zname
+
+    @zname.setter
+    def zname(self, newname):
+        if self.rename_column(self._zname, newname):
+            self._zname = newname
+
+    @property
     @abstractmethod
-    def copy(self):
-        """Returns a a deep copy of an instance"""
+    def dataframe(self) -> pd.DataFrame:
+        """Return or set the Pandas dataframe object."""
         ...
 
-    def describe(self, flush=True):
-        """Describe an instance by printing to stdout"""
+    @property
+    def filesrc(self) -> str:
+        """Returns the filesrc attribute, file name or description (read-only).
 
-        dsc = XTGDescription()
-        dsc.title(f"Description of {self.__class__.__name__} instance")
-        dsc.txt("Object ID", id(self))
-        dsc.txt("xname, yname, zname", self._xname, self._yname, self._zname)
+        Unless it is a valid file name, a `Derived from:` prefix is applied, e.g.
+        `Derived from: list-like`
+        """
+        return self._filesrc
 
-        if flush:
-            dsc.flush()
-            return None
+    @property
+    def nrow(self) -> int:
+        """Returns the Pandas dataframe object number of rows."""
+        if self.dataframe is None:
+            return 0
+        return len(self.dataframe.index)
 
-        return dsc.astext()
-
-    # ==================================================================================
-    # Import and export
-    # ==================================================================================
+    # io: abstract and concrete methods ------------------------------------------------
 
     @abstractmethod
     def from_file(self, pfile, fformat="xyz"):
@@ -213,282 +241,186 @@ class XYZ(ABC):
         .. versionadded:: 2.6
         .. versionchanged:: 2.16
         .. deprecated:: 2.16
-           Use xtgeo.Points() or xtgeo.Polygons() directly.
+           Use xtgeo.Points(list_like) or xtgeo.Polygons(list_like) directly.
         """
         ...
 
-        # first = plist[0]
-        # if len(first) == 3:
-        #     self._df = pd.DataFrame(
-        #         plist, columns=[self._xname, self._yname, self._zname]
-        #     )
-
-        #     # add ID 0 for Polygons if input is missing
-        #     if self._ispolygons:
-        #         self._df[self.pname] = 0
-
-        # elif len(first) == 4:
-        #     self._df = pd.DataFrame(
-        #         plist, columns=[self._xname, self._yname, self._zname, self._pname]
-        #     )
-        # else:
-        #     raise ValueError(
-        #         "Wrong length detected of first tuple: {}".format(len(first))
-        #     )
-        # self._df.dropna(inplace=True)
-        # self._filesrc = "Derived from: list-like input"
-
-    def to_file(
-        self,
-        pfile,
-        fformat="xyz",
-        attributes=False,
-        pfilter=None,
-        wcolumn=None,
-        hcolumn=None,
-        mdcolumn="M_MDEPTH",
-        **kwargs,
-    ):  # pylint: disable=redefined-builtin
-        """Export XYZ (Points/Polygons) to file.
+    # general: abstract and concrete methods -------------------------------------------
+    def rename_column(self, oldname: str, newname: str) -> bool:
+        """Rename a column, return True if rename was done, else False.
 
         Args:
-            pfile (str): Name of file
-            fformat (str): File format xyz/poi/pol / rms_attr /rms_wellpicks
-            attributes (bool or list): List of extra columns to export (some formats)
-                or True for all attributes present
-            pfilter (dict): Filter on e.g. top name(s) with keys TopName
-                or ZoneName as {'TopName': ['Top1', 'Top2']}.
-            wcolumn (str): Name of well column (rms_wellpicks format only)
-            hcolumn (str): Name of horizons column (rms_wellpicks format only)
-            mdcolumn (str): Name of MD column (rms_wellpicks format only)
+            oldname: Old column name
+            newname: The new column name
 
-        Returns:
-            Number of points exported
+        .. versionadded:: 2.16
+        """
+        if self._check_newname_oldname_is_different(oldname, newname):
+            self._check_newname_is_unique(newname)
+            self._df_column_rename(oldname, newname)
+            return True
+        return False
 
-        Note that the rms_wellpicks will try to output to:
+    @abstractmethod
+    def copy(self):
+        """Returns a deep copy of an instance"""
+        ...
 
-        * HorizonName, WellName, MD  if a MD (mdcolumn) is present,
-        * HorizonName, WellName, X, Y, Z  otherwise
+    def describe(self, flush=True):
+        """Describe an instance by printing to stdout"""
+
+        dsc = XTGDescription()
+        dsc.title(f"Description of {self.__class__.__name__} instance")
+        dsc.txt("Object ID", id(self))
+        dsc.txt("xname, yname, zname", self._xname, self._yname, self._zname)
+
+        if flush:
+            dsc.flush()
+            return None
+
+        return dsc.astext()
+
+    @abstractmethod
+    def delete_columns(self, clist, strict=False):
+        """Delete one or more columns by name in a safe way for Points or Polygons.
+
+        Note that the coordinate columns will be protected, as well as then
+        POLY_ID column (pname atribute) if Polygons.
+
+        Args:
+            self (obj): Points or Polygons
+            clist (list): Name of columns
+            strict (bool): I False, will not trigger exception if a column is not
+                found. Otherways a ValueError will be raised.
+
+        Raises:
+            ValueError: If strict is True and columnname not present
+
+        Example::
+            mypoly.delete_columns(["WELL_ID", mypoly.hname, mypoly.dhname])
+
+        .. versionadded:: 2.1
+        """
+        ...
+
+    def operation_polygons(self, poly, value, opname="add", inside=True):
+        """A generic function for operations restricted to inside or outside polygon(s).
+
+        The operations are performed on the Z values, while the 'inside' or 'outside'
+        of polygons are purely based on X and Y values (typically X is East and Y in
+        North coordinates).
+
+        The operations are XYZ generic i.e. done on the points that defines the
+        Polygon or the point in Points, depending on the calling instance.
+
+        Possible ``opname`` strings:
+
+        * ``add``: add the value
+        * ``sub``: substract the value
+        * ``mul``: multiply the value
+        * ``div``: divide the value
+        * ``set``: replace current values with value
+        * ``eli``: eliminate; here value is not applied
+
+        Args:
+            poly (Polygons): A XTGeo Polygons instance
+            value(float): Value to add, subtract etc
+            opname (str): Name of operation... 'add', 'sub', etc
+            inside (bool): If True do operation inside polygons; else outside. Note
+                that boundary is treated as 'inside'
 
         Note:
-            For backward compatibility, the key ``filter`` can be applied instead of
-            ``pfilter``.
-
-        Raises:
-            KeyError if pfilter is set and key(s) are invalid
-
+            This function works only intuitively when using one single polygon
+            in the ``poly`` instance. When having several polygons the
+            operation is done sequentially per polygon which may
+            lead to surprising results. For instance, using "add inside"
+            into two overlapping polygons, the addition will be doubled in the
+            overlapping part. Similarly using e.g. "eli, outside" will completely
+            remove all points of two non-overlapping polygons are given as input.
         """
-        filter_deprecated = kwargs.get("filter", None)
-        if filter_deprecated is not None and pfilter is None:
-            pfilter = filter_deprecated
+        _xyz_oper.operation_polygons(self, poly, value, opname=opname, inside=inside)
 
-        pfile = xtgeo._XTGeoFile(pfile)
-        pfile.check_folder(raiseerror=OSError)
+    # shortforms
+    def add_inside(self, poly, value):
+        """Add a value (scalar) to points inside polygons.
 
-        if self.dataframe is None:
-            ncount = 0
-            logger.warning("Nothing to export!")
-            return ncount
-
-        if fformat is None or fformat in ["xyz", "poi", "pol"]:
-            # NB! reuse export_rms_attr function, but no attributes
-            # are possible
-            ncount = _xyz_io.export_rms_attr(
-                self, pfile.name, attributes=False, pfilter=pfilter
-            )
-
-        elif fformat == "rms_attr":
-            ncount = _xyz_io.export_rms_attr(
-                self, pfile.name, attributes=attributes, pfilter=pfilter
-            )
-        elif fformat == "rms_wellpicks":
-            ncount = _xyz_io.export_rms_wpicks(
-                self, pfile.name, hcolumn, wcolumn, mdcolumn=mdcolumn
-            )
-
-        if ncount is None:
-            ncount = 0
-
-        if ncount == 0:
-            logger.warning("Nothing to export!")
-
-        return ncount
-
-    # @classmethod
-    # @abstractmethod
-    # def _read_roxar(cls, ...):
-    #     cls,
-    #     project,
-    #     name,
-    #     category,
-    #     stype="horizons",
-    #     realisation=0,
-    #     attributes=False,
-    #     # is_polygons=False,
-    # ):
-    #     """Load a points/polygons item from a Roxar RMS project.
-
-    #     The import from the RMS project can be done either within the project
-    #     or outside the project.
-
-    #     Use::
-
-    #       import xtgeo
-    #       mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
-
-    #     Note also that horizon/zone/faults name and category must exists
-    #     in advance, otherwise an Exception will be raised.
-
-    #     Args:
-    #         project (str or special): Name of project (as folder) if
-    #             outside RMS, og just use the magic project word if within RMS.
-    #         name (str): Name of polygons item
-    #         category (str): For horizons/zones/faults: for example 'DL_depth'
-    #             or use a folder notation on clipboard.
-
-    #         stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
-    #         realisation (int): Realisation number, default is 0
-    #         attributes (bool): If True, attributes will be preserved (from RMS 11)
-    #         is_polygons (bool): True if Polygons
-
-    #     Returns:
-    #         Object instance updated
-
-    #     Raises:
-    #         ValueError: Various types of invalid inputs.
-
-    #     """
-    #     stype = stype.lower()
-    #     valid_stypes = ["horizons", "zones", "faults", "clipboard"]
-
-    #     if stype not in valid_stypes:
-    #         raise ValueError(
-    #             "Invalid stype, only {} stypes is supported.".format(valid_stypes)
-    #         )
-
-    #     kwargs = _xyz_roxapi.import_xyz_roxapi(
-    #         project, name, category, stype, realisation, attributes, is_polygons
-    #     )
-
-    #     kwargs["filesrc"] = f"RMS: {name} ({category})"
-    #     return cls(**kwargs)
-
-    @deprecation.deprecated(
-        deprecated_in="2.16",
-        removed_in="4.0",
-        current_version=xtgeo.version,
-        details="Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar() instead",
-    )
-    def from_roxar(
-        self,
-        project: Union[str, Any],
-        name: str,
-        category: str,
-        stype: Optional[str] = "horizons",
-        realisation: Optional[int] = 0,
-        attributes: Optional[bool] = False,
-    ):
-        """Load a points/polygons item from a Roxar RMS project (deprecated).
-
-        The import from the RMS project can be done either within the project
-        or outside the project.
-
-        Note that the preferred shortform for (use polygons as example)::
-
-          import xtgeo
-          mypoly = xtgeo.xyz.Polygons()
-          mypoly.from_roxar(project, 'TopAare', 'DepthPolys')
-
-        is now::
-
-          import xtgeo
-          mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
-
-        Note also that horizon/zone/faults name and category must exists
-        in advance, otherwise an Exception will be raised.
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
-            category (str): For horizons/zones/faults: for example 'DL_depth'
-                or use a folder notation on clipboard.
-
-            stype (str): RMS folder type, 'horizons' (default) or 'zones' etc!
-            realisation (int): Realisation number, default is 0
-            attributes (bool): If True, attributes will be preserved (from RMS 11)
-
-        Returns:
-            Object instance updated
-
-        Raises:
-            ValueError: Various types of invalid inputs.
-
-        .. deprecated:: 2.16
-           Use xtgeo.points_from_roxar() or xtgeo.polygons_from_roxar()
+        See notes under :meth:`operation_polygons`.
         """
+        self.operation_polygons(poly, value, opname="add", inside=True)
 
-    def to_roxar(
-        self,
-        project,
-        name,
-        category,
-        stype="horizons",
-        pfilter=None,
-        realisation=0,
-        attributes=False,
-        is_polygons=False,
-    ):
-        """Export (store) a points/polygons item to a Roxar RMS project.
+    def add_outside(self, poly, value):
+        """Add a value (scalar) to points outside polygons.
 
-        The export to the RMS project can be done either within the project
-        or outside the project.
-
-        Note also that horizon/zone name and category must exists in advance,
-        otherwise an Exception will be raised.
-
-        Note:
-            When project is file path (direct access, outside RMS) then
-            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
-            will not be saved until the user do an explicit project save action.
-
-        Args:
-            project (str or special): Name of project (as folder) if
-                outside RMS, og just use the magic project word if within RMS.
-            name (str): Name of polygons item
-            category (str): For horizons/zones/faults: for example 'DL_depth'
-            pfilter (dict): Filter on e.g. top name(s) with keys TopName
-                or ZoneName as {'TopName': ['Top1', 'Top2']}
-            stype (str): RMS folder type, 'horizons' (default), 'zones'
-                or 'faults' or 'clipboard'  (in prep: well picks)
-            realisation (int): Realisation number, default is 0
-            attributes (bool): If True, attributes will be preserved (from RMS 11)
-
-
-        Returns:
-            Object instance updated
-
-        Raises:
-            ValueError: Various types of invalid inputs.
-            NotImplementedError: Not supported in this ROXAPI version
-
+        See notes under :meth:`operation_polygons`.
         """
+        self.operation_polygons(poly, value, opname="add", inside=False)
 
-        valid_stypes = ["horizons", "zones", "faults", "clipboard", "horizon_picks"]
+    def sub_inside(self, poly, value):
+        """Subtract a value (scalar) to points inside polygons.
 
-        if stype.lower() not in valid_stypes:
-            raise ValueError(
-                "Invalid stype, only {} stypes is supported.".format(valid_stypes)
-            )
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="sub", inside=True)
 
-        _xyz_roxapi.export_xyz_roxapi(
-            self,
-            project,
-            name,
-            category,
-            stype.lower(),
-            pfilter,
-            realisation,
-            attributes,
-            is_polygons,
-        )
+    def sub_outside(self, poly, value):
+        """Subtract a value (scalar) to points outside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="sub", inside=False)
+
+    def mul_inside(self, poly, value):
+        """Multiply a value (scalar) to points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="mul", inside=True)
+
+    def mul_outside(self, poly, value):
+        """Multiply a value (scalar) to points outside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="mul", inside=False)
+
+    def div_inside(self, poly, value):
+        """Divide a value (scalar) to points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="div", inside=True)
+
+    def div_outside(self, poly, value):
+        """Divide a value (scalar) outside polygons (value 0.0 will give result 0).
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="div", inside=False)
+
+    def set_inside(self, poly, value):
+        """Set a value (scalar) to points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="set", inside=True)
+
+    def set_outside(self, poly, value):
+        """Set a value (scalar) to points outside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, value, opname="set", inside=False)
+
+    def eli_inside(self, poly):
+        """Eliminate current points inside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, 0, opname="eli", inside=True)
+
+    def eli_outside(self, poly):
+        """Eliminate current points outside polygons.
+
+        See notes under :meth:`operation_polygons`.
+        """
+        self.operation_polygons(poly, 0, opname="eli", inside=False)

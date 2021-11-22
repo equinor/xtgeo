@@ -1,10 +1,8 @@
 import pathlib
 
 import pytest
-
 import xtgeo
-from xtgeo.xyz import Points
-from xtgeo.xyz import Polygons
+from xtgeo.xyz import Points, Polygons
 
 POLSET2 = pathlib.Path("polygons/reek/1/polset2.pol")
 POINTSET2 = pathlib.Path("points/reek/1/pointset2.poi")
@@ -58,13 +56,13 @@ def test_points_in_polygon(testpath):
     assert poi.nrow == 30
 
     # remove points in polygon
-    poi.operation_polygons(pol, 0, opname="eli", where=True)
+    poi.operation_polygons(pol, 0, opname="eli")
 
     assert poi.nrow == 19
 
     poi = Points(testpath / POINTSET2)
     # remove points outside polygon
-    poi.operation_polygons(pol, 0, opname="eli", inside=False, where=True)
+    poi.operation_polygons(pol, 0, opname="eli", inside=False)
     assert poi.nrow == 1
 
 
@@ -231,7 +229,12 @@ def test_oper_points_inside_overlapping_polygon(oper, expected):
     # The Four points are placed: within first poly, within the overlap, within the
     # second poly, outside both poly
     poi = Points(
-        [(3.5, 3.5, 10.0), (4.5, 4.5, 10.0), (5.5, 5.5, 10.0), (6.5, 6.5, 10.0)]
+        [
+            (3.5, 3.5, 10.0),
+            (4.5, 4.5, 10.0),
+            (5.5, 5.5, 10.0),
+            (6.5, 6.5, 10.0),
+        ]
     )
     # Operations are performed n times, where n reflects the number of polygons a
     # point is outside

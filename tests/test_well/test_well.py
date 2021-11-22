@@ -7,7 +7,6 @@ from os.path import join
 import numpy as np
 import pandas as pd
 import pytest
-
 import xtgeo
 from xtgeo.common import XTGeoDialog
 from xtgeo.well import Well
@@ -734,6 +733,38 @@ def test_get_filled_dataframe():
 
     assert np.isnan(df1.iat[4860, 6])
     assert df2.iat[4860, 6] == -888
+
+
+def test_create_surf_distance_log_simple():
+    """Test making a log which is distance to a surface, simple numbers."""
+
+    well = xtgeo.Well()
+
+    # overrride with just 3 points
+    well.dataframe = pd.DataFrame(
+        {
+            "X_UTME": [100.0, 100.0, 100.0],
+            "Y_UTMN": [100.0, 100.0, 100.0],
+            "Z_TVDSS": [0.0, 1000.0, 2000.0],
+        }
+    )
+
+    surf1 = xtgeo.RegularSurface(
+        ncol=10,
+        nrow=10,
+        xori=0.0,
+        yori=0.0,
+        xinc=20,
+        yinc=20,
+        values=1900,
+    )
+    surf2 = surf1.copy()
+    surf2 += 200
+
+    well.create_surf_distance_log(surf1, name="DIST_TOP")
+    well.create_surf_distance_log(surf2, name="DIST_BASE")
+    assert well.dataframe.loc[1, "DIST_TOP"] == pytest.approx(900.0)
+    assert well.dataframe.loc[1, "DIST_BASE"] == pytest.approx(1100)
 
 
 def test_create_surf_distance_log(loadwell1):

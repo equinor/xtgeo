@@ -5,7 +5,6 @@ from distutils.version import StrictVersion
 
 import numpy as np
 import pandas as pd
-
 import xtgeo
 import xtgeo.cxtgeo._cxtgeo as _cxtgeo
 from xtgeo.common import XTGeoDialog
@@ -573,6 +572,7 @@ def create_surf_distance_log(self, surf, name):
     zvalues = self.dataframe["Z_TVDSS"]
     points = xtgeo.Points()
     points.dataframe = self.dataframe.iloc[:, 0:3]
+
     points.snap_surface(surf)
     snapped = points.dataframe["Z_TVDSS"]
     diff = snapped - zvalues

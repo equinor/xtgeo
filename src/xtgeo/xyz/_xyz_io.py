@@ -3,6 +3,7 @@
 
 import warnings
 from collections import OrderedDict
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -111,7 +112,6 @@ def import_xyz(pfile, zname="Z_TVDSS", is_polygons=False):
         if ncolumns == 3:
             dfr.insert(2, _pn, 0.0)
 
-    kwargs["attributes"] = None
     kwargs["values"] = _ValidDataFrame(dfr)
     kwargs["filesrc"] = pfile.name
 
@@ -207,7 +207,6 @@ def import_zmap(pfile, zname="Z_TVDSS", is_polygons=True):
     if not is_polygons:
         dfr.drop(_pn, axis=1, inplace=True)  # allow Points, remove ID column
 
-    args["is_polygons"] = is_polygons
     args["attributes"] = None
     args["values"] = _ValidDataFrame(dfr)
     args["filesrc"] = pfile.name
@@ -304,6 +303,53 @@ def import_rms_attr(pfile, zname="Z_TVDSS"):
     return kwargs
 
 
+def to_generic_file(
+    self,
+    pfile,
+    fformat="xyz",
+    attributes=False,
+    pfilter=None,
+    wcolumn=None,
+    hcolumn=None,
+    mdcolumn="M_MDEPTH",
+    **kwargs,
+):  # pylint: disable=redefined-builtin
+    """Generic export to file."""
+    filter_deprecated = kwargs.get("filter", None)
+    if filter_deprecated is not None and pfilter is None:
+        pfilter = filter_deprecated
+
+    pfile = xtgeo._XTGeoFile(pfile)
+    pfile.check_folder(raiseerror=OSError)
+
+    if self.dataframe is None:
+        ncount = 0
+        logger.warning("Nothing to export!")
+        return ncount
+
+    if fformat is None or fformat in ["xyz", "poi", "pol"]:
+        # NB! reuse export_rms_attr function, but no attributes
+        # are possible
+        ncount = export_rms_attr(self, pfile.name, attributes=False, pfilter=pfilter)
+
+    elif fformat == "rms_attr":
+        ncount = export_rms_attr(
+            self, pfile.name, attributes=attributes, pfilter=pfilter
+        )
+    elif fformat == "rms_wellpicks":
+        ncount = export_rms_wpicks(
+            self, pfile.name, hcolumn, wcolumn, mdcolumn=mdcolumn
+        )
+
+    if ncount is None:
+        ncount = 0
+
+    if ncount == 0:
+        logger.warning("Nothing to export!")
+
+    return ncount
+
+
 def export_rms_attr(self, pfile, attributes=True, pfilter=None):
     """Export til RMS attribute, also called RMS extended set.
 
@@ -346,12 +392,8 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
                     "{}".format(key, df.columns)
                 )
 
-    # if not attributes and self._pname in df.columns and self._ispolygons:
-    #     # need to convert the dataframe
-    #     df = _convert_idbased_xyz(self, df)
-
     if attributes is True:
-        attributes = list(self._attrs.keys())
+        attributes = list(self.attributes.keys())
         logger.info("Use all attributes: %s", attributes)
 
         for column in (self._xname, self._yname, self._zname):
@@ -366,13 +408,13 @@ def export_rms_attr(self, pfile, attributes=True, pfilter=None):
         with open(pfile, "w", encoding="utf8") as fout:
             for col in attributes:
                 if col in df.columns:
-                    fout.write(transl[self._attrs[col]] + " " + col + "\n")
-                    if self._attrs[col] == "int":
+                    fout.write(transl[self.attributes[col]] + " " + col + "\n")
+                    if self.attributes[col] == "int":
                         df[col].replace(xtgeo.UNDEF_INT, "UNDEF", inplace=True)
-                    elif self._attrs[col] == "float":
+                    elif self.attributes[col] == "float":
                         df[col].replace(xtgeo.UNDEF, "UNDEF", inplace=True)
 
-    with open(pfile, mode) as fc:
+    with open(pfile, mode, encoding="utf8") as fc:
         df.to_csv(
             fc, sep=" ", header=None, columns=columns, index=False, float_format="%.3f"
         )
@@ -452,6 +494,29 @@ def export_rms_wpicks(self, pfile, hcolumn, wcolumn, mdcolumn="M_MDEPTH"):
     return len(df.index)
 
 
+def initialize_by_values(values, zname, attrs, is_polygons):
+    """Worker for values initialization for Points/Polygons."""
+    # process values if present
+    dfr = None
+    filesrc = None
+
+    if values is not None:
+
+        if isinstance(values, _ValidDataFrame):
+            dfr = values
+        elif isinstance(values, (list, np.ndarray, pd.DataFrame)):
+            # make instance from a list(-like) of 3 or 4 tuples or similar
+            logger.info("Instance from list, np array or dataframe")
+
+            dfr, filesrc = _from_list_like(values, zname, attrs, is_polygons)
+        else:
+            raise ValueError(
+                f"The values are of type {type(values)} which is not supported."
+            )
+
+    return dfr, filesrc
+
+
 def _from_list_like(plist, zname, attrs, is_polygons):
     """Import Points or Polygons from a list-like input.
 
@@ -465,7 +530,7 @@ def _from_list_like(plist, zname, attrs, is_polygons):
 
     Points scenaria:
     * 3 columns, X Y Z
-    * 4 or more columns: rest columns are attributes and must match len(self._attrs)
+    * 4 or more columns: rest columns are attributes
 
     Polygons scenaria:
     * 3 columns, X Y Z. Here P column is assigned 0 afterwards
@@ -506,7 +571,7 @@ def _from_list_like(plist, zname, attrs, is_polygons):
 
     if isinstance(plist, pd.DataFrame):
         # convert input dataframe to a 2D numpy and process the numpy below
-        plist = plist.to_numpy(copy=True)
+        plist = plist.apply(deepcopy).to_numpy(copy=True)
         filesrc = "Derived from: dataframe input"
 
     if isinstance(plist, np.ndarray):

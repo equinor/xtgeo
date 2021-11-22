@@ -22,7 +22,6 @@ def test_custom_polygons():
     plist = [(234, 556, 11), (235, 559, 14), (255, 577, 12)]
 
     mypol = Polygons(plist)
-    assert mypol._ispolygons is True
 
     assert mypol.dataframe["X_UTME"].values[0] == 234
     assert mypol.dataframe["Z_TVDSS"].values[2] == 12
@@ -42,7 +41,10 @@ def test_custom_polygons():
 
 
 def test_custom_polygons_with_attrs():
-    """Make polygons with attrs from list of tuples ndarray or dataframe."""
+    """Make polygons from list of tuples ndarray or dataframe.
+
+    Extra columns (attributes when points) shall be ignored for Polygons
+    """
 
     plist = [
         (234, 556, 11, 0, "some", 1.0),
@@ -142,6 +144,7 @@ def test_polygon_filter_byid(testpath):
     """Filter a Polygon by a list of ID's"""
 
     pol = Polygons(testpath / POLSET3)
+    print(pol.dataframe)
 
     assert pol.dataframe["POLY_ID"].iloc[0] == 0
     assert pol.dataframe["POLY_ID"].iloc[-1] == 3
@@ -342,15 +345,24 @@ def test_rename_columns(testpath):
     assert "NEWY" in pol.dataframe
 
 
-def test_empty_polygon_has_default_name():
+def test_empty_polygon_has_default_name_none():
     pol = Polygons()
-    assert pol.dtname == "T_DELTALEN"
+    assert pol.dtname is None
 
 
 def test_check_column_names():
-    pol = Polygons()
-    data = pd.DataFrame({"T_DELTALEN": [1, 2]})
-    pol.dataframe = data
+    data = pd.DataFrame(
+        {
+            "X_UTME": [1.0, 2.0],
+            "Y_UTMN": [2.0, 1.0],
+            "Z_TVDSS": [3.0, 3.0],
+            "POLY_ID": [3, 3],
+            "T_DELTALEN": [2.0, 1.0],
+        }
+    )
+    pol = Polygons(data, attributes={"T_DELTALEN": "float"})
+
+    pol._dtname = "T_DELTALEN"
     assert pol.dtname == "T_DELTALEN"
     assert pol.dhname is None
 
@@ -363,25 +375,86 @@ def test_delete_from_empty_polygon_does_not_fail(recwarn):
 
 
 @pytest.mark.parametrize("test_name", [(1), ({}), ([]), (2.3)])
-@pytest.mark.parametrize(
-    "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname"), ("pname")]
-)
-def test_raise_incorrect_name_type(test_name, name_attribute):
+def test_raise_incorrect_name_type(test_name):
     pol = Polygons()
-    data = pd.DataFrame({"ANYTHING": [1, 2]})
+    data = pd.DataFrame(
+        {
+            "X_UTME": [1.0, 2.0],
+            "Y_UTMN": [2.0, 1.0],
+            "Z_TVDSS": [3.0, 3.0],
+            "POLY_ID": [3, 3],
+            "T_DELTALEN": [2.0, 1.0],
+        }
+    )
     pol.dataframe = data
+    pol._pname = "POLY_ID"
+    pol._tname = "T_DELTALEN"
 
     with pytest.raises(ValueError, match="Wrong type of input"):
-        setattr(pol, name_attribute, test_name)
+        setattr(pol, "tname", test_name)
 
 
 @pytest.mark.parametrize(
     "name_attribute", [("hname"), ("dhname"), ("tname"), ("dtname")]
 )
-def test_raise_non_existing_name(name_attribute):
+def test_raise_special_name_name_type(name_attribute):
     pol = Polygons()
-    data = pd.DataFrame({"ANYTHING": [1, 2]})
+    data = pd.DataFrame(
+        {
+            "X_UTME": [1.0, 2.0],
+            "Y_UTMN": [2.0, 1.0],
+            "Z_TVDSS": [3.0, 3.0],
+            "POLY_ID": [3, 3],
+            "T_DELTALEN": [2.0, 1.0],
+        }
+    )
+    pol._pname = "POLY_ID"
     pol.dataframe = data
 
-    with pytest.raises(ValueError, match="does not exist"):
-        setattr(pol, name_attribute, "NON_EXISTING")
+    with pytest.raises(ValueError, match="which is currently None"):
+        setattr(pol, name_attribute, "anyname")
+
+
+@pytest.mark.parametrize(
+    "func, where, value, expected_result",
+    [
+        ("add", "inside", 44.0, [47.0, 47.0, 3.0]),
+        ("add", "outside", 44.0, [3.0, 3.0, 47.0]),
+        ("mul", "inside", 2.0, [6.0, 6.0, 3.0]),
+        ("div", "inside", 2.0, [1.5, 1.5, 3.0]),
+        ("sub", "outside", 3.0, [3.0, 3.0, 0.0]),
+        ("set", "outside", 88.0, [3.0, 3.0, 88.0]),
+        ("eli", "outside", 0, [3.0, 3.0]),
+    ],
+)
+def test_polygons_operation_in_polygons(func, where, value, expected_result):
+    """Test what happens to point belonging to polygons for add_inside etc."""
+
+    closed_poly = Polygons(
+        pd.DataFrame(
+            {
+                "X_UTME": [0.0, 100.0, 100.0, 0.0, 0.0],
+                "Y_UTMN": [0.0, 0.0, 200.0, 200.0, 0.0],
+                "Z_TVDSS": [3.0, 3.0, 3.0, 3.0, 3.0],
+                "POLY_ID": [0, 0, 0, 0, 0],
+            }
+        )
+    )
+
+    # this set will first point on border, middle point inside and last point outside
+    # the closed_poly defined above
+    polyset = Polygons(
+        pd.DataFrame(
+            {
+                "X_UTME": [0.0, 50.0, 200.0],
+                "Y_UTMN": [0.0, 100.0, 300.0],
+                "Z_TVDSS": [3.0, 3.0, 3.0],
+                "POLY_ID": [0, 0, 0],
+            }
+        )
+    )
+
+    inside = True if "inside" in where else False
+
+    polyset.operation_polygons(closed_poly, value, opname=func, inside=inside)
+    assert list(polyset.dataframe["Z_TVDSS"]) == expected_result

@@ -157,12 +157,16 @@ def test_export_load_rmsformatted_points(testpath, tmp_path):
     """Export XYZ points to file, various formats."""
 
     test_points_path = testpath / POINTSET4
-    orig_points = Points(test_points_path)  # should guess based on extesion
+    orig_points = Points(test_points_path)  # should guess based on extension
 
     export_path = tmp_path / "attrs.rmsattr"
     orig_points.to_file(export_path, fformat="rms_attr")
+    print(orig_points.attributes)
 
     reloaded_points = Points(export_path)
+    print(reloaded_points.dataframe)
+    print(reloaded_points.dataframe["Seg"].dtype)
+    print(reloaded_points.attributes)
 
     pd.testing.assert_frame_equal(orig_points.dataframe, reloaded_points.dataframe)
 

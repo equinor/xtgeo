@@ -7,13 +7,14 @@ import functools
 import io
 import pathlib
 import warnings
+from copy import deepcopy
 from typing import Any, Optional, Union
 
+import deprecation
 import numpy as np
 import pandas as pd
 import shapely.geometry as sg
 import xtgeo
-import xtgeo.common.sys as xtgeosys
 from xtgeo.common import inherit_docstring
 from xtgeo.xyz import _xyz_io, _xyz_roxapi
 
@@ -25,6 +26,15 @@ xtg = xtgeo.common.XTGeoDialog()
 logger = xtg.functionlogger(__name__)
 
 
+class ValidationError(ValueError):
+    ...
+
+
+# ======================================================================================
+# Private functions outside class
+# ======================================================================================
+
+
 def _data_reader_factory(file_format):
     if file_format == "xyz":
         return _xyz_io.import_xyz
@@ -33,14 +43,11 @@ def _data_reader_factory(file_format):
     raise ValueError(f"Unknown file format {file_format}")
 
 
-def _read_file_worker(
+def _file_importer(
     pfile: Union[str, pathlib.Path, io.BytesIO],
     fformat: Optional[str] = None,
 ):
-    """General function for classmethod _read_file and (deprecated) method from_file.
-
-    See _read_file in class for args.
-    """
+    """General function for polygons_from_file and (deprecated) method from_file."""
     pfile = xtgeo._XTGeoFile(pfile)
     if fformat is None or fformat == "guess":
         fformat = pfile.detect_fformat()
@@ -48,8 +55,31 @@ def _read_file_worker(
         fformat = pfile.generic_format_by_proposal(fformat)  # default
     kwargs = _data_reader_factory(fformat)(pfile, is_polygons=True)
 
+    kwargs["name"] = "polygons"
     kwargs["filesrc"] = pfile.name
 
+    return kwargs
+
+
+def _roxar_importer(
+    project: Union[str, Any],
+    name: str,
+    category: str,
+    stype: Optional[str] = "horizons",
+    realisation: Optional[int] = 0,
+):
+    stype = stype.lower()
+    valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+
+    if stype not in valid_stypes:
+        raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
+
+    kwargs = _xyz_roxapi.import_xyz_roxapi(
+        project, name, category, stype, realisation, None, True
+    )
+
+    kwargs["name"] = "polygons"
+    kwargs["filesrc"] = f"Derived from: RMS {name} ({category})"
     return kwargs
 
 
@@ -71,29 +101,13 @@ def _allow_deprecated_init(func):
                     "pol = xtgeo.polygons_from_file('some_file.xx') instead!",
                     DeprecationWarning,
                 )
-                pfile = args[0]
                 fformat = kwargs.get("fformat", "guess")
-                pfile = xtgeosys._XTGeoFile(pfile)
-                if fformat is None or fformat == "guess":
-                    fformat = pfile.detect_fformat()
-                else:
-                    fformat = pfile.generic_format_by_proposal(fformat)  # default
-                kwargs = _data_reader_factory(fformat)(pfile, is_polygons=True)
-
-            elif isinstance(args[0], xtgeo.RegularSurface):
-                warnings.warn(
-                    "Initializing directly from RegularSurface is deprecated "
-                    "and will be removed in xtgeo version 4.0. Use: "
-                    "poi = xtgeo.points_from_surface(regsurf) instead",
-                    DeprecationWarning,
-                )
-                zname = kwargs.get("zname", "Z_TVDSS")
-                kwargs = XYZ._read_surface(args[0], zname=zname, return_cls=False)
+                kwargs = _file_importer(args[0], fformat)
 
             elif isinstance(args[0], (list, np.ndarray, pd.DataFrame)):
                 # initialisation from an list-like object without 'values' keyword
-                # should be possible, i.e. Points(some_list) is same as
-                # Points(values=some_list)
+                # should be possible, i.e. Polygons(some_list) is same as
+                # Polygons(values=some_list)
                 kwargs["values"] = args[0]
 
             else:
@@ -114,6 +128,14 @@ def polygons_from_file(
 ) -> "Polygons":
     """Make an instance of a Polygons object directly from file import.
 
+    Supported formats are:
+
+        * 'xyz' or 'poi' or 'pol': Simple XYZ format
+
+        * 'zmap': ZMAP line format as exported from RMS (e.g. fault lines)
+
+        * 'guess': Try to choose file format based on extension
+
     Args:
         pfile (str): Name of file
         fformat (str): See :meth:`Polygons.from_file`
@@ -123,7 +145,7 @@ def polygons_from_file(
         import xtgeo
         mypoly = xtgeo.polygons_from_file('somefile.xyz')
     """
-    return Polygons._read_file(pfile, fformat=fformat)
+    return Polygons(**_file_importer(pfile, fformat=fformat))
 
 
 def polygons_from_roxar(
@@ -132,7 +154,6 @@ def polygons_from_roxar(
     category: str,
     stype: Optional[str] = "horizons",
     realisation: Optional[int] = 0,
-    attributes: Optional[bool] = False,
 ) -> "Polygons":
     """Load a Polygons instance from Roxar RMS project.
 
@@ -148,8 +169,6 @@ def polygons_from_roxar(
         stype: RMS folder type, 'horizons' (default), 'zones', 'clipboard',
             'faults', ...
         realisation: Realisation number, default is 0
-        attributes: If True, additional attributes will be read and stored
-            (from RMS 11).
 
     Example::
 
@@ -157,20 +176,22 @@ def polygons_from_roxar(
         mysurf = xtgeo.polygons_from_roxar(project, 'TopAare', 'DepthPolys')
     """
 
-    args = Polygons._read_roxar(
+    kwargs = _roxar_importer(
         project,
         name,
         category,
         stype,
         realisation,
-        attributes,
     )
 
-    return Polygons(**args)
+    return Polygons(**kwargs)
 
 
+########################################################################################
+# Polygons class
+########################################################################################
 class Polygons(XYZ):  # pylint: disable=too-many-public-methods
-    """Class for a polygons object (connected points) in the XTGeo framework.
+    """Class for a Polygons object (connected points) in XTGeo.
 
     The term Polygons is here used in a wider context, as it includes
     polylines that do not connect into closed polygons. A Polygons
@@ -187,41 +208,87 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
     * Z_TVDSS - For depth or property from mean SeaLevel; Depth positive down
     * POLY_ID - for polygon ID as there may be several polylines segments
 
-    Each Polygons instance can also a name (through the name attribute).
-    Default is 'poly'. E.g. if a well fence, it is logical to name the
+    Each Polygons instance can also a informal name (through the name attribute).
+    Default is 'polygons'. E.g. if a well fence, it is logical to name the
     instance to be the same as the well name.
 
+    Args:
+        values: Provide input values on various forms (list-like or dataframe).
+        xname: Name of first (X) mandatory column, default is X_UTME.
+        yname: Name of second (Y) mandatory column, default is Y_UTMN.
+        zname: Name of third (Z) mandatory column, default is Z_TVDSS.
+        pname: Name of forth (P) mandatory enumerating column, default is POLY_ID.
+        name: A given name for the Points/Polygons object, defaults to 'points'.
+        attributes: A dictionary for attribute columns as 'name: type', e.g.
+            {"WellName": "str", "IX": "int"}. This is applied when values are input
+            and is to name and type the extra attribute columns in a point set.
+        filesrc: Spesify input file name or other origin (informal)
     """
 
-    def __init__(self, *args, **kwargs):
-        """Polygons() initialisation."""
-        # additonal properties for Polygons
-        self._hname = "H_CUMLEN"
-        self._dhname = "H_DELTALEN"
-        self._tname = "T_CUMLEN"
-        self._dtname = "T_DELTALEN"
-        self._name = "poly"  # the name of the Polygons() instance
+    @_allow_deprecated_init
+    def __init__(
+        self,
+        values: Optional[Union[list, np.ndarray, pd.DataFrame]] = None,
+        xname: Optional[str] = "X_UTME",
+        yname: Optional[str] = "Y_UTMN",
+        zname: Optional[str] = "Z_TVDSS",
+        pname: Optional[str] = "POLY_ID",
+        name: Optional[str] = "polygons",
+        attributes: Optional[dict] = None,
+        filesrc: Optional[str] = None,
+    ):
 
-        kwargs["is_polygons"] = True  # force is_polygons to be true
-        super().__init__(*args, **kwargs)
+        super().__init__(xname, yname, zname, name, filesrc)
+
+        # additonal state properties for Polygons
+        self._pname = pname
+
+        self._hname = None
+        self._dhname = None
+        self._tname = None
+        self._dtname = None
+
+        self._df, self._filesrc = _xyz_io.initialize_by_values(
+            values, self._zname, attributes, True
+        )
         logger.info("Initiated Polygons")
 
-    def __str__(self):
-        """User friendly print."""
-        return self.describe(flush=False)
-
-    # ----------------------------------------------------------------------------------
+    # ==================================================================================
     # Properties
-    # ----------------------------------------------------------------------------------
+    # See also base class
+    # ==================================================================================
 
     @property
-    def name(self):
-        """Returns or sets the name of the instance."""
-        return self._name
+    def attributes(self) -> dict:
+        """Returns a dictionary with attribute names and type, or None."""
+        # this is not stored as state variable now, but is dynamically stored in
+        # all pandas columns after the 4 first.
+        attrs = {}
+        for col in self._df.columns[4:]:
+            if col:
+                name = col
+                dtype = str(self._df[col].dtype).lower()
+                if "int" in dtype:
+                    dtype = "int"
+                elif "float" in dtype:
+                    dtype = "float"
+                else:
+                    dtype = "str"
+                attrs[name] = dtype
 
-    @name.setter
-    def name(self, newname):
-        self._name = newname
+        if attrs:
+            return attrs
+        return None
+
+    @property
+    def pname(self):
+        """Returns or sets the name of the Polygons ID column."""
+        return self._pname
+
+    @pname.setter
+    def pname(self, newname):
+        if self.rename_column(self._pname, newname):
+            self._pname = newname
 
     @property
     def hname(self):
@@ -234,9 +301,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return self._hname
 
     @hname.setter
-    def hname(self, value):
-        super()._check_name(value)
-        self._hname = value
+    def hname(self, newname):
+        if self._hname is not None:
+            if self.rename_column(self._hname, newname):
+                self._hname = newname
+        else:
+            raise ValueError("Cannot rename hname, which is currently None.")
 
     @property
     def dhname(self):
@@ -249,9 +319,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return self._dhname
 
     @dhname.setter
-    def dhname(self, value):
-        super()._check_name(value)
-        self._dhname = value
+    def dhname(self, newname):
+        if self._dhname is not None:
+            if self.rename_column(self._dhname, newname):
+                self._dhname = newname
+        else:
+            raise ValueError("Cannot rename dhname, which is currently None.")
 
     @property
     def tname(self):
@@ -262,9 +335,12 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return self._tname
 
     @tname.setter
-    def tname(self, value):
-        super()._check_name(value)
-        self._tname = value
+    def tname(self, newname):
+        if self._tname is not None:
+            if self.rename_column(self._tname, newname):
+                self._tname = newname
+        else:
+            raise ValueError("Cannot rename tname, which is currently None.")
 
     @property
     def dtname(self):
@@ -275,15 +351,45 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         return self._dtname
 
     @dtname.setter
-    def dtname(self, value):
-        super()._check_name(value)
-        self._dtname = value
+    def dtname(self, newname):
+        if self._dtname is not None:
+            if self.rename_column(self._dtname, newname):
+                self._dtname = newname
+        else:
+            raise ValueError("Cannot rename dtname, which is currently None.")
 
-    @XYZ.dataframe.setter
+    @property
+    def dataframe(self) -> pd.DataFrame:
+        """Returns or set the Pandas dataframe object."""
+        return self._df
+
+    @dataframe.setter
     def dataframe(self, df):
-        # pylint: disable=maybe-no-member
-        XYZ.dataframe.fset(self, df)
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError(f"Input df is not a DataFrame, but a {type(df)} instance.")
+        if len(df.columns) < 4:
+            raise ValidationError(
+                "Input dataframe has too few columns (need >= 4) "
+                f"but has {len(df.columns)}"
+            )
+        self._xname, self._yname, self._zname, self._pname = df.columns[0:4]
+        self._df = df.apply(deepcopy)  # see comment note in _xyz.py
         self._name_to_none_if_missing()
+
+    # ==================================================================================
+    # Private methods
+    # ==================================================================================
+
+    def _reset(self, **kwargs):
+        """Used in deprecated methods."""
+        self._df = kwargs.get("values", self._df)
+        self._xname = kwargs.get("xname", self._xname)
+        self._yname = kwargs.get("yname", self._yname)
+        self._zname = kwargs.get("zname", self._zname)
+        self._pname = kwargs.get("pname", self._pname)
+
+        self._name = kwargs.get("name", self._name)
+        self._filesrc = kwargs.get("filesrc", self._filesrc)
 
     def _name_to_none_if_missing(self):
         if self._dtname not in self._df.columns:
@@ -295,75 +401,107 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         if self._hname not in self._df.columns:
             self._hname = None
 
-    # ----------------------------------------------------------------------------------
-    # Methods
-    # ----------------------------------------------------------------------------------
-
-    def delete_columns(self, clist, strict=False):
-        """Delete one or more columns by name in a safe way.
-
-        Note that the coordinate columns will be protected, as well as then
-        POLY_ID column (pname atribute).
-
-        Args:
-            clist (list): Name of columns
-            strict (bool): I False, will not trigger exception if a column is not
-                found. Otherways a ValueError will be raised.
-
-        Raises:
-            ValueError: If strict is True and columnname not present
-
-        Example::
-            mypoly.delete_columns(["WELL_ID", mypoly.hname, mypoly.dhname])
-
-        .. versionadded:: 2.1
-        """
-        if self._df is None:
-            xtg.warnuser(
-                "Trying to delete a column before a dataframe has been set - ignored"
-            )
-            return
-
-        for cname in clist:
-            if cname in (self.xname, self.yname, self.zname, self.pname):
-                xtg.warnuser(
-                    "The column {} is protected and will not be deleted".format(cname)
-                )
-                continue
-
-            if cname not in self._df:
-                if strict is True:
-                    raise ValueError("The column {} is not present".format(cname))
-
-            if cname in self._df:
-                self._df.drop(cname, axis=1, inplace=True)
+    # ==================================================================================
+    # I/O methods
+    # from_ methods are deprecated
+    # ==================================================================================
 
     @inherit_docstring(inherit_from=XYZ.from_file)
-    def from_file(self, pfile, fformat="xyz", **kwargs):
-        kwargs["is_polygons"] = True
+    def from_file(self, pfile, fformat="xyz"):
+        self._reset(**_file_importer(pfile, fformat))
 
-    @inherit_docstring(inherit_from=XYZ.to_file)
     def to_file(
         self,
         pfile,
         fformat="xyz",
-        attributes=False,
-        pfilter=None,
-        wcolumn=None,
-        hcolumn=None,
-        mdcolumn=None,
-        **kwargs,
-    ):  # pylint: disable=redefined-builtin
-        return super().to_file(
+    ):
+        """Export Polygons to file.
+
+        Args:
+            pfile (str): Name of file
+            fformat (str): File format xyz/poi/pol
+
+        Returns:
+            Number of polygon points exported
+        """
+
+        return _xyz_io.to_generic_file(
+            self,
             pfile,
             fformat=fformat,
-            attributes=attributes,
-            pfilter=pfilter,
-            wcolumn=wcolumn,
-            hcolumn=hcolumn,
-            mdcolumn=mdcolumn,
-            **kwargs,
         )
+
+    def to_roxar(
+        self,
+        project,
+        name,
+        category,
+        stype="horizons",
+        realisation=0,
+    ):
+        """Export (store) a Polygons item to a Roxar RMS project.
+
+        The export to the RMS project can be done either within the project
+        or outside the project.
+
+        Note also that horizon/zone name and category must exists in advance,
+        otherwise an Exception will be raised.
+
+        Note:
+            When project is file path (direct access, outside RMS) then
+            ``to_roxar()`` will implicitly do a project save. Otherwise, the project
+            will not be saved until the user do an explicit project save action.
+
+        Args:
+            project (str or special): Name of project (as folder) if
+                outside RMS, og just use the magic project word if within RMS.
+            name (str): Name of polygons item
+            category (str): For horizons/zones/faults: for example 'DL_depth'
+            stype (str): RMS folder type, 'horizons' (default), 'zones'
+                or 'faults' or 'clipboard'  (in prep: well picks)
+            realisation (int): Realisation number, default is 0
+
+
+        Returns:
+            Object instance updated
+
+        Raises:
+            ValueError: Various types of invalid inputs.
+            NotImplementedError: Not supported in this ROXAPI version
+
+        """
+
+        valid_stypes = ["horizons", "zones", "faults", "clipboard"]
+
+        if stype.lower() not in valid_stypes:
+            raise ValueError(f"Invalid stype, only {valid_stypes} stypes is supported.")
+
+        _xyz_roxapi.export_xyz_roxapi(
+            self,
+            project,
+            name,
+            category,
+            stype.lower(),
+            None,
+            realisation,
+            None,
+            True,
+        )
+
+    @inherit_docstring(inherit_from=XYZ.from_list)
+    @deprecation.deprecated(
+        deprecated_in="2.16",
+        removed_in="4.0",
+        current_version=xtgeo.version,
+        details="Use direct Polygons() initialisation instead",
+    )
+    def from_list(self, plist):
+
+        kwargs = {}
+        kwargs["values"], kwargs["filesrc"] = _xyz_io._from_list_like(
+            plist, "Z_TVDSS", None, True
+        )
+        self._reset(**kwargs)
 
     def from_wells(self, wells, zone, resample=1):
         """Get line segments from a list of wells and a zone number.
@@ -379,8 +517,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
             None if well list is empty; otherwise the number of wells that
             have one or more line segments to return
 
-        Raises:
-            Todo
         """
         if not wells:
             return None
@@ -403,8 +539,34 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
         return len(dflist)
 
+    # ==================================================================================
+    # Other methods
+    # ==================================================================================
+
+    def copy(self):
+        """Returns a deep copy of an instance"""
+        mycopy = self.__class__()
+        mycopy._df = self._df.apply(deepcopy)  # df.copy() is not fully deep!
+        mycopy._xname = self._xname
+        mycopy._yname = self._yname
+        mycopy._zname = self._zname
+        mycopy._pname = self._pname
+        mycopy._hname = self._hname
+        mycopy._dhname = self._dhname
+        mycopy._tname = self._tname
+        mycopy._dtname = self._dtname
+        mycopy._name = self._name
+
+        mycopy._filesrc = "Derived from: copied instance"
+
+        return mycopy
+
+    @inherit_docstring(inherit_from=XYZ.delete_columns)
+    def delete_columns(self, clist, strict=False):
+        _xyz_oper.delete_columns(self, clist, strict, True)
+
     def get_xyz_dataframe(self):
-        """Get a dataframe copy from the XYZ points with no ID column.
+        """Get a dataframe copy from the Polygons points with no ID column.
 
         Convert from POLY_ID based to XYZ, where a new polygon is marked with a 999
         value as flag.
@@ -415,7 +577,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
         """Returns a list of Shapely LineString objects, one per POLY_ID.
 
         .. versionadded:: 2.1
-
         """
         spolys = []
         idgroups = self.dataframe.groupby(self.pname)
@@ -623,67 +784,6 @@ class Polygons(XYZ):  # pylint: disable=too-many-public-methods
 
     # ==================================================================================
     # Operations restricted to inside/outside polygons
+    # See base class!
     # ==================================================================================
-
-    def operation_polygons(self, poly, value, opname="add", inside=True):
-        """A generic function for operations restricted to inside or outside polygon(s).
-
-        The operations are done on the points that defines the polygon. Hence on a
-        coarse sampled polygon, results may appear inexact.
-
-        Args:
-            poly (Polygons): A XTGeo Polygons instance
-            value(float): Value to add, subtract etc
-            opname (str): Name of operation... 'add', 'sub', etc
-            inside (bool): If True do operation inside polygons; else outside.
-        """
-        _xyz_oper.operation_polygons(self, poly, value, opname=opname, inside=inside)
-
-    # shortforms
-    def add_inside(self, poly, value):
-        """Add a value (scalar) inside polygons."""
-        self.operation_polygons(poly, value, opname="add", inside=True)
-
-    def add_outside(self, poly, value):
-        """Add a value (scalar) outside polygons."""
-        self.operation_polygons(poly, value, opname="add", inside=False)
-
-    def sub_inside(self, poly, value):
-        """Subtract a value (scalar) inside polygons."""
-        self.operation_polygons(poly, value, opname="sub", inside=True)
-
-    def sub_outside(self, poly, value):
-        """Subtract a value (scalar) outside polygons."""
-        self.operation_polygons(poly, value, opname="sub", inside=False)
-
-    def mul_inside(self, poly, value):
-        """Multiply a value (scalar) inside polygons."""
-        self.operation_polygons(poly, value, opname="mul", inside=True)
-
-    def mul_outside(self, poly, value):
-        """Multiply a value (scalar) outside polygons."""
-        self.operation_polygons(poly, value, opname="mul", inside=False)
-
-    def div_inside(self, poly, value):
-        """Divide a value (scalar) inside polygons."""
-        self.operation_polygons(poly, value, opname="div", inside=True)
-
-    def div_outside(self, poly, value):
-        """Divide a value (scalar) outside polygons (value 0.0 will give result 0)."""
-        self.operation_polygons(poly, value, opname="div", inside=False)
-
-    def set_inside(self, poly, value):
-        """Set a value (scalar) inside polygons."""
-        self.operation_polygons(poly, value, opname="set", inside=True)
-
-    def set_outside(self, poly, value):
-        """Set a value (scalar) outside polygons."""
-        self.operation_polygons(poly, value, opname="set", inside=False)
-
-    def eli_inside(self, poly):
-        """Eliminate current map values inside polygons."""
-        self.operation_polygons(poly, 0, opname="eli", inside=True)
-
-    def eli_outside(self, poly):
-        """Eliminate current map values outside polygons."""
-        self.operation_polygons(poly, 0, opname="eli", inside=False)
+    ...

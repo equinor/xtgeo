@@ -93,7 +93,7 @@ def test_get_zone_tops_some_wells(testpath, tmp_path):
 
     # classmethod
     p2 = xtgeo.points_from_wells(wlist)
-    # assert p1.dataframe.equals(p2.dataframe)
+    assert p1.dataframe.equals(p2.dataframe)
 
     assert p2.get_nwells() == 6
 
