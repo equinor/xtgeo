@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+    branches: [master, "*postfix"]
+  pull_request:
+    branches: [master]
+
+jobs:
+  fast:
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest]
+        include:
+          - os: macos-latest
+            python-version: 3.6
+          - os: macos-latest
+            python-version: 3.8
+          - os: windows-latest
+            python-version: 3.6
+          - os: windows-latest
+            python-version: 3.8
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+      - uses: "./.github/actions/test_setup"
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run test
+        run: python -m pytest --disable-warnings -x --hypothesis-profile ci-fast
+  hypothesis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: "./.github/actions/test_setup"
+        with:
+          python-version: 3.9
+      - name: Run just hypothesis tests with more examples
+        run: python -m pytest --disable-warnings -x -m hypothesis --hypothesis-profile ci --generate-plots
+  big:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: "./.github/actions/test_setup"
+        with:
+          python-version: 3.9
+      - name: Run just tests marked big
+        run: XTG_BIGTEST=1 python -m pytest --disable-warnings -x -m bigtest --hypothesis-profile ci --generate-plots
+  codecov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: "./.github/actions/test_setup"
+        with:
+          python-version: 3.9
+      - name: "Install codecov"
+        run: pip install pytest-cov
+      - name: Generate coverage report
+        run: pytest tests --doctest-modules --generate-plots --disable-warnings --cov=xtgeo --hypothesis-profile ci-fast --cov-report=xml:xtgeocoverage.xml;
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: xtgeocoverage.xml
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: "./.github/actions/test_setup"
+        with:
+          python-version: 3.9
+      - name: Set up OPM
+        run: |
+          sudo apt install software-properties-common &&
+          sudo apt-add-repository ppa:opm/ppa &&
+          sudo apt install mpi-default-bin libopm-simulators-bin
+      - name: Integration test
+        run: HAS_OPM=1 python -m pytest -m requires_opm --disable-warnings -x --hypothesis-profile ci
