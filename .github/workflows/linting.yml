@@ -5,14 +5,9 @@ on: [push, pull_request]
 jobs:
   linting:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8"]
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up python
-        uses: actions/setup-python@v2
+      - uses: actions/setup-python@v2
       - name: Check black style and linting
         run: |
           pip install black

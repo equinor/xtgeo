@@ -3,67 +3,41 @@ name: cibuildwheel
 on:
   pull_request:
       branches: [master, "*postfix"]
+  release:
+    types: [created]
 
-# Verify that wheel build jobs succeed
 jobs:
-  build_linux_cibuildwheel:
-    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  build_and_upload_with_cibw:
+    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os.runs_on }}
+    runs-on: ${{ matrix.os.runs_on }}
+    strategy:
+     matrix:
+        cibw_python: [cp36, cp37, cp38, cp39]
+        os:
+           - runs_on: ubuntu-latest
+             cibw_image: manylinux_x86_64
+           - runs_on: windows-latest
+             cibw_image: win_amd64
+           - runs_on: macos-latest
+             cibw_image: macosx_x86_64
 
     env:
-      CIBW_BEFORE_TEST: >
-        pushd {project} &&
-        pip install -r requirements/requirements.txt &&
-        pip install -r requirements/requirements_test.txt &&
-        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-      CIBW_TEST_COMMAND: >
-        pushd {project} &&
-        pytest tests/test_common --disable-warnings -x --hypothesis-profile ci --generate-plots
-      CIBW_BUILD: ${{ matrix.cibw_python }}-manylinux_x86_64
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        cibw_python: [cp36, cp39]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-
-      - name: Install cibuildwheel
-        run: >
-          python -m pip install pip -U &&
-          python -m pip install wheel &&
-          python -m pip install cibuildwheel
-
-      - name: Build wheels and test
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-
-  build_macos_cibuildwheel:
-    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    env:
       CIBW_BEFORE_TEST: >
         pushd {project} &&
-        pip install -r requirements/requirements.txt &&
         pip install -r requirements/requirements_test.txt &&
         git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
+      # Ignore forking tests as they do not work well with CIBW
+      # ignore tests/test_well due to missing pytables wheel
       CIBW_TEST_COMMAND: >
         pushd {project} &&
-        pytest tests --disable-warnings -x --hypothesis-profile ci
-      CIBW_BUILD: ${{ matrix.cibw_python }}-macosx_x86_64
-
-    strategy:
-      matrix:
-        os: [macos-latest]
-        python-version: [3.8] # PY version for "Install cibuildwheel", default is 2.7!
-        cibw_python: [cp36, cp39]
+        pytest  --disable-warnings -x -m "not hypothesis" --ignore tests/test_well --ignore-glob="*forks.py"
+      CIBW_BUILD: ${{ matrix.cibw_python }}-${{ matrix.os.cibw_image }}
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v2
 
@@ -72,81 +46,13 @@ jobs:
           python -m pip install pip -U &&
           python -m pip install wheel &&
           python -m pip install cibuildwheel
-
-      - name: Build wheels and test python < 3.9
-        if: matrix.cibw_python != 'cp39'
-        run: >
-          python -m cibuildwheel --output-dir wheelhouse
-
-      - name: Build wheels and test python 3.9
-        if: matrix.cibw_python == 'cp39'
-        # note tests are a bit restricted due to missing pytables wheel
+      - name: Run cibuildwheel
+        run: python -m cibuildwheel --output-dir wheelhouse
+      - name: Publish
+        if: ${{ github.event_name == 'release' }}
         env:
-          CIBW_TEST_COMMAND: >
-            pushd {project} &&
-            pytest tests --disable-warnings --ignore tests/test_well -x --hypothesis-profile ci
-
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-
-  # pitfall for Windows, while this works for linux and macos:
-  # run: |
-  #    command1
-  #    command2
-  # it will not work for windows! Only command1 is executed; hence this syntax is
-  # replaced with:
-  # run: >
-  #     command1 &&
-  #     command2
-
-  build_windows_cibuildwheel:
-    name: CIBW python ${{ matrix.cibw_python }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    env:
-      CIBW_BEFORE_TEST: >
-        pushd {project} &&
-        pip install -r requirements/requirements.txt &&
-        pip install -r requirements/requirements_test.txt &&
-        git clone --depth 1 https://github.com/equinor/xtgeo-testdata ../xtgeo-testdata
-
-      # a test with forks is skipped as this calls python in a subprocess, where
-      # the cibuildwheel on windows cannot find the xtgeo module
-      CIBW_TEST_COMMAND: >
-        pushd {project} && dir &&
-        pytest tests -x --hypothesis-profile ci --ignore-glob="*forks.py"
-
-      CIBW_BUILD: ${{ matrix.cibw_python }}-win_amd64
-
-    strategy:
-      matrix:
-        os: [windows-latest]
-        cibw_python: [cp36, cp39]
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-
-      - name: Install cibuildwheel
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
         run: >
-          python -m pip install pip -U &&
-          python -m pip install wheel &&
-          python -m pip install cibuildwheel
-
-      - name: Build wheels and test python < 3.9
-        if: matrix.cibw_python != 'cp39'
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-
-      - name: Build wheels and test python 3.9
-        if: matrix.cibw_python == 'cp39'
-        # note tests are a bit restricted due to missing pytables wheel
-        env:
-          CIBW_TEST_COMMAND: >
-            pushd {project} &&
-            pytest tests --disable-warnings --hypothesis-profile ci --ignore tests/test_well
-            --ignore-glob="*forks.py" -x
-
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
+          pip install twine &&
+          twine upload wheelhouse/*
